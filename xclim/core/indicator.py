@@ -89,11 +89,11 @@ import warnings
 import weakref
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
-from inspect import Parameter, _empty, signature  # noqa
+from inspect import Parameter, Signature, _empty, signature
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Union
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 from boltons.funcutils import copy_function, wraps
@@ -315,106 +315,32 @@ class Indicator(IndicatorRegistrar):
             raise AttributeError("`identifier` has not been set.")
 
         if "compute" in kwds:
-            # Compute is passed :
-            #   - Metadata is extracted from the docstring
-            #   - Parameters of base class are thrown in the bin, replaced by
-            #     what we parse from the docstring (description, choices), decorator (units),
-            #     signature (kind, default) and passed "input".
-            docmeta = parse_doc(kwds["compute"].__doc__)
-            parameters = docmeta.pop("parameters", {})  # override parent's parameters
-            for (
-                name,
-                value,
-            ) in docmeta.items():  # title, abstract, references, notes, long_name
-                # Only set if not passed as keywords (parent's are overridden anyway)
+            # Parsed parameters and metadata override parent's params entirely.
+            parameters, docmeta = cls._parse_indice(
+                kwds["compute"], kwds.get("parameters", {})
+            )
+            for name, value in docmeta.items():
+                # title, abstract, references, notes, long_name
                 kwds.setdefault(name, value)
-
-            for name, unit in getattr(kwds["compute"], "in_units", {}).items():
-                parameters.setdefault(name, {})["units"] = unit
-
-            compute_sig = signature(kwds["compute"])
-            # Test for malformed docstrings. Maybe that's too strong?
-            if not set(parameters.keys()).issubset(compute_sig.parameters.keys()):
-                raise ValueError(
-                    f"Malformed docstring on {kwds['compute']} : the parameters "
-                    f"{set(parameters.keys()) - set(compute_sig.parameters.keys())} "
-                    "are absent from the signature."
-                )
-            for name, param in compute_sig.parameters.items():
-                meta = parameters.setdefault(name, {})
-                meta["default"] = param.default
-                has_units = (
-                    "units" in meta  # Units read from compute.in_units
-                    or "units" in kwds.get("parameters", {}).get(name, {})
-                )  # Units passed explicitly, will be added to "meta" below.
-                meta["kind"] = infer_kind_from_parameter(param, has_units)
-
         else:  # inherit parameters from base class
             parameters = deepcopy(cls.parameters)
 
         # Update parameters with passed parameters
-        param_fields = cls._param_fields - {"units"}
-        try:
-            for key, val in kwds.get("parameters", {}).items():
-                if isinstance(val, dict):  # Modified meta
-                    if not set(val.keys()).issubset(param_fields):
-                        raise ValueError(
-                            "Parameter metadata can only have keys: "
-                            f"{param_fields}, got : {val.keys()} for parameter {key}."
-                        )
-                    parameters[key].update(val)
-                else:  # Injected
-                    parameters[key] = val
-        except KeyError as err:
-            raise ValueError(
-                f"Parameter {err} was passed but it does not exist on the "
-                f" compute function (not one of {parameters.keys()})"
-            ) from err
+        cls._update_parameters(parameters, kwds.pop("parameters", {}))
 
         # Input variable mapping (to change variable names in signature and expected units/cf attrs).
         if "input" in kwds:
-            # Update parameters
             new_variable_mapping = kwds.pop("input")
-            for old_name, new_name in new_variable_mapping.items():
-                meta = parameters[new_name] = parameters.pop(old_name)
-                try:
-                    varmeta = VARIABLES[new_name]
-                except KeyError:
-                    raise ValueError(
-                        f"Compute argument {old_name} was mapped to variable "
-                        f"{new_name} which is not understood by xclim or CMIP6. Please"
-                        " use names listed in `xclim.core.utils.VARIABLES`."
-                    )
-                if "units" in meta:
-                    try:
-                        check_units(varmeta["canonical_units"], meta["units"])
-                    except ValidationError:
-                        raise ValueError(
-                            "When changing the name of a variable by passing `input`, "
-                            "the units dimensionality must stay the same. Got: old = "
-                            f"{meta['units']}, new = {varmeta['canonical_units']}"
-                        )
-                meta["units"] = varmeta["canonical_units"]
-                meta["description"] = varmeta["description"]
+            # parameters is updated in-place
+            cls._parse_var_mapping(new_variable_mapping, parameters)
 
             # Update mapping attribute
             variable_mapping = deepcopy(cls._variable_mapping)
             variable_mapping.update(new_variable_mapping)
             kwds["_variable_mapping"] = variable_mapping
 
-        # Ensure correct parameters
-        for name, meta in parameters.items():
-            if isinstance(meta, dict):
-                if meta["kind"] <= InputKind.OPTIONAL_VARIABLE and "units" not in meta:
-                    raise ValueError(
-                        f"Input variable {name} is missing expected units. Units are "
-                        "parsed either from the declare_units decorator or from the "
-                        "variable mapping (arg name to CMIP6 name) passed in `input`"
-                    )
-                if meta["kind"] == InputKind.OPTIONAL_VARIABLE:
-                    meta["default"] = None
-                elif meta["kind"] == InputKind.VARIABLE:
-                    meta["default"] = name
+        # Raise on incorrect params, modify var defaults in-place if needed
+        cls._ensure_correct_parameters(parameters)
 
         # If needed, wrap compute with declare units
         if "compute" in kwds and not hasattr(kwds["compute"], "in_units"):
@@ -445,6 +371,7 @@ class Indicator(IndicatorRegistrar):
             xclim_realm = cls.__module__.split(".")[2]
         else:
             xclim_realm = None
+
         # Priority given to passed realm -> parent's realm -> location of the class declaration (official inds only)
         kwds.setdefault("realm", cls.realm or xclim_realm)
         if kwds["realm"] not in ["atmos", "seaIce", "land", "ocean"]:
@@ -464,11 +391,120 @@ class Indicator(IndicatorRegistrar):
             new.__module__ = cls.__module__
 
         # Generate docstring
-        new._indcompute.__doc__ = new.__doc__ = generate_indicator_docstring(new)
+        new.__doc__ = generate_indicator_docstring(new)
 
         #  Add the created class to the registry
         # This will create an instance from the new class and call __init__.
         return super().__new__(new)
+
+    @staticmethod
+    def _parse_indice(compute, passed_parameters):
+        """Parse the compute function.
+
+        - Metadata is extracted from the docstring
+        - Parameters are parsed from the docstring (description, choices), decorator (units), signature (kind, default)
+
+        'passed_parameters' is only needed when compute is a generic function
+        (not decorated by `declare_units`) and it takes a string parameter. In that case
+        we need to check if that parameter has units (which have been passed explicitly).
+
+        """
+        docmeta = parse_doc(compute.__doc__)
+        parameters = docmeta.pop("parameters", {})  # override parent's parameters
+
+        for name, unit in getattr(compute, "in_units", {}).items():
+            parameters.setdefault(name, {})["units"] = unit
+
+        compute_sig = signature(compute)
+        # Test for malformed docstrings. Maybe that's too strong?
+        if not set(parameters.keys()).issubset(compute_sig.parameters.keys()):
+            raise ValueError(
+                f"Malformed docstring on {compute} : the parameters "
+                f"{set(parameters.keys()) - set(compute_sig.parameters.keys())} "
+                "are absent from the signature."
+            )
+        for name, param in compute_sig.parameters.items():
+            meta = parameters.setdefault(name, {})
+            meta["default"] = param.default
+            # Units read from compute.in_units or units passed explicitly, will be added to "meta" elsewhere in the __new__.
+            passed_meta = passed_parameters.get(name, {})
+            has_units = ("units" in meta) or (
+                isinstance(passed_meta, dict) and "units" in passed_meta
+            )
+            meta["kind"] = infer_kind_from_parameter(param, has_units)
+
+        # Insert "ds" arg
+        parameters["ds"] = {
+            "default": None,
+            "kind": InputKind.DATASET,
+            "description": "A dataset with the variables given by name.",
+        }
+        return parameters, docmeta
+
+    @classmethod
+    def _update_parameters(cls, parameters, passed):
+        """Update parameters with the ones passed."""
+        try:
+            for key, val in passed.items():
+                if isinstance(val, dict):  # Modified meta
+                    if not set(val.keys()).issubset(cls._param_fields):
+                        raise ValueError(
+                            f"Parameter metadata can only have keys: {cls._param_fields}"
+                            f", got : {val.keys()} for parameter {key}."
+                        )
+                    parameters[key].update(val)
+                else:  # Injected
+                    parameters[key] = val
+        except KeyError as err:
+            raise ValueError(
+                f"Parameter {err} was passed but it does not exist on the "
+                f" compute function (not one of {parameters.keys()})"
+            ) from err
+
+    @staticmethod
+    def _parse_var_mapping(new_variable_mapping, parameters):
+        """Parse the variable mapping passed in `input` and update `parameters` in-place."""
+        # Update parameters
+        for old_name, new_name in new_variable_mapping.items():
+            meta = parameters[new_name] = parameters.pop(old_name)
+            try:
+                varmeta = VARIABLES[new_name]
+            except KeyError:
+                raise ValueError(
+                    f"Compute argument {old_name} was mapped to variable "
+                    f"{new_name} which is not understood by xclim or CMIP6. Please"
+                    " use names listed in `xclim.core.utils.VARIABLES`."
+                )
+            if "units" in meta:
+                try:
+                    check_units(varmeta["canonical_units"], meta["units"])
+                except ValidationError:
+                    raise ValueError(
+                        "When changing the name of a variable by passing `input`, "
+                        "the units dimensionality must stay the same. Got: old = "
+                        f"{meta['units']}, new = {varmeta['canonical_units']}"
+                    )
+            meta["units"] = varmeta["canonical_units"]
+            meta["description"] = varmeta["description"]
+
+    @staticmethod
+    def _ensure_correct_parameters(parameters):
+        """Ensure the parameters are correctly set.
+
+        Sets the correct variable default to be sure.
+        """
+        for name, meta in parameters.items():
+            if isinstance(meta, dict):
+                if meta["kind"] <= InputKind.OPTIONAL_VARIABLE and "units" not in meta:
+                    raise ValueError(
+                        f"Input variable {name} is missing expected units. Units are "
+                        "parsed either from the declare_units decorator or from the "
+                        "variable mapping (arg name to CMIP6 name) passed in `input`"
+                    )
+                if meta["kind"] == InputKind.OPTIONAL_VARIABLE:
+                    meta["default"] = None
+                elif meta["kind"] == InputKind.VARIABLE:
+                    meta["default"] = name
 
     @classmethod
     def _parse_output_attrs(
@@ -563,7 +599,8 @@ class Indicator(IndicatorRegistrar):
                 )
                 if cls is None:
                     raise ValueError(
-                        f"Requested base class {data['base']} is neither in the indicators registry nor in base classes registry."
+                        f"Requested base class {data['base']} is neither in the "
+                        "indicators registry nor in base classes registry."
                     )
             else:
                 cls = data["base"]
@@ -575,7 +612,8 @@ class Indicator(IndicatorRegistrar):
             compute = getattr(indices.generic, compute, getattr(indices, compute, None))
             if compute is None:
                 raise ImportError(
-                    f"Indice function {compute} not found in xclim.indices or xclim.indices.generic."
+                    f"Indice function {compute} not found in xclim.indices or "
+                    "xclim.indices.generic."
                 )
             data["compute"] = compute
 
@@ -599,6 +637,10 @@ class Indicator(IndicatorRegistrar):
         # Validation is done : register the instance.
         super().__init__()
 
+        self.__call__.__dict__["__signature__"] = self._gen_call_signature()
+
+    def _gen_call_signature(self):
+        """Generate the indicator's call signature based on its parameters."""
         # Update call signature
         variables = []
         parameters = []
@@ -618,7 +660,18 @@ class Indicator(IndicatorRegistrar):
                         annotation=annot,
                     )
                 )
-            elif meta["kind"] != InputKind.KWARGS:
+            elif meta["kind"] == InputKind.KWARGS:
+                parameters.append(Parameter(name, kind=Parameter.VAR_KEYWORD))
+            elif meta["kind"] == InputKind.DATASET:
+                parameters.append(
+                    Parameter(
+                        name,
+                        kind=Parameter.KEYWORD_ONLY,
+                        annotation=Dataset,
+                        default=meta["default"],
+                    )
+                )
+            else:
                 parameters.append(
                     Parameter(
                         name,
@@ -627,30 +680,36 @@ class Indicator(IndicatorRegistrar):
                         annotation=compute_sig.parameters[name].annotation,
                     )
                 )
-            else:
-                parameters.append(Parameter(name, kind=Parameter.VAR_KEYWORD))
+        # Sort variables to have non-optional first
+        variables = sorted(variables, key=lambda v: self.parameters[v.name]["kind"])
+        # Sort parameters to ensure kwargs are last
+        parameters = sorted(parameters, key=lambda p: p.kind)
+        ret_ann = DataArray if self.n_outs == 1 else Tuple[(DataArray,) * self.n_outs]
+        selfarg = Parameter("self", kind=Parameter.POSITIONAL_OR_KEYWORD)
+        return Signature([selfarg] + variables + parameters, return_annotation=ret_ann)
 
     def __call__(self, *args, **kwds):
         """Call function of Indicator class."""
-        # For convenience
-        n_outs = len(self.cf_attrs)
-
         # Put the variables in `das`, parse them according to the annotations
         # das : OrderedDict of variables (required + non-None optionals)
-        # params : OrderedDict of parameters INCLUDING unpacked kwargs
-        # all_params: OrderedDict of parameters with PACKED kwargs <- this is needed by _update_attrs and _mask because of `indexer`.
-        #                  AND includes injected arguments <- this is needed by update_attrs and missing (when "freq" is injected)
-        das, params, all_params = self._parse_variables_from_call(args, kwds)
+        # params : OrderedDict of parameters INCLUDING unpacked kwargs and injected EXCLUDING indexer
+        # indexer: If present, the "indexer" kwargs <- this is needed by _update_attrs and _mask
+        das, params, indexer = self._parse_variables_from_call(args, kwds)
 
         # Metadata attributes from templates
         var_id = None
         cf_attrs = []
         for attrs in self.cf_attrs:
-            if n_outs > 1:
+            if self.n_outs > 1:
                 var_id = attrs["var_name"]
             cf_attrs.append(
                 self._update_attrs(
-                    all_params.copy(), das, attrs, names=self._cf_names, var_id=var_id
+                    params.copy(),
+                    das,
+                    attrs,
+                    names=self._cf_names,
+                    var_id=var_id,
+                    indexer=indexer,
                 )
             )
 
@@ -661,12 +720,13 @@ class Indicator(IndicatorRegistrar):
         # Check if the period is allowed:
         if (
             self.allowed_periods is not None
-            and "freq" in all_params
-            and parse_offset(all_params["freq"])[1] not in self.allowed_periods
+            and "freq" in params
+            and parse_offset(params["freq"])[1] not in self.allowed_periods
         ):
             raise ValueError(
-                f"Resampling frequency {all_params['freq']} is not allowed for indicator "
-                f"{self.identifier} (needs something equivalent to one of {self.allowed_periods})."
+                f"Resampling frequency {params['freq']} is not allowed for indicator "
+                f"{self.identifier} (needs something equivalent to one "
+                f"of {self.allowed_periods})."
             )
 
         # Compute the indicator values, ignoring NaNs and missing values.
@@ -675,9 +735,10 @@ class Indicator(IndicatorRegistrar):
         if isinstance(outs, DataArray):
             outs = [outs]
 
-        if len(outs) != n_outs:
+        if len(outs) != self.n_outs:
             raise ValueError(
-                f"Indicator {self.identifier} was wrongly defined. Expected {n_outs} outputs, got {len(outs)}."
+                f"Indicator {self.identifier} was wrongly defined. Expected "
+                f"{self.n_outs} outputs, got {len(outs)}."
             )
 
         # Convert to output units
@@ -695,74 +756,72 @@ class Indicator(IndicatorRegistrar):
         if self.missing != "skip":
             # Mask results that do not meet criteria defined by the `missing` method.
             # This means all outputs must have the same dimensions as the broadcasted inputs (excluding time)
-            mask = self._mask(*das.values(), **all_params)
+            mask = self._mask(*das.values(), indexer=indexer, **params)
             outs = [out.where(~mask) for out in outs]
 
         # Return a single DataArray in case of single output, otherwise a tuple
-        if n_outs == 1:
+        if self.n_outs == 1:
             return outs[0]
         return tuple(outs)
-
-    def _assign_named_args(self, ba):
-        """Assign inputs passed as strings from ds."""
-        ds = ba.arguments.pop("ds")
-        for name, param in self._sig.parameters.items():
-            if (
-                self.parameters[name]["kind"]
-                in (
-                    InputKind.VARIABLE,
-                    InputKind.OPTIONAL_VARIABLE,
-                )
-                and isinstance(ba.arguments[name], str)
-            ):
-                if ds is not None:
-                    try:
-                        ba.arguments[name] = ds[ba.arguments[name]]
-                    except KeyError:
-                        raise MissingVariableError(
-                            f"For input '{name}', variable '{ba.arguments[name]}' was not found in the input dataset."
-                        )
-                else:
-                    raise ValueError(
-                        f"Passing variable names as string requires giving the `ds` dataset (got {name}='{ba.arguments[name]}')"
-                    )
 
     def _parse_variables_from_call(self, args, kwds):
         """Extract variable and optional variables from call arguments."""
         # Bind call arguments to `compute` arguments and set defaults.
-        ba = self._sig.bind(*args, **kwds)
+        ba = self.__call__.__signature__.bind(*args, **kwds)
         ba.apply_defaults()
 
         # Assign inputs passed as strings from ds.
         self._assign_named_args(ba)
 
+        # Extract variables + inject injected
         das = OrderedDict()
-        for name, param in self.parameters.items():
-            kind = param["kind"]
-            # If a variable pop the arg
-            if kind in (InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE):
-                data = ba.arguments.pop(name)
-                # If a non-optional variable OR None, store the arg
-                if kind == InputKind.VARIABLE or data is not None:
-                    das[name] = data
-
-        # Remove **kwargs from bind object and put all those params in "kwargs" to be passed to compute.
         params = ba.arguments.copy()
-        for param in self._sig.parameters.values():
-            if param.kind == param.VAR_KEYWORD:
-                kwargs = params.pop(param.name)
-                params.update(**kwargs)
+        indexer = {}
+        for name, param in self.parameters.items():
+            if name == "indexer":
+                indexer = params.get(name, param)
+            elif isinstance(param, dict):
+                kind = param["kind"]
+                # If a variable pop the arg
+                if kind <= InputKind.OPTIONAL_VARIABLE:
+                    data = params.pop(name)
+                    # If a non-optional variable OR None, store the arg
+                    if kind == InputKind.VARIABLE or data is not None:
+                        das[name] = data
+                elif kind == InputKind.KWARGS:
+                    kwargs = params.pop(name)
+                    params.update(**kwargs)
+            else:
+                params[name] = param
 
-        # Add injected kwargs to the all_params
-        all_params = ba.arguments
-        all_params.update(getattr(self._indcompute, "_injected", {}))
-        return das, params, all_params
+        return das, params, indexer
+
+    def _assign_named_args(self, ba):
+        """Assign inputs passed as strings from ds."""
+        ds = ba.arguments.pop("ds")
+        for name, param in self.__call__.__signature__.parameters.items():
+            if self.parameters[name][
+                "kind"
+            ] <= InputKind.OPTIONAL_VARIABLE and isinstance(ba.arguments[name], str):
+                if ds is not None:
+                    try:
+                        ba.arguments[name] = ds[ba.arguments[name]]
+                    except KeyError:
+                        raise MissingVariableError(
+                            f"For input '{name}', variable '{ba.arguments[name]}' "
+                            "was not found in the input dataset."
+                        )
+                else:
+                    raise ValueError(
+                        "Passing variable names as string requires giving the `ds` "
+                        f"dataset (got {name}='{ba.arguments[name]}')"
+                    )
 
     def _bind_call(self, func, **das):
         """Call function using `__call__` `DataArray` arguments.
 
-        This will try to bind keyword arguments to `func` arguments. If this fails, `func` is called with positional
-        arguments only.
+        This will try to bind keyword arguments to `func` arguments. If this fails,
+        `func` is called with positional arguments only.
 
         Notes
         -----
@@ -774,8 +833,8 @@ class Indicator(IndicatorRegistrar):
         In use case #2, we have two compute functions with arguments that have different names:
             `generic_func(da)` and `custom_func(tas)`
 
-        For each case, we want to define a single `cfcheck` and `datacheck` methods that will work with both compute
-        functions.
+        For each case, we want to define a single `cfcheck` and `datacheck` methods that
+        will work with both compute functions.
 
         Passing a dictionary of arguments will solve #1, but not #2.
         """
@@ -795,8 +854,8 @@ class Indicator(IndicatorRegistrar):
     ):
         """Get raw translated metadata for the curent indicator and a given locale.
 
-        All available translated metadata from the current indicator and those it is based on are merged,
-        with highest priority to the current one.
+        All available translated metadata from the current indicator and those it is
+        based on are merged, with highest priority to the current one.
         """
         var_id = var_id or ""
         if var_id:
@@ -817,11 +876,11 @@ class Indicator(IndicatorRegistrar):
         )
 
     @classmethod
-    def _update_attrs(cls, args, das, attrs, var_id=None, names=None):
+    def _update_attrs(cls, args, das, attrs, var_id=None, names=None, indexer=None):
         """Format attributes with the run-time values of `compute` call parameters.
 
-        Cell methods and history attributes are updated, adding to existing values. The language of the string is
-        taken from the `OPTIONS` configuration dictionary.
+        Cell methods and history attributes are updated, adding to existing values.
+        The language of the string is taken from the `OPTIONS` configuration dictionary.
 
         Parameters
         ----------
@@ -833,19 +892,22 @@ class Indicator(IndicatorRegistrar):
           The attributes to format and update.
         var_id : str
           The identifier to use when requesting the attributes translations.
-          Defaults to the class name (for the translations) or the `identifier` field of the class (for the history attribute).
-          If given, the identifier will be converted to uppercase to get the translation attributes.
-          This is meant for multi-outputs indicators.
+          Defaults to the class name (for the translations) or the `identifier` field of
+          the class (for the history attribute).
+          If given, the identifier will be converted to uppercase to get the translation
+          attributes. This is meant for multi-outputs indicators.
         names : Sequence[str]
           List of attribute names for which to get a translation.
+        indexer : Optiona[Mapping[str, str]]
+          The `indexer` argument as passed to the indicator.
 
         Returns
         -------
         dict
           Attributes with {} expressions replaced by call argument values. With updated `cell_methods` and `history`.
-          `cell_methods` is not added is `names` is given and those not contain `cell_methods`.
+          `cell_methods` is not added if `names` is given and those not contain `cell_methods`.
         """
-        out = cls._format(attrs, args)
+        out = cls._format(attrs, args, indexer)
         for locale in OPTIONS[METADATA_LOCALES]:
             out.update(
                 cls._format(
@@ -853,6 +915,7 @@ class Indicator(IndicatorRegistrar):
                         locale, var_id=var_id, names=names or list(attrs.keys())
                     ),
                     args=args,
+                    indexer=indexer,
                     formatter=get_local_formatter(locale),
                 )
             )
@@ -867,10 +930,10 @@ class Indicator(IndicatorRegistrar):
                 attrs["cell_methods"] += " " + out.pop("cell_methods")
 
         # Use of OrderedDict to ensure inputs (das) get listed before parameters (args).
-        # In the history attr, call signature will be all keywords
-        # and might be in a different order than the real function (but order doesn't really matter with keywords).
+        # In the history attr, call signature will be all keywords and might be in a
+        # different order than the real function (but order doesn't really matter with keywords).
         kwargs = OrderedDict(**das)
-        kwargs.update(**args)
+        kwargs.update(**args, **indexer)
         attrs["history"] = update_history(
             gen_call_string(cls._registry_id, **kwargs),
             new_name=out.get("var_name"),
@@ -885,8 +948,8 @@ class Indicator(IndicatorRegistrar):
         """Verify that the identifier is a proper slug."""
         if not re.match(r"^[-\w]+$", identifier):
             warnings.warn(
-                "The identifier contains non-alphanumeric characters. It could make life "
-                "difficult for downstream software reusing this class.",
+                "The identifier contains non-alphanumeric characters. It could make "
+                "life difficult for downstream software reusing this class.",
                 UserWarning,
             )
 
@@ -967,11 +1030,12 @@ class Indicator(IndicatorRegistrar):
         # All those tweaks are to ensure proper serialization of the returned dictionary.
         out["parameters"] = deepcopy(self.parameters)
         for param in out["parameters"].values():
-            if param["default"] is _empty:
-                param.pop("default")
-            param["kind"] = param["kind"].value  # Get the int.
-            if "choices" in param:  # A set is stored, convert to list
-                param["choices"] = list(param["choices"])
+            if isinstance(param, dict):
+                if param["default"] is _empty:
+                    param.pop("default")
+                param["kind"] = param["kind"].value  # Get the int.
+                if "choices" in param:  # A set is stored, convert to list
+                    param["choices"] = list(param["choices"])
         return out
 
     @classmethod
@@ -979,6 +1043,7 @@ class Indicator(IndicatorRegistrar):
         cls,
         attrs: dict,
         args: dict = None,
+        indexer: dict = None,
         formatter: AttrFormatter = default_formatter,
     ):
         """Format attributes including {} tags with arguments.
@@ -993,27 +1058,30 @@ class Indicator(IndicatorRegistrar):
         """
         # Use defaults
         if args is None:
-            args = {k: v["default"] for k, v in cls.parameters.items()}
-            args.update(getattr(cls._indcompute, "_injected", {}))
+            args = {
+                k: v["default"] if isinstance(v, dict) else v
+                for k, v in cls.parameters.items()
+            }
+
+        # Prepare arguments
+        mba = {}
+        # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
+        for k, v in args.items():
+            if isinstance(v, units.Quantity):
+                mba[k] = "{:g~P}".format(v)
+            elif isinstance(v, (int, float)):
+                mba[k] = "{:g}".format(v)
+            # TODO: What about InputKind.NUMBER_SEQUENCE
+            else:
+                mba[k] = v
+        if indexer:
+            dk, dv = indexer.copy().popitem()
+            if dk == "month":
+                dv = "m{}".format(dv)
+            mba["indexer"] = dv
 
         out = {}
         for key, val in attrs.items():
-            mba = {"indexer": "annual"}
-            # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
-            for k, v in args.items():
-                if isinstance(v, dict):
-                    if v:
-                        dk, dv = v.copy().popitem()
-                        if dk == "month":
-                            dv = "m{}".format(dv)
-                        mba[k] = dv
-                elif isinstance(v, units.Quantity):
-                    mba[k] = "{:g~P}".format(v)
-                elif isinstance(v, (int, float)):
-                    mba[k] = "{:g}".format(v)
-                else:
-                    mba[k] = v
-
             if callable(val):
                 val = val(**mba)
 
@@ -1030,12 +1098,11 @@ class Indicator(IndicatorRegistrar):
             return indices.generic.default_freq(**indexer)
         return None
 
-    def _mask(self, *args, **kwds):
+    def _mask(self, *args, indexer=None, **kwds):
         """Return whether mask for output values, based on the output of the `missing` method."""
         from functools import reduce
 
-        indexer = kwds.get("indexer") or {}
-        freq = kwds.get("freq") if "freq" in kwds else self._default_freq(**indexer)
+        freq = kwds.get("freq", self._default_freq(**(indexer or {})))
 
         options = self.missing_options or OPTIONS[MISSING_OPTIONS].get(self.missing, {})
 
@@ -1093,6 +1160,10 @@ class Indicator(IndicatorRegistrar):
                 return out[0]
             return out
         raise AttributeError(attr)
+
+    @property
+    def n_outs(self):
+        return len(self.cf_attrs)
 
 
 class Daily(Indicator):

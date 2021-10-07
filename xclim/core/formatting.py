@@ -472,26 +472,21 @@ KIND_ANNOTATION = {
 }
 
 
-def _gen_parameters_section(names, parameters, allowed_periods=None):
+def _gen_parameters_section(parameters, allowed_periods=None):
     """Generate the "parameters" section of the indicator docstring.
 
     Parameters
     ----------
-    names : Sequence[str]
-      Names of the input parameters, in order. Usually `Ind._parameters`.
+    compute : Callable
+      The indicator's compute function (`Ind.compute`).
     parameters : Mapping[str, Any]
-      Parameters dictionary. Usually `Ind.parameters`, As this is missing `ds`, it is added explicitly.
+      Parameters dictionary (`Ind.parameters`).
+    allowed_periods : list of str, optional
     """
     section = "Parameters\n----------\n"
-    for name in names:
-        if name == "ds":
-            descstr = "Input dataset."
-            defstr = "Default: None."
-            unitstr = ""
-            annotstr = "Dataset, optional"
-        else:
-            param = parameters[name]
-            descstr = param["description"]
+    for name, param in parameters.items():
+        if isinstance(param, dict):
+            descstr = param.get("description", "")
             if param["kind"] == InputKind.FREQ_STR and allowed_periods is not None:
                 descstr += (
                     f" Restricted to frequencies equivalent to one of {allowed_periods}"
@@ -501,7 +496,7 @@ def _gen_parameters_section(names, parameters, allowed_periods=None):
             elif param["kind"] == InputKind.OPTIONAL_VARIABLE:
                 defstr = ""
             else:
-                defstr = f"Default : {param['default']}. "
+                defstr = f"Default : {param.get('default', '')}. "
             if "choices" in param:
                 annotstr = str(param["choices"])
             else:
@@ -549,20 +544,18 @@ def generate_indicator_docstring(ind):
     header = f"{ind.title} (realm: {ind.realm})\n\n{ind.abstract}\n"
 
     special = f'This indicator will check for missing values according to the method "{ind.missing}".\n'
+
+    injected = {k: v for k, v in ind.parameters.items() if not isinstance(v, dict)}
     if hasattr(ind.compute, "__module__"):
         special += f"Based on indice :py:func:`{ind.compute.__module__}.{ind.compute.__name__}`.\n"
-        if hasattr(ind.compute, "_injected"):
+        if injected:
             special += "With injected parameters: "
-            special += (
-                ", ".join([f"{k}={v}" for k, v in ind.compute._injected.items()])
-                + ".\n"
-            )
+            special += ", ".join([f"{k}={v}" for k, v in injected.items()])
+            special += ".\n"
     if ind.keywords:
         special += f"Keywords : {ind.keywords}.\n"
 
-    parameters = _gen_parameters_section(
-        ind._parameters, ind.parameters, ind.allowed_periods
-    )
+    parameters = _gen_parameters_section(ind.parameters, ind.allowed_periods)
 
     returns = _gen_returns_section(ind.cf_attrs)
 
