@@ -56,6 +56,35 @@ def test_check_valid_raise(value, expected):
         cfchecks.check_valid(d, "test", expected)
 
 
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        (None, "expecto: patronum"),
+        ("test: mean", "expecto: patronum"),
+    ],
+)
+def test_check_cell_methods_nok(value, expected):
+    with pytest.raises(ValidationError):
+        cfchecks._check_cell_methods(value, expected)
+
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        ("expecto: patronum", "expecto: patronum"),
+        ("area: mean expecto: patronum", "expecto: patronum"),
+        ("expecto: patronum within days", "expecto: patronum"),
+        (
+            "complex: thing expecto: patronum within days very: complex",
+            "expecto: patronum",
+        ),
+    ],
+)
+def test_check_cell_methods_ok(value, expected):
+    # No error raise so all is good
+    assert None is cfchecks._check_cell_methods(value, expected)
+
+
 class TestDateHandling:
     tas_attrs = {
         "units": "K",
