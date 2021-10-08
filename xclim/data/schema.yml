@@ -1,0 +1,32 @@
+base: str(required=False)
+doc: str(required=False)
+keywords: str(required=False)
+module : str(required=False)
+realm: str(required=False)
+references: str(required=False)
+indicators: map(include('indicator'), key=regex('^[-\w]+$'))
+
+---
+indicator:
+  abstract: str(required=False)
+  allowed_periods: list(enum('A', 'Q', 'M', 'W'), required=False)
+  base: str(required=False)
+  compute: str(required=False)
+  input: map(str(), key=str(), required=False)
+  keywords: str(required=False)
+  missing: str(required=False)
+  missing_options: map(key=str(), required=False)
+  notes: str(required=False)
+  cf_attrs: any(list(include('cf_attrs')), include('cf_attrs'), required=False)
+  parameters: map(str(), num(), bool(), null(), include('parameter'), key=str(), required=False)
+  realm: str(required=False)
+  references: str(required=False)
+  title: str(required=False)
+
+cf_attrs: map(str(), key=str(), required=False)
+
+parameter:
+  description: str(required=False)
+  default: any(str(), num(), bool(), null(), required=False)
+  choices: list(str(), required=False)
+  units: str(required=False)

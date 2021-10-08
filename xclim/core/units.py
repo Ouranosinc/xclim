@@ -364,19 +364,6 @@ Mapping from offset base to CF-compliant unit. Only constant-length frequencies 
 """
 
 
-FREQ_NAMES = {
-    "annual": ("A", "YS"),  # A is the same as Y
-    "seasonal": ("Q", "QS-DEC"),
-    "monthly": ("M", "MS"),
-    "weekly": ("W", "W-SUN"),
-}
-"""
-Resampling frequency names for the "period" element of the YAML definition of indicators.
-
-Mapping from english name to a tuple of offset base and default freq value.
-"""
-
-
 def infer_sampling_units(
     da: xr.DataArray,
     deffreq: Optional[str] = "D",

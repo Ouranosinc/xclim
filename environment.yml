@@ -42,3 +42,4 @@ dependencies:
  - tokenize-rt
  - tox
  - xdoctest
+ - yamale

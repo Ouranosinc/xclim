@@ -251,3 +251,65 @@ def _loessdetrend_get_trend(da, *, dim, f, niter, d, weights, equal_spacing, kin
         equal_spacing=equal_spacing,
     )
     return trend.rename("trend").to_dataset()
+
+
+class RollingMeanDetrend(BaseDetrend):
+    """
+    Detrend time series using a rolling mean.
+
+    Parameters
+    ----------
+    group : Union[str, Grouper]
+      The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+      The fit is performed along the group's main dim.
+    kind : {'*', '+'}
+      The way the trend is removed or added, either additive or multiplicative.
+    win : int
+      The size of the rolling window. Units are the steps of the grouped data, which
+      means this detrending is best use with either `group='time'` or
+      `group='time.dayofyear'`. Other grouping will have large jumps included within the
+      windows and :py`:class:`LoessDetrend` might offer a better solution.
+    weights : sequence of floats, optional
+      Sequence of length `win`. Defaults to None, which means a flat window.
+    min_periods: int, optional
+      Minimum number of observations in window required to have a value, otherwise the
+      result is NaN. See :py:meth:`xarray.DataArray.rolling`.
+      Defauls to None, which sets it equal to `win`. Setting both `weights` and this
+      is not implemented yet.
+
+    Notes
+    -----
+    As for the :py:class:`LoessDetrend` detrending, important boundary effects are to be
+    expeted.
+    """
+
+    def __init__(
+        self, group="time", kind=ADDITIVE, win=30, weights=None, min_periods=None
+    ):
+        if weights is not None:
+            weights = xr.DataArray(weights, dims=("window",))
+            weights = weights / weights.sum()
+            if min_periods is not None:
+                raise NotImplementedError(
+                    "Setting both `min_periods` and `weights` is not implemented yet."
+                )
+        super().__init__(
+            group=group, kind=kind, win=win, weights=weights, min_periods=min_periods
+        )
+
+    def _get_trend(self, da):
+        # Estimate trend over da
+        trend = _rollingmean_get_trend(da, **self)
+        return trend.trend
+
+
+@map_groups(trend=[Grouper.DIM])
+def _rollingmean_get_trend(da, *, dim, kind, win, weights, min_periods):
+    if len(dim) > 1:
+        da = da.mean(dim[1:])
+    roll = da.rolling(center=True, min_periods=min_periods, **{dim[0]: win})
+    if weights is not None:
+        trend = roll.construct("window").dot(weights)
+    else:
+        trend = roll.mean()
+    return trend.rename("trend").to_dataset()

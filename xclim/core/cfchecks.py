@@ -8,7 +8,6 @@ Utilities designed to verify the compliance of metadata with the CF-Convention.
 import fnmatch
 from typing import Sequence, Union
 
-from .formatting import parse_cell_methods
 from .options import cfcheck
 from .utils import VARIABLES, ValidationError
 
@@ -36,8 +35,6 @@ def cfcheck_from_name(varname, vardata):
     """Perform cfchecks on a DataArray using specifications from xclim's default variables."""
     data = VARIABLES[varname]
     if "cell_methods" in data:
-        check_valid(
-            vardata, "cell_methods", parse_cell_methods(data["cell_methods"]) + "*"
-        )
+        check_valid(vardata, "cell_methods", data["cell_methods"] + "*")
     if "standard_name" in data:
         check_valid(vardata, "standard_name", data["standard_name"])

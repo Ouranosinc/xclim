@@ -1,8 +1,15 @@
 import numpy as np
 import pytest
 import xarray as xr
+from scipy.signal import windows
 
-from xclim.sdba.detrending import LoessDetrend, MeanDetrend, PolyDetrend
+from xclim.sdba import Grouper
+from xclim.sdba.detrending import (
+    LoessDetrend,
+    MeanDetrend,
+    PolyDetrend,
+    RollingMeanDetrend,
+)
 
 
 def test_poly_detrend_and_from_ds(series, tmp_path):
@@ -53,3 +60,31 @@ def test_mean_detrend(series):
     x2 = md.retrend(anomaly)
 
     np.testing.assert_array_almost_equal(x, x2)
+
+
+def test_rollingmean_detrend(series):
+    x = series(np.arange(12 * 365.25), "tas")
+    det = RollingMeanDetrend(group="time", win=29, min_periods=1)
+    fx = det.fit(x)
+    dx = fx.detrend(x)
+    xt = fx.retrend(dx)
+
+    np.testing.assert_array_almost_equal(dx.isel(time=slice(30, 3500)), 0)
+    np.testing.assert_array_almost_equal(xt, x)
+
+    # weights + grouping
+    x = xr.DataArray(
+        np.sin(2 * np.pi * np.arange(11 * 365) / 365),
+        dims=("time",),
+        coords={
+            "time": xr.cftime_range(
+                "2010-01-01", periods=11 * 365, freq="D", calendar="noleap"
+            )
+        },
+    )
+    w = windows.get_window("triang", 11, False)
+    det = RollingMeanDetrend(
+        group=Grouper("time.dayofyear", window=3), win=11, weights=w
+    )
+    fx = det.fit(x)
+    assert fx.ds.trend.notnull().sum() == 365

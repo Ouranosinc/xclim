@@ -18,6 +18,7 @@ repos:
     -   id: end-of-file-fixer
         exclude: ".ipynb"
     -   id: check-yaml
+        args: ['--allow-multiple-documents']
     -   id: debug-statements
 -   repo: https://github.com/ambv/black
     rev: 21.8b0

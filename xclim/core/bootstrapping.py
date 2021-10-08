@@ -1,6 +1,7 @@
 from inspect import signature
 from typing import Any, Callable, Dict
 
+import cftime
 import numpy as np
 import xarray
 from boltons.funcutils import wraps
@@ -131,7 +132,10 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xarray.DataArray:
     out = []
     # Compute func on each grouping
     for label, time_slice in da_years.items():
-        year = label.astype("datetime64[Y]").astype(int) + 1970
+        if isinstance(label, cftime.datetime):
+            year = label.year
+        else:
+            year = label.astype("datetime64[Y]").astype(int) + 1970
         kw = {da_key: da.isel(time=time_slice), **kwargs}
 
         # If the group year is in the base period, run the bootstrap
