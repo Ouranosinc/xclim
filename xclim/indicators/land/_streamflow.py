@@ -2,7 +2,6 @@
 
 from xclim.core.cfchecks import check_valid
 from xclim.core.indicator import Daily
-from xclim.core.utils import wrapped_partial
 from xclim.indices import base_flow_index, generic, rb_flashiness_index
 from xclim.indices.stats import fit as _fit
 from xclim.indices.stats import frequency_analysis
@@ -123,7 +122,8 @@ doy_qmax = Streamflow(
     description="Day of the year of the maximum over {indexer}",
     title="Day of year of the maximum.",
     units="",
-    compute=wrapped_partial(generic.select_resample_op, op=generic.doymax),
+    compute=generic.select_resample_op,
+    parameters=dict(op=generic.doymax),
 )
 
 
@@ -134,5 +134,6 @@ doy_qmin = Streamflow(
     description="Day of the year of the minimum over {indexer}",
     title="Day of year of the minimum.",
     units="",
-    compute=wrapped_partial(generic.select_resample_op, op=generic.doymin),
+    compute=generic.select_resample_op,
+    parameters=dict(op=generic.doymin),
 )

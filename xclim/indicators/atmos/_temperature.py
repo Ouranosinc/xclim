@@ -6,7 +6,7 @@ from inspect import _empty  # noqa
 from xclim import indices
 from xclim.core import cfchecks
 from xclim.core.indicator import Daily
-from xclim.core.utils import wrapped_partial
+from xclim.core.utils import InputKind
 
 __all__ = [
     "tn_days_above",
@@ -337,7 +337,8 @@ daily_temperature_range = Temp(
     long_name="Mean Diurnal Temperature Range",
     description="{freq} mean diurnal temperature range.",
     cell_methods="time range within days time: mean over days",
-    compute=wrapped_partial(indices.daily_temperature_range, op="mean"),
+    compute=indices.daily_temperature_range,
+    parameters=dict(op="mean"),
 )
 
 max_daily_temperature_range = Temp(
@@ -348,7 +349,8 @@ max_daily_temperature_range = Temp(
     long_name="Maximum Diurnal Temperature Range",
     description="{freq} maximum diurnal temperature range.",
     cell_methods="time range within days time: max over days",
-    compute=wrapped_partial(indices.daily_temperature_range, op="max"),
+    compute=indices.daily_temperature_range,
+    parameters=dict(op="max"),
 )
 
 daily_temperature_range_variability = Temp(
@@ -432,12 +434,13 @@ daily_freezethaw_cycles = Temp(
     description="{freq} number of days with a diurnal freeze-thaw cycle "
     ": Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin}.",
     cell_methods="",
-    compute=wrapped_partial(
-        indices.multiday_temperature_swing,
-        op="sum",
-        window=1,
-        suggested=dict(thresh_tasmax="0 degC", thresh_tasmin="0 degC"),
-    ),
+    compute=indices.multiday_temperature_swing,
+    parameters={
+        "op": "sum",
+        "window": 1,
+        "thresh_tasmax": {"default": "0 degC"},
+        "thresh_tasmin": {"default": "0 degC"},
+    },
 )
 
 
@@ -450,11 +453,12 @@ freezethaw_spell_frequency = Temp(
     ": Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin} "
     "for at least {window} consecutive day(s).",
     cell_methods="",
-    compute=wrapped_partial(
-        indices.multiday_temperature_swing,
-        op="count",
-        suggested=dict(thresh_tasmax="0 degC", thresh_tasmin="0 degC"),
-    ),
+    compute=indices.multiday_temperature_swing,
+    parameters={
+        "op": "count",
+        "thresh_tasmax": {"default": "0 degC"},
+        "thresh_tasmin": {"default": "0 degC"},
+    },
 )
 
 
@@ -467,11 +471,12 @@ freezethaw_spell_mean_length = Temp(
     ": Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin} "
     "for at least {window} consecutive day(s).",
     cell_methods="",
-    compute=wrapped_partial(
-        indices.multiday_temperature_swing,
-        op="mean",
-        suggested=dict(thresh_tasmax="0 degC", thresh_tasmin="0 degC"),
-    ),
+    compute=indices.multiday_temperature_swing,
+    parameters={
+        "op": "mean",
+        "thresh_tasmax": {"default": "0 degC"},
+        "thresh_tasmin": {"default": "0 degC"},
+    },
 )
 
 
@@ -484,11 +489,12 @@ freezethaw_spell_max_length = Temp(
     ": Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin} "
     "for at least {window} consecutive day(s).",
     cell_methods="",
-    compute=wrapped_partial(
-        indices.multiday_temperature_swing,
-        op="max",
-        suggested=dict(thresh_tasmax="0 degC", thresh_tasmin="0 degC"),
-    ),
+    compute=indices.multiday_temperature_swing,
+    parameters={
+        "op": "max",
+        "thresh_tasmax": {"default": "0 degC"},
+        "thresh_tasmin": {"default": "0 degC"},
+    },
 )
 
 
@@ -552,7 +558,8 @@ frost_season_length = Temp(
     "the first occurrence of at least {window} consecutive days with "
     "minimuim daily temperature above freezing after {mid_date}.",
     cell_methods="time: minimum within days time: sum over days",
-    compute=wrapped_partial(indices.frost_season_length, thresh="0 degC"),
+    compute=indices.frost_season_length,
+    parameters=dict(thresh="0 degC"),
 )
 
 last_spring_frost = Temp(
@@ -649,7 +656,8 @@ tropical_nights = Temp(
     description="{freq} number of Tropical Nights : defined as days with minimum daily temperature"
     " above {thresh}",
     cell_methods="time: minimum within days time: sum over days",
-    compute=wrapped_partial(indices.tn_days_above, suggested=dict(thresh="20 degC")),
+    compute=indices.tn_days_above,
+    parameters={"thresh": {"default": "20 degC"}},
 )
 
 tg90p = Temp(
@@ -799,10 +807,8 @@ huglin_index = Temp(
     cell_methods="",
     comment="Metric originally published in Huglin (1978). Day-length coefficient based on Hall & Jones (2010)",
     var_name="hi",
-    compute=wrapped_partial(
-        indices.huglin_index,
-        method="jones",
-    ),
+    compute=indices.huglin_index,
+    parameters=dict(method="jones"),
 )
 
 
@@ -818,20 +824,10 @@ biologically_effective_degree_days = Temp(
     cell_methods="",
     comment="Original formula published in Gladstones, 1992.",
     var_name="bedd",
-    compute=wrapped_partial(
-        indices.biologically_effective_degree_days,
-        method="gladstones",
-        suggested=dict(
-            thresh_tasmin="10 degC",
-            low_dtr="10 degC",
-            high_dtr="13 degC",
-            max_daily_degree_days="9 degC",
-            start_date="04-01",
-            end_date="11-01",
-            lat=_empty,
-        ),
-    ),
+    compute=indices.biologically_effective_degree_days,
+    parameters={"method": "gladstones", "lat": {"kind": InputKind.VARIABLE}},
 )
+
 
 effective_growing_degree_days = Temp(
     identifier="effective_growing_degree_days",
@@ -846,14 +842,7 @@ effective_growing_degree_days = Temp(
     cell_methods="",
     comment="Original formula published in Bootsma et al. 2005.",
     var_name="egdd",
-    compute=wrapped_partial(
-        indices.effective_growing_degree_days,
-        suggested=dict(
-            thresh="5 degC",
-            method="bootsma",
-            after_date="07-01",
-        ),
-    ),
+    compute=indices.effective_growing_degree_days,
 )
 
 
@@ -868,7 +857,6 @@ latitude_temperature_index = Temp(
     allowed_periods=["A"],
     comment="Indice originally published in Jackson, D. I., & Cherry, N. J. (1988)",
     var_name="lti",
-    compute=wrapped_partial(
-        indices.latitude_temperature_index, suggested=dict(lat_factor=60, lat=_empty)
-    ),
+    compute=indices.latitude_temperature_index,
+    parameters={"lat_factor": 60, "lat": {"kind": InputKind.VARIABLE}},
 )

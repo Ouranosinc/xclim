@@ -1134,7 +1134,7 @@ def fire_weather_ufunc(
     return {name: da for name, da in zip(outputs, das)}
 
 
-@declare_units(winter_pr="[length]")
+@declare_units(last_dc="[]", winter_pr="[length]")
 def overwintering_drought_code(
     last_dc: xr.DataArray,
     winter_pr: xr.DataArray,
@@ -1231,7 +1231,12 @@ def _convert_parameters(
     pr="[precipitation]",
     sfcWind="[speed]",
     hurs="[]",
+    lat="[]",
     snd="[length]",
+    ffmc0="[]",
+    dmc0="[]",
+    dc0="[]",
+    season_mask="[]",
 )
 def fire_weather_indexes(
     tas: xr.DataArray,
@@ -1340,7 +1345,14 @@ def fire_weather_indexes(
     return out["DC"], out["DMC"], out["FFMC"], out["ISI"], out["BUI"], out["FWI"]
 
 
-@declare_units(tas="[temperature]", pr="[precipitation]", snd="[length]")
+@declare_units(
+    tas="[temperature]",
+    pr="[precipitation]",
+    lat="[]",
+    snd="[length]",
+    dc0="[]",
+    season_mask="[]",
+)
 def drought_code(
     tas: xr.DataArray,
     pr: xr.DataArray,

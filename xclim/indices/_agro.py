@@ -120,6 +120,7 @@ def corn_heat_units(
 @declare_units(
     tasmin="[temperature]",
     tasmax="[temperature]",
+    lat="[]",
     thresh_tasmin="[temperature]",
 )
 def huglin_index(
@@ -271,6 +272,7 @@ def huglin_index(
 @declare_units(
     tasmin="[temperature]",
     tasmax="[temperature]",
+    lat="[]",
     thresh_tasmin="[temperature]",
     low_dtr="[temperature]",
     high_dtr="[temperature]",
@@ -421,7 +423,7 @@ def biologically_effective_degree_days(
     return bedd
 
 
-@declare_units(tasmin="[temperature]")
+@declare_units(tasmin="[temperature]", lat="[]")
 def cool_night_index(
     tasmin: xarray.DataArray, lat: xarray.DataArray, freq: str = "YS"
 ) -> xarray.DataArray:
@@ -471,7 +473,7 @@ def cool_night_index(
     return cni
 
 
-@declare_units(tas="[temperature]")
+@declare_units(tas="[temperature]", lat="[]")
 def latitude_temperature_index(
     tas: xarray.DataArray,
     lat: xarray.DataArray,
@@ -712,9 +714,9 @@ def qian_weighted_mean_average(
     thresh="[temperature]",
 )
 def effective_growing_degree_days(
-    *,
     tasmax: xarray.DataArray,
     tasmin: xarray.DataArray,
+    *,
     thresh: str = "5 degC",
     method: str = "bootsma",
     after_date: DayOfYearStr = "07-01",

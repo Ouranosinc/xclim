@@ -96,7 +96,6 @@ from types import ModuleType
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
-from boltons.funcutils import copy_function, wraps
 from xarray import DataArray, Dataset
 from yaml import safe_load
 
@@ -729,8 +728,10 @@ class Indicator(IndicatorRegistrar):
                 f"of {self.allowed_periods})."
             )
 
+        # Get correct variable names for the compute function.
+        compute_das = {self._variable_mapping.get(nm, nm): das[nm] for nm in das}
         # Compute the indicator values, ignoring NaNs and missing values.
-        outs = self.compute(**das, **params)
+        outs = self.compute(**compute_das, **params)
 
         if isinstance(outs, DataArray):
             outs = [outs]
