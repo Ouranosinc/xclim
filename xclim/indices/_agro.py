@@ -5,6 +5,7 @@ from typing import Optional
 import numpy as np
 import xarray
 
+import xclim.core.units
 import xclim.indices as xci
 import xclim.indices.run_length as rl
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
@@ -469,6 +470,86 @@ def cool_night_index(
     cni = tasmin.resample(time=freq).mean()
     cni.attrs["units"] = "degC"
     return cni
+
+
+@declare_units(pr="[precipitation]", evspsblpot="[precipitation]")
+def dryness_index(
+    pr: xarray.DataArray,
+    evspsblpot: xarray.DataArray,
+    wo: str = "200 mm",
+    hemisphere: str = "north",
+    freq: str = "YS",
+) -> xarray.DataArray:
+    """Dryness Index.
+
+    Mean minimum temperature for September (northern hemisphere) or March (Southern hemishere).
+    Used in calculating the Géoviticulture Multicriteria Classification System.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Precipitation.
+    evspsblpot: xarray.DataArray
+      Potential evapotranspiration.
+    wo : str
+      The initial soil water reserve accessible to root systems.
+    hemisphere: {"northern", "southern"}
+      The hemisphere of interest (affects month choices used in summation).
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [mm]
+      Absolute Dryness Index values.
+
+    Notes
+    -----
+    TODO: Describe this indice.
+
+    References
+    ----------
+    Indice originally published in Tonietto, J., & Carbonneau, A. (2004). A multicriteria climatic classification system
+    or grape-growing regions worldwide. Agricultural and Forest Meteorology, 124(1–2), 81‑97.
+    https://doi.org/10.1016/j.agrformet.2003.06.001
+
+    Riou, C. (1994). Le déterminisme climatique de la maturation du raisin : Application au zonage de la teneur en sucre
+    dans la Communauté Européenne (EUR–15863). Commission Européenne. https://hal.inrae.fr/hal-02843898
+    """
+    # Resample all variables to monthly totals in mm units.
+    evspsblpot = rate2amount(evspsblpot, out_units="mm")
+    pr = rate2amount(pr, out_units="mm")
+
+    evspsblpot = evspsblpot.resample(time="MS").sum(dim="time")
+    pr = pr.resample(time="MS").sum(dim="time")
+
+    # Different potential evapotranspiration rates for northern hemisphere and southern hemisphere.
+    if hemisphere.lower() == "northern":
+        adjustment = [0, 0, 0, 0.1, 0.3, 0.5, 0.5, 0.5, 0.5, 0, 0, 0]
+    elif hemisphere.lower() == "southern":
+        adjustment = [0.5, 0.5, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0.1, 0.3]
+    else:
+        raise ValueError(hemisphere)
+
+    adjustment_array = xarray.DataArray(
+        adjustment,
+        dims="month",
+        coords=dict(month=np.arange(1, 13)),
+    )
+
+    # Monthly weights array
+    k = adjustment_array.sel(month=evspsblpot.time.dt.month)
+
+    # Potential transpiration of the vineyard
+    t_v = evspsblpot * k
+
+    # Direct soil evaporation
+    e_s = (evspsblpot / evspsblpot.time.dt.daysinmonth) * (1 - k) * (pr / 5)
+
+    # Dryness index
+    di = (wo + pr - t_v - e_s).resample(time=freq)
+    di.attrs["units"] = "mm"
+    return di
 
 
 @declare_units(tas="[temperature]")
