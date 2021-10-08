@@ -11,13 +11,12 @@ Breaking changes
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* The ``sdba.loess`` algorithm has been optimized to run faster in all cases, with an even faster special case (``equal_spacing=True``) when the x coordinate is equally spaced. When activated, this special case might return results different from without, up to around 0.1%.
-* Add support for group's window and additionnal dimensions in ``LoessDetrend``. Add new ``RollingMeanDetrend`` object.
+* The ``sdba.loess`` algorithm has been optimized to run faster in all cases, with an even faster special case (``equal_spacing=True``) when the x coordinate is equally spaced. When activated, this special case might return results different from without, up to around 0.1%. (:pull:`865`)
+* Add support for group's window and additionnal dimensions in ``LoessDetrend``. Add new ``RollingMeanDetrend`` object. (:pull:`865`)
 
 Bug fixes
 ~~~~~~~~~
 * Fix a bug in bootstrapping where computation would fail when the dataset time coordinate is encoded using `cftime.datetime`. (:pull:`859`). By `Abel Aoun <https://github.com/bzah>`_.
->>>>>>> master
 
 0.30.1 (2021-10-01)
 -------------------
