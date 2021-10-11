@@ -5,6 +5,10 @@ History
 0.31.0 (unreleased)
 -------------------
 
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Improve cell_methods checking to search the wanted method within the whole string. (:pull:`866`, :issue:`863`).
+
 Breaking changes
 ~~~~~~~~~~~~~~~~
 * Major changes in the YAML schema for virtual submodules, now closer to how indicators are declared dynamically, see the doc for details. (:pull:`849`, :issue:`848`).

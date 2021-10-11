@@ -48,9 +48,7 @@ def _check_cell_methods(data_cell_methods: str, expected_method: str) -> None:
     if data_cell_methods is None:
         raise ValidationError("Variable does not have a `cell_methods` attribute.")
     EXTRACT_CELL_METHOD_REGEX = r"(\w*:(\s\w*)*(?!\w*:))"
-    regex = re.compile(EXTRACT_CELL_METHOD_REGEX)
-    methods = regex.findall(data_cell_methods)
-    for m in methods:
+    for m in re.compile(EXTRACT_CELL_METHOD_REGEX).findall(data_cell_methods):
         if m[0].__contains__(expected_method):
             return None
     raise ValidationError(
