@@ -154,14 +154,13 @@ Before you submit a pull request, please follow these guidelines:
 
 6. The version changes (HISTORY.rst) should briefly describe changes introduced in the Pull request. Changes should be organized by type
    (ie: `New Indicators`, `New features and enhancements`, `Breaking changes`, `Bug fixes`, `Internal changes`) and the GitHub Pull Request,
-   GitHub Issue. Your name and/or GitHub handle should also be listed among the contributors to this version. This can be done as follows:
+   GitHub Issue. Your name and/or GitHub handle should also be listed among the contributors to this version. This can be done as follows::
 
-   .. raw:: html
-        <em>Contributors to this version: John Jacob Jingleheimer Schmidt `@hisnameismynametoo <https://github.com/hisnameismynametoo>`_</em><br>
-        <br>
-        Internal changes<br>
-        ~~~~~~~~~~~~~~~~<br>
-        * Updated the contribution guidelines. (:gh:`868`, :pull:`869`).<br>
+     Contributors to this version: John Jacob Jingleheimer Schmidt (:user:`username`).
+
+     Internal changes
+     ~~~~~~~~~~~~~~~~
+     * Updated the contribution guidelines. (:gh:`868`, :pull:`869`).
 
    If this is your first contribution to Ouranosinc/xclim, we ask that you also add your name to the `AUTHORS.rst <https://github.com/Ouranosinc/xclim/blob/master/AUTHORS.rst>`_, under *Contributors*.
 
