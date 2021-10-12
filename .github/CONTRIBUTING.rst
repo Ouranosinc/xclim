@@ -160,7 +160,7 @@ Before you submit a pull request, please follow these guidelines:
 
      Internal changes
      ~~~~~~~~~~~~~~~~
-     * Updated the contribution guidelines. (:gh:`868`, :pull:`869`).
+     * Updated the contribution guidelines. (:issue:`868`, :pull:`869`).
 
    If this is your first contribution to Ouranosinc/xclim, we ask that you also add your name to the `AUTHORS.rst <https://github.com/Ouranosinc/xclim/blob/master/AUTHORS.rst>`_, under *Contributors*.
 
