@@ -136,7 +136,7 @@ Before you submit a pull request, please follow these guidelines:
    If you are adding a new set of functions, they **must be tested** and **coverage percentage should not significantly decrease.**
 4. If the pull request adds functionality, your functions should include docstring explanations.
    So long as the docstrings are syntactically correct, sphinx-autodoc will be able to automatically parse the information.
-   Please ensure that the docstrings adhere to one of the following standards (badly formed docstrings will fail build tests):
+   Please ensure that the docstrings and documentation adhere to the following standards (badly formed docstrings will fail build tests):
 
    * `numpydoc`_
    * `reStructuredText (ReST)`_
@@ -151,6 +151,19 @@ Before you submit a pull request, please follow these guidelines:
     PEP8, black, pytest (with xdoctest) and pydocstyle (for numpy docstrings) conventions are strongly enforced.
     Ensure that your changes pass all tests prior to pushing your final commits to your branch.
     Code formatting errors are treated as build errors and will block your pull request from being accepted.
+
+6. The version changes (HISTORY.rst) should briefly describe changes introduced in the Pull request. Changes should be organized by type
+   (ie: `New Indicators`, `New features and enhancements`, `Breaking changes`, `Bug fixes`, `Internal changes`) and the GitHub Pull Request,
+   GitHub Issue. Your name and/or GitHub handle should also be listed among the contributors to this version. This can be done as follows:
+
+   .. raw:: html
+        <em>Contributors to this version: John Jacob Jingleheimer Schmidt `@hisnameismynametoo <https://github.com/hisnameismynametoo>`_</em><br>
+        <br>
+        Internal changes<br>
+        ~~~~~~~~~~~~~~~~<br>
+        * Updated the contribution guidelines. (:gh:`868`, :pull:`869`).<br>
+
+   If this is your first contribution to Ouranosinc/xclim, we ask that you also add your name to the `AUTHORS.rst <https://github.com/Ouranosinc/xclim/blob/master/AUTHORS.rst>`_, under *Contributors*.
 
 Tips
 ----
