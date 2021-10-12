@@ -57,9 +57,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install tox
       run: pip install tox
-    - name: Test with tox
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Test with tox}
       run: tox -e ${{ matrix.tox-env }}
     - name: report coverage
       uses: coverallsapp/github-action@1.1.3
