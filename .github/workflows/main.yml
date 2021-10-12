@@ -59,6 +59,12 @@ jobs:
       run: pip install tox
     - name: Test with tox
       run: tox -e ${{ matrix.tox-env }}
+    - name: Coveralls
+      uses: coverallsapp/github-action@1.1.3
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        flag-name: run-${{ matrix.tox-env }}
+        parallel: true
 
 #  docs:
 #    needs: test
@@ -83,12 +89,12 @@ jobs:
 #        flag-name: run-${{ matrix.python-version }}
 #        parallel: true
 
-#  finish:
-#    needs: test
-#    runs-on: ubuntu-latest
-#    steps:
-#    - name: Coveralls Finished
-#      uses: coverallsapp/github-action@master
-#      with:
-#        github-token: ${{ secrets.github_token }}
-#        parallel-finished: true
+  finish:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Coveralls Finished
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        parallel-finished: true
