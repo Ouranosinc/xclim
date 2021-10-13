@@ -44,7 +44,7 @@ def test_virtual_modules(virtual_indicator, atmosds):
         # skip when missing default values
         kws = {}
         mod, indname, ind = virtual_indicator
-        for name, param in ind.parameters.items():
+        for name, param in ind.iter_parameters():
             if name == "src_timestep":
                 kws["src_timestep"] = "D"
             if param["kind"] is not InputKind.DATASET and (

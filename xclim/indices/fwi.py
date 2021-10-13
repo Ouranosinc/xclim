@@ -1440,13 +1440,20 @@ def drought_code(
 @declare_units(
     tas="[temperature]",
     snd="[length]",
+    temp_start_thresh="[temperature]",
+    temp_end_thresh="[temperature]",
+    snow_thresh="[length]",
 )
 def fire_season(
     tas: xr.DataArray,
     snd: Optional[xr.DataArray] = None,
     method: str = "WF93",
     freq: Optional[str] = None,
-    **params,
+    temp_start_thresh: str = "12 degC",
+    temp_end_thresh: str = "5 degC",
+    temp_condition_days: int = 3,
+    snow_condition_days: int = 3,
+    snow_thresh: str = "0.01 m",
 ):
     """Fire season mask.
 
@@ -1491,7 +1498,11 @@ def fire_season(
                 tas=ds.tas.values,
                 snd=None if method == "WF93" else ds.snd.values,
                 method=method,
-                **_convert_parameters(params),
+                temp_start_thresh=temp_start_thresh,
+                temp_end_thresh=temp_end_thresh,
+                temp_condition_days=temp_condition_days,
+                snow_condition_days=snow_condition_days,
+                snow_thresh=snow_thresh,
             )
         )
         season_mask.attrs = {}

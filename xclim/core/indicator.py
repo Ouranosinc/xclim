@@ -96,6 +96,7 @@ from types import ModuleType
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
+from boltons.funcutils import copy_function
 from xarray import DataArray, Dataset
 from yaml import safe_load
 
@@ -344,9 +345,8 @@ class Indicator(IndicatorRegistrar):
         # If needed, wrap compute with declare units
         if "compute" in kwds and not hasattr(kwds["compute"], "in_units"):
             kwds["compute"] = declare_units(
-                kwds["compute"],
-                **{k: m["units"] for k, m in parameters.items() if "units" in m},
-            )
+                **{k: m["units"] for k, m in parameters.items() if "units" in m}
+            )(kwds["compute"])
 
         # All updates done.
         kwds["parameters"] = parameters
@@ -636,10 +636,10 @@ class Indicator(IndicatorRegistrar):
         # Validation is done : register the instance.
         super().__init__()
 
-        self.__call__.__dict__["__signature__"] = self._gen_call_signature()
+        self.__call__ = self._gen_new_call()
 
-    def _gen_call_signature(self):
-        """Generate the indicator's call signature based on its parameters."""
+    def _gen_new_call(self):
+        """Generates a new call function with the correct signature."""
         # Update call signature
         variables = []
         parameters = []
@@ -685,7 +685,10 @@ class Indicator(IndicatorRegistrar):
         parameters = sorted(parameters, key=lambda p: p.kind)
         ret_ann = DataArray if self.n_outs == 1 else Tuple[(DataArray,) * self.n_outs]
         selfarg = Parameter("self", kind=Parameter.POSITIONAL_OR_KEYWORD)
-        return Signature([selfarg] + variables + parameters, return_annotation=ret_ann)
+        sig = Signature([selfarg] + variables + parameters, return_annotation=ret_ann)
+        new_call = copy_function(self.__call__)
+        new_call.__signature__ = sig
+        return new_call
 
     def __call__(self, *args, **kwds):
         """Call function of Indicator class."""
@@ -768,7 +771,8 @@ class Indicator(IndicatorRegistrar):
     def _parse_variables_from_call(self, args, kwds):
         """Extract variable and optional variables from call arguments."""
         # Bind call arguments to `compute` arguments and set defaults.
-        ba = self.__call__.__signature__.bind(*args, **kwds)
+        ba = self.__call__.__signature__.bind(self, *args, **kwds)
+        ba.arguments.pop("self")
         ba.apply_defaults()
 
         # Assign inputs passed as strings from ds.
@@ -800,7 +804,7 @@ class Indicator(IndicatorRegistrar):
     def _assign_named_args(self, ba):
         """Assign inputs passed as strings from ds."""
         ds = ba.arguments.pop("ds")
-        for name, param in self.__call__.__signature__.parameters.items():
+        for name in list(ba.arguments.keys()):
             if self.parameters[name][
                 "kind"
             ] <= InputKind.OPTIONAL_VARIABLE and isinstance(ba.arguments[name], str):
@@ -1165,6 +1169,15 @@ class Indicator(IndicatorRegistrar):
     @property
     def n_outs(self):
         return len(self.cf_attrs)
+
+    def iter_parameters(self):
+        """Generator to iterate over pairs of name and parameter dict.
+
+        Similar to `self.parameters.items()`, but doesn't include injected parameters.
+        """
+        for name, param in self.parameters:
+            if isinstance(param, dict):
+                yield param
 
 
 class Daily(Indicator):

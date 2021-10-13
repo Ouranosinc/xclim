@@ -195,7 +195,7 @@ liquid_precip_accumulation = PrTasx(
     description="{freq} total {phase} precipitation, estimated as precipitation when temperature >= {thresh}",
     cell_methods="time: sum within days time: sum over days",
     compute=indices.precip_accumulation,
-    paramters={"tas": {"kind": InputKind.VARIABLE}, "phase": "liquid"},
+    parameters={"tas": {"kind": InputKind.VARIABLE}, "phase": "liquid"},
 )
 
 solid_precip_accumulation = PrTasx(

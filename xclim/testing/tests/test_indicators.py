@@ -348,7 +348,7 @@ def test_all_parameters_understood(official_indicators):
     problems = []
     for identifier, ind in official_indicators.items():
         indinst = ind.get_instance()
-        for name, param in indinst.parameters.items():
+        for name, param in indinst.iter_parameters():
             if param["kind"] == InputKind.OTHER_PARAMETER:
                 problems.append((identifier, name))
     if problems:

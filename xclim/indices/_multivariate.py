@@ -1376,7 +1376,7 @@ def tn10p(
     return to_agg_units(out, tasmin, "count")
 
 
-@declare_units(tasmax="[temperature]")
+@declare_units(tasmax="[temperature]", t90="[temperature]")
 @percentile_bootstrap
 def tx90p(
     tasmax: xarray.DataArray,

@@ -479,12 +479,12 @@ def _gen_parameters_section(parameters, allowed_periods=None):
     ----------
     compute : Callable
       The indicator's compute function (`Ind.compute`).
-    parameters : Mapping[str, Any]
-      Parameters dictionary (`Ind.parameters`).
+    parameters : generator, pairs of name and parameters' dict
+      Parameters dictionary (`Ind.iter_parameters()`).
     allowed_periods : list of str, optional
     """
     section = "Parameters\n----------\n"
-    for name, param in parameters.items():
+    for name, param in parameters:
         if isinstance(param, dict):
             descstr = param.get("description", "")
             if param["kind"] == InputKind.FREQ_STR and allowed_periods is not None:
@@ -505,7 +505,7 @@ def _gen_parameters_section(parameters, allowed_periods=None):
                 unitstr = f"[Required units : {param['units']}]"
             else:
                 unitstr = ""
-        section += f"{name} : {annotstr}\n  {descstr}\n  {defstr}{unitstr}\n"
+            section += f"{name} : {annotstr}\n  {descstr}\n  {defstr}{unitstr}\n"
     return section
 
 
@@ -555,7 +555,7 @@ def generate_indicator_docstring(ind):
     if ind.keywords:
         special += f"Keywords : {ind.keywords}.\n"
 
-    parameters = _gen_parameters_section(ind.parameters, ind.allowed_periods)
+    parameters = _gen_parameters_section(ind.iter_parameters(), ind.allowed_periods)
 
     returns = _gen_returns_section(ind.cf_attrs)
 
