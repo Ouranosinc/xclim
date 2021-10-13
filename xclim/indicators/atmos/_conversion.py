@@ -167,7 +167,7 @@ specific_humidity = Converter(
         else ""
     ),
     compute=indices.specific_humidity,
-    paramters={"invalid_values": "mask"},
+    parameters={"invalid_values": "mask"},
 )
 
 

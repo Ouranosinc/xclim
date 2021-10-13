@@ -344,8 +344,13 @@ class Indicator(IndicatorRegistrar):
 
         # If needed, wrap compute with declare units
         if "compute" in kwds and not hasattr(kwds["compute"], "in_units"):
+            variable_mapping = kwds.get("_variable_mapping", cls._variable_mapping)
             kwds["compute"] = declare_units(
-                **{k: m["units"] for k, m in parameters.items() if "units" in m}
+                **{
+                    variable_mapping.get(k, k): m["units"]
+                    for k, m in parameters.items()
+                    if "units" in m
+                }
             )(kwds["compute"])
 
         # All updates done.
@@ -734,7 +739,7 @@ class Indicator(IndicatorRegistrar):
         # Get correct variable names for the compute function.
         compute_das = {self._variable_mapping.get(nm, nm): das[nm] for nm in das}
         # Compute the indicator values, ignoring NaNs and missing values.
-        outs = self.compute(**compute_das, **params)
+        outs = self.compute(**compute_das, **params, **indexer)
 
         if isinstance(outs, DataArray):
             outs = [outs]
@@ -784,7 +789,7 @@ class Indicator(IndicatorRegistrar):
         indexer = {}
         for name, param in self.parameters.items():
             if name == "indexer":
-                indexer = params.get(name, param)
+                indexer = params.pop(name, {})
             elif isinstance(param, dict):
                 kind = param["kind"]
                 # If a variable pop the arg
@@ -1170,14 +1175,15 @@ class Indicator(IndicatorRegistrar):
     def n_outs(self):
         return len(self.cf_attrs)
 
-    def iter_parameters(self):
+    @classmethod
+    def iter_parameters(cls):
         """Generator to iterate over pairs of name and parameter dict.
 
-        Similar to `self.parameters.items()`, but doesn't include injected parameters.
+        Similar to `cls.parameters.items()`, but doesn't include injected parameters.
         """
-        for name, param in self.parameters:
+        for name, param in cls.parameters.items():
             if isinstance(param, dict):
-                yield param
+                yield name, param
 
 
 class Daily(Indicator):
