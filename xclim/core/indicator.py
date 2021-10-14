@@ -94,7 +94,7 @@ from copy import deepcopy
 from inspect import Parameter, Signature, _empty, signature
 from os import PathLike
 from pathlib import Path
-from types import ModuleType
+from types import MethodType, ModuleType
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
@@ -341,8 +341,8 @@ class Indicator(IndicatorRegistrar):
             variable_mapping.update(new_variable_mapping)
             kwds["_variable_mapping"] = variable_mapping
 
-        # Raise on incorrect params, modify var defaults in-place if needed
-        cls._ensure_correct_parameters(parameters)
+        # Raise on incorrect params, sort params, modify var defaults in-place if needed
+        parameters = cls._ensure_correct_parameters(parameters)
 
         # If needed, wrap compute with declare units
         if "compute" in kwds and not hasattr(kwds["compute"], "in_units"):
@@ -469,6 +469,7 @@ class Indicator(IndicatorRegistrar):
                         )
                     parameters[key].update(val)
                 else:  # Injected
+                    parameters[key]  # To trigger KeyError if it doesn't exist
                     parameters[key] = val
         except KeyError as err:
             raise ValueError(
@@ -504,7 +505,7 @@ class Indicator(IndicatorRegistrar):
 
     @staticmethod
     def _ensure_correct_parameters(parameters):
-        """Ensure the parameters are correctly set.
+        """Ensure the parameters are correctly set and ordered.
 
         Sets the correct variable default to be sure.
         """
@@ -520,6 +521,16 @@ class Indicator(IndicatorRegistrar):
                     meta["default"] = None
                 elif meta["kind"] == InputKind.VARIABLE:
                     meta["default"] = name
+
+        # Sort parameters : Var, Opt Var, all params, ds, injected params.
+        def sortkey(kv):
+            if isinstance(kv[1], dict):
+                if kv[1]["kind"] in [0, 1, 50]:
+                    return kv[1]["kind"]
+                return 2
+            return 99
+
+        return dict(sorted(parameters.items(), key=sortkey))
 
     @classmethod
     def _parse_output_attrs(
@@ -695,16 +706,13 @@ class Indicator(IndicatorRegistrar):
                         annotation=compute_sig.parameters[name].annotation,
                     )
                 )
-        # Sort variables to have non-optional first
-        variables = sorted(variables, key=lambda v: self.parameters[v.name]["kind"])
-        # Sort parameters to ensure kwargs are last
-        parameters = sorted(parameters, key=lambda p: p.kind)
+
         ret_ann = DataArray if self.n_outs == 1 else Tuple[(DataArray,) * self.n_outs]
         selfarg = Parameter("self", kind=Parameter.POSITIONAL_OR_KEYWORD)
         sig = Signature([selfarg] + variables + parameters, return_annotation=ret_ann)
         new_call = copy_function(self.__call__)
         new_call.__signature__ = sig
-        return new_call
+        return MethodType(new_call, self)
 
     def __call__(self, *args, **kwds):
         """Call function of Indicator class."""
