@@ -1491,18 +1491,21 @@ def fire_season(
     Wotton, B.M. and Flannigan, M.D. (1993). Length of the fire season in a changing climate. ForestryChronicle, 69, 187-192.
     Lawson, B.D. and O.B. Armitage. 2008. Weather guide for the Canadian Forest Fire Danger Rating System. NRCAN, CFS, Edmonton, AB
     """
+    kwargs = dict(
+        method=method,
+        temp_start_thresh=convert_units_to(temp_start_thresh, "degC"),
+        temp_end_thresh=convert_units_to(temp_end_thresh, "degC"),
+        temp_condition_days=temp_condition_days,
+        snow_condition_days=snow_condition_days,
+        snow_thresh=convert_units_to(snow_thresh, "m"),
+    )
 
-    def _apply_fire_season(ds):
+    def _apply_fire_season(ds, **kwargs):
         season_mask = ds.tas.copy(
             data=_fire_season(
                 tas=ds.tas.values,
-                snd=None if method == "WF93" else ds.snd.values,
-                method=method,
-                temp_start_thresh=temp_start_thresh,
-                temp_end_thresh=temp_end_thresh,
-                temp_condition_days=temp_condition_days,
-                snow_condition_days=snow_condition_days,
-                snow_thresh=snow_thresh,
+                snd=None if kwargs["method"] == "WF93" else ds.snd.values,
+                **kwargs,
             )
         )
         season_mask.attrs = {}
@@ -1521,6 +1524,6 @@ def fire_season(
     ds = ds.transpose(..., "time")
 
     tmpl = xr.full_like(tas, np.nan)
-    out = ds.map_blocks(_apply_fire_season, template=tmpl)
+    out = ds.map_blocks(_apply_fire_season, template=tmpl, kwargs=kwargs)
     out.attrs["units"] = ""
     return out

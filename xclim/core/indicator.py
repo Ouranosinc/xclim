@@ -59,7 +59,9 @@ details on each.
         input:  # When "compute" is a generic function this is a mapping from argument
                 # name to what CMIP6/xclim variable is expected. This will allow for
                 # declaring expected input units and have a CF metadata check on the inputs.
-          <var1> : <variable official name 1>
+                # Can also be used to modify the expected variable, as long as it has
+                # the same units. Ex: tas instead of tasmin.
+          <var name in compute> : <variable official name>
           ...
         parameters:
          <param name>: <param data>  # Simplest case, to inject parameters in the compute function.
@@ -270,7 +272,7 @@ class Indicator(IndicatorRegistrar):
     _param_fields = {"description", "choices", "kind", "default", "units"}
     # Class attributes that are function (so we know which to convert to static methods)
     _funcs = ["compute", "cfcheck", "datacheck"]
-    # Mapping from variable name in "compute" to a new variable (CMIP6) name
+    # Mapping from name in the compute function to official (CMIP6) variable name
     _variable_mapping = {}
 
     # Will become the class's name
@@ -344,10 +346,19 @@ class Indicator(IndicatorRegistrar):
 
         # If needed, wrap compute with declare units
         if "compute" in kwds and not hasattr(kwds["compute"], "in_units"):
-            variable_mapping = kwds.get("_variable_mapping", cls._variable_mapping)
+            if "_variable_mapping" not in kwds:
+                raise ValueError(
+                    "If a generic compute function (not wrapped by `declare_units`) is "
+                    "passed, a mapping from variable argument name to official (CMIP6) "
+                    "name must also be passed in the `input` argument of the indicator "
+                    "constructor."
+                )
+            # We actually need the inverse mapping (to get cmip6 name -> arg name)
+            inv_var_map = dict(map(reversed, kwds["_variable_mapping"].items()))
+            # parameters has already been update above.
             kwds["compute"] = declare_units(
                 **{
-                    variable_mapping.get(k, k): m["units"]
+                    inv_var_map.get(k, k): m["units"]
                     for k, m in parameters.items()
                     if "units" in m
                 }
@@ -609,7 +620,7 @@ class Indicator(IndicatorRegistrar):
             else:
                 cls = data["base"]
 
-        compute = data.pop("compute", None)
+        compute = data.get("compute", None)
         # data.compute refers to a function in xclim.indices.generic or xclim.indices (in this order of priority).
         # It can also directly be a function (like if a module was passed to build_indicator_module_from_yaml)
         if isinstance(compute, str):
@@ -737,7 +748,8 @@ class Indicator(IndicatorRegistrar):
             )
 
         # Get correct variable names for the compute function.
-        compute_das = {self._variable_mapping.get(nm, nm): das[nm] for nm in das}
+        inv_var_map = dict(map(reversed, self._variable_mapping.items()))
+        compute_das = {inv_var_map.get(nm, nm): das[nm] for nm in das}
         # Compute the indicator values, ignoring NaNs and missing values.
         outs = self.compute(**compute_das, **params, **indexer)
 
@@ -1039,13 +1051,16 @@ class Indicator(IndicatorRegistrar):
         # We need to deepcopy, otherwise empty defaults get overwritten!
         # All those tweaks are to ensure proper serialization of the returned dictionary.
         out["parameters"] = deepcopy(self.parameters)
-        for param in out["parameters"].values():
+        for name, param in list(out["parameters"].items()):
             if isinstance(param, dict):
                 if param["default"] is _empty:
                     param.pop("default")
                 param["kind"] = param["kind"].value  # Get the int.
                 if "choices" in param:  # A set is stored, convert to list
                     param["choices"] = list(param["choices"])
+            elif callable(param):  # Rare special case (doy_qmax and doy_qmin).
+                out["parameters"][name] = f"{param.__module__}.{param.__name__}"
+
         return out
 
     @classmethod
@@ -1089,6 +1104,8 @@ class Indicator(IndicatorRegistrar):
             if dk == "month":
                 dv = "m{}".format(dv)
             mba["indexer"] = dv
+        else:
+            mba["indexer"] = "annual"
 
         out = {}
         for key, val in attrs.items():
@@ -1405,6 +1422,7 @@ def build_indicator_module_from_yaml(
                         pass
 
                 if indice_func is not None:
+                    print(identifier, indice_func)
                     data["compute"] = indice_func
 
             _merge_attrs(data, defkwargs, "references", "\n")

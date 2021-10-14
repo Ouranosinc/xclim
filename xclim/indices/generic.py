@@ -6,6 +6,7 @@ Generic indices submodule
 
 Helper functions for common generic actions done in the computation of indices.
 """
+from collections.abc import Iterable
 from typing import Optional, Union
 
 import numpy as np
@@ -135,9 +136,9 @@ def default_freq(**indexer) -> str:
     freq = "AS-JAN"
     if indexer:
         group, value = indexer.popitem()
-        if "DJF" in value:
+        if isinstance(value, str) and "DJF" in value:
             freq = "AS-DEC"
-        if group == "month" and sorted(value) != value:
+        if group == "month" and isinstance(value, Iterable) and sorted(value) != value:
             raise NotImplementedError
 
     return freq

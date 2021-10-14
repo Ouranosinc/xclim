@@ -1,4 +1,5 @@
 import sys
+from inspect import _empty
 from pathlib import Path
 
 import pytest
@@ -48,7 +49,7 @@ def test_virtual_modules(virtual_indicator, atmosds):
             if name == "src_timestep":
                 kws["src_timestep"] = "D"
             if param["kind"] is not InputKind.DATASET and (
-                param["default"] is None
+                param["default"] in (None, _empty)
                 or (param["default"] == name and name not in atmosds)
             ):
 

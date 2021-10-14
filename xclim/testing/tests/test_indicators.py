@@ -3,6 +3,7 @@
 # Tests for the Indicator objects
 import gc
 import json
+from inspect import signature
 from typing import Optional, Union
 
 import dask
@@ -20,17 +21,26 @@ from xclim.core.formatting import (
     update_history,
 )
 from xclim.core.indicator import Daily, Indicator, registry
-from xclim.core.units import units
+from xclim.core.units import convert_units_to, declare_units, units
 from xclim.core.utils import InputKind, MissingVariableError
 from xclim.indices import tg_mean
 from xclim.indices.generic import select_time
 from xclim.testing import open_dataset
 
 
-class UniIndTemp(Daily):
-    realm = "atmos"
-    identifier = "tmin"
-    cf_attrs = [
+@declare_units(da="[temperature]", thresh="[temperature]")
+def uniindtemp_compute(da: xr.DataArray, thresh: str = "0.0 degC", freq: str = "YS"):
+    """Docstring"""
+    out = da
+    out -= convert_units_to(thresh, da)
+    return out.resample(time=freq).mean(keep_attrs=True)
+
+
+uniIndTemp = Daily(
+    realm="atmos",
+    identifier="tmin",
+    module="test",
+    cf_attrs=[
         dict(
             var_name="tmin{thresh}",
             units="K",
@@ -39,43 +49,54 @@ class UniIndTemp(Daily):
             cell_methods="time: mean within {freq:noun}",
             another_attr="With a value.",
         )
-    ]
-
-    @staticmethod
-    def compute(da: xr.DataArray, thresh: int = 0.0, freq: str = "YS"):
-        """Docstring"""
-        out = da
-        out -= thresh
-        return out.resample(time=freq).mean(keep_attrs=True)
+    ],
+    compute=uniindtemp_compute,
+)
 
 
-class UniIndPr(Daily):
-    realm = "atmos"
-    identifier = "prmax"
-    cf_attrs = [dict(units="mm/s")]
-    context = "hydro"
-
-    @staticmethod
-    def compute(da: xr.DataArray, freq):
-        """Docstring"""
-        return da.resample(time=freq).mean(keep_attrs=True)
+@declare_units(da="[precipitation]")
+def uniindpr_compute(da: xr.DataArray, freq: str):
+    """Docstring"""
+    return da.resample(time=freq).mean(keep_attrs=True)
 
 
-class UniClim(Daily):
-    realm = "atmos"
-    identifier = "clim"
-    cf_attrs = [dict(units="K")]
+uniIndPr = Daily(
+    realm="atmos",
+    identifier="prmax",
+    cf_attrs=[dict(units="mm/s")],
+    context="hydro",
+    module="test",
+    compute=uniindpr_compute,
+)
 
-    @staticmethod
-    def compute(da: xr.DataArray, freq="YS", **indexer):
-        select = select_time(da, **indexer)
-        return select.mean(dim="time", keep_attrs=True)
+
+@declare_units(da="[temperature]")
+def uniclim_compute(da: xr.DataArray, freq="YS", **indexer):
+    select = select_time(da, **indexer)
+    return select.mean(dim="time", keep_attrs=True)
 
 
-class MultiTemp(Daily):
-    realm = "atmos"
-    identifier = "minmaxtemp"
-    cf_attrs = [
+uniClim = Daily(
+    realm="atmos",
+    identifier="clim",
+    cf_attrs=[dict(units="K")],
+    module="test",
+    compute=uniclim_compute,
+)
+
+
+@declare_units(tas="[temperature]")
+def multitemp_compute(tas: xr.DataArray, freq: str):
+    return (
+        tas.resample(time=freq).min(keep_attrs=True),
+        tas.resample(time=freq).max(keep_attrs=True),
+    )
+
+
+multiTemp = Daily(
+    realm="atmos",
+    identifier="minmaxtemp",
+    cf_attrs=[
         dict(
             var_name="tmin",
             units="K",
@@ -87,59 +108,55 @@ class MultiTemp(Daily):
             units="K",
             description="Grouped computation of tmax and tmin",
         ),
-    ]
-
-    @staticmethod
-    def compute(tas: xr.DataArray, freq):
-        return (
-            tas.resample(time=freq).min(keep_attrs=True),
-            tas.resample(time=freq).max(keep_attrs=True),
-        )
+    ],
+    module="test",
+    compute=multitemp_compute,
+)
 
 
-class MultiOptVar(Daily):
-    realm = "atmos"
-    identifier = "multiopt"
-    cf_attrs = [dict(units="K")]
+@declare_units(tas="[temperature]", tasmin="[temperature]", tasmax="[temperature]")
+def multioptvar_compute(
+    tas: Optional[xr.DataArray] = None,
+    tasmax: Optional[xr.DataArray] = None,
+    tasmin: Optional[xr.DataArray] = None,
+):
+    if tas is None:
+        with xr.set_options(keep_attrs=True):
+            return (tasmin + tasmax) / 2
+    return tas
 
-    @staticmethod
-    def compute(
-        tas: Optional[xr.DataArray] = None,
-        tasmax: Optional[xr.DataArray] = None,
-        tasmin: Optional[xr.DataArray] = None,
-    ):
-        if tas is None:
-            with xr.set_options(keep_attrs=True):
-                return (tasmin + tasmax) / 2
-        return tas
+
+multiOptVar = Daily(
+    realm="atmos",
+    identifier="multiopt",
+    cf_attrs=[dict(units="K")],
+    module="test",
+    compute=multioptvar_compute,
+)
 
 
 def test_attrs(tas_series):
     import datetime as dt
 
     a = tas_series(np.arange(360.0))
-    ind = UniIndTemp()
-    txm = ind(a, thresh=5, freq="YS")
+    txm = uniIndTemp(a, thresh=5, freq="YS")
     assert txm.cell_methods == "time: mean within days time: mean within years"
     assert f"{dt.datetime.now():%Y-%m-%d %H}" in txm.attrs["history"]
     assert "TMIN(da=tas, thresh=5, freq='YS')" in txm.attrs["history"]
     assert f"xclim version: {__version__}." in txm.attrs["history"]
     assert txm.name == "tmin5"
-    assert ind.standard_name == "{freq} mean temperature"
-    assert ind.cf_attrs[0]["another_attr"] == "With a value."
+    assert uniIndTemp.standard_name == "{freq} mean temperature"
+    assert uniIndTemp.cf_attrs[0]["another_attr"] == "With a value."
 
 
 def test_opt_vars(tasmin_series, tasmax_series):
     tn = tasmin_series(np.zeros(365))
     tx = tasmax_series(np.zeros(365))
 
-    ind = MultiOptVar()
-
-    ind(tasmin=tn, tasmax=tx)
+    multiOptVar(tasmin=tn, tasmax=tx)
 
 
 def test_registering():
-    UniIndTemp(module="test")
     assert "test.TMIN" in registry
 
     # Because this has not been instantiated, it's not in any registry.
@@ -182,26 +199,23 @@ def test_module():
 
 def test_temp_unit_conversion(tas_series):
     a = tas_series(np.arange(360.0))
-    ind = UniIndTemp()
-    txk = ind(a, freq="YS")
+    txk = uniIndTemp(a, freq="YS")
 
-    ind.units = "degC"
-    txc = ind(a, freq="YS")
+    uniIndTemp.units = "degC"
+    txc = uniIndTemp(a, freq="YS")
 
     np.testing.assert_array_almost_equal(txk, txc + 273.15)
 
 
 def test_multiindicator(tas_series):
     tas = tas_series(np.arange(366), start="2000-01-01")
-    ind = MultiTemp()  # Attrs passed as class attributes
-
-    tmin, tmax = ind(tas, freq="YS")
+    tmin, tmax = multiTemp(tas, freq="YS")
     assert tmin[0] == tas.min()
     assert tmax[0] == tas.max()
     assert tmin.attrs["standard_name"] == "Min temp"
     assert tmin.attrs["description"] == "Grouped computation of tmax and tmin"
     assert tmax.attrs["description"] == "Grouped computation of tmax and tmin"
-    assert ind.units == ["K", "K"]
+    assert multiTemp.units == ["K", "K"]
 
     # Attrs passed as keywords - together
     ind = Daily(
@@ -220,7 +234,7 @@ def test_multiindicator(tas_series):
                 description="Grouped computation of tmax and tmin",
             ),
         ],
-        compute=MultiTemp.compute,
+        compute=multitemp_compute,
     )
     tmin, tmax = ind(tas, freq="YS")
     assert tmin[0] == tas.min()
@@ -237,7 +251,7 @@ def test_multiindicator(tas_series):
         units="K",
         standard_name=["Min temp", ""],
         description="Grouped computation of tmax and tmin",
-        compute=MultiTemp.compute,
+        compute=multitemp_compute,
     )
     tmin, tmax = ind(tas, freq="YS")
     assert tmin[0] == tas.min()
@@ -252,39 +266,35 @@ def test_missing(tas_series):
     a = tas_series(np.ones(360, float), start="1/1/2000")
 
     # By default, missing is set to "from_context", and the default missing option is "any"
-    ind = UniIndTemp()
-
     # Cannot set missing_options with "from_context"
     with pytest.raises(ValueError, match="Cannot set `missing_options`"):
-        UniClim(missing_options={"tolerance": 0.01})
-
-    clim = UniClim()
+        uniClim.__class__(missing_options={"tolerance": 0.01})
 
     # Null value
     a[5] = np.nan
 
-    m = ind(a, freq="MS")
+    m = uniIndTemp(a, freq="MS")
     assert m[0].isnull()
 
     with xclim.set_options(
         check_missing="pct", missing_options={"pct": {"tolerance": 0.05}}
     ):
-        m = ind(a, freq="MS")
+        m = uniIndTemp(a, freq="MS")
         assert not m[0].isnull()
 
     with xclim.set_options(check_missing="wmo"):
-        m = ind(a, freq="YS")
+        m = uniIndTemp(a, freq="YS")
         assert m[0].isnull()
 
     # With freq=None
-    c = clim(a)
+    c = uniClim(a)
     assert c.isnull()
 
     # With indexer
-    ci = clim(a, month=[2])
+    ci = uniClim(a, month=[2])
     assert not ci.isnull()
 
-    out = clim(a, month=[1])
+    out = uniClim(a, month=[1])
     assert out.isnull()
 
 
@@ -293,15 +303,14 @@ def test_missing_from_context(tas_series):
     # Null value
     a[5] = np.nan
 
-    ind = UniIndTemp(missing="from_context")
+    ind = uniIndTemp.__class__(missing="from_context")
 
     m = ind(a, freq="MS")
     assert m[0].isnull()
 
 
 def test_json(pr_series):
-    ind = UniIndPr()
-    meta = ind.json()
+    meta = uniIndPr.json()
 
     expected = {
         "identifier",
@@ -358,43 +367,22 @@ def test_all_parameters_understood(official_indicators):
 
 
 def test_signature():
-    from inspect import signature
-
-    ind = UniIndTemp()
-    assert ind._sig == signature(ind.__call__)
-    assert ind._sig.parameters["da"].annotation is Union[str, xr.DataArray]
-
-    compsig = signature(ind.compute)
-    assert compsig.parameters["da"].annotation is xr.DataArray
-    assert "ds" not in compsig.parameters
-    assert "ds" in ind._sig.parameters
+    pass
 
 
 def test_doc():
-    ind = UniIndTemp()
-    assert ind.__call__.__doc__.startswith("Docstring (realm: atmos)")
+    assert uniIndTemp.__doc__.startswith("Docstring (realm: atmos)")
 
 
 def test_delayed(tasmax_series):
     tasmax = tasmax_series(np.arange(360.0)).chunk({"time": 5})
-
-    tx = UniIndTemp()
-    txk = tx(tasmax)
-
-    # Check that the calculations are delayed
-    assert isinstance(txk.data, dask.array.core.Array)
-
-    # Same with unit conversion
-    tx.required_units = ("C",)
-    tx.units = "C"
-    txc = tx(tasmax)
-
-    assert isinstance(txc.data, dask.array.core.Array)
+    out = uniIndTemp(tasmax)
+    assert isinstance(out.data, dask.array.Array)
 
 
 def test_identifier():
     with pytest.warns(UserWarning):
-        UniIndPr(identifier="t_{}")
+        uniIndPr.__class__(identifier="t_{}")
 
 
 def test_formatting(pr_series):
@@ -435,7 +423,6 @@ def test_parse_doc():
 
 def test_parsed_doc():
     assert "tas" in xclim.atmos.liquid_precip_accumulation.parameters
-    assert "tas" not in xclim.atmos.precip_accumulation.parameters
 
     params = xclim.atmos.drought_code.parameters
     assert params["tas"]["description"] == "Noon temperature."
@@ -546,10 +533,11 @@ def test_indicator_from_dict():
     # Parameters metadata modification
     assert ind.parameters["threshold"]["description"] == "A threshold temp"
     # Injection of paramters
-    assert "condition" in ind.compute._injected
+    assert ind.parameters["condition"] == "<"
     # Default value for input variable injected and meta injected
-    assert ind._sig.parameters["data"].default == "tas"
-    assert ind.parameters["data"]["units"] == "K"
+    assert ind._variable_mapping["data"] == "tas"
+    assert signature(ind.__call__).parameters["tas"].default == "tas"
+    assert ind.parameters["tas"]["units"] == "K"
 
     # Wrap a multi-output ind
     d = dict(base="wind_speed_from_vector")
