@@ -78,6 +78,10 @@ def test_check_cell_methods_nok(value, expected):
             "complex: thing expecto: patronum within days very: complex",
             "expecto: patronum",
         ),
+        (
+            "expecto: pa-tro_num (area-weighted)",
+            "expecto: pa-tro_num (area-weighted)",
+        ),
     ],
 )
 def test_check_cell_methods_ok(value, expected):
