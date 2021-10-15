@@ -10,7 +10,7 @@ import re
 import string
 from ast import literal_eval
 from fnmatch import fnmatch
-from typing import Callable, Dict, Mapping, Optional, Sequence, Union
+from typing import Dict, Mapping, Optional, Sequence, Union
 
 import xarray as xr
 from boltons.funcutils import wraps
@@ -477,35 +477,32 @@ def _gen_parameters_section(parameters, allowed_periods=None):
 
     Parameters
     ----------
-    compute : Callable
-      The indicator's compute function (`Ind.compute`).
     parameters : generator, pairs of name and parameters' dict
       Parameters dictionary (`Ind.iter_parameters()`).
     allowed_periods : list of str, optional
     """
     section = "Parameters\n----------\n"
     for name, param in parameters:
-        if isinstance(param, dict):
-            descstr = param.get("description", "")
-            if param["kind"] == InputKind.FREQ_STR and allowed_periods is not None:
-                descstr += (
-                    f" Restricted to frequencies equivalent to one of {allowed_periods}"
-                )
-            if param["kind"] == InputKind.VARIABLE:
-                defstr = f"Default : `ds.{param['default']}`. "
-            elif param["kind"] == InputKind.OPTIONAL_VARIABLE:
-                defstr = ""
-            else:
-                defstr = f"Default : {param.get('default', '')}. "
-            if "choices" in param:
-                annotstr = str(param["choices"])
-            else:
-                annotstr = KIND_ANNOTATION[param["kind"]]
-            if param.get("units", False):
-                unitstr = f"[Required units : {param['units']}]"
-            else:
-                unitstr = ""
-            section += f"{name} : {annotstr}\n  {descstr}\n  {defstr}{unitstr}\n"
+        descstr = param.get("description", "")
+        if param["kind"] == InputKind.FREQ_STR and allowed_periods is not None:
+            descstr += (
+                f" Restricted to frequencies equivalent to one of {allowed_periods}"
+            )
+        if param["kind"] == InputKind.VARIABLE:
+            defstr = f"Default : `ds.{param['default']}`. "
+        elif param["kind"] == InputKind.OPTIONAL_VARIABLE:
+            defstr = ""
+        else:
+            defstr = f"Default : {param.get('default', '')}. "
+        if "choices" in param:
+            annotstr = str(param["choices"])
+        else:
+            annotstr = KIND_ANNOTATION[param["kind"]]
+        if param.get("units", False):
+            unitstr = f"[Required units : {param['units']}]"
+        else:
+            unitstr = ""
+        section += f"{name} : {annotstr}\n  {descstr}\n  {defstr}{unitstr}\n"
     return section
 
 

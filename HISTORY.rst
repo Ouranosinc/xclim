@@ -9,6 +9,13 @@ Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James
 Breaking changes
 ~~~~~~~~~~~~~~~~
 * Major changes in the YAML schema for virtual submodules, now closer to how indicators are declared dynamically, see the doc for details. (:pull:`849`, :issue:`848`).
+* Major changes on how parameters are passed to indicators (:pull:`873`)
+
+    - Their signature is now coherent : input variables (DataArrays, optional or not) are positional or keyword arguments and all other parameters are keyword only. (:issue:`855`, :issue:`857`)
+    - Some indicators have modified signatures because we now rename variables when wrapping generic indices. This is the case for the whole cf module, for example.
+    - ``Indicator.parameters`` now includes the injected parameters, which it didn't before. If one wants to iterates on non-injected parameters, one can use ``Indicator.iter_parameters()``, yielding pairs of (name, meta), where meta is always a dictionary.
+    - See the pull request (:pull:`873`) for all information.
+
 
 Internal changes
 ~~~~~~~~~~~~~~~~
@@ -16,6 +23,7 @@ Internal changes
 * Updated the contribution guidelines to better give credit to contributors and more easily track changes. (:pull:`869`, :issue:`868`).
 * Enabled coveralls code coverage reporting for GitHub CI. (:pull:`870`).
 * Added automated TestPyPI and PyPI-publishing workflows for GitHub CI. (:pull:`872`).
+* Changes on how indicators are constructed (:pull:`873`).
 
 Bug fixes
 ~~~~~~~~~
