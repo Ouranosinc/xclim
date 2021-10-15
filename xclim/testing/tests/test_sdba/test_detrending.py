@@ -7,6 +7,7 @@ from xclim.sdba import Grouper
 from xclim.sdba.detrending import (
     LoessDetrend,
     MeanDetrend,
+    NoDetrend,
     PolyDetrend,
     RollingMeanDetrend,
 )
@@ -88,3 +89,22 @@ def test_rollingmean_detrend(series):
     )
     fx = det.fit(x)
     assert fx.ds.trend.notnull().sum() == 365
+
+
+def test_no_detrend(series):
+    x = series(np.arange(12 * 365.25), "tas")
+
+    det = NoDetrend(group="time.dayofyear", kind="+")
+
+    with pytest.raises(ValueError, match="You must call fit()"):
+        det.retrend(x)
+
+    with pytest.raises(ValueError, match="You must call fit()"):
+        det.detrend(x)
+
+    assert repr(det).endswith("unfitted>")
+
+    fit = det.fit(x)
+
+    np.testing.assert_array_equal(fit.retrend(x), x)
+    np.testing.assert_array_equal(fit.detrend(x), x)
