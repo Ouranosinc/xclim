@@ -337,13 +337,6 @@ class Indicator(IndicatorRegistrar):
 
         # If needed, wrap compute with declare units
         if "compute" in kwds and not hasattr(kwds["compute"], "in_units"):
-            if "_variable_mapping" not in kwds:
-                raise ValueError(
-                    "If a generic compute function (not wrapped by `declare_units`) is "
-                    "passed, a mapping from variable argument name to official (CMIP6) "
-                    "name must also be passed in the `input` argument of the indicator "
-                    "constructor."
-                )
             # We actually need the inverse mapping (to get cmip6 name -> arg name)
             inv_var_map = dict(map(reversed, kwds["_variable_mapping"].items()))
             # parameters has already been update above.
