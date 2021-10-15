@@ -330,15 +330,7 @@ class Indicator(IndicatorRegistrar):
         cls._update_parameters(parameters, kwds.pop("parameters", {}))
 
         # Input variable mapping (to change variable names in signature and expected units/cf attrs).
-        if "input" in kwds:
-            new_variable_mapping = kwds.pop("input")
-            # parameters is updated in-place
-            cls._parse_var_mapping(new_variable_mapping, parameters)
-
-            # Update mapping attribute
-            variable_mapping = deepcopy(cls._variable_mapping)
-            variable_mapping.update(new_variable_mapping)
-            kwds["_variable_mapping"] = variable_mapping
+        cls._parse_var_mapping(kwds.pop("input", {}), parameters, kwds)
 
         # Raise on incorrect params, sort params, modify var defaults in-place if needed
         parameters = cls._ensure_correct_parameters(parameters)
@@ -376,7 +368,7 @@ class Indicator(IndicatorRegistrar):
         kwds["cf_attrs"] = cls._parse_output_attrs(kwds, identifier)
 
         # Convert function objects to static methods.
-        for key in cls._funcs + cls._cf_names:
+        for key in cls._funcs:
             if key in kwds and callable(kwds[key]):
                 kwds[key] = staticmethod(kwds[key])
 
@@ -467,20 +459,21 @@ class Indicator(IndicatorRegistrar):
                             f", got : {val.keys()} for parameter {key}."
                         )
                     parameters[key].update(val)
-                else:  # Injected
-                    parameters[key]  # To trigger KeyError if it doesn't exist
+                elif key in parameters:
                     parameters[key] = val
+                else:
+                    raise KeyError(key)
         except KeyError as err:
             raise ValueError(
                 f"Parameter {err} was passed but it does not exist on the "
                 f" compute function (not one of {parameters.keys()})"
             ) from err
 
-    @staticmethod
-    def _parse_var_mapping(new_variable_mapping, parameters):
+    @classmethod
+    def _parse_var_mapping(cls, variable_mapping, parameters, kwds):
         """Parse the variable mapping passed in `input` and update `parameters` in-place."""
         # Update parameters
-        for old_name, new_name in new_variable_mapping.items():
+        for old_name, new_name in variable_mapping.items():
             meta = parameters[new_name] = parameters.pop(old_name)
             try:
                 varmeta = VARIABLES[new_name]
@@ -501,6 +494,12 @@ class Indicator(IndicatorRegistrar):
                     )
             meta["units"] = varmeta["canonical_units"]
             meta["description"] = varmeta["description"]
+
+        if variable_mapping:
+            # Update mapping attribute
+            new_variable_mapping = deepcopy(cls._variable_mapping)
+            new_variable_mapping.update(variable_mapping)
+            kwds["_variable_mapping"] = new_variable_mapping
 
     @staticmethod
     def _ensure_correct_parameters(parameters):
