@@ -110,6 +110,7 @@ intersphinx_mapping = {
 extlinks = {
     "issue": ("https://github.com/Ouranosinc/xclim/issues/%s", "GH/"),
     "pull": ("https://github.com/Ouranosinc/xclim/pull/%s", "PR/"),
+    "user": ("https://github.com/", "@"),
 }
 
 nbsphinx_execute = "auto"

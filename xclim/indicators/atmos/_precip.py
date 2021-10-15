@@ -337,7 +337,7 @@ dry_spell_total_length = Precip(
     identifier="dry_spell_total_length",
     description="The {freq} number of days in dry periods of {window} days and more, during which the accumulated "
     "precipitation on a window of {window} days is under {thresh}.",
-    units="d",
+    units="days",
     cell_methods="",
     compute=indices.dry_spell_total_length,
 )

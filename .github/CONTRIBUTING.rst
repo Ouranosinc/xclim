@@ -136,7 +136,7 @@ Before you submit a pull request, please follow these guidelines:
    If you are adding a new set of functions, they **must be tested** and **coverage percentage should not significantly decrease.**
 4. If the pull request adds functionality, your functions should include docstring explanations.
    So long as the docstrings are syntactically correct, sphinx-autodoc will be able to automatically parse the information.
-   Please ensure that the docstrings adhere to one of the following standards (badly formed docstrings will fail build tests):
+   Please ensure that the docstrings and documentation adhere to the following standards (badly formed docstrings will fail build tests):
 
    * `numpydoc`_
    * `reStructuredText (ReST)`_
@@ -151,6 +151,18 @@ Before you submit a pull request, please follow these guidelines:
     PEP8, black, pytest (with xdoctest) and pydocstyle (for numpy docstrings) conventions are strongly enforced.
     Ensure that your changes pass all tests prior to pushing your final commits to your branch.
     Code formatting errors are treated as build errors and will block your pull request from being accepted.
+
+6. The version changes (HISTORY.rst) should briefly describe changes introduced in the Pull request. Changes should be organized by type
+   (ie: `New Indicators`, `New features and enhancements`, `Breaking changes`, `Bug fixes`, `Internal changes`) and the GitHub Pull Request,
+   GitHub Issue. Your name and/or GitHub handle should also be listed among the contributors to this version. This can be done as follows::
+
+     Contributors to this version: John Jacob Jingleheimer Schmidt (:user:`username`).
+
+     Internal changes
+     ~~~~~~~~~~~~~~~~
+     * Updated the contribution guidelines. (:issue:`868`, :pull:`869`).
+
+   If this is your first contribution to Ouranosinc/xclim, we ask that you also add your name to the `AUTHORS.rst <https://github.com/Ouranosinc/xclim/blob/master/AUTHORS.rst>`_, under *Contributors*.
 
 Tips
 ----
@@ -207,16 +219,28 @@ With this performed, we can tag a version that will act as the GitHub-provided s
     $ git tag v1.2.3-XYZ
     $ git push --tags
 
+.. note::
+    Starting from October, 2021, all tags pushed to GitHub will trigger a build and publish a package to TestPyPI by default. TestPyPI is a testing ground that is not indexed or easily available to `pip`.
+    The test package can be found at: https://test.pypi.org/project/xclim/
+
 Packaging
 ---------
 
 When a new version has been minted (features have been successfully integrated test coverage and stability is adequate),
 maintainers should update the pip-installable package (wheel and source release) on PyPI as well as the binary on conda-forge.
 
-TThe simple approach
+The Automated Approach
+~~~~~~~~~~~~~~~~~~~~~~
+
+The simplest way to package `xclim` is to "publish" a version on GitHuh. GitHub CI Actions are presently configured to build the library and publish the packages on PyPI automatically.
+
+.. warning::
+    Be warned that a published package version on PyPI can never be overwritten. Be sure to verify that the package published at https://test.pypi.org/project/xclim/ matches expectations before publishing a version on GitHub.
+
+The Manual Approach
 ~~~~~~~~~~~~~~~~~~~
 
-The simplest approach to packaging for general support (pip wheels) requires the following packages installed:
+The manual approach to library packaging for general support (pip wheels) requires the following packages installed:
  * setuptools
  * wheel
  * twine

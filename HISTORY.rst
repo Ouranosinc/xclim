@@ -4,14 +4,22 @@ History
 
 0.31.0 (unreleased)
 -------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`).
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
 * Major changes in the YAML schema for virtual submodules, now closer to how indicators are declared dynamically, see the doc for details. (:pull:`849`, :issue:`848`).
 
+Internal changes
+~~~~~~~~~~~~~~~~
+* Pull Request contributions now require hyperlinks to the issue and pull request pages on GitHub listed alongside changess in HISTORY.rst. (:pull:`860`,:issue:`854`).
+* Updated the contribution guidelines to better give credit to contributors and more easily track changes. (:pull:`869`, :issue:`868`).
+* Enabled coveralls code coverage reporting for GitHub CI. (:pull:`870`).
+* Added automated TestPyPI and PyPI-publishing workflows for GitHub CI. (:pull:`872`).
+
 Bug fixes
 ~~~~~~~~~
-* Fix a bug in bootstrapping where computation would fail when the dataset time coordinate is encoded using `cftime.datetime`. (:pull:`859`). By `Abel Aoun <https://github.com/bzah>`_.
+* Fix a bug in bootstrapping where computation would fail when the dataset time coordinate is encoded using `cftime.datetime`. (:pull:`859`).
 
 0.30.1 (2021-10-01)
 -------------------

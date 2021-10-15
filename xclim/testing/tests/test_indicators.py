@@ -217,6 +217,7 @@ def test_temp_unit_conversion(tas_series):
 def test_multiindicator(tas_series):
     tas = tas_series(np.arange(366), start="2000-01-01")
     tmin, tmax = multiTemp(tas, freq="YS")
+
     assert tmin[0] == tas.min()
     assert tmax[0] == tas.max()
     assert tmin.attrs["standard_name"] == "Min temp"

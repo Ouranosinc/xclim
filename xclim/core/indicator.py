@@ -616,7 +616,6 @@ class Indicator(IndicatorRegistrar):
           is part of a dynamically generated submodule, to override the module of the base class.
         """
         data = data.copy()
-
         if "base" in data:
             if isinstance(data["base"], str):
                 cls = registry.get(
