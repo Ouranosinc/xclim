@@ -94,11 +94,10 @@ from copy import deepcopy
 from inspect import Parameter, Signature, _empty, signature
 from os import PathLike
 from pathlib import Path
-from types import MethodType, ModuleType
+from types import ModuleType
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
-from boltons.funcutils import copy_function
 from xarray import DataArray, Dataset
 from yaml import safe_load
 
@@ -663,10 +662,10 @@ class Indicator(IndicatorRegistrar):
         # Validation is done : register the instance.
         super().__init__()
 
-        self.__call__ = self._gen_new_call()
+        self.__signature__ = self._gen_signature()
 
-    def _gen_new_call(self):
-        """Generates a new call function with the correct signature."""
+    def _gen_signature(self):
+        """Generates the correct signature."""
         # Update call signature
         variables = []
         parameters = []
@@ -708,11 +707,7 @@ class Indicator(IndicatorRegistrar):
                 )
 
         ret_ann = DataArray if self.n_outs == 1 else Tuple[(DataArray,) * self.n_outs]
-        selfarg = Parameter("self", kind=Parameter.POSITIONAL_OR_KEYWORD)
-        sig = Signature([selfarg] + variables + parameters, return_annotation=ret_ann)
-        new_call = copy_function(self.__call__)
-        new_call.__signature__ = sig
-        return MethodType(new_call, self)
+        return Signature(variables + parameters, return_annotation=ret_ann)
 
     def __call__(self, *args, **kwds):
         """Call function of Indicator class."""
@@ -796,8 +791,7 @@ class Indicator(IndicatorRegistrar):
     def _parse_variables_from_call(self, args, kwds):
         """Extract variable and optional variables from call arguments."""
         # Bind call arguments to `compute` arguments and set defaults.
-        ba = self.__call__.__signature__.bind(self, *args, **kwds)
-        ba.arguments.pop("self")
+        ba = self.__signature__.bind(*args, **kwds)
         ba.apply_defaults()
 
         # Assign inputs passed as strings from ds.
@@ -1430,7 +1424,6 @@ def build_indicator_module_from_yaml(
                         pass
 
                 if indice_func is not None:
-                    print(identifier, indice_func)
                     data["compute"] = indice_func
 
             _merge_attrs(data, defkwargs, "references", "\n")

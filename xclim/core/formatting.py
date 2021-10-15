@@ -547,7 +547,7 @@ def generate_indicator_docstring(ind):
 
     injected = {k: v for k, v in ind.parameters.items() if not isinstance(v, dict)}
     if hasattr(ind.compute, "__module__"):
-        special += f"Based on indice :py:func:`{ind.compute.__module__}.{ind.compute.__name__}`.\n"
+        special += f"Based on indice :py:func:`~{ind.compute.__module__}.{ind.compute.__name__}`.\n"
         if injected:
             special += "With injected parameters: "
             special += ", ".join([f"{k}={v}" for k, v in injected.items()])

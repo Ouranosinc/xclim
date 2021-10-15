@@ -374,7 +374,7 @@ def test_all_parameters_understood(official_indicators):
 
 
 def test_signature():
-    sig = signature(xclim.atmos.solid_precip_accumulation.__call__)
+    sig = signature(xclim.atmos.solid_precip_accumulation)
     assert list(sig.parameters.keys()) == ["pr", "tas", "thresh", "freq", "ds"]
     assert sig.parameters["pr"].annotation == Union[xr.DataArray, str]
     assert sig.parameters["tas"].default == "tas"
@@ -382,7 +382,7 @@ def test_signature():
     assert sig.parameters["thresh"].kind == sig.parameters["thresh"].KEYWORD_ONLY
     assert sig.return_annotation == xr.DataArray
 
-    sig = signature(xclim.atmos.wind_speed_from_vector.__call__)
+    sig = signature(xclim.atmos.wind_speed_from_vector)
     assert sig.return_annotation == Tuple[xr.DataArray, xr.DataArray]
 
 
@@ -390,7 +390,7 @@ def test_doc():
     doc = xclim.atmos.fire_weather_indexes.__doc__
     assert doc.startswith("Fire weather indexes. (realm: atmos)")
     assert "This indicator will check for missing values according to the method" in doc
-    assert "Based on indice :py:func:`xclim.indices.fwi.fire_weather_indexes`." in doc
+    assert "Based on indice :py:func:`~xclim.indices.fwi.fire_weather_indexes`." in doc
     assert "ffmc0 : str or DataArray, optional" in doc
     assert "Returns\n-------" in doc
     assert "See https://cwfis.cfs.nrcan.gc.ca/background/dsm/fwi, the module's" in doc
@@ -559,7 +559,7 @@ def test_indicator_from_dict():
     assert ind.parameters["condition"] == "<"
     # Default value for input variable injected and meta injected
     assert ind._variable_mapping["data"] == "tas"
-    assert signature(ind.__call__).parameters["tas"].default == "tas"
+    assert signature(ind).parameters["tas"].default == "tas"
     assert ind.parameters["tas"]["units"] == "K"
 
     # Wrap a multi-output ind
@@ -569,7 +569,7 @@ def test_indicator_from_dict():
 
 def test_indicator_errors():
     def func(data: xr.DataArray, thresh: str = "0 degC"):
-        pass
+        return data
 
     doc = [
         "The title",
@@ -643,3 +643,14 @@ def test_indicator_errors():
     d["input"] = {"data": "tasmin"}
     with pytest.raises(AttributeError, match="Indicator's realm must be given as one"):
         Daily(**d)
+
+
+def test_indicator_call_errors(tas_series):
+    tas = tas_series(np.arange(730), start="2001-01-01")
+    uniIndTemp(da=tas, thresh="3 K")
+
+    with pytest.raises(TypeError, match="too many positional arguments"):
+        uniIndTemp(tas, tas)
+
+    with pytest.raises(TypeError, match="got an unexpected keyword argument 'oups'"):
+        uniIndTemp(tas, oups=3)
