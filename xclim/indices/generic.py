@@ -395,7 +395,7 @@ def count_occurrences(
 def diurnal_temperature_range(
     low_data: xr.DataArray, high_data: xr.DataArray, reducer: str, freq: str
 ) -> xr.DataArray:
-    """Calculate the diurnal temperature range and reduces according to a statistic.
+    """Calculate the diurnal temperature range and reduce according to a statistic.
 
     Parameters
     ----------
