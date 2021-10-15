@@ -219,16 +219,28 @@ With this performed, we can tag a version that will act as the GitHub-provided s
     $ git tag v1.2.3-XYZ
     $ git push --tags
 
+.. note::
+    Starting from October, 2021, all tags pushed to GitHub will trigger a build and publish a package to TestPyPI by default. TestPyPI is a testing ground that is not indexed or easily available to `pip`.
+    The test package can be found at: https://test.pypi.org/project/xclim/
+
 Packaging
 ---------
 
 When a new version has been minted (features have been successfully integrated test coverage and stability is adequate),
 maintainers should update the pip-installable package (wheel and source release) on PyPI as well as the binary on conda-forge.
 
-TThe simple approach
+The Automated Approach
+~~~~~~~~~~~~~~~~~~~~~~
+
+The simplest way to package `xclim` is to "publish" a version on GitHuh. GitHub CI Actions are presently configured to build the library and publish the packages on PyPI automatically.
+
+.. warning::
+    Be warned that a published package version on PyPI can never be overwritten. Be sure to verify that the package published at https://test.pypi.org/project/xclim/ matches expectations before publishing a version on GitHub.
+
+The Manual Approach
 ~~~~~~~~~~~~~~~~~~~
 
-The simplest approach to packaging for general support (pip wheels) requires the following packages installed:
+The manual approach to library packaging for general support (pip wheels) requires the following packages installed:
  * setuptools
  * wheel
  * twine

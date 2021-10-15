@@ -67,22 +67,6 @@ jobs:
         flag-name: run-${{ matrix.tox-env }}
         parallel: true
 
-#  docs:
-#    needs: test
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v2
-#      - name: Install packages
-#        run: |
-#          sudo apt-get -y install pandoc
-#      - uses: actions/setup-python@v2
-#        with:
-#          python-version: 3.6
-#      - name: Install tox
-#        run: pip install tox
-#      - name: make docs
-#        run: tox -e docs
-
 #    - name: Coveralls
 #      uses: coverallsapp/github-action@master
 #      with:
