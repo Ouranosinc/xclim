@@ -482,7 +482,7 @@ def dryness_index(
 ) -> xarray.DataArray:
     """Dryness Index.
 
-    Mean minimum temperature for September (northern hemisphere) or March (Southern hemishere).
+    Mean minimum temperature for September (northern hemisphere) or March (Southern hemisphere).
     Used in calculating the Géoviticulture Multicriteria Classification System.
 
     Parameters
