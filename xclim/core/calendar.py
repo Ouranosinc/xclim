@@ -176,6 +176,22 @@ def convert_calendar(
     References
     ----------
     .. [LOCA] Pierce, D. W., D. R. Cayan, and B. L. Thrasher, 2014: Statistical downscaling using Localized Constructed Analogs (LOCA). Journal of Hydrometeorology, volume 15, page 2558-2585
+
+    Examples
+    --------
+    This method does not try to fill the missing dates other than with a constant value,
+    passed with `missing`. In order to fill the missing dates with interpolation, one
+    can simply use xarray's method:
+
+    >>> tas_nl = convert_calendar(tas, 'noleap')  # For the example
+    >>> with_missing = convert_calendar(tas_nl, 'standard', missing=np.NaN)
+    >>> out = with_missing.interpolate_na('time', method='linear')
+
+    Here, if Nans existed in the source data, they will be interpolated too. If that is,
+    for some reason, not wanted, the workaround is to do:
+
+    >>> mask = convert_calendar(tas_nl, 'standard').notnull()
+    >>> out2 = out.where(mask)
     """
     cal_src = get_calendar(source, dim=dim)
 
@@ -220,18 +236,17 @@ def convert_calendar(
                 # Return a doy in the new calendar, removing the Feb 29th and 5 other
                 # days chosen randomly within 5 sections of 72 days.
                 yr = int(time.dt.year[0])
-                diy = days_in_year(yr, cal_tgt)
                 new_doy = np.arange(360) + 1
                 rm_idx = rng.integers(0, 72, 5) + (np.arange(5) * 72)
                 if cal_src == "360_day":
                     for idx in rm_idx:
                         new_doy[idx + 1 :] = new_doy[idx + 1 :] + 1
-                    if diy == 366:
+                    if days_in_year(yr, cal_tgt) == 366:
                         new_doy[new_doy >= 60] = new_doy[new_doy >= 60] + 1
                 elif cal_tgt == "360_day":
-                    new_doy = np.insert(new_doy, rm_idx - np.arange(5), np.NaN)
-                    if diy == 366:
-                        new_doy = np.insert(new_doy, 60, np.NaN)
+                    new_doy = np.insert(new_doy, rm_idx - np.arange(5), -1)
+                    if days_in_year(yr, cal_src) == 366:
+                        new_doy = np.insert(new_doy, 60, -1)
                 return new_doy[time.dt.dayofyear - 1]
 
             new_doy = source.time.groupby(f"{dim}.year").map(
@@ -247,9 +262,11 @@ def convert_calendar(
             dims=(dim,),
             name=dim,
         )
+        # Remove NaN that where put on invalid dates in target calendar
+        out = out.where(out[dim].notnull(), drop=True)
         # Remove duplicate timestamps, happens when reducing the number of days
         out = out.isel({dim: np.unique(out[dim], return_index=True)[1]})
-    elif align_on == "date":
+    else:
         time_idx = source[dim].indexes[dim]
         out[dim] = xr.DataArray(
             [_convert_datetime(time, calendar=cal_tgt) for time in time_idx],
@@ -393,6 +410,7 @@ def _convert_datetime(
       A datetime object to convert.
     new_doy:  Optional[Union[float, int]]
       Allows for redefining the day of year (thus ignoring month and day information from the source datetime).
+      -1 is understood as a nan.
     calendar: str
       The target calendar
 
@@ -403,7 +421,7 @@ def _convert_datetime(
       as the source (month and day according to `new_doy` if given).
       If the month and day doesn't exist in the target calendar, returns np.nan. (Ex. 02-29 in "noleap")
     """
-    if new_doy == np.nan:
+    if new_doy in [np.nan, -1]:
         return np.nan
     if new_doy is not None:
         new_date = cftime.num2date(

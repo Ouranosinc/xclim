@@ -257,20 +257,20 @@ def test_convert_calendar_360_days(source, target, freq, align_on):
 
 def test_convert_calendar_360_days_random():
     da_std = xr.DataArray(
-        np.linspace(0, 1, 366),
+        np.linspace(0, 1, 366 * 2),
         dims=("time",),
         coords={
             "time": date_range(
-                "2004-01-01", "2004-12-31", freq="12H", calendar="default"
+                "2004-01-01", "2004-12-31T23:59:59", freq="12H", calendar="default"
             )
         },
     )
     da_360 = xr.DataArray(
-        np.linspace(0, 1, 360),
+        np.linspace(0, 1, 360 * 2),
         dims=("time",),
         coords={
             "time": date_range(
-                "2004-01-01", "2004-12-30", freq="12H", calendar="360_day"
+                "2004-01-01", "2004-12-30T23:59:59", freq="12H", calendar="360_day"
             )
         },
     )
@@ -279,19 +279,18 @@ def test_convert_calendar_360_days_random():
     assert get_calendar(conv) == "360_day"
     assert conv.size == 720
     conv2 = convert_calendar(da_std, "360_day", align_on="random")
-    assert conv != conv2
+    assert (conv != conv2).any()
 
     conv = convert_calendar(da_360, "default", align_on="random")
     assert get_calendar(conv) == "default"
     assert conv.size == 720
-
     assert np.datetime64("2004-02-29") not in conv.time
     conv2 = convert_calendar(da_360, "default", align_on="random")
-    assert conv2.time != conv.time
+    assert (conv2 != conv).any()
 
     conv = convert_calendar(da_360, "noleap", align_on="random", missing=np.NaN)
     conv = conv.where(conv.isnull(), drop=True)
-    assert conv.time.dt.dayofyear < np.array([73, 145, 217, 289, 361])
+    assert all(conv.time.dt.dayofyear[::2] < np.array([73, 145, 217, 289, 361]))
 
 
 @pytest.mark.parametrize(
