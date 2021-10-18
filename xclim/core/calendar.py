@@ -116,7 +116,7 @@ def convert_calendar(
       Either a calendar name or the 1D time coordinate to convert to.
       If an array is provided, the output will be reindexed using it and in that case, days in `target`
       that are missing in the converted `source` are filled by `missing` (which defaults to NaN).
-    align_on : {None, 'date', 'year'}
+    align_on : {None, 'date', 'year', 'random'}
       Must be specified when either source or target is a `360_day` calendar, ignored otherwise. See Notes.
     missing : Optional[any]
       A value to use for filling in dates in the target that were missing in the source.
@@ -162,6 +162,20 @@ def convert_calendar(
       a standard calendar.
 
       This option is best used with data on a frequency coarser than daily.
+
+    "random"
+      Similar to "year", each day of year of the source is mapped to another day of year
+      of the target. However, instead of having always the same missing days according
+      the source and target years, here 5 days are chosen randomly, one for each fifth
+      of the year. However, February 29th is always missing when converting to a leap year,
+      or its value is dropped when converting from a leap year. This is similar to method
+      used in the [LOCA]_ dataset.
+
+      This option best used on daily data.
+
+    References
+    ----------
+    .. [LOCA] Pierce, D. W., D. R. Cayan, and B. L. Thrasher, 2014: Statistical downscaling using Localized Constructed Analogs (LOCA). Journal of Hydrometeorology, volume 15, page 2558-2585
     """
     cal_src = get_calendar(source, dim=dim)
 
@@ -173,28 +187,56 @@ def convert_calendar(
     if cal_src == cal_tgt:
         return source
 
-    if (cal_src == "360_day" or cal_tgt == "360_day") and align_on is None:
+    if (cal_src == "360_day" or cal_tgt == "360_day") and align_on not in [
+        "year",
+        "date",
+        "random",
+    ]:
         raise ValueError(
-            "Argument `align_on` must be specified with either 'date' or "
-            "'year' when converting to or from a '360_day' calendar."
+            "Argument `align_on` must be specified with either 'date', 'year' or"
+            "'random' when converting to or from a '360_day' calendar."
         )
     if cal_src != "360_day" and cal_tgt != "360_day":
         align_on = None
 
     out = source.copy()
     # TODO Maybe the 5-6 days to remove could be given by the user?
-    if align_on == "year":
+    if align_on in ["year", "random"]:
+        if align_on == "year":
 
-        def _yearly_interp_doy(time):
-            # Returns the nearest day in the target calendar of the corresponding "decimal year" in the source calendar
-            yr = int(time.dt.year[0])
-            return np.round(
-                days_in_year(yr, cal_tgt)
-                * time.dt.dayofyear
-                / days_in_year(yr, cal_src)
-            ).astype(int)
+            def _yearly_interp_doy(time):
+                # Returns the nearest day in the target calendar of the corresponding "decimal year" in the source calendar
+                yr = int(time.dt.year[0])
+                return np.round(
+                    days_in_year(yr, cal_tgt)
+                    * time.dt.dayofyear
+                    / days_in_year(yr, cal_src)
+                ).astype(int)
 
-        new_doy = source.time.groupby(f"{dim}.year").map(_yearly_interp_doy)
+            new_doy = source.time.groupby(f"{dim}.year").map(_yearly_interp_doy)
+        elif align_on == "random":
+
+            def _yearly_random_doy(time, rng):
+                # Return a doy in the new calendar, removing the Feb 29th and 5 other
+                # days chosen randomly within 5 sections of 72 days.
+                yr = int(time.dt.year[0])
+                diy = days_in_year(yr, cal_tgt)
+                new_doy = np.arange(360) + 1
+                rm_idx = rng.integers(0, 72, 5) + (np.arange(5) * 72)
+                if cal_src == "360_day":
+                    for idx in rm_idx:
+                        new_doy[idx + 1 :] = new_doy[idx + 1 :] + 1
+                    if diy == 366:
+                        new_doy[new_doy >= 60] = new_doy[new_doy >= 60] + 1
+                elif cal_tgt == "360_day":
+                    new_doy = np.insert(new_doy, rm_idx - np.arange(5), np.NaN)
+                    if diy == 366:
+                        new_doy = np.insert(new_doy, 60, np.NaN)
+                return new_doy[time.dt.dayofyear - 1]
+
+            new_doy = source.time.groupby(f"{dim}.year").map(
+                _yearly_random_doy, rng=np.random.default_rng()
+            )
 
         # Convert the source datetimes, but override the doy with our new doys
         out[dim] = xr.DataArray(
@@ -207,7 +249,7 @@ def convert_calendar(
         )
         # Remove duplicate timestamps, happens when reducing the number of days
         out = out.isel({dim: np.unique(out[dim], return_index=True)[1]})
-    else:
+    elif align_on == "date":
         time_idx = source[dim].indexes[dim]
         out[dim] = xr.DataArray(
             [_convert_datetime(time, calendar=cal_tgt) for time in time_idx],
@@ -361,6 +403,8 @@ def _convert_datetime(
       as the source (month and day according to `new_doy` if given).
       If the month and day doesn't exist in the target calendar, returns np.nan. (Ex. 02-29 in "noleap")
     """
+    if new_doy == np.nan:
+        return np.nan
     if new_doy is not None:
         new_date = cftime.num2date(
             new_doy - 1,
