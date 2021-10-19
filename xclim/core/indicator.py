@@ -501,11 +501,14 @@ class Indicator(IndicatorRegistrar):
         # data.compute refers to a function in xclim.indices.generic or xclim.indices (in this order of priority).
         # It can also directly be a function (like if a module was passed to build_indicator_module_from_yaml)
         if isinstance(compute, str):
-            compute = getattr(indices.generic, compute, getattr(indices, compute, None))
-            if compute is None:
+            compute_func = getattr(
+                indices.generic, compute, getattr(indices, compute, None)
+            )
+            if compute_func is None:
                 raise ImportError(
                     f"Indice function {compute} not found in xclim.indices or xclim.indices.generic."
                 )
+            compute = compute_func
 
         injected_params = {}
         for name, param in data.pop("parameters", {}).items():
