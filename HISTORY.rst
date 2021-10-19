@@ -9,6 +9,7 @@ Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Improve cell_methods checking to search the wanted method within the whole string. (:pull:`866`, :issue:`863`).
+* ``dry_spell_frequency`` now has a parameter `op: {"sum", "max"}` to choose if the threshold is less than the accumulated precipitation or the maximum daily precipitation.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
