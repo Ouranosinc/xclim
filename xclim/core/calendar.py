@@ -209,7 +209,7 @@ def convert_calendar(
         "random",
     ]:
         raise ValueError(
-            "Argument `align_on` must be specified with either 'date', 'year' or"
+            "Argument `align_on` must be specified with either 'date', 'year' or "
             "'random' when converting to or from a '360_day' calendar."
         )
     if cal_src != "360_day" and cal_tgt != "360_day":

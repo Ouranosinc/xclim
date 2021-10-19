@@ -290,7 +290,9 @@ def test_convert_calendar_360_days_random():
 
     conv = convert_calendar(da_360, "noleap", align_on="random", missing=np.NaN)
     conv = conv.where(conv.isnull(), drop=True)
-    assert all(conv.time.dt.dayofyear[::2] < np.array([73, 145, 217, 289, 361]))
+    nandoys = conv.time.dt.dayofyear[::2]
+    assert all(nandoys < np.array([74, 147, 220, 292, 366]))
+    assert all(nandoys > np.array([0, 73, 146, 219, 291]))
 
 
 @pytest.mark.parametrize(
