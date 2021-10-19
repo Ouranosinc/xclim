@@ -591,11 +591,15 @@ def water_budget(
 
 @declare_units(pr="[precipitation]", thresh="[length]")
 def dry_spell_frequency(
-    pr: xarray.DataArray, thresh: str = "1.0 mm", window: int = 3, freq: str = "YS", op: str = "sum"
+    pr: xarray.DataArray,
+    thresh: str = "1.0 mm",
+    window: int = 3,
+    freq: str = "YS",
+    op: str = "sum",
 ) -> xarray.DataArray:
     """
-    Return the number of dry periods of n days and more, during which the accumulated precipitation on a window of
-    n days is under the threshold.
+    Return the number of dry periods of n days and more, during which the accumulated (or maximum daily) precipitation
+    on a window of n days is under the threshold.
 
     Parameters
     ----------
@@ -606,14 +610,14 @@ def dry_spell_frequency(
       If op="max", the period is considered dry if the maximum daily precipitation value is less than the threshold.
     window : int
       Number of days where the accumulated precipitation is under threshold.
-      If op="max", maximum daily precipitation is checked instead of accumulated precipitation.
+      If op="max", maximum daily precipitation during the window is checked.
     freq : str
       Resampling frequency.
     op: {"sum","max"}
       Operation to perform on the window.
       Default is "sum".
       "sum" checks that the sum of accumulated precipitation over the whole window is less than the threshold.
-      "max" checks that the maximum daily precipitation over the window is less than threshold.
+      "max" checks that the maximum daily precipitation over the window is less than the threshold.
       This is the same as verifying that each individual day is below the threshold.
 
     Returns
@@ -623,20 +627,19 @@ def dry_spell_frequency(
 
     Examples
     --------
-    >>> from xclimJLFork.indices import dry_spell_frequency
-    >>>from xclimJLFork.testing import open_dataset
-
-    >>> ds= open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
-    >>> dry_spell_frequency(pr=ds.pr, op="sum")
-    >>> dry_spell_frequency(pr=ds.pr, op="max")
+    >>> from xclim.indices import dry_spell_frequency
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> dry_spell_frequency(pr=pr, op="sum")
+    >>> dry_spell_frequency(pr=pr, op="max")
     """
     pram = rate2amount(pr, out_units="mm")
     thresh = convert_units_to(thresh, pram)
 
     method = getattr(pram.rolling(time=window, center=True), op)
-    out = ( (method() < thresh)
-            .resample(time=freq)
-            .map(rl.windowed_run_events, window=1, dim="time")
+    out = (
+        (method() < thresh)
+        .resample(time=freq)
+        .map(rl.windowed_run_events, window=1, dim="time")
     )
 
     out.attrs["units"] = ""
