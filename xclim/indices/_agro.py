@@ -598,15 +598,15 @@ def dry_spell_frequency(
     op: str = "sum",
 ) -> xarray.DataArray:
     """
-    Return the number of dry periods of n days and more, during which the accumulated or maximal precipitation amount
-    on a window of n days is under the threshold.
+    Return the number of dry periods of n days and more, during which the accumulated or maximal daily precipitation
+    amount on a window of n days is under the threshold.
 
     Parameters
     ----------
     pr : xarray.DataArray
       Daily precipitation.
     thresh : str
-      Precipitation amount under which a period is considered dry. 
+      Precipitation amount under which a period is considered dry.
       The value against which the threshold is compared depends on  `op` .
     window : int
       Minimum length of the spells.
@@ -614,8 +614,9 @@ def dry_spell_frequency(
       Resampling frequency.
     op: {"sum","max"}
       Operation to perform on the window.
-      Default is "sum", which checks that the sum of accumulated precipitation over the whole window is less than the threshold.
-      "max" checks that the maximal precipitation amount within the window is less than the threshold.
+      Default is "sum", which checks that the sum of accumulated precipitation over the whole window is less than the
+      threshold.
+      "max" checks that the maximal daily precipitation amount within the window is less than the threshold.
       This is the same as verifying that each individual day is below the threshold.
 
     Returns
