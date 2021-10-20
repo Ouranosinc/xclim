@@ -598,7 +598,7 @@ def dry_spell_frequency(
     op: str = "sum",
 ) -> xarray.DataArray:
     """
-    Return the number of dry periods of n days and more, during which the accumulated (or maximum daily) precipitation
+    Return the number of dry periods of n days and more, during which the accumulated or maximal precipitation amount
     on a window of n days is under the threshold.
 
     Parameters
