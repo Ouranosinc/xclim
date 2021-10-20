@@ -627,7 +627,6 @@ def dry_spell_frequency(
 
     Examples
     --------
-    >>> from xclim.indices import dry_spell_frequency
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> dry_spell_frequency(pr=pr, op="sum")
     >>> dry_spell_frequency(pr=pr, op="max")
