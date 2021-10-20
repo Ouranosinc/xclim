@@ -114,7 +114,7 @@ class NoDetrend(BaseDetrend):
     """Convenience class for polymorphism. Does nothing."""
 
     def _get_trend_group(self, da, dim=None):
-        return da.isel({dim: 0})
+        return da.isel({d: 0 for d in dim})
 
     def _detrend(self, da, trend):
         return da
