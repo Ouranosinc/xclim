@@ -947,7 +947,7 @@
   },
   "DRY_SPELL_FREQUENCY": {
     "title": "Fréquence des périodes sèches.",
-    "abstract": "Fréquence des périodes sèches de n jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de n jours sont inférieures à un seuil donné.",
+    "abstract": "Fréquence des périodes sèches de n jours et plus, pendant lesquelles les précipitations accumulées ou maximales sur une fenêtre de n jours sont inférieures à un seuil donné.",
     "description": "Fréquence {freq:f} des périodes sèches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}.",
     "long_name": "Fréquence {freq:f} des périodes sèches de {window} jours et plus."
   },
