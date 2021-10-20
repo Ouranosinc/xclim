@@ -69,7 +69,6 @@ class BaseDetrend(ParametrizableWithDataset):
         out = self.group.apply(
             self._get_trend_group,
             da,
-            main_only=True,
         )
         if hasattr(da, "dtype"):
             out = out.astype(da.dtype)
@@ -131,7 +130,7 @@ class MeanDetrend(BaseDetrend):
         return _meandetrend_get_trend(da, **self).trend
 
 
-@map_groups(main_only=True, trend=[Grouper.DIM])
+@map_groups(trend=[Grouper.DIM])
 def _meandetrend_get_trend(da, *, dim, kind):
     trend = da.mean(dim).broadcast_like(da)
     return trend.rename("trend").to_dataset()
@@ -166,9 +165,12 @@ class PolyDetrend(BaseDetrend):
         return trend.trend
 
 
-@map_groups(main_only=True, trend=[Grouper.DIM])
+@map_groups(trend=[Grouper.DIM])
 def _polydetrend_get_trend(da, *, dim, degree, preserve_mean, kind):
     """Polydetrend, atomic func on 1 group."""
+    if len(dim) > 1:
+        da = da.mean(dim[1:])
+    dim = dim[0]
     pfc = da.polyfit(dim=dim, deg=degree)
     trend = xr.polyval(coord=da[dim], coeffs=pfc.polyfit_coefficients)
 
