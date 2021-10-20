@@ -606,18 +606,16 @@ def dry_spell_frequency(
     pr : xarray.DataArray
       Daily precipitation.
     thresh : str
-      Accumulated precipitation value under which a period is considered dry.
-      If op="max", the period is considered dry if the maximum daily precipitation value is less than the threshold.
+      Precipitation amount under which a period is considered dry. 
+      The value against which the threshold is compared depends on  `op` .
     window : int
-      Number of days where the accumulated precipitation is under threshold.
-      If op="max", maximum daily precipitation during the window is checked.
+      Minimum length of the spells.
     freq : str
       Resampling frequency.
     op: {"sum","max"}
       Operation to perform on the window.
-      Default is "sum".
-      "sum" checks that the sum of accumulated precipitation over the whole window is less than the threshold.
-      "max" checks that the maximum daily precipitation over the window is less than the threshold.
+      Default is "sum", which checks that the sum of accumulated precipitation over the whole window is less than the threshold.
+      "max" checks that the maximal precipitation amount within the window is less than the threshold.
       This is the same as verifying that each individual day is below the threshold.
 
     Returns
@@ -634,9 +632,9 @@ def dry_spell_frequency(
     pram = rate2amount(pr, out_units="mm")
     thresh = convert_units_to(thresh, pram)
 
-    method = getattr(pram.rolling(time=window, center=True), op)
+    agg_pr = getattr(pram.rolling(time=window, center=True), op)()
     out = (
-        (method() < thresh)
+        (agg_pr < thresh)
         .resample(time=freq)
         .map(rl.windowed_run_events, window=1, dim="time")
     )
