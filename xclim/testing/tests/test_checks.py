@@ -156,4 +156,10 @@ class TestDataCheck:
         with pytest.raises(ValidationError):
             datachecks.check_freq(da, "H")
 
+        with pytest.raises(ValidationError):
+            datachecks.check_freq(da, ["H", "D"])
+
         datachecks.check_freq(da, "H", strict=False)
+        datachecks.check_freq(da, ["H", "D"], strict=False)
+        datachecks.check_freq(da, "3H")
+        datachecks.check_freq(da, ["H", "3H"])

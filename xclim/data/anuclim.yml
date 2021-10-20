@@ -16,6 +16,7 @@ doc: '===============
   .. _ANUCLIM: https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6)
 
   '
+base: DailyWeeklyMonthly
 indicators:
   P10_MeanTempWarmestQuarter:
     allowed_periods: [A]
@@ -33,7 +34,7 @@ indicators:
       op: coldest
   P12_AnnualPrecip:
     allowed_periods: [A]
-    base: prcptot
+    computeb: prcptot
     cf_attrs:
       long_name: Annual precipitation
   P13_PrecipWettestPeriod:
@@ -83,10 +84,10 @@ indicators:
       op: coldest
   P1_AnnMeanTemp:
     allowed_periods: [A]
-    base: tg_mean
+    compute: tg_mean
   P2_MeanDiurnalRange:
     allowed_periods: [A]
-    base: dtr
+    compute: daily_temperature_range
   P3_Isothermality:
     allowed_periods: [A]
     compute: isothermality
@@ -95,16 +96,16 @@ indicators:
     compute: temperature_seasonality
   P5_MaxTempWarmestPeriod:
     allowed_periods: [A]
-    base: tx_max
+    compute: tx_max
     cf_attrs:
       long_name: Max temperature of warmest period
   P6_MinTempColdestPeriod:
     allowed_periods: [A]
-    base: tn_min
+    compute: tn_min
     cf_attrs:
       long_name: Min temperature of coldest period
   P7_TempAnnualRange:
-    base: etr
+    compute: extreme_temperature_range
     cf_attrs:
       long_name: Temperature annual range
   P8_MeanTempWettestQuarter:

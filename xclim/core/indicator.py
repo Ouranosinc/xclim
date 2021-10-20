@@ -1049,8 +1049,21 @@ class Hourly(Indicator):
             datachecks.check_freq(da, "H")
 
 
+class DailyWeeklyMonthly(Indicator):
+    """Indicator defined for inputs at daily, weekly or monthly frequencies."""
+
+    freq = "D"
+
+    @staticmethod
+    def datacheck(**das):  # noqa
+        for key, da in das.items():
+            if "time" in da.coords and da.time.ndim == 1 and len(da.time) > 3:
+                datachecks.check_freq(da, ["D", "7D", "M"], strict=True)
+
+
 base_registry["Hourly"] = Hourly
 base_registry["Daily"] = Daily
+base_registry["DailyWeeklyMonthly"] = DailyWeeklyMonthly
 
 
 def _parse_indice(indice: Callable, passed=None, **new_kwargs):
