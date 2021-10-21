@@ -608,10 +608,10 @@ consecutive_frost_days = Temp(
 maximum_consecutive_frost_free_days = Temp(
     identifier="consecutive_frost_free_days",
     units="days",
-    standard_name="spell_length_of_days_with_air_temperature_above_threshold",
-    long_name="Maximum number of consecutive days with Tmin > {thresh}",
+    standard_name="spell_length_of_days_with_air_temperature_above_or_equal_to_threshold",
+    long_name="Maximum number of consecutive days with Tmin >= {thresh}",
     description="{freq} maximum number of consecutive days with "
-    "minimum daily temperature above {thresh}.",
+    "minimum daily temperature above or equal to {thresh}.",
     cell_methods="time: min within days time: maximum over days",
     compute=indices.maximum_consecutive_frost_free_days,
 )
