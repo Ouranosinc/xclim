@@ -1642,15 +1642,15 @@ def maximum_consecutive_dry_days(
 def maximum_consecutive_frost_free_days(
     tasmin: xarray.DataArray, thresh: str = "0 degC", freq: str = "YS"
 ) -> xarray.DataArray:
-    r"""Maximum number of consecutive frost free days (Tn > 0℃).
+    r"""Maximum number of consecutive frost free days (Tn >= 0℃).
 
     Return the maximum number of consecutive days within the period where the
-    minimum temperature is above a certain threshold.
+    minimum temperature is above or equal a certain threshold.
 
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Max daily temperature.
+      Min daily temperature.
     thresh : str
       Threshold temperature.
     freq : str
@@ -1659,24 +1659,25 @@ def maximum_consecutive_frost_free_days(
     Returns
     -------
     xarray.DataArray, [time]
-      The maximum number of consecutive frost free days (tasmin > threshold per period).
+      The maximum number of consecutive frost free days (tasmin >= threshold per period).
 
     Notes
     -----
     Let :math:`\mathbf{t}=t_0, t_1, \ldots, t_n` be a daily minimum temperature series and :math:`thresh` the threshold
-    above which a day is considered a frost free day. Let :math:`\mathbf{s}` be the sorted vector of indices :math:`i`
-    where :math:`[t_i < thresh] \neq [t_{i+1} < thresh]`, that is, the days when the temperature crosses the threshold.
+    above or equal to which a day is considered a frost free day. Let :math:`\mathbf{s}` be the sorted vector of
+    indices :math:`i` where :math:`[t_i <= thresh] \neq [t_{i+1} <= thresh]`, that is, the days when the temperature
+    crosses the threshold.
     Then the maximum number of consecutive frost free days is given by
 
     .. math::
 
-       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [t_{s_j} > thresh]
+       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [t_{s_j} >= thresh]
 
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
     the start and end of the series, but the numerical algorithm does.
     """
     t = convert_units_to(thresh, tasmin)
-    group = (tasmin > t).resample(time=freq)
+    group = (tasmin >= t).resample(time=freq)
     out = group.map(rl.longest_run, dim="time")
     return to_agg_units(out, tasmin, "count")
 
