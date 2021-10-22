@@ -355,11 +355,10 @@ class TestConsecutiveFrostDays:
 
 
 class TestConsecutiveFrostFreeDays:
-    def test_real_data(self):
-        tasmin = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmin
+    def test_real_data(self, atmosds):
+        tasmin = atmosds.tasmin
         test = atmos.maximum_consecutive_frost_free_days(tasmin)
         np.testing.assert_allclose(test[2, 0], [68], rtol=1e-1)
-        print(type(test.description))
         assert (
             "Annual maximum number of consecutive days with minimum daily temperature above or equal to 0 degc."
         ) in test.description
