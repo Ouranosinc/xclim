@@ -591,33 +591,51 @@ def water_budget(
 
 @declare_units(pr="[precipitation]", thresh="[length]")
 def dry_spell_frequency(
-    pr: xarray.DataArray, thresh: str = "1.0 mm", window: int = 3, freq: str = "YS"
+    pr: xarray.DataArray,
+    thresh: str = "1.0 mm",
+    window: int = 3,
+    freq: str = "YS",
+    op: str = "sum",
 ) -> xarray.DataArray:
     """
-    Return the number of dry periods of n days and more, during which the accumulated precipitation on a window of
-    n days is under the threshold.
+    Return the number of dry periods of n days and more, during which the accumulated or maximal daily precipitation
+    amount on a window of n days is under the threshold.
 
     Parameters
     ----------
     pr : xarray.DataArray
       Daily precipitation.
     thresh : str
-      Accumulated precipitation value under which a period is considered dry.
+      Precipitation amount under which a period is considered dry.
+      The value against which the threshold is compared depends on  `op` .
     window : int
-      Number of days where the accumulated precipitation is under threshold.
+      Minimum length of the spells.
     freq : str
       Resampling frequency.
+    op: {"sum","max"}
+      Operation to perform on the window.
+      Default is "sum", which checks that the sum of accumulated precipitation over the whole window is less than the
+      threshold.
+      "max" checks that the maximal daily precipitation amount within the window is less than the threshold.
+      This is the same as verifying that each individual day is below the threshold.
 
     Returns
     -------
     xarray.DataArray
       The {freq} number of dry periods of minimum {window} days.
+
+    Examples
+    --------
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> dry_spell_frequency(pr=pr, op="sum")
+    >>> dry_spell_frequency(pr=pr, op="max")
     """
     pram = rate2amount(pr, out_units="mm")
     thresh = convert_units_to(thresh, pram)
 
+    agg_pr = getattr(pram.rolling(time=window, center=True), op)()
     out = (
-        (pram.rolling(time=window, center=True).sum() < thresh)
+        (agg_pr < thresh)
         .resample(time=freq)
         .map(rl.windowed_run_events, window=1, dim="time")
     )
