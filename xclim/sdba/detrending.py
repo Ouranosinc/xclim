@@ -100,7 +100,7 @@ class BaseDetrend(ParametrizableWithDataset):
         # Add trend to series
         return apply_correction(da, trend, self.kind)
 
-    def _get_trend_group(self, grpd, dim="time"):
+    def _get_trend_group(self, grpd, *, dim):
         raise NotImplementedError
 
     def __repr__(self):
@@ -113,7 +113,7 @@ class BaseDetrend(ParametrizableWithDataset):
 class NoDetrend(BaseDetrend):
     """Convenience class for polymorphism. Does nothing."""
 
-    def _get_trend_group(self, da, dim=None):
+    def _get_trend_group(self, da, *, dim):
         return da.isel({d: 0 for d in dim})
 
     def _detrend(self, da, trend):
