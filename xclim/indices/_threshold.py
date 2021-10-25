@@ -1645,12 +1645,12 @@ def maximum_consecutive_frost_free_days(
     r"""Maximum number of consecutive frost free days (Tn >= 0℃).
 
     Return the maximum number of consecutive days within the period where the
-    minimum temperature is above or equal a certain threshold.
+    minimum temperature is above or equal to a certain threshold.
 
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Min daily temperature.
+      Minimum daily temperature.
     thresh : str
       Threshold temperature.
     freq : str
