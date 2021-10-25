@@ -282,7 +282,7 @@ class RollingMeanDetrend(BaseDetrend):
     Notes
     -----
     As for the :py:class:`LoessDetrend` detrending, important boundary effects are to be
-    expeted.
+    expected.
     """
 
     def __init__(
