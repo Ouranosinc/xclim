@@ -2290,7 +2290,13 @@ def test_dry_spell(pr_series):
     pr.attrs["units"] = "mm/day"
 
     events = xci.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="YS")
-    total_d = xci.dry_spell_total_length(pr, thresh="3 mm", window=7, freq="YS")
+    total_d_sum = xci.dry_spell_total_length(
+        pr, thresh="3 mm", window=7, op="sum", freq="YS"
+    )
+    total_d_max = xci.dry_spell_total_length(
+        pr, thresh="3 mm", window=7, op="max", freq="YS"
+    )
 
     np.testing.assert_allclose(events[0], [2], rtol=1e-1)
-    np.testing.assert_allclose(total_d[0], [12], rtol=1e-1)
+    np.testing.assert_allclose(total_d_sum[0], [12], rtol=1e-1)
+    np.testing.assert_allclose(total_d_max[0], [20], rtol=1e-1)

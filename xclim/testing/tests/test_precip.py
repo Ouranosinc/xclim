@@ -446,10 +446,23 @@ def test_dry_spell():
     pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
 
     events = atmos.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="YS")
-    total_d = atmos.dry_spell_total_length(pr, thresh="3 mm", window=7, freq="YS")
+    total_d_sum = atmos.dry_spell_total_length(
+        pr, thresh="3 mm", window=7, op="sum", freq="YS"
+    )
+    total_d_max = atmos.dry_spell_total_length(
+        pr, thresh="3 mm", window=7, op="max", freq="YS"
+    )
+
+    total_d_sum = list(
+        total_d_sum.sel(location=slice("Halifax")).squeeze()[0:2].astype(int).values
+    )
+    total_d_max = list(
+        total_d_max.sel(location=slice("Halifax")).squeeze()[0:2].astype(int).values
+    )
 
     np.testing.assert_allclose(events[0:2, 0], [5, 8], rtol=1e-1)
-    np.testing.assert_allclose(total_d[0:2, 0], [50, 67], rtol=1e-1)
+    np.testing.assert_allclose(total_d_sum, [50, 60], rtol=1e-1)
+    np.testing.assert_allclose(total_d_max, [76, 97], rtol=1e-1)
 
     assert (
         "The annual number of dry periods of 7 days and more, during which the accumulated "
@@ -457,5 +470,9 @@ def test_dry_spell():
     ) in events.description
     assert (
         "The annual number of days in dry periods of 7 days and more"
-        in total_d.description
+        in total_d_sum.description
+    )
+    assert (
+        "The annual number of days in dry periods of 7 days and more"
+        in total_d_max.description
     )

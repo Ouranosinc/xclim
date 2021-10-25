@@ -1,5 +1,6 @@
 # noqa: D100
 
+import datetime
 from typing import Optional
 
 import numpy as np
@@ -628,11 +629,17 @@ def dry_spell_frequency(
 
 @declare_units(pr="[precipitation]", thresh="[length]")
 def dry_spell_total_length(
-    pr: xarray.DataArray, thresh: str = "1.0 mm", window: int = 3, freq: str = "YS"
+    pr: xarray.DataArray,
+    thresh: str = "1.0 mm",
+    window: int = 3,
+    op: str = "sum",
+    freq: str = "YS",
+    start_date: str = "",
+    end_date: str = "",
 ) -> xarray.DataArray:
     """
-    Return the total number of days in dry periods of n days and more, during which the accumulated precipitation
-    on a window of n days is under the threshold.
+    Return the total number of days in dry periods of n days and more, during which the maximum or accumulated
+    precipitation on a window of n days is under the threshold.
 
     Parameters
     ----------
@@ -641,9 +648,15 @@ def dry_spell_total_length(
     thresh : str
       Accumulated precipitation value under which a period is considered dry.
     window : int
-      Number of days where the accumulated precipitation is under threshold.
+      Number of days where the maximum or accumulated precipitation is under threshold.
+    op : {"max", "sum"}
+        Reduce operation.
     freq : str
       Resampling frequency.
+    start_date : str
+        First day of year to consider ("mm-dd").
+    end_date : str
+        Last day of year to consider ("mm-dd").
 
     Returns
     -------
@@ -653,8 +666,42 @@ def dry_spell_total_length(
     pram = rate2amount(pr, out_units="mm")
     thresh = convert_units_to(thresh, pram)
 
-    mask = pram.rolling(time=window, center=True).sum() < thresh
-    out = (mask.rolling(time=window, center=True).sum() >= 1).resample(time=freq).sum()
+    pram = xarray.where(pram < (thresh if op == "max" else 0), 0, pram)
+    pram.attrs["units"] = "mm"
+
+    dry = None
+    for i in range(2):
+        pram_i = pram if dry is None else pram.sortby("time", ascending=False)
+        if op == "max":
+            mask_i = xarray.DataArray(pram_i.rolling(time=window).max() < thresh)
+        else:
+            mask_i = xarray.DataArray(pram_i.rolling(time=window).sum() < thresh)
+        dry_i = xarray.DataArray(mask_i.rolling(time=window).sum() >= 1).shift(
+            time=-(window - 1)
+        )
+        if dry is None:
+            dry = dry_i
+        else:
+            dry_i = dry_i.sortby("time", ascending=True)
+            dt = (dry.time - dry.time[0]).dt.days
+            dry = xarray.where(dt > len(dry.time) - window - 1, dry_i, dry)
+
+    doy_start = 1
+    if start_date != "":
+        doy_start = datetime.datetime.strptime(start_date, "%m-%d").timetuple().tm_yday
+    doy_end = 365
+    if end_date != "":
+        doy_end = datetime.datetime.strptime(end_date, "%m-%d").timetuple().tm_yday
+    if doy_end >= doy_start:
+        doy = (pram.time.dt.dayofyear >= doy_start) & (
+            pram.time.dt.dayofyear <= doy_end
+        )
+    else:
+        doy = (pram.time.dt.dayofyear <= doy_end) | (
+            pram.time.dt.dayofyear >= doy_start
+        )
+
+    out = (dry & doy).astype(float).resample(time=freq).sum("time")
 
     return to_agg_units(out, pram, "count")
 
