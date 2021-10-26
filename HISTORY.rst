@@ -16,6 +16,11 @@ Breaking changes
 ~~~~~~~~~~~~~~~~
 * Major changes in the YAML schema for virtual submodules, now closer to how indicators are declared dynamically, see the doc for details. (:pull:`849`, :issue:`848`).
 
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* The ``sdba.loess`` algorithm has been optimized to run faster in all cases, with an even faster special case (``equal_spacing=True``) when the x coordinate is equally spaced. When activated, this special case might return results different from without, up to around 0.1%. (:pull:`865`)
+* Add support for group's window and additionnal dimensions in ``LoessDetrend``. Add new ``RollingMeanDetrend`` object. (:pull:`865`)
+
 Internal changes
 ~~~~~~~~~~~~~~~~
 * Pull Request contributions now require hyperlinks to the issue and pull request pages on GitHub listed alongside changess in HISTORY.rst. (:pull:`860`,:issue:`854`).
