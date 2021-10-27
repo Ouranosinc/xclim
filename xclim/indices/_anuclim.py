@@ -220,7 +220,7 @@ def tg_mean_warmcold_quarter(
     Returns
     -------
     xarray.DataArray, [same as tas]
-       Mean temperature values of the {op} quearter of each year.
+       Mean temperature of {op} quarter
 
     Examples
     --------
@@ -272,7 +272,7 @@ def tg_mean_wetdry_quarter(
     Returns
     -------
     xarray.DataArray, [same as tas]
-       Mean temperature values of the {op} quarter of each year.
+       Mean temperature of {op} quarter
 
     Notes
     -----
@@ -313,7 +313,7 @@ def prcptot_wetdry_quarter(
     Returns
     -------
     xarray.DataArray, [length]
-       Total precipitation values of the {op} quarter of each year.
+       Precipitation of {op} quarter
 
     Examples
     --------
@@ -372,7 +372,7 @@ def prcptot_warmcold_quarter(
     Returns
     -------
     xarray.DataArray : [mm]
-       Total precipitation values of the {op} quarter of each year
+       Precipitation of {op} quarter
 
     Notes
     -----
@@ -410,7 +410,7 @@ def prcptot(
     Returns
     -------
     xarray.DataArray, [length]
-       Total precipitation.
+       Total {freq} precipitation.
     """
     thresh = convert_units_to(thresh, pr)
     return (
@@ -436,7 +436,7 @@ def prcptot_wetdry_period(
     Returns
     -------
     xarray.DataArray, [length]
-       Total precipitation of the {op} sampling period.
+       Precipitation of {op} period
 
     Notes
     -----
