@@ -15,7 +15,7 @@ Dictionary and YAML parser
 
 To construct indicators dynamically, xclim can also use dictionaries and parse them from YAML files.
 This is especially useful for generating whole indicator "submodules" from files.
-This functionality is inspired by the work of [clix-meta](https://github.com/clix-meta/clix-meta/).
+This functionality is inspired by the work of `clix-meta <https://github.com/clix-meta/clix-meta/>`_.
 
 YAML file structure
 ~~~~~~~~~~~~~~~~~~~
@@ -76,7 +76,7 @@ All fields are optional. Other fields found in the yaml file will trigger errors
 In the following, the section under `<identifier>` is refered to as `data`. When creating indicators from
 a dictionary, with :py:meth:`Indicator.from_dict`, the input dict must follow the same structure of `data`.
 
-The resulting yaml file can be validated using the provided schema (in xclim/data/schema.yml) and the [yamale](https://github.com/23andMe/Yamale) tool.
+The resulting yaml file can be validated using the provided schema (in xclim/data/schema.yml) and the `yamale <https://github.com/23andMe/Yamale>`_ tool.
 See the "Extending xclim" notebook for more info.
 
 Inputs
@@ -187,16 +187,23 @@ class Indicator(IndicatorRegistrar):
     CF-compliant attributes. Some of these attributes can be *templated*, allowing metadata to reflect
     the value of call arguments.
 
-    Instantiating a new indicator returns an instance but also creates and registers a custom subclass.
+    Instantiating a new indicator returns an instance but also creates and registers a custom subclass
+    in :py:data:`xclim.core.indicator.registry`.
 
-    Parameters in `Indicator._cf_names` will be added to the output variable(s). When creating new `Indicators`
-    subclasses, if the compute function returns multiple variables, attributes may be given as lists of strings or
-    strings. In the latter case, the same value is used on all variables.
+    Attributes in `Indicator.cf_attrs` will be formatted and added to the output variable(s).
+    This attribute is a list of dictionaries. For convenience and retrocompatibility,
+    standard CF attributes (names listed in :py:attr:`xclim.core.indicator.Indicator._cf_names`)
+    can be passed as strings or list of strings directly to the indicator constructor.
+
+    A lot of the Indicator's metadata is parsed from the underlying `compute` function's
+    docstring and signature. Input variables and parameters are listed in
+    :py:attr:`xclim.core.indicator.Indicator.parameters`, which contains both injected
+    parameters and "signature" parameters (that a user can control).
 
     Compared to their base `compute` function, indicators add the possibility of using dataset as input,
-    with the injected argument `ds` in the call signature. All arguments that were indicated by the compute function
-    to be DataArrays through annotations will be promoted to also accept strings that correspond to variable names
-    in the `ds` dataset.
+    with the injected argument `ds` in the call signature. All arguments that were indicated
+    by the compute function to be variables (DataArrays) through annotations will be promoted
+    to also accept strings that correspond to variable names in the `ds` dataset.
 
     Parameters
     ----------
@@ -206,41 +213,28 @@ class Indicator(IndicatorRegistrar):
       General domain of validity of the indicator. Indicators created outside xclim.indicators must set this attribute.
     compute: func
       The function computing the indicators. It should return one or more DataArray.
-    var_name: str or Sequence[str]
-      Output variable(s) name(s). May use tags {<tag>}. If the indicator outputs multiple variables,
-      var_name *must* be a list of the same length.
-    standard_name: str or Sequence[str]
-      Variable name (CF).
-    long_name: str or Sequence[str]
-      Descriptive variable name. Parsed from `compute` docstring if not given.
-    units: str or Sequence[str]
-      Representative units of the physical quantity (CF).
-    cell_methods: str or Sequence[str]
-      List of blank-separated words of the form "name: method" (CF).
-    description: str or Sequence[str]
-      Sentence meant to clarify the qualifiers of the fundamental quantities, such as which
-      surface a quantity is defined on or what the flux sign conventions are.
-    comment: str or Sequence[str]
-      Miscellaneous information about the data or methods used to produce it.
+    cf_attrs: list of dicts
+      Attributes to be formatted and added to the computation's output.
+      See :py:attr:`xclim.core.indicator.Indicator.cf_attrs`.
     title: str
-      A succinct description of what is in the computed outputs. Parsed from `compute` docstring if None.
+      A succinct description of what is in the computed outputs. Parsed from `compute` docstring if None (first paragraph).
     abstract: str
-      A long description of what is in the computed outputs. Parsed from `compute` docstring if None.
+      A long description of what is in the computed outputs. Parsed from `compute` docstring if None (second paragraph).
     keywords: str
-      Comma separated list of keywords. Parsed from `compute` docstring if None.
+      Comma separated list of keywords. Parsed from `compute` docstring if None (from a "Keywords" section).
     references: str
       Published or web-based references that describe the data or methods used to produce it. Parsed from
-      `compute` docstring if None.
+      `compute` docstring if None (from the "References" section).
     notes: str
       Notes regarding computing function, for example the mathematical formulation. Parsed from `compute`
-      docstring if None.
+      docstring if None (form the "Notes" section).
     missing: {any, wmo, pct, at_least_n, skip, from_context}
       The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods. If
       None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
-    freq: {"D", "H", None}
-      The expected frequency of the input data. Use None if irrelevant.
     missing_options : dict, None
       Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
+    freq: {"D", "H", None}
+      The expected frequency of the input data. Use None if irrelevant.
     context: str
       The `pint` unit context, for example use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
     allowed_periods : Sequence[str], optional
@@ -294,19 +288,37 @@ class Indicator(IndicatorRegistrar):
     parameters: Mapping[str, Any] = {}
     """A dictionary mapping metadata about the input parameters to the indicator.
 
-       Keys are the arguments of the "compute" function. "Injected" parameters,
-       those absent from the indicator's call signature are listed here with the
-       injected values. Controlable parameters have mappings containing :
-       "default", "description", "kind" and, sometimes, "units" and "choices".
-       "kind" refers to the constants of :py:class:`xclim.core.utils.InputKind`.
+    Keys are the arguments of the "compute" function. "Injected" parameters,
+    those absent from the indicator's call signature are listed here with the
+    injected values. Controlable parameters have mappings containing :
+    "default", "description", "kind" and, sometimes, "units" and "choices".
+    "kind" refers to the constants of :py:class:`xclim.core.utils.InputKind`.
     """
 
     cf_attrs: Sequence[Mapping[str, Any]] = None
     """A list of metadata information for each output of the indicator.
 
-       It minimally contains a "var_name" entry, and may contain : "standard_name", "long_name",
-       "units", "cell_methods", "description" and "comment" on official xclim indicators. Other
-       fields could also be present if the indicator was created from outside xclim.
+    It minimally contains a "var_name" entry, and may contain : "standard_name", "long_name",
+    "units", "cell_methods", "description" and "comment" on official xclim indicators. Other
+    fields could also be present if the indicator was created from outside xclim.
+
+    var_name:
+      Output variable(s) name(s).
+    standard_name:
+      Variable name, must be in the CF standard names table (this is not checked).
+    long_name:
+      Descriptive variable name. Parsed from `compute` docstring if not given.
+      (first line after the output dtype, only works on single output function).
+    units:
+      Representative units of the physical quantity.
+    cell_methods:
+      List of blank-separated words of the form "name: method". Must respect the
+      CF-conventions and vocabulary (not checked).
+    description:
+      Sentence(s) meant to clarify the qualifiers of the fundamental quantities, such as which
+      surface a quantity is defined on or what the flux sign conventions are.
+    comment:
+      Miscellaneous information about the data or methods used to produce it.
     """
 
     def __new__(cls, **kwds):
@@ -630,27 +642,10 @@ class Indicator(IndicatorRegistrar):
             )
             if compute_func is None:
                 raise ImportError(
-                    f"Indice function {compute} not found in xclim.indices or xclim.indices.generic."
+                    f"Indice function {compute} not found in xclim.indices or "
+                    "xclim.indices.generic."
                 )
-            compute = compute_func
-
-        injected_params = {}
-        for name, param in data.pop("parameters", {}).items():
-            if not isinstance(param, dict):
-                # Injecting by passing a value directly, catch all YAML-supported types
-                injected_params[name] = param
-            else:
-                # Changing the metadata (only "description", "default", "choices" and "units")
-                params[name] = param
-                if "units" in param:
-                    input_units[name] = param["units"]
-
-        if input_units:
-            if hasattr(compute, "in_units"):
-                raise ValueError(
-                    f"Passing inputs or changing parameters' units is only valid if the compute function is not aleady wrapped by `xclim.core.units.declare_units`. Got function {compute} that has input units {compute.in_units}."
-                )
-            data["compute"] = compute
+            data["compute"] = compute_func
 
         return cls(identifier=identifier, module=module, **data)
 
@@ -1186,9 +1181,10 @@ class Indicator(IndicatorRegistrar):
         When subclassing this method, use functions decorated using `xclim.core.options.datacheck`.
 
         For example, checks could include:
-         - assert temporal frequency is daily
-         - assert no precipitation is negative
-         - assert no temperature has the same value 5 days in a row
+
+        * assert temporal frequency is daily
+        * assert no precipitation is negative
+        * assert no temperature has the same value 5 days in a row
         """
         pass
 
@@ -1208,7 +1204,7 @@ class Indicator(IndicatorRegistrar):
     def iter_parameters(cls):
         """Generator to iterate over pairs of name and parameter dict.
 
-        Similar to `cls.parameters.items()`, but doesn't include injected parameters.
+        Similar to ``Indicators.parameters.items()``, but doesn't include injected parameters.
         """
         for name, param in cls.parameters.items():
             if isinstance(param, dict):
