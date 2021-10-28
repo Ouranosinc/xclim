@@ -10,6 +10,7 @@ import re
 import string
 from ast import literal_eval
 from fnmatch import fnmatch
+from inspect import _empty
 from typing import Dict, Mapping, Optional, Sequence, Union
 
 import xarray as xr
@@ -483,23 +484,23 @@ def _gen_parameters_section(parameters, allowed_periods=None):
     """
     section = "Parameters\n----------\n"
     for name, param in parameters:
-        descstr = param.get("description", "")
-        if param["kind"] == InputKind.FREQ_STR and allowed_periods is not None:
+        descstr = param.description
+        if param.kind == InputKind.FREQ_STR and allowed_periods is not None:
             descstr += (
                 f" Restricted to frequencies equivalent to one of {allowed_periods}"
             )
-        if param["kind"] == InputKind.VARIABLE:
-            defstr = f"Default : `ds.{param['default']}`. "
-        elif param["kind"] == InputKind.OPTIONAL_VARIABLE:
+        if param.kind == InputKind.VARIABLE:
+            defstr = f"Default : `ds.{param.default}`. "
+        elif param.kind == InputKind.OPTIONAL_VARIABLE:
             defstr = ""
-        else:
-            defstr = f"Default : {param.get('default', '')}. "
+        elif param.default is not _empty:
+            defstr = f"Default : {param.default}. "
         if "choices" in param:
-            annotstr = str(param["choices"])
+            annotstr = str(param.choices)
         else:
-            annotstr = KIND_ANNOTATION[param["kind"]]
-        if param.get("units", False):
-            unitstr = f"[Required units : {param['units']}]"
+            annotstr = KIND_ANNOTATION[param.kind]
+        if param.units not in [_empty, None]:
+            unitstr = f"[Required units : {param.units}]"
         else:
             unitstr = ""
         section += f"{name} : {annotstr}\n  {descstr}\n  {defstr}{unitstr}\n"
@@ -542,7 +543,7 @@ def generate_indicator_docstring(ind):
 
     special = f'This indicator will check for missing values according to the method "{ind.missing}".\n'
 
-    injected = {k: v for k, v in ind.parameters.items() if not isinstance(v, dict)}
+    injected = dict(ind.injected_parameters())
     if hasattr(ind.compute, "__module__"):
         special += f"Based on indice :py:func:`~{ind.compute.__module__}.{ind.compute.__name__}`.\n"
         if injected:

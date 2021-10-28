@@ -91,7 +91,9 @@ import warnings
 import weakref
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
-from inspect import Parameter, Signature, _empty, signature
+from dataclasses import asdict, dataclass
+from inspect import Parameter as _Parameter
+from inspect import Signature, _empty, signature
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
@@ -137,6 +139,44 @@ from .utils import (
 registry = dict()  # Main class registry
 base_registry = dict()
 _indicators_registry = defaultdict(list)  # Private instance registry
+
+
+@dataclass
+class Parameter:
+    """Class for storing an indicator's controllable parameter."""
+
+    kind: InputKind
+    default: Any = _empty
+    description: str = ""
+    units: str = _empty  # Reuse of inspect sentinel object to mean "unset"
+    choices: set = _empty
+
+    def update(self, other: dict):
+        """Update a parameter's values from a dict."""
+        for k, v in other.items():
+            if hasattr(self, k):
+                setattr(self, k, v)
+            else:
+                raise AttributeError(f"Unexpected parameter field '{k}'.")
+
+    @classmethod
+    def is_parameter_dict(cls, other: dict):
+        return set(other.keys()).issubset(cls.__dataclass_fields__.keys())
+
+    # For retro-compatibility
+    def __getitem__(self, key):
+        try:
+            return getattr(self, key)
+        except AttributeError as err:
+            raise KeyError(key) from err
+
+    def __contains__(self, key):
+        # To imitate previous behaviour where "units" and "choices" were missing,
+        # instead of being "_empty".
+        return getattr(self, key, _empty) is not _empty
+
+    def asdict(self):
+        return {k: v for k, v in asdict(self).items() if v is not _empty}
 
 
 class IndicatorRegistrar:
@@ -261,8 +301,6 @@ class Indicator(IndicatorRegistrar):
 
     # metadata fields that are formatted as free text (first letter capitalized)
     _text_fields = ["long_name", "description", "comment"]
-    # Parameters metadata fields
-    _param_fields = {"description", "choices", "kind", "default", "units"}
     # Class attributes that are function (so we know which to convert to static methods)
     _funcs = ["compute", "cfcheck", "datacheck"]
     # Mapping from name in the compute function to official (CMIP6) variable name
@@ -285,14 +323,12 @@ class Indicator(IndicatorRegistrar):
     references = ""
     notes = ""
 
-    parameters: Mapping[str, Any] = {}
+    parameters: Mapping[str, Union[Parameter, Any]] = {}
     """A dictionary mapping metadata about the input parameters to the indicator.
 
     Keys are the arguments of the "compute" function. "Injected" parameters,
     those absent from the indicator's call signature are listed here with the
-    injected values. Controlable parameters have mappings containing :
-    "default", "description", "kind" and, sometimes, "units" and "choices".
-    "kind" refers to the constants of :py:class:`xclim.core.utils.InputKind`.
+    injected values. Controlable parameters are instance of :py:class:`xclim.core.indicator.Parameter`.
     """
 
     cf_attrs: Sequence[Mapping[str, Any]] = None
@@ -421,21 +457,21 @@ class Indicator(IndicatorRegistrar):
 
         """
         docmeta = parse_doc(compute.__doc__)
-        parameters = docmeta.pop("parameters", {})  # override parent's parameters
+        params_dict = docmeta.pop("parameters", {})  # override parent's parameters
 
         for name, unit in getattr(compute, "in_units", {}).items():
-            parameters.setdefault(name, {})["units"] = unit
+            params_dict.setdefault(name, {})["units"] = unit
 
         compute_sig = signature(compute)
         # Check that the `Parameters` section of the docstring does not include parameters that are not in the `compute` function signature.
-        if not set(parameters.keys()).issubset(compute_sig.parameters.keys()):
+        if not set(params_dict.keys()).issubset(compute_sig.parameters.keys()):
             raise ValueError(
                 f"Malformed docstring on {compute} : the parameters "
-                f"{set(parameters.keys()) - set(compute_sig.parameters.keys())} "
+                f"{set(params_dict.keys()) - set(compute_sig.parameters.keys())} "
                 "are absent from the signature."
             )
         for name, param in compute_sig.parameters.items():
-            meta = parameters.setdefault(name, {})
+            meta = params_dict.setdefault(name, {})
             meta["default"] = param.default
             # Units read from compute.in_units or units passed explicitly, will be added to "meta" elsewhere in the __new__.
             passed_meta = passed_parameters.get(name, {})
@@ -445,11 +481,13 @@ class Indicator(IndicatorRegistrar):
             meta["kind"] = infer_kind_from_parameter(param, has_units)
 
         # Insert "ds" arg
-        parameters["ds"] = {
+        params_dict["ds"] = {
             "default": None,
             "kind": InputKind.DATASET,
             "description": "A dataset with the variables given by name.",
         }
+
+        parameters = {name: Parameter(**param) for name, param in params_dict.items()}
         return parameters, docmeta
 
     @classmethod
@@ -457,12 +495,8 @@ class Indicator(IndicatorRegistrar):
         """Update parameters with the ones passed."""
         try:
             for key, val in passed.items():
-                if isinstance(val, dict):  # Modified meta
-                    if not set(val.keys()).issubset(cls._param_fields):
-                        raise ValueError(
-                            f"Parameter metadata can only have keys: {cls._param_fields}"
-                            f", got : {val.keys()} for parameter {key}."
-                        )
+                if isinstance(val, dict) and Parameter.is_parameter_dict(val):
+                    # modified meta
                     parameters[key].update(val)
                 elif key in parameters:
                     parameters[key] = val
@@ -488,17 +522,17 @@ class Indicator(IndicatorRegistrar):
                     f"{new_name} which is not understood by xclim or CMIP6. Please"
                     " use names listed in `xclim.core.utils.VARIABLES`."
                 )
-            if "units" in meta:
+            if meta.units is not _empty:
                 try:
-                    check_units(varmeta["canonical_units"], meta["units"])
+                    check_units(varmeta["canonical_units"], meta.units)
                 except ValidationError:
                     raise ValueError(
                         "When changing the name of a variable by passing `input`, "
                         "the units dimensionality must stay the same. Got: old = "
-                        f"{meta['units']}, new = {varmeta['canonical_units']}"
+                        f"{meta.units}, new = {varmeta['canonical_units']}"
                     )
-            meta["units"] = varmeta["canonical_units"]
-            meta["description"] = varmeta["description"]
+            meta.units = varmeta["canonical_units"]
+            meta.description = varmeta["description"]
 
         if variable_mapping:
             # Update mapping attribute
@@ -513,23 +547,23 @@ class Indicator(IndicatorRegistrar):
         Sets the correct variable default to be sure.
         """
         for name, meta in parameters.items():
-            if isinstance(meta, dict):
-                if meta["kind"] <= InputKind.OPTIONAL_VARIABLE and "units" not in meta:
+            if isinstance(meta, Parameter):
+                if meta.kind <= InputKind.OPTIONAL_VARIABLE and meta.units is _empty:
                     raise ValueError(
                         f"Input variable {name} is missing expected units. Units are "
                         "parsed either from the declare_units decorator or from the "
                         "variable mapping (arg name to CMIP6 name) passed in `input`"
                     )
-                if meta["kind"] == InputKind.OPTIONAL_VARIABLE:
-                    meta["default"] = None
-                elif meta["kind"] == InputKind.VARIABLE:
-                    meta["default"] = name
+                if meta.kind == InputKind.OPTIONAL_VARIABLE:
+                    meta.default = None
+                elif meta.kind == InputKind.VARIABLE:
+                    meta.default = name
 
         # Sort parameters : Var, Opt Var, all params, ds, injected params.
         def sortkey(kv):
-            if isinstance(kv[1], dict):
-                if kv[1]["kind"] in [0, 1, 50]:
-                    return kv[1]["kind"]
+            if isinstance(kv[1], Parameter):
+                if kv[1].kind in [0, 1, 50]:
+                    return kv[1].kind
                 return 2
             return 99
 
@@ -676,37 +710,37 @@ class Indicator(IndicatorRegistrar):
         parameters = []
         compute_sig = signature(self.compute)
         for name, meta in self.parameters.items():
-            if not isinstance(meta, dict):
+            if not isinstance(meta, Parameter):
                 continue
-            if meta["kind"] <= InputKind.OPTIONAL_VARIABLE:
+            if meta.kind <= InputKind.OPTIONAL_VARIABLE:
                 annot = Union[DataArray, str]
-                if meta["kind"] == InputKind.OPTIONAL_VARIABLE:
+                if meta.kind == InputKind.OPTIONAL_VARIABLE:
                     annot = Optional[annot]
                 variables.append(
-                    Parameter(
+                    _Parameter(
                         name,
-                        kind=Parameter.POSITIONAL_OR_KEYWORD,
-                        default=meta["default"],
+                        kind=_Parameter.POSITIONAL_OR_KEYWORD,
+                        default=meta.default,
                         annotation=annot,
                     )
                 )
-            elif meta["kind"] == InputKind.KWARGS:
-                parameters.append(Parameter(name, kind=Parameter.VAR_KEYWORD))
-            elif meta["kind"] == InputKind.DATASET:
+            elif meta.kind == InputKind.KWARGS:
+                parameters.append(_Parameter(name, kind=_Parameter.VAR_KEYWORD))
+            elif meta.kind == InputKind.DATASET:
                 parameters.append(
-                    Parameter(
+                    _Parameter(
                         name,
-                        kind=Parameter.KEYWORD_ONLY,
+                        kind=_Parameter.KEYWORD_ONLY,
                         annotation=Dataset,
-                        default=meta["default"],
+                        default=meta.default,
                     )
                 )
             else:
                 parameters.append(
-                    Parameter(
+                    _Parameter(
                         name,
-                        kind=Parameter.KEYWORD_ONLY,
-                        default=meta["default"],
+                        kind=_Parameter.KEYWORD_ONLY,
+                        default=meta.default,
                         annotation=compute_sig.parameters[name].annotation,
                     )
                 )
@@ -809,15 +843,14 @@ class Indicator(IndicatorRegistrar):
         for name, param in self.parameters.items():
             if name == "indexer":
                 indexer = params.pop(name, {})
-            elif isinstance(param, dict):
-                kind = param["kind"]
+            elif isinstance(param, Parameter):
                 # If a variable pop the arg
-                if kind <= InputKind.OPTIONAL_VARIABLE:
+                if param.kind <= InputKind.OPTIONAL_VARIABLE:
                     data = params.pop(name)
                     # If a non-optional variable OR None, store the arg
-                    if kind == InputKind.VARIABLE or data is not None:
+                    if param.kind == InputKind.VARIABLE or data is not None:
                         das[name] = data
-                elif kind == InputKind.KWARGS:
+                elif param.kind == InputKind.KWARGS:
                     kwargs = params.pop(name)
                     params.update(**kwargs)
             else:
@@ -829,9 +862,9 @@ class Indicator(IndicatorRegistrar):
         """Assign inputs passed as strings from ds."""
         ds = ba.arguments.pop("ds")
         for name in list(ba.arguments.keys()):
-            if self.parameters[name][
-                "kind"
-            ] <= InputKind.OPTIONAL_VARIABLE and isinstance(ba.arguments[name], str):
+            if self.parameters[name].kind <= InputKind.OPTIONAL_VARIABLE and isinstance(
+                ba.arguments[name], str
+            ):
                 if ds is not None:
                     try:
                         ba.arguments[name] = ds[ba.arguments[name]]
@@ -1057,11 +1090,12 @@ class Indicator(IndicatorRegistrar):
 
         # We need to deepcopy, otherwise empty defaults get overwritten!
         # All those tweaks are to ensure proper serialization of the returned dictionary.
-        out["parameters"] = deepcopy(self.parameters)
+        out["parameters"] = {
+            k: p.asdict() if isinstance(p, Parameter) else deepcopy(p)
+            for k, p in self.parameters.items()
+        }
         for name, param in list(out["parameters"].items()):
-            if isinstance(param, dict):
-                if param["default"] is _empty:
-                    param.pop("default")
+            if isinstance(self.parameters[name], Parameter):
                 param["kind"] = param["kind"].value  # Get the int.
                 if "choices" in param:  # A set is stored, convert to list
                     param["choices"] = list(param["choices"])
@@ -1091,7 +1125,7 @@ class Indicator(IndicatorRegistrar):
         # Use defaults
         if args is None:
             args = {
-                k: v["default"] if isinstance(v, dict) else v
+                k: v.default if isinstance(v, Parameter) else v
                 for k, v in cls.parameters.items()
             }
 
@@ -1207,7 +1241,17 @@ class Indicator(IndicatorRegistrar):
         Similar to ``Indicators.parameters.items()``, but doesn't include injected parameters.
         """
         for name, param in cls.parameters.items():
-            if isinstance(param, dict):
+            if isinstance(param, Parameter):
+                yield name, param
+
+    @classmethod
+    def injected_parameters(cls):
+        """Generator to iterate over pairs of name and parameter value.
+
+        Exact opposite of :py:meth:`Indicator.iter_parameters`.
+        """
+        for name, param in cls.parameters.items():
+            if not isinstance(param, Parameter):
                 yield name, param
 
 

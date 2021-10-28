@@ -617,10 +617,7 @@ def test_indicator_errors():
         Daily(**d)
 
     func.__doc__ = "\n".join(doc)
-    d["parameters"] = {"thresh": {"description": "This is ok", "garbage": "This aint"}}
-    with pytest.raises(ValueError, match="Parameter metadata can only have keys"):
-        Daily(**d)
-
+    d["parameters"] = {}
     d["parameters"]["thresh"] = "1 degK"
     d["parameters"]["extra"] = "woopsi again"
     with pytest.raises(ValueError, match="Parameter 'extra' was passed but it does"):
