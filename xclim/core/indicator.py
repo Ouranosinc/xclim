@@ -1309,7 +1309,9 @@ def build_indicator_module_from_yaml(
     # Load values from top-level in yml.
     # Priority of arguments differ.
     module_name = name or yml.get("module", filepath.stem)
-    default_base = registry.get(yml.get("base"), Daily)
+    default_base = registry.get(
+        yml.get("base"), base_registry.get(yml.get("base"), Daily)
+    )
     doc = yml.get("doc")
 
     # When given as a stem, we try to load indices and translations
