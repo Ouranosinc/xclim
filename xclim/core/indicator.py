@@ -415,7 +415,7 @@ class Indicator(IndicatorRegistrar):
             parameters.setdefault(name, {})["units"] = unit
 
         compute_sig = signature(compute)
-        # Test for malformed docstrings. Maybe that's too strong?
+        # Check that the `Parameters` section of the docstring does not include parameters that are not in the `compute` function signature.
         if not set(parameters.keys()).issubset(compute_sig.parameters.keys()):
             raise ValueError(
                 f"Malformed docstring on {compute} : the parameters "
