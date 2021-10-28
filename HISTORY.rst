@@ -16,6 +16,7 @@ New features and enhancements
 Breaking changes
 ~~~~~~~~~~~~~~~~
 * Major changes in the YAML schema for virtual submodules, now closer to how indicators are declared dynamically, see the doc for details. (:pull:`849`, :issue:`848`).
+* Refactor of ``xclim.core.calendar.parse_offset``, output types were changed to useful ones (:pull:`885`).
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

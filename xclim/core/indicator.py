@@ -236,8 +236,8 @@ class Indicator(IndicatorRegistrar):
     missing: {any, wmo, pct, at_least_n, skip, from_context}
       The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods. If
       None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
-    freq: {"D", "H", None}
-      The expected frequency of the input data. Use None if irrelevant.
+    freq: str, sequence of strings, optional
+      The expected frequency of the input data. Can be a list if multiple frequencies are supported, or None is irrelevant.
     missing_options : dict, None
       Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
     context: str
@@ -971,8 +971,9 @@ class Indicator(IndicatorRegistrar):
         options = self.missing_options or OPTIONS[MISSING_OPTIONS].get(self.missing, {})
 
         # We flag periods according to the missing method. skip variables without a time coordinate.
+        src_freq = self.freq if isinstance(self.freq, str) else None
         miss = (
-            self._missing(da, freq, self.freq, options, indexer)
+            self._missing(da, freq, src_freq, options, indexer)
             for da in args
             if "time" in da.coords
         )
@@ -1052,7 +1053,7 @@ class Hourly(Indicator):
 class DailyWeeklyMonthly(Indicator):
     """Indicator defined for inputs at daily, weekly or monthly frequencies."""
 
-    freq = "D"
+    freq = ["D", "7D", "M"]
 
     @staticmethod
     def datacheck(**das):  # noqa
