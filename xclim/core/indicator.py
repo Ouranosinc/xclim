@@ -141,15 +141,36 @@ base_registry = dict()
 _indicators_registry = defaultdict(list)  # Private instance registry
 
 
+class empty_param:
+    """Sentinel class for unset properties of Indicator's parameters."""
+
+    pass
+
+
 @dataclass
 class Parameter:
-    """Class for storing an indicator's controllable parameter."""
+    """Class for storing an indicator's controllable parameter.
+
+    For retrocompatibility, this class implements a "getitem" and a special "contains".
+
+    Example
+    -------
+    >>> p = Parameter(InputKind.NUMBER, default=2, description='A simple number')
+    >>> p.units  # has not been set
+    <class 'xclim.core.indicator.empty_param'>
+    >>> 'units' in p  # Easier/retrocompatible way to test is units are set
+    False
+    >>> p.description
+    'A simple number'
+    >>> p['description']  # Same as above, for convenience.
+    'A simple number'
+    """
 
     kind: InputKind
     default: Any = _empty
     description: str = ""
-    units: str = _empty  # Reuse of inspect sentinel object to mean "unset"
-    choices: set = _empty
+    units: str = empty_param
+    choices: set = empty_param
 
     def update(self, other: dict):
         """Update a parameter's values from a dict."""
@@ -172,11 +193,11 @@ class Parameter:
 
     def __contains__(self, key):
         # To imitate previous behaviour where "units" and "choices" were missing,
-        # instead of being "_empty".
-        return getattr(self, key, _empty) is not _empty
+        # instead of being "empty_param".
+        return getattr(self, key, empty_param) is not empty_param
 
     def asdict(self):
-        return {k: v for k, v in asdict(self).items() if v is not _empty}
+        return {k: v for k, v in asdict(self).items() if v is not empty_param}
 
 
 class IndicatorRegistrar:
@@ -237,8 +258,9 @@ class Indicator(IndicatorRegistrar):
 
     A lot of the Indicator's metadata is parsed from the underlying `compute` function's
     docstring and signature. Input variables and parameters are listed in
-    :py:attr:`xclim.core.indicator.Indicator.parameters`, which contains both injected
-    parameters and "signature" parameters (that a user can control).
+    :py:attr:`xclim.core.indicator.Indicator.parameters`, while parameters that will be
+    injected in the compute function are in  :py:attr:`xclim.core.indicator.Indicator.injected_parameters`.
+    Both are simply views of :py:attr:`xclim.core.indicator.Indicator._all_parameters`.
 
     Compared to their base `compute` function, indicators add the possibility of using dataset as input,
     with the injected argument `ds` in the call signature. All arguments that were indicated
@@ -323,7 +345,7 @@ class Indicator(IndicatorRegistrar):
     references = ""
     notes = ""
 
-    parameters: Mapping[str, Union[Parameter, Any]] = {}
+    _all_parameters: Mapping[str, Union[Parameter, Any]] = {}
     """A dictionary mapping metadata about the input parameters to the indicator.
 
     Keys are the arguments of the "compute" function. "Injected" parameters,
@@ -372,7 +394,7 @@ class Indicator(IndicatorRegistrar):
                 # title, abstract, references, notes, long_name
                 kwds.setdefault(name, value)
         else:  # inherit parameters from base class
-            parameters = deepcopy(cls.parameters)
+            parameters = deepcopy(cls._all_parameters)
 
         # Update parameters with passed parameters
         cls._update_parameters(parameters, kwds.pop("parameters", {}))
@@ -397,7 +419,7 @@ class Indicator(IndicatorRegistrar):
             )(kwds["compute"])
 
         # All updates done.
-        kwds["parameters"] = parameters
+        kwds["_all_parameters"] = parameters
 
         # By default skip missing values handling if there is no resampling.
         # Dont only check if freq is in current parameters but also if it was injected earlier.
@@ -436,9 +458,6 @@ class Indicator(IndicatorRegistrar):
             # If the module was not forced, set the module to the base class' module.
             # Otherwise all indicators will have module `xclim.core.indicator`.
             new.__module__ = cls.__module__
-
-        # Generate docstring
-        new.__doc__ = generate_indicator_docstring(new)
 
         #  Add the created class to the registry
         # This will create an instance from the new class and call __init__.
@@ -522,7 +541,7 @@ class Indicator(IndicatorRegistrar):
                     f"{new_name} which is not understood by xclim or CMIP6. Please"
                     " use names listed in `xclim.core.utils.VARIABLES`."
                 )
-            if meta.units is not _empty:
+            if meta.units is not empty_param:
                 try:
                     check_units(varmeta["canonical_units"], meta.units)
                 except ValidationError:
@@ -548,7 +567,10 @@ class Indicator(IndicatorRegistrar):
         """
         for name, meta in parameters.items():
             if isinstance(meta, Parameter):
-                if meta.kind <= InputKind.OPTIONAL_VARIABLE and meta.units is _empty:
+                if (
+                    meta.kind <= InputKind.OPTIONAL_VARIABLE
+                    and meta.units is empty_param
+                ):
                     raise ValueError(
                         f"Input variable {name} is missing expected units. Units are "
                         "parsed either from the declare_units decorator or from the "
@@ -703,6 +725,9 @@ class Indicator(IndicatorRegistrar):
 
         self.__signature__ = self._gen_signature()
 
+        # Generate docstring
+        self.__doc__ = generate_indicator_docstring(self)
+
     def _gen_signature(self):
         """Generates the correct signature."""
         # Update call signature
@@ -710,8 +735,6 @@ class Indicator(IndicatorRegistrar):
         parameters = []
         compute_sig = signature(self.compute)
         for name, meta in self.parameters.items():
-            if not isinstance(meta, Parameter):
-                continue
             if meta.kind <= InputKind.OPTIONAL_VARIABLE:
                 annot = Union[DataArray, str]
                 if meta.kind == InputKind.OPTIONAL_VARIABLE:
@@ -840,7 +863,7 @@ class Indicator(IndicatorRegistrar):
         das = OrderedDict()
         params = ba.arguments.copy()
         indexer = {}
-        for name, param in self.parameters.items():
+        for name, param in self._all_parameters.items():
             if name == "indexer":
                 indexer = params.pop(name, {})
             elif isinstance(param, Parameter):
@@ -1092,13 +1115,15 @@ class Indicator(IndicatorRegistrar):
         # All those tweaks are to ensure proper serialization of the returned dictionary.
         out["parameters"] = {
             k: p.asdict() if isinstance(p, Parameter) else deepcopy(p)
-            for k, p in self.parameters.items()
+            for k, p in self._all_parameters.items()
         }
         for name, param in list(out["parameters"].items()):
-            if isinstance(self.parameters[name], Parameter):
+            if isinstance(self._all_parameters[name], Parameter):
                 param["kind"] = param["kind"].value  # Get the int.
                 if "choices" in param:  # A set is stored, convert to list
                     param["choices"] = list(param["choices"])
+                if param["default"] is _empty:
+                    del param["default"]
             elif callable(param):  # Rare special case (doy_qmax and doy_qmin).
                 out["parameters"][name] = f"{param.__module__}.{param.__name__}"
 
@@ -1126,7 +1151,7 @@ class Indicator(IndicatorRegistrar):
         if args is None:
             args = {
                 k: v.default if isinstance(v, Parameter) else v
-                for k, v in cls.parameters.items()
+                for k, v in cls._all_parameters.items()
             }
 
         # Prepare arguments
@@ -1234,25 +1259,29 @@ class Indicator(IndicatorRegistrar):
     def n_outs(self):
         return len(self.cf_attrs)
 
-    @classmethod
-    def iter_parameters(cls):
-        """Generator to iterate over pairs of name and parameter dict.
+    @property
+    def parameters(self):
+        """Dictionary of controlable parameters.
 
-        Similar to ``Indicators.parameters.items()``, but doesn't include injected parameters.
+        Similar to :py:attr:`Indicator._all_parameters`, but doesn't include injected parameters.
         """
-        for name, param in cls.parameters.items():
-            if isinstance(param, Parameter):
-                yield name, param
+        return {
+            name: param
+            for name, param in self._all_parameters.items()
+            if isinstance(param, Parameter)
+        }
 
-    @classmethod
-    def injected_parameters(cls):
-        """Generator to iterate over pairs of name and parameter value.
+    @property
+    def injected_parameters(self):
+        """Dictionary of injected parameters.
 
-        Exact opposite of :py:meth:`Indicator.iter_parameters`.
+        Opposite of :py:meth:`Indicator.parameters`.
         """
-        for name, param in cls.parameters.items():
-            if not isinstance(param, Parameter):
-                yield name, param
+        return {
+            name: param
+            for name, param in self._all_parameters.items()
+            if not isinstance(param, Parameter)
+        }
 
 
 class Daily(Indicator):

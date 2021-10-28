@@ -365,7 +365,7 @@ def test_all_parameters_understood(official_indicators):
     problems = []
     for identifier, ind in official_indicators.items():
         indinst = ind.get_instance()
-        for name, param in indinst.iter_parameters():
+        for name, param in indinst.parameters.items():
             if param["kind"] == InputKind.OTHER_PARAMETER:
                 problems.append((identifier, name))
     if problems:
@@ -555,13 +555,13 @@ def test_indicator_from_dict():
 
     assert ind.realm == "atmos"
     # Parameters metadata modification
-    assert ind.parameters["threshold"]["description"] == "A threshold temp"
+    assert ind.parameters["threshold"].description == "A threshold temp"
     # Injection of paramters
-    assert ind.parameters["condition"] == "<"
+    assert ind.injected_parameters["condition"] == "<"
     # Default value for input variable injected and meta injected
     assert ind._variable_mapping["data"] == "tas"
     assert signature(ind).parameters["tas"].default == "tas"
-    assert ind.parameters["tas"]["units"] == "K"
+    assert ind.parameters["tas"].units == "K"
 
     # Wrap a multi-output ind
     d = dict(base="wind_speed_from_vector")

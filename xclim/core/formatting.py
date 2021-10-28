@@ -478,12 +478,12 @@ def _gen_parameters_section(parameters, allowed_periods=None):
 
     Parameters
     ----------
-    parameters : generator, pairs of name and parameters' dict
-      Parameters dictionary (`Ind.iter_parameters()`).
+    parameters :
+      Parameters dictionary (`Ind.parameters`).
     allowed_periods : list of str, optional
     """
     section = "Parameters\n----------\n"
-    for name, param in parameters:
+    for name, param in parameters.items():
         descstr = param.description
         if param.kind == InputKind.FREQ_STR and allowed_periods is not None:
             descstr += (
@@ -499,7 +499,7 @@ def _gen_parameters_section(parameters, allowed_periods=None):
             annotstr = str(param.choices)
         else:
             annotstr = KIND_ANNOTATION[param.kind]
-        if param.units not in [_empty, None]:
+        if "units" in param and param.units is not None:
             unitstr = f"[Required units : {param.units}]"
         else:
             unitstr = ""
@@ -537,23 +537,24 @@ def generate_indicator_docstring(ind):
 
     Parameters
     ----------
-    ind: Indicator class
+    ind: Indicator instance
     """
     header = f"{ind.title} (realm: {ind.realm})\n\n{ind.abstract}\n"
 
     special = f'This indicator will check for missing values according to the method "{ind.missing}".\n'
 
-    injected = dict(ind.injected_parameters())
     if hasattr(ind.compute, "__module__"):
         special += f"Based on indice :py:func:`~{ind.compute.__module__}.{ind.compute.__name__}`.\n"
-        if injected:
+        if ind.injected_parameters:
             special += "With injected parameters: "
-            special += ", ".join([f"{k}={v}" for k, v in injected.items()])
+            special += ", ".join(
+                [f"{k}={v}" for k, v in ind.injected_parameters.items()]
+            )
             special += ".\n"
     if ind.keywords:
         special += f"Keywords : {ind.keywords}.\n"
 
-    parameters = _gen_parameters_section(ind.iter_parameters(), ind.allowed_periods)
+    parameters = _gen_parameters_section(ind.parameters, ind.allowed_periods)
 
     returns = _gen_returns_section(ind.cf_attrs)
 
