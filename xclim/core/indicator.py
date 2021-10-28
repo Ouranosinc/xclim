@@ -237,7 +237,7 @@ class Indicator(IndicatorRegistrar):
       The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods. If
       None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
     freq: str, sequence of strings, optional
-      The expected frequency of the input data. Can be a list if multiple frequencies are supported, or None is irrelevant.
+      The expected frequency of the input data. Can be a list for multiple frequencies, or None if irrelevant.
     missing_options : dict, None
       Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
     context: str
