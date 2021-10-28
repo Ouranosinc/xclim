@@ -625,11 +625,30 @@ class Indicator(IndicatorRegistrar):
         # data.compute refers to a function in xclim.indices.generic or xclim.indices (in this order of priority).
         # It can also directly be a function (like if a module was passed to build_indicator_module_from_yaml)
         if isinstance(compute, str):
-            compute = getattr(indices.generic, compute, getattr(indices, compute, None))
-            if compute is None:
+            compute_func = getattr(
+                indices.generic, compute, getattr(indices, compute, None)
+            )
+            if compute_func is None:
                 raise ImportError(
-                    f"Indice function {compute} not found in xclim.indices or "
-                    "xclim.indices.generic."
+                    f"Indice function {compute} not found in xclim.indices or xclim.indices.generic."
+                )
+            compute = compute_func
+
+        injected_params = {}
+        for name, param in data.pop("parameters", {}).items():
+            if not isinstance(param, dict):
+                # Injecting by passing a value directly, catch all YAML-supported types
+                injected_params[name] = param
+            else:
+                # Changing the metadata (only "description", "default", "choices" and "units")
+                params[name] = param
+                if "units" in param:
+                    input_units[name] = param["units"]
+
+        if input_units:
+            if hasattr(compute, "in_units"):
+                raise ValueError(
+                    f"Passing inputs or changing parameters' units is only valid if the compute function is not aleady wrapped by `xclim.core.units.declare_units`. Got function {compute} that has input units {compute.in_units}."
                 )
             data["compute"] = compute
 

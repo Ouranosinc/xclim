@@ -4,11 +4,13 @@ History
 
 0.31.0 (unreleased)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), Juliette Lavoie (:user:`juliettelavoie`).
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Improve cell_methods checking to search the wanted method within the whole string. (:pull:`866`, :issue:`863`).
+* New ``align_on='random`` option for ``xclim.core.calendar.convert_calendar``, for conversions involving '360_day' calendars. (:pull:`875`, :issue:`841`).
+* ``dry_spell_frequency`` now has a parameter `op: {"sum", "max"}` to choose if the threshold is compared against the accumulated or maximal precipitation, over the given window. (:pull:`879`).
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
@@ -20,6 +22,11 @@ Breaking changes
     - ``Indicator.parameters`` now includes the injected parameters, which it didn't before. If one wants to iterates on non-injected parameters, one can use ``Indicator.iter_parameters()``, yielding pairs of (name, meta), where meta is always a dictionary.
     - See the pull request (:pull:`873`) for all information.
 
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* The ``sdba.loess`` algorithm has been optimized to run faster in all cases, with an even faster special case (``equal_spacing=True``) when the x coordinate is equally spaced. When activated, this special case might return results different from without, up to around 0.1%. (:pull:`865`)
+* Add support for group's window and additionnal dimensions in ``LoessDetrend``. Add new ``RollingMeanDetrend`` object. (:pull:`865`)
 
 Internal changes
 ~~~~~~~~~~~~~~~~

@@ -87,6 +87,11 @@ def test_custom_indices():
         nbpath / "example.yml", name="ex2", indices=exinds
     )
 
+    # Error when missing
+    with pytest.raises(ImportError, match="extreme_precip_accumulation_and_days"):
+        build_indicator_module_from_yaml(nbpath / "example.yml", name="ex3")
+    build_indicator_module_from_yaml(nbpath / "example.yml", name="ex4", mode="ignore")
+
     assert ex1.R95p.__doc__ == ex2.R95p.__doc__  # noqa
 
     out1 = ex1.R95p(pr=pr)  # noqa

@@ -394,9 +394,9 @@ def count_occurrences(
 
 
 def diurnal_temperature_range(
-    low_data: xr.DataArray, high_data: xr.DataArray, freq: str
+    low_data: xr.DataArray, high_data: xr.DataArray, reducer: str, freq: str
 ) -> xr.DataArray:
-    """Calculate the average diurnal temperature range.
+    """Calculate the diurnal temperature range and reduce according to a statistic.
 
     Parameters
     ----------
@@ -404,6 +404,8 @@ def diurnal_temperature_range(
       Lowest daily temperature (tasmin).
     high_data : xr.DataArray
       Highest daily temperature (tasmax).
+    reducer : {'max', 'min', 'mean', 'sum'}
+      Reducer.
     freq: str
       Resampling frequency.
 
@@ -414,7 +416,7 @@ def diurnal_temperature_range(
     high_data = convert_units_to(high_data, low_data)
 
     dtr = high_data - low_data
-    out = dtr.resample(time=freq).mean()
+    out = getattr(dtr.resample(time=freq), reducer)()
 
     u = str2pint(low_data.units)
     out.attrs["units"] = pint2cfunits(u - u)
@@ -511,7 +513,7 @@ def spell_length(
       Quantity.
     condition : {">", "<", ">=", "<=", "==", "!="}
       Operator
-    reducer : {'maximum', 'minimum', 'mean', 'sum'}
+    reducer : {'max', 'min', 'mean', 'sum'}
       Reducer.
     freq : str
       Resampling frequency.
@@ -568,7 +570,7 @@ def thresholded_statistics(
       Quantity.
     condition : {">", "<", ">=", "<=", "==", "!="}
       Operator
-    reducer : {'maximum', 'minimum', 'mean', 'sum'}
+    reducer : {'max', 'min', 'mean', 'sum'}
       Reducer.
     freq : str
       Resampling frequency.

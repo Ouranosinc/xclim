@@ -2260,37 +2260,88 @@ def test_water_budget(pr_series, tasmin_series, tasmax_series):
     np.testing.assert_allclose(out[1, 0], [8.5746025 / 86400], rtol=1e-1)
 
 
-def test_dry_spell(pr_series):
-    pr = pr_series(
-        np.array(
-            [
-                1.01,
-                1.01,
-                1.01,
-                1.01,
-                1.01,
-                1.01,
-                0.01,
-                0.01,
-                0.01,
-                0.51,
-                0.51,
-                0.75,
-                0.75,
-                0.51,
-                0.01,
-                0.01,
-                0.01,
-                1.01,
-                1.01,
-                1.01,
-            ]
+class TestDrySpell:
+    def test_dry_spell(self, pr_series):
+        pr = pr_series(
+            np.array(
+                [
+                    1.01,
+                    1.01,
+                    1.01,
+                    1.01,
+                    1.01,
+                    1.01,
+                    0.01,
+                    0.01,
+                    0.01,
+                    0.51,
+                    0.51,
+                    0.75,
+                    0.75,
+                    0.51,
+                    0.01,
+                    0.01,
+                    0.01,
+                    1.01,
+                    1.01,
+                    1.01,
+                ]
+            )
         )
-    )
-    pr.attrs["units"] = "mm/day"
+        pr.attrs["units"] = "mm/day"
 
-    events = xci.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="YS")
-    total_d = xci.dry_spell_total_length(pr, thresh="3 mm", window=7, freq="YS")
+        events = xci.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="YS")
+        total_d = xci.dry_spell_total_length(pr, thresh="3 mm", window=7, freq="YS")
 
-    np.testing.assert_allclose(events[0], [2], rtol=1e-1)
-    np.testing.assert_allclose(total_d[0], [12], rtol=1e-1)
+        np.testing.assert_allclose(events[0], [2], rtol=1e-1)
+        np.testing.assert_allclose(total_d[0], [12], rtol=1e-1)
+
+    def test_dry_spell_frequency_op(self, pr_series):
+        pr = pr_series(
+            np.array(
+                [
+                    29.012,
+                    0.1288,
+                    0.0253,
+                    0.0035,
+                    4.9147,
+                    1.4186,
+                    1.014,
+                    0.5622,
+                    0.8001,
+                    10.5823,
+                    2.8879,
+                    8.2635,
+                    0.292,
+                    0.5242,
+                    0.2426,
+                    1.3934,
+                    0.0,
+                    0.4633,
+                    0.1862,
+                    0.0034,
+                    2.4591,
+                    3.8547,
+                    3.1983,
+                    3.0442,
+                    7.422,
+                    14.8854,
+                    13.4334,
+                    0.0012,
+                    0.0782,
+                    31.2916,
+                    0.0379,
+                ]
+            )
+        )
+        pr.attrs["units"] = "mm/day"
+
+        test_sum = xci.dry_spell_frequency(
+            pr, thresh="1 mm", window=3, freq="MS", op="sum"
+        )
+        test_max = xci.dry_spell_frequency(
+            pr, thresh="1 mm", window=3, freq="MS", op="max"
+        )
+
+        np.testing.assert_allclose(test_sum[0], [2], rtol=1e-1)
+        np.testing.assert_allclose(test_max[0], [3], rtol=1e-1)
