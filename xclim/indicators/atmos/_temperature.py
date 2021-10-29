@@ -505,7 +505,9 @@ cooling_degree_days = Temp(
     long_name="Cooling degree days (Tmean > {thresh})",
     description="{freq} cooling degree days above {thresh}.",
     cell_methods="time: mean within days time: sum over days",
-    compute=wrapped_partial(indices.cooling_degree_days, thresh="18 degC"),
+    compute=wrapped_partial(
+        indices.cooling_degree_days, suggested=dict(thresh="18 degC")
+    ),
 )
 
 heating_degree_days = Temp(
