@@ -17,6 +17,7 @@ New features and enhancements
 Breaking changes
 ~~~~~~~~~~~~~~~~
 * Major changes in the YAML schema for virtual submodules, now closer to how indicators are declared dynamically, see the doc for details. (:pull:`849`, :issue:`848`).
+* Removed ``xclim.generic.daily_downsampler``, as it served no purpose now that xarray's resampling works with cftime (:pull:`888`, :issue:`889`).
 * Refactor of ``xclim.core.calendar.parse_offset``, output types were changed to useful ones (:pull:`885`).
 
 New features and enhancements
@@ -31,6 +32,7 @@ Internal changes
 * Updated the contribution guidelines to better give credit to contributors and more easily track changes. (:pull:`869`, :issue:`868`).
 * Enabled coveralls code coverage reporting for GitHub CI. (:pull:`870`).
 * Added automated TestPyPI and PyPI-publishing workflows for GitHub CI. (:pull:`872`).
+* Added missing algorithms tests for conversion from hourly to daily (:pull:`888`).
 
 Bug fixes
 ~~~~~~~~~
