@@ -43,14 +43,11 @@ def test_default_modules_exist():
 def test_virtual_modules(virtual_indicator, atmosds):
     with set_options(cf_compliance="warn"):
         # skip when missing default values
-        kws = {}
         mod, indname, ind = virtual_indicator
-        for name, param in ind.iter_parameters():
-            if name == "src_timestep":
-                kws["src_timestep"] = "D"
-            if param["kind"] is not InputKind.DATASET and (
-                param["default"] in (None, _empty)
-                or (param["default"] == name and name not in atmosds)
+        for name, param in ind.parameters.items():
+            if param.kind is not InputKind.DATASET and (
+                param.default in (None, _empty)
+                or (param.default == name and name not in atmosds)
             ):
 
                 pytest.skip(f"Indicator {mod}.{indname} has no default for {name}.")
