@@ -492,11 +492,11 @@ class TestCoolingDegreeDays:
         tas.values[180, 1, 0] = np.nan
 
         # compute with both skipna options
-        thresh = 18 + K2C
-        cdd = atmos.cooling_degree_days(tas, thresh="18 C", freq="YS")
+        cdd = atmos.cooling_degree_days(tas, freq="YS")
 
         x1 = tas.values[:, 0, 0]
 
+        thresh = 18 + K2C
         cdd1 = (x1[x1 > thresh] - thresh).sum()
 
         assert np.allclose(cdd1, cdd.values[0, 0, 0])
@@ -515,12 +515,12 @@ class TestCoolingDegreeDays:
         tas.values[180, 1, 0] = np.nan
 
         # compute with both skipna options
-        thresh = 18
-        cdd = atmos.cooling_degree_days(tas, thresh="18 C", freq="YS")
+        cdd = atmos.cooling_degree_days(tas, freq="YS")
 
         x1 = tas.values[:, 0, 0]
         # x2 = tas.values[:, 1, 0]
 
+        thresh = 18
         cdd1 = (x1[x1 > thresh] - thresh).sum()
         # gdd2 = (x2[x2 > thresh] - thresh).sum()
 
