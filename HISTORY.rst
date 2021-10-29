@@ -11,10 +11,16 @@ New features and enhancements
 * Improve cell_methods checking to search the wanted method within the whole string. (:pull:`866`, :issue:`863`).
 * New ``align_on='random`` option for ``xclim.core.calendar.convert_calendar``, for conversions involving '360_day' calendars. (:pull:`875`, :issue:`841`).
 * ``dry_spell_frequency`` now has a parameter `op: {"sum", "max"}` to choose if the threshold is compared against the accumulated or maximal precipitation, over the given window. (:pull:`879`).
+* ``maximum_consecutive_frost_free_days`` is now checking that the minimum temperature is above or equal to the threshold ( instead of only above). (:pull:`883`, :issue:`881`).
+* The ANUCLIM virtual module as been updated to accept weekly and monthly inputs and with improved metadata. (:pull:`885`, :issue:`538`)
+* The ``sdba.loess`` algorithm has been optimized to run faster in all cases, with an even faster special case (``equal_spacing=True``) when the x coordinate is equally spaced. When activated, this special case might return results different from without, up to around 0.1%. (:pull:`865`)
+* Add support for group's window and additionnal dimensions in ``LoessDetrend``. Add new ``RollingMeanDetrend`` object. (:pull:`865`)
+* Missing value algorithms now try to infer the source timestep of the input data when it is not given. (:pull:`885`)
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
 * Major changes in the YAML schema for virtual submodules, now closer to how indicators are declared dynamically, see the doc for details. (:pull:`849`, :issue:`848`).
+* Refactor of ``xclim.core.calendar.parse_offset``, output types were changed to useful ones (:pull:`885`).
 * Major changes on how parameters are passed to indicators (:pull:`873`)
 
     - Their signature is now consistent : input variables (DataArrays, optional or not) are positional or keyword arguments and all other parameters are keyword only. (:issue:`855`, :issue:`857`)
@@ -25,12 +31,6 @@ Breaking changes
     - New ``Indicator.injected_parameters`` to see which compute function arguments will
     be injected at call time.
     - See the pull request (:pull:`873`) for all information.
-
-
-New features and enhancements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* The ``sdba.loess`` algorithm has been optimized to run faster in all cases, with an even faster special case (``equal_spacing=True``) when the x coordinate is equally spaced. When activated, this special case might return results different from without, up to around 0.1%. (:pull:`865`)
-* Add support for group's window and additionnal dimensions in ``LoessDetrend``. Add new ``RollingMeanDetrend`` object. (:pull:`865`)
 
 Internal changes
 ~~~~~~~~~~~~~~~~
@@ -43,6 +43,7 @@ Internal changes
 Bug fixes
 ~~~~~~~~~
 * Fix a bug in bootstrapping where computation would fail when the dataset time coordinate is encoded using `cftime.datetime`. (:pull:`859`).
+* Fix a bug in ``build_indicator_module_from_yaml`` where bases classes (Daily, Hourly, etc) were not usable with the `base` field. (:pull:`885`)
 
 0.30.1 (2021-10-01)
 -------------------
