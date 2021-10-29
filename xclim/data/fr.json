@@ -663,11 +663,11 @@
     "abstract": "Longueur maximale des périodes chaudes dans une période donnée. Une période chaude se produit lorsque la température journalière maximale excède un seuil spécifique durant un minimum de jours."
   },
   "CONSECUTIVE_FROST_FREE_DAYS": {
-    "long_name": "Nombre maximal de jours consécutifs avec Tmin > {thresh}",
-    "description": "Nombre maximal {freq} de jours consécutifs où la température journalière minimale excède {thresh}.",
+    "long_name": "Nombre maximal de jours consécutifs avec Tmin >= {thresh}",
+    "description": "Nombre maximal {freq} de jours consécutifs où la température journalière minimale excède ou est égale à {thresh}.",
     "comment": "",
-    "title": "Nombre maximal de jours consécutifs sans gel (Tmin > 0℃)",
-    "abstract": "La nombre maximal de jours consécutifs sans gel: où la température journalière minimale est au-dessus d'un seuil."
+    "title": "Nombre maximal de jours consécutifs sans gel (Tmin >= 0℃)",
+    "abstract": "La nombre maximal de jours consécutifs sans gel: où la température journalière minimale est au-dessus ou égale à un seuil."
   },
   "GROWING_SEASON_END": {
     "long_name": "Jour de l'année de la fin de la saison de végétation",
