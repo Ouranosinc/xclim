@@ -502,17 +502,17 @@ cooling_degree_days = Temp(
     identifier="cooling_degree_days",
     units="K days",
     standard_name="integral_of_air_temperature_excess_wrt_time",
-    long_name="Cooling Degree Days (Tmean > {thresh})",
+    long_name="Cooling degree days (Tmean > {thresh})",
     description="{freq} cooling degree days above {thresh}.",
     cell_methods="time: mean within days time: sum over days",
-    compute=indices.cooling_degree_days,
+    compute=wrapped_partial(indices.cooling_degree_days, thresh="18 degC"),
 )
 
 heating_degree_days = Temp(
     identifier="heating_degree_days",
     units="K days",
     standard_name="integral_of_air_temperature_deficit_wrt_time",
-    long_name="Heating Degree Days (Tmean < {thresh})",
+    long_name="Heating degree days (Tmean < {thresh})",
     description="{freq} heating degree days below {thresh}.",
     cell_methods="time: mean within days time: sum over days",
     compute=indices.heating_degree_days,
@@ -522,10 +522,20 @@ growing_degree_days = Temp(
     identifier="growing_degree_days",
     units="K days",
     standard_name="integral_of_air_temperature_excess_wrt_time",
-    long_name="growing degree days above {thresh}",
-    description="{freq} growing degree days above {thresh}",
+    long_name="Growing degree days above {thresh}",
+    description="{freq} growing degree days above {thresh}.",
     cell_methods="time: mean within days time: sum over days",
     compute=indices.growing_degree_days,
+)
+
+thawing_degree_days = Temp(
+    identifier="thawing_degree_days",
+    units="K days",
+    standard_name="integral_of_air_temperature_excess_wrt_time",
+    long_name="Thawing degree days (degree days above 0°C)",
+    description="{freq} thawing degree days above 0°C.",
+    cell_methods="time: mean within days time: sum over days",
+    compute=wrapped_partial(indices.growing_degree_days, thresh="0 degC"),
 )
 
 freshet_start = Temp(
@@ -542,7 +552,7 @@ frost_days = Temp(
     identifier="frost_days",
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
-    long_name="Number of Frost Days (Tmin < 0C)",
+    long_name="Number of frost days (Tmin < 0C)",
     description="{freq} number of days with minimum daily temperature below 0℃.",
     cell_methods="time: minimum within days time: sum over days",
     compute=indices.frost_days,
@@ -596,7 +606,7 @@ ice_days = Temp(
     standard_name="days_with_air_temperature_below_threshold",
     units="days",
     long_name="Number of Ice Days (Tmax < 0℃)",
-    description="{freq} number of days with maximum daily temperature below 0℃",
+    description="{freq} number of days with maximum daily temperature below 0℃.",
     cell_methods="time: maximum within days time: sum over days",
     compute=indices.ice_days,
 )
@@ -607,7 +617,7 @@ consecutive_frost_days = Temp(
     standard_name="spell_length_of_days_with_air_temperature_below_threshold",
     long_name="Maximum number of consecutive days with Tmin < {thresh}",
     description="{freq} maximum number of consecutive days with "
-    "minimum daily temperature below {thresh}",
+    "minimum daily temperature below {thresh}.",
     cell_methods="time: min within days time: maximum over days",
     compute=indices.maximum_consecutive_frost_days,
 )
@@ -706,7 +716,7 @@ tropical_nights = Temp(
     standard_name="number_of_days_with_air_temperature_above_threshold",
     long_name="Number of Tropical Nights (Tmin > {thresh})",
     description="{freq} number of Tropical Nights : defined as days with minimum daily temperature"
-    " above {thresh}",
+    " above {thresh}.",
     cell_methods="time: minimum within days time: sum over days",
     compute=indices.tn_days_above,
     parameters={"thresh": {"default": "20 degC"}},
@@ -890,7 +900,7 @@ effective_growing_degree_days = Temp(
     "Considers daily Tmin and Tmax with a base of {thresh} between dynamically-determined growing season start"
     "and end dates. The 'bootsma' method uses a 10-day average temperature above {thresh} to identify a start date, "
     "while the 'qian' method uses a weighted mean average above {thresh} over 5 days to determine start date. "
-    "The end date of the growing season is the date of first fall frost (Tmin < 0 degC).",
+    "The end date of the growing season is the date of first fall frost (Tmin < 0°C).",
     cell_methods="",
     comment="Original formula published in Bootsma et al. 2005.",
     var_name="egdd",
@@ -903,8 +913,8 @@ latitude_temperature_index = Temp(
     units="",
     long_name="Latitude-temperature index",
     description="A climate indice based on mean temperature of the warmest month and a latitude-based coefficient to "
-    "account for longer day-length favouring growing conditions. Developed specifically for viticulture. Mean temperature of warmest "
-    "month * ({lat_factor} - latitude).",
+    "account for longer day-length favouring growing conditions. Developed specifically for viticulture. "
+    "Mean temperature of warmest month * ({lat_factor} - latitude).",
     cell_methods="",
     allowed_periods=["A"],
     comment="Indice originally published in Jackson, D. I., & Cherry, N. J. (1988)",
