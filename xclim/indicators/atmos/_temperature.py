@@ -605,6 +605,19 @@ consecutive_frost_days = Temp(
     compute=indices.maximum_consecutive_frost_days,
 )
 
+frost_free_season_length = Temp(
+    identifier="frost_free_season_length",
+    units="days",
+    standard_name="days_with_air_temperature_above_threshold",
+    long_name="Length of the frost free season",
+    description="{freq} number of days between the first occurrence of at least "
+    "{window} consecutive days with minimum daily temperature above freezing and "
+    "the first occurrence of at least {window} consecutive days with "
+    "minimuim daily temperature below freezing after {mid_date}.",
+    cell_methods="time: minimum within days time: sum over days",
+    compute=wrapped_partial(indices.growing_season_length, thresh="0 degC"),
+)
+
 maximum_consecutive_frost_free_days = Temp(
     identifier="consecutive_frost_free_days",
     units="days",
@@ -614,6 +627,21 @@ maximum_consecutive_frost_free_days = Temp(
     "minimum daily temperature above or equal to {thresh}.",
     cell_methods="time: min within days time: maximum over days",
     compute=indices.maximum_consecutive_frost_free_days,
+)
+
+growing_season_start = Temp(
+    identifier="growing_season_start",
+    units="",
+    standard_name="day_of_year",
+    long_name="Day of year of growing season start",
+    description="Day of year of start of growing season, defined as the first day of "
+    "consistent superior threshold temperature of {thresh} after a run of "
+    "{window} days inferior to threshold temperature.",
+    cell_methods="",
+    compute=wrapped_partial(
+        indices.growing_season_length,
+        suggested=dict(thresh="5.0 degC"),
+    ),
 )
 
 growing_season_length = Temp(
