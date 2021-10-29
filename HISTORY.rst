@@ -22,7 +22,7 @@ New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * The ``sdba.loess`` algorithm has been optimized to run faster in all cases, with an even faster special case (``equal_spacing=True``) when the x coordinate is equally spaced. When activated, this special case might return results different from without, up to around 0.1%. (:pull:`865`)
 * Add support for group's window and additionnal dimensions in ``LoessDetrend``. Add new ``RollingMeanDetrend`` object. (:pull:`865`)
-* Missing classes now try to infer the source timestep of the input data when it is not given. (:pull:`885`)
+* Missing value algorithms now try to infer the source timestep of the input data when it is not given. (:pull:`885`)
 
 Internal changes
 ~~~~~~~~~~~~~~~~

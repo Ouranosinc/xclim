@@ -1051,7 +1051,10 @@ class Hourly(Indicator):
 
 
 class DailyWeeklyMonthly(Indicator):
-    """Indicator defined for inputs at daily, weekly or monthly frequencies."""
+    """Indicator defined for inputs at daily, weekly or monthly frequencies.
+    
+    Required by ANUCLIM indicators.
+    """
 
     freq = ["D", "7D", "M"]
 

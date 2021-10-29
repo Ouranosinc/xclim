@@ -620,7 +620,7 @@ def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
         t_a = (t[1] - t[0]).total_seconds()
         t = pd.date_range("1970-01-01T00:00:00.000", periods=2, freq=freqB)
         t_b = (t[1] - t[0]).total_seconds()
-    # else Same base freq, compare mulitplicator only.
+    # else Same base freq, compare multiplicator only.
 
     return get_op(op)(t_a, t_b)
 
@@ -628,6 +628,13 @@ def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
 def parse_offset(freq: str) -> Sequence[str]:
     """Parse an offset string.
 
+Parse a frequency offset and, if needed, convert to cftime-compatible components.
+
+Parameters
+----------
+freq : str
+  Frequency offset.
+  
     Returns
     -------
     multiplicator (int), offset base (str), is start anchored (bool), anchor (str or None)

@@ -22,9 +22,8 @@ def check_freq(var: xr.DataArray, freq: Union[str, Sequence[str]], strict: bool 
     ----------
     var : xr.DataArray
       Input array.
-    freq : str or sequence of str,
-      The expected temporal frequencies, as the Pandas frequency strings.
-      Xarray understands : 'A', 'M', 'D', 'H', 'T', 'S', 'L' and 'U' and multiples thereof.
+    freq : str or sequence of str
+      The expected temporal frequencies, using Pandas frequency terminology ({'A', 'M', 'D', 'H', 'T', 'S', 'L', 'U'} and multiples thereof).
       To test strictly for 'W', pass '7D' with `strict=True`.
       This ignores the start flag and the anchor (ex: 'AS-JUL' will validate against 'Y').
     strict : bool

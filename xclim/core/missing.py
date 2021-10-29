@@ -65,7 +65,7 @@ class MissingBase:
             src_timestep = xr.infer_freq(da.time)
             if src_timestep is None:
                 raise ValueError(
-                    "`src_timestep` must be given as it can't be inferred."
+                    "`src_timestep` must be given as it cannot be inferred."
                 )
         self.null, self.count = self.prepare(da, freq, src_timestep, **indexer)
 
