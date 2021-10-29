@@ -120,9 +120,9 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xarray.DataArray:
 
     # Group input array in years, with an offset matching freq
     freq = kwargs["freq"]
-    _, base, start_stamp, anchor = parse_offset(freq)
+    _, base, start_anchor, anchor = parse_offset(freq)
     bfreq = "A"
-    if start_stamp is not None:
+    if start_anchor:
         bfreq += "S"
     if base in ["A", "Q"] and anchor is not None:
         bfreq = f"{bfreq}-{anchor}"

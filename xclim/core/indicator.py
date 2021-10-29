@@ -236,8 +236,8 @@ class Indicator(IndicatorRegistrar):
     missing: {any, wmo, pct, at_least_n, skip, from_context}
       The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods. If
       None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
-    freq: {"D", "H", None}
-      The expected frequency of the input data. Use None if irrelevant.
+    freq: str, sequence of strings, optional
+      The expected frequency of the input data. Can be a list for multiple frequencies, or None if irrelevant.
     missing_options : dict, None
       Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
     context: str
@@ -971,8 +971,9 @@ class Indicator(IndicatorRegistrar):
         options = self.missing_options or OPTIONS[MISSING_OPTIONS].get(self.missing, {})
 
         # We flag periods according to the missing method. skip variables without a time coordinate.
+        src_freq = self.freq if isinstance(self.freq, str) else None
         miss = (
-            self._missing(da, freq, self.freq, options, indexer)
+            self._missing(da, freq, src_freq, options, indexer)
             for da in args
             if "time" in da.coords
         )
@@ -1049,8 +1050,24 @@ class Hourly(Indicator):
             datachecks.check_freq(da, "H")
 
 
+class DailyWeeklyMonthly(Indicator):
+    """Indicator defined for inputs at daily, weekly or monthly frequencies.
+
+    Required by ANUCLIM indicators.
+    """
+
+    freq = ["D", "7D", "M"]
+
+    @staticmethod
+    def datacheck(**das):  # noqa
+        for key, da in das.items():
+            if "time" in da.coords and da.time.ndim == 1 and len(da.time) > 3:
+                datachecks.check_freq(da, ["D", "7D", "M"], strict=True)
+
+
 base_registry["Hourly"] = Hourly
 base_registry["Daily"] = Daily
+base_registry["DailyWeeklyMonthly"] = DailyWeeklyMonthly
 
 
 def _parse_indice(indice: Callable, passed=None, **new_kwargs):
@@ -1295,7 +1312,9 @@ def build_indicator_module_from_yaml(
     # Load values from top-level in yml.
     # Priority of arguments differ.
     module_name = name or yml.get("module", filepath.stem)
-    default_base = registry.get(yml.get("base"), Daily)
+    default_base = registry.get(
+        yml.get("base"), base_registry.get(yml.get("base"), Daily)
+    )
     doc = yml.get("doc")
 
     # When given as a stem, we try to load indices and translations

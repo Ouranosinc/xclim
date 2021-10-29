@@ -189,6 +189,11 @@ class TestMaximumConsecutiveFrostFreeDays:
         ffd = xci.maximum_consecutive_frost_free_days(a)
         assert np.all(ffd) == 0
 
+    def test_zero(self, tasmin_series):
+        a = tasmin_series(np.array([-1, -1, 1, 1, 0, 2, -1]) + K2C)
+        ffd = xci.maximum_consecutive_frost_free_days(a)
+        assert ffd == 4
+
 
 class TestCoolingDegreeDays:
     def test_no_cdd(self, tas_series):
