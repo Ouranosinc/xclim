@@ -94,20 +94,19 @@ def _create_command(indname):
     """Generate a Click.Command from an xclim Indicator."""
     indicator = _get_indicator(indname)
     params = []
-    for name, param in indicator.iter_parameters():
-        if name in ["ds"] or param["kind"] == InputKind.KWARGS:
+    for name, param in indicator.parameters.items():
+        if name in ["ds"] or param.kind == InputKind.KWARGS:
             continue
-        choices = "" if "choices" not in param else f" Choices: {param['choices']}"
+        choices = "" if "choices" not in param else f" Choices: {param.choices}"
         params.append(
             click.Option(
                 param_decls=[f"--{name}"],
-                default=param["default"],
+                default=param.default,
                 show_default=True,
-                help=param["description"] + choices,
+                help=param.description + choices,
                 metavar=(
                     "VAR_NAME"
-                    if param["kind"]
-                    in [InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE]
+                    if param.kind in [InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE]
                     else "TEXT"
                 ),
             )
