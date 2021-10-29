@@ -19,6 +19,7 @@ CHECK_MISSING = "check_missing"
 MISSING_OPTIONS = "missing_options"
 RUN_LENGTH_UFUNC = "run_length_ufunc"
 SDBA_EXTRA_OUTPUT = "sdba_extra_output"
+SDBA_ENCODE_CF = "sdba_encode_cf"
 
 MISSING_METHODS: Dict[str, Callable] = dict()
 
@@ -30,6 +31,7 @@ OPTIONS = {
     MISSING_OPTIONS: dict(),
     RUN_LENGTH_UFUNC: "auto",
     SDBA_EXTRA_OUTPUT: False,
+    SDBA_ENCODE_CF: False,
 }
 
 _LOUDNESS_OPTIONS = frozenset(["log", "warn", "raise"])
@@ -44,7 +46,7 @@ def _valid_missing_options(mopts):
             # All options must exist
             or any([opt not in OPTIONS[MISSING_OPTIONS][meth] for opt in opts.keys()])
             # Method option validator must pass, default validator is always True.
-            or not cls.validate(**opts)
+            or not cls.validate(**opts)  # noqa
         ):
             return False
     return True
@@ -58,6 +60,7 @@ _VALIDATORS = {
     MISSING_OPTIONS: _valid_missing_options,
     RUN_LENGTH_UFUNC: _RUN_LENGTH_UFUNC_OPTIONS.__contains__,
     SDBA_EXTRA_OUTPUT: lambda opt: isinstance(opt, bool),
+    SDBA_ENCODE_CF: lambda opt: isinstance(opt, bool),
 }
 
 
@@ -160,6 +163,9 @@ class set_options:
       docstring. When activated,  `adjust` will return a Dataset with `scen`  and those extra diagnostics
       For `processing` functions, see the doc, the output type might change, or not depending on the
       algorithm. Default: ``False``.
+    - ``sdba_encode_cf``:
+      Whether to encode cf coordinates in the ``map_blocks`` optimization most of adjustment methods are based on.
+      This should have no impact on the results, but should run much faster in the graph creation phase.
 
     Examples
     --------

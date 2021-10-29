@@ -1,4 +1,3 @@
-import logging
 from collections import namedtuple
 
 import numpy as np
@@ -57,6 +56,39 @@ def test_check_valid_raise(value, expected):
         cfchecks.check_valid(d, "test", expected)
 
 
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        (None, "expecto: patronum"),
+        ("test: mean", "expecto: patronum"),
+    ],
+)
+def test_check_cell_methods_nok(value, expected):
+    with pytest.raises(ValidationError):
+        cfchecks._check_cell_methods(value, expected)
+
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        ("expecto: patronum", "expecto: patronum"),
+        ("area: mean expecto: patronum", "expecto: patronum"),
+        ("expecto: patronum within days", "expecto: patronum"),
+        (
+            "complex: thing expecto: patronum within days very: complex",
+            "expecto: patronum",
+        ),
+        (
+            "expecto: pa-tro_num (area-weighted)",
+            "expecto: pa-tro_num (area-weighted)",
+        ),
+    ],
+)
+def test_check_cell_methods_ok(value, expected):
+    # No error raise so all is good
+    assert None is cfchecks._check_cell_methods(value, expected)
+
+
 class TestDateHandling:
     tas_attrs = {
         "units": "K",
@@ -107,31 +139,6 @@ class TestDateHandling:
             tg_mean(da)
 
 
-def test_cf_compliance_options(tas_series, caplog):
-    tas = tas_series(np.ones(365))
-    tas.attrs["standard_name"] = "not the right name"
-
-    with caplog.at_level(logging.INFO):
-        with set_options(cf_compliance="log"):
-            cfchecks.check_valid_temperature(tas, "degK")
-
-            assert all([rec.levelname == "INFO" for rec in caplog.records])
-            assert (
-                "Variable has a non-conforming standard_name" in caplog.records[0].msg
-            )
-            assert "Variable has a non-conforming units" in caplog.records[1].msg
-
-    with pytest.warns(UserWarning, match="Variable has a non-conforming"):
-        with set_options(cf_compliance="warn"):
-            cfchecks.check_valid_temperature(tas, "degK")
-
-    with pytest.raises(
-        ValidationError, match="Variable has a non-conforming standard_name"
-    ):
-        with set_options(cf_compliance="raise"):
-            cfchecks.check_valid_temperature(tas, "degK")
-
-
 class TestDataCheck:
     def test_check_hourly(self, date_range):
         tas_attrs = {
@@ -149,26 +156,13 @@ class TestDataCheck:
         with pytest.raises(ValidationError):
             datachecks.check_freq(da, "H")
 
+        with pytest.raises(ValidationError):
+            datachecks.check_freq(da, ["H", "D"])
+
         datachecks.check_freq(da, "H", strict=False)
+        datachecks.check_freq(da, ["H", "D"], strict=False)
+        datachecks.check_freq(da, "3H")
+        datachecks.check_freq(da, ["H", "3H"])
 
-
-def test_generated_cfchecks():
-    tas = xr.DataArray(
-        attrs=dict(
-            standard_name="air_temperature", cell_methods="time: mean within days"
-        )
-    )
-
-    cfchecks.generate_cfcheck("tas")(tas)
-
-    tas.attrs["standard_name"] = "air_feeling_of_heat"
-
-    with pytest.raises(ValidationError):
-        cfchecks.generate_cfcheck("tas")(tas)
-
-    sfcwind = xr.DataArray(
-        attrs=dict(standard_name="wind_speed", cell_methods="time: max within hours")
-    )
-
-    with pytest.raises(ValidationError):
-        cfchecks.generate_cfcheck("sfcWind")(sfcwind)
+        with pytest.raises(ValidationError, match="Unable to infer the frequency of"):
+            datachecks.check_freq(da.where(da.time.dt.dayofyear != 5, drop=True), "3H")

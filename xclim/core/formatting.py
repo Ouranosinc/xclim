@@ -5,13 +5,15 @@ Formatting utilities for indicators
 ===================================
 """
 import datetime as dt
+import itertools
 import re
 import string
 from ast import literal_eval
 from fnmatch import fnmatch
-from typing import Dict, Mapping, Optional, Sequence, Union
+from typing import Callable, Dict, Mapping, Optional, Sequence, Union
 
 import xarray as xr
+from boltons.funcutils import wraps
 
 from .utils import InputKind
 
@@ -321,6 +323,84 @@ def update_history(
     return merged_history
 
 
+def update_xclim_history(func):
+    """Decorator that auto-generates and fills the history attribute.
+
+    The history is generated from the signature of the function and added to the first output.
+    """
+
+    @wraps(func)
+    def _call_and_add_history(*args, **kwargs):
+        """Call the function and then generate and add the history attr."""
+        outs = func(*args, **kwargs)
+
+        if isinstance(outs, tuple):
+            out = outs[0]
+        else:
+            out = outs
+
+        if not isinstance(out, (xr.DataArray, xr.Dataset)):
+            raise TypeError(
+                f"Decorated `update_xclim_history` received a non-xarray output from {func.__name__}."
+            )
+
+        da_list = [arg for arg in args if isinstance(arg, xr.DataArray)]
+        da_dict = {
+            name: arg for name, arg in kwargs.items() if isinstance(arg, xr.DataArray)
+        }
+
+        attr = update_history(
+            gen_call_string(func.__name__, *args, **kwargs),
+            *da_list,
+            new_name=out.name,
+            **da_dict,
+        )
+        out.attrs["history"] = attr
+        return outs
+
+    return _call_and_add_history
+
+
+def gen_call_string(funcname: str, *args, **kwargs):
+    """Generate a signature string for use in the history attribute.
+
+    DataArrays and Dataset are replaced with their name, floats, ints and strings are
+    printed directly, all other objects have their type printed between < >.
+
+    Arguments given through *args are printed positionnally and those given through
+    **kwargs are printed prefixed by their name.
+
+    Parameters
+    ----------
+    funcname : str
+      Name of the function
+    *args, **kwargs
+      Arguments given to the function.
+
+    Example
+    -------
+    >>> A = xr.DataArray([1], dims=('x',), name='A')
+    >>> gen_call_string("func", A, b=2.0, c="3", d=[4, 5, 6])
+    "func(A, b=2.0, c='3', d=<list>)"
+    """
+    elements = []
+    chain = itertools.chain(zip([None] * len(args), args), kwargs.items())
+    for name, val in chain:
+        if isinstance(val, xr.DataArray):
+            rep = val.name or "<array>"
+        elif isinstance(val, (int, float, str, bool)):
+            rep = repr(val)
+        else:
+            rep = f"<{type(val).__name__}>"
+
+        if name is not None:
+            rep = f"{name}={rep}"
+
+        elements.append(rep)
+
+    return f"{funcname}({', '.join(elements)})"
+
+
 def prefix_attrs(source, keys, prefix):
     """Rename some of the keys of a dictionary by adding a prefix.
 
@@ -439,8 +519,8 @@ def _gen_returns_section(cfattrs):
 
     Parameters
     ----------
-    cfattrs : Sequence[Dict[str, Any]]
-      The list of cf attributes, usually Indicator.cf_attrs.
+    attrs : Sequence[Dict[str, Any]]
+      The list of attributes, usually Indicator.cf_attrs.
     """
     section = "Returns\n-------\n"
     for attrs in cfattrs:
@@ -493,11 +573,3 @@ def generate_indicator_docstring(ind):
 
     doc = f"{header}\n{special}\n{parameters}\n{returns}\n{extras}"
     return doc
-
-
-def parse_cell_methods(cell_methods: Sequence[Mapping[str, str]]) -> str:
-    """Parse cell methods as YAML reads them into a string."""
-    methods = []
-    for cell_method in cell_methods:
-        methods.append("".join([f"{dim}: {meth}" for dim, meth in cell_method.items()]))
-    return " ".join(methods)

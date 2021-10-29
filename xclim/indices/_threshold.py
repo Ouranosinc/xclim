@@ -26,6 +26,7 @@ from .generic import domain_count, threshold_count
 # -------------------------------------------------- #
 
 __all__ = [
+    "calm_days",
     "cold_spell_days",
     "cold_spell_frequency",
     "daily_pr_intensity",
@@ -68,7 +69,45 @@ __all__ = [
     "maximum_consecutive_wet_days",
     "sea_ice_area",
     "sea_ice_extent",
+    "windy_days",
 ]
+
+
+@declare_units(sfcWind="[speed]", thresh="[speed]")
+def calm_days(
+    sfcWind: xarray.DataArray, thresh: str = "2 m s-1", freq: str = "MS"
+) -> xarray.DataArray:
+    r"""Calm days.
+
+    The number of days with average near-surface wind speed below threshold.
+
+    Parameters
+    ----------
+    sfcWind : xarray.DataArray
+      Daily windspeed.
+    thresh : str
+      Threshold average near-surface wind speed on which to base evaluation.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+      Number of days with average near-surface wind speed below threshold.
+
+    Notes
+    -----
+    Let :math:`WS_{ij}` be the windspeed at day :math:`i` of period :math:`j`. Then
+    counted is the number of days where:
+
+    .. math::
+
+        WS_{ij} < Threshold [m s-1]
+    """
+    thresh = convert_units_to(thresh, sfcWind)
+    out = threshold_count(sfcWind, "<", thresh, freq)
+    out = to_agg_units(out, sfcWind, "count")
+    return out
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -264,7 +303,7 @@ def daily_pr_intensity(
     pr : xarray.DataArray
       Daily precipitation.
     thresh : str
-      precipitation value over which a day is considered wet.
+      Precipitation value over which a day is considered wet.
     freq : str
       Resampling frequency.
 
@@ -1603,15 +1642,15 @@ def maximum_consecutive_dry_days(
 def maximum_consecutive_frost_free_days(
     tasmin: xarray.DataArray, thresh: str = "0 degC", freq: str = "YS"
 ) -> xarray.DataArray:
-    r"""Maximum number of consecutive frost free days (Tn > 0℃).
+    r"""Maximum number of consecutive frost free days (Tn >= 0℃).
 
     Return the maximum number of consecutive days within the period where the
-    minimum temperature is above a certain threshold.
+    minimum temperature is above or equal to a certain threshold.
 
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Max daily temperature.
+      Minimum daily temperature.
     thresh : str
       Threshold temperature.
     freq : str
@@ -1620,24 +1659,25 @@ def maximum_consecutive_frost_free_days(
     Returns
     -------
     xarray.DataArray, [time]
-      The maximum number of consecutive frost free days (tasmin > threshold per period).
+      The maximum number of consecutive frost free days (tasmin >= threshold per period).
 
     Notes
     -----
     Let :math:`\mathbf{t}=t_0, t_1, \ldots, t_n` be a daily minimum temperature series and :math:`thresh` the threshold
-    above which a day is considered a frost free day. Let :math:`\mathbf{s}` be the sorted vector of indices :math:`i`
-    where :math:`[t_i < thresh] \neq [t_{i+1} < thresh]`, that is, the days when the temperature crosses the threshold.
+    above or equal to which a day is considered a frost free day. Let :math:`\mathbf{s}` be the sorted vector of
+    indices :math:`i` where :math:`[t_i <= thresh] \neq [t_{i+1} <= thresh]`, that is, the days when the temperature
+    crosses the threshold.
     Then the maximum number of consecutive frost free days is given by
 
     .. math::
 
-       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [t_{s_j} > thresh]
+       \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [t_{s_j} >= thresh]
 
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
     the start and end of the series, but the numerical algorithm does.
     """
     t = convert_units_to(thresh, tasmin)
-    group = (tasmin > t).resample(time=freq)
+    group = (tasmin >= t).resample(time=freq)
     out = group.map(rl.longest_run, dim="time")
     return to_agg_units(out, tasmin, "count")
 
@@ -1760,6 +1800,43 @@ def sea_ice_extent(
     t = convert_units_to(thresh, siconc)
     out = xarray.dot(siconc >= t, areacello)
     out.attrs["units"] = areacello.units
+    return out
+
+
+@declare_units(sfcWind="[speed]", thresh="[speed]")
+def windy_days(
+    sfcWind: xarray.DataArray, thresh: str = "10.8 m s-1", freq: str = "MS"
+) -> xarray.DataArray:
+    r"""Windy days.
+
+    The number of days with average near-surface wind speed above threshold.
+
+    Parameters
+    ----------
+    sfcWind : xarray.DataArray
+      Daily average near-surface wind speed.
+    thresh : str
+      Threshold average near-surface wind speed on which to base evaluation.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+      Number of days with average near-surface wind speed above threshold.
+
+    Notes
+    -----
+    Let :math:`WS_{ij}` be the windspeed at day :math:`i` of period :math:`j`. Then
+    counted is the number of days where:
+
+    .. math::
+
+        WS_{ij} >= Threshold [m s-1]
+    """
+    thresh = convert_units_to(thresh, sfcWind)
+    out = threshold_count(sfcWind, ">=", thresh, freq)
+    out = to_agg_units(out, sfcWind, "count")
     return out
 
 

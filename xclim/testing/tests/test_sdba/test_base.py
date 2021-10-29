@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from xclim.sdba.base import Grouper, Parametrizable
+from xclim.sdba.base import Grouper, Parametrizable, map_blocks, map_groups
 
 
 class ATestSubClass(Parametrizable):
@@ -155,3 +155,49 @@ def test_grouper_apply(tas_series, use_dask, group, n):
         exp = normed.groupby(group).mean().isel(lat=0)
     assert grouper.prop in out.dims
     np.testing.assert_array_equal(out, exp)
+
+
+def test_map_blocks(tas_series):
+    tas = tas_series(np.arange(366), start="2000-01-01")
+    tas = tas.expand_dims(lat=[1, 2, 3, 4]).chunk()
+
+    # Test dim parsing
+    @map_blocks(reduces=["lat"], data=["lon"])
+    def func(ds, *, group, lon=None):
+        assert group.window == 5
+        data = ds.tas.rename(lat="lon")
+        return data.rename("data").to_dataset()
+
+    # Raises on missing coords
+    with pytest.raises(ValueError, match="This function adds the lon dimension*"):
+        data = func(xr.Dataset(dict(tas=tas)), group="time.dayofyear", window=5)
+
+    data = func(
+        xr.Dataset(dict(tas=tas)), group="time.dayofyear", window=5, lon=[1, 2, 3, 4]
+    ).load()
+    assert set(data.data.dims) == {"time", "lon"}
+
+    @map_groups(data=[Grouper.PROP])
+    def func(ds, *, dim):
+        assert isinstance(dim, list)
+        data = ds.tas.mean(dim)
+        return data.rename("data").to_dataset()
+
+    data = func(
+        xr.Dataset(dict(tas=tas)), group="time.dayofyear", window=5, add_dims=["lat"]
+    ).load()
+    assert set(data.data.dims) == {"dayofyear"}
+
+    @map_groups(data=[Grouper.PROP], main_only=True)
+    def func(ds, *, dim):
+        assert isinstance(dim, str)
+        data = ds.tas.mean(dim)
+        return data.rename("data").to_dataset()
+
+    # with a scalar aux coord
+    data = func(
+        xr.Dataset(dict(tas=tas.isel(lat=0, drop=True)), coords=dict(leftover=1)),
+        group="time.dayofyear",
+    ).load()
+    assert set(data.data.dims) == {"dayofyear"}
+    assert "leftover" in data

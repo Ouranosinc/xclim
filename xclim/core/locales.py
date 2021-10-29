@@ -231,12 +231,21 @@ class UnavailableLocaleError(ValueError):
         )
 
 
-def read_locale_file(filename, module=None):
+def read_locale_file(filename, module=None, encoding="UTF8"):
     """Read a locale file (*.json) and return its dictionary.
 
-    If module is a string, this module name is added to all identifiers translated in this file.
+    Parameters
+    ----------
+    filename: PathLike
+      The file to read.
+    module: string, optional
+      If module is a string, this module name is added to all identifiers translated in this file.
+      Defaults to None, and no module name is added (as if the indicator was an official xclim indicator).
+    encoding : string
+      The encoding to use when reading the file.
+      Defaults to UTF-8, overriding python's default mechanism which is machine dependent.
     """
-    with open(filename, "r", encoding="utf-8") as f:
+    with open(filename, "r", encoding=encoding) as f:
         locdict = json.load(f)
 
     if module is not None:
@@ -305,16 +314,16 @@ def generate_local_dict(locale: str, init_english: bool = False):
                     eng_attr = ""
             ind_attrs.setdefault(f"{translatable_attr}", eng_attr)
 
-        for var_attrs in indicator.cf_attrs:
+        for cf_attrs in indicator.cf_attrs:
             # In the case of single output, put var attrs in main dict
             if len(indicator.cf_attrs) > 1:
-                ind_attrs = attrs.setdefault(f"{ind_name}.{var_attrs['var_name']}", {})
+                ind_attrs = attrs.setdefault(f"{ind_name}.{cf_attrs['var_name']}", {})
 
             for translatable_attr in set(TRANSLATABLE_ATTRS).intersection(
                 set(indicator._cf_names)
             ):
                 if init_english:
-                    eng_attr = var_attrs.get(translatable_attr)
+                    eng_attr = cf_attrs.get(translatable_attr)
                     if not isinstance(eng_attr, str):
                         eng_attr = ""
                 ind_attrs.setdefault(f"{translatable_attr}", eng_attr)

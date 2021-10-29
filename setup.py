@@ -9,7 +9,7 @@ URL = "https://github.com/Ouranosinc/xclim"
 AUTHOR = "Travis Logan"
 AUTHOR_EMAIL = "logan.travis@ouranos.ca"
 REQUIRES_PYTHON = ">=3.7.0"
-VERSION = "0.28.1"
+VERSION = "0.30.6-beta"
 LICENSE = "Apache Software License 2.0"
 
 with open("README.rst") as readme_file:
@@ -23,7 +23,7 @@ requirements = [
     "xarray>=0.17",
     "scipy>=1.2",
     "numba",
-    "pandas>=0.23,<1.3",
+    "pandas>=0.23",
     "cftime>=1.4.1",
     "dask[array]>=2.6",
     "pint>=0.9",
@@ -35,26 +35,6 @@ requirements = [
     "pyyaml",
     "jsonpickle",
 ]
-
-setup_requirements = ["pytest-runner", "wheel"]
-
-test_requirements = ["pytest", "tox", "xdoctest", "pooch"]
-
-docs_requirements = [
-    "sphinx",
-    "sphinx-rtd-theme",
-    "nbsphinx",
-    "ipython",
-    "ipykernel",
-    "jupyter_client",
-    "matplotlib",
-    "netCDF4",
-    "nc-time-axis",
-    "distributed>=2.0",
-    "pooch",
-]
-
-gis_requirements = ["clisops>=0.4.0"]
 
 dev_requirements = []
 with open("requirements_dev.txt") as dev:
@@ -89,18 +69,11 @@ setup(
     keywords=KEYWORDS,
     name=NAME,
     packages=find_packages(),
-    setup_requires=setup_requirements,
-    test_suite="tests",
-    tests_require=test_requirements,
     entry_points="""
         [console_scripts]
         xclim=xclim.cli:cli
     """,
-    extras_require={
-        "docs": docs_requirements,
-        "dev": dev_requirements,
-        "gis": gis_requirements,
-    },
+    extras_require={"dev": dev_requirements},
     url=URL,
     version=VERSION,
     zip_safe=False,

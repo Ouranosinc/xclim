@@ -32,7 +32,11 @@ The official documentation is at https://xclim.readthedocs.io/
 
 Contributing
 ------------
-xclim is in active development and it's being used in production by climate services specialists. If you're interested in participating to the development, want to  suggest features, new indices or report bugs, please leave us a message on the `issue tracker <https://github.com/Ouranosinc/xclim/issues>`_. There is also a chat room on gitter (|gitter|).
+xclim is in active development and it's being used in production by climate services specialists.
+
+* If you're interested in participating in the development of xclim by suggesting new features, new indices or report bugs, please leave us a message on the `issue tracker <https://github.com/Ouranosinc/xclim/issues>`_. There is also a chat room on gitter (|gitter|).
+
+* If you would like to contribute code or documentation (which is greatly appreciated!), check out the `Contributing Guidelines <https://github.com/Ouranosinc/xclim/blob/master/.github/CONTRIBUTING.rst>`_ before you begin!
 
 
 How to cite this library

@@ -10,6 +10,7 @@ from xarray.coding.cftimeindex import CFTimeIndex
 
 from xclim.core.calendar import (
     adjust_doy_calendar,
+    climatological_mean_doy,
     compare_offsets,
     convert_calendar,
     date_range,
@@ -21,6 +22,7 @@ from xclim.core.calendar import (
     get_calendar,
     interp_calendar,
     max_doy,
+    parse_offset,
     percentile_doy,
     time_bnds,
 )
@@ -253,6 +255,46 @@ def test_convert_calendar_360_days(source, target, freq, align_on):
         assert conv.size == 359 if freq == "D" else 359 * 4
 
 
+def test_convert_calendar_360_days_random():
+    da_std = xr.DataArray(
+        np.linspace(0, 1, 366 * 2),
+        dims=("time",),
+        coords={
+            "time": date_range(
+                "2004-01-01", "2004-12-31T23:59:59", freq="12H", calendar="default"
+            )
+        },
+    )
+    da_360 = xr.DataArray(
+        np.linspace(0, 1, 360 * 2),
+        dims=("time",),
+        coords={
+            "time": date_range(
+                "2004-01-01", "2004-12-30T23:59:59", freq="12H", calendar="360_day"
+            )
+        },
+    )
+
+    conv = convert_calendar(da_std, "360_day", align_on="random")
+    assert get_calendar(conv) == "360_day"
+    assert conv.size == 720
+    conv2 = convert_calendar(da_std, "360_day", align_on="random")
+    assert (conv != conv2).any()
+
+    conv = convert_calendar(da_360, "default", align_on="random")
+    assert get_calendar(conv) == "default"
+    assert conv.size == 720
+    assert np.datetime64("2004-02-29") not in conv.time
+    conv2 = convert_calendar(da_360, "default", align_on="random")
+    assert (conv2 != conv).any()
+
+    conv = convert_calendar(da_360, "noleap", align_on="random", missing=np.NaN)
+    conv = conv.where(conv.isnull(), drop=True)
+    nandoys = conv.time.dt.dayofyear[::2]
+    assert all(nandoys < np.array([74, 147, 220, 292, 366]))
+    assert all(nandoys > np.array([0, 73, 146, 219, 291]))
+
+
 @pytest.mark.parametrize(
     "source,target,freq",
     [
@@ -381,6 +423,21 @@ def test_datetime_to_decimal_year(source_cal, exp180):
     np.testing.assert_almost_equal(decy[180] - 2004, exp180)
 
 
+def test_clim_mean_doy(tas_series):
+    arr = tas_series(np.ones(365 * 10))
+    mean, stddev = climatological_mean_doy(arr, window=1)
+
+    assert "dayofyear" in mean.coords
+    np.testing.assert_array_equal(mean.values, 1)
+    np.testing.assert_array_equal(stddev.values, 0)
+
+    arr = tas_series(np.arange(365 * 3), start="1/1/2001")
+    mean, stddev = climatological_mean_doy(arr, window=3)
+
+    np.testing.assert_array_equal(mean[1:-1], np.arange(365, 365 * 2)[1:-1])
+    np.testing.assert_array_almost_equal(stddev[1:-1], 298.0223, 4)
+
+
 def test_doy_to_days_since():
     # simple test
     time = date_range("2020-07-01", "2022-07-01", freq="AS-JUL")
@@ -446,3 +503,25 @@ def test_doy_to_days_since():
 
     da2 = days_since_to_doy(out)  # start read from attribute
     xr.testing.assert_identical(da, da2)
+
+
+def test_parse_offset_full():
+    # GIVEN
+    freq = "4AS-JUL"
+    # WHEN
+    m, b, s, a = parse_offset(freq)
+    assert m == 4
+    assert b == "A"
+    assert s is True
+    assert a == "JUL"
+
+
+def test_parse_offset_minimal():
+    # GIVEN
+    freq = "M"
+    # WHEN
+    m, b, s, a = parse_offset(freq)
+    assert m == 1
+    assert b == "M"
+    assert s is False
+    assert a is None

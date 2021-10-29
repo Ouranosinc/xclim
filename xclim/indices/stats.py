@@ -144,7 +144,7 @@ def fit(
         estimator=method_name[method].capitalize(),
         scipy_dist=dist,
         units="",
-        xclim_history=update_history(
+        history=update_history(
             f"Estimate distribution parameters by {method_name[method]} method along dimension {dim}.",
             new_name="fit",
             data=da,
@@ -209,7 +209,7 @@ def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]) -> xr.DataArra
         long_name=f"{dist} quantiles",
         description=f"Quantiles estimated by the {dist} distribution",
         cell_methods=merge_attributes("dparams: ppf", out, new_line=" "),
-        xclim_history=update_history(
+        history=update_history(
             "Compute parametric quantiles from distribution parameters",
             new_name="parametric_quantile",
             parameters=p,

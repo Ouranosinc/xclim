@@ -13,4 +13,6 @@ for each indicator.
 """
 from ._conversion import *
 from ._precip import *
+from ._preciptemp import *
 from ._temperature import *
+from ._wind import *

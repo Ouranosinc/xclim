@@ -19,7 +19,7 @@ loffsets = {"MS": "14d", "M": "15d", "YS": "181d", "Y": "182d", "QS": "45d", "Q"
 
 
 def _ecdf_1d(x, value):
-    sx = np.r_[-np.inf, np.sort(x)]
+    sx = np.r_[-np.inf, np.sort(x, axis=None)]
     return np.searchsorted(sx, value, side="right") / np.sum(~np.isnan(sx))
 
 
@@ -219,7 +219,7 @@ def broadcast(
                     " interpolation, not cubic. Using linear."
                 )
 
-            grouped = grouped.interp(sel, method=interp)
+            grouped = grouped.interp(sel, method=interp).astype(grouped.dtype)
 
         for var in sel.keys():
             if var in grouped.coords and var not in grouped.dims:
@@ -291,7 +291,10 @@ def add_cyclic_bounds(
 
 
 def extrapolate_qm(
-    qf: xr.DataArray, xq: xr.DataArray, method: str = "constant"
+    qf: xr.DataArray,
+    xq: xr.DataArray,
+    method: str = "constant",
+    abs_bounds: Optional[tuple] = (-np.inf, np.inf),
 ) -> Tuple[xr.DataArray, xr.DataArray]:
     """Extrapolate quantile adjustment factors beyond the computed quantiles.
 
@@ -303,6 +306,8 @@ def extrapolate_qm(
       Values at each `quantile`.
     method : {"constant"}
       Extrapolation method. See notes below.
+    abs_bounds : 2-tuple
+      The absolute bounds for the "constant*" methods. Defaults to (-inf, inf).
 
     Returns
     -------
@@ -326,7 +331,7 @@ def extrapolate_qm(
 
     if method == "constant":
         q_l, q_r = [0], [1]
-        x_l, x_r = [-np.inf], [np.inf]
+        x_l, x_r = [abs_bounds[0]], [abs_bounds[1]]
         qf_l, qf_r = qf.isel(quantiles=0), qf.isel(quantiles=-1)
 
     elif (
