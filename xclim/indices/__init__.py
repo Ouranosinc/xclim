@@ -22,7 +22,6 @@ the implementation of the indices.
     :mod:`xclim.indicators.land` and :mod:`xclim.indicators.seaIce` modules, documented in :ref:`Climate Indicators`.
 
 """
-from . import generic
 from ._agro import *
 from ._anuclim import *
 from ._conversion import *
