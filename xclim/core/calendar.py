@@ -614,16 +614,13 @@ def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
     t_a, b_a, _, _ = parse_offset(freqA)
     t_b, b_b, _, _ = parse_offset(freqB)
 
-    if b_a == b_b:
-        # Same base freq, compare mulitplicator only.
-        t_a = int(t_a or "1")
-        t_b = int(t_b or "1")
-    else:
+    if b_a != b_b:
         # Different base freq, compare length of first period after beginning of time.
         t = pd.date_range("1970-01-01T00:00:00.000", periods=2, freq=freqA)
         t_a = (t[1] - t[0]).total_seconds()
         t = pd.date_range("1970-01-01T00:00:00.000", periods=2, freq=freqB)
         t_b = (t[1] - t[0]).total_seconds()
+    # else Same base freq, compare multiplicator only.
 
     return get_op(op)(t_a, t_b)
 
@@ -631,10 +628,28 @@ def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
 def parse_offset(freq: str) -> Sequence[str]:
     """Parse an offset string.
 
-    Returns: multiplicator, offset base, start stamp (or None), anchor (or None)
+    Parse a frequency offset and, if needed, convert to cftime-compatible components.
+
+    Parameters
+    ----------
+    freq : str
+      Frequency offset.
+
+        Returns
+        -------
+        multiplicator (int), offset base (str), is start anchored (bool), anchor (str or None)
+          "[n]W" is always replaced with "[7n]D", as xarray doesn't support "W" for cftime indexes.
+          "Y" is always replaced with "A".
     """
     patt = r"(\d*)(\w)(S)?(?:-(\w{2,3}))?"
-    return re.search(patt, freq.replace("Y", "A")).groups()
+    mult, base, start, anchor = re.search(patt, freq).groups()
+    mult = int(mult or "1")
+    base = base.replace("Y", "A")
+    if base == "W":
+        mult = 7 * mult
+        base = "D"
+        anchor = ""
+    return mult, base, start == "S", anchor
 
 
 def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArray:
