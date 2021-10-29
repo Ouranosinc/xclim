@@ -628,18 +628,18 @@ def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
 def parse_offset(freq: str) -> Sequence[str]:
     """Parse an offset string.
 
-Parse a frequency offset and, if needed, convert to cftime-compatible components.
+    Parse a frequency offset and, if needed, convert to cftime-compatible components.
 
-Parameters
-----------
-freq : str
-  Frequency offset.
-  
-    Returns
-    -------
-    multiplicator (int), offset base (str), is start anchored (bool), anchor (str or None)
-      "[n]W" is always replaced with "[7n]D", as xarray doesn't support "W" for cftime indexes.
-      "Y" is always replaced with "A".
+    Parameters
+    ----------
+    freq : str
+      Frequency offset.
+
+        Returns
+        -------
+        multiplicator (int), offset base (str), is start anchored (bool), anchor (str or None)
+          "[n]W" is always replaced with "[7n]D", as xarray doesn't support "W" for cftime indexes.
+          "Y" is always replaced with "A".
     """
     patt = r"(\d*)(\w)(S)?(?:-(\w{2,3}))?"
     mult, base, start, anchor = re.search(patt, freq).groups()
