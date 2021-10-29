@@ -625,6 +625,30 @@ frost_free_season_length = Temp(
     compute=wrapped_partial(indices.growing_season_length, thresh="0 degC"),
 )
 
+frost_free_season_start = Temp(
+    identifier="frost_free_season_start",
+    units="",
+    standard_name="day_of_year",
+    long_name="Day of year of frost free season start",
+    description="Day of year of beginning of frost free season, defined as the first day a temperature "
+    "threshold of {thresh} is exceeded for at least {window} days.",
+    compute=wrapped_partial(indices.freshet_start, suggested=dict(thresh="0 degC")),
+)
+
+frost_free_season_end = Temp(
+    identifier="frost_free_season_end",
+    units="",
+    standard_name="day_of_year",
+    long_name="Day of year of frost free season end",
+    description="Day of year of end of frost free season, defined as the first day of "
+    "consistent inferior threshold temperature of {thresh} after a run of "
+    "{window} days superior to threshold temperature.",
+    cell_methods="",
+    compute=wrapped_partial(
+        indices.growing_season_end, suggested=dict(thresh="0 degC")
+    ),
+)
+
 maximum_consecutive_frost_free_days = Temp(
     identifier="consecutive_frost_free_days",
     units="days",
@@ -646,7 +670,7 @@ growing_season_start = Temp(
     "{window} days inferior to threshold temperature.",
     cell_methods="",
     compute=wrapped_partial(
-        indices.growing_season_length,
+        indices.freshet_start,
         suggested=dict(thresh="5.0 degC"),
     ),
 )
