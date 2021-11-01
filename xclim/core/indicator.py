@@ -93,7 +93,8 @@ from collections import OrderedDict, defaultdict
 from copy import deepcopy
 from dataclasses import asdict, dataclass
 from inspect import Parameter as _Parameter
-from inspect import Signature, _empty, signature
+from inspect import _empty as _empty_default
+from inspect import Signature, signature
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
@@ -140,11 +141,8 @@ registry = dict()  # Main class registry
 base_registry = dict()
 _indicators_registry = defaultdict(list)  # Private instance registry
 
-
-class empty_param:
-    """Sentinel class for unset properties of Indicator's parameters."""
-
-    pass
+# Sentinel class for unset properties of Indicator's parameters."""
+_empty = object()
 
 
 @dataclass
@@ -156,8 +154,8 @@ class Parameter:
     Example
     -------
     >>> p = Parameter(InputKind.NUMBER, default=2, description='A simple number')
-    >>> p.units  # has not been set
-    <class 'xclim.core.indicator.empty_param'>
+    >>> p.units is Parameter._empty # has not been set
+    True
     >>> 'units' in p  # Easier/retrocompatible way to test if units are set
     False
     >>> p.description
@@ -165,12 +163,13 @@ class Parameter:
     >>> p['description']  # Same as above, for convenience.
     'A simple number'
     """
+    _empty = _empty 
 
     kind: InputKind
-    default: Any = _empty
+    default: Any = _empty_default
     description: str = ""
-    units: str = empty_param
-    choices: set = empty_param
+    units: str = _empty
+    choices: set = _empty
 
     def update(self, other: dict):
         """Update a parameter's values from a dict."""
@@ -193,11 +192,11 @@ class Parameter:
 
     def __contains__(self, key):
         # To imitate previous behaviour where "units" and "choices" were missing,
-        # instead of being "empty_param".
-        return getattr(self, key, empty_param) is not empty_param
+        # instead of being "_empty".
+        return getattr(self, key, _empty) is not _empty
 
     def asdict(self):
-        return {k: v for k, v in asdict(self).items() if v is not empty_param}
+        return {k: v for k, v in asdict(self).items() if v is not _empty}
 
 
 class IndicatorRegistrar:
@@ -541,7 +540,7 @@ class Indicator(IndicatorRegistrar):
                     f"{new_name} which is not understood by xclim or CMIP6. Please"
                     " use names listed in `xclim.core.utils.VARIABLES`."
                 )
-            if meta.units is not empty_param:
+            if meta.units is not _empty:
                 try:
                     check_units(varmeta["canonical_units"], meta.units)
                 except ValidationError:
@@ -569,7 +568,7 @@ class Indicator(IndicatorRegistrar):
             if isinstance(meta, Parameter):
                 if (
                     meta.kind <= InputKind.OPTIONAL_VARIABLE
-                    and meta.units is empty_param
+                    and meta.units is _empty
                 ):
                     raise ValueError(
                         f"Input variable {name} is missing expected units. Units are "
@@ -1122,7 +1121,7 @@ class Indicator(IndicatorRegistrar):
                 param["kind"] = param["kind"].value  # Get the int.
                 if "choices" in param:  # A set is stored, convert to list
                     param["choices"] = list(param["choices"])
-                if param["default"] is _empty:
+                if param["default"] is _empty_default:
                     del param["default"]
             elif callable(param):  # Rare special case (doy_qmax and doy_qmin).
                 out["parameters"][name] = f"{param.__module__}.{param.__name__}"
