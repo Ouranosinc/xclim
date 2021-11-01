@@ -6,6 +6,8 @@ This file defines the different steps, to be wrapped into the Adjustment objects
 import numpy as np
 import xarray as xr
 
+from xclim.indices.stats import _fitfunc_1d, get_dist
+
 from . import nbutils as nbu
 from . import utils as u
 from .base import Grouper, map_blocks, map_groups
@@ -289,3 +291,98 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
             "escores": escores,
         }
     )
+
+
+def _fit_on_cluster(data, thresh, dist, cluster_thresh):
+    _, _, _, maximums = u.get_clusters_1d(data, thresh, cluster_thresh)
+    params = _fitfunc_1d(maximums - thresh, dist=dist, floc=0)
+    # We forced 0, put back thresh.
+    params[-2] = thresh
+    return params
+
+
+def _extremes_train_1d(ref, hist, ref_params, *, q_thresh, cluster_thresh, dist, N):
+    thresh = (
+        np.quantile(ref[ref >= cluster_thresh], q_thresh)
+        + np.quantile(hist[hist >= cluster_thresh], q_thresh)
+    ) / 2
+
+    if np.isnan(ref_params).all():
+        ref_params = _fit_on_cluster(ref, thresh, dist, cluster_thresh)
+
+    hist_params = _fit_on_cluster(hist, thresh, dist, cluster_thresh)
+
+    Px_ref = dist.cdf(ref[ref >= thresh], *ref_params)
+    hist = hist[hist >= thresh]
+    Px_hist = dist.cdf(hist, *hist_params)
+
+    Pmax = min(Px_ref.max(), Px_hist.max())
+    Pmin = max(Px_ref.min(), Px_hist.min())
+
+    Pcommon = (Px_hist <= Pmax) & (Px_hist >= Pmin)
+    Px_hist = Px_hist[Pcommon]
+    hist_in_ref = dist.ppf(Px_hist, *ref_params)
+
+    # Adjustment factors, unsorted
+    af = hist_in_ref / hist[Pcommon]
+    # sort them in Px order, and pad to have N values.
+    order = np.argsort(Px_hist)
+    px_hist = np.pad(Px_hist[order], ((0, N - af.size),), constant_values=np.NaN)
+    af = np.pad(af[order], ((0, N - af.size),), constant_values=np.NaN)
+
+    return px_hist, af, thresh
+
+
+@map_blocks(reduces=["time"], px_hist=["quantiles"], af=["quantiles"], thresh=[])
+def extremes_train(ds, *, q_thresh, cluster_thresh, dist, quantiles):
+    px_hist, af, thresh = xr.apply_ufunc(
+        _extremes_train_1d,
+        ds.ref,
+        ds.hist,
+        ds.ref_params or np.NaN,
+        input_core_dims=[("time",), ("time",)],
+        output_core_dims=[("time",), ("quantiles",), ("quantiles",)],
+        vectorize=True,
+        kwargs={
+            "q_thresh": q_thresh,
+            "cluster_thresh": cluster_thresh,
+            "dist": dist,
+            "N": len(quantiles),
+        },
+    )
+    return xr.Dataset(
+        {"px_hist": px_hist, "af": af, "thresh": thresh},
+        coords={"quantiles": quantiles},
+    )
+
+
+def _fit_cluster_and_cdf(data, thresh, dist, cluster_thresh):
+    fut_params = _fit_on_cluster(data, thresh, dist, cluster_thresh)
+    return dist.cdf(data[data >= thresh], *fut_params)
+
+
+@map_blocks(reduces=["quantiles"], scen=[])
+def extremes_adjust(ds, *, frac, power, dist, interp, extrapolation, cluster_thresh):
+    px_fut = xr.apply_ufunc(
+        _fit_cluster_and_cdf,
+        ds.sim,
+        ds.thresh,
+        input_core_dims=[["time"], []],
+        output_core_dims=[["time"]],
+        kwargs={"dist": dist, "cluster_thresh": cluster_thresh},
+        vectorize=True,
+    )
+
+    af, px_hist = u.extrapolate_qm(
+        ds.af, ds.px_hist, method=extrapolation, abs_bounds=(0, 1)
+    )
+
+    af = u.interp_on_quantiles(px_fut, px_hist, af, method=interp)
+    scen = u.apply_correction(ds.sim, af, "*")
+
+    transition = (
+        ((ds.sim - ds.thresh) / ((ds.sim.max("time")) - ds.thresh)) / frac
+    ) ** power
+    transition = transition.clip(0, 1)
+
+    return (transition * scen) + ((1 - transition) * ds.scen)

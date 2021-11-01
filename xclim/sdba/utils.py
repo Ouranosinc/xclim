@@ -307,7 +307,7 @@ def extrapolate_qm(
     method : {"constant"}
       Extrapolation method. See notes below.
     abs_bounds : 2-tuple
-      The absolute bounds for the "constant*" methods. Defaults to (-inf, inf).
+      The absolute bounds for the "constant*" methods. Defaults to (-inf, inf).
 
     Returns
     -------

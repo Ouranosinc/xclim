@@ -17,6 +17,8 @@ from ._adjustment import (
     dqm_adjust,
     dqm_train,
     eqm_train,
+    extremes_adjust,
+    extremes_train,
     loci_adjust,
     loci_train,
     npdf_transform,
@@ -604,56 +606,33 @@ class ExtremeValues(TrainAdjust):
         ref_params: xr.Dataset = None,
         q_thresh: float = 0.95,
     ):
-        warn(
-            "The ExtremeValues adjustment is a work in progress and not production-ready. The current version imitates the algorithm found in ClimateTools.jl, but results might not be accurate."
-        )
         cluster_thresh = convert_units_to(cluster_thresh, ref)
-        hist = convert_units_to(hist, ref)
 
-        # Extreme value threshold computed relative to "large values".
-        # We use the mean between ref and hist here.
-        thresh = (
-            ref.where(ref >= cluster_thresh).quantile(q_thresh, dim="time")
-            + hist.where(hist >= cluster_thresh).quantile(q_thresh, dim="time")
-        ) / 2
+        # Approximation of how many "quantiles" values we will get:
+        N = (1 - q_thresh) * ref.time.size * 1.1
 
-        if ref_params is None:
-            # All large value clusters
-            ref_clusters = get_clusters(ref, thresh, cluster_thresh)
-            # Parameters of a genpareto (or other) distribution, we force the location at thresh.
-            fit_params = stats.fit(
-                ref_clusters.maximum - thresh, "genpareto", dim="cluster", floc=0
-            )
-            # Param "loc" was fitted with 0, put thresh back
-            fit_params = fit_params.where(
-                fit_params.dparams != "loc", fit_params + thresh
-            )
-        else:
-            dist = ref_params.attrs.get("scipy_dist", "genpareto")
-            fit_params = ref_params.copy().transpose(..., "dparams")
-            if dist == "genextreme":
-                fit_params = xr.where(
-                    fit_params.dparams == "loc",
-                    fit_params.sel(dparams="scale")
-                    + fit_params.sel(dparams="c") * (thresh - fit_params),
-                    fit_params,
-                )
-            elif dist != "genpareto":
-                raise ValueError(f"Unknown conversion from {dist} to genpareto.")
+        ds = extremes_train(
+            xr.Dataset({"ref": ref, "hist": hist, "ref_params": ref_params}),
+            q_thresh=q_thresh,
+            cluster_thresh=cluster_thresh,
+            dist=stats.get_dist("genpareto"),
+            quantiles=np.arange(int(N)),
+        )
 
-        ds = xr.Dataset(dict(fit_params=fit_params, thresh=thresh))
-        ds.fit_params.attrs.update(
-            long_name="Generalized Pareto distribution parameters of ref",
+        ds.px_hist.attrs.update(
+            long_name="Probability of extremes in hist",
+            description="Parametric probabilities of extremes in the common domain of hist and ref.",
+        )
+        ds.af.attrs.update(
+            long_name="Extremes adjustment factor",
+            description="Multiplicative adjustment factor of extremes from hist to ref.",
         )
         ds.thresh.attrs.update(
             long_name=f"{q_thresh * 100}th percentile extreme value threshold",
             description=f"Mean of the {q_thresh * 100}th percentile of large values (x > {cluster_thresh}) of ref and hist.",
         )
 
-        if OPTIONS[SDBA_EXTRA_OUTPUT] and ref_params is None:
-            ds = ds.assign(nclusters=ref_clusters.nclusters)
-
-        return ds, {"cluster_thresh": cluster_thresh}
+        return ds.drop_vars(["quantiles"]), {"cluster_thresh": cluster_thresh}
 
     def _adjust(
         self,
@@ -662,61 +641,24 @@ class ExtremeValues(TrainAdjust):
         *,
         frac: float = 0.25,
         power: float = 1.0,
+        interp: str = "linear",
+        extrapolation: str = "constant",
     ):
-        def _adjust_extremes_1d(scen, sim, ref_params, thresh, *, dist, cluster_thresh):
-            # Clusters of large values of sim
-            _, _, sim_posmax, sim_maxs = get_clusters_1d(sim, thresh, cluster_thresh)
-
-            new_scen = scen.copy()
-            if sim_posmax.size == 0:
-                # Happens if everything is under `cluster_thresh`
-                return new_scen
-
-            # Fit the dist, force location at thresh
-            sim_fit = stats._fitfunc_1d(
-                sim_maxs, dist=dist, nparams=len(ref_params), method="ML", floc=thresh
-            )
-
-            # Cumulative density function for extreme values in sim's distribution
-            sim_cdf = dist.cdf(sim_maxs, *sim_fit)
-            # Equivalent value of sim's CDF's but in ref's distribution.
-            # removed a +thresh that was a bug in the julia source.
-            new_sim = dist.ppf(sim_cdf, *ref_params)
-
-            # Get the transition weights based on frac and power values
-            transition = (
-                ((sim_maxs - sim_maxs.min()) / ((sim_maxs.max()) - sim_maxs.min()))
-                / frac
-            ) ** power
-            np.clip(transition, None, 1, out=transition)
-
-            # Apply smooth linear transition between scen and corrected scen
-            new_scen_trans = (new_sim * transition) + (
-                scen[sim_posmax] * (1.0 - transition)
-            )
-
-            # We change new_scen to the new data
-            new_scen[sim_posmax] = new_scen_trans
-            return new_scen
-
-        new_scen = xr.apply_ufunc(
-            _adjust_extremes_1d,
-            scen,
-            sim,
-            self.ds.fit_params,
-            self.ds.thresh,
-            input_core_dims=[["time"], ["time"], ["dparams"], []],
-            output_core_dims=[["time"]],
-            vectorize=True,
-            kwargs={
-                "dist": stats.get_dist("genpareto"),
-                "cluster_thresh": convert_units_to(self.cluster_thresh, sim),
-            },
-            dask="parallelized",
-            output_dtypes=[scen.dtype],
+        # Quantiles coord : cheat and assign 0 - 1 so we can use `extrapolate_qm`.
+        ds = self.ds.assign(
+            quantiles=(np.arange(self.quantiles.size) + 1) / (self.quantiles.size + 1)
         )
 
-        return new_scen
+        scen = extremes_adjust(
+            ds.assign(sim=sim, scen=scen),
+            dist=stats.get_dist("genpareto"),
+            frac=frac,
+            power=power,
+            interp=interp,
+            extrapolation=extrapolation,
+        )
+
+        return scen
 
 
 class LOCI(TrainAdjust):
