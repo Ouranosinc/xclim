@@ -77,7 +77,7 @@ __all__ = [
 
 # We need to declare the class here so that the `atmos` realm is automatically detected.
 class Temp(Daily):
-    """Indicators involving temperature."""
+    """Indicators involving daily temperature."""
 
 
 tn_days_above = Temp(

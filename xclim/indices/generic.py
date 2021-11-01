@@ -35,7 +35,6 @@ __all__ = [
     "compare",
     "count_level_crossings",
     "count_occurrences",
-    "daily_downsampler",
     "day_lengths",
     "default_freq",
     "degree_days",
@@ -255,75 +254,6 @@ def get_daily_events(da: xr.DataArray, da_value: float, operator: str) -> xr.Dat
     return events
 
 
-def daily_downsampler(da: xr.DataArray, freq: str = "YS") -> xr.DataArray:
-    r"""Daily climate data downsampler.
-
-    Parameters
-    ----------
-    da : xr.DataArray
-    freq : str
-
-    Returns
-    -------
-    xr.DataArray
-
-    Note
-    ----
-
-        Usage Example
-
-            grouper = daily_downsampler(da_std, freq='YS')
-            x2 = grouper.mean()
-
-            # add time coords to x2 and change dimension tags to time
-            time1 = daily_downsampler(da_std.time, freq=freq).first()
-            x2.coords['time'] = ('tags', time1.values)
-            x2 = x2.swap_dims({'tags': 'time'})
-            x2 = x2.sortby('time')
-    """
-    # generate tags from da.time and freq
-    if isinstance(da.time.values[0], np.datetime64):
-        years = [f"{y:04d}" for y in da.time.dt.year.values]
-        months = [f"{m:02d}" for m in da.time.dt.month.values]
-    else:
-        # cannot use year, month, season attributes, not available for all calendars ...
-        years = [f"{v.year:04d}" for v in da.time.values]
-        months = [f"{v.month:02d}" for v in da.time.values]
-    seasons = [
-        "DJF DJF MAM MAM MAM JJA JJA JJA SON SON SON DJF".split()[int(m) - 1]
-        for m in months
-    ]
-
-    n_t = da.time.size
-    if freq == "YS":
-        # year start frequency
-        l_tags = years
-    elif freq == "MS":
-        # month start frequency
-        l_tags = [years[i] + months[i] for i in range(n_t)]
-    elif freq == "QS-DEC":
-        # DJF, MAM, JJA, SON seasons
-        # construct tags from list of season+year, increasing year for December
-        ys = []
-        for i in range(n_t):
-            m = months[i]
-            s = seasons[i]
-            y = years[i]
-            if m == "12":
-                y = str(int(y) + 1)
-            ys.append(y + s)
-        l_tags = ys
-    else:
-        raise RuntimeError(f"Frequency `{freq}` not implemented.")
-
-    # add tags to buffer DataArray
-    buffer = da.copy()
-    buffer.coords["tags"] = ("time", l_tags)
-
-    # return groupby according to tags
-    return buffer.groupby("tags")
-
-
 # CF-INDEX-META Indices
 
 
@@ -540,7 +470,7 @@ def statistics(data: xr.DataArray, reducer: str, freq: str) -> xr.DataArray:
     Parameters
     ----------
     data : xr.DataArray
-    reducer : {'maximum', 'minimum', 'mean', 'sum'}
+    reducer : {'max', 'min', 'mean', 'sum'}
       Reducer.
     freq : str
       Resampling frequency.
