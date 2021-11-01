@@ -2,6 +2,8 @@
 API
 ===
 
+.. toctree::
+
 Indicators
 ==========
 
