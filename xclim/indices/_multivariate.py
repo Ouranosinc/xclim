@@ -11,13 +11,11 @@ from xclim.core.calendar import resample_doy
 from xclim.core.units import (
     convert_units_to,
     declare_units,
-    infer_sampling_units,
     pint2cfunits,
     rate2amount,
     str2pint,
     to_agg_units,
 )
-from xclim.core.utils import ValidationError
 
 from . import run_length as rl
 from ._conversion import rain_approximation, snowfall_approximation
@@ -162,9 +160,12 @@ def cold_and_dry_days(
       Daily precipitation.
     pr_25 : xarray.DataArray
       First quartile of daily total precipitation computed by month.
-      Warning:
+
+      .. warning::
+
         Before computing the percentiles, all the precipitation below 1mm must be filtered out !
         Otherwise the percentiles will include non wet days.
+
     freq : str
       Resampling frequency.
 
@@ -223,9 +224,12 @@ def warm_and_dry_days(
       Daily precipitation.
     pr_25 : xarray.DataArray
       First quartile of daily total precipitation computed by month.
-      Warning:
+
+      .. warning::
+
         Before computing the percentiles, all the precipitation below 1mm must be filtered out !
         Otherwise the percentiles will include non wet days.
+
     freq : str
       Resampling frequency.
 
@@ -243,7 +247,7 @@ def warm_and_dry_days(
     References
     ----------
     .. [warm_dry_days] Beniston, M. (2009). Trends in joint quantiles of temperature and precipitation in Europe
-        since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
+       since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
     tas_75 = convert_units_to(tas_75, tas)
     thresh = resample_doy(tas_75, tas)
@@ -284,9 +288,12 @@ def warm_and_wet_days(
       Daily precipitation.
     pr_75 : xarray.DataArray
       Third quartile of daily total precipitation computed by month.
-      Warning:
+
+      .. warning::
+
         Before computing the percentiles, all the precipitation below 1mm must be filtered out !
         Otherwise the percentiles will include non wet days.
+
     freq : str
       Resampling frequency.
 
@@ -345,9 +352,12 @@ def cold_and_wet_days(
       Daily precipitation.
     pr_75 : xarray.DataArray
       Third quartile of daily total precipitation computed by month.
-      Warning:
+
+      .. warning::
+
         Before computing the percentiles, all the precipitation below 1mm must be filtered out !
         Otherwise the percentiles will include non wet days.
+
     freq : str
       Resampling frequency.
 

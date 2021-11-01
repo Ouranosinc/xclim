@@ -123,7 +123,8 @@ References
 ----------
 Codes:
 
-.. [CFS2015] Updated source code for calculating fire danger indexes in the Canadian Forest Fire Weather Index System, Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
+Updated source code for calculating fire danger indexes in the Canadian Forest Fire Weather Index System, Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
+
 .. [cffdrs] Cantin, A., Wang, X., Parisien M-A., Wotton, M., Anderson, K., Moore, B., Schiks, T., Flannigan, M., Canadian Forest Fire Danger Rating System, R package, CRAN, https://cran.r-project.org/package=cffdrs
 
 https://cwfis.cfs.nrcan.gc.ca/background/dsm/fwi
@@ -1181,7 +1182,7 @@ def overwintering_drought_code(
     conditions) a large error in this spring starting condition can affect the DC for a significant
     portion of the fire season. In areas where overwinter precipitation is 200 mm or more, full moisture
     recharge occurs and DC overwintering is usually unnecessary.  More discussion of overwintering and
-    fuel drying time lag can be found in [LA08]_ and Van Wagner (1985)
+    fuel drying time lag can be found in [LA08]_ and [VW85]_.
 
     Carry-over fraction of last fall's moisture:
         - 1.0, Daily DC calculated up to 1 November; continuous snow cover, or freeze-up, whichever comes first

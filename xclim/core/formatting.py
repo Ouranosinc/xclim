@@ -368,8 +368,8 @@ def gen_call_string(funcname: str, *args, **kwargs):
     DataArrays and Dataset are replaced with their name, floats, ints and strings are
     printed directly, all other objects have their type printed between < >.
 
-    Arguments given through *args are printed positionnally and those given through
-    **kwargs are printed prefixed by their name.
+    Arguments given through positional arguments are printed positionnally and those
+    given through keywords are printed prefixed by their name.
 
     Parameters
     ----------

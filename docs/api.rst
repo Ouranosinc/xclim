@@ -2,7 +2,6 @@
 API
 ===
 
-.. toctree::
 
 Indicators
 ==========
@@ -66,21 +65,6 @@ Other utilities
 ===============
 
 .. automodule:: xclim.core.calendar
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. automodule:: xclim.core.cfchecks
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. automodule:: xclim.core.datachecks
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. automodule:: xclim.core.dataflags
    :members:
    :undoc-members:
    :show-inheritance:
