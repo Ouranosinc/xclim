@@ -142,8 +142,10 @@ registry = dict()  # Main class registry
 base_registry = dict()
 _indicators_registry = defaultdict(list)  # Private instance registry
 
+
 # Sentinel class for unset properties of Indicator's parameters."""
-_empty = object()
+class _empty:
+    pass
 
 
 @dataclass
