@@ -158,7 +158,7 @@ class Parameter:
     >>> p = Parameter(InputKind.NUMBER, default=2, description='A simple number')
     >>> p.units  # has not been set
     <class 'xclim.core.indicator.empty_param'>
-    >>> 'units' in p  # Easier/retrocompatible way to test is units are set
+    >>> 'units' in p  # Easier/retrocompatible way to test if units are set
     False
     >>> p.description
     'A simple number'

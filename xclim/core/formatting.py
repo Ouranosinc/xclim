@@ -478,7 +478,7 @@ def _gen_parameters_section(parameters, allowed_periods=None):
 
     Parameters
     ----------
-    parameters :
+    parameters : mapping
       Parameters dictionary (`Ind.parameters`).
     allowed_periods : list of str, optional
     """
