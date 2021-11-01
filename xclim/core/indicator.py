@@ -163,7 +163,7 @@ class Parameter:
     >>> p['description']  # Same as above, for convenience.
     'A simple number'
     """
-    _empty = _empty 
+    _empty = _empty
 
     kind: InputKind
     default: Any = _empty_default
