@@ -121,7 +121,7 @@ def test_overwintering_drought_code(inputs, exp):
     ],
 )
 def test_overwintering_drought_code_indice(inputs, exp):
-    last_dc = xr.DataArray([inputs[0]], dims=("x",))
+    last_dc = xr.DataArray([inputs[0]], dims=("x",), attrs={"units": ""})
     winter_pr = xr.DataArray([inputs[1]], dims=("x",), attrs={"units": "mm"})
 
     out = overwintering_drought_code(last_dc, winter_pr, *inputs[2:])
@@ -150,6 +150,7 @@ def test_day_lengh_factor():
 
 def test_fire_weather_indicator():
     fwi_data = open_dataset(fwi_url)
+    fwi_data.lat.attrs["units"] = "degrees_north"
     dc, dmc, ffmc, isi, bui, fwi = atmos.fire_weather_indexes(
         tas=fwi_data.tas,
         pr=fwi_data.pr,
