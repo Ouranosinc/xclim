@@ -6,6 +6,7 @@ Generic indices submodule
 
 Helper functions for common generic actions done in the computation of indices.
 """
+from collections.abc import Iterable
 from typing import Optional, Union
 
 import numpy as np
@@ -95,7 +96,7 @@ def select_resample_op(da: xr.DataArray, op: str, freq: str = "YS", **indexer):
     freq : str
       Resampling frequency defining the periods as defined in
       https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
-    **indexer : {dim: indexer, }, optional
+    indexer : {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
       month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
       considered.
@@ -134,9 +135,9 @@ def default_freq(**indexer) -> str:
     freq = "AS-JAN"
     if indexer:
         group, value = indexer.popitem()
-        if "DJF" in value:
+        if isinstance(value, str) and "DJF" in value:
             freq = "AS-DEC"
-        if group == "month" and sorted(value) != value:
+        if group == "month" and isinstance(value, Iterable) and sorted(value) != value:
             raise NotImplementedError
 
     return freq

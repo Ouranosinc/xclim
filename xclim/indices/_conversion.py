@@ -704,7 +704,7 @@ def wind_chill_index(
     ----------
     tas : xarray.DataArray
       Surface air temperature.
-    sfcwind : xarray.DataArray
+    sfcWind : xarray.DataArray
       Surface wind speed (10 m).
     method : {'CAN', 'US'}
       If "CAN" (default), a "slow wind" equation is used where winds are slower than 5 km/h, see Notes.
