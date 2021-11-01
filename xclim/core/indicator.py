@@ -93,8 +93,9 @@ from collections import OrderedDict, defaultdict
 from copy import deepcopy
 from dataclasses import asdict, dataclass
 from inspect import Parameter as _Parameter
+from inspect import Signature
 from inspect import _empty as _empty_default
-from inspect import Signature, signature
+from inspect import signature
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
@@ -163,6 +164,7 @@ class Parameter:
     >>> p['description']  # Same as above, for convenience.
     'A simple number'
     """
+
     _empty = _empty
 
     kind: InputKind
@@ -566,10 +568,7 @@ class Indicator(IndicatorRegistrar):
         """
         for name, meta in parameters.items():
             if isinstance(meta, Parameter):
-                if (
-                    meta.kind <= InputKind.OPTIONAL_VARIABLE
-                    and meta.units is _empty
-                ):
+                if meta.kind <= InputKind.OPTIONAL_VARIABLE and meta.units is _empty:
                     raise ValueError(
                         f"Input variable {name} is missing expected units. Units are "
                         "parsed either from the declare_units decorator or from the "
