@@ -502,6 +502,13 @@
     "comment": "",
     "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est au-dessus d'un seuil."
   },
+    "THAWING_DEGREE_DAYS": {
+    "long_name": "Degré-jour de dégel (Tmoy > {thresh})",
+    "description": "Cumul {freq} des degrés-jours de dégel(Température au-dessus de {thresh})",
+    "title": "Degré-jour de dégel",
+    "comment": "",
+    "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est au-dessus d'un seuil."
+  },
   "BIOLOGICALLY_EFFECTIVE_DEGREE_DAYS": {
     "long_name": "Degrés-jours biologiquement actifs",
     "description": "Accumulation des degrés-jours borné par Tmin > {thresh_tasmin} et Tmax-Tmin < {max_daily_degree_days}. Les degrés jours quotidiens sont corrigés selon Tmax-Tmin et selon un coefficient de longueur du jour dépendent de la latitude.",
@@ -557,12 +564,33 @@
     "comment": "",
     "abstract": "Durée maximale des périodes consécutives où la température journalière minimale est sous 0°C."
   },
+  "FROST_FREE_SEASON_LENGTH": {
+    "long_name": "Durée de la saison sans gel",
+    "description": "Nombre {freq:m} de jours entre la première occurrence d'au moins {window} jours consécutifs où la température journalière moyenne dépasse {thresh} et la première occurrence (après le {mid_date}) d'au moins {window} jours consécutifs où la température est sous {thresh}.",
+    "comment": "",
+    "title": "Durée de la saison sans gel",
+    "abstract": "Nombre de jours entre la première série de N jours avec des températures journalières moyennes au-dessus d'un seuil et la première série de N jours avec des températures journalières moyennes sous ce même seuil."
+  },
+    "FROST_FREE_SEASON_START": {
+    "long_name": "Jour de l'année du début de la saison sans gel",
+    "description": "Jour de l'année du début de la saison sans gel, défini comme le {window}e jour consécutif où la température excède {thresh}.",
+    "title": "Nième jour consécutif où la température excède un seuil",
+    "comment": "",
+    "abstract": "Premier jour où la température excède un certain seuil depuis un certain nombre de jours consécutifs."
+  },
   "GROWING_SEASON_LENGTH": {
     "long_name": "Durée de la saison de végétation",
     "description": "Nombre {freq:m} de jours entre la première occurrence d'au moins {window} jours consécutifs où la température journalière moyenne dépasse {thresh} et la première occurrence (après le {mid_date}) d'au moins {window} jours consécutifs où la température est sous {thresh}.",
     "comment": "",
     "title": "Durée de la saison de croissance",
     "abstract": "Nombre de jours entre la première série de N jours avec des températures journalières moyennes au-dessus d'un seuil et la première série de N jours avec des températures journalières moyennes sous ce même seuil."
+  },
+    "GROWING_SEASON_START": {
+    "long_name": "Jour de l'année du début de la saison de végétation",
+    "description": "Jour de l'année du début de la saison de végétation, défini comme le {window}e jour consécutif où la température excède {thresh}.",
+    "title": "Nième jour consécutif où la température excède un seuil",
+    "comment": "",
+    "abstract": "Premier jour où la température excède un certain seuil depuis un certain nombre de jours consécutifs."
   },
   "TROPICAL_NIGHTS": {
     "long_name": "Nombre de nuits tropicales (Tmin > {thresh})",
@@ -675,6 +703,13 @@
     "comment": "",
     "title": "Fin de la saison de végétation",
     "abstract": "Jour de l'année de la fin de la saison de végétation. La saison de végétation est définie comme l'intervalle entre la première série de N jours où la température journalière est au-dessus d'un seuil et la première série (après une certaine date) de N jours où elle est sous ce même seuil"
+  },
+  "FROST_FREE_SEASON_END": {
+    "long_name": "Jour de l'année de la fin de la saison sans gel",
+    "description": "Jour de l'année de la fin de la saison sans gel. La saison dsans gél est définie comme l'intervalle entre la première série de {window} jours où la température journalière est au-dessus de {thresh} et la première série (après le {mid_date}) de {window} jours où elle est sous {thresh}.",
+    "comment": "",
+    "title": "Fin de la saison sans gél",
+    "abstract": "Jour de l'année de la fin de la saison sans gél. La saison sans gél est définie comme l'intervalle entre la première série de N jours où la température journalière est au-dessus d'un seuil et la première série (après une certaine date) de N jours où elle est sous ce même seuil"
   },
   "FWI": {
     "description": "L'IFM est formé de six composantes qui tiennent compte des effets de la teneur en eau des combustibles et des conditions météorologiques sur le comportement du feu.",
