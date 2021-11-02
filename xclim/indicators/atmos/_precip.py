@@ -32,6 +32,11 @@ __all__ = [
     "dry_spell_frequency",
     "dry_spell_total_length",
     "wet_precip_accumulation",
+    "rain_season",
+    "rain_season_start",
+    "rain_season_end",
+    "rain_season_length",
+    "rain_season_prcptot",
 ]
 
 
@@ -341,4 +346,79 @@ dry_spell_total_length = Precip(
     units="days",
     cell_methods="",
     compute=indices.dry_spell_total_length,
+)
+
+
+rain_season = Precip(
+    identifier="rain_season",
+    description=[
+        "Day of year marking the start of a rain season.",
+        "Day of year marking the end of a rain season.",
+        "Duration of a rain season.",
+        "Accumulated precipitation during a rain season.",
+    ],
+    long_name=[
+        "Day of year marking the start of a rain season.",
+        "Day of year marking the end of a rain season.",
+        "Duration of a rain season.",
+        "Accumulated precipitation during a rain season.",
+    ],
+    var_name=[
+        "rain_season_start",
+        "rain_season_end",
+        "rain_season_length",
+        "rain_season_prcptot",
+    ],
+    units=["", "", "days", "mm"],
+    cell_methods="",
+    compute=indices.rain_season,
+)
+
+
+rain_season_start = Precip(
+    identifier="rain_season_start",
+    long_name="Day of year marking the start of a rain season",
+    description="Day of year marking the start of a rain season. Season starts on the first day of a sequence "
+    "of {window_wet} days with accumulated precipitation greater than or equal to {thresh_wet} that is "
+    "followed by a period of {window_dry} days with fewer than {dry_days} consecutive days with less than "
+    "{thresh_dry} daily precipitation. Search is constrained by {start_date} and {end_date}.",
+    units="",
+    cell_methods="",
+    compute=indices.rain_season_start,
+)
+
+
+rain_season_end = Precip(
+    identifier="rain_season_end",
+    long_name="Day of year marking the end of a rain season",
+    description="Day of year marking the end of a rain season. There are 3 calculation methods. "
+    "If {op}=='max', season ends when no daily precipitation is greater than {thresh} over a period of "
+    "{window} days. If {op}=='sum', season ends when cumulated precipitation over a period of {window} "
+    "days is smaller than {thresh}. If {op}=='etp', season ends after a water column of height "
+    "{thresh} has evaporated at daily rate (specified in 'etp') or at a constant rate (specified in {etp_rate}), "
+    "considering that the cumulated precipitation during this period must also evaporate. Search is constrained by "
+    "{start_date} and {end_date}.",
+    units="",
+    cell_methods="",
+    compute=indices.rain_season_end,
+)
+
+
+rain_season_length = Precip(
+    identifier="rain_season_length",
+    long_name="Duration of a rain season",
+    description="Number of days between the start and end of a rain season.",
+    units="days",
+    cell_methods="",
+    compute=indices.rain_season_length,
+)
+
+
+rain_season_prcptot = Precip(
+    identifier="rain_season_prcptot",
+    long_name="Accumulated precipitation during a rain season.",
+    description="Accumulated precipitation between the start and end of a rain season.",
+    units="mm",
+    cell_methods="",
+    compute=indices.rain_season_prcptot,
 )
