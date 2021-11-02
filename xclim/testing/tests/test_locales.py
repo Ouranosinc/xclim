@@ -60,6 +60,13 @@ def test_local_dict(tmp_path):
     with pytest.raises(xloc.UnavailableLocaleError):
         xloc.get_local_dict("tlh")
 
+    loc, dic = xloc.get_local_dict(("fr", {"TX_MAX": {"long_name": "Fait chaud."}}))
+    assert loc == "fr"
+    assert dic["TX_MAX"]["long_name"] == "Fait chaud."
+    assert (
+        dic["TG_MEAN"]["long_name"] == "Moyenne de la température journalière moyenne"
+    )
+
 
 def test_local_attrs_sing():
     attrs = xloc.get_local_attrs(
