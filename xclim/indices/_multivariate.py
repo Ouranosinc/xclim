@@ -90,10 +90,10 @@ def cold_spell_duration_index(
     bootstrap : bool
       Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
       Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
-      This perdiod, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
-      the rest of the timeserie.
+      This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+      the rest of the time series.
       Keep bootstrap to False when there is no common period, it would give wrong results
-      plus, bootstrapping is always expensive.
+      plus, bootstrapping is computationally expensive.
 
     Returns
     -------
