@@ -115,6 +115,8 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xarray.DataArray:
     percentile = per.percentiles.data.tolist()  # Can be a list or scalar
     pdoy_args = dict(
         window=per.attrs["window"],
+        alpha=per.attrs["alpha"],
+        beta=per.attrs["beta"],
         per=percentile if np.isscalar(percentile) else percentile[0],
     )
 
