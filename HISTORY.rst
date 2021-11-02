@@ -38,6 +38,8 @@ Internal changes
 * Added automated TestPyPI and PyPI-publishing workflows for GitHub CI. (:pull:`872`).
 * Changes on how indicators are constructed (:pull:`873`).
 * Added missing algorithms tests for conversion from hourly to daily (:pull:`888`).
+* Moved ``stack_variables``, ``unstack_variables``, ``construct_moving_yearly_window`` and ``unpack_moving_yearly_window`` from ``xclim.sdba.base`` to ``xclim.sdba.processing``. They still are imported in ``xclim.sdba`` as before. (:pull:`892`)
+* Many improvements to the documentation. (:pull:`892`, :issue:`880`)
 
 Bug fixes
 ~~~~~~~~~
