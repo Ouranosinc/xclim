@@ -1,4 +1,7 @@
-"""Detrending objects."""
+"""
+Detrending objects
+------------------
+"""
 from typing import Union
 
 import xarray as xr
@@ -20,13 +23,13 @@ class BaseDetrend(ParametrizableWithDataset):
     retrend(da)  : Puts trend back on da.
 
     A fitted Detrend object is unique to the trend coordinate of the object used in `fit`, (usually 'time').
-    The computed trend is stored in `Detrend.trend`.
+    The computed trend is stored in ``Detrend.ds.trend``.
 
-    * Subclasses should implement _get_trend_group() or _get_trend().
-    The first will be called in a `group.apply(..., main_only=True)`, and should return a single DataArray.
-    The second allows the use of functions wrapped in `map_groups` and should also return a single DataArray.
+    Subclasses should implement ``_get_trend_group()`` or ``_get_trend()``.
+    The first will be called in a ``group.apply(..., main_only=True)``, and should return a single DataArray.
+    The second allows the use of functions wrapped in :py:func:`map_groups` and should also return a single DataArray.
 
-    The subclasses may reimplement `_detrend` and `_retrend`.
+    The subclasses may reimplement ``_detrend`` and ``_retrend``.
     """
 
     @parse_group

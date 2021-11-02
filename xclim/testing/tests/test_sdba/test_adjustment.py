@@ -16,12 +16,14 @@ from xclim.sdba.adjustment import (
     QuantileDeltaMapping,
     Scaling,
 )
-from xclim.sdba.base import Grouper, stack_variables, unstack_variables
+from xclim.sdba.base import Grouper
 from xclim.sdba.processing import (
     jitter_under_thresh,
     reordering,
+    stack_variables,
     standardize,
     uniform_noise_like,
+    unstack_variables,
 )
 from xclim.sdba.utils import (
     ADDITIVE,

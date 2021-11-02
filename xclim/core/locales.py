@@ -231,7 +231,7 @@ class UnavailableLocaleError(ValueError):
 
 
 def read_locale_file(filename, module=None, encoding="UTF8"):
-    """Read a locale file (*.json) and return its dictionary.
+    """Read a locale file (.json) and return its dictionary.
 
     Parameters
     ----------

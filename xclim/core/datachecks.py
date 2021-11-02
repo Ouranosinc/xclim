@@ -52,4 +52,6 @@ def check_daily(var: xr.DataArray):
     Note that this does not check for gaps in the series.
     """
     if xr.infer_freq(var.time) != "D":
-        raise ValidationError("time series is not recognized as daily.")
+        raise ValidationError(
+            "time series is not recognized as daily. You can quiet this error by setting `data_validation` to 'warn' or 'log', in `xclim.set_options`."
+        )

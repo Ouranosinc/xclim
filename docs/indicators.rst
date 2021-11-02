@@ -72,6 +72,7 @@ Virtual submodules
 ==================
 
 .. automodule:: xclim.indicators.cf
+    :noindex:
 
 .. raw:: html
     <dl>
@@ -87,6 +88,7 @@ Virtual submodules
    </dl>
 
 .. automodule:: xclim.indicators.icclim
+    :noindex:
 
 .. raw:: html
     <dl>
@@ -102,6 +104,7 @@ Virtual submodules
    </dl>
 
 .. automodule:: xclim.indicators.anuclim
+    :noindex:
 
 .. raw:: html
     <dl>
