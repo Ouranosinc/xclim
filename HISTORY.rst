@@ -48,6 +48,7 @@ Internal changes
 * Added automated TestPyPI and PyPI-publishing workflows for GitHub CI. (:pull:`872`).
 * Changes on how indicators are constructed. (:pull:`873`).
 * Added missing algorithms tests for conversion from hourly to daily. (:pull:`888`).
+* Updated pre-commit hooks to use black v21.10.b0. (:pull:`896`).
 * Corrected several French indicator translation description strings. (:pull:`895`).
 
 Bug fixes
