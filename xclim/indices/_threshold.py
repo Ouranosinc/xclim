@@ -37,6 +37,7 @@ __all__ = [
     "days_with_snow",
     "freshet_start",
     "growing_degree_days",
+    "growing_season_start",
     "growing_season_end",
     "growing_season_length",
     "last_spring_frost",
@@ -553,6 +554,51 @@ def growing_degree_days(
     thresh = convert_units_to(thresh, tas)
     out = (tas - thresh).clip(min=0).resample(time=freq).sum(dim="time")
     return to_agg_units(out, tas, "delta_prod")
+
+
+@declare_units(tas="[temperature]", thresh="[temperature]")
+def growing_season_start(
+    tas: xarray.DataArray, thresh: str = "5.0 degC", window: int = 5, freq: str = "YS"
+) -> xarray.DataArray:
+    r"""Start of the growing season.
+
+    Day of the year of the start of a sequence of days with a temperature consistently
+    above a threshold, after a period with temperatures consistently above the same threshold.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+      Mean daily temperature.
+    thresh : str
+      Threshold temperature on which to base evaluation.
+    window : int
+      Minimum number of days with temperature above threshold needed for evaluation.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+      Day of the year when temperature is superior to a threshold over a given number of days for the first time.
+      If there is no such day or if a growing season is not detected, returns np.nan.
+
+    Notes
+    -----
+    Let :math:`x_i` be the daily mean temperature at day of the year :math:`i` for values of :math:`i` going from 1
+    to 365 or 366. The start date of the start of growing season is given by the smallest index :math:`i` for which:
+
+    .. math::
+
+       \prod_{j=i}^{i+w} [x_j >= thresh]
+
+    is true, where :math:`w` is the number of days the temperature threshold should be met or exceeded,
+    and :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
+    """
+    thresh = convert_units_to(thresh, tas)
+    over = tas >= thresh
+    out = over.resample(time=freq).map(rl.first_run, window=window, coord="dayofyear")
+    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(tas))
+    return out
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")

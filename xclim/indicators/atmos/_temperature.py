@@ -650,7 +650,7 @@ frost_free_season_start = Temp(
     long_name="Day of year of frost free season start",
     description="Day of year of beginning of frost free season, defined as the first day a temperature "
     "threshold of {thresh} is exceeded for at least {window} days.",
-    compute=indices.freshet_start,
+    compute=indices.growing_season_start,
     parameters={"thresh": {"default": "0 degC"}},
 )
 
@@ -687,7 +687,7 @@ growing_season_start = Temp(
     "consistent superior threshold temperature of {thresh} after a run of "
     "{window} days inferior to threshold temperature.",
     cell_methods="",
-    compute=indices.freshet_start,
+    compute=indices.growing_season_start,
     parameters={"thresh": {"default": "5.0 degC"}},
 )
 
