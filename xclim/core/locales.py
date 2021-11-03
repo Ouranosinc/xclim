@@ -5,7 +5,7 @@ Internationalization
 ====================
 
 This module defines methods and object to help the internationalization of metadata for
-the climate indicators computed by xclim. Go to :ref:`Adding translated metadata` to see
+climate indicators computed by xclim. Go to :ref:`Adding translated metadata` to see
 how to use this feature.
 
 All the methods and objects in this module use localization data given in json files.
@@ -149,7 +149,7 @@ def get_local_attrs(
     ----------
     indicator : str or sequence of strings
         Indicator's class name, usually the same as in `xc.core.indicator.registry`.
-        If multiple names are passed, the attrs from each indicators are merged, with highest priority to the first name.
+        If multiple names are passed, the attrs from each indicator are merged, with the highest priority set to the first name.
     *locales : str
         IETF language tag or a tuple of the language tag and a translation dict, or
         a tuple of the language tag and a path to a json file defining translation
