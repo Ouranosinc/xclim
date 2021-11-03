@@ -41,6 +41,9 @@ __all__ = [
     "growing_season_end",
     "growing_season_length",
     "last_spring_frost",
+    "frost_free_season_start",
+    "frost_free_season_end",
+    "frost_free_season_length",
     "frost_season_length",
     "first_day_below",
     "first_day_above",
@@ -562,8 +565,8 @@ def growing_season_start(
 ) -> xarray.DataArray:
     r"""Start of the growing season.
 
-    Day of the year of the start of a sequence of days with a temperature consistently
-    above or equal to a threshold, after a period with temperatures consistently above the same threshold.
+    Day of the year of the start of a sequence of days with mean temperatures consistently
+    above or equal to a threshold, after a period with mean temperatures consistently above the same threshold.
 
     Parameters
     ----------
@@ -611,8 +614,8 @@ def growing_season_end(
 ) -> xarray.DataArray:
     r"""End of the growing season.
 
-    Day of the year of the start of a sequence of days with a temperature consistently
-    below a threshold, after a period with temperatures consistently above the same threshold.
+    Day of the year of the start of a sequence of days with mean temperatures consistently
+    below a threshold, after a period with mean temperatures consistently above the same threshold.
 
     Parameters
     ----------
@@ -781,10 +784,180 @@ def frost_season_length(
     >>> fsl_nh = frost_season_length(tasmin, freq='AS-JUL')
 
     # If working in the Southern Hemisphere, one can use:
-    >>> dsl_sh = frost_season_length(tasmin, freq='YS')
+    >>> fsl_sh = frost_season_length(tasmin, freq='YS')
     """
     thresh = convert_units_to(thresh, tasmin)
     cond = tasmin < thresh
+
+    out = cond.resample(time=freq).map(
+        rl.season_length,
+        window=window,
+        date=mid_date,
+        dim="time",
+    )
+    return to_agg_units(out, tasmin, "count")
+
+
+@declare_units(tasmin="[temperature]", thresh="[temperature]")
+def frost_free_season_start(
+    tasmin: xarray.DataArray,
+    thresh: str = "0.0 degC",
+    window: int = 5,
+    freq: str = "YS",
+) -> xarray.DataArray:
+    r"""Start of the frost free season.
+
+    Day of the year of the start of a sequence of days with minimum temperatures consistently
+    above or equal to a threshold, after a period with minimum temperatures consistently above the same threshold.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature.
+    thresh : str
+      Threshold temperature on which to base evaluation.
+    window : int
+      Minimum number of days with temperature above threshold needed for evaluation.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+      Day of the year when minimum temperature is superior to a threshold
+      over a given number of days for the first time.
+      If there is no such day or if a frost free season is not detected, returns np.nan.
+
+    Notes
+    -----
+    Let :math:`x_i` be the daily mean temperature at day of the year :math:`i` for values of :math:`i` going from 1
+    to 365 or 366. The start date of the start of growing season is given by the smallest index :math:`i` for which:
+
+    .. math::
+
+       \prod_{j=i}^{i+w} [x_j >= thresh]
+
+    is true, where :math:`w` is the number of days the temperature threshold should be met or exceeded,
+    and :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
+    """
+    thresh = convert_units_to(thresh, tasmin)
+    over = tasmin >= thresh
+    out = over.resample(time=freq).map(rl.first_run, window=window, coord="dayofyear")
+    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(tasmin))
+    return out
+
+
+@declare_units(tasmin="[temperature]", thresh="[temperature]")
+def frost_free_season_end(
+    tasmin: xarray.DataArray,
+    thresh: str = "0.0 degC",
+    mid_date: DayOfYearStr = "07-01",
+    window: int = 5,
+    freq: str = "YS",
+) -> xarray.DataArray:
+    r"""End of the frost free season.
+
+    Day of the year of the start of a sequence of days with minimum temperatures consistently
+    below a threshold, after a period with minimum temperatures consistently above the same threshold.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature.
+    thresh : str
+      Threshold temperature on which to base evaluation.
+    mid_date : str
+      Date of the year after which to look for the end of the season. Should have the format '%m-%d'.
+    window : int
+      Minimum number of days with temperature below threshold needed for evaluation.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+      Day of the year when minimum temperature is inferior to a threshold
+      over a given number of days for the first time.
+      If there is no such day or if a frost free season is not detected, returns np.nan.
+      If the frost free season does not end within the time period, returns the last day of the period.
+    """
+    thresh = convert_units_to(thresh, tasmin)
+    cond = tasmin >= thresh
+
+    out = cond.resample(time=freq).map(
+        rl.run_end_after_date,
+        window=window,
+        date=mid_date,
+        dim="time",
+        coord="dayofyear",
+    )
+    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(tasmin))
+    return out
+
+
+@declare_units(tasmin="[temperature]", thresh="[temperature]")
+def frost_free_season_length(
+    tasmin: xarray.DataArray,
+    window: int = 5,
+    mid_date: Optional[DayOfYearStr] = "07-01",
+    thresh: str = "0.0 degC",
+    freq: str = "YS",
+) -> xarray.DataArray:
+    r"""Frost free season length.
+
+    The number of days between the first occurrence of at least N (def: 5) consecutive days
+    with minimum daily temperature above a threshold (default: 0℃) and the first occurrence
+    of at least N (def 5) consecutive days with minimum daily temperature below the same threshold
+    A mid date can be given to limit the earliest day the end of season can take.
+    WARNING: The default freq and mid_date values are valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+      Minimum daily temperature.
+    window : int
+      Minimum number of days with temperature above threshold to mark the beginning and end of frost free season.
+    mid_date : str, optional
+      Date the must be included in the season. It is the earliest the end of the season can be.
+      If None, there is no limit.
+    thresh : str
+      Threshold temperature on which to base evaluation.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+      Frost free season length.
+
+    Notes
+    -----
+    Let :math:`TN_{ij}` be the minimum temperature at day :math:`i` of period :math:`j`. Then counted is
+    the number of days between the first occurrence of at least N consecutive days with:
+
+    .. math::
+
+        TN_{ij} >= 0 ℃
+
+    and the first subsequent occurrence of at least N consecutive days with:
+
+    .. math::
+
+        TN_{ij} < 0 ℃
+
+    Examples
+    --------
+    >>> from xclim.indices import frost_season_length
+    >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
+
+    # For the Northern Hemisphere:
+    >>> ffsl_nh = frost_free_season_length(tasmin, freq='YS')
+
+    # If working in the Southern Hemisphere, one can use:
+    >>> ffsl_sh = frost_free_season_length(tasmin, freq='AS-JUL')
+    """
+    thresh = convert_units_to(thresh, tasmin)
+    cond = tasmin >= thresh
 
     out = cond.resample(time=freq).map(
         rl.season_length,

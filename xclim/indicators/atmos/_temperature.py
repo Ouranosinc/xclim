@@ -653,7 +653,7 @@ frost_free_season_length = Temp(
     "the first occurrence of at least {window} consecutive days with "
     "minimum daily temperature below freezing after {mid_date}.",
     cell_methods="time: minimum within days time: sum over days",
-    compute=indices.growing_season_length,
+    compute=indices.frost_free_season_length,
     parameters={"thresh": {"default": "0 degC"}},
 )
 
@@ -662,9 +662,9 @@ frost_free_season_start = Temp(
     units="",
     standard_name="day_of_year",
     long_name="Day of year of frost free season start",
-    description="Day of year of beginning of frost free season, defined as the first day a temperature "
+    description="Day of year of beginning of frost free season, defined as the first day a minimum temperature "
     "threshold of {thresh} is equal or exceeded for at least {window} days.",
-    compute=indices.growing_season_start,
+    compute=indices.frost_free_season_start,
     parameters={"thresh": {"default": "0 degC"}},
 )
 
@@ -673,11 +673,10 @@ frost_free_season_end = Temp(
     units="",
     standard_name="day_of_year",
     long_name="Day of year of frost free season end",
-    description="Day of year of end of frost free season, defined as the first day of "
-    "consistent inferior threshold temperature of {thresh} after a run of "
-    "{window} days superior to threshold temperature.",
+    description="Day of year of end of frost free season, defined as the first day minimum temperatures below a  "
+    "threshold of {thresh}, after a run of days above this threshold, for at least {window} days.",
     cell_methods="",
-    compute=indices.growing_season_end,
+    compute=indices.frost_free_season_end,
     parameters={"thresh": {"default": "0 degC"}},
 )
 

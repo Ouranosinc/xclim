@@ -738,6 +738,34 @@ class TestFrostSeasonLength:
         np.testing.assert_array_equal(fsl.sel(time="2000-07-01"), 121)
 
 
+class TestFrostFreeSeasonLength:
+    @pytest.mark.parametrize(
+        "d1,d2,expected",
+        [
+            ("1950-01-01", "1951-01-01", 0),  # No frost free season
+            ("2000-01-01", "2000-12-31", 365),  # All year frost free season
+            ("2000-06-15", "2001-01-01", 199),  # No end
+            ("2000-06-15", "2000-07-15", 31),  # Normal case
+        ],
+    )
+    def test_simple(self, tasmin_series, d1, d2, expected):
+        # test for different growing length
+
+        # generate a year of data
+        tasmin = tasmin_series(np.zeros(365) + 270, start="2000/1/1")
+        warm_period = tasmin.sel(time=slice(d1, d2))
+        tasmin = tasmin.where(~tasmin.time.isin(warm_period.time), 300)
+        fsl = xci.frost_free_season_length(tasmin, freq="YS", mid_date="07-01")
+        np.testing.assert_array_equal(fsl, expected)
+
+    def test_southhemisphere(self, tasmin_series):
+        tasmin = tasmin_series(np.zeros(2 * 365) + 270, start="2000/1/1")
+        warm_period = tasmin.sel(time=slice("2000-11-01", "2001-03-01"))
+        tasmin = tasmin.where(~tasmin.time.isin(warm_period.time), 300)
+        fsl = xci.frost_free_season_length(tasmin, freq="AS-JUL", mid_date="01-01")
+        np.testing.assert_array_equal(fsl.sel(time="2000-07-01"), 121)
+
+
 class TestHeatingDegreeDays:
     def test_simple(self, tas_series):
         a = np.zeros(365) + 17
