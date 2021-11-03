@@ -511,7 +511,7 @@ cooling_degree_days = Temp(
     description="{freq} cooling degree days above {thresh}.",
     cell_methods="time: mean within days time: sum over days",
     compute=indices.cooling_degree_days,
-    parameters={"thresh": {"default": "18 degC"}},
+    parameters={"thresh": {"default": "18.0 degC"}},
 )
 
 heating_degree_days = Temp(
@@ -522,6 +522,7 @@ heating_degree_days = Temp(
     description="{freq} heating degree days below {thresh}.",
     cell_methods="time: mean within days time: sum over days",
     compute=indices.heating_degree_days,
+    parameters={"thresh": {"default": "17.0 degC"}},
 )
 
 growing_degree_days = Temp(
@@ -532,6 +533,18 @@ growing_degree_days = Temp(
     description="{freq} growing degree days above {thresh}.",
     cell_methods="time: mean within days time: sum over days",
     compute=indices.growing_degree_days,
+    parameters={"thresh": {"default": "5.0 degC"}},
+)
+
+freezing_degree_days = Temp(
+    identifier="freezing_degree_days",
+    units="K days",
+    standard_name="integral_of_air_temperature_deficit_wrt_time",
+    long_name="Freezing degree days (Tmean < {thresh})",
+    description="{freq} freezing degree days below {thresh}.",
+    cell_methods="time: mean within days time: sum over days",
+    compute=indices.heating_degree_days,
+    parameters={"thresh": {"default": "0.0 degC"}},
 )
 
 thawing_degree_days = Temp(

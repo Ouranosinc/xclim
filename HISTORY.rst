@@ -9,6 +9,7 @@ Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James
 New indicators
 ~~~~~~~~~~~~~~
 * ``thawing_degree_days`` indicator returns degree-days above a default of `thresh="0 degC"`. (:pull:`895`, :issue:`887`).
+* ``freezing_degree_days`` indicator returns degree-days below a default of `thresh="0 degC"`. (:pull:`895`, :issue:`887`).
 * Several frost-free season indicators are now offered (``frost_free_season_start``, ``frost_free_season_end``, ``frost_free_season_length``). (:pull:`895`, :issue:`887`).
 * ``growing_season_start`` is now offered as an indice and as an indicator to complement other growing season-based indicators (threshold calculation with `op=">="`). (:pull:`895`, :issue:`887`).
 
