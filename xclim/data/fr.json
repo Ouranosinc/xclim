@@ -511,7 +511,7 @@
   },
   "THAWING_DEGREE_DAYS": {
     "long_name": "Degré-jour de dégel (Tmoy > {thresh})",
-    "description": "Cumul {freq} des degrés-jours de dégel(Température au-dessus de {thresh}).",
+    "description": "Cumul {freq} des degrés-jours de dégel (Température au-dessus de {thresh}).",
     "title": "Degré-jour de dégel",
     "comment": "",
     "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est au-dessus d'un seuil."
@@ -713,10 +713,10 @@
   },
   "FROST_FREE_SEASON_END": {
     "long_name": "Jour de l'année de la fin de la saison sans gel",
-    "description": "Jour de l'année de la fin de la saison sans gel. La saison sans gél est définie comme l'intervalle entre la première série de {window} jours où la température journalière est au-dessus de {thresh} et la première série (après le {mid_date}) de {window} jours où elle est sous {thresh}.",
+    "description": "Jour de l'année de la fin de la saison sans gel. La saison sans gel est définie comme l'intervalle entre la première série de {window} jours où la température journalière est au-dessus de {thresh} et la première série (après le {mid_date}) de {window} jours où elle est sous {thresh}.",
     "comment": "",
-    "title": "Fin de la saison sans gél",
-    "abstract": "Jour de l'année de la fin de la saison sans gél. La saison sans gél est définie comme l'intervalle entre la première série de N jours où la température journalière est au-dessus d'un seuil et la première série (après une certaine date) de N jours où elle est sous ce même seuil."
+    "title": "Fin de la saison sans gel",
+    "abstract": "Jour de l'année de la fin de la saison sans gél. La saison sans gel est définie comme l'intervalle entre la première série de N jours où la température journalière est au-dessus d'un seuil et la première série (après une certaine date) de N jours où elle est sous ce même seuil."
   },
   "FWI": {
     "description": "L'IFM est formé de six composantes qui tiennent compte des effets de la teneur en eau des combustibles et des conditions météorologiques sur le comportement du feu.",
