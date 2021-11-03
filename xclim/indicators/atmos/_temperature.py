@@ -533,7 +533,7 @@ growing_degree_days = Temp(
     description="{freq} growing degree days above {thresh}.",
     cell_methods="time: mean within days time: sum over days",
     compute=indices.growing_degree_days,
-    parameters={"thresh": {"default": "5.0 degC"}},
+    parameters={"thresh": {"default": "4.0 degC"}},
 )
 
 freezing_degree_days = Temp(
