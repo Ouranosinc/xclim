@@ -6,6 +6,12 @@ History
 -------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), Juliette Lavoie (:user:`juliettelavoie`).
 
+New indicators
+~~~~~~~~~~~~~~
+* ``thawing_degree_days`` indicator returns degree-days above a default of `thresh="0 degC"`. (:pull:`895`, :issue:`887`).
+* Several frost-free season indicators are now offered (``frost_free_season_start``, ``frost_free_season_end``, ``frost_free_season_length``). (:pull:`895`, :issue:`887`).
+* ``growing_season_start`` is now offered as an indicator to complement other growing season-based indicators (identical calculation as ``freshet_start`` with modified description metadata). (:pull:`895`, :issue:`887`).
+
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Improve cell_methods checking to search the wanted method within the whole string. (:pull:`866`, :issue:`863`).
@@ -13,10 +19,10 @@ New features and enhancements
 * ``dry_spell_frequency`` now has a parameter `op: {"sum", "max"}` to choose if the threshold is compared against the accumulated or maximal precipitation, over the given window. (:pull:`879`).
 * ``maximum_consecutive_frost_free_days`` is now checking that the minimum temperature is above or equal to the threshold ( instead of only above). (:pull:`883`, :issue:`881`).
 * The ANUCLIM virtual module has been updated to accept weekly and monthly inputs and with improved metadata. (:pull:`885`, :issue:`538`)
-* The ``sdba.loess`` algorithm has been optimized to run faster in all cases, with an even faster special case (``equal_spacing=True``) when the x coordinate is equally spaced. When activated, this special case might return results different from without, up to around 0.1%. (:pull:`865`)
-* Add support for group's window and additional dimensions in ``LoessDetrend``. Add new ``RollingMeanDetrend`` object. (:pull:`865`)
-* Missing value algorithms now try to infer the source timestep of the input data when it is not given. (:pull:`885`)
-* On indices, `bootstrap` parameter documentation has been updated to explain when and why it should be used. (:pull:`893`, :issue:`846`)
+* The ``sdba.loess`` algorithm has been optimized to run faster in all cases, with an even faster special case (``equal_spacing=True``) when the x coordinate is equally spaced. When activated, this special case might return results different from without, up to around 0.1%. (:pull:`865`).
+* Add support for group's window and additional dimensions in ``LoessDetrend``. Add new ``RollingMeanDetrend`` object. (:pull:`865`).
+* Missing value algorithms now try to infer the source timestep of the input data when it is not given. (:pull:`885`).
+* On indices, `bootstrap` parameter documentation has been updated to explain when and why it should be used. (:pull:`893`, :issue:`846`).
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
@@ -40,8 +46,9 @@ Internal changes
 * Updated the contribution guidelines to better give credit to contributors and more easily track changes. (:pull:`869`, :issue:`868`).
 * Enabled coveralls code coverage reporting for GitHub CI. (:pull:`870`).
 * Added automated TestPyPI and PyPI-publishing workflows for GitHub CI. (:pull:`872`).
-* Changes on how indicators are constructed (:pull:`873`).
-* Added missing algorithms tests for conversion from hourly to daily (:pull:`888`).
+* Changes on how indicators are constructed. (:pull:`873`).
+* Added missing algorithms tests for conversion from hourly to daily. (:pull:`888`).
+* Corrected several French indicator translation description strings. (:pull:`895`).
 
 Bug fixes
 ~~~~~~~~~
