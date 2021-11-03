@@ -510,9 +510,8 @@ cooling_degree_days = Temp(
     long_name="Cooling degree days (Tmean > {thresh})",
     description="{freq} cooling degree days above {thresh}.",
     cell_methods="time: mean within days time: sum over days",
-    compute=wrapped_partial(
-        indices.cooling_degree_days, suggested=dict(thresh="18 degC")
-    ),
+    compute=indices.cooling_degree_days,
+    parameters={"thresh": {"default": "18 degC"}},
 )
 
 heating_degree_days = Temp(
@@ -542,7 +541,8 @@ thawing_degree_days = Temp(
     long_name="Thawing degree days (degree days above 0°C)",
     description="{freq} thawing degree days above 0°C.",
     cell_methods="time: mean within days time: sum over days",
-    compute=wrapped_partial(indices.growing_degree_days, thresh="0 degC"),
+    compute=indices.growing_degree_days,
+    parameters={"thresh": {"default": "0 degC"}},
 )
 
 freshet_start = Temp(
@@ -639,7 +639,8 @@ frost_free_season_length = Temp(
     "the first occurrence of at least {window} consecutive days with "
     "minimuim daily temperature below freezing after {mid_date}.",
     cell_methods="time: minimum within days time: sum over days",
-    compute=wrapped_partial(indices.growing_season_length, thresh="0 degC"),
+    compute=indices.growing_season_length,
+    parameters={"thresh": {"default": "0 degC"}},
 )
 
 frost_free_season_start = Temp(
@@ -649,7 +650,8 @@ frost_free_season_start = Temp(
     long_name="Day of year of frost free season start",
     description="Day of year of beginning of frost free season, defined as the first day a temperature "
     "threshold of {thresh} is exceeded for at least {window} days.",
-    compute=wrapped_partial(indices.freshet_start, suggested=dict(thresh="0 degC")),
+    compute=indices.freshet_start,
+    parameters={"thresh": {"default": "0 degC"}},
 )
 
 frost_free_season_end = Temp(
@@ -661,9 +663,8 @@ frost_free_season_end = Temp(
     "consistent inferior threshold temperature of {thresh} after a run of "
     "{window} days superior to threshold temperature.",
     cell_methods="",
-    compute=wrapped_partial(
-        indices.growing_season_end, suggested=dict(thresh="0 degC")
-    ),
+    compute=indices.growing_season_end,
+    parameters={"thresh": {"default": "0 degC"}},
 )
 
 maximum_consecutive_frost_free_days = Temp(
@@ -686,10 +687,8 @@ growing_season_start = Temp(
     "consistent superior threshold temperature of {thresh} after a run of "
     "{window} days inferior to threshold temperature.",
     cell_methods="",
-    compute=wrapped_partial(
-        indices.freshet_start,
-        suggested=dict(thresh="5.0 degC"),
-    ),
+    compute=indices.freshet_start,
+    parameters={"thresh": {"default": "5.0 degC"}},
 )
 
 growing_season_length = Temp(
@@ -703,6 +702,7 @@ growing_season_length = Temp(
     "mean daily temperature below {thresh} after {mid_date}.",
     cell_methods="",
     compute=indices.growing_season_length,
+    parameters={"thresh": {"default": "5.0 degC"}},
 )
 
 growing_season_end = Temp(
@@ -715,6 +715,7 @@ growing_season_end = Temp(
     "{window} days superior to threshold temperature.",
     cell_methods="",
     compute=indices.growing_season_end,
+    parameters={"thresh": {"default": "5.0 degC"}},
 )
 
 tropical_nights = Temp(
