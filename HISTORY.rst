@@ -34,11 +34,8 @@ Breaking changes
 
     - Their signature is now consistent : input variables (DataArrays, optional or not) are positional or keyword arguments and all other parameters are keyword only. (:issue:`855`, :issue:`857`)
     - Some indicators have modified signatures because we now rename variables when wrapping generic indices. This is the case for the whole cf module, for example.
-    - ``Indicator.parameters`` is now a property generated from ``Indicator._all_parameters``,
-    as the latter includes the injected parameters. The keys of the former are instances
-    of new ``xclim.core.indicator.Parameter``, and not dictionaries as before.
-    - New ``Indicator.injected_parameters`` to see which compute function arguments will
-    be injected at call time.
+    - ``Indicator.parameters`` is now a property generated from ``Indicator._all_parameters``, as the latter includes the injected parameters. The keys of the former are instances of new ``xclim.core.indicator.Parameter``, and not dictionaries as before.
+    - New ``Indicator.injected_parameters`` to see which compute function arguments will be injected at call time.
     - See the pull request (:pull:`873`) for all information.
 
 Internal changes
@@ -50,6 +47,8 @@ Internal changes
 * Changes on how indicators are constructed. (:pull:`873`).
 * Added missing algorithms tests for conversion from hourly to daily. (:pull:`888`).
 * Updated pre-commit hooks to use black v21.10.b0. (:pull:`896`).
+* Moved ``stack_variables``, ``unstack_variables``, ``construct_moving_yearly_window`` and ``unpack_moving_yearly_window`` from ``xclim.sdba.base`` to ``xclim.sdba.processing``. They still are imported in ``xclim.sdba`` as before. (:pull:`892`)
+* Many improvements to the documentation. (:pull:`892`, :issue:`880`)
 
 Bug fixes
 ~~~~~~~~~

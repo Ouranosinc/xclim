@@ -1,4 +1,8 @@
-"""Pre and post processing for bias adjustment."""
+"""
+Pre and post processing
+-----------------------
+"""
+import warnings
 from typing import Optional, Sequence, Tuple, Union
 
 import dask.array as dsk
@@ -6,6 +10,7 @@ import numpy as np
 import xarray as xr
 from xarray.core.utils import get_temp_dimname
 
+from xclim.core.calendar import get_calendar, max_doy, parse_offset
 from xclim.core.formatting import update_xclim_history
 from xclim.core.units import convert_units_to
 from xclim.core.utils import uses_dask
@@ -336,7 +341,7 @@ def escore(
 
     References
     ----------
-    .. [SkezelyRizzo] Skezely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
+    .. Skezely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
     .. [BaringhausFranz] Baringhaus, L. and Franz, C. (2004) On a new multivariate two-sample test, Journal of Multivariate Analysis, 88(1), 190–206. https://doi.org/10.1016/s0047-259x(03)00079-4
     """
 
@@ -373,3 +378,215 @@ def escore(
         references="Skezely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)",
     )
     return out
+
+
+def _get_number_of_elements_by_year(time):
+    """Get the number of elements in time in a year by inferring its sampling frequency.
+
+    Only calendar with uniform year lengths are supported : 360_day, noleap, all_leap.
+    """
+    cal = get_calendar(time)
+
+    # Calendar check
+    if cal in ["standard", "gregorian", "default", "proleptic_gregorian"]:
+        raise ValueError(
+            "For moving window computations, the data must have a uniform calendar (360_day, no_leap or all_leap)"
+        )
+
+    mult, freq, _, _ = parse_offset(xr.infer_freq(time))
+    days_in_year = max_doy[cal]
+    elements_in_year = {"Q": 4, "M": 12, "D": days_in_year, "H": days_in_year * 24}
+    N_in_year = elements_in_year.get(freq, 1) / mult
+    if N_in_year % 1 != 0:
+        raise ValueError(
+            f"Sampling frequency of the data must be Q, M, D or H and evenly divide a year (got {mult}{freq})."
+        )
+
+    return int(N_in_year)
+
+
+def construct_moving_yearly_window(
+    da: xr.Dataset, window: int = 21, step: int = 1, dim: str = "movingwin"
+):
+    """Construct a moving window DataArray.
+
+    Stacks windows of `da` in a new 'movingwin' dimension.
+    Windows are always made of full years, so calendar with non uniform year lengths are not supported.
+
+    Windows are constructed starting at the beginning of `da`, if number of given years is not
+    a multiple of `step`, then the last year(s) will be missing as a supplementary window would be incomplete.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      A DataArray with a `time` dimension.
+    window : int
+      The length of the moving window as a number of years.
+    step : int
+      The step between each window as a number of years.
+    dim : str
+      The new dimension name. If given, must also be given to `unpack_moving_yearly_window`.
+
+    Return
+    ------
+    xr.DataArray
+      A DataArray with a new `movingwin` dimension and a `time` dimension with a length of 1 window.
+      This assumes downstream algorithms do not make use of the _absolute_ year of the data.
+      The correct timeseries can be reconstructed with :py:func:`unpack_moving_yearly_window`.
+      The coordinates of `movingwin` are the first date of the windows.
+    """
+    # Get number of samples per year (and perform checks)
+    N_in_year = _get_number_of_elements_by_year(da.time)
+
+    # Number of samples in a window
+    N = window * N_in_year
+
+    first_slice = da.isel(time=slice(0, N))
+    first_slice = first_slice.expand_dims({dim: np.atleast_1d(first_slice.time[0])})
+    daw = [first_slice]
+
+    i_start = N_in_year * step
+    # This is the first time I use `while` in real python code. What an event.
+    while i_start + N <= da.time.size:
+        # Cut and add _full_ slices only, partial window are thrown out
+        # Use isel so that we don't need to deal with a starting date.
+        slc = da.isel(time=slice(i_start, i_start + N))
+        slc = slc.expand_dims({dim: np.atleast_1d(slc.time[0])})
+        slc["time"] = first_slice.time
+        daw.append(slc)
+        i_start += N_in_year * step
+
+    daw = xr.concat(daw, dim)
+    return daw
+
+
+def unpack_moving_yearly_window(da: xr.DataArray, dim: str = "movingwin"):
+    """Unpack a constructed moving window dataset to a normal timeseries, only keeping the central data.
+
+    Unpack DataArrays created with :py:func:`construct_moving_yearly_window` and recreate a timeseries data.
+    Only keeps the central non-overlapping years. The final timeseries will be (window - step) years shorter than
+    the initial one.
+
+    The window length and window step are inferred from the coordinates.
+
+    Parameters
+    ----------
+    da: xr.DataArray
+      As constructed by :py:func:`construct_moving_yearly_window`.
+    dim : str
+      The window dimension name as given to the construction function.
+    """
+    # Get number of samples by year (and perform checks)
+    N_in_year = _get_number_of_elements_by_year(da.time)
+
+    # Might be smaller than the original moving window, doesn't matter
+    window = da.time.size / N_in_year
+
+    if window % 1 != 0:
+        warnings.warn(
+            f"Incomplete data received as number of years covered is not an integer ({window})"
+        )
+
+    # Get step in number of years
+    days_in_year = max_doy[get_calendar(da)]
+    step = np.unique(da[dim].diff(dim).dt.days / days_in_year)
+    if len(step) > 1:
+        raise ValueError("The spacing between the windows is not equal.")
+    step = int(step[0])
+
+    # Which years to keep: length step, in the middle of window
+    left = int((window - step) // 2)  # first year to keep
+
+    # Keep only the middle years
+    da = da.isel(time=slice(left * N_in_year, (left + step) * N_in_year))
+
+    out = []
+    for win_start in da[dim]:
+        slc = da.sel({dim: win_start}).drop_vars(dim)
+        dt = win_start.values - da[dim][0].values
+        slc["time"] = slc.time + dt
+        out.append(slc)
+
+    return xr.concat(out, "time")
+
+
+def stack_variables(ds, rechunk=True, dim="variables"):
+    """Stack different variables of a dataset into a single DataArray with a new "variables" dimension.
+
+    Variable attributes are all added as lists of attributes to the new coordinate, prefixed with "_".
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+      Input dataset.
+    rechunk : bool
+      If True (default), dask arrays are rechunked with `variables : -1`.
+    dim : str
+      Name of dimension along which variables are indexed.
+
+    Returns
+    -------
+    xr.DataArray
+      Array with variables stacked along `dim` dimension. Units are set to "".
+    """
+    # Store original arrays' attributes
+    attrs = {}
+    nvar = len(ds.data_vars)
+    for i, var in enumerate(ds.data_vars.values()):
+        for name, attr in var.attrs.items():
+            attrs.setdefault("_" + name, [None] * nvar)[i] = attr
+
+    # Special key used for later `unstacking`
+    attrs["is_variables"] = True
+    var_crd = xr.DataArray(
+        list(ds.data_vars.keys()), dims=(dim,), name=dim, attrs=attrs
+    )
+
+    da = xr.concat(ds.data_vars.values(), var_crd, combine_attrs="drop")
+
+    if uses_dask(da) and rechunk:
+        da = da.chunk({dim: -1})
+
+    da.attrs.update(ds.attrs)
+    da.attrs["units"] = ""
+    return da.rename("multivariate")
+
+
+def unstack_variables(da, dim=None):
+    """Unstack a DataArray created by `stack_variables` to a dataset.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Array holding different variables along `dim` dimension.
+    dim : str
+      Name of dimension along which the variables are stacked. If not specified (default),
+      `dim` is inferred from attributes of the coordinate.
+
+    Returns
+    -------
+    xr.Dataset
+      Dataset holding each variable in an individual DataArray.
+    """
+    if dim is None:
+        for dim, crd in da.coords.items():
+            if crd.attrs.get("is_variables"):
+                break
+        else:
+            raise ValueError("No variable coordinate found, were attributes removed?")
+
+    ds = xr.Dataset(
+        {name.item(): da.sel({dim: name.item()}, drop=True) for name in da[dim]},
+        attrs=da.attrs,
+    )
+    del ds.attrs["units"]
+
+    # Reset attributes
+    for name, attr_list in da.variables.attrs.items():
+        if not name.startswith("_"):
+            continue
+        for attr, var in zip(attr_list, da.variables):
+            if attr is not None:
+                ds[var.item()].attrs[name[1:]] = attr
+
+    return ds

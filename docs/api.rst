@@ -2,6 +2,9 @@
 API
 ===
 
+The API of the statistical downscaling and bias adjustment module (sdba) is documented :ref:`on this page <SDBA's user API>`. The API of the ``cfchecks``, ``datachecks``, ``missing`` and ``dataflags`` modules are in :ref:`Health checks`. Finally, the API of the translating tools is on the :ref:`Internationalization` page.
+
+
 Indicators
 ==========
 
@@ -43,7 +46,6 @@ Indicator tools
    :member-order: bysource
    :show-inheritance:
 
-
 Unit handling module
 ====================
 
@@ -52,33 +54,11 @@ Unit handling module
    :undoc-members:
    :show-inheritance:
 
-Statistical Downscaling and Bias Adjustment
-===========================================
-
-.. toctree::
-
-     sdba_api
-
 
 Other utilities
 ===============
 
 .. automodule:: xclim.core.calendar
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. automodule:: xclim.core.cfchecks
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. automodule:: xclim.core.datachecks
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. automodule:: xclim.core.dataflags
    :members:
    :undoc-members:
    :show-inheritance:
