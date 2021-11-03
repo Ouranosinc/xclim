@@ -53,6 +53,7 @@ __all__ = [
     "heating_degree_days",
     "growing_degree_days",
     "thawing_degree_days",
+    "freezing_degree_days",
     "frost_season_length",
     "freshet_start",
     "frost_days",
