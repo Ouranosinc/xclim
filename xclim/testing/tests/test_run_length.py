@@ -512,6 +512,20 @@ class TestRunsWithDates:
 
 
 @pytest.mark.parametrize("use_dask", [True, False])
+def test_lazy_indexing(use_dask):
+    idx = xr.DataArray([[0, 10], [33, 99]], dims=("x", "y"))
+    da = xr.DataArray(np.arange(100), dims=("time",))
+
+    if use_dask:
+        idx = idx.chunk({"x": 1})
+
+    out = rl.lazy_indexing(da, idx)
+    assert set(out.dims) == {"x", "y"}
+    np.testing.assert_array_equal(idx, out)
+    assert "time" not in out.coords
+
+
+@pytest.mark.parametrize("use_dask", [True, False])
 def test_lazy_indexing_special_cases(use_dask):
     a = xr.DataArray(np.random.rand(10, 10, 10), dims=("x", "y", "z"))
     b = xr.DataArray(np.random.rand(10, 10, 10), dims=("x", "y", "z"))

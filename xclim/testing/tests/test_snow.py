@@ -26,13 +26,14 @@ class TestContinuousSnowCoverStartEnd:
         a = np.zeros(365)
         a[100:200] = 0.03
         snd = snd_series(a, start="2001-07-01")
+        snd = snd.expand_dims(lat=[0, 1, 2])
         out = land.continuous_snow_cover_start(snd)
         assert out.units == ""
-        np.testing.assert_array_equal(out, snd.time.dt.dayofyear[100])
+        np.testing.assert_array_equal(out.isel(lat=0), snd.time.dt.dayofyear[100])
 
         out = land.continuous_snow_cover_end(snd)
         assert out.units == ""
-        np.testing.assert_array_equal(out, snd.time.dt.dayofyear[200])
+        np.testing.assert_array_equal(out.isel(lat=0), snd.time.dt.dayofyear[200])
 
 
 class TestSndMaxDoy:
