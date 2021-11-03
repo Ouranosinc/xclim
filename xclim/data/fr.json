@@ -489,9 +489,9 @@
     "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est au-dessus d'un seuil et que les immeubles doivent être réfrigérés."
   },
   "HEATING_DEGREE_DAYS": {
-    "long_name": "Degré-jour de chauffe (Tmoy < {thresh})",
-    "description": "Cumul {freq:m} des degrés-jours de chauffe (Température au-dessus de {thresh}).",
-    "title": "Degré-jour de chauffe",
+    "long_name": "Degré-jour de chauffage (Tmoy < {thresh})",
+    "description": "Cumul {freq:m} des degrés-jours de chauffage (Température au-dessus de {thresh}).",
+    "title": "Degré-jour de chauffage",
     "comment": "",
     "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est sous un seuil et que les immeubles doivent être chauffés."
   },

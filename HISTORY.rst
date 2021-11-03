@@ -49,13 +49,14 @@ Internal changes
 * Changes on how indicators are constructed. (:pull:`873`).
 * Added missing algorithms tests for conversion from hourly to daily. (:pull:`888`).
 * Updated pre-commit hooks to use black v21.10.b0. (:pull:`896`).
-* Corrected several French indicator translation description strings. (:pull:`895`).
 
 Bug fixes
 ~~~~~~~~~
 * Fix a bug in bootstrapping where computation would fail when the dataset time coordinate is encoded using `cftime.datetime`. (:pull:`859`).
 * Fix a bug in ``build_indicator_module_from_yaml`` where bases classes (Daily, Hourly, etc) were not usable with the `base` field. (:pull:`885`)
 * ``percentile_doy`` alpha and beta parameters are now properly transmitted to bootstrap calls of this function. (:pull:`893`, :issue:`846`)
+* Fix name of heating degree days in French (`"chauffe"` -> "`chauffage`"). (:pull:`895`).
+* Corrected several French indicator translation description strings (bad usages of `"."` in `description` and `long_name` fields). (:pull:`895`).
 
 0.30.1 (2021-10-01)
 -------------------
