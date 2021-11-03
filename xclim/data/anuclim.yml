@@ -1,4 +1,5 @@
-doc: '===============
+doc: |
+  ===============
   ANUCLIM indices
   ===============
 
@@ -10,9 +11,7 @@ doc: '===============
   a weekly or monthly frequency.  However, the implementation here expands these
   definitions and can calculate the result with daily input data.
 
-  .. _ANUCLIM: https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6)
-
-  '
+  .. [ANUCLIM] https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6)
 base: DailyWeeklyMonthly
 indicators:
   P10_MeanTempWarmestQuarter:
