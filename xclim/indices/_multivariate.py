@@ -86,7 +86,12 @@ def cold_spell_duration_index(
     freq : str
       Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
+      Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
+      Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
+      This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+      the rest of the time series.
+      Keep bootstrap to False when there is no common period, it would give wrong results
+      plus, bootstrapping is computationally expensive.
 
     Returns
     -------
@@ -1107,7 +1112,12 @@ def days_over_precip_thresh(
     freq : str
       Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
+      Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
+      Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
+      This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+      the rest of the time series.
+      Keep bootstrap to False when there is no common period, it would give wrong results
+      plus, bootstrapping is computationally expensive.
 
     Returns
     -------
@@ -1159,7 +1169,12 @@ def fraction_over_precip_thresh(
     freq : str
       Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
+      Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
+      Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
+      This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+      the rest of the time series.
+      Keep bootstrap to False when there is no common period, it would give wrong results
+      plus, bootstrapping is computationally expensive.
 
     Returns
     -------
@@ -1207,7 +1222,12 @@ def tg90p(
     freq : str
       Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
+      Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
+      Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
+      This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+      the rest of the time series.
+      Keep bootstrap to False when there is no common period, it would give wrong results
+      plus, bootstrapping is computationally expensive.
 
     Returns
     -------
@@ -1257,7 +1277,12 @@ def tg10p(
     freq : str
       Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
+      Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
+      Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
+      This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+      the rest of the time series.
+      Keep bootstrap to False when there is no common period, it would give wrong results
+      plus, bootstrapping is computationally expensive.
 
     Returns
     -------
@@ -1307,7 +1332,12 @@ def tn90p(
     freq : str
       Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
+      Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
+      Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
+      This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+      the rest of the time series.
+      Keep bootstrap to False when there is no common period, it would give wrong results
+      plus, bootstrapping is computationally expensive.
 
     Returns
     -------
@@ -1357,7 +1387,12 @@ def tn10p(
     freq : str
       Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
+      Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
+      Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
+      This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+      the rest of the time series.
+      Keep bootstrap to False when there is no common period, it would give wrong results
+      plus, bootstrapping is computationally expensive.
 
     Returns
     -------
@@ -1407,7 +1442,12 @@ def tx90p(
     freq : str
       Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
+      Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
+      Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
+      This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+      the rest of the time series.
+      Keep bootstrap to False when there is no common period, it would give wrong results
+      plus, bootstrapping is computationally expensive.
 
     Returns
     -------
@@ -1457,7 +1497,12 @@ def tx10p(
     freq : str
       Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
+      Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
+      Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
+      This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+      the rest of the time series.
+      Keep bootstrap to False when there is no common period, it would give wrong results
+      plus, bootstrapping is computationally expensive.
 
     Returns
     -------
@@ -1572,7 +1617,12 @@ def warm_spell_duration_index(
     freq : str
       Resampling frequency.
     bootstrap : bool
-      Flag to run bootstrapping. Used by percentile_bootstrap decorator.
+      Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
+      Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
+      This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+      the rest of the time series.
+      Keep bootstrap to False when there is no common period, it would give wrong results
+      plus, bootstrapping is computationally expensive.
 
     Returns
     -------

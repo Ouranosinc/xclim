@@ -583,6 +583,8 @@ def percentile_doy(
         arr.time[0 :: n - 1].dt.strftime("%Y-%m-%d").values.tolist()
     )
     p.attrs["window"] = window
+    p.attrs["alpha"] = alpha
+    p.attrs["beta"] = beta
     return p.rename("per")
 
 
