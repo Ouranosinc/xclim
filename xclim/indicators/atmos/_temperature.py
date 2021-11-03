@@ -648,9 +648,9 @@ frost_free_season_length = Temp(
     standard_name="days_with_air_temperature_above_threshold",
     long_name="Length of the frost free season",
     description="{freq} number of days between the first occurrence of at least "
-    "{window} consecutive days with minimum daily temperature above freezing and "
+    "{window} consecutive days with minimum daily temperature above or at the freezing point and "
     "the first occurrence of at least {window} consecutive days with "
-    "minimuim daily temperature below freezing after {mid_date}.",
+    "minimum daily temperature below freezing after {mid_date}.",
     cell_methods="time: minimum within days time: sum over days",
     compute=indices.growing_season_length,
     parameters={"thresh": {"default": "0 degC"}},
@@ -662,7 +662,7 @@ frost_free_season_start = Temp(
     standard_name="day_of_year",
     long_name="Day of year of frost free season start",
     description="Day of year of beginning of frost free season, defined as the first day a temperature "
-    "threshold of {thresh} is exceeded for at least {window} days.",
+    "threshold of {thresh} is equal or exceeded for at least {window} days.",
     compute=indices.growing_season_start,
     parameters={"thresh": {"default": "0 degC"}},
 )
@@ -697,7 +697,7 @@ growing_season_start = Temp(
     standard_name="day_of_year",
     long_name="Day of year of growing season start",
     description="Day of year of start of growing season, defined as the first day of "
-    "consistent superior threshold temperature of {thresh} after a run of "
+    "consistent superior or equal to threshold temperature of {thresh} after a run of "
     "{window} days inferior to threshold temperature.",
     cell_methods="",
     compute=indices.growing_season_start,

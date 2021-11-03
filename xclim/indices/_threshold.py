@@ -563,7 +563,7 @@ def growing_season_start(
     r"""Start of the growing season.
 
     Day of the year of the start of a sequence of days with a temperature consistently
-    above a threshold, after a period with temperatures consistently above the same threshold.
+    above or equal to a threshold, after a period with temperatures consistently above the same threshold.
 
     Parameters
     ----------
