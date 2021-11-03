@@ -3,7 +3,7 @@ from inspect import _empty  # noqa
 
 from xclim import indices
 from xclim.core.indicator import Indicator
-from xclim.core.utils import wrapped_partial
+from xclim.core.utils import InputKind
 
 __all__ = [
     "humidex",
@@ -115,13 +115,13 @@ relative_humidity_from_dewpoint = Converter(
         if kws["ice_thresh"] is not None
         else ""
     ),
-    compute=wrapped_partial(
-        indices.relative_humidity,
-        suggested={"tdps": _empty},
-        huss=None,
-        ps=None,
-        invalid_values="mask",
-    ),
+    compute=indices.relative_humidity,
+    parameters={
+        "tdps": {"kind": InputKind.VARIABLE},
+        "huss": None,
+        "ps": None,
+        "invalid_values": "mask",
+    },
 )
 
 
@@ -141,9 +141,13 @@ relative_humidity = Converter(
         if kws["ice_thresh"] is not None
         else ""
     ),
-    compute=wrapped_partial(
-        indices.relative_humidity, tdps=None, invalid_values="mask"
-    ),
+    compute=indices.relative_humidity,
+    parameters={
+        "tdps": None,
+        "huss": {"kind": InputKind.VARIABLE},
+        "ps": {"kind": InputKind.VARIABLE},
+        "invalid_values": "mask",
+    },
 )
 
 
@@ -162,7 +166,8 @@ specific_humidity = Converter(
         if kws["ice_thresh"] is not None
         else ""
     ),
-    compute=wrapped_partial(indices.specific_humidity, invalid_values="mask"),
+    compute=indices.specific_humidity,
+    parameters={"invalid_values": "mask"},
 )
 
 
@@ -205,7 +210,8 @@ wind_chill_index = Converter(
         if kws["method"] == "CAN"
         else "Invalid temperatures (T > 50°F) and winds (V < 3 mph) where masked."
     ),
-    compute=wrapped_partial(indices.wind_chill_index, mask_invalid=True),
+    compute=indices.wind_chill_index,
+    parameters={"mask_invalid": True},
 )
 
 

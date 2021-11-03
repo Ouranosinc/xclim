@@ -127,6 +127,7 @@ def corn_heat_units(
 @declare_units(
     tasmin="[temperature]",
     tasmax="[temperature]",
+    lat="[]",
     thresh_tasmin="[temperature]",
 )
 def huglin_index(
@@ -278,6 +279,7 @@ def huglin_index(
 @declare_units(
     tasmin="[temperature]",
     tasmax="[temperature]",
+    lat="[]",
     thresh_tasmin="[temperature]",
     low_dtr="[temperature]",
     high_dtr="[temperature]",
@@ -428,7 +430,7 @@ def biologically_effective_degree_days(
     return bedd
 
 
-@declare_units(tasmin="[temperature]")
+@declare_units(tasmin="[temperature]", lat="[]")
 def cool_night_index(
     tasmin: xarray.DataArray, lat: xarray.DataArray, freq: str = "YS"
 ) -> xarray.DataArray:
@@ -478,7 +480,7 @@ def cool_night_index(
     return cni
 
 
-@declare_units(tas="[temperature]")
+@declare_units(tas="[temperature]", lat="[]")
 def latitude_temperature_index(
     tas: xarray.DataArray,
     lat: xarray.DataArray,
@@ -598,33 +600,51 @@ def water_budget(
 
 @declare_units(pr="[precipitation]", thresh="[length]")
 def dry_spell_frequency(
-    pr: xarray.DataArray, thresh: str = "1.0 mm", window: int = 3, freq: str = "YS"
+    pr: xarray.DataArray,
+    thresh: str = "1.0 mm",
+    window: int = 3,
+    freq: str = "YS",
+    op: str = "sum",
 ) -> xarray.DataArray:
     """
-    Return the number of dry periods of n days and more, during which the accumulated precipitation on a window of
-    n days is under the threshold.
+    Return the number of dry periods of n days and more, during which the accumulated or maximal daily precipitation
+    amount on a window of n days is under the threshold.
 
     Parameters
     ----------
     pr : xarray.DataArray
       Daily precipitation.
     thresh : str
-      Accumulated precipitation value under which a period is considered dry.
+      Precipitation amount under which a period is considered dry.
+      The value against which the threshold is compared depends on  `op` .
     window : int
-      Number of days where the accumulated precipitation is under threshold.
+      Minimum length of the spells.
     freq : str
       Resampling frequency.
+    op: {"sum","max"}
+      Operation to perform on the window.
+      Default is "sum", which checks that the sum of accumulated precipitation over the whole window is less than the
+      threshold.
+      "max" checks that the maximal daily precipitation amount within the window is less than the threshold.
+      This is the same as verifying that each individual day is below the threshold.
 
     Returns
     -------
     xarray.DataArray
       The {freq} number of dry periods of minimum {window} days.
+
+    Examples
+    --------
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> dry_spell_frequency(pr=pr, op="sum")
+    >>> dry_spell_frequency(pr=pr, op="max")
     """
     pram = rate2amount(pr, out_units="mm")
     thresh = convert_units_to(thresh, pram)
 
+    agg_pr = getattr(pram.rolling(time=window, center=True), op)()
     out = (
-        (pram.rolling(time=window, center=True).sum() < thresh)
+        (agg_pr < thresh)
         .resample(time=freq)
         .map(rl.windowed_run_events, window=1, dim="time")
     )
@@ -719,9 +739,9 @@ def qian_weighted_mean_average(
     thresh="[temperature]",
 )
 def effective_growing_degree_days(
-    *,
     tasmax: xarray.DataArray,
     tasmin: xarray.DataArray,
+    *,
     thresh: str = "5 degC",
     method: str = "bootsma",
     after_date: DayOfYearStr = "07-01",

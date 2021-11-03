@@ -5,7 +5,7 @@ from inspect import _empty  # noqa
 from xclim import indices
 from xclim.core import cfchecks
 from xclim.core.indicator import Daily, Hourly
-from xclim.core.utils import wrapped_partial
+from xclim.core.utils import InputKind
 
 __all__ = [
     "rain_on_frozen_ground_days",
@@ -175,7 +175,8 @@ precip_accumulation = Precip(
     long_name="Total precipitation",
     description="{freq} total precipitation",
     cell_methods="time: sum within days time: sum over days",
-    compute=wrapped_partial(indices.precip_accumulation, tas=None, phase=None),
+    compute=indices.precip_accumulation,
+    parameters=dict(tas=None, phase=None),
 )
 
 wet_precip_accumulation = Precip(
@@ -186,7 +187,8 @@ wet_precip_accumulation = Precip(
     long_name="Total precipitation",
     description="{freq} total precipitation over wet days, defined as days where precipitation exceeds {thresh}.",
     cell_methods="time: sum within days time: sum over days",
-    compute=wrapped_partial(indices.prcptot, suggested={"thresh": "1 mm/day"}),
+    compute=indices.prcptot,
+    parameters={"thresh": {"default": "1 mm/day"}},
 )
 
 liquid_precip_accumulation = PrTasx(
@@ -197,9 +199,8 @@ liquid_precip_accumulation = PrTasx(
     long_name="Total liquid precipitation",
     description="{freq} total {phase} precipitation, estimated as precipitation when temperature >= {thresh}",
     cell_methods="time: sum within days time: sum over days",
-    compute=wrapped_partial(
-        indices.precip_accumulation, suggested={"tas": _empty}, phase="liquid"
-    ),  # _empty is added to un-optionalize the argument.
+    compute=indices.precip_accumulation,
+    parameters={"tas": {"kind": InputKind.VARIABLE}, "phase": "liquid"},
 )
 
 solid_precip_accumulation = PrTasx(
@@ -210,9 +211,8 @@ solid_precip_accumulation = PrTasx(
     long_name="Total solid precipitation",
     description="{freq} total solid precipitation, estimated as precipitation when temperature < {thresh}",
     cell_methods="time: sum within days time: sum over days",
-    compute=wrapped_partial(
-        indices.precip_accumulation, suggested={"tas": _empty}, phase="solid"
-    ),
+    compute=indices.precip_accumulation,
+    parameters={"tas": {"kind": InputKind.VARIABLE}, "phase": "solid"},
 )
 
 drought_code = Precip(
@@ -323,16 +323,15 @@ liquid_precip_ratio = PrTasx(
     abstract="The ratio of total liquid precipitation over the total precipitation. Liquid precipitation is"
     " approximated from total precipitation on days where temperature is above a threshold.",
     units="",
-    compute=wrapped_partial(
-        indices.liquid_precip_ratio, suggested={"tas": _empty}, prsn=None
-    ),
+    compute=indices.liquid_precip_ratio,
+    parameters={"tas": {"kind": InputKind.VARIABLE}, "prsn": None},
 )
 
 
 dry_spell_frequency = Precip(
     identifier="dry_spell_frequency",
-    description="The {freq} number of dry periods of {window} days and more, during which the accumulated "
-    "precipitation on a window of {window} days is under {thresh}.",
+    description="The {freq} number of dry periods of {window} days and more, during which the {op} precipitation "
+    "on a window of {window} days is under {thresh}.",
     units="",
     cell_methods="",
     compute=indices.dry_spell_frequency,

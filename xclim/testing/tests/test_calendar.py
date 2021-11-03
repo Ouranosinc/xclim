@@ -510,9 +510,9 @@ def test_parse_offset_full():
     freq = "4AS-JUL"
     # WHEN
     m, b, s, a = parse_offset(freq)
-    assert m == "4"
+    assert m == 4
     assert b == "A"
-    assert s == "S"
+    assert s is True
     assert a == "JUL"
 
 
@@ -521,7 +521,7 @@ def test_parse_offset_minimal():
     freq = "M"
     # WHEN
     m, b, s, a = parse_offset(freq)
-    assert m == ""
+    assert m == 1
     assert b == "M"
-    assert s is None
+    assert s is False
     assert a is None

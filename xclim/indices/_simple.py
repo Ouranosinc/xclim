@@ -516,8 +516,8 @@ def snow_depth(
 
     Parameters
     ----------
-    tas : xarray.DataArray
-      Mean daily snow depth.
+    snd : xarray.DataArray
+     Mean daily snow depth.
     freq : str
       Resampling frequency.
 

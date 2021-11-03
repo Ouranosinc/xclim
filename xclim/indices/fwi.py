@@ -1134,7 +1134,7 @@ def fire_weather_ufunc(
     return {name: da for name, da in zip(outputs, das)}
 
 
-@declare_units(winter_pr="[length]")
+@declare_units(last_dc="[]", winter_pr="[length]")
 def overwintering_drought_code(
     last_dc: xr.DataArray,
     winter_pr: xr.DataArray,
@@ -1231,7 +1231,12 @@ def _convert_parameters(
     pr="[precipitation]",
     sfcWind="[speed]",
     hurs="[]",
+    lat="[]",
     snd="[length]",
+    ffmc0="[]",
+    dmc0="[]",
+    dc0="[]",
+    season_mask="[]",
 )
 def fire_weather_indexes(
     tas: xr.DataArray,
@@ -1340,7 +1345,14 @@ def fire_weather_indexes(
     return out["DC"], out["DMC"], out["FFMC"], out["ISI"], out["BUI"], out["FWI"]
 
 
-@declare_units(tas="[temperature]", pr="[precipitation]", snd="[length]")
+@declare_units(
+    tas="[temperature]",
+    pr="[precipitation]",
+    lat="[]",
+    snd="[length]",
+    dc0="[]",
+    season_mask="[]",
+)
 def drought_code(
     tas: xr.DataArray,
     pr: xr.DataArray,
@@ -1428,13 +1440,20 @@ def drought_code(
 @declare_units(
     tas="[temperature]",
     snd="[length]",
+    temp_start_thresh="[temperature]",
+    temp_end_thresh="[temperature]",
+    snow_thresh="[length]",
 )
 def fire_season(
     tas: xr.DataArray,
     snd: Optional[xr.DataArray] = None,
     method: str = "WF93",
     freq: Optional[str] = None,
-    **params,
+    temp_start_thresh: str = "12 degC",
+    temp_end_thresh: str = "5 degC",
+    temp_condition_days: int = 3,
+    snow_condition_days: int = 3,
+    snow_thresh: str = "0.01 m",
 ):
     """Fire season mask.
 
@@ -1472,14 +1491,21 @@ def fire_season(
     Wotton, B.M. and Flannigan, M.D. (1993). Length of the fire season in a changing climate. ForestryChronicle, 69, 187-192.
     Lawson, B.D. and O.B. Armitage. 2008. Weather guide for the Canadian Forest Fire Danger Rating System. NRCAN, CFS, Edmonton, AB
     """
+    kwargs = dict(
+        method=method,
+        temp_start_thresh=convert_units_to(temp_start_thresh, "degC"),
+        temp_end_thresh=convert_units_to(temp_end_thresh, "degC"),
+        temp_condition_days=temp_condition_days,
+        snow_condition_days=snow_condition_days,
+        snow_thresh=convert_units_to(snow_thresh, "m"),
+    )
 
-    def _apply_fire_season(ds):
+    def _apply_fire_season(ds, **kwargs):
         season_mask = ds.tas.copy(
             data=_fire_season(
                 tas=ds.tas.values,
-                snd=None if method == "WF93" else ds.snd.values,
-                method=method,
-                **_convert_parameters(params),
+                snd=None if kwargs["method"] == "WF93" else ds.snd.values,
+                **kwargs,
             )
         )
         season_mask.attrs = {}
@@ -1498,6 +1524,6 @@ def fire_season(
     ds = ds.transpose(..., "time")
 
     tmpl = xr.full_like(tas, np.nan)
-    out = ds.map_blocks(_apply_fire_season, template=tmpl)
+    out = ds.map_blocks(_apply_fire_season, template=tmpl, kwargs=kwargs)
     out.attrs["units"] = ""
     return out
