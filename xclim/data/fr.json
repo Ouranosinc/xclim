@@ -504,7 +504,7 @@
   },
   "THAWING_DEGREE_DAYS": {
     "long_name": "Degré-jour de dégel (Tmoy > {thresh})",
-    "description": "Cumul {freq} des degrés-jours de dégel(Température au-dessus de {thresh}).",
+    "description": "Cumul {freq} des degrés-jours de dégel (Température au-dessus de {thresh}).",
     "title": "Degré-jour de dégel",
     "comment": "",
     "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est au-dessus d'un seuil."
