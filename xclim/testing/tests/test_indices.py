@@ -595,14 +595,17 @@ class TestFreshetStart:
         tg[i : i + w - 1] += 6  # too short
 
         i = 20
-        tg[i : i + w] += 6  # ok
+        tg[i : i + w] += 1  # does not cross threshold
 
         i = 30
+        tg[i : i + w] += 6  # ok
+
+        i = 40
         tg[i : i + w + 1] += 6  # Second valid condition, should be ignored.
 
         tg = tas_series(tg + K2C, start="1/1/2000")
         out = xci.freshet_start(tg, window=w)
-        assert out[0] == tg.indexes["time"][20].dayofyear
+        assert out[0] == tg.indexes["time"][30].dayofyear
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
         assert out.attrs["units"] == ""
@@ -621,6 +624,35 @@ class TestGrowingDegreeDays:
         a[0] = 5  # default thresh at 4
         da = tas_series(a + K2C)
         assert xci.growing_degree_days(da)[0] == 1
+
+
+class TestGrowingSeasonStart:
+    def test_simple(self, tas_series):
+        tg = np.zeros(365) - 1
+        w = 5
+
+        i = 10
+        tg[i : i + w - 1] += 6  # too short
+
+        i = 20
+        tg[i : i + w] += 6  # at threshold / ok
+
+        i = 30
+        tg[i : i + w + 1] += 6  # Second valid condition, should be ignored.
+
+        tg = tas_series(tg + K2C, start="1/1/2000")
+        out = xci.growing_season_start(tg, window=w)
+        assert out[0] == tg.indexes["time"][20].dayofyear
+        for attr in ["units", "is_dayofyear", "calendar"]:
+            assert attr in out.attrs.keys()
+        assert out.attrs["units"] == ""
+        assert out.attrs["is_dayofyear"] == 1
+
+    def test_no_start(self, tas_series):
+        tg = np.zeros(365) - 1
+        tg = tas_series(tg, start="1/1/2000")
+        out = xci.growing_season_start(tg)
+        np.testing.assert_equal(out, [np.nan])
 
 
 class TestGrowingSeasonEnd:
