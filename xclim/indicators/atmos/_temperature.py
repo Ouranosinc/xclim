@@ -544,7 +544,7 @@ freezing_degree_days = Temp(
     description="{freq} freezing degree days below {thresh}.",
     cell_methods="time: mean within days time: sum over days",
     compute=indices.heating_degree_days,
-    parameters={"thresh": {"default": "0.0 degC"}},
+    parameters={"thresh": {"default": "0 degC"}},
 )
 
 thawing_degree_days = Temp(
@@ -572,7 +572,7 @@ frost_days = Temp(
     identifier="frost_days",
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
-    long_name="Number of frost days (Tmin < 0C)",
+    long_name="Number of frost days (Tmin < 0℃)",
     description="{freq} number of days with minimum daily temperature below 0℃.",
     cell_methods="time: minimum within days time: sum over days",
     compute=indices.frost_days,
@@ -625,7 +625,7 @@ ice_days = Temp(
     identifier="ice_days",
     standard_name="days_with_air_temperature_below_threshold",
     units="days",
-    long_name="Number of Ice Days (Tmax < 0℃)",
+    long_name="Number of ice days (Tmax < 0℃)",
     description="{freq} number of days with maximum daily temperature below 0℃.",
     cell_methods="time: maximum within days time: sum over days",
     compute=indices.ice_days,
@@ -740,7 +740,7 @@ tropical_nights = Temp(
     " above {thresh}.",
     cell_methods="time: minimum within days time: sum over days",
     compute=indices.tn_days_above,
-    parameters={"thresh": {"default": "20 degC"}},
+    parameters={"thresh": {"default": "20.0 degC"}},
 )
 
 tg90p = Temp(
