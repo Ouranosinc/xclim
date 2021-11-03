@@ -551,18 +551,18 @@
     "abstract": "Durée de la saison de gel, définie comme la période où Tmin est sous 0°C sans redoux de {window} jours ou plus."
   },
   "FROST_DAYS": {
-    "long_name": "Nombre de jours de gel (Tmin < 0C)",
-    "description": "Nombre {freq:m} de jours où la température journalière minimale est sous 0°C.",
+    "long_name": "Nombre de jours de gel (Tmin < {thresh})",
+    "description": "Nombre {freq:m} de jours où la température journalière minimale est sous {thresh}.",
     "title": "Nombre de jours de gel",
     "comment": "",
-    "abstract": "Nombre de jours où la température journalière minimale est sous 0°C."
+    "abstract": "Nombre de jours où la température journalière minimale est sous un seuil."
   },
   "ICE_DAYS": {
-    "long_name": "Nombre de jours de givre (Tmax < 0°C)",
-    "description": "Nombre {freq:m} de jours où la température journalière maximale est sous 0°C.",
+    "long_name": "Nombre de jours de givre (Tmax < {thresh})",
+    "description": "Nombre {freq:m} de jours où la température journalière maximale est sous {thresh}.",
     "title": "Nombre de jours de givre",
     "comment": "",
-    "abstract": "Nombre de jours où la température journalière maximale est sous 0°C."
+    "abstract": "Nombre de jours où la température journalière maximale est sous un seuil."
   },
   "CONSECUTIVE_FROST_DAYS": {
     "long_name": "Durée maximale des périodes de gel (Tmin < 0°C)",
