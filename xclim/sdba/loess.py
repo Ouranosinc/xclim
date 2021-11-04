@@ -1,4 +1,7 @@
-"""LOESS smoothing module."""
+"""
+LOESS smoothing
+---------------
+"""
 from typing import Callable, Optional, Union
 from warnings import warn
 
@@ -192,10 +195,10 @@ def loess_smoothing(
     -----
     As stated in [Cleveland1979]_, the weighting function :math:`W(x)` should respect the following conditions:
 
-        - :math:`W(x) > 0` for :math:`|x| < 1`
-        - :math:`W(-x) = W(x)`
-        - :math:`W(x)` is nonincreasing for :math:`x \ge 0`
-        - :math:`W(x) = 0` for :math:`|x| \ge 0`
+    - :math:`W(x) > 0` for :math:`|x| < 1`
+    - :math:`W(-x) = W(x)`
+    - :math:`W(x)` is nonincreasing for :math:`x \ge 0`
+    - :math:`W(x) = 0` for :math:`|x| \ge 0`
 
     If a callable is provided, it should only accept the 1D `np.ndarray` :math:`x` which is an absolute value
     function going from 1 to 0 to 1 around :math:`x_i`, for all values where :math:`x - x_i < h_i` with
@@ -203,8 +206,8 @@ def loess_smoothing(
 
     References
     ----------
+    .. [Cleveland1979] Cleveland, W. S., 1979. Robust Locally Weighted Regression and Smoothing Scatterplot, Journal of the American Statistical Association 74, 829–836.
     Code adapted from https://gist.github.com/agramfort/850437
-    [Cleveland1979] Cleveland, W. S., 1979. Robust Locally Weighted Regression and Smoothing Scatterplot, Journal of the American Statistical Association 74, 829–836.
     """
     x = da[dim]
     x = ((x - x[0]) / (x[-1] - x[0])).astype(float)

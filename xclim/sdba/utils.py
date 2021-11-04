@@ -1,4 +1,7 @@
-"""SDBA utilities module."""
+"""
+sdba utilities
+--------------
+"""
 from typing import Callable, List, Mapping, Optional, Tuple, Union
 from warnings import warn
 
@@ -399,18 +402,18 @@ def interp_on_quantiles(
     Parameters
     ----------
     newx : xr.DataArray
-        The values at which to evaluate `yq`. If `group` has group information,
-        `new` should have a coordinate with the same name as the group name
-         In that case, 2D interpolation is used.
+      The values at which to evaluate `yq`. If `group` has group information,
+      `new` should have a coordinate with the same name as the group name
+      In that case, 2D interpolation is used.
     xq, yq : xr.DataArray
-        coordinates and values on which to interpolate. The interpolation is done
-        along the "quantiles" dimension if `group` has no group information.
-        If it does, interpolation is done in 2D on "quantiles" and on the group dimension.
+      Coordinates and values on which to interpolate. The interpolation is done
+      along the "quantiles" dimension if `group` has no group information.
+      If it does, interpolation is done in 2D on "quantiles" and on the group dimension.
     group : Union[str, Grouper]
-        The dimension and grouping information. (ex: "time" or "time.month").
-        Defaults to the "group" attribute of xq, or "time" if there is none.
+      The dimension and grouping information. (ex: "time" or "time.month").
+      Defaults to the "group" attribute of xq, or "time" if there is none.
     method : {'nearest', 'linear', 'cubic'}
-        The interpolation method.
+      The interpolation method.
     """
     dim = group.dim
     prop = group.prop
@@ -754,7 +757,7 @@ def rand_rot_matrix(
 
     References
     ----------
-    .. [Mezzadri] Mezzadri, F. (2006). How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050.
+    Mezzadri, F. (2006). How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050.
     """
     if num > 1:
         return xr.concat([rand_rot_matrix(crd, num=1) for i in range(num)], "matrices")

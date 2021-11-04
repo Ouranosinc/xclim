@@ -471,8 +471,8 @@ def run_bounds(
         if isinstance(coord, str):
             crd = getattr(crd.dt, coord)
 
-        starts = lazy_indexing(crd, starts).drop(dim)
-        ends = lazy_indexing(crd, ends).drop(dim)
+        starts = lazy_indexing(crd, starts)
+        ends = lazy_indexing(crd, ends)
     return xr.concat((starts, ends), "bounds")
 
 
@@ -1107,7 +1107,7 @@ def lazy_indexing(
         if idx_ndim == 0:
             # 0-D case, drop useless coords and dummy dim
             out = out.drop_vars(da.dims[0]).squeeze()
-        return out
+        return out.drop_vars(dim or da.dims[0], errors="ignore")
 
     # Case where index.dims is a subset of da.dims.
     if dim is None:

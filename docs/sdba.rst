@@ -2,7 +2,7 @@
 Bias adjustment and downscaling algorithms
 ==========================================
 
-`xarray` data structures allow for relatively straightforward implementations of simple bias-adjustment and downscaling algorithms documented in :ref:`bias-adjustment-algos`. Each algorithm is split into `train` and `adjust` components. The `train` function will compare two DataArrays `x` and `y`, and create a dataset storing the *transfer* information allowing to go from `x` to `y`. This dataset, stored in the adjustment object, can then be used by the `adjust` method to apply this information to `x`. `x` could be the same `DataArray` used for training, or another `DataArray` with similar characteristics.
+`xarray` data structures allow for relatively straightforward implementations of simple bias-adjustment and downscaling algorithms documented in :ref:`Adjustment methods`. Each algorithm is split into `train` and `adjust` components. The `train` function will compare two DataArrays `x` and `y`, and create a dataset storing the *transfer* information allowing to go from `x` to `y`. This dataset, stored in the adjustment object, can then be used by the `adjust` method to apply this information to `x`. `x` could be the same `DataArray` used for training, or another `DataArray` with similar characteristics.
 
 For example, given a daily time series of observations `ref`, a model simulation over the observational period `hist` and a model simulation over a future period `sim`, we would apply a bias-adjustment method such as *detrended quantile mapping* (DQM) as::
 
@@ -19,7 +19,7 @@ When transfer factors are applied in adjustment, they can be interpolated accord
 Application in multivariate settings
 ====================================
 
-There are no multivariate algorithm implemented yet, and when applying univariate adjustment methods to multiple variables, some strategies are recommended to avoid introducing unrealistic artifacts in adjusted outputs.
+When applying univariate adjustment methods to multiple variables, some strategies are recommended to avoid introducing unrealistic artifacts in adjusted outputs.
 
 Minimum and maximum temperature
 -------------------------------
@@ -44,3 +44,52 @@ References
 .. [Grenier] Grenier, P. (2018). Two Types of Physical Inconsistency to Avoid with Univariate Quantile Mapping: A Case Study over North America Concerning Relative Humidity and Its Parent Variables. Journal of Applied Meteorology and Climatology, 57(2), 347–364. https://doi.org/10.1175/JAMC-D-17-0177.1
 .. [Hoffman] Hoffmann, H., & Rath, T. (2012). Meteorologically consistent bias correction of climate time series for agricultural models. Theoretical and Applied Climatology, 110(1–2), 129–141. https://doi.org/10.1007/s00704-012-0618-x
 .. [Thrasher] Thrasher, B., Maurer, E. P., McKellar, C., & Duffy, P. B. (2012). Technical Note: Bias correcting climate model simulated daily temperature extremes with quantile mapping. Hydrology and Earth System Sciences, 16(9), 3309–3314. https://doi.org/10.5194/hess-16-3309-2012
+
+
+SDBA's user API
+===============
+
+.. automodule:: xclim.sdba.adjustment
+   :members:
+   :exclude-members: BaseAdjustment
+   :special-members:
+   :show-inheritance:
+
+
+.. automodule:: xclim.sdba.processing
+   :members:
+
+.. automodule:: xclim.sdba.detrending
+   :members:
+   :show-inheritance:
+   :exclude-members: BaseDetrend
+
+.. automodule:: xclim.sdba.utils
+   :members:
+
+.. autoclass:: xclim.sdba.base.Grouper
+   :members:
+   :class-doc-from: init
+
+.. automodule:: xclim.sdba.nbutils
+   :members:
+
+.. automodule:: xclim.sdba.loess
+   :members:
+
+Developer tools
+===============
+
+.. automodule:: xclim.sdba.base
+   :members:
+   :show-inheritance:
+   :exclude-members: Grouper
+
+.. autoclass:: xclim.sdba.detrending.BaseDetrend
+   :members:
+
+.. autoclass:: xclim.sdba.adjustment.TrainAdjust
+   :members:
+
+.. autoclass:: xclim.sdba.adjustment.Adjust
+   :members:

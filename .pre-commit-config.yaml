@@ -15,13 +15,14 @@ repos:
     rev: v4.0.1
     hooks:
     -   id: trailing-whitespace
+        exclude: setup.cfg
     -   id: end-of-file-fixer
         exclude: ".ipynb"
     -   id: check-yaml
         args: ['--allow-multiple-documents']
     -   id: debug-statements
 -   repo: https://github.com/ambv/black
-    rev: 21.9b0
+    rev: 21.10b0
     hooks:
     -   id: black
         args: ["--target-version", "py37"]
@@ -38,7 +39,7 @@ repos:
 #    -   id: autopep8
 #        args: ['--global-config=setup.cfg','--in-place']
 -   repo: https://github.com/timothycrosley/isort
-    rev: 5.9.3
+    rev: 5.10.0
     hooks:
     -   id: isort
         args: ['--profile', 'black']
