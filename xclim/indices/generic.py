@@ -525,7 +525,7 @@ def temperature_sum(
 
     First, the threshold is transformed to the same standard_name and units as the input data.
     Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
-    Finally, the sum is calculated for those data values that fulfil the condition after subtraction of the threshold value.
+    Finally, the sum is calculated for those data values that fulfill the condition after subtraction of the threshold value.
     If the sum is for values below the threshold the result is multiplied by -1.
 
     Parameters
