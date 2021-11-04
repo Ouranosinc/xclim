@@ -666,6 +666,7 @@ class TestGrowingSeasonEnd:
             ("2000-06-15", "2000-07-25", "07-15", 208),  # PCC Case
             ("2000-06-15", "2000-07-15", "10-01", 275),  # Late mid_date
             ("2000-06-15", "2000-07-15", "01-10", np.nan),  # Early mid_date
+            ("2000-06-15", "2000-07-15", "06-15", np.nan),  # mid_date on first day
         ],
     )
     def test_varying_mid_dates(self, tas_series, d1, d2, mid_date, expected):
@@ -736,6 +737,62 @@ class TestFrostSeasonLength:
         tas = tas.where(~tas.time.isin(cold_period.time), 270)
         fsl = xci.frost_season_length(tas)
         np.testing.assert_array_equal(fsl.sel(time="2000-07-01"), 121)
+
+
+class TestFrostFreeSeasonStart:
+    def test_simple(self, tasmin_series):
+        tn = np.zeros(365) - 1
+        w = 5
+
+        i = 10
+        tn[i : i + w - 1] += 2  # too short
+
+        i = 20
+        tn[i : i + w] += 1  # at threshold / ok
+
+        i = 30
+        tn[i : i + w + 1] += 1  # Second valid condition, should be ignored.
+
+        tn = tasmin_series(tn + K2C, start="1/1/2000")
+        out = xci.frost_free_season_start(tn, window=w)
+        assert out[0] == tn.indexes["time"][20].dayofyear
+        for attr in ["units", "is_dayofyear", "calendar"]:
+            assert attr in out.attrs.keys()
+        assert out.attrs["units"] == ""
+        assert out.attrs["is_dayofyear"] == 1
+
+    def test_no_start(self, tasmin_series):
+        tn = np.zeros(365) - 1
+        tn = tasmin_series(tn, start="1/1/2000")
+        out = xci.frost_free_season_start(tn)
+        np.testing.assert_equal(out, [np.nan])
+
+
+class TestFrostFreeSeasonEnd:
+    @pytest.mark.parametrize(
+        "d1,d2,mid_date,expected",
+        [
+            ("1950-01-01", "1951-01-01", "07-01", np.nan),  # No frost free season
+            ("2000-01-06", "2000-12-31", "07-01", 365),  # All year frost free season
+            ("2000-07-10", "2001-01-01", "07-01", np.nan),  # End happens before start
+            ("2000-06-15", "2000-07-15", "07-01", 198),  # Normal case
+            ("2000-06-15", "2000-07-25", "07-15", 208),  # PCC Case
+            ("2000-06-15", "2000-07-15", "10-01", 275),  # Late mid_date
+            ("2000-06-15", "2000-07-15", "01-10", np.nan),  # Early mid_date
+            ("2000-06-15", "2000-07-15", "06-15", np.nan),  # mid_date on first day
+        ],
+    )
+    def test_varying_mid_dates(self, tasmin_series, d1, d2, mid_date, expected):
+        # generate a year of data
+        tasmin = tasmin_series(np.zeros(365), start="2000/1/1")
+        warm_period = tasmin.sel(time=slice(d1, d2))
+        tasmin = tasmin.where(~tasmin.time.isin(warm_period.time), 0.1 + K2C)
+        gs_end = xci.frost_free_season_end(tasmin, mid_date=mid_date)
+        np.testing.assert_array_equal(gs_end, expected)
+        for attr in ["units", "is_dayofyear", "calendar"]:
+            assert attr in gs_end.attrs.keys()
+        assert gs_end.attrs["units"] == ""
+        assert gs_end.attrs["is_dayofyear"] == 1
 
 
 class TestFrostFreeSeasonLength:
