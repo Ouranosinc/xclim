@@ -54,12 +54,8 @@ jobs:
             python-dev: false
     steps:
     - uses: actions/checkout@v2
-    - if: ${{ matrix.python-dev }}
-      name: Install GCC and development headers
-      run: |
-        sudo apt-get update
-        sudo apt-get install gcc python3-dev
-    - name: Set up Python ${{ matrix.python-version }}
+    - if: ${{ matrix.python-dev == false }}
+      name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
