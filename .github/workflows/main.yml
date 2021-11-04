@@ -44,18 +44,14 @@ jobs:
       matrix:
         include:
           - tox-env: py37-xarray-lm3
-            python-version: 3.7
-            python-dev: true
+            python-version: 3.7-dev
           - tox-env: py38-slow-lm3
             python-version: 3.8
-            python-dev: false
           - tox-env: py39-lm3
             python-version: 3.9
-            python-dev: false
     steps:
     - uses: actions/checkout@v2
-    - if: ${{ matrix.python-dev == false }}
-      name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
