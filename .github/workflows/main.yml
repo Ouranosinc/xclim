@@ -51,6 +51,10 @@ jobs:
             python-version: 3.9
     steps:
     - uses: actions/checkout@v2
+    - name: Install GCC
+      run: |
+        sudo apt-get update
+        sudo apt-get install gcc
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
