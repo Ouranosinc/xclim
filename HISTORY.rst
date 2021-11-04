@@ -10,7 +10,10 @@ New indicators
 ~~~~~~~~~~~~~~
 * ``thawing_degree_days`` indicator returns degree-days above a default of `thresh="0 degC"`. (:pull:`895`, :issue:`887`).
 * ``freezing_degree_days`` indicator returns degree-days below a default of `thresh="0 degC"`. (:pull:`895`, :issue:`887`).
-* Several frost-free season indicators are now offered (``frost_free_season_start``, ``frost_free_season_end``, ``frost_free_season_length``). (:pull:`895`, :issue:`887`).
+* Several frost-free season calculations are now available as both indices and indicators. (:pull:`895`, :issue:`887`):
+    - ``frost_free_season_start``
+    - ``frost_free_season_end``
+    - ``frost_free_season_length``
 * ``growing_season_start`` is now offered as an indice and as an indicator to complement other growing season-based indicators (threshold calculation with `op=">="`). (:pull:`895`, :issue:`887`).
 
 New features and enhancements
@@ -30,7 +33,7 @@ Breaking changes
 * Major changes in the YAML schema for virtual submodules, now closer to how indicators are declared dynamically, see the doc for details. (:pull:`849`, :issue:`848`).
 * Removed ``xclim.generic.daily_downsampler``, as it served no purpose now that xarray's resampling works with cftime (:pull:`888`, :issue:`889`).
 * Refactor of ``xclim.core.calendar.parse_offset``, output types were changed to useful ones (:pull:`885`).
-* Major changes on how parameters are passed to indicators (:pull:`873`)
+* Major changes on how parameters are passed to indicators (:pull:`873`):
 
     - Their signature is now consistent : input variables (DataArrays, optional or not) are positional or keyword arguments and all other parameters are keyword only. (:issue:`855`, :issue:`857`)
     - Some indicators have modified signatures because we now rename variables when wrapping generic indices. This is the case for the whole cf module, for example.
