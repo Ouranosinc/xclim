@@ -94,7 +94,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     $ flake8 xclim xclim/testing/tests
     $ pytest --nbval docs/notebooks
     $ pytest --rootdir=xclim/testing/tests --xdoctest xclim
-    $ pydocstyle --convention=numpy --match="(?!test_).*\.py" xclim
+    $ pydocstyle --convention=numpy --match='(?!test_).*\.py' xclim
     $ tox
 
 6. Before committing your changes, we ask that you install `pre-commit` in your development environment. `Pre-commit` runs git hooks that ensure that your code resembles that of the project and catches and corrects any small errors or inconsistencies when you `git commit`::
