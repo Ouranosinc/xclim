@@ -59,12 +59,12 @@ indicators:
   HI:
     base: huglin_index
     cf_attrs:
-      long_name: Huglin heliothermal index (Summation of ((Tmin + Tmax)/2 - {thresh_tasmin}) * Latitude-based day-length coefficient (`k`), for days between 1 April and 31 October)
+      long_name: Huglin heliothermal index (Summation of ((Tmean + Tmax)/2 - {thresh}) * Latitude-based day-length coefficient (`k`), for days between 1 April and 31 October)
       comment: Metric originally published in Huglin, 1978. Also presented by ECAD/KNMI for ICCLIM, 2013.
     compute: huglin_index
     parameters:
       method: icclim
-      thresh_tasmin: 10 degC
+      thresh: 10 degC
       start_date: 04-01
       end_date: 11-01
   BEDD:

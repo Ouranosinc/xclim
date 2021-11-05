@@ -527,7 +527,7 @@ class Indicator(IndicatorRegistrar):
         except KeyError as err:
             raise ValueError(
                 f"Parameter {err} was passed but it does not exist on the "
-                f" compute function (not one of {parameters.keys()})"
+                f"compute function (not one of {parameters.keys()})"
             ) from err
 
     @classmethod
