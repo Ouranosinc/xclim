@@ -2,9 +2,9 @@
 History
 =======
 
-0.31.0 (unreleased)
+0.31.0 (2021-10-05)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), Juliette Lavoie (:user:`juliettelavoie`).
+Contributors to this version: Abel Aoun (:user:`bzah`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Juliette Lavoie (:user:`juliettelavoie`), Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`).
 
 New indicators
 ~~~~~~~~~~~~~~
@@ -33,7 +33,7 @@ Breaking changes
 * Major changes in the YAML schema for virtual submodules, now closer to how indicators are declared dynamically, see the doc for details. (:pull:`849`, :issue:`848`).
 * Removed ``xclim.generic.daily_downsampler``, as it served no purpose now that xarray's resampling works with cftime (:pull:`888`, :issue:`889`).
 * Refactor of ``xclim.core.calendar.parse_offset``, output types were changed to useful ones (:pull:`885`).
-* Major changes on how parameters are passed to indicators (:pull:`873`):
+* Major changes on how parameters are passed to indicators. (:pull:`873`):
     - Their signature is now consistent : input variables (DataArrays, optional or not) are positional or keyword arguments and all other parameters are keyword only. (:issue:`855`, :issue:`857`)
     - Some indicators have modified signatures because we now rename variables when wrapping generic indices. This is the case for the whole cf module, for example.
     - ``Indicator.parameters`` is now a property generated from ``Indicator._all_parameters``, as the latter includes the injected parameters. The keys of the former are instances of new ``xclim.core.indicator.Parameter``, and not dictionaries as before.
@@ -50,15 +50,15 @@ Internal changes
 * Changes on how indicators are constructed. (:pull:`873`).
 * Added missing algorithms tests for conversion from hourly to daily. (:pull:`888`).
 * Updated pre-commit hooks to use black v21.10.b0. (:pull:`896`).
-* Moved ``stack_variables``, ``unstack_variables``, ``construct_moving_yearly_window`` and ``unpack_moving_yearly_window`` from ``xclim.sdba.base`` to ``xclim.sdba.processing``. They still are imported in ``xclim.sdba`` as before. (:pull:`892`)
-* Many improvements to the documentation. (:pull:`892`, :issue:`880`)
+* Moved ``stack_variables``, ``unstack_variables``, ``construct_moving_yearly_window`` and ``unpack_moving_yearly_window`` from ``xclim.sdba.base`` to ``xclim.sdba.processing``. They still are imported in ``xclim.sdba`` as before. (:pull:`892`).
+* Many improvements to the documentation. (:pull:`892`, :issue:`880`).
 
 Bug fixes
 ~~~~~~~~~
 * Fix a bug in bootstrapping where computation would fail when the dataset time coordinate is encoded using `cftime.datetime`. (:pull:`859`).
-* Fix a bug in ``build_indicator_module_from_yaml`` where bases classes (Daily, Hourly, etc) were not usable with the `base` field. (:pull:`885`)
-* ``percentile_doy`` alpha and beta parameters are now properly transmitted to bootstrap calls of this function. (:pull:`893`, :issue:`846`)
-* When called with a 1D da and ND index, ``xclim.indices.run_length.lazy_indexing`` now drops the auxiliary coordinate corresponding to da's index. This fixes a bug with ND data in ``xclim.indices.run_length.season``. (:pull:`900`)
+* Fix a bug in ``build_indicator_module_from_yaml`` where bases classes (Daily, Hourly, etc) were not usable with the `base` field. (:pull:`885`).
+* ``percentile_doy`` alpha and beta parameters are now properly transmitted to bootstrap calls of this function. (:pull:`893`, :issue:`846`).
+* When called with a 1D da and ND index, ``xclim.indices.run_length.lazy_indexing`` now drops the auxiliary coordinate corresponding to da's index. This fixes a bug with ND data in ``xclim.indices.run_length.season``. (:pull:`900`).
 * Fix name of heating degree days in French (`"chauffe"` -> "`chauffage`"). (:pull:`895`).
 * Corrected several French indicator translation description strings (bad usages of `"."` in `description` and `long_name` fields). (:pull:`895`).
 * Fixed an error with the formula for ``huglin_index`` where `tasmin` was being used in the calculation instead of `tas`. (:pull:`903`, :issue:`902`).
