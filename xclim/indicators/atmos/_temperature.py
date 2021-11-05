@@ -882,10 +882,10 @@ corn_heat_units = Temp(
 huglin_index = Temp(
     identifier="huglin_index",
     units="",
-    long_name="Huglin heliothermal index (Summation of ((Tmin + Tmax)/2 - {thresh_tasmin}) * Latitude-based day-length"
+    long_name="Huglin heliothermal index (Summation of ((Tmin + Tmax)/2 - {thresh}) * Latitude-based day-length"
     "coefficient (`k`), for days between {start_date} and {end_date}).",
     description="Heat-summation index for agroclimatic suitability estimation, developed specifically for viticulture. "
-    "Considers daily Tmin and Tmax with a base of {thresh_tasmin}, typically between 1 April and 30 September. "
+    "Considers daily Tmin and Tmax with a base of {thresh}, typically between 1 April and 30 September. "
     "Integrates a day-length coefficient calculation for higher latitudes.",
     cell_methods="",
     comment="Metric originally published in Huglin (1978). Day-length coefficient based on Hall & Jones (2010)",

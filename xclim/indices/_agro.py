@@ -148,7 +148,7 @@ def huglin_index(
     lat: xarray.DataArray
       Latitude coordinate.
     thresh: str
-      The minimum temperature threshold.
+      The temperature threshold.
     method: {"smoothed", "icclim", "jones"}
       The formula to use for the latitude coefficient calculation.
     start_date: DayOfYearStr
