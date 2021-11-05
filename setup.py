@@ -21,9 +21,9 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 hyperlink_replacements = {
-    r":issue:`([0-9]+)`": r"`<GH/\1 https://github.com/Ouranosinc/xclim/issues/\1>`_",
-    r":pull:`([0-9]+)`": r"`<PR/\1 https://github.com/Ouranosinc/xclim/pull/\1>`_",
-    r":user:`([a-zA-Z0-9_]+)`": r"`<@\1 https://github.com/\1>`_",
+    r":issue:`([0-9]+)`": r"`GH/\1 <https://github.com/Ouranosinc/xclim/issues/\1>`_",
+    r":pull:`([0-9]+)`": r"`PR/\1 <https://github.com/Ouranosinc/xclim/pull/\1>`_",
+    r":user:`([a-zA-Z0-9_]+)`": r"`@\1 <https://github.com/\1>`_",
 }
 
 for search, replacement in hyperlink_replacements.items():
