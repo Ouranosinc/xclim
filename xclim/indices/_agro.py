@@ -118,16 +118,16 @@ def corn_heat_units(
 
 
 @declare_units(
-    tasmin="[temperature]",
+    tas="[temperature]",
     tasmax="[temperature]",
     lat="[]",
-    thresh_tasmin="[temperature]",
+    thresh="[temperature]",
 )
 def huglin_index(
-    tasmin: xarray.DataArray,
+    tas: xarray.DataArray,
     tasmax: xarray.DataArray,
     lat: xarray.DataArray,
-    thresh_tasmin: str = "10 degC",
+    thresh: str = "10 degC",
     method: str = "smoothed",
     start_date: DayOfYearStr = "04-01",
     end_date: DayOfYearStr = "10-01",
@@ -141,14 +141,14 @@ def huglin_index(
 
     Parameters
     ----------
-    tasmin: xarray.DataArray
-      Minimum daily temperature.
+    tas: xarray.DataArray
+      Mean daily temperature.
     tasmax: xarray.DataArray
       Maximum daily temperature.
     lat: xarray.DataArray
       Latitude coordinate.
-    thresh_tasmin: str
-      The minimum temperature threshold.
+    thresh: str
+      The temperature threshold.
     method: {"smoothed", "icclim", "jones"}
       The formula to use for the latitude coefficient calculation.
     start_date: DayOfYearStr
@@ -165,13 +165,13 @@ def huglin_index(
 
     Notes
     -----
-    Let :math:`TX_{i}` and :math:`TN_{i}` be the daily maximum and minimum temperature at day :math:`i` and
-    :math:`TN_{thresh}` the base threshold needed for heat summation (typically, 10 degC). A day-length multiplication,
+    Let :math:`TX_{i}` and :math:`TG_{i}` be the daily maximum and mean temperature at day :math:`i` and
+    :math:`T_{thresh}` the base threshold needed for heat summation (typically, 10 degC). A day-length multiplication,
     :math:`k`, based on latitude, :math:`lat`, is also considered. Then the Huglin heliothermal index for dates between
     1 April and 30 September is:
 
     .. math::
-        HI = \sum_{i=\text{April 1}}^{\text{September 30}} \left( \frac{TX_i  + TN_i)}{2} - 10 \right) * k
+        HI = \sum_{i=\text{April 1}}^{\text{September 30}} \left( \frac{TX_i  + TG_i)}{2} - T_{thresh} \right) * k
 
     For the `smoothed` method, the day-length multiplication factor, :math:`k`, is calculated as follows:
 
@@ -196,9 +196,8 @@ def huglin_index(
                         NaN, & \text{if } |lat| > 50 \\
                     \end{cases}
 
-    For a more robust day-length calculation based on latitude, calendar, day-of-year, and obliquity is available is
-    available with `method="jones"`.
-    see: :py:func:`xclim.indices.generic.day_lengths` or Hall and Jones (2010) for more information.
+    A more robust day-length calculation based on latitude, calendar, day-of-year, and obliquity is available with
+    `method="jones"`. See: :py:func:`xclim.indices.generic.day_lengths` or Hall and Jones (2010) for more information.
 
     References
     ----------
@@ -210,9 +209,9 @@ def huglin_index(
     climate in winegrape-growing regions in Australia. Australian Journal of Grape and Wine Research, 16(3), 389‑404.
     https://doi.org/10.1111/j.1755-0238.2010.00100.x
     """
-    tasmin = convert_units_to(tasmin, "degC")
+    tas = convert_units_to(tas, "degC")
     tasmax = convert_units_to(tasmax, "degC")
-    thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
+    thresh = convert_units_to(thresh, "degC")
 
     if method.lower() == "smoothed":
         lat_mask = abs(lat) <= 50
@@ -248,7 +247,7 @@ def huglin_index(
         k_aggregated = 1
     elif method.lower() == "jones":
         day_length = day_lengths(
-            dates=tasmin.time,
+            dates=tas.time,
             lat=lat,
             start_date=start_date,
             end_date=end_date,
@@ -259,7 +258,7 @@ def huglin_index(
     else:
         raise NotImplementedError(f"'{method}' method is not implemented.")
 
-    hi = (((tasmin + tasmax) / 2) - thresh_tasmin).clip(min=0) * k
+    hi = (((tas + tasmax) / 2) - thresh).clip(min=0) * k
     hi = (
         aggregate_between_dates(hi, start=start_date, end=end_date, freq=freq)
         * k_aggregated
