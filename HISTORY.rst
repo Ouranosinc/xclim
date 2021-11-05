@@ -39,7 +39,7 @@ Breaking changes
     - ``Indicator.parameters`` is now a property generated from ``Indicator._all_parameters``, as the latter includes the injected parameters. The keys of the former are instances of new ``xclim.core.indicator.Parameter``, and not dictionaries as before.
     - New ``Indicator.injected_parameters`` to see which compute function arguments will be injected at call time.
     - See the pull request (:pull:`873`) for all information.
-* The call signature for ``huglin_index`` has been modified to reflect the correct variables used in its formula (`tasmin` -> `tas`; `thresh_tasmin` -> `thresh`). (:issue:`902`).
+* The call signature for ``huglin_index`` has been modified to reflect the correct variables used in its formula (`tasmin` -> `tas`; `thresh_tasmin` -> `thresh`). (:pull:`903`, :issue:`902`).
 
 Internal changes
 ~~~~~~~~~~~~~~~~
@@ -61,7 +61,7 @@ Bug fixes
 * When called with a 1D da and ND index, ``xclim.indices.run_length.lazy_indexing`` now drops the auxiliary coordinate corresponding to da's index. This fixes a bug with ND data in ``xclim.indices.run_length.season``. (:pull:`900`)
 * Fix name of heating degree days in French (`"chauffe"` -> "`chauffage`"). (:pull:`895`).
 * Corrected several French indicator translation description strings (bad usages of `"."` in `description` and `long_name` fields). (:pull:`895`).
-* Fixed an error with the formula for ``huglin_index`` where `tasmin` was being used in the calculation instead of `tas`. (:issue:`902`).
+* Fixed an error with the formula for ``huglin_index`` where `tasmin` was being used in the calculation instead of `tas`. (:pull:`903`, :issue:`902`).
 
 0.30.1 (2021-10-01)
 -------------------
