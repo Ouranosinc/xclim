@@ -10,7 +10,7 @@ from xclim.indicators import atmos, land, seaIce  # noqa
 
 __author__ = """Travis Logan"""
 __email__ = "logan.travis@ouranos.ca"
-__version__ = "0.30.8-beta"
+__version__ = "0.31.0"
 
 
 # Load official locales
