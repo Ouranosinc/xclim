@@ -52,6 +52,7 @@ Internal changes
 * Updated pre-commit hooks to use black v21.10.b0. (:pull:`896`).
 * Moved ``stack_variables``, ``unstack_variables``, ``construct_moving_yearly_window`` and ``unpack_moving_yearly_window`` from ``xclim.sdba.base`` to ``xclim.sdba.processing``. They still are imported in ``xclim.sdba`` as before. (:pull:`892`).
 * Many improvements to the documentation. (:pull:`892`, :issue:`880`).
+* Added regex replacement handling in setup.py to facilitate publishing contributor/contribution links on PyPI. (:pull:`906`).
 
 Bug fixes
 ~~~~~~~~~
