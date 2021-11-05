@@ -453,12 +453,8 @@ def test_dry_spell():
         pr, thresh="3 mm", window=7, op="max", freq="YS"
     )
 
-    total_d_sum = list(
-        total_d_sum.sel(location=slice("Halifax")).squeeze()[0:2].astype(int).values
-    )
-    total_d_max = list(
-        total_d_max.sel(location=slice("Halifax")).squeeze()[0:2].astype(int).values
-    )
+    total_d_sum = total_d_sum.sel(location=slice("Halifax"), drop=True).squeeze()[0:2]
+    total_d_max = total_d_max.sel(location=slice("Halifax"), drop=True).squeeze()[0:2]
 
     np.testing.assert_allclose(events[0:2, 0], [5, 8], rtol=1e-1)
     np.testing.assert_allclose(total_d_sum, [50, 60], rtol=1e-1)
