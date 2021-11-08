@@ -15,7 +15,8 @@ import scipy.stats
 import xarray
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
-logger = logging.getLogger('xclim')
+
+logger = logging.getLogger("xclim")
 
 # Avoid having to include matplotlib in xclim requirements
 try:

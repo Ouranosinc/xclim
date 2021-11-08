@@ -18,7 +18,13 @@ from ..indices.run_length import suspicious_run
 from .calendar import climatological_mean_doy, within_bnds_doy
 from .formatting import update_xclim_history
 from .units import convert_units_to, declare_units, str2pint
-from .utils import VARIABLES, InputKind, MissingVariableError, infer_kind_from_parameter, raise_warn_or_log
+from .utils import (
+    VARIABLES,
+    InputKind,
+    MissingVariableError,
+    infer_kind_from_parameter,
+    raise_warn_or_log,
+)
 
 _REGISTRY = dict()
 
@@ -619,9 +625,9 @@ def data_flags(
         except (KeyError, TypeError) as err:
             raise_warn_or_log(
                 err,
-                mode='raise' if raise_flags else 'log',
+                mode="raise" if raise_flags else "log",
                 msg=f"Data quality checks do not exist for '{var}' variable.",
-                err_type=NotImplementedError
+                err_type=NotImplementedError,
             )
             return xarray.Dataset()
     else:
