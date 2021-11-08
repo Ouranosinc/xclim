@@ -252,7 +252,7 @@ def continuous_snow_cover_start(
 ) -> xarray.DataArray:
     r"""Start date of continuous snow cover.
 
-    Day of year when snow depth is above `threshold` for at least `window` consecutive days.
+    Day of year when snow depth is above or equal `threshold` for at least `window` consecutive days.
     WARNING: The default `freq` is valid for the northern hemisphere.
 
     Parameters
