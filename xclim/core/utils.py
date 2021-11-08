@@ -25,6 +25,8 @@ from boltons.funcutils import update_wrapper
 from dask import array as dsk
 from xarray import DataArray, Dataset
 from yaml import safe_dump, safe_load
+logger = logging.getLogger('xclim')
+
 
 #: Type annotation for strings representing full dates (YYYY-MM-DD), may include time.
 DateStr = NewType("DateStr", str)
@@ -359,7 +361,7 @@ def _nan_quantile(
 
 
 def raise_warn_or_log(
-    err: Exception, mode: str, msg: Optional[str] = None, stacklevel: int = 1
+    err: Exception, mode: str, msg: Optional[str] = None, err_type=ValueError, stacklevel: int = 1
 ):
     """Raise, warn or log an error according.
 
@@ -379,11 +381,11 @@ def raise_warn_or_log(
     if mode == "ignore":
         pass
     elif mode == "log":
-        logging.info(msg)
+        logger.info(msg)
     elif mode == "warn":
         warnings.warn(msg, stacklevel=stacklevel + 1)
     else:  # mode == "raise"
-        raise err from ValueError(msg)
+        raise err from err_type(msg)
 
 
 class InputKind(IntEnum):
