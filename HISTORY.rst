@@ -2,6 +2,13 @@
 History
 =======
 
+0.32.0 (unreleased)
+-------------------
+
+Internal changes
+~~~~~~~~~~~~~~~~
+* Remove some logging configuration in ``dataflags`` that were polluting python's main logging configuration.
+
 0.31.0 (2021-11-05)
 -------------------
 Contributors to this version: Abel Aoun (:user:`bzah`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Juliette Lavoie (:user:`juliettelavoie`), Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`).

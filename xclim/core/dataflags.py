@@ -512,7 +512,7 @@ def data_flags(
     flags: Optional[dict] = None,
     dims: Union[None, str, Sequence[str]] = "all",
     freq: Optional[str] = None,
-    on_error: str = 'warn',
+    raise_flags: bool = False,
 ) -> xarray.Dataset:
     """Evaluate the supplied DataArray for a set of data flag checks.
 
@@ -535,8 +535,8 @@ def data_flags(
     freq : str, optional
       Resampling frequency to have data_flags aggregated over periods.
       Defaults to None, which means the "time" axis is treated as any other dimension (see `dims`).
-    on_error : {'raise', 'warn', 'log', 'ignore'}
-      Raise, warn, log or ignore exception if any of the quality assessment flags are raised. Default: 'warn'.
+    raise_flags : bool
+      Raise exception if any of the quality assessment flags are raised. Default: False.
 
     Returns
     -------
@@ -619,7 +619,7 @@ def data_flags(
         except (KeyError, TypeError) as err:
             raise_warn_or_log(
                 err,
-                mode=on_error,
+                mode='raise' if raise_flags else 'log',
                 msg=f"Data quality checks do not exist for '{var}' variable.",
                 err_type=NotImplementedError
             )
@@ -656,7 +656,7 @@ def data_flags(
 
     dsflags = xarray.Dataset(data_vars=flags)
 
-    if on_error == 'raise':
+    if raise_flags:
         if np.any(dsflags.data_vars.values()):
             raise DataQualityException(dsflags)
 
