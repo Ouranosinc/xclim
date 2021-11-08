@@ -5,7 +5,6 @@ Data flags
 
 Pseudo-indicators designed to analyse supplied variables for suspicious/erroneous indicator values.
 """
-import logging
 from decimal import Decimal
 from functools import reduce
 from inspect import signature
@@ -19,11 +18,9 @@ from ..indices.run_length import suspicious_run
 from .calendar import climatological_mean_doy, within_bnds_doy
 from .formatting import update_xclim_history
 from .units import convert_units_to, declare_units, str2pint
-from .utils import VARIABLES, InputKind, MissingVariableError, infer_kind_from_parameter
+from .utils import VARIABLES, InputKind, MissingVariableError, infer_kind_from_parameter, raise_warn_or_log
 
 _REGISTRY = dict()
-logging.basicConfig(format="UserWarning: %(message)s")
-logger = logging.getLogger("xclim")
 
 
 class DataQualityException(Exception):
@@ -515,7 +512,7 @@ def data_flags(
     flags: Optional[dict] = None,
     dims: Union[None, str, Sequence[str]] = "all",
     freq: Optional[str] = None,
-    raise_flags: bool = False,
+    on_error: str = 'warn',
 ) -> xarray.Dataset:
     """Evaluate the supplied DataArray for a set of data flag checks.
 
@@ -538,8 +535,8 @@ def data_flags(
     freq : str, optional
       Resampling frequency to have data_flags aggregated over periods.
       Defaults to None, which means the "time" axis is treated as any other dimension (see `dims`).
-    raise_flags : bool
-      Raise exception if any of the quality assessment flags are raised. Default: False.
+    on_error : {'raise', 'warn', 'log', 'ignore'}
+      Raise, warn, log or ignore exception if any of the quality assessment flags are raised. Default: 'warn'.
 
     Returns
     -------
@@ -619,14 +616,12 @@ def data_flags(
     if flags is None:
         try:
             flag_funcs = VARIABLES.get(var)["data_flags"]
-        except (KeyError, TypeError):
-            if raise_flags:
-                raise NotImplementedError(
-                    f"Data quality checks do not exist for '{var}' variable."
-                )
-            logger.warning(
-                f"Data quality checks do not exist for '{var}' variable.",
-                exc_info=False,
+        except (KeyError, TypeError) as err:
+            raise_warn_or_log(
+                err,
+                mode=on_error,
+                msg=f"Data quality checks do not exist for '{var}' variable.",
+                err_type=NotImplementedError
             )
             return xarray.Dataset()
     else:
@@ -661,7 +656,7 @@ def data_flags(
 
     dsflags = xarray.Dataset(data_vars=flags)
 
-    if raise_flags:
+    if on_error == 'raise':
         if np.any(dsflags.data_vars.values()):
             raise DataQualityException(dsflags)
 

@@ -15,16 +15,17 @@ import scipy.stats
 import xarray
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
+logger = logging.getLogger('xclim')
 
 # Avoid having to include matplotlib in xclim requirements
 try:
     from matplotlib import pyplot as plt
 
-    logging.info("Matplotlib installed. Setting make_graph to True.")
+    logger.info("Matplotlib installed. Setting make_graph to True.")
     MPL_INSTALLED = True
 
 except ImportError:
-    logging.info("Matplotlib not found. No graph data will be produced.")
+    logger.info("Matplotlib not found. No graph data will be produced.")
     plt = None
     MPL_INSTALLED = False
 
