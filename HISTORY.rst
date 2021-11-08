@@ -7,7 +7,8 @@ History
 
 Internal changes
 ~~~~~~~~~~~~~~~~
-* Remove some logging configuration in ``dataflags`` that were polluting python's main logging configuration.
+* Removed some logging configurations in ``dataflags`` that were polluting python's main logging configuration. (:pull:`909`).
+* Synchronized logging formatters in `xclim.ensembles` and `xclim.core.utils`. (:pull:`909`).
 
 0.31.0 (2021-11-05)
 -------------------
