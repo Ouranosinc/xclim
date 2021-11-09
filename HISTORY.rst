@@ -8,7 +8,7 @@ Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* Added an optimized pathway for ``xclim.indices.run_length`` functions when ``window=1``.
+* Added an optimized pathway for ``xclim.indices.run_length`` functions when ``window=1``, (:pull:`911`, :issue:`910`).
 
 Internal changes
 ~~~~~~~~~~~~~~~~
