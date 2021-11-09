@@ -263,9 +263,8 @@ def windowed_run_events(
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
 
     if window == 1:
-        out = (
-            da.pad(x=(0, 1), constant_values=False).astype(int).diff("x") == -1
-        ).sum()
+        d = da.pad({dim: (0, 1)}, constant_values=False).astype(int).diff(dim)
+        out = (d == -1).sum()
     elif ufunc_1dim:
         out = windowed_run_events_ufunc(da, window, dim)
     else:
