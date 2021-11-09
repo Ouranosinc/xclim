@@ -264,7 +264,7 @@ def windowed_run_events(
 
     if window == 1:
         d = da.pad({dim: (0, 1)}, constant_values=False).astype(int).diff(dim)
-        out = (d == -1).sum()
+        out = (d == -1).sum(dim=dim)
     elif ufunc_1dim:
         out = windowed_run_events_ufunc(da, window, dim)
     else:
