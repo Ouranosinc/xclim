@@ -243,16 +243,17 @@ def windowed_run_events(
       Input N-dimensional DataArray (boolean).
     window : int
       Minimum run length.
+      When equal to 1, an optimized version of the algorithm is used.
     dim : str
       Dimension along which to calculate consecutive run (default: 'time').
     ufunc_1dim : Union[str, bool]
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
       for dataarray with a small number of gridpoints.
+      Ignored when `window=1`.
     index: {'first', 'last'}
       If 'first', the run length is indexed with the first element in the run.
       If 'last', with the last element in the run.
-
 
     Returns
     -------
@@ -261,7 +262,11 @@ def windowed_run_events(
     """
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
 
-    if ufunc_1dim:
+    if window == 1:
+        out = (
+            da.pad(x=(0, 1), constant_values=False).astype(int).diff("x") == -1
+        ).sum()
+    elif ufunc_1dim:
         out = windowed_run_events_ufunc(da, window, dim)
     else:
         d = rle(da, dim=dim, index=index)
@@ -284,12 +289,14 @@ def windowed_run_count(
       Input N-dimensional DataArray (boolean).
     window : int
       Minimum run length.
+      When equal to 1, an optimized version of the algorithm is used.
     dim : str
       Dimension along which to calculate consecutive run (default: 'time').
     ufunc_1dim : Union[str, bool]
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points. Using 1D_ufunc=True is typically more efficient
       for dataarray with a small number of gridpoints.
+      Ignored when `window=1`.
     index: {'first', 'last'}
       If 'first', the run length is indexed with the first element in the run.
       If 'last', with the last element in the run.
@@ -301,7 +308,9 @@ def windowed_run_count(
     """
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
 
-    if ufunc_1dim:
+    if window == 1:
+        out = da.sum(dim=dim)
+    elif ufunc_1dim:
         out = windowed_run_count_ufunc(da, window, dim)
     else:
         d = rle(da, dim=dim, index=index)
@@ -324,6 +333,7 @@ def first_run(
       Input N-dimensional DataArray (boolean).
     window : int
       Minimum duration of consecutive run to accumulate values.
+      When equal to 1, an optimized version of the algorithm is used.
     dim : str
       Dimension along which to calculate consecutive run (default: 'time').
     coord : Optional[str]
@@ -334,6 +344,7 @@ def first_run(
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
       for dataarray with a small number of gridpoints.
+      Ignored when `window=1`.
 
     Returns
     -------
@@ -344,9 +355,10 @@ def first_run(
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim)
 
     da = da.fillna(0)  # We expect a boolean array, but there could be NaNs nonetheless
-    if ufunc_1dim:
+    if window == 1:
+        out = xr.where(da.any(dim=dim), da.argmax(dim=dim), np.NaN)
+    elif ufunc_1dim:
         out = first_run_ufunc(x=da, window=window, dim=dim)
-
     else:
         da = da.astype("int")
         i = xr.DataArray(np.arange(da[dim].size), dims=dim)
@@ -385,6 +397,7 @@ def last_run(
       Input N-dimensional DataArray (boolean).
     window : int
       Minimum duration of consecutive run to accumulate values.
+      When equal to 1, an optimized version of the algorithm is used.
     dim : str
       Dimension along which to calculate consecutive run (default: 'time').
     coord : Optional[str]
@@ -395,6 +408,7 @@ def last_run(
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using `1D_ufunc=True` is typically more efficient
       for a DataArray with a small number of grid points.
+      Ignored when `window=1`.
 
     Returns
     -------

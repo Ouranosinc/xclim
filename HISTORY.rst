@@ -6,6 +6,10 @@ History
 -------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`)
 
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Added an optimized pathway for ``xclim.indices.run_length`` functions when ``window=1``.
+
 Internal changes
 ~~~~~~~~~~~~~~~~
 * Removed some logging configurations in ``dataflags`` that were polluting python's main logging configuration. (:pull:`909`).
