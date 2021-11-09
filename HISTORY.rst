@@ -4,11 +4,16 @@ History
 
 0.32.0 (unreleased)
 -------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`)
 
 Internal changes
 ~~~~~~~~~~~~~~~~
 * Removed some logging configurations in ``dataflags`` that were polluting python's main logging configuration. (:pull:`909`).
 * Synchronized logging formatters in `xclim.ensembles` and `xclim.core.utils`. (:pull:`909`).
+
+Bug fixes
+~~~~~~~~~
+* Fix bugs in the `cf_attrs` and/or `abstract` of `continuous_snow_cover_end` and `continuous_snow_cover_start`. (:pull:`908`).
 
 0.31.0 (2021-11-05)
 -------------------
