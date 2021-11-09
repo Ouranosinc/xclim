@@ -1,6 +1,13 @@
 =======
 History
 =======
+0.32.0
+-------------------
+Contributors to this version: Travis Logan (:user:`tlogan2000`)
+Bug fixes
+~~~~~~~~~
+* Fix bugs in the `cf_attrs` and/or `abstract` of `continuous_snow_cover_end` and `continuous_snow_cover_start`. (:pull:`908`).
+
 
 0.31.0 (2021-11-05)
 -------------------
