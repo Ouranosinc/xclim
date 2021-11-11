@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """The setup script."""
+import re
+
 from setuptools import find_packages, setup
 
 NAME = "xclim"
@@ -9,7 +11,7 @@ URL = "https://github.com/Ouranosinc/xclim"
 AUTHOR = "Travis Logan"
 AUTHOR_EMAIL = "logan.travis@ouranos.ca"
 REQUIRES_PYTHON = ">=3.7.0"
-VERSION = "0.30.6-beta"
+VERSION = "0.31.2-beta"
 LICENSE = "Apache Software License 2.0"
 
 with open("README.rst") as readme_file:
@@ -17,6 +19,15 @@ with open("README.rst") as readme_file:
 
 with open("HISTORY.rst") as history_file:
     history = history_file.read()
+
+hyperlink_replacements = {
+    r":issue:`([0-9]+)`": r"`GH/\1 <https://github.com/Ouranosinc/xclim/issues/\1>`_",
+    r":pull:`([0-9]+)`": r"`PR/\1 <https://github.com/Ouranosinc/xclim/pull/\1>`_",
+    r":user:`([a-zA-Z0-9_]+)`": r"`@\1 <https://github.com/\1>`_",
+}
+
+for search, replacement in hyperlink_replacements.items():
+    history = re.sub(search, replacement, history)
 
 requirements = [
     "numpy>=1.16",

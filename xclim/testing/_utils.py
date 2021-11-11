@@ -320,7 +320,7 @@ def list_input_variables(
             continue
 
         # ok we want this one.
-        for varname, meta in ind.parameters.items():
+        for varname, meta in ind.iter_parameters():
             if meta["kind"] in [InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE]:
                 var = meta.get("default") or varname
                 variables[var].append(ind)

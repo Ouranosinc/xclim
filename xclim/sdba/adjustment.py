@@ -1,4 +1,7 @@
-"""Adjustment objects."""
+"""
+Adjustment methods
+------------------
+"""
 from typing import Any, Mapping, Optional, Sequence, Union
 from warnings import warn
 
@@ -123,12 +126,9 @@ class TrainAdjust(BaseAdjustment):
 
     Children classes should implement these methods:
 
-    @classmethod
-    _train(ref, hist, **kwargs)
-      Receiving the training target and data, returning a training dataset and parameters to store in the object.
+    - ``_train(ref, hist, **kwargs)``, classmethod receiving the training target and data, returning a training dataset and parameters to store in the object.
 
-    _adjust(sim, **kwargs)
-      Receiving the projected data and some arguments, returning the `scen` dataarray.
+    - ``_adjust(sim, **kwargs)``, receiving the projected data and some arguments, returning the `scen` dataarray.
 
     """
 
@@ -1055,17 +1055,19 @@ class NpdfTransform(Adjust):
     As done by [Cannon18]_, the distance score chosen is the "Energy distance" from [SkezelyRizzo]_
     (see :py:func:`xclim.sdba.processing.escore`).
 
-    The random matrices are generated following a method laid out by [Mezzadri].
+    The random matrices are generated following a method laid out by [Mezzadri]_.
 
-    This is only part of the full MBCn algorithm, see :ref:`The MBCn algorithm` for an example on how
-    to replicate the full method with xclim. This includes a standardization of the simulated data beforehand,
-    an initial univariate adjustment and the reordering of those adjusted series according to the
-    rank structure of the output of this algorithm.
+    This is only part of the full MBCn algorithm, see :ref:`Fourth example : Multivariate bias-adjustment with multiple steps - Cannon 2018`
+    for an example on how to replicate the full method with xclim. This includes a
+    standardization of the simulated data beforehand, an initial univariate adjustment
+    and the reordering of those adjusted series according to the rank structure of the
+    output of this algorithm.
 
     References
     ----------
     .. [Cannon18] Cannon, A. J. (2018). Multivariate quantile mapping bias correction: An N-dimensional probability density function transform for climate model simulations of multiple variables. Climate Dynamics, 50(1), 31–49. https://doi.org/10.1007/s00382-017-3580-6
-    .. [Mezzadri]Mezzadri, F. (2006). How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050.
+    .. [CannonR] https://CRAN.R-project.org/package=MBC
+    .. [Mezzadri] Mezzadri, F. (2006). How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050.
     .. [Pitie05] Pitie, F., Kokaram, A. C., & Dahyot, R. (2005). N-dimensional probability density function transfer and its application to color transfer. Tenth IEEE International Conference on Computer Vision (ICCV’05) Volume 1, 2, 1434-1439 Vol. 2. https://doi.org/10.1109/ICCV.2005.166
     .. [SkezelyRizzo] Szekely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
     """

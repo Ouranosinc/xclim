@@ -2,9 +2,36 @@
 History
 =======
 
-0.31.0 (unreleased)
+0.32.0 (unreleased)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), Juliette Lavoie (:user:`juliettelavoie`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`)
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Added an optimized pathway for ``xclim.indices.run_length`` functions when ``window=1``. (:pull:`911`, :issue:`910`).
+
+Internal changes
+~~~~~~~~~~~~~~~~
+* Removed some logging configurations in ``dataflags`` that were polluting python's main logging configuration. (:pull:`909`).
+* Synchronized logging formatters in `xclim.ensembles` and `xclim.core.utils`. (:pull:`909`).
+
+Bug fixes
+~~~~~~~~~
+* Fix bugs in the `cf_attrs` and/or `abstract` of `continuous_snow_cover_end` and `continuous_snow_cover_start`. (:pull:`908`).
+
+0.31.0 (2021-11-05)
+-------------------
+Contributors to this version: Abel Aoun (:user:`bzah`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Juliette Lavoie (:user:`juliettelavoie`), Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`).
+
+New indicators
+~~~~~~~~~~~~~~
+* ``thawing_degree_days`` indicator returns degree-days above a default of `thresh="0 degC"`. (:pull:`895`, :issue:`887`).
+* ``freezing_degree_days`` indicator returns degree-days below a default of `thresh="0 degC"`. (:pull:`895`, :issue:`887`).
+* Several frost-free season calculations are now available as both indices and indicators. (:pull:`895`, :issue:`887`):
+    - ``frost_free_season_start``
+    - ``frost_free_season_end``
+    - ``frost_free_season_length``
+* ``growing_season_start`` is now offered as an indice and as an indicator to complement other growing season-based indicators (threshold calculation with `op=">="`). (:pull:`895`, :issue:`887`).
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -12,18 +39,24 @@ New features and enhancements
 * New ``align_on='random`` option for ``xclim.core.calendar.convert_calendar``, for conversions involving '360_day' calendars. (:pull:`875`, :issue:`841`).
 * ``dry_spell_frequency`` now has a parameter `op: {"sum", "max"}` to choose if the threshold is compared against the accumulated or maximal precipitation, over the given window. (:pull:`879`).
 * ``maximum_consecutive_frost_free_days`` is now checking that the minimum temperature is above or equal to the threshold ( instead of only above). (:pull:`883`, :issue:`881`).
-* The ANUCLIM virtual module as been updated to accept weekly and monthly inputs and with improved metadata. (:pull:`885`, :issue:`538`)
+* The ANUCLIM virtual module has been updated to accept weekly and monthly inputs and with improved metadata. (:pull:`885`, :issue:`538`)
+* The ``sdba.loess`` algorithm has been optimized to run faster in all cases, with an even faster special case (``equal_spacing=True``) when the x coordinate is equally spaced. When activated, this special case might return results different from without, up to around 0.1%. (:pull:`865`).
+* Add support for group's window and additional dimensions in ``LoessDetrend``. Add new ``RollingMeanDetrend`` object. (:pull:`865`).
+* Missing value algorithms now try to infer the source timestep of the input data when it is not given. (:pull:`885`).
+* On indices, `bootstrap` parameter documentation has been updated to explain when and why it should be used. (:pull:`893`, :issue:`846`).
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
 * Major changes in the YAML schema for virtual submodules, now closer to how indicators are declared dynamically, see the doc for details. (:pull:`849`, :issue:`848`).
+* Removed ``xclim.generic.daily_downsampler``, as it served no purpose now that xarray's resampling works with cftime (:pull:`888`, :issue:`889`).
 * Refactor of ``xclim.core.calendar.parse_offset``, output types were changed to useful ones (:pull:`885`).
-
-New features and enhancements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* The ``sdba.loess`` algorithm has been optimized to run faster in all cases, with an even faster special case (``equal_spacing=True``) when the x coordinate is equally spaced. When activated, this special case might return results different from without, up to around 0.1%. (:pull:`865`)
-* Add support for group's window and additionnal dimensions in ``LoessDetrend``. Add new ``RollingMeanDetrend`` object. (:pull:`865`)
-* Missing value algorithms now try to infer the source timestep of the input data when it is not given. (:pull:`885`)
+* Major changes on how parameters are passed to indicators. (:pull:`873`):
+    - Their signature is now consistent : input variables (DataArrays, optional or not) are positional or keyword arguments and all other parameters are keyword only. (:issue:`855`, :issue:`857`)
+    - Some indicators have modified signatures because we now rename variables when wrapping generic indices. This is the case for the whole cf module, for example.
+    - ``Indicator.parameters`` is now a property generated from ``Indicator._all_parameters``, as the latter includes the injected parameters. The keys of the former are instances of new ``xclim.core.indicator.Parameter``, and not dictionaries as before.
+    - New ``Indicator.injected_parameters`` to see which compute function arguments will be injected at call time.
+    - See the pull request (:pull:`873`) for all information.
+* The call signature for ``huglin_index`` has been modified to reflect the correct variables used in its formula (`tasmin` -> `tas`; `thresh_tasmin` -> `thresh`). (:pull:`903`, :issue:`902`).
 
 Internal changes
 ~~~~~~~~~~~~~~~~
@@ -31,11 +64,22 @@ Internal changes
 * Updated the contribution guidelines to better give credit to contributors and more easily track changes. (:pull:`869`, :issue:`868`).
 * Enabled coveralls code coverage reporting for GitHub CI. (:pull:`870`).
 * Added automated TestPyPI and PyPI-publishing workflows for GitHub CI. (:pull:`872`).
+* Changes on how indicators are constructed. (:pull:`873`).
+* Added missing algorithms tests for conversion from hourly to daily. (:pull:`888`).
+* Updated pre-commit hooks to use black v21.10.b0. (:pull:`896`).
+* Moved ``stack_variables``, ``unstack_variables``, ``construct_moving_yearly_window`` and ``unpack_moving_yearly_window`` from ``xclim.sdba.base`` to ``xclim.sdba.processing``. They still are imported in ``xclim.sdba`` as before. (:pull:`892`).
+* Many improvements to the documentation. (:pull:`892`, :issue:`880`).
+* Added regex replacement handling in setup.py to facilitate publishing contributor/contribution links on PyPI. (:pull:`906`).
 
 Bug fixes
 ~~~~~~~~~
 * Fix a bug in bootstrapping where computation would fail when the dataset time coordinate is encoded using `cftime.datetime`. (:pull:`859`).
-* Fix a bug in ``build_indicator_module_from_yaml`` where bases classes (Daily, Hourly, etc) were not usable with the `base` field. (:pull:`885`)
+* Fix a bug in ``build_indicator_module_from_yaml`` where bases classes (Daily, Hourly, etc) were not usable with the `base` field. (:pull:`885`).
+* ``percentile_doy`` alpha and beta parameters are now properly transmitted to bootstrap calls of this function. (:pull:`893`, :issue:`846`).
+* When called with a 1D da and ND index, ``xclim.indices.run_length.lazy_indexing`` now drops the auxiliary coordinate corresponding to da's index. This fixes a bug with ND data in ``xclim.indices.run_length.season``. (:pull:`900`).
+* Fix name of heating degree days in French (`"chauffe"` -> "`chauffage`"). (:pull:`895`).
+* Corrected several French indicator translation description strings (bad usages of `"."` in `description` and `long_name` fields). (:pull:`895`).
+* Fixed an error with the formula for ``huglin_index`` where `tasmin` was being used in the calculation instead of `tas`. (:pull:`903`, :issue:`902`).
 
 0.30.1 (2021-10-01)
 -------------------

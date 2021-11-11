@@ -583,6 +583,8 @@ def percentile_doy(
         arr.time[0 :: n - 1].dt.strftime("%Y-%m-%d").values.tolist()
     )
     p.attrs["window"] = window
+    p.attrs["alpha"] = alpha
+    p.attrs["beta"] = beta
     return p.rename("per")
 
 
@@ -635,11 +637,11 @@ def parse_offset(freq: str) -> Sequence[str]:
     freq : str
       Frequency offset.
 
-        Returns
-        -------
-        multiplicator (int), offset base (str), is start anchored (bool), anchor (str or None)
-          "[n]W" is always replaced with "[7n]D", as xarray doesn't support "W" for cftime indexes.
-          "Y" is always replaced with "A".
+    Returns
+    -------
+    multiplicator (int), offset base (str), is start anchored (bool), anchor (str or None)
+      "[n]W" is always replaced with "[7n]D", as xarray doesn't support "W" for cftime indexes.
+      "Y" is always replaced with "A".
     """
     patt = r"(\d*)(\w)(S)?(?:-(\w{2,3}))?"
     mult, base, start, anchor = re.search(patt, freq).groups()
