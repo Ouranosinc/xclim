@@ -32,8 +32,6 @@ from .utils import (
     ADDITIVE,
     best_pc_orientation,
     equally_spaced_nodes,
-    get_clusters,
-    get_clusters_1d,
     pc_matrix,
     rand_rot_matrix,
 )
@@ -43,6 +41,7 @@ __all__ = [
     "EmpiricalQuantileMapping",
     "DetrendedQuantileMapping",
     "LOCI",
+    "ExtremeValues",
     "PrincipalComponents",
     "QuantileDeltaMapping",
     "Scaling",
@@ -609,7 +608,7 @@ class ExtremeValues(TrainAdjust):
         cluster_thresh = convert_units_to(cluster_thresh, ref)
 
         # Approximation of how many "quantiles" values we will get:
-        N = (1 - q_thresh) * ref.time.size * 1.1
+        N = (1 - q_thresh) * ref.time.size
 
         ds = extremes_train(
             xr.Dataset({"ref": ref, "hist": hist, "ref_params": ref_params}),
@@ -617,6 +616,7 @@ class ExtremeValues(TrainAdjust):
             cluster_thresh=cluster_thresh,
             dist=stats.get_dist("genpareto"),
             quantiles=np.arange(int(N)),
+            group="time",
         )
 
         ds.px_hist.attrs.update(
@@ -646,16 +646,19 @@ class ExtremeValues(TrainAdjust):
     ):
         # Quantiles coord : cheat and assign 0 - 1 so we can use `extrapolate_qm`.
         ds = self.ds.assign(
-            quantiles=(np.arange(self.quantiles.size) + 1) / (self.quantiles.size + 1)
+            quantiles=(np.arange(self.ds.quantiles.size) + 1)
+            / (self.ds.quantiles.size + 1)
         )
 
         scen = extremes_adjust(
             ds.assign(sim=sim, scen=scen),
+            cluster_thresh=self.cluster_thresh,
             dist=stats.get_dist("genpareto"),
             frac=frac,
             power=power,
             interp=interp,
             extrapolation=extrapolation,
+            group="time",
         )
 
         return scen

@@ -6,7 +6,7 @@ This file defines the different steps, to be wrapped into the Adjustment objects
 import numpy as np
 import xarray as xr
 
-from xclim.indices.stats import _fitfunc_1d, get_dist
+from xclim.indices.stats import _fitfunc_1d
 
 from . import nbutils as nbu
 from . import utils as u
@@ -295,7 +295,9 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
 
 def _fit_on_cluster(data, thresh, dist, cluster_thresh):
     _, _, _, maximums = u.get_clusters_1d(data, thresh, cluster_thresh)
-    params = _fitfunc_1d(maximums - thresh, dist=dist, floc=0)
+    params = list(
+        _fitfunc_1d(maximums - thresh, dist=dist, floc=0, nparams=3, method="ML")
+    )
     # We forced 0, put back thresh.
     params[-2] = thresh
     return params
@@ -334,14 +336,14 @@ def _extremes_train_1d(ref, hist, ref_params, *, q_thresh, cluster_thresh, dist,
 
 
 @map_blocks(reduces=["time"], px_hist=["quantiles"], af=["quantiles"], thresh=[])
-def extremes_train(ds, *, q_thresh, cluster_thresh, dist, quantiles):
+def extremes_train(ds, *, group, q_thresh, cluster_thresh, dist, quantiles):
     px_hist, af, thresh = xr.apply_ufunc(
         _extremes_train_1d,
         ds.ref,
         ds.hist,
         ds.ref_params or np.NaN,
-        input_core_dims=[("time",), ("time",)],
-        output_core_dims=[("time",), ("quantiles",), ("quantiles",)],
+        input_core_dims=[("time",), ("time",), ()],
+        output_core_dims=[("quantiles",), ("quantiles",), ()],
         vectorize=True,
         kwargs={
             "q_thresh": q_thresh,
@@ -358,11 +360,13 @@ def extremes_train(ds, *, q_thresh, cluster_thresh, dist, quantiles):
 
 def _fit_cluster_and_cdf(data, thresh, dist, cluster_thresh):
     fut_params = _fit_on_cluster(data, thresh, dist, cluster_thresh)
-    return dist.cdf(data[data >= thresh], *fut_params)
+    return dist.cdf(data, *fut_params)
 
 
 @map_blocks(reduces=["quantiles"], scen=[])
-def extremes_adjust(ds, *, frac, power, dist, interp, extrapolation, cluster_thresh):
+def extremes_adjust(
+    ds, *, group, frac, power, dist, interp, extrapolation, cluster_thresh
+):
     px_fut = xr.apply_ufunc(
         _fit_cluster_and_cdf,
         ds.sim,

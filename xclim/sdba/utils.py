@@ -423,11 +423,14 @@ def interp_on_quantiles(
                 oldx, oldy, bounds_error=False, kind=method, fill_value=fill_value
             )(newx)
 
+        if "group" in xq.dims:
+            xq = xq.squeeze("group", drop=True)
+            yq = yq.squeeze("group", drop=True)
         return xr.apply_ufunc(
             _interp_quantiles_1D,
             newx,
-            xq.squeeze("group", drop=True),
-            yq.squeeze("group", drop=True),
+            xq,
+            yq,
             input_core_dims=[[dim], ["quantiles"], ["quantiles"]],
             output_core_dims=[[dim]],
             vectorize=True,

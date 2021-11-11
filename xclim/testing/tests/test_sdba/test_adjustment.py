@@ -609,14 +609,14 @@ class TestPrincipalComponents:
 @pytest.mark.xfail(reason="Inaccurate version.")
 class TestExtremeValues:
     @pytest.mark.parametrize(
-        "c_thresh,q_thresh,frac,power,diags",
+        "c_thresh,q_thresh,frac,power",
         [
-            ["1 mm/d", 0.95, 0.25, 1, True],
-            ["1 mm/d", 0.90, 1e-6, 1, False],
-            ["0.007 m/week", 0.95, 0.25, 2, False],
+            ["1 mm/d", 0.95, 0.25, 1],
+            ["1 mm/d", 0.90, 1e-6, 1],
+            ["0.007 m/week", 0.95, 0.25, 2],
         ],
     )
-    def test_simple(self, c_thresh, q_thresh, frac, power, diags):
+    def test_simple(self, c_thresh, q_thresh, frac, power):
         n = 45 * 365
 
         def gen_testdata(c, s):
@@ -634,8 +634,8 @@ class TestExtremeValues:
                 attrs={"units": "mm/day", "thresh": qv},
             )
 
-        ref = jitter_under_thresh(gen_testdata(-0.1, 2), 1e-3)
-        hist = jitter_under_thresh(gen_testdata(-0.1, 2), 1e-3)
+        ref = jitter_under_thresh(gen_testdata(-0.1, 2), "1e-3 mm/d")
+        hist = jitter_under_thresh(gen_testdata(-0.1, 2), "1e-3 mm/d")
         sim = gen_testdata(-0.15, 2.5)
 
         EQM = EmpiricalQuantileMapping.train(
@@ -644,14 +644,8 @@ class TestExtremeValues:
 
         scen = EQM.adjust(sim)
 
-        with set_options(sdba_extra_output=diags):
-            EX = ExtremeValues.train(ref, hist, c_thresh, q_thresh=q_thresh)
-
-        if diags:
-            assert "nclusters" in EX.ds
-
+        EX = ExtremeValues.train(ref, hist, cluster_thresh=c_thresh, q_thresh=q_thresh)
         qv = (ref.thresh + hist.thresh) / 2
-        np.testing.assert_allclose(EX.ds.fit_params, [-0.1, qv, 2], atol=0.5, rtol=0.1)
         np.testing.assert_allclose(EX.ds.thresh, qv, atol=0.15, rtol=0.01)
 
         scen2 = EX.adjust(scen, sim, frac=frac, power=power)
