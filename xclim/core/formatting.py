@@ -5,13 +5,16 @@ Formatting utilities for indicators
 ===================================
 """
 import datetime as dt
+import itertools
 import re
 import string
 from ast import literal_eval
 from fnmatch import fnmatch
+from inspect import _empty
 from typing import Dict, Mapping, Optional, Sequence, Union
 
 import xarray as xr
+from boltons.funcutils import wraps
 
 from .utils import InputKind
 
@@ -321,6 +324,84 @@ def update_history(
     return merged_history
 
 
+def update_xclim_history(func):
+    """Decorator that auto-generates and fills the history attribute.
+
+    The history is generated from the signature of the function and added to the first output.
+    """
+
+    @wraps(func)
+    def _call_and_add_history(*args, **kwargs):
+        """Call the function and then generate and add the history attr."""
+        outs = func(*args, **kwargs)
+
+        if isinstance(outs, tuple):
+            out = outs[0]
+        else:
+            out = outs
+
+        if not isinstance(out, (xr.DataArray, xr.Dataset)):
+            raise TypeError(
+                f"Decorated `update_xclim_history` received a non-xarray output from {func.__name__}."
+            )
+
+        da_list = [arg for arg in args if isinstance(arg, xr.DataArray)]
+        da_dict = {
+            name: arg for name, arg in kwargs.items() if isinstance(arg, xr.DataArray)
+        }
+
+        attr = update_history(
+            gen_call_string(func.__name__, *args, **kwargs),
+            *da_list,
+            new_name=out.name,
+            **da_dict,
+        )
+        out.attrs["history"] = attr
+        return outs
+
+    return _call_and_add_history
+
+
+def gen_call_string(funcname: str, *args, **kwargs):
+    """Generate a signature string for use in the history attribute.
+
+    DataArrays and Dataset are replaced with their name, floats, ints and strings are
+    printed directly, all other objects have their type printed between < >.
+
+    Arguments given through positional arguments are printed positionnally and those
+    given through keywords are printed prefixed by their name.
+
+    Parameters
+    ----------
+    funcname : str
+      Name of the function
+    *args, **kwargs
+      Arguments given to the function.
+
+    Example
+    -------
+    >>> A = xr.DataArray([1], dims=('x',), name='A')
+    >>> gen_call_string("func", A, b=2.0, c="3", d=[4, 5, 6])
+    "func(A, b=2.0, c='3', d=<list>)"
+    """
+    elements = []
+    chain = itertools.chain(zip([None] * len(args), args), kwargs.items())
+    for name, val in chain:
+        if isinstance(val, xr.DataArray):
+            rep = val.name or "<array>"
+        elif isinstance(val, (int, float, str, bool)):
+            rep = repr(val)
+        else:
+            rep = f"<{type(val).__name__}>"
+
+        if name is not None:
+            rep = f"{name}={rep}"
+
+        elements.append(rep)
+
+    return f"{funcname}({', '.join(elements)})"
+
+
 def prefix_attrs(source, keys, prefix):
     """Rename some of the keys of a dictionary by adding a prefix.
 
@@ -392,44 +473,36 @@ KIND_ANNOTATION = {
 }
 
 
-def _gen_parameters_section(names, parameters, allowed_periods=None):
+def _gen_parameters_section(parameters, allowed_periods=None):
     """Generate the "parameters" section of the indicator docstring.
 
     Parameters
     ----------
-    names : Sequence[str]
-      Names of the input parameters, in order. Usually `Ind._parameters`.
-    parameters : Mapping[str, Any]
-      Parameters dictionary. Usually `Ind.parameters`, As this is missing `ds`, it is added explicitly.
+    parameters : mapping
+      Parameters dictionary (`Ind.parameters`).
+    allowed_periods : list of str, optional
     """
     section = "Parameters\n----------\n"
-    for name in names:
-        if name == "ds":
-            descstr = "Input dataset."
-            defstr = "Default: None."
-            unitstr = ""
-            annotstr = "Dataset, optional"
+    for name, param in parameters.items():
+        descstr = param.description
+        if param.kind == InputKind.FREQ_STR and allowed_periods is not None:
+            descstr += (
+                f" Restricted to frequencies equivalent to one of {allowed_periods}"
+            )
+        if param.kind == InputKind.VARIABLE:
+            defstr = f"Default : `ds.{param.default}`. "
+        elif param.kind == InputKind.OPTIONAL_VARIABLE:
+            defstr = ""
+        elif param.default is not _empty:
+            defstr = f"Default : {param.default}. "
+        if "choices" in param:
+            annotstr = str(param.choices)
         else:
-            param = parameters[name]
-            descstr = param["description"]
-            if param["kind"] == InputKind.FREQ_STR and allowed_periods is not None:
-                descstr += (
-                    f" Restricted to frequencies equivalent to one of {allowed_periods}"
-                )
-            if param["kind"] == InputKind.VARIABLE:
-                defstr = f"Default : `ds.{param['default']}`. "
-            elif param["kind"] == InputKind.OPTIONAL_VARIABLE:
-                defstr = ""
-            else:
-                defstr = f"Default : {param['default']}. "
-            if "choices" in param:
-                annotstr = str(param["choices"])
-            else:
-                annotstr = KIND_ANNOTATION[param["kind"]]
-            if param.get("units", False):
-                unitstr = f"[Required units : {param['units']}]"
-            else:
-                unitstr = ""
+            annotstr = KIND_ANNOTATION[param.kind]
+        if "units" in param and param.units is not None:
+            unitstr = f"[Required units : {param.units}]"
+        else:
+            unitstr = ""
         section += f"{name} : {annotstr}\n  {descstr}\n  {defstr}{unitstr}\n"
     return section
 
@@ -439,8 +512,8 @@ def _gen_returns_section(cfattrs):
 
     Parameters
     ----------
-    cfattrs : Sequence[Dict[str, Any]]
-      The list of cf attributes, usually Indicator.cf_attrs.
+    attrs : Sequence[Dict[str, Any]]
+      The list of attributes, usually Indicator.cf_attrs.
     """
     section = "Returns\n-------\n"
     for attrs in cfattrs:
@@ -464,25 +537,24 @@ def generate_indicator_docstring(ind):
 
     Parameters
     ----------
-    ind: Indicator class
+    ind: Indicator instance
     """
     header = f"{ind.title} (realm: {ind.realm})\n\n{ind.abstract}\n"
 
     special = f'This indicator will check for missing values according to the method "{ind.missing}".\n'
+
     if hasattr(ind.compute, "__module__"):
-        special += f"Based on indice :py:func:`{ind.compute.__module__}.{ind.compute.__name__}`.\n"
-        if hasattr(ind.compute, "_injected"):
+        special += f"Based on indice :py:func:`~{ind.compute.__module__}.{ind.compute.__name__}`.\n"
+        if ind.injected_parameters:
             special += "With injected parameters: "
-            special += (
-                ", ".join([f"{k}={v}" for k, v in ind.compute._injected.items()])
-                + ".\n"
+            special += ", ".join(
+                [f"{k}={v}" for k, v in ind.injected_parameters.items()]
             )
+            special += ".\n"
     if ind.keywords:
         special += f"Keywords : {ind.keywords}.\n"
 
-    parameters = _gen_parameters_section(
-        ind._parameters, ind.parameters, ind.allowed_periods
-    )
+    parameters = _gen_parameters_section(ind.parameters, ind.allowed_periods)
 
     returns = _gen_returns_section(ind.cf_attrs)
 
@@ -493,11 +565,3 @@ def generate_indicator_docstring(ind):
 
     doc = f"{header}\n{special}\n{parameters}\n{returns}\n{extras}"
     return doc
-
-
-def parse_cell_methods(cell_methods: Sequence[Mapping[str, str]]) -> str:
-    """Parse cell methods as YAML reads them into a string."""
-    methods = []
-    for cell_method in cell_methods:
-        methods.append("".join([f"{dim}: {meth}" for dim, meth in cell_method.items()]))
-    return " ".join(methods)

@@ -11,7 +11,6 @@ import re
 from typing import Any, Optional, Sequence, Tuple, Union
 
 import cftime
-import numpy
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -27,8 +26,8 @@ from xarray.coding.cftime_offsets import (
 from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core.resample import DataArrayResample
 
-from xclim.core.formatting import update_history
-from xclim.core.utils import DayOfYearStr, _calc_perc
+from xclim.core.formatting import update_xclim_history
+from xclim.core.utils import DayOfYearStr, calc_perc
 
 # cftime and datetime classes to use for each calendar name
 datetime_classes = {"default": pydt.datetime, **cftime._cftime.DATE_TYPES}  # noqa
@@ -117,7 +116,7 @@ def convert_calendar(
       Either a calendar name or the 1D time coordinate to convert to.
       If an array is provided, the output will be reindexed using it and in that case, days in `target`
       that are missing in the converted `source` are filled by `missing` (which defaults to NaN).
-    align_on : {None, 'date', 'year'}
+    align_on : {None, 'date', 'year', 'random'}
       Must be specified when either source or target is a `360_day` calendar, ignored otherwise. See Notes.
     missing : Optional[any]
       A value to use for filling in dates in the target that were missing in the source.
@@ -163,6 +162,36 @@ def convert_calendar(
       a standard calendar.
 
       This option is best used with data on a frequency coarser than daily.
+
+    "random"
+      Similar to "year", each day of year of the source is mapped to another day of year
+      of the target. However, instead of having always the same missing days according
+      the source and target years, here 5 days are chosen randomly, one for each fifth
+      of the year. However, February 29th is always missing when converting to a leap year,
+      or its value is dropped when converting from a leap year. This is similar to method
+      used in the [LOCA]_ dataset.
+
+      This option best used on daily data.
+
+    References
+    ----------
+    .. [LOCA] Pierce, D. W., D. R. Cayan, and B. L. Thrasher, 2014: Statistical downscaling using Localized Constructed Analogs (LOCA). Journal of Hydrometeorology, volume 15, page 2558-2585
+
+    Examples
+    --------
+    This method does not try to fill the missing dates other than with a constant value,
+    passed with `missing`. In order to fill the missing dates with interpolation, one
+    can simply use xarray's method:
+
+    >>> tas_nl = convert_calendar(tas, 'noleap')  # For the example
+    >>> with_missing = convert_calendar(tas_nl, 'standard', missing=np.NaN)
+    >>> out = with_missing.interpolate_na('time', method='linear')
+
+    Here, if Nans existed in the source data, they will be interpolated too. If that is,
+    for some reason, not wanted, the workaround is to do:
+
+    >>> mask = convert_calendar(tas_nl, 'standard').notnull()
+    >>> out2 = out.where(mask)
     """
     cal_src = get_calendar(source, dim=dim)
 
@@ -174,28 +203,55 @@ def convert_calendar(
     if cal_src == cal_tgt:
         return source
 
-    if (cal_src == "360_day" or cal_tgt == "360_day") and align_on is None:
+    if (cal_src == "360_day" or cal_tgt == "360_day") and align_on not in [
+        "year",
+        "date",
+        "random",
+    ]:
         raise ValueError(
-            "Argument `align_on` must be specified with either 'date' or "
-            "'year' when converting to or from a '360_day' calendar."
+            "Argument `align_on` must be specified with either 'date', 'year' or "
+            "'random' when converting to or from a '360_day' calendar."
         )
     if cal_src != "360_day" and cal_tgt != "360_day":
         align_on = None
 
     out = source.copy()
     # TODO Maybe the 5-6 days to remove could be given by the user?
-    if align_on == "year":
+    if align_on in ["year", "random"]:
+        if align_on == "year":
 
-        def _yearly_interp_doy(time):
-            # Returns the nearest day in the target calendar of the corresponding "decimal year" in the source calendar
-            yr = int(time.dt.year[0])
-            return np.round(
-                days_in_year(yr, cal_tgt)
-                * time.dt.dayofyear
-                / days_in_year(yr, cal_src)
-            ).astype(int)
+            def _yearly_interp_doy(time):
+                # Returns the nearest day in the target calendar of the corresponding "decimal year" in the source calendar
+                yr = int(time.dt.year[0])
+                return np.round(
+                    days_in_year(yr, cal_tgt)
+                    * time.dt.dayofyear
+                    / days_in_year(yr, cal_src)
+                ).astype(int)
 
-        new_doy = source.time.groupby(f"{dim}.year").map(_yearly_interp_doy)
+            new_doy = source.time.groupby(f"{dim}.year").map(_yearly_interp_doy)
+        elif align_on == "random":
+
+            def _yearly_random_doy(time, rng):
+                # Return a doy in the new calendar, removing the Feb 29th and 5 other
+                # days chosen randomly within 5 sections of 72 days.
+                yr = int(time.dt.year[0])
+                new_doy = np.arange(360) + 1
+                rm_idx = rng.integers(0, 72, 5) + (np.arange(5) * 72)
+                if cal_src == "360_day":
+                    for idx in rm_idx:
+                        new_doy[idx + 1 :] = new_doy[idx + 1 :] + 1
+                    if days_in_year(yr, cal_tgt) == 366:
+                        new_doy[new_doy >= 60] = new_doy[new_doy >= 60] + 1
+                elif cal_tgt == "360_day":
+                    new_doy = np.insert(new_doy, rm_idx - np.arange(5), -1)
+                    if days_in_year(yr, cal_src) == 366:
+                        new_doy = np.insert(new_doy, 60, -1)
+                return new_doy[time.dt.dayofyear - 1]
+
+            new_doy = source.time.groupby(f"{dim}.year").map(
+                _yearly_random_doy, rng=np.random.default_rng()
+            )
 
         # Convert the source datetimes, but override the doy with our new doys
         out[dim] = xr.DataArray(
@@ -206,6 +262,8 @@ def convert_calendar(
             dims=(dim,),
             name=dim,
         )
+        # Remove NaN that where put on invalid dates in target calendar
+        out = out.where(out[dim].notnull(), drop=True)
         # Remove duplicate timestamps, happens when reducing the number of days
         out = out.isel({dim: np.unique(out[dim], return_index=True)[1]})
     else:
@@ -352,6 +410,7 @@ def _convert_datetime(
       A datetime object to convert.
     new_doy:  Optional[Union[float, int]]
       Allows for redefining the day of year (thus ignoring month and day information from the source datetime).
+      -1 is understood as a nan.
     calendar: str
       The target calendar
 
@@ -362,6 +421,8 @@ def _convert_datetime(
       as the source (month and day according to `new_doy` if given).
       If the month and day doesn't exist in the target calendar, returns np.nan. (Ex. 02-29 in "noleap")
     """
+    if new_doy in [np.nan, -1]:
+        return np.nan
     if new_doy is not None:
         new_date = cftime.num2date(
             new_doy - 1,
@@ -386,7 +447,7 @@ def _convert_datetime(
 
 def ensure_cftime_array(
     time: Sequence,
-) -> Union[CFTimeIndex, numpy.ndarray]:
+) -> Union[CFTimeIndex, np.ndarray]:
     """Convert an input 1D array to an array of cftime objects.
 
     Python's datetime are converted to cftime.DatetimeGregorian.
@@ -440,15 +501,18 @@ def days_in_year(year: int, calendar: str = "default") -> int:
     )
 
 
+@update_xclim_history
 def percentile_doy(
     arr: xr.DataArray,
     window: int = 5,
-    per: Union[float, Sequence[float]] = 10,
+    per: Union[float, Sequence[float]] = 10.0,
+    alpha: float = 1.0 / 3.0,
+    beta: float = 1.0 / 3.0,
 ) -> xr.DataArray:
     """Percentile value for each day of the year.
 
     Return the climatological percentile over a moving window around each day of the year.
-    All NaNs are skipped.
+    Different quantile estimators can be used by specifying `alpha` and `beta` according to specifications given by [HyndmanFan]_. The default definition corresponds to method 8, which meets multiple desirable statistical properties for sample quantiles. Note that `numpy.percentile` corresponds to method 7, with alpha and beta set to 1.
 
     Parameters
     ----------
@@ -458,12 +522,20 @@ def percentile_doy(
       Number of time-steps around each day of the year to include in the calculation.
     per : float or sequence of floats
       Percentile(s) between [0, 100]
+    alpha: float
+        Plotting position parameter.
+    beta: float
+        Plotting position parameter.
 
     Returns
     -------
     xr.DataArray
       The percentiles indexed by the day of the year.
       For calendars with 366 days, percentiles of doys 1-365 are interpolated to the 1-366 range.
+
+    References
+    ----------
+    .. [HyndmanFan] Hyndman, R. J., & Fan, Y. (1996). Sample quantiles in statistical packages. The American Statistician, 50(4), 361-365.
     """
 
     # Ensure arr sampling frequency is daily or coarser
@@ -486,12 +558,12 @@ def percentile_doy(
         per = [per]
 
     p = xr.apply_ufunc(
-        _calc_perc,
+        calc_perc,
         rrr,
         input_core_dims=[["stack_dim"]],
         output_core_dims=[["percentiles"]],
         keep_attrs=True,
-        kwargs=dict(p=per),
+        kwargs=dict(percentiles=per, alpha=alpha, beta=beta),
         dask="parallelized",
         output_dtypes=[rrr.dtype],
         dask_gufunc_kwargs=dict(output_sizes={"percentiles": len(per)}),
@@ -511,14 +583,12 @@ def percentile_doy(
         arr.time[0 :: n - 1].dt.strftime("%Y-%m-%d").values.tolist()
     )
     p.attrs["window"] = window
-
-    infostr = f"percentile_doy(arr, window={window}, per={per})"
-    p.attrs["xclim_history"] = update_history(infostr, arr, new_name="per")
-
-    return p
+    p.attrs["alpha"] = alpha
+    p.attrs["beta"] = beta
+    return p.rename("per")
 
 
-def compare_offsets(freqA: str, op: str, freqB: str):  # noqa
+def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
     """Compare offsets string based on their approximate length, according to a given operator.
 
     Offset are compared based on their length approximated for a period starting
@@ -546,27 +616,42 @@ def compare_offsets(freqA: str, op: str, freqB: str):  # noqa
     t_a, b_a, _, _ = parse_offset(freqA)
     t_b, b_b, _, _ = parse_offset(freqB)
 
-    if b_a == b_b:
-        # Same base freq, compare mulitplicator only.
-        t_a = int(t_a or "1")
-        t_b = int(t_b or "1")
-    else:
+    if b_a != b_b:
         # Different base freq, compare length of first period after beginning of time.
         t = pd.date_range("1970-01-01T00:00:00.000", periods=2, freq=freqA)
         t_a = (t[1] - t[0]).total_seconds()
         t = pd.date_range("1970-01-01T00:00:00.000", periods=2, freq=freqB)
         t_b = (t[1] - t[0]).total_seconds()
+    # else Same base freq, compare multiplicator only.
 
     return get_op(op)(t_a, t_b)
 
 
-def parse_offset(freq: str) -> Tuple[str, str, Optional[str], Optional[str]]:
+def parse_offset(freq: str) -> Sequence[str]:
     """Parse an offset string.
 
-    Returns: multiplicator, offset base, start stamp (or None), anchor (or None)
+    Parse a frequency offset and, if needed, convert to cftime-compatible components.
+
+    Parameters
+    ----------
+    freq : str
+      Frequency offset.
+
+    Returns
+    -------
+    multiplicator (int), offset base (str), is start anchored (bool), anchor (str or None)
+      "[n]W" is always replaced with "[7n]D", as xarray doesn't support "W" for cftime indexes.
+      "Y" is always replaced with "A".
     """
     patt = r"(\d*)(\w)(S)?(?:-(\w{2,3}))?"
-    return re.search(patt, freq.replace("Y", "A")).groups()
+    mult, base, start, anchor = re.search(patt, freq).groups()
+    mult = int(mult or "1")
+    base = base.replace("Y", "A")
+    if base == "W":
+        mult = 7 * mult
+        base = "D"
+        anchor = ""
+    return mult, base, start == "S", anchor
 
 
 def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArray:
@@ -664,7 +749,7 @@ def resample_doy(
     return out
 
 
-def cftime_start_time(date, freq):
+def cftime_start_time(date: cftime.datetime, freq: str) -> cftime.datetime:
     """Get the cftime.datetime for the start of a period.
 
     As we are not supplying actual period objects, assumptions regarding the period are made based on
@@ -697,7 +782,7 @@ def cftime_start_time(date, freq):
     return date
 
 
-def cftime_end_time(date, freq):
+def cftime_end_time(date: cftime.datetime, freq: str) -> cftime.datetime:
     """Get the cftime.datetime for the end of a period.
 
     As we are not supplying actual period objects, assumptions regarding the period are made based on
@@ -730,7 +815,7 @@ def cftime_end_time(date, freq):
     return cftime_start_time(date + mod_freq, freq) - pydt.timedelta(microseconds=1)
 
 
-def cfindex_start_time(cfindex, freq):
+def cfindex_start_time(cfindex: CFTimeIndex, freq: str) -> CFTimeIndex:
     """
     Get the start of a period for a pseudo-period index.
 
@@ -750,10 +835,10 @@ def cfindex_start_time(cfindex, freq):
     CFTimeIndex
         The starting datetimes of periods inferred from dates and freq
     """
-    return CFTimeIndex([cftime_start_time(date, freq) for date in cfindex])
+    return CFTimeIndex([cftime_start_time(date, freq) for date in cfindex])  # noqa
 
 
-def cfindex_end_time(cfindex, freq):
+def cfindex_end_time(cfindex: CFTimeIndex, freq: str) -> CFTimeIndex:
     """
     Get the end of a period for a pseudo-period index.
 
@@ -773,10 +858,10 @@ def cfindex_end_time(cfindex, freq):
     CFTimeIndex
         The ending datetimes of periods inferred from dates and freq
     """
-    return CFTimeIndex([cftime_end_time(date, freq) for date in cfindex])
+    return CFTimeIndex([cftime_end_time(date, freq) for date in cfindex])  # noqa
 
 
-def time_bnds(group, freq):
+def time_bnds(group, freq: str) -> Sequence[Tuple[cftime.datetime, cftime.datetime]]:
     """
     Find the time bounds for a pseudo-period index.
 
@@ -794,8 +879,8 @@ def time_bnds(group, freq):
 
     Returns
     -------
-    start_time : cftime.datetime
-        The start time of the period inferred from datetime and freq.
+    Sequence[(cftime.datetime, cftime.datetime)]
+        The start and end times of the period inferred from datetime and freq.
 
     Examples
     --------
@@ -832,7 +917,60 @@ def time_bnds(group, freq):
     )
 
 
-def _doy_days_since_doys(base: xr.DataArray, start: Optional[DayOfYearStr] = None):
+def climatological_mean_doy(
+    arr: xr.DataArray, window: int = 5
+) -> Tuple[xr.DataArray, xr.DataArray]:
+    """The climatological mean and standard deviation for each day of the year.
+
+    Parameters
+    ----------
+    arr : xarray.DataArray
+      Input array.
+    window : int
+      Window size in days.
+
+    Returns
+    -------
+    xarray.DataArray, xarray.DataArray
+      Mean and standard deviation.
+    """
+    rr = arr.rolling(min_periods=1, center=True, time=window).construct("window")
+
+    # Create empty percentile array
+    g = rr.groupby("time.dayofyear")
+
+    m = g.mean(["time", "window"])
+    s = g.std(["time", "window"])
+
+    return m, s
+
+
+def within_bnds_doy(
+    arr: xr.DataArray, *, low: xr.DataArray, high: xr.DataArray
+) -> xr.DataArray:
+    """Return whether or not array values are within bounds for each day of the year.
+
+    Parameters
+    ----------
+    arr : xarray.DataArray
+      Input array.
+    low : xarray.DataArray
+      Low bound with dayofyear coordinate.
+    high : xarray.DataArray
+      High bound with dayofyear coordinate.
+
+    Returns
+    -------
+    xarray.DataArray
+    """
+    low = resample_doy(low, arr)
+    high = resample_doy(high, arr)
+    return (low < arr) * (arr < high)
+
+
+def _doy_days_since_doys(
+    base: xr.DataArray, start: Optional[DayOfYearStr] = None
+) -> Tuple[xr.DataArray, xr.DataArray, xr.DataArray]:
     """Common calculation for doy to days since and inverse conversions.
 
     Parameters
@@ -879,7 +1017,7 @@ def doy_to_days_since(
     da: xr.DataArray,
     start: Optional[DayOfYearStr] = None,
     calendar: Optional[str] = None,
-):
+) -> xr.DataArray:
     """Convert day-of-year data to days since a given date
 
     This is useful for computing meaningful statistics on doy data.
@@ -949,7 +1087,7 @@ def days_since_to_doy(
     da: xr.DataArray,
     start: Optional[DayOfYearStr] = None,
     calendar: Optional[str] = None,
-):
+) -> xr.DataArray:
     """Reverse the conversion made by :py:func:`doy_to_days_since`.
 
     Converts data given in days since a specific date to day-of-year.

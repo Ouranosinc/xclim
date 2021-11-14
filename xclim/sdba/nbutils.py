@@ -1,4 +1,7 @@
-"""Numba-accelerated utils."""
+"""
+Numba-accelerated utilities
+---------------------------
+"""
 import numpy as np
 from numba import boolean, float32, float64, guvectorize, njit
 from xarray import DataArray
@@ -11,7 +14,10 @@ from xarray.core import utils
     nopython=True,
 )
 def _vecquantiles(arr, rnk, res):
-    res[0] = np.nanquantile(arr, rnk)
+    if np.isnan(rnk):
+        res[0] = np.NaN
+    else:
+        res[0] = np.nanquantile(arr, rnk)
 
 
 def vecquantiles(da, rnk, dim):

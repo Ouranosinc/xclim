@@ -2,38 +2,182 @@
 History
 =======
 
-0.29.0 (unreleased)
+0.32.0 (unreleased)
+-------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`)
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Added an optimized pathway for ``xclim.indices.run_length`` functions when ``window=1``. (:pull:`911`, :issue:`910`).
+
+Internal changes
+~~~~~~~~~~~~~~~~
+* Removed some logging configurations in ``dataflags`` that were polluting python's main logging configuration. (:pull:`909`).
+* Synchronized logging formatters in `xclim.ensembles` and `xclim.core.utils`. (:pull:`909`).
+
+Bug fixes
+~~~~~~~~~
+* Fix bugs in the `cf_attrs` and/or `abstract` of `continuous_snow_cover_end` and `continuous_snow_cover_start`. (:pull:`908`).
+
+0.31.0 (2021-11-05)
+-------------------
+Contributors to this version: Abel Aoun (:user:`bzah`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Juliette Lavoie (:user:`juliettelavoie`), Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`).
+
+New indicators
+~~~~~~~~~~~~~~
+* ``thawing_degree_days`` indicator returns degree-days above a default of `thresh="0 degC"`. (:pull:`895`, :issue:`887`).
+* ``freezing_degree_days`` indicator returns degree-days below a default of `thresh="0 degC"`. (:pull:`895`, :issue:`887`).
+* Several frost-free season calculations are now available as both indices and indicators. (:pull:`895`, :issue:`887`):
+    - ``frost_free_season_start``
+    - ``frost_free_season_end``
+    - ``frost_free_season_length``
+* ``growing_season_start`` is now offered as an indice and as an indicator to complement other growing season-based indicators (threshold calculation with `op=">="`). (:pull:`895`, :issue:`887`).
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Improve cell_methods checking to search the wanted method within the whole string. (:pull:`866`, :issue:`863`).
+* New ``align_on='random`` option for ``xclim.core.calendar.convert_calendar``, for conversions involving '360_day' calendars. (:pull:`875`, :issue:`841`).
+* ``dry_spell_frequency`` now has a parameter `op: {"sum", "max"}` to choose if the threshold is compared against the accumulated or maximal precipitation, over the given window. (:pull:`879`).
+* ``maximum_consecutive_frost_free_days`` is now checking that the minimum temperature is above or equal to the threshold ( instead of only above). (:pull:`883`, :issue:`881`).
+* The ANUCLIM virtual module has been updated to accept weekly and monthly inputs and with improved metadata. (:pull:`885`, :issue:`538`)
+* The ``sdba.loess`` algorithm has been optimized to run faster in all cases, with an even faster special case (``equal_spacing=True``) when the x coordinate is equally spaced. When activated, this special case might return results different from without, up to around 0.1%. (:pull:`865`).
+* Add support for group's window and additional dimensions in ``LoessDetrend``. Add new ``RollingMeanDetrend`` object. (:pull:`865`).
+* Missing value algorithms now try to infer the source timestep of the input data when it is not given. (:pull:`885`).
+* On indices, `bootstrap` parameter documentation has been updated to explain when and why it should be used. (:pull:`893`, :issue:`846`).
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+* Major changes in the YAML schema for virtual submodules, now closer to how indicators are declared dynamically, see the doc for details. (:pull:`849`, :issue:`848`).
+* Removed ``xclim.generic.daily_downsampler``, as it served no purpose now that xarray's resampling works with cftime (:pull:`888`, :issue:`889`).
+* Refactor of ``xclim.core.calendar.parse_offset``, output types were changed to useful ones (:pull:`885`).
+* Major changes on how parameters are passed to indicators. (:pull:`873`):
+    - Their signature is now consistent : input variables (DataArrays, optional or not) are positional or keyword arguments and all other parameters are keyword only. (:issue:`855`, :issue:`857`)
+    - Some indicators have modified signatures because we now rename variables when wrapping generic indices. This is the case for the whole cf module, for example.
+    - ``Indicator.parameters`` is now a property generated from ``Indicator._all_parameters``, as the latter includes the injected parameters. The keys of the former are instances of new ``xclim.core.indicator.Parameter``, and not dictionaries as before.
+    - New ``Indicator.injected_parameters`` to see which compute function arguments will be injected at call time.
+    - See the pull request (:pull:`873`) for all information.
+* The call signature for ``huglin_index`` has been modified to reflect the correct variables used in its formula (`tasmin` -> `tas`; `thresh_tasmin` -> `thresh`). (:pull:`903`, :issue:`902`).
+
+Internal changes
+~~~~~~~~~~~~~~~~
+* Pull Request contributions now require hyperlinks to the issue and pull request pages on GitHub listed alongside changess in HISTORY.rst. (:pull:`860`,:issue:`854`).
+* Updated the contribution guidelines to better give credit to contributors and more easily track changes. (:pull:`869`, :issue:`868`).
+* Enabled coveralls code coverage reporting for GitHub CI. (:pull:`870`).
+* Added automated TestPyPI and PyPI-publishing workflows for GitHub CI. (:pull:`872`).
+* Changes on how indicators are constructed. (:pull:`873`).
+* Added missing algorithms tests for conversion from hourly to daily. (:pull:`888`).
+* Updated pre-commit hooks to use black v21.10.b0. (:pull:`896`).
+* Moved ``stack_variables``, ``unstack_variables``, ``construct_moving_yearly_window`` and ``unpack_moving_yearly_window`` from ``xclim.sdba.base`` to ``xclim.sdba.processing``. They still are imported in ``xclim.sdba`` as before. (:pull:`892`).
+* Many improvements to the documentation. (:pull:`892`, :issue:`880`).
+* Added regex replacement handling in setup.py to facilitate publishing contributor/contribution links on PyPI. (:pull:`906`).
+
+Bug fixes
+~~~~~~~~~
+* Fix a bug in bootstrapping where computation would fail when the dataset time coordinate is encoded using `cftime.datetime`. (:pull:`859`).
+* Fix a bug in ``build_indicator_module_from_yaml`` where bases classes (Daily, Hourly, etc) were not usable with the `base` field. (:pull:`885`).
+* ``percentile_doy`` alpha and beta parameters are now properly transmitted to bootstrap calls of this function. (:pull:`893`, :issue:`846`).
+* When called with a 1D da and ND index, ``xclim.indices.run_length.lazy_indexing`` now drops the auxiliary coordinate corresponding to da's index. This fixes a bug with ND data in ``xclim.indices.run_length.season``. (:pull:`900`).
+* Fix name of heating degree days in French (`"chauffe"` -> "`chauffage`"). (:pull:`895`).
+* Corrected several French indicator translation description strings (bad usages of `"."` in `description` and `long_name` fields). (:pull:`895`).
+* Fixed an error with the formula for ``huglin_index`` where `tasmin` was being used in the calculation instead of `tas`. (:pull:`903`, :issue:`902`).
+
+0.30.1 (2021-10-01)
+-------------------
+
+Bug fixes
+~~~~~~~~~
+* Fix a bug in ``xclim.sdba``'s ``map_groups`` where 1D input including an auxiliary coordinate would fail with an obscure error on a reducing operation.
+
+0.30.0 (2021-09-28)
+-------------------
+
+New indicators
+~~~~~~~~~~~~~~
+* ``climatological_mean_doy`` indice returns the mean and standard deviation across a climatology according to day-of-year (`xarray.DataArray.groupby("time.dayofyear")`). A moving window averaging of days can also be supplied (default:`window=1`).
+* ``within_bnds_doy`` indice returns a boolean array indicating whether or not array's values are within bounds for each day of the year.
+* Added ``atmos.wet_precip_accumulation``, an indicator accumulating precipitation over wet days.
+* Module ICCLIM now includes ``PRCPTOT``, which accumulates precipitation for days with precipitation above 1 mm/day.
+
+New features and enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* ``xclim.core.utils.nan_calc_percentiles`` now uses a custom algorithm instead of ``numpy.nanpercentiles`` to have more flexibility on the interpolation method. The performance is also improved.
+* ``xclim.core.calendar.percentile_doy`` now uses the 8th method of Hyndman & Fan for linear interpolation (alpha = beta = 1/3). Previously, the function used Numpy's percentile, which corresponds to the 7th method. This change is motivated by the fact that the 8th is recommended by Hyndman & Fay and it ensures consistency with other climate indices packages (`climdex`, `icclim`). Using `alpha = beta = 1` restores the previous behaviour.
+* ``xclim.core.utils._cal_perc`` is now only a proxy for ``xc.core.utils.nan_calc_percentiles`` with some axis moves.
+* `xclim` now implements many data quality assurance flags (``xclim.core.dataflags``) for temperature and precipitation based on `ICCLIM documentation guidelines <https://eca.knmi.nl/documents/atbd.pdf>`_. These checks include the following:
+    - Temperature (variables: ``tas``, ``tasmin``, ``tasmax``): ``tasmax_below_tasmin``, ``tas_exceeds_tasmax``, ``tas_below_tasmin``, ``temperature_extremely_low`` (`thresh="-90 degC"`), ``temperature_extremely_high`` (`thresh="60 degC"`).
+    - Precipitation-specific (variables: ``pr``, ``prsn``, ):  ``negative_accumulation_values``, ``very_large_precipitation_events`` (`thresh="300 mm d-1"`).
+    - Wind-specific (variables: ``sfcWind``, ``wsgsmax``/``sfcWindMax``): ``wind_values_outside_of_bounds``
+    - Generic: ``outside_n_standard_deviations_of_climatology``, ``values_repeating_for_n_or_more_days``, ``values_op_thresh_repeating_for_n_or_more_days``, ``percentage_values_outside_of_bounds``.
+
+    These quality-assurance checks are selected according to CF-standard variable names, and can be triggered via ``xclim.core.dataflags.data_flags(xarray.DataArray, xarray.Dataset)``. These checks are separate from the Indicator-defined `datachecks` and must be launched manually. They'll return an array of data_flags as boolean variables.
+    If called with `raise_flags=True`, will raise an Exception with comments for each quality control check raised.
+* A convenience function (``xclim.core.dataflags.ecad_compliant``) is also offered as a method for asserting that data adheres to all relevant ECAD/ICCLIM checks. For more information on usage, consult the docstring/documentation.
+* A new utility "``dataflags``" is also available for performing fast quality control checks from the command-line (`xclim dataflags --help`). See the CLI documentation page for usage examples.
+* Added missing typed call signatures, expected returns and docstrings for many ``xclim.core.calendar`` functions.
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+* All "ANUCLIM" indices and indicators have lost their `src_timestep` argument. Most of them were not using it and now every function infers the frequency from the data directly. This may add stricter constraints on the time coordinate, the same as for ``xarray.infer_freq``.
+* Many functions found within ``xclim.core.cfchecks`` (``generate_cfcheck`` and ``check_valid_*``) have been removed as existing indicator CF-standard checks and data checks rendered them redundant/obsolete.
+
+Bug fixes
+~~~~~~~~~
+* Fixes in ``sdba`` for (1) inputs with dimensions without coordinates, for (2) ``sdba.detrending.MeanDetrend`` and for (3) ``DetrendedQuantileMapping`` when used with dask's distributed scheduler.
+* Replaced instances of `'◦'` ("White bullet") with `'°'` ("Degree Sign") in ``icclim.yaml`` as it was causing issues for non-UTF8 environments.
+* Addressed an edge case where ``test_sdba::test_standardize`` randomness could generate values that surpass the test error tolerance.
+* Added a missing `.txt` file to the MANIFEST of the source distributable in order to be able to run all tests.
+* ``xc.core.units.rate2amount`` is now exact when the sampling frequency is monthly, seasonal or yearly. Earlier, monthly and yearly data were computed using constant month and year length. End-of-period frequencies are also correctly understood (ex: "M" vs "MS").
+* In the ``potential_evapotranspiration`` indice, add abbreviated ``method`` names to docstring.
+* Fixed an issue that prevented using the default ``group`` arg in adjustment objects.
+* Fix bug in ``missing_wmo``, where a period would be considered valid if all months met WMO criteria, but complete months in a year were missing. Now if any month does not meet criteria or is absent, the period will be considered missing.
+* Fix bootstrapping with dask arrays. Dask does not support using ``loc`` with multiple indexes to set new values so a workaround was necessary.
+* Fix bootstrapping when the bootstrapped year must be converted to a 366_day calendar.
+* Virtual modules and translations now use 'UTF-8' by default when reading yaml or json file, instead of a machine-dependent encoding.
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+* `xclim` code quality checks now use the newest `black` (v21.8-beta). Checks launched via `tox` and `pre-commit` now run formatting modifications over Jupyter notebooks found under `docs`.
+
+0.29.0 (2021-08-30)
 -------------------
 
 Announcements
 ~~~~~~~~~~~~~
-* It was found that the `ExtremeValues` adjustment algorithm was not as accurate and stable as first thought. It is now hidden from `xclim.sdba` but can still be accessed via `xclim.sdba.adjustment`, with a warning. Work on improving the algorithm is ongoing, and a better implementation will be in a future version.
+* It was found that the ``ExtremeValues`` adjustment algorithm was not as accurate and stable as first thought. It is now hidden from ``xclim.sdba`` but can still be accessed via ``xclim.sdba.adjustment``, with a warning. Work on improving the algorithm is ongoing, and a better implementation will be in a future version.
+* It was found that the ``add_dims`` argument of ``sdba.Grouper`` had some caveats throughout ``sdba``. This argument is to be used with care before a careful analysis and more testing is done within ``xclim``.
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
-* The Adjustment classes of ``xclim.sdba`` have been refactored into 2 categories:
+* `xclim` has switched back to updating the ``history`` attribute (instead of ``xclim_history``). This impacts all indicators, most ensemble functions, ``percentile_doy`` and ``sdba.processing`` (see below).
+* Refactor of ``sdba.processing``. Now all functions take one or more DataArrays as input, plus some parameters. And output one or more dataarrays (not Datasets). Units and metadata is handled. This impacts ``sdba.processing.adapt_freq`` especially.
+* Add unit handling in ``sdba``. Most parameters involving quantities are now expecting strings (and not numbers). Adjustment objects will ensure ref, hist and sim all have the same units (taking ref as reference).
+* The Adjustment` classes of ``xclim.sdba`` have been refactored into 2 categories:
 
     - ``TrainAdjust`` objects (most of the algorithms), which are created **and** trained in the same call:
       ``obj = Adj.train(ref, hist, **kwargs)``. The ``.adjust`` step stays the same.
 
     - ``Adjust`` objects (only ``NpdfTransform``), which are never initialized. Their ``adjust``
       class method performs all the work in one call.
-* ``snowfall_approximation`` used a < condition instead of <= to determine the snow fraction based on the freezing point temperature. The new version sticks to the convention used in the Canadian Land Surface Scheme (CLASS).
-* Removed the `"gis", "docs", "test" and "setup"`extra dependencies from ``setup.py``. The ``dev`` recipe now includes all tools needed for xclim's development.
+* ``snowfall_approximation`` used a `"<"` condition instead of `"<="` to determine the snow fraction based on the freezing point temperature. The new version sticks to the convention used in the Canadian Land Surface Scheme (CLASS).
+* Removed the `"gis"`, `"docs"`, `"test"` and `"setup"`extra dependencies from ``setup.py``. The ``dev`` recipe now includes all tools needed for xclim's development.
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * ``snowfall_approximation`` has gained support for new estimation methods used in CLASS: 'brown' and 'auer'.
 * A ``ValidationError`` will be raised if temperature units are given as 'deg C', which is misinterpreted by pint.
+* Functions computing run lengths (sequences of consecutive `"True"` values) now take the ``index`` argument. Possible values are ``first`` and ``last``, indicating which item in the run should be used to index the run length. The default is set to `"first"`, preserving the current behavior.
+* New ``sdba_encode_cf`` option to workaround a cftime/xarray performance issue when using dask.
 
 New indicators
 ~~~~~~~~~~~~~~
 * ``effective_growing_degree_days`` indice returns growing degree days using dynamic start and end dates for the growing season (based on Bootsma et al. (2005)). This has also been wrapped as an indicator.
 * ``qian_weighted_mean_average`` (based on Qian et al. (2010)) is offered as an alternate method for determining the start date using a weighted 5-day average (``method="qian"``). Can also be used directly as an indice.
-* ``cold_and_dry_days`` indicator returns the number of days where the mean daily temperature is below the 25th percentile and the mean daily precipitation is below the 25th percentile over period. Added as ``CD`` to ICCLIM module.
-* ``warm_and_dry_days`` indicator returns the number of days where the mean daily temperature is above the 75th percentile and the mean daily precipitation is below the 25th percentile over period. Added as ``WD`` to ICCLIM module.
-* ``warm_and_wet_days`` indicator returns the number of days where the mean daily temperature is above the 75th percentile and the mean daily precipitation is above the 75th percentile over period. Added as ``WW`` to ICCLIM module.
-* ``cold_and_wet_days`` indicator returns the number of days where the mean daily temperature is below the 25th percentile and the mean daily precipitation is above the 75th percentile over period. Added as ``CW`` to ICCLIM module.
+* ``cold_and_dry_days`` indicator returns the number of days where the mean daily temperature is below the 25th percentile and the mean daily precipitation is below the 25th percentile over period. Added as ``CD`` indicator to ICCLIM module.
+* ``warm_and_dry_days`` indicator returns the number of days where the mean daily temperature is above the 75th percentile and the mean daily precipitation is below the 25th percentile over period. Added as ``WD`` indicator to ICCLIM module.
+* ``warm_and_wet_days`` indicator returns the number of days where the mean daily temperature is above the 75th percentile and the mean daily precipitation is above the 75th percentile over period. Added as ``WW`` indicator to ICCLIM module.
+* ``cold_and_wet_days`` indicator returns the number of days where the mean daily temperature is below the 25th percentile and the mean daily precipitation is above the 75th percentile over period. Added as ``CW`` indicator to ICCLIM module.
+* ``calm_days`` indicator returns the number of days where surface wind speed is below threshold.
+* ``windy_days`` indicator returns the number of days where surface wind speed is above threshold.
 
 Bug fixes
 ~~~~~~~~~
@@ -41,13 +185,23 @@ Bug fixes
    - in ``percentile_bootstrap`` decorator, fix the popping of bootstrap argument to propagate in to the function call.
    - in ``bootstrap_func``, fix some issues with the resampling frequency which was not working when anchored.
 * Made argument ``thresh`` of ``sdba.LOCI`` required, as not giving it raised an error. Made defaults explicit in the adjustments docstrings.
+* Fixes in ``sdba.processing.adapt_freq`` and ``sdba.nbutils.vecquantiles`` when handling all-nan slices.
+* Dimensions in a grouper's ``add_dims`` are now taken into consideration in function wrapped with ``map_blocks/groups``. This feature is still not fully tested throughout ``sdba`` though, so use with caution.
+* Better dtype preservation throughout ``sdba``.
+* "constant" extrapolation in the quantile mappings' adjustment is now padding values just above and under the target's max and min, instead of ``±np.inf``.
+* Fixes in ``sdba.LOCI`` for the case where a grouping with additionnal dimensions is used.
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+* The behaviour of ``xclim.testing._utils.getfile`` was adjusted to launch file download requests for web-hosted md5 files for every call to compare against local test data.
+  This was done to validate that locally-stored test data is identical to test data available online, without resorting to git-based actions. This approach may eventually be revised/optimized in the future.
 
 0.28.1 (2021-07-29)
 -------------------
 
 Announcements
 ~~~~~~~~~~~~~
-* The ``xclim`` binary package available on conda-forge will no longer supply ``clisops`` by default. Installation of ``clisops`` must be performed explicitly to preserve subsetting and bias correction capabilities.
+* The `xclim` binary package available on conda-forge will no longer supply ``clisops`` by default. Installation of ``clisops`` must be performed explicitly to preserve subsetting and bias correction capabilities.
 
 New indicators
 ~~~~~~~~~~~~~~

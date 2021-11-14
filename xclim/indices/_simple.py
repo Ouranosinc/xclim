@@ -319,7 +319,7 @@ def frost_days(
 ) -> xarray.DataArray:
     r"""Frost days index.
 
-    Number of days where daily minimum temperatures are below 0℃.
+    Number of days where daily minimum temperatures are below a threshold temperature.
 
     Parameters
     ----------
@@ -337,12 +337,12 @@ def frost_days(
 
     Notes
     -----
-    Let :math:`TN_{ij}` be the daily minimum temperature at day :math:`i` of period :math:`j`. Then
-    counted is the number of days where:
+    Let :math:`TN_{ij}` be the daily minimum temperature at day :math:`i` of period :math:`j`
+    and :math`TT` the threshold. Then counted is the number of days where:
 
     .. math::
 
-        TN_{ij} < 0℃
+        TN_{ij} < TT
     """
     frz = convert_units_to(thresh, tasmin)
     out = threshold_count(tasmin, "<", frz, freq)
@@ -355,7 +355,7 @@ def ice_days(
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of ice/freezing days.
 
-    Number of days where daily maximum temperatures are below 0℃.
+    Number of days where daily maximum temperatures are below a threshold.
 
     Parameters
     ----------
@@ -373,12 +373,12 @@ def ice_days(
 
     Notes
     -----
-    Let :math:`TX_{ij}` be the daily maximum temperature at day :math:`i` of period :math:`j`. Then
-    counted is the number of days where:
+    Let :math:`TX_{ij}` be the daily maximum temperature at day :math:`i` of period :math:`j`,
+    and :math`TT` the threshold. Then counted is the number of days where:
 
     .. math::
 
-        TX_{ij} < 0℃
+        TX_{ij} < TT
     """
     frz = convert_units_to(thresh, tasmax)
     out = threshold_count(tasmax, "<", frz, freq)
@@ -516,8 +516,8 @@ def snow_depth(
 
     Parameters
     ----------
-    tas : xarray.DataArray
-      Mean daily snow depth.
+    snd : xarray.DataArray
+     Mean daily snow depth.
     freq : str
       Resampling frequency.
 

@@ -1,6 +1,7 @@
 from inspect import signature
 from typing import Any, Callable, Dict
 
+import cftime
 import numpy as np
 import xarray
 from boltons.funcutils import wraps
@@ -94,7 +95,7 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xarray.DataArray:
     # Identify the input and the percentile arrays from the bound arguments
     for name, val in kwargs.items():
         if isinstance(val, DataArray):
-            if "percentile_doy" in val.attrs.get("xclim_history", ""):
+            if "percentile_doy" in val.attrs.get("history", ""):
                 per_key = name
             else:
                 da_key = name
@@ -114,14 +115,16 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xarray.DataArray:
     percentile = per.percentiles.data.tolist()  # Can be a list or scalar
     pdoy_args = dict(
         window=per.attrs["window"],
+        alpha=per.attrs["alpha"],
+        beta=per.attrs["beta"],
         per=percentile if np.isscalar(percentile) else percentile[0],
     )
 
     # Group input array in years, with an offset matching freq
     freq = kwargs["freq"]
-    _, base, start_stamp, anchor = parse_offset(freq)
+    _, base, start_anchor, anchor = parse_offset(freq)
     bfreq = "A"
-    if start_stamp is not None:
+    if start_anchor:
         bfreq += "S"
     if base in ["A", "Q"] and anchor is not None:
         bfreq = f"{bfreq}-{anchor}"
@@ -131,7 +134,10 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xarray.DataArray:
     out = []
     # Compute func on each grouping
     for label, time_slice in da_years.items():
-        year = label.astype("datetime64[Y]").astype(int) + 1970
+        if isinstance(label, cftime.datetime):
+            year = label.year
+        else:
+            year = label.astype("datetime64[Y]").astype(int) + 1970
         kw = {da_key: da.isel(time=time_slice), **kwargs}
 
         # If the group year is in the base period, run the bootstrap
@@ -182,22 +188,28 @@ def bootstrap_year(
     # Initialize output array with new bootstrap dimension
     bdim = "_bootstrap"
     out = da.expand_dims({bdim: np.arange(len(gr))}).copy(deep=True)
-
+    # With dask, mutating the views of out is not working, thus the accumulator
+    out_accumulator = []
     # Replace `bloc` by every other group
     for i, (key, group_slice) in enumerate(gr.items()):
         source = da.isel({dim: group_slice})
-
-        if len(source[dim]) == len(bloc):
-            out.loc[{bdim: i, dim: bloc}] = source.data
-        if len(source[dim]) < len(bloc):
+        out_view = out.loc[{bdim: i}]
+        if len(source[dim]) < 360 and len(source[dim]) < len(bloc):
+            # This happens when the sampling frequency is anchored thus
+            # source[dim] would be only a few months on the first and last year
             pass
+        elif len(source[dim]) == len(bloc):
+            out_view.loc[{dim: bloc}] = source.data
         elif len(bloc) == 365:
-            out.loc[{bdim: i, dim: bloc}] = convert_calendar(source, "365_day").data
+            out_view.loc[{dim: bloc}] = convert_calendar(source, "365_day").data
         elif len(bloc) == 366:
-            out.loc[{bdim: i, dim: bloc}] = convert_calendar(source, "366_day").data
+            out_view.loc[{dim: bloc}] = convert_calendar(
+                source, "366_day", missing=np.NAN
+            ).data
         elif len(bloc) < 365:
-            out.loc[{bdim: i, dim: bloc}] = source.data[: len(bloc)]
+            out_view.loc[{dim: bloc}] = source.data[: len(bloc)]
         else:
             raise NotImplementedError
+        out_accumulator.append(out_view)
 
-    return out
+    return xarray.concat(out_accumulator, dim=bdim)

@@ -1,5 +1,4 @@
 """Ensembles creation and statistics."""
-import logging
 from pathlib import Path
 from typing import List, Optional, Sequence, Union
 
@@ -8,7 +7,7 @@ import xarray as xr
 
 from xclim.core.calendar import convert_calendar, get_calendar
 from xclim.core.formatting import update_history
-from xclim.core.utils import _calc_perc  # noqa
+from xclim.core.utils import calc_perc, logger
 
 
 def create_ensemble(
@@ -133,7 +132,7 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
                     + vv.split("_")[-1]
                     + " of ensemble"
                 )
-    ds_out.attrs["xclim_history"] = update_history(
+    ds_out.attrs["history"] = update_history(
         f"Computation of statistics on {ens.realization.size} ensemble members.", ds_out
     )
     return ds_out
@@ -141,7 +140,7 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
 
 def ensemble_percentiles(
     ens: Union[xr.Dataset, xr.DataArray],
-    values: Sequence[int] = (10, 50, 90),
+    values: Sequence[float] = [10, 50, 90],
     keep_chunk_size: Optional[bool] = None,
     split: bool = True,
 ) -> xr.Dataset:
@@ -201,7 +200,7 @@ def ensemble_percentiles(
             ]
         )
         out.attrs.update(ens.attrs)
-        out.attrs["xclim_history"] = update_history(
+        out.attrs["history"] = update_history(
             f"Computation of the percentiles on {ens.realization.size} ensemble members.",
             ens,
         )
@@ -231,12 +230,14 @@ def ensemble_percentiles(
             ens = ens.chunk({"realization": -1})
 
     out = xr.apply_ufunc(
-        _calc_perc,
+        calc_perc,
         ens,
         input_core_dims=[["realization"]],
         output_core_dims=[["percentiles"]],
         keep_attrs=True,
-        kwargs=dict(p=values),
+        kwargs=dict(
+            percentiles=values,
+        ),
         dask="parallelized",
         output_dtypes=[ens.dtype],
         dask_gufunc_kwargs=dict(output_sizes={"percentiles": len(values)}),
@@ -256,7 +257,7 @@ def ensemble_percentiles(
             out[p] = perc
             out = out.rename(name_dict={p: f"{ens.name}_p{int(p):02d}"})
 
-    out.attrs["xclim_history"] = update_history(
+    out.attrs["history"] = update_history(
         f"Computation of the percentiles on {ens.realization.size} ensemble members.",
         ens,
     )
@@ -299,7 +300,7 @@ def _ens_align_datasets(
 
     ds_all = []
     for i, n in enumerate(datasets):
-        logging.info(f"Accessing {n} of {len(datasets)}")
+        logger.info(f"Accessing {n} of {len(datasets)}")
         if mf_flag:
             ds = xr.open_mfdataset(n, combine="by_coords", **xr_kwargs)
         else:

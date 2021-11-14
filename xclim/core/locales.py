@@ -4,8 +4,9 @@
 Internationalization
 ====================
 
-Defines methods and object to help the internationalization of metadata for the
-climate indicators computed by xclim.
+This module defines methods and object to help the internationalization of metadata for
+climate indicators computed by xclim. Go to :ref:`Adding translated metadata` to see
+how to use this feature.
 
 All the methods and objects in this module use localization data given in json files.
 These files are expected to be defined as in this example for french:
@@ -45,11 +46,6 @@ its "modifiers" key are mandatory, all other entries (translations of frequent p
 and all indicator entries) are optional. For xclim-provided translations (for now only french),
 all indicators must have en entry and the "attrs_mapping" entries must match exactly the default formatter.
 Those default translations are found in the `xclim/locales` folder.
-
-Attributes
-----------
-TRANSLATABLE_ATTRS
-    List of attributes to consider translatable when generating locale dictionaries.
 """
 import json
 import warnings
@@ -66,6 +62,9 @@ TRANSLATABLE_ATTRS = [
     "abstract",
     "keywords",
 ]
+"""
+List of attributes to consider translatable when generating locale dictionaries.
+"""
 
 _LOCALES = {}
 
@@ -150,7 +149,7 @@ def get_local_attrs(
     ----------
     indicator : str or sequence of strings
         Indicator's class name, usually the same as in `xc.core.indicator.registry`.
-        If multiple names are passed, te attrs from each indicators are merged, with highest priority to the first name.
+        If multiple names are passed, the attrs from each indicator are merged, with the highest priority set to the first name.
     *locales : str
         IETF language tag or a tuple of the language tag and a translation dict, or
         a tuple of the language tag and a path to a json file defining translation
@@ -231,12 +230,21 @@ class UnavailableLocaleError(ValueError):
         )
 
 
-def read_locale_file(filename, module=None):
-    """Read a locale file (*.json) and return its dictionary.
+def read_locale_file(filename, module=None, encoding="UTF8"):
+    """Read a locale file (.json) and return its dictionary.
 
-    If module is a string, this module name is added to all identifiers translated in this file.
+    Parameters
+    ----------
+    filename: PathLike
+      The file to read.
+    module: string, optional
+      If module is a string, this module name is added to all identifiers translated in this file.
+      Defaults to None, and no module name is added (as if the indicator was an official xclim indicator).
+    encoding : string
+      The encoding to use when reading the file.
+      Defaults to UTF-8, overriding python's default mechanism which is machine dependent.
     """
-    with open(filename, "r", encoding="utf-8") as f:
+    with open(filename, "r", encoding=encoding) as f:
         locdict = json.load(f)
 
     if module is not None:
@@ -305,16 +313,16 @@ def generate_local_dict(locale: str, init_english: bool = False):
                     eng_attr = ""
             ind_attrs.setdefault(f"{translatable_attr}", eng_attr)
 
-        for var_attrs in indicator.cf_attrs:
+        for cf_attrs in indicator.cf_attrs:
             # In the case of single output, put var attrs in main dict
             if len(indicator.cf_attrs) > 1:
-                ind_attrs = attrs.setdefault(f"{ind_name}.{var_attrs['var_name']}", {})
+                ind_attrs = attrs.setdefault(f"{ind_name}.{cf_attrs['var_name']}", {})
 
             for translatable_attr in set(TRANSLATABLE_ATTRS).intersection(
                 set(indicator._cf_names)
             ):
                 if init_english:
-                    eng_attr = var_attrs.get(translatable_attr)
+                    eng_attr = cf_attrs.get(translatable_attr)
                     if not isinstance(eng_attr, str):
                         eng_attr = ""
                 ind_attrs.setdefault(f"{translatable_attr}", eng_attr)

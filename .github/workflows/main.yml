@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        tox-env: [doctests]
+        tox-env: [doctests_only]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -58,23 +58,14 @@ jobs:
     - name: Install tox
       run: pip install tox
     - name: Test with tox
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: tox -e ${{ matrix.tox-env }}
-
-#  docs:
-#    needs: test
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v2
-#      - name: Install packages
-#        run: |
-#          sudo apt-get -y install pandoc
-#      - uses: actions/setup-python@v2
-#        with:
-#          python-version: 3.6
-#      - name: Install tox
-#        run: pip install tox
-#      - name: make docs
-#        run: tox -e docs
+    - name: report coverage
+      uses: AndreMiras/coveralls-python-action@develop
+      with:
+        flag-name: run-${{ matrix.tox-env }}
+        parallel: true
 
 #    - name: Coveralls
 #      uses: coverallsapp/github-action@master
@@ -83,12 +74,11 @@ jobs:
 #        flag-name: run-${{ matrix.python-version }}
 #        parallel: true
 
-#  finish:
-#    needs: test
-#    runs-on: ubuntu-latest
-#    steps:
-#    - name: Coveralls Finished
-#      uses: coverallsapp/github-action@master
-#      with:
-#        github-token: ${{ secrets.github_token }}
-#        parallel-finished: true
+  finish:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Coveralls Finished
+      uses: AndreMiras/coveralls-python-action@develop
+      with:
+        parallel-finished: true

@@ -6,6 +6,7 @@ Generic indices submodule
 
 Helper functions for common generic actions done in the computation of indices.
 """
+from collections.abc import Iterable
 from typing import Optional, Union
 
 import numpy as np
@@ -34,7 +35,6 @@ __all__ = [
     "compare",
     "count_level_crossings",
     "count_occurrences",
-    "daily_downsampler",
     "day_lengths",
     "default_freq",
     "degree_days",
@@ -96,7 +96,7 @@ def select_resample_op(da: xr.DataArray, op: str, freq: str = "YS", **indexer):
     freq : str
       Resampling frequency defining the periods as defined in
       https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
-    **indexer : {dim: indexer, }, optional
+    indexer : {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
       month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
       considered.
@@ -135,9 +135,9 @@ def default_freq(**indexer) -> str:
     freq = "AS-JAN"
     if indexer:
         group, value = indexer.popitem()
-        if "DJF" in value:
+        if isinstance(value, str) and "DJF" in value:
             freq = "AS-DEC"
-        if group == "month" and sorted(value) != value:
+        if group == "month" and isinstance(value, Iterable) and sorted(value) != value:
             raise NotImplementedError
 
     return freq
@@ -254,75 +254,6 @@ def get_daily_events(da: xr.DataArray, da_value: float, operator: str) -> xr.Dat
     return events
 
 
-def daily_downsampler(da: xr.DataArray, freq: str = "YS") -> xr.DataArray:
-    r"""Daily climate data downsampler.
-
-    Parameters
-    ----------
-    da : xr.DataArray
-    freq : str
-
-    Returns
-    -------
-    xr.DataArray
-
-    Note
-    ----
-
-        Usage Example
-
-            grouper = daily_downsampler(da_std, freq='YS')
-            x2 = grouper.mean()
-
-            # add time coords to x2 and change dimension tags to time
-            time1 = daily_downsampler(da_std.time, freq=freq).first()
-            x2.coords['time'] = ('tags', time1.values)
-            x2 = x2.swap_dims({'tags': 'time'})
-            x2 = x2.sortby('time')
-    """
-    # generate tags from da.time and freq
-    if isinstance(da.time.values[0], np.datetime64):
-        years = [f"{y:04d}" for y in da.time.dt.year.values]
-        months = [f"{m:02d}" for m in da.time.dt.month.values]
-    else:
-        # cannot use year, month, season attributes, not available for all calendars ...
-        years = [f"{v.year:04d}" for v in da.time.values]
-        months = [f"{v.month:02d}" for v in da.time.values]
-    seasons = [
-        "DJF DJF MAM MAM MAM JJA JJA JJA SON SON SON DJF".split()[int(m) - 1]
-        for m in months
-    ]
-
-    n_t = da.time.size
-    if freq == "YS":
-        # year start frequency
-        l_tags = years
-    elif freq == "MS":
-        # month start frequency
-        l_tags = [years[i] + months[i] for i in range(n_t)]
-    elif freq == "QS-DEC":
-        # DJF, MAM, JJA, SON seasons
-        # construct tags from list of season+year, increasing year for December
-        ys = []
-        for i in range(n_t):
-            m = months[i]
-            s = seasons[i]
-            y = years[i]
-            if m == "12":
-                y = str(int(y) + 1)
-            ys.append(y + s)
-        l_tags = ys
-    else:
-        raise RuntimeError(f"Frequency `{freq}` not implemented.")
-
-    # add tags to buffer DataArray
-    buffer = da.copy()
-    buffer.coords["tags"] = ("time", l_tags)
-
-    # return groupby according to tags
-    return buffer.groupby("tags")
-
-
 # CF-INDEX-META Indices
 
 
@@ -393,9 +324,9 @@ def count_occurrences(
 
 
 def diurnal_temperature_range(
-    low_data: xr.DataArray, high_data: xr.DataArray, freq: str
+    low_data: xr.DataArray, high_data: xr.DataArray, reducer: str, freq: str
 ) -> xr.DataArray:
-    """Calculate the average diurnal temperature range.
+    """Calculate the diurnal temperature range and reduce according to a statistic.
 
     Parameters
     ----------
@@ -403,6 +334,8 @@ def diurnal_temperature_range(
       Lowest daily temperature (tasmin).
     high_data : xr.DataArray
       Highest daily temperature (tasmax).
+    reducer : {'max', 'min', 'mean', 'sum'}
+      Reducer.
     freq: str
       Resampling frequency.
 
@@ -413,7 +346,7 @@ def diurnal_temperature_range(
     high_data = convert_units_to(high_data, low_data)
 
     dtr = high_data - low_data
-    out = dtr.resample(time=freq).mean()
+    out = getattr(dtr.resample(time=freq), reducer)()
 
     u = str2pint(low_data.units)
     out.attrs["units"] = pint2cfunits(u - u)
@@ -510,7 +443,7 @@ def spell_length(
       Quantity.
     condition : {">", "<", ">=", "<=", "==", "!="}
       Operator
-    reducer : {'maximum', 'minimum', 'mean', 'sum'}
+    reducer : {'max', 'min', 'mean', 'sum'}
       Reducer.
     freq : str
       Resampling frequency.
@@ -537,7 +470,7 @@ def statistics(data: xr.DataArray, reducer: str, freq: str) -> xr.DataArray:
     Parameters
     ----------
     data : xr.DataArray
-    reducer : {'maximum', 'minimum', 'mean', 'sum'}
+    reducer : {'max', 'min', 'mean', 'sum'}
       Reducer.
     freq : str
       Resampling frequency.
@@ -558,7 +491,7 @@ def thresholded_statistics(
 
     First, the threshold is transformed to the same standard_name and units as the input data.
     Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
-    Finally, the statistic is calculated for those data values that fulfil the condition.
+    Finally, the statistic is calculated for those data values that fulfill the condition.
 
     Parameters
     ----------
@@ -567,7 +500,7 @@ def thresholded_statistics(
       Quantity.
     condition : {">", "<", ">=", "<=", "==", "!="}
       Operator
-    reducer : {'maximum', 'minimum', 'mean', 'sum'}
+    reducer : {'max', 'min', 'mean', 'sum'}
       Reducer.
     freq : str
       Resampling frequency.
@@ -592,7 +525,7 @@ def temperature_sum(
 
     First, the threshold is transformed to the same standard_name and units as the input data.
     Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
-    Finally, the sum is calculated for those data values that fulfil the condition after subtraction of the threshold value.
+    Finally, the sum is calculated for those data values that fulfill the condition after subtraction of the threshold value.
     If the sum is for values below the threshold the result is multiplied by -1.
 
     Parameters

@@ -3,9 +3,10 @@
 import hashlib
 import json
 import logging
+import warnings
 from pathlib import Path
 from typing import Optional, Sequence
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin
 from urllib.request import urlopen, urlretrieve
 
@@ -46,6 +47,25 @@ def _get(
     md5name = fullname.with_suffix("{}.md5".format(suffix))
     md5file = cache_dir / branch / md5name
 
+    if local_file.is_file():
+        localmd5 = file_md5_checksum(local_file)
+        try:
+            url = "/".join((github_url, "raw", branch, md5name.as_posix()))
+            LOGGER.info("Attempting to fetch remote file md5: %s" % md5name.as_posix())
+            urlretrieve(url, md5file)
+            with open(md5file) as f:
+                remote_md5 = f.read()
+            if localmd5.strip() != remote_md5.strip():
+                local_file.unlink()
+                msg = (
+                    f"MD5 checksum for {local_file.as_posix()} does not match upstream md5. "
+                    "Attempting new download."
+                )
+                warnings.warn(msg)
+        except (HTTPError, URLError):
+            msg = f"{md5name.as_posix()} not accessible online. Unable to determine validity with upstream repo."
+            warnings.warn(msg)
+
     if not local_file.is_file():
         # This will always leave this directory on disk.
         # We may want to add an option to remove it.
@@ -66,15 +86,17 @@ def _get(
         localmd5 = file_md5_checksum(local_file)
         try:
             with open(md5file) as f:
-                remotemd5 = f.read()
-            if localmd5.strip() != remotemd5.strip():
+                remote_md5 = f.read()
+            if localmd5.strip() != remote_md5.strip():
                 local_file.unlink()
-                msg = """
-                    MD5 checksum does not match, try downloading dataset again.
-                    """
+                msg = (
+                    f"{local_file.as_posix()} and md5 checksum do not match. "
+                    "There may be an issue with the upstream origin data."
+                )
                 raise OSError(msg)
         except OSError as e:
             LOGGER.error(e)
+
     return local_file
 
 
@@ -158,8 +180,8 @@ def list_datasets(github_repo="Ouranosinc/xclim-testdata", branch="main"):
     """Return a DataFrame listing all xclim test datasets available on the github repo for the given branch.
 
     The result includes the filepath, as passed to `open_dataset`, the file size (in KB) and the html url to the file.
-    This uses a unauthenticated call to Github's REST API, so it is limited to 60 requests per hour (per IP). A single call
-    of this function triggers one request per subdirectory, so use with parcimony.
+    This uses a unauthenticated call to Github's REST API, so it is limited to 60 requests per hour (per IP).
+    A single call of this function triggers one request per subdirectory, so use with parsimony.
     """
     res = urlopen(f"https://api.github.com/repos/{github_repo}/contents?ref={branch}")
     base = json.loads(res.read().decode())
@@ -264,9 +286,9 @@ def list_input_variables(
 
     Parameters
     ----------
-    realm: Sequence of str, optional
+    realms: Sequence of str, optional
       Restrict the output to indicators of a list of realms only. Default None, which parses all indicators.
-    submodule: str, optional
+    submodules: str, optional
       Restrict the output to indicators of a list of submodules only. Default None, which parses all indicators.
 
     Returns
@@ -298,7 +320,7 @@ def list_input_variables(
             continue
 
         # ok we want this one.
-        for varname, meta in ind.parameters.items():
+        for varname, meta in ind.iter_parameters():
             if meta["kind"] in [InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE]:
                 var = meta.get("default") or varname
                 variables[var].append(ind)

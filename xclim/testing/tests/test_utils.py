@@ -1,16 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Test for utils
-import os
 from inspect import signature
 
 import numpy as np
-import pytest
 import xarray as xr
 
 from xclim.core.indicator import Daily
-from xclim.core.utils import ensure_chunk_size, walk_map, wrapped_partial
-from xclim.testing import list_datasets, open_dataset
+from xclim.core.utils import (
+    ensure_chunk_size,
+    nan_calc_percentiles,
+    walk_map,
+    wrapped_partial,
+)
 
 
 def test_walk_map():
@@ -43,42 +45,6 @@ def test_wrapped_partial():
     assert newf() == (2, 2, 2)
 
 
-def test_wrapped_indicator(tas_series):
-    def indice(
-        tas: xr.DataArray,
-        tas2: xr.DataArray = None,
-        thresh: int = float,
-        freq: str = "YS",
-    ):
-        if tas2 is None:
-            out = tas < thresh
-        else:
-            out = tas < tas2
-        out = out.resample(time="YS").sum()
-        out.attrs["units"] = "days"
-        return out
-
-    ind1 = Daily(
-        realm="atmos",
-        identifier="test_ind1",
-        units="days",
-        compute=wrapped_partial(indice, tas2=None),
-    )
-
-    ind2 = Daily(
-        realm="atmos",
-        identifier="test_ind2",
-        units="days",
-        compute=wrapped_partial(indice, thresh=None),
-    )
-
-    tas = tas_series(np.arange(366), start="2000-01-01")
-    tas2 = tas_series(1 + np.arange(366), start="2000-01-01")
-
-    assert ind2(tas, tas2) == 366
-    assert ind1(tas, thresh=1111) == 366
-
-
 def test_ensure_chunk_size():
     da = xr.DataArray(np.zeros((20, 21, 20)), dims=("x", "y", "z"))
 
@@ -95,22 +61,52 @@ def test_ensure_chunk_size():
     assert out.chunks[2] == (20,)
 
 
-def test_open_testdata():
-    ds = open_dataset(
-        os.path.join("cmip5", "tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712")
-    )
-    assert ds.lon.size == 128
+class Test_nan_calc_percentiles:
+    def test_calc_perc_type7(self):
+        # Exemple array from: https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
+        arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0])
+        res = nan_calc_percentiles(arr, percentiles=[40.0], alpha=1, beta=1)
+        # The expected is from R `quantile(arr, probs=c(0.4), type=7)`
+        assert res[()] == 29
 
+    def test_calc_perc_type8(self):
+        # Exemple array from: https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
+        arr = np.asarray(
+            [[15.0, 20.0, 35.0, 40.0, 50.0], [15.0, 20.0, 35.0, 40.0, 50.0]]
+        )
+        res = nan_calc_percentiles(
+            arr,
+            percentiles=[40.0],
+            alpha=1.0 / 3.0,
+            beta=1.0 / 3.0,
+        )
+        # The expected is from R `quantile(arr, probs=c(0.4), type=8)`
+        assert np.all(res[0][0] == 27)
+        assert np.all(res[0][1] == 27)
 
-# Not that this test is super slow, but there is no need in spamming github's API for no reason.
-@pytest.mark.slow
-def test_list_datasets():
-    out = list_datasets()
+    def test_calc_perc_2d(self):
+        # Exemple array from: https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
+        arr = np.asarray(
+            [[15.0, 20.0, 35.0, 40.0, 50.0], [15.0, 20.0, 35.0, 40.0, 50.0]]
+        )
+        res = nan_calc_percentiles(arr, percentiles=[40.0])
+        # The expected is from R ` quantile(c(15.0, 20.0, 35.0, 40.0, 50.0), probs=0.4)`
+        assert np.all(res[0][0] == 29)
+        assert np.all(res[0][1] == 29)
 
-    assert list(out.columns) == ["size", "url"]
-    np.testing.assert_allclose(
-        out.loc["cmip6/o3_Amon_GFDL-ESM4_historical_r1i1p1f1_gr1_185001-194912.nc"][
-            "size"
-        ],
-        845.021484375,
-    )
+    def test_calc_perc_nan(self):
+        arr = np.asarray([np.NAN])
+        res = nan_calc_percentiles(arr, percentiles=[50.0])
+        assert np.isnan(res)
+
+    def test_calc_perc_empty(self):
+        arr = np.asarray([])
+        res = nan_calc_percentiles(arr)
+        assert np.isnan(res)
+
+    def test_calc_perc_partial_nan(self):
+        arr = np.asarray([np.NaN, 41.0, 41.0, 43.0, 43.0])
+        res = nan_calc_percentiles(arr, percentiles=[50.0], alpha=1 / 3.0, beta=1 / 3.0)
+        # The expected is from R `quantile(arr, 0.5, type=8, na.rm = TRUE)`
+        # Note that scipy mquantiles would give a different result here
+        assert res[()] == 42.0

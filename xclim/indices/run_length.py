@@ -12,9 +12,9 @@ from typing import Optional, Sequence, Tuple, Union
 from warnings import warn
 
 import numpy as np
-import xarray
 import xarray as xr
 from dask import array as dsk
+from xarray.core.utils import get_temp_dimname
 
 from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
 from xclim.core.utils import DateStr, DayOfYearStr, uses_dask
@@ -27,7 +27,10 @@ the use of the ufunc version of run lengths algorithms.
 
 
 def use_ufunc(
-    ufunc_1dim: Union[bool, str], da: xr.DataArray, dim: str = "time"
+    ufunc_1dim: Union[bool, str],
+    da: xr.DataArray,
+    dim: str = "time",
+    index: str = "first",
 ) -> bool:
     """Return whether the ufunc version of run length algorithms should be used with this DataArray or not.
 
@@ -38,10 +41,13 @@ def use_ufunc(
     Parameters
     ----------
     ufunc_1dim: {'from_context', 'auto', True, False}
-    da : xarray.DataArray
-      N-dimensional input array.
+    da : xr.DataArray
+      Input array.
     dim: str
       The dimension along which to find runs.
+    index: {'first', 'last'}
+      If 'first', the run length is indexed with the first element in the run.
+      If 'last', with the last element in the run.
 
     Returns
     -------
@@ -49,36 +55,47 @@ def use_ufunc(
       If ufunc_1dim is "auto", returns True if the array is on dask or too large.
       Otherwise, returns ufunc_1dim.
     """
+
     if ufunc_1dim == "from_context":
         ufunc_1dim = OPTIONS[RUN_LENGTH_UFUNC]
 
     if ufunc_1dim == "auto":
-        return not uses_dask(da) and (da.size // da[dim].size) < npts_opt
-    return ufunc_1dim
+        ufunc_1dim = not uses_dask(da) and (da.size // da[dim].size) < npts_opt
+
+    return index == "first" and ufunc_1dim
 
 
 def rle(
-    da: xr.DataArray, dim: str = "time", max_chunk: int = 1_000_000
+    da: xr.DataArray,
+    dim: str = "time",
+    max_chunk: int = 1_000_000,
+    index: str = "first",
 ) -> xr.DataArray:
     """Generate basic run length function.
 
     Parameters
     ----------
     da : xr.DataArray
+      Input array.
     dim : str
+      Dimension name.
     max_chunk : int
+      Maximum chunk size.
+    index: {'first', 'last'}
+      If 'first', the run length is indexed with the first element in the run.
+      If 'last', with the last element in the run.
 
     Returns
     -------
     xr.DataArray
-      Values are 0 where da is False (out of runs),
-      are N on the first day of a run, where N is the length of that run,
-      and are NaN on the other days of the runs.
+      Values are 0 where da is False (out of runs).
     """
     use_dask = isinstance(da.data, dsk.Array)
 
     # Ensure boolean
     da = da.astype(bool)
+    if index == "last":
+        da = da.reindex({dim: da[dim][::-1]})
 
     n = len(da[dim])
     # Need to chunk here to ensure the broadcasting is not made in memory
@@ -101,7 +118,7 @@ def rle(
     b = xr.concat([start1, b, end1], dim)
 
     # Ensure bfill operates on entire (unchunked) time dimension
-    # Determine appropraite chunk size for other dims - do not exceed 'max_chunk' total size per chunk (default 1000000)
+    # Determine appropriate chunk size for other dims - do not exceed 'max_chunk' total size per chunk (default 1000000)
     ndims = len(b.shape)
     if use_dask:
         chunk_dim = b[dim].size
@@ -121,10 +138,13 @@ def rle(
 
     # back fill nans with first position after
     z = b.bfill(dim=dim)
+
     # calculate lengths
     d = z.diff(dim=dim) - 1
     d = d.where(d >= 0)
     d = d.isel({dim: slice(None, -1)}).where(da, 0)
+    if index == "last":
+        d = d.reindex({dim: d[dim][::-1]})
     return d
 
 
@@ -134,6 +154,7 @@ def rle_statistics(
     window: int = 1,
     dim: str = "time",
     ufunc_1dim: Union[str, bool] = "from_context",
+    index: str = "first",
 ) -> xr.DataArray:
     """Return the length of consecutive run of True values, according to a reducing operator.
 
@@ -151,6 +172,10 @@ def rle_statistics(
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
       for DataArray with a small number of grid points.
+    index: {'first', 'last'}
+      If 'first', the run length is indexed with the first element in the run.
+      If 'last', with the last element in the run.
+
 
     Returns
     -------
@@ -158,12 +183,12 @@ def rle_statistics(
       Length of runs of True values along dimension, according to the reducing function (float)
       If there are no runs (but the data is valid), returns 0.
     """
-    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim)
+    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
 
     if ufunc_1dim:
         rl_stat = statistics_run_ufunc(da, reducer, window, dim)
     else:
-        d = rle(da, dim=dim)
+        d = rle(da, dim=dim, index=index)
         rl_stat = getattr(d.where(d >= window), reducer)(dim=dim)
         rl_stat = xr.where((d.isnull() | (d < window)).all(dim=dim), 0, rl_stat)
 
@@ -174,6 +199,7 @@ def longest_run(
     da: xr.DataArray,
     dim: str = "time",
     ufunc_1dim: Union[str, bool] = "from_context",
+    index: str = "first",
 ) -> xr.DataArray:
     """Return the length of the longest consecutive run of True values.
 
@@ -187,13 +213,19 @@ def longest_run(
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
       for DataArray with a small number of grid points.
+    index: {'first', 'last'}
+      If 'first', the run length is indexed with the first element in the run.
+      If 'last', with the last element in the run.
+
 
     Returns
     -------
     xr.DataArray
       Length of longest run of True values along dimension (int).
     """
-    return rle_statistics(da, reducer="max", dim=dim, ufunc_1dim=ufunc_1dim)
+    return rle_statistics(
+        da, reducer="max", dim=dim, ufunc_1dim=ufunc_1dim, index=index
+    )
 
 
 def windowed_run_events(
@@ -201,6 +233,7 @@ def windowed_run_events(
     window: int,
     dim: str = "time",
     ufunc_1dim: Union[str, bool] = "auto",
+    index: str = "first",
 ) -> xr.DataArray:
     """Return the number of runs of a minimum length.
 
@@ -210,24 +243,32 @@ def windowed_run_events(
       Input N-dimensional DataArray (boolean).
     window : int
       Minimum run length.
+      When equal to 1, an optimized version of the algorithm is used.
     dim : str
       Dimension along which to calculate consecutive run (default: 'time').
     ufunc_1dim : Union[str, bool]
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
       for dataarray with a small number of gridpoints.
+      Ignored when `window=1`.
+    index: {'first', 'last'}
+      If 'first', the run length is indexed with the first element in the run.
+      If 'last', with the last element in the run.
 
     Returns
     -------
     xr.DataArray
       Number of distinct runs of a minimum length (int).
     """
-    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim)
+    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
 
-    if ufunc_1dim:
+    if window == 1:
+        d = da.pad({dim: (0, 1)}, constant_values=False).astype(int).diff(dim)
+        out = (d == -1).sum(dim=dim)
+    elif ufunc_1dim:
         out = windowed_run_events_ufunc(da, window, dim)
     else:
-        d = rle(da, dim=dim)
+        d = rle(da, dim=dim, index=index)
         out = (d >= window).sum(dim=dim)
     return out
 
@@ -237,6 +278,7 @@ def windowed_run_count(
     window: int,
     dim: str = "time",
     ufunc_1dim: Union[str, bool] = "from_context",
+    index: str = "first",
 ) -> xr.DataArray:
     """Return the number of consecutive true values in array for runs at least as long as given duration.
 
@@ -246,24 +288,31 @@ def windowed_run_count(
       Input N-dimensional DataArray (boolean).
     window : int
       Minimum run length.
+      When equal to 1, an optimized version of the algorithm is used.
     dim : str
       Dimension along which to calculate consecutive run (default: 'time').
     ufunc_1dim : Union[str, bool]
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points. Using 1D_ufunc=True is typically more efficient
       for dataarray with a small number of gridpoints.
+      Ignored when `window=1`.
+    index: {'first', 'last'}
+      If 'first', the run length is indexed with the first element in the run.
+      If 'last', with the last element in the run.
 
     Returns
     -------
     xr.DataArray
       Total number of `True` values part of a consecutive runs of at least `window` long.
     """
-    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim)
+    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
 
-    if ufunc_1dim:
+    if window == 1:
+        out = da.sum(dim=dim)
+    elif ufunc_1dim:
         out = windowed_run_count_ufunc(da, window, dim)
     else:
-        d = rle(da, dim=dim)
+        d = rle(da, dim=dim, index=index)
         out = d.where(d >= window, 0).sum(dim=dim)
     return out
 
@@ -283,6 +332,7 @@ def first_run(
       Input N-dimensional DataArray (boolean).
     window : int
       Minimum duration of consecutive run to accumulate values.
+      When equal to 1, an optimized version of the algorithm is used.
     dim : str
       Dimension along which to calculate consecutive run (default: 'time').
     coord : Optional[str]
@@ -293,6 +343,7 @@ def first_run(
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
       for dataarray with a small number of gridpoints.
+      Ignored when `window=1`.
 
     Returns
     -------
@@ -303,9 +354,10 @@ def first_run(
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim)
 
     da = da.fillna(0)  # We expect a boolean array, but there could be NaNs nonetheless
-    if ufunc_1dim:
+    if window == 1:
+        out = xr.where(da.any(dim=dim), da.argmax(dim=dim), np.NaN)
+    elif ufunc_1dim:
         out = first_run_ufunc(x=da, window=window, dim=dim)
-
     else:
         da = da.astype("int")
         i = xr.DataArray(np.arange(da[dim].size), dims=dim)
@@ -344,6 +396,7 @@ def last_run(
       Input N-dimensional DataArray (boolean).
     window : int
       Minimum duration of consecutive run to accumulate values.
+      When equal to 1, an optimized version of the algorithm is used.
     dim : str
       Dimension along which to calculate consecutive run (default: 'time').
     coord : Optional[str]
@@ -354,6 +407,7 @@ def last_run(
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using `1D_ufunc=True` is typically more efficient
       for a DataArray with a small number of grid points.
+      Ignored when `window=1`.
 
     Returns
     -------
@@ -371,7 +425,7 @@ def last_run(
 
 
 # TODO: Add window arg
-# Maybe todo : Inverse window arg to tolerate holes?
+# TODO: Inverse window arg to tolerate holes?
 def run_bounds(
     mask: xr.DataArray, dim: str = "time", coord: Optional[Union[bool, str]] = True
 ):
@@ -430,8 +484,8 @@ def run_bounds(
         if isinstance(coord, str):
             crd = getattr(crd.dt, coord)
 
-        starts = lazy_indexing(crd, starts).drop(dim)
-        ends = lazy_indexing(crd, ends).drop(dim)
+        starts = lazy_indexing(crd, starts)
+        ends = lazy_indexing(crd, ends)
     return xr.concat((starts, ends), "bounds")
 
 
@@ -468,7 +522,7 @@ def season(
     date: Optional[DayOfYearStr] = None,
     dim: str = "time",
     coord: Optional[Union[str, bool]] = False,
-) -> xr.DataArray:
+) -> xr.Dataset:
     """Return the bounds of a season (along dim).
 
     A "season" is a run of True values that may include breaks under a given length (`window`).
@@ -492,7 +546,7 @@ def season(
 
     Returns
     -------
-    xr.DataArray
+    xr.Dataset
       "dim" is reduced to "season_bnds" with 2 elements : season start and season end, both indices of da[dim].
 
     Notes
@@ -571,7 +625,8 @@ def season(
     )
     out.end.attrs.update(
         long_name="End of the season.",
-        description=f"First {coordstr} of a run of at least {window} steps breaking the condition, starting after `start`.",
+        description=f"First {coordstr} of a run of at least {window} "
+        "steps breaking the condition, starting after `start`.",
     )
     out.length.attrs.update(
         long_name="Length of the season.",
@@ -867,7 +922,7 @@ def windowed_run_count_1d(arr: Sequence[bool], window: int) -> int:
     return np.where(v * rl >= window, rl, 0).sum()
 
 
-def windowed_run_events_1d(arr: Sequence[bool], window: int) -> xarray.DataArray:
+def windowed_run_events_1d(arr: Sequence[bool], window: int) -> xr.DataArray:
     """Return the number of runs of a minimum length.
 
     Parameters
@@ -879,7 +934,7 @@ def windowed_run_events_1d(arr: Sequence[bool], window: int) -> xarray.DataArray
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       Number of distinct runs of a minimum length.
     """
     v, rl, pos = rle_1d(arr)
@@ -897,10 +952,12 @@ def windowed_run_count_ufunc(
       Input array (bool).
     window : int
       Minimum duration of consecutive run to accumulate values.
+    dim : str
+      Dimension along which to calculate windowed run.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       A function operating along the time dimension of a dask-array.
     """
     return xr.apply_ufunc(
@@ -926,10 +983,12 @@ def windowed_run_events_ufunc(
       Input array (bool).
     window : int
       Minimum run length.
+    dim : str
+      Dimension along which to calculate windowed run.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       A function operating along the time dimension of a dask-array.
     """
     return xr.apply_ufunc(
@@ -961,11 +1020,11 @@ def statistics_run_ufunc(
     window : int
       Minimal length of runs.
     dim : str
-      The dimension along which the run are found.
+      The dimension along which the runs are found.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       A function operating along the time dimension of a dask-array.
     """
     return xr.apply_ufunc(
@@ -994,11 +1053,11 @@ def first_run_ufunc(
     window : int
       Minimum run length.
     dim : str
-      Dimension along which to index (default: "time").
+      The dimension along which the runs are found.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       A function operating along the time dimension of a dask-array.
     """
     ind = xr.apply_ufunc(
@@ -1048,7 +1107,7 @@ def lazy_indexing(
         idx_ndim = index.ndim
         if idx_ndim == 0:
             # The 0-D index case, we add a dummy dimension to help dask
-            dim = xr.core.utils.get_temp_dimname(da.dims, "x")
+            dim = get_temp_dimname(da.dims, "x")
             index = index.expand_dims(dim)
         invalid = index.isnull()  # Which indexes to mask
         # NaN-indexing doesn't work, so fill with 0 and cast to int
@@ -1061,7 +1120,7 @@ def lazy_indexing(
         if idx_ndim == 0:
             # 0-D case, drop useless coords and dummy dim
             out = out.drop_vars(da.dims[0]).squeeze()
-        return out
+        return out.drop_vars(dim or da.dims[0], errors="ignore")
 
     # Case where index.dims is a subset of da.dims.
     if dim is None:
@@ -1137,3 +1196,90 @@ def index_of_date(
             f"More than {max_idxs} instance of date {date} found in the coordinate array."
         )
     return idxs
+
+
+def suspicious_run_1d(
+    arr: np.ndarray,
+    window: int = 10,
+    op: str = ">",
+    thresh: Optional[float] = None,
+) -> np.ndarray:
+    """Return True where the array contains a run of identical values.
+
+    Parameters
+    ----------
+    arr : numpy.ndarray
+      Array of values to be parsed.
+    window : int
+      Minimum run length
+    op : {">", ">=", "==", "<", "<= "eq", "gt", "lt", "gteq", "lteq"}, optional
+      Operator for threshold comparison. Defaults to ">".
+    thresh : float, optional
+      Threshold above which values are checked for identical values.
+
+    Returns
+    -------
+    numpy.ndarray
+      Whether or not the data points are part of a run of identical values.
+    """
+    v, rl, pos = rle_1d(arr)
+    sus_runs = rl >= window
+    if thresh is not None:
+        if op in {">", "gt"}:
+            sus_runs = sus_runs & (v > thresh)
+        elif op in {"<", "lt"}:
+            sus_runs = sus_runs & (v < thresh)
+        elif op in {"==", "eq"}:
+            sus_runs = sus_runs & (v == thresh)
+        elif op in {">=", "gteq"}:
+            sus_runs = sus_runs & (v >= thresh)
+        elif op in {"<=", "lteq"}:
+            sus_runs = sus_runs & (v <= thresh)
+        else:
+            raise NotImplementedError(f"{op}")
+
+    out = np.zeros_like(arr, dtype=bool)
+    for st, l in zip(pos[sus_runs], rl[sus_runs]):
+        out[st : st + l] = True
+    return out
+
+
+def suspicious_run(
+    arr: xr.DataArray,
+    dim: str = "time",
+    window: int = 10,
+    op: str = ">",
+    thresh: Optional[float] = None,
+) -> xr.DataArray:
+    """Return True where the array contains has runs of identical values, vectorized version.
+
+    In opposition to other run length functions, here the output has the same shape as the input.
+
+    Parameters
+    ----------
+    arr : xr.DataArray
+      Array of values to be parsed.
+    dim: str
+      Dimension along which to check for runs (default: "time").
+    window : int
+      Minimum run length
+    thresh : float, optional
+      Threshold above which values are checked for identical values.
+    op: {">", ">=", "==", "<", "<= "eq", "gt", "lt", "gteq", "lteq"}
+      Operator for threshold comparison, defaults to ">".
+
+    Returns
+    -------
+    xarray.DataArray
+    """
+    return xr.apply_ufunc(
+        suspicious_run_1d,
+        arr,
+        input_core_dims=[[dim]],
+        output_core_dims=[[dim]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[bool],
+        keep_attrs=True,
+        kwargs=dict(window=window, op=op, thresh=thresh),
+    )

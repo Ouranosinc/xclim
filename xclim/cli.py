@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """xclim command line interface module."""
+import sys
 import warnings
 
 import click
@@ -7,6 +8,7 @@ import xarray as xr
 from dask.diagnostics import ProgressBar
 
 import xclim as xc
+from xclim.core.dataflags import DataQualityException, data_flags, ecad_compliant
 from xclim.core.utils import InputKind
 
 try:
@@ -18,7 +20,7 @@ except ImportError:
 
 def _get_indicator(indname):
     try:
-        return xc.core.indicator.registry[indname.upper()].get_instance()
+        return xc.core.indicator.registry[indname.upper()].get_instance()  # noqa
     except KeyError:
         raise click.BadArgumentUsage(f"Indicator '{indname}' not found in xclim.")
 
@@ -93,19 +95,18 @@ def _create_command(indname):
     indicator = _get_indicator(indname)
     params = []
     for name, param in indicator.parameters.items():
-        if name in ["ds"] or param["kind"] == InputKind.KWARGS:
+        if name in ["ds"] or param.kind == InputKind.KWARGS:
             continue
-        choices = "" if "choices" not in param else f" Choices: {param['choices']}"
+        choices = "" if "choices" not in param else f" Choices: {param.choices}"
         params.append(
             click.Option(
                 param_decls=[f"--{name}"],
-                default=param["default"],
+                default=param.default,
                 show_default=True,
-                help=param["description"] + choices,
+                help=param.description + choices,
                 metavar=(
                     "VAR_NAME"
-                    if param["kind"]
-                    in [InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE]
+                    if param.kind in [InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE]
                     else "TEXT"
                 ),
             )
@@ -124,6 +125,90 @@ def _create_command(indname):
     )
 
 
+@click.command(short_help="Run data flag checks for input variables.")
+@click.argument("variables", required=False, nargs=-1)
+@click.option(
+    "-r",
+    "--raise-flags",
+    is_flag=True,
+    help="Print an exception in the event that a variable is found to have quality control issues.",
+)
+@click.option(
+    "-a",
+    "--append",
+    is_flag=True,
+    help="Return the netCDF dataset with the `ecad_qc_flag` array appended as a data_var.",
+)
+@click.option(
+    "-d",
+    "--dims",
+    default="all",
+    help='Dimensions upon which aggregation should be performed. Default: "all". Ignored if no variable provided.',
+)
+@click.option(
+    "-f",
+    "--freq",
+    default=None,
+    help="Resampling periods frequency used for aggregation. Default: None. Ignored if no variable provided.",
+)
+@click.pass_context
+def dataflags(ctx, variables, raise_flags, append, dims, freq):
+    """Run quality control checks on input data variables and flag for quality control issues or suspicious values."""
+    ds = _get_input(ctx)
+    flagged = xr.Dataset()
+    output = ctx.obj["output"]
+    if dims == "none":
+        dims = None
+
+    if output and raise_flags:
+        ctx.fail(
+            click.BadOptionUsage(
+                "raise_flags",
+                "Cannot use 'raise_flags' with output netCDF.",
+                ctx.parent,
+            )
+        )
+    if not output and not raise_flags:
+        ctx.fail(
+            click.BadOptionUsage(
+                "raise_flags",
+                "Must specify output or call with 'raise_flags'.",
+                ctx.parent,
+            )
+        )
+
+    if variables:
+        exit_code = 0
+        for v in variables:
+            try:
+                flagged_var = data_flags(
+                    ds[v], ds, dims=dims, freq=freq, raise_flags=raise_flags
+                )
+                if output:
+                    flagged = xr.merge([flagged, flagged_var])
+            except DataQualityException as e:
+                exit_code = 1
+                tb = sys.exc_info()
+                click.echo(e.with_traceback(tb[2]))
+        if raise_flags:
+            ctx.exit(exit_code)
+    else:
+        try:
+            flagged = ecad_compliant(
+                ds, dims=dims, raise_flags=raise_flags, append=append
+            )
+            if raise_flags:
+                click.echo("Dataset passes quality control checks!")
+                ctx.exit()
+        except DataQualityException as e:
+            tb = sys.exc_info()
+            click.echo(e.with_traceback(tb[2]))
+            ctx.exit(1)
+
+    if output:
+        ctx.obj["ds_out"] = flagged
+
+
 @click.command(short_help="List indicators.")
 @click.option(
     "-i", "--info", is_flag=True, help="Prints more details for each indicator."
@@ -132,8 +217,8 @@ def indices(info):
     """List all indicators."""
     formatter = click.HelpFormatter()
     formatter.write_heading("Listing all available indicators for computation.")
-    rows = []
-    for name, indcls in xc.core.indicator.registry.items():
+    rows = list()
+    for name, indcls in xc.core.indicator.registry.items():  # noqa
         left = click.style(name.lower(), fg="yellow")
         right = ", ".join(
             [var.get("long_name", var["var_name"]) for var in indcls.cf_attrs]
@@ -194,11 +279,11 @@ class XclimCli(click.MultiCommand):
 
     def list_commands(self, ctx):
         """Return the available commands (other than the indicators)."""
-        return "indices", "info"
+        return "indices", "info", "dataflags"
 
     def get_command(self, ctx, name):
         """Return the requested command."""
-        command = {"indices": indices, "info": info}.get(name)
+        command = {"indices": indices, "info": info, "dataflags": dataflags}.get(name)
         if command is None:
             command = _create_command(name)
         return command
@@ -207,7 +292,8 @@ class XclimCli(click.MultiCommand):
 @click.command(
     cls=XclimCli,
     chain=True,
-    help="Command line tool to compute indices on netCDF datasets. Indicators are referred to by their (case-insensitive) identifier, as in xclim.core.indicator.registry.",
+    help="Command line tool to compute indices on netCDF datasets. Indicators are referred to by their "
+    "(case-insensitive) identifier, as in xclim.core.indicator.registry.",
     invoke_without_command=True,
     subcommand_metavar="INDICATOR1 [OPTIONS] ... [INDICATOR2 [OPTIONS] ... ] ...",
 )
@@ -227,15 +313,18 @@ class XclimCli(click.MultiCommand):
 @click.option(
     "--dask-nthreads",
     type=int,
-    help="Start a dask.distributed Client with this many threads and 1 worker. If not specified, the local schedular is used. If specified, '--dask-maxmem' must also be given",
+    help="Start a dask.distributed Client with this many threads and 1 worker. "
+    "If not specified, the local scheduler is used. If specified, '--dask-maxmem' must also be given",
 )
 @click.option(
     "--dask-maxmem",
-    help="Memory limit for the dask.distributed Client as a human readable string (ex: 4GB). If specified, '--dask-nthreads' must also be specified.",
+    help="Memory limit for the dask.distributed Client as a human readable string (ex: 4GB). "
+    "If specified, '--dask-nthreads' must also be specified.",
 )
 @click.option(
     "--chunks",
-    help="Chunks to use when opening the input dataset(s). Given as <dim1>:num,<dim2:num>. Ex: time:365,lat:168,lon:150.",
+    help="Chunks to use when opening the input dataset(s). "
+    "Given as <dim1>:num,<dim2:num>. Ex: time:365,lat:168,lon:150.",
 )
 @click.pass_context
 def cli(ctx, **kwargs):
@@ -261,7 +350,8 @@ def cli(ctx, **kwargs):
         if Client is None:
             raise click.BadOptionUsage(
                 "dask_nthreads",
-                "Dask's distributed scheduler is not installed, only the local scheduler (non-customizable) can be used.",
+                "Dask's distributed scheduler is not installed, only the "
+                "local scheduler (non-customizable) can be used.",
                 ctx,
             )
         if kwargs["dask_maxmem"] is None:
@@ -277,7 +367,8 @@ def cli(ctx, **kwargs):
             memory_limit=kwargs["dask_maxmem"],
         )
         click.echo(
-            f"Dask client started. The dashboard is available at http://127.0.0.1:{client.scheduler_info()['services']['dashboard']}/status"
+            "Dask client started. The dashboard is available at http://127.0.0.1:"
+            f"{client.scheduler_info()['services']['dashboard']}/status"
         )
     if kwargs["chunks"] is not None:
         kwargs["chunks"] = {

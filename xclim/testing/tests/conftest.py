@@ -75,7 +75,7 @@ def tasmin_series():
 
 @pytest.fixture
 def pr_series():
-    def _pr_series(values, start="7/1/2000"):
+    def _pr_series(values, start="7/1/2000", units="kg m-2 s-1"):
         coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
         return xr.DataArray(
             values,
@@ -85,11 +85,35 @@ def pr_series():
             attrs={
                 "standard_name": "precipitation_flux",
                 "cell_methods": "time: mean within days",
-                "units": "kg m-2 s-1",
+                "units": units,
             },
         )
 
     return _pr_series
+
+
+@pytest.fixture
+def bootstrap_series():
+    def _bootstrap_series(values, start="7/1/2000", units="kg m-2 s-1", cf_time=False):
+        if cf_time:
+            coords = xr.cftime_range(start, periods=len(values), freq="D")
+        else:
+            coords = pd.date_range(
+                start, periods=len(values), freq=pd.DateOffset(days=1)
+            )
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="pr",
+            attrs={
+                "standard_name": "precipitation_flux",
+                "cell_methods": "time: mean within days",
+                "units": units,
+            },
+        )
+
+    return _bootstrap_series
 
 
 @pytest.fixture

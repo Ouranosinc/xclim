@@ -51,7 +51,7 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint: ## check style with flake8
-	pydocstyle --convention=numpy xclim
+	pydocstyle --convention=numpy --match='(?!test_).*\.py' xclim
 	flake8 xclim
 	black --check --target-version py36 xclim
 	pylint --rcfile=setup.cfg --exit-zero xclim

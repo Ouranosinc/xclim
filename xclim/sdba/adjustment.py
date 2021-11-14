@@ -1,4 +1,7 @@
-"""Adjustment objects."""
+"""
+Adjustment methods
+------------------
+"""
 from typing import Any, Mapping, Optional, Sequence, Union
 from warnings import warn
 
@@ -14,7 +17,7 @@ from xclim.core.utils import uses_dask
 from xclim.indices import stats
 
 from ._adjustment import (
-    dqm_scale_sim,
+    dqm_adjust,
     dqm_train,
     eqm_train,
     loci_adjust,
@@ -26,7 +29,6 @@ from ._adjustment import (
     scaling_train,
 )
 from .base import Grouper, ParametrizableWithDataset, parse_group
-from .detrending import PolyDetrend
 from .utils import (
     ADDITIVE,
     best_pc_orientation,
@@ -98,6 +100,19 @@ class BaseAdjustment(ParametrizableWithDataset):
             )
 
     @classmethod
+    def _harmonize_units(cls, *inputs, target: Optional[str] = None):
+        """Convert all inputs to the same units.
+
+        If the target unit is not given, the units of the first input are used.
+
+        Returns the converted inputs and the target units.
+        """
+        if target is None:
+            target = inputs[0].units
+
+        return (convert_units_to(inda, target) for inda in inputs), target
+
+    @classmethod
     def _train(ref, hist, **kwargs):
         raise NotImplementedError()
 
@@ -110,19 +125,17 @@ class TrainAdjust(BaseAdjustment):
 
     Children classes should implement these methods:
 
-    @classmethod
-    _train(ref, hist, **kwargs)
-      Receiving the training target and data, returning a training dataset and parameters to store in the object.
+    - ``_train(ref, hist, **kwargs)``, classmethod receiving the training target and data, returning a training dataset and parameters to store in the object.
 
-    _adjust(sim, **kwargs)
-      Receiving the projected data and some arguments, returning the `scen` dataarray.
+    - ``_adjust(sim, **kwargs)``, receiving the projected data and some arguments, returning the `scen` dataarray.
 
     """
 
-    _repr_hide_params = ["hist_calendar"]
+    _allow_diff_calendars = True
+    _attribute = "_xclim_adjustment"
+    _repr_hide_params = ["hist_calendar", "train_units"]
 
     @classmethod
-    @parse_group
     def train(cls, ref: DataArray, hist: DataArray, **kwargs):
         """Train the adjustment object. Refer to the class documentation for the algorithm details.
 
@@ -133,12 +146,22 @@ class TrainAdjust(BaseAdjustment):
         hist : DataArray
           Training data, usually a model output whose biases are to be adjusted.
         """
+        kwargs = parse_group(cls._train, kwargs)
+
+        (ref, hist), train_units = cls._harmonize_units(ref, hist)
+
         if "group" in kwargs:
             cls._check_inputs(ref, hist, group=kwargs["group"])
 
+        hist = convert_units_to(hist, ref)
+
         ds, params = cls._train(ref, hist, **kwargs)
-        obj = cls(_trained=True, **params)
-        obj["hist_calendar"] = get_calendar(hist)
+        obj = cls(
+            _trained=True,
+            hist_calendar=get_calendar(hist),
+            train_units=train_units,
+            **params,
+        )
         obj.set_dataset(ds)
         return obj
 
@@ -154,10 +177,12 @@ class TrainAdjust(BaseAdjustment):
         kwargs :
           Algorithm-specific keyword arguments, see class doc.
         """
+        (sim, *args), _ = self._harmonize_units(sim, *args, target=self.train_units)
 
         if "group" in self:
             self._check_inputs(sim, *args, group=self.group)
 
+        sim = convert_units_to(sim, self.train_units)
         out = self._adjust(sim, *args, **kwargs)
 
         if isinstance(out, xr.DataArray):
@@ -167,10 +192,9 @@ class TrainAdjust(BaseAdjustment):
 
         params = ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
         infostr = f"{str(self)}.adjust(sim, {params})"
-        scen.attrs["xclim_history"] = update_history(
-            f"Bias-adjusted with {infostr}", sim
-        )
+        scen.attrs["history"] = update_history(f"Bias-adjusted with {infostr}", sim)
         scen.attrs["bias_adjustment"] = infostr
+        scen.attrs["units"] = self.train_units
 
         if OPTIONS[SDBA_EXTRA_OUTPUT]:
             return out
@@ -200,7 +224,6 @@ class Adjust(BaseAdjustment):
     """
 
     @classmethod
-    @parse_group
     def adjust(
         cls,
         ref: xr.DataArray,
@@ -208,9 +231,24 @@ class Adjust(BaseAdjustment):
         sim: xr.DataArray,
         **kwargs,
     ):
+        """Return bias-adjusted data. Refer to the class documentation for the algorithm details.
 
+        Parameters
+        ----------
+        ref : DataArray
+          Training target, usually a reference time series drawn from observations.
+        hist : DataArray
+          Training data, usually a model output whose biases are to be adjusted.
+        sim : DataArray
+          Time series to be bias-adjusted, usually a model output.
+        kwargs :
+          Algorithm-specific keyword arguments, see class doc.
+        """
+        kwargs = parse_group(cls._adjust, kwargs)
         if "group" in kwargs:
             cls._check_inputs(ref, hist, sim, group=kwargs["group"])
+
+        (ref, hist, sim), _ = cls._harmonize_units(ref, hist, sim)
 
         out = cls._adjust(ref, hist, sim, **kwargs)
 
@@ -221,10 +259,9 @@ class Adjust(BaseAdjustment):
 
         params = ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
         infostr = f"{cls.__name__}.adjust(ref, hist, sim, {params})"
-        scen.attrs["xclim_history"] = update_history(
-            f"Bias-adjusted with {infostr}", sim
-        )
+        scen.attrs["history"] = update_history(f"Bias-adjusted with {infostr}", sim)
         scen.attrs["bias_adjustment"] = infostr
+        scen.attrs["units"] = ref.units
 
         if OPTIONS[SDBA_EXTRA_OUTPUT]:
             return out
@@ -271,6 +308,8 @@ class EmpiricalQuantileMapping(TrainAdjust):
 
     """
 
+    _allow_diff_calendars = False
+
     @classmethod
     def _train(
         cls,
@@ -282,7 +321,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
         group: Union[str, Grouper] = "time",
     ):
         if np.isscalar(nquantiles):
-            quantiles = equally_spaced_nodes(nquantiles, eps=1e-6)
+            quantiles = equally_spaced_nodes(nquantiles, eps=1e-6).astype(ref.dtype)
         else:
             quantiles = nquantiles
 
@@ -379,7 +418,7 @@ class DetrendedQuantileMapping(TrainAdjust):
             )
 
         if np.isscalar(nquantiles):
-            quantiles = equally_spaced_nodes(nquantiles, eps=1e-6)
+            quantiles = equally_spaced_nodes(nquantiles, eps=1e-6).astype(ref.dtype)
         else:
             quantiles = nquantiles
 
@@ -412,30 +451,17 @@ class DetrendedQuantileMapping(TrainAdjust):
         detrend=1,
     ):
 
-        scaled_sim = dqm_scale_sim(
-            xr.Dataset({"scaling": self.ds.scaling, "sim": sim}),
-            group=self.group,
-            kind=self.kind,
-            interp=interp,
-        ).sim
-
-        if isinstance(detrend, int):
-            detrend = PolyDetrend(degree=detrend, kind=self.kind, group=self.group)
-
-        detrend = detrend.fit(scaled_sim)
-        sim_detrended = detrend.detrend(scaled_sim)
-
-        scen = qm_adjust(
-            xr.Dataset(
-                {"af": self.ds.af, "hist_q": self.ds.hist_q, "sim": sim_detrended}
-            ),
-            group=self.group,
+        scen = dqm_adjust(
+            self.ds.assign(sim=sim),
             interp=interp,
             extrapolation=extrapolation,
+            detrend=detrend,
+            group=self.group,
             kind=self.kind,
         ).scen
-
-        return detrend.retrend(scen)
+        # Detrending needs units.
+        scen.attrs["units"] = sim.units
+        return scen
 
 
 class QuantileDeltaMapping(EmpiricalQuantileMapping):
@@ -724,7 +750,7 @@ class LOCI(TrainAdjust):
     group : Union[str, Grouper]
       The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
       Default is "time", meaning an single adjustment group along dimension "time".
-    thresh : float
+    thresh : str
       The threshold in `ref` above which the values are scaled.
 
     Adjust step:
@@ -745,9 +771,10 @@ class LOCI(TrainAdjust):
         ref: xr.DataArray,
         hist: xr.DataArray,
         *,
-        thresh: float,
+        thresh: str,
         group: Union[str, Grouper] = "time",
     ):
+        thresh = convert_units_to(thresh, ref)
         ds = loci_train(
             xr.Dataset({"ref": ref, "hist": hist}), group=group, thresh=thresh
         )
@@ -1083,17 +1110,19 @@ class NpdfTransform(Adjust):
     As done by [Cannon18]_, the distance score chosen is the "Energy distance" from [SkezelyRizzo]_
     (see :py:func:`xclim.sdba.processing.escore`).
 
-    The random matrices are generated following a method laid out by [Mezzadri].
+    The random matrices are generated following a method laid out by [Mezzadri]_.
 
-    This is only part of the full MBCn algorithm, see :ref:`The MBCn algorithm` for an example on how
-    to replicate the full method with xclim. This includes a standardization of the simulated data beforehand,
-    an initial univariate adjustment and the reordering of those adjusted series according to the
-    rank structure of the output of this algorithm.
+    This is only part of the full MBCn algorithm, see :ref:`Fourth example : Multivariate bias-adjustment with multiple steps - Cannon 2018`
+    for an example on how to replicate the full method with xclim. This includes a
+    standardization of the simulated data beforehand, an initial univariate adjustment
+    and the reordering of those adjusted series according to the rank structure of the
+    output of this algorithm.
 
     References
     ----------
     .. [Cannon18] Cannon, A. J. (2018). Multivariate quantile mapping bias correction: An N-dimensional probability density function transform for climate model simulations of multiple variables. Climate Dynamics, 50(1), 31–49. https://doi.org/10.1007/s00382-017-3580-6
-    .. [Mezzadri]Mezzadri, F. (2006). How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050.
+    .. [CannonR] https://CRAN.R-project.org/package=MBC
+    .. [Mezzadri] Mezzadri, F. (2006). How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050.
     .. [Pitie05] Pitie, F., Kokaram, A. C., & Dahyot, R. (2005). N-dimensional probability density function transfer and its application to color transfer. Tenth IEEE International Conference on Computer Vision (ICCV’05) Volume 1, 2, 1434-1439 Vol. 2. https://doi.org/10.1109/ICCV.2005.166
     .. [SkezelyRizzo] Szekely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
     """
@@ -1169,4 +1198,5 @@ class NpdfTransform(Adjust):
             out = ds.map_blocks(npdf_transform, template=template, kwargs=kwargs)
 
         out = out.assign(rotation_matrices=rot_matrices)
+        out.scenh.attrs["units"] = hist.units
         return out

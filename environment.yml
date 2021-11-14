@@ -39,5 +39,7 @@ dependencies:
  - pytest-runner
  - sphinx
  - sphinx_rtd_theme
+ - tokenize-rt
  - tox
  - xdoctest
+ - yamale

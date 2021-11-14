@@ -3,40 +3,35 @@ default_language_version:
 
 repos:
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v2.13.0
+    rev: v2.29.0
     hooks:
     -   id: pyupgrade
-        language_version: python3
 -   repo: https://github.com/kynan/nbstripout
-    rev: 0.4.0
+    rev: 0.5.0
     hooks:
     -   id: nbstripout
-        language_version: python3
         files: ".ipynb"
-#        args: ["--dry-run"]
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.4.0
+    rev: v4.0.1
     hooks:
     -   id: trailing-whitespace
-        language_version: python3
+        exclude: setup.cfg
     -   id: end-of-file-fixer
-        language_version: python3
         exclude: ".ipynb"
     -   id: check-yaml
-        language_version: python3
+        args: ['--allow-multiple-documents']
     -   id: debug-statements
-        language_version: python3
 -   repo: https://github.com/ambv/black
-    rev: 21.4b2
+    rev: 21.10b0
     hooks:
     -   id: black
-        language_version: python3
+        args: ["--target-version", "py37"]
+    -   id: black-jupyter
         args: ["--target-version", "py37"]
 -   repo: https://github.com/pycqa/flake8
-    rev: 3.9.1
+    rev: 4.0.1
     hooks:
     -   id: flake8
-        language_version: python3
         args: ['--config=setup.cfg']
 #-   repo: https://github.com/pre-commit/mirrors-autopep8
 #    rev: v1.4.4
@@ -44,16 +39,14 @@ repos:
 #    -   id: autopep8
 #        args: ['--global-config=setup.cfg','--in-place']
 -   repo: https://github.com/timothycrosley/isort
-    rev: 5.8.0
+    rev: 5.10.0
     hooks:
     -   id: isort
-        language_version: python3
         args: ['--profile', 'black']
 -   repo: https://github.com/pycqa/pydocstyle
-    rev: 6.0.0
+    rev: 6.1.1
     hooks:
     -   id: pydocstyle
-        language_version: python3
         args: ['--convention=numpy', '--match="(?!test_).*\.py"']
 -   repo: meta
     hooks:

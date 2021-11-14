@@ -22,7 +22,7 @@ def test_indicator_docstring():
     assert doc[0] == "Heat wave frequency. (realm: atmos)"
     assert (
         doc[5]
-        == "Based on indice :py:func:`xclim.indices._multivariate.heat_wave_frequency`."
+        == "Based on indice :py:func:`~xclim.indices._multivariate.heat_wave_frequency`."
     )
     assert doc[6] == "Keywords : health,."
     assert doc[12] == "  Default : `ds.tasmin`. [Required units : [temperature]]"

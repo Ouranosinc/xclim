@@ -5,10 +5,12 @@ from dask import array as dsk
 
 from xclim import indices, set_options
 from xclim.core.units import (
+    amount2rate,
     check_units,
     convert_units_to,
     pint2cfunits,
     pint_multiply,
+    rate2amount,
     str2pint,
     units,
     units2pint,
@@ -154,3 +156,45 @@ class TestCheckUnits:
     def test_user_error(self):
         with pytest.raises(ValidationError):
             check_units("deg C", "[temperature]")
+
+
+def test_rate2amount(pr_series):
+    pr = pr_series(np.ones(365 + 366 + 365), start="2019-01-01")
+
+    am_d = rate2amount(pr)
+    np.testing.assert_array_equal(am_d, 86400)
+
+    with xr.set_options(keep_attrs=True):
+        pr_ms = pr.resample(time="MS").mean()
+        pr_m = pr.resample(time="M").mean()
+
+        am_ms = rate2amount(pr_ms)
+        np.testing.assert_array_equal(am_ms[:4], 86400 * np.array([31, 28, 31, 30]))
+        am_m = rate2amount(pr_m)
+        np.testing.assert_array_equal(am_m[:4], 86400 * np.array([31, 28, 31, 30]))
+        np.testing.assert_array_equal(am_ms, am_m)
+
+        pr_ys = pr.resample(time="YS").mean()
+        am_ys = rate2amount(pr_ys)
+
+        np.testing.assert_array_equal(am_ys, 86400 * np.array([365, 366, 365]))
+
+
+def test_amount2rate(pr_series):
+    pr = pr_series(np.ones(365 + 366 + 365), start="2019-01-01")
+    am = rate2amount(pr)
+
+    np.testing.assert_allclose(amount2rate(am), pr)
+
+    with xr.set_options(keep_attrs=True):
+        am_ms = am.resample(time="MS").sum()
+        am_m = am.resample(time="M").sum()
+
+        pr_ms = amount2rate(am_ms)
+        np.testing.assert_allclose(pr_ms, 1)
+        pr_m = amount2rate(am_m)
+        np.testing.assert_allclose(pr_m, 1)
+
+        am_ys = am.resample(time="YS").sum()
+        pr_ys = amount2rate(am_ys)
+        np.testing.assert_allclose(pr_ys, 1)

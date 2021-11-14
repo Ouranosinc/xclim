@@ -22,6 +22,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+from scipy.stats.mstats import mquantiles
 
 from xclim import ensembles
 from xclim.indices.stats import get_dist
@@ -145,15 +146,21 @@ class TestEnsembleStats:
 
         out1 = ensembles.ensemble_percentiles(ens, split=True)
         np.testing.assert_array_equal(
-            np.percentile(ens["tg_mean"].isel(time=0, lon=5, lat=5), 10),
+            mquantiles(
+                ens["tg_mean"].isel(time=0, lon=5, lat=5), 0.1, alphap=1, betap=1
+            ),
             out1["tg_mean_p10"].isel(time=0, lon=5, lat=5),
         )
         np.testing.assert_array_equal(
-            np.percentile(ens["tg_mean"].isel(time=0, lon=5, lat=5), 50),
+            mquantiles(
+                ens["tg_mean"].isel(time=0, lon=5, lat=5), alphap=1, betap=1, prob=0.50
+            ),
             out1["tg_mean_p50"].isel(time=0, lon=5, lat=5),
         )
         np.testing.assert_array_equal(
-            np.percentile(ens["tg_mean"].isel(time=0, lon=5, lat=5), 90),
+            mquantiles(
+                ens["tg_mean"].isel(time=0, lon=5, lat=5), alphap=1, betap=1, prob=0.90
+            ),
             out1["tg_mean_p90"].isel(time=0, lon=5, lat=5),
         )
         assert np.all(out1["tg_mean_p90"] > out1["tg_mean_p50"])
@@ -161,7 +168,7 @@ class TestEnsembleStats:
 
         out2 = ensembles.ensemble_percentiles(ens, values=(25, 75))
         assert np.all(out2["tg_mean_p75"] > out2["tg_mean_p25"])
-        assert "Computation of the percentiles on" in out1.attrs["xclim_history"]
+        assert "Computation of the percentiles on" in out1.attrs["history"]
 
         out3 = ensembles.ensemble_percentiles(ens, split=False)
         xr.testing.assert_equal(
@@ -183,18 +190,14 @@ class TestEnsembleStats:
         ens.tg_mean[2, 0, 5, 5] = np.nan
         ens.tg_mean[2, 7, 5, 5] = np.nan
         out1 = ensembles.ensemble_percentiles(ens, split=True)
+        masked_arr = np.ma.fix_invalid(ens["tg_mean"][:, 0, 5, 5])
         np.testing.assert_array_equal(
-            np.percentile(ens["tg_mean"][:, 0, 5, 5], 10), np.nan
-        )
-        np.testing.assert_array_equal(
-            np.percentile(ens["tg_mean"][:, 7, 5, 5], 10), np.nan
-        )
-        np.testing.assert_array_equal(
-            np.nanpercentile(ens["tg_mean"][:, 0, 5, 5], 10),
+            mquantiles(masked_arr, 0.10, alphap=1, betap=1),
             out1["tg_mean_p10"][0, 5, 5],
         )
+        masked_arr = np.ma.fix_invalid(ens["tg_mean"][:, 7, 5, 5])
         np.testing.assert_array_equal(
-            np.nanpercentile(ens["tg_mean"][:, 7, 5, 5], 10),
+            mquantiles(masked_arr, 0.10, alphap=1, betap=1),
             out1["tg_mean_p10"][7, 5, 5],
         )
         assert np.all(out1["tg_mean_p90"] > out1["tg_mean_p50"])
@@ -217,7 +220,7 @@ class TestEnsembleStats:
         np.testing.assert_array_equal(
             ens["tg_mean"][:, 0, 5, 5].min(dim="realization"), out1.tg_mean_min[0, 5, 5]
         )
-        assert "Computation of statistics on" in out1.attrs["xclim_history"]
+        assert "Computation of statistics on" in out1.attrs["history"]
 
 
 @pytest.mark.slow

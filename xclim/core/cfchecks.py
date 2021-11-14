@@ -6,9 +6,9 @@ CF-Convention checking
 Utilities designed to verify the compliance of metadata with the CF-Convention.
 """
 import fnmatch
+import re
 from typing import Sequence, Union
 
-from .formatting import parse_cell_methods
 from .options import cfcheck
 from .utils import VARIABLES, ValidationError
 
@@ -28,7 +28,7 @@ def check_valid(var, key: str, expected: Union[str, Sequence[str]]):
             break
     else:
         raise ValidationError(
-            f"Variable has a non-conforming {key}. Got `{att}`, expected `{expected}`",
+            f"Variable has a non-conforming {key}: Got `{att}`, expected `{expected}`",
         )
 
 
@@ -36,46 +36,23 @@ def cfcheck_from_name(varname, vardata):
     """Perform cfchecks on a DataArray using specifications from xclim's default variables."""
     data = VARIABLES[varname]
     if "cell_methods" in data:
-        check_valid(
-            vardata, "cell_methods", parse_cell_methods(data["cell_methods"]) + "*"
+        _check_cell_methods(
+            getattr(vardata, "cell_methods", None), data["cell_methods"]
         )
     if "standard_name" in data:
         check_valid(vardata, "standard_name", data["standard_name"])
 
 
-def generate_cfcheck(*varnames):
-    def _generated_check(*args):
-        for varname, var in zip(varnames, args):
-            cfcheck_from_name(varname, var)
-
-    return _generated_check
-
-
-def check_valid_temperature(var, units):
-    r"""Check that variable is air temperature."""
-    check_valid(var, "standard_name", "air_temperature")
-    check_valid(var, "units", units)
-
-
-def check_valid_discharge(var):
-    r"""Check that the variable is a discharge."""
-    check_valid(var, "standard_name", "water_volume_transport_in_river_channel")
-    check_valid(var, "units", "m3 s-1")
-
-
-def check_valid_min_temperature(var, units="K"):
-    r"""Check that a variable is a valid daily minimum temperature."""
-    check_valid_temperature(var, units)
-    check_valid(var, "cell_methods", "time: minimum within days")
-
-
-def check_valid_mean_temperature(var, units="K"):
-    r"""Check that a variable is a valid daily mean temperature."""
-    check_valid_temperature(var, units)
-    check_valid(var, "cell_methods", "time: mean within days")
-
-
-def check_valid_max_temperature(var, units="K"):
-    r"""Check that a variable is a valid daily maximum temperature."""
-    check_valid_temperature(var, units)
-    check_valid(var, "cell_methods", "time: maximum within days")
+@cfcheck
+def _check_cell_methods(data_cell_methods: str, expected_method: str) -> None:
+    if data_cell_methods is None:
+        raise ValidationError("Variable does not have a `cell_methods` attribute.")
+    EXTRACT_CELL_METHOD_REGEX = r"(\s*\S+\s*:(\s+[\w()-]+)+)(?!\S*:)"
+    for m in re.compile(EXTRACT_CELL_METHOD_REGEX).findall(data_cell_methods):
+        if m[0].__contains__(expected_method):
+            return None
+    raise ValidationError(
+        f"Variable has a non-conforming cell_methods: "
+        f"Got `{data_cell_methods}`, which do not include the expected "
+        f"`{expected_method}`"
+    )

@@ -1,20 +1,19 @@
 variables:
   areacello:
     canonical_units: m2
-    cell_methods:
-    - area: sum
+    cell_methods: "area: sum"
     description: Cell area (over the ocean).
     standard_name: cell_area
   hurs:
     canonical_units: '%'
-    cell_methods:
-    - time: mean
+    cell_methods: "time: mean"
     description: Relative humidity.
     standard_name: relative_humidity
+    data_flags:
+      - percentage_values_outside_of_bounds:
   huss:
     canonical_units: '1'
-    cell_methods:
-    - time: mean
+    cell_methods: "time: mean"
     description: Specific humidity.
     standard_name: specific_humidity
   lat:
@@ -23,112 +22,178 @@ variables:
     standard_name: latitude
   pr:
     canonical_units: kg m-2 s-1
-    cell_methods:
-    - time: mean
+    cell_methods: "time: mean"
     description: Surface precipitation flux (all phases).
     standard_name: precipitation_flux
+    data_flags:
+      - negative_accumulation_values:
+      - very_large_precipitation_events:
+          thresh: 300 mm d-1
+      - values_op_thresh_repeating_for_n_or_more_days:
+          op: eq
+          n: 5
+          thresh: 5 mm d-1
+      - values_op_thresh_repeating_for_n_or_more_days:
+          op: eq
+          n: 10
+          thresh: 1 mm d-1
   prsn:
     canonical_units: kg m-2 s-1
-    cell_methods:
-    - time: mean
+    cell_methods: "time: mean"
     description: Surface snowfall flux.
     standard_name: snowfall_flux
+    data_flags:
+      - negative_accumulation_values:
   ps:
     canonical_units: Pa
-    cell_methods:
-    - time: mean
+    cell_methods: "time: mean"
     description: Air pressure at surface
     standard_name: surface_air_pressure
+    data_flags:
+      - values_repeating_for_n_or_more_days:
+          n: 5
   psl:
     canonical_units: Pa
-    cell_methods:
-    - time: mean
+    cell_methods: "time: mean"
     description: Air pressure at sea level.
     standard_name: air_pressure_at_sea_level
   sfcWind:
     canonical_units: m s-1
-    cell_methods:
-    - time: mean
+    cell_methods: "time: mean"
     description: Surface wind speed.
     standard_name: wind_speed
+    data_flags:
+      - wind_values_outside_of_bounds:
+          upper: 46.0 m s-1
+          lower: 0 m s-1
+      - values_op_thresh_repeating_for_n_or_more_days:
+          op: gt
+          thresh: 2.0 m s-1
+          n: 6
   sfcWindfromdir:
     cmip6: False
     canonical_units: degree
-    cell_methods:
-    - time: mean
+    cell_methods: "time: mean"
     description: Surface wind direction of provenance.
     standard_name: wind_from_direction
   siconc:
     canonical_units: '%'
-    cell_methods:
-    - time: mean
+    cell_methods: "time: mean"
     description: Sea ice concentration (area fraction).
     standard_name: sea_ice_area_fraction
+    data_flags:
+      - percentage_values_outside_of_bounds:
   snc:
     canonical_units: '%'
-    cell_methods:
-    - time: mean
+    cell_methods: "time: mean"
     description: Surface area fraction covered by snow.
     standard_name: surface_snow_area_fraction
+    data_flags:
+      - percentage_values_outside_of_bounds:
   snd:
     canonical_units: m
-    cell_methods:
-    - time: mean
+    cell_methods: "time: mean"
     description: Surface snow thickness.
     standard_name: surface_snow_thickness
+    data_flags:
+      - negative_accumulation_values:
   snw:
     canonical_units: kg m-2
-    cell_methods:
-    - time: mean
+    cell_methods: "time: mean"
     description: Surface snow amount.
     standard_name: surface_snow_amount
+    data_flags:
+       - negative_accumulation_values:
   sund:
     cmip6: False
     canonical_units: s
-    cell_methods:
-    - time: mean
+    cell_methods: "time: mean"
     description: Duration of sunshine.
     standard_name: duration_of_sunshine
+  swe:
+    canonical_units: m
+    cell_methods: "time: mean"
+    description: Surface snow water equivalent amount
+    standard_name: lwe_thickness_of_snow_amount
+    data_flags:
+       - negative_accumulation_values:
   tas:
     canonical_units: K
-    cell_methods:
-    - time: mean
+    cell_methods: "time: mean"
     description: Mean surface temperature.
     standard_name: air_temperature
+    data_flags:
+      - temperature_extremely_high:
+          thresh: 60 degC
+      - temperature_extremely_low:
+          thresh: -90 degC
+      - tas_exceeds_tasmax:
+      - tas_below_tasmin:
+      - values_repeating_for_n_or_more_days:
+          n: 5
+      - outside_n_standard_deviations_of_climatology:
+          n: 5
+          window: 5
   tasmax:
     canonical_units: K
-    cell_methods:
-    - time: maximum
+    cell_methods: "time: maximum"
     description: Maximum surface temperature.
     standard_name: air_temperature
+    data_flags:
+      - temperature_extremely_high:
+          thresh: 60 degC
+      - temperature_extremely_low:
+          thresh: -90 degC
+      - tas_exceeds_tasmax:
+      - tasmax_below_tasmin:
+      - values_repeating_for_n_or_more_days:
+          n: 5
+      - outside_n_standard_deviations_of_climatology:
+          n: 5
+          window: 5
   tasmin:
     canonical_units: K
-    cell_methods:
-    - time: minimum
+    cell_methods: "time: minimum"
     description: Minimum surface temperature.
     standard_name: air_temperature
+    data_flags:
+      - temperature_extremely_high:
+          thresh: 60 degC
+      - temperature_extremely_low:
+          thresh: -90 degC
+      - tasmax_below_tasmin:
+      - tas_below_tasmin:
+      - values_repeating_for_n_or_more_days:
+          n: 5
+      - outside_n_standard_deviations_of_climatology:
+          n: 5
+          window: 5
   tdps:
     canonical_units: K
-    cell_methods:
-    - time: mean
+    cell_methods: "time: mean"
     description: Mean surface dew point temperaure.
     standard_name: dew_point_temperature
   uas:
     canonical_units: m s-1
-    cell_methods:
-    - time: mean
+    cell_methods: "time: mean"
     description: Eastward component of the wind velocity.
     standard_name: eastward_wind
   vas:
     canonical_units: m s-1
-    cell_methods:
-    - time: mean
+    cell_methods: "time: mean"
     description: Northward component of the wind velocity.
     standard_name: northward_wind
   wsgsmax:
     cmip6: False
     canonical_units: m s-1
-    cell_methods:
-    - time: maximum
+    cell_methods: "time: maximum"
     description: Maximum surface wind speed.
     standard_name: wind_speed_of_gust
+    data_flags:
+      - wind_values_outside_of_bounds:
+          upper: 76.0 m s-1
+          lower: 0 m s-1
+      - values_op_thresh_repeating_for_n_or_more_days:
+          op: gt
+          thresh: 4.0 m s-1
+          n: 5

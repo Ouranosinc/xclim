@@ -62,7 +62,11 @@ class MissingBase:
 
     def __init__(self, da, freq, src_timestep, **indexer):
         if src_timestep is None:
-            raise ValueError("`src_timestep` must be either 'D' or 'H'.")
+            src_timestep = xr.infer_freq(da.time)
+            if src_timestep is None:
+                raise ValueError(
+                    "`src_timestep` must be given as it cannot be inferred."
+                )
         self.null, self.count = self.prepare(da, freq, src_timestep, **indexer)
 
     @classmethod
@@ -140,7 +144,7 @@ class MissingBase:
             start_time = i[:1]
             end_time = i[-1:]
 
-        if indexer:
+        if indexer or "M" in src_timestep:
             # Create a full synthetic time series and compare the number of days with the original series.
             t = date_range(
                 start_time[0],
@@ -197,7 +201,7 @@ class MissingAny(MissingBase):
       Input array.
     freq : str
       Resampling frequency.
-    src_timestep : {"D", "H"}
+    src_timestep : {"D", "H", "M"}
       Expected input frequency.
     **indexer : {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
@@ -253,6 +257,11 @@ class MissingWMO(MissingAny):
     -------
     out : DataArray
       A boolean array set to True if period has missing values.
+
+    Notes
+    -----
+    If used at frequencies larger than a month, for example on an annual or seasonal basis, the function will return
+    True if any month within a period is missing.
     """
 
     def __init__(self, da, freq, src_timestep, **indexer):
@@ -274,8 +283,11 @@ class MissingWMO(MissingAny):
             raise ValueError(
                 "MissingWMO can only be used with Monthly or longer frequencies."
             )
-        obj = cls(da, "MS", src_timestep, **indexer)
-        return obj(**options).resample(time=freq).any()
+        obj = cls(da, "M", src_timestep, **indexer)
+        miss = obj(**options)
+        # Replace missing months by NaNs
+        mda = miss.where(miss == 0)
+        return MissingAny(mda, freq, "M", **indexer)()
 
     def is_missing(self, null, count, nm=11, nc=5):
         from xclim.indices import run_length as rl
@@ -421,8 +433,9 @@ def missing_any(da, freq, src_timestep=None, **indexer):  # noqa: D103
 
 def missing_wmo(da, freq, nm=11, nc=5, src_timestep=None, **indexer):  # noqa: D103
     src_timestep = src_timestep or xr.infer_freq(da.time)
-    missing = MissingWMO(da, "M", src_timestep, **indexer)(nm=nm, nc=nc)
-    return missing.resample(time=freq).any()
+    return MissingWMO.execute(
+        da, freq, src_timestep, options=dict(nm=nm, nc=nc), indexer=indexer
+    )
 
 
 def missing_pct(da, freq, tolerance, src_timestep=None, **indexer):  # noqa: D103

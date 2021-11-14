@@ -11,8 +11,10 @@ pylint
 pytest
 pytest-cov
 pytest-runner
+tokenize-rt
 tox
 xdoctest
+yamale
 # Documentation and examples
 distributed>=2.0
 ipykernel

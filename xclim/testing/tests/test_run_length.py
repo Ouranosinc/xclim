@@ -12,6 +12,76 @@ from xclim.testing import open_dataset
 K2C = 273.15
 
 
+class TestSuspiciousRun:
+    def test_simple(self, tas_series):
+        t = np.zeros(365)
+        tas = tas_series(t, start="2000-01-01")
+        sus = rl.suspicious_run(tas)
+        # Only zeroes
+        assert sus.all()
+
+        t = np.zeros(365)
+        t[30:39] = 5
+        tas = tas_series(t, start="2000-01-01")
+        sus = rl.suspicious_run(tas, thresh=0)
+        # Not enough 5s to trigger suspicion
+        assert not sus[30:39].all()
+        assert not sus[0:10].all()
+
+        t = np.zeros(365)
+        t[30:40] = 1
+        tas = tas_series(t, start="2000-01-01")
+        sus = rl.suspicious_run(tas, thresh=0)
+        # Run of 10 identical values
+        assert sus[30:40].all()
+        assert not sus[30:41].all()
+
+    def test_above_thresh(self, tas_series):
+        t = np.zeros(365)
+        t[30:40] = 0.1
+        t[40:50] = 1e-6
+        t[50:60] = 0.0001
+        t[60:65] = 1e-9
+        tas = tas_series(t, start="2000-01-01")
+
+        sus = rl.suspicious_run(tas, thresh=0, window=5)
+        assert not sus[:30].any()
+        assert sus[30:65].all()
+        assert not sus[65:].any()
+
+        sus = rl.suspicious_run(tas, thresh=1e-9, window=5)
+        assert sus[30:60].all()
+        assert not sus[60:].any()
+
+        sus = rl.suspicious_run(tas, thresh=1e-5, window=5)
+        assert sus[30:40].all()
+        assert not sus[40:50].any()
+        assert sus[50:60].all()
+        assert not sus[60:].any()
+
+        sus = rl.suspicious_run(tas, thresh=0, window=11)
+        assert not sus.any()
+
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_dask(self, use_dask):
+        values = np.zeros((10, 200))
+        time = pd.date_range("2015-01-01", periods=200, freq="D")
+        values[:, :10] = 1
+        values[9, :] = 1
+        da = xr.DataArray(values, coords={"time": time}, dims=("qq", "time"))
+
+        if use_dask:
+            da = da.chunk({"qq": 2})
+
+        sus = rl.suspicious_run(da, thresh=0)
+        assert sus[:, :10].all()
+        assert not sus[1, 10:].any()
+        assert sus[9].all()
+
+        sus = rl.suspicious_run(da)
+        assert sus.all()
+
+
 @pytest.fixture(scope="module", params=[True, False], autouse=True)
 def ufunc(request):
     with set_options(run_length_ufunc=request.param):
@@ -19,7 +89,8 @@ def ufunc(request):
 
 
 @pytest.mark.parametrize("use_dask", [True, False])
-def test_rle(ufunc, use_dask):
+@pytest.mark.parametrize("index", ["first", "last"])
+def test_rle(ufunc, use_dask, index):
     if use_dask and ufunc:
         pytest.xfail("rle_1d is not implemented for dask arrays.")
 
@@ -38,10 +109,15 @@ def test_rle(ufunc, use_dask):
         if use_dask:
             da = da.chunk({"a": 1, "b": 2})
 
-        out = rl.rle(da != 0).mean(["a", "b", "c"])
-        expected = np.zeros(365)
-        expected[1] = 10
-        expected[2:11] = np.nan
+        out = rl.rle(da != 0, index=index).mean(["a", "b", "c"])
+        if index == "last":
+            expected = np.zeros(365)
+            expected[1:10] = np.nan
+            expected[10] = 10
+        else:
+            expected = np.zeros(365)
+            expected[1] = 10
+            expected[2:11] = np.nan
         np.testing.assert_array_equal(out, expected)
 
 
@@ -158,19 +234,23 @@ class TestFirstRun:
 
 
 class TestWindowedRunEvents:
-    def test_simple(self):
+    @pytest.mark.parametrize("index", ["first", "last"])
+    def test_simple(self, index):
         a = xr.DataArray(np.zeros(50, bool), dims=("x",))
         a[4:7] = True
         a[34:45] = True
-        assert rl.windowed_run_events(a, 3, dim="x") == 2
+        assert rl.windowed_run_events(a, 3, dim="x", index=index) == 2
 
 
 class TestWindowedRunCount:
-    def test_simple(self):
-        a = xr.DataArray(np.zeros(50, bool), dims=("x",))
+    @pytest.mark.parametrize("index", ["first", "last"])
+    def test_simple(self, index):
+        a = xr.DataArray(np.zeros(50, bool), dims=("time",))
         a[4:7] = True
         a[34:45] = True
-        assert rl.windowed_run_count(a, 3, dim="x") == len(a[4:7]) + len(a[34:45])
+        assert rl.windowed_run_count(a, 3, dim="time", index=index) == len(
+            a[4:7]
+        ) + len(a[34:45])
 
 
 class TestLastRun:
@@ -221,8 +301,8 @@ def test_run_bounds_data():
 
 
 def test_keep_longest_run_synthetic():
-    runs = xr.DataArray([0, 1, 1, 1, 0, 0, 1, 1, 1, 0], dims="x").astype(bool)
-    lrun = rl.keep_longest_run(runs, "x")
+    runs = xr.DataArray([0, 1, 1, 1, 0, 0, 1, 1, 1, 0], dims="time").astype(bool)
+    lrun = rl.keep_longest_run(runs, "time")
     np.testing.assert_array_equal(
         lrun, np.array([0, 1, 1, 1, 0, 0, 0, 0, 0, 0], dtype=bool)
     )
@@ -238,7 +318,8 @@ def test_keep_longest_run_data():
     )
 
     xr.testing.assert_equal(
-        rl.keep_longest_run(cond, "time").sum("time"), rl.longest_run(cond, "time")
+        rl.keep_longest_run(cond, "time").sum("time"),
+        rl.longest_run(cond, "time"),
     )
 
 
@@ -428,6 +509,20 @@ class TestRunsWithDates:
         tas = tas_series(np.zeros(730), start="2000-01-01")
         with pytest.raises(ValueError, match="More than 1 instance of date"):
             func((tas == 0), date="03-01", window=5)
+
+
+@pytest.mark.parametrize("use_dask", [True, False])
+def test_lazy_indexing(use_dask):
+    idx = xr.DataArray([[0, 10], [33, 99]], dims=("x", "y"))
+    da = xr.DataArray(np.arange(100), dims=("time",))
+
+    if use_dask:
+        idx = idx.chunk({"x": 1})
+
+    out = rl.lazy_indexing(da, idx)
+    assert set(out.dims) == {"x", "y"}
+    np.testing.assert_array_equal(idx, out)
+    assert "time" not in out.coords
 
 
 @pytest.mark.parametrize("use_dask", [True, False])

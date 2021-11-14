@@ -20,102 +20,175 @@ from xclim.indices import (
 from xclim.testing import open_dataset
 
 
-def ar1(alpha, n, positive_values=False):
-    """Return random AR1 DataArray."""
+class Test_bootstrap:
+    @pytest.mark.slow
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_bootstrap_tg90p(self, tas_series, use_dask):
+        self.bootstrap_testor(
+            tas_series,
+            98,
+            lambda x, y, z: tg90p(x, y, freq="MS", bootstrap=z),
+            use_dask=use_dask,
+        )
 
-    # White noise
-    wn = np.random.randn(n - 1) * np.sqrt(1 - alpha ** 2)
+    @pytest.mark.slow
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_bootstrap_tn90p(self, tasmin_series, use_dask):
+        self.bootstrap_testor(
+            tasmin_series,
+            98,
+            lambda x, y, z: tn90p(x, y, freq="A-JUL", bootstrap=z),
+            use_dask=use_dask,
+        )
 
-    # Autoregressive series of order 1
-    out = np.empty(n)
-    out[0] = np.random.randn()
-    for i, w in enumerate(wn):
-        if positive_values:
-            out[i + 1] = np.abs(alpha * out[i] + w)
-        else:
-            out[i + 1] = alpha * out[i] + w
+    @pytest.mark.slow
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_bootstrap_tx90p(self, tasmax_series, use_dask):
+        self.bootstrap_testor(
+            tasmax_series,
+            98,
+            lambda x, y, z: tx90p(x, y, freq="Q-APR", bootstrap=z),
+            use_dask=use_dask,
+        )
 
-    return out
+    @pytest.mark.slow
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_bootstrap_tn10p(self, tasmin_series, use_dask):
+        self.bootstrap_testor(
+            tasmin_series,
+            2,
+            lambda x, y, z: tn10p(x, y, freq="MS", bootstrap=z),
+            use_dask=use_dask,
+        )
 
+    @pytest.mark.slow
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_bootstrap_tx10p(self, tasmax_series, use_dask):
+        self.bootstrap_testor(
+            tasmax_series,
+            2,
+            lambda x, y, z: tx10p(x, y, freq="YS", bootstrap=z),
+            use_dask=use_dask,
+        )
 
-def bootstrap_testor(
-    serie: DataArray,
-    per: int,
-    compute_indice: Callable[[DataArray, DataArray], DataArray],
-    positive_values=False,
-):
-    # GIVEN
-    n = int(60 * 365.25)
-    alpha = 0.8
-    climat_variable = serie(ar1(alpha, n, positive_values), start="2000-01-01")
-    in_base_slice = slice("2000-01-01", "2029-12-31")
-    out_base_slice = slice("2030-01-01", "2059-12-31")
-    per = percentile_doy(climat_variable.sel(time=in_base_slice), per=per)
-    # WHEN
-    no_bootstrap = compute_indice(climat_variable, per, False)
-    no_bs_in_base = no_bootstrap.sel(time=(in_base_slice))
-    no_bs_out_base = no_bootstrap.sel(time=(out_base_slice))
-    bootstrap = compute_indice(climat_variable, per, True)
-    bootstrapped_in_base = bootstrap.sel(time=(in_base_slice))
-    bs_out_base = bootstrap.sel(time=(out_base_slice))
-    # THEN
-    # bootstrapping should increase the indices values within the in_base
-    # will not work on unrealistic values such as a constant temperature
-    assert np.count_nonzero(bootstrapped_in_base > no_bs_in_base) > np.count_nonzero(
-        bootstrapped_in_base < no_bs_in_base
-    )
-    # bootstrapping should let the out of base unchanged
-    assert np.count_nonzero(no_bs_out_base != bs_out_base) == 0
+    @pytest.mark.slow
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_bootstrap_tg10p(self, tas_series, use_dask):
+        self.bootstrap_testor(
+            tas_series,
+            2,
+            lambda x, y, z: tg10p(x, y, freq="MS", bootstrap=z),
+            use_dask=use_dask,
+        )
 
+    @pytest.mark.slow
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_bootstrap_warm_spell_duration_index(self, tasmax_series, use_dask):
+        self.bootstrap_testor(
+            tasmax_series,
+            98,
+            lambda x, y, z: warm_spell_duration_index(
+                x, y, window=6, freq="MS", bootstrap=z
+            ),
+            use_dask=use_dask,
+        )
 
-@pytest.mark.slow
-def test_bootstrap(tas_series, tasmax_series, tasmin_series, pr_series):
-    # The closer the targetted percentile is to the median the less bootstrapping makes sense to use.
-    # The tests may even fail if the chosen percentile is close to 50
-    # temperatures
-    bootstrap_testor(
-        tas_series, 98, lambda x, y, z: tg90p(x, y, freq="MS", bootstrap=z)
-    )
-    bootstrap_testor(
-        tasmin_series, 98, lambda x, y, z: tn90p(x, y, freq="A-JUL", bootstrap=z)
-    )
-    bootstrap_testor(
-        tasmax_series, 98, lambda x, y, z: tx90p(x, y, freq="Q-APR", bootstrap=z)
-    )
-    bootstrap_testor(
-        tasmin_series, 2, lambda x, y, z: tn10p(x, y, freq="MS", bootstrap=z)
-    )
-    bootstrap_testor(
-        tasmax_series, 2, lambda x, y, z: tx10p(x, y, freq="YS", bootstrap=z)
-    )
-    bootstrap_testor(tas_series, 2, lambda x, y, z: tg10p(x, y, freq="MS", bootstrap=z))
-    bootstrap_testor(
-        tasmax_series,
-        98,
-        lambda x, y, z: warm_spell_duration_index(
-            x, y, window=6, freq="MS", bootstrap=z
-        ),
-    )
-    bootstrap_testor(
-        tasmin_series,
-        2,
-        lambda x, y, z: cold_spell_duration_index(
-            x, y, window=6, freq="MS", bootstrap=z
-        ),
-    )
-    # precipitations
-    bootstrap_testor(
-        pr_series,
-        99,
-        lambda x, y, z: days_over_precip_thresh(x, y, freq="MS", bootstrap=z),
-        positive_values=True,
-    )
-    bootstrap_testor(
-        pr_series,
-        98,
-        lambda x, y, z: fraction_over_precip_thresh(x, y, freq="MS", bootstrap=z),
-        positive_values=True,
-    )
+    @pytest.mark.slow
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_bootstrap_cold_spell_duration_index(self, tasmin_series, use_dask):
+        self.bootstrap_testor(
+            tasmin_series,
+            2,
+            lambda x, y, z: cold_spell_duration_index(
+                x, y, window=6, freq="MS", bootstrap=z
+            ),
+            use_dask=use_dask,
+        )
+
+    @pytest.mark.slow
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_bootstrap_days_over_precip_thresh(self, pr_series, use_dask):
+        self.bootstrap_testor(
+            pr_series,
+            99,
+            lambda x, y, z: days_over_precip_thresh(x, y, freq="MS", bootstrap=z),
+            positive_values=True,
+            use_dask=use_dask,
+        )
+
+    @pytest.mark.slow
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_bootstrap_fraction_over_precip_thresh(self, pr_series, use_dask):
+        self.bootstrap_testor(
+            pr_series,
+            98,
+            lambda x, y, z: fraction_over_precip_thresh(x, y, freq="MS", bootstrap=z),
+            positive_values=True,
+            use_dask=use_dask,
+        )
+
+    def test_bootstrap_cftime(self, bootstrap_series):
+        self.bootstrap_testor(
+            lambda values, start: bootstrap_series(values, start, cf_time=True),
+            98,
+            lambda x, y, z: fraction_over_precip_thresh(x, y, freq="MS", bootstrap=z),
+            positive_values=True,
+            use_dask=False,
+        )
+
+    def bootstrap_testor(
+        self,
+        series,
+        per: int,
+        compute_indice: Callable[[DataArray, DataArray], DataArray],
+        positive_values=False,
+        use_dask=False,
+    ):
+        # GIVEN
+        n = int(4 * 365.25)
+        alpha = 0.8
+        arr = self.ar1(alpha, n, positive_values)
+        climat_variable = series(arr, start="2000-01-01")
+        if use_dask:
+            climat_variable = climat_variable.chunk(dict(time=2))
+        in_base_slice = slice("2000-01-01", "2001-12-31")
+        out_base_slice = slice("2002-01-01", "2003-12-31")
+        per = percentile_doy(climat_variable.sel(time=in_base_slice), per=per)
+        # WHEN
+        no_bootstrap = compute_indice(climat_variable, per, False)
+        no_bs_in_base = no_bootstrap.sel(time=(in_base_slice))
+        no_bs_out_base = no_bootstrap.sel(time=(out_base_slice))
+        bootstrap = compute_indice(climat_variable, per, True)
+        bootstrapped_in_base = bootstrap.sel(time=(in_base_slice))
+        bs_out_base = bootstrap.sel(time=(out_base_slice))
+        # THEN
+        # bootstrapping should increase the indices values within the in_base
+        # will not work on unrealistic values such as a constant temperature
+        # However, the closer the targeted percentile is to the median
+        # the less bootstrapping makes sense to use.
+        # The tests may even fail if the chosen percentile is close to 50
+        assert np.count_nonzero(
+            bootstrapped_in_base > no_bs_in_base
+        ) > np.count_nonzero(bootstrapped_in_base < no_bs_in_base)
+        # bootstrapping should let the out of base unchanged
+        assert np.count_nonzero(no_bs_out_base != bs_out_base) == 0
+
+    def ar1(self, alpha, n, positive_values=False):
+        """Return random AR1 DataArray."""
+
+        # White noise
+        wn = np.random.randn(n - 1) * np.sqrt(1 - alpha ** 2)
+
+        # Autoregressive series of order 1
+        out = np.empty(n)
+        out[0] = np.random.randn()
+        for i, w in enumerate(wn):
+            if positive_values:
+                out[i + 1] = np.abs(alpha * out[i] + w)
+            else:
+                out[i + 1] = alpha * out[i] + w
+
+        return out
 
 
 def test_doctest_ndims():

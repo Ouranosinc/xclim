@@ -1,4 +1,7 @@
-"""SDBA utilities module."""
+"""
+sdba utilities
+--------------
+"""
 from typing import Callable, List, Mapping, Optional, Tuple, Union
 from warnings import warn
 
@@ -19,7 +22,7 @@ loffsets = {"MS": "14d", "M": "15d", "YS": "181d", "Y": "182d", "QS": "45d", "Q"
 
 
 def _ecdf_1d(x, value):
-    sx = np.r_[-np.inf, np.sort(x)]
+    sx = np.r_[-np.inf, np.sort(x, axis=None)]
     return np.searchsorted(sx, value, side="right") / np.sum(~np.isnan(sx))
 
 
@@ -219,7 +222,7 @@ def broadcast(
                     " interpolation, not cubic. Using linear."
                 )
 
-            grouped = grouped.interp(sel, method=interp)
+            grouped = grouped.interp(sel, method=interp).astype(grouped.dtype)
 
         for var in sel.keys():
             if var in grouped.coords and var not in grouped.dims:
@@ -291,7 +294,10 @@ def add_cyclic_bounds(
 
 
 def extrapolate_qm(
-    qf: xr.DataArray, xq: xr.DataArray, method: str = "constant"
+    qf: xr.DataArray,
+    xq: xr.DataArray,
+    method: str = "constant",
+    abs_bounds: Optional[tuple] = (-np.inf, np.inf),
 ) -> Tuple[xr.DataArray, xr.DataArray]:
     """Extrapolate quantile adjustment factors beyond the computed quantiles.
 
@@ -303,6 +309,8 @@ def extrapolate_qm(
       Values at each `quantile`.
     method : {"constant"}
       Extrapolation method. See notes below.
+    abs_bounds : 2-tuple
+      The absolute bounds for the "constant*" methods. Defaults to (-inf, inf).
 
     Returns
     -------
@@ -326,7 +334,7 @@ def extrapolate_qm(
 
     if method == "constant":
         q_l, q_r = [0], [1]
-        x_l, x_r = [-np.inf], [np.inf]
+        x_l, x_r = [abs_bounds[0]], [abs_bounds[1]]
         qf_l, qf_r = qf.isel(quantiles=0), qf.isel(quantiles=-1)
 
     elif (
@@ -394,18 +402,18 @@ def interp_on_quantiles(
     Parameters
     ----------
     newx : xr.DataArray
-        The values at which to evaluate `yq`. If `group` has group information,
-        `new` should have a coordinate with the same name as the group name
-         In that case, 2D interpolation is used.
+      The values at which to evaluate `yq`. If `group` has group information,
+      `new` should have a coordinate with the same name as the group name
+      In that case, 2D interpolation is used.
     xq, yq : xr.DataArray
-        coordinates and values on which to interpolate. The interpolation is done
-        along the "quantiles" dimension if `group` has no group information.
-        If it does, interpolation is done in 2D on "quantiles" and on the group dimension.
+      Coordinates and values on which to interpolate. The interpolation is done
+      along the "quantiles" dimension if `group` has no group information.
+      If it does, interpolation is done in 2D on "quantiles" and on the group dimension.
     group : Union[str, Grouper]
-        The dimension and grouping information. (ex: "time" or "time.month").
-        Defaults to the "group" attribute of xq, or "time" if there is none.
+      The dimension and grouping information. (ex: "time" or "time.month").
+      Defaults to the "group" attribute of xq, or "time" if there is none.
     method : {'nearest', 'linear', 'cubic'}
-        The interpolation method.
+      The interpolation method.
     """
     dim = group.dim
     prop = group.prop
@@ -749,7 +757,7 @@ def rand_rot_matrix(
 
     References
     ----------
-    .. [Mezzadri] Mezzadri, F. (2006). How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050.
+    Mezzadri, F. (2006). How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050.
     """
     if num > 1:
         return xr.concat([rand_rot_matrix(crd, num=1) for i in range(num)], "matrices")

@@ -6,13 +6,13 @@
 - [ ] Tests for the changes have been added (for bug fixes / features)
 - [ ] Documentation has been added / updated (for bug fixes / features)
 - [ ] HISTORY.rst has been updated (with summary of main changes)
-- [ ] `bumpversion (major / minor / patch)` has been called on this branch
-- [ ] Tags have been pushed (`git push --tags`)
+  - [ ] Link to issue (:issue:`number`) and pull request (:pull:`number`) has been added.
+- [ ] `bumpversion patch` has been called on this branch
 - [ ] The relevant author information has been added to `.zenodo.json`
 
 ### What kind of change does this PR introduce?
 
-* ,,,
+* ...
 
 ### Does this PR introduce a breaking change?
 
