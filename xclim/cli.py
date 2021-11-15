@@ -133,6 +133,7 @@ def _create_command(indname):
 )
 @click.pass_context
 def release_notes(ctx, md, rst):
+    """Generate the release notes history for publishing purposes."""
     if md and rst:
         raise click.BadArgumentUsage(
             "Cannot return both Markdown and ReStructuredText in same release_notes call."
