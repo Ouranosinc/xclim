@@ -159,7 +159,7 @@ def cold_spell_days(
 
     runs = rl.rle(over)
     cold_spells = runs.ffill(dim="time") >= window
-    out = cold_spells.resample(time=freq).sum().rename(cold_spell_days)
+    out = cold_spells.resample(time=freq).sum()
 
     return to_agg_units(out, tas, "count")
 
