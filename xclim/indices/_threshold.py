@@ -1804,7 +1804,7 @@ def wetday_prop(
 
     wd = compare(pr, ">=", thresh)
     fwd = wd.resample(time=freq).mean(dim="time").assign_attrs(units="1")
-    return fwd.rename("fwd")
+    return fwd
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
