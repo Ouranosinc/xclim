@@ -844,7 +844,7 @@ def potential_evapotranspiration(
       Maximum daily temperature.
     tas : xarray.DataArray
       Mean daily temperature.
-    method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48"}
+    method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48", "mcguinnessbordne05", "MB05"}
       Which method to use, see notes.
 
     Returns
@@ -857,12 +857,14 @@ def potential_evapotranspiration(
 
     - "baierrobertson65" or "BR65", based on [baierrobertson65]_. Requires tasmin and tasmax, daily [D] freq.
     - "hargreaves85" or "HG85", based on [hargreaves85]_. Requires tasmin and tasmax, daily [D] freq. (optional: tas can be given in addition of tasmin and tasmax).
+    - "mcguinnessbordne05" or "MB05", based on [oudin05]_. Requires tas, daily [D] freq, with latitudes 'lat'.
     - "thornthwaite48" or "TW48", based on [thornthwaite48]_. Requires tasmin and tasmax, monthly [MS] or daily [D] freq. (optional: tas can be given instead of tasmin and tasmax).
 
     References
     ----------
     .. [baierrobertson65] Baier, W., & Robertson, G. W. (1965). Estimation of latent evaporation from simple weather observations. Canadian journal of plant science, 45(3), 276-284.
     .. [hargreaves85] Hargreaves, G. H., & Samani, Z. A. (1985). Reference crop evapotranspiration from temperature. Applied engineering in agriculture, 1(2), 96-99.
+    .. [oudin05] Oudin, L., Hervieu, F., Michel, C., Perrin, C., Andréassian, V., Anctil, F., and Loumagne, C. (2005). Which potential evapotranspiration input for a lumped rainfall–runoff model?: Part 2  -- towards a simple and efficient potential evapotranspiration model for rainfall–runoff modelling. Journal of Hydrology, 303, 290–306
     .. [thornthwaite48] Thornthwaite, C. W. (1948). An approach toward a rational classification of climate. Geographical review, 38(1), 55-94.
     """
 
@@ -927,6 +929,41 @@ def potential_evapotranspiration(
         # Hargreaves and Samani(1985) formula
         out = (0.0023 * ra * (tas + 17.8) * (tasmax - tasmin) ** 0.5) / lv
         out = out.clip(0)
+
+    elif method in ["mcguinnessbordne05", "MB05"]:
+        tas = convert_units_to(tas, "degC")
+        tasK = convert_units_to(tas, "K")
+
+        latr = (tasmin.lat * np.pi) / 180
+        jd_frac = (datetime_to_decimal_year(tasmin.time) % 1) * 2 * np.pi
+
+        S = 1367.0  # Set solar constant [W/m2]
+        ds = 0.409 * np.sin(jd_frac - 1.39)  # solar declination ds [radians]
+        omega = np.arccos(-np.tan(latr) * np.tan(ds))  # sunset hour angle [radians]
+        dr = 1.0 + 0.03344 * np.cos(
+            jd_frac - 0.048869
+        )  # Calculate relative distance to sun
+
+        ext_rad = (
+            S
+            * 86400
+            / np.pi
+            * dr
+            * (
+                omega * np.sin(ds) * np.sin(latr)
+                + np.sin(omega) * np.cos(ds) * np.cos(latr)
+            )
+        )
+        latentH = 4185.5 * (751.78 - 0.5655 * tasK)
+
+        radDIVlat = np.divide(ext_rad, latentH)
+
+        # parameters from calibration provided by Dr Maliko Tanguy @ CEH
+        # (calibrated for PET over the UK)
+        a = 0.00516409319477
+        b = 0.0874972822289
+
+        out = np.multiply(np.multiply(radDIVlat, a), tas) + np.multiply(radDIVlat, b)
 
     elif method in ["thornthwaite48", "TW48"]:
         if tas is None:
