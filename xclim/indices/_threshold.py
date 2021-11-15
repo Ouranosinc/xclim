@@ -1266,9 +1266,9 @@ def heat_index(
     xarray.DataArray, [time][temperature]
       Heat index.
     """
-    thresh = convert_units_to(thresh, tasmax)
+    thresh = convert_units_to(thresh, "degC")
     t = convert_units_to(tasmax, "degC")
-    t = t.where(t > 20)
+    t = t.where(t > thresh)
     r = convert_units_to(hurs, "%")
 
     tr = np.multiply(t, r)
