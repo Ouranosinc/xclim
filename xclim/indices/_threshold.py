@@ -2147,6 +2147,7 @@ def rprctot(
     """
 
     thresh = convert_units_to(thresh, pr, "hydro")
+    prc = convert_units_to(prc, pr)
 
     wd = compare(pr, ">=", thresh)
     pr_tot = pr.where(wd).resample(time=freq).sum(dim="time")
