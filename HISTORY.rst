@@ -14,7 +14,7 @@ Internal changes
 ~~~~~~~~~~~~~~~~
 * Removed some logging configurations in ``dataflags`` that were polluting python's main logging configuration. (:pull:`909`).
 * Synchronized logging formatters in `xclim.ensembles` and `xclim.core.utils`. (:pull:`909`).
-* Added a helper function for generating the release notes with dynamically-generated ReStructuredText or Markdown-formatted hyperlinks (:pull:`922`, :issue:`907).
+* Added a helper function for generating the release notes with dynamically-generated ReStructuredText or Markdown-formatted hyperlinks (:pull:`922`, :issue:`907`).
 
 Bug fixes
 ~~~~~~~~~
