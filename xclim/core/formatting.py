@@ -11,7 +11,6 @@ import string
 from ast import literal_eval
 from fnmatch import fnmatch
 from inspect import _empty
-from pathlib import Path
 from typing import Dict, Mapping, Optional, Sequence, Union
 
 import xarray as xr
@@ -566,47 +565,3 @@ def generate_indicator_docstring(ind):
 
     doc = f"{header}\n{special}\n{parameters}\n{returns}\n{extras}"
     return doc
-
-
-def publish_release_notes(style: str = "md") -> str:
-    """Format release history in Markdown or ReStructuredText.
-
-    Parameters
-    ----------
-    style: {"rst", "md"}
-
-    Returns
-    -------
-    str
-
-    Notes
-    -----
-    This function is solely for development purposes.
-    """
-    history_file = Path(__file__).parent.parent.parent.joinpath("HISTORY.rst")
-
-    if not history_file.exists():
-        raise FileNotFoundError("History file not found in xclim file tree.")
-
-    with open(history_file) as hf:
-        history = hf.read()
-
-    if style == "rst":
-        hyperlink_replacements = {
-            r":issue:`([0-9]+)`": r"`GH/\1 <https://github.com/Ouranosinc/xclim/issues/\1>`_",
-            r":pull:`([0-9]+)`": r"`PR/\1 <https://github.com/Ouranosinc/xclim/pull/\>`_",
-            r":user:`([a-zA-Z0-9_]+)`": r"`@\1 <https://github.com/\1>`_",
-        }
-    elif style == "md":
-        hyperlink_replacements = {
-            r":issue:`([0-9]+)`": r"[GH/\1](https://github.com/Ouranosinc/xclim/issues/\1)",
-            r":pull:`([0-9]+)`": r"[PR/\1](https://github.com/Ouranosinc/xclim/pull/\1)",
-            r":user:`([a-zA-Z0-9_]+)`": r"[@\1](https://github.com/\1)",
-        }
-    else:
-        raise NotImplementedError()
-
-    for search, replacement in hyperlink_replacements.items():
-        history = re.sub(search, replacement, history)
-
-    return history

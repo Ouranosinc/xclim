@@ -292,3 +292,19 @@ def test_bad_usage(tas_series, tmp_path):
         assert "distributed scheduler is not installed" in results.output
     else:
         assert "'--dask-maxmem' must be given" in results.output
+
+
+def test_release_notes():
+    runner = CliRunner()
+    for method, pattern in {"-r": "`GH/", "-m": "[GH/"}:
+        results = runner.invoke(
+            cli,
+            [
+                "release_notes",
+                method,
+            ],
+        )
+        assert ":pull:`" not in results.output
+        assert ":issue:`" not in results.output
+        assert ":user:`" not in results.output
+        assert pattern in results.output

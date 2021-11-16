@@ -9,8 +9,8 @@ from dask.diagnostics import ProgressBar
 
 import xclim as xc
 from xclim.core.dataflags import DataQualityException, data_flags, ecad_compliant
-from xclim.core.formatting import publish_release_notes
 from xclim.core.utils import InputKind
+from xclim.testing._utils import publish_release_notes
 
 try:
     from dask.distributed import Client, progress
