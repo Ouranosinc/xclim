@@ -296,7 +296,7 @@ def test_bad_usage(tas_series, tmp_path):
 
 def test_release_notes():
     runner = CliRunner()
-    for method, pattern in {"-r": "`GH/", "-m": "[GH/"}:
+    for method, pattern in [("-r", "`GH/"), ("-m", "[GH/")]:
         results = runner.invoke(
             cli,
             [
