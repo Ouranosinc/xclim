@@ -234,6 +234,15 @@ The Automated Approach
 
 The simplest way to package `xclim` is to "publish" a version on GitHuh. GitHub CI Actions are presently configured to build the library and publish the packages on PyPI automatically.
 
+When publishing on GitHub, maintainers will need to generate the release notes for the current version, replacing the ``:issue:``, ``:pull:``, and ``:user:`` tags. The `xclim` CLI offers a helper function for performing this action::
+
+    # For Markdown format (needed when publishing a new version on GitHub):
+    $ xclim release_notes -m
+    # For ReStructuredText format (offered for convenience):
+    $ xclim release_notes -r
+
+When publishing to GitHub, you will still need to replace subsection headers in the Markdown (`^^^^` -> `###`) and the history published should not extend past the changes for the current version. This behaviour may eventually change.
+
 .. warning::
     Be warned that a published package version on PyPI can never be overwritten. Be sure to verify that the package published at https://test.pypi.org/project/xclim/ matches expectations before publishing a version on GitHub.
 
