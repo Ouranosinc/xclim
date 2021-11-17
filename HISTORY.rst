@@ -9,11 +9,13 @@ Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Added an optimized pathway for ``xclim.indices.run_length`` functions when ``window=1``. (:pull:`911`, :issue:`910`).
+* The data input frequency expected by ``Indicator``s is now in the ``src_freq`` attribute and is thus controlable by subclassing existing indicators. (:issue:`898`, :pull:`927`).
 
 Internal changes
 ~~~~~~~~~~~~~~~~
 * Removed some logging configurations in ``dataflags`` that were polluting python's main logging configuration. (:pull:`909`).
 * Synchronized logging formatters in `xclim.ensembles` and `xclim.core.utils`. (:pull:`909`).
+* Split of resampling-related functionality of ``Indicator``s into a new ``ResamplingIndicator`` subclass. The use of new (private) methods makes it easier to inject functionality in indicator subclasses. (:issue:`867`, :pull:`927`).
 
 Bug fixes
 ~~~~~~~~~
