@@ -541,8 +541,10 @@ def generate_indicator_docstring(ind):
     """
     header = f"{ind.title} (realm: {ind.realm})\n\n{ind.abstract}\n"
 
-    special = f'This indicator will check for missing values according to the method "{ind.missing}".\n'
+    special = ""
 
+    if hasattr(ind, "missing"):  # Only ResamplingIndicators
+        special += f'This indicator will check for missing values according to the method "{ind.missing}".\n'
     if hasattr(ind.compute, "__module__"):
         special += f"Based on indice :py:func:`~{ind.compute.__module__}.{ind.compute.__name__}`.\n"
         if ind.injected_parameters:
@@ -554,7 +556,9 @@ def generate_indicator_docstring(ind):
     if ind.keywords:
         special += f"Keywords : {ind.keywords}.\n"
 
-    parameters = _gen_parameters_section(ind.parameters, ind.allowed_periods)
+    parameters = _gen_parameters_section(
+        ind.parameters, getattr(ind, "allowed_periods", None)
+    )
 
     returns = _gen_returns_section(ind.cf_attrs)
 
