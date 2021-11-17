@@ -294,17 +294,14 @@ def test_bad_usage(tas_series, tmp_path):
         assert "'--dask-maxmem' must be given" in results.output
 
 
-def test_release_notes():
+@pytest.mark.parametrize("method, pattern", [("-r", "`GH/"), ("-m", "[GH/")])
+def test_release_notes(method, pattern):
     runner = CliRunner()
-    for method, pattern in [("-r", "`GH/"), ("-m", "[GH/")]:
-        results = runner.invoke(
-            cli,
-            [
-                "release_notes",
-                method,
-            ],
-        )
-        assert ":pull:`" not in results.output
-        assert ":issue:`" not in results.output
-        assert ":user:`" not in results.output
-        assert pattern in results.output
+    results = runner.invoke(
+        cli,
+        ["release_notes", method],
+    )
+    assert ":pull:`" not in results.output
+    assert ":issue:`" not in results.output
+    assert ":user:`" not in results.output
+    assert pattern in results.output

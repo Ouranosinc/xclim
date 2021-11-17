@@ -21,10 +21,11 @@ _default_cache_dir = Path.home() / ".xclim_testing_data"
 LOGGER = logging.getLogger("xclim")
 
 __all__ = [
-    "open_dataset",
+    "get_all_CMIP6_variables",
     "list_datasets",
     "list_input_variables",
-    "get_all_CMIP6_variables",
+    "open_dataset",
+    "publish_release_notes",
     "update_variable_yaml",
 ]
 
