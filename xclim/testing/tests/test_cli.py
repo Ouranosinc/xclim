@@ -308,20 +308,19 @@ def test_release_notes(method, pattern):
 
 
 @pytest.mark.parametrize(
-    "method. error",
+    "method, error",
     [
         (
-            "-m -r",
+            ["-m", "-r"],
             "Cannot return both Markdown and ReStructuredText in same release_notes call.",
         ),
-        ("", "Must specify Markdown (-m) or ReStructuredText (-r)."),
+        (list(), "Must specify Markdown (-m) or ReStructuredText (-r)."),
     ],
 )
 def test_release_notes_failure(method, error):
     runner = CliRunner()
-
     results = runner.invoke(
         cli,
-        ["release_notes", method],
+        ["release_notes", *method],
     )
     assert error in results.output
