@@ -3,6 +3,7 @@
 import hashlib
 import json
 import logging
+import re
 import warnings
 from pathlib import Path
 from typing import Optional, Sequence
@@ -20,10 +21,11 @@ _default_cache_dir = Path.home() / ".xclim_testing_data"
 LOGGER = logging.getLogger("xclim")
 
 __all__ = [
-    "open_dataset",
+    "get_all_CMIP6_variables",
     "list_datasets",
     "list_input_variables",
-    "get_all_CMIP6_variables",
+    "open_dataset",
+    "publish_release_notes",
     "update_variable_yaml",
 ]
 
@@ -392,3 +394,47 @@ def update_variable_yaml(filename=None, xclim_needs_only=True):
 
     with filepath.open("w") as f:
         safe_dump(stdvars, f)
+
+
+def publish_release_notes(style: str = "md") -> str:
+    """Format release history in Markdown or ReStructuredText.
+
+    Parameters
+    ----------
+    style: {"rst", "md"}
+
+    Returns
+    -------
+    str
+
+    Notes
+    -----
+    This function is solely for development purposes.
+    """
+    history_file = Path(__file__).parent.parent.parent.joinpath("HISTORY.rst")
+
+    if not history_file.exists():
+        raise FileNotFoundError("History file not found in xclim file tree.")
+
+    with open(history_file) as hf:
+        history = hf.read()
+
+    if style == "rst":
+        hyperlink_replacements = {
+            r":issue:`([0-9]+)`": r"`GH/\1 <https://github.com/Ouranosinc/xclim/issues/\1>`_",
+            r":pull:`([0-9]+)`": r"`PR/\1 <https://github.com/Ouranosinc/xclim/pull/\>`_",
+            r":user:`([a-zA-Z0-9_]+)`": r"`@\1 <https://github.com/\1>`_",
+        }
+    elif style == "md":
+        hyperlink_replacements = {
+            r":issue:`([0-9]+)`": r"[GH/\1](https://github.com/Ouranosinc/xclim/issues/\1)",
+            r":pull:`([0-9]+)`": r"[PR/\1](https://github.com/Ouranosinc/xclim/pull/\1)",
+            r":user:`([a-zA-Z0-9_]+)`": r"[@\1](https://github.com/\1)",
+        }
+    else:
+        raise NotImplementedError()
+
+    for search, replacement in hyperlink_replacements.items():
+        history = re.sub(search, replacement, history)
+
+    return history
