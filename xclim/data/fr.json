@@ -337,10 +337,10 @@
     "abstract": "Moyenne de la température journalière minimale."
   },
   "TN10P": {
-    "long_name": "Nombre de jours où la température minimale est au-dessous du 10e percentile",
-    "description": "Nombre {freq:m} de jours où la température minimale est au-dessous du 10e percentile. Le 10e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
-    "title": "Nombre de jours où la température minimale est au-dessous du 10e percentile",
-    "abstract": "Nombre de jours où la température minimale est au-dessous du 10e percentile."
+    "long_name": "Nombre de jours où la température minimale est en dessous du 10e percentile",
+    "description": "Nombre {freq:m} de jours où la température minimale est en dessous du 10e percentile. Le 10e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours où la température minimale est en dessous du 10e percentile",
+    "abstract": "Nombre de jours où la température minimale est en dessous du 10e percentile."
   },
   "TN90P": {
     "long_name": "Nombre de jours où la température minimale est au-dessus du 90e percentile",
@@ -367,10 +367,10 @@
     "abstract": "Moyenne de la température journalière maximale."
   },
   "TX10P": {
-    "long_name": "Nombre de jours où la température maximale est au-dessous du 10e percentile",
-    "description": "Nombre {freq:m} de jours où la température maximale est au-dessous du 10e percentile. Le 10e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
-    "title": "Nombre de jours où la température maximale est au-dessous du 10e percentile",
-    "abstract": "Nombre de jours où la température maximale est au-dessous du 10e percentile."
+    "long_name": "Nombre de jours où la température maximale est en dessous du 10e percentile",
+    "description": "Nombre {freq:m} de jours où la température maximale est en dessous du 10e percentile. Le 10e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours où la température maximale est en dessous du 10e percentile",
+    "abstract": "Nombre de jours où la température maximale est en dessous du 10e percentile."
   },
   "TX90P": {
     "long_name": "Nombre de jours où la température maximale est au-dessus du 90e percentile",
@@ -431,7 +431,7 @@
     "long_name": "Cycles de gel-dégel",
     "description": "Nombre {freq:m} de jours avec un gel-dégel quotidien : Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin}.",
     "title": "Nombre de jours avec un cycle de gel-dégel",
-    "abstract": "Le nombre de jours où Tmax est au-dessus d'un seuil et Tmin au-dessous d'un seuil, habituellement 0 °C pour les deux."
+    "abstract": "Le nombre de jours où Tmax est au-dessus d'un seuil et Tmin en dessous d'un seuil, habituellement 0 °C pour les deux."
   },
   "COOLING_DEGREE_DAYS": {
     "long_name": "Degrés-jours de réfrigération (Tmoy > {thresh})",
@@ -441,7 +441,7 @@
   },
   "HEATING_DEGREE_DAYS": {
     "long_name": "Degrés-jours de chauffage (Tmoy < {thresh})",
-    "description": "Cumul {freq:m} des degrés-jours de chauffage (Température au-dessous de {thresh}).",
+    "description": "Cumul {freq:m} des degrés-jours de chauffage (Température en dessous de {thresh}).",
     "title": "Degrés-jours de chauffage",
     "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est sous un seuil et que les immeubles doivent être chauffés."
   },
@@ -453,7 +453,7 @@
   },
   "FREEZING_DEGREE_DAYS": {
     "long_name": "Degrés-jours de gel (Tmoy < {thresh})",
-    "description": "Cumul {freq:m} des degrés-jours de gel (Température au-dessous de {thresh}).",
+    "description": "Cumul {freq:m} des degrés-jours de gel (Température en dessous de {thresh}).",
     "title": "Degrés-jours de gel",
     "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est sous un seuil."
   },
@@ -846,7 +846,7 @@
   "WARM_SPELL_DURATION_INDEX": {
     "title": "Indice de durée des vagues de chaleur",
     "abstract": "Nombre de jours faisant partie de vagues d'une longueur minimale où la température maximale quotidienne excède le 90e percentile. Le 90e percentile des températures devrait être calculé avec une fenêtre mobile de 5 jours.",
-    "description": "Durée totale {freq:m} des vagues de chaleur. Une vague de chaleur se produit lorsque Tmax est au-dessus du 90e percentile, durant au moins {window} jours.",
+    "description": "Durée totale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque Tmax est au-dessus du 90e percentile durant au moins {window} jours.",
     "long_name": "Durée des vagues de chaleur"
   },
   "MAXIMUM_CONSECUTIVE_WARM_DAYS": {
@@ -870,17 +870,17 @@
   "FREEZETHAW_SPELL_FREQUENCY": {
     "title": "Fréquence des événements de gel-dégel quotidien",
     "abstract": "Nombre de périodes de gel-dégel. Ces périodes sont des séries de jours consécutifs où la température minimale quotidienne est sous un seuil et la température maximale quotidienne au-dessus d'un autre. En général, ces deux seuils sont 0°C.",
-    "description": "Fréquence {freq:f} des événements de gel-dégel quotidien : Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consecutif(s).",
+    "description": "Fréquence {freq:f} des événements de gel-dégel quotidiens : Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consecutif(s).",
     "long_name": "Fréquence {freq:f} des événements de gel-dégel quotidien"
   },
   "FREEZETHAW_SPELL_MAX_LENGTH": {
-    "title": "Durée maximale du nombre de jours consécutifs avec un gel-dégel",
+    "title": "Durée maximale d'une période de jours consécutifs avec un gel-dégel",
     "abstract": "Durée maximale des périodes de gel-dégel. Ces périodes sont des séries de jours consécutifs où la température minimale quotidienne est sous un seuil et la température maximale quotidienne au-dessus d'un autre. En général, ces deux seuils sont 0°C.",
     "description": "Durée maximale {freq:f} des événements de gel-dégel quotidien : Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consecutif(s).",
     "long_name": "Durée maximale {freq:f} des événements de gel-dégel quotidien"
   },
   "FREEZETHAW_SPELL_MEAN_LENGTH": {
-    "title": "Durée moyenne du nombre de jours consécutifs avec un gel-dégel",
+    "title": "Durée moyenne d'une période de jours consécutifs avec un gel-dégel",
     "abstract": "Durée moyenne des périodes de gel-dégel. Ces périodes sont des séries de jours consécutifs où la température minimale quotidienne est sous un seuil et la température maximale quotidienne au-dessus d'un autre. En général, ces deux seuils sont 0°C.",
     "description": "Durée moyenne {freq:f} des événements de gel-dégel quotidien : Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consecutif(s).",
     "long_name": "Durée moyenne {freq:f} des événements de gel-dégel quotidien"
