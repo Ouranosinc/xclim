@@ -10,6 +10,7 @@ from dask.diagnostics import ProgressBar
 import xclim as xc
 from xclim.core.dataflags import DataQualityException, data_flags, ecad_compliant
 from xclim.core.utils import InputKind
+from xclim.testing._utils import publish_release_notes
 
 try:
     from dask.distributed import Client, progress
@@ -123,6 +124,31 @@ def _create_command(indname):
         help=indicator.abstract,
         short_help=indicator.title,
     )
+
+
+@click.command(short_help="Print history for publishing purposes.")
+@click.option("-m", "--md", is_flag=True, help="Prints the history in Markdown format.")
+@click.option(
+    "-r", "--rst", is_flag=True, help="Prints the history in ReStructuredText format."
+)
+@click.pass_context
+def release_notes(ctx, md, rst):
+    """Generate the release notes history for publishing purposes."""
+    if md and rst:
+        raise click.BadArgumentUsage(
+            "Cannot return both Markdown and ReStructuredText in same release_notes call."
+        )
+    if md:
+        style = "md"
+    elif rst:
+        style = "rst"
+    else:
+        raise click.BadArgumentUsage(
+            "Must specify Markdown (-m) or ReStructuredText (-r)."
+        )
+
+    click.echo(f"{publish_release_notes(style)}")
+    ctx.exit()
 
 
 @click.command(short_help="Run data flag checks for input variables.")
@@ -279,11 +305,16 @@ class XclimCli(click.MultiCommand):
 
     def list_commands(self, ctx):
         """Return the available commands (other than the indicators)."""
-        return "indices", "info", "dataflags"
+        return "indices", "info", "dataflags", "release_notes"
 
     def get_command(self, ctx, name):
         """Return the requested command."""
-        command = {"indices": indices, "info": info, "dataflags": dataflags}.get(name)
+        command = {
+            "indices": indices,
+            "info": info,
+            "dataflags": dataflags,
+            "release_notes": release_notes,
+        }.get(name)
         if command is None:
             command = _create_command(name)
         return command
