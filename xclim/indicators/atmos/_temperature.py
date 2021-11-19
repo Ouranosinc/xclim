@@ -5,7 +5,7 @@ from inspect import _empty  # noqa
 
 from xclim import indices
 from xclim.core import cfchecks
-from xclim.core.indicator import Daily
+from xclim.core.indicator import Daily, Indicator
 from xclim.core.utils import InputKind
 
 __all__ = [
@@ -74,7 +74,6 @@ __all__ = [
     "warm_spell_duration_index",
     "maximum_consecutive_warm_days",
     "fire_season",
-    "corn_heat_units",
     "huglin_index",
     "biologically_effective_degree_days",
     "latitude_temperature_index",
@@ -849,11 +848,10 @@ maximum_consecutive_warm_days = Temp(
 )
 
 
-class FireSeasonBase(Daily):
-    """Special Indicator class for FireSeason that accepts any tas[min/max] and optional snd."""
+class FireSeasonBase(Indicator):
+    """Special Indicator class for FireSeason that accepts any tas[min/max] and optional snd and is not resampling."""
 
-    @staticmethod
-    def cfcheck(tas, snd=None):
+    def cfcheck(self, tas, snd=None):
         cfchecks.check_valid(tas, "standard_name", "air_temperature")
         cfchecks.cfcheck_from_name("snd", snd)
 
@@ -865,19 +863,6 @@ fire_season = FireSeasonBase(
     compute=indices.fire_season,
 )
 
-
-corn_heat_units = Temp(
-    identifier="corn_heat_units",
-    units="",
-    long_name="Corn heat units (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}).",
-    description="Temperature-based index used to estimate the development of corn crops. "
-    "Corn growth occurs when the minimum and maximum daily temperature both exceeds "
-    "specific thresholds : Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}.",
-    var_name="chu",
-    cell_methods="",
-    missing="skip",
-    compute=indices.corn_heat_units,
-)
 
 huglin_index = Temp(
     identifier="huglin_index",
