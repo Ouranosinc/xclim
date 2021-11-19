@@ -150,8 +150,8 @@
     "abstract": "Maximum des précipitations totales quotidiennes pour une période donnée."
   },
   "MAX_N_DAY_PRECIPITATION_AMOUNT": {
-    "long_name": "Précipitation quotidienne maximale sur {window} jours",
-    "description": "Précipitation quotidienne maximale sur {window} jours {freq:f}.",
+    "long_name": "Maximum du cumul sur {window} jours de la précipitation quotidienne",
+    "description": "Maximum {freq:m} du cumul sur {window} jours de la précipitation quotidienne.",
     "title": "Précipitation maximale cumulée sur un nombre de jours donné",
     "abstract": "Maximum de la somme mobile des précipitations quotidiennes pour une période donnée."
   },
@@ -379,22 +379,22 @@
     "abstract": "Nombre de jours où la température maximale est au-dessus du 90e percentile."
   },
   "DTRMAX": {
-    "long_name": "Amplitude maximale de la température diurne",
-    "description": "Maximum {freq:m} de l'amplitude diurne de température.",
-    "title": "Amplitude maxmimale de la température diurne",
-    "abstract": "La différence maximale entre la température journalière maximale et minimale."
+    "long_name": "Amplitude diurne maximale de la température",
+    "description": "Maximum {freq:m} de l'amplitude diurne de la température.",
+    "title": "Amplitude diurne maximale de la température",
+    "abstract": "L'écart maximal entre les températures journalières maximale et minimale."
   },
   "DTR": {
-    "long_name": "Amplitude de la température diurne",
-    "description": "Moyenne {freq:f} de l'amplitude diurne de température.",
-    "title": "Amplitude de la température diurne",
-    "abstract": "La différence moyenne entre la température journalière maximale et minimale."
+    "long_name": "Amplitude diurne de la température",
+    "description": "Moyenne {freq:f} de l'amplitude diurne de la température.",
+    "title": "Amplitude diurne de la température",
+    "abstract": "La différence moyenne entre les températures journalières maximale et minimale."
   },
   "DTRVAR": {
-    "long_name": "Variabilité de l'amplitude de la température diurne",
-    "description": "Variabilité {freq:f} de l'amplitude de la température diurne (définie comme la moyenne de la variation journalière de l'amplitude de température sur une période donnée).",
-    "title": "Variation quotidienne absolue moyenne de l'amplitude de la température diurne",
-    "abstract": "La valeur absolue de la moyenne de l'amplitude de la température diurne."
+    "long_name": "Variabilité de l'amplitude diurne de la température",
+    "description": "Variation interdiurne moyenne {freq:f} de l'amplitude diurne de la température.",
+    "title": "Variation interdiurne moyenne de l'amplitude diurne de la température",
+    "abstract": "Variation interdiurne moyenne de l'amplitude diurne de la température."
   },
   "ETR": {
     "long_name": "Amplitude des températures extrêmes",
