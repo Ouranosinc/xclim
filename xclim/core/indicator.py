@@ -1279,7 +1279,7 @@ class ResamplingIndicator(Indicator):
         super().__init__(**kwds)
 
     def _preprocess_and_checks(self, das, params, indexer):
-        """Perform parent's checks and also checks if freq is allowed."""
+        """Perform parent's checks and also check if freq is allowed."""
         das, params, indexer = super()._preprocess_and_checks(das, params, indexer)
 
         # Check if the period is allowed:
