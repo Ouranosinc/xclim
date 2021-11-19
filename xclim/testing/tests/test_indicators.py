@@ -252,6 +252,22 @@ def test_multiindicator(tas_series):
     assert tmin.attrs["description"] == "Grouped computation of tmax and tmin"
     assert tmax.attrs["description"] == "Grouped computation of tmax and tmin"
 
+    with pytest.raises(ValueError, match="Output #2 is missing a var_name!"):
+        ind = Daily(
+            realm="atmos",
+            identifier="minmaxtemp2",
+            cf_attrs=[
+                dict(
+                    var_name="tmin",
+                    units="K",
+                ),
+                dict(
+                    units="K",
+                ),
+            ],
+            compute=multitemp_compute,
+        )
+
     # Attrs passed as keywords - individually
     ind = Daily(
         realm="atmos",
@@ -269,6 +285,30 @@ def test_multiindicator(tas_series):
     assert tmin.attrs["description"] == "Grouped computation of tmax and tmin"
     assert tmax.attrs["description"] == "Grouped computation of tmax and tmin"
     assert ind.units == ["K", "K"]
+
+    # All must be the same length
+    with pytest.raises(ValueError, match="Attribute var_name has 2 elements"):
+        ind = Daily(
+            realm="atmos",
+            identifier="minmaxtemp3",
+            var_name=["tmin", "tmax"],
+            units="K",
+            standard_name=["Min temp"],
+            description="Grouped computation of tmax and tmin",
+            compute=uniindpr_compute,
+        )
+
+    ind = Daily(
+        realm="atmos",
+        identifier="minmaxtemp4",
+        var_name=["tmin", "tmax"],
+        units="K",
+        standard_name=["Min temp", ""],
+        description="Grouped computation of tmax and tmin",
+        compute=uniindtemp_compute,
+    )
+    with pytest.raises(ValueError, match="Indicator minmaxtemp4 was wrongly defined"):
+        tmin, tmax = ind(tas, freq="YS")
 
 
 def test_missing(tas_series):
