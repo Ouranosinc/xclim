@@ -1,7 +1,7 @@
 """Streamflow indicator definitions."""
 
 from xclim.core.cfchecks import check_valid
-from xclim.core.indicator import Daily
+from xclim.core.indicator import Daily, Indicator
 from xclim.core.units import declare_units
 from xclim.indices import base_flow_index, generic, rb_flashiness_index
 from xclim.indices.stats import fit as _fit
@@ -49,17 +49,10 @@ class FA(Streamflow):
 
 
 # Disable the daily checks because the inputs are period extremas.
-class Fit(Streamflow):
-    freq = None
-    missing = "at_least_n"
-    # Do not set `missing_options` so it can be overriden by `set_options`.
+class Fit(Indicator):
+    src_freq = None
 
-    @staticmethod
-    def cfcheck(**das):
-        pass
-
-    @staticmethod
-    def datacheck(**das):
+    def cfcheck(self, **das):
         pass
 
 
@@ -111,8 +104,6 @@ fit = Fit(
     title="Distribution parameters fitted over the time dimension.",
     cell_methods="time: fit",
     compute=declare_units(da=None)(_fit),
-    missing="skip",
-    missing_options=None,
 )
 
 

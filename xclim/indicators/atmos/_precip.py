@@ -4,7 +4,7 @@ from inspect import _empty  # noqa
 
 from xclim import indices
 from xclim.core import cfchecks
-from xclim.core.indicator import Daily, Hourly
+from xclim.core.indicator import Daily, Hourly, Indicator
 from xclim.core.utils import InputKind
 
 __all__ = [
@@ -35,6 +35,13 @@ __all__ = [
 ]
 
 
+class FireWeather(Indicator):
+    """Non resampling - precipitation related indicators."""
+
+    src_freq = "D"
+    context = "hydro"
+
+
 class Precip(Daily):
     """Indicator involving daily pr series."""
 
@@ -46,8 +53,7 @@ class PrTasx(Daily):
 
     context = "hydro"
 
-    @staticmethod
-    def cfcheck(pr, tas):
+    def cfcheck(self, pr, tas):
         cfchecks.cfcheck_from_name("pr", pr)
         cfchecks.check_valid(tas, "standard_name", "air_temperature")
 
@@ -210,7 +216,7 @@ solid_precip_accumulation = PrTasx(
     parameters={"tas": {"kind": InputKind.VARIABLE}, "phase": "solid"},
 )
 
-drought_code = Precip(
+drought_code = FireWeather(
     identifier="dc",
     units="",
     standard_name="drought_code",
@@ -220,7 +226,7 @@ drought_code = Precip(
     missing="skip",
 )
 
-fire_weather_indexes = Precip(
+fire_weather_indexes = FireWeather(
     identifier="fwi",
     realm="atmos",
     var_name=["dc", "dmc", "ffmc", "isi", "bui", "fwi"],

@@ -92,6 +92,7 @@ import weakref
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
 from dataclasses import asdict, dataclass
+from functools import reduce
 from inspect import Parameter as _Parameter
 from inspect import Signature
 from inspect import _empty as _empty_default
@@ -293,19 +294,10 @@ class Indicator(IndicatorRegistrar):
     notes: str
       Notes regarding computing function, for example the mathematical formulation. Parsed from `compute`
       docstring if None (form the "Notes" section).
-    missing: {any, wmo, pct, at_least_n, skip, from_context}
-      The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods. If
-      None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
-    missing_options : dict, None
-      Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
-    freq: str, sequence of strings, optional
+    src_freq: str, sequence of strings, optional
       The expected frequency of the input data. Can be a list for multiple frequencies, or None if irrelevant.
     context: str
       The `pint` unit context, for example use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
-    allowed_periods : Sequence[str], optional
-      A list of allowed periods, i.e. base parts of the `freq` parameter. For example, indicators meant to be
-      computed annually only will have `allowed_periods=["A"]`. `None` means "any period" or that the
-      indicator doesn't take a `freq` argument.
 
     Notes
     -----
@@ -327,18 +319,15 @@ class Indicator(IndicatorRegistrar):
     # metadata fields that are formatted as free text (first letter capitalized)
     _text_fields = ["long_name", "description", "comment"]
     # Class attributes that are function (so we know which to convert to static methods)
-    _funcs = ["compute", "cfcheck", "datacheck"]
+    _funcs = ["compute"]
     # Mapping from name in the compute function to official (CMIP6) variable name
     _variable_mapping = {}
 
     # Will become the class's name
     identifier = None
 
-    missing = "from_context"
-    missing_options = None
     context = "none"
-    freq = None
-    allowed_periods = None
+    src_freq = None
 
     # Global metadata (must be strings, not attributed to the output)
     realm = None
@@ -423,11 +412,6 @@ class Indicator(IndicatorRegistrar):
 
         # All updates done.
         kwds["_all_parameters"] = parameters
-
-        # By default skip missing values handling if there is no resampling.
-        # Dont only check if freq is in current parameters but also if it was injected earlier.
-        if "freq" not in parameters:
-            kwds["missing"] = "skip"
 
         # Parse kwds to organize `cf_attrs`
         # And before converting callables to staticmethods
@@ -562,8 +546,8 @@ class Indicator(IndicatorRegistrar):
             new_variable_mapping.update(variable_mapping)
             kwds["_variable_mapping"] = new_variable_mapping
 
-    @staticmethod
-    def _ensure_correct_parameters(parameters):
+    @classmethod
+    def _ensure_correct_parameters(cls, parameters):
         """Ensure the parameters are correctly set and ordered.
 
         Sets the correct variable default to be sure.
@@ -709,16 +693,6 @@ class Indicator(IndicatorRegistrar):
         """Run checks and organizes the metadata."""
         # keywords of kwds that are class attributes have already been set in __new__
         self._check_identifier(self.identifier)
-        if self.missing == "from_context" and self.missing_options is not None:
-            raise ValueError(
-                "Cannot set `missing_options` with `missing` method being from context."
-            )
-
-        # Validate hard-coded missing options
-        kls = MISSING_METHODS[self.missing]
-        self._missing = kls.execute
-        if self.missing_options:
-            kls.validate(**self.missing_options)
 
         # Validation is done : register the instance.
         super().__init__()
@@ -779,6 +753,23 @@ class Indicator(IndicatorRegistrar):
         # indexer: If present, the "indexer" kwargs <- this is needed by _update_attrs and _mask
         das, params, indexer = self._parse_variables_from_call(args, kwds)
 
+        das, params, indexer = self._preprocess_and_checks(das, params, indexer)
+
+        # Get correct variable names for the compute function.
+        inv_var_map = dict(map(reversed, self._variable_mapping.items()))
+        compute_das = {inv_var_map.get(nm, nm): das[nm] for nm in das}
+        # Compute the indicator values, ignoring NaNs and missing values.
+        outs = self.compute(**compute_das, **params, **indexer)
+
+        if isinstance(outs, DataArray):
+            outs = [outs]
+
+        if len(outs) != self.n_outs:
+            raise ValueError(
+                f"Indicator {self.identifier} was wrongly defined. Expected "
+                f"{self.n_outs} outputs, got {len(outs)}."
+            )
+
         # Metadata attributes from templates
         var_id = None
         cf_attrs = []
@@ -796,37 +787,6 @@ class Indicator(IndicatorRegistrar):
                 )
             )
 
-        # Pre-computation validation checks on DataArray arguments
-        self._bind_call(self.datacheck, **das)
-        self._bind_call(self.cfcheck, **das)
-
-        # Check if the period is allowed:
-        if (
-            self.allowed_periods is not None
-            and "freq" in params
-            and parse_offset(params["freq"])[1] not in self.allowed_periods
-        ):
-            raise ValueError(
-                f"Resampling frequency {params['freq']} is not allowed for indicator "
-                f"{self.identifier} (needs something equivalent to one "
-                f"of {self.allowed_periods})."
-            )
-
-        # Get correct variable names for the compute function.
-        inv_var_map = dict(map(reversed, self._variable_mapping.items()))
-        compute_das = {inv_var_map.get(nm, nm): das[nm] for nm in das}
-        # Compute the indicator values, ignoring NaNs and missing values.
-        outs = self.compute(**compute_das, **params, **indexer)
-
-        if isinstance(outs, DataArray):
-            outs = [outs]
-
-        if len(outs) != self.n_outs:
-            raise ValueError(
-                f"Indicator {self.identifier} was wrongly defined. Expected "
-                f"{self.n_outs} outputs, got {len(outs)}."
-            )
-
         # Convert to output units
         outs = [
             convert_units_to(out, attrs.get("units", ""), self.context)
@@ -839,11 +799,7 @@ class Indicator(IndicatorRegistrar):
             out.attrs.update(attrs)
             out.name = var_name
 
-        if self.missing != "skip":
-            # Mask results that do not meet criteria defined by the `missing` method.
-            # This means all outputs must have the same dimensions as the broadcasted inputs (excluding time)
-            mask = self._mask(*das.values(), indexer=indexer, **params)
-            outs = [out.where(~mask) for out in outs]
+        outs = self._postprocess(outs, das, params, indexer)
 
         # Return a single DataArray in case of single output, otherwise a tuple
         if self.n_outs == 1:
@@ -901,6 +857,18 @@ class Indicator(IndicatorRegistrar):
                         "Passing variable names as string requires giving the `ds` "
                         f"dataset (got {name}='{ba.arguments[name]}')"
                     )
+
+    def _preprocess_and_checks(self, das, params, indexer):
+        """Actions to be done after parsing the arguments and before computing."""
+        # Pre-computation validation checks on DataArray arguments
+        self._bind_call(self.datacheck, **das)
+        self._bind_call(self.cfcheck, **das)
+
+        return das, params, indexer
+
+    def _postprocess(self, outs, das, params, indexer):
+        """Actions to done after computing."""
+        return outs
 
     def _bind_call(self, func, **das):
         """Call function using `__call__` `DataArray` arguments.
@@ -1185,29 +1153,6 @@ class Indicator(IndicatorRegistrar):
 
         return out
 
-    def _default_freq(self, **indexer):
-        """Return default frequency."""
-        if self.freq in ["D", "H"]:
-            return indices.generic.default_freq(**indexer)
-        return None
-
-    def _mask(self, *args, indexer=None, **kwds):
-        """Return whether mask for output values, based on the output of the `missing` method."""
-        from functools import reduce
-
-        freq = kwds.get("freq", self._default_freq(**(indexer or {})))
-
-        options = self.missing_options or OPTIONS[MISSING_OPTIONS].get(self.missing, {})
-
-        # We flag periods according to the missing method. skip variables without a time coordinate.
-        src_freq = self.freq if isinstance(self.freq, str) else None
-        miss = (
-            self._missing(da, freq, src_freq, options, indexer)
-            for da in args
-            if "time" in da.coords
-        )
-        return reduce(np.logical_or, miss)
-
     # The following static methods are meant to be replaced to define custom indicators.
     @staticmethod
     def compute(*args, **kwds):
@@ -1217,8 +1162,7 @@ class Indicator(IndicatorRegistrar):
         """
         raise NotImplementedError
 
-    @staticmethod
-    def cfcheck(**das):
+    def cfcheck(self, **das):
         """Compare metadata attributes to CF-Convention standards.
 
         Default cfchecks use the specifications in `xclim.core.utils.VARIABLES`,
@@ -1234,19 +1178,22 @@ class Indicator(IndicatorRegistrar):
                 # Silently ignore unknown variables.
                 pass
 
-    @staticmethod
-    def datacheck(**das):
+    def datacheck(self, **das):
         """Verify that input data is valid.
 
         When subclassing this method, use functions decorated using `xclim.core.options.datacheck`.
 
         For example, checks could include:
 
-        * assert temporal frequency is daily
         * assert no precipitation is negative
         * assert no temperature has the same value 5 days in a row
+
+        This base datacheck checks that the input data has a valid sampling frequency, as given in self.src_freq.
         """
-        pass
+        if self.src_freq is not None:
+            for key, da in das.items():
+                if "time" in da.coords and da.time.ndim == 1 and len(da.time) > 3:
+                    datachecks.check_freq(da, self.src_freq, strict=True)
 
     def __getattr__(self, attr):
         if attr in self._cf_names:
@@ -1285,47 +1232,109 @@ class Indicator(IndicatorRegistrar):
         }
 
 
-class Daily(Indicator):
-    """Indicator defined for inputs at daily frequency."""
+class ResamplingIndicator(Indicator):
+    """Indicator that performs a resampling computation.
 
-    freq = "D"
+    Compared to the base Indicator, this adds the handling of missing data,
+    and the check of allowed periods.
 
-    @staticmethod
-    def datacheck(**das):  # noqa
-        for key, da in das.items():
-            if "time" in da.coords and da.time.ndim == 1 and len(da.time) > 3:
-                datachecks.check_daily(da)
-
-
-class Hourly(Indicator):
-    """Indicator defined for inputs at strict hourly frequency, meaning 3-hourly inputs would raise an error."""
-
-    freq = "H"
-
-    @staticmethod
-    def datacheck(**das):  # noqa
-        for key, da in das.items():
-            datachecks.check_freq(da, "H")
-
-
-class DailyWeeklyMonthly(Indicator):
-    """Indicator defined for inputs at daily, weekly or monthly frequencies.
-
-    Required by ANUCLIM indicators.
+    Parameters
+    ----------
+    missing: {any, wmo, pct, at_least_n, skip, from_context}
+      The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods. If
+      None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
+    missing_options : dict, None
+      Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
+    allowed_periods : Sequence[str], optional
+      A list of allowed periods, i.e. base parts of the `freq` parameter. For example, indicators meant to be
+      computed annually only will have `allowed_periods=["A"]`. `None` means "any period" or that the
+      indicator doesn't take a `freq` argument.
     """
 
-    freq = ["D", "7D", "M"]
+    missing = "from_context"
+    missing_options = None
+    allowed_periods = None
 
-    @staticmethod
-    def datacheck(**das):  # noqa
-        for key, da in das.items():
-            if "time" in da.coords and da.time.ndim == 1 and len(da.time) > 3:
-                datachecks.check_freq(da, ["D", "7D", "M"], strict=True)
+    @classmethod
+    def _ensure_correct_parameters(cls, parameters):
+        if "freq" not in parameters:
+            raise ValueError(
+                "ResamplingIndicator require a 'freq' argument, use the base Indicator"
+                " class if your computation doesn't perform any resampling."
+            )
+        return super()._ensure_correct_parameters(parameters)
+
+    def __init__(self, **kwds):
+        if self.missing == "from_context" and self.missing_options is not None:
+            raise ValueError(
+                "Cannot set `missing_options` with `missing` method being from context."
+            )
+
+        # Validate hard-coded missing options
+        kls = MISSING_METHODS[self.missing]
+        self._missing = kls.execute
+        if self.missing_options:
+            kls.validate(**self.missing_options)
+
+        super().__init__(**kwds)
+
+    def _preprocess_and_checks(self, das, params, indexer):
+        """Perform parent's checks and also check if freq is allowed."""
+        das, params, indexer = super()._preprocess_and_checks(das, params, indexer)
+
+        # Check if the period is allowed:
+        if (
+            self.allowed_periods is not None
+            and parse_offset(params["freq"])[1] not in self.allowed_periods
+        ):
+            raise ValueError(
+                f"Resampling frequency {params['freq']} is not allowed for indicator "
+                f"{self.identifier} (needs something equivalent to one "
+                f"of {self.allowed_periods})."
+            )
+
+        return das, params, indexer
+
+    def _postprocess(self, outs, das, params, indexer):
+        """Masking of missing values."""
+        outs = super()._postprocess(outs, das, params, indexer)
+
+        if self.missing != "skip":
+            # Mask results that do not meet criteria defined by the `missing` method.
+            # This means all outputs must have the same dimensions as the broadcasted inputs (excluding time)
+            options = self.missing_options or OPTIONS[MISSING_OPTIONS].get(
+                self.missing, {}
+            )
+
+            # We flag periods according to the missing method. skip variables without a time coordinate.
+            src_freq = self.src_freq if isinstance(self.src_freq, str) else None
+            miss = (
+                self._missing(da, params["freq"], src_freq, options, indexer)
+                for da in das.values()
+                if "time" in da.coords
+            )
+            mask = reduce(np.logical_or, miss)
+            outs = [out.where(~mask) for out in outs]
+
+        return outs
 
 
+class Daily(ResamplingIndicator):
+    """Class for daily inputs and resampling computes."""
+
+    src_freq = "D"
+
+
+class Hourly(ResamplingIndicator):
+    """Class for hourly inputs and resampling computes."""
+
+    src_freq = "H"
+
+
+base_registry["Indicator"] = Indicator
+base_registry["ResamplingIndicator"] = ResamplingIndicator
 base_registry["Hourly"] = Hourly
 base_registry["Daily"] = Daily
-base_registry["DailyWeeklyMonthly"] = DailyWeeklyMonthly
 
 
 def add_iter_indicators(module):
