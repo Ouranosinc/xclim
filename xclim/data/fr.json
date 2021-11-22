@@ -434,9 +434,9 @@
     "abstract": "Le nombre de jours où Tmax est au-dessus d'un seuil et Tmin en dessous d'un seuil, habituellement 0 °C pour les deux."
   },
   "COOLING_DEGREE_DAYS": {
-    "long_name": "Degrés-jours de réfrigération (Tmoy > {thresh})",
-    "description": "Cumul {freq:m} des degrés-jours de réfrigération (Température au-dessus de {thresh}).",
-    "title": "Degrés-jours de réfrigération",
+    "long_name": "Degrés-jours de climatisation (Tmoy > {thresh})",
+    "description": "Cumul {freq:m} des degrés-jours de climatisation (Température au-dessus de {thresh}).",
+    "title": "Degrés-jours de climatisation",
     "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est au-dessus d'un seuil et que les immeubles doivent être réfrigérés."
   },
   "HEATING_DEGREE_DAYS": {
@@ -503,9 +503,9 @@
     "abstract": "Nombre de jours où la température journalière minimale est sous un seuil."
   },
   "ICE_DAYS": {
-    "long_name": "Nombre de jours froids (Tmax < {thresh})",
+    "long_name": "Nombre de jours de glace (Tmax < {thresh})",
     "description": "Nombre {freq:m} de jours où la température journalière maximale est sous {thresh}.",
-    "title": "Nombre de jours froids",
+    "title": "Nombre de jours de glace",
     "abstract": "Nombre de jours où la température journalière maximale est sous un seuil."
   },
   "CONSECUTIVE_FROST_DAYS": {
