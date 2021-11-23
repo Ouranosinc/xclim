@@ -1348,7 +1348,7 @@ class ResamplingIndicatorWithIndexing(ResamplingIndicator):
 
     @classmethod
     def _injected_parameters(self):
-        return super()._injected_parameters + [
+        return super()._injected_parameters() + [
             (
                 "indexer",
                 Parameter(
@@ -1366,20 +1366,20 @@ class ResamplingIndicatorWithIndexing(ResamplingIndicator):
         """Perform parent's checks and also check if freq is allowed."""
         das, params = super()._preprocess_and_checks(das, params)
 
-        indexer = params.get("indexer")
-        if indexer:
-            # do things
-            pass
+        indxr = params.get("indexer")
+        if indxr:
+            das = {k: indices.generic.select_time(da, **indxr) for k, da in das.items()}
+            print(das)
         return das, params
 
 
-class Daily(ResamplingIndicator):
+class Daily(ResamplingIndicatorWithIndexing):
     """Class for daily inputs and resampling computes."""
 
     src_freq = "D"
 
 
-class Hourly(ResamplingIndicator):
+class Hourly(ResamplingIndicatorWithIndexing):
     """Class for hourly inputs and resampling computes."""
 
     src_freq = "H"
@@ -1387,6 +1387,7 @@ class Hourly(ResamplingIndicator):
 
 base_registry["Indicator"] = Indicator
 base_registry["ResamplingIndicator"] = ResamplingIndicator
+base_registry["ResamplingIndicatorWithIndexing"] = ResamplingIndicatorWithIndexing
 base_registry["Hourly"] = Hourly
 base_registry["Daily"] = Daily
 

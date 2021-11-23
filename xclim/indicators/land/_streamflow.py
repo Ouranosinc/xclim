@@ -1,7 +1,7 @@
 """Streamflow indicator definitions."""
 
 from xclim.core.cfchecks import check_valid
-from xclim.core.indicator import Daily, Indicator
+from xclim.core.indicator import Indicator, ResamplingIndicator
 from xclim.core.units import declare_units
 from xclim.indices import base_flow_index, generic, rb_flashiness_index
 from xclim.indices.stats import fit as _fit
@@ -18,8 +18,9 @@ __all__ = [
 ]
 
 
-class Streamflow(Daily):
+class Streamflow(ResamplingIndicator):
     context = "hydro"
+    src_freq = "D"
 
     @staticmethod
     def cfcheck(q):
