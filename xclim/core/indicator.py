@@ -770,8 +770,7 @@ class Indicator(IndicatorRegistrar):
         """Call function of Indicator class."""
         # Put the variables in `das`, parse them according to the annotations
         # das : OrderedDict of variables (required + non-None optionals)
-        # params : OrderedDict of parameters INCLUDING unpacked kwargs and injected EXCLUDING indexer
-        # indexer: If present, the "indexer" kwargs <- this is needed by _update_attrs and _mask
+        # params : OrderedDict of parameters (var_kwargs as a single argument, if any)
         das, params = self._parse_variables_from_call(args, kwds)
 
         das, params = self._preprocess_and_checks(das, params)
@@ -1367,7 +1366,7 @@ class ResamplingIndicatorWithIndexing(ResamplingIndicator):
         """Perform parent's checks and also check if freq is allowed."""
         das, params = super()._preprocess_and_checks(das, params)
 
-        indexer = params.pop("indexer")
+        indexer = params.get("indexer")
         if indexer:
             # do things
             pass
