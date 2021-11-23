@@ -1045,6 +1045,41 @@ class TestTxDays:
         np.testing.assert_array_equal(out[1:], [0])
 
 
+class TestJetStreamIndices:
+    # data needs to consist of at least 61 days for Lanczos filter (here: 66 days)
+    time_coords = pd.date_range("2000-01-01", "2000-03-06", freq="D")
+    # make random ua data array of shape (66 days, 3 plevs, 5 lons, 5 lats)
+    np.random.seed(42)
+    da_ua = xr.DataArray(
+        np.random.rand(66, 3, 5, 5),
+        coords={
+            "time": time_coords,
+            "plev": [75000, 85000, 100000],
+            "lon": [-60, -59, -58, -57, -56],
+            "lat": [15, 16, 17, 18, 19],
+        },
+        dims=["time", "plev", "lon", "lat"],
+        attrs={
+            "standard_name": "eastward_wind",
+            "units": "m s-1",
+        },
+    )
+    da_ua.plev.attrs["units"] = "Pa"
+
+    def test_jetstream_metric_woolings(self):
+        da_ua = self.da_ua
+        out = xci.jetstream_metric_woolings(da_ua)
+        np.testing.assert_equal(len(out), 2)
+        jetlat, jetstr = out
+        # should be 6 values that are not NaN because of 61 day moving window and 66 chosen
+        np.testing.assert_equal(np.sum(~np.isnan(jetlat).data), 6)
+        np.testing.assert_equal(np.sum(~np.isnan(jetstr).data), 6)
+        np.testing.assert_equal(jetlat.max().data, 19.0)
+        np.testing.assert_equal(jetstr.max().data, 0.5620588628647811)
+        assert jetlat.units == "deg"
+        assert jetstr.units == "m s-1"
+
+
 class TestLiquidPrecipitationRatio:
     def test_simple(self, pr_series, tas_series):
         pr = np.zeros(100)
