@@ -74,7 +74,7 @@ __all__ = [
     "sea_ice_area",
     "sea_ice_extent",
     "windy_days",
-    "jetstream",
+    "jetstream_metric_woolings",
 ]
 
 
@@ -2061,7 +2061,7 @@ def windy_days(
 
 
 @declare_units(ua="[speed]")
-def jetstream(
+def jetstream_metric_woolings(
     ua: xarray.DataArray,
 ) -> xarray.DataArray:
     """Strength and latitude of jetstream.
@@ -2071,7 +2071,7 @@ def jetstream(
     Parameters
     ----------
     ua : xarray.DataArray
-      Wind velocity at between 750 and 950 hPa.
+      u-component wind velocity at between 750 and 950 hPa.
 
     Returns
     -------
