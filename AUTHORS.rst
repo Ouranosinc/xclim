@@ -28,4 +28,4 @@ Contributors
 * Clair Barnes <clair.barnes.16@ucl.ac.uk> `@clairbarnes <https://github.com/clairbarnes>`_
 * Raquel Alegre <raquel.alegre@gmail.com> `@raquel-ucl <https://github.com/raquel-ucl>`_
 * Abel Aoun <aoun.abel@gmail.com> `@bzah <https://github.com/bzah>`_
-* Tom Keel <thomas.keel.18@ucl.ac.uk> `@Thomasjkeel-ucl <https://github.com/Thomasjkeel>`_
+* Tom Keel <thomas.keel.18@ucl.ac.uk> `@Thomasjkeel <https://github.com/Thomasjkeel>`_
