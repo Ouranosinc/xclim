@@ -1337,7 +1337,9 @@ class ResamplingIndicator(Indicator):
                 for da in das.values()
                 if "time" in da.coords
             )
-            mask = reduce(np.logical_or, miss)
+            # Reduce by or and broadcast to ensure the same length in time
+            # When indexing is used and there are no valid points in the last period, mask will not include it
+            mask = reduce(np.logical_or, miss).reindex_like(outs[0], fill_value=True)
             outs = [out.where(~mask) for out in outs]
 
         return outs
@@ -1369,7 +1371,6 @@ class ResamplingIndicatorWithIndexing(ResamplingIndicator):
         indxr = params.get("indexer")
         if indxr:
             das = {k: indices.generic.select_time(da, **indxr) for k, da in das.items()}
-            print(das)
         return das, params
 
 

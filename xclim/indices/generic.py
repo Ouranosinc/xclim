@@ -61,7 +61,7 @@ binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "n
 
 def select_time(
     da: Union[xr.DataArray, xr.Dataset],
-    drop: bool = True,
+    drop: bool = False,
     season: Union[str, Sequence[str]] = None,
     month: Union[int, Sequence[int]] = None,
     doy_bounds: Tuple[int, int] = None,
