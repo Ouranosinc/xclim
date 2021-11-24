@@ -109,13 +109,13 @@ def select_time(
     >>> ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
     >>> ds.time.size
     1461
-    >>> out = select_time(ds, season=['MAM', 'SON'])
+    >>> out = select_time(ds, drop=True, season=['MAM', 'SON'])
     >>> out.time.size
     732
 
     Or all values between two dates (included).
 
-    >>> out = select_time(ds, date_bounds=('02-29', '03-02'))
+    >>> out = select_time(ds, drop=True, date_bounds=('02-29', '03-02'))
     >>> out.time.values
     array(['1990-03-01T00:00:00.000000000', '1990-03-02T00:00:00.000000000',
            '1991-03-01T00:00:00.000000000', '1991-03-02T00:00:00.000000000',
