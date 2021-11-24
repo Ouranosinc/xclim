@@ -74,7 +74,7 @@ uniIndPr = Daily(
 @declare_units(da="[temperature]")
 def uniclim_compute(da: xr.DataArray, freq="YS", **indexer):
     select = select_time(da, **indexer)
-    return select.mean(dim="time", keep_attrs=True)
+    return select.mean(dim="time", keep_attrs=True).expand_dims("time")
 
 
 uniClim = ResamplingIndicator(

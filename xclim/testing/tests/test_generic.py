@@ -316,7 +316,7 @@ def series(start, end, calendar):
 def test_select_time_month():
     da = series("1993-01-05", "1994-12-31", "default")
 
-    out = generic.select_time(da, month=1)
+    out = generic.select_time(da, drop=True, month=1)
     exp = xr.concat(
         (
             series("1993-01-05", "1993-01-31", "default"),
@@ -326,12 +326,12 @@ def test_select_time_month():
     )
     xr.testing.assert_equal(out, exp)
 
-    out = generic.select_time(da, month=1, drop=False)
+    out = generic.select_time(da, month=1)
     xr.testing.assert_equal(out.time, da.time)
     assert out.sum() == 58
 
     da = series("1993-01-05", "1994-12-30", "360_day")
-    out = generic.select_time(da, month=[3, 6])
+    out = generic.select_time(da, drop=True, month=[3, 6])
     exp = xr.concat(
         (
             series("1993-03-01", "1993-03-30", "360_day"),
@@ -347,7 +347,7 @@ def test_select_time_month():
 def test_select_time_season():
     da = series("1993-01-05", "1994-12-31", "default")
 
-    out = generic.select_time(da, season="DJF")
+    out = generic.select_time(da, drop=True, season="DJF")
     exp = xr.concat(
         (
             series("1993-01-05", "1993-02-28", "default"),
@@ -359,7 +359,7 @@ def test_select_time_season():
     xr.testing.assert_equal(out, exp)
 
     da = series("1993-01-05", "1994-12-31", "365_day")
-    out = generic.select_time(da, season=["MAM", "SON"])
+    out = generic.select_time(da, drop=True, season=["MAM", "SON"])
     exp = xr.concat(
         (
             series("1993-03-01", "1993-05-31", "365_day"),
@@ -375,7 +375,7 @@ def test_select_time_season():
 def test_select_time_doys():
     da = series("2003-02-13", "2004-12-31", "default")
 
-    out = generic.select_time(da, doy_bounds=(360, 75))
+    out = generic.select_time(da, drop=True, doy_bounds=(360, 75))
     exp = xr.concat(
         (
             series("2003-02-13", "2003-03-16", "default"),
@@ -388,7 +388,7 @@ def test_select_time_doys():
 
     da = series("2003-02-13", "2004-12-31", "proleptic_gregorian")
 
-    out = generic.select_time(da, doy_bounds=(25, 80))
+    out = generic.select_time(da, drop=True, doy_bounds=(25, 80))
     exp = xr.concat(
         (
             series("2003-02-13", "2003-03-21", "proleptic_gregorian"),
@@ -403,7 +403,7 @@ def test_select_time_dates():
     da = series("2003-02-13", "2004-11-01", "all_leap")
     da = da.where(da.time.dt.dayofyear != 92, drop=True)  # no 04-01
 
-    out = generic.select_time(da, date_bounds=("04-01", "12-04"))
+    out = generic.select_time(da, drop=True, date_bounds=("04-01", "12-04"))
     exp = xr.concat(
         (
             series("2003-04-02", "2003-12-04", "all_leap"),
@@ -415,7 +415,7 @@ def test_select_time_dates():
 
     da = series("2003-02-13", "2005-11-01", "standard")
 
-    out = generic.select_time(da, date_bounds=("10-05", "02-29"))
+    out = generic.select_time(da, drop=True, date_bounds=("10-05", "02-29"))
     exp = xr.concat(
         (
             series("2003-02-13", "2003-02-28", "standard"),
