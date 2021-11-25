@@ -140,14 +140,6 @@ def select_time(
             month = [month]
         mask = da.time.dt.month.isin(month)
 
-    elif doy_bounds is not None:
-        start, end = doy_bounds
-        if start <= end:
-            doys = np.arange(start, end + 1)
-        else:
-            doys = np.concatenate((np.arange(start, 367), np.arange(0, end + 1)))
-        mask = da.time.dt.dayofyear.isin(doys)
-
     elif date_bounds is not None:
         # This one is a bit trickier.
         start, end = date_bounds
@@ -162,16 +154,21 @@ def select_time(
             calendar = "all_leap"
 
         # Get doy of date, this is now safe because the calendar is uniform.
-        start = to_cftime_datetime("2000-" + start, calendar).dayofyr
-        end = to_cftime_datetime("2000-" + end, calendar).dayofyr
+        doy_bounds = (
+            to_cftime_datetime("2000-" + start, calendar).dayofyr,
+            to_cftime_datetime("2000-" + end, calendar).dayofyr,
+        )
 
+    if doy_bounds is not None:
+        start, end = doy_bounds
         if start <= end:
             doys = np.arange(start, end + 1)
         else:
             doys = np.concatenate((np.arange(start, 367), np.arange(0, end + 1)))
-        mask = time.time.dt.dayofyear.isin(doys)
-        mask["time"] = da.time  # If we converted, this puts back the correct coord.
+        mask = da.time.dt.dayofyear.isin(doys)
 
+    # Needed if we converted calendar in date_bounds, this puts back the correct coord, useless and inoffensive otherwise
+    mask["time"] = da.time
     return da.where(mask, drop=drop)
 
 
