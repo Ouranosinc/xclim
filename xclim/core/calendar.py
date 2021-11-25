@@ -449,10 +449,8 @@ def _convert_datetime(
         return np.nan
 
 
-def ensure_cftime_array(
-    time: Sequence,
-) -> np.ndarray:
-    """Convert an input 1D array to an array of cftime objects.
+def ensure_cftime_array(time: Sequence) -> np.ndarray:
+    """Convert an input 1D array to a numpy array of cftime objects.
 
     Python's datetime are converted to cftime.DatetimeGregorian ("standard" calendar).
 
