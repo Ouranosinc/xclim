@@ -331,7 +331,7 @@ def test_convert_calendar_missing(source, target, freq):
         ("standard", "noleap"),
         ("noleap", "default"),
         ("standard", "360_day"),
-        ("360_day", "gregorian"),
+        ("360_day", "standard"),
         ("noleap", "all_leap"),
         ("360_day", "noleap"),
     ],
@@ -368,20 +368,20 @@ def test_interp_calendar(source, target):
                 dims=("time",),
                 name="time",
             ),
-            "gregorian",
+            "standard",
         ),
-        (date_range("2004-01-01", "2004-01-10", freq="D"), "gregorian"),
+        (date_range("2004-01-01", "2004-01-10", freq="D"), "standard"),
         (
             xr.DataArray(date_range("2004-01-01", "2004-01-10", freq="D")).values,
-            "gregorian",
+            "standard",
         ),
-        (date_range("2004-01-01", "2004-01-10", freq="D"), "gregorian"),
+        (date_range("2004-01-01", "2004-01-10", freq="D"), "standard"),
         (date_range("2004-01-01", "2004-01-10", freq="D", calendar="julian"), "julian"),
     ],
 )
 def test_ensure_cftime_array(inp, calout):
     out = ensure_cftime_array(inp)
-    assert out[0].calendar == calout
+    assert get_calendar(out) == calout
 
 
 @pytest.mark.parametrize(
@@ -391,7 +391,7 @@ def test_ensure_cftime_array(inp, calout):
         (2004, "noleap", 365),
         (2004, "all_leap", 366),
         (1500, "default", 365),
-        (1500, "gregorian", 366),
+        (1500, "standard", 366),
         (1500, "proleptic_gregorian", 365),
         (2030, "360_day", 360),
     ],
