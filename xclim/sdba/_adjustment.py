@@ -294,6 +294,7 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
 
 
 def _fit_on_cluster(data, thresh, dist, cluster_thresh):
+    """Extract clusters on 1D data and fit "dist" on the maximums."""
     _, _, _, maximums = u.get_clusters_1d(data, thresh, cluster_thresh)
     params = list(
         _fitfunc_1d(maximums - thresh, dist=dist, floc=0, nparams=3, method="ML")
@@ -304,25 +305,31 @@ def _fit_on_cluster(data, thresh, dist, cluster_thresh):
 
 
 def _extremes_train_1d(ref, hist, ref_params, *, q_thresh, cluster_thresh, dist, N):
+    """Train for method ExtremeValues, only for 1D input along time."""
+    # Find quantile q_thresh
     thresh = (
         np.quantile(ref[ref >= cluster_thresh], q_thresh)
         + np.quantile(hist[hist >= cluster_thresh], q_thresh)
     ) / 2
 
+    # Fit genpareto on cluster maximums on ref (if needed) and hist.
     if np.isnan(ref_params).all():
         ref_params = _fit_on_cluster(ref, thresh, dist, cluster_thresh)
 
     hist_params = _fit_on_cluster(hist, thresh, dist, cluster_thresh)
 
+    # Find probabilities of extremes according to fitted dist
     Px_ref = dist.cdf(ref[ref >= thresh], *ref_params)
     hist = hist[hist >= thresh]
     Px_hist = dist.cdf(hist, *hist_params)
 
+    # Find common probabilities range.
     Pmax = min(Px_ref.max(), Px_hist.max())
     Pmin = max(Px_ref.min(), Px_hist.min())
-
     Pcommon = (Px_hist <= Pmax) & (Px_hist >= Pmin)
     Px_hist = Px_hist[Pcommon]
+
+    # Find values of hist extremes if they followed ref's distribution.
     hist_in_ref = dist.ppf(Px_hist, *ref_params)
 
     # Adjustment factors, unsorted
@@ -365,6 +372,7 @@ def extremes_train(ds, *, group, q_thresh, cluster_thresh, dist, quantiles):
 
 
 def _fit_cluster_and_cdf(data, thresh, dist, cluster_thresh):
+    """Fit 1D cluster maximums and immediatly compute CDF."""
     fut_params = _fit_on_cluster(data, thresh, dist, cluster_thresh)
     return dist.cdf(data, *fut_params)
 
@@ -373,6 +381,7 @@ def _fit_cluster_and_cdf(data, thresh, dist, cluster_thresh):
 def extremes_adjust(
     ds, *, group, frac, power, dist, interp, extrapolation, cluster_thresh
 ):
+    # Find probabilities of extremes of fut according to its own cluster-fitted dist.
     px_fut = xr.apply_ufunc(
         _fit_cluster_and_cdf,
         ds.sim,
@@ -383,13 +392,16 @@ def extremes_adjust(
         vectorize=True,
     )
 
+    # Extrapolate adjustment factors
     af, px_hist = u.extrapolate_qm(
         ds.af, ds.px_hist, method=extrapolation, abs_bounds=(0, 1)
     )
 
+    # Find factors by interpolating from hist probs to fut probs. apply them.
     af = u.interp_on_quantiles(px_fut, px_hist, af, method=interp)
     scen = u.apply_correction(ds.sim, af, "*")
 
+    # Smooth transition function between sim and scen
     transition = (
         ((ds.sim - ds.thresh) / ((ds.sim.max("time")) - ds.thresh)) / frac
     ) ** power
