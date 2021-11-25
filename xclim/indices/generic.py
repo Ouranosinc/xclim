@@ -89,11 +89,11 @@ def select_time(
       The bounds as (start, end) of the period of interest expressed in day-of-year,
       integers going from 1 (January 1st) to 365 or 366 (December 31st). If calendar
       awareness is needed, consider using ``date_bounds`` instead.
-      Bounds are included in the result.
+      Bounds are inclusive.
     date_bounds: 2-tuple of strings
       The bounds as (start, end) of the period of interest expressed as dates in the
       month-day (%m-%d) format.
-      Bounds are included in the result.
+      Bounds are inclusive.
 
     Returns
     -------
