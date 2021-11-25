@@ -418,14 +418,7 @@ def test_all_parameters_understood(official_indicators):
 
 def test_signature():
     sig = signature(xclim.atmos.solid_precip_accumulation)
-    assert list(sig.parameters.keys()) == [
-        "pr",
-        "tas",
-        "thresh",
-        "freq",
-        "ds",
-        "indexer",
-    ]
+    assert list(sig.parameters.keys()) == ["pr", "tas", "thresh", "freq", "ds"]
     assert sig.parameters["pr"].annotation == Union[xr.DataArray, str]
     assert sig.parameters["tas"].default == "tas"
     assert sig.parameters["tas"].kind == sig.parameters["tas"].POSITIONAL_OR_KEYWORD
@@ -735,17 +728,21 @@ def test_resamplingIndicator_new_error():
         )
 
 
-def test_resampling_indicator_with_indexing(pr_series):
-    pr = pr_series(np.ones(731), start="2003-01-01", units="mm/d")
+def test_resampling_indicator_with_indexing(tas_series):
+    tas = tas_series(np.ones(731) + 273.15, start="2003-01-01")
 
-    out = xclim.atmos.precip_accumulation(pr, freq="YS")
+    out = xclim.atmos.tx_days_above(tas, thresh="0 degC", freq="YS")
     np.testing.assert_allclose(out, [365, 366])
 
-    out = xclim.atmos.precip_accumulation(pr, freq="YS", month=2)
+    out = xclim.atmos.tx_days_above(tas, thresh="0 degC", freq="YS", month=2)
     np.testing.assert_allclose(out, [28, 29])
 
-    out = xclim.atmos.precip_accumulation(pr, freq="AS-JUL", doy_bounds=(1, 50))
+    out = xclim.atmos.tx_days_above(
+        tas, thresh="0 degC", freq="AS-JUL", doy_bounds=(1, 50)
+    )
     np.testing.assert_allclose(out, [50, 50, np.NaN])
 
-    out = xclim.atmos.precip_accumulation(pr, freq="YS", date_bounds=("02-29", "04-01"))
+    out = xclim.atmos.tx_days_above(
+        tas, thresh="0 degC", freq="YS", date_bounds=("02-29", "04-01")
+    )
     np.testing.assert_allclose(out, [32, 33])

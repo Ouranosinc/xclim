@@ -1154,7 +1154,7 @@ class Indicator(IndicatorRegistrar):
                 mba[k] = "{:g}".format(v)
             # TODO: What about InputKind.NUMBER_SEQUENCE
             elif k == "indexer":
-                if v:
+                if v and v is not _empty:
                     dk, dv = v.copy().popitem()
                     if dk == "month":
                         dv = f"m{dv}"

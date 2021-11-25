@@ -442,5 +442,5 @@ def test_select_time_errors():
     with pytest.raises(ValueError):
         generic.select_time(da, date_bounds=("02-30",))
 
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         generic.select_time(da, doy_bounds=(300, 203, 202))
