@@ -168,6 +168,7 @@ def test_get_calendar(file, cal, maxdoy):
         (pd.Timestamp.now(), "default"),
         (cftime.DatetimeAllLeap(2000, 1, 1), "all_leap"),
         (np.array([cftime.DatetimeNoLeap(2000, 1, 1)]), "noleap"),
+        (xr.cftime_range("2000-01-01", periods=4, freq="D"), "standard"),
     ],
 )
 def test_get_calendar_nonxr(obj, cal):
