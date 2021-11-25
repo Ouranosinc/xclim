@@ -175,6 +175,12 @@ def test_get_calendar_nonxr(obj, cal):
     assert get_calendar(obj) == cal
 
 
+@pytest.mark.parametrize("obj", ["astring", {"a": "dict"}, lambda x: x])
+def test_get_calendar_errors(obj):
+    with pytest.raises(ValueError, match="Calendar could not be inferred from object"):
+        get_calendar(obj)
+
+
 @pytest.mark.parametrize(
     "source,target,target_as_str,freq",
     [
@@ -376,7 +382,7 @@ def test_interp_calendar(source, target):
             xr.DataArray(date_range("2004-01-01", "2004-01-10", freq="D")).values,
             "standard",
         ),
-        (date_range("2004-01-01", "2004-01-10", freq="D"), "standard"),
+        (date_range("2004-01-01", "2004-01-10", freq="D").values, "standard"),
         (date_range("2004-01-01", "2004-01-10", freq="D", calendar="julian"), "julian"),
     ],
 )
