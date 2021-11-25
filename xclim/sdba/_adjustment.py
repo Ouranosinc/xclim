@@ -335,7 +335,9 @@ def _extremes_train_1d(ref, hist, ref_params, *, q_thresh, cluster_thresh, dist,
     return px_hist, af, thresh
 
 
-@map_blocks(reduces=["time"], px_hist=["quantiles"], af=["quantiles"], thresh=[])
+@map_blocks(
+    reduces=["time"], px_hist=["quantiles"], af=["quantiles"], thresh=[Grouper.PROP]
+)
 def extremes_train(ds, *, group, q_thresh, cluster_thresh, dist, quantiles):
     px_hist, af, thresh = xr.apply_ufunc(
         _extremes_train_1d,
@@ -352,6 +354,10 @@ def extremes_train(ds, *, group, q_thresh, cluster_thresh, dist, quantiles):
             "N": len(quantiles),
         },
     )
+    # Outputs of map_blocks must have dimensions.
+    if not isinstance(thresh, xr.DataArray):
+        thresh = xr.DataArray(thresh)
+    thresh = thresh.expand_dims(group=[1])
     return xr.Dataset(
         {"px_hist": px_hist, "af": af, "thresh": thresh},
         coords={"quantiles": quantiles},
@@ -363,7 +369,7 @@ def _fit_cluster_and_cdf(data, thresh, dist, cluster_thresh):
     return dist.cdf(data, *fut_params)
 
 
-@map_blocks(reduces=["quantiles"], scen=[])
+@map_blocks(reduces=["quantiles", Grouper.PROP], scen=[])
 def extremes_adjust(
     ds, *, group, frac, power, dist, interp, extrapolation, cluster_thresh
 ):
@@ -389,4 +395,5 @@ def extremes_adjust(
     ) ** power
     transition = transition.clip(0, 1)
 
-    return (transition * scen) + ((1 - transition) * ds.scen)
+    out = (transition * scen) + ((1 - transition) * ds.scen)
+    return out.rename("scen").squeeze("group", drop=True).to_dataset()

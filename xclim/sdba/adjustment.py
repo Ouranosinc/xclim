@@ -610,8 +610,16 @@ class ExtremeValues(TrainAdjust):
         # Approximation of how many "quantiles" values we will get:
         N = (1 - q_thresh) * ref.time.size
 
+        # ref_params: cast nan to f32 not to interfere with map_blocks dtype parsing
+        #   ref and hist are f32, we want to have f32 in the output.
         ds = extremes_train(
-            xr.Dataset({"ref": ref, "hist": hist, "ref_params": ref_params}),
+            xr.Dataset(
+                {
+                    "ref": ref,
+                    "hist": hist,
+                    "ref_params": ref_params or np.float32(np.NaN),
+                }
+            ),
             q_thresh=q_thresh,
             cluster_thresh=cluster_thresh,
             dist=stats.get_dist("genpareto"),
