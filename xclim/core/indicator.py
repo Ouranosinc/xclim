@@ -1376,13 +1376,13 @@ class ResamplingIndicatorWithIndexing(ResamplingIndicator):
         return das, params
 
 
-class Daily(ResamplingIndicatorWithIndexing):
+class Daily(ResamplingIndicator):
     """Class for daily inputs and resampling computes."""
 
     src_freq = "D"
 
 
-class Hourly(ResamplingIndicatorWithIndexing):
+class Hourly(ResamplingIndicator):
     """Class for hourly inputs and resampling computes."""
 
     src_freq = "H"
