@@ -1153,15 +1153,20 @@ class Indicator(IndicatorRegistrar):
             elif isinstance(v, (int, float)):
                 mba[k] = "{:g}".format(v)
             # TODO: What about InputKind.NUMBER_SEQUENCE
+            elif k == "indexer":
+                if v:
+                    dk, dv = v.copy().popitem()
+                    if dk == "month":
+                        dv = f"m{dv}"
+                    elif dk in ("doy_bounds", "date_bounds"):
+                        dv = f"{dv[0]} to {dv[1]}"
+                    mba["indexer"] = dv
+                else:
+                    mba["indexer"] = args.get("freq") or indices.generic.default_freq(
+                        **v
+                    )
             else:
                 mba[k] = v
-        # if indexer:
-        #     dk, dv = indexer.copy().popitem()
-        #     if dk == "month":
-        #         dv = "m{}".format(dv)
-        #     mba["indexer"] = dv
-        # else:
-        #     mba["indexer"] = "annual"
 
         out = {}
         for key, val in attrs.items():

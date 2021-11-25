@@ -6,13 +6,13 @@ Generic indices submodule
 
 Helper functions for common generic actions done in the computation of indices.
 """
-from collections.abc import Iterable
 from typing import Optional, Sequence, Tuple, Union
 
+import cftime
 import numpy as np
 import xarray
 import xarray as xr
-from xarray.coding.cftime_offsets import to_cftime_datetime
+from xarray.coding.cftime_offsets import _MONTH_ABBREVIATIONS, to_cftime_datetime
 
 from xclim.core.calendar import (
     convert_calendar,
@@ -223,11 +223,15 @@ def default_freq(**indexer) -> str:
     freq = "AS-JAN"
     if indexer:
         group, value = indexer.popitem()
-        if isinstance(value, str) and "DJF" in value:
-            freq = "AS-DEC"
-        if group == "month" and isinstance(value, Iterable) and sorted(value) != value:
-            raise NotImplementedError
-
+        if group == "season":
+            month = 12  # The "season" scheme is based on AS-DEC
+        elif group == "month":
+            month = np.take(value, 0)
+        elif group == "doy_bounds":
+            month = cftime.num2date(value[0] - 1, "days since 2004-01-01").month
+        elif group == "date_bounds":
+            month = int(value[0][:2])
+        freq = "AS-" + _MONTH_ABBREVIATIONS[month]
     return freq
 
 
