@@ -10,6 +10,7 @@ indicators: map(include('indicator'), key=regex('^[-\w]+$'))
 indicator:
   abstract: str(required=False)
   allowed_periods: list(enum('A', 'Q', 'M', 'W'), required=False)
+  src_freq: list(str(), required=False)
   base: str(required=False)
   compute: str(required=False)
   input: map(str(), key=str(), required=False)

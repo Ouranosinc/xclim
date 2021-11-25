@@ -127,7 +127,8 @@ def multioptvar_compute(
     return tas
 
 
-multiOptVar = Daily(
+multiOptVar = Indicator(
+    src_freq="D",
     realm="atmos",
     identifier="multiopt",
     cf_attrs=[dict(units="K")],
@@ -251,6 +252,22 @@ def test_multiindicator(tas_series):
     assert tmin.attrs["description"] == "Grouped computation of tmax and tmin"
     assert tmax.attrs["description"] == "Grouped computation of tmax and tmin"
 
+    with pytest.raises(ValueError, match="Output #2 is missing a var_name!"):
+        ind = Daily(
+            realm="atmos",
+            identifier="minmaxtemp2",
+            cf_attrs=[
+                dict(
+                    var_name="tmin",
+                    units="K",
+                ),
+                dict(
+                    units="K",
+                ),
+            ],
+            compute=multitemp_compute,
+        )
+
     # Attrs passed as keywords - individually
     ind = Daily(
         realm="atmos",
@@ -268,6 +285,30 @@ def test_multiindicator(tas_series):
     assert tmin.attrs["description"] == "Grouped computation of tmax and tmin"
     assert tmax.attrs["description"] == "Grouped computation of tmax and tmin"
     assert ind.units == ["K", "K"]
+
+    # All must be the same length
+    with pytest.raises(ValueError, match="Attribute var_name has 2 elements"):
+        ind = Daily(
+            realm="atmos",
+            identifier="minmaxtemp3",
+            var_name=["tmin", "tmax"],
+            units="K",
+            standard_name=["Min temp"],
+            description="Grouped computation of tmax and tmin",
+            compute=uniindpr_compute,
+        )
+
+    ind = Daily(
+        realm="atmos",
+        identifier="minmaxtemp4",
+        var_name=["tmin", "tmax"],
+        units="K",
+        standard_name=["Min temp", ""],
+        description="Grouped computation of tmax and tmin",
+        compute=uniindtemp_compute,
+    )
+    with pytest.raises(ValueError, match="Indicator minmaxtemp4 was wrongly defined"):
+        tmin, tmax = ind(tas, freq="YS")
 
 
 def test_missing(tas_series):
@@ -569,7 +610,7 @@ def test_indicator_from_dict():
 
 
 def test_indicator_errors():
-    def func(data: xr.DataArray, thresh: str = "0 degC"):
+    def func(data: xr.DataArray, thresh: str = "0 degC", freq: str = "YS"):
         return data
 
     doc = [
@@ -583,6 +624,8 @@ def test_indicator_errors():
         "      A variable.",
         "    thresh : str",
         "      A threshold",
+        "    freq : str",
+        "      The resampling frequency.",
         "",
         "    Returns",
         "    -------",
@@ -611,7 +654,7 @@ def test_indicator_errors():
     d["identifier"] = "bad_indi"
     d["module"] = "test"
 
-    bad_doc = doc[:10] + ["    extra: bool", "      Woupsi"] + doc[10:]
+    bad_doc = doc[:12] + ["    extra: bool", "      Woupsi"] + doc[12:]
     func.__doc__ = "\n".join(bad_doc)
     with pytest.raises(ValueError, match="Malformed docstring"):
         Daily(**d)
@@ -642,6 +685,25 @@ def test_indicator_errors():
     with pytest.raises(AttributeError, match="Indicator's realm must be given as one"):
         Daily(**d)
 
+    def func(data: xr.DataArray, thresh: str = "0 degC"):
+        return data
+
+    func.__doc__ = "\n".join(doc[:10] + doc[12:])
+    d = dict(
+        realm="atmos",
+        cf_attrs=dict(
+            var_name="tmean{threshold}",
+            units="K",
+            long_name="{freq} mean surface temperature",
+            standard_name="{freq} mean temperature",
+            cell_methods=[{"time": "mean within days"}],
+        ),
+        compute=func,
+        input={"data": "tas"},
+    )
+    with pytest.raises(ValueError, match="ResamplingIndicator require a 'freq'"):
+        ind = Daily(identifier="indi", module="test", **d)
+
 
 def test_indicator_call_errors(tas_series):
     tas = tas_series(np.arange(730), start="2001-01-01")
@@ -652,3 +714,14 @@ def test_indicator_call_errors(tas_series):
 
     with pytest.raises(TypeError, match="got an unexpected keyword argument 'oups'"):
         uniIndTemp(tas, oups=3)
+
+
+def test_resamplingIndicator_new_error():
+    with pytest.raises(ValueError, match="ResamplingIndicator require a 'freq'"):
+        Daily(
+            realm="atmos",
+            identifier="multiopt",
+            cf_attrs=[dict(units="K")],
+            module="test",
+            compute=multioptvar_compute,
+        )
