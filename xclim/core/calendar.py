@@ -451,7 +451,7 @@ def _convert_datetime(
 
 def ensure_cftime_array(
     time: Sequence,
-) -> Union[CFTimeIndex, np.ndarray]:
+) -> np.ndarray:
     """Convert an input 1D array to an array of cftime objects.
 
     Python's datetime are converted to cftime.DatetimeGregorian ("standard" calendar).
