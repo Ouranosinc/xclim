@@ -533,6 +533,8 @@ class ExtremeValues(TrainAdjust):
     Only extreme values, whose quantile within the pool of large values are above
     `q_thresh`, are re-adjusted. See Notes.
 
+    This adjustment method should be considered experimental and used with care.
+
     Parameters
     ----------
     Train step:
