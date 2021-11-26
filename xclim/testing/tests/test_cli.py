@@ -56,7 +56,7 @@ def test_indicator_help(indicator, indname):
     results = runner.invoke(cli, [indname, "--help"])
 
     for name in indicator.parameters.keys():
-        if name != "ds":
+        if name not in ["ds", "indexer"]:
             assert name in results.output
 
 
