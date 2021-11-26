@@ -1154,7 +1154,7 @@ class Indicator(IndicatorRegistrar):
                 mba[k] = "{:g}".format(v)
             # TODO: What about InputKind.NUMBER_SEQUENCE
             elif k == "indexer":
-                if v and v is not _empty:
+                if v and v not in [_empty, _empty_default]:
                     dk, dv = v.copy().popitem()
                     if dk == "month":
                         dv = f"m{dv}"
@@ -1162,9 +1162,7 @@ class Indicator(IndicatorRegistrar):
                         dv = f"{dv[0]} to {dv[1]}"
                     mba["indexer"] = dv
                 else:
-                    mba["indexer"] = args.get("freq") or indices.generic.default_freq(
-                        **v
-                    )
+                    mba["indexer"] = args.get("freq") or indices.generic.default_freq()
             else:
                 mba[k] = v
 
