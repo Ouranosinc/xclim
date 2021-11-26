@@ -4,7 +4,11 @@ History
 
 0.32.0 (unreleased)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`)
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Tom Keel (:user:`Thomasjkeel`) Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`)
+
+New indicators
+^^^^^^^^^^^^^^
+* ``jetstream_metric_woolings`` indicator returns latitude and strength of jet-stream in u-wind field. (:pull:`924`, :issue:`923`).
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
