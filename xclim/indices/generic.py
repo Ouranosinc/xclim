@@ -271,7 +271,7 @@ def compare(da: xr.DataArray, op: str, thresh: Union[float, int]) -> xr.DataArra
 
 
 def threshold_count(
-    da: xr.DataArray, op: str, thresh: Union[float, int], freq: str
+    da: xr.DataArray, op: str, thresh: Union[float, int, xr.DataArray], freq: str
 ) -> xr.DataArray:
     """Count number of days where value is above or below threshold.
 
