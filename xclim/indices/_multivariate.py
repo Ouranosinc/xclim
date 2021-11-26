@@ -1106,7 +1106,8 @@ def days_over_precip_thresh(
     pr : xarray.DataArray
       Mean daily precipitation flux.
     per : xarray.DataArray
-      Daily percentile of wet day precipitation flux.
+      Percentile of wet day precipitation flux. Either computed daily (one value per day
+      of year) or computed over a period (one value per spatial point).
     thresh : str
        Precipitation value over which a day is considered wet.
     freq : str
@@ -1138,6 +1139,10 @@ def days_over_precip_thresh(
     if "dayofyear" in per.coords:
         # Create time series out of doy values.
         tp = resample_doy(tp, pr)
+    elif bootstrap:
+        raise KeyError(
+            "`bootstrap` can only be used with percentiles computed on day of year."
+        )
 
     # Compute the days where precip is both over the wet day threshold and the percentile threshold.
     out = threshold_count(pr, ">", tp, freq)
@@ -1189,6 +1194,10 @@ def fraction_over_precip_thresh(
     if "dayofyear" in per.coords:
         # Create time series out of doy values.
         tp = resample_doy(tp, pr)
+    else:
+        raise KeyError(
+            "`bootstrap` can only be used with percentiles computed on day of year."
+        )
 
     # Total precip during wet days over period
     total = pr.where(pr > thresh).resample(time=freq).sum(dim="time")
