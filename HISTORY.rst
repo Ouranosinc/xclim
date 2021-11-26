@@ -7,23 +7,24 @@ History
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`)
 
 New features and enhancements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Added an optimized pathway for ``xclim.indices.run_length`` functions when ``window=1``. (:pull:`911`, :issue:`910`).
-* The data input frequency expected by ``Indicator``s is now in the ``src_freq`` attribute and is thus controlable by subclassing existing indicators. (:issue:`898`, :pull:`927`).
+* The data input frequency expected by ``Indicator``s is now in the ``src_freq`` attribute and is thus controllable by subclassing existing indicators. (:issue:`898`, :pull:`927`).
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
 * Following version 1.9 of the CF Conventions, published in September 2021, the calendar name "gregorian" is deprecated. ``core.calendar.get_calendar`` will return "standard", even if the underlying cftime objects still use "gregorian" (cftime <= 1.5.1). (:pull:`935`).
 
 Internal changes
-~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^
 * Removed some logging configurations in ``dataflags`` that were polluting python's main logging configuration. (:pull:`909`).
 * Synchronized logging formatters in `xclim.ensembles` and `xclim.core.utils`. (:pull:`909`).
 * Added a helper function for generating the release notes with dynamically-generated ReStructuredText or Markdown-formatted hyperlinks (:pull:`922`, :issue:`907`).
 * Split of resampling-related functionality of ``Indicator``s into a new ``ResamplingIndicator`` subclass. The use of new (private) methods makes it easier to inject functionality in indicator subclasses. (:issue:`867`, :pull:`927`).
+* French translation metadata fields are now cleaner and much more internally consistent, and many empty metadata fields (e.g. ``comment_fr``) have been removed. (:pull:`930`, :issue:`929`).
 
 Bug fixes
-~~~~~~~~~
+^^^^^^^^^
 * Fix bugs in the `cf_attrs` and/or `abstract` of `continuous_snow_cover_end` and `continuous_snow_cover_start`. (:pull:`908`).
 
 0.31.0 (2021-11-05)
