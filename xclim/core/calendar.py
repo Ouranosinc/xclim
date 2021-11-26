@@ -70,19 +70,23 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
     -------
     str
       The cftime calendar name or "default" when the data is using numpy's or python's datetime types.
+      Will always return "standard" instead of "gregorian", following CF conventions 1.9.
     """
     if isinstance(obj, (xr.DataArray, xr.Dataset)):
         if obj[dim].dtype == "O":
             obj = obj[dim].where(obj[dim].notnull(), drop=True)[0].item()
         elif "datetime64" in obj[dim].dtype.name:
             return "default"
-
-    obj = np.take(
-        obj, 0
-    )  # Take zeroth element, overcome cases when arrays or lists are passed.
+    elif isinstance(obj, xr.CFTimeIndex):
+        obj = obj.values[0]
+    else:
+        obj = np.take(obj, 0)
+        # Take zeroth element, overcome cases when arrays or lists are passed.
     if isinstance(obj, pydt.datetime):  # Also covers pandas Timestamp
         return "default"
     if isinstance(obj, cftime.datetime):
+        if obj.calendar == "gregorian":
+            return "standard"
         return obj.calendar
 
     raise ValueError(f"Calendar could not be inferred from object of type {type(obj)}.")
@@ -445,12 +449,10 @@ def _convert_datetime(
         return np.nan
 
 
-def ensure_cftime_array(
-    time: Sequence,
-) -> Union[CFTimeIndex, np.ndarray]:
-    """Convert an input 1D array to an array of cftime objects.
+def ensure_cftime_array(time: Sequence) -> np.ndarray:
+    """Convert an input 1D array to a numpy array of cftime objects.
 
-    Python's datetime are converted to cftime.DatetimeGregorian.
+    Python's datetime are converted to cftime.DatetimeGregorian ("standard" calendar).
 
     Raises ValueError when unable to cast the input.
     """
@@ -458,6 +460,8 @@ def ensure_cftime_array(
         time = time.indexes["time"]
     elif isinstance(time, np.ndarray):
         time = pd.DatetimeIndex(time)
+    if isinstance(time, xr.CFTimeIndex):
+        return time.values
     if isinstance(time[0], cftime.datetime):
         return time
     if isinstance(time[0], pydt.datetime):

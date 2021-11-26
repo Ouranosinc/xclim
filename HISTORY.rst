@@ -11,6 +11,10 @@ New features and enhancements
 * Added an optimized pathway for ``xclim.indices.run_length`` functions when ``window=1``. (:pull:`911`, :issue:`910`).
 * The data input frequency expected by ``Indicator``s is now in the ``src_freq`` attribute and is thus controlable by subclassing existing indicators. (:issue:`898`, :pull:`927`).
 
+Breaking changes
+~~~~~~~~~~~~~~~~
+* Following version 1.9 of the CF Conventions, published in September 2021, the calendar name "gregorian" is deprecated. ``core.calendar.get_calendar`` will return "standard", even if the underlying cftime objects still use "gregorian" (cftime <= 1.5.1). (:pull:`935`).
+
 Internal changes
 ~~~~~~~~~~~~~~~~
 * Removed some logging configurations in ``dataflags`` that were polluting python's main logging configuration. (:pull:`909`).
