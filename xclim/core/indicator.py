@@ -1162,7 +1162,7 @@ class Indicator(IndicatorRegistrar):
                         dv = f"{dv[0]} to {dv[1]}"
                     mba["indexer"] = dv
                 else:
-                    mba["indexer"] = args.get("freq") or indices.generic.default_freq()
+                    mba["indexer"] = args.get("freq") or "YS"
             else:
                 mba[k] = v
 
