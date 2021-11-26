@@ -79,8 +79,8 @@ def select_time(
     da : xr.DataArray or xr.Dataset
       Input data.
     drop: boolean
-      Whether to drop elements outside the period of interest (default) or
-      to simply mask them.
+      Whether to drop elements outside the period of interest or
+      to simply mask them (default).
     season: string or sequence of strings
       One or more of 'DJF', 'MAM', 'JJA' and 'SON'.
     month: integer or sequence of integers
