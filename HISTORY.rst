@@ -9,7 +9,7 @@ Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Added an optimized pathway for ``xclim.indices.run_length`` functions when ``window=1``. (:pull:`911`, :issue:`910`).
-* The data input frequency expected by ``Indicator``s is now in the ``src_freq`` attribute and is thus controlable by subclassing existing indicators. (:issue:`898`, :pull:`927`).
+* The data input frequency expected by ``Indicator``s is now in the ``src_freq`` attribute and is thus controllable by subclassing existing indicators. (:issue:`898`, :pull:`927`).
 * New ``**indexer`` keyword args added to many indicators, it accepts the same arguments as ``xclim.indices.generic.select_time``, which has been improved. Unless otherwise specified, the time selection is done before any computation. (:pull:`934`, :issue:`899`).
 
 Breaking changes
@@ -22,6 +22,7 @@ Internal changes
 * Synchronized logging formatters in `xclim.ensembles` and `xclim.core.utils`. (:pull:`909`).
 * Added a helper function for generating the release notes with dynamically-generated ReStructuredText or Markdown-formatted hyperlinks (:pull:`922`, :issue:`907`).
 * Split of resampling-related functionality of ``Indicator``s into a new ``ResamplingIndicator`` and ``ResamplingIndicatorWithIndexing`` subclasses. The use of new (private) methods makes it easier to inject functionality in indicator subclasses. (:issue:`867`, :pull:`927`, :pull:`934`).
+* French translation metadata fields are now cleaner and much more internally consistent, and many empty metadata fields (e.g. ``comment_fr``) have been removed. (:pull:`930`, :issue:`929`).
 
 Bug fixes
 ^^^^^^^^^
