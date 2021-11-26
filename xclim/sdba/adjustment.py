@@ -526,12 +526,12 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
 class ExtremeValues(TrainAdjust):
     r"""Adjustment correction for extreme values.
 
-    The tail of the distribution of adjusted data is corrected according to the
-    parametric Generalized Pareto distribution of the reference data, [RRJF2021]_.
-    The distributions are composed of the maximal values of clusters of "large" values.
-    With "large" values being those above `cluster_thresh`. Only extreme values, whose
-    quantile within the pool of large values are above `q_thresh`, are re-adjusted.
-    See Notes.
+    The tail of the distribution of adjusted data is corrected according to the bias
+    between the parametric Generalized Pareto distributions of the simulatated and
+    reference data, [RRJF2021]_. The distributions are composed of the maximal values of
+    clusters of "large" values.  With "large" values being those above `cluster_thresh`.
+    Only extreme values, whose quantile within the pool of large values are above
+    `q_thresh`, are re-adjusted. See Notes.
 
     Parameters
     ----------
@@ -549,50 +549,62 @@ class ExtremeValues(TrainAdjust):
     scen: DataArray
       This is a second-order adjustment, so the adjust method needs the first-order
       adjusted timeseries in addition to the raw "sim".
+    interp : {'nearest', 'linear', 'cubic'}
+      The interpolation method to use when interpolating the adjustment factors. Defaults to "linear".
+    extrapolation : {'constant', 'nan'}
+      The type of extrapolation to use. See :py:func:`~xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
     frac: float
       Fraction where the cutoff happens between the original scen and the corrected one.
       See Notes, ]0, 1]. Defaults to 0.25.
     power: float
       Shape of the correction strength, see Notes. Defaults to 1.0.
 
-    Extra diagnostics
-    -----------------
-    In training:
-
-    nclusters : Number of extreme value clusters found for each gridpoint.
-
     Notes
     -----
     Extreme values are extracted from `ref`, `hist` and `sim` by finding all "clusters",
     i.e. runs of consecutive values above `cluster_thresh`. The `q_thresh`th percentile
     of these values is taken on `ref` and `hist` and becomes `thresh`, the extreme value
-    threshold. The maximal value of each cluster of `ref`, if it exceeds that new threshold,
-    is taken and Generalized Pareto distribution is fitted to them.
-    Similarly with `sim`. The cdf of the extreme values of `sim` is computed in reference
-    to the distribution fitted on `sim` and then the corresponding values (quantile / ppf)
-    in reference to the distribution fitted on `ref` are taken as the new bias-adjusted values.
+    threshold. The maximal value of each cluster, if it exceeds that new threshold,
+    is taken and Generalized Pareto distributions are fitted to them, for both `ref` and
+    `hist`. The probabilities associated with each of these extremes in `hist` is used
+    to find the corresponding value according to `ref`'s distribution. Adjustment
+    factors are computed as the bias between those new extremes and the original ones.
 
-    Once new extreme values are found, a mixture from the original scen and corrected scen
-    is used in the result. For each original value :math:`S_i` and corrected value :math:`C_i`
-    the final extreme value :math:`V_i` is:
+    In the adjust step, a Generalized Pareto distributions is fitted on the
+    cluster-maximums of `sim` and it is used to associate a probability to each extreme,
+    values over the `thresh` compute in the training, without the clustering. The
+    adjustment factors are computed by interpolating the trained ones using these
+    probabilities and the probabilities computed from `hist`.
+
+    Finally, the adjusted values (:math:`C_i`) are mixed with the pre-adjusted ones
+    (`scen`, :math:`D_i`) using the following transition function:
 
     .. math::
 
-        V_i = C_i * \tau + S_i * (1 - \tau)
+        V_i = C_i * \tau + D_i * (1 - \tau)
 
-    Where :math:`\tau` is a function of sim's extreme values :math:`F` and of arguments
-    ``frac`` (:math:`f`) and ``power`` (:math:`p`):
+    Where :math:`\tau` is a function of sim's extreme values (unadjusted, :math:`S_i`)
+    and of arguments ``frac`` (:math:`f`) and ``power`` (:math:`p`):
 
     .. math::
 
         \tau = \left(\frac{1}{f}\frac{S - min(S)}{max(S) - min(S)}\right)^p
 
-    Code based on the `biascorrect_extremes` function of the julia package [ClimateTools]_.
+    Code based on an internal Matlab source and partly ib the `biascorrect_extremes`
+    function of the julia package [ClimateTools]_.
+
+    Because of limitations imposed by the lazy computing nature of the dask backend, it
+    is not possible to know the number of cluster extremes in `ref` and `hist` at the
+    moment the output data structure is created. This is why the code tries to estimate
+    that number and usually overstimates it. In the training dataset, this translated
+    into a `quantile` dimension that is too large and variables `af` and `px_hist` are
+    assigned NaNs on extra elements. This has no incidence on the calculations
+    themselves but requires more memory than is useful.
 
     References
     ----------
-    .. [ClimateTools] https://juliaclimate.github.io/ClimateTools.jl/stable/
     .. [RRJF2021] Roy, P., Rondeau-Genesse, G., Jalbert, J., Fournier, É. 2021. Climate Scenarios of Extreme Precipitation Using a Combination of Parametric and Non-Parametric Bias Correction Methods. Submitted to Climate Services, April 2021.
+    .. [ClimateTools] https://juliaclimate.github.io/ClimateTools.jl/stable/
     """
 
     @classmethod
