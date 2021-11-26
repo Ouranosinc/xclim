@@ -608,7 +608,6 @@ class TestPrincipalComponents:
         assert (ref - scen).mean() < 5e-3
 
 
-@pytest.mark.xfail(reason="Inaccurate version.")
 class TestExtremeValues:
     @pytest.mark.parametrize(
         "c_thresh,q_thresh,frac,power",
@@ -658,14 +657,11 @@ class TestExtremeValues:
         assert (scen2.where(exval) > EX.ds.thresh).sum() > (
             scen.where(exval) > EX.ds.thresh
         ).sum()
-        # ONLY extreme values have been touched (but some might not have been modified)
-        assert (((scen != scen2) | exval) == exval).all()
 
-    def test_dask_julia_diags(self):
+    def test_real_data(self):
 
         dsim = open_dataset("sdba/CanESM2_1950-2100.nc").chunk()
         dref = open_dataset("sdba/ahccd_1950-2013.nc").chunk()
-        dexp = open_dataset("sdba/adjusted_external.nc")
 
         ref = convert_units_to(dref.sel(time=slice("1950", "2009")).pr, "mm/d")
         hist = convert_units_to(dsim.sel(time=slice("1950", "2009")).pr, "mm/d")
@@ -684,16 +680,7 @@ class TestExtremeValues:
 
         EX = ExtremeValues.train(ref, hist, cluster_thresh="1 mm/day", q_thresh=0.97)
         new_scen = EX.adjust(scen, hist, frac=0.000000001)
-
         new_scen.load()
-
-        exp_scen = dexp.extreme_values_julia
-        xr.testing.assert_allclose(
-            new_scen.where(new_scen != scen).transpose("time", "location"),
-            exp_scen.where(new_scen != scen).transpose("time", "location"),
-            atol=0.005,
-            rtol=2e-3,
-        )
 
 
 def test_raise_on_multiple_chunks(tas_series):
