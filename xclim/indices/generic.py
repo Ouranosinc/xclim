@@ -107,7 +107,7 @@ def select_resample_op(da: xr.DataArray, op: str, freq: str = "YS", **indexer):
       The maximum value for each period.
     """
     da = select_time(da, **indexer)
-    r = da.resample(time=freq, keep_attrs=True)
+    r = da.resample(time=freq)
     if isinstance(op, str):
         return getattr(r, op)(dim="time", keep_attrs=True)
 
