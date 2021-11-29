@@ -88,7 +88,7 @@ class MissingBase:
     @staticmethod
     def is_null(da, freq, **indexer):
         """Return a boolean array indicating which values are null."""
-        selected = generic.select_time(da, **indexer)
+        selected = generic.select_time(da, drop=True, **indexer)
         if selected.time.size == 0:
             raise ValueError("No data for selected period.")
 
@@ -154,7 +154,7 @@ class MissingBase:
             )
 
             sda = xr.DataArray(data=np.ones(len(t)), coords={"time": t}, dims=("time",))
-            st = generic.select_time(sda, **indexer)
+            st = generic.select_time(sda, drop=True, **indexer)
             if freq:
                 count = st.notnull().resample(time=freq).sum(dim="time")
             else:

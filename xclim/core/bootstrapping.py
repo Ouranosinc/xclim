@@ -1,5 +1,5 @@
 from inspect import signature
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Optional
 
 import cftime
 import numpy as np
@@ -93,6 +93,7 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xarray.DataArray:
 
     """
     # Identify the input and the percentile arrays from the bound arguments
+    per_key = None
     for name, val in kwargs.items():
         if isinstance(val, DataArray):
             if "percentile_doy" in val.attrs.get("history", ""):
@@ -102,7 +103,12 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xarray.DataArray:
 
     # Extract the DataArray inputs from the arguments
     da: DataArray = kwargs.pop(da_key)
-    per: DataArray = kwargs.pop(per_key)
+    per: Optional[DataArray] = kwargs.pop(per_key, None)
+    if per is None:
+        # per may be empty on non doy percentiles
+        raise KeyError(
+            "`bootstrap` can only be used with percentiles computed using `percentile_doy`"
+        )
 
     # List of years in base period
     clim = per.attrs["climatology_bounds"]
