@@ -404,7 +404,7 @@ def interp_on_quantiles(
     """Interpolate values of yq on new values of x.
 
     Interpolate in 2D with :py:func:`~scipy.interpolate.griddata` if grouping is used,
-    in 1D otherwise, with :py:func:`~scipy.interpolate.interp1d`. Except for the
+    in 1D otherwise, with :py:class:`~scipy.interpolate.interp1d`. Except for the
     boundaries as added by :py:func:`~xclim.sdba.utils.extrapolate_qm`, any NaNs in xq
     or yq are removed from the input map. Similarly, NaNs in newx are left NaNs.
 
