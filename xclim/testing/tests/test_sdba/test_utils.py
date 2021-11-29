@@ -103,14 +103,11 @@ def test_interp_on_quantiles(shape, group, method):
         *("time", "lat", "lon")[: len(shape)]
     )
 
-    if method == "nearest":
-        np.testing.assert_allclose(fut_corr.values, obs.values, rtol=0.3)
-        assert fut_corr.isnull().sum() == 0
-    else:
-        np.testing.assert_allclose(
-            fut_corr.values, obs.where(fut != 1000).values, rtol=2e-3
-        )
-        xr.testing.assert_equal(fut_corr.isnull(), fut == 1000)
+    rtol = 0.02 if method == "nearest" else 0.002
+    np.testing.assert_allclose(
+        fut_corr.values, obs.where(fut != 1000).values, rtol=rtol
+    )
+    xr.testing.assert_equal(fut_corr.isnull(), fut == 1000)
 
 
 @pytest.mark.parametrize("group", ["time", "time.month"])

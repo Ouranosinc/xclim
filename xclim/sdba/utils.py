@@ -408,6 +408,8 @@ def interp_on_quantiles(
     boundaries as added by :py:func:`~xclim.sdba.utils.extrapolate_qm`, any NaNs in xq
     or yq are removed from the input map. Similarly, NaNs in newx are left NaNs.
 
+    Values of newx outside the range of xq will return as NaNs.
+
     Parameters
     ----------
     newx : xr.DataArray
@@ -445,9 +447,13 @@ def interp_on_quantiles(
             mask_old = mask_old | np.isnan(oldx)
 
             out = np.full_like(newx, np.NaN, dtype=oldy.dtype)
-            out[~mask_new] = interp1d(oldx[~mask_old], oldy[~mask_old], kind=method)(
-                newx[~mask_new]
-            )
+            out[~mask_new] = interp1d(
+                oldx[~mask_old],
+                oldy[~mask_old],
+                kind=method,
+                bounds_error=False,
+                fill_value=np.NaN,
+            )(newx[~mask_new])
             return out
 
         if "group" in xq.dims:
@@ -489,6 +495,9 @@ def interp_on_quantiles(
             (_newx[~mask_new], _newg[~mask_new]),
             method=method,
         )
+
+        if method == "nearest":  # It is implicit for other methods
+            out[(_newx < _oldx.min()) | (_newx > _oldx.max())] = np.NaN
         return out
 
     xq = add_cyclic_bounds(xq, prop, cyclic_coords=False)
