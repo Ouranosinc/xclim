@@ -113,6 +113,48 @@ def test_interp_on_quantiles(shape, group, method):
         xr.testing.assert_equal(fut_corr.isnull(), fut == 1000)
 
 
+@pytest.mark.parametrize("group", ["time", "time.month"])
+@pytest.mark.parametrize("method", ["nearest", "linear", "cubic"])
+def test_interp_on_quantiles_nans(group, method):
+    quantiles = np.linspace(0, 1, num=13)
+    xq = xr.DataArray(
+        np.concatenate(([0], np.linspace(205, 215, num=11), [1000])),
+        dims=("quantiles",),
+        coords={"quantiles": quantiles},
+    )
+
+    yq = xr.DataArray(
+        np.concatenate(([2.0], np.linspace(2, 4, num=11), [4])),
+        dims=("quantiles",),
+        coords={"quantiles": quantiles},
+    )
+
+    if group == "time.month":
+        xq = xq.expand_dims(month=np.arange(12) + 1)
+        yq = yq.expand_dims(month=np.arange(12) + 1)
+
+    newx = xr.DataArray(
+        np.linspace(240, 200, num=30),
+        dims=("time",),
+        coords={"time": xr.cftime_range("1900-03-01", freq="D", periods=30)},
+    )
+    newx = newx.where(newx > 201)  # Put some NaNs in newx
+
+    out = u.interp_on_quantiles(newx, xq, yq, group=group, method=method)
+
+    if method != "cubic":
+        assert out[0] == 4
+    assert out[-1].isnull().item()
+
+    xq = xq.where(xq != 214)
+    yq = yq.where(yq != 3)
+    out = u.interp_on_quantiles(newx, xq, yq, group=group, method=method)
+
+    if method != "cubic":
+        assert out[0] == 4
+    assert out[-1].isnull().item()
+
+
 def test_rank():
     arr = np.random.random_sample(size=(10, 10, 1000))
     da = xr.DataArray(arr, dims=("x", "y", "time"))

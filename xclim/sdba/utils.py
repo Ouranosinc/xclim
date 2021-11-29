@@ -403,7 +403,10 @@ def interp_on_quantiles(
 ):
     """Interpolate values of yq on new values of x.
 
-    Interpolate in 2D if grouping is used, in 1D otherwise.
+    Interpolate in 2D with :py:func:`~scipy.interpolate.griddata` if grouping is used,
+    in 1D otherwise, with :py:func:`~scipy.interpolate.interp1d`. Except for the
+    boundaries as added by :py:func:`~xclim.sdba.utils.extrapolate_qm`, any NaNs in xq
+    or yq are removed from the input map. Similarly, NaNs in newx are left NaNs.
 
     Parameters
     ----------
@@ -417,18 +420,19 @@ def interp_on_quantiles(
       If it does, interpolation is done in 2D on "quantiles" and on the group dimension.
     group : Union[str, Grouper]
       The dimension and grouping information. (ex: "time" or "time.month").
-      Defaults to the "group" attribute of xq, or "time" if there is none.
+      Defaults to "time".
     method : {'nearest', 'linear', 'cubic'}
-      The interpolation method.
+      The interpolation method. Using cubic interpolation will NOT respect the constant
+      extrapolation as added by :py:func:`~xclim.sdba.utils.extrapolate_qm`.
     """
     dim = group.dim
     prop = group.prop
 
     if prop == "group":
-        fill_value = "extrapolate" if method == "nearest" else np.nan
 
         def _interp_quantiles_1D(newx, oldx, oldy):
-            if np.all(np.isnan(newx)):
+            mask_new = np.isnan(newx)
+            if np.all(mask_new):
                 warn(
                     "All-NaN slice encountered in interp_on_quantiles",
                     category=RuntimeWarning,
@@ -440,15 +444,10 @@ def interp_on_quantiles(
             mask_old[np.array([0, -1])] = False
             mask_old = mask_old | np.isnan(oldx)
 
-            mask_new = np.isnan(newx)
             out = np.full_like(newx, np.NaN, dtype=oldy.dtype)
-            out[~mask_new] = interp1d(
-                oldx[~mask_old],
-                oldy[~mask_old],
-                bounds_error=False,
-                kind=method,
-                fill_value=fill_value,
-            )(newx[~mask_new])
+            out[~mask_new] = interp1d(oldx[~mask_old], oldy[~mask_old], kind=method)(
+                newx[~mask_new]
+            )
             return out
 
         if "group" in xq.dims:
@@ -468,21 +467,21 @@ def interp_on_quantiles(
     # else:
 
     def _interp_quantiles_2D(_newx, _newg, _oldx, _oldy, _oldg):  # noqa
-        if method != "nearest":
-            _oldx = np.clip(_oldx, _newx.min() - 1, _newx.max() + 1)
-
-        if np.all(np.isnan(_newx)):
+        mask_new = np.isnan(_newx) | np.isnan(_newg)
+        if np.all(mask_new):
             warn(
                 "All-NaN slice encountered in interp_on_quantiles",
                 category=RuntimeWarning,
             )
             return _newx
 
+        if method != "nearest":
+            _oldx = np.clip(_oldx, _newx.min() - 1, _newx.max() + 1)
+
         mask_old = np.isnan(_oldy)
         mask_old[:, np.array([0, -1])] = False  # bounds might be NaN for a good reason.
         mask_old = mask_old | np.isnan(_oldx) | np.isnan(_oldg)
 
-        mask_new = np.isnan(_newx) | np.isnan(_newg)
         out = np.full_like(_newx, np.NaN, dtype=_oldy.dtype)
         out[~mask_new] = griddata(
             (_oldx[~mask_old], _oldg[~mask_old]),
