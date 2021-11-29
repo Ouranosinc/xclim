@@ -36,6 +36,7 @@ Bug fixes
 ^^^^^^^^^
 * Fix bugs in the `cf_attrs` and/or `abstract` of `continuous_snow_cover_end` and `continuous_snow_cover_start`. (:pull:`908`).
 * Remove unnecessary `keep_attrs` from `resample` call which would raise an error in futur Xarray version. (:pull:`937`).
+* Skip all missing values in ``xclim.sdba.utils.interp_on_quantiles``, drop them from both the old and new coordinates, as well as from the old values.
 
 0.31.0 (2021-11-05)
 -------------------
