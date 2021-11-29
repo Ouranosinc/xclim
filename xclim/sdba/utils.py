@@ -449,6 +449,7 @@ def interp_on_quantiles(
                 kind=method,
                 fill_value=fill_value,
             )(newx[~mask_new])
+            return out
 
         if "group" in xq.dims:
             xq = xq.squeeze("group", drop=True)
@@ -462,7 +463,7 @@ def interp_on_quantiles(
             output_core_dims=[[dim]],
             vectorize=True,
             dask="parallelized",
-            output_dtypes=[float],
+            output_dtypes=[yq.dtype],
         )
     # else:
 
@@ -484,11 +485,12 @@ def interp_on_quantiles(
         mask_new = np.isnan(_newx) | np.isnan(_newg)
         out = np.full_like(_newx, np.NaN)
         out[~mask_new] = griddata(
-            (_oldx[~mask], _oldg[~mask]),
-            _oldy[~mask],
+            (_oldx[~mask_old], _oldg[~mask_old]),
+            _oldy[~mask_old],
             (_newx[~mask_new], _newg[~mask_new]),
             method=method,
         )
+        return out
 
     xq = add_cyclic_bounds(xq, prop, cyclic_coords=False)
     yq = add_cyclic_bounds(yq, prop, cyclic_coords=False)
