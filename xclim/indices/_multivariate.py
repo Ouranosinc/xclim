@@ -1168,7 +1168,8 @@ def fraction_over_precip_thresh(
     pr : xarray.DataArray
       Mean daily precipitation flux.
     per : xarray.DataArray
-      Daily percentile of wet day precipitation flux.
+      Percentile of wet day precipitation flux. Either computed daily (one value per day
+      of year) or computed over a period (one value per spatial point).
     thresh : str
        Precipitation value over which a day is considered wet.
     freq : str
