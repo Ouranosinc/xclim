@@ -7,6 +7,7 @@ from xclim.core.utils import InputKind
 
 __all__ = [
     "humidex",
+    "heat_index",
     "tg",
     "wind_speed_from_vector",
     "wind_vector_from_speed",
@@ -38,6 +39,15 @@ humidex = Converter(
     compute=indices.humidex,
 )
 
+heat_index = Converter(
+    identifier="heat_index",
+    units="C",
+    standard_name="air_temperature",
+    long_name="heat index",
+    description="Days in which the human body perceives temperature is hot, which combines relative humidity with the air temperature.",
+    cell_methods="",
+    compute=indices.heat_index,
+)
 
 tg = Converter(
     identifier="tg",
