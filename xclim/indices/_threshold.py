@@ -49,7 +49,6 @@ __all__ = [
     "first_day_above",
     "first_snowfall",
     "last_snowfall",
-    "heat_index",
     "heat_wave_index",
     "heating_degree_days",
     "hot_spell_frequency",
@@ -1236,62 +1235,6 @@ def days_with_snow(
     high = convert_units_to(high, prsn)
     out = domain_count(prsn, low, high, freq)
     return to_agg_units(out, prsn, "count")
-
-
-@declare_units(tasmax="[temperature]", hurs="[g m-3]", thresh="[temperature]")
-def heat_index(
-    tasmax: xarray.DataArray,
-    hurs: xarray.DataArray,
-    thresh: str = "20.0 degC",
-    freq: str = "MS",
-) -> xarray.DataArray:
-    r"""Daily heat index.
-
-    Days in which the human body perceives temperature is hot, which combines
-    relative humidity with the air temperature.
-
-    Parameters
-    ----------
-    tasmax : xarray.DataArray
-      Maximum daily temperature.
-    hurs : xarray.DataArray
-      Relative humidity.
-    thresh : str
-      Threshold temperature on which to base evaluation.
-    freq : str
-      Resampling frequency.
-
-    Returns
-    -------
-    xarray.DataArray, [time][temperature]
-      Heat index.
-    """
-    thresh = convert_units_to(thresh, "degC")
-    t = convert_units_to(tasmax, "degC")
-    t = t.where(t > thresh)
-    r = convert_units_to(hurs, "%")
-
-    tr = np.multiply(t, r)
-    tt = np.multiply(t, t)
-    rr = np.multiply(r, r)
-    ttr = np.multiply(tt, r)
-    trr = np.multiply(t, rr)
-    ttrr = np.multiply(tt, rr)
-
-    out = (
-        -8.78469475556
-        + 1.61139411 * t
-        + 2.33854883889 * r
-        - 0.14611605 * tr
-        - 0.012308094 * tt
-        - 0.0164248277778 * rr
-        + 0.002211732 * ttr
-        + 0.00072546 * trr
-        - 0.000003582 * ttrr
-    )
-    out = out.assign_attrs(units="degC")
-
-    return out
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")

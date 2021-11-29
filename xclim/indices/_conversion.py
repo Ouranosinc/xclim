@@ -9,6 +9,7 @@ from xclim.core.units import amount2rate, convert_units_to, declare_units, units
 
 __all__ = [
     "humidex",
+    "heat_index",
     "tas",
     "uas_vas_2_sfcwind",
     "sfcwind_2_uas_vas",
@@ -113,6 +114,62 @@ def humidex(
     # Add the delta to the input temperature
     out = h + tas
     out.attrs["units"] = tas.units
+    return out
+
+
+@declare_units(tasmax="[temperature]", hurs="[g m-3]", thresh="[temperature]")
+def heat_index(
+    tasmax: xr.DataArray,
+    hurs: xr.DataArray,
+    thresh: str = "20.0 degC",
+    freq: str = "MS",
+) -> xr.DataArray:
+    r"""Daily heat index.
+
+    Days in which the human body perceives temperature is hot, which combines
+    relative humidity with the air temperature.
+
+    Parameters
+    ----------
+    tasmax : xr.DataArray
+      Maximum daily temperature.
+    hurs : xr.DataArray
+      Relative humidity.
+    thresh : str
+      Threshold temperature on which to base evaluation.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xr.DataArray, [time][temperature]
+      Heat index.
+    """
+    thresh = convert_units_to(thresh, "degC")
+    t = convert_units_to(tasmax, "degC")
+    t = t.where(t > thresh)
+    r = convert_units_to(hurs, "%")
+
+    tr = np.multiply(t, r)
+    tt = np.multiply(t, t)
+    rr = np.multiply(r, r)
+    ttr = np.multiply(tt, r)
+    trr = np.multiply(t, rr)
+    ttrr = np.multiply(tt, rr)
+
+    out = (
+        -8.78469475556
+        + 1.61139411 * t
+        + 2.33854883889 * r
+        - 0.14611605 * tr
+        - 0.012308094 * tt
+        - 0.0164248277778 * rr
+        + 0.002211732 * ttr
+        + 0.00072546 * trr
+        - 0.000003582 * ttrr
+    )
+    out = out.assign_attrs(units="degC")
+
     return out
 
 
