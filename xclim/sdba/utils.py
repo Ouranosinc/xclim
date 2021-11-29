@@ -435,17 +435,20 @@ def interp_on_quantiles(
                 )
                 return newx
 
-            mask = np.isnan(oldx) & np.isnan(oldy)
+            mask_old = np.isnan(oldy)
             # The bounds might be NaN for a good reason.
-            mask[np.array([0, -1])] = False
+            mask_old[np.array([0, -1])] = False
+            mask_old = mask_old | np.isnan(oldx)
 
-            return interp1d(
-                oldx[~mask],
-                oldy[~mask],
+            mask_new = np.isnan(newx)
+            out = np.full_like(newx, np.NaN)
+            out[~mask_new] = interp1d(
+                oldx[~mask_old],
+                oldy[~mask_old],
                 bounds_error=False,
                 kind=method,
                 fill_value=fill_value,
-            )(newx)
+            )(newx[~mask_new])
 
         if "group" in xq.dims:
             xq = xq.squeeze("group", drop=True)
@@ -474,13 +477,16 @@ def interp_on_quantiles(
             )
             return _newx
 
-        mask = np.isnan(_oldx) & np.isnan(_oldy) & np.isnan(_oldg)
-        mask[:, np.array([0, -1])] = False  # bounds might be NaN for a good reason.
+        mask_old = np.isnan(_oldy)
+        mask_old[:, np.array([0, -1])] = False  # bounds might be NaN for a good reason.
+        mask_old = mask_old | np.isnan(_oldx) | np.isnan(_oldg)
 
-        return griddata(
+        mask_new = np.isnan(_newx) | np.isnan(_newg)
+        out = np.full_like(_newx, np.NaN)
+        out[~mask_new] = griddata(
             (_oldx[~mask], _oldg[~mask]),
             _oldy[~mask],
-            (_newx, _newg),
+            (_newx[~mask_new], _newg[~mask_new]),
             method=method,
         )
 
