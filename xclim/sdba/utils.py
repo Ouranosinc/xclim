@@ -441,7 +441,7 @@ def interp_on_quantiles(
             mask_old = mask_old | np.isnan(oldx)
 
             mask_new = np.isnan(newx)
-            out = np.full_like(newx, np.NaN)
+            out = np.full_like(newx, np.NaN, dtype=oldy.dtype)
             out[~mask_new] = interp1d(
                 oldx[~mask_old],
                 oldy[~mask_old],
@@ -483,7 +483,7 @@ def interp_on_quantiles(
         mask_old = mask_old | np.isnan(_oldx) | np.isnan(_oldg)
 
         mask_new = np.isnan(_newx) | np.isnan(_newg)
-        out = np.full_like(_newx, np.NaN)
+        out = np.full_like(_newx, np.NaN, dtype=_oldy.dtype)
         out[~mask_new] = griddata(
             (_oldx[~mask_old], _oldg[~mask_old]),
             _oldy[~mask_old],
