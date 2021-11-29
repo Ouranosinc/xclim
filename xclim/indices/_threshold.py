@@ -2066,7 +2066,7 @@ def jetstream_metric_woolings(
 ) -> xarray.DataArray:
     """Strength and latitude of jetstream.
 
-    Identify latitude and strength of maximum smoothed zonal windspeed in the region 15-75&deg;N, -60-0&deg;E.
+    Identify latitude and strength of maximum smoothed zonal wind speed in the region from 15 to 75°N and -60 to 0°E.
 
     Parameters
     ----------
