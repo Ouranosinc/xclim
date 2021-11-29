@@ -150,12 +150,12 @@ def heat_index(
     t = t.where(t > thresh)
     r = convert_units_to(hurs, "%")
 
-    tr = np.multiply(t, r)
-    tt = np.multiply(t, t)
-    rr = np.multiply(r, r)
-    ttr = np.multiply(tt, r)
-    trr = np.multiply(t, rr)
-    ttrr = np.multiply(tt, rr)
+    tr = t * r
+    tt = t * t
+    rr = r * r
+    ttr = tt * r
+    trr = t * rr
+    ttrr = tt * rr
 
     out = (
         -8.78469475556
