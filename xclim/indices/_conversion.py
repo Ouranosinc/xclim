@@ -931,8 +931,12 @@ def potential_evapotranspiration(
         out = out.clip(0)
 
     elif method in ["mcguinnessbordne05", "MB05"]:
+        if tas is None:
+            tas = (tasmin + tasmax) / 2
+
         tas = convert_units_to(tas, "degC")
         tasK = convert_units_to(tas, "K")
+        tasmin = convert_units_to(tasmin, "degC")
 
         latr = (tasmin.lat * np.pi) / 180
         jd_frac = (datetime_to_decimal_year(tasmin.time) % 1) * 2 * np.pi
