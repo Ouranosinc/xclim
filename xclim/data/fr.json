@@ -166,6 +166,14 @@
     "keywords": "courbes IDF",
     "abstract": "Maximum de l'intensité de précipitation horaire pour une durée et période donnée."
   },
+  "RPRCTOT": {
+    "long_name": "",
+    "description": "",
+    "title": "",
+    "comment": "",
+    "keywords": "",
+    "abstract": ""
+  },
   "WETDAYS": {
     "long_name": "Nombre de jours pluvieux (précip >= {thresh})",
     "description": "Nombre {freq:m} de jours où les précipitations sont au-dessus de {thresh}.",
