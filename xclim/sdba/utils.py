@@ -1,4 +1,7 @@
-"""SDBA utilities module."""
+"""
+sdba utilities
+--------------
+"""
 from typing import Callable, List, Mapping, Optional, Tuple, Union
 from warnings import warn
 
@@ -303,36 +306,42 @@ def extrapolate_qm(
     qf : xr.DataArray
       Adjustment factors over `quantile` coordinates.
     xq : xr.DataArray
-      Values at each `quantile`.
-    method : {"constant"}
+      Coordinates of the adjustment factors.
+      For example, in EQM, this are the values at each `quantile`.
+    method : {"constant", "nan"}
       Extrapolation method. See notes below.
     abs_bounds : 2-tuple
-      The absolute bounds for the "constant*" methods. Defaults to (-inf, inf).
+      The absolute bounds of `xq`. Defaults to (-inf, inf).
 
     Returns
     -------
-    xr.Dataset or xr.DataArray
+    qf: xr.Dataset or xr.DataArray
         Extrapolated adjustment factors.
-    xr.Dataset or xr.DataArray
+    xq: xr.Dataset or xr.DataArray
         Extrapolated x-values.
 
     Notes
     -----
-    qf: xr.DataArray
+    Valid values for `method` are:
+
+    - 'nan'
+
       Estimating values above or below the computed values will return a NaN.
-    xq: xr.DataArray
-      The adjustment factor above and below the computed values are equal to the last and first values
-      respectively.
+
+    - 'constant'
+
+      The adjustment factor above and below the computed values are equal to the last
+      and first values respectively.
     """
     # constant_iqr
     #   Same as `constant`, but values are set to NaN if farther than one interquartile range from the min and max.
+    q_l, q_r = [0], [1]
+    x_l, x_r = [abs_bounds[0]], [abs_bounds[1]]
     if method == "nan":
-        return qf, xq
-
-    if method == "constant":
-        q_l, q_r = [0], [1]
-        x_l, x_r = [abs_bounds[0]], [abs_bounds[1]]
-        qf_l, qf_r = qf.isel(quantiles=0), qf.isel(quantiles=-1)
+        qf_l, qf_r = np.NaN, np.NaN
+    elif method == "constant":
+        qf_l = qf.bfill("quantiles").isel(quantiles=0)
+        qf_r = qf.ffill("quantiles").isel(quantiles=-1)
 
     elif (
         method == "constant_iqr"
@@ -399,18 +408,18 @@ def interp_on_quantiles(
     Parameters
     ----------
     newx : xr.DataArray
-        The values at which to evaluate `yq`. If `group` has group information,
-        `new` should have a coordinate with the same name as the group name
-         In that case, 2D interpolation is used.
+      The values at which to evaluate `yq`. If `group` has group information,
+      `new` should have a coordinate with the same name as the group name
+      In that case, 2D interpolation is used.
     xq, yq : xr.DataArray
-        coordinates and values on which to interpolate. The interpolation is done
-        along the "quantiles" dimension if `group` has no group information.
-        If it does, interpolation is done in 2D on "quantiles" and on the group dimension.
+      Coordinates and values on which to interpolate. The interpolation is done
+      along the "quantiles" dimension if `group` has no group information.
+      If it does, interpolation is done in 2D on "quantiles" and on the group dimension.
     group : Union[str, Grouper]
-        The dimension and grouping information. (ex: "time" or "time.month").
-        Defaults to the "group" attribute of xq, or "time" if there is none.
+      The dimension and grouping information. (ex: "time" or "time.month").
+      Defaults to the "group" attribute of xq, or "time" if there is none.
     method : {'nearest', 'linear', 'cubic'}
-        The interpolation method.
+      The interpolation method.
     """
     dim = group.dim
     prop = group.prop
@@ -419,15 +428,33 @@ def interp_on_quantiles(
         fill_value = "extrapolate" if method == "nearest" else np.nan
 
         def _interp_quantiles_1D(newx, oldx, oldy):
+            if np.all(np.isnan(newx)):
+                warn(
+                    "All-NaN slice encountered in interp_on_quantiles",
+                    category=RuntimeWarning,
+                )
+                return newx
+
+            mask = np.isnan(oldx) & np.isnan(oldy)
+            # The bounds might be NaN for a good reason.
+            mask[np.array([0, -1])] = False
+
             return interp1d(
-                oldx, oldy, bounds_error=False, kind=method, fill_value=fill_value
+                oldx[~mask],
+                oldy[~mask],
+                bounds_error=False,
+                kind=method,
+                fill_value=fill_value,
             )(newx)
 
+        if "group" in xq.dims:
+            xq = xq.squeeze("group", drop=True)
+            yq = yq.squeeze("group", drop=True)
         return xr.apply_ufunc(
             _interp_quantiles_1D,
             newx,
-            xq.squeeze("group", drop=True),
-            yq.squeeze("group", drop=True),
+            xq,
+            yq,
             input_core_dims=[[dim], ["quantiles"], ["quantiles"]],
             output_core_dims=[[dim]],
             vectorize=True,
@@ -439,15 +466,20 @@ def interp_on_quantiles(
     def _interp_quantiles_2D(_newx, _newg, _oldx, _oldy, _oldg):  # noqa
         if method != "nearest":
             _oldx = np.clip(_oldx, _newx.min() - 1, _newx.max() + 1)
+
         if np.all(np.isnan(_newx)):
             warn(
                 "All-NaN slice encountered in interp_on_quantiles",
                 category=RuntimeWarning,
             )
             return _newx
+
+        mask = np.isnan(_oldx) & np.isnan(_oldy) & np.isnan(_oldg)
+        mask[:, np.array([0, -1])] = False  # bounds might be NaN for a good reason.
+
         return griddata(
-            (_oldx.flatten(), _oldg.flatten()),
-            _oldy.flatten(),
+            (_oldx[~mask], _oldg[~mask]),
+            _oldy[~mask],
             (_newx, _newg),
             method=method,
         )
@@ -754,7 +786,7 @@ def rand_rot_matrix(
 
     References
     ----------
-    .. [Mezzadri] Mezzadri, F. (2006). How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050.
+    Mezzadri, F. (2006). How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050.
     """
     if num > 1:
         return xr.concat([rand_rot_matrix(crd, num=1) for i in range(num)], "matrices")

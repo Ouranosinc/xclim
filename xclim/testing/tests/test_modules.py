@@ -1,4 +1,5 @@
 import sys
+from inspect import _empty
 from pathlib import Path
 
 import pytest
@@ -42,14 +43,11 @@ def test_default_modules_exist():
 def test_virtual_modules(virtual_indicator, atmosds):
     with set_options(cf_compliance="warn"):
         # skip when missing default values
-        kws = {}
         mod, indname, ind = virtual_indicator
         for name, param in ind.parameters.items():
-            if name == "src_timestep":
-                kws["src_timestep"] = "D"
-            if param["kind"] is not InputKind.DATASET and (
-                param["default"] is None
-                or (param["default"] == name and name not in atmosds)
+            if param.kind is not InputKind.DATASET and (
+                param.default in (None, _empty)
+                or (param.default == name and name not in atmosds)
             ):
 
                 pytest.skip(f"Indicator {mod}.{indname} has no default for {name}.")
@@ -85,6 +83,11 @@ def test_custom_indices():
     ex2 = build_indicator_module_from_yaml(
         nbpath / "example.yml", name="ex2", indices=exinds
     )
+
+    # Error when missing
+    with pytest.raises(ImportError, match="extreme_precip_accumulation_and_days"):
+        build_indicator_module_from_yaml(nbpath / "example.yml", name="ex3")
+    build_indicator_module_from_yaml(nbpath / "example.yml", name="ex4", mode="ignore")
 
     assert ex1.R95p.__doc__ == ex2.R95p.__doc__  # noqa
 

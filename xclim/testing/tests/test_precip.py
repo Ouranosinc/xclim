@@ -452,10 +452,31 @@ def test_dry_spell():
     np.testing.assert_allclose(total_d[0:2, 0], [50, 67], rtol=1e-1)
 
     assert (
-        "The annual number of dry periods of 7 days and more, during which the accumulated "
+        "The annual number of dry periods of 7 days and more, during which the total "
         "precipitation on a window of 7 days is under 3 mm."
     ) in events.description
     assert (
         "The annual number of days in dry periods of 7 days and more"
         in total_d.description
     )
+
+
+def test_dry_spell_frequency_op():
+    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
+    test_sum = atmos.dry_spell_frequency(
+        pr, thresh="3 mm", window=7, freq="MS", op="sum"
+    )
+    test_max = atmos.dry_spell_frequency(
+        pr, thresh="3 mm", window=7, freq="MS", op="max"
+    )
+
+    np.testing.assert_allclose(test_sum[0, 2], [1], rtol=1e-1)
+    np.testing.assert_allclose(test_max[0, 2], [2], rtol=1e-1)
+    assert (
+        "The monthly number of dry periods of 7 days and more, during which the total precipitation "
+        "on a window of 7 days is under 3 mm."
+    ) in test_sum.description
+    assert (
+        "The monthly number of dry periods of 7 days and more, during which the maximal precipitation "
+        "on a window of 7 days is under 3 mm."
+    ) in test_max.description

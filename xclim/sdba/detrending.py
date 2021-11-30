@@ -1,4 +1,7 @@
-"""Detrending objects."""
+"""
+Detrending objects
+------------------
+"""
 from typing import Union
 
 import xarray as xr
@@ -20,13 +23,13 @@ class BaseDetrend(ParametrizableWithDataset):
     retrend(da)  : Puts trend back on da.
 
     A fitted Detrend object is unique to the trend coordinate of the object used in `fit`, (usually 'time').
-    The computed trend is stored in `Detrend.trend`.
+    The computed trend is stored in ``Detrend.ds.trend``.
 
-    * Subclasses should implement _get_trend_group() or _get_trend().
-    The first will be called in a `group.apply(..., main_only=True)`, and should return a single DataArray.
-    The second allows the use of functions wrapped in `map_groups` and should also return a single DataArray.
+    Subclasses should implement ``_get_trend_group()`` or ``_get_trend()``.
+    The first will be called in a ``group.apply(..., main_only=True)``, and should return a single DataArray.
+    The second allows the use of functions wrapped in :py:func:`map_groups` and should also return a single DataArray.
 
-    The subclasses may reimplement `_detrend` and `_retrend`.
+    The subclasses may reimplement ``_detrend`` and ``_retrend``.
     """
 
     @parse_group
@@ -69,7 +72,6 @@ class BaseDetrend(ParametrizableWithDataset):
         out = self.group.apply(
             self._get_trend_group,
             da,
-            main_only=True,
         )
         if hasattr(da, "dtype"):
             out = out.astype(da.dtype)
@@ -101,7 +103,7 @@ class BaseDetrend(ParametrizableWithDataset):
         # Add trend to series
         return apply_correction(da, trend, self.kind)
 
-    def _get_trend_group(self, grpd, dim="time"):
+    def _get_trend_group(self, grpd, *, dim):
         raise NotImplementedError
 
     def __repr__(self):
@@ -114,8 +116,8 @@ class BaseDetrend(ParametrizableWithDataset):
 class NoDetrend(BaseDetrend):
     """Convenience class for polymorphism. Does nothing."""
 
-    def _get_trend_group(self, da, dim=None):
-        return da.isel({dim: 0})
+    def _get_trend_group(self, da, *, dim):
+        return da.isel({d: 0 for d in dim})
 
     def _detrend(self, da, trend):
         return da
@@ -131,7 +133,7 @@ class MeanDetrend(BaseDetrend):
         return _meandetrend_get_trend(da, **self).trend
 
 
-@map_groups(main_only=True, trend=[Grouper.DIM])
+@map_groups(trend=[Grouper.DIM])
 def _meandetrend_get_trend(da, *, dim, kind):
     trend = da.mean(dim).broadcast_like(da)
     return trend.rename("trend").to_dataset()
@@ -166,9 +168,12 @@ class PolyDetrend(BaseDetrend):
         return trend.trend
 
 
-@map_groups(main_only=True, trend=[Grouper.DIM])
+@map_groups(trend=[Grouper.DIM])
 def _polydetrend_get_trend(da, *, dim, degree, preserve_mean, kind):
     """Polydetrend, atomic func on 1 group."""
+    if len(dim) > 1:
+        da = da.mean(dim[1:])
+    dim = dim[0]
     pfc = da.polyfit(dim=dim, deg=degree)
     trend = xr.polyval(coord=da[dim], coeffs=pfc.polyfit_coefficients)
 
@@ -212,17 +217,104 @@ class LoessDetrend(BaseDetrend):
     """
 
     def __init__(
-        self, group="time", kind=ADDITIVE, f=0.2, niter=1, d=0, weights="tricube"
+        self,
+        group="time",
+        kind=ADDITIVE,
+        f=0.2,
+        niter=1,
+        d=0,
+        weights="tricube",
+        equal_spacing=None,
     ):
-        super().__init__(group=group, kind=kind, f=f, niter=niter, d=0, weights=weights)
-
-    def _get_trend_group(self, da, *, dim):
-        trend = loess_smoothing(
-            da,
-            dim=dim,
-            f=self.f,
-            niter=self.niter,
-            d=self.d,
-            weights=self.weights,
+        super().__init__(
+            group=group,
+            kind=kind,
+            f=f,
+            niter=niter,
+            d=0,
+            weights=weights,
+            equal_spacing=equal_spacing,
         )
-        return trend
+
+    def _get_trend(self, da):
+        # Estimate trend over da
+        trend = _loessdetrend_get_trend(da, **self)
+        return trend.trend
+
+
+@map_groups(trend=[Grouper.DIM])
+def _loessdetrend_get_trend(da, *, dim, f, niter, d, weights, equal_spacing, kind):
+    if len(dim) > 1:
+        da = da.mean(dim[1:])
+    trend = loess_smoothing(
+        da,
+        dim=dim[0],
+        f=f,
+        niter=niter,
+        d=d,
+        weights=weights,
+        equal_spacing=equal_spacing,
+    )
+    return trend.rename("trend").to_dataset()
+
+
+class RollingMeanDetrend(BaseDetrend):
+    """
+    Detrend time series using a rolling mean.
+
+    Parameters
+    ----------
+    group : Union[str, Grouper]
+      The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+      The fit is performed along the group's main dim.
+    kind : {'*', '+'}
+      The way the trend is removed or added, either additive or multiplicative.
+    win : int
+      The size of the rolling window. Units are the steps of the grouped data, which
+      means this detrending is best use with either `group='time'` or
+      `group='time.dayofyear'`. Other grouping will have large jumps included within the
+      windows and :py`:class:`LoessDetrend` might offer a better solution.
+    weights : sequence of floats, optional
+      Sequence of length `win`. Defaults to None, which means a flat window.
+    min_periods: int, optional
+      Minimum number of observations in window required to have a value, otherwise the
+      result is NaN. See :py:meth:`xarray.DataArray.rolling`.
+      Defauls to None, which sets it equal to `win`. Setting both `weights` and this
+      is not implemented yet.
+
+    Notes
+    -----
+    As for the :py:class:`LoessDetrend` detrending, important boundary effects are to be
+    expected.
+    """
+
+    def __init__(
+        self, group="time", kind=ADDITIVE, win=30, weights=None, min_periods=None
+    ):
+        if weights is not None:
+            weights = xr.DataArray(weights, dims=("window",))
+            weights = weights / weights.sum()
+            if min_periods is not None:
+                raise NotImplementedError(
+                    "Setting both `min_periods` and `weights` is not implemented yet."
+                )
+        super().__init__(
+            group=group, kind=kind, win=win, weights=weights, min_periods=min_periods
+        )
+
+    def _get_trend(self, da):
+        # Estimate trend over da
+        trend = _rollingmean_get_trend(da, **self)
+        return trend.trend
+
+
+@map_groups(trend=[Grouper.DIM])
+def _rollingmean_get_trend(da, *, dim, kind, win, weights, min_periods):
+    if len(dim) > 1:
+        da = da.mean(dim[1:])
+    roll = da.rolling(center=True, min_periods=min_periods, **{dim[0]: win})
+    if weights is not None:
+        trend = roll.construct("window").dot(weights)
+    else:
+        trend = roll.mean()
+    return trend.rename("trend").to_dataset()

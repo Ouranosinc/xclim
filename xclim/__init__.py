@@ -10,7 +10,7 @@ from xclim.indicators import atmos, land, seaIce  # noqa
 
 __author__ = """Travis Logan"""
 __email__ = "logan.travis@ouranos.ca"
-__version__ = "0.30.4-beta"
+__version__ = "0.31.5-beta"
 
 
 # Load official locales
@@ -28,5 +28,4 @@ with path("xclim.data", "icclim.yml") as f:
 with path("xclim.data", "anuclim.yml") as f:
     build_indicator_module_from_yaml(f.with_suffix(""), mode="raise")
 with path("xclim.data", "cf.yml") as f:
-    # ignore because some generic function are missing.
-    build_indicator_module_from_yaml(f.with_suffix(""), mode="ignore")
+    build_indicator_module_from_yaml(f.with_suffix(""), mode="raise")

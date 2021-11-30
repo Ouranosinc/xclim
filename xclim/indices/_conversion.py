@@ -583,18 +583,20 @@ def snowfall_approximation(
     The following methods are available to approximate snowfall and are drawn from the
     Canadian Land Surface Scheme (CLASS, [Verseghy09]_).
 
-    - "binary" : When the temperature is under the freezing threshold, precipitation
-        is assumed to be solid. The method is agnostic to the type of temperature used
-        (mean, maximum or minimum).
-    - "brown" : The phase between the freezing threshold goes from solid to liquid linearly
-        over a range of 2°C over the freezing point.
-    - "auer" : The phase between the freezing threshold goes from solid to liquid as a degree six
-        polynomial over a range of 6°C over the freezing point.
+    - ``'binary'`` : When the temperature is under the freezing threshold, precipitation
+      is assumed to be solid. The method is agnostic to the type of temperature used
+      (mean, maximum or minimum).
+    - ``'brown'`` : The phase between the freezing threshold goes from solid to liquid linearly
+      over a range of 2°C over the freezing point.
+    - ``'auer'`` : The phase between the freezing threshold goes from solid to liquid as a degree six
+      polynomial over a range of 6°C over the freezing point.
 
-    .. [Verseghy09]: Diana Verseghy (2009), CLASS – The Canadian Land Surface Scheme (Version 3.4), Technical
-    Documentation (Version 1.1), Environment Canada, Climate Research Division, Science and Technology Branch.
+    References
+    ----------
+    .. [Verseghy09] Diana Verseghy (2009), CLASS – The Canadian Land Surface Scheme (Version 3.4), Technical
+       Documentation (Version 1.1), Environment Canada, Climate Research Division, Science and Technology Branch.
+    https://gitlab.com/cccma/classic/-/blob/master/src/atmosphericVarsCalc.f90
     """
-    # https://gitlab.com/cccma/classic/-/blob/master/src/atmosphericVarsCalc.f90
 
     if method == "binary":
         thresh = convert_units_to(thresh, tas)
@@ -654,7 +656,7 @@ def rain_approximation(
     """Rainfall approximation from total precipitation and temperature.
 
     Liquid precipitation estimated from precipitation and temperature according to a given method.
-    This is a convenience method based on `snowfall_approximation`, see the latter for details.
+    This is a convenience method based on :py:func:`snowfall_approximation`, see the latter for details.
 
     Parameters
     ----------
@@ -674,10 +676,12 @@ def rain_approximation(
 
     Notes
     -----
-    See the documentation of `snowfall_approximation` for details. This method computes
-    the snowfall approximation and subtracts it from the total precipitation to estimate
-    the liquid rain precipitation.
+    This method computes the snowfall approximation and subtracts it from the total
+    precipitation to estimate the liquid rain precipitation.
 
+    See also
+    --------
+    snowfall_approximation
     """
     prra = pr - snowfall_approximation(pr, tas, thresh=thresh, method=method)
     prra.attrs["units"] = pr.attrs["units"]
@@ -694,7 +698,7 @@ def wind_chill_index(
     method: str = "CAN",
     mask_invalid: bool = True,
 ):
-    """Wind chill index.
+    r"""Wind chill index.
 
     The Wind Chill Index is an estimation of how cold the weather feels to the average person.
     It is computed from the air temperature and the 10-m wind. As defined by the Environment and Climate Change Canada ([MVSZ15]_),
@@ -704,7 +708,7 @@ def wind_chill_index(
     ----------
     tas : xarray.DataArray
       Surface air temperature.
-    sfcwind : xarray.DataArray
+    sfcWind : xarray.DataArray
       Surface wind speed (10 m).
     method : {'CAN', 'US'}
       If "CAN" (default), a "slow wind" equation is used where winds are slower than 5 km/h, see Notes.
@@ -776,7 +780,7 @@ def clausius_clapeyron_scaled_precipitation(
     pr_baseline: xr.DataArray,
     cc_scale_factor: float = 1.07,
 ) -> xr.DataArray:
-    """Scale precipitation according to the Clausius-Clapeyron relation.
+    r"""Scale precipitation according to the Clausius-Clapeyron relation.
 
     Parameters
     ----------

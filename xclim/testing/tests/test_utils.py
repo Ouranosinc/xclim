@@ -45,42 +45,6 @@ def test_wrapped_partial():
     assert newf() == (2, 2, 2)
 
 
-def test_wrapped_indicator(tas_series):
-    def indice(
-        tas: xr.DataArray,
-        tas2: xr.DataArray = None,
-        thresh: int = float,
-        freq: str = "YS",
-    ):
-        if tas2 is None:
-            out = tas < thresh
-        else:
-            out = tas < tas2
-        out = out.resample(time="YS").sum()
-        out.attrs["units"] = "days"
-        return out
-
-    ind1 = Daily(
-        realm="atmos",
-        identifier="test_ind1",
-        units="days",
-        compute=wrapped_partial(indice, tas2=None),
-    )
-
-    ind2 = Daily(
-        realm="atmos",
-        identifier="test_ind2",
-        units="days",
-        compute=wrapped_partial(indice, thresh=None),
-    )
-
-    tas = tas_series(np.arange(366), start="2000-01-01")
-    tas2 = tas_series(1 + np.arange(366), start="2000-01-01")
-
-    assert ind2(tas, tas2) == 366
-    assert ind1(tas, thresh=1111) == 366
-
-
 def test_ensure_chunk_size():
     da = xr.DataArray(np.zeros((20, 21, 20)), dims=("x", "y", "z"))
 

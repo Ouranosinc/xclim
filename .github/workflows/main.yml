@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        tox-env: [doctests]
+        tox-env: [doctests_only]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -75,7 +75,7 @@ jobs:
 #        parallel: true
 
   finish:
-    needs: test
+    needs: [test, doctests]
     runs-on: ubuntu-latest
     steps:
     - name: Coveralls Finished

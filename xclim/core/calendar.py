@@ -46,6 +46,9 @@ max_doy = {
     "360_day": 360,
 }
 
+# Names of calendars that have the same number of days for all years
+uniform_calendars = ("noleap", "all_leap", "365_day", "366_day", "360_day")
+
 
 def get_calendar(obj: Any, dim: str = "time") -> str:
     """Return the calendar of an object.
@@ -70,19 +73,23 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
     -------
     str
       The cftime calendar name or "default" when the data is using numpy's or python's datetime types.
+      Will always return "standard" instead of "gregorian", following CF conventions 1.9.
     """
     if isinstance(obj, (xr.DataArray, xr.Dataset)):
         if obj[dim].dtype == "O":
             obj = obj[dim].where(obj[dim].notnull(), drop=True)[0].item()
         elif "datetime64" in obj[dim].dtype.name:
             return "default"
-
-    obj = np.take(
-        obj, 0
-    )  # Take zeroth element, overcome cases when arrays or lists are passed.
+    elif isinstance(obj, xr.CFTimeIndex):
+        obj = obj.values[0]
+    else:
+        obj = np.take(obj, 0)
+        # Take zeroth element, overcome cases when arrays or lists are passed.
     if isinstance(obj, pydt.datetime):  # Also covers pandas Timestamp
         return "default"
     if isinstance(obj, cftime.datetime):
+        if obj.calendar == "gregorian":
+            return "standard"
         return obj.calendar
 
     raise ValueError(f"Calendar could not be inferred from object of type {type(obj)}.")
@@ -116,7 +123,7 @@ def convert_calendar(
       Either a calendar name or the 1D time coordinate to convert to.
       If an array is provided, the output will be reindexed using it and in that case, days in `target`
       that are missing in the converted `source` are filled by `missing` (which defaults to NaN).
-    align_on : {None, 'date', 'year'}
+    align_on : {None, 'date', 'year', 'random'}
       Must be specified when either source or target is a `360_day` calendar, ignored otherwise. See Notes.
     missing : Optional[any]
       A value to use for filling in dates in the target that were missing in the source.
@@ -162,6 +169,36 @@ def convert_calendar(
       a standard calendar.
 
       This option is best used with data on a frequency coarser than daily.
+
+    "random"
+      Similar to "year", each day of year of the source is mapped to another day of year
+      of the target. However, instead of having always the same missing days according
+      the source and target years, here 5 days are chosen randomly, one for each fifth
+      of the year. However, February 29th is always missing when converting to a leap year,
+      or its value is dropped when converting from a leap year. This is similar to method
+      used in the [LOCA]_ dataset.
+
+      This option best used on daily data.
+
+    References
+    ----------
+    .. [LOCA] Pierce, D. W., D. R. Cayan, and B. L. Thrasher, 2014: Statistical downscaling using Localized Constructed Analogs (LOCA). Journal of Hydrometeorology, volume 15, page 2558-2585
+
+    Examples
+    --------
+    This method does not try to fill the missing dates other than with a constant value,
+    passed with `missing`. In order to fill the missing dates with interpolation, one
+    can simply use xarray's method:
+
+    >>> tas_nl = convert_calendar(tas, 'noleap')  # For the example
+    >>> with_missing = convert_calendar(tas_nl, 'standard', missing=np.NaN)
+    >>> out = with_missing.interpolate_na('time', method='linear')
+
+    Here, if Nans existed in the source data, they will be interpolated too. If that is,
+    for some reason, not wanted, the workaround is to do:
+
+    >>> mask = convert_calendar(tas_nl, 'standard').notnull()
+    >>> out2 = out.where(mask)
     """
     cal_src = get_calendar(source, dim=dim)
 
@@ -173,28 +210,55 @@ def convert_calendar(
     if cal_src == cal_tgt:
         return source
 
-    if (cal_src == "360_day" or cal_tgt == "360_day") and align_on is None:
+    if (cal_src == "360_day" or cal_tgt == "360_day") and align_on not in [
+        "year",
+        "date",
+        "random",
+    ]:
         raise ValueError(
-            "Argument `align_on` must be specified with either 'date' or "
-            "'year' when converting to or from a '360_day' calendar."
+            "Argument `align_on` must be specified with either 'date', 'year' or "
+            "'random' when converting to or from a '360_day' calendar."
         )
     if cal_src != "360_day" and cal_tgt != "360_day":
         align_on = None
 
     out = source.copy()
     # TODO Maybe the 5-6 days to remove could be given by the user?
-    if align_on == "year":
+    if align_on in ["year", "random"]:
+        if align_on == "year":
 
-        def _yearly_interp_doy(time):
-            # Returns the nearest day in the target calendar of the corresponding "decimal year" in the source calendar
-            yr = int(time.dt.year[0])
-            return np.round(
-                days_in_year(yr, cal_tgt)
-                * time.dt.dayofyear
-                / days_in_year(yr, cal_src)
-            ).astype(int)
+            def _yearly_interp_doy(time):
+                # Returns the nearest day in the target calendar of the corresponding "decimal year" in the source calendar
+                yr = int(time.dt.year[0])
+                return np.round(
+                    days_in_year(yr, cal_tgt)
+                    * time.dt.dayofyear
+                    / days_in_year(yr, cal_src)
+                ).astype(int)
 
-        new_doy = source.time.groupby(f"{dim}.year").map(_yearly_interp_doy)
+            new_doy = source.time.groupby(f"{dim}.year").map(_yearly_interp_doy)
+        elif align_on == "random":
+
+            def _yearly_random_doy(time, rng):
+                # Return a doy in the new calendar, removing the Feb 29th and 5 other
+                # days chosen randomly within 5 sections of 72 days.
+                yr = int(time.dt.year[0])
+                new_doy = np.arange(360) + 1
+                rm_idx = rng.integers(0, 72, 5) + (np.arange(5) * 72)
+                if cal_src == "360_day":
+                    for idx in rm_idx:
+                        new_doy[idx + 1 :] = new_doy[idx + 1 :] + 1
+                    if days_in_year(yr, cal_tgt) == 366:
+                        new_doy[new_doy >= 60] = new_doy[new_doy >= 60] + 1
+                elif cal_tgt == "360_day":
+                    new_doy = np.insert(new_doy, rm_idx - np.arange(5), -1)
+                    if days_in_year(yr, cal_src) == 366:
+                        new_doy = np.insert(new_doy, 60, -1)
+                return new_doy[time.dt.dayofyear - 1]
+
+            new_doy = source.time.groupby(f"{dim}.year").map(
+                _yearly_random_doy, rng=np.random.default_rng()
+            )
 
         # Convert the source datetimes, but override the doy with our new doys
         out[dim] = xr.DataArray(
@@ -205,6 +269,8 @@ def convert_calendar(
             dims=(dim,),
             name=dim,
         )
+        # Remove NaN that where put on invalid dates in target calendar
+        out = out.where(out[dim].notnull(), drop=True)
         # Remove duplicate timestamps, happens when reducing the number of days
         out = out.isel({dim: np.unique(out[dim], return_index=True)[1]})
     else:
@@ -351,6 +417,7 @@ def _convert_datetime(
       A datetime object to convert.
     new_doy:  Optional[Union[float, int]]
       Allows for redefining the day of year (thus ignoring month and day information from the source datetime).
+      -1 is understood as a nan.
     calendar: str
       The target calendar
 
@@ -361,6 +428,8 @@ def _convert_datetime(
       as the source (month and day according to `new_doy` if given).
       If the month and day doesn't exist in the target calendar, returns np.nan. (Ex. 02-29 in "noleap")
     """
+    if new_doy in [np.nan, -1]:
+        return np.nan
     if new_doy is not None:
         new_date = cftime.num2date(
             new_doy - 1,
@@ -383,12 +452,10 @@ def _convert_datetime(
         return np.nan
 
 
-def ensure_cftime_array(
-    time: Sequence,
-) -> Union[CFTimeIndex, np.ndarray]:
-    """Convert an input 1D array to an array of cftime objects.
+def ensure_cftime_array(time: Sequence) -> np.ndarray:
+    """Convert an input 1D array to a numpy array of cftime objects.
 
-    Python's datetime are converted to cftime.DatetimeGregorian.
+    Python's datetime are converted to cftime.DatetimeGregorian ("standard" calendar).
 
     Raises ValueError when unable to cast the input.
     """
@@ -396,6 +463,8 @@ def ensure_cftime_array(
         time = time.indexes["time"]
     elif isinstance(time, np.ndarray):
         time = pd.DatetimeIndex(time)
+    if isinstance(time, xr.CFTimeIndex):
+        return time.values
     if isinstance(time[0], cftime.datetime):
         return time
     if isinstance(time[0], pydt.datetime):
@@ -521,6 +590,8 @@ def percentile_doy(
         arr.time[0 :: n - 1].dt.strftime("%Y-%m-%d").values.tolist()
     )
     p.attrs["window"] = window
+    p.attrs["alpha"] = alpha
+    p.attrs["beta"] = beta
     return p.rename("per")
 
 
@@ -552,16 +623,13 @@ def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
     t_a, b_a, _, _ = parse_offset(freqA)
     t_b, b_b, _, _ = parse_offset(freqB)
 
-    if b_a == b_b:
-        # Same base freq, compare mulitplicator only.
-        t_a = int(t_a or "1")
-        t_b = int(t_b or "1")
-    else:
+    if b_a != b_b:
         # Different base freq, compare length of first period after beginning of time.
         t = pd.date_range("1970-01-01T00:00:00.000", periods=2, freq=freqA)
         t_a = (t[1] - t[0]).total_seconds()
         t = pd.date_range("1970-01-01T00:00:00.000", periods=2, freq=freqB)
         t_b = (t[1] - t[0]).total_seconds()
+    # else Same base freq, compare multiplicator only.
 
     return get_op(op)(t_a, t_b)
 
@@ -569,10 +637,28 @@ def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
 def parse_offset(freq: str) -> Sequence[str]:
     """Parse an offset string.
 
-    Returns: multiplicator, offset base, start stamp (or None), anchor (or None)
+    Parse a frequency offset and, if needed, convert to cftime-compatible components.
+
+    Parameters
+    ----------
+    freq : str
+      Frequency offset.
+
+    Returns
+    -------
+    multiplicator (int), offset base (str), is start anchored (bool), anchor (str or None)
+      "[n]W" is always replaced with "[7n]D", as xarray doesn't support "W" for cftime indexes.
+      "Y" is always replaced with "A".
     """
     patt = r"(\d*)(\w)(S)?(?:-(\w{2,3}))?"
-    return re.search(patt, freq.replace("Y", "A")).groups()
+    mult, base, start, anchor = re.search(patt, freq).groups()
+    mult = int(mult or "1")
+    base = base.replace("Y", "A")
+    if base == "W":
+        mult = 7 * mult
+        base = "D"
+        anchor = ""
+    return mult, base, start == "S", anchor
 
 
 def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArray:
