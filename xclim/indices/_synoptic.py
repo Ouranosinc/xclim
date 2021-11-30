@@ -59,6 +59,25 @@ def jetstream_metric_woolings(
         return
 
     # compute low-pass filter weights
+    lanczos_weights = compute_low_pass_filter_weights(
+        window_size=window_size, cutoff=cutoff
+    )
+    # apply the filter
+    ua_lf = (
+        zonal_mean.rolling(time=window_size, center=True)
+        .construct("window")
+        .dot(lanczos_weights)
+    )
+
+    jetlat = ua_lf.idxmax("lat").rename("jetlat").assign_attrs(units="degrees")
+    jetstr = ua_lf.max("lat").rename("jetstr").assign_attrs(units="m s-1")
+
+    return jetlat, jetstr
+
+
+def compute_low_pass_filter_weights(
+    window_size: int, cutoff: float
+) -> xarray.DataArray:
     order = ((window_size - 1) // 2) + 1
     nwts = 2 * order + 1
     w = np.zeros([nwts])
@@ -71,15 +90,4 @@ def jetstream_metric_woolings(
     w[n + 1 : -1] = firstfactor * sigma
 
     lanczos_weights = xarray.DataArray(w[0 + (window_size % 2) : -1], dims=["window"])
-
-    # apply the filter
-    ua_lf = (
-        zonal_mean.rolling(time=window_size, center=True)
-        .construct("window")
-        .dot(lanczos_weights)
-    )
-
-    jetlat = ua_lf.idxmax("lat").rename("jetlat").assign_attrs(units="degrees")
-    jetstr = ua_lf.max("lat").rename("jetstr").assign_attrs(units="m s-1")
-
-    return jetlat, jetstr
+    return lanczos_weights
