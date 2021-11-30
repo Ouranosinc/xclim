@@ -144,6 +144,10 @@ def heat_index(
     -------
     xr.DataArray, [time][temperature]
       Heat index.
+
+    References
+    ----------
+    .. [blazejczyk2012] Blazejczyk, K., Epstein, Y., Jendritzky, G., Staiger, H., & Tinz, B. (2012). Comparison of UTCI to selected thermal indices. International journal of biometeorology, 56(3), 515-535.
     """
     thresh = convert_units_to(thresh, "degC")
     t = convert_units_to(tasmax, "degC")
