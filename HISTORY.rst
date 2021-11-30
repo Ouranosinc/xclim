@@ -4,7 +4,7 @@ History
 
 0.32.0 (unreleased)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`)
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -32,6 +32,7 @@ Internal changes
 * Split of resampling-related functionality of ``Indicator``s into a new ``ResamplingIndicator`` and ``ResamplingIndicatorWithIndexing`` subclasses. The use of new (private) methods makes it easier to inject functionality in indicator subclasses. (:issue:`867`, :pull:`927`, :pull:`934`).
 * French translation metadata fields are now cleaner and much more internally consistent, and many empty metadata fields (e.g. ``comment_fr``) have been removed. (:pull:`930`, :issue:`929`).
 * Adjustments to the `tox` builds so that slow tests are now run alongside standard tests (for more accurate coverage reporting). (:pull:`938`)
+* Use ``xarray.apply_ufunc`` to vectorize statistical functions.
 
 Bug fixes
 ^^^^^^^^^
