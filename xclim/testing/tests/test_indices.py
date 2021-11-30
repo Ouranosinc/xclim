@@ -2174,6 +2174,28 @@ def test_humidex(tas_series):
     np.testing.assert_array_almost_equal(hk, expected.to("K"), 0)
 
 
+def test_heat_index(tas_series, hurs_series):
+
+    tas = tas_series([15, 25, 20, 40])
+    tas.attrs["units"] = "C"
+
+    hurs = hurs_series([0, 10, 20, 50])
+
+    expected = np.array([0, 1, 0, 0]) * units.degC
+
+    # Celsius
+    hc = xci.heat_index(tas, hurs)
+    np.testing.assert_array_almost_equal(hc, expected, 0)
+
+    # Kelvin
+    hk = xci.heat_index(convert_units_to(tas, "K"), hurs)
+    np.testing.assert_array_almost_equal(hk, expected.to("K"), 0)
+
+    # Fahrenheit
+    hf = xci.heat_index(convert_units_to(tas, "fahrenheit"), hurs)
+    np.testing.assert_array_almost_equal(hf, expected.to("fahrenheit"), 0)
+
+
 @pytest.mark.parametrize(
     "op,exp", [("max", 11), ("sum", 21), ("count", 3), ("mean", 7)]
 )
