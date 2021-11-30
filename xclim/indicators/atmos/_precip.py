@@ -98,8 +98,10 @@ max_n_day_precipitation_amount = Precip(
 wetdays = Precip(
     identifier="wetdays",
     units="days",
-    description="{freq} proportion of days with precipitation over {thresh}.",
-    cell_methods="",
+    standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold",
+    long_name="Number of wet days (precip >= {thresh})",
+    description="{freq} number of days with daily precipitation over {thresh}.",
+    cell_methods="time: sum within days time: sum over days",
     compute=indices.wetdays,
 )
 
