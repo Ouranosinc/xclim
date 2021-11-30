@@ -936,10 +936,9 @@ def potential_evapotranspiration(
 
         tas = convert_units_to(tas, "degC")
         tasK = convert_units_to(tas, "K")
-        tasmin = convert_units_to(tasmin, "degC")
 
-        latr = (tasmin.lat * np.pi) / 180
-        jd_frac = (datetime_to_decimal_year(tasmin.time) % 1) * 2 * np.pi
+        latr = (tas.lat * np.pi) / 180
+        jd_frac = (datetime_to_decimal_year(tas.time) % 1) * 2 * np.pi
 
         S = 1367.0  # Set solar constant [W/m2]
         ds = 0.409 * np.sin(jd_frac - 1.39)  # solar declination ds [radians]
