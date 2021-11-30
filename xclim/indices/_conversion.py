@@ -932,7 +932,10 @@ def potential_evapotranspiration(
 
     elif method in ["mcguinnessbordne05", "MB05"]:
         if tas is None:
+            tasmin = convert_units_to(tasmin, "degC")
+            tasmax = convert_units_to(tasmax, "degC")
             tas = (tasmin + tasmax) / 2
+            tas.attrs["units"] = "degC"
 
         tas = convert_units_to(tas, "degC")
         tasK = convert_units_to(tas, "K")
