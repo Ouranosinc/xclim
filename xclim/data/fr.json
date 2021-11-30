@@ -959,7 +959,7 @@
   },
   "RAIN_SEASON": {
     "title": "Saison de pluie",
-    "abstract": "Début, fin, durée et cumul de précipitation pendant la saison de pluie",
+    "abstract": "Début, fin, durée et cumul de précipitation pendant la saison de pluie.",
     "description": [
         "Premier jour de la saison de pluie (voir rain_season_start).",
         "Dernier jour de la saison de pluie (voir rain_season_end).",
@@ -975,14 +975,14 @@
   },
   "RAIN_SEASON_START": {
     "title": "Début de la saison de pluie",
-    "abstract": "Premier jour d'une période pendant laquelle le cumul de précipitation est supérieur ou égal à un seuil et qui est suivie d'une période exempte d'une séquence de jours secs",
-    "description": "Premier jour d'une période de {window_wet} jours avec cumul de préciptiations supérieur ou égal à {thresh_wet} suivie d'une période de {window_dry} jours avec moins de {dry_days} jours consécutifs avec précipitation journalière inférieure à {thresh_dry}; la recherche est limitée par {start_date} et {end_date}",
+    "abstract": "Premier jour d'une période pendant laquelle le cumul de précipitation est supérieur ou égal à un seuil et qui est suivie d'une période exempte d'une séquence de jours secs.",
+    "description": "Premier jour d'une période de {window_wet} jours avec cumul de précipitations supérieur ou égal à {thresh_wet} suivie d'une période de {window_dry} jours avec moins de {dry_days} jours consécutifs avec précipitation journalière inférieure à {thresh_dry}; la recherche est limitée par {start_date} et {end_date}.",
     "long_name": "Début de la saison de pluie"
   },
   "RAIN_SEASON_END": {
     "title": "Fin de la saison de pluie",
-    "abstract": "Jour précédent une période pendant laquelle le maxima ou cumul des précipitations est inférieur à un seuil ou pendant laquelle une colonne d'eau d'une hauteur donnée peut s'évaporer",
-    "description": "Jour précédent une période de {window} jours pendant laquelle le maxima (si {op}=='max') ou cumul (si {op}=='sum') des précipitations est inférieur à {tresh}, ou pendant laquelle une colonne d'eau d'une hauteur de {thresh} et les précipitations reçues pendant cette période s'évaporent à un taux variable (spécifié dans 'etp') ou fixe (spécifié dans {etp_rate}); la recherche est limitée par {start_date} et {end_date}",
+    "abstract": "Jour précédent une période pendant laquelle le maximum ou cumul des précipitations est inférieur à un seuil ou pendant laquelle une colonne d'eau d'une hauteur donnée peut s'évaporer.",
+    "description": "Jour précédent une période de {window} jours pendant laquelle le maximum (si {op}=='max') ou cumul (si {op}=='sum') des précipitations est inférieur à {thresh}, ou pendant laquelle une colonne d'eau d'une hauteur de {thresh} et les précipitations reçues pendant cette période s'évaporent à un taux variable (spécifié dans 'etp') ou fixe (spécifié dans {etp_rate}); la recherche est limitée par {start_date} et {end_date}.",
     "long_name": "Fin de la saison de pluie"
   },
   "RAIN_SEASON_LENGTH": {
