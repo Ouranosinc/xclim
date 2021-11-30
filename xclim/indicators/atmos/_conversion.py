@@ -19,13 +19,12 @@ __all__ = [
     "wind_chill_index",
     "potential_evapotranspiration",
     "water_budget",
+    "corn_heat_units",
 ]
 
 
 class Converter(Indicator):
     """Class for indicators doing variable conversion (dimension-independent 1-to-1 computation)."""
-
-    missing = "skip"
 
 
 humidex = Converter(
@@ -237,4 +236,18 @@ water_budget = Converter(
         "where the potential evapotranspiration is calculated with the method {method}."
     ),
     compute=indices.water_budget,
+)
+
+
+corn_heat_units = Converter(
+    identifier="corn_heat_units",
+    units="",
+    long_name="Corn heat units (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}).",
+    description="Temperature-based index used to estimate the development of corn crops. "
+    "Corn growth occurs when the minimum and maximum daily temperature both exceeds "
+    "specific thresholds : Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}.",
+    var_name="chu",
+    cell_methods="",
+    missing="skip",
+    compute=indices.corn_heat_units,
 )

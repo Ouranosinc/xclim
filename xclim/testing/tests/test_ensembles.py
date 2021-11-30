@@ -145,19 +145,19 @@ class TestEnsembleStats:
             ens = ens.transpose()
 
         out1 = ensembles.ensemble_percentiles(ens, split=True)
-        np.testing.assert_array_equal(
+        np.testing.assert_array_almost_equal(
             mquantiles(
                 ens["tg_mean"].isel(time=0, lon=5, lat=5), 0.1, alphap=1, betap=1
             ),
             out1["tg_mean_p10"].isel(time=0, lon=5, lat=5),
         )
-        np.testing.assert_array_equal(
+        np.testing.assert_array_almost_equal(
             mquantiles(
                 ens["tg_mean"].isel(time=0, lon=5, lat=5), alphap=1, betap=1, prob=0.50
             ),
             out1["tg_mean_p50"].isel(time=0, lon=5, lat=5),
         )
-        np.testing.assert_array_equal(
+        np.testing.assert_array_almost_equal(
             mquantiles(
                 ens["tg_mean"].isel(time=0, lon=5, lat=5), alphap=1, betap=1, prob=0.90
             ),
@@ -191,12 +191,12 @@ class TestEnsembleStats:
         ens.tg_mean[2, 7, 5, 5] = np.nan
         out1 = ensembles.ensemble_percentiles(ens, split=True)
         masked_arr = np.ma.fix_invalid(ens["tg_mean"][:, 0, 5, 5])
-        np.testing.assert_array_equal(
+        np.testing.assert_array_almost_equal(
             mquantiles(masked_arr, 0.10, alphap=1, betap=1),
             out1["tg_mean_p10"][0, 5, 5],
         )
         masked_arr = np.ma.fix_invalid(ens["tg_mean"][:, 7, 5, 5])
-        np.testing.assert_array_equal(
+        np.testing.assert_array_almost_equal(
             mquantiles(masked_arr, 0.10, alphap=1, betap=1),
             out1["tg_mean_p10"][7, 5, 5],
         )
