@@ -4,7 +4,7 @@ History
 
 0.32.0 (unreleased)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), David Huard (:user:`huard`)
 
 Announcements
 ^^^^^^^^^^^^^
@@ -18,7 +18,8 @@ New features and enhancements
 * The data input frequency expected by ``Indicator``s is now in the ``src_freq`` attribute and is thus controllable by subclassing existing indicators. (:issue:`898`, :pull:`927`).
 * New ``**indexer`` keyword args added to many indicators, it accepts the same arguments as ``xclim.indices.generic.select_time``, which has been improved. Unless otherwise specified, the time selection is done before any computation. (:pull:`934`, :issue:`899`).
 * Rewrite of ``xclim.sdba.ExtremeValues``, now fixed with a correct algorithm. It has not been tested extensively and should be considered experimental. (:pull:`914`, :issue:`789`, :issue:`790`).
-* Added `days_over_precip_doy_thresh` and `fraction_over_precip_doy_thresh` indicators to distinguish between WMO and ECAD definition of the Rxxp and RxxpTot indices. (:issue:`931`, :pull:`940`)
+* Added `days_over_precip_doy_thresh` and `fraction_over_precip_doy_thresh` indicators to distinguish between WMO and ECAD definition of the Rxxp and RxxpTot indices. (:issue:`931`, :pull:`940`).
+* Update `xclim.core.utils.nan_calc_percentiles` to improve maintainability. (:pull:`942`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
