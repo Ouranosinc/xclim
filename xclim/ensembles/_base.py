@@ -1,5 +1,4 @@
 """Ensembles creation and statistics."""
-import logging
 from pathlib import Path
 from typing import List, Optional, Sequence, Union
 
@@ -8,7 +7,7 @@ import xarray as xr
 
 from xclim.core.calendar import convert_calendar, get_calendar
 from xclim.core.formatting import update_history
-from xclim.core.utils import calc_perc
+from xclim.core.utils import calc_perc, logger
 
 
 def create_ensemble(
@@ -301,7 +300,7 @@ def _ens_align_datasets(
 
     ds_all = []
     for i, n in enumerate(datasets):
-        logging.info(f"Accessing {n} of {len(datasets)}")
+        logger.info(f"Accessing {n} of {len(datasets)}")
         if mf_flag:
             ds = xr.open_mfdataset(n, combine="by_coords", **xr_kwargs)
         else:

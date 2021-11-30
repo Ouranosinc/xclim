@@ -354,17 +354,17 @@ class TestAgroclimaticIndices:
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
         ds = ds.drop_isel(time=0)  # drop time=2006/12 for one year of data
 
-        tasmax, tasmin = ds.tas + 15, ds.tas - 5
+        tasmax, tas = ds.tas + 15, ds.tas - 5
         # It would be much better if the index would interpolate to daily from monthly data intelligently.
-        tasmax, tasmin = (
+        tasmax, tas = (
             tasmax.resample(time="1D").interpolate("cubic"),
-            tasmin.resample(time="1D").interpolate("cubic"),
+            tas.resample(time="1D").interpolate("cubic"),
         )
-        tasmax.attrs["units"], tasmin.attrs["units"] = "K", "K"
+        tasmax.attrs["units"], tas.attrs["units"] = "K", "K"
 
         hi = xci.huglin_index(
             tasmax=tasmax,
-            tasmin=tasmin,
+            tas=tas,
             lat=ds.lat,
             method=method,
             end_date=end_date,  # noqa

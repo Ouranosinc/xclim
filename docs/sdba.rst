@@ -7,8 +7,7 @@ Bias adjustment and downscaling algorithms
 For example, given a daily time series of observations `ref`, a model simulation over the observational period `hist` and a model simulation over a future period `sim`, we would apply a bias-adjustment method such as *detrended quantile mapping* (DQM) as::
 
   from xclim import sdba
-  dqm = sdba.adjustment.DetrendedQuantileMapping()
-  dqm.train(ref, hist)
+  dqm = sdba.adjustment.DetrendedQuantileMapping.train(ref, hist)
   scen = dqm.adjust(sim)
 
 Most method can either be applied additively or multiplicatively. Also, most methods can be applied independently on different time groupings (monthly, seasonally) or according to the day of the year and a rolling window width.
