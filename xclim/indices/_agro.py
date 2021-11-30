@@ -453,7 +453,7 @@ def cool_night_index(
     are missing several months will be flagged as invalid. This check can be ignored by setting the following context:
 
     >>> with xclim.set_options(check_missing='skip', data_validation='log'):
-    >>>     cni = xclim.atmos.cool_night_index(...)  # xdoctest: +SKIP
+    >>>     cool_night = xclim.atmos.cool_night_index(...)  # xdoctest: +SKIP
 
     References
     ----------
@@ -479,7 +479,7 @@ def dryness_index(
     evspsblpot: xarray.DataArray,
     wo: str = "200 mm",
     hemisphere: str = "north",
-    freq: str = "YS",
+    freq: str = "MS",
 ) -> xarray.DataArray:
     """Dryness Index.
 
