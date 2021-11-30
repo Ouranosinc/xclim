@@ -173,6 +173,13 @@
     "comment": "",
     "abstract": "Nombre de jours où les précipitations sont au-dessus d'un seuil."
   },
+  "WETDAY_PROP": {
+    "long_name": "",
+    "description": "",
+    "title": "",
+    "comment": "",
+    "abstract": ""
+  },
   "CDD": {
     "long_name": "Durée maximale d'une période sèche",
     "description": "Nombre {freq:m} maximal de jours consécutifs où les précipitations sont sous {thresh}.",
