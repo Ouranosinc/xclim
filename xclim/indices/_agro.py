@@ -478,7 +478,7 @@ def dryness_index(
     pr: xarray.DataArray,
     evspsblpot: xarray.DataArray,
     wo: str = "200 mm",
-    hemisphere: str = "north",
+    hemisphere: str = "n",
     freq: str = "MS",
 ) -> xarray.DataArray:
     """Dryness Index.
@@ -494,7 +494,7 @@ def dryness_index(
       Potential evapotranspiration.
     wo : str
       The initial soil water reserve accessible to root systems.
-    hemisphere: {"northern", "southern"}
+    hemisphere: {"n", "s"}
       The hemisphere of interest (affects month choices used in summation).
     freq : str
       Resampling frequency.
@@ -520,15 +520,20 @@ def dryness_index(
     # Resample all variables to monthly totals in mm units.
     evspsblpot = rate2amount(evspsblpot, out_units="mm")
     pr = rate2amount(pr, out_units="mm")
+    wo = convert_units_to(wo, "mm")
 
     evspsblpot = evspsblpot.resample(time="MS").sum(dim="time")
     pr = pr.resample(time="MS").sum(dim="time")
 
     # Different potential evapotranspiration rates for northern hemisphere and southern hemisphere.
-    if hemisphere.lower() == "northern":
+    # wo_adjustment is the initial soil moisture rate at beginning of season.
+    if hemisphere.lower() == "n":
         adjustment = [0, 0, 0, 0.1, 0.3, 0.5, 0.5, 0.5, 0.5, 0, 0, 0]
-    elif hemisphere.lower() == "southern":
+        wo_adjustment = [0, 0, 0, wo, 0, 0, 0, 0, 0, 0, 0, 0]  # noqa
+    elif hemisphere.lower() == "s":
         adjustment = [0.5, 0.5, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0.1, 0.3]
+        wo_adjustment = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, wo, 0]  # noqa
+
     else:
         raise ValueError(hemisphere)
 
@@ -548,7 +553,7 @@ def dryness_index(
     e_s = (evspsblpot / evspsblpot.time.dt.daysinmonth) * (1 - k) * (pr / 5)
 
     # Dryness index
-    di = (wo + pr - t_v - e_s).resample(time=freq)
+    di = (pr - t_v - e_s).resample(time=freq).mean()
     di.attrs["units"] = "mm"
     return di
 
