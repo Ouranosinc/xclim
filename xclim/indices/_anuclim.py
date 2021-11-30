@@ -97,7 +97,9 @@ def isothermality(
 
 
 @declare_units(tas="[temperature]")
-def temperature_seasonality(tas: xarray.DataArray) -> xarray.DataArray:
+def temperature_seasonality(
+    tas: xarray.DataArray, freq: str = "YS"
+) -> xarray.DataArray:
     r"""ANUCLIM temperature seasonality (coefficient of variation).
 
     The annual temperature coefficient of variation expressed in percent. Calculated as the standard deviation
@@ -107,11 +109,14 @@ def temperature_seasonality(tas: xarray.DataArray) -> xarray.DataArray:
     ----------
     tas : xarray.DataArray
       Mean temperature at daily, weekly, or monthly frequency.
+    freq :
 
     Returns
     -------
     xarray.DataArray, [%]
       Mean temperature coefficient of variation
+    freq : str
+      Resampling frequency.
 
     Examples
     --------
@@ -136,16 +141,14 @@ def temperature_seasonality(tas: xarray.DataArray) -> xarray.DataArray:
     tas = convert_units_to(tas, "K")
 
     with xarray.set_options(keep_attrs=True):
-        seas = 100 * _anuclim_coeff_var(tas)
+        seas = 100 * _anuclim_coeff_var(tas, freq=freq)
 
     seas.attrs["units"] = "%"
     return seas
 
 
 @declare_units(pr="[precipitation]")
-def precip_seasonality(
-    pr: xarray.DataArray,
-) -> xarray.DataArray:
+def precip_seasonality(pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""ANUCLIM Precipitation Seasonality (C of V).
 
     The annual precipitation Coefficient of Variation (C of V) expressed in percent. Calculated as the standard deviation
@@ -156,6 +159,8 @@ def precip_seasonality(
     pr : xarray.DataArray
       Total precipitation rate at daily, weekly, or monthly frequency.
       Units need to be defined as a rate (e.g. mm d-1, mm week-1).
+    freq : str
+      Resampling frequency.
 
     Returns
     -------
@@ -190,7 +195,7 @@ def precip_seasonality(
         pr = convert_units_to(pr, "mm d-1")
 
     with xarray.set_options(keep_attrs=True):
-        seas = 100 * _anuclim_coeff_var(pr)
+        seas = 100 * _anuclim_coeff_var(pr, freq=freq)
 
     seas.attrs["units"] = "%"
     return seas
@@ -456,10 +461,10 @@ def prcptot_wetdry_period(
     )
 
 
-def _anuclim_coeff_var(arr: xarray.DataArray) -> xarray.DataArray:
+def _anuclim_coeff_var(arr: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     """Calculate the annual coefficient of variation for ANUCLIM indices."""
-    std = arr.resample(time="YS").std(dim="time")
-    mu = arr.resample(time="YS").mean(dim="time")
+    std = arr.resample(time=freq).std(dim="time")
+    mu = arr.resample(time=freq).mean(dim="time")
     return std / mu
 
 

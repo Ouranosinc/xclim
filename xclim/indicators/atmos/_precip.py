@@ -4,7 +4,7 @@ from inspect import _empty  # noqa
 
 from xclim import indices
 from xclim.core import cfchecks
-from xclim.core.indicator import Daily, Hourly
+from xclim.core.indicator import Daily, Hourly, Indicator
 from xclim.core.utils import InputKind
 
 __all__ = [
@@ -36,6 +36,13 @@ __all__ = [
 ]
 
 
+class FireWeather(Indicator):
+    """Non resampling - precipitation related indicators."""
+
+    src_freq = "D"
+    context = "hydro"
+
+
 class Precip(Daily):
     """Indicator involving daily pr series."""
 
@@ -47,8 +54,7 @@ class PrTasx(Daily):
 
     context = "hydro"
 
-    @staticmethod
-    def cfcheck(pr, tas):
+    def cfcheck(self, pr, tas):
         cfchecks.cfcheck_from_name("pr", pr)
         cfchecks.check_valid(tas, "standard_name", "air_temperature")
 
@@ -219,7 +225,7 @@ solid_precip_accumulation = PrTasx(
     parameters={"tas": {"kind": InputKind.VARIABLE}, "phase": "solid"},
 )
 
-drought_code = Precip(
+drought_code = FireWeather(
     identifier="dc",
     units="",
     standard_name="drought_code",
@@ -229,7 +235,7 @@ drought_code = Precip(
     missing="skip",
 )
 
-fire_weather_indexes = Precip(
+fire_weather_indexes = FireWeather(
     identifier="fwi",
     realm="atmos",
     var_name=["dc", "dmc", "ffmc", "isi", "bui", "fwi"],
@@ -293,13 +299,22 @@ days_with_snow = Precip(
 days_over_precip_thresh = Precip(
     identifier="days_over_precip_thresh",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold",
-    description="{freq} number of days with precipitation above a daily percentile."
+    description="{freq} number of days with precipitation above percentile."
     " Only days with at least {thresh} are counted.",
     units="days",
     cell_methods="time: sum over days",
     compute=indices.days_over_precip_thresh,
 )
 
+days_over_precip_doy_thresh = Precip(
+    identifier="days_over_precip_doy_thresh",
+    standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_above_daily_threshold",
+    description="{freq} number of days with precipitation above a daily percentile."
+    " Only days with at least {thresh} are counted.",
+    units="days",
+    cell_methods="time: sum over days",
+    compute=indices.days_over_precip_thresh,
+)
 
 high_precip_low_temp = PrTasx(
     identifier="high_precip_low_temp",
@@ -310,7 +325,7 @@ high_precip_low_temp = PrTasx(
 )
 
 
-fraction_over_precip_thresh = Precip(
+fraction_over_precip_doy_thresh = Precip(
     identifier="fraction_over_precip_thresh",
     description="{freq} fraction of total precipitation due to days with precipitation above a daily percentile."
     " Only days with at least {thresh} are included in the total.",
@@ -319,6 +334,14 @@ fraction_over_precip_thresh = Precip(
     compute=indices.fraction_over_precip_thresh,
 )
 
+fraction_over_precip_thresh = Precip(
+    identifier="fraction_over_precip_thresh",
+    description="{freq} fraction of total precipitation due to days with precipitation above percentile."
+    " Only days with at least {thresh} are included in the total.",
+    units="",
+    cell_methods="",
+    compute=indices.fraction_over_precip_thresh,
+)
 
 liquid_precip_ratio = PrTasx(
     identifier="liquid_precip_ratio",
