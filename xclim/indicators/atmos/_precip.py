@@ -26,8 +26,10 @@ __all__ = [
     "first_snowfall",
     "days_with_snow",
     "days_over_precip_thresh",
+    "days_over_precip_doy_thresh",
     "high_precip_low_temp",
     "fraction_over_precip_thresh",
+    "fraction_over_precip_doy_thresh",
     "liquid_precip_ratio",
     "dry_spell_frequency",
     "dry_spell_total_length",
@@ -320,9 +322,8 @@ high_precip_low_temp = PrTasx(
     compute=indices.high_precip_low_temp,
 )
 
-
 fraction_over_precip_doy_thresh = Precip(
-    identifier="fraction_over_precip_thresh",
+    identifier="fraction_over_precip_doy_thresh",
     description="{freq} fraction of total precipitation due to days with precipitation above a daily percentile."
     " Only days with at least {thresh} are included in the total.",
     units="",

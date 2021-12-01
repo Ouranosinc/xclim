@@ -393,11 +393,11 @@ class TestDaysWithSnow:
         np.testing.assert_array_equal(out[1], [np.nan, 224, 263, 123, np.nan])
 
 
-def test_days_over_precip_thresh():
+def test_days_over_precip_doy_thresh():
     pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
     per = percentile_doy(pr, window=5, per=80)
 
-    out1 = atmos.days_over_precip_thresh(pr, per)
+    out1 = atmos.days_over_precip_doy_thresh(pr, per)
     np.testing.assert_array_equal(out1[1, :, 0], np.array([81, 61, 69, 78]))
 
     out2 = atmos.days_over_precip_thresh(pr, per, thresh="2 mm/d")
@@ -406,11 +406,22 @@ def test_days_over_precip_thresh():
     assert "only days with at least 2 mm/d are counted." in out2.description
 
 
-def test_fraction_over_precip_thresh():
+def test_days_over_precip_thresh():
+    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
+    per = pr.quantile(0.8, "time", keep_attrs=True)
+
+    out = atmos.days_over_precip_thresh(pr, per)
+
+    np.testing.assert_allclose(
+        out[1, :], np.array([80.0, 63.0, 68.0, 81.0]), atol=0.001
+    )
+
+
+def test_fraction_over_precip_doy_thresh():
     pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
     per = percentile_doy(pr, window=5, per=80)
 
-    out = atmos.fraction_over_precip_thresh(pr, per)
+    out = atmos.fraction_over_precip_doy_thresh(pr, per)
     np.testing.assert_allclose(
         out[1, :, 0], np.array([0.809, 0.770, 0.748, 0.807]), atol=0.001
     )
@@ -421,6 +432,17 @@ def test_fraction_over_precip_thresh():
     )
 
     assert "only days with at least 0.002 m/d are included" in out.description
+
+
+def test_fraction_over_precip_thresh():
+    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
+    per = pr.quantile(0.8, "time", keep_attrs=True)
+
+    out = atmos.fraction_over_precip_thresh(pr, per)
+
+    np.testing.assert_allclose(
+        out[1, :], np.array([0.839, 0.809, 0.798, 0.859]), atol=0.001
+    )
 
 
 def test_liquid_precip_ratio():
