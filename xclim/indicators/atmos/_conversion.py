@@ -43,7 +43,7 @@ heat_index = Converter(
     units="C",
     standard_name="air_temperature",
     long_name="heat index",
-    description="Days in which the human body perceives temperature is hot, which combines relative humidity with the air temperature.",
+    description="Perceived temperature after relative humidity is taken into account.",
     cell_methods="",
     compute=indices.heat_index,
 )
