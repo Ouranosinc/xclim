@@ -133,7 +133,7 @@ def heat_index(
     r"""Daily heat index.
 
     Perceived temperature after relative humidity is taken into account. The
-    index is only valid for temperatures above 20C.
+    index is only valid for temperatures above 20°C.
 
     Parameters
     ----------
