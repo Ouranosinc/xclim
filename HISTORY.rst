@@ -38,6 +38,7 @@ Bug fixes
 ^^^^^^^^^
 * Fix bugs in the `cf_attrs` and/or `abstract` of `continuous_snow_cover_end` and `continuous_snow_cover_start`. (:pull:`908`).
 * Remove unnecessary `keep_attrs` from `resample` call which would raise an error in futur Xarray version. (:pull:`937`).
+* Fixed a bug in the regex that parses usernames in the history. (:pull:`945`)
 
 0.31.0 (2021-11-05)
 -------------------
