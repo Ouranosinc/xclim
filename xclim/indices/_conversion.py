@@ -151,9 +151,7 @@ def heat_index(
 
     References
     ----------
-    .. [blazejczyk2012] Blazejczyk, K., Epstein, Y., Jendritzky, G., Staiger,
-    H., & Tinz, B. (2012). Comparison of UTCI to selected thermal indices.
-    International journal of biometeorology, 56(3), 515-535.
+    .. [blazejczyk2012] Blazejczyk, K., Epstein, Y., Jendritzky, G., Staiger, H., & Tinz, B. (2012). Comparison of UTCI to selected thermal indices. International journal of biometeorology, 56(3), 515-535.
 
     Notes
     -----
