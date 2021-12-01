@@ -117,7 +117,7 @@ def humidex(
     return out
 
 
-@declare_units(tasmax="[temperature]", hurs="[g m-3]", thresh="[temperature]")
+@declare_units(tasmax="[temperature]", hurs="[]", thresh="[temperature]")
 def heat_index(
     tasmax: xr.DataArray,
     hurs: xr.DataArray,
@@ -174,7 +174,7 @@ def heat_index(
     )
     out = out.assign_attrs(units="degC")
 
-    return out
+    return convert_units_to(out, tasmax.units)
 
 
 @declare_units(tasmin="[temperature]", tasmax="[temperature]")
