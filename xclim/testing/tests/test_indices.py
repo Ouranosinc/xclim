@@ -2176,12 +2176,14 @@ def test_humidex(tas_series):
 
 def test_heat_index(tas_series, hurs_series):
 
-    tas = tas_series([15, 25, 20, 40])
+    tas = tas_series([15, 20, 25, 25, 30, 30, 35, 35, 40, 40, 45, 45])
     tas.attrs["units"] = "C"
 
-    hurs = hurs_series([5, 25, 50, 80])
+    hurs = hurs_series([5, 5, 0, 25, 25, 50, 25, 50, 25, 50, 25, 50, 25, 50])
 
-    expected = np.array([np.nan, 25.0, np.nan, 83.0]) * units.degC
+    expected = (
+        np.array([np.nan, np.nan, 24, 25, 28, 31, 34, 41, 41, 55, 50, 73]) * units.degC
+    )
 
     # Celsius
     hc = xci.heat_index(tas, hurs)
