@@ -80,8 +80,12 @@ def humidex(
     - 40 to 45 : great discomfort, avoid exertion;
     - 46 and over : dangerous, possible heat stroke;
 
-    Please note this is the Canadian index version of the calculation performed for Heat Index, which is American.
-
+    Please note that while both the humidex and the heat index are calculated
+    using dew point, the humidex uses a dew point of 7 °C (45 °F) as a base,
+    whereas the heat index uses a dew point base of 14 °C (57 °F). Further,
+    the heat index uses heat balance equations which account for many variables
+    other than vapor pressure, which is used exclusively in the humidex
+    calculation.
 
     References
     ----------
@@ -147,11 +151,17 @@ def heat_index(
 
     References
     ----------
-    .. [blazejczyk2012] Blazejczyk, K., Epstein, Y., Jendritzky, G., Staiger, H., & Tinz, B. (2012). Comparison of UTCI to selected thermal indices. International journal of biometeorology, 56(3), 515-535.
+    .. [blazejczyk2012] Blazejczyk, K., Epstein, Y., Jendritzky, G., Staiger,
+    H., & Tinz, B. (2012). Comparison of UTCI to selected thermal indices.
+    International journal of biometeorology, 56(3), 515-535.
 
     Notes
     -----
-    Please note this is the American index version of the calculation performed for Humidex, which is Canadian.
+    While both the humidex and the heat index are calculated using dew point,
+    the humidex uses a dew point of 7 °C (45 °F) as a base, whereas the heat
+    index uses a dew point base of 14 °C (57 °F). Further, the heat index uses
+    heat balance equations which account for many variables other than vapor
+    pressure, which is used exclusively in the humidex calculation.
     """
     thresh = "20.0 degC"
     thresh = convert_units_to(thresh, "degC")
