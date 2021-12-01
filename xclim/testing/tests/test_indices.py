@@ -2403,12 +2403,9 @@ def test_dry_spell(pr_series):
         + [0.01] * 3
     )
     pr_arr_3 = [3.01] * 358 + [0.99] * 14 + [3.01] * 358
-    pr_1 = pr_series(np.array(pr_arr_1))
-    pr_2 = pr_series(np.array(pr_arr_2))
-    pr_3 = pr_series(np.array(pr_arr_3), start="1981-01-01")
-    pr_1.attrs["units"] = "mm/day"
-    pr_2.attrs["units"] = "mm/day"
-    pr_3.attrs["units"] = "mm/day"
+    pr_1 = pr_series(np.array(pr_arr_1), units="mm/day")
+    pr_2 = pr_series(np.array(pr_arr_2), units="mm/day")
+    pr_3 = pr_series(np.array(pr_arr_3), start="1981-01-01", units="mm/day")
 
     for i in range(1, 4):
 
@@ -2431,17 +2428,17 @@ def test_dry_spell(pr_series):
             pr = pr_3
 
         events = xci.dry_spell_frequency(
-            pr, thresh=str(thresh) + " mm", window=window, freq="YS"
+            pr, thresh=f"{thresh} mm", window=window, freq="YS"
         )
         total_d_sum = xci.dry_spell_total_length(
             pr,
-            thresh=str(thresh * (window if i == 3 else 1)) + " mm",
+            thresh=f"{thresh * (window if i == 3 else 1)} mm",
             window=window,
             op="sum",
             freq="YS",
         )
         total_d_max = xci.dry_spell_total_length(
-            pr, thresh=str(thresh) + " mm", window=window, op="max", freq="YS"
+            pr, thresh=f"{thresh} mm", window=window, op="max", freq="YS"
         )
 
         np.testing.assert_allclose(events[0], out_events, rtol=1e-1)
@@ -2449,7 +2446,15 @@ def test_dry_spell(pr_series):
         np.testing.assert_allclose(total_d_max[0], out_total_d_max, rtol=1e-1)
 
 
-def test_dry_spell_frequency_op(self, pr_series):
+def test_dry_spell_total_length_indexer(pr_series):
+    pr = pr_series([1] * 5 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d")
+    out = xci.dry_spell_total_length(
+        pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31")
+    )
+    np.testing.assert_allclose(out, [9] + [0] * 11)
+
+
+def test_dry_spell_frequency_op(pr_series):
     pr = pr_series(
         np.array(
             [

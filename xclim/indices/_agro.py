@@ -11,7 +11,7 @@ import xclim.indices.run_length as rl
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.core.utils import DayOfYearStr
 from xclim.indices._threshold import first_day_above, first_day_below, freshet_start
-from xclim.indices.generic import aggregate_between_dates, day_lengths
+from xclim.indices.generic import aggregate_between_dates, day_lengths, select_time
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -653,8 +653,7 @@ def dry_spell_total_length(
     window: int = 3,
     op: str = "sum",
     freq: str = "YS",
-    start_date: str = "",
-    end_date: str = "",
+    **indexer,
 ) -> xarray.DataArray:
     """
     Return the total number of days in dry periods of n days and more, during which the maximum or accumulated
@@ -672,10 +671,10 @@ def dry_spell_total_length(
         Reduce operation.
     freq : str
       Resampling frequency.
-    start_date : str
-        First day of year to consider ("mm-dd").
-    end_date : str
-        Last day of year to consider ("mm-dd").
+    indexer :
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        Indexing is done after finding the dry days, but before finding the spells.
 
     Returns
     -------
@@ -685,47 +684,13 @@ def dry_spell_total_length(
     pram = rate2amount(pr, out_units="mm")
     thresh = convert_units_to(thresh, pram)
 
-    pram = xarray.where(pram < (thresh if op == "max" else 0), 0, pram)
-    pram.attrs["units"] = "mm"
+    # Pad with NaNs i.e. assuming dry days at the end.
+    pram_pad = pram.pad(time=(0, window))
+    mask = getattr(pram_pad.rolling(time=window), op)() < thresh
+    dry = (mask.rolling(time=window).sum() >= 1).shift(time=-(window - 1))
+    dry = dry.isel(time=slice(0, pram.time.size)).astype(float)
 
-    dry = None
-    for i in range(2):
-        pram_i = pram if dry is None else pram.sortby("time", ascending=False)
-        if op == "max":
-            mask_i = pram_i.rolling(time=window).max() < thresh
-        else:
-            mask_i = pram_i.rolling(time=window).sum() < thresh
-        dry_i = (mask_i.rolling(time=window).sum() >= 1).shift(time=-(window - 1))
-        if dry is None:
-            dry = dry_i
-        else:
-            dry_i = dry_i.sortby("time", ascending=True)
-            dt = (dry.time - dry.time[0]).dt.days
-            dry = xarray.where(dt > len(dry.time) - window - 1, dry_i, dry)
-
-    doy_start = 1
-    if start_date != "":
-        doy_start = datetime.datetime.strptime(start_date, "%m-%d").timetuple().tm_yday
-    doy_end = 365
-    if end_date != "":
-        doy_end = datetime.datetime.strptime(end_date, "%m-%d").timetuple().tm_yday
-    bisextile_year_fix = xarray.where(pram.time.dt.year % 4 == 0, 1, 0)
-    doy_start = (
-        ([doy_start] * len(pram.time))
-        if doy_start < 60
-        else (doy_start + bisextile_year_fix)
-    )
-    doy_end = (
-        ([doy_end] * len(pram.time)) if doy_end < 60 else (doy_end + bisextile_year_fix)
-    )
-    doy = xarray.where(
-        doy_end >= doy_start,
-        (pram.time.dt.dayofyear >= doy_start) & (pram.time.dt.dayofyear <= doy_end),
-        (pram.time.dt.dayofyear <= doy_end) | (pram.time.dt.dayofyear >= doy_start),
-    )
-
-    out = (dry & doy).astype(float).resample(time=freq).sum("time")
-
+    out = select_time(dry, **indexer).resample(time=freq).sum("time")
     return to_agg_units(out, pram, "count")
 
 
