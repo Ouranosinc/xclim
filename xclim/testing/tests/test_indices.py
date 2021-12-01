@@ -2179,9 +2179,9 @@ def test_heat_index(tas_series, hurs_series):
     tas = tas_series([15, 25, 20, 40])
     tas.attrs["units"] = "C"
 
-    hurs = hurs_series([0, 10, 20, 50])
+    hurs = hurs_series([5, 25, 50, 80])
 
-    expected = np.array([0, 1, 0, 0]) * units.degC
+    expected = np.array([np.nan, 25.0, np.nan, 83.0]) * units.degC
 
     # Celsius
     hc = xci.heat_index(tas, hurs)
