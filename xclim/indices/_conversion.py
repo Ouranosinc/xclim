@@ -147,7 +147,7 @@ def heat_index(
     Returns
     -------
     xr.DataArray, [time][temperature]
-      Heat index for days with temperature above 20C.
+      Heat index for days with temperature above 20°C.
 
     References
     ----------
