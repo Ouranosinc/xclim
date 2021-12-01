@@ -80,6 +80,9 @@ def humidex(
     - 40 to 45 : great discomfort, avoid exertion;
     - 46 and over : dangerous, possible heat stroke;
 
+    Please note this is the Canadian index version of the calculation performed for Heat Index, which is American.
+
+
     References
     ----------
     .. [masterton79] Masterton, J. M., & Richardson, F. A. (1979). HUMIDEX, A method of quantifying human discomfort due to excessive heat and humidity, CLI 1-79. Downsview, Ontario: Environment Canada, Atmospheric Environment Service.
@@ -145,6 +148,10 @@ def heat_index(
     References
     ----------
     .. [blazejczyk2012] Blazejczyk, K., Epstein, Y., Jendritzky, G., Staiger, H., & Tinz, B. (2012). Comparison of UTCI to selected thermal indices. International journal of biometeorology, 56(3), 515-535.
+
+    Notes
+    -----
+    Please note this is the American index version of the calculation performed for Humidex, which is Canadian.
     """
     thresh = "20.0 degC"
     thresh = convert_units_to(thresh, "degC")
