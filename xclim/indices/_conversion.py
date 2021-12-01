@@ -117,17 +117,16 @@ def humidex(
     return out
 
 
-@declare_units(tasmax="[temperature]", hurs="[]", thresh="[temperature]")
+@declare_units(tasmax="[temperature]", hurs="[]")
 def heat_index(
     tasmax: xr.DataArray,
     hurs: xr.DataArray,
-    thresh: str = "20.0 degC",
     freq: str = "MS",
 ) -> xr.DataArray:
     r"""Daily heat index.
 
-    Days in which the human body perceives temperature is hot, which combines
-    relative humidity with the air temperature.
+    Perceived temperature after relative humidity is taken into account. The
+    index is only valid for temperatures above 20C.
 
     Parameters
     ----------
@@ -135,20 +134,19 @@ def heat_index(
       Maximum daily temperature.
     hurs : xr.DataArray
       Relative humidity.
-    thresh : str
-      Threshold temperature on which to base evaluation.
     freq : str
       Resampling frequency.
 
     Returns
     -------
     xr.DataArray, [time][temperature]
-      Heat index.
+      Heat index for days with temperature above 20C.
 
     References
     ----------
     .. [blazejczyk2012] Blazejczyk, K., Epstein, Y., Jendritzky, G., Staiger, H., & Tinz, B. (2012). Comparison of UTCI to selected thermal indices. International journal of biometeorology, 56(3), 515-535.
     """
+    thresh = "20.0 degC"
     thresh = convert_units_to(thresh, "degC")
     t = convert_units_to(tasmax, "degC")
     t = t.where(t > thresh)
