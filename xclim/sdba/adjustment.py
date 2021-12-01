@@ -1,4 +1,7 @@
-"""Adjustment objects."""
+"""
+Adjustment methods
+------------------
+"""
 from typing import Any, Mapping, Optional, Sequence, Union
 from warnings import warn
 
@@ -17,6 +20,8 @@ from ._adjustment import (
     dqm_adjust,
     dqm_train,
     eqm_train,
+    extremes_adjust,
+    extremes_train,
     loci_adjust,
     loci_train,
     npdf_transform,
@@ -30,8 +35,6 @@ from .utils import (
     ADDITIVE,
     best_pc_orientation,
     equally_spaced_nodes,
-    get_clusters,
-    get_clusters_1d,
     pc_matrix,
     rand_rot_matrix,
 )
@@ -41,6 +44,7 @@ __all__ = [
     "EmpiricalQuantileMapping",
     "DetrendedQuantileMapping",
     "LOCI",
+    "ExtremeValues",
     "PrincipalComponents",
     "QuantileDeltaMapping",
     "Scaling",
@@ -122,12 +126,9 @@ class TrainAdjust(BaseAdjustment):
 
     Children classes should implement these methods:
 
-    @classmethod
-    _train(ref, hist, **kwargs)
-      Receiving the training target and data, returning a training dataset and parameters to store in the object.
+    - ``_train(ref, hist, **kwargs)``, classmethod receiving the training target and data, returning a training dataset and parameters to store in the object.
 
-    _adjust(sim, **kwargs)
-      Receiving the projected data and some arguments, returning the `scen` dataarray.
+    - ``_adjust(sim, **kwargs)``, receiving the projected data and some arguments, returning the `scen` dataarray.
 
     """
 
@@ -525,12 +526,14 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
 class ExtremeValues(TrainAdjust):
     r"""Adjustment correction for extreme values.
 
-    The tail of the distribution of adjusted data is corrected according to the
-    parametric Generalized Pareto distribution of the reference data, [RRJF2021]_.
-    The distributions are composed of the maximal values of clusters of "large" values.
-    With "large" values being those above `cluster_thresh`. Only extreme values, whose
-    quantile within the pool of large values are above `q_thresh`, are re-adjusted.
-    See Notes.
+    The tail of the distribution of adjusted data is corrected according to the bias
+    between the parametric Generalized Pareto distributions of the simulatated and
+    reference data, [RRJF2021]_. The distributions are composed of the maximal values of
+    clusters of "large" values.  With "large" values being those above `cluster_thresh`.
+    Only extreme values, whose quantile within the pool of large values are above
+    `q_thresh`, are re-adjusted. See Notes.
+
+    This adjustment method should be considered experimental and used with care.
 
     Parameters
     ----------
@@ -548,50 +551,62 @@ class ExtremeValues(TrainAdjust):
     scen: DataArray
       This is a second-order adjustment, so the adjust method needs the first-order
       adjusted timeseries in addition to the raw "sim".
+    interp : {'nearest', 'linear', 'cubic'}
+      The interpolation method to use when interpolating the adjustment factors. Defaults to "linear".
+    extrapolation : {'constant', 'nan'}
+      The type of extrapolation to use. See :py:func:`~xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
     frac: float
       Fraction where the cutoff happens between the original scen and the corrected one.
       See Notes, ]0, 1]. Defaults to 0.25.
     power: float
       Shape of the correction strength, see Notes. Defaults to 1.0.
 
-    Extra diagnostics
-    -----------------
-    In training:
-
-    nclusters : Number of extreme value clusters found for each gridpoint.
-
     Notes
     -----
     Extreme values are extracted from `ref`, `hist` and `sim` by finding all "clusters",
     i.e. runs of consecutive values above `cluster_thresh`. The `q_thresh`th percentile
     of these values is taken on `ref` and `hist` and becomes `thresh`, the extreme value
-    threshold. The maximal value of each cluster of `ref`, if it exceeds that new threshold,
-    is taken and Generalized Pareto distribution is fitted to them.
-    Similarly with `sim`. The cdf of the extreme values of `sim` is computed in reference
-    to the distribution fitted on `sim` and then the corresponding values (quantile / ppf)
-    in reference to the distribution fitted on `ref` are taken as the new bias-adjusted values.
+    threshold. The maximal value of each cluster, if it exceeds that new threshold,
+    is taken and Generalized Pareto distributions are fitted to them, for both `ref` and
+    `hist`. The probabilities associated with each of these extremes in `hist` is used
+    to find the corresponding value according to `ref`'s distribution. Adjustment
+    factors are computed as the bias between those new extremes and the original ones.
 
-    Once new extreme values are found, a mixture from the original scen and corrected scen
-    is used in the result. For each original value :math:`S_i` and corrected value :math:`C_i`
-    the final extreme value :math:`V_i` is:
+    In the adjust step, a Generalized Pareto distributions is fitted on the
+    cluster-maximums of `sim` and it is used to associate a probability to each extreme,
+    values over the `thresh` compute in the training, without the clustering. The
+    adjustment factors are computed by interpolating the trained ones using these
+    probabilities and the probabilities computed from `hist`.
+
+    Finally, the adjusted values (:math:`C_i`) are mixed with the pre-adjusted ones
+    (`scen`, :math:`D_i`) using the following transition function:
 
     .. math::
 
-        V_i = C_i * \tau + S_i * (1 - \tau)
+        V_i = C_i * \tau + D_i * (1 - \tau)
 
-    Where :math:`\tau` is a function of sim's extreme values :math:`F` and of arguments
-    ``frac`` (:math:`f`) and ``power`` (:math:`p`):
+    Where :math:`\tau` is a function of sim's extreme values (unadjusted, :math:`S_i`)
+    and of arguments ``frac`` (:math:`f`) and ``power`` (:math:`p`):
 
     .. math::
 
         \tau = \left(\frac{1}{f}\frac{S - min(S)}{max(S) - min(S)}\right)^p
 
-    Code based on the `biascorrect_extremes` function of the julia package [ClimateTools]_.
+    Code based on an internal Matlab source and partly ib the `biascorrect_extremes`
+    function of the julia package [ClimateTools]_.
+
+    Because of limitations imposed by the lazy computing nature of the dask backend, it
+    is not possible to know the number of cluster extremes in `ref` and `hist` at the
+    moment the output data structure is created. This is why the code tries to estimate
+    that number and usually overstimates it. In the training dataset, this translated
+    into a `quantile` dimension that is too large and variables `af` and `px_hist` are
+    assigned NaNs on extra elements. This has no incidence on the calculations
+    themselves but requires more memory than is useful.
 
     References
     ----------
-    .. [ClimateTools] https://juliaclimate.github.io/ClimateTools.jl/stable/
     .. [RRJF2021] Roy, P., Rondeau-Genesse, G., Jalbert, J., Fournier, É. 2021. Climate Scenarios of Extreme Precipitation Using a Combination of Parametric and Non-Parametric Bias Correction Methods. Submitted to Climate Services, April 2021.
+    .. [ClimateTools] https://juliaclimate.github.io/ClimateTools.jl/stable/
     """
 
     @classmethod
@@ -604,56 +619,42 @@ class ExtremeValues(TrainAdjust):
         ref_params: xr.Dataset = None,
         q_thresh: float = 0.95,
     ):
-        warn(
-            "The ExtremeValues adjustment is a work in progress and not production-ready. The current version imitates the algorithm found in ClimateTools.jl, but results might not be accurate."
-        )
         cluster_thresh = convert_units_to(cluster_thresh, ref)
-        hist = convert_units_to(hist, ref)
 
-        # Extreme value threshold computed relative to "large values".
-        # We use the mean between ref and hist here.
-        thresh = (
-            ref.where(ref >= cluster_thresh).quantile(q_thresh, dim="time")
-            + hist.where(hist >= cluster_thresh).quantile(q_thresh, dim="time")
-        ) / 2
+        # Approximation of how many "quantiles" values we will get:
+        N = (1 - q_thresh) * ref.time.size
 
-        if ref_params is None:
-            # All large value clusters
-            ref_clusters = get_clusters(ref, thresh, cluster_thresh)
-            # Parameters of a genpareto (or other) distribution, we force the location at thresh.
-            fit_params = stats.fit(
-                ref_clusters.maximum - thresh, "genpareto", dim="cluster", floc=0
-            )
-            # Param "loc" was fitted with 0, put thresh back
-            fit_params = fit_params.where(
-                fit_params.dparams != "loc", fit_params + thresh
-            )
-        else:
-            dist = ref_params.attrs.get("scipy_dist", "genpareto")
-            fit_params = ref_params.copy().transpose(..., "dparams")
-            if dist == "genextreme":
-                fit_params = xr.where(
-                    fit_params.dparams == "loc",
-                    fit_params.sel(dparams="scale")
-                    + fit_params.sel(dparams="c") * (thresh - fit_params),
-                    fit_params,
-                )
-            elif dist != "genpareto":
-                raise ValueError(f"Unknown conversion from {dist} to genpareto.")
+        # ref_params: cast nan to f32 not to interfere with map_blocks dtype parsing
+        #   ref and hist are f32, we want to have f32 in the output.
+        ds = extremes_train(
+            xr.Dataset(
+                {
+                    "ref": ref,
+                    "hist": hist,
+                    "ref_params": ref_params or np.float32(np.NaN),
+                }
+            ),
+            q_thresh=q_thresh,
+            cluster_thresh=cluster_thresh,
+            dist=stats.get_dist("genpareto"),
+            quantiles=np.arange(int(N)),
+            group="time",
+        )
 
-        ds = xr.Dataset(dict(fit_params=fit_params, thresh=thresh))
-        ds.fit_params.attrs.update(
-            long_name="Generalized Pareto distribution parameters of ref",
+        ds.px_hist.attrs.update(
+            long_name="Probability of extremes in hist",
+            description="Parametric probabilities of extremes in the common domain of hist and ref.",
+        )
+        ds.af.attrs.update(
+            long_name="Extremes adjustment factor",
+            description="Multiplicative adjustment factor of extremes from hist to ref.",
         )
         ds.thresh.attrs.update(
             long_name=f"{q_thresh * 100}th percentile extreme value threshold",
             description=f"Mean of the {q_thresh * 100}th percentile of large values (x > {cluster_thresh}) of ref and hist.",
         )
 
-        if OPTIONS[SDBA_EXTRA_OUTPUT] and ref_params is None:
-            ds = ds.assign(nclusters=ref_clusters.nclusters)
-
-        return ds, {"cluster_thresh": cluster_thresh}
+        return ds.drop_vars(["quantiles"]), {"cluster_thresh": cluster_thresh}
 
     def _adjust(
         self,
@@ -662,61 +663,27 @@ class ExtremeValues(TrainAdjust):
         *,
         frac: float = 0.25,
         power: float = 1.0,
+        interp: str = "linear",
+        extrapolation: str = "constant",
     ):
-        def _adjust_extremes_1d(scen, sim, ref_params, thresh, *, dist, cluster_thresh):
-            # Clusters of large values of sim
-            _, _, sim_posmax, sim_maxs = get_clusters_1d(sim, thresh, cluster_thresh)
-
-            new_scen = scen.copy()
-            if sim_posmax.size == 0:
-                # Happens if everything is under `cluster_thresh`
-                return new_scen
-
-            # Fit the dist, force location at thresh
-            sim_fit = stats._fitfunc_1d(
-                sim_maxs, dist=dist, nparams=len(ref_params), method="ML", floc=thresh
-            )
-
-            # Cumulative density function for extreme values in sim's distribution
-            sim_cdf = dist.cdf(sim_maxs, *sim_fit)
-            # Equivalent value of sim's CDF's but in ref's distribution.
-            # removed a +thresh that was a bug in the julia source.
-            new_sim = dist.ppf(sim_cdf, *ref_params)
-
-            # Get the transition weights based on frac and power values
-            transition = (
-                ((sim_maxs - sim_maxs.min()) / ((sim_maxs.max()) - sim_maxs.min()))
-                / frac
-            ) ** power
-            np.clip(transition, None, 1, out=transition)
-
-            # Apply smooth linear transition between scen and corrected scen
-            new_scen_trans = (new_sim * transition) + (
-                scen[sim_posmax] * (1.0 - transition)
-            )
-
-            # We change new_scen to the new data
-            new_scen[sim_posmax] = new_scen_trans
-            return new_scen
-
-        new_scen = xr.apply_ufunc(
-            _adjust_extremes_1d,
-            scen,
-            sim,
-            self.ds.fit_params,
-            self.ds.thresh,
-            input_core_dims=[["time"], ["time"], ["dparams"], []],
-            output_core_dims=[["time"]],
-            vectorize=True,
-            kwargs={
-                "dist": stats.get_dist("genpareto"),
-                "cluster_thresh": convert_units_to(self.cluster_thresh, sim),
-            },
-            dask="parallelized",
-            output_dtypes=[scen.dtype],
+        # Quantiles coord : cheat and assign 0 - 1 so we can use `extrapolate_qm`.
+        ds = self.ds.assign(
+            quantiles=(np.arange(self.ds.quantiles.size) + 1)
+            / (self.ds.quantiles.size + 1)
         )
 
-        return new_scen
+        scen = extremes_adjust(
+            ds.assign(sim=sim, scen=scen),
+            cluster_thresh=self.cluster_thresh,
+            dist=stats.get_dist("genpareto"),
+            frac=frac,
+            power=power,
+            interp=interp,
+            extrapolation=extrapolation,
+            group="time",
+        )
+
+        return scen
 
 
 class LOCI(TrainAdjust):
@@ -1110,17 +1077,19 @@ class NpdfTransform(Adjust):
     As done by [Cannon18]_, the distance score chosen is the "Energy distance" from [SkezelyRizzo]_
     (see :py:func:`xclim.sdba.processing.escore`).
 
-    The random matrices are generated following a method laid out by [Mezzadri].
+    The random matrices are generated following a method laid out by [Mezzadri]_.
 
-    This is only part of the full MBCn algorithm, see :ref:`The MBCn algorithm` for an example on how
-    to replicate the full method with xclim. This includes a standardization of the simulated data beforehand,
-    an initial univariate adjustment and the reordering of those adjusted series according to the
-    rank structure of the output of this algorithm.
+    This is only part of the full MBCn algorithm, see :ref:`Fourth example : Multivariate bias-adjustment with multiple steps - Cannon 2018`
+    for an example on how to replicate the full method with xclim. This includes a
+    standardization of the simulated data beforehand, an initial univariate adjustment
+    and the reordering of those adjusted series according to the rank structure of the
+    output of this algorithm.
 
     References
     ----------
     .. [Cannon18] Cannon, A. J. (2018). Multivariate quantile mapping bias correction: An N-dimensional probability density function transform for climate model simulations of multiple variables. Climate Dynamics, 50(1), 31–49. https://doi.org/10.1007/s00382-017-3580-6
-    .. [Mezzadri]Mezzadri, F. (2006). How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050.
+    .. [CannonR] https://CRAN.R-project.org/package=MBC
+    .. [Mezzadri] Mezzadri, F. (2006). How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050.
     .. [Pitie05] Pitie, F., Kokaram, A. C., & Dahyot, R. (2005). N-dimensional probability density function transfer and its application to color transfer. Tenth IEEE International Conference on Computer Vision (ICCV’05) Volume 1, 2, 1434-1439 Vol. 2. https://doi.org/10.1109/ICCV.2005.166
     .. [SkezelyRizzo] Szekely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
     """

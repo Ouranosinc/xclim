@@ -17,7 +17,7 @@ from importlib.resources import open_text
 from inspect import Parameter
 from pathlib import Path
 from types import FunctionType
-from typing import Callable, NewType, Optional, Sequence, Union
+from typing import Callable, NewType, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import xarray as xr
@@ -25,6 +25,9 @@ from boltons.funcutils import update_wrapper
 from dask import array as dsk
 from xarray import DataArray, Dataset
 from yaml import safe_dump, safe_load
+
+logger = logging.getLogger("xclim")
+
 
 #: Type annotation for strings representing full dates (YYYY-MM-DD), may include time.
 DateStr = NewType("DateStr", str)
@@ -209,8 +212,11 @@ def uses_dask(da):
 
 
 def calc_perc(
-    arr: np.array, percentiles: Sequence[float] = [50.0], alpha=1.0, beta=1.0
-) -> np.array:
+    arr: np.ndarray,
+    percentiles: Sequence[float] = [50.0],
+    alpha: float = 1.0,
+    beta: float = 1.0,
+) -> np.ndarray:
     """
     Compute percentiles using nan_calc_percentiles and move the percentiles axis to the end.
     """
@@ -224,12 +230,12 @@ def calc_perc(
 
 
 def nan_calc_percentiles(
-    arr: np.array,
+    arr: np.ndarray,
     percentiles: Sequence[float] = [50.0],
     axis=-1,
     alpha=1.0,
     beta=1.0,
-) -> np.array:
+) -> np.ndarray:
     """
     Convert the percentiles to quantiles and compute them using _nan_quantile.
     """
@@ -238,46 +244,119 @@ def nan_calc_percentiles(
     return _nan_quantile(arr_copy, quantiles, axis, alpha, beta)
 
 
-def virtual_index_formula(
-    array_size: Union[int, np.array], quantiles: np.array, alpha: float, beta: float
-) -> np.array:
+def _compute_virtual_index(
+    n: np.ndarray, quantiles: np.ndarray, alpha: float, beta: float
+):
     """
-    Compute the floating point indexes of an array for the linear interpolation of quantiles.
+    Compute the floating point indexes of an array for the linear
+    interpolation of quantiles.
+    n : array_like
+        The sample sizes.
+    quantiles : array_like
+        The quantiles values.
+    alpha : float
+        A constant used to correct the index computed.
+    beta : float
+        A constant used to correct the index computed.
 
-    Notes
-    -----
-        Compared to R, -1 is added because R array indexes start at 1 (0 for python)
+    alpha and beta values depend on the chosen method
+    (see quantile documentation)
+
+    Reference:
+    Hyndman&Fan paper "Sample Quantiles in Statistical Packages",
+    DOI: 10.1080/00031305.1996.10473566
     """
-    return array_size * quantiles + (alpha + quantiles * (1 - alpha - beta)) - 1
+    return n * quantiles + (alpha + quantiles * (1 - alpha - beta)) - 1
 
 
-def gamma_formula(
-    val: Union[float, np.array], val_floor: Union[int, np.array]
-) -> Union[float, np.array]:
+def _get_gamma(virtual_indexes: np.ndarray, previous_indexes: np.ndarray):
     """
-    Compute the gamma (a.k.a 'm' or weight) for the linear interpolation of quantiles.
+    Compute gamma (a.k.a 'm' or 'weight') for the linear interpolation
+    of quantiles.
+
+    virtual_indexes : array_like
+        The indexes where the percentile is supposed to be found in the sorted
+        sample.
+    previous_indexes : array_like
+        The floor values of virtual_indexes.
+
+    gamma is usually the fractional part of virtual_indexes but can be modified
+    by the interpolation method.
     """
-    return val - val_floor
+    gamma = np.asanyarray(virtual_indexes - previous_indexes)
+    return np.asanyarray(gamma)
 
 
-def linear_interpolation_formula(
-    left: Union[float, np.array],
-    right: Union[float, np.array],
-    gamma: Union[float, np.array],
-) -> Union[float, np.array]:
+def _get_indexes(
+    arr: np.ndarray, virtual_indexes: np.ndarray, valid_values_count: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Compute the linear interpolation weighted by gamma on each point of two same shape array.
+    Get the valid indexes of arr neighbouring virtual_indexes.
+
+    Notes:
+    This is a companion function to linear interpolation of quantiles
+
+    Returns
+    -------
+    (previous_indexes, next_indexes): Tuple
+        A Tuple of virtual_indexes neighbouring indexes
     """
-    return gamma * right + (1 - gamma) * left
+    previous_indexes = np.asanyarray(np.floor(virtual_indexes))
+    next_indexes = np.asanyarray(previous_indexes + 1)
+    indexes_above_bounds = virtual_indexes >= valid_values_count - 1
+    # When indexes is above max index, take the max value of the array
+    if indexes_above_bounds.any():
+        previous_indexes[indexes_above_bounds] = -1
+        next_indexes[indexes_above_bounds] = -1
+    # When indexes is below min index, take the min value of the array
+    indexes_below_bounds = virtual_indexes < 0
+    if indexes_below_bounds.any():
+        previous_indexes[indexes_below_bounds] = 0
+        next_indexes[indexes_below_bounds] = 0
+    if np.issubdtype(arr.dtype, np.inexact):
+        # After the sort, slices having NaNs will have for last element a NaN
+        virtual_indexes_nans = np.isnan(virtual_indexes)
+        if virtual_indexes_nans.any():
+            previous_indexes[virtual_indexes_nans] = -1
+            next_indexes[virtual_indexes_nans] = -1
+    previous_indexes = previous_indexes.astype(np.intp)
+    next_indexes = next_indexes.astype(np.intp)
+    return previous_indexes, next_indexes
+
+
+def _linear_interpolation(
+    left: np.ndarray,
+    right: np.ndarray,
+    gamma: np.ndarray,
+) -> np.ndarray:
+    """
+    Compute the linear interpolation weighted by gamma on each point of
+    two same shape arrays.
+
+    left : array_like
+        Left bound.
+    right : array_like
+        Right bound.
+    gamma : array_like
+        The interpolation weight.
+    """
+    diff_b_a = np.subtract(right, left)
+    lerp_interpolation = np.asanyarray(np.add(left, diff_b_a * gamma))
+    np.subtract(
+        right, diff_b_a * (1 - gamma), out=lerp_interpolation, where=gamma >= 0.5
+    )
+    if lerp_interpolation.ndim == 0:
+        lerp_interpolation = lerp_interpolation[()]  # unpack 0d arrays
+    return lerp_interpolation
 
 
 def _nan_quantile(
-    arr: np.array,
-    quantiles: np.array,
+    arr: np.ndarray,
+    quantiles: np.ndarray,
     axis: int = 0,
     alpha: float = 1.0,
     beta: float = 1.0,
-) -> Union[float, np.array]:
+) -> Union[float, np.ndarray]:
     """
     Get the quantiles of the array for the given axis.
     A linear interpolation is performed using alpha and beta.
@@ -286,18 +365,20 @@ def _nan_quantile(
     with alpha == beta == 1/3 we get the 8th method.
     """
     # --- Setup
-    values_count = arr.shape[axis]
-    if values_count == 0:
+    data_axis_length = arr.shape[axis]
+    if data_axis_length == 0:
         return np.NAN
-    if values_count == 1:
+    if data_axis_length == 1:
         result = np.take(arr, 0, axis=axis)
         return np.broadcast_to(result, (quantiles.size,) + result.shape)
     # The dimensions of `q` are prepended to the output shape, so we need the
-    # axis being sampled from `ap` to be first.
-    arr = np.moveaxis(arr, axis, 0)
+    # axis being sampled from `arr` to be last.
+    DATA_AXIS = 0
+    if axis != DATA_AXIS:  # But moveaxis is slow, so only call it if axis!=0.
+        arr = np.moveaxis(arr, axis, destination=DATA_AXIS)
     # nan_count is not a scalar
-    nan_count = np.isnan(arr).sum(0).astype(float)
-    valid_values_count = values_count - nan_count
+    nan_count = np.isnan(arr).sum(axis=DATA_AXIS).astype(float)
+    valid_values_count = data_axis_length - nan_count
     # We need at least two values to do an interpolation
     too_few_values = valid_values_count < 2
     if too_few_values.any():
@@ -306,34 +387,16 @@ def _nan_quantile(
     # --- Computation of indexes
     # Add axis for quantiles
     valid_values_count = valid_values_count[..., np.newaxis]
-    # Index where to find the value in the sorted array.
-    # Virtual because it is a floating point value, not an valid index. The nearest neighbours are used for interpolation
-    virtual_indexes = np.where(
-        valid_values_count == 0,
-        0.0,
-        virtual_index_formula(valid_values_count, quantiles, alpha, beta),
+    virtual_indexes = _compute_virtual_index(valid_values_count, quantiles, alpha, beta)
+    virtual_indexes = np.asanyarray(virtual_indexes)
+    previous_indexes, next_indexes = _get_indexes(
+        arr, virtual_indexes, valid_values_count
     )
-    previous_indexes = np.floor(virtual_indexes)
-    next_indexes = previous_indexes + 1
-    previous_index_nans = np.isnan(previous_indexes)
-    if previous_index_nans.any():
-        # After sort, slices having NaNs will have for last element a NaN
-        previous_indexes[np.isnan(previous_indexes)] = -1
-        next_indexes[np.isnan(next_indexes)] = -1
-    indexes_above_bounds = virtual_indexes >= valid_values_count - 1
-    if indexes_above_bounds.any():
-        previous_indexes[indexes_above_bounds] = -1
-        next_indexes[indexes_above_bounds] = -1
-    indexes_below_bounds = virtual_indexes < 0
-    if indexes_below_bounds.any():
-        previous_indexes[indexes_below_bounds] = 0
-        next_indexes[indexes_below_bounds] = 0
     # --- Sorting
-    # A sort instead of partition to push all NaNs at the very end of the array. Performances are good enough even on large arrays.
-    arr.sort(axis=0)
+    arr.sort(axis=DATA_AXIS)
     # --- Get values from indexes
     arr = arr[..., np.newaxis]
-    previous_elements = np.squeeze(
+    previous = np.squeeze(
         np.take_along_axis(arr, previous_indexes.astype(int)[np.newaxis, ...], axis=0),
         axis=0,
     )
@@ -342,24 +405,22 @@ def _nan_quantile(
         axis=0,
     )
     # --- Linear interpolation
-    gamma = gamma_formula(virtual_indexes, previous_indexes)
-    interpolation = linear_interpolation_formula(
-        previous_elements, next_elements, gamma
-    )
-    # When an interpolation is in Nan range, which is at the end of the sorted array,
-    # it means that we can take the array nanmax as an valid interpolation.
-    result = np.where(
-        np.isnan(interpolation),
-        np.nanmax(arr, axis=0),
-        interpolation,
-    )
+    gamma = _get_gamma(virtual_indexes, previous_indexes)
+    interpolation = _linear_interpolation(previous, next_elements, gamma)
+    # When an interpolation is in Nan range, (near the end of the sorted array) it means
+    # we can clip to the array max value.
+    result = np.where(np.isnan(interpolation), np.nanmax(arr, axis=0), interpolation)
     # Move quantile axis in front
     result = np.moveaxis(result, axis, 0)
     return result
 
 
 def raise_warn_or_log(
-    err: Exception, mode: str, msg: Optional[str] = None, stacklevel: int = 1
+    err: Exception,
+    mode: str,
+    msg: Optional[str] = None,
+    err_type=ValueError,
+    stacklevel: int = 1,
 ):
     """Raise, warn or log an error according.
 
@@ -379,11 +440,11 @@ def raise_warn_or_log(
     if mode == "ignore":
         pass
     elif mode == "log":
-        logging.info(msg)
+        logger.info(msg)
     elif mode == "warn":
         warnings.warn(msg, stacklevel=stacklevel + 1)
     else:  # mode == "raise"
-        raise err from ValueError(msg)
+        raise err from err_type(msg)
 
 
 class InputKind(IntEnum):

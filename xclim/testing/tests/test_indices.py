@@ -189,6 +189,11 @@ class TestMaximumConsecutiveFrostFreeDays:
         ffd = xci.maximum_consecutive_frost_free_days(a)
         assert np.all(ffd) == 0
 
+    def test_zero(self, tasmin_series):
+        a = tasmin_series(np.array([-1, -1, 1, 1, 0, 2, -1]) + K2C)
+        ffd = xci.maximum_consecutive_frost_free_days(a)
+        assert ffd == 4
+
 
 class TestCoolingDegreeDays:
     def test_no_cdd(self, tas_series):
@@ -247,13 +252,13 @@ class TestAgroclimaticIndices:
             attrs=dict(units="K"),
         )
 
-        lat = np.array([45])
-        high_lat = np.array([48])
+        lat = xr.DataArray(45, name="lat", attrs={"units": "degrees_north"})
+        high_lat = lat.copy(data=48)
 
         bedd = xci.biologically_effective_degree_days(
             tasmin=tn,
             tasmax=tx,
-            lat=lat,  # noqa
+            lat=lat,
             method=method,
             end_date=end_date,  # noqa
             freq="YS",
@@ -261,7 +266,7 @@ class TestAgroclimaticIndices:
         bedd_hot = xci.biologically_effective_degree_days(
             tasmin=tn,
             tasmax=tx_hot,
-            lat=lat,  # noqa
+            lat=lat,
             method=method,
             end_date=end_date,  # noqa
             freq="YS",
@@ -269,7 +274,7 @@ class TestAgroclimaticIndices:
         bedd_high_lat = xci.biologically_effective_degree_days(
             tasmin=tn,
             tasmax=tx,
-            lat=high_lat,  # noqa
+            lat=high_lat,
             method=method,
             end_date=end_date,  # noqa
             freq="YS",
@@ -349,17 +354,17 @@ class TestAgroclimaticIndices:
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
         ds = ds.drop_isel(time=0)  # drop time=2006/12 for one year of data
 
-        tasmax, tasmin = ds.tas + 15, ds.tas - 5
+        tasmax, tas = ds.tas + 15, ds.tas - 5
         # It would be much better if the index would interpolate to daily from monthly data intelligently.
-        tasmax, tasmin = (
+        tasmax, tas = (
             tasmax.resample(time="1D").interpolate("cubic"),
-            tasmin.resample(time="1D").interpolate("cubic"),
+            tas.resample(time="1D").interpolate("cubic"),
         )
-        tasmax.attrs["units"], tasmin.attrs["units"] = "K", "K"
+        tasmax.attrs["units"], tas.attrs["units"] = "K", "K"
 
         hi = xci.huglin_index(
             tasmax=tasmax,
-            tasmin=tasmin,
+            tas=tas,
             lat=ds.lat,
             method=method,
             end_date=end_date,  # noqa
@@ -590,14 +595,17 @@ class TestFreshetStart:
         tg[i : i + w - 1] += 6  # too short
 
         i = 20
-        tg[i : i + w] += 6  # ok
+        tg[i : i + w] += 1  # does not cross threshold
 
         i = 30
+        tg[i : i + w] += 6  # ok
+
+        i = 40
         tg[i : i + w + 1] += 6  # Second valid condition, should be ignored.
 
         tg = tas_series(tg + K2C, start="1/1/2000")
         out = xci.freshet_start(tg, window=w)
-        assert out[0] == tg.indexes["time"][20].dayofyear
+        assert out[0] == tg.indexes["time"][30].dayofyear
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
         assert out.attrs["units"] == ""
@@ -618,6 +626,35 @@ class TestGrowingDegreeDays:
         assert xci.growing_degree_days(da)[0] == 1
 
 
+class TestGrowingSeasonStart:
+    def test_simple(self, tas_series):
+        tg = np.zeros(365) - 1
+        w = 5
+
+        i = 10
+        tg[i : i + w - 1] += 6  # too short
+
+        i = 20
+        tg[i : i + w] += 6  # at threshold / ok
+
+        i = 30
+        tg[i : i + w + 1] += 6  # Second valid condition, should be ignored.
+
+        tg = tas_series(tg + K2C, start="1/1/2000")
+        out = xci.growing_season_start(tg, window=w)
+        assert out[0] == tg.indexes["time"][20].dayofyear
+        for attr in ["units", "is_dayofyear", "calendar"]:
+            assert attr in out.attrs.keys()
+        assert out.attrs["units"] == ""
+        assert out.attrs["is_dayofyear"] == 1
+
+    def test_no_start(self, tas_series):
+        tg = np.zeros(365) - 1
+        tg = tas_series(tg, start="1/1/2000")
+        out = xci.growing_season_start(tg)
+        np.testing.assert_equal(out, [np.nan])
+
+
 class TestGrowingSeasonEnd:
     @pytest.mark.parametrize(
         "d1,d2,mid_date,expected",
@@ -629,6 +666,7 @@ class TestGrowingSeasonEnd:
             ("2000-06-15", "2000-07-25", "07-15", 208),  # PCC Case
             ("2000-06-15", "2000-07-15", "10-01", 275),  # Late mid_date
             ("2000-06-15", "2000-07-15", "01-10", np.nan),  # Early mid_date
+            ("2000-06-15", "2000-07-15", "06-15", np.nan),  # mid_date on first day
         ],
     )
     def test_varying_mid_dates(self, tas_series, d1, d2, mid_date, expected):
@@ -698,6 +736,90 @@ class TestFrostSeasonLength:
         cold_period = tas.sel(time=slice("2000-11-01", "2001-03-01"))
         tas = tas.where(~tas.time.isin(cold_period.time), 270)
         fsl = xci.frost_season_length(tas)
+        np.testing.assert_array_equal(fsl.sel(time="2000-07-01"), 121)
+
+
+class TestFrostFreeSeasonStart:
+    def test_simple(self, tasmin_series):
+        tn = np.zeros(365) - 1
+        w = 5
+
+        i = 10
+        tn[i : i + w - 1] += 2  # too short
+
+        i = 20
+        tn[i : i + w] += 1  # at threshold / ok
+
+        i = 30
+        tn[i : i + w + 1] += 1  # Second valid condition, should be ignored.
+
+        tn = tasmin_series(tn + K2C, start="1/1/2000")
+        out = xci.frost_free_season_start(tn, window=w)
+        assert out[0] == tn.indexes["time"][20].dayofyear
+        for attr in ["units", "is_dayofyear", "calendar"]:
+            assert attr in out.attrs.keys()
+        assert out.attrs["units"] == ""
+        assert out.attrs["is_dayofyear"] == 1
+
+    def test_no_start(self, tasmin_series):
+        tn = np.zeros(365) - 1
+        tn = tasmin_series(tn, start="1/1/2000")
+        out = xci.frost_free_season_start(tn)
+        np.testing.assert_equal(out, [np.nan])
+
+
+class TestFrostFreeSeasonEnd:
+    @pytest.mark.parametrize(
+        "d1,d2,mid_date,expected",
+        [
+            ("1950-01-01", "1951-01-01", "07-01", np.nan),  # No frost free season
+            ("2000-01-06", "2000-12-31", "07-01", 365),  # All year frost free season
+            ("2000-07-10", "2001-01-01", "07-01", np.nan),  # End happens before start
+            ("2000-06-15", "2000-07-15", "07-01", 198),  # Normal case
+            ("2000-06-15", "2000-07-25", "07-15", 208),  # PCC Case
+            ("2000-06-15", "2000-07-15", "10-01", 275),  # Late mid_date
+            ("2000-06-15", "2000-07-15", "01-10", np.nan),  # Early mid_date
+            ("2000-06-15", "2000-07-15", "06-15", np.nan),  # mid_date on first day
+        ],
+    )
+    def test_varying_mid_dates(self, tasmin_series, d1, d2, mid_date, expected):
+        # generate a year of data
+        tasmin = tasmin_series(np.zeros(365), start="2000/1/1")
+        warm_period = tasmin.sel(time=slice(d1, d2))
+        tasmin = tasmin.where(~tasmin.time.isin(warm_period.time), 0.1 + K2C)
+        gs_end = xci.frost_free_season_end(tasmin, mid_date=mid_date)
+        np.testing.assert_array_equal(gs_end, expected)
+        for attr in ["units", "is_dayofyear", "calendar"]:
+            assert attr in gs_end.attrs.keys()
+        assert gs_end.attrs["units"] == ""
+        assert gs_end.attrs["is_dayofyear"] == 1
+
+
+class TestFrostFreeSeasonLength:
+    @pytest.mark.parametrize(
+        "d1,d2,expected",
+        [
+            ("1950-01-01", "1951-01-01", 0),  # No frost free season
+            ("2000-01-01", "2000-12-31", 365),  # All year frost free season
+            ("2000-06-15", "2001-01-01", 199),  # No end
+            ("2000-06-15", "2000-07-15", 31),  # Normal case
+        ],
+    )
+    def test_simple(self, tasmin_series, d1, d2, expected):
+        # test for different growing length
+
+        # generate a year of data
+        tasmin = tasmin_series(np.zeros(365) + 270, start="2000/1/1")
+        warm_period = tasmin.sel(time=slice(d1, d2))
+        tasmin = tasmin.where(~tasmin.time.isin(warm_period.time), 300)
+        fsl = xci.frost_free_season_length(tasmin, freq="YS", mid_date="07-01")
+        np.testing.assert_array_equal(fsl, expected)
+
+    def test_southhemisphere(self, tasmin_series):
+        tasmin = tasmin_series(np.zeros(2 * 365) + 270, start="2000/1/1")
+        warm_period = tasmin.sel(time=slice("2000-11-01", "2001-03-01"))
+        tasmin = tasmin.where(~tasmin.time.isin(warm_period.time), 300)
+        fsl = xci.frost_free_season_length(tasmin, freq="AS-JUL", mid_date="01-01")
         np.testing.assert_array_equal(fsl.sel(time="2000-07-01"), 121)
 
 
@@ -2325,3 +2447,50 @@ def test_dry_spell(pr_series):
         np.testing.assert_allclose(events[0], out_events, rtol=1e-1)
         np.testing.assert_allclose(total_d_sum[0], out_total_d_sum, rtol=1e-1)
         np.testing.assert_allclose(total_d_max[0], out_total_d_max, rtol=1e-1)
+
+
+def test_dry_spell_frequency_op(self, pr_series):
+    pr = pr_series(
+        np.array(
+            [
+                29.012,
+                0.1288,
+                0.0253,
+                0.0035,
+                4.9147,
+                1.4186,
+                1.014,
+                0.5622,
+                0.8001,
+                10.5823,
+                2.8879,
+                8.2635,
+                0.292,
+                0.5242,
+                0.2426,
+                1.3934,
+                0.0,
+                0.4633,
+                0.1862,
+                0.0034,
+                2.4591,
+                3.8547,
+                3.1983,
+                3.0442,
+                7.422,
+                14.8854,
+                13.4334,
+                0.0012,
+                0.0782,
+                31.2916,
+                0.0379,
+            ]
+        )
+    )
+    pr.attrs["units"] = "mm/day"
+
+    test_sum = xci.dry_spell_frequency(pr, thresh="1 mm", window=3, freq="MS", op="sum")
+    test_max = xci.dry_spell_frequency(pr, thresh="1 mm", window=3, freq="MS", op="max")
+
+    np.testing.assert_allclose(test_sum[0], [2], rtol=1e-1)
+    np.testing.assert_allclose(test_max[0], [3], rtol=1e-1)

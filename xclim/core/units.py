@@ -398,7 +398,7 @@ def infer_sampling_units(
 
     multi, base, _, _ = parse_offset(freq)
     try:
-        out = int(multi or "1"), FREQ_UNITS[base]
+        out = multi, FREQ_UNITS[base]
     except KeyError:
         raise ValueError(f"Sampling frequency {freq} has no corresponding units.")
     if out == (7, "d"):
@@ -485,10 +485,10 @@ def _rate_and_amount_converter(
     except ValueError:
         freq = None
     if freq is not None:
-        multi, base, start_str, _ = parse_offset(freq)
+        multi, base, start_anchor, _ = parse_offset(freq)
         if base in ["M", "Q", "A"]:
             start = time.indexes[dim][0]
-            if start_str != "S":
+            if not start_anchor:
                 # Anchor is on the end of the period, substract 1 period.
                 start = start - xr.coding.cftime_offsets.to_offset(freq)
                 # In the diff below, assign to upper label!
@@ -503,7 +503,7 @@ def _rate_and_amount_converter(
                 attrs=da[dim].attrs,
             )
         else:
-            m, u = int(multi or "1"), FREQ_UNITS[base]
+            m, u = multi, FREQ_UNITS[base]
 
     # Freq is month, season or year, which are not constant units, or simply freq is not inferrable.
     if u is None:

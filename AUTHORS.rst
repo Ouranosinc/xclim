@@ -16,6 +16,7 @@ Co-Developers
 * Gabriel Rondeau-Genesse <rondeau-genesse.gabriel@ouranos.ca> `@RondeauG <https://github.com/RondeauG>`_
 * Philippe Roy <roy.philippe@ouranos.ca> `@Balinus <https://github.com/Balinus>`_
 * Trevor James Smith <smith.trevorj@ouranos.ca> `@Zeitsperre <https://github.com/Zeitsperre>`_
+* Juliette Lavoie <lavoie.juliette@ouranos.ca> `@juliettelavoie <https://github.com/juliettelavoie>`_
 
 Contributors
 ------------

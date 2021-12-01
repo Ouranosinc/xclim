@@ -354,6 +354,16 @@ class TestConsecutiveFrostDays:
         np.testing.assert_array_equal(out, [np.nan])
 
 
+class TestConsecutiveFrostFreeDays:
+    def test_real_data(self, atmosds):
+        tasmin = atmosds.tasmin
+        test = atmos.maximum_consecutive_frost_free_days(tasmin)
+        np.testing.assert_allclose(test[2, 0], [68], rtol=1e-1)
+        assert (
+            "Annual maximum number of consecutive days with minimum daily temperature above or equal to 0 degc."
+        ) in test.description
+
+
 class TestFrostSeasonLength:
     def test_simple(self, tasmin_series):
         a = np.zeros(730) + K2C + 15

@@ -3,7 +3,7 @@ from inspect import _empty  # noqa
 
 from xclim import indices
 from xclim.core.indicator import Indicator
-from xclim.core.utils import wrapped_partial
+from xclim.core.utils import InputKind
 
 __all__ = [
     "humidex",
@@ -19,13 +19,12 @@ __all__ = [
     "wind_chill_index",
     "potential_evapotranspiration",
     "water_budget",
+    "corn_heat_units",
 ]
 
 
 class Converter(Indicator):
     """Class for indicators doing variable conversion (dimension-independent 1-to-1 computation)."""
-
-    missing = "skip"
 
 
 humidex = Converter(
@@ -115,13 +114,13 @@ relative_humidity_from_dewpoint = Converter(
         if kws["ice_thresh"] is not None
         else ""
     ),
-    compute=wrapped_partial(
-        indices.relative_humidity,
-        suggested={"tdps": _empty},
-        huss=None,
-        ps=None,
-        invalid_values="mask",
-    ),
+    compute=indices.relative_humidity,
+    parameters={
+        "tdps": {"kind": InputKind.VARIABLE},
+        "huss": None,
+        "ps": None,
+        "invalid_values": "mask",
+    },
 )
 
 
@@ -141,9 +140,13 @@ relative_humidity = Converter(
         if kws["ice_thresh"] is not None
         else ""
     ),
-    compute=wrapped_partial(
-        indices.relative_humidity, tdps=None, invalid_values="mask"
-    ),
+    compute=indices.relative_humidity,
+    parameters={
+        "tdps": None,
+        "huss": {"kind": InputKind.VARIABLE},
+        "ps": {"kind": InputKind.VARIABLE},
+        "invalid_values": "mask",
+    },
 )
 
 
@@ -162,7 +165,8 @@ specific_humidity = Converter(
         if kws["ice_thresh"] is not None
         else ""
     ),
-    compute=wrapped_partial(indices.specific_humidity, invalid_values="mask"),
+    compute=indices.specific_humidity,
+    parameters={"invalid_values": "mask"},
 )
 
 
@@ -205,7 +209,8 @@ wind_chill_index = Converter(
         if kws["method"] == "CAN"
         else "Invalid temperatures (T > 50°F) and winds (V < 3 mph) where masked."
     ),
-    compute=wrapped_partial(indices.wind_chill_index, mask_invalid=True),
+    compute=indices.wind_chill_index,
+    parameters={"mask_invalid": True},
 )
 
 
@@ -231,4 +236,18 @@ water_budget = Converter(
         "where the potential evapotranspiration is calculated with the method {method}."
     ),
     compute=indices.water_budget,
+)
+
+
+corn_heat_units = Converter(
+    identifier="corn_heat_units",
+    units="",
+    long_name="Corn heat units (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}).",
+    description="Temperature-based index used to estimate the development of corn crops. "
+    "Corn growth occurs when the minimum and maximum daily temperature both exceeds "
+    "specific thresholds : Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}.",
+    var_name="chu",
+    cell_methods="",
+    missing="skip",
+    compute=indices.corn_heat_units,
 )
