@@ -41,7 +41,7 @@ class TestSndMaxDoy:
         a = np.zeros(365)
         a[200] = 1
         snd = snd_series(a, start="2001-07-01")
-        out = land.snd_max_doy(snd)
+        out = land.snd_max_doy(snd, freq="AS-JUL")
         np.testing.assert_array_equal(out, snd.time.dt.dayofyear[200])
 
     def test_units(self, tas_series):
@@ -54,3 +54,21 @@ class TestSndMaxDoy:
         snd = snd_series(np.zeros(365), start="2001-07-01")
         out = land.snd_max_doy(snd)
         np.testing.assert_array_equal(out, np.nan)
+
+
+class TestSnwMax:
+    def test_simple(self, snw_series):
+        a = np.zeros(366)
+        a[20] = 1
+        snw = snw_series(a, start="2001-01-01")
+        out = land.snw_max(snw, freq="AS-DEC")
+        np.testing.assert_array_equal(out, [1, np.nan])
+
+
+class TestSnwMaxDoy:
+    def test_simple(self, snw_series):
+        a = np.zeros(366)
+        a[20] = 1
+        snw = snw_series(a, start="2001-01-01")
+        out = land.snw_max_doy(snw, freq="YS")
+        np.testing.assert_array_equal(out, [21, np.nan])
