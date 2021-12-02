@@ -77,6 +77,8 @@ from .processing import (
     unpack_moving_yearly_window,
     unstack_variables,
 )
+from .diagnostics import *
+from .measures import *
 
 # TODO: ISIMIP ? Used for precip freq adjustment in biasCorrection.R
 # Hempel, S., Frieler, K., Warszawski, L., Schewe, J., & Piontek, F. (2013). A trend-preserving bias correction &ndash;
