@@ -857,14 +857,14 @@ def potential_evapotranspiration(
 
     - "baierrobertson65" or "BR65", based on [baierrobertson65]_. Requires tasmin and tasmax, daily [D] freq.
     - "hargreaves85" or "HG85", based on [hargreaves85]_. Requires tasmin and tasmax, daily [D] freq. (optional: tas can be given in addition of tasmin and tasmax).
-    - "mcguinnessbordne05" or "MB05", based on [oudin05]_. Requires tas, daily [D] freq, with latitudes 'lat'.
+    - "mcguinnessbordne05" or "MB05", based on [tanguy2018]_. Requires tas, daily [D] freq, with latitudes 'lat'.
     - "thornthwaite48" or "TW48", based on [thornthwaite48]_. Requires tasmin and tasmax, monthly [MS] or daily [D] freq. (optional: tas can be given instead of tasmin and tasmax).
 
     References
     ----------
     .. [baierrobertson65] Baier, W., & Robertson, G. W. (1965). Estimation of latent evaporation from simple weather observations. Canadian journal of plant science, 45(3), 276-284.
     .. [hargreaves85] Hargreaves, G. H., & Samani, Z. A. (1985). Reference crop evapotranspiration from temperature. Applied engineering in agriculture, 1(2), 96-99.
-    .. [oudin05] Oudin, L., Hervieu, F., Michel, C., Perrin, C., Andréassian, V., Anctil, F., and Loumagne, C. (2005). Which potential evapotranspiration input for a lumped rainfall–runoff model?: Part 2  -- towards a simple and efficient potential evapotranspiration model for rainfall–runoff modelling. Journal of Hydrology, 303, 290–306
+    .. [tanguy2018], Tanguy, M., Prudhomme, C., Smith, K., & Hannaford, J. (2018). Historical gridded reconstruction of potential evapotranspiration for the UK. Earth System Science Data, 10(2), 951-968.
     .. [thornthwaite48] Thornthwaite, C. W. (1948). An approach toward a rational classification of climate. Geographical review, 38(1), 55-94.
     """
 
