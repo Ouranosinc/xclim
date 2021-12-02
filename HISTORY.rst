@@ -4,11 +4,12 @@ History
 
 0.32.0 (unreleased)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`)
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`), Maliko Tanguy (:user:`malngu`)
 
 New features and enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Added an optimized pathway for ``xclim.indices.run_length`` functions when ``window=1``. (:pull:`911`, :issue:`910`).
+* Added alternative method for ``xclim.indices.potential_evapotranspiration`` based on mcguinnessbordne05. (:pull:`926`, :issue:`925`).
 
 Internal changes
 ~~~~~~~~~~~~~~~~
