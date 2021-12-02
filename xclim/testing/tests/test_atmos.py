@@ -84,6 +84,19 @@ def test_humidex(tas_series):
     assert h.name == "humidex"
 
 
+def test_heat_index(tas_series, hurs_series):
+    tas = tas_series([15, 20, 25, 25, 30, 30, 35, 35, 40, 40, 45, 45])
+    tas.attrs["units"] = "C"
+
+    hurs = hurs_series([5, 5, 0, 25, 25, 50, 25, 50, 25, 50, 25, 50, 25, 50])
+
+    expected = np.array([np.nan, np.nan, 24, 25, 28, 31, 34, 41, 41, 55, 50, 73])
+
+    hi = atmos.heat_index(tas, hurs)
+    np.testing.assert_array_almost_equal(hi, expected, 0)
+    assert hi.name == "heat_index"
+
+
 def test_saturation_vapor_pressure(tas_series):
     tas = tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C)
     e_sat_exp = [103, 260, 563, 1228, 2339, 3169, 4247, 7385, 19947]
