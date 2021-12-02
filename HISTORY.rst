@@ -21,6 +21,7 @@ New features and enhancements
 * Added `days_over_precip_doy_thresh` and `fraction_over_precip_doy_thresh` indicators to distinguish between WMO and ECAD definition of the Rxxp and RxxpTot indices. (:issue:`931`, :pull:`940`).
 * Update `xclim.core.utils.nan_calc_percentiles` to improve maintainability. (:pull:`942`).
 * Added `heat_index` indicator. Added `heat_index` indicator. This is similar to `humidex` but uses a different dew point as well as heat balance equations which account for variables other than vapor pressure. (:issue:807) and (:pull:915). See (:issue:807) and (:pull:915).
+* Added ``snw_max`` and ``snw_max_doy`` indicators to compute the maximum snow amount and the day of year of the maximum snow amount respectively. (:issue:`776`)
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
