@@ -969,7 +969,7 @@ def potential_evapotranspiration(
         a = 0.00516409319477
         b = 0.0874972822289
 
-        out = np.multiply(np.multiply(radDIVlat, a), tas) + np.multiply(radDIVlat, b)
+        out = radDIVlat * a * tas + radDIVlat * b
 
     elif method in ["thornthwaite48", "TW48"]:
         if tas is None:
