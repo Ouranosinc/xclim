@@ -962,14 +962,14 @@ def potential_evapotranspiration(
         )
         latentH = 4185.5 * (751.78 - 0.5655 * tasK)
 
-        radDIVlat = np.divide(ext_rad, latentH)
+        radDIVlat = ext_rad / latentH
 
         # parameters from calibration provided by Dr Maliko Tanguy @ CEH
         # (calibrated for PET over the UK)
         a = 0.00516409319477
         b = 0.0874972822289
 
-        out = np.multiply(np.multiply(radDIVlat, a), tas) + np.multiply(radDIVlat, b)
+        out = radDIVlat * a * tas + radDIVlat * b
 
     elif method in ["thornthwaite48", "TW48"]:
         if tas is None:
