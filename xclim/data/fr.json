@@ -897,6 +897,12 @@
     "description": "Indice humidex décrivant la température ressentie par une personne en réponse à l'humidité relative.",
     "long_name": "indice humidex"
   },
+  "HEAT_INDEX": {
+    "title": "Indice de chaleur",
+    "abstract": "L'indice de chaleur est une estimation de la température ressentie par une personne à l'ombre lorsqu'on tient compte de l'humidité relative.",
+    "description": "Température ressentie estimée avec l'humidité relative et la température ambiante.",
+    "long_name": "Indice de chaleur"
+  },
   "POTENTIAL_EVAPOTRANSPIRATION": {
     "title": "Évapotranspiration potentielle",
     "abstract": "Le potentiel d'évaporation de l'eau du sol et de transpiration par les plantes si l'approvisionnement en eau est suffisant, avec une méthode donnée.",
