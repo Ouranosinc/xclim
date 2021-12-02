@@ -35,6 +35,7 @@ Internal changes
 * French translation metadata fields are now cleaner and much more internally consistent, and many empty metadata fields (e.g. ``comment_fr``) have been removed. (:pull:`930`, :issue:`929`).
 * Adjustments to the `tox` builds so that slow tests are now run alongside standard tests (for more accurate coverage reporting). (:pull:`938`)
 * Use ``xarray.apply_ufunc`` to vectorize statistical functions. (:pull:`943`)
+* Refactor of ``xclim.sdba.utils.interp_on_quantiles`` so that it now handles the extrapolation directly and to better handle missing values. (:pull:`941`).
 
 Bug fixes
 ^^^^^^^^^
