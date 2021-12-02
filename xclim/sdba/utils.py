@@ -201,7 +201,7 @@ def broadcast(
         sel = {}
 
     if group.prop != "group" and group.prop not in sel:
-        sel.update({group.prop: group.get_index(x, interp=interp)})
+        sel.update({group.prop: group.get_index(x, interp=interp != "nearest")})
 
     if sel:
         # Extract the correct mean factor for each time step.
@@ -395,21 +395,20 @@ def add_endpoints(
 
 def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):
     mask_new = np.isnan(newx)
-    if np.all(mask_new):
+    mask_old = np.isnan(oldy) | np.isnan(oldx)
+    out = np.full_like(newx, np.NaN, dtype=f"float{oldy.dtype.itemsize * 8}")
+    if np.all(mask_new) or np.all(mask_old):
         warn(
             "All-NaN slice encountered in interp_on_quantiles",
             category=RuntimeWarning,
         )
-        return newx
+        return out
 
     if extrap == "constant":
         fill_value = (oldy[0], oldy[-1])
     else:  # extrap == 'nan'
         fill_value = np.NaN
 
-    mask_old = np.isnan(oldy) | np.isnan(oldx)
-
-    out = np.full_like(newx, np.NaN, dtype=f"float{oldy.dtype.itemsize * 8}")
     out[~mask_new] = interp1d(
         oldx[~mask_old],
         oldy[~mask_old],
@@ -422,16 +421,15 @@ def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):
 
 def _interp_on_quantiles_2D(newx, newg, oldx, oldy, oldg, method, extrap):  # noqa
     mask_new = np.isnan(newx) | np.isnan(newg)
-    if np.all(mask_new):
+    mask_old = np.isnan(oldy) | np.isnan(oldx) | np.isnan(oldg)
+    out = np.full_like(newx, np.NaN, dtype=f"float{oldy.dtype.itemsize * 8}")
+    if np.all(mask_new) or np.all(mask_old):
         warn(
             "All-NaN slice encountered in interp_on_quantiles",
             category=RuntimeWarning,
         )
-        return newx
+        return out
 
-    mask_old = np.isnan(oldy) | np.isnan(oldx) | np.isnan(oldg)
-
-    out = np.full_like(newx, np.NaN, dtype=f"float{oldy.dtype.itemsize * 8}")
     out[~mask_new] = griddata(
         (oldx[~mask_old], oldg[~mask_old]),
         oldy[~mask_old],
@@ -494,9 +492,10 @@ def interp_on_quantiles(
     if prop == "group":
         if "group" in xq.dims:
             xq = xq.squeeze("group", drop=True)
+        if "group" in yq.dims:
             yq = yq.squeeze("group", drop=True)
 
-        return xr.apply_ufunc(
+        out = xr.apply_ufunc(
             _interp_on_quantiles_1D,
             newx,
             xq,
@@ -508,6 +507,8 @@ def interp_on_quantiles(
             dask="parallelized",
             output_dtypes=[yq.dtype],
         )
+        return out
+
     # else:
     if prop not in xq.dims:
         xq = xq.expand_dims({prop: group.get_coordinate()})
