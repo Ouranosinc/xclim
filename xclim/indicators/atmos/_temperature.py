@@ -5,7 +5,7 @@ from inspect import _empty  # noqa
 
 from xclim import indices
 from xclim.core import cfchecks
-from xclim.core.indicator import Daily
+from xclim.core.indicator import Daily, Indicator, ResamplingIndicatorWithIndexing
 from xclim.core.utils import InputKind
 
 __all__ = [
@@ -74,7 +74,6 @@ __all__ = [
     "warm_spell_duration_index",
     "maximum_consecutive_warm_days",
     "fire_season",
-    "corn_heat_units",
     "huglin_index",
     "biologically_effective_degree_days",
     "latitude_temperature_index",
@@ -86,7 +85,13 @@ class Temp(Daily):
     """Indicators involving daily temperature."""
 
 
-tn_days_above = Temp(
+class TempWithIndexing(ResamplingIndicatorWithIndexing):
+    """Indicators involving daily temperature and adding an indexing possibility."""
+
+    src_freq = "D"
+
+
+tn_days_above = TempWithIndexing(
     identifier="tn_days_above",
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
@@ -96,7 +101,7 @@ tn_days_above = Temp(
     compute=indices.tn_days_above,
 )
 
-tn_days_below = Temp(
+tn_days_below = TempWithIndexing(
     identifier="tn_days_below",
     units="days",
     standard_name="number_of_days_with_air_temperature_below_threshold",
@@ -106,7 +111,7 @@ tn_days_below = Temp(
     compute=indices.tn_days_below,
 )
 
-tg_days_above = Temp(
+tg_days_above = TempWithIndexing(
     identifier="tg_days_above",
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
@@ -116,7 +121,7 @@ tg_days_above = Temp(
     compute=indices.tg_days_above,
 )
 
-tg_days_below = Temp(
+tg_days_below = TempWithIndexing(
     identifier="tg_days_below",
     units="days",
     standard_name="number_of_days_with_air_temperature_below_threshold",
@@ -126,7 +131,7 @@ tg_days_below = Temp(
     compute=indices.tg_days_below,
 )
 
-tx_days_above = Temp(
+tx_days_above = TempWithIndexing(
     identifier="tx_days_above",
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
@@ -136,7 +141,7 @@ tx_days_above = Temp(
     compute=indices.tx_days_above,
 )
 
-tx_days_below = Temp(
+tx_days_below = TempWithIndexing(
     identifier="tx_days_below",
     units="days",
     standard_name="number_of_days_with_air_temperature_below_threshold",
@@ -146,7 +151,7 @@ tx_days_below = Temp(
     compute=indices.tx_days_below,
 )
 
-tx_tn_days_above = Temp(
+tx_tn_days_above = TempWithIndexing(
     identifier="tx_tn_days_above",
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
@@ -245,7 +250,7 @@ hot_spell_max_length = Temp(
     compute=indices.hot_spell_max_length,
 )
 
-tg_mean = Temp(
+tg_mean = TempWithIndexing(
     identifier="tg_mean",
     units="K",
     standard_name="air_temperature",
@@ -255,7 +260,7 @@ tg_mean = Temp(
     compute=indices.tg_mean,
 )
 
-tg_max = Temp(
+tg_max = TempWithIndexing(
     identifier="tg_max",
     units="K",
     standard_name="air_temperature",
@@ -265,7 +270,7 @@ tg_max = Temp(
     compute=indices.tg_max,
 )
 
-tg_min = Temp(
+tg_min = TempWithIndexing(
     identifier="tg_min",
     units="K",
     standard_name="air_temperature",
@@ -275,7 +280,7 @@ tg_min = Temp(
     compute=indices.tg_min,
 )
 
-tx_mean = Temp(
+tx_mean = TempWithIndexing(
     identifier="tx_mean",
     units="K",
     standard_name="air_temperature",
@@ -285,7 +290,7 @@ tx_mean = Temp(
     compute=indices.tx_mean,
 )
 
-tx_max = Temp(
+tx_max = TempWithIndexing(
     identifier="tx_max",
     units="K",
     standard_name="air_temperature",
@@ -295,7 +300,7 @@ tx_max = Temp(
     compute=indices.tx_max,
 )
 
-tx_min = Temp(
+tx_min = TempWithIndexing(
     identifier="tx_min",
     units="K",
     standard_name="air_temperature",
@@ -305,7 +310,7 @@ tx_min = Temp(
     compute=indices.tx_min,
 )
 
-tn_mean = Temp(
+tn_mean = TempWithIndexing(
     identifier="tn_mean",
     units="K",
     standard_name="air_temperature",
@@ -315,7 +320,7 @@ tn_mean = Temp(
     compute=indices.tn_mean,
 )
 
-tn_max = Temp(
+tn_max = TempWithIndexing(
     identifier="tn_max",
     units="K",
     standard_name="air_temperature",
@@ -325,7 +330,7 @@ tn_max = Temp(
     compute=indices.tn_max,
 )
 
-tn_min = Temp(
+tn_min = TempWithIndexing(
     identifier="tn_min",
     units="K",
     standard_name="air_temperature",
@@ -335,7 +340,7 @@ tn_min = Temp(
     compute=indices.tn_min,
 )
 
-daily_temperature_range = Temp(
+daily_temperature_range = TempWithIndexing(
     title="Mean of daily temperature range.",
     identifier="dtr",
     units="K",
@@ -347,7 +352,7 @@ daily_temperature_range = Temp(
     parameters=dict(op="mean"),
 )
 
-max_daily_temperature_range = Temp(
+max_daily_temperature_range = TempWithIndexing(
     title="Maximum of daily temperature range.",
     identifier="dtrmax",
     units="K",
@@ -359,7 +364,7 @@ max_daily_temperature_range = Temp(
     parameters=dict(op="max"),
 )
 
-daily_temperature_range_variability = Temp(
+daily_temperature_range_variability = TempWithIndexing(
     identifier="dtrvar",
     units="K",
     standard_name="air_temperature",
@@ -373,7 +378,7 @@ daily_temperature_range_variability = Temp(
     compute=indices.daily_temperature_range_variability,
 )
 
-extreme_temperature_range = Temp(
+extreme_temperature_range = TempWithIndexing(
     identifier="etr",
     units="K",
     standard_name="air_temperature",
@@ -433,7 +438,7 @@ cool_night_index = Temp(
     compute=indices.cool_night_index,
 )
 
-daily_freezethaw_cycles = Temp(
+daily_freezethaw_cycles = TempWithIndexing(
     identifier="dlyfrzthw",
     units="days",
     long_name="daily freezethaw cycles",
@@ -504,7 +509,7 @@ freezethaw_spell_max_length = Temp(
 )
 
 
-cooling_degree_days = Temp(
+cooling_degree_days = TempWithIndexing(
     identifier="cooling_degree_days",
     units="K days",
     standard_name="integral_of_air_temperature_excess_wrt_time",
@@ -515,7 +520,7 @@ cooling_degree_days = Temp(
     parameters={"thresh": {"default": "18.0 degC"}},
 )
 
-heating_degree_days = Temp(
+heating_degree_days = TempWithIndexing(
     identifier="heating_degree_days",
     units="K days",
     standard_name="integral_of_air_temperature_deficit_wrt_time",
@@ -526,7 +531,7 @@ heating_degree_days = Temp(
     parameters={"thresh": {"default": "17.0 degC"}},
 )
 
-growing_degree_days = Temp(
+growing_degree_days = TempWithIndexing(
     identifier="growing_degree_days",
     units="K days",
     standard_name="integral_of_air_temperature_excess_wrt_time",
@@ -537,7 +542,7 @@ growing_degree_days = Temp(
     parameters={"thresh": {"default": "4.0 degC"}},
 )
 
-freezing_degree_days = Temp(
+freezing_degree_days = TempWithIndexing(
     identifier="freezing_degree_days",
     units="K days",
     standard_name="integral_of_air_temperature_deficit_wrt_time",
@@ -548,7 +553,7 @@ freezing_degree_days = Temp(
     parameters={"thresh": {"default": "0 degC"}},
 )
 
-thawing_degree_days = Temp(
+thawing_degree_days = TempWithIndexing(
     identifier="thawing_degree_days",
     units="K days",
     standard_name="integral_of_air_temperature_excess_wrt_time",
@@ -569,7 +574,7 @@ freshet_start = Temp(
     compute=indices.freshet_start,
 )
 
-frost_days = Temp(
+frost_days = TempWithIndexing(
     identifier="frost_days",
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
@@ -622,7 +627,7 @@ first_day_above = Temp(
 )
 
 
-ice_days = Temp(
+ice_days = TempWithIndexing(
     identifier="ice_days",
     standard_name="days_with_air_temperature_below_threshold",
     units="days",
@@ -731,7 +736,7 @@ growing_season_end = Temp(
     parameters={"thresh": {"default": "5.0 degC"}},
 )
 
-tropical_nights = Temp(
+tropical_nights = TempWithIndexing(
     identifier="tropical_nights",
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
@@ -849,11 +854,10 @@ maximum_consecutive_warm_days = Temp(
 )
 
 
-class FireSeasonBase(Daily):
-    """Special Indicator class for FireSeason that accepts any tas[min/max] and optional snd."""
+class FireSeasonBase(Indicator):
+    """Special Indicator class for FireSeason that accepts any tas[min/max] and optional snd and is not resampling."""
 
-    @staticmethod
-    def cfcheck(tas, snd=None):
+    def cfcheck(self, tas, snd=None):
         cfchecks.check_valid(tas, "standard_name", "air_temperature")
         cfchecks.cfcheck_from_name("snd", snd)
 
@@ -865,19 +869,6 @@ fire_season = FireSeasonBase(
     compute=indices.fire_season,
 )
 
-
-corn_heat_units = Temp(
-    identifier="corn_heat_units",
-    units="",
-    long_name="Corn heat units (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}).",
-    description="Temperature-based index used to estimate the development of corn crops. "
-    "Corn growth occurs when the minimum and maximum daily temperature both exceeds "
-    "specific thresholds : Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}.",
-    var_name="chu",
-    cell_methods="",
-    missing="skip",
-    compute=indices.corn_heat_units,
-)
 
 huglin_index = Temp(
     identifier="huglin_index",

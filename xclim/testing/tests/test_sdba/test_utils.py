@@ -53,7 +53,9 @@ def test_equally_spaced_nodes():
     np.testing.assert_almost_equal(x[0], 0.5)
 
 
-@pytest.mark.parametrize("method,exp", [("nan", [0, 0]), ("constant", [0, -np.inf])])
+@pytest.mark.parametrize(
+    "method,exp", [("nan", [np.NaN, -np.inf]), ("constant", [0, -np.inf])]
+)
 def test_extrapolate_qm(make_qm, method, exp):
     qm = make_qm(np.arange(6).reshape(2, 3))
     xq = make_qm(np.arange(6).reshape(2, 3))
@@ -62,7 +64,10 @@ def test_extrapolate_qm(make_qm, method, exp):
 
     assert isinstance(q, xr.DataArray)
     assert isinstance(x, xr.DataArray)
-    assert q[0, 0] == exp[0]
+    if np.isnan(exp[0]):
+        assert q[0, 0].isnull()
+    else:
+        assert q[0, 0] == exp[0]
     assert x[0, 0] == exp[1]
 
 

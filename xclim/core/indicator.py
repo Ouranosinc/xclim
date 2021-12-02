@@ -92,6 +92,7 @@ import weakref
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
 from dataclasses import asdict, dataclass
+from functools import reduce
 from inspect import Parameter as _Parameter
 from inspect import Signature
 from inspect import _empty as _empty_default
@@ -174,6 +175,7 @@ class Parameter:
     description: str = ""
     units: str = _empty
     choices: set = _empty
+    value: Any = _empty
 
     def update(self, other: dict):
         """Update a parameter's values from a dict."""
@@ -201,6 +203,10 @@ class Parameter:
 
     def asdict(self):
         return {k: v for k, v in asdict(self).items() if v is not _empty}
+
+    @property
+    def injected(self):
+        return self.value is not _empty
 
 
 class IndicatorRegistrar:
@@ -293,19 +299,10 @@ class Indicator(IndicatorRegistrar):
     notes: str
       Notes regarding computing function, for example the mathematical formulation. Parsed from `compute`
       docstring if None (form the "Notes" section).
-    missing: {any, wmo, pct, at_least_n, skip, from_context}
-      The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods. If
-      None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
-    missing_options : dict, None
-      Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
-    freq: str, sequence of strings, optional
+    src_freq: str, sequence of strings, optional
       The expected frequency of the input data. Can be a list for multiple frequencies, or None if irrelevant.
     context: str
       The `pint` unit context, for example use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
-    allowed_periods : Sequence[str], optional
-      A list of allowed periods, i.e. base parts of the `freq` parameter. For example, indicators meant to be
-      computed annually only will have `allowed_periods=["A"]`. `None` means "any period" or that the
-      indicator doesn't take a `freq` argument.
 
     Notes
     -----
@@ -327,18 +324,15 @@ class Indicator(IndicatorRegistrar):
     # metadata fields that are formatted as free text (first letter capitalized)
     _text_fields = ["long_name", "description", "comment"]
     # Class attributes that are function (so we know which to convert to static methods)
-    _funcs = ["compute", "cfcheck", "datacheck"]
+    _funcs = ["compute"]
     # Mapping from name in the compute function to official (CMIP6) variable name
     _variable_mapping = {}
 
     # Will become the class's name
     identifier = None
 
-    missing = "from_context"
-    missing_options = None
     context = "none"
-    freq = None
-    allowed_periods = None
+    src_freq = None
 
     # Global metadata (must be strings, not attributed to the output)
     realm = None
@@ -348,12 +342,12 @@ class Indicator(IndicatorRegistrar):
     references = ""
     notes = ""
 
-    _all_parameters: Mapping[str, Union[Parameter, Any]] = {}
+    _all_parameters: Mapping[str, Parameter] = {}
     """A dictionary mapping metadata about the input parameters to the indicator.
 
-    Keys are the arguments of the "compute" function. "Injected" parameters,
-    those absent from the indicator's call signature are listed here with the
-    injected values. Controlable parameters are instance of :py:class:`xclim.core.indicator.Parameter`.
+    Keys are the arguments of the "compute" function. All parameters are listed, even
+    those "injected", absent from the indicator's call signature. All are instances of
+    :py:class:`xclim.core.indicator.Parameter`.
     """
 
     cf_attrs: Sequence[Mapping[str, Any]] = None
@@ -396,6 +390,15 @@ class Indicator(IndicatorRegistrar):
             for name, value in docmeta.items():
                 # title, abstract, references, notes, long_name
                 kwds.setdefault(name, value)
+
+            # Inject parameters (subclasses can override or extend this through _injected_parameters)
+            for name, param in cls._injected_parameters():
+                if name in parameters:
+                    raise ValueError(
+                        f"Class {cls.__name__} can't wrap indices that have a `{name}`"
+                        " argument as it conflicts with arguments it injects."
+                    )
+                parameters[name] = param
         else:  # inherit parameters from base class
             parameters = deepcopy(cls._all_parameters)
 
@@ -423,11 +426,6 @@ class Indicator(IndicatorRegistrar):
 
         # All updates done.
         kwds["_all_parameters"] = parameters
-
-        # By default skip missing values handling if there is no resampling.
-        # Dont only check if freq is in current parameters but also if it was injected earlier.
-        if "freq" not in parameters:
-            kwds["missing"] = "skip"
 
         # Parse kwds to organize `cf_attrs`
         # And before converting callables to staticmethods
@@ -502,15 +500,22 @@ class Indicator(IndicatorRegistrar):
             )
             meta["kind"] = infer_kind_from_parameter(param, has_units)
 
-        # Insert "ds" arg
-        params_dict["ds"] = {
-            "default": None,
-            "kind": InputKind.DATASET,
-            "description": "A dataset with the variables given by name.",
-        }
-
         parameters = {name: Parameter(**param) for name, param in params_dict.items()}
         return parameters, docmeta
+
+    @classmethod
+    def _injected_parameters(cls):
+        """A list of tuples for arguments to inject, (name, Parameter)."""
+        return [
+            (
+                "ds",
+                Parameter(
+                    kind=InputKind.DATASET,
+                    default=None,
+                    description="A dataset with the variables given by name.",
+                ),
+            )
+        ]
 
     @classmethod
     def _update_parameters(cls, parameters, passed):
@@ -521,7 +526,7 @@ class Indicator(IndicatorRegistrar):
                     # modified meta
                     parameters[key].update(val)
                 elif key in parameters:
-                    parameters[key] = val
+                    parameters[key].value = val
                 else:
                     raise KeyError(key)
         except KeyError as err:
@@ -562,14 +567,14 @@ class Indicator(IndicatorRegistrar):
             new_variable_mapping.update(variable_mapping)
             kwds["_variable_mapping"] = new_variable_mapping
 
-    @staticmethod
-    def _ensure_correct_parameters(parameters):
+    @classmethod
+    def _ensure_correct_parameters(cls, parameters):
         """Ensure the parameters are correctly set and ordered.
 
         Sets the correct variable default to be sure.
         """
         for name, meta in parameters.items():
-            if isinstance(meta, Parameter):
+            if not meta.injected:
                 if meta.kind <= InputKind.OPTIONAL_VARIABLE and meta.units is _empty:
                     raise ValueError(
                         f"Input variable {name} is missing expected units. Units are "
@@ -583,7 +588,7 @@ class Indicator(IndicatorRegistrar):
 
         # Sort parameters : Var, Opt Var, all params, ds, injected params.
         def sortkey(kv):
-            if isinstance(kv[1], Parameter):
+            if not kv[1].injected:
                 if kv[1].kind in [0, 1, 50]:
                     return kv[1].kind
                 return 2
@@ -709,16 +714,6 @@ class Indicator(IndicatorRegistrar):
         """Run checks and organizes the metadata."""
         # keywords of kwds that are class attributes have already been set in __new__
         self._check_identifier(self.identifier)
-        if self.missing == "from_context" and self.missing_options is not None:
-            raise ValueError(
-                "Cannot set `missing_options` with `missing` method being from context."
-            )
-
-        # Validate hard-coded missing options
-        kls = MISSING_METHODS[self.missing]
-        self._missing = kls.execute
-        if self.missing_options:
-            kls.validate(**self.missing_options)
 
         # Validation is done : register the instance.
         super().__init__()
@@ -775,9 +770,34 @@ class Indicator(IndicatorRegistrar):
         """Call function of Indicator class."""
         # Put the variables in `das`, parse them according to the annotations
         # das : OrderedDict of variables (required + non-None optionals)
-        # params : OrderedDict of parameters INCLUDING unpacked kwargs and injected EXCLUDING indexer
-        # indexer: If present, the "indexer" kwargs <- this is needed by _update_attrs and _mask
-        das, params, indexer = self._parse_variables_from_call(args, kwds)
+        # params : OrderedDict of parameters (var_kwargs as a single argument, if any)
+        das, params = self._parse_variables_from_call(args, kwds)
+
+        das, params = self._preprocess_and_checks(das, params)
+
+        # Get correct variable names for the compute function.
+        inv_var_map = dict(map(reversed, self._variable_mapping.items()))
+        compute_das = {inv_var_map.get(nm, nm): das[nm] for nm in das}
+
+        # Compute the indicator values, ignoring NaNs and missing values.
+        # Filter the passed parameters to only keep the ones needed by compute.
+        kwargs = {}
+        var_kwargs = {}
+        for nm, pa in signature(self.compute).parameters.items():
+            if pa.kind == _Parameter.VAR_KEYWORD:
+                var_kwargs = params[nm]
+            elif nm not in compute_das and nm in params:
+                kwargs[nm] = params[nm]
+        outs = self.compute(**compute_das, **kwargs, **var_kwargs)
+
+        if isinstance(outs, DataArray):
+            outs = [outs]
+
+        if len(outs) != self.n_outs:
+            raise ValueError(
+                f"Indicator {self.identifier} was wrongly defined. Expected "
+                f"{self.n_outs} outputs, got {len(outs)}."
+            )
 
         # Metadata attributes from templates
         var_id = None
@@ -792,39 +812,7 @@ class Indicator(IndicatorRegistrar):
                     attrs,
                     names=self._cf_names,
                     var_id=var_id,
-                    indexer=indexer,
                 )
-            )
-
-        # Pre-computation validation checks on DataArray arguments
-        self._bind_call(self.datacheck, **das)
-        self._bind_call(self.cfcheck, **das)
-
-        # Check if the period is allowed:
-        if (
-            self.allowed_periods is not None
-            and "freq" in params
-            and parse_offset(params["freq"])[1] not in self.allowed_periods
-        ):
-            raise ValueError(
-                f"Resampling frequency {params['freq']} is not allowed for indicator "
-                f"{self.identifier} (needs something equivalent to one "
-                f"of {self.allowed_periods})."
-            )
-
-        # Get correct variable names for the compute function.
-        inv_var_map = dict(map(reversed, self._variable_mapping.items()))
-        compute_das = {inv_var_map.get(nm, nm): das[nm] for nm in das}
-        # Compute the indicator values, ignoring NaNs and missing values.
-        outs = self.compute(**compute_das, **params, **indexer)
-
-        if isinstance(outs, DataArray):
-            outs = [outs]
-
-        if len(outs) != self.n_outs:
-            raise ValueError(
-                f"Indicator {self.identifier} was wrongly defined. Expected "
-                f"{self.n_outs} outputs, got {len(outs)}."
             )
 
         # Convert to output units
@@ -839,11 +827,7 @@ class Indicator(IndicatorRegistrar):
             out.attrs.update(attrs)
             out.name = var_name
 
-        if self.missing != "skip":
-            # Mask results that do not meet criteria defined by the `missing` method.
-            # This means all outputs must have the same dimensions as the broadcasted inputs (excluding time)
-            mask = self._mask(*das.values(), indexer=indexer, **params)
-            outs = [out.where(~mask) for out in outs]
+        outs = self._postprocess(outs, das, params)
 
         # Return a single DataArray in case of single output, otherwise a tuple
         if self.n_outs == 1:
@@ -862,28 +846,22 @@ class Indicator(IndicatorRegistrar):
         # Extract variables + inject injected
         das = OrderedDict()
         params = ba.arguments.copy()
-        indexer = {}
         for name, param in self._all_parameters.items():
-            if name == "indexer":
-                indexer = params.pop(name, {})
-            elif isinstance(param, Parameter):
+            if not param.injected:
                 # If a variable pop the arg
                 if param.kind <= InputKind.OPTIONAL_VARIABLE:
                     data = params.pop(name)
                     # If a non-optional variable OR None, store the arg
                     if param.kind == InputKind.VARIABLE or data is not None:
                         das[name] = data
-                elif param.kind == InputKind.KWARGS:
-                    kwargs = params.pop(name)
-                    params.update(**kwargs)
             else:
-                params[name] = param
+                params[name] = param.value
 
-        return das, params, indexer
+        return das, params
 
     def _assign_named_args(self, ba):
         """Assign inputs passed as strings from ds."""
-        ds = ba.arguments.pop("ds")
+        ds = ba.arguments.get("ds")
         for name in list(ba.arguments.keys()):
             if self.parameters[name].kind <= InputKind.OPTIONAL_VARIABLE and isinstance(
                 ba.arguments[name], str
@@ -901,6 +879,18 @@ class Indicator(IndicatorRegistrar):
                         "Passing variable names as string requires giving the `ds` "
                         f"dataset (got {name}='{ba.arguments[name]}')"
                     )
+
+    def _preprocess_and_checks(self, das, params):
+        """Actions to be done after parsing the arguments and before computing."""
+        # Pre-computation validation checks on DataArray arguments
+        self._bind_call(self.datacheck, **das)
+        self._bind_call(self.cfcheck, **das)
+
+        return das, params
+
+    def _postprocess(self, outs, das, params):
+        """Actions to done after computing."""
+        return outs
 
     def _bind_call(self, func, **das):
         """Call function using `__call__` `DataArray` arguments.
@@ -961,7 +951,7 @@ class Indicator(IndicatorRegistrar):
         )
 
     @classmethod
-    def _update_attrs(cls, args, das, attrs, var_id=None, names=None, indexer=None):
+    def _update_attrs(cls, args, das, attrs, var_id=None, names=None):
         """Format attributes with the run-time values of `compute` call parameters.
 
         Cell methods and history attributes are updated, adding to existing values.
@@ -983,8 +973,6 @@ class Indicator(IndicatorRegistrar):
           attributes. This is meant for multi-outputs indicators.
         names : Sequence[str]
           List of attribute names for which to get a translation.
-        indexer : Optiona[Mapping[str, str]]
-          The `indexer` argument as passed to the indicator.
 
         Returns
         -------
@@ -992,7 +980,7 @@ class Indicator(IndicatorRegistrar):
           Attributes with {} expressions replaced by call argument values. With updated `cell_methods` and `history`.
           `cell_methods` is not added if `names` is given and those not contain `cell_methods`.
         """
-        out = cls._format(attrs, args, indexer)
+        out = cls._format(attrs, args)
         for locale in OPTIONS[METADATA_LOCALES]:
             out.update(
                 cls._format(
@@ -1000,7 +988,6 @@ class Indicator(IndicatorRegistrar):
                         locale, var_id=var_id, names=names or list(attrs.keys())
                     ),
                     args=args,
-                    indexer=indexer,
                     formatter=get_local_formatter(locale),
                 )
             )
@@ -1018,7 +1005,11 @@ class Indicator(IndicatorRegistrar):
         # In the history attr, call signature will be all keywords and might be in a
         # different order than the real function (but order doesn't really matter with keywords).
         kwargs = OrderedDict(**das)
-        kwargs.update(**args, **indexer)
+        for k, v in args.items():
+            if cls._all_parameters[k].kind == InputKind.KWARGS:
+                kwargs.update(**v)
+            elif cls._all_parameters[k].kind != InputKind.DATASET:
+                kwargs[k] = v
         attrs["history"] = update_history(
             gen_call_string(cls._registry_id, **kwargs),
             new_name=out.get("var_name"),
@@ -1114,11 +1105,11 @@ class Indicator(IndicatorRegistrar):
         # We need to deepcopy, otherwise empty defaults get overwritten!
         # All those tweaks are to ensure proper serialization of the returned dictionary.
         out["parameters"] = {
-            k: p.asdict() if isinstance(p, Parameter) else deepcopy(p)
+            k: p.asdict() if not p.injected else deepcopy(p.value)
             for k, p in self._all_parameters.items()
         }
         for name, param in list(out["parameters"].items()):
-            if isinstance(self._all_parameters[name], Parameter):
+            if not self._all_parameters[name].injected:
                 param["kind"] = param["kind"].value  # Get the int.
                 if "choices" in param:  # A set is stored, convert to list
                     param["choices"] = list(param["choices"])
@@ -1134,7 +1125,6 @@ class Indicator(IndicatorRegistrar):
         cls,
         attrs: dict,
         args: dict = None,
-        indexer: dict = None,
         formatter: AttrFormatter = default_formatter,
     ):
         """Format attributes including {} tags with arguments.
@@ -1150,8 +1140,8 @@ class Indicator(IndicatorRegistrar):
         # Use defaults
         if args is None:
             args = {
-                k: v.default if isinstance(v, Parameter) else v
-                for k, v in cls._all_parameters.items()
+                k: p.default if not p.injected else p.value
+                for k, p in cls._all_parameters.items()
             }
 
         # Prepare arguments
@@ -1163,15 +1153,18 @@ class Indicator(IndicatorRegistrar):
             elif isinstance(v, (int, float)):
                 mba[k] = "{:g}".format(v)
             # TODO: What about InputKind.NUMBER_SEQUENCE
+            elif k == "indexer":
+                if v and v not in [_empty, _empty_default]:
+                    dk, dv = v.copy().popitem()
+                    if dk == "month":
+                        dv = f"m{dv}"
+                    elif dk in ("doy_bounds", "date_bounds"):
+                        dv = f"{dv[0]} to {dv[1]}"
+                    mba["indexer"] = dv
+                else:
+                    mba["indexer"] = args.get("freq") or "YS"
             else:
                 mba[k] = v
-        if indexer:
-            dk, dv = indexer.copy().popitem()
-            if dk == "month":
-                dv = "m{}".format(dv)
-            mba["indexer"] = dv
-        else:
-            mba["indexer"] = "annual"
 
         out = {}
         for key, val in attrs.items():
@@ -1185,29 +1178,6 @@ class Indicator(IndicatorRegistrar):
 
         return out
 
-    def _default_freq(self, **indexer):
-        """Return default frequency."""
-        if self.freq in ["D", "H"]:
-            return indices.generic.default_freq(**indexer)
-        return None
-
-    def _mask(self, *args, indexer=None, **kwds):
-        """Return whether mask for output values, based on the output of the `missing` method."""
-        from functools import reduce
-
-        freq = kwds.get("freq", self._default_freq(**(indexer or {})))
-
-        options = self.missing_options or OPTIONS[MISSING_OPTIONS].get(self.missing, {})
-
-        # We flag periods according to the missing method. skip variables without a time coordinate.
-        src_freq = self.freq if isinstance(self.freq, str) else None
-        miss = (
-            self._missing(da, freq, src_freq, options, indexer)
-            for da in args
-            if "time" in da.coords
-        )
-        return reduce(np.logical_or, miss)
-
     # The following static methods are meant to be replaced to define custom indicators.
     @staticmethod
     def compute(*args, **kwds):
@@ -1217,8 +1187,7 @@ class Indicator(IndicatorRegistrar):
         """
         raise NotImplementedError
 
-    @staticmethod
-    def cfcheck(**das):
+    def cfcheck(self, **das):
         """Compare metadata attributes to CF-Convention standards.
 
         Default cfchecks use the specifications in `xclim.core.utils.VARIABLES`,
@@ -1234,19 +1203,22 @@ class Indicator(IndicatorRegistrar):
                 # Silently ignore unknown variables.
                 pass
 
-    @staticmethod
-    def datacheck(**das):
+    def datacheck(self, **das):
         """Verify that input data is valid.
 
         When subclassing this method, use functions decorated using `xclim.core.options.datacheck`.
 
         For example, checks could include:
 
-        * assert temporal frequency is daily
         * assert no precipitation is negative
         * assert no temperature has the same value 5 days in a row
+
+        This base datacheck checks that the input data has a valid sampling frequency, as given in self.src_freq.
         """
-        pass
+        if self.src_freq is not None:
+            for key, da in das.items():
+                if "time" in da.coords and da.time.ndim == 1 and len(da.time) > 3:
+                    datachecks.check_freq(da, self.src_freq, strict=True)
 
     def __getattr__(self, attr):
         if attr in self._cf_names:
@@ -1269,7 +1241,7 @@ class Indicator(IndicatorRegistrar):
         return {
             name: param
             for name, param in self._all_parameters.items()
-            if isinstance(param, Parameter)
+            if not param.injected
         }
 
     @property
@@ -1279,53 +1251,151 @@ class Indicator(IndicatorRegistrar):
         Opposite of :py:meth:`Indicator.parameters`.
         """
         return {
-            name: param
+            name: param.value
             for name, param in self._all_parameters.items()
-            if not isinstance(param, Parameter)
+            if param.injected
         }
 
 
-class Daily(Indicator):
-    """Indicator defined for inputs at daily frequency."""
+class ResamplingIndicator(Indicator):
+    """Indicator that performs a resampling computation.
 
-    freq = "D"
+    Compared to the base Indicator, this adds the handling of missing data,
+    and the check of allowed periods.
 
-    @staticmethod
-    def datacheck(**das):  # noqa
-        for key, da in das.items():
-            if "time" in da.coords and da.time.ndim == 1 and len(da.time) > 3:
-                datachecks.check_daily(da)
-
-
-class Hourly(Indicator):
-    """Indicator defined for inputs at strict hourly frequency, meaning 3-hourly inputs would raise an error."""
-
-    freq = "H"
-
-    @staticmethod
-    def datacheck(**das):  # noqa
-        for key, da in das.items():
-            datachecks.check_freq(da, "H")
-
-
-class DailyWeeklyMonthly(Indicator):
-    """Indicator defined for inputs at daily, weekly or monthly frequencies.
-
-    Required by ANUCLIM indicators.
+    Parameters
+    ----------
+    missing: {any, wmo, pct, at_least_n, skip, from_context}
+      The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods. If
+      None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
+    missing_options : dict, None
+      Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
+    allowed_periods : Sequence[str], optional
+      A list of allowed periods, i.e. base parts of the `freq` parameter. For example, indicators meant to be
+      computed annually only will have `allowed_periods=["A"]`. `None` means "any period" or that the
+      indicator doesn't take a `freq` argument.
     """
 
-    freq = ["D", "7D", "M"]
+    missing = "from_context"
+    missing_options = None
+    allowed_periods = None
 
-    @staticmethod
-    def datacheck(**das):  # noqa
-        for key, da in das.items():
-            if "time" in da.coords and da.time.ndim == 1 and len(da.time) > 3:
-                datachecks.check_freq(da, ["D", "7D", "M"], strict=True)
+    @classmethod
+    def _ensure_correct_parameters(cls, parameters):
+        if "freq" not in parameters:
+            raise ValueError(
+                "ResamplingIndicator require a 'freq' argument, use the base Indicator"
+                " class if your computation doesn't perform any resampling."
+            )
+        return super()._ensure_correct_parameters(parameters)
+
+    def __init__(self, **kwds):
+        if self.missing == "from_context" and self.missing_options is not None:
+            raise ValueError(
+                "Cannot set `missing_options` with `missing` method being from context."
+            )
+
+        # Validate hard-coded missing options
+        kls = MISSING_METHODS[self.missing]
+        self._missing = kls.execute
+        if self.missing_options:
+            kls.validate(**self.missing_options)
+
+        super().__init__(**kwds)
+
+    def _preprocess_and_checks(self, das, params):
+        """Perform parent's checks and also check if freq is allowed."""
+        das, params = super()._preprocess_and_checks(das, params)
+
+        # Check if the period is allowed:
+        if (
+            self.allowed_periods is not None
+            and parse_offset(params["freq"])[1] not in self.allowed_periods
+        ):
+            raise ValueError(
+                f"Resampling frequency {params['freq']} is not allowed for indicator "
+                f"{self.identifier} (needs something equivalent to one "
+                f"of {self.allowed_periods})."
+            )
+
+        return das, params
+
+    def _postprocess(self, outs, das, params):
+        """Masking of missing values."""
+        outs = super()._postprocess(outs, das, params)
+
+        if self.missing != "skip":
+            # Mask results that do not meet criteria defined by the `missing` method.
+            # This means all outputs must have the same dimensions as the broadcasted inputs (excluding time)
+            options = self.missing_options or OPTIONS[MISSING_OPTIONS].get(
+                self.missing, {}
+            )
+
+            # We flag periods according to the missing method. skip variables without a time coordinate.
+            src_freq = self.src_freq if isinstance(self.src_freq, str) else None
+            miss = (
+                self._missing(
+                    da, params["freq"], src_freq, options, params.get("indexer", {})
+                )
+                for da in das.values()
+                if "time" in da.coords
+            )
+            # Reduce by or and broadcast to ensure the same length in time
+            # When indexing is used and there are no valid points in the last period, mask will not include it
+            mask = reduce(np.logical_or, miss)
+            if isinstance(mask, DataArray) and mask.time.size < outs[0].time.size:
+                mask = mask.reindex(time=outs[0].time, fill_value=True)
+            outs = [out.where(~mask) for out in outs]
+
+        return outs
 
 
+class ResamplingIndicatorWithIndexing(ResamplingIndicator):
+    """Resampling indicator that also injects "indexer" kwargs to subset the inputs before computation."""
+
+    @classmethod
+    def _injected_parameters(self):
+        return super()._injected_parameters() + [
+            (
+                "indexer",
+                Parameter(
+                    kind=InputKind.KWARGS,
+                    description=(
+                        "Indexing parameters to compute the indicator on a temporal "
+                        "subset of the data. It accepts the same arguments as "
+                        ":py:func:`xclim.indices.generic.select_time`."
+                    ),
+                ),
+            )
+        ]
+
+    def _preprocess_and_checks(self, das, params):
+        """Perform parent's checks and also check if freq is allowed."""
+        das, params = super()._preprocess_and_checks(das, params)
+
+        indxr = params.get("indexer")
+        if indxr:
+            das = {k: indices.generic.select_time(da, **indxr) for k, da in das.items()}
+        return das, params
+
+
+class Daily(ResamplingIndicator):
+    """Class for daily inputs and resampling computes."""
+
+    src_freq = "D"
+
+
+class Hourly(ResamplingIndicator):
+    """Class for hourly inputs and resampling computes."""
+
+    src_freq = "H"
+
+
+base_registry["Indicator"] = Indicator
+base_registry["ResamplingIndicator"] = ResamplingIndicator
+base_registry["ResamplingIndicatorWithIndexing"] = ResamplingIndicatorWithIndexing
 base_registry["Hourly"] = Hourly
 base_registry["Daily"] = Daily
-base_registry["DailyWeeklyMonthly"] = DailyWeeklyMonthly
 
 
 def add_iter_indicators(module):
