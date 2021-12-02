@@ -125,11 +125,7 @@ def humidex(
 
 
 @declare_units(tasmax="[temperature]", hurs="[]")
-def heat_index(
-    tasmax: xr.DataArray,
-    hurs: xr.DataArray,
-    freq: str = "MS",
-) -> xr.DataArray:
+def heat_index(tasmax: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
     r"""Daily heat index.
 
     Perceived temperature after relative humidity is taken into account. The
@@ -141,8 +137,6 @@ def heat_index(
       Maximum daily temperature.
     hurs : xr.DataArray
       Relative humidity.
-    freq : str
-      Resampling frequency.
 
     Returns
     -------
