@@ -15,6 +15,7 @@ from xclim.core.calendar import _interpolate_doy_calendar  # noqa
 from xclim.core.utils import ensure_chunk_size
 
 from .base import Grouper, parse_group
+from .nbutils import _extrapolate_on_quantiles
 
 MULTIPLICATIVE = "*"
 ADDITIVE = "+"
@@ -402,7 +403,6 @@ def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):
         return newx
 
     if extrap == "constant":
-        # This is not needed with nearest, as it is the default behaviour
         fill_value = (oldy[0], oldy[-1])
     else:  # extrap == 'nan'
         fill_value = np.NaN
@@ -438,21 +438,9 @@ def _interp_on_quantiles_2D(newx, newg, oldx, oldy, oldg, method, extrap):  # no
         (newx[~mask_new], newg[~mask_new]),
         method=method,
     )
-
-    def first_and_last_nonnull(vector):
-        return vector[np.where(~np.isnan(vector))[0][np.array([0, -1])]]
-
-    if (method == "nearest" and extrap == "nan") or extrap == "constant":
-        igrp = np.searchsorted(oldg[:, 0], np.round(newg).astype(int))
-        toolow = newx < np.nanmin(oldx, axis=-1)[igrp]
-        toohigh = newx > np.nanmax(oldx, axis=-1)[igrp]
-        if extrap == "constant":
-            out[toolow] = oldy[igrp, 0][toolow]
-            out[toohigh] = oldy[igrp, -1][toohigh]
-        else:
-            out[toolow] = np.NaN
-            out[toohigh] = np.NaN
-
+    if method == "nearest" or extrap != "nan":
+        # 'nan' extrapolation implicit for cubic and linear interpolation.
+        out = _extrapolate_on_quantiles(out, oldx, oldg, oldy, newx, newg, extrap)
     return out
 
 

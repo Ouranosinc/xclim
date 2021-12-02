@@ -6,7 +6,6 @@ from inspect import signature
 import numpy as np
 import xarray as xr
 
-from xclim.core.indicator import Daily
 from xclim.core.utils import (
     ensure_chunk_size,
     nan_calc_percentiles,

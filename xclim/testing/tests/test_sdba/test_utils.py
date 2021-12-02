@@ -71,57 +71,21 @@ def test_extrapolate_qm(make_qm, method, exp):
     assert x[0, 0] == exp[1]
 
 
-@pytest.mark.parametrize("shape", [(2920,), (2920, 5, 5)])
 @pytest.mark.parametrize("group", ["time", "time.month"])
-@pytest.mark.parametrize("method", ["nearest", "linear", "cubic"])
-def test_interp_on_quantiles(shape, group, method):
-    group = Grouper(group)
-    raw = np.random.random_sample(shape)  # [0, 1]
-    t = pd.date_range("2000-01-01", periods=shape[0], freq="D")
-    # obs : [9, 11]
-    obs = xr.DataArray(
-        raw * 2 + 9, dims=("time", "lat", "lon")[: len(shape)], coords={"time": t}
-    )
-    # sim [9, 11.4] (x1.2 + 0.2)
-    sim = xr.DataArray(
-        raw * 2.4 + 9, dims=("time", "lat", "lon")[: len(shape)], coords={"time": t}
-    )
-    # fut [9.02, 11.38] (x1.18 + 0.2) In order to have every point of fut inside the range of sim
-    fut_raw = raw * 2.36 + 9.02
-    fut_raw[
-        np.array([100, 300, 500, 700])
-    ] = 1000  # Points outside the sim range will be NaN
-    fut = xr.DataArray(
-        fut_raw, dims=("time", "lat", "lon")[: len(shape)], coords={"time": t}
-    )
-
-    q = np.linspace(0, 1, 11)
-    xq = group.apply("quantile", sim, q=q).rename(quantile="quantiles")
-    yq = group.apply("quantile", obs, q=q).rename(quantile="quantiles")
-
-    fut_corr = u.interp_on_quantiles(fut, xq, yq, group=group, method=method).transpose(
-        *("time", "lat", "lon")[: len(shape)]
-    )
-
-    rtol = 0.02 if method == "nearest" else 0.002
-    np.testing.assert_allclose(
-        fut_corr.values, obs.where(fut != 1000).values, rtol=rtol
-    )
-    xr.testing.assert_equal(fut_corr.isnull(), fut == 1000)
-
-
-@pytest.mark.parametrize("group", ["time", "time.month"])
-@pytest.mark.parametrize("method", ["nearest", "linear", "cubic"])
-def test_interp_on_quantiles_nans(group, method):
-    quantiles = np.linspace(0, 1, num=13)
+@pytest.mark.parametrize(
+    "interp,expi", [("nearest", 2.9), ("linear", 2.95), ("cubic", 2.95)]
+)
+@pytest.mark.parametrize("extrap,expe", [("constant", 4.4), ("nan", np.NaN)])
+def test_interp_on_quantiles_constant(group, interp, expi, extrap, expe):
+    quantiles = np.linspace(0, 1, num=25)
     xq = xr.DataArray(
-        np.concatenate(([0], np.linspace(205, 215, num=11), [1000])),
+        np.linspace(205, 229, num=25),
         dims=("quantiles",),
         coords={"quantiles": quantiles},
     )
 
     yq = xr.DataArray(
-        np.concatenate(([2.0], np.linspace(2, 4, num=11), [4])),
+        np.linspace(2, 4.4, num=25),
         dims=("quantiles",),
         coords={"quantiles": quantiles},
     )
@@ -131,25 +95,39 @@ def test_interp_on_quantiles_nans(group, method):
         yq = yq.expand_dims(month=np.arange(12) + 1)
 
     newx = xr.DataArray(
-        np.linspace(240, 200, num=30),
+        np.linspace(240, 200, num=41) - 0.5,
         dims=("time",),
-        coords={"time": xr.cftime_range("1900-03-01", freq="D", periods=30)},
+        coords={"time": xr.cftime_range("1900-03-01", freq="D", periods=41)},
     )
     newx = newx.where(newx > 201)  # Put some NaNs in newx
 
-    out = u.interp_on_quantiles(newx, xq, yq, group=group, method=method)
+    xq = xq.expand_dims(lat=[1, 2, 3])
+    yq = yq.expand_dims(lat=[1, 2, 3])
+    newx = newx.expand_dims(lat=[1, 2, 3])
 
-    if method != "cubic":
-        assert out[0] == 4
-    assert out[-1].isnull().item()
+    out = u.interp_on_quantiles(
+        newx, xq, yq, group=group, method=interp, extrapolation=extrap
+    )
 
-    xq = xq.where(xq != 214)
+    if np.isnan(expe):
+        assert out.isel(time=0).isnull().all()
+    else:
+        assert out.isel(lat=1, time=0) == expe
+    np.testing.assert_allclose(out.isel(time=25), expi)
+    assert out.isel(time=-1).isnull().all()
+
+    xq = xq.where(xq != 220)
     yq = yq.where(yq != 3)
-    out = u.interp_on_quantiles(newx, xq, yq, group=group, method=method)
+    out = u.interp_on_quantiles(
+        newx, xq, yq, group=group, method=interp, extrapolation=extrap
+    )
 
-    if method != "cubic":
-        assert out[0] == 4
-    assert out[-1].isnull().item()
+    if np.isnan(expe):
+        assert out.isel(time=0).isnull().all()
+    else:
+        assert out.isel(lat=1, time=0) == expe
+    np.testing.assert_allclose(out.isel(time=25), expi)
+    assert out.isel(time=-1).isnull().all()
 
 
 def test_rank():
