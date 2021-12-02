@@ -962,7 +962,7 @@ def potential_evapotranspiration(
         )
         latentH = 4185.5 * (751.78 - 0.5655 * tasK)
 
-        radDIVlat = np.divide(ext_rad, latentH)
+        radDIVlat = ext_rad / latentH
 
         # parameters from calibration provided by Dr Maliko Tanguy @ CEH
         # (calibrated for PET over the UK)
