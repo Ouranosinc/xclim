@@ -40,6 +40,14 @@ def jetstream_metric_woolings(
     .. [woollings2010] Woollings, T., Hannachi, A., & Hoskins, B. (2010). Variability of the North Atlantic eddy‐driven jet stream. Quarterly Journal of the Royal Meteorological Society, 136(649), 856-868.
 
     """
+    lon_min = -60
+    lon_max = 0
+    lons_within_range = any((ua["lon"] >= lon_min) & (ua["lon"] <= lon_max))
+    if not lons_within_range:
+        raise ValueError(
+            "Longitude values need to be in a range between %s-%s. Consider changing the longitude coordinates to between -180.E–180.W"
+            % (lon_min, lon_max)
+        )
 
     # get latitude & eastward wind component units
     lat_units = ua["lat"].units
@@ -49,7 +57,7 @@ def jetstream_metric_woolings(
     pmin = convert_units_to("750 hPa", ua.plev)
     pmax = convert_units_to("950 hPa", ua.plev)
 
-    ua = ua.sel(plev=slice(pmin, pmax), lat=slice(15, 75), lon=slice(-60, 0))
+    ua = ua.sel(plev=slice(pmin, pmax), lat=slice(15, 75), lon=slice(lon_min, lon_max))
 
     zonal_mean = ua.mean(["plev", "lon"])
 
