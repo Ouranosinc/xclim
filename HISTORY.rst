@@ -25,6 +25,7 @@ New features and enhancements
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * Following version 1.9 of the CF Conventions, published in September 2021, the calendar name "gregorian" is deprecated. ``core.calendar.get_calendar`` will return "standard", even if the underlying cftime objects still use "gregorian" (cftime <= 1.5.1). (:pull:`935`).
+* ``sdba.utils.extrapolate_qm`` is now deprecated and will be removed in version 0.33. (:pull:`941`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -35,12 +36,14 @@ Internal changes
 * French translation metadata fields are now cleaner and much more internally consistent, and many empty metadata fields (e.g. ``comment_fr``) have been removed. (:pull:`930`, :issue:`929`).
 * Adjustments to the `tox` builds so that slow tests are now run alongside standard tests (for more accurate coverage reporting). (:pull:`938`)
 * Use ``xarray.apply_ufunc`` to vectorize statistical functions. (:pull:`943`)
+* Refactor of ``xclim.sdba.utils.interp_on_quantiles`` so that it now handles the extrapolation directly and to better handle missing values. (:pull:`941`).
 
 Bug fixes
 ^^^^^^^^^
 * Fix bugs in the `cf_attrs` and/or `abstract` of `continuous_snow_cover_end` and `continuous_snow_cover_start`. (:pull:`908`).
 * Remove unnecessary `keep_attrs` from `resample` call which would raise an error in futur Xarray version. (:pull:`937`).
-* Fixed a bug in the regex that parses usernames in the history. (:pull:`945`)
+* Fixed a bug in the regex that parses usernames in the history. (:pull:`945`).
+* Skip all missing values in ``xclim.sdba.utils.interp_on_quantiles``, drop them from both the old and new coordinates, as well as from the old values. (:pull:`941`).
 
 0.31.0 (2021-11-05)
 -------------------
