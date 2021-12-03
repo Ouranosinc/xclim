@@ -334,6 +334,13 @@ def extrapolate_qm(
       The adjustment factor above and below the computed values are equal to the last
       and first values respectively.
     """
+    warn(
+        (
+            "`extrapolate_qm` is deprecated and will be removed in xclim 0.33. "
+            "Extrapolation is now handled directly in `interp_on_quantiles`."
+        ),
+        DeprecationWarning,
+    )
     # constant_iqr
     #   Same as `constant`, but values are set to NaN if farther than one interquartile range from the min and max.
     q_l, q_r = [0], [1]
