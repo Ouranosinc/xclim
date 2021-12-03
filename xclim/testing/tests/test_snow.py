@@ -61,7 +61,7 @@ class TestSnwMax:
         a = np.zeros(366)
         a[20] = 1
         snw = snw_series(a, start="2001-01-01")
-        out = land.snw_max(snw, freq="AS-DEC")
+        out = land.snw_max(snw=snw, freq="YS")
         np.testing.assert_array_equal(out, [1, np.nan])
 
 

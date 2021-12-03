@@ -139,7 +139,7 @@ def snd_max_doy(snd: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray
 
 
 @declare_units(snw="[mass]/[area]")
-def snw_max(snw=xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray:
+def snw_max(snw: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray:
     """Maximum snow amount.
 
     The maximum daily snow amount.
