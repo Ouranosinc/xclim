@@ -1055,7 +1055,7 @@ class TestJetStreamIndices:
         coords={
             "time": time_coords,
             "plev": [75000, 85000, 100000],
-            "lon": [-60, -59, -58, -57, -56],
+            "lon": [120, 121, 122, 123, 124],
             "lat": [15, 16, 17, 18, 19],
         },
         dims=["time", "plev", "lon", "lat"],
@@ -1065,9 +1065,15 @@ class TestJetStreamIndices:
         },
     )
     da_ua.plev.attrs["units"] = "Pa"
+    da_ua.lat.attrs["units"] = "degrees"
 
     def test_jetstream_metric_woolings(self):
         da_ua = self.da_ua
+        # Should raise ValueError as longitude is in 0-360 instead of -180.E-180.W
+        with pytest.raises(ValueError):
+            _ = xci.jetstream_metric_woolings(da_ua)
+        # redefine longitude coordiantes to -180.E--180.E so function runs
+        da_ua["lon"] = da_ua["lon"] - 180
         out = xci.jetstream_metric_woolings(da_ua)
         np.testing.assert_equal(len(out), 2)
         jetlat, jetstr = out
