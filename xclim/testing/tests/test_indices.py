@@ -1072,7 +1072,7 @@ class TestJetStreamIndices:
         # Should raise ValueError as longitude is in 0-360 instead of -180.E-180.W
         with pytest.raises(ValueError):
             _ = xci.jetstream_metric_woolings(da_ua)
-        # redefine longitude coordiantes to -180.E--180.E so function runs
+        # redefine longitude coordiantes to -180.E-180.W so function runs
         da_ua["lon"] = da_ua["lon"] - 180
         out = xci.jetstream_metric_woolings(da_ua)
         np.testing.assert_equal(len(out), 2)
