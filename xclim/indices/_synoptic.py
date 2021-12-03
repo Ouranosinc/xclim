@@ -41,6 +41,10 @@ def jetstream_metric_woolings(
 
     """
 
+    # get latitude units
+    lat_units = ua["lat"].units  # should be degrees or degrees_north
+    ua_units = ua.units  # should be m s^{-1}
+
     # select only relevant hPa levels, compute zonal mean windspeed
     pmin = convert_units_to("750 hPa", ua.plev)
     pmax = convert_units_to("950 hPa", ua.plev)
@@ -69,8 +73,8 @@ def jetstream_metric_woolings(
         .dot(lanczos_weights)
     )
 
-    jetlat = ua_lf.idxmax("lat").rename("jetlat").assign_attrs(units="degrees")
-    jetstr = ua_lf.max("lat").rename("jetstr").assign_attrs(units="m s-1")
+    jetlat = ua_lf.idxmax("lat").rename("jetlat").assign_attrs(units=lat_units)
+    jetstr = ua_lf.max("lat").rename("jetstr").assign_attrs(units=ua_units)
 
     return jetlat, jetstr
 
