@@ -50,10 +50,11 @@ class TestSndMaxDoy:
         with pytest.raises(ValidationError):
             land.snd_max_doy(tas)
 
-    def test_no_snow(self, snd_series):
-        snd = snd_series(np.zeros(365), start="2001-07-01")
+    def test_no_snow(self, atmosds):
+        # Put 0 on one row.
+        snd = atmosds.snd.where(atmosds.location != "Victoria", 0)
         out = land.snd_max_doy(snd)
-        np.testing.assert_array_equal(out, np.nan)
+        np.testing.assert_array_equal(out.isel(time=1), [16, 33, 146, 12, np.NaN])
 
 
 class TestSnwMax:
