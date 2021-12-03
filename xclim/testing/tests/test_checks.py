@@ -56,6 +56,39 @@ def test_check_valid_raise(value, expected):
         cfchecks.check_valid(d, "test", expected)
 
 
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        (None, "expecto: patronum"),
+        ("test: mean", "expecto: patronum"),
+    ],
+)
+def test_check_cell_methods_nok(value, expected):
+    with pytest.raises(ValidationError):
+        cfchecks._check_cell_methods(value, expected)
+
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        ("expecto: patronum", "expecto: patronum"),
+        ("area: mean expecto: patronum", "expecto: patronum"),
+        ("expecto: patronum within days", "expecto: patronum"),
+        (
+            "complex: thing expecto: patronum within days very: complex",
+            "expecto: patronum",
+        ),
+        (
+            "expecto: pa-tro_num (area-weighted)",
+            "expecto: pa-tro_num (area-weighted)",
+        ),
+    ],
+)
+def test_check_cell_methods_ok(value, expected):
+    # No error raise so all is good
+    assert None is cfchecks._check_cell_methods(value, expected)
+
+
 class TestDateHandling:
     tas_attrs = {
         "units": "K",
@@ -123,4 +156,13 @@ class TestDataCheck:
         with pytest.raises(ValidationError):
             datachecks.check_freq(da, "H")
 
+        with pytest.raises(ValidationError):
+            datachecks.check_freq(da, ["H", "D"])
+
         datachecks.check_freq(da, "H", strict=False)
+        datachecks.check_freq(da, ["H", "D"], strict=False)
+        datachecks.check_freq(da, "3H")
+        datachecks.check_freq(da, ["H", "3H"])
+
+        with pytest.raises(ValidationError, match="Unable to infer the frequency of"):
+            datachecks.check_freq(da.where(da.time.dt.dayofyear != 5, drop=True), "3H")

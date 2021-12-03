@@ -6,6 +6,8 @@ This file defines the different steps, to be wrapped into the Adjustment objects
 import numpy as np
 import xarray as xr
 
+from xclim.indices.stats import _fitfunc_1d
+
 from . import nbutils as nbu
 from . import utils as u
 from .base import Grouper, map_blocks, map_groups
@@ -113,8 +115,6 @@ def dqm_adjust(ds, *, group, interp, kind, extrapolation, detrend):
         extrapolation=extrapolation,
         kind=kind,
     ).scen
-    # Circumvent random dask bug, same as discussed in  #810
-    scen.attrs["units"] = ds.sim.units
     scen = detrend.retrend(scen)
 
     out = xr.Dataset({"scen": scen, "trend": detrend.ds.trend})
@@ -291,3 +291,121 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
             "escores": escores,
         }
     )
+
+
+def _fit_on_cluster(data, thresh, dist, cluster_thresh):
+    """Extract clusters on 1D data and fit "dist" on the maximums."""
+    _, _, _, maximums = u.get_clusters_1d(data, thresh, cluster_thresh)
+    params = list(
+        _fitfunc_1d(maximums - thresh, dist=dist, floc=0, nparams=3, method="ML")
+    )
+    # We forced 0, put back thresh.
+    params[-2] = thresh
+    return params
+
+
+def _extremes_train_1d(ref, hist, ref_params, *, q_thresh, cluster_thresh, dist, N):
+    """Train for method ExtremeValues, only for 1D input along time."""
+    # Find quantile q_thresh
+    thresh = (
+        np.quantile(ref[ref >= cluster_thresh], q_thresh)
+        + np.quantile(hist[hist >= cluster_thresh], q_thresh)
+    ) / 2
+
+    # Fit genpareto on cluster maximums on ref (if needed) and hist.
+    if np.isnan(ref_params).all():
+        ref_params = _fit_on_cluster(ref, thresh, dist, cluster_thresh)
+
+    hist_params = _fit_on_cluster(hist, thresh, dist, cluster_thresh)
+
+    # Find probabilities of extremes according to fitted dist
+    Px_ref = dist.cdf(ref[ref >= thresh], *ref_params)
+    hist = hist[hist >= thresh]
+    Px_hist = dist.cdf(hist, *hist_params)
+
+    # Find common probabilities range.
+    Pmax = min(Px_ref.max(), Px_hist.max())
+    Pmin = max(Px_ref.min(), Px_hist.min())
+    Pcommon = (Px_hist <= Pmax) & (Px_hist >= Pmin)
+    Px_hist = Px_hist[Pcommon]
+
+    # Find values of hist extremes if they followed ref's distribution.
+    hist_in_ref = dist.ppf(Px_hist, *ref_params)
+
+    # Adjustment factors, unsorted
+    af = hist_in_ref / hist[Pcommon]
+    # sort them in Px order, and pad to have N values.
+    order = np.argsort(Px_hist)
+    px_hist = np.pad(Px_hist[order], ((0, N - af.size),), constant_values=np.NaN)
+    af = np.pad(af[order], ((0, N - af.size),), constant_values=np.NaN)
+
+    return px_hist, af, thresh
+
+
+@map_blocks(
+    reduces=["time"], px_hist=["quantiles"], af=["quantiles"], thresh=[Grouper.PROP]
+)
+def extremes_train(ds, *, group, q_thresh, cluster_thresh, dist, quantiles):
+    px_hist, af, thresh = xr.apply_ufunc(
+        _extremes_train_1d,
+        ds.ref,
+        ds.hist,
+        ds.ref_params or np.NaN,
+        input_core_dims=[("time",), ("time",), ()],
+        output_core_dims=[("quantiles",), ("quantiles",), ()],
+        vectorize=True,
+        kwargs={
+            "q_thresh": q_thresh,
+            "cluster_thresh": cluster_thresh,
+            "dist": dist,
+            "N": len(quantiles),
+        },
+    )
+    # Outputs of map_blocks must have dimensions.
+    if not isinstance(thresh, xr.DataArray):
+        thresh = xr.DataArray(thresh)
+    thresh = thresh.expand_dims(group=[1])
+    return xr.Dataset(
+        {"px_hist": px_hist, "af": af, "thresh": thresh},
+        coords={"quantiles": quantiles},
+    )
+
+
+def _fit_cluster_and_cdf(data, thresh, dist, cluster_thresh):
+    """Fit 1D cluster maximums and immediatly compute CDF."""
+    fut_params = _fit_on_cluster(data, thresh, dist, cluster_thresh)
+    return dist.cdf(data, *fut_params)
+
+
+@map_blocks(reduces=["quantiles", Grouper.PROP], scen=[])
+def extremes_adjust(
+    ds, *, group, frac, power, dist, interp, extrapolation, cluster_thresh
+):
+    # Find probabilities of extremes of fut according to its own cluster-fitted dist.
+    px_fut = xr.apply_ufunc(
+        _fit_cluster_and_cdf,
+        ds.sim,
+        ds.thresh,
+        input_core_dims=[["time"], []],
+        output_core_dims=[["time"]],
+        kwargs={"dist": dist, "cluster_thresh": cluster_thresh},
+        vectorize=True,
+    )
+
+    # Extrapolate adjustment factors
+    af, px_hist = u.extrapolate_qm(
+        ds.af, ds.px_hist, method=extrapolation, abs_bounds=(0, 1)
+    )
+
+    # Find factors by interpolating from hist probs to fut probs. apply them.
+    af = u.interp_on_quantiles(px_fut, px_hist, af, method=interp)
+    scen = u.apply_correction(ds.sim, af, "*")
+
+    # Smooth transition function between sim and scen
+    transition = (
+        ((ds.sim - ds.thresh) / ((ds.sim.max("time")) - ds.thresh)) / frac
+    ) ** power
+    transition = transition.clip(0, 1)
+
+    out = (transition * scen) + ((1 - transition) * ds.scen)
+    return out.rename("scen").squeeze("group", drop=True).to_dataset()

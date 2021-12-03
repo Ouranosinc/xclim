@@ -91,6 +91,7 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.extlinks",
     "rstjinja",
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
@@ -105,6 +106,11 @@ napoleon_use_ivar = True
 intersphinx_mapping = {
     "clisops": ("https://clisops.readthedocs.io/en/latest/", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
+}
+extlinks = {
+    "issue": ("https://github.com/Ouranosinc/xclim/issues/%s", "GH/"),
+    "pull": ("https://github.com/Ouranosinc/xclim/pull/%s", "PR/"),
+    "user": ("https://github.com/", "@"),
 }
 
 nbsphinx_execute = "auto"
@@ -184,7 +190,7 @@ html_context = {"indicators": indicators}
 # theme further.  For a list of options available for each theme, see the
 # documentation.
 #
-html_theme_options = {"logo_only": True}
+html_theme_options = {"logo_only": True, "style_external_links": True}
 
 html_sidebars = {
     "**": ["logo-text.html", "globaltoc.html", "localtoc.html", "searchbox.html"]

@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from xclim import atmos, set_options
+from xclim import atmos, core, set_options
 from xclim.core.calendar import percentile_doy
 from xclim.testing import open_dataset
 
@@ -125,6 +125,21 @@ class TestWetDays:
         # make sure that vector with all nans gives nans whatever skipna
         assert np.isnan(out1.values[0, -1, -1])
         # assert (np.isnan(wds.values[0, -1, -1]))
+
+
+class TestWetPrcptot:
+    """Testing of prcptot with wet days"""
+
+    def test_simple(self):
+        pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
+
+        thresh = "1 mm/day"
+        out = atmos.wet_precip_accumulation(pr, thresh=thresh)
+
+        # Reference value
+        t = core.units.convert_units_to(thresh, pr)
+        pa = atmos.precip_accumulation(pr.where(pr >= t, 0))
+        np.testing.assert_array_equal(out, pa)
 
 
 class TestDailyIntensity:
@@ -378,11 +393,11 @@ class TestDaysWithSnow:
         np.testing.assert_array_equal(out[1], [np.nan, 224, 263, 123, np.nan])
 
 
-def test_days_over_precip_thresh():
+def test_days_over_precip_doy_thresh():
     pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
     per = percentile_doy(pr, window=5, per=80)
 
-    out1 = atmos.days_over_precip_thresh(pr, per)
+    out1 = atmos.days_over_precip_doy_thresh(pr, per)
     np.testing.assert_array_equal(out1[1, :, 0], np.array([81, 61, 69, 78]))
 
     out2 = atmos.days_over_precip_thresh(pr, per, thresh="2 mm/d")
@@ -391,11 +406,22 @@ def test_days_over_precip_thresh():
     assert "only days with at least 2 mm/d are counted." in out2.description
 
 
-def test_fraction_over_precip_thresh():
+def test_days_over_precip_thresh():
+    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
+    per = pr.quantile(0.8, "time", keep_attrs=True)
+
+    out = atmos.days_over_precip_thresh(pr, per)
+
+    np.testing.assert_allclose(
+        out[1, :], np.array([80.0, 63.0, 68.0, 81.0]), atol=0.001
+    )
+
+
+def test_fraction_over_precip_doy_thresh():
     pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
     per = percentile_doy(pr, window=5, per=80)
 
-    out = atmos.fraction_over_precip_thresh(pr, per)
+    out = atmos.fraction_over_precip_doy_thresh(pr, per)
     np.testing.assert_allclose(
         out[1, :, 0], np.array([0.809, 0.770, 0.748, 0.807]), atol=0.001
     )
@@ -406,6 +432,17 @@ def test_fraction_over_precip_thresh():
     )
 
     assert "only days with at least 0.002 m/d are included" in out.description
+
+
+def test_fraction_over_precip_thresh():
+    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
+    per = pr.quantile(0.8, "time", keep_attrs=True)
+
+    out = atmos.fraction_over_precip_thresh(pr, per)
+
+    np.testing.assert_allclose(
+        out[1, :], np.array([0.839, 0.809, 0.798, 0.859]), atol=0.001
+    )
 
 
 def test_liquid_precip_ratio():
@@ -437,10 +474,31 @@ def test_dry_spell():
     np.testing.assert_allclose(total_d[0:2, 0], [50, 67], rtol=1e-1)
 
     assert (
-        "The annual number of dry periods of 7 days and more, during which the accumulated "
+        "The annual number of dry periods of 7 days and more, during which the total "
         "precipitation on a window of 7 days is under 3 mm."
     ) in events.description
     assert (
         "The annual number of days in dry periods of 7 days and more"
         in total_d.description
     )
+
+
+def test_dry_spell_frequency_op():
+    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
+    test_sum = atmos.dry_spell_frequency(
+        pr, thresh="3 mm", window=7, freq="MS", op="sum"
+    )
+    test_max = atmos.dry_spell_frequency(
+        pr, thresh="3 mm", window=7, freq="MS", op="max"
+    )
+
+    np.testing.assert_allclose(test_sum[0, 2], [1], rtol=1e-1)
+    np.testing.assert_allclose(test_max[0, 2], [2], rtol=1e-1)
+    assert (
+        "The monthly number of dry periods of 7 days and more, during which the total precipitation "
+        "on a window of 7 days is under 3 mm."
+    ) in test_sum.description
+    assert (
+        "The monthly number of dry periods of 7 days and more, during which the maximal precipitation "
+        "on a window of 7 days is under 3 mm."
+    ) in test_max.description

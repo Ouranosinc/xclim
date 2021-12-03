@@ -127,6 +127,37 @@ class Test_bootstrap:
             use_dask=use_dask,
         )
 
+    def test_bootstrap_cftime(self, bootstrap_series):
+        self.bootstrap_testor(
+            lambda values, start: bootstrap_series(values, start, cf_time=True),
+            98,
+            lambda x, y, z: fraction_over_precip_thresh(x, y, freq="MS", bootstrap=z),
+            positive_values=True,
+            use_dask=False,
+        )
+
+    @pytest.mark.slow
+    def test_bootstrap_fraction_over_precip_error_no_doy(self, pr_series):
+        with pytest.raises(KeyError):
+            # no "dayofyear" coords on per
+            fraction_over_precip_thresh(
+                pr_series([1, 2]), pr_series([1, 2]), bootstrap=True
+            )
+
+    @pytest.mark.slow
+    def test_bootstrap_days_over_precip_thresh_error_no_doy(self, pr_series):
+        with pytest.raises(KeyError):
+            # no "dayofyear" coords on per
+            days_over_precip_thresh(
+                pr_series([1, 2]), pr_series([1, 2]), bootstrap=True
+            )
+
+    @pytest.mark.slow
+    def test_bootstrap_no_doy(self, tas_series):
+        # no "dayofyear" coords on per
+        with pytest.raises(KeyError):
+            tg10p(tas_series([42]), tas_series([42]), freq="MS", bootstrap=True)
+
     def bootstrap_testor(
         self,
         series,

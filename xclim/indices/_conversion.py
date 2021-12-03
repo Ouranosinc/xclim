@@ -9,6 +9,7 @@ from xclim.core.units import amount2rate, convert_units_to, declare_units, units
 
 __all__ = [
     "humidex",
+    "heat_index",
     "tas",
     "uas_vas_2_sfcwind",
     "sfcwind_2_uas_vas",
@@ -79,6 +80,13 @@ def humidex(
     - 40 to 45 : great discomfort, avoid exertion;
     - 46 and over : dangerous, possible heat stroke;
 
+    Please note that while both the humidex and the heat index are calculated
+    using dew point, the humidex uses a dew point of 7 °C (45 °F) as a base,
+    whereas the heat index uses a dew point base of 14 °C (57 °F). Further,
+    the heat index uses heat balance equations which account for many variables
+    other than vapor pressure, which is used exclusively in the humidex
+    calculation.
+
     References
     ----------
     .. [masterton79] Masterton, J. M., & Richardson, F. A. (1979). HUMIDEX, A method of quantifying human discomfort due to excessive heat and humidity, CLI 1-79. Downsview, Ontario: Environment Canada, Atmospheric Environment Service.
@@ -114,6 +122,66 @@ def humidex(
     out = h + tas
     out.attrs["units"] = tas.units
     return out
+
+
+@declare_units(tasmax="[temperature]", hurs="[]")
+def heat_index(tasmax: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
+    r"""Daily heat index.
+
+    Perceived temperature after relative humidity is taken into account. The
+    index is only valid for temperatures above 20°C.
+
+    Parameters
+    ----------
+    tasmax : xr.DataArray
+      Maximum daily temperature.
+    hurs : xr.DataArray
+      Relative humidity.
+
+    Returns
+    -------
+    xr.DataArray, [time][temperature]
+      Heat index for days with temperature above 20°C.
+
+    References
+    ----------
+    .. [blazejczyk2012] Blazejczyk, K., Epstein, Y., Jendritzky, G., Staiger, H., & Tinz, B. (2012). Comparison of UTCI to selected thermal indices. International journal of biometeorology, 56(3), 515-535.
+
+    Notes
+    -----
+    While both the humidex and the heat index are calculated using dew point,
+    the humidex uses a dew point of 7 °C (45 °F) as a base, whereas the heat
+    index uses a dew point base of 14 °C (57 °F). Further, the heat index uses
+    heat balance equations which account for many variables other than vapor
+    pressure, which is used exclusively in the humidex calculation.
+    """
+    thresh = "20.0 degC"
+    thresh = convert_units_to(thresh, "degC")
+    t = convert_units_to(tasmax, "degC")
+    t = t.where(t > thresh)
+    r = convert_units_to(hurs, "%")
+
+    tr = t * r
+    tt = t * t
+    rr = r * r
+    ttr = tt * r
+    trr = t * rr
+    ttrr = tt * rr
+
+    out = (
+        -8.78469475556
+        + 1.61139411 * t
+        + 2.33854883889 * r
+        - 0.14611605 * tr
+        - 0.012308094 * tt
+        - 0.0164248277778 * rr
+        + 0.002211732 * ttr
+        + 0.00072546 * trr
+        - 0.000003582 * ttrr
+    )
+    out = out.assign_attrs(units="degC")
+
+    return convert_units_to(out, tasmax.units)
 
 
 @declare_units(tasmin="[temperature]", tasmax="[temperature]")
@@ -583,18 +651,20 @@ def snowfall_approximation(
     The following methods are available to approximate snowfall and are drawn from the
     Canadian Land Surface Scheme (CLASS, [Verseghy09]_).
 
-    - "binary" : When the temperature is under the freezing threshold, precipitation
-        is assumed to be solid. The method is agnostic to the type of temperature used
-        (mean, maximum or minimum).
-    - "brown" : The phase between the freezing threshold goes from solid to liquid linearly
-        over a range of 2°C over the freezing point.
-    - "auer" : The phase between the freezing threshold goes from solid to liquid as a degree six
-        polynomial over a range of 6°C over the freezing point.
+    - ``'binary'`` : When the temperature is under the freezing threshold, precipitation
+      is assumed to be solid. The method is agnostic to the type of temperature used
+      (mean, maximum or minimum).
+    - ``'brown'`` : The phase between the freezing threshold goes from solid to liquid linearly
+      over a range of 2°C over the freezing point.
+    - ``'auer'`` : The phase between the freezing threshold goes from solid to liquid as a degree six
+      polynomial over a range of 6°C over the freezing point.
 
-    .. [Verseghy09]: Diana Verseghy (2009), CLASS – The Canadian Land Surface Scheme (Version 3.4), Technical
-    Documentation (Version 1.1), Environment Canada, Climate Research Division, Science and Technology Branch.
+    References
+    ----------
+    .. [Verseghy09] Diana Verseghy (2009), CLASS – The Canadian Land Surface Scheme (Version 3.4), Technical
+       Documentation (Version 1.1), Environment Canada, Climate Research Division, Science and Technology Branch.
+    https://gitlab.com/cccma/classic/-/blob/master/src/atmosphericVarsCalc.f90
     """
-    # https://gitlab.com/cccma/classic/-/blob/master/src/atmosphericVarsCalc.f90
 
     if method == "binary":
         thresh = convert_units_to(thresh, tas)
@@ -654,7 +724,7 @@ def rain_approximation(
     """Rainfall approximation from total precipitation and temperature.
 
     Liquid precipitation estimated from precipitation and temperature according to a given method.
-    This is a convenience method based on `snowfall_approximation`, see the latter for details.
+    This is a convenience method based on :py:func:`snowfall_approximation`, see the latter for details.
 
     Parameters
     ----------
@@ -674,10 +744,12 @@ def rain_approximation(
 
     Notes
     -----
-    See the documentation of `snowfall_approximation` for details. This method computes
-    the snowfall approximation and subtracts it from the total precipitation to estimate
-    the liquid rain precipitation.
+    This method computes the snowfall approximation and subtracts it from the total
+    precipitation to estimate the liquid rain precipitation.
 
+    See also
+    --------
+    snowfall_approximation
     """
     prra = pr - snowfall_approximation(pr, tas, thresh=thresh, method=method)
     prra.attrs["units"] = pr.attrs["units"]
@@ -694,7 +766,7 @@ def wind_chill_index(
     method: str = "CAN",
     mask_invalid: bool = True,
 ):
-    """Wind chill index.
+    r"""Wind chill index.
 
     The Wind Chill Index is an estimation of how cold the weather feels to the average person.
     It is computed from the air temperature and the 10-m wind. As defined by the Environment and Climate Change Canada ([MVSZ15]_),
@@ -704,7 +776,7 @@ def wind_chill_index(
     ----------
     tas : xarray.DataArray
       Surface air temperature.
-    sfcwind : xarray.DataArray
+    sfcWind : xarray.DataArray
       Surface wind speed (10 m).
     method : {'CAN', 'US'}
       If "CAN" (default), a "slow wind" equation is used where winds are slower than 5 km/h, see Notes.
@@ -776,7 +848,7 @@ def clausius_clapeyron_scaled_precipitation(
     pr_baseline: xr.DataArray,
     cc_scale_factor: float = 1.07,
 ) -> xr.DataArray:
-    """Scale precipitation according to the Clausius-Clapeyron relation.
+    r"""Scale precipitation according to the Clausius-Clapeyron relation.
 
     Parameters
     ----------

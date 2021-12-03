@@ -1,85 +1,62 @@
-realm: atmos
 doc: |
   ==============
   Example module
   ==============
+
   This module is an example of YAML generated xclim submodule.
+realm: atmos
 references: xclim documentation https://xclim.readthedocs.io
-indices:
+indicators:
   RX1day:
     base: rx1day
-    period:
-      allowed:
-      - seasonal
-      - annual
-      default: annual
-    output:
+    cf_attrs:
       long_name: Highest 1-day precipitation amount
   RX5day:
     base: max_n_day_precipitation_amount
-    output:
+    cf_attrs:
       long_name: Highest 5-day precipitation amount
-    index_function:
-      parameters:
-        window: 5
-        freq: QS-DEC
+    parameters:
+      freq: QS-DEC
+      window: 5
   R75pdays:
     base: days_over_precip_thresh
-    index_function:
-      parameters:
-        thresh:
-          data: 1 mm/day
-        per:
-          data: {per}
-          description: Daily 75th percentile of wet day precipitation flux.
+    parameters:
+      per:
+        description: Daily 75th percentile of wet day precipitation flux.
+      thresh: 1 mm/day
   fd:
-    reference: ETCCDI
-    period: weekly
-    output:
-      var_name: "fd"
-      standard_name: number_of_days_with_air_temperature_below_threshold
-      long_name: "Number of Frost Days (Tmin < 0C)"
-      units: "days"
-      cell_methods:
-        - time: minimum within days
-        - time: sum over days
+    compute: count_occurrences
     input:
       data: tasmin
-    index_function:
-      name: count_occurrences
-      parameters:
-        threshold: 0 degC
-        condition: "<"
+    cf_attrs:
+      cell_methods: 'time: minimum within days time: sum over days'
+      long_name: Number of Frost Days (Tmin < 0°C)
+      standard_name: number_of_days_with_air_temperature_below_threshold
+      units: days
+      var_name: fd
+    parameters:
+      condition: <
+      threshold: 0 degC
+      freq:
+        default: YS
+    references: ETCCDI
   R95p:
-    reference: climdex
-    period: annual
-    output:
-      var_name: R95p
-      long_name: Annual total PRCP when RR > {perc}th percentile
-      units: m
-      cell_methods:
-        - time: sum within days
-        - time: sum over days
-    input:
-      pr: pr
-    index_function:
-      name: extreme_precip_accumulation
-      parameters:
-        perc: 95
+    compute: extreme_precip_accumulation_and_days
+    cf_attrs:
+      - cell_methods: 'time: sum within days time: sum over days'
+        long_name: Annual total PRCP when RR > {perc}th percentile
+        units: m
+        var_name: R95p
+      - long_name: Annual number of days when RR > {perc}th percentile
+        units: days
+        var_name: R95p_days
+    parameters:
+      perc: 95
+    references: climdex
   R99p:
     base: .R95p
-    index_function:
-      name: extreme_precip_accumulation
-      parameters:
-        perc: 99
-  LPRatio:
-    base: liquid_precip_ratio
-    input:
-      tas: tas
-      pr: pr
-    output:
-      long_name: Liquid precip to total precip ratio.
-      description: Precipitation is estimated to be solid when tas is under 0.5°C
-    index_function:
-      parameters:
-        thresh: 0.5 degC
+    cf_attrs:
+      - var_name: R99p
+      - var_name: R99p_days
+    parameters:
+      perc: 99

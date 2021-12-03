@@ -1,3 +1,5 @@
+.. highlight:: console
+
 ============
 Contributing
 ============
@@ -13,16 +15,56 @@ Types of Contributions
 Implement Features, Indices or Indicators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-xclim's structure makes it easy to create and register new user-defined indices and indicators. Refer to the :ref:`Customizing and controlling xclim` page for more information.
+xclim's structure makes it easy to create and register new user-defined indices and indicators.
+For the general implementation of indices and their wrapping into indicators, refer to
+:ref:`Extending xclim`  and  :ref:`Customizing and controlling xclim`.
 
 Look through the GitHub issues for features. Anything tagged with "enhancement"
 and "help wanted" is open to whoever wants to implement it.
 
-.. warning::
-     If you plan to implement new indicators into xclim, be aware that metadata translations
-     for all official xclim languages (for now only French) must be provided, or else the tests
-     will fail and the PR will not be mergeable. See :ref:`Internationalization` for more details.
-     Don't hesitate to ask for help in your PR for this task!
+General to-do list for implementing a new Indicator:
+
+1. Implement the indice
+
+    * Indices are function wrapped with :py:func:`~xclim.core.units.declare_units`
+    * Their input arguments should have type annotations, as documented in :py:class:`~xclim.core.utils.InputKind`
+    * Their docstring should follow the scheme explained in :ref:`Defining new indices`.
+    * They should set the units on their outputs, but no other metadata fields.
+    * Their code should be found in the most relevant ``xclim/indices/_*.py``  file. Functions are explicitly added to the ``__all__`` at the top of the file.
+
+2. Add unit tests
+
+    * Indices are best tested with made up, idealized data to explicitly test the edge cases. Many pytest fixtures are available to help this data generation.
+    * Tests should be added as one or more functions in ``xclim/testing/tests/test_indices.py``, see other tests for inspiration.
+
+3. Add the indicator
+
+    * See :ref:`Defining new indicators` for more info and look at the other indicators for inspiration.
+    * They are added in the most relevant ``xclim/indicators/{realm}/_*.py`` file.
+    * Indicator are instances of subclasses of :py:class:`xclim.core.indicator.Indicator`.
+      They should use a class declared within the ``{realm}`` folder, creating a dummy one if needed. They are explicitly added to the file's ``__all__``.
+
+4. Add unit tests
+
+    * Indicators are best tested with real data, also looking at missing value propagation and metadata formatting.
+      In addition to the ``atmos_ds`` fixture, only datasets openable with :py:func:`xclim.testing.open_dataset` should be used.
+    * Tests are added in the most relevant ``xclim/testing/tests/test_{variable}.py`` file.
+
+5. Add french translations
+
+    xclim comes with an internationalization module and all "official" indicators
+    (those in ``xclim.atmos.indicators``) must have a french translation added to ``xclim/data/fr.json``.
+    This part can be done by the core team after you open a PR.
+
+
+General notes for implementing new bias-adjustment methods:
+
+* Method are implemented as classes in ``xclim/sdba/adjustment.py``.
+* If the algorithm gets complicated and would generate many dask tasks, it should be
+  implemented as functions wrapped by :py:func:`~xclim.sdba.map_blocks` or :py:func:`~xclim.sdba.map_groups`
+  in ``xclim/sdba/_adjustment.py``.
+* xclim doesn't implement monolithic multi-parameter methods, but rather smaller modular functions to construct post-processing workflows.
+
 
 Report Bugs
 ~~~~~~~~~~~
@@ -71,13 +113,8 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     $ git clone git@github.com:Ouranosinc/xclim.git
     $ cd xclim/
 
-3. Create a development environment. Assuming you have `virtualenvwrapper` installed, this is how you set up your fork for local development::
+3. Create a development environment. We recommend using ``conda``::
 
-    # For virtualenv environments (ensure that you have the necessary system libraries).
-    $ mkvirtualenv xclim
-    $ pip install -e .[dev]
-
-    # For Anaconda/Miniconda environments:
     $ conda create -n xclim python=3.7 --file=environment.yml
     $ pip install -e .[dev]
 
@@ -87,22 +124,27 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
    Now you can make your changes locally!
 
-5. When you're done making changes, check that you verify your changes with `black`, `pydocstyle`, and run the tests, including testing other available Python versions with `tox`::
-
-    $ black --check --target-version py37 xclim xclim/testing/tests
-    $ black --check --target-version py37 --include "\.ipynb$" docs
-    $ flake8 xclim xclim/testing/tests
-    $ pytest --nbval docs/notebooks
-    $ pytest --rootdir=xclim/testing/tests --xdoctest xclim
-    $ pydocstyle --convention=numpy --match="(?!test_).*\.py" xclim
-    $ tox
-
-6. Before committing your changes, we ask that you install `pre-commit` in your development environment. `Pre-commit` runs git hooks that ensure that your code resembles that of the project and catches and corrects any small errors or inconsistencies when you `git commit`::
+5. Before committing your changes, we ask that you install ``pre-commit`` in your development environment. Pre-commit runs git hooks that ensure that your code resembles that of the project and catches and corrects any small errors or inconsistencies when you ``git commit``::
 
     # To install the necessary pre-commit hooks:
     $ pre-commit install
     # To run pre-commit hooks manually:
     $ pre-commit run --all-files
+
+  Instead of ``pre-commit``, you could also verify your changes manually with `black` and `pydocstyle`::
+
+    $ black --check --target-version py37 xclim xclim/testing/tests
+    $ black --check --target-version py37 --include "\.ipynb$" docs
+    $ flake8 xclim xclim/testing/tests
+    $ pydocstyle --convention=numpy --match='(?!test_).*\.py' xclim
+
+6. When unit/doc tests are added or notebooks updated, use ``pytest`` to run them. Alternatively, one can use ``tox`` to run all testing suites as would github do when the PR is submitted and new commits are pushed::
+
+    $ pytest --nbval docs/notebooks  # for notebooks
+    $ pytest --rootdir=xclim/testing/tests --xdoctest xclim  # for all tests, including doctests
+    $ pytest  # for all tests, excluding docstests.
+    $ tox  # run all testing suites
+
 
 7. Commit your changes and push your branch to GitHub::
 
@@ -136,7 +178,7 @@ Before you submit a pull request, please follow these guidelines:
    If you are adding a new set of functions, they **must be tested** and **coverage percentage should not significantly decrease.**
 4. If the pull request adds functionality, your functions should include docstring explanations.
    So long as the docstrings are syntactically correct, sphinx-autodoc will be able to automatically parse the information.
-   Please ensure that the docstrings adhere to one of the following standards (badly formed docstrings will fail build tests):
+   Please ensure that the docstrings and documentation adhere to the following standards (badly formed docstrings will fail build tests):
 
    * `numpydoc`_
    * `reStructuredText (ReST)`_
@@ -151,6 +193,18 @@ Before you submit a pull request, please follow these guidelines:
     PEP8, black, pytest (with xdoctest) and pydocstyle (for numpy docstrings) conventions are strongly enforced.
     Ensure that your changes pass all tests prior to pushing your final commits to your branch.
     Code formatting errors are treated as build errors and will block your pull request from being accepted.
+
+6. The version changes (HISTORY.rst) should briefly describe changes introduced in the Pull request. Changes should be organized by type
+   (ie: `New Indicators`, `New features and enhancements`, `Breaking changes`, `Bug fixes`, `Internal changes`) and the GitHub Pull Request,
+   GitHub Issue. Your name and/or GitHub handle should also be listed among the contributors to this version. This can be done as follows::
+
+     Contributors to this version: John Jacob Jingleheimer Schmidt (:user:`username`).
+
+     Internal changes
+     ^^^^^^^^^^^^^^^^
+     * Updated the contribution guidelines. (:issue:`868`, :pull:`869`).
+
+   If this is your first contribution to Ouranosinc/xclim, we ask that you also add your name to the `AUTHORS.rst <https://github.com/Ouranosinc/xclim/blob/master/AUTHORS.rst>`_, under *Contributors*.
 
 Tips
 ----
@@ -207,16 +261,37 @@ With this performed, we can tag a version that will act as the GitHub-provided s
     $ git tag v1.2.3-XYZ
     $ git push --tags
 
+.. note::
+    Starting from October, 2021, all tags pushed to GitHub will trigger a build and publish a package to TestPyPI by default. TestPyPI is a testing ground that is not indexed or easily available to `pip`.
+    The test package can be found at: https://test.pypi.org/project/xclim/
+
 Packaging
 ---------
 
 When a new version has been minted (features have been successfully integrated test coverage and stability is adequate),
 maintainers should update the pip-installable package (wheel and source release) on PyPI as well as the binary on conda-forge.
 
-TThe simple approach
+The Automated Approach
+~~~~~~~~~~~~~~~~~~~~~~
+
+The simplest way to package `xclim` is to "publish" a version on GitHuh. GitHub CI Actions are presently configured to build the library and publish the packages on PyPI automatically.
+
+When publishing on GitHub, maintainers will need to generate the release notes for the current version, replacing the ``:issue:``, ``:pull:``, and ``:user:`` tags. The `xclim` CLI offers a helper function for performing this action::
+
+    # For Markdown format (needed when publishing a new version on GitHub):
+    $ xclim release_notes -m
+    # For ReStructuredText format (offered for convenience):
+    $ xclim release_notes -r
+
+When publishing to GitHub, you will still need to replace subsection headers in the Markdown (`^^^^` -> `###`) and the history published should not extend past the changes for the current version. This behaviour may eventually change.
+
+.. warning::
+    Be warned that a published package version on PyPI can never be overwritten. Be sure to verify that the package published at https://test.pypi.org/project/xclim/ matches expectations before publishing a version on GitHub.
+
+The Manual Approach
 ~~~~~~~~~~~~~~~~~~~
 
-The simplest approach to packaging for general support (pip wheels) requires the following packages installed:
+The manual approach to library packaging for general support (pip wheels) requires the following packages installed:
  * setuptools
  * wheel
  * twine

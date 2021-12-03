@@ -29,14 +29,13 @@ def synth_rainfall(shape, scale=1, wet_freq=0.25, size=1):
 
     Notes
     -----
-    The probability density for the Gamma distribution is
+    The probability density for the Gamma distribution is:
 
-    .. math:: p(x) = x^{k-1}\frac{e^{-x/\theta}}{\theta^k\\Gamma(k)},
+    .. math::
 
-    where :math:`k` is the shape and :math:`\theta` the scale,
-    and :math:`\\Gamma` is the Gamma function.
+        p(x) = x^{k-1}\frac{e^{-x/\theta}}{\theta^k\\Gamma(k)},
 
-
+    where :math:`k` is the shape and :math:`\theta` the scale, and :math:`\\Gamma` is the Gamma function.
     """
     is_wet = np.random.binomial(1, p=wet_freq, size=size)
     wet_intensity = np.random.gamma(shape, scale, size)

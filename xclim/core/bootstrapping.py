@@ -1,6 +1,7 @@
 from inspect import signature
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Optional
 
+import cftime
 import numpy as np
 import xarray
 from boltons.funcutils import wraps
@@ -92,6 +93,7 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xarray.DataArray:
 
     """
     # Identify the input and the percentile arrays from the bound arguments
+    per_key = None
     for name, val in kwargs.items():
         if isinstance(val, DataArray):
             if "percentile_doy" in val.attrs.get("history", ""):
@@ -101,7 +103,12 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xarray.DataArray:
 
     # Extract the DataArray inputs from the arguments
     da: DataArray = kwargs.pop(da_key)
-    per: DataArray = kwargs.pop(per_key)
+    per: Optional[DataArray] = kwargs.pop(per_key, None)
+    if per is None:
+        # per may be empty on non doy percentiles
+        raise KeyError(
+            "`bootstrap` can only be used with percentiles computed using `percentile_doy`"
+        )
 
     # List of years in base period
     clim = per.attrs["climatology_bounds"]
@@ -114,14 +121,16 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xarray.DataArray:
     percentile = per.percentiles.data.tolist()  # Can be a list or scalar
     pdoy_args = dict(
         window=per.attrs["window"],
+        alpha=per.attrs["alpha"],
+        beta=per.attrs["beta"],
         per=percentile if np.isscalar(percentile) else percentile[0],
     )
 
     # Group input array in years, with an offset matching freq
     freq = kwargs["freq"]
-    _, base, start_stamp, anchor = parse_offset(freq)
+    _, base, start_anchor, anchor = parse_offset(freq)
     bfreq = "A"
-    if start_stamp is not None:
+    if start_anchor:
         bfreq += "S"
     if base in ["A", "Q"] and anchor is not None:
         bfreq = f"{bfreq}-{anchor}"
@@ -131,7 +140,10 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xarray.DataArray:
     out = []
     # Compute func on each grouping
     for label, time_slice in da_years.items():
-        year = label.astype("datetime64[Y]").astype(int) + 1970
+        if isinstance(label, cftime.datetime):
+            year = label.year
+        else:
+            year = label.astype("datetime64[Y]").astype(int) + 1970
         kw = {da_key: da.isel(time=time_slice), **kwargs}
 
         # If the group year is in the base period, run the bootstrap

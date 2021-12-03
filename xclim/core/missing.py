@@ -62,7 +62,11 @@ class MissingBase:
 
     def __init__(self, da, freq, src_timestep, **indexer):
         if src_timestep is None:
-            raise ValueError("`src_timestep` must be either 'D', 'H' or 'M'.")
+            src_timestep = xr.infer_freq(da.time)
+            if src_timestep is None:
+                raise ValueError(
+                    "`src_timestep` must be given as it cannot be inferred."
+                )
         self.null, self.count = self.prepare(da, freq, src_timestep, **indexer)
 
     @classmethod
@@ -84,7 +88,7 @@ class MissingBase:
     @staticmethod
     def is_null(da, freq, **indexer):
         """Return a boolean array indicating which values are null."""
-        selected = generic.select_time(da, **indexer)
+        selected = generic.select_time(da, drop=True, **indexer)
         if selected.time.size == 0:
             raise ValueError("No data for selected period.")
 
@@ -150,7 +154,7 @@ class MissingBase:
             )
 
             sda = xr.DataArray(data=np.ones(len(t)), coords={"time": t}, dims=("time",))
-            st = generic.select_time(sda, **indexer)
+            st = generic.select_time(sda, drop=True, **indexer)
             if freq:
                 count = st.notnull().resample(time=freq).sum(dim="time")
             else:
@@ -197,7 +201,7 @@ class MissingAny(MissingBase):
       Input array.
     freq : str
       Resampling frequency.
-    src_timestep : {"D", "H"}
+    src_timestep : {"D", "H", "M"}
       Expected input frequency.
     **indexer : {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter

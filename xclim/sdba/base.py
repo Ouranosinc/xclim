@@ -1,4 +1,7 @@
-"""Base classes."""
+"""
+Base classes and developper tools
+---------------------------------
+"""
 import warnings
 from inspect import signature
 from types import FunctionType
@@ -89,7 +92,6 @@ class ParametrizableWithDataset(Parametrizable):
 
 
 class Grouper(Parametrizable):
-    """Helper object to perform grouping actions on DataArrays and Datasets."""
 
     _repr_hide_params = ["dim", "prop"]  # For a concise repr
     # Two constants for use of `map_blocks` and `map_groups`.
@@ -257,7 +259,7 @@ class Grouper(Parametrizable):
           The index of each element along `Grouper.dim`.
           If `Grouper.dim` is `time` and `Grouper.prop` is None, an uniform array of True is returned.
           If `Grouper.prop` is a time accessor (month, dayofyear, etc), an numerical array is returned,
-            with a special case of `month` and `interp=True`.
+          with a special case of `month` and `interp=True`.
           If `Grouper.dim` is not `time`, the dim is simply returned.
         """
         if self.prop == "group":
@@ -323,20 +325,24 @@ class Grouper(Parametrizable):
           or with all grouping dims (if False, default) (including the window and dimensions given through `add_dims`).
           The dimensions used are also written in the "group_compute_dims" attribute.
           If all the input arrays are missing one of the 'add_dims', it is silently omitted.
-        **kwargs :
+        kwargs :
           Other keyword arguments to pass to the function.
 
         Returns
         -------
         DataArray or Dataset
           Attributes "group", "group_window" and "group_compute_dims" are added.
+
           If the function did not reduce the array:
-            - The output is sorted along the main dimension.
-            - The output is rechunked to match the chunks on the input
-                If multiple inputs with differing chunking were given as inputs, the chunking with the smallest number of chunks is used.
+
+          - The output is sorted along the main dimension.
+          - The output is rechunked to match the chunks on the input
+            If multiple inputs with differing chunking were given as inputs, the chunking with the smallest number of chunks is used.
+
           If the function reduces the array:
-            - If there is only one group, the singleton dimension is squeezed out of the output
-            - The output is rechunked as to have only 1 chunk along the new dimension.
+
+          - If there is only one group, the singleton dimension is squeezed out of the output
+          - The output is rechunked as to have only 1 chunk along the new dimension.
 
 
         Notes
@@ -466,7 +472,7 @@ def map_blocks(reduces=None, **outvars):
 
     Dimension order is not preserved.
 
-    The decorated function must always have the signature: func(ds, **kwargs), where ds is a DataArray or a Dataset.
+    The decorated function must always have the signature: ``func(ds, **kwargs)``, where ds is a DataArray or a Dataset.
     It must always output a dataset matching the mapping passed to the decorator.
 
     Parameters
@@ -571,6 +577,7 @@ def map_blocks(reduces=None, **outvars):
             # All dimensions of the output data, new_dims are added at the end on purpose.
             all_dims = base_dims + new_dims
             # The coordinates of the output data.
+            added_coords = []
             coords = {}
             sizes = {}
             for dim in all_dims:
@@ -578,13 +585,15 @@ def map_blocks(reduces=None, **outvars):
                     coords[group.prop] = group.get_coordinate(ds=ds)
                 elif dim == group.dim:
                     coords[group.dim] = ds[group.dim]
-                elif dim in ds.coords:
-                    coords[dim] = ds[dim]
                 elif dim in kwargs:
                     coords[dim] = xr.DataArray(kwargs[dim], dims=(dim,), name=dim)
                 elif dim in ds.dims:
-                    # Dimension with no coordinate, but it is in the inputs so we can get the size.
-                    sizes[dim] = ds[dim].size
+                    # If a dim has no coords : some sdba function will add them, so to be safe we add them right now
+                    # and note them to remove them afterwards.
+                    if dim not in ds.coords:
+                        added_coords.append(dim)
+                    ds[dim] = ds[dim]
+                    coords[dim] = ds[dim]
                 else:
                     raise ValueError(
                         f"This function adds the {dim} dimension, its coordinate must be provided as a keyword argument."
@@ -626,18 +635,35 @@ def map_blocks(reduces=None, **outvars):
                     raise ValueError(
                         f"{func.__name__} failed on block with coords : {dsblock.coords}."
                     ) from err
-                for name, crd in dsblock.coords.items():
-                    if name not in out.coords and set(crd.dims).issubset(out.dims):
-                        out = out.assign_coords({name: dsblock[name]})
                 return out
 
             # Fancy patching for explicit dask task names
             _call_and_transpose_on_exit.__name__ = f"block_{func.__name__}"
 
+            # Remove all auxiliary coords on both tmpl and ds
+            extra_coords = {
+                nam: crd for nam, crd in ds.coords.items() if nam not in crd.dims
+            }
+            ds = ds.drop_vars(extra_coords.keys())
+            # Coords not sharing dims with `all_dims` (like scalar aux coord on reduced 1D input) are absent from tmpl
+            tmpl = tmpl.drop_vars(extra_coords.keys(), errors="ignore")
+
+            # Call
             out = ds.map_blocks(
                 _call_and_transpose_on_exit, template=tmpl, kwargs=kwargs
             )
 
+            # Add back the extra coords, but only those which have compatible dimensions (like xarray would have done)
+            out = out.assign_coords(
+                {
+                    nam: crd
+                    for nam, crd in extra_coords.items()
+                    if set(crd.dims).issubset(out.dims)
+                }
+            )
+
+            # Finally remove coords we added... 'ignore' in case they were already removed.
+            out = out.drop_vars(added_coords, errors="ignore")
             return out
 
         _map_blocks.__dict__["func"] = func
@@ -654,7 +680,7 @@ def map_groups(reduces=None, main_only=False, **outvars):
     This is the same as `map_blocks` but adds a call to `group.apply()` in the mapped func and the default
     value of `reduces` is changed.
 
-    The decorated function must have the signature: func(ds, dim, **kwargs).
+    The decorated function must have the signature: ``func(ds, dim, **kwargs)``.
     Where ds is a DataAray or Dataset, dim is the group.dim (and add_dims). The `group` argument
     is stripped from the kwargs, but must evidently be provided in the call.
 
@@ -687,215 +713,3 @@ def map_groups(reduces=None, main_only=False, **outvars):
         return wrapper
 
     return _decorator
-
-
-def _get_number_of_elements_by_year(time):
-    """Get the number of elements in time in a year by inferring its sampling frequency.
-
-    Only calendar with uniform year lengths are supported : 360_day, noleap, all_leap.
-    """
-    cal = get_calendar(time)
-
-    # Calendar check
-    if cal in ["standard", "gregorian", "default", "proleptic_gregorian"]:
-        raise ValueError(
-            "For moving window computations, the data must have a uniform calendar (360_day, no_leap or all_leap)"
-        )
-
-    mult, freq, _, _ = parse_offset(xr.infer_freq(time))
-    days_in_year = max_doy[cal]
-    elements_in_year = {"Q": 4, "M": 12, "D": days_in_year, "H": days_in_year * 24}
-    N_in_year = elements_in_year.get(freq, 1) / int(mult or 1)
-    if N_in_year % 1 != 0:
-        raise ValueError(
-            f"Sampling frequency of the data must be Q, M, D or H and evenly divide a year (got {mult}{freq})."
-        )
-
-    return int(N_in_year)
-
-
-def construct_moving_yearly_window(
-    da: xr.Dataset, window: int = 21, step: int = 1, dim: str = "movingwin"
-):
-    """Construct a moving window DataArray.
-
-    Stacks windows of `da` in a new 'movingwin' dimension.
-    Windows are always made of full years, so calendar with non uniform year lengths are not supported.
-
-    Windows are constructed starting at the beginning of `da`, if number of given years is not
-    a multiple of `step`, then the last year(s) will be missing as a supplementary window would be incomplete.
-
-    Parameters
-    ----------
-    da : xr.DataArray
-      A DataArray with a `time` dimension.
-    window : int
-      The length of the moving window as a number of years.
-    step : int
-      The step between each window as a number of years.
-    dim : str
-      The new dimension name. If given, must also be given to `unpack_moving_yearly_window`.
-
-    Return
-    ------
-    xr.DataArray
-      A DataArray with a new `movingwin` dimension and a `time` dimension with a length of 1 window.
-      This assumes downstream algorithms do not make use of the _absolute_ year of the data.
-      The correct timeseries can be reconstructed with :py:func:`unpack_moving_yearly_window`.
-      The coordinates of `movingwin` are the first date of the windows.
-    """
-    # Get number of samples per year (and perform checks)
-    N_in_year = _get_number_of_elements_by_year(da.time)
-
-    # Number of samples in a window
-    N = window * N_in_year
-
-    first_slice = da.isel(time=slice(0, N))
-    first_slice = first_slice.expand_dims({dim: np.atleast_1d(first_slice.time[0])})
-    daw = [first_slice]
-
-    i_start = N_in_year * step
-    # This is the first time I use `while` in real python code. What an event.
-    while i_start + N <= da.time.size:
-        # Cut and add _full_ slices only, partial window are thrown out
-        # Use isel so that we don't need to deal with a starting date.
-        slc = da.isel(time=slice(i_start, i_start + N))
-        slc = slc.expand_dims({dim: np.atleast_1d(slc.time[0])})
-        slc["time"] = first_slice.time
-        daw.append(slc)
-        i_start += N_in_year * step
-
-    daw = xr.concat(daw, dim)
-    return daw
-
-
-def unpack_moving_yearly_window(da: xr.DataArray, dim: str = "movingwin"):
-    """Unpack a constructed moving window dataset to a normal timeseries, only keeping the central data.
-
-    Unpack DataArrays created with :py:func:`construct_moving_yearly_window` and recreate a timeseries data.
-    Only keeps the central non-overlapping years. The final timeseries will be (window - step) years shorter than
-    the initial one.
-
-    The window length and window step are inferred from the coordinates.
-
-    Parameters
-    ----------
-    da: xr.DataArray
-      As constructed by :py:func:`construct_moving_yearly_window`.
-    dim : str
-      The window dimension name as given to the construction function.
-    """
-    # Get number of samples by year (and perform checks)
-    N_in_year = _get_number_of_elements_by_year(da.time)
-
-    # Might be smaller than the original moving window, doesn't matter
-    window = da.time.size / N_in_year
-
-    if window % 1 != 0:
-        warnings.warn(
-            f"Incomplete data received as number of years covered is not an integer ({window})"
-        )
-
-    # Get step in number of years
-    days_in_year = max_doy[get_calendar(da)]
-    step = np.unique(da[dim].diff(dim).dt.days / days_in_year)
-    if len(step) > 1:
-        raise ValueError("The spacing between the windows is not equal.")
-    step = int(step[0])
-
-    # Which years to keep: length step, in the middle of window
-    left = int((window - step) // 2)  # first year to keep
-
-    # Keep only the middle years
-    da = da.isel(time=slice(left * N_in_year, (left + step) * N_in_year))
-
-    out = []
-    for win_start in da[dim]:
-        slc = da.sel({dim: win_start}).drop_vars(dim)
-        dt = win_start.values - da[dim][0].values
-        slc["time"] = slc.time + dt
-        out.append(slc)
-
-    return xr.concat(out, "time")
-
-
-def stack_variables(ds, rechunk=True, dim="variables"):
-    """Stack different variables of a dataset into a single DataArray with a new "variables" dimension.
-
-    Variable attributes are all added as lists of attributes to the new coordinate, prefixed with "_".
-
-    Parameters
-    ----------
-    ds : xr.Dataset
-      Input dataset.
-    rechunk : bool
-      If True (default), dask arrays are rechunked with `variables : -1`.
-    dim : str
-      Name of dimension along which variables are indexed.
-
-    Returns
-    -------
-    xr.DataArray
-      Array with variables stacked along `dim` dimension. Units are set to "".
-    """
-    # Store original arrays' attributes
-    attrs = {}
-    nvar = len(ds.data_vars)
-    for i, var in enumerate(ds.data_vars.values()):
-        for name, attr in var.attrs.items():
-            attrs.setdefault("_" + name, [None] * nvar)[i] = attr
-
-    # Special key used for later `unstacking`
-    attrs["is_variables"] = True
-    var_crd = xr.DataArray(
-        list(ds.data_vars.keys()), dims=(dim,), name=dim, attrs=attrs
-    )
-
-    da = xr.concat(ds.data_vars.values(), var_crd, combine_attrs="drop")
-
-    if uses_dask(da) and rechunk:
-        da = da.chunk({dim: -1})
-
-    da.attrs.update(ds.attrs)
-    da.attrs["units"] = ""
-    return da.rename("multivariate")
-
-
-def unstack_variables(da, dim=None):
-    """Unstack a DataArray created by `stack_variables` to a dataset.
-
-    Parameters
-    ----------
-    da : xr.DataArray
-      Array holding different variables along `dim` dimension.
-    dim : str
-      Name of dimension along which the variables are stacked. If not specified (default),
-      `dim` is inferred from attributes of the coordinate.
-
-    Returns
-    -------
-    xr.Dataset
-      Dataset holding each variable in an individual DataArray.
-    """
-    if dim is None:
-        for dim, crd in da.coords.items():
-            if crd.attrs.get("is_variables"):
-                break
-        else:
-            raise ValueError("No variable coordinate found, were attributes removed?")
-
-    ds = xr.Dataset(
-        {name.item(): da.sel({dim: name.item()}, drop=True) for name in da[dim]},
-        attrs=da.attrs,
-    )
-    del ds.attrs["units"]
-
-    # Reset attributes
-    for name, attr_list in da.variables.attrs.items():
-        if not name.startswith("_"):
-            continue
-        for attr, var in zip(attr_list, da.variables):
-            if attr is not None:
-                ds[var.item()].attrs[name[1:]] = attr
-
-    return ds

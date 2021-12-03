@@ -6,9 +6,9 @@ CF-Convention checking
 Utilities designed to verify the compliance of metadata with the CF-Convention.
 """
 import fnmatch
+import re
 from typing import Sequence, Union
 
-from .formatting import parse_cell_methods
 from .options import cfcheck
 from .utils import VARIABLES, ValidationError
 
@@ -36,8 +36,23 @@ def cfcheck_from_name(varname, vardata):
     """Perform cfchecks on a DataArray using specifications from xclim's default variables."""
     data = VARIABLES[varname]
     if "cell_methods" in data:
-        check_valid(
-            vardata, "cell_methods", parse_cell_methods(data["cell_methods"]) + "*"
+        _check_cell_methods(
+            getattr(vardata, "cell_methods", None), data["cell_methods"]
         )
     if "standard_name" in data:
         check_valid(vardata, "standard_name", data["standard_name"])
+
+
+@cfcheck
+def _check_cell_methods(data_cell_methods: str, expected_method: str) -> None:
+    if data_cell_methods is None:
+        raise ValidationError("Variable does not have a `cell_methods` attribute.")
+    EXTRACT_CELL_METHOD_REGEX = r"(\s*\S+\s*:(\s+[\w()-]+)+)(?!\S*:)"
+    for m in re.compile(EXTRACT_CELL_METHOD_REGEX).findall(data_cell_methods):
+        if m[0].__contains__(expected_method):
+            return None
+    raise ValidationError(
+        f"Variable has a non-conforming cell_methods: "
+        f"Got `{data_cell_methods}`, which do not include the expected "
+        f"`{expected_method}`"
+    )
