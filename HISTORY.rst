@@ -4,7 +4,13 @@ History
 
 0.32.0 (unreleased)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Tom Keel (:user:`Thomasjkeel`) Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`)
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), David Huard (:user:`huard`), Clair Barnes (:user:`clairbarnes`), Raquel Alegre (:user:`raquel-ucl`), Jamie Quinn (:user:`JamieJQuinn`), Tom Keel (:user: `Thomasjkeel`),
+
+Announcements
+^^^^^^^^^^^^^
+* Code coverage (`coverage/coveralls`) is now a required CI check for merging Pull Requests. Requirements are now:
+    - No individual run may report *<80%* code coverage.
+    - Some drop in coverage is now tolerable, but runs cannot dip below *-0.25%* relative to the main branch.
 
 New indicators
 ^^^^^^^^^^^^^^
