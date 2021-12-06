@@ -24,6 +24,7 @@ New features and enhancements
 Breaking changes
 ~~~~~~~~~~~~~~~~
 * Following version 1.9 of the CF Conventions, published in September 2021, the calendar name "gregorian" is deprecated. ``core.calendar.get_calendar`` will return "standard", even if the underlying cftime objects still use "gregorian" (cftime <= 1.5.1). (:pull:`935`).
+* `xclim` now requires `cf-xarray>=0.6.1`.
 
 Internal changes
 ~~~~~~~~~~~~~~~~
