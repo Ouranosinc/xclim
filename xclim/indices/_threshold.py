@@ -1296,7 +1296,7 @@ def heating_degree_days(
 
     Notes
     -----
-    This index intentionally differs from its ECA&D equivalent: HD17. In HD17, values below zero are 
+    This index intentionally differs from its ECA&D equivalent: HD17. In HD17, values below zero are
     not clipped before the sum. The present definition should provide a better representation of the energy
     demand for cooling buildings to the given threshold.
 
