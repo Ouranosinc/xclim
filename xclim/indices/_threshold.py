@@ -1296,10 +1296,9 @@ def heating_degree_days(
 
     Notes
     -----
-    This index intentionally differs from it's ECA&D equivalent: HD17.
-    In HD17, values below zero are not clipped before the sum.
-    The present definition should gives a better representation of the energy demand
-    for cooling building to the given threshold.
+    This index intentionally differs from its ECA&D equivalent: HD17. In HD17, values below zero are 
+    not clipped before the sum. The present definition should provide a better representation of the energy
+    demand for cooling buildings to the given threshold.
 
     Let :math:`TG_{ij}` be the daily mean temperature at day :math:`i` of period :math:`j`. Then the
     heating degree days are:
