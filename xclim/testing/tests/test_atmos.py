@@ -4,6 +4,7 @@ import numpy as np
 import xarray as xr
 
 from xclim import atmos
+from xclim.core.units import convert_units_to
 from xclim.testing import open_dataset
 
 K2C = 273.16
@@ -82,6 +83,38 @@ def test_humidex(tas_series):
     h = atmos.humidex(tas, dtas)
     np.testing.assert_array_almost_equal(h, [16, 29, 47, 52], 0)
     assert h.name == "humidex"
+
+
+def test_heat_index(atmosds):
+    # Keep just Montreal values for summer time as we need tas > 20 degC
+    tas = atmosds.tas[1][193:210]
+    hurs = atmosds.hurs[1][193:210]
+
+    expected = np.array(
+        [
+            np.nan,
+            np.nan,
+            24.0,
+            25.0,
+            24.0,
+            26.0,
+            26.0,
+            20.0,
+            22.0,
+            22.0,
+            20.0,
+            22.0,
+            21.0,
+            24.0,
+            25.0,
+            25.0,
+            26.0,
+        ]
+    )
+
+    hi = atmos.heat_index(tas, hurs)
+    np.testing.assert_array_almost_equal(hi, expected, 0)
+    assert hi.name == "heat_index"
 
 
 def test_saturation_vapor_pressure(tas_series):
