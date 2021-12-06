@@ -21,7 +21,6 @@ New features and enhancements
 * Added `days_over_precip_doy_thresh` and `fraction_over_precip_doy_thresh` indicators to distinguish between WMO and ECAD definition of the Rxxp and RxxpTot indices. (:issue:`931`, :pull:`940`).
 * Update `xclim.core.utils.nan_calc_percentiles` to improve maintainability. (:pull:`942`).
 * Added `heat_index` indicator. Added `heat_index` indicator. This is similar to `humidex` but uses a different dew point as well as heat balance equations which account for variables other than vapor pressure. (:issue:`807`) and (:pull:`915`).
-* Updated `heating_degree_days` and `fraction_over_precip_thresh` documentations. See (:issue:`952`) and (:pull:`953`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -38,6 +37,7 @@ Internal changes
 * Adjustments to the `tox` builds so that slow tests are now run alongside standard tests (for more accurate coverage reporting). (:pull:`938`)
 * Use ``xarray.apply_ufunc`` to vectorize statistical functions. (:pull:`943`)
 * Refactor of ``xclim.sdba.utils.interp_on_quantiles`` so that it now handles the extrapolation directly and to better handle missing values. (:pull:`941`).
+* Updated `heating_degree_days` and `fraction_over_precip_thresh` documentations. See (:issue:`952`) and (:pull:`953`).
 
 Bug fixes
 ^^^^^^^^^
