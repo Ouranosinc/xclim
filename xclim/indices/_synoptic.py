@@ -55,7 +55,6 @@ def jetstream_metric_woolings(
     # get latitude & eastward wind component units
     lat_units = ua.cf["latitude"].units
     ua_units = ua.units
-    # todo, wouldn't work without
     lat_name = ua.cf["latitude"].name
 
     # select only relevant hPa levels, compute zonal mean windspeed
