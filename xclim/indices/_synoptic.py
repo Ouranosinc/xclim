@@ -1,3 +1,4 @@
+import cf_xarray
 import numpy as np
 import xarray
 
@@ -42,7 +43,9 @@ def jetstream_metric_woolings(
     """
     lon_min = -60
     lon_max = 0
-    lons_within_range = any((ua["lon"] >= lon_min) & (ua["lon"] <= lon_max))
+    lons_within_range = any(
+        (ua.cf["longitude"] >= lon_min) & (ua.cf["longitude"] <= lon_max)
+    )
     if not lons_within_range:
         raise ValueError(
             "Longitude values need to be in a range between %s-%s. Consider changing the longitude coordinates to between -180.E–180.W"
@@ -50,23 +53,28 @@ def jetstream_metric_woolings(
         )
 
     # get latitude & eastward wind component units
-    lat_units = ua["lat"].units
+    lat_units = ua.cf["latitude"].units
     ua_units = ua.units
+    # todo, wouldn't work without
+    lat_name = ua.cf["latitude"].name
 
     # select only relevant hPa levels, compute zonal mean windspeed
-    pmin = convert_units_to("750 hPa", ua.plev)
-    pmax = convert_units_to("950 hPa", ua.plev)
+    pmin = convert_units_to("750 hPa", ua.cf["pressure"])
+    pmax = convert_units_to("950 hPa", ua.cf["pressure"])
 
-    ua = ua.sel(plev=slice(pmin, pmax), lat=slice(15, 75), lon=slice(lon_min, lon_max))
+    ua = ua.cf.sel(
+        pressure=slice(pmin, pmax),
+        latitude=slice(15, 75),
+        longitude=slice(lon_min, lon_max),
+    )
 
-    zonal_mean = ua.mean(["plev", "lon"])
+    zonal_mean = ua.cf.mean(["pressure", "longitude"])
 
     # apply Lanczos filter - parameters are hard-coded following those used in Woollings (2010)
     filter_freq = 10
     window_size = 61
     cutoff = 1 / filter_freq
-
-    if ua["time"].count() <= filter_freq or ua["time"].count() <= window_size:
+    if ua.cf["T"].count() <= filter_freq or ua.cf["T"].count() <= window_size:
         print("Time series is too short to apply 61-day Lanczos filter")
         return
 
@@ -76,14 +84,13 @@ def jetstream_metric_woolings(
     )
     # apply the filter
     ua_lf = (
-        zonal_mean.rolling(time=window_size, center=True)
+        zonal_mean.cf.rolling(T=window_size, center=True)
         .construct("window")
         .dot(lanczos_weights)
     )
-
-    jetlat = ua_lf.idxmax("lat").rename("jetlat").assign_attrs(units=lat_units)
-    jetstr = ua_lf.max("lat").rename("jetstr").assign_attrs(units=ua_units)
-
+    jetlat = ua_lf.cf.idxmax(lat_name).rename("jetlat").assign_attrs(units=lat_units)
+    jetstr = ua_lf.cf.max(lat_name).rename("jetstr").assign_attrs(units=ua_units)
+    print(jetlat.units)
     return jetlat, jetstr
 
 

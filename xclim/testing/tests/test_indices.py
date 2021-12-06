@@ -1053,19 +1053,22 @@ class TestJetStreamIndices:
     da_ua = xr.DataArray(
         np.random.rand(66, 3, 5, 5),
         coords={
-            "time": time_coords,
-            "plev": [75000, 85000, 100000],
-            "lon": [120, 121, 122, 123, 124],
-            "lat": [15, 16, 17, 18, 19],
+            "T": time_coords,
+            "Z": [75000, 85000, 100000],
+            "X": [120, 121, 122, 123, 124],
+            "Y": [15, 16, 17, 18, 19],
         },
-        dims=["time", "plev", "lon", "lat"],
+        dims=["T", "Z", "X", "Y"],
         attrs={
             "standard_name": "eastward_wind",
             "units": "m s-1",
         },
     )
-    da_ua.plev.attrs["units"] = "Pa"
-    da_ua.lat.attrs["units"] = "degrees"
+
+    da_ua.Z.attrs = {"units": "Pa", "standard_name": "pressure"}
+    da_ua.X.attrs = {"units": "degrees_east", "standard_name": "longitude"}
+    da_ua.Y.attrs = {"units": "degrees_north", "standard_name": "latitude"}
+    da_ua.T.attrs = {"standard_name": "time"}
 
     def test_jetstream_metric_woolings(self):
         da_ua = self.da_ua
@@ -1073,7 +1076,16 @@ class TestJetStreamIndices:
         with pytest.raises(ValueError):
             _ = xci.jetstream_metric_woolings(da_ua)
         # redefine longitude coordiantes to -180.E-180.W so function runs
-        da_ua["lon"] = da_ua["lon"] - 180
+        # da_ua["X"] = da_ua["X"] - 180
+        da_ua = da_ua.cf.assign_coords(
+            {
+                "X": (
+                    "X",
+                    (da_ua.cf["longitude"] - 180).data,
+                    da_ua.cf["longitude"].attrs,
+                )
+            }
+        )
         out = xci.jetstream_metric_woolings(da_ua)
         np.testing.assert_equal(len(out), 2)
         jetlat, jetstr = out
@@ -1082,8 +1094,8 @@ class TestJetStreamIndices:
         np.testing.assert_equal(np.sum(~np.isnan(jetstr).data), 6)
         np.testing.assert_equal(jetlat.max().data, 19.0)
         np.testing.assert_equal(jetstr.max().data, 0.5620588628647811)
-        assert jetlat.units == "deg"
-        assert jetstr.units == "m s-1"
+        assert jetlat.units == da_ua.cf["latitude"].units
+        assert jetstr.units == da_ua.units
 
 
 class TestLiquidPrecipitationRatio:
