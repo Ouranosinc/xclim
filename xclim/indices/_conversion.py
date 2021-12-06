@@ -830,6 +830,8 @@ def potential_evapotranspiration(
     tasmax: Optional[xr.DataArray] = None,
     tas: Optional[xr.DataArray] = None,
     method: str = "BR65",
+    peta: Optional[float] = 0.00516409319477,
+    petb: Optional[float] = 0.0874972822289,
 ) -> xr.DataArray:
     """Potential evapotranspiration.
 
@@ -846,6 +848,10 @@ def potential_evapotranspiration(
       Mean daily temperature.
     method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48", "mcguinnessbordne05", "MB05"}
       Which method to use, see notes.
+    peta : float
+      Used only with method MB05 as :math:`a` for calculation of PET, see Notes section. Default value resulted from calibration of PET over the UK.
+    petb : float
+      Used only with method MB05 as :math:`b` for calculation of PET, see Notes section. Default value resulted from calibration of PET over the UK.
 
     Returns
     -------
@@ -975,8 +981,8 @@ def potential_evapotranspiration(
 
         # parameters from calibration provided by Dr Maliko Tanguy @ CEH
         # (calibrated for PET over the UK)
-        a = 0.00516409319477
-        b = 0.0874972822289
+        a = peta
+        b = petb
 
         out = radDIVlat * a * tas + radDIVlat * b
 
