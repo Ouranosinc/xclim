@@ -1050,13 +1050,16 @@ class TestJetStreamIndices:
     time_coords = pd.date_range("2000-01-01", "2000-03-06", freq="D")
     # make random ua data array of shape (66 days, 3 plevs, 5 lons, 5 lats)
     np.random.seed(42)
+    zeros_arr = np.zeros(shape=(66, 3, 3, 1))
+    ones_arr = np.ones(shape=(66, 3, 3, 1))
+    fake_jet = np.concatenate([zeros_arr, ones_arr, zeros_arr], axis=3)  # axis 3 is lat
     da_ua = xr.DataArray(
-        np.random.rand(66, 3, 5, 5),
+        fake_jet,
         coords={
             "T": time_coords,
             "Z": [75000, 85000, 100000],
-            "X": [120, 121, 122, 123, 124],
-            "Y": [15, 16, 17, 18, 19],
+            "X": [120, 121, 122],
+            "Y": [15, 16, 17],
         },
         dims=["T", "Z", "X", "Y"],
         attrs={
@@ -1092,8 +1095,10 @@ class TestJetStreamIndices:
         # should be 6 values that are not NaN because of 61 day moving window and 66 chosen
         np.testing.assert_equal(np.sum(~np.isnan(jetlat).data), 6)
         np.testing.assert_equal(np.sum(~np.isnan(jetstr).data), 6)
-        np.testing.assert_equal(jetlat.max().data, 19.0)
-        np.testing.assert_equal(jetstr.max().data, 0.5620588628647811)
+        np.testing.assert_equal(jetlat.max().data, 16.0)
+        np.testing.assert_equal(
+            jetstr.max().data, 0.999276877412766
+        )  # manually checked (sum of lanzcos weights for 61 day window and 0.1 cutoff)
         assert jetlat.units == da_ua.cf["latitude"].units
         assert jetstr.units == da_ua.units
 
