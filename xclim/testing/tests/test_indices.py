@@ -1048,8 +1048,7 @@ class TestTxDays:
 class TestJetStreamIndices:
     # data needs to consist of at least 61 days for Lanczos filter (here: 66 days)
     time_coords = pd.date_range("2000-01-01", "2000-03-06", freq="D")
-    # make random ua data array of shape (66 days, 3 plevs, 5 lons, 5 lats)
-    np.random.seed(42)
+    # make fake ua data array of shape (66 days, 3 plevs, 3 lons, 3 lats) to mimic jet at 16.N
     zeros_arr = np.zeros(shape=(66, 3, 3, 1))
     ones_arr = np.ones(shape=(66, 3, 3, 1))
     fake_jet = np.concatenate([zeros_arr, ones_arr, zeros_arr], axis=3)  # axis 3 is lat
@@ -1079,7 +1078,6 @@ class TestJetStreamIndices:
         with pytest.raises(ValueError):
             _ = xci.jetstream_metric_woolings(da_ua)
         # redefine longitude coordiantes to -180.E-180.W so function runs
-        # da_ua["X"] = da_ua["X"] - 180
         da_ua = da_ua.cf.assign_coords(
             {
                 "X": (
