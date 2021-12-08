@@ -102,7 +102,7 @@ def _adapt_freq(
     return xr.Dataset(data_vars={"pth": pth, "dP0": dP0, "sim_ad": sim_ad})
 
 
-@map_groups(reduces=[Grouper.PROP], data=[])
+@map_groups(reduces=[Grouper.PROP], data=[], norm=[Grouper.PROP])
 def _normalize(
     ds: xr.Dataset,
     *,
@@ -133,8 +133,9 @@ def _normalize(
         norm = invert(ds.norm, kind)
     else:
         norm = invert(ds.data.mean(dim=dim), kind)
+    norm.attrs["_group_apply_reshape"] = True
 
-    return xr.Dataset(dict(data=apply_correction(ds.data, norm, kind)))
+    return xr.Dataset(dict(data=apply_correction(ds.data, norm, kind), norm=norm))
 
 
 @map_groups(reordered=[Grouper.DIM], main_only=True)

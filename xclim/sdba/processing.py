@@ -191,7 +191,9 @@ def normalize(
     Returns
     -------
     xr.DataArray
-      Groupwise anomaly
+      Groupwise anomaly.
+    norm : xr.DataArray
+      Mean over each group.
     """
     ds = xr.Dataset(dict(data=data))
 
@@ -201,7 +203,7 @@ def normalize(
 
     out = _normalize(ds, group=group, kind=kind)
     out.attrs.update(data.attrs)
-    return out.data.rename(data.name)
+    return out.data.rename(data.name), out.norm
 
 
 def uniform_noise_like(
@@ -512,7 +514,10 @@ def unpack_moving_yearly_window(da: xr.DataArray, dim: str = "movingwin"):
 
 @update_xclim_history
 def to_additive_space(
-    data, trans: str = "log", lower_bound: float = 0, upper_bound: float = 1
+    data,
+    lower_bound: str,
+    upper_bound: str = None,
+    trans: str = "log",
 ):
     r"""Transform a non-additive variable into an addtitive space by the means of a log or logit transformation.
 
@@ -522,14 +527,15 @@ def to_additive_space(
     ----------
     data : xr.DataArray
       A variable that can't usually be bias-adusted by additive methods.
+    lower_bound : str
+      The smallest physical value of the variable, excluded, as a Quantity string.
+      The data should only have values strictly larger than this bound.
+    upper_bound : str, optional
+      The largest physical value of the variable, excluded, as a Quantity string.
+      Only relevant for the logit transformation.
+      The data should only have values strictly smaller than this bound.
     trans : {'log', 'logit'}
       The transformation to use. See notes.
-    lower_bound : float
-      The smallest physical value of the variable, excluded.
-      The data should only have values strictly larger than this bound.
-    upper_bound : float
-      The largest physical value of the variable, excluded. Only relevant for the logit transformation.
-      The data should only have values strictly smaller than this bound.
 
     Notes
     -----
@@ -571,6 +577,9 @@ def to_additive_space(
     .. [AlavoineGrenier] Alavoine M., and Grenier P. (under review) The distinct problems of physical inconsistency and of multivariate bias potentially involved in the statistical adjustment of climate simulations.
                          International Journal of Climatology, Manuscript ID: JOC-21-0789, submitted on September 19th 2021.
     """
+    lower_bound = convert_units_to(lower_bound, data)
+    if upper_bound is not None:
+        upper_bound = convert_units_to(upper_bound, data)
 
     with xr.set_options(keep_attrs=True):
         if trans == "log":
@@ -583,9 +592,8 @@ def to_additive_space(
 
     # Attributes to remember all this.
     out.attrs["sdba_transform"] = trans
-    if lower_bound != 0:
-        out.attrs["sdba_transform_lower"] = lower_bound
-    if upper_bound != 1:
+    out.attrs["sdba_transform_lower"] = lower_bound
+    if upper_bound is not None:
         out.attrs["sdba_transform_upper"] = upper_bound
     if "units" in out.attrs:
         out.attrs["sdba_transform_units"] = out.attrs.pop("units")
@@ -594,26 +602,37 @@ def to_additive_space(
 
 
 @update_xclim_history
-def from_additive_space(data, trans=None, lower_bound=None, upper_bound=None):
+def from_additive_space(
+    data,
+    lower_bound: str = None,
+    upper_bound: str = None,
+    trans: str = None,
+    units: str = None,
+):
     r"""Transform back a to the physical space a variable that was transformed with `to_addtitive_space`.
 
-    Based on [AlavoineGrenier]_.
+    Based on [AlavoineGrenier]_. If parameters are not present on the attributes of the
+    data, they must be all given are arguments.
 
     Parameters
     ----------
     data : xr.DataArray
-      A variable that can't usually be bias-adusted by additive methods.
+      A variable that was transform by :py:func:`to_additive_space`.
+    lower_bound : str, optional
+      The smallest physical value of the variable, as a Quantity string.
+      The final data will have no value smaller or equal to this bound.
+      If None (default), the `sdba_transform_lower` attribute is looked up on `data`.
+    upper_bound : str, optional
+      The largest physical value of the variable, as a Quantity string.
+      Only relevant for the logit transformation.
+      The final data will have no value larger or equal to this bound.
+      If None (default), the `sdba_transform_upper` attribute is looked up on `data`.
     trans : {'log', 'logit'}, optional
       The transformation to use. See notes.
       If None (the default), the `sdba_transform` attribute is looked up on `data`.
-    lower_bound : float, optional
-      The smallest physical value of the variable.
-      The final data will have no value smaller or equal to this bound.
-      If None (default), the `sdba_transform_lower` attribute is looked up on `data`.
-    upper_bound : float, optional
-      The largest physical value of the variable, only relevant for the logit transformation.
-      The final data will have no value larger or equal to this bound.
-      If None (default), the `sdba_transform_upper` attribute is looked up on `data`.
+    units: str, optional
+      The units of the data before transformation to the addtitive space.
+      If None (the default), the `sdba_transform_units` attrobited is looked up on `data`.
 
     Returns
     -------
@@ -652,12 +671,32 @@ def from_additive_space(data, trans=None, lower_bound=None, upper_bound=None):
     .. [AlavoineGrenier] Alavoine M., and Grenier P. (under review) The distinct problems of physical inconsistency and of multivariate bias potentially involved in the statistical adjustment of climate simulations.
                          International Journal of Climatology, Manuscript ID: JOC-21-0789, submitted on September 19th 2021.
     """
-    if trans is None:
-        trans = data.attrs["sdba_transform"]
-    if lower_bound is None:
-        lower_bound = data.attrs.get("sdba_transform_lower", 0)
-    if upper_bound is None:
-        upper_bound = data.attrs.get("sdba_transform_upper", 1)
+    if trans is None and lower_bound is None and units is None:
+        try:
+            trans = data.attrs["sdba_transform"]
+            units = data.attrs["sdba_transform_units"]
+            lower_bound = data.attrs["sdba_transform_lower"]
+            if trans == "logit":
+                upper_bound = data.attrs["sdba_transform_upper"]
+        except KeyError as err:
+            raise ValueError(
+                f"Attribute {err!s} must be present on the input data "
+                "or all parameters must be given as arguments."
+            )
+    elif (
+        trans is not None
+        and lower_bound is not None
+        and units is not None
+        and (upper_bound is not None or trans == "log")
+    ):
+        lower_bound = convert_units_to(lower_bound, units)
+        if trans == "logit":
+            upper_bound = convert_units_to(upper_bound, units)
+    else:
+        raise ValueError(
+            "Parameters missing. Either all parameters are given as attributes of data, "
+            "or all of them are given as input arguments."
+        )
 
     with xr.set_options(keep_attrs=True):
         if trans == "log":
@@ -672,9 +711,8 @@ def from_additive_space(data, trans=None, lower_bound=None, upper_bound=None):
     out.attrs.pop("sdba_transform", None)
     out.attrs.pop("sdba_transform_lower", None)
     out.attrs.pop("sdba_transform_upper", None)
-    if "sdba_transform_units" in out.attrs:
-        out.attrs["units"] = out.attrs["sdba_transform_units"]
-        out.attrs.pop("sdba_transform_units")
+    out.attrs.pop("sdba_transform_units", None)
+    out.attrs["units"] = units
     return out
 
 
