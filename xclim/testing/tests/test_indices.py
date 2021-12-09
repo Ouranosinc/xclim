@@ -2503,7 +2503,6 @@ class TestWetDays:
         pr.attrs["units"] = "mm/day"
 
         out = xci.wetdays(pr, thresh="5 mm/day", freq="M")
-        print(out)
         np.testing.assert_allclose(out, [4, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0])
 
 
