@@ -200,14 +200,9 @@ def cold_spell_frequency(
     t = convert_units_to(thresh, tas)
     over = tas < t
 
-    group = over.resample(time=freq)
-
-    out = group.map(rl.windowed_run_events, window=window, dim="time")
-
-    # runs = rl.rle(over, index=index)
-    # cold_spells = runs >= window
-
-    # out = cold_spells.resample(time="AS-JUL").sum()
+    runs = rl.rle(over, index=index)
+    cold_spells = runs >= window
+    out = cold_spells.resample(time=freq).sum()
 
     out.attrs["units"] = ""
     return out

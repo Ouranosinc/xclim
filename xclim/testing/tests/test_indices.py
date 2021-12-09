@@ -139,14 +139,15 @@ class TestColdSpellFreq:
         a[40:43] -= 50  # too short -> 0
         a[80:86] -= 30
         a[95:101] -= 30
+        a[150:156] -= 50  # short cold spell spanning two months
         da = tas_series(a + K2C, start="1971-01-01")
 
         out = xci.cold_spell_frequency(da, thresh="-10. C", freq="M")
-        np.testing.assert_array_equal(out, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0])
+        np.testing.assert_array_equal(out, [1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0])
         assert out.units == ""
 
         out = xci.cold_spell_frequency(da, thresh="-10. C", freq="YS")
-        np.testing.assert_array_equal(out, 3)
+        np.testing.assert_array_equal(out, 4)
         assert out.units == ""
 
 

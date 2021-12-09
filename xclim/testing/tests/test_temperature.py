@@ -391,7 +391,7 @@ class TestColdSpellDays:
         out = atmos.cold_spell_days(ts, thresh="-10 C", freq="MS")
         np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
         out = atmos.cold_spell_frequency(ts, thresh="-10 C", freq="MS")
-        np.testing.assert_array_equal(out, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0])
+        np.testing.assert_array_equal(out, [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
     def test_convert_units(self, tas_series):
         a = np.zeros(365)
@@ -403,7 +403,7 @@ class TestColdSpellDays:
         out = atmos.cold_spell_days(ts, thresh="-10 C", freq="MS")
         np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
         out = atmos.cold_spell_frequency(ts, thresh="-10 C", freq="MS")
-        np.testing.assert_array_equal(out, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0])
+        np.testing.assert_array_equal(out, [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
     def test_nan_presence(self, tas_series):
         a = np.zeros(365) + K2C
@@ -416,7 +416,7 @@ class TestColdSpellDays:
         out = atmos.cold_spell_days(ts, thresh="-10 C", freq="MS")
         np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, np.nan])
         out = atmos.cold_spell_frequency(ts, thresh="-10 C", freq="MS")
-        np.testing.assert_array_equal(out, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, np.nan])
+        np.testing.assert_array_equal(out, [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, np.nan])
 
 
 class TestFrostDays:
