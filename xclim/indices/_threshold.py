@@ -157,9 +157,13 @@ def cold_spell_days(
     t = convert_units_to(thresh, tas)
     over = tas < t
 
-    runs = rl.rle(over)
-    cold_spells = runs.ffill(dim="time") >= window
-    out = cold_spells.resample(time=freq).sum()
+    group = over.resample(time=freq)
+
+    out = group.map(rl.windowed_run_count, window=window, dim="time")
+
+    # runs = rl.rle(over)
+    # cold_spells = runs.ffill(dim="time") >= window
+    # out = cold_spells.resample(time=freq).sum()
 
     return to_agg_units(out, tas, "count")
 
@@ -170,6 +174,7 @@ def cold_spell_frequency(
     thresh: str = "-10 degC",
     window: int = 5,
     freq: str = "AS-JUL",
+    index: str = "first",
 ) -> xarray.DataArray:
     r"""Cold spell frequency.
 
@@ -186,6 +191,8 @@ def cold_spell_frequency(
       Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
       Resampling frequency.
+    index : str
+      If ‘first’, the run length is indexed at the first element in the run. If ‘last’, at the last element in the run.
 
     Returns
     -------
@@ -196,9 +203,16 @@ def cold_spell_frequency(
     """
     t = convert_units_to(thresh, tas)
     over = tas < t
+
     group = over.resample(time=freq)
 
     out = group.map(rl.windowed_run_events, window=window, dim="time")
+
+    # runs = rl.rle(over, index=index)
+    # cold_spells = runs >= window
+
+    # out = cold_spells.resample(time="AS-JUL").sum()
+
     out.attrs["units"] = ""
     return out
 

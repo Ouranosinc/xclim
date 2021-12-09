@@ -387,11 +387,12 @@ class TestColdSpellDays:
         a[10:20] -= 15  # 10 days
         a[40:43] -= 50  # too short -> 0
         a[80:100] -= 30  # at the end and beginning
+        a[148:154] -= 50  # short cold spell spanning two months
         ts = tas_series(a)
         out = atmos.cold_spell_days(ts, thresh="-10 C", freq="MS")
-        np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
+        np.testing.assert_array_equal(out, [10, 0, 12, 8, 3, 3, 0, 0, 0, 0, 0, 0])
         out = atmos.cold_spell_frequency(ts, thresh="-10 C", freq="MS")
-        np.testing.assert_array_equal(out, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0])
+        np.testing.assert_array_equal(out, [1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0])
 
     def test_convert_units(self, tas_series):
         a = np.zeros(365)
