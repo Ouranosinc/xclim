@@ -157,13 +157,9 @@ def cold_spell_days(
     t = convert_units_to(thresh, tas)
     over = tas < t
 
-    group = over.resample(time=freq)
-
-    out = group.map(rl.windowed_run_count, window=window, dim="time")
-
-    # runs = rl.rle(over)
-    # cold_spells = runs.ffill(dim="time") >= window
-    # out = cold_spells.resample(time=freq).sum()
+    runs = rl.rle(over)
+    cold_spells = runs.ffill(dim="time") >= window
+    out = cold_spells.resample(time=freq).sum()
 
     return to_agg_units(out, tas, "count")
 
