@@ -27,4 +27,5 @@ Contributors
 * Jeremy Fyke `@jeremyfyke <https://github.com/jeremyfyke>`_
 * Clair Barnes <clair.barnes.16@ucl.ac.uk> `@clairbarnes <https://github.com/clairbarnes>`_
 * Raquel Alegre <raquel.alegre@gmail.com> `@raquel-ucl <https://github.com/raquel-ucl>`_
+* Jamie Quinn <jamiejquinn@jamiejquinn.com> `@jamiejquinn <https://github.com/jamiejquinn>`_
 * Abel Aoun <aoun.abel@gmail.com> `@bzah <https://github.com/bzah>`_
