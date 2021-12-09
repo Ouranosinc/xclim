@@ -2157,7 +2157,6 @@ def rprctot(
     pr_tot = pr.where(wd).resample(time=freq).sum(dim="time")
     prc_tot = prc.where(wd).resample(time=freq).sum(dim="time")
 
-    # TODO what should ratio be when pr above threshold == 0 in a time period (results in nans)
     ratio = prc_tot / pr_tot
     ratio = ratio.rename("rprctot").assign_attrs(units="1")
 
