@@ -221,20 +221,20 @@ indicators:
     parameters:
       thresh: 1 mm/day
       per:
-        description: Daily 75th percentile of wet day precipitation flux.
+        description: 75th percentile of wet day precipitation flux.
 
   R95p:
     base: days_over_precip_thresh
     parameters:
       thresh: 1 mm/day
       per:
-        description: Daily 95th percentile of wet day precipitation flux.
+        description: 95th percentile of wet day precipitation flux.
   R99p:
     base: days_over_precip_thresh
     parameters:
       thresh: 1 mm/day
       per:
-        description: Daily 99th percentile of wet day precipitation flux.
+        description: 99th percentile of wet day precipitation flux.
   R75pTOT:
     base: fraction_over_precip_thresh
     cf_attrs:
@@ -242,7 +242,7 @@ indicators:
     parameters:
       thresh: 1 mm/day
       per:
-        description: Daily 75th percentile of wet day precipitation flux.
+        description: 75th percentile of wet day precipitation flux.
 
   R95pTOT:
     base: fraction_over_precip_thresh
@@ -251,7 +251,7 @@ indicators:
     parameters:
       thresh: 1 mm/day
       per:
-        description: Daily 95th percentile of wet day precipitation flux.
+        description: 95th percentile of wet day precipitation flux.
   R99pTOT:
     base: fraction_over_precip_thresh
     cf_attrs:
@@ -259,7 +259,7 @@ indicators:
     parameters:
       thresh: 1 mm/day
       per:
-        description: Daily 99th percentile of wet day precipitation flux.
+        description: 99th percentile of wet day precipitation flux.
   SD:
     realm: land
     base: snow_depth

@@ -71,14 +71,20 @@
       "orcid": "0000-0002-4708-5182"
     },
     {
-      "affiliation": "UCL",
+      "affiliation": "University College London",
+      "name": "Barnes, Clair",
+      "orcid": "0000-0002-7806-7913"
+    },
+    {
+      "affiliation": "University College London",
+      "name": "Alegre, Raquel",
+      "orcid": "0000-0002-6081-0721"
+    },
+    {
+      "affiliation": "University College London",
       "name": "Quinn, Jamie",
       "orcid": "0000-0002-0268-7032"
     },
-    {
-      "affiliation": "UCL",
-      "name": "Alegre, Raquel"
-    }
   ],
   "keywords": [
     "xclim",

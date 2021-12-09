@@ -29,3 +29,4 @@ Contributors
 * Raquel Alegre <raquel.alegre@gmail.com> `@raquel-ucl <https://github.com/raquel-ucl>`_
 * Jamie Quinn <jamiejquinn@jamiejquinn.com> `@jamiejquinn <https://github.com/jamiejquinn>`_
 * Abel Aoun <aoun.abel@gmail.com> `@bzah <https://github.com/bzah>`_
+* Jamie Quinn <jamiejquinn@jamiejquinn.com> `@JamieJQuinn <https://github.com/JamieJQuinn>`_
