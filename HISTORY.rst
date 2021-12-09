@@ -18,6 +18,7 @@ Internal changes
 Bug fixes
 ~~~~~~~~~
 * Fix bugs in the `cf_attrs` and/or `abstract` of `continuous_snow_cover_end` and `continuous_snow_cover_start`. (:pull:`908`).
+* Fix counting of cold spells when split across two time periods. (:pull:`917`, :issue:`916`)
 
 0.31.0 (2021-11-05)
 -------------------
