@@ -1,11 +1,13 @@
 from xclim import indices
-from xclim.core.indicator import Daily
+from xclim.core.indicator import ResamplingIndicatorWithIndexing
 
 __all__ = ["calm_days", "windy_days"]
 
 
-class Wind(Daily):
+class Wind(ResamplingIndicatorWithIndexing):
     """Indicator involving daily sfcWind series."""
+
+    src_freq = "D"
 
 
 calm_days = Wind(

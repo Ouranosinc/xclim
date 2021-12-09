@@ -3,7 +3,7 @@ default_language_version:
 
 repos:
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v2.29.0
+    rev: v2.29.1
     hooks:
     -   id: pyupgrade
 -   repo: https://github.com/kynan/nbstripout
@@ -22,7 +22,7 @@ repos:
         args: ['--allow-multiple-documents']
     -   id: debug-statements
 -   repo: https://github.com/ambv/black
-    rev: 21.10b0
+    rev: 21.12b0
     hooks:
     -   id: black
         args: ["--target-version", "py37"]
@@ -39,7 +39,7 @@ repos:
 #    -   id: autopep8
 #        args: ['--global-config=setup.cfg','--in-place']
 -   repo: https://github.com/timothycrosley/isort
-    rev: 5.10.0
+    rev: 5.10.1
     hooks:
     -   id: isort
         args: ['--profile', 'black']

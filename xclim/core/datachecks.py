@@ -35,23 +35,23 @@ def check_freq(var: xr.DataArray, freq: Union[str, Sequence[str]], strict: bool 
     exp_base = [parse_offset(frq)[1] for frq in freq]
     v_freq = xr.infer_freq(var.time)
     if v_freq is None:
-        raise ValidationError("Unable to infer the frequency of the time series.")
+        raise ValidationError(
+            "Unable to infer the frequency of the time series. "
+            "To mute this, set xclim's option data_validation='log'."
+        )
     v_base = parse_offset(v_freq)[1]
     if v_base not in exp_base or (
         strict and all(compare_offsets(v_freq, "!=", frq) for frq in freq)
     ):
         raise ValidationError(
-            f"Frequency of time series not {'strictly' if strict else ''} in {freq}"
+            f"Frequency of time series not {'strictly' if strict else ''} in {freq}. "
+            "To mute this, set xclim's option data_validation='log'."
         )
 
 
-@datacheck
 def check_daily(var: xr.DataArray):
     """Raise an error if not series has a frequency other that daily, or is not monotonically increasing.
 
     Note that this does not check for gaps in the series.
     """
-    if xr.infer_freq(var.time) != "D":
-        raise ValidationError(
-            "time series is not recognized as daily. You can quiet this error by setting `data_validation` to 'warn' or 'log', in `xclim.set_options`."
-        )
+    return check_freq(var, "D")

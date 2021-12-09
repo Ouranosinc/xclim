@@ -56,7 +56,7 @@ def test_indicator_help(indicator, indname):
     results = runner.invoke(cli, [indname, "--help"])
 
     for name in indicator.parameters.keys():
-        if name != "ds":
+        if name not in ["ds", "indexer"]:
             assert name in results.output
 
 
@@ -292,3 +292,35 @@ def test_bad_usage(tas_series, tmp_path):
         assert "distributed scheduler is not installed" in results.output
     else:
         assert "'--dask-maxmem' must be given" in results.output
+
+
+@pytest.mark.parametrize("method, pattern", [("-r", "`GH/"), ("-m", "[GH/")])
+def test_release_notes(method, pattern):
+    runner = CliRunner()
+    results = runner.invoke(
+        cli,
+        ["release_notes", method],
+    )
+    assert ":pull:`" not in results.output
+    assert ":issue:`" not in results.output
+    assert ":user:`" not in results.output
+    assert pattern in results.output
+
+
+@pytest.mark.parametrize(
+    "method, error",
+    [
+        (
+            ["-m", "-r"],
+            "Cannot return both Markdown and ReStructuredText in same release_notes call.",
+        ),
+        (list(), "Must specify Markdown (-m) or ReStructuredText (-r)."),
+    ],
+)
+def test_release_notes_failure(method, error):
+    runner = CliRunner()
+    results = runner.invoke(
+        cli,
+        ["release_notes", *method],
+    )
+    assert error in results.output
