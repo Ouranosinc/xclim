@@ -105,7 +105,6 @@ class Grouper(Parametrizable):
         group: str,
         window: int = 1,
         add_dims: Optional[Union[Sequence[str], Set[str]]] = None,
-        interp: Union[bool, str] = False,
     ):
         """Create the Grouper object.
 
@@ -122,19 +121,11 @@ class Grouper(Parametrizable):
           Additional dimensions that should be reduced in grouping operations. This behaviour is also controlled
           by the `main_only` parameter of the `apply` method. If any of these dimensions are absent from the dataarrays,
           they will be omitted.
-        interp : Union[bool, str]
-          Whether to return an interpolatable index in the `get_index` method. Only effective for `month` grouping.
-          Interpolation method names are accepted for convenience, "nearest" is translated to False, all other names
-          are translated to True.
-          This modifies the default, but `get_index` also accepts an `interp` argument overriding the one defined here..
         """
         if "." in group:
             dim, prop = group.split(".")
         else:
             dim, prop = group, "group"
-
-        if isinstance(interp, str):
-            interp = interp != "nearest"
 
         if isinstance(add_dims, str):
             add_dims = [add_dims]
@@ -146,7 +137,6 @@ class Grouper(Parametrizable):
             prop=prop,
             name=group,
             window=window,
-            interp=interp,
         )
 
     @classmethod
@@ -155,7 +145,6 @@ class Grouper(Parametrizable):
             group=kwargs.pop("group"),
             window=kwargs.pop("window", 1),
             add_dims=kwargs.pop("add_dims", []),
-            interp=kwargs.get("interp", False),
         )
         return kwargs
 
@@ -239,7 +228,7 @@ class Grouper(Parametrizable):
     def get_index(
         self,
         da: Union[xr.DataArray, xr.Dataset],
-        interp: Optional[Union[bool, str]] = None,
+        interp: Optional[bool] = None,
     ):
         """Return the group index of each element along the main dimension.
 
@@ -248,9 +237,9 @@ class Grouper(Parametrizable):
         da : Union[xr.DataArray, xr.Dataset]
           The input array/dataset for which the group index is returned.
           It must have Grouper.dim as a coordinate.
-        interp : Union[bool, str]
-          Argument `interp` defaults to `self.interp`. If True, the returned index can be
-          used for interpolation. For month grouping, integer values represent the middle of the month, all other
+        interp : bool, optional
+          If True, the returned index can be used for interpolation. Only value for month
+          grouping, where integer values represent the middle of the month, all other
           days are linearly interpolated in between.
 
         Returns
@@ -275,21 +264,8 @@ class Grouper(Parametrizable):
                 f"Index {self.name} is not of type int (rather {i.dtype}), but {self.__class__.__name__} requires integer indexes."
             )
 
-        interp = (
-            (interp or self.interp)
-            if not isinstance(interp, str)
-            else interp != "nearest"
-        )
-        if interp:
-            if self.dim == "time":
-                if self.prop == "month":
-                    i = ind.month - 0.5 + ind.day / ind.days_in_month
-                elif self.prop == "dayofyear":
-                    i = ind.dayofyear
-                else:
-                    raise NotImplementedError
-            else:
-                raise NotImplementedError
+        if interp and self.dim == "time" and self.prop == "month":
+            i = ind.month - 0.5 + ind.day / ind.days_in_month
 
         xi = xr.DataArray(
             i,

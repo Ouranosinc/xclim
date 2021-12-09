@@ -9,6 +9,7 @@ from xclim.core.units import amount2rate, convert_units_to, declare_units, units
 
 __all__ = [
     "humidex",
+    "heat_index",
     "tas",
     "uas_vas_2_sfcwind",
     "sfcwind_2_uas_vas",
@@ -79,6 +80,13 @@ def humidex(
     - 40 to 45 : great discomfort, avoid exertion;
     - 46 and over : dangerous, possible heat stroke;
 
+    Please note that while both the humidex and the heat index are calculated
+    using dew point, the humidex uses a dew point of 7 °C (45 °F) as a base,
+    whereas the heat index uses a dew point base of 14 °C (57 °F). Further,
+    the heat index uses heat balance equations which account for many variables
+    other than vapor pressure, which is used exclusively in the humidex
+    calculation.
+
     References
     ----------
     .. [masterton79] Masterton, J. M., & Richardson, F. A. (1979). HUMIDEX, A method of quantifying human discomfort due to excessive heat and humidity, CLI 1-79. Downsview, Ontario: Environment Canada, Atmospheric Environment Service.
@@ -114,6 +122,66 @@ def humidex(
     out = h + tas
     out.attrs["units"] = tas.units
     return out
+
+
+@declare_units(tasmax="[temperature]", hurs="[]")
+def heat_index(tasmax: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
+    r"""Daily heat index.
+
+    Perceived temperature after relative humidity is taken into account. The
+    index is only valid for temperatures above 20°C.
+
+    Parameters
+    ----------
+    tasmax : xr.DataArray
+      Maximum daily temperature.
+    hurs : xr.DataArray
+      Relative humidity.
+
+    Returns
+    -------
+    xr.DataArray, [time][temperature]
+      Heat index for days with temperature above 20°C.
+
+    References
+    ----------
+    .. [blazejczyk2012] Blazejczyk, K., Epstein, Y., Jendritzky, G., Staiger, H., & Tinz, B. (2012). Comparison of UTCI to selected thermal indices. International journal of biometeorology, 56(3), 515-535.
+
+    Notes
+    -----
+    While both the humidex and the heat index are calculated using dew point,
+    the humidex uses a dew point of 7 °C (45 °F) as a base, whereas the heat
+    index uses a dew point base of 14 °C (57 °F). Further, the heat index uses
+    heat balance equations which account for many variables other than vapor
+    pressure, which is used exclusively in the humidex calculation.
+    """
+    thresh = "20.0 degC"
+    thresh = convert_units_to(thresh, "degC")
+    t = convert_units_to(tasmax, "degC")
+    t = t.where(t > thresh)
+    r = convert_units_to(hurs, "%")
+
+    tr = t * r
+    tt = t * t
+    rr = r * r
+    ttr = tt * r
+    trr = t * rr
+    ttrr = tt * rr
+
+    out = (
+        -8.78469475556
+        + 1.61139411 * t
+        + 2.33854883889 * r
+        - 0.14611605 * tr
+        - 0.012308094 * tt
+        - 0.0164248277778 * rr
+        + 0.002211732 * ttr
+        + 0.00072546 * trr
+        - 0.000003582 * ttrr
+    )
+    out = out.assign_attrs(units="degC")
+
+    return convert_units_to(out, tasmax.units)
 
 
 @declare_units(tasmin="[temperature]", tasmax="[temperature]")
