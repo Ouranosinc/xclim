@@ -1181,7 +1181,7 @@ def fraction_over_precip_thresh(
     Returns
     -------
     xarray.DataArray, [dimensionless]
-      Fraction of precipitation over threshold during wet days days.
+      Fraction of precipitation over threshold during wet days.
 
     """
     per = convert_units_to(per, pr)
