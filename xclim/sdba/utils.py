@@ -15,6 +15,7 @@ from xclim.core.calendar import _interpolate_doy_calendar  # noqa
 from xclim.core.utils import ensure_chunk_size
 
 from .base import Grouper, parse_group
+from .nbutils import _extrapolate_on_quantiles
 
 MULTIPLICATIVE = "*"
 ADDITIVE = "+"
@@ -200,7 +201,7 @@ def broadcast(
         sel = {}
 
     if group.prop != "group" and group.prop not in sel:
-        sel.update({group.prop: group.get_index(x, interp=interp)})
+        sel.update({group.prop: group.get_index(x, interp=interp != "nearest")})
 
     if sel:
         # Extract the correct mean factor for each time step.
@@ -333,6 +334,13 @@ def extrapolate_qm(
       The adjustment factor above and below the computed values are equal to the last
       and first values respectively.
     """
+    warn(
+        (
+            "`extrapolate_qm` is deprecated and will be removed in xclim 0.33. "
+            "Extrapolation is now handled directly in `interp_on_quantiles`."
+        ),
+        DeprecationWarning,
+    )
     # constant_iqr
     #   Same as `constant`, but values are set to NaN if farther than one interquartile range from the min and max.
     q_l, q_r = [0], [1]
@@ -392,6 +400,55 @@ def add_endpoints(
     return ensure_chunk_size(out, **{dim: -1})
 
 
+def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):
+    mask_new = np.isnan(newx)
+    mask_old = np.isnan(oldy) | np.isnan(oldx)
+    out = np.full_like(newx, np.NaN, dtype=f"float{oldy.dtype.itemsize * 8}")
+    if np.all(mask_new) or np.all(mask_old):
+        warn(
+            "All-NaN slice encountered in interp_on_quantiles",
+            category=RuntimeWarning,
+        )
+        return out
+
+    if extrap == "constant":
+        fill_value = (oldy[0], oldy[-1])
+    else:  # extrap == 'nan'
+        fill_value = np.NaN
+
+    out[~mask_new] = interp1d(
+        oldx[~mask_old],
+        oldy[~mask_old],
+        kind=method,
+        bounds_error=False,
+        fill_value=fill_value,
+    )(newx[~mask_new])
+    return out
+
+
+def _interp_on_quantiles_2D(newx, newg, oldx, oldy, oldg, method, extrap):  # noqa
+    mask_new = np.isnan(newx) | np.isnan(newg)
+    mask_old = np.isnan(oldy) | np.isnan(oldx) | np.isnan(oldg)
+    out = np.full_like(newx, np.NaN, dtype=f"float{oldy.dtype.itemsize * 8}")
+    if np.all(mask_new) or np.all(mask_old):
+        warn(
+            "All-NaN slice encountered in interp_on_quantiles",
+            category=RuntimeWarning,
+        )
+        return out
+
+    out[~mask_new] = griddata(
+        (oldx[~mask_old], oldg[~mask_old]),
+        oldy[~mask_old],
+        (newx[~mask_new], newg[~mask_new]),
+        method=method,
+    )
+    if method == "nearest" or extrap != "nan":
+        # 'nan' extrapolation implicit for cubic and linear interpolation.
+        out = _extrapolate_on_quantiles(out, oldx, oldg, oldy, newx, newg, extrap)
+    return out
+
+
 @parse_group
 def interp_on_quantiles(
     newx: xr.DataArray,
@@ -400,10 +457,13 @@ def interp_on_quantiles(
     *,
     group: Union[str, Grouper] = "time",
     method: str = "linear",
+    extrapolation: str = "constant",
 ):
     """Interpolate values of yq on new values of x.
 
-    Interpolate in 2D if grouping is used, in 1D otherwise.
+    Interpolate in 2D with :py:func:`~scipy.interpolate.griddata` if grouping is used,
+    in 1D otherwise, with :py:class:`~scipy.interpolate.interp1d`. Any NaNs in xq
+    or yq are removed from the input map. Similarly, NaNs in newx are left NaNs.
 
     Parameters
     ----------
@@ -417,85 +477,64 @@ def interp_on_quantiles(
       If it does, interpolation is done in 2D on "quantiles" and on the group dimension.
     group : Union[str, Grouper]
       The dimension and grouping information. (ex: "time" or "time.month").
-      Defaults to the "group" attribute of xq, or "time" if there is none.
+      Defaults to "time".
     method : {'nearest', 'linear', 'cubic'}
       The interpolation method.
+    extrapolation : {'constant', 'nan'}
+      The extrapolation method used for values of `newx` outside the range of `xq`.
+      See notes.
+
+    Notes
+    -----
+    Extrapolation methods:
+
+    - 'nan' : Any value of `newx` outside the range of `xq` is set to NaN.
+    - 'constant' : Values of `newx` smaller than the minimum of `xq` are set to the first
+      value of `yq` and those larger than the maximum, set to the last one (first and
+      last values along the "quantiles" dimension).
     """
     dim = group.dim
     prop = group.prop
 
     if prop == "group":
-        fill_value = "extrapolate" if method == "nearest" else np.nan
-
-        def _interp_quantiles_1D(newx, oldx, oldy):
-            if np.all(np.isnan(newx)):
-                warn(
-                    "All-NaN slice encountered in interp_on_quantiles",
-                    category=RuntimeWarning,
-                )
-                return newx
-
-            mask = np.isnan(oldx) & np.isnan(oldy)
-            # The bounds might be NaN for a good reason.
-            mask[np.array([0, -1])] = False
-
-            return interp1d(
-                oldx[~mask],
-                oldy[~mask],
-                bounds_error=False,
-                kind=method,
-                fill_value=fill_value,
-            )(newx)
-
         if "group" in xq.dims:
             xq = xq.squeeze("group", drop=True)
+        if "group" in yq.dims:
             yq = yq.squeeze("group", drop=True)
-        return xr.apply_ufunc(
-            _interp_quantiles_1D,
+
+        out = xr.apply_ufunc(
+            _interp_on_quantiles_1D,
             newx,
             xq,
             yq,
+            kwargs={"method": method, "extrap": extrapolation},
             input_core_dims=[[dim], ["quantiles"], ["quantiles"]],
             output_core_dims=[[dim]],
             vectorize=True,
             dask="parallelized",
-            output_dtypes=[float],
+            output_dtypes=[yq.dtype],
         )
+        return out
+
     # else:
-
-    def _interp_quantiles_2D(_newx, _newg, _oldx, _oldy, _oldg):  # noqa
-        if method != "nearest":
-            _oldx = np.clip(_oldx, _newx.min() - 1, _newx.max() + 1)
-
-        if np.all(np.isnan(_newx)):
-            warn(
-                "All-NaN slice encountered in interp_on_quantiles",
-                category=RuntimeWarning,
-            )
-            return _newx
-
-        mask = np.isnan(_oldx) & np.isnan(_oldy) & np.isnan(_oldg)
-        mask[:, np.array([0, -1])] = False  # bounds might be NaN for a good reason.
-
-        return griddata(
-            (_oldx[~mask], _oldg[~mask]),
-            _oldy[~mask],
-            (_newx, _newg),
-            method=method,
-        )
+    if prop not in xq.dims:
+        xq = xq.expand_dims({prop: group.get_coordinate()})
+    if prop not in yq.dims:
+        yq = yq.expand_dims({prop: group.get_coordinate()})
 
     xq = add_cyclic_bounds(xq, prop, cyclic_coords=False)
     yq = add_cyclic_bounds(yq, prop, cyclic_coords=False)
-    newg = group.get_index(newx)
+    newg = group.get_index(newx, interp=method != "nearest")
     oldg = xq[prop].expand_dims(quantiles=xq.coords["quantiles"])
 
     return xr.apply_ufunc(
-        _interp_quantiles_2D,
+        _interp_on_quantiles_2D,
         newx,
         newg,
         xq,
         yq,
         oldg,
+        kwargs={"method": method, "extrap": extrapolation},
         input_core_dims=[
             [dim],
             [dim],

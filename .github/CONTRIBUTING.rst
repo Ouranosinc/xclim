@@ -80,15 +80,13 @@ If you are reporting a bug, please include:
 Fix Bugs
 ~~~~~~~~
 
-Look through the GitHub issues for bugs. Anything tagged with "bug" and "help
-wanted" is open to whoever wants to implement it.
+Look through the GitHub issues for bugs. Anything tagged with "bug" and "help wanted" is open to whoever wants to implement it.
 
 Write Documentation
 ~~~~~~~~~~~~~~~~~~~
 
-xclim could always use more documentation, whether as part of the
-official xclim docs, in docstrings, or even on the web in blog posts,
-articles, and such.
+xclim could always use more documentation, whether as part of the official xclim docs, in docstrings, or even on the
+web in blog posts, articles, and such.
 
 Submit Feedback
 ~~~~~~~~~~~~~~~
@@ -99,7 +97,7 @@ If you are proposing a feature:
 
 * Explain in detail how it would work.
 * Keep the scope as narrow as possible, to make it easier to implement.
-* Remember that this is a volunteer-driven project, and that contributions are welcome :)
+* The Xclim development team welcomes you and is always on hand to help. :)
 
 Get Started!
 ------------
@@ -182,6 +180,10 @@ Before you submit a pull request, please follow these guidelines:
 
    * `numpydoc`_
    * `reStructuredText (ReST)`_
+
+.. note::
+    If you aren't accustomed to writing documentation in reStructuredText (`.rst`), we encourage you to spend a few minutes going over the
+    incredibly well-summarized `reStructuredText Primer`_ from the sphinx-doc maintainer community.
 
 5. The pull request should work for Python 3.7, 3.8, and 3.9 as well as raise test coverage.
    Pull requests are also checked for documentation build status and for `PEP8`_ compliance.
@@ -328,5 +330,6 @@ Before updating the main conda-forge recipe, we *strongly* suggest performing th
 
 .. _`numpydoc`: https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt
 .. _`reStructuredText (ReST)`: https://www.jetbrains.com/help/pycharm/using-docstrings-to-specify-types.html
+.. _`reStructuredText Primer`: https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
 .. _`GitHub Repository`: https://github.com/Ouranosinc/xclim
 .. _`PEP8`: https://www.python.org/dev/peps/pep-0008/

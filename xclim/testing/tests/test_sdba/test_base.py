@@ -51,8 +51,8 @@ def test_grouper_group(tas_series, group, window, nvals):
 )
 def test_grouper_get_index(tas_series, group, interp, val90):
     tas = tas_series(np.ones(366), start="2000-01-01")
-    grouper = Grouper(group, interp=interp)
-    indx = grouper.get_index(tas)
+    grouper = Grouper(group)
+    indx = grouper.get_index(tas, interp=interp)
     # 90 is March 31st
     assert indx[90] == val90
 
