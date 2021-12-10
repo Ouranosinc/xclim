@@ -39,6 +39,7 @@ Internal changes
 * Use ``xarray.apply_ufunc`` to vectorize statistical functions. (:pull:`943`)
 * Refactor of ``xclim.sdba.utils.interp_on_quantiles`` so that it now handles the extrapolation directly and to better handle missing values. (:pull:`941`).
 * Updated `heating_degree_days` and `fraction_over_precip_thresh` documentations. See (:issue:`952`) and (:pull:`953`).
+* Intersphinx mapping to xarray (:pull:`955`).
 
 Bug fixes
 ^^^^^^^^^
