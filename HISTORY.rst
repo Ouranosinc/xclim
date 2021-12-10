@@ -21,6 +21,7 @@ New features and enhancements
 * Added `days_over_precip_doy_thresh` and `fraction_over_precip_doy_thresh` indicators to distinguish between WMO and ECAD definition of the Rxxp and RxxpTot indices. (:issue:`931`, :pull:`940`).
 * Update `xclim.core.utils.nan_calc_percentiles` to improve maintainability. (:pull:`942`).
 * Added `heat_index` indicator. Added `heat_index` indicator. This is similar to `humidex` but uses a different dew point as well as heat balance equations which account for variables other than vapor pressure. (:issue:`807`) and (:pull:`915`).
+* Added ``snw_max`` and ``snw_max_doy`` indicators to compute the maximum snow amount and the day of year of the maximum snow amount respectively. (:issue:`776`, :pull:`950`)
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -44,6 +45,7 @@ Bug fixes
 * Fix bugs in the `cf_attrs` and/or `abstract` of `continuous_snow_cover_end` and `continuous_snow_cover_start`. (:pull:`908`).
 * Remove unnecessary `keep_attrs` from `resample` call which would raise an error in futur Xarray version. (:pull:`937`).
 * Fixed a bug in the regex that parses usernames in the history. (:pull:`945`).
+* Fixed a bug in ``generic.doymax`` and ``generic.doymin`` that prevented the use of the functions on multidimensional data. (:pull:`950`, :issue:`951`).
 * Skip all missing values in ``xclim.sdba.utils.interp_on_quantiles``, drop them from both the old and new coordinates, as well as from the old values. (:pull:`941`).
 
 0.31.0 (2021-11-05)
