@@ -187,7 +187,7 @@ def cold_spell_frequency(
       Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
       Resampling frequency.
-    index : str
+    index : {"first", "last"}
       If ‘first’, the run length is indexed at the first element in the run. If ‘last’, at the last element in the run.
 
     Returns
