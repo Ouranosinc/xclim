@@ -18,6 +18,10 @@ import sys
 import warnings
 from collections import OrderedDict
 
+import xarray 
+xarray.DataArray.__module__ = "xarray"
+xarray.Dataset.__module__ = "xarray"
+
 import xclim
 
 # If extensions (or modules to document with autodoc) are in another
