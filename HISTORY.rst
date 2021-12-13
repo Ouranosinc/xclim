@@ -4,7 +4,7 @@ History
 
 0.32.0 (unreleased)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), David Huard (:user:`huard`), Clair Barnes (:user:`clairbarnes`), Raquel Alegre (:user:`raquel-ucl`), Jamie Quinn (:user:`JamieJQuinn`)
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), David Huard (:user:`huard`), Clair Barnes (:user:`clairbarnes`), Raquel Alegre (:user:`raquel-ucl`), Jamie Quinn (:user:`JamieJQuinn`), Aaron Spring (:user:`aaronspring`)
 
 Announcements
 ^^^^^^^^^^^^^
@@ -39,6 +39,7 @@ Internal changes
 * Use ``xarray.apply_ufunc`` to vectorize statistical functions. (:pull:`943`)
 * Refactor of ``xclim.sdba.utils.interp_on_quantiles`` so that it now handles the extrapolation directly and to better handle missing values. (:pull:`941`).
 * Updated `heating_degree_days` and `fraction_over_precip_thresh` documentations. See (:issue:`952`) and (:pull:`953`).
+* Intersphinx mapping to xarray (:pull:`955`).
 
 Bug fixes
 ^^^^^^^^^
