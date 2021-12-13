@@ -21,6 +21,26 @@ class TestRBIndex:
         np.testing.assert_array_equal(out, 2)
 
 
+class TestSnwMax:
+    def test_simple(self, snw_series):
+        a = np.zeros(366)
+        a[10:20] = np.arange(0, 10)
+        snw = snw_series(a, start="1999-01-01")
+        out = xci.snw_max(snw, freq="YS")
+        np.testing.assert_array_equal(out, [9, 0])
+        assert out.units == "kg m-2"
+
+
+class TestSnwMaxDoy:
+    def test_simple(self, snw_series):
+        a = np.zeros(366)
+        a[10] = 10
+        snw = snw_series(a, start="1999-01-01")
+        out = xci.snw_max_doy(snw, freq="YS")
+        np.testing.assert_array_equal(out, [11, np.nan])
+        assert out.units == ""
+
+
 class TestSnowMeltWEMax:
     def test_simple(self, snw_series):
         a = np.zeros(365)
