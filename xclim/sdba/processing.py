@@ -96,7 +96,6 @@ def adapt_freq(
     return out.sim_ad, out.pth, out.dP0
 
 
-@update_xclim_history
 def jitter_under_thresh(x: xr.DataArray, thresh: str):
     """Replace values smaller than threshold by a uniform random noise.
 
@@ -117,20 +116,9 @@ def jitter_under_thresh(x: xr.DataArray, thresh: str):
     -----
     If thresh is high, this will change the mean value of x.
     """
-    thresh = convert_units_to(thresh, x)
-    epsilon = np.finfo(x.dtype).eps
-    if uses_dask(x):
-        jitter = dsk.random.uniform(
-            low=epsilon, high=thresh, size=x.shape, chunks=x.chunks
-        )
-    else:
-        jitter = np.random.uniform(low=epsilon, high=thresh, size=x.shape)
-    out = x.where(~((x < thresh) & (x.notnull())), jitter.astype(x.dtype))
-    out.attrs.update(x.attrs)  # copy attrs and same units
-    return out
+    return jitter(x, lower=thresh, upper=None, minimum=None, maximum=None)
 
 
-@update_xclim_history
 def jitter_over_thresh(x: xr.DataArray, thresh: str, upper_bnd: str) -> xr.Dataset:
     """Replace values greater than threshold by a uniform random noise.
 
@@ -152,15 +140,71 @@ def jitter_over_thresh(x: xr.DataArray, thresh: str, upper_bnd: str) -> xr.Datas
     -----
     If thresh is low, this will change the mean value of x.
     """
-    thresh = convert_units_to(thresh, x)
-    upper_bnd = convert_units_to(upper_bnd, x)
-    if uses_dask(x):
-        jitter = dsk.random.uniform(
-            low=thresh, high=upper_bnd, size=x.shape, chunks=x.chunks
-        )
-    else:
-        jitter = np.random.uniform(low=thresh, high=upper_bnd, size=x.shape)
-    out = x.where(~((x > thresh) & (x.notnull())), jitter.astype(x.dtype))
+    return jitter(x, lower=None, upper=thresh, minimum=None, maximum=upper_bnd)
+
+
+@update_xclim_history
+def jitter(
+    x: xr.DataArray,
+    lower: str = None,
+    upper: str = None,
+    minimum: str = None,
+    maximum: str = None,
+):
+    """Replaces values under a threshold and values above another by a uniform random noise.
+
+    Do not confuse with R's jitter, which adds uniform noise instead of replacing values.
+
+    Parameters
+    ----------
+    x : xr.DataArray
+      Values.
+    lower : str
+      Threshold under which to add uniform random noise to values, a quantity with units.
+      If None, no jittering is performed on the lower end.
+    upper : str
+      Threshold over which to add uniform random noise to values, a quantity with units.
+      If None, no jittering is performed on the upper end.
+    minimum : str
+      Lower limit (excluded) for the lower end random noise, a quantity with units.
+      If None but `lower` is not None, 0 is used.
+    maximum : str
+      Upper limit (excluded) for the upper end random noise, a quantity with units.
+      If `upper` is not None, it must be given.
+
+    Returns
+    -------
+    xr.DataArray
+      Same as  `x` but values < lower are replaced by a uniform noise in range (minimum, lower)
+      and values >= upper are replaced by a uniform noise in range [upper, maximum).
+      The two noise distributions are independent.
+    """
+    out = x
+    notnull = x.notnull()
+    if lower is not None:
+        lower = convert_units_to(lower, x)
+        minimum = convert_units_to(minimum, x) if minimum is not None else 0
+        minimum = minimum + np.finfo(x.dtype).eps
+        if uses_dask(x):
+            jitter = dsk.random.uniform(
+                low=minimum, high=lower, size=x.shape, chunks=x.chunks
+            )
+        else:
+            jitter = np.random.uniform(low=minimum, high=lower, size=x.shape)
+        out = out.where(~((x < lower) & notnull), jitter.astype(x.dtype))
+    if upper is not None:
+        if maximum is None:
+            raise ValueError("If 'upper' is given, so must 'maximum'.")
+        upper = convert_units_to(upper, x)
+        maximum = convert_units_to(maximum, x)
+        if uses_dask(x):
+            jitter = dsk.random.uniform(
+                low=upper, high=maximum, size=x.shape, chunks=x.chunks
+            )
+        else:
+            jitter = np.random.uniform(low=upper, high=maximum, size=x.shape)
+        out = out.where(~((x >= upper) & notnull), jitter.astype(x.dtype))
+
     out.attrs.update(x.attrs)  # copy attrs and same units
     return out
 
