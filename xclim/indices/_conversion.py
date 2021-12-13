@@ -934,7 +934,7 @@ def potential_evapotranspiration(
     - "mcguinnessbordne05" or "MB05", based on [tanguy2018]_. Requires tas, daily [D] freq, with latitudes 'lat'.
     - "thornthwaite48" or "TW48", based on [thornthwaite48]_. Requires tasmin and tasmax, monthly [MS] or daily [D] freq. (optional: tas can be given instead of tasmin and tasmax).
 
-    The McGuiness-Bordne [McGuinness1972]_ equation is
+    The McGuinness-Bordne [McGuinness1972]_ equation is
 
     .. math::
 
