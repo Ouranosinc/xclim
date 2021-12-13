@@ -169,11 +169,10 @@
     "abstract": "Nombre de jours où les précipitations sont au-dessus d'un seuil."
   },
   "WETDAY_PROP": {
-    "long_name": "",
-    "description": "",
-    "title": "",
-    "comment": "",
-    "abstract": ""
+    "long_name": "Proportion de jours pluvieux (précip >= {thresh})",
+    "description": "Propotion {freq:m} de jours où les précipitations sont au-dessus de {thresh}.",
+    "title": "Proportion de jours pluvieux",
+    "abstract": "Proportion de jours où les précipitations sont au-dessus d'un seuil."
   },
   "CDD": {
     "long_name": "Durée maximale d'une période sèche",
