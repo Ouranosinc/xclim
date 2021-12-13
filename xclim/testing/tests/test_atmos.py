@@ -237,10 +237,13 @@ class TestPotentialEvapotranspiration:
         pet_hg85C = atmos.potential_evapotranspiration(tnC, tx, method="HG85")
         pet_tw48 = atmos.potential_evapotranspiration(tas=tm, method="TW48")
         pet_tw48C = atmos.potential_evapotranspiration(tas=tmC, method="TW48")
+        pet_mb05 = atmos.potential_evapotranspiration(tn, tx, method="MB05")
+        pet_mb05C = atmos.potential_evapotranspiration(tnC, tx, method="MB05")
 
         np.testing.assert_allclose(pet_br65, pet_br65C, atol=1)
         np.testing.assert_allclose(pet_hg85, pet_hg85C, atol=1)
         np.testing.assert_allclose(pet_tw48, pet_tw48C, atol=1)
+        np.testing.assert_allclose(pet_mb05, pet_mb05C, atol=1)
 
     def test_nan_values(self):
         tn = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmin

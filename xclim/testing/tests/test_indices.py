@@ -2372,6 +2372,15 @@ class TestPotentialEvapotranspiration:
         out = xci.potential_evapotranspiration(tas=tm, method="TW48")
         np.testing.assert_allclose(out[0, 1], [42.7619242 / (86400 * 30)], rtol=1e-1)
 
+    def test_mcguinnessbordne(self, tasmin_series, tasmax_series):
+        tn = tasmin_series(np.array([0, 5, 10]) + 273.15)
+        tn = tn.expand_dims(lat=[45])
+        tx = tasmax_series(np.array([10, 15, 20]) + 273.15)
+        tx = tx.expand_dims(lat=[45])
+
+        out = xci.potential_evapotranspiration(tn, tx, method="MB05")
+        np.testing.assert_allclose(out[2, 0], [2.78253138816 / 86400], rtol=1e-2)
+
 
 def test_water_budget(pr_series, tasmin_series, tasmax_series):
     pr = pr_series(np.array([10, 10, 10]))
