@@ -809,6 +809,18 @@
     "title": "Fonte de neige maximale",
     "abstract": "Équivalent en eau de la fonte de neige maximale."
   },
+  "SNW_MAX": {
+    "long_name": "Quantité de neige maximale",
+    "description": "Quantité maximale {freq:f} de neige.",
+    "title": "Quantité de neige maximale",
+    "abstract": "Maximum de la quantité de neige journalière."
+  },
+  "SNW_MAX_DOY": {
+    "long_name": "Date de la quantité de neige maximale",
+    "description": "Date {freq:f} à laquelle la quantité de neige atteint sa valeur maximale.",
+    "title": "Date où la quantité de neige est maximale",
+    "abstract": "Jour de l'année où la quantité de neige atteint sa valeur maximale."
+  },
   "MELT_AND_PRECIP_MAX": {
     "long_name": "Maximum des apports en eau incluant la fonte de neige et les précipitations",
     "description": "Precipitation et fonte de neige maximales {freq:fpl} sur {window} jours.",

@@ -206,7 +206,7 @@ def select_resample_op(da: xr.DataArray, op: str, freq: str = "YS", **indexer):
 def doymax(da: xr.DataArray) -> xr.DataArray:
     """Return the day of year of the maximum value."""
     i = da.argmax(dim="time")
-    out = da.time.dt.dayofyear[i]
+    out = da.time.dt.dayofyear.isel(time=i, drop=True)
     out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(da))
     return out
 
@@ -214,7 +214,7 @@ def doymax(da: xr.DataArray) -> xr.DataArray:
 def doymin(da: xr.DataArray) -> xr.DataArray:
     """Return the day of year of the minimum value."""
     i = da.argmin(dim="time")
-    out = da.time.dt.dayofyear[i]
+    out = da.time.dt.dayofyear.isel(time=i, drop=True)
     out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(da))
     return out
 
