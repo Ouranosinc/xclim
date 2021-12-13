@@ -2138,16 +2138,6 @@ def rprctot(
     -------
     xarray.DataArray, [time]
       The proportion of the total precipition accounted for by convective precipitation for each period [1].
-
-    Examples
-    --------
-    The following would compute for each grid cell of file `pr.day.nc` the proportion of total rainfall
-    arising from convective precipitation on days with more than 5mm rainfall at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
-
-    >>> from xclim.indices import rprctot
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
-    >>> prc = xr.open_dataset(path_to_prc_file).prc
-    >>> wd = rprctot(pr, prc, thresh="5 mm/day", freq="QS-DEC")
     """
 
     thresh = convert_units_to(thresh, pr, "hydro")
