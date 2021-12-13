@@ -71,6 +71,9 @@
       "orcid": "0000-0002-4708-5182"
     },
     {
+      "affiliation": "CEH",
+      "name": "Tanguy, Maliko"
+    }
       "affiliation": "University College London",
       "name": "Barnes, Clair",
       "orcid": "0000-0002-7806-7913"
@@ -84,7 +87,6 @@
       "affiliation": "University College London",
       "name": "Quinn, Jamie",
     },
-
   ],
   "keywords": [
     "xclim",
