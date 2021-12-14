@@ -163,12 +163,10 @@
     "abstract": "Maximum de l'intensité de précipitation horaire pour une durée et période donnée."
   },
   "RPRCTOT": {
-    "long_name": "",
-    "description": "",
-    "title": "",
-    "comment": "",
-    "keywords": "",
-    "abstract": ""
+    "long_name": "Proportion convective de la précipitation totale",
+    "description": "Proportion de la précipitation totale {freq:f} due à la précipitation convective pour les jours avec une précipitation d'au moins {thresh}.",
+    "title": "Proportion convective de la précipitation totale.",
+    "abstract": "Proportion de la précipitation totale due aux processus de convections. Seuls les jours avec un flux minimum de précipitation sont considérés."
   },
   "WETDAYS": {
     "long_name": "Nombre de jours pluvieux (précip >= {thresh})",
