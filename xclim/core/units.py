@@ -55,10 +55,10 @@ if version.parse(pint.__version__) >= version.parse("0.10"):
     units.define("@alias day = d")
     units.define("@alias hour = h")  # Not the Planck constant...
     units.define(
-        "@alias degree = degrees_north = degrees_N = degreesN = degree_north = degree_N = degreeN"
+        "degrees_north = 1 * degree = degrees_north = degrees_N = degreesN = degree_north = degree_N = degreeN"
     )
     units.define(
-        "@alias degree = degrees_east = degrees_E = degreesE = degree_east = degree_E = degreeE"
+        "degrees_east = 1 * degree = degrees_east = degrees_E = degreesE = degree_east = degree_E = degreeE"
     )
 
 else:
