@@ -87,7 +87,6 @@ def jetstream_metric_woolings(
     )
     jetlat = ua_lf.cf.idxmax(lat_name).rename("jetlat").assign_attrs(units=lat_units)
     jetstr = ua_lf.cf.max(lat_name).rename("jetstr").assign_attrs(units=ua_units)
-    print(jetlat.units)
     return jetlat, jetstr
 
 
