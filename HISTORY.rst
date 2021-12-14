@@ -28,6 +28,7 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 * Following version 1.9 of the CF Conventions, published in September 2021, the calendar name "gregorian" is deprecated. ``core.calendar.get_calendar`` will return "standard", even if the underlying cftime objects still use "gregorian" (cftime <= 1.5.1). (:pull:`935`).
 * ``sdba.utils.extrapolate_qm`` is now deprecated and will be removed in version 0.33. (:pull:`941`).
+* Dependency ``pint`` now needs at least version 0.10 (:pull:`959`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -49,6 +50,7 @@ Bug fixes
 * Fixed a bug in the regex that parses usernames in the history. (:pull:`945`).
 * Fixed a bug in ``generic.doymax`` and ``generic.doymin`` that prevented the use of the functions on multidimensional data. (:pull:`950`, :issue:`951`).
 * Skip all missing values in ``xclim.sdba.utils.interp_on_quantiles``, drop them from both the old and new coordinates, as well as from the old values. (:pull:`941`).
+* "degrees_north" and "degrees_east" (and their variants) are now considered independent units, so that ``pint`` and ``xc.core.units.ensure_cf_units`` don't convert them to "deg" (:pull:`959`).
 
 0.31.0 (2021-11-05)
 -------------------

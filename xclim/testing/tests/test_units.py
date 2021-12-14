@@ -119,6 +119,9 @@ class TestUnitConversion:
         u = units2pint("mm s-1")
         assert str(u) == "millimeter / second"
 
+        u = units2pint("degrees_north")
+        assert str(u) == "degrees_north"
+
     def test_pint_multiply(self, pr_series):
         a = pr_series([1, 2, 3])
         out = pint_multiply(a, 1 * units.days)
