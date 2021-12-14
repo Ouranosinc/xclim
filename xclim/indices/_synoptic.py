@@ -73,9 +73,8 @@ def jetstream_metric_woolings(
     filter_freq = 10
     window_size = 61
     cutoff = 1 / filter_freq
-    if ua.cf["T"].count() <= filter_freq or ua.cf["T"].count() <= window_size:
-        print("Time series is too short to apply 61-day Lanczos filter")
-        return
+    if ua.time.size <= filter_freq or ua.time.size <= window_size:
+        raise ValueError(f"Time series is too short to apply 61-day Lanczos filter (got a length of  {ua.time.size})")
 
     # compute low-pass filter weights
     lanczos_weights = compute_low_pass_filter_weights(
