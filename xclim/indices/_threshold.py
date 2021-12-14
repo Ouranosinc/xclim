@@ -2136,19 +2136,19 @@ def rprctot(
 
     Returns
     -------
-    xarray.DataArray, [time]
-      The proportion of the total precipition accounted for by convective precipitation for each period [1].
+    xarray.DataArray, [dimensionless]
+      The proportion of the total precipitation accounted for by convective precipitation for each period.
     """
 
     thresh = convert_units_to(thresh, pr, "hydro")
     prc = convert_units_to(prc, pr)
 
     wd = compare(pr, ">=", thresh)
-    pr_tot = pr.where(wd).resample(time=freq).sum(dim="time")
-    prc_tot = prc.where(wd).resample(time=freq).sum(dim="time")
+    pr_tot = rate2amount(pr).where(wd).resample(time=freq).sum(dim="time")
+    prc_tot = rate2amount(prc).where(wd).resample(time=freq).sum(dim="time")
 
     ratio = prc_tot / pr_tot
-    ratio = ratio.rename("rprctot").assign_attrs(units="1")
+    ratio = ratio.assign_attrs(units="")
 
     return ratio
 
