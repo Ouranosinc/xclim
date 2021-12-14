@@ -48,8 +48,7 @@ def jetstream_metric_woolings(
     )
     if not lons_within_range:
         raise ValueError(
-            "Longitude values need to be in a range between %s-%s. Consider changing the longitude coordinates to between -180.E–180.W"
-            % (lon_min, lon_max)
+            f"Longitude values need to be in a range between {lon_min}-{lon_max}. Consider changing the longitude coordinates to between -180.E–180.W"
         )
 
     # get latitude & eastward wind component units
