@@ -82,7 +82,7 @@ def jetstream_metric_woolings(
     )
     # apply the filter
     ua_lf = (
-        zonal_mean.cf.rolling(T=window_size, center=True)
+        zonal_mean.rolling(time=window_size, center=True)
         .construct("window")
         .dot(lanczos_weights)
     )
