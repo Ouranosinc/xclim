@@ -1,3 +1,5 @@
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FOuranosinc%2Fxclim.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FOuranosinc%2Fxclim?ref=badge_shield)
+
 ==========================================
 xclim: Climate indices computations |logo|
 ==========================================
@@ -98,3 +100,6 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 
 .. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/master/_static/_images/xclim-logo-small.png
         :target: https://github.com/Ouranosinc/xclim
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FOuranosinc%2Fxclim.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FOuranosinc%2Fxclim?ref=badge_large)
