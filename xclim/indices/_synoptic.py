@@ -23,6 +23,7 @@ def jetstream_metric_woolings(
     """Strength and latitude of jetstream.
 
     Identify latitude and strength of maximum smoothed zonal wind speed in the region from 15 to 75°N and -60 to 0°E.
+    WARNING: This metric expects eastward wind component (u) to be on a regular grid (i.e. Plate Carree, 1D lat and lon)
 
     Parameters
     ----------
@@ -73,7 +74,9 @@ def jetstream_metric_woolings(
     window_size = 61
     cutoff = 1 / filter_freq
     if ua.time.size <= filter_freq or ua.time.size <= window_size:
-        raise ValueError(f"Time series is too short to apply 61-day Lanczos filter (got a length of  {ua.time.size})")
+        raise ValueError(
+            f"Time series is too short to apply 61-day Lanczos filter (got a length of  {ua.time.size})"
+        )
 
     # compute low-pass filter weights
     lanczos_weights = compute_low_pass_filter_weights(
