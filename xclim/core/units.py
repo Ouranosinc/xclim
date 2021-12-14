@@ -723,3 +723,14 @@ def declare_units(
         return wrapper
 
     return dec
+
+
+def check_same_units(func) -> Callable:
+    def _check_same_units(sim, ref):
+        units_sim = units2pint(sim.units)
+        units_ref = units2pint(ref.units)
+        if units_sim != units_ref:
+            raise ValueError(f" sim({units_sim}) and ref({units_ref}) don't have the same units.")
+        out = func(sim, ref)
+        return out
+    return _check_same_units

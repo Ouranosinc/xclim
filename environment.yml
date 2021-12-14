@@ -18,6 +18,7 @@ dependencies:
  - Click
  - pyyaml
  - jsonpickle
+ - statsmodels
 # Testing and development dependencies
  - black
  - bump2version

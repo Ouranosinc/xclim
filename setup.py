@@ -45,6 +45,7 @@ requirements = [
     "packaging>=20.0",
     "pyyaml",
     "jsonpickle",
+    "statsmodels"
 ]
 
 dev_requirements = []
