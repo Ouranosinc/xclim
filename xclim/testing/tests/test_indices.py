@@ -1055,12 +1055,12 @@ class TestJetStreamIndices:
     da_ua = xr.DataArray(
         fake_jet,
         coords={
-            "T": time_coords,
+            "time": time_coords,
             "Z": [75000, 85000, 100000],
             "X": [120, 121, 122],
             "Y": [15, 16, 17],
         },
-        dims=["T", "Z", "X", "Y"],
+        dims=["time", "Z", "X", "Y"],
         attrs={
             "standard_name": "eastward_wind",
             "units": "m s-1",
