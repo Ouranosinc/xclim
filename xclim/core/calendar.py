@@ -46,6 +46,9 @@ max_doy = {
     "360_day": 360,
 }
 
+# Names of calendars that have the same number of days for all years
+uniform_calendars = ("noleap", "all_leap", "365_day", "366_day", "360_day")
+
 
 def get_calendar(obj: Any, dim: str = "time") -> str:
     """Return the calendar of an object.

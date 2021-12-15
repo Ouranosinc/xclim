@@ -2230,6 +2230,30 @@ def test_humidex(tas_series):
     np.testing.assert_array_almost_equal(hk, expected.to("K"), 0)
 
 
+def test_heat_index(tas_series, hurs_series):
+
+    tas = tas_series([15, 20, 25, 25, 30, 30, 35, 35, 40, 40, 45, 45])
+    tas.attrs["units"] = "C"
+
+    hurs = hurs_series([5, 5, 0, 25, 25, 50, 25, 50, 25, 50, 25, 50, 25, 50])
+
+    expected = (
+        np.array([np.nan, np.nan, 24, 25, 28, 31, 34, 41, 41, 55, 50, 73]) * units.degC
+    )
+
+    # Celsius
+    hc = xci.heat_index(tas, hurs)
+    np.testing.assert_array_almost_equal(hc, expected, 0)
+
+    # Kelvin
+    hk = xci.heat_index(convert_units_to(tas, "K"), hurs)
+    np.testing.assert_array_almost_equal(hk, expected.to("K"), 0)
+
+    # Fahrenheit
+    hf = xci.heat_index(convert_units_to(tas, "fahrenheit"), hurs)
+    np.testing.assert_array_almost_equal(hf, expected.to("fahrenheit"), 0)
+
+
 @pytest.mark.parametrize(
     "op,exp", [("max", 11), ("sum", 21), ("count", 3), ("mean", 7)]
 )
@@ -2403,6 +2427,15 @@ class TestPotentialEvapotranspiration:
 
         out = xci.potential_evapotranspiration(tas=tm, method="TW48")
         np.testing.assert_allclose(out[0, 1], [42.7619242 / (86400 * 30)], rtol=1e-1)
+
+    def test_mcguinnessbordne(self, tasmin_series, tasmax_series):
+        tn = tasmin_series(np.array([0, 5, 10]) + 273.15)
+        tn = tn.expand_dims(lat=[45])
+        tx = tasmax_series(np.array([10, 15, 20]) + 273.15)
+        tx = tx.expand_dims(lat=[45])
+
+        out = xci.potential_evapotranspiration(tn, tx, method="MB05")
+        np.testing.assert_allclose(out[2, 0], [2.78253138816 / 86400], rtol=1e-2)
 
 
 def test_water_budget(pr_series, tasmin_series, tasmax_series):

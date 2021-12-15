@@ -4,7 +4,7 @@ History
 
 0.32.0 (unreleased)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), David Huard (:user:`huard`), Clair Barnes (:user:`clairbarnes`), Raquel Alegre (:user:`raquel-ucl`), Jamie Quinn (:user:`JamieJQuinn`), Tom Keel (:user:`Thomasjkeel`),
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), David Huard (:user:`huard`), Clair Barnes (:user:`clairbarnes`), Raquel Alegre (:user:`raquel-ucl`), Jamie Quinn (:user:`JamieJQuinn`), Maliko Tanguy (:user:`malngu`), Aaron Spring (:user:`aaronspring`), Tom Keel (:user:`Thomasjkeel`),
 
 Announcements
 ^^^^^^^^^^^^^
@@ -17,25 +17,45 @@ New indicators
 * ``jetstream_metric_woolings`` indicator returns latitude and strength of jet-stream in u-wind field. (:pull:`924`, :issue:`923`).
 
 New features and enhancements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Added an optimized pathway for ``xclim.indices.run_length`` functions when ``window=1``. (:pull:`911`, :issue:`910`).
-* The data input frequency expected by ``Indicator``s is now in the ``src_freq`` attribute and is thus controlable by subclassing existing indicators. (:issue:`898`, :pull:`927`).
+* The data input frequency expected by ``Indicator``s is now in the ``src_freq`` attribute and is thus controllable by subclassing existing indicators. (:issue:`898`, :pull:`927`).
+* New ``**indexer`` keyword args added to many indicators, it accepts the same arguments as ``xclim.indices.generic.select_time``, which has been improved. Unless otherwise specified, the time selection is done before any computation. (:pull:`934`, :issue:`899`).
+* Rewrite of ``xclim.sdba.ExtremeValues``, now fixed with a correct algorithm. It has not been tested extensively and should be considered experimental. (:pull:`914`, :issue:`789`, :issue:`790`).
+* Added `days_over_precip_doy_thresh` and `fraction_over_precip_doy_thresh` indicators to distinguish between WMO and ECAD definition of the Rxxp and RxxpTot indices. (:issue:`931`, :pull:`940`).
+* Update `xclim.core.utils.nan_calc_percentiles` to improve maintainability. (:pull:`942`).
+* Added `heat_index` indicator. Added `heat_index` indicator. This is similar to `humidex` but uses a different dew point as well as heat balance equations which account for variables other than vapor pressure. (:issue:807) and (:pull:915). See (:issue:807) and (:pull:915).
+* Added alternative method for ``xclim.indices.potential_evapotranspiration`` based on mcguinnessbordne05. (:pull:`926`, :issue:`925`).
+* Added ``snw_max`` and ``snw_max_doy`` indicators to compute the maximum snow amount and the day of year of the maximum snow amount respectively. (:issue:`776`, :pull:`950`)
 
 Breaking changes
-~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^
 * Following version 1.9 of the CF Conventions, published in September 2021, the calendar name "gregorian" is deprecated. ``core.calendar.get_calendar`` will return "standard", even if the underlying cftime objects still use "gregorian" (cftime <= 1.5.1). (:pull:`935`).
 * `xclim` now requires `cf-xarray>=0.6.1`.
+* ``sdba.utils.extrapolate_qm`` is now deprecated and will be removed in version 0.33. (:pull:`941`).
+* Dependency ``pint`` now needs at least version 0.10 (:pull:`959`).
 
 Internal changes
-~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^
 * Removed some logging configurations in ``dataflags`` that were polluting python's main logging configuration. (:pull:`909`).
 * Synchronized logging formatters in `xclim.ensembles` and `xclim.core.utils`. (:pull:`909`).
 * Added a helper function for generating the release notes with dynamically-generated ReStructuredText or Markdown-formatted hyperlinks (:pull:`922`, :issue:`907`).
-* Split of resampling-related functionality of ``Indicator``s into a new ``ResamplingIndicator`` subclass. The use of new (private) methods makes it easier to inject functionality in indicator subclasses. (:issue:`867`, :pull:`927`).
+* Split of resampling-related functionality of ``Indicator``s into a new ``ResamplingIndicator`` and ``ResamplingIndicatorWithIndexing`` subclasses. The use of new (private) methods makes it easier to inject functionality in indicator subclasses. (:issue:`867`, :pull:`927`, :pull:`934`).
+* French translation metadata fields are now cleaner and much more internally consistent, and many empty metadata fields (e.g. ``comment_fr``) have been removed. (:pull:`930`, :issue:`929`).
+* Adjustments to the `tox` builds so that slow tests are now run alongside standard tests (for more accurate coverage reporting). (:pull:`938`)
+* Use ``xarray.apply_ufunc`` to vectorize statistical functions. (:pull:`943`)
+* Refactor of ``xclim.sdba.utils.interp_on_quantiles`` so that it now handles the extrapolation directly and to better handle missing values. (:pull:`941`).
+* Updated `heating_degree_days` and `fraction_over_precip_thresh` documentations. See (:issue:`952`) and (:pull:`953`).
+* Intersphinx mapping to xarray (:pull:`955`).
 
 Bug fixes
-~~~~~~~~~
+^^^^^^^^^
 * Fix bugs in the `cf_attrs` and/or `abstract` of `continuous_snow_cover_end` and `continuous_snow_cover_start`. (:pull:`908`).
+* Remove unnecessary `keep_attrs` from `resample` call which would raise an error in futur Xarray version. (:pull:`937`).
+* Fixed a bug in the regex that parses usernames in the history. (:pull:`945`).
+* Fixed a bug in ``generic.doymax`` and ``generic.doymin`` that prevented the use of the functions on multidimensional data. (:pull:`950`, :issue:`951`).
+* Skip all missing values in ``xclim.sdba.utils.interp_on_quantiles``, drop them from both the old and new coordinates, as well as from the old values. (:pull:`941`).
+* "degrees_north" and "degrees_east" (and their variants) are now considered independent units, so that ``pint`` and ``xc.core.units.ensure_cf_units`` don't convert them to "deg" (:pull:`959`).
 
 0.31.0 (2021-11-05)
 -------------------

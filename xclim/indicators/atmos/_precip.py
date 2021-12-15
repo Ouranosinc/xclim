@@ -26,8 +26,10 @@ __all__ = [
     "first_snowfall",
     "days_with_snow",
     "days_over_precip_thresh",
+    "days_over_precip_doy_thresh",
     "high_precip_low_temp",
     "fraction_over_precip_thresh",
+    "fraction_over_precip_doy_thresh",
     "liquid_precip_ratio",
     "dry_spell_frequency",
     "dry_spell_total_length",
@@ -290,13 +292,22 @@ days_with_snow = Precip(
 days_over_precip_thresh = Precip(
     identifier="days_over_precip_thresh",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold",
-    description="{freq} number of days with precipitation above a daily percentile."
+    description="{freq} number of days with precipitation above percentile."
     " Only days with at least {thresh} are counted.",
     units="days",
     cell_methods="time: sum over days",
     compute=indices.days_over_precip_thresh,
 )
 
+days_over_precip_doy_thresh = Precip(
+    identifier="days_over_precip_doy_thresh",
+    standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_above_daily_threshold",
+    description="{freq} number of days with precipitation above a daily percentile."
+    " Only days with at least {thresh} are counted.",
+    units="days",
+    cell_methods="time: sum over days",
+    compute=indices.days_over_precip_thresh,
+)
 
 high_precip_low_temp = PrTasx(
     identifier="high_precip_low_temp",
@@ -306,9 +317,8 @@ high_precip_low_temp = PrTasx(
     compute=indices.high_precip_low_temp,
 )
 
-
-fraction_over_precip_thresh = Precip(
-    identifier="fraction_over_precip_thresh",
+fraction_over_precip_doy_thresh = Precip(
+    identifier="fraction_over_precip_doy_thresh",
     description="{freq} fraction of total precipitation due to days with precipitation above a daily percentile."
     " Only days with at least {thresh} are included in the total.",
     units="",
@@ -316,6 +326,14 @@ fraction_over_precip_thresh = Precip(
     compute=indices.fraction_over_precip_thresh,
 )
 
+fraction_over_precip_thresh = Precip(
+    identifier="fraction_over_precip_thresh",
+    description="{freq} fraction of total precipitation due to days with precipitation above percentile."
+    " Only days with at least {thresh} are included in the total.",
+    units="",
+    cell_methods="",
+    compute=indices.fraction_over_precip_thresh,
+)
 
 liquid_precip_ratio = PrTasx(
     identifier="liquid_precip_ratio",

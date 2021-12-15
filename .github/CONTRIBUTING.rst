@@ -1,3 +1,5 @@
+.. highlight:: console
+
 ============
 Contributing
 ============
@@ -13,16 +15,56 @@ Types of Contributions
 Implement Features, Indices or Indicators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-xclim's structure makes it easy to create and register new user-defined indices and indicators. Refer to the :ref:`Customizing and controlling xclim` page for more information.
+xclim's structure makes it easy to create and register new user-defined indices and indicators.
+For the general implementation of indices and their wrapping into indicators, refer to
+:ref:`Extending xclim`  and  :ref:`Customizing and controlling xclim`.
 
 Look through the GitHub issues for features. Anything tagged with "enhancement"
 and "help wanted" is open to whoever wants to implement it.
 
-.. warning::
-     If you plan to implement new indicators into xclim, be aware that metadata translations
-     for all official xclim languages (for now only French) must be provided, or else the tests
-     will fail and the PR will not be mergeable. See :ref:`Internationalization` for more details.
-     Don't hesitate to ask for help in your PR for this task!
+General to-do list for implementing a new Indicator:
+
+1. Implement the indice
+
+    * Indices are function wrapped with :py:func:`~xclim.core.units.declare_units`
+    * Their input arguments should have type annotations, as documented in :py:class:`~xclim.core.utils.InputKind`
+    * Their docstring should follow the scheme explained in :ref:`Defining new indices`.
+    * They should set the units on their outputs, but no other metadata fields.
+    * Their code should be found in the most relevant ``xclim/indices/_*.py``  file. Functions are explicitly added to the ``__all__`` at the top of the file.
+
+2. Add unit tests
+
+    * Indices are best tested with made up, idealized data to explicitly test the edge cases. Many pytest fixtures are available to help this data generation.
+    * Tests should be added as one or more functions in ``xclim/testing/tests/test_indices.py``, see other tests for inspiration.
+
+3. Add the indicator
+
+    * See :ref:`Defining new indicators` for more info and look at the other indicators for inspiration.
+    * They are added in the most relevant ``xclim/indicators/{realm}/_*.py`` file.
+    * Indicator are instances of subclasses of :py:class:`xclim.core.indicator.Indicator`.
+      They should use a class declared within the ``{realm}`` folder, creating a dummy one if needed. They are explicitly added to the file's ``__all__``.
+
+4. Add unit tests
+
+    * Indicators are best tested with real data, also looking at missing value propagation and metadata formatting.
+      In addition to the ``atmos_ds`` fixture, only datasets openable with :py:func:`xclim.testing.open_dataset` should be used.
+    * Tests are added in the most relevant ``xclim/testing/tests/test_{variable}.py`` file.
+
+5. Add french translations
+
+    xclim comes with an internationalization module and all "official" indicators
+    (those in ``xclim.atmos.indicators``) must have a french translation added to ``xclim/data/fr.json``.
+    This part can be done by the core team after you open a PR.
+
+
+General notes for implementing new bias-adjustment methods:
+
+* Method are implemented as classes in ``xclim/sdba/adjustment.py``.
+* If the algorithm gets complicated and would generate many dask tasks, it should be
+  implemented as functions wrapped by :py:func:`~xclim.sdba.map_blocks` or :py:func:`~xclim.sdba.map_groups`
+  in ``xclim/sdba/_adjustment.py``.
+* xclim doesn't implement monolithic multi-parameter methods, but rather smaller modular functions to construct post-processing workflows.
+
 
 Report Bugs
 ~~~~~~~~~~~
@@ -38,15 +80,13 @@ If you are reporting a bug, please include:
 Fix Bugs
 ~~~~~~~~
 
-Look through the GitHub issues for bugs. Anything tagged with "bug" and "help
-wanted" is open to whoever wants to implement it.
+Look through the GitHub issues for bugs. Anything tagged with "bug" and "help wanted" is open to whoever wants to implement it.
 
 Write Documentation
 ~~~~~~~~~~~~~~~~~~~
 
-xclim could always use more documentation, whether as part of the
-official xclim docs, in docstrings, or even on the web in blog posts,
-articles, and such.
+xclim could always use more documentation, whether as part of the official xclim docs, in docstrings, or even on the
+web in blog posts, articles, and such.
 
 Submit Feedback
 ~~~~~~~~~~~~~~~
@@ -57,7 +97,7 @@ If you are proposing a feature:
 
 * Explain in detail how it would work.
 * Keep the scope as narrow as possible, to make it easier to implement.
-* Remember that this is a volunteer-driven project, and that contributions are welcome :)
+* The Xclim development team welcomes you and is always on hand to help. :)
 
 Get Started!
 ------------
@@ -71,13 +111,8 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     $ git clone git@github.com:Ouranosinc/xclim.git
     $ cd xclim/
 
-3. Create a development environment. Assuming you have `virtualenvwrapper` installed, this is how you set up your fork for local development::
+3. Create a development environment. We recommend using ``conda``::
 
-    # For virtualenv environments (ensure that you have the necessary system libraries).
-    $ mkvirtualenv xclim
-    $ pip install -e .[dev]
-
-    # For Anaconda/Miniconda environments:
     $ conda create -n xclim python=3.7 --file=environment.yml
     $ pip install -e .[dev]
 
@@ -87,22 +122,27 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
    Now you can make your changes locally!
 
-5. When you're done making changes, check that you verify your changes with `black`, `pydocstyle`, and run the tests, including testing other available Python versions with `tox`::
-
-    $ black --check --target-version py37 xclim xclim/testing/tests
-    $ black --check --target-version py37 --include "\.ipynb$" docs
-    $ flake8 xclim xclim/testing/tests
-    $ pytest --nbval docs/notebooks
-    $ pytest --rootdir=xclim/testing/tests --xdoctest xclim
-    $ pydocstyle --convention=numpy --match='(?!test_).*\.py' xclim
-    $ tox
-
-6. Before committing your changes, we ask that you install `pre-commit` in your development environment. `Pre-commit` runs git hooks that ensure that your code resembles that of the project and catches and corrects any small errors or inconsistencies when you `git commit`::
+5. Before committing your changes, we ask that you install ``pre-commit`` in your development environment. Pre-commit runs git hooks that ensure that your code resembles that of the project and catches and corrects any small errors or inconsistencies when you ``git commit``::
 
     # To install the necessary pre-commit hooks:
     $ pre-commit install
     # To run pre-commit hooks manually:
     $ pre-commit run --all-files
+
+  Instead of ``pre-commit``, you could also verify your changes manually with `black` and `pydocstyle`::
+
+    $ black --check --target-version py37 xclim xclim/testing/tests
+    $ black --check --target-version py37 --include "\.ipynb$" docs
+    $ flake8 xclim xclim/testing/tests
+    $ pydocstyle --convention=numpy --match='(?!test_).*\.py' xclim
+
+6. When unit/doc tests are added or notebooks updated, use ``pytest`` to run them. Alternatively, one can use ``tox`` to run all testing suites as would github do when the PR is submitted and new commits are pushed::
+
+    $ pytest --nbval docs/notebooks  # for notebooks
+    $ pytest --rootdir=xclim/testing/tests --xdoctest xclim  # for all tests, including doctests
+    $ pytest  # for all tests, excluding docstests.
+    $ tox  # run all testing suites
+
 
 7. Commit your changes and push your branch to GitHub::
 
@@ -141,6 +181,10 @@ Before you submit a pull request, please follow these guidelines:
    * `numpydoc`_
    * `reStructuredText (ReST)`_
 
+.. note::
+    If you aren't accustomed to writing documentation in reStructuredText (`.rst`), we encourage you to spend a few minutes going over the
+    incredibly well-summarized `reStructuredText Primer`_ from the sphinx-doc maintainer community.
+
 5. The pull request should work for Python 3.7, 3.8, and 3.9 as well as raise test coverage.
    Pull requests are also checked for documentation build status and for `PEP8`_ compliance.
 
@@ -159,7 +203,7 @@ Before you submit a pull request, please follow these guidelines:
      Contributors to this version: John Jacob Jingleheimer Schmidt (:user:`username`).
 
      Internal changes
-     ~~~~~~~~~~~~~~~~
+     ^^^^^^^^^^^^^^^^
      * Updated the contribution guidelines. (:issue:`868`, :pull:`869`).
 
    If this is your first contribution to Ouranosinc/xclim, we ask that you also add your name to the `AUTHORS.rst <https://github.com/Ouranosinc/xclim/blob/master/AUTHORS.rst>`_, under *Contributors*.
@@ -286,5 +330,6 @@ Before updating the main conda-forge recipe, we *strongly* suggest performing th
 
 .. _`numpydoc`: https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt
 .. _`reStructuredText (ReST)`: https://www.jetbrains.com/help/pycharm/using-docstrings-to-specify-types.html
+.. _`reStructuredText Primer`: https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
 .. _`GitHub Repository`: https://github.com/Ouranosinc/xclim
 .. _`PEP8`: https://www.python.org/dev/peps/pep-0008/

@@ -30,3 +30,4 @@ Contributors
 * Abel Aoun <aoun.abel@gmail.com> `@bzah <https://github.com/bzah>`_
 * Jamie Quinn <jamiejquinn@jamiejquinn.com> `@JamieJQuinn <https://github.com/JamieJQuinn>`_
 * Tom Keel <thomas.keel.18@ucl.ac.uk> `@Thomasjkeel <https://github.com/Thomasjkeel>`_
+* Maliko Tanguy <malngu@ceh.ac.uk> `@malngu <https://github.com/malngu>`_
