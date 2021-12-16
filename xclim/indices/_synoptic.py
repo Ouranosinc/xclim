@@ -23,7 +23,7 @@ def jetstream_metric_woolings(
     """Strength and latitude of jetstream.
 
     Identify latitude and strength of maximum smoothed zonal wind speed in the region from 15 to 75°N and -60 to 0°E.
-    
+
     Warnings
     --------
     This metric expects eastward wind component (u) to be on a regular grid (i.e. Plate Carree, 1D lat and lon)
