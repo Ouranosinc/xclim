@@ -116,7 +116,6 @@ wetdays = Precip(
 wetdays_prop = Precip(
     identifier="wetdays_prop",
     units="1",
-    standard_name="proportion_of_days_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold",
     long_name="Proportion of wet days (precip >= {thresh})",
     description="{freq} proportion of days with precipitation over {thresh}.",
     cell_methods="time: sum within days time: sum over days",
