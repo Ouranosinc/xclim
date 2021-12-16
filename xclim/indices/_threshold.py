@@ -65,6 +65,7 @@ __all__ = [
     "warm_day_frequency",
     "warm_night_frequency",
     "wetdays",
+    "wetdays_prop",
     "winter_storm",
     "dry_days",
     "maximum_consecutive_dry_days",
@@ -1771,6 +1772,44 @@ def wetdays(
 
     wd = threshold_count(pr, ">=", thresh, freq)
     return to_agg_units(wd, pr, "count")
+
+
+@declare_units(pr="[precipitation]", thresh="[precipitation]")
+def wetdays_prop(
+    pr: xarray.DataArray, thresh: str = "1.0 mm/day", freq: str = "YS"
+) -> xarray.DataArray:
+    """Proportion of wet days.
+
+    Return the proportion of days during period with precipitation over threshold.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Daily precipitation.
+    thresh : str
+      Precipitation value over which a day is considered wet.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+      The proportion of wet days for each period [1].
+
+    Examples
+    --------
+    The following would compute for each grid cell of file `pr.day.nc` the proportion of days
+    with precipitation over 5 mm at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
+
+    >>> from xclim.indices import wetdays_prop
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> wd = wetdays_prop(pr, thresh="5 mm/day", freq="QS-DEC")
+    """
+    thresh = convert_units_to(thresh, pr, "hydro")
+
+    wd = compare(pr, ">=", thresh)
+    fwd = wd.resample(time=freq).mean(dim="time").assign_attrs(units="1")
+    return fwd
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")

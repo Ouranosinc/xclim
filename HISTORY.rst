@@ -4,7 +4,7 @@ History
 
 0.32.0 (unreleased)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), David Huard (:user:`huard`), Clair Barnes (:user:`clairbarnes`), Raquel Alegre (:user:`raquel-ucl`), Jamie Quinn (:user:`JamieJQuinn`), Aaron Spring (:user:`aaronspring`)
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), David Huard (:user:`huard`), Clair Barnes (:user:`clairbarnes`), Raquel Alegre (:user:`raquel-ucl`), Jamie Quinn (:user:`JamieJQuinn`), Maliko Tanguy (:user:`malngu`), Aaron Spring (:user:`aaronspring`)
 
 Announcements
 ^^^^^^^^^^^^^
@@ -20,14 +20,17 @@ New features and enhancements
 * Rewrite of ``xclim.sdba.ExtremeValues``, now fixed with a correct algorithm. It has not been tested extensively and should be considered experimental. (:pull:`914`, :issue:`789`, :issue:`790`).
 * Added `days_over_precip_doy_thresh` and `fraction_over_precip_doy_thresh` indicators to distinguish between WMO and ECAD definition of the Rxxp and RxxpTot indices. (:issue:`931`, :pull:`940`).
 * Update `xclim.core.utils.nan_calc_percentiles` to improve maintainability. (:pull:`942`).
-* Added `heat_index` indicator. Added `heat_index` indicator. This is similar to `humidex` but uses a different dew point as well as heat balance equations which account for variables other than vapor pressure. (:issue:`807`) and (:pull:`915`).
+* Added `heat_index` indicator. Added `heat_index` indicator. This is similar to `humidex` but uses a different dew point as well as heat balance equations which account for variables other than vapor pressure. (:issue:807) and (:pull:915). See (:issue:807) and (:pull:915).
+* Added alternative method for ``xclim.indices.potential_evapotranspiration`` based on mcguinnessbordne05. (:pull:`926`, :issue:`925`).
 * Added ``snw_max`` and ``snw_max_doy`` indicators to compute the maximum snow amount and the day of year of the maximum snow amount respectively. (:issue:`776`, :pull:`950`)
 * Added index for calculating ratio of convective to total precipitation. (:issue:`920`, :pull:`921`)
+* Added `wetdays_prop` indicator to calculate the proportion of days in a period where the precipitation is greater than a threshold. (:pull:`919`, :issue:`918`)
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * Following version 1.9 of the CF Conventions, published in September 2021, the calendar name "gregorian" is deprecated. ``core.calendar.get_calendar`` will return "standard", even if the underlying cftime objects still use "gregorian" (cftime <= 1.5.1). (:pull:`935`).
 * ``sdba.utils.extrapolate_qm`` is now deprecated and will be removed in version 0.33. (:pull:`941`).
+* Dependency ``pint`` now needs at least version 0.10 (:pull:`959`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -40,7 +43,8 @@ Internal changes
 * Use ``xarray.apply_ufunc`` to vectorize statistical functions. (:pull:`943`)
 * Refactor of ``xclim.sdba.utils.interp_on_quantiles`` so that it now handles the extrapolation directly and to better handle missing values. (:pull:`941`).
 * Updated `heating_degree_days` and `fraction_over_precip_thresh` documentations. See (:issue:`952`) and (:pull:`953`).
-* Intersphinx mapping to xarray (:pull:`955`).
+* Added an intersphinx mapping to xarray. (:pull:`955`).
+* Added a CodeQL security analysis GitHub CI hook on push to master and on Friday nights. (:pull:`960`).
 
 Bug fixes
 ^^^^^^^^^
@@ -49,6 +53,8 @@ Bug fixes
 * Fixed a bug in the regex that parses usernames in the history. (:pull:`945`).
 * Fixed a bug in ``generic.doymax`` and ``generic.doymin`` that prevented the use of the functions on multidimensional data. (:pull:`950`, :issue:`951`).
 * Skip all missing values in ``xclim.sdba.utils.interp_on_quantiles``, drop them from both the old and new coordinates, as well as from the old values. (:pull:`941`).
+* "degrees_north" and "degrees_east" (and their variants) are now considered independent units, so that ``pint`` and ``xc.core.units.ensure_cf_units`` don't convert them to "deg". (:pull:`959`).
+* Fixed a bug in `dataflags` that would misidentify the "extra" variable to be called when running multivariate checks. (:pull:`957`, :issue:`861`).
 
 0.31.0 (2021-11-05)
 -------------------

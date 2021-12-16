@@ -12,6 +12,7 @@ __all__ = [
     "max_1day_precipitation_amount",
     "max_n_day_precipitation_amount",
     "wetdays",
+    "wetdays_prop",
     "dry_days",
     "maximum_consecutive_dry_days",
     "maximum_consecutive_wet_days",
@@ -111,6 +112,15 @@ wetdays = Precip(
     description="{freq} number of days with daily precipitation over {thresh}.",
     cell_methods="time: sum within days time: sum over days",
     compute=indices.wetdays,
+)
+
+wetdays_prop = Precip(
+    identifier="wetdays_prop",
+    units="1",
+    long_name="Proportion of wet days (precip >= {thresh})",
+    description="{freq} proportion of days with precipitation over {thresh}.",
+    cell_methods="time: sum within days time: sum over days",
+    compute=indices.wetdays_prop,
 )
 
 dry_days = Precip(

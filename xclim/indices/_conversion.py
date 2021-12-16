@@ -898,6 +898,8 @@ def potential_evapotranspiration(
     tasmax: Optional[xr.DataArray] = None,
     tas: Optional[xr.DataArray] = None,
     method: str = "BR65",
+    peta: Optional[float] = 0.00516409319477,
+    petb: Optional[float] = 0.0874972822289,
 ) -> xr.DataArray:
     """Potential evapotranspiration.
 
@@ -912,8 +914,12 @@ def potential_evapotranspiration(
       Maximum daily temperature.
     tas : xarray.DataArray
       Mean daily temperature.
-    method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48"}
+    method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48", "mcguinnessbordne05", "MB05"}
       Which method to use, see notes.
+    peta : float
+      Used only with method MB05 as :math:`a` for calculation of PET, see Notes section. Default value resulted from calibration of PET over the UK.
+    petb : float
+      Used only with method MB05 as :math:`b` for calculation of PET, see Notes section. Default value resulted from calibration of PET over the UK.
 
     Returns
     -------
@@ -925,12 +931,23 @@ def potential_evapotranspiration(
 
     - "baierrobertson65" or "BR65", based on [baierrobertson65]_. Requires tasmin and tasmax, daily [D] freq.
     - "hargreaves85" or "HG85", based on [hargreaves85]_. Requires tasmin and tasmax, daily [D] freq. (optional: tas can be given in addition of tasmin and tasmax).
+    - "mcguinnessbordne05" or "MB05", based on [tanguy2018]_. Requires tas, daily [D] freq, with latitudes 'lat'.
     - "thornthwaite48" or "TW48", based on [thornthwaite48]_. Requires tasmin and tasmax, monthly [MS] or daily [D] freq. (optional: tas can be given instead of tasmin and tasmax).
+
+    The McGuinness-Bordne [McGuinness1972]_ equation is
+
+    .. math::
+
+    PET[mm day^{-1}] = a * \frac{S_0}{\\lambda}T_a + b *\frsc{S_0}{\\lambda}
+
+    where :math:`a` and :math:`b` are empirical parameters; :math:`S_0` is the extraterrestrial radiation [MJ m-2 day-1]; :math:`\\lambda` is the latent heat of vaporisation [MJ kg-1] and :math:`T_a` is the air temperature [°C]. The equation was originally derived for the USA, with :math:`a=0.0147` and :math:`b=0.07353`. The default parameters used here are calibrated for the UK, using the method described in [Tanguy2018]_.
 
     References
     ----------
     .. [baierrobertson65] Baier, W., & Robertson, G. W. (1965). Estimation of latent evaporation from simple weather observations. Canadian journal of plant science, 45(3), 276-284.
     .. [hargreaves85] Hargreaves, G. H., & Samani, Z. A. (1985). Reference crop evapotranspiration from temperature. Applied engineering in agriculture, 1(2), 96-99.
+    .. [tanguy2018], Tanguy, M., Prudhomme, C., Smith, K., & Hannaford, J. (2018). Historical gridded reconstruction of potential evapotranspiration for the UK. Earth System Science Data, 10(2), 951-968.
+    .. [McGuinness1972] McGuinness, J. L., & Bordne, E. F. (1972). A comparison of lysimeter-derived potential evapotranspiration with computed values (No. 1452). US Department of Agriculture.
     .. [thornthwaite48] Thornthwaite, C. W. (1948). An approach toward a rational classification of climate. Geographical review, 38(1), 55-94.
     """
 
@@ -995,6 +1012,47 @@ def potential_evapotranspiration(
         # Hargreaves and Samani(1985) formula
         out = (0.0023 * ra * (tas + 17.8) * (tasmax - tasmin) ** 0.5) / lv
         out = out.clip(0)
+
+    elif method in ["mcguinnessbordne05", "MB05"]:
+        if tas is None:
+            tasmin = convert_units_to(tasmin, "degC")
+            tasmax = convert_units_to(tasmax, "degC")
+            tas = (tasmin + tasmax) / 2
+            tas.attrs["units"] = "degC"
+
+        tas = convert_units_to(tas, "degC")
+        tasK = convert_units_to(tas, "K")
+
+        latr = (tas.lat * np.pi) / 180
+        jd_frac = (datetime_to_decimal_year(tas.time) % 1) * 2 * np.pi
+
+        S = 1367.0  # Set solar constant [W/m2]
+        ds = 0.409 * np.sin(jd_frac - 1.39)  # solar declination ds [radians]
+        omega = np.arccos(-np.tan(latr) * np.tan(ds))  # sunset hour angle [radians]
+        dr = 1.0 + 0.03344 * np.cos(
+            jd_frac - 0.048869
+        )  # Calculate relative distance to sun
+
+        ext_rad = (
+            S
+            * 86400
+            / np.pi
+            * dr
+            * (
+                omega * np.sin(ds) * np.sin(latr)
+                + np.sin(omega) * np.cos(ds) * np.cos(latr)
+            )
+        )
+        latentH = 4185.5 * (751.78 - 0.5655 * tasK)
+
+        radDIVlat = ext_rad / latentH
+
+        # parameters from calibration provided by Dr Maliko Tanguy @ CEH
+        # (calibrated for PET over the UK)
+        a = peta
+        b = petb
+
+        out = radDIVlat * a * tas + radDIVlat * b
 
     elif method in ["thornthwaite48", "TW48"]:
         if tas is None:
