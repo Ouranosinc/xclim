@@ -2,13 +2,15 @@
 """Synoptic indicator definitions."""
 
 from xclim import indices
-from xclim.core.indicator import Daily
+from xclim.core.indicator import Indicator
 
 __all__ = ["jetstream_metric_woolings"]
 
 
-class JetStream(Daily):
+class JetStream(Indicator):
     """Indicator involving daily u- and/or v-component wind series."""
+    
+    src_freq = 'D'
 
 
 jetstream_metric_woolings = JetStream(
