@@ -51,7 +51,8 @@ Bug fixes
 * Fixed a bug in the regex that parses usernames in the history. (:pull:`945`).
 * Fixed a bug in ``generic.doymax`` and ``generic.doymin`` that prevented the use of the functions on multidimensional data. (:pull:`950`, :issue:`951`).
 * Skip all missing values in ``xclim.sdba.utils.interp_on_quantiles``, drop them from both the old and new coordinates, as well as from the old values. (:pull:`941`).
-* "degrees_north" and "degrees_east" (and their variants) are now considered independent units, so that ``pint`` and ``xc.core.units.ensure_cf_units`` don't convert them to "deg" (:pull:`959`).
+* "degrees_north" and "degrees_east" (and their variants) are now considered independent units, so that ``pint`` and ``xc.core.units.ensure_cf_units`` don't convert them to "deg". (:pull:`959`).
+* Fixed a bug in `dataflags` that would misidentify the "extra" variable to be called when running multivariate checks. (:pull:`957`, :issue:`861`).
 
 0.31.0 (2021-11-05)
 -------------------
