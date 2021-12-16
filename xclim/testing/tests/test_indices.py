@@ -2500,3 +2500,29 @@ class TestDrySpell:
 
         np.testing.assert_allclose(test_sum[0], [2], rtol=1e-1)
         np.testing.assert_allclose(test_max[0], [3], rtol=1e-1)
+
+
+class TestWetDays:
+    def test_simple(self, pr_series):
+        a = np.zeros(365)
+        a[:6] += [4, 5.5, 6, 6, 2, 7]  # 4 above 5 in Jan
+        a[100:105] += [1, 6, 7, 2, 1]  # 2 above 5 in Mar
+
+        pr = pr_series(a)
+        pr.attrs["units"] = "mm/day"
+
+        out = xci.wetdays(pr, thresh="5 mm/day", freq="M")
+        np.testing.assert_allclose(out, [4, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0])
+
+
+class TestWetDaysProp:
+    def test_simple(self, pr_series):
+        a = np.zeros(365)
+        a[:6] += [4, 5.5, 6, 6, 2, 7]  # 4 above 5 in Jan
+        a[100:105] += [1, 6, 7, 2, 1]  # 2 above 5 in Mar
+
+        pr = pr_series(a)
+        pr.attrs["units"] = "mm/day"
+
+        out = xci.wetdays_prop(pr, thresh="5 mm/day", freq="M")
+        np.testing.assert_allclose(out, [4 / 31, 0, 0, 2 / 31, 0, 0, 0, 0, 0, 0, 0, 0])
