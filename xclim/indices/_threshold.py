@@ -61,6 +61,7 @@ __all__ = [
     "tx_days_above",
     "tx_days_below",
     "tropical_nights",
+    "rprctot",
     "warm_day_frequency",
     "warm_night_frequency",
     "wetdays",
@@ -2148,6 +2149,47 @@ def tropical_nights(
     )
 
     return tn_days_above(tasmin, thresh=thresh, freq=freq)
+
+
+@declare_units(pr="[precipitation]", prc="[precipitation]", thresh="[precipitation]")
+def rprctot(
+    pr: xarray.DataArray,
+    prc: xarray.DataArray,
+    thresh: str = "1.0 mm/day",
+    freq: str = "YS",
+) -> xarray.DataArray:
+    """Proportion of accumulated precipitation arising from convective processes.
+
+    Return the proportion of total accumulated precipitation due to convection on days with total precipitation exceeding a specified threshold during the given period.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Daily precipitation.
+    prc : xarray.DataArray
+      Daily convective precipitation.
+    thresh : str
+      Precipitation value over which a day is considered wet.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+      The proportion of the total precipitation accounted for by convective precipitation for each period.
+    """
+
+    thresh = convert_units_to(thresh, pr, "hydro")
+    prc = convert_units_to(prc, pr)
+
+    wd = compare(pr, ">=", thresh)
+    pr_tot = rate2amount(pr).where(wd).resample(time=freq).sum(dim="time")
+    prc_tot = rate2amount(prc).where(wd).resample(time=freq).sum(dim="time")
+
+    ratio = prc_tot / pr_tot
+    ratio = ratio.assign_attrs(units="")
+
+    return ratio
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]", sum_thresh="K days")

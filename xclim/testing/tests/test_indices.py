@@ -2502,6 +2502,42 @@ class TestDrySpell:
         np.testing.assert_allclose(test_max[0], [3], rtol=1e-1)
 
 
+class TestRPRCTot:
+    def test_simple(self, pr_series, prc_series):
+        a_pr = np.zeros(365)
+        a_pr[:7] += [2, 4, 6, 8, 10, 12, 14]
+        a_pr[35] = 6
+        a_pr[100:105] += [2, 6, 10, 14, 20]
+
+        a_prc = a_pr.copy() * 2  # Make ratio 2
+        a_prc[35] = 0  # zero convective precip
+
+        pr = pr_series(a_pr)
+        pr.attrs["units"] = "mm/day"
+
+        prc = prc_series(a_prc)
+        prc.attrs["units"] = "mm/day"
+
+        out = xci.rprctot(pr, prc, thresh="5 mm/day", freq="M")
+        np.testing.assert_allclose(
+            out,
+            [
+                2,
+                0,
+                np.NaN,
+                2,
+                np.NaN,
+                np.NaN,
+                np.NaN,
+                np.NaN,
+                np.NaN,
+                np.NaN,
+                np.NaN,
+                np.NaN,
+            ],
+        )
+
+
 class TestWetDays:
     def test_simple(self, pr_series):
         a = np.zeros(365)
