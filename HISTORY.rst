@@ -7,7 +7,7 @@ History
 
 Bug fixes
 ^^^^^^^^^
-* Adjusted a test (``test_cli::test_release_notes``) that prevented conda-forge test ensemble from passing.
+* Adjusted a test (``test_cli::test_release_notes``) that prevented conda-forge test ensemble from passing. (:pull:`962`).
 
 0.32.0 (2021-12-17)
 -------------------
