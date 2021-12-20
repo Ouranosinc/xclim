@@ -2372,6 +2372,15 @@ class TestPotentialEvapotranspiration:
         out = xci.potential_evapotranspiration(tas=tm, method="TW48")
         np.testing.assert_allclose(out[0, 1], [42.7619242 / (86400 * 30)], rtol=1e-1)
 
+    def test_mcguinnessbordne(self, tasmin_series, tasmax_series):
+        tn = tasmin_series(np.array([0, 5, 10]) + 273.15)
+        tn = tn.expand_dims(lat=[45])
+        tx = tasmax_series(np.array([10, 15, 20]) + 273.15)
+        tx = tx.expand_dims(lat=[45])
+
+        out = xci.potential_evapotranspiration(tn, tx, method="MB05")
+        np.testing.assert_allclose(out[2, 0], [2.78253138816 / 86400], rtol=1e-2)
+
 
 def test_water_budget(pr_series, tasmin_series, tasmax_series):
     pr = pr_series(np.array([10, 10, 10]))
@@ -2491,3 +2500,65 @@ class TestDrySpell:
 
         np.testing.assert_allclose(test_sum[0], [2], rtol=1e-1)
         np.testing.assert_allclose(test_max[0], [3], rtol=1e-1)
+
+
+class TestRPRCTot:
+    def test_simple(self, pr_series, prc_series):
+        a_pr = np.zeros(365)
+        a_pr[:7] += [2, 4, 6, 8, 10, 12, 14]
+        a_pr[35] = 6
+        a_pr[100:105] += [2, 6, 10, 14, 20]
+
+        a_prc = a_pr.copy() * 2  # Make ratio 2
+        a_prc[35] = 0  # zero convective precip
+
+        pr = pr_series(a_pr)
+        pr.attrs["units"] = "mm/day"
+
+        prc = prc_series(a_prc)
+        prc.attrs["units"] = "mm/day"
+
+        out = xci.rprctot(pr, prc, thresh="5 mm/day", freq="M")
+        np.testing.assert_allclose(
+            out,
+            [
+                2,
+                0,
+                np.NaN,
+                2,
+                np.NaN,
+                np.NaN,
+                np.NaN,
+                np.NaN,
+                np.NaN,
+                np.NaN,
+                np.NaN,
+                np.NaN,
+            ],
+        )
+
+
+class TestWetDays:
+    def test_simple(self, pr_series):
+        a = np.zeros(365)
+        a[:6] += [4, 5.5, 6, 6, 2, 7]  # 4 above 5 in Jan
+        a[100:105] += [1, 6, 7, 2, 1]  # 2 above 5 in Mar
+
+        pr = pr_series(a)
+        pr.attrs["units"] = "mm/day"
+
+        out = xci.wetdays(pr, thresh="5 mm/day", freq="M")
+        np.testing.assert_allclose(out, [4, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0])
+
+
+class TestWetDaysProp:
+    def test_simple(self, pr_series):
+        a = np.zeros(365)
+        a[:6] += [4, 5.5, 6, 6, 2, 7]  # 4 above 5 in Jan
+        a[100:105] += [1, 6, 7, 2, 1]  # 2 above 5 in Mar
+
+        pr = pr_series(a)
+        pr.attrs["units"] = "mm/day"
+
+        out = xci.wetdays_prop(pr, thresh="5 mm/day", freq="M")
+        np.testing.assert_allclose(out, [4 / 31, 0, 0, 2 / 31, 0, 0, 0, 0, 0, 0, 0, 0])

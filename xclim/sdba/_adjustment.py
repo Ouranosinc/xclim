@@ -70,13 +70,14 @@ def qm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
       hist_q : Quantiles over the training data
       sim : Data to adjust.
     """
-    af, hist_q = u.extrapolate_qm(
-        ds.af,
+    af = u.interp_on_quantiles(
+        ds.sim,
         ds.hist_q,
-        method=extrapolation,
-        abs_bounds=(ds.sim.min().item() - 1, ds.sim.max().item() + 1),
+        ds.af,
+        group=group,
+        method=interp,
+        extrapolation=extrapolation,
     )
-    af = u.interp_on_quantiles(ds.sim, hist_q, af, group=group, method=interp)
 
     scen = u.apply_correction(ds.sim, af, kind).rename("scen")
     return scen.to_dataset()
@@ -130,12 +131,15 @@ def qdm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
       hist_q : Quantiles over the training data
       sim : Data to adjust.
     """
-    af, _ = u.extrapolate_qm(ds.af, ds.hist_q, method=extrapolation)
-
     sim_q = group.apply(u.rank, ds.sim, main_only=True, pct=True)
-    sel = {"quantiles": sim_q}
-    af = u.broadcast(af, ds.sim, group=group, interp=interp, sel=sel)
-
+    af = u.interp_on_quantiles(
+        sim_q,
+        ds.quantiles,
+        ds.af,
+        group=group,
+        method=interp,
+        extrapolation=extrapolation,
+    )
     scen = u.apply_correction(ds.sim, af, kind)
     return xr.Dataset(dict(scen=scen, sim_q=sim_q))
 
@@ -392,13 +396,10 @@ def extremes_adjust(
         vectorize=True,
     )
 
-    # Extrapolate adjustment factors
-    af, px_hist = u.extrapolate_qm(
-        ds.af, ds.px_hist, method=extrapolation, abs_bounds=(0, 1)
-    )
-
     # Find factors by interpolating from hist probs to fut probs. apply them.
-    af = u.interp_on_quantiles(px_fut, px_hist, af, method=interp)
+    af = u.interp_on_quantiles(
+        px_fut, ds.px_hist, ds.af, method=interp, extrapolation=extrapolation
+    )
     scen = u.apply_correction(ds.sim, af, "*")
 
     # Smooth transition function between sim and scen

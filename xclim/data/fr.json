@@ -162,11 +162,23 @@
     "keywords": "courbes IDF",
     "abstract": "Maximum de l'intensité de précipitation horaire pour une durée et période donnée."
   },
+  "RPRCTOT": {
+    "long_name": "Proportion convective de la précipitation totale",
+    "description": "Proportion de la précipitation totale {freq:f} due à la précipitation convective pour les jours avec une précipitation d'au moins {thresh}.",
+    "title": "Proportion convective de la précipitation totale.",
+    "abstract": "Proportion de la précipitation totale due aux processus de convections. Seuls les jours avec un flux minimum de précipitation sont considérés."
+  },
   "WETDAYS": {
     "long_name": "Nombre de jours pluvieux (précip >= {thresh})",
     "description": "Nombre {freq:m} de jours où les précipitations sont au-dessus de {thresh}.",
     "title": "Jours mouillés",
     "abstract": "Nombre de jours où les précipitations sont au-dessus d'un seuil."
+  },
+  "WETDAY_PROP": {
+    "long_name": "Proportion de jours pluvieux (précip >= {thresh})",
+    "description": "Propotion {freq:m} de jours où les précipitations sont au-dessus de {thresh}.",
+    "title": "Proportion de jours pluvieux",
+    "abstract": "Proportion de jours où les précipitations sont au-dessus d'un seuil."
   },
   "CDD": {
     "long_name": "Durée maximale d'une période sèche",
@@ -800,6 +812,18 @@
     "description": "Fonte maximale {freq:f} de neige sur {window} jours.",
     "title": "Fonte de neige maximale",
     "abstract": "Équivalent en eau de la fonte de neige maximale."
+  },
+  "SNW_MAX": {
+    "long_name": "Quantité de neige maximale",
+    "description": "Quantité maximale {freq:f} de neige.",
+    "title": "Quantité de neige maximale",
+    "abstract": "Maximum de la quantité de neige journalière."
+  },
+  "SNW_MAX_DOY": {
+    "long_name": "Date de la quantité de neige maximale",
+    "description": "Date {freq:f} à laquelle la quantité de neige atteint sa valeur maximale.",
+    "title": "Date où la quantité de neige est maximale",
+    "abstract": "Jour de l'année où la quantité de neige atteint sa valeur maximale."
   },
   "MELT_AND_PRECIP_MAX": {
     "long_name": "Maximum des apports en eau incluant la fonte de neige et les précipitations",

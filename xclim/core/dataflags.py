@@ -592,13 +592,13 @@ def data_flags(
 
         return var_name
 
-    def _missing_vars(function, dataset: xarray.Dataset):
+    def _missing_vars(function, dataset: xarray.Dataset, var_provided: str):
         """Handle missing variables in passed datasets."""
         sig = signature(function)
         sig = sig.parameters
         extra_vars = dict()
-        for i, (arg, val) in enumerate(sig.items()):
-            if i == 0:
+        for arg, val in sig.items():
+            if arg in ["da", var_provided]:
                 continue
             kind = infer_kind_from_parameter(val)
             if kind == InputKind.VARIABLE:
@@ -640,17 +640,26 @@ def data_flags(
         for name, kwargs in flag_func.items():
             func = _REGISTRY[name]
             variable_name = str(name)
+            named_da_variable = None
 
             if kwargs:
                 for param, value in kwargs.items():
                     variable_name = _convert_value_to_str(variable_name, value)
             try:
-                extras = _missing_vars(func, ds)
+                extras = _missing_vars(func, ds, str(da.name))
+                # Entries in extras implies that there are two variables being compared
+                # Both variables will be sent in as dict entries
+                if extras:
+                    named_da_variable = {da.name: da}
+
             except MissingVariableError:
                 flags[variable_name] = None
             else:
                 with xarray.set_options(keep_attrs=True):
-                    out = func(da, **extras, **(kwargs or dict()))
+                    if named_da_variable:
+                        out = func(**named_da_variable, **extras, **(kwargs or dict()))
+                    else:
+                        out = func(da, **extras, **(kwargs or dict()))
 
                     # Aggregation
                     if freq is not None:
