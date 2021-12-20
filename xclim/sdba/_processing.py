@@ -130,12 +130,14 @@ def _normalize(
     """
 
     if "norm" in ds:
-        norm = invert(ds.norm, kind)
+        norm = ds.norm
     else:
-        norm = invert(ds.data.mean(dim=dim), kind)
+        norm = ds.data.mean(dim=dim)
     norm.attrs["_group_apply_reshape"] = True
 
-    return xr.Dataset(dict(data=apply_correction(ds.data, norm, kind), norm=norm))
+    return xr.Dataset(
+        dict(data=apply_correction(ds.data, invert(norm, kind), kind), norm=norm)
+    )
 
 
 @map_groups(reordered=[Grouper.DIM], main_only=True)

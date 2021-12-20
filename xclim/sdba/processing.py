@@ -246,7 +246,8 @@ def normalize(
         ds = ds.assign(norm=norm)
 
     out = _normalize(ds, group=group, kind=kind)
-    out.attrs.update(data.attrs)
+    out.data.attrs.update(data.attrs)
+    out.norm.attrs['units'] = data.attrs['units']
     return out.data.rename(data.name), out.norm
 
 
@@ -783,21 +784,23 @@ def stack_variables(ds, rechunk=True, dim="variables"):
       `sdba_transform_lower` and `sdba_transform_upper` are also set if the requested bounds are different from the defaults.
 
       Array with variables stacked along `dim` dimension. Units are set to "".
+      Variables are sorted alphabetically.
     """
     # Store original arrays' attributes
     attrs = {}
-    nvar = len(ds.data_vars)
-    for i, var in enumerate(ds.data_vars.values()):
+    datavars = sorted(ds.data_vars.items(), key=lambda e: e[0])
+    nvar = len(datavars)
+    for i, (nm, var) in enumerate(datavars):
         for name, attr in var.attrs.items():
             attrs.setdefault("_" + name, [None] * nvar)[i] = attr
 
     # Special key used for later `unstacking`
     attrs["is_variables"] = True
     var_crd = xr.DataArray(
-        list(ds.data_vars.keys()), dims=(dim,), name=dim, attrs=attrs
+        [nm for nm, vr in datavars], dims=(dim,), name=dim, attrs=attrs
     )
 
-    da = xr.concat(ds.data_vars.values(), var_crd, combine_attrs="drop")
+    da = xr.concat([vr for nm, vr in datavars], var_crd, combine_attrs="drop")
 
     if uses_dask(da) and rechunk:
         da = da.chunk({dim: -1})
