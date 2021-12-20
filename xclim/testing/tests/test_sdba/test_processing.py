@@ -40,7 +40,10 @@ def test_jitter_under_thresh():
     assert da[0] < 1
     assert da[0] > 0
     np.testing.assert_allclose(da[1:], out[1:])
-    assert "jitter(<array>, '1 K', <NoneType>, <NoneType>, <NoneType>) - xclim version" in out.attrs["history"]
+    assert (
+        "jitter(<array>, '1 K', <NoneType>, <NoneType>, <NoneType>) - xclim version"
+        in out.attrs["history"]
+    )
 
 
 def test_jitter_over_thresh():
@@ -195,7 +198,9 @@ def test_to_additive(pr_series, hurs_series):
     # logit
     hurs = hurs_series(np.array([0, 1e-3, 90, 100]))
 
-    hurslogit = to_additive_space(hurs, lower_bound="0 %", trans="logit", upper_bound="100 %")
+    hurslogit = to_additive_space(
+        hurs, lower_bound="0 %", trans="logit", upper_bound="100 %"
+    )
     np.testing.assert_allclose(
         hurslogit, [-np.Inf, -11.5129154649, 2.197224577, np.Inf]
     )
@@ -204,12 +209,14 @@ def test_to_additive(pr_series, hurs_series):
 
     with xr.set_options(keep_attrs=True):
         hursscl = hurs * 4 + 200
-    hurslogit2 = to_additive_space(hursscl, trans="logit", lower_bound="2", upper_bound="6")
+    hurslogit2 = to_additive_space(
+        hursscl, trans="logit", lower_bound="2", upper_bound="6"
+    )
     np.testing.assert_allclose(
         hurslogit2, [-np.Inf, -11.5129154649, 2.197224577, np.Inf]
     )
-    assert hurslogit2.attrs["sdba_transform_lower"] == 200.
-    assert hurslogit2.attrs["sdba_transform_upper"] == 600.
+    assert hurslogit2.attrs["sdba_transform_lower"] == 200.0
+    assert hurslogit2.attrs["sdba_transform_upper"] == 600.0
 
 
 def test_from_additive(pr_series, hurs_series):
@@ -222,12 +229,16 @@ def test_from_additive(pr_series, hurs_series):
 
     # logit
     hurs = hurs_series(np.array([0, 1e-5, 0.9, 1]))
-    hurs2 = from_additive_space(to_additive_space(hurs, lower_bound="0 %", trans="logit", upper_bound="100 %"))
+    hurs2 = from_additive_space(
+        to_additive_space(hurs, lower_bound="0 %", trans="logit", upper_bound="100 %")
+    )
     np.testing.assert_allclose(hurs[1:-1], hurs2[1:-1])
 
 
 def test_normalize(tas_series):
-    tas = tas_series(np.random.standard_normal((int(365.25 * 36),)) + 273.15, start='2000-01-01')
+    tas = tas_series(
+        np.random.standard_normal((int(365.25 * 36),)) + 273.15, start="2000-01-01"
+    )
 
     xp, norm = normalize(tas, group="time.dayofyear")
     np.testing.assert_allclose(norm, 273.15, atol=1)
