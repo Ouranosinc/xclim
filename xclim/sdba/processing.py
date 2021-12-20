@@ -247,7 +247,7 @@ def normalize(
 
     out = _normalize(ds, group=group, kind=kind)
     out.data.attrs.update(data.attrs)
-    out.norm.attrs['units'] = data.attrs['units']
+    out.norm.attrs["units"] = data.attrs["units"]
     return out.data.rename(data.name), out.norm
 
 
@@ -620,7 +620,7 @@ def to_additive_space(
     References
     ----------
     .. [AlavoineGrenier] Alavoine M., and Grenier P. (under review) The distinct problems of physical inconsistency and of multivariate bias potentially involved in the statistical adjustment of climate simulations.
-                         International Journal of Climatology, Manuscript ID: JOC-21-0789, submitted on September 19th 2021.
+                         International Journal of Climatology, Manuscript ID: JOC-21-0789, submitted on September 19th 2021. (Preprint https://doi.org/10.31223/X5C34C)
     """
     lower_bound = convert_units_to(lower_bound, data)
     if upper_bound is not None:
@@ -714,7 +714,7 @@ def from_additive_space(
     References
     ----------
     .. [AlavoineGrenier] Alavoine M., and Grenier P. (under review) The distinct problems of physical inconsistency and of multivariate bias potentially involved in the statistical adjustment of climate simulations.
-                         International Journal of Climatology, Manuscript ID: JOC-21-0789, submitted on September 19th 2021.
+                         International Journal of Climatology, Manuscript ID: JOC-21-0789, submitted on September 19th 2021. (Preprint https://doi.org/10.31223/X5C34C)
     """
     if trans is None and lower_bound is None and units is None:
         try:
