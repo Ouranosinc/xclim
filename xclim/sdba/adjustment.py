@@ -93,6 +93,21 @@ class BaseAdjustment(ParametrizableWithDataset):
                 f" this is not supported for {cls.__name__} adjustment."
             )
 
+        # Check multivariate dimensions
+        mvcrds = []
+        for inda in inputs:
+            for crd in inda.coords.values():
+                if crd.attrs.get("is_variables", False):
+                    mvcrds.append(crd)
+        if mvcrds and (
+            not all(mvcrds[0].equals(mv) for mv in mvcrds[1:])
+            or len(mvcrds) != len(inputs)
+        ):
+            raise ValueError(
+                "Inputs have different multivariate coordinates "
+                f"({set(mv.name for mv in mvcrds)})."
+            )
+
         if group.prop == "dayofyear" and (
             "default" in calendars or "standard" in calendars
         ):

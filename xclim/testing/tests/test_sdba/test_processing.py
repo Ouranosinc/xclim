@@ -3,6 +3,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
+from xclim.sdba.adjustment import EmpiricalQuantileMapping
 from xclim.sdba.base import Grouper
 from xclim.sdba.processing import (
     adapt_freq,
@@ -13,10 +14,13 @@ from xclim.sdba.processing import (
     jitter_under_thresh,
     normalize,
     reordering,
+    stack_variables,
     standardize,
     to_additive_space,
+    unstack_variables,
     unstandardize,
 )
+from xclim.testing import open_dataset
 
 
 def test_jitter_both():
@@ -245,3 +249,28 @@ def test_normalize(tas_series):
 
     xp2, norm = normalize(tas, norm=norm, group="time.dayofyear")
     np.testing.assert_allclose(xp, xp2)
+
+
+def test_stack_variables():
+    ds1 = open_dataset("sdba/CanESM2_1950-2100.nc")
+    ds2 = open_dataset("sdba/ahccd_1950-2013.nc")
+
+    da1 = stack_variables(ds1)
+    da2 = stack_variables(ds2)
+
+    assert list(da1.variables.values) == ["pr", "tasmax"]
+    assert da1.variables.attrs["_standard_name"] == [
+        "precipitation_flux",
+        "air_temperature",
+    ]
+    assert da2.variables.attrs["is_variables"]
+    assert da1.variables.equals(da2.variables)
+
+    da1p = da1.sortby("variables", ascending=False)
+
+    with pytest.raises(ValueError, match="Inputs have different multivariate"):
+        EmpiricalQuantileMapping.train(da1p, da2)
+
+    ds1p = unstack_variables(da1)
+
+    xr.testing.assert_equal(ds1, ds1p)

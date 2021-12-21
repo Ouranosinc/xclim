@@ -765,6 +765,8 @@ def stack_variables(ds, rechunk=True, dim="variables"):
     """Stack different variables of a dataset into a single DataArray with a new "variables" dimension.
 
     Variable attributes are all added as lists of attributes to the new coordinate, prefixed with "_".
+    Variables are concatenate in the new dimension in alphabetical order, to ensure
+    coherent behaviour with different datasets.
 
     Parameters
     ----------
@@ -784,10 +786,10 @@ def stack_variables(ds, rechunk=True, dim="variables"):
       `sdba_transform_lower` and `sdba_transform_upper` are also set if the requested bounds are different from the defaults.
 
       Array with variables stacked along `dim` dimension. Units are set to "".
-      Variables are sorted alphabetically.
     """
     # Store original arrays' attributes
     attrs = {}
+    # sort to have coherent order with different datasets
     datavars = sorted(ds.data_vars.items(), key=lambda e: e[0])
     nvar = len(datavars)
     for i, (nm, var) in enumerate(datavars):
