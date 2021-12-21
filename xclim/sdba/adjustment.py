@@ -164,13 +164,17 @@ class TrainAdjust(BaseAdjustment):
           Training data, usually a model output whose biases are to be adjusted.
         """
         kwargs = parse_group(cls._train, kwargs)
+        skip_checks = kwargs.pop("skip_input_checks", False)
 
-        (ref, hist), train_units = cls._harmonize_units(ref, hist)
+        if not skip_checks:
+            (ref, hist), train_units = cls._harmonize_units(ref, hist)
 
-        if "group" in kwargs:
-            cls._check_inputs(ref, hist, group=kwargs["group"])
+            if "group" in kwargs:
+                cls._check_inputs(ref, hist, group=kwargs["group"])
 
-        hist = convert_units_to(hist, ref)
+            hist = convert_units_to(hist, ref)
+        else:
+            train_units = ""
 
         ds, params = cls._train(ref, hist, **kwargs)
         obj = cls(
@@ -194,12 +198,14 @@ class TrainAdjust(BaseAdjustment):
         kwargs :
           Algorithm-specific keyword arguments, see class doc.
         """
-        (sim, *args), _ = self._harmonize_units(sim, *args, target=self.train_units)
+        skip_checks = kwargs.pop("skip_input_checks", False)
+        if not skip_checks:
+            (sim, *args), _ = self._harmonize_units(sim, *args, target=self.train_units)
 
-        if "group" in self:
-            self._check_inputs(sim, *args, group=self.group)
+            if "group" in self:
+                self._check_inputs(sim, *args, group=self.group)
 
-        sim = convert_units_to(sim, self.train_units)
+            sim = convert_units_to(sim, self.train_units)
         out = self._adjust(sim, *args, **kwargs)
 
         if isinstance(out, xr.DataArray):
@@ -268,10 +274,13 @@ class Adjust(BaseAdjustment):
           Algorithm-specific keyword arguments, see class doc.
         """
         kwargs = parse_group(cls._adjust, kwargs)
-        if "group" in kwargs:
-            cls._check_inputs(ref, hist, sim, group=kwargs["group"])
+        skip_checks = kwargs.pop("skip_input_checks", False)
 
-        (ref, hist, sim), _ = cls._harmonize_units(ref, hist, sim)
+        if not skip_checks:
+            if "group" in kwargs:
+                cls._check_inputs(ref, hist, sim, group=kwargs["group"])
+
+            (ref, hist, sim), _ = cls._harmonize_units(ref, hist, sim)
 
         out = cls._adjust(ref, hist, sim, **kwargs)
 
