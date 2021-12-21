@@ -13,6 +13,9 @@ New features and enhancements
     - ``xclim.sdba.processing.normalize`` now also returns the norm. ``xclim.sdba.processing.jitter`` was created by combining the "under" and "over" methods.
     - ``xclim.sdba.adjustment.PrincipalComponent`` was modified to have a simpler signature. The "full" method for finding the best PC orientation was added. (:issue:`697`).
 
+Internal changes
+^^^^^^^^^^^^^^^^
+* `TrainAdjust` and `Adjust` object have a new `skip_input_checks` keyword arg to their `train` and  `adjust` methods. When True, all unit-, calendar- and coordinate-related input checks are skipped. This is an ugly solution to disappearing attributes when using `xr.map_blocks` with dask (:pull:`964`).
 
 0.32.1 (2021-12-17)
 -------------------
