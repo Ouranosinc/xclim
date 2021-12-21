@@ -564,7 +564,7 @@ def to_additive_space(
     upper_bound: str = None,
     trans: str = "log",
 ):
-    r"""Transform a non-additive variable into an addtitive space by the means of a log or logit transformation.
+    r"""Transform a non-additive variable into an additive space by the means of a log or logit transformation.
 
     Based on [AlavoineGrenier]_.
 
@@ -585,7 +585,7 @@ def to_additive_space(
     Notes
     -----
     Given a variable that is not usable in an additive adjustment, this apply a transformation to a space where
-    addtitive methods are sensible. Given :math:`X` the variable, :math:`b_-` the lower physical bound of that variable
+    additive methods are sensible. Given :math:`X` the variable, :math:`b_-` the lower physical bound of that variable
     and :math:`b_+` the upper physical bound, two transformations are currently implemented to get :math:`Y`,
     the additive-ready variable. :math:`\ln` is the natural logarithm.
 
@@ -677,7 +677,7 @@ def from_additive_space(
       If None (the default), the `sdba_transform` attribute is looked up on `data`.
     units: str, optional
       The units of the data before transformation to the addtitive space.
-      If None (the default), the `sdba_transform_units` attrobited is looked up on `data`.
+      If None (the default), the `sdba_transform_units` attribute is looked up on `data`.
 
     Returns
     -------
@@ -689,10 +689,10 @@ def from_additive_space(
     Notes
     -----
     Given a variable that is not usable in an additive adjustment,
-    :py:func:`to_additive_space` applied a transformation to a space where addtitive
+    :py:func:`to_additive_space` applied a transformation to a space where additive
     methods are sensible. Given :math:`Y` the transformed variable, :math:`b_-` the
     lower physical bound of that variable and :math:`b_+` the upper physical bound,
-    two back-transformations are currently implemented to get :math:`X`. the physical variable.
+    two back-transformations are currently implemented to get :math:`X`, the physical variable.
 
     - `log`
 
@@ -779,7 +779,7 @@ def stack_variables(ds, rechunk=True, dim="variables"):
     -------
     xr.DataArray
       The transformed variable. Attributes are conserved, even if some might be incorrect.
-      Except units, which are replace with "". Old units are stored in `sdba_transformation_units`.
+      Except units, which are replaced with "". Old units are stored in `sdba_transformation_units`.
       A `sdba_transform` attribute is added, set to the transformation method.
       `sdba_transform_lower` and `sdba_transform_upper` are also set if the requested bounds are different from the defaults.
 

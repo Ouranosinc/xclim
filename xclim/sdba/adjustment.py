@@ -845,7 +845,7 @@ class PrincipalComponents(TrainAdjust):
       :py:func:`~xclim.sdba.utils.best_pc_orientiation_full`.
       "full" is more precise, but it is much slower.
     crd_dim : str
-      The data dimension long which the multiple simulation space dimensions are taken.
+      The data dimension along which the multiple simulation space dimensions are taken.
       For a multivariate ajustment, this should be "variables", as returned by `sdba.stack_variables`.
       For a multisite ajustment, this should be the spatial dimension.
       The training algorithm currently doesn't support any chunking
@@ -857,7 +857,7 @@ class PrincipalComponents(TrainAdjust):
 
     - :math:`M` is taken along `crd_dim`.
 
-    - :math:`N` is taken along the dimensions given trhough `group` : (the main `dim` but also, if requested, the `add_dims` and `window`).
+    - :math:`N` is taken along the dimensions given through `group` : (the main `dim` but also, if requested, the `add_dims` and `window`).
 
     The principal components (PC) of `hist` and `ref` are used to defined new
     coordinate systems, centered on their respective means. The training step creates a
