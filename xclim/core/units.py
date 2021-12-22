@@ -22,6 +22,7 @@ from pint.definitions import UnitDefinition
 from .calendar import date_range, get_calendar, parse_offset
 from .options import datacheck
 from .utils import ValidationError
+from warnings import warn
 
 __all__ = [
     "convert_units_to",
@@ -34,6 +35,7 @@ __all__ = [
     "to_agg_units",
     "units",
     "units2pint",
+    "check_same_units_and_convert"
 ]
 
 
@@ -725,12 +727,15 @@ def declare_units(
     return dec
 
 
-def check_same_units(func) -> Callable:
-    def _check_same_units(sim, ref):
+def check_same_units_and_convert(func) -> Callable:
+    def _check_same_units(sim, ref, **kwargs):
         units_sim = units2pint(sim.units)
         units_ref = units2pint(ref.units)
+
         if units_sim != units_ref:
-            raise ValueError(f" sim({units_sim}) and ref({units_ref}) don't have the same units.")
+            warn(f" sim({units_sim}) and ref({units_ref}) don't have the same units."
+                 f" sim will be converted to {units_ref}.")
+            sim = convert_units_to(sim, ref)
         out = func(sim, ref)
         return out
     return _check_same_units

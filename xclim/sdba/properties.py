@@ -3,6 +3,8 @@ Properties submodule
 =================
  Statistical Properties is the xclim term for 'indices' in the VALUE project.
  SDBA diagnostics are made up of properties and measures.
+
+ This framework for the diagnostics was inspired by the VALUE project (www.value-cost.eu/).
 """
 import xarray
 import xclim as xc
@@ -15,11 +17,12 @@ from warnings import warn
 import scipy
 import pandas as pd
 from xclim.indices.stats import frequency_analysis
+from xclim.indices.stats import frequency_analysis, fit, fa, parametric_quantile
+from xclim.indices.generic import select_resample_op
 
 res2freq = {'year': 'YS', 'season': 'QS-DEC', 'month': 'MS'}
 
 STATISTICAL_PROPERTIES: Dict[str, Callable] = dict()
-
 
 
 def register_statistical_properties(aspect: str, seasonal: bool, annual: bool) -> Callable:
@@ -63,7 +66,7 @@ def mean(da: xarray.DataArray, time_res: str = 'year') -> xarray.DataArray:
         da = da.groupby(f'time.{time_res}')
     out = da.mean(dim='time')
     out.attrs.update(attrs)
-    out.attrs["long_name"] = f"Mean of {attrs['standard_name']}"
+    out.attrs["long_name"] = f"Mean {attrs['standard_name']}"
     return out
 
 
@@ -247,11 +250,11 @@ def spell_length_distribution(
         out = cond.map(rl.rle_statistics, dim="time", reducer=stat)
     else:
         out = rl.rle_statistics(cond, dim="time", reducer=stat)
-        # TODO: add percentile in reducer, this includes modifying rl.rle_statistics
     out = out.where(mask, np.nan)  # put NaNs back over the ocean
     out.attrs.update(attrs)
     out.attrs["long_name"] = f" {stat} of spell length when {attrs['standard_name']} {op} {method} {thresh} "
     return out
+
 
 @register_statistical_properties(aspect='temporal', seasonal=True, annual=False)
 def acf(da: xarray.DataArray, lag: int = 1, time_res: str = 'season') -> xarray.DataArray:
@@ -281,7 +284,10 @@ def acf(da: xarray.DataArray, lag: int = 1, time_res: str = 'season') -> xarray.
     >>> acf(da=pr, lag=3, time_res='season')
     Notes
     --------
-    See statsmodels.tsa.stattools.acf and
+    See statsmodels.tsa.stattools.acf
+
+    References
+    --------
     Alavoine, M., & Grenier, P. (2021). The distinct problems of physical inconsistency and of multivariate bias
     potentially involved in the statistical adjustment of climate simulations. California Digital Library (CDL).
     https://doi.org/10.31223/x5c34c
@@ -346,14 +352,14 @@ def annual_cycle_amplitude(
     da = da.resample(time='YS')
     # amplitude
     amp = da.max(dim='time') - da.min(dim='time')
-    if amplitude_type == 'relative':
-        amp = amp * 100 / da.mean(dim='time')
-        amp.attrs['units'] = '%'
-    amp = amp.mean(dim='time')
     amp.attrs.update(attrs)
-    amp.attrs["long_name"] = f"{amplitude_type} amplitude of the annual cycle of {attrs['standard_name']}"
+    if xc.core.units.units2pint(attrs['units']).dimensionality == xc.core.units.units2pint('degC').dimensionality:
+        amp.attrs['units'] = 'delta_degree_Celsius'
     if amplitude_type == 'relative':
+        amp = amp * 100 / da.mean(dim='time', keep_attrs=True)
         amp.attrs['units'] = '%'
+    amp = amp.mean(dim='time', keep_attrs=True)
+    amp.attrs["long_name"] = f"{amplitude_type} amplitude of the annual cycle of {attrs['standard_name']}"
     return amp
 
 
@@ -394,7 +400,7 @@ def annual_cycle_phase(da: xarray.DataArray, time_res: str = 'year') -> xarray.D
     phase = phase.where(mask, np.nan)
     phase.attrs.update(attrs)
     phase.attrs["long_name"] = f"Phase of the annual cycle of {attrs['standard_name']}"
-    phase.attrs["units"] = 'd'
+    phase.attrs.update(units="", is_dayofyear=1)
     return phase
 
 
@@ -498,19 +504,21 @@ def relative_frequency(
     >>> relative_frequency(da=tas, op= '<', thresh= '0 degC', time_res='season')
     """
     attrs = da.attrs
+    mask = ~(da.isel(time=0).isnull())  # mask of the ocean with NaNs
     ops = {">": np.greater,
            "<": np.less,
            ">=": np.greater_equal,
            "<=": np.less_equal}
     t = convert_units_to(thresh, da)
     length = da.sizes['time']
-    cond = ops[op](da, t, where=np.isfinite(da), out=da.values)  # check the condition
+    cond = ops[op](da, t)#, where=np.isfinite(da), out=da.values)  # check the condition
     if time_res != 'year':  # change the time resolution if necessary
         cond = cond.groupby(f'time.{time_res}')
         length = np.array([len(v) for k, v in cond.groups.items()])  # length of the groupBy groups
         for i in range(da.ndim - 1):  # add empty dimension(s) to match input
             length = np.expand_dims(length, axis=-1)
     out = cond.sum(dim='time', skipna=False) / length  # count days with the condition and divide by total nb of days
+    out = out.where(mask, np.nan)
     out.attrs.update(attrs)
     out.attrs["long_name"] = f"Relative frequency of days with {attrs['standard_name']} {op} {thresh}"
     out.attrs["units"] = ''
@@ -557,8 +565,9 @@ def trend(
     attrs = da.attrs
     da = da.resample(time=res2freq[time_res])  # separate all the {time_res}
     da_mean = da.mean(dim='time')  # avg over all {time_res}
+    da_mean = da_mean.chunk({'time': -1})
     if time_res != 'year':
-        da_mean = da_mean.groupby('time.season')  # group all month/season together
+        da_mean = da_mean.groupby(f'time.{time_res}')  # group all month/season together
 
     def modified_lr(x):  # modify linregress to fit into apply_ufunc and only return slope
         return getattr(scipy.stats.linregress(list(range(len(x))), x), output)
@@ -571,8 +580,9 @@ def trend(
     return out
 
 
-#@register_statistical_properties(aspect='marginal', seasonal=True, annual=True)
-def return_value(da: xarray.DataArray, period: int = 20, op: str = 'max', time_res: str = 'year') -> xarray.DataArray:
+@register_statistical_properties(aspect='marginal', seasonal=True, annual=True)
+def return_value(da: xarray.DataArray, period: int = 20, op: str = 'max', method: str ='PWM', time_res: str = 'year')\
+    -> xarray.DataArray:
     f"""Return value.
 
     Return the value corresponding to a return period.
@@ -593,6 +603,11 @@ def return_value(da: xarray.DataArray, period: int = 20, op: str = 'max', time_r
       Whether we are looking for a probability of exceedance ('max', right side of the distribution)
        or a probability of non-exceedance (min, left side of the distribution).
 
+    method : {"ML", "PWM"}
+      Fitting method, either maximum likelihood (ML) or probability weighted moments (PWM), also called L-Moments.
+      The PWM method is usually more robust to outliers. However, it requires the lmoments3 libraryto be installed
+       from the `develop` branch. `pip install git+https://github.com/OpenHydrology/lmoments3.git@develop#egg=lmoments3`
+
     time_res : {'year', 'season', 'month'}
       Time resolution on which to create a distribution of the extremums.
 
@@ -607,8 +622,15 @@ def return_value(da: xarray.DataArray, period: int = 20, op: str = 'max', time_r
     >>> return_value(da=tas, time_res='season')
     """
     attrs = da.attrs
+
+    def frequency_analysis_method(x, method, **indexer):
+        sub = select_resample_op(x, op=op, **indexer)
+        params = fit(sub, dist="genextreme", method=method)
+        out = parametric_quantile(params, q=1 - 1.0 / period)
+        return out
+
     if time_res == 'year':
-        out = frequency_analysis(da, t=period, dist="genextreme", mode=op, freq="Y")
+        out = frequency_analysis_method(da, method)
     else:
         # get coords of final output
         coords = da.groupby(f'time.{time_res}').mean(dim='time').coords
@@ -616,14 +638,15 @@ def return_value(da: xarray.DataArray, period: int = 20, op: str = 'max', time_r
         out = xarray.DataArray(coords=coords)
         # iterate through all the seasons/months to get the return value
         for ind in coords[time_res].values:
-            if time_res == 'season':
-                out.loc[{time_res: ind}] = frequency_analysis(da, t=period, dist="genextreme", mode=op,
-                                                              **{time_res: ind}).isel(return_period=0)
+                #out.loc[{time_res: ind}] = frequency_analysis(da, t=period, dist="genextreme", mode=op,
+                                                              #**{time_res: ind}).isel(return_period=0)
+            out.loc[{time_res: ind}] = frequency_analysis_method(da, method, **{time_res: ind}).isel(quantile=0)
+
     out.attrs.update(attrs)
     out.attrs["long_name"] = f" {period}-{time_res} {op} return level of {attrs['standard_name']}"
     return out
-    # TODO: make it go faster
 
 
 
-# TODO apply ufunc, check if necessary for time_res ='year'
+
+
