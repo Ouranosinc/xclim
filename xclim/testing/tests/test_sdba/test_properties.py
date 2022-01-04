@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-import xarray as xr
 from xclim import sdba
 from xclim.testing import open_dataset
 
@@ -56,45 +55,42 @@ def test_spell_length_distribution():
     tmean = sdba.properties.spell_length_distribution(sim, op='<', time_res='month').sel(month=1).values
     tmax = sdba.properties.spell_length_distribution(sim, op='<', time_res='month', stat='max').sel(month=1).values
     tmin = sdba.properties.spell_length_distribution(sim, op='<', time_res='month', stat='min').sel(month=1).values
-    tmedian = sdba.properties.spell_length_distribution(sim, op='<', time_res='month', stat='median').sel(month=1).values
 
-    np.testing.assert_array_almost_equal([tmean, tmax, tmin, tmedian], [2.6, 10, 1, 1.0])
+    np.testing.assert_array_almost_equal([tmean, tmax, tmin], [2.44127, 10, 1])
 
-    simT = open_dataset('sdba/CanESM2_1950-2100.nc').sel(time=slice('1950', '1952'), location='Vancouver').tasmax
-    tmean = sdba.properties.spell_length_distribution(simT, op='>=', time_res='month', method='quantile', thresh=0.9)\
+    simt = open_dataset('sdba/CanESM2_1950-2100.nc').sel(time=slice('1950', '1952'), location='Vancouver').tasmax
+    tmean = sdba.properties.spell_length_distribution(simt, op='>=', time_res='month', method='quantile', thresh=0.9)\
         .sel(month=6).values
-    tmax = sdba.properties.spell_length_distribution(simT, op='>=', time_res='month', stat='max', method='quantile',
+    tmax = sdba.properties.spell_length_distribution(simt, op='>=', time_res='month', stat='max', method='quantile',
                                                      thresh=0.9).sel(month=6).values
-    tmin = sdba.properties.spell_length_distribution(simT, op='>=', time_res='month', stat='min', method='quantile',
+    tmin = sdba.properties.spell_length_distribution(simt, op='>=', time_res='month', stat='min', method='quantile',
                                                      thresh=0.9).sel(month=6).values
-    tmedian = sdba.properties.spell_length_distribution(simT, op='>=', time_res='month', stat='median',
-                                                        method='quantile', thresh=0.9).sel(month=6).values
 
-    np.testing.assert_array_almost_equal([tmean, tmax, tmin, tmedian], [3.0, 6, 1, 2.0])
+    np.testing.assert_array_almost_equal([tmean, tmax, tmin], [3.0, 6, 1])
 
 
 def test_acf():
     sim = open_dataset('sdba/CanESM2_1950-2100.nc').sel(time=slice('1950', '1952'), location='Vancouver').pr
-    out = sdba.properties.acf(sim, lag =1, time_res='month').sel(month=1).values
+    out = sdba.properties.acf(sim, lag=1, time_res='month').sel(month=1).values
     np.testing.assert_array_almost_equal(out, [0.11242357313756905])
 
 
 def test_annual_cycle():
-    simT = open_dataset('sdba/CanESM2_1950-2100.nc').sel(time=slice('1950', '1952'), location='Vancouver').tasmax
-    amp = sdba.properties.annual_cycle_amplitude(simT, amplitude_type='absolute').values
-    relamp = sdba.properties.annual_cycle_amplitude(simT, amplitude_type='relative').values
-    phase = sdba.properties.annual_cycle_phase(simT).values
+    simt = open_dataset('sdba/CanESM2_1950-2100.nc').sel(time=slice('1950', '1952'), location='Vancouver').tasmax
+    amp = sdba.properties.annual_cycle_amplitude(simt, amplitude_type='absolute').values
+    relamp = sdba.properties.annual_cycle_amplitude(simt, amplitude_type='relative').values
+    phase = sdba.properties.annual_cycle_phase(simt).values
 
     np.testing.assert_array_almost_equal([amp, relamp, phase],
                                          [34.039806, 11.793684020675501, 165.33333333333334])
     with pytest.warns(None) as record:
-        sdba.properties.annual_cycle_amplitude(simT, time_res='season')
+        sdba.properties.annual_cycle_amplitude(simt, time_res='season')
     assert (
         "'year' is the only valid time resolution for this statistical property."
         in [str(q.message) for q in record]
     )
     with pytest.warns(None) as record:
-        sdba.properties.annual_cycle_phase(simT, time_res='season')
+        sdba.properties.annual_cycle_phase(simt, time_res='season')
     assert (
         "'year' is the only valid time resolution for this statistical property."
         in [str(q.message) for q in record]
@@ -102,15 +98,15 @@ def test_annual_cycle():
 
 
 def test_corr_btw_var():
-    simT = open_dataset('sdba/CanESM2_1950-2100.nc').sel(time=slice('1950', '1952'), location='Vancouver').tasmax
+    simt = open_dataset('sdba/CanESM2_1950-2100.nc').sel(time=slice('1950', '1952'), location='Vancouver').tasmax
     sim = open_dataset('sdba/CanESM2_1950-2100.nc').sel(time=slice('1950', '1952'), location='Vancouver').pr
-    pc = sdba.properties.corr_btw_var(simT, sim, corr_type='Pearson').values
-    pp = sdba.properties.corr_btw_var(simT, sim, corr_type='Pearson', output='pvalue').values
-    sc = sdba.properties.corr_btw_var(simT, sim).values
-    sp = sdba.properties.corr_btw_var(simT, sim, output='pvalue').values
-    sc_jan = sdba.properties.corr_btw_var(simT, sim, time_res='month').sel(month=1).values
+    pc = sdba.properties.corr_btw_var(simt, sim, corr_type='Pearson').values
+    pp = sdba.properties.corr_btw_var(simt, sim, corr_type='Pearson', output='pvalue').values
+    sc = sdba.properties.corr_btw_var(simt, sim).values
+    sp = sdba.properties.corr_btw_var(simt, sim, output='pvalue').values
+    sc_jan = sdba.properties.corr_btw_var(simt, sim, time_res='month').sel(month=1).values
     sim[0] = np.nan
-    pc_nan = sdba.properties.corr_btw_var(sim, simT, corr_type='Pearson').values
+    pc_nan = sdba.properties.corr_btw_var(sim, simt, corr_type='Pearson').values
 
     np.testing.assert_array_almost_equal([pc, pp, sc, sp, sc_jan, pc_nan],
                                          [-0.20849051347480407,
@@ -126,24 +122,24 @@ def test_relative_frequency():
     sim = open_dataset('sdba/CanESM2_1950-2100.nc').sel(time=slice('1950', '1952'), location='Vancouver').pr
 
     test = sdba.properties.relative_frequency(sim, thresh='25 mm d-1', op='>=').values
-    test_jan = sdba.properties.relative_frequency(sim, thresh='25 mm d-1', op='>=', time_res='month').sel(month=1).values
-    np.testing.assert_array_almost_equal([test, test_jan], [0.0045662100456621, 0.010752688172043012])
+    testjan = sdba.properties.relative_frequency(sim, thresh='25 mm d-1', op='>=', time_res='month').sel(month=1).values
+    np.testing.assert_array_almost_equal([test, testjan], [0.0045662100456621, 0.010752688172043012])
 
 
 def test_trend():
-    simT = open_dataset('sdba/CanESM2_1950-2100.nc').sel(time=slice('1950', '1952'), location='Vancouver').tasmax
-    slope = sdba.properties.trend(simT).values
-    pvalue = sdba.properties.trend(simT, output='pvalue').values
+    simt = open_dataset('sdba/CanESM2_1950-2100.nc').sel(time=slice('1950', '1952'), location='Vancouver').tasmax
+    slope = sdba.properties.trend(simt).values
+    pvalue = sdba.properties.trend(simt, output='pvalue').values
     np.testing.assert_array_almost_equal([slope, pvalue], [-1.33720000e-01, 0.154605951862107], 4)
 
-    slope = sdba.properties.trend(simT, time_res='month').sel(month=1).values
-    pvalue = sdba.properties.trend(simT, output='pvalue', time_res='month').sel(month=1).values
+    slope = sdba.properties.trend(simt, time_res='month').sel(month=1).values
+    pvalue = sdba.properties.trend(simt, output='pvalue', time_res='month').sel(month=1).values
     np.testing.assert_array_almost_equal([slope, pvalue], [0.8254349999999988, 0.6085783558202086], 4)
 
 
 def test_return_value():
-    simT = open_dataset('sdba/CanESM2_1950-2100.nc').sel(time=slice('1950', '2010'), location='Vancouver').tasmax
-    out_y = sdba.properties.return_value(simT).values
-    out_djf = sdba.properties.return_value(simT, op='min', time_res='season').sel(season='DJF').values
+    simt = open_dataset('sdba/CanESM2_1950-2100.nc').sel(time=slice('1950', '2010'), location='Vancouver').tasmax
+    out_y = sdba.properties.return_value(simt).values
+    out_djf = sdba.properties.return_value(simt, op='min', time_res='season').sel(season='DJF').values
 
     np.testing.assert_array_almost_equal([out_y, out_djf], [313.15443369, 269.57327687399675], 4)

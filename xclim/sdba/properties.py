@@ -211,8 +211,8 @@ def spell_length_distribution(
       Threshold on which to evaluate the condition to have a spell.
       Str with units if the method is "amount".
       Float of the quantile if the method is "quantile".
-    stat: {'mean','max','min','median'}
-      Statistics to apply to the spell length distribution.
+    stat: {'mean','max','min'}
+      Statistics to apply to the resampled input (eg. 1-31 Jan 1980) and then over all years (eg. Jan 1980-2010)
     time_res : str
       Time resolution.
       Eg. If 'month', the {stat} is calculated on 12 distributions for each grid point.
@@ -245,14 +245,16 @@ def spell_length_distribution(
 
     cond = ops[op](da, t)
     if time_res != 'year':
-        cond = cond.groupby(f'time.{time_res}')
-        # DataArrayGroupBy need to call map
+        cond = cond.resample(time=res2freq[time_res])
+        # the stat is taken on each resampling (1-31 Jan 1980)
         out = cond.map(rl.rle_statistics, dim="time", reducer=stat)
+        # then again on all years (Jan 1980-2010)
+        out = getattr(out.groupby(f'time.{time_res}'), stat)(dim='time')
     else:
         out = rl.rle_statistics(cond, dim="time", reducer=stat)
     out = out.where(mask, np.nan)  # put NaNs back over the ocean
     out.attrs.update(attrs)
-    out.attrs["long_name"] = f" {stat} of spell length when {attrs['standard_name']} {op} {method} {thresh} "
+    out.attrs["long_name"] = f"{stat} of spell length when {attrs['standard_name']} {op} {method} {thresh} "
     return out
 
 
@@ -575,7 +577,7 @@ def trend(
     out = xarray.apply_ufunc(modified_lr, da_mean,
                              input_core_dims=[["time"]], vectorize=True, dask='parallelized')
     out.attrs.update(attrs)
-    out.attrs["long_name"] = f" {output} of the interannual linear trend of {attrs['standard_name']}"
+    out.attrs["long_name"] = f"{output} of the interannual linear trend of {attrs['standard_name']}"
     out.attrs["units"] = f"{attrs['units']}/year"
     return out
 
@@ -643,7 +645,7 @@ def return_value(da: xarray.DataArray, period: int = 20, op: str = 'max', method
             out.loc[{time_res: ind}] = frequency_analysis_method(da, method, **{time_res: ind}).isel(quantile=0)
 
     out.attrs.update(attrs)
-    out.attrs["long_name"] = f" {period}-{time_res} {op} return level of {attrs['standard_name']}"
+    out.attrs["long_name"] = f"{period}-{time_res} {op} return level of {attrs['standard_name']}"
     return out
 
 
