@@ -18,7 +18,8 @@ import sys
 import warnings
 from collections import OrderedDict
 
-import xarray 
+import xarray
+
 xarray.DataArray.__module__ = "xarray"
 xarray.Dataset.__module__ = "xarray"
 
