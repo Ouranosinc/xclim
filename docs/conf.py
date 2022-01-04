@@ -18,11 +18,12 @@ import sys
 import warnings
 from collections import OrderedDict
 
-import xarray 
+import xarray
+
 xarray.DataArray.__module__ = "xarray"
 xarray.Dataset.__module__ = "xarray"
 
-import xclim
+import xclim  # noqa
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory is
