@@ -177,7 +177,7 @@ def quantile(da: xarray.DataArray, q: float = 0.98, time_res: str = 'year') -> x
     attrs = da.attrs
     if time_res != 'year':
         da = da.groupby(f'time.{time_res}')
-    out = da.quantile(q, dim="time", keep_attrs=True)
+    out = da.quantile(q, dim="time", keep_attrs=True).drop_vars('quantile')
     out.attrs.update(attrs)
     out.attrs["long_name"] = f"Quantile {q} of {attrs['standard_name']}"
     return out
@@ -228,7 +228,7 @@ def spell_length_distribution(
     >>> spell_length_by_amount(da=pr, op='<',thresh ='1mm d-1', stat= 'p10', time_res='season')
     """
     attrs = da.attrs
-    mask = ~(da.isel(time=0).isnull())  # mask of the ocean with NaNs
+    mask = ~(da.isel(time=0).isnull()).drop_vars('time')  # mask of the ocean with NaNs
     ops = {">": np.greater,
            "<": np.less,
            ">=": np.greater_equal,
@@ -241,7 +241,7 @@ def spell_length_distribution(
     elif method == 'quantile':
         if time_res != 'year':
             da = da.groupby(f'time.{time_res}')
-        t = da.quantile(thresh, dim='time')
+        t = da.quantile(thresh, dim='time').drop_vars('quantile')
 
     cond = ops[op](da, t)
     if time_res != 'year':
@@ -390,7 +390,7 @@ def annual_cycle_phase(da: xarray.DataArray, time_res: str = 'year') -> xarray.D
         return None
 
     attrs = da.attrs
-    mask = ~(da.isel(time=0).isnull())  # mask of the ocean with NaNs
+    mask = ~(da.isel(time=0).isnull()).drop_vars('time')  # mask of the ocean with NaNs
     da = da.resample(time='YS')
 
     # +1  at the end to go from index to doy
@@ -504,7 +504,7 @@ def relative_frequency(
     >>> relative_frequency(da=tas, op= '<', thresh= '0 degC', time_res='season')
     """
     attrs = da.attrs
-    mask = ~(da.isel(time=0).isnull())  # mask of the ocean with NaNs
+    mask = ~(da.isel(time=0).isnull()).drop_vars('time')  # mask of the ocean with NaNs
     ops = {">": np.greater,
            "<": np.less,
            ">=": np.greater_equal,

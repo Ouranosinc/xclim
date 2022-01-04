@@ -33,7 +33,7 @@ def bias(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataArray:
     """
     out = sim - ref
     out.attrs.update(sim.attrs)
-    out.attrs["long_name"] = f"Bias of the {sim.attrs['standard_name']}"
+    out.attrs["long_name"] = f"Bias of the {sim.attrs['long_name']}"
     out.attrs["units"] = sim.attrs["units"]
     return out
 
@@ -59,7 +59,7 @@ def relative_bias(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataAr
     """
     out = (sim - ref) / ref
     out.attrs.update(sim.attrs)
-    out.attrs["long_name"] = f"Relative bias of the {sim.attrs['standard_name']}"
+    out.attrs["long_name"] = f"Relative bias of the {sim.attrs['long_name']}"
     out.attrs["units"] = ''
     return out
 
@@ -88,7 +88,7 @@ def circular_bias(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataAr
     out = out.where(out <= 365/2, 365 - out)  # when condition false, replace by 2nd arg
     out = out.where(ref >= sim, out * -1)
     out.attrs.update(sim.attrs)
-    out.attrs["long_name"] = f"Circular bias of the {sim.attrs['standard_name']}"
+    out.attrs["long_name"] = f"Circular bias of the {sim.attrs['long_name']}"
     return out
 
 @check_same_units_and_convert
@@ -112,7 +112,7 @@ def ratio(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataArray:
     """
     out = sim / ref
     out.attrs.update(sim.attrs)
-    out.attrs["long_name"] = f"Ratio of the {sim.attrs['standard_name']}"
+    out.attrs["long_name"] = f"Ratio of the {sim.attrs['long_name']}"
     out.attrs["units"] = ''
     return out
 
@@ -148,7 +148,7 @@ def rmse(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataArray:
     out = xarray.apply_ufunc(nan_sklearn, sim, ref, input_core_dims=[["time"], ["time"]], vectorize=True,
                              dask='parallelized')
     out.attrs.update(sim.attrs)
-    out.attrs["long_name"] = f"Root mean square of the {sim.attrs['standard_name']}"
+    out.attrs["long_name"] = f"Root mean square of the {sim.attrs['long_name']}"
     return out
 
 
@@ -182,7 +182,7 @@ def mae(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataArray:
     out = xarray.apply_ufunc(nan_sklearn, sim, ref, input_core_dims=[["time"], ["time"]], vectorize=True,
                              dask='parallelized')
     out.attrs.update(sim.attrs)
-    out.attrs["long_name"] = f"Mean absolute error of the {sim.attrs['standard_name']}"
+    out.attrs["long_name"] = f"Mean absolute error of the {sim.attrs['long__name']}"
     return out
 
 
@@ -218,5 +218,5 @@ def annual_cycle_correlation(sim, ref, window: int = 15):
     ref_annual_cycle = grouper_test.apply('mean', ref)
     out = xarray.corr(ref_annual_cycle, sim_annual_cycle, dim='dayofyear')
     out.attrs.update(sim.attrs)
-    out.attrs["long_name"] = f"Correlation of the annual cycle of the {sim.attrs['standard_name']}"
+    out.attrs["long_name"] = f"Correlation of the annual cycle of the {sim.attrs['long_name']}"
     return out
