@@ -294,6 +294,7 @@ def test_bad_usage(tas_series, tmp_path):
         assert "'--dask-maxmem' must be given" in results.output
 
 
+@pytest.mark.requires_docs
 @pytest.mark.parametrize("method, pattern", [("-r", "`GH/"), ("-m", "[GH/")])
 def test_release_notes(method, pattern):
     runner = CliRunner()

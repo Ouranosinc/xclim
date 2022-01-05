@@ -37,6 +37,11 @@ variables:
           op: eq
           n: 10
           thresh: 1 mm d-1
+  prc:
+    canonical_units: kg m-2 s-1
+    cell_methods: "time: mean"
+    description: Precipitation flux due to the convection schemes of the model (all phases).
+    standard_name: convective_precipitation_flux
   prsn:
     canonical_units: kg m-2 s-1
     cell_methods: "time: mean"
