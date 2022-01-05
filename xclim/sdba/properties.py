@@ -6,37 +6,43 @@ Properties submodule
 
  This framework for the diagnostic tests was inspired by the VALUE project (www.value-cost.eu/).
 """
-import xarray as xr
-import xclim as xc
 from typing import Callable, Dict
+
+import numpy as np
+import xarray as xr
+from scipy import stats
+from statsmodels.tsa import stattools
+
+import xclim as xc
 from xclim.core.formatting import update_xclim_history
 from xclim.core.units import convert_units_to
 from xclim.indices import run_length as rl
-import numpy as np
-from statsmodels.tsa import stattools
-from scipy import stats
-from xclim.indices.stats import fit, parametric_quantile
 from xclim.indices.generic import select_resample_op
+from xclim.indices.stats import fit, parametric_quantile
 
-res2freq = {'year': 'YS', 'season': 'QS-DEC', 'month': 'MS'}
+res2freq = {"year": "YS", "season": "QS-DEC", "month": "MS"}
 
-STATISTICAL_PROPERTIES: Dict[str, Callable] = dict()
+STATISTICAL_PROPERTIES: Dict[str, Callable] = {}
 
 
-def register_statistical_properties(aspect: str, seasonal: bool, annual: bool) -> Callable:
+def register_statistical_properties(
+    aspect: str, seasonal: bool, annual: bool
+) -> Callable:
     """Register missing properties."""
+
     def _register_statistical_properties(func):
         func.aspect = aspect
         func.seasonal = seasonal
         func.annual = annual
         STATISTICAL_PROPERTIES[func.__name__] = func
         return func
+
     return _register_statistical_properties
 
 
 @update_xclim_history
-@register_statistical_properties(aspect='marginal', seasonal=True, annual=True)
-def mean(da: xr.DataArray, time_res: str = 'year') -> xr.DataArray:
+@register_statistical_properties(aspect="marginal", seasonal=True, annual=True)
+def mean(da: xr.DataArray, time_res: str = "year") -> xr.DataArray:
     """Mean.
 
     Mean over all years at the time resolution.
@@ -57,21 +63,22 @@ def mean(da: xr.DataArray, time_res: str = 'year') -> xr.DataArray:
 
     Examples
     --------
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> from xclim.testing import open_dataset
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> mean(da=pr, time_res='season')
     """
     attrs = da.attrs
-    if time_res != 'year':
-        da = da.groupby(f'time.{time_res}')
-    out = da.mean(dim='time')
+    if time_res != "year":
+        da = da.groupby(f"time.{time_res}")
+    out = da.mean(dim="time")
     out.attrs.update(attrs)
-    out.attrs["long_name"] = f"Mean {attrs['standard_name']}"
+    out.attrs["long_name"] = f"Mean {attrs['long_name']}"
     return out
 
 
 @update_xclim_history
-@register_statistical_properties(aspect='marginal', seasonal=True, annual=True)
-def var(da: xr.DataArray, time_res: str = 'year') -> xr.DataArray:
+@register_statistical_properties(aspect="marginal", seasonal=True, annual=True)
+def var(da: xr.DataArray, time_res: str = "year") -> xr.DataArray:
     """Variance.
 
     Variance of the variable over all years at the time resolution.
@@ -92,24 +99,25 @@ def var(da: xr.DataArray, time_res: str = 'year') -> xr.DataArray:
 
     Examples
     --------
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> from xclim.testing import open_dataset
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> var(da=pr, time_res='season')
     """
     attrs = da.attrs
-    if time_res != 'year':
-        da = da.groupby(f'time.{time_res}')
-    out = da.var(dim='time')
+    if time_res != "year":
+        da = da.groupby(f"time.{time_res}")
+    out = da.var(dim="time")
     out.attrs.update(attrs)
-    out.attrs["long_name"] = f"Variance of {attrs['standard_name']}"
-    u = xc.core.units.units2pint(attrs['units'])
+    out.attrs["long_name"] = f"Variance of {attrs['long_name']}"
+    u = xc.core.units.units2pint(attrs["units"])
     u2 = u ** 2
-    out.attrs['units'] = xc.core.units.pint2cfunits(u2)
+    out.attrs["units"] = xc.core.units.pint2cfunits(u2)
     return out
 
 
 @update_xclim_history
-@register_statistical_properties(aspect='marginal', seasonal=True, annual=True)
-def skewness(da: xr.DataArray, time_res: str = 'year') -> xr.DataArray:
+@register_statistical_properties(aspect="marginal", seasonal=True, annual=True)
+def skewness(da: xr.DataArray, time_res: str = "year") -> xr.DataArray:
     """Skewness.
 
     Skewness of the distribution of the variable over all years at the time resolution.
@@ -130,7 +138,8 @@ def skewness(da: xr.DataArray, time_res: str = 'year') -> xr.DataArray:
 
     Examples
     --------
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> from xclim.testing import open_dataset
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> skewness(da=pr, time_res='season')
 
     Notes
@@ -138,18 +147,20 @@ def skewness(da: xr.DataArray, time_res: str = 'year') -> xr.DataArray:
      See scipy.stats.skew
     """
     attrs = da.attrs
-    if time_res != 'year':
-        da = da.groupby(f'time.{time_res}')
-    out = xr.apply_ufunc(stats.skew, da, input_core_dims=[["time"]], vectorize=True, dask='parallelized')
+    if time_res != "year":
+        da = da.groupby(f"time.{time_res}")
+    out = xr.apply_ufunc(
+        stats.skew, da, input_core_dims=[["time"]], vectorize=True, dask="parallelized"
+    )
     out.attrs.update(attrs)
-    out.attrs["long_name"] = f"Skewness of {attrs['standard_name']}"
-    out.attrs['units'] = ''
+    out.attrs["long_name"] = f"Skewness of {attrs['long_name']}"
+    out.attrs["units"] = ""
     return out
 
 
 @update_xclim_history
-@register_statistical_properties(aspect='marginal', seasonal=True, annual=True)
-def quantile(da: xr.DataArray, q: float = 0.98, time_res: str = 'year') -> xr.DataArray:
+@register_statistical_properties(aspect="marginal", seasonal=True, annual=True)
+def quantile(da: xr.DataArray, q: float = 0.98, time_res: str = "year") -> xr.DataArray:
     """Quantile.
 
     Returns the quantile {q} of the distribution of the variable over all years at the time resolution.
@@ -172,29 +183,30 @@ def quantile(da: xr.DataArray, q: float = 0.98, time_res: str = 'year') -> xr.Da
 
     Examples
     --------
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> from xclim.testing import open_dataset
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> quantile(da=pr, q=0.9, time_res='season')
     """
     attrs = da.attrs
-    if time_res != 'year':
-        da = da.groupby(f'time.{time_res}')
-    out = da.quantile(q, dim="time", keep_attrs=True).drop_vars('quantile')
+    if time_res != "year":
+        da = da.groupby(f"time.{time_res}")
+    out = da.quantile(q, dim="time", keep_attrs=True).drop_vars("quantile")
     out.attrs.update(attrs)
-    out.attrs["long_name"] = f"Quantile {q} of {attrs['standard_name']}"
+    out.attrs["long_name"] = f"Quantile {q} of {attrs['long_name']}"
     return out
 
 
 @update_xclim_history
-@register_statistical_properties(aspect='temporal', seasonal=True, annual=True)
+@register_statistical_properties(aspect="temporal", seasonal=True, annual=True)
 def spell_length_distribution(
     da: xr.DataArray,
-    method: str = 'amount',
-    op: str = '>=',
-    thresh='1mm d-1',
-    stat: str = 'mean',
-    time_res: str = 'year'
+    method: str = "amount",
+    op: str = ">=",
+    thresh="1mm d-1",
+    stat: str = "mean",
+    time_res: str = "year",
 ) -> xr.DataArray:
-    f"""Spell length distribution.
+    r"""Spell length distribution.
 
     {stat} of spell length distribution when the variable is {op} the {method} {thresh}.
 
@@ -226,46 +238,48 @@ def spell_length_distribution(
 
     Examples
     --------
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
-    >>> spell_length_distribution(da=pr, op='<',thresh ='1mm d-1', stat= 'p10', time_res='season')
+    >>> from xclim.testing import open_dataset
+    >>> pr = open_dataset(path_to_pr_file).pr
+    >>> spell_length_distribution(da=pr, op='<',thresh ='1mm d-1', time_res='season')
     """
     attrs = da.attrs
-    mask = ~(da.isel(time=0).isnull()).drop_vars('time')  # mask of the ocean with NaNs
-    ops = {">": np.greater,
-           "<": np.less,
-           ">=": np.greater_equal,
-           "<=": np.less_equal}
+    mask = ~(da.isel(time=0).isnull()).drop_vars("time")  # mask of the ocean with NaNs
+    ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
 
     # threshold is an amount that will be converted to the right units
-    if method == 'amount':
+    if method == "amount":
         t = convert_units_to(thresh, da)
     # threshold is calculated from quantile of distribution at the time_res
-    elif method == 'quantile':
-        if time_res != 'year':
-            da = da.groupby(f'time.{time_res}')
-        t = da.quantile(thresh, dim='time').drop_vars('quantile')
+    elif method == "quantile":
+        if time_res != "year":
+            da = da.groupby(f"time.{time_res}")
+        t = da.quantile(thresh, dim="time").drop_vars("quantile")
     else:
-        raise ValueError(f"{method} is not a valid method. Choose 'amount' or 'quantile'.")
+        raise ValueError(
+            f"{method} is not a valid method. Choose 'amount' or 'quantile'."
+        )
 
     cond = ops[op](da, t)
-    if time_res != 'year':
+    if time_res != "year":
         cond = cond.resample(time=res2freq[time_res])
         # the stat is taken on each resampling (1-31 Jan 1980)
         out = cond.map(rl.rle_statistics, dim="time", reducer=stat)
         # then again on all years (Jan 1980-2010)
-        out = getattr(out.groupby(f'time.{time_res}'), stat)(dim='time')
+        out = getattr(out.groupby(f"time.{time_res}"), stat)(dim="time")
     else:
         out = rl.rle_statistics(cond, dim="time", reducer=stat)
     out = out.where(mask, np.nan)  # put NaNs back over the ocean
     out.attrs.update(attrs)
-    out.attrs["long_name"] = f"{stat} of spell length when {attrs['standard_name']} {op} {method} {thresh} "
+    out.attrs[
+        "long_name"
+    ] = f"{stat} of spell length when {attrs['long_name']} {op} {method} {thresh}"
     return out
 
 
 @update_xclim_history
-@register_statistical_properties(aspect='temporal', seasonal=True, annual=False)
-def acf(da: xr.DataArray, lag: int = 1, time_res: str = 'season') -> xr.DataArray:
-    f"""Autocorrelation function.
+@register_statistical_properties(aspect="temporal", seasonal=True, annual=False)
+def acf(da: xr.DataArray, lag: int = 1, time_res: str = "season") -> xr.DataArray:
+    r"""Autocorrelation function.
 
     Autocorrelation with lag-{lag} over a {time_res} and averaged over all years.
 
@@ -285,10 +299,6 @@ def acf(da: xr.DataArray, lag: int = 1, time_res: str = 'season') -> xr.DataArra
     xr.DataArray,
       lag-{lag} autocorrelation of the variable over a {time_res} and averaged over all years.
 
-    Examples
-    --------
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
-    >>> acf(da=pr, lag=3, time_res='season')
     Notes
     --------
     See statsmodels.tsa.stattools.acf
@@ -298,37 +308,50 @@ def acf(da: xr.DataArray, lag: int = 1, time_res: str = 'season') -> xr.DataArra
     Alavoine, M., & Grenier, P. (2021). The distinct problems of physical inconsistency and of multivariate bias
     potentially involved in the statistical adjustment of climate simulations. California Digital Library (CDL).
     https://doi.org/10.31223/x5c34c
+
+    Examples
+    --------
+    >>> from xclim.testing import open_dataset
+    >>> pr = open_dataset(path_to_pr_file).pr
+    >>> acf(da=pr, lag=3, time_res='season')
     """
-    if time_res != 'year':
-        raise ValueError("'year' is the only valid time resolution for this statistical property.")
+    if time_res == "year":
+        raise ValueError(
+            "'year' is not a valid time resolution for this statistical property."
+        )
 
     attrs = da.attrs
     da = da.resample(time=res2freq[time_res])
 
     def acf_last(x, nlags):
-        """ statsmodels acf calculates acf for lag 0 to nlags, this return only the last one. """
+        """statsmodels acf calculates acf for lag 0 to nlags, this return only the last one."""
         out_last = stattools.acf(x, nlags=nlags)
         return out_last[-1]
-    out = xr.apply_ufunc(acf_last, da, input_core_dims=[["time"]], vectorize=True, kwargs={'nlags': lag},
-                         dask='parallelized')
+
+    out = xr.apply_ufunc(
+        acf_last,
+        da,
+        input_core_dims=[["time"]],
+        vectorize=True,
+        kwargs={"nlags": lag},
+        dask="parallelized",
+    )
     # average over the years
-    out = out.groupby(f'__resample_dim__.{time_res}').mean(dim='__resample_dim__')
+    out = out.groupby(f"__resample_dim__.{time_res}").mean(dim="__resample_dim__")
 
     out.attrs.update(attrs)
-    out.attrs["long_name"] = f"lag-{lag} autocorrelation of {attrs['standard_name']}"
-    out.attrs["units"] = ''
+    out.attrs["long_name"] = f"lag-{lag} autocorrelation of {attrs['long_name']}"
+    out.attrs["units"] = ""
     return out
 
 
 # time_res was kept even though 'year' it the only acceptable arg to keep the signature similar to other properties
 @update_xclim_history
-@register_statistical_properties(aspect='temporal', seasonal=False, annual=True)
+@register_statistical_properties(aspect="temporal", seasonal=False, annual=True)
 def annual_cycle_amplitude(
-    da: xr.DataArray,
-    amplitude_type: str = 'absolute',
-    time_res: str = 'year'
+    da: xr.DataArray, amplitude_type: str = "absolute", time_res: str = "year"
 ) -> xr.DataArray:
-    f"""Annual Cycle amplitude.
+    r"""Annual Cycle amplitude.
 
     The amplitudes of the annual cycle are calculated for each year, than averaged over the all years.
 
@@ -349,32 +372,40 @@ def annual_cycle_amplitude(
 
     Examples
     --------
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> from xclim.testing import open_dataset
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> annual_cycle_amplitude(da=pr, amplitude_type='relative')
     """
-    if time_res != 'year':
-        raise ValueError("'year' is the only valid time resolution for this statistical property.")
+    if time_res != "year":
+        raise ValueError(
+            "'year' is the only valid time resolution for this statistical property."
+        )
 
     attrs = da.attrs
-    da = da.resample(time='YS')
+    da = da.resample(time="YS")
     # amplitude
-    amp = da.max(dim='time') - da.min(dim='time')
+    amp = da.max(dim="time") - da.min(dim="time")
     amp.attrs.update(attrs)
-    if xc.core.units.units2pint(attrs['units']).dimensionality == xc.core.units.units2pint('degC').dimensionality:
-        amp.attrs['units'] = 'delta_degree_Celsius'
-    if amplitude_type == 'relative':
-        amp = amp * 100 / da.mean(dim='time', keep_attrs=True)
-        amp.attrs['units'] = '%'
-    amp = amp.mean(dim='time', keep_attrs=True)
-    amp.attrs["long_name"] = f"{amplitude_type} amplitude of the annual cycle of {attrs['standard_name']}"
+    if (
+        xc.core.units.units2pint(attrs["units"]).dimensionality
+        == xc.core.units.units2pint("degC").dimensionality
+    ):
+        amp.attrs["units"] = "delta_degree_Celsius"
+    if amplitude_type == "relative":
+        amp = amp * 100 / da.mean(dim="time", keep_attrs=True)
+        amp.attrs["units"] = "%"
+    amp = amp.mean(dim="time", keep_attrs=True)
+    amp.attrs[
+        "long_name"
+    ] = f"{amplitude_type} amplitude of the annual cycle of {attrs['long_name']}"
     return amp
 
 
 # time_res was kept even though 'year' it the only acceptable arg to keep the signature similar to other properties
 @update_xclim_history
-@register_statistical_properties(aspect='temporal', seasonal=False, annual=True)
-def annual_cycle_phase(da: xr.DataArray, time_res: str = 'year') -> xr.DataArray:
-    f"""Annual Cycle phase.
+@register_statistical_properties(aspect="temporal", seasonal=False, annual=True)
+def annual_cycle_phase(da: xr.DataArray, time_res: str = "year") -> xr.DataArray:
+    """Annual Cycle phase.
 
     The phases of the annual cycle are calculated for each year, than averaged over the all years.
 
@@ -390,37 +421,49 @@ def annual_cycle_phase(da: xr.DataArray, time_res: str = 'year') -> xr.DataArray
 
     Examples
     --------
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
-    >>> annual_cycle_phase(da=pr, amplitude_type='relative')
+    >>> from xclim.testing import open_dataset
+    >>> pr = open_dataset(path_to_pr_file).pr
+    >>> annual_cycle_phase(da=pr)
     """
-    if time_res != 'year':
-        raise ValueError("'year' is the only valid time resolution for this statistical property.")
+    if time_res != "year":
+        raise ValueError(
+            "'year' is the only valid time resolution for this statistical property."
+        )
 
     attrs = da.attrs
-    mask = ~(da.isel(time=0).isnull()).drop_vars('time')  # mask of the ocean with NaNs
-    da = da.resample(time='YS')
+    mask = ~(da.isel(time=0).isnull()).drop_vars("time")  # mask of the ocean with NaNs
+    da = da.resample(time="YS")
 
     # +1  at the end to go from index to doy
-    phase = xr.apply_ufunc(np.argmax, da, input_core_dims=[["time"]], vectorize=True, dask='parallelized')+1
-    phase = phase.mean(dim='__resample_dim__')
+    phase = (
+        xr.apply_ufunc(
+            np.argmax,
+            da,
+            input_core_dims=[["time"]],
+            vectorize=True,
+            dask="parallelized",
+        )
+        + 1
+    )
+    phase = phase.mean(dim="__resample_dim__")
     # put nan where there was nan in the input, if not phase = 0 + 1
     phase = phase.where(mask, np.nan)
     phase.attrs.update(attrs)
-    phase.attrs["long_name"] = f"Phase of the annual cycle of {attrs['standard_name']}"
+    phase.attrs["long_name"] = f"Phase of the annual cycle of {attrs['long_name']}"
     phase.attrs.update(units="", is_dayofyear=1)
     return phase
 
 
 @update_xclim_history
-@register_statistical_properties(aspect='multivariate', seasonal=True, annual=True)
+@register_statistical_properties(aspect="multivariate", seasonal=True, annual=True)
 def corr_btw_var(
     da1: xr.DataArray,
     da2: xr.DataArray,
-    corr_type: str = 'Spearman',
-    time_res: str = 'year',
-    output: str = 'correlation',
+    corr_type: str = "Spearman",
+    time_res: str = "year",
+    output: str = "correlation",
 ) -> xr.DataArray:
-    f"""Correlation between two variables.
+    r"""Correlation between two variables.
 
     {corr_type} correlation coefficient between two variables at the time resolution.
 
@@ -446,44 +489,55 @@ def corr_btw_var(
 
     Examples
     --------
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
-    >>> corr_btw_var(da=pr, q=0.9, time_res='season')
+    >>> from xclim.testing import open_dataset
+    >>> pr = open_dataset(path_to_pr_file).pr
+    >>> tasmax = open_dataset('NRCANdaily/nrcan_canada_daily_tasmax_1990.nc').tasmax
+    >>> corr_btw_var(da1=pr, da2=tasmax, time_res='season')
     """
     attrs1 = da1.attrs
     attrs2 = da2.attrs
-    if time_res != 'year':
-        da1 = da1.groupby(f'time.{time_res}')
-        da2 = da2.groupby(f'time.{time_res}')
+    if time_res != "year":
+        da1 = da1.groupby(f"time.{time_res}")
+        da2 = da2.groupby(f"time.{time_res}")
 
     def first_output(a, b):
         """Only keep the correlation (first output) from the scipy function"""
-        index = {'correlation': 0, 'pvalue': 1}
-        if corr_type == 'Pearson':
+        index = {"correlation": 0, "pvalue": 1}
+        if corr_type == "Pearson":
             # for points in the water with NaNs
             if np.isnan(a[0]):
                 return np.nan
-            else:
-                return stats.pearsonr(a, b)[index[output]]
-        elif corr_type == 'Spearman':
-            return stats.spearmanr(a, b, nan_policy='propagate')[index[output]]
-    out = xr.apply_ufunc(first_output, da1, da2,
-                         input_core_dims=[["time"], ["time"]], vectorize=True, dask='parallelized')
+            return stats.pearsonr(a, b)[index[output]]
+        elif corr_type == "Spearman":
+            return stats.spearmanr(a, b, nan_policy="propagate")[index[output]]
+        else:
+            raise ValueError(
+                "pear is not a valid type. Choose 'Pearson' or 'Spearman'."
+            )
+
+    out = xr.apply_ufunc(
+        first_output,
+        da1,
+        da2,
+        input_core_dims=[["time"], ["time"]],
+        vectorize=True,
+        dask="parallelized",
+    )
     out.attrs.update(attrs1)
-    out.attrs["long_name"] = f"{corr_type} correlation coefficient between" \
-                              f" {attrs1['standard_name']} and {attrs2['standard_name']}"
+    out.attrs["long_name"] = (
+        f"{corr_type} correlation coefficient between {attrs1['long_name']} and"
+        f" {attrs2['long_name']}"
+    )
     out.attrs["units"] = ""
     return out
 
 
 @update_xclim_history
-@register_statistical_properties(aspect='temporal', seasonal=True, annual=True)
+@register_statistical_properties(aspect="temporal", seasonal=True, annual=True)
 def relative_frequency(
-    da: xr.DataArray,
-    op: str = '>=',
-    thresh='1mm d-1',
-    time_res: str = 'year'
+    da: xr.DataArray, op: str = ">=", thresh="1mm d-1", time_res: str = "year"
 ) -> xr.DataArray:
-    f"""Relative Frequency.
+    r"""Relative Frequency.
 
     Relative Frequency of days with variable {op} {thresh} at the time resolution.
     Number of days that satisfy the condition / total number of days.
@@ -509,39 +563,43 @@ def relative_frequency(
 
     Examples
     --------
-    >>> tas = xr.open_dataset(path_to_tas_file).tas
-    >>> relative_frequency(da=tas, op= '<', thresh= '0 degC', time_res='season')
+    >>> from xclim.testing import open_dataset
+    >>> tasmax = open_dataset('NRCANdaily/nrcan_canada_daily_tasmax_1990.nc').tasmax
+    >>> relative_frequency(da=tasmax, op= '<', thresh= '0 degC', time_res='season')
     """
     attrs = da.attrs
-    mask = ~(da.isel(time=0).isnull()).drop_vars('time')  # mask of the ocean with NaNs
-    ops = {">": np.greater,
-           "<": np.less,
-           ">=": np.greater_equal,
-           "<=": np.less_equal}
+    mask = ~(da.isel(time=0).isnull()).drop_vars("time")  # mask of the ocean with NaNs
+    ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
     t = convert_units_to(thresh, da)
-    length = da.sizes['time']
+    length = da.sizes["time"]
     cond = ops[op](da, t)
-    if time_res != 'year':  # change the time resolution if necessary
-        cond = cond.groupby(f'time.{time_res}')
-        length = np.array([len(v) for k, v in cond.groups.items()])  # length of the groupBy groups
+    if time_res != "year":  # change the time resolution if necessary
+        cond = cond.groupby(f"time.{time_res}")
+        length = np.array(
+            [len(v) for k, v in cond.groups.items()]
+        )  # length of the groupBy groups
         for i in range(da.ndim - 1):  # add empty dimension(s) to match input
             length = np.expand_dims(length, axis=-1)
-    out = cond.sum(dim='time', skipna=False) / length  # count days with the condition and divide by total nb of days
+    out = (
+        cond.sum(dim="time", skipna=False) / length
+    )  # count days with the condition and divide by total nb of days
     out = out.where(mask, np.nan)
     out.attrs.update(attrs)
-    out.attrs["long_name"] = f"Relative frequency of days with {attrs['standard_name']} {op} {thresh}"
-    out.attrs["units"] = ''
+    out.attrs[
+        "long_name"
+    ] = f"Relative frequency of days with {attrs['long_name']} {op} {thresh}"
+    out.attrs["units"] = ""
     return out
 
 
 @update_xclim_history
-@register_statistical_properties(aspect='temporal', seasonal=True, annual=True)
+@register_statistical_properties(aspect="temporal", seasonal=True, annual=True)
 def trend(
     da: xr.DataArray,
-    time_res: str = 'year',
-    output: str = 'slope',
+    time_res: str = "year",
+    output: str = "slope",
 ) -> xr.DataArray:
-    f"""Linear Trend.
+    r"""Linear Trend.
 
     The data is averaged over each {time_res} and the interannual trend is returned.
 
@@ -564,37 +622,53 @@ def trend(
     xr.DataArray,
       Trend of the variable.
 
-    Examples
-    --------
-    >>> tas = xr.open_dataset(path_to_tas_file).tas
-    >>> trend(da=tas, time_res='season')
     Notes
     --------
     See scipy.stats.linregress and np.polyfit
+
+    Examples
+    --------
+    >>> from xclim.testing import open_dataset
+    >>> tas = open_dataset(path_to_tas_file).tas
+    >>> trend(da=tas, time_res='season')
     """
     attrs = da.attrs
     da = da.resample(time=res2freq[time_res])  # separate all the {time_res}
-    da_mean = da.mean(dim='time')  # avg over all {time_res}
-    da_mean = da_mean.chunk({'time': -1})
-    if time_res != 'year':
-        da_mean = da_mean.groupby(f'time.{time_res}')  # group all month/season together
+    da_mean = da.mean(dim="time")  # avg over all {time_res}
+    da_mean = da_mean.chunk({"time": -1})
+    if time_res != "year":
+        da_mean = da_mean.groupby(f"time.{time_res}")  # group all month/season together
 
-    def modified_lr(x):  # modify linregress to fit into apply_ufunc and only return slope
+    def modified_lr(
+        x,
+    ):  # modify linregress to fit into apply_ufunc and only return slope
         return getattr(stats.linregress(list(range(len(x))), x), output)
 
-    out = xr.apply_ufunc(modified_lr, da_mean,
-                         input_core_dims=[["time"]], vectorize=True, dask='parallelized')
+    out = xr.apply_ufunc(
+        modified_lr,
+        da_mean,
+        input_core_dims=[["time"]],
+        vectorize=True,
+        dask="parallelized",
+    )
     out.attrs.update(attrs)
-    out.attrs["long_name"] = f"{output} of the interannual linear trend of {attrs['standard_name']}"
+    out.attrs[
+        "long_name"
+    ] = f"{output} of the interannual linear trend of {attrs['long_name']}"
     out.attrs["units"] = f"{attrs['units']}/year"
     return out
 
 
 @update_xclim_history
-@register_statistical_properties(aspect='marginal', seasonal=True, annual=True)
-def return_value(da: xr.DataArray, period: int = 20, op: str = 'max', method: str = 'PWM', time_res: str = 'year')\
-     -> xr.DataArray:
-    f"""Return value.
+@register_statistical_properties(aspect="marginal", seasonal=True, annual=True)
+def return_value(
+    da: xr.DataArray,
+    period: int = 20,
+    op: str = "max",
+    method: str = "ML",
+    time_res: str = "year",
+) -> xr.DataArray:
+    r"""Return value.
 
     Return the value corresponding to a return period.
     On average, the return value will be exceeded (or not exceed for op='min') every {period} years.
@@ -629,7 +703,8 @@ def return_value(da: xr.DataArray, period: int = 20, op: str = 'max', method: st
 
     Examples
     --------
-    >>> tas = xr.open_dataset(path_to_tas_file).tas
+    >>> from xclim.testing import open_dataset
+    >>> tas = open_dataset(path_to_tas_file).tas
     >>> return_value(da=tas, time_res='season')
     """
     attrs = da.attrs
@@ -640,17 +715,21 @@ def return_value(da: xr.DataArray, period: int = 20, op: str = 'max', method: st
         out = parametric_quantile(params, q=1 - 1.0 / period)
         return out
 
-    if time_res == 'year':
+    if time_res == "year":
         out = frequency_analysis_method(da, method)
     else:
         # get coords of final output
-        coords = da.groupby(f'time.{time_res}').mean(dim='time').coords
+        coords = da.groupby(f"time.{time_res}").mean(dim="time").coords
         # create empty dataArray in the shape of final output
         out = xr.DataArray(coords=coords)
         # iterate through all the seasons/months to get the return value
         for ind in coords[time_res].values:
-            out.loc[{time_res: ind}] = frequency_analysis_method(da, method, **{time_res: ind}).isel(quantile=0)
+            out.loc[{time_res: ind}] = frequency_analysis_method(
+                da, method, **{time_res: ind}
+            ).isel(quantile=0)
 
     out.attrs.update(attrs)
-    out.attrs["long_name"] = f"{period}-{time_res} {op} return level of {attrs['standard_name']}"
+    out.attrs[
+        "long_name"
+    ] = f"{period}-{time_res} {op} return level of {attrs['long_name']}"
     return out
