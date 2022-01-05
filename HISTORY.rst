@@ -4,11 +4,15 @@ History
 
 0.33.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user:`juliettelavoie`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Added a CI hook in ``.pre-commit-config.yaml`` to perform automated `pre-commit` corrections with GitHub CI. (:pull:`965`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Added ``properties.py`` and ``measures.py`` in order to perform diagnostic tests of sdba (:issue:`424`).
 
 0.32.1 (2021-12-17)
 -------------------

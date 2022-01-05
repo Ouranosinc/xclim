@@ -2,22 +2,21 @@
 Properties submodule
 =================
  Statistical Properties is the xclim term for 'indices' in the VALUE project.
- SDBA diagnostics are made up of properties and measures.
+ SDBA diagnostic tests are made up of properties and measures.
 
- This framework for the diagnostics was inspired by the VALUE project (www.value-cost.eu/).
+ This framework for the diagnostic tests was inspired by the VALUE project (www.value-cost.eu/).
 """
-import xarray
+import xarray as xr
 import xclim as xc
-from typing import Callable, Dict, Tuple
+from typing import Callable, Dict
+from xclim.core.formatting import update_xclim_history
 from xclim.core.units import convert_units_to
 from xclim.indices import run_length as rl
 import numpy as np
 from statsmodels.tsa import stattools
 from warnings import warn
-import scipy
-import pandas as pd
-from xclim.indices.stats import frequency_analysis
-from xclim.indices.stats import frequency_analysis, fit, fa, parametric_quantile
+from scipy import stats
+from xclim.indices.stats import fit, parametric_quantile
 from xclim.indices.generic import select_resample_op
 
 res2freq = {'year': 'YS', 'season': 'QS-DEC', 'month': 'MS'}
@@ -36,15 +35,16 @@ def register_statistical_properties(aspect: str, seasonal: bool, annual: bool) -
     return _register_statistical_properties
 
 
+@update_xclim_history
 @register_statistical_properties(aspect='marginal', seasonal=True, annual=True)
-def mean(da: xarray.DataArray, time_res: str = 'year') -> xarray.DataArray:
+def mean(da: xr.DataArray, time_res: str = 'year') -> xr.DataArray:
     """Mean.
 
     Mean over all years at the time resolution.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
       Variable on which to calculate the diagnostic.
     time_res : {'year', 'season', 'month'}
       Time resolution.
@@ -53,7 +53,7 @@ def mean(da: xarray.DataArray, time_res: str = 'year') -> xarray.DataArray:
 
     Returns
     -------
-    xarray.DataArray,
+    xr.DataArray,
       Mean of the variable.
 
     Examples
@@ -70,15 +70,16 @@ def mean(da: xarray.DataArray, time_res: str = 'year') -> xarray.DataArray:
     return out
 
 
+@update_xclim_history
 @register_statistical_properties(aspect='marginal', seasonal=True, annual=True)
-def var(da: xarray.DataArray, time_res: str = 'year') -> xarray.DataArray:
+def var(da: xr.DataArray, time_res: str = 'year') -> xr.DataArray:
     """Variance.
 
     Variance of the variable over all years at the time resolution.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
       Variable on which to calculate the diagnostic.
     time_res : {'year', 'season', 'month'}
       Time resolution.
@@ -87,7 +88,7 @@ def var(da: xarray.DataArray, time_res: str = 'year') -> xarray.DataArray:
 
     Returns
     -------
-    xarray.DataArray,
+    xr.DataArray,
       Variance of the variable.
 
     Examples
@@ -107,15 +108,16 @@ def var(da: xarray.DataArray, time_res: str = 'year') -> xarray.DataArray:
     return out
 
 
+@update_xclim_history
 @register_statistical_properties(aspect='marginal', seasonal=True, annual=True)
-def skewness(da: xarray.DataArray, time_res: str = 'year') -> xarray.DataArray:
+def skewness(da: xr.DataArray, time_res: str = 'year') -> xr.DataArray:
     """Skewness.
 
     Skewness of the distribution of the variable over all years at the time resolution.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
       Variable on which to calculate the diagnostic.
     time_res : {'year', 'season', 'month'}
       Time resolution.
@@ -124,7 +126,7 @@ def skewness(da: xarray.DataArray, time_res: str = 'year') -> xarray.DataArray:
 
     Returns
     -------
-    xarray.DataArray,
+    xr.DataArray,
       Skewness of the variable.
 
     Examples
@@ -139,23 +141,23 @@ def skewness(da: xarray.DataArray, time_res: str = 'year') -> xarray.DataArray:
     attrs = da.attrs
     if time_res != 'year':
         da = da.groupby(f'time.{time_res}')
-    out = xarray.apply_ufunc(scipy.stats.skew, da,
-                             input_core_dims=[["time"]], vectorize=True, dask='parallelized')
+    out = xr.apply_ufunc(stats.skew, da, input_core_dims=[["time"]], vectorize=True, dask='parallelized')
     out.attrs.update(attrs)
     out.attrs["long_name"] = f"Skewness of {attrs['standard_name']}"
     out.attrs['units'] = ''
     return out
 
 
+@update_xclim_history
 @register_statistical_properties(aspect='marginal', seasonal=True, annual=True)
-def quantile(da: xarray.DataArray, q: float = 0.98, time_res: str = 'year') -> xarray.DataArray:
+def quantile(da: xr.DataArray, q: float = 0.98, time_res: str = 'year') -> xr.DataArray:
     """Quantile.
 
     Returns the quantile {q} of the distribution of the variable over all years at the time resolution.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
       Variable on which to calculate the diagnostic.
     q: float
       Quantile to be calculated. Should be between 0 and 1.
@@ -166,7 +168,7 @@ def quantile(da: xarray.DataArray, q: float = 0.98, time_res: str = 'year') -> x
 
     Returns
     -------
-    xarray.DataArray,
+    xr.DataArray,
       Quantile {q} of the variable.
 
     Examples
@@ -183,22 +185,23 @@ def quantile(da: xarray.DataArray, q: float = 0.98, time_res: str = 'year') -> x
     return out
 
 
+@update_xclim_history
 @register_statistical_properties(aspect='temporal', seasonal=True, annual=True)
 def spell_length_distribution(
-    da: xarray.DataArray,
+    da: xr.DataArray,
     method: str = 'amount',
     op: str = '>=',
     thresh='1mm d-1',
     stat: str = 'mean',
     time_res: str = 'year'
-) -> xarray.DataArray:
+) -> xr.DataArray:
     f"""Spell length distribution.
 
     {stat} of spell length distribution when the variable is {op} the {method} {thresh}.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
       Variable on which to calculate the diagnostic.
     method: {'amount', 'quantile'}:
       Method to choose the threshold
@@ -219,13 +222,13 @@ def spell_length_distribution(
       Each distribution contains the spell lenghts in a given month for all available years.
     Returns
     -------
-    xarray.DataArray,
+    xr.DataArray,
       {stat} of spell length distribution when the variable is {op} the {method} {thresh}.
 
     Examples
     --------
     >>> pr = xr.open_dataset(path_to_pr_file).pr
-    >>> spell_length_by_amount(da=pr, op='<',thresh ='1mm d-1', stat= 'p10', time_res='season')
+    >>> spell_length_distribution(da=pr, op='<',thresh ='1mm d-1', stat= 'p10', time_res='season')
     """
     attrs = da.attrs
     mask = ~(da.isel(time=0).isnull()).drop_vars('time')  # mask of the ocean with NaNs
@@ -242,6 +245,8 @@ def spell_length_distribution(
         if time_res != 'year':
             da = da.groupby(f'time.{time_res}')
         t = da.quantile(thresh, dim='time').drop_vars('quantile')
+    else:
+        warn(f"{method} is not a valid method. Choose 'amount' or 'quantile'.")
 
     cond = ops[op](da, t)
     if time_res != 'year':
@@ -258,15 +263,16 @@ def spell_length_distribution(
     return out
 
 
+@update_xclim_history
 @register_statistical_properties(aspect='temporal', seasonal=True, annual=False)
-def acf(da: xarray.DataArray, lag: int = 1, time_res: str = 'season') -> xarray.DataArray:
+def acf(da: xr.DataArray, lag: int = 1, time_res: str = 'season') -> xr.DataArray:
     f"""Autocorrelation function.
 
     Autocorrelation with lag-{lag} over a {time_res} and averaged over all years.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
       Variable on which to calculate the diagnostic.
     lag: int
       lag.
@@ -277,7 +283,7 @@ def acf(da: xarray.DataArray, lag: int = 1, time_res: str = 'season') -> xarray.
 
     Returns
     -------
-    xarray.DataArray,
+    xr.DataArray,
       lag-{lag} autocorrelation of the variable over a {time_res} and averaged over all years.
 
     Examples
@@ -305,8 +311,8 @@ def acf(da: xarray.DataArray, lag: int = 1, time_res: str = 'season') -> xarray.
         """ statsmodels acf calculates acf for lag 0 to nlags, this return only the last one. """
         out_last = stattools.acf(x, nlags=nlags)
         return out_last[-1]
-    out = xarray.apply_ufunc(acf_last, da, input_core_dims=[["time"]], vectorize=True, kwargs={'nlags': lag},
-                             dask='parallelized')
+    out = xr.apply_ufunc(acf_last, da, input_core_dims=[["time"]], vectorize=True, kwargs={'nlags': lag},
+                         dask='parallelized')
     # average over the years
     out = out.groupby(f'__resample_dim__.{time_res}').mean(dim='__resample_dim__')
 
@@ -317,19 +323,20 @@ def acf(da: xarray.DataArray, lag: int = 1, time_res: str = 'season') -> xarray.
 
 
 # time_res was kept even though 'year' it the only acceptable arg to keep the signature similar to other properties
+@update_xclim_history
 @register_statistical_properties(aspect='temporal', seasonal=False, annual=True)
 def annual_cycle_amplitude(
-    da: xarray.DataArray,
+    da: xr.DataArray,
     amplitude_type: str = 'absolute',
     time_res: str = 'year'
-) -> xarray.DataArray:
+) -> xr.DataArray:
     f"""Annual Cycle amplitude.
 
     The amplitudes of the annual cycle are calculated for each year, than averaged over the all years.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
       Variable on which to calculate the diagnostic.
 
     amplitude_type: {'absolute','relative'}
@@ -339,7 +346,7 @@ def annual_cycle_amplitude(
 
     Returns
     -------
-    out: xarray.DataArray,
+    out: xr.DataArray,
       {amplitude_type} amplitude of the annual cycle.
 
     Examples
@@ -366,20 +373,21 @@ def annual_cycle_amplitude(
 
 
 # time_res was kept even though 'year' it the only acceptable arg to keep the signature similar to other properties
+@update_xclim_history
 @register_statistical_properties(aspect='temporal', seasonal=False, annual=True)
-def annual_cycle_phase(da: xarray.DataArray, time_res: str = 'year') -> xarray.DataArray:
+def annual_cycle_phase(da: xr.DataArray, time_res: str = 'year') -> xr.DataArray:
     f"""Annual Cycle phase.
 
     The phases of the annual cycle are calculated for each year, than averaged over the all years.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
       Variable on which to calculate the diagnostic.
 
     Returns
     -------
-    phase: xarray.DataArray,
+    phase: xr.DataArray,
       Phase of the annual cycle. The position (day-of-year) of the maximal value.
 
     Examples
@@ -396,7 +404,7 @@ def annual_cycle_phase(da: xarray.DataArray, time_res: str = 'year') -> xarray.D
     da = da.resample(time='YS')
 
     # +1  at the end to go from index to doy
-    phase = xarray.apply_ufunc(np.argmax, da, input_core_dims=[["time"]], vectorize=True, dask='parallelized')+1
+    phase = xr.apply_ufunc(np.argmax, da, input_core_dims=[["time"]], vectorize=True, dask='parallelized')+1
     phase = phase.mean(dim='__resample_dim__')
     # put nan where there was nan in the input, if not phase = 0 + 1
     phase = phase.where(mask, np.nan)
@@ -406,23 +414,24 @@ def annual_cycle_phase(da: xarray.DataArray, time_res: str = 'year') -> xarray.D
     return phase
 
 
+@update_xclim_history
 @register_statistical_properties(aspect='multivariate', seasonal=True, annual=True)
 def corr_btw_var(
-    da1: xarray.DataArray,
-    da2: xarray.DataArray,
+    da1: xr.DataArray,
+    da2: xr.DataArray,
     corr_type: str = 'Spearman',
     time_res: str = 'year',
     output: str = 'correlation',
-) -> xarray.DataArray:
+) -> xr.DataArray:
     f"""Correlation between two variables.
 
     {corr_type} correlation coefficient between two variables at the time resolution.
 
     Parameters
     ----------
-    da1 : xarray.DataArray
+    da1 : xr.DataArray
       First variable on which to calculate the diagnostic.
-    da2 : xarray.DataArray
+    da2 : xr.DataArray
       Second variable on which to calculate the diagnostic.
     corr_type: {'Pearson','Spearman'}
         Type of correlation to calculate.
@@ -435,7 +444,7 @@ def corr_btw_var(
 
     Returns
     -------
-    xarray.DataArray,
+    xr.DataArray,
       {corr_type} correlation coefficient
 
     Examples
@@ -451,17 +460,17 @@ def corr_btw_var(
 
     def first_output(a, b):
         """Only keep the correlation (first output) from the scipy function"""
-        index = {'correlation':0, 'pvalue':1}
+        index = {'correlation': 0, 'pvalue': 1}
         if corr_type == 'Pearson':
             # for points in the water with NaNs
             if np.isnan(a[0]):
                 return np.nan
             else:
-                return scipy.stats.pearsonr(a, b)[index[output]]
+                return stats.pearsonr(a, b)[index[output]]
         elif corr_type == 'Spearman':
-            return scipy.stats.spearmanr(a, b, nan_policy='propagate')[index[output]]
-    out = xarray.apply_ufunc(first_output, da1, da2,
-                             input_core_dims=[["time"], ["time"]], vectorize=True, dask='parallelized')
+            return stats.spearmanr(a, b, nan_policy='propagate')[index[output]]
+    out = xr.apply_ufunc(first_output, da1, da2,
+                         input_core_dims=[["time"], ["time"]], vectorize=True, dask='parallelized')
     out.attrs.update(attrs1)
     out.attrs["long_name"] = f"{corr_type} correlation coefficient between" \
                               f" {attrs1['standard_name']} and {attrs2['standard_name']}"
@@ -469,13 +478,14 @@ def corr_btw_var(
     return out
 
 
+@update_xclim_history
 @register_statistical_properties(aspect='temporal', seasonal=True, annual=True)
 def relative_frequency(
-    da: xarray.DataArray,
+    da: xr.DataArray,
     op: str = '>=',
     thresh='1mm d-1',
     time_res: str = 'year'
-) -> xarray.DataArray:
+) -> xr.DataArray:
     f"""Relative Frequency.
 
     Relative Frequency of days with variable {op} {thresh} at the time resolution.
@@ -483,7 +493,7 @@ def relative_frequency(
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
       Variable on which to calculate the diagnostic.
     op: {">", "<", ">=", "<="}
       Operation to verify the condition.
@@ -497,7 +507,7 @@ def relative_frequency(
 
     Returns
     -------
-    xarray.DataArray,
+    xr.DataArray,
       Relative frequency of the variable.
 
     Examples
@@ -513,7 +523,7 @@ def relative_frequency(
            "<=": np.less_equal}
     t = convert_units_to(thresh, da)
     length = da.sizes['time']
-    cond = ops[op](da, t)#, where=np.isfinite(da), out=da.values)  # check the condition
+    cond = ops[op](da, t)
     if time_res != 'year':  # change the time resolution if necessary
         cond = cond.groupby(f'time.{time_res}')
         length = np.array([len(v) for k, v in cond.groups.items()])  # length of the groupBy groups
@@ -527,19 +537,20 @@ def relative_frequency(
     return out
 
 
+@update_xclim_history
 @register_statistical_properties(aspect='temporal', seasonal=True, annual=True)
 def trend(
-    da: xarray.DataArray,
+    da: xr.DataArray,
     time_res: str = 'year',
     output: str = 'slope',
-) -> xarray.DataArray:
+) -> xr.DataArray:
     f"""Linear Trend.
 
     The data is averaged over each {time_res} and the interannual trend is returned.
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
       Variable on which to calculate the diagnostic.
 
     output: {'slope', 'pvalue'}
@@ -553,7 +564,7 @@ def trend(
 
     Returns
     -------
-    xarray.DataArray,
+    xr.DataArray,
       Trend of the variable.
 
     Examples
@@ -572,19 +583,20 @@ def trend(
         da_mean = da_mean.groupby(f'time.{time_res}')  # group all month/season together
 
     def modified_lr(x):  # modify linregress to fit into apply_ufunc and only return slope
-        return getattr(scipy.stats.linregress(list(range(len(x))), x), output)
+        return getattr(stats.linregress(list(range(len(x))), x), output)
 
-    out = xarray.apply_ufunc(modified_lr, da_mean,
-                             input_core_dims=[["time"]], vectorize=True, dask='parallelized')
+    out = xr.apply_ufunc(modified_lr, da_mean,
+                         input_core_dims=[["time"]], vectorize=True, dask='parallelized')
     out.attrs.update(attrs)
     out.attrs["long_name"] = f"{output} of the interannual linear trend of {attrs['standard_name']}"
     out.attrs["units"] = f"{attrs['units']}/year"
     return out
 
 
+@update_xclim_history
 @register_statistical_properties(aspect='marginal', seasonal=True, annual=True)
-def return_value(da: xarray.DataArray, period: int = 20, op: str = 'max', method: str ='PWM', time_res: str = 'year')\
-    -> xarray.DataArray:
+def return_value(da: xr.DataArray, period: int = 20, op: str = 'max', method: str = 'PWM', time_res: str = 'year')\
+     -> xr.DataArray:
     f"""Return value.
 
     Return the value corresponding to a return period.
@@ -595,7 +607,7 @@ def return_value(da: xarray.DataArray, period: int = 20, op: str = 'max', method
 
     Parameters
     ----------
-    da : xarray.DataArray
+    da : xr.DataArray
       Variable on which to calculate the diagnostic.
 
     period: int
@@ -615,7 +627,7 @@ def return_value(da: xarray.DataArray, period: int = 20, op: str = 'max', method
 
     Returns
     -------
-    xarray.DataArray,
+    xr.DataArray,
       {period}-{time_res} {op} return level of the variable.
 
     Examples
@@ -637,18 +649,11 @@ def return_value(da: xarray.DataArray, period: int = 20, op: str = 'max', method
         # get coords of final output
         coords = da.groupby(f'time.{time_res}').mean(dim='time').coords
         # create empty dataArray in the shape of final output
-        out = xarray.DataArray(coords=coords)
+        out = xr.DataArray(coords=coords)
         # iterate through all the seasons/months to get the return value
         for ind in coords[time_res].values:
-                #out.loc[{time_res: ind}] = frequency_analysis(da, t=period, dist="genextreme", mode=op,
-                                                              #**{time_res: ind}).isel(return_period=0)
             out.loc[{time_res: ind}] = frequency_analysis_method(da, method, **{time_res: ind}).isel(quantile=0)
 
     out.attrs.update(attrs)
     out.attrs["long_name"] = f"{period}-{time_res} {op} return level of {attrs['standard_name']}"
     return out
-
-
-
-
-

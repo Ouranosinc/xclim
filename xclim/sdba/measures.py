@@ -2,17 +2,19 @@
 Measures submodule
 =================
 To compare adjusted simulations to observations, through statistical properties or directly
-SDBA diagnostics are made up of properties and measures.
-This framework for the diagnostics was inspired by the VALUE project (www.value-cost.eu/).
+SDBA diagnostic tests are made up of properties and measures.
+This framework was inspired by the VALUE project (www.value-cost.eu/).
 """
 import numpy as np
 import xarray
 from xclim.core.units import check_same_units_and_convert
 from sklearn import metrics
 from xclim import sdba
+from xclim.core.formatting import update_xclim_history
 
 
 @check_same_units_and_convert
+@update_xclim_history
 def bias(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataArray:
     r"""Bias.
 
@@ -39,6 +41,7 @@ def bias(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataArray:
 
 
 @check_same_units_and_convert
+@update_xclim_history
 def relative_bias(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataArray:
     r""" Relative Bias.
 
@@ -65,6 +68,7 @@ def relative_bias(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataAr
 
 
 @check_same_units_and_convert
+@update_xclim_history
 def circular_bias(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataArray:
     r""" Ratio.
 
@@ -91,7 +95,9 @@ def circular_bias(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataAr
     out.attrs["long_name"] = f"Circular bias of the {sim.attrs['long_name']}"
     return out
 
+
 @check_same_units_and_convert
+@update_xclim_history
 def ratio(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataArray:
     r""" Ratio.
 
@@ -118,6 +124,7 @@ def ratio(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataArray:
 
 
 @check_same_units_and_convert
+@update_xclim_history
 def rmse(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataArray:
     r""" Root mean square error.
 
@@ -153,6 +160,7 @@ def rmse(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataArray:
 
 
 @check_same_units_and_convert
+@update_xclim_history
 def mae(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataArray:
     r""" Mean absolute error.
 
@@ -187,6 +195,7 @@ def mae(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataArray:
 
 
 @check_same_units_and_convert
+@update_xclim_history
 def annual_cycle_correlation(sim, ref, window: int = 15):
     r""" Annual cycle correlation.
 
