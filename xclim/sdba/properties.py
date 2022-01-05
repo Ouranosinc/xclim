@@ -14,7 +14,6 @@ from xclim.core.units import convert_units_to
 from xclim.indices import run_length as rl
 import numpy as np
 from statsmodels.tsa import stattools
-from warnings import warn
 from scipy import stats
 from xclim.indices.stats import fit, parametric_quantile
 from xclim.indices.generic import select_resample_op
@@ -246,7 +245,7 @@ def spell_length_distribution(
             da = da.groupby(f'time.{time_res}')
         t = da.quantile(thresh, dim='time').drop_vars('quantile')
     else:
-        warn(f"{method} is not a valid method. Choose 'amount' or 'quantile'.")
+        raise ValueError(f"{method} is not a valid method. Choose 'amount' or 'quantile'.")
 
     cond = ops[op](da, t)
     if time_res != 'year':
@@ -300,9 +299,8 @@ def acf(da: xr.DataArray, lag: int = 1, time_res: str = 'season') -> xr.DataArra
     potentially involved in the statistical adjustment of climate simulations. California Digital Library (CDL).
     https://doi.org/10.31223/x5c34c
     """
-    if time_res == 'year':
-        warn("'year' is not a valid time resolution for this statistical property.")
-        return None
+    if time_res != 'year':
+        raise ValueError("'year' is the only valid time resolution for this statistical property.")
 
     attrs = da.attrs
     da = da.resample(time=res2freq[time_res])
@@ -355,8 +353,8 @@ def annual_cycle_amplitude(
     >>> annual_cycle_amplitude(da=pr, amplitude_type='relative')
     """
     if time_res != 'year':
-        warn("'year' is the only valid time resolution for this statistical property.")
-        return None
+        raise ValueError("'year' is the only valid time resolution for this statistical property.")
+
     attrs = da.attrs
     da = da.resample(time='YS')
     # amplitude
@@ -396,8 +394,7 @@ def annual_cycle_phase(da: xr.DataArray, time_res: str = 'year') -> xr.DataArray
     >>> annual_cycle_phase(da=pr, amplitude_type='relative')
     """
     if time_res != 'year':
-        warn("'year' is the only valid time resolution for this statistical property.")
-        return None
+        raise ValueError("'year' is the only valid time resolution for this statistical property.")
 
     attrs = da.attrs
     mask = ~(da.isel(time=0).isnull()).drop_vars('time')  # mask of the ocean with NaNs

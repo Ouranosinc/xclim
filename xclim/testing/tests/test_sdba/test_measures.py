@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 import xarray as xr
 from xclim import sdba
 from xclim.testing import open_dataset
@@ -20,8 +19,8 @@ def test_relative_bias():
 
 
 def test_circular_bias():
-    sim = xr.DataArray(data=np.array([1, 1, 1, 2, 365, 300]), attrs={'units': '', 'standard_name': 'test'})
-    ref = xr.DataArray(data=np.array([2, 365, 300, 1, 1, 1]), attrs={'units': '', 'standard_name': 'test'})
+    sim = xr.DataArray(data=np.array([1, 1, 1, 2, 365, 300]), attrs={'units': '', 'long_name': 'test'})
+    ref = xr.DataArray(data=np.array([2, 365, 300, 1, 1, 1]), attrs={'units': '', 'long_name': 'test'})
     test = sdba.measures.circular_bias(sim, ref).values
     np.testing.assert_array_almost_equal(test, [1, 1, 66, -1, -1, -66])
 

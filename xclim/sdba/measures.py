@@ -190,7 +190,7 @@ def mae(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataArray:
     out = xarray.apply_ufunc(nan_sklearn, sim, ref, input_core_dims=[["time"], ["time"]], vectorize=True,
                              dask='parallelized')
     out.attrs.update(sim.attrs)
-    out.attrs["long_name"] = f"Mean absolute error of the {sim.attrs['long__name']}"
+    out.attrs["long_name"] = f"Mean absolute error of the {sim.attrs['long_name']}"
     return out
 
 

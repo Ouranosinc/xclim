@@ -68,6 +68,9 @@ def test_spell_length_distribution():
 
     np.testing.assert_array_almost_equal([tmean, tmax, tmin], [3.0, 6, 1])
 
+    with pytest.raises(ValueError, match=f"percentile is not a valid method. Choose 'amount' or 'quantile'."):
+        sdba.properties.spell_length_distribution(simt, method='percentile')
+
 
 def test_acf():
     sim = open_dataset('sdba/CanESM2_1950-2100.nc').sel(time=slice('1950', '1952'), location='Vancouver').pr
@@ -83,18 +86,11 @@ def test_annual_cycle():
 
     np.testing.assert_array_almost_equal([amp, relamp, phase],
                                          [34.039806, 11.793684020675501, 165.33333333333334])
-    with pytest.warns(None) as record:
+    with pytest.raises(ValueError, match="'year' is the only valid time resolution for this statistical property."):
         sdba.properties.annual_cycle_amplitude(simt, time_res='season')
-    assert (
-        "'year' is the only valid time resolution for this statistical property."
-        in [str(q.message) for q in record]
-    )
-    with pytest.warns(None) as record:
+
+    with pytest.raises(ValueError, match="'year' is the only valid time resolution for this statistical property."):
         sdba.properties.annual_cycle_phase(simt, time_res='season')
-    assert (
-        "'year' is the only valid time resolution for this statistical property."
-        in [str(q.message) for q in record]
-    )
 
 
 def test_corr_btw_var():
@@ -142,4 +138,4 @@ def test_return_value():
     out_y = sdba.properties.return_value(simt).values
     out_djf = sdba.properties.return_value(simt, op='min', time_res='season').sel(season='DJF').values
 
-    np.testing.assert_array_almost_equal([out_y, out_djf], [313.15443369, 269.57327687399675], 4)
+    np.testing.assert_array_almost_equal([out_y, out_djf], [313.03657551, 278.20185982], 4)
