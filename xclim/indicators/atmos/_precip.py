@@ -35,6 +35,7 @@ __all__ = [
     "dry_spell_frequency",
     "dry_spell_total_length",
     "wet_precip_accumulation",
+    "rprctot",
 ]
 
 
@@ -374,4 +375,12 @@ dry_spell_total_length = Precip(
     units="days",
     cell_methods="",
     compute=indices.dry_spell_total_length,
+)
+
+rprctot = Precip(
+    identifier="rprctot",
+    description="Proportion of accumulated precipitation arising from convective processes.",
+    units="",
+    cell_methods="time: sum",
+    compute=indices.rprctot,
 )
