@@ -95,7 +95,7 @@ from dataclasses import asdict, dataclass
 from functools import reduce
 from inspect import Parameter as _Parameter
 from inspect import Signature
-from inspect import _empty as _empty_default
+from inspect import _empty as _empty_default  # noqa
 from inspect import signature
 from os import PathLike
 from pathlib import Path
@@ -136,6 +136,7 @@ from .utils import (
     infer_kind_from_parameter,
     load_module,
     raise_warn_or_log,
+    select_time,
 )
 
 # Indicators registry
@@ -1375,7 +1376,7 @@ class ResamplingIndicatorWithIndexing(ResamplingIndicator):
 
         indxr = params.get("indexer")
         if indxr:
-            das = {k: indices.generic.select_time(da, **indxr) for k, da in das.items()}
+            das = {k: select_time(da, **indxr) for k, da in das.items()}
         return das, params
 
 

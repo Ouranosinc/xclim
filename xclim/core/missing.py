@@ -29,15 +29,15 @@ from typing import Any, Tuple, Union
 import numpy as np
 import xarray as xr
 
-from xclim.core.calendar import date_range, get_calendar
-from xclim.core.options import (
+from .calendar import get_calendar
+from .options import (
     CHECK_MISSING,
     MISSING_METHODS,
     MISSING_OPTIONS,
     OPTIONS,
     register_missing_method,
 )
-from xclim.indices import generic
+from .utils import date_range, select_time
 
 __all__ = [
     "missing_wmo",
@@ -88,7 +88,7 @@ class MissingBase:
     @staticmethod
     def is_null(da, freq, **indexer):
         """Return a boolean array indicating which values are null."""
-        selected = generic.select_time(da, drop=True, **indexer)
+        selected = select_time(da, drop=True, **indexer)
         if selected.time.size == 0:
             raise ValueError("No data for selected period.")
 
@@ -154,7 +154,7 @@ class MissingBase:
             )
 
             sda = xr.DataArray(data=np.ones(len(t)), coords={"time": t}, dims=("time",))
-            st = generic.select_time(sda, drop=True, **indexer)
+            st = select_time(sda, drop=True, **indexer)
             if freq:
                 count = st.notnull().resample(time=freq).sum(dim="time")
             else:

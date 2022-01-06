@@ -1,11 +1,9 @@
-import cftime
 import numpy as np
-import pandas as pd
 import pytest
 import xarray as xr
 
-import xclim as xc
-from xclim.core.calendar import date_range
+from xclim.core.calendar import doy_to_days_since
+from xclim.core.utils import date_range, select_time
 from xclim.indices import generic
 
 
@@ -98,8 +96,8 @@ class TestAggregateBetweenDates:
         )
 
         # expected output
-        s = xc.core.calendar.doy_to_days_since(start_std)
-        e = xc.core.calendar.doy_to_days_since(end_std)
+        s = doy_to_days_since(start_std)
+        e = doy_to_days_since(end_std)
         expected = e - s
         expected = xr.where(((s > e) | (s.isnull()) | (e.isnull())), np.nan, expected)
 
@@ -151,8 +149,8 @@ class TestAggregateBetweenDates:
         out = generic.aggregate_between_dates(data, start, end, op="sum", freq="YS")
 
         # expected output
-        s = xc.core.calendar.doy_to_days_since(start)
-        e = xc.core.calendar.doy_to_days_since(end)
+        s = doy_to_days_since(start)
+        e = doy_to_days_since(end)
         expected = e - s
         expected[1, 1] = np.nan
 
@@ -222,8 +220,8 @@ class TestAggregateBetweenDates:
         out = generic.aggregate_between_dates(data, start, end, op="sum", freq="QS-DEC")
 
         # expected output
-        s = xc.core.calendar.doy_to_days_since(start)
-        e = xc.core.calendar.doy_to_days_since(end)
+        s = doy_to_days_since(start)
+        e = doy_to_days_since(end)
         expected = e - s
         expected = xr.where(expected < 0, np.nan, expected)
 
@@ -316,7 +314,7 @@ def series(start, end, calendar):
 def test_select_time_month():
     da = series("1993-01-05", "1994-12-31", "default")
 
-    out = generic.select_time(da, drop=True, month=1)
+    out = select_time(da, drop=True, month=1)
     exp = xr.concat(
         (
             series("1993-01-05", "1993-01-31", "default"),
@@ -326,12 +324,12 @@ def test_select_time_month():
     )
     xr.testing.assert_equal(out, exp)
 
-    out = generic.select_time(da, month=1)
+    out = select_time(da, month=1)
     xr.testing.assert_equal(out.time, da.time)
     assert out.sum() == 58
 
     da = series("1993-01-05", "1994-12-30", "360_day")
-    out = generic.select_time(da, drop=True, month=[3, 6])
+    out = select_time(da, drop=True, month=[3, 6])
     exp = xr.concat(
         (
             series("1993-03-01", "1993-03-30", "360_day"),
@@ -347,7 +345,7 @@ def test_select_time_month():
 def test_select_time_season():
     da = series("1993-01-05", "1994-12-31", "default")
 
-    out = generic.select_time(da, drop=True, season="DJF")
+    out = select_time(da, drop=True, season="DJF")
     exp = xr.concat(
         (
             series("1993-01-05", "1993-02-28", "default"),
@@ -359,7 +357,7 @@ def test_select_time_season():
     xr.testing.assert_equal(out, exp)
 
     da = series("1993-01-05", "1994-12-31", "365_day")
-    out = generic.select_time(da, drop=True, season=["MAM", "SON"])
+    out = select_time(da, drop=True, season=["MAM", "SON"])
     exp = xr.concat(
         (
             series("1993-03-01", "1993-05-31", "365_day"),
@@ -375,7 +373,7 @@ def test_select_time_season():
 def test_select_time_doys():
     da = series("2003-02-13", "2004-12-31", "default")
 
-    out = generic.select_time(da, drop=True, doy_bounds=(360, 75))
+    out = select_time(da, drop=True, doy_bounds=(360, 75))
     exp = xr.concat(
         (
             series("2003-02-13", "2003-03-16", "default"),
@@ -388,7 +386,7 @@ def test_select_time_doys():
 
     da = series("2003-02-13", "2004-12-31", "proleptic_gregorian")
 
-    out = generic.select_time(da, drop=True, doy_bounds=(25, 80))
+    out = select_time(da, drop=True, doy_bounds=(25, 80))
     exp = xr.concat(
         (
             series("2003-02-13", "2003-03-21", "proleptic_gregorian"),
@@ -403,7 +401,7 @@ def test_select_time_dates():
     da = series("2003-02-13", "2004-11-01", "all_leap")
     da = da.where(da.time.dt.dayofyear != 92, drop=True)  # no 04-01
 
-    out = generic.select_time(da, drop=True, date_bounds=("04-01", "12-04"))
+    out = select_time(da, drop=True, date_bounds=("04-01", "12-04"))
     exp = xr.concat(
         (
             series("2003-04-02", "2003-12-04", "all_leap"),
@@ -415,7 +413,7 @@ def test_select_time_dates():
 
     da = series("2003-02-13", "2005-11-01", "standard")
 
-    out = generic.select_time(da, drop=True, date_bounds=("10-05", "02-29"))
+    out = select_time(da, drop=True, date_bounds=("10-05", "02-29"))
     exp = xr.concat(
         (
             series("2003-02-13", "2003-02-28", "standard"),
@@ -431,16 +429,16 @@ def test_select_time_dates():
 def test_select_time_errors():
     da = series("2003-01-01", "2004-01-01", "standard")
 
-    xr.testing.assert_identical(da, generic.select_time(da))
+    xr.testing.assert_identical(da, select_time(da))
 
     with pytest.raises(ValueError, match="Only one method of indexing may be given"):
-        generic.select_time(da, season="DJF", month=[3, 4, 5])
+        select_time(da, season="DJF", month=[3, 4, 5])
 
     with pytest.raises(ValueError, match="invalid day number provided in cftime."):
-        generic.select_time(da, date_bounds=("02-30", "03-03"))
+        select_time(da, date_bounds=("02-30", "03-03"))
 
     with pytest.raises(ValueError):
-        generic.select_time(da, date_bounds=("02-30",))
+        select_time(da, date_bounds=("02-30",))
 
     with pytest.raises(TypeError):
-        generic.select_time(da, doy_bounds=(300, 203, 202))
+        select_time(da, doy_bounds=(300, 203, 202))

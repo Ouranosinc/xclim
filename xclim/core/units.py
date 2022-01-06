@@ -18,11 +18,12 @@ import xarray as xr
 from boltons.funcutils import wraps
 from pint.definitions import UnitDefinition
 
-from .calendar import date_range, get_calendar, parse_offset
+from .calendar import parse_offset
 from .options import datacheck
-from .utils import ValidationError
+from .utils import ValidationError, date_range, get_calendar
 
 __all__ = [
+    "check_units",
     "convert_units_to",
     "declare_units",
     "infer_sampling_units",

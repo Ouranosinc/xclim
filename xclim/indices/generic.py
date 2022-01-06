@@ -6,20 +6,19 @@ Generic indices submodule
 
 Helper functions for common generic actions done in the computation of indices.
 """
-from typing import Optional, Sequence, Tuple, Union
+from typing import Optional, Union
 
 import cftime
 import numpy as np
 import xarray
 import xarray as xr
-from xarray.coding.cftime_offsets import _MONTH_ABBREVIATIONS, to_cftime_datetime
+from xarray.coding.cftime_offsets import _MONTH_ABBREVIATIONS
 
 from xclim.core.calendar import (
     convert_calendar,
     days_in_year,
     doy_to_days_since,
     get_calendar,
-    uniform_calendars,
 )
 from xclim.core.units import (
     convert_units_to,
@@ -28,8 +27,8 @@ from xclim.core.units import (
     str2pint,
     to_agg_units,
 )
+from xclim.core.utils import DayOfYearStr, select_time
 
-from ..core.utils import DayOfYearStr
 from . import run_length as rl
 
 __all__ = [
@@ -49,7 +48,6 @@ __all__ = [
     "interday_diurnal_temperature_range",
     "last_occurrence",
     "select_resample_op",
-    "select_time",
     "statistics",
     "temperature_sum",
     "threshold_count",
@@ -57,120 +55,6 @@ __all__ = [
 ]
 
 binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "ne"}
-
-
-def select_time(
-    da: Union[xr.DataArray, xr.Dataset],
-    drop: bool = False,
-    season: Union[str, Sequence[str]] = None,
-    month: Union[int, Sequence[int]] = None,
-    doy_bounds: Tuple[int, int] = None,
-    date_bounds: Tuple[str, str] = None,
-):
-    """Select entries according to a time period.
-
-    This conveniently improves xarray's :py:meth:`xarray.DataArray.where` and
-    :py:meth:`xarray.DataArray.sel` with fancier ways of indexing over time elements.
-    In addition to the data `da` and argument `drop`, only one of `season`, `month`,
-    `doy_bounds` or `date_bounds` may be passed.
-
-    Parameters
-    ----------
-    da : xr.DataArray or xr.Dataset
-      Input data.
-    drop: boolean
-      Whether to drop elements outside the period of interest or
-      to simply mask them (default).
-    season: string or sequence of strings
-      One or more of 'DJF', 'MAM', 'JJA' and 'SON'.
-    month: integer or sequence of integers
-      Sequence of month numbers (January = 1 ... December = 12)
-    doy_bounds: 2-tuple of integers
-      The bounds as (start, end) of the period of interest expressed in day-of-year,
-      integers going from 1 (January 1st) to 365 or 366 (December 31st). If calendar
-      awareness is needed, consider using ``date_bounds`` instead.
-      Bounds are inclusive.
-    date_bounds: 2-tuple of strings
-      The bounds as (start, end) of the period of interest expressed as dates in the
-      month-day (%m-%d) format.
-      Bounds are inclusive.
-
-    Returns
-    -------
-    xr.DataArray or xr.Dataset
-      Selected input values. If ``drop=False``, this has the same length as ``da``
-      (along dimension 'time'), but with masked (NaN) values outside the period of
-      interest.
-
-    Examples
-    --------
-    Keep only the values of fall and spring.
-
-    >>> ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
-    >>> ds.time.size
-    1461
-    >>> out = select_time(ds, drop=True, season=['MAM', 'SON'])
-    >>> out.time.size
-    732
-
-    Or all values between two dates (included).
-
-    >>> out = select_time(ds, drop=True, date_bounds=('02-29', '03-02'))
-    >>> out.time.values
-    array(['1990-03-01T00:00:00.000000000', '1990-03-02T00:00:00.000000000',
-           '1991-03-01T00:00:00.000000000', '1991-03-02T00:00:00.000000000',
-           '1992-02-29T00:00:00.000000000', '1992-03-01T00:00:00.000000000',
-           '1992-03-02T00:00:00.000000000', '1993-03-01T00:00:00.000000000',
-           '1993-03-02T00:00:00.000000000'], dtype='datetime64[ns]')
-    """
-    N = sum(arg is not None for arg in [season, month, doy_bounds, date_bounds])
-    if N > 1:
-        raise ValueError(f"Only one method of indexing may be given, got {N}.")
-
-    if N == 0:
-        return da
-
-    def get_doys(start, end):
-        if start <= end:
-            return np.arange(start, end + 1)
-        return np.concatenate((np.arange(start, 367), np.arange(0, end + 1)))
-
-    if season is not None:
-        if isinstance(season, str):
-            season = [season]
-        mask = da.time.dt.season.isin(season)
-
-    elif month is not None:
-        if isinstance(month, int):
-            month = [month]
-        mask = da.time.dt.month.isin(month)
-
-    elif doy_bounds is not None:
-        mask = da.time.dt.dayofyear.isin(get_doys(*doy_bounds))
-
-    elif date_bounds is not None:
-        # This one is a bit trickier.
-        start, end = date_bounds
-        time = da.time
-        calendar = get_calendar(time)
-        if calendar not in uniform_calendars:
-            # For non-uniform calendars, we can't simply convert dates to doys
-            # conversion to all_leap is safe for all non-uniform calendar as it doesn't remove any date.
-            time = convert_calendar(time, "all_leap")
-            # values of time are the _old_ calendar
-            # and the new calendar is in the coordinate
-            calendar = "all_leap"
-
-        # Get doy of date, this is now safe because the calendar is uniform.
-        doys = get_doys(
-            to_cftime_datetime("2000-" + start, calendar).dayofyr,
-            to_cftime_datetime("2000-" + end, calendar).dayofyr,
-        )
-        mask = time.time.dt.dayofyear.isin(doys)
-        # Needed if we converted calendar, this puts back the correct coord
-        mask["time"] = da.time
-
-    return da.where(mask, drop=drop)
 
 
 def select_resample_op(da: xr.DataArray, op: str, freq: str = "YS", **indexer):
