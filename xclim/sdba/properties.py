@@ -1,12 +1,12 @@
 """
 Properties submodule
-=================
+====================
  Statistical Properties is the xclim term for 'indices' in the VALUE project.
  SDBA diagnostic tests are made up of properties and measures.
 
  This framework for the diagnostic tests was inspired by the [VALUE]_ project.
 
- .. [VALUE] www.value-cost.eu/.
+ .. [VALUE] https://www.value-cost.eu/
 """
 from typing import Callable, Dict
 
@@ -146,9 +146,9 @@ def skewness(da: xr.DataArray, time_res: str = "year") -> xr.DataArray:
     >>> pr = open_dataset(path_to_pr_file).pr
     >>> skewness(da=pr, time_res='season')
 
-    Notes
+    See also
     --------
-     See scipy.stats.skew
+    :py:func:`scipy.stats.skew`
     """
     attrs = da.attrs
     if time_res != "year":
@@ -208,7 +208,7 @@ def spell_length_distribution(
     da: xr.DataArray,
     method: str = "amount",
     op: str = ">=",
-    thresh="1mm d-1",
+    thresh="1 mm d-1",
     stat: str = "mean",
     time_res: str = "year",
 ) -> xr.DataArray:
@@ -237,6 +237,7 @@ def spell_length_distribution(
       Time resolution.
       Eg. If 'month', the {stat} is calculated on 12 distributions for each grid point.
       Each distribution contains the spell lenghts in a given month for all available years.
+  
     Returns
     -------
     xr.DataArray,
@@ -306,15 +307,13 @@ def acf(da: xr.DataArray, lag: int = 1, time_res: str = "season") -> xr.DataArra
     xr.DataArray,
       lag-{lag} autocorrelation of the variable over a {time_res} and averaged over all years.
 
-    Notes
+    See also
     --------
-    See statsmodels.tsa.stattools.acf
+    :py:func:`statsmodels.tsa.stattools.acf`
 
     References
-    --------
-    Alavoine, M., & Grenier, P. (2021). The distinct problems of physical inconsistency and of multivariate bias
-    potentially involved in the statistical adjustment of climate simulations. California Digital Library (CDL).
-    https://doi.org/10.31223/x5c34c
+    ----------
+    Alavoine M., and Grenier P. (under review) The distinct problems of physical inconsistency and of multivariate bias potentially involved in the statistical adjustment of climate simulations. International Journal of Climatology, submitted on September 19th 2021. (Preprint: https://doi.org/10.31223/X5C34C)
 
     Examples
     --------
@@ -367,11 +366,10 @@ def annual_cycle_amplitude(
     ----------
     da : xr.DataArray
       Variable on which to calculate the diagnostic.
-
     amplitude_type: {'absolute','relative'}
         Type of amplitude.
         'absolute' is the peak-to-peak amplitude. (max - min)
-        'relative' is a relative percentage. 100 * (max - min) / mean. Recommanded for precipitation.
+        'relative' is a relative percentage. 100 * (max - min) / mean. Recommended for precipitation.
 
     Returns
     -------

@@ -193,9 +193,9 @@ def rmse(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataArray:
     xarray.DataArray,
       root mean square error between the simulation and the reference
 
-    Notes
-    -------
-    See sklearn.metrics.mean_squared_error
+    See also
+    --------
+    :py:func:`sklearn.metrics.mean_squared_error`
 
     Examples
     --------
@@ -242,9 +242,9 @@ def mae(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataArray:
     xarray.DataArray,
       Mean absolute error between the simulation and the reference
 
-    Notes
-    -------
-    See sklearn.metrics.mean_absolute_error
+    See also
+    --------
+    :py:func:`sklearn.metrics.mean_absolute_error`
 
     Examples
     --------
@@ -255,7 +255,7 @@ def mae(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataArray:
     """
 
     def nan_sklearn(sim, ref):
-        if np.isnan(sim[0]):  # sklearn can't handle the NaNs
+        if np.any(np.isnan(sim)):  # sklearn can't handle the NaNs
             return np.nan
         return metrics.mean_absolute_error(sim, ref)
 
@@ -287,7 +287,6 @@ def annual_cycle_correlation(sim, ref, window: int = 15):
       data from the simulation (a time-series for each grid-point)
     ref : xarray.DataArray
       data from the reference (observations) (a time-series fro each grid-point)
-
     window: str
       Size of window around each day of year around which to take the mean.
       Eg. If window=31, Jan 1st is averaged over from December 17th to January 16th.
