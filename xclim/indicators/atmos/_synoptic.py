@@ -15,6 +15,7 @@ class JetStream(Indicator):
 
 jetstream_metric_woolings = JetStream(
     identifier="jetstream_metric_woolings",
+    var_name=["jetlat", "jetstr"],
     units=["degrees_North", "m s-1"],
     long_name=[
         "Latitude of maximum smoothed zonal wind speed",
