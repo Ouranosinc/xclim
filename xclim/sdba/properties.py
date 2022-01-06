@@ -4,7 +4,9 @@ Properties submodule
  Statistical Properties is the xclim term for 'indices' in the VALUE project.
  SDBA diagnostic tests are made up of properties and measures.
 
- This framework for the diagnostic tests was inspired by the VALUE project (www.value-cost.eu/).
+ This framework for the diagnostic tests was inspired by the [VALUE]_ project.
+ 
+ .. [VALUE] www.value-cost.eu/.
 """
 from typing import Callable, Dict
 
@@ -512,7 +514,7 @@ def corr_btw_var(
             return stats.spearmanr(a, b, nan_policy="propagate")[index[output]]
         else:
             raise ValueError(
-                "pear is not a valid type. Choose 'Pearson' or 'Spearman'."
+                f"{corr_type} is not a valid type. Choose 'Pearson' or 'Spearman'."
             )
 
     out = xr.apply_ufunc(
