@@ -5,7 +5,7 @@ Properties submodule
  SDBA diagnostic tests are made up of properties and measures.
 
  This framework for the diagnostic tests was inspired by the [VALUE]_ project.
- 
+
  .. [VALUE] www.value-cost.eu/.
 """
 from typing import Callable, Dict
