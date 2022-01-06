@@ -237,7 +237,7 @@ def spell_length_distribution(
       Time resolution.
       Eg. If 'month', the {stat} is calculated on 12 distributions for each grid point.
       Each distribution contains the spell lenghts in a given month for all available years.
-  
+
     Returns
     -------
     xr.DataArray,
