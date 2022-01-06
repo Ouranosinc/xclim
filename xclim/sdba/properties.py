@@ -75,6 +75,7 @@ def mean(da: xr.DataArray, time_res: str = "year") -> xr.DataArray:
     out = da.mean(dim="time")
     out.attrs.update(attrs)
     out.attrs["long_name"] = f"Mean {attrs['long_name']}"
+    out.name = "mean"
     return out
 
 
@@ -114,6 +115,7 @@ def var(da: xr.DataArray, time_res: str = "year") -> xr.DataArray:
     u = xc.core.units.units2pint(attrs["units"])
     u2 = u ** 2
     out.attrs["units"] = xc.core.units.pint2cfunits(u2)
+    out.name = "variance"
     return out
 
 
@@ -157,6 +159,7 @@ def skewness(da: xr.DataArray, time_res: str = "year") -> xr.DataArray:
     out.attrs.update(attrs)
     out.attrs["long_name"] = f"Skewness of {attrs['long_name']}"
     out.attrs["units"] = ""
+    out.name = "skewness"
     return out
 
 
@@ -195,6 +198,7 @@ def quantile(da: xr.DataArray, q: float = 0.98, time_res: str = "year") -> xr.Da
     out = da.quantile(q, dim="time", keep_attrs=True).drop_vars("quantile")
     out.attrs.update(attrs)
     out.attrs["long_name"] = f"Quantile {q} of {attrs['long_name']}"
+    out.name = "quantile"
     return out
 
 
@@ -275,6 +279,7 @@ def spell_length_distribution(
     out.attrs[
         "long_name"
     ] = f"{stat} of spell length when {attrs['long_name']} {op} {method} {thresh}"
+    out.name = "spell_length_distribution"
     return out
 
 
@@ -344,6 +349,7 @@ def acf(da: xr.DataArray, lag: int = 1, time_res: str = "season") -> xr.DataArra
     out.attrs.update(attrs)
     out.attrs["long_name"] = f"lag-{lag} autocorrelation of {attrs['long_name']}"
     out.attrs["units"] = ""
+    out.name = "acf"
     return out
 
 
@@ -400,6 +406,7 @@ def annual_cycle_amplitude(
     amp.attrs[
         "long_name"
     ] = f"{amplitude_type} amplitude of the annual cycle of {attrs['long_name']}"
+    amp.name = "annual_cycle_amplitude"
     return amp
 
 
@@ -453,6 +460,7 @@ def annual_cycle_phase(da: xr.DataArray, time_res: str = "year") -> xr.DataArray
     phase.attrs.update(attrs)
     phase.attrs["long_name"] = f"Phase of the annual cycle of {attrs['long_name']}"
     phase.attrs.update(units="", is_dayofyear=1)
+    phase.name = "annual_cycle_phase"
     return phase
 
 
@@ -531,6 +539,7 @@ def corr_btw_var(
         f" {attrs2['long_name']}"
     )
     out.attrs["units"] = ""
+    out.name = "corr_btw_varr"
     return out
 
 
@@ -591,6 +600,7 @@ def relative_frequency(
         "long_name"
     ] = f"Relative frequency of days with {attrs['long_name']} {op} {thresh}"
     out.attrs["units"] = ""
+    out.name = "relative frequency"
     return out
 
 
@@ -658,6 +668,7 @@ def trend(
         "long_name"
     ] = f"{output} of the interannual linear trend of {attrs['long_name']}"
     out.attrs["units"] = f"{attrs['units']}/year"
+    out.name = "trend"
     return out
 
 
@@ -734,4 +745,5 @@ def return_value(
     out.attrs[
         "long_name"
     ] = f"{period}-{time_res} {op} return level of {attrs['long_name']}"
+    out.name = "return_value"
     return out
