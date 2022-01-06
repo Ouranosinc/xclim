@@ -25,12 +25,13 @@ from xclim.indices.stats import fit, parametric_quantile
 res2freq = {"year": "YS", "season": "QS-DEC", "month": "MS"}
 
 STATISTICAL_PROPERTIES: Dict[str, Callable] = {}
+""" Dictionary of all the statistical properties available."""
 
 
 def register_statistical_properties(
     aspect: str, seasonal: bool, annual: bool
 ) -> Callable:
-    """Register missing properties."""
+    """Register statistical properties in the STATISTICAL_PROPERTIES dictionary with its aspect and time resolutions."""
 
     def _register_statistical_properties(func):
         func.aspect = aspect
@@ -237,7 +238,7 @@ def spell_length_distribution(
       Time resolution.
       Eg. If 'month', the {stat} is calculated on 12 distributions for each grid point.
       Each distribution contains the spell lenghts in a given month for all available years.
-  
+
     Returns
     -------
     xr.DataArray,
@@ -367,9 +368,9 @@ def annual_cycle_amplitude(
     da : xr.DataArray
       Variable on which to calculate the diagnostic.
     amplitude_type: {'absolute','relative'}
-        Type of amplitude.
-        'absolute' is the peak-to-peak amplitude. (max - min)
-        'relative' is a relative percentage. 100 * (max - min) / mean. Recommended for precipitation.
+      Type of amplitude.
+      'absolute' is the peak-to-peak amplitude. (max - min)
+      'relative' is a relative percentage. 100 * (max - min) / mean. Recommended for precipitation.
 
     Returns
     -------
@@ -482,7 +483,7 @@ def corr_btw_var(
     da2 : xr.DataArray
       Second variable on which to calculate the diagnostic.
     corr_type: {'Pearson','Spearman'}
-        Type of correlation to calculate.
+      Type of correlation to calculate.
     output: {'correlation', 'pvalue'}
       Wheter to return the correlation coefficient or the p-value.
     time_res : {'year', 'season', 'month'}
@@ -632,9 +633,9 @@ def trend(
     xr.DataArray,
       Trend of the variable.
 
-    Notes
+    See also
     --------
-    See scipy.stats.linregress and np.polyfit
+    :py:func:`scipy.stats.linregress` and :py:func:`numpy.polyfit`
 
     Examples
     --------
@@ -697,12 +698,12 @@ def return_value(
 
     op: {'max','min'}
       Whether we are looking for a probability of exceedance ('max', right side of the distribution)
-       or a probability of non-exceedance (min, left side of the distribution).
+      or a probability of non-exceedance (min, left side of the distribution).
 
     method : {"ML", "PWM"}
       Fitting method, either maximum likelihood (ML) or probability weighted moments (PWM), also called L-Moments.
       The PWM method is usually more robust to outliers. However, it requires the lmoments3 libraryto be installed
-       from the `develop` branch. `pip install git+https://github.com/OpenHydrology/lmoments3.git@develop#egg=lmoments3`
+      from the `develop` branch. `pip install git+https://github.com/OpenHydrology/lmoments3.git@develop#egg=lmoments3`
 
     time_res : {'year', 'season', 'month'}
       Time resolution on which to create a distribution of the extremums.

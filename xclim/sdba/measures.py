@@ -1,9 +1,11 @@
 """
 Measures submodule
 =================
-To compare adjusted simulations to observations, through statistical properties or directly
+Measures compare adjusted simulations to observations, through statistical properties or directly.
 SDBA diagnostic tests are made up of properties and measures.
-This framework was inspired by the VALUE project (www.value-cost.eu/).
+ This framework for the diagnostic tests was inspired by the [VALUE]_ project.
+
+ .. [VALUE] https://www.value-cost.eu/
 """
 from typing import Callable
 from warnings import warn
@@ -18,6 +20,9 @@ from xclim.core.units import convert_units_to, units2pint
 
 
 def check_same_units_and_convert(func) -> Callable:
+    """Verify that the simulation and the reference have the same units.
+    If not, it converts the simulation to the units of the reference"""
+
     def _check_same_units(sim, ref, **kwargs):
         units_sim = units2pint(sim.units)
         units_ref = units2pint(ref.units)
@@ -59,7 +64,6 @@ def bias(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataArray:
     >>> tasmax = open_dataset(path_to_tasmax_file).tasmax.isel(time=0)
     >>> tasmin = open_dataset(path_to_tasmin_file).tasmin.isel(time=0)
     >>> bias(tasmax, tasmin)
-
     """
     out = sim - ref
     out.attrs.update(sim.attrs)
@@ -93,7 +97,6 @@ def relative_bias(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataAr
     >>> tasmax = open_dataset(path_to_tasmax_file).tasmax.isel(time=0)
     >>> tasmin = open_dataset(path_to_tasmin_file).tasmin.isel(time=0)
     >>> relative_bias(tasmax, tasmin)
-
     """
     out = (sim - ref) / ref
     out.attrs.update(sim.attrs)
@@ -128,7 +131,6 @@ def circular_bias(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataAr
     >>> tasmax = open_dataset(path_to_tasmax_file).tasmax.isel(time=0)
     >>> tasmin = open_dataset(path_to_tasmin_file).tasmin.isel(time=0)
     >>> circular_bias(tasmax, tasmin)
-
     """
     out = (sim - ref) % 365
     out = out.where(
@@ -165,7 +167,6 @@ def ratio(sim: xarray.DataArray, ref: xarray.DataArray) -> xarray.DataArray:
     >>> tasmax = open_dataset(path_to_tasmax_file).tasmax.isel(time=0)
     >>> tasmin = open_dataset(path_to_tasmin_file).tasmin.isel(time=0)
     >>> ratio(tasmax, tasmin)
-
     """
     out = sim / ref
     out.attrs.update(sim.attrs)
@@ -302,7 +303,6 @@ def annual_cycle_correlation(sim, ref, window: int = 15):
     >>> tasmax = open_dataset(path_to_tasmax_file).tasmax
     >>> tasmin = open_dataset(path_to_tasmin_file).tasmin
     >>> annual_cycle_correlation(tasmax, tasmin)
-
     """
     # group by day-of-year and window around each doy
     grouper_test = sdba.base.Grouper("time.dayofyear", window=window)
