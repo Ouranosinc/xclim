@@ -5,13 +5,33 @@ To compare adjusted simulations to observations, through statistical properties 
 SDBA diagnostic tests are made up of properties and measures.
 This framework was inspired by the VALUE project (www.value-cost.eu/).
 """
+from typing import Callable
+from warnings import warn
+
 import numpy as np
 import xarray
 from sklearn import metrics
 
 from xclim import sdba
 from xclim.core.formatting import update_xclim_history
-from xclim.core.units import check_same_units_and_convert
+from xclim.core.units import convert_units_to, units2pint
+
+
+def check_same_units_and_convert(func) -> Callable:
+    def _check_same_units(sim, ref, **kwargs):
+        units_sim = units2pint(sim.units)
+        units_ref = units2pint(ref.units)
+
+        if units_sim != units_ref:
+            warn(
+                f" sim({units_sim}) and ref({units_ref}) don't have the same units."
+                f" sim will be converted to {units_ref}."
+            )
+            sim = convert_units_to(sim, ref)
+        out = func(sim, ref)
+        return out
+
+    return _check_same_units
 
 
 @check_same_units_and_convert

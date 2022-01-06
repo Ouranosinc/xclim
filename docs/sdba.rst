@@ -76,6 +76,12 @@ SDBA's user API
 .. automodule:: xclim.sdba.loess
    :members:
 
+.. automodule:: xclim.sdba.properties
+   :members:
+
+.. automodule:: xclim.sdba.measures
+   :members:
+
 Developer tools
 ===============
 

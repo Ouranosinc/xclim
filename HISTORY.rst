@@ -12,7 +12,7 @@ Internal changes
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* Added ``properties.py`` and ``measures.py`` in order to perform diagnostic tests of sdba (:issue:`424`).
+* Added ``properties.py`` and ``measures.py`` in order to perform diagnostic tests of sdba (:pull:`967`, :issue:`424`).
 
 0.32.1 (2021-12-17)
 -------------------
