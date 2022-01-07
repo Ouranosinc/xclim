@@ -29,7 +29,7 @@ from typing import Any, Tuple, Union
 import numpy as np
 import xarray as xr
 
-from .calendar import get_calendar
+from .calendar import date_range, get_calendar, select_time
 from .options import (
     CHECK_MISSING,
     MISSING_METHODS,
@@ -37,7 +37,6 @@ from .options import (
     OPTIONS,
     register_missing_method,
 )
-from .utils import date_range, select_time
 
 __all__ = [
     "missing_wmo",

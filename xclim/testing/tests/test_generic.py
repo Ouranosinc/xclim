@@ -2,8 +2,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from xclim.core.calendar import doy_to_days_since
-from xclim.core.utils import date_range, select_time
+from xclim.core.calendar import date_range, doy_to_days_since, select_time
 from xclim.indices import generic
 
 

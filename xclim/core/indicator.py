@@ -108,7 +108,7 @@ from yaml import safe_load
 
 from .. import indices
 from . import datachecks
-from .calendar import parse_offset
+from .calendar import parse_offset, select_time
 from .cfchecks import cfcheck_from_name
 from .formatting import (
     AttrFormatter,
@@ -136,7 +136,6 @@ from .utils import (
     infer_kind_from_parameter,
     load_module,
     raise_warn_or_log,
-    select_time,
 )
 
 # Indicators registry

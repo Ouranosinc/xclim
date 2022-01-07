@@ -15,10 +15,12 @@ import xarray as xr
 from xarray.coding.cftime_offsets import _MONTH_ABBREVIATIONS
 
 from xclim.core.calendar import (
+    DayOfYearStr,
     convert_calendar,
     days_in_year,
     doy_to_days_since,
     get_calendar,
+    select_time,
 )
 from xclim.core.units import (
     convert_units_to,
@@ -27,7 +29,6 @@ from xclim.core.units import (
     str2pint,
     to_agg_units,
 )
-from xclim.core.utils import DayOfYearStr, select_time
 
 from . import run_length as rl
 
