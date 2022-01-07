@@ -6,6 +6,10 @@ History
 -------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 
+Breaking changes
+^^^^^^^^^^^^^^^^
+* To reduce import complexity, `select_time` has been refactored/moved from ``xclim.indices.generic`` to ``xclim.core.calendar``. (:issue:`949`, :pull:`969`).
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Added a CI hook in ``.pre-commit-config.yaml`` to perform automated `pre-commit` corrections with GitHub CI. (:pull:`965`).
