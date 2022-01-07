@@ -214,7 +214,7 @@ def spell_length_distribution(
     stat: str = "mean",
     time_res: str = "year",
 ) -> xr.DataArray:
-    fr"""Spell length distribution.
+    r"""Spell length distribution.
 
     Statistic of spell length distribution when the variable respects a condition (defined by an operation, a method and
      a threshold).
@@ -475,7 +475,7 @@ def corr_btw_var(
 ) -> xr.DataArray:
     r"""Correlation between two variables.
 
-    Spearmand or Pearson correlation coefficient between two variables at the time resolution.
+    Spearman or Pearson correlation coefficient between two variables at the time resolution.
 
     Parameters
     ----------
