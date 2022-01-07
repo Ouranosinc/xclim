@@ -111,9 +111,9 @@ napoleon_use_ivar = True
 intersphinx_mapping = {
     "clisops": ("https://clisops.readthedocs.io/en/latest/", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
-    "sklearn": ("https://scikit-learn.org/stable/modules/", None),
+    "sklearn": ("https://scikit-learn.org/stable/", None),
     "statsmodels": ("https://www.statsmodels.org/stable/", None),
-    "numpy": ("https://numpy.org/doc/stable/reference/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
 }
 extlinks = {
     "issue": ("https://github.com/Ouranosinc/xclim/issues/%s", "GH/"),

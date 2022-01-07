@@ -1,12 +1,13 @@
 """
 Properties submodule
 ====================
- Statistical Properties is the xclim term for 'indices' in the VALUE project.
- SDBA diagnostic tests are made up of properties and measures.
+ SDBA diagnostic tests are made up of statistical properties and measures. Properties are calculated on both simulation
+ and reference datasets. They collapse the time dimension to one value.
 
  This framework for the diagnostic tests was inspired by the [VALUE]_ project.
+ Statistical Properties is the xclim term for 'indices' in the VALUE project.
 
- .. [VALUE] https://www.value-cost.eu/
+ .. [VALUE] http://www.value-cost.eu/
 """
 from typing import Callable, Dict
 
@@ -169,7 +170,7 @@ def skewness(da: xr.DataArray, time_res: str = "year") -> xr.DataArray:
 def quantile(da: xr.DataArray, q: float = 0.98, time_res: str = "year") -> xr.DataArray:
     """Quantile.
 
-    Returns the quantile {q} of the distribution of the variable over all years at the time resolution.
+    Returns the quantile q of the distribution of the variable over all years at the time resolution.
 
     Parameters
     ----------
@@ -213,17 +214,18 @@ def spell_length_distribution(
     stat: str = "mean",
     time_res: str = "year",
 ) -> xr.DataArray:
-    r"""Spell length distribution.
+    fr"""Spell length distribution.
 
-    {stat} of spell length distribution when the variable is {op} the {method} {thresh}.
+    Statistic of spell length distribution when the variable respects a condition (defined by an operation, a method and
+     a threshold).
 
     Parameters
     ----------
     da : xr.DataArray
       Variable on which to calculate the diagnostic.
     method: {'amount', 'quantile'}:
-      Method to choose the threshold
-      'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as da.
+      Method to choose the threshold.
+      'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
       'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
     op: {">", "<", ">=", "<="}
       Operation to verify the condition for a spell.
@@ -233,11 +235,10 @@ def spell_length_distribution(
       Str with units if the method is "amount".
       Float of the quantile if the method is "quantile".
     stat: {'mean','max','min'}
-      Statistics to apply to the resampled input (eg. 1-31 Jan 1980) and then over all years (eg. Jan 1980-2010)
+      Statistics to apply to the resampled input at the {time_res} (eg. 1-31 Jan 1980) and then over all years \
+      (eg. Jan 1980-2010)
     time_res : str
       Time resolution.
-      Eg. If 'month', the {stat} is calculated on 12 distributions for each grid point.
-      Each distribution contains the spell lenghts in a given month for all available years.
 
     Returns
     -------
@@ -290,7 +291,7 @@ def spell_length_distribution(
 def acf(da: xr.DataArray, lag: int = 1, time_res: str = "season") -> xr.DataArray:
     r"""Autocorrelation function.
 
-    Autocorrelation with lag-{lag} over a {time_res} and averaged over all years.
+    Autocorrelation with a lag over a time resolution and averaged over all years.
 
     Parameters
     ----------
@@ -359,7 +360,7 @@ def acf(da: xr.DataArray, lag: int = 1, time_res: str = "season") -> xr.DataArra
 def annual_cycle_amplitude(
     da: xr.DataArray, amplitude_type: str = "absolute", time_res: str = "year"
 ) -> xr.DataArray:
-    r"""Annual Cycle amplitude.
+    r"""Annual cycle amplitude.
 
     The amplitudes of the annual cycle are calculated for each year, than averaged over the all years.
 
@@ -369,8 +370,8 @@ def annual_cycle_amplitude(
       Variable on which to calculate the diagnostic.
     amplitude_type: {'absolute','relative'}
       Type of amplitude.
-      'absolute' is the peak-to-peak amplitude. (max - min)
-      'relative' is a relative percentage. 100 * (max - min) / mean. Recommended for precipitation.
+      'absolute' is the peak-to-peak amplitude. (max - min).
+      'relative' is a relative percentage. 100 * (max - min) / mean (Recommended for precipitation).
 
     Returns
     -------
@@ -413,7 +414,7 @@ def annual_cycle_amplitude(
 @update_xclim_history
 @register_statistical_properties(aspect="temporal", seasonal=False, annual=True)
 def annual_cycle_phase(da: xr.DataArray, time_res: str = "year") -> xr.DataArray:
-    """Annual Cycle phase.
+    """Annual cycle phase.
 
     The phases of the annual cycle are calculated for each year, than averaged over the all years.
 
@@ -474,7 +475,7 @@ def corr_btw_var(
 ) -> xr.DataArray:
     r"""Correlation between two variables.
 
-    {corr_type} correlation coefficient between two variables at the time resolution.
+    Spearmand or Pearson correlation coefficient between two variables at the time resolution.
 
     Parameters
     ----------
@@ -549,8 +550,9 @@ def relative_frequency(
 ) -> xr.DataArray:
     r"""Relative Frequency.
 
-    Relative Frequency of days with variable {op} {thresh} at the time resolution.
-    Number of days that satisfy the condition / total number of days.
+    Relative Frequency of days with variable  respecting a condition (defined by an operation and a threshold) at the
+    time resolution. The relative freqency is the number of days that satisfy the condition divided by the total number
+    of days.
 
     Parameters
     ----------
@@ -612,7 +614,7 @@ def trend(
 ) -> xr.DataArray:
     r"""Linear Trend.
 
-    The data is averaged over each {time_res} and the interannual trend is returned.
+    The data is averaged over each time resolution and the interannual trend is returned.
 
     Parameters
     ----------
@@ -623,7 +625,7 @@ def trend(
       Attributes of the linear regression to return.
       'slope' is the slope of the regression line.
       'pvalue' is  for a hypothesis test whose null hypothesis is that the slope is zero,
-       using Wald Test with t-distribution of the test statistic.
+      using Wald Test with t-distribution of the test statistic.
 
     time_res : {'year', 'season', 'month'}
       Time resolution on which to do the initial averaging.
@@ -635,7 +637,8 @@ def trend(
 
     See also
     --------
-    :py:func:`scipy.stats.linregress` and :py:func:`numpy.polyfit`
+    :py:func:`scipy.stats.linregress`
+    :py:func:`numpy.polyfit`
 
     Examples
     --------
@@ -683,7 +686,7 @@ def return_value(
     r"""Return value.
 
     Return the value corresponding to a return period.
-    On average, the return value will be exceeded (or not exceed for op='min') every {period} years.
+    On average, the return value will be exceeded (or not exceed for op='min') every return period (eg. 20 years).
     The return value is computed by first extracting the variable annual maxima/minima,
     fitting a statistical distribution to the maxima/minima,
     then estimating the percentile associated with the return period (eg. 95th percentile (1/20) for 20 years)
@@ -703,7 +706,8 @@ def return_value(
     method : {"ML", "PWM"}
       Fitting method, either maximum likelihood (ML) or probability weighted moments (PWM), also called L-Moments.
       The PWM method is usually more robust to outliers. However, it requires the lmoments3 libraryto be installed
-      from the `develop` branch. `pip install git+https://github.com/OpenHydrology/lmoments3.git@develop#egg=lmoments3`
+      from the `develop` branch.
+      ``pip install git+https://github.com/OpenHydrology/lmoments3.git@develop#egg=lmoments3``
 
     time_res : {'year', 'season', 'month'}
       Time resolution on which to create a distribution of the extremums.

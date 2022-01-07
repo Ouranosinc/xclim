@@ -65,4 +65,4 @@ def test_annual_cycle_correlation():
         .sel(location="Vancouver")
         .values
     )
-    np.testing.assert_array_almost_equal(test, [0.93501862], 4)
+    np.testing.assert_array_almost_equal(test, [0.94580488], 4)
