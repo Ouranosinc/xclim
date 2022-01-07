@@ -50,8 +50,9 @@ jobs:
             python-version: "3.8"
           - tox-env: py39-lm3
             python-version: "3.9"
-          - tox-env: py310-xarray-lm3
-            python-version: "3.10"
+           # Bottleneck does not yet support Python3.10 - https://github.com/pydata/bottleneck/issues/388
+#          - tox-env: py310-xarray-lm3
+#            python-version: "3.10"
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
