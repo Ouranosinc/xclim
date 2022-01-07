@@ -23,6 +23,7 @@ from .options import datacheck
 from .utils import ValidationError
 
 __all__ = [
+    "check_units",
     "convert_units_to",
     "declare_units",
     "infer_sampling_units",
