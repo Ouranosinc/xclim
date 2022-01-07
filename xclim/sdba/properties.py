@@ -150,7 +150,7 @@ def skewness(da: xr.DataArray, time_res: str = "year") -> xr.DataArray:
 
     See also
     --------
-    :py:func:`scipy.stats.skew`
+    scipy.stats.skew
     """
     attrs = da.attrs
     if time_res != "year":
@@ -311,7 +311,7 @@ def acf(da: xr.DataArray, lag: int = 1, time_res: str = "season") -> xr.DataArra
 
     See also
     --------
-    :py:func:`statsmodels.tsa.stattools.acf`
+    statsmodels.tsa.stattools.acf
 
     References
     ----------
@@ -637,8 +637,8 @@ def trend(
 
     See also
     --------
-    :py:func:`scipy.stats.linregress`
-    :py:func:`numpy.polyfit`
+    scipy.stats.linregress
+    numpy.polyfit
 
     Examples
     --------
@@ -742,8 +742,8 @@ def return_value(
         for ind in coords[time_res].values:
             out.loc[{time_res: ind}] = frequency_analysis_method(
                 da, method, **{time_res: ind}
-            ).isel(quantile=0)
-
+            )
+    out = out.drop_vars("quantile")
     out.attrs.update(attrs)
     out.attrs[
         "long_name"

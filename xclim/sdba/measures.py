@@ -202,7 +202,7 @@ def rmse(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
 
     See also
     --------
-    :py:func:`sklearn.metrics.mean_squared_error`
+    sklearn.metrics.mean_squared_error
 
     Examples
     --------
@@ -251,7 +251,7 @@ def mae(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
 
     See also
     --------
-    :py:func:`sklearn.metrics.mean_absolute_error`
+    sklearn.metrics.mean_absolute_error
 
     Examples
     --------
