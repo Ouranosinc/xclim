@@ -6,7 +6,8 @@ Generic indices submodule
 
 Helper functions for common generic actions done in the computation of indices.
 """
-from typing import Optional, Union
+import warnings
+from typing import Optional, Sequence, Tuple, Union
 
 import cftime
 import numpy as np
@@ -20,8 +21,8 @@ from xclim.core.calendar import (
     days_in_year,
     doy_to_days_since,
     get_calendar,
-    select_time,
 )
+from xclim.core.calendar import select_time as _select_time
 from xclim.core.units import (
     convert_units_to,
     declare_units,
@@ -56,6 +57,30 @@ __all__ = [
 ]
 
 binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "ne"}
+
+
+def select_time(
+    da: Union[xr.DataArray, xr.Dataset],
+    drop: bool = False,
+    season: Union[str, Sequence[str]] = None,
+    month: Union[int, Sequence[int]] = None,
+    doy_bounds: Tuple[int, int] = None,
+    date_bounds: Tuple[str, str] = None,
+):
+    """Select entries according to a time period."""
+    warnings.warn(
+        "'select_time()' has moved from `xclim.indices.generic` to `xclim.core.calendar`. "
+        "Please update your scripts accordingly.",
+        DeprecationWarning,
+    )
+    return _select_time(
+        da,
+        drop=drop,
+        season=season,
+        month=month,
+        doy_bounds=doy_bounds,
+        date_bounds=date_bounds,
+    )
 
 
 def select_resample_op(da: xr.DataArray, op: str, freq: str = "YS", **indexer):
