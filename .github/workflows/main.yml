@@ -23,6 +23,7 @@ jobs:
         run: tox -e ${{ matrix.tox-env }}
 
   doctests:
+    needs: black
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -34,7 +35,7 @@ jobs:
           python-version: 3.7
       - name: Install tox
         run: pip install tox
-      - name: Run lint
+      - name: Run doctests
         run: tox -e ${{ matrix.tox-env }}
 
   test:
@@ -49,6 +50,8 @@ jobs:
             python-version: 3.8
           - tox-env: py39-lm3
             python-version: 3.9
+          - tox-env: py310-lm3
+            python-version: 3.10
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -66,13 +69,6 @@ jobs:
       with:
         flag-name: run-${{ matrix.tox-env }}
         parallel: true
-
-#    - name: Coveralls
-#      uses: coverallsapp/github-action@master
-#      with:
-#        github-token: ${{ secrets.GITHUB_TOKEN }}
-#        flag-name: run-${{ matrix.python-version }}
-#        parallel: true
 
   finish:
     needs: [test, doctests]
