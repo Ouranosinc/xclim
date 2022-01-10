@@ -4,7 +4,7 @@
 from xclim import indices
 from xclim.core.indicator import Indicator
 
-__all__ = ["jetstream_metric_woolings"]
+__all__ = ["jetstream_metric_woollings"]
 
 
 class JetStream(Indicator):
