@@ -589,14 +589,14 @@ class TestPrincipalComponents:
             sim = sim.chunk()
 
         PCA = PrincipalComponents.train(
-            ref, hist, crd_dim="variables", best_orientation=pcorient
+            ref, hist, crd_dim="multivar", best_orientation=pcorient
         )
         scen = PCA.adjust(sim)
 
         def dist(ref, sim):
             """Pointwise distance between ref and sim in the PC space."""
             sim["time"] = ref.time
-            return np.sqrt(((ref - sim) ** 2).sum("variables"))
+            return np.sqrt(((ref - sim) ** 2).sum("multivar"))
 
         # Most points are closer after transform.
         assert (dist(ref, sim) < dist(ref, scen)).mean() < 0.01

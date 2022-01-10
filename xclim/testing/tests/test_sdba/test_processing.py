@@ -263,10 +263,10 @@ def test_stack_variables():
         "precipitation_flux",
         "air_temperature",
     ]
-    assert da2.variables.attrs["is_variables"]
-    assert da1.variables.equals(da2.variables)
+    assert da2.multivar.attrs["is_variables"]
+    assert da1.multivar.equals(da2.multivar)
 
-    da1p = da1.sortby("variables", ascending=False)
+    da1p = da1.sortby("multivar", ascending=False)
 
     with pytest.raises(ValueError, match="Inputs have different multivariate"):
         EmpiricalQuantileMapping.train(da1p, da2)
