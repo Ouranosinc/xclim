@@ -1050,7 +1050,7 @@ class NpdfTransform(Adjust):
     n_iter : int
       The number of iterations to perform. Defaults to 20.
     pts_dim : str
-      The name of the "multivariate" dimension. Defaults to "variables", which is the
+      The name of the "multivariate" dimension. Defaults to "multivar", which is the
       normal case when using :py:func:`xclim.sdba.base.stack_variables`.
     adj_kws : dict, optional
       Dictionary of arguments to pass to the adjust method of the univariate adjustment.
@@ -1124,7 +1124,7 @@ class NpdfTransform(Adjust):
         base_kws: Optional[Mapping[str, Any]] = None,
         n_escore: int = 0,
         n_iter: int = 20,
-        pts_dim: str = "variables",
+        pts_dim: str = "multivar",
         adj_kws: Optional[Mapping[str, Any]] = None,
         rot_matrices: Optional[xr.DataArray] = None,
     ):

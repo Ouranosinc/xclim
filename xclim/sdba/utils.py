@@ -897,9 +897,13 @@ def rand_rot_matrix(
     ).astype("float32")
 
 
-def copy_all_attrs(ds: xr.Dataset, ref: xr.Dataset):
-    """Copies all attributes of ds to ref, including attributes of shared coordinates and variables."""
+def copy_all_attrs(
+    ds: Union[xr.Dataset, xr.DataArray], ref: Union[xr.Dataset, xr.DataArray]
+):
+    """Copies all attributes of ds to ref, including attributes of shared coordinates, and variables in the case of Datasets."""
     ds.attrs.update(ref.attrs)
-    for name, var in ds.variables.items():
-        if name in ref:
+    extras = ds.variables if isinstance(ds, xr.Dataset) else ds.coords
+    others = ref.variables if isinstance(ref, xr.Dataset) else ref.coords
+    for name, var in extras.items():
+        if name in others:
             var.attrs.update(ref[name].attrs)

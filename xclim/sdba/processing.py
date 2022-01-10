@@ -81,6 +81,7 @@ def adapt_freq(
     out = _adapt_freq(xr.Dataset(dict(sim=sim, ref=ref)), group=group, thresh=thresh)
 
     # Set some metadata
+    copy_all_attrs(out, sim)
     out.sim_ad.attrs.update(sim.attrs)
     out.sim_ad.attrs.update(
         references="Themeßl et al. (2012), Empirical-statistical downscaling and error correction of regional climate models and its impact on the climate change signal, Climatic Change, DOI 10.1007/s10584-011-0224-4."
@@ -205,7 +206,7 @@ def jitter(
             jitter = np.random.uniform(low=upper, high=maximum, size=x.shape)
         out = out.where(~((x >= upper) & notnull), jitter.astype(x.dtype))
 
-    out.attrs.update(x.attrs)  # copy attrs and same units
+    copy_all_attrs(out, x)  # copy attrs and same units
     return out
 
 
@@ -289,15 +290,17 @@ def standardize(
         mean = da.mean(dim, keep_attrs=True)
     if std is None:
         std = da.std(dim, keep_attrs=True)
-    with xr.set_options(keep_attrs=True):
-        return (da - mean) / std, mean, std
+    out = (da - mean) / std
+    copy_all_attrs(out, da)
+    return out, mean, std
 
 
 @update_xclim_history
 def unstandardize(da: xr.DataArray, mean: xr.DataArray, std: xr.DataArray):
     """Rescale a standardized array by performing the inverse operation of `standardize`."""
-    with xr.set_options(keep_attrs=True):
-        return (std * da) + mean
+    out = (std * da) + mean
+    copy_all_attrs(out, da)
+    return out
 
 
 @update_xclim_history
@@ -329,7 +332,7 @@ def reordering(ref: xr.DataArray, sim: xr.DataArray, group: str = "time") -> xr.
     """
     ds = xr.Dataset({"sim": sim, "ref": ref})
     out = _reordering(ds, group=group).reordered
-    out.attrs.update(sim.attrs)
+    copy_all_attrs(out, sim)
     return out
 
 
