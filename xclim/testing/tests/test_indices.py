@@ -1087,7 +1087,7 @@ class TestJetStreamIndices:
                 )
             }
         )
-        out = xci.jetstream_metric_woolings(da_ua)
+        out = xci.jetstream_metric_woollings(da_ua)
         np.testing.assert_equal(len(out), 2)
         jetlat, jetstr = out
         # should be 6 values that are not NaN because of 61 day moving window and 66 chosen
