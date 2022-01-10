@@ -82,7 +82,7 @@ def jetstream_metric_woolings(
         )
 
     # compute low-pass filter weights
-    lanczos_weights = compute_low_pass_filter_weights(
+    lanczos_weights = _compute_low_pass_filter_weights(
         window_size=window_size, cutoff=cutoff
     )
     # apply the filter
