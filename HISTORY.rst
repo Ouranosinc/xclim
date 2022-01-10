@@ -8,7 +8,7 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), , Tom Kee
 
 New indicators
 ^^^^^^^^^^^^^^
-* ``jetstream_metric_woolings`` indicator returns latitude and strength of jet-stream in u-wind field. (:pull:`924`, :issue:`923`).
+* ``jetstream_metric_woollings`` indicator returns latitude and strength of jet-stream in u-wind field. (:pull:`924`, :issue:`923`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
