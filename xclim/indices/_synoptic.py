@@ -17,7 +17,7 @@ __all__ = [
 
 
 @declare_units(ua="[speed]")
-def jetstream_metric_woolings(
+def jetstream_metric_woollings(
     ua: xarray.DataArray,
 ) -> xarray.DataArray:
     """Strength and latitude of jetstream.
@@ -31,7 +31,7 @@ def jetstream_metric_woolings(
     Parameters
     ----------
     ua : xarray.DataArray
-      eastward wind component (u) at between 750 and 950 hPa.
+      Eastward wind component (u) at between 750 and 950 hPa.
 
     Returns
     -------
@@ -82,7 +82,7 @@ def jetstream_metric_woolings(
         )
 
     # compute low-pass filter weights
-    lanczos_weights = compute_low_pass_filter_weights(
+    lanczos_weights = _compute_low_pass_filter_weights(
         window_size=window_size, cutoff=cutoff
     )
     # apply the filter
@@ -96,7 +96,7 @@ def jetstream_metric_woolings(
     return jetlat, jetstr
 
 
-def compute_low_pass_filter_weights(
+def _compute_low_pass_filter_weights(
     window_size: int, cutoff: float
 ) -> xarray.DataArray:
     order = ((window_size - 1) // 2) + 1

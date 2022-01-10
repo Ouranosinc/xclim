@@ -1072,11 +1072,11 @@ class TestJetStreamIndices:
     da_ua.Y.attrs = {"units": "degrees_north", "standard_name": "latitude"}
     da_ua.T.attrs = {"standard_name": "time"}
 
-    def test_jetstream_metric_woolings(self):
+    def test_jetstream_metric_woollings(self):
         da_ua = self.da_ua
         # Should raise ValueError as longitude is in 0-360 instead of -180.E-180.W
         with pytest.raises(ValueError):
-            _ = xci.jetstream_metric_woolings(da_ua)
+            _ = xci.jetstream_metric_woollings(da_ua)
         # redefine longitude coordiantes to -180.E-180.W so function runs
         da_ua = da_ua.cf.assign_coords(
             {
@@ -1087,7 +1087,7 @@ class TestJetStreamIndices:
                 )
             }
         )
-        out = xci.jetstream_metric_woolings(da_ua)
+        out = xci.jetstream_metric_woollings(da_ua)
         np.testing.assert_equal(len(out), 2)
         jetlat, jetstr = out
         # should be 6 values that are not NaN because of 61 day moving window and 66 chosen
