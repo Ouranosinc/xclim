@@ -870,7 +870,7 @@ class PrincipalComponents(TrainAdjust):
       "full" is more precise, but it is much slower.
     crd_dim : str
       The data dimension along which the multiple simulation space dimensions are taken.
-      For a multivariate ajustment, this should be "variables", as returned by `sdba.stack_variables`.
+      For a multivariate ajustment, this usually is "multivar", as returned by `sdba.stack_variables`.
       For a multisite ajustment, this should be the spatial dimension.
       The training algorithm currently doesn't support any chunking
       along either `crd_dim`. `group.dim` and `group.add_dims`.
