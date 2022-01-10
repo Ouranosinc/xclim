@@ -16,6 +16,7 @@ New features and enhancements
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * To reduce import complexity, `select_time` has been refactored/moved from ``xclim.indices.generic`` to ``xclim.core.calendar``. (:issue:`949`, :pull:`969`).
+* The stacking dimension of ``xclim.sdba.stack_variables`` has been renamed to "multivar" to avoid name conflicts with the "variables" property of xarray Datasets. (:pull:`964`)`.`
 
 Internal changes
 ^^^^^^^^^^^^^^^^
