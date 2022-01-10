@@ -31,7 +31,7 @@ def jetstream_metric_woolings(
     Parameters
     ----------
     ua : xarray.DataArray
-      eastward wind component (u) at between 750 and 950 hPa.
+      Eastward wind component (u) at between 750 and 950 hPa.
 
     Returns
     -------
