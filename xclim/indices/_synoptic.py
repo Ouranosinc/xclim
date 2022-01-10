@@ -17,7 +17,7 @@ __all__ = [
 
 
 @declare_units(ua="[speed]")
-def jetstream_metric_woolings(
+def jetstream_metric_woollings(
     ua: xarray.DataArray,
 ) -> xarray.DataArray:
     """Strength and latitude of jetstream.
