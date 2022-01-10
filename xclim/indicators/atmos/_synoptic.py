@@ -14,7 +14,7 @@ class JetStream(Indicator):
 
 
 jetstream_metric_woolings = JetStream(
-    identifier="jetstream_metric_woolings",
+    identifier="jetstream_metric_woollings",
     var_name=["jetlat", "jetstr"],
     units=["degrees_North", "m s-1"],
     long_name=[
