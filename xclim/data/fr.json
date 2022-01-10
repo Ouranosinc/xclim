@@ -986,5 +986,11 @@
     "abstract": "Nombre de jours où la vitesse du vent de surface est au-dessus d'un seuil.",
     "description": "Nombre {freq:m} de jours où la vitesse du vent de surface >= {thresh}.",
     "long_name": "Nombre {freq:m} de jours où la vitesse du vent de surface est au-dessus d'un seuil"
+  },
+  "JETSTREAM_METRIC_WOOLLINGS": {
+      "title": "Force et latitude du courant-jet",
+      "abstract": "Latitude et magnitude du maximum de la vitesse du vent zonal entre 15 à 75°N et -60 à 0°E.",
+      "description": ["Latitude journalière du maximum du vent zonal lissé", "Magnitude journalière du maximum du vent zonal lissé"],
+      "long_name": ["Latitude du maximum du vent zonal", "Magnitude du maximum du vent zonal"]
   }
 }
