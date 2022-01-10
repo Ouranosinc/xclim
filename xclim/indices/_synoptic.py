@@ -12,7 +12,7 @@ from xclim.core.units import convert_units_to, declare_units
 # -------------------------------------------------- #
 
 __all__ = [
-    "jetstream_metric_woolings",
+    "jetstream_metric_woollings",
 ]
 
 
