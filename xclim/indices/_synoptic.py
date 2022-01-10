@@ -96,7 +96,7 @@ def jetstream_metric_woolings(
     return jetlat, jetstr
 
 
-def compute_low_pass_filter_weights(
+def _compute_low_pass_filter_weights(
     window_size: int, cutoff: float
 ) -> xarray.DataArray:
     order = ((window_size - 1) // 2) + 1
