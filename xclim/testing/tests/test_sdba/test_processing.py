@@ -258,8 +258,8 @@ def test_stack_variables():
     da1 = stack_variables(ds1)
     da2 = stack_variables(ds2)
 
-    assert list(da1.variables.values) == ["pr", "tasmax"]
-    assert da1.variables.attrs["_standard_name"] == [
+    assert list(da1.multivar.values) == ["pr", "tasmax"]
+    assert da1.multivar.attrs["_standard_name"] == [
         "precipitation_flux",
         "air_temperature",
     ]
