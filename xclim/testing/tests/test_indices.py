@@ -1072,7 +1072,7 @@ class TestJetStreamIndices:
     da_ua.Y.attrs = {"units": "degrees_north", "standard_name": "latitude"}
     da_ua.T.attrs = {"standard_name": "time"}
 
-    def test_jetstream_metric_woolings(self):
+    def test_jetstream_metric_woollings(self):
         da_ua = self.da_ua
         # Should raise ValueError as longitude is in 0-360 instead of -180.E-180.W
         with pytest.raises(ValueError):
