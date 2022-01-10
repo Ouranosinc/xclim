@@ -28,7 +28,6 @@ from yaml import safe_dump, safe_load
 
 logger = logging.getLogger("xclim")
 
-
 #: Type annotation for strings representing full dates (YYYY-MM-DD), may include time.
 DateStr = NewType("DateStr", str)
 

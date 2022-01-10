@@ -13,6 +13,7 @@ import xarray as xr
 
 import xclim
 from xclim import __version__, atmos
+from xclim.core.calendar import select_time
 from xclim.core.formatting import (
     AttrFormatter,
     default_formatter,
@@ -24,7 +25,6 @@ from xclim.core.indicator import Daily, Indicator, ResamplingIndicator, registry
 from xclim.core.units import convert_units_to, declare_units, units
 from xclim.core.utils import InputKind, MissingVariableError
 from xclim.indices import tg_mean
-from xclim.indices.generic import select_time
 from xclim.testing import open_dataset
 
 
