@@ -895,3 +895,11 @@ def rand_rot_matrix(
     return xr.DataArray(
         Q @ lam, dims=(dim, new_dim), coords={dim: crd, new_dim: crd2}
     ).astype("float32")
+
+
+def copy_all_attrs(ds: xr.Dataset, ref: xr.Dataset):
+    """Copies all attributes of ds to ref, including attributes of shared coordinates and variables."""
+    ds.attrs.update(ref.attrs)
+    for name, var in ds.variables.items():
+        if name in ref:
+            var.attrs.update(ref[name].attrs)

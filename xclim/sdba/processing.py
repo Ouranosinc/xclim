@@ -18,7 +18,7 @@ from xclim.core.utils import uses_dask
 from ._processing import _adapt_freq, _normalize, _reordering
 from .base import Grouper
 from .nbutils import _escore
-from .utils import ADDITIVE
+from .utils import ADDITIVE, copy_all_attrs
 
 
 @update_xclim_history
@@ -246,6 +246,7 @@ def normalize(
         ds = ds.assign(norm=norm)
 
     out = _normalize(ds, group=group, kind=kind)
+    copy_all_attrs(out, ds)
     out.data.attrs.update(data.attrs)
     out.norm.attrs["units"] = data.attrs["units"]
     return out.data.rename(data.name), out.norm
@@ -761,7 +762,7 @@ def from_additive_space(
     return out
 
 
-def stack_variables(ds, rechunk=True, dim="variables"):
+def stack_variables(ds, rechunk=True, dim="multivar"):
     """Stack different variables of a dataset into a single DataArray with a new "variables" dimension.
 
     Variable attributes are all added as lists of attributes to the new coordinate, prefixed with "_".
@@ -842,10 +843,10 @@ def unstack_variables(da, dim=None):
     del ds.attrs["units"]
 
     # Reset attributes
-    for name, attr_list in da.variables.attrs.items():
+    for name, attr_list in da[dim].attrs.items():
         if not name.startswith("_"):
             continue
-        for attr, var in zip(attr_list, da.variables):
+        for attr, var in zip(attr_list, da[dim]):
             if attr is not None:
                 ds[var.item()].attrs[name[1:]] = attr
 
