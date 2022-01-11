@@ -2,7 +2,6 @@
 Base classes and developper tools
 ---------------------------------
 """
-import warnings
 from inspect import signature
 from types import FunctionType
 from typing import Callable, Mapping, Optional, Sequence, Set, Union
@@ -13,7 +12,7 @@ import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
 
-from xclim.core.calendar import days_in_year, get_calendar, max_doy, parse_offset
+from xclim.core.calendar import days_in_year, get_calendar
 from xclim.core.options import OPTIONS, SDBA_ENCODE_CF
 from xclim.core.utils import uses_dask
 
