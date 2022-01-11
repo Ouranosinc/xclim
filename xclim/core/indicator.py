@@ -95,7 +95,7 @@ from dataclasses import asdict, dataclass
 from functools import reduce
 from inspect import Parameter as _Parameter
 from inspect import Signature
-from inspect import _empty as _empty_default
+from inspect import _empty as _empty_default  # noqa
 from inspect import signature
 from os import PathLike
 from pathlib import Path
@@ -108,7 +108,7 @@ from yaml import safe_load
 
 from .. import indices
 from . import datachecks
-from .calendar import parse_offset
+from .calendar import parse_offset, select_time
 from .cfchecks import cfcheck_from_name
 from .formatting import (
     AttrFormatter,
@@ -1375,7 +1375,7 @@ class ResamplingIndicatorWithIndexing(ResamplingIndicator):
 
         indxr = params.get("indexer")
         if indxr:
-            das = {k: indices.generic.select_time(da, **indxr) for k, da in das.items()}
+            das = {k: select_time(da, **indxr) for k, da in das.items()}
         return das, params
 
 

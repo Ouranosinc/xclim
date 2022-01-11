@@ -7,7 +7,7 @@ import xarray
 from boltons.funcutils import wraps
 from xarray.core.dataarray import DataArray
 
-from xclim.core.calendar import convert_calendar, parse_offset, percentile_doy
+from .calendar import convert_calendar, parse_offset, percentile_doy
 
 
 def percentile_bootstrap(func):
