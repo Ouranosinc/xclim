@@ -709,3 +709,25 @@ def declare_units(
         return wrapper
 
     return dec
+
+
+def ensure_delta(unit: str = None):
+    """
+    Return delta units for temperature.
+
+    For dimensions where delta exist in pint (Temperature), it returns the units of delta_degC or delta_degF based on
+    the input unit.
+    For other dimensionality, it just gives back the input units.
+
+    Parameters
+    ----------
+    unit : str
+      unit to transform in delta (or not)
+    """
+    d = 1 * units2pint(unit)
+    delta_unit = pint2cfunits(d - d)
+    if delta_unit == "K":
+        delta_unit = "delta_degC"
+    if delta_unit == "°R":
+        delta_unit = "delta_degF"
+    return delta_unit

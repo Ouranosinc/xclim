@@ -192,7 +192,7 @@ def test_annual_cycle():
 
     assert amp.long_name == "absolute amplitude of the annual cycle"
     assert phase.long_name == "Phase of the annual cycle"
-    assert amp.units == "delta_degree_Celsius"
+    assert amp.units == "delta_degC"
     assert relamp.units == "%"
     assert phase.units == ""
 

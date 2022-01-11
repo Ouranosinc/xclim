@@ -394,11 +394,7 @@ def annual_cycle_amplitude(
     # amplitude
     amp = da.max(dim="time") - da.min(dim="time")
     amp.attrs.update(attrs)
-    if (
-        xc.core.units.units2pint(attrs["units"]).dimensionality
-        == xc.core.units.units2pint("degC").dimensionality
-    ):
-        amp.attrs["units"] = "delta_degree_Celsius"
+    amp.attrs["units"] = xc.core.units.ensure_delta(attrs["units"])
     if amplitude_type == "relative":
         amp = amp * 100 / da.mean(dim="time", keep_attrs=True)
         amp.attrs["units"] = "%"
