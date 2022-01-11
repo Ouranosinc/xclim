@@ -76,7 +76,7 @@ def mean(da: xr.DataArray, time_res: str = "year") -> xr.DataArray:
         da = da.groupby(f"time.{time_res}")
     out = da.mean(dim="time")
     out.attrs.update(attrs)
-    out.attrs["long_name"] = f"Mean {attrs['long_name']}"
+    out.attrs["long_name"] = "Mean"
     out.name = "mean"
     return out
 
@@ -113,7 +113,7 @@ def var(da: xr.DataArray, time_res: str = "year") -> xr.DataArray:
         da = da.groupby(f"time.{time_res}")
     out = da.var(dim="time")
     out.attrs.update(attrs)
-    out.attrs["long_name"] = f"Variance of {attrs['long_name']}"
+    out.attrs["long_name"] = "Variance"
     u = xc.core.units.units2pint(attrs["units"])
     u2 = u ** 2
     out.attrs["units"] = xc.core.units.pint2cfunits(u2)
@@ -159,7 +159,7 @@ def skewness(da: xr.DataArray, time_res: str = "year") -> xr.DataArray:
         stats.skew, da, input_core_dims=[["time"]], vectorize=True, dask="parallelized"
     )
     out.attrs.update(attrs)
-    out.attrs["long_name"] = f"Skewness of {attrs['long_name']}"
+    out.attrs["long_name"] = "Skewness"
     out.attrs["units"] = ""
     out.name = "skewness"
     return out
@@ -199,7 +199,7 @@ def quantile(da: xr.DataArray, q: float = 0.98, time_res: str = "year") -> xr.Da
         da = da.groupby(f"time.{time_res}")
     out = da.quantile(q, dim="time", keep_attrs=True).drop_vars("quantile")
     out.attrs.update(attrs)
-    out.attrs["long_name"] = f"Quantile {q} of {attrs['long_name']}"
+    out.attrs["long_name"] = f"Quantile {q}"
     out.name = "quantile"
     return out
 
@@ -281,7 +281,7 @@ def spell_length_distribution(
     out.attrs.update(attrs)
     out.attrs[
         "long_name"
-    ] = f"{stat} of spell length when {attrs['long_name']} {op} {method} {thresh}"
+    ] = f"{stat} of spell length when input variable {op} {method} {thresh}"
     out.name = "spell_length_distribution"
     return out
 
@@ -348,7 +348,7 @@ def acf(da: xr.DataArray, lag: int = 1, time_res: str = "season") -> xr.DataArra
     out = out.groupby(f"__resample_dim__.{time_res}").mean(dim="__resample_dim__")
 
     out.attrs.update(attrs)
-    out.attrs["long_name"] = f"lag-{lag} autocorrelation of {attrs['long_name']}"
+    out.attrs["long_name"] = f"lag-{lag} autocorrelation"
     out.attrs["units"] = ""
     out.name = "acf"
     return out
@@ -403,9 +403,7 @@ def annual_cycle_amplitude(
         amp = amp * 100 / da.mean(dim="time", keep_attrs=True)
         amp.attrs["units"] = "%"
     amp = amp.mean(dim="time", keep_attrs=True)
-    amp.attrs[
-        "long_name"
-    ] = f"{amplitude_type} amplitude of the annual cycle of {attrs['long_name']}"
+    amp.attrs["long_name"] = f"{amplitude_type} amplitude of the annual cycle"
     amp.name = "annual_cycle_amplitude"
     return amp
 
@@ -458,7 +456,7 @@ def annual_cycle_phase(da: xr.DataArray, time_res: str = "year") -> xr.DataArray
     # put nan where there was nan in the input, if not phase = 0 + 1
     phase = phase.where(mask, np.nan)
     phase.attrs.update(attrs)
-    phase.attrs["long_name"] = f"Phase of the annual cycle of {attrs['long_name']}"
+    phase.attrs["long_name"] = "Phase of the annual cycle"
     phase.attrs.update(units="", is_dayofyear=1)
     phase.name = "annual_cycle_phase"
     return phase
@@ -505,7 +503,6 @@ def corr_btw_var(
     >>> corr_btw_var(da1=pr, da2=tasmax, time_res='season')
     """
     attrs1 = da1.attrs
-    attrs2 = da2.attrs
     if time_res != "year":
         da1 = da1.groupby(f"time.{time_res}")
         da2 = da2.groupby(f"time.{time_res}")
@@ -534,10 +531,7 @@ def corr_btw_var(
         dask="parallelized",
     )
     out.attrs.update(attrs1)
-    out.attrs["long_name"] = (
-        f"{corr_type} correlation coefficient between {attrs1['long_name']} and"
-        f" {attrs2['long_name']}"
-    )
+    out.attrs["long_name"] = f"{corr_type} correlation coefficient"
     out.attrs["units"] = ""
     out.name = "corr_btw_varr"
     return out
@@ -599,7 +593,7 @@ def relative_frequency(
     out.attrs.update(attrs)
     out.attrs[
         "long_name"
-    ] = f"Relative frequency of days with {attrs['long_name']} {op} {thresh}"
+    ] = f"Relative frequency of days with input variable {op} {thresh}"
     out.attrs["units"] = ""
     out.name = "relative frequency"
     return out
@@ -666,9 +660,7 @@ def trend(
         dask="parallelized",
     )
     out.attrs.update(attrs)
-    out.attrs[
-        "long_name"
-    ] = f"{output} of the interannual linear trend of {attrs['long_name']}"
+    out.attrs["long_name"] = f"{output} of the interannual linear trend"
     out.attrs["units"] = f"{attrs['units']}/year"
     out.name = "trend"
     return out
@@ -728,11 +720,12 @@ def return_value(
     def frequency_analysis_method(x, method, **indexer):
         sub = select_resample_op(x, op=op, **indexer)
         params = fit(sub, dist="genextreme", method=method)
-        out = parametric_quantile(params, q=1 - 1.0 / period)
-        return out
+        pq = parametric_quantile(params, q=1 - 1.0 / period)
+        return pq
 
     if time_res == "year":
-        out = frequency_analysis_method(da, method)
+        out = frequency_analysis_method(da, method).isel(quantile=0)
+        out = out.drop_vars("quantile")
     else:
         # get coords of final output
         coords = da.groupby(f"time.{time_res}").mean(dim="time").coords
@@ -742,11 +735,8 @@ def return_value(
         for ind in coords[time_res].values:
             out.loc[{time_res: ind}] = frequency_analysis_method(
                 da, method, **{time_res: ind}
-            )
-    out = out.drop_vars("quantile")
+            ).isel(quantile=0)
     out.attrs.update(attrs)
-    out.attrs[
-        "long_name"
-    ] = f"{period}-{time_res} {op} return level of {attrs['long_name']}"
+    out.attrs["long_name"] = f"{period}-{time_res} {op} return level"
     out.name = "return_value"
     return out

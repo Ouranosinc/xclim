@@ -64,16 +64,10 @@ def bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     xr.DataArray,
       Bias between the simulation and the reference
 
-    Examples
-    --------
-    >>> from xclim.testing import open_dataset
-    >>> tasmax = open_dataset(path_to_tasmax_file).tasmax.isel(time=0)
-    >>> tasmin = open_dataset(path_to_tasmin_file).tasmin.isel(time=0)
-    >>> bias(tasmax, tasmin)
     """
     out = sim - ref
     out.attrs.update(sim.attrs)
-    out.attrs["long_name"] = f"Bias of the {sim.attrs['long_name']}"
+    out.attrs["long_name"] = "Bias"
     out.attrs["units"] = sim.attrs["units"]
     return out
 
@@ -97,16 +91,10 @@ def relative_bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     xr.DataArray,
       Relative bias between the simulation and the reference
 
-    Examples
-    --------
-    >>> from xclim.testing import open_dataset
-    >>> tasmax = open_dataset(path_to_tasmax_file).tasmax.isel(time=0)
-    >>> tasmin = open_dataset(path_to_tasmin_file).tasmin.isel(time=0)
-    >>> relative_bias(tasmax, tasmin)
     """
     out = (sim - ref) / ref
     out.attrs.update(sim.attrs)
-    out.attrs["long_name"] = f"Relative bias of the {sim.attrs['long_name']}"
+    out.attrs["long_name"] = "Relative bias"
     out.attrs["units"] = ""
     return out
 
@@ -114,7 +102,7 @@ def relative_bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
 @check_same_units_and_convert
 @update_xclim_history
 def circular_bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
-    r"""Ratio.
+    r"""Circular bias.
 
     Bias considering circular time series.
     Eg. The bias between doy 365 and doy 1 is 364, but the circular bias is -1.
@@ -131,12 +119,6 @@ def circular_bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     xr.DataArray,
       Circular bias between the simulation and the reference
 
-    Examples
-    --------
-    >>> from xclim.testing import open_dataset
-    >>> tasmax = open_dataset(path_to_tasmax_file).tasmax.isel(time=0)
-    >>> tasmin = open_dataset(path_to_tasmin_file).tasmin.isel(time=0)
-    >>> circular_bias(tasmax, tasmin)
     """
     out = (sim - ref) % 365
     out = out.where(
@@ -144,7 +126,7 @@ def circular_bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     )  # when condition false, replace by 2nd arg
     out = out.where(ref >= sim, out * -1)  # when condition false, replace by 2nd arg
     out.attrs.update(sim.attrs)
-    out.attrs["long_name"] = f"Circular bias of the {sim.attrs['long_name']}"
+    out.attrs["long_name"] = "Circular bias"
     return out
 
 
@@ -153,7 +135,7 @@ def circular_bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
 def ratio(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     r"""Ratio.
 
-    The ration is the quotient of the simulation over the reference.
+    The ratio is the quotient of the simulation over the reference.
 
     Parameters
     ----------
@@ -167,16 +149,10 @@ def ratio(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     xr.DataArray,
       Ratio between the simulation and the reference
 
-    Examples
-    --------
-    >>> from xclim.testing import open_dataset
-    >>> tasmax = open_dataset(path_to_tasmax_file).tasmax.isel(time=0)
-    >>> tasmin = open_dataset(path_to_tasmin_file).tasmin.isel(time=0)
-    >>> ratio(tasmax, tasmin)
     """
     out = sim / ref
     out.attrs.update(sim.attrs)
-    out.attrs["long_name"] = f"Ratio of the {sim.attrs['long_name']}"
+    out.attrs["long_name"] = "Ratio"
     out.attrs["units"] = ""
     return out
 
@@ -204,12 +180,6 @@ def rmse(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     --------
     sklearn.metrics.mean_squared_error
 
-    Examples
-    --------
-    >>> from xclim.testing import open_dataset
-    >>> tasmax = open_dataset(path_to_tasmax_file).tasmax
-    >>> tasmin = open_dataset(path_to_tasmin_file).tasmin
-    >>> rmse(tasmax, tasmin)
     """
 
     def nan_sklearn(sim, ref):
@@ -226,7 +196,7 @@ def rmse(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
         dask="parallelized",
     )
     out.attrs.update(sim.attrs)
-    out.attrs["long_name"] = f"Root mean square of the {sim.attrs['long_name']}"
+    out.attrs["long_name"] = "Root mean square"
     return out
 
 
@@ -253,12 +223,6 @@ def mae(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     --------
     sklearn.metrics.mean_absolute_error
 
-    Examples
-    --------
-    >>> from xclim.testing import open_dataset
-    >>> tasmax = open_dataset(path_to_tasmax_file).tasmax
-    >>> tasmin = open_dataset(path_to_tasmin_file).tasmin
-    >>> mae(tasmax, tasmin)
     """
 
     def nan_sklearn(sim, ref):
@@ -275,7 +239,7 @@ def mae(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
         dask="parallelized",
     )
     out.attrs.update(sim.attrs)
-    out.attrs["long_name"] = f"Mean absolute error of the {sim.attrs['long_name']}"
+    out.attrs["long_name"] = "Mean absolute error"
     return out
 
 
@@ -285,7 +249,7 @@ def annual_cycle_correlation(sim, ref, window: int = 15):
     r"""Annual cycle correlation.
 
     Pearson correlation coefficient between the smooth day-of-year averaged annual cycles of the simulation and
-    the reference. In the smooth day-of-year averaged annual cycles, each day-of-year is average over all years
+    the reference. In the smooth day-of-year averaged annual cycles, each day-of-year is averaged over all years
     and over a window of days around that day.
 
     Parameters
@@ -303,12 +267,6 @@ def annual_cycle_correlation(sim, ref, window: int = 15):
     xr.DataArray,
       Annual cycle correlation between the simulation and the reference
 
-    Examples
-    --------
-    >>> from xclim.testing import open_dataset
-    >>> tasmax = open_dataset(path_to_tasmax_file).tasmax
-    >>> tasmin = open_dataset(path_to_tasmin_file).tasmin
-    >>> annual_cycle_correlation(tasmax, tasmin)
     """
     # group by day-of-year and window around each doy
     grouper_test = sdba.base.Grouper("time.dayofyear", window=window)
@@ -317,7 +275,5 @@ def annual_cycle_correlation(sim, ref, window: int = 15):
     ref_annual_cycle = grouper_test.apply("mean", ref)
     out = xr.corr(ref_annual_cycle, sim_annual_cycle, dim="dayofyear")
     out.attrs.update(sim.attrs)
-    out.attrs[
-        "long_name"
-    ] = f"Correlation of the annual cycle of the {sim.attrs['long_name']}"
+    out.attrs["long_name"] = "Correlation of the annual cycle"
     return out
