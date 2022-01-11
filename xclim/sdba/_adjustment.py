@@ -251,15 +251,12 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
         histp = hist @ R
         simp = sim @ R
 
-        # I have no idea why this is needed. See #801.
-        refp.attrs.update(units="")
-        histp.attrs.update(units="")
-        simp.attrs.update(units="")
-
         # Perform univariate adjustment in rotated space (x')
-        ADJ = kwargs["base"].train(refp, histp, **kwargs["base_kws"])
-        scenhp = ADJ.adjust(histp, **kwargs["adj_kws"])
-        scensp = ADJ.adjust(simp, **kwargs["adj_kws"])
+        ADJ = kwargs["base"].train(
+            refp, histp, **kwargs["base_kws"], skip_input_checks=True
+        )
+        scenhp = ADJ.adjust(histp, **kwargs["adj_kws"], skip_input_checks=True)
+        scensp = ADJ.adjust(simp, **kwargs["adj_kws"], skip_input_checks=True)
 
         # Rotate back to original dimension x'@R = x
         # Note that x'@R is a back rotation because the matrix multiplication is now done along x' due to xarray

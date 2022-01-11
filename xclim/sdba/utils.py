@@ -2,6 +2,7 @@
 sdba utilities
 --------------
 """
+import itertools
 from typing import Callable, List, Mapping, Optional, Tuple, Union
 from warnings import warn
 
@@ -10,6 +11,7 @@ import xarray as xr
 from boltons.funcutils import wraps
 from dask import array as dsk
 from scipy.interpolate import griddata, interp1d
+from scipy.stats import spearmanr
 
 from xclim.core.calendar import _interpolate_doy_calendar  # noqa
 from xclim.core.utils import ensure_chunk_size
@@ -615,23 +617,26 @@ def pc_matrix(arr: Union[np.ndarray, dsk.Array]) -> Union[np.ndarray, dsk.Array]
     return eig_vec * mod.sqrt(eig_vals)
 
 
-def best_pc_orientation(
-    A: np.ndarray, Binv: np.ndarray, val: float = 1000
+def best_pc_orientation_simple(
+    R: np.ndarray, Hinv: np.ndarray, val: float = 1000
 ) -> np.ndarray:
-    """Return best orientation vector for A.
+    """Return best orientation vector according to a simple test.
 
     Eigenvectors returned by `pc_matrix` do not have a defined orientation.
-    Given an inverse transform Binv and a transform A, this returns the orientation
+    Given an inverse transform Hinv and a transform R, this returns the orientation
     minimizing the projected distance for a test point far from the origin.
 
-    This trick is explained in [hnilica2017]_. See documentation of
-    `sdba.adjustment.PrincipalComponentAdjustment`.
+    This trick is inspired by the one exposed in [hnilica2017]_.
+    For each possible orientation vector, the test point is reprojected
+    and the distance from the original point is computed. The orientation
+    minimizing that distance is chosen.
+    See documentation of `sdba.adjustment.PrincipalComponentAdjustment`.
 
     Parameters
     ----------
-    A : np.ndarray
+    R : np.ndarray
       MxM Matrix defining the final transformation.
-    Binv : np.ndarray
+    Hinv : np.ndarray
       MxM Matrix defining the (inverse) first transformation.
     val : float
       The coordinate of the test point (same for all axes). It should be much
@@ -642,24 +647,66 @@ def best_pc_orientation(
     np.ndarray
       Mx1 vector of orientation correction (1 or -1).
     """
-    m = A.shape[0]
-    orient = np.ones(m)
+    m = R.shape[0]
     P = np.diag(val * np.ones(m))
-
-    # Compute first reference error
-    err = np.linalg.norm(P - A @ Binv @ P)
-    for i in range(m):
-        # Switch the ith axis orientation
-        orient[i] = -1
+    signes = dict(itertools.zip_longest(itertools.product(*[[1, -1]] * m), [None]))
+    for orient in list(signes.keys()):
         # Compute new error
-        new_err = np.linalg.norm(P - (A * orient) @ Binv @ P)
-        if new_err > err:
-            # Previous error was lower, switch back
-            orient[i] = 1
-        else:
-            # New orientation is better, keep and remember error.
-            err = new_err
-    return orient
+        signes[orient] = np.linalg.norm(P - ((orient * R) @ Hinv) @ P)
+    return np.array(min(signes, key=lambda o: signes[o]))
+
+
+def best_pc_orientation_full(
+    R: np.ndarray,
+    Hinv: np.ndarray,
+    Rmean: np.ndarray,
+    Hmean: np.ndarray,
+    hist: np.ndarray,
+) -> np.ndarray:
+    """Return best orientation vector for A according to the method of Alavoine et al. (2021).
+
+    Eigenvectors returned by `pc_matrix` do not have a defined orientation.
+    Given an inverse transform Hinv, a transform R, the actual and target origins
+    Hmean and Rmean and the matrix of training observations hist, this computes
+    a scenario for all possible orientations and return the orientation that
+    maximizes the Spearman correlation coefficient of all variables. The
+    correlation is computed for each variable individually, then averaged.
+
+    This trick is explained in [alavoine2021]_. See documentation of
+    `sdba.adjustment.PrincipalComponentAdjustment`.
+
+    Parameters
+    ----------
+    R : np.ndarray
+      MxM Matrix defining the final transformation.
+    Hinv : np.ndarray
+      MxM Matrix defining the (inverse) first transformation.
+    Rmean : np.ndarray
+      M vector defining the target distribution center point.
+    Hmean : np.ndarray
+      M vector defining the original distribution center point.
+    hist : np.ndarray
+      MxN matrix of all training observations of the M variables/sites.
+
+    Returns
+    -------
+    np.ndarray
+      M vector of orientation correction (1 or -1).
+    """
+    # All possible orientation vectors
+    m = R.shape[0]
+    signes = dict(itertools.zip_longest(itertools.product(*[[1, -1]] * m), [None]))
+    for orient in list(signes.keys()):
+        # Calculate scen for hist
+        scen = np.atleast_2d(Rmean).T + ((orient * R) @ Hinv) @ (
+            hist - np.atleast_2d(Hmean).T
+        )
+        # Correlation for each variable
+        corr = [spearmanr(hist[i, :], scen[i, :])[0] for i in range(hist.shape[0])]
+        # Store mean correlation
+        signes[orient] = np.mean(corr)
+    # Return orientation that maximizes the correlation
+    return np.array(max(signes, key=lambda o: signes[o]))
 
 
 def get_clusters_1d(
@@ -848,3 +895,15 @@ def rand_rot_matrix(
     return xr.DataArray(
         Q @ lam, dims=(dim, new_dim), coords={dim: crd, new_dim: crd2}
     ).astype("float32")
+
+
+def copy_all_attrs(
+    ds: Union[xr.Dataset, xr.DataArray], ref: Union[xr.Dataset, xr.DataArray]
+):
+    """Copies all attributes of ds to ref, including attributes of shared coordinates, and variables in the case of Datasets."""
+    ds.attrs.update(ref.attrs)
+    extras = ds.variables if isinstance(ds, xr.Dataset) else ds.coords
+    others = ref.variables if isinstance(ref, xr.Dataset) else ref.coords
+    for name, var in extras.items():
+        if name in others:
+            var.attrs.update(ref[name].attrs)
