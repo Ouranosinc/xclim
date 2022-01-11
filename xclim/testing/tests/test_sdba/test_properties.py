@@ -20,7 +20,7 @@ def test_mean():
         out_season.values, [4.6115547e-05, 1.7220482e-05, 2.8805329e-05, 2.825359e-05]
     )
 
-    assert out_season.long_name == "Mean Precipitation"
+    assert out_season.long_name == "Mean"
 
 
 def test_var():
@@ -37,7 +37,7 @@ def test_var():
     np.testing.assert_array_almost_equal(
         out_season.values, [3.9270796e-09, 1.2538864e-09, 1.9057025e-09, 2.8776632e-09]
     )
-    assert out_season.long_name == "Variance of Precipitation"
+    assert out_season.long_name == "Variance"
     assert out_season.units == "kg^2 m-4 s-2"
 
 
@@ -56,7 +56,7 @@ def test_skewness():
         out_season.values,
         [2.036650744163691, 3.7909534745807147, 2.416590445325826, 3.3521301798559566],
     )
-    assert out_season.long_name == "Skewness of Precipitation"
+    assert out_season.long_name == "Skewness"
     assert out_season.units == ""
 
 
@@ -80,7 +80,7 @@ def test_quantile():
             4.135342521749408e-07,
         ],
     )
-    assert out_season.long_name == "Quantile 0.2 of Precipitation"
+    assert out_season.long_name == "Quantile 0.2"
 
 
 def test_spell_length_distribution():
@@ -142,10 +142,7 @@ def test_spell_length_distribution():
     ):
         sdba.properties.spell_length_distribution(simt, method="percentile")
 
-    assert (
-        tmean.long_name
-        == "mean of spell length when Daily Maximum Near-Surface Air Temperature >= quantile 0.9"
-    )
+    assert tmean.long_name == "mean of spell length when input variable >= quantile 0.9"
 
 
 def test_acf():
@@ -163,7 +160,7 @@ def test_acf():
     ):
         sdba.properties.acf(sim, time_res="year")
 
-    assert out.long_name == "lag-1 autocorrelation of Precipitation"
+    assert out.long_name == "lag-1 autocorrelation"
     assert out.units == ""
 
 
@@ -193,14 +190,8 @@ def test_annual_cycle():
     ):
         sdba.properties.annual_cycle_phase(simt, time_res="season")
 
-    assert (
-        amp.long_name
-        == "absolute amplitude of the annual cycle of Daily Maximum Near-Surface Air Temperature"
-    )
-    assert (
-        phase.long_name
-        == "Phase of the annual cycle of Daily Maximum Near-Surface Air Temperature"
-    )
+    assert amp.long_name == "absolute amplitude of the annual cycle"
+    assert phase.long_name == "Phase of the annual cycle"
     assert amp.units == "delta_degree_Celsius"
     assert relamp.units == "%"
     assert phase.units == ""
@@ -240,10 +231,7 @@ def test_corr_btw_var():
             np.nan,
         ],
     )
-    assert (
-        pc.long_name == "Pearson correlation coefficient between"
-        " Daily Maximum Near-Surface Air Temperature and Precipitation"
-    )
+    assert pc.long_name == "Pearson correlation coefficient"
     assert pc.units == ""
 
     with pytest.raises(
@@ -272,7 +260,7 @@ def test_relative_frequency():
         [test.values, testjan], [0.0045662100456621, 0.010752688172043012]
     )
     assert (
-        test.long_name == "Relative frequency of days with Precipitation >= 25 mm d-1"
+        test.long_name == "Relative frequency of days with input variable >= 25 mm d-1"
     )
     assert test.units == ""
 
@@ -299,10 +287,7 @@ def test_trend():
         [slope.values, pvalue], [0.8254349999999988, 0.6085783558202086], 4
     )
 
-    assert (
-        slope.long_name
-        == "slope of the interannual linear trend of Daily Maximum Near-Surface Air Temperature"
-    )
+    assert slope.long_name == "slope of the interannual linear trend"
     assert slope.units == "K/year"
 
 
@@ -322,7 +307,4 @@ def test_return_value():
     np.testing.assert_array_almost_equal(
         [out_y.values, out_djf], [313.15443369, 278.07292642], 4
     )
-    assert (
-        out_y.long_name
-        == "20-year max return level of Daily Maximum Near-Surface Air Temperature"
-    )
+    assert out_y.long_name == "20-year max return level"
