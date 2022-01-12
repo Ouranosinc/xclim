@@ -32,6 +32,7 @@ for search, replacement in hyperlink_replacements.items():
 requirements = [
     "numpy>=1.16",
     "xarray>=0.17",
+    "cf-xarray>=0.6.1",
     "scipy>=1.2",
     "numba",
     "pandas>=0.23",
