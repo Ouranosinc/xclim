@@ -715,8 +715,8 @@ def ensure_delta(unit: str = None):
     """
     Return delta units for temperature.
 
-    For dimensions where delta exist in pint (Temperature), it returns the units of delta_degC or delta_degF based on
-    the input unit.
+    For dimensions where delta exist in pint (Temperature), it replaces the temperature unit by delta_degC or
+    delta_degF based on the input unit.
     For other dimensionality, it just gives back the input units.
 
     Parameters
@@ -724,10 +724,13 @@ def ensure_delta(unit: str = None):
     unit : str
       unit to transform in delta (or not)
     """
-    d = 1 * units2pint(unit)
+    u = units2pint(unit)
+    d = 1 * u
+    #
     delta_unit = pint2cfunits(d - d)
-    if delta_unit == "K":
-        delta_unit = "delta_degC"
-    if delta_unit == "°R":
-        delta_unit = "delta_degF"
+    # replace kelvin/rankine by delta_degC/F
+    if "kelvin" in u._units:
+        delta_unit = pint2cfunits(u / units2pint("K") * units2pint("delta_degC"))
+    if "degree_Rankine" in u._units:
+        delta_unit = pint2cfunits(u / units2pint("°R") * units2pint("delta_degF"))
     return delta_unit
