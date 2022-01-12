@@ -50,7 +50,6 @@ class TestDataFlags:
         pr[-7:] += 11 / 3600 / 24
 
         flagged = df.data_flags(pr)
-        print(flagged)
         np.testing.assert_equal(flagged.negative_accumulation_values.values, False)
         np.testing.assert_equal(flagged.very_large_precipitation_events.values, False)
         np.testing.assert_equal(
