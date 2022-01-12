@@ -1045,6 +1045,62 @@ class TestTxDays:
         np.testing.assert_array_equal(out[1:], [0])
 
 
+class TestJetStreamIndices:
+    # data needs to consist of at least 61 days for Lanczos filter (here: 66 days)
+    time_coords = pd.date_range("2000-01-01", "2000-03-06", freq="D")
+    # make fake ua data array of shape (66 days, 3 plevs, 3 lons, 3 lats) to mimic jet at 16.N
+    zeros_arr = np.zeros(shape=(66, 3, 3, 1))
+    ones_arr = np.ones(shape=(66, 3, 3, 1))
+    fake_jet = np.concatenate([zeros_arr, ones_arr, zeros_arr], axis=3)  # axis 3 is lat
+    da_ua = xr.DataArray(
+        fake_jet,
+        coords={
+            "time": time_coords,
+            "Z": [75000, 85000, 100000],
+            "X": [120, 121, 122],
+            "Y": [15, 16, 17],
+        },
+        dims=["time", "Z", "X", "Y"],
+        attrs={
+            "standard_name": "eastward_wind",
+            "units": "m s-1",
+        },
+    )
+
+    da_ua.Z.attrs = {"units": "Pa", "standard_name": "pressure"}
+    da_ua.X.attrs = {"units": "degrees_east", "standard_name": "longitude"}
+    da_ua.Y.attrs = {"units": "degrees_north", "standard_name": "latitude"}
+    da_ua.T.attrs = {"standard_name": "time"}
+
+    def test_jetstream_metric_woollings(self):
+        da_ua = self.da_ua
+        # Should raise ValueError as longitude is in 0-360 instead of -180.E-180.W
+        with pytest.raises(ValueError):
+            _ = xci.jetstream_metric_woollings(da_ua)
+        # redefine longitude coordiantes to -180.E-180.W so function runs
+        da_ua = da_ua.cf.assign_coords(
+            {
+                "X": (
+                    "X",
+                    (da_ua.cf["longitude"] - 180).data,
+                    da_ua.cf["longitude"].attrs,
+                )
+            }
+        )
+        out = xci.jetstream_metric_woollings(da_ua)
+        np.testing.assert_equal(len(out), 2)
+        jetlat, jetstr = out
+        # should be 6 values that are not NaN because of 61 day moving window and 66 chosen
+        np.testing.assert_equal(np.sum(~np.isnan(jetlat).data), 6)
+        np.testing.assert_equal(np.sum(~np.isnan(jetstr).data), 6)
+        np.testing.assert_equal(jetlat.max().data, 16.0)
+        np.testing.assert_equal(
+            jetstr.max().data, 0.999276877412766
+        )  # manually checked (sum of lanzcos weights for 61 day window and 0.1 cutoff)
+        assert jetlat.units == da_ua.cf["latitude"].units
+        assert jetstr.units == da_ua.units
+
+
 class TestLiquidPrecipitationRatio:
     def test_simple(self, pr_series, tas_series):
         pr = np.zeros(100)

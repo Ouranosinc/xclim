@@ -4,7 +4,11 @@ History
 
 0.33.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Tom Keel (:user:`Thomasjkeel`), Juliette Lavoie (:user:`juliettelavoie`).
+
+New indicators
+^^^^^^^^^^^^^^
+* ``jetstream_metric_woollings`` indicator returns latitude and strength of jet-stream in u-wind field. (:pull:`924`, :issue:`923`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -18,13 +22,13 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 * To reduce import complexity, `select_time` has been refactored/moved from ``xclim.indices.generic`` to ``xclim.core.calendar``. (:issue:`949`, :pull:`969`).
 * The stacking dimension of ``xclim.sdba.stack_variables`` has been renamed to "multivar" to avoid name conflicts with the "variables" property of xarray Datasets. (:pull:`964`)`.`
+* `xclim` now requires `cf-xarray>=0.6.1`.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Added a CI hook in ``.pre-commit-config.yaml`` to perform automated `pre-commit` corrections with GitHub CI. (:pull:`965`).
 * Adjusted CI hooks to fail earlier if `lint` checks fail. (:pull:`972`).
 * `TrainAdjust` and `Adjust` object have a new `skip_input_checks` keyword arg to their `train` and  `adjust` methods. When `True`, all unit-, calendar- and coordinate-related input checks are skipped. This is an ugly solution to disappearing attributes when using `xr.map_blocks` with dask. (:pull:`964`).
-
 
 
 0.32.1 (2021-12-17)
@@ -43,6 +47,7 @@ Announcements
 * Code coverage (`coverage/coveralls`) is now a required CI check for merging Pull Requests. Requirements are now:
     - No individual run may report *<80%* code coverage.
     - Some drop in coverage is now tolerable, but runs cannot dip below *-0.25%* relative to the main branch.
+
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
