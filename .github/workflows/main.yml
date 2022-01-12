@@ -44,9 +44,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - tox-env: py37-xarray-lm3
+          - tox-env: py37-slow-lm3
             python-version: "3.7"
-          - tox-env: py38-slow-lm3
+          - tox-env: py38-xarray-lm3
             python-version: "3.8"
           - tox-env: py39-lm3
             python-version: "3.9"
