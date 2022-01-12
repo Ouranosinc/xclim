@@ -4,7 +4,11 @@ History
 
 0.33.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Tom Keel (:user:`Thomasjkeel`).
+
+New indicators
+^^^^^^^^^^^^^^
+* ``jetstream_metric_woollings`` indicator returns latitude and strength of jet-stream in u-wind field. (:pull:`924`, :issue:`923`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -17,6 +21,7 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 * To reduce import complexity, `select_time` has been refactored/moved from ``xclim.indices.generic`` to ``xclim.core.calendar``. (:issue:`949`, :pull:`969`).
 * The stacking dimension of ``xclim.sdba.stack_variables`` has been renamed to "multivar" to avoid name conflicts with the "variables" property of xarray Datasets. (:pull:`964`)`.`
+* `xclim` now requires `cf-xarray>=0.6.1`.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -40,6 +45,7 @@ Announcements
 * Code coverage (`coverage/coveralls`) is now a required CI check for merging Pull Requests. Requirements are now:
     - No individual run may report *<80%* code coverage.
     - Some drop in coverage is now tolerable, but runs cannot dip below *-0.25%* relative to the main branch.
+
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
