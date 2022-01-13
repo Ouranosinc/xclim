@@ -2,7 +2,6 @@
 Base classes and developper tools
 ---------------------------------
 """
-import warnings
 from inspect import signature
 from types import FunctionType
 from typing import Callable, Mapping, Optional, Sequence, Set, Union

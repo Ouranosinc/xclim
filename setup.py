@@ -11,7 +11,7 @@ URL = "https://github.com/Ouranosinc/xclim"
 AUTHOR = "Travis Logan"
 AUTHOR_EMAIL = "logan.travis@ouranos.ca"
 REQUIRES_PYTHON = ">=3.7.0"
-VERSION = "0.32.2-beta"
+VERSION = "0.32.4-beta"
 LICENSE = "Apache Software License 2.0"
 
 with open("README.rst") as readme_file:
@@ -32,6 +32,7 @@ for search, replacement in hyperlink_replacements.items():
 requirements = [
     "numpy>=1.16",
     "xarray>=0.17",
+    "cf-xarray>=0.6.1",
     "scipy>=1.2",
     "numba",
     "pandas>=0.23",

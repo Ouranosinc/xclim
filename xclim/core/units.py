@@ -23,6 +23,7 @@ from .options import datacheck
 from .utils import ValidationError
 
 __all__ = [
+    "check_units",
     "convert_units_to",
     "declare_units",
     "infer_sampling_units",
@@ -708,3 +709,28 @@ def declare_units(
         return wrapper
 
     return dec
+
+
+def ensure_delta(unit: str = None):
+    """
+    Return delta units for temperature.
+
+    For dimensions where delta exist in pint (Temperature), it replaces the temperature unit by delta_degC or
+    delta_degF based on the input unit.
+    For other dimensionality, it just gives back the input units.
+
+    Parameters
+    ----------
+    unit : str
+      unit to transform in delta (or not)
+    """
+    u = units2pint(unit)
+    d = 1 * u
+    #
+    delta_unit = pint2cfunits(d - d)
+    # replace kelvin/rankine by delta_degC/F
+    if "kelvin" in u._units:
+        delta_unit = pint2cfunits(u / units2pint("K") * units2pint("delta_degC"))
+    if "degree_Rankine" in u._units:
+        delta_unit = pint2cfunits(u / units2pint("°R") * units2pint("delta_degF"))
+    return delta_unit
