@@ -135,7 +135,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     $ black --check --target-version py37 --include "\.ipynb$" docs
     $ flake8 xclim xclim/testing/tests
     $ pydocstyle --convention=numpy --match='(?!test_).*\.py' xclim
-    $ yamllint --config-file .yamllint.yaml .
+    $ yamllint --config-file .yamllint.yaml xclim
 
 6. When unit/doc tests are added or notebooks updated, use ``pytest`` to run them. Alternatively, one can use ``tox`` to run all testing suites as would github do when the PR is submitted and new commits are pushed::
 
