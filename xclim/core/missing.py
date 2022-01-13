@@ -29,15 +29,14 @@ from typing import Any, Tuple, Union
 import numpy as np
 import xarray as xr
 
-from xclim.core.calendar import date_range, get_calendar
-from xclim.core.options import (
+from .calendar import date_range, get_calendar, select_time
+from .options import (
     CHECK_MISSING,
     MISSING_METHODS,
     MISSING_OPTIONS,
     OPTIONS,
     register_missing_method,
 )
-from xclim.indices import generic
 
 __all__ = [
     "missing_wmo",
@@ -62,7 +61,11 @@ class MissingBase:
 
     def __init__(self, da, freq, src_timestep, **indexer):
         if src_timestep is None:
-            raise ValueError("`src_timestep` must be either 'D', 'H' or 'M'.")
+            src_timestep = xr.infer_freq(da.time)
+            if src_timestep is None:
+                raise ValueError(
+                    "`src_timestep` must be given as it cannot be inferred."
+                )
         self.null, self.count = self.prepare(da, freq, src_timestep, **indexer)
 
     @classmethod
@@ -84,7 +87,7 @@ class MissingBase:
     @staticmethod
     def is_null(da, freq, **indexer):
         """Return a boolean array indicating which values are null."""
-        selected = generic.select_time(da, **indexer)
+        selected = select_time(da, drop=True, **indexer)
         if selected.time.size == 0:
             raise ValueError("No data for selected period.")
 
@@ -150,7 +153,7 @@ class MissingBase:
             )
 
             sda = xr.DataArray(data=np.ones(len(t)), coords={"time": t}, dims=("time",))
-            st = generic.select_time(sda, **indexer)
+            st = select_time(sda, drop=True, **indexer)
             if freq:
                 count = st.notnull().resample(time=freq).sum(dim="time")
             else:

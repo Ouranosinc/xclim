@@ -5,7 +5,6 @@ Data flags
 
 Pseudo-indicators designed to analyse supplied variables for suspicious/erroneous indicator values.
 """
-import logging
 from decimal import Decimal
 from functools import reduce
 from inspect import signature
@@ -19,11 +18,15 @@ from ..indices.run_length import suspicious_run
 from .calendar import climatological_mean_doy, within_bnds_doy
 from .formatting import update_xclim_history
 from .units import convert_units_to, declare_units, str2pint
-from .utils import VARIABLES, InputKind, MissingVariableError, infer_kind_from_parameter
+from .utils import (
+    VARIABLES,
+    InputKind,
+    MissingVariableError,
+    infer_kind_from_parameter,
+    raise_warn_or_log,
+)
 
 _REGISTRY = dict()
-logging.basicConfig(format="UserWarning: %(message)s")
-logger = logging.getLogger("xclim")
 
 
 class DataQualityException(Exception):
@@ -589,13 +592,13 @@ def data_flags(
 
         return var_name
 
-    def _missing_vars(function, dataset: xarray.Dataset):
+    def _missing_vars(function, dataset: xarray.Dataset, var_provided: str):
         """Handle missing variables in passed datasets."""
         sig = signature(function)
         sig = sig.parameters
         extra_vars = dict()
-        for i, (arg, val) in enumerate(sig.items()):
-            if i == 0:
+        for arg, val in sig.items():
+            if arg in ["da", var_provided]:
                 continue
             kind = infer_kind_from_parameter(val)
             if kind == InputKind.VARIABLE:
@@ -619,14 +622,12 @@ def data_flags(
     if flags is None:
         try:
             flag_funcs = VARIABLES.get(var)["data_flags"]
-        except (KeyError, TypeError):
-            if raise_flags:
-                raise NotImplementedError(
-                    f"Data quality checks do not exist for '{var}' variable."
-                )
-            logger.warning(
-                f"Data quality checks do not exist for '{var}' variable.",
-                exc_info=False,
+        except (KeyError, TypeError) as err:
+            raise_warn_or_log(
+                err,
+                mode="raise" if raise_flags else "log",
+                msg=f"Data quality checks do not exist for '{var}' variable.",
+                err_type=NotImplementedError,
             )
             return xarray.Dataset()
     else:
@@ -639,17 +640,26 @@ def data_flags(
         for name, kwargs in flag_func.items():
             func = _REGISTRY[name]
             variable_name = str(name)
+            named_da_variable = None
 
             if kwargs:
                 for param, value in kwargs.items():
                     variable_name = _convert_value_to_str(variable_name, value)
             try:
-                extras = _missing_vars(func, ds)
+                extras = _missing_vars(func, ds, str(da.name))
+                # Entries in extras implies that there are two variables being compared
+                # Both variables will be sent in as dict entries
+                if extras:
+                    named_da_variable = {da.name: da}
+
             except MissingVariableError:
                 flags[variable_name] = None
             else:
                 with xarray.set_options(keep_attrs=True):
-                    out = func(da, **extras, **(kwargs or dict()))
+                    if named_da_variable:
+                        out = func(**named_da_variable, **extras, **(kwargs or dict()))
+                    else:
+                        out = func(da, **extras, **(kwargs or dict()))
 
                     # Aggregation
                     if freq is not None:

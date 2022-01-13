@@ -6,18 +6,23 @@ Generic indices submodule
 
 Helper functions for common generic actions done in the computation of indices.
 """
-from typing import Optional, Union
+import warnings
+from typing import Optional, Sequence, Tuple, Union
 
+import cftime
 import numpy as np
 import xarray
 import xarray as xr
+from xarray.coding.cftime_offsets import _MONTH_ABBREVIATIONS
 
 from xclim.core.calendar import (
+    DayOfYearStr,
     convert_calendar,
     days_in_year,
     doy_to_days_since,
     get_calendar,
 )
+from xclim.core.calendar import select_time as _select_time
 from xclim.core.units import (
     convert_units_to,
     declare_units,
@@ -26,7 +31,6 @@ from xclim.core.units import (
     to_agg_units,
 )
 
-from ..core.utils import DayOfYearStr
 from . import run_length as rl
 
 __all__ = [
@@ -34,7 +38,6 @@ __all__ = [
     "compare",
     "count_level_crossings",
     "count_occurrences",
-    "daily_downsampler",
     "day_lengths",
     "default_freq",
     "degree_days",
@@ -47,7 +50,6 @@ __all__ = [
     "interday_diurnal_temperature_range",
     "last_occurrence",
     "select_resample_op",
-    "select_time",
     "statistics",
     "temperature_sum",
     "threshold_count",
@@ -57,31 +59,28 @@ __all__ = [
 binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "ne"}
 
 
-def select_time(da: xr.DataArray, **indexer):
-    """Select entries according to a time period.
-
-    Parameters
-    ----------
-    da : xr.DataArray
-      Input data.
-    **indexer : {dim: indexer, }, optional
-      Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
-      month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
-      considered.
-
-    Returns
-    -------
-    xr.DataArray
-      Selected input values.
-    """
-    if not indexer:
-        selected = da
-    else:
-        key, val = indexer.popitem()
-        time_att = getattr(da.time.dt, key)
-        selected = da.sel(time=time_att.isin(val)).dropna(dim="time")
-
-    return selected
+def select_time(
+    da: Union[xr.DataArray, xr.Dataset],
+    drop: bool = False,
+    season: Union[str, Sequence[str]] = None,
+    month: Union[int, Sequence[int]] = None,
+    doy_bounds: Tuple[int, int] = None,
+    date_bounds: Tuple[str, str] = None,
+):
+    """Select entries according to a time period."""
+    warnings.warn(
+        "'select_time()' has moved from `xclim.indices.generic` to `xclim.core.calendar`. "
+        "Please update your scripts accordingly.",
+        DeprecationWarning,
+    )
+    return _select_time(
+        da,
+        drop=drop,
+        season=season,
+        month=month,
+        doy_bounds=doy_bounds,
+        date_bounds=date_bounds,
+    )
 
 
 def select_resample_op(da: xr.DataArray, op: str, freq: str = "YS", **indexer):
@@ -96,7 +95,7 @@ def select_resample_op(da: xr.DataArray, op: str, freq: str = "YS", **indexer):
     freq : str
       Resampling frequency defining the periods as defined in
       https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
-    **indexer : {dim: indexer, }, optional
+    indexer : {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
       month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
       considered.
@@ -107,7 +106,7 @@ def select_resample_op(da: xr.DataArray, op: str, freq: str = "YS", **indexer):
       The maximum value for each period.
     """
     da = select_time(da, **indexer)
-    r = da.resample(time=freq, keep_attrs=True)
+    r = da.resample(time=freq)
     if isinstance(op, str):
         return getattr(r, op)(dim="time", keep_attrs=True)
 
@@ -117,7 +116,7 @@ def select_resample_op(da: xr.DataArray, op: str, freq: str = "YS", **indexer):
 def doymax(da: xr.DataArray) -> xr.DataArray:
     """Return the day of year of the maximum value."""
     i = da.argmax(dim="time")
-    out = da.time.dt.dayofyear[i]
+    out = da.time.dt.dayofyear.isel(time=i, drop=True)
     out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(da))
     return out
 
@@ -125,7 +124,7 @@ def doymax(da: xr.DataArray) -> xr.DataArray:
 def doymin(da: xr.DataArray) -> xr.DataArray:
     """Return the day of year of the minimum value."""
     i = da.argmin(dim="time")
-    out = da.time.dt.dayofyear[i]
+    out = da.time.dt.dayofyear.isel(time=i, drop=True)
     out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(da))
     return out
 
@@ -135,11 +134,15 @@ def default_freq(**indexer) -> str:
     freq = "AS-JAN"
     if indexer:
         group, value = indexer.popitem()
-        if "DJF" in value:
-            freq = "AS-DEC"
-        if group == "month" and sorted(value) != value:
-            raise NotImplementedError
-
+        if group == "season":
+            month = 12  # The "season" scheme is based on AS-DEC
+        elif group == "month":
+            month = np.take(value, 0)
+        elif group == "doy_bounds":
+            month = cftime.num2date(value[0] - 1, "days since 2004-01-01").month
+        elif group == "date_bounds":
+            month = int(value[0][:2])
+        freq = "AS-" + _MONTH_ABBREVIATIONS[month]
     return freq
 
 
@@ -178,7 +181,7 @@ def compare(da: xr.DataArray, op: str, thresh: Union[float, int]) -> xr.DataArra
 
 
 def threshold_count(
-    da: xr.DataArray, op: str, thresh: Union[float, int], freq: str
+    da: xr.DataArray, op: str, thresh: Union[float, int, xr.DataArray], freq: str
 ) -> xr.DataArray:
     """Count number of days where value is above or below threshold.
 
@@ -254,75 +257,6 @@ def get_daily_events(da: xr.DataArray, da_value: float, operator: str) -> xr.Dat
     return events
 
 
-def daily_downsampler(da: xr.DataArray, freq: str = "YS") -> xr.DataArray:
-    r"""Daily climate data downsampler.
-
-    Parameters
-    ----------
-    da : xr.DataArray
-    freq : str
-
-    Returns
-    -------
-    xr.DataArray
-
-    Note
-    ----
-
-        Usage Example
-
-            grouper = daily_downsampler(da_std, freq='YS')
-            x2 = grouper.mean()
-
-            # add time coords to x2 and change dimension tags to time
-            time1 = daily_downsampler(da_std.time, freq=freq).first()
-            x2.coords['time'] = ('tags', time1.values)
-            x2 = x2.swap_dims({'tags': 'time'})
-            x2 = x2.sortby('time')
-    """
-    # generate tags from da.time and freq
-    if isinstance(da.time.values[0], np.datetime64):
-        years = [f"{y:04d}" for y in da.time.dt.year.values]
-        months = [f"{m:02d}" for m in da.time.dt.month.values]
-    else:
-        # cannot use year, month, season attributes, not available for all calendars ...
-        years = [f"{v.year:04d}" for v in da.time.values]
-        months = [f"{v.month:02d}" for v in da.time.values]
-    seasons = [
-        "DJF DJF MAM MAM MAM JJA JJA JJA SON SON SON DJF".split()[int(m) - 1]
-        for m in months
-    ]
-
-    n_t = da.time.size
-    if freq == "YS":
-        # year start frequency
-        l_tags = years
-    elif freq == "MS":
-        # month start frequency
-        l_tags = [years[i] + months[i] for i in range(n_t)]
-    elif freq == "QS-DEC":
-        # DJF, MAM, JJA, SON seasons
-        # construct tags from list of season+year, increasing year for December
-        ys = []
-        for i in range(n_t):
-            m = months[i]
-            s = seasons[i]
-            y = years[i]
-            if m == "12":
-                y = str(int(y) + 1)
-            ys.append(y + s)
-        l_tags = ys
-    else:
-        raise RuntimeError(f"Frequency `{freq}` not implemented.")
-
-    # add tags to buffer DataArray
-    buffer = da.copy()
-    buffer.coords["tags"] = ("time", l_tags)
-
-    # return groupby according to tags
-    return buffer.groupby("tags")
-
-
 # CF-INDEX-META Indices
 
 
@@ -393,9 +327,9 @@ def count_occurrences(
 
 
 def diurnal_temperature_range(
-    low_data: xr.DataArray, high_data: xr.DataArray, freq: str
+    low_data: xr.DataArray, high_data: xr.DataArray, reducer: str, freq: str
 ) -> xr.DataArray:
-    """Calculate the average diurnal temperature range.
+    """Calculate the diurnal temperature range and reduce according to a statistic.
 
     Parameters
     ----------
@@ -403,6 +337,8 @@ def diurnal_temperature_range(
       Lowest daily temperature (tasmin).
     high_data : xr.DataArray
       Highest daily temperature (tasmax).
+    reducer : {'max', 'min', 'mean', 'sum'}
+      Reducer.
     freq: str
       Resampling frequency.
 
@@ -413,7 +349,7 @@ def diurnal_temperature_range(
     high_data = convert_units_to(high_data, low_data)
 
     dtr = high_data - low_data
-    out = dtr.resample(time=freq).mean()
+    out = getattr(dtr.resample(time=freq), reducer)()
 
     u = str2pint(low_data.units)
     out.attrs["units"] = pint2cfunits(u - u)
@@ -510,7 +446,7 @@ def spell_length(
       Quantity.
     condition : {">", "<", ">=", "<=", "==", "!="}
       Operator
-    reducer : {'maximum', 'minimum', 'mean', 'sum'}
+    reducer : {'max', 'min', 'mean', 'sum'}
       Reducer.
     freq : str
       Resampling frequency.
@@ -537,7 +473,7 @@ def statistics(data: xr.DataArray, reducer: str, freq: str) -> xr.DataArray:
     Parameters
     ----------
     data : xr.DataArray
-    reducer : {'maximum', 'minimum', 'mean', 'sum'}
+    reducer : {'max', 'min', 'mean', 'sum'}
       Reducer.
     freq : str
       Resampling frequency.
@@ -567,7 +503,7 @@ def thresholded_statistics(
       Quantity.
     condition : {">", "<", ">=", "<=", "==", "!="}
       Operator
-    reducer : {'maximum', 'minimum', 'mean', 'sum'}
+    reducer : {'max', 'min', 'mean', 'sum'}
       Reducer.
     freq : str
       Resampling frequency.
@@ -592,7 +528,7 @@ def temperature_sum(
 
     First, the threshold is transformed to the same standard_name and units as the input data.
     Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
-    Finally, the sum is calculated for those data values that fulfil the condition after subtraction of the threshold value.
+    Finally, the sum is calculated for those data values that fulfill the condition after subtraction of the threshold value.
     If the sum is for values below the threshold the result is multiplied by -1.
 
     Parameters

@@ -1,123 +1,197 @@
-doc: '===============
+doc: |
+  ===============
   ANUCLIM indices
   ===============
 
-
-  The ANUCLIM (v6.1) software package'' BIOCLIM sub-module produces a set of Bioclimatic
+  The ANUCLIM (v6.1) software package BIOCLIM sub-module produces a set of bioclimatic
   parameters derived values of temperature and precipitation. The methods in this
-  module are wrappers around a subset of corresponding methods of `xclim.indices`. Note that
-  none of the checks performed by the `xclim.utils.Indicator` class (like with `xclim.atmos`
-  indicators) are performed in this module.
+  module are wrappers around a subset of corresponding methods of `xclim.indices`.
 
-  Futhermore, according to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf
-  (ch. 6), input values should be at a weekly (or monthly) frequency.  However, the xclim.indices
-  implementation here will calculate the result with input data of any frequency.
+  Furthermore, according to the ANUCLIM user-guide ([ANUCLIM]_), input values should be at
+  a weekly or monthly frequency.  However, the implementation here expands these
+  definitions and can calculate the result with daily input data.
 
-  .. _ANUCLIM: https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6)
-
-  '
+  .. [ANUCLIM] https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6)
+base: ResamplingIndicator
 indicators:
   P10_MeanTempWarmestQuarter:
     allowed_periods: [A]
+    src_freq: ['D', '7D', 'M']
     compute: tg_mean_warmcold_quarter
     cf_attrs:
+      standard_name: air_temperature
+      cell_methods: "time: mean"
       units: K
     parameters:
       op: warmest
   P11_MeanTempColdestQuarter:
     allowed_periods: [A]
+    src_freq: ['D', '7D', 'M']
     compute: tg_mean_warmcold_quarter
     cf_attrs:
+      standard_name: air_temperature
+      cell_methods: "time: mean"
       units: K
     parameters:
       op: coldest
   P12_AnnualPrecip:
     allowed_periods: [A]
-    base: prcptot
+    src_freq: ['D', '7D', 'M']
+    compute: prcptot
     cf_attrs:
-      long_name: Annual precipitation
+      long_name: Annual Precipitation
+      standard_name: lwe_thickness_of_precipitation_amount
+      cell_methods: "time: sum"
+      units: mm
   P13_PrecipWettestPeriod:
     allowed_periods: [A]
+    src_freq: ['D', '7D', 'M']
     compute: prcptot_wetdry_period
     cf_attrs:
+      standard_name: lwe_thickness_of_precipitation_amount
+      cell_methods: "time: sum"
       units: mm
     parameters:
       op: wettest
   P14_PrecipDriestPeriod:
     allowed_periods: [A]
+    src_freq: ['D', '7D', 'M']
     compute: prcptot_wetdry_period
     cf_attrs:
+      standard_name: lwe_thickness_of_precipitation_amount
+      cell_methods: "time: sum"
       units: mm
     parameters:
       op: driest
   P15_PrecipSeasonality:
     allowed_periods: [A]
+    src_freq: ['D', '7D', 'M']
     compute: precip_seasonality
+    cf_attrs:
+      cell_methods: "time: standard_deviation"
+      description: "The standard deviation of the precipitation estimates expressed as a percentage of the mean of those estimates."
   P16_PrecipWettestQuarter:
     allowed_periods: [A]
+    src_freq: ['D', '7D', 'M']
     compute: prcptot_wetdry_quarter
     cf_attrs:
+      standard_name: lwe_thickness_of_precipitation_amount
+      cell_methods: "time: sum"
       units: mm
     parameters:
       op: wettest
   P17_PrecipDriestQuarter:
     allowed_periods: [A]
+    src_freq: ['D', '7D', 'M']
     compute: prcptot_wetdry_quarter
     cf_attrs:
+      standard_name: lwe_thickness_of_precipitation_amount
+      cell_methods: "time: sum"
       units: mm
     parameters:
       op: driest
   P18_PrecipWarmestQuarter:
+    src_freq: ['D', '7D', 'M']
     allowed_periods: [A]
     compute: prcptot_warmcold_quarter
     cf_attrs:
+      standard_name: lwe_thickness_of_precipitation_amount
+      cell_methods: "time: sum"
       units: mm
     parameters:
       op: warmest
   P19_PrecipColdestQuarter:
+    src_freq: ['D', '7D', 'M']
     allowed_periods: [A]
     compute: prcptot_warmcold_quarter
     cf_attrs:
+      standard_name: lwe_thickness_of_precipitation_amount
+      cell_methods: "time: sum"
       units: mm
     parameters:
       op: coldest
   P1_AnnMeanTemp:
     allowed_periods: [A]
-    base: tg_mean
+    src_freq: ['D', '7D', 'M']
+    compute: tg_mean
+    cf_attrs:
+      units: K
+      cell_methods: "time: mean"
+      long_name: Annual Mean Temperature
+      standard_name: air_temperature
   P2_MeanDiurnalRange:
     allowed_periods: [A]
-    base: dtr
+    src_freq: ['D', '7D', 'M']
+    compute: daily_temperature_range
+    cf_attrs:
+      units: K
+      long_name: Mean Diurnal Range
+      cell_methods: "time: range"
   P3_Isothermality:
     allowed_periods: [A]
+    src_freq: ['D', '7D', 'M']
     compute: isothermality
+    cf_attrs:
+      cell_methods: "time: range"
+      description: "The mean diurnal range (P2) divided by the Annual Temperature Range (P7)."
   P4_TempSeasonality:
     allowed_periods: [A]
+    src_freq: ['D', '7D', 'M']
     compute: temperature_seasonality
+    cf_attrs:
+      cell_methods: "time: standard_deviation"
+      description: "The standard deviation of the mean temperatures expressed as a percentage of the mean of those temperatures. For this calculation, the mean in degrees Kelvin is used. This avoids the possibility of having to divide by zero, but it does mean that the values are usually quite small."
   P5_MaxTempWarmestPeriod:
     allowed_periods: [A]
-    base: tx_max
+    src_freq: ['D', '7D', 'M']
+    compute: tx_max
     cf_attrs:
-      long_name: Max temperature of warmest period
+      long_name: Max Temperature of Warmest Period
+      description: The highest maximum temperature in all periods of the year.
+      standard_name: air_temperature
+      units: K
+      cell_methods: "time: maximum"
   P6_MinTempColdestPeriod:
     allowed_periods: [A]
-    base: tn_min
+    src_freq: ['D', '7D', 'M']
+    compute: tn_min
     cf_attrs:
-      long_name: Min temperature of coldest period
+      long_name: Min Temperature of Coldest Period
+      description: The lowest minimum temperature in all periods of the year.
+      standard_name: air_temperature
+      units: K
+      cell_methods: "time: minimum"
   P7_TempAnnualRange:
-    base: etr
+    allowed_periods: [A]
+    src_freq: ['D', '7D', 'M']
+    compute: extreme_temperature_range
+    input:
+      low_data: tasmin
+      high_data: tasmax
     cf_attrs:
-      long_name: Temperature annual range
+      long_name: Temperature Annual Range
+      cell_methods: "time: range"
+      units: K
+    parameters:
+      freq:
+        default: YS
   P8_MeanTempWettestQuarter:
     allowed_periods: [A]
+    src_freq: ['D', '7D', 'M']
     compute: tg_mean_wetdry_quarter
     cf_attrs:
+      standard_name: air_temperature
+      cell_methods: "time: mean"
       units: K
     parameters:
       op: wettest
   P9_MeanTempDriestQuarter:
     allowed_periods: [A]
+    src_freq: ['D', '7D', 'M']
     compute: tg_mean_wetdry_quarter
     cf_attrs:
+      standard_name: air_temperature
+      cell_methods: "time: mean"
       units: K
     parameters:
       op: driest

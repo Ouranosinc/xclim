@@ -16,7 +16,6 @@ import pint.converters
 import pint.unit
 import xarray as xr
 from boltons.funcutils import wraps
-from packaging import version
 from pint.definitions import UnitDefinition
 
 from .calendar import date_range, get_calendar, parse_offset
@@ -24,6 +23,7 @@ from .options import datacheck
 from .utils import ValidationError
 
 __all__ = [
+    "check_units",
     "convert_units_to",
     "declare_units",
     "infer_sampling_units",
@@ -49,30 +49,16 @@ units.define(
 units.define("year = 365.25 * day = yr")
 
 # Define commonly encountered units not defined by pint
-if version.parse(pint.__version__) >= version.parse("0.10"):
-    units.define("@alias degC = C = deg_C")
-    units.define("@alias degK = deg_K")
-    units.define("@alias day = d")
-    units.define("@alias hour = h")  # Not the Planck constant...
-    units.define(
-        "@alias degree = degrees_north = degrees_N = degreesN = degree_north = degree_N = degreeN"
-    )
-    units.define(
-        "@alias degree = degrees_east = degrees_E = degreesE = degree_east = degree_E = degreeE"
-    )
-
-else:
-    units.define("degC = kelvin; offset: 273.15 = celsius = C = deg_C")
-    units.define("d = day")
-    units.define("h = hour")
-    units.define(
-        "degrees_north = degree = degrees_N = degreesN = degree_north = degree_N "
-        "= degreeN"
-    )
-    units.define(
-        "degrees_east = degree = degrees_E = degreesE = degree_east = degree_E = degreeE"
-    )
-
+units.define("@alias degC = C = deg_C")
+units.define("@alias degK = deg_K")
+units.define("@alias day = d")
+units.define("@alias hour = h")  # Not the Planck constant...
+units.define(
+    "degrees_north = 1 * degree = degrees_north = degrees_N = degreesN = degree_north = degree_N = degreeN"
+)
+units.define(
+    "degrees_east = 1 * degree = degrees_east = degrees_E = degreesE = degree_east = degree_E = degreeE"
+)
 units.define("[speed] = [length] / [time]")
 
 # Default context.
@@ -398,7 +384,7 @@ def infer_sampling_units(
 
     multi, base, _, _ = parse_offset(freq)
     try:
-        out = int(multi or "1"), FREQ_UNITS[base]
+        out = multi, FREQ_UNITS[base]
     except KeyError:
         raise ValueError(f"Sampling frequency {freq} has no corresponding units.")
     if out == (7, "d"):
@@ -485,10 +471,10 @@ def _rate_and_amount_converter(
     except ValueError:
         freq = None
     if freq is not None:
-        multi, base, start_str, _ = parse_offset(freq)
+        multi, base, start_anchor, _ = parse_offset(freq)
         if base in ["M", "Q", "A"]:
             start = time.indexes[dim][0]
-            if start_str != "S":
+            if not start_anchor:
                 # Anchor is on the end of the period, substract 1 period.
                 start = start - xr.coding.cftime_offsets.to_offset(freq)
                 # In the diff below, assign to upper label!
@@ -503,7 +489,7 @@ def _rate_and_amount_converter(
                 attrs=da[dim].attrs,
             )
         else:
-            m, u = int(multi or "1"), FREQ_UNITS[base]
+            m, u = multi, FREQ_UNITS[base]
 
     # Freq is month, season or year, which are not constant units, or simply freq is not inferrable.
     if u is None:

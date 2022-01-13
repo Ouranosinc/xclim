@@ -55,7 +55,6 @@ indicators:
     references: climdex
   R99p:
     base: .R95p
-    compute: extreme_precip_accumulation_and_days
     cf_attrs:
       - var_name: R99p
       - var_name: R99p_days

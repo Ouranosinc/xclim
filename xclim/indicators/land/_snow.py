@@ -8,6 +8,8 @@ __all__ = [
     "continuous_snow_cover_end",
     "snd_max_doy",
     "snow_melt_we_max",
+    "snw_max",
+    "snw_max_doy",
     "winter_storm",
     "snow_depth",
 ]
@@ -30,7 +32,7 @@ continuous_snow_cover_start = Snow(
     identifier="continuous_snow_cover_start",
     standard_name="day_of_year",
     long_name="Start date of continuous snow cover",
-    description="Day of year when snow depth is above {thresh} for {window} consecutive days.",
+    description="Day of year when snow depth is above or equal to {thresh} for {window} consecutive days.",
     units="",
     compute=xci.continuous_snow_cover_start,
 )
@@ -38,14 +40,15 @@ continuous_snow_cover_start = Snow(
 continuous_snow_cover_end = Snow(
     identifier="continuous_snow_cover_end",
     standard_name="day_of_year",
-    long_name="Start date of continuous snow cover",
-    description="Day of year when snow depth is above {thresh} for {window} consecutive days.",
+    long_name="End date of continuous snow cover",
+    description="Day of year when snow depth is below {thresh} for {window} consecutive days.",
     units="",
     compute=xci.continuous_snow_cover_end,
 )
 
 snd_max_doy = Snow(
     identifier="snd_max_doy",
+    standard_name="day_of_year",
     var_name="{freq}_snd_max_doy",
     long_name="Date when snow depth reaches its maximum value.",
     description="{freq} day of year when snow depth reaches its maximum value.",
@@ -63,6 +66,25 @@ snow_melt_we_max = Snow(
     compute=xci.snow_melt_we_max,
 )
 
+snw_max = Snow(
+    identifier="snw_max",
+    standard_name="surface_snow_amount",
+    var_name="{freq}_snw_max",
+    long_name="Maximum daily snow amount",
+    description="{freq} day of year when snow amount on the surface reaches its maximum.",
+    units="kg m-2",
+    compute=xci.snw_max,
+)
+
+snw_max_doy = Snow(
+    identifier="snw_max_doy",
+    standard_name="day_of_year",
+    var_name="{freq}_snw_max_doy",
+    long_name="Day of year of maximum daily snow amount",
+    description="{freq} maximum snow amount on the surface.",
+    units="",
+    compute=xci.snw_max_doy,
+)
 
 melt_and_precip_max = Snow(
     identifier="melt_and_precip_max",

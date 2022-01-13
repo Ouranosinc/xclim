@@ -4,14 +4,15 @@ from inspect import _empty  # noqa
 
 from xclim import indices
 from xclim.core import cfchecks
-from xclim.core.indicator import Daily, Hourly
-from xclim.core.utils import wrapped_partial
+from xclim.core.indicator import Daily, Hourly, Indicator
+from xclim.core.utils import InputKind
 
 __all__ = [
     "rain_on_frozen_ground_days",
     "max_1day_precipitation_amount",
     "max_n_day_precipitation_amount",
     "wetdays",
+    "wetdays_prop",
     "dry_days",
     "maximum_consecutive_dry_days",
     "maximum_consecutive_wet_days",
@@ -26,13 +27,23 @@ __all__ = [
     "first_snowfall",
     "days_with_snow",
     "days_over_precip_thresh",
+    "days_over_precip_doy_thresh",
     "high_precip_low_temp",
     "fraction_over_precip_thresh",
+    "fraction_over_precip_doy_thresh",
     "liquid_precip_ratio",
     "dry_spell_frequency",
     "dry_spell_total_length",
     "wet_precip_accumulation",
+    "rprctot",
 ]
+
+
+class FireWeather(Indicator):
+    """Non resampling - precipitation related indicators."""
+
+    src_freq = "D"
+    context = "hydro"
 
 
 class Precip(Daily):
@@ -46,8 +57,7 @@ class PrTasx(Daily):
 
     context = "hydro"
 
-    @staticmethod
-    def cfcheck(pr, tas):
+    def cfcheck(self, pr, tas):
         cfchecks.cfcheck_from_name("pr", pr)
         cfchecks.check_valid(tas, "standard_name", "air_temperature")
 
@@ -102,6 +112,15 @@ wetdays = Precip(
     description="{freq} number of days with daily precipitation over {thresh}.",
     cell_methods="time: sum within days time: sum over days",
     compute=indices.wetdays,
+)
+
+wetdays_prop = Precip(
+    identifier="wetdays_prop",
+    units="1",
+    long_name="Proportion of wet days (precip >= {thresh})",
+    description="{freq} proportion of days with precipitation over {thresh}.",
+    cell_methods="time: sum within days time: sum over days",
+    compute=indices.wetdays_prop,
 )
 
 dry_days = Precip(
@@ -170,7 +189,8 @@ precip_accumulation = Precip(
     long_name="Total precipitation",
     description="{freq} total precipitation",
     cell_methods="time: sum within days time: sum over days",
-    compute=wrapped_partial(indices.precip_accumulation, tas=None, phase=None),
+    compute=indices.precip_accumulation,
+    parameters=dict(tas=None, phase=None),
 )
 
 wet_precip_accumulation = Precip(
@@ -181,7 +201,8 @@ wet_precip_accumulation = Precip(
     long_name="Total precipitation",
     description="{freq} total precipitation over wet days, defined as days where precipitation exceeds {thresh}.",
     cell_methods="time: sum within days time: sum over days",
-    compute=wrapped_partial(indices.prcptot, suggested={"thresh": "1 mm/day"}),
+    compute=indices.prcptot,
+    parameters={"thresh": {"default": "1 mm/day"}},
 )
 
 liquid_precip_accumulation = PrTasx(
@@ -192,9 +213,8 @@ liquid_precip_accumulation = PrTasx(
     long_name="Total liquid precipitation",
     description="{freq} total {phase} precipitation, estimated as precipitation when temperature >= {thresh}",
     cell_methods="time: sum within days time: sum over days",
-    compute=wrapped_partial(
-        indices.precip_accumulation, suggested={"tas": _empty}, phase="liquid"
-    ),  # _empty is added to un-optionalize the argument.
+    compute=indices.precip_accumulation,
+    parameters={"tas": {"kind": InputKind.VARIABLE}, "phase": "liquid"},
 )
 
 solid_precip_accumulation = PrTasx(
@@ -205,12 +225,11 @@ solid_precip_accumulation = PrTasx(
     long_name="Total solid precipitation",
     description="{freq} total solid precipitation, estimated as precipitation when temperature < {thresh}",
     cell_methods="time: sum within days time: sum over days",
-    compute=wrapped_partial(
-        indices.precip_accumulation, suggested={"tas": _empty}, phase="solid"
-    ),
+    compute=indices.precip_accumulation,
+    parameters={"tas": {"kind": InputKind.VARIABLE}, "phase": "solid"},
 )
 
-drought_code = Precip(
+drought_code = FireWeather(
     identifier="dc",
     units="",
     standard_name="drought_code",
@@ -220,7 +239,7 @@ drought_code = Precip(
     missing="skip",
 )
 
-fire_weather_indexes = Precip(
+fire_weather_indexes = FireWeather(
     identifier="fwi",
     realm="atmos",
     var_name=["dc", "dmc", "ffmc", "isi", "bui", "fwi"],
@@ -284,13 +303,22 @@ days_with_snow = Precip(
 days_over_precip_thresh = Precip(
     identifier="days_over_precip_thresh",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold",
-    description="{freq} number of days with precipitation above a daily percentile."
+    description="{freq} number of days with precipitation above percentile."
     " Only days with at least {thresh} are counted.",
     units="days",
     cell_methods="time: sum over days",
     compute=indices.days_over_precip_thresh,
 )
 
+days_over_precip_doy_thresh = Precip(
+    identifier="days_over_precip_doy_thresh",
+    standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_above_daily_threshold",
+    description="{freq} number of days with precipitation above a daily percentile."
+    " Only days with at least {thresh} are counted.",
+    units="days",
+    cell_methods="time: sum over days",
+    compute=indices.days_over_precip_thresh,
+)
 
 high_precip_low_temp = PrTasx(
     identifier="high_precip_low_temp",
@@ -300,9 +328,8 @@ high_precip_low_temp = PrTasx(
     compute=indices.high_precip_low_temp,
 )
 
-
-fraction_over_precip_thresh = Precip(
-    identifier="fraction_over_precip_thresh",
+fraction_over_precip_doy_thresh = Precip(
+    identifier="fraction_over_precip_doy_thresh",
     description="{freq} fraction of total precipitation due to days with precipitation above a daily percentile."
     " Only days with at least {thresh} are included in the total.",
     units="",
@@ -310,6 +337,14 @@ fraction_over_precip_thresh = Precip(
     compute=indices.fraction_over_precip_thresh,
 )
 
+fraction_over_precip_thresh = Precip(
+    identifier="fraction_over_precip_thresh",
+    description="{freq} fraction of total precipitation due to days with precipitation above percentile."
+    " Only days with at least {thresh} are included in the total.",
+    units="",
+    cell_methods="",
+    compute=indices.fraction_over_precip_thresh,
+)
 
 liquid_precip_ratio = PrTasx(
     identifier="liquid_precip_ratio",
@@ -318,16 +353,15 @@ liquid_precip_ratio = PrTasx(
     abstract="The ratio of total liquid precipitation over the total precipitation. Liquid precipitation is"
     " approximated from total precipitation on days where temperature is above a threshold.",
     units="",
-    compute=wrapped_partial(
-        indices.liquid_precip_ratio, suggested={"tas": _empty}, prsn=None
-    ),
+    compute=indices.liquid_precip_ratio,
+    parameters={"tas": {"kind": InputKind.VARIABLE}, "prsn": None},
 )
 
 
 dry_spell_frequency = Precip(
     identifier="dry_spell_frequency",
-    description="The {freq} number of dry periods of {window} days and more, during which the accumulated "
-    "precipitation on a window of {window} days is under {thresh}.",
+    description="The {freq} number of dry periods of {window} days and more, during which the {op} precipitation "
+    "on a window of {window} days is under {thresh}.",
     units="",
     cell_methods="",
     compute=indices.dry_spell_frequency,
@@ -341,4 +375,12 @@ dry_spell_total_length = Precip(
     units="days",
     cell_methods="",
     compute=indices.dry_spell_total_length,
+)
+
+rprctot = Precip(
+    identifier="rprctot",
+    description="Proportion of accumulated precipitation arising from convective processes.",
+    units="",
+    cell_methods="time: sum",
+    compute=indices.rprctot,
 )

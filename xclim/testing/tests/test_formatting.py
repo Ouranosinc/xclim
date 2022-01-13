@@ -22,13 +22,13 @@ def test_indicator_docstring():
     assert doc[0] == "Heat wave frequency. (realm: atmos)"
     assert (
         doc[5]
-        == "Based on indice :py:func:`xclim.indices._multivariate.heat_wave_frequency`."
+        == "Based on indice :py:func:`~xclim.indices._multivariate.heat_wave_frequency`."
     )
     assert doc[6] == "Keywords : health,."
     assert doc[12] == "  Default : `ds.tasmin`. [Required units : [temperature]]"
-    assert (
-        doc[35]
-        == "  Number of heat wave events (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax} for >= {window} days) (heat_wave_events)"
+    assert doc[35] == (
+        "  Number of heat wave events (Tmin > {thresh_tasmin} and Tmax > "
+        "{thresh_tasmax} for >= {window} days) (heat_wave_events)"
     )
 
     doc = degree_days_exceedance_date.__doc__.split("\n")

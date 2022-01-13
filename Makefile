@@ -50,10 +50,10 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr htmlcov/
 	rm -fr .pytest_cache
 
-lint: ## check style with flake8
-	pydocstyle --convention=numpy xclim
+lint: ## check style with flake8 and black
+	pydocstyle --convention=numpy --match='(?!test_).*\.py' xclim
 	flake8 xclim
-	black --check --target-version py36 xclim
+	black --check --target-version py37 xclim
 	pylint --rcfile=setup.cfg --exit-zero xclim
 
 test: ## run tests quickly with the default Python

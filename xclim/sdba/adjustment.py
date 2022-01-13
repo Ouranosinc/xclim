@@ -1,5 +1,8 @@
-"""Adjustment objects."""
-from typing import Any, Mapping, Optional, Sequence, Union
+"""
+Adjustment methods
+------------------
+"""
+from typing import Any, Mapping, Optional, Union
 from warnings import warn
 
 import numpy as np
@@ -17,6 +20,8 @@ from ._adjustment import (
     dqm_adjust,
     dqm_train,
     eqm_train,
+    extremes_adjust,
+    extremes_train,
     loci_adjust,
     loci_train,
     npdf_transform,
@@ -28,10 +33,9 @@ from ._adjustment import (
 from .base import Grouper, ParametrizableWithDataset, parse_group
 from .utils import (
     ADDITIVE,
-    best_pc_orientation,
+    best_pc_orientation_full,
+    best_pc_orientation_simple,
     equally_spaced_nodes,
-    get_clusters,
-    get_clusters_1d,
     pc_matrix,
     rand_rot_matrix,
 )
@@ -41,6 +45,7 @@ __all__ = [
     "EmpiricalQuantileMapping",
     "DetrendedQuantileMapping",
     "LOCI",
+    "ExtremeValues",
     "PrincipalComponents",
     "QuantileDeltaMapping",
     "Scaling",
@@ -88,6 +93,21 @@ class BaseAdjustment(ParametrizableWithDataset):
                 f" this is not supported for {cls.__name__} adjustment."
             )
 
+        # Check multivariate dimensions
+        mvcrds = []
+        for inda in inputs:
+            for crd in inda.coords.values():
+                if crd.attrs.get("is_variables", False):
+                    mvcrds.append(crd)
+        if mvcrds and (
+            not all(mvcrds[0].equals(mv) for mv in mvcrds[1:])
+            or len(mvcrds) != len(inputs)
+        ):
+            raise ValueError(
+                "Inputs have different multivariate coordinates "
+                f"({set(mv.name for mv in mvcrds)})."
+            )
+
         if group.prop == "dayofyear" and (
             "default" in calendars or "standard" in calendars
         ):
@@ -122,12 +142,9 @@ class TrainAdjust(BaseAdjustment):
 
     Children classes should implement these methods:
 
-    @classmethod
-    _train(ref, hist, **kwargs)
-      Receiving the training target and data, returning a training dataset and parameters to store in the object.
+    - ``_train(ref, hist, **kwargs)``, classmethod receiving the training target and data, returning a training dataset and parameters to store in the object.
 
-    _adjust(sim, **kwargs)
-      Receiving the projected data and some arguments, returning the `scen` dataarray.
+    - ``_adjust(sim, **kwargs)``, receiving the projected data and some arguments, returning the `scen` dataarray.
 
     """
 
@@ -147,13 +164,17 @@ class TrainAdjust(BaseAdjustment):
           Training data, usually a model output whose biases are to be adjusted.
         """
         kwargs = parse_group(cls._train, kwargs)
+        skip_checks = kwargs.pop("skip_input_checks", False)
 
-        (ref, hist), train_units = cls._harmonize_units(ref, hist)
+        if not skip_checks:
+            (ref, hist), train_units = cls._harmonize_units(ref, hist)
 
-        if "group" in kwargs:
-            cls._check_inputs(ref, hist, group=kwargs["group"])
+            if "group" in kwargs:
+                cls._check_inputs(ref, hist, group=kwargs["group"])
 
-        hist = convert_units_to(hist, ref)
+            hist = convert_units_to(hist, ref)
+        else:
+            train_units = ""
 
         ds, params = cls._train(ref, hist, **kwargs)
         obj = cls(
@@ -177,18 +198,26 @@ class TrainAdjust(BaseAdjustment):
         kwargs :
           Algorithm-specific keyword arguments, see class doc.
         """
-        (sim, *args), _ = self._harmonize_units(sim, *args, target=self.train_units)
+        skip_checks = kwargs.pop("skip_input_checks", False)
+        if not skip_checks:
+            (sim, *args), _ = self._harmonize_units(sim, *args, target=self.train_units)
 
-        if "group" in self:
-            self._check_inputs(sim, *args, group=self.group)
+            if "group" in self:
+                self._check_inputs(sim, *args, group=self.group)
 
-        sim = convert_units_to(sim, self.train_units)
+            sim = convert_units_to(sim, self.train_units)
         out = self._adjust(sim, *args, **kwargs)
 
         if isinstance(out, xr.DataArray):
             out = out.rename("scen").to_dataset()
 
         scen = out.scen
+
+        # Keep attrs
+        scen.attrs.update(sim.attrs)
+        for name, crd in sim.coords.items():
+            if name in scen.coords:
+                scen[name].attrs.update(crd.attrs)
 
         params = ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
         infostr = f"{str(self)}.adjust(sim, {params})"
@@ -245,10 +274,13 @@ class Adjust(BaseAdjustment):
           Algorithm-specific keyword arguments, see class doc.
         """
         kwargs = parse_group(cls._adjust, kwargs)
-        if "group" in kwargs:
-            cls._check_inputs(ref, hist, sim, group=kwargs["group"])
+        skip_checks = kwargs.pop("skip_input_checks", False)
 
-        (ref, hist, sim), _ = cls._harmonize_units(ref, hist, sim)
+        if not skip_checks:
+            if "group" in kwargs:
+                cls._check_inputs(ref, hist, sim, group=kwargs["group"])
+
+            (ref, hist, sim), _ = cls._harmonize_units(ref, hist, sim)
 
         out = cls._adjust(ref, hist, sim, **kwargs)
 
@@ -525,12 +557,14 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
 class ExtremeValues(TrainAdjust):
     r"""Adjustment correction for extreme values.
 
-    The tail of the distribution of adjusted data is corrected according to the
-    parametric Generalized Pareto distribution of the reference data, [RRJF2021]_.
-    The distributions are composed of the maximal values of clusters of "large" values.
-    With "large" values being those above `cluster_thresh`. Only extreme values, whose
-    quantile within the pool of large values are above `q_thresh`, are re-adjusted.
-    See Notes.
+    The tail of the distribution of adjusted data is corrected according to the bias
+    between the parametric Generalized Pareto distributions of the simulatated and
+    reference data, [RRJF2021]_. The distributions are composed of the maximal values of
+    clusters of "large" values.  With "large" values being those above `cluster_thresh`.
+    Only extreme values, whose quantile within the pool of large values are above
+    `q_thresh`, are re-adjusted. See Notes.
+
+    This adjustment method should be considered experimental and used with care.
 
     Parameters
     ----------
@@ -548,50 +582,62 @@ class ExtremeValues(TrainAdjust):
     scen: DataArray
       This is a second-order adjustment, so the adjust method needs the first-order
       adjusted timeseries in addition to the raw "sim".
+    interp : {'nearest', 'linear', 'cubic'}
+      The interpolation method to use when interpolating the adjustment factors. Defaults to "linear".
+    extrapolation : {'constant', 'nan'}
+      The type of extrapolation to use. See :py:func:`~xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
     frac: float
       Fraction where the cutoff happens between the original scen and the corrected one.
       See Notes, ]0, 1]. Defaults to 0.25.
     power: float
       Shape of the correction strength, see Notes. Defaults to 1.0.
 
-    Extra diagnostics
-    -----------------
-    In training:
-
-    nclusters : Number of extreme value clusters found for each gridpoint.
-
     Notes
     -----
     Extreme values are extracted from `ref`, `hist` and `sim` by finding all "clusters",
     i.e. runs of consecutive values above `cluster_thresh`. The `q_thresh`th percentile
     of these values is taken on `ref` and `hist` and becomes `thresh`, the extreme value
-    threshold. The maximal value of each cluster of `ref`, if it exceeds that new threshold,
-    is taken and Generalized Pareto distribution is fitted to them.
-    Similarly with `sim`. The cdf of the extreme values of `sim` is computed in reference
-    to the distribution fitted on `sim` and then the corresponding values (quantile / ppf)
-    in reference to the distribution fitted on `ref` are taken as the new bias-adjusted values.
+    threshold. The maximal value of each cluster, if it exceeds that new threshold,
+    is taken and Generalized Pareto distributions are fitted to them, for both `ref` and
+    `hist`. The probabilities associated with each of these extremes in `hist` is used
+    to find the corresponding value according to `ref`'s distribution. Adjustment
+    factors are computed as the bias between those new extremes and the original ones.
 
-    Once new extreme values are found, a mixture from the original scen and corrected scen
-    is used in the result. For each original value :math:`S_i` and corrected value :math:`C_i`
-    the final extreme value :math:`V_i` is:
+    In the adjust step, a Generalized Pareto distributions is fitted on the
+    cluster-maximums of `sim` and it is used to associate a probability to each extreme,
+    values over the `thresh` compute in the training, without the clustering. The
+    adjustment factors are computed by interpolating the trained ones using these
+    probabilities and the probabilities computed from `hist`.
+
+    Finally, the adjusted values (:math:`C_i`) are mixed with the pre-adjusted ones
+    (`scen`, :math:`D_i`) using the following transition function:
 
     .. math::
 
-        V_i = C_i * \tau + S_i * (1 - \tau)
+        V_i = C_i * \tau + D_i * (1 - \tau)
 
-    Where :math:`\tau` is a function of sim's extreme values :math:`F` and of arguments
-    ``frac`` (:math:`f`) and ``power`` (:math:`p`):
+    Where :math:`\tau` is a function of sim's extreme values (unadjusted, :math:`S_i`)
+    and of arguments ``frac`` (:math:`f`) and ``power`` (:math:`p`):
 
     .. math::
 
         \tau = \left(\frac{1}{f}\frac{S - min(S)}{max(S) - min(S)}\right)^p
 
-    Code based on the `biascorrect_extremes` function of the julia package [ClimateTools]_.
+    Code based on an internal Matlab source and partly ib the `biascorrect_extremes`
+    function of the julia package [ClimateTools]_.
+
+    Because of limitations imposed by the lazy computing nature of the dask backend, it
+    is not possible to know the number of cluster extremes in `ref` and `hist` at the
+    moment the output data structure is created. This is why the code tries to estimate
+    that number and usually overstimates it. In the training dataset, this translated
+    into a `quantile` dimension that is too large and variables `af` and `px_hist` are
+    assigned NaNs on extra elements. This has no incidence on the calculations
+    themselves but requires more memory than is useful.
 
     References
     ----------
-    .. [ClimateTools] https://juliaclimate.github.io/ClimateTools.jl/stable/
     .. [RRJF2021] Roy, P., Rondeau-Genesse, G., Jalbert, J., Fournier, É. 2021. Climate Scenarios of Extreme Precipitation Using a Combination of Parametric and Non-Parametric Bias Correction Methods. Submitted to Climate Services, April 2021.
+    .. [ClimateTools] https://juliaclimate.github.io/ClimateTools.jl/stable/
     """
 
     @classmethod
@@ -604,56 +650,42 @@ class ExtremeValues(TrainAdjust):
         ref_params: xr.Dataset = None,
         q_thresh: float = 0.95,
     ):
-        warn(
-            "The ExtremeValues adjustment is a work in progress and not production-ready. The current version imitates the algorithm found in ClimateTools.jl, but results might not be accurate."
-        )
         cluster_thresh = convert_units_to(cluster_thresh, ref)
-        hist = convert_units_to(hist, ref)
 
-        # Extreme value threshold computed relative to "large values".
-        # We use the mean between ref and hist here.
-        thresh = (
-            ref.where(ref >= cluster_thresh).quantile(q_thresh, dim="time")
-            + hist.where(hist >= cluster_thresh).quantile(q_thresh, dim="time")
-        ) / 2
+        # Approximation of how many "quantiles" values we will get:
+        N = (1 - q_thresh) * ref.time.size
 
-        if ref_params is None:
-            # All large value clusters
-            ref_clusters = get_clusters(ref, thresh, cluster_thresh)
-            # Parameters of a genpareto (or other) distribution, we force the location at thresh.
-            fit_params = stats.fit(
-                ref_clusters.maximum - thresh, "genpareto", dim="cluster", floc=0
-            )
-            # Param "loc" was fitted with 0, put thresh back
-            fit_params = fit_params.where(
-                fit_params.dparams != "loc", fit_params + thresh
-            )
-        else:
-            dist = ref_params.attrs.get("scipy_dist", "genpareto")
-            fit_params = ref_params.copy().transpose(..., "dparams")
-            if dist == "genextreme":
-                fit_params = xr.where(
-                    fit_params.dparams == "loc",
-                    fit_params.sel(dparams="scale")
-                    + fit_params.sel(dparams="c") * (thresh - fit_params),
-                    fit_params,
-                )
-            elif dist != "genpareto":
-                raise ValueError(f"Unknown conversion from {dist} to genpareto.")
+        # ref_params: cast nan to f32 not to interfere with map_blocks dtype parsing
+        #   ref and hist are f32, we want to have f32 in the output.
+        ds = extremes_train(
+            xr.Dataset(
+                {
+                    "ref": ref,
+                    "hist": hist,
+                    "ref_params": ref_params or np.float32(np.NaN),
+                }
+            ),
+            q_thresh=q_thresh,
+            cluster_thresh=cluster_thresh,
+            dist=stats.get_dist("genpareto"),
+            quantiles=np.arange(int(N)),
+            group="time",
+        )
 
-        ds = xr.Dataset(dict(fit_params=fit_params, thresh=thresh))
-        ds.fit_params.attrs.update(
-            long_name="Generalized Pareto distribution parameters of ref",
+        ds.px_hist.attrs.update(
+            long_name="Probability of extremes in hist",
+            description="Parametric probabilities of extremes in the common domain of hist and ref.",
+        )
+        ds.af.attrs.update(
+            long_name="Extremes adjustment factor",
+            description="Multiplicative adjustment factor of extremes from hist to ref.",
         )
         ds.thresh.attrs.update(
             long_name=f"{q_thresh * 100}th percentile extreme value threshold",
             description=f"Mean of the {q_thresh * 100}th percentile of large values (x > {cluster_thresh}) of ref and hist.",
         )
 
-        if OPTIONS[SDBA_EXTRA_OUTPUT] and ref_params is None:
-            ds = ds.assign(nclusters=ref_clusters.nclusters)
-
-        return ds, {"cluster_thresh": cluster_thresh}
+        return ds.drop_vars(["quantiles"]), {"cluster_thresh": cluster_thresh}
 
     def _adjust(
         self,
@@ -662,61 +694,27 @@ class ExtremeValues(TrainAdjust):
         *,
         frac: float = 0.25,
         power: float = 1.0,
+        interp: str = "linear",
+        extrapolation: str = "constant",
     ):
-        def _adjust_extremes_1d(scen, sim, ref_params, thresh, *, dist, cluster_thresh):
-            # Clusters of large values of sim
-            _, _, sim_posmax, sim_maxs = get_clusters_1d(sim, thresh, cluster_thresh)
-
-            new_scen = scen.copy()
-            if sim_posmax.size == 0:
-                # Happens if everything is under `cluster_thresh`
-                return new_scen
-
-            # Fit the dist, force location at thresh
-            sim_fit = stats._fitfunc_1d(
-                sim_maxs, dist=dist, nparams=len(ref_params), method="ML", floc=thresh
-            )
-
-            # Cumulative density function for extreme values in sim's distribution
-            sim_cdf = dist.cdf(sim_maxs, *sim_fit)
-            # Equivalent value of sim's CDF's but in ref's distribution.
-            # removed a +thresh that was a bug in the julia source.
-            new_sim = dist.ppf(sim_cdf, *ref_params)
-
-            # Get the transition weights based on frac and power values
-            transition = (
-                ((sim_maxs - sim_maxs.min()) / ((sim_maxs.max()) - sim_maxs.min()))
-                / frac
-            ) ** power
-            np.clip(transition, None, 1, out=transition)
-
-            # Apply smooth linear transition between scen and corrected scen
-            new_scen_trans = (new_sim * transition) + (
-                scen[sim_posmax] * (1.0 - transition)
-            )
-
-            # We change new_scen to the new data
-            new_scen[sim_posmax] = new_scen_trans
-            return new_scen
-
-        new_scen = xr.apply_ufunc(
-            _adjust_extremes_1d,
-            scen,
-            sim,
-            self.ds.fit_params,
-            self.ds.thresh,
-            input_core_dims=[["time"], ["time"], ["dparams"], []],
-            output_core_dims=[["time"]],
-            vectorize=True,
-            kwargs={
-                "dist": stats.get_dist("genpareto"),
-                "cluster_thresh": convert_units_to(self.cluster_thresh, sim),
-            },
-            dask="parallelized",
-            output_dtypes=[scen.dtype],
+        # Quantiles coord : cheat and assign 0 - 1 so we can use `extrapolate_qm`.
+        ds = self.ds.assign(
+            quantiles=(np.arange(self.ds.quantiles.size) + 1)
+            / (self.ds.quantiles.size + 1)
         )
 
-        return new_scen
+        scen = extremes_adjust(
+            ds.assign(sim=sim, scen=scen),
+            cluster_thresh=self.cluster_thresh,
+            dist=stats.get_dist("genpareto"),
+            frac=frac,
+            power=power,
+            interp=interp,
+            extrapolation=extrapolation,
+            group="time",
+        )
+
+        return scen
 
 
 class LOCI(TrainAdjust):
@@ -861,37 +859,29 @@ class PrincipalComponents(TrainAdjust):
     Parameters
     ----------
     group : Union[str, Grouper]
-      The grouping information. `pts_dims` can also be given through Grouper's
-      `add_dims` argument. See Notes.
+      The main dimension and grouping information. See Notes.
       See :py:class:`xclim.sdba.base.Grouper` for details.
       The adjustment will be performed on each group independently.
       Default is "time", meaning an single adjustment group along dimension "time".
-    crd_dims : Sequence of str, optional
-      The data dimension(s) along which the multiple simulation space dimensions are taken.
-      They are flattened into  "coordinate" dimension, see Notes.
-      Default is `None` in which case all dimensions shared by `ref` and `hist`,
-      except those in `pts_dims` are used.
+    best_orientation : {'simple', 'full'}
+      Which method to use when searching for the best principal component orientation.
+      See :py:func:`~xclim.sdba.utils.best_pc_orientation_simple` and
+      :py:func:`~xclim.sdba.utils.best_pc_orientiation_full`.
+      "full" is more precise, but it is much slower.
+    crd_dim : str
+      The data dimension along which the multiple simulation space dimensions are taken.
+      For a multivariate ajustment, this usually is "multivar", as returned by `sdba.stack_variables`.
+      For a multisite ajustment, this should be the spatial dimension.
       The training algorithm currently doesn't support any chunking
-      along the coordinate and point dimensions.
-    pts_dims : Sequence of str, optional
-      The data dimensions to flatten into the "points" dimension, see Notes.
-      They will be merged with those given through the `add_dims` property
-      of `group`.
+      along either `crd_dim`. `group.dim` and `group.add_dims`.
 
     Notes
     -----
     The input data is understood as a set of N points in a :math:`M`-dimensional space.
 
-    - :math:`N` is taken along the data coordinates listed in `pts_dims` and the `group` (the main `dim` but also the `add_dims`).
+    - :math:`M` is taken along `crd_dim`.
 
-    - :math:`M` is taken along the data coordinates listed in `crd_dims`, the default being all except those in `pts_dims`.
-
-    For example, for a 3D matrix of data, say in (lat, lon, time), we could say that all spatial points
-    are independent dimensions of the simulation space by passing  ``crd_dims=['lat', 'lon']``. For
-    a (5, 5, 365) array, this results in a 25-dimensions space, i.e. :math:`M = 25` and :math:`N = 365`.
-
-    Thus, the adjustment is equivalent to a linear transformation
-    of these :math:`N` points in a :math:`M`-dimensional space.
+    - :math:`N` is taken along the dimensions given through `group` : (the main `dim` but also, if requested, the `add_dims` and `window`).
 
     The principal components (PC) of `hist` and `ref` are used to defined new
     coordinate systems, centered on their respective means. The training step creates a
@@ -917,7 +907,9 @@ class PrincipalComponents(TrainAdjust):
 
     References
     ----------
-    .. [hnilica2017] Hnilica, J., Hanel, M. and Puš, V. (2017), Multisite bias correction of precipitation data from regional climate models. Int. J. Climatol., 37: 2934-2946. https://doi.org/10.1002/joc.4890
+    .. [hnilica2017] Hnilica, J., Hanel, M. and Pš, V. (2017), Multisite bias correction of precipitation data from regional climate models. Int. J. Climatol., 37: 2934-2946. https://doi.org/10.1002/joc.4890
+    .. Alavoine M., and Grenier P. (under review) The distinct problems of physical inconsistency and of multivariate bias potentially involved in the statistical adjustment of climate simulations.
+                         International Journal of Climatology, Manuscript ID: JOC-21-0789, submitted on September 19th 2021. (Preprint https://doi.org/10.31223/X5C34C)
     """
 
     @classmethod
@@ -926,32 +918,19 @@ class PrincipalComponents(TrainAdjust):
         ref: xr.DataArray,
         hist: xr.DataArray,
         *,
+        crd_dim: str,
+        best_orientation: str = "simple",
         group: Union[str, Grouper] = "time",
-        crd_dims: Optional[Sequence[str]] = None,
-        pts_dims: Optional[Sequence[str]] = None,
     ):
-        pts_dims = set(pts_dims or []).intersection(set(group.add_dims) - {"window"})
+        all_dims = set(ref.dims + hist.dims)
 
-        # Grouper used in the training part
-        train_group = Grouper(group.name, window=group.window, add_dims=pts_dims)
-        # Grouper used in the adjust part : no window, no add_dims
-        adj_group = Grouper(group.name)
+        # Dimension name for the "points"
+        lblP = xr.core.utils.get_temp_dimname(all_dims, "points")
 
-        all_dims = set(ref.dims).intersection(hist.dims)
-        lbl_R = xr.core.utils.get_temp_dimname(all_dims, "crdR")
-        lbl_M = xr.core.utils.get_temp_dimname(all_dims, "crdM")
-        lbl_P = xr.core.utils.get_temp_dimname(all_dims, "points")
-
-        # Dimensions that represent different points
-        pts_dims = set(train_group.add_dims)
-        pts_dims.update({train_group.dim})
-        # Dimensions that represents different dimensions.
-        crds_M = crd_dims or (set(ref.dims).union(hist.dims) - pts_dims)
-        # Rename coords on ref, multiindex do not like conflicting coordinates names
-        crds_R = [f"{name}_out" for name in crds_M]
-        # Stack, so that we have a single "coordinate" axis
-        ref = ref.rename(dict(zip(crds_M, crds_R))).stack({lbl_R: crds_R})
-        hist = hist.stack({lbl_M: crds_M})
+        # Rename coord on ref, multiindex do not like conflicting coordinates names
+        lblM = crd_dim
+        lblR = xr.core.utils.get_temp_dimname(ref.dims, lblM + "_out")
+        ref = ref.rename({lblM: lblR})
 
         # The real thing, acting on 2D numpy arrays
         def _compute_transform_matrix(reference, historical):
@@ -965,28 +944,36 @@ class PrincipalComponents(TrainAdjust):
             # This step needs vectorize with dask, but vectorize doesn't work with dask, argh.
             # Invert to get transformation matrix from hist to PC coords.
             Hinv = np.linalg.inv(H)
-            # Fancy trick to choose best orientation on each axes
+            # Fancy tricks to choose best orientation on each axes
             # (using eigenvectors, the output axes orientation is undefined)
-            orient = best_pc_orientation(R, Hinv)
+            if best_orientation == "simple":
+                orient = best_pc_orientation_simple(R, Hinv)
+            elif best_orientation == "full":
+                orient = best_pc_orientation_full(
+                    R, Hinv, reference.mean(axis=1), historical.mean(axis=1), historical
+                )
             # Get transformation matrix
             return (R * orient) @ Hinv
 
         # The group wrapper
         def _compute_transform_matrices(ds, dim):
             """Apply `_compute_transform_matrix` along dimensions other than time and the variables to map."""
-            # The multiple PC-space dimensions are along "coordinate"
+            # The multiple PC-space dimensions are along lblR and lblM
             # Matrix multiplication in xarray behaves as a dot product across
             # same-name dimensions, instead of reducing according to the dimension order,
-            # as in numpy or normal maths. So crdX all refer to the same dimension,
-            # but with names assuring correct matrix multiplication even if they are out of order.
-            reference = ds.ref.stack({lbl_P: dim})
-            historical = ds.hist.stack({lbl_P: dim})
+            # as in numpy or normal maths.
+            if len(dim) > 1:
+                reference = ds.ref.stack({lblP: dim})
+                historical = ds.hist.stack({lblP: dim})
+            else:
+                reference = ds.ref.rename({dim[0]: lblP})
+                historical = ds.hist.rename({dim[0]: lblP})
             transformation = xr.apply_ufunc(
                 _compute_transform_matrix,
                 reference,
                 historical,
-                input_core_dims=[[lbl_R, lbl_P], [lbl_M, lbl_P]],
-                output_core_dims=[[lbl_R, lbl_M]],
+                input_core_dims=[[lblR, lblP], [lblM, lblP]],
+                output_core_dims=[[lblR, lblM]],
                 vectorize=True,
                 dask="parallelized",
                 output_dtypes=[float],
@@ -994,48 +981,47 @@ class PrincipalComponents(TrainAdjust):
             return transformation
 
         # Transformation matrix, from model coords to ref coords.
-        trans = train_group.apply(
-            _compute_transform_matrices, {"ref": ref, "hist": hist}
-        )
+        trans = group.apply(_compute_transform_matrices, {"ref": ref, "hist": hist})
         trans.attrs.update(long_name="Transformation from training to target spaces.")
 
-        ref_mean = train_group.apply("mean", ref)  # Centroids of ref
+        ref_mean = group.apply("mean", ref)  # Centroids of ref
         ref_mean.attrs.update(long_name="Centroid point of target.")
 
-        hist_mean = train_group.apply("mean", hist)  # Centroids of hist
+        hist_mean = group.apply("mean", hist)  # Centroids of hist
         hist_mean.attrs.update(long_name="Centroid point of training.")
 
         ds = xr.Dataset(dict(trans=trans, ref_mean=ref_mean, hist_mean=hist_mean))
 
-        ds.attrs["_reference_coord"] = lbl_R
-        ds.attrs["_model_coord"] = lbl_M
-        return ds, {"train_group": train_group, "adj_group": adj_group}
+        ds.attrs["_reference_coord"] = lblR
+        ds.attrs["_model_coord"] = lblM
+        return ds, {"group": group}
 
     def _adjust(self, sim):
-        lbl_R = self.ds.attrs["_reference_coord"]
-        lbl_M = self.ds.attrs["_model_coord"]
-        crds_M = self.ds.indexes[lbl_M].names
+        lblR = self.ds.attrs["_reference_coord"]
+        lblM = self.ds.attrs["_model_coord"]
 
-        vmean = self.train_group.apply("mean", sim).stack({lbl_M: crds_M})
-
-        sim = sim.stack({lbl_M: crds_M})
+        vmean = self.group.apply("mean", sim)
 
         def _compute_adjust(ds, dim):
             """Apply the mapping transformation."""
-            scenario = ds.ref_mean + ds.trans.dot((ds.sim - ds.vmean), [lbl_M])
+            scenario = ds.ref_mean + ds.trans.dot((ds.sim - ds.vmean), [lblM])
             return scenario
 
-        scen = self.adj_group.apply(
-            _compute_adjust,
-            {
-                "ref_mean": self.ds.ref_mean,
-                "trans": self.ds.trans,
-                "sim": sim,
-                "vmean": vmean,
-            },
+        scen = (
+            self.group.apply(
+                _compute_adjust,
+                {
+                    "ref_mean": self.ds.ref_mean,
+                    "trans": self.ds.trans,
+                    "sim": sim,
+                    "vmean": vmean,
+                },
+                main_only=True,
+            )
+            .rename({lblR: lblM})
+            .rename("scen")
         )
-        scen[lbl_R] = sim.indexes[lbl_M]
-        return scen.unstack(lbl_R)
+        return scen
 
 
 class NpdfTransform(Adjust):
@@ -1064,7 +1050,7 @@ class NpdfTransform(Adjust):
     n_iter : int
       The number of iterations to perform. Defaults to 20.
     pts_dim : str
-      The name of the "multivariate" dimension. Defaults to "variables", which is the
+      The name of the "multivariate" dimension. Defaults to "multivar", which is the
       normal case when using :py:func:`xclim.sdba.base.stack_variables`.
     adj_kws : dict, optional
       Dictionary of arguments to pass to the adjust method of the univariate adjustment.
@@ -1110,17 +1096,19 @@ class NpdfTransform(Adjust):
     As done by [Cannon18]_, the distance score chosen is the "Energy distance" from [SkezelyRizzo]_
     (see :py:func:`xclim.sdba.processing.escore`).
 
-    The random matrices are generated following a method laid out by [Mezzadri].
+    The random matrices are generated following a method laid out by [Mezzadri]_.
 
-    This is only part of the full MBCn algorithm, see :ref:`The MBCn algorithm` for an example on how
-    to replicate the full method with xclim. This includes a standardization of the simulated data beforehand,
-    an initial univariate adjustment and the reordering of those adjusted series according to the
-    rank structure of the output of this algorithm.
+    This is only part of the full MBCn algorithm, see :ref:`Fourth example : Multivariate bias-adjustment with multiple steps - Cannon 2018`
+    for an example on how to replicate the full method with xclim. This includes a
+    standardization of the simulated data beforehand, an initial univariate adjustment
+    and the reordering of those adjusted series according to the rank structure of the
+    output of this algorithm.
 
     References
     ----------
     .. [Cannon18] Cannon, A. J. (2018). Multivariate quantile mapping bias correction: An N-dimensional probability density function transform for climate model simulations of multiple variables. Climate Dynamics, 50(1), 31–49. https://doi.org/10.1007/s00382-017-3580-6
-    .. [Mezzadri]Mezzadri, F. (2006). How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050.
+    .. [CannonR] https://CRAN.R-project.org/package=MBC
+    .. [Mezzadri] Mezzadri, F. (2006). How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050.
     .. [Pitie05] Pitie, F., Kokaram, A. C., & Dahyot, R. (2005). N-dimensional probability density function transfer and its application to color transfer. Tenth IEEE International Conference on Computer Vision (ICCV’05) Volume 1, 2, 1434-1439 Vol. 2. https://doi.org/10.1109/ICCV.2005.166
     .. [SkezelyRizzo] Szekely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
     """
@@ -1136,7 +1124,7 @@ class NpdfTransform(Adjust):
         base_kws: Optional[Mapping[str, Any]] = None,
         n_escore: int = 0,
         n_iter: int = 20,
-        pts_dim: str = "variables",
+        pts_dim: str = "multivar",
         adj_kws: Optional[Mapping[str, Any]] = None,
         rot_matrices: Optional[xr.DataArray] = None,
     ):

@@ -1,4 +1,8 @@
-"""Pre and post processing for bias adjustment."""
+"""
+Pre and post processing
+-----------------------
+"""
+import warnings
 from typing import Optional, Sequence, Tuple, Union
 
 import dask.array as dsk
@@ -6,6 +10,7 @@ import numpy as np
 import xarray as xr
 from xarray.core.utils import get_temp_dimname
 
+from xclim.core.calendar import get_calendar, max_doy, parse_offset
 from xclim.core.formatting import update_xclim_history
 from xclim.core.units import convert_units_to
 from xclim.core.utils import uses_dask
@@ -13,7 +18,7 @@ from xclim.core.utils import uses_dask
 from ._processing import _adapt_freq, _normalize, _reordering
 from .base import Grouper
 from .nbutils import _escore
-from .utils import ADDITIVE
+from .utils import ADDITIVE, copy_all_attrs
 
 
 @update_xclim_history
@@ -76,6 +81,7 @@ def adapt_freq(
     out = _adapt_freq(xr.Dataset(dict(sim=sim, ref=ref)), group=group, thresh=thresh)
 
     # Set some metadata
+    copy_all_attrs(out, sim)
     out.sim_ad.attrs.update(sim.attrs)
     out.sim_ad.attrs.update(
         references="Themeßl et al. (2012), Empirical-statistical downscaling and error correction of regional climate models and its impact on the climate change signal, Climatic Change, DOI 10.1007/s10584-011-0224-4."
@@ -91,7 +97,6 @@ def adapt_freq(
     return out.sim_ad, out.pth, out.dP0
 
 
-@update_xclim_history
 def jitter_under_thresh(x: xr.DataArray, thresh: str):
     """Replace values smaller than threshold by a uniform random noise.
 
@@ -112,20 +117,9 @@ def jitter_under_thresh(x: xr.DataArray, thresh: str):
     -----
     If thresh is high, this will change the mean value of x.
     """
-    thresh = convert_units_to(thresh, x)
-    epsilon = np.finfo(x.dtype).eps
-    if uses_dask(x):
-        jitter = dsk.random.uniform(
-            low=epsilon, high=thresh, size=x.shape, chunks=x.chunks
-        )
-    else:
-        jitter = np.random.uniform(low=epsilon, high=thresh, size=x.shape)
-    out = x.where(~((x < thresh) & (x.notnull())), jitter.astype(x.dtype))
-    out.attrs.update(x.attrs)  # copy attrs and same units
-    return out
+    return jitter(x, lower=thresh, upper=None, minimum=None, maximum=None)
 
 
-@update_xclim_history
 def jitter_over_thresh(x: xr.DataArray, thresh: str, upper_bnd: str) -> xr.Dataset:
     """Replace values greater than threshold by a uniform random noise.
 
@@ -147,16 +141,72 @@ def jitter_over_thresh(x: xr.DataArray, thresh: str, upper_bnd: str) -> xr.Datas
     -----
     If thresh is low, this will change the mean value of x.
     """
-    thresh = convert_units_to(thresh, x)
-    upper_bnd = convert_units_to(upper_bnd, x)
-    if uses_dask(x):
-        jitter = dsk.random.uniform(
-            low=thresh, high=upper_bnd, size=x.shape, chunks=x.chunks
-        )
-    else:
-        jitter = np.random.uniform(low=thresh, high=upper_bnd, size=x.shape)
-    out = x.where(~((x > thresh) & (x.notnull())), jitter.astype(x.dtype))
-    out.attrs.update(x.attrs)  # copy attrs and same units
+    return jitter(x, lower=None, upper=thresh, minimum=None, maximum=upper_bnd)
+
+
+@update_xclim_history
+def jitter(
+    x: xr.DataArray,
+    lower: str = None,
+    upper: str = None,
+    minimum: str = None,
+    maximum: str = None,
+):
+    """Replaces values under a threshold and values above another by a uniform random noise.
+
+    Do not confuse with R's jitter, which adds uniform noise instead of replacing values.
+
+    Parameters
+    ----------
+    x : xr.DataArray
+      Values.
+    lower : str
+      Threshold under which to add uniform random noise to values, a quantity with units.
+      If None, no jittering is performed on the lower end.
+    upper : str
+      Threshold over which to add uniform random noise to values, a quantity with units.
+      If None, no jittering is performed on the upper end.
+    minimum : str
+      Lower limit (excluded) for the lower end random noise, a quantity with units.
+      If None but `lower` is not None, 0 is used.
+    maximum : str
+      Upper limit (excluded) for the upper end random noise, a quantity with units.
+      If `upper` is not None, it must be given.
+
+    Returns
+    -------
+    xr.DataArray
+      Same as  `x` but values < lower are replaced by a uniform noise in range (minimum, lower)
+      and values >= upper are replaced by a uniform noise in range [upper, maximum).
+      The two noise distributions are independent.
+    """
+    out = x
+    notnull = x.notnull()
+    if lower is not None:
+        lower = convert_units_to(lower, x)
+        minimum = convert_units_to(minimum, x) if minimum is not None else 0
+        minimum = minimum + np.finfo(x.dtype).eps
+        if uses_dask(x):
+            jitter = dsk.random.uniform(
+                low=minimum, high=lower, size=x.shape, chunks=x.chunks
+            )
+        else:
+            jitter = np.random.uniform(low=minimum, high=lower, size=x.shape)
+        out = out.where(~((x < lower) & notnull), jitter.astype(x.dtype))
+    if upper is not None:
+        if maximum is None:
+            raise ValueError("If 'upper' is given, so must 'maximum'.")
+        upper = convert_units_to(upper, x)
+        maximum = convert_units_to(maximum, x)
+        if uses_dask(x):
+            jitter = dsk.random.uniform(
+                low=upper, high=maximum, size=x.shape, chunks=x.chunks
+            )
+        else:
+            jitter = np.random.uniform(low=upper, high=maximum, size=x.shape)
+        out = out.where(~((x >= upper) & notnull), jitter.astype(x.dtype))
+
+    copy_all_attrs(out, x)  # copy attrs and same units
     return out
 
 
@@ -186,7 +236,9 @@ def normalize(
     Returns
     -------
     xr.DataArray
-      Groupwise anomaly
+      Groupwise anomaly.
+    norm : xr.DataArray
+      Mean over each group.
     """
     ds = xr.Dataset(dict(data=data))
 
@@ -195,8 +247,10 @@ def normalize(
         ds = ds.assign(norm=norm)
 
     out = _normalize(ds, group=group, kind=kind)
-    out.attrs.update(data.attrs)
-    return out.data.rename(data.name)
+    copy_all_attrs(out, ds)
+    out.data.attrs.update(data.attrs)
+    out.norm.attrs["units"] = data.attrs["units"]
+    return out.data.rename(data.name), out.norm
 
 
 def uniform_noise_like(
@@ -236,15 +290,17 @@ def standardize(
         mean = da.mean(dim, keep_attrs=True)
     if std is None:
         std = da.std(dim, keep_attrs=True)
-    with xr.set_options(keep_attrs=True):
-        return (da - mean) / std, mean, std
+    out = (da - mean) / std
+    copy_all_attrs(out, da)
+    return out, mean, std
 
 
 @update_xclim_history
 def unstandardize(da: xr.DataArray, mean: xr.DataArray, std: xr.DataArray):
     """Rescale a standardized array by performing the inverse operation of `standardize`."""
-    with xr.set_options(keep_attrs=True):
-        return (std * da) + mean
+    out = (std * da) + mean
+    copy_all_attrs(out, da)
+    return out
 
 
 @update_xclim_history
@@ -276,7 +332,7 @@ def reordering(ref: xr.DataArray, sim: xr.DataArray, group: str = "time") -> xr.
     """
     ds = xr.Dataset({"sim": sim, "ref": ref})
     out = _reordering(ds, group=group).reordered
-    out.attrs.update(sim.attrs)
+    copy_all_attrs(out, sim)
     return out
 
 
@@ -336,7 +392,7 @@ def escore(
 
     References
     ----------
-    .. [SkezelyRizzo] Skezely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
+    .. Skezely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
     .. [BaringhausFranz] Baringhaus, L. and Franz, C. (2004) On a new multivariate two-sample test, Journal of Multivariate Analysis, 88(1), 190–206. https://doi.org/10.1016/s0047-259x(03)00079-4
     """
 
@@ -373,3 +429,428 @@ def escore(
         references="Skezely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)",
     )
     return out
+
+
+def _get_number_of_elements_by_year(time):
+    """Get the number of elements in time in a year by inferring its sampling frequency.
+
+    Only calendar with uniform year lengths are supported : 360_day, noleap, all_leap.
+    """
+    cal = get_calendar(time)
+
+    # Calendar check
+    if cal in ["standard", "gregorian", "default", "proleptic_gregorian"]:
+        raise ValueError(
+            "For moving window computations, the data must have a uniform calendar (360_day, no_leap or all_leap)"
+        )
+
+    mult, freq, _, _ = parse_offset(xr.infer_freq(time))
+    days_in_year = max_doy[cal]
+    elements_in_year = {"Q": 4, "M": 12, "D": days_in_year, "H": days_in_year * 24}
+    N_in_year = elements_in_year.get(freq, 1) / mult
+    if N_in_year % 1 != 0:
+        raise ValueError(
+            f"Sampling frequency of the data must be Q, M, D or H and evenly divide a year (got {mult}{freq})."
+        )
+
+    return int(N_in_year)
+
+
+def construct_moving_yearly_window(
+    da: xr.Dataset, window: int = 21, step: int = 1, dim: str = "movingwin"
+):
+    """Construct a moving window DataArray.
+
+    Stacks windows of `da` in a new 'movingwin' dimension.
+    Windows are always made of full years, so calendar with non uniform year lengths are not supported.
+
+    Windows are constructed starting at the beginning of `da`, if number of given years is not
+    a multiple of `step`, then the last year(s) will be missing as a supplementary window would be incomplete.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      A DataArray with a `time` dimension.
+    window : int
+      The length of the moving window as a number of years.
+    step : int
+      The step between each window as a number of years.
+    dim : str
+      The new dimension name. If given, must also be given to `unpack_moving_yearly_window`.
+
+    Return
+    ------
+    xr.DataArray
+      A DataArray with a new `movingwin` dimension and a `time` dimension with a length of 1 window.
+      This assumes downstream algorithms do not make use of the _absolute_ year of the data.
+      The correct timeseries can be reconstructed with :py:func:`unpack_moving_yearly_window`.
+      The coordinates of `movingwin` are the first date of the windows.
+    """
+    # Get number of samples per year (and perform checks)
+    N_in_year = _get_number_of_elements_by_year(da.time)
+
+    # Number of samples in a window
+    N = window * N_in_year
+
+    first_slice = da.isel(time=slice(0, N))
+    first_slice = first_slice.expand_dims({dim: np.atleast_1d(first_slice.time[0])})
+    daw = [first_slice]
+
+    i_start = N_in_year * step
+    # This is the first time I use `while` in real python code. What an event.
+    while i_start + N <= da.time.size:
+        # Cut and add _full_ slices only, partial window are thrown out
+        # Use isel so that we don't need to deal with a starting date.
+        slc = da.isel(time=slice(i_start, i_start + N))
+        slc = slc.expand_dims({dim: np.atleast_1d(slc.time[0])})
+        slc["time"] = first_slice.time
+        daw.append(slc)
+        i_start += N_in_year * step
+
+    daw = xr.concat(daw, dim)
+    return daw
+
+
+def unpack_moving_yearly_window(da: xr.DataArray, dim: str = "movingwin"):
+    """Unpack a constructed moving window dataset to a normal timeseries, only keeping the central data.
+
+    Unpack DataArrays created with :py:func:`construct_moving_yearly_window` and recreate a timeseries data.
+    Only keeps the central non-overlapping years. The final timeseries will be (window - step) years shorter than
+    the initial one.
+
+    The window length and window step are inferred from the coordinates.
+
+    Parameters
+    ----------
+    da: xr.DataArray
+      As constructed by :py:func:`construct_moving_yearly_window`.
+    dim : str
+      The window dimension name as given to the construction function.
+    """
+    # Get number of samples by year (and perform checks)
+    N_in_year = _get_number_of_elements_by_year(da.time)
+
+    # Might be smaller than the original moving window, doesn't matter
+    window = da.time.size / N_in_year
+
+    if window % 1 != 0:
+        warnings.warn(
+            f"Incomplete data received as number of years covered is not an integer ({window})"
+        )
+
+    # Get step in number of years
+    days_in_year = max_doy[get_calendar(da)]
+    step = np.unique(da[dim].diff(dim).dt.days / days_in_year)
+    if len(step) > 1:
+        raise ValueError("The spacing between the windows is not equal.")
+    step = int(step[0])
+
+    # Which years to keep: length step, in the middle of window
+    left = int((window - step) // 2)  # first year to keep
+
+    # Keep only the middle years
+    da = da.isel(time=slice(left * N_in_year, (left + step) * N_in_year))
+
+    out = []
+    for win_start in da[dim]:
+        slc = da.sel({dim: win_start}).drop_vars(dim)
+        dt = win_start.values - da[dim][0].values
+        slc["time"] = slc.time + dt
+        out.append(slc)
+
+    return xr.concat(out, "time")
+
+
+@update_xclim_history
+def to_additive_space(
+    data,
+    lower_bound: str,
+    upper_bound: str = None,
+    trans: str = "log",
+):
+    r"""Transform a non-additive variable into an additive space by the means of a log or logit transformation.
+
+    Based on [AlavoineGrenier]_.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+      A variable that can't usually be bias-adusted by additive methods.
+    lower_bound : str
+      The smallest physical value of the variable, excluded, as a Quantity string.
+      The data should only have values strictly larger than this bound.
+    upper_bound : str, optional
+      The largest physical value of the variable, excluded, as a Quantity string.
+      Only relevant for the logit transformation.
+      The data should only have values strictly smaller than this bound.
+    trans : {'log', 'logit'}
+      The transformation to use. See notes.
+
+    Notes
+    -----
+    Given a variable that is not usable in an additive adjustment, this apply a transformation to a space where
+    additive methods are sensible. Given :math:`X` the variable, :math:`b_-` the lower physical bound of that variable
+    and :math:`b_+` the upper physical bound, two transformations are currently implemented to get :math:`Y`,
+    the additive-ready variable. :math:`\ln` is the natural logarithm.
+
+    - `log`
+
+        .. math::
+
+            Y = \ln\left( X - b_- \right)
+
+        Usually used for variables with only a lower bound, like precipitation (`pr`,  `prsn`, etc)
+        and daily temperature range (`dtr`). Both have a lower bound of 0.
+
+    - `logit`
+
+        .. math::
+
+            X' = (X - b_-) / (b_+ - b_-)
+            Y = \ln\left(\frac{X'}{1 - X'} \right)
+
+        Usually used for variables with both a lower and a upper bound, like relative and specific humidity,
+        cloud cover fraction, etc.
+
+    This will thus produce `Infinity` and `NaN` values where :math:`X == b_-` or :math:`X == b_+`.
+    We recommend using :py:func:`jitter_under_thresh` and :py:func:`jitter_over_thresh` to remove those issues.
+
+    See also
+    --------
+    from_additive_space : for the inverse transformation.
+    jitter_under_thresh : Remove values exactly equal to the lower bound.
+    jitter_over_thresh : Remove values exactly equal to the upper bound.
+
+    References
+    ----------
+    .. [AlavoineGrenier] Alavoine M., and Grenier P. (under review) The distinct problems of physical inconsistency and of multivariate bias potentially involved in the statistical adjustment of climate simulations.
+                         International Journal of Climatology, Manuscript ID: JOC-21-0789, submitted on September 19th 2021. (Preprint https://doi.org/10.31223/X5C34C)
+    """
+    lower_bound = convert_units_to(lower_bound, data)
+    if upper_bound is not None:
+        upper_bound = convert_units_to(upper_bound, data)
+
+    with xr.set_options(keep_attrs=True):
+        if trans == "log":
+            out = np.log(data - lower_bound)
+        elif trans == "logit":
+            data_prime = (data - lower_bound) / (upper_bound - lower_bound)
+            out = np.log(data_prime / (1 - data_prime))
+        else:
+            raise NotImplementedError("`trans` must be one of 'log' or 'logit'.")
+
+    # Attributes to remember all this.
+    out.attrs["sdba_transform"] = trans
+    out.attrs["sdba_transform_lower"] = lower_bound
+    if upper_bound is not None:
+        out.attrs["sdba_transform_upper"] = upper_bound
+    if "units" in out.attrs:
+        out.attrs["sdba_transform_units"] = out.attrs.pop("units")
+        out.attrs["units"] = ""
+    return out
+
+
+@update_xclim_history
+def from_additive_space(
+    data,
+    lower_bound: str = None,
+    upper_bound: str = None,
+    trans: str = None,
+    units: str = None,
+):
+    r"""Transform back a to the physical space a variable that was transformed with `to_addtitive_space`.
+
+    Based on [AlavoineGrenier]_. If parameters are not present on the attributes of the
+    data, they must be all given are arguments.
+
+    Parameters
+    ----------
+    data : xr.DataArray
+      A variable that was transform by :py:func:`to_additive_space`.
+    lower_bound : str, optional
+      The smallest physical value of the variable, as a Quantity string.
+      The final data will have no value smaller or equal to this bound.
+      If None (default), the `sdba_transform_lower` attribute is looked up on `data`.
+    upper_bound : str, optional
+      The largest physical value of the variable, as a Quantity string.
+      Only relevant for the logit transformation.
+      The final data will have no value larger or equal to this bound.
+      If None (default), the `sdba_transform_upper` attribute is looked up on `data`.
+    trans : {'log', 'logit'}, optional
+      The transformation to use. See notes.
+      If None (the default), the `sdba_transform` attribute is looked up on `data`.
+    units: str, optional
+      The units of the data before transformation to the addtitive space.
+      If None (the default), the `sdba_transform_units` attribute is looked up on `data`.
+
+    Returns
+    -------
+    xr.DataArray
+      The physical variable. Attributes are conserved, even if some might be incorrect.
+      Except units which are taken from `sdba_transform_units` if available.
+      All `sdba_transform*` attributes are deleted.
+
+    Notes
+    -----
+    Given a variable that is not usable in an additive adjustment,
+    :py:func:`to_additive_space` applied a transformation to a space where additive
+    methods are sensible. Given :math:`Y` the transformed variable, :math:`b_-` the
+    lower physical bound of that variable and :math:`b_+` the upper physical bound,
+    two back-transformations are currently implemented to get :math:`X`, the physical variable.
+
+    - `log`
+
+        .. math::
+
+            X = e^{Y) + b_-
+
+    - `logit`
+
+        .. math::
+
+            X' = \frac{1}{1 + e^{-Y}}
+            X = X * (b_+ - b_-) + b_-
+
+    See also
+    --------
+    to_additive_space : for the original transformation.
+
+    References
+    ----------
+    .. [AlavoineGrenier] Alavoine M., and Grenier P. (under review) The distinct problems of physical inconsistency and of multivariate bias potentially involved in the statistical adjustment of climate simulations.
+                         International Journal of Climatology, Manuscript ID: JOC-21-0789, submitted on September 19th 2021. (Preprint https://doi.org/10.31223/X5C34C)
+    """
+    if trans is None and lower_bound is None and units is None:
+        try:
+            trans = data.attrs["sdba_transform"]
+            units = data.attrs["sdba_transform_units"]
+            lower_bound = data.attrs["sdba_transform_lower"]
+            if trans == "logit":
+                upper_bound = data.attrs["sdba_transform_upper"]
+        except KeyError as err:
+            raise ValueError(
+                f"Attribute {err!s} must be present on the input data "
+                "or all parameters must be given as arguments."
+            )
+    elif (
+        trans is not None
+        and lower_bound is not None
+        and units is not None
+        and (upper_bound is not None or trans == "log")
+    ):
+        lower_bound = convert_units_to(lower_bound, units)
+        if trans == "logit":
+            upper_bound = convert_units_to(upper_bound, units)
+    else:
+        raise ValueError(
+            "Parameters missing. Either all parameters are given as attributes of data, "
+            "or all of them are given as input arguments."
+        )
+
+    with xr.set_options(keep_attrs=True):
+        if trans == "log":
+            out = np.exp(data) + lower_bound
+        elif trans == "logit":
+            out_prime = 1 / (1 + np.exp(-data))
+            out = out_prime * (upper_bound - lower_bound) + lower_bound
+        else:
+            raise NotImplementedError("`trans` must be one of 'log' or 'logit'.")
+
+    # Remove unneeded attributes, put correct units back.
+    out.attrs.pop("sdba_transform", None)
+    out.attrs.pop("sdba_transform_lower", None)
+    out.attrs.pop("sdba_transform_upper", None)
+    out.attrs.pop("sdba_transform_units", None)
+    out.attrs["units"] = units
+    return out
+
+
+def stack_variables(ds, rechunk=True, dim="multivar"):
+    """Stack different variables of a dataset into a single DataArray with a new "variables" dimension.
+
+    Variable attributes are all added as lists of attributes to the new coordinate, prefixed with "_".
+    Variables are concatenate in the new dimension in alphabetical order, to ensure
+    coherent behaviour with different datasets.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+      Input dataset.
+    rechunk : bool
+      If True (default), dask arrays are rechunked with `variables : -1`.
+    dim : str
+      Name of dimension along which variables are indexed.
+
+    Returns
+    -------
+    xr.DataArray
+      The transformed variable. Attributes are conserved, even if some might be incorrect.
+      Except units, which are replaced with "". Old units are stored in `sdba_transformation_units`.
+      A `sdba_transform` attribute is added, set to the transformation method.
+      `sdba_transform_lower` and `sdba_transform_upper` are also set if the requested bounds are different from the defaults.
+
+      Array with variables stacked along `dim` dimension. Units are set to "".
+    """
+    # Store original arrays' attributes
+    attrs = {}
+    # sort to have coherent order with different datasets
+    datavars = sorted(ds.data_vars.items(), key=lambda e: e[0])
+    nvar = len(datavars)
+    for i, (nm, var) in enumerate(datavars):
+        for name, attr in var.attrs.items():
+            attrs.setdefault("_" + name, [None] * nvar)[i] = attr
+
+    # Special key used for later `unstacking`
+    attrs["is_variables"] = True
+    var_crd = xr.DataArray(
+        [nm for nm, vr in datavars], dims=(dim,), name=dim, attrs=attrs
+    )
+
+    da = xr.concat([vr for nm, vr in datavars], var_crd, combine_attrs="drop")
+
+    if uses_dask(da) and rechunk:
+        da = da.chunk({dim: -1})
+
+    da.attrs.update(ds.attrs)
+    da.attrs["units"] = ""
+    return da.rename("multivariate")
+
+
+def unstack_variables(da, dim=None):
+    """Unstack a DataArray created by `stack_variables` to a dataset.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Array holding different variables along `dim` dimension.
+    dim : str
+      Name of dimension along which the variables are stacked. If not specified (default),
+      `dim` is inferred from attributes of the coordinate.
+
+    Returns
+    -------
+    xr.Dataset
+      Dataset holding each variable in an individual DataArray.
+    """
+    if dim is None:
+        for dim, crd in da.coords.items():
+            if crd.attrs.get("is_variables"):
+                break
+        else:
+            raise ValueError("No variable coordinate found, were attributes removed?")
+
+    ds = xr.Dataset(
+        {name.item(): da.sel({dim: name.item()}, drop=True) for name in da[dim]},
+        attrs=da.attrs,
+    )
+    del ds.attrs["units"]
+
+    # Reset attributes
+    for name, attr_list in da[dim].attrs.items():
+        if not name.startswith("_"):
+            continue
+        for attr, var in zip(attr_list, da[dim]):
+            if attr is not None:
+                ds[var.item()].attrs[name[1:]] = attr
+
+    return ds

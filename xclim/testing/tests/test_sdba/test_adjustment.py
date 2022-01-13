@@ -7,21 +7,19 @@ from xclim.core.options import set_options
 from xclim.core.units import convert_units_to
 from xclim.sdba.adjustment import (
     LOCI,
-    BaseAdjustment,
     DetrendedQuantileMapping,
     EmpiricalQuantileMapping,
     ExtremeValues,
-    NpdfTransform,
     PrincipalComponents,
     QuantileDeltaMapping,
     Scaling,
 )
-from xclim.sdba.base import Grouper, stack_variables, unstack_variables
+from xclim.sdba.base import Grouper
 from xclim.sdba.processing import (
     jitter_under_thresh,
-    reordering,
-    standardize,
+    stack_variables,
     uniform_noise_like,
+    unstack_variables,
 )
 from xclim.sdba.utils import (
     ADDITIVE,
@@ -522,16 +520,9 @@ class TestQM:
 
 class TestPrincipalComponents:
     @pytest.mark.parametrize(
-        "group,crd_dims,pts_dims",
-        (
-            ["time", ["lat"], None],  # Lon as vectorizing dim
-            ["time", None, None],  # Lon as second coord dims
-            ["time", ["lat"], ["lon"]],  # Lon as a Points dim
-            # Testing time grouping, vectorization on lon
-            [Grouper("time.month"), ["lat"], None],
-        ),
+        "group", (Grouper("time.month"), Grouper("time", add_dims=["lon"]))
     )
-    def test_simple(self, group, crd_dims, pts_dims):
+    def test_simple(self, group):
         n = 15 * 365
         m = 2  # A dummy dimension to test vectorizing.
         ref_y = norm.rvs(loc=10, scale=1, size=(m, n))
@@ -548,24 +539,13 @@ class TestPrincipalComponents:
         )
         sim["time"] = ref["time"]
 
-        PCA = PrincipalComponents.train(
-            ref, sim, group=group, crd_dims=crd_dims, pts_dims=pts_dims
-        )
+        PCA = PrincipalComponents.train(ref, sim, group=group, crd_dim="lat")
         scen = PCA.adjust(sim)
 
-        group = group if isinstance(group, Grouper) else Grouper("time")
-        crds = crd_dims or ["lat", "lon"]
-        pts = (pts_dims or []) + ["time"]
-
-        vec = list({"lat", "lon"} - set(crds) - set(pts))
-        refs = ref.stack(crd=crds)
-        sims = sim.stack(crd=crds)
-        scens = scen.stack(crd=crds)
-
         def _assert(ds):
-            cov_ref = nancov(ds.ref.transpose("crd", "pt"))
-            cov_sim = nancov(ds.sim.transpose("crd", "pt"))
-            cov_scen = nancov(ds.scen.transpose("crd", "pt"))
+            cov_ref = nancov(ds.ref.transpose("lat", "pt"))
+            cov_sim = nancov(ds.sim.transpose("lat", "pt"))
+            cov_scen = nancov(ds.scen.transpose("lat", "pt"))
 
             # PC adjustment makes the covariance of scen match the one of ref.
             np.testing.assert_allclose(cov_ref - cov_scen, 0, atol=1e-6)
@@ -573,50 +553,70 @@ class TestPrincipalComponents:
                 np.testing.assert_allclose(cov_ref - cov_sim, 0, atol=1e-6)
 
         def _group_assert(ds, dim):
-            ds = ds.stack(pt=pts)
-            if len(vec) == 1:
-                for v in ds[vec[0]]:
-                    _assert(ds.sel({vec[0]: 0}))
+            if "lon" not in dim:
+                for lon in ds.lon:
+                    _assert(ds.sel(lon=lon).stack(pt=dim))
             else:
-                _assert(ds)
-            return ds.unstack("pt")
+                _assert(ds.stack(pt=dim))
+            return ds
 
-        group.apply(_group_assert, {"ref": refs, "sim": sims, "scen": scens})
+        group.apply(_group_assert, {"ref": ref, "sim": sim, "scen": scen})
 
-    @pytest.mark.parametrize(
-        "group", [Grouper("time"), Grouper("time.month", window=11)]
-    )
-    def test_real_data(self, group):
-        ds = xr.tutorial.open_dataset("air_temperature")
+    @pytest.mark.parametrize("use_dask", [True, False])
+    @pytest.mark.parametrize("pcorient", ["full", "simple"])
+    def test_real_data(self, atmosds, use_dask, pcorient):
+        ref = stack_variables(
+            xr.Dataset(
+                {"tasmax": atmosds.tasmax, "tasmin": atmosds.tasmin, "tas": atmosds.tas}
+            )
+        ).isel(location=3)
+        hist = stack_variables(
+            xr.Dataset(
+                {
+                    "tasmax": 1.001 * atmosds.tasmax,
+                    "tasmin": atmosds.tasmin - 0.25,
+                    "tas": atmosds.tas + 1,
+                }
+            )
+        ).isel(location=3)
+        with xr.set_options(keep_attrs=True):
+            sim = hist + 5
+            sim["time"] = sim.time + np.timedelta64(10, "Y").astype("<m8[ns]")
 
-        ref = ds.air.isel(lat=21, lon=[40, 52]).drop_vars(["lon", "lat"])
-        sim = ds.air.isel(lat=18, lon=[17, 35]).drop_vars(["lon", "lat"])
+        if use_dask:
+            ref = ref.chunk()
+            hist = hist.chunk()
+            sim = sim.chunk()
 
-        PCA = PrincipalComponents.train(ref, sim, group=group)
+        PCA = PrincipalComponents.train(
+            ref, hist, crd_dim="multivar", best_orientation=pcorient
+        )
         scen = PCA.adjust(sim)
 
         def dist(ref, sim):
             """Pointwise distance between ref and sim in the PC space."""
-            return np.sqrt(((ref - sim) ** 2).sum("lon"))
+            sim["time"] = ref.time
+            return np.sqrt(((ref - sim) ** 2).sum("multivar"))
 
         # Most points are closer after transform.
-        assert (dist(ref, sim) < dist(ref, scen)).mean() < 0.05
+        assert (dist(ref, sim) < dist(ref, scen)).mean() < 0.01
 
+        ref = unstack_variables(ref)
+        scen = unstack_variables(scen)
         # "Error" is very small
-        assert (ref - scen).mean() < 5e-3
+        assert (ref - scen).mean().tasmin < 5e-3
 
 
-@pytest.mark.xfail(reason="Inaccurate version.")
 class TestExtremeValues:
     @pytest.mark.parametrize(
-        "c_thresh,q_thresh,frac,power,diags",
+        "c_thresh,q_thresh,frac,power",
         [
-            ["1 mm/d", 0.95, 0.25, 1, True],
-            ["1 mm/d", 0.90, 1e-6, 1, False],
-            ["0.007 m/week", 0.95, 0.25, 2, False],
+            ["1 mm/d", 0.95, 0.25, 1],
+            ["1 mm/d", 0.90, 1e-6, 1],
+            ["0.007 m/week", 0.95, 0.25, 2],
         ],
     )
-    def test_simple(self, c_thresh, q_thresh, frac, power, diags):
+    def test_simple(self, c_thresh, q_thresh, frac, power):
         n = 45 * 365
 
         def gen_testdata(c, s):
@@ -634,8 +634,8 @@ class TestExtremeValues:
                 attrs={"units": "mm/day", "thresh": qv},
             )
 
-        ref = jitter_under_thresh(gen_testdata(-0.1, 2), 1e-3)
-        hist = jitter_under_thresh(gen_testdata(-0.1, 2), 1e-3)
+        ref = jitter_under_thresh(gen_testdata(-0.1, 2), "1e-3 mm/d")
+        hist = jitter_under_thresh(gen_testdata(-0.1, 2), "1e-3 mm/d")
         sim = gen_testdata(-0.15, 2.5)
 
         EQM = EmpiricalQuantileMapping.train(
@@ -644,14 +644,8 @@ class TestExtremeValues:
 
         scen = EQM.adjust(sim)
 
-        with set_options(sdba_extra_output=diags):
-            EX = ExtremeValues.train(ref, hist, c_thresh, q_thresh=q_thresh)
-
-        if diags:
-            assert "nclusters" in EX.ds
-
+        EX = ExtremeValues.train(ref, hist, cluster_thresh=c_thresh, q_thresh=q_thresh)
         qv = (ref.thresh + hist.thresh) / 2
-        np.testing.assert_allclose(EX.ds.fit_params, [-0.1, qv, 2], atol=0.5, rtol=0.1)
         np.testing.assert_allclose(EX.ds.thresh, qv, atol=0.15, rtol=0.01)
 
         scen2 = EX.adjust(scen, sim, frac=frac, power=power)
@@ -662,14 +656,11 @@ class TestExtremeValues:
         assert (scen2.where(exval) > EX.ds.thresh).sum() > (
             scen.where(exval) > EX.ds.thresh
         ).sum()
-        # ONLY extreme values have been touched (but some might not have been modified)
-        assert (((scen != scen2) | exval) == exval).all()
 
-    def test_dask_julia_diags(self):
+    def test_real_data(self):
 
         dsim = open_dataset("sdba/CanESM2_1950-2100.nc").chunk()
         dref = open_dataset("sdba/ahccd_1950-2013.nc").chunk()
-        dexp = open_dataset("sdba/adjusted_external.nc")
 
         ref = convert_units_to(dref.sel(time=slice("1950", "2009")).pr, "mm/d")
         hist = convert_units_to(dsim.sel(time=slice("1950", "2009")).pr, "mm/d")
@@ -688,16 +679,7 @@ class TestExtremeValues:
 
         EX = ExtremeValues.train(ref, hist, cluster_thresh="1 mm/day", q_thresh=0.97)
         new_scen = EX.adjust(scen, hist, frac=0.000000001)
-
         new_scen.load()
-
-        exp_scen = dexp.extreme_values_julia
-        xr.testing.assert_allclose(
-            new_scen.where(new_scen != scen).transpose("time", "location"),
-            exp_scen.where(new_scen != scen).transpose("time", "location"),
-            atol=0.005,
-            rtol=2e-3,
-        )
 
 
 def test_raise_on_multiple_chunks(tas_series):

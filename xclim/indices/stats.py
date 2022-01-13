@@ -2,7 +2,6 @@
 
 from typing import Dict, Optional, Sequence, Tuple, Union
 
-import dask.array
 import numpy as np
 import xarray as xr
 
@@ -52,7 +51,7 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
 
     # Return NaNs if array is empty.
     if len(x) <= 1:
-        return [np.nan] * nparams
+        return np.asarray([np.nan] * nparams)
 
     # Estimate parameters
     if method == "ML":
@@ -60,6 +59,8 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
         params = dist.fit(x, *args, **kwargs, **fitkwargs)
     elif method == "PWM":
         params = list(dist.lmom_fit(x).values())
+
+    params = np.asarray(params)
 
     # Fill with NaNs if one of the parameters is NaN
     if np.isnan(params).any():
@@ -113,28 +114,27 @@ def fit(
     shape_params = [] if dc.shapes is None else dc.shapes.split(",")
     dist_params = shape_params + ["loc", "scale"]
 
-    # xarray.apply_ufunc does not yet support multiple outputs with dask parallelism.
-    duck = dask.array if isinstance(da.data, dask.array.Array) else np
-    data = duck.apply_along_axis(
+    data = xr.apply_ufunc(
         _fitfunc_1d,
-        da.get_axis_num(dim),
         da,
-        dist=dc if method == "ML" else lm3dc,
-        nparams=len(dist_params),
-        method=method,
-        **fitkwargs,
+        input_core_dims=[[dim]],
+        output_core_dims=[["dparams"]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[float],
+        keep_attrs=True,
+        kwargs=dict(
+            dist=dc if method == "ML" else lm3dc,
+            nparams=len(dist_params),
+            method=method,
+            **fitkwargs,
+        ),
     )
 
-    # Coordinates for the distribution parameters
-    coords = dict(da.coords.items())
-    if dim in coords:
-        coords.pop(dim)
-    coords["dparams"] = dist_params
-
-    # Dimensions for the distribution parameters
+    # Add coordinates for the distribution parameters and transpose to original shape (with dim -> dparams)
     dims = [d if d != dim else "dparams" for d in da.dims]
+    out = data.assign_coords(dparams=dist_params).transpose(*dims)
 
-    out = xr.DataArray(data=data, coords=coords, dims=dims)
     out.attrs = prefix_attrs(
         da.attrs, ["standard_name", "long_name", "units", "description"], "original_"
     )
@@ -193,17 +193,20 @@ def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]) -> xr.DataArra
         def func(x):
             return dc.ppf(q, *x)
 
-    duck = dask.array if isinstance(p.data, dask.array.Array) else np
-    data = duck.apply_along_axis(func, p.get_axis_num("dparams"), p)
+    data = xr.apply_ufunc(
+        func,
+        p,
+        input_core_dims=[["dparams"]],
+        output_core_dims=[["quantile"]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[float],
+        keep_attrs=True,
+    )
 
-    # Create coordinate for the return periods
-    coords = dict(p.coords.items())
-    coords.pop("dparams")
-    coords["quantile"] = q
-    # Create dimensions
+    # Assign quantile coordinates and transpose to preserve original dimension order
     dims = [d if d != "dparams" else "quantile" for d in p.dims]
-
-    out = xr.DataArray(data=data, coords=coords, dims=dims)
+    out = data.assign_coords(quantile=q).transpose(*dims)
     out.attrs = unprefix_attrs(p.attrs, ["units", "standard_name"], "original_")
 
     attrs = dict(
@@ -350,7 +353,7 @@ def frequency_analysis(
     freq : str
       Resampling frequency. If None, the frequency is assumed to be 'YS' unless the indexer is season='DJF',
       in which case `freq` would be set to `AS-DEC`.
-    **indexer : {dim: indexer, }, optional
+    indexer : {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
       month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
       considered.
