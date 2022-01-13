@@ -23,6 +23,8 @@ from xclim.indices import run_length as rl
 from xclim.indices.generic import select_resample_op
 from xclim.indices.stats import fit, parametric_quantile
 
+from .base import Grouper, map_groups
+
 res2freq = {"year": "YS", "season": "QS-DEC", "month": "MS"}
 
 STATISTICAL_PROPERTIES: Dict[str, Callable] = {}
@@ -252,32 +254,47 @@ def spell_length_distribution(
     >>> spell_length_distribution(da=pr, op='<',thresh ='1mm d-1', time_res='season')
     """
     attrs = da.attrs
-    mask = ~(da.isel(time=0).isnull()).drop_vars("time")  # mask of the ocean with NaNs
     ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
+
+    @map_groups(out=[Grouper.PROP], main_only=True)
+    def _spell_stats(ds, *, dim, method, thresh, op, freq, stat):
+        import xarray.core.resample_cftime
+
+        da = ds.data
+        mask = ~(da.isel({dim: 0}).isnull()).drop_vars(
+            dim
+        )  # mask of the ocean with NaNs
+        if method == "quantile":
+            thresh = da.quantile(thresh, dim=dim).drop_vars("quantile")
+
+        cond = op(da, thresh)
+        out = cond.resample(time=freq).map(rl.rle_statistics, dim=dim, reducer=stat)
+        out = getattr(out, stat)(dim=dim)
+        out = out.where(mask)
+        return out.rename("out").to_dataset()
 
     # threshold is an amount that will be converted to the right units
     if method == "amount":
-        t = convert_units_to(thresh, da)
-    # threshold is calculated from quantile of distribution at the time_res
-    elif method == "quantile":
-        if time_res != "year":
-            da = da.groupby(f"time.{time_res}")
-        t = da.quantile(thresh, dim="time").drop_vars("quantile")
-    else:
+        thresh = convert_units_to(thresh, da)
+    elif method != "quantile":
         raise ValueError(
             f"{method} is not a valid method. Choose 'amount' or 'quantile'."
         )
 
-    cond = ops[op](da, t)
-    if time_res != "year":
-        cond = cond.resample(time=res2freq[time_res])
-        # the stat is taken on each resampling (1-31 Jan 1980)
-        out = cond.map(rl.rle_statistics, dim="time", reducer=stat)
-        # then again on all years (Jan 1980-2010)
-        out = getattr(out.groupby(f"time.{time_res}"), stat)(dim="time")
+    if time_res == "year":
+        group = Grouper("time")
     else:
-        out = rl.rle_statistics(cond, dim="time", reducer=stat)
-    out = out.where(mask, np.nan)  # put NaNs back over the ocean
+        group = Grouper(f"time.{time_res}")
+
+    out = _spell_stats(
+        da.rename("data").to_dataset(),
+        group=group,
+        method=method,
+        thresh=thresh,
+        op=ops[op],
+        freq=res2freq[time_res],
+        stat=stat,
+    ).out
     out.attrs.update(attrs)
     out.attrs[
         "long_name"
@@ -329,24 +346,32 @@ def acf(da: xr.DataArray, lag: int = 1, time_res: str = "season") -> xr.DataArra
         )
 
     attrs = da.attrs
-    da = da.resample(time=res2freq[time_res])
 
     def acf_last(x, nlags):
         """statsmodels acf calculates acf for lag 0 to nlags, this return only the last one."""
-        out_last = stattools.acf(x, nlags=nlags)
+        out_last = stattools.acf(x, nlags=nlags, fft=False)
         return out_last[-1]
 
-    out = xr.apply_ufunc(
-        acf_last,
-        da,
-        input_core_dims=[["time"]],
-        vectorize=True,
-        kwargs={"nlags": lag},
-        dask="parallelized",
-    )
-    # average over the years
-    out = out.groupby(f"__resample_dim__.{time_res}").mean(dim="__resample_dim__")
+    @map_groups(out=[Grouper.PROP], main_only=True)
+    def _acf(ds, *, dim, lag, freq):
+        out = xr.apply_ufunc(
+            acf_last,
+            ds.data.resample({dim: freq}),
+            input_core_dims=[[dim]],
+            vectorize=True,
+            kwargs={"nlags": lag},
+        )
+        out = out.mean("__resample_dim__")
+        return out.rename("out").to_dataset()
 
+    if time_res == "year":
+        group = Grouper("time")
+    else:
+        group = Grouper(f"time.{time_res}")
+
+    out = _acf(
+        da.rename("data").to_dataset(), group=group, lag=lag, freq=res2freq[time_res]
+    ).out
     out.attrs.update(attrs)
     out.attrs["long_name"] = f"lag-{lag} autocorrelation of {attrs['long_name']}"
     out.attrs["units"] = ""
@@ -723,30 +748,25 @@ def return_value(
     >>> tas = open_dataset(path_to_tas_file).tas
     >>> return_value(da=tas, time_res='season')
     """
-    attrs = da.attrs
 
-    def frequency_analysis_method(x, method, **indexer):
-        sub = select_resample_op(x, op=op, **indexer)
+    @map_groups(out=[Grouper.PROP], main_only=True)
+    def frequency_analysis_method(ds, *, dim, method):
+        sub = select_resample_op(ds.x, op=op)
         params = fit(sub, dist="genextreme", method=method)
         out = parametric_quantile(params, q=1 - 1.0 / period)
-        return out
+        return out.isel(quantile=0, drop=True).rename("out").to_dataset()
 
     if time_res == "year":
-        out = frequency_analysis_method(da, method)
+        group = Grouper("time")
     else:
-        # get coords of final output
-        coords = da.groupby(f"time.{time_res}").mean(dim="time").coords
-        # create empty dataArray in the shape of final output
-        out = xr.DataArray(coords=coords)
-        # iterate through all the seasons/months to get the return value
-        for ind in coords[time_res].values:
-            out.loc[{time_res: ind}] = frequency_analysis_method(
-                da, method, **{time_res: ind}
-            ).isel(quantile=0)
+        group = Grouper(f"time.{time_res}")
 
-    out.attrs.update(attrs)
+    out = frequency_analysis_method(
+        da.rename("x").to_dataset(), method=method, group=group
+    ).out
+    out.attrs.update(da.attrs)
     out.attrs[
         "long_name"
-    ] = f"{period}-{time_res} {op} return level of {attrs['long_name']}"
+    ] = f"{period}-{time_res} {op} return level of {da.attrs['long_name']}"
     out.name = "return_value"
     return out

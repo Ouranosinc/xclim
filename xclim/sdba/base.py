@@ -13,7 +13,7 @@ import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
 
-from xclim.core.calendar import days_in_year, get_calendar, max_doy, parse_offset
+from xclim.core.calendar import days_in_year, get_calendar
 from xclim.core.options import OPTIONS, SDBA_ENCODE_CF
 from xclim.core.utils import uses_dask
 
@@ -157,6 +157,10 @@ class Grouper(Parametrizable):
         """
         if self.prop == "month":
             return xr.DataArray(np.arange(1, 13), dims=("month",), name="month")
+        if self.prop == "season":
+            return xr.DataArray(
+                ["DJF", "MAM", "JJA", "SON"], dims=("season",), name="season"
+            )
         if self.prop == "dayofyear":
             if ds is not None:
                 cal = get_calendar(ds, dim=self.dim)
@@ -385,6 +389,9 @@ class Grouper(Parametrizable):
             if uses_dask(out):
                 # or -1 in case dim_chunks is [], when no input is chunked (only happens if the operation is chunking the output)
                 out = out.chunk({self.dim: dim_chunks or -1})
+        if self.prop == "season" and self.prop in out.coords:
+            # Special case for "DIM.season", it is often returned in alphabetical order, but that doesn't fit the coord given in get_coordinate
+            out = out.sel(season=np.array(["DJF", "MAM", "JJA", "SON"]))
         if self.prop in out.dims and uses_dask(out):
             # Same as above : downstream methods expect only one chunk along the group
             out = out.chunk({self.prop: -1})
