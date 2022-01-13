@@ -108,7 +108,7 @@ variables:
     description: Surface snow amount.
     standard_name: surface_snow_amount
     data_flags:
-       - negative_accumulation_values:
+      - negative_accumulation_values:
   sund:
     cmip6: False
     canonical_units: s
@@ -121,7 +121,7 @@ variables:
     description: Surface snow water equivalent amount
     standard_name: lwe_thickness_of_snow_amount
     data_flags:
-       - negative_accumulation_values:
+      - negative_accumulation_values:
   tas:
     canonical_units: K
     cell_methods: "time: mean"

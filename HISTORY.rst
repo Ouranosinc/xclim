@@ -6,6 +6,10 @@ History
 -------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Tom Keel (:user:`Thomasjkeel`), Juliette Lavoie (:user:`juliettelavoie`).
 
+Announcements
+^^^^^^^^^^^^^
+* `xclim` now requires yaml files to pass `yamllint` checks on Pull Requests. (:pull:`981`).
+
 New indicators
 ^^^^^^^^^^^^^^
 * ``jetstream_metric_woollings`` indicator returns latitude and strength of jet-stream in u-wind field. (:pull:`924`, :issue:`923`).
@@ -47,7 +51,6 @@ Announcements
 * Code coverage (`coverage/coveralls`) is now a required CI check for merging Pull Requests. Requirements are now:
     - No individual run may report *<80%* code coverage.
     - Some drop in coverage is now tolerable, but runs cannot dip below *-0.25%* relative to the main branch.
-
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
