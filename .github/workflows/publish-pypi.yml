@@ -2,24 +2,25 @@ name: Publish Python 🐍 distributions 📦 to PyPI
 
 on:
   release:
-    types: [ published ]
+    types:
+      - published
 
 jobs:
   build-n-publish-pypi:
     name: Build and publish Python 🐍 distributions 📦 to PyPI
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.9
-    - name: Install packaging libraries
-      run: pip install wheel
-    - name: Build a binary wheel and a source tarball
-      run: python setup.py sdist bdist_wheel
-    - name: Publish distribution 📦 to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_API_TOKEN }}
+      - uses: actions/checkout@master
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.9
+      - name: Install packaging libraries
+        run: pip install wheel
+      - name: Build a binary wheel and a source tarball
+        run: python setup.py sdist bdist_wheel
+      - name: Publish distribution 📦 to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
