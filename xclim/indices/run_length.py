@@ -11,7 +11,7 @@ from functools import partial
 from typing import Optional, Sequence, Tuple, Union
 from warnings import warn
 
-import numba as nb
+from numba import njit
 import numpy as np
 import xarray as xr
 from dask import array as dsk
@@ -814,7 +814,7 @@ def last_run_before_date(
     return last_run(run, window=window, dim=dim, coord=coord)
 
 
-@nb.njit
+@njit
 def _rle_1d(ia):
     y = ia[1:] != ia[:-1]  # pairwise unequal (string safe)
     i = np.append(np.nonzero(y)[0], ia.size - 1)  # must include last element position
