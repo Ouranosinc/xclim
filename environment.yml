@@ -5,7 +5,7 @@ channels:
 dependencies:
     - numpy>=1.16
     - xarray>=0.17
-    - cf-xarray>=0.6.1
+    - cf_xarray>=0.6.1
     - scipy>=1.2
     - numba
     - pandas>=0.23
