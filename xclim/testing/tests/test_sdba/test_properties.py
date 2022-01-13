@@ -15,7 +15,7 @@ def test_mean():
     out_year = sdba.properties.mean(sim)
     np.testing.assert_array_almost_equal(out_year.values, [3.0016028e-05])
 
-    out_season = sdba.properties.mean(sim, time_res="season")
+    out_season = sdba.properties.mean(sim, group="time.season")
     np.testing.assert_array_almost_equal(
         out_season.values, [4.6115547e-05, 1.7220482e-05, 2.8805329e-05, 2.825359e-05]
     )
@@ -33,7 +33,7 @@ def test_var():
     out_year = sdba.properties.var(sim)
     np.testing.assert_array_almost_equal(out_year.values, [2.5884779e-09])
 
-    out_season = sdba.properties.var(sim, time_res="season")
+    out_season = sdba.properties.var(sim, group="time.season")
     np.testing.assert_array_almost_equal(
         out_season.values, [3.9270796e-09, 1.2538864e-09, 1.9057025e-09, 2.8776632e-09]
     )
@@ -51,7 +51,7 @@ def test_skewness():
     out_year = sdba.properties.skewness(sim)
     np.testing.assert_array_almost_equal(out_year.values, [2.8497460898513745])
 
-    out_season = sdba.properties.skewness(sim, time_res="season")
+    out_season = sdba.properties.skewness(sim, group="time.season")
     np.testing.assert_array_almost_equal(
         out_season.values,
         [2.036650744163691, 3.7909534745807147, 2.416590445325826, 3.3521301798559566],
@@ -70,7 +70,7 @@ def test_quantile():
     out_year = sdba.properties.quantile(sim, q=0.2)
     np.testing.assert_array_almost_equal(out_year.values, [2.8109431013945154e-07])
 
-    out_season = sdba.properties.quantile(sim, time_res="season", q=0.2)
+    out_season = sdba.properties.quantile(sim, group="time.season", q=0.2)
     np.testing.assert_array_almost_equal(
         out_season.values,
         [
@@ -90,20 +90,20 @@ def test_spell_length_distribution():
         .pr
     )
     tmean = (
-        sdba.properties.spell_length_distribution(sim, op="<", time_res="month")
+        sdba.properties.spell_length_distribution(sim, op="<", group="time.month")
         .sel(month=1)
         .values
     )
     tmax = (
         sdba.properties.spell_length_distribution(
-            sim, op="<", time_res="month", stat="max"
+            sim, op="<", group="time.month", stat="max"
         )
         .sel(month=1)
         .values
     )
     tmin = (
         sdba.properties.spell_length_distribution(
-            sim, op="<", time_res="month", stat="min"
+            sim, op="<", group="time.month", stat="min"
         )
         .sel(month=1)
         .values
@@ -117,18 +117,18 @@ def test_spell_length_distribution():
         .tasmax
     )
     tmean = sdba.properties.spell_length_distribution(
-        simt, op=">=", time_res="month", method="quantile", thresh=0.9
+        simt, op=">=", group="time.month", method="quantile", thresh=0.9
     ).sel(month=6)
     tmax = (
         sdba.properties.spell_length_distribution(
-            simt, op=">=", time_res="month", stat="max", method="quantile", thresh=0.9
+            simt, op=">=", group="time.month", stat="max", method="quantile", thresh=0.9
         )
         .sel(month=6)
         .values
     )
     tmin = (
         sdba.properties.spell_length_distribution(
-            simt, op=">=", time_res="month", stat="min", method="quantile", thresh=0.9
+            simt, op=">=", group="time.month", stat="min", method="quantile", thresh=0.9
         )
         .sel(month=6)
         .values
@@ -151,14 +151,14 @@ def test_acf():
         .sel(time=slice("1950", "1952"), location="Vancouver")
         .pr
     )
-    out = sdba.properties.acf(sim, lag=1, time_res="month").sel(month=1)
+    out = sdba.properties.acf(sim, lag=1, group="time.month").sel(month=1)
     np.testing.assert_array_almost_equal(out.values, [0.11242357313756905])
 
     with pytest.raises(
         ValueError,
-        match="'year' is not a valid time resolution for this statistical property.",
+        match="Grouping on year is not allowed for this function.",
     ):
-        sdba.properties.acf(sim, time_res="year")
+        sdba.properties.acf(sim, group="time")
 
     assert out.long_name == "lag-1 autocorrelation"
     assert out.units == ""
@@ -180,15 +180,15 @@ def test_annual_cycle():
     )
     with pytest.raises(
         ValueError,
-        match="'year' is the only valid time resolution for this statistical property.",
+        match="Grouping on season is not allowed for this function.",
     ):
-        sdba.properties.annual_cycle_amplitude(simt, time_res="season")
+        sdba.properties.annual_cycle_amplitude(simt, group="time.season")
 
     with pytest.raises(
         ValueError,
-        match="'year' is the only valid time resolution for this statistical property.",
+        match="Grouping on month is not allowed for this function.",
     ):
-        sdba.properties.annual_cycle_phase(simt, time_res="season")
+        sdba.properties.annual_cycle_phase(simt, group="time.month")
 
     assert amp.long_name == "absolute amplitude of the annual cycle"
     assert phase.long_name == "Phase of the annual cycle"
@@ -215,7 +215,7 @@ def test_corr_btw_var():
     sc = sdba.properties.corr_btw_var(simt, sim).values
     sp = sdba.properties.corr_btw_var(simt, sim, output="pvalue").values
     sc_jan = (
-        sdba.properties.corr_btw_var(simt, sim, time_res="month").sel(month=1).values
+        sdba.properties.corr_btw_var(simt, sim, group="time.month").sel(month=1).values
     )
     sim[0] = np.nan
     pc_nan = sdba.properties.corr_btw_var(sim, simt, corr_type="Pearson").values
@@ -238,7 +238,7 @@ def test_corr_btw_var():
         ValueError,
         match="pear is not a valid type. Choose 'Pearson' or 'Spearman'.",
     ):
-        sdba.properties.corr_btw_var(sim, simt, time_res="year", corr_type="pear")
+        sdba.properties.corr_btw_var(sim, simt, group="time", corr_type="pear")
 
 
 def test_relative_frequency():
@@ -251,7 +251,7 @@ def test_relative_frequency():
     test = sdba.properties.relative_frequency(sim, thresh="25 mm d-1", op=">=")
     testjan = (
         sdba.properties.relative_frequency(
-            sim, thresh="25 mm d-1", op=">=", time_res="month"
+            sim, thresh="25 mm d-1", op=">=", group="time.month"
         )
         .sel(month=1)
         .values
@@ -277,9 +277,9 @@ def test_trend():
         [slope, pvalue], [-1.33720000e-01, 0.154605951862107], 4
     )
 
-    slope = sdba.properties.trend(simt, time_res="month").sel(month=1)
+    slope = sdba.properties.trend(simt, group="time.month").sel(month=1)
     pvalue = (
-        sdba.properties.trend(simt, output="pvalue", time_res="month")
+        sdba.properties.trend(simt, output="pvalue", group="time.month")
         .sel(month=1)
         .values
     )
@@ -299,7 +299,7 @@ def test_return_value():
     )
     out_y = sdba.properties.return_value(simt)
     out_djf = (
-        sdba.properties.return_value(simt, op="min", time_res="season")
+        sdba.properties.return_value(simt, op="min", group="time.season")
         .sel(season="DJF")
         .values
     )
