@@ -414,7 +414,7 @@ class Grouper(Parametrizable):
         return out
 
 
-def parse_group(func: Callable, allow_only=None, kwargs=None) -> Callable:
+def parse_group(func: Callable, kwargs=None, allow_only=None) -> Callable:
     """Parse the kwargs given to a function to set the `group` arg with a Grouper object.
 
     This function can be used as a decorator, in which case the parsing and updating of the kwargs is done at call time.
