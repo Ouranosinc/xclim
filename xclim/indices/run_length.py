@@ -11,10 +11,10 @@ from functools import partial
 from typing import Optional, Sequence, Tuple, Union
 from warnings import warn
 
-from numba import njit
 import numpy as np
 import xarray as xr
 from dask import array as dsk
+from numba import njit
 from xarray.core.utils import get_temp_dimname
 
 from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
