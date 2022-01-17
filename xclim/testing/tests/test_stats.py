@@ -242,3 +242,26 @@ class TestParametricQuantile:
 
         np.testing.assert_array_almost_equal(q, expected, 1)
         assert "quantile" in q.coords
+
+
+class TestParametricCDF:
+    def test_synth(self):
+        mu = 23
+        sigma = 2
+        n = 10000
+        v = 24
+        d = norm(loc=mu, scale=sigma)
+        r = xr.DataArray(
+            d.rvs(n),
+            dims=("time",),
+            coords={"time": xr.cftime_range(start="1980-01-01", periods=n)},
+            attrs={"history": "Mosquito bytes per minute"},
+        )
+        expected = d.cdf(v)
+
+        p = stats.fit(r, dist="norm")
+        out = stats.parametric_cdf(p=p, v=v)
+
+        np.testing.assert_array_almost_equal(out, expected, 1)
+        assert "cdf" in out.coords
+        assert out.attrs["cell_methods"] == "dparams: cdf"

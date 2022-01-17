@@ -17,6 +17,7 @@ from . import generic
 __all__ = [
     "fit",
     "parametric_quantile",
+    "parametric_cdf",
     "fa",
     "frequency_analysis",
     "get_dist",
@@ -211,10 +212,70 @@ def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]) -> xr.DataArra
     attrs = dict(
         long_name=f"{dist} quantiles",
         description=f"Quantiles estimated by the {dist} distribution",
-        cell_methods=merge_attributes("dparams: ppf", out, new_line=" "),
+        cell_methods="dparams: ppf",
         history=update_history(
             "Compute parametric quantiles from distribution parameters",
             new_name="parametric_quantile",
+            parameters=p,
+        ),
+    )
+    out.attrs.update(attrs)
+    return out
+
+
+def parametric_cdf(p: xr.DataArray, v: Union[float, Sequence]) -> xr.DataArray:
+    """Return the cumulative distribution function corresponding to the given distribution parameters and value.
+
+    Parameters
+    ----------
+    p : xr.DataArray
+      Distribution parameters returned by the `fit` function.
+      The array should have dimension `dparams` storing the distribution parameters,
+      and attribute `scipy_dist`, storing the name of the distribution.
+    v : Union[float, Sequence]
+      Value to compute the CDF.
+
+    Returns
+    -------
+    xarray.DataArray
+      An array of parametric CDF values estimated from the distribution parameters.
+
+    Notes
+    -----
+    """
+    v = np.atleast_1d(v)
+
+    # Get the distribution
+    dist = p.attrs["scipy_dist"]
+    dc = get_dist(dist)
+
+    # Create a lambda function to facilitate passing arguments to dask. There is probably a better way to do this.
+    def func(x):
+        return dc.cdf(v, *x)
+
+    data = xr.apply_ufunc(
+        func,
+        p,
+        input_core_dims=[["dparams"]],
+        output_core_dims=[["cdf"]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[float],
+        keep_attrs=True,
+    )
+
+    # Assign quantile coordinates and transpose to preserve original dimension order
+    dims = [d if d != "dparams" else "cdf" for d in p.dims]
+    out = data.assign_coords(cdf=v).transpose(*dims)
+    out.attrs = unprefix_attrs(p.attrs, ["units", "standard_name"], "original_")
+
+    attrs = dict(
+        long_name=f"{dist} cdf",
+        description=f"CDF estimated by the {dist} distribution",
+        cell_methods="dparams: cdf",
+        history=update_history(
+            "Compute parametric cdf from distribution parameters",
+            new_name="parametric_cdf",
             parameters=p,
         ),
     )
