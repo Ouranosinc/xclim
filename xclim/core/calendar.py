@@ -439,6 +439,7 @@ def percentile_doy(
     per: Union[float, Sequence[float]] = 10.0,
     alpha: float = 1.0 / 3.0,
     beta: float = 1.0 / 3.0,
+    copy: bool = True,
 ) -> xr.DataArray:
     """Percentile value for each day of the year.
 
@@ -457,6 +458,12 @@ def percentile_doy(
         Plotting position parameter.
     beta: float
         Plotting position parameter.
+    copy: bool
+        If True (default) the input array will be deep copied. It's a necessary step
+        to keep the data integrity but it can be costly.
+        If False, no copy is made of the input array. It will be mutated and rendered
+        unusable but performances may significantly improve.
+        Put this flag to False only if you understand the consequences.
 
     Returns
     -------
@@ -495,7 +502,7 @@ def percentile_doy(
         input_core_dims=[["stack_dim"]],
         output_core_dims=[["percentiles"]],
         keep_attrs=True,
-        kwargs=dict(percentiles=per, alpha=alpha, beta=beta),
+        kwargs=dict(percentiles=per, alpha=alpha, beta=beta, copy=copy),
         dask="parallelized",
         output_dtypes=[rrr.dtype],
         dask_gufunc_kwargs=dict(output_sizes={"percentiles": len(per)}),

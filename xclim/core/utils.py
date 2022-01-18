@@ -215,13 +215,14 @@ def calc_perc(
     percentiles: Sequence[float] = [50.0],
     alpha: float = 1.0,
     beta: float = 1.0,
+    copy: bool = True,
 ) -> np.ndarray:
     """
     Compute percentiles using nan_calc_percentiles and move the percentiles axis to the end.
     """
     return np.moveaxis(
         nan_calc_percentiles(
-            arr=arr, percentiles=percentiles, axis=-1, alpha=alpha, beta=beta
+            arr=arr, percentiles=percentiles, axis=-1, alpha=alpha, beta=beta, copy=copy
         ),
         source=0,
         destination=-1,
@@ -234,13 +235,17 @@ def nan_calc_percentiles(
     axis=-1,
     alpha=1.0,
     beta=1.0,
+    copy=True,
 ) -> np.ndarray:
     """
     Convert the percentiles to quantiles and compute them using _nan_quantile.
     """
-    arr_copy = arr.copy()
+    if copy:
+        # bootstrapping already works on a data's copy
+        # doing it again is extremely costly, especially with dask.
+        arr = arr.copy()
     quantiles = np.array([per / 100.0 for per in percentiles])
-    return _nan_quantile(arr_copy, quantiles, axis, alpha, beta)
+    return _nan_quantile(arr, quantiles, axis, alpha, beta)
 
 
 def _compute_virtual_index(
