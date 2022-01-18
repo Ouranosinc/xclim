@@ -21,6 +21,7 @@ New features and enhancements
     - ``xclim.sdba.processing.normalize`` now also returns the norm. ``xclim.sdba.processing.jitter`` was created by combining the "under" and "over" methods.
     - ``xclim.sdba.adjustment.PrincipalComponent`` was modified to have a simpler signature. The "full" method for finding the best PC orientation was added. (:issue:`697`).
 * New ``xclim.indices.stats.parametric_cdf`` function to facilitate the computation of return periods over DataArrays of statistical distribution parameters (:issue:`876`, :pull:`984`).
+* Add ``copy`` parameter to ``percentile_doy`` to control if the array input can be dumped after computing percentiles (:pull:``, :issue:`932`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
