@@ -750,7 +750,7 @@ def return_value(
     --------
     >>> from xclim.testing import open_dataset
     >>> tas = open_dataset(path_to_tas_file).tas
-    >>> return_value(da=tas, group='season')
+    >>> return_value(da=tas, group='time.season')
     """
 
     @map_groups(out=[Grouper.PROP], main_only=True)
