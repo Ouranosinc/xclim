@@ -82,8 +82,7 @@ def mean(da: xr.DataArray, *, group: Union[str, Grouper] = "time") -> xr.DataArr
 
     Examples
     --------
-    >>> from xclim.testing import open_dataset
-    >>> pr = open_dataset(path_to_pr_file).pr
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> mean(da=pr, group='time.season')
     """
     attrs = da.attrs
@@ -113,13 +112,12 @@ def var(da: xr.DataArray, *, group: Union[str, Grouper] = "time") -> xr.DataArra
 
     Returns
     -------
-    xr.DataArray,
+    xr.DataArray
       Variance of the variable.
 
     Examples
     --------
-    >>> from xclim.testing import open_dataset
-    >>> pr = open_dataset(path_to_pr_file).pr
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> var(da=pr, group='time.season')
     """
     attrs = da.attrs
@@ -152,13 +150,12 @@ def skewness(da: xr.DataArray, *, group: Union[str, Grouper] = "time") -> xr.Dat
 
     Returns
     -------
-    xr.DataArray,
+    xr.DataArray
       Skewness of the variable.
 
     Examples
     --------
-    >>> from xclim.testing import open_dataset
-    >>> pr = open_dataset(path_to_pr_file).pr
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> skewness(da=pr, group='time.season')
 
     See also
@@ -203,13 +200,12 @@ def quantile(
 
     Returns
     -------
-    xr.DataArray,
+    xr.DataArray
       Quantile {q} of the variable.
 
     Examples
     --------
-    >>> from xclim.testing import open_dataset
-    >>> pr = open_dataset(path_to_pr_file).pr
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> quantile(da=pr, q=0.9, group='time.season')
     """
     attrs = da.attrs
@@ -229,7 +225,7 @@ def spell_length_distribution(
     *,
     method: str = "amount",
     op: str = ">=",
-    thresh="1 mm d-1",
+    thresh: Union[str, float] = "1 mm d-1",
     stat: str = "mean",
     group: Union[str, Grouper] = "time",
 ) -> xr.DataArray:
@@ -242,14 +238,14 @@ def spell_length_distribution(
     ----------
     da : xr.DataArray
       Variable on which to calculate the diagnostic.
-    method: {'amount', 'quantile'}:
+    method: {'amount', 'quantile'}
       Method to choose the threshold.
       'amount': The threshold is directly the quantity in {thresh}. It needs to have the same units as {da}.
       'quantile': The threshold is calculated as the quantile {thresh} of the distribution.
     op: {">", "<", ">=", "<="}
       Operation to verify the condition for a spell.
       The condition for a spell is variable {op} threshold.
-    thresh: str, float
+    thresh: str or float
       Threshold on which to evaluate the condition to have a spell.
       Str with units if the method is "amount".
       Float of the quantile if the method is "quantile".
@@ -262,13 +258,12 @@ def spell_length_distribution(
 
     Returns
     -------
-    xr.DataArray,
+    xr.DataArray
       {stat} of spell length distribution when the variable is {op} the {method} {thresh}.
 
     Examples
     --------
-    >>> from xclim.testing import open_dataset
-    >>> pr = open_dataset(path_to_pr_file).pr
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> spell_length_distribution(da=pr, op='<',thresh ='1mm d-1', group='time.season')
     """
     attrs = da.attrs
@@ -331,7 +326,7 @@ def acf(
     da : xr.DataArray
       Variable on which to calculate the diagnostic.
     lag: int
-      lag.
+      Lag.
     group : {'time.season', 'time.month'}
       Grouping of the output.
       Eg. If 'time.month', the autocorrelation is calculated over each month separately for all years.
@@ -339,7 +334,7 @@ def acf(
 
     Returns
     -------
-    xr.DataArray,
+    xr.DataArray
       lag-{lag} autocorrelation of the variable over a {group.prop} and averaged over all years.
 
     See also
@@ -408,13 +403,12 @@ def annual_cycle_amplitude(
 
     Returns
     -------
-    out: xr.DataArray,
+    xr.DataArray
       {amplitude_type} amplitude of the annual cycle.
 
     Examples
     --------
-    >>> from xclim.testing import open_dataset
-    >>> pr = open_dataset(path_to_pr_file).pr
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> annual_cycle_amplitude(da=pr, amplitude_type='relative')
     """
     attrs = da.attrs
@@ -446,16 +440,17 @@ def annual_cycle_phase(
     ----------
     da : xr.DataArray
       Variable on which to calculate the diagnostic.
+    group : {"time", 'time.season', 'time.month'}
+      Grouping of the output. Default: "time".
 
     Returns
     -------
-    phase: xr.DataArray,
+    xr.DataArray
       Phase of the annual cycle. The position (day-of-year) of the maximal value.
 
     Examples
     --------
-    >>> from xclim.testing import open_dataset
-    >>> pr = open_dataset(path_to_pr_file).pr
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> annual_cycle_phase(da=pr)
     """
     attrs = da.attrs
@@ -516,13 +511,12 @@ def corr_btw_var(
 
     Returns
     -------
-    xr.DataArray,
+    xr.DataArray
       {corr_type} correlation coefficient
 
     Examples
     --------
-    >>> from xclim.testing import open_dataset
-    >>> pr = open_dataset(path_to_pr_file).pr
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> tasmax = open_dataset('NRCANdaily/nrcan_canada_daily_tasmax_1990.nc').tasmax
     >>> corr_btw_var(da1=pr, da2=tasmax, group='time.season')
     """
@@ -573,7 +567,7 @@ def relative_frequency(
     da: xr.DataArray,
     *,
     op: str = ">=",
-    thresh="1mm d-1",
+    thresh: str = "1mm d-1",
     group: Union[str, Grouper] = "time",
 ) -> xr.DataArray:
     r"""Relative Frequency.
@@ -598,13 +592,12 @@ def relative_frequency(
 
     Returns
     -------
-    xr.DataArray,
+    xr.DataArray
       Relative frequency of the variable.
 
     Examples
     --------
-    >>> from xclim.testing import open_dataset
-    >>> tasmax = open_dataset('NRCANdaily/nrcan_canada_daily_tasmax_1990.nc').tasmax
+    >>> tasmax = xr.open_dataset("path_to_tasmax_file"').tasmax
     >>> relative_frequency(da=tasmax, op= '<', thresh= '0 degC', group='time.season')
     """
     attrs = da.attrs
@@ -649,19 +642,17 @@ def trend(
     ----------
     da : xr.DataArray
       Variable on which to calculate the diagnostic.
-
     output: {'slope', 'pvalue'}
       Attributes of the linear regression to return.
       'slope' is the slope of the regression line.
       'pvalue' is  for a hypothesis test whose null hypothesis is that the slope is zero,
       using Wald Test with t-distribution of the test statistic.
-
     group : {'time', 'time.season', 'time.month'}
       Grouping on the output.
 
     Returns
     -------
-    xr.DataArray,
+    xr.DataArray
       Trend of the variable.
 
     See also
@@ -671,8 +662,7 @@ def trend(
 
     Examples
     --------
-    >>> from xclim.testing import open_dataset
-    >>> tas = open_dataset(path_to_tas_file).tas
+    >>> tas = xr.open_dataset(path_to_tas_file).tas
     >>> trend(da=tas, group='time.season')
     """
     attrs = da.attrs
@@ -724,32 +714,27 @@ def return_value(
     ----------
     da : xr.DataArray
       Variable on which to calculate the diagnostic.
-
     period: int
       Return period. Number of years over which to check if the value is exceeded (or not for op='min').
-
     op: {'max','min'}
       Whether we are looking for a probability of exceedance ('max', right side of the distribution)
       or a probability of non-exceedance (min, left side of the distribution).
-
     method : {"ML", "PWM"}
       Fitting method, either maximum likelihood (ML) or probability weighted moments (PWM), also called L-Moments.
       The PWM method is usually more robust to outliers. However, it requires the lmoments3 libraryto be installed
       from the `develop` branch.
       ``pip install git+https://github.com/OpenHydrology/lmoments3.git@develop#egg=lmoments3``
-
     group : {'time', 'time.season', 'time.month'}
       Grouping of the output. A distribution of the extremums is done for each group.
 
     Returns
     -------
-    xr.DataArray,
+    xr.DataArray
       {period}-{group} {op} return level of the variable.
 
     Examples
     --------
-    >>> from xclim.testing import open_dataset
-    >>> tas = open_dataset(path_to_tas_file).tas
+    >>> tas = xr.open_dataset(path_to_tas_file).tas
     >>> return_value(da=tas, group='time.season')
     """
 
