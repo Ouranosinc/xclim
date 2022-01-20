@@ -10,13 +10,14 @@ from dask.diagnostics import ProgressBar
 import xclim as xc
 from xclim.core.dataflags import DataQualityException, data_flags, ecad_compliant
 from xclim.core.utils import InputKind
-from xclim.testing._utils import publish_release_notes
+from xclim.testing._utils import publish_release_notes  # noqa
 
 try:
     from dask.distributed import Client, progress
 except ImportError:
     # Distributed is not a dependency of xclim
     Client = None
+    progress = None
 
 
 def _get_indicator(indname):
@@ -411,7 +412,7 @@ def cli(ctx, **kwargs):
     ctx.obj = kwargs
 
 
-@cli.resultcallback()
+@cli.result_callback()
 @click.pass_context
 def write_file(ctx, *args, **kwargs):
     """Write the output dataset to file."""

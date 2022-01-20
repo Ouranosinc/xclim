@@ -58,6 +58,7 @@ class DataQualityException(Exception):
 
 __all__ = [
     "data_flags",
+    "DataQualityException",
     "ecad_compliant",
     "negative_accumulation_values",
     "outside_n_standard_deviations_of_climatology",
