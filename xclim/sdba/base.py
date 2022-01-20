@@ -147,6 +147,22 @@ class Grouper(Parametrizable):
         )
         return kwargs
 
+    @property
+    def freq(self):
+        """The frequency string corresponding to the group. For use with xarray's resampling."""
+        return {
+            "group": "YS",
+            "season": "QS-DEC",
+            "month": "MS",
+            "week": "W",
+            "dayofyear": "D",
+        }.get(self.prop, None)
+
+    @property
+    def prop_name(self):
+        """A significative name of the grouping."""
+        return "year" if self.prop == "group" else self.prop
+
     def get_coordinate(self, ds=None):
         """Return the coordinate as in the output of group.apply.
 
@@ -156,6 +172,10 @@ class Grouper(Parametrizable):
         """
         if self.prop == "month":
             return xr.DataArray(np.arange(1, 13), dims=("month",), name="month")
+        if self.prop == "season":
+            return xr.DataArray(
+                ["DJF", "MAM", "JJA", "SON"], dims=("season",), name="season"
+            )
         if self.prop == "dayofyear":
             if ds is not None:
                 cal = get_calendar(ds, dim=self.dim)
@@ -384,6 +404,9 @@ class Grouper(Parametrizable):
             if uses_dask(out):
                 # or -1 in case dim_chunks is [], when no input is chunked (only happens if the operation is chunking the output)
                 out = out.chunk({self.dim: dim_chunks or -1})
+        if self.prop == "season" and self.prop in out.coords:
+            # Special case for "DIM.season", it is often returned in alphabetical order, but that doesn't fit the coord given in get_coordinate
+            out = out.sel(season=np.array(["DJF", "MAM", "JJA", "SON"]))
         if self.prop in out.dims and uses_dask(out):
             # Same as above : downstream methods expect only one chunk along the group
             out = out.chunk({self.prop: -1})
@@ -391,11 +414,13 @@ class Grouper(Parametrizable):
         return out
 
 
-def parse_group(func: Callable, kwargs=None) -> Callable:
+def parse_group(func: Callable, kwargs=None, allow_only=None) -> Callable:
     """Parse the kwargs given to a function to set the `group` arg with a Grouper object.
 
     This function can be used as a decorator, in which case the parsing and updating of the kwargs is done at call time.
     It can also be called with a function from which extract the default group and kwargs to update, in which case it returns the updated kwargs.
+
+    If allow_only is given, an exception is raised when the parsed group is not within that list.
     """
     sig = signature(func)
     if "group" in sig.parameters:
@@ -403,20 +428,29 @@ def parse_group(func: Callable, kwargs=None) -> Callable:
     else:
         default_group = None
 
-    def _update_kwargs(kwargs):
+    def _update_kwargs(kwargs, allowed=None):
         if default_group or "group" in kwargs:
             kwargs.setdefault("group", default_group)
             if not isinstance(kwargs["group"], Grouper):
                 kwargs = Grouper.from_kwargs(**kwargs)
+        if (
+            allowed is not None
+            and "group" in kwargs
+            and kwargs["group"].prop not in allowed
+        ):
+            raise ValueError(
+                f"Grouping on {kwargs['group'].prop_name} is not allowed for this "
+                f"function. Should be one of {allowed}."
+            )
         return kwargs
 
     if kwargs is not None:  # Not used as a decorator
-        return _update_kwargs(kwargs)
+        return _update_kwargs(kwargs, allowed=allow_only)
 
     # else (then it's a decorator)
     @wraps(func)
     def _parse_group(*args, **kwargs):
-        kwargs = _update_kwargs(kwargs)
+        kwargs = _update_kwargs(kwargs, allowed=allow_only)
         return func(*args, **kwargs)
 
     return _parse_group
