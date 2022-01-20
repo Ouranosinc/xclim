@@ -1,6 +1,4 @@
 # noqa: D100
-
-import datetime
 from typing import Optional
 
 import numpy as np
@@ -656,8 +654,10 @@ def dry_spell_total_length(
     **indexer,
 ) -> xarray.DataArray:
     """
-    Return the total number of days in dry periods of n days and more, during which the maximum or accumulated
-    precipitation on a window of n days is under the threshold.
+    Total length of dry spells
+
+    Total number of days in dry periods of a minimum length, during which the maximum or
+    accumulated precipitation within a window of the same length is under a threshold.
 
     Parameters
     ----------
@@ -668,23 +668,32 @@ def dry_spell_total_length(
     window : int
       Number of days where the maximum or accumulated precipitation is under threshold.
     op : {"max", "sum"}
-        Reduce operation.
+      Reduce operation.
     freq : str
       Resampling frequency.
     indexer :
-        Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
-        Indexing is done after finding the dry days, but before finding the spells.
+      Indexing parameters to compute the indicator on a temporal subset of the data.
+      It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+      Indexing is done after finding the dry days, but before finding the spells.
 
     Returns
     -------
     xarray.DataArray
       The {freq} total number of days in dry periods of minimum {window} days.
+
+    Notes
+    -----
+    The algorithm assumes days before and after the timeseries are "wet", meaning that
+    the condition for being considered part of a dry spell is stricter on the edges. For
+    example, with `window=3` and `op='sum'`, the first day of the series is considered
+    part of a dry spell only if the accumulated precipitation within the first 3 days is
+    under the threshold. In comparison, a day in the middle of the series is considered
+    part of a dry spell if any of the three 3-day periods of which it is part are
+    considered dry (so a total of five days are included in the computation, compared to only 3.)
     """
     pram = rate2amount(pr, out_units="mm")
     thresh = convert_units_to(thresh, pram)
 
-    # Pad with NaNs i.e. assuming dry days at the end.
     pram_pad = pram.pad(time=(0, window))
     mask = getattr(pram_pad.rolling(time=window), op)() < thresh
     dry = (mask.rolling(time=window).sum() >= 1).shift(time=-(window - 1))
