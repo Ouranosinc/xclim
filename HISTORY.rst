@@ -4,7 +4,7 @@ History
 
 0.33.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Tom Keel (:user:`Thomasjkeel`), Jeremy Fyke (:user:`JeremyFyke`), David Huard (:user:`huard`), Abel Aoun (:user:`bzah`), Juliette Lavoie (:user:`juliettelavoie`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Tom Keel (:user:`Thomasjkeel`), Jeremy Fyke (:user:`JeremyFyke`), David Huard (:user:`huard`), Abel Aoun (:user:`bzah`), Juliette Lavoie (:user:`juliettelavoie`), Yannick Rousseau (:user:`yrouranos`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -23,6 +23,7 @@ New features and enhancements
 * New ``xclim.indices.stats.parametric_cdf`` function to facilitate the computation of return periods over DataArrays of statistical distribution parameters (:issue:`876`, :pull:`984`).
 * Add ``copy`` parameter to ``percentile_doy`` to control if the array input can be dumped after computing percentiles (:issue:`932`, :pull:`985`).
 * Added ``properties.py`` and ``measures.py`` in order to perform diagnostic tests of sdba (:pull:`967`, :issue:`424`).
+* New improved algorithm for ``dry_spell_total_length``, performing the temporal indexing at the right moment and with control on the aggregation operator (``op``) for determining the dry spells.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
