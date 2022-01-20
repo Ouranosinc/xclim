@@ -117,7 +117,7 @@ def var(da: xr.DataArray, *, group: Union[str, Grouper] = "time") -> xr.DataArra
 
     Examples
     --------
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> var(da=pr, group='time.season')
     """
     attrs = da.attrs
@@ -155,7 +155,7 @@ def skewness(da: xr.DataArray, *, group: Union[str, Grouper] = "time") -> xr.Dat
 
     Examples
     --------
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> skewness(da=pr, group='time.season')
 
     See also
@@ -205,7 +205,7 @@ def quantile(
 
     Examples
     --------
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> quantile(da=pr, q=0.9, group='time.season')
     """
     attrs = da.attrs
@@ -263,7 +263,7 @@ def spell_length_distribution(
 
     Examples
     --------
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> spell_length_distribution(da=pr, op='<',thresh ='1mm d-1', group='time.season')
     """
     attrs = da.attrs
@@ -408,7 +408,7 @@ def annual_cycle_amplitude(
 
     Examples
     --------
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> annual_cycle_amplitude(da=pr, amplitude_type='relative')
     """
     attrs = da.attrs
@@ -450,7 +450,7 @@ def annual_cycle_phase(
 
     Examples
     --------
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> annual_cycle_phase(da=pr)
     """
     attrs = da.attrs
@@ -516,7 +516,7 @@ def corr_btw_var(
 
     Examples
     --------
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> tasmax = open_dataset('NRCANdaily/nrcan_canada_daily_tasmax_1990.nc').tasmax
     >>> corr_btw_var(da1=pr, da2=tasmax, group='time.season')
     """
@@ -597,7 +597,7 @@ def relative_frequency(
 
     Examples
     --------
-    >>> tasmax = xr.open_dataset("path_to_tasmax_file"').tasmax
+    >>> tasmax = open_dataset("path_to_tasmax_file").tasmax
     >>> relative_frequency(da=tasmax, op= '<', thresh= '0 degC', group='time.season')
     """
     attrs = da.attrs
@@ -662,7 +662,7 @@ def trend(
 
     Examples
     --------
-    >>> tas = xr.open_dataset(path_to_tas_file).tas
+    >>> tas = open_dataset(path_to_tas_file).tas
     >>> trend(da=tas, group='time.season')
     """
     attrs = da.attrs
@@ -734,7 +734,7 @@ def return_value(
 
     Examples
     --------
-    >>> tas = xr.open_dataset(path_to_tas_file).tas
+    >>> tas = open_dataset(path_to_tas_file).tas
     >>> return_value(da=tas, group='time.season')
     """
 
