@@ -2,7 +2,6 @@
 Base classes and developper tools
 ---------------------------------
 """
-import warnings
 from inspect import signature
 from types import FunctionType
 from typing import Callable, Mapping, Optional, Sequence, Set, Union
@@ -13,7 +12,7 @@ import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
 
-from xclim.core.calendar import days_in_year, get_calendar, max_doy, parse_offset
+from xclim.core.calendar import days_in_year, get_calendar
 from xclim.core.options import OPTIONS, SDBA_ENCODE_CF
 from xclim.core.utils import uses_dask
 
@@ -105,7 +104,6 @@ class Grouper(Parametrizable):
         group: str,
         window: int = 1,
         add_dims: Optional[Union[Sequence[str], Set[str]]] = None,
-        interp: Union[bool, str] = False,
     ):
         """Create the Grouper object.
 
@@ -122,19 +120,11 @@ class Grouper(Parametrizable):
           Additional dimensions that should be reduced in grouping operations. This behaviour is also controlled
           by the `main_only` parameter of the `apply` method. If any of these dimensions are absent from the dataarrays,
           they will be omitted.
-        interp : Union[bool, str]
-          Whether to return an interpolatable index in the `get_index` method. Only effective for `month` grouping.
-          Interpolation method names are accepted for convenience, "nearest" is translated to False, all other names
-          are translated to True.
-          This modifies the default, but `get_index` also accepts an `interp` argument overriding the one defined here..
         """
         if "." in group:
             dim, prop = group.split(".")
         else:
             dim, prop = group, "group"
-
-        if isinstance(interp, str):
-            interp = interp != "nearest"
 
         if isinstance(add_dims, str):
             add_dims = [add_dims]
@@ -146,7 +136,6 @@ class Grouper(Parametrizable):
             prop=prop,
             name=group,
             window=window,
-            interp=interp,
         )
 
     @classmethod
@@ -155,9 +144,24 @@ class Grouper(Parametrizable):
             group=kwargs.pop("group"),
             window=kwargs.pop("window", 1),
             add_dims=kwargs.pop("add_dims", []),
-            interp=kwargs.get("interp", False),
         )
         return kwargs
+
+    @property
+    def freq(self):
+        """The frequency string corresponding to the group. For use with xarray's resampling."""
+        return {
+            "group": "YS",
+            "season": "QS-DEC",
+            "month": "MS",
+            "week": "W",
+            "dayofyear": "D",
+        }.get(self.prop, None)
+
+    @property
+    def prop_name(self):
+        """A significative name of the grouping."""
+        return "year" if self.prop == "group" else self.prop
 
     def get_coordinate(self, ds=None):
         """Return the coordinate as in the output of group.apply.
@@ -168,6 +172,10 @@ class Grouper(Parametrizable):
         """
         if self.prop == "month":
             return xr.DataArray(np.arange(1, 13), dims=("month",), name="month")
+        if self.prop == "season":
+            return xr.DataArray(
+                ["DJF", "MAM", "JJA", "SON"], dims=("season",), name="season"
+            )
         if self.prop == "dayofyear":
             if ds is not None:
                 cal = get_calendar(ds, dim=self.dim)
@@ -239,7 +247,7 @@ class Grouper(Parametrizable):
     def get_index(
         self,
         da: Union[xr.DataArray, xr.Dataset],
-        interp: Optional[Union[bool, str]] = None,
+        interp: Optional[bool] = None,
     ):
         """Return the group index of each element along the main dimension.
 
@@ -248,9 +256,9 @@ class Grouper(Parametrizable):
         da : Union[xr.DataArray, xr.Dataset]
           The input array/dataset for which the group index is returned.
           It must have Grouper.dim as a coordinate.
-        interp : Union[bool, str]
-          Argument `interp` defaults to `self.interp`. If True, the returned index can be
-          used for interpolation. For month grouping, integer values represent the middle of the month, all other
+        interp : bool, optional
+          If True, the returned index can be used for interpolation. Only value for month
+          grouping, where integer values represent the middle of the month, all other
           days are linearly interpolated in between.
 
         Returns
@@ -275,21 +283,8 @@ class Grouper(Parametrizable):
                 f"Index {self.name} is not of type int (rather {i.dtype}), but {self.__class__.__name__} requires integer indexes."
             )
 
-        interp = (
-            (interp or self.interp)
-            if not isinstance(interp, str)
-            else interp != "nearest"
-        )
-        if interp:
-            if self.dim == "time":
-                if self.prop == "month":
-                    i = ind.month - 0.5 + ind.day / ind.days_in_month
-                elif self.prop == "dayofyear":
-                    i = ind.dayofyear
-                else:
-                    raise NotImplementedError
-            else:
-                raise NotImplementedError
+        if interp and self.dim == "time" and self.prop == "month":
+            i = ind.month - 0.5 + ind.day / ind.days_in_month
 
         xi = xr.DataArray(
             i,
@@ -409,6 +404,9 @@ class Grouper(Parametrizable):
             if uses_dask(out):
                 # or -1 in case dim_chunks is [], when no input is chunked (only happens if the operation is chunking the output)
                 out = out.chunk({self.dim: dim_chunks or -1})
+        if self.prop == "season" and self.prop in out.coords:
+            # Special case for "DIM.season", it is often returned in alphabetical order, but that doesn't fit the coord given in get_coordinate
+            out = out.sel(season=np.array(["DJF", "MAM", "JJA", "SON"]))
         if self.prop in out.dims and uses_dask(out):
             # Same as above : downstream methods expect only one chunk along the group
             out = out.chunk({self.prop: -1})
@@ -416,11 +414,13 @@ class Grouper(Parametrizable):
         return out
 
 
-def parse_group(func: Callable, kwargs=None) -> Callable:
+def parse_group(func: Callable, kwargs=None, allow_only=None) -> Callable:
     """Parse the kwargs given to a function to set the `group` arg with a Grouper object.
 
     This function can be used as a decorator, in which case the parsing and updating of the kwargs is done at call time.
     It can also be called with a function from which extract the default group and kwargs to update, in which case it returns the updated kwargs.
+
+    If allow_only is given, an exception is raised when the parsed group is not within that list.
     """
     sig = signature(func)
     if "group" in sig.parameters:
@@ -428,20 +428,29 @@ def parse_group(func: Callable, kwargs=None) -> Callable:
     else:
         default_group = None
 
-    def _update_kwargs(kwargs):
+    def _update_kwargs(kwargs, allowed=None):
         if default_group or "group" in kwargs:
             kwargs.setdefault("group", default_group)
             if not isinstance(kwargs["group"], Grouper):
                 kwargs = Grouper.from_kwargs(**kwargs)
+        if (
+            allowed is not None
+            and "group" in kwargs
+            and kwargs["group"].prop not in allowed
+        ):
+            raise ValueError(
+                f"Grouping on {kwargs['group'].prop_name} is not allowed for this "
+                f"function. Should be one of {allowed}."
+            )
         return kwargs
 
     if kwargs is not None:  # Not used as a decorator
-        return _update_kwargs(kwargs)
+        return _update_kwargs(kwargs, allowed=allow_only)
 
     # else (then it's a decorator)
     @wraps(func)
     def _parse_group(*args, **kwargs):
-        kwargs = _update_kwargs(kwargs)
+        kwargs = _update_kwargs(kwargs, allowed=allow_only)
         return func(*args, **kwargs)
 
     return _parse_group

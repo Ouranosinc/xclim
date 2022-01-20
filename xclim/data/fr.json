@@ -162,11 +162,23 @@
     "keywords": "courbes IDF",
     "abstract": "Maximum de l'intensité de précipitation horaire pour une durée et période donnée."
   },
+  "RPRCTOT": {
+    "long_name": "Proportion convective de la précipitation totale",
+    "description": "Proportion de la précipitation totale {freq:f} due à la précipitation convective pour les jours avec une précipitation d'au moins {thresh}.",
+    "title": "Proportion convective de la précipitation totale.",
+    "abstract": "Proportion de la précipitation totale due aux processus de convections. Seuls les jours avec un flux minimum de précipitation sont considérés."
+  },
   "WETDAYS": {
     "long_name": "Nombre de jours pluvieux (précip >= {thresh})",
     "description": "Nombre {freq:m} de jours où les précipitations sont au-dessus de {thresh}.",
     "title": "Jours mouillés",
     "abstract": "Nombre de jours où les précipitations sont au-dessus d'un seuil."
+  },
+  "WETDAY_PROP": {
+    "long_name": "Proportion de jours pluvieux (précip >= {thresh})",
+    "description": "Propotion {freq:m} de jours où les précipitations sont au-dessus de {thresh}.",
+    "title": "Proportion de jours pluvieux",
+    "abstract": "Proportion de jours où les précipitations sont au-dessus d'un seuil."
   },
   "CDD": {
     "long_name": "Durée maximale d'une période sèche",
@@ -801,6 +813,18 @@
     "title": "Fonte de neige maximale",
     "abstract": "Équivalent en eau de la fonte de neige maximale."
   },
+  "SNW_MAX": {
+    "long_name": "Quantité de neige maximale",
+    "description": "Quantité maximale {freq:f} de neige.",
+    "title": "Quantité de neige maximale",
+    "abstract": "Maximum de la quantité de neige journalière."
+  },
+  "SNW_MAX_DOY": {
+    "long_name": "Date de la quantité de neige maximale",
+    "description": "Date {freq:f} à laquelle la quantité de neige atteint sa valeur maximale.",
+    "title": "Date où la quantité de neige est maximale",
+    "abstract": "Jour de l'année où la quantité de neige atteint sa valeur maximale."
+  },
   "MELT_AND_PRECIP_MAX": {
     "long_name": "Maximum des apports en eau incluant la fonte de neige et les précipitations",
     "description": "Precipitation et fonte de neige maximales {freq:fpl} sur {window} jours.",
@@ -897,6 +921,12 @@
     "description": "Indice humidex décrivant la température ressentie par une personne en réponse à l'humidité relative.",
     "long_name": "indice humidex"
   },
+  "HEAT_INDEX": {
+    "title": "Indice de chaleur",
+    "abstract": "L'indice de chaleur est une estimation de la température ressentie par une personne à l'ombre lorsqu'on tient compte de l'humidité relative.",
+    "description": "Température ressentie estimée avec l'humidité relative et la température ambiante.",
+    "long_name": "Indice de chaleur"
+  },
   "POTENTIAL_EVAPOTRANSPIRATION": {
     "title": "Évapotranspiration potentielle",
     "abstract": "Le potentiel d'évaporation de l'eau du sol et de transpiration par les plantes si l'approvisionnement en eau est suffisant, avec une méthode donnée.",
@@ -956,5 +986,11 @@
     "abstract": "Nombre de jours où la vitesse du vent de surface est au-dessus d'un seuil.",
     "description": "Nombre {freq:m} de jours où la vitesse du vent de surface >= {thresh}.",
     "long_name": "Nombre {freq:m} de jours où la vitesse du vent de surface est au-dessus d'un seuil"
+  },
+  "JETSTREAM_METRIC_WOOLLINGS": {
+      "title": "Force et latitude du courant-jet",
+      "abstract": "Latitude et magnitude du maximum de la vitesse du vent zonal entre 15 à 75°N et -60 à 0°E.",
+      "description": ["Latitude journalière du maximum du vent zonal lissé", "Magnitude journalière du maximum du vent zonal lissé"],
+      "long_name": ["Latitude du maximum du vent zonal", "Magnitude du maximum du vent zonal"]
   }
 }

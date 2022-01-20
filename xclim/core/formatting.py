@@ -10,7 +10,7 @@ import re
 import string
 from ast import literal_eval
 from fnmatch import fnmatch
-from inspect import _empty
+from inspect import _empty  # noqa
 from typing import Dict, Mapping, Optional, Sequence, Union
 
 import xarray as xr

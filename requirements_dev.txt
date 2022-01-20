@@ -15,6 +15,7 @@ tokenize-rt
 tox
 xdoctest
 yamale
+yamllint
 # Documentation and examples
 distributed>=2.0
 ipykernel

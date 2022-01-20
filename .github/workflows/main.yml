@@ -11,30 +11,33 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        tox-env: [black]
+        tox-env:
+          - black
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.7
+          python-version: "3.7"
       - name: Install tox
         run: pip install tox
       - name: Run linting suite
         run: tox -e ${{ matrix.tox-env }}
 
   doctests:
+    needs: black
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        tox-env: [doctests_only]
+        tox-env:
+          - doctests_only
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.7
+          python-version: "3.7"
       - name: Install tox
         run: pip install tox
-      - name: Run lint
+      - name: Run doctests
         run: tox -e ${{ matrix.tox-env }}
 
   test:
@@ -43,42 +46,41 @@ jobs:
     strategy:
       matrix:
         include:
-          - tox-env: py37-xarray-lm3
-            python-version: 3.7
-          - tox-env: py38-slow-lm3
-            python-version: 3.8
+          - tox-env: py37-slow-lm3
+            python-version: "3.7"
+          - tox-env: py38-xarray-lm3
+            python-version: "3.8"
           - tox-env: py39-lm3
-            python-version: 3.9
+            python-version: "3.9"
+          # Bottleneck does not yet support Python3.10
+          # https://github.com/pydata/bottleneck/issues/388
+          # - tox-env: py310-xarray-lm3
+          #   python-version: "3.10"
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install tox
-      run: pip install tox
-    - name: Test with tox
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: tox -e ${{ matrix.tox-env }}
-    - name: report coverage
-      uses: AndreMiras/coveralls-python-action@develop
-      with:
-        flag-name: run-${{ matrix.tox-env }}
-        parallel: true
-
-#    - name: Coveralls
-#      uses: coverallsapp/github-action@master
-#      with:
-#        github-token: ${{ secrets.GITHUB_TOKEN }}
-#        flag-name: run-${{ matrix.python-version }}
-#        parallel: true
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install tox
+        run: pip install tox
+      - name: Test with tox
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: tox -e ${{ matrix.tox-env }}
+      - name: report coverage
+        uses: AndreMiras/coveralls-python-action@develop
+        with:
+          flag-name: run-${{ matrix.tox-env }}
+          parallel: true
 
   finish:
-    needs: [test, doctests]
+    needs:
+      - test
+      - doctests
     runs-on: ubuntu-latest
     steps:
-    - name: Coveralls Finished
-      uses: AndreMiras/coveralls-python-action@develop
-      with:
-        parallel-finished: true
+      - name: Coveralls Finished
+        uses: AndreMiras/coveralls-python-action@develop
+        with:
+          parallel-finished: true

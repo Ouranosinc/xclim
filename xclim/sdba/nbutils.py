@@ -3,7 +3,7 @@ Numba-accelerated utilities
 ---------------------------
 """
 import numpy as np
-from numba import boolean, float32, float64, guvectorize, njit
+from numba import boolean, float32, float64, guvectorize, int64, njit
 from xarray import DataArray
 from xarray.core import utils
 
@@ -172,3 +172,39 @@ def _escore(tgt, sim, out):
 
     w = n1 * n2 / (n1 + n2)
     out[0] = w * (sXY + sXY - sXX - sYY) / 2
+
+
+@njit
+def _first_and_last_nonnull(arr):
+    """For each row of arr, get the first and last non NaN elements."""
+    out = np.empty((arr.shape[0], 2))
+    for i in range(arr.shape[0]):
+        idxs = np.where(~np.isnan(arr[i]))[0]
+        if idxs.size > 0:
+            out[i] = arr[i][idxs[np.array([0, -1])]]
+        else:
+            out[i] = np.array([np.NaN, np.NaN])
+    return out
+
+
+@njit
+def _extrapolate_on_quantiles(interp, oldx, oldg, oldy, newx, newg, method="constant"):
+    """Apply extrapolation to the output of interpolation on quantiles with a given
+    grouping. Arguments are the same as _interp_on_quantiles_2D.
+
+    "constant" extrapolation is done independently for each group.
+    """
+    igrp = np.empty_like(newg)
+    np.around(newg, 0, igrp)
+    igrp = igrp.astype(int64)
+    bnds = _first_and_last_nonnull(oldx)
+    toolow = newx < bnds[:, 0][igrp]
+    toohigh = newx > bnds[:, 1][igrp]
+    if method == "constant":
+        constants = _first_and_last_nonnull(oldy)
+        interp[toolow] = constants[igrp, 0][toolow]
+        interp[toohigh] = constants[igrp, 1][toohigh]
+    else:  # 'nan'
+        interp[toolow] = np.NaN
+        interp[toohigh] = np.NaN
+    return interp

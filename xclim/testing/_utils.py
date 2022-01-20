@@ -423,13 +423,13 @@ def publish_release_notes(style: str = "md") -> str:
         hyperlink_replacements = {
             r":issue:`([0-9]+)`": r"`GH/\1 <https://github.com/Ouranosinc/xclim/issues/\1>`_",
             r":pull:`([0-9]+)`": r"`PR/\1 <https://github.com/Ouranosinc/xclim/pull/\>`_",
-            r":user:`([a-zA-Z0-9_]+)`": r"`@\1 <https://github.com/\1>`_",
+            r":user:`([a-zA-Z0-9_.-]+)`": r"`@\1 <https://github.com/\1>`_",
         }
     elif style == "md":
         hyperlink_replacements = {
             r":issue:`([0-9]+)`": r"[GH/\1](https://github.com/Ouranosinc/xclim/issues/\1)",
             r":pull:`([0-9]+)`": r"[PR/\1](https://github.com/Ouranosinc/xclim/pull/\1)",
-            r":user:`([a-zA-Z0-9_]+)`": r"[@\1](https://github.com/\1)",
+            r":user:`([a-zA-Z0-9_.-]+)`": r"[@\1](https://github.com/\1)",
         }
     else:
         raise NotImplementedError()

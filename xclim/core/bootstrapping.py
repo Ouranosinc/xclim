@@ -7,7 +7,7 @@ import xarray
 from boltons.funcutils import wraps
 from xarray.core.dataarray import DataArray
 
-from xclim.core.calendar import convert_calendar, parse_offset, percentile_doy
+from .calendar import convert_calendar, parse_offset, percentile_doy
 
 
 def percentile_bootstrap(func):
@@ -149,7 +149,7 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xarray.DataArray:
         # If the group year is in the base period, run the bootstrap
         if year in per_clim_years:
             bda = bootstrap_year(da_base, in_base_years, label)
-            kw[per_key] = percentile_doy(bda, **pdoy_args)
+            kw[per_key] = percentile_doy(bda, **pdoy_args, copy=False)
             value = compute_indice_func(**kw).mean(dim="_bootstrap", keep_attrs=True)
 
         # Otherwise run the normal computation using the original percentile

@@ -16,7 +16,6 @@ import pint.converters
 import pint.unit
 import xarray as xr
 from boltons.funcutils import wraps
-from packaging import version
 from pint.definitions import UnitDefinition
 
 from .calendar import date_range, get_calendar, parse_offset
@@ -24,6 +23,7 @@ from .options import datacheck
 from .utils import ValidationError
 
 __all__ = [
+    "check_units",
     "convert_units_to",
     "declare_units",
     "infer_sampling_units",
@@ -49,30 +49,16 @@ units.define(
 units.define("year = 365.25 * day = yr")
 
 # Define commonly encountered units not defined by pint
-if version.parse(pint.__version__) >= version.parse("0.10"):
-    units.define("@alias degC = C = deg_C")
-    units.define("@alias degK = deg_K")
-    units.define("@alias day = d")
-    units.define("@alias hour = h")  # Not the Planck constant...
-    units.define(
-        "@alias degree = degrees_north = degrees_N = degreesN = degree_north = degree_N = degreeN"
-    )
-    units.define(
-        "@alias degree = degrees_east = degrees_E = degreesE = degree_east = degree_E = degreeE"
-    )
-
-else:
-    units.define("degC = kelvin; offset: 273.15 = celsius = C = deg_C")
-    units.define("d = day")
-    units.define("h = hour")
-    units.define(
-        "degrees_north = degree = degrees_N = degreesN = degree_north = degree_N "
-        "= degreeN"
-    )
-    units.define(
-        "degrees_east = degree = degrees_E = degreesE = degree_east = degree_E = degreeE"
-    )
-
+units.define("@alias degC = C = deg_C")
+units.define("@alias degK = deg_K")
+units.define("@alias day = d")
+units.define("@alias hour = h")  # Not the Planck constant...
+units.define(
+    "degrees_north = 1 * degree = degrees_north = degrees_N = degreesN = degree_north = degree_N = degreeN"
+)
+units.define(
+    "degrees_east = 1 * degree = degrees_east = degrees_E = degreesE = degree_east = degree_E = degreeE"
+)
 units.define("[speed] = [length] / [time]")
 
 # Default context.
@@ -723,3 +709,28 @@ def declare_units(
         return wrapper
 
     return dec
+
+
+def ensure_delta(unit: str = None):
+    """
+    Return delta units for temperature.
+
+    For dimensions where delta exist in pint (Temperature), it replaces the temperature unit by delta_degC or
+    delta_degF based on the input unit.
+    For other dimensionality, it just gives back the input units.
+
+    Parameters
+    ----------
+    unit : str
+      unit to transform in delta (or not)
+    """
+    u = units2pint(unit)
+    d = 1 * u
+    #
+    delta_unit = pint2cfunits(d - d)
+    # replace kelvin/rankine by delta_degC/F
+    if "kelvin" in u._units:
+        delta_unit = pint2cfunits(u / units2pint("K") * units2pint("delta_degC"))
+    if "degree_Rankine" in u._units:
+        delta_unit = pint2cfunits(u / units2pint("°R") * units2pint("delta_degF"))
+    return delta_unit

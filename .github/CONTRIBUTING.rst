@@ -80,15 +80,13 @@ If you are reporting a bug, please include:
 Fix Bugs
 ~~~~~~~~
 
-Look through the GitHub issues for bugs. Anything tagged with "bug" and "help
-wanted" is open to whoever wants to implement it.
+Look through the GitHub issues for bugs. Anything tagged with "bug" and "help wanted" is open to whoever wants to implement it.
 
 Write Documentation
 ~~~~~~~~~~~~~~~~~~~
 
-xclim could always use more documentation, whether as part of the
-official xclim docs, in docstrings, or even on the web in blog posts,
-articles, and such.
+xclim could always use more documentation, whether as part of the official xclim docs, in docstrings, or even on the
+web in blog posts, articles, and such.
 
 Submit Feedback
 ~~~~~~~~~~~~~~~
@@ -99,7 +97,7 @@ If you are proposing a feature:
 
 * Explain in detail how it would work.
 * Keep the scope as narrow as possible, to make it easier to implement.
-* Remember that this is a volunteer-driven project, and that contributions are welcome :)
+* The Xclim development team welcomes you and is always on hand to help. :)
 
 Get Started!
 ------------
@@ -110,7 +108,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
 2. Clone your fork locally::
 
-    $ git clone git@github.com:Ouranosinc/xclim.git
+    $ git clone git@github.com:{my_github_username}/xclim.git
     $ cd xclim/
 
 3. Create a development environment. We recommend using ``conda``::
@@ -131,12 +129,13 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     # To run pre-commit hooks manually:
     $ pre-commit run --all-files
 
-  Instead of ``pre-commit``, you could also verify your changes manually with `black` and `pydocstyle`::
+  Instead of ``pre-commit``, you could also verify your changes manually with `black`, `flake8`, `pydocstyle`, and `yamllint`::
 
     $ black --check --target-version py37 xclim xclim/testing/tests
     $ black --check --target-version py37 --include "\.ipynb$" docs
     $ flake8 xclim xclim/testing/tests
     $ pydocstyle --convention=numpy --match='(?!test_).*\.py' xclim
+    $ yamllint --config-file .yamllint.yaml xclim
 
 6. When unit/doc tests are added or notebooks updated, use ``pytest`` to run them. Alternatively, one can use ``tox`` to run all testing suites as would github do when the PR is submitted and new commits are pushed::
 
@@ -145,7 +144,6 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     $ pytest  # for all tests, excluding docstests.
     $ tox  # run all testing suites
 
-
 7. Commit your changes and push your branch to GitHub::
 
     $ git add *
@@ -153,7 +151,8 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     $ git commit -m "Your detailed description of your changes."
     # If installed, `pre-commit` will run checks at this point:
     # If no errors are found, changes will be committed.
-    # If errors are found, modifications will be made and warnings will be raised if intervention is needed. After changes, simply `git commit` again.
+    # If errors are found, modifications will be made and warnings will be raised if intervention is needed.
+    # After changes, simply `git commit` again.
 
     $ git push origin name-of-your-bugfix-or-feature
 
@@ -182,6 +181,10 @@ Before you submit a pull request, please follow these guidelines:
 
    * `numpydoc`_
    * `reStructuredText (ReST)`_
+
+.. note::
+    If you aren't accustomed to writing documentation in reStructuredText (`.rst`), we encourage you to spend a few minutes going over the
+    incredibly well-summarized `reStructuredText Primer`_ from the sphinx-doc maintainer community.
 
 5. The pull request should work for Python 3.7, 3.8, and 3.9 as well as raise test coverage.
    Pull requests are also checked for documentation build status and for `PEP8`_ compliance.
@@ -328,5 +331,6 @@ Before updating the main conda-forge recipe, we *strongly* suggest performing th
 
 .. _`numpydoc`: https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt
 .. _`reStructuredText (ReST)`: https://www.jetbrains.com/help/pycharm/using-docstrings-to-specify-types.html
+.. _`reStructuredText Primer`: https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
 .. _`GitHub Repository`: https://github.com/Ouranosinc/xclim
 .. _`PEP8`: https://www.python.org/dev/peps/pep-0008/

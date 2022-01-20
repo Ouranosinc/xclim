@@ -1045,6 +1045,62 @@ class TestTxDays:
         np.testing.assert_array_equal(out[1:], [0])
 
 
+class TestJetStreamIndices:
+    # data needs to consist of at least 61 days for Lanczos filter (here: 66 days)
+    time_coords = pd.date_range("2000-01-01", "2000-03-06", freq="D")
+    # make fake ua data array of shape (66 days, 3 plevs, 3 lons, 3 lats) to mimic jet at 16.N
+    zeros_arr = np.zeros(shape=(66, 3, 3, 1))
+    ones_arr = np.ones(shape=(66, 3, 3, 1))
+    fake_jet = np.concatenate([zeros_arr, ones_arr, zeros_arr], axis=3)  # axis 3 is lat
+    da_ua = xr.DataArray(
+        fake_jet,
+        coords={
+            "time": time_coords,
+            "Z": [75000, 85000, 100000],
+            "X": [120, 121, 122],
+            "Y": [15, 16, 17],
+        },
+        dims=["time", "Z", "X", "Y"],
+        attrs={
+            "standard_name": "eastward_wind",
+            "units": "m s-1",
+        },
+    )
+
+    da_ua.Z.attrs = {"units": "Pa", "standard_name": "pressure"}
+    da_ua.X.attrs = {"units": "degrees_east", "standard_name": "longitude"}
+    da_ua.Y.attrs = {"units": "degrees_north", "standard_name": "latitude"}
+    da_ua.T.attrs = {"standard_name": "time"}
+
+    def test_jetstream_metric_woollings(self):
+        da_ua = self.da_ua
+        # Should raise ValueError as longitude is in 0-360 instead of -180.E-180.W
+        with pytest.raises(ValueError):
+            _ = xci.jetstream_metric_woollings(da_ua)
+        # redefine longitude coordiantes to -180.E-180.W so function runs
+        da_ua = da_ua.cf.assign_coords(
+            {
+                "X": (
+                    "X",
+                    (da_ua.cf["longitude"] - 180).data,
+                    da_ua.cf["longitude"].attrs,
+                )
+            }
+        )
+        out = xci.jetstream_metric_woollings(da_ua)
+        np.testing.assert_equal(len(out), 2)
+        jetlat, jetstr = out
+        # should be 6 values that are not NaN because of 61 day moving window and 66 chosen
+        np.testing.assert_equal(np.sum(~np.isnan(jetlat).data), 6)
+        np.testing.assert_equal(np.sum(~np.isnan(jetstr).data), 6)
+        np.testing.assert_equal(jetlat.max().data, 16.0)
+        np.testing.assert_equal(
+            jetstr.max().data, 0.999276877412766
+        )  # manually checked (sum of lanzcos weights for 61 day window and 0.1 cutoff)
+        assert jetlat.units == da_ua.cf["latitude"].units
+        assert jetstr.units == da_ua.units
+
+
 class TestLiquidPrecipitationRatio:
     def test_simple(self, pr_series, tas_series):
         pr = np.zeros(100)
@@ -2174,6 +2230,30 @@ def test_humidex(tas_series):
     np.testing.assert_array_almost_equal(hk, expected.to("K"), 0)
 
 
+def test_heat_index(tas_series, hurs_series):
+
+    tas = tas_series([15, 20, 25, 25, 30, 30, 35, 35, 40, 40, 45, 45])
+    tas.attrs["units"] = "C"
+
+    hurs = hurs_series([5, 5, 0, 25, 25, 50, 25, 50, 25, 50, 25, 50, 25, 50])
+
+    expected = (
+        np.array([np.nan, np.nan, 24, 25, 28, 31, 34, 41, 41, 55, 50, 73]) * units.degC
+    )
+
+    # Celsius
+    hc = xci.heat_index(tas, hurs)
+    np.testing.assert_array_almost_equal(hc, expected, 0)
+
+    # Kelvin
+    hk = xci.heat_index(convert_units_to(tas, "K"), hurs)
+    np.testing.assert_array_almost_equal(hk, expected.to("K"), 0)
+
+    # Fahrenheit
+    hf = xci.heat_index(convert_units_to(tas, "fahrenheit"), hurs)
+    np.testing.assert_array_almost_equal(hf, expected.to("fahrenheit"), 0)
+
+
 @pytest.mark.parametrize(
     "op,exp", [("max", 11), ("sum", 21), ("count", 3), ("mean", 7)]
 )
@@ -2348,6 +2428,15 @@ class TestPotentialEvapotranspiration:
         out = xci.potential_evapotranspiration(tas=tm, method="TW48")
         np.testing.assert_allclose(out[0, 1], [42.7619242 / (86400 * 30)], rtol=1e-1)
 
+    def test_mcguinnessbordne(self, tasmin_series, tasmax_series):
+        tn = tasmin_series(np.array([0, 5, 10]) + 273.15)
+        tn = tn.expand_dims(lat=[45])
+        tx = tasmax_series(np.array([10, 15, 20]) + 273.15)
+        tx = tx.expand_dims(lat=[45])
+
+        out = xci.potential_evapotranspiration(tn, tx, method="MB05")
+        np.testing.assert_allclose(out[2, 0], [2.78253138816 / 86400], rtol=1e-2)
+
 
 def test_water_budget(pr_series, tasmin_series, tasmax_series):
     pr = pr_series(np.array([10, 10, 10]))
@@ -2499,3 +2588,65 @@ def test_dry_spell_frequency_op(pr_series):
 
     np.testing.assert_allclose(test_sum[0], [2], rtol=1e-1)
     np.testing.assert_allclose(test_max[0], [3], rtol=1e-1)
+
+
+class TestRPRCTot:
+    def test_simple(self, pr_series, prc_series):
+        a_pr = np.zeros(365)
+        a_pr[:7] += [2, 4, 6, 8, 10, 12, 14]
+        a_pr[35] = 6
+        a_pr[100:105] += [2, 6, 10, 14, 20]
+
+        a_prc = a_pr.copy() * 2  # Make ratio 2
+        a_prc[35] = 0  # zero convective precip
+
+        pr = pr_series(a_pr)
+        pr.attrs["units"] = "mm/day"
+
+        prc = prc_series(a_prc)
+        prc.attrs["units"] = "mm/day"
+
+        out = xci.rprctot(pr, prc, thresh="5 mm/day", freq="M")
+        np.testing.assert_allclose(
+            out,
+            [
+                2,
+                0,
+                np.NaN,
+                2,
+                np.NaN,
+                np.NaN,
+                np.NaN,
+                np.NaN,
+                np.NaN,
+                np.NaN,
+                np.NaN,
+                np.NaN,
+            ],
+        )
+
+
+class TestWetDays:
+    def test_simple(self, pr_series):
+        a = np.zeros(365)
+        a[:6] += [4, 5.5, 6, 6, 2, 7]  # 4 above 5 in Jan
+        a[100:105] += [1, 6, 7, 2, 1]  # 2 above 5 in Mar
+
+        pr = pr_series(a)
+        pr.attrs["units"] = "mm/day"
+
+        out = xci.wetdays(pr, thresh="5 mm/day", freq="M")
+        np.testing.assert_allclose(out, [4, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0])
+
+
+class TestWetDaysProp:
+    def test_simple(self, pr_series):
+        a = np.zeros(365)
+        a[:6] += [4, 5.5, 6, 6, 2, 7]  # 4 above 5 in Jan
+        a[100:105] += [1, 6, 7, 2, 1]  # 2 above 5 in Mar
+
+        pr = pr_series(a)
+        pr.attrs["units"] = "mm/day"
+
+        out = xci.wetdays_prop(pr, thresh="5 mm/day", freq="M")
+        np.testing.assert_allclose(out, [4 / 31, 0, 0, 2 / 31, 0, 0, 0, 0, 0, 0, 0, 0])

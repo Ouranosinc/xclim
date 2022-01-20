@@ -66,10 +66,33 @@
       "name": "Low, Jwen-Fai"
     },
     {
+      "affiliation": "University College London",
+      "name": "Keel, Tom",
+      "orcid": "0000-0001-9193-5271"
+    },
+    {
       "affiliation": "Ouranos",
       "name": "Lavoie, Juliette",
       "orcid": "0000-0002-4708-5182"
-    }
+    },
+    {
+      "affiliation": "CEH",
+      "name": "Tanguy, Maliko"
+    },
+    {
+      "affiliation": "University College London",
+      "name": "Barnes, Clair",
+      "orcid": "0000-0002-7806-7913"
+    },
+    {
+      "affiliation": "University College London",
+      "name": "Alegre, Raquel",
+      "orcid": "0000-0002-6081-0721"
+    },
+    {
+      "affiliation": "University College London",
+      "name": "Quinn, Jamie",
+    },
   ],
   "keywords": [
     "xclim",

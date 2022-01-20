@@ -2,7 +2,6 @@
 
 from typing import Dict, Optional, Sequence, Tuple, Union
 
-import dask.array
 import numpy as np
 import xarray as xr
 
@@ -18,6 +17,7 @@ from . import generic
 __all__ = [
     "fit",
     "parametric_quantile",
+    "parametric_cdf",
     "fa",
     "frequency_analysis",
     "get_dist",
@@ -51,7 +51,7 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
 
     # Return NaNs if array is empty.
     if len(x) <= 1:
-        return [np.nan] * nparams
+        return np.asarray([np.nan] * nparams)
 
     # Estimate parameters
     if method == "ML":
@@ -59,6 +59,8 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
         params = dist.fit(x, *args, **kwargs, **fitkwargs)
     elif method == "PWM":
         params = list(dist.lmom_fit(x).values())
+
+    params = np.asarray(params)
 
     # Fill with NaNs if one of the parameters is NaN
     if np.isnan(params).any():
@@ -112,28 +114,27 @@ def fit(
     shape_params = [] if dc.shapes is None else dc.shapes.split(",")
     dist_params = shape_params + ["loc", "scale"]
 
-    # xarray.apply_ufunc does not yet support multiple outputs with dask parallelism.
-    duck = dask.array if isinstance(da.data, dask.array.Array) else np
-    data = duck.apply_along_axis(
+    data = xr.apply_ufunc(
         _fitfunc_1d,
-        da.get_axis_num(dim),
         da,
-        dist=dc if method == "ML" else lm3dc,
-        nparams=len(dist_params),
-        method=method,
-        **fitkwargs,
+        input_core_dims=[[dim]],
+        output_core_dims=[["dparams"]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[float],
+        keep_attrs=True,
+        kwargs=dict(
+            dist=dc if method == "ML" else lm3dc,
+            nparams=len(dist_params),
+            method=method,
+            **fitkwargs,
+        ),
     )
 
-    # Coordinates for the distribution parameters
-    coords = dict(da.coords.items())
-    if dim in coords:
-        coords.pop(dim)
-    coords["dparams"] = dist_params
-
-    # Dimensions for the distribution parameters
+    # Add coordinates for the distribution parameters and transpose to original shape (with dim -> dparams)
     dims = [d if d != dim else "dparams" for d in da.dims]
+    out = data.assign_coords(dparams=dist_params).transpose(*dims)
 
-    out = xr.DataArray(data=data, coords=coords, dims=dims)
     out.attrs = prefix_attrs(
         da.attrs, ["standard_name", "long_name", "units", "description"], "original_"
     )
@@ -192,26 +193,89 @@ def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]) -> xr.DataArra
         def func(x):
             return dc.ppf(q, *x)
 
-    duck = dask.array if isinstance(p.data, dask.array.Array) else np
-    data = duck.apply_along_axis(func, p.get_axis_num("dparams"), p)
+    data = xr.apply_ufunc(
+        func,
+        p,
+        input_core_dims=[["dparams"]],
+        output_core_dims=[["quantile"]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[float],
+        keep_attrs=True,
+    )
 
-    # Create coordinate for the return periods
-    coords = dict(p.coords.items())
-    coords.pop("dparams")
-    coords["quantile"] = q
-    # Create dimensions
+    # Assign quantile coordinates and transpose to preserve original dimension order
     dims = [d if d != "dparams" else "quantile" for d in p.dims]
-
-    out = xr.DataArray(data=data, coords=coords, dims=dims)
+    out = data.assign_coords(quantile=q).transpose(*dims)
     out.attrs = unprefix_attrs(p.attrs, ["units", "standard_name"], "original_")
 
     attrs = dict(
         long_name=f"{dist} quantiles",
         description=f"Quantiles estimated by the {dist} distribution",
-        cell_methods=merge_attributes("dparams: ppf", out, new_line=" "),
+        cell_methods="dparams: ppf",
         history=update_history(
             "Compute parametric quantiles from distribution parameters",
             new_name="parametric_quantile",
+            parameters=p,
+        ),
+    )
+    out.attrs.update(attrs)
+    return out
+
+
+def parametric_cdf(p: xr.DataArray, v: Union[float, Sequence]) -> xr.DataArray:
+    """Return the cumulative distribution function corresponding to the given distribution parameters and value.
+
+    Parameters
+    ----------
+    p : xr.DataArray
+      Distribution parameters returned by the `fit` function.
+      The array should have dimension `dparams` storing the distribution parameters,
+      and attribute `scipy_dist`, storing the name of the distribution.
+    v : Union[float, Sequence]
+      Value to compute the CDF.
+
+    Returns
+    -------
+    xarray.DataArray
+      An array of parametric CDF values estimated from the distribution parameters.
+
+    Notes
+    -----
+    """
+    v = np.atleast_1d(v)
+
+    # Get the distribution
+    dist = p.attrs["scipy_dist"]
+    dc = get_dist(dist)
+
+    # Create a lambda function to facilitate passing arguments to dask. There is probably a better way to do this.
+    def func(x):
+        return dc.cdf(v, *x)
+
+    data = xr.apply_ufunc(
+        func,
+        p,
+        input_core_dims=[["dparams"]],
+        output_core_dims=[["cdf"]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[float],
+        keep_attrs=True,
+    )
+
+    # Assign quantile coordinates and transpose to preserve original dimension order
+    dims = [d if d != "dparams" else "cdf" for d in p.dims]
+    out = data.assign_coords(cdf=v).transpose(*dims)
+    out.attrs = unprefix_attrs(p.attrs, ["units", "standard_name"], "original_")
+
+    attrs = dict(
+        long_name=f"{dist} cdf",
+        description=f"CDF estimated by the {dist} distribution",
+        cell_methods="dparams: cdf",
+        history=update_history(
+            "Compute parametric cdf from distribution parameters",
+            new_name="parametric_cdf",
             parameters=p,
         ),
     )

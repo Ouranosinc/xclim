@@ -11,7 +11,7 @@ URL = "https://github.com/Ouranosinc/xclim"
 AUTHOR = "Travis Logan"
 AUTHOR_EMAIL = "logan.travis@ouranos.ca"
 REQUIRES_PYTHON = ">=3.7.0"
-VERSION = "0.31.5-beta"
+VERSION = "0.32.4-beta"
 LICENSE = "Apache Software License 2.0"
 
 with open("README.rst") as readme_file:
@@ -23,7 +23,7 @@ with open("HISTORY.rst") as history_file:
 hyperlink_replacements = {
     r":issue:`([0-9]+)`": r"`GH/\1 <https://github.com/Ouranosinc/xclim/issues/\1>`_",
     r":pull:`([0-9]+)`": r"`PR/\1 <https://github.com/Ouranosinc/xclim/pull/\1>`_",
-    r":user:`([a-zA-Z0-9_]+)`": r"`@\1 <https://github.com/\1>`_",
+    r":user:`([a-zA-Z0-9_.-]+)`": r"`@\1 <https://github.com/\1>`_",
 }
 
 for search, replacement in hyperlink_replacements.items():
@@ -32,12 +32,13 @@ for search, replacement in hyperlink_replacements.items():
 requirements = [
     "numpy>=1.16",
     "xarray>=0.17",
+    "cf-xarray>=0.6.1",
     "scipy>=1.2",
     "numba",
     "pandas>=0.23",
     "cftime>=1.4.1",
     "dask[array]>=2.6",
-    "pint>=0.9",
+    "pint>=0.10",
     "bottleneck~=1.3.1",
     "boltons>=20.1",
     "scikit-learn>=0.21.3",
@@ -45,6 +46,7 @@ requirements = [
     "packaging>=20.0",
     "pyyaml",
     "jsonpickle",
+    "statsmodels",
 ]
 
 dev_requirements = []
