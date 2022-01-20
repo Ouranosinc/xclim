@@ -82,7 +82,7 @@ def mean(da: xr.DataArray, *, group: Union[str, Grouper] = "time") -> xr.DataArr
 
     Examples
     --------
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> pr = open_dataset(path_to_pr_file).pr
     >>> mean(da=pr, group='time.season')
     """
     attrs = da.attrs
@@ -597,7 +597,7 @@ def relative_frequency(
 
     Examples
     --------
-    >>> tasmax = open_dataset("path_to_tasmax_file").tasmax
+    >>> tasmax = open_dataset(path_to_tasmax_file).tasmax
     >>> relative_frequency(da=tasmax, op= '<', thresh= '0 degC', group='time.season')
     """
     attrs = da.attrs
