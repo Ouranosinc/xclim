@@ -38,6 +38,7 @@ Internal changes
 * `TrainAdjust` and `Adjust` object have a new `skip_input_checks` keyword arg to their `train` and  `adjust` methods. When `True`, all unit-, calendar- and coordinate-related input checks are skipped. This is an ugly solution to disappearing attributes when using `xr.map_blocks` with dask. (:pull:`964`).
 * Some slow tests were marked `slow` to help speed up the standard test ensemble. (:pull:`969`).
     - Tox testing ensemble now also reports slowest tests using the ``--durations`` flag.
+* Added a CI step for cancelling running workflows in pull requests that receive multiple pushes. (:pull:`988`).
 
 0.32.1 (2021-12-17)
 -------------------
