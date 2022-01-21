@@ -76,6 +76,16 @@ SDBA's user API
 .. automodule:: xclim.sdba.loess
    :members:
 
+.. automodule:: xclim.sdba.properties
+   :members:
+   :exclude-members: register_statistical_properties
+
+.. automodule:: xclim.sdba.measures
+   :members:
+   :exclude-members: check_same_units_and_convert
+
+
+
 Developer tools
 ===============
 
@@ -92,3 +102,7 @@ Developer tools
 
 .. autoclass:: xclim.sdba.adjustment.Adjust
    :members:
+
+.. autofunction:: xclim.sdba.properties.register_statistical_properties
+
+.. autofunction:: xclim.sdba.measures.check_same_units_and_convert

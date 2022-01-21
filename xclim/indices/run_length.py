@@ -14,6 +14,7 @@ from warnings import warn
 import numpy as np
 import xarray as xr
 from dask import array as dsk
+from numba import njit
 from xarray.core.utils import get_temp_dimname
 
 from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
@@ -813,6 +814,15 @@ def last_run_before_date(
     return last_run(run, window=window, dim=dim, coord=coord)
 
 
+@njit
+def _rle_1d(ia):
+    y = ia[1:] != ia[:-1]  # pairwise unequal (string safe)
+    i = np.append(np.nonzero(y)[0], ia.size - 1)  # must include last element position
+    rl = np.diff(np.append(-1, i))  # run lengths
+    pos = np.cumsum(np.append(0, rl))[:-1]  # positions
+    return ia[i], rl, pos
+
+
 def rle_1d(
     arr: Union[int, float, bool, Sequence[Union[int, float, bool]]]
 ) -> Tuple[np.array, np.array, np.array]:
@@ -847,12 +857,7 @@ def rle_1d(
         warn(e)
         # Returning None makes some other 1d func below fail.
         return np.array(np.nan), 0, np.array(np.nan)
-
-    y = np.array(ia[1:] != ia[:-1])  # pairwise unequal (string safe)
-    i = np.append(np.where(y), n - 1)  # must include last element position
-    rl = np.diff(np.append(-1, i))  # run lengths
-    pos = np.cumsum(np.append(0, rl))[:-1]  # positions
-    return ia[i], rl, pos
+    return _rle_1d(ia)
 
 
 def first_run_1d(arr: Sequence[Union[int, float]], window: int) -> int:
