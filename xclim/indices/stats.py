@@ -91,7 +91,7 @@ def fit(
       The PWM method is usually more robust to outliers.
     dim : str
       The dimension upon which to perform the indexing (default: "time").
-    **fitkwargs
+    fitkwargs
       Other arguments passed directly to :py:func:`_fitstart` and to the distribution's `fit`.
 
     Returns
@@ -296,7 +296,7 @@ def fa(
       Return period. The period depends on the resolution of the input data. If the input array's resolution is
       yearly, then the return period is in years.
     dist : str
-      Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
+      Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
       (see scipy.stats).
     mode : {'min', 'max}
       Whether we are looking for a probability of exceedance (max) or a probability of non-exceedance (min).
@@ -350,7 +350,7 @@ def frequency_analysis(
       Return period. The period depends on the resolution of the input data. If the input array's resolution is
       yearly, then the return period is in years.
     dist : str
-      Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
+      Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
       (see scipy.stats).
     window : int
       Averaging window length (days).
@@ -420,7 +420,7 @@ def _fit_start(x, dist, **fitkwargs) -> Tuple[Tuple, Dict]:
     x : array-like
       Input data.
     dist : str
-      Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
+      Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
       (see scipy.stats). Only `genextreme` and `weibull_exp` distributions are supported.
 
     Returns
@@ -466,8 +466,8 @@ def _dist_method_1D(
 ) -> xr.DataArray:
     """Statistical function for given argument on given distribution initialized with params.
 
-    See :ref:`scipy:scipy.stats.rv_continuous` for a available functions and their arguments.
-    Every method where "*args" are the distribution parameters can be wrapped.
+    See :py:ref:`scipy:scipy.stats.rv_continuous` for all available functions and their arguments.
+    Every method where `"*args"` are the distribution parameters can be wrapped.
 
     Parameters
     ----------
@@ -500,8 +500,8 @@ def dist_method(
 ) -> xr.DataArray:
     """Vectorized statistical function for given argument on given distribution initialized with params.
 
-    See :ref:`scipy:scipy.stats.rv_continuous` for a available functions and their arguments.
-    Methods where "*args" are the distribution parameters can be wrapped, except those
+    See :ref:`scipy:scipy.stats.rv_continuous` for all available functions and their arguments.
+    Methods where `"*args"` are the distribution parameters can be wrapped, except those
     that return new dimensions (Ex: 'rvs' with size != 1, 'stats' with more than one moment, 'interval', 'support')
 
     Parameters

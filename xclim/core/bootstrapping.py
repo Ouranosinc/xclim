@@ -18,15 +18,17 @@ def percentile_bootstrap(func):
     Boostraping avoids discontinuities in the exceedance between the "in base" period over which percentiles are
     computed, and "out of base" periods. See `bootstrap_func` for details.
 
-    Example of declaration:
-    @declare_units(tas="[temperature]", t90="[temperature]")
-    @percentile_bootstrap
-    def tg90p(
-        tas: xarray.DataArray,
-        t90: xarray.DataArray,
-        freq: str = "YS",
-        bootstrap: bool = False
-    ) -> xarray.DataArray:
+    Example of declaration::
+
+    >>> # xdoctest: +SKIP
+    >>> @declare_units(tas="[temperature]", t90="[temperature]")
+    >>> @percentile_bootstrap
+    >>> def tg90p(
+    >>>    tas: xarray.DataArray,
+    >>>    t90: xarray.DataArray,
+    >>>    freq: str = "YS",
+    >>>    bootstrap: bool = False
+    >>>) -> xarray.DataArray:
 
     Examples
     --------
@@ -80,16 +82,16 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xarray.DataArray:
     This function is meant to be used by the `percentile_bootstrap` decorator.
     The parameters of the percentile calculation (percentile, window, base period) are stored in the
     attributes of the percentile DataArray.
-    The bootstrap algorithm implemented here does the following:
+    The bootstrap algorithm implemented here does the following::
 
-    For each temporal grouping in the calculation of the indice
-        If the group `g_t` is in the base period
-            For every other group `g_s` in the base period
-                Replace group `g_t` by `g_s`
-                Compute percentile on resampled time series
-                Compute indice function using percentile
-            Average output from indice function over all resampled time series
-        Else compute indice function using original percentile
+        For each temporal grouping in the calculation of the indice
+            If the group `g_t` is in the base period
+                For every other group `g_s` in the base period
+                    Replace group `g_t` by `g_s`
+                    Compute percentile on resampled time series
+                    Compute indice function using percentile
+                Average output from indice function over all resampled time series
+            Else compute indice function using original percentile
 
     """
     # Identify the input and the percentile arrays from the bound arguments

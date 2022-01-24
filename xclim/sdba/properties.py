@@ -73,7 +73,7 @@ def mean(da: xr.DataArray, *, group: Union[str, Grouper] = "time") -> xr.DataArr
       Variable on which to calculate the diagnostic.
     group : {'time', 'time.season', 'time.month'}
       Grouping of the output.
-      Eg. If 'time.month', the temporal average is performed separately for each month.
+      E.g. If 'time.month', the temporal average is performed separately for each month.
 
     Returns
     -------
@@ -108,7 +108,7 @@ def var(da: xr.DataArray, *, group: Union[str, Grouper] = "time") -> xr.DataArra
       Variable on which to calculate the diagnostic.
     group : {'time', 'time.season', 'time.month'}
       Grouping of the output.
-      Eg. If 'time.month', the variance is performed separately for each month.
+      E.g. If 'time.month', the variance is performed separately for each month.
 
     Returns
     -------
@@ -146,7 +146,7 @@ def skewness(da: xr.DataArray, *, group: Union[str, Grouper] = "time") -> xr.Dat
       Variable on which to calculate the diagnostic.
     group : {'time', 'time.season', 'time.month'}
       Grouping of the output.
-      Eg. If 'time.month', the skewness is performed separately for each month.
+      E.g. If 'time.month', the skewness is performed separately for each month.
 
     Returns
     -------
@@ -196,7 +196,7 @@ def quantile(
       Quantile to be calculated. Should be between 0 and 1.
     group : {'time', 'time.season', 'time.month'}
       Grouping of the output.
-      Eg. If 'time.month', the quantile is computed separately for each month.
+      E.g. If 'time.month', the quantile is computed separately for each month.
 
     Returns
     -------
@@ -329,7 +329,7 @@ def acf(
       Lag.
     group : {'time.season', 'time.month'}
       Grouping of the output.
-      Eg. If 'time.month', the autocorrelation is calculated over each month separately for all years.
+      E.g. If 'time.month', the autocorrelation is calculated over each month separately for all years.
       Then, the autocorrelation for all Jan/Feb/... is averaged over all years, giving 12 outputs for each grid point.
 
     Returns

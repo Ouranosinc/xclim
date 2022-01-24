@@ -233,11 +233,7 @@ def domain_count(da: xr.DataArray, low: float, high: float, freq: str) -> xr.Dat
 
 
 def get_daily_events(da: xr.DataArray, da_value: float, operator: str) -> xr.DataArray:
-    r"""Return a 0/1 mask when a condition is True or False.
-
-    the function returns 1 where operator(da, da_value) is True
-                         0 where operator(da, da_value) is False
-                         nan where da is nan
+    """Return a 0/1 mask when a condition is True or False.
 
     Parameters
     ----------
@@ -245,6 +241,13 @@ def get_daily_events(da: xr.DataArray, da_value: float, operator: str) -> xr.Dat
     da_value : float
     operator : {">", "<", ">=", "<=", "gt", "lt", "ge", "le"}
       Logical operator {>, <, >=, <=, gt, lt, ge, le}. e.g. arr > thresh.
+
+    Notes
+    -----
+    the function returns::
+        - 1 where operator(da, da_value) is True
+        - 0 where operator(da, da_value) is False
+        - nan where da is nan
 
     Returns
     -------
@@ -311,7 +314,7 @@ def count_occurrences(
       Quantity.
     condition : {">", "<", ">=", "<=", "==", "!="}
       Operator.
-    freq: str
+    freq : str
       Resampling frequency.
 
     Returns
@@ -761,7 +764,9 @@ def day_lengths(
     summer_solstice: DayOfYearStr
       Date of summer solstice in northern hemisphere. Used for approximating solar julian dates.
     start_date: xarray.DataArray or DayOfYearStr, optional
+      Start date to consider for calculating mean day lengths. Default: None.
     end_date: xarray.DataArray or DayOfYearStr, optional
+      End date to consider for calculating mean day lengths. Default: None.
     freq : str
       Resampling frequency.
 

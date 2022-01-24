@@ -193,7 +193,7 @@ class TrainAdjust(BaseAdjustment):
         ----------
         sim : DataArray
           Time series to be bias-adjusted, usually a model output.
-        *args : xr.DataArray
+        args : xr.DataArray
           Other DataArrays needed for the adjustment (usually none).
         kwargs :
           Algorithm-specific keyword arguments, see class doc.
@@ -537,7 +537,7 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
 
     References
     ----------
-    Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias correction of GCM precipitation by quantile mapping: How well do methods preserve changes in quantiles and extremes? Journal of Climate, 28(17), 6938–6959. https://doi.org/10.1175/JCLI-D-14-00754.1
+    .. [Cannon2015] Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias correction of GCM precipitation by quantile mapping: How well do methods preserve changes in quantiles and extremes? Journal of Climate, 28(17), 6938–6959. https://doi.org/10.1175/JCLI-D-14-00754.1
     """
 
     def _adjust(self, sim, interp="nearest", extrapolation="constant"):
@@ -1091,7 +1091,7 @@ class NpdfTransform(Adjust):
     iteration, a new random rotation matrix is generated.
 
     The original algorithm ([Pitie05]_), stops the iteration when some distance score converges. Following
-    [Cannon18_] and the MBCn implementation in [CannonR]_, we instead fix the number of iterations.
+    [Cannon18]_ and the MBCn implementation in [CannonR]_, we instead fix the number of iterations.
 
     As done by [Cannon18]_, the distance score chosen is the "Energy distance" from [SkezelyRizzo]_
     (see :py:func:`xclim.sdba.processing.escore`).

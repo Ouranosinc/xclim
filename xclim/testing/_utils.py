@@ -127,7 +127,7 @@ def open_dataset(
     dap_url : str, optional
         URL to OPeNDAP folder where the data is stored. If supplied, supersedes github_url.
     github_url : str
-        URL to Github repository where the data is stored.
+        URL to GitHub repository where the data is stored.
     branch : str, optional
         For GitHub-hosted files, the branch to download from.
     cache_dir : Path
@@ -135,7 +135,7 @@ def open_dataset(
     cache : bool
         If True, then cache data locally for use on subsequent calls.
     kwds : dict, optional
-        For NetCDF files, **kwds passed to xarray.open_dataset.
+        For NetCDF files, kwds passed to :py:func:`xarray.open_dataset`.
 
     Returns
     -------

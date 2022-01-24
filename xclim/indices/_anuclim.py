@@ -109,7 +109,8 @@ def temperature_seasonality(
     ----------
     tas : xarray.DataArray
       Mean temperature at daily, weekly, or monthly frequency.
-    freq :
+    freq : str
+      Resampling frequency.
 
     Returns
     -------

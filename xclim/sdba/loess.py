@@ -188,8 +188,8 @@ def loess_smoothing(
       "tricube" : a smooth top-hat like curve.
       "gaussian" : a gaussian curve, f gives the span for 95% of the values.
     equal_spacing : bool, optional
-      Whether to use the equal spacing optimization. If None (the default), it is activated only if the
-      x axis is equally-spaced. When activated, `dx = x[1] - x[0]`.
+      Whether to use the equal spacing optimization. If `None` (the default), it is activated only if the
+      x-axis is equally-spaced. When activated, `dx = x[1] - x[0]`.
 
     Notes
     -----
@@ -197,16 +197,17 @@ def loess_smoothing(
 
     - :math:`W(x) > 0` for :math:`|x| < 1`
     - :math:`W(-x) = W(x)`
-    - :math:`W(x)` is nonincreasing for :math:`x \ge 0`
+    - :math:`W(x)` is non-increasing for :math:`x \ge 0`
     - :math:`W(x) = 0` for :math:`|x| \ge 0`
 
-    If a callable is provided, it should only accept the 1D `np.ndarray` :math:`x` which is an absolute value
+    If a Callable is provided, it should only accept the 1D `np.ndarray` :math:`x` which is an absolute value
     function going from 1 to 0 to 1 around :math:`x_i`, for all values where :math:`x - x_i < h_i` with
     :math:`h_i` the distance of the rth nearest neighbor of  :math:`x_i`, :math:`r = f * size(x)`.
 
     References
     ----------
     .. [Cleveland1979] Cleveland, W. S., 1979. Robust Locally Weighted Regression and Smoothing Scatterplot, Journal of the American Statistical Association 74, 829–836.
+
     Code adapted from https://gist.github.com/agramfort/850437
     """
     x = da[dim]

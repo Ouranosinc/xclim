@@ -16,7 +16,9 @@ import pint.converters
 import pint.unit
 import xarray as xr
 from boltons.funcutils import wraps
+from pint import Unit
 from pint.definitions import UnitDefinition
+from xarray import DataArray
 
 from .calendar import date_range, get_calendar, parse_offset
 from .options import datacheck
@@ -103,7 +105,7 @@ units.enable_contexts(hydro)
 # @end
 
 
-def units2pint(value: Union[xr.DataArray, str, units.Quantity]) -> units.Unit:
+def units2pint(value: Union[xr.DataArray, str, units.Quantity]) -> Unit:
     """Return the pint Unit for the DataArray units.
 
     Parameters
@@ -264,9 +266,8 @@ def convert_units_to(
     source: Union[str, xr.DataArray, Any],
     target: Union[str, xr.DataArray, Any],
     context: Optional[str] = None,
-):
-    """
-    Convert a mathematical expression into a value with the same units as a DataArray.
+) -> Union[DataArray, float, int, Any]:
+    """Convert a mathematical expression into a value with the same units as a DataArray.
 
     Parameters
     ----------
@@ -274,11 +275,12 @@ def convert_units_to(
       The value to be converted, e.g. '4C' or '1 mm/d'.
     target : Union[str, xr.DataArray, Any]
       Target array of values to which units must conform.
-    context : Optional[str]
+    context : str, optional
+      The unit definition context. Default: None.
 
     Returns
     -------
-    out
+    Union[DataArray, float, int, Any]
       The source value converted to target's units.
     """
     # Target units
@@ -376,7 +378,8 @@ def infer_sampling_units(
     u : str
       Units as a string, understandable by pint.
     """
-    freq = xr.infer_freq(da.time)
+    dimmed = getattr(da, dim)
+    freq = xr.infer_freq(dimmed)
     if freq is None:
         freq = deffreq
 
@@ -493,7 +496,8 @@ def _rate_and_amount_converter(
     if u is None:
         # Get sampling period lengths in nanoseconds
         # In the case with no freq, last period as the same length as the one before.
-        # In the case with freq in M, Q, A, this has been dealt with above in `time` and `label` has been update accordingly.
+        # In the case with freq in M, Q, A, this has been dealt with above in `time`
+        # and `label` has been updated accordingly.
         dt = (
             time.diff(dim, label=label)
             .reindex({dim: da[dim]}, method="ffill")

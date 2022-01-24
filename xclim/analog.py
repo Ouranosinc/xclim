@@ -24,7 +24,7 @@ choices thus enter the computation:
 The climate indices chosen to compute the spatial analogues are usually annual values of
 indices relevant to the intended audience of these maps. For example, in the case of the
 wine grape industry, the climate indices examined could include the length of the frost-free
-season, growing degree-days, annual winter minimum temperature andand annual number of
+season, growing degree-days, annual winter minimum temperature and annual number of
 very cold days [Roy2017]_.
 
 
@@ -33,8 +33,8 @@ Methods to compute the (dis)similarity between samples
 
 This module implements five of the six methods described in [Grenier2013]_ to measure
 the dissimilarity between two samples. Some of these algorithms can be used to
-test whether or not two samples have been drawn from the same distribution.
-Here, they are used to find areas with analog climate conditions to a target
+test whether two samples have been drawn from the same distribution.
+Here, they are used in finding areas with analog climate conditions to a target
 climate.
 
 Methods available
@@ -101,7 +101,7 @@ def spatial_analogs(
       The dimension over which the *distributions* are constructed. This can be a multi-index dimension.
     method : {'seuclidean', 'nearest_neighbor', 'zech_aslan', 'kolmogorov_smirnov', 'friedman_rafsky', 'kldiv'}
       Which method to use when computing the dissimilarity statistic.
-    **kwargs
+    kwargs
       Any other parameter passed directly to the dissimilarity method.
 
     Returns
@@ -296,7 +296,7 @@ def nearest_neighbor(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 @metric
 def zech_aslan(x: np.ndarray, y: np.ndarray) -> float:
     """
-    Compute the Zech-Aslan energy distance dissimimilarity metric based on an analogy with the energy of a cloud of electrical charges.
+    Compute the Zech-Aslan energy distance dissimilarity metric based on an analogy with the energy of a cloud of electrical charges.
 
     Parameters
     ----------
@@ -335,7 +335,7 @@ def zech_aslan(x: np.ndarray, y: np.ndarray) -> float:
 @metric
 def skezely_rizzo(x, y):
     """
-    Compute the Skezely-Rizzo energy distance dissimimilarity metric based on an analogy with the energy of a cloud of electrical charges.
+    Compute the Skezely-Rizzo energy distance dissimilarity metric based on an analogy with the energy of a cloud of electrical charges.
 
     Parameters
     ----------
@@ -397,7 +397,7 @@ def friedman_rafsky(x: np.ndarray, y: np.ndarray) -> float:
 
     References
     ----------
-    Friedman J.H. and Rafsky L.C. (1979) Multivariate generaliations of the
+    Friedman J.H. and Rafsky L.C. (1979) Multivariate generalisations of the
     Wald-Wolfowitz and Smirnov two-sample tests. Annals of Stat. Vol.7, No. 4, 697-717.
     """
     from scipy.sparse.csgraph import minimum_spanning_tree
@@ -434,7 +434,7 @@ def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
     Returns
     -------
     float
-        Kolmogorov-Smirnov dissimilarity metric ranging from 0 to 1.
+      Kolmogorov-Smirnov dissimilarity metric ranging from 0 to 1.
 
     References
     ----------
@@ -551,7 +551,7 @@ def kldiv(
     s, _ = ytree.query(x, k=kmax, eps=0, p=2, workers=2)
 
     # There is a mistake in the paper. In Eq. 14, the right side misses a
-    # negative sign on the first term of the right hand side.
+    # negative sign on the first term of the right-hand side.
     out = list()
     for ki in ka:
         # The 0th nearest neighbour of x[i] in x is x[i] itself.

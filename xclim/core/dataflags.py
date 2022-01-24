@@ -298,6 +298,7 @@ def very_large_precipitation_events(
     Parameters
     ----------
     da : xarray.DataArray
+      The DataArray being examined.
     thresh : str
       Threshold to search array for that will trigger flag if any day exceeds value.
 
@@ -332,6 +333,7 @@ def values_op_thresh_repeating_for_n_or_more_days(
     Parameters
     ----------
     da : xarray.DataArray
+      The DataArray being examined.
     n : int
       Number of days needed to trigger flag.
     thresh : str
@@ -377,10 +379,11 @@ def wind_values_outside_of_bounds(
     Parameters
     ----------
     da : xarray.DataArray
+      The DataArray being examined.
     lower : str
-      Lower limit for wind speed.
+      The lower limit for wind speed.
     upper : str
-      Upper limit for wind speed.
+      The upper limit for wind speed.
 
     Returns
     -------
@@ -418,6 +421,7 @@ def outside_n_standard_deviations_of_climatology(
     Parameters
     ----------
     da : xarray.DataArray
+      The DataArray being examined.
     n : int
       Number of standard deviations.
     window : int
@@ -465,6 +469,7 @@ def values_repeating_for_n_or_more_days(
     Parameters
     ----------
     da : xarray.DataArray
+      The DataArray being examined.
     n : int
       Number of days to trigger flag.
 
