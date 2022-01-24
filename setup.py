@@ -30,23 +30,23 @@ for search, replacement in hyperlink_replacements.items():
     history = re.sub(search, replacement, history)
 
 requirements = [
-    "numpy>=1.16",
-    "xarray>=0.17",
-    "cf-xarray>=0.6.1",
-    "scipy>=1.2",
-    "numba",
-    "pandas>=0.23",
-    "cftime>=1.4.1",
-    "dask[array]>=2.6",
-    "pint>=0.10",
-    "bottleneck~=1.3.1",
     "boltons>=20.1",
-    "scikit-learn>=0.21.3",
+    "bottleneck~=1.3.1",
+    "cf-xarray>=0.6.1",
+    "cftime>=1.4.1",
     "Click",
-    "packaging>=20.0",
-    "pyyaml",
+    "dask[array]>=2.6",
     "jsonpickle",
+    "numba",
+    "numpy>=1.16",
+    "packaging>=20.0",
+    "pandas>=0.23",
+    "pint>=0.10",
+    "pyyaml",
+    "scikit-learn>=0.21.3",
+    "scipy>=1.2",
     "statsmodels",
+    "xarray>=0.17",
 ]
 
 dev_requirements = []

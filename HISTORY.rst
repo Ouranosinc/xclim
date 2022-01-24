@@ -12,7 +12,7 @@ Announcements
 
 New indicators
 ^^^^^^^^^^^^^^
-* ``jetstream_metric_woollings`` indicator returns latitude and strength of jet-stream in u-wind field. (:pull:`924`, :issue:`923`).
+* ``jetstream_metric_woollings`` indicator returns latitude and strength of jet-stream in u-wind field. (:issue:`923`, :pull:`924`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -22,20 +22,22 @@ New features and enhancements
     - ``xclim.sdba.adjustment.PrincipalComponent`` was modified to have a simpler signature. The "full" method for finding the best PC orientation was added. (:issue:`697`).
 * New ``xclim.indices.stats.parametric_cdf`` function to facilitate the computation of return periods over DataArrays of statistical distribution parameters (:issue:`876`, :pull:`984`).
 * Add ``copy`` parameter to ``percentile_doy`` to control if the array input can be dumped after computing percentiles (:issue:`932`, :pull:`985`).
-* Added ``properties.py`` and ``measures.py`` in order to perform diagnostic tests of sdba (:pull:`967`, :issue:`424`).
+* Added ``properties.py`` and ``measures.py`` in order to perform diagnostic tests of sdba (:issue:`424`, :pull:`967`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * To reduce import complexity, `select_time` has been refactored/moved from ``xclim.indices.generic`` to ``xclim.core.calendar``. (:issue:`949`, :pull:`969`).
-* The stacking dimension of ``xclim.sdba.stack_variables`` has been renamed to "multivar" to avoid name conflicts with the "variables" property of xarray Datasets. (:pull:`964`)`.`
-* `xclim` now requires `cf-xarray>=0.6.1`.
+* The stacking dimension of ``xclim.sdba.stack_variables`` has been renamed to "multivar" to avoid name conflicts with the "variables" property of xarray Datasets. (:pull:`964`).
+* `xclim` now requires `cf-xarray>=0.6.1`. (:issue:`923`, :pull:`924`).
+* `xclim` now requires `statsmodels`. (:issue:`424`, :pull:`967`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Added a CI hook in ``.pre-commit-config.yaml`` to perform automated `pre-commit` corrections with GitHub CI. (:pull:`965`).
 * Adjusted CI hooks to fail earlier if `lint` checks fail. (:pull:`972`).
 * `TrainAdjust` and `Adjust` object have a new `skip_input_checks` keyword arg to their `train` and  `adjust` methods. When `True`, all unit-, calendar- and coordinate-related input checks are skipped. This is an ugly solution to disappearing attributes when using `xr.map_blocks` with dask. (:pull:`964`).
-
+* Some slow tests were marked `slow` to help speed up the standard test ensemble. (:pull:`969`).
+    - Tox testing ensemble now also reports slowest tests using the ``--durations`` flag.
 
 0.32.1 (2021-12-17)
 -------------------
