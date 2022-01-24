@@ -39,6 +39,7 @@ Internal changes
 * Some slow tests were marked `slow` to help speed up the standard test ensemble. (:pull:`969`).
     - Tox testing ensemble now also reports slowest tests using the ``--durations`` flag.
 * `pint` no longer emits warnings about redefined units when the `logging` module is loaded. (:issue:`990`, :pull:`991`).
+* `pandas` is now temporarily pinned below version 1.4.0. (related: :issue:`992`).
 
 0.32.1 (2021-12-17)
 -------------------
