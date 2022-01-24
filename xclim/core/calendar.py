@@ -58,7 +58,6 @@ __all__ = [
     "uniform_calendars",
 ]
 
-
 # Maximum day of year in each calendar.
 max_doy = {
     "default": 366,
@@ -492,9 +491,17 @@ def percentile_doy(
 
     if rrr.chunks is not None and len(rrr.chunks[rrr.get_axis_num("stack_dim")]) > 1:
         # Preserve chunk size
-        time_chunks_count = len(arr.chunks[arr.get_axis_num("time")])
-        doy_chunk_size = round(len(rrr.dayofyear) / (window * time_chunks_count))
-        rrr = rrr.chunk(dict(stack_dim=-1, dayofyear=doy_chunk_size))
+        initial_chunk_count = 1
+        for chunk in arr.chunks:
+            initial_chunk_count *= len(chunk)
+        dims = set(arr.dims) & set(rrr.dims)
+        chunks = {
+            d: (np.ceil(len(arr[d]) / (window * initial_chunk_count / len(rrr.dims))))
+            for d in dims
+        }
+        chunks["stack_dim"] = -1
+        chunks["dayofyear"] = -1
+        rrr = rrr.chunk(chunks)
 
     if np.isscalar(per):
         per = [per]
