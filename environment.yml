@@ -25,6 +25,7 @@ dependencies:
     - coverage
     - distributed>=2.0
     - flake8
+    - flake8-rst-docstrings
     - ipykernel
     - matplotlib
     - mypy
