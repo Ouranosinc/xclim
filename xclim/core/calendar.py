@@ -491,17 +491,9 @@ def percentile_doy(
 
     if rrr.chunks is not None and len(rrr.chunks[rrr.get_axis_num("stack_dim")]) > 1:
         # Preserve chunk size
-        initial_chunk_count = 1
-        for chunk in arr.chunks:
-            initial_chunk_count *= len(chunk)
-        dims = set(arr.dims) & set(rrr.dims)
-        chunks = {
-            d: (np.ceil(len(arr[d]) / (window * initial_chunk_count / len(rrr.dims))))
-            for d in dims
-        }
-        chunks["stack_dim"] = -1
-        chunks["dayofyear"] = -1
-        rrr = rrr.chunk(chunks)
+        time_chunks_count = len(arr.chunks[arr.get_axis_num("time")])
+        doy_chunk_size = np.ceil(len(rrr.dayofyear) / (window * time_chunks_count))
+        rrr = rrr.chunk(dict(stack_dim=-1, dayofyear=doy_chunk_size))
 
     if np.isscalar(per):
         per = [per]
@@ -629,12 +621,14 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArra
     doy_max_source = int(source.dayofyear.max())
 
     # Interpolate to fill na values
-    tmp = source.interpolate_na(dim="dayofyear")
+    filled_na = source.chunk(dict(dayofyear=-1)).interpolate_na(dim="dayofyear")
 
     # Interpolate to target dayofyear range
-    tmp.coords["dayofyear"] = np.linspace(start=1, stop=doy_max, num=doy_max_source)
+    filled_na.coords["dayofyear"] = np.linspace(
+        start=1, stop=doy_max, num=doy_max_source
+    )
 
-    return tmp.interp(dayofyear=range(1, doy_max + 1))
+    return filled_na.interp(dayofyear=range(1, doy_max + 1))
 
 
 def adjust_doy_calendar(
