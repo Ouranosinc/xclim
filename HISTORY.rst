@@ -27,6 +27,7 @@ New features and enhancements
 * New ``xclim.indices.stats.parametric_cdf`` function to facilitate the computation of return periods over DataArrays of statistical distribution parameters (:issue:`876`, :pull:`984`).
 * Add ``copy`` parameter to ``percentile_doy`` to control if the array input can be dumped after computing percentiles (:issue:`932`, :pull:`985`).
 * Added ``properties.py`` and ``measures.py`` in order to perform diagnostic tests of sdba (:issue:`424`, :pull:`967`).
+* Update how ``percentile_doy`` rechunk the input data to preserve the initial chunk size. This should make the computation memory footprint more predictable (:issue:`932`, :pull:`987`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
