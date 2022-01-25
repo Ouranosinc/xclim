@@ -27,6 +27,8 @@ from xarray.coding.cftime_offsets import (
 from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core.resample import DataArrayResample
 
+from xclim.core.utils import uses_dask
+
 from .formatting import update_xclim_history
 
 __all__ = [
@@ -621,7 +623,11 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArra
     doy_max_source = int(source.dayofyear.max())
 
     # Interpolate to fill na values
-    filled_na = source.chunk(dict(dayofyear=-1)).interpolate_na(dim="dayofyear")
+    da = source
+    if uses_dask(source):
+        # interpolate_na cannot run on chunked dayofyear.
+        da = source.chunk(dict(dayofyear=-1))
+    filled_na = da.interpolate_na(dim="dayofyear")
 
     # Interpolate to target dayofyear range
     filled_na.coords["dayofyear"] = np.linspace(
