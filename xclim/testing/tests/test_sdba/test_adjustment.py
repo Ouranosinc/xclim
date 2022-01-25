@@ -657,6 +657,7 @@ class TestExtremeValues:
             scen.where(exval) > EX.ds.thresh
         ).sum()
 
+    @pytest.mark.slow
     def test_real_data(self):
 
         dsim = open_dataset("sdba/CanESM2_1950-2100.nc").chunk()

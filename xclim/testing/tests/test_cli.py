@@ -275,6 +275,7 @@ def test_suspicious_precipitation_flags(pr_series, tmp_path):
             assert var
 
 
+@pytest.mark.slow
 def test_dataflags_output(tmp_path, tas_series, tasmax_series, tasmin_series):
     ds = xr.Dataset()
     for series, val in zip([tas_series, tasmax_series, tasmin_series], [0, 10, -10]):
