@@ -27,6 +27,8 @@ from xarray.coding.cftime_offsets import (
 from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core.resample import DataArrayResample
 
+from xclim.core.utils import uses_dask
+
 from .formatting import update_xclim_history
 
 __all__ = [
@@ -57,7 +59,6 @@ __all__ = [
     "within_bnds_doy",
     "uniform_calendars",
 ]
-
 
 # Maximum day of year in each calendar.
 max_doy = {
@@ -491,7 +492,10 @@ def percentile_doy(
     rrr = rr.assign_coords(time=ind).unstack("time").stack(stack_dim=("year", "window"))
 
     if rrr.chunks is not None and len(rrr.chunks[rrr.get_axis_num("stack_dim")]) > 1:
-        rrr = rrr.chunk(dict(stack_dim=-1))
+        # Preserve chunk size
+        time_chunks_count = len(arr.chunks[arr.get_axis_num("time")])
+        doy_chunk_size = np.ceil(len(rrr.dayofyear) / (window * time_chunks_count))
+        rrr = rrr.chunk(dict(stack_dim=-1, dayofyear=doy_chunk_size))
 
     if np.isscalar(per):
         per = [per]
@@ -619,12 +623,18 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArra
     doy_max_source = int(source.dayofyear.max())
 
     # Interpolate to fill na values
-    tmp = source.interpolate_na(dim="dayofyear")
+    da = source
+    if uses_dask(source):
+        # interpolate_na cannot run on chunked dayofyear.
+        da = source.chunk(dict(dayofyear=-1))
+    filled_na = da.interpolate_na(dim="dayofyear")
 
     # Interpolate to target dayofyear range
-    tmp.coords["dayofyear"] = np.linspace(start=1, stop=doy_max, num=doy_max_source)
+    filled_na.coords["dayofyear"] = np.linspace(
+        start=1, stop=doy_max, num=doy_max_source
+    )
 
-    return tmp.interp(dayofyear=range(1, doy_max + 1))
+    return filled_na.interp(dayofyear=range(1, doy_max + 1))
 
 
 def adjust_doy_calendar(
