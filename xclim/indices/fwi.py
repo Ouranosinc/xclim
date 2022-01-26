@@ -18,8 +18,8 @@ Parts of the code and of the documentation in this submodule are directly taken 
 Fire season
 -----------
 Fire weather indexes are iteratively computed, each day's value depending on the previous day indexes.
-Additionally and optionally, the codes are "shut-down" (set to NaN) in winter. There are a few ways of computing this
-shut-down and the subsequent spring start-up. The `fire_season` function allows for full control of that,
+Additionally and optionally, the codes are "shut down" (set to NaN) in winter. There are a few ways of computing this
+shut down and the subsequent spring start-up. The `fire_season` function allows for full control of that,
 replicating the `fireSeason` method in the R package. It produces a mask to be given a `season_mask` in the
 indicators. However, the `fire_weather_ufunc` and the indicators also accept a `season_method` parameter so the
 fire season can be computed inside the iterator. Passing `season_method=None` switches to an "always on" mode
@@ -926,8 +926,8 @@ def fire_weather_ufunc(
     indexes : Sequence[str], optional
         Which indexes to compute. If intermediate indexes are needed, they will be added to the list and output.
     season_method : {None, "WF93", "LA08", "GFWED"}
-        How to compute the start-up and shut-down of the fire season.
-        If "None", no start-ups or shut-downs are computed, similar to the R fwi function.
+        How to compute the start-up and shutdown of the fire season.
+        If "None", no start-ups or shutdowns are computed, similar to the R fwi function.
         Ignored if `season_mask` is given.
     overwintering: bool
         Whether to activate DC overwintering or not. If True, either season_method or season_mask must be given.
@@ -1402,8 +1402,8 @@ def drought_code(
     season_mask : xr.DataArray, optional
       Boolean mask, True where/when the fire season is active.
     season_method : {None, "WF93", "LA08", "GFWED"}
-      How to compute the start-up and shut-down of the fire season.
-      If "None", no start-ups or shut-downs are computed, similar to the R fwi function.
+      How to compute the start-up and shutdown of the fire season.
+      If "None", no start-ups or shutdowns are computed, similar to the R fwi function.
       Ignored if `season_mask` is given.
     overwintering: bool
       Whether to activate DC overwintering or not. If True, either season_method or season_mask must be given.
