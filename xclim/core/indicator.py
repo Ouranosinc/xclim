@@ -261,7 +261,7 @@ class Indicator(IndicatorRegistrar):
     in :py:data:`xclim.core.indicator.registry`.
 
     Attributes in `Indicator.cf_attrs` will be formatted and added to the output variable(s).
-    This attribute is a list of dictionaries. For convenience and retrocompatibility,
+    This attribute is a list of dictionaries. For convenience and retro-compatibility,
     standard CF attributes (names listed in :py:attr:`xclim.core.indicator.Indicator._cf_names`)
     can be passed as strings or list of strings directly to the indicator constructor.
 
@@ -1040,10 +1040,10 @@ class Indicator(IndicatorRegistrar):
         Parameters
         ----------
         locale : Union[str, Sequence[str]]
-            The POSIX name of the locale or a tuple of a locale name and a path to a
-            json file defining the translations. See `xclim.locale` for details.
+          The POSIX name of the locale or a tuple of a locale name and a path to a
+          json file defining the translations. See `xclim.locale` for details.
         fill_missing : bool
-            If True (default fill the missing attributes by their english values.
+           If True (default) fill the missing attributes by their english values.
         """
 
         def _translate(cf_attrs, names, var_id=None):
@@ -1086,8 +1086,8 @@ class Indicator(IndicatorRegistrar):
         Parameters
         ----------
         args : mapping, optional
-            Arguments as passed to the call method of the indicator.
-            If not given, the default arguments will be used when formatting the attributes.
+          Arguments as passed to the call method of the indicator.
+          If not given, the default arguments will be used when formatting the attributes.
 
         Notes
         -----
@@ -1136,6 +1136,7 @@ class Indicator(IndicatorRegistrar):
         args : dict, optional
           Function call arguments. If not given, the default arguments will be used when formatting the attributes.
         formatter : AttrFormatter
+          Plaintext mappings for indicator attributes.
         """
         # Use defaults
         if args is None:

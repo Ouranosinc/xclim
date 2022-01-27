@@ -121,12 +121,12 @@ def get_local_dict(locale: Union[str, Sequence[str], Tuple[str, dict]]):
         if locale not in _LOCALES:
             raise UnavailableLocaleError(locale)
 
-        return (locale, _LOCALES[locale])
+        return locale, _LOCALES[locale]
 
     if isinstance(locale[1], dict):
         trans = locale[1]
     else:
-        # Thus a string pointing to a json file
+        # Thus, a string pointing to a json file
         trans = read_locale_file(locale[1])
 
     if locale[0] in _LOCALES:
@@ -134,7 +134,7 @@ def get_local_dict(locale: Union[str, Sequence[str], Tuple[str, dict]]):
         # Passed translations have priority
         loaded_trans.update(trans)
         trans = loaded_trans
-    return (locale[0], trans)
+    return locale[0], trans
 
 
 def get_local_attrs(
@@ -150,7 +150,7 @@ def get_local_attrs(
     indicator : str or sequence of strings
         Indicator's class name, usually the same as in `xc.core.indicator.registry`.
         If multiple names are passed, the attrs from each indicator are merged, with the highest priority set to the first name.
-    *locales : str
+    locales :  str or tuple of str
         IETF language tag or a tuple of the language tag and a translation dict, or
         a tuple of the language tag and a path to a json file defining translation
         of attributes.
@@ -230,17 +230,17 @@ class UnavailableLocaleError(ValueError):
         )
 
 
-def read_locale_file(filename, module=None, encoding="UTF8"):
+def read_locale_file(filename, module: Optional[str] = None, encoding: str = "UTF8"):
     """Read a locale file (.json) and return its dictionary.
 
     Parameters
     ----------
     filename: PathLike
       The file to read.
-    module: string, optional
+    module: str, optional
       If module is a string, this module name is added to all identifiers translated in this file.
       Defaults to None, and no module name is added (as if the indicator was an official xclim indicator).
-    encoding : string
+    encoding : str
       The encoding to use when reading the file.
       Defaults to UTF-8, overriding python's default mechanism which is machine dependent.
     """
@@ -305,7 +305,7 @@ def generate_local_dict(locale: str, init_english: bool = False):
     for ind_name, indicator in registry.items():
         ind_attrs = attrs.setdefault(ind_name, {})
         for translatable_attr in set(TRANSLATABLE_ATTRS).difference(
-            set(indicator._cf_names)
+            set(indicator._cf_names)  # noqa
         ):
             if init_english:
                 eng_attr = getattr(indicator, translatable_attr)
@@ -319,7 +319,7 @@ def generate_local_dict(locale: str, init_english: bool = False):
                 ind_attrs = attrs.setdefault(f"{ind_name}.{cf_attrs['var_name']}", {})
 
             for translatable_attr in set(TRANSLATABLE_ATTRS).intersection(
-                set(indicator._cf_names)
+                set(indicator._cf_names)  # noqa
             ):
                 if init_english:
                     eng_attr = cf_attrs.get(translatable_attr)

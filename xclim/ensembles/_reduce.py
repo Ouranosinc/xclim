@@ -59,7 +59,7 @@ def kkz_reduce_ensemble(
     standardize : bool
       Whether to standardize the input before running the selection or not.
       Standardization consists in translation as to have a zero mean and scaling as to have a unit standard deviation.
-    **cdist_kwargs
+    cdist_kwargs
       All extra arguments are passed as-is to `scipy.spatial.distance.cdist`, see its docs for more information.
 
     Returns

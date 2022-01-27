@@ -17,9 +17,9 @@ the implementation of the indices.
 .. note::
 
     Indices functions do not perform missing value checks, and do not set CF-Convention attributes
-    (long_name, standard_name, description, cell_methods, etc). These functionalities are provided by
-    :class:`xclim.indicators.Indicator` instances found in the :mod:`xclim.indicators.atmos`,
-    :mod:`xclim.indicators.land` and :mod:`xclim.indicators.seaIce` modules, documented in :ref:`Climate Indicators`.
+    (long_name, standard_name, description, cell_methods, etc.). These functionalities are provided by
+    :py:class:`xclim.indicators.Indicator` instances found in the :py:mod:`xclim.indicators.atmos`,
+    :py:mod:`xclim.indicators.land` and :mod:`xclim.indicators.seaIce` modules, documented in :ref:`Climate Indicators`.
 
 """
 from ._agro import *

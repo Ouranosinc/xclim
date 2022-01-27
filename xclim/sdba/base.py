@@ -488,7 +488,7 @@ def map_blocks(reduces=None, **outvars):
     ----------
     reduces : sequence of strings
       Name of the dimensions that are removed by the function.
-    **outvars
+    outvars
       Mapping from variable names in the output to their *new* dimensions.
       The placeholders `Grouper.PROP`, `Grouper.DIM` and `Grouper.ADD_DIMS` can be used to signify
       `group.prop`,`group.dim` and `group.add_dims` respectively.

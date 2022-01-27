@@ -17,7 +17,7 @@ from importlib.resources import open_text
 from inspect import Parameter
 from pathlib import Path
 from types import FunctionType
-from typing import Callable, NewType, Optional, Sequence, Tuple, Union
+from typing import Callable, Mapping, NewType, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import xarray as xr
@@ -152,8 +152,8 @@ class MissingVariableError(ValueError):
     """Error raised when a dataset is passed to an indicator but one of the needed variable is missing."""
 
 
-def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
-    """Ensure that the input dataarray has chunks of at least the given size.
+def ensure_chunk_size(da: xr.DataArray, **minchunks: Mapping[str, int]) -> xr.DataArray:
+    """Ensure that the input DataArray has chunks of at least the given size.
 
     If only one chunk is too small, it is merged with an adjacent chunk.
     If many chunks are too small, they are grouped together by merging adjacent chunks.
@@ -161,8 +161,8 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
     Parameters
     ----------
     da : xr.DataArray
-      The input dataarray, with or without the dask backend. Does nothing when passed a non-dask array.
-    **minchunks : Mapping[str, int]
+      The input DataArray, with or without the dask backend. Does nothing when passed a non-dask array.
+    minchunks : Mapping[str, int]
       A kwarg mapping from dimension name to minimum chunk size.
       Pass -1 to force a single chunk along that dimension.
     """
@@ -251,9 +251,10 @@ def nan_calc_percentiles(
 def _compute_virtual_index(
     n: np.ndarray, quantiles: np.ndarray, alpha: float, beta: float
 ):
-    """
-    Compute the floating point indexes of an array for the linear
-    interpolation of quantiles.
+    """Compute the floating point indexes of an array for the linear interpolation of quantiles.
+
+    Parameters
+    ----------
     n : array_like
         The sample sizes.
     quantiles : array_like
@@ -263,29 +264,31 @@ def _compute_virtual_index(
     beta : float
         A constant used to correct the index computed.
 
-    alpha and beta values depend on the chosen method
-    (see quantile documentation)
+    Notes
+    -----
+    `alpha` and `beta` values depend on the chosen method (see quantile documentation).
 
-    Reference:
-    Hyndman&Fan paper "Sample Quantiles in Statistical Packages",
-    DOI: 10.1080/00031305.1996.10473566
+    References
+    ----------
+    .. [Hyndman&Fan] Hyndman, R. J., & Fan, Y. (1996). Sample Quantiles in Statistical Packages. The American Statistician, 50(4), 361‑365. https://doi.org/10.1080/00031305.1996.10473566
     """
     return n * quantiles + (alpha + quantiles * (1 - alpha - beta)) - 1
 
 
 def _get_gamma(virtual_indexes: np.ndarray, previous_indexes: np.ndarray):
     """
-    Compute gamma (a.k.a 'm' or 'weight') for the linear interpolation
-    of quantiles.
+    Compute gamma (a.k.a 'm' or 'weight') for the linear interpolation of quantiles.
 
+    Parameters
+    ----------
     virtual_indexes : array_like
-        The indexes where the percentile is supposed to be found in the sorted
-        sample.
+        The indexes where the percentile is supposed to be found in the sorted sample.
     previous_indexes : array_like
         The floor values of virtual_indexes.
 
-    gamma is usually the fractional part of virtual_indexes but can be modified
-    by the interpolation method.
+    Notes
+    -----
+    `gamma` is usually the fractional part of virtual_indexes but can be modified by the interpolation method.
     """
     gamma = np.asanyarray(virtual_indexes - previous_indexes)
     return np.asanyarray(gamma)
@@ -337,6 +340,8 @@ def _linear_interpolation(
     Compute the linear interpolation weighted by gamma on each point of
     two same shape arrays.
 
+    Parameters
+    ----------
     left : array_like
         Left bound.
     right : array_like
@@ -365,7 +370,7 @@ def _nan_quantile(
     Get the quantiles of the array for the given axis.
     A linear interpolation is performed using alpha and beta.
 
-    By default alpha == beta == 1 which performs the 7th method of Hyndman&Fan.
+    By default alpha == beta == 1 which performs the 7th method of [Hyndman&Fan]_.
     with alpha == beta == 1/3 we get the 8th method.
     """
     # --- Setup
