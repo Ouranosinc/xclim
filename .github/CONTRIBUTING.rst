@@ -129,7 +129,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     # To run pre-commit hooks manually:
     $ pre-commit run --all-files
 
-  Instead of ``pre-commit``, you could also verify your changes manually with `black`, `flake8`, `pydocstyle`, and `yamllint`::
+  Instead of ``pre-commit``, you could also verify your changes manually with `black`, `flake8`, `flake8-rst-docstrings`, `pydocstyle`, and `yamllint`::
 
     $ black --check --target-version py37 xclim xclim/testing/tests
     $ black --check --target-version py37 --include "\.ipynb$" docs
