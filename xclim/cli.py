@@ -20,11 +20,13 @@ except ImportError:
     progress = None
 
 
-def _get_indicator(indname):
+def _get_indicator(indicator_name):
     try:
-        return xc.core.indicator.registry[indname.upper()].get_instance()  # noqa
+        return xc.core.indicator.registry[indicator_name.upper()].get_instance()  # noqa
     except KeyError:
-        raise click.BadArgumentUsage(f"Indicator '{indname}' not found in xclim.")
+        raise click.BadArgumentUsage(
+            f"Indicator '{indicator_name}' not found in xclim."
+        )
 
 
 def _get_input(ctx):
@@ -54,8 +56,8 @@ def _get_output(ctx):
     If the output dataset doesn't exist, create it.
     """
     if "ds_out" not in ctx.obj:
-        dsin = _get_input(ctx)
-        ctx.obj["ds_out"] = xr.Dataset(attrs=dsin.attrs)
+        ds_in = _get_input(ctx)
+        ctx.obj["ds_out"] = xr.Dataset(attrs=ds_in.attrs)
         if ctx.obj["output"] is None:
             raise click.BadOptionUsage(
                 "output", "No output file name given.", ctx.parent

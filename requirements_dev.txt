@@ -3,6 +3,7 @@ black
 bump2version
 coverage
 flake8
+flake8-rst-docstrings
 mypy
 nbval
 pre-commit>=2.9

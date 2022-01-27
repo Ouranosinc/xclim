@@ -133,6 +133,7 @@ def jitter_over_thresh(x: xr.DataArray, thresh: str, upper_bnd: str) -> xr.Datas
       Threshold over which to add uniform random noise to values, a quantity with units.
     upper_bnd : str
       Maximum possible value for the random noise, a quantity with units.
+
     Returns
     -------
     xr.Dataset
@@ -341,7 +342,7 @@ def escore(
     tgt: xr.DataArray,
     sim: xr.DataArray,
     dims: Sequence[str] = ("variables", "time"),
-    N: int = 0,
+    N: int = 0,  # noqa
     scale: bool = False,
 ) -> xr.DataArray:
     r"""Energy score, or energy dissimilarity metric, based on [SkezelyRizzo]_ and [Cannon18]_.
@@ -372,8 +373,8 @@ def escore(
     Notes
     -----
     Explanation adapted from the "energy" R package documentation.
-    The e-distance between two clusters :math:`C_i`, :math:`C_j` (tgt and sim) of size :math:`n_i,,n_j`
-    proposed by Szekely and Rizzo (2005) is defined by:
+    The e-distance between two clusters :math:`C_i`, :math:`C_j` (tgt and sim) of size :math:`n_i,n_j`
+    proposed by Skezely and Rizzo (2004) is defined by:
 
     .. math::
 
@@ -392,8 +393,9 @@ def escore(
 
     References
     ----------
-    .. Skezely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
     .. [BaringhausFranz] Baringhaus, L. and Franz, C. (2004) On a new multivariate two-sample test, Journal of Multivariate Analysis, 88(1), 190–206. https://doi.org/10.1016/s0047-259x(03)00079-4
+    .. [Cannon18] Cannon, A. J. (2018). Multivariate quantile mapping bias correction: An N-dimensional probability density function transform for climate model simulations of multiple variables. Climate Dynamics, 50(1), 31–49. https://doi.org/10.1007/s00382-017-3580-6
+    .. [SkezelyRizzo] Skezely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
     """
 
     pts_dim, obs_dim = dims

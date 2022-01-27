@@ -42,12 +42,13 @@ def use_ufunc(
     Parameters
     ----------
     ufunc_1dim: {'from_context', 'auto', True, False}
-    da : xr.DataArray
+      The method for handling the ufunc parameters.
+    da: xr.DataArray
       Input array.
     dim: str
       The dimension along which to find runs.
     index: {'first', 'last'}
-      If 'first', the run length is indexed with the first element in the run.
+      If 'first' (default), the run length is indexed with the first element in the run.
       If 'last', with the last element in the run.
 
     Returns
@@ -83,7 +84,7 @@ def rle(
     max_chunk : int
       Maximum chunk size.
     index: {'first', 'last'}
-      If 'first', the run length is indexed with the first element in the run.
+      If 'first' (default), the run length is indexed with the first element in the run.
       If 'last', with the last element in the run.
 
     Returns
@@ -174,7 +175,7 @@ def rle_statistics(
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
       for DataArray with a small number of grid points.
     index: {'first', 'last'}
-      If 'first', the run length is indexed with the first element in the run.
+      If 'first' (default), the run length is indexed with the first element in the run.
       If 'last', with the last element in the run.
 
 
@@ -222,7 +223,7 @@ def longest_run(
     Returns
     -------
     xr.DataArray
-      Length of longest run of True values along dimension (int).
+      Length of the longest run of True values along dimension (int).
     """
     return rle_statistics(
         da, reducer="max", dim=dim, ufunc_1dim=ufunc_1dim, index=index
@@ -250,7 +251,7 @@ def windowed_run_events(
     ufunc_1dim : Union[str, bool]
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
-      for dataarray with a small number of gridpoints.
+      for DataArray with a small number of grid points.
       Ignored when `window=1`.
     index: {'first', 'last'}
       If 'first', the run length is indexed with the first element in the run.
@@ -295,7 +296,7 @@ def windowed_run_count(
     ufunc_1dim : Union[str, bool]
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points. Using 1D_ufunc=True is typically more efficient
-      for dataarray with a small number of gridpoints.
+      for DataArray with a small number of grid points.
       Ignored when `window=1`.
     index: {'first', 'last'}
       If 'first', the run length is indexed with the first element in the run.
@@ -343,7 +344,7 @@ def first_run(
     ufunc_1dim : Union[str, bool]
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
-      for dataarray with a small number of gridpoints.
+      for DataArray with a small number of grid points.
       Ignored when `window=1`.
 
     Returns

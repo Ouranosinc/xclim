@@ -124,7 +124,8 @@ def _normalize(
     dim : sequence of strings
       Dimension name(s).
     kind : {'+', '*'}
-      How to apply the adjustment, either additively or multiplicatively.
+      How to apply the adjustment, using either additive or multiplicative methods.
+
     Returns
     -------
     xr.Dataset

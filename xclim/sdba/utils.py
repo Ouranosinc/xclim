@@ -559,25 +559,27 @@ def rank(da: xr.DataArray, dim: str = "time", pct: bool = False) -> xr.DataArray
     Xarray's docstring is below:
 
     Equal values are assigned a rank that is the average of the ranks that
-    would have been otherwise assigned to all of the values within that
-    set.  Ranks begin at 1, not 0. If pct, computes percentage ranks.
-
-    NaNs in the input array are returned as NaNs.
-
-    The `bottleneck` library is required.
+    would have been otherwise assigned to all the values within that
+    set. Ranks begin at 1, not 0. If pct, computes percentage ranks.
 
     Parameters
     ----------
     da: xr.DataArray
+      Source array.
     dim : str, hashable
-        Dimension over which to compute rank.
+      Dimension over which to compute rank.
     pct : bool, optional
-        If True, compute percentage ranks, otherwise compute integer ranks.
+      If True, compute percentage ranks, otherwise compute integer ranks.
 
     Returns
     -------
     DataArray
         DataArray with the same coordinates and dtype 'float64'.
+
+    Notes
+    -----
+    The `bottleneck` library is required.
+    NaNs in the input array are returned as NaNs.
     """
     return da.rank(dim, pct=pct)
 
@@ -646,6 +648,10 @@ def best_pc_orientation_simple(
     -------
     np.ndarray
       Mx1 vector of orientation correction (1 or -1).
+
+    References
+    ----------
+    .. [hnilica2017] Hnilica, J., Hanel, M. and Pš, V. (2017), Multisite bias correction of precipitation data from regional climate models. Int. J. Climatol., 37: 2934-2946. https://doi.org/10.1002/joc.4890
     """
     m = R.shape[0]
     P = np.diag(val * np.ones(m))
@@ -663,7 +669,7 @@ def best_pc_orientation_full(
     Hmean: np.ndarray,
     hist: np.ndarray,
 ) -> np.ndarray:
-    """Return best orientation vector for A according to the method of Alavoine et al. (2021).
+    """Return best orientation vector for A according to the method of Alavoine et al. (2021, preprint).
 
     Eigenvectors returned by `pc_matrix` do not have a defined orientation.
     Given an inverse transform Hinv, a transform R, the actual and target origins
@@ -672,8 +678,8 @@ def best_pc_orientation_full(
     maximizes the Spearman correlation coefficient of all variables. The
     correlation is computed for each variable individually, then averaged.
 
-    This trick is explained in [alavoine2021]_. See documentation of
-    `sdba.adjustment.PrincipalComponentAdjustment`.
+    This trick is explained in [alavoine2021]_.
+    See documentation of :py:func:`sdba.adjustment.PrincipalComponentAdjustment`.
 
     Parameters
     ----------
@@ -692,6 +698,10 @@ def best_pc_orientation_full(
     -------
     np.ndarray
       M vector of orientation correction (1 or -1).
+
+    References
+    ----------
+    .. [alavoine2021] Alavoine, M., & Grenier, P. (2021). The distinct problems of physical inconsistency and of multivariate bias potentially involved in the statistical adjustment of climate simulations. https://eartharxiv.org/repository/view/2876/
     """
     # All possible orientation vectors
     m = R.shape[0]
@@ -792,7 +802,7 @@ def get_clusters(data: xr.DataArray, u1, u2, dim: str = "time") -> xr.Dataset:
         - `maximum` : Maximal value within the cluster (`dim` reduced, new `cluster`), same dtype as data.
 
       For `start`, `end` and `maxpos`, -1 means NaN and should always correspond to a `NaN` in `maximum`.
-      The length along `cluster` is half the size of "dim", the maximal theoritical number of clusters.
+      The length along `cluster` is half the size of "dim", the maximal theoretical number of clusters.
     """
 
     def _get_clusters(arr, u1, u2, N):

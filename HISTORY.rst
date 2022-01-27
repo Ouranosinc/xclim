@@ -9,6 +9,10 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bo
 Announcements
 ^^^^^^^^^^^^^
 * `xclim` now requires yaml files to pass `yamllint` checks on Pull Requests. (:pull:`981`).
+* `xclim` now requires docstrings have valid ReStructuredText formatting to pass basic linting checks. (:pull:`993`). Checks generally require:
+    - Working hyperlinks and reference tags.
+    - Valid content references (e.g. `:py:func:`).
+    - Valid NumPy-formatted docstrings.
 
 New indicators
 ^^^^^^^^^^^^^^
