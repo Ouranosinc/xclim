@@ -62,9 +62,7 @@ class TestMaxNDayPrecipitationAmount:
 class TestMax1DayPrecipitationAmount:
     @staticmethod
     def time_series(values):
-        coords = pd.date_range(
-            "7/1/2000", periods=len(values), freq=pd.DateOffset(days=1)
-        )
+        coords = pd.date_range("7/1/2000", periods=len(values), freq="D")
         return xr.DataArray(
             values,
             coords=[coords],
