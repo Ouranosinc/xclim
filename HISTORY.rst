@@ -13,6 +13,7 @@ Announcements
     - Working hyperlinks and reference tags.
     - Valid content references (e.g. `:py:func:`).
     - Valid NumPy-formatted docstrings.
+* The `xclim` developer community has now adopted the 'Contributor Covenant' Code of Conduct v2.1 (`text <https://www.contributor-covenant.org/version/2/1/code_of_conduct/>`_). (:issue:`948`, :pull:`996`).
 
 New indicators
 ^^^^^^^^^^^^^^
