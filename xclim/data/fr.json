@@ -947,8 +947,8 @@
   },
   "DRY_SPELL_TOTAL_LENGTH": {
     "title": "Durée totale en jours des périodes séches",
-    "abstract": "Durée totale en jours des périodes séches de n jours et plus, pendant lesquelles les précipitations accumulées sur une fenêtre de n jours sont inférieures à un seuil donné.",
-    "description": "Durée totale {freq:f} en jours des périodes séches de {window} jours et plus, pendant lesquelles les précipitations accumulées sur une fenêtre de {window} jours sont inférieures à {thresh}.",
+    "abstract": "Durée totale en jours des périodes séches de n jours et plus, pendant lesquelles les précipitations accumulées ou maximales sur une fenêtre de n jours sont inférieures à un seuil donné.",
+    "description": "Durée totale {freq:f} en jours des périodes séches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}.",
     "long_name": "Durée totale {freq:f} en jours des périodes sèches de {window} jours et plus"
   },
   "COLD_AND_DRY_DAYS": {
