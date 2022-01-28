@@ -14,7 +14,7 @@ def series(values, name, start="2000-01-01"):
     coords = collections.OrderedDict()
     for dim, n in zip(("time", "lon", "lat"), values.shape):
         if dim == "time":
-            coords[dim] = pd.date_range(start, periods=n, freq=pd.DateOffset(days=1))
+            coords[dim] = pd.date_range(start, periods=n, freq="D")
         else:
             coords[dim] = xr.IndexVariable(dim, np.arange(n))
 

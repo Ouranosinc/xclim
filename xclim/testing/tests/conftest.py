@@ -19,7 +19,7 @@ def tmp_netcdf_filename(tmpdir):
 @pytest.fixture
 def tas_series():
     def _tas_series(values, start="7/1/2000"):
-        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
             coords=[coords],
@@ -38,7 +38,7 @@ def tas_series():
 @pytest.fixture
 def tasmax_series():
     def _tasmax_series(values, start="7/1/2000"):
-        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
             coords=[coords],
@@ -57,7 +57,7 @@ def tasmax_series():
 @pytest.fixture
 def tasmin_series():
     def _tasmin_series(values, start="7/1/2000"):
-        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
             coords=[coords],
@@ -76,7 +76,7 @@ def tasmin_series():
 @pytest.fixture
 def pr_series():
     def _pr_series(values, start="7/1/2000", units="kg m-2 s-1"):
-        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
             coords=[coords],
@@ -95,7 +95,7 @@ def pr_series():
 @pytest.fixture
 def prc_series():
     def _prc_series(values, start="7/1/2000", units="kg m-2 s-1"):
-        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
             coords=[coords],
@@ -117,9 +117,7 @@ def bootstrap_series():
         if cf_time:
             coords = xr.cftime_range(start, periods=len(values), freq="D")
         else:
-            coords = pd.date_range(
-                start, periods=len(values), freq=pd.DateOffset(days=1)
-            )
+            coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
             coords=[coords],
@@ -138,7 +136,7 @@ def bootstrap_series():
 @pytest.fixture
 def prsn_series():
     def _prsn_series(values, start="7/1/2000"):
-        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
             coords=[coords],
@@ -159,7 +157,7 @@ def pr_hr_series():
     """Return hourly time series."""
 
     def _pr_hr_series(values, start="1/1/2000"):
-        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(hours=1))
+        coords = pd.date_range(start, periods=len(values), freq="1H")
         return xr.DataArray(
             values,
             coords=[coords],
@@ -179,7 +177,7 @@ def pr_hr_series():
 def pr_ndseries():
     def _pr_series(values, start="1/1/2000"):
         nt, nx, ny = np.atleast_3d(values).shape
-        time = pd.date_range(start, periods=nt, freq=pd.DateOffset(days=1))
+        time = pd.date_range(start, periods=nt, freq="D")
         x = np.arange(nx)
         y = np.arange(ny)
         return xr.DataArray(
@@ -200,7 +198,7 @@ def pr_ndseries():
 @pytest.fixture
 def q_series():
     def _q_series(values, start="1/1/2000"):
-        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
             coords=[coords],
@@ -223,7 +221,7 @@ def ndq_series():
 
     cx = xr.IndexVariable("x", x)
     cy = xr.IndexVariable("y", y)
-    dates = pd.date_range("1900-01-01", periods=nt, freq=pd.DateOffset(days=1))
+    dates = pd.date_range("1900-01-01", periods=nt, freq="D")
 
     time = xr.IndexVariable(
         "time", dates, attrs={"units": "days since 1900-01-01", "calendar": "standard"}
@@ -287,7 +285,7 @@ areacello = areacella
 @pytest.fixture
 def hurs_series():
     def _hurs_series(values, start="7/1/2000"):
-        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
             coords=[coords],
@@ -305,7 +303,7 @@ def hurs_series():
 @pytest.fixture
 def sfcWind_series():
     def _sfcWind_series(values, start="7/1/2000"):
-        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
             coords=[coords],
@@ -323,7 +321,7 @@ def sfcWind_series():
 @pytest.fixture
 def huss_series():
     def _huss_series(values, start="7/1/2000"):
-        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
             coords=[coords],
@@ -341,7 +339,7 @@ def huss_series():
 @pytest.fixture
 def snd_series():
     def _snd_series(values, start="7/1/2000"):
-        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
             coords=[coords],
@@ -359,7 +357,7 @@ def snd_series():
 @pytest.fixture
 def snw_series():
     def _snw_series(values, start="7/1/2000"):
-        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
             coords=[coords],
@@ -377,7 +375,7 @@ def snw_series():
 @pytest.fixture
 def ps_series():
     def _ps_series(values, start="7/1/2000"):
-        coords = pd.date_range(start, periods=len(values), freq=pd.DateOffset(days=1))
+        coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
             coords=[coords],

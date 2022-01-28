@@ -40,7 +40,7 @@ requirements = [
     "numba",
     "numpy>=1.16",
     "packaging>=20.0",
-    "pandas>=0.23,<1.4",
+    "pandas>=0.23",
     "pint>=0.10",
     "pyyaml",
     "scikit-learn>=0.21.3",
