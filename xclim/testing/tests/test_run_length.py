@@ -126,9 +126,7 @@ class TestStatisticsRun:
 
     def test_simple(self):
         values = np.zeros(365)
-        time = pd.date_range(
-            "7/1/2000", periods=len(values), freq=pd.DateOffset(days=1)
-        )
+        time = pd.date_range("7/1/2000", periods=len(values), freq="D")
         values[1:11] = 1
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
         lt = da.resample(time="M").map(rl.rle_statistics, reducer="max")
@@ -137,9 +135,7 @@ class TestStatisticsRun:
 
     def test_start_at_0(self):
         values = np.zeros(365)
-        time = pd.date_range(
-            "7/1/2000", periods=len(values), freq=pd.DateOffset(days=1)
-        )
+        time = pd.date_range("7/1/2000", periods=len(values), freq="D")
         values[0:10] = 1
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
         lt = da.resample(time="M").map(rl.rle_statistics, reducer="max")
@@ -148,9 +144,7 @@ class TestStatisticsRun:
 
     def test_end_start_at_0(self):
         values = np.zeros(365)
-        time = pd.date_range(
-            "7/1/2000", periods=len(values), freq=pd.DateOffset(days=1)
-        )
+        time = pd.date_range("7/1/2000", periods=len(values), freq="D")
         values[-10:] = 1
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
 
@@ -160,9 +154,7 @@ class TestStatisticsRun:
 
     def test_all_true(self):
         values = np.ones(365)
-        time = pd.date_range(
-            "7/1/2000", periods=len(values), freq=pd.DateOffset(days=1)
-        )
+        time = pd.date_range("7/1/2000", periods=len(values), freq="D")
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
 
         lt = da.resample(time="M").map(rl.rle_statistics, reducer="max")
@@ -171,9 +163,7 @@ class TestStatisticsRun:
     def test_almost_all_true(self):
         values = np.ones(365)
         values[35] = 0
-        time = pd.date_range(
-            "7/1/2000", periods=len(values), freq=pd.DateOffset(days=1)
-        )
+        time = pd.date_range("7/1/2000", periods=len(values), freq="D")
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
 
         lt = da.resample(time="M").map(rl.rle_statistics, reducer="max")
@@ -184,9 +174,7 @@ class TestStatisticsRun:
     def test_other_stats(self):
         values = np.ones(365)
         values[35] = 0
-        time = pd.date_range(
-            "1/1/2000", periods=len(values), freq=pd.DateOffset(days=1)
-        )
+        time = pd.date_range("1/1/2000", periods=len(values), freq="D")
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
 
         lt = da.resample(time="YS").map(rl.rle_statistics, reducer="min")
