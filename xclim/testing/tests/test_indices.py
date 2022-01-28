@@ -2471,68 +2471,61 @@ def test_water_budget(pr_series, tasmin_series, tasmax_series):
     np.testing.assert_allclose(out[1, 0], [8.5746025 / 86400], rtol=1e-1)
 
 
-def test_dry_spell(pr_series):
+@pytest.mark.parametrize(
+    "pr,thresh1,thresh2,window,outs",
+    [
+        (
+            [1.01] * 6
+            + [0.01] * 3
+            + [0.51] * 2
+            + [0.75] * 2
+            + [0.51]
+            + [0.01] * 3
+            + [1.01] * 3,
+            3,
+            3,
+            7,
+            (2, 12, 20),
+        ),
+        (
+            [0.01] * 6
+            + [1.01] * 3
+            + [0.51] * 2
+            + [0.75] * 2
+            + [0.51]
+            + [0.01] * 3
+            + [0.01] * 3,
+            3,
+            3,
+            7,
+            (2, 18, 20),
+        ),
+        ([3.01] * 358 + [0.99] * 14 + [3.01] * 358, 1, 14, 14, (0, 7, 7)),
+    ],
+)
+def test_dry_spell(pr_series, pr, thresh1, thresh2, window, outs):
 
-    pr_arr_1 = (
-        [1.01] * 6
-        + [0.01] * 3
-        + [0.51] * 2
-        + [0.75] * 2
-        + [0.51]
-        + [0.01] * 3
-        + [1.01] * 3
+    pr = pr_series(np.array(pr), start="1981-01-01", units="mm/day")
+
+    out_events, out_total_d_sum, out_total_d_max = outs
+
+    events = xci.dry_spell_frequency(
+        pr, thresh=f"{thresh1} mm", window=window, freq="YS"
     )
-    pr_arr_2 = (
-        [0.01] * 6
-        + [1.01] * 3
-        + [0.51] * 2
-        + [0.75] * 2
-        + [0.51]
-        + [0.01] * 3
-        + [0.01] * 3
+    total_d_sum = xci.dry_spell_total_length(
+        pr,
+        thresh=f"{thresh2} mm",
+        window=window,
+        op="sum",
+        freq="YS",
     )
-    pr_arr_3 = [3.01] * 358 + [0.99] * 14 + [3.01] * 358
-    pr_1 = pr_series(np.array(pr_arr_1), units="mm/day")
-    pr_2 = pr_series(np.array(pr_arr_2), units="mm/day")
-    pr_3 = pr_series(np.array(pr_arr_3), start="1981-01-01", units="mm/day")
+    total_d_max = xci.dry_spell_total_length(
+        pr, thresh=f"{thresh1} mm", window=window, op="max", freq="YS"
+    )
 
-    for i in range(1, 4):
-
-        if i == 1:
-            thresh, window = 3, 7
-            out_events = [2]
-            out_total_d_sum = [12]
-            out_total_d_max = [20]
-            pr = pr_1
-        elif i == 2:
-            thresh, window = 3, 7
-            out_events = [2]
-            out_total_d_sum = [18]
-            out_total_d_max = [20]
-            pr = pr_2
-        else:
-            thresh, window = 1, 14
-            out_events = [0]
-            out_total_d_sum = out_total_d_max = [7, 7]
-            pr = pr_3
-
-        events = xci.dry_spell_frequency(
-            pr, thresh=f"{thresh} mm", window=window, freq="YS"
-        )
-        total_d_sum = xci.dry_spell_total_length(
-            pr,
-            thresh=f"{thresh * (window if i == 3 else 1)} mm",
-            window=window,
-            op="sum",
-            freq="YS",
-        )
-        total_d_max = xci.dry_spell_total_length(
-            pr, thresh=f"{thresh} mm", window=window, op="max", freq="YS"
-        )
-
-        np.testing.assert_allclose(events[0], out_events, rtol=1e-1)
-        np.testing.assert_allclose(total_d_sum[0], out_total_d_sum, rtol=1e-1)
-        np.testing.assert_allclose(total_d_max[0], out_total_d_max, rtol=1e-1)
+    np.testing.assert_allclose(events[0], [out_events], rtol=1e-1)
+    np.testing.assert_allclose(total_d_sum[0], [out_total_d_sum], rtol=1e-1)
+    np.testing.assert_allclose(total_d_max[0], [out_total_d_max], rtol=1e-1)
 
 
 def test_dry_spell_total_length_indexer(pr_series):
