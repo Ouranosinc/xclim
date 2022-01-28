@@ -2,12 +2,13 @@
 History
 =======
 
-0.33.0 (unreleased)
+0.33.0 (2022-01-28)
 -------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Tom Keel (:user:`Thomasjkeel`), Jeremy Fyke (:user:`JeremyFyke`), David Huard (:user:`huard`), Abel Aoun (:user:`bzah`), Juliette Lavoie (:user:`juliettelavoie`), Yannick Rousseau (:user:`yrouranos`).
 
 Announcements
 ^^^^^^^^^^^^^
+* Deprecation: Release 0.33.0 of `xclim` will be the last version to explicitly support Python3.7 and `xarray<0.21.0`.
 * `xclim` now requires yaml files to pass `yamllint` checks on Pull Requests. (:pull:`981`).
 * `xclim` now requires docstrings have valid ReStructuredText formatting to pass basic linting checks. (:pull:`993`). Checks generally require:
     - Working hyperlinks and reference tags.
