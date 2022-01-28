@@ -113,7 +113,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
 3. Create a development environment. We recommend using ``conda``::
 
-    $ conda create -n xclim python=3.7 --file=environment.yml
+    $ conda create -n xclim python=3.8 --file=environment.yml
     $ pip install -e .[dev]
 
 4. Create a branch for local development::
@@ -131,8 +131,8 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
   Instead of ``pre-commit``, you could also verify your changes manually with `black`, `flake8`, `flake8-rst-docstrings`, `pydocstyle`, and `yamllint`::
 
-    $ black --check --target-version py37 xclim xclim/testing/tests
-    $ black --check --target-version py37 --include "\.ipynb$" docs
+    $ black --check --target-version py38 xclim xclim/testing/tests
+    $ black --check --target-version py38 --include "\.ipynb$" docs
     $ flake8 xclim xclim/testing/tests
     $ pydocstyle --convention=numpy --match='(?!test_).*\.py' xclim
     $ yamllint --config-file .yamllint.yaml xclim
@@ -186,7 +186,7 @@ Before you submit a pull request, please follow these guidelines:
     If you aren't accustomed to writing documentation in reStructuredText (`.rst`), we encourage you to spend a few minutes going over the
     incredibly well-summarized `reStructuredText Primer`_ from the sphinx-doc maintainer community.
 
-5. The pull request should work for Python 3.7, 3.8, and 3.9 as well as raise test coverage.
+5. The pull request should work for Python 3.8 and 3.9 as well as raise test coverage.
    Pull requests are also checked for documentation build status and for `PEP8`_ compliance.
 
    The build statuses and build errors for pull requests can be found at:
