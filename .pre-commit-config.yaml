@@ -22,12 +22,12 @@ repos:
         args: ['--allow-multiple-documents']
       - id: debug-statements
   - repo: https://github.com/psf/black
-    rev: 21.12b0
+    rev: 22.1.0
     hooks:
       - id: black
-        args: ["--target-version", "py37"]
+        args: ["--target-version", "py38"]
       - id: black-jupyter
-        args: ["--target-version", "py37"]
+        args: ["--target-version", "py38"]
   - repo: https://github.com/pycqa/flake8
     rev: 4.0.1
     hooks:
