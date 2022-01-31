@@ -50,11 +50,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - tox-env: py37-slow-lm3
-            python-version: "3.7"
           - tox-env: py38-xarray-lm3
             python-version: "3.8"
-          - tox-env: py39-lm3
+          - tox-env: py39-slow-lm3
             python-version: "3.9"
           # Bottleneck does not yet support Python3.10
           # https://github.com/pydata/bottleneck/issues/388
