@@ -447,7 +447,7 @@ def _fit_start(x, dist, **fitkwargs) -> Tuple[Tuple, Dict]:
             m = (x - t).mean()
             v = (x - t).var()
 
-        c = 0.5 * (1 - m ** 2 / v)
+        c = 0.5 * (1 - m**2 / v)
         scale = (1 - c) * m
         return (c,), {"scale": scale}
 

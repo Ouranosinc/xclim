@@ -448,7 +448,7 @@ def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
 
         # Multiplicative factor converting d-dim booleans to a unique integer.
         mf = (2 ** np.arange(d)).reshape(1, d, 1)
-        minlength = 2 ** d
+        minlength = 2**d
 
         # Assign a unique integer according on whether or not x[i] <= sample
         ix = ((x.T <= np.atleast_3d(x)) * mf).sum(1)

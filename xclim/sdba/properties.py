@@ -127,7 +127,7 @@ def var(da: xr.DataArray, *, group: Union[str, Grouper] = "time") -> xr.DataArra
     out.attrs.update(attrs)
     out.attrs["long_name"] = "Variance"
     u = xc.core.units.units2pint(attrs["units"])
-    u2 = u ** 2
+    u2 = u**2
     out.attrs["units"] = xc.core.units.pint2cfunits(u2)
     out.name = "variance"
     return out
