@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # noqa: D205,D400
 """
 Miscellaneous indices utilities
@@ -376,7 +375,7 @@ def _nan_quantile(
     Get the quantiles of the array for the given axis.
     A linear interpolation is performed using alpha and beta.
 
-    By default alpha == beta == 1 which performs the 7th method of [Hyndman&Fan]_.
+    By default, alpha == beta == 1 which performs the 7th method of [Hyndman&Fan]_.
     with alpha == beta == 1/3 we get the 8th method.
     """
     # --- Setup

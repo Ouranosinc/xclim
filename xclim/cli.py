@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """xclim command line interface module."""
 import sys
 import warnings

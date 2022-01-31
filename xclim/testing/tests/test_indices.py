@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Tests for `xclim` package.
 #
 # We want to tests multiple things here:

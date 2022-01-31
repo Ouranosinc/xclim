@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Synoptic indicator definitions."""
 
 from xclim import indices

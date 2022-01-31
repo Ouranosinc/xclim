@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Climate indices computation package based on Xarray."""
 from importlib.resources import contents, path
 

@@ -1,4 +1,3 @@
-# -*- encoding: utf8 -*-
 # noqa: D205,D400
 """
 Spatial analogs
@@ -532,7 +531,7 @@ def kldiv(
 
     # Limit the number of dimensions to 10, too slow otherwise.
     if d > 10:
-        raise ValueError("Too many dimensions: {}.".format(d))
+        raise ValueError(f"Too many dimensions: {d}.")
 
     # Not enough data to draw conclusions.
     if nx < 5 or ny < 5:

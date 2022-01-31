@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # noqa: D205,D400
 """
 Internationalization
@@ -248,7 +247,7 @@ def read_locale_file(
       The encoding to use when reading the file.
       Defaults to UTF-8, overriding python's default mechanism which is machine dependent.
     """
-    with open(filename, "r", encoding=encoding) as f:
+    with open(filename, encoding=encoding) as f:
         locdict = json.load(f)
 
     if module is not None:

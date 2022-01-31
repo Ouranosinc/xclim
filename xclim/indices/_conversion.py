@@ -1068,7 +1068,7 @@ def potential_evapotranspiration(
         start = "-".join(
             [
                 str(tas.time[0].dt.year.values),
-                "{:02d}".format(tas.time[0].dt.month.values),
+                f"{tas.time[0].dt.month.values:02d}",
                 "01",
             ]
         )
@@ -1076,7 +1076,7 @@ def potential_evapotranspiration(
         end = "-".join(
             [
                 str(tas.time[-1].dt.year.values),
-                "{:02d}".format(tas.time[-1].dt.month.values),
+                f"{tas.time[-1].dt.month.values:02d}",
                 str(tas.time[-1].dt.daysinmonth.values),
             ]
         )
