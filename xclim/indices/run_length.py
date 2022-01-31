@@ -138,7 +138,7 @@ def rle(
                 chunks[dd] = chunksize_ex_dims
         b = b.chunk(chunks)
 
-    # back fill nans with first position after
+    # back-fill nans with first position after
     z = b.bfill(dim=dim)
 
     # calculate lengths
@@ -595,7 +595,7 @@ def season(
 
         # No end:  length is actually until the end of the array, so it is missing 1
         length = xr.where(no_end, da[dim].size - beg, length)
-        # Where the begining was before the mid date, invalid.
+        # Where the beginning was before the mid-date, invalid.
         length = length.where(valid_start)
         # Where there were data points, but no season : put 0 length
         length = xr.where(beg.isnull() & end.notnull(), 0, length)
@@ -603,7 +603,7 @@ def season(
         # No end: end defaults to the last element (this differs from length, but heh)
         end = xr.where(no_end, da[dim].size - 1, end)
 
-        # Where the beginning was before the mid date
+        # Where the beginning was before the mid-date
         beg = beg.where(valid_start)
         end = end.where(valid_start)
 
@@ -663,7 +663,8 @@ def season_length(
     Returns
     -------
     xr.DataArray
-      Length of longest run of True values along a given dimension (inclusive of a given date) without breaks longer than a given length.
+      Length of the longest run of True values along a given dimension (inclusive of a given date)
+      without breaks longer than a given length.
 
     Notes
     -----
@@ -1218,7 +1219,7 @@ def suspicious_run_1d(
       Array of values to be parsed.
     window : int
       Minimum run length
-    op : {">", ">=", "==", "<", "<= "eq", "gt", "lt", "gteq", "lteq"}, optional
+    op : {">", ">=", "==", "<", "<=", "eq", "gt", "lt", "gteq", "lteq"}, optional
       Operator for threshold comparison. Defaults to ">".
     thresh : float, optional
       Threshold above which values are checked for identical values.
@@ -1271,7 +1272,7 @@ def suspicious_run(
       Minimum run length
     thresh : float, optional
       Threshold above which values are checked for identical values.
-    op: {">", ">=", "==", "<", "<= "eq", "gt", "lt", "gteq", "lteq"}
+    op: {">", ">=", "==", "<", "<=", "eq", "gt", "lt", "gteq", "lteq"}
       Operator for threshold comparison, defaults to ">".
 
     Returns

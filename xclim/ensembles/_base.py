@@ -277,8 +277,9 @@ def _ens_align_datasets(
     Parameters
     ----------
     datasets : List[Union[xr.Dataset, xr.DataArray, Path, str, List[Path, str]]]
-      List of netcdf file paths or xarray Dataset/DataArray objects . If mf_flag is True, ncfiles should be a list of lists where
-      each sublist contains input .nc files of an xarray multifile Dataset. DataArrays should have a name so they can be converted to datasets.
+      List of netcdf file paths or xarray Dataset/DataArray objects . If mf_flag is True, ncfiles should be a list
+      of lists where each sublist contains input NetCDF files of a xarray multifile Dataset.
+      DataArrays should have a name, so they can be converted to datasets.
     mf_flag : bool
       If True climate simulations are treated as xarray multifile datasets before concatenation.
       Only applicable when datasets is a sequence of file paths.
@@ -286,7 +287,8 @@ def _ens_align_datasets(
       If the members of the ensemble have the same frequency but not the same offset, they cannot be properly aligned.
       If resample_freq is set, the time coordinate of each members will be modified to fit this frequency.
     calendar : str
-      The calendar of the time coordinate of the ensemble. For conversions involving '360_day', the align_on='date' option is used.
+      The calendar of the time coordinate of the ensemble. For conversions involving '360_day',
+      the align_on='date' option is used.
       See `xclim.core.calendar.convert_calendar`. 'default' is the standard calendar using np.datetime64 objects.
     xr_kwargs :
       Any keyword arguments to be given to xarray when opening the files.

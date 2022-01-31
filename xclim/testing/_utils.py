@@ -199,7 +199,7 @@ def list_datasets(github_repo="Ouranosinc/xclim-testdata", branch="main"):
                 records.append(
                     {
                         "name": file["path"],
-                        "size": file["size"] / 2 ** 10,
+                        "size": file["size"] / 2**10,
                         "url": file["html_url"],
                     }
                 )

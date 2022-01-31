@@ -15,7 +15,7 @@ def percentile_bootstrap(func):
 
     This feature is experimental.
 
-    Boostraping avoids discontinuities in the exceedance between the "in base" period over which percentiles are
+    Bootstraping avoids discontinuities in the exceedance between the "in base" period over which percentiles are
     computed, and "out of base" periods. See `bootstrap_func` for details.
 
     Example of declaration::
@@ -28,7 +28,7 @@ def percentile_bootstrap(func):
     >>>    t90: xarray.DataArray,
     >>>    freq: str = "YS",
     >>>    bootstrap: bool = False
-    >>>) -> xarray.DataArray:
+    >>> ) -> xarray.DataArray:
 
     Examples
     --------
@@ -154,7 +154,7 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xarray.DataArray:
             kw[per_key] = percentile_doy(bda, **pdoy_args, copy=False)
             value = compute_indice_func(**kw).mean(dim="_bootstrap", keep_attrs=True)
 
-        # Otherwise run the normal computation using the original percentile
+        # Otherwise, run the normal computation using the original percentile
         else:
             kw[per_key] = per
             value = compute_indice_func(**kw)
@@ -172,7 +172,7 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xarray.DataArray:
 def bootstrap_year(
     da: DataArray, groups: Dict[Any, slice], label: Any, dim: str = "time"
 ) -> DataArray:
-    """Return an array where a group in the original is replace by every other groups along a new dimension.
+    """Return an array where a group in the original is replaced by every other groups along a new dimension.
 
     Parameters
     ----------
@@ -182,6 +182,8 @@ def bootstrap_year(
       Output of grouping functions, such as `DataArrayResample.groups`.
     label : Any
       Key identifying the group item to replace.
+    dim : str
+      Dimension recognized as time. Default: `time`.
 
     Returns
     -------

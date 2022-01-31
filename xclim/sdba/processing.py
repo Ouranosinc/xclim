@@ -97,7 +97,7 @@ def adapt_freq(
     return out.sim_ad, out.pth, out.dP0
 
 
-def jitter_under_thresh(x: xr.DataArray, thresh: str):
+def jitter_under_thresh(x: xr.DataArray, thresh: str) -> xr.DataArray:
     """Replace values smaller than threshold by a uniform random noise.
 
     Do not confuse with R's jitter, which adds uniform noise instead of replacing values.
@@ -111,7 +111,7 @@ def jitter_under_thresh(x: xr.DataArray, thresh: str):
 
     Returns
     -------
-    array
+    xr.DataArray
 
     Notes
     -----
@@ -120,7 +120,7 @@ def jitter_under_thresh(x: xr.DataArray, thresh: str):
     return jitter(x, lower=thresh, upper=None, minimum=None, maximum=None)
 
 
-def jitter_over_thresh(x: xr.DataArray, thresh: str, upper_bnd: str) -> xr.Dataset:
+def jitter_over_thresh(x: xr.DataArray, thresh: str, upper_bnd: str) -> xr.DataArray:
     """Replace values greater than threshold by a uniform random noise.
 
     Do not confuse with R's jitter, which adds uniform noise instead of replacing values.
@@ -136,7 +136,7 @@ def jitter_over_thresh(x: xr.DataArray, thresh: str, upper_bnd: str) -> xr.Datas
 
     Returns
     -------
-    xr.Dataset
+    xr.DataArray
 
     Notes
     -----
@@ -152,7 +152,7 @@ def jitter(
     upper: str = None,
     minimum: str = None,
     maximum: str = None,
-):
+) -> xr.DataArray:
     """Replaces values under a threshold and values above another by a uniform random noise.
 
     Do not confuse with R's jitter, which adds uniform noise instead of replacing values.
@@ -327,9 +327,7 @@ def reordering(ref: xr.DataArray, sim: xr.DataArray, group: str = "time") -> xr.
 
     Reference
     ---------
-    Cannon, A. J. (2018). Multivariate quantile mapping bias correction: An N-dimensional probability density function
-    transform for climate model simulations of multiple variables. Climate Dynamics, 50(1), 31–49.
-    https://doi.org/10.1007/s00382-017-3580-6
+    .. [Cannon18] Cannon, A. J. (2018). Multivariate quantile mapping bias correction: An N-dimensional probability density function transform for climate model simulations of multiple variables. Climate Dynamics, 50(1), 31–49. https://doi.org/10.1007/s00382-017-3580-6
     """
     ds = xr.Dataset({"sim": sim, "ref": ref})
     out = _reordering(ds, group=group).reordered
@@ -349,9 +347,9 @@ def escore(
 
     Parameters
     ----------
-    tgt: DataArray
+    tgt: xr.DataArray
       Target observations.
-    sim: DataArray
+    sim: xr.DataArray
       Candidate observations. Must have the same dimensions as `tgt`.
     dims: sequence of 2 strings
       The name of the dimensions along which the variables and observation points are listed.
@@ -363,7 +361,7 @@ def escore(
     scale: bool
       Whether to scale the data before computing the score. If True, both arrays as scaled according
       to the mean and standard deviation of `tgt` along `obs_dim`. (std computed with `ddof=1` and both
-      statistics excluding NaN values.
+      statistics excluding NaN values).
 
     Returns
     -------
@@ -464,14 +462,14 @@ def construct_moving_yearly_window(
     """Construct a moving window DataArray.
 
     Stacks windows of `da` in a new 'movingwin' dimension.
-    Windows are always made of full years, so calendar with non uniform year lengths are not supported.
+    Windows are always made of full years, so calendar with non-uniform year lengths are not supported.
 
     Windows are constructed starting at the beginning of `da`, if number of given years is not
     a multiple of `step`, then the last year(s) will be missing as a supplementary window would be incomplete.
 
     Parameters
     ----------
-    da : xr.DataArray
+    da : xr.Dataset
       A DataArray with a `time` dimension.
     window : int
       The length of the moving window as a number of years.
@@ -565,7 +563,7 @@ def unpack_moving_yearly_window(da: xr.DataArray, dim: str = "movingwin"):
 
 @update_xclim_history
 def to_additive_space(
-    data,
+    data: xr.DataArray,
     lower_bound: str,
     upper_bound: str = None,
     trans: str = "log",
@@ -654,13 +652,13 @@ def to_additive_space(
 
 @update_xclim_history
 def from_additive_space(
-    data,
+    data: xr.DataArray,
     lower_bound: str = None,
     upper_bound: str = None,
     trans: str = None,
     units: str = None,
 ):
-    r"""Transform back a to the physical space a variable that was transformed with `to_addtitive_space`.
+    r"""Transform back to the physical space a variable that was transformed with `to_addtitive_space`.
 
     Based on [AlavoineGrenier]_. If parameters are not present on the attributes of the
     data, they must be all given are arguments.
@@ -682,7 +680,7 @@ def from_additive_space(
       The transformation to use. See notes.
       If None (the default), the `sdba_transform` attribute is looked up on `data`.
     units: str, optional
-      The units of the data before transformation to the addtitive space.
+      The units of the data before transformation to the additive space.
       If None (the default), the `sdba_transform_units` attribute is looked up on `data`.
 
     Returns
@@ -704,7 +702,7 @@ def from_additive_space(
 
         .. math::
 
-            X = e^{Y) + b_-
+            X = e^{Y} + b_-
 
     - `logit`
 
@@ -767,11 +765,11 @@ def from_additive_space(
     return out
 
 
-def stack_variables(ds, rechunk=True, dim="multivar"):
+def stack_variables(ds: xr.Dataset, rechunk: bool = True, dim: str = "multivar"):
     """Stack different variables of a dataset into a single DataArray with a new "variables" dimension.
 
     Variable attributes are all added as lists of attributes to the new coordinate, prefixed with "_".
-    Variables are concatenate in the new dimension in alphabetical order, to ensure
+    Variables are concatenated in the new dimension in alphabetical order, to ensure
     coherent behaviour with different datasets.
 
     Parameters
@@ -818,7 +816,7 @@ def stack_variables(ds, rechunk=True, dim="multivar"):
     return da.rename("multivariate")
 
 
-def unstack_variables(da, dim=None):
+def unstack_variables(da: xr.DataArray, dim: str = None):
     """Unstack a DataArray created by `stack_variables` to a dataset.
 
     Parameters

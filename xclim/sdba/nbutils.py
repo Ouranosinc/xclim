@@ -113,7 +113,7 @@ def remove_NaNs(x):
 @njit([float32(float32[:]), float64(float64[:])], fastmath=True)
 def _euclidean_norm(v):
     """Compute the euclidean norm of vector v."""
-    return np.sqrt(np.sum(v ** 2))
+    return np.sqrt(np.sum(v**2))
 
 
 @njit(

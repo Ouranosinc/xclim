@@ -438,8 +438,7 @@ def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
 
     References
     ----------
-    Fasano G. and Francheschini A. (1987) A multidimensional version
-    of the Kolmogorov-Smirnov test. Monthly Notices of the Royal Astronomical Society, vol. 225, pp. 155-170.
+    Fasano, G., & Franceschini, A. (1987). A multidimensional version of the Kolmogorov-Smirnov test. Monthly Notices of the Royal Astronomical Society, 225, 155‑170. https://doi.org/10.1093/mnras/225.1.155
     """
 
     def pivot(x, y):
@@ -448,7 +447,7 @@ def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
 
         # Multiplicative factor converting d-dim booleans to a unique integer.
         mf = (2 ** np.arange(d)).reshape(1, d, 1)
-        minlength = 2 ** d
+        minlength = 2**d
 
         # Assign a unique integer according on whether or not x[i] <= sample
         ix = ((x.T <= np.atleast_3d(x)) * mf).sum(1)
@@ -502,7 +501,7 @@ def kldiv(
 
     Notes
     -----
-    In information theory, the Kullback–Leibler divergence is a non-symmetric
+    In information theory, the Kullback–Leibler divergence ([perezcruz08]_) is a non-symmetric
     measure of the difference between two probability distributions P and Q,
     where P is the "true" distribution and Q an approximation. This nuance is
     important because D(P||Q) is not equal to D(Q||P).
@@ -523,8 +522,7 @@ def kldiv(
 
     References
     ----------
-    Kullback-Leibler Divergence Estimation of Continuous Distributions (2008).
-    Fernando Pérez-Cruz.
+    .. [perezcruz08] Perez-Cruz, F. (2008). Kullback-Leibler divergence estimation of continuous distributions. 2008 IEEE International Symposium on Information Theory, 1666‑1670. https://doi.org/10.1109/ISIT.2008.4595271
     """
     mk = np.iterable(k)
     ka = np.atleast_1d(k)

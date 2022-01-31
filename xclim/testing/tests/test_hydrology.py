@@ -62,7 +62,7 @@ class TestMeltandPrecipMax:
 
         # 1 kg/ m2 /d of rain on day 11
         b = np.zeros(365)
-        b[11] = 1.0 / 60 ** 2 / 24
+        b[11] = 1.0 / 60**2 / 24
         pr = pr_series(b, start="1999-07-01")
 
         out = xci.melt_and_precip_max(snw, pr)

@@ -75,7 +75,7 @@ def list_locales():
 
 
 def _valid_locales(locales):
-    """Check if the lcoales are valid."""
+    """Check if the locales are valid."""
     if isinstance(locales, str):
         return True
     return all(
@@ -93,7 +93,9 @@ def _valid_locales(locales):
     )
 
 
-def get_local_dict(locale: Union[str, Sequence[str], Tuple[str, dict]]):
+def get_local_dict(
+    locale: Union[str, Sequence[str], Tuple[str, dict]]
+) -> Tuple[str, dict]:
     """Return all translated metadata for a given locale.
 
     Parameters
@@ -230,7 +232,9 @@ class UnavailableLocaleError(ValueError):
         )
 
 
-def read_locale_file(filename, module: Optional[str] = None, encoding: str = "UTF8"):
+def read_locale_file(
+    filename, module: Optional[str] = None, encoding: str = "UTF8"
+) -> dict:
     """Read a locale file (.json) and return its dictionary.
 
     Parameters
@@ -275,8 +279,8 @@ def load_locale(locdata: Union[str, Path, Mapping[str, dict]], locale: str):
         _LOCALES[locale] = locdata
 
 
-def generate_local_dict(locale: str, init_english: bool = False):
-    """Generate a dictionary with keys for each indicators and translatable attributes.
+def generate_local_dict(locale: str, init_english: bool = False) -> dict:
+    """Generate a dictionary with keys for each indicator and translatable attributes.
 
     Parameters
     ----------
