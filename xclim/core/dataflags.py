@@ -618,7 +618,7 @@ def data_flags(
     if dims == "all":
         dims = da.dims
     elif isinstance(dims, str):
-        # thus a single dimension name, we allow this option to mirror xarray.
+        # Thus, a single dimension name, we allow this option to mirror xarray.
         dims = {dims}
     if freq is not None and dims is not None:
         dims = (
@@ -699,7 +699,7 @@ def ecad_compliant(
     ds : xarray.Dataset
       Dataset containing variables to be examined.
     dims : {"all", None} or str or a sequence of strings
-      Dimenions upon which aggregation should be performed. Default: "all".
+      Dimensions upon which aggregation should be performed. Default: "all".
     raise_flags : bool
       Raise exception if any of the quality assessment flags are raised, otherwise returns None. Default: False.
     append : bool
@@ -742,7 +742,11 @@ def ecad_compliant(
             return
 
     ecad_flag = xarray.DataArray(
-        ~reduce(np.logical_or, flags.data_vars.values()),  # noqa
+        # TODO: Test for this change concerning data of type None in dataflag variables
+        ~reduce(
+            np.logical_or,
+            filter(lambda x: x.dtype == bool, flags.data_vars.values()),  # noqa
+        ),
         name="ecad_qc_flag",
         attrs=dict(
             comment="Adheres to ECAD quality control checks.",
