@@ -6,6 +6,7 @@ repos:
     rev: v2.31.0
     hooks:
       - id: pyupgrade
+        args: [--py38-plus]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.1.0
     hooks:
@@ -39,17 +40,11 @@ repos:
       - id: nbqa-pyupgrade
         args: [--py38-plus]
       - id: nbqa-isort
-  - repo: https://github.com/kynan/nbstripout
-    rev: 0.5.0
-    hooks:
-      - id: nbstripout
-        files: ".ipynb"
-  # - repo: https://github.com/pre-commit/mirrors-autopep8
-  #   rev: v1.4.4
-  #   hooks:
-  #   - id: autopep8
-  #     args: ['--global-config=setup.cfg','--in-place']
-
+#   - repo: https://github.com/kynan/nbstripout
+#     rev: 0.5.0
+#     hooks:
+#       - id: nbstripout
+#         files: ".ipynb"
   - repo: https://github.com/pycqa/pydocstyle
     rev: 6.1.1
     hooks:
