@@ -11,6 +11,10 @@ Announcements
 ^^^^^^^^^^^^^
 * `xclim` no longer supports Python3.7. Code conventions and new features for Python3.8 (`PEP 569 <https://www.python.org/dev/peps/pep-0569/>`_) are now accepted. (:pull:`1000`).
 
+Bug fixes
+^^^^^^^^^
+* Adjusted behaviour in ``dataflags.ecad_compliant`` to remove `data_vars` of invalids checks that return `None`, causing issues with `dask`. (:pull:`1002`).
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * `pre-commit` now uses Black 22.1.0 with Python3.8 style conventions. Existing code has been adjusted. (:pull:`1000`).
