@@ -212,14 +212,17 @@ def uses_dask(da):
 
 def calc_perc(
     arr: np.ndarray,
-    percentiles: Sequence[float] = [50.0],
+    percentiles: Sequence[float] = None,
     alpha: float = 1.0,
     beta: float = 1.0,
     copy: bool = True,
 ) -> np.ndarray:
     """
-    Compute percentiles using nan_calc_percentiles and move the percentiles axis to the end.
+    Compute percentiles using nan_calc_percentiles and move the percentiles' axis to the end.
     """
+    if percentiles is None:
+        percentiles = [50.0]
+
     return np.moveaxis(
         nan_calc_percentiles(
             arr=arr, percentiles=percentiles, axis=-1, alpha=alpha, beta=beta, copy=copy
@@ -231,7 +234,7 @@ def calc_perc(
 
 def nan_calc_percentiles(
     arr: np.ndarray,
-    percentiles=None,
+    percentiles: Sequence[float] = None,
     axis=-1,
     alpha=1.0,
     beta=1.0,
@@ -394,7 +397,7 @@ def _nan_quantile(
     # We need at least two values to do an interpolation
     too_few_values = valid_values_count < 2
     if too_few_values.any():
-        # This will result in getting the only available value if it exist
+        # This will result in getting the only available value if it exists
         valid_values_count[too_few_values] = np.NaN
     # --- Computation of indexes
     # Add axis for quantiles
