@@ -51,7 +51,7 @@ Internal changes
 
 Bug fixes
 ^^^^^^^^^
-*Fix mistake in the units of spell_length_distribution. (:issue:`1003`, :pull:`1004`)
+* Fix mistake in the units of spell_length_distribution. (:issue:`1003`, :pull:`1004`)
 
 0.32.1 (2021-12-17)
 -------------------
