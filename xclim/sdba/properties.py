@@ -309,6 +309,7 @@ def spell_length_distribution(
         "long_name"
     ] = f"{stat} of spell length when input variable {op} {method} {thresh}"
     out.name = "spell_length_distribution"
+    out.attrs["units"] = "days"
     return out
 
 
