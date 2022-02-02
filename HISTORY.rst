@@ -49,6 +49,10 @@ Internal changes
 * `pint` no longer emits warnings about redefined units when the `logging` module is loaded. (:issue:`990`, :pull:`991`).
 * Added a CI step for cancelling running workflows in pull requests that receive multiple pushes. (:pull:`988`).
 
+Bug fixes
+^^^^^^^^^
+*Fix mistake in the units of spell_length_distribution. (:issue:`1003`, :pull:`1004`)
+
 0.32.1 (2021-12-17)
 -------------------
 
