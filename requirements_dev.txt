@@ -4,6 +4,7 @@ bump2version
 coverage
 flake8
 flake8-rst-docstrings
+ipython<8.0 # this need when testing see #1005
 mypy
 nbval
 pre-commit>=2.9
