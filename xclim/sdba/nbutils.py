@@ -3,7 +3,7 @@ Numba-accelerated utilities
 ---------------------------
 """
 import numpy as np
-from numba import boolean, float32, float64, guvectorize, int64, njit
+from numba import boolean, float32, float64, guvectorize, njit
 from xarray import DataArray
 from xarray.core import utils
 

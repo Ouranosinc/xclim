@@ -1,11 +1,9 @@
 import numpy as np
-import pandas as pd
 import pytest
 import xarray as xr
 from scipy.stats import norm
 
 from xclim.sdba import utils as u
-from xclim.sdba.base import Grouper
 
 
 def test_ecdf(series):
@@ -51,24 +49,6 @@ def test_equally_spaced_nodes():
 
     x = u.equally_spaced_nodes(1, eps=None)
     np.testing.assert_almost_equal(x[0], 0.5)
-
-
-@pytest.mark.parametrize(
-    "method,exp", [("nan", [np.NaN, -np.inf]), ("constant", [0, -np.inf])]
-)
-def test_extrapolate_qm(make_qm, method, exp):
-    qm = make_qm(np.arange(6).reshape(2, 3))
-    xq = make_qm(np.arange(6).reshape(2, 3))
-
-    q, x = u.extrapolate_qm(qm, xq, method=method)
-
-    assert isinstance(q, xr.DataArray)
-    assert isinstance(x, xr.DataArray)
-    if np.isnan(exp[0]):
-        assert q[0, 0].isnull()
-    else:
-        assert q[0, 0] == exp[0]
-    assert x[0, 0] == exp[1]
 
 
 @pytest.mark.parametrize("group", ["time", "time.month"])
