@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Tests for `xclim` package.
 #
 # We want to tests multiple things here:
@@ -2376,7 +2375,7 @@ class TestClausiusClapeyronScaledPrecip:
         delta_tas = tfut_m - tref_m
         delta_tas.attrs["units"] = "delta_degC"
         pr_m_cc = xci.clausius_clapeyron_scaled_precipitation(delta_tas, pr_m)
-        np.testing.assert_array_almost_equal(pr_m_cc, pr_m * 1.07 ** 2, 1)
+        np.testing.assert_array_almost_equal(pr_m_cc, pr_m * 1.07**2, 1)
 
         # Compute monthly climatologies
         with xr.set_options(keep_attrs=True):
@@ -2388,7 +2387,7 @@ class TestClausiusClapeyronScaledPrecip:
         delta_tas_m.attrs["units"] = "delta_degC"
 
         pr_mm_cc = xci.clausius_clapeyron_scaled_precipitation(delta_tas_m, pr_mm)
-        np.testing.assert_array_almost_equal(pr_mm_cc, pr_mm * 1.07 ** 2, 1)
+        np.testing.assert_array_almost_equal(pr_mm_cc, pr_mm * 1.07**2, 1)
 
 
 class TestPotentialEvapotranspiration:

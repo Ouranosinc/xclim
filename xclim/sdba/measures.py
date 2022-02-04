@@ -75,7 +75,7 @@ def bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
 @check_same_units_and_convert
 @update_xclim_history
 def relative_bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
-    r"""Relative Bias.
+    """Relative Bias.
 
     The relative bias is the simulation minus reference, divided by the reference.
 
@@ -102,10 +102,10 @@ def relative_bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
 @check_same_units_and_convert
 @update_xclim_history
 def circular_bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
-    r"""Circular bias.
+    """Circular bias.
 
     Bias considering circular time series.
-    Eg. The bias between doy 365 and doy 1 is 364, but the circular bias is -1.
+    E.g. The bias between doy 365 and doy 1 is 364, but the circular bias is -1.
 
     Parameters
     ----------
@@ -133,7 +133,7 @@ def circular_bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
 @check_same_units_and_convert
 @update_xclim_history
 def ratio(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
-    r"""Ratio.
+    """Ratio.
 
     The ratio is the quotient of the simulation over the reference.
 
@@ -160,21 +160,21 @@ def ratio(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
 @check_same_units_and_convert
 @update_xclim_history
 def rmse(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
-    r"""Root mean square error.
+    """Root mean square error.
 
     The root mean square error on the time dimension between the simulation and the reference.
 
     Parameters
     ----------
     sim : xr.DataArray
-      data from the simulation (a time-series for each grid-point)
+      Data from the simulation (a time-series for each grid-point)
     ref : xr.DataArray
-      data from the reference (observations) (a time-series fro each grid-point)
+      Data from the reference (observations) (a time-series for each grid-point)
 
     Returns
     -------
     xr.DataArray,
-      root mean square error between the simulation and the reference
+      Root mean square error between the simulation and the reference
 
     See also
     --------
@@ -182,13 +182,13 @@ def rmse(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
 
     """
 
-    def nan_sklearn(sim, ref):
-        if np.isnan(sim[0]):  # sklearn can't handle the NaNs
+    def _nan_sklearn(simulation, reference):
+        if np.isnan(simulation[0]):  # sklearn can't handle the NaNs
             return np.nan
-        return metrics.mean_squared_error(sim, ref, squared=False)
+        return metrics.mean_squared_error(simulation, reference, squared=False)
 
     out = xr.apply_ufunc(
-        nan_sklearn,
+        _nan_sklearn,
         sim,
         ref,
         input_core_dims=[["time"], ["time"]],
@@ -203,7 +203,7 @@ def rmse(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
 @check_same_units_and_convert
 @update_xclim_history
 def mae(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
-    r"""Mean absolute error.
+    """Mean absolute error.
 
     The mean absolute error on the time dimension between the simulation and the reference.
 
@@ -212,7 +212,7 @@ def mae(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     sim : xr.DataArray
       data from the simulation (a time-series for each grid-point)
     ref : xr.DataArray
-      data from the reference (observations) (a time-series fro each grid-point)
+      data from the reference (observations) (a time-series for each grid-point)
 
     Returns
     -------
@@ -225,13 +225,13 @@ def mae(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
 
     """
 
-    def nan_sklearn(sim, ref):
-        if np.any(np.isnan(sim)):  # sklearn can't handle the NaNs
+    def _nan_sklearn(simulation, reference):
+        if np.any(np.isnan(simulation)):  # sklearn can't handle the NaNs
             return np.nan
-        return metrics.mean_absolute_error(sim, ref)
+        return metrics.mean_absolute_error(simulation, reference)
 
     out = xr.apply_ufunc(
-        nan_sklearn,
+        _nan_sklearn,
         sim,
         ref,
         input_core_dims=[["time"], ["time"]],
@@ -246,7 +246,7 @@ def mae(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
 @check_same_units_and_convert
 @update_xclim_history
 def annual_cycle_correlation(sim, ref, window: int = 15):
-    r"""Annual cycle correlation.
+    """Annual cycle correlation.
 
     Pearson correlation coefficient between the smooth day-of-year averaged annual cycles of the simulation and
     the reference. In the smooth day-of-year averaged annual cycles, each day-of-year is averaged over all years
@@ -260,7 +260,7 @@ def annual_cycle_correlation(sim, ref, window: int = 15):
       data from the reference (observations) (a time-series for each grid-point)
     window: int
       Size of window around each day of year around which to take the mean.
-      Eg. If window=31, Jan 1st is averaged over from December 17th to January 16th.
+      E.g. If window=31, Jan 1st is averaged over from December 17th to January 16th.
 
     Returns
     -------

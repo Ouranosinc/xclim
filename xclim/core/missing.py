@@ -223,7 +223,7 @@ class MissingWMO(MissingAny):
     r"""Return whether a series fails WMO criteria for missing days.
 
     The World Meteorological Organisation recommends that where monthly means are computed from daily values,
-    it should considered missing if either of these two criteria are met:
+    it should be considered missing if either of these two criteria are met:
 
       – observations are missing for 11 or more days during the month;
       – observations are missing for a period of 5 or more consecutive days during the month.
@@ -316,7 +316,7 @@ class MissingPct(MissingBase):
     freq : str
       Resampling frequency.
     tolerance : float
-      Fraction of missing values that is tolerated [0,1].
+      Fraction of missing values that are tolerated [0,1].
     src_timestep : {"D", "H"}
       Expected input frequency.
     indexer : {dim: indexer, }, optional

@@ -166,8 +166,8 @@ class Grouper(Parametrizable):
     def get_coordinate(self, ds=None):
         """Return the coordinate as in the output of group.apply.
 
-        Currently only implemented for groupings with prop == month or dayofyear.
-        For prop == dayfofyear a ds (dataset or dataarray) can be passed to infer
+        Currently, only implemented for groupings with prop == month or dayofyear.
+        For prop == dayfofyear, a ds (Dataset or DataArray) can be passed to infer
         the max doy from the available years and calendar.
         """
         if self.prop == "month":
@@ -474,7 +474,7 @@ def _decode_cf_coords(ds):
         ds[crdname] = crds[crdname]
 
 
-def map_blocks(reduces=None, **outvars):
+def map_blocks(reduces: Sequence[str] = None, **outvars):
     """
     Decorator for declaring functions and wrapping them into a map_blocks. It takes care of constructing
     the template dataset.
@@ -681,7 +681,7 @@ def map_blocks(reduces=None, **outvars):
     return _decorator
 
 
-def map_groups(reduces=None, main_only=False, **outvars):
+def map_groups(reduces: Sequence[str] = None, main_only: bool = False, **outvars):
     """
     Decorator for declaring functions acting only on groups and wrapping them into a map_blocks.
     See :py:func:`map_blocks`.
@@ -700,6 +700,12 @@ def map_groups(reduces=None, main_only=False, **outvars):
       and [Grouper.DIM] if main_only is True. See :py:func:`map_blocks`.
     main_only: bool
         Same as for :py:meth:`Grouper.apply`.
+    outvars:
+        Mapping from variable names in the output to their *new* dimensions.
+      The placeholders `Grouper.PROP`, `Grouper.DIM` and `Grouper.ADD_DIMS` can be used to signify
+      `group.prop`,`group.dim` and `group.add_dims` respectively.
+      If an output keeps a dimension that another loses, that dimension name must be given in `reduces` and in
+      the list of new dimensions of the first output.
     """
     defreduces = [Grouper.DIM]
     if not main_only:

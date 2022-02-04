@@ -46,7 +46,7 @@ def _get(
 ) -> Path:
     cache_dir = cache_dir.absolute()
     local_file = cache_dir / branch / fullname
-    md5name = fullname.with_suffix("{}.md5".format(suffix))
+    md5name = fullname.with_suffix(f"{suffix}.md5")
     md5file = cache_dir / branch / md5name
 
     if local_file.is_file():
@@ -199,7 +199,7 @@ def list_datasets(github_repo="Ouranosinc/xclim-testdata", branch="main"):
                 records.append(
                     {
                         "name": file["path"],
-                        "size": file["size"] / 2 ** 10,
+                        "size": file["size"] / 2**10,
                         "url": file["html_url"],
                     }
                 )

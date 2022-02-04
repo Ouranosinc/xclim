@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # noqa: D205,D400
 """
 Indicators utilities
@@ -1150,9 +1149,9 @@ class Indicator(IndicatorRegistrar):
         # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
         for k, v in args.items():
             if isinstance(v, units.Quantity):
-                mba[k] = "{:g~P}".format(v)
+                mba[k] = f"{v:g~P}"
             elif isinstance(v, (int, float)):
-                mba[k] = "{:g}".format(v)
+                mba[k] = f"{v:g}"
             # TODO: What about InputKind.NUMBER_SEQUENCE
             elif k == "indexer":
                 if v and v not in [_empty, _empty_default]:

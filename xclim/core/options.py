@@ -134,7 +134,7 @@ def cfcheck(func: Callable) -> Callable:
 class set_options:
     """Set options for xclim in a controlled context.
 
-    Currently supported options:
+    Currently-supported options:
 
     - ``metadata_locales``:
       List of IETF language tags or tuples of language tags and a translation dict, or
@@ -164,7 +164,7 @@ class set_options:
       For `processing` functions, see the doc, the output type might change, or not depending on the
       algorithm. Default: ``False``.
     - ``sdba_encode_cf``:
-      Whether to encode cf coordinates in the ``map_blocks`` optimization most of adjustment methods are based on.
+      Whether to encode cf coordinates in the ``map_blocks`` optimization that most adjustment methods are based on.
       This should have no impact on the results, but should run much faster in the graph creation phase.
 
     Examples

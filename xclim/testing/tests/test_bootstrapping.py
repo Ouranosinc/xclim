@@ -199,7 +199,7 @@ class Test_bootstrap:
         """Return random AR1 DataArray."""
 
         # White noise
-        wn = np.random.randn(n - 1) * np.sqrt(1 - alpha ** 2)
+        wn = np.random.randn(n - 1) * np.sqrt(1 - alpha**2)
 
         # Autoregressive series of order 1
         out = np.empty(n)

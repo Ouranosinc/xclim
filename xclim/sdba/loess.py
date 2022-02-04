@@ -17,7 +17,7 @@ def _gaussian_weighting(x):  # pragma: no cover
 
     The span f covers 95% of the gaussian.
     """
-    w = np.exp(-(x ** 2) / (2 * (1 / 1.96) ** 2))
+    w = np.exp(-(x**2) / (2 * (1 / 1.96) ** 2))
     w[x >= 1] = 0
     return w
 
@@ -25,7 +25,7 @@ def _gaussian_weighting(x):  # pragma: no cover
 @numba.njit
 def _tricube_weighting(x):  # pragma: no cover
     """Kernel function for loess with a tricubic shape."""
-    w = (1 - x ** 3) ** 3
+    w = (1 - x**3) ** 3
     w[x >= 1] = 0
     return w
 
@@ -148,7 +148,7 @@ def _loess_nb(
             residuals = y - yest
             s = np.median(np.abs(residuals))
             xres = residuals / (6.0 * s)
-            delta = (1 - xres ** 2) ** 2
+            delta = (1 - xres**2) ** 2
             delta[np.abs(xres) >= 1] = 0
 
     return yest

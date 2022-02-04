@@ -364,7 +364,7 @@ def saturation_vapor_pressure(
                 -6096.9385 / tas  # type: ignore
                 + 16.635794
                 + -2.711193e-2 * tas  # type: ignore
-                + 1.673952e-5 * tas ** 2
+                + 1.673952e-5 * tas**2
                 + 2.433502 * np.log(tas)  # numpy's log is ln
             ),
             100
@@ -372,7 +372,7 @@ def saturation_vapor_pressure(
                 -6024.5282 / tas  # type: ignore
                 + 24.7219
                 + 1.0613868e-2 * tas  # type: ignore
-                + -1.3198825e-5 * tas ** 2
+                + -1.3198825e-5 * tas**2
                 + -0.49382577 * np.log(tas)
             ),
         )
@@ -824,7 +824,7 @@ def wind_chill_index(
     tas = convert_units_to(tas, "degC")
     sfcWind = convert_units_to(sfcWind, "km/h")
 
-    V = sfcWind ** 0.16
+    V = sfcWind**0.16
     W = 13.12 + 0.6215 * tas - 11.37 * V + 0.3965 * tas * V
 
     if method.upper() == "CAN":
@@ -886,7 +886,7 @@ def clausius_clapeyron_scaled_precipitation(
     delta_tas = convert_units_to(delta_tas, "delta_degreeC")
 
     # Calculate scaled precipitation.
-    pr_out = pr_baseline * (cc_scale_factor ** delta_tas)
+    pr_out = pr_baseline * (cc_scale_factor**delta_tas)
     pr_out.attrs["units"] = pr_baseline.attrs["units"]
 
     return pr_out
@@ -1068,7 +1068,7 @@ def potential_evapotranspiration(
         start = "-".join(
             [
                 str(tas.time[0].dt.year.values),
-                "{:02d}".format(tas.time[0].dt.month.values),
+                f"{tas.time[0].dt.month.values:02d}",
                 "01",
             ]
         )
@@ -1076,7 +1076,7 @@ def potential_evapotranspiration(
         end = "-".join(
             [
                 str(tas.time[-1].dt.year.values),
-                "{:02d}".format(tas.time[-1].dt.month.values),
+                f"{tas.time[-1].dt.month.values:02d}",
                 str(tas.time[-1].dt.daysinmonth.values),
             ]
         )
@@ -1105,7 +1105,7 @@ def potential_evapotranspiration(
         for base_time, indexes in tas.resample(time="YS").groups.items():
             tas_y = tas.isel(time=indexes)
             id_v = id_y.sel(time=base_time)
-            a = 6.75e-7 * id_v ** 3 - 7.71e-5 * id_v ** 2 + 0.01791 * id_v + 0.49239
+            a = 6.75e-7 * id_v**3 - 7.71e-5 * id_v**2 + 0.01791 * id_v + 0.49239
 
             frac = (10 * tas_y / id_v) ** a
             tas_idy_a.append(frac)

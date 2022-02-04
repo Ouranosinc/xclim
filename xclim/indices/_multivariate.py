@@ -169,7 +169,7 @@ def cold_and_dry_days(
       .. warning::
 
         Before computing the percentiles, all the precipitation below 1mm must be filtered out !
-        Otherwise the percentiles will include non wet days.
+        Otherwise, the percentiles will include non-wet days.
 
     freq : str
       Resampling frequency.
@@ -233,7 +233,7 @@ def warm_and_dry_days(
       .. warning::
 
         Before computing the percentiles, all the precipitation below 1mm must be filtered out !
-        Otherwise the percentiles will include non wet days.
+        Otherwise, the percentiles will include non-wet days.
 
     freq : str
       Resampling frequency.
@@ -297,7 +297,7 @@ def warm_and_wet_days(
       .. warning::
 
         Before computing the percentiles, all the precipitation below 1mm must be filtered out !
-        Otherwise the percentiles will include non wet days.
+        Otherwise, the percentiles will include non-wet days.
 
     freq : str
       Resampling frequency.
@@ -361,7 +361,7 @@ def cold_and_wet_days(
       .. warning::
 
         Before computing the percentiles, all the precipitation below 1mm must be filtered out !
-        Otherwise the percentiles will include non wet days.
+        Otherwise, the percentiles will include non-wet days.
 
     freq : str
       Resampling frequency.
@@ -708,18 +708,14 @@ def heat_wave_frequency(
     The thresholds of 22° and 25°C for night temperatures and 30° and 35°C for day temperatures were selected by
     Health Canada professionals, following a temperature–mortality analysis. These absolute temperature thresholds
     characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
-    communities (Casati et al., 2013).
+    communities ([casati2013]_).
 
-    In Robinson (2001), the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
+    In Robinson (2001; [robinson2001]_), the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
 
     References
     ----------
-    Casati, B., A. Yagouti, and D. Chaumont, 2013: Regional Climate Projections of Extreme Heat Events in Nine Pilot
-    Canadian Communities for Public Health Planning. J. Appl. Meteor. Climatol., 52, 2669–2698,
-    https://doi.org/10.1175/JAMC-D-12-0341.1
-
-    Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775,
-    https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
+    .. [casati2013] Casati, B., Yagouti, A., & Chaumont, D. (2013). Regional Climate Projections of Extreme Heat Events in Nine Pilot Canadian Communities for Public Health Planning. Journal of Applied Meteorology and Climatology, 52(12), 2669‑2698. https://doi.org/10.1175/JAMC-D-12-0341.1
+    .. [robinson2001] Robinson, P. J. (2001). On the Definition of a Heat Wave. Journal of Applied Meteorology and Climatology, 40(4), 762‑775. https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
     """
     thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
@@ -777,18 +773,14 @@ def heat_wave_max_length(
     The thresholds of 22° and 25°C for night temperatures and 30° and 35°C for day temperatures were selected by
     Health Canada professionals, following a temperature–mortality analysis. These absolute temperature thresholds
     characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
-    communities (Casati et al., 2013).
+    communities ([casati2013]_).
 
-    In Robinson (2001), the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
+    In Robinson (2001; [robinson2001]_), the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
 
     References
     ----------
-    Casati, B., A. Yagouti, and D. Chaumont, 2013: Regional Climate Projections of Extreme Heat Events in Nine Pilot
-    Canadian Communities for Public Health Planning. J. Appl. Meteor. Climatol., 52, 2669–2698,
-    https://doi.org/10.1175/JAMC-D-12-0341.1
-
-    Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775,
-    https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
+    .. [casati2013] Casati, B., Yagouti, A., & Chaumont, D. (2013). Regional Climate Projections of Extreme Heat Events in Nine Pilot Canadian Communities for Public Health Planning. Journal of Applied Meteorology and Climatology, 52(12), 2669‑2698. https://doi.org/10.1175/JAMC-D-12-0341.1
+    .. [robinson2001] Robinson, P. J. (2001). On the Definition of a Heat Wave. Journal of Applied Meteorology and Climatology, 40(4), 762‑775. https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
     """
     thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
@@ -1458,7 +1450,7 @@ def tx90p(
 
     Notes
     -----
-    The 90th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
+    The 90th percentile should be computed for a 5-day window centered on each calendar day for a reference period.
 
     Examples
     --------
