@@ -186,7 +186,7 @@ def test_reordering():
 
 def test_to_additive(pr_series, hurs_series):
     # log
-    pr = pr_series(np.array([0, 1e-5, 1, np.e ** 10]))
+    pr = pr_series(np.array([0, 1e-5, 1, np.e**10]))
 
     prlog = to_additive_space(pr, lower_bound="0 mm/d", trans="log")
     np.testing.assert_allclose(prlog, [-np.Inf, -11.512925, 0, 10])
@@ -225,7 +225,7 @@ def test_to_additive(pr_series, hurs_series):
 
 def test_from_additive(pr_series, hurs_series):
     # log
-    pr = pr_series(np.array([0, 1e-5, 1, np.e ** 10]))
+    pr = pr_series(np.array([0, 1e-5, 1, np.e**10]))
     pr2 = from_additive_space(to_additive_space(pr, lower_bound="0 mm/d", trans="log"))
     np.testing.assert_allclose(pr[1:], pr2[1:])
     pr2.attrs.pop("history")

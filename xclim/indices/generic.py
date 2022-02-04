@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # noqa: D205,D400
 """
 Generic indices submodule
@@ -66,7 +65,7 @@ def select_time(
     month: Union[int, Sequence[int]] = None,
     doy_bounds: Tuple[int, int] = None,
     date_bounds: Tuple[str, str] = None,
-):
+) -> Union[xr.DataArray, xr.Dataset]:
     """Select entries according to a time period."""
     warnings.warn(
         "'select_time()' has moved from `xclim.indices.generic` to `xclim.core.calendar`. "
@@ -83,7 +82,9 @@ def select_time(
     )
 
 
-def select_resample_op(da: xr.DataArray, op: str, freq: str = "YS", **indexer):
+def select_resample_op(
+    da: xr.DataArray, op: str, freq: str = "YS", **indexer
+) -> xr.DataArray:
     """Apply operation over each period that is part of the index selection.
 
     Parameters
@@ -337,9 +338,9 @@ def diurnal_temperature_range(
     Parameters
     ----------
     low_data : xr.DataArray
-      Lowest daily temperature (tasmin).
+      The lowest daily temperature (tasmin).
     high_data : xr.DataArray
-      Highest daily temperature (tasmax).
+      The highest daily temperature (tasmax).
     reducer : {'max', 'min', 'mean', 'sum'}
       Reducer.
     freq: str
@@ -566,9 +567,9 @@ def interday_diurnal_temperature_range(
     Parameters
     ----------
     low_data : xr.DataArray
-      Lowest daily temperature (tasmin).
+      The lowest daily temperature (tasmin).
     high_data : xr.DataArray
-      Highest daily temperature (tasmax).
+      The highest daily temperature (tasmax).
     freq: str
       Resampling frequency.
 
@@ -594,9 +595,9 @@ def extreme_temperature_range(
     Parameters
     ----------
     low_data : xr.DataArray
-      Lowest daily temperature (tasmin).
+      The lowest daily temperature (tasmin).
     high_data : xr.DataArray
-      Highest daily temperature (tasmax).
+      The highest daily temperature (tasmax).
     freq: str
       Resampling frequency.
 
@@ -619,7 +620,7 @@ def aggregate_between_dates(
     end: Union[xr.DataArray, DayOfYearStr],
     op: str = "sum",
     freq: Optional[str] = None,
-):
+) -> xr.DataArray:
     """Aggregate the data over a period between start and end dates and apply the operator on the aggregated data.
 
     Parameters

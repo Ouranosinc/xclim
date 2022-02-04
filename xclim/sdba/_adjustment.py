@@ -6,7 +6,7 @@ This file defines the different steps, to be wrapped into the Adjustment objects
 import numpy as np
 import xarray as xr
 
-from xclim.indices.stats import _fitfunc_1d
+from xclim.indices.stats import _fitfunc_1d  # noqa
 
 from . import nbutils as nbu
 from . import utils as u
@@ -226,7 +226,7 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
         rot_matrices : Random rotation matrices.
 
     kwargs:
-      pts_dim : multivariate dimensionn name
+      pts_dim : multivariate dimension name
       base : Adjustment class
       base_kws : Kwargs for initialising the adjustment object
       adj_kws : Kwargs of the `adjust` call
@@ -373,7 +373,7 @@ def extremes_train(ds, *, group, q_thresh, cluster_thresh, dist, quantiles):
 
 
 def _fit_cluster_and_cdf(data, thresh, dist, cluster_thresh):
-    """Fit 1D cluster maximums and immediatly compute CDF."""
+    """Fit 1D cluster maximums and immediately compute CDF."""
     fut_params = _fit_on_cluster(data, thresh, dist, cluster_thresh)
     return dist.cdf(data, *fut_params)
 

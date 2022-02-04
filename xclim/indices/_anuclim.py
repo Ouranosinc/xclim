@@ -211,7 +211,7 @@ def tg_mean_warmcold_quarter(
     r"""ANUCLIM Mean temperature of warmest/coldest quarter.
 
     The warmest (or coldest) quarter of the year is determined, and the mean temperature of this period is
-    calculated.  If the input data frequency is daily ("D") or weekly ("W"), quarters are defined as 13 week periods,
+    calculated.  If the input data frequency is daily ("D") or weekly ("W"), quarters are defined as 13-week periods,
     otherwise as 3 months.
 
     Parameters
@@ -219,7 +219,7 @@ def tg_mean_warmcold_quarter(
     tas : xarray.DataArray
       Mean temperature at daily, weekly, or monthly frequency.
     op : str {'warmest', 'coldest'}
-      Operation to perform:  'warmest' calculate warmest quarter; 'coldest' calculate coldest quarter.
+      Operation to perform:  'warmest' calculate the warmest quarter; 'coldest' calculate the coldest quarter.
     freq : str
       Resampling frequency.
 
@@ -262,7 +262,8 @@ def tg_mean_wetdry_quarter(
     r"""ANUCLIM Mean temperature of wettest/driest quarter.
 
     The wettest (or driest) quarter of the year is determined, and the mean temperature of this period is calculated.
-    If the input data frequency is daily ("D") or weekly ("W"), quarters are defined as 13 week periods, otherwise are 3 months.
+    If the input data frequency is daily ("D") or weekly ("W"), quarters are defined as 13-week periods,
+    otherwise are 3 months.
 
     Parameters
     ----------
@@ -305,14 +306,14 @@ def prcptot_wetdry_quarter(
 
     The wettest (or driest) quarter of the year is determined, and the total precipitation of this
     period is calculated. If the input data frequency is daily ("D") or weekly ("W") quarters
-    are defined as 13 week periods, otherwise are 3 months.
+    are defined as 13-week periods, otherwise are 3 months.
 
     Parameters
     ----------
     pr : xarray.DataArray
       Total precipitation rate at daily, weekly, or monthly frequency.
     op : {'wettest', 'driest'}
-      Operation to perform :  'wettest' calculate wettest quarter ; 'driest' calculate driest quarter.
+      Operation to perform :  'wettest' calculate the wettest quarter ; 'driest' calculate the driest quarter.
     freq : str
       Resampling frequency.
 
@@ -361,8 +362,8 @@ def prcptot_warmcold_quarter(
     r"""ANUCLIM Total precipitation of warmest/coldest quarter.
 
     The warmest (or coldest) quarter of the year is determined, and the total
-    precipitation of this period is calculated.  If the input data frequency is daily ("D) or weekly ("W"), quarters
-    are defined as 13 week periods, otherwise are 3 months.
+    precipitation of this period is calculated. If the input data frequency is daily ("D) or weekly ("W"), quarters
+    are defined as 13-week periods, otherwise are 3 months.
 
     Parameters
     ----------
@@ -435,7 +436,7 @@ def prcptot_wetdry_period(
     pr : xarray.DataArray
       Total precipitation flux [mm d-1], [mm week-1], [mm month-1] or similar.
     op : {'wettest', 'driest'}
-      Operation to perform :  'wettest' calculate wettest period ; 'driest' calculate driest period.
+      Operation to perform :  'wettest' calculate the wettest period ; 'driest' calculate the driest period.
     freq : str
       Resampling frequency.
 
@@ -488,7 +489,7 @@ def _from_other_arg(
     Returns
     -------
     xarray.DataArray
-      Output values where criteria is met at the given frequency.
+      Output values where criteria are met at the given frequency.
     """
     ds = xarray.Dataset(data_vars={"criteria": criteria, "output": output})
     dim = "time"

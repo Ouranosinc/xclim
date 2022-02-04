@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # noqa: D205,D400
 """
 Calendar handling utilities
@@ -1208,7 +1207,7 @@ def select_time(
     month: Union[int, Sequence[int]] = None,
     doy_bounds: Tuple[int, int] = None,
     date_bounds: Tuple[str, str] = None,
-):
+) -> Union[xr.DataArray, xr.Dataset]:
     """Select entries according to a time period.
 
     This conveniently improves xarray's :py:meth:`xarray.DataArray.where` and

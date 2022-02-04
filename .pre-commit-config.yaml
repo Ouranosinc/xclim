@@ -6,11 +6,7 @@ repos:
     rev: v2.31.0
     hooks:
       - id: pyupgrade
-  - repo: https://github.com/kynan/nbstripout
-    rev: 0.5.0
-    hooks:
-      - id: nbstripout
-        files: ".ipynb"
+        args: [--py38-plus]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.1.0
     hooks:
@@ -21,29 +17,34 @@ repos:
       - id: check-yaml
         args: ['--allow-multiple-documents']
       - id: debug-statements
-  - repo: https://github.com/psf/black
-    rev: 21.12b0
-    hooks:
-      - id: black
-        args: ["--target-version", "py37"]
-      - id: black-jupyter
-        args: ["--target-version", "py37"]
   - repo: https://github.com/pycqa/flake8
     rev: 4.0.1
     hooks:
       - id: flake8
         additional_dependencies: ['flake8-rst-docstrings']
         args: ['--config=setup.cfg']
-  # - repo: https://github.com/pre-commit/mirrors-autopep8
-  #   rev: v1.4.4
-  #   hooks:
-  #   - id: autopep8
-  #     args: ['--global-config=setup.cfg','--in-place']
+  - repo: https://github.com/psf/black
+    rev: 22.1.0
+    hooks:
+      - id: black
+        args: ["--target-version", "py38"]
   - repo: https://github.com/PyCQA/isort
     rev: 5.10.1
     hooks:
       - id: isort
         args: ['--profile', 'black']
+  - repo: https://github.com/nbQA-dev/nbQA
+    rev: 1.2.3
+    hooks:
+      - id: nbqa-black
+      - id: nbqa-pyupgrade
+        args: [--py38-plus]
+      - id: nbqa-isort
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.5.0
+    hooks:
+      - id: nbstripout
+        files: ".ipynb"
   - repo: https://github.com/pycqa/pydocstyle
     rev: 6.1.1
     hooks:
@@ -68,5 +69,5 @@ ci:
   autoupdate_branch: ''
   autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
   autoupdate_schedule: weekly
-  skip: []
+  skip: [nbstripout]
   submodules: false

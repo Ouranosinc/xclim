@@ -127,7 +127,7 @@ def var(da: xr.DataArray, *, group: Union[str, Grouper] = "time") -> xr.DataArra
     out.attrs.update(attrs)
     out.attrs["long_name"] = "Variance"
     u = xc.core.units.units2pint(attrs["units"])
-    u2 = u ** 2
+    u2 = u**2
     out.attrs["units"] = xc.core.units.pint2cfunits(u2)
     out.name = "variance"
     return out
@@ -250,11 +250,11 @@ def spell_length_distribution(
       Str with units if the method is "amount".
       Float of the quantile if the method is "quantile".
     stat: {'mean','max','min'}
-      Statistics to apply to the resampled input at the {group} (eg. 1-31 Jan 1980) and then over all years \
-      (eg. Jan 1980-2010)
+      Statistics to apply to the resampled input at the {group} (e.g. 1-31 Jan 1980)
+      and then over all years (e.g. Jan 1980-2010)
     group : {'time', 'time.season', 'time.month'}
       Grouping of the output.
-      Eg. If 'time.month', the spell lengths are coputed separately for each month.
+      E.g. If 'time.month', the spell lengths are coputed separately for each month.
 
     Returns
     -------

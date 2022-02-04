@@ -2,6 +2,25 @@
 History
 =======
 
+0.34.0 (unreleased)
+-------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`),  Trevor James Smith (:user:`Zeitsperre`)
+
+Announcements
+^^^^^^^^^^^^^
+* `xclim` no longer supports Python3.7. Code conventions and new features for Python3.8 (`PEP 569 <https://www.python.org/dev/peps/pep-0569/>`_) are now accepted. (:pull:`1000`).
+
+Bug fixes
+^^^^^^^^^
+* Adjusted behaviour in ``dataflags.ecad_compliant`` to remove `data_vars` of invalids checks that return `None`, causing issues with `dask`. (:pull:`1002`).
+* Temporarily pinned `ipython` below version 8.0 due to behaviour causing hangs in GitHub Actions and ReadTheDocs. (:issue:`1005`, :pull:`1006`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* `pre-commit` now uses Black 22.1.0 with Python3.8 style conventions. Existing code has been adjusted. (:pull:`1000`).
+* `tox` builds for Python3.7 have been deprecated. (:pull:`1000`).
+* Docstrings and documentation has been adjusted for grammar and typos. (:pull:`1000`).
+
 0.33.0 (2022-01-28)
 -------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Tom Keel (:user:`Thomasjkeel`), Jeremy Fyke (:user:`JeremyFyke`), David Huard (:user:`huard`), Abel Aoun (:user:`bzah`), Juliette Lavoie (:user:`juliettelavoie`), Yannick Rousseau (:user:`yrouranos`).

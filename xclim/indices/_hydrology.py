@@ -73,7 +73,7 @@ def rb_flashiness_index(
     r"""Richards-Baker flashiness index.
 
     Measures oscillations in flow relative to total flow, quantifying the frequency and rapidity of short term changes
-    in flow.
+    in flow, based on Baker et al. (2004; [baker2004]_).
 
     Parameters
     ----------
@@ -97,8 +97,7 @@ def rb_flashiness_index(
 
     References
     ----------
-    Baker, D.B., R.P. Richards, T.T. Loftus, and J.W. Kramer, 2004. A new Flashiness Index: Characteristics and
-    Applications to Midwestern Rivers and Streams. Journal of the American Water Resources Association 40(2):503-522.
+    .. [baker2004] Baker, D. B., Richards, R. P., Loftus, T. T., & Kramer, J. W. (2004). A New Flashiness Index: Characteristics and Applications to Midwestern Rivers and Streams1. JAWRA Journal of the American Water Resources Association, 40(2), 503‑522. https://doi.org/10.1111/j.1752-1688.2004.tb01046.x
     """
     d = np.abs(q.diff(dim="time")).resample(time=freq)
     mq = q.resample(time=freq)

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """The setup script."""
 import re
 
@@ -10,8 +9,8 @@ DESCRIPTION = "Derived climate variables built with xarray."
 URL = "https://github.com/Ouranosinc/xclim"
 AUTHOR = "Travis Logan"
 AUTHOR_EMAIL = "logan.travis@ouranos.ca"
-REQUIRES_PYTHON = ">=3.7.0"
-VERSION = "0.33.0"
+REQUIRES_PYTHON = ">=3.8.0"
+VERSION = "0.33.1-beta"
 LICENSE = "Apache Software License 2.0"
 
 with open("README.rst") as readme_file:
@@ -67,7 +66,6 @@ setup(
         "Natural Language :: English",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Topic :: Scientific/Engineering :: Atmospheric Science",

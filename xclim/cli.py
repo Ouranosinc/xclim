@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """xclim command line interface module."""
 import sys
 import warnings
@@ -33,7 +32,7 @@ def _get_input(ctx):
     """Return the input dataset stored in the given context.
 
     If the dataset is not open, opens it with open_dataset if a single path was given,
-    or with open_mfdataset if a tuple or glob path was given.
+    or with `open_mfdataset` if a tuple or glob path was given.
     """
     arg = ctx.obj["input"]
     if arg is None:
@@ -94,9 +93,9 @@ def _process_indicator(indicator, ctx, **params):
     ctx.obj["ds_out"] = dsout
 
 
-def _create_command(indname):
+def _create_command(indicator_name):
     """Generate a Click.Command from an xclim Indicator."""
-    indicator = _get_indicator(indname)
+    indicator = _get_indicator(indicator_name)
     params = []
     for name, param in indicator.parameters.items():
         if name in ["ds"] or param.kind == InputKind.KWARGS:
@@ -121,7 +120,7 @@ def _create_command(indname):
         return _process_indicator(indicator, ctx, **kwargs)
 
     return click.Command(
-        indname,
+        indicator_name,
         callback=_process,
         params=params,
         help=indicator.abstract,
@@ -414,9 +413,9 @@ def cli(ctx, **kwargs):
     ctx.obj = kwargs
 
 
-@cli.result_callback()
+@cli.result_callback()  # noqa
 @click.pass_context
-def write_file(ctx, *args, **kwargs):
+def write_file(ctx, *args, **kwargs):  # noqa
     """Write the output dataset to file."""
     if ctx.obj["output"] is not None:
         if ctx.obj["verbose"]:
