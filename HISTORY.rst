@@ -2,10 +2,9 @@
 History
 =======
 
-
 0.34.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`),  Trevor James Smith (:user:`Zeitsperre`)
 
 Announcements
 ^^^^^^^^^^^^^
@@ -14,6 +13,7 @@ Announcements
 Bug fixes
 ^^^^^^^^^
 * Adjusted behaviour in ``dataflags.ecad_compliant`` to remove `data_vars` of invalids checks that return `None`, causing issues with `dask`. (:pull:`1002`).
+* Temporarily pinned `ipython` below version 8.0 due to behaviour causing hangs in GitHub Actions and ReadTheDocs. (:issue:`1005`, :pull:`1006`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
