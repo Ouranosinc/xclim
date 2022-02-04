@@ -191,19 +191,17 @@ def _first_and_last_nonnull(arr):
 def _extrapolate_on_quantiles(interp, oldx, oldg, oldy, newx, newg, method="constant"):
     """Apply extrapolation to the output of interpolation on quantiles with a given
     grouping. Arguments are the same as _interp_on_quantiles_2D.
-
-    "constant" extrapolation is done independently for each group.
     """
-    igrp = np.empty_like(newg)
-    np.around(newg, 0, igrp)
-    igrp = igrp.astype(int64)
     bnds = _first_and_last_nonnull(oldx)
-    toolow = newx < bnds[:, 0][igrp]
-    toohigh = newx > bnds[:, 1][igrp]
+    xp = np.arange(bnds.shape[0])
+    toolow = newx < np.interp(newg, xp, bnds[:, 0])
+    toohigh = newx > np.interp(newg, xp, bnds[:, 1])
     if method == "constant":
         constants = _first_and_last_nonnull(oldy)
-        interp[toolow] = constants[igrp, 0][toolow]
-        interp[toohigh] = constants[igrp, 1][toohigh]
+        cnstlow = np.interp(newg, xp, constants[:, 0])
+        cnsthigh = np.interp(newg, xp, constants[:, 1])
+        interp[toolow] = cnstlow[toolow]
+        interp[toohigh] = cnsthigh[toohigh]
     else:  # 'nan'
         interp[toolow] = np.NaN
         interp[toohigh] = np.NaN

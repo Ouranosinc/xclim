@@ -438,7 +438,6 @@ def _interp_on_quantiles_2D(newx, newg, oldx, oldy, oldg, method, extrap):  # no
             category=RuntimeWarning,
         )
         return out
-
     out[~mask_new] = griddata(
         (oldx[~mask_old], oldg[~mask_old]),
         oldy[~mask_old],
@@ -493,7 +492,7 @@ def interp_on_quantiles(
     - 'nan' : Any value of `newx` outside the range of `xq` is set to NaN.
     - 'constant' : Values of `newx` smaller than the minimum of `xq` are set to the first
       value of `yq` and those larger than the maximum, set to the last one (first and
-      last values along the "quantiles" dimension).
+      last values along the "quantiles" dimension). When the grouping is
     """
     dim = group.dim
     prop = group.prop
