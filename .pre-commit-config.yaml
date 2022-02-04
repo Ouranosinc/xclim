@@ -40,11 +40,11 @@ repos:
       - id: nbqa-pyupgrade
         args: [--py38-plus]
       - id: nbqa-isort
-#   - repo: https://github.com/kynan/nbstripout
-#     rev: 0.5.0
-#     hooks:
-#       - id: nbstripout
-#         files: ".ipynb"
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.5.0
+    hooks:
+      - id: nbstripout
+        files: ".ipynb"
   - repo: https://github.com/pycqa/pydocstyle
     rev: 6.1.1
     hooks:
@@ -69,5 +69,5 @@ ci:
   autoupdate_branch: ''
   autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
   autoupdate_schedule: weekly
-  skip: []
+  skip: [nbstripout]
   submodules: false
