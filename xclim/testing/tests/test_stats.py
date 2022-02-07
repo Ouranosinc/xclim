@@ -227,67 +227,72 @@ class TestPWMFit:
             np.testing.assert_array_equal(out.sel(dparams=key), val, 1)
 
 
-class TestFrequencyAnalysis:
-    def test_simple(self, ndq_series):
-        q = ndq_series.copy()
-        q[:, 0, 0] = np.nan
-        out = stats.frequency_analysis(
-            q, mode="max", t=2, dist="genextreme", window=6, freq="YS"
-        )
-        assert out.dims == ("return_period", "x", "y")
-        assert out.shape == (1, 2, 3)
-        v = out.values
-        assert v.shape == (1, 2, 3)
-        assert np.isnan(v[:, 0, 0])
-        assert ~np.isnan(v[:, 1, 1])
-        assert out.units == "m3 s-1"
+@pytest.mark.parametrize("use_dask", [True, False])
+def test_frequency_analysis(ndq_series, use_dask):
+    q = ndq_series.copy()
+    q[:, 0, 0] = np.nan
+    if use_dask:
+        q = q.chunk()
 
-        # smoke test when time is not the first dimension
-        stats.frequency_analysis(
-            q.transpose(), mode="max", t=2, dist="genextreme", window=6, freq="YS"
-        )
+    out = stats.frequency_analysis(
+        q, mode="max", t=2, dist="genextreme", window=6, freq="YS"
+    )
+    assert out.dims == ("return_period", "x", "y")
+    assert out.shape == (1, 2, 3)
+    v = out.values
+    assert v.shape == (1, 2, 3)
+    assert np.isnan(v[:, 0, 0])
+    assert ~np.isnan(v[:, 1, 1])
+    assert out.units == "m3 s-1"
 
-
-class TestParametricQuantile:
-    def test_synth(self):
-        mu = 23
-        sigma = 2
-        n = 10000
-        per = 0.9
-        d = norm(loc=mu, scale=sigma)
-        r = xr.DataArray(
-            d.rvs(n),
-            dims=("time",),
-            coords={"time": xr.cftime_range(start="1980-01-01", periods=n)},
-            attrs={"history": "Mosquito bytes per minute"},
-        )
-        expected = d.ppf(per)
-
-        p = stats.fit(r, dist="norm")
-        q = stats.parametric_quantile(p=p, q=per)
-
-        np.testing.assert_array_almost_equal(q, expected, 1)
-        assert "quantile" in q.coords
+    # smoke test when time is not the first dimension
+    stats.frequency_analysis(
+        q.transpose(), mode="max", t=2, dist="genextreme", window=6, freq="YS"
+    )
 
 
-class TestParametricCDF:
-    def test_synth(self):
-        mu = 23
-        sigma = 2
-        n = 10000
-        v = 24
-        d = norm(loc=mu, scale=sigma)
-        r = xr.DataArray(
-            d.rvs(n),
-            dims=("time",),
-            coords={"time": xr.cftime_range(start="1980-01-01", periods=n)},
-            attrs={"history": "Mosquito bytes per minute"},
-        )
-        expected = d.cdf(v)
+@pytest.mark.parametrize("use_dask", [True, False])
+def test_parametric_quantile(use_dask):
+    mu = 23
+    sigma = 2
+    n = 10000
+    per = 0.9
+    d = norm(loc=mu, scale=sigma)
+    r = xr.DataArray(
+        d.rvs(n),
+        dims=("time",),
+        coords={"time": xr.cftime_range(start="1980-01-01", periods=n)},
+        attrs={"history": "Mosquito bytes per minute"},
+    )
+    expected = d.ppf(per)
 
-        p = stats.fit(r, dist="norm")
-        out = stats.parametric_cdf(p=p, v=v)
+    p = stats.fit(r, dist="norm")
+    q = stats.parametric_quantile(p=p, q=per)
 
-        np.testing.assert_array_almost_equal(out, expected, 1)
-        assert "cdf" in out.coords
-        assert out.attrs["cell_methods"] == "dparams: cdf"
+    np.testing.assert_array_almost_equal(q, expected, 1)
+    assert "quantile" in q.coords
+
+
+@pytest.mark.parametrize("use_dask", [True, False])
+def test_paramtric_cdf(use_dask):
+    mu = 23
+    sigma = 2
+    n = 10000
+    v = 24
+    d = norm(loc=mu, scale=sigma)
+    r = xr.DataArray(
+        d.rvs(n),
+        dims=("time",),
+        coords={"time": xr.cftime_range(start="1980-01-01", periods=n)},
+        attrs={"history": "Mosquito bytes per minute"},
+    )
+    if use_dask:
+        r = r.chunk()
+    expected = d.cdf(v)
+
+    p = stats.fit(r, dist="norm")
+    out = stats.parametric_cdf(p=p, v=v)
+
+    np.testing.assert_array_almost_equal(out, expected, 1)
+    assert "cdf" in out.coords
+    assert out.attrs["cell_methods"] == "dparams: cdf"
