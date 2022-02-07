@@ -188,7 +188,7 @@ class LoessDetrend(BaseDetrend):
 
     The fit is a piecewise linear regression. For each point, the contribution of all
     neighbors is weighted by a bell-shaped curve (gaussian) with parameters sigma (std).
-    The x-coordinate of the dataarray is scaled to [0,1] before the regression is computed.
+    The x-coordinate of the DataArray is scaled to [0,1] before the regression is computed.
 
     Parameters
     ----------
@@ -200,7 +200,7 @@ class LoessDetrend(BaseDetrend):
     d: [0, 1]
       Order of the local regression. Only 0 and 1 currently implemented.
     f : float
-      Parameter controling the span of the weights, between 0 and 1.
+      Parameter controlling the span of the weights, between 0 and 1.
     niter : int
       Number of robustness iterations to execute.
     weights : ["tricube", "gaussian"]
@@ -279,7 +279,7 @@ class RollingMeanDetrend(BaseDetrend):
     min_periods: int, optional
       Minimum number of observations in window required to have a value, otherwise the
       result is NaN. See :py:meth:`xarray.DataArray.rolling`.
-      Defauls to None, which sets it equal to `win`. Setting both `weights` and this
+      Defaults to None, which sets it equal to `win`. Setting both `weights` and this
       is not implemented yet.
 
     Notes

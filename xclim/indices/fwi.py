@@ -282,14 +282,14 @@ def _fine_fuel_moisture_code(t, p, w, h, ffmc0):  # pragma: no cover
             mo = 250.0
 
     ed = (
-        0.942 * (h ** 0.679)
+        0.942 * (h**0.679)
         + (11.0 * np.exp((h - 100.0) / 10.0))
         + 0.18 * (21.1 - t) * (1.0 - 1.0 / np.exp(0.1150 * h))
     )  # *Eq.4*#
 
     if mo < ed:
         ew = (
-            0.618 * (h ** 0.753)
+            0.618 * (h**0.753)
             + (10.0 * np.exp((h - 100.0) / 10.0))
             + 0.18 * (21.1 - t) * (1.0 - 1.0 / np.exp(0.115 * h))
         )  # *Eq.5*#
@@ -299,7 +299,7 @@ def _fine_fuel_moisture_code(t, p, w, h, ffmc0):  # pragma: no cover
                 0.0694 * np.sqrt(w)
             ) * (1.0 - ((100.0 - h) / 100.0) ** 8)
             kw = kl * (0.581 * np.exp(0.0365 * t))  # *Eq.7b*#
-            m = ew - (ew - mo) / 10.0 ** kw  # *Eq.9*#
+            m = ew - (ew - mo) / 10.0**kw  # *Eq.9*#
         elif mo > ew:
             m = mo
     elif mo == ed:
@@ -309,7 +309,7 @@ def _fine_fuel_moisture_code(t, p, w, h, ffmc0):  # pragma: no cover
             1.0 - (h / 100.0) ** 8
         )  # *Eq.6a*#
         kw = kl * (0.581 * np.exp(0.0365 * t))  # *Eq.6b*#
-        m = ed + (mo - ed) / 10.0 ** kw  # *Eq.8*#
+        m = ed + (mo - ed) / 10.0**kw  # *Eq.8*#
 
     ffmc = (59.5 * (250.0 - m)) / (147.2 + m)  # *Eq.10*#
     if ffmc > 101.0:
@@ -444,7 +444,7 @@ def initial_spread_index(ws, ffmc):
       Initial spread index.
     """
     mo = 147.2 * (101.0 - ffmc) / (59.5 + ffmc)  # *Eq.1*#
-    ff = 19.1152 * np.exp(mo * -0.1386) * (1.0 + (mo ** 5.31) / 49300000.0)  # *Eq.25*#
+    ff = 19.1152 * np.exp(mo * -0.1386) * (1.0 + (mo**5.31) / 49300000.0)  # *Eq.25*#
     isi = ff * np.exp(0.05039 * ws)  # *Eq.26*#
     return isi
 
@@ -489,7 +489,7 @@ def fire_weather_index(isi, bui):
     """
     fwi = np.where(
         bui <= 80.0,
-        0.1 * isi * (0.626 * bui ** 0.809 + 2.0),  # *Eq.28a*#
+        0.1 * isi * (0.626 * bui**0.809 + 2.0),  # *Eq.28a*#
         0.1 * isi * (1000.0 / (25.0 + 108.64 / np.exp(0.023 * bui))),
     )  # *Eq.28b*#
     fwi[fwi > 1] = np.exp(2.72 * (0.434 * np.log(fwi[fwi > 1])) ** 0.647)  # *Eq.30b*#
@@ -509,7 +509,7 @@ def daily_severity_rating(fwi):
     array
       Daily severity rating.
     """
-    return 0.0272 * fwi ** 1.77
+    return 0.0272 * fwi**1.77
 
 
 @vectorize

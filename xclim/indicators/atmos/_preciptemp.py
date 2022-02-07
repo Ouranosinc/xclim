@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Precipitation and temperature indicator definitions."""
 
 from xclim import indices

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # noqa: D205,D400
 """
 Miscellaneous indices utilities
@@ -85,7 +84,7 @@ def wrapped_partial(
 
 
 # TODO Reconsider the utility of this
-def walk_map(d: dict, func: FunctionType):
+def walk_map(d: dict, func: FunctionType) -> dict:
     """Apply a function recursively to values of dictionary.
 
     Parameters
@@ -212,14 +211,17 @@ def uses_dask(da):
 
 def calc_perc(
     arr: np.ndarray,
-    percentiles: Sequence[float] = [50.0],
+    percentiles: Sequence[float] = None,
     alpha: float = 1.0,
     beta: float = 1.0,
     copy: bool = True,
 ) -> np.ndarray:
     """
-    Compute percentiles using nan_calc_percentiles and move the percentiles axis to the end.
+    Compute percentiles using nan_calc_percentiles and move the percentiles' axis to the end.
     """
+    if percentiles is None:
+        percentiles = [50.0]
+
     return np.moveaxis(
         nan_calc_percentiles(
             arr=arr, percentiles=percentiles, axis=-1, alpha=alpha, beta=beta, copy=copy
@@ -231,7 +233,7 @@ def calc_perc(
 
 def nan_calc_percentiles(
     arr: np.ndarray,
-    percentiles: Sequence[float] = [50.0],
+    percentiles: Sequence[float] = None,
     axis=-1,
     alpha=1.0,
     beta=1.0,
@@ -240,6 +242,9 @@ def nan_calc_percentiles(
     """
     Convert the percentiles to quantiles and compute them using _nan_quantile.
     """
+    if percentiles is None:
+        percentiles = [50.0]
+
     if copy:
         # bootstrapping already works on a data's copy
         # doing it again is extremely costly, especially with dask.
@@ -277,7 +282,7 @@ def _compute_virtual_index(
 
 def _get_gamma(virtual_indexes: np.ndarray, previous_indexes: np.ndarray):
     """
-    Compute gamma (a.k.a 'm' or 'weight') for the linear interpolation of quantiles.
+    Compute gamma (AKA 'm' or 'weight') for the linear interpolation of quantiles.
 
     Parameters
     ----------
@@ -370,7 +375,7 @@ def _nan_quantile(
     Get the quantiles of the array for the given axis.
     A linear interpolation is performed using alpha and beta.
 
-    By default alpha == beta == 1 which performs the 7th method of [Hyndman&Fan]_.
+    By default, alpha == beta == 1 which performs the 7th method of [Hyndman&Fan]_.
     with alpha == beta == 1/3 we get the 8th method.
     """
     # --- Setup
@@ -391,7 +396,7 @@ def _nan_quantile(
     # We need at least two values to do an interpolation
     too_few_values = valid_values_count < 2
     if too_few_values.any():
-        # This will result in getting the only available value if it exist
+        # This will result in getting the only available value if it exists
         valid_values_count[too_few_values] = np.NaN
     # --- Computation of indexes
     # Add axis for quantiles
@@ -442,6 +447,8 @@ def raise_warn_or_log(
     msg : str, optional
       The string used when logging or warning.
       Defaults to the `msg` attr of the error (if present) or to "Failed with <err>".
+    err_type : type
+      The type of error/exception to raise.
     stacklevel : int
       Stacklevel when warning. Relative to the call of this function (1 is added).
     """
@@ -540,7 +547,7 @@ class InputKind(IntEnum):
 def _typehint_is_in(hint, hints):
     """Returns whether the first argument is in the other arguments.
 
-    If the first arg is an Union of several typehints, this returns True only
+    If the first arg is a Union of several typehints, this returns True only
     if all the members of that Union are in the given list.
     """
     # This code makes use of the "set-like" property of Unions and Optionals:
@@ -552,7 +559,7 @@ def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> Inpu
     """Returns the appropriate InputKind constant from an ``inspect.Parameter`` object.
 
     The correspondance between parameters and kinds is documented in :py:class:`xclim.core.utils.InputKind`.
-    The only information not inferable through the inspect object is whether the parameter
+    The only information not inferable through the `inspect` object is whether the parameter
     has been assigned units through the :py:func:`xclim.core.units.declare_units` decorator.
     That can be given with the ``has_units`` flag.
     """
@@ -658,14 +665,16 @@ def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
         ) or cmid == "nzero":
             remove_ids.append(cmid)
             print(
-                f"Indicator {cmid} has a 'number_of_days' standard name and xclim disagrees with the CF conventions on the correct output units, removing."
+                f"Indicator {cmid} has a 'number_of_days' standard name"
+                " and xclim disagrees with the CF conventions on the correct output units, removing."
             )
             continue
 
         if (data["output"].get("standard_name") or "").endswith("precipitation_amount"):
             remove_ids.append(cmid)
             print(
-                f"Indicator {cmid} has a 'precipitation_amount' standard name and clix-meta has incoherent output units, removing."
+                f"Indicator {cmid} has a 'precipitation_amount' standard name"
+                " and clix-meta has incoherent output units, removing."
             )
             continue
 

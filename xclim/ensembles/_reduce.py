@@ -49,7 +49,7 @@ def kkz_reduce_ensemble(
     Parameters
     ----------
     data : xr.DataArray
-      Selecton criteria data : 2-D xr.DataArray with dimensions 'realization' (N) and
+      Selection criteria data : 2-D xr.DataArray with dimensions 'realization' (N) and
       'criteria' (P). These are the values used for clustering. Realizations represent the individual original
       ensemble members and criteria the variables/indicators used in the grouping algorithm.
     num_select : int
@@ -116,9 +116,9 @@ def kmeans_reduce_ensemble(
     """Return a sample of ensemble members using k-means clustering.
 
     The algorithm attempts to reduce the total number of ensemble members while maintaining adequate coverage of
-    the ensemble uncertainty in a N-dimensional data space. K-Means clustering is carried out on the input
+    the ensemble uncertainty in an N-dimensional data space. K-Means clustering is carried out on the input
     selection criteria data-array in order to group individual ensemble members into a reduced number of similar groups.
-    Subsequently a single representative simulation is retained from each group.
+    Subsequently, a single representative simulation is retained from each group.
 
     Parameters
     ----------
@@ -323,7 +323,7 @@ def kmeans_reduce_ensemble(
 
 
 def _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights):
-    """Subfunction to kmeans_reduce_ensemble. Calculates r-square profile (r-square versus number of clusters."""
+    """Sub-function to kmeans_reduce_ensemble. Calculates r-square profile (r-square versus number of clusters."""
     rsq = None
     if list(method.keys())[0] != "n_clusters" or make_graph is True:
         # generate r2 profile data
@@ -350,10 +350,10 @@ def _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights):
 
 
 def _get_nclust(method=None, n_sim=None, rsq=None, max_clusters=None):
-    """Subfunction to kmeans_reduce_ensemble. Determine number of clusters to create depending on various methods."""
+    """Sub-function to kmeans_reduce_ensemble. Determine number of clusters to create depending on various methods."""
     # if we actually need to find the optimal number of clusters, this is where it is done
     if list(method.keys())[0] == "rsq_cutoff":
-        # argmax finds the first occurence of rsq > rsq_cutoff,but we need to add 1 b/c of python indexing
+        # argmax finds the first occurrence of rsq > rsq_cutoff,but we need to add 1 b/c of python indexing
         n_clusters = np.argmax(rsq > method["rsq_cutoff"]) + 1
 
     elif list(method.keys())[0] == "rsq_optimize":

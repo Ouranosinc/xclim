@@ -6,7 +6,7 @@ from scipy.stats import lognorm, norm
 from xclim.indices import stats
 
 
-class TestFA(object):
+class TestFA:
     def setup(self):
         self.nx, self.ny = 2, 3
         x = np.arange(0, self.nx)

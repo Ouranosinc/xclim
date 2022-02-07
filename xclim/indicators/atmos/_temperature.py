@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Temperature indicator definitions."""
 
 from inspect import _empty  # noqa

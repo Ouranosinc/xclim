@@ -1,4 +1,3 @@
-# -*- encoding: utf8 -*-
 # noqa: D205,D400
 """
 Ensemble Robustness metrics.
