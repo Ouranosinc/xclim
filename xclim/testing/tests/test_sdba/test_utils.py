@@ -57,7 +57,7 @@ def test_equally_spaced_nodes():
     "interp,expi", [("nearest", 2.9), ("linear", 2.95), ("cubic", 2.95)]
 )
 @pytest.mark.parametrize("extrap,expe", [("constant", 4.4), ("nan", np.NaN)])
-def test_interp_on_quantiles_constant(group, interp, expi, extrap, expe):
+def test_interp_on_quantiles_constant(interp, expi, extrap, expe):
     quantiles = np.linspace(0, 1, num=25)
     xq = xr.DataArray(
         np.linspace(205, 229, num=25),
@@ -83,7 +83,7 @@ def test_interp_on_quantiles_constant(group, interp, expi, extrap, expe):
     newx = newx.expand_dims(lat=[1, 2, 3])
 
     out = u.interp_on_quantiles(
-        newx, xq, yq, group=group, method=interp, extrapolation=extrap
+        newx, xq, yq, group="time", method=interp, extrapolation=extrap
     )
 
     if np.isnan(expe):
@@ -96,7 +96,7 @@ def test_interp_on_quantiles_constant(group, interp, expi, extrap, expe):
     xq = xq.where(xq != 220)
     yq = yq.where(yq != 3)
     out = u.interp_on_quantiles(
-        newx, xq, yq, group=group, method=interp, extrapolation=extrap
+        newx, xq, yq, group="time", method=interp, extrapolation=extrap
     )
 
     if np.isnan(expe):
