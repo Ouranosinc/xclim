@@ -3,7 +3,9 @@ import pytest
 import xarray as xr
 from scipy.stats import norm
 
+from xclim.sdba import nbutils as nbu
 from xclim.sdba import utils as u
+from xclim.sdba.base import Grouper
 
 
 def test_ecdf(series):
@@ -51,7 +53,6 @@ def test_equally_spaced_nodes():
     np.testing.assert_almost_equal(x[0], 0.5)
 
 
-@pytest.mark.parametrize("group", ["time", "time.month"])
 @pytest.mark.parametrize(
     "interp,expi", [("nearest", 2.9), ("linear", 2.95), ("cubic", 2.95)]
 )
@@ -69,10 +70,6 @@ def test_interp_on_quantiles_constant(group, interp, expi, extrap, expe):
         dims=("quantiles",),
         coords={"quantiles": quantiles},
     )
-
-    if group == "time.month":
-        xq = xq.expand_dims(month=np.arange(12) + 1)
-        yq = yq.expand_dims(month=np.arange(12) + 1)
 
     newx = xr.DataArray(
         np.linspace(240, 200, num=41) - 0.5,
@@ -108,6 +105,47 @@ def test_interp_on_quantiles_constant(group, interp, expi, extrap, expe):
         assert out.isel(lat=1, time=0) == expe
     np.testing.assert_allclose(out.isel(time=25), expi)
     assert out.isel(time=-1).isnull().all()
+
+
+def test_interp_on_quantiles_monthly():
+    t = xr.cftime_range("2000-01-01", "2030-12-31", freq="D", calendar="noleap")
+    ref = xr.DataArray(
+        (
+            -20 * np.cos(2 * np.pi * t.dayofyear / 365)
+            + 2 * np.random.random_sample((t.size,))
+            + 273.15
+            + 0.1 * (t - t[0]).days / 365
+        ),  # "warming" of 1K per decade,
+        dims=("time",),
+        coords={"time": t},
+        attrs={"units": "K"},
+    )
+    sim = xr.DataArray(
+        (
+            -18 * np.cos(2 * np.pi * t.dayofyear / 365)
+            + 2 * np.random.random_sample((t.size,))
+            + 273.15
+            + 0.11 * (t - t[0]).days / 365
+        ),  # "warming" of 1.1K per decade
+        dims=("time",),
+        coords={"time": t},
+        attrs={"units": "K"},
+    )
+
+    ref = ref.sel(time=slice(None, "2015-01-01"))
+    hist = sim.sel(time=slice(None, "2015-01-01"))
+
+    group = Grouper("time.month")
+    quantiles = u.equally_spaced_nodes(15, eps=1e-6)
+    ref_q = group.apply(nbu.quantile, ref, main_only=True, q=quantiles)
+    hist_q = group.apply(nbu.quantile, hist, main_only=True, q=quantiles)
+    af = u.get_correction(hist_q, ref_q, "+")
+
+    for interp in ["nearest", "linear", "cubic"]:
+        afi = u.interp_on_quantiles(
+            sim, hist_q, af, group="time.month", method=interp, extrapolation="constant"
+        )
+        assert afi.isnull().sum("time") == 0, interp
 
 
 def test_rank():
