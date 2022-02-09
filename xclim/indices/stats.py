@@ -5,12 +5,8 @@ from typing import Dict, Optional, Sequence, Tuple, Union
 import numpy as np
 import xarray as xr
 
-from xclim.core.formatting import (
-    merge_attributes,
-    prefix_attrs,
-    unprefix_attrs,
-    update_history,
-)
+from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history
+from xclim.core.utils import uses_dask
 
 from . import generic
 
@@ -129,6 +125,7 @@ def fit(
             method=method,
             **fitkwargs,
         ),
+        dask_gufunc_kwargs={"output_sizes": {"dparams": len(dist_params)}},
     )
 
     # Add coordinates for the distribution parameters and transpose to original shape (with dim -> dparams)
@@ -202,6 +199,7 @@ def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]) -> xr.DataArra
         dask="parallelized",
         output_dtypes=[float],
         keep_attrs=True,
+        dask_gufunc_kwargs={"output_sizes": {"quantile": len(q)}},
     )
 
     # Assign quantile coordinates and transpose to preserve original dimension order
@@ -262,6 +260,7 @@ def parametric_cdf(p: xr.DataArray, v: Union[float, Sequence]) -> xr.DataArray:
         dask="parallelized",
         output_dtypes=[float],
         keep_attrs=True,
+        dask_gufunc_kwargs={"output_sizes": {"cdf": len(v)}},
     )
 
     # Assign quantile coordinates and transpose to preserve original dimension order
@@ -380,6 +379,8 @@ def frequency_analysis(
     # Extract the time series of min or max over the period
     sel = generic.select_resample_op(da, op=mode, freq=freq, **indexer)
 
+    if uses_dask(sel):
+        sel = sel.chunk({"time": -1})
     # Frequency analysis
     return fa(sel, t, dist, mode)
 
