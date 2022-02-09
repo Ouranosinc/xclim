@@ -3,7 +3,7 @@ sdba utilities
 --------------
 """
 import itertools
-from typing import Callable, List, Mapping, Optional, Tuple, Union
+from typing import Callable, Mapping, Optional, Tuple, Union
 from warnings import warn
 
 import numpy as np
@@ -296,112 +296,6 @@ def add_cyclic_bounds(
     return ensure_chunk_size(qmf, **{att: -1})
 
 
-def extrapolate_qm(
-    qf: xr.DataArray,
-    xq: xr.DataArray,
-    method: str = "constant",
-    abs_bounds: Optional[tuple] = (-np.inf, np.inf),
-) -> Tuple[xr.DataArray, xr.DataArray]:
-    """Extrapolate quantile adjustment factors beyond the computed quantiles.
-
-    Parameters
-    ----------
-    qf : xr.DataArray
-      Adjustment factors over `quantile` coordinates.
-    xq : xr.DataArray
-      Coordinates of the adjustment factors.
-      For example, in EQM, this are the values at each `quantile`.
-    method : {"constant", "nan"}
-      Extrapolation method. See notes below.
-    abs_bounds : 2-tuple
-      The absolute bounds of `xq`. Defaults to (-inf, inf).
-
-    Returns
-    -------
-    qf: xr.Dataset or xr.DataArray
-        Extrapolated adjustment factors.
-    xq: xr.Dataset or xr.DataArray
-        Extrapolated x-values.
-
-    Notes
-    -----
-    Valid values for `method` are:
-
-    - 'nan'
-
-      Estimating values above or below the computed values will return a NaN.
-
-    - 'constant'
-
-      The adjustment factor above and below the computed values are equal to the last
-      and first values respectively.
-    """
-    warn(
-        (
-            "`extrapolate_qm` is deprecated and will be removed in xclim 0.33. "
-            "Extrapolation is now handled directly in `interp_on_quantiles`."
-        ),
-        DeprecationWarning,
-    )
-    # constant_iqr
-    #   Same as `constant`, but values are set to NaN if farther than one interquartile range from the min and max.
-    q_l, q_r = [0], [1]
-    x_l, x_r = [abs_bounds[0]], [abs_bounds[1]]
-    if method == "nan":
-        qf_l, qf_r = np.NaN, np.NaN
-    elif method == "constant":
-        qf_l = qf.bfill("quantiles").isel(quantiles=0)
-        qf_r = qf.ffill("quantiles").isel(quantiles=-1)
-
-    elif (
-        method == "constant_iqr"
-    ):  # This won't work because add_endpoints does not support mixed y (float and DA)
-        raise NotImplementedError
-        # iqr = np.diff(xq.interp(quantile=[0.25, 0.75]))[0]
-        # ql, qr = [0, 0], [1, 1]
-        # xl, xr = [-np.inf, xq.isel(quantile=0) - iqr], [xq.isel(quantile=-1) + iqr, np.inf]
-        # qml, qmr = [np.nan, qm.isel(quantile=0)], [qm.isel(quantile=-1), np.nan]
-    else:
-        raise ValueError
-
-    qf = add_endpoints(qf, left=[q_l, qf_l], right=[q_r, qf_r])
-    xq = add_endpoints(xq, left=[q_l, x_l], right=[q_r, x_r])
-    return qf, xq
-
-
-def add_endpoints(
-    da: xr.DataArray,
-    left: List[Union[int, float, xr.DataArray, List[int], List[float]]],
-    right: List[Union[int, float, xr.DataArray, List[int], List[float]]],
-    dim: str = "quantiles",
-) -> xr.DataArray:
-    """Add left and right endpoints to a DataArray.
-
-    Parameters
-    ----------
-    da : DataArray
-      Source array.
-    left : [x, y]
-      Values to prepend
-    right : [x, y]
-      Values to append.
-    dim : str
-      Dimension along which to add endpoints.
-    """
-    elems = []
-    for (x, y) in (left, right):
-        if isinstance(y, xr.DataArray):
-            if "quantiles" not in y.dims:
-                y = y.expand_dims("quantiles")
-            y = y.assign_coords(quantiles=x)
-        else:
-            y = xr.DataArray(y, coords={dim: x}, dims=(dim,))
-        elems.append(y)
-    l, r = elems  # pylint: disable=unbalanced-tuple-unpacking
-    out = xr.concat((l, da, r), dim=dim)
-    return ensure_chunk_size(out, **{dim: -1})
-
-
 def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):
     mask_new = np.isnan(newx)
     mask_old = np.isnan(oldy) | np.isnan(oldx)
@@ -438,7 +332,6 @@ def _interp_on_quantiles_2D(newx, newg, oldx, oldy, oldg, method, extrap):  # no
             category=RuntimeWarning,
         )
         return out
-
     out[~mask_new] = griddata(
         (oldx[~mask_old], oldg[~mask_old]),
         oldy[~mask_old],
@@ -493,7 +386,8 @@ def interp_on_quantiles(
     - 'nan' : Any value of `newx` outside the range of `xq` is set to NaN.
     - 'constant' : Values of `newx` smaller than the minimum of `xq` are set to the first
       value of `yq` and those larger than the maximum, set to the last one (first and
-      last values along the "quantiles" dimension).
+      last values along the "quantiles" dimension). When the grouping is "time.month",
+      these limits are linearly interpolated along the month dimension.
     """
     dim = group.dim
     prop = group.prop

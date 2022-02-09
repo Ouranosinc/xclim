@@ -15,12 +15,14 @@ Bug fixes
 * Adjusted behaviour in ``dataflags.ecad_compliant`` to remove `data_vars` of invalids checks that return `None`, causing issues with `dask`. (:pull:`1002`).
 * Temporarily pinned `ipython` below version 8.0 due to behaviour causing hangs in GitHub Actions and ReadTheDocs. (:issue:`1005`, :pull:`1006`).
 * ``indices.stats`` methods where adapted to handle dask-backed arrays. (:issue:`1007`, :`pull:`1011`).
+* ``sdba.utils.interp_on_quantiles``, with ``extrapolation='constant'``, now interpolates the limits of the interpolation along the time grouping index, fixing a issue with "time.month" grouping. (:issue:`1008`, :pull:`1009`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * `pre-commit` now uses Black 22.1.0 with Python3.8 style conventions. Existing code has been adjusted. (:pull:`1000`).
 * `tox` builds for Python3.7 have been deprecated. (:pull:`1000`).
 * Docstrings and documentation has been adjusted for grammar and typos. (:pull:`1000`).
+* ``sdba.utils.extrapolate_qm`` has been removed, as announced for xclim 0.33.
 
 0.33.0 (2022-01-28)
 -------------------
