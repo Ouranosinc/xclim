@@ -2,13 +2,17 @@
 History
 =======
 
-0.34.0 (unreleased)
+0.33.2 (2022-02-09)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`),  Trevor James Smith (:user:`Zeitsperre`)
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`).
 
 Announcements
 ^^^^^^^^^^^^^
-* `xclim` no longer supports Python3.7. Code conventions and new features for Python3.8 (`PEP 569 <https://www.python.org/dev/peps/pep-0569/>`_) are now accepted. (:pull:`1000`).
+* `xclim` no longer supports Python3.7. Code conventions and new features for Python3.8 (`PEP 569 <https://www.python.org/dev/peps/pep-0569/>`_) are now accepted. (:issue:`966`, :pull:`1000`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Python3.7 (`PEP 537 <https://www.python.org/dev/peps/pep-0537/>`_) support has been officially deprecated. Continuous integration testing is no longer run against this version of Python. (:issue:`966`, :pull:`1000`).
 
 Bug fixes
 ^^^^^^^^^
@@ -22,7 +26,7 @@ Internal changes
 * `pre-commit` now uses Black 22.1.0 with Python3.8 style conventions. Existing code has been adjusted. (:pull:`1000`).
 * `tox` builds for Python3.7 have been deprecated. (:pull:`1000`).
 * Docstrings and documentation has been adjusted for grammar and typos. (:pull:`1000`).
-* ``sdba.utils.extrapolate_qm`` has been removed, as announced for xclim 0.33.
+* ``sdba.utils.extrapolate_qm`` has been removed, as announced for xclim 0.33. (:pull:`1009`).
 
 0.33.0 (2022-01-28)
 -------------------
