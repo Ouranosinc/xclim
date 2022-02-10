@@ -2,6 +2,25 @@
 History
 =======
 
+0.34.0 (unreleased)
+-------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+Announcements
+^^^^^^^^^^^^^
+* `xclim` now officially supports Python3.10. (:pull:`1013`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* The version pin for `bottleneck` (<1.4) has been lifted. (:pull:`1013`).
+* `packaging` has been removed from the `xclim` run dependencies.
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Due to an upstream bug in `bottleneck`'s support of virtualenv, `tox` builds for Python3.10 now depend on a patched fork of `bottleneck`. This workaround will be removed once the fix is merged upstream. (:pull:`1013`, see: `bottleneck PR/397`_).
+
+.. _bottleneck PR/397: https://github.com/pydata/bottleneck/pull/397
+
 0.33.2 (2022-02-09)
 -------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`).
