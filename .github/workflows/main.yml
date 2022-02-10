@@ -58,18 +58,12 @@ jobs:
           # https://github.com/pydata/bottleneck/issues/388
           # Builds available for Python3.10 on conda-forge?
           # https://anaconda.org/conda-forge/bottleneck/files
-          - tox-env: py310
-            python-version: "3.10"
+#          - tox-env: py310
+#            python-version: "3.10"
     steps:
       - uses: actions/checkout@v2
-      # Python-dev headers not available in Ubuntu-20.04 Bionic
-      - name: Set up Python ${{ matrix.python-version }} (deadsnakes version)
-        if: ${{ matrix.python-version }} == "3.10"
-        uses: deadsnakes/action@v2.1.1
-        with:
-          python-version: ${{ matrix.python-version }}
       - name: Set up Python ${{ matrix.python-version }}
-        if:  ${{ matrix.python-version }} != "3.10"
+        if:  ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
@@ -84,6 +78,25 @@ jobs:
         with:
           flag-name: run-${{ matrix.tox-env }}
           parallel: true
+
+  test-py310-experimental:
+    needs: black
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      # Python-dev headers not available in Ubuntu-20.04 Bionic
+      - name: Set up Python3.10 (deadsnakes version)
+        uses: deadsnakes/action@v2.1.1
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        run: |
+          python -m pip install --no-user setuptools wheel cython
+          python -m pip install --no-user git+https://github.com/pydata/bottleneck.git@master#egg=bottleneck
+          python -m pip install --no-user .[dev]
+      - name: Test with pytest
+        run: |
+          pytest --cov xclim -m "not slow" --durations=10
 
   finish:
     needs:
