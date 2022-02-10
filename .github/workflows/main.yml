@@ -58,7 +58,7 @@ jobs:
           # https://github.com/pydata/bottleneck/issues/388
           # Builds available for Python3.10 on conda-forge?
           # https://anaconda.org/conda-forge/bottleneck/files
-          - tox-env: py310-xarray-lm3
+          - tox-env: py310
             python-version: "3.10"
     steps:
       - uses: actions/checkout@v2
