@@ -138,21 +138,15 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xr.DataArray:
         bfreq += "S"
     if base in ["A", "Q"] and anchor is not None:
         bfreq = f"{bfreq}-{anchor}"
-    # overlap_da = da.sel(time=slice(str(min(per_clim_years)), str(max(per_clim_years))))
-    # for item in da_years.items():
-    #     year = get_year(item[0])
-    #     if year in per_clim_years:
-    #         overlap_years.append(year)
-    #     else:
-    #         no_overlap_years.append(year)
-    # if len(no_overlap_years) == 0:
-    #     raise KeyError(
-    #         "`bootstrap` is unnecessary when all years between in_base (percentiles period) and out_of_base (index period) are overlapping"
-    #     )
-    # if len(overlap_years) == 0 :
-    #     raise KeyError(
-    #         "`bootstrap` is unnecessary when no year overlap between in_base (percentiles period) and out_of_base (index period)."
-    #     )
+    # TODO add unit tests for these exceptions
+    if len(overlapping_da) == len(da):
+        raise KeyError(
+            "`bootstrap` is unnecessary when all years between in_base (percentiles period) and out_of_base (index period) are overlapping"
+        )
+    if len(overlapping_da) == 0:
+        raise KeyError(
+            "`bootstrap` is unnecessary when no year overlap between in_base (percentiles period) and out_of_base (index period)."
+        )
     overlapping_years = overlapping_da.resample(time=bfreq).groups
     out = []
 
@@ -162,72 +156,42 @@ def bootstrap_func(compute_indice_func: Callable, **kwargs) -> xr.DataArray:
     kw = {da_key: out_of_base_da, **kwargs}
     kw[per_key] = per
     out.append(compute_indice_func(**kw))
-    # template = out[0]
 
     if xclim.core.utils.uses_dask(overlapping_da):
         chunking = {d: "auto" for d in da.dims}
         chunking["time"] = -1  # no chunking on time to use map_block
         overlapping_da = overlapping_da.chunk(chunking)
-    #     # TODO, 1. would be better with xr.chunksizes be it needs xarray>=20
-    #     # TODO, 2. make sure time is always the first dimension
-    #     a = (len(out[0].time),) + overlapping_da.chunks[1:]
-    #     template = out[0].chunk(a)
 
-    # def bs_percentile_doys(overlapping_da, overlapping_years, pdoy_args):
-    #     out = []
-    #     for label, time_slice in overlapping_years.items():
-    #         bda = bootstrap_year(overlapping_da, overlapping_years, label)
-    #         out.append(percentile_doy(bda, **pdoy_args, copy=False))
-    #     return xr.concat(out, dim="time")
-    #
-    # per_template: DataArray = kwargs[per_key]  # noqa
-    # per_template.expand_dims(time=)
-    # per_doys = xr.map_blocks(
-    #     bs_percentile_doys,
-    #     obj=overlapping_da,
-    #     kwargs={
-    #         "overlapping_years": overlapping_years,
-    #         "per_key":       per_key,
-    #         "pdoy_args":     pdoy_args,
-    #     },
-    #     template=per_template,
-    # )
+    # Copying here is not too costly because per is smallish: time dim was reduced to
+    # 366 doy values
     template = per.copy(deep=True)
-    # Compute bootstrapped index on each year
     overlapping_da_years = overlapping_da.resample(time=bfreq).groups.items()
+    # Compute bootstrapped index on each year of overlapping years
     for year_label, _ in overlapping_da_years:
-        da_year = da.sel(time=str(get_year(year_label)))
+        da_year = da.sel(time=get_year(year_label))
         kw = {da_key: da_year, **kwargs}
-        # template.coords["time"] = pd.date_range(
-        #     start=da_year.time[0].dt.date.values[()],
-        #     periods=len(template["time"]),
-        #     freq=freq,
-        # )
         bda = build_bootstrap_year_da(
             overlapping_da, overlapping_years, year_label, bs_dim_name="_bootstrap"
         )
         if "_bootstrap" not in template.dims:
+            # Do this only on first iteration
             template = template.expand_dims(_bootstrap=len(bda._bootstrap))
             template["_bootstrap"] = bda._bootstrap
             # TODO: fill a bug on gh-xarray to make the indexing automatic ?
-            #       (without this reindex, the expect of check_result_variables in parallel.py is not properly computed)
+            #       (without this reindex, the expect of check_result_variables in parallel.py is not properly computed and it raises "Result from applying user function has unexpected" )
             template = template.reindex(
-                {
-                    "_bootstrap": pd.RangeIndex(
-                        start=0, stop=len(bda._bootstrap), step=1, name="_bootstrap"
-                    )
-                }
+                _bootstrap=pd.RangeIndex(
+                    start=0, stop=len(bda._bootstrap), step=1, name="_bootstrap"
+                )
             )
             for d in set(bda.dims).intersection(set(template.dims)):
                 template = template.chunk({d: bda.chunks[bda.get_axis_num(d)]})
-
-        # initial_kwargs[per_key] = percentile_doy(bda, **pdoy_args, copy=False)
         kw[per_key] = xr.map_blocks(
-            bs_percentile_doy,
+            _bs_percentile_doy,
             obj=bda,
             kwargs={**pdoy_args, "copy": False},
             template=template,
-        )  # noqa
+        )
         value = compute_indice_func(**kw).mean(dim="_bootstrap", keep_attrs=True)
         out.append(value)
     out = xr.concat(out, dim="time")
@@ -243,7 +207,7 @@ def get_year(label):
         year = label.year
     else:
         year = label.astype("datetime64[Y]").astype(int) + 1970
-    return year
+    return str(year)
 
 
 # TODO: Return a generator instead and assess performance
@@ -307,39 +271,7 @@ def build_bootstrap_year_da(
     return xr.concat(out_accumulator, dim=bdim)
 
 
-# def percentile_doy(
-#     arr: xr.DataArray,
-#     window: int = 5,
-#     per: Union[float, Sequence[float]] = 10.0,
-#     alpha: float = 1.0 / 3.0,
-#     beta: float = 1.0 / 3.0,
-#     copy: bool = True,
-# ) -> xr.DataArray:
-#     from .utils import calc_perc
-#     rr = arr.rolling(min_periods=1, center=True, time=window).construct("window")
-#     ind = pd.MultiIndex.from_arrays(
-#         (rr.time.dt.year.values, rr.time.dt.dayofyear.values),
-#         names=("year", "dayofyear"),
-#     )
-#     rr = rr.assign_coords(time=ind).unstack("time").stack(stack_dim=("year", "window"))
-#     if np.isscalar(per):
-#         per = [per]
-#     p = xr.apply_ufunc(
-#         calc_perc,
-#         rr,
-#         input_core_dims=[["stack_dim"]],
-#         output_core_dims=[["percentiles"]],
-#         keep_attrs=True,
-#         kwargs=dict(percentiles=per, alpha=alpha, beta=beta, copy=copy),
-#         dask="parallelized",
-#         output_dtypes=[rr.dtype],
-#         dask_gufunc_kwargs=dict(output_sizes={"percentiles": len(per)}),
-#     )
-#     p = p.assign_coords(percentiles=xr.DataArray(per, dims=("percentiles",)))
-#     return p.rename("per")
-
-
-def bs_percentile_doy(
+def _bs_percentile_doy(
     arr: xr.DataArray,
     window: int = 5,
     per: Union[float, Sequence[float]] = 10.0,
@@ -347,59 +279,22 @@ def bs_percentile_doy(
     beta: float = 1.0 / 3.0,
     copy: bool = True,
 ) -> xr.DataArray:
-    """Percentile value for each day of the year.
-
-    Return the climatological percentile over a moving window around each day of the year.
-    Different quantile estimators can be used by specifying `alpha` and `beta` according to specifications given by [HyndmanFan]_. The default definition corresponds to method 8, which meets multiple desirable statistical properties for sample quantiles. Note that `numpy.percentile` corresponds to method 7, with alpha and beta set to 1.
-
-    Parameters
-    ----------
-    arr : xr.DataArray
-      Input data, a daily frequency (or coarser) is required.
-    window : int
-      Number of time-steps around each day of the year to include in the calculation.
-    per : float or sequence of floats
-      Percentile(s) between [0, 100]
-    alpha: float
-        Plotting position parameter.
-    beta: float
-        Plotting position parameter.
-    copy: bool
-        If True (default) the input array will be deep copied. It's a necessary step
-        to keep the data integrity but it can be costly.
-        If False, no copy is made of the input array. It will be mutated and rendered
-        unusable but performances may significantly improve.
-        Put this flag to False only if you understand the consequences.
-
-    Returns
-    -------
-    xr.DataArray
-      The percentiles indexed by the day of the year.
-      For calendars with 366 days, percentiles of doys 1-365 are interpolated to the 1-366 range.
-
-    References
-    ----------
-    .. [HyndmanFan] Hyndman, R. J., & Fan, Y. (1996). Sample quantiles in statistical packages. The American Statistician, 50(4), 361-365.
-    """
+    # TODO: make sure we really need a new `percentile_doy`, in which case, write a good doc for it.
+    # for now it removes attrs filling and xclim_history annotation
     from .utils import calc_perc
 
     rr = arr.rolling(min_periods=1, center=True, time=window).construct("window")
-
     ind = pd.MultiIndex.from_arrays(
         (rr.time.dt.year.values, rr.time.dt.dayofyear.values),
         names=("year", "dayofyear"),
     )
     rrr = rr.assign_coords(time=ind).unstack("time").stack(stack_dim=("year", "window"))
-
     if rrr.chunks is not None and len(rrr.chunks[rrr.get_axis_num("stack_dim")]) > 1:
-        # # Preserve chunk size
         time_chunks_count = len(arr.chunks[arr.get_axis_num("time")])
         doy_chunk_size = np.ceil(len(rrr.dayofyear) / (window * time_chunks_count))
         rrr = rrr.chunk(dict(stack_dim=-1, dayofyear=doy_chunk_size))
-
     if np.isscalar(per):
         per = [per]
-
     p = xr.apply_ufunc(
         calc_perc,
         rrr,
@@ -412,9 +307,6 @@ def bs_percentile_doy(
         dask_gufunc_kwargs=dict(output_sizes={"percentiles": len(per)}),
     )
     p = p.assign_coords(percentiles=xr.DataArray(per, dims=("percentiles",)))
-
-    # The percentile for the 366th day has a sample size of 1/4 of the other days.
-    # To have the same sample size, we interpolate the percentile from 1-365 doy range to 1-366
     if p.dayofyear.max() == 366:
         p = xclim.core.calendar.adjust_doy_calendar(
             p.sel(dayofyear=(p.dayofyear < 366)), arr
