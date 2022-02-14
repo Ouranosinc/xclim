@@ -33,7 +33,7 @@ class Test_bootstrap:
 
     @pytest.mark.slow
     @pytest.mark.parametrize("use_dask", [True, False])
-    def test_bootstrap_tn90p(self, tasmin_series, use_dask):
+    def test_bootstrap_tn90p_anchored_freq(self, tasmin_series, use_dask):
         self.bootstrap_testor(
             tasmin_series,
             98,
@@ -43,7 +43,7 @@ class Test_bootstrap:
 
     @pytest.mark.slow
     @pytest.mark.parametrize("use_dask", [True, False])
-    def test_bootstrap_tx90p(self, tasmax_series, use_dask):
+    def test_bootstrap_tx90p_anchored_freq(self, tasmax_series, use_dask):
         self.bootstrap_testor(
             tasmax_series,
             98,
@@ -158,11 +158,17 @@ class Test_bootstrap:
         with pytest.raises(KeyError):
             tg10p(tas_series([42]), tas_series([42]), freq="MS", bootstrap=True)
 
+    # @pytest.mark.slow
+    # def test_bootstrap_full_overlap(self, tas_series):
+    #     # bootstrap is unnecessary when in base and out of base fully overlap
+    #     with pytest.raises(KeyError):
+    #         tg10p(tas_series([42]), tas_series([42]), freq="MS", bootstrap=True)
+
     def bootstrap_testor(
         self,
         series,
         per: int,
-        compute_indice: Callable[[DataArray, DataArray], DataArray],
+        index_fun: Callable[[DataArray, DataArray], DataArray],
         positive_values=False,
         use_dask=False,
     ):
@@ -172,17 +178,17 @@ class Test_bootstrap:
         arr = self.ar1(alpha, n, positive_values)
         climat_variable = series(arr, start="2000-01-01")
         if use_dask:
-            climat_variable = climat_variable.chunk(dict(time=2))
+            climat_variable = climat_variable.chunk(dict(time=50))
         in_base_slice = slice("2000-01-01", "2001-12-31")
         out_base_slice = slice("2002-01-01", "2003-12-31")
         per = percentile_doy(climat_variable.sel(time=in_base_slice), per=per)
         # WHEN
-        no_bootstrap = compute_indice(climat_variable, per, False)
-        no_bs_in_base = no_bootstrap.sel(time=(in_base_slice))
-        no_bs_out_base = no_bootstrap.sel(time=(out_base_slice))
-        bootstrap = compute_indice(climat_variable, per, True)
-        bootstrapped_in_base = bootstrap.sel(time=(in_base_slice))
-        bs_out_base = bootstrap.sel(time=(out_base_slice))
+        no_bootstrap = index_fun(climat_variable, per, False)
+        no_bs_in_base = no_bootstrap.sel(time=in_base_slice)
+        no_bs_out_base = no_bootstrap.sel(time=out_base_slice)
+        bootstrap = index_fun(climat_variable, per, True)
+        bootstrapped_in_base = bootstrap.sel(time=in_base_slice)
+        bs_out_base = bootstrap.sel(time=out_base_slice)
         # THEN
         # bootstrapping should increase the indices values within the in_base
         # will not work on unrealistic values such as a constant temperature
