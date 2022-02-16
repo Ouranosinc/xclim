@@ -8,7 +8,7 @@ Contributors to this version: Pascal Bourgault (:user:`aulemahal`)
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* The "history" attribute added by xclim will was changed:
+* The "history" attribute added by xclim will was changed: (:issue:`963`, :pull:`1018`).
     - The trailing dot was dropped.
     - ``None`` inputs are now printed as "None" (and not "<NoneType>").
     - Arguments are always printed as keyword-arguments. This mostly impacts ``sdba`` functions, as it was already the case for ``Indicators``.

@@ -327,6 +327,8 @@ def update_xclim_history(func):
     """Decorator that auto-generates and fills the history attribute.
 
     The history is generated from the signature of the function and added to the first output.
+    Because of a limiation of boltons wrapper, all arguments passed to the wrapped function
+    will be printed as keyword arguments.
     """
 
     @wraps(func)
@@ -367,8 +369,9 @@ def update_xclim_history(func):
 def gen_call_string(funcname: str, *args, **kwargs):
     """Generate a signature string for use in the history attribute.
 
-    DataArrays and Dataset are replaced with their name, floats, ints and strings are
-    printed directly, all other objects have their type printed between < >.
+    DataArrays and Dataset are replaced with their name, while Nones, floats,
+    ints and strings are printed directly.
+    All other objects have their type printed between < >.
 
     Arguments given through positional arguments are printed positionnally and those
     given through keywords are printed prefixed by their name.
