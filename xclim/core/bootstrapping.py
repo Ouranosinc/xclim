@@ -1,16 +1,15 @@
 from inspect import signature
-from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, Optional
 
 import cftime
 import numpy as np
-import pandas as pd
 import xarray as xr
 from boltons.funcutils import wraps
 from xarray.core.dataarray import DataArray
 
 import xclim.core.utils
 
-from .calendar import compare_offsets, convert_calendar, parse_offset, percentile_doy
+from .calendar import convert_calendar, parse_offset, percentile_doy
 
 BOOTSTRAP_DIM = "_bootstrap"
 
@@ -153,62 +152,51 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xr.DataArray:
     if base in ["A", "Q"] and anchor is not None:
         bfreq = f"{bfreq}-{anchor}"
 
-    acc = []
-    no_bs_dates = da.indexes["time"].difference(overlap_da.indexes["time"])
-    kw = {da_key: da.sel(time=no_bs_dates), per_key: per, **kwargs}
-    no_bs_result = compute_index_func(**kw)
-    no_bs_result.name = "pouet_pouet"
-
     overlap_years_groups = overlap_da.resample(time=bfreq).groups
+    da_years_groups = da.resample(time=bfreq).groups
     # Copy is not costly per is small
-    per_template = per.copy(deep=True).expand_dims(
-        _bootstrap=np.arange(len(overlap_years_groups) - 1)
-    )
+    per_template = per.copy(deep=True)
+    # TODO fill per_template here instead of in the for loop
     # Compute bootstrapped index on each year of overlapping years
-    bs_acc = []
-    for year, time_slice in overlap_years_groups.items():
-        kw = {da_key: overlap_da.isel(time=time_slice), **kwargs}
-        bda = build_bootstrap_year_da(overlap_da, overlap_years_groups, year)
-        if xclim.core.utils.uses_dask(bda):
-            chunking = {
-                d: bda.chunks[bda.get_axis_num(d)]
-                for d in set(bda.dims).intersection(set(per_template.dims))
-            }
-            per_template = per_template.chunk(chunking)
-        kw[per_key] = xr.map_blocks(
-            percentile_doy.__wrapped__,  # strip history update from percentile_doy
-            obj=bda,
-            kwargs={**pdoy_args, "copy": False, "keep_chunk_size": True},
-            template=per_template,
-        )
-        value = compute_index_func(**kw).mean(dim=BOOTSTRAP_DIM, keep_attrs=True)
-        value.name = "pouet_pouet"
-        bs_acc.append(value)
+    acc = []
+    for year_key, year_slice in da_years_groups.items():
+        kw = {da_key: da.isel(time=year_slice), **kwargs}
+        if _get_year_label(year_key) in overlap_da.get_index("time").year:
+            # If the group year is in the base period, run the bootstrap
+            bda = build_bootstrap_year_da(overlap_da, overlap_years_groups, year_key)
+            if BOOTSTRAP_DIM not in per_template.dims:
+                per_template = per_template.expand_dims(
+                    {BOOTSTRAP_DIM: np.arange(len(bda._bootstrap))}
+                )
+                if xclim.core.utils.uses_dask(bda):
+                    chunking = {
+                        d: bda.chunks[bda.get_axis_num(d)]
+                        for d in set(bda.dims).intersection(set(per_template.dims))
+                    }
+                    per_template = per_template.chunk(chunking)
+            kw[per_key] = xr.map_blocks(
+                percentile_doy.__wrapped__,  # strip history update from percentile_doy
+                obj=bda,
+                kwargs={**pdoy_args, "copy": False, "keep_chunk_size": False},
+                template=per_template,
+            )
+            value = compute_index_func(**kw).mean(dim="_bootstrap", keep_attrs=True)
+        else:
+            # Otherwise, run the normal computation using the original percentile
+            kw[per_key] = per
+            value = compute_index_func(**kw)
         acc.append(value)
-    bs_result = xr.concat(bs_acc, dim="time")
-    # inter_mask = bs_result.sel(time = no_bs_result.get_indexes("time").intesection(bs_result.get_indexes("time")))
-    # no_bs_result[inter_mask] = inter_mask
-    # todo make sure it's not too slow to use merge
-    # no_bs_result --> ~700 tasks
-    # bs_result --> ~9400 tasks
-    # xr.merge([no_bs_result, bs_result]) --> 781 + 11593 tasks (2 graphs)
-
-    result = xr.merge(
-        [no_bs_result, bs_result],
-        compat="no_conflicts",  # build pouet_pouet by preserving computed values
-        join="outer",  # build dims using indexes' union
-        combine_attrs="override",  # Take no_bs_result attributes
-    )
-    result.pouet_pouet.attrs["units"] = value.attrs["units"]
-    return result.pouet_pouet
+    result = xr.concat(acc, dim="time")
+    result.attrs["units"] = value.attrs["units"]
+    return result
 
 
-def get_year(label):
-    if isinstance(label, cftime.datetime):
-        year = label.year
+def _get_year_label(year_dt) -> str:
+    if isinstance(year_dt, cftime.datetime):
+        year_label = year_dt.year
     else:
-        year = label.astype("datetime64[Y]").astype(int) + 1970
-    return year
+        year_label = year_dt.astype("datetime64[Y]").astype(int) + 1970
+    return year_label
 
 
 # TODO: Return a generator instead and assess performance
