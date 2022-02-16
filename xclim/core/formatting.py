@@ -9,7 +9,7 @@ import re
 import string
 from ast import literal_eval
 from fnmatch import fnmatch
-from inspect import _empty  # noqa
+from inspect import _empty, signature  # noqa
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
 
 import xarray as xr
@@ -319,7 +319,7 @@ def update_history(
     )
     if len(merged_history) > 0 and not merged_history.endswith("\n"):
         merged_history += "\n"
-    merged_history += f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] {new_name or ''}: {hist_str} - xclim version: {__version__}."
+    merged_history += f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] {new_name or ''}: {hist_str} - xclim version: {__version__}"
     return merged_history
 
 
@@ -349,8 +349,11 @@ def update_xclim_history(func):
             name: arg for name, arg in kwargs.items() if isinstance(arg, xr.DataArray)
         }
 
+        # The wrapper hides how the user passed the arguments (positional or keyword)
+        # Instead of having it all position, we have it all keyword-like for explicitness.
+        bound_args = signature(func).bind(*args, **kwargs)
         attr = update_history(
-            gen_call_string(func.__name__, *args, **kwargs),
+            gen_call_string(func.__name__, **bound_args.arguments),
             *da_list,
             new_name=out.name,
             **da_dict,
@@ -388,7 +391,7 @@ def gen_call_string(funcname: str, *args, **kwargs):
     for name, val in chain:
         if isinstance(val, xr.DataArray):
             rep = val.name or "<array>"
-        elif isinstance(val, (int, float, str, bool)):
+        elif isinstance(val, (int, float, str, bool)) or val is None:
             rep = repr(val)
         else:
             rep = f"<{type(val).__name__}>"
