@@ -4,14 +4,27 @@ History
 
 0.34.0 (unreleased)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`)
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
+
+Announcements
+^^^^^^^^^^^^^
+* `xclim` now officially supports Python3.10. (:pull:`1013`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* The "history" attribute added by xclim will was changed: (:issue:`963`, :pull:`1018`).
-    - The trailing dot was dropped.
+* The version pin for `bottleneck` (<1.4) has been lifted. (:pull:`1013`).
+* `packaging` has been removed from the `xclim` run dependencies. (:pull:`1013`).
+* The "history" string attribute added by xclim has been modified for readability: (:issue:`963`, :pull:`1018`).
+    - The trailing dot (``.``) was dropped.
     - ``None`` inputs are now printed as "None" (and not "<NoneType>").
-    - Arguments are always printed as keyword-arguments. This mostly impacts ``sdba`` functions, as it was already the case for ``Indicators``.
+    - Arguments are now always shown as keyword-arguments. This mostly impacts ``sdba`` functions, as it was already the case for ``Indicators``.
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Due to an upstream bug in `bottleneck`'s support of virtualenv, `tox` builds for Python3.10 now depend on a patched fork of `bottleneck`. This workaround will be removed once the fix is merged upstream. (:pull:`1013`, see: `bottleneck PR/397`_).
+* GitHub CI actions now use the `deadsnakes python PPA Action <https://github.com/deadsnakes/action>`_ for gathering the Python3.10 development headers. (:pull:`1013`).
+
+.. _bottleneck PR/397: https://github.com/pydata/bottleneck/pull/397/
 
 0.33.2 (2022-02-09)
 -------------------
