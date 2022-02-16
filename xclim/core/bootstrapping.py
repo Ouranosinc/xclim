@@ -39,7 +39,9 @@ def percentile_bootstrap(func):
     >>> from xclim.core.calendar import percentile_doy
     >>> from xclim.indices import tg90p
     >>> tas = xr.open_dataset(path_to_tas_file).tas
-    >>> t90 = percentile_doy(tas, window=5, per=90)
+    >>> # In base must no exactly overlap the studied period
+    >>> tas_in_base = tas.sel(time=slice("1990-01-01","1992-12-31"))
+    >>> t90 = percentile_doy(tas_in_base, window=5, per=90)
     >>> tg90p(tas=tas, t90=t90.sel(percentiles=90), freq="YS", bootstrap=True)
     """
 
@@ -106,59 +108,45 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xr.DataArray:
                 per_key = name
             else:
                 da_key = name
-
     # Extract the DataArray inputs from the arguments
     da: DataArray = kwargs.pop(da_key)
-    per: Optional[DataArray] = kwargs.pop(per_key, None)
-    if per is None:
+    per_da: Optional[DataArray] = kwargs.pop(per_key, None)
+    if per_da is None:
         # per may be empty on non doy percentiles
         raise KeyError(
             "`bootstrap` can only be used with percentiles computed using `percentile_doy`"
         )
-
-    # List of years in base period
-    clim = per.attrs["climatology_bounds"]
-
+    # Boundary years of base period
+    clim = per_da.attrs["climatology_bounds"]
     if xclim.core.utils.uses_dask(da):
         chunking = {d: "auto" for d in da.dims}
         chunking["time"] = -1  # no chunking on time to use map_block
         da = da.chunk(chunking)
     # overlap of `da` and base period used to compute percentile
     overlap_da = da.sel(time=slice(*clim))
-    # TODO add unit tests for these exceptions
-    if len(overlap_da) == len(da):
+    if len(overlap_da.time) == len(da.time):
         raise KeyError(
-            "`bootstrap` is unnecessary when all years between in_base (percentiles period) and out_of_base (index period) are overlapping"
+            "`bootstrap` is unnecessary when all years are overlapping between in_base "
+            "(percentiles period) and out_of_base (index period)"
         )
     if len(overlap_da) == 0:
         raise KeyError(
-            "`bootstrap` is unnecessary when no year overlap between in_base (percentiles period) and out_of_base (index period)."
+            "`bootstrap` is unnecessary when no year overlap between in_base "
+            "(percentiles period) and out_of_base (index period)."
         )
-    # Arguments used to compute percentile
-    percentile = per.percentiles.data.tolist()  # Can be a list or scalar
     pdoy_args = dict(
-        window=per.attrs["window"],
-        alpha=per.attrs["alpha"],
-        beta=per.attrs["beta"],
-        per=percentile if np.isscalar(percentile) else percentile[0],
+        window=per_da.attrs["window"],
+        alpha=per_da.attrs["alpha"],
+        beta=per_da.attrs["beta"],
+        per=per_da.percentiles.data[()],
     )
-
+    bfreq = _get_bootstrap_freq(kwargs["freq"])
     # Group input array in years, with an offset matching freq
-    freq = kwargs["freq"]
-    _, base, start_anchor, anchor = parse_offset(freq)  # noqa
-    bfreq = "A"
-    if start_anchor:
-        bfreq += "S"
-    if base in ["A", "Q"] and anchor is not None:
-        bfreq = f"{bfreq}-{anchor}"
-
     overlap_years_groups = overlap_da.resample(time=bfreq).groups
     da_years_groups = da.resample(time=bfreq).groups
-    # Copy is not costly per is small
-    per_template = per.copy(deep=True)
-    # TODO fill per_template here instead of in the for loop
-    # Compute bootstrapped index on each year of overlapping years
+    per_template = per_da.copy(deep=True)
     acc = []
+    # Compute bootstrapped index on each year of overlapping years
     for year_key, year_slice in da_years_groups.items():
         kw = {da_key: da.isel(time=year_slice), **kwargs}
         if _get_year_label(year_key) in overlap_da.get_index("time").year:
@@ -177,18 +165,30 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xr.DataArray:
             kw[per_key] = xr.map_blocks(
                 percentile_doy.__wrapped__,  # strip history update from percentile_doy
                 obj=bda,
-                kwargs={**pdoy_args, "copy": False, "keep_chunk_size": False},
+                kwargs={**pdoy_args, "copy": False},
                 template=per_template,
             )
             value = compute_index_func(**kw).mean(dim="_bootstrap", keep_attrs=True)
+            if "percentiles" not in per_da.dims:
+                value = value.squeeze("percentiles")
         else:
             # Otherwise, run the normal computation using the original percentile
-            kw[per_key] = per
+            kw[per_key] = per_da
             value = compute_index_func(**kw)
         acc.append(value)
     result = xr.concat(acc, dim="time")
     result.attrs["units"] = value.attrs["units"]
     return result
+
+
+def _get_bootstrap_freq(freq):
+    _, base, start_anchor, anchor = parse_offset(freq)  # noqa
+    bfreq = "A"
+    if start_anchor:
+        bfreq += "S"
+    if base in ["A", "Q"] and anchor is not None:
+        bfreq = f"{bfreq}-{anchor}"
+    return bfreq
 
 
 def _get_year_label(year_dt) -> str:
@@ -201,10 +201,7 @@ def _get_year_label(year_dt) -> str:
 
 # TODO: Return a generator instead and assess performance
 def build_bootstrap_year_da(
-    da: DataArray,
-    groups: Dict[Any, slice],
-    label: Any,
-    dim: str = "time",
+    da: DataArray, groups: Dict[Any, slice], label: Any, dim: str = "time"
 ) -> DataArray:
     """Return an array where a group in the original is replaced by every other groups along a new dimension.
 
@@ -225,10 +222,8 @@ def build_bootstrap_year_da(
       Array where one group is replaced by values from every other group along the `bootstrap` dimension.
     """
     gr = groups.copy()
-
     # Location along dim that must be replaced
     bloc = da[dim][gr.pop(label)]
-
     # Initialize output array with new bootstrap dimension
     out = da.expand_dims({BOOTSTRAP_DIM: np.arange(len(gr))}).copy(deep=True)
     # With dask, mutating the views of out is not working, thus the accumulator
@@ -255,5 +250,4 @@ def build_bootstrap_year_da(
         else:
             raise NotImplementedError
         out_accumulator.append(out_view)
-
     return xr.concat(out_accumulator, dim=BOOTSTRAP_DIM)

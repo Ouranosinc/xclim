@@ -440,7 +440,6 @@ def percentile_doy(
     alpha: float = 1.0 / 3.0,
     beta: float = 1.0 / 3.0,
     copy: bool = True,
-    keep_chunk_size: bool = True,
 ) -> xr.DataArray:
     """Percentile value for each day of the year.
 
@@ -465,10 +464,6 @@ def percentile_doy(
         If False, no copy is made of the input array. It will be mutated and rendered
         unusable but performances may significantly improve.
         Put this flag to False only if you understand the consequences.
-    keep_chunk_size: bool
-        If True will rechunk dayofyear into len(time) * windows chunks, this preserves
-        the initial chunk size.
-        Otherwise, it will not rechunk.
 
     Returns
     -------
@@ -496,13 +491,10 @@ def percentile_doy(
     rrr = rr.assign_coords(time=ind).unstack("time").stack(stack_dim=("year", "window"))
 
     if rrr.chunks is not None and len(rrr.chunks[rrr.get_axis_num("stack_dim")]) > 1:
-        chunking = {"stack_dim": -1}
-        if keep_chunk_size:
-            # Preserve chunk size
-            time_chunks_count = len(arr.chunks[arr.get_axis_num("time")])
-            doy_chunk_size = np.ceil(len(rrr.dayofyear) / (window * time_chunks_count))
-            chunking["dayofyear"] = doy_chunk_size
-        rrr = rrr.chunk(chunking)
+        # Preserve chunk size
+        time_chunks_count = len(arr.chunks[arr.get_axis_num("time")])
+        doy_chunk_size = np.ceil(len(rrr.dayofyear) / (window * time_chunks_count))
+        rrr = rrr.chunk(dict(stack_dim=-1, dayofyear=doy_chunk_size))
 
     if np.isscalar(per):
         per = [per]
