@@ -2,6 +2,14 @@
 History
 =======
 
+0.34.0 (unreleased)
+-------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`)
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* The "is_dayofyear" attribute added by several indices is now a ``numpy.int32`` instance, instead of python's ``int``. This ensures a THREDDS server can read it when the variableis saved to a netCDF file with xarray/netCDF4. (:issue:`980`, :pull:`1019`).
+
 0.33.2 (2022-02-09)
 -------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`).
