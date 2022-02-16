@@ -225,15 +225,15 @@ class Test_bootstrap:
         # Bootstrapping should increase the computed index values within the overlapping
         # period. However, this will not work on unrealistic values such as a constant
         # temperature.
-        # Beside, bootstrapping is particularly effective on extreme percentiles, the
-        # closer the target percentile(s) is to the median the less bootstrapping is
-        # effective.
-        # The following assertions may even fail if the chosen percentile is close to 50
+        # Beside, bootstrapping is particularly effective on extreme percentiles, but
+        # the closer the target percentile is to the median the less bootstrapping is
+        # necessary.
+        # Following assertions may even fail if chosen percentile is close to 50.
         assert np.count_nonzero(
             bootstrapped_in_base > no_bs_in_base
         ) > np.count_nonzero(bootstrapped_in_base < no_bs_in_base)
-        # bootstrapping should let the out of base unchanged,
-        # precision above 15th decimal might differ though
+        # bootstrapping should leave the out of base unchanged,
+        # but precision above 15th decimal might differ.
         np.testing.assert_array_almost_equal(no_bs_out_base, bs_out_base, 15)
 
     def ar1(self, alpha, n, positive_values=False):
