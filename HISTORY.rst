@@ -26,7 +26,7 @@ Breaking changes
     - The trailing dot (``.``) was dropped.
     - ``None`` inputs are now printed as "None" (and not "<NoneType>").
     - Arguments are now always shown as keyword-arguments. This mostly impacts ``sdba`` functions, as it was already the case for ``Indicators``.
-* The `cell_methods` string attribute appends only the operation from the indicator itself. In previous version, some indicators also appended the input data's own `cell_method`. The clix-meta importer has been modified to follow the same convention. (:issue:`983`)
+* The `cell_methods` string attribute appends only the operation from the indicator itself. In previous version, some indicators also appended the input data's own `cell_method`. The clix-meta importer has been modified to follow the same convention. (:issue:`983`, :pull:`1022`)
 
 Bug fixes
 ^^^^^^^^^
