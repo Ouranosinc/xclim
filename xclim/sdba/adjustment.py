@@ -318,7 +318,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
 
     nquantiles : int or 1d array of floats
       The number of quantiles to use. Two endpoints at 1e-6 and 1 - 1e-6 will be added.
-      An array of quantiles [0, 1] can also be passed. Defaults to 20 quantiles (+2 endpoints).
+      An array of quantiles [0, 1] can also be passed. Defaults to 20 quantiles.
     kind : {'+', '*'}
       The adjustment kind, either additive or multiplicative. Defaults to "+".
     group : Union[str, Grouper]
@@ -348,14 +348,14 @@ class EmpiricalQuantileMapping(TrainAdjust):
         ref: xr.DataArray,
         hist: xr.DataArray,
         *,
-        nquantiles: int = 20,
+        nquantiles: Union[int, np.ndarray] = 20,
         kind: str = ADDITIVE,
         group: Union[str, Grouper] = "time",
     ):
         if np.isscalar(nquantiles):
-            quantiles = equally_spaced_nodes(nquantiles, eps=1e-6).astype(ref.dtype)
+            quantiles = equally_spaced_nodes(nquantiles).astype(ref.dtype)
         else:
-            quantiles = nquantiles
+            quantiles = nquantiles.astype(ref.dtype)
 
         ds = eqm_train(
             xr.Dataset({"ref": ref, "hist": hist}),
@@ -409,8 +409,8 @@ class DetrendedQuantileMapping(TrainAdjust):
     Train step:
 
     nquantiles : int or 1d array of floats
-      The number of quantiles to use. Two endpoints at 1e-6 and 1 - 1e-6 will be added.
-      An array of quantiles [0, 1] can also be passed. Defaults to 20 quantiles (+2 endpoints).
+      The number of quantiles to use. See :py:func:`~xclim.sdba.utils.equally_spaced_nodes`.
+      An array of quantiles [0, 1] can also be passed. Defaults to 20 quantiles.
     kind : {'+', '*'}
       The adjustment kind, either additive or multiplicative. Defaults to "+".
     group : Union[str, Grouper]
@@ -440,7 +440,7 @@ class DetrendedQuantileMapping(TrainAdjust):
         ref: xr.DataArray,
         hist: xr.DataArray,
         *,
-        nquantiles: int = 20,
+        nquantiles: Union[int, np.ndarray] = 20,
         kind: str = ADDITIVE,
         group: Union[str, Grouper] = "time",
     ):
@@ -450,9 +450,9 @@ class DetrendedQuantileMapping(TrainAdjust):
             )
 
         if np.isscalar(nquantiles):
-            quantiles = equally_spaced_nodes(nquantiles, eps=1e-6).astype(ref.dtype)
+            quantiles = equally_spaced_nodes(nquantiles).astype(ref.dtype)
         else:
-            quantiles = nquantiles
+            quantiles = nquantiles.astype(ref.dtype)
 
         ds = dqm_train(
             xr.Dataset({"ref": ref, "hist": hist}),
@@ -514,8 +514,8 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
     Train step:
 
     nquantiles : int or 1d array of floats
-      The number of quantiles to use. Two endpoints at 1e-6 and 1 - 1e-6 will be added.
-      An array of quantiles [0, 1] can also be passed. Defaults to 20 quantiles (+2 endpoints).
+      The number of quantiles to use. See :py:func:`~xclim.sdba.utils.equally_spaced_nodes`.
+      An array of quantiles [0, 1] can also be passed. Defaults to 20 quantiles.
     kind : {'+', '*'}
       The adjustment kind, either additive or multiplicative. Defaults to "+".
     group : Union[str, Grouper]
