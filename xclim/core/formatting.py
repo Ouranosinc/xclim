@@ -327,7 +327,7 @@ def update_xclim_history(func):
     """Decorator that auto-generates and fills the history attribute.
 
     The history is generated from the signature of the function and added to the first output.
-    Because of a limiation of boltons wrapper, all arguments passed to the wrapped function
+    Because of a limitation of the `boltons` wrapper, all arguments passed to the wrapped function
     will be printed as keyword arguments.
     """
 
