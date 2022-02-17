@@ -1,4 +1,3 @@
-import sys
 from inspect import _empty
 from pathlib import Path
 
@@ -8,8 +7,9 @@ import yamale
 
 from xclim import indicators
 from xclim.core.indicator import build_indicator_module_from_yaml
+from xclim.core.locales import read_locale_file
 from xclim.core.options import set_options
-from xclim.core.utils import InputKind
+from xclim.core.utils import InputKind, load_module
 from xclim.testing import open_dataset
 
 
@@ -67,9 +67,8 @@ def test_custom_indices():
 
     pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
 
-    sys.path.insert(1, str(nbpath.absolute()))
-
-    import example  # noqa
+    # This tests load_module with a python file that is _not_ on the PATH
+    example = load_module(nbpath / "example.py")
 
     # Fron module
     ex1 = build_indicator_module_from_yaml(
@@ -84,11 +83,6 @@ def test_custom_indices():
         nbpath / "example.yml", name="ex2", indices=exinds
     )
 
-    # Error when missing
-    with pytest.raises(ImportError, match="extreme_precip_accumulation_and_days"):
-        build_indicator_module_from_yaml(nbpath / "example.yml", name="ex3")
-    build_indicator_module_from_yaml(nbpath / "example.yml", name="ex4", mode="ignore")
-
     assert ex1.R95p.__doc__ == ex2.R95p.__doc__  # noqa
 
     out1 = ex1.R95p(pr=pr)  # noqa
@@ -98,6 +92,39 @@ def test_custom_indices():
 
     # Check that missing was not modified even with injecting `freq`.
     assert ex1.RX5day.missing == indicators.atmos.max_n_day_precipitation_amount.missing
+
+    # Error when missing
+    with pytest.raises(ImportError, match="extreme_precip_accumulation_and_days"):
+        build_indicator_module_from_yaml(nbpath / "example.yml", name="ex3")
+    build_indicator_module_from_yaml(nbpath / "example.yml", name="ex4", mode="ignore")
+
+
+@pytest.mark.requires_docs
+def test_build_indicator_module_from_yaml_edge_cases():
+    # Use the example in the Extending Xclim notebook for testing.
+    nbpath = Path(__file__).parent.parent.parent.parent / "docs" / "notebooks"
+
+    # All from paths but one
+    ex5 = build_indicator_module_from_yaml(
+        nbpath / "example.yml",
+        indices=nbpath / "example.py",
+        translations={
+            "fr": nbpath / "example.fr.json",
+            "ru": str(nbpath / "example.fr.json"),
+            "eo": read_locale_file(nbpath / "example.fr.json", module="ex5"),
+        },
+        name="ex5",
+    )
+    assert hasattr(indicators, "ex5")
+    assert ex5.R95p.translate_attrs("fr")["cf_attrs"][0]["description"].startswith(
+        "Épaisseur équivalente"
+    )
+    assert ex5.R95p.translate_attrs("ru")["cf_attrs"][0]["description"].startswith(
+        "Épaisseur équivalente"
+    )
+    assert ex5.R95p.translate_attrs("eo")["cf_attrs"][0]["description"].startswith(
+        "Épaisseur équivalente"
+    )
 
 
 class TestOfficalYaml(yamale.YamaleTestCase):

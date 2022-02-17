@@ -5,13 +5,13 @@ Miscellaneous indices utilities
 
 Helper functions for the indices computation, indicator construction and other things.
 """
+import importlib.util
 import logging
 import os
 import warnings
 from collections import defaultdict
 from enum import IntEnum
 from functools import partial
-from importlib import import_module
 from importlib.resources import open_text
 from inspect import Parameter
 from pathlib import Path
@@ -108,19 +108,19 @@ def walk_map(d: dict, func: FunctionType) -> dict:
     return out
 
 
-def load_module(path: os.PathLike):
-    """Load a python module from a single .py file.
+def load_module(path: os.PathLike, name: Optional[str] = None):
+    """Load a python module from a python file, optionally changing its name.
 
     Examples
     --------
     Given a path to a module file (.py)
 
+    >>> # xdoctest: +SKIP
     >>> from pathlib import Path
-    >>> path = Path(path_to_example_py)
+    >>> path = Path("path/to/example.py")
 
     The two following imports are equivalent, the second uses this method.
 
-    >>> # xdoctest: +SKIP
     >>> os.chdir(path.parent)
     >>> import example as mod1
     >>> os.chdir(previous_working_dir)
@@ -128,14 +128,9 @@ def load_module(path: os.PathLike):
     >>> mod1 == mod2
     """
     path = Path(path)
-    pwd = Path(os.getcwd())
-    os.chdir(path.parent)
-    try:
-        mod = import_module(path.stem)
-    except ModuleNotFoundError as err:
-        raise err
-    finally:
-        os.chdir(pwd)
+    spec = importlib.util.spec_from_file_location(name or path.stem, path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)  # This executes code, effectively loading the module
     return mod
 
 
