@@ -162,15 +162,16 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xr.DataArray:
                         for d in set(bda.dims).intersection(set(per_template.dims))
                     }
                     per_template = per_template.chunk(chunking)
-            kw[per_key] = xr.map_blocks(
+            per = xr.map_blocks(
                 percentile_doy.__wrapped__,  # strip history update from percentile_doy
                 obj=bda,
                 kwargs={**pdoy_args, "copy": False},
                 template=per_template,
             )
-            value = compute_index_func(**kw).mean(dim="_bootstrap", keep_attrs=True)
             if "percentiles" not in per_da.dims:
-                value = value.squeeze("percentiles")
+                per = per.squeeze("percentiles")
+            kw[per_key] = per
+            value = compute_index_func(**kw).mean(dim="_bootstrap", keep_attrs=True)
         else:
             # Otherwise, run the normal computation using the original percentile
             kw[per_key] = per_da
