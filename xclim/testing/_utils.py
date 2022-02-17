@@ -438,6 +438,8 @@ def publish_release_notes(style: str = "md") -> str:
         history = re.sub(search, replacement, history)
 
     if style == "md":
+        history = history.replace("=======\nHistory\n=======", "# History")
+
         titles = {r"\n(.*?)\n([\-]{1,})": "-", r"\n(.*?)\n([\^]{1,})": "^"}
         for title_expression, level in titles.items():
             found = re.findall(title_expression, history)

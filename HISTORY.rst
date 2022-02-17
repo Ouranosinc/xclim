@@ -29,7 +29,7 @@ Breaking changes
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* `publish_release_notes` now leverages much more regular expression logic for link translations to markdown.
+* `publish_release_notes` now leverages much more regular expression logic for link translations to markdown. (:pull:`1023`).
 
 Bug fixes
 ^^^^^^^^^
