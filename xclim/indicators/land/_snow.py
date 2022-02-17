@@ -119,6 +119,6 @@ snow_depth = Snow(
     standard_name="surface_snow_thickness",
     long_name="Mean of daily snow depth",
     description="{freq} mean of daily mean snow depth.",
-    cell_methods="time: mean within days time: mean over days",
+    cell_methods="time: mean over days",
     compute=xci.snow_depth,
 )
