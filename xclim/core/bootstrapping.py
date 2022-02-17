@@ -19,8 +19,8 @@ def percentile_bootstrap(func):
 
     This feature is experimental.
 
-    Bootstraping avoids discontinuities in the exceedance between the "in base" period over which percentiles are
-    computed, and "out of base" periods. See `bootstrap_func` for details.
+    Bootstraping avoids discontinuities in the exceedance between the reference period over which percentiles are
+    computed, and "out of reference" periods. See `bootstrap_func` for details.
 
     Example of declaration::
 
@@ -39,9 +39,9 @@ def percentile_bootstrap(func):
     >>> from xclim.core.calendar import percentile_doy
     >>> from xclim.indices import tg90p
     >>> tas = xr.open_dataset(path_to_tas_file).tas
-    >>> # In base must no exactly overlap the studied period
-    >>> tas_in_base = tas.sel(time=slice("1990-01-01","1992-12-31"))
-    >>> t90 = percentile_doy(tas_in_base, window=5, per=90)
+    >>> # To start bootstrap reference period must not fully overlap the studied period.
+    >>> tas_ref = tas.sel(time=slice("1990-01-01","1992-12-31"))
+    >>> t90 = percentile_doy(tas_ref, window=5, per=90)
     >>> tg90p(tas=tas, t90=t90.sel(percentiles=90), freq="YS", bootstrap=True)
     """
 
@@ -62,9 +62,9 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xr.DataArray:
     """Bootstrap the computation of percentile-based exceedance indices.
 
     Indices measuring exceedance over percentile-based threshold may contain artificial discontinuities at the
-    beginning and end of the base period used for calculating the percentile. A bootstrap resampling
+    beginning and end of the reference period used for calculating the percentile. A bootstrap resampling
     procedure can reduce those discontinuities by iteratively replacing each the year the indice is computed on from
-    the percentile estimate, and replacing it with another year within the base period.
+    the percentile estimate, and replacing it with another year within the reference period.
 
     Parameters
     ----------
@@ -86,13 +86,13 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xr.DataArray:
     Notes
     -----
     This function is meant to be used by the `percentile_bootstrap` decorator.
-    The parameters of the percentile calculation (percentile, window, base period) are stored in the
-    attributes of the percentile DataArray.
+    The parameters of the percentile calculation (percentile, window, reference_period)
+    are stored in the attributes of the percentile DataArray.
     The bootstrap algorithm implemented here does the following::
 
         For each temporal grouping in the calculation of the indice
-            If the group `g_t` is in the base period
-                For every other group `g_s` in the base period
+            If the group `g_t` is in the reference period
+                For every other group `g_s` in the reference period
                     Replace group `g_t` by `g_s`
                     Compute percentile on resampled time series
                     Compute indice function using percentile
@@ -116,23 +116,23 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xr.DataArray:
         raise KeyError(
             "`bootstrap` can only be used with percentiles computed using `percentile_doy`"
         )
-    # Boundary years of base period
+    # Boundary years of reference period
     clim = per_da.attrs["climatology_bounds"]
     if xclim.core.utils.uses_dask(da):
         chunking = {d: "auto" for d in da.dims}
         chunking["time"] = -1  # no chunking on time to use map_block
         da = da.chunk(chunking)
-    # overlap of `da` and base period used to compute percentile
+    # overlap of studied `da` and reference period used to compute percentile
     overlap_da = da.sel(time=slice(*clim))
     if len(overlap_da.time) == len(da.time):
         raise KeyError(
-            "`bootstrap` is unnecessary when all years are overlapping between in_base "
-            "(percentiles period) and out_of_base (index period)"
+            "`bootstrap` is unnecessary when all years are overlapping between reference "
+            "(percentiles period) and studied (index period) periods"
         )
     if len(overlap_da) == 0:
         raise KeyError(
-            "`bootstrap` is unnecessary when no year overlap between in_base "
-            "(percentiles period) and out_of_base (index period)."
+            "`bootstrap` is unnecessary when no year overlap between reference "
+            "(percentiles period) and studied (index period) periods."
         )
     pdoy_args = dict(
         window=per_da.attrs["window"],
@@ -150,7 +150,7 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xr.DataArray:
     for year_key, year_slice in da_years_groups.items():
         kw = {da_key: da.isel(time=year_slice), **kwargs}
         if _get_year_label(year_key) in overlap_da.get_index("time").year:
-            # If the group year is in the base period, run the bootstrap
+            # If the group year is in both reference and studied periods, run the bootstrap
             bda = build_bootstrap_year_da(overlap_da, overlap_years_groups, year_key)
             if BOOTSTRAP_DIM not in per_template.dims:
                 per_template = per_template.expand_dims(
@@ -208,7 +208,7 @@ def build_bootstrap_year_da(
     Parameters
     ----------
     da : DataArray
-      Original input array over base period.
+      Original input array over reference period.
     groups : dict
       Output of grouping functions, such as `DataArrayResample.groups`.
     label : Any
