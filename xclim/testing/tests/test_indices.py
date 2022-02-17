@@ -496,6 +496,7 @@ class TestLastSpringFrost:
             assert attr in lsf.attrs.keys()
         assert lsf.attrs["units"] == ""
         assert lsf.attrs["is_dayofyear"] == 1
+        assert lsf.attrs["is_dayofyear"].dtype == np.int32
 
 
 class TestFirstDayBelow:

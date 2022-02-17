@@ -244,7 +244,7 @@ def continuous_snow_cover_end(
         .map(rl.season, window=window, dim="time", coord="dayofyear")
         .end
     )
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(snd))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd))
     return out
 
 
@@ -292,7 +292,7 @@ def continuous_snow_cover_start(
         )
         .start
     )
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(snd))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd))
     return out
 
 
@@ -521,7 +521,7 @@ def freshet_start(
     thresh = convert_units_to(thresh, tas)
     over = tas > thresh
     out = over.resample(time=freq).map(rl.first_run, window=window, coord="dayofyear")
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(tas))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
     return out
 
 
@@ -602,7 +602,7 @@ def growing_season_start(
     thresh = convert_units_to(thresh, tas)
     over = tas >= thresh
     out = over.resample(time=freq).map(rl.first_run, window=window, coord="dayofyear")
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(tas))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
     return out
 
 
@@ -649,7 +649,7 @@ def growing_season_end(
         dim="time",
         coord="dayofyear",
     )
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(tas))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
     return out
 
 
@@ -845,7 +845,7 @@ def frost_free_season_start(
     thresh = convert_units_to(thresh, tasmin)
     over = tasmin >= thresh
     out = over.resample(time=freq).map(rl.first_run, window=window, coord="dayofyear")
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(tasmin))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tasmin))
     return out
 
 
@@ -893,7 +893,7 @@ def frost_free_season_end(
         dim="time",
         coord="dayofyear",
     )
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(tasmin))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tasmin))
     return out
 
 
@@ -1012,7 +1012,7 @@ def last_spring_frost(
         dim="time",
         coord="dayofyear",
     )
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(tas))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
     return out
 
 
@@ -1060,7 +1060,7 @@ def first_day_below(
         dim="time",
         coord="dayofyear",
     )
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(tasmin))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tasmin))
     return out
 
 
@@ -1108,7 +1108,7 @@ def first_day_above(
         dim="time",
         coord="dayofyear",
     )
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(tasmin))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tasmin))
     return out
 
 
@@ -1152,7 +1152,7 @@ def first_snowfall(
         dim="time",
         coord="dayofyear",
     )
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(prsn))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(prsn))
     return out
 
 
@@ -2271,7 +2271,7 @@ def degree_days_exceedance_date(
         )
 
     out = c.clip(0).resample(time=freq).map(_exceedance_date)
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(tas))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
     return out
 
 

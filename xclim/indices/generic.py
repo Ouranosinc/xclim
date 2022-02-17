@@ -118,7 +118,7 @@ def doymax(da: xr.DataArray) -> xr.DataArray:
     """Return the day of year of the maximum value."""
     i = da.argmax(dim="time")
     out = da.time.dt.dayofyear.isel(time=i, drop=True)
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(da))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(da))
     return out
 
 
@@ -126,7 +126,7 @@ def doymin(da: xr.DataArray) -> xr.DataArray:
     """Return the day of year of the minimum value."""
     i = da.argmin(dim="time")
     out = da.time.dt.dayofyear.isel(time=i, drop=True)
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(da))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(da))
     return out
 
 
