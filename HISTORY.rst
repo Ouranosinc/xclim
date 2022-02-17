@@ -11,9 +11,17 @@ Announcements
 * `xclim` now officially supports Python3.10. (:pull:`1013`).
 
 Breaking changes
-^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~
 * The version pin for `bottleneck` (<1.4) has been lifted. (:pull:`1013`).
 * `packaging` has been removed from the `xclim` run dependencies. (:pull:`1013`).
+* Quantile mapping adjustment objects (EQM, DQM and QDM) and ``sdba.utils.equally_spaced_nodes`` will not add additional endpoints to the quantile range. With those endpoints, variables are capped to the reference's range in the historical period, which can be dangerous with high variability in the extremes (ex: pr), especially if the reference doesn't reproduce those extremes credibly. (:issue:`1015`, :pull:`1016`). To retrieve the same functionality as before use:
+
+.. code-block:: python
+
+    from xclim import sdba
+    # NQ is the the number of equally spaced nodes, the argument previously given to nquantiles directly.
+    EQM = sdba.EmpiricalQuantileMapping.train(ref, hist, nquantiles=sdba.equally_spaced_nodes(NQ, eps=1e-6), ...)
+
 * The "history" string attribute added by xclim has been modified for readability: (:issue:`963`, :pull:`1018`).
     - The trailing dot (``.``) was dropped.
     - ``None`` inputs are now printed as "None" (and not "<NoneType>").
