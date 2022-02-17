@@ -1546,7 +1546,7 @@ def build_indicator_module_from_yaml(
     if not filepath.suffix and translations is None:
         # No suffix mean we try to automatically detect the json files.
         translations = {}
-        for locfile in filepath.parent.glob(filepath.stem + ".*.json"):
+        for locfile in filepath.parent.glob(f"{filepath.stem}.*.json"):
             locale = locfile.suffixes[0][1:]
             translations[locale] = read_locale_file(
                 locfile, module=module_name, encoding=encoding
