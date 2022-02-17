@@ -2,6 +2,43 @@
 History
 =======
 
+0.34.0 (unreleased)
+-------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
+
+Announcements
+^^^^^^^^^^^^^
+* `xclim` now officially supports Python3.10. (:pull:`1013`).
+
+Breaking changes
+~~~~~~~~~~~~~~~~
+* The version pin for `bottleneck` (<1.4) has been lifted. (:pull:`1013`).
+* `packaging` has been removed from the `xclim` run dependencies. (:pull:`1013`).
+* Quantile mapping adjustment objects (EQM, DQM and QDM) and ``sdba.utils.equally_spaced_nodes`` will not add additional endpoints to the quantile range. With those endpoints, variables are capped to the reference's range in the historical period, which can be dangerous with high variability in the extremes (ex: pr), especially if the reference doesn't reproduce those extremes credibly. (:issue:`1015`, :pull:`1016`). To retrieve the same functionality as before use:
+
+.. code-block:: python
+
+    from xclim import sdba
+    # NQ is the the number of equally spaced nodes, the argument previously given to nquantiles directly.
+    EQM = sdba.EmpiricalQuantileMapping.train(ref, hist, nquantiles=sdba.equally_spaced_nodes(NQ, eps=1e-6), ...)
+
+* The "history" string attribute added by xclim has been modified for readability: (:issue:`963`, :pull:`1018`).
+    - The trailing dot (``.``) was dropped.
+    - ``None`` inputs are now printed as "None" (and not "<NoneType>").
+    - Arguments are now always shown as keyword-arguments. This mostly impacts ``sdba`` functions, as it was already the case for ``Indicators``.
+
+Bug fixes
+^^^^^^^^^
+* Loading virtual python modules with ``build_indicator_module_from_yaml`` is now fixed on some systems where the current directory was not part of python's path. Furthermore, paths of the python and json files can now be passed directly to the ``indices`` and ``translations`` arguments, respectively. (:issue:`1020`, :pull:`1021`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Due to an upstream bug in `bottleneck`'s support of virtualenv, `tox` builds for Python3.10 now depend on a patched fork of `bottleneck`. This workaround will be removed once the fix is merged upstream. (:pull:`1013`, see: `bottleneck PR/397`_).
+* GitHub CI actions now use the `deadsnakes python PPA Action <https://github.com/deadsnakes/action>`_ for gathering the Python3.10 development headers. (:pull:`1013`).
+* The "is_dayofyear" attribute added by several indices is now a ``numpy.int32`` instance, instead of python's ``int``. This ensures a THREDDS server can read it when the variable is saved to a netCDF file with `xarray`/`netCDF4-python`. (:issue:`980`, :pull:`1019`).
+
+.. _bottleneck PR/397: https://github.com/pydata/bottleneck/pull/397/
+
 0.33.2 (2022-02-09)
 -------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`).

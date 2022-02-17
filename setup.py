@@ -10,7 +10,7 @@ URL = "https://github.com/Ouranosinc/xclim"
 AUTHOR = "Travis Logan"
 AUTHOR_EMAIL = "logan.travis@ouranos.ca"
 REQUIRES_PYTHON = ">=3.8.0"
-VERSION = "0.33.2"
+VERSION = "0.33.4-beta"
 LICENSE = "Apache Software License 2.0"
 
 with open("README.rst") as readme_file:
@@ -30,7 +30,7 @@ for search, replacement in hyperlink_replacements.items():
 
 requirements = [
     "boltons>=20.1",
-    "bottleneck~=1.3.1",
+    "bottleneck>=1.3.1",
     "cf-xarray>=0.6.1",
     "cftime>=1.4.1",
     "Click",
@@ -38,7 +38,6 @@ requirements = [
     "jsonpickle",
     "numba",
     "numpy>=1.16",
-    "packaging>=20.0",
     "pandas>=0.23",
     "pint>=0.10",
     "pyyaml",
@@ -68,6 +67,7 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Topic :: Scientific/Engineering :: Atmospheric Science",
     ],
     description=DESCRIPTION,

@@ -1,3 +1,7 @@
+import datetime as dt
+import re
+
+from xclim import __version__
 from xclim.core import formatting as fmt
 from xclim.indicators.atmos import degree_days_exceedance_date, heat_wave_frequency
 
@@ -33,3 +37,23 @@ def test_indicator_docstring():
 
     doc = degree_days_exceedance_date.__doc__.split("\n")
     assert doc[20] == "  Default : >. "
+
+
+def test_update_xclim_history(atmosds):
+    @fmt.update_xclim_history
+    def func(da, arg1, arg2=None, arg3=None):
+        return da
+
+    out = func(atmosds.tas, 1, arg2=[1, 2], arg3=None)
+
+    matches = re.match(
+        r"\[([0-9-:\s]*)\]\s(\w*):\s(\w*)\((.*)\)\s-\sxclim\sversion:\s(\d*\.\d*\.\d*[a-zA-Z-]*)",
+        out.attrs["history"],
+    ).groups()
+
+    date = dt.datetime.fromisoformat(matches[0])
+    assert dt.timedelta(0) < (dt.datetime.now() - date) < dt.timedelta(seconds=3)
+    assert matches[1] == "tas"
+    assert matches[2] == "func"
+    assert matches[3] == "da=tas, arg1=1, arg2=<list>, arg3=None"
+    assert matches[4] == __version__
