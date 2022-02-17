@@ -25,11 +25,12 @@ Internal changes
 * GitHub CI actions now use the `deadsnakes python PPA Action <https://github.com/deadsnakes/action>`_ for gathering the Python3.10 development headers. (:pull:`1013`).
 * The "is_dayofyear" attribute added by several indices is now a ``numpy.int32`` instance, instead of python's ``int``. This ensures a THREDDS server can read it when the variable is saved to a netCDF file with `xarray`/`netCDF4-python`. (:issue:`980`, :pull:`1019`).
 
-.. _bottleneck PR/397: https://github.com/pydata/bottleneck/pull/397/
-
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Improve performances of percentile bootstrap algorithm by using ``xarray.map_block`` (:issue:`932`, :pull:`1017`).
+
+.. _bottleneck PR/397: https://github.com/pydata/bottleneck/pull/397/
+
 
 0.33.2 (2022-02-09)
 -------------------
