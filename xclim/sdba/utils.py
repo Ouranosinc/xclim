@@ -239,7 +239,7 @@ def broadcast(
 def equally_spaced_nodes(n: int, eps: Optional[float] = None) -> np.array:
     """Return nodes with `n` equally spaced points within [0, 1], optionally adding two end-points.
 
-    .. warning:: 
+    .. warning::
         Passing a small `eps` will effectively clip the scenario to the bounds of the reference
         on the historical period in most cases. With normal quantile mapping algorithms, this can
         give strange result when the reference does not show as many extremes as the simulation does.
