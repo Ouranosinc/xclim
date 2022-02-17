@@ -236,20 +236,26 @@ def broadcast(
     return grouped
 
 
-def equally_spaced_nodes(n: int, eps: Union[float, None] = 1e-4) -> np.array:
-    """Return nodes with `n` equally spaced points within [0, 1] plus two end-points.
+def equally_spaced_nodes(n: int, eps: Optional[float] = None) -> np.array:
+    """Return nodes with `n` equally spaced points within [0, 1], optionally adding two end-points.
 
     Parameters
     ----------
     n : int
       Number of equally spaced nodes.
-    eps : float, None
-      Distance from 0 and 1 of end nodes. If None, do not add endpoints.
+    eps : float, optional
+      Distance from 0 and 1 of added end nodes. If None (default), do not add endpoints.
 
     Returns
     -------
     np.array
-      Nodes between 0 and 1.
+      Nodes between 0 and 1. Nodes can be seen as the middle points of `n` equal bins.
+
+    Warnings
+    --------
+    Passing a small `eps` will effectively clip the scenario to the bounds of the reference
+    on the historical period in most cases. With normal quantile mapping algorithms, this can
+    give strange result when the reference does not show as many extremes as the simulation does.
 
     Notes
     -----

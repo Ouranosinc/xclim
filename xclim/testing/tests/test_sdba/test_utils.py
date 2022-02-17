@@ -44,12 +44,12 @@ def test_map_cdf(series):
 
 
 def test_equally_spaced_nodes():
-    x = u.equally_spaced_nodes(5)
+    x = u.equally_spaced_nodes(5, eps=1e-4)
     assert len(x) == 7
     d = np.diff(x)
     np.testing.assert_almost_equal(d[0], d[1] / 2, 3)
 
-    x = u.equally_spaced_nodes(1, eps=None)
+    x = u.equally_spaced_nodes(1)
     np.testing.assert_almost_equal(x[0], 0.5)
 
 
