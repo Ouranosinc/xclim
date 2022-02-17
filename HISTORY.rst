@@ -8,7 +8,7 @@ Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
 
 Breaking changes
 ~~~~~~~~~~~~~~~~
-* Quantile mapping adjustment objects (EQM, DQM and QDM) and ``sdba.utils.equally_spaced_nodes`` will not add additionnal endpoints to the quantile range. (:issue:`1015`, :pull:`1016`). To retrieve the same functionality as before use.
+* Quantile mapping adjustment objects (EQM, DQM and QDM) and ``sdba.utils.equally_spaced_nodes`` will not add additional endpoints to the quantile range. With those endpoints, variables are capped to the reference's range in the historical period, which can be dangerous with high variability in the extremes (ex: pr), especially if the reference doesn't reproduce those extremes credibly. (:issue:`1015`, :pull:`1016`). To retrieve the same functionality as before use:
 
 .. code-block:: python
 
