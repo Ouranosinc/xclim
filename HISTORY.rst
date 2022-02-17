@@ -11,7 +11,7 @@ Announcements
 * `xclim` now officially supports Python3.10. (:pull:`1013`).
 
 Breaking changes
-~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^
 * The version pin for `bottleneck` (<1.4) has been lifted. (:pull:`1013`).
 * `packaging` has been removed from the `xclim` run dependencies. (:pull:`1013`).
 * Quantile mapping adjustment objects (EQM, DQM and QDM) and ``sdba.utils.equally_spaced_nodes`` will not add additional endpoints to the quantile range. With those endpoints, variables are capped to the reference's range in the historical period, which can be dangerous with high variability in the extremes (ex: pr), especially if the reference doesn't reproduce those extremes credibly. (:issue:`1015`, :pull:`1016`). To retrieve the same functionality as before use:
@@ -26,6 +26,10 @@ Breaking changes
     - The trailing dot (``.``) was dropped.
     - ``None`` inputs are now printed as "None" (and not "<NoneType>").
     - Arguments are now always shown as keyword-arguments. This mostly impacts ``sdba`` functions, as it was already the case for ``Indicators``.
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* `publish_release_notes` now leverages much more regular expression logic for link translations to markdown.
 
 Bug fixes
 ^^^^^^^^^

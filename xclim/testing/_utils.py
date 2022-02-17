@@ -437,4 +437,23 @@ def publish_release_notes(style: str = "md") -> str:
     for search, replacement in hyperlink_replacements.items():
         history = re.sub(search, replacement, history)
 
+    if style == "md":
+        titles = {r"\n(.*?)\n([\-]{1,})": "-", r"\n(.*?)\n([\^]{1,})": "^"}
+        for title_expression, level in titles.items():
+            found = re.findall(title_expression, history)
+            for grouping in found:
+                fixed_grouping = (
+                    str(grouping[0]).replace("(", r"\(").replace(")", r"\)")
+                )
+                search = rf"({fixed_grouping})\n([\{level}]{'{' + str(len(grouping[1])) + '}'})"
+                replacement = f"{'##' if level=='-' else '###'} {grouping[0]}"
+                history = re.sub(search, replacement, history)
+
+        link_expressions = r"[\`]{1}([\w\s]+)\s<(.+)>`\_"
+        found = re.findall(link_expressions, history)
+        for grouping in found:
+            search = rf"`{grouping[0]} <.+>`\_"
+            replacement = f"[{str(grouping[0]).strip()}]({grouping[1]})"
+            history = re.sub(search, replacement, history)
+
     return history
