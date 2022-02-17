@@ -45,7 +45,7 @@ def test_jitter_under_thresh():
     assert da[0] > 0
     np.testing.assert_allclose(da[1:], out[1:])
     assert (
-        "jitter(<array>, '1 K', <NoneType>, <NoneType>, <NoneType>) - xclim version"
+        "jitter(x=<array>, lower='1 K', upper=None, minimum=None, maximum=None) - xclim version"
         in out.attrs["history"]
     )
 

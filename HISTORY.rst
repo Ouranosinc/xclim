@@ -14,6 +14,10 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 * The version pin for `bottleneck` (<1.4) has been lifted. (:pull:`1013`).
 * `packaging` has been removed from the `xclim` run dependencies. (:pull:`1013`).
+* The "history" string attribute added by xclim has been modified for readability: (:issue:`963`, :pull:`1018`).
+    - The trailing dot (``.``) was dropped.
+    - ``None`` inputs are now printed as "None" (and not "<NoneType>").
+    - Arguments are now always shown as keyword-arguments. This mostly impacts ``sdba`` functions, as it was already the case for ``Indicators``.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
