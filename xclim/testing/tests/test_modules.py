@@ -110,7 +110,7 @@ def test_build_indicator_module_from_yaml_edge_cases():
         indices=nbpath / "example.py",
         translations={
             "fr": nbpath / "example.fr.json",
-            "tlh": str(nbpath / "example.fr.json"),
+            "ru": str(nbpath / "example.fr.json"),
             "eo": read_locale_file(nbpath / "example.fr.json", module="ex5"),
         },
         name="ex5",
@@ -119,7 +119,7 @@ def test_build_indicator_module_from_yaml_edge_cases():
     assert ex5.R95p.translate_attrs("fr")["cf_attrs"][0]["description"].startswith(
         "Épaisseur équivalente"
     )
-    assert ex5.R95p.translate_attrs("tlh")["cf_attrs"][0]["description"].startswith(
+    assert ex5.R95p.translate_attrs("ru")["cf_attrs"][0]["description"].startswith(
         "Épaisseur équivalente"
     )
     assert ex5.R95p.translate_attrs("eo")["cf_attrs"][0]["description"].startswith(
