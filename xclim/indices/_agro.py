@@ -21,6 +21,7 @@ from xclim.indices.generic import aggregate_between_dates, day_lengths
 
 __all__ = [
     "biologically_effective_degree_days",
+    "hardiness_zones",
     "huglin_index",
     "cool_night_index",
     "corn_heat_units",
@@ -845,3 +846,69 @@ def effective_growing_degree_days(
     egdd = aggregate_between_dates(deg_days, start=start, end=end, freq=freq)
 
     return to_agg_units(egdd, tas, op="delta_prod")
+
+
+@declare_units(tasmin="[temperature]")
+def hardiness_zones(
+    tasmin: xarray.DataArray, window: int = 30, method: str = "usda", freq: str = "YS"
+) -> xarray.DataArray:
+    """Hardiness zones
+
+    Hardiness zones are defined using the averaged annual minimum temperature and based
+    on fixed scales. The zones are computed for each averaging period in the input timeseries,
+    the data point is assigned to the last year of the period.
+
+    Parameters
+    ----------
+    tasmin: xr.DataArray
+      Daily minimum temperature.
+    window : int
+      The averging window in years, default (30) is the one used by the USDA.
+    method : {'usda', 'anbg'}
+      The temperature scale to use.
+      The [usda]_ scale (United States Department of Agriculture) uses bins of 10°F,
+      while the [anbg]_ scale (Australian National Botanic Gardens) uses bins of 5°C.
+      See Notes.
+    freq : str
+      The resampling frequency. Must be annual.
+      'YS' is the most meaningful value for the usda scale, while AS-JUL could make more
+      sence for the anbg scale.
+
+    Returns
+    -------
+    xr.DataArray, [unitless]
+        {scale} hardiness zones
+
+    Notes
+    -----
+    The USDA scale is the most universally used scale for hardiness zones. The official
+    USDA data is based on a 30 year average going from 1976 to 2005 ([usda]_). Apart from
+    the australian scale, another commonly used scale is the Canadian one, defined by
+    Natural Resources Canada. It is not implemented here as it depends on much more then
+    only the daily minimum temperature.
+
+    The zone numbers are returned as float. "1.5" means zone 1b, "2.0" means 2a, and so on.
+
+    References
+    ----------
+    .. [usda] : USDA Plant Hardiness Zone Map, 2012. Agricultural Research Service, U.S. Department of Agriculture. Accessed from https://planthardiness.ars.usda.gov/
+    .. [anbg] : Dawson, I. A. (1991). Plant hardiness zones for Australia. http://www.anbg.gov.au/gardens/research/hort.research/zones.html
+    """
+    tn_min = tasmin.resample(time="YS").min().rolling(time=window).mean()
+    tn_min.attrs["units"] = tasmin.units
+
+    if method == "usda":
+        tn_min = convert_units_to(tn_min, "degF")
+        print(tn_min)
+        bins = np.arange(-60, 71, 5)
+    elif method == "anbg":
+        tn_min = convert_units_to(tn_min, "degC")
+        bins = np.arange(-15, 21, 2.5)
+    else:
+        raise NotImplementedError(f"Method must be one of usda or anbg (got {method}).")
+
+    out = tn_min.copy(data=(np.digitize(tn_min, bins) - 1) / 2) + 1
+    # mask values outside the range of the bins and where the average was nan
+    out = out.where((out >= 1) & (out < ((len(bins) - 1) / 2) + 1) & tn_min.notnull())
+    out.attrs["units"] = ""
+    return out

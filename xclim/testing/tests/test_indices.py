@@ -2641,3 +2641,27 @@ class TestWetDaysProp:
 
         out = xci.wetdays_prop(pr, thresh="5 mm/day", freq="M")
         np.testing.assert_allclose(out, [4 / 31, 0, 0, 2 / 31, 0, 0, 0, 0, 0, 0, 0, 0])
+
+
+@pytest.mark.parametrize(
+    "tmin,meth,zone",
+    [
+        (-6, "usda", 9.0),
+        (19, "usda", 13.5),
+        (-47, "usda", 1.5),
+        (-6, "anbg", 2.5),
+        (19, "anbg", 7.5),
+        (-47, "anbg", np.NaN),
+    ],
+)
+def test_hardiness_zones(tasmin_series, tmin, meth, zone):
+    tasmin = tasmin_series(
+        np.zeros(10957) + K2C + 20, start="1997-01-01"
+    )  # 30 years at 20°C
+    tasmin = xr.where(
+        tasmin.time.dt.dayofyear == 1, tmin + K2C, tasmin, keep_attrs=True
+    )
+
+    hz = xci.hardiness_zones(tasmin=tasmin, method=meth)
+    np.testing.assert_array_equal(hz[-1], zone)
+    assert hz[:-1].isnull().all()
