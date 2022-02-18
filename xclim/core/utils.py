@@ -752,5 +752,7 @@ def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
     for cmid in remove_ids:
         del yml["indices"][cmid]
 
+    yml["indicators"] = yml.pop("indices")
+
     with open(adapted, "w") as f:
         safe_dump(yml, f)

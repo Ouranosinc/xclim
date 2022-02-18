@@ -10,7 +10,7 @@ doc: "  ===================\n  CF Standard indices\n  ===================\n\n  I
   \ that are currently not well covered by the\n  CF Conventions. Currently identified\
   \ issues frequently relate to standard_name or/and cell_methods\n  which both are\
   \ controlled vocabularies of the CF Conventions.\n\n  .. _clix-meta: https://github.com/clix-meta/clix-meta\n"
-indices:
+indicators:
   cdd:
     cf_attrs:
     - cell_methods: 'time: sum over days'
