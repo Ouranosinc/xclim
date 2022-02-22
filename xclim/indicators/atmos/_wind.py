@@ -16,7 +16,7 @@ calm_days = Wind(
     standard_name="number_of_days_with_sfcWind_below_threshold",
     long_name="Number of days with surface wind speed below threshold",
     description="{freq} number of days with surface wind speed < {thresh}",
-    cell_methods="time: mean within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.calm_days,
 )
 
@@ -26,6 +26,6 @@ windy_days = Wind(
     standard_name="number_of_days_with_sfcWind_above_threshold",
     long_name="Number of days with surface wind speed above threshold",
     description="{freq} number of days with surface wind speed >= {thresh}",
-    cell_methods="time: mean within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.windy_days,
 )
