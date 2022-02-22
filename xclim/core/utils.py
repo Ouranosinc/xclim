@@ -36,6 +36,14 @@ DayOfYearStr = NewType("DayOfYearStr", str)
 # Official variables definitions
 VARIABLES = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
 
+# Input cell methods
+ICM = {
+    "tasmin": "time: minimum within days",
+    "tasmax": "time: maximum within days",
+    "tas": "time: mean within days",
+    "pr": "time: sum within days",
+}
+
 
 def wrapped_partial(
     func: FunctionType, suggested: Optional[dict] = None, **fixed
@@ -609,7 +617,7 @@ def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
     """Reads in a clix-meta yaml and refactors it to fit xclim's yaml specifications."""
     from xclim.indices import generic
 
-    freq_names = {"annual": "A", "seasonal": "Q", "monthly": "M", "weekly": "W"}
+    # freq_names = {"annual": "A", "seasonal": "Q", "monthly": "M", "weekly": "W"}
     freq_defs = {"annual": "YS", "seasonal": "QS-DEC", "monthly": "MS", "weekly": "W"}
 
     with open(raw) as f:
@@ -701,23 +709,32 @@ def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
                         # Value
                         data["parameters"][name] = f"{param['data']} {param['units']}"
 
-        period = data.pop("period")
-        data["allowed_periods"] = [freq_names[per] for per in period["allowed"].keys()]
-        data.setdefault("parameters", {})["freq"] = {
-            "default": freq_defs[period["default"]]
-        }
+        period = data.pop("default_period")
+        # data["allowed_periods"] = [freq_names[per] for per in period["allowed"].keys()]
+        data.setdefault("parameters", {})["freq"] = {"default": freq_defs[period]}
 
         attrs = {}
-        for attr, val in data.pop("output").items():
+        output = data.pop("output")
+        for attr, val in output.items():
             if val is None:
                 continue
             if attr == "cell_methods":
                 methods = []
-                for cell_method in val:
-                    methods.append(
-                        "".join([f"{dim}: {meth}" for dim, meth in cell_method.items()])
+                for i, cell_method in enumerate(val):
+                    # Construct cell_method string
+                    cm = "".join(
+                        [f"{dim}: {meth}" for dim, meth in cell_method.items()]
                     )
+
+                    # If cell_method seems to be describing input data, and not the operation, skip.
+                    if i == 0:
+                        if cm in [ICM.get(v) for v in data["input"].values()]:
+                            continue
+
+                    methods.append(cm)
+
                 val = " ".join(methods)
+
             elif attr in ["var_name", "long_name"]:
                 for new, old in rename_params.items():
                     val = val.replace(old, new)
@@ -734,6 +751,8 @@ def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
 
     for cmid in remove_ids:
         del yml["indices"][cmid]
+
+    yml["indicators"] = yml.pop("indices")
 
     with open(adapted, "w") as f:
         safe_dump(yml, f)

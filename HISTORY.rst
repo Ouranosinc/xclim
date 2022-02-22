@@ -4,14 +4,14 @@ History
 
 0.34.0 (unreleased)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Aoun Abel (:user:`bzah`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`), Aoun Abel (:user:`bzah`).
 
 Announcements
 ^^^^^^^^^^^^^
 * `xclim` now officially supports Python3.10. (:pull:`1013`).
 
 Breaking changes
-~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^
 * The version pin for `bottleneck` (<1.4) has been lifted. (:pull:`1013`).
 * `packaging` has been removed from the `xclim` run dependencies. (:pull:`1013`).
 * Quantile mapping adjustment objects (EQM, DQM and QDM) and ``sdba.utils.equally_spaced_nodes`` will not add additional endpoints to the quantile range. With those endpoints, variables are capped to the reference's range in the historical period, which can be dangerous with high variability in the extremes (ex: pr), especially if the reference doesn't reproduce those extremes credibly. (:issue:`1015`, :pull:`1016`). To retrieve the same functionality as before use:
@@ -26,6 +26,11 @@ Breaking changes
     - The trailing dot (``.``) was dropped.
     - ``None`` inputs are now printed as "None" (and not "<NoneType>").
     - Arguments are now always shown as keyword-arguments. This mostly impacts ``sdba`` functions, as it was already the case for ``Indicators``.
+* The `cell_methods` string attribute appends only the operation from the indicator itself. In previous version, some indicators also appended the input data's own `cell_method`. The clix-meta importer has been modified to follow the same convention. (:issue:`983`, :pull:`1022`)
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* `publish_release_notes` now leverages much more regular expression logic for link translations to markdown. (:pull:`1023`).
 
 Bug fixes
 ^^^^^^^^^
