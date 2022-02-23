@@ -1885,7 +1885,7 @@ def maximum_consecutive_dry_days(
     -----
     Let :math:`\mathbf{p}=p_0, p_1, \ldots, p_n` be a daily precipitation series and :math:`thresh` the threshold
     under which a day is considered dry. Then let :math:`\mathbf{s}` be the sorted vector of indices :math:`i` where
-    :math:`[p_i < thresh] \neq [p_{i+1} < thresh]`, that is, the days when the temperature crosses the threshold.
+    :math:`[p_i < thresh] \neq [p_{i+1} < thresh]`, that is, the days when the precipitation crosses the threshold.
     Then the maximum number of consecutive dry days is given by
 
     .. math::
