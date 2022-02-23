@@ -38,12 +38,10 @@ Bug fixes
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* ~Due to an upstream bug in `bottleneck`'s support of virtualenv, `tox` builds for Python3.10 now depend on a patched fork of `bottleneck`. This workaround will be removed once the fix is merged upstream. (:pull:`1013`, see: `bottleneck PR/397`_).~
-    - This has been removed with the release of `bottleneck` version 1.3.4.
+* Due to an upstream bug in `bottleneck`'s support of virtualenv, `tox` builds for Python3.10 now depend on a patched fork of `bottleneck`. This workaround will be removed once the fix is merged upstream. (:pull:`1013`, see: `bottleneck PR/397 <https://github.com/pydata/bottleneck/pull/397/>`_).
+    - This has been removed with the release of `bottleneck version 1.3.4 <https://pypi.org/project/Bottleneck/1.3.4/>`_. (:pull:`1025`).
 * GitHub CI actions now use the `deadsnakes python PPA Action <https://github.com/deadsnakes/action>`_ for gathering the Python3.10 development headers. (:pull:`1013`).
 * The "is_dayofyear" attribute added by several indices is now a ``numpy.int32`` instance, instead of python's ``int``. This ensures a THREDDS server can read it when the variable is saved to a netCDF file with `xarray`/`netCDF4-python`. (:issue:`980`, :pull:`1019`).
-
-.. _bottleneck PR/397: https://github.com/pydata/bottleneck/pull/397/
 
 0.33.2 (2022-02-09)
 -------------------
@@ -51,11 +49,11 @@ Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Juliette Lav
 
 Announcements
 ^^^^^^^^^^^^^
-* `xclim` no longer supports Python3.7. Code conventions and new features for Python3.8 (`PEP 569`_) are now accepted. (:issue:`966`, :pull:`1000`).
+* `xclim` no longer supports Python3.7. Code conventions and new features for Python3.8 (`PEP 569 <https://www.python.org/dev/peps/pep-0569/>`_) are now accepted. (:issue:`966`, :pull:`1000`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* Python3.7 (`PEP 537`_) support has been officially deprecated. Continuous integration testing is no longer run against this version of Python. (:issue:`966`, :pull:`1000`).
+* Python3.7 (`PEP 537 <https://www.python.org/dev/peps/pep-0537/>`_) support has been officially deprecated. Continuous integration testing is no longer run against this version of Python. (:issue:`966`, :pull:`1000`).
 
 Bug fixes
 ^^^^^^^^^
@@ -70,8 +68,6 @@ Internal changes
 * `tox` builds for Python3.7 have been deprecated. (:pull:`1000`).
 * Docstrings and documentation has been adjusted for grammar and typos. (:pull:`1000`).
 * ``sdba.utils.extrapolate_qm`` has been removed, as announced for xclim 0.33. (:pull:`1009`).
-
-.. _PEP 569: https://www.python.org/dev/peps/pep-0569/
 
 0.33.0 (2022-01-28)
 -------------------
@@ -486,7 +482,7 @@ Internal Changes
 
 Announcements
 ^^^^^^^^^^^^^
-* `xclim` no longer supports Python3.6. Code conventions and new features from Python3.7 (`PEP 537`_) are now accepted.
+* `xclim` no longer supports Python3.6. Code conventions and new features from Python3.7 (`PEP 537 Features <https://www.python.org/dev/peps/pep-0537/#features-for-3-7>`_) are now accepted.
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -515,8 +511,6 @@ Internal Changes
 ^^^^^^^^^^^^^^^^
 * `pre-commit` linting checks now run formatting hook `black==21.4b2`.
 * Code cleaning (more accurate call signatures, more use of https links, docstring updates, and typo fixes).
-
-.. _PEP 537:  https://www.python.org/dev/peps/pep-0537/#features-for-3-7
 
 0.25.0 (2021-03-31)
 -------------------
