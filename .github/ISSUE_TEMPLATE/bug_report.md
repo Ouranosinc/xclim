@@ -8,8 +8,8 @@ assignees: ''
 ---
 
 **Please complete the following information:**
- - Operating System: 
- - Xclim version: 
+ - Operating System:
+ - Xclim version:
  - Python version:
 
 **Description**
