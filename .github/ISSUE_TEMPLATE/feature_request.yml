@@ -1,0 +1,35 @@
+name: Feature request
+description: Suggest an idea for this project
+labels: [ "enhancement" ]
+
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Addressing a Problem?
+      description: Is your feature request related to a problem? Please describe.
+  - type: textarea
+    id: potential-solution
+    attributes:
+      label: Potential Solution
+      description: Describe the solution you'd like.
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
+      description: Add any other context about the feature request here.
+  - type: checkboxes
+    id: submit-pr
+    attributes:
+      label: Contribution
+      description: Do you intend to submit a fix for this bug?
+      options:
+        - label: I would be willing/able to open a Pull Request to address this bug.
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/Ouranosinc/xclim/blob/master/CODE_OF_CONDUCT.md)
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true
