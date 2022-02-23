@@ -1,3 +1,4 @@
+import warnings
 from inspect import signature
 from typing import Any, Callable, Dict, Optional
 
@@ -118,7 +119,14 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xr.DataArray:
         )
     # Boundary years of reference period
     clim = per_da.attrs["climatology_bounds"]
-    if xclim.core.utils.uses_dask(da):
+    if xclim.core.utils.uses_dask(da) and len(da.chunks[da.get_axis_num("time")]) > 1:
+        warnings.warn(
+            "The input data is chunked on time dimension and must be fully re-chunked to"
+            " run percentile bootstrapping."
+            " Beware, this operation can significantly increase the number of tasks dask"
+            " has to handle.",
+            stacklevel=2,
+        )
         chunking = {d: "auto" for d in da.dims}
         chunking["time"] = -1  # no chunking on time to use map_block
         da = da.chunk(chunking)
