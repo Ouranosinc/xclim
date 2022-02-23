@@ -171,7 +171,7 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xr.DataArray:
             if "percentiles" not in per_da.dims:
                 per = per.squeeze("percentiles")
             kw[per_key] = per
-            value = compute_index_func(**kw).mean(dim="_bootstrap", keep_attrs=True)
+            value = compute_index_func(**kw).mean(dim=BOOTSTRAP_DIM, keep_attrs=True)
         else:
             # Otherwise, run the normal computation using the original percentile
             kw[per_key] = per_da
