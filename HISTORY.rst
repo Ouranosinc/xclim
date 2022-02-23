@@ -4,7 +4,7 @@ History
 
 0.34.0 (unreleased)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`), Aoun Abel (:user:`bzah`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -31,6 +31,7 @@ Breaking changes
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * `publish_release_notes` now leverages much more regular expression logic for link translations to markdown. (:pull:`1023`).
+* Improve performances of percentile bootstrap algorithm by using ``xarray.map_block`` (:issue:`932`, :pull:`1017`).
 
 Bug fixes
 ^^^^^^^^^
