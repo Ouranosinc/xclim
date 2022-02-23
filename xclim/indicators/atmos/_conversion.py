@@ -15,6 +15,7 @@ __all__ = [
     "relative_humidity_from_dewpoint",
     "relative_humidity",
     "specific_humidity",
+    "specific_humidity_from_dewpoint",
     "snowfall_approximation",
     "rain_approximation",
     "wind_chill_index",
@@ -179,6 +180,17 @@ specific_humidity = Converter(
     parameters={"invalid_values": "mask"},
 )
 
+specific_humidity_from_dewpoint = Converter(
+    identifier="huss_fromdewpoint",
+    units="",
+    long_name="Specific Humidity",
+    standard_name="specific_humidity",
+    description=lambda **kws: (
+        "Computed from dewpoint temperature and pressure through the saturation "
+        "vapor pressure, which was calculated according to the {method} method."
+    ),
+    compute=indices.specific_humidity_from_dewpoint,
+)
 
 snowfall_approximation = Converter(
     identifier="prsn",
