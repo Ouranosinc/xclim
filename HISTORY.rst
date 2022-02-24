@@ -8,7 +8,7 @@ Contributors to this version: David Huard (:user:`huard`).
 
 New indicators
 ^^^^^^^^^^^^^^
-* New indicator ``specific_humidity_from_dewpoint``, computing specific humidity from the dewpoint temperature and air pressure. (:issue:`864`)
+* New indicator ``specific_humidity_from_dewpoint``, computing specific humidity from the dewpoint temperature and air pressure. (:issue:`864`, :pull:`1027`)
 
 
 0.34.0 (unreleased)
