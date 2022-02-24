@@ -185,7 +185,7 @@ specific_humidity_from_dewpoint = Converter(
     units="",
     long_name="Specific Humidity",
     standard_name="specific_humidity",
-    description=lambda **kws: (
+    description=(
         "Computed from dewpoint temperature and pressure through the saturation "
         "vapor pressure, which was calculated according to the {method} method."
     ),

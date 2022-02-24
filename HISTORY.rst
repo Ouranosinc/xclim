@@ -6,8 +6,8 @@ History
 -----------------
 Contributors to this version: David Huard (:user:`huard`).
 
-New features and enhancements
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+New indicators
+^^^^^^^^^^^^^^
 * New indicator ``specific_humidity_from_dewpoint``, computing specific humidity from the dewpoint temperature and air pressure. (:issue:`864`)
 
 
