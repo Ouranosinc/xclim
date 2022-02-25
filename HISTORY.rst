@@ -2,16 +2,15 @@
 History
 =======
 
-0.35 (unreleased)
------------------
+0.35.0 (unreleased)
+-------------------
 Contributors to this version: David Huard (:user:`huard`).
 
 New indicators
 ^^^^^^^^^^^^^^
 * New indicator ``specific_humidity_from_dewpoint``, computing specific humidity from the dewpoint temperature and air pressure. (:issue:`864`, :pull:`1027`)
 
-
-0.34.0 (unreleased)
+0.34.0 (25-02-2022)
 -------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`), Aoun Abel (:user:`bzah`).
 
