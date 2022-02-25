@@ -2,7 +2,7 @@
 History
 =======
 
-0.34.0 (unreleased)
+0.34.0 (25-02-2022)
 -------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`), Aoun Abel (:user:`bzah`).
 
