@@ -124,4 +124,12 @@ ENV/
 /docs/xclim.testing.tests.test_sdba.rst
 
 .vscode
+
+# netCDF
 *.nc
+
+# zarr store
+*.zarr
+
+# dask
+dask-worker-space
