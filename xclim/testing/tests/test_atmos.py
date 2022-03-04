@@ -165,6 +165,25 @@ def test_specific_humidity(tas_series, hurs_series, huss_series, ps_series):
     assert huss.name == "huss"
 
 
+def test_specific_humidity_from_dewpoint(tas_series, ps_series, huss_series):
+    tdps = tas_series([272, 283, 293])
+    ps = ps_series([100000, 105000, 110000])
+    # Computed from MetPy
+    # >>> from metpy.units import units as u
+    # >>> from metpy.calc import specific_humidity_from_dewpoint as sh
+    # >>> sh([100000, 105000, 110000] * u.Pa, [272, 283, 293] * u.degK)
+    # array([0.0035031, 0.00722795, 0.01319614]) < Unit('dimensionless') >
+    huss_exp = huss_series([0.0035031, 0.00722795, 0.01319614])
+
+    huss = atmos.specific_humidity_from_dewpoint(
+        tdps=tdps,
+        ps=ps,
+        method="sonntag90",
+    )
+    np.testing.assert_allclose(huss, huss_exp, atol=1e-4, rtol=0.05)
+    assert huss.name == "huss_fromdewpoint"
+
+
 def test_snowfall_approximation(pr_series, tasmax_series):
     pr = pr_series(np.ones(10))
     tasmax = tasmax_series(np.arange(10) + K2C)
