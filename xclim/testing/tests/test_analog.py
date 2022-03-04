@@ -31,25 +31,25 @@ def matlab_sample(n=30):
 
     z = 1.0 * (np.arange(n) + 1) / n - 0.5
 
-    x = np.vstack([z * 2 + 30, z * 3 + 40, z]).T
+    x = np.vstack([z * 2 + 30, z * 3 + 40, z])
 
-    y = np.vstack([z * 2.2 + 31, z[::-1] * 2.8 + 38, z * 1.1]).T
+    y = np.vstack([z * 2.2 + 31, z[::-1] * 2.8 + 38, z * 1.1])
 
     return x, y
 
 
-def randn(mean, std, shape):
+def randn(mean, std, n, m):
     """Return a random normal sample with exact mean and standard deviation."""
-    r = np.random.randn(*shape)
-    r1 = r / r.std(0, ddof=1) * np.array(std)
-    return r1 - r1.mean(0) + np.array(mean)
+    r = np.random.randn(n, m)
+    r1 = r / r.std(-1, ddof=1, keepdims=True) * np.atleast_2d(std).T
+    return r1 - r1.mean(-1, keepdims=True) + np.atleast_2d(mean).T
 
 
 def test_randn():
     mu, std = [2, 3], [1, 2]
-    r = randn(mu, std, [10, 2])
-    assert_almost_equal(r.mean(0), mu)
-    assert_almost_equal(r.std(0, ddof=1), std)
+    r = randn(mu, std, 2, 10)
+    assert_almost_equal(r.mean(-1), mu)
+    assert_almost_equal(r.std(-1, ddof=1), std)
 
 
 @pytest.mark.slow
@@ -122,14 +122,14 @@ class TestSEuclidean:
         d = 2
         n, m = 25, 30
 
-        x = randn(0, 1, (n, d))
-        y = randn([1, 2], 1, (m, d))
+        x = randn(0, 1, d, n)
+        y = randn([1, 2], 1, d, m)
         dm = xca.seuclidean(x, y)
         assert_almost_equal(dm, np.hypot(1, 2), 2)
 
         # Variance of the candidate sample does not affect answer.
-        x = randn(0, 1, (n, d))
-        y = randn([1, 2], 2, (m, d))
+        x = randn(0, 1, d, n)
+        y = randn([1, 2], 2, d, m)
         dm = xca.seuclidean(x, y)
         assert_almost_equal(dm, np.hypot(1, 2), 2)
 
@@ -148,8 +148,8 @@ class TestNN:
         d = 2
         n, m = 200, 200
         np.random.seed(1)
-        x = np.random.randn(n, d)
-        y = np.random.randn(m, d)
+        x = np.random.randn(d, n)
+        y = np.random.randn(d, m)
 
         # Almost identical samples
         dm = xca.nearest_neighbor(x + 0.001, x)
@@ -174,8 +174,8 @@ class TestZAE:
         d = 2
         n = 200
         # m = 200
-        x = np.random.randn(n, d)
-        # y = np.random.randn(m, d)
+        x = np.random.randn(d, n)
+        # y = np.random.randn(d, m)
 
         # Almost identical samples
         dm = xca.zech_aslan(x + 0.001, x)
@@ -196,8 +196,8 @@ class TestFR:
         # | o o x x
         # | x  o
         # |_ _ _ _ _ _ _
-        x = np.array([[1, 2], [2, 2], [3, 1]])
-        y = np.array([[1, 1], [2, 4], [3, 2], [4, 2]])
+        x = np.array([[1, 2], [2, 2], [3, 1]]).T
+        y = np.array([[1, 1], [2, 4], [3, 2], [4, 2]]).T
 
         dm = xca.friedman_rafsky(x, y)
         assert_almost_equal(dm, 2.0 / 7, 3)
@@ -327,9 +327,9 @@ class TestKLDIV:
         from numpy.random import multivariate_normal, normal
 
         n = 30000
-        p = normal(0, 1, size=(n, 2))
+        p = normal(0, 1, size=(2, n))
         np.random.seed(1)
-        q = multivariate_normal([0.5, -0.5], [[0.5, 0.1], [0.1, 0.3]], size=n)
+        q = multivariate_normal([0.5, -0.5], [[0.5, 0.1], [0.1, 0.3]], size=n).T
 
         assert_almost_equal(xca.kldiv(p, q), 1.39, 1)
         assert_almost_equal(xca.kldiv(q, p), 0.62, 1)
