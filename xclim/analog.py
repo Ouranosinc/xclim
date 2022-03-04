@@ -138,6 +138,11 @@ def spatial_analogs(
             f"Method {method} is not implemented. Available methods are : {','.join(metrics.keys())}."
         )
 
+    if candidates.chunks is not None:
+        candidates = candidates.chunk({"indices": -1})
+    if target.chunks is not None:
+        target = target.chunk({"indices": -1})
+
     # Compute dissimilarity
     diss = xr.apply_ufunc(
         metric,
