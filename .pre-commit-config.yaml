@@ -19,7 +19,7 @@ repos:
         args: ['--allow-multiple-documents']
       - id: debug-statements
       - id: pretty-format-json
-        args: ['--autofix']
+        args: ['--autofix', '--no-ensure-ascii']
   - repo: https://github.com/pycqa/flake8
     rev: 4.0.1
     hooks:
