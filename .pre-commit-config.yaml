@@ -14,6 +14,7 @@ repos:
         exclude: setup.cfg
       - id: end-of-file-fixer
         exclude: ".ipynb"
+      - id: check-json
       - id: check-yaml
         args: ['--allow-multiple-documents']
       - id: debug-statements
