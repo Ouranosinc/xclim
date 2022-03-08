@@ -4,11 +4,15 @@ History
 
 0.35.0 (unreleased)
 -------------------
-Contributors to this version: David Huard (:user:`huard`).
+Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`).
 
 New indicators
 ^^^^^^^^^^^^^^
 * New indicator ``specific_humidity_from_dewpoint``, computing specific humidity from the dewpoint temperature and air pressure. (:issue:`864`, :pull:`1027`)
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* `xclim` now uses the ``check-json`` and ``pretty-format-json`` pre-commit checks to validate and format JSON files. (:pull:`1032`).
 
 0.34.0 (25-02-2022)
 -------------------

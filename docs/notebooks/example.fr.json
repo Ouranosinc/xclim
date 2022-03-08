@@ -1,7 +1,7 @@
 {
   "FD": {
     "title": "Nombre de jours de gel",
-    "long_name" : "Nombre de jours de gel (Tmin < 0°C)",
+    "long_name": "Nombre de jours de gel (Tmin < 0°C)",
     "description": "Nombre de jours où la température minimale passe sous 0°C."
   },
   "R95P": {
