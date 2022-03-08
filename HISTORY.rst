@@ -4,7 +4,7 @@ History
 
 0.35.0 (unreleased)
 -------------------
-Contributors to this version: David Huard (:user:`huard`).
+Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`).
 
 New indicators
 ^^^^^^^^^^^^^^
