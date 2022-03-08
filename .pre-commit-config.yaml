@@ -18,6 +18,8 @@ repos:
       - id: check-yaml
         args: ['--allow-multiple-documents']
       - id: debug-statements
+      - id: pretty-format-json
+        args: ['--autofix']
   - repo: https://github.com/pycqa/flake8
     rev: 4.0.1
     hooks:
