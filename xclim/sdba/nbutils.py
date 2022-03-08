@@ -141,9 +141,9 @@ def _autocorrelation(X):
     """
     d = 0
     for i in range(X.shape[1]):
-        for j in range(i + 1):
-            d += (int(i != j) + 1) * _euclidean_norm(X[:, i] - X[:, j])
-    return d / X.shape[1] ** 2
+        for j in range(i):
+            d += _euclidean_norm(X[:, i] - X[:, j])
+    return (2 * d) / X.shape[1] ** 2
 
 
 @guvectorize(
@@ -154,7 +154,7 @@ def _autocorrelation(X):
     "(k, n),(k, m)->()",
 )
 def _escore(tgt, sim, out):
-    """E-score based on the Skezely-Rizzo e-distances between clusters.
+    """E-score based on the Székely-Rizzo e-distances between clusters.
 
     tgt and sim are KxN and KxM, where dimensions are along K and observations along M and N.
     When N > 0, only this many points of target and sim are used, taken evenly distributed in the series.

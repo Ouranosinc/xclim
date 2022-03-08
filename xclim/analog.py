@@ -56,6 +56,9 @@ a single float.
 .. [Roy2017] Roy, P., Grenier, P., Barriault, E. et al. Climatic Change (2017) 143: 43. `<doi:10.1007/s10584-017-1960-x>`_
 .. [Grenier2013]  Grenier, P., A.-C. Parent, D. Huard, F. Anctil, and D. Chaumont, 2013: An assessment of six dissimilarity metrics for climate analogs. J. Appl. Meteor. Climatol., 52, 733–752, `<doi:10.1175/JAMC-D-12-0170.1>`_
 """
+# TODO: Szekely, G, Rizzo, M (2014) Energy statistics: A class of statistics
+# based on distances. J Stat Planning & Inference 143: 1249-1272
+# TODO: Hellinger distance
 # Code adapted from flyingpigeon.dissimilarity, Nov 2020.
 from typing import Sequence, Tuple, Union
 
@@ -67,10 +70,7 @@ from scipy import __version__ as __scipy_version__
 from scipy import spatial
 from scipy.spatial import cKDTree as KDTree
 
-# TODO: Szekely, G, Rizzo, M (2014) Energy statistics: A class of statistics
-# based on distances. J Stat Planning & Inference 143: 1249-1272
-
-# TODO: Hellinger distance
+__all__ = ["spatial_analogs"]
 metrics = dict()
 
 
@@ -115,21 +115,12 @@ def spatial_analogs(
         raise RuntimeError(f"Spatial analog method ({method}) requires scipy>=1.6.0.")
 
     # Create the target DataArray:
-    target = xr.concat(
-        target.data_vars.values(),
-        xr.DataArray(list(target.data_vars.keys()), dims=("indices",), name="indices"),
-    )
+    target = target.to_array("_indices", "target")
 
     # Create the target DataArray with different dist_dim
-    c_dist_dim = "candidate_dist_dim"
-    candidates = xr.concat(
-        candidates.data_vars.values(),
-        xr.DataArray(
-            list(candidates.data_vars.keys()),
-            dims=("indices",),
-            name="indices",
-        ),
-    ).rename({dist_dim: c_dist_dim})
+    candidates = candidates.to_array("_indices", "candidates").rename(
+        {dist_dim: "_dist_dim"}
+    )
 
     try:
         metric = metrics[method]
@@ -139,16 +130,16 @@ def spatial_analogs(
         )
 
     if candidates.chunks is not None:
-        candidates = candidates.chunk({"indices": -1})
+        candidates = candidates.chunk({"_indices": -1})
     if target.chunks is not None:
-        target = target.chunk({"indices": -1})
+        target = target.chunk({"_indices": -1})
 
     # Compute dissimilarity
     diss = xr.apply_ufunc(
         metric,
         target,
         candidates,
-        input_core_dims=[(dist_dim, "indices"), (c_dist_dim, "indices")],
+        input_core_dims=[(dist_dim, "_indices"), ("_dist_dim", "_indices")],
         output_core_dims=[()],
         vectorize=True,
         dask="parallelized",
@@ -158,7 +149,7 @@ def spatial_analogs(
     diss.name = "dissimilarity"
     diss.attrs.update(
         long_name=f"Dissimilarity between target and candidates, using metric {method}.",
-        indices=",".join(target.indices.values),
+        indices=",".join(target._indices.values),
         metric=method,
     )
 
@@ -337,9 +328,9 @@ def zech_aslan(x: np.ndarray, y: np.ndarray) -> float:
 
 
 @metric
-def skezely_rizzo(x, y):
-    """
-    Compute the Skezely-Rizzo energy distance dissimilarity metric based on an analogy with the energy of a cloud of electrical charges.
+def szekely_rizzo(x: np.ndarray, y: np.ndarray) -> float:
+    r"""
+    Compute the Székely-Rizzo energy distance dissimilarity metric based on an analogy with Newton's gravitational potential energy.
 
     Parameters
     ----------
@@ -351,31 +342,45 @@ def skezely_rizzo(x, y):
     Returns
     -------
     float
-      Skezely-Rizzo dissimilarity metric ranging from -infinity to infinity.
+      Székely-Rizzo's energy distance dissimilarity metric ranging from 0 to infinity.
+
+    Notes
+    -----
+    The e-distance between two variables :math:`X`, :math:`Y` (taget and candidates) of
+    sizes :math:`n,d` and :math:`m,d` proposed by [SR2004]_ is defined by:
+
+    .. math::
+
+        e(X, Y) = \frac{n m}{n + m} \left[2A − B − C \right]
+
+    where
+
+    .. math::
+
+        A = \frac{1}{n m} \sum_{i = 1}^n \sum_{j = 1}^m \left\Vert X_i − Y_j \right\Vert
+        B = \frac{1}{n^2} \sum_{i = 1}^n \sum_{j = 1}^n \left\Vert X_i − X_j \right\Vert
+        C = \frac{1}{m^2} \sum_{i = 1}^m \sum_{j = 1}^m \left\Vert X_i − Y_j \right\Vert
+
+    and where :math:`\Vert\cdot\Vert` denotes Euclidean norm, :math:`X_i` denotes the i-th
+    observation of :math:`X`. This version corresponds the :math:`T` test of [RS2016]_ (p. 28)
+    and to the `eqdist.e` function of the `energy` R package (with 2 sample).
+    However, it gives results twice as big as :py:func:`sdba.processing.escore`.
 
     References
     ----------
-    TODO
+    .. [SR2004] Székely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
+    .. [RS2016] Rizzo, M. L., & Székely, G. J. (2016). Energy distance. Wiley Interdisciplinary Reviews: Computational Statistics, 8(1), 27–38. https://doi.org/10.1002/wics.1375
     """
-    raise NotImplementedError
-    # nx, d = x.shape
-    # ny, d = y.shape
-    #
-    # v = x.std(0, ddof=1) * y.std(0, ddof=1)
-    #
-    # dx = spatial.distance.pdist(x, 'seuclidean', V=v)
-    # dy = spatial.distance.pdist(y, 'seuclidean', V=v)
-    # dxy = spatial.distance.cdist(x, y, 'seuclidean', V=v)
-    #
-    # phix = -np.log(dx).sum() / nx / (nx - 1)
-    # phiy = -np.log(dy).sum() / ny / (ny - 1)
-    # phixy = np.log(dxy).sum() / nx / ny
+    n, _ = x.shape
+    m, _ = y.shape
 
-    # z = dxy.sum() * 2. / (nx*ny) - (1./nx**2) *
-
-    # z = (2 / (n * m)) * sum(dxy(:)) - (1 / (n ^ 2)) * sum(2 * dx) - (1 /
-    #  (m ^ 2)) * sum(2 * dy);
-    # z = ((n * m) / (n + m)) * z;
+    # Mean of the distance pairs
+    # We are not taking "mean" because of the condensed output format of pdist
+    sXY = spatial.distance.cdist(x, y, "euclidean").sum() / (n * m)
+    sXX = spatial.distance.pdist(x, "euclidean").sum() * 2 / n**2
+    sYY = spatial.distance.pdist(y, "euclidean").sum() * 2 / m**2
+    w = n * m / (n + m)
+    return w * (sXY + sXY - sXX - sYY)
 
 
 @metric

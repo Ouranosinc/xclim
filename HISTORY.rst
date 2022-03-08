@@ -2,6 +2,18 @@
 History
 =======
 
+0.35.0 (unreleased)
+-------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New spatial analogs method "szekely_rizzo".
+
+Bug fixes
+^^^^^^^^^
+* ``xclim.analog.spatial_analogs`` now compatible with dask-backed DataArrays.
+
 0.34.0 (25-02-2022)
 -------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`), Aoun Abel (:user:`bzah`).
