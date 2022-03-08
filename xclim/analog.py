@@ -62,13 +62,11 @@ from typing import Sequence, Tuple, Union
 import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
-from numba import float32, float64, guvectorize, njit
 from pkg_resources import parse_version
 from scipy import __version__ as __scipy_version__
 from scipy import spatial
 from scipy.spatial import cKDTree as KDTree
 
-__all__ = ["spatial_analogs"]
 # TODO: Szekely, G, Rizzo, M (2014) Energy statistics: A class of statistics
 # based on distances. J Stat Planning & Inference 143: 1249-1272
 
@@ -117,12 +115,21 @@ def spatial_analogs(
         raise RuntimeError(f"Spatial analog method ({method}) requires scipy>=1.6.0.")
 
     # Create the target DataArray:
-    target = target.to_array("_indices", "target")
+    target = xr.concat(
+        target.data_vars.values(),
+        xr.DataArray(list(target.data_vars.keys()), dims=("indices",), name="indices"),
+    )
 
     # Create the target DataArray with different dist_dim
-    candidates = candidates.to_array("_indices", "candidates").rename(
-        {dist_dim: "_dist_dim"}
-    )
+    c_dist_dim = "candidate_dist_dim"
+    candidates = xr.concat(
+        candidates.data_vars.values(),
+        xr.DataArray(
+            list(candidates.data_vars.keys()),
+            dims=("indices",),
+            name="indices",
+        ),
+    ).rename({dist_dim: c_dist_dim})
 
     try:
         metric = metrics[method]
@@ -132,18 +139,18 @@ def spatial_analogs(
         )
 
     if candidates.chunks is not None:
-        candidates = candidates.chunk({"_indices": -1})
+        candidates = candidates.chunk({"indices": -1})
     if target.chunks is not None:
-        target = target.chunk({"_indices": -1})
+        target = target.chunk({"indices": -1})
 
     # Compute dissimilarity
     diss = xr.apply_ufunc(
         metric,
         target,
         candidates,
-        input_core_dims=[("_indices", dist_dim), ("_indices", "_dist_dim")],
+        input_core_dims=[(dist_dim, "indices"), (c_dist_dim, "indices")],
         output_core_dims=[()],
-        vectorize=metric.vectorize,
+        vectorize=True,
         dask="parallelized",
         output_dtypes=[float],
         **kwargs,
@@ -151,7 +158,7 @@ def spatial_analogs(
     diss.name = "dissimilarity"
     diss.attrs.update(
         long_name=f"Dissimilarity between target and candidates, using metric {method}.",
-        indices=",".join(target._indices.values),
+        indices=",".join(target.indices.values),
         metric=method,
     )
 
@@ -163,10 +170,9 @@ def spatial_analogs(
 # ---------------------------------------------------------------------------- #
 
 
-@njit
 def standardize(x: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Standardize x and y by the square root of the product of their standard deviation, taken on the last axis..
+    Standardize x and y by the square root of the product of their standard deviation.
 
     Parameters
     ----------
@@ -180,35 +186,38 @@ def standardize(x: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     (ndarray, ndarray)
         Standardized arrays.
     """
-    s = np.sqrt(std_last_axis(x) * std_last_axis(y))
-    s = s.reshape((*s.shape, 1))
+    s = np.sqrt(x.std(0, ddof=1) * y.std(0, ddof=1))
     return x / s, y / s
 
 
-def metric(vectorize=True):
+def metric(func):
     """Register a metric function in the `metrics` mapping and add some preparation/checking code.
 
+    All metric functions accept 2D inputs. This reshape 1D inputs to (n, 1) and (m, 1).
     All metric functions are invalid when any non-finite values are present in the inputs.
     """
 
-    def _metric(func):
-        @wraps(func)
-        def _metric_overhead(x, y, **kwargs):
-            if vectorize and (np.any(np.isnan(x)) or np.any(np.isnan(y))):
-                return np.NaN
+    @wraps(func)
+    def _metric_overhead(x, y, **kwargs):
+        if np.any(np.isnan(x)) or np.any(np.isnan(y)):
+            return np.NaN
 
-            if x.ndim == 1:
-                x = np.atleast_2d(x)
-            if y.ndim == 1:
-                y = np.atleast_2d(y)
+        x = np.atleast_2d(x)
+        y = np.atleast_2d(y)
 
-            return func(x, y, **kwargs)
+        # If array is 1D, flip it.
+        if x.shape[0] == 1:
+            x = x.T
+        if y.shape[0] == 1:
+            y = y.T
 
-        _metric_overhead.vectorize = vectorize
-        metrics[func.__name__] = _metric_overhead
-        return _metric_overhead
+        if x.shape[1] != y.shape[1]:
+            raise AttributeError("Shape mismatch")
 
-    return _metric
+        return func(x, y, **kwargs)
+
+    metrics[func.__name__] = _metric_overhead
+    return _metric_overhead
 
 
 # ---------------------------------------------------------------------------- #
@@ -216,16 +225,16 @@ def metric(vectorize=True):
 # ---------------------------------------------------------------------------- #
 
 
-@metric()
+@metric
 def seuclidean(x: np.ndarray, y: np.ndarray) -> float:
     """
     Compute the Euclidean distance between the mean of a multivariate candidate sample with respect to the mean of a reference sample.
 
     Parameters
     ----------
-    x : np.ndarray (d,n)
+    x : np.ndarray (n,d)
       Reference sample.
-    y : np.ndarray (d,m)
+    y : np.ndarray (m,d)
       Candidate sample.
 
     Returns
@@ -245,22 +254,22 @@ def seuclidean(x: np.ndarray, y: np.ndarray) -> float:
     21st-century climate-change scenarios. Climatic Change,
     DOI 10.1007/s10584-011-0261-z.
     """
-    mx = x.mean(axis=-1)
-    my = y.mean(axis=-1)
+    mx = x.mean(axis=0)
+    my = y.mean(axis=0)
 
-    return spatial.distance.seuclidean(mx, my, x.var(axis=-1, ddof=1))
+    return spatial.distance.seuclidean(mx, my, x.var(axis=0, ddof=1))
 
 
-@metric()
+@metric
 def nearest_neighbor(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
     Compute a dissimilarity metric based on the number of points in the pooled sample whose nearest neighbor belongs to the same distribution.
 
     Parameters
     ----------
-    x : np.ndarray (d,n)
+    x : np.ndarray (n,d)
       Reference sample.
-    y : np.ndarray (d,m)
+    y : np.ndarray (m,d)
       Candidate sample.
 
     Returns
@@ -275,10 +284,10 @@ def nearest_neighbor(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
     x, y = standardize(x, y)
 
-    _, nx = x.shape
+    nx, _ = x.shape
 
     # Pool the samples and find the nearest neighbours
-    xy = np.vstack([x.T, y.T])
+    xy = np.vstack([x, y])
     tree = KDTree(xy)
     _, ind = tree.query(xy, k=2, eps=0, p=2, workers=2)
 
@@ -288,16 +297,16 @@ def nearest_neighbor(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     return same.mean()
 
 
-@metric(vectorize=False)
+@metric
 def zech_aslan(x: np.ndarray, y: np.ndarray) -> float:
     """
     Compute the Zech-Aslan energy distance dissimilarity metric based on an analogy with the energy of a cloud of electrical charges.
 
     Parameters
     ----------
-    x : np.ndarray (d,n)
+    x : np.ndarray (n,d)
       Reference sample.
-    y : np.ndarray (d,m)
+    y : np.ndarray (m,d)
       Candidate sample.
 
     Returns
@@ -312,19 +321,31 @@ def zech_aslan(x: np.ndarray, y: np.ndarray) -> float:
     Aslan B. and Zech G. (2008) A new class of binning-free, multivariate
     goodness-of-fit tests: the energy tests. arXiV:hep-ex/0203010v5.
     """
-    return _zech_aslan(x, y)
+    nx, d = x.shape
+    ny, d = y.shape
+
+    v = (x.std(axis=0, ddof=1) * y.std(axis=0, ddof=1)).astype(np.double)
+
+    dx = spatial.distance.pdist(x, "seuclidean", V=v)
+    dy = spatial.distance.pdist(y, "seuclidean", V=v)
+    dxy = spatial.distance.cdist(x, y, "seuclidean", V=v)
+
+    phix = -np.log(dx).sum() / nx / (nx - 1)
+    phiy = -np.log(dy).sum() / ny / (ny - 1)
+    phixy = np.log(dxy).sum() / nx / ny
+    return phix + phiy + phixy
 
 
-@metric()
+@metric
 def skezely_rizzo(x, y):
     """
     Compute the Skezely-Rizzo energy distance dissimilarity metric based on an analogy with the energy of a cloud of electrical charges.
 
     Parameters
     ----------
-    x : ndarray (d,n)
+    x : ndarray (n,d)
       Reference sample.
-    y : ndarray (d,m)
+    y : ndarray (m,d)
       Candidate sample.
 
     Returns
@@ -336,11 +357,28 @@ def skezely_rizzo(x, y):
     ----------
     TODO
     """
+    raise NotImplementedError
+    # nx, d = x.shape
+    # ny, d = y.shape
+    #
+    # v = x.std(0, ddof=1) * y.std(0, ddof=1)
+    #
+    # dx = spatial.distance.pdist(x, 'seuclidean', V=v)
+    # dy = spatial.distance.pdist(y, 'seuclidean', V=v)
+    # dxy = spatial.distance.cdist(x, y, 'seuclidean', V=v)
+    #
+    # phix = -np.log(dx).sum() / nx / (nx - 1)
+    # phiy = -np.log(dy).sum() / ny / (ny - 1)
+    # phixy = np.log(dxy).sum() / nx / ny
 
-    raise NotImplementedError()
+    # z = dxy.sum() * 2. / (nx*ny) - (1./nx**2) *
+
+    # z = (2 / (n * m)) * sum(dxy(:)) - (1 / (n ^ 2)) * sum(2 * dx) - (1 /
+    #  (m ^ 2)) * sum(2 * dy);
+    # z = ((n * m) / (n + m)) * z;
 
 
-@metric()
+@metric
 def friedman_rafsky(x: np.ndarray, y: np.ndarray) -> float:
     """
     Compute a dissimilarity metric based on the Friedman-Rafsky runs statistics.
@@ -351,9 +389,9 @@ def friedman_rafsky(x: np.ndarray, y: np.ndarray) -> float:
 
     Parameters
     ----------
-    x : np.ndarray (d,n)
+    x : np.ndarray (n,d)
       Reference sample.
-    y : np.ndarray (d,m)
+    y : np.ndarray (m,d)
       Candidate sample.
 
     Returns
@@ -369,11 +407,11 @@ def friedman_rafsky(x: np.ndarray, y: np.ndarray) -> float:
     from scipy.sparse.csgraph import minimum_spanning_tree
     from sklearn import neighbors
 
-    _, nx = x.shape
-    _, ny = y.shape
+    nx, _ = x.shape
+    ny, _ = y.shape
     n = nx + ny
 
-    xy = np.vstack([x.T, y.T])
+    xy = np.vstack([x, y])
     # Compute the NNs and the minimum spanning tree
     g = neighbors.kneighbors_graph(xy, n_neighbors=n - 1, mode="distance")
     mst = minimum_spanning_tree(g, overwrite=True)
@@ -385,16 +423,16 @@ def friedman_rafsky(x: np.ndarray, y: np.ndarray) -> float:
     return 1.0 - (1.0 + diff) / n
 
 
-@metric()
+@metric
 def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
     """
     Compute the Kolmogorov-Smirnov statistic applied to two multivariate samples as described by Fasano and Franceschini.
 
     Parameters
     ----------
-    x : np.ndarray (d,n)
+    x : np.ndarray (n,d)
         Reference sample.
-    y : np.ndarray (d,m)
+    y : np.ndarray (m,d)
         Candidate sample.
 
     Returns
@@ -408,16 +446,16 @@ def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
     """
 
     def pivot(x, y):
-        d, nx = x.shape
-        d, ny = y.shape
+        nx, d = x.shape
+        ny, d = y.shape
 
         # Multiplicative factor converting d-dim booleans to a unique integer.
         mf = (2 ** np.arange(d)).reshape(1, d, 1)
         minlength = 2**d
 
         # Assign a unique integer according on whether or not x[i] <= sample
-        ix = ((x <= np.atleast_3d(x.T)) * mf).sum(1)
-        iy = ((x <= np.atleast_3d(y.T)) * mf).sum(1)
+        ix = ((x.T <= np.atleast_3d(x)) * mf).sum(1)
+        iy = ((x.T <= np.atleast_3d(y)) * mf).sum(1)
 
         # Count the number of samples in each quadrant
         cx = 1.0 * np.apply_along_axis(np.bincount, 0, ix, minlength=minlength) / nx
@@ -433,7 +471,7 @@ def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
     return max(pivot(x, y), pivot(y, x))
 
 
-@metric()
+@metric
 def kldiv(
     x: np.ndarray, y: np.ndarray, *, k: Union[int, Sequence[int]] = 1
 ) -> Union[float, Sequence[float]]:
@@ -449,10 +487,10 @@ def kldiv(
 
     Parameters
     ----------
-    x : np.ndarray (d,n)
+    x : np.ndarray (n,d)
       Samples from distribution P, which typically represents the true
       distribution (reference).
-    y : np.ndarray (d,m)
+    y : np.ndarray (m,d)
       Samples from distribution Q, which typically represents the
       approximate distribution (candidate)
     k : int or sequence
@@ -493,8 +531,8 @@ def kldiv(
     mk = np.iterable(k)
     ka = np.atleast_1d(k)
 
-    d, nx = x.shape
-    d, ny = y.shape
+    nx, d = x.shape
+    ny, d = y.shape
 
     # Limit the number of dimensions to 10, too slow otherwise.
     if d > 10:
@@ -505,14 +543,14 @@ def kldiv(
         return np.nan if not mk else [np.nan] * len(k)
 
     # Build a KD tree representation of the samples.
-    xtree = KDTree(x.T)
-    ytree = KDTree(y.T)
+    xtree = KDTree(x)
+    ytree = KDTree(y)
 
     # Get the k'th nearest neighbour from each points in x for both x and y.
     # We get the values for K + 1 to make sure the output is a 2D array.
     kmax = max(ka) + 1
-    r, _ = xtree.query(x.T, k=kmax, eps=0, p=2, workers=2)
-    s, _ = ytree.query(x.T, k=kmax, eps=0, p=2, workers=2)
+    r, _ = xtree.query(x, k=kmax, eps=0, p=2, workers=2)
+    s, _ = ytree.query(x, k=kmax, eps=0, p=2, workers=2)
 
     # There is a mistake in the paper. In Eq. 14, the right side misses a
     # negative sign on the first term of the right-hand side.
@@ -528,112 +566,3 @@ def kldiv(
     if mk:
         return out
     return out[0]
-
-
-# Numba utilities #
-###################
-
-
-@njit([float32(float32[:], float32[:]), float64(float64[:], float64[:])], fastmath=True)
-def _seuclidean_norm(x, v):
-    """Compute the standardized euclidean norm of vector x."""
-    return np.sqrt(np.sum(x**2 / v))
-
-
-@njit(
-    [
-        float32[:, :](float32[:, :], float32[:, :], float32[:]),
-        float64[:, :](float64[:, :], float64[:, :], float64[:]),
-    ],
-    fastmath=True,
-)
-def _cdist_seuclidean(X, Y, V):
-    """Compute the pairwise distances between points in X and Y, standardized by
-    V.
-
-    X is DxN, Y is DxM and V is D. The result is the mean of the MxN distances,
-    Same as scipy.spatial.distance.cdist(X, Y, 'seuclidean', V=V)
-    """
-    out = np.empty((X.shape[1], Y.shape[1]), X.dtype)
-    for i in range(X.shape[1]):
-        for j in range(Y.shape[1]):
-            out[i, j] = _seuclidean_norm(X[:, i] - Y[:, j], V)
-    return out
-
-
-@njit(
-    [float32[:](float32[:, :], float32[:]), float64[:](float64[:, :], float64[:])],
-    fastmath=True,
-)
-def _pdist_seuclidean(X, V):
-    """Pairwise distances of points in X of shape DxN, standardized by V (D)
-
-    Same as to scipy.spatial.distance.pdist(X, 'seuclidean', V=V)
-    """
-    n = X.shape[1]
-    out = np.empty(((n * n - n) // 2,), X.dtype)
-    for j in range(n):
-        for i in range(j):
-            out[n * i + j - ((i + 2) * (i + 1)) // 2] = _seuclidean_norm(
-                X[:, i] - X[:, j], V
-            )
-    return out
-
-
-@njit
-def apply_along_last_axis(func1d, arr):
-    """Like calling func1d(arr, axis=0)"""
-    result_shape = arr.shape[:-1]
-    out = np.empty(result_shape, arr.dtype)
-    _apply_along_last_axis(func1d, arr, out)
-    return out
-
-
-@njit
-def _apply_along_last_axis(func1d, arr, out):
-    """Like calling func1d(arr, axis=0, out=out). Require arr to be 2d or bigger."""
-    if arr.ndim == 2:  # 2-dimensional case
-        for i in range(out.shape[-1]):
-            out[i] = func1d(arr[i, :])
-    else:  # higher dimensional case
-        for i, out_slice in enumerate(out):
-            _apply_along_last_axis(func1d, arr[i, :], out_slice)
-
-
-@njit
-def std_ddof1(arr):
-    N = arr.shape[0]
-    return np.sqrt(np.sum((arr - arr.mean()) ** 2) / (N - 1))
-
-
-@njit
-def std_last_axis(arr):
-    return apply_along_last_axis(std_ddof1, arr)
-
-
-# Numba-accelerated metrics #
-#############################
-
-
-@guvectorize(
-    [
-        (float32[:, :], float32[:, :], float32[:]),
-        (float64[:, :], float64[:, :], float64[:]),
-    ],
-    "(d, n),(d, m)->()",
-    nopython=True,
-)
-def _zech_aslan(x, y, out):
-    d, n = x.shape
-    d, m = y.shape
-
-    v = std_last_axis(x) * std_last_axis(y)
-
-    dx = _pdist_seuclidean(x, v)
-    dy = _pdist_seuclidean(y, v)
-    dxy = _cdist_seuclidean(x, y, v)
-
-    phix = -np.log(dx).sum() / n / (n - 1)
-    phiy = -np.log(dy).sum() / m / (m - 1)
-    phixy = np.log(dxy).sum() / n / m
-    out[0] = phix + phiy + phixy
