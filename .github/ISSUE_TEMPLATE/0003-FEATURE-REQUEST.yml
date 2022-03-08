@@ -7,12 +7,12 @@ body:
     id: problem
     attributes:
       label: Addressing a Problem?
-      description: Is your feature request related to a problem? Please describe.
+      description: Is your feature request related to a problem? Please describe it.
   - type: textarea
     id: potential-solution
     attributes:
       label: Potential Solution
-      description: Describe the solution you'd like.
+      description: Describe the solution you'd like to see implemented.
   - type: textarea
     id: additional-context
     attributes:
