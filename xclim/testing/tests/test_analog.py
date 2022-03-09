@@ -57,7 +57,7 @@ def test_randn():
 @pytest.mark.slow
 @pytest.mark.parametrize("method", xca.metrics.keys())
 def test_spatial_analogs(method):
-    if method == "skezely_rizzo":
+    if method == "szekely_rizzo":
         pytest.skip("Method not in test data.")
 
     if method in ["nearest_neighbor", "kldiv"] and parse_version(
@@ -337,17 +337,17 @@ class TestKLDIV:
         assert_almost_equal(xca.kldiv(q, p), 0.62, 1)
 
 
-def test_skezely_rizzo():
+def test_szekely_rizzo():
     iris = pd.DataFrame(datasets.load_iris().data)
 
     # first 80 against last 70
     x = iris.iloc[:80, :].to_xarray().to_array().T
     y = iris.iloc[80:, :].to_xarray().to_array().T
 
-    np.testing.assert_allclose(xca.skezely_rizzo(x, y), 116.1987, atol=5e-5)
+    np.testing.assert_allclose(xca.szekely_rizzo(x, y), 116.1987, atol=5e-5)
 
     # first 50 against last 100
     x = iris.iloc[:50, :].to_xarray().to_array().T
     y = iris.iloc[50:, :].to_xarray().to_array().T
 
-    np.testing.assert_allclose(xca.skezely_rizzo(x, y), 199.6205, atol=5e-5)
+    np.testing.assert_allclose(xca.szekely_rizzo(x, y), 199.6205, atol=5e-5)
