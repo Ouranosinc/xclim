@@ -33,7 +33,7 @@ Methods to compute the (dis)similarity between samples
 This module implements all methods described in [Grenier2013]_ to measure
 the dissimilarity between two samples, plus the Székely-Rizzo energy distance,
 Some of these algorithms can be used to test whether two samples have been
-drawn from the same distribution. Here, they are used in finding areas 
+drawn from the same distribution. Here, they are used in finding areas
 with analog climate conditions to a target climate.
 
 Methods available
