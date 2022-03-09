@@ -3,7 +3,9 @@
   "features": [
     {
       "type": "Feature",
-      "properties": {"id": "Québec"},
+      "properties": {
+        "id": "Québec"
+      },
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -46,7 +48,9 @@
     },
     {
       "type": "Feature",
-      "properties": {"id": "Europe"},
+      "properties": {
+        "id": "Europe"
+      },
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -121,7 +125,9 @@
     },
     {
       "type": "Feature",
-      "properties": {"id": "Newfoundland"},
+      "properties": {
+        "id": "Newfoundland"
+      },
       "geometry": {
         "type": "Polygon",
         "coordinates": [

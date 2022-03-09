@@ -4,15 +4,23 @@ History
 
 0.35.0 (unreleased)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`) and Pascal Bourgault (:user:`aulemahal`).
+
+New indicators
+^^^^^^^^^^^^^^
+* New indicator ``specific_humidity_from_dewpoint``, computing specific humidity from the dewpoint temperature and air pressure. (:issue:`864`, :pull:`1027`)
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* New spatial analogs method "szekely_rizzo".
+* New spatial analogs method "szekely_rizzo" (:pull:`1033`).
 
 Bug fixes
 ^^^^^^^^^
-* ``xclim.analog.spatial_analogs`` now compatible with dask-backed DataArrays.
+* ``xclim.analog.spatial_analogs`` now compatible with dask-backed DataArrays (:pull:`1033`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* `xclim` now uses the ``check-json`` and ``pretty-format-json`` pre-commit checks to validate and format JSON files. (:pull:`1032`).
 
 0.34.0 (25-02-2022)
 -------------------

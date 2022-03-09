@@ -16,6 +16,7 @@ __all__ = [
     "saturation_vapor_pressure",
     "relative_humidity",
     "specific_humidity",
+    "specific_humidity_from_dewpoint",
     "snowfall_approximation",
     "rain_approximation",
     "wind_chill_index",
@@ -324,7 +325,7 @@ def saturation_vapor_pressure(
     ice_thresh : str
       Threshold temperature under which to switch to equations in reference to ice instead of water.
       If None (default) everything is computed with reference to water.
-    method : {"dewpoint", "goffgratch46", "sonntag90", "tetens30", "wmo08"}
+    method : {"goffgratch46", "sonntag90", "tetens30", "wmo08"}
       Which method to use, see notes.
 
     Returns
@@ -555,6 +556,8 @@ def specific_humidity(
 ) -> xr.DataArray:
     r"""Specific humidity from temperature, relative humidity and pressure.
 
+    Specific humidity is the ratio between the mass of water vapour and the mass of moist air [WMO08]_.
+
     Parameters
     ----------
     tas : xr.DataArray
@@ -598,6 +601,10 @@ def specific_humidity(
     .. math::
 
         q_{sat} = w_{sat} / (1 + w_{sat})
+
+    References
+    ----------
+    .. [WMO08] World Meteorological Organization. (2008). Guide to meteorological instruments and methods of observation. Geneva, Switzerland: World Meteorological Organization. https://www.weather.gov/media/epz/mesonet/CWOP-WMO8.pdf
     """
     ps = convert_units_to(ps, "Pa")
     hurs = convert_units_to(hurs, "")
@@ -615,6 +622,58 @@ def specific_humidity(
             q = q.clip(0, q_sat)
         elif invalid_values == "mask":
             q = q.where((q <= q_sat) & (q >= 0))
+    q.attrs["units"] = ""
+    return q
+
+
+@declare_units(
+    tdps="[temperature]",
+    ps="[pressure]",
+)
+def specific_humidity_from_dewpoint(
+    tdps: xr.DataArray,
+    ps: xr.DataArray,
+    method: str = "sonntag90",
+) -> xr.DataArray:
+    r"""Specific humidity from dewpoint temperature and air pressure.
+
+    Specific humidity is the ratio between the mass of water vapour and the mass of moist air [WMO08]_.
+
+    Parameters
+    ----------
+    tdps : xr.DataArray
+      Dewpoint temperature array.
+    ps : xr.DataArray
+      Air pressure array.
+    method : {"goffgratch46", "sonntag90", "tetens30", "wmo08"}
+      Method to compute the saturation vapor pressure.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+      Specific humidity.
+
+    Notes
+    -----
+    If :math:`e` is the water vapor pressure, and :math:`p` the total air pressure, then specific humidity is given by
+
+    .. math::
+
+       q = m_w e / ( m_a (p - e) + m_w e )
+
+    where :math:`m_w` and :math:`m_a` are the molecular weights of water and dry air respectively. This formula is often
+    written with :math:`ε = m_w / m_a`, which simplifies to :math:`q = ε e / (p - e (1 - ε))`.
+
+    References
+    ----------
+    .. [WMO08] World Meteorological Organization. (2008). Guide to meteorological instruments and methods of observation. Geneva, Switzerland: World Meteorological Organization. https://www.weather.gov/media/epz/mesonet/CWOP-WMO8.pdf
+    """
+
+    ε = 0.6219569  # weight of water vs dry air []
+    e = saturation_vapor_pressure(tas=tdps, method=method)  # vapor pressure [Pa]
+    ps = convert_units_to(ps, "Pa")  # total air pressure
+
+    q = ε * e / (ps - e * (1 - ε))
     q.attrs["units"] = ""
     return q
 
