@@ -3,14 +3,14 @@
 Spatial analogs
 ===============
 
-Spatial analogues are maps showing which areas have a present-day climate that is analogous
+Spatial analogs are maps showing which areas have a present-day climate that is analogous
 to the future climate of a given place. This type of map can be useful for climate adaptation
 to see how well regions are coping today under specific climate conditions. For example,
 officials from a city located in a temperate region that may be expecting more heatwaves in
 the future can learn from the experience of another city where heatwaves are a common occurrence,
 leading to more proactive intervention plans to better deal with new climate conditions.
 
-Spatial analogues are estimated by comparing the distribution of climate indices computed at
+Spatial analogs are estimated by comparing the distribution of climate indices computed at
 the target location over the future period with the distribution of the same climate indices
 computed over a reference period for multiple candidate regions. A number of methodological
 choices thus enter the computation:
@@ -20,7 +20,7 @@ choices thus enter the computation:
     - Reference data from which to compute the base indices,
     - A future climate scenario to compute the target indices.
 
-The climate indices chosen to compute the spatial analogues are usually annual values of
+The climate indices chosen to compute the spatial analogs are usually annual values of
 indices relevant to the intended audience of these maps. For example, in the case of the
 wine grape industry, the climate indices examined could include the length of the frost-free
 season, growing degree-days, annual winter minimum temperature and annual number of
@@ -30,17 +30,18 @@ very cold days [Roy2017]_.
 Methods to compute the (dis)similarity between samples
 ------------------------------------------------------
 
-This module implements five of the six methods described in [Grenier2013]_ to measure
-the dissimilarity between two samples. Some of these algorithms can be used to
-test whether two samples have been drawn from the same distribution.
-Here, they are used in finding areas with analog climate conditions to a target
-climate.
+This module implements all methods described in [Grenier2013]_ to measure
+the dissimilarity between two samples, plus the Székely-Rizzo energy distance,
+Some of these algorithms can be used to test whether two samples have been
+drawn from the same distribution. Here, they are used in finding areas 
+with analog climate conditions to a target climate.
 
 Methods available
 ~~~~~~~~~~~~~~~~~
  * Standardized Euclidean distance
  * Nearest Neighbour distance
  * Zech-Aslan energy statistic
+ * Székely-Rizzo energy distance
  * Friedman-Rafsky runs statistic
  * Kolmogorov-Smirnov statistic
  * Kullback-Leibler divergence
@@ -56,8 +57,6 @@ a single float.
 .. [Roy2017] Roy, P., Grenier, P., Barriault, E. et al. Climatic Change (2017) 143: 43. `<doi:10.1007/s10584-017-1960-x>`_
 .. [Grenier2013]  Grenier, P., A.-C. Parent, D. Huard, F. Anctil, and D. Chaumont, 2013: An assessment of six dissimilarity metrics for climate analogs. J. Appl. Meteor. Climatol., 52, 733–752, `<doi:10.1175/JAMC-D-12-0170.1>`_
 """
-# TODO: Szekely, G, Rizzo, M (2014) Energy statistics: A class of statistics
-# based on distances. J Stat Planning & Inference 143: 1249-1272
 # TODO: Hellinger distance
 # Code adapted from flyingpigeon.dissimilarity, Nov 2020.
 from typing import Sequence, Tuple, Union
@@ -106,7 +105,7 @@ def spatial_analogs(
     Returns
     -------
     xr.DataArray
-      The dissimilarity statistic over the union of candidates' and target's dimensions.
+      The dissimilarity statistic over the union of candidates' and target's dimensions. The range depends on the method.
     """
     if parse_version(__scipy_version__) < parse_version("1.6.0") and method in [
         "kldiv",
