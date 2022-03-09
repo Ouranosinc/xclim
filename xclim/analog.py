@@ -1,16 +1,16 @@
 # noqa: D205,D400
 """
-Spatial analogs
-===============
+Spatial analogues
+=================
 
-Spatial analogs are maps showing which areas have a present-day climate that is analogous
+Spatial analogues are maps showing which areas have a present-day climate that is analogous
 to the future climate of a given place. This type of map can be useful for climate adaptation
 to see how well regions are coping today under specific climate conditions. For example,
 officials from a city located in a temperate region that may be expecting more heatwaves in
 the future can learn from the experience of another city where heatwaves are a common occurrence,
 leading to more proactive intervention plans to better deal with new climate conditions.
 
-Spatial analogs are estimated by comparing the distribution of climate indices computed at
+Spatial analogues are estimated by comparing the distribution of climate indices computed at
 the target location over the future period with the distribution of the same climate indices
 computed over a reference period for multiple candidate regions. A number of methodological
 choices thus enter the computation:
@@ -20,7 +20,7 @@ choices thus enter the computation:
     - Reference data from which to compute the base indices,
     - A future climate scenario to compute the target indices.
 
-The climate indices chosen to compute the spatial analogs are usually annual values of
+The climate indices chosen to compute the spatial analogues are usually annual values of
 indices relevant to the intended audience of these maps. For example, in the case of the
 wine grape industry, the climate indices examined could include the length of the frost-free
 season, growing degree-days, annual winter minimum temperature and annual number of
@@ -34,7 +34,7 @@ This module implements all methods described in [Grenier2013]_ to measure
 the dissimilarity between two samples, plus the Székely-Rizzo energy distance,
 Some of these algorithms can be used to test whether two samples have been
 drawn from the same distribution. Here, they are used in finding areas
-with analog climate conditions to a target climate.
+with analogue climate conditions to a target climate.
 
 Methods available
 ~~~~~~~~~~~~~~~~~
@@ -82,7 +82,7 @@ def spatial_analogs(
 ):
     """Compute dissimilarity statistics between target points and candidate points.
 
-    Spatial analogs based on the comparison of climate indices. The algorithm compares
+    Spatial analogues based on the comparison of climate indices. The algorithm compares
     the distribution of the reference indices with the distribution of spatially
     distributed candidate indices and returns a value measuring the dissimilarity
     between both distributions over the candidate grid.
@@ -111,7 +111,7 @@ def spatial_analogs(
         "kldiv",
         "nearest_neighbor",
     ]:
-        raise RuntimeError(f"Spatial analog method ({method}) requires scipy>=1.6.0.")
+        raise RuntimeError(f"Spatial analogue method ({method}) requires scipy>=1.6.0.")
 
     # Create the target DataArray:
     target = target.to_array("_indices", "target")

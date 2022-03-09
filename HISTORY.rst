@@ -12,7 +12,7 @@ New indicators
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* New spatial analogs method "szekely_rizzo" (:pull:`1033`).
+* New spatial analogues method "szekely_rizzo" (:pull:`1033`).
 
 Bug fixes
 ^^^^^^^^^
