@@ -151,7 +151,7 @@ def test_escore():
     out = escore(x, y)
     np.testing.assert_allclose(out, 1.90018550338863)
     assert "escore(" in out.attrs["history"]
-    assert out.attrs["references"].startswith("Skezely")
+    assert out.attrs["references"].startswith("Székely")
 
 
 def test_standardize():

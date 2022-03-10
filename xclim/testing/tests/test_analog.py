@@ -1,10 +1,12 @@
 # Tests taken from flyingpigeon on Nov 2020
 import numpy as np
+import pandas as pd
 import pytest
 from numpy.testing import assert_almost_equal
 from pkg_resources import parse_version
 from scipy import __version__ as __scipy_version__
 from scipy import integrate, stats
+from sklearn import datasets
 
 import xclim.analog as xca
 from xclim.testing import open_dataset
@@ -55,9 +57,6 @@ def test_randn():
 @pytest.mark.slow
 @pytest.mark.parametrize("method", xca.metrics.keys())
 def test_spatial_analogs(method):
-    if method == "skezely_rizzo":
-        pytest.skip("Method not implemented.")
-
     if method in ["nearest_neighbor", "kldiv"] and parse_version(
         __scipy_version__
     ) < parse_version("1.6.0"):
@@ -333,3 +332,23 @@ class TestKLDIV:
 
         assert_almost_equal(xca.kldiv(p, q), 1.39, 1)
         assert_almost_equal(xca.kldiv(q, p), 0.62, 1)
+
+
+def test_szekely_rizzo():
+    iris = pd.DataFrame(datasets.load_iris().data)
+
+    # first 80 against last 70
+    x = iris.iloc[:80, :].to_xarray().to_array().T
+    y = iris.iloc[80:, :].to_xarray().to_array().T
+
+    np.testing.assert_allclose(
+        xca.szekely_rizzo(x, y, standardize=False), 116.1987, atol=5e-5
+    )
+
+    # first 50 against last 100
+    x = iris.iloc[:50, :].to_xarray().to_array().T
+    y = iris.iloc[50:, :].to_xarray().to_array().T
+
+    np.testing.assert_allclose(
+        xca.szekely_rizzo(x, y, standardize=False), 199.6205, atol=5e-5
+    )
