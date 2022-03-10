@@ -1,8 +1,5 @@
 # noqa: D205,D400
 """
-Spatial analogues
-=================
-
 Spatial analogues are maps showing which areas have a present-day climate that is analogous
 to the future climate of a given place. This type of map can be useful for climate adaptation
 to see how well regions are coping today under specific climate conditions. For example,
@@ -36,8 +33,6 @@ Some of these algorithms can be used to test whether two samples have been
 drawn from the same distribution. Here, they are used in finding areas
 with analogue climate conditions to a target climate.
 
-Methods available
-~~~~~~~~~~~~~~~~~
  * Standardized Euclidean distance
  * Nearest Neighbour distance
  * Zech-Aslan energy statistic
@@ -49,7 +44,7 @@ Methods available
 All methods accept arrays, the first is the reference (n, D) and
 the second is the candidate (m, D). Where the climate indicators
 vary along D and the distribution dimension along n or m. All methods output
-a single float.
+a single float. See their documentation in :ref:`Analogue metrics API`.
 
 
 .. rubric:: References
@@ -69,7 +64,6 @@ from scipy import __version__ as __scipy_version__
 from scipy import spatial
 from scipy.spatial import cKDTree as KDTree
 
-__all__ = ["spatial_analogs"]
 metrics = dict()
 
 
@@ -288,9 +282,9 @@ def nearest_neighbor(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 
 
 @metric
-def zech_aslan(x: np.ndarray, y: np.ndarray) -> float:
-    """
-    Compute the Zech-Aslan energy distance dissimilarity metric based on an analogy with the energy of a cloud of electrical charges.
+def zech_aslan(x: np.ndarray, y: np.ndarray, *, dmin: float = 1e-12) -> float:
+    r"""
+    Compute a modified Zech-Aslan energy distance dissimilarity metric based on an analogy with the energy of a cloud of electrical charges.
 
     Parameters
     ----------
@@ -298,18 +292,47 @@ def zech_aslan(x: np.ndarray, y: np.ndarray) -> float:
       Reference sample.
     y : np.ndarray (m,d)
       Candidate sample.
+    dmin : float
+      The cut-off for low distances to avoid singularities on identical points.
 
     Returns
     -------
     float
       Zech-Aslan dissimilarity metric ranging from -infinity to infinity.
 
+    Notes
+    -----
+    The energy measure between two variables :math:`X`, :math:`Y` (target and candidates) of
+    sizes :math:`n,d` and :math:`m,d` proposed by [AZ03]_ is defined by:
+
+    .. math::
+
+        e(X, Y) &= \left[\phi_{xx} + \phi_{yy} - \phi_{xy}\right] \\
+        \phi_{xy} &= \frac{1}{n m} \sum_{i = 1}^n \sum_{j = 1}^m R\left[SED(X_i, Y_j)\right] \\
+        \phi_{xx} &= \frac{1}{n^2} \sum_{i = 1}^n \sum_{j = i + 1}^n R\left[SED(X_i, X_j)\right] \\
+        \phi_{yy} &= \frac{1}{m^2} \sum_{i = 1}^m \sum_{j = i + 1}^m R\left[SED(X_i, Y_j)\right] \\
+
+    where :math:`X_i` denotes the i-th observation of :math:`X`. :math:`R` is a weight function
+    and :math:`SED(A, B)` denotes the standardized Euclidean distance.
+
+    .. math::
+
+        R(r) &= \left\{\begin{array}{r l} -\ln r & \text{for } r > d_{min} \\ -\ln d_{min} & \text{for } r \leq d_{min} \end{array}\right. \\
+        SED(X_i, Y_j) &= \sqrt{\sum_{k=1}^d \frac{\left(X_i(k) - Y_i(k)\right)^2}{\sigma_x(k)\sigma_y(k)}}
+
+    where :math:`k` is a counter over dimensions (indices in the case of spatial analogs)
+    and ::math:`\sigma_x(k)` is the standard deviation of :math:`X` in dimension :math:`k`.
+    Finally, :math:`d_{min}` is a cut-off to avoid poles when :math:`r \to 0`, it is
+    controllable through the `dmin` parameter.
+
+    This version corresponds the :math:`D_{ZAE}` test of [Grenier2013]_ (eq. 7), which is
+    a version of :math:`\phi_{NM}` from [AZ03]_, modified by using the standardized
+    euclidean distance, the log weight function and choosing :math:`d_{min} = 10^{-12}`.
+
     References
     ----------
-    Zech G. and Aslan B. (2003) A Multivariate two-sample test based on the
-    concept of minimum energy. PHYStat2003, SLAC, Stanford, CA, Sep 8-11.
-    Aslan B. and Zech G. (2008) A new class of binning-free, multivariate
-    goodness-of-fit tests: the energy tests. arXiV:hep-ex/0203010v5.
+    .. Zech G. and Aslan B. (2003) A Multivariate two-sample test based on the concept of minimum energy. PHYStat2003, SLAC, Stanford, CA, Sep 8-11.
+    .. [AZ03] Aslan B. and Zech G. (2003) A new class of binning-free, multivariate goodness-of-fit tests: the energy tests. arXiV:hep-ex/0203010.
     """
     nx, d = x.shape
     ny, d = y.shape
@@ -320,10 +343,10 @@ def zech_aslan(x: np.ndarray, y: np.ndarray) -> float:
     dy = spatial.distance.pdist(y, "seuclidean", V=v)
     dxy = spatial.distance.cdist(x, y, "seuclidean", V=v)
 
-    phix = -np.log(dx).sum() / nx / (nx - 1)
-    phiy = -np.log(dy).sum() / ny / (ny - 1)
-    phixy = np.log(dxy).sum() / nx / ny
-    return phix + phiy + phixy
+    phix = -np.log(dx.clip(dmin)).sum() / (nx * (nx - 1))
+    phiy = -np.log(dy.clip(dmin)).sum() / (ny * (ny - 1))
+    phixy = -np.log(dxy.clip(dmin)).sum() / (nx * ny)
+    return phix + phiy - phixy
 
 
 @metric
@@ -345,25 +368,25 @@ def szekely_rizzo(x: np.ndarray, y: np.ndarray) -> float:
 
     Notes
     -----
-    The e-distance between two variables :math:`X`, :math:`Y` (taget and candidates) of
+    The e-distance between two variables :math:`X`, :math:`Y` (target and candidates) of
     sizes :math:`n,d` and :math:`m,d` proposed by [SR2004]_ is defined by:
 
     .. math::
 
-        e(X, Y) = \frac{n m}{n + m} \left[2A − B − C \right]
+        e(X, Y) = \frac{n m}{n + m} \left[2\phi_{xy} − \phi_{xx} − \phi_{yy} \right]
 
     where
 
     .. math::
 
-        A = \frac{1}{n m} \sum_{i = 1}^n \sum_{j = 1}^m \left\Vert X_i − Y_j \right\Vert
-        B = \frac{1}{n^2} \sum_{i = 1}^n \sum_{j = 1}^n \left\Vert X_i − X_j \right\Vert
-        C = \frac{1}{m^2} \sum_{i = 1}^m \sum_{j = 1}^m \left\Vert X_i − Y_j \right\Vert
+        \phi_{xy} &= \frac{1}{n m} \sum_{i = 1}^n \sum_{j = 1}^m \left\Vert X_i − Y_j \right\Vert \\
+        \phi_{xx} &= \frac{1}{n^2} \sum_{i = 1}^n \sum_{j = 1}^n \left\Vert X_i − X_j \right\Vert \\
+        \phi_{yy} &= \frac{1}{m^2} \sum_{i = 1}^m \sum_{j = 1}^m \left\Vert X_i − Y_j \right\Vert \\
 
-    and where :math:`\Vert\cdot\Vert` denotes Euclidean norm, :math:`X_i` denotes the i-th
+    and where :math:`\Vert\cdot\Vert` denotes the Euclidean norm, :math:`X_i` denotes the i-th
     observation of :math:`X`. This version corresponds the :math:`T` test of [RS2016]_ (p. 28)
-    and to the `eqdist.e` function of the `energy` R package (with 2 sample).
-    However, it gives results twice as big as :py:func:`sdba.processing.escore`.
+    and to the ``eqdist.e`` function of the `energy` R package (with 2 sample).
+    However, it gives results twice as big as :py:func:`xclim.sdba.processing.escore`.
 
     References
     ----------
@@ -483,10 +506,10 @@ def kldiv(
     Compute the Kullback-Leibler divergence between two multivariate samples.
 
     .. math
-        D(P||Q) = "\"frac{d}{n} "\"sum_i^n "\"log{"\"frac{r_k(x_i)}{s_k(x_i)}} + "\"log{"\"frac{m}{n-1}}
+        D(P||Q) = \frac{d}{n} \sum_i^n \log\left\{\frac{r_k(x_i)}{s_k(x_i)}\right\} + \log\left\{\frac{m}{n-1}\right\}
 
-    where r_k(x_i) and s_k(x_i) are, respectively, the euclidean distance
-    to the kth neighbour of x_i in the x array (excepting x_i) and
+    where :math:`r_k(x_i)` and :math:`s_k(x_i)` are, respectively, the euclidean distance
+    to the kth neighbour of :math:`x_i` in the x array (excepting :math:`x_i`) and
     in the y array.
 
     Parameters
@@ -512,15 +535,17 @@ def kldiv(
     In information theory, the Kullback–Leibler divergence ([perezcruz08]_) is a non-symmetric
     measure of the difference between two probability distributions P and Q,
     where P is the "true" distribution and Q an approximation. This nuance is
-    important because D(P||Q) is not equal to D(Q||P).
+    important because :math:`D(P||Q)` is not equal to :math:`D(Q||P)`.
 
     For probability distributions P and Q of a continuous random variable,
     the K–L  divergence is defined as:
 
-        D_{KL}(P||Q) = "\"int p(x) "\"log{p()/q(x)} dx
+    .. math::
+
+        D_{KL}(P||Q) = \int p(x) \log\left(\frac{p(x)}{q(x)}\right) dx
 
     This formula assumes we have a representation of the probability
-    densities p(x) and q(x).  In many cases, we only have samples from the
+    densities :math:`p(x)` and :math:`q(x)`.  In many cases, we only have samples from the
     distribution, and most methods first estimate the densities from the
     samples and then proceed to compute the K-L divergence. In Perez-Cruz,
     the authors propose an algorithm to estimate the K-L divergence directly
