@@ -57,9 +57,6 @@ def test_randn():
 @pytest.mark.slow
 @pytest.mark.parametrize("method", xca.metrics.keys())
 def test_spatial_analogs(method):
-    if method == "szekely_rizzo":
-        pytest.skip("Method not in test data.")
-
     if method in ["nearest_neighbor", "kldiv"] and parse_version(
         __scipy_version__
     ) < parse_version("1.6.0"):
@@ -344,10 +341,14 @@ def test_szekely_rizzo():
     x = iris.iloc[:80, :].to_xarray().to_array().T
     y = iris.iloc[80:, :].to_xarray().to_array().T
 
-    np.testing.assert_allclose(xca.szekely_rizzo(x, y), 116.1987, atol=5e-5)
+    np.testing.assert_allclose(
+        xca.szekely_rizzo(x, y, standardize=False), 116.1987, atol=5e-5
+    )
 
     # first 50 against last 100
     x = iris.iloc[:50, :].to_xarray().to_array().T
     y = iris.iloc[50:, :].to_xarray().to_array().T
 
-    np.testing.assert_allclose(xca.szekely_rizzo(x, y), 199.6205, atol=5e-5)
+    np.testing.assert_allclose(
+        xca.szekely_rizzo(x, y, standardize=False), 199.6205, atol=5e-5
+    )

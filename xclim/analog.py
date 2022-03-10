@@ -46,6 +46,12 @@ the second is the candidate (m, D). Where the climate indicators
 vary along D and the distribution dimension along n or m. All methods output
 a single float. See their documentation in :ref:`Analogue metrics API`.
 
+.. warning::
+
+   Some methods are scale-invariant and others are not. This is indicated in the docstring
+   of the methods as it can change the results significantly. In most cases, scale-invariance
+   is desirable and inputs may need to be scaled beforehand for scale-dependent methods.
+
 
 .. rubric:: References
 
@@ -53,7 +59,10 @@ a single float. See their documentation in :ref:`Analogue metrics API`.
 .. [Grenier2013]  Grenier, P., A.-C. Parent, D. Huard, F. Anctil, and D. Chaumont, 2013: An assessment of six dissimilarity metrics for climate analogs. J. Appl. Meteor. Climatol., 52, 733–752, `<doi:10.1175/JAMC-D-12-0170.1>`_
 """
 # TODO: Hellinger distance
+# TODO: Mahalanobis distance
+# TODO: Comment on "significance" of results.
 # Code adapted from flyingpigeon.dissimilarity, Nov 2020.
+
 from typing import Sequence, Tuple, Union
 
 import numpy as np
@@ -137,7 +146,7 @@ def spatial_analogs(
         vectorize=True,
         dask="parallelized",
         output_dtypes=[float],
-        **kwargs,
+        kwargs=kwargs,
     )
     diss.name = "dissimilarity"
     diss.attrs.update(
@@ -214,6 +223,8 @@ def seuclidean(x: np.ndarray, y: np.ndarray) -> float:
     """
     Compute the Euclidean distance between the mean of a multivariate candidate sample with respect to the mean of a reference sample.
 
+    This method is scale-invariant.
+
     Parameters
     ----------
     x : np.ndarray (n,d)
@@ -248,6 +259,8 @@ def seuclidean(x: np.ndarray, y: np.ndarray) -> float:
 def nearest_neighbor(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
     Compute a dissimilarity metric based on the number of points in the pooled sample whose nearest neighbor belongs to the same distribution.
+
+    This method is scale-invariant.
 
     Parameters
     ----------
@@ -285,6 +298,8 @@ def nearest_neighbor(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 def zech_aslan(x: np.ndarray, y: np.ndarray, *, dmin: float = 1e-12) -> float:
     r"""
     Compute a modified Zech-Aslan energy distance dissimilarity metric based on an analogy with the energy of a cloud of electrical charges.
+
+    This method is scale-invariant.
 
     Parameters
     ----------
@@ -350,9 +365,11 @@ def zech_aslan(x: np.ndarray, y: np.ndarray, *, dmin: float = 1e-12) -> float:
 
 
 @metric
-def szekely_rizzo(x: np.ndarray, y: np.ndarray) -> float:
+def szekely_rizzo(x: np.ndarray, y: np.ndarray, *, standardize: bool = True) -> float:
     r"""
     Compute the Székely-Rizzo energy distance dissimilarity metric based on an analogy with Newton's gravitational potential energy.
+
+    This method is scale-invariant when `standardize=True` (default), scale-dependent otherwise.
 
     Parameters
     ----------
@@ -360,6 +377,8 @@ def szekely_rizzo(x: np.ndarray, y: np.ndarray) -> float:
       Reference sample.
     y : ndarray (m,d)
       Candidate sample.
+    standardize : bool
+      If True (default), the standardized euclidean norm is used, instead of the conventional one.
 
     Returns
     -------
@@ -384,9 +403,10 @@ def szekely_rizzo(x: np.ndarray, y: np.ndarray) -> float:
         \phi_{yy} &= \frac{1}{m^2} \sum_{i = 1}^m \sum_{j = 1}^m \left\Vert X_i − Y_j \right\Vert \\
 
     and where :math:`\Vert\cdot\Vert` denotes the Euclidean norm, :math:`X_i` denotes the i-th
-    observation of :math:`X`. This version corresponds to the :math:`T` test of [RS2016]_ (p. 28)
-    and to the ``eqdist.e`` function of the `energy` R package (with two samples).
-    However, it gives results twice as big as :py:func:`xclim.sdba.processing.escore`.
+    observation of :math:`X`. When `standardized=False`, this corresponds to the :math:`T`
+    test of [RS2016]_ (p. 28) and to the ``eqdist.e`` function of the `energy` R package
+    (with two samples) and gives results twice as big as :py:func:`xclim.sdba.processing.escore`.
+    The standardization was added following the logic of [Grenier2013] to make the metric scale-invariant.
 
     References
     ----------
@@ -398,9 +418,15 @@ def szekely_rizzo(x: np.ndarray, y: np.ndarray) -> float:
 
     # Mean of the distance pairs
     # We are not taking "mean" because of the condensed output format of pdist
-    sXY = spatial.distance.cdist(x, y, "euclidean").sum() / (n * m)
-    sXX = spatial.distance.pdist(x, "euclidean").sum() * 2 / n**2
-    sYY = spatial.distance.pdist(y, "euclidean").sum() * 2 / m**2
+    if standardize:
+        v = (x.std(axis=0, ddof=1) * y.std(axis=0, ddof=1)).astype(np.double)
+        sXY = spatial.distance.cdist(x, y, "seuclidean", V=v).sum() / (n * m)
+        sXX = spatial.distance.pdist(x, "seuclidean", V=v).sum() * 2 / n**2
+        sYY = spatial.distance.pdist(y, "seuclidean", V=v).sum() * 2 / m**2
+    else:
+        sXY = spatial.distance.cdist(x, y, "euclidean").sum() / (n * m)
+        sXX = spatial.distance.pdist(x, "euclidean").sum() * 2 / n**2
+        sYY = spatial.distance.pdist(y, "euclidean").sum() * 2 / m**2
     w = n * m / (n + m)
     return w * (sXY + sXY - sXX - sYY)
 
@@ -413,6 +439,7 @@ def friedman_rafsky(x: np.ndarray, y: np.ndarray) -> float:
     The algorithm builds a minimal spanning tree (the subset of edges
     connecting all points that minimizes the total edge length) then counts
     the edges linking points from the same distribution.
+    This method is scale-dependent.
 
     Parameters
     ----------
@@ -454,6 +481,8 @@ def friedman_rafsky(x: np.ndarray, y: np.ndarray) -> float:
 def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
     """
     Compute the Kolmogorov-Smirnov statistic applied to two multivariate samples as described by Fasano and Franceschini.
+
+    This method is scale-dependent.
 
     Parameters
     ----------
@@ -510,7 +539,7 @@ def kldiv(
 
     where :math:`r_k(x_i)` and :math:`s_k(x_i)` are, respectively, the euclidean distance
     to the kth neighbour of :math:`x_i` in the x array (excepting :math:`x_i`) and
-    in the y array.
+    in the y array. This method is scale-dependent.
 
     Parameters
     ----------
