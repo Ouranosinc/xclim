@@ -17,6 +17,7 @@ New features and enhancements
 Bug fixes
 ^^^^^^^^^
 * ``xclim.analog.spatial_analogs`` now compatible with dask-backed DataArrays (:pull:`1033`).
+* Parameter ``dmin`` added to spatial analog method "zech_aslan", to avoid singularities on identical points (:pull:`1033`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^

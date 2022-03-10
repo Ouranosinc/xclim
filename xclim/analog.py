@@ -321,7 +321,7 @@ def zech_aslan(x: np.ndarray, y: np.ndarray, *, dmin: float = 1e-12) -> float:
         SED(X_i, Y_j) &= \sqrt{\sum_{k=1}^d \frac{\left(X_i(k) - Y_i(k)\right)^2}{\sigma_x(k)\sigma_y(k)}}
 
     where :math:`k` is a counter over dimensions (indices in the case of spatial analogs)
-    and ::math:`\sigma_x(k)` is the standard deviation of :math:`X` in dimension :math:`k`.
+    and :math:`\sigma_x(k)` is the standard deviation of :math:`X` in dimension :math:`k`.
     Finally, :math:`d_{min}` is a cut-off to avoid poles when :math:`r \to 0`, it is
     controllable through the `dmin` parameter.
 
@@ -384,8 +384,8 @@ def szekely_rizzo(x: np.ndarray, y: np.ndarray) -> float:
         \phi_{yy} &= \frac{1}{m^2} \sum_{i = 1}^m \sum_{j = 1}^m \left\Vert X_i − Y_j \right\Vert \\
 
     and where :math:`\Vert\cdot\Vert` denotes the Euclidean norm, :math:`X_i` denotes the i-th
-    observation of :math:`X`. This version corresponds the :math:`T` test of [RS2016]_ (p. 28)
-    and to the ``eqdist.e`` function of the `energy` R package (with 2 sample).
+    observation of :math:`X`. This version corresponds to the :math:`T` test of [RS2016]_ (p. 28)
+    and to the ``eqdist.e`` function of the `energy` R package (with two samples).
     However, it gives results twice as big as :py:func:`xclim.sdba.processing.escore`.
 
     References
