@@ -4,11 +4,20 @@ History
 
 0.35.0 (unreleased)
 -------------------
-Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`) and Pascal Bourgault (:user:`aulemahal`).
 
 New indicators
 ^^^^^^^^^^^^^^
 * New indicator ``specific_humidity_from_dewpoint``, computing specific humidity from the dewpoint temperature and air pressure. (:issue:`864`, :pull:`1027`)
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New spatial analogues method "szekely_rizzo" (:pull:`1033`).
+
+Bug fixes
+^^^^^^^^^
+* ``xclim.analog.spatial_analogs`` now compatible with dask-backed DataArrays (:pull:`1033`).
+* Parameter ``dmin`` added to spatial analog method "zech_aslan", to avoid singularities on identical points (:pull:`1033`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^

@@ -1,8 +1,5 @@
 # noqa: D205,D400
 """
-Spatial analogs
-===============
-
 Spatial analogues are maps showing which areas have a present-day climate that is analogous
 to the future climate of a given place. This type of map can be useful for climate adaptation
 to see how well regions are coping today under specific climate conditions. For example,
@@ -30,17 +27,16 @@ very cold days [Roy2017]_.
 Methods to compute the (dis)similarity between samples
 ------------------------------------------------------
 
-This module implements five of the six methods described in [Grenier2013]_ to measure
-the dissimilarity between two samples. Some of these algorithms can be used to
-test whether two samples have been drawn from the same distribution.
-Here, they are used in finding areas with analog climate conditions to a target
-climate.
+This module implements all methods described in [Grenier2013]_ to measure
+the dissimilarity between two samples, plus the Székely-Rizzo energy distance,
+Some of these algorithms can be used to test whether two samples have been
+drawn from the same distribution. Here, they are used in finding areas
+with analogue climate conditions to a target climate.
 
-Methods available
-~~~~~~~~~~~~~~~~~
  * Standardized Euclidean distance
  * Nearest Neighbour distance
  * Zech-Aslan energy statistic
+ * Székely-Rizzo energy distance
  * Friedman-Rafsky runs statistic
  * Kolmogorov-Smirnov statistic
  * Kullback-Leibler divergence
@@ -48,7 +44,13 @@ Methods available
 All methods accept arrays, the first is the reference (n, D) and
 the second is the candidate (m, D). Where the climate indicators
 vary along D and the distribution dimension along n or m. All methods output
-a single float.
+a single float. See their documentation in :ref:`Analogue metrics API`.
+
+.. warning::
+
+   Some methods are scale-invariant and others are not. This is indicated in the docstring
+   of the methods as it can change the results significantly. In most cases, scale-invariance
+   is desirable and inputs may need to be scaled beforehand for scale-dependent methods.
 
 
 .. rubric:: References
@@ -56,7 +58,11 @@ a single float.
 .. [Roy2017] Roy, P., Grenier, P., Barriault, E. et al. Climatic Change (2017) 143: 43. `<doi:10.1007/s10584-017-1960-x>`_
 .. [Grenier2013]  Grenier, P., A.-C. Parent, D. Huard, F. Anctil, and D. Chaumont, 2013: An assessment of six dissimilarity metrics for climate analogs. J. Appl. Meteor. Climatol., 52, 733–752, `<doi:10.1175/JAMC-D-12-0170.1>`_
 """
+# TODO: Hellinger distance
+# TODO: Mahalanobis distance
+# TODO: Comment on "significance" of results.
 # Code adapted from flyingpigeon.dissimilarity, Nov 2020.
+
 from typing import Sequence, Tuple, Union
 
 import numpy as np
@@ -67,10 +73,6 @@ from scipy import __version__ as __scipy_version__
 from scipy import spatial
 from scipy.spatial import cKDTree as KDTree
 
-# TODO: Szekely, G, Rizzo, M (2014) Energy statistics: A class of statistics
-# based on distances. J Stat Planning & Inference 143: 1249-1272
-
-# TODO: Hellinger distance
 metrics = dict()
 
 
@@ -83,7 +85,7 @@ def spatial_analogs(
 ):
     """Compute dissimilarity statistics between target points and candidate points.
 
-    Spatial analogs based on the comparison of climate indices. The algorithm compares
+    Spatial analogues based on the comparison of climate indices. The algorithm compares
     the distribution of the reference indices with the distribution of spatially
     distributed candidate indices and returns a value measuring the dissimilarity
     between both distributions over the candidate grid.
@@ -106,30 +108,21 @@ def spatial_analogs(
     Returns
     -------
     xr.DataArray
-      The dissimilarity statistic over the union of candidates' and target's dimensions.
+      The dissimilarity statistic over the union of candidates' and target's dimensions. The range depends on the method.
     """
     if parse_version(__scipy_version__) < parse_version("1.6.0") and method in [
         "kldiv",
         "nearest_neighbor",
     ]:
-        raise RuntimeError(f"Spatial analog method ({method}) requires scipy>=1.6.0.")
+        raise RuntimeError(f"Spatial analogue method ({method}) requires scipy>=1.6.0.")
 
     # Create the target DataArray:
-    target = xr.concat(
-        target.data_vars.values(),
-        xr.DataArray(list(target.data_vars.keys()), dims=("indices",), name="indices"),
-    )
+    target = target.to_array("_indices", "target")
 
     # Create the target DataArray with different dist_dim
-    c_dist_dim = "candidate_dist_dim"
-    candidates = xr.concat(
-        candidates.data_vars.values(),
-        xr.DataArray(
-            list(candidates.data_vars.keys()),
-            dims=("indices",),
-            name="indices",
-        ),
-    ).rename({dist_dim: c_dist_dim})
+    candidates = candidates.to_array("_indices", "candidates").rename(
+        {dist_dim: "_dist_dim"}
+    )
 
     try:
         metric = metrics[method]
@@ -138,22 +131,27 @@ def spatial_analogs(
             f"Method {method} is not implemented. Available methods are : {','.join(metrics.keys())}."
         )
 
+    if candidates.chunks is not None:
+        candidates = candidates.chunk({"_indices": -1})
+    if target.chunks is not None:
+        target = target.chunk({"_indices": -1})
+
     # Compute dissimilarity
     diss = xr.apply_ufunc(
         metric,
         target,
         candidates,
-        input_core_dims=[(dist_dim, "indices"), (c_dist_dim, "indices")],
+        input_core_dims=[(dist_dim, "_indices"), ("_dist_dim", "_indices")],
         output_core_dims=[()],
         vectorize=True,
         dask="parallelized",
         output_dtypes=[float],
-        **kwargs,
+        kwargs=kwargs,
     )
     diss.name = "dissimilarity"
     diss.attrs.update(
         long_name=f"Dissimilarity between target and candidates, using metric {method}.",
-        indices=",".join(target.indices.values),
+        indices=",".join(target._indices.values),
         metric=method,
     )
 
@@ -225,6 +223,8 @@ def seuclidean(x: np.ndarray, y: np.ndarray) -> float:
     """
     Compute the Euclidean distance between the mean of a multivariate candidate sample with respect to the mean of a reference sample.
 
+    This method is scale-invariant.
+
     Parameters
     ----------
     x : np.ndarray (n,d)
@@ -260,6 +260,8 @@ def nearest_neighbor(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     """
     Compute a dissimilarity metric based on the number of points in the pooled sample whose nearest neighbor belongs to the same distribution.
 
+    This method is scale-invariant.
+
     Parameters
     ----------
     x : np.ndarray (n,d)
@@ -293,9 +295,11 @@ def nearest_neighbor(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 
 
 @metric
-def zech_aslan(x: np.ndarray, y: np.ndarray) -> float:
-    """
-    Compute the Zech-Aslan energy distance dissimilarity metric based on an analogy with the energy of a cloud of electrical charges.
+def zech_aslan(x: np.ndarray, y: np.ndarray, *, dmin: float = 1e-12) -> float:
+    r"""
+    Compute a modified Zech-Aslan energy distance dissimilarity metric based on an analogy with the energy of a cloud of electrical charges.
+
+    This method is scale-invariant.
 
     Parameters
     ----------
@@ -303,18 +307,47 @@ def zech_aslan(x: np.ndarray, y: np.ndarray) -> float:
       Reference sample.
     y : np.ndarray (m,d)
       Candidate sample.
+    dmin : float
+      The cut-off for low distances to avoid singularities on identical points.
 
     Returns
     -------
     float
       Zech-Aslan dissimilarity metric ranging from -infinity to infinity.
 
+    Notes
+    -----
+    The energy measure between two variables :math:`X`, :math:`Y` (target and candidates) of
+    sizes :math:`n,d` and :math:`m,d` proposed by [AZ03]_ is defined by:
+
+    .. math::
+
+        e(X, Y) &= \left[\phi_{xx} + \phi_{yy} - \phi_{xy}\right] \\
+        \phi_{xy} &= \frac{1}{n m} \sum_{i = 1}^n \sum_{j = 1}^m R\left[SED(X_i, Y_j)\right] \\
+        \phi_{xx} &= \frac{1}{n^2} \sum_{i = 1}^n \sum_{j = i + 1}^n R\left[SED(X_i, X_j)\right] \\
+        \phi_{yy} &= \frac{1}{m^2} \sum_{i = 1}^m \sum_{j = i + 1}^m R\left[SED(X_i, Y_j)\right] \\
+
+    where :math:`X_i` denotes the i-th observation of :math:`X`. :math:`R` is a weight function
+    and :math:`SED(A, B)` denotes the standardized Euclidean distance.
+
+    .. math::
+
+        R(r) &= \left\{\begin{array}{r l} -\ln r & \text{for } r > d_{min} \\ -\ln d_{min} & \text{for } r \leq d_{min} \end{array}\right. \\
+        SED(X_i, Y_j) &= \sqrt{\sum_{k=1}^d \frac{\left(X_i(k) - Y_i(k)\right)^2}{\sigma_x(k)\sigma_y(k)}}
+
+    where :math:`k` is a counter over dimensions (indices in the case of spatial analogs)
+    and :math:`\sigma_x(k)` is the standard deviation of :math:`X` in dimension :math:`k`.
+    Finally, :math:`d_{min}` is a cut-off to avoid poles when :math:`r \to 0`, it is
+    controllable through the `dmin` parameter.
+
+    This version corresponds the :math:`D_{ZAE}` test of [Grenier2013]_ (eq. 7), which is
+    a version of :math:`\phi_{NM}` from [AZ03]_, modified by using the standardized
+    euclidean distance, the log weight function and choosing :math:`d_{min} = 10^{-12}`.
+
     References
     ----------
-    Zech G. and Aslan B. (2003) A Multivariate two-sample test based on the
-    concept of minimum energy. PHYStat2003, SLAC, Stanford, CA, Sep 8-11.
-    Aslan B. and Zech G. (2008) A new class of binning-free, multivariate
-    goodness-of-fit tests: the energy tests. arXiV:hep-ex/0203010v5.
+    .. Zech G. and Aslan B. (2003) A Multivariate two-sample test based on the concept of minimum energy. PHYStat2003, SLAC, Stanford, CA, Sep 8-11.
+    .. [AZ03] Aslan B. and Zech G. (2003) A new class of binning-free, multivariate goodness-of-fit tests: the energy tests. arXiV:hep-ex/0203010.
     """
     nx, d = x.shape
     ny, d = y.shape
@@ -325,16 +358,18 @@ def zech_aslan(x: np.ndarray, y: np.ndarray) -> float:
     dy = spatial.distance.pdist(y, "seuclidean", V=v)
     dxy = spatial.distance.cdist(x, y, "seuclidean", V=v)
 
-    phix = -np.log(dx).sum() / nx / (nx - 1)
-    phiy = -np.log(dy).sum() / ny / (ny - 1)
-    phixy = np.log(dxy).sum() / nx / ny
-    return phix + phiy + phixy
+    phix = -np.log(dx.clip(dmin)).sum() / (nx * (nx - 1))
+    phiy = -np.log(dy.clip(dmin)).sum() / (ny * (ny - 1))
+    phixy = -np.log(dxy.clip(dmin)).sum() / (nx * ny)
+    return phix + phiy - phixy
 
 
 @metric
-def skezely_rizzo(x, y):
-    """
-    Compute the Skezely-Rizzo energy distance dissimilarity metric based on an analogy with the energy of a cloud of electrical charges.
+def szekely_rizzo(x: np.ndarray, y: np.ndarray, *, standardize: bool = True) -> float:
+    r"""
+    Compute the Székely-Rizzo energy distance dissimilarity metric based on an analogy with Newton's gravitational potential energy.
+
+    This method is scale-invariant when `standardize=True` (default), scale-dependent otherwise.
 
     Parameters
     ----------
@@ -342,35 +377,58 @@ def skezely_rizzo(x, y):
       Reference sample.
     y : ndarray (m,d)
       Candidate sample.
+    standardize : bool
+      If True (default), the standardized euclidean norm is used, instead of the conventional one.
 
     Returns
     -------
     float
-      Skezely-Rizzo dissimilarity metric ranging from -infinity to infinity.
+      Székely-Rizzo's energy distance dissimilarity metric ranging from 0 to infinity.
+
+    Notes
+    -----
+    The e-distance between two variables :math:`X`, :math:`Y` (target and candidates) of
+    sizes :math:`n,d` and :math:`m,d` proposed by [SR2004]_ is defined by:
+
+    .. math::
+
+        e(X, Y) = \frac{n m}{n + m} \left[2\phi_{xy} − \phi_{xx} − \phi_{yy} \right]
+
+    where
+
+    .. math::
+
+        \phi_{xy} &= \frac{1}{n m} \sum_{i = 1}^n \sum_{j = 1}^m \left\Vert X_i − Y_j \right\Vert \\
+        \phi_{xx} &= \frac{1}{n^2} \sum_{i = 1}^n \sum_{j = 1}^n \left\Vert X_i − X_j \right\Vert \\
+        \phi_{yy} &= \frac{1}{m^2} \sum_{i = 1}^m \sum_{j = 1}^m \left\Vert X_i − Y_j \right\Vert \\
+
+    and where :math:`\Vert\cdot\Vert` denotes the Euclidean norm, :math:`X_i` denotes the i-th
+    observation of :math:`X`. When `standardized=False`, this corresponds to the :math:`T`
+    test of [RS2016]_ (p. 28) and to the ``eqdist.e`` function of the `energy` R package
+    (with two samples) and gives results twice as big as :py:func:`xclim.sdba.processing.escore`.
+    The standardization was added following the logic of [Grenier2013] to make the metric scale-invariant.
 
     References
     ----------
-    TODO
+    .. [SR2004] Székely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
+    .. [RS2016] Rizzo, M. L., & Székely, G. J. (2016). Energy distance. Wiley Interdisciplinary Reviews: Computational Statistics, 8(1), 27–38. https://doi.org/10.1002/wics.1375
     """
-    raise NotImplementedError
-    # nx, d = x.shape
-    # ny, d = y.shape
-    #
-    # v = x.std(0, ddof=1) * y.std(0, ddof=1)
-    #
-    # dx = spatial.distance.pdist(x, 'seuclidean', V=v)
-    # dy = spatial.distance.pdist(y, 'seuclidean', V=v)
-    # dxy = spatial.distance.cdist(x, y, 'seuclidean', V=v)
-    #
-    # phix = -np.log(dx).sum() / nx / (nx - 1)
-    # phiy = -np.log(dy).sum() / ny / (ny - 1)
-    # phixy = np.log(dxy).sum() / nx / ny
+    n, _ = x.shape
+    m, _ = y.shape
 
-    # z = dxy.sum() * 2. / (nx*ny) - (1./nx**2) *
-
-    # z = (2 / (n * m)) * sum(dxy(:)) - (1 / (n ^ 2)) * sum(2 * dx) - (1 /
-    #  (m ^ 2)) * sum(2 * dy);
-    # z = ((n * m) / (n + m)) * z;
+    # Mean of the distance pairs
+    # We are not taking "mean" because of the condensed output format of pdist
+    if standardize:
+        v = (x.std(axis=0, ddof=1) * y.std(axis=0, ddof=1)).astype(np.double)
+        sXY = spatial.distance.cdist(x, y, "seuclidean", V=v).sum() / (n * m)
+        sXX = spatial.distance.pdist(x, "seuclidean", V=v).sum() * 2 / n**2
+        sYY = spatial.distance.pdist(y, "seuclidean", V=v).sum() * 2 / m**2
+    else:
+        sXY = spatial.distance.cdist(x, y, "euclidean").sum() / (n * m)
+        sXX = spatial.distance.pdist(x, "euclidean").sum() * 2 / n**2
+        sYY = spatial.distance.pdist(y, "euclidean").sum() * 2 / m**2
+    w = n * m / (n + m)
+    return w * (sXY + sXY - sXX - sYY)
 
 
 @metric
@@ -381,6 +439,7 @@ def friedman_rafsky(x: np.ndarray, y: np.ndarray) -> float:
     The algorithm builds a minimal spanning tree (the subset of edges
     connecting all points that minimizes the total edge length) then counts
     the edges linking points from the same distribution.
+    This method is scale-dependent.
 
     Parameters
     ----------
@@ -422,6 +481,8 @@ def friedman_rafsky(x: np.ndarray, y: np.ndarray) -> float:
 def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
     """
     Compute the Kolmogorov-Smirnov statistic applied to two multivariate samples as described by Fasano and Franceschini.
+
+    This method is scale-dependent.
 
     Parameters
     ----------
@@ -474,11 +535,11 @@ def kldiv(
     Compute the Kullback-Leibler divergence between two multivariate samples.
 
     .. math
-        D(P||Q) = "\"frac{d}{n} "\"sum_i^n "\"log{"\"frac{r_k(x_i)}{s_k(x_i)}} + "\"log{"\"frac{m}{n-1}}
+        D(P||Q) = \frac{d}{n} \sum_i^n \log\left\{\frac{r_k(x_i)}{s_k(x_i)}\right\} + \log\left\{\frac{m}{n-1}\right\}
 
-    where r_k(x_i) and s_k(x_i) are, respectively, the euclidean distance
-    to the kth neighbour of x_i in the x array (excepting x_i) and
-    in the y array.
+    where :math:`r_k(x_i)` and :math:`s_k(x_i)` are, respectively, the euclidean distance
+    to the kth neighbour of :math:`x_i` in the x array (excepting :math:`x_i`) and
+    in the y array. This method is scale-dependent.
 
     Parameters
     ----------
@@ -503,15 +564,17 @@ def kldiv(
     In information theory, the Kullback–Leibler divergence ([perezcruz08]_) is a non-symmetric
     measure of the difference between two probability distributions P and Q,
     where P is the "true" distribution and Q an approximation. This nuance is
-    important because D(P||Q) is not equal to D(Q||P).
+    important because :math:`D(P||Q)` is not equal to :math:`D(Q||P)`.
 
     For probability distributions P and Q of a continuous random variable,
     the K–L  divergence is defined as:
 
-        D_{KL}(P||Q) = "\"int p(x) "\"log{p()/q(x)} dx
+    .. math::
+
+        D_{KL}(P||Q) = \int p(x) \log\left(\frac{p(x)}{q(x)}\right) dx
 
     This formula assumes we have a representation of the probability
-    densities p(x) and q(x).  In many cases, we only have samples from the
+    densities :math:`p(x)` and :math:`q(x)`.  In many cases, we only have samples from the
     distribution, and most methods first estimate the densities from the
     samples and then proceed to compute the K-L divergence. In Perez-Cruz,
     the authors propose an algorithm to estimate the K-L divergence directly
