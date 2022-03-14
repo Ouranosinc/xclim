@@ -24,6 +24,7 @@ xclim currently provides over 50 indices related to mean, minimum and maximum da
    internationalization
    notebooks/cli
    sdba
+   analogues
    api
    contributing
    authors

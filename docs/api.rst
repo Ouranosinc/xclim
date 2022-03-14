@@ -84,8 +84,7 @@ Other xclim modules
 Spatial Analogs module
 ----------------------
 
-.. automodule:: xclim.analog
-   :members:
+See :ref:`Spatial analogues`.
 
 Testing module
 --------------

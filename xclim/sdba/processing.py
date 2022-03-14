@@ -343,7 +343,7 @@ def escore(
     N: int = 0,  # noqa
     scale: bool = False,
 ) -> xr.DataArray:
-    r"""Energy score, or energy dissimilarity metric, based on [SkezelyRizzo]_ and [Cannon18]_.
+    r"""Energy score, or energy dissimilarity metric, based on [SzekelyRizzo]_ and [Cannon18]_.
 
     Parameters
     ----------
@@ -372,7 +372,7 @@ def escore(
     -----
     Explanation adapted from the "energy" R package documentation.
     The e-distance between two clusters :math:`C_i`, :math:`C_j` (tgt and sim) of size :math:`n_i,n_j`
-    proposed by Skezely and Rizzo (2004) is defined by:
+    proposed by Székely and Rizzo (2004) is defined by:
 
     .. math::
 
@@ -382,18 +382,19 @@ def escore(
 
     .. math::
 
-        M_{ij} = \frac{1}{n_i n_j} \sum_{p = 1}^{n_i} \sum{q = 1}^{n_j} \left\Vert X_{ip} − X{jq} \right\Vert.
+        M_{ij} = \frac{1}{n_i n_j} \sum_{p = 1}^{n_i} \sum_{q = 1}^{n_j} \left\Vert X_{ip} − X{jq} \right\Vert.
 
     :math:`\Vert\cdot\Vert` denotes Euclidean norm, :math:`X_{ip}` denotes the p-th observation in the i-th cluster.
 
     The input scaling and the factor :math:`\frac{1}{2}` in the first equation are additions of [Cannon18]_ to
     the metric. With that factor, the test becomes identical to the one defined by [BaringhausFranz]_.
+    This version is tested against values taken from Alex Cannon's MBC R package.
 
     References
     ----------
     .. [BaringhausFranz] Baringhaus, L. and Franz, C. (2004) On a new multivariate two-sample test, Journal of Multivariate Analysis, 88(1), 190–206. https://doi.org/10.1016/s0047-259x(03)00079-4
     .. [Cannon18] Cannon, A. J. (2018). Multivariate quantile mapping bias correction: An N-dimensional probability density function transform for climate model simulations of multiple variables. Climate Dynamics, 50(1), 31–49. https://doi.org/10.1007/s00382-017-3580-6
-    .. [SkezelyRizzo] Skezely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
+    .. [SzekelyRizzo] Székely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
     """
 
     pts_dim, obs_dim = dims
@@ -426,7 +427,7 @@ def escore(
     out.attrs.update(
         long_name="Energy dissimilarity metric",
         description=f"Escores computed from {N or 'all'} points.",
-        references="Skezely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)",
+        references="Székely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)",
     )
     return out
 
