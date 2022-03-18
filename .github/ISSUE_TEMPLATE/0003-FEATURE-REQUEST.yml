@@ -26,7 +26,7 @@ body:
     id: submit-pr
     attributes:
       label: Contribution
-      description: Do you intend to submit a fix for this bug? (The Xclim developers will help with code compliance)
+      description: Do you intend to submit a fix for this bug? (The xclim developers will help with code compliance)
       options:
         - label: I would be willing/able to open a Pull Request to contribute this feature.
   - type: checkboxes
