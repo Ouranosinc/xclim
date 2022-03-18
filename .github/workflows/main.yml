@@ -9,10 +9,6 @@ on:
 jobs:
   black:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        tox-env:
-          - black
     steps:
       - name: Cancel previous runs
         uses: styfle/cancel-workflow-action@0.9.1
@@ -25,15 +21,11 @@ jobs:
       - name: Install tox
         run: pip install tox
       - name: Run linting suite
-        run: tox -e ${{ matrix.tox-env }}
+        run: tox -e black
 
   doctests:
     needs: black
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        tox-env:
-          - doctests_only
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -42,7 +34,28 @@ jobs:
       - name: Install tox
         run: pip install tox
       - name: Run doctests
-        run: tox -e ${{ matrix.tox-env }}
+        run: tox -e doctests_only
+
+  test-py38-upstream-dev-dependencies:
+    needs: black
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
+      - name: Install tox
+        run: pip install tox
+      - name: Test with tox
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: tox -e py38-xarray-lm3
+      - name: report coverage
+        uses: AndreMiras/coveralls-python-action@develop
+        with:
+          flag-name: run-py38-xarray-lm3
+          parallel: true
 
   test:
     needs: black
@@ -50,8 +63,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - tox-env: py38-xarray-lm3
-            python-version: "3.8"
+#          - tox-env: py38-xarray-lm3
+#            python-version: "3.8"
           - tox-env: py39-slow-lm3
             python-version: "3.9"
           # Warning: Bottleneck does not yet officially support PEP 405
@@ -67,7 +80,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Set up Python ${{ matrix.python-version }}
-        if:  "!endsWith(matrix.python-version, '-dev')"
+        if: "!endsWith(matrix.python-version, '-dev')"
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
