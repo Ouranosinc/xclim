@@ -66,6 +66,7 @@ a single float. See their documentation in :ref:`Analogue metrics API`.
 from typing import Sequence, Tuple, Union
 
 import numpy as np
+import pandas as pd
 import xarray as xr
 from boltons.funcutils import wraps
 from pkg_resources import parse_version
@@ -119,10 +120,18 @@ def spatial_analogs(
     # Create the target DataArray:
     target = target.to_array("_indices", "target")
 
-    # Create the target DataArray with different dist_dim
+    # Create the target DataArray
+    # drop any (sub-)index along "dist_dim" that could conflict with target, and rename it.
+    # The drop is the simplest solution that is compatible with both xarray <=2022.3.0 and >2022.3.1
     candidates = candidates.to_array("_indices", "candidates").rename(
         {dist_dim: "_dist_dim"}
     )
+    if isinstance(candidates.indexes["_dist_dim"], pd.MultiIndex):
+        candidates = candidates.drop_vars(
+            ["_dist_dim"] + candidates.indexes["_dist_dim"].names,
+            # in xr <= 2022.3.0 the subindexes are not listed as separate coords, they are dropped when the multiindex is dropped
+            errors="ignore",
+        )
 
     try:
         metric = metrics[method]

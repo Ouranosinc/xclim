@@ -472,6 +472,10 @@ def _decode_cf_coords(ds):
     crds = xr.decode_cf(ds.coords.to_dataset())
     for crdname in ds.coords.keys():
         ds[crdname] = crds[crdname]
+        # decode_cf introduces an encoding key for the dtype, which can confuse the netCDF writer
+        dtype = ds[crdname].encoding.get("dtype")
+        if np.issubdtype(dtype, np.timedelta64) or np.issubdtype(dtype, np.datetime64):
+            del ds[crdname].encoding["dtype"]
 
 
 def map_blocks(reduces: Sequence[str] = None, **outvars):
@@ -661,7 +665,6 @@ def map_blocks(reduces: Sequence[str] = None, **outvars):
             out = ds.map_blocks(
                 _call_and_transpose_on_exit, template=tmpl, kwargs=kwargs
             )
-
             # Add back the extra coords, but only those which have compatible dimensions (like xarray would have done)
             out = out.assign_coords(
                 {
