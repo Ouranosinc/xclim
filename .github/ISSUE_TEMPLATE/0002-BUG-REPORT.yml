@@ -11,8 +11,12 @@ body:
     id: setup-information
     attributes:
       label: Setup Information
-      description: Software versions are you running?
-      placeholder: |
+      description: |
+        What software versions are you running? Example:
+        - Xclim version: 0.55.0-gamma
+        - Python version: 4.2
+        - Operating System: Nutmeg Linux 12.34 | macOS 11.0 "Redmond"
+      value: |
         - Xclim version:
         - Python version:
         - Operating System:
@@ -31,16 +35,11 @@ body:
     attributes:
       label: Additional context
       description: Add any other context about the problem here.
-  - type: textarea
-    id: additional-context
-    attributes:
-      label: Additional context
-      description: Add any other context about the problem here.
   - type: checkboxes
     id: submit-pr
     attributes:
       label: Contribution
-      description: Do you intend to submit a fix for this bug? (The Xclim developers will help with code compliance)
+      description: Do you intend to submit a fix for this bug? (The xclim developers will help with code compliance)
       options:
         - label: I would be willing/able to open a Pull Request to address this bug.
   - type: checkboxes

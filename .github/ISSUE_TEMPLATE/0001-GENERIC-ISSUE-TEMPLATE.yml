@@ -6,7 +6,8 @@ body:
     id: generic-issue
     attributes:
       label: Generic Issue
-      placeholder: |
+      description: Please fill in the following information fields as needed.
+      value: |
         * xclim version:
         * Python version:
         * Operating System:
