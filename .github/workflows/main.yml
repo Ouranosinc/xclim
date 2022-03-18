@@ -36,7 +36,7 @@ jobs:
       - name: Run doctests
         run: tox -e doctests_only
 
-  test-upstream-dev-dependencies:
+  test-py38-upstream-dev-dependencies:
     needs: black
     runs-on: ubuntu-latest
     steps:
