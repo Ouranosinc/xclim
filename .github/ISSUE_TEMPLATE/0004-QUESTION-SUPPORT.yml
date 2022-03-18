@@ -7,8 +7,12 @@ body:
     id: setup-information
     attributes:
       label: Setup Information
-      description: Software versions are you running?
-      placeholder: |
+      description: |
+        What software versions are you running? Example:
+        - Xclim version: 0.55.0-gamma
+        - Python version: 4.2
+        - Operating System: Nutmeg Linux 12.34 | macOS 11.0 "Redmond"
+      value: |
         - Xclim version:
         - Python version:
         - Operating System:

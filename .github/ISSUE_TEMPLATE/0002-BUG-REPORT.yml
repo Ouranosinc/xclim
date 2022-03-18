@@ -11,8 +11,12 @@ body:
     id: setup-information
     attributes:
       label: Setup Information
-      description: Software versions are you running?
-      placeholder: |
+      description: |
+        What software versions are you running? Example:
+        - Xclim version: 0.55.0-gamma
+        - Python version: 4.2
+        - Operating System: Nutmeg Linux 12.34 | macOS 11.0 "Redmond"
+      value: |
         - Xclim version:
         - Python version:
         - Operating System:
@@ -26,11 +30,6 @@ body:
     attributes:
       label: Steps To Reproduce
       description: Paste the command(s) you ran and the output. If there was a crash, please include the traceback below.
-  - type: textarea
-    id: additional-context
-    attributes:
-      label: Additional context
-      description: Add any other context about the problem here.
   - type: textarea
     id: additional-context
     attributes:
