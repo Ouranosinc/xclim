@@ -812,7 +812,7 @@ def stack_variables(ds: xr.Dataset, rechunk: bool = True, dim: str = "multivar")
 
     da.attrs.update(ds.attrs)
     da.attrs["units"] = ""
-    da[dim].atts.update(attrs)
+    da[dim].attrs.update(attrs)
     return da.rename("multivariate")
 
 
