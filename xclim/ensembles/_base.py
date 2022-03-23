@@ -61,17 +61,18 @@ def create_ensemble(
     Examples
     --------
     >>> from xclim.ensembles import create_ensemble
-    >>> ens = create_ensemble(temperature_datasets)
+    >>> ensemble = create_ensemble(temperature_datasets)  # noqa
 
     Using multifile datasets, through glob patterns.
     Simulation 1 is a list of .nc files (e.g. separated by time):
 
-    >>> datasets = glob.glob('/dir/*.nc')  # doctest: +SKIP
+    >>> data = list()
+    >>> data.extend([f for f in Path("/dir1").glob("*.nc")])  # doctest: +SKIP
 
     Simulation 2 is also a list of .nc files:
 
-    >>> datasets.append(glob.glob('/dir2/*.nc'))  # doctest: +SKIP
-    >>> ens = create_ensemble(datasets, mf_flag=True)  # doctest: +SKIP
+    >>> data.extend([f for f in Path("/dir2").glob("*.nc")])  # doctest: +SKIP
+    >>> ensemble = create_ensemble(data, mf_flag=True)  # doctest: +SKIP
     """
     ds = _ens_align_datasets(
         datasets, mf_flag, resample_freq, calendar=calendar, **xr_kwargs
@@ -79,7 +80,7 @@ def create_ensemble(
 
     dim = xr.IndexVariable("realization", np.arange(len(ds)), attrs={"axis": "E"})
 
-    ens = xr.concat(ds, dim)
+    ens = xr.concat(ds, dim)  # noqa
     for vname, var in ds[0].variables.items():
         ens[vname].attrs.update(**var.attrs)
     ens.attrs.update(**ds[0].attrs)
@@ -109,7 +110,7 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
 
     Create the ensemble dataset:
 
-    >>> ens = create_ensemble(temperature_datasets)
+    >>> ens = create_ensemble(temperature_datasets)  # noqa
 
     Calculate ensemble statistics:
 
@@ -140,7 +141,7 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
 
 def ensemble_percentiles(
     ens: Union[xr.Dataset, xr.DataArray],
-    values: Sequence[float] = [10, 50, 90],
+    values: Optional[Sequence[int]] = None,
     keep_chunk_size: Optional[bool] = None,
     split: bool = True,
 ) -> xr.Dataset:
@@ -152,7 +153,7 @@ def ensemble_percentiles(
     ----------
     ens: Union[xr.Dataset, xr.DataArray]
       Ensemble dataset or dataarray (see xclim.ensembles.create_ensemble).
-    values : Tuple[int, int, int]
+    values : Sequence[int], optional
       Percentile values to calculate. Default: (10, 50, 90).
     keep_chunk_size : Optional[bool]
       For ensembles using dask arrays, all chunks along the 'realization' axis are merged.
@@ -175,7 +176,7 @@ def ensemble_percentiles(
 
     Create ensemble dataset:
 
-    >>> ens = create_ensemble(temperature_datasets)
+    >>> ens = create_ensemble(temperature_datasets)  # noqa
 
     Calculate default ensemble percentiles:
 
@@ -189,6 +190,9 @@ def ensemble_percentiles(
 
     >>> ens_percs = ensemble_percentiles(ens, keep_chunk_size=False)
     """
+    if values is None:
+        values = (10, 50, 90)
+
     if isinstance(ens, xr.Dataset):
         out = xr.merge(
             [
@@ -251,9 +255,9 @@ def ensemble_percentiles(
         out = out.to_dataset(dim="percentiles")
         for p, perc in out.data_vars.items():
             perc.attrs.update(ens.attrs)
-            perc.attrs["description"] = (
-                perc.attrs.get("description", "") + f" {p}th percentile of ensemble."
-            )
+            perc.attrs[
+                "description"
+            ] = f"{perc.attrs.get('description', '')} {p}th percentile of ensemble."
             out[p] = perc
             out = out.rename(name_dict={p: f"{ens.name}_p{int(p):02d}"})
 
@@ -268,7 +272,7 @@ def ensemble_percentiles(
 def _ens_align_datasets(
     datasets: List[Union[xr.Dataset, Path, str, List[Union[Path, str]]]],
     mf_flag: bool = False,
-    resample_freq: str = None,
+    resample_freq: Optional[str] = None,
     calendar: str = "default",
     **xr_kwargs,
 ) -> List[xr.Dataset]:
@@ -285,7 +289,7 @@ def _ens_align_datasets(
       Only applicable when datasets is a sequence of file paths.
     resample_freq : Optional[str]
       If the members of the ensemble have the same frequency but not the same offset, they cannot be properly aligned.
-      If resample_freq is set, the time coordinate of each members will be modified to fit this frequency.
+      If resample_freq is set, the time coordinate of each member will be modified to fit this frequency.
     calendar : str
       The calendar of the time coordinate of the ensemble. For conversions involving '360_day',
       the align_on='date' option is used.
@@ -320,7 +324,7 @@ def _ens_align_datasets(
                 counts = time.resample(time=resample_freq).count()
                 if any(counts > 1):
                     raise ValueError(
-                        f"Alignment of dataset #{i:02d} failed : its time axis cannot be resampled to freq {resample_freq}."
+                        f"Alignment of dataset #{i:02d} failed: Time axis cannot be resampled to freq {resample_freq}."
                     )
                 time = counts.time
 

@@ -305,7 +305,7 @@ def _fit_on_cluster(data, thresh, dist, cluster_thresh):
     return params
 
 
-def _extremes_train_1d(ref, hist, ref_params, *, q_thresh, cluster_thresh, dist, N):
+def _extremes_train_1d(ref, hist, ref_params, *, q_thresh, cluster_thresh, dist, n):
     """Train for method ExtremeValues, only for 1D input along time."""
     # Find quantile q_thresh
     thresh = (
@@ -337,12 +337,13 @@ def _extremes_train_1d(ref, hist, ref_params, *, q_thresh, cluster_thresh, dist,
     af = hist_in_ref / hist[Pcommon]
     # sort them in Px order, and pad to have N values.
     order = np.argsort(Px_hist)
-    px_hist = np.pad(Px_hist[order], ((0, N - af.size),), constant_values=np.NaN)
-    af = np.pad(af[order], ((0, N - af.size),), constant_values=np.NaN)
+    px_hist = np.pad(Px_hist[order], ((0, n - af.size),), constant_values=np.NaN)
+    af = np.pad(af[order], ((0, n - af.size),), constant_values=np.NaN)
 
     return px_hist, af, thresh
 
 
+# FIXME: 'group' is not used
 @map_blocks(
     reduces=["time"], px_hist=["quantiles"], af=["quantiles"], thresh=[Grouper.PROP]
 )

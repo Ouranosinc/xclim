@@ -36,6 +36,7 @@ requirements = [
     "Click",
     "dask[array]>=2.6",
     "jsonpickle",
+    "loguru",
     "numba",
     "numpy>=1.16",
     "pandas>=0.23",

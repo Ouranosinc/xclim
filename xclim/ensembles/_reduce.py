@@ -6,21 +6,19 @@ Ensemble reduction is the process of selecting a subset of members from an ensem
 order to reduce the volume of computation needed while still covering a good portion of
 the simulated climate variability.
 """
-import logging
 import warnings
 from typing import Optional, Tuple, Union
 
 import numpy as np
 import scipy.stats
 import xarray
+from loguru import logger
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
 
-logger = logging.getLogger("xclim")
-
 # Avoid having to include matplotlib in xclim requirements
 try:
-    from matplotlib import pyplot as plt
+    from matplotlib import pyplot as plt  # noqa
 
     logger.info("Matplotlib installed. Setting make_graph to True.")
     MPL_INSTALLED = True
@@ -79,8 +77,9 @@ def kkz_reduce_ensemble(
     data["realization"] = np.arange(data.realization.size)
 
     unselected = list(data.realization.values)
-    selected = []
+    selected = list()
 
+    # noinspection PyTypeChecker
     dist0 = cdist(
         data.mean("realization").expand_dims("realization"),
         data,
@@ -90,6 +89,7 @@ def kkz_reduce_ensemble(
     selected.append(unselected.pop(dist0.argmin()))
 
     for i in range(1, num_select):
+        # noinspection PyTypeChecker
         dist = cdist(
             data.isel(realization=selected),
             data.isel(realization=unselected),
@@ -197,7 +197,7 @@ def kmeans_reduce_ensemble(
 
     Start with ensemble datasets for temperature:
 
-    >>> ensTas = create_ensemble(temperature_datasets)
+    >>> ensTas = create_ensemble(temperature_datasets)  # noqa
 
     Calculate selection criteria -- Use annual climate change Δ fields between 2071-2100 and 1981-2010 normals.
     First, average annual temperature:
@@ -221,11 +221,11 @@ def kmeans_reduce_ensemble(
 
     Finally, create clusters and select realization ids of reduced ensemble:
 
-    >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=False)
-    >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_optimize':None}, random_state=42, make_graph=True)
+    >>> ids1, cluster1, figure_data1 = kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=False)
+    >>> ids2, cluster2, figure_data2 = kmeans_reduce_ensemble(data=crit, method={'rsq_optimize':None}, random_state=42, make_graph=True)
     """
     if make_graph:
-        fig_data = {}
+        fig_data = dict()
         if max_clusters is not None:
             fig_data["max_clusters"] = max_clusters
     else:
@@ -340,7 +340,7 @@ def _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights):
             sumd[
                 nclust
             ] = (
-                kmeans.inertia_
+                kmeans.inertia_  # noqa
             )  # sum of the squared distance between each simulation and the nearest cluster centroid
 
         # R² of the groups vs. the full ensemble
@@ -389,10 +389,10 @@ def plot_rsqprofile(fig_data):
     Examples
     --------
     >>> from xclim.ensembles import kmeans_reduce_ensemble, plot_rsqprofile
-    >>> is_matplotlib_installed()
-    >>> crit = xr.open_dataset(path_to_ensemble_file).data
-    >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=True)
-    >>> plot_rsqprofile(fig_data)
+    >>> is_matplotlib_installed()  # noqa
+    >>> crit = xr.open_dataset(path_to_ensemble_file).data  # noqa
+    >>> ids, cluster, figure_data = kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=True)
+    >>> plot_rsqprofile(figure_data)
     """
     rsq = fig_data["rsq"]
     n_sim = fig_data["realizations"]
