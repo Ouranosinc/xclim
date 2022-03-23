@@ -13,7 +13,7 @@ from xclim.indicators import atmos, land, seaIce
 
 __author__ = """Travis Logan"""
 __email__ = "logan.travis@ouranos.ca"
-__version__ = "0.34.1-beta"
+__version__ = "0.34.2-beta"
 
 
 # On import, clisops sets a root logger for console output. This is huge annoyance to deal with.
