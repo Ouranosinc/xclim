@@ -1,6 +1,7 @@
 """Climate indices computation package based on Xarray."""
 import logging
 import sys
+import warnings
 from importlib.resources import contents, path
 
 from loguru import logger
@@ -21,6 +22,22 @@ __version__ = "0.34.2-beta"
 if "clisops" in sys.modules:
     root_logger = logging.getLogger()
     root_logger.removeHandler(root_logger.handlers[0])
+
+# Inject warnings from warnings.warn into loguru
+showwarning_ = warnings.showwarning
+
+
+def showwarning(message, *args, **kwargs):
+    logger.warning(message)
+    showwarning_(message, *args, **kwargs)
+
+
+warnings.showwarning = showwarning
+
+
+class PropagateHandler(logging.Handler):
+    def emit(self, record):
+        logging.getLogger(record.name).handle(record)
 
 
 # Gather logged events from standard logging
@@ -43,8 +60,13 @@ class InterceptHandler(logging.Handler):
         )
 
 
-# Send logged events to loguru handler and deactivate it
+# Synchronize logged events between standard logging and loguru, then deactivate their handlers
 logging.basicConfig(handlers=[InterceptHandler()], level=0)
+logger.add(
+    PropagateHandler(),
+    format="{message}",
+    filter=lambda record: "emit" in record["extra"],
+)
 logger.disable("xclim")
 
 
