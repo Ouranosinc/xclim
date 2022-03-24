@@ -61,14 +61,17 @@ class InterceptHandler(logging.Handler):
 
 
 # Synchronize logged events between standard logging and loguru, then deactivate their handlers
-logging.basicConfig(handlers=[InterceptHandler()], level=0)
-logger.add(
-    PropagateHandler(),
-    format="{message}",
-    filter=lambda record: "emit" in record["extra"],
+logging.basicConfig(handlers=[InterceptHandler()], level=logging.NOTSET)
+config = dict(
+    handlers=[
+        dict(
+            sink=PropagateHandler(),
+            format="{message}",
+            filter=lambda record: "emit" in record["extra"],
+        )
+    ]
 )
-logger.disable("xclim")
-
+logger.configure(**config)
 
 # Load official locales
 for filename in contents("xclim.data"):
