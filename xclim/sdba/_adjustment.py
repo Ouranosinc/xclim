@@ -305,7 +305,9 @@ def _fit_on_cluster(data, thresh, dist, cluster_thresh):
     return params
 
 
-def _extremes_train_1d(ref, hist, ref_params, *, q_thresh, cluster_thresh, dist, N):  # noqa
+def _extremes_train_1d(
+    ref, hist, ref_params, *, q_thresh, cluster_thresh, dist, N
+):  # noqa
     """Train for method ExtremeValues, only for 1D input along time."""
     # Find quantile q_thresh
     thresh = (
