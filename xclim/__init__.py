@@ -23,26 +23,30 @@ if "clisops" in sys.modules:
     root_logger = logging.getLogger()
     root_logger.removeHandler(root_logger.handlers[0])
 
-# Inject warnings from warnings.warn into loguru
-showwarning_ = warnings.showwarning
-
 
 def showwarning(message, *args, **kwargs):
+    """Inject warnings from `warnings.warn into loguru`."""
     logger.warning(message)
     showwarning_(message, *args, **kwargs)
 
 
+showwarning_ = warnings.showwarning
 warnings.showwarning = showwarning
 
 
 class PropagateHandler(logging.Handler):
+    """Propagate loguru logging events into the standard library logging handler."""
+
     def emit(self, record):
+        """Emit message to standard logging."""
         logging.getLogger(record.name).handle(record)
 
 
-# Gather logged events from standard logging
 class InterceptHandler(logging.Handler):
+    """Gather logged events from standard logging and send them to the loguru logging handler."""
+
     def emit(self, record):
+        """Emit message to loguru logging."""
         # Get corresponding Loguru level if it exists
         try:
             level = logger.level(record.levelname).name
