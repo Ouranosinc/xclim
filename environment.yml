@@ -50,3 +50,5 @@ dependencies:
   - xdoctest
   - yamale
   - yamllint
+  - pip:
+    - pytest-loguru

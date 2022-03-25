@@ -6,6 +6,7 @@ from importlib.resources import contents, path
 
 from loguru import logger
 
+from xclim._scripting import enable_synced_logger
 from xclim.core import units
 from xclim.core.indicator import build_indicator_module_from_yaml
 from xclim.core.locales import load_locale
@@ -25,7 +26,7 @@ if "clisops" in sys.modules:
 
 
 def showwarning(message, *args, **kwargs):
-    """Inject warnings from `warnings.warn into loguru`."""
+    """Inject warnings from `warnings.warn` into `loguru`."""
     logger.warning(message)
     showwarning_(message, *args, **kwargs)
 
@@ -33,49 +34,8 @@ def showwarning(message, *args, **kwargs):
 showwarning_ = warnings.showwarning
 warnings.showwarning = showwarning
 
-
-class PropagateHandler(logging.Handler):
-    """Propagate loguru logging events into the standard library logging handler."""
-
-    def emit(self, record):
-        """Emit message to standard logging."""
-        logging.getLogger(record.name).handle(record)
-
-
-class InterceptHandler(logging.Handler):
-    """Gather logged events from standard logging and send them to the loguru logging handler."""
-
-    def emit(self, record):
-        """Emit message to loguru logging."""
-        # Get corresponding Loguru level if it exists
-        try:
-            level = logger.level(record.levelname).name
-        except ValueError:
-            level = record.levelno
-
-        # Find caller from where originated the logged message
-        frame, depth = logging.currentframe(), 2
-        while frame.f_code.co_filename == logging.__file__:
-            frame = frame.f_back
-            depth += 1
-
-        logger.opt(depth=depth, exception=record.exc_info).log(
-            level, record.getMessage()
-        )
-
-
-# Synchronize logged events between standard logging and loguru, then deactivate their handlers
-logging.basicConfig(handlers=[InterceptHandler()], level=logging.NOTSET)
-config = dict(
-    handlers=[
-        dict(
-            sink=PropagateHandler(),
-            format="{message}",
-            filter=lambda record: "emit" in record["extra"],
-        )
-    ]
-)
-logger.configure(**config)
+# Deactivate xclim logger on import
+logger.disable("xclim")
 
 # Load official locales
 for filename in contents("xclim.data"):

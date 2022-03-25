@@ -12,6 +12,7 @@ pydocstyle>=5.1.1
 pylint
 pytest
 pytest-cov
+pytest-loguru
 pytest-runner
 tokenize-rt
 tox

@@ -12,6 +12,7 @@ from urllib.parse import urljoin
 from urllib.request import urlopen, urlretrieve
 
 import pandas as pd
+from loguru import logger
 from xarray import Dataset
 from xarray import open_dataset as _open_dataset
 from yaml import safe_dump, safe_load
@@ -459,3 +460,14 @@ def publish_release_notes(style: str = "md") -> str:
             history = re.sub(search, replacement, history)
 
     return history
+
+
+def _logging_examples() -> None:
+    """Testing module"""
+    logger.trace("0")
+    logger.debug("1")
+    logger.info("2")
+    logger.success("2.5")
+    logger.warning("3")
+    logger.error("4")
+    logger.critical("5")
