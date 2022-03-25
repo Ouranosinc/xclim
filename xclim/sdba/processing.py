@@ -803,9 +803,7 @@ def stack_variables(ds: xr.Dataset, rechunk: bool = True, dim: str = "multivar")
 
     # Special key used for later `unstacking`
     attrs["is_variables"] = True
-    var_crd = xr.DataArray(
-        [nm for nm, vr in datavars], dims=(dim,), name=dim, attrs=attrs
-    )
+    var_crd = xr.DataArray([nm for nm, vr in datavars], dims=(dim,), name=dim)
 
     da = xr.concat([vr for nm, vr in datavars], var_crd, combine_attrs="drop")
 
@@ -814,6 +812,7 @@ def stack_variables(ds: xr.Dataset, rechunk: bool = True, dim: str = "multivar")
 
     da.attrs.update(ds.attrs)
     da.attrs["units"] = ""
+    da[dim].attrs.update(attrs)
     return da.rename("multivariate")
 
 
