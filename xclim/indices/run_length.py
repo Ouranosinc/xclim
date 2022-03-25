@@ -452,7 +452,9 @@ def run_bounds(
             "Dask arrays not supported as we can't know the final event number before computing."
         )
 
-    diff = xr.concat((mask.isel({dim: 0}).astype(int), mask.astype(int).diff(dim)), dim)
+    diff = xr.concat(
+        (mask.isel({dim: [0]}).astype(int), mask.astype(int).diff(dim)), dim
+    )
 
     nstarts = (diff == 1).sum(dim).max().item()
 

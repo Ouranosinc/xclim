@@ -31,6 +31,7 @@ Bug fixes
 ^^^^^^^^^
 * ``xclim.analog.spatial_analogs`` now compatible with dask-backed DataArrays (:pull:`1033`).
 * Parameter ``dmin`` added to spatial analog method "zech_aslan", to avoid singularities on identical points (:pull:`1033`).
+* `xclim` is now compatible with changes in `xarray` that enabled explicit indexing operations. (:pull:`1038`, `xarray PR <https://github.com/pydata/xarray/pull/5692>`_).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
