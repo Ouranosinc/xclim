@@ -5,6 +5,7 @@ coverage
 flake8
 flake8-rst-docstrings
 ipython<8.0  # this needed when testing see #1005
+Jinja2<=3.0.3  # this can be lifted when nbconvert>6.4.3 is released (see #1042)
 mypy
 nbval
 pre-commit>=2.9
