@@ -12,9 +12,7 @@ class TestLoggingFuncs:
         id1 = logger.add(sys.stderr, level="ERROR")
         id2 = logger.add(sys.stdout, level="INFO")
 
-        logger.enable("xclim")
         _logging_examples()  # noqa
-        logger.disable("xclim")
 
         captured = capsys.readouterr()
         assert "ERROR" in captured.err
@@ -29,6 +27,7 @@ class TestLoggingFuncs:
         id1 = logger.add(sys.stdout, level="INFO")
         id2 = logger.add(sys.stderr, level="CRITICAL")
 
+        logger.disable("xclim")
         _logging_examples()  # noqa
 
         captured = capsys.readouterr()
@@ -38,7 +37,6 @@ class TestLoggingFuncs:
         # enable xclim logging
         logger.enable("xclim")
         _logging_examples()  # noqa
-        logger.disable("xclim")
 
         captured = capsys.readouterr()
         assert "INFO" in captured.out
@@ -50,19 +48,17 @@ class TestLoggingFuncs:
         logger.remove(id2)
 
     def test_standard_logging_configuration(self, caplog):
-        logger.enable("xclim")
         _logging_examples()  # noqa
-        logger.disable("xclim")
 
         assert ("xclim.testing._utils", 40, "4") in caplog.record_tuples
 
     def test_file_logger_enable(self, tmpdir):
         test_log = Path(tmpdir).joinpath("xclim_test.log")
-        logger.add(test_log, level=logging.WARNING)
+        id1 = logger.add(test_log, level=logging.WARNING)
 
-        logger.enable("xclim")
         _logging_examples()
-        logger.disable("xclim")
 
         assert "INFO" not in test_log.read_text()
         assert "CRITICAL" in test_log.read_text()
+
+        logger.remove(id1)

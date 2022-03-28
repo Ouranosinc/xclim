@@ -73,8 +73,6 @@ Logging
 
     from loguru import logger
 
-    ...
-
     logger.warning("This a warning message!")
 
 While logging has not yet been implemented throughout the library, the mechanism for enabling log reporting in scripts/notebooks using ``loguru`` is as follows:
@@ -84,23 +82,11 @@ While logging has not yet been implemented throughout the library, the mechanism
     import sys
     from loguru import logger
 
-    logger.enable("xclim")
-
     LEVEL = "INFO || DEBUG || WARNING || etc."
     logger.add(sys.stdout, level=LEVEL)  # for logging to stdout
     # or
     logger.add("my_log_file.log", level=LEVEL, enqueue=True)  # for logging to a file
 
-``enable_synced_logger`` is a compatibility function with standard logging that will synchronize capture events from both ``xclim`` and its dependencies.
-Be warned that thread-locking is possible if events occur in spawned processes due to the single-threaded nature of the standard logging library.
-In order to use this simply run:
-
-.. code-block:: python
-
-    import xclim
-
-    logger.enable("xclim")
-    xclim.enable_synced_logger(level="LEVEL")
 
 Report Bugs
 ~~~~~~~~~~~

@@ -21,21 +21,10 @@ New features and enhancements
     import sys
     from loguru import logger
 
-    logger.enable("xclim")
-
     LEVEL = "INFO || DEBUG || WARNING || etc."
     logger.add(sys.stdout, level=LEVEL)  # for logging to stdout
     # or
     logger.add("my_log_file.log", level=LEVEL, enqueue=True)  # for logging to a file
-
-* ``xclim`` also now offers ``enable_synced_logger`` as a compatibility function with standard logging that will synchronize capture events from both ``xclim`` and its dependencies.
-  In order to use this simply run:
-
-.. code-block:: python
-    import xclim
-
-    logger.enable("xclim")
-    xclim.enable_synced_logger(level="LEVEL")
 
 Bug fixes
 ^^^^^^^^^
