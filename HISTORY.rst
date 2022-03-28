@@ -14,18 +14,28 @@ New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * New spatial analogues method "szekely_rizzo" (:pull:`1033`).
 * ``xclim`` now uses the `loguru <https://loguru.readthedocs.io/en/stable/index.html>`_ library as its primary logging engine. (:issue:`1039`, :pull:`1041`).
-  ``loguru`` is configured for compatibility with standard logging and will capture events from both ``xclim`` and its dependencies.
-  While logging has not yet been implemented throughout, the mechanism for enabling log reporting in scripts/notebooks using ``loguru`` is as follows:
+  While logging has not yet been implemented throughout the library, the mechanism for enabling log reporting in scripts/notebooks using ``loguru`` is as follows:
 
 .. code-block:: python
 
     import sys
     from loguru import logger
 
+    logger.enable("xclim")
+
     LEVEL = "INFO || DEBUG || WARNING || etc."
-    logger.add(sys.stderr, level=LEVEL)  # for logging to stderr
+    logger.add(sys.stdout, level=LEVEL)  # for logging to stdout
     # or
     logger.add("my_log_file.log", level=LEVEL, enqueue=True)  # for logging to a file
+
+* ``xclim`` also now offers ``enable_synced_logger`` as a compatibility function with standard logging that will synchronize capture events from both ``xclim`` and its dependencies.
+  In order to use this simply run:
+
+.. code-block:: python
+    import xclim
+
+    logger.enable("xclim")
+    xclim.enable_synced_logger(level="LEVEL")
 
 Bug fixes
 ^^^^^^^^^
