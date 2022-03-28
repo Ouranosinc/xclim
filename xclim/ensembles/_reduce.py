@@ -6,9 +6,8 @@ Ensemble reduction is the process of selecting a subset of members from an ensem
 order to reduce the volume of computation needed while still covering a good portion of
 the simulated climate variability.
 """
-import logging
-import warnings
 from typing import Optional, Tuple, Union
+from warnings import warn
 
 import numpy as np
 import scipy.stats
@@ -16,17 +15,15 @@ import xarray
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
 
-logger = logging.getLogger("xclim")
-
 # Avoid having to include matplotlib in xclim requirements
 try:
     from matplotlib import pyplot as plt
 
-    logger.info("Matplotlib installed. Setting make_graph to True.")
+    warn("Matplotlib installed. Setting make_graph to True.")
     MPL_INSTALLED = True
 
 except ImportError:
-    logger.info("Matplotlib not found. No graph data will be produced.")
+    warn("Matplotlib not found. No graph data will be produced.")
     plt = None
     MPL_INSTALLED = False
 
@@ -370,7 +367,7 @@ def _get_nclust(method=None, n_sim=None, rsq=None, max_clusters=None):
     else:
         raise Exception(f"Unknown selection method : {list(method.keys())}")
     if n_clusters > max_clusters:
-        warnings.warn(
+        warn(
             f"{n_clusters} clusters has been found to be the optimal number of clusters, but limiting "
             f"to {max_clusters} as required by user provided max_clusters",
             UserWarning,
