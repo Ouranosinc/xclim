@@ -27,11 +27,10 @@ repos:
         additional_dependencies: [ 'flake8-rst-docstrings' ]
         args: [ '--config=setup.cfg' ]
   - repo: https://github.com/psf/black
-    rev: 22.1.0
+    rev: 22.3.0
     hooks:
       - id: black
         args: [ "--target-version", "py38" ]
-        additional_dependencies: ['click==8.0.4']
   - repo: https://github.com/PyCQA/isort
     rev: 5.10.1
     hooks:
