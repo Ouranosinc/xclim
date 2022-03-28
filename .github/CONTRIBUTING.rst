@@ -15,7 +15,7 @@ Types of Contributions
 Implement Features, Indices or Indicators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-xclim's structure makes it easy to create and register new user-defined indices and indicators.
+`xclim`'s structure makes it easy to create and register new user-defined indices and indicators.
 For the general implementation of indices and their wrapping into indicators, refer to
 :ref:`Extending xclim`  and  :ref:`Customizing and controlling xclim`.
 
@@ -50,12 +50,11 @@ General to-do list for implementing a new Indicator:
       In addition to the ``atmos_ds`` fixture, only datasets openable with :py:func:`xclim.testing.open_dataset` should be used.
     * Tests are added in the most relevant ``xclim/testing/tests/test_{variable}.py`` file.
 
-5. Add french translations
+5. Add French translations
 
     xclim comes with an internationalization module and all "official" indicators
     (those in ``xclim.atmos.indicators``) must have a french translation added to ``xclim/data/fr.json``.
     This part can be done by the core team after you open a PR.
-
 
 General notes for implementing new bias-adjustment methods:
 
@@ -65,6 +64,43 @@ General notes for implementing new bias-adjustment methods:
   in ``xclim/sdba/_adjustment.py``.
 * xclim doesn't implement monolithic multi-parameter methods, but rather smaller modular functions to construct post-processing workflows.
 
+Logging
+~~~~~~~
+
+``xclim`` uses the `loguru`_ library as its primary logging engine. In order to integrate this kind of logging in processes, we can use their :py:func:`logger`:
+
+.. code-block:: python
+
+    from loguru import logger
+
+    ...
+
+    logger.warning("This a warning message!")
+
+While logging has not yet been implemented throughout the library, the mechanism for enabling log reporting in scripts/notebooks using ``loguru`` is as follows:
+
+.. code-block:: python
+
+    import sys
+    from loguru import logger
+
+    logger.enable("xclim")
+
+    LEVEL = "INFO || DEBUG || WARNING || etc."
+    logger.add(sys.stdout, level=LEVEL)  # for logging to stdout
+    # or
+    logger.add("my_log_file.log", level=LEVEL, enqueue=True)  # for logging to a file
+
+``enable_synced_logger`` is a compatibility function with standard logging that will synchronize capture events from both ``xclim`` and its dependencies.
+Be warned that thread-locking is possible if events occur in spawned processes due to the single-threaded nature of the standard logging library.
+In order to use this simply run:
+
+.. code-block:: python
+
+    import xclim
+
+    logger.enable("xclim")
+    xclim.enable_synced_logger(level="LEVEL")
 
 Report Bugs
 ~~~~~~~~~~~
@@ -334,3 +370,4 @@ Before updating the main conda-forge recipe, we *strongly* suggest performing th
 .. _`reStructuredText Primer`: https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
 .. _`GitHub Repository`: https://github.com/Ouranosinc/xclim
 .. _`PEP8`: https://www.python.org/dev/peps/pep-0008/
+.. _`loguru`: https://loguru.readthedocs.io/en/stable/index.html

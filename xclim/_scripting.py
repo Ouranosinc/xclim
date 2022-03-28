@@ -36,7 +36,13 @@ class InterceptHandler(logging.Handler):
 
 
 def enable_synced_logger(level: Union[int, str] = logging.WARNING):
-    # Synchronize logged events between standard logging and loguru, then deactivate their handlers
+    """Synchronize logged events between standard logging and loguru.
+
+    Warnings
+    --------
+    Loguru is an async-capable logger while standard logging is not. Be warned that the Global Interpreter Lock may
+    cause threading problems if logging events occur within running spawned processes.
+    """
     logging.basicConfig(handlers=[InterceptHandler()], level=logging.NOTSET)
     config = dict(
         handlers=[
