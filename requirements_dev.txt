@@ -1,6 +1,7 @@
 # dev tools and testing
 black
 bump2version
+click==8.0.4
 coverage
 flake8
 flake8-rst-docstrings
