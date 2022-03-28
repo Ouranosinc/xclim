@@ -345,11 +345,10 @@ def _extremes_train_1d(
     return px_hist, af, thresh
 
 
-# FIXME: 'group' is not used
 @map_blocks(
     reduces=["time"], px_hist=["quantiles"], af=["quantiles"], thresh=[Grouper.PROP]
 )
-def extremes_train(ds, *, group, q_thresh, cluster_thresh, dist, quantiles):
+def extremes_train(ds, *, group, q_thresh, cluster_thresh, dist, quantiles):  # noqa
     px_hist, af, thresh = xr.apply_ufunc(
         _extremes_train_1d,
         ds.ref,
@@ -381,10 +380,9 @@ def _fit_cluster_and_cdf(data, thresh, dist, cluster_thresh):
     return dist.cdf(data, *fut_params)
 
 
-# FIXME: 'group' is not used
 @map_blocks(reduces=["quantiles", Grouper.PROP], scen=[])
 def extremes_adjust(
-    ds, *, group, frac, power, dist, interp, extrapolation, cluster_thresh
+    ds, *, group, frac, power, dist, interp, extrapolation, cluster_thresh  # noqa
 ):
     # Find probabilities of extremes of fut according to its own cluster-fitted dist.
     px_fut = xr.apply_ufunc(
