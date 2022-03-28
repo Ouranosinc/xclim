@@ -1,5 +1,6 @@
 import logging
 import sys
+from typing import Union
 
 from loguru import logger
 
@@ -34,7 +35,7 @@ class InterceptHandler(logging.Handler):
         )
 
 
-def enable_synced_logger(level: int = logging.WARNING):
+def enable_synced_logger(level: Union[int, str] = logging.WARNING):
     # Synchronize logged events between standard logging and loguru, then deactivate their handlers
     logging.basicConfig(handlers=[InterceptHandler()], level=logging.NOTSET)
     config = dict(
@@ -42,6 +43,7 @@ def enable_synced_logger(level: int = logging.WARNING):
             dict(
                 sink=PropagateHandler(),
                 filter=lambda record: "emit" in record["extra"],
+                enqueue=True,
             ),
             dict(sink=sys.stdout, level=level),
         ]

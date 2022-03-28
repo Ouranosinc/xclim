@@ -2,40 +2,38 @@ import logging
 import sys
 from pathlib import Path
 
-import pytest
 from loguru import logger
 
-from xclim import enable_synced_logger
 from xclim.testing._utils import _logging_examples  # noqa
 
 
 class TestLoggingFuncs:
     def test_logging_configuration(self, capsys):
-        id1 = logger.add(sys.stdout, level="ERROR")
-        id2 = logger.add(sys.stderr, level="INFO")
+        id1 = logger.add(sys.stderr, level="ERROR")
+        id2 = logger.add(sys.stdout, level="INFO")
 
         logger.enable("xclim")
         _logging_examples()  # noqa
         logger.disable("xclim")
 
         captured = capsys.readouterr()
-        assert "ERROR" in captured.out
-        assert "WARNING" not in captured.out
-        assert "WARNING" in captured.err
+        assert "ERROR" in captured.err
+        assert "WARNING" not in captured.err
+        assert "WARNING" in captured.out
 
         # teardown
         logger.remove(id1)
         logger.remove(id2)
 
     def test_disabled_enabled_logging(self, capsys):
-        id1 = logger.add(sys.stderr, level="WARNING")
-        id2 = logger.add(sys.stdout, level="CRITICAL")
+        id1 = logger.add(sys.stdout, level="INFO")
+        id2 = logger.add(sys.stderr, level="CRITICAL")
 
         _logging_examples()  # noqa
 
         captured = capsys.readouterr()
-        assert "WARNING" not in captured.err
-        assert "CRITICAL" not in captured.out
+        assert "INFO" not in captured.out
+        assert "CRITICAL" not in captured.err
 
         # enable xclim logging
         logger.enable("xclim")
@@ -43,20 +41,18 @@ class TestLoggingFuncs:
         logger.disable("xclim")
 
         captured = capsys.readouterr()
-        assert "WARNING" in captured.err
-        assert "WARNING" not in captured.out
-        assert "CRITICAL" in captured.out
+        assert "INFO" in captured.out
+        assert "WARNING" not in captured.err
+        assert "CRITICAL" in captured.err
 
         # teardown
         logger.remove(id1)
         logger.remove(id2)
 
-    @pytest.xfail("This test needs love.")
     def test_standard_logging_configuration(self, caplog):
         logger.enable("xclim")
-        enable_synced_logger()
-
         _logging_examples()  # noqa
+        logger.disable("xclim")
 
         assert ("xclim.testing._utils", 40, "4") in caplog.record_tuples
 

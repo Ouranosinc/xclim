@@ -34,7 +34,8 @@ def showwarning(message, *args, **kwargs):
 showwarning_ = warnings.showwarning
 warnings.showwarning = showwarning
 
-# Deactivate xclim logger on import
+# Remove default "DEBUG"-level logger and deactivate xclim logger on import
+logger.remove()
 logger.disable("xclim")
 
 # Load official locales
