@@ -72,26 +72,6 @@ def test_spatial_analogs(method):
     np.testing.assert_allclose(diss[method], out, rtol=1e-3, atol=1e-3)
 
 
-@pytest.mark.slow
-def test_spatial_analogs_multidim():
-    diss = open_dataset("SpatialAnalogs/dissimilarity")
-    data = open_dataset("SpatialAnalogs/indicators")
-
-    targets = data.sel(
-        lat=slice(46, 47), lon=slice(-73, -72), time=slice("1970", "1990")
-    )
-    targets = targets.stack(locations=["lat", "lon"])
-    candidates = data.sel(time=slice("1970", "1990"))
-
-    out = xca.spatial_analogs(targets, candidates, method="seuclidean")
-    assert out.dims == ("locations", "lat", "lon")
-
-    np.testing.assert_array_almost_equal(
-        diss.seuclidean, out.sel(locations=(46.1875, -72.1875)), 5
-    )
-    assert out.attrs["indices"] == "meantemp,totalpr"
-
-
 def test_spatial_analogs_multi_index():
     # Test multi-indexes
     diss = open_dataset("SpatialAnalogs/dissimilarity")

@@ -19,10 +19,12 @@ Bug fixes
 ^^^^^^^^^
 * ``xclim.analog.spatial_analogs`` now compatible with dask-backed DataArrays (:pull:`1033`).
 * Parameter ``dmin`` added to spatial analog method "zech_aslan", to avoid singularities on identical points (:pull:`1033`).
+* `xclim` is now compatible with changes in `xarray` that enabled explicit indexing operations. (:pull:`1038`, `xarray PR <https://github.com/pydata/xarray/pull/5692>`_).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * `xclim` now uses the ``check-json`` and ``pretty-format-json`` pre-commit checks to validate and format JSON files. (:pull:`1032`).
+* The few `logging` artifacts in the ``xclim.ensembles`` module have been replaced with `warnings.warn` calls or removed. (:issue:`1039`, :pull:`1044`).
 
 0.34.0 (25-02-2022)
 -------------------

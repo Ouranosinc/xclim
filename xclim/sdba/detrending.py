@@ -179,7 +179,8 @@ def _polydetrend_get_trend(da, *, dim, degree, preserve_mean, kind):
 
     if preserve_mean:
         trend = apply_correction(trend, invert(trend.mean(dim=dim), kind), kind)
-    return trend.rename("trend").to_dataset()
+    out = trend.rename("trend").to_dataset()
+    return out
 
 
 class LoessDetrend(BaseDetrend):

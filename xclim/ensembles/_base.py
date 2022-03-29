@@ -7,7 +7,7 @@ import xarray as xr
 
 from xclim.core.calendar import convert_calendar, get_calendar
 from xclim.core.formatting import update_history
-from xclim.core.utils import calc_perc, logger
+from xclim.core.utils import calc_perc
 
 
 def create_ensemble(
@@ -302,7 +302,6 @@ def _ens_align_datasets(
 
     ds_all = []
     for i, n in enumerate(datasets):
-        logger.info(f"Accessing {n} of {len(datasets)}")
         if mf_flag:
             ds = xr.open_mfdataset(n, combine="by_coords", **xr_kwargs)
         else:
