@@ -21,7 +21,7 @@ dependencies:
   - scipy>=1.2
   - xarray>=0.17
   # Testing and development dependencies
-  - black
+  - black>=22.3.0
   - bump2version
   - coverage
   - distributed>=2.0
