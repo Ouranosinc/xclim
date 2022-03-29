@@ -12,7 +12,6 @@ from warnings import warn
 import numpy as np
 import scipy.stats
 import xarray
-
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
 
