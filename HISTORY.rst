@@ -23,6 +23,7 @@ Bug fixes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * `xclim` now uses the ``check-json`` and ``pretty-format-json`` pre-commit checks to validate and format JSON files. (:pull:`1032`).
+* The few `logging` artifacts in the ``xclim.ensembles`` module have been replaced with `warnings.warn` calls or removed. (:issue:`1039`, :pull:`1044`).
 
 0.34.0 (25-02-2022)
 -------------------
