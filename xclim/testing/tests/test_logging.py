@@ -2,63 +2,83 @@ import logging
 import sys
 from pathlib import Path
 
-from loguru import logger
-
+from xclim import __version__
 from xclim.testing._utils import _logging_examples  # noqa
 
 
+class ContextLogger:
+    def __init__(self):
+        from loguru import logger
+
+        self.logger = logger
+        self._was_enabled = False
+
+    def __enter__(self):
+        if not __version__.endswith("beta"):
+            self.logger.enable("xclim")
+            self._was_enabled = True
+        return self.logger
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self._was_enabled:
+            self.logger.disable("xclim")
+        try:
+            self.logger.remove()
+        except ValueError:
+            pass
+
+
 class TestLoggingFuncs:
-    def test_logging_configuration(self, capsys):
-        id1 = logger.add(sys.stderr, level="ERROR")
-        id2 = logger.add(sys.stdout, level="INFO")
-
+    def test_default_logging_setup_for_releases(self, caplog):
         _logging_examples()  # noqa
 
-        captured = capsys.readouterr()
-        assert "ERROR" in captured.err
-        assert "WARNING" not in captured.err
-        assert "WARNING" in captured.out
+        if __version__.endswith("beta"):
+            assert ("xclim.testing._utils", 40, "4") in caplog.record_tuples
+        else:
+            assert ("xclim.testing._utils", 40, "4") not in caplog.record_tuples
 
-        # teardown
-        logger.remove(id1)
-        logger.remove(id2)
+    def test_logger_configuration(self, capsys):
+        with ContextLogger() as _logger:
 
-    def test_disabled_enabled_logging(self, capsys):
-        id1 = logger.add(sys.stdout, level="INFO")
-        id2 = logger.add(sys.stderr, level="CRITICAL")
+            _logger.add(sys.stderr, level="ERROR")
+            _logger.add(sys.stdout, level="INFO")
 
-        logger.disable("xclim")
-        _logging_examples()  # noqa
+            _logging_examples()  # noqa
 
-        captured = capsys.readouterr()
-        assert "INFO" not in captured.out
-        assert "CRITICAL" not in captured.err
+            captured = capsys.readouterr()
+            assert "ERROR" in captured.err
+            assert "WARNING" not in captured.err
+            assert "WARNING" in captured.out
 
-        # enable xclim logging
-        logger.enable("xclim")
-        _logging_examples()  # noqa
+    def test_disabled_enabled_logger(self, capsys):
+        with ContextLogger() as _logger:
 
-        captured = capsys.readouterr()
-        assert "INFO" in captured.out
-        assert "WARNING" not in captured.err
-        assert "CRITICAL" in captured.err
+            _logger.add(sys.stdout, level="INFO")
+            _logger.add(sys.stderr, level="CRITICAL")
 
-        # teardown
-        logger.remove(id1)
-        logger.remove(id2)
+            _logger.disable("xclim")
+            _logging_examples()  # noqa
 
-    def test_standard_logging_configuration(self, caplog):
-        _logging_examples()  # noqa
+            captured = capsys.readouterr()
+            assert "INFO" not in captured.out
+            assert "CRITICAL" not in captured.err
 
-        assert ("xclim.testing._utils", 40, "4") in caplog.record_tuples
+            # enable xclim logging
+            _logger.enable("xclim")
+            _logging_examples()  # noqa
+
+            captured = capsys.readouterr()
+            assert "INFO" in captured.out
+            assert "WARNING" not in captured.err
+            assert "CRITICAL" in captured.err
 
     def test_file_logger_enable(self, tmpdir):
-        test_log = Path(tmpdir).joinpath("xclim_test.log")
-        id1 = logger.add(test_log, level=logging.WARNING)
+        with ContextLogger() as _logger:
 
-        _logging_examples()
+            test_log = Path(tmpdir).joinpath("xclim_test.log")
+            _logger.add(test_log, level=logging.WARNING)
 
-        assert "INFO" not in test_log.read_text()
-        assert "CRITICAL" in test_log.read_text()
+            _logging_examples()
 
-        logger.remove(id1)
+            assert "INFO" not in test_log.read_text()
+            assert "CRITICAL" in test_log.read_text()

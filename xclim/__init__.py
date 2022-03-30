@@ -24,7 +24,11 @@ def showwarning(message, *args, **kwargs):
 showwarning_ = warnings.showwarning
 warnings.showwarning = showwarning
 
-# Remove the default "DEBUG"-level loguru.logger
+# Disable the logger for release versions of xclim
+if not __version__.endswith("beta"):
+    logger.disable("xclim")
+
+# Remove the default "DEBUG"-level logger
 logger.remove()
 
 # Load official locales
