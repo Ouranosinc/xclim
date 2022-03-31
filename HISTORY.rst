@@ -13,6 +13,7 @@ New indicators
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * New spatial analogues method "szekely_rizzo" (:pull:`1033`).
+* Loess smoothing (and detrending) now skip NaN values, instead of propagating them. This can be controlled through the `skipna` argument. (:pull:`1030`).
 
 Bug fixes
 ^^^^^^^^^
