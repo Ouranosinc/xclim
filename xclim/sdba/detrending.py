@@ -208,6 +208,9 @@ class LoessDetrend(BaseDetrend):
       Shape of the weighting function:
       "tricube" : a smooth top-hat like curve, f gives the span of non-zero values.
       "gaussian" : a gaussian curve, f gives the span for 95% of the values.
+    skipna : bool
+      If True (default), missing values are not included in the loess trend computation
+      and thus are not propagated. The output will have the same missing values as the input.
 
     Notes
     -----
@@ -226,6 +229,7 @@ class LoessDetrend(BaseDetrend):
         d=0,
         weights="tricube",
         equal_spacing=None,
+        skipna=True,
     ):
         super().__init__(
             group=group,
@@ -235,6 +239,7 @@ class LoessDetrend(BaseDetrend):
             d=0,
             weights=weights,
             equal_spacing=equal_spacing,
+            skipna=skipna,
         )
 
     def _get_trend(self, da):
@@ -244,7 +249,9 @@ class LoessDetrend(BaseDetrend):
 
 
 @map_groups(trend=[Grouper.DIM])
-def _loessdetrend_get_trend(da, *, dim, f, niter, d, weights, equal_spacing, kind):
+def _loessdetrend_get_trend(
+    da, *, dim, f, niter, d, weights, equal_spacing, skipna, kind
+):
     if len(dim) > 1:
         da = da.mean(dim[1:])
     trend = loess_smoothing(
@@ -255,6 +262,7 @@ def _loessdetrend_get_trend(da, *, dim, f, niter, d, weights, equal_spacing, kin
         d=d,
         weights=weights,
         equal_spacing=equal_spacing,
+        skipna=skipna,
     )
     return trend.rename("trend").to_dataset()
 

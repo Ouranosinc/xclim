@@ -42,10 +42,12 @@ def test_loess_smoothing(use_dask):
         "cmip3/tas.sresb1.giss_model_e_r.run1.atm.da.nc",
         chunks={"lat": 1} if use_dask else None,
     ).tas.isel(lon=0, time=slice(0, 740))
+    tas = tas.where(tas.time.dt.dayofyear != 360)  # Put NaNs
 
     tasmooth = loess_smoothing(tas, f=0.1).load()
 
-    assert np.isclose(tasmooth.isel(lat=0, time=0), 263.21876878)
+    np.testing.assert_allclose(tasmooth.isel(lat=0, time=0), 263.19834)
+    np.testing.assert_array_equal(tasmooth.isnull(), tas.isnull().T)
 
     # Same but with one missing time, so the x axis is not equally spaced
     tas2 = tas.where(tas.time != tas.time[-3], drop=True)

@@ -13,6 +13,7 @@ New indicators
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * New spatial analogues method "szekely_rizzo" (:pull:`1033`).
+* Loess smoothing (and detrending) now skip NaN values, instead of propagating them. This can be controlled through the `skipna` argument. (:pull:`1030`).
 * ``xclim`` now uses the `loguru <https://loguru.readthedocs.io/en/stable/index.html>`_ library as its primary logging engine. (:issue:`1039`, :pull:`1041`).
   While logging has not yet been implemented throughout the library, the mechanism for enabling log reporting in scripts/notebooks using ``loguru`` is as follows:
 
@@ -20,7 +21,9 @@ New features and enhancements
 
     import sys
     from loguru import logger
-
+    
+    logger.activate("xclim")
+    
     LEVEL = "INFO || DEBUG || WARNING || etc."
     logger.add(sys.stdout, level=LEVEL)  # for logging to stdout
     # or
