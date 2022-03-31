@@ -21,9 +21,9 @@ New features and enhancements
 
     import sys
     from loguru import logger
-    
+
     logger.activate("xclim")
-    
+
     LEVEL = "INFO || DEBUG || WARNING || etc."
     logger.add(sys.stdout, level=LEVEL)  # for logging to stdout
     # or
