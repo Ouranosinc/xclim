@@ -2,11 +2,16 @@ import logging
 import sys
 from pathlib import Path
 
+import pytest
+
 from xclim import __version__
 from xclim.testing._utils import ContextLogger, _logging_examples  # noqa
 
 
 class TestLoggingFuncs:
+    @pytest.mark.xfail(
+        reason="pytest-loguru required but does not yet implement logging levels for caplog."
+    )
     def test_default_logging_setup_for_releases(self, caplog):
         _logging_examples()  # noqa
 
