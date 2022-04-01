@@ -3,29 +3,7 @@ import sys
 from pathlib import Path
 
 from xclim import __version__
-from xclim.testing._utils import _logging_examples  # noqa
-
-
-class ContextLogger:
-    def __init__(self):
-        from loguru import logger
-
-        self.logger = logger
-        self._was_enabled = False
-
-    def __enter__(self):
-        if not __version__.endswith("beta"):
-            self.logger.enable("xclim")
-            self._was_enabled = True
-        return self.logger
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self._was_enabled:
-            self.logger.disable("xclim")
-        try:
-            self.logger.remove()
-        except ValueError:
-            pass
+from xclim.testing._utils import ContextLogger, _logging_examples  # noqa
 
 
 class TestLoggingFuncs:

@@ -2,7 +2,6 @@
 # Most of this code copied and adapted from xarray
 import hashlib
 import json
-import logging
 import re
 import warnings
 from pathlib import Path
@@ -17,11 +16,13 @@ from xarray import Dataset
 from xarray import open_dataset as _open_dataset
 from yaml import safe_dump, safe_load
 
+from xclim import __version__
+
 _default_cache_dir = Path.home() / ".xclim_testing_data"
 
-LOGGER = logging.getLogger("xclim")
 
 __all__ = [
+    "ContextLogger",
     "get_all_CMIP6_variables",
     "list_datasets",
     "list_input_variables",
@@ -29,6 +30,28 @@ __all__ = [
     "publish_release_notes",
     "update_variable_yaml",
 ]
+
+
+class ContextLogger:
+    def __init__(self):
+        from loguru import logger
+
+        self.logger = logger
+        self._was_enabled = False
+
+    def __enter__(self):
+        if not __version__.endswith("beta"):
+            self.logger.enable("xclim")
+            self._was_enabled = True
+        return self.logger
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self._was_enabled:
+            self.logger.disable("xclim")
+        try:
+            self.logger.remove()
+        except ValueError:
+            pass
 
 
 def file_md5_checksum(fname):
@@ -54,7 +77,7 @@ def _get(
         localmd5 = file_md5_checksum(local_file)
         try:
             url = "/".join((github_url, "raw", branch, md5name.as_posix()))
-            LOGGER.info("Attempting to fetch remote file md5: %s" % md5name.as_posix())
+            logger.info("Attempting to fetch remote file md5: %s" % md5name.as_posix())
             urlretrieve(url, md5file)
             with open(md5file) as f:
                 remote_md5 = f.read()
@@ -75,11 +98,11 @@ def _get(
         local_file.parent.mkdir(parents=True, exist_ok=True)
 
         url = "/".join((github_url, "raw", branch, fullname.as_posix()))
-        LOGGER.info("Fetching remote file: %s" % fullname.as_posix())
+        logger.info("Fetching remote file: %s" % fullname.as_posix())
         urlretrieve(url, local_file)
         try:
             url = "/".join((github_url, "raw", branch, md5name.as_posix()))
-            LOGGER.info("Fetching remote file md5: %s" % md5name.as_posix())
+            logger.info("Fetching remote file md5: %s" % md5name.as_posix())
             urlretrieve(url, md5file)
         except HTTPError as e:
             msg = f"{md5name.as_posix()} not found. Aborting file retrieval."
@@ -98,7 +121,8 @@ def _get(
                 )
                 raise OSError(msg)
         except OSError as e:
-            LOGGER.error(e)
+            logger.error(e)
+            raise
 
     return local_file
 
@@ -158,7 +182,7 @@ def open_dataset(
             return ds
         except OSError:
             msg = "OPeNDAP file not read. Verify that service is available."
-            LOGGER.error(msg)
+            logger.error(msg)
             raise
 
     local_file = _get(
