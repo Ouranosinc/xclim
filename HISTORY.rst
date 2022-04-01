@@ -2,7 +2,7 @@
 History
 =======
 
-0.35.0 (01-03-2022)
+0.35.0 (01-04-2022)
 -------------------
 Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`) and Pascal Bourgault (:user:`aulemahal`).
 
