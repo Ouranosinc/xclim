@@ -2,7 +2,7 @@
 History
 =======
 
-0.35.0 (unreleased)
+0.35.0 (01-03-2022)
 -------------------
 Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`) and Pascal Bourgault (:user:`aulemahal`).
 
@@ -17,8 +17,8 @@ New features and enhancements
 
 Bug fixes
 ^^^^^^^^^
-* ``xclim.analog.spatial_analogs`` now compatible with dask-backed DataArrays (:pull:`1033`).
-* Parameter ``dmin`` added to spatial analog method "zech_aslan", to avoid singularities on identical points (:pull:`1033`).
+* ``xclim.analog.spatial_analogs`` is now compatible with dask-backed DataArrays. (:pull:`1033`).
+* Parameter ``dmin`` added to spatial analog method "zech_aslan", to avoid singularities on identical points. (:pull:`1033`).
 * `xclim` is now compatible with changes in `xarray` that enabled explicit indexing operations. (:pull:`1038`, `xarray PR <https://github.com/pydata/xarray/pull/5692>`_).
 
 Internal changes
