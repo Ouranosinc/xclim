@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """xclim command line interface module."""
 import sys
 import warnings
@@ -10,27 +9,30 @@ from dask.diagnostics import ProgressBar
 import xclim as xc
 from xclim.core.dataflags import DataQualityException, data_flags, ecad_compliant
 from xclim.core.utils import InputKind
-from xclim.testing._utils import publish_release_notes
+from xclim.testing._utils import publish_release_notes  # noqa
 
 try:
     from dask.distributed import Client, progress
 except ImportError:
     # Distributed is not a dependency of xclim
     Client = None
+    progress = None
 
 
-def _get_indicator(indname):
+def _get_indicator(indicator_name):
     try:
-        return xc.core.indicator.registry[indname.upper()].get_instance()  # noqa
+        return xc.core.indicator.registry[indicator_name.upper()].get_instance()  # noqa
     except KeyError:
-        raise click.BadArgumentUsage(f"Indicator '{indname}' not found in xclim.")
+        raise click.BadArgumentUsage(
+            f"Indicator '{indicator_name}' not found in xclim."
+        )
 
 
 def _get_input(ctx):
     """Return the input dataset stored in the given context.
 
     If the dataset is not open, opens it with open_dataset if a single path was given,
-    or with open_mfdataset if a tuple or glob path was given.
+    or with `open_mfdataset` if a tuple or glob path was given.
     """
     arg = ctx.obj["input"]
     if arg is None:
@@ -53,8 +55,8 @@ def _get_output(ctx):
     If the output dataset doesn't exist, create it.
     """
     if "ds_out" not in ctx.obj:
-        dsin = _get_input(ctx)
-        ctx.obj["ds_out"] = xr.Dataset(attrs=dsin.attrs)
+        ds_in = _get_input(ctx)
+        ctx.obj["ds_out"] = xr.Dataset(attrs=ds_in.attrs)
         if ctx.obj["output"] is None:
             raise click.BadOptionUsage(
                 "output", "No output file name given.", ctx.parent
@@ -91,9 +93,9 @@ def _process_indicator(indicator, ctx, **params):
     ctx.obj["ds_out"] = dsout
 
 
-def _create_command(indname):
+def _create_command(indicator_name):
     """Generate a Click.Command from an xclim Indicator."""
-    indicator = _get_indicator(indname)
+    indicator = _get_indicator(indicator_name)
     params = []
     for name, param in indicator.parameters.items():
         if name in ["ds"] or param.kind == InputKind.KWARGS:
@@ -118,7 +120,7 @@ def _create_command(indname):
         return _process_indicator(indicator, ctx, **kwargs)
 
     return click.Command(
-        indname,
+        indicator_name,
         callback=_process,
         params=params,
         help=indicator.abstract,
@@ -411,9 +413,9 @@ def cli(ctx, **kwargs):
     ctx.obj = kwargs
 
 
-@cli.resultcallback()
+@cli.result_callback()  # noqa
 @click.pass_context
-def write_file(ctx, *args, **kwargs):
+def write_file(ctx, *args, **kwargs):  # noqa
     """Write the output dataset to file."""
     if ctx.obj["output"] is not None:
         if ctx.obj["verbose"]:

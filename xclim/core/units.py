@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # noqa: D205,D400
 """
 Units handling submodule
@@ -16,14 +15,16 @@ import pint.converters
 import pint.unit
 import xarray as xr
 from boltons.funcutils import wraps
-from packaging import version
+from pint import Unit
 from pint.definitions import UnitDefinition
+from xarray import DataArray
 
 from .calendar import date_range, get_calendar, parse_offset
 from .options import datacheck
 from .utils import ValidationError
 
 __all__ = [
+    "check_units",
     "convert_units_to",
     "declare_units",
     "infer_sampling_units",
@@ -37,9 +38,7 @@ __all__ = [
 ]
 
 
-units = pint.UnitRegistry(
-    autoconvert_offset_to_baseunit=True
-)  # , on_redefinition="ignore")
+units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True, on_redefinition="ignore")
 units.define(
     pint.unit.UnitDefinition(
         "percent", "%", ("pct",), pint.converters.ScaleConverter(0.01)
@@ -49,30 +48,16 @@ units.define(
 units.define("year = 365.25 * day = yr")
 
 # Define commonly encountered units not defined by pint
-if version.parse(pint.__version__) >= version.parse("0.10"):
-    units.define("@alias degC = C = deg_C")
-    units.define("@alias degK = deg_K")
-    units.define("@alias day = d")
-    units.define("@alias hour = h")  # Not the Planck constant...
-    units.define(
-        "@alias degree = degrees_north = degrees_N = degreesN = degree_north = degree_N = degreeN"
-    )
-    units.define(
-        "@alias degree = degrees_east = degrees_E = degreesE = degree_east = degree_E = degreeE"
-    )
-
-else:
-    units.define("degC = kelvin; offset: 273.15 = celsius = C = deg_C")
-    units.define("d = day")
-    units.define("h = hour")
-    units.define(
-        "degrees_north = degree = degrees_N = degreesN = degree_north = degree_N "
-        "= degreeN"
-    )
-    units.define(
-        "degrees_east = degree = degrees_E = degreesE = degree_east = degree_E = degreeE"
-    )
-
+units.define("@alias degC = C = deg_C")
+units.define("@alias degK = deg_K")
+units.define("@alias day = d")
+units.define("@alias hour = h")  # Not the Planck constant...
+units.define(
+    "degrees_north = 1 * degree = degrees_north = degrees_N = degreesN = degree_north = degree_N = degreeN"
+)
+units.define(
+    "degrees_east = 1 * degree = degrees_east = degrees_E = degreesE = degree_east = degree_E = degreeE"
+)
 units.define("[speed] = [length] / [time]")
 
 # Default context.
@@ -91,17 +76,17 @@ hydro = pint.Context("hydro")
 hydro.add_transformation(
     "[mass] / [length]**2",
     "[length]",
-    lambda ureg, x: x / (1000 * ureg.kg / ureg.m ** 3),
+    lambda ureg, x: x / (1000 * ureg.kg / ureg.m**3),
 )
 hydro.add_transformation(
     "[mass] / [length]**2 / [time]",
     "[length] / [time]",
-    lambda ureg, x: x / (1000 * ureg.kg / ureg.m ** 3),
+    lambda ureg, x: x / (1000 * ureg.kg / ureg.m**3),
 )
 hydro.add_transformation(
     "[length] / [time]",
     "[mass] / [length]**2 / [time]",
-    lambda ureg, x: x * (1000 * ureg.kg / ureg.m ** 3),
+    lambda ureg, x: x * (1000 * ureg.kg / ureg.m**3),
 )
 units.add_context(hydro)
 units.enable_contexts(hydro)
@@ -119,7 +104,7 @@ units.enable_contexts(hydro)
 # @end
 
 
-def units2pint(value: Union[xr.DataArray, str, units.Quantity]) -> units.Unit:
+def units2pint(value: Union[xr.DataArray, str, units.Quantity]) -> Unit:
     """Return the pint Unit for the DataArray units.
 
     Parameters
@@ -280,9 +265,8 @@ def convert_units_to(
     source: Union[str, xr.DataArray, Any],
     target: Union[str, xr.DataArray, Any],
     context: Optional[str] = None,
-):
-    """
-    Convert a mathematical expression into a value with the same units as a DataArray.
+) -> Union[DataArray, float, int, Any]:
+    """Convert a mathematical expression into a value with the same units as a DataArray.
 
     Parameters
     ----------
@@ -290,11 +274,12 @@ def convert_units_to(
       The value to be converted, e.g. '4C' or '1 mm/d'.
     target : Union[str, xr.DataArray, Any]
       Target array of values to which units must conform.
-    context : Optional[str]
+    context : str, optional
+      The unit definition context. Default: None.
 
     Returns
     -------
-    out
+    Union[DataArray, float, int, Any]
       The source value converted to target's units.
     """
     # Target units
@@ -392,7 +377,8 @@ def infer_sampling_units(
     u : str
       Units as a string, understandable by pint.
     """
-    freq = xr.infer_freq(da.time)
+    dimmed = getattr(da, dim)
+    freq = xr.infer_freq(dimmed)
     if freq is None:
         freq = deffreq
 
@@ -509,7 +495,8 @@ def _rate_and_amount_converter(
     if u is None:
         # Get sampling period lengths in nanoseconds
         # In the case with no freq, last period as the same length as the one before.
-        # In the case with freq in M, Q, A, this has been dealt with above in `time` and `label` has been update accordingly.
+        # In the case with freq in M, Q, A, this has been dealt with above in `time`
+        # and `label` has been updated accordingly.
         dt = (
             time.diff(dim, label=label)
             .reindex({dim: da[dim]}, method="ffill")
@@ -723,3 +710,28 @@ def declare_units(
         return wrapper
 
     return dec
+
+
+def ensure_delta(unit: str = None):
+    """
+    Return delta units for temperature.
+
+    For dimensions where delta exist in pint (Temperature), it replaces the temperature unit by delta_degC or
+    delta_degF based on the input unit.
+    For other dimensionality, it just gives back the input units.
+
+    Parameters
+    ----------
+    unit : str
+      unit to transform in delta (or not)
+    """
+    u = units2pint(unit)
+    d = 1 * u
+    #
+    delta_unit = pint2cfunits(d - d)
+    # replace kelvin/rankine by delta_degC/F
+    if "kelvin" in u._units:
+        delta_unit = pint2cfunits(u / units2pint("K") * units2pint("delta_degC"))
+    if "degree_Rankine" in u._units:
+        delta_unit = pint2cfunits(u / units2pint("°R") * units2pint("delta_degF"))
+    return delta_unit

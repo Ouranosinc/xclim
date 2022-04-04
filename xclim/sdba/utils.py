@@ -2,7 +2,8 @@
 sdba utilities
 --------------
 """
-from typing import Callable, List, Mapping, Optional, Tuple, Union
+import itertools
+from typing import Callable, Mapping, Optional, Tuple, Union
 from warnings import warn
 
 import numpy as np
@@ -10,6 +11,7 @@ import xarray as xr
 from boltons.funcutils import wraps
 from dask import array as dsk
 from scipy.interpolate import griddata, interp1d
+from scipy.stats import spearmanr
 
 from xclim.core.calendar import _interpolate_doy_calendar  # noqa
 from xclim.core.utils import ensure_chunk_size
@@ -234,20 +236,26 @@ def broadcast(
     return grouped
 
 
-def equally_spaced_nodes(n: int, eps: Union[float, None] = 1e-4) -> np.array:
-    """Return nodes with `n` equally spaced points within [0, 1] plus two end-points.
+def equally_spaced_nodes(n: int, eps: Optional[float] = None) -> np.array:
+    """Return nodes with `n` equally spaced points within [0, 1], optionally adding two end-points.
 
     Parameters
     ----------
     n : int
       Number of equally spaced nodes.
-    eps : float, None
-      Distance from 0 and 1 of end nodes. If None, do not add endpoints.
+    eps : float, optional
+      Distance from 0 and 1 of added end nodes. If None (default), do not add endpoints.
 
     Returns
     -------
     np.array
-      Nodes between 0 and 1.
+      Nodes between 0 and 1. Nodes can be seen as the middle points of `n` equal bins.
+
+    Warnings
+    --------
+    Passing a small `eps` will effectively clip the scenario to the bounds of the reference
+    on the historical period in most cases. With normal quantile mapping algorithms, this can
+    give strange result when the reference does not show as many extremes as the simulation does.
 
     Notes
     -----
@@ -294,112 +302,6 @@ def add_cyclic_bounds(
     return ensure_chunk_size(qmf, **{att: -1})
 
 
-def extrapolate_qm(
-    qf: xr.DataArray,
-    xq: xr.DataArray,
-    method: str = "constant",
-    abs_bounds: Optional[tuple] = (-np.inf, np.inf),
-) -> Tuple[xr.DataArray, xr.DataArray]:
-    """Extrapolate quantile adjustment factors beyond the computed quantiles.
-
-    Parameters
-    ----------
-    qf : xr.DataArray
-      Adjustment factors over `quantile` coordinates.
-    xq : xr.DataArray
-      Coordinates of the adjustment factors.
-      For example, in EQM, this are the values at each `quantile`.
-    method : {"constant", "nan"}
-      Extrapolation method. See notes below.
-    abs_bounds : 2-tuple
-      The absolute bounds of `xq`. Defaults to (-inf, inf).
-
-    Returns
-    -------
-    qf: xr.Dataset or xr.DataArray
-        Extrapolated adjustment factors.
-    xq: xr.Dataset or xr.DataArray
-        Extrapolated x-values.
-
-    Notes
-    -----
-    Valid values for `method` are:
-
-    - 'nan'
-
-      Estimating values above or below the computed values will return a NaN.
-
-    - 'constant'
-
-      The adjustment factor above and below the computed values are equal to the last
-      and first values respectively.
-    """
-    warn(
-        (
-            "`extrapolate_qm` is deprecated and will be removed in xclim 0.33. "
-            "Extrapolation is now handled directly in `interp_on_quantiles`."
-        ),
-        DeprecationWarning,
-    )
-    # constant_iqr
-    #   Same as `constant`, but values are set to NaN if farther than one interquartile range from the min and max.
-    q_l, q_r = [0], [1]
-    x_l, x_r = [abs_bounds[0]], [abs_bounds[1]]
-    if method == "nan":
-        qf_l, qf_r = np.NaN, np.NaN
-    elif method == "constant":
-        qf_l = qf.bfill("quantiles").isel(quantiles=0)
-        qf_r = qf.ffill("quantiles").isel(quantiles=-1)
-
-    elif (
-        method == "constant_iqr"
-    ):  # This won't work because add_endpoints does not support mixed y (float and DA)
-        raise NotImplementedError
-        # iqr = np.diff(xq.interp(quantile=[0.25, 0.75]))[0]
-        # ql, qr = [0, 0], [1, 1]
-        # xl, xr = [-np.inf, xq.isel(quantile=0) - iqr], [xq.isel(quantile=-1) + iqr, np.inf]
-        # qml, qmr = [np.nan, qm.isel(quantile=0)], [qm.isel(quantile=-1), np.nan]
-    else:
-        raise ValueError
-
-    qf = add_endpoints(qf, left=[q_l, qf_l], right=[q_r, qf_r])
-    xq = add_endpoints(xq, left=[q_l, x_l], right=[q_r, x_r])
-    return qf, xq
-
-
-def add_endpoints(
-    da: xr.DataArray,
-    left: List[Union[int, float, xr.DataArray, List[int], List[float]]],
-    right: List[Union[int, float, xr.DataArray, List[int], List[float]]],
-    dim: str = "quantiles",
-) -> xr.DataArray:
-    """Add left and right endpoints to a DataArray.
-
-    Parameters
-    ----------
-    da : DataArray
-      Source array.
-    left : [x, y]
-      Values to prepend
-    right : [x, y]
-      Values to append.
-    dim : str
-      Dimension along which to add endpoints.
-    """
-    elems = []
-    for (x, y) in (left, right):
-        if isinstance(y, xr.DataArray):
-            if "quantiles" not in y.dims:
-                y = y.expand_dims("quantiles")
-            y = y.assign_coords(quantiles=x)
-        else:
-            y = xr.DataArray(y, coords={dim: x}, dims=(dim,))
-        elems.append(y)
-    l, r = elems  # pylint: disable=unbalanced-tuple-unpacking
-    out = xr.concat((l, da, r), dim=dim)
-    return ensure_chunk_size(out, **{dim: -1})
-
-
 def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):
     mask_new = np.isnan(newx)
     mask_old = np.isnan(oldy) | np.isnan(oldx)
@@ -436,7 +338,6 @@ def _interp_on_quantiles_2D(newx, newg, oldx, oldy, oldg, method, extrap):  # no
             category=RuntimeWarning,
         )
         return out
-
     out[~mask_new] = griddata(
         (oldx[~mask_old], oldg[~mask_old]),
         oldy[~mask_old],
@@ -491,7 +392,8 @@ def interp_on_quantiles(
     - 'nan' : Any value of `newx` outside the range of `xq` is set to NaN.
     - 'constant' : Values of `newx` smaller than the minimum of `xq` are set to the first
       value of `yq` and those larger than the maximum, set to the last one (first and
-      last values along the "quantiles" dimension).
+      last values along the "quantiles" dimension). When the grouping is "time.month",
+      these limits are linearly interpolated along the month dimension.
     """
     dim = group.dim
     prop = group.prop
@@ -557,25 +459,27 @@ def rank(da: xr.DataArray, dim: str = "time", pct: bool = False) -> xr.DataArray
     Xarray's docstring is below:
 
     Equal values are assigned a rank that is the average of the ranks that
-    would have been otherwise assigned to all of the values within that
-    set.  Ranks begin at 1, not 0. If pct, computes percentage ranks.
-
-    NaNs in the input array are returned as NaNs.
-
-    The `bottleneck` library is required.
+    would have been otherwise assigned to all the values within that
+    set. Ranks begin at 1, not 0. If pct, computes percentage ranks.
 
     Parameters
     ----------
     da: xr.DataArray
+      Source array.
     dim : str, hashable
-        Dimension over which to compute rank.
+      Dimension over which to compute rank.
     pct : bool, optional
-        If True, compute percentage ranks, otherwise compute integer ranks.
+      If True, compute percentage ranks, otherwise compute integer ranks.
 
     Returns
     -------
     DataArray
         DataArray with the same coordinates and dtype 'float64'.
+
+    Notes
+    -----
+    The `bottleneck` library is required.
+    NaNs in the input array are returned as NaNs.
     """
     return da.rank(dim, pct=pct)
 
@@ -615,23 +519,26 @@ def pc_matrix(arr: Union[np.ndarray, dsk.Array]) -> Union[np.ndarray, dsk.Array]
     return eig_vec * mod.sqrt(eig_vals)
 
 
-def best_pc_orientation(
-    A: np.ndarray, Binv: np.ndarray, val: float = 1000
+def best_pc_orientation_simple(
+    R: np.ndarray, Hinv: np.ndarray, val: float = 1000
 ) -> np.ndarray:
-    """Return best orientation vector for A.
+    """Return best orientation vector according to a simple test.
 
     Eigenvectors returned by `pc_matrix` do not have a defined orientation.
-    Given an inverse transform Binv and a transform A, this returns the orientation
+    Given an inverse transform Hinv and a transform R, this returns the orientation
     minimizing the projected distance for a test point far from the origin.
 
-    This trick is explained in [hnilica2017]_. See documentation of
-    `sdba.adjustment.PrincipalComponentAdjustment`.
+    This trick is inspired by the one exposed in [hnilica2017]_.
+    For each possible orientation vector, the test point is reprojected
+    and the distance from the original point is computed. The orientation
+    minimizing that distance is chosen.
+    See documentation of `sdba.adjustment.PrincipalComponentAdjustment`.
 
     Parameters
     ----------
-    A : np.ndarray
+    R : np.ndarray
       MxM Matrix defining the final transformation.
-    Binv : np.ndarray
+    Hinv : np.ndarray
       MxM Matrix defining the (inverse) first transformation.
     val : float
       The coordinate of the test point (same for all axes). It should be much
@@ -641,25 +548,75 @@ def best_pc_orientation(
     -------
     np.ndarray
       Mx1 vector of orientation correction (1 or -1).
-    """
-    m = A.shape[0]
-    orient = np.ones(m)
-    P = np.diag(val * np.ones(m))
 
-    # Compute first reference error
-    err = np.linalg.norm(P - A @ Binv @ P)
-    for i in range(m):
-        # Switch the ith axis orientation
-        orient[i] = -1
+    References
+    ----------
+    .. [hnilica2017] Hnilica, J., Hanel, M. and Pš, V. (2017), Multisite bias correction of precipitation data from regional climate models. Int. J. Climatol., 37: 2934-2946. https://doi.org/10.1002/joc.4890
+    """
+    m = R.shape[0]
+    P = np.diag(val * np.ones(m))
+    signes = dict(itertools.zip_longest(itertools.product(*[[1, -1]] * m), [None]))
+    for orient in list(signes.keys()):
         # Compute new error
-        new_err = np.linalg.norm(P - (A * orient) @ Binv @ P)
-        if new_err > err:
-            # Previous error was lower, switch back
-            orient[i] = 1
-        else:
-            # New orientation is better, keep and remember error.
-            err = new_err
-    return orient
+        signes[orient] = np.linalg.norm(P - ((orient * R) @ Hinv) @ P)
+    return np.array(min(signes, key=lambda o: signes[o]))
+
+
+def best_pc_orientation_full(
+    R: np.ndarray,
+    Hinv: np.ndarray,
+    Rmean: np.ndarray,
+    Hmean: np.ndarray,
+    hist: np.ndarray,
+) -> np.ndarray:
+    """Return best orientation vector for A according to the method of Alavoine et al. (2021, preprint).
+
+    Eigenvectors returned by `pc_matrix` do not have a defined orientation.
+    Given an inverse transform Hinv, a transform R, the actual and target origins
+    Hmean and Rmean and the matrix of training observations hist, this computes
+    a scenario for all possible orientations and return the orientation that
+    maximizes the Spearman correlation coefficient of all variables. The
+    correlation is computed for each variable individually, then averaged.
+
+    This trick is explained in [alavoine2021]_.
+    See documentation of :py:func:`sdba.adjustment.PrincipalComponentAdjustment`.
+
+    Parameters
+    ----------
+    R : np.ndarray
+      MxM Matrix defining the final transformation.
+    Hinv : np.ndarray
+      MxM Matrix defining the (inverse) first transformation.
+    Rmean : np.ndarray
+      M vector defining the target distribution center point.
+    Hmean : np.ndarray
+      M vector defining the original distribution center point.
+    hist : np.ndarray
+      MxN matrix of all training observations of the M variables/sites.
+
+    Returns
+    -------
+    np.ndarray
+      M vector of orientation correction (1 or -1).
+
+    References
+    ----------
+    .. [alavoine2021] Alavoine, M., & Grenier, P. (2021). The distinct problems of physical inconsistency and of multivariate bias potentially involved in the statistical adjustment of climate simulations. https://eartharxiv.org/repository/view/2876/
+    """
+    # All possible orientation vectors
+    m = R.shape[0]
+    signes = dict(itertools.zip_longest(itertools.product(*[[1, -1]] * m), [None]))
+    for orient in list(signes.keys()):
+        # Calculate scen for hist
+        scen = np.atleast_2d(Rmean).T + ((orient * R) @ Hinv) @ (
+            hist - np.atleast_2d(Hmean).T
+        )
+        # Correlation for each variable
+        corr = [spearmanr(hist[i, :], scen[i, :])[0] for i in range(hist.shape[0])]
+        # Store mean correlation
+        signes[orient] = np.mean(corr)
+    # Return orientation that maximizes the correlation
+    return np.array(max(signes, key=lambda o: signes[o]))
 
 
 def get_clusters_1d(
@@ -745,7 +702,7 @@ def get_clusters(data: xr.DataArray, u1, u2, dim: str = "time") -> xr.Dataset:
         - `maximum` : Maximal value within the cluster (`dim` reduced, new `cluster`), same dtype as data.
 
       For `start`, `end` and `maxpos`, -1 means NaN and should always correspond to a `NaN` in `maximum`.
-      The length along `cluster` is half the size of "dim", the maximal theoritical number of clusters.
+      The length along `cluster` is half the size of "dim", the maximal theoretical number of clusters.
     """
 
     def _get_clusters(arr, u1, u2, N):
@@ -848,3 +805,15 @@ def rand_rot_matrix(
     return xr.DataArray(
         Q @ lam, dims=(dim, new_dim), coords={dim: crd, new_dim: crd2}
     ).astype("float32")
+
+
+def copy_all_attrs(
+    ds: Union[xr.Dataset, xr.DataArray], ref: Union[xr.Dataset, xr.DataArray]
+):
+    """Copies all attributes of ds to ref, including attributes of shared coordinates, and variables in the case of Datasets."""
+    ds.attrs.update(ref.attrs)
+    extras = ds.variables if isinstance(ds, xr.Dataset) else ds.coords
+    others = ref.variables if isinstance(ref, xr.Dataset) else ref.coords
+    for name, var in extras.items():
+        if name in others:
+            var.attrs.update(ref[name].attrs)

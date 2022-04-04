@@ -32,7 +32,7 @@ def _adapt_freq(
     ds : xr.Dataset
       With variables :  "ref", Target/reference data, usually observed data.
       and  "sim", Simulated data.
-    dim : str, or seqence of strings
+    dim : str, or sequence of strings
       Dimension name(s). If more than one, the probabilities and quantiles are computed within all the dimensions.
       If  `window` is in the names, it is removed before the correction and the final timeseries is corrected along dim[0] only.
     group : Union[str, Grouper]
@@ -66,7 +66,7 @@ def _adapt_freq(
     else:
 
         # Compute : ecdf_ref^-1( ecdf_sim( thresh ) )
-        # The value in ref with the same rank as the first non zero value in sim.
+        # The value in ref with the same rank as the first non-zero value in sim.
         # pth is meaningless when freq. adaptation is not needed
         pth = nbu.vecquantiles(ds.ref, P0_sim, dim).where(dP0 > 0)
 
@@ -102,7 +102,9 @@ def _adapt_freq(
     return xr.Dataset(data_vars={"pth": pth, "dP0": dP0, "sim_ad": sim_ad})
 
 
-@map_groups(reduces=[Grouper.PROP], data=[])
+@map_groups(
+    reduces=[Grouper.DIM, Grouper.PROP], data=[Grouper.DIM], norm=[Grouper.PROP]
+)
 def _normalize(
     ds: xr.Dataset,
     *,
@@ -122,7 +124,8 @@ def _normalize(
     dim : sequence of strings
       Dimension name(s).
     kind : {'+', '*'}
-      How to apply the adjustment, either additively or multiplicatively.
+      How to apply the adjustment, using either additive or multiplicative methods.
+
     Returns
     -------
     xr.Dataset
@@ -130,11 +133,14 @@ def _normalize(
     """
 
     if "norm" in ds:
-        norm = invert(ds.norm, kind)
+        norm = ds.norm
     else:
-        norm = invert(ds.data.mean(dim=dim), kind)
+        norm = ds.data.mean(dim=dim)
+    norm.attrs["_group_apply_reshape"] = True
 
-    return xr.Dataset(dict(data=apply_correction(ds.data, norm, kind)))
+    return xr.Dataset(
+        dict(data=apply_correction(ds.data, invert(norm, kind), kind), norm=norm)
+    )
 
 
 @map_groups(reordered=[Grouper.DIM], main_only=True)

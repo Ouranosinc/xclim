@@ -26,7 +26,7 @@ class TestUnits:
 
     def test_hydro(self):
         with units.context("hydro"):
-            q = 1 * units.kg / units.m ** 2 / units.s
+            q = 1 * units.kg / units.m**2 / units.s
             assert q.to("mm/day") == q.to("mm/d")
 
     def test_lat_lon(self):
@@ -118,6 +118,9 @@ class TestUnitConversion:
 
         u = units2pint("mm s-1")
         assert str(u) == "millimeter / second"
+
+        u = units2pint("degrees_north")
+        assert str(u) == "degrees_north"
 
     def test_pint_multiply(self, pr_series):
         a = pr_series([1, 2, 3])

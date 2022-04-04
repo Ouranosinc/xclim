@@ -1,4 +1,3 @@
-# -*- encoding: utf8 -*-
 # noqa: D205,D400
 """
 Ensemble Robustness metrics.
@@ -45,7 +44,7 @@ def change_significance(
       Dataset, they must have the same variables (name and coords).
     test : {'ttest', 'welch-ttest', 'threshold', None}
       Name of the statistical test used to determine if there was significant change. See notes.
-    **kwargs
+    kwargs
       Other arguments specific to the statistical test.
 
       For 'ttest' and 'welch-ttest':
@@ -72,7 +71,7 @@ def change_significance(
       number of members (`fut.realization.size`).
 
       +-----------------+------------------------------+------------------------+
-      |                 | Significant change           | Non significant change |
+      |                 | Significant change           | Non-significant change |
       +-----------------+------------------------------+------------------------+
       | Any direction   | change_frac                  | 1 - change_frac        |
       +-----------------+------------------------------+------------------------+

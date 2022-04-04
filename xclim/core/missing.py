@@ -3,14 +3,14 @@
 Missing values identification
 =============================
 
-Indicators may use different criteria to determine whether or not a computed indicator value should be
+Indicators may use different criteria to determine whether a computed indicator value should be
 considered missing. In some cases, the presence of any missing value in the input time series should result in a
 missing indicator value for that period. In other cases, a minimum number of valid values or a percentage of missing
 values should be enforced. The World Meteorological Organisation  (WMO) suggests criteria based on the number of
 consecutive and overall missing values per month.
 
 `xclim` has a registry of missing value detection algorithms that can be extended by users to customize the behavior
-of indicators. Once registered, algorithms can be be used within indicators by setting the `missing` attribute of an
+of indicators. Once registered, algorithms can be used within indicators by setting the `missing` attribute of an
 `Indicator` subclass. By default, `xclim` registers the following algorithms:
 
  * `any`: A result is missing if any input value is missing.
@@ -18,26 +18,23 @@ of indicators. Once registered, algorithms can be be used within indicators by s
  * `pct`: A result is missing if more than a given fraction of values are missing.
  * `wmo`: A result is missing if 11 days are missing, or 5 consecutive values are missing in a month.
  * `skip`: Skip missing value detection.
- * `from_context`: Look-up the missing value algorithm from options settings. See :func:`xclim.set_options`.
+ * `from_context`: Look-up the missing value algorithm from options settings. See :py:func:`xclim.set_options`.
 
-To define another missing value algorithm, subclass :class:`MissingBase` and decorate it with
-`xclim.core.options.register_missing_method`.
+To define another missing value algorithm, subclass :py:class:`MissingBase` and decorate it with
+:py:func:`xclim.core.options.register_missing_method`.
 
 """
-from typing import Any, Tuple, Union
-
 import numpy as np
 import xarray as xr
 
-from xclim.core.calendar import date_range, get_calendar
-from xclim.core.options import (
+from .calendar import date_range, get_calendar, select_time
+from .options import (
     CHECK_MISSING,
     MISSING_METHODS,
     MISSING_OPTIONS,
     OPTIONS,
     register_missing_method,
 )
-from xclim.indices import generic
 
 __all__ = [
     "missing_wmo",
@@ -88,7 +85,7 @@ class MissingBase:
     @staticmethod
     def is_null(da, freq, **indexer):
         """Return a boolean array indicating which values are null."""
-        selected = generic.select_time(da, drop=True, **indexer)
+        selected = select_time(da, drop=True, **indexer)
         if selected.time.size == 0:
             raise ValueError("No data for selected period.")
 
@@ -110,7 +107,7 @@ class MissingBase:
           https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
         src_timestep : {"D", "H"}
           Expected input frequency.
-        **indexer : {dim: indexer}, optional
+        indexer : {dim: indexer}, optional
           Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
           values, month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given,
           all values are considered.
@@ -132,7 +129,7 @@ class MissingBase:
 
         c = null.sum(dim="time")
 
-        # Otherwise simply use the start and end dates to find the expected number of days.
+        # Otherwise, simply use the start and end dates to find the expected number of days.
         if pfreq.endswith("S"):
             start_time = c.indexes["time"]
             end_time = start_time.shift(1, freq=freq)
@@ -154,7 +151,7 @@ class MissingBase:
             )
 
             sda = xr.DataArray(data=np.ones(len(t)), coords={"time": t}, dims=("time",))
-            st = generic.select_time(sda, drop=True, **indexer)
+            st = select_time(sda, drop=True, **indexer)
             if freq:
                 count = st.notnull().resample(time=freq).sum(dim="time")
             else:
@@ -172,12 +169,12 @@ class MissingBase:
         return null, count
 
     def is_missing(self, null, count, **kwargs):
-        """Return whether or not the values within each period should be considered missing or not."""
+        """Return whether the values within each period should be considered missing or not."""
         raise NotImplementedError
 
     @staticmethod
     def validate(**kwargs):
-        """Return whether or not options arguments are valid."""
+        """Return whether options arguments are valid or not."""
         return True
 
     def __call__(self, **kwargs):
@@ -203,7 +200,7 @@ class MissingAny(MissingBase):
       Resampling frequency.
     src_timestep : {"D", "H", "M"}
       Expected input frequency.
-    **indexer : {dim: indexer, }, optional
+    indexer : {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
       values,
       month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
@@ -211,7 +208,7 @@ class MissingAny(MissingBase):
 
     Returns
     -------
-    out : DataArray
+    DataArray
       A boolean array set to True if period has missing values.
     """
 
@@ -226,7 +223,7 @@ class MissingWMO(MissingAny):
     r"""Return whether a series fails WMO criteria for missing days.
 
     The World Meteorological Organisation recommends that where monthly means are computed from daily values,
-    it should considered missing if either of these two criteria are met:
+    it should be considered missing if either of these two criteria are met:
 
       – observations are missing for 11 or more days during the month;
       – observations are missing for a period of 5 or more consecutive days during the month.
@@ -246,7 +243,7 @@ class MissingWMO(MissingAny):
       Number of consecutive missing values per month that should not be exceeded.
     src_timestep : {"D"}
       Expected input frequency. Only daily values are supported.
-    **indexer : {dim: indexer, }, optional
+    indexer : {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
       values,
@@ -255,7 +252,7 @@ class MissingWMO(MissingAny):
 
     Returns
     -------
-    out : DataArray
+    DataArray
       A boolean array set to True if period has missing values.
 
     Notes
@@ -319,18 +316,17 @@ class MissingPct(MissingBase):
     freq : str
       Resampling frequency.
     tolerance : float
-      Fraction of missing values that is tolerated [0,1].
+      Fraction of missing values that are tolerated [0,1].
     src_timestep : {"D", "H"}
       Expected input frequency.
-    **indexer : {dim: indexer, }, optional
-      Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
-      values,
+    indexer : {dim: indexer, }, optional
+      Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
       month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
       considered.
 
     Returns
     -------
-    out : DataArray
+    DataArray
       A boolean array set to True if period has missing values.
     """
 
@@ -360,7 +356,7 @@ class AtLeastNValid(MissingBase):
       Minimum of valid values required.
     src_timestep : {"D", "H"}
       Expected input frequency.
-    **indexer : {dim: indexer, }, optional
+    indexer : {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
       values, month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given,
       all values are considered.

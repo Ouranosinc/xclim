@@ -179,7 +179,8 @@ def _polydetrend_get_trend(da, *, dim, degree, preserve_mean, kind):
 
     if preserve_mean:
         trend = apply_correction(trend, invert(trend.mean(dim=dim), kind), kind)
-    return trend.rename("trend").to_dataset()
+    out = trend.rename("trend").to_dataset()
+    return out
 
 
 class LoessDetrend(BaseDetrend):
@@ -188,7 +189,7 @@ class LoessDetrend(BaseDetrend):
 
     The fit is a piecewise linear regression. For each point, the contribution of all
     neighbors is weighted by a bell-shaped curve (gaussian) with parameters sigma (std).
-    The x-coordinate of the dataarray is scaled to [0,1] before the regression is computed.
+    The x-coordinate of the DataArray is scaled to [0,1] before the regression is computed.
 
     Parameters
     ----------
@@ -200,13 +201,16 @@ class LoessDetrend(BaseDetrend):
     d: [0, 1]
       Order of the local regression. Only 0 and 1 currently implemented.
     f : float
-      Parameter controling the span of the weights, between 0 and 1.
+      Parameter controlling the span of the weights, between 0 and 1.
     niter : int
       Number of robustness iterations to execute.
     weights : ["tricube", "gaussian"]
       Shape of the weighting function:
       "tricube" : a smooth top-hat like curve, f gives the span of non-zero values.
       "gaussian" : a gaussian curve, f gives the span for 95% of the values.
+    skipna : bool
+      If True (default), missing values are not included in the loess trend computation
+      and thus are not propagated. The output will have the same missing values as the input.
 
     Notes
     -----
@@ -225,6 +229,7 @@ class LoessDetrend(BaseDetrend):
         d=0,
         weights="tricube",
         equal_spacing=None,
+        skipna=True,
     ):
         super().__init__(
             group=group,
@@ -234,6 +239,7 @@ class LoessDetrend(BaseDetrend):
             d=0,
             weights=weights,
             equal_spacing=equal_spacing,
+            skipna=skipna,
         )
 
     def _get_trend(self, da):
@@ -243,7 +249,9 @@ class LoessDetrend(BaseDetrend):
 
 
 @map_groups(trend=[Grouper.DIM])
-def _loessdetrend_get_trend(da, *, dim, f, niter, d, weights, equal_spacing, kind):
+def _loessdetrend_get_trend(
+    da, *, dim, f, niter, d, weights, equal_spacing, skipna, kind
+):
     if len(dim) > 1:
         da = da.mean(dim[1:])
     trend = loess_smoothing(
@@ -254,6 +262,7 @@ def _loessdetrend_get_trend(da, *, dim, f, niter, d, weights, equal_spacing, kin
         d=d,
         weights=weights,
         equal_spacing=equal_spacing,
+        skipna=skipna,
     )
     return trend.rename("trend").to_dataset()
 
@@ -279,7 +288,7 @@ class RollingMeanDetrend(BaseDetrend):
     min_periods: int, optional
       Minimum number of observations in window required to have a value, otherwise the
       result is NaN. See :py:meth:`xarray.DataArray.rolling`.
-      Defauls to None, which sets it equal to `win`. Setting both `weights` and this
+      Defaults to None, which sets it equal to `win`. Setting both `weights` and this
       is not implemented yet.
 
     Notes

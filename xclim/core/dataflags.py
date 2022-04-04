@@ -58,6 +58,7 @@ class DataQualityException(Exception):
 
 __all__ = [
     "data_flags",
+    "DataQualityException",
     "ecad_compliant",
     "negative_accumulation_values",
     "outside_n_standard_deviations_of_climatology",
@@ -297,6 +298,7 @@ def very_large_precipitation_events(
     Parameters
     ----------
     da : xarray.DataArray
+      The DataArray being examined.
     thresh : str
       Threshold to search array for that will trigger flag if any day exceeds value.
 
@@ -331,6 +333,7 @@ def values_op_thresh_repeating_for_n_or_more_days(
     Parameters
     ----------
     da : xarray.DataArray
+      The DataArray being examined.
     n : int
       Number of days needed to trigger flag.
     thresh : str
@@ -376,10 +379,11 @@ def wind_values_outside_of_bounds(
     Parameters
     ----------
     da : xarray.DataArray
+      The DataArray being examined.
     lower : str
-      Lower limit for wind speed.
+      The lower limit for wind speed.
     upper : str
-      Upper limit for wind speed.
+      The upper limit for wind speed.
 
     Returns
     -------
@@ -417,6 +421,7 @@ def outside_n_standard_deviations_of_climatology(
     Parameters
     ----------
     da : xarray.DataArray
+      The DataArray being examined.
     n : int
       Number of standard deviations.
     window : int
@@ -464,6 +469,7 @@ def values_repeating_for_n_or_more_days(
     Parameters
     ----------
     da : xarray.DataArray
+      The DataArray being examined.
     n : int
       Number of days to trigger flag.
 
@@ -592,13 +598,13 @@ def data_flags(
 
         return var_name
 
-    def _missing_vars(function, dataset: xarray.Dataset):
+    def _missing_vars(function, dataset: xarray.Dataset, var_provided: str):
         """Handle missing variables in passed datasets."""
         sig = signature(function)
         sig = sig.parameters
         extra_vars = dict()
-        for i, (arg, val) in enumerate(sig.items()):
-            if i == 0:
+        for arg, val in sig.items():
+            if arg in ["da", var_provided]:
                 continue
             kind = infer_kind_from_parameter(val)
             if kind == InputKind.VARIABLE:
@@ -612,7 +618,7 @@ def data_flags(
     if dims == "all":
         dims = da.dims
     elif isinstance(dims, str):
-        # thus a single dimension name, we allow this option to mirror xarray.
+        # Thus, a single dimension name, we allow this option to mirror xarray.
         dims = {dims}
     if freq is not None and dims is not None:
         dims = (
@@ -640,17 +646,26 @@ def data_flags(
         for name, kwargs in flag_func.items():
             func = _REGISTRY[name]
             variable_name = str(name)
+            named_da_variable = None
 
             if kwargs:
                 for param, value in kwargs.items():
                     variable_name = _convert_value_to_str(variable_name, value)
             try:
-                extras = _missing_vars(func, ds)
+                extras = _missing_vars(func, ds, str(da.name))
+                # Entries in extras implies that there are two variables being compared
+                # Both variables will be sent in as dict entries
+                if extras:
+                    named_da_variable = {da.name: da}
+
             except MissingVariableError:
                 flags[variable_name] = None
             else:
                 with xarray.set_options(keep_attrs=True):
-                    out = func(da, **extras, **(kwargs or dict()))
+                    if named_da_variable:
+                        out = func(**named_da_variable, **extras, **(kwargs or dict()))
+                    else:
+                        out = func(da, **extras, **(kwargs or dict()))
 
                     # Aggregation
                     if freq is not None:
@@ -684,7 +699,7 @@ def ecad_compliant(
     ds : xarray.Dataset
       Dataset containing variables to be examined.
     dims : {"all", None} or str or a sequence of strings
-      Dimenions upon which aggregation should be performed. Default: "all".
+      Dimensions upon which aggregation should be performed. Default: "all".
     raise_flags : bool
       Raise exception if any of the quality assessment flags are raised, otherwise returns None. Default: False.
     append : bool
@@ -727,7 +742,11 @@ def ecad_compliant(
             return
 
     ecad_flag = xarray.DataArray(
-        ~reduce(np.logical_or, flags.data_vars.values()),  # noqa
+        # TODO: Test for this change concerning data of type None in dataflag variables
+        ~reduce(
+            np.logical_or,
+            filter(lambda x: x.dtype == bool, flags.data_vars.values()),  # noqa
+        ),
         name="ecad_qc_flag",
         attrs=dict(
             comment="Adheres to ECAD quality control checks.",

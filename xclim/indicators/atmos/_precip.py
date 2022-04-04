@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Precipitation indicator definitions."""
 from inspect import _empty  # noqa
 
@@ -12,6 +11,7 @@ __all__ = [
     "max_1day_precipitation_amount",
     "max_n_day_precipitation_amount",
     "wetdays",
+    "wetdays_prop",
     "dry_days",
     "maximum_consecutive_dry_days",
     "maximum_consecutive_wet_days",
@@ -39,6 +39,7 @@ __all__ = [
     "rain_season_end",
     "rain_season_length",
     "rain_season_prcptot",
+    "rprctot",
 ]
 
 
@@ -92,7 +93,7 @@ max_1day_precipitation_amount = Precip(
     standard_name="lwe_thickness_of_precipitation_amount",
     long_name="maximum 1-day total precipitation",
     description="{freq} maximum 1-day total precipitation",
-    cell_methods="time: sum within days time: maximum over days",
+    cell_methods="time: maximum over days",
     compute=indices.max_1day_precipitation_amount,
 )
 
@@ -103,7 +104,7 @@ max_n_day_precipitation_amount = Precip(
     standard_name="lwe_thickness_of_precipitation_amount",
     long_name="maximum {window}-day total precipitation",
     description="{freq} maximum {window}-day total precipitation.",
-    cell_methods="time: sum within days time: maximum over days",
+    cell_methods="time: maximum over days",
     compute=indices.max_n_day_precipitation_amount,
 )
 
@@ -113,8 +114,17 @@ wetdays = Precip(
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold",
     long_name="Number of wet days (precip >= {thresh})",
     description="{freq} number of days with daily precipitation over {thresh}.",
-    cell_methods="time: sum within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.wetdays,
+)
+
+wetdays_prop = Precip(
+    identifier="wetdays_prop",
+    units="1",
+    long_name="Proportion of wet days (precip >= {thresh})",
+    description="{freq} proportion of days with precipitation over {thresh}.",
+    cell_methods="time: sum over days",
+    compute=indices.wetdays_prop,
 )
 
 dry_days = Precip(
@@ -123,7 +133,7 @@ dry_days = Precip(
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_below_threshold",
     long_name="Number of dry days (precip < {thresh})",
     description="{freq} number of days with daily precipitation under {thresh}.",
-    cell_methods="time: sum within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.dry_days,
 )
 
@@ -135,7 +145,7 @@ maximum_consecutive_wet_days = Precip(
     long_name="Maximum consecutive wet days (Precip >= {thresh})",
     description="{freq} maximum number of consecutive days with daily "
     "precipitation over {thresh}.",
-    cell_methods="time: sum within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.maximum_consecutive_wet_days,
 )
 
@@ -147,7 +157,7 @@ maximum_consecutive_dry_days = Precip(
     long_name="Maximum consecutive dry days (Precip < {thresh})",
     description="{freq} maximum number of consecutive days with daily "
     "precipitation below {thresh}.",
-    cell_methods="time: sum within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.maximum_consecutive_dry_days,
 )
 
@@ -182,7 +192,7 @@ precip_accumulation = Precip(
     standard_name="lwe_thickness_of_precipitation_amount",
     long_name="Total precipitation",
     description="{freq} total precipitation",
-    cell_methods="time: sum within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.precip_accumulation,
     parameters=dict(tas=None, phase=None),
 )
@@ -194,7 +204,7 @@ wet_precip_accumulation = Precip(
     standard_name="lwe_thickness_of_precipitation_amount",
     long_name="Total precipitation",
     description="{freq} total precipitation over wet days, defined as days where precipitation exceeds {thresh}.",
-    cell_methods="time: sum within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.prcptot,
     parameters={"thresh": {"default": "1 mm/day"}},
 )
@@ -206,7 +216,7 @@ liquid_precip_accumulation = PrTasx(
     standard_name="lwe_thickness_of_liquid_precipitation_amount",
     long_name="Total liquid precipitation",
     description="{freq} total {phase} precipitation, estimated as precipitation when temperature >= {thresh}",
-    cell_methods="time: sum within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.precip_accumulation,
     parameters={"tas": {"kind": InputKind.VARIABLE}, "phase": "liquid"},
 )
@@ -218,7 +228,7 @@ solid_precip_accumulation = PrTasx(
     standard_name="lwe_thickness_of_snowfall_amount",
     long_name="Total solid precipitation",
     description="{freq} total solid precipitation, estimated as precipitation when temperature < {thresh}",
-    cell_methods="time: sum within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.precip_accumulation,
     parameters={"tas": {"kind": InputKind.VARIABLE}, "phase": "solid"},
 )
@@ -364,12 +374,19 @@ dry_spell_frequency = Precip(
 
 dry_spell_total_length = Precip(
     identifier="dry_spell_total_length",
-    description="The {freq} number of days in dry periods of {window} days and more, during which the accumulated "
-    "precipitation on a window of {window} days is under {thresh}.",
+    description="The {freq} number of days in dry periods of {window} days and more, during which the {op}"
+    "precipitation within windows of {window} days is under {thresh}.",
     units="days",
     cell_methods="",
     compute=indices.dry_spell_total_length,
 )
+
+rprctot = Precip(
+    identifier="rprctot",
+    description="Proportion of accumulated precipitation arising from convective processes.",
+    units="",
+    cell_methods="time: sum",
+    compute=indices.rprctot,
 
 
 rain_season = Precip(
@@ -444,4 +461,5 @@ rain_season_prcptot = Precip(
     units="mm",
     cell_methods="",
     compute=indices.rain_season_prcptot,
+
 )

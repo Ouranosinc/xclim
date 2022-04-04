@@ -6,9 +6,8 @@ Ensemble reduction is the process of selecting a subset of members from an ensem
 order to reduce the volume of computation needed while still covering a good portion of
 the simulated climate variability.
 """
-import logging
-import warnings
 from typing import Optional, Tuple, Union
+from warnings import warn
 
 import numpy as np
 import scipy.stats
@@ -16,17 +15,15 @@ import xarray
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
 
-logger = logging.getLogger("xclim")
-
 # Avoid having to include matplotlib in xclim requirements
 try:
     from matplotlib import pyplot as plt
 
-    logger.info("Matplotlib installed. Setting make_graph to True.")
+    warn("Matplotlib installed. Setting make_graph to True.")
     MPL_INSTALLED = True
 
 except ImportError:
-    logger.info("Matplotlib not found. No graph data will be produced.")
+    warn("Matplotlib not found. No graph data will be produced.")
     plt = None
     MPL_INSTALLED = False
 
@@ -49,7 +46,7 @@ def kkz_reduce_ensemble(
     Parameters
     ----------
     data : xr.DataArray
-      Selecton criteria data : 2-D xr.DataArray with dimensions 'realization' (N) and
+      Selection criteria data : 2-D xr.DataArray with dimensions 'realization' (N) and
       'criteria' (P). These are the values used for clustering. Realizations represent the individual original
       ensemble members and criteria the variables/indicators used in the grouping algorithm.
     num_select : int
@@ -59,7 +56,7 @@ def kkz_reduce_ensemble(
     standardize : bool
       Whether to standardize the input before running the selection or not.
       Standardization consists in translation as to have a zero mean and scaling as to have a unit standard deviation.
-    **cdist_kwargs
+    cdist_kwargs
       All extra arguments are passed as-is to `scipy.spatial.distance.cdist`, see its docs for more information.
 
     Returns
@@ -116,9 +113,9 @@ def kmeans_reduce_ensemble(
     """Return a sample of ensemble members using k-means clustering.
 
     The algorithm attempts to reduce the total number of ensemble members while maintaining adequate coverage of
-    the ensemble uncertainty in a N-dimensional data space. K-Means clustering is carried out on the input
+    the ensemble uncertainty in an N-dimensional data space. K-Means clustering is carried out on the input
     selection criteria data-array in order to group individual ensemble members into a reduced number of similar groups.
-    Subsequently a single representative simulation is retained from each group.
+    Subsequently, a single representative simulation is retained from each group.
 
     Parameters
     ----------
@@ -323,7 +320,7 @@ def kmeans_reduce_ensemble(
 
 
 def _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights):
-    """Subfunction to kmeans_reduce_ensemble. Calculates r-square profile (r-square versus number of clusters."""
+    """Sub-function to kmeans_reduce_ensemble. Calculates r-square profile (r-square versus number of clusters."""
     rsq = None
     if list(method.keys())[0] != "n_clusters" or make_graph is True:
         # generate r2 profile data
@@ -350,10 +347,10 @@ def _calc_rsq(z, method, make_graph, n_sim, random_state, sample_weights):
 
 
 def _get_nclust(method=None, n_sim=None, rsq=None, max_clusters=None):
-    """Subfunction to kmeans_reduce_ensemble. Determine number of clusters to create depending on various methods."""
+    """Sub-function to kmeans_reduce_ensemble. Determine number of clusters to create depending on various methods."""
     # if we actually need to find the optimal number of clusters, this is where it is done
     if list(method.keys())[0] == "rsq_cutoff":
-        # argmax finds the first occurence of rsq > rsq_cutoff,but we need to add 1 b/c of python indexing
+        # argmax finds the first occurrence of rsq > rsq_cutoff,but we need to add 1 b/c of python indexing
         n_clusters = np.argmax(rsq > method["rsq_cutoff"]) + 1
 
     elif list(method.keys())[0] == "rsq_optimize":
@@ -370,7 +367,7 @@ def _get_nclust(method=None, n_sim=None, rsq=None, max_clusters=None):
     else:
         raise Exception(f"Unknown selection method : {list(method.keys())}")
     if n_clusters > max_clusters:
-        warnings.warn(
+        warn(
             f"{n_clusters} clusters has been found to be the optimal number of clusters, but limiting "
             f"to {max_clusters} as required by user provided max_clusters",
             UserWarning,

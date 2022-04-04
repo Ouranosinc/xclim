@@ -17,7 +17,7 @@ def _gaussian_weighting(x):  # pragma: no cover
 
     The span f covers 95% of the gaussian.
     """
-    w = np.exp(-(x ** 2) / (2 * (1 / 1.96) ** 2))
+    w = np.exp(-(x**2) / (2 * (1 / 1.96) ** 2))
     w[x >= 1] = 0
     return w
 
@@ -25,7 +25,7 @@ def _gaussian_weighting(x):  # pragma: no cover
 @numba.njit
 def _tricube_weighting(x):  # pragma: no cover
     """Kernel function for loess with a tricubic shape."""
-    w = (1 - x ** 3) ** 3
+    w = (1 - x**3) ** 3
     w[x >= 1] = 0
     return w
 
@@ -52,6 +52,7 @@ def _loess_nb(
     weight_func=_tricube_weighting,
     reg_func=_linear_regression,
     dx=0,
+    skipna=True,
 ):  # pragma: no cover
     """1D Locally weighted regression: fits a nonparametric regression curve to a scatterplot.
 
@@ -75,12 +76,21 @@ def _loess_nb(
     dx : float
       The spacing of the x coordinates. If above 0, this enables the optimization for equally spaced x coordinates.
       Must be 0 if spacing is unequal (default).
+    skipna : bool
+      If True (default), remove NaN values before computing the loess. The output has the
+      same missing values as the input.
 
     References
     ----------
     Code adapted from https://gist.github.com/agramfort/850437
     Cleveland, W. S., 1979. Robust Locally Weighted Regression and Smoothing Scatterplot, Journal of the American Statistical Association 74, 829–836.
     """
+    if skipna:
+        nan = np.isnan(y)
+        out = np.full(x.size, np.NaN)
+        y = y[~nan]
+        x = x[~nan]
+
     n = x.size
     yest = np.zeros(n)
     delta = np.ones(n)
@@ -148,9 +158,12 @@ def _loess_nb(
             residuals = y - yest
             s = np.median(np.abs(residuals))
             xres = residuals / (6.0 * s)
-            delta = (1 - xres ** 2) ** 2
+            delta = (1 - xres**2) ** 2
             delta[np.abs(xres) >= 1] = 0
 
+    if skipna:
+        out[~nan] = yest
+        return out
     return yest
 
 
@@ -162,6 +175,7 @@ def loess_smoothing(
     niter: int = 2,
     weights: Union[str, Callable] = "tricube",
     equal_spacing: Optional[bool] = None,
+    skipna: bool = True,
 ):
     r"""Locally weighted regression in 1D: fits a nonparametric regression curve to a scatterplot.
 
@@ -188,8 +202,11 @@ def loess_smoothing(
       "tricube" : a smooth top-hat like curve.
       "gaussian" : a gaussian curve, f gives the span for 95% of the values.
     equal_spacing : bool, optional
-      Whether to use the equal spacing optimization. If None (the default), it is activated only if the
-      x axis is equally-spaced. When activated, `dx = x[1] - x[0]`.
+      Whether to use the equal spacing optimization. If `None` (the default), it is activated only if the
+      x-axis is equally-spaced. When activated, `dx = x[1] - x[0]`.
+    skipna : bool
+        If True (default), skip missing values (as marked by NaN). The output will have the
+        same missing values as the input.
 
     Notes
     -----
@@ -197,16 +214,17 @@ def loess_smoothing(
 
     - :math:`W(x) > 0` for :math:`|x| < 1`
     - :math:`W(-x) = W(x)`
-    - :math:`W(x)` is nonincreasing for :math:`x \ge 0`
+    - :math:`W(x)` is non-increasing for :math:`x \ge 0`
     - :math:`W(x) = 0` for :math:`|x| \ge 0`
 
-    If a callable is provided, it should only accept the 1D `np.ndarray` :math:`x` which is an absolute value
+    If a Callable is provided, it should only accept the 1D `np.ndarray` :math:`x` which is an absolute value
     function going from 1 to 0 to 1 around :math:`x_i`, for all values where :math:`x - x_i < h_i` with
     :math:`h_i` the distance of the rth nearest neighbor of  :math:`x_i`, :math:`r = f * size(x)`.
 
     References
     ----------
     .. [Cleveland1979] Cleveland, W. S., 1979. Robust Locally Weighted Regression and Smoothing Scatterplot, Journal of the American Statistical Association 74, 829–836.
+
     Code adapted from https://gist.github.com/agramfort/850437
     """
     x = da[dim]
@@ -244,6 +262,7 @@ def loess_smoothing(
             "niter": niter,
             "reg_func": reg_func,
             "dx": dx,
+            "skipna": skipna,
         },
         dask="parallelized",
         output_dtypes=[float],

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Temperature indicator definitions."""
 
 from inspect import _empty  # noqa
@@ -97,7 +96,7 @@ tn_days_above = TempWithIndexing(
     standard_name="number_of_days_with_air_temperature_above_threshold",
     long_name="Number of days with Tmin > {thresh}",
     description="{freq} number of days where daily minimum temperature exceeds {thresh}.",
-    cell_methods="time: minimum within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.tn_days_above,
 )
 
@@ -107,7 +106,7 @@ tn_days_below = TempWithIndexing(
     standard_name="number_of_days_with_air_temperature_below_threshold",
     long_name="Number of days with Tmin < {thresh}",
     description="{freq} number of days where daily minimum temperature is below {thresh}.",
-    cell_methods="time: minimum within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.tn_days_below,
 )
 
@@ -117,7 +116,7 @@ tg_days_above = TempWithIndexing(
     standard_name="number_of_days_with_air_temperature_above_threshold",
     long_name="Number of days with Tavg > {thresh}",
     description="{freq} number of days where daily mean temperature exceeds {thresh}.",
-    cell_methods="time: mean within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.tg_days_above,
 )
 
@@ -127,7 +126,7 @@ tg_days_below = TempWithIndexing(
     standard_name="number_of_days_with_air_temperature_below_threshold",
     long_name="Number of days with Tavg < {thresh}",
     description="{freq} number of days where daily mean temperature is below {thresh}.",
-    cell_methods="time: mean within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.tg_days_below,
 )
 
@@ -137,7 +136,7 @@ tx_days_above = TempWithIndexing(
     standard_name="number_of_days_with_air_temperature_above_threshold",
     long_name="Number of days with Tmax > {thresh}",
     description="{freq} number of days where daily maximum temperature exceeds {thresh}.",
-    cell_methods="time: maximum within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.tx_days_above,
 )
 
@@ -147,7 +146,7 @@ tx_days_below = TempWithIndexing(
     standard_name="number_of_days_with_air_temperature_below_threshold",
     long_name="Number of days with Tmax < {thresh}",
     description="{freq} number of days where daily max temperature is below {thresh}.",
-    cell_methods="time: max within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.tx_days_below,
 )
 
@@ -256,7 +255,7 @@ tg_mean = TempWithIndexing(
     standard_name="air_temperature",
     long_name="Mean daily mean temperature",
     description="{freq} mean of daily mean temperature.",
-    cell_methods="time: mean within days time: mean over days",
+    cell_methods="time: mean over days",
     compute=indices.tg_mean,
 )
 
@@ -266,7 +265,7 @@ tg_max = TempWithIndexing(
     standard_name="air_temperature",
     long_name="Maximum daily mean temperature",
     description="{freq} maximum of daily mean temperature.",
-    cell_methods="time: mean within days time: maximum over days",
+    cell_methods="time: maximum over days",
     compute=indices.tg_max,
 )
 
@@ -276,7 +275,7 @@ tg_min = TempWithIndexing(
     standard_name="air_temperature",
     long_name="Minimum daily mean temperature",
     description="{freq} minimum of daily mean temperature.",
-    cell_methods="time: mean within days time: minimum over days",
+    cell_methods="time: minimum over days",
     compute=indices.tg_min,
 )
 
@@ -286,7 +285,7 @@ tx_mean = TempWithIndexing(
     standard_name="air_temperature",
     long_name="Mean daily maximum temperature",
     description="{freq} mean of daily maximum temperature.",
-    cell_methods="time: maximum within days time: mean over days",
+    cell_methods="time: mean over days",
     compute=indices.tx_mean,
 )
 
@@ -296,7 +295,7 @@ tx_max = TempWithIndexing(
     standard_name="air_temperature",
     long_name="Maximum daily maximum temperature",
     description="{freq} maximum of daily maximum temperature.",
-    cell_methods="time: maximum within days time: maximum over days",
+    cell_methods="time: maximum over days",
     compute=indices.tx_max,
 )
 
@@ -306,7 +305,7 @@ tx_min = TempWithIndexing(
     standard_name="air_temperature",
     long_name="Minimum daily maximum temperature",
     description="{freq} minimum of daily maximum temperature.",
-    cell_methods="time: maximum within days time: minimum over days",
+    cell_methods="time: minimum over days",
     compute=indices.tx_min,
 )
 
@@ -316,7 +315,7 @@ tn_mean = TempWithIndexing(
     standard_name="air_temperature",
     long_name="Mean daily minimum temperature",
     description="{freq} mean of daily minimum temperature.",
-    cell_methods="time: minimum within days time: mean over days",
+    cell_methods="time: mean over days",
     compute=indices.tn_mean,
 )
 
@@ -326,7 +325,7 @@ tn_max = TempWithIndexing(
     standard_name="air_temperature",
     long_name="Maximum daily minimum temperature",
     description="{freq} maximum of daily minimum temperature.",
-    cell_methods="time: minimum within days time: maximum over days",
+    cell_methods="time: maximum over days",
     compute=indices.tn_max,
 )
 
@@ -336,7 +335,7 @@ tn_min = TempWithIndexing(
     standard_name="air_temperature",
     long_name="Minimum daily minimum temperature",
     description="{freq} minimum of daily minimum temperature.",
-    cell_methods="time: minimum within days time: minimum over days",
+    cell_methods="time: minimum over days",
     compute=indices.tn_min,
 )
 
@@ -431,7 +430,7 @@ cool_night_index = Temp(
     units="degC",
     long_name="cool night index",
     description="Mean minimum temperature for September (northern hemisphere) or March (southern hemisphere).",
-    cell_methods="time: min within days time: mean over days",
+    cell_methods="time: mean over days",
     abstract="A night coolness variable which takes into account the mean minimum night temperatures during the "
     "month when ripening usually occurs beyond the ripening period.",
     allowed_periods=["A"],
@@ -515,7 +514,7 @@ cooling_degree_days = TempWithIndexing(
     standard_name="integral_of_air_temperature_excess_wrt_time",
     long_name="Cooling degree days (Tmean > {thresh})",
     description="{freq} cooling degree days above {thresh}.",
-    cell_methods="time: mean within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.cooling_degree_days,
     parameters={"thresh": {"default": "18.0 degC"}},
 )
@@ -526,7 +525,7 @@ heating_degree_days = TempWithIndexing(
     standard_name="integral_of_air_temperature_deficit_wrt_time",
     long_name="Heating degree days (Tmean < {thresh})",
     description="{freq} heating degree days below {thresh}.",
-    cell_methods="time: mean within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.heating_degree_days,
     parameters={"thresh": {"default": "17.0 degC"}},
 )
@@ -537,7 +536,7 @@ growing_degree_days = TempWithIndexing(
     standard_name="integral_of_air_temperature_excess_wrt_time",
     long_name="Growing degree days above {thresh}",
     description="{freq} growing degree days above {thresh}.",
-    cell_methods="time: mean within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.growing_degree_days,
     parameters={"thresh": {"default": "4.0 degC"}},
 )
@@ -548,7 +547,7 @@ freezing_degree_days = TempWithIndexing(
     standard_name="integral_of_air_temperature_deficit_wrt_time",
     long_name="Freezing degree days (Tmean < {thresh})",
     description="{freq} freezing degree days below {thresh}.",
-    cell_methods="time: mean within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.heating_degree_days,
     parameters={"thresh": {"default": "0 degC"}},
 )
@@ -559,7 +558,7 @@ thawing_degree_days = TempWithIndexing(
     standard_name="integral_of_air_temperature_excess_wrt_time",
     long_name="Thawing degree days (degree days above 0°C)",
     description="{freq} thawing degree days above 0°C.",
-    cell_methods="time: mean within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.growing_degree_days,
     parameters={"thresh": {"default": "0 degC"}},
 )
@@ -580,7 +579,7 @@ frost_days = TempWithIndexing(
     standard_name="days_with_air_temperature_below_threshold",
     long_name="Number of frost days (Tmin < {thresh})",
     description="{freq} number of days with minimum daily temperature below {thresh}.",
-    cell_methods="time: minimum within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.frost_days,
 )
 
@@ -593,7 +592,7 @@ frost_season_length = Temp(
     "{window} consecutive days with minimum daily temperature below freezing and "
     "the first occurrence of at least {window} consecutive days with "
     "minimuim daily temperature above freezing after {mid_date}.",
-    cell_methods="time: minimum within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.frost_season_length,
     parameters=dict(thresh="0 degC"),
 )
@@ -633,7 +632,7 @@ ice_days = TempWithIndexing(
     units="days",
     long_name="Number of ice days (Tmax < {thresh})",
     description="{freq} number of days with maximum daily temperature below {thresh}.",
-    cell_methods="time: maximum within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.ice_days,
 )
 
@@ -644,7 +643,7 @@ consecutive_frost_days = Temp(
     long_name="Maximum number of consecutive days with Tmin < {thresh}",
     description="{freq} maximum number of consecutive days with "
     "minimum daily temperature below {thresh}.",
-    cell_methods="time: min within days time: maximum over days",
+    cell_methods="time: maximum over days",
     compute=indices.maximum_consecutive_frost_days,
 )
 
@@ -657,7 +656,7 @@ frost_free_season_length = Temp(
     "{window} consecutive days with minimum daily temperature above or at the freezing point and "
     "the first occurrence of at least {window} consecutive days with "
     "minimum daily temperature below freezing after {mid_date}.",
-    cell_methods="time: minimum within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.frost_free_season_length,
     parameters={"thresh": {"default": "0 degC"}},
 )
@@ -692,7 +691,7 @@ maximum_consecutive_frost_free_days = Temp(
     long_name="Maximum number of consecutive days with Tmin >= {thresh}",
     description="{freq} maximum number of consecutive days with "
     "minimum daily temperature above or equal to {thresh}.",
-    cell_methods="time: min within days time: maximum over days",
+    cell_methods="time: maximum over days",
     compute=indices.maximum_consecutive_frost_free_days,
 )
 
@@ -743,7 +742,7 @@ tropical_nights = TempWithIndexing(
     long_name="Number of Tropical Nights (Tmin > {thresh})",
     description="{freq} number of Tropical Nights : defined as days with minimum daily temperature"
     " above {thresh}.",
-    cell_methods="time: minimum within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.tn_days_above,
     parameters={"thresh": {"default": "20.0 degC"}},
 )
@@ -756,7 +755,7 @@ tg90p = Temp(
     description="{freq} number of days with mean daily temperature above the 90th percentile."
     "The 90th percentile is to be computed for a 5 day moving window centered on each calendar day "
     "for a reference period.",
-    cell_methods="time: mean within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.tg90p,
 )
 
@@ -768,7 +767,7 @@ tg10p = Temp(
     description="{freq} number of days with mean daily temperature below the 10th percentile."
     "The 10th percentile is to be computed for a 5 day moving window centered on each calendar day "
     "for a reference period.",
-    cell_methods="time: mean within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.tg10p,
 )
 
@@ -780,7 +779,7 @@ tx90p = Temp(
     description="{freq} number of days with maximum daily temperature above the 90th percentile."
     "The 90th percentile is to be computed for a 5 day moving window centered on each calendar day "
     "for a reference period.",
-    cell_methods="time: maximum within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.tx90p,
 )
 
@@ -792,7 +791,7 @@ tx10p = Temp(
     description="{freq} number of days with maximum daily temperature below the 10th percentile."
     "The 10th percentile is to be computed for a 5 day moving window centered on each calendar day "
     "for a reference period.",
-    cell_methods="time: maximum within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.tx10p,
 )
 
@@ -804,7 +803,7 @@ tn90p = Temp(
     description="{freq} number of days with minimum daily temperature above the 90th percentile."
     "The 90th percentile is to be computed for a 5 day moving window centered on each calendar day "
     "for a reference period.",
-    cell_methods="time: minimum within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.tn90p,
 )
 
@@ -816,7 +815,7 @@ tn10p = Temp(
     description="{freq} number of days with minimum daily temperature below the 10th percentile."
     "The 10th percentile is to be computed for a 5 day moving window centered on each calendar day "
     "for a reference period.",
-    cell_methods="time: minimum within days time: sum over days",
+    cell_methods="time: sum over days",
     compute=indices.tn10p,
 )
 

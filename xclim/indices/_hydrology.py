@@ -6,12 +6,17 @@ from xclim.core.units import declare_units, rate2amount
 
 from . import generic
 
+# from xclim.core.missing import at_least_n_valid  # raises circular import issue, see https://github.com/Ouranosinc/xclim/issues/949
+
+
 __all__ = [
     "base_flow_index",
     "rb_flashiness_index",
     "snd_max_doy",
     "snow_melt_we_max",
     "melt_and_precip_max",
+    "snw_max",
+    "snw_max_doy",
 ]
 
 
@@ -68,7 +73,7 @@ def rb_flashiness_index(
     r"""Richards-Baker flashiness index.
 
     Measures oscillations in flow relative to total flow, quantifying the frequency and rapidity of short term changes
-    in flow.
+    in flow, based on Baker et al. (2004; [baker2004]_).
 
     Parameters
     ----------
@@ -92,8 +97,7 @@ def rb_flashiness_index(
 
     References
     ----------
-    Baker, D.B., R.P. Richards, T.T. Loftus, and J.W. Kramer, 2004. A new Flashiness Index: Characteristics and
-    Applications to Midwestern Rivers and Streams. Journal of the American Water Resources Association 40(2):503-522.
+    .. [baker2004] Baker, D. B., Richards, R. P., Loftus, T. T., & Kramer, J. W. (2004). A New Flashiness Index: Characteristics and Applications to Midwestern Rivers and Streams1. JAWRA Journal of the American Water Resources Association, 40(2), 503‑522. https://doi.org/10.1111/j.1752-1688.2004.tb01046.x
     """
     d = np.abs(q.diff(dim="time")).resample(time=freq)
     mq = q.resample(time=freq)
@@ -127,7 +131,59 @@ def snd_max_doy(snd: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray
 
     # Compute doymax. Will return first time step if all snow depths are 0.
     out = generic.select_resample_op(snd, op=generic.doymax, freq=freq)
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(snd))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd))
+
+    # Mask arrays that miss at least one non-null snd.
+    return out.where(~valid)
+
+
+@declare_units(snw="[mass]/[area]")
+def snw_max(snw: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray:
+    """Maximum snow amount.
+
+    The maximum daily snow amount.
+
+    Parameters
+    ----------
+    snw : xarray.DataArray
+      Snow amount (mass per area).
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+      The maximum snow amount over a given number of days for each period. [mass/area].
+    """
+    return snw.resample(time=freq).max(dim="time", keep_attrs=True)
+
+
+@declare_units(snw="[mass]/[area]")
+def snw_max_doy(snw: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray:
+    """Maximum snow amount day of year.
+
+    Day of year when surface snow amount reaches its peak value. If snow amount is 0 over entire period, return NaN.
+
+    Parameters
+    ----------
+    snw : xarray.DataArray
+      Surface snow amount.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+      The day of year at which snow amount reaches its maximum value.
+    """
+    from xclim.core.missing import at_least_n_valid
+
+    # Identify periods where there is at least one non-null value for snow depth
+    valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
+
+    # Compute doymax. Will return first time step if all snow depths are 0.
+    out = generic.select_resample_op(snw, op=generic.doymax, freq=freq)
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snw))
 
     # Mask arrays that miss at least one non-null snd.
     return out.where(~valid)

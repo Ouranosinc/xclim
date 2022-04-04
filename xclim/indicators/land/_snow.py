@@ -8,6 +8,8 @@ __all__ = [
     "continuous_snow_cover_end",
     "snd_max_doy",
     "snow_melt_we_max",
+    "snw_max",
+    "snw_max_doy",
     "winter_storm",
     "snow_depth",
 ]
@@ -46,6 +48,7 @@ continuous_snow_cover_end = Snow(
 
 snd_max_doy = Snow(
     identifier="snd_max_doy",
+    standard_name="day_of_year",
     var_name="{freq}_snd_max_doy",
     long_name="Date when snow depth reaches its maximum value.",
     description="{freq} day of year when snow depth reaches its maximum value.",
@@ -63,6 +66,25 @@ snow_melt_we_max = Snow(
     compute=xci.snow_melt_we_max,
 )
 
+snw_max = Snow(
+    identifier="snw_max",
+    standard_name="surface_snow_amount",
+    var_name="{freq}_snw_max",
+    long_name="Maximum daily snow amount",
+    description="{freq} day of year when snow amount on the surface reaches its maximum.",
+    units="kg m-2",
+    compute=xci.snw_max,
+)
+
+snw_max_doy = Snow(
+    identifier="snw_max_doy",
+    standard_name="day_of_year",
+    var_name="{freq}_snw_max_doy",
+    long_name="Day of year of maximum daily snow amount",
+    description="{freq} maximum snow amount on the surface.",
+    units="",
+    compute=xci.snw_max_doy,
+)
 
 melt_and_precip_max = Snow(
     identifier="melt_and_precip_max",
@@ -97,6 +119,6 @@ snow_depth = Snow(
     standard_name="surface_snow_thickness",
     long_name="Mean of daily snow depth",
     description="{freq} mean of daily mean snow depth.",
-    cell_methods="time: mean within days time: mean over days",
+    cell_methods="time: mean over days",
     compute=xci.snow_depth,
 )

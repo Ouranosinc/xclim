@@ -5,18 +5,15 @@ from typing import Dict, Optional, Sequence, Tuple, Union
 import numpy as np
 import xarray as xr
 
-from xclim.core.formatting import (
-    merge_attributes,
-    prefix_attrs,
-    unprefix_attrs,
-    update_history,
-)
+from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history
+from xclim.core.utils import uses_dask
 
 from . import generic
 
 __all__ = [
     "fit",
     "parametric_quantile",
+    "parametric_cdf",
     "fa",
     "frequency_analysis",
     "get_dist",
@@ -90,7 +87,7 @@ def fit(
       The PWM method is usually more robust to outliers.
     dim : str
       The dimension upon which to perform the indexing (default: "time").
-    **fitkwargs
+    fitkwargs
       Other arguments passed directly to :py:func:`_fitstart` and to the distribution's `fit`.
 
     Returns
@@ -128,6 +125,7 @@ def fit(
             method=method,
             **fitkwargs,
         ),
+        dask_gufunc_kwargs={"output_sizes": {"dparams": len(dist_params)}},
     )
 
     # Add coordinates for the distribution parameters and transpose to original shape (with dim -> dparams)
@@ -201,6 +199,7 @@ def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]) -> xr.DataArra
         dask="parallelized",
         output_dtypes=[float],
         keep_attrs=True,
+        dask_gufunc_kwargs={"output_sizes": {"quantile": len(q)}},
     )
 
     # Assign quantile coordinates and transpose to preserve original dimension order
@@ -211,10 +210,71 @@ def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]) -> xr.DataArra
     attrs = dict(
         long_name=f"{dist} quantiles",
         description=f"Quantiles estimated by the {dist} distribution",
-        cell_methods=merge_attributes("dparams: ppf", out, new_line=" "),
+        cell_methods="dparams: ppf",
         history=update_history(
             "Compute parametric quantiles from distribution parameters",
             new_name="parametric_quantile",
+            parameters=p,
+        ),
+    )
+    out.attrs.update(attrs)
+    return out
+
+
+def parametric_cdf(p: xr.DataArray, v: Union[float, Sequence]) -> xr.DataArray:
+    """Return the cumulative distribution function corresponding to the given distribution parameters and value.
+
+    Parameters
+    ----------
+    p : xr.DataArray
+      Distribution parameters returned by the `fit` function.
+      The array should have dimension `dparams` storing the distribution parameters,
+      and attribute `scipy_dist`, storing the name of the distribution.
+    v : Union[float, Sequence]
+      Value to compute the CDF.
+
+    Returns
+    -------
+    xarray.DataArray
+      An array of parametric CDF values estimated from the distribution parameters.
+
+    Notes
+    -----
+    """
+    v = np.atleast_1d(v)
+
+    # Get the distribution
+    dist = p.attrs["scipy_dist"]
+    dc = get_dist(dist)
+
+    # Create a lambda function to facilitate passing arguments to dask. There is probably a better way to do this.
+    def func(x):
+        return dc.cdf(v, *x)
+
+    data = xr.apply_ufunc(
+        func,
+        p,
+        input_core_dims=[["dparams"]],
+        output_core_dims=[["cdf"]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[float],
+        keep_attrs=True,
+        dask_gufunc_kwargs={"output_sizes": {"cdf": len(v)}},
+    )
+
+    # Assign quantile coordinates and transpose to preserve original dimension order
+    dims = [d if d != "dparams" else "cdf" for d in p.dims]
+    out = data.assign_coords(cdf=v).transpose(*dims)
+    out.attrs = unprefix_attrs(p.attrs, ["units", "standard_name"], "original_")
+
+    attrs = dict(
+        long_name=f"{dist} cdf",
+        description=f"CDF estimated by the {dist} distribution",
+        cell_methods="dparams: cdf",
+        history=update_history(
+            "Compute parametric cdf from distribution parameters",
+            new_name="parametric_cdf",
             parameters=p,
         ),
     )
@@ -235,7 +295,7 @@ def fa(
       Return period. The period depends on the resolution of the input data. If the input array's resolution is
       yearly, then the return period is in years.
     dist : str
-      Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
+      Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
       (see scipy.stats).
     mode : {'min', 'max}
       Whether we are looking for a probability of exceedance (max) or a probability of non-exceedance (min).
@@ -289,7 +349,7 @@ def frequency_analysis(
       Return period. The period depends on the resolution of the input data. If the input array's resolution is
       yearly, then the return period is in years.
     dist : str
-      Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
+      Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
       (see scipy.stats).
     window : int
       Averaging window length (days).
@@ -319,6 +379,8 @@ def frequency_analysis(
     # Extract the time series of min or max over the period
     sel = generic.select_resample_op(da, op=mode, freq=freq, **indexer)
 
+    if uses_dask(sel):
+        sel = sel.chunk({"time": -1})
     # Frequency analysis
     return fa(sel, t, dist, mode)
 
@@ -359,7 +421,7 @@ def _fit_start(x, dist, **fitkwargs) -> Tuple[Tuple, Dict]:
     x : array-like
       Input data.
     dist : str
-      Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
+      Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
       (see scipy.stats). Only `genextreme` and `weibull_exp` distributions are supported.
 
     Returns
@@ -386,7 +448,7 @@ def _fit_start(x, dist, **fitkwargs) -> Tuple[Tuple, Dict]:
             m = (x - t).mean()
             v = (x - t).var()
 
-        c = 0.5 * (1 - m ** 2 / v)
+        c = 0.5 * (1 - m**2 / v)
         scale = (1 - c) * m
         return (c,), {"scale": scale}
 
@@ -405,8 +467,8 @@ def _dist_method_1D(
 ) -> xr.DataArray:
     """Statistical function for given argument on given distribution initialized with params.
 
-    See :ref:`scipy:scipy.stats.rv_continuous` for a available functions and their arguments.
-    Every method where "*args" are the distribution parameters can be wrapped.
+    See :py:ref:`scipy:scipy.stats.rv_continuous` for all available functions and their arguments.
+    Every method where `"*args"` are the distribution parameters can be wrapped.
 
     Parameters
     ----------
@@ -439,8 +501,8 @@ def dist_method(
 ) -> xr.DataArray:
     """Vectorized statistical function for given argument on given distribution initialized with params.
 
-    See :ref:`scipy:scipy.stats.rv_continuous` for a available functions and their arguments.
-    Methods where "*args" are the distribution parameters can be wrapped, except those
+    See :ref:`scipy:scipy.stats.rv_continuous` for all available functions and their arguments.
+    Methods where `"*args"` are the distribution parameters can be wrapped, except those
     that return new dimensions (Ex: 'rvs' with size != 1, 'stats' with more than one moment, 'interval', 'support')
 
     Parameters

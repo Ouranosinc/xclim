@@ -1,54 +1,76 @@
 default_language_version:
-    python: python3
+  python: python3
 
 repos:
--   repo: https://github.com/asottile/pyupgrade
-    rev: v2.29.1
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v2.31.1
     hooks:
-    -   id: pyupgrade
--   repo: https://github.com/kynan/nbstripout
-    rev: 0.5.0
+      - id: pyupgrade
+        args: [ --py38-plus ]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.1.0
     hooks:
-    -   id: nbstripout
-        files: ".ipynb"
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.0.1
-    hooks:
-    -   id: trailing-whitespace
+      - id: trailing-whitespace
         exclude: setup.cfg
-    -   id: end-of-file-fixer
+      - id: end-of-file-fixer
         exclude: ".ipynb"
-    -   id: check-yaml
-        args: ['--allow-multiple-documents']
-    -   id: debug-statements
--   repo: https://github.com/ambv/black
-    rev: 21.12b0
-    hooks:
-    -   id: black
-        args: ["--target-version", "py37"]
-    -   id: black-jupyter
-        args: ["--target-version", "py37"]
--   repo: https://github.com/pycqa/flake8
+      - id: check-json
+      - id: check-yaml
+        args: [ '--allow-multiple-documents' ]
+      - id: debug-statements
+      - id: pretty-format-json
+        args: ['--autofix', '--no-ensure-ascii', '--no-sort-keys']
+  - repo: https://github.com/pycqa/flake8
     rev: 4.0.1
     hooks:
-    -   id: flake8
-        args: ['--config=setup.cfg']
-#-   repo: https://github.com/pre-commit/mirrors-autopep8
-#    rev: v1.4.4
-#    hooks:
-#    -   id: autopep8
-#        args: ['--global-config=setup.cfg','--in-place']
--   repo: https://github.com/timothycrosley/isort
+      - id: flake8
+        additional_dependencies: [ 'flake8-rst-docstrings' ]
+        args: [ '--config=setup.cfg' ]
+  - repo: https://github.com/psf/black
+    rev: 22.3.0
+    hooks:
+      - id: black
+        args: [ "--target-version", "py38" ]
+  - repo: https://github.com/PyCQA/isort
     rev: 5.10.1
     hooks:
-    -   id: isort
-        args: ['--profile', 'black']
--   repo: https://github.com/pycqa/pydocstyle
+      - id: isort
+        args: [ '--profile', 'black' ]
+  - repo: https://github.com/nbQA-dev/nbQA
+    rev: 1.3.1
+    hooks:
+      - id: nbqa-black
+      - id: nbqa-pyupgrade
+        args: [ --py38-plus ]
+      - id: nbqa-isort
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.5.0
+    hooks:
+      - id: nbstripout
+        files: ".ipynb"
+  - repo: https://github.com/pycqa/pydocstyle
     rev: 6.1.1
     hooks:
-    -   id: pydocstyle
-        args: ['--convention=numpy', '--match="(?!test_).*\.py"']
--   repo: meta
+      - id: pydocstyle
+        args: [ '--convention=numpy', '--match="(?!test_).*\.py"' ]
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.26.3
     hooks:
-    -   id: check-hooks-apply
-    -   id: check-useless-excludes
+      - id: yamllint
+        args: [ '--config-file', '.yamllint.yaml' ]
+  - repo: meta
+    hooks:
+      - id: check-hooks-apply
+      - id: check-useless-excludes
+
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit.com hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: [ nbstripout ]
+  submodules: false

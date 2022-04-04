@@ -2,7 +2,6 @@
 Base classes and developper tools
 ---------------------------------
 """
-import warnings
 from inspect import signature
 from types import FunctionType
 from typing import Callable, Mapping, Optional, Sequence, Set, Union
@@ -13,7 +12,7 @@ import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
 
-from xclim.core.calendar import days_in_year, get_calendar, max_doy, parse_offset
+from xclim.core.calendar import days_in_year, get_calendar
 from xclim.core.options import OPTIONS, SDBA_ENCODE_CF
 from xclim.core.utils import uses_dask
 
@@ -148,15 +147,35 @@ class Grouper(Parametrizable):
         )
         return kwargs
 
+    @property
+    def freq(self):
+        """The frequency string corresponding to the group. For use with xarray's resampling."""
+        return {
+            "group": "YS",
+            "season": "QS-DEC",
+            "month": "MS",
+            "week": "W",
+            "dayofyear": "D",
+        }.get(self.prop, None)
+
+    @property
+    def prop_name(self):
+        """A significative name of the grouping."""
+        return "year" if self.prop == "group" else self.prop
+
     def get_coordinate(self, ds=None):
         """Return the coordinate as in the output of group.apply.
 
-        Currently only implemented for groupings with prop == month or dayofyear.
-        For prop == dayfofyear a ds (dataset or dataarray) can be passed to infer
+        Currently, only implemented for groupings with prop == month or dayofyear.
+        For prop == dayfofyear, a ds (Dataset or DataArray) can be passed to infer
         the max doy from the available years and calendar.
         """
         if self.prop == "month":
             return xr.DataArray(np.arange(1, 13), dims=("month",), name="month")
+        if self.prop == "season":
+            return xr.DataArray(
+                ["DJF", "MAM", "JJA", "SON"], dims=("season",), name="season"
+            )
         if self.prop == "dayofyear":
             if ds is not None:
                 cal = get_calendar(ds, dim=self.dim)
@@ -385,6 +404,9 @@ class Grouper(Parametrizable):
             if uses_dask(out):
                 # or -1 in case dim_chunks is [], when no input is chunked (only happens if the operation is chunking the output)
                 out = out.chunk({self.dim: dim_chunks or -1})
+        if self.prop == "season" and self.prop in out.coords:
+            # Special case for "DIM.season", it is often returned in alphabetical order, but that doesn't fit the coord given in get_coordinate
+            out = out.sel(season=np.array(["DJF", "MAM", "JJA", "SON"]))
         if self.prop in out.dims and uses_dask(out):
             # Same as above : downstream methods expect only one chunk along the group
             out = out.chunk({self.prop: -1})
@@ -392,11 +414,13 @@ class Grouper(Parametrizable):
         return out
 
 
-def parse_group(func: Callable, kwargs=None) -> Callable:
+def parse_group(func: Callable, kwargs=None, allow_only=None) -> Callable:
     """Parse the kwargs given to a function to set the `group` arg with a Grouper object.
 
     This function can be used as a decorator, in which case the parsing and updating of the kwargs is done at call time.
     It can also be called with a function from which extract the default group and kwargs to update, in which case it returns the updated kwargs.
+
+    If allow_only is given, an exception is raised when the parsed group is not within that list.
     """
     sig = signature(func)
     if "group" in sig.parameters:
@@ -404,20 +428,29 @@ def parse_group(func: Callable, kwargs=None) -> Callable:
     else:
         default_group = None
 
-    def _update_kwargs(kwargs):
+    def _update_kwargs(kwargs, allowed=None):
         if default_group or "group" in kwargs:
             kwargs.setdefault("group", default_group)
             if not isinstance(kwargs["group"], Grouper):
                 kwargs = Grouper.from_kwargs(**kwargs)
+        if (
+            allowed is not None
+            and "group" in kwargs
+            and kwargs["group"].prop not in allowed
+        ):
+            raise ValueError(
+                f"Grouping on {kwargs['group'].prop_name} is not allowed for this "
+                f"function. Should be one of {allowed}."
+            )
         return kwargs
 
     if kwargs is not None:  # Not used as a decorator
-        return _update_kwargs(kwargs)
+        return _update_kwargs(kwargs, allowed=allow_only)
 
     # else (then it's a decorator)
     @wraps(func)
     def _parse_group(*args, **kwargs):
-        kwargs = _update_kwargs(kwargs)
+        kwargs = _update_kwargs(kwargs, allowed=allow_only)
         return func(*args, **kwargs)
 
     return _parse_group
@@ -439,9 +472,13 @@ def _decode_cf_coords(ds):
     crds = xr.decode_cf(ds.coords.to_dataset())
     for crdname in ds.coords.keys():
         ds[crdname] = crds[crdname]
+        # decode_cf introduces an encoding key for the dtype, which can confuse the netCDF writer
+        dtype = ds[crdname].encoding.get("dtype")
+        if np.issubdtype(dtype, np.timedelta64) or np.issubdtype(dtype, np.datetime64):
+            del ds[crdname].encoding["dtype"]
 
 
-def map_blocks(reduces=None, **outvars):
+def map_blocks(reduces: Sequence[str] = None, **outvars):
     """
     Decorator for declaring functions and wrapping them into a map_blocks. It takes care of constructing
     the template dataset.
@@ -455,7 +492,7 @@ def map_blocks(reduces=None, **outvars):
     ----------
     reduces : sequence of strings
       Name of the dimensions that are removed by the function.
-    **outvars
+    outvars
       Mapping from variable names in the output to their *new* dimensions.
       The placeholders `Grouper.PROP`, `Grouper.DIM` and `Grouper.ADD_DIMS` can be used to signify
       `group.prop`,`group.dim` and `group.add_dims` respectively.
@@ -628,7 +665,6 @@ def map_blocks(reduces=None, **outvars):
             out = ds.map_blocks(
                 _call_and_transpose_on_exit, template=tmpl, kwargs=kwargs
             )
-
             # Add back the extra coords, but only those which have compatible dimensions (like xarray would have done)
             out = out.assign_coords(
                 {
@@ -648,7 +684,7 @@ def map_blocks(reduces=None, **outvars):
     return _decorator
 
 
-def map_groups(reduces=None, main_only=False, **outvars):
+def map_groups(reduces: Sequence[str] = None, main_only: bool = False, **outvars):
     """
     Decorator for declaring functions acting only on groups and wrapping them into a map_blocks.
     See :py:func:`map_blocks`.
@@ -667,6 +703,12 @@ def map_groups(reduces=None, main_only=False, **outvars):
       and [Grouper.DIM] if main_only is True. See :py:func:`map_blocks`.
     main_only: bool
         Same as for :py:meth:`Grouper.apply`.
+    outvars:
+        Mapping from variable names in the output to their *new* dimensions.
+      The placeholders `Grouper.PROP`, `Grouper.DIM` and `Grouper.ADD_DIMS` can be used to signify
+      `group.prop`,`group.dim` and `group.add_dims` respectively.
+      If an output keeps a dimension that another loses, that dimension name must be given in `reduces` and in
+      the list of new dimensions of the first output.
     """
     defreduces = [Grouper.DIM]
     if not main_only:

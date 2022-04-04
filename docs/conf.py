@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # xclim documentation build configuration file, created by
 # sphinx-quickstart on Fri Jun  9 13:47:02 2017.
@@ -18,7 +17,12 @@ import sys
 import warnings
 from collections import OrderedDict
 
-import xclim
+import xarray
+
+xarray.DataArray.__module__ = "xarray"
+xarray.Dataset.__module__ = "xarray"
+
+import xclim  # noqa
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory is
@@ -106,6 +110,9 @@ napoleon_use_ivar = True
 intersphinx_mapping = {
     "clisops": ("https://clisops.readthedocs.io/en/latest/", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
+    "sklearn": ("https://scikit-learn.org/stable/", None),
+    "statsmodels": ("https://www.statsmodels.org/stable/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
 }
 extlinks = {
     "issue": ("https://github.com/Ouranosinc/xclim/issues/%s", "GH/"),

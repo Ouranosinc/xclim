@@ -1,8 +1,10 @@
 # dev tools and testing
-black
+black>=22.3
 bump2version
 coverage
 flake8
+flake8-rst-docstrings
+ipython<8.0  # this needed when testing see #1005
 mypy
 nbval
 pre-commit>=2.9
@@ -13,8 +15,10 @@ pytest-cov
 pytest-runner
 tokenize-rt
 tox
+wheel
 xdoctest
 yamale
+yamllint
 # Documentation and examples
 distributed>=2.0
 ipykernel

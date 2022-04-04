@@ -46,7 +46,7 @@ def _get(
 ) -> Path:
     cache_dir = cache_dir.absolute()
     local_file = cache_dir / branch / fullname
-    md5name = fullname.with_suffix("{}.md5".format(suffix))
+    md5name = fullname.with_suffix(f"{suffix}.md5")
     md5file = cache_dir / branch / md5name
 
     if local_file.is_file():
@@ -127,7 +127,7 @@ def open_dataset(
     dap_url : str, optional
         URL to OPeNDAP folder where the data is stored. If supplied, supersedes github_url.
     github_url : str
-        URL to Github repository where the data is stored.
+        URL to GitHub repository where the data is stored.
     branch : str, optional
         For GitHub-hosted files, the branch to download from.
     cache_dir : Path
@@ -135,7 +135,7 @@ def open_dataset(
     cache : bool
         If True, then cache data locally for use on subsequent calls.
     kwds : dict, optional
-        For NetCDF files, **kwds passed to xarray.open_dataset.
+        For NetCDF files, kwds passed to :py:func:`xarray.open_dataset`.
 
     Returns
     -------
@@ -199,7 +199,7 @@ def list_datasets(github_repo="Ouranosinc/xclim-testdata", branch="main"):
                 records.append(
                     {
                         "name": file["path"],
-                        "size": file["size"] / 2 ** 10,
+                        "size": file["size"] / 2**10,
                         "url": file["html_url"],
                     }
                 )
@@ -436,5 +436,26 @@ def publish_release_notes(style: str = "md") -> str:
 
     for search, replacement in hyperlink_replacements.items():
         history = re.sub(search, replacement, history)
+
+    if style == "md":
+        history = history.replace("=======\nHistory\n=======", "# History")
+
+        titles = {r"\n(.*?)\n([\-]{1,})": "-", r"\n(.*?)\n([\^]{1,})": "^"}
+        for title_expression, level in titles.items():
+            found = re.findall(title_expression, history)
+            for grouping in found:
+                fixed_grouping = (
+                    str(grouping[0]).replace("(", r"\(").replace(")", r"\)")
+                )
+                search = rf"({fixed_grouping})\n([\{level}]{'{' + str(len(grouping[1])) + '}'})"
+                replacement = f"{'##' if level=='-' else '###'} {grouping[0]}"
+                history = re.sub(search, replacement, history)
+
+        link_expressions = r"[\`]{1}([\w\s]+)\s<(.+)>`\_"
+        found = re.findall(link_expressions, history)
+        for grouping in found:
+            search = rf"`{grouping[0]} <.+>`\_"
+            replacement = f"[{str(grouping[0]).strip()}]({grouping[1]})"
+            history = re.sub(search, replacement, history)
 
     return history

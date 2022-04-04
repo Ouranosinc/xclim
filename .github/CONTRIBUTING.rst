@@ -108,12 +108,12 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
 2. Clone your fork locally::
 
-    $ git clone git@github.com:Ouranosinc/xclim.git
+    $ git clone git@github.com:{my_github_username}/xclim.git
     $ cd xclim/
 
 3. Create a development environment. We recommend using ``conda``::
 
-    $ conda create -n xclim python=3.7 --file=environment.yml
+    $ conda create -n xclim python=3.8 --file=environment.yml
     $ pip install -e .[dev]
 
 4. Create a branch for local development::
@@ -129,12 +129,13 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     # To run pre-commit hooks manually:
     $ pre-commit run --all-files
 
-  Instead of ``pre-commit``, you could also verify your changes manually with `black` and `pydocstyle`::
+  Instead of ``pre-commit``, you could also verify your changes manually with `black`, `flake8`, `flake8-rst-docstrings`, `pydocstyle`, and `yamllint`::
 
-    $ black --check --target-version py37 xclim xclim/testing/tests
-    $ black --check --target-version py37 --include "\.ipynb$" docs
+    $ black --check --target-version py38 xclim xclim/testing/tests
+    $ black --check --target-version py38 --include "\.ipynb$" docs
     $ flake8 xclim xclim/testing/tests
     $ pydocstyle --convention=numpy --match='(?!test_).*\.py' xclim
+    $ yamllint --config-file .yamllint.yaml xclim
 
 6. When unit/doc tests are added or notebooks updated, use ``pytest`` to run them. Alternatively, one can use ``tox`` to run all testing suites as would github do when the PR is submitted and new commits are pushed::
 
@@ -143,7 +144,6 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     $ pytest  # for all tests, excluding docstests.
     $ tox  # run all testing suites
 
-
 7. Commit your changes and push your branch to GitHub::
 
     $ git add *
@@ -151,7 +151,8 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     $ git commit -m "Your detailed description of your changes."
     # If installed, `pre-commit` will run checks at this point:
     # If no errors are found, changes will be committed.
-    # If errors are found, modifications will be made and warnings will be raised if intervention is needed. After changes, simply `git commit` again.
+    # If errors are found, modifications will be made and warnings will be raised if intervention is needed.
+    # After changes, simply `git commit` again.
 
     $ git push origin name-of-your-bugfix-or-feature
 
@@ -185,7 +186,7 @@ Before you submit a pull request, please follow these guidelines:
     If you aren't accustomed to writing documentation in reStructuredText (`.rst`), we encourage you to spend a few minutes going over the
     incredibly well-summarized `reStructuredText Primer`_ from the sphinx-doc maintainer community.
 
-5. The pull request should work for Python 3.7, 3.8, and 3.9 as well as raise test coverage.
+5. The pull request should work for Python 3.8, 3.9, and 3.10 as well as raise test coverage.
    Pull requests are also checked for documentation build status and for `PEP8`_ compliance.
 
    The build statuses and build errors for pull requests can be found at:

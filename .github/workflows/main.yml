@@ -9,33 +9,53 @@ on:
 jobs:
   black:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        tox-env: [black]
     steps:
+      - name: Cancel previous runs
+        uses: styfle/cancel-workflow-action@0.9.1
+        with:
+          access_token: ${{ github.token }}
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.7
+          python-version: "3.8"
       - name: Install tox
         run: pip install tox
       - name: Run linting suite
-        run: tox -e ${{ matrix.tox-env }}
+        run: tox -e black
 
   doctests:
+    needs: black
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        tox-env: [doctests_only]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.7
+          python-version: "3.8"
       - name: Install tox
         run: pip install tox
-      - name: Run lint
-        run: tox -e ${{ matrix.tox-env }}
+      - name: Run doctests
+        run: tox -e doctests_only
+
+  test-py38-upstream-dev-dependencies:
+    needs: black
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
+      - name: Install tox
+        run: pip install tox
+      - name: Test with tox
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: tox -e py38-xarray-lm3
+      - name: report coverage
+        uses: AndreMiras/coveralls-python-action@develop
+        with:
+          flag-name: run-py38-xarray-lm3
+          parallel: true
 
   test:
     needs: black
@@ -43,42 +63,46 @@ jobs:
     strategy:
       matrix:
         include:
-          - tox-env: py37-xarray-lm3
-            python-version: 3.7
-          - tox-env: py38-slow-lm3
-            python-version: 3.8
-          - tox-env: py39-lm3
-            python-version: 3.9
+#          - tox-env: py38-xarray-lm3
+#            python-version: "3.8"
+          - tox-env: py39-slow-lm3
+            python-version: "3.9"
+          # Warning: Bottleneck does not yet officially support PEP 405
+          # https://github.com/pydata/bottleneck/issues/348#issuecomment-776165418
+          - tox-env: py310
+            python-version: "3.10-dev"
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install tox
-      run: pip install tox
-    - name: Test with tox
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: tox -e ${{ matrix.tox-env }}
-    - name: report coverage
-      uses: AndreMiras/coveralls-python-action@develop
-      with:
-        flag-name: run-${{ matrix.tox-env }}
-        parallel: true
-
-#    - name: Coveralls
-#      uses: coverallsapp/github-action@master
-#      with:
-#        github-token: ${{ secrets.GITHUB_TOKEN }}
-#        flag-name: run-${{ matrix.python-version }}
-#        parallel: true
+      - uses: actions/checkout@v2
+      # Python3.10-dev headers not available in Ubuntu-20.04 Bionic
+      - name: Set up Python3.10 (deadsnakes version)
+        if: "endsWith(matrix.python-version, '-dev')"
+        uses: deadsnakes/action@v2.1.1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python-version }}
+        if: "!endsWith(matrix.python-version, '-dev')"
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install tox
+        run: pip install tox
+      - name: Test with tox
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: tox -e ${{ matrix.tox-env }}
+      - name: report coverage
+        uses: AndreMiras/coveralls-python-action@develop
+        with:
+          flag-name: run-${{ matrix.tox-env }}
+          parallel: true
 
   finish:
-    needs: [test, doctests]
+    needs:
+      - test
+      - doctests
     runs-on: ubuntu-latest
     steps:
-    - name: Coveralls Finished
-      uses: AndreMiras/coveralls-python-action@develop
-      with:
-        parallel-finished: true
+      - name: Coveralls Finished
+        uses: AndreMiras/coveralls-python-action@develop
+        with:
+          parallel-finished: true

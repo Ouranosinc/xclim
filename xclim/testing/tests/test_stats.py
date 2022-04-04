@@ -6,146 +6,169 @@ from scipy.stats import lognorm, norm
 from xclim.indices import stats
 
 
-class TestFA(object):
-    def setup(self):
-        self.nx, self.ny = 2, 3
-        x = np.arange(0, self.nx)
-        y = np.arange(0, self.ny)
+@pytest.fixture(params=[True, False])
+def fitda(request):
+    nx, ny, nt = 2, 3, 50
+    x = np.arange(nx)
+    y = np.arange(ny)
 
-        cx = xr.IndexVariable("x", x)
-        cy = xr.IndexVariable("y", y)
-        time = xr.IndexVariable("time", np.arange(50))
+    time = xr.cftime_range("2045-02-02", periods=nt, freq="D")
 
-        self.da = xr.DataArray(
-            np.random.lognormal(10, 1, (len(time), self.nx, self.ny)),
-            dims=("time", "x", "y"),
-            coords={"time": time, "x": cx, "y": cy},
-        )
+    da = xr.DataArray(
+        np.random.lognormal(10, 1, (nt, nx, ny)),
+        dims=("time", "x", "y"),
+        coords={"time": time, "x": x, "y": y},
+    )
 
-        self.weibull_min = xr.DataArray(
-            [
-                4836.6,
-                823.6,
-                3131.7,
-                1343.4,
-                709.7,
-                610.6,
-                3034.2,
-                1973,
-                7358.5,
-                265,
-                4590.5,
-                5440.4,
-                4613.7,
-                4763.1,
-                115.3,
-                5385.1,
-                6398.1,
-                8444.6,
-                2397.1,
-                3259.7,
-                307.5,
-                4607.4,
-                6523.7,
-                600.3,
-                2813.5,
-                6119.8,
-                6438.8,
-                2799.1,
-                2849.8,
-                5309.6,
-                3182.4,
-                705.5,
-                5673.3,
-                2939.9,
-                2631.8,
-                5002.1,
-                1967.3,
-                2810.4,
-                2948,
-                6904.8,
-            ],
-            dims=("time",),
-            coords={"time": xr.IndexVariable("time", np.arange(40))},
-        )
+    if request.param:
+        da = da.chunk({"x": 1})
+    return da
 
-        self.genextreme = xr.DataArray(
-            [
-                279,
-                302,
-                450,
-                272,
-                401,
-                222,
-                311,
-                327,
-                294,
-                299,
-                348,
-                286,
-                492,
-                296,
-                227,
-                437,
-                340,
-                376,
-                444,
-                177,
-            ],
-            dims=("time",),
-            coords={"time": xr.IndexVariable("time", np.arange(20))},
-        )
 
-    def test_fit(self):
-        p = stats.fit(self.da, "lognorm")
+@pytest.fixture(params=[True, False])
+def weibull_min(request):
+    da = xr.DataArray(
+        [
+            4836.6,
+            823.6,
+            3131.7,
+            1343.4,
+            709.7,
+            610.6,
+            3034.2,
+            1973,
+            7358.5,
+            265,
+            4590.5,
+            5440.4,
+            4613.7,
+            4763.1,
+            115.3,
+            5385.1,
+            6398.1,
+            8444.6,
+            2397.1,
+            3259.7,
+            307.5,
+            4607.4,
+            6523.7,
+            600.3,
+            2813.5,
+            6119.8,
+            6438.8,
+            2799.1,
+            2849.8,
+            5309.6,
+            3182.4,
+            705.5,
+            5673.3,
+            2939.9,
+            2631.8,
+            5002.1,
+            1967.3,
+            2810.4,
+            2948,
+            6904.8,
+        ],
+        dims=("time",),
+    )
+    da = da.assign_coords(
+        time=xr.cftime_range("2045-02-02", periods=da.time.size, freq="D")
+    )
 
-        assert p.dims[0] == "dparams"
-        assert p.get_axis_num("dparams") == 0
-        p0 = lognorm.fit(self.da.values[:, 0, 0])
-        np.testing.assert_array_equal(p[:, 0, 0], p0)
+    if request.param:
+        da = da.chunk()
+    return da
 
-        # Check that we can reuse the parameters with scipy distributions
-        cdf = lognorm.cdf(0.99, *p.values)
-        assert cdf.shape == (self.nx, self.ny)
-        assert p.attrs["estimator"] == "Maximum likelihood"
 
-    def test_weibull_min_fit(self):
-        """Check ML fit with a series that leads to poor values without good initial conditions."""
-        p = stats.fit(self.weibull_min, "weibull_min")
-        np.testing.assert_allclose(p, (1.7760067, -322.092552, 4355.262679), 1e-5)
+@pytest.fixture(params=[True, False])
+def genextreme(request):
+    da = xr.DataArray(
+        [
+            279,
+            302,
+            450,
+            272,
+            401,
+            222,
+            311,
+            327,
+            294,
+            299,
+            348,
+            286,
+            492,
+            296,
+            227,
+            437,
+            340,
+            376,
+            444,
+            177,
+        ],
+        dims=("time",),
+    )
+    da = da.assign_coords(
+        time=xr.cftime_range("2045-02-02", periods=da.time.size, freq="D")
+    )
 
-    def test_genextreme_fit(self):
-        """Check ML fit with a series that leads to poor values without good initial conditions."""
-        p = stats.fit(self.genextreme, "genextreme")
-        np.testing.assert_allclose(p, (0.20949, 297.954091, 75.7911863), 1e-5)
+    if request.param:
+        da = da.chunk()
+    return da
 
-    def test_fa(self):
-        T = 10
-        q = stats.fa(self.da, T, "lognorm")
-        assert "return_period" in q.coords
-        p0 = lognorm.fit(self.da.values[:, 0, 0])
-        q0 = lognorm.ppf(1 - 1.0 / T, *p0)
-        np.testing.assert_array_equal(q[0, 0, 0], q0)
 
-    def test_fit_nan(self):
-        da = self.da.copy()
-        da[0, 0, 0] = np.nan
-        out_nan = stats.fit(da, "lognorm")
-        out_censor = stats.fit(da[1:], "lognorm")
-        np.testing.assert_array_equal(
-            out_nan.values[:, 0, 0], out_censor.values[:, 0, 0]
-        )
+def test_fit(fitda):
+    p = stats.fit(fitda, "lognorm")
 
-    def test_empty(self):
-        da = self.da.copy()
-        da[:, 0, 0] = np.nan
-        out = stats.fit(da, "lognorm").values
-        assert np.isnan(out[:, 0, 0]).all()
+    assert p.dims[0] == "dparams"
+    assert p.get_axis_num("dparams") == 0
+    p0 = lognorm.fit(fitda.values[:, 0, 0])
+    np.testing.assert_array_equal(p[:, 0, 0], p0)
 
-    def test_dims_order(self):
-        da = self.da.transpose()
-        p = stats.fit(da)
-        assert p.dims[-1] == "dparams"
+    # Check that we can reuse the parameters with scipy distributions
+    cdf = lognorm.cdf(0.99, *p.values)
+    assert cdf.shape == (fitda.x.size, fitda.y.size)
+    assert p.attrs["estimator"] == "Maximum likelihood"
+
+
+def test_weibull_min_fit(weibull_min):
+    """Check ML fit with a series that leads to poor values without good initial conditions."""
+    p = stats.fit(weibull_min, "weibull_min")
+    np.testing.assert_allclose(p, (1.7760067, -322.092552, 4355.262679), 1e-5)
+
+
+def test_genextreme_fit(genextreme):
+    """Check ML fit with a series that leads to poor values without good initial conditions."""
+    p = stats.fit(genextreme, "genextreme")
+    np.testing.assert_allclose(p, (0.20949, 297.954091, 75.7911863), 1e-5)
+
+
+def test_fa(fitda):
+    T = 10
+    q = stats.fa(fitda, T, "lognorm")
+    assert "return_period" in q.coords
+    p0 = lognorm.fit(fitda.values[:, 0, 0])
+    q0 = lognorm.ppf(1 - 1.0 / T, *p0)
+    np.testing.assert_array_equal(q[0, 0, 0], q0)
+
+
+def test_fit_nan(fitda):
+    da = fitda.where((fitda.x > 0) & (fitda.y > 0))
+    out_nan = stats.fit(da, "lognorm")
+    out_censor = stats.fit(da[1:], "lognorm")
+    np.testing.assert_array_equal(out_nan.values[:, 0, 0], out_censor.values[:, 0, 0])
+
+
+def test_empty(fitda):
+    da = fitda.where((fitda.x > 0) & (fitda.y > 0))
+    out = stats.fit(da, "lognorm").values
+    assert np.isnan(out[:, 0, 0]).all()
+
+
+def test_dims_order(fitda):
+    da = fitda.transpose()
+    p = stats.fit(da)
+    assert p.dims[-1] == "dparams"
 
 
 class TestPWMFit:
@@ -181,7 +204,8 @@ class TestPWMFit:
         np.testing.assert_array_almost_equal(values, expected)
 
     @pytest.mark.parametrize("dist", stats._lm3_dist_map.keys())
-    def test_pwm_fit(self, dist):
+    @pytest.mark.parametrize("use_dask", [True, False])
+    def test_pwm_fit(self, dist, use_dask):
         """Test that the fitted parameters match parameters used to generate a random sample."""
         pytest.importorskip("lmoments3")
         n = 500
@@ -192,6 +216,8 @@ class TestPWMFit:
             dims=("time",),
             coords={"time": xr.cftime_range("1980-01-01", periods=n)},
         )
+        if use_dask:
+            da = da.chunk()
         out = stats.fit(da, dist=dist, method="PWM").compute()
 
         # Check that values are identical to lmoments3's output dict
@@ -201,44 +227,72 @@ class TestPWMFit:
             np.testing.assert_array_equal(out.sel(dparams=key), val, 1)
 
 
-class TestFrequencyAnalysis:
-    def test_simple(self, ndq_series):
-        q = ndq_series.copy()
-        q[:, 0, 0] = np.nan
-        out = stats.frequency_analysis(
-            q, mode="max", t=2, dist="genextreme", window=6, freq="YS"
-        )
-        assert out.dims == ("return_period", "x", "y")
-        assert out.shape == (1, 2, 3)
-        v = out.values
-        assert v.shape == (1, 2, 3)
-        assert np.isnan(v[:, 0, 0])
-        assert ~np.isnan(v[:, 1, 1])
-        assert out.units == "m3 s-1"
+@pytest.mark.parametrize("use_dask", [True, False])
+def test_frequency_analysis(ndq_series, use_dask):
+    q = ndq_series.copy()
+    q[:, 0, 0] = np.nan
+    if use_dask:
+        q = q.chunk()
 
-        # smoke test when time is not the first dimension
-        stats.frequency_analysis(
-            q.transpose(), mode="max", t=2, dist="genextreme", window=6, freq="YS"
-        )
+    out = stats.frequency_analysis(
+        q, mode="max", t=2, dist="genextreme", window=6, freq="YS"
+    )
+    assert out.dims == ("return_period", "x", "y")
+    assert out.shape == (1, 2, 3)
+    v = out.values
+    assert v.shape == (1, 2, 3)
+    assert np.isnan(v[:, 0, 0])
+    assert ~np.isnan(v[:, 1, 1])
+    assert out.units == "m3 s-1"
+
+    # smoke test when time is not the first dimension
+    stats.frequency_analysis(
+        q.transpose(), mode="max", t=2, dist="genextreme", window=6, freq="YS"
+    )
 
 
-class TestParametricQuantile:
-    def test_synth(self):
-        mu = 23
-        sigma = 2
-        n = 10000
-        per = 0.9
-        d = norm(loc=mu, scale=sigma)
-        r = xr.DataArray(
-            d.rvs(n),
-            dims=("time",),
-            coords={"time": xr.cftime_range(start="1980-01-01", periods=n)},
-            attrs={"history": "Mosquito bytes per minute"},
-        )
-        expected = d.ppf(per)
+@pytest.mark.parametrize("use_dask", [True, False])
+def test_parametric_quantile(use_dask):
+    mu = 23
+    sigma = 2
+    n = 10000
+    per = 0.9
+    d = norm(loc=mu, scale=sigma)
+    r = xr.DataArray(
+        d.rvs(n),
+        dims=("time",),
+        coords={"time": xr.cftime_range(start="1980-01-01", periods=n)},
+        attrs={"history": "Mosquito bytes per minute"},
+    )
+    expected = d.ppf(per)
 
-        p = stats.fit(r, dist="norm")
-        q = stats.parametric_quantile(p=p, q=per)
+    p = stats.fit(r, dist="norm")
+    q = stats.parametric_quantile(p=p, q=per)
 
-        np.testing.assert_array_almost_equal(q, expected, 1)
-        assert "quantile" in q.coords
+    np.testing.assert_array_almost_equal(q, expected, 1)
+    assert "quantile" in q.coords
+
+
+@pytest.mark.parametrize("use_dask", [True, False])
+def test_paramtric_cdf(use_dask):
+    mu = 23
+    sigma = 2
+    n = 10000
+    v = 24
+    d = norm(loc=mu, scale=sigma)
+    r = xr.DataArray(
+        d.rvs(n),
+        dims=("time",),
+        coords={"time": xr.cftime_range(start="1980-01-01", periods=n)},
+        attrs={"history": "Mosquito bytes per minute"},
+    )
+    if use_dask:
+        r = r.chunk()
+    expected = d.cdf(v)
+
+    p = stats.fit(r, dist="norm")
+    out = stats.parametric_cdf(p=p, v=v)
+
+    np.testing.assert_array_almost_equal(out, expected, 1)
+    assert "cdf" in out.coords
+    assert out.attrs["cell_methods"] == "dparams: cdf"

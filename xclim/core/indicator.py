@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # noqa: D205,D400
 """
 Indicators utilities
@@ -95,7 +94,7 @@ from dataclasses import asdict, dataclass
 from functools import reduce
 from inspect import Parameter as _Parameter
 from inspect import Signature
-from inspect import _empty as _empty_default
+from inspect import _empty as _empty_default  # noqa
 from inspect import signature
 from os import PathLike
 from pathlib import Path
@@ -108,7 +107,7 @@ from yaml import safe_load
 
 from .. import indices
 from . import datachecks
-from .calendar import parse_offset
+from .calendar import parse_offset, select_time
 from .cfchecks import cfcheck_from_name
 from .formatting import (
     AttrFormatter,
@@ -261,7 +260,7 @@ class Indicator(IndicatorRegistrar):
     in :py:data:`xclim.core.indicator.registry`.
 
     Attributes in `Indicator.cf_attrs` will be formatted and added to the output variable(s).
-    This attribute is a list of dictionaries. For convenience and retrocompatibility,
+    This attribute is a list of dictionaries. For convenience and retro-compatibility,
     standard CF attributes (names listed in :py:attr:`xclim.core.indicator.Indicator._cf_names`)
     can be passed as strings or list of strings directly to the indicator constructor.
 
@@ -1040,10 +1039,10 @@ class Indicator(IndicatorRegistrar):
         Parameters
         ----------
         locale : Union[str, Sequence[str]]
-            The POSIX name of the locale or a tuple of a locale name and a path to a
-            json file defining the translations. See `xclim.locale` for details.
+          The POSIX name of the locale or a tuple of a locale name and a path to a
+          json file defining the translations. See `xclim.locale` for details.
         fill_missing : bool
-            If True (default fill the missing attributes by their english values.
+           If True (default) fill the missing attributes by their english values.
         """
 
         def _translate(cf_attrs, names, var_id=None):
@@ -1086,8 +1085,8 @@ class Indicator(IndicatorRegistrar):
         Parameters
         ----------
         args : mapping, optional
-            Arguments as passed to the call method of the indicator.
-            If not given, the default arguments will be used when formatting the attributes.
+          Arguments as passed to the call method of the indicator.
+          If not given, the default arguments will be used when formatting the attributes.
 
         Notes
         -----
@@ -1136,6 +1135,7 @@ class Indicator(IndicatorRegistrar):
         args : dict, optional
           Function call arguments. If not given, the default arguments will be used when formatting the attributes.
         formatter : AttrFormatter
+          Plaintext mappings for indicator attributes.
         """
         # Use defaults
         if args is None:
@@ -1149,9 +1149,9 @@ class Indicator(IndicatorRegistrar):
         # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
         for k, v in args.items():
             if isinstance(v, units.Quantity):
-                mba[k] = "{:g~P}".format(v)
+                mba[k] = f"{v:g~P}"
             elif isinstance(v, (int, float)):
-                mba[k] = "{:g}".format(v)
+                mba[k] = f"{v:g}"
             # TODO: What about InputKind.NUMBER_SEQUENCE
             elif k == "indexer":
                 if v and v not in [_empty, _empty_default]:
@@ -1375,7 +1375,7 @@ class ResamplingIndicatorWithIndexing(ResamplingIndicator):
 
         indxr = params.get("indexer")
         if indxr:
-            das = {k: indices.generic.select_time(da, **indxr) for k, da in das.items()}
+            das = {k: select_time(da, **indxr) for k, da in das.items()}
         return das, params
 
 
@@ -1459,8 +1459,8 @@ def build_indicator_module(
 def build_indicator_module_from_yaml(
     filename: PathLike,
     name: Optional[str] = None,
-    indices: Optional[Union[Mapping[str, Callable], ModuleType]] = None,
-    translations: Optional[Mapping[str, dict]] = None,
+    indices: Optional[Union[Mapping[str, Callable], ModuleType, PathLike]] = None,
+    translations: Optional[Dict[str, Union[dict, PathLike]]] = None,
     mode: str = "raise",
     encoding: str = "UTF8",
 ) -> ModuleType:
@@ -1476,12 +1476,14 @@ def build_indicator_module_from_yaml(
     name: str, optional
       The name of the new or existing module, defaults to the basename of the file.
       (e.g: `atmos.yml` -> `atmos`)
-    indices : Mapping of callables or module, optional
-      A mapping or module of indice functions. When creating the indicator, the name in the `index_function` field is
-      first sought here, then in xclim.indices.generic and finally in xclim.indices.
-    translations  : Mapping of dicts, optional
+    indices : Mapping of callables or module or path, optional
+      A mapping or module of indice functions or a python file declaring such a file.
+      When creating the indicator, the name in the `index_function` field is first sought
+      here, then the indicator class will search in xclim.indices.generic and finally in xclim.indices.
+    translations  : Mapping of dicts or path, optional
       Translated metadata for the new indicators. Keys of the mapping must be 2-char language tags.
-      See Notes and :ref:`Internationalization` for more details.
+      Values can be translations dictionaries as defined in :ref:`Internationalization`.
+      They can also be a path to a json file defining the translations.
     mode: {'raise', 'warn', 'ignore'}
       How to deal with broken indice definitions.
     encoding: str
@@ -1530,21 +1532,33 @@ def build_indicator_module_from_yaml(
     )
     doc = yml.get("doc")
 
-    # When given as a stem, we try to load indices and translations
-    if not filepath.suffix:
-        if indices is None:
-            try:
-                indices = load_module(filepath.with_suffix(".py"))
-            except ModuleNotFoundError:
-                pass
+    if (
+        not filepath.suffix
+        and indices is None
+        and (indfile := filepath.with_suffix(".py")).is_file()
+    ):
+        # No suffix means we try to automatically detect the python file
+        indices = indfile
 
-        if translations is None:
-            translations = {}
-            for locfile in filepath.parent.glob(filepath.stem + ".*.json"):
-                locale = locfile.suffixes[0][1:]
-                translations[locale] = read_locale_file(
-                    locfile, module=module_name, encoding=encoding
-                )
+    if isinstance(indices, (str, Path)):
+        indices = load_module(indices, name=module_name)
+
+    if not filepath.suffix and translations is None:
+        # No suffix mean we try to automatically detect the json files.
+        translations = {}
+        for locfile in filepath.parent.glob(f"{filepath.stem}.*.json"):
+            locale = locfile.suffixes[0][1:]
+            translations[locale] = read_locale_file(
+                locfile, module=module_name, encoding=encoding
+            )
+    elif translations is not None:
+        # A mapping was passed, we read paths is any.
+        translations = {
+            lng: read_locale_file(trans, module=module_name, encoding=encoding)
+            if isinstance(trans, (str, Path))
+            else trans
+            for lng, trans in translations.items()
+        }
 
     # Module-wide default values for some attributes
     defkwargs = {

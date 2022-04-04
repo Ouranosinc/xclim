@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Tests for the Indicator objects
 import gc
 import json
@@ -13,6 +12,7 @@ import xarray as xr
 
 import xclim
 from xclim import __version__, atmos
+from xclim.core.calendar import select_time
 from xclim.core.formatting import (
     AttrFormatter,
     default_formatter,
@@ -24,7 +24,6 @@ from xclim.core.indicator import Daily, Indicator, ResamplingIndicator, registry
 from xclim.core.units import convert_units_to, declare_units, units
 from xclim.core.utils import InputKind, MissingVariableError
 from xclim.indices import tg_mean
-from xclim.indices.generic import select_time
 from xclim.testing import open_dataset
 
 
@@ -146,7 +145,7 @@ def test_attrs(tas_series):
     assert txm.cell_methods == "time: mean within days time: mean within years"
     assert f"{dt.datetime.now():%Y-%m-%d %H}" in txm.attrs["history"]
     assert "TMIN(da=tas, thresh='5 degC', freq='YS')" in txm.attrs["history"]
-    assert f"xclim version: {__version__}." in txm.attrs["history"]
+    assert f"xclim version: {__version__}" in txm.attrs["history"]
     assert txm.name == "tmin5 degC"
     assert uniIndTemp.standard_name == "{freq} mean temperature"
     assert uniIndTemp.cf_attrs[0]["another_attr"] == "With a value."

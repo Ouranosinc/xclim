@@ -1,7 +1,7 @@
 base: str(required=False)
 doc: str(required=False)
 keywords: str(required=False)
-module : str(required=False)
+module: str(required=False)
 realm: str(required=False)
 references: str(required=False)
 indicators: map(include('indicator'), key=regex('^[-\w]+$'))

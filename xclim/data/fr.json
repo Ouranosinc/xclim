@@ -162,11 +162,23 @@
     "keywords": "courbes IDF",
     "abstract": "Maximum de l'intensité de précipitation horaire pour une durée et période donnée."
   },
+  "RPRCTOT": {
+    "long_name": "Proportion convective de la précipitation totale",
+    "description": "Proportion de la précipitation totale {freq:f} due à la précipitation convective pour les jours avec une précipitation d'au moins {thresh}.",
+    "title": "Proportion convective de la précipitation totale.",
+    "abstract": "Proportion de la précipitation totale due aux processus de convections. Seuls les jours avec un flux minimum de précipitation sont considérés."
+  },
   "WETDAYS": {
     "long_name": "Nombre de jours pluvieux (précip >= {thresh})",
     "description": "Nombre {freq:m} de jours où les précipitations sont au-dessus de {thresh}.",
     "title": "Jours mouillés",
     "abstract": "Nombre de jours où les précipitations sont au-dessus d'un seuil."
+  },
+  "WETDAY_PROP": {
+    "long_name": "Proportion de jours pluvieux (précip >= {thresh})",
+    "description": "Propotion {freq:m} de jours où les précipitations sont au-dessus de {thresh}.",
+    "title": "Proportion de jours pluvieux",
+    "abstract": "Proportion de jours où les précipitations sont au-dessus d'un seuil."
   },
   "CDD": {
     "long_name": "Durée maximale d'une période sèche",
@@ -707,15 +719,21 @@
   },
   "HURS": {
     "long_name": "Humidité relative",
-    "description": "Calculée à partir de la température, de l'humidité spécifique et de la pression à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}",
+    "description": "Calculée à partir de la température, de l'humidité spécifique et de la pression à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}.",
     "title": "Humidité relative à partir de l'humidité spécifique et de la pression",
     "abstract": "Calcul de l'humidité relative à partir de la température, de l'humidité spécifique et de la pression à l'aide de la pression de vapeur saturante."
   },
   "HUSS": {
     "long_name": "Humidité spécifique",
-    "description": "Calculée à partir de la température, de l'humidité relative et de la pression à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}",
+    "description": "Calculée à partir de la température, de l'humidité relative et de la pression à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}.",
     "title": "Humidité spécifique à partir de l'humidité relative et de la pression",
     "abstract": "Calcul de l'humidité spécifique à partir de la température, de l'humidité relative et de la pression à l'aide de la pression de vapeur saturante."
+  },
+  "HUSS_FROMDEWPOINT": {
+    "long_name": "Humidité spécifique",
+    "description": "Calculée à partir de la température du point de rosée et de la pression à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}.",
+    "title": "Humidité spécifique à partir de la température du point de rosée et de la pression",
+    "abstract": "Calcul de l'humidité spécifique à partir de la température du point de rosée et de la pression à l'aide de la pression de vapeur saturante."
   },
   "FIRST_DAY_BELOW": {
     "long_name": "Premier jour de l'année avec une température sous {thresh}",
@@ -800,6 +818,18 @@
     "description": "Fonte maximale {freq:f} de neige sur {window} jours.",
     "title": "Fonte de neige maximale",
     "abstract": "Équivalent en eau de la fonte de neige maximale."
+  },
+  "SNW_MAX": {
+    "long_name": "Quantité de neige maximale",
+    "description": "Quantité maximale {freq:f} de neige.",
+    "title": "Quantité de neige maximale",
+    "abstract": "Maximum de la quantité de neige journalière."
+  },
+  "SNW_MAX_DOY": {
+    "long_name": "Date de la quantité de neige maximale",
+    "description": "Date {freq:f} à laquelle la quantité de neige atteint sa valeur maximale.",
+    "title": "Date où la quantité de neige est maximale",
+    "abstract": "Jour de l'année où la quantité de neige atteint sa valeur maximale."
   },
   "MELT_AND_PRECIP_MAX": {
     "long_name": "Maximum des apports en eau incluant la fonte de neige et les précipitations",
@@ -923,8 +953,8 @@
   },
   "DRY_SPELL_TOTAL_LENGTH": {
     "title": "Durée totale en jours des périodes séches",
-    "abstract": "Durée totale en jours des périodes séches de n jours et plus, pendant lesquelles les précipitations accumulées sur une fenêtre de n jours sont inférieures à un seuil donné.",
-    "description": "Durée totale {freq:f} en jours des périodes séches de {window} jours et plus, pendant lesquelles les précipitations accumulées sur une fenêtre de {window} jours sont inférieures à {thresh}.",
+    "abstract": "Durée totale en jours des périodes séches de n jours et plus, pendant lesquelles les précipitations accumulées ou maximales sur une fenêtre de n jours sont inférieures à un seuil donné.",
+    "description": "Durée totale {freq:f} en jours des périodes séches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}.",
     "long_name": "Durée totale {freq:f} en jours des périodes sèches de {window} jours et plus"
   },
   "COLD_AND_DRY_DAYS": {
@@ -1002,5 +1032,16 @@
     "abstract": "Cumul de précipitation {freq:f} pendant la saison de pluie",
     "description": "Cumul de précipitation pendant la saison de pluie",
     "long_name": "Cumul de précipitation pendant la saison de pluie"
+  "JETSTREAM_METRIC_WOOLLINGS": {
+    "title": "Force et latitude du courant-jet",
+    "abstract": "Latitude et magnitude du maximum de la vitesse du vent zonal entre 15 à 75°N et -60 à 0°E.",
+    "description": [
+      "Latitude journalière du maximum du vent zonal lissé",
+      "Magnitude journalière du maximum du vent zonal lissé"
+    ],
+    "long_name": [
+      "Latitude du maximum du vent zonal",
+      "Magnitude du maximum du vent zonal"
+    ]
   }
 }

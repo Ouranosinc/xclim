@@ -2,9 +2,160 @@
 History
 =======
 
-0.32.0 (unreleased)
+0.35.0 (01-04-2022)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), David Huard (:user:`huard`), Clair Barnes (:user:`clairbarnes`), Raquel Alegre (:user:`raquel-ucl`), Jamie Quinn (:user:`JamieJQuinn`)
+Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`) and Pascal Bourgault (:user:`aulemahal`).
+
+New indicators
+^^^^^^^^^^^^^^
+* New indicator ``specific_humidity_from_dewpoint``, computing specific humidity from the dewpoint temperature and air pressure. (:issue:`864`, :pull:`1027`)
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New spatial analogues method "szekely_rizzo" (:pull:`1033`).
+* Loess smoothing (and detrending) now skip NaN values, instead of propagating them. This can be controlled through the `skipna` argument. (:pull:`1030`).
+
+Bug fixes
+^^^^^^^^^
+* ``xclim.analog.spatial_analogs`` is now compatible with dask-backed DataArrays. (:pull:`1033`).
+* Parameter ``dmin`` added to spatial analog method "zech_aslan", to avoid singularities on identical points. (:pull:`1033`).
+* `xclim` is now compatible with changes in `xarray` that enabled explicit indexing operations. (:pull:`1038`, `xarray PR <https://github.com/pydata/xarray/pull/5692>`_).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* `xclim` now uses the ``check-json`` and ``pretty-format-json`` pre-commit checks to validate and format JSON files. (:pull:`1032`).
+* The few `logging` artifacts in the ``xclim.ensembles`` module have been replaced with `warnings.warn` calls or removed. (:issue:`1039`, :pull:`1044`).
+
+0.34.0 (25-02-2022)
+-------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`), Aoun Abel (:user:`bzah`).
+
+Announcements
+^^^^^^^^^^^^^
+* `xclim` now officially supports Python3.10. (:pull:`1013`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* The version pin for `bottleneck` (<1.4) has been lifted. (:pull:`1013`).
+* `packaging` has been removed from the `xclim` run dependencies. (:pull:`1013`).
+* Quantile mapping adjustment objects (EQM, DQM and QDM) and ``sdba.utils.equally_spaced_nodes`` will not add additional endpoints to the quantile range. With those endpoints, variables are capped to the reference's range in the historical period, which can be dangerous with high variability in the extremes (ex: pr), especially if the reference doesn't reproduce those extremes credibly. (:issue:`1015`, :pull:`1016`). To retrieve the same functionality as before use:
+
+.. code-block:: python
+
+    from xclim import sdba
+    # NQ is the the number of equally spaced nodes, the argument previously given to nquantiles directly.
+    EQM = sdba.EmpiricalQuantileMapping.train(ref, hist, nquantiles=sdba.equally_spaced_nodes(NQ, eps=1e-6), ...)
+
+* The "history" string attribute added by xclim has been modified for readability: (:issue:`963`, :pull:`1018`).
+    - The trailing dot (``.``) was dropped.
+    - ``None`` inputs are now printed as "None" (and not "<NoneType>").
+    - Arguments are now always shown as keyword-arguments. This mostly impacts ``sdba`` functions, as it was already the case for ``Indicators``.
+* The `cell_methods` string attribute appends only the operation from the indicator itself. In previous version, some indicators also appended the input data's own `cell_method`. The clix-meta importer has been modified to follow the same convention. (:issue:`983`, :pull:`1022`)
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* `publish_release_notes` now leverages much more regular expression logic for link translations to markdown. (:pull:`1023`).
+* Improve performances of percentile bootstrap algorithm by using ``xarray.map_block`` (:issue:`932`, :pull:`1017`).
+
+Bug fixes
+^^^^^^^^^
+* Loading virtual python modules with ``build_indicator_module_from_yaml`` is now fixed on some systems where the current directory was not part of python's path. Furthermore, paths of the python and json files can now be passed directly to the ``indices`` and ``translations`` arguments, respectively. (:issue:`1020`, :pull:`1021`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Due to an upstream bug in `bottleneck`'s support of virtualenv, `tox` builds for Python3.10 now depend on a patched fork of `bottleneck`. This workaround will be removed once the fix is merged upstream. (:pull:`1013`, see: `bottleneck PR/397 <https://github.com/pydata/bottleneck/pull/397/>`_).
+    - This has been removed with the release of `bottleneck version 1.3.4 <https://pypi.org/project/Bottleneck/1.3.4/>`_. (:pull:`1025`).
+* GitHub CI actions now use the `deadsnakes python PPA Action <https://github.com/deadsnakes/action>`_ for gathering the Python3.10 development headers. (:pull:`1013`).
+* The "is_dayofyear" attribute added by several indices is now a ``numpy.int32`` instance, instead of python's ``int``. This ensures a THREDDS server can read it when the variable is saved to a netCDF file with `xarray`/`netCDF4-python`. (:issue:`980`, :pull:`1019`).
+* The `xclim` git repository now offers `Issue Forms <https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository#creating-issue-forms>`_ for some general issue types.
+
+0.33.2 (2022-02-09)
+-------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`).
+
+Announcements
+^^^^^^^^^^^^^
+* `xclim` no longer supports Python3.7. Code conventions and new features for Python3.8 (`PEP 569 <https://www.python.org/dev/peps/pep-0569/>`_) are now accepted. (:issue:`966`, :pull:`1000`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Python3.7 (`PEP 537 <https://www.python.org/dev/peps/pep-0537/>`_) support has been officially deprecated. Continuous integration testing is no longer run against this version of Python. (:issue:`966`, :pull:`1000`).
+
+Bug fixes
+^^^^^^^^^
+* Adjusted behaviour in ``dataflags.ecad_compliant`` to remove `data_vars` of invalids checks that return `None`, causing issues with `dask`. (:pull:`1002`).
+* Temporarily pinned `ipython` below version 8.0 due to behaviour causing hangs in GitHub Actions and ReadTheDocs. (:issue:`1005`, :pull:`1006`).
+* ``indices.stats`` methods where adapted to handle dask-backed arrays. (:issue:`1007`, :`pull:`1011`).
+* ``sdba.utils.interp_on_quantiles``, with ``extrapolation='constant'``, now interpolates the limits of the interpolation along the time grouping index, fixing a issue with "time.month" grouping. (:issue:`1008`, :pull:`1009`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* `pre-commit` now uses Black 22.1.0 with Python3.8 style conventions. Existing code has been adjusted. (:pull:`1000`).
+* `tox` builds for Python3.7 have been deprecated. (:pull:`1000`).
+* Docstrings and documentation has been adjusted for grammar and typos. (:pull:`1000`).
+* ``sdba.utils.extrapolate_qm`` has been removed, as announced for xclim 0.33. (:pull:`1009`).
+
+0.33.0 (2022-01-28)
+-------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Tom Keel (:user:`Thomasjkeel`), Jeremy Fyke (:user:`JeremyFyke`), David Huard (:user:`huard`), Abel Aoun (:user:`bzah`), Juliette Lavoie (:user:`juliettelavoie`), Yannick Rousseau (:user:`yrouranos`).
+
+Announcements
+^^^^^^^^^^^^^
+* Deprecation: Release 0.33.0 of `xclim` will be the last version to explicitly support Python3.7 and `xarray<0.21.0`.
+* `xclim` now requires yaml files to pass `yamllint` checks on Pull Requests. (:pull:`981`).
+* `xclim` now requires docstrings have valid ReStructuredText formatting to pass basic linting checks. (:pull:`993`). Checks generally require:
+    - Working hyperlinks and reference tags.
+    - Valid content references (e.g. `:py:func:`).
+    - Valid NumPy-formatted docstrings.
+* The `xclim` developer community has now adopted the 'Contributor Covenant' Code of Conduct v2.1 (`text <https://www.contributor-covenant.org/version/2/1/code_of_conduct/>`_). (:issue:`948`, :pull:`996`).
+
+New indicators
+^^^^^^^^^^^^^^
+* ``jetstream_metric_woollings`` indicator returns latitude and strength of jet-stream in u-wind field. (:issue:`923`, :pull:`924`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Features added and modified to allow proper multivariate adjustments. (:pull:`964`).
+    - Added ``xclim.sdba.processing.to_additive_space`` and ``xclim.sdba.processing.from_additive_space`` to transform "multiplicative" variables to the additive space. An example of multivariate adjustment using this technique was added to the "Advanced" sdba notebook.
+    - ``xclim.sdba.processing.normalize`` now also returns the norm. ``xclim.sdba.processing.jitter`` was created by combining the "under" and "over" methods.
+    - ``xclim.sdba.adjustment.PrincipalComponent`` was modified to have a simpler signature. The "full" method for finding the best PC orientation was added. (:issue:`697`).
+* New ``xclim.indices.stats.parametric_cdf`` function to facilitate the computation of return periods over DataArrays of statistical distribution parameters (:issue:`876`, :pull:`984`).
+* Add ``copy`` parameter to ``percentile_doy`` to control if the array input can be dumped after computing percentiles (:issue:`932`, :pull:`985`).
+* New improved algorithm for ``dry_spell_total_length``, performing the temporal indexing at the right moment and with control on the aggregation operator (``op``) for determining the dry spells.
+* Added ``properties.py`` and ``measures.py`` in order to perform diagnostic tests of sdba (:issue:`424`, :pull:`967`).
+* Update how ``percentile_doy`` rechunk the input data to preserve the initial chunk size. This should make the computation memory footprint more predictable (:issue:`932`, :pull:`987`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* To reduce import complexity, `select_time` has been refactored/moved from ``xclim.indices.generic`` to ``xclim.core.calendar``. (:issue:`949`, :pull:`969`).
+* The stacking dimension of ``xclim.sdba.stack_variables`` has been renamed to "multivar" to avoid name conflicts with the "variables" property of xarray Datasets. (:pull:`964`).
+* `xclim` now requires `cf-xarray>=0.6.1`. (:issue:`923`, :pull:`924`).
+* `xclim` now requires `statsmodels`. (:issue:`424`, :pull:`967`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Added a CI hook in ``.pre-commit-config.yaml`` to perform automated `pre-commit` corrections with GitHub CI. (:pull:`965`).
+* Adjusted CI hooks to fail earlier if `lint` checks fail. (:pull:`972`).
+* `TrainAdjust` and `Adjust` object have a new `skip_input_checks` keyword arg to their `train` and  `adjust` methods. When `True`, all unit-, calendar- and coordinate-related input checks are skipped. This is an ugly solution to disappearing attributes when using `xr.map_blocks` with dask. (:pull:`964`).
+* Some slow tests were marked `slow` to help speed up the standard test ensemble. (:pull:`969`).
+    - Tox testing ensemble now also reports slowest tests using the ``--durations`` flag.
+* `pint` no longer emits warnings about redefined units when the `logging` module is loaded. (:issue:`990`, :pull:`991`).
+* Added a CI step for cancelling running workflows in pull requests that receive multiple pushes. (:pull:`988`).
+
+Bug fixes
+^^^^^^^^^
+* Fix mistake in the units of spell_length_distribution. (:issue:`1003`, :pull:`1004`)
+
+0.32.1 (2021-12-17)
+-------------------
+
+Bug fixes
+^^^^^^^^^
+* Adjusted a test (``test_cli::test_release_notes``) that prevented conda-forge test ensemble from passing. (:pull:`962`).
+
+0.32.0 (2021-12-17)
+-------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), David Huard (:user:`huard`), Clair Barnes (:user:`clairbarnes`), Raquel Alegre (:user:`raquel-ucl`), Jamie Quinn (:user:`JamieJQuinn`), Maliko Tanguy (:user:`malngu`), Aaron Spring (:user:`aaronspring`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -15,36 +166,46 @@ Announcements
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Added an optimized pathway for ``xclim.indices.run_length`` functions when ``window=1``. (:pull:`911`, :issue:`910`).
-* The data input frequency expected by ``Indicator``s is now in the ``src_freq`` attribute and is thus controllable by subclassing existing indicators. (:issue:`898`, :pull:`927`).
+* The data input frequency expected by ``Indicator`` is now in the ``src_freq`` attribute and is thus controllable by subclassing existing indicators. (:issue:`898`, :pull:`927`).
 * New ``**indexer`` keyword args added to many indicators, it accepts the same arguments as ``xclim.indices.generic.select_time``, which has been improved. Unless otherwise specified, the time selection is done before any computation. (:pull:`934`, :issue:`899`).
 * Rewrite of ``xclim.sdba.ExtremeValues``, now fixed with a correct algorithm. It has not been tested extensively and should be considered experimental. (:pull:`914`, :issue:`789`, :issue:`790`).
 * Added `days_over_precip_doy_thresh` and `fraction_over_precip_doy_thresh` indicators to distinguish between WMO and ECAD definition of the Rxxp and RxxpTot indices. (:issue:`931`, :pull:`940`).
 * Update `xclim.core.utils.nan_calc_percentiles` to improve maintainability. (:pull:`942`).
 * Added `heat_index` indicator. Added `heat_index` indicator. This is similar to `humidex` but uses a different dew point as well as heat balance equations which account for variables other than vapor pressure. (:issue:`807`) and (:pull:`915`).
+* Added alternative method for ``xclim.indices.potential_evapotranspiration`` based on `mcguinnessbordne05` (from Tanguay et al. 2018). (:pull:`926`, :issue:`925`).
+* Added `snw_max` and `snw_max_doy` indicators to compute the maximum snow amount and the day of year of the maximum snow amount respectively. (:issue:`776`, :pull:`950`).
+* Added index for calculating ratio of convective to total precipitation. (:issue:`920`, :pull:`921`).
+* Added `wetdays_prop` indicator to calculate the proportion of days in a period where the precipitation is greater than a threshold. (:pull:`919`, :issue:`918`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * Following version 1.9 of the CF Conventions, published in September 2021, the calendar name "gregorian" is deprecated. ``core.calendar.get_calendar`` will return "standard", even if the underlying cftime objects still use "gregorian" (cftime <= 1.5.1). (:pull:`935`).
-* ``sdba.utils.extrapolate_qm`` is now deprecated and will be removed in version 0.33. (:pull:`941`).
+* ``xclim.sdba.utils.extrapolate_qm`` is now deprecated and will be removed in version 0.33. (:pull:`941`).
+* Dependency ``pint`` minimum necessary version is now 0.10. (:pull:`959`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* Removed some logging configurations in ``dataflags`` that were polluting python's main logging configuration. (:pull:`909`).
-* Synchronized logging formatters in `xclim.ensembles` and `xclim.core.utils`. (:pull:`909`).
+* Removed some logging configurations in ``xclim.core.dataflags`` that were polluting python's main logging configuration. (:pull:`909`).
+* Synchronized logging formatters in ``xclim.ensembles`` and ``xclim.core.utils``. (:pull:`909`).
 * Added a helper function for generating the release notes with dynamically-generated ReStructuredText or Markdown-formatted hyperlinks (:pull:`922`, :issue:`907`).
-* Split of resampling-related functionality of ``Indicator``s into a new ``ResamplingIndicator`` and ``ResamplingIndicatorWithIndexing`` subclasses. The use of new (private) methods makes it easier to inject functionality in indicator subclasses. (:issue:`867`, :pull:`927`, :pull:`934`).
+* Split of resampling-related functionality of ``Indicator`` into new ``ResamplingIndicator`` and ``ResamplingIndicatorWithIndexing`` subclasses. The use of new (private) methods makes it easier to inject functionality in indicator subclasses. (:issue:`867`, :pull:`927`, :pull:`934`).
 * French translation metadata fields are now cleaner and much more internally consistent, and many empty metadata fields (e.g. ``comment_fr``) have been removed. (:pull:`930`, :issue:`929`).
-* Adjustments to the `tox` builds so that slow tests are now run alongside standard tests (for more accurate coverage reporting). (:pull:`938`)
-* Use ``xarray.apply_ufunc`` to vectorize statistical functions. (:pull:`943`)
+* Adjustments to the ``tox`` builds so that slow tests are now run alongside standard tests (for more accurate coverage reporting). (:pull:`938`).
+* Use ``xarray.apply_ufunc`` to vectorize statistical functions. (:pull:`943`).
 * Refactor of ``xclim.sdba.utils.interp_on_quantiles`` so that it now handles the extrapolation directly and to better handle missing values. (:pull:`941`).
-* Updated `heating_degree_days` and `fraction_over_precip_thresh` documentations. See (:issue:`952`) and (:pull:`953`).
+* Updated `heating_degree_days` and `fraction_over_precip_thresh` documentations. (:issue:`952`, :pull:`953`).
+* Added an intersphinx mapping to xarray. (:pull:`955`).
+* Added a CodeQL security analysis GitHub CI hook on push to master and on Friday nights. (:pull:`960`).
 
 Bug fixes
 ^^^^^^^^^
 * Fix bugs in the `cf_attrs` and/or `abstract` of `continuous_snow_cover_end` and `continuous_snow_cover_start`. (:pull:`908`).
 * Remove unnecessary `keep_attrs` from `resample` call which would raise an error in futur Xarray version. (:pull:`937`).
 * Fixed a bug in the regex that parses usernames in the history. (:pull:`945`).
+* Fixed a bug in ``xclim.indices.generic.doymax`` and ``xclim.indices.generic.doymin`` that prevented the use of the functions on multidimensional data. (:pull:`950`, :issue:`951`).
 * Skip all missing values in ``xclim.sdba.utils.interp_on_quantiles``, drop them from both the old and new coordinates, as well as from the old values. (:pull:`941`).
+* "degrees_north" and "degrees_east" (and their variants) are now considered independent units, so that ``pint`` and ``xclim.core.units.ensure_cf_units`` don't convert them to "deg". (:pull:`959`).
+* Fixed a bug in ``xclim.core.dataflags`` that would misidentify the "extra" variable to be called when running multivariate checks. (:pull:`957`, :issue:`861`).
 
 0.31.0 (2021-11-05)
 -------------------
@@ -347,7 +508,7 @@ Internal Changes
 
 Announcements
 ^^^^^^^^^^^^^
-* `xclim` no longer supports Python3.6. Code conventions and new features from Python3.7 (`PEP 537 <https://www.python.org/dev/peps/pep-0537/#features-for-3-7>`_) are now accepted.
+* `xclim` no longer supports Python3.6. Code conventions and new features from Python3.7 (`PEP 537 Features <https://www.python.org/dev/peps/pep-0537/#features-for-3-7>`_) are now accepted.
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

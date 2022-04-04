@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Tests for `xclim` package.
 #
 # We want to tests multiple things here:
@@ -62,9 +61,7 @@ class TestMaxNDayPrecipitationAmount:
 class TestMax1DayPrecipitationAmount:
     @staticmethod
     def time_series(values):
-        coords = pd.date_range(
-            "7/1/2000", periods=len(values), freq=pd.DateOffset(days=1)
-        )
+        coords = pd.date_range("7/1/2000", periods=len(values), freq="D")
         return xr.DataArray(
             values,
             coords=[coords],
@@ -499,6 +496,7 @@ class TestLastSpringFrost:
             assert attr in lsf.attrs.keys()
         assert lsf.attrs["units"] == ""
         assert lsf.attrs["is_dayofyear"] == 1
+        assert lsf.attrs["is_dayofyear"].dtype == np.int32
 
 
 class TestFirstDayBelow:
@@ -1043,6 +1041,62 @@ class TestTxDays:
         out = xci.tx_days_below(mx, thresh="-30 C")
         np.testing.assert_array_equal(out[:1], [2])
         np.testing.assert_array_equal(out[1:], [0])
+
+
+class TestJetStreamIndices:
+    # data needs to consist of at least 61 days for Lanczos filter (here: 66 days)
+    time_coords = pd.date_range("2000-01-01", "2000-03-06", freq="D")
+    # make fake ua data array of shape (66 days, 3 plevs, 3 lons, 3 lats) to mimic jet at 16.N
+    zeros_arr = np.zeros(shape=(66, 3, 3, 1))
+    ones_arr = np.ones(shape=(66, 3, 3, 1))
+    fake_jet = np.concatenate([zeros_arr, ones_arr, zeros_arr], axis=3)  # axis 3 is lat
+    da_ua = xr.DataArray(
+        fake_jet,
+        coords={
+            "time": time_coords,
+            "Z": [75000, 85000, 100000],
+            "X": [120, 121, 122],
+            "Y": [15, 16, 17],
+        },
+        dims=["time", "Z", "X", "Y"],
+        attrs={
+            "standard_name": "eastward_wind",
+            "units": "m s-1",
+        },
+    )
+
+    da_ua.Z.attrs = {"units": "Pa", "standard_name": "pressure"}
+    da_ua.X.attrs = {"units": "degrees_east", "standard_name": "longitude"}
+    da_ua.Y.attrs = {"units": "degrees_north", "standard_name": "latitude"}
+    da_ua.T.attrs = {"standard_name": "time"}
+
+    def test_jetstream_metric_woollings(self):
+        da_ua = self.da_ua
+        # Should raise ValueError as longitude is in 0-360 instead of -180.E-180.W
+        with pytest.raises(ValueError):
+            _ = xci.jetstream_metric_woollings(da_ua)
+        # redefine longitude coordiantes to -180.E-180.W so function runs
+        da_ua = da_ua.cf.assign_coords(
+            {
+                "X": (
+                    "X",
+                    (da_ua.cf["longitude"] - 180).data,
+                    da_ua.cf["longitude"].attrs,
+                )
+            }
+        )
+        out = xci.jetstream_metric_woollings(da_ua)
+        np.testing.assert_equal(len(out), 2)
+        jetlat, jetstr = out
+        # should be 6 values that are not NaN because of 61 day moving window and 66 chosen
+        np.testing.assert_equal(np.sum(~np.isnan(jetlat).data), 6)
+        np.testing.assert_equal(np.sum(~np.isnan(jetstr).data), 6)
+        np.testing.assert_equal(jetlat.max().data, 16.0)
+        np.testing.assert_equal(
+            jetstr.max().data, 0.999276877412766
+        )  # manually checked (sum of lanzcos weights for 61 day window and 0.1 cutoff)
+        assert jetlat.units == da_ua.cf["latitude"].units
+        assert jetstr.units == da_ua.units
 
 
 class TestLiquidPrecipitationRatio:
@@ -1932,6 +1986,19 @@ def test_relative_humidity_dewpoint(
     )
 
 
+def test_specific_humidity_from_dewpoint(tas_series, ps_series):
+    """Specific humidity from dewpoint."""
+    # Test taken from MetPy
+    ps = ps_series([1013.25])
+    ps.attrs["units"] = "mbar"
+
+    tdps = tas_series([16.973])
+    tdps.attrs["units"] = "degC"
+
+    q = xci.specific_humidity_from_dewpoint(tdps, ps)
+    np.testing.assert_allclose(q, 0.012, 3)
+
+
 @pytest.mark.parametrize("method", ["tetens30", "sonntag90", "goffgratch46", "wmo08"])
 @pytest.mark.parametrize(
     "ice_thresh,exp0", [(None, [125, 286, 568]), ("0 degC", [103, 260, 563])]
@@ -2322,7 +2389,7 @@ class TestClausiusClapeyronScaledPrecip:
         delta_tas = tfut_m - tref_m
         delta_tas.attrs["units"] = "delta_degC"
         pr_m_cc = xci.clausius_clapeyron_scaled_precipitation(delta_tas, pr_m)
-        np.testing.assert_array_almost_equal(pr_m_cc, pr_m * 1.07 ** 2, 1)
+        np.testing.assert_array_almost_equal(pr_m_cc, pr_m * 1.07**2, 1)
 
         # Compute monthly climatologies
         with xr.set_options(keep_attrs=True):
@@ -2334,7 +2401,7 @@ class TestClausiusClapeyronScaledPrecip:
         delta_tas_m.attrs["units"] = "delta_degC"
 
         pr_mm_cc = xci.clausius_clapeyron_scaled_precipitation(delta_tas_m, pr_mm)
-        np.testing.assert_array_almost_equal(pr_mm_cc, pr_mm * 1.07 ** 2, 1)
+        np.testing.assert_array_almost_equal(pr_mm_cc, pr_mm * 1.07**2, 1)
 
 
 class TestPotentialEvapotranspiration:
@@ -2372,6 +2439,15 @@ class TestPotentialEvapotranspiration:
         out = xci.potential_evapotranspiration(tas=tm, method="TW48")
         np.testing.assert_allclose(out[0, 1], [42.7619242 / (86400 * 30)], rtol=1e-1)
 
+    def test_mcguinnessbordne(self, tasmin_series, tasmax_series):
+        tn = tasmin_series(np.array([0, 5, 10]) + 273.15)
+        tn = tn.expand_dims(lat=[45])
+        tx = tasmax_series(np.array([10, 15, 20]) + 273.15)
+        tx = tx.expand_dims(lat=[45])
+
+        out = xci.potential_evapotranspiration(tn, tx, method="MB05")
+        np.testing.assert_allclose(out[2, 0], [2.78253138816 / 86400], rtol=1e-2)
+
 
 def test_water_budget(pr_series, tasmin_series, tasmax_series):
     pr = pr_series(np.array([10, 10, 10]))
@@ -2406,88 +2482,153 @@ def test_water_budget(pr_series, tasmin_series, tasmax_series):
     np.testing.assert_allclose(out[1, 0], [8.5746025 / 86400], rtol=1e-1)
 
 
-class TestDrySpell:
-    def test_dry_spell(self, pr_series):
-        pr = pr_series(
-            np.array(
-                [
-                    1.01,
-                    1.01,
-                    1.01,
-                    1.01,
-                    1.01,
-                    1.01,
-                    0.01,
-                    0.01,
-                    0.01,
-                    0.51,
-                    0.51,
-                    0.75,
-                    0.75,
-                    0.51,
-                    0.01,
-                    0.01,
-                    0.01,
-                    1.01,
-                    1.01,
-                    1.01,
-                ]
-            )
+@pytest.mark.parametrize(
+    "pr,thresh1,thresh2,window,outs",
+    [
+        (
+            [1.01] * 6
+            + [0.01] * 3
+            + [0.51] * 2
+            + [0.75] * 2
+            + [0.51]
+            + [0.01] * 3
+            + [1.01] * 3,
+            3,
+            3,
+            7,
+            (2, 12, 20),
+        ),
+        (
+            [0.01] * 6
+            + [1.01] * 3
+            + [0.51] * 2
+            + [0.75] * 2
+            + [0.51]
+            + [0.01] * 3
+            + [0.01] * 3,
+            3,
+            3,
+            7,
+            (2, 18, 20),
+        ),
+        ([3.01] * 358 + [0.99] * 14 + [3.01] * 358, 1, 14, 14, (0, 7, 7)),
+    ],
+)
+def test_dry_spell(pr_series, pr, thresh1, thresh2, window, outs):
+
+    pr = pr_series(np.array(pr), start="1981-01-01", units="mm/day")
+
+    out_events, out_total_d_sum, out_total_d_max = outs
+
+    events = xci.dry_spell_frequency(
+        pr, thresh=f"{thresh1} mm", window=window, freq="YS"
+    )
+    total_d_sum = xci.dry_spell_total_length(
+        pr,
+        thresh=f"{thresh2} mm",
+        window=window,
+        op="sum",
+        freq="YS",
+    )
+    total_d_max = xci.dry_spell_total_length(
+        pr, thresh=f"{thresh1} mm", window=window, op="max", freq="YS"
+    )
+
+    np.testing.assert_allclose(events[0], [out_events], rtol=1e-1)
+    np.testing.assert_allclose(total_d_sum[0], [out_total_d_sum], rtol=1e-1)
+    np.testing.assert_allclose(total_d_max[0], [out_total_d_max], rtol=1e-1)
+
+
+def test_dry_spell_total_length_indexer(pr_series):
+    pr = pr_series([1] * 5 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d")
+    out = xci.dry_spell_total_length(
+        pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31")
+    )
+    np.testing.assert_allclose(out, [9] + [0] * 11)
+
+
+def test_dry_spell_frequency_op(pr_series):
+    pr = pr_series(
+        np.array(
+            [
+                29.012,
+                0.1288,
+                0.0253,
+                0.0035,
+                4.9147,
+                1.4186,
+                1.014,
+                0.5622,
+                0.8001,
+                10.5823,
+                2.8879,
+                8.2635,
+                0.292,
+                0.5242,
+                0.2426,
+                1.3934,
+                0.0,
+                0.4633,
+                0.1862,
+                0.0034,
+                2.4591,
+                3.8547,
+                3.1983,
+                3.0442,
+                7.422,
+                14.8854,
+                13.4334,
+                0.0012,
+                0.0782,
+                31.2916,
+                0.0379,
+            ]
         )
+    )
+    pr.attrs["units"] = "mm/day"
+
+    test_sum = xci.dry_spell_frequency(pr, thresh="1 mm", window=3, freq="MS", op="sum")
+    test_max = xci.dry_spell_frequency(pr, thresh="1 mm", window=3, freq="MS", op="max")
+
+    np.testing.assert_allclose(test_sum[0], [2], rtol=1e-1)
+    np.testing.assert_allclose(test_max[0], [3], rtol=1e-1)
+
+
+class TestRPRCTot:
+    def test_simple(self, pr_series, prc_series):
+        a_pr = np.zeros(365)
+        a_pr[:7] += [2, 4, 6, 8, 10, 12, 14]
+        a_pr[35] = 6
+        a_pr[100:105] += [2, 6, 10, 14, 20]
+
+        a_prc = a_pr.copy() * 2  # Make ratio 2
+        a_prc[35] = 0  # zero convective precip
+
+        pr = pr_series(a_pr)
         pr.attrs["units"] = "mm/day"
 
-        events = xci.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="YS")
-        total_d = xci.dry_spell_total_length(pr, thresh="3 mm", window=7, freq="YS")
+        prc = prc_series(a_prc)
+        prc.attrs["units"] = "mm/day"
 
-        np.testing.assert_allclose(events[0], [2], rtol=1e-1)
-        np.testing.assert_allclose(total_d[0], [12], rtol=1e-1)
-
-    def test_dry_spell_frequency_op(self, pr_series):
-        pr = pr_series(
-            np.array(
-                [
-                    29.012,
-                    0.1288,
-                    0.0253,
-                    0.0035,
-                    4.9147,
-                    1.4186,
-                    1.014,
-                    0.5622,
-                    0.8001,
-                    10.5823,
-                    2.8879,
-                    8.2635,
-                    0.292,
-                    0.5242,
-                    0.2426,
-                    1.3934,
-                    0.0,
-                    0.4633,
-                    0.1862,
-                    0.0034,
-                    2.4591,
-                    3.8547,
-                    3.1983,
-                    3.0442,
-                    7.422,
-                    14.8854,
-                    13.4334,
-                    0.0012,
-                    0.0782,
-                    31.2916,
-                    0.0379,
-                ]
-            )
+        out = xci.rprctot(pr, prc, thresh="5 mm/day", freq="M")
+        np.testing.assert_allclose(
+            out,
+            [
+                2,
+                0,
+                np.NaN,
+                2,
+                np.NaN,
+                np.NaN,
+                np.NaN,
+                np.NaN,
+                np.NaN,
+                np.NaN,
+                np.NaN,
+                np.NaN,
+            ],
         )
-        pr.attrs["units"] = "mm/day"
-
-        test_sum = xci.dry_spell_frequency(
-            pr, thresh="1 mm", window=3, freq="MS", op="sum"
-        )
-        test_max = xci.dry_spell_frequency(
-            pr, thresh="1 mm", window=3, freq="MS", op="max"
-        )
+        # FIXME: @yrouranos These two assertions are set for removal in #894 - verify!
         np.testing.assert_allclose(test_sum[0], [2], rtol=1e-1)
         np.testing.assert_allclose(test_max[0], [3], rtol=1e-1)
 
@@ -2606,3 +2747,31 @@ def test_rain_season(pr_series):
     np.testing.assert_allclose(end_2[0][0][0], 288, rtol=1e-1)
     np.testing.assert_allclose(length_2[0][0][0], 198, rtol=1e-1)
     np.testing.assert_allclose(prcptot_2[0][0][0], 871, rtol=1e-1)
+
+
+# FIXME: @yrouranos This class is being set for removal in #894 - verify!
+class TestWetDays:
+    def test_simple(self, pr_series):
+        a = np.zeros(365)
+        a[:6] += [4, 5.5, 6, 6, 2, 7]  # 4 above 5 in Jan
+        a[100:105] += [1, 6, 7, 2, 1]  # 2 above 5 in Mar
+
+        pr = pr_series(a)
+        pr.attrs["units"] = "mm/day"
+
+        out = xci.wetdays(pr, thresh="5 mm/day", freq="M")
+        np.testing.assert_allclose(out, [4, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0])
+
+
+# FIXME: @yrouranos This class is being set for removal in #894 - verify!
+class TestWetDaysProp:
+    def test_simple(self, pr_series):
+        a = np.zeros(365)
+        a[:6] += [4, 5.5, 6, 6, 2, 7]  # 4 above 5 in Jan
+        a[100:105] += [1, 6, 7, 2, 1]  # 2 above 5 in Mar
+
+        pr = pr_series(a)
+        pr.attrs["units"] = "mm/day"
+
+        out = xci.wetdays_prop(pr, thresh="5 mm/day", freq="M")
+        np.testing.assert_allclose(out, [4 / 31, 0, 0, 2 / 31, 0, 0, 0, 0, 0, 0, 0, 0])

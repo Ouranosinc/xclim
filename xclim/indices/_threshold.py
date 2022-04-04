@@ -16,7 +16,7 @@ from xclim.core.units import (
 from xclim.core.utils import DayOfYearStr
 
 from . import run_length as rl
-from .generic import domain_count, threshold_count
+from .generic import compare, domain_count, threshold_count
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -61,9 +61,11 @@ __all__ = [
     "tx_days_above",
     "tx_days_below",
     "tropical_nights",
+    "rprctot",
     "warm_day_frequency",
     "warm_night_frequency",
     "wetdays",
+    "wetdays_prop",
     "winter_storm",
     "dry_days",
     "maximum_consecutive_dry_days",
@@ -242,7 +244,7 @@ def continuous_snow_cover_end(
         .map(rl.season, window=window, dim="time", coord="dayofyear")
         .end
     )
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(snd))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd))
     return out
 
 
@@ -290,7 +292,7 @@ def continuous_snow_cover_start(
         )
         .start
     )
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(snd))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd))
     return out
 
 
@@ -519,7 +521,7 @@ def freshet_start(
     thresh = convert_units_to(thresh, tas)
     over = tas > thresh
     out = over.resample(time=freq).map(rl.first_run, window=window, coord="dayofyear")
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(tas))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
     return out
 
 
@@ -600,7 +602,7 @@ def growing_season_start(
     thresh = convert_units_to(thresh, tas)
     over = tas >= thresh
     out = over.resample(time=freq).map(rl.first_run, window=window, coord="dayofyear")
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(tas))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
     return out
 
 
@@ -647,7 +649,7 @@ def growing_season_end(
         dim="time",
         coord="dayofyear",
     )
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(tas))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
     return out
 
 
@@ -843,7 +845,7 @@ def frost_free_season_start(
     thresh = convert_units_to(thresh, tasmin)
     over = tasmin >= thresh
     out = over.resample(time=freq).map(rl.first_run, window=window, coord="dayofyear")
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(tasmin))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tasmin))
     return out
 
 
@@ -891,7 +893,7 @@ def frost_free_season_end(
         dim="time",
         coord="dayofyear",
     )
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(tasmin))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tasmin))
     return out
 
 
@@ -1010,7 +1012,7 @@ def last_spring_frost(
         dim="time",
         coord="dayofyear",
     )
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(tas))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
     return out
 
 
@@ -1058,7 +1060,7 @@ def first_day_below(
         dim="time",
         coord="dayofyear",
     )
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(tasmin))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tasmin))
     return out
 
 
@@ -1106,7 +1108,7 @@ def first_day_above(
         dim="time",
         coord="dayofyear",
     )
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(tasmin))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tasmin))
     return out
 
 
@@ -1150,7 +1152,7 @@ def first_snowfall(
         dim="time",
         coord="dayofyear",
     )
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(prsn))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(prsn))
     return out
 
 
@@ -1772,6 +1774,44 @@ def wetdays(
     return to_agg_units(wd, pr, "count")
 
 
+@declare_units(pr="[precipitation]", thresh="[precipitation]")
+def wetdays_prop(
+    pr: xarray.DataArray, thresh: str = "1.0 mm/day", freq: str = "YS"
+) -> xarray.DataArray:
+    """Proportion of wet days.
+
+    Return the proportion of days during period with precipitation over threshold.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Daily precipitation.
+    thresh : str
+      Precipitation value over which a day is considered wet.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+      The proportion of wet days for each period [1].
+
+    Examples
+    --------
+    The following would compute for each grid cell of file `pr.day.nc` the proportion of days
+    with precipitation over 5 mm at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
+
+    >>> from xclim.indices import wetdays_prop
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> wd = wetdays_prop(pr, thresh="5 mm/day", freq="QS-DEC")
+    """
+    thresh = convert_units_to(thresh, pr, "hydro")
+
+    wd = compare(pr, ">=", thresh)
+    fwd = wd.resample(time=freq).mean(dim="time").assign_attrs(units="1")
+    return fwd
+
+
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def maximum_consecutive_frost_days(
     tasmin: xarray.DataArray,
@@ -1845,7 +1885,7 @@ def maximum_consecutive_dry_days(
     -----
     Let :math:`\mathbf{p}=p_0, p_1, \ldots, p_n` be a daily precipitation series and :math:`thresh` the threshold
     under which a day is considered dry. Then let :math:`\mathbf{s}` be the sorted vector of indices :math:`i` where
-    :math:`[p_i < thresh] \neq [p_{i+1} < thresh]`, that is, the days when the temperature crosses the threshold.
+    :math:`[p_i < thresh] \neq [p_{i+1} < thresh]`, that is, the days when the precipitation crosses the threshold.
     Then the maximum number of consecutive dry days is given by
 
     .. math::
@@ -2111,6 +2151,47 @@ def tropical_nights(
     return tn_days_above(tasmin, thresh=thresh, freq=freq)
 
 
+@declare_units(pr="[precipitation]", prc="[precipitation]", thresh="[precipitation]")
+def rprctot(
+    pr: xarray.DataArray,
+    prc: xarray.DataArray,
+    thresh: str = "1.0 mm/day",
+    freq: str = "YS",
+) -> xarray.DataArray:
+    """Proportion of accumulated precipitation arising from convective processes.
+
+    Return the proportion of total accumulated precipitation due to convection on days with total precipitation exceeding a specified threshold during the given period.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Daily precipitation.
+    prc : xarray.DataArray
+      Daily convective precipitation.
+    thresh : str
+      Precipitation value over which a day is considered wet.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+      The proportion of the total precipitation accounted for by convective precipitation for each period.
+    """
+
+    thresh = convert_units_to(thresh, pr, "hydro")
+    prc = convert_units_to(prc, pr)
+
+    wd = compare(pr, ">=", thresh)
+    pr_tot = rate2amount(pr).where(wd).resample(time=freq).sum(dim="time")
+    prc_tot = rate2amount(prc).where(wd).resample(time=freq).sum(dim="time")
+
+    ratio = prc_tot / pr_tot
+    ratio = ratio.assign_attrs(units="")
+
+    return ratio
+
+
 @declare_units(tas="[temperature]", thresh="[temperature]", sum_thresh="K days")
 def degree_days_exceedance_date(
     tas: xarray.DataArray,
@@ -2190,7 +2271,7 @@ def degree_days_exceedance_date(
         )
 
     out = c.clip(0).resample(time=freq).map(_exceedance_date)
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(tas))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
     return out
 
 

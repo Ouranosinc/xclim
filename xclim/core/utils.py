@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # noqa: D205,D400
 """
 Miscellaneous indices utilities
@@ -6,18 +5,18 @@ Miscellaneous indices utilities
 
 Helper functions for the indices computation, indicator construction and other things.
 """
+import importlib.util
 import logging
 import os
 import warnings
 from collections import defaultdict
 from enum import IntEnum
 from functools import partial
-from importlib import import_module
 from importlib.resources import open_text
 from inspect import Parameter
 from pathlib import Path
 from types import FunctionType
-from typing import Callable, NewType, Optional, Sequence, Tuple, Union
+from typing import Callable, Mapping, NewType, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import xarray as xr
@@ -28,7 +27,6 @@ from yaml import safe_dump, safe_load
 
 logger = logging.getLogger("xclim")
 
-
 #: Type annotation for strings representing full dates (YYYY-MM-DD), may include time.
 DateStr = NewType("DateStr", str)
 
@@ -37,6 +35,14 @@ DayOfYearStr = NewType("DayOfYearStr", str)
 
 # Official variables definitions
 VARIABLES = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
+
+# Input cell methods
+ICM = {
+    "tasmin": "time: minimum within days",
+    "tasmax": "time: maximum within days",
+    "tas": "time: mean within days",
+    "pr": "time: sum within days",
+}
 
 
 def wrapped_partial(
@@ -86,7 +92,7 @@ def wrapped_partial(
 
 
 # TODO Reconsider the utility of this
-def walk_map(d: dict, func: FunctionType):
+def walk_map(d: dict, func: FunctionType) -> dict:
     """Apply a function recursively to values of dictionary.
 
     Parameters
@@ -110,19 +116,19 @@ def walk_map(d: dict, func: FunctionType):
     return out
 
 
-def load_module(path: os.PathLike):
-    """Load a python module from a single .py file.
+def load_module(path: os.PathLike, name: Optional[str] = None):
+    """Load a python module from a python file, optionally changing its name.
 
     Examples
     --------
     Given a path to a module file (.py)
 
+    >>> # xdoctest: +SKIP
     >>> from pathlib import Path
-    >>> path = Path(path_to_example_py)
+    >>> path = Path("path/to/example.py")
 
     The two following imports are equivalent, the second uses this method.
 
-    >>> # xdoctest: +SKIP
     >>> os.chdir(path.parent)
     >>> import example as mod1
     >>> os.chdir(previous_working_dir)
@@ -130,14 +136,9 @@ def load_module(path: os.PathLike):
     >>> mod1 == mod2
     """
     path = Path(path)
-    pwd = Path(os.getcwd())
-    os.chdir(path.parent)
-    try:
-        mod = import_module(path.stem)
-    except ModuleNotFoundError as err:
-        raise err
-    finally:
-        os.chdir(pwd)
+    spec = importlib.util.spec_from_file_location(name or path.stem, path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)  # This executes code, effectively loading the module
     return mod
 
 
@@ -153,8 +154,8 @@ class MissingVariableError(ValueError):
     """Error raised when a dataset is passed to an indicator but one of the needed variable is missing."""
 
 
-def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
-    """Ensure that the input dataarray has chunks of at least the given size.
+def ensure_chunk_size(da: xr.DataArray, **minchunks: Mapping[str, int]) -> xr.DataArray:
+    """Ensure that the input DataArray has chunks of at least the given size.
 
     If only one chunk is too small, it is merged with an adjacent chunk.
     If many chunks are too small, they are grouped together by merging adjacent chunks.
@@ -162,8 +163,8 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: int) -> xr.DataArray:
     Parameters
     ----------
     da : xr.DataArray
-      The input dataarray, with or without the dask backend. Does nothing when passed a non-dask array.
-    **minchunks : Mapping[str, int]
+      The input DataArray, with or without the dask backend. Does nothing when passed a non-dask array.
+    minchunks : Mapping[str, int]
       A kwarg mapping from dimension name to minimum chunk size.
       Pass -1 to force a single chunk along that dimension.
     """
@@ -213,16 +214,20 @@ def uses_dask(da):
 
 def calc_perc(
     arr: np.ndarray,
-    percentiles: Sequence[float] = [50.0],
+    percentiles: Sequence[float] = None,
     alpha: float = 1.0,
     beta: float = 1.0,
+    copy: bool = True,
 ) -> np.ndarray:
     """
-    Compute percentiles using nan_calc_percentiles and move the percentiles axis to the end.
+    Compute percentiles using nan_calc_percentiles and move the percentiles' axis to the end.
     """
+    if percentiles is None:
+        percentiles = [50.0]
+
     return np.moveaxis(
         nan_calc_percentiles(
-            arr=arr, percentiles=percentiles, axis=-1, alpha=alpha, beta=beta
+            arr=arr, percentiles=percentiles, axis=-1, alpha=alpha, beta=beta, copy=copy
         ),
         source=0,
         destination=-1,
@@ -231,25 +236,33 @@ def calc_perc(
 
 def nan_calc_percentiles(
     arr: np.ndarray,
-    percentiles: Sequence[float] = [50.0],
+    percentiles: Sequence[float] = None,
     axis=-1,
     alpha=1.0,
     beta=1.0,
+    copy=True,
 ) -> np.ndarray:
     """
     Convert the percentiles to quantiles and compute them using _nan_quantile.
     """
-    arr_copy = arr.copy()
+    if percentiles is None:
+        percentiles = [50.0]
+
+    if copy:
+        # bootstrapping already works on a data's copy
+        # doing it again is extremely costly, especially with dask.
+        arr = arr.copy()
     quantiles = np.array([per / 100.0 for per in percentiles])
-    return _nan_quantile(arr_copy, quantiles, axis, alpha, beta)
+    return _nan_quantile(arr, quantiles, axis, alpha, beta)
 
 
 def _compute_virtual_index(
     n: np.ndarray, quantiles: np.ndarray, alpha: float, beta: float
 ):
-    """
-    Compute the floating point indexes of an array for the linear
-    interpolation of quantiles.
+    """Compute the floating point indexes of an array for the linear interpolation of quantiles.
+
+    Parameters
+    ----------
     n : array_like
         The sample sizes.
     quantiles : array_like
@@ -259,29 +272,31 @@ def _compute_virtual_index(
     beta : float
         A constant used to correct the index computed.
 
-    alpha and beta values depend on the chosen method
-    (see quantile documentation)
+    Notes
+    -----
+    `alpha` and `beta` values depend on the chosen method (see quantile documentation).
 
-    Reference:
-    Hyndman&Fan paper "Sample Quantiles in Statistical Packages",
-    DOI: 10.1080/00031305.1996.10473566
+    References
+    ----------
+    .. [Hyndman&Fan] Hyndman, R. J., & Fan, Y. (1996). Sample Quantiles in Statistical Packages. The American Statistician, 50(4), 361‑365. https://doi.org/10.1080/00031305.1996.10473566
     """
     return n * quantiles + (alpha + quantiles * (1 - alpha - beta)) - 1
 
 
 def _get_gamma(virtual_indexes: np.ndarray, previous_indexes: np.ndarray):
     """
-    Compute gamma (a.k.a 'm' or 'weight') for the linear interpolation
-    of quantiles.
+    Compute gamma (AKA 'm' or 'weight') for the linear interpolation of quantiles.
 
+    Parameters
+    ----------
     virtual_indexes : array_like
-        The indexes where the percentile is supposed to be found in the sorted
-        sample.
+        The indexes where the percentile is supposed to be found in the sorted sample.
     previous_indexes : array_like
         The floor values of virtual_indexes.
 
-    gamma is usually the fractional part of virtual_indexes but can be modified
-    by the interpolation method.
+    Notes
+    -----
+    `gamma` is usually the fractional part of virtual_indexes but can be modified by the interpolation method.
     """
     gamma = np.asanyarray(virtual_indexes - previous_indexes)
     return np.asanyarray(gamma)
@@ -333,6 +348,8 @@ def _linear_interpolation(
     Compute the linear interpolation weighted by gamma on each point of
     two same shape arrays.
 
+    Parameters
+    ----------
     left : array_like
         Left bound.
     right : array_like
@@ -361,7 +378,7 @@ def _nan_quantile(
     Get the quantiles of the array for the given axis.
     A linear interpolation is performed using alpha and beta.
 
-    By default alpha == beta == 1 which performs the 7th method of Hyndman&Fan.
+    By default, alpha == beta == 1 which performs the 7th method of [Hyndman&Fan]_.
     with alpha == beta == 1/3 we get the 8th method.
     """
     # --- Setup
@@ -382,7 +399,7 @@ def _nan_quantile(
     # We need at least two values to do an interpolation
     too_few_values = valid_values_count < 2
     if too_few_values.any():
-        # This will result in getting the only available value if it exist
+        # This will result in getting the only available value if it exists
         valid_values_count[too_few_values] = np.NaN
     # --- Computation of indexes
     # Add axis for quantiles
@@ -433,6 +450,8 @@ def raise_warn_or_log(
     msg : str, optional
       The string used when logging or warning.
       Defaults to the `msg` attr of the error (if present) or to "Failed with <err>".
+    err_type : type
+      The type of error/exception to raise.
     stacklevel : int
       Stacklevel when warning. Relative to the call of this function (1 is added).
     """
@@ -531,7 +550,7 @@ class InputKind(IntEnum):
 def _typehint_is_in(hint, hints):
     """Returns whether the first argument is in the other arguments.
 
-    If the first arg is an Union of several typehints, this returns True only
+    If the first arg is a Union of several typehints, this returns True only
     if all the members of that Union are in the given list.
     """
     # This code makes use of the "set-like" property of Unions and Optionals:
@@ -543,7 +562,7 @@ def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> Inpu
     """Returns the appropriate InputKind constant from an ``inspect.Parameter`` object.
 
     The correspondance between parameters and kinds is documented in :py:class:`xclim.core.utils.InputKind`.
-    The only information not inferable through the inspect object is whether the parameter
+    The only information not inferable through the `inspect` object is whether the parameter
     has been assigned units through the :py:func:`xclim.core.units.declare_units` decorator.
     That can be given with the ``has_units`` flag.
     """
@@ -598,7 +617,7 @@ def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
     """Reads in a clix-meta yaml and refactors it to fit xclim's yaml specifications."""
     from xclim.indices import generic
 
-    freq_names = {"annual": "A", "seasonal": "Q", "monthly": "M", "weekly": "W"}
+    # freq_names = {"annual": "A", "seasonal": "Q", "monthly": "M", "weekly": "W"}
     freq_defs = {"annual": "YS", "seasonal": "QS-DEC", "monthly": "MS", "weekly": "W"}
 
     with open(raw) as f:
@@ -649,14 +668,16 @@ def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
         ) or cmid == "nzero":
             remove_ids.append(cmid)
             print(
-                f"Indicator {cmid} has a 'number_of_days' standard name and xclim disagrees with the CF conventions on the correct output units, removing."
+                f"Indicator {cmid} has a 'number_of_days' standard name"
+                " and xclim disagrees with the CF conventions on the correct output units, removing."
             )
             continue
 
         if (data["output"].get("standard_name") or "").endswith("precipitation_amount"):
             remove_ids.append(cmid)
             print(
-                f"Indicator {cmid} has a 'precipitation_amount' standard name and clix-meta has incoherent output units, removing."
+                f"Indicator {cmid} has a 'precipitation_amount' standard name"
+                " and clix-meta has incoherent output units, removing."
             )
             continue
 
@@ -688,23 +709,32 @@ def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
                         # Value
                         data["parameters"][name] = f"{param['data']} {param['units']}"
 
-        period = data.pop("period")
-        data["allowed_periods"] = [freq_names[per] for per in period["allowed"].keys()]
-        data.setdefault("parameters", {})["freq"] = {
-            "default": freq_defs[period["default"]]
-        }
+        period = data.pop("default_period")
+        # data["allowed_periods"] = [freq_names[per] for per in period["allowed"].keys()]
+        data.setdefault("parameters", {})["freq"] = {"default": freq_defs[period]}
 
         attrs = {}
-        for attr, val in data.pop("output").items():
+        output = data.pop("output")
+        for attr, val in output.items():
             if val is None:
                 continue
             if attr == "cell_methods":
                 methods = []
-                for cell_method in val:
-                    methods.append(
-                        "".join([f"{dim}: {meth}" for dim, meth in cell_method.items()])
+                for i, cell_method in enumerate(val):
+                    # Construct cell_method string
+                    cm = "".join(
+                        [f"{dim}: {meth}" for dim, meth in cell_method.items()]
                     )
+
+                    # If cell_method seems to be describing input data, and not the operation, skip.
+                    if i == 0:
+                        if cm in [ICM.get(v) for v in data["input"].values()]:
+                            continue
+
+                    methods.append(cm)
+
                 val = " ".join(methods)
+
             elif attr in ["var_name", "long_name"]:
                 for new, old in rename_params.items():
                     val = val.replace(old, new)
@@ -721,6 +751,8 @@ def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
 
     for cmid in remove_ids:
         del yml["indices"][cmid]
+
+    yml["indicators"] = yml.pop("indices")
 
     with open(adapted, "w") as f:
         safe_dump(yml, f)

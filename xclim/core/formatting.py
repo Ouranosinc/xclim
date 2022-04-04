@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # noqa: D205,D400
 """
 Formatting utilities for indicators
@@ -10,8 +9,8 @@ import re
 import string
 from ast import literal_eval
 from fnmatch import fnmatch
-from inspect import _empty
-from typing import Dict, Mapping, Optional, Sequence, Union
+from inspect import _empty, signature  # noqa
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
 
 import xarray as xr
 from boltons.funcutils import wraps
@@ -279,11 +278,11 @@ def merge_attributes(
 
 def update_history(
     hist_str: str,
-    *inputs_list: Union[xr.DataArray, xr.Dataset],
+    *inputs_list: Sequence[Union[xr.DataArray, xr.Dataset]],
     new_name: Optional[str] = None,
-    **inputs_kws: Union[xr.DataArray, xr.Dataset],
+    **inputs_kws: Mapping[str, Union[xr.DataArray, xr.Dataset]],
 ):
-    """Return an history string with the timestamped message and the combination of the history of all inputs.
+    """Return a history string with the timestamped message and the combination of the history of all inputs.
 
     The new history entry is formatted as "[<timestamp>] <new_name>: <hist_str> - xclim version: <xclim.__version__>."
 
@@ -293,10 +292,10 @@ def update_history(
       The string describing what has been done on the data.
     new_name : Optional[str]
       The name of the newly created variable or dataset to prefix hist_msg.
-    *inputs_list : Union[xr.DataArray, xr.Dataset]
+    inputs_list : Sequence[Union[xr.DataArray, xr.Dataset]]
       The datasets or variables that were used to produce the new object.
       Inputs given that way will be prefixed by their "name" attribute if available.
-    **inputs_kws : Union[xr.DataArray, xr.Dataset]
+    inputs_kws : Mapping[str, Union[xr.DataArray, xr.Dataset]]
       Mapping from names to the datasets or variables that were used to produce the new object.
       Inputs given that way will be prefixes by the passed name.
 
@@ -320,7 +319,7 @@ def update_history(
     )
     if len(merged_history) > 0 and not merged_history.endswith("\n"):
         merged_history += "\n"
-    merged_history += f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] {new_name or ''}: {hist_str} - xclim version: {__version__}."
+    merged_history += f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] {new_name or ''}: {hist_str} - xclim version: {__version__}"
     return merged_history
 
 
@@ -328,6 +327,8 @@ def update_xclim_history(func):
     """Decorator that auto-generates and fills the history attribute.
 
     The history is generated from the signature of the function and added to the first output.
+    Because of a limitation of the `boltons` wrapper, all arguments passed to the wrapped function
+    will be printed as keyword arguments.
     """
 
     @wraps(func)
@@ -350,8 +351,11 @@ def update_xclim_history(func):
             name: arg for name, arg in kwargs.items() if isinstance(arg, xr.DataArray)
         }
 
+        # The wrapper hides how the user passed the arguments (positional or keyword)
+        # Instead of having it all position, we have it all keyword-like for explicitness.
+        bound_args = signature(func).bind(*args, **kwargs)
         attr = update_history(
-            gen_call_string(func.__name__, *args, **kwargs),
+            gen_call_string(func.__name__, **bound_args.arguments),
             *da_list,
             new_name=out.name,
             **da_dict,
@@ -365,8 +369,9 @@ def update_xclim_history(func):
 def gen_call_string(funcname: str, *args, **kwargs):
     """Generate a signature string for use in the history attribute.
 
-    DataArrays and Dataset are replaced with their name, floats, ints and strings are
-    printed directly, all other objects have their type printed between < >.
+    DataArrays and Dataset are replaced with their name, while Nones, floats,
+    ints and strings are printed directly.
+    All other objects have their type printed between < >.
 
     Arguments given through positional arguments are printed positionnally and those
     given through keywords are printed prefixed by their name.
@@ -375,7 +380,7 @@ def gen_call_string(funcname: str, *args, **kwargs):
     ----------
     funcname : str
       Name of the function
-    *args, **kwargs
+    args, kwargs
       Arguments given to the function.
 
     Example
@@ -389,7 +394,7 @@ def gen_call_string(funcname: str, *args, **kwargs):
     for name, val in chain:
         if isinstance(val, xr.DataArray):
             rep = val.name or "<array>"
-        elif isinstance(val, (int, float, str, bool)):
+        elif isinstance(val, (int, float, str, bool)) or val is None:
             rep = repr(val)
         else:
             rep = f"<{type(val).__name__}>"
@@ -402,8 +407,8 @@ def gen_call_string(funcname: str, *args, **kwargs):
     return f"{funcname}({', '.join(elements)})"
 
 
-def prefix_attrs(source, keys, prefix):
-    """Rename some of the keys of a dictionary by adding a prefix.
+def prefix_attrs(source: Dict, keys: Sequence, prefix: str):
+    """Rename some keys of a dictionary by adding a prefix.
 
     Parameters
     ----------
@@ -428,7 +433,7 @@ def prefix_attrs(source, keys, prefix):
     return out
 
 
-def unprefix_attrs(source, keys, prefix):
+def unprefix_attrs(source: Dict, keys: Sequence, prefix: str):
     """Remove prefix from keys in a dictionary.
 
     Parameters
@@ -473,14 +478,15 @@ KIND_ANNOTATION = {
 }
 
 
-def _gen_parameters_section(parameters, allowed_periods=None):
+def _gen_parameters_section(parameters: Mapping, allowed_periods: List[str] = None):
     """Generate the "parameters" section of the indicator docstring.
 
     Parameters
     ----------
     parameters : mapping
       Parameters dictionary (`Ind.parameters`).
-    allowed_periods : list of str, optional
+    allowed_periods : List[str], optional
+      Restrict parameters to specific periods. Default: None.
     """
     section = "Parameters\n----------\n"
     for name, param in parameters.items():
@@ -507,16 +513,16 @@ def _gen_parameters_section(parameters, allowed_periods=None):
     return section
 
 
-def _gen_returns_section(cfattrs):
+def _gen_returns_section(cf_attrs: Sequence[Dict[str, Any]]):
     """Generate the "Returns" section of an indicator's docstring.
 
     Parameters
     ----------
-    attrs : Sequence[Dict[str, Any]]
+    cf_attrs : Sequence[Dict[str, Any]]
       The list of attributes, usually Indicator.cf_attrs.
     """
     section = "Returns\n-------\n"
-    for attrs in cfattrs:
+    for attrs in cf_attrs:
         section += f"{attrs['var_name']} : DataArray\n"
         section += f"  {attrs.get('long_name', '')}"
         if "standard_name" in attrs:

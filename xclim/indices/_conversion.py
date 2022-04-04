@@ -16,6 +16,7 @@ __all__ = [
     "saturation_vapor_pressure",
     "relative_humidity",
     "specific_humidity",
+    "specific_humidity_from_dewpoint",
     "snowfall_approximation",
     "rain_approximation",
     "wind_chill_index",
@@ -324,7 +325,7 @@ def saturation_vapor_pressure(
     ice_thresh : str
       Threshold temperature under which to switch to equations in reference to ice instead of water.
       If None (default) everything is computed with reference to water.
-    method : {"dewpoint", "goffgratch46", "sonntag90", "tetens30", "wmo08"}
+    method : {"goffgratch46", "sonntag90", "tetens30", "wmo08"}
       Which method to use, see notes.
 
     Returns
@@ -364,7 +365,7 @@ def saturation_vapor_pressure(
                 -6096.9385 / tas  # type: ignore
                 + 16.635794
                 + -2.711193e-2 * tas  # type: ignore
-                + 1.673952e-5 * tas ** 2
+                + 1.673952e-5 * tas**2
                 + 2.433502 * np.log(tas)  # numpy's log is ln
             ),
             100
@@ -372,7 +373,7 @@ def saturation_vapor_pressure(
                 -6024.5282 / tas  # type: ignore
                 + 24.7219
                 + 1.0613868e-2 * tas  # type: ignore
-                + -1.3198825e-5 * tas ** 2
+                + -1.3198825e-5 * tas**2
                 + -0.49382577 * np.log(tas)
             ),
         )
@@ -555,6 +556,8 @@ def specific_humidity(
 ) -> xr.DataArray:
     r"""Specific humidity from temperature, relative humidity and pressure.
 
+    Specific humidity is the ratio between the mass of water vapour and the mass of moist air [WMO08]_.
+
     Parameters
     ----------
     tas : xr.DataArray
@@ -598,6 +601,10 @@ def specific_humidity(
     .. math::
 
         q_{sat} = w_{sat} / (1 + w_{sat})
+
+    References
+    ----------
+    .. [WMO08] World Meteorological Organization. (2008). Guide to meteorological instruments and methods of observation. Geneva, Switzerland: World Meteorological Organization. https://www.weather.gov/media/epz/mesonet/CWOP-WMO8.pdf
     """
     ps = convert_units_to(ps, "Pa")
     hurs = convert_units_to(hurs, "")
@@ -615,6 +622,58 @@ def specific_humidity(
             q = q.clip(0, q_sat)
         elif invalid_values == "mask":
             q = q.where((q <= q_sat) & (q >= 0))
+    q.attrs["units"] = ""
+    return q
+
+
+@declare_units(
+    tdps="[temperature]",
+    ps="[pressure]",
+)
+def specific_humidity_from_dewpoint(
+    tdps: xr.DataArray,
+    ps: xr.DataArray,
+    method: str = "sonntag90",
+) -> xr.DataArray:
+    r"""Specific humidity from dewpoint temperature and air pressure.
+
+    Specific humidity is the ratio between the mass of water vapour and the mass of moist air [WMO08]_.
+
+    Parameters
+    ----------
+    tdps : xr.DataArray
+      Dewpoint temperature array.
+    ps : xr.DataArray
+      Air pressure array.
+    method : {"goffgratch46", "sonntag90", "tetens30", "wmo08"}
+      Method to compute the saturation vapor pressure.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+      Specific humidity.
+
+    Notes
+    -----
+    If :math:`e` is the water vapor pressure, and :math:`p` the total air pressure, then specific humidity is given by
+
+    .. math::
+
+       q = m_w e / ( m_a (p - e) + m_w e )
+
+    where :math:`m_w` and :math:`m_a` are the molecular weights of water and dry air respectively. This formula is often
+    written with :math:`ε = m_w / m_a`, which simplifies to :math:`q = ε e / (p - e (1 - ε))`.
+
+    References
+    ----------
+    .. [WMO08] World Meteorological Organization. (2008). Guide to meteorological instruments and methods of observation. Geneva, Switzerland: World Meteorological Organization. https://www.weather.gov/media/epz/mesonet/CWOP-WMO8.pdf
+    """
+
+    ε = 0.6219569  # weight of water vs dry air []
+    e = saturation_vapor_pressure(tas=tdps, method=method)  # vapor pressure [Pa]
+    ps = convert_units_to(ps, "Pa")  # total air pressure
+
+    q = ε * e / (ps - e * (1 - ε))
     q.attrs["units"] = ""
     return q
 
@@ -663,6 +722,7 @@ def snowfall_approximation(
     ----------
     .. [Verseghy09] Diana Verseghy (2009), CLASS – The Canadian Land Surface Scheme (Version 3.4), Technical
        Documentation (Version 1.1), Environment Canada, Climate Research Division, Science and Technology Branch.
+
     https://gitlab.com/cccma/classic/-/blob/master/src/atmosphericVarsCalc.f90
     """
 
@@ -817,13 +877,13 @@ def wind_chill_index(
     References
     ----------
     .. [MVSZ15] Éva Mekis, Lucie A. Vincent, Mark W. Shephard & Xuebin Zhang (2015) Observed Trends in Severe Weather Conditions Based on Humidex, Wind Chill, and Heavy Rainfall Events in Canada for 1953–2012, Atmosphere-Ocean, 53:4, 383-397, DOI: 10.1080/07055900.2015.1086970
-    Osczevski, R., & Bluestein, M. (2005). The New Wind Chill Equivalent Temperature Chart. Bulletin of the American Meteorological Society, 86(10), 1453–1458. https://doi.org/10.1175/BAMS-86-10-1453
+    .. [Osczevski&Bluestein05] Osczevski, R., & Bluestein, M. (2005). The New Wind Chill Equivalent Temperature Chart. Bulletin of the American Meteorological Society, 86(10), 1453–1458. https://doi.org/10.1175/BAMS-86-10-1453
     .. [NWS] Wind Chill Questions, Cold Resources, National Weather Service, retrieved 25-05-21. https://www.weather.gov/safety/cold-faqs
     """
     tas = convert_units_to(tas, "degC")
     sfcWind = convert_units_to(sfcWind, "km/h")
 
-    V = sfcWind ** 0.16
+    V = sfcWind**0.16
     W = 13.12 + 0.6215 * tas - 11.37 * V + 0.3965 * tas * V
 
     if method.upper() == "CAN":
@@ -869,8 +929,7 @@ def clausius_clapeyron_scaled_precipitation(
     The Clausius-Clapeyron equation for water vapor under typical atmospheric conditions states that the saturation
     water vapor pressure :math:`e_s` changes approximately exponentially with temperature
 
-        .. math::
-
+    .. math::
         \frac{\\mathrm{d}e_s(T)}{\\mathrm{d}T} \approx 1.07 e_s(T)
 
     This function assumes that precipitation can be scaled by the same factor.
@@ -886,7 +945,7 @@ def clausius_clapeyron_scaled_precipitation(
     delta_tas = convert_units_to(delta_tas, "delta_degreeC")
 
     # Calculate scaled precipitation.
-    pr_out = pr_baseline * (cc_scale_factor ** delta_tas)
+    pr_out = pr_baseline * (cc_scale_factor**delta_tas)
     pr_out.attrs["units"] = pr_baseline.attrs["units"]
 
     return pr_out
@@ -898,6 +957,8 @@ def potential_evapotranspiration(
     tasmax: Optional[xr.DataArray] = None,
     tas: Optional[xr.DataArray] = None,
     method: str = "BR65",
+    peta: Optional[float] = 0.00516409319477,
+    petb: Optional[float] = 0.0874972822289,
 ) -> xr.DataArray:
     """Potential evapotranspiration.
 
@@ -912,8 +973,12 @@ def potential_evapotranspiration(
       Maximum daily temperature.
     tas : xarray.DataArray
       Mean daily temperature.
-    method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48"}
+    method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48", "mcguinnessbordne05", "MB05"}
       Which method to use, see notes.
+    peta : float
+      Used only with method MB05 as :math:`a` for calculation of PET, see Notes section. Default value resulted from calibration of PET over the UK.
+    petb : float
+      Used only with method MB05 as :math:`b` for calculation of PET, see Notes section. Default value resulted from calibration of PET over the UK.
 
     Returns
     -------
@@ -925,12 +990,22 @@ def potential_evapotranspiration(
 
     - "baierrobertson65" or "BR65", based on [baierrobertson65]_. Requires tasmin and tasmax, daily [D] freq.
     - "hargreaves85" or "HG85", based on [hargreaves85]_. Requires tasmin and tasmax, daily [D] freq. (optional: tas can be given in addition of tasmin and tasmax).
+    - "mcguinnessbordne05" or "MB05", based on [tanguy2018]_. Requires tas, daily [D] freq, with latitudes 'lat'.
     - "thornthwaite48" or "TW48", based on [thornthwaite48]_. Requires tasmin and tasmax, monthly [MS] or daily [D] freq. (optional: tas can be given instead of tasmin and tasmax).
+
+    The McGuinness-Bordne [McGuinness1972]_ equation is:
+
+    .. math::
+        PET[mm day^{-1}] = a * \frac{S_0}{\\lambda}T_a + b *\frsc{S_0}{\\lambda}
+
+    where :math:`a` and :math:`b` are empirical parameters; :math:`S_0` is the extraterrestrial radiation [MJ m-2 day-1]; :math:`\\lambda` is the latent heat of vaporisation [MJ kg-1] and :math:`T_a` is the air temperature [°C]. The equation was originally derived for the USA, with :math:`a=0.0147` and :math:`b=0.07353`. The default parameters used here are calibrated for the UK, using the method described in [Tanguy2018]_.
 
     References
     ----------
     .. [baierrobertson65] Baier, W., & Robertson, G. W. (1965). Estimation of latent evaporation from simple weather observations. Canadian journal of plant science, 45(3), 276-284.
     .. [hargreaves85] Hargreaves, G. H., & Samani, Z. A. (1985). Reference crop evapotranspiration from temperature. Applied engineering in agriculture, 1(2), 96-99.
+    .. [tanguy2018] Tanguy, M., Prudhomme, C., Smith, K., & Hannaford, J. (2018). Historical gridded reconstruction of potential evapotranspiration for the UK. Earth System Science Data, 10(2), 951-968.
+    .. [McGuinness1972] McGuinness, J. L., & Bordne, E. F. (1972). A comparison of lysimeter-derived potential evapotranspiration with computed values (No. 1452). US Department of Agriculture.
     .. [thornthwaite48] Thornthwaite, C. W. (1948). An approach toward a rational classification of climate. Geographical review, 38(1), 55-94.
     """
 
@@ -996,6 +1071,47 @@ def potential_evapotranspiration(
         out = (0.0023 * ra * (tas + 17.8) * (tasmax - tasmin) ** 0.5) / lv
         out = out.clip(0)
 
+    elif method in ["mcguinnessbordne05", "MB05"]:
+        if tas is None:
+            tasmin = convert_units_to(tasmin, "degC")
+            tasmax = convert_units_to(tasmax, "degC")
+            tas = (tasmin + tasmax) / 2
+            tas.attrs["units"] = "degC"
+
+        tas = convert_units_to(tas, "degC")
+        tasK = convert_units_to(tas, "K")
+
+        latr = (tas.lat * np.pi) / 180
+        jd_frac = (datetime_to_decimal_year(tas.time) % 1) * 2 * np.pi
+
+        S = 1367.0  # Set solar constant [W/m2]
+        ds = 0.409 * np.sin(jd_frac - 1.39)  # solar declination ds [radians]
+        omega = np.arccos(-np.tan(latr) * np.tan(ds))  # sunset hour angle [radians]
+        dr = 1.0 + 0.03344 * np.cos(
+            jd_frac - 0.048869
+        )  # Calculate relative distance to sun
+
+        ext_rad = (
+            S
+            * 86400
+            / np.pi
+            * dr
+            * (
+                omega * np.sin(ds) * np.sin(latr)
+                + np.sin(omega) * np.cos(ds) * np.cos(latr)
+            )
+        )
+        latentH = 4185.5 * (751.78 - 0.5655 * tasK)
+
+        radDIVlat = ext_rad / latentH
+
+        # parameters from calibration provided by Dr Maliko Tanguy @ CEH
+        # (calibrated for PET over the UK)
+        a = peta
+        b = petb
+
+        out = radDIVlat * a * tas + radDIVlat * b
+
     elif method in ["thornthwaite48", "TW48"]:
         if tas is None:
             tasmin = convert_units_to(tasmin, "degC")
@@ -1011,7 +1127,7 @@ def potential_evapotranspiration(
         start = "-".join(
             [
                 str(tas.time[0].dt.year.values),
-                "{:02d}".format(tas.time[0].dt.month.values),
+                f"{tas.time[0].dt.month.values:02d}",
                 "01",
             ]
         )
@@ -1019,7 +1135,7 @@ def potential_evapotranspiration(
         end = "-".join(
             [
                 str(tas.time[-1].dt.year.values),
-                "{:02d}".format(tas.time[-1].dt.month.values),
+                f"{tas.time[-1].dt.month.values:02d}",
                 str(tas.time[-1].dt.daysinmonth.values),
             ]
         )
@@ -1048,7 +1164,7 @@ def potential_evapotranspiration(
         for base_time, indexes in tas.resample(time="YS").groups.items():
             tas_y = tas.isel(time=indexes)
             id_v = id_y.sel(time=base_time)
-            a = 6.75e-7 * id_v ** 3 - 7.71e-5 * id_v ** 2 + 0.01791 * id_v + 0.49239
+            a = 6.75e-7 * id_v**3 - 7.71e-5 * id_v**2 + 0.01791 * id_v + 0.49239
 
             frac = (10 * tas_y / id_v) ** a
             tas_idy_a.append(frac)

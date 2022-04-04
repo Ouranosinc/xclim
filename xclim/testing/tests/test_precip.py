@@ -464,14 +464,23 @@ def test_liquid_precip_ratio():
         assert "where temperature is above 33 degf." in out.description
 
 
-def test_dry_spell():
-    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
+def test_dry_spell(atmosds):
+    pr = atmosds.pr
 
     events = atmos.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="YS")
-    total_d = atmos.dry_spell_total_length(pr, thresh="3 mm", window=7, freq="YS")
+    total_d_sum = atmos.dry_spell_total_length(
+        pr, thresh="3 mm", window=7, op="sum", freq="YS"
+    )
+    total_d_max = atmos.dry_spell_total_length(
+        pr, thresh="3 mm", window=7, op="max", freq="YS"
+    )
+
+    total_d_sum = total_d_sum.sel(location="Halifax", drop=True).isel(time=slice(0, 2))
+    total_d_max = total_d_max.sel(location="Halifax", drop=True).isel(time=slice(0, 2))
 
     np.testing.assert_allclose(events[0:2, 0], [5, 8], rtol=1e-1)
-    np.testing.assert_allclose(total_d[0:2, 0], [50, 67], rtol=1e-1)
+    np.testing.assert_allclose(total_d_sum, [50, 60], rtol=1e-1)
+    np.testing.assert_allclose(total_d_max, [76, 97], rtol=1e-1)
 
     assert (
         "The annual number of dry periods of 7 days and more, during which the total "
@@ -479,8 +488,31 @@ def test_dry_spell():
     ) in events.description
     assert (
         "The annual number of days in dry periods of 7 days and more"
-        in total_d.description
+        in total_d_sum.description
     )
+    assert (
+        "The annual number of days in dry periods of 7 days and more"
+        in total_d_max.description
+    )
+
+
+def test_dry_spell_total_length_indexer(pr_series):
+    pr = pr_series(
+        [np.NaN] + [1] * 4 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d"
+    )
+    out = atmos.dry_spell_total_length(
+        pr,
+        window=7,
+        op="sum",
+        thresh="3 mm",
+        freq="MS",
+    )
+    np.testing.assert_allclose(out, [np.NaN] + [0] * 11)
+
+    out = atmos.dry_spell_total_length(
+        pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31")
+    )
+    np.testing.assert_allclose(out, [9] + [0] * 11)
 
 
 def test_dry_spell_frequency_op():

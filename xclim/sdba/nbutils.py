@@ -3,7 +3,7 @@ Numba-accelerated utilities
 ---------------------------
 """
 import numpy as np
-from numba import boolean, float32, float64, guvectorize, int64, njit
+from numba import boolean, float32, float64, guvectorize, njit
 from xarray import DataArray
 from xarray.core import utils
 
@@ -113,7 +113,7 @@ def remove_NaNs(x):
 @njit([float32(float32[:]), float64(float64[:])], fastmath=True)
 def _euclidean_norm(v):
     """Compute the euclidean norm of vector v."""
-    return np.sqrt(np.sum(v ** 2))
+    return np.sqrt(np.sum(v**2))
 
 
 @njit(
@@ -141,9 +141,9 @@ def _autocorrelation(X):
     """
     d = 0
     for i in range(X.shape[1]):
-        for j in range(i + 1):
-            d += (int(i != j) + 1) * _euclidean_norm(X[:, i] - X[:, j])
-    return d / X.shape[1] ** 2
+        for j in range(i):
+            d += _euclidean_norm(X[:, i] - X[:, j])
+    return (2 * d) / X.shape[1] ** 2
 
 
 @guvectorize(
@@ -154,7 +154,7 @@ def _autocorrelation(X):
     "(k, n),(k, m)->()",
 )
 def _escore(tgt, sim, out):
-    """E-score based on the Skezely-Rizzo e-distances between clusters.
+    """E-score based on the Székely-Rizzo e-distances between clusters.
 
     tgt and sim are KxN and KxM, where dimensions are along K and observations along M and N.
     When N > 0, only this many points of target and sim are used, taken evenly distributed in the series.
@@ -191,19 +191,17 @@ def _first_and_last_nonnull(arr):
 def _extrapolate_on_quantiles(interp, oldx, oldg, oldy, newx, newg, method="constant"):
     """Apply extrapolation to the output of interpolation on quantiles with a given
     grouping. Arguments are the same as _interp_on_quantiles_2D.
-
-    "constant" extrapolation is done independently for each group.
     """
-    igrp = np.empty_like(newg)
-    np.around(newg, 0, igrp)
-    igrp = igrp.astype(int64)
     bnds = _first_and_last_nonnull(oldx)
-    toolow = newx < bnds[:, 0][igrp]
-    toohigh = newx > bnds[:, 1][igrp]
+    xp = np.arange(bnds.shape[0])
+    toolow = newx < np.interp(newg, xp, bnds[:, 0])
+    toohigh = newx > np.interp(newg, xp, bnds[:, 1])
     if method == "constant":
         constants = _first_and_last_nonnull(oldy)
-        interp[toolow] = constants[igrp, 0][toolow]
-        interp[toohigh] = constants[igrp, 1][toohigh]
+        cnstlow = np.interp(newg, xp, constants[:, 0])
+        cnsthigh = np.interp(newg, xp, constants[:, 1])
+        interp[toolow] = cnstlow[toolow]
+        interp[toohigh] = cnsthigh[toohigh]
     else:  # 'nan'
         interp[toolow] = np.NaN
         interp[toohigh] = np.NaN

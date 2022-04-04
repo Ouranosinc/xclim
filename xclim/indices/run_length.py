@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # noqa: D205,D400
 """
 Run length algorithms submodule
@@ -14,6 +13,7 @@ from warnings import warn
 import numpy as np
 import xarray as xr
 from dask import array as dsk
+from numba import njit
 from xarray.core.utils import get_temp_dimname
 
 from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
@@ -41,12 +41,13 @@ def use_ufunc(
     Parameters
     ----------
     ufunc_1dim: {'from_context', 'auto', True, False}
-    da : xr.DataArray
+      The method for handling the ufunc parameters.
+    da: xr.DataArray
       Input array.
     dim: str
       The dimension along which to find runs.
     index: {'first', 'last'}
-      If 'first', the run length is indexed with the first element in the run.
+      If 'first' (default), the run length is indexed with the first element in the run.
       If 'last', with the last element in the run.
 
     Returns
@@ -82,7 +83,7 @@ def rle(
     max_chunk : int
       Maximum chunk size.
     index: {'first', 'last'}
-      If 'first', the run length is indexed with the first element in the run.
+      If 'first' (default), the run length is indexed with the first element in the run.
       If 'last', with the last element in the run.
 
     Returns
@@ -136,7 +137,7 @@ def rle(
                 chunks[dd] = chunksize_ex_dims
         b = b.chunk(chunks)
 
-    # back fill nans with first position after
+    # back-fill nans with first position after
     z = b.bfill(dim=dim)
 
     # calculate lengths
@@ -173,7 +174,7 @@ def rle_statistics(
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
       for DataArray with a small number of grid points.
     index: {'first', 'last'}
-      If 'first', the run length is indexed with the first element in the run.
+      If 'first' (default), the run length is indexed with the first element in the run.
       If 'last', with the last element in the run.
 
 
@@ -221,7 +222,7 @@ def longest_run(
     Returns
     -------
     xr.DataArray
-      Length of longest run of True values along dimension (int).
+      Length of the longest run of True values along dimension (int).
     """
     return rle_statistics(
         da, reducer="max", dim=dim, ufunc_1dim=ufunc_1dim, index=index
@@ -249,7 +250,7 @@ def windowed_run_events(
     ufunc_1dim : Union[str, bool]
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
-      for dataarray with a small number of gridpoints.
+      for DataArray with a small number of grid points.
       Ignored when `window=1`.
     index: {'first', 'last'}
       If 'first', the run length is indexed with the first element in the run.
@@ -294,7 +295,7 @@ def windowed_run_count(
     ufunc_1dim : Union[str, bool]
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points. Using 1D_ufunc=True is typically more efficient
-      for dataarray with a small number of gridpoints.
+      for DataArray with a small number of grid points.
       Ignored when `window=1`.
     index: {'first', 'last'}
       If 'first', the run length is indexed with the first element in the run.
@@ -342,7 +343,7 @@ def first_run(
     ufunc_1dim : Union[str, bool]
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
-      for dataarray with a small number of gridpoints.
+      for DataArray with a small number of grid points.
       Ignored when `window=1`.
 
     Returns
@@ -451,7 +452,9 @@ def run_bounds(
             "Dask arrays not supported as we can't know the final event number before computing."
         )
 
-    diff = xr.concat((mask.isel({dim: 0}).astype(int), mask.astype(int).diff(dim)), dim)
+    diff = xr.concat(
+        (mask.isel({dim: [0]}).astype(int), mask.astype(int).diff(dim)), dim
+    )
 
     nstarts = (diff == 1).sum(dim).max().item()
 
@@ -593,7 +596,7 @@ def season(
 
         # No end:  length is actually until the end of the array, so it is missing 1
         length = xr.where(no_end, da[dim].size - beg, length)
-        # Where the begining was before the mid date, invalid.
+        # Where the beginning was before the mid-date, invalid.
         length = length.where(valid_start)
         # Where there were data points, but no season : put 0 length
         length = xr.where(beg.isnull() & end.notnull(), 0, length)
@@ -601,7 +604,7 @@ def season(
         # No end: end defaults to the last element (this differs from length, but heh)
         end = xr.where(no_end, da[dim].size - 1, end)
 
-        # Where the beginning was before the mid date
+        # Where the beginning was before the mid-date
         beg = beg.where(valid_start)
         end = end.where(valid_start)
 
@@ -661,7 +664,8 @@ def season_length(
     Returns
     -------
     xr.DataArray
-      Length of longest run of True values along a given dimension (inclusive of a given date) without breaks longer than a given length.
+      Length of the longest run of True values along a given dimension (inclusive of a given date)
+      without breaks longer than a given length.
 
     Notes
     -----
@@ -813,6 +817,15 @@ def last_run_before_date(
     return last_run(run, window=window, dim=dim, coord=coord)
 
 
+@njit
+def _rle_1d(ia):
+    y = ia[1:] != ia[:-1]  # pairwise unequal (string safe)
+    i = np.append(np.nonzero(y)[0], ia.size - 1)  # must include last element position
+    rl = np.diff(np.append(-1, i))  # run lengths
+    pos = np.cumsum(np.append(0, rl))[:-1]  # positions
+    return ia[i], rl, pos
+
+
 def rle_1d(
     arr: Union[int, float, bool, Sequence[Union[int, float, bool]]]
 ) -> Tuple[np.array, np.array, np.array]:
@@ -847,12 +860,7 @@ def rle_1d(
         warn(e)
         # Returning None makes some other 1d func below fail.
         return np.array(np.nan), 0, np.array(np.nan)
-
-    y = np.array(ia[1:] != ia[:-1])  # pairwise unequal (string safe)
-    i = np.append(np.where(y), n - 1)  # must include last element position
-    rl = np.diff(np.append(-1, i))  # run lengths
-    pos = np.cumsum(np.append(0, rl))[:-1]  # positions
-    return ia[i], rl, pos
+    return _rle_1d(ia)
 
 
 def first_run_1d(arr: Sequence[Union[int, float]], window: int) -> int:
@@ -1212,7 +1220,7 @@ def suspicious_run_1d(
       Array of values to be parsed.
     window : int
       Minimum run length
-    op : {">", ">=", "==", "<", "<= "eq", "gt", "lt", "gteq", "lteq"}, optional
+    op : {">", ">=", "==", "<", "<=", "eq", "gt", "lt", "gteq", "lteq"}, optional
       Operator for threshold comparison. Defaults to ">".
     thresh : float, optional
       Threshold above which values are checked for identical values.
@@ -1265,7 +1273,7 @@ def suspicious_run(
       Minimum run length
     thresh : float, optional
       Threshold above which values are checked for identical values.
-    op: {">", ">=", "==", "<", "<= "eq", "gt", "lt", "gteq", "lteq"}
+    op: {">", ">=", "==", "<", "<=", "eq", "gt", "lt", "gteq", "lteq"}
       Operator for threshold comparison, defaults to ">".
 
     Returns
