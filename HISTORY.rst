@@ -2,18 +2,12 @@
 History
 =======
 
-0.35.0 (01-04-2022)
+0.36.0 (29-04-2022)
 -------------------
-Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`) and Pascal Bourgault (:user:`aulemahal`).
-
-New indicators
-^^^^^^^^^^^^^^
-* New indicator ``specific_humidity_from_dewpoint``, computing specific humidity from the dewpoint temperature and air pressure. (:issue:`864`, :pull:`1027`)
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* New spatial analogues method "szekely_rizzo" (:pull:`1033`).
-* Loess smoothing (and detrending) now skip NaN values, instead of propagating them. This can be controlled through the `skipna` argument. (:pull:`1030`).
 * ``xclim`` now uses the `loguru <https://loguru.readthedocs.io/en/stable/index.html>`_ library as its primary logging engine. (:issue:`1039`, :pull:`1041`).
   While logging has not yet been implemented throughout the library, the mechanism for enabling log reporting in scripts/notebooks using ``loguru`` is as follows:
 
@@ -28,6 +22,19 @@ New features and enhancements
     logger.add(sys.stdout, level=LEVEL)  # for logging to stdout
     # or
     logger.add("my_log_file.log", level=LEVEL, enqueue=True)  # for logging to a file
+
+0.35.0 (01-04-2022)
+-------------------
+Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`) and Pascal Bourgault (:user:`aulemahal`).
+
+New indicators
+^^^^^^^^^^^^^^
+* New indicator ``specific_humidity_from_dewpoint``, computing specific humidity from the dewpoint temperature and air pressure. (:issue:`864`, :pull:`1027`)
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New spatial analogues method "szekely_rizzo" (:pull:`1033`).
+* Loess smoothing (and detrending) now skip NaN values, instead of propagating them. This can be controlled through the `skipna` argument. (:pull:`1030`).
 
 Bug fixes
 ^^^^^^^^^
