@@ -2628,9 +2628,6 @@ class TestRPRCTot:
                 np.NaN,
             ],
         )
-        # FIXME: @yrouranos These two assertions are set for removal in #894 - verify!
-        np.testing.assert_allclose(test_sum[0], [2], rtol=1e-1)
-        np.testing.assert_allclose(test_max[0], [3], rtol=1e-1)
 
 
 def test_rain_season(pr_series):
