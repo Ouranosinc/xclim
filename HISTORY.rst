@@ -2,9 +2,9 @@
 History
 =======
 
-0.36.0 (29-04-2022)
+0.36.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -22,6 +22,10 @@ New features and enhancements
     logger.add(sys.stdout, level=LEVEL)  # for logging to stdout
     # or
     logger.add("my_log_file.log", level=LEVEL, enqueue=True)  # for logging to a file
+
+Bug fixes
+^^^^^^^^^
+* Invoking ``lazy_indexing`` twice in row (or more) using the same indexes (using dask) is now fixed. (:issue:`1048`, :pull:`1049`).
 
 0.35.0 (01-04-2022)
 -------------------

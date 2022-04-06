@@ -1107,10 +1107,8 @@ def lazy_indexing(
     if da.ndim == 1:
         # Case where da is 1D and index is N-D
         # Slightly better performance using map_blocks, over an apply_ufunc
-        def _index_from_1d_array(array, indices):
-            return array[
-                indices,
-            ]
+        def _index_from_1d_array(indices, array):
+            return array[indices]
 
         idx_ndim = index.ndim
         if idx_ndim == 0:
@@ -1121,8 +1119,9 @@ def lazy_indexing(
         # NaN-indexing doesn't work, so fill with 0 and cast to int
         index = index.fillna(0).astype(int)
         # for each chunk of index, take corresponding values from da
-        func = partial(_index_from_1d_array, da)
-        out = index.map_blocks(func)
+
+        da2 = da.rename("__placeholder__")
+        out = index.map_blocks(_index_from_1d_array, args=(da2,)).rename(da.name)
         # mask where index was NaN
         out = out.where(~invalid)
         if idx_ndim == 0:
