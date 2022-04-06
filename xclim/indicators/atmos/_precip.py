@@ -387,7 +387,7 @@ rprctot = Precip(
     units="",
     cell_methods="time: sum",
     compute=indices.rprctot,
-
+)
 
 rain_season = Precip(
     identifier="rain_season",
@@ -461,5 +461,4 @@ rain_season_prcptot = Precip(
     units="mm",
     cell_methods="",
     compute=indices.rain_season_prcptot,
-
 )

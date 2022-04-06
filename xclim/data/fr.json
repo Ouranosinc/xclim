@@ -997,16 +997,16 @@
     "title": "Saison de pluie",
     "abstract": "Début, fin, durée et cumul de précipitation pendant la saison de pluie.",
     "description": [
-        "Premier jour de la saison de pluie (voir rain_season_start).",
-        "Dernier jour de la saison de pluie (voir rain_season_end).",
-        "Durée de la saison de pluie (voir rain_season_length).",
-        "Cumul de précipitation pendant la saison de pluie (voir rain_season_prcptot)."
+      "Premier jour de la saison de pluie (voir rain_season_start).",
+      "Dernier jour de la saison de pluie (voir rain_season_end).",
+      "Durée de la saison de pluie (voir rain_season_length).",
+      "Cumul de précipitation pendant la saison de pluie (voir rain_season_prcptot)."
     ],
     "long_name": [
-        "Premier jour de la saison de pluie",
-        "Dernier jour de la saison de pluie",
-        "Durée de la saison de pluie",
-        "Cumul de précipitation pendant la saison de pluie"
+      "Premier jour de la saison de pluie",
+      "Dernier jour de la saison de pluie",
+      "Durée de la saison de pluie",
+      "Cumul de précipitation pendant la saison de pluie"
     ]
   },
   "RAIN_SEASON_START": {
@@ -1031,17 +1031,18 @@
     "title": "Cumul de précipitation pendant la saison de pluie",
     "abstract": "Cumul de précipitation {freq:f} pendant la saison de pluie",
     "description": "Cumul de précipitation pendant la saison de pluie",
-    "long_name": "Cumul de précipitation pendant la saison de pluie"
-  "JETSTREAM_METRIC_WOOLLINGS": {
-    "title": "Force et latitude du courant-jet",
-    "abstract": "Latitude et magnitude du maximum de la vitesse du vent zonal entre 15 à 75°N et -60 à 0°E.",
-    "description": [
-      "Latitude journalière du maximum du vent zonal lissé",
-      "Magnitude journalière du maximum du vent zonal lissé"
-    ],
-    "long_name": [
-      "Latitude du maximum du vent zonal",
-      "Magnitude du maximum du vent zonal"
-    ]
+    "long_name": "Cumul de précipitation pendant la saison de pluie",
+    "JETSTREAM_METRIC_WOOLLINGS": {
+      "title": "Force et latitude du courant-jet",
+      "abstract": "Latitude et magnitude du maximum de la vitesse du vent zonal entre 15 à 75°N et -60 à 0°E.",
+      "description": [
+        "Latitude journalière du maximum du vent zonal lissé",
+        "Magnitude journalière du maximum du vent zonal lissé"
+      ],
+      "long_name": [
+        "Latitude du maximum du vent zonal",
+        "Magnitude du maximum du vent zonal"
+      ]
+    }
   }
 }
