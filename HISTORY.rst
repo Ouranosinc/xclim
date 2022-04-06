@@ -2,6 +2,14 @@
 History
 =======
 
+0.36.0 (unreleased)
+-------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
+
+Bug fixes
+^^^^^^^^^
+* Invoking ``lazy_indexing`` twice in row (or more) using the same indexes (using dask) is now fixed. (:issue:`1048`, :pull:`1049`).
+
 0.35.0 (01-04-2022)
 -------------------
 Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`) and Pascal Bourgault (:user:`aulemahal`).
