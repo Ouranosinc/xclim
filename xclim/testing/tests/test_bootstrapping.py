@@ -185,7 +185,7 @@ class Test_bootstrap:
         t90 = percentile_doy(
             tas.sel(time=slice("1990-01-01", "1991-12-31")), window=5, per=[90, 91]
         )
-        res = tg90p(tas=tas, t90=t90, freq="YS", bootstrap=True)
+        res = tg90p(tas=tas, tas_per=t90, freq="YS", bootstrap=True)
         np.testing.assert_array_equal([90, 91], res.percentiles)
 
     @pytest.mark.slow
@@ -195,8 +195,8 @@ class Test_bootstrap:
         t90 = percentile_doy(
             tas.sel(time=slice("1990-01-01", "1991-12-31")), window=5, per=90
         )
-        tg90p(tas=tas, t90=t90.isel(percentiles=0), freq="YS", bootstrap=True)
-        tg90p(tas=tas, t90=t90, freq="YS", bootstrap=True)
+        tg90p(tas=tas, tas_per=t90.isel(percentiles=0), freq="YS", bootstrap=True)
+        tg90p(tas=tas, tas_per=t90, freq="YS", bootstrap=True)
 
     def bootstrap_testor(
         self,

@@ -390,15 +390,18 @@ def test_json(pr_series):
 
 def test_all_jsonable(official_indicators):
     problems = []
+    err = None
     for identifier, ind in official_indicators.items():
         indinst = ind.get_instance()
+        json.dumps(indinst.json())
         try:
             json.dumps(indinst.json())
-        except (TypeError, KeyError):
+        except (TypeError, KeyError) as e:
             problems.append(identifier)
+            err = e
     if problems:
         raise ValueError(
-            f"Indicators {problems} provide problematic json serialization."
+            f"Indicators {problems} provide problematic json serialization.: {err}"
         )
 
 

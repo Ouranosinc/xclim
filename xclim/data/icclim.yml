@@ -220,20 +220,20 @@ indicators:
     base: days_over_precip_thresh
     parameters:
       thresh: 1 mm/day
-      per:
+      pr_per:
         description: 75th percentile of wet day precipitation flux.
 
   R95p:
     base: days_over_precip_thresh
     parameters:
       thresh: 1 mm/day
-      per:
+      pr_per:
         description: 95th percentile of wet day precipitation flux.
   R99p:
     base: days_over_precip_thresh
     parameters:
       thresh: 1 mm/day
-      per:
+      pr_per:
         description: 99th percentile of wet day precipitation flux.
   R75pTOT:
     base: fraction_over_precip_thresh
@@ -241,7 +241,7 @@ indicators:
       long_name: Precipitation fraction due to moderate wet days (>75th percentile)
     parameters:
       thresh: 1 mm/day
-      per:
+      pr_per:
         description: 75th percentile of wet day precipitation flux.
 
   R95pTOT:
@@ -250,7 +250,7 @@ indicators:
       long_name: Precipitation fraction due to very wet days (>95th percentile)
     parameters:
       thresh: 1 mm/day
-      per:
+      pr_per:
         description: 95th percentile of wet day precipitation flux.
   R99pTOT:
     base: fraction_over_precip_thresh
@@ -258,7 +258,7 @@ indicators:
       long_name: Precipitation fraction due to extremely wet days (>99th percentile)
     parameters:
       thresh: 1 mm/day
-      per:
+      pr_per:
         description: 99th percentile of wet day precipitation flux.
   SD:
     realm: land

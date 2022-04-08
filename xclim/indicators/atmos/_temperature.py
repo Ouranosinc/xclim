@@ -756,72 +756,102 @@ tg90p = Temp(
     identifier="tg90p",
     units="days",
     standard_name="days_with_air_temperature_above_threshold",
-    long_name="Number of days when Tmean > 90th percentile",
-    description="{freq} number of days with mean daily temperature above the 90th percentile."
-    "The 90th percentile is to be computed for a 5 day moving window centered on each calendar day "
-    "for a reference period.",
+    long_name="Number of days when Tmean > {per_base_thresh}th percentile",
+    description="{freq} number of days with mean daily temperature above the the {per_base_thresh}th "
+    "percentile(s). A {per_window} day(s) window, centred on each calendar day in the "
+    "{per_period} period, is used to compute the {per_base_thresh}th percentile(s).",
     cell_methods="time: sum over days",
     compute=indices.tg90p,
+    default_params={
+        "per_base_thresh": 90,
+        "per_window": 5,
+        "per_period": "1961-1990",
+    },
 )
 
 tg10p = Temp(
     identifier="tg10p",
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
-    long_name="Number of days when Tmean < 10th percentile",
-    description="{freq} number of days with mean daily temperature below the 10th percentile."
-    "The 10th percentile is to be computed for a 5 day moving window centered on each calendar day "
-    "for a reference period.",
+    long_name="Number of days when Tmean < {per_base_thresh}th percentile",
+    description="{freq} number of days with mean daily temperature below the {per_base_thresh}th "
+    "percentile(s). A {per_window} day(s) window, centred on each calendar day in the "
+    "{per_period} period, is used to compute the {per_base_thresh}th percentile(s).",
     cell_methods="time: sum over days",
     compute=indices.tg10p,
+    default_params={
+        "per_base_thresh": 10,
+        "per_window": 5,
+        "per_period": "1961-1990",
+    },
 )
 
 tx90p = Temp(
     identifier="tx90p",
     units="days",
     standard_name="days_with_air_temperature_above_threshold",
-    long_name="Number of days when Tmax > 90th percentile",
-    description="{freq} number of days with maximum daily temperature above the 90th percentile."
-    "The 90th percentile is to be computed for a 5 day moving window centered on each calendar day "
-    "for a reference period.",
+    long_name="Number of days when Tmax > {per_base_thresh}th percentile",
+    description="{freq} number of days with maximum daily temperature above the {per_base_thresh}th "
+    "percentile(s). A {per_window} day(s) window, centred on each calendar day in the "
+    "{per_period} period, is used to compute the {per_base_thresh}th percentile(s).",
     cell_methods="time: sum over days",
     compute=indices.tx90p,
+    default_params={
+        "per_base_thresh": 90,
+        "per_window": 5,
+        "per_period": "1961-1990",
+    },
 )
 
 tx10p = Temp(
     identifier="tx10p",
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
-    long_name="Number of days when Tmax < 10th percentile",
-    description="{freq} number of days with maximum daily temperature below the 10th percentile."
-    "The 10th percentile is to be computed for a 5 day moving window centered on each calendar day "
-    "for a reference period.",
+    long_name="Number of days when Tmax < {per_base_thresh}th percentile",
+    description="{freq} number of days with maximum daily temperature below the {per_base_thresh}th "
+    "percentile(s). A {per_window} day(s) window, centred on each calendar day in the "
+    "{per_period} period, is used to compute the {per_base_thresh}th percentile(s).",
     cell_methods="time: sum over days",
     compute=indices.tx10p,
+    default_params={
+        "per_base_thresh": 10,
+        "per_window": 5,
+        "per_period": "1961-1990",
+    },
 )
 
 tn90p = Temp(
     identifier="tn90p",
     units="days",
     standard_name="days_with_air_temperature_above_threshold",
-    long_name="Number of days when Tmin > 90th percentile",
-    description="{freq} number of days with minimum daily temperature above the 90th percentile."
-    "The 90th percentile is to be computed for a 5 day moving window centered on each calendar day "
-    "for a reference period.",
+    long_name="Number of days when Tmin > {per_base_thresh}th percentile",
+    description="{freq} number of days with minimum daily temperature above the the {per_base_thresh}th "
+    "percentile(s). A {per_window} day(s) window, centred on each calendar day in the "
+    "{per_period} period, is used to compute the {per_base_thresh}th percentile(s).",
     cell_methods="time: sum over days",
     compute=indices.tn90p,
+    default_params={
+        "per_base_thresh": 90,
+        "per_window": 5,
+        "per_period": "1961-1990",
+    },
 )
 
 tn10p = Temp(
     identifier="tn10p",
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
-    long_name="Number of days when Tmin < 10th percentile",
-    description="{freq} number of days with minimum daily temperature below the 10th percentile."
-    "The 10th percentile is to be computed for a 5 day moving window centered on each calendar day "
-    "for a reference period.",
+    long_name="Number of days when Tmin < {per_base_thresh}th percentile",
+    description="{freq} number of days with minimum daily temperature below the the {per_base_thresh}th "
+    "percentile(s). A {per_window} day(s) window, centred on each calendar day in the "
+    "{per_period} period, is used to compute the {per_base_thresh}th percentile(s).",
     cell_methods="time: sum over days",
     compute=indices.tn10p,
+    default_params={
+        "per_base_thresh": 10,
+        "per_window": 5,
+        "per_period": "1961-1990",
+    },
 )
 
 
@@ -839,6 +869,7 @@ degree_days_exceedance_date = Temp(
 
 warm_spell_duration_index = Temp(
     identifier="warm_spell_duration_index",
+    long_name="Number of days part of a percentile-defined warm spell",
     description="{freq} number of days with at least {window} consecutive days "
     "where the daily maximum temperature is above the {per_base_thresh}th "
     "percentile(s). A {per_window} day(s) window, centred on each calendar day in the "
