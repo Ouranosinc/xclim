@@ -846,7 +846,9 @@ class Indicator(IndicatorRegistrar):
         # Extract variables + inject injected
         das = OrderedDict()
         params = ba.arguments.copy()
-        preformatted_params = {}
+        preformatted_params = (
+            self.default_params if self.default_params is not None else {}
+        )
         for name, param in self._all_parameters.items():
             if not param.injected:
                 # If a variable pop the arg
@@ -856,7 +858,7 @@ class Indicator(IndicatorRegistrar):
                     if param.kind == InputKind.VARIABLE or data is not None:
                         das[name] = data
                         # Retrieve percentile threshold used from percentile_doy result
-                        if isinstance(data, DataArray) and data.name == "per":
+                        if "percentile_doy" in data.attrs.get("history", ""):
                             base_per = data.attrs.get("per_base_thresh")
                             if len(base_per) == 1:
                                 preformatted_params["per_base_thresh"] = base_per[0]

@@ -398,6 +398,11 @@ cold_spell_duration_index = Temp(
     "percentile(s). A {per_window} day(s) window, centred on each calendar day in the "
     "{per_period} period, is used to compute the {per_base_thresh}th percentile(s).",
     cell_methods="",
+    default_params={
+        "per_base_thresh": 10,
+        "per_window": 5,
+        "per_period": "1961-1990",
+    },
     compute=indices.cold_spell_duration_index,
 )
 
@@ -841,6 +846,11 @@ warm_spell_duration_index = Temp(
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
     cell_methods="time: sum over days",
+    default_params={
+        "per_base_thresh": 90,
+        "per_window": 5,
+        "per_period": "1961-1990",
+    },
     compute=indices.warm_spell_duration_index,
 )
 
