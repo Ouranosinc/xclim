@@ -1229,13 +1229,37 @@ def test_warm_spell_duration_index():
     tx90 = percentile_doy(tasmax, window=5, per=90)
 
     out = atmos.warm_spell_duration_index(
-        tasmax=tasmax, tx90=tx90, window=3, freq="AS-JUL"
+        tasmax=tasmax, per_da=tx90, window=3, freq="AS-JUL"
     )
     np.testing.assert_array_equal(out[0, :, 0], np.array([np.nan, 3, 0, 0, np.nan]))
-    assert (
-        "Annual total number of days within spells of at least 3 days"
-        in out.description
-    )
+    assert "Annual number of days with at least 3 consecutive days" in out.description
+
+
+def test_wsdi__custom_percentiles_params():
+    # GIVEN
+    tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
+    per_da = tasmax.sel(time=slice("01-01-1990", "31-12-1991"))
+    # WHEN
+    tx90 = percentile_doy(per_da, per=[42, 24], window=2)
+    out = atmos.warm_spell_duration_index(tasmax, tx90, freq="YS")
+    # THEN
+    assert "[42, 24]th" in out.attrs["description"]
+    assert "2 day(s) window" in out.attrs["description"]
+    assert "['1990-01-01', '1991-12-31']" in out.attrs["description"]
+
+
+def test_wsdi__default_percentiles_params():
+    # GIVEN
+    tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
+    per_da = tasmax.sel(time=slice("01-01-1990", "31-12-1991"))
+    # WHEN
+    tx90 = percentile_doy(per_da, per=[42, 24], window=2)
+    tx90.attrs["history"] = ""
+    out = atmos.warm_spell_duration_index(tasmax, tx90, freq="YS")
+    # THEN
+    assert "90th" in out.attrs["description"]
+    assert "5 day(s) window" in out.attrs["description"]
+    assert "1961-1990" in out.attrs["description"]
 
 
 def test_maximum_consecutive_warm_days():
