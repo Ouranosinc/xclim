@@ -862,11 +862,9 @@ class Indicator(IndicatorRegistrar):
                         das[name] = data
                         # Retrieve percentile threshold used from percentile_doy result
                         if "percentile_doy" in data.attrs.get("history", ""):
-                            base_per = data.attrs.get("per_base_thresh")
-                            if len(base_per) == 1:
-                                preformatted_params["per_base_thresh"] = base_per[0]
-                            else:
-                                preformatted_params["per_base_thresh"] = base_per
+                            preformatted_params["per_base_thresh"] = data.coords[
+                                "percentiles"
+                            ].values
                             preformatted_params["per_window"] = data.attrs.get("window")
                             preformatted_params["per_period"] = data.attrs.get(
                                 "climatology_bounds"
