@@ -13,7 +13,6 @@ from warnings import warn
 import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
-from sklearn import metrics
 
 from xclim import sdba
 from xclim.core.formatting import update_xclim_history
@@ -175,24 +174,16 @@ def rmse(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     -------
     xr.DataArray,
       Root mean square error between the simulation and the reference
-
-    See also
-    --------
-    sklearn.metrics.mean_squared_error
-
     """
 
-    def _nan_sklearn(simulation, reference):
-        if np.isnan(simulation[0]):  # sklearn can't handle the NaNs
-            return np.nan
-        return metrics.mean_squared_error(simulation, reference, squared=False)
+    def _rmse(sim, ref):
+        return np.sqrt(np.mean((sim - ref) ** 2, axis=-1))
 
     out = xr.apply_ufunc(
-        _nan_sklearn,
+        _rmse,
         sim,
         ref,
         input_core_dims=[["time"], ["time"]],
-        vectorize=True,
         dask="parallelized",
     )
     out.attrs.update(sim.attrs)
@@ -218,24 +209,16 @@ def mae(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     -------
     xr.DataArray,
       Mean absolute error between the simulation and the reference
-
-    See also
-    --------
-    sklearn.metrics.mean_absolute_error
-
     """
 
-    def _nan_sklearn(simulation, reference):
-        if np.any(np.isnan(simulation)):  # sklearn can't handle the NaNs
-            return np.nan
-        return metrics.mean_absolute_error(simulation, reference)
+    def _mae(sim, ref):
+        return np.mean(np.abs(sim - ref), axis=-1)
 
     out = xr.apply_ufunc(
-        _nan_sklearn,
+        _mae,
         sim,
         ref,
         input_core_dims=[["time"], ["time"]],
-        vectorize=True,
         dask="parallelized",
     )
     out.attrs.update(sim.attrs)
