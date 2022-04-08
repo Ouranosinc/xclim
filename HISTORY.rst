@@ -4,7 +4,7 @@ History
 
 0.36.0 (unreleased)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -26,6 +26,10 @@ New features and enhancements
 Bug fixes
 ^^^^^^^^^
 * Invoking ``lazy_indexing`` twice in row (or more) using the same indexes (using dask) is now fixed. (:issue:`1048`, :pull:`1049`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* ``xclim.sdba.measures.rmse`` and ``xclim.sdba.measures.mae`` now use `numpy` instead of `sklearn`. This improves their performances when using `dask`. (:pull:`1051`).
 
 0.35.0 (01-04-2022)
 -------------------

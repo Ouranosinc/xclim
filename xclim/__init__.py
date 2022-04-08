@@ -12,7 +12,7 @@ from xclim.indicators import atmos, land, seaIce
 
 __author__ = """Travis Logan"""
 __email__ = "logan.travis@ouranos.ca"
-__version__ = "0.35.1-beta"
+__version__ = "0.35.2-beta"
 
 
 def showwarning(message, *args, **kwargs):
