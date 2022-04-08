@@ -341,6 +341,9 @@ class Indicator(IndicatorRegistrar):
     references = ""
     notes = ""
 
+    # Default values for extra parameters used in formatting
+    default_params: dict = _empty
+
     _all_parameters: Mapping[str, Parameter] = {}
     """A dictionary mapping metadata about the input parameters to the indicator.
 
@@ -847,7 +850,7 @@ class Indicator(IndicatorRegistrar):
         das = OrderedDict()
         params = ba.arguments.copy()
         preformatted_params = (
-            self.default_params if self.default_params is not None else {}
+            self.default_params.copy() if self.default_params is not _empty else {}
         )
         for name, param in self._all_parameters.items():
             if not param.injected:
