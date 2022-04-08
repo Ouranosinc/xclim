@@ -770,7 +770,7 @@ class Indicator(IndicatorRegistrar):
         # Put the variables in `das`, parse them according to the annotations
         # das : OrderedDict of variables (required + non-None optionals)
         # params : OrderedDict of parameters (var_kwargs as a single argument, if any)
-        das, params = self._parse_variables_from_call(args, kwds)
+        das, params, preformatted_params = self._parse_variables_from_call(args, kwds)
 
         das, params = self._preprocess_and_checks(das, params)
 
@@ -807,6 +807,7 @@ class Indicator(IndicatorRegistrar):
             cf_attrs.append(
                 self._update_attrs(
                     params.copy(),
+                    preformatted_params,
                     das,
                     attrs,
                     names=self._cf_names,
@@ -833,7 +834,7 @@ class Indicator(IndicatorRegistrar):
             return outs[0]
         return tuple(outs)
 
-    def _parse_variables_from_call(self, args, kwds):
+    def _parse_variables_from_call(self, args, kwds) -> (OrderedDict, dict, dict):
         """Extract variable and optional variables from call arguments."""
         # Bind call arguments to `compute` arguments and set defaults.
         ba = self.__signature__.bind(*args, **kwds)
@@ -845,6 +846,7 @@ class Indicator(IndicatorRegistrar):
         # Extract variables + inject injected
         das = OrderedDict()
         params = ba.arguments.copy()
+        preformatted_params = {}
         for name, param in self._all_parameters.items():
             if not param.injected:
                 # If a variable pop the arg
@@ -853,10 +855,21 @@ class Indicator(IndicatorRegistrar):
                     # If a non-optional variable OR None, store the arg
                     if param.kind == InputKind.VARIABLE or data is not None:
                         das[name] = data
+                        # Retrieve percentile threshold used from percentile_doy result
+                        if isinstance(data, DataArray) and data.name == "per":
+                            base_per = data.attrs.get("per_base_thresh")
+                            if len(base_per) == 1:
+                                preformatted_params["per_base_thresh"] = base_per[0]
+                            else:
+                                preformatted_params["per_base_thresh"] = base_per
+                            preformatted_params["per_window"] = data.attrs.get("window")
+                            preformatted_params["per_period"] = data.attrs.get(
+                                "climatology_bounds"
+                            )
             else:
                 params[name] = param.value
 
-        return das, params
+        return das, params, preformatted_params
 
     def _assign_named_args(self, ba):
         """Assign inputs passed as strings from ds."""
@@ -950,7 +963,9 @@ class Indicator(IndicatorRegistrar):
         )
 
     @classmethod
-    def _update_attrs(cls, args, das, attrs, var_id=None, names=None):
+    def _update_attrs(
+        cls, args, preformatted_params, das, attrs, var_id=None, names=None
+    ):
         """Format attributes with the run-time values of `compute` call parameters.
 
         Cell methods and history attributes are updated, adding to existing values.
@@ -979,7 +994,7 @@ class Indicator(IndicatorRegistrar):
           Attributes with {} expressions replaced by call argument values. With updated `cell_methods` and `history`.
           `cell_methods` is not added if `names` is given and those not contain `cell_methods`.
         """
-        out = cls._format(attrs, args)
+        out = cls._format(attrs, args, preformatted_params=preformatted_params)
         for locale in OPTIONS[METADATA_LOCALES]:
             out.update(
                 cls._format(
@@ -1124,6 +1139,7 @@ class Indicator(IndicatorRegistrar):
         cls,
         attrs: dict,
         args: dict = None,
+        preformatted_params: dict = None,
         formatter: AttrFormatter = default_formatter,
     ):
         """Format attributes including {} tags with arguments.
@@ -1165,7 +1181,8 @@ class Indicator(IndicatorRegistrar):
                     mba["indexer"] = args.get("freq") or "YS"
             else:
                 mba[k] = v
-
+        if preformatted_params is not None:
+            mba.update(preformatted_params)
         out = {}
         for key, val in attrs.items():
             if callable(val):

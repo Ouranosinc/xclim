@@ -527,6 +527,7 @@ def percentile_doy(
     p.attrs["window"] = window
     p.attrs["alpha"] = alpha
     p.attrs["beta"] = beta
+    p.attrs["per_base_thresh"] = per
     return p.rename("per")
 
 

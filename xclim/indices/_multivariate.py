@@ -61,26 +61,26 @@ __all__ = [
 ]
 
 
-@declare_units(tasmin="[temperature]", tn10="[temperature]")
+@declare_units(tasmin="[temperature]", per_da="[temperature]")
 @percentile_bootstrap
 def cold_spell_duration_index(
     tasmin: xarray.DataArray,
-    tn10: xarray.DataArray,
+    per_da: xarray.DataArray,
     window: int = 6,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
 ) -> xarray.DataArray:
     r"""Cold spell duration index.
 
-    Number of days with at least six consecutive days where the daily minimum temperature is below the 10th
-    percentile.
+    Number of days with at least `window` consecutive days where the daily minimum temperature is below the
+    `per_da` percentiles.
 
     Parameters
     ----------
     tasmin : xarray.DataArray
       Minimum daily temperature.
-    tn10 : xarray.DataArray
-      10th percentile of daily minimum temperature with `dayofyear` coordinate.
+    per_da : xarray.DataArray
+      nth percentile of daily minimum temperature with `dayofyear` coordinate.
     window : int
       Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
@@ -125,10 +125,10 @@ def cold_spell_duration_index(
     >>> tn10 = percentile_doy(tasmin, per=10).sel(percentiles=10)
     >>> cold_spell_duration_index(tasmin, tn10)
     """
-    tn10 = convert_units_to(tn10, tasmin)
+    per_da = convert_units_to(per_da, tasmin)
 
     # Create time series out of doy values.
-    thresh = resample_doy(tn10, tasmin)
+    thresh = resample_doy(per_da, tasmin)
 
     below = tasmin < thresh
 
@@ -1585,11 +1585,11 @@ def tx_tn_days_above(
     return to_agg_units(out, tasmin, "count")
 
 
-@declare_units(tasmax="[temperature]", tx90="[temperature]")
+@declare_units(tasmax="[temperature]", per_da="[temperature]")
 @percentile_bootstrap
 def warm_spell_duration_index(
     tasmax: xarray.DataArray,
-    tx90: xarray.DataArray,
+    per_da: xarray.DataArray,
     window: int = 6,
     freq: str = "YS",
     bootstrap: bool = False,
@@ -1604,8 +1604,8 @@ def warm_spell_duration_index(
     ----------
     tasmax : xarray.DataArray
       Maximum daily temperature.
-    tx90 : xarray.DataArray
-      90th percentile of daily maximum temperature.
+    per_da : xarray.DataArray
+      percentile(s) of daily maximum temperature.
     window : int
       Minimum number of days with temperature above threshold to qualify as a warm spell.
     freq : str
@@ -1632,7 +1632,7 @@ def warm_spell_duration_index(
 
     >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax.isel(lat=0, lon=0)
     >>> tx90 = percentile_doy(tasmax, per=90).sel(percentiles=90)
-    >>> warm_spell_duration_index(tasmax, tx90)
+    >>> warm_spell_duration_index(tasmax, per_da)
 
     References
     ----------
@@ -1641,12 +1641,12 @@ def warm_spell_duration_index(
     precipitation, J. Geophys. Res., 111, D05109, doi: 10.1029/2005JD006290.
 
     """
-    thresh = convert_units_to(tx90, tasmax)
+    thresh = convert_units_to(per_da, tasmax)
 
     # Create time series out of doy values.
     thresh = resample_doy(thresh, tasmax)
 
-    above: DataArray = tasmax > thresh
+    above = tasmax > thresh
 
     out = above.resample(time=freq).map(
         rl.windowed_run_count, window=window, dim="time"

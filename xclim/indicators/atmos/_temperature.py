@@ -394,9 +394,9 @@ cold_spell_duration_index = Temp(
     standard_name="cold_spell_duration_index",
     long_name="Number of days part of a percentile-defined cold spell",
     description="{freq} number of days with at least {window} consecutive days "
-    "where the daily minimum temperature is below the 10th "
-    "percentile. The 10th percentile should be computed for "
-    "a 5-day window centred on each calendar day in the  1961-1990 period",
+    "where the daily minimum temperature is below the {per_base_thresh}th "
+    "percentile(s). A {per_window} day(s) window, centred on each calendar day in the "
+    "{per_period} period, is used to compute the {per_base_thresh}th percentile(s).",
     cell_methods="",
     compute=indices.cold_spell_duration_index,
 )
@@ -834,8 +834,10 @@ degree_days_exceedance_date = Temp(
 
 warm_spell_duration_index = Temp(
     identifier="warm_spell_duration_index",
-    description="{freq} total number of days within spells of at least {window} days"
-    " with tmax above the 90th daily percentile.",
+    description="{freq} number of days with at least {window} consecutive days "
+    "where the daily maximum temperature is above the {per_base_thresh}th "
+    "percentile(s). A {per_window} day(s) window, centred on each calendar day in the "
+    "{per_period} period, is used to compute the {per_base_thresh}th percentile(s).",
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
     cell_methods="time: sum over days",
