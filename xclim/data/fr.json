@@ -959,26 +959,26 @@
   },
   "COLD_AND_DRY_DAYS": {
     "title": "Nombre de jours froide et secs",
-    "abstract": "Nombre de jours où la température est en dessous du 25eme percentile et les précipitations en dessous du 25eme percentile.",
-    "description": "Nombre {freq:m} de jours où la température est en dessous du 25eme percentile et les précipitations en dessous du 25eme percentile.",
+    "abstract": "Nombre de jours où la température est en dessous du {tas_per_thresh}e percentile et les précipitations en dessous du {pr_per_thresh}e percentile.",
+    "description": "Nombre {freq:m} de jours où la température est en dessous du {tas_per_thresh}e percentile et les précipitations en dessous du {pr_per_thresh}e percentile.",
     "long_name": "Nombre {freq:m} de jours froids et secs"
   },
   "WARM_AND_DRY_DAYS": {
     "title": "Nombre de jours chauds et secs",
-    "abstract": "Nombre de jours où la température est au-dessus du 75eme percentile et les précipitations en dessous du 25eme percentile.",
-    "description": "Nombre {freq:m} de jours où la température est au dessus du 75eme percentile et les précipitations en dessous du 25eme percentile.",
+    "abstract": "Nombre de jours où la température est au-dessus du {tas_per_thresh}e percentile et les précipitations en dessous du {pr_per_thresh}e percentile.",
+    "description": "Nombre {freq:m} de jours où la température est au-dessus du {tas_per_thresh}e percentile et les précipitations en dessous du {pr_per_thresh}e percentile.",
     "long_name": "Nombre {freq:m} de jours chauds et secs"
   },
   "WARM_AND_WET_DAYS": {
     "title": "Nombre de jours chauds et pluvieux",
-    "abstract": "Nombre de jours où la température est au-dessus du 75eme percentile et les précipitations au-dessus du 75eme percentile.",
-    "description": "Nombre {freq:m} de jours où la température est au-dessus du 75eme percentile et les précipitations au-dessus du 75eme percentile.",
+    "abstract": "Nombre de jours où la température est au-dessus du {tas_per_thresh}e percentile et les précipitations au-dessus du {pr_per_thresh}e percentile.",
+    "description": "Nombre {freq:m} de jours où la température est au-dessus du {tas_per_thresh}e percentile et les précipitations au-dessus du {pr_per_thresh}e percentile.",
     "long_name": "Nombre {freq:m} de jours chauds et pluvieux"
   },
   "COLD_AND_WET_DAYS": {
     "title": "Nombre de jours froids et pluvieux",
-    "abstract": "Nombre de jours où la température est en dessous du 25eme percentile et les précipitations au-dessus du 75eme percentile.",
-    "description": "Nombre {freq:m} de jours où la température est en dessous du 25eme percentile et les précipitations au-dessus du 75eme percentile.",
+    "abstract": "Nombre de jours où la température est en dessous du {tas_per_thresh}e percentile et les précipitations au-dessus du {pr_per_thresh}e percentile.",
+    "description": "Nombre {freq:m} de jours où la température est en dessous du {tas_per_thresh}e percentile et les précipitations au-dessus du {pr_per_thresh}e percentile.",
     "long_name": "Nombre {freq:m} de jours froids et pluvieux"
   },
   "CALM_DAYS": {
