@@ -773,18 +773,14 @@ def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
 class PercentileDataArray(xr.DataArray):
     @classmethod
     def from_da(cls, da: xr.DataArray) -> PercentileDataArray:
-        def is_cast_safe(da: xr.DataArray) -> bool:
-            return "percentiles" in da.coords and "dayofyear" in da.dims
-
-        if is_cast_safe(da):
+        if "percentiles" in da.coords and "dayofyear" in da.dims:
             return PercentileDataArray(da)
-        else:
-            raise ValueError(
-                f"DataArray {da.name} could not be turned into"
-                f" PercentileDataArray. A PercentileDataArray must have a"
-                f" 'percentiles' coordinate variable and a 'dayofyear'"
-                f" dimension."
-            )
+        raise ValueError(
+            f"DataArray {da.name} could not be turned into"
+            f" PercentileDataArray. A PercentileDataArray must have a"
+            f" 'percentiles' coordinate variable and a 'dayofyear'"
+            f" dimension."
+        )
 
     def get_metadata(self) -> dict[str, str]:
         return {
