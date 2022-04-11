@@ -131,6 +131,7 @@ from .utils import (
     VARIABLES,
     InputKind,
     MissingVariableError,
+    PercentileDataArray,
     ValidationError,
     infer_kind_from_parameter,
     load_module,
@@ -588,7 +589,12 @@ class Indicator(IndicatorRegistrar):
         # Sort parameters : Var, Opt Var, all params, ds, injected params.
         def sortkey(kv):
             if not kv[1].injected:
-                if kv[1].kind in [0, 1, 50]:
+                if kv[1].kind in [
+                    InputKind.VARIABLE,
+                    InputKind.PERCENTILE_VARIABLE,
+                    InputKind.OPTIONAL_VARIABLE,
+                    InputKind.KWARGS,
+                ]:
                     return kv[1].kind
                 return 2
             return 99
@@ -852,17 +858,14 @@ class Indicator(IndicatorRegistrar):
         for name, param in self._all_parameters.items():
             if not param.injected:
                 # If a variable pop the arg
-                if param.kind in [
-                    InputKind.VARIABLE,
-                    InputKind.OPTIONAL_VARIABLE,
-                    InputKind.PERCENTILE_VARIABLE,
-                ]:
+                if param.kind == InputKind.PERCENTILE_VARIABLE:
+                    # duplicate percentiles DA in both das and params
+                    das[name] = params[name]
+                if param.kind in [InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE]:
                     data = params.pop(name)
                     # If a non-optional variable OR None, store the arg
                     if param.kind == InputKind.VARIABLE or data is not None:
                         das[name] = data
-                    if param.kind == InputKind.PERCENTILE_VARIABLE:
-                        params["per"] = data
             else:
                 params[name] = param.value
 
@@ -1174,11 +1177,10 @@ class Indicator(IndicatorRegistrar):
                     mba["indexer"] = dv
                 else:
                     mba["indexer"] = args.get("freq") or "YS"
+            elif isinstance(v, PercentileDataArray):
+                mba.update(v.get_metadata(k))
             else:
                 mba[k] = v
-        # Retrieve percentile threshold used from percentile_doy result
-        if (per_arg := args.get("per", None)) is not None:
-            mba.update(per_arg.get_metadata())
         out = {}
         for key, val in attrs.items():
             if callable(val):

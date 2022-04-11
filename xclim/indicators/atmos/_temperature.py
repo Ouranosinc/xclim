@@ -394,9 +394,9 @@ cold_spell_duration_index = Temp(
     standard_name="cold_spell_duration_index",
     long_name="Number of days part of a percentile-defined cold spell",
     description="{freq} number of days with at least {window} consecutive days "
-    "where the daily minimum temperature is below the {per_base_thresh}th "
-    "percentile(s). A {per_window} day(s) window, centred on each calendar day in the "
-    "{per_period} period, is used to compute the {per_base_thresh}th percentile(s).",
+    "where the daily minimum temperature is below the {tasmin_per_thresh}th "
+    "percentile(s). A {tasmin_per_window} day(s) window, centred on each calendar day in the "
+    "{tasmin_per_period} period, is used to compute the {tasmin_per_thresh}th percentile(s).",
     cell_methods="",
     compute=indices.cold_spell_duration_index,
 )
@@ -751,10 +751,10 @@ tg90p = Temp(
     identifier="tg90p",
     units="days",
     standard_name="days_with_air_temperature_above_threshold",
-    long_name="Number of days when Tmean > {per_base_thresh}th percentile",
-    description="{freq} number of days with mean daily temperature above the the {per_base_thresh}th "
-    "percentile(s). A {per_window} day(s) window, centred on each calendar day in the "
-    "{per_period} period, is used to compute the {per_base_thresh}th percentile(s).",
+    long_name="Number of days when Tmean > {tas_per_thresh}th percentile",
+    description="{freq} number of days with mean daily temperature above the the {tas_per_thresh}th "
+    "percentile(s). A {tas_per_window} day(s) window, centred on each calendar day in the "
+    "{tas_per_period} period, is used to compute the {tas_per_thresh}th percentile(s).",
     cell_methods="time: sum over days",
     compute=indices.tg90p,
 )
@@ -763,10 +763,10 @@ tg10p = Temp(
     identifier="tg10p",
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
-    long_name="Number of days when Tmean < {per_base_thresh}th percentile",
-    description="{freq} number of days with mean daily temperature below the {per_base_thresh}th "
-    "percentile(s). A {per_window} day(s) window, centred on each calendar day in the "
-    "{per_period} period, is used to compute the {per_base_thresh}th percentile(s).",
+    long_name="Number of days when Tmean < {tas_per_thresh}th percentile",
+    description="{freq} number of days with mean daily temperature below the {tas_per_thresh}th "
+    "percentile(s). A {tas_per_window} day(s) window, centred on each calendar day in the "
+    "{tas_per_period} period, is used to compute the {tas_per_thresh}th percentile(s).",
     cell_methods="time: sum over days",
     compute=indices.tg10p,
 )
@@ -775,10 +775,10 @@ tx90p = Temp(
     identifier="tx90p",
     units="days",
     standard_name="days_with_air_temperature_above_threshold",
-    long_name="Number of days when Tmax > {per_base_thresh}th percentile",
-    description="{freq} number of days with maximum daily temperature above the {per_base_thresh}th "
-    "percentile(s). A {per_window} day(s) window, centred on each calendar day in the "
-    "{per_period} period, is used to compute the {per_base_thresh}th percentile(s).",
+    long_name="Number of days when Tmax > {tasmax_per_thresh}th percentile",
+    description="{freq} number of days with maximum daily temperature above the {tasmax_per_thresh}th "
+    "percentile(s). A {tasmax_per_window} day(s) window, centred on each calendar day in the "
+    "{tasmax_per_period} period, is used to compute the {tasmax_per_thresh}th percentile(s).",
     cell_methods="time: sum over days",
     compute=indices.tx90p,
 )
@@ -787,10 +787,10 @@ tx10p = Temp(
     identifier="tx10p",
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
-    long_name="Number of days when Tmax < {per_base_thresh}th percentile",
-    description="{freq} number of days with maximum daily temperature below the {per_base_thresh}th "
-    "percentile(s). A {per_window} day(s) window, centred on each calendar day in the "
-    "{per_period} period, is used to compute the {per_base_thresh}th percentile(s).",
+    long_name="Number of days when Tmax < {tasmax_per_thresh}th percentile",
+    description="{freq} number of days with maximum daily temperature below the {tasmax_per_thresh}th "
+    "percentile(s). A {tasmax_per_window} day(s) window, centred on each calendar day in the "
+    "{tasmax_per_period} period, is used to compute the {tasmax_per_thresh}th percentile(s).",
     cell_methods="time: sum over days",
     compute=indices.tx10p,
 )
@@ -799,10 +799,10 @@ tn90p = Temp(
     identifier="tn90p",
     units="days",
     standard_name="days_with_air_temperature_above_threshold",
-    long_name="Number of days when Tmin > {per_base_thresh}th percentile",
-    description="{freq} number of days with minimum daily temperature above the the {per_base_thresh}th "
-    "percentile(s). A {per_window} day(s) window, centred on each calendar day in the "
-    "{per_period} period, is used to compute the {per_base_thresh}th percentile(s).",
+    long_name="Number of days when Tmin > {tasmin_per_thresh}th percentile",
+    description="{freq} number of days with minimum daily temperature above the the {tasmin_per_thresh}th "
+    "percentile(s). A {tasmin_per_window} day(s) window, centred on each calendar day in the "
+    "{tasmin_per_period} period, is used to compute the {tasmin_per_thresh}th percentile(s).",
     cell_methods="time: sum over days",
     compute=indices.tn90p,
 )
@@ -811,10 +811,10 @@ tn10p = Temp(
     identifier="tn10p",
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
-    long_name="Number of days when Tmin < {per_base_thresh}th percentile",
-    description="{freq} number of days with minimum daily temperature below the the {per_base_thresh}th "
-    "percentile(s). A {per_window} day(s) window, centred on each calendar day in the "
-    "{per_period} period, is used to compute the {per_base_thresh}th percentile(s).",
+    long_name="Number of days when Tmin < {tasmin_per_thresh}th percentile",
+    description="{freq} number of days with minimum daily temperature below the the {tasmin_per_thresh}th "
+    "percentile(s). A {tasmin_per_window} day(s) window, centred on each calendar day in the "
+    "{tasmin_per_period} period, is used to compute the {tasmin_per_thresh}th percentile(s).",
     cell_methods="time: sum over days",
     compute=indices.tn10p,
 )
@@ -836,9 +836,9 @@ warm_spell_duration_index = Temp(
     identifier="warm_spell_duration_index",
     long_name="Number of days part of a percentile-defined warm spell",
     description="{freq} number of days with at least {window} consecutive days "
-    "where the daily maximum temperature is above the {per_base_thresh}th "
-    "percentile(s). A {per_window} day(s) window, centred on each calendar day in the "
-    "{per_period} period, is used to compute the {per_base_thresh}th percentile(s).",
+    "where the daily maximum temperature is above the {tasmax_per_thresh}th "
+    "percentile(s). A {tasmax_per_window} day(s) window, centred on each calendar day in the "
+    "{tasmax_per_period} period, is used to compute the {tasmax_per_thresh}th percentile(s).",
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
     cell_methods="time: sum over days",

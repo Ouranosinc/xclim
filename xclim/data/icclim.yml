@@ -291,34 +291,34 @@ indicators:
     cf_attrs:
       long_name: Cold and dry days
     parameters:
-      tas_25:
+      tas_per:
         description: Daily 25th percentile of temperature.
-      pr_25:
+      pr_per:
         description: Daily 25th percentile of wet day precipitation flux.
   WD:
     base: warm_and_dry_days
     cf_attrs:
       long_name: Warm and dry days
     parameters:
-      tas_75:
+      tas_per:
         description: Daily 75th percentile of temperature.
-      pr_25:
+      pr_per:
         description: Daily 25th percentile of wet day precipitation flux.
   WW:
     base: warm_and_wet_days
     cf_attrs:
       long_name: Warm and wet days
     parameters:
-      tas_75:
+      tas_per:
         description: Daily 75th percentile of temperature.
-      pr_75:
+      pr_per:
         description: Daily 75th percentile of wet day precipitation flux.
   CW:
     base: cold_and_wet_days
     cf_attrs:
       long_name: cold and wet days
     parameters:
-      tas_25:
+      tas_per:
         description: Daily 25th percentile of temperature.
-      pr_75:
+      pr_per:
         description: Daily 75th percentile of wet day precipitation flux.

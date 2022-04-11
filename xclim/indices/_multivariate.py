@@ -140,15 +140,15 @@ def cold_spell_duration_index(
 
 @declare_units(
     tas="[temperature]",
-    tas_25="[temperature]",
     pr="[precipitation]",
-    pr_25="[precipitation]",
+    tas_per="[temperature]",
+    pr_per="[precipitation]",
 )
 def cold_and_dry_days(
     tas: xarray.DataArray,
-    tas_25: xarray.DataArray,
     pr: xarray.DataArray,
-    pr_25: xarray.DataArray,
+    tas_per: PercentileDataArray,
+    pr_per: PercentileDataArray,
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Cold and dry days.
@@ -159,11 +159,11 @@ def cold_and_dry_days(
     ----------
     tas : xarray.DataArray
       Mean daily temperature values
-    tas_25 : xarray.DataArray
-      First quartile of daily mean temperature computed by month.
     pr : xarray.DataArray
       Daily precipitation.
-    pr_25 : xarray.DataArray
+    tas_per : xarray.DataArray
+      First quartile of daily mean temperature computed by month.
+    pr_per : xarray.DataArray
       First quartile of daily total precipitation computed by month.
 
       .. warning::
@@ -190,12 +190,12 @@ def cold_and_dry_days(
     .. [cold_dry_days] Beniston, M. (2009). Trends in joint quantiles of temperature and precipitation in Europe
         since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
-    tas_25 = convert_units_to(tas_25, tas)
-    thresh = resample_doy(tas_25, tas)
+    tas_per = convert_units_to(tas_per, tas)
+    thresh = resample_doy(tas_per, tas)
     tg25 = tas < thresh
 
-    pr_25 = convert_units_to(pr_25, pr)
-    thresh = resample_doy(pr_25, pr)
+    pr_per = convert_units_to(pr_per, pr)
+    thresh = resample_doy(pr_per, pr)
     pr25 = pr < thresh
 
     cold_and_dry = np.logical_and(tg25, pr25).resample(time=freq).sum(dim="time")
@@ -204,15 +204,15 @@ def cold_and_dry_days(
 
 @declare_units(
     tas="[temperature]",
-    tas_75="[temperature]",
     pr="[precipitation]",
-    pr_25="[precipitation]",
+    tas_per="[temperature]",
+    pr_per="[precipitation]",
 )
 def warm_and_dry_days(
     tas: xarray.DataArray,
-    tas_75: xarray.DataArray,
     pr: xarray.DataArray,
-    pr_25: xarray.DataArray,
+    tas_per: PercentileDataArray,
+    pr_per: PercentileDataArray,
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Warm and dry days.
@@ -223,11 +223,11 @@ def warm_and_dry_days(
     ----------
     tas : xarray.DataArray
       Mean daily temperature values
-    tas_75 : xarray.DataArray
-      Third quartile of daily mean temperature computed by month.
     pr : xarray.DataArray
       Daily precipitation.
-    pr_25 : xarray.DataArray
+    tas_per : xarray.DataArray
+      Third quartile of daily mean temperature computed by month.
+    pr_per : xarray.DataArray
       First quartile of daily total precipitation computed by month.
 
       .. warning::
@@ -254,12 +254,12 @@ def warm_and_dry_days(
     .. [warm_dry_days] Beniston, M. (2009). Trends in joint quantiles of temperature and precipitation in Europe
        since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
-    tas_75 = convert_units_to(tas_75, tas)
-    thresh = resample_doy(tas_75, tas)
+    tas_per = convert_units_to(tas_per, tas)
+    thresh = resample_doy(tas_per, tas)
     tg75 = tas > thresh
 
-    pr_25 = convert_units_to(pr_25, pr)
-    thresh = resample_doy(pr_25, pr)
+    pr_per = convert_units_to(pr_per, pr)
+    thresh = resample_doy(pr_per, pr)
     pr25 = pr < thresh
 
     warm_and_dry = np.logical_and(tg75, pr25).resample(time=freq).sum(dim="time")
@@ -268,15 +268,15 @@ def warm_and_dry_days(
 
 @declare_units(
     tas="[temperature]",
-    tas_75="[temperature]",
     pr="[precipitation]",
-    pr_75="[precipitation]",
+    tas_per="[temperature]",
+    pr_per="[precipitation]",
 )
 def warm_and_wet_days(
     tas: xarray.DataArray,
-    tas_75: xarray.DataArray,
     pr: xarray.DataArray,
-    pr_75: xarray.DataArray,
+    tas_per: PercentileDataArray,
+    pr_per: PercentileDataArray,
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Warm and wet days.
@@ -287,11 +287,11 @@ def warm_and_wet_days(
     ----------
     tas : xarray.DataArray
       Mean daily temperature values
-    tas_75 : xarray.DataArray
-      Third quartile of daily mean temperature computed by month.
     pr : xarray.DataArray
       Daily precipitation.
-    pr_75 : xarray.DataArray
+    tas_per : xarray.DataArray
+      Third quartile of daily mean temperature computed by month.
+    pr_per : xarray.DataArray
       Third quartile of daily total precipitation computed by month.
 
       .. warning::
@@ -318,12 +318,12 @@ def warm_and_wet_days(
     .. [warm_wet_days] Beniston, M. (2009). Trends in joint quantiles of temperature and precipitation in Europe
         since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
-    tas_75 = convert_units_to(tas_75, tas)
-    thresh = resample_doy(tas_75, tas)
+    tas_per = convert_units_to(tas_per, tas)
+    thresh = resample_doy(tas_per, tas)
     tg75 = tas > thresh
 
-    pr_75 = convert_units_to(pr_75, pr)
-    thresh = resample_doy(pr_75, pr)
+    pr_per = convert_units_to(pr_per, pr)
+    thresh = resample_doy(pr_per, pr)
     pr75 = pr > thresh
 
     warm_and_wet = np.logical_and(tg75, pr75).resample(time=freq).sum(dim="time")
@@ -332,15 +332,15 @@ def warm_and_wet_days(
 
 @declare_units(
     tas="[temperature]",
-    tas_25="[temperature]",
     pr="[precipitation]",
-    pr_75="[precipitation]",
+    tas_per="[temperature]",
+    pr_per="[precipitation]",
 )
 def cold_and_wet_days(
     tas: xarray.DataArray,
-    tas_25: xarray.DataArray,
     pr: xarray.DataArray,
-    pr_75: xarray.DataArray,
+    tas_per: PercentileDataArray,
+    pr_per: PercentileDataArray,
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""cold and wet days.
@@ -351,11 +351,11 @@ def cold_and_wet_days(
     ----------
     tas : xarray.DataArray
       Mean daily temperature values
-    tas_25 : xarray.DataArray
-      First quartile of daily mean temperature computed by month.
     pr : xarray.DataArray
       Daily precipitation.
-    pr_75 : xarray.DataArray
+    tas_per : xarray.DataArray
+      First quartile of daily mean temperature computed by month.
+    pr_per : xarray.DataArray
       Third quartile of daily total precipitation computed by month.
 
       .. warning::
@@ -382,12 +382,12 @@ def cold_and_wet_days(
     .. [cold_wet_days] Beniston, M. (2009). Trends in joint quantiles of temperature and precipitation in Europe
         since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
-    tas_25 = convert_units_to(tas_25, tas)
-    thresh = resample_doy(tas_25, tas)
+    tas_per = convert_units_to(tas_per, tas)
+    thresh = resample_doy(tas_per, tas)
     tg25 = tas < thresh
 
-    pr_75 = convert_units_to(pr_75, pr)
-    thresh = resample_doy(pr_75, pr)
+    pr_per = convert_units_to(pr_per, pr)
+    thresh = resample_doy(pr_per, pr)
     pr75 = pr > thresh
 
     cold_and_wet = np.logical_and(tg25, pr75).resample(time=freq).sum(dim="time")

@@ -485,58 +485,58 @@ class InputKind(IntEnum):
 
        Annotation : ``xr.DataArray``.
     """
-    OPTIONAL_VARIABLE = 1
+    PERCENTILE_VARIABLE = 1
+    """A data variable (DataArray or PercentileDataArray) with sufficient metadata to
+       recognize it's content as percentiles values from ``percentile_doy``.
+
+       Annotation : ``xr.PercentileDataArray``.
+    """
+    OPTIONAL_VARIABLE = 2
     """An optional data variable (DataArray or variable name).
 
        Annotation : ``xr.DataArray`` or ``Optional[xr.DataArray]``.
     """
-    QUANTITY_STR = 2
+    QUANTITY_STR = 3
     """A string representing a quantity with units.
 
        Annotation : ``str`` +  an entry in the :py:func:`xclim.core.units.declare_units` decorator.
     """
-    FREQ_STR = 3
+    FREQ_STR = 4
     """A string representing an "offset alias", as defined by pandas.
 
        See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases .
        Annotation : ``str`` + ``freq`` as the parameter name.
     """
-    NUMBER = 4
+    NUMBER = 5
     """A number.
 
        Annotation : ``int``, ``float`` and Unions and Optionals thereof.
     """
-    STRING = 5
+    STRING = 6
     """A simple string.
 
        Annotation : ``str`` or ``Optional[str]``. In most cases, this kind of parameter makes sense with choices indicated
        in the docstring's version of the annotation with curly braces. See :ref:`Defining new indices`.
     """
-    DAY_OF_YEAR = 6
+    DAY_OF_YEAR = 7
     """A date, but without a year, in the MM-DD format.
 
        Annotation : :py:obj:`xclim.core.utils.DayOfYearStr` (may be optional).
     """
-    DATE = 7
+    DATE = 8
     """A date in the YYYY-MM-DD format, may include a time.
 
        Annotation : :py:obj:`xclim.core.utils.DateStr` (may be optional).
     """
-    NUMBER_SEQUENCE = 8
+    NUMBER_SEQUENCE = 9
     """A sequence of numbers
 
        Annotation : ``Sequence[int]``, ``Sequence[float]`` and ``Union`` thereof, may include single ``int`` and ``float``.
     """
-    BOOL = 9
+    BOOL = 10
     """A boolean flag.
 
        Annotation : ``bool``, or optional thereof.
-    """
-    PERCENTILE_VARIABLE = 10
-    """A data variable (DataArray or PercentileDataArray) with sufficient metadata to
-       recognize it's content as percentiles values from ``percentile_doy``.
-
-       Annotation : ``xr.PercentileDataArray``.
     """
     KWARGS = 50
     """A mapping from argument name to value.
@@ -782,9 +782,9 @@ class PercentileDataArray(xr.DataArray):
             f" dimension."
         )
 
-    def get_metadata(self) -> dict[str, str]:
+    def get_metadata(self, prefix) -> dict[str, str]:
         return {
-            "per_base_thresh": self.coords["percentiles"].values,
-            "per_window": self.attrs.get("window"),
-            "per_period": self.attrs.get("climatology_bounds"),
+            f"{prefix}_thresh": self.coords["percentiles"].values,
+            f"{prefix}_window": self.attrs.get("window"),
+            f"{prefix}_period": self.attrs.get("climatology_bounds"),
         }
