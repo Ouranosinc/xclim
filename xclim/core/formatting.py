@@ -17,6 +17,21 @@ from boltons.funcutils import wraps
 
 from .utils import InputKind
 
+DEFAULT_FORMAT_PARAMS = {
+    "tasmin_per_thresh": "{unkown}",
+    "tasmin_per_window": "{unkown}",
+    "tasmin_per_period": "{unkown}",
+    "tas_per_thresh": "{unkown}",
+    "tas_per_window": "{unkown}",
+    "tas_per_period": "{unkown}",
+    "tasmax_per_thresh": "{unkown}",
+    "tasmax_per_window": "{unkown}",
+    "tasmax_per_period": "{unkown}",
+    "pr_per_thresh": "{unkown}",
+    "pr_per_window": "{unkown}",
+    "pr_per_period": "{unkown}",
+}
+
 
 class AttrFormatter(string.Formatter):
     """A formatter for frequently used attribute values.
@@ -43,6 +58,13 @@ class AttrFormatter(string.Formatter):
             raise ValueError("Modifier 'r' is reserved for default raw formatting.")
         self.modifiers = modifiers
         self.mapping = mapping
+
+    def format(self, format_string: str, /, *args: Any, **kwargs: dict) -> str:
+        kw = {**kwargs}
+        for k, v in DEFAULT_FORMAT_PARAMS.items():
+            if k not in kw:
+                kw.update({k: v})
+        return super().format(format_string, *args, **kw)
 
     def format_field(self, value, format_spec):
         """Format a value given a formatting spec.
