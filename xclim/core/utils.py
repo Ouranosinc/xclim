@@ -5,6 +5,8 @@ Miscellaneous indices utilities
 
 Helper functions for the indices computation, indicator construction and other things.
 """
+from __future__ import annotations
+
 import importlib.util
 import logging
 import os
@@ -46,7 +48,7 @@ ICM = {
 
 
 def wrapped_partial(
-    func: FunctionType, suggested: Optional[dict] = None, **fixed
+    func: FunctionType, suggested: dict | None = None, **fixed
 ) -> Callable:
     """Wrap a function, updating its signature but keeping its docstring.
 
@@ -116,7 +118,7 @@ def walk_map(d: dict, func: FunctionType) -> dict:
     return out
 
 
-def load_module(path: os.PathLike, name: Optional[str] = None):
+def load_module(path: os.PathLike, name: str | None = None):
     """Load a python module from a python file, optionally changing its name.
 
     Examples
@@ -304,7 +306,7 @@ def _get_gamma(virtual_indexes: np.ndarray, previous_indexes: np.ndarray):
 
 def _get_indexes(
     arr: np.ndarray, virtual_indexes: np.ndarray, valid_values_count: np.ndarray
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Get the valid indexes of arr neighbouring virtual_indexes.
 
@@ -373,7 +375,7 @@ def _nan_quantile(
     axis: int = 0,
     alpha: float = 1.0,
     beta: float = 1.0,
-) -> Union[float, np.ndarray]:
+) -> float | np.ndarray:
     """
     Get the quantiles of the array for the given axis.
     A linear interpolation is performed using alpha and beta.
@@ -435,7 +437,7 @@ def _nan_quantile(
 def raise_warn_or_log(
     err: Exception,
     mode: str,
-    msg: Optional[str] = None,
+    msg: str | None = None,
     err_type=ValueError,
     stacklevel: int = 1,
 ):
@@ -530,6 +532,12 @@ class InputKind(IntEnum):
 
        Annotation : ``bool``, or optional thereof.
     """
+    PERCENTILE_VARIABLE = 10
+    """A data variable (DataArray or PercentileDataArray) with sufficient metadata to
+       recognize it's content as percentiles values from ``percentile_doy``.
+
+       Annotation : ``xr.PercentileDataArray``.
+    """
     KWARGS = 50
     """A mapping from argument name to value.
 
@@ -566,6 +574,9 @@ def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> Inpu
     has been assigned units through the :py:func:`xclim.core.units.declare_units` decorator.
     That can be given with the ``has_units`` flag.
     """
+    if param.annotation == PercentileDataArray:
+        return InputKind.PERCENTILE_VARIABLE
+
     if (
         param.annotation in [DataArray, Union[DataArray, str]]
         and param.default is not None
@@ -575,6 +586,7 @@ def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> Inpu
     if Optional[param.annotation] in [
         Optional[DataArray],
         Optional[Union[DataArray, str]],
+        Optional[PercentileDataArray],
     ]:
         return InputKind.OPTIONAL_VARIABLE
 
@@ -756,3 +768,27 @@ def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
 
     with open(adapted, "w") as f:
         safe_dump(yml, f)
+
+
+class PercentileDataArray(xr.DataArray):
+    @classmethod
+    def from_da(cls, da: xr.DataArray) -> PercentileDataArray:
+        def is_cast_safe(da: xr.DataArray) -> bool:
+            return "percentiles" in da.coords and "dayofyear" in da.dims
+
+        if is_cast_safe(da):
+            return PercentileDataArray(da)
+        else:
+            raise ValueError(
+                f"DataArray {da.name} could not be turned into"
+                f" PercentileDataArray. A PercentileDataArray must have a"
+                f" 'percentiles' coordinate variable and a 'dayofyear'"
+                f" dimension."
+            )
+
+    def get_metadata(self) -> dict[str, str]:
+        return {
+            "per_base_thresh": self.coords["percentiles"].values,
+            "per_window": self.attrs.get("window"),
+            "per_period": self.attrs.get("climatology_bounds"),
+        }

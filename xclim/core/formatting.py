@@ -475,6 +475,7 @@ KIND_ANNOTATION = {
     InputKind.DATASET: "Dataset, optional",
     InputKind.KWARGS: "",
     InputKind.OTHER_PARAMETER: "Any",
+    InputKind.PERCENTILE_VARIABLE: "PercentileDataArray",
 }
 
 

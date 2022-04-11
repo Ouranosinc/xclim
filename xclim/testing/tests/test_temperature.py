@@ -1254,12 +1254,11 @@ def test_wsdi__default_percentiles_params():
     tasmax_per = tasmax.sel(time=slice("01-01-1990", "31-12-1991"))
     # WHEN
     tx90 = percentile_doy(tasmax_per, per=[42, 24], window=2)
-    tx90.attrs["history"] = ""
-    out = atmos.warm_spell_duration_index(tasmax, tx90, freq="YS")
+    tx90 = xr.DataArray(tx90)
     # THEN
-    assert "90th" in out.attrs["description"]
-    assert "5 day(s) window" in out.attrs["description"]
-    assert "1961-1990" in out.attrs["description"]
+    with pytest.raises(Exception):
+        # todo raise a better exception
+        atmos.warm_spell_duration_index(tasmax, tx90, freq="YS")
 
 
 def test_maximum_consecutive_warm_days():

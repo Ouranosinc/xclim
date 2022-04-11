@@ -582,7 +582,7 @@ class Indicator(IndicatorRegistrar):
                     )
                 if meta.kind == InputKind.OPTIONAL_VARIABLE:
                     meta.default = None
-                elif meta.kind == InputKind.VARIABLE:
+                elif meta.kind in [InputKind.VARIABLE, InputKind.PERCENTILE_VARIABLE]:
                     meta.default = name
 
         # Sort parameters : Var, Opt Var, all params, ds, injected params.
@@ -729,7 +729,11 @@ class Indicator(IndicatorRegistrar):
         parameters = []
         compute_sig = signature(self.compute)
         for name, meta in self.parameters.items():
-            if meta.kind <= InputKind.OPTIONAL_VARIABLE:
+            if meta.kind in [
+                InputKind.VARIABLE,
+                InputKind.OPTIONAL_VARIABLE,
+                InputKind.PERCENTILE_VARIABLE,
+            ]:
                 annot = Union[DataArray, str]
                 if meta.kind == InputKind.OPTIONAL_VARIABLE:
                     annot = Optional[annot]
@@ -848,16 +852,17 @@ class Indicator(IndicatorRegistrar):
         for name, param in self._all_parameters.items():
             if not param.injected:
                 # If a variable pop the arg
-                if param.kind <= InputKind.OPTIONAL_VARIABLE:
+                if param.kind in [
+                    InputKind.VARIABLE,
+                    InputKind.OPTIONAL_VARIABLE,
+                    InputKind.PERCENTILE_VARIABLE,
+                ]:
                     data = params.pop(name)
                     # If a non-optional variable OR None, store the arg
                     if param.kind == InputKind.VARIABLE or data is not None:
                         das[name] = data
-                        # Retrieve percentile threshold used from percentile_doy result
-                        if "percentile_doy" in data.attrs.get(
-                            "history", ""
-                        ):  # todo replace by a new InputKind
-                            params["per"] = data
+                    if param.kind == InputKind.PERCENTILE_VARIABLE:
+                        params["per"] = data
             else:
                 params[name] = param.value
 
@@ -1173,13 +1178,7 @@ class Indicator(IndicatorRegistrar):
                 mba[k] = v
         # Retrieve percentile threshold used from percentile_doy result
         if (per_arg := args.get("per", None)) is not None:
-            mba.update(
-                {
-                    "per_base_thresh": per_arg.coords["percentiles"].values,
-                    "per_window": per_arg.attrs.get("window"),
-                    "per_period": per_arg.attrs.get("climatology_bounds"),
-                }
-            )
+            mba.update(per_arg.get_metadata())
         out = {}
         for key, val in attrs.items():
             if callable(val):

@@ -109,7 +109,12 @@ def _create_command(indicator_name):
                 help=param.description + choices,
                 metavar=(
                     "VAR_NAME"
-                    if param.kind in [InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE]
+                    if param.kind
+                    in [
+                        InputKind.VARIABLE,
+                        InputKind.OPTIONAL_VARIABLE,
+                        InputKind.PERCENTILE_VARIABLE,
+                    ]
                     else "TEXT"
                 ),
             )
