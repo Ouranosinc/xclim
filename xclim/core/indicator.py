@@ -341,9 +341,6 @@ class Indicator(IndicatorRegistrar):
     references = ""
     notes = ""
 
-    # Default values for extra parameters used in formatting
-    default_params: dict = _empty
-
     _all_parameters: Mapping[str, Parameter] = {}
     """A dictionary mapping metadata about the input parameters to the indicator.
 
@@ -773,7 +770,7 @@ class Indicator(IndicatorRegistrar):
         # Put the variables in `das`, parse them according to the annotations
         # das : OrderedDict of variables (required + non-None optionals)
         # params : OrderedDict of parameters (var_kwargs as a single argument, if any)
-        das, params, preformatted_params = self._parse_variables_from_call(args, kwds)
+        das, params = self._parse_variables_from_call(args, kwds)
 
         das, params = self._preprocess_and_checks(das, params)
 
@@ -810,7 +807,6 @@ class Indicator(IndicatorRegistrar):
             cf_attrs.append(
                 self._update_attrs(
                     params.copy(),
-                    preformatted_params,
                     das,
                     attrs,
                     names=self._cf_names,
@@ -837,7 +833,7 @@ class Indicator(IndicatorRegistrar):
             return outs[0]
         return tuple(outs)
 
-    def _parse_variables_from_call(self, args, kwds) -> (OrderedDict, dict, dict):
+    def _parse_variables_from_call(self, args, kwds) -> (OrderedDict, dict):
         """Extract variable and optional variables from call arguments."""
         # Bind call arguments to `compute` arguments and set defaults.
         ba = self.__signature__.bind(*args, **kwds)
@@ -849,9 +845,6 @@ class Indicator(IndicatorRegistrar):
         # Extract variables + inject injected
         das = OrderedDict()
         params = ba.arguments.copy()
-        preformatted_params = (
-            self.default_params.copy() if self.default_params is not _empty else {}
-        )
         for name, param in self._all_parameters.items():
             if not param.injected:
                 # If a variable pop the arg
@@ -861,18 +854,14 @@ class Indicator(IndicatorRegistrar):
                     if param.kind == InputKind.VARIABLE or data is not None:
                         das[name] = data
                         # Retrieve percentile threshold used from percentile_doy result
-                        if "percentile_doy" in data.attrs.get("history", ""):
-                            preformatted_params["per_base_thresh"] = data.coords[
-                                "percentiles"
-                            ].values
-                            preformatted_params["per_window"] = data.attrs.get("window")
-                            preformatted_params["per_period"] = data.attrs.get(
-                                "climatology_bounds"
-                            )
+                        if "percentile_doy" in data.attrs.get(
+                            "history", ""
+                        ):  # todo replace by a new InputKind
+                            params["per"] = data
             else:
                 params[name] = param.value
 
-        return das, params, preformatted_params
+        return das, params
 
     def _assign_named_args(self, ba):
         """Assign inputs passed as strings from ds."""
@@ -966,9 +955,7 @@ class Indicator(IndicatorRegistrar):
         )
 
     @classmethod
-    def _update_attrs(
-        cls, args, preformatted_params, das, attrs, var_id=None, names=None
-    ):
+    def _update_attrs(cls, args, das, attrs, var_id=None, names=None):
         """Format attributes with the run-time values of `compute` call parameters.
 
         Cell methods and history attributes are updated, adding to existing values.
@@ -997,7 +984,7 @@ class Indicator(IndicatorRegistrar):
           Attributes with {} expressions replaced by call argument values. With updated `cell_methods` and `history`.
           `cell_methods` is not added if `names` is given and those not contain `cell_methods`.
         """
-        out = cls._format(attrs, args, preformatted_params=preformatted_params)
+        out = cls._format(attrs, args)
         for locale in OPTIONS[METADATA_LOCALES]:
             out.update(
                 cls._format(
@@ -1022,7 +1009,8 @@ class Indicator(IndicatorRegistrar):
         # In the history attr, call signature will be all keywords and might be in a
         # different order than the real function (but order doesn't really matter with keywords).
         kwargs = OrderedDict(**das)
-        for k, v in args.items():
+        filtered_args = [(k, v) for k, v in args.items() if k in cls._all_parameters]
+        for k, v in filtered_args:
             if cls._all_parameters[k].kind == InputKind.KWARGS:
                 kwargs.update(**v)
             elif cls._all_parameters[k].kind != InputKind.DATASET:
@@ -1142,7 +1130,6 @@ class Indicator(IndicatorRegistrar):
         cls,
         attrs: dict,
         args: dict = None,
-        preformatted_params: dict = None,
         formatter: AttrFormatter = default_formatter,
     ):
         """Format attributes including {} tags with arguments.
@@ -1184,8 +1171,15 @@ class Indicator(IndicatorRegistrar):
                     mba["indexer"] = args.get("freq") or "YS"
             else:
                 mba[k] = v
-        if preformatted_params is not None:
-            mba.update(preformatted_params)
+        # Retrieve percentile threshold used from percentile_doy result
+        if (per_arg := args.get("per", None)) is not None:
+            mba.update(
+                {
+                    "per_base_thresh": per_arg.coords["percentiles"].values,
+                    "per_window": per_arg.attrs.get("window"),
+                    "per_period": per_arg.attrs.get("climatology_bounds"),
+                }
+            )
         out = {}
         for key, val in attrs.items():
             if callable(val):
