@@ -1231,7 +1231,9 @@ def test_warm_spell_duration_index():
     out = atmos.warm_spell_duration_index(
         tasmax=tasmax, tasmax_per=tx90, window=3, freq="AS-JUL"
     )
-    np.testing.assert_array_equal(out[0, :, 0], np.array([np.nan, 3, 0, 0, np.nan]))
+    np.testing.assert_array_equal(
+        out.isel(location=0, percentiles=0), np.array([np.nan, 3, 0, 0, np.nan])
+    )
     assert "Annual number of days with at least 3 consecutive days" in out.description
 
 
