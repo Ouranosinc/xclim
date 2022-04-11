@@ -319,16 +319,16 @@
     "abstract": "Température journalière moyenne."
   },
   "TG10P": {
-    "long_name": "Nombre de jours où la température est au-dessus du 10e percentile",
-    "description": "Nombre {freq:m} de jours où la température est au-dessus du 10e percentile. Le 10e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
-    "title": "Nombre de jours où la température est au-dessus du 10e percentile",
-    "abstract": "Nombre de jours où la température est au-dessus du 10e percentile"
+    "long_name": "Nombre de jours où la température est au-dessus du {per_base_thresh}e percentile",
+    "description": "Nombre {freq:m} de jours où la température est au-dessus du {per_base_thresh}e percentile. Le {per_base_thresh}e percentile est calculé à partir d'une fenêtre de {per_window} jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours où la température est au-dessus du {per_base_thresh}e percentile",
+    "abstract": "Nombre de jours où la température est au-dessus du {per_base_thresh}e percentile"
   },
   "TG90P": {
-    "long_name": "Nombre de jours où la température est au-dessus du 90e percentile",
-    "description": "Nombre {freq:m} de jours où la température est au-dessus du 90e percentile. Le 90e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
-    "title": "Nombre de jours où la température est au-dessus du 90e percentile",
-    "abstract": "Nombre de jours où la température est au-dessus du 90e percentile."
+    "long_name": "Nombre de jours où la température est au-dessus du {per_base_thresh}e percentile",
+    "description": "Nombre {freq:m} de jours où la température est au-dessus du {per_base_thresh}e percentile. Le {per_base_thresh}e percentile est calculé à partir d'une fenêtre de {per_window} jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours où la température est au-dessus du {per_base_thresh}e percentile",
+    "abstract": "Nombre de jours où la température est au-dessus du {per_base_thresh}e percentile."
   },
   "TN_MIN": {
     "long_name": "Minimum de la température journalière",
@@ -349,16 +349,16 @@
     "abstract": "Moyenne de la température journalière minimale."
   },
   "TN10P": {
-    "long_name": "Nombre de jours où la température minimale est en dessous du 10e percentile",
-    "description": "Nombre {freq:m} de jours où la température minimale est en dessous du 10e percentile. Le 10e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
-    "title": "Nombre de jours où la température minimale est en dessous du 10e percentile",
-    "abstract": "Nombre de jours où la température minimale est en dessous du 10e percentile."
+    "long_name": "Nombre de jours où la température minimale est en dessous du {per_base_thresh}e percentile",
+    "description": "Nombre {freq:m} de jours où la température minimale est en dessous du {per_base_thresh}e percentile. Le {per_base_thresh}e percentile est calculé à partir d'une fenêtre de {per_window} jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours où la température minimale est en dessous du {per_base_thresh}e percentile",
+    "abstract": "Nombre de jours où la température minimale est en dessous du {per_base_thresh}e percentile."
   },
   "TN90P": {
-    "long_name": "Nombre de jours où la température minimale est au-dessus du 90e percentile",
-    "description": "Nombre {freq:m} de jours où la température minimale est au-dessus du 90e percentile. Le 90e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
-    "title": "Nombre de jours où la température minimale est au-dessus du 90e percentile",
-    "abstract": "Nombre de jours où la température minimale est au-dessus du 90e percentile."
+    "long_name": "Nombre de jours où la température minimale est au-dessus du {per_base_thresh}e percentile",
+    "description": "Nombre {freq:m} de jours où la température minimale est au-dessus du {per_base_thresh}e percentile. Le {per_base_thresh}e percentile est calculé à partir d'une fenêtre de {per_window} jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours où la température minimale est au-dessus du {per_base_thresh}e percentile",
+    "abstract": "Nombre de jours où la température minimale est au-dessus du {per_base_thresh}e percentile."
   },
   "TX_MIN": {
     "long_name": "Minimum de la température journalière maximale",
@@ -379,16 +379,16 @@
     "abstract": "Moyenne de la température journalière maximale."
   },
   "TX10P": {
-    "long_name": "Nombre de jours où la température maximale est en dessous du 10e percentile",
-    "description": "Nombre {freq:m} de jours où la température maximale est en dessous du 10e percentile. Le 10e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
-    "title": "Nombre de jours où la température maximale est en dessous du 10e percentile",
-    "abstract": "Nombre de jours où la température maximale est en dessous du 10e percentile."
+    "long_name": "Nombre de jours où la température maximale est en dessous du {per_base_thresh}e percentile",
+    "description": "Nombre {freq:m} de jours où la température maximale est en dessous du {per_base_thresh}e percentile. Le {per_base_thresh}e percentile est calculé à partir d'une fenêtre de {per_window} jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours où la température maximale est en dessous du {per_base_thresh}e percentile",
+    "abstract": "Nombre de jours où la température maximale est en dessous du {per_base_thresh}e percentile."
   },
   "TX90P": {
-    "long_name": "Nombre de jours où la température maximale est au-dessus du 90e percentile",
-    "description": "Nombre {freq:m} de jours où la température maximale est au-dessus du 90e percentile. Le 90e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
-    "title": "Nombre de jours où la température maximale est au-dessus du 90e percentile",
-    "abstract": "Nombre de jours où la température maximale est au-dessus du 90e percentile."
+    "long_name": "Nombre de jours où la température maximale est au-dessus du {per_base_thresh}e percentile",
+    "description": "Nombre {freq:m} de jours où la température maximale est au-dessus du {per_base_thresh}e percentile. Le {per_base_thresh}e percentile est calculé à partir d'une fenêtre de {per_window} jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours où la température maximale est au-dessus du {per_base_thresh}e percentile",
+    "abstract": "Nombre de jours où la température maximale est au-dessus du {per_base_thresh}e percentile."
   },
   "DTRMAX": {
     "long_name": "Amplitude diurne maximale de la température",
@@ -416,9 +416,9 @@
   },
   "COLD_SPELL_DURATION_INDEX": {
     "long_name": "Indice de durée des vagues de froid",
-    "description": "Nombre {freq:m} de jours de vague de froid. Une vague de froid se produit lorsque la température journalière minimale est sous le 10e percentile durant au moins {window} jours consécutifs. Le 10e percentile est calculé à partir d'une fenêtre de 5 jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "description": "Nombre {freq:m} de jours de vague de froid. Une vague de froid se produit lorsque la température journalière minimale est sous le {per_base_thresh} percentile durant au moins {window} jours consécutifs. Le {per_base_thresh} percentile est calculé à partir d'une fenêtre de {per_window} jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
     "title": "Indice de durée des vagues de froid",
-    "abstract": "Nombre de jours de vagues de froid. Une vague de froid se produit lorsque la température journalière minimale est sous le 10e percentile durant au moins un certain nombre de jours consécutifs."
+    "abstract": "Nombre de jours de vagues de froid. Une vague de froid se produit lorsque la température journalière minimale est sous le {per_base_thresh} percentile durant au moins {window} nombre de jours consécutifs."
   },
   "COLD_SPELL_FREQUENCY": {
     "long_name": "Nombre de vagues de froid",
@@ -875,8 +875,8 @@
   },
   "WARM_SPELL_DURATION_INDEX": {
     "title": "Indice de durée des vagues de chaleur",
-    "abstract": "Nombre de jours faisant partie de vagues d'une longueur minimale où la température maximale quotidienne excède le 90e percentile. Le 90e percentile des températures devrait être calculé avec une fenêtre mobile de 5 jours.",
-    "description": "Durée totale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque Tmax est au-dessus du 90e percentile durant au moins {window} jours.",
+    "abstract": "Nombre de jours faisant partie de vagues d'une longueur minimale où la température maximale quotidienne excède le {per_base_thresh}e percentile. Le {per_base_thresh} percentile des températures devrait être calculé avec une fenêtre mobile de {per_window} jours.",
+    "description": "Durée totale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque Tmax est au-dessus du {per_base_thresh}e percentile durant au moins {window} jours.",
     "long_name": "Durée des vagues de chaleur"
   },
   "MAXIMUM_CONSECUTIVE_WARM_DAYS": {
