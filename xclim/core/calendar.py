@@ -520,14 +520,16 @@ def percentile_doy(
     p.attrs.update(arr.attrs.copy())
 
     # Saving percentile attributes
-    n = len(arr.time)
-    p.attrs["climatology_bounds"] = (
-        arr.time[0 :: n - 1].dt.strftime("%Y-%m-%d").values.tolist()
-    )
+    p.attrs["climatology_bounds"] = build_climatology_bounds(arr)
     p.attrs["window"] = window
     p.attrs["alpha"] = alpha
     p.attrs["beta"] = beta
     return PercentileDataArray.from_da(p.rename("per"))
+
+
+def build_climatology_bounds(da: xr.DataArray) -> list[str]:
+    n = len(da.time)
+    return da.time[0 :: n - 1].dt.strftime("%Y-%m-%d").values.tolist()
 
 
 def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa

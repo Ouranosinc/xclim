@@ -302,7 +302,8 @@ days_with_snow = Precip(
 days_over_precip_thresh = Precip(
     identifier="days_over_precip_thresh",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold",
-    description="{freq} number of days with precipitation above percentile."
+    description="{freq} number of days with precipitation above the {pr_per_thresh}th"
+    " percentile of {pr_per_period} period."
     " Only days with at least {thresh} are counted.",
     units="days",
     cell_methods="time: sum over days",
@@ -312,8 +313,10 @@ days_over_precip_thresh = Precip(
 days_over_precip_doy_thresh = Precip(
     identifier="days_over_precip_doy_thresh",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_above_daily_threshold",
-    description="{freq} number of days with precipitation above a daily percentile."
-    " Only days with at least {thresh} are counted.",
+    description="{freq} number of days with precipitation above the {pr_per_thresh}th daily percentile."
+    " Only days with at least {thresh} are counted."
+    " A {pr_per_window} day(s) window, centred on each calendar day in the"
+    " {pr_per_period} period, is used to compute the {pr_per_thresh}th percentile(s).",
     units="days",
     cell_methods="time: sum over days",
     compute=indices.days_over_precip_thresh,
@@ -329,8 +332,11 @@ high_precip_low_temp = PrTasx(
 
 fraction_over_precip_doy_thresh = Precip(
     identifier="fraction_over_precip_doy_thresh",
-    description="{freq} fraction of total precipitation due to days with precipitation above a daily percentile."
-    " Only days with at least {thresh} are included in the total.",
+    description="{freq} fraction of total precipitation due to days with precipitation"
+    " above {pr_per_thresh}th daily percentile."
+    " Only days with at least {thresh} are included in the total."
+    " A {pr_per_window} day(s) window, centred on each calendar day in the"
+    " {pr_per_period} period, is used to compute the {pr_per_thresh}th percentile(s).",
     units="",
     cell_methods="",
     compute=indices.fraction_over_precip_thresh,
@@ -338,7 +344,8 @@ fraction_over_precip_doy_thresh = Precip(
 
 fraction_over_precip_thresh = Precip(
     identifier="fraction_over_precip_thresh",
-    description="{freq} fraction of total precipitation due to days with precipitation above percentile."
+    description="{freq} fraction of total precipitation due to days with precipitation"
+    " above {pr_per_thresh}th percentile of {pr_per_period} period."
     " Only days with at least {thresh} are included in the total.",
     units="",
     cell_methods="",

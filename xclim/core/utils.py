@@ -772,19 +772,32 @@ def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
 
 class PercentileDataArray(xr.DataArray):
     @classmethod
-    def from_da(cls, da: xr.DataArray) -> PercentileDataArray:
-        if "percentiles" in da.coords and "dayofyear" in da.dims:
-            return PercentileDataArray(da)
+    def from_da(
+        cls, source: xr.DataArray, climatology_bounds: list[str] = None
+    ) -> PercentileDataArray:
+        if (
+            climatology_bounds is None
+            and source.attrs.get("climatology_bounds", None) is None
+        ):
+            raise ValueError("PercentileDataArray needs a climatology_bounds.")
+        per = PercentileDataArray(source)
+        # handle case where da was create with `quantile()` method
+        if "quantile" in source.coords:
+            per = per.rename({"quantile": "percentiles"})
+            per.coords["percentiles"] = per.coords["percentiles"] * 100
+        clim_bounds = source.attrs.get("climatology_bounds", climatology_bounds)
+        per.attrs["climatology_bounds"] = clim_bounds
+        if "percentiles" in per.coords:
+            return per
         raise ValueError(
-            f"DataArray {da.name} could not be turned into"
-            f" PercentileDataArray. A PercentileDataArray must have a"
-            f" 'percentiles' coordinate variable and a 'dayofyear'"
-            f" dimension."
+            f"DataArray {source.name} could not be turned into"
+            f" PercentileDataArray. The DataArray must have a"
+            f" 'percentiles' coordinate variable."
         )
 
     def get_metadata(self, prefix) -> dict[str, str]:
         return {
             f"{prefix}_thresh": self.coords["percentiles"].values,
-            f"{prefix}_window": self.attrs.get("window"),
+            f"{prefix}_window": self.attrs.get("window", None),
             f"{prefix}_period": self.attrs.get("climatology_bounds"),
         }

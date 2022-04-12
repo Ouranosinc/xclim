@@ -856,16 +856,28 @@
     "abstract": "Nombre de jours avec précipitation au-dessus d'un seuil et températures sous un seuil."
   },
   "DAYS_OVER_PRECIP_THRESH": {
-    "title": "Nombre de jours pluvieux où la précipitation est au-dessus d'un percentile quotidien",
-    "abstract": "Nombre de jours d'une période où la précipitation est au-dessus d'un percentile quotidien et d'un seuil fixe.",
-    "description": "Nombre {freq:m} de jours où la précipitation au-dessus d'un percentile quotidien. Seuls les jours avec au moins {thresh} sont comptés.",
-    "long_name": "Nombre de jours pluvieux où la précipitation est au-dessus d'un percentile quotidien"
+    "title": "Nombre de jours pluvieux où la précipitation est au-dessus du {pr_per_thresh}e percentile",
+    "abstract": "Nombre de jours d'une période où la précipitation est au-dessus du {pr_per_thresh}e percentile calculé sur la période {pr_per_period} et d'un seuil fixe.",
+    "description": "Nombre {freq:m} de jours où la précipitation est au-dessus du {pr_per_thresh}e percentile calculé sur la période {pr_per_period}. Seuls les jours avec au moins {thresh} sont comptés.",
+    "long_name": "Nombre de jours pluvieux où la précipitation est au-dessus du {pr_per_thresh}e percentile calculé sur la période {pr_per_period}"
+  },
+  "DAYS_OVER_PRECIP_DOY_THRESH": {
+    "title": "Nombre de jours pluvieux où la précipitation est au-dessus du {pr_per_thresh}e percentile quotidien",
+    "abstract": "Nombre de jours d'une période où la précipitation est au-dessus du {pr_per_thresh}e percentile quotidien et d'un seuil fixe.",
+    "description": "Nombre {freq:m} de jours où la précipitation est au-dessus du {pr_per_thresh}e percentile quotidien. Seuls les jours avec au moins {thresh} sont comptés. Le {pr_per_thresh}e percentile est calculé sur une fenêtre glissante de {pr_per_window} jour(s) de la période {pr_per_period}.",
+    "long_name": "Nombre de jours pluvieux où la précipitation est au-dessus du {pr_per_thresh}e percentile quotidien"
   },
   "FRACTION_OVER_PRECIP_THRESH": {
     "title": "Fraction des jours pluvieux où la précipitation est au-dessus d'un percentile quotidien.",
     "abstract": "Fraction des jours pluvieux d'une période où la précipitation est au-dessus d'un percentile quotidien. La référence est le nombre de jours où la précipitation est au-dessus d'un seuil fixe.",
     "description": "Fraction {freq:f} des jours pluvieux où la précipitation est au-dessus d'un percentile quotidien. La référence est le nombre jours où la précipitation est au-dessus d'un seuil fixe.",
     "long_name": "Fraction des jours pluvieux où la précipitation est au-dessus d'un percentile quotidien."
+  },
+  "FRACTION_OVER_PRECIP_DOY_THRESH": {
+    "title": "Fraction de jours pluvieux où la précipitation est au-dessus du {pr_per_thresh}e percentile quotidien",
+    "abstract": "Fraction de jours d'une période où la précipitation est au-dessus du {pr_per_thresh}e percentile quotidien et d'un seuil fixe.",
+    "description": "Fraction {freq:m} de jours où la précipitation est au-dessus du {pr_per_thresh}e percentile quotidien. Seuls les jours avec au moins {thresh} sont comptés. Le {pr_per_thresh}e percentile est calculé sur une fenêtre glissante de {pr_per_window} jour(s) de la période {pr_per_period}.",
+    "long_name": "Fraction de jours pluvieux où la précipitation est au-dessus du {pr_per_thresh}e percentile quotidien"
   },
   "LIQUID_PRECIP_RATIO": {
     "title": "Fraction liquide de la précipitation totale",
