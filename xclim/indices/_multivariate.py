@@ -1596,49 +1596,49 @@ def warm_spell_duration_index(
 ) -> xarray.DataArray:
     r"""Warm spell duration index.
 
-    Number of days inside spells of a minimum number of consecutive days where the daily maximum temperature is above the 90th
-    percentile. The 90th percentile should be computed for a 5-day moving window, centered on each calendar day in the
-    1961-1990 period.
+        Number of days inside spells of a minimum number of consecutive days where the daily maximum temperature is above the 90th
+        percentile. The 90th percentile should be computed for a 5-day moving window, centered on each calendar day in the
+        1961-1990 period.
 
-    Parameters
-    ----------
-    tasmax : xarray.DataArray
-      Maximum daily temperature.
-    tasmax_per : xarray.DataArray
-      percentile(s) of daily maximum temperature.
-    window : int
-      Minimum number of days with temperature above threshold to qualify as a warm spell.
-    freq : str
-      Resampling frequency.
-    bootstrap : bool
-      Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
-      Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
-      This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
-      the rest of the time series.
-      Keep bootstrap to False when there is no common period, it would give wrong results
-      plus, bootstrapping is computationally expensive.
+        Parameters
+        ----------
+        tasmax : xarray.DataArray
+          Maximum daily temperature.
+        tasmax_per : xarray.DataArray
+          percentile(s) of daily maximum temperature.
+        window : int
+          Minimum number of days with temperature above threshold to qualify as a warm spell.
+        freq : str
+          Resampling frequency.
+        bootstrap : bool
+          Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
+          Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
+          This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+          the rest of the time series.
+          Keep bootstrap to False when there is no common period, it would give wrong results
+          plus, bootstrapping is computationally expensive.
 
-    Returns
-    -------
-    xarray.DataArray, [time]
-      Warm spell duration index.
+        Returns
+        -------
+        xarray.DataArray, [time]
+          Warm spell duration index.
 
-    Examples
-    --------
-    Note that this example does not use a proper 1961-1990 reference period.
+        Examples
+        --------
+        Note that this example does not use a proper 1961-1990 reference period.
 
-    >>> from xclim.core.calendar import percentile_doy
-    >>> from xclim.indices import warm_spell_duration_index
+        >>> from xclim.core.calendar import percentile_doy
+        >>> from xclim.indices import warm_spell_duration_index
 
-    >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax.isel(lat=0, lon=0)
-    >>> tasmax_per = percentile_doy(tasmax, per=90).sel(percentiles=90)
-    >>> warm_spell_duration_index(tasmax, tasmax_per)
-`
-    References
-    ----------
-    From the Expert Team on Climate Change Detection, Monitoring and Indices (ETCCDMI).
-    Used in Alexander, L. V., et al. (2006), Global observed changes in daily climate extremes of temperature and
-    precipitation, J. Geophys. Res., 111, D05109, doi: 10.1029/2005JD006290.
+        >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax.isel(lat=0, lon=0)
+        >>> tasmax_per = percentile_doy(tasmax, per=90).sel(percentiles=90)
+        >>> warm_spell_duration_index(tasmax, tasmax_per)
+    `
+        References
+        ----------
+        From the Expert Team on Climate Change Detection, Monitoring and Indices (ETCCDMI).
+        Used in Alexander, L. V., et al. (2006), Global observed changes in daily climate extremes of temperature and
+        precipitation, J. Geophys. Res., 111, D05109, doi: 10.1029/2005JD006290.
 
     """
     thresh = convert_units_to(tasmax_per, tasmax)
