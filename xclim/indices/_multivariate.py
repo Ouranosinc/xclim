@@ -1623,6 +1623,12 @@ def warm_spell_duration_index(
         xarray.DataArray, [time]
           Warm spell duration index.
 
+        References
+        ----------
+        From the Expert Team on Climate Change Detection, Monitoring and Indices (ETCCDMI).
+        Used in Alexander, L. V., et al. (2006), Global observed changes in daily climate extremes of temperature and
+        precipitation, J. Geophys. Res., 111, D05109, doi: 10.1029/2005JD006290.
+
         Examples
         --------
         Note that this example does not use a proper 1961-1990 reference period.
@@ -1633,13 +1639,6 @@ def warm_spell_duration_index(
         >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax.isel(lat=0, lon=0)
         >>> tasmax_per = percentile_doy(tasmax, per=90).sel(percentiles=90)
         >>> warm_spell_duration_index(tasmax, tasmax_per)
-    `
-        References
-        ----------
-        From the Expert Team on Climate Change Detection, Monitoring and Indices (ETCCDMI).
-        Used in Alexander, L. V., et al. (2006), Global observed changes in daily climate extremes of temperature and
-        precipitation, J. Geophys. Res., 111, D05109, doi: 10.1029/2005JD006290.
-
     """
     thresh = convert_units_to(tasmax_per, tasmax)
 
