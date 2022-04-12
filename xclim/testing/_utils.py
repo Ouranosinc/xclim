@@ -11,6 +11,7 @@ from urllib.parse import urljoin
 from urllib.request import urlopen, urlretrieve
 
 import pandas as pd
+from _pytest.logging import LogCaptureFixture
 from loguru import logger
 from xarray import Dataset
 from xarray import open_dataset as _open_dataset
@@ -33,11 +34,14 @@ __all__ = [
 
 
 class ContextLogger:
-    def __init__(self):
+    def __init__(self, caplog: Optional[LogCaptureFixture] = None):
         from loguru import logger
 
         self.logger = logger
         self._was_enabled = False
+        self._using_caplog = False
+        if caplog:
+            self._using_caplog = True
 
     def __enter__(self):
         if not __version__.endswith("beta"):
@@ -48,10 +52,11 @@ class ContextLogger:
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self._was_enabled:
             self.logger.disable("xclim")
-        try:
-            self.logger.remove()
-        except ValueError:
-            pass
+        if not self._using_caplog:
+            try:
+                self.logger.remove()
+            except ValueError:
+                pass
 
 
 def file_md5_checksum(fname):

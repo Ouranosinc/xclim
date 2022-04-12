@@ -10,8 +10,18 @@ from xclim.testing._utils import ContextLogger, _logging_examples  # noqa
 
 class TestLoggingFuncs:
     @pytest.mark.xfail(
-        reason="pytest-loguru required but does not yet implement logging levels for caplog."
+        reason="pytest-loguru <0.1.1 does not implement set logging level for caplog."
     )
+    def test_logging_with_caplog_levels(self, caplog):
+        with ContextLogger(caplog):
+
+            caplog.set_level(logging.CRITICAL)
+
+            _logging_examples()
+
+            assert ("xclim.testing._utils", 50, "5") in caplog.record_tuples
+            assert ("xclim.testing._utils", 40, "4") not in caplog.record_tuples
+
     def test_default_logging_setup_for_releases(self, caplog):
         _logging_examples()  # noqa
 
