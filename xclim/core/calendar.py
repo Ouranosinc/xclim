@@ -7,7 +7,7 @@ Helper function to handle dates, times and different calendars with xarray.
 """
 import datetime as pydt
 import re
-from typing import Any, NewType, Optional, Sequence, Tuple, Union
+from typing import Any, List, NewType, Optional, Sequence, Tuple, Union
 
 import cftime
 import numpy as np
@@ -527,7 +527,7 @@ def percentile_doy(
     return PercentileDataArray.from_da(p.rename("per"))
 
 
-def build_climatology_bounds(da: xr.DataArray) -> list[str]:
+def build_climatology_bounds(da: xr.DataArray) -> List[str]:
     n = len(da.time)
     return da.time[0 :: n - 1].dt.strftime("%Y-%m-%d").values.tolist()
 
