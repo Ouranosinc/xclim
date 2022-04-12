@@ -4,7 +4,7 @@ History
 
 0.36.0 (unreleased)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Abel Aoun (:user:`bzah`).
 
 Bug fixes
 ^^^^^^^^^
@@ -13,6 +13,12 @@ Bug fixes
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.sdba.measures.rmse`` and ``xclim.sdba.measures.mae`` now use `numpy` instead of `sklearn`. This improves their performances when using `dask`. (:pull:`1051`).
+* Improve percentile based indicators' metadata with percentile metadata window, threshold and climatology period. (:issue:`1047`, :pull:`1050`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* The signature of the Indicators [cold_spell_duration_index, tg90p, tg10p, tx90p, tx10p, tn90p, tn10p, warm_spell_duration_index, days_over_precip_doy_thresh, days_over_precip_thresh, fraction_over_precip_doy_thresh, fraction_over_precip_thresh, cold_and_dry_days, warm_and_dry_days, warm_and_wet_days, cold_and_wet_days ]
+has been modified. The parameter for percentiles values is now named after the variable it is supposed be be computed upon. (:pull:`1050`)
 
 0.35.0 (01-04-2022)
 -------------------
