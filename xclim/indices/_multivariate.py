@@ -1457,7 +1457,7 @@ def tx90p(
     >>> from xclim.core.calendar import percentile_doy
     >>> from xclim.indices import tx90p
     >>> tas = xr.open_dataset(path_to_tas_file).tas
-    >>> tas_per = percentile_doy(tas, per=90).sel(percentiles=90)
+    >>> tasmax_per = percentile_doy(tas, per=90).sel(percentiles=90)
     >>> hot_days = tx90p(tas, tasmax_per)
     """
     tasmax_per = convert_units_to(tasmax_per, tasmax)
@@ -1631,9 +1631,9 @@ def warm_spell_duration_index(
     >>> from xclim.indices import warm_spell_duration_index
 
     >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax.isel(lat=0, lon=0)
-    >>> tx90 = percentile_doy(tasmax, per=90).sel(percentiles=90)
+    >>> tasmax_per = percentile_doy(tasmax, per=90).sel(percentiles=90)
     >>> warm_spell_duration_index(tasmax, tasmax_per)
-
+`
     References
     ----------
     From the Expert Team on Climate Change Detection, Monitoring and Indices (ETCCDMI).
