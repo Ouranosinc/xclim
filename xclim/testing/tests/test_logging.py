@@ -2,19 +2,13 @@ import logging
 import sys
 from pathlib import Path
 
-import pytest
-
 from xclim import __version__
 from xclim.testing._utils import ContextLogger, _logging_examples  # noqa
 
 
 class TestLoggingFuncs:
-    @pytest.mark.xfail(
-        reason="pytest-loguru <0.1.1 does not implement set logging level for caplog."
-    )
     def test_logging_with_caplog_levels(self, caplog):
         with ContextLogger(caplog):
-
             caplog.set_level(logging.CRITICAL)
 
             _logging_examples()
@@ -49,6 +43,7 @@ class TestLoggingFuncs:
             _logger.add(sys.stdout, level="INFO")
             _logger.add(sys.stderr, level="CRITICAL")
 
+            # disable xclim logging
             _logger.disable("xclim")
             _logging_examples()  # noqa
 
