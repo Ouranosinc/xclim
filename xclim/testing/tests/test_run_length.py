@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+from dask import compute
 
 from xclim.core.options import set_options
 from xclim.indices import run_length as rl
@@ -503,14 +504,18 @@ class TestRunsWithDates:
 def test_lazy_indexing(use_dask):
     idx = xr.DataArray([[0, 10], [33, 99]], dims=("x", "y"))
     da = xr.DataArray(np.arange(100), dims=("time",))
+    db = xr.DataArray(-np.arange(100), dims=("time",))
 
     if use_dask:
         idx = idx.chunk({"x": 1})
 
-    out = rl.lazy_indexing(da, idx)
-    assert set(out.dims) == {"x", "y"}
-    np.testing.assert_array_equal(idx, out)
-    assert "time" not in out.coords
+    # Ensure tasks are different
+    outa, outb = compute(rl.lazy_indexing(da, idx), rl.lazy_indexing(db, idx))
+
+    assert set(outa.dims) == {"x", "y"}
+    np.testing.assert_array_equal(idx, outa)
+    np.testing.assert_array_equal(idx, -outb)
+    assert "time" not in outa.coords
 
 
 @pytest.mark.parametrize("use_dask", [True, False])
