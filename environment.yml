@@ -41,6 +41,7 @@ dependencies:
   - pylint
   - pytest
   - pytest-cov
+  - pytest-loguru
   - pytest-runner
   - sphinx
   - sphinx_rtd_theme
@@ -50,5 +51,3 @@ dependencies:
   - xdoctest
   - yamale
   - yamllint
-  - pip:
-    - pytest-loguru
