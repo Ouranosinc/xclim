@@ -314,7 +314,10 @@ def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):
         return out
 
     if extrap == "constant":
-        fill_value = (oldy[0], oldy[-1])
+        fill_value = (
+            oldy.where(~np.isnan(oldy), drop=True)[0],
+            oldy.where(~np.isnan(oldy), drop=True)[-1],
+        )
     else:  # extrap == 'nan'
         fill_value = np.NaN
 
