@@ -148,6 +148,60 @@ def test_interp_on_quantiles_monthly():
         assert afi.isnull().sum("time") == 0, interp
 
 
+@pytest.mark.parametrize(
+    "interp,expi", [("nearest", 2.9), ("linear", 2.95), ("cubic", 2.95)]
+)
+@pytest.mark.parametrize("extrap,expe", [("constant", 4.4), ("nan", np.NaN)])
+def test_interp_on_quantiles_constant_with_nan(interp, expi, extrap, expe):
+    quantiles = np.linspace(0, 1, num=30)
+    xq = xr.DataArray(
+        np.append(np.linspace(205, 229, num=25), [np.nan] * 5),
+        dims=("quantiles",),
+        coords={"quantiles": quantiles},
+    )
+
+    yq = xr.DataArray(
+        np.append(np.linspace(2, 4.4, num=25), [np.nan] * 5),
+        dims=("quantiles",),
+        coords={"quantiles": quantiles},
+    )
+
+    newx = xr.DataArray(
+        np.linspace(240, 200, num=41) - 0.5,
+        dims=("time",),
+        coords={"time": xr.cftime_range("1900-03-01", freq="D", periods=41)},
+    )
+    newx = newx.where(newx > 201)  # Put some NaNs in newx
+
+    xq = xq.expand_dims(lat=[1, 2, 3])
+    yq = yq.expand_dims(lat=[1, 2, 3])
+    newx = newx.expand_dims(lat=[1, 2, 3])
+
+    out = u.interp_on_quantiles(
+        newx, xq, yq, group="time", method=interp, extrapolation=extrap
+    )
+
+    if np.isnan(expe):
+        assert out.isel(time=0).isnull().all()
+    else:
+        assert out.isel(lat=1, time=0) == expe
+    np.testing.assert_allclose(out.isel(time=25), expi)
+    assert out.isel(time=-1).isnull().all()
+
+    xq = xq.where(xq != 220)
+    yq = yq.where(yq != 3)
+    out = u.interp_on_quantiles(
+        newx, xq, yq, group="time", method=interp, extrapolation=extrap
+    )
+
+    if np.isnan(expe):
+        assert out.isel(time=0).isnull().all()
+    else:
+        assert out.isel(lat=1, time=0) == expe
+    np.testing.assert_allclose(out.isel(time=25), expi)
+    assert out.isel(time=-1).isnull().all()
+
+
 def test_rank():
     arr = np.random.random_sample(size=(10, 10, 1000))
     da = xr.DataArray(arr, dims=("x", "y", "time"))
