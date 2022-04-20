@@ -314,7 +314,10 @@ def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):
         return out
 
     if extrap == "constant":
-        fill_value = (oldy[0], oldy[-1])
+        fill_value = (
+            oldy[~np.isnan(oldy)][0],
+            oldy[~np.isnan(oldy)][-1],
+        )
     else:  # extrap == 'nan'
         fill_value = np.NaN
 
@@ -392,7 +395,7 @@ def interp_on_quantiles(
     - 'nan' : Any value of `newx` outside the range of `xq` is set to NaN.
     - 'constant' : Values of `newx` smaller than the minimum of `xq` are set to the first
       value of `yq` and those larger than the maximum, set to the last one (first and
-      last values along the "quantiles" dimension). When the grouping is "time.month",
+      last non-nan values along the "quantiles" dimension). When the grouping is "time.month",
       these limits are linearly interpolated along the month dimension.
     """
     dim = group.dim
