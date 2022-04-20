@@ -26,6 +26,7 @@ New features and enhancements
 Bug fixes
 ^^^^^^^^^
 * Invoking ``lazy_indexing`` twice in row (or more) using the same indexes (using dask) is now fixed. (:issue:`1048`, :pull:`1049`).
+*  Filtering out the nans before choosing the first and last values as ``fill_value`` in ``_interp_on_quantiles_1D`` (:issue:`1056`, :pull:`1057`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
