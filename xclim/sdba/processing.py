@@ -517,7 +517,7 @@ def unpack_moving_yearly_window(da: xr.DataArray, dim: str = "movingwin", append
 
     Unpack DataArrays created with :py:func:`construct_moving_yearly_window` and recreate a timeseries data.
     If `append_ends` is False, only keeps the central non-overlapping years. The final timeseries will be
-    (window - step) years shorter than the initial one. If `append_ends` is True, the times from first and last windows
+    (window - step) years shorter than the initial one. If `append_ends` is True, the time points from first and last windows
      will be be included in the final timeseries.
 
     The time points that are not in a window will never be included in the final timeseries.
@@ -534,9 +534,10 @@ def unpack_moving_yearly_window(da: xr.DataArray, dim: str = "movingwin", append
       Whether to append the ends of the timeseries
       If False, the final timeseries will be (window - step) years shorter than the initial one,
       but all windows will contribute equally.
-      If True, the windows at both ends of the timeseries will keep the central non-overlapping years as well as the
-      end non-overlapping years. The final timeseries will be the same lenght as the initial timeseries if the windows
-      span the whole timeseries. The time steps that are not in a window will be left out of the final timeseries.
+      If True, the year before the middle years of the first window and the years after the middle years of the last
+      window are appended to the middle years. The final timeseries will be the same length as the initial timeseries
+      if the windows span the whole timeseries.
+      The time steps that are not in a window will be left out of the final timeseries.
     """
     # Get number of samples by year (and perform checks)
     N_in_year = _get_number_of_elements_by_year(da.time)
@@ -569,16 +570,14 @@ def unpack_moving_yearly_window(da: xr.DataArray, dim: str = "movingwin", append
         slc["time"] = slc.time + dt
         out.append(slc)
 
-    #ds_final =
-
-    #display(da)
-
     if append_ends:
-        out.insert(0, da.isel({dim: 0, 'time': slice(None, left * N_in_year)}).drop_vars(dim))  # add end at the front
+        # add front end at the front
+        out.insert(0, da.isel({dim: 0, 'time': slice(None, left * N_in_year)}).drop_vars(dim))
+        # add back end at the back
         back_end = da.isel({dim: -1, 'time': slice((left + step) * N_in_year, None)}).drop_vars(dim)
         dt = da.isel({dim: -1})[dim].values - da.isel({dim: 0})[dim].values
         back_end["time"] = back_end.time + dt
-        out.append(back_end)  # add end at the back
+        out.append(back_end)
 
     return xr.concat(out, "time")
 
