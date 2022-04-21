@@ -516,8 +516,11 @@ def unpack_moving_yearly_window(da: xr.DataArray, dim: str = "movingwin", append
     """Unpack a constructed moving window dataset to a normal timeseries, only keeping the central data.
 
     Unpack DataArrays created with :py:func:`construct_moving_yearly_window` and recreate a timeseries data.
-    Only keeps the central non-overlapping years. If `append_ends` is False, the final timeseries will be (window - step) years shorter than
-    the initial one.
+    If `append_ends` is False, only keeps the central non-overlapping years. The final timeseries will be
+    (window - step) years shorter than the initial one. If `append_ends` is True, the times from first and last windows
+     will be be included in the final timeseries.
+
+    The time points that are not in a window will never be included in the final timeseries.
 
     The window length and window step are inferred from the coordinates.
 
