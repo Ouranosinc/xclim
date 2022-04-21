@@ -512,7 +512,9 @@ def construct_moving_yearly_window(
     return daw
 
 
-def unpack_moving_yearly_window(da: xr.DataArray, dim: str = "movingwin", append_ends=True):
+def unpack_moving_yearly_window(
+    da: xr.DataArray, dim: str = "movingwin", append_ends=True
+):
     """Unpack a constructed moving window dataset to a normal timeseries, only keeping the central data.
 
     Unpack DataArrays created with :py:func:`construct_moving_yearly_window` and recreate a timeseries data.
@@ -572,9 +574,13 @@ def unpack_moving_yearly_window(da: xr.DataArray, dim: str = "movingwin", append
 
     if append_ends:
         # add front end at the front
-        out.insert(0, da.isel({dim: 0, 'time': slice(None, left * N_in_year)}).drop_vars(dim))
+        out.insert(
+            0, da.isel({dim: 0, "time": slice(None, left * N_in_year)}).drop_vars(dim)
+        )
         # add back end at the back
-        back_end = da.isel({dim: -1, 'time': slice((left + step) * N_in_year, None)}).drop_vars(dim)
+        back_end = da.isel(
+            {dim: -1, "time": slice((left + step) * N_in_year, None)}
+        ).drop_vars(dim)
         dt = da.isel({dim: -1})[dim].values - da.isel({dim: 0})[dim].values
         back_end["time"] = back_end.time + dt
         out.append(back_end)
