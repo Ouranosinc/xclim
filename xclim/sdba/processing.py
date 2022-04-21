@@ -575,7 +575,7 @@ def unpack_moving_yearly_window(da: xr.DataArray, dim: str = "movingwin", append
 
     if append_ends:
         out.insert(0, da.isel({dim: 0, 'time': slice(None, left * N_in_year)}).drop_vars(dim))  # add end at the front
-        back_end = da.isel({dim: -1, 'time': slice(-(left+1) * N_in_year, None)}).drop_vars(dim)
+        back_end = da.isel({dim: -1, 'time': slice((left + step) * N_in_year, None)}).drop_vars(dim)
         dt = da.isel({dim: -1})[dim].values - da.isel({dim: 0})[dim].values
         back_end["time"] = back_end.time + dt
         out.append(back_end)  # add end at the back

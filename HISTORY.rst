@@ -14,7 +14,7 @@ Bug fixes
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.sdba.measures.rmse`` and ``xclim.sdba.measures.mae`` now use `numpy` instead of `sklearn`. This improves their performances when using `dask`. (:pull:`1051`).
-* Argument ``append_ends`` added to `sdba.unpack_moving_yearly_window` (:pull:`1059`).
+* Argument ``append_ends`` added to ``sdba.unpack_moving_yearly_window`` (:pull:`1059`).
 
 0.35.0 (01-04-2022)
 -------------------
