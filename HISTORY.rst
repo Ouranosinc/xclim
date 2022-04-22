@@ -9,11 +9,13 @@ Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Juliette Lav
 Bug fixes
 ^^^^^^^^^
 * Invoking ``lazy_indexing`` twice in row (or more) using the same indexes (using dask) is now fixed. (:issue:`1048`, :pull:`1049`).
-*  Filtering out the nans before choosing the first and last values as ``fill_value`` in ``_interp_on_quantiles_1D`` (:issue:`1056`, :pull:`1057`).
+* Filtering out the nans before choosing the first and last values as ``fill_value`` in ``_interp_on_quantiles_1D`` (:issue:`1056`, :pull:`1057`).
+* Translations from virtual indicator modules do not override those of the base indicators anymore. (:issue:`1053`, :pull:`1058`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.sdba.measures.rmse`` and ``xclim.sdba.measures.mae`` now use `numpy` instead of `sklearn`. This improves their performances when using `dask`. (:pull:`1051`).
+* Argument ``append_ends`` added to ``sdba.unpack_moving_yearly_window`` (:pull:`1059`).
 * Improve percentile based indicators' metadata with percentile metadata window, threshold and climatology period. (:issue:`1047`, :pull:`1050`).
 
 Breaking changes
