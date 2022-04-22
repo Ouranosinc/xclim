@@ -513,7 +513,7 @@ def construct_moving_yearly_window(
 
 
 def unpack_moving_yearly_window(
-    da: xr.DataArray, dim: str = "movingwin", append_ends=True
+    da: xr.DataArray, dim: str = "movingwin", append_ends: bool = True
 ):
     """Unpack a constructed moving window dataset to a normal timeseries, only keeping the central data.
 
