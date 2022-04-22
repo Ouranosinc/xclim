@@ -48,6 +48,7 @@ Those default translations are found in the `xclim/locales` folder.
 """
 import json
 import warnings
+from copy import deepcopy
 from pathlib import Path
 from typing import Mapping, Optional, Sequence, Tuple, Union
 
@@ -122,7 +123,7 @@ def get_local_dict(
         if locale not in _LOCALES:
             raise UnavailableLocaleError(locale)
 
-        return locale, _LOCALES[locale]
+        return locale, deepcopy(_LOCALES[locale])
 
     if isinstance(locale[1], dict):
         trans = locale[1]
@@ -131,7 +132,7 @@ def get_local_dict(
         trans = read_locale_file(locale[1])
 
     if locale[0] in _LOCALES:
-        loaded_trans = _LOCALES[locale[0]]
+        loaded_trans = deepcopy(_LOCALES[locale[0]])
         # Passed translations have priority
         loaded_trans.update(trans)
         trans = loaded_trans
