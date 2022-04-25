@@ -486,8 +486,8 @@ class InputKind(IntEnum):
        Annotation : ``xr.DataArray``.
     """
     PERCENTILE_VARIABLE = 1
-    """A data variable (DataArray or PercentileDataArray) with sufficient metadata to
-       recognize it's content as percentiles values from ``percentile_doy``.
+    """A data variable (PercentileDataArray) which contains percentiles values and
+    the related metadata.
 
        Annotation : ``xr.PercentileDataArray``.
     """
@@ -771,10 +771,35 @@ def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
 
 
 class PercentileDataArray(xr.DataArray):
+    """Wrap xarray DataArray for percentiles values.
+    This class is used internally with its corresponding InputKind to recognize this
+    sort of input and to retrieve from it the attributes needed to build indicator
+    metadata.
+    """
+
     @classmethod
     def from_da(
         cls, source: xr.DataArray, climatology_bounds: list[str] = None
     ) -> PercentileDataArray:
+        """Create a PercentileDataArray from a xarray.DataArray.
+
+        Parameters
+        ----------
+        source: DataArray
+            A DataArray with its content containing percentiles values.
+            It must also have a coordinate variable percentiles or quantile.
+        climatology_bounds: list[str]
+            Optional. A List of size two which contains the period on which the
+            percentiles were computed. See `xclim.core.calendar.build_climatology_bounds`
+            to build this list from a DataArray.
+        Returns
+        -------
+        PercentileDataArray
+            The initial `source` DataArray but wrap by PercentileDataArray class.
+            The data is unchanged and only climatology_bounds attributes is overridden
+            if q new value is given in inputs.
+
+        """
         if (
             climatology_bounds is None
             and source.attrs.get("climatology_bounds", None) is None
@@ -795,7 +820,21 @@ class PercentileDataArray(xr.DataArray):
             f" 'percentiles' coordinate variable."
         )
 
-    def get_metadata(self, prefix) -> dict[str, str]:
+    def get_metadata(self, prefix: str) -> dict[str, str]:
+        """Get this PercentileDataArray metadata as a dictionary.
+        Used to format indicators' own metadata.
+
+        Parameters
+        ----------
+        prefix: str
+            The prefix to be used in the metadata key.
+            Usually this takes the form of "tasmin_per" or equivalent.
+
+        Returns
+        -------
+        dict
+            A mapping of the configuration used to compute these percentiles.
+        """
         return {
             f"{prefix}_thresh": self.coords["percentiles"].values,
             f"{prefix}_window": self.attrs.get("window", None),
