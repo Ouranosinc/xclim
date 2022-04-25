@@ -21,7 +21,7 @@ New features and enhancements
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * The signature of the Indicators [cold_spell_duration_index, tg90p, tg10p, tx90p, tx10p, tn90p, tn10p, warm_spell_duration_index, days_over_precip_doy_thresh, days_over_precip_thresh, fraction_over_precip_doy_thresh, fraction_over_precip_thresh, cold_and_dry_days, warm_and_dry_days, warm_and_wet_days, cold_and_wet_days ]
-has been modified. The parameter for percentiles values is now named after the variable it is supposed be be computed upon. (:pull:`1050`)
+has been modified. The parameter for percentiles values is now named after the variable it is supposed to be computed upon. (:pull:`1050`)
 
 0.35.0 (01-04-2022)
 -------------------
