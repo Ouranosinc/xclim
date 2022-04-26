@@ -1746,11 +1746,12 @@ def xutci(tdb, tr, v, rh, freq):
     return idx.resample(time=freq)
 
 
-@declare_units(tas="[temperature]", hurs="[]", sfcWind="[speed]")
+@declare_units(tas="[temperature]", hurs="[]", sfcWind="[speed]", tdb="[temperature]")
 def universal_thermal_climate_index(
     tas: xarray.DataArray,
     hurs: xarray.DataArray,
     sfcWind: xarray.DataArray,
+    tdb: xarray.DataArray = None,
     freq: str = "YS",
 ) -> xarray.DataArray:
     """
@@ -1766,6 +1767,8 @@ def universal_thermal_climate_index(
         Relative Humidity
     sfcWind : xarray.DataArray
         Wind velocity
+    tdb: xarray.DataArray, optional
+        Mean daily dry bulb temperature
     freq : str
         Resampling frequency.
 
@@ -1775,8 +1778,10 @@ def universal_thermal_climate_index(
         Ultimate Thermal Climate Index.
     """
 
+    if tdb is None: tdb = tas.copy()
     tas = convert_units_to(tas, "degC")
+    tdb = convert_units_to(tdb, "degC")
     hurs = convert_units_to(hurs, "pct")
 
-    arr = xutci(tdb=tas, tr=tas, v=sfcWind, rh=hurs, freq=freq)
+    arr = xutci(tdb=tdb, tr=tas, v=sfcWind, rh=hurs, freq=freq)
     return arr.mean(dim="time", keep_attrs=True)
