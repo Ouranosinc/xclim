@@ -67,7 +67,7 @@ units.add_context(null)
 # Precipitation units. This is an artificial unit that we're using to verify that a given unit can be converted into
 # a precipitation unit. Ideally this could be checked through the `dimensionality`, but I can't get it to work.
 units.define("[precipitation] = [mass] / [length] ** 2 / [time]")
-units.define("mmday = 1000 kg / meter ** 2 / day")
+units.define("mmday = 1 kg / meter ** 2 / day")
 
 units.define("[discharge] = [length] ** 3 / [time]")
 units.define("cms = meter ** 3 / second")
