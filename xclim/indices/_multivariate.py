@@ -1778,7 +1778,8 @@ def universal_thermal_climate_index(
         Ultimate Thermal Climate Index.
     """
 
-    if tdb is None: tdb = tas.copy()
+    if tdb is None:
+        tdb = tas.copy()
     tas = convert_units_to(tas, "degC")
     tdb = convert_units_to(tdb, "degC")
     hurs = convert_units_to(hurs, "pct")
