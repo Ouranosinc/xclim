@@ -1738,30 +1738,26 @@ def blowing_snow(
     out.attrs["units"] = to_agg_units(out, snd, "count")
     return out
 
+
 def xutci(tdb, tr, v, rh, freq):
     from pythermalcomfort.models import utci
-    idx = xarray.apply_ufunc(
-        utci,
-        tdb,
-        tr,
-        v,
-        rh).assign_attrs({"units":"degC"})
+
+    idx = xarray.apply_ufunc(utci, tdb, tr, v, rh).assign_attrs({"units": "degC"})
     return idx.resample(time=freq)
 
-@declare_units(
-    tas="[temperature]", hurs="[]", sfcWind="[speed]" 
-)
+
+@declare_units(tas="[temperature]", hurs="[]", sfcWind="[speed]")
 def universal_thermal_climate_index(
     tas: xarray.DataArray,
     hurs: xarray.DataArray,
     sfcWind: xarray.DataArray,
-    freq: str = 'YS',
+    freq: str = "YS",
 ) -> xarray.DataArray:
     """
     Mean Universal Thermal Climate Index (UTCI)
 
     The mean of daily UTCI
-    
+
     Parameters
     ----------
     tas : xarray.DataArray
@@ -1778,10 +1774,9 @@ def universal_thermal_climate_index(
     xarray.DataArray
         Ultimate Thermal Climate Index.
     """
-    
+
     tas = convert_units_to(tas, "degC")
     hurs = convert_units_to(hurs, "pct")
 
     arr = xutci(tdb=tas, tr=tas, v=sfcWind, rh=hurs, freq=freq)
     return arr.mean(dim="time", keep_attrs=True)
-
