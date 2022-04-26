@@ -18,6 +18,10 @@ New features and enhancements
 * ``xclim.sdba.measures.rmse`` and ``xclim.sdba.measures.mae`` now use `numpy` instead of `sklearn`. This improves their performances when using `dask`. (:pull:`1051`).
 * Argument ``append_ends`` added to ``sdba.unpack_moving_yearly_window`` (:pull:`1059`).
 
+Internal changes
+^^^^^^^^^^^^^^^^
+* Ipython was unpinned as version 8.2 fixed the previous issue. (:issue:`1005`, :pull:`1064`).
+
 0.35.0 (01-04-2022)
 -------------------
 Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`) and Pascal Bourgault (:user:`aulemahal`).
