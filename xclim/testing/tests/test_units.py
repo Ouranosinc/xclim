@@ -28,6 +28,7 @@ class TestUnits:
         with units.context("hydro"):
             q = 1 * units.kg / units.m**2 / units.s
             assert q.to("mm/day") == q.to("mm/d")
+            assert q.to("mm/day").magnitude == 24 * 60**2
 
     def test_lat_lon(self):
         assert 100 * units.degreeN == 100 * units.degree

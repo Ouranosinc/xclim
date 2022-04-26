@@ -4,13 +4,14 @@ History
 
 0.36.0 (unreleased)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), David Huard (:user:`huard`).
 
 Bug fixes
 ^^^^^^^^^
 * Invoking ``lazy_indexing`` twice in row (or more) using the same indexes (using dask) is now fixed. (:issue:`1048`, :pull:`1049`).
 * Filtering out the nans before choosing the first and last values as ``fill_value`` in ``_interp_on_quantiles_1D`` (:issue:`1056`, :pull:`1057`).
 * Translations from virtual indicator modules do not override those of the base indicators anymore. (:issue:`1053`, :pull:`1058`).
+* Fix mmday unit definition (factor 1000 error). (:issue:`1061`, :pull:`1063`)
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
