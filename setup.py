@@ -45,6 +45,7 @@ requirements = [
     "scipy>=1.2",
     "statsmodels",
     "xarray>=0.17",
+    "pythermalcomfort>=2.1.0"
 ]
 
 dev_requirements = []
