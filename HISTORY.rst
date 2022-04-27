@@ -4,13 +4,14 @@ History
 
 0.36.0 (unreleased)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Abel Aoun (:user:`bzah`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), David Huard (:user:`huard`), Abel Aoun (:user:`bzah`).
 
 Bug fixes
 ^^^^^^^^^
 * Invoking ``lazy_indexing`` twice in row (or more) using the same indexes (using dask) is now fixed. (:issue:`1048`, :pull:`1049`).
 * Filtering out the nans before choosing the first and last values as ``fill_value`` in ``_interp_on_quantiles_1D`` (:issue:`1056`, :pull:`1057`).
 * Translations from virtual indicator modules do not override those of the base indicators anymore. (:issue:`1053`, :pull:`1058`).
+* Fix mmday unit definition (factor 1000 error). (:issue:`1061`, :pull:`1063`)
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -22,6 +23,10 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 * The signature of the Indicators [cold_spell_duration_index, tg90p, tg10p, tx90p, tx10p, tn90p, tn10p, warm_spell_duration_index, days_over_precip_doy_thresh, days_over_precip_thresh, fraction_over_precip_doy_thresh, fraction_over_precip_thresh, cold_and_dry_days, warm_and_dry_days, warm_and_wet_days, cold_and_wet_days ]
 has been modified. The parameter for percentiles values is now named after the variable it is supposed to be computed upon. (:pull:`1050`)
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Ipython was unpinned as version 8.2 fixed the previous issue. (:issue:`1005`, :pull:`1064`).
 
 0.35.0 (01-04-2022)
 -------------------
