@@ -5,8 +5,6 @@ Miscellaneous indices utilities
 
 Helper functions for the indices computation, indicator construction and other things.
 """
-from __future__ import annotations
-
 import importlib.util
 import logging
 import os
@@ -48,7 +46,7 @@ ICM = {
 
 
 def wrapped_partial(
-    func: FunctionType, suggested: dict | None = None, **fixed
+    func: FunctionType, suggested: Optional[dict] = None, **fixed
 ) -> Callable:
     """Wrap a function, updating its signature but keeping its docstring.
 
@@ -118,7 +116,7 @@ def walk_map(d: dict, func: FunctionType) -> dict:
     return out
 
 
-def load_module(path: os.PathLike, name: str | None = None):
+def load_module(path: os.PathLike, name: Optional[str] = None):
     """Load a python module from a python file, optionally changing its name.
 
     Examples
@@ -375,7 +373,7 @@ def _nan_quantile(
     axis: int = 0,
     alpha: float = 1.0,
     beta: float = 1.0,
-) -> float | np.ndarray:
+) -> Union[float, np.ndarray]:
     """
     Get the quantiles of the array for the given axis.
     A linear interpolation is performed using alpha and beta.
@@ -437,7 +435,7 @@ def _nan_quantile(
 def raise_warn_or_log(
     err: Exception,
     mode: str,
-    msg: str | None = None,
+    msg: Optional[str] = None,
     err_type=ValueError,
     stacklevel: int = 1,
 ):
@@ -780,7 +778,7 @@ class PercentileDataArray(xr.DataArray):
     @classmethod
     def from_da(
         cls, source: xr.DataArray, climatology_bounds: list[str] = None
-    ) -> PercentileDataArray:
+    ) -> "PercentileDataArray":
         """Create a PercentileDataArray from a xarray.DataArray.
 
         Parameters
