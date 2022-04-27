@@ -16,7 +16,17 @@ from importlib.resources import open_text
 from inspect import Parameter
 from pathlib import Path
 from types import FunctionType
-from typing import Callable, Dict, Mapping, NewType, Optional, Sequence, Tuple, Union
+from typing import (
+    Callable,
+    Dict,
+    List,
+    Mapping,
+    NewType,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 import xarray as xr
@@ -777,7 +787,7 @@ class PercentileDataArray(xr.DataArray):
 
     @classmethod
     def from_da(
-        cls, source: xr.DataArray, climatology_bounds: list[str] = None
+        cls, source: xr.DataArray, climatology_bounds: List[str] = None
     ) -> "PercentileDataArray":
         """Create a PercentileDataArray from a xarray.DataArray.
 
