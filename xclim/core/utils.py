@@ -778,7 +778,7 @@ class PercentileDataArray(xr.DataArray):
     @classmethod
     def from_da(
         cls, source: xr.DataArray, climatology_bounds: list[str] = None
-    ) -> "PercentileDataArray":
+    ) -> xr.DataArray:  # actual type is PercentileDataArray
         """Create a PercentileDataArray from a xarray.DataArray.
 
         Parameters
