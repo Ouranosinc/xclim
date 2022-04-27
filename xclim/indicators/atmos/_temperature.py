@@ -933,4 +933,3 @@ latitude_temperature_index = Temp(
     compute=indices.latitude_temperature_index,
     parameters={"lat_factor": 60, "lat": {"kind": InputKind.VARIABLE}},
 )
-

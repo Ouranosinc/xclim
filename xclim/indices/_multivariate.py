@@ -1767,12 +1767,12 @@ def universal_thermal_climate_index(
     xarray.DataArray
         Ultimate Thermal Climate Index.
     """
-    
+
     def xutci(tdb, tr, v, rh):
         from pythermalcomfort.models import utci
 
         return xarray.apply_ufunc(utci, tdb, tr, v, rh).assign_attrs({"units": "degC"})
-    
+
     if tdb is None:
         tdb = tas.copy()
     tas = convert_units_to(tas, "degC")
