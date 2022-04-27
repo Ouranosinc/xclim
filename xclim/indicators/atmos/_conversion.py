@@ -22,6 +22,7 @@ __all__ = [
     "potential_evapotranspiration",
     "water_budget",
     "corn_heat_units",
+    "universal_thermal_climate_index",
 ]
 
 
@@ -272,4 +273,17 @@ corn_heat_units = Converter(
     cell_methods="",
     missing="skip",
     compute=indices.corn_heat_units,
+)
+
+universal_thermal_climate_index = Converter(
+    identifier="universal_thermal_climate_index",
+    units="K",
+    long_name="Universal Thermal Climate Index",
+    description="UTCI is the equivalent temperature for the environment derived from a reference environment. "
+    "It is one of the most comprehensive indices for calculating heat stress in outdoor spaces."
+    "Where the applicability wind speed between 0.5 and 17 m/s is exceeded, nan applied.",
+    cell_methods="",
+    comment="Original formula published in Zare et al. 2018",
+    var_name="utci",
+    compute=indices.universal_thermal_climate_index,
 )

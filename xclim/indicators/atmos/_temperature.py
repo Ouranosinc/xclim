@@ -76,7 +76,6 @@ __all__ = [
     "huglin_index",
     "biologically_effective_degree_days",
     "latitude_temperature_index",
-    "universal_thermal_climate_index",
 ]
 
 
@@ -935,15 +934,3 @@ latitude_temperature_index = Temp(
     parameters={"lat_factor": 60, "lat": {"kind": InputKind.VARIABLE}},
 )
 
-universal_thermal_climate_index = Temp(
-    identifier="universal_thermal_climate_index",
-    units="K",
-    long_name="Universal Thermal Climate Index",
-    description="UTCI is the equivalent temperature for the environment derived from a reference environment. "
-    "It is one of the most comprehensive indices for calculating heat stress in outdoor spaces."
-    "Where the applicability wind speed between 0.5 and 17 m/s is exceeded, nan applied.",
-    cell_methods="",
-    comment="Original formula published in Zare et al. 2018",
-    var_name="utci",
-    compute=indices.universal_thermal_climate_index,
-)
