@@ -100,6 +100,20 @@ def test_custom_indices():
 
 
 @pytest.mark.requires_docs
+def test_indicator_module_translations():
+    # Use the example in the Extending Xclim notebook for testing.
+    nbpath = Path(__file__).parent.parent.parent.parent / "docs" / "notebooks"
+
+    ex = build_indicator_module_from_yaml(nbpath / "example", name="ex_trans")
+    assert ex.RX5day.translate_attrs("fr")["cf_attrs"][0]["long_name"].startswith(
+        "Cumul maximal"
+    )
+    assert indicators.atmos.max_n_day_precipitation_amount.translate_attrs("fr")[
+        "cf_attrs"
+    ][0]["long_name"].startswith("Maximum du cumul")
+
+
+@pytest.mark.requires_docs
 def test_build_indicator_module_from_yaml_edge_cases():
     # Use the example in the Extending Xclim notebook for testing.
     nbpath = Path(__file__).parent.parent.parent.parent / "docs" / "notebooks"

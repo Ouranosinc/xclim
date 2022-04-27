@@ -512,12 +512,17 @@ def construct_moving_yearly_window(
     return daw
 
 
-def unpack_moving_yearly_window(da: xr.DataArray, dim: str = "movingwin"):
+def unpack_moving_yearly_window(
+    da: xr.DataArray, dim: str = "movingwin", append_ends: bool = True
+):
     """Unpack a constructed moving window dataset to a normal timeseries, only keeping the central data.
 
     Unpack DataArrays created with :py:func:`construct_moving_yearly_window` and recreate a timeseries data.
-    Only keeps the central non-overlapping years. The final timeseries will be (window - step) years shorter than
-    the initial one.
+    If `append_ends` is False, only keeps the central non-overlapping years. The final timeseries will be
+    (window - step) years shorter than the initial one. If `append_ends` is True, the time points from first and last windows
+     will be be included in the final timeseries.
+
+    The time points that are not in a window will never be included in the final timeseries.
 
     The window length and window step are inferred from the coordinates.
 
@@ -527,6 +532,14 @@ def unpack_moving_yearly_window(da: xr.DataArray, dim: str = "movingwin"):
       As constructed by :py:func:`construct_moving_yearly_window`.
     dim : str
       The window dimension name as given to the construction function.
+    append_ends: bool
+      Whether to append the ends of the timeseries
+      If False, the final timeseries will be (window - step) years shorter than the initial one,
+      but all windows will contribute equally.
+      If True, the year before the middle years of the first window and the years after the middle years of the last
+      window are appended to the middle years. The final timeseries will be the same length as the initial timeseries
+      if the windows span the whole timeseries.
+      The time steps that are not in a window will be left out of the final timeseries.
     """
     # Get number of samples by year (and perform checks)
     N_in_year = _get_number_of_elements_by_year(da.time)
@@ -550,14 +563,27 @@ def unpack_moving_yearly_window(da: xr.DataArray, dim: str = "movingwin"):
     left = int((window - step) // 2)  # first year to keep
 
     # Keep only the middle years
-    da = da.isel(time=slice(left * N_in_year, (left + step) * N_in_year))
+    da_mid = da.isel(time=slice(left * N_in_year, (left + step) * N_in_year))
 
     out = []
-    for win_start in da[dim]:
-        slc = da.sel({dim: win_start}).drop_vars(dim)
-        dt = win_start.values - da[dim][0].values
+    for win_start in da_mid[dim]:
+        slc = da_mid.sel({dim: win_start}).drop_vars(dim)
+        dt = win_start.values - da_mid[dim][0].values
         slc["time"] = slc.time + dt
         out.append(slc)
+
+    if append_ends:
+        # add front end at the front
+        out.insert(
+            0, da.isel({dim: 0, "time": slice(None, left * N_in_year)}).drop_vars(dim)
+        )
+        # add back end at the back
+        back_end = da.isel(
+            {dim: -1, "time": slice((left + step) * N_in_year, None)}
+        ).drop_vars(dim)
+        dt = da.isel({dim: -1})[dim].values - da.isel({dim: 0})[dim].values
+        back_end["time"] = back_end.time + dt
+        out.append(back_end)
 
     return xr.concat(out, "time")
 

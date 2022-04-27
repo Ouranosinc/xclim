@@ -28,7 +28,7 @@ dependencies:
     - flake8
     - flake8-rst-docstrings
     - ipykernel
-    - ipython<8.0 # see #1005
+    - ipython
     - matplotlib
     - mypy
     - nbval
