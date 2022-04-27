@@ -16,7 +16,7 @@ from importlib.resources import open_text
 from inspect import Parameter
 from pathlib import Path
 from types import FunctionType
-from typing import Callable, Mapping, NewType, Optional, Sequence, Tuple, Union
+from typing import Callable, Dict, Mapping, NewType, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import xarray as xr
@@ -304,7 +304,7 @@ def _get_gamma(virtual_indexes: np.ndarray, previous_indexes: np.ndarray):
 
 def _get_indexes(
     arr: np.ndarray, virtual_indexes: np.ndarray, valid_values_count: np.ndarray
-) -> tuple[np.ndarray, np.ndarray]:
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Get the valid indexes of arr neighbouring virtual_indexes.
 
@@ -778,7 +778,7 @@ class PercentileDataArray(xr.DataArray):
     @classmethod
     def from_da(
         cls, source: xr.DataArray, climatology_bounds: list[str] = None
-    ) -> xr.DataArray:  # actual type is PercentileDataArray
+    ) -> "PercentileDataArray":
         """Create a PercentileDataArray from a xarray.DataArray.
 
         Parameters
@@ -818,7 +818,7 @@ class PercentileDataArray(xr.DataArray):
             f" 'percentiles' coordinate variable."
         )
 
-    def get_metadata(self, prefix: str) -> dict[str, str]:
+    def get_metadata(self, prefix: str) -> Dict[str, str]:
         """Get this PercentileDataArray metadata as a dictionary.
         Used to format indicators' own metadata.
 
