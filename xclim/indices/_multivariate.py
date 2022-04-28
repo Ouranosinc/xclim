@@ -58,7 +58,6 @@ __all__ = [
     "tx_tn_days_above",
     "warm_spell_duration_index",
     "winter_rain_ratio",
-    "universal_thermal_climate_index",
 ]
 
 
@@ -1737,46 +1736,3 @@ def blowing_snow(
     out = cond.resample(time=freq).sum(dim="time")
     out.attrs["units"] = to_agg_units(out, snd, "count")
     return out
-
-
-@declare_units(tas="[temperature]", hurs="[]", sfcWind="[speed]", tdb="[temperature]")
-def universal_thermal_climate_index(
-    tas: xarray.DataArray,
-    hurs: xarray.DataArray,
-    sfcWind: xarray.DataArray,
-    tdb: xarray.DataArray = None,
-) -> xarray.DataArray:
-    """
-    Mean Universal Thermal Climate Index (UTCI)
-
-    The mean of daily UTCI
-
-    Parameters
-    ----------
-    tas : xarray.DataArray
-        Mean daily temperature
-    hurs : xarray.DataArray
-        Relative Humidity
-    sfcWind : xarray.DataArray
-        Wind velocity
-    tdb: xarray.DataArray, optional
-        Mean daily dry bulb temperature
-
-    Returns
-    -------
-    xarray.DataArray
-        Ultimate Thermal Climate Index.
-    """
-
-    def xutci(tdb, tr, v, rh):
-        from pythermalcomfort.models import utci
-
-        return xarray.apply_ufunc(utci, tdb, tr, v, rh).assign_attrs({"units": "degC"})
-
-    if tdb is None:
-        tdb = tas.copy()
-    tas = convert_units_to(tas, "degC")
-    tdb = convert_units_to(tdb, "degC")
-    hurs = convert_units_to(hurs, "pct")
-
-    return xutci(tdb=tdb, tr=tas, v=sfcWind, rh=hurs)
