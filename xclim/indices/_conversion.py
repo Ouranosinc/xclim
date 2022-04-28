@@ -1182,6 +1182,7 @@ def potential_evapotranspiration(
     out.attrs["units"] = "mm"
     return amount2rate(out, out_units="kg m-2 s-1")
 
+
 @declare_units(tas="[temperature]", hurs="[]", sfcWind="[speed]", tr="[temperature]")
 def universal_thermal_climate_index(
     tas: xr.DataArray,
@@ -1212,7 +1213,6 @@ def universal_thermal_climate_index(
     """
 
     def _utci(tas, tr, sfcWind, hurs):
-
         def valid_range(v, tuple):
             return np.where((v >= tuple[0]) & (v <= tuple[1]), v, np.nan)
 
@@ -1252,7 +1252,13 @@ def universal_thermal_climate_index(
                 + (-1.73754510 * (10 ** (-4))) * tdb * tdb * delta_t_tr
                 + (-7.60781159 * (10 ** (-7))) * tdb * tdb * tdb * delta_t_tr
                 + (3.77830287 * (10 ** (-8))) * tdb * tdb * tdb * tdb * delta_t_tr
-                + (5.43079673 * (10 ** (-10))) * tdb * tdb * tdb * tdb * tdb * delta_t_tr
+                + (5.43079673 * (10 ** (-10)))
+                * tdb
+                * tdb
+                * tdb
+                * tdb
+                * tdb
+                * delta_t_tr
                 + (-0.0200518269) * v * delta_t_tr
                 + (8.92859837 * (10 ** (-4))) * tdb * v * delta_t_tr
                 + (3.45433048 * (10 ** (-6))) * tdb * tdb * v * delta_t_tr
@@ -1271,21 +1277,59 @@ def universal_thermal_climate_index(
                 + (7.55043090 * (10 ** (-4))) * delta_t_tr * delta_t_tr
                 + (-5.65095215 * (10 ** (-5))) * tdb * delta_t_tr * delta_t_tr
                 + (-4.52166564 * (10 ** (-7))) * tdb * tdb * delta_t_tr * delta_t_tr
-                + (2.46688878 * (10 ** (-8))) * tdb * tdb * tdb * delta_t_tr * delta_t_tr
-                + (2.42674348 * (10 ** (-10))) * tdb * tdb * tdb * tdb * delta_t_tr * delta_t_tr
+                + (2.46688878 * (10 ** (-8)))
+                * tdb
+                * tdb
+                * tdb
+                * delta_t_tr
+                * delta_t_tr
+                + (2.42674348 * (10 ** (-10)))
+                * tdb
+                * tdb
+                * tdb
+                * tdb
+                * delta_t_tr
+                * delta_t_tr
                 + (1.54547250 * (10 ** (-4))) * v * delta_t_tr * delta_t_tr
                 + (5.24110970 * (10 ** (-6))) * tdb * v * delta_t_tr * delta_t_tr
                 + (-8.75874982 * (10 ** (-8))) * tdb * tdb * v * delta_t_tr * delta_t_tr
-                + (-1.50743064 * (10 ** (-9))) * tdb * tdb * tdb * v * delta_t_tr * delta_t_tr
+                + (-1.50743064 * (10 ** (-9)))
+                * tdb
+                * tdb
+                * tdb
+                * v
+                * delta_t_tr
+                * delta_t_tr
                 + (-1.56236307 * (10 ** (-5))) * v * v * delta_t_tr * delta_t_tr
                 + (-1.33895614 * (10 ** (-7))) * tdb * v * v * delta_t_tr * delta_t_tr
-                + (2.49709824 * (10 ** (-9))) * tdb * tdb * v * v * delta_t_tr * delta_t_tr
+                + (2.49709824 * (10 ** (-9)))
+                * tdb
+                * tdb
+                * v
+                * v
+                * delta_t_tr
+                * delta_t_tr
                 + (6.51711721 * (10 ** (-7))) * v * v * v * delta_t_tr * delta_t_tr
-                + (1.94960053 * (10 ** (-9))) * tdb * v * v * v * delta_t_tr * delta_t_tr
+                + (1.94960053 * (10 ** (-9)))
+                * tdb
+                * v
+                * v
+                * v
+                * delta_t_tr
+                * delta_t_tr
                 + (-1.00361113 * (10 ** (-8))) * v * v * v * v * delta_t_tr * delta_t_tr
                 + (-1.21206673 * (10 ** (-5))) * delta_t_tr * delta_t_tr * delta_t_tr
-                + (-2.18203660 * (10 ** (-7))) * tdb * delta_t_tr * delta_t_tr * delta_t_tr
-                + (7.51269482 * (10 ** (-9))) * tdb * tdb * delta_t_tr * delta_t_tr * delta_t_tr
+                + (-2.18203660 * (10 ** (-7)))
+                * tdb
+                * delta_t_tr
+                * delta_t_tr
+                * delta_t_tr
+                + (7.51269482 * (10 ** (-9)))
+                * tdb
+                * tdb
+                * delta_t_tr
+                * delta_t_tr
+                * delta_t_tr
                 + (9.79063848 * (10 ** (-11)))
                 * tdb
                 * tdb
@@ -1294,7 +1338,12 @@ def universal_thermal_climate_index(
                 * delta_t_tr
                 * delta_t_tr
                 + (1.25006734 * (10 ** (-6))) * v * delta_t_tr * delta_t_tr * delta_t_tr
-                + (-1.81584736 * (10 ** (-9))) * tdb * v * delta_t_tr * delta_t_tr * delta_t_tr
+                + (-1.81584736 * (10 ** (-9)))
+                * tdb
+                * v
+                * delta_t_tr
+                * delta_t_tr
+                * delta_t_tr
                 + (-3.52197671 * (10 ** (-10)))
                 * tdb
                 * tdb
@@ -1302,7 +1351,12 @@ def universal_thermal_climate_index(
                 * delta_t_tr
                 * delta_t_tr
                 * delta_t_tr
-                + (-3.36514630 * (10 ** (-8))) * v * v * delta_t_tr * delta_t_tr * delta_t_tr
+                + (-3.36514630 * (10 ** (-8)))
+                * v
+                * v
+                * delta_t_tr
+                * delta_t_tr
+                * delta_t_tr
                 + (1.35908359 * (10 ** (-10)))
                 * tdb
                 * v
@@ -1421,15 +1475,48 @@ def universal_thermal_climate_index(
                 + (-7.32469180 * (10 ** (-4))) * delta_t_tr * delta_t_tr * pa
                 + (-1.87381964 * (10 ** (-5))) * tdb * delta_t_tr * delta_t_tr * pa
                 + (4.80925239 * (10 ** (-6))) * tdb * tdb * delta_t_tr * delta_t_tr * pa
-                + (-8.75492040 * (10 ** (-8))) * tdb * tdb * tdb * delta_t_tr * delta_t_tr * pa
+                + (-8.75492040 * (10 ** (-8)))
+                * tdb
+                * tdb
+                * tdb
+                * delta_t_tr
+                * delta_t_tr
+                * pa
                 + (2.77862930 * (10 ** (-5))) * v * delta_t_tr * delta_t_tr * pa
                 + (-5.06004592 * (10 ** (-6))) * tdb * v * delta_t_tr * delta_t_tr * pa
-                + (1.14325367 * (10 ** (-7))) * tdb * tdb * v * delta_t_tr * delta_t_tr * pa
+                + (1.14325367 * (10 ** (-7)))
+                * tdb
+                * tdb
+                * v
+                * delta_t_tr
+                * delta_t_tr
+                * pa
                 + (2.53016723 * (10 ** (-6))) * v * v * delta_t_tr * delta_t_tr * pa
-                + (-1.72857035 * (10 ** (-8))) * tdb * v * v * delta_t_tr * delta_t_tr * pa
-                + (-3.95079398 * (10 ** (-8))) * v * v * v * delta_t_tr * delta_t_tr * pa
-                + (-3.59413173 * (10 ** (-7))) * delta_t_tr * delta_t_tr * delta_t_tr * pa
-                + (7.04388046 * (10 ** (-7))) * tdb * delta_t_tr * delta_t_tr * delta_t_tr * pa
+                + (-1.72857035 * (10 ** (-8)))
+                * tdb
+                * v
+                * v
+                * delta_t_tr
+                * delta_t_tr
+                * pa
+                + (-3.95079398 * (10 ** (-8)))
+                * v
+                * v
+                * v
+                * delta_t_tr
+                * delta_t_tr
+                * pa
+                + (-3.59413173 * (10 ** (-7)))
+                * delta_t_tr
+                * delta_t_tr
+                * delta_t_tr
+                * pa
+                + (7.04388046 * (10 ** (-7)))
+                * tdb
+                * delta_t_tr
+                * delta_t_tr
+                * delta_t_tr
+                * pa
                 + (-1.89309167 * (10 ** (-8)))
                 * tdb
                 * tdb
@@ -1437,7 +1524,12 @@ def universal_thermal_climate_index(
                 * delta_t_tr
                 * delta_t_tr
                 * pa
-                + (-4.79768731 * (10 ** (-7))) * v * delta_t_tr * delta_t_tr * delta_t_tr * pa
+                + (-4.79768731 * (10 ** (-7)))
+                * v
+                * delta_t_tr
+                * delta_t_tr
+                * delta_t_tr
+                * pa
                 + (7.96079978 * (10 ** (-9)))
                 * tdb
                 * v
@@ -1506,11 +1598,34 @@ def universal_thermal_climate_index(
                 + (2.29748967 * (10 ** (-7))) * v * v * v * delta_t_tr * pa * pa
                 + (3.04788893 * (10 ** (-4))) * delta_t_tr * delta_t_tr * pa * pa
                 + (-6.42070836 * (10 ** (-5))) * tdb * delta_t_tr * delta_t_tr * pa * pa
-                + (1.16257971 * (10 ** (-6))) * tdb * tdb * delta_t_tr * delta_t_tr * pa * pa
+                + (1.16257971 * (10 ** (-6)))
+                * tdb
+                * tdb
+                * delta_t_tr
+                * delta_t_tr
+                * pa
+                * pa
                 + (7.68023384 * (10 ** (-6))) * v * delta_t_tr * delta_t_tr * pa * pa
-                + (-5.47446896 * (10 ** (-7))) * tdb * v * delta_t_tr * delta_t_tr * pa * pa
-                + (-3.59937910 * (10 ** (-8))) * v * v * delta_t_tr * delta_t_tr * pa * pa
-                + (-4.36497725 * (10 ** (-6))) * delta_t_tr * delta_t_tr * delta_t_tr * pa * pa
+                + (-5.47446896 * (10 ** (-7)))
+                * tdb
+                * v
+                * delta_t_tr
+                * delta_t_tr
+                * pa
+                * pa
+                + (-3.59937910 * (10 ** (-8)))
+                * v
+                * v
+                * delta_t_tr
+                * delta_t_tr
+                * pa
+                * pa
+                + (-4.36497725 * (10 ** (-6)))
+                * delta_t_tr
+                * delta_t_tr
+                * delta_t_tr
+                * pa
+                * pa
                 + (1.68737969 * (10 ** (-7)))
                 * tdb
                 * delta_t_tr
@@ -1549,8 +1664,20 @@ def universal_thermal_climate_index(
                 + (2.53458034 * (10 ** (-5))) * tdb * v * delta_t_tr * pa * pa * pa
                 + (-6.31223658 * (10 ** (-6))) * v * v * delta_t_tr * pa * pa * pa
                 + (3.02122035 * (10 ** (-4))) * delta_t_tr * delta_t_tr * pa * pa * pa
-                + (-4.77403547 * (10 ** (-6))) * tdb * delta_t_tr * delta_t_tr * pa * pa * pa
-                + (1.73825715 * (10 ** (-6))) * v * delta_t_tr * delta_t_tr * pa * pa * pa
+                + (-4.77403547 * (10 ** (-6)))
+                * tdb
+                * delta_t_tr
+                * delta_t_tr
+                * pa
+                * pa
+                * pa
+                + (1.73825715 * (10 ** (-6)))
+                * v
+                * delta_t_tr
+                * delta_t_tr
+                * pa
+                * pa
+                * pa
                 + (-4.09087898 * (10 ** (-7)))
                 * delta_t_tr
                 * delta_t_tr
@@ -1567,7 +1694,13 @@ def universal_thermal_climate_index(
                 + (-0.00148526421) * delta_t_tr * pa * pa * pa * pa
                 + (-4.11469183 * (10 ** (-5))) * tdb * delta_t_tr * pa * pa * pa * pa
                 + (-6.80434415 * (10 ** (-6))) * v * delta_t_tr * pa * pa * pa * pa
-                + (-9.77675906 * (10 ** (-6))) * delta_t_tr * delta_t_tr * pa * pa * pa * pa
+                + (-9.77675906 * (10 ** (-6)))
+                * delta_t_tr
+                * delta_t_tr
+                * pa
+                * pa
+                * pa
+                * pa
                 + 0.0882773108 * pa * pa * pa * pa * pa
                 + (-0.00301859306) * tdb * pa * pa * pa * pa * pa
                 + 0.00104452989 * v * pa * pa * pa * pa * pa
@@ -1585,11 +1718,11 @@ def universal_thermal_climate_index(
                 (7.0229056 * np.power(10.0, -10)),
                 (-1.8680009 * np.power(10.0, -13)),
             ]
-            tk = tas + 273.15  
+            tk = tas + 273.15
             es = 2.7150305 * np.log1p(tk)
             for count, i in enumerate(g):
                 es = es + (i * np.power(tk, count - 2))
-            es = np.exp(es) * 0.01 
+            es = np.exp(es) * 0.01
             return es
 
         tas = np.array(tas)
@@ -1600,20 +1733,22 @@ def universal_thermal_climate_index(
         eh_pa = exponential(tas) * (hurs / 100.0)
         delta = tr - tas
         pa = eh_pa / 10.0
-                            
+
         utci_approx = optimized(tas, sfcWind, delta, pa)
 
         tas_valid = valid_range(tas, (-50.0, 50.0))
-        tr_valid = valid_range(tr-tas, (-30.0, 30.0))
-        sfcWind_valid = valid_range(sfcWind, (.5, 17.0))
-        valid = ~(np.isnan(tas_valid) | np.isnan(tr_valid) | np.isnan(sfcWind_valid))     
+        tr_valid = valid_range(tr - tas, (-30.0, 30.0))
+        sfcWind_valid = valid_range(sfcWind, (0.5, 17.0))
+        valid = ~(np.isnan(tas_valid) | np.isnan(tr_valid) | np.isnan(sfcWind_valid))
         utci_approx = np.where(valid, utci_approx, np.nan)
 
         return np.round_(utci_approx, 1)
-        
+
     tr = tas.copy()
     tas = convert_units_to(tas, "degC")
     tr = convert_units_to(tr, "degC")
     hurs = convert_units_to(hurs, "pct")
 
-    return xr.apply_ufunc(_utci, tas, tr, sfcWind, hurs,  dask='parallelized').assign_attrs({"units": "degC"})
+    return xr.apply_ufunc(
+        _utci, tas, tr, sfcWind, hurs, dask="parallelized"
+    ).assign_attrs({"units": "degC"})
