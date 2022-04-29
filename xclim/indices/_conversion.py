@@ -1213,8 +1213,8 @@ def universal_thermal_climate_index(
     """
 
     def _utci(tas, tr, sfcWind, hurs):
-        def valid_range(v, tuple):
-            return np.where((v >= tuple[0]) & (v <= tuple[1]), v, np.nan)
+        def valid_range(value, bounds):
+            return np.where((value >= bounds[0]) & (value <= bounds[1]), value, np.nan)
 
         def optimized(tdb, v, delta_t_tr, pa):
             return (
