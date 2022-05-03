@@ -49,4 +49,3 @@ dependencies:
     - xdoctest
     - yamale
     - yamllint
-    - pythermalcomfort>=2.1.0
