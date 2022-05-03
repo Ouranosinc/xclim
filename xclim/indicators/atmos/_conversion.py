@@ -283,7 +283,6 @@ universal_thermal_climate_index = Converter(
     "It is one of the most comprehensive indices for calculating heat stress in outdoor spaces."
     "Where the applicability wind speed between 0.5 and 17 m/s is exceeded, nan applied.",
     cell_methods="",
-    comment="Original formula published in Zare et al. 2018",
     var_name="utci",
     compute=indices.universal_thermal_climate_index,
 )
