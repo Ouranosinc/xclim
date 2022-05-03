@@ -2657,7 +2657,9 @@ class TestWetDaysProp:
 
 
 def test_universal_thermal_climate_index(
-    tas_series, hurs_series, sfcWind_series, tmrt_series
+    tas_series,
+    hurs_series,
+    sfcWind_series,
 ):
     tas = tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C)
     hurs = hurs_series(np.array([15, 100, 93, 71, 52, 73, 94, 31, 20]))
