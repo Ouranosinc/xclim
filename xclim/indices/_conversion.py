@@ -1183,12 +1183,12 @@ def potential_evapotranspiration(
     return amount2rate(out, out_units="kg m-2 s-1")
 
 
-@declare_units(tas="[temperature]", hurs="[]", sfcWind="[speed]", tr="[temperature]")
+@declare_units(tas="[temperature]", hurs="[]", sfcWind="[speed]", tmrt="[temperature]")
 def universal_thermal_climate_index(
     tas: xr.DataArray,
     hurs: xr.DataArray,
     sfcWind: xr.DataArray,
-    tr: xr.DataArray = None,
+    tmrt: xr.DataArray = None,
 ) -> xr.DataArray:
     """
     Universal Thermal Climate Index (UTCI)
@@ -1203,7 +1203,7 @@ def universal_thermal_climate_index(
         Relative Humidity
     sfcWind : xarray.DataArray
         Wind velocity
-    tr: xarray.DataArray, optional
+    tmrt: xarray.DataArray, optional
         Daily mean radiant temperature
 
     Returns
@@ -1212,7 +1212,7 @@ def universal_thermal_climate_index(
         Ultimate Thermal Climate Index.
     """
 
-    def _utci(tas, tr, sfcWind, hurs):
+    def _utci(tas, tmrt, sfcWind, hurs):
         def valid_range(value, bounds):
             return np.where((value >= bounds[0]) & (value <= bounds[1]), value, np.nan)
 
@@ -1725,30 +1725,25 @@ def universal_thermal_climate_index(
             es = np.exp(es) * 0.01
             return es
 
-        tas = np.array(tas)
-        tr = np.array(tr)
-        sfcWind = np.array(sfcWind)
-        hurs = np.array(hurs)
-
         eh_pa = exponential(tas) * (hurs / 100.0)
-        delta = tr - tas
+        delta = tmrt - tas
         pa = eh_pa / 10.0
 
         utci_approx = optimized(tas, sfcWind, delta, pa)
 
         tas_valid = valid_range(tas, (-50.0, 50.0))
-        tr_valid = valid_range(tr - tas, (-30.0, 30.0))
+        tmrt_valid = valid_range(tmrt - tas, (-30.0, 30.0))
         sfcWind_valid = valid_range(sfcWind, (0.5, 17.0))
-        valid = ~(np.isnan(tas_valid) | np.isnan(tr_valid) | np.isnan(sfcWind_valid))
+        valid = ~(np.isnan(tas_valid) | np.isnan(tmrt_valid) | np.isnan(sfcWind_valid))
         utci_approx = np.where(valid, utci_approx, np.nan)
 
         return np.round_(utci_approx, 1)
 
-    tr = tas.copy()
+    if tmrt is None: tmrt = tas.copy()
     tas = convert_units_to(tas, "degC")
-    tr = convert_units_to(tr, "degC")
+    tmrt = convert_units_to(tmrt, "degC")
     hurs = convert_units_to(hurs, "pct")
 
     return xr.apply_ufunc(
-        _utci, tas, tr, sfcWind, hurs, dask="parallelized"
+        _utci, tas, tmrt, sfcWind, hurs, dask="parallelized"
     ).assign_attrs({"units": "degC"})
