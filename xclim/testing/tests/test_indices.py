@@ -2654,3 +2654,22 @@ class TestWetDaysProp:
 
         out = xci.wetdays_prop(pr, thresh="5 mm/day", freq="M")
         np.testing.assert_allclose(out, [4 / 31, 0, 0, 2 / 31, 0, 0, 0, 0, 0, 0, 0, 0])
+
+
+def test_universal_thermal_climate_index(
+    tas_series, hurs_series, sfcWind_series, tmrt_series
+):
+    tas = tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C)
+    hurs = hurs_series(np.array([15, 100, 93, 71, 52, 73, 94, 31, 20]))
+    sfcWind = sfcWind_series(np.array([4, 11, 6, 3, 16, 1, 8, 7, 19]))
+    tmrt = tmrt_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C)
+    # Expected values
+    utci_exp = [238.65, 231.35, 255.05, 278.25, 275.15, 299.45, 305.15, 313.75, np.NaN]
+
+    utci = xci.universal_thermal_climate_index(
+        tas=tas,
+        hurs=hurs,
+        sfcWind=sfcWind,
+        tmrt=tmrt,
+    )
+    np.testing.assert_allclose(utci, utci_exp)
