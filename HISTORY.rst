@@ -9,7 +9,7 @@ Contributors to this version:  Abel Aoun (:user:`bzah`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* Add "Celsius" to aliases of "celsius" unit.
+* Add "Celsius" to aliases of "celsius" unit.(:issue:`1067`, :pull:`1068`).
 
 
 0.36.0 (29-04-2022)
