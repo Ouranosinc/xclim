@@ -1743,6 +1743,7 @@ def universal_thermal_climate_index(
     tas = convert_units_to(tas, "degC")
     tmrt = convert_units_to(tmrt, "degC")
     hurs = convert_units_to(hurs, "pct")
+    sfcWind = convert_units_to(sfcWind, "m/s")
 
     return xr.apply_ufunc(
         _utci, tas, tmrt, sfcWind, hurs, dask="parallelized"
