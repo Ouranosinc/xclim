@@ -326,7 +326,7 @@ def saturation_vapor_pressure(
     ice_thresh : str
       Threshold temperature under which to switch to equations in reference to ice instead of water.
       If None (default) everything is computed with reference to water.
-    method : {"goffgratch46", "sonntag90", "tetens30", "wmo08"}
+    method : {"goffgratch46", "sonntag90", "tetens30", "wmo08", "its90"}
       Which method to use, see notes.
 
     Returns
@@ -343,6 +343,7 @@ def saturation_vapor_pressure(
     - "sonntag90" or "SO90", taken from [sonntag90]_.
     - "tetens30" or "TE30", based on [tetens30]_, values and equation taken from [voemel]_.
     - "wmo08" or "WMO08", taken from [wmo08]_.
+    - "its90" or "ITS90", taken from [its90]_.
 
     References
     ----------
@@ -351,6 +352,7 @@ def saturation_vapor_pressure(
     .. [tetens30] Tetens, O. 1930. Über einige meteorologische Begriffe. Z. Geophys 6: 207-309.
     .. [voemel] https://cires1.colorado.edu/~voemel/vp.html
     .. [wmo08] World Meteorological Organization. (2008). Guide to meteorological instruments and methods of observation. Geneva, Switzerland: World Meteorological Organization. https://www.weather.gov/media/epz/mesonet/CWOP-WMO8.pdf
+    .. [its90] Hardy, B. (1998). ITS-90 formulations for vapor pressure, frostpoint temperature, dewpoint temperature, and enhancement factors in the range–100 to+ 100 C. In The Proceedings of the Third International Symposium on Humidity & Moisture (pp. 1-8). https://www.thunderscientific.com/tech_info/reflibrary/its90formulas.pdf
     """
     if ice_thresh is not None:
         thresh = convert_units_to(ice_thresh, "degK")
@@ -413,6 +415,20 @@ def saturation_vapor_pressure(
             611.2 * np.exp(17.62 * (tas - 273.16) / (tas - 30.04)),
             611.2 * np.exp(22.46 * (tas - 273.16) / (tas - 0.54)),
         )
+    elif method in ["its90", "ITS90"]:
+        g = [
+            -2836.5744,
+            -6028.076559,
+            19.54263612,
+            -0.02737830188,
+            0.000016261698,
+            (7.0229056 * np.power(10.0, -10)),
+            (-1.8680009 * np.power(10.0, -13)),
+        ]
+        e_sat = 2.7150305 * np.log1p(tas)
+        for count, i in enumerate(g):
+            e_sat = e_sat + (i * np.power(tas, count - 2))
+        e_sat = np.exp(e_sat) * 0.01
     else:
         raise ValueError(
             f"Method {method} is not in ['sonntag90', 'tetens30', 'goffgratch46', 'wmo08']"
@@ -1212,7 +1228,7 @@ def universal_thermal_climate_index(
         Ultimate Thermal Climate Index.
     """
 
-    def _utci(tas, tmrt, sfcWind, hurs):
+    def _utci(tas, e_sat, tmrt, sfcWind, hurs):
         def valid_range(value, bounds):
             return np.where((value >= bounds[0]) & (value <= bounds[1]), value, np.nan)
 
@@ -1708,24 +1724,7 @@ def universal_thermal_climate_index(
                 + 0.00148348065 * pa * pa * pa * pa * pa * pa
             )
 
-        def exponential(tas):
-            g = [
-                -2836.5744,
-                -6028.076559,
-                19.54263612,
-                -0.02737830188,
-                0.000016261698,
-                (7.0229056 * np.power(10.0, -10)),
-                (-1.8680009 * np.power(10.0, -13)),
-            ]
-            tk = tas + 273.15
-            es = 2.7150305 * np.log1p(tk)
-            for count, i in enumerate(g):
-                es = es + (i * np.power(tk, count - 2))
-            es = np.exp(es) * 0.01
-            return es
-
-        eh_pa = exponential(tas) * (hurs / 100.0)
+        eh_pa = e_sat * (hurs / 100.0)
         delta = tmrt - tas
         pa = eh_pa / 10.0
 
@@ -1739,6 +1738,8 @@ def universal_thermal_climate_index(
 
         return np.round_(utci_approx, 1)
 
+    e_sat = saturation_vapor_pressure(tas=tas, method="its90")
+    
     if tmrt is None: tmrt = tas.copy()
     tas = convert_units_to(tas, "degC")
     tmrt = convert_units_to(tmrt, "degC")
@@ -1746,5 +1747,5 @@ def universal_thermal_climate_index(
     sfcWind = convert_units_to(sfcWind, "m/s")
 
     return xr.apply_ufunc(
-        _utci, tas, tmrt, sfcWind, hurs, dask="parallelized"
+        _utci, tas, e_sat, tmrt, sfcWind, hurs, dask="parallelized"
     ).assign_attrs({"units": "degC"})
