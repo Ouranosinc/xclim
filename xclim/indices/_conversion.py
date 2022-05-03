@@ -1191,9 +1191,9 @@ def universal_thermal_climate_index(
     tr: xr.DataArray = None,
 ) -> xr.DataArray:
     """
-    Mean Universal Thermal Climate Index (UTCI)
+    Universal Thermal Climate Index (UTCI)
 
-    The mean of daily UTCI
+    The daily UTCI
 
     Parameters
     ----------
