@@ -2,6 +2,16 @@
 History
 =======
 
+0.36.1 (unreleased)
+------------------
+
+Contributors to this version:  Abel Aoun (:user:`bzah`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Add "Celsius" to aliases of "celsius" unit.(:issue:`1067`, :pull:`1068`).
+
+
 0.36.0 (29-04-2022)
 -------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), David Huard (:user:`huard`).
