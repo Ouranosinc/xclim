@@ -1739,8 +1739,9 @@ def universal_thermal_climate_index(
         return np.round_(utci_approx, 1)
 
     e_sat = saturation_vapor_pressure(tas=tas, method="its90")
-    
-    if tmrt is None: tmrt = tas.copy()
+
+    if tmrt is None:
+        tmrt = tas.copy()
     tas = convert_units_to(tas, "degC")
     tmrt = convert_units_to(tmrt, "degC")
     hurs = convert_units_to(hurs, "pct")
