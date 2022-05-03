@@ -331,7 +331,7 @@ class TestWaterBudget:
 def test_universal_thermal_climate_index(atmosds):
     tas = atmosds.tas
     hurs = atmosds.hurs
-    sfcWind = wind, winddir = atmos.wind_speed_from_vector(
+    sfcWind, sfcWindfromdir = atmos.wind_speed_from_vector(
         uas=atmosds.uas, vas=atmosds.vas
     )
 
