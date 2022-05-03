@@ -83,6 +83,12 @@ class TestConvertUnitsTo:
         out = convert_units_to(pr, "mm/day")
         assert isinstance(out.data, dsk.Array)
 
+    @pytest.mark.parametrize(
+        "alias", [units("Celsius"), units("degC"), units("C"), units("deg_C")]
+    )
+    def test_temperature_aliases(self, alias):
+        assert alias == units("celsius")
+
     def test_offset_confusion(self):
         out = convert_units_to("10 degC days", "K days")
         assert out == 10
