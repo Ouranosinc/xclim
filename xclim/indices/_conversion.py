@@ -1724,16 +1724,15 @@ def universal_thermal_climate_index(
                 + 0.00148348065 * pa * pa * pa * pa * pa * pa
             )
 
-        eh_pa = (e_sat / 100) * (hurs / 100)
         delta = tmrt - tas
-        pa = eh_pa / 10.0
+        pa = e_sat * hurs / 1e5
 
         utci_approx = optimized(tas, sfcWind, delta, pa)
 
         tas_valid = valid_range(tas, (-50.0, 50.0))
-        tmrt_valid = valid_range(tmrt - tas, (-30.0, 30.0))
+        delta_valid = valid_range(delta, (-30.0, 30.0))
         sfcWind_valid = valid_range(sfcWind, (0.5, 17.0))
-        valid = ~(np.isnan(tas_valid) | np.isnan(tmrt_valid) | np.isnan(sfcWind_valid))
+        valid = ~(np.isnan(tas_valid) | np.isnan(delta_valid) | np.isnan(sfcWind_valid))
         utci_approx = np.where(valid, utci_approx, np.nan)
 
         return np.round_(utci_approx, 1)
