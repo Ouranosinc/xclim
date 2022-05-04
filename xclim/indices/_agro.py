@@ -1,5 +1,7 @@
 # noqa: D100
-from typing import Optional
+import datetime
+import math
+from typing import Optional, Tuple
 
 import numpy as np
 import xarray
@@ -30,6 +32,11 @@ __all__ = [
     "latitude_temperature_index",
     "qian_weighted_mean_average",
     "water_budget",
+    "rain_season",
+    "rain_season_start",
+    "rain_season_end",
+    "rain_season_length",
+    "rain_season_prcptot",
 ]
 
 
@@ -714,14 +721,14 @@ def qian_weighted_mean_average(
 
     Parameters
     ----------
-    tas: xr.DataArray
+    tas: xarray.DataArray
       Daily mean temperature.
     dim: str
       Time dimension.
 
     Returns
     -------
-    xr.DataArray
+    xarray.DataArray
       Binomial smoothed, five-day weighted mean average temperature.
 
     Notes
@@ -772,9 +779,9 @@ def effective_growing_degree_days(
 
     Parameters
     ----------
-    tasmax: xr.DataArray
+    tasmax: xarray.DataArray
       Daily mean temperature.
-    tasmin: xr.DataArray
+    tasmin: xarray.DataArray
       Daily minimum temperature.
     thresh: str
       The minimum temperature threshold.
@@ -845,3 +852,708 @@ def effective_growing_degree_days(
     egdd = aggregate_between_dates(deg_days, start=start, end=end, freq=freq)
 
     return to_agg_units(egdd, tas, op="delta_prod")
+
+
+@declare_units(
+    pr="[precipitation]",
+    etp="[evapotranspiration]",
+    s_thresh_wet="[length]",
+    s_thresh_dry="[length]",
+    e_thresh="[length]",
+)
+def rain_season(
+    pr: xarray.DataArray,
+    etp: xarray.DataArray = None,
+    start_next: xarray.DataArray = None,
+    s_thresh_wet: str = "25.0 mm",
+    s_window_wet: int = 3,
+    s_thresh_dry: str = "1.0 mm",
+    s_dry_days: int = 7,
+    s_window_dry: int = 30,
+    s_start_date: str = "",
+    s_end_date: str = "",
+    e_op: str = "max",
+    e_thresh: str = "5.0 mm",
+    e_window: int = 20,
+    e_etp_rate: str = "",
+    e_start_date: str = "",
+    e_end_date: str = "",
+) -> Tuple[xarray.DataArray, xarray.DataArray, xarray.DataArray, xarray.DataArray]:
+
+    """
+    Calculate rain season start, end, length and accumulated precipitation.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+        Daily precipitation.
+    etp : xarray.DataArray
+        Daily evapotranspiration.
+    start_next : xarray.DataArray
+        First day of the next rain season.
+    s_thresh_wet : str
+        Accumulated precipitation threshold associated with {s_window_wet}.
+    s_window_wet: int
+        Number of days where accumulated precipitation is above {s_thresh_wet}.
+    s_thresh_dry: str
+        Daily precipitation threshold associated with {s_window_dry].
+    s_dry_days: int
+        Maximum number of dry days in {s_window_tot}.
+    s_window_dry: int
+        Number of days, after {s_window_wet}, during which daily precipitation is not greater than or equal to
+        {s_thresh_dry} for {s_dry_days} consecutive days.
+    s_start_date: str
+        First day of year where season can start ("mm-dd").
+    s_end_date: str
+        Last day of year where season can start ("mm-dd").
+    e_op : str
+        Resampling operator = {"max", "sum", "etp}
+        If "max": based on the occurrence (or not) of an event during the last days of a rain season.
+            The rain season stops when no daily precipitation greater than {e_thresh} have occurred over a period of
+            {e_window} days.
+        If "sum": based on a total amount of precipitation received during the last days of the rain season.
+            The rain season stops when the total amount of precipitation is less than {e_thresh} over a period of
+            {e_window} days.
+        If "etp": calculation is based on the period required for a water column of height {e_thresh] to evaporate,
+            considering that any amount of precipitation received during that period must evaporate as well. If {etp} is
+            not available, the evapotranspiration rate is assumed to be {e_etp_rate}.
+    e_thresh : str
+        Maximum or accumulated precipitation threshold associated with {e_window}.
+        If {e_op} == "max": maximum daily precipitation  during a period of {e_window} days.
+        If {e_op} == "sum": accumulated precipitation over {e_window} days.
+        If {e_op} == "etp": height of water column that must evaporate.
+    e_window: int
+        If {e_op} in ["max", "sum"]: number of days used to verify if the rain season is ending.
+    e_etp_rate: str
+        If {e_op} == "etp": evapotranspiration rate.
+        Otherwise: not used.
+    e_start_date: str
+        First day of year at or after which the season can end ("mm-dd").
+    e_end_date: str
+        Last day of year at or before which the season can end ("mm-dd").
+    """
+
+    def rename_dimensions(
+        da: xarray.DataArray, lat_name: str = "latitude", lon_name: str = "longitude"
+    ) -> xarray.DataArray:
+
+        if ("location" not in da.dims) and (
+            (lat_name not in da.dims) or (lon_name not in da.dims)
+        ):
+            if "dim_0" in list(da.dims):
+                da = da.rename({"dim_0": "time"})
+                da = da.rename({"dim_1": lat_name, "dim_2": lon_name})
+            elif ("lat" in list(da.dims)) or ("lon" in list(da.dims)):
+                da = da.rename({"lat": lat_name, "lon": lon_name})
+            elif ("rlat" in list(da.dims)) or ("rlon" in list(da.dims)):
+                da = da.rename({"rlat": lat_name, "rlon": lon_name})
+            elif (lat_name not in list(da.dims)) and (lon_name not in list(da.dims)):
+                if lat_name == "latitude":
+                    da = da.expand_dims(latitude=1)
+                if lon_name == "longitude":
+                    da = da.expand_dims(longitude=1)
+        return da
+
+    # Rename dimensions.
+    pr = rename_dimensions(pr)
+    if etp is not None:
+        etp = rename_dimensions(etp)
+
+    # Calculate rain season start.
+    start = xarray.DataArray(
+        rain_season_start(
+            pr,
+            s_thresh_wet,
+            s_window_wet,
+            s_thresh_dry,
+            s_dry_days,
+            s_window_dry,
+            s_start_date,
+            s_end_date,
+        )
+    )
+
+    # Calculate rain season end.
+    end = xarray.DataArray(
+        rain_season_end(
+            pr,
+            etp,
+            start,
+            start_next,
+            e_op,
+            e_thresh,
+            e_window,
+            e_etp_rate,
+            e_start_date,
+            e_end_date,
+        )
+    )
+
+    # Calculate rain season length.
+    length = xarray.DataArray(rain_season_length(start, end))
+
+    # Calculate rain quantity.
+    prcptot = xarray.DataArray(rain_season_prcptot(pr, start, end))
+
+    return start, end, length, prcptot
+
+
+@declare_units(pr="[precipitation]", thresh_wet="[length]", thresh_dry="[length]")
+def rain_season_start(
+    pr: xarray.DataArray,
+    thresh_wet: str = "25.0 mm",
+    window_wet: int = 3,
+    thresh_dry: str = "1.0 mm",
+    dry_days: int = 7,
+    window_dry: int = 30,
+    start_date: str = "",
+    end_date: str = "",
+) -> xarray.DataArray:
+
+    """
+    Detect the first day of the rain season.
+
+    Rain season starts on the first day of a sequence of {window_wet} days with accumulated precipitation greater than
+    or equal to {thresh_wet} that is followed by a period of {window_dry} days with fewer than {dry_days} consecutive
+    days with less than {thresh_dry} daily precipitation. The search is constrained by {start_date} and {end_date}."
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+        Precipitation data.
+    thresh_wet : str
+        Accumulated precipitation threshold associated with {window_wet}.
+    window_wet: int
+        Number of days where accumulated precipitation is above {thresh_wet}.
+    thresh_dry: str
+        Daily precipitation threshold associated with {window_dry}.
+    dry_days: int
+        Maximum number of dry days in {window_dry}.
+    window_dry: int
+        Number of days, after {window_wet}, during which daily precipitation is not greater than or equal to
+        {thresh_dry} for {dry_days} consecutive days.
+    start_date: str
+        First day of year where season can start ("mm-dd").
+    end_date: str
+        Last day of year where season can start ("mm-dd").
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+        Rain season start (day of year).
+
+    Examples
+    --------
+    Successful season start:
+        . . . . 10 10 10 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 . . .
+                 ^
+    False start:
+        . . . . 10 10 10 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 . . .
+    Not even a start:
+        . . . .  8  8  8 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 . . .
+    given the numbers correspond to daily precipitation, based on default parameter values.
+
+    References
+    ----------
+    This index was suggested by:
+    Sivakumar, M.V.K. (1988). Predicting rainy season potential from the onset of rains in Southern Sahelian and
+    Sudanian climatic zones of West Africa. Agricultural and Forest Meteorology, 42(4): 295-305.
+    https://doi.org/10.1016/0168-1923(88)90039-1
+    and by:
+    Dodd, D.E.S. & Jolliffe, I.T. (2001) Early detection of the start of the wet season in semiarid tropical climates of
+    Western Africa. Int. J. Climatol., 21, 1251‑1262. https://doi.org/10.1002/joc.640
+    This correspond to definition no. 2, which is a simplification of an index mentioned in:
+    Jolliffe, I.T. & Sarria-Dodd, D.E. (1994) Early detection of the start of the wet season in tropical climates. Int.
+    J. Climatol., 14: 71-76. https://doi.org/10.1002/joc.3370140106
+    which is based on:
+    Stern, R.D., Dennett, M.D., & Garbutt, D.J. (1981) The start of the rains in West Africa. J. Climatol., 1: 59-68.
+    https://doi.org/10.1002/joc.3370010107
+    """
+
+    # Unit conversion.
+    pram = rate2amount(pr, out_units="mm")
+    thresh_wet = convert_units_to(thresh_wet, pram)
+    thresh_dry = convert_units_to(thresh_dry, pram)
+
+    # Eliminate negative values.
+    pram = xarray.where(pram < 0, 0, pram)
+    pram.attrs["units"] = "mm"
+
+    # Assign search boundaries.
+    start_doy = 1
+    if start_date != "":
+        start_doy = datetime.datetime.strptime(start_date, "%m-%d").timetuple().tm_yday
+    end_doy = 365
+    if end_date != "":
+        end_doy = datetime.datetime.strptime(end_date, "%m-%d").timetuple().tm_yday
+    if (start_date == "") and (end_date != ""):
+        start_doy = 1 if end_doy == 365 else end_doy + 1
+    elif (start_date != "") and (end_date == ""):
+        end_doy = 365 if start_doy == 1 else start_doy - 1
+
+    # Flag the first day of each sequence of {window_wet} days with a total of {thresh_wet} in precipitation
+    # (assign True).
+    wet = xarray.DataArray(pram.rolling(time=window_wet).sum() >= thresh_wet).shift(
+        time=-(window_wet - 1), fill_value=False
+    )
+
+    # Identify dry days (assign 1).
+    dry_day = xarray.where(pram < thresh_dry, 1, 0)
+
+    # Identify each day that is not followed by a sequence of {window_dry} days within a period of {window_tot} days,
+    # starting after {window_wet} days (assign True).
+    dry_seq = None
+    for i in range(window_dry - dry_days - 1):
+        dry_day_i = dry_day.shift(time=-(i + window_wet), fill_value=False)
+        dry_seq_i = xarray.DataArray(
+            dry_day_i.rolling(time=dry_days).sum() >= dry_days
+        ).shift(time=-(dry_days - 1), fill_value=False)
+        if i == 0:
+            dry_seq = dry_seq_i.copy()
+        else:
+            dry_seq = dry_seq | dry_seq_i
+    no_dry_seq = dry_seq.astype(bool) == 0
+
+    # Flag days between {start_date} and {end_date} (or the opposite).
+    if end_doy >= start_doy:
+        doy = (pram.time.dt.dayofyear >= start_doy) & (
+            pram.time.dt.dayofyear <= end_doy
+        )
+    else:
+        doy = (pram.time.dt.dayofyear <= end_doy) | (
+            pram.time.dt.dayofyear >= start_doy
+        )
+
+    # Obtain the first day of each year where conditions apply.
+    start = (
+        (wet & no_dry_seq & doy)
+        .resample(time="YS")
+        .map(rl.first_run, window=1, dim="time", coord="dayofyear")
+    )
+    start = xarray.where((start < 1) | (start > 365), np.nan, start)
+    start.attrs["units"] = "1"
+
+    return start
+
+
+@declare_units(
+    pr="[precipitation]",
+    etp="[evapotranspiration]",
+    thresh="[length]",
+    etp_rate="[length]",
+)
+def rain_season_end(
+    pr: xarray.DataArray,
+    etp: xarray.DataArray = None,
+    start: xarray.DataArray = None,
+    start_next: xarray.DataArray = None,
+    op: str = "max",
+    thresh: str = "5.0 mm",
+    window: int = 20,
+    etp_rate: str = "0.0 mm",
+    start_date: str = "",
+    end_date: str = "",
+) -> xarray.DataArray:
+
+    """
+    Detect the last day of the rain season.
+
+    Three methods are available:
+    - If {op}=="max", season ends when no daily precipitation is greater than {thresh} over a period of {window} days.
+    - If {op}=="sum", season ends when cumulated precipitation over a period of {window} days is smaller than {thresh}.
+    - If {op}=="etp", season ends after a water column of height {thresh} has evaporated at daily rate specified in
+      {etp} or {etp_rate}, considering that the cumulated precipitation during this period must also evaporate.
+    Search is constrained by {start_date} and {end_date}.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+        Daily precipitation.
+    etp : xarray.DataArray
+        Daily evapotranspiration.
+    start : xarray.DataArray
+        First day of the current rain season.
+    start_next : xarray.DataArray
+        First day of the next rain season.
+    op : str
+        Resampling operator = {"max", "sum", "etp}
+        If "max": based on the occurrence (or not) of an event during the last days of a rain season.
+            The rain season stops when no daily precipitation greater than {thresh} have occurred over a period of
+            {window} days.
+        If "sum": based on a total amount of precipitation received during the last days of the rain season.
+            The rain season stops when the total amount of precipitation is less than {thresh} over a period of
+            {window} days.
+        If "etp": calculation is based on the period required for a water column of height {thresh] to evaporate,
+            considering that any amount of precipitation received during that period must evaporate as well. If {etp} is
+            not available, the evapotranspiration rate is assumed to be {etp_rate}.
+    thresh : str
+        Maximum or accumulated precipitation threshold associated with {window}.
+        If {op} == "max": maximum daily precipitation  during a period of {window} days.
+        If {op} == "sum": accumulated precipitation over {window} days.
+        If {op} == "etp": height of water column that must evaporate.
+    window: int
+        If {op} in ["max", "sum"]: number of days used to verify if the rain season is ending.
+    etp_rate: str
+        If {op} == "etp": evapotranspiration rate.
+        Otherwise: not used.
+    start_date: str
+        First day of year at or after which the season can end ("mm-dd").
+    end_date: str
+        Last day of year at or before which the season can end ("mm-dd").
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+        Rain season end (day of year).
+
+    Examples
+    --------
+    Successful season end with {op} == "max":
+        . . . . 5 0 1 0 1 0 1 0 1 0 1 0 1 0 4 0 1 0 1 0 1 . . . (pr)
+                ^
+    Successful season end with {op} == "sum":
+        . 5 5 5 5 0 1 0 2 0 3 0 4 0 3 0 2 0 1 0 1 0 1 0 1 . . . (pr)
+                ^
+    Successful season end with {op} == "etp":
+        . 5 5 5 5 3 3 3 3 5 0 0 1 1 0 5 . . (pr)
+        . 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 . . (etp_rate)
+                                  ^
+    given the numbers correspond to daily precipitation or evapotranspiration, based on default parameter values.
+
+    References
+    ----------
+    The algorithm corresponding to {op} = "max", referred to as the agronomic criterion, is suggested by:
+    Somé, L. & Sivakumar, M.V.k. (1994). Analyse de la longueur de la saison culturale en fonction de la date de début
+    des pluies au Burkina Faso. Compte rendu des travaux no 1: Division du sol et Agroclimatologie. INERA, Burkina Faso,
+    43 pp.
+    It can be applied to a country such as Ivory Coast, which has a bimodal regime near its coast.
+    The algorithm corresponding to {op} = "etp" is applicable to Sahelian countries with a monomodal regime, as
+    mentioned by Food Security Cluster (May 23rd, 2016):
+    https://fscluster.org/mali/document/les-previsions-climatiques-de-2016-du
+    This includes countries such as Burkina Faso, Senegal, Mauritania, Gambia, Guinea and Bissau.
+    """
+
+    # Unit conversion.
+    pram = rate2amount(pr, out_units="mm")
+    etpam = None
+    if etp is not None:
+        etpam = rate2amount(etp, out_units="mm")
+    thresh = convert_units_to(thresh, pram)
+    etp_rate = convert_units_to(etp_rate, etpam if etpam is not None else pram)
+
+    # Eliminate negative values.
+    pram = xarray.where(pram < 0, 0, pram)
+    pram.attrs["units"] = "mm"
+    if etpam is not None:
+        etpam = xarray.where(etpam < 0, 0, etpam)
+        etpam.attrs["units"] = "mm"
+
+    # Assign search boundaries.
+    start_doy = 1
+    if start_date != "":
+        start_doy = datetime.datetime.strptime(start_date, "%m-%d").timetuple().tm_yday
+    end_doy = 365
+    if end_date != "":
+        end_doy = datetime.datetime.strptime(end_date, "%m-%d").timetuple().tm_yday
+    if (start_date == "") and (end_date != ""):
+        start_doy = 1 if end_doy == 365 else end_doy + 1
+    elif (start_date != "") and (end_date == ""):
+        end_doy = 365 if start_doy == 1 else start_doy - 1
+
+    # Flag days between {start_date} and {end_date} (or the opposite).
+    dayofyear = pram.time.dt.dayofyear.astype(float)
+    if end_doy >= start_doy:
+        doy = (dayofyear >= start_doy) & (dayofyear <= end_doy)
+    else:
+        doy = (dayofyear <= end_doy) | (dayofyear >= start_doy)
+
+    end = None
+
+    if op == "etp":
+
+        # Calculate the minimum length of the period.
+        window_min = math.ceil(thresh / etp_rate) if (etp_rate > 0) else 0
+        window_max = (
+            end_doy - start_doy + 1
+            if (end_doy >= start_doy)
+            else (365 - start_doy + 1 + end_doy)
+        ) - window_min
+        if etp_rate == 0:
+            window_min = window_max
+
+        # Window must be varied until it's size allows for complete evaporation.
+        for window_i in list(range(window_min, window_max + 1)):
+
+            # Flag the day before each sequence of {dt} days that results in evaporating a water column, considering
+            # precipitation falling during this period (assign 1).
+            if etpam is None:
+                dry_seq = xarray.DataArray(
+                    (pram.rolling(time=window_i).sum() + thresh)
+                    <= (window_i * etp_rate)
+                )
+            else:
+                dry_seq = xarray.DataArray(
+                    (pram.rolling(time=window_i).sum() + thresh)
+                    <= etpam.rolling(time=window_i).sum()
+                )
+
+            # Obtain the first day of each year where conditions apply.
+            end_i = (
+                (dry_seq & doy)
+                .resample(time="YS")
+                .map(rl.first_run, window=1, dim="time", coord="dayofyear")
+            )
+
+            # Update the cells that were not assigned yet.
+            if end is None:
+                end = end_i.copy()
+            else:
+                sel = np.isnan(end) & (
+                    (np.isnan(end_i).astype(int) == 0) | (end_i < end)
+                )
+                end = xarray.where(sel, end_i, end)
+
+            # Exit loop if all cells were assigned a value.
+            window = window_i
+            if np.isnan(end).astype(int).sum() == 0:
+                break
+
+    else:
+
+        # Shift datasets to simplify the analysis.
+        dt = 0 if end_doy >= start_doy else start_doy - 1
+        pram_shift = pram.copy().shift(time=-dt, fill_value=False)
+        doy = doy.shift(time=-dt, fill_value=False)
+
+        # Determine if it rains (assign 1) or not (assign 0).
+        wet = (
+            xarray.where(pram_shift < thresh, 0, 1)
+            if op == "max"
+            else xarray.where(pram_shift == 0, 0, 1)
+        )
+
+        # Flag each day (assign 1) before a sequence of:
+        # {window} days with no amount reaching {thresh}:
+        if op == "max":
+            dry_seq = xarray.DataArray(wet.rolling(time=window).sum() == 0)
+        # {window} days with a total amount reaching {thresh}:
+        else:
+            dry_seq = xarray.DataArray(pram_shift.rolling(time=window).sum() < thresh)
+        dry_seq = dry_seq.shift(time=-window, fill_value=False)
+
+        # Obtain the first day of each year where conditions apply.
+        end = (
+            (dry_seq & doy)
+            .resample(time="YS")
+            .map(rl.first_run, window=1, dim="time", coord="dayofyear")
+        )
+
+        # Shift result to the right.
+        end += dt
+        if end.max() > 365:
+            transfer = xarray.ufuncs.maximum(end - 365, 0).shift(
+                time=1, fill_value=np.nan
+            )
+            end = xarray.where(end > 365, np.nan, end)
+            end = xarray.where(np.isnan(transfer).astype(bool) == 0, transfer, end)
+
+        # Rain season can't end on (or after) the first day of the last moving {window}, because we ignore the weather
+        # past the end of the dataset.
+        end = xarray.where(
+            (end > 365 - window) & (end == end[len(end.time) - 1]), np.nan, end
+        )
+
+    # Rain season can't end unless the last day is rainy or the window comprises rainy days.
+    def rain_near_end(loc: str = "") -> xarray.DataArray:
+        if loc == "":
+            end_loc = end
+            pram_loc = pram
+        else:
+            end_loc = end[end.location == loc].squeeze()
+            pram_loc = pram[pram.location == loc].squeeze()
+        n_days = 0
+        for t in range(len(end_loc.time)):
+            n_days_t = int(
+                xarray.DataArray(pram_loc.time.dt.year == end_loc[t].time.dt.year)
+                .astype(int)
+                .sum()
+            )
+            if not np.isnan(end_loc[t]):
+                pos_end = int(end_loc[t]) + n_days - 1
+                if op in ["max", "sum"]:
+                    pos_win_1 = pos_end + 1
+                    pos_win_2 = min(pos_win_1 + window, n_days_t + n_days)
+                else:
+                    pos_win_2 = pos_end + 1
+                    pos_win_1 = max(0, pos_end - window)
+                pos_range = [min(pos_win_1, pos_win_2), max(pos_win_1, pos_win_2)]
+                if not (
+                    (
+                        pram_loc.isel(time=slice(pos_range[0], pos_range[1])).sum(
+                            dim="time"
+                        )
+                        > 0
+                    )
+                    or (pram_loc.isel(time=pos_end) > 0)
+                ):
+                    end_loc[t] = np.nan
+            n_days += n_days_t
+        return end_loc
+
+    if "location" not in pram.dims:
+        end = rain_near_end()
+    else:
+        locations = list(pram.location.values)
+        for i in range(len(locations)):
+            end[end.location == locations[i]] = rain_near_end(locations[i])
+
+    # Adjust or discard rain end values that are not compatible with the current or next season start values.
+    # If the season ends before or on start day, discard rain end.
+    if start is not None:
+        sel = (
+            (np.isnan(start).astype(int) == 0)
+            & (np.isnan(end).astype(int) == 0)
+            & (end <= start)
+        )
+        end = xarray.where(sel, np.nan, end)
+
+    # If the season ends after or on start day of the next season, the end day of the current season becomes the day
+    # before the next season.
+    if start_next is not None:
+        sel = (
+            (np.isnan(start_next).astype(int) == 0)
+            & (np.isnan(end).astype(int) == 0)
+            & (end >= start_next)
+        )
+        end = xarray.where(sel, start_next - 1, end)
+        end = xarray.where(end < 1, 365, end)
+    end.attrs["units"] = "1"
+
+    return end
+
+
+def rain_season_length(
+    start: xarray.DataArray, end: xarray.DataArray
+) -> xarray.DataArray:
+
+    """
+    Determine the length of the rain season.
+
+    Parameters
+    ----------
+    start : xarray.DataArray
+        Rain season start (first day of year).
+    end: xarray.DataArray
+        Rain season end (last day of year).
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+        Rain season length (days/freq).
+    """
+
+    # Start and end dates in the same calendar year.
+    if start.mean() <= end.mean():
+        length = end - start + 1
+
+    # Start and end dates not in the same year (left shift required).
+    else:
+        length = (
+            xarray.DataArray(xarray.ones_like(start) * 365)
+            - start
+            + end.shift(time=-1, fill_value=np.nan)
+            + 1
+        )
+
+    # Eliminate negative values. This is a safety measure as this should not happen.
+    length = xarray.where(length < 0, 0, length)
+    length.attrs["units"] = "days"
+
+    return length
+
+
+@declare_units(pr="[precipitation]")
+def rain_season_prcptot(
+    pr: xarray.DataArray, start: xarray.DataArray, end: xarray.DataArray
+) -> xarray.DataArray:
+
+    """
+    Determine precipitation amount during rain season.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+        Daily precipitation.
+    start : xarray.DataArray
+        Rain season start (first day of year).
+    end: xarray.DataArray
+        Rain season end (last day of year).
+
+    Returns
+    -------
+    xarray.DataArray
+        Rain season accumulated precipitation (mm/year).
+    """
+
+    # Unit conversion.
+    pram = rate2amount(pr, out_units="mm")
+
+    # Initialize the array that will contain results.
+    prcptot = xarray.zeros_like(start) * np.nan
+
+    # Calculate the sum between two dates for a given year.
+    def calc_sum(year: int, start_doy: int, end_doy: int):
+        sel = (
+            (pram.time.dt.year == year)
+            & (pram.time.dt.dayofyear >= start_doy)
+            & (pram.time.dt.dayofyear <= end_doy)
+        )
+        return xarray.where(sel, pram, 0).sum()
+
+    # Calculate the index.
+    def calc_idx(loc: str = ""):
+        if loc == "":
+            prcptot_loc = prcptot
+            start_loc = start
+            end_loc = end
+        else:
+            prcptot_loc = prcptot[prcptot.location == loc].squeeze()
+            start_loc = start[start.location == loc].squeeze()
+            end_loc = end[end.location == loc].squeeze()
+
+        end_shift = None
+        for t in range(len(start.time.dt.year)):
+            year = int(start.time.dt.year[t])
+
+            # Start and end dates in the same calendar year.
+            if start_loc.mean() <= end_loc.mean():
+                if (np.isnan(start_loc[t]).astype(bool) == 0) and (
+                    np.isnan(end_loc[t]).astype(bool) == 0
+                ):
+                    prcptot_loc[t] = calc_sum(year, int(start_loc[t]), int(end_loc[t]))
+
+            # Start and end dates not in the same year (left shift required).
+            else:
+                end_shift = (
+                    end_loc.shift(time=-1, fill_value=np.nan) if t == 0 else end_shift
+                )
+                if (np.isnan(start_loc[t]).astype(bool) == 0) and (
+                    np.isnan(end_shift[t]).astype(bool) == 0
+                ):
+                    prcptot_loc[t] = calc_sum(year, int(start_loc[t]), 365) + calc_sum(
+                        year, 1, int(end_shift[t])
+                    )
+
+        return prcptot_loc
+
+    if "location" not in pram.dims:
+        prcptot = calc_idx()
+    else:
+        locations = list(pram.location.values)
+        for i in range(len(locations)):
+            prcptot[prcptot.location == locations[i]] = calc_idx(locations[i])
+
+    prcptot = prcptot // 1
+    prcptot.attrs["units"] = "mm"
+
+    return prcptot

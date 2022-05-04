@@ -958,7 +958,7 @@
     "long_name": "Durée totale {freq:f} en jours des périodes sèches de {window} jours et plus"
   },
   "COLD_AND_DRY_DAYS": {
-    "title": "Nombre de jours froide et secs",
+    "title": "Nombre de jours froids et secs",
     "abstract": "Nombre de jours où la température est en dessous du 25eme percentile et les précipitations en dessous du 25eme percentile.",
     "description": "Nombre {freq:m} de jours où la température est en dessous du 25eme percentile et les précipitations en dessous du 25eme percentile.",
     "long_name": "Nombre {freq:m} de jours froids et secs"
@@ -993,16 +993,56 @@
     "description": "Nombre {freq:m} de jours où la vitesse du vent de surface >= {thresh}.",
     "long_name": "Nombre {freq:m} de jours où la vitesse du vent de surface est au-dessus d'un seuil"
   },
-  "JETSTREAM_METRIC_WOOLLINGS": {
-    "title": "Force et latitude du courant-jet",
-    "abstract": "Latitude et magnitude du maximum de la vitesse du vent zonal entre 15 à 75°N et -60 à 0°E.",
+  "RAIN_SEASON": {
+    "title": "Saison de pluie",
+    "abstract": "Début, fin, durée et cumul de précipitation pendant la saison de pluie.",
     "description": [
-      "Latitude journalière du maximum du vent zonal lissé",
-      "Magnitude journalière du maximum du vent zonal lissé"
+      "Premier jour de la saison de pluie (voir rain_season_start).",
+      "Dernier jour de la saison de pluie (voir rain_season_end).",
+      "Durée de la saison de pluie (voir rain_season_length).",
+      "Cumul de précipitation pendant la saison de pluie (voir rain_season_prcptot)."
     ],
     "long_name": [
-      "Latitude du maximum du vent zonal",
-      "Magnitude du maximum du vent zonal"
+      "Premier jour de la saison de pluie",
+      "Dernier jour de la saison de pluie",
+      "Durée de la saison de pluie",
+      "Cumul de précipitation pendant la saison de pluie"
     ]
+  },
+  "RAIN_SEASON_START": {
+    "title": "Début de la saison de pluie",
+    "abstract": "Premier jour d'une période pendant laquelle le cumul de précipitation est supérieur ou égal à un seuil et qui est suivie d'une période exempte d'une séquence de jours secs.",
+    "description": "Premier jour d'une période de {window_wet} jours avec cumul de précipitations supérieur ou égal à {thresh_wet} suivie d'une période de {window_dry} jours avec moins de {dry_days} jours consécutifs avec précipitation journalière inférieure à {thresh_dry}; la recherche est limitée par {start_date} et {end_date}.",
+    "long_name": "Début de la saison de pluie"
+  },
+  "RAIN_SEASON_END": {
+    "title": "Fin de la saison de pluie",
+    "abstract": "Jour précédent une période pendant laquelle le maximum ou cumul des précipitations est inférieur à un seuil ou pendant laquelle une colonne d'eau d'une hauteur donnée peut s'évaporer.",
+    "description": "Jour précédent une période de {window} jours pendant laquelle le maximum (si {op}=='max') ou cumul (si {op}=='sum') des précipitations est inférieur à {thresh}, ou pendant laquelle une colonne d'eau d'une hauteur de {thresh} et les précipitations reçues pendant cette période s'évaporent à un taux variable (spécifié dans 'etp') ou fixe (spécifié dans {etp_rate}); la recherche est limitée par {start_date} et {end_date}.",
+    "long_name": "Fin de la saison de pluie"
+  },
+  "RAIN_SEASON_LENGTH": {
+    "title": "Durée de la saison de pluie",
+    "abstract": "Durée de la saison de pluie",
+    "description": "Nombre de jours {freq:f} pendant la saison de pluie",
+    "long_name": "Durée de la saison de pluie"
+  },
+  "RAIN_SEASON_PRCPTOT": {
+    "title": "Cumul de précipitation pendant la saison de pluie",
+    "abstract": "Cumul de précipitation {freq:f} pendant la saison de pluie",
+    "description": "Cumul de précipitation pendant la saison de pluie",
+    "long_name": "Cumul de précipitation pendant la saison de pluie",
+    "JETSTREAM_METRIC_WOOLLINGS": {
+      "title": "Force et latitude du courant-jet",
+      "abstract": "Latitude et magnitude du maximum de la vitesse du vent zonal entre 15 à 75°N et -60 à 0°E.",
+      "description": [
+        "Latitude journalière du maximum du vent zonal lissé",
+        "Magnitude journalière du maximum du vent zonal lissé"
+      ],
+      "long_name": [
+        "Latitude du maximum du vent zonal",
+        "Magnitude du maximum du vent zonal"
+      ]
+    }
   }
 }

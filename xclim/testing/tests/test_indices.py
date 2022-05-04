@@ -2630,6 +2630,123 @@ class TestRPRCTot:
         )
 
 
+def test_rain_season(pr_series):
+    vals = (
+        ([1.01] * 90)
+        + ([5.01] * 3)
+        + ([1.01] * 10)
+        + ([0.99] * 9)
+        + ([1.01] * 11)
+        + ([5.01] * 165)
+        + [4.01]
+        + [3.01]
+        + [2.01]
+        + [1.01]
+        + ([0.0] * 73)
+    )
+    pr = pr_series(np.array(vals), start="1981-01-01", units="mm/day")
+    pr = (
+        pr.expand_dims(latitude=[45])
+        .expand_dims(longitude=[-75])
+        .transpose("time", "latitude", "longitude")
+    )
+
+    s_thresh_wet = "15 mm"
+    s_window_wet = 3
+    s_thresh_dry = "1 mm"
+    s_dry_days = 10
+    s_window_dry = 30
+    s_start_date = "03-01"
+    s_end_date = "12-31"
+    e_thresh_max = "5 mm"
+    e_thresh_sum = "10 mm"
+    e_thresh_etp = "70 mm"
+    e_window = 14
+    e_etp_rate = "5 mm"
+    e_start_date = "09-01"
+    e_end_date = "12-31"
+
+    start_1 = xci.rain_season_start(
+        pr,
+        thresh_wet=s_thresh_wet,
+        window_wet=s_window_wet,
+        thresh_dry=s_thresh_dry,
+        dry_days=s_dry_days,
+        window_dry=s_window_dry,
+        start_date=s_start_date,
+        end_date=s_end_date,
+    )
+    end_max_1 = xci.rain_season_end(
+        pr,
+        None,
+        None,
+        None,
+        op="max",
+        thresh=e_thresh_max,
+        window=e_window,
+        etp_rate=e_etp_rate,
+        start_date=e_start_date,
+        end_date=e_end_date,
+    )
+    end_sum_1 = xci.rain_season_end(
+        pr,
+        None,
+        None,
+        None,
+        op="sum",
+        thresh=e_thresh_sum,
+        window=e_window,
+        etp_rate=e_etp_rate,
+        start_date=e_start_date,
+        end_date=e_end_date,
+    )
+    end_etp_1 = xci.rain_season_end(
+        pr,
+        None,
+        None,
+        None,
+        op="etp",
+        thresh=e_thresh_etp,
+        window=e_window,
+        etp_rate=e_etp_rate,
+        start_date=e_start_date,
+        end_date=e_end_date,
+    )
+    length_1 = xci.rain_season_length(start_1, end_max_1)
+    prcptot_1 = xci.rain_season_prcptot(pr, start_1, end_max_1)
+    start_2, end_2, length_2, prcptot_2 = xci.rain_season(
+        pr,
+        None,
+        None,
+        s_thresh_wet,
+        s_window_wet,
+        s_thresh_dry,
+        s_dry_days,
+        s_window_dry,
+        s_start_date,
+        s_end_date,
+        "max",
+        e_thresh_max,
+        e_window,
+        e_etp_rate,
+        e_start_date,
+        e_end_date,
+    )
+
+    np.testing.assert_allclose(start_1[0][0][0], 91, rtol=1e-1)
+    np.testing.assert_allclose(end_max_1[0][0][0], 288, rtol=1e-1)
+    np.testing.assert_allclose(end_sum_1[0][0][0], 289, rtol=1e-1)
+    np.testing.assert_allclose(end_etp_1[0][0][0], 305, rtol=1e-1)
+    np.testing.assert_allclose(length_1[0][0][0], 198, rtol=1e-1)
+    np.testing.assert_allclose(prcptot_1[0][0][0], 871, rtol=1e-1)
+
+    np.testing.assert_allclose(start_2[0][0][0], 91, rtol=1e-1)
+    np.testing.assert_allclose(end_2[0][0][0], 288, rtol=1e-1)
+    np.testing.assert_allclose(length_2[0][0][0], 198, rtol=1e-1)
+    np.testing.assert_allclose(prcptot_2[0][0][0], 871, rtol=1e-1)
+
+
+# FIXME: @yrouranos This class is being set for removal in #894 - verify!
 class TestWetDays:
     def test_simple(self, pr_series):
         a = np.zeros(365)
@@ -2643,6 +2760,7 @@ class TestWetDays:
         np.testing.assert_allclose(out, [4, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0])
 
 
+# FIXME: @yrouranos This class is being set for removal in #894 - verify!
 class TestWetDaysProp:
     def test_simple(self, pr_series):
         a = np.zeros(365)

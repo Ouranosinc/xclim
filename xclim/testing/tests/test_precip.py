@@ -534,3 +534,103 @@ def test_dry_spell_frequency_op():
         "The monthly number of dry periods of 7 days and more, during which the maximal precipitation "
         "on a window of 7 days is under 3 mm."
     ) in test_max.description
+
+
+def test_rain_season():
+    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
+
+    s_thresh_wet = "25 mm"
+    s_window_wet = 3
+    s_thresh_dry = "1 mm"
+    s_dry_days = 10
+    s_window_dry = 30
+    s_start_date = "03-01"
+    s_end_date = "12-31"
+    e_thresh_max = "5 mm"
+    e_thresh_sum = "10 mm"
+    e_thresh_etp = "20 mm"
+    e_window = 10
+    e_etp_rate = "5 mm"
+    e_start_date = "06-01"
+    e_end_date = "09-30"
+
+    start_1 = atmos.rain_season_start(
+        pr,
+        thresh_wet=s_thresh_wet,
+        window_wet=s_window_wet,
+        thresh_dry=s_thresh_dry,
+        dry_days=s_dry_days,
+        window_dry=s_window_dry,
+        start_date=s_start_date,
+        end_date=s_end_date,
+    )
+    end_max_1 = atmos.rain_season_end(
+        pr,
+        None,
+        None,
+        None,
+        op="max",
+        thresh=e_thresh_max,
+        window=e_window,
+        etp_rate=e_etp_rate,
+        start_date=e_start_date,
+        end_date=e_end_date,
+    )
+    end_sum_1 = atmos.rain_season_end(
+        pr,
+        None,
+        None,
+        None,
+        op="sum",
+        thresh=e_thresh_sum,
+        window=e_window,
+        etp_rate=e_etp_rate,
+        start_date=e_start_date,
+        end_date=e_end_date,
+    )
+    end_etp_1 = atmos.rain_season_end(
+        pr,
+        None,
+        None,
+        None,
+        op="etp",
+        thresh=e_thresh_etp,
+        window=e_window,
+        etp_rate=e_etp_rate,
+        start_date=e_start_date,
+        end_date=e_end_date,
+    )
+    # Data validation is disabled, because start and end DataArrays are not at a daily frequency.
+    with set_options(data_validation="log"):
+        length_1 = atmos.rain_season_length(start_1, end_max_1)
+        prcptot_1 = atmos.rain_season_prcptot(pr, start_1, end_max_1)
+        start_2, end_2, length_2, prcptot_2 = atmos.rain_season(
+            pr,
+            None,
+            None,
+            s_thresh_wet,
+            s_window_wet,
+            s_thresh_dry,
+            s_dry_days,
+            s_window_dry,
+            s_start_date,
+            s_end_date,
+            "max",
+            e_thresh_max,
+            e_window,
+            e_etp_rate,
+            e_start_date,
+            e_end_date,
+        )
+
+    np.testing.assert_allclose(start_1[0, 0:2], [89, 61], rtol=1e-1)
+    np.testing.assert_allclose(end_max_1[0, 0:2], [190, 152], rtol=1e-1)
+    np.testing.assert_allclose(end_sum_1[0, 0:2], [186, 152], rtol=1e-1)
+    np.testing.assert_allclose(end_etp_1[0, 0:2], [195, 153], rtol=1e-1)
+    np.testing.assert_allclose(length_1[0, 0:2], [102, 92], rtol=1e-1)
+    np.testing.assert_allclose(prcptot_1[0, 0:2], [1402, 1143], rtol=1e-1)
+
+    np.testing.assert_allclose(start_2[0, 0:2], [89, 61], rtol=1e-1)
+    np.testing.assert_allclose(end_2[0, 0:2], [190, 152], rtol=1e-1)
+    np.testing.assert_allclose(length_2[0, 0:2], [102, 92], rtol=1e-1)
+    np.testing.assert_allclose(prcptot_2[0, 0:2], [1402, 1143], rtol=1)
