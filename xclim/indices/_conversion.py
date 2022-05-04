@@ -428,7 +428,7 @@ def saturation_vapor_pressure(
         e_sat = 2.7150305 * np.log1p(tas)
         for count, i in enumerate(g):
             e_sat = e_sat + (i * np.power(tas, count - 2))
-        e_sat = np.exp(e_sat) * 0.01
+        e_sat = np.exp(e_sat)
     else:
         raise ValueError(
             f"Method {method} is not in ['sonntag90', 'tetens30', 'goffgratch46', 'wmo08']"
@@ -1724,7 +1724,7 @@ def universal_thermal_climate_index(
                 + 0.00148348065 * pa * pa * pa * pa * pa * pa
             )
 
-        eh_pa = e_sat * (hurs / 100.0)
+        eh_pa = e_sat * hurs
         delta = tmrt - tas
         pa = eh_pa / 10.0
 
