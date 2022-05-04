@@ -1999,7 +1999,9 @@ def test_specific_humidity_from_dewpoint(tas_series, ps_series):
     np.testing.assert_allclose(q, 0.012, 3)
 
 
-@pytest.mark.parametrize("method", ["tetens30", "sonntag90", "goffgratch46", "wmo08"])
+@pytest.mark.parametrize(
+    "method", ["tetens30", "sonntag90", "goffgratch46", "wmo08", "its90"]
+)
 @pytest.mark.parametrize(
     "ice_thresh,exp0", [(None, [125, 286, 568]), ("0 degC", [103, 260, 563])]
 )
