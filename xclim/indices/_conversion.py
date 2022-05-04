@@ -431,7 +431,7 @@ def saturation_vapor_pressure(
         e_sat = np.exp(e_sat)
     else:
         raise ValueError(
-            f"Method {method} is not in ['sonntag90', 'tetens30', 'goffgratch46', 'wmo08']"
+            f"Method {method} is not in ['sonntag90', 'tetens30', 'goffgratch46', 'wmo08', 'its90']"
         )
 
     e_sat.attrs["units"] = "Pa"
@@ -1724,7 +1724,7 @@ def universal_thermal_climate_index(
                 + 0.00148348065 * pa * pa * pa * pa * pa * pa
             )
 
-        eh_pa = e_sat * hurs
+        eh_pa = (e_sat / 100) * (hurs / 100)
         delta = tmrt - tas
         pa = eh_pa / 10.0
 
