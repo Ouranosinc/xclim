@@ -2,6 +2,13 @@
 History
 =======
 
+0.37.0 (unreleased)
+-------------------
+
+Contributors to this version: Ludwig Lierhammer (:user:`ludwiglierhammer`).
+
+*  New indicator ``universal_thermal_climate_index``, computing universal thermal climate index from the near-surface temperature, relative humidity and near-surface windspeed. New method ITS90 for calculating saturation water vapour pressure (:issue:`1060`, :pull:`1062`).
+
 0.36.1 (unreleased)
 ------------------
 
