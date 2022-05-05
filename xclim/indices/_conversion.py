@@ -3,6 +3,7 @@ from typing import Optional, Tuple
 
 import numpy as np
 import xarray as xr
+from numba import float32, float64, vectorize
 
 from xclim.core.calendar import date_range, datetime_to_decimal_year
 from xclim.core.units import amount2rate, convert_units_to, declare_units, units2pint
@@ -359,6 +360,7 @@ def saturation_vapor_pressure(
     else:
         thresh = convert_units_to("0 K", "degK")
     ref_is_water = tas > thresh
+    tas = convert_units_to(tas, "K")
 
     if method in ["sonntag90", "SO90"]:
         e_sat = xr.where(
@@ -416,19 +418,27 @@ def saturation_vapor_pressure(
             611.2 * np.exp(22.46 * (tas - 273.16) / (tas - 0.54)),
         )
     elif method in ["its90", "ITS90"]:
-        g = [
-            -2836.5744,
-            -6028.076559,
-            19.54263612,
-            -0.02737830188,
-            0.000016261698,
-            (7.0229056 * np.power(10.0, -10)),
-            (-1.8680009 * np.power(10.0, -13)),
-        ]
-        e_sat = 2.7150305 * np.log1p(tas)
-        for count, i in enumerate(g):
-            e_sat = e_sat + (i * np.power(tas, count - 2))
-        e_sat = np.exp(e_sat)
+        e_sat = xr.where(
+            ref_is_water,
+            np.exp(
+                -2836.5744 / tas**2
+                + -6028.076559 / tas
+                + 19.54263612
+                + -2.737830188e-2 * tas
+                + 1.6261698e-5 * tas**2
+                + 7.0229056e-10 * tas**3
+                + -1.8680009e-13 * tas**4
+                + 2.7150305 * np.log(tas)
+            ),
+            np.exp(
+                +-5866.6426 / tas
+                + 22.32870244
+                + 1.39387003e-2 * tas
+                + -3.4262402e-5 * tas**2
+                + 2.7040955e-8 * tas**3
+                + 3.7063522e-1 * np.log(tas)
+            ),
+        )
     else:
         raise ValueError(
             f"Method {method} is not in ['sonntag90', 'tetens30', 'goffgratch46', 'wmo08', 'its90']"
@@ -1199,17 +1209,248 @@ def potential_evapotranspiration(
     return amount2rate(out, out_units="kg m-2 s-1")
 
 
+@vectorize(
+    [
+        float64(float64, float64, float64, float64),
+        float32(float32, float32, float32, float32),
+    ],
+)
+def _utci(tas, sfcWind, dt, wvp):
+    """The empirical polynomial function for UTCI. See :py:func:`universal_thermal_climate_index`."""
+    # Taken directly from the original Fortran code by Peter Bröde.
+    # http://www.utci.org/public/UTCI%20Program%20Code/UTCI_a002.f90
+    # tas -> Ta (surface temperature, °C)
+    # sfcWind -> va (surface wind speed, m/s)
+    # dt -> D_Tmrt (tas - t_mrt, K)
+    # wvp -> Pa (water vapor partial pressure, kPa)
+    return (
+        tas
+        + 6.07562052e-1
+        + -2.27712343e-2 * tas
+        + 8.06470249e-4 * tas * tas
+        + -1.54271372e-4 * tas * tas * tas
+        + -3.24651735e-6 * tas * tas * tas * tas
+        + 7.32602852e-8 * tas * tas * tas * tas * tas
+        + 1.35959073e-9 * tas * tas * tas * tas * tas * tas
+        + -2.25836520e0 * sfcWind
+        + 8.80326035e-2 * tas * sfcWind
+        + 2.16844454e-3 * tas * tas * sfcWind
+        + -1.53347087e-5 * tas * tas * tas * sfcWind
+        + -5.72983704e-7 * tas * tas * tas * tas * sfcWind
+        + -2.55090145e-9 * tas * tas * tas * tas * tas * sfcWind
+        + -7.51269505e-1 * sfcWind * sfcWind
+        + -4.08350271e-3 * tas * sfcWind * sfcWind
+        + -5.21670675e-5 * tas * tas * sfcWind * sfcWind
+        + 1.94544667e-6 * tas * tas * tas * sfcWind * sfcWind
+        + 1.14099531e-8 * tas * tas * tas * tas * sfcWind * sfcWind
+        + 1.58137256e-1 * sfcWind * sfcWind * sfcWind
+        + -6.57263143e-5 * tas * sfcWind * sfcWind * sfcWind
+        + 2.22697524e-7 * tas * tas * sfcWind * sfcWind * sfcWind
+        + -4.16117031e-8 * tas * tas * tas * sfcWind * sfcWind * sfcWind
+        + -1.27762753e-2 * sfcWind * sfcWind * sfcWind * sfcWind
+        + 9.66891875e-6 * tas * sfcWind * sfcWind * sfcWind * sfcWind
+        + 2.52785852e-9 * tas * tas * sfcWind * sfcWind * sfcWind * sfcWind
+        + 4.56306672e-4 * sfcWind * sfcWind * sfcWind * sfcWind * sfcWind
+        + -1.74202546e-7 * tas * sfcWind * sfcWind * sfcWind * sfcWind * sfcWind
+        + -5.91491269e-6 * sfcWind * sfcWind * sfcWind * sfcWind * sfcWind * sfcWind
+        + 3.98374029e-1 * dt
+        + 1.83945314e-4 * tas * dt
+        + -1.73754510e-4 * tas * tas * dt
+        + -7.60781159e-7 * tas * tas * tas * dt
+        + 3.77830287e-8 * tas * tas * tas * tas * dt
+        + 5.43079673e-10 * tas * tas * tas * tas * tas * dt
+        + -2.00518269e-2 * sfcWind * dt
+        + 8.92859837e-4 * tas * sfcWind * dt
+        + 3.45433048e-6 * tas * tas * sfcWind * dt
+        + -3.77925774e-7 * tas * tas * tas * sfcWind * dt
+        + -1.69699377e-9 * tas * tas * tas * tas * sfcWind * dt
+        + 1.69992415e-4 * sfcWind * sfcWind * dt
+        + -4.99204314e-5 * tas * sfcWind * sfcWind * dt
+        + 2.47417178e-7 * tas * tas * sfcWind * sfcWind * dt
+        + 1.07596466e-8 * tas * tas * tas * sfcWind * sfcWind * dt
+        + 8.49242932e-5 * sfcWind * sfcWind * sfcWind * dt
+        + 1.35191328e-6 * tas * sfcWind * sfcWind * sfcWind * dt
+        + -6.21531254e-9 * tas * tas * sfcWind * sfcWind * sfcWind * dt
+        + -4.99410301e-6 * sfcWind * sfcWind * sfcWind * sfcWind * dt
+        + -1.89489258e-8 * tas * sfcWind * sfcWind * sfcWind * sfcWind * dt
+        + 8.15300114e-8 * sfcWind * sfcWind * sfcWind * sfcWind * sfcWind * dt
+        + 7.55043090e-4 * dt * dt
+        + -5.65095215e-5 * tas * dt * dt
+        + -4.52166564e-7 * tas * tas * dt * dt
+        + 2.46688878e-8 * tas * tas * tas * dt * dt
+        + 2.42674348e-10 * tas * tas * tas * tas * dt * dt
+        + 1.54547250e-4 * sfcWind * dt * dt
+        + 5.24110970e-6 * tas * sfcWind * dt * dt
+        + -8.75874982e-8 * tas * tas * sfcWind * dt * dt
+        + -1.50743064e-9 * tas * tas * tas * sfcWind * dt * dt
+        + -1.56236307e-5 * sfcWind * sfcWind * dt * dt
+        + -1.33895614e-7 * tas * sfcWind * sfcWind * dt * dt
+        + 2.49709824e-9 * tas * tas * sfcWind * sfcWind * dt * dt
+        + 6.51711721e-7 * sfcWind * sfcWind * sfcWind * dt * dt
+        + 1.94960053e-9 * tas * sfcWind * sfcWind * sfcWind * dt * dt
+        + -1.00361113e-8 * sfcWind * sfcWind * sfcWind * sfcWind * dt * dt
+        + -1.21206673e-5 * dt * dt * dt
+        + -2.18203660e-7 * tas * dt * dt * dt
+        + 7.51269482e-9 * tas * tas * dt * dt * dt
+        + 9.79063848e-11 * tas * tas * tas * dt * dt * dt
+        + 1.25006734e-6 * sfcWind * dt * dt * dt
+        + -1.81584736e-9 * tas * sfcWind * dt * dt * dt
+        + -3.52197671e-10 * tas * tas * sfcWind * dt * dt * dt
+        + -3.36514630e-8 * sfcWind * sfcWind * dt * dt * dt
+        + 1.35908359e-10 * tas * sfcWind * sfcWind * dt * dt * dt
+        + 4.17032620e-10 * sfcWind * sfcWind * sfcWind * dt * dt * dt
+        + -1.30369025e-9 * dt * dt * dt * dt
+        + 4.13908461e-10 * tas * dt * dt * dt * dt
+        + 9.22652254e-12 * tas * tas * dt * dt * dt * dt
+        + -5.08220384e-9 * sfcWind * dt * dt * dt * dt
+        + -2.24730961e-11 * tas * sfcWind * dt * dt * dt * dt
+        + 1.17139133e-10 * sfcWind * sfcWind * dt * dt * dt * dt
+        + 6.62154879e-10 * dt * dt * dt * dt * dt
+        + 4.03863260e-13 * tas * dt * dt * dt * dt * dt
+        + 1.95087203e-12 * sfcWind * dt * dt * dt * dt * dt
+        + -4.73602469e-12 * dt * dt * dt * dt * dt * dt
+        + 5.12733497e0 * wvp
+        + -3.12788561e-1 * tas * wvp
+        + -1.96701861e-2 * tas * tas * wvp
+        + 9.99690870e-4 * tas * tas * tas * wvp
+        + 9.51738512e-6 * tas * tas * tas * tas * wvp
+        + -4.66426341e-7 * tas * tas * tas * tas * tas * wvp
+        + 5.48050612e-1 * sfcWind * wvp
+        + -3.30552823e-3 * tas * sfcWind * wvp
+        + -1.64119440e-3 * tas * tas * sfcWind * wvp
+        + -5.16670694e-6 * tas * tas * tas * sfcWind * wvp
+        + 9.52692432e-7 * tas * tas * tas * tas * sfcWind * wvp
+        + -4.29223622e-2 * sfcWind * sfcWind * wvp
+        + 5.00845667e-3 * tas * sfcWind * sfcWind * wvp
+        + 1.00601257e-6 * tas * tas * sfcWind * sfcWind * wvp
+        + -1.81748644e-6 * tas * tas * tas * sfcWind * sfcWind * wvp
+        + -1.25813502e-3 * sfcWind * sfcWind * sfcWind * wvp
+        + -1.79330391e-4 * tas * sfcWind * sfcWind * sfcWind * wvp
+        + 2.34994441e-6 * tas * tas * sfcWind * sfcWind * sfcWind * wvp
+        + 1.29735808e-4 * sfcWind * sfcWind * sfcWind * sfcWind * wvp
+        + 1.29064870e-6 * tas * sfcWind * sfcWind * sfcWind * sfcWind * wvp
+        + -2.28558686e-6 * sfcWind * sfcWind * sfcWind * sfcWind * sfcWind * wvp
+        + -3.69476348e-2 * dt * wvp
+        + 1.62325322e-3 * tas * dt * wvp
+        + -3.14279680e-5 * tas * tas * dt * wvp
+        + 2.59835559e-6 * tas * tas * tas * dt * wvp
+        + -4.77136523e-8 * tas * tas * tas * tas * dt * wvp
+        + 8.64203390e-3 * sfcWind * dt * wvp
+        + -6.87405181e-4 * tas * sfcWind * dt * wvp
+        + -9.13863872e-6 * tas * tas * sfcWind * dt * wvp
+        + 5.15916806e-7 * tas * tas * tas * sfcWind * dt * wvp
+        + -3.59217476e-5 * sfcWind * sfcWind * dt * wvp
+        + 3.28696511e-5 * tas * sfcWind * sfcWind * dt * wvp
+        + -7.10542454e-7 * tas * tas * sfcWind * sfcWind * dt * wvp
+        + -1.24382300e-5 * sfcWind * sfcWind * sfcWind * dt * wvp
+        + -7.38584400e-9 * tas * sfcWind * sfcWind * sfcWind * dt * wvp
+        + 2.20609296e-7 * sfcWind * sfcWind * sfcWind * sfcWind * dt * wvp
+        + -7.32469180e-4 * dt * dt * wvp
+        + -1.87381964e-5 * tas * dt * dt * wvp
+        + 4.80925239e-6 * tas * tas * dt * dt * wvp
+        + -8.75492040e-8 * tas * tas * tas * dt * dt * wvp
+        + 2.77862930e-5 * sfcWind * dt * dt * wvp
+        + -5.06004592e-6 * tas * sfcWind * dt * dt * wvp
+        + 1.14325367e-7 * tas * tas * sfcWind * dt * dt * wvp
+        + 2.53016723e-6 * sfcWind * sfcWind * dt * dt * wvp
+        + -1.72857035e-8 * tas * sfcWind * sfcWind * dt * dt * wvp
+        + -3.95079398e-8 * sfcWind * sfcWind * sfcWind * dt * dt * wvp
+        + -3.59413173e-7 * dt * dt * dt * wvp
+        + 7.04388046e-7 * tas * dt * dt * dt * wvp
+        + -1.89309167e-8 * tas * tas * dt * dt * dt * wvp
+        + -4.79768731e-7 * sfcWind * dt * dt * dt * wvp
+        + 7.96079978e-9 * tas * sfcWind * dt * dt * dt * wvp
+        + 1.62897058e-9 * sfcWind * sfcWind * dt * dt * dt * wvp
+        + 3.94367674e-8 * dt * dt * dt * dt * wvp
+        + -1.18566247e-9 * tas * dt * dt * dt * dt * wvp
+        + 3.34678041e-10 * sfcWind * dt * dt * dt * dt * wvp
+        + -1.15606447e-10 * dt * dt * dt * dt * dt * wvp
+        + -2.80626406e0 * wvp * wvp
+        + 5.48712484e-1 * tas * wvp * wvp
+        + -3.99428410e-3 * tas * tas * wvp * wvp
+        + -9.54009191e-4 * tas * tas * tas * wvp * wvp
+        + 1.93090978e-5 * tas * tas * tas * tas * wvp * wvp
+        + -3.08806365e-1 * sfcWind * wvp * wvp
+        + 1.16952364e-2 * tas * sfcWind * wvp * wvp
+        + 4.95271903e-4 * tas * tas * sfcWind * wvp * wvp
+        + -1.90710882e-5 * tas * tas * tas * sfcWind * wvp * wvp
+        + 2.10787756e-3 * sfcWind * sfcWind * wvp * wvp
+        + -6.98445738e-4 * tas * sfcWind * sfcWind * wvp * wvp
+        + 2.30109073e-5 * tas * tas * sfcWind * sfcWind * wvp * wvp
+        + 4.17856590e-4 * sfcWind * sfcWind * sfcWind * wvp * wvp
+        + -1.27043871e-5 * tas * sfcWind * sfcWind * sfcWind * wvp * wvp
+        + -3.04620472e-6 * sfcWind * sfcWind * sfcWind * sfcWind * wvp * wvp
+        + 5.14507424e-2 * dt * wvp * wvp
+        + -4.32510997e-3 * tas * dt * wvp * wvp
+        + 8.99281156e-5 * tas * tas * dt * wvp * wvp
+        + -7.14663943e-7 * tas * tas * tas * dt * wvp * wvp
+        + -2.66016305e-4 * sfcWind * dt * wvp * wvp
+        + 2.63789586e-4 * tas * sfcWind * dt * wvp * wvp
+        + -7.01199003e-6 * tas * tas * sfcWind * dt * wvp * wvp
+        + -1.06823306e-4 * sfcWind * sfcWind * dt * wvp * wvp
+        + 3.61341136e-6 * tas * sfcWind * sfcWind * dt * wvp * wvp
+        + 2.29748967e-7 * sfcWind * sfcWind * sfcWind * dt * wvp * wvp
+        + 3.04788893e-4 * dt * dt * wvp * wvp
+        + -6.42070836e-5 * tas * dt * dt * wvp * wvp
+        + 1.16257971e-6 * tas * tas * dt * dt * wvp * wvp
+        + 7.68023384e-6 * sfcWind * dt * dt * wvp * wvp
+        + -5.47446896e-7 * tas * sfcWind * dt * dt * wvp * wvp
+        + -3.59937910e-8 * sfcWind * sfcWind * dt * dt * wvp * wvp
+        + -4.36497725e-6 * dt * dt * dt * wvp * wvp
+        + 1.68737969e-7 * tas * dt * dt * dt * wvp * wvp
+        + 2.67489271e-8 * sfcWind * dt * dt * dt * wvp * wvp
+        + 3.23926897e-9 * dt * dt * dt * dt * wvp * wvp
+        + -3.53874123e-2 * wvp * wvp * wvp
+        + -2.21201190e-1 * tas * wvp * wvp * wvp
+        + 1.55126038e-2 * tas * tas * wvp * wvp * wvp
+        + -2.63917279e-4 * tas * tas * tas * wvp * wvp * wvp
+        + 4.53433455e-2 * sfcWind * wvp * wvp * wvp
+        + -4.32943862e-3 * tas * sfcWind * wvp * wvp * wvp
+        + 1.45389826e-4 * tas * tas * sfcWind * wvp * wvp * wvp
+        + 2.17508610e-4 * sfcWind * sfcWind * wvp * wvp * wvp
+        + -6.66724702e-5 * tas * sfcWind * sfcWind * wvp * wvp * wvp
+        + 3.33217140e-5 * sfcWind * sfcWind * sfcWind * wvp * wvp * wvp
+        + -2.26921615e-3 * dt * wvp * wvp * wvp
+        + 3.80261982e-4 * tas * dt * wvp * wvp * wvp
+        + -5.45314314e-9 * tas * tas * dt * wvp * wvp * wvp
+        + -7.96355448e-4 * sfcWind * dt * wvp * wvp * wvp
+        + 2.53458034e-5 * tas * sfcWind * dt * wvp * wvp * wvp
+        + -6.31223658e-6 * sfcWind * sfcWind * dt * wvp * wvp * wvp
+        + 3.02122035e-4 * dt * dt * wvp * wvp * wvp
+        + -4.77403547e-6 * tas * dt * dt * wvp * wvp * wvp
+        + 1.73825715e-6 * sfcWind * dt * dt * wvp * wvp * wvp
+        + -4.09087898e-7 * dt * dt * dt * wvp * wvp * wvp
+        + 6.14155345e-1 * wvp * wvp * wvp * wvp
+        + -6.16755931e-2 * tas * wvp * wvp * wvp * wvp
+        + 1.33374846e-3 * tas * tas * wvp * wvp * wvp * wvp
+        + 3.55375387e-3 * sfcWind * wvp * wvp * wvp * wvp
+        + -5.13027851e-4 * tas * sfcWind * wvp * wvp * wvp * wvp
+        + 1.02449757e-4 * sfcWind * sfcWind * wvp * wvp * wvp * wvp
+        + -1.48526421e-3 * dt * wvp * wvp * wvp * wvp
+        + -4.11469183e-5 * tas * dt * wvp * wvp * wvp * wvp
+        + -6.80434415e-6 * sfcWind * dt * wvp * wvp * wvp * wvp
+        + -9.77675906e-6 * dt * dt * wvp * wvp * wvp * wvp
+        + 8.82773108e-2 * wvp * wvp * wvp * wvp * wvp
+        + -3.01859306e-3 * tas * wvp * wvp * wvp * wvp * wvp
+        + 1.04452989e-3 * sfcWind * wvp * wvp * wvp * wvp * wvp
+        + 2.47090539e-4 * dt * wvp * wvp * wvp * wvp * wvp
+        + 1.48348065e-3 * wvp * wvp * wvp * wvp * wvp * wvp
+    )
+
+
 @declare_units(tas="[temperature]", hurs="[]", sfcWind="[speed]", tmrt="[temperature]")
 def universal_thermal_climate_index(
     tas: xr.DataArray,
     hurs: xr.DataArray,
     sfcWind: xr.DataArray,
     tmrt: xr.DataArray = None,
+    mask_invalid: bool = True,
 ) -> xr.DataArray:
     """
     Universal Thermal Climate Index (UTCI)
 
-    The daily UTCI
+    The UTCI is the equivalent temperature for the environment derived from a
+    reference environment and is used to evaluate heat stress in outdoor spaces.
 
     Parameters
     ----------
@@ -1221,531 +1462,52 @@ def universal_thermal_climate_index(
         Wind velocity
     tmrt: xarray.DataArray, optional
         Daily mean radiant temperature
+    mask_invalid: boolean
+        If True (default), UTCI values are NaN where any of the inputs are outside
+        their validity ranges : -50°C < tas < 50°C,  -30°C < tas - tmrt < 30°C
+        and  0.5 m/s < sfcWind < 17.0 m/s.
 
     Returns
     -------
     xarray.DataArray
-        Ultimate Thermal Climate Index.
+        Universal Thermal Climate Index.
+
+    Notes
+    -----
+    The calculation uses water vapor partial pressure, which is derived from relative
+    humidity and saturation vapor pressure computed according to the ITS-90 equation.
+
+    This code was inspired by the `pythermalcomfort` package.
+
+    References
+    ----------
+    Bröde, Peter (2009). Program for calculating UTCI Temperature (UTCI), version a 0.002, http://www.utci.org/public/UTCI%20Program%20Code/UTCI_a002.f90
+    Błażejczyk, K., Jendritzky, G., Bröde, P., Fiala, D., Havenith, G., Epstein, Y., Psikuta, A., & Kampmann, B. (2013). An introduction to the Universal Thermal Climate Index (UTCI). DOI:10.7163/GPOL.2013.1
+
+    See also
+    --------
+    http://www.utci.org/utcineu/utcineu.php
     """
-
-    def _utci(tas, e_sat, tmrt, sfcWind, hurs):
-        def valid_range(value, bounds):
-            return np.where((value >= bounds[0]) & (value <= bounds[1]), value, np.nan)
-
-        def optimized(tdb, v, delta_t_tr, pa):
-            return (
-                tdb
-                + 0.607562052
-                + (-0.0227712343) * tdb
-                + (8.06470249 * (10 ** (-4))) * tdb * tdb
-                + (-1.54271372 * (10 ** (-4))) * tdb * tdb * tdb
-                + (-3.24651735 * (10 ** (-6))) * tdb * tdb * tdb * tdb
-                + (7.32602852 * (10 ** (-8))) * tdb * tdb * tdb * tdb * tdb
-                + (1.35959073 * (10 ** (-9))) * tdb * tdb * tdb * tdb * tdb * tdb
-                + (-2.25836520) * v
-                + 0.0880326035 * tdb * v
-                + 0.00216844454 * tdb * tdb * v
-                + (-1.53347087 * (10 ** (-5))) * tdb * tdb * tdb * v
-                + (-5.72983704 * (10 ** (-7))) * tdb * tdb * tdb * tdb * v
-                + (-2.55090145 * (10 ** (-9))) * tdb * tdb * tdb * tdb * tdb * v
-                + (-0.751269505) * v * v
-                + (-0.00408350271) * tdb * v * v
-                + (-5.21670675 * (10 ** (-5))) * tdb * tdb * v * v
-                + (1.94544667 * (10 ** (-6))) * tdb * tdb * tdb * v * v
-                + (1.14099531 * (10 ** (-8))) * tdb * tdb * tdb * tdb * v * v
-                + 0.158137256 * v * v * v
-                + (-6.57263143 * (10 ** (-5))) * tdb * v * v * v
-                + (2.22697524 * (10 ** (-7))) * tdb * tdb * v * v * v
-                + (-4.16117031 * (10 ** (-8))) * tdb * tdb * tdb * v * v * v
-                + (-0.0127762753) * v * v * v * v
-                + (9.66891875 * (10 ** (-6))) * tdb * v * v * v * v
-                + (2.52785852 * (10 ** (-9))) * tdb * tdb * v * v * v * v
-                + (4.56306672 * (10 ** (-4))) * v * v * v * v * v
-                + (-1.74202546 * (10 ** (-7))) * tdb * v * v * v * v * v
-                + (-5.91491269 * (10 ** (-6))) * v * v * v * v * v * v
-                + 0.398374029 * delta_t_tr
-                + (1.83945314 * (10 ** (-4))) * tdb * delta_t_tr
-                + (-1.73754510 * (10 ** (-4))) * tdb * tdb * delta_t_tr
-                + (-7.60781159 * (10 ** (-7))) * tdb * tdb * tdb * delta_t_tr
-                + (3.77830287 * (10 ** (-8))) * tdb * tdb * tdb * tdb * delta_t_tr
-                + (5.43079673 * (10 ** (-10)))
-                * tdb
-                * tdb
-                * tdb
-                * tdb
-                * tdb
-                * delta_t_tr
-                + (-0.0200518269) * v * delta_t_tr
-                + (8.92859837 * (10 ** (-4))) * tdb * v * delta_t_tr
-                + (3.45433048 * (10 ** (-6))) * tdb * tdb * v * delta_t_tr
-                + (-3.77925774 * (10 ** (-7))) * tdb * tdb * tdb * v * delta_t_tr
-                + (-1.69699377 * (10 ** (-9))) * tdb * tdb * tdb * tdb * v * delta_t_tr
-                + (1.69992415 * (10 ** (-4))) * v * v * delta_t_tr
-                + (-4.99204314 * (10 ** (-5))) * tdb * v * v * delta_t_tr
-                + (2.47417178 * (10 ** (-7))) * tdb * tdb * v * v * delta_t_tr
-                + (1.07596466 * (10 ** (-8))) * tdb * tdb * tdb * v * v * delta_t_tr
-                + (8.49242932 * (10 ** (-5))) * v * v * v * delta_t_tr
-                + (1.35191328 * (10 ** (-6))) * tdb * v * v * v * delta_t_tr
-                + (-6.21531254 * (10 ** (-9))) * tdb * tdb * v * v * v * delta_t_tr
-                + (-4.99410301 * (10 ** (-6))) * v * v * v * v * delta_t_tr
-                + (-1.89489258 * (10 ** (-8))) * tdb * v * v * v * v * delta_t_tr
-                + (8.15300114 * (10 ** (-8))) * v * v * v * v * v * delta_t_tr
-                + (7.55043090 * (10 ** (-4))) * delta_t_tr * delta_t_tr
-                + (-5.65095215 * (10 ** (-5))) * tdb * delta_t_tr * delta_t_tr
-                + (-4.52166564 * (10 ** (-7))) * tdb * tdb * delta_t_tr * delta_t_tr
-                + (2.46688878 * (10 ** (-8)))
-                * tdb
-                * tdb
-                * tdb
-                * delta_t_tr
-                * delta_t_tr
-                + (2.42674348 * (10 ** (-10)))
-                * tdb
-                * tdb
-                * tdb
-                * tdb
-                * delta_t_tr
-                * delta_t_tr
-                + (1.54547250 * (10 ** (-4))) * v * delta_t_tr * delta_t_tr
-                + (5.24110970 * (10 ** (-6))) * tdb * v * delta_t_tr * delta_t_tr
-                + (-8.75874982 * (10 ** (-8))) * tdb * tdb * v * delta_t_tr * delta_t_tr
-                + (-1.50743064 * (10 ** (-9)))
-                * tdb
-                * tdb
-                * tdb
-                * v
-                * delta_t_tr
-                * delta_t_tr
-                + (-1.56236307 * (10 ** (-5))) * v * v * delta_t_tr * delta_t_tr
-                + (-1.33895614 * (10 ** (-7))) * tdb * v * v * delta_t_tr * delta_t_tr
-                + (2.49709824 * (10 ** (-9)))
-                * tdb
-                * tdb
-                * v
-                * v
-                * delta_t_tr
-                * delta_t_tr
-                + (6.51711721 * (10 ** (-7))) * v * v * v * delta_t_tr * delta_t_tr
-                + (1.94960053 * (10 ** (-9)))
-                * tdb
-                * v
-                * v
-                * v
-                * delta_t_tr
-                * delta_t_tr
-                + (-1.00361113 * (10 ** (-8))) * v * v * v * v * delta_t_tr * delta_t_tr
-                + (-1.21206673 * (10 ** (-5))) * delta_t_tr * delta_t_tr * delta_t_tr
-                + (-2.18203660 * (10 ** (-7)))
-                * tdb
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                + (7.51269482 * (10 ** (-9)))
-                * tdb
-                * tdb
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                + (9.79063848 * (10 ** (-11)))
-                * tdb
-                * tdb
-                * tdb
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                + (1.25006734 * (10 ** (-6))) * v * delta_t_tr * delta_t_tr * delta_t_tr
-                + (-1.81584736 * (10 ** (-9)))
-                * tdb
-                * v
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                + (-3.52197671 * (10 ** (-10)))
-                * tdb
-                * tdb
-                * v
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                + (-3.36514630 * (10 ** (-8)))
-                * v
-                * v
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                + (1.35908359 * (10 ** (-10)))
-                * tdb
-                * v
-                * v
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                + (4.17032620 * (10 ** (-10)))
-                * v
-                * v
-                * v
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                + (-1.30369025 * (10 ** (-9)))
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                + (4.13908461 * (10 ** (-10)))
-                * tdb
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                + (9.22652254 * (10 ** (-12)))
-                * tdb
-                * tdb
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                + (-5.08220384 * (10 ** (-9)))
-                * v
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                + (-2.24730961 * (10 ** (-11)))
-                * tdb
-                * v
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                + (1.17139133 * (10 ** (-10)))
-                * v
-                * v
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                + (6.62154879 * (10 ** (-10)))
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                + (4.03863260 * (10 ** (-13)))
-                * tdb
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                + (1.95087203 * (10 ** (-12)))
-                * v
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                + (-4.73602469 * (10 ** (-12)))
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                + 5.12733497 * pa
-                + (-0.312788561) * tdb * pa
-                + (-0.0196701861) * tdb * tdb * pa
-                + (9.99690870 * (10 ** (-4))) * tdb * tdb * tdb * pa
-                + (9.51738512 * (10 ** (-6))) * tdb * tdb * tdb * tdb * pa
-                + (-4.66426341 * (10 ** (-7))) * tdb * tdb * tdb * tdb * tdb * pa
-                + 0.548050612 * v * pa
-                + (-0.00330552823) * tdb * v * pa
-                + (-0.00164119440) * tdb * tdb * v * pa
-                + (-5.16670694 * (10 ** (-6))) * tdb * tdb * tdb * v * pa
-                + (9.52692432 * (10 ** (-7))) * tdb * tdb * tdb * tdb * v * pa
-                + (-0.0429223622) * v * v * pa
-                + 0.00500845667 * tdb * v * v * pa
-                + (1.00601257 * (10 ** (-6))) * tdb * tdb * v * v * pa
-                + (-1.81748644 * (10 ** (-6))) * tdb * tdb * tdb * v * v * pa
-                + (-1.25813502 * (10 ** (-3))) * v * v * v * pa
-                + (-1.79330391 * (10 ** (-4))) * tdb * v * v * v * pa
-                + (2.34994441 * (10 ** (-6))) * tdb * tdb * v * v * v * pa
-                + (1.29735808 * (10 ** (-4))) * v * v * v * v * pa
-                + (1.29064870 * (10 ** (-6))) * tdb * v * v * v * v * pa
-                + (-2.28558686 * (10 ** (-6))) * v * v * v * v * v * pa
-                + (-0.0369476348) * delta_t_tr * pa
-                + 0.00162325322 * tdb * delta_t_tr * pa
-                + (-3.14279680 * (10 ** (-5))) * tdb * tdb * delta_t_tr * pa
-                + (2.59835559 * (10 ** (-6))) * tdb * tdb * tdb * delta_t_tr * pa
-                + (-4.77136523 * (10 ** (-8))) * tdb * tdb * tdb * tdb * delta_t_tr * pa
-                + (8.64203390 * (10 ** (-3))) * v * delta_t_tr * pa
-                + (-6.87405181 * (10 ** (-4))) * tdb * v * delta_t_tr * pa
-                + (-9.13863872 * (10 ** (-6))) * tdb * tdb * v * delta_t_tr * pa
-                + (5.15916806 * (10 ** (-7))) * tdb * tdb * tdb * v * delta_t_tr * pa
-                + (-3.59217476 * (10 ** (-5))) * v * v * delta_t_tr * pa
-                + (3.28696511 * (10 ** (-5))) * tdb * v * v * delta_t_tr * pa
-                + (-7.10542454 * (10 ** (-7))) * tdb * tdb * v * v * delta_t_tr * pa
-                + (-1.24382300 * (10 ** (-5))) * v * v * v * delta_t_tr * pa
-                + (-7.38584400 * (10 ** (-9))) * tdb * v * v * v * delta_t_tr * pa
-                + (2.20609296 * (10 ** (-7))) * v * v * v * v * delta_t_tr * pa
-                + (-7.32469180 * (10 ** (-4))) * delta_t_tr * delta_t_tr * pa
-                + (-1.87381964 * (10 ** (-5))) * tdb * delta_t_tr * delta_t_tr * pa
-                + (4.80925239 * (10 ** (-6))) * tdb * tdb * delta_t_tr * delta_t_tr * pa
-                + (-8.75492040 * (10 ** (-8)))
-                * tdb
-                * tdb
-                * tdb
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                + (2.77862930 * (10 ** (-5))) * v * delta_t_tr * delta_t_tr * pa
-                + (-5.06004592 * (10 ** (-6))) * tdb * v * delta_t_tr * delta_t_tr * pa
-                + (1.14325367 * (10 ** (-7)))
-                * tdb
-                * tdb
-                * v
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                + (2.53016723 * (10 ** (-6))) * v * v * delta_t_tr * delta_t_tr * pa
-                + (-1.72857035 * (10 ** (-8)))
-                * tdb
-                * v
-                * v
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                + (-3.95079398 * (10 ** (-8)))
-                * v
-                * v
-                * v
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                + (-3.59413173 * (10 ** (-7)))
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                + (7.04388046 * (10 ** (-7)))
-                * tdb
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                + (-1.89309167 * (10 ** (-8)))
-                * tdb
-                * tdb
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                + (-4.79768731 * (10 ** (-7)))
-                * v
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                + (7.96079978 * (10 ** (-9)))
-                * tdb
-                * v
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                + (1.62897058 * (10 ** (-9)))
-                * v
-                * v
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                + (3.94367674 * (10 ** (-8)))
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                + (-1.18566247 * (10 ** (-9)))
-                * tdb
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                + (3.34678041 * (10 ** (-10)))
-                * v
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                + (-1.15606447 * (10 ** (-10)))
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                + (-2.80626406) * pa * pa
-                + 0.548712484 * tdb * pa * pa
-                + (-0.00399428410) * tdb * tdb * pa * pa
-                + (-9.54009191 * (10 ** (-4))) * tdb * tdb * tdb * pa * pa
-                + (1.93090978 * (10 ** (-5))) * tdb * tdb * tdb * tdb * pa * pa
-                + (-0.308806365) * v * pa * pa
-                + 0.0116952364 * tdb * v * pa * pa
-                + (4.95271903 * (10 ** (-4))) * tdb * tdb * v * pa * pa
-                + (-1.90710882 * (10 ** (-5))) * tdb * tdb * tdb * v * pa * pa
-                + 0.00210787756 * v * v * pa * pa
-                + (-6.98445738 * (10 ** (-4))) * tdb * v * v * pa * pa
-                + (2.30109073 * (10 ** (-5))) * tdb * tdb * v * v * pa * pa
-                + (4.17856590 * (10 ** (-4))) * v * v * v * pa * pa
-                + (-1.27043871 * (10 ** (-5))) * tdb * v * v * v * pa * pa
-                + (-3.04620472 * (10 ** (-6))) * v * v * v * v * pa * pa
-                + 0.0514507424 * delta_t_tr * pa * pa
-                + (-0.00432510997) * tdb * delta_t_tr * pa * pa
-                + (8.99281156 * (10 ** (-5))) * tdb * tdb * delta_t_tr * pa * pa
-                + (-7.14663943 * (10 ** (-7))) * tdb * tdb * tdb * delta_t_tr * pa * pa
-                + (-2.66016305 * (10 ** (-4))) * v * delta_t_tr * pa * pa
-                + (2.63789586 * (10 ** (-4))) * tdb * v * delta_t_tr * pa * pa
-                + (-7.01199003 * (10 ** (-6))) * tdb * tdb * v * delta_t_tr * pa * pa
-                + (-1.06823306 * (10 ** (-4))) * v * v * delta_t_tr * pa * pa
-                + (3.61341136 * (10 ** (-6))) * tdb * v * v * delta_t_tr * pa * pa
-                + (2.29748967 * (10 ** (-7))) * v * v * v * delta_t_tr * pa * pa
-                + (3.04788893 * (10 ** (-4))) * delta_t_tr * delta_t_tr * pa * pa
-                + (-6.42070836 * (10 ** (-5))) * tdb * delta_t_tr * delta_t_tr * pa * pa
-                + (1.16257971 * (10 ** (-6)))
-                * tdb
-                * tdb
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                * pa
-                + (7.68023384 * (10 ** (-6))) * v * delta_t_tr * delta_t_tr * pa * pa
-                + (-5.47446896 * (10 ** (-7)))
-                * tdb
-                * v
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                * pa
-                + (-3.59937910 * (10 ** (-8)))
-                * v
-                * v
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                * pa
-                + (-4.36497725 * (10 ** (-6)))
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                * pa
-                + (1.68737969 * (10 ** (-7)))
-                * tdb
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                * pa
-                + (2.67489271 * (10 ** (-8)))
-                * v
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                * pa
-                + (3.23926897 * (10 ** (-9)))
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                * pa
-                + (-0.0353874123) * pa * pa * pa
-                + (-0.221201190) * tdb * pa * pa * pa
-                + 0.0155126038 * tdb * tdb * pa * pa * pa
-                + (-2.63917279 * (10 ** (-4))) * tdb * tdb * tdb * pa * pa * pa
-                + 0.0453433455 * v * pa * pa * pa
-                + (-0.00432943862) * tdb * v * pa * pa * pa
-                + (1.45389826 * (10 ** (-4))) * tdb * tdb * v * pa * pa * pa
-                + (2.17508610 * (10 ** (-4))) * v * v * pa * pa * pa
-                + (-6.66724702 * (10 ** (-5))) * tdb * v * v * pa * pa * pa
-                + (3.33217140 * (10 ** (-5))) * v * v * v * pa * pa * pa
-                + (-0.00226921615) * delta_t_tr * pa * pa * pa
-                + (3.80261982 * (10 ** (-4))) * tdb * delta_t_tr * pa * pa * pa
-                + (-5.45314314 * (10 ** (-9))) * tdb * tdb * delta_t_tr * pa * pa * pa
-                + (-7.96355448 * (10 ** (-4))) * v * delta_t_tr * pa * pa * pa
-                + (2.53458034 * (10 ** (-5))) * tdb * v * delta_t_tr * pa * pa * pa
-                + (-6.31223658 * (10 ** (-6))) * v * v * delta_t_tr * pa * pa * pa
-                + (3.02122035 * (10 ** (-4))) * delta_t_tr * delta_t_tr * pa * pa * pa
-                + (-4.77403547 * (10 ** (-6)))
-                * tdb
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                * pa
-                * pa
-                + (1.73825715 * (10 ** (-6)))
-                * v
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                * pa
-                * pa
-                + (-4.09087898 * (10 ** (-7)))
-                * delta_t_tr
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                * pa
-                * pa
-                + 0.614155345 * pa * pa * pa * pa
-                + (-0.0616755931) * tdb * pa * pa * pa * pa
-                + 0.00133374846 * tdb * tdb * pa * pa * pa * pa
-                + 0.00355375387 * v * pa * pa * pa * pa
-                + (-5.13027851 * (10 ** (-4))) * tdb * v * pa * pa * pa * pa
-                + (1.02449757 * (10 ** (-4))) * v * v * pa * pa * pa * pa
-                + (-0.00148526421) * delta_t_tr * pa * pa * pa * pa
-                + (-4.11469183 * (10 ** (-5))) * tdb * delta_t_tr * pa * pa * pa * pa
-                + (-6.80434415 * (10 ** (-6))) * v * delta_t_tr * pa * pa * pa * pa
-                + (-9.77675906 * (10 ** (-6)))
-                * delta_t_tr
-                * delta_t_tr
-                * pa
-                * pa
-                * pa
-                * pa
-                + 0.0882773108 * pa * pa * pa * pa * pa
-                + (-0.00301859306) * tdb * pa * pa * pa * pa * pa
-                + 0.00104452989 * v * pa * pa * pa * pa * pa
-                + (2.47090539 * (10 ** (-4))) * delta_t_tr * pa * pa * pa * pa * pa
-                + 0.00148348065 * pa * pa * pa * pa * pa * pa
-            )
-
-        delta = tmrt - tas
-        pa = e_sat * hurs / 1e5
-
-        utci_approx = optimized(tas, sfcWind, delta, pa)
-
-        tas_valid = valid_range(tas, (-50.0, 50.0))
-        delta_valid = valid_range(delta, (-30.0, 30.0))
-        sfcWind_valid = valid_range(sfcWind, (0.5, 17.0))
-        valid = ~(np.isnan(tas_valid) | np.isnan(delta_valid) | np.isnan(sfcWind_valid))
-        utci_approx = np.where(valid, utci_approx, np.nan)
-
-        return np.round_(utci_approx, 1)
-
     e_sat = saturation_vapor_pressure(tas=tas, method="its90")
-
-    if tmrt is None:
-        tmrt = tas.copy()
     tas = convert_units_to(tas, "degC")
-    tmrt = convert_units_to(tmrt, "degC")
-    hurs = convert_units_to(hurs, "pct")
     sfcWind = convert_units_to(sfcWind, "m/s")
+    if tmrt is None:
+        delta = np.float32(0.0)
+    else:
+        tmrt = convert_units_to(tmrt, "degC")
+        delta = tmrt - tas
+    pa = convert_units_to(e_sat, "kPa") * convert_units_to(hurs, "1")
 
-    return xr.apply_ufunc(
-        _utci, tas, e_sat, tmrt, sfcWind, hurs, dask="parallelized"
-    ).assign_attrs({"units": "degC"})
+    utci = _utci(tas, sfcWind, delta, pa)
+
+    utci = utci.assign_attrs({"units": "degC"})
+    if mask_invalid:
+        utci = utci.where(
+            (-50.0 < tas)
+            & (tas < 50.0)
+            & (-30 < delta)
+            & (delta < 30)
+            & (0.5 < sfcWind)
+            & (sfcWind < 17.0)
+        )
+    return utci
