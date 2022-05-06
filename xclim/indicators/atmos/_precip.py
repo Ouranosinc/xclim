@@ -3,7 +3,12 @@ from inspect import _empty  # noqa
 
 from xclim import indices
 from xclim.core import cfchecks
-from xclim.core.indicator import Daily, Hourly, Indicator
+from xclim.core.indicator import (
+    Daily,
+    Hourly,
+    Indicator,
+    ResamplingIndicatorWithIndexing,
+)
 from xclim.core.utils import InputKind
 
 __all__ = [
@@ -35,6 +40,10 @@ __all__ = [
     "dry_spell_total_length",
     "wet_precip_accumulation",
     "rprctot",
+    "cold_and_dry_days",
+    "cold_and_wet_days",
+    "warm_and_dry_days",
+    "warm_and_wet_days",
 ]
 
 
@@ -51,9 +60,17 @@ class Precip(Daily):
     context = "hydro"
 
 
-class PrTasx(Daily):
-    """Indicator involving pr and one of tas, tasmin or tasmax."""
+class PrecipWithIndexing(ResamplingIndicatorWithIndexing):
+    """Indicator involving daily pr series and allowing indexing."""
 
+    src_freq = "D"
+    context = "hydro"
+
+
+class PrTasxWithIndexing(ResamplingIndicatorWithIndexing):
+    """Indicator involving pr and one of tas, tasmin or tasmax, allowing indexing."""
+
+    src_freq = "D"
     context = "hydro"
 
     def cfcheck(self, pr, tas):
@@ -67,7 +84,7 @@ class HrPrecip(Hourly):
     context = "hydro"
 
 
-rain_on_frozen_ground_days = PrTasx(
+rain_on_frozen_ground_days = PrTasxWithIndexing(
     identifier="rain_frzgr",
     units="days",
     standard_name="number_of_days_with_lwe_thickness_of_"
@@ -82,7 +99,7 @@ rain_on_frozen_ground_days = PrTasx(
     compute=indices.rain_on_frozen_ground_days,
 )
 
-max_1day_precipitation_amount = Precip(
+max_1day_precipitation_amount = PrecipWithIndexing(
     identifier="rx1day",
     units="mm/day",
     standard_name="lwe_thickness_of_precipitation_amount",
@@ -103,7 +120,7 @@ max_n_day_precipitation_amount = Precip(
     compute=indices.max_n_day_precipitation_amount,
 )
 
-wetdays = Precip(
+wetdays = PrecipWithIndexing(
     identifier="wetdays",
     units="days",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold",
@@ -113,7 +130,7 @@ wetdays = Precip(
     compute=indices.wetdays,
 )
 
-wetdays_prop = Precip(
+wetdays_prop = PrecipWithIndexing(
     identifier="wetdays_prop",
     units="1",
     long_name="Proportion of wet days (precip >= {thresh})",
@@ -122,7 +139,7 @@ wetdays_prop = Precip(
     compute=indices.wetdays_prop,
 )
 
-dry_days = Precip(
+dry_days = PrecipWithIndexing(
     identifier="dry_days",
     units="days",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_below_threshold",
@@ -156,7 +173,7 @@ maximum_consecutive_dry_days = Precip(
     compute=indices.maximum_consecutive_dry_days,
 )
 
-daily_pr_intensity = Precip(
+daily_pr_intensity = PrecipWithIndexing(
     identifier="sdii",
     units="mm/day",
     standard_name="lwe_thickness_of_precipitation_amount",
@@ -180,7 +197,7 @@ max_pr_intensity = HrPrecip(
     keywords="IDF curves",
 )
 
-precip_accumulation = Precip(
+precip_accumulation = PrecipWithIndexing(
     title="Accumulated total precipitation (solid and liquid)",
     identifier="prcptot",
     units="mm",
@@ -192,7 +209,7 @@ precip_accumulation = Precip(
     parameters=dict(tas=None, phase=None),
 )
 
-wet_precip_accumulation = Precip(
+wet_precip_accumulation = PrecipWithIndexing(
     title="Accumulated total precipitation (solid and liquid) during wet days",
     identifier="wet_prcptot",
     units="mm",
@@ -204,7 +221,7 @@ wet_precip_accumulation = Precip(
     parameters={"thresh": {"default": "1 mm/day"}},
 )
 
-liquid_precip_accumulation = PrTasx(
+liquid_precip_accumulation = PrTasxWithIndexing(
     title="Accumulated liquid precipitation.",
     identifier="liquidprcptot",
     units="mm",
@@ -216,7 +233,7 @@ liquid_precip_accumulation = PrTasx(
     parameters={"tas": {"kind": InputKind.VARIABLE}, "phase": "liquid"},
 )
 
-solid_precip_accumulation = PrTasx(
+solid_precip_accumulation = PrTasxWithIndexing(
     title="Accumulated solid precipitation.",
     identifier="solidprcptot",
     units="mm",
@@ -272,7 +289,7 @@ fire_weather_indexes = FireWeather(
 )
 
 
-last_snowfall = Precip(
+last_snowfall = PrecipWithIndexing(
     identifier="last_snowfall",
     standard_name="day_of_year",
     long_name="Date of last snowfall",
@@ -281,7 +298,7 @@ last_snowfall = Precip(
     compute=indices.last_snowfall,
 )
 
-first_snowfall = Precip(
+first_snowfall = PrecipWithIndexing(
     identifier="first_snowfall",
     standard_name="day_of_year",
     long_name="Date of first snowfall",
@@ -290,7 +307,7 @@ first_snowfall = Precip(
     compute=indices.first_snowfall,
 )
 
-days_with_snow = Precip(
+days_with_snow = PrecipWithIndexing(
     identifier="days_with_snow",
     title="Days with snowfall",
     long_name="Number of days with solid precipitation flux between low and high thresholds.",
@@ -299,7 +316,7 @@ days_with_snow = Precip(
     compute=indices.days_with_snow,
 )
 
-days_over_precip_thresh = Precip(
+days_over_precip_thresh = PrecipWithIndexing(
     identifier="days_over_precip_thresh",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold",
     description="{freq} number of days with precipitation above percentile."
@@ -309,7 +326,7 @@ days_over_precip_thresh = Precip(
     compute=indices.days_over_precip_thresh,
 )
 
-days_over_precip_doy_thresh = Precip(
+days_over_precip_doy_thresh = PrecipWithIndexing(
     identifier="days_over_precip_doy_thresh",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_above_daily_threshold",
     description="{freq} number of days with precipitation above a daily percentile."
@@ -319,7 +336,7 @@ days_over_precip_doy_thresh = Precip(
     compute=indices.days_over_precip_thresh,
 )
 
-high_precip_low_temp = PrTasx(
+high_precip_low_temp = PrTasxWithIndexing(
     identifier="high_precip_low_temp",
     description="{freq} number of days with precipitation above {pr_thresh} and temperature below {tas_thresh}.",
     units="days",
@@ -327,7 +344,7 @@ high_precip_low_temp = PrTasx(
     compute=indices.high_precip_low_temp,
 )
 
-fraction_over_precip_doy_thresh = Precip(
+fraction_over_precip_doy_thresh = PrecipWithIndexing(
     identifier="fraction_over_precip_doy_thresh",
     description="{freq} fraction of total precipitation due to days with precipitation above a daily percentile."
     " Only days with at least {thresh} are included in the total.",
@@ -336,7 +353,7 @@ fraction_over_precip_doy_thresh = Precip(
     compute=indices.fraction_over_precip_thresh,
 )
 
-fraction_over_precip_thresh = Precip(
+fraction_over_precip_thresh = PrecipWithIndexing(
     identifier="fraction_over_precip_thresh",
     description="{freq} fraction of total precipitation due to days with precipitation above percentile."
     " Only days with at least {thresh} are included in the total.",
@@ -345,7 +362,7 @@ fraction_over_precip_thresh = Precip(
     compute=indices.fraction_over_precip_thresh,
 )
 
-liquid_precip_ratio = PrTasx(
+liquid_precip_ratio = PrTasxWithIndexing(
     identifier="liquid_precip_ratio",
     description="{freq} ratio of rainfall to total precipitation."
     " Rainfall is estimated as precipitation on days where temperature is above {thresh}.",
@@ -376,10 +393,51 @@ dry_spell_total_length = Precip(
     compute=indices.dry_spell_total_length,
 )
 
-rprctot = Precip(
+rprctot = PrecipWithIndexing(
     identifier="rprctot",
     description="Proportion of accumulated precipitation arising from convective processes.",
     units="",
     cell_methods="time: sum",
     compute=indices.rprctot,
+)
+
+
+cold_and_dry_days = PrecipWithIndexing(
+    identifier="cold_and_dry_days",
+    units="days",
+    long_name="Cold and dry days",
+    title="Cold and dry days",
+    description="{freq} number of days where tas < 25th percentile and pr < 25th percentile",
+    cell_methods="time: sum over days",
+    compute=indices.cold_and_dry_days,
+)
+
+warm_and_dry_days = PrecipWithIndexing(
+    identifier="warm_and_dry_days",
+    units="days",
+    long_name="warm and dry days",
+    title="warm and dry days",
+    description="{freq} number of days where tas > 75th percentile and pr < 25th percentile",
+    cell_methods="time: sum over days",
+    compute=indices.warm_and_dry_days,
+)
+
+warm_and_wet_days = PrecipWithIndexing(
+    identifier="warm_and_wet_days",
+    units="days",
+    long_name="warm and wet days",
+    title="warm and wet days",
+    description="{freq} number of days where tas > 75th percentile and pr > 75th percentile",
+    cell_methods="time: sum over days",
+    compute=indices.warm_and_wet_days,
+)
+
+cold_and_wet_days = PrecipWithIndexing(
+    identifier="cold_and_wet_days",
+    units="days",
+    long_name="cold and wet days",
+    title="cold and wet days",
+    description="{freq} number of days where tas < 25th percentile and pr > 75th percentile",
+    cell_methods="time: sum over days",
+    compute=indices.cold_and_wet_days,
 )
