@@ -149,7 +149,7 @@ dry_days = PrecipWithIndexing(
     compute=indices.dry_days,
 )
 
-maximum_consecutive_wet_days = PrecipWithIndexing(
+maximum_consecutive_wet_days = Precip(
     identifier="cwd",
     units="days",
     standard_name="number_of_days_with_lwe_thickness_of_"
@@ -161,7 +161,7 @@ maximum_consecutive_wet_days = PrecipWithIndexing(
     compute=indices.maximum_consecutive_wet_days,
 )
 
-maximum_consecutive_dry_days = PrecipWithIndexing(
+maximum_consecutive_dry_days = Precip(
     identifier="cdd",
     units="days",
     standard_name="number_of_days_with_lwe_thickness_of_"
