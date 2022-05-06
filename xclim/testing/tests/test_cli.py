@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # Tests for `xclim` package, command line interface
+from __future__ import annotations
+
 import numpy as np
 import pytest
 import xarray as xr

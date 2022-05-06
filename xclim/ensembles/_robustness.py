@@ -12,7 +12,9 @@ References
 ----------
 .. [AR5WG1C12] https://www.ipcc.ch/site/assets/uploads/2018/02/WG1AR5_Chapter12_FINAL.pdf
 """
-from typing import Tuple, Union
+from __future__ import annotations
+
+from typing import Union
 
 import numpy as np
 import scipy.stats as spstats
@@ -22,11 +24,11 @@ from xclim.core.formatting import update_history
 
 
 def change_significance(
-    fut: Union[xr.DataArray, xr.Dataset],
-    ref: Union[xr.DataArray, xr.Dataset] = None,
+    fut: xr.DataArray | xr.Dataset,
+    ref: xr.DataArray | xr.Dataset = None,
     test: str = "ttest",
     **kwargs,
-) -> Tuple[Union[xr.DataArray, xr.Dataset], Union[xr.DataArray, xr.Dataset]]:
+) -> tuple[xr.DataArray | xr.Dataset, xr.DataArray | xr.Dataset]:
     """Robustness statistics qualifying how the members of an ensemble agree on the existence of change and on its sign.
 
     Parameters
@@ -230,8 +232,8 @@ def change_significance(
 
 
 def robustness_coefficient(
-    fut: Union[xr.DataArray, xr.Dataset], ref: Union[xr.DataArray, xr.Dataset]
-) -> Union[xr.DataArray, xr.Dataset]:
+    fut: xr.DataArray | xr.Dataset, ref: xr.DataArray | xr.Dataset
+) -> xr.DataArray | xr.Dataset:
     """Robustness coefficient quantifying the robustness of a climate change signal in an ensemble.
 
     Taken from Knutti and Sedlacek (2013).

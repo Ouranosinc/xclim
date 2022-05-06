@@ -2,6 +2,8 @@
 Detrending objects
 ------------------
 """
+from __future__ import annotations
+
 from typing import Union
 
 import xarray as xr
@@ -33,9 +35,7 @@ class BaseDetrend(ParametrizableWithDataset):
     """
 
     @parse_group
-    def __init__(
-        self, *, group: Union[Grouper, str] = "time", kind: str = "+", **kwargs
-    ):
+    def __init__(self, *, group: Grouper | str = "time", kind: str = "+", **kwargs):
         """Initialize Detrending object.
 
         Parameters

@@ -1,4 +1,6 @@
 """xclim command line interface module."""
+from __future__ import annotations
+
 import sys
 import warnings
 

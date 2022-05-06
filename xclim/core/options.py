@@ -4,8 +4,10 @@ Options submodule
 
 Global or contextual options for xclim, similar to xarray.set_options.
 """
+from __future__ import annotations
+
 from inspect import signature
-from typing import Callable, Dict
+from typing import Callable
 
 from boltons.funcutils import wraps
 
@@ -21,7 +23,7 @@ RUN_LENGTH_UFUNC = "run_length_ufunc"
 SDBA_EXTRA_OUTPUT = "sdba_extra_output"
 SDBA_ENCODE_CF = "sdba_encode_cf"
 
-MISSING_METHODS: Dict[str, Callable] = dict()
+MISSING_METHODS: dict[str, Callable] = dict()
 
 OPTIONS = {
     METADATA_LOCALES: list(),

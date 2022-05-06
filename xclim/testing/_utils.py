@@ -1,12 +1,14 @@
 """Testing and tutorial utilities module."""
 # Most of this code copied and adapted from xarray
+from __future__ import annotations
+
 import hashlib
 import json
 import logging
 import re
 import warnings
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Sequence
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin
 from urllib.request import urlopen, urlretrieve
@@ -105,8 +107,8 @@ def _get(
 # idea copied from raven that it borrowed from xclim that borrowed it from xarray that was borrowed from Seaborn
 def open_dataset(
     name: str,
-    suffix: Optional[str] = None,
-    dap_url: Optional[str] = None,
+    suffix: str | None = None,
+    dap_url: str | None = None,
     github_url: str = "https://github.com/Ouranosinc/xclim-testdata",
     branch: str = "main",
     cache: bool = True,

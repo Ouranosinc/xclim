@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # Tests for `xclim.locales`
+from __future__ import annotations
+
 import json
 
 import numpy as np

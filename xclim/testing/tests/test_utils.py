@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # Test for utils
+from __future__ import annotations
+
 from inspect import signature
 
 import numpy as np

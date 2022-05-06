@@ -1,10 +1,11 @@
 # This File is for testing atmos indicators that fit neither in test_precip or test_temperature
 # Expected values might be the same as for the indices tests, see test_indices comments.
+from __future__ import annotations
+
 import numpy as np
 import xarray as xr
 
 from xclim import atmos
-from xclim.core.units import convert_units_to
 from xclim.testing import open_dataset
 
 K2C = 273.16

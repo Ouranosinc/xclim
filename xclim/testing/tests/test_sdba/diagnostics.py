@@ -2,6 +2,8 @@
 This module is meant to compare results with those expected from papers, or create figures illustrating the
 behavior of sdba methods and utilities.
 """
+from __future__ import annotations
+
 import numpy as np
 from scipy.stats import scoreatpercentile
 from scipy.stats.kde import gaussian_kde

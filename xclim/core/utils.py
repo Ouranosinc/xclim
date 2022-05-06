@@ -5,6 +5,8 @@ Miscellaneous indices utilities
 
 Helper functions for the indices computation, indicator construction and other things.
 """
+from __future__ import annotations
+
 import importlib.util
 import logging
 import os
@@ -16,7 +18,7 @@ from importlib.resources import open_text
 from inspect import Parameter
 from pathlib import Path
 from types import FunctionType
-from typing import Callable, Mapping, NewType, Optional, Sequence, Tuple, Union
+from typing import Callable, Mapping, NewType, Optional, Sequence, Union
 
 import numpy as np
 import xarray as xr
@@ -46,7 +48,7 @@ ICM = {
 
 
 def wrapped_partial(
-    func: FunctionType, suggested: Optional[dict] = None, **fixed
+    func: FunctionType, suggested: dict | None = None, **fixed
 ) -> Callable:
     """Wrap a function, updating its signature but keeping its docstring.
 
@@ -116,7 +118,7 @@ def walk_map(d: dict, func: FunctionType) -> dict:
     return out
 
 
-def load_module(path: os.PathLike, name: Optional[str] = None):
+def load_module(path: os.PathLike, name: str | None = None):
     """Load a python module from a python file, optionally changing its name.
 
     Examples
@@ -304,7 +306,7 @@ def _get_gamma(virtual_indexes: np.ndarray, previous_indexes: np.ndarray):
 
 def _get_indexes(
     arr: np.ndarray, virtual_indexes: np.ndarray, valid_values_count: np.ndarray
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Get the valid indexes of arr neighbouring virtual_indexes.
 
@@ -373,7 +375,7 @@ def _nan_quantile(
     axis: int = 0,
     alpha: float = 1.0,
     beta: float = 1.0,
-) -> Union[float, np.ndarray]:
+) -> float | np.ndarray:
     """
     Get the quantiles of the array for the given axis.
     A linear interpolation is performed using alpha and beta.
@@ -435,7 +437,7 @@ def _nan_quantile(
 def raise_warn_or_log(
     err: Exception,
     mode: str,
-    msg: Optional[str] = None,
+    msg: str | None = None,
     err_type=ValueError,
     stacklevel: int = 1,
 ):

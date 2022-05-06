@@ -2,8 +2,10 @@
 Pre and post processing
 -----------------------
 """
+from __future__ import annotations
+
 import warnings
-from typing import Optional, Sequence, Tuple, Union
+from typing import Sequence, Union
 
 import dask.array as dsk
 import numpy as np
@@ -26,7 +28,7 @@ def adapt_freq(
     ref: xr.DataArray,
     sim: xr.DataArray,
     *,
-    group: Union[Grouper, str],
+    group: Grouper | str,
     thresh: str = "0 mm d-1",
 ) -> xr.Dataset:
     r"""
@@ -214,9 +216,9 @@ def jitter(
 @update_xclim_history
 def normalize(
     data: xr.DataArray,
-    norm: Optional[xr.DataArray] = None,
+    norm: xr.DataArray | None = None,
     *,
-    group: Union[Grouper, str],
+    group: Grouper | str,
     kind: str = ADDITIVE,
 ) -> xr.Dataset:
     """Normalize an array by removing its mean.
@@ -277,10 +279,10 @@ def uniform_noise_like(
 @update_xclim_history
 def standardize(
     da: xr.DataArray,
-    mean: Optional[xr.DataArray] = None,
-    std: Optional[xr.DataArray] = None,
+    mean: xr.DataArray | None = None,
+    std: xr.DataArray | None = None,
     dim: str = "time",
-) -> Tuple[Union[xr.DataArray, xr.Dataset], xr.DataArray, xr.DataArray]:
+) -> tuple[xr.DataArray | xr.Dataset, xr.DataArray, xr.DataArray]:
     """Standardize a DataArray by centering its mean and scaling it by its standard deviation.
 
     Either of both of mean and std can be provided if need be.

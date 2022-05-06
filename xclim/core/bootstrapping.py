@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import warnings
 from inspect import signature
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable
 
 import cftime
 import numpy as np
@@ -111,7 +113,7 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xr.DataArray:
                 da_key = name
     # Extract the DataArray inputs from the arguments
     da: DataArray = kwargs.pop(da_key)
-    per_da: Optional[DataArray] = kwargs.pop(per_key, None)
+    per_da: DataArray | None = kwargs.pop(per_key, None)
     if per_da is None:
         # per may be empty on non doy percentiles
         raise KeyError(
@@ -210,7 +212,7 @@ def _get_year_label(year_dt) -> str:
 
 # TODO: Return a generator instead and assess performance
 def build_bootstrap_year_da(
-    da: DataArray, groups: Dict[Any, slice], label: Any, dim: str = "time"
+    da: DataArray, groups: dict[Any, slice], label: Any, dim: str = "time"
 ) -> DataArray:
     """Return an array where a group in the original is replaced by every other groups along a new dimension.
 

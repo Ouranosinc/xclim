@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def rstjinja(app, docname, source):
     """
     Render our pages as a jinja template for fancy templating goodness.
