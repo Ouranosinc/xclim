@@ -2,6 +2,11 @@ default_language_version:
   python: python3
 
 repos:
+  - repo: https://github.com/asottile/reorder_python_imports
+    rev: v3.0.1
+    hooks:
+      - id: reorder-python-imports
+        args: [ --py38-plus, --add-import, 'from __future__ import annotations' ]
   - repo: https://github.com/asottile/pyupgrade
     rev: v2.32.0
     hooks:
