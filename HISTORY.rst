@@ -12,6 +12,9 @@ New features and enhancements
 * Add "Celsius" to aliases of "celsius" unit.(:issue:`1067`, :pull:`1068`).
 * All indicators now have indexing enabled, except those computing statistics on spells. (:issue:`1069`, :pull:`1070`).
 
+Internal changes
+^^^^^^^^^^^^^^^^
+* Typing syntax has been updated everywhere thanks to `from __future__ import annotations'`.(:issue:`1065`, :pull:`1071`)
 
 0.36.0 (29-04-2022)
 -------------------
