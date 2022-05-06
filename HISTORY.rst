@@ -13,7 +13,7 @@ New features and enhancements
 
 New indicators
 ^^^^^^^^^^^^^^
-* ``universal_thermal_climate_index`` for computing universal thermal climate index from the near-surface temperature, relative humidity and near-surface windspeed. (:issue:`1060`, :pull:`1062`). 
+* ``universal_thermal_climate_index`` for computing universal thermal climate index from the near-surface temperature, relative humidity and near-surface windspeed. (:issue:`1060`, :pull:`1062`).
     - A new method ``ITS90`` has also been added for calculating saturation water vapour pressure. (:issue:`1060`, :pull:`1062`).
 
 0.36.0 (29-04-2022)
