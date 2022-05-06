@@ -4,20 +4,17 @@ History
 
 0.37.0 (unreleased)
 -------------------
-
-Contributors to this version: Ludwig Lierhammer (:user:`ludwiglierhammer`).
-
-*  New indicator ``universal_thermal_climate_index``, computing universal thermal climate index from the near-surface temperature, relative humidity and near-surface windspeed. New method ITS90 for calculating saturation water vapour pressure (:issue:`1060`, :pull:`1062`).
-
-0.36.1 (unreleased)
-------------------
-
-Contributors to this version:  Abel Aoun (:user:`bzah`).
+Contributors to this version:  Abel Aoun (:user:`bzah`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* Add "Celsius" to aliases of "celsius" unit.(:issue:`1067`, :pull:`1068`).
+* Add "Celsius" to aliases of "celsius" unit. (:issue:`1067`, :pull:`1068`).
+* All indicators now have indexing enabled, except those computing statistics on spells. (:issue:`1069`, :pull:`1070`).
 
+New indicators
+^^^^^^^^^^^^^^
+* ``universal_thermal_climate_index`` for computing universal thermal climate index from the near-surface temperature, relative humidity and near-surface windspeed. (:issue:`1060`, :pull:`1062`). 
+    - A new method ``ITS90`` has also been added for calculating saturation water vapour pressure. (:issue:`1060`, :pull:`1062`).
 
 0.36.0 (29-04-2022)
 -------------------

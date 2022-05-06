@@ -417,7 +417,14 @@ def test_all_parameters_understood(official_indicators):
 
 def test_signature():
     sig = signature(xclim.atmos.solid_precip_accumulation)
-    assert list(sig.parameters.keys()) == ["pr", "tas", "thresh", "freq", "ds"]
+    assert list(sig.parameters.keys()) == [
+        "pr",
+        "tas",
+        "thresh",
+        "freq",
+        "ds",
+        "indexer",
+    ]
     assert sig.parameters["pr"].annotation == Union[xr.DataArray, str]
     assert sig.parameters["tas"].default == "tas"
     assert sig.parameters["tas"].kind == sig.parameters["tas"].POSITIONAL_OR_KEYWORD
