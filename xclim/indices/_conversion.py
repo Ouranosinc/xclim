@@ -4,8 +4,12 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 
-from xclim.core.calendar import date_range, datetime_to_decimal_year
-from xclim.core.units import amount2rate, convert_units_to, declare_units, units2pint
+from xclim.core.calendar import date_range
+from xclim.core.calendar import datetime_to_decimal_year
+from xclim.core.units import amount2rate
+from xclim.core.units import convert_units_to
+from xclim.core.units import declare_units
+from xclim.core.units import units2pint
 
 __all__ = [
     "humidex",

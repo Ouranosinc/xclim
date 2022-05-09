@@ -23,9 +23,12 @@ import pytest
 import xarray as xr
 
 from xclim import indices as xci
-from xclim.core.calendar import date_range, percentile_doy
+from xclim.core.calendar import date_range
+from xclim.core.calendar import percentile_doy
 from xclim.core.options import set_options
-from xclim.core.units import ValidationError, convert_units_to, units
+from xclim.core.units import convert_units_to
+from xclim.core.units import units
+from xclim.core.units import ValidationError
 from xclim.testing import open_dataset
 
 K2C = 273.15

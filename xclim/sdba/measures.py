@@ -18,7 +18,8 @@ from boltons.funcutils import wraps
 
 from xclim import sdba
 from xclim.core.formatting import update_xclim_history
-from xclim.core.units import convert_units_to, units2pint
+from xclim.core.units import convert_units_to
+from xclim.core.units import units2pint
 
 
 def check_same_units_and_convert(func) -> Callable:

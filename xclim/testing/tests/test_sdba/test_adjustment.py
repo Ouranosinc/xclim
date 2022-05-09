@@ -3,36 +3,31 @@ from __future__ import annotations
 import numpy as np
 import pytest
 import xarray as xr
-from scipy.stats import genpareto, norm, uniform
-
-from xclim.core.options import set_options
-from xclim.core.units import convert_units_to
-from xclim.sdba.adjustment import (
-    LOCI,
-    DetrendedQuantileMapping,
-    EmpiricalQuantileMapping,
-    ExtremeValues,
-    PrincipalComponents,
-    QuantileDeltaMapping,
-    Scaling,
-)
-from xclim.sdba.base import Grouper
-from xclim.sdba.processing import (
-    jitter_under_thresh,
-    stack_variables,
-    uniform_noise_like,
-    unstack_variables,
-)
-from xclim.sdba.utils import (
-    ADDITIVE,
-    MULTIPLICATIVE,
-    apply_correction,
-    get_correction,
-    invert,
-)
-from xclim.testing import open_dataset
+from scipy.stats import genpareto
+from scipy.stats import norm
+from scipy.stats import uniform
 
 from .utils import nancov
+from xclim.core.options import set_options
+from xclim.core.units import convert_units_to
+from xclim.sdba.adjustment import DetrendedQuantileMapping
+from xclim.sdba.adjustment import EmpiricalQuantileMapping
+from xclim.sdba.adjustment import ExtremeValues
+from xclim.sdba.adjustment import LOCI
+from xclim.sdba.adjustment import PrincipalComponents
+from xclim.sdba.adjustment import QuantileDeltaMapping
+from xclim.sdba.adjustment import Scaling
+from xclim.sdba.base import Grouper
+from xclim.sdba.processing import jitter_under_thresh
+from xclim.sdba.processing import stack_variables
+from xclim.sdba.processing import uniform_noise_like
+from xclim.sdba.processing import unstack_variables
+from xclim.sdba.utils import ADDITIVE
+from xclim.sdba.utils import apply_correction
+from xclim.sdba.utils import get_correction
+from xclim.sdba.utils import invert
+from xclim.sdba.utils import MULTIPLICATIVE
+from xclim.testing import open_dataset
 
 
 class TestLoci:

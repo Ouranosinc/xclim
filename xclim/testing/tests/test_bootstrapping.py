@@ -7,18 +7,16 @@ import pytest
 from xarray.core.dataarray import DataArray
 
 from xclim.core.calendar import percentile_doy
-from xclim.indices import (
-    cold_spell_duration_index,
-    days_over_precip_thresh,
-    fraction_over_precip_thresh,
-    tg10p,
-    tg90p,
-    tn10p,
-    tn90p,
-    tx10p,
-    tx90p,
-    warm_spell_duration_index,
-)
+from xclim.indices import cold_spell_duration_index
+from xclim.indices import days_over_precip_thresh
+from xclim.indices import fraction_over_precip_thresh
+from xclim.indices import tg10p
+from xclim.indices import tg90p
+from xclim.indices import tn10p
+from xclim.indices import tn90p
+from xclim.indices import tx10p
+from xclim.indices import tx90p
+from xclim.indices import warm_spell_duration_index
 from xclim.testing import open_dataset
 
 

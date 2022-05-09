@@ -3,14 +3,12 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from xclim.sdba.loess import (
-    _constant_regression,
-    _gaussian_weighting,
-    _linear_regression,
-    _loess_nb,
-    _tricube_weighting,
-    loess_smoothing,
-)
+from xclim.sdba.loess import _constant_regression
+from xclim.sdba.loess import _gaussian_weighting
+from xclim.sdba.loess import _linear_regression
+from xclim.sdba.loess import _loess_nb
+from xclim.sdba.loess import _tricube_weighting
+from xclim.sdba.loess import loess_smoothing
 from xclim.testing import open_dataset
 
 

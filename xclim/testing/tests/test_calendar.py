@@ -10,24 +10,22 @@ import xarray as xr
 from numpy.testing import assert_array_equal
 from xarray.coding.cftimeindex import CFTimeIndex
 
-from xclim.core.calendar import (
-    adjust_doy_calendar,
-    climatological_mean_doy,
-    compare_offsets,
-    convert_calendar,
-    date_range,
-    datetime_to_decimal_year,
-    days_in_year,
-    days_since_to_doy,
-    doy_to_days_since,
-    ensure_cftime_array,
-    get_calendar,
-    interp_calendar,
-    max_doy,
-    parse_offset,
-    percentile_doy,
-    time_bnds,
-)
+from xclim.core.calendar import adjust_doy_calendar
+from xclim.core.calendar import climatological_mean_doy
+from xclim.core.calendar import compare_offsets
+from xclim.core.calendar import convert_calendar
+from xclim.core.calendar import date_range
+from xclim.core.calendar import datetime_to_decimal_year
+from xclim.core.calendar import days_in_year
+from xclim.core.calendar import days_since_to_doy
+from xclim.core.calendar import doy_to_days_since
+from xclim.core.calendar import ensure_cftime_array
+from xclim.core.calendar import get_calendar
+from xclim.core.calendar import interp_calendar
+from xclim.core.calendar import max_doy
+from xclim.core.calendar import parse_offset
+from xclim.core.calendar import percentile_doy
+from xclim.core.calendar import time_bnds
 from xclim.testing import open_dataset
 
 

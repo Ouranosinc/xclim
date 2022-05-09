@@ -90,54 +90,64 @@ from __future__ import annotations
 import re
 import warnings
 import weakref
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
+from collections import OrderedDict
 from copy import deepcopy
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
+from dataclasses import dataclass
 from functools import reduce
+from inspect import _empty as _empty_default  # noqa
 from inspect import Parameter as _Parameter
 from inspect import Signature
-from inspect import _empty as _empty_default  # noqa
 from inspect import signature
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Callable, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any
+from typing import Callable
+from typing import Mapping
+from typing import Optional
+from typing import Sequence
+from typing import Tuple
+from typing import Union
 
 import numpy as np
-from xarray import DataArray, Dataset
+from xarray import DataArray
+from xarray import Dataset
 from yaml import safe_load
 
-from .. import indices
 from . import datachecks
-from .calendar import parse_offset, select_time
+from .. import indices
+from .calendar import parse_offset
+from .calendar import select_time
 from .cfchecks import cfcheck_from_name
-from .formatting import (
-    AttrFormatter,
-    default_formatter,
-    gen_call_string,
-    generate_indicator_docstring,
-    merge_attributes,
-    parse_doc,
-    update_history,
-)
-from .locales import (
-    TRANSLATABLE_ATTRS,
-    get_local_attrs,
-    get_local_formatter,
-    load_locale,
-    read_locale_file,
-)
-from .options import METADATA_LOCALES, MISSING_METHODS, MISSING_OPTIONS, OPTIONS
-from .units import check_units, convert_units_to, declare_units, units
-from .utils import (
-    VARIABLES,
-    InputKind,
-    MissingVariableError,
-    ValidationError,
-    infer_kind_from_parameter,
-    load_module,
-    raise_warn_or_log,
-)
+from .formatting import AttrFormatter
+from .formatting import default_formatter
+from .formatting import gen_call_string
+from .formatting import generate_indicator_docstring
+from .formatting import merge_attributes
+from .formatting import parse_doc
+from .formatting import update_history
+from .locales import get_local_attrs
+from .locales import get_local_formatter
+from .locales import load_locale
+from .locales import read_locale_file
+from .locales import TRANSLATABLE_ATTRS
+from .options import METADATA_LOCALES
+from .options import MISSING_METHODS
+from .options import MISSING_OPTIONS
+from .options import OPTIONS
+from .units import check_units
+from .units import convert_units_to
+from .units import declare_units
+from .units import units
+from .utils import infer_kind_from_parameter
+from .utils import InputKind
+from .utils import load_module
+from .utils import MissingVariableError
+from .utils import raise_warn_or_log
+from .utils import ValidationError
+from .utils import VARIABLES
 
 # Indicators registry
 registry = dict()  # Main class registry

@@ -20,14 +20,16 @@ from scipy import stats
 from statsmodels.tsa import stattools
 
 import xclim as xc
+from .base import Grouper
+from .base import map_groups
+from .base import parse_group
 from xclim.core.formatting import update_xclim_history
 from xclim.core.units import convert_units_to
 from xclim.core.utils import uses_dask
 from xclim.indices import run_length as rl
 from xclim.indices.generic import select_resample_op
-from xclim.indices.stats import fit, parametric_quantile
-
-from .base import Grouper, map_groups, parse_group
+from xclim.indices.stats import fit
+from xclim.indices.stats import parametric_quantile
 
 STATISTICAL_PROPERTIES: dict[str, Callable] = {}
 """ Dictionary of all the statistical properties available."""

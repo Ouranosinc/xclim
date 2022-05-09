@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from xclim import indices as xci
-from xclim.core.indicator import Daily, ResamplingIndicatorWithIndexing
+from xclim.core.indicator import Daily
+from xclim.core.indicator import ResamplingIndicatorWithIndexing
 
 __all__ = [
     "blowing_snow",

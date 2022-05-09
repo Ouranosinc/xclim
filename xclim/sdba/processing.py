@@ -5,22 +5,27 @@ Pre and post processing
 from __future__ import annotations
 
 import warnings
-from typing import Sequence, Union
+from typing import Sequence
+from typing import Union
 
 import dask.array as dsk
 import numpy as np
 import xarray as xr
 from xarray.core.utils import get_temp_dimname
 
-from xclim.core.calendar import get_calendar, max_doy, parse_offset
+from ._processing import _adapt_freq
+from ._processing import _normalize
+from ._processing import _reordering
+from .base import Grouper
+from .nbutils import _escore
+from .utils import ADDITIVE
+from .utils import copy_all_attrs
+from xclim.core.calendar import get_calendar
+from xclim.core.calendar import max_doy
+from xclim.core.calendar import parse_offset
 from xclim.core.formatting import update_xclim_history
 from xclim.core.units import convert_units_to
 from xclim.core.utils import uses_dask
-
-from ._processing import _adapt_freq, _normalize, _reordering
-from .base import Grouper
-from .nbutils import _escore
-from .utils import ADDITIVE, copy_all_attrs
 
 
 @update_xclim_history

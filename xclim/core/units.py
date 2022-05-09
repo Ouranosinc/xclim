@@ -11,7 +11,10 @@ from __future__ import annotations
 import re
 import warnings
 from inspect import signature
-from typing import Any, Callable, Optional, Union
+from typing import Any
+from typing import Callable
+from typing import Optional
+from typing import Union
 
 import pint.converters
 import pint.unit
@@ -21,7 +24,9 @@ from pint import Unit
 from pint.definitions import UnitDefinition
 from xarray import DataArray
 
-from .calendar import date_range, get_calendar, parse_offset
+from .calendar import date_range
+from .calendar import get_calendar
+from .calendar import parse_offset
 from .options import datacheck
 from .utils import ValidationError
 

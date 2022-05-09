@@ -11,7 +11,8 @@ from xclim import indicators
 from xclim.core.indicator import build_indicator_module_from_yaml
 from xclim.core.locales import read_locale_file
 from xclim.core.options import set_options
-from xclim.core.utils import InputKind, load_module
+from xclim.core.utils import InputKind
+from xclim.core.utils import load_module
 from xclim.testing import open_dataset
 
 

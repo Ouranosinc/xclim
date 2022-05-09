@@ -4,23 +4,18 @@ from __future__ import annotations
 import numpy as np
 import xarray
 
-from xclim.core.units import (
-    convert_units_to,
-    declare_units,
-    rate2amount,
-    units,
-    units2pint,
-)
-from xclim.core.utils import ensure_chunk_size
-
-from ._multivariate import (
-    daily_temperature_range,
-    extreme_temperature_range,
-    precip_accumulation,
-)
+from ._multivariate import daily_temperature_range
+from ._multivariate import extreme_temperature_range
+from ._multivariate import precip_accumulation
 from ._simple import tg_mean
 from .generic import select_resample_op
 from .run_length import lazy_indexing
+from xclim.core.units import convert_units_to
+from xclim.core.units import declare_units
+from xclim.core.units import rate2amount
+from xclim.core.units import units
+from xclim.core.units import units2pint
+from xclim.core.utils import ensure_chunk_size
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases

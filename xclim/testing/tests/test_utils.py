@@ -7,12 +7,10 @@ from inspect import signature
 import numpy as np
 import xarray as xr
 
-from xclim.core.utils import (
-    ensure_chunk_size,
-    nan_calc_percentiles,
-    walk_map,
-    wrapped_partial,
-)
+from xclim.core.utils import ensure_chunk_size
+from xclim.core.utils import nan_calc_percentiles
+from xclim.core.utils import walk_map
+from xclim.core.utils import wrapped_partial
 
 
 def test_walk_map():

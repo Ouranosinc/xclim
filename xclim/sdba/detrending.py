@@ -8,11 +8,15 @@ from typing import Union
 
 import xarray as xr
 
-from xclim.core.units import convert_units_to
-
-from .base import Grouper, ParametrizableWithDataset, map_groups, parse_group
+from .base import Grouper
+from .base import map_groups
+from .base import ParametrizableWithDataset
+from .base import parse_group
 from .loess import loess_smoothing
-from .utils import ADDITIVE, apply_correction, invert
+from .utils import ADDITIVE
+from .utils import apply_correction
+from .utils import invert
+from xclim.core.units import convert_units_to
 
 
 class BaseDetrend(ParametrizableWithDataset):

@@ -7,20 +7,19 @@ import numpy as np
 import xarray
 from xarray.core.dataarray import DataArray
 
+from . import run_length as rl
+from ._conversion import rain_approximation
+from ._conversion import snowfall_approximation
+from .generic import select_resample_op
+from .generic import threshold_count
 from xclim.core.bootstrapping import percentile_bootstrap
 from xclim.core.calendar import resample_doy
-from xclim.core.units import (
-    convert_units_to,
-    declare_units,
-    pint2cfunits,
-    rate2amount,
-    str2pint,
-    to_agg_units,
-)
-
-from . import run_length as rl
-from ._conversion import rain_approximation, snowfall_approximation
-from .generic import select_resample_op, threshold_count
+from xclim.core.units import convert_units_to
+from xclim.core.units import declare_units
+from xclim.core.units import pint2cfunits
+from xclim.core.units import rate2amount
+from xclim.core.units import str2pint
+from xclim.core.units import to_agg_units
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html

@@ -31,7 +31,9 @@ from ._multivariate import *
 from ._simple import *
 from ._synoptic import *
 from ._threshold import *
-from .fwi import drought_code, fire_season, fire_weather_indexes
+from .fwi import drought_code
+from .fwi import fire_season
+from .fwi import fire_weather_indexes
 
 """
 Notes for docstring

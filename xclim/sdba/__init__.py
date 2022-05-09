@@ -69,16 +69,16 @@ Other restrictions : ``map_blocks`` will remove any "auxiliary" coordinates befo
 """
 from __future__ import annotations
 
-from . import detrending, processing, utils
+from . import detrending
+from . import processing
+from . import utils
 from .adjustment import *
 from .base import Grouper
 from .measures import *
-from .processing import (
-    construct_moving_yearly_window,
-    stack_variables,
-    unpack_moving_yearly_window,
-    unstack_variables,
-)
+from .processing import construct_moving_yearly_window
+from .processing import stack_variables
+from .processing import unpack_moving_yearly_window
+from .processing import unstack_variables
 from .properties import *
 
 # TODO: ISIMIP ? Used for precip freq adjustment in biasCorrection.R

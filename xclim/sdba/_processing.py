@@ -11,8 +11,12 @@ import numpy as np
 import xarray as xr
 
 from . import nbutils as nbu
-from .base import Grouper, map_groups
-from .utils import ADDITIVE, apply_correction, ecdf, invert
+from .base import Grouper
+from .base import map_groups
+from .utils import ADDITIVE
+from .utils import apply_correction
+from .utils import ecdf
+from .utils import invert
 
 
 @map_groups(

@@ -4,43 +4,44 @@ Adjustment methods
 """
 from __future__ import annotations
 
-from typing import Any, Mapping, Union
+from typing import Any
+from typing import Mapping
+from typing import Union
 from warnings import warn
 
 import numpy as np
 import xarray as xr
 from xarray.core.dataarray import DataArray
 
+from ._adjustment import dqm_adjust
+from ._adjustment import dqm_train
+from ._adjustment import eqm_train
+from ._adjustment import extremes_adjust
+from ._adjustment import extremes_train
+from ._adjustment import loci_adjust
+from ._adjustment import loci_train
+from ._adjustment import npdf_transform
+from ._adjustment import qdm_adjust
+from ._adjustment import qm_adjust
+from ._adjustment import scaling_adjust
+from ._adjustment import scaling_train
+from .base import Grouper
+from .base import ParametrizableWithDataset
+from .base import parse_group
+from .utils import ADDITIVE
+from .utils import best_pc_orientation_full
+from .utils import best_pc_orientation_simple
+from .utils import equally_spaced_nodes
+from .utils import pc_matrix
+from .utils import rand_rot_matrix
 from xclim.core.calendar import get_calendar
 from xclim.core.formatting import update_history
-from xclim.core.options import OPTIONS, SDBA_EXTRA_OUTPUT, set_options
+from xclim.core.options import OPTIONS
+from xclim.core.options import SDBA_EXTRA_OUTPUT
+from xclim.core.options import set_options
 from xclim.core.units import convert_units_to
 from xclim.core.utils import uses_dask
 from xclim.indices import stats
-
-from ._adjustment import (
-    dqm_adjust,
-    dqm_train,
-    eqm_train,
-    extremes_adjust,
-    extremes_train,
-    loci_adjust,
-    loci_train,
-    npdf_transform,
-    qdm_adjust,
-    qm_adjust,
-    scaling_adjust,
-    scaling_train,
-)
-from .base import Grouper, ParametrizableWithDataset, parse_group
-from .utils import (
-    ADDITIVE,
-    best_pc_orientation_full,
-    best_pc_orientation_simple,
-    equally_spaced_nodes,
-    pc_matrix,
-    rand_rot_matrix,
-)
 
 __all__ = [
     "BaseAdjustment",

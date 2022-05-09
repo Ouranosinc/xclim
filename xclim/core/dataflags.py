@@ -10,23 +10,25 @@ from __future__ import annotations
 from decimal import Decimal
 from functools import reduce
 from inspect import signature
-from typing import Sequence, Union
+from typing import Sequence
+from typing import Union
 
 import numpy as np
 import pint
 import xarray
 
 from ..indices.run_length import suspicious_run
-from .calendar import climatological_mean_doy, within_bnds_doy
+from .calendar import climatological_mean_doy
+from .calendar import within_bnds_doy
 from .formatting import update_xclim_history
-from .units import convert_units_to, declare_units, str2pint
-from .utils import (
-    VARIABLES,
-    InputKind,
-    MissingVariableError,
-    infer_kind_from_parameter,
-    raise_warn_or_log,
-)
+from .units import convert_units_to
+from .units import declare_units
+from .units import str2pint
+from .utils import infer_kind_from_parameter
+from .utils import InputKind
+from .utils import MissingVariableError
+from .utils import raise_warn_or_log
+from .utils import VARIABLES
 
 _REGISTRY = dict()
 

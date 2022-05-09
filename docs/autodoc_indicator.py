@@ -6,7 +6,8 @@ Based on https://github.com/powerline/powerline/blob/83d855d3d73498c47553afeba21
 """
 from __future__ import annotations
 
-from sphinx.domains.python import PyFunction, PyXRefRole
+from sphinx.domains.python import PyFunction
+from sphinx.domains.python import PyXRefRole
 from sphinx.ext import autodoc
 
 from xclim.core.indicator import Indicator

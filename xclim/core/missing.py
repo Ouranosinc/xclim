@@ -29,14 +29,14 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 
-from .calendar import date_range, get_calendar, select_time
-from .options import (
-    CHECK_MISSING,
-    MISSING_METHODS,
-    MISSING_OPTIONS,
-    OPTIONS,
-    register_missing_method,
-)
+from .calendar import date_range
+from .calendar import get_calendar
+from .calendar import select_time
+from .options import CHECK_MISSING
+from .options import MISSING_METHODS
+from .options import MISSING_OPTIONS
+from .options import OPTIONS
+from .options import register_missing_method
 
 __all__ = [
     "missing_wmo",

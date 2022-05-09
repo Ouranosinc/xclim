@@ -5,21 +5,24 @@ sdba utilities
 from __future__ import annotations
 
 import itertools
-from typing import Callable, Mapping, Union
+from typing import Callable
+from typing import Mapping
+from typing import Union
 from warnings import warn
 
 import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
 from dask import array as dsk
-from scipy.interpolate import griddata, interp1d
+from scipy.interpolate import griddata
+from scipy.interpolate import interp1d
 from scipy.stats import spearmanr
 
+from .base import Grouper
+from .base import parse_group
+from .nbutils import _extrapolate_on_quantiles
 from xclim.core.calendar import _interpolate_doy_calendar  # noqa
 from xclim.core.utils import ensure_chunk_size
-
-from .base import Grouper, parse_group
-from .nbutils import _extrapolate_on_quantiles
 
 MULTIPLICATIVE = "*"
 ADDITIVE = "+"

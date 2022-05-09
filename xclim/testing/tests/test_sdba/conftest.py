@@ -4,10 +4,10 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from xclim.sdba.base import parse_group
-from xclim.sdba.utils import apply_correction, equally_spaced_nodes
-
 from . import utils as tu
+from xclim.sdba.base import parse_group
+from xclim.sdba.utils import apply_correction
+from xclim.sdba.utils import equally_spaced_nodes
 
 # Some test fixtures are useful to have around, so they are implemented as normal python functions and objects in
 # utils.py, and converted into fixtures here.

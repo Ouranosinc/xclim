@@ -7,7 +7,8 @@ import pytest
 from numpy.testing import assert_almost_equal
 from pkg_resources import parse_version
 from scipy import __version__ as __scipy_version__
-from scipy import integrate, stats
+from scipy import integrate
+from scipy import stats
 from sklearn import datasets
 
 import xclim.analog as xca

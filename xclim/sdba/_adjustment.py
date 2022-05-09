@@ -8,13 +8,14 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 
-from xclim.indices.stats import _fitfunc_1d  # noqa
-
 from . import nbutils as nbu
 from . import utils as u
-from .base import Grouper, map_blocks, map_groups
+from .base import Grouper
+from .base import map_blocks
+from .base import map_groups
 from .detrending import PolyDetrend
 from .processing import escore
+from xclim.indices.stats import _fitfunc_1d  # noqa
 
 
 @map_groups(

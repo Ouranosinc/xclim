@@ -5,7 +5,8 @@ from __future__ import annotations
 import gc
 import json
 from inspect import signature
-from typing import Tuple, Union
+from typing import Tuple
+from typing import Union
 
 import dask
 import numpy as np
@@ -13,18 +14,23 @@ import pytest
 import xarray as xr
 
 import xclim
-from xclim import __version__, atmos
+from xclim import __version__
+from xclim import atmos
 from xclim.core.calendar import select_time
-from xclim.core.formatting import (
-    AttrFormatter,
-    default_formatter,
-    merge_attributes,
-    parse_doc,
-    update_history,
-)
-from xclim.core.indicator import Daily, Indicator, ResamplingIndicator, registry
-from xclim.core.units import convert_units_to, declare_units, units
-from xclim.core.utils import InputKind, MissingVariableError
+from xclim.core.formatting import AttrFormatter
+from xclim.core.formatting import default_formatter
+from xclim.core.formatting import merge_attributes
+from xclim.core.formatting import parse_doc
+from xclim.core.formatting import update_history
+from xclim.core.indicator import Daily
+from xclim.core.indicator import Indicator
+from xclim.core.indicator import registry
+from xclim.core.indicator import ResamplingIndicator
+from xclim.core.units import convert_units_to
+from xclim.core.units import declare_units
+from xclim.core.units import units
+from xclim.core.utils import InputKind
+from xclim.core.utils import MissingVariableError
 from xclim.indices import tg_mean
 from xclim.testing import open_dataset
 

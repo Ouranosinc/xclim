@@ -7,10 +7,16 @@ import xarray
 import xclim.indices as xci
 import xclim.indices.run_length as rl
 from xclim.core.calendar import select_time
-from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
+from xclim.core.units import convert_units_to
+from xclim.core.units import declare_units
+from xclim.core.units import rate2amount
+from xclim.core.units import to_agg_units
 from xclim.core.utils import DayOfYearStr
-from xclim.indices._threshold import first_day_above, first_day_below, freshet_start
-from xclim.indices.generic import aggregate_between_dates, day_lengths
+from xclim.indices._threshold import first_day_above
+from xclim.indices._threshold import first_day_below
+from xclim.indices._threshold import freshet_start
+from xclim.indices.generic import aggregate_between_dates
+from xclim.indices.generic import day_lengths
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html

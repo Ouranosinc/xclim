@@ -9,7 +9,9 @@ import xarray as xr
 from dask.diagnostics import ProgressBar
 
 import xclim as xc
-from xclim.core.dataflags import DataQualityException, data_flags, ecad_compliant
+from xclim.core.dataflags import data_flags
+from xclim.core.dataflags import DataQualityException
+from xclim.core.dataflags import ecad_compliant
 from xclim.core.utils import InputKind
 from xclim.testing._utils import publish_release_notes  # noqa
 

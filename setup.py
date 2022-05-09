@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import re
 
-from setuptools import find_packages, setup
+from setuptools import find_packages
+from setuptools import setup
 
 NAME = "xclim"
 DESCRIPTION = "Derived climate variables built with xarray."
