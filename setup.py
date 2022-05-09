@@ -33,7 +33,7 @@ requirements = [
     "bottleneck>=1.3.1",
     "cf-xarray>=0.6.1",
     "cftime>=1.4.1",
-    "Click",
+    "Click>=8.1",
     "dask[array]>=2.6",
     "jsonpickle",
     "numba",
