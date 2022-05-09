@@ -2,14 +2,15 @@
 History
 =======
 
-0.36.1 (unreleased)
-------------------
+0.37.0 (unreleased)
+-------------------
 
-Contributors to this version:  Abel Aoun (:user:`bzah`).
+Contributors to this version:  Abel Aoun (:user:`bzah`), Pascal Bourgault (:user:`aulemahal`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Add "Celsius" to aliases of "celsius" unit.(:issue:`1067`, :pull:`1068`).
+* All indicators now have indexing enabled, except those computing statistics on spells. (:issue:`1069`, :pull:`1070`).
 
 
 0.36.0 (29-04-2022)
