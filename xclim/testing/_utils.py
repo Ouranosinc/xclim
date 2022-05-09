@@ -401,16 +401,21 @@ def update_variable_yaml(filename=None, xclim_needs_only=True):
         safe_dump(stdvars, f)
 
 
-def publish_release_notes(style: str = "md") -> str:
+def publish_release_notes(
+    style: str = "md", file: Optional[Union[os.PathLike, StringIO, TextIO]] = None
+) -> Optional[str]:
     """Format release history in Markdown or ReStructuredText.
 
     Parameters
     ----------
     style: {"rst", "md"}
+      Use ReStructuredText formatting or Markdown. Default: Markdown.
+    file: {os.PathLike, StringIO, TextIO}, optional
+      If provided, prints to the given file-like object. Otherwise, returns a string.
 
     Returns
     -------
-    str
+    str, optional
 
     Notes
     -----
@@ -463,7 +468,10 @@ def publish_release_notes(style: str = "md") -> str:
             replacement = f"[{str(grouping[0]).strip()}]({grouping[1]})"
             history = re.sub(search, replacement, history)
 
-    return history
+    if not file:
+        return history
+    else:
+        print(history, file=file)
 
 
 def show_versions(
@@ -473,8 +481,12 @@ def show_versions(
 
     Parameters
     ----------
-    file : os.PathLike or StringIO
-      Print to the given file-like object. Defaults to sys.stdout.
+    file : {os.PathLike, StringIO, TextIO}, optional
+      If provided, prints to the given file-like object. Otherwise, returns a string.
+
+    Returns
+    -------
+    str, optional
     """
 
     deps = [
@@ -510,11 +522,11 @@ def show_versions(
     modules_versions = "\n".join([f"{k}: {stat}" for k, stat in sorted(deps_blob)])
 
     installed_versions = (
-        "\n"
         "INSTALLED VERSIONS\n"
         "------------------\n"
         f"python: {platform.python_version()}\n"
-        f"{modules_versions}"
+        f"{modules_versions}\n"
+        f"Anaconda-based environment: {'yes' if Path(sys.base_prefix).joinpath('conda-meta').exists() else 'no'}"
     )
 
     if not file:
