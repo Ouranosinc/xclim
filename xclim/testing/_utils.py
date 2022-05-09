@@ -470,8 +470,7 @@ def publish_release_notes(
 
     if not file:
         return history
-    else:
-        print(history, file=file)
+    print(history, file=file)
 
 
 def show_versions(
@@ -532,5 +531,4 @@ def show_versions(
 
     if not file:
         return installed_versions
-    else:
-        print(installed_versions, file=file)
+    print(installed_versions, file=file)
