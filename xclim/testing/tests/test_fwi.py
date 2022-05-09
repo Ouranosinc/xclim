@@ -7,19 +7,21 @@ import xarray as xr
 from xclim import atmos
 from xclim.core.options import set_options
 from xclim.core.units import convert_units_to
-from xclim.indices.fwi import _day_length
-from xclim.indices.fwi import _day_length_factor
-from xclim.indices.fwi import _drought_code
-from xclim.indices.fwi import _duff_moisture_code
-from xclim.indices.fwi import _fine_fuel_moisture_code
-from xclim.indices.fwi import _overwintering_drought_code
-from xclim.indices.fwi import build_up_index
-from xclim.indices.fwi import fire_season
-from xclim.indices.fwi import fire_weather_index
-from xclim.indices.fwi import fire_weather_indexes
-from xclim.indices.fwi import fire_weather_ufunc
-from xclim.indices.fwi import initial_spread_index
-from xclim.indices.fwi import overwintering_drought_code
+from xclim.indices.fwi import (
+    _day_length,
+    _day_length_factor,
+    _drought_code,
+    _duff_moisture_code,
+    _fine_fuel_moisture_code,
+    _overwintering_drought_code,
+    build_up_index,
+    fire_season,
+    fire_weather_index,
+    fire_weather_indexes,
+    fire_weather_ufunc,
+    initial_spread_index,
+    overwintering_drought_code,
+)
 from xclim.indices.run_length import run_bounds
 from xclim.testing import open_dataset
 

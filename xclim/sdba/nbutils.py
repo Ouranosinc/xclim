@@ -5,11 +5,7 @@ Numba-accelerated utilities
 from __future__ import annotations
 
 import numpy as np
-from numba import boolean
-from numba import float32
-from numba import float64
-from numba import guvectorize
-from numba import njit
+from numba import boolean, float32, float64, guvectorize, njit
 from xarray import DataArray
 from xarray.core import utils
 

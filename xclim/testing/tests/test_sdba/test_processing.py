@@ -7,19 +7,21 @@ import xarray as xr
 
 from xclim.sdba.adjustment import EmpiricalQuantileMapping
 from xclim.sdba.base import Grouper
-from xclim.sdba.processing import adapt_freq
-from xclim.sdba.processing import escore
-from xclim.sdba.processing import from_additive_space
-from xclim.sdba.processing import jitter
-from xclim.sdba.processing import jitter_over_thresh
-from xclim.sdba.processing import jitter_under_thresh
-from xclim.sdba.processing import normalize
-from xclim.sdba.processing import reordering
-from xclim.sdba.processing import stack_variables
-from xclim.sdba.processing import standardize
-from xclim.sdba.processing import to_additive_space
-from xclim.sdba.processing import unstack_variables
-from xclim.sdba.processing import unstandardize
+from xclim.sdba.processing import (
+    adapt_freq,
+    escore,
+    from_additive_space,
+    jitter,
+    jitter_over_thresh,
+    jitter_under_thresh,
+    normalize,
+    reordering,
+    stack_variables,
+    standardize,
+    to_additive_space,
+    unstack_variables,
+    unstandardize,
+)
 from xclim.testing import open_dataset
 
 

@@ -6,8 +6,7 @@ import pytest
 
 from xclim import set_options
 from xclim.core.missing import MissingBase
-from xclim.core.options import OPTIONS
-from xclim.core.options import register_missing_method
+from xclim.core.options import OPTIONS, register_missing_method
 
 
 @pytest.mark.parametrize(

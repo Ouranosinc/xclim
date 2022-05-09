@@ -6,11 +6,13 @@ import xarray as xr
 from scipy.signal import windows
 
 from xclim.sdba import Grouper
-from xclim.sdba.detrending import LoessDetrend
-from xclim.sdba.detrending import MeanDetrend
-from xclim.sdba.detrending import NoDetrend
-from xclim.sdba.detrending import PolyDetrend
-from xclim.sdba.detrending import RollingMeanDetrend
+from xclim.sdba.detrending import (
+    LoessDetrend,
+    MeanDetrend,
+    NoDetrend,
+    PolyDetrend,
+    RollingMeanDetrend,
+)
 
 
 def test_poly_detrend_and_from_ds(series, tmp_path):

@@ -2,16 +2,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List
-from typing import Optional
-from typing import Sequence
-from typing import Union
+from typing import List, Optional, Sequence, Union
 
 import numpy as np
 import xarray as xr
 
-from xclim.core.calendar import convert_calendar
-from xclim.core.calendar import get_calendar
+from xclim.core.calendar import convert_calendar, get_calendar
 from xclim.core.formatting import update_history
 from xclim.core.utils import calc_perc
 

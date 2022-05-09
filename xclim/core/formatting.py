@@ -11,14 +11,8 @@ import re
 import string
 from ast import literal_eval
 from fnmatch import fnmatch
-from inspect import _empty
-from inspect import signature
-from typing import Any
-from typing import Dict
-from typing import Mapping
-from typing import Optional
-from typing import Sequence
-from typing import Union
+from inspect import _empty, signature
+from typing import Any, Dict, Mapping, Optional, Sequence, Union
 
 import xarray as xr
 from boltons.funcutils import wraps

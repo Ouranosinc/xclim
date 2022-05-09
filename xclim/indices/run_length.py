@@ -8,9 +8,7 @@ Computation of statistics on runs of True values in boolean arrays.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
-from typing import Sequence
-from typing import Union
+from typing import Optional, Sequence, Union
 from warnings import warn
 
 import numpy as np
@@ -19,11 +17,8 @@ from dask import array as dsk
 from numba import njit
 from xarray.core.utils import get_temp_dimname
 
-from xclim.core.options import OPTIONS
-from xclim.core.options import RUN_LENGTH_UFUNC
-from xclim.core.utils import DateStr
-from xclim.core.utils import DayOfYearStr
-from xclim.core.utils import uses_dask
+from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
+from xclim.core.utils import DateStr, DayOfYearStr, uses_dask
 
 npts_opt = 9000
 """

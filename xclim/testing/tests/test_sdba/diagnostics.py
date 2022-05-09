@@ -8,11 +8,14 @@ import numpy as np
 from scipy.stats import scoreatpercentile
 from scipy.stats.kde import gaussian_kde
 
-from . import utils as tu
-from xclim.sdba.adjustment import DetrendedQuantileMapping
-from xclim.sdba.adjustment import EmpiricalQuantileMapping
-from xclim.sdba.adjustment import QuantileDeltaMapping
+from xclim.sdba.adjustment import (
+    DetrendedQuantileMapping,
+    EmpiricalQuantileMapping,
+    QuantileDeltaMapping,
+)
 from xclim.sdba.processing import adapt_freq
+
+from . import utils as tu
 
 try:
     from matplotlib import pyplot as plt

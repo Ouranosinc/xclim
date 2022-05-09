@@ -151,17 +151,15 @@ Drought Code overwintering:
 from __future__ import annotations
 
 from collections import OrderedDict
-from typing import Mapping
-from typing import Sequence
+from typing import Mapping, Sequence
 
 import numpy as np
 import xarray as xr
-from numba import jit
-from numba import vectorize
+from numba import jit, vectorize
+
+from xclim.core.units import convert_units_to, declare_units
 
 from . import run_length as rl
-from xclim.core.units import convert_units_to
-from xclim.core.units import declare_units
 
 default_params = dict(
     temp_start_thresh=(12, "degC"),

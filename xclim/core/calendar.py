@@ -9,29 +9,28 @@ from __future__ import annotations
 
 import datetime as pydt
 import re
-from typing import Any
-from typing import NewType
-from typing import Optional
-from typing import Sequence
-from typing import Union
+from typing import Any, NewType, Optional, Sequence, Union
 
 import cftime
 import numpy as np
 import pandas as pd
 import xarray as xr
-from xarray.coding.cftime_offsets import MonthBegin
-from xarray.coding.cftime_offsets import MonthEnd
-from xarray.coding.cftime_offsets import QuarterBegin
-from xarray.coding.cftime_offsets import QuarterEnd
-from xarray.coding.cftime_offsets import to_cftime_datetime
-from xarray.coding.cftime_offsets import to_offset
-from xarray.coding.cftime_offsets import YearBegin
-from xarray.coding.cftime_offsets import YearEnd
+from xarray.coding.cftime_offsets import (
+    MonthBegin,
+    MonthEnd,
+    QuarterBegin,
+    QuarterEnd,
+    YearBegin,
+    YearEnd,
+    to_cftime_datetime,
+    to_offset,
+)
 from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core.resample import DataArrayResample
 
-from .formatting import update_xclim_history
 from xclim.core.utils import uses_dask
+
+from .formatting import update_xclim_history
 
 __all__ = [
     "DayOfYearStr",

@@ -5,9 +5,7 @@ from inspect import _empty  # noqa
 
 from xclim import indices
 from xclim.core import cfchecks
-from xclim.core.indicator import Daily
-from xclim.core.indicator import Indicator
-from xclim.core.indicator import ResamplingIndicatorWithIndexing
+from xclim.core.indicator import Daily, Indicator, ResamplingIndicatorWithIndexing
 from xclim.core.utils import InputKind
 
 __all__ = [

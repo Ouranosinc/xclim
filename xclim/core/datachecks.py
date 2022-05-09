@@ -11,8 +11,7 @@ from typing import Sequence
 
 import xarray as xr
 
-from .calendar import compare_offsets
-from .calendar import parse_offset
+from .calendar import compare_offsets, parse_offset
 from .options import datacheck
 from .utils import ValidationError
 

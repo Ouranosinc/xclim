@@ -5,10 +5,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from xclim.sdba.base import Grouper
-from xclim.sdba.base import map_blocks
-from xclim.sdba.base import map_groups
-from xclim.sdba.base import Parametrizable
+from xclim.sdba.base import Grouper, Parametrizable, map_blocks, map_groups
 
 
 class ATestSubClass(Parametrizable):

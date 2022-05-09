@@ -8,8 +8,7 @@ Helper functions for common generic actions done in the computation of indices.
 from __future__ import annotations
 
 import warnings
-from typing import Sequence
-from typing import Union
+from typing import Sequence, Union
 
 import cftime
 import numpy as np
@@ -17,18 +16,23 @@ import xarray
 import xarray as xr
 from xarray.coding.cftime_offsets import _MONTH_ABBREVIATIONS
 
-from . import run_length as rl
-from xclim.core.calendar import convert_calendar
-from xclim.core.calendar import DayOfYearStr
-from xclim.core.calendar import days_in_year
-from xclim.core.calendar import doy_to_days_since
-from xclim.core.calendar import get_calendar
+from xclim.core.calendar import (
+    DayOfYearStr,
+    convert_calendar,
+    days_in_year,
+    doy_to_days_since,
+    get_calendar,
+)
 from xclim.core.calendar import select_time as _select_time
-from xclim.core.units import convert_units_to
-from xclim.core.units import declare_units
-from xclim.core.units import pint2cfunits
-from xclim.core.units import str2pint
-from xclim.core.units import to_agg_units
+from xclim.core.units import (
+    convert_units_to,
+    declare_units,
+    pint2cfunits,
+    str2pint,
+    to_agg_units,
+)
+
+from . import run_length as rl
 
 __all__ = [
     "aggregate_between_dates",

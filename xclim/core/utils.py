@@ -15,22 +15,16 @@ from collections import defaultdict
 from enum import IntEnum
 from functools import partial
 from importlib.resources import open_text
-from inspect import _empty
-from inspect import Parameter
+from inspect import Parameter, _empty
 from pathlib import Path
 from types import FunctionType
-from typing import Callable
-from typing import Mapping
-from typing import NewType
-from typing import Sequence
-from typing import Union
+from typing import Callable, Mapping, NewType, Sequence, Union
 
 import numpy as np
 import xarray as xr
 from boltons.funcutils import update_wrapper
 from dask import array as dsk
-from yaml import safe_dump
-from yaml import safe_load
+from yaml import safe_dump, safe_load
 
 logger = logging.getLogger("xclim")
 

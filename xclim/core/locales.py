@@ -52,12 +52,9 @@ import json
 import warnings
 from copy import deepcopy
 from pathlib import Path
-from typing import Mapping
-from typing import Optional
-from typing import Sequence
+from typing import Mapping, Optional, Sequence
 
-from .formatting import AttrFormatter
-from .formatting import default_formatter
+from .formatting import AttrFormatter, default_formatter
 
 TRANSLATABLE_ATTRS = [
     "long_name",

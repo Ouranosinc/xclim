@@ -12,8 +12,7 @@ import re
 from typing import Sequence
 
 from .options import cfcheck
-from .utils import ValidationError
-from .utils import VARIABLES
+from .utils import VARIABLES, ValidationError
 
 # TODO: Implement pandas infer_freq in xarray with CFTimeIndex. >> PR pydata/xarray#4033
 

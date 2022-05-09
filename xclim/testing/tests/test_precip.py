@@ -7,9 +7,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from xclim import atmos
-from xclim import core
-from xclim import set_options
+from xclim import atmos, core, set_options
 from xclim.core.calendar import percentile_doy
 from xclim.testing import open_dataset
 

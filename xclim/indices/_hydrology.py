@@ -3,10 +3,10 @@ from __future__ import annotations
 import numpy as np
 import xarray
 
-from . import generic
 from xclim.core.calendar import get_calendar
-from xclim.core.units import declare_units
-from xclim.core.units import rate2amount
+from xclim.core.units import declare_units, rate2amount
+
+from . import generic
 
 # from xclim.core.missing import at_least_n_valid  # raises circular import issue, see https://github.com/Ouranosinc/xclim/issues/949
 

@@ -3,8 +3,7 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 
-from xclim import land
-from xclim import set_options
+from xclim import land, set_options
 
 
 def test_base_flow_index(ndq_series):

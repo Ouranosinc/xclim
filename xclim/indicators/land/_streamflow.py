@@ -2,12 +2,9 @@
 from __future__ import annotations
 
 from xclim.core.cfchecks import check_valid
-from xclim.core.indicator import Indicator
-from xclim.core.indicator import ResamplingIndicator
+from xclim.core.indicator import Indicator, ResamplingIndicator
 from xclim.core.units import declare_units
-from xclim.indices import base_flow_index
-from xclim.indices import generic
-from xclim.indices import rb_flashiness_index
+from xclim.indices import base_flow_index, generic, rb_flashiness_index
 from xclim.indices.stats import fit as _fit
 from xclim.indices.stats import frequency_analysis
 

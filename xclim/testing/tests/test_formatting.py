@@ -5,8 +5,7 @@ import re
 
 from xclim import __version__
 from xclim.core import formatting as fmt
-from xclim.indicators.atmos import degree_days_exceedance_date
-from xclim.indicators.atmos import heat_wave_frequency
+from xclim.indicators.atmos import degree_days_exceedance_date, heat_wave_frequency
 
 
 def test_prefix_attrs():

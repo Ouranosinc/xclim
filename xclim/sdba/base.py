@@ -6,10 +6,7 @@ from __future__ import annotations
 
 from inspect import signature
 from types import FunctionType
-from typing import Callable
-from typing import Mapping
-from typing import Sequence
-from typing import Union
+from typing import Callable, Mapping, Sequence, Union
 
 import dask.array as dsk
 import jsonpickle
@@ -17,10 +14,8 @@ import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
 
-from xclim.core.calendar import days_in_year
-from xclim.core.calendar import get_calendar
-from xclim.core.options import OPTIONS
-from xclim.core.options import SDBA_ENCODE_CF
+from xclim.core.calendar import days_in_year, get_calendar
+from xclim.core.options import OPTIONS, SDBA_ENCODE_CF
 from xclim.core.utils import uses_dask
 
 

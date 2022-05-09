@@ -12,8 +12,7 @@ from typing import Callable
 from boltons.funcutils import wraps
 
 from .locales import _valid_locales
-from .utils import raise_warn_or_log
-from .utils import ValidationError
+from .utils import ValidationError, raise_warn_or_log
 
 METADATA_LOCALES = "metadata_locales"
 DATA_VALIDATION = "data_validation"

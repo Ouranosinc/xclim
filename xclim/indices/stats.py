@@ -1,17 +1,15 @@
 """Statistic-related functions. See the `frequency_analysis` notebook for examples."""
 from __future__ import annotations
 
-from typing import Sequence
-from typing import Union
+from typing import Sequence, Union
 
 import numpy as np
 import xarray as xr
 
-from . import generic
-from xclim.core.formatting import prefix_attrs
-from xclim.core.formatting import unprefix_attrs
-from xclim.core.formatting import update_history
+from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history
 from xclim.core.utils import uses_dask
+
+from . import generic
 
 __all__ = [
     "fit",

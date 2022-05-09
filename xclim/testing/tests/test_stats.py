@@ -3,8 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 import xarray as xr
-from scipy.stats import lognorm
-from scipy.stats import norm
+from scipy.stats import lognorm, norm
 
 from xclim.indices import stats
 

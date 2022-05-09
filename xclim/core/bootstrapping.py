@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import warnings
 from inspect import signature
-from typing import Any
-from typing import Callable
+from typing import Any, Callable
 
 import cftime
 import numpy as np
@@ -12,9 +11,8 @@ from boltons.funcutils import wraps
 from xarray.core.dataarray import DataArray
 
 import xclim.core.utils
-from .calendar import convert_calendar
-from .calendar import parse_offset
-from .calendar import percentile_doy
+
+from .calendar import convert_calendar, parse_offset, percentile_doy
 
 BOOTSTRAP_DIM = "_bootstrap"
 
