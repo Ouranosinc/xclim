@@ -522,6 +522,7 @@ def show_versions(
     modules_versions = "\n".join([f"{k}: {stat}" for k, stat in sorted(deps_blob)])
 
     installed_versions = (
+        "\n"
         "INSTALLED VERSIONS\n"
         "------------------\n"
         f"python: {platform.python_version()}\n"
