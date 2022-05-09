@@ -15,17 +15,25 @@ from collections import defaultdict
 from enum import IntEnum
 from functools import partial
 from importlib.resources import open_text
+from inspect import _empty
 from inspect import Parameter
 from pathlib import Path
 from types import FunctionType
-from typing import Callable, Mapping, NewType, Optional, Sequence, Union
+from typing import Callable
+from typing import Mapping
+from typing import NewType
+from typing import Optional
+from typing import Sequence
+from typing import Union
 
 import numpy as np
 import xarray as xr
 from boltons.funcutils import update_wrapper
 from dask import array as dsk
-from xarray import DataArray, Dataset
-from yaml import safe_dump, safe_load
+from xarray import DataArray
+from xarray import Dataset
+from yaml import safe_dump
+from yaml import safe_load
 
 logger = logging.getLogger("xclim")
 
@@ -568,45 +576,45 @@ def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> Inpu
     has been assigned units through the :py:func:`xclim.core.units.declare_units` decorator.
     That can be given with the ``has_units`` flag.
     """
-    if (
-        param.annotation in [DataArray, Union[DataArray, str]]
-        and param.default is not None
-    ):
+    if param.annotation is not _empty:
+        annot = set(
+            param.annotation.replace("xarray.", "").replace("xr.", "").split(" | ")
+        )
+    else:
+        annot = {"no_annotation"}
+    if "DataArray" in annot and "None" not in annot and param.default is not None:
         return InputKind.VARIABLE
 
-    if Optional[param.annotation] in [
-        Optional[DataArray],
-        Optional[Union[DataArray, str]],
-    ]:
-        return InputKind.OPTIONAL_VARIABLE
+    annot = annot - {"None"}
 
-    if _typehint_is_in(param.annotation, (str, None)) and has_units:
-        return InputKind.QUANTITY_STR
+    if "DataArray" in annot:
+        return InputKind.OPTIONAL_VARIABLE
 
     if param.name == "freq":
         return InputKind.FREQ_STR
 
-    if _typehint_is_in(param.annotation, (None, int, float)):
+    if annot == {"str"} and has_units:
+        return InputKind.QUANTITY_STR
+
+    if annot.issubset({"int", "float"}):
         return InputKind.NUMBER
 
-    if _typehint_is_in(
-        param.annotation, (None, int, float, Sequence[int], Sequence[float])
-    ):
+    if annot.issubset({"int", "float", "Sequence[int]", "Sequence[float]"}):
         return InputKind.NUMBER_SEQUENCE
 
-    if _typehint_is_in(param.annotation, (None, str)):
+    if annot == {"str"}:
         return InputKind.STRING
 
-    if _typehint_is_in(param.annotation, (None, DayOfYearStr)):
+    if annot == {"DayOfYearStr"}:
         return InputKind.DAY_OF_YEAR
 
-    if _typehint_is_in(param.annotation, (None, DateStr)):
+    if annot == {"DateStr"}:
         return InputKind.DATE
 
-    if _typehint_is_in(param.annotation, (None, bool)):
+    if annot == {"bool"}:
         return InputKind.BOOL
 
-    if _typehint_is_in(param.annotation, (None, Dataset)):
+    if annot == {"Dataset"}:
         return InputKind.DATASET
 
     if param.kind == param.VAR_KEYWORD:

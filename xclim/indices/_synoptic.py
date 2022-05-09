@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import cf_xarray  # noqa
 import numpy as np
 import xarray
 
-from xclim.core.units import convert_units_to, declare_units
+from xclim.core.units import convert_units_to
+from xclim.core.units import declare_units
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
