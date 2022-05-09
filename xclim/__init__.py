@@ -11,7 +11,7 @@ from xclim.indicators import atmos, land, seaIce
 
 __author__ = """Travis Logan"""
 __email__ = "logan.travis@ouranos.ca"
-__version__ = "0.36.1"
+__version__ = "0.36.2-beta"
 
 
 # Load official locales
