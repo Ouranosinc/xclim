@@ -22,7 +22,6 @@ from types import FunctionType
 from typing import Callable
 from typing import Mapping
 from typing import NewType
-from typing import Optional
 from typing import Sequence
 from typing import Union
 
@@ -30,8 +29,6 @@ import numpy as np
 import xarray as xr
 from boltons.funcutils import update_wrapper
 from dask import array as dsk
-from xarray import DataArray
-from xarray import Dataset
 from yaml import safe_dump
 from yaml import safe_load
 
@@ -485,7 +482,8 @@ class InputKind(IntEnum):
     of :py:meth:`xclim.core.indicator.Indicator.json`.
 
     For developers : for each constant, the docstring specifies the annotation a parameter of an indice function
-    should use in order to be picked up by the indicator constructor.
+    should use in order to be picked up by the indicator constructor. Notice that we are using the annotation format
+    as described in PEP604/py3.10, i.e. with | indicating an union and without import objects from `typing`.
     """
 
     VARIABLE = 0
@@ -496,7 +494,7 @@ class InputKind(IntEnum):
     OPTIONAL_VARIABLE = 1
     """An optional data variable (DataArray or variable name).
 
-       Annotation : ``xr.DataArray`` or ``Optional[xr.DataArray]``.
+       Annotation : ``xr.DataArray | None``. The default should be None.
     """
     QUANTITY_STR = 2
     """A string representing a quantity with units.
@@ -512,12 +510,12 @@ class InputKind(IntEnum):
     NUMBER = 4
     """A number.
 
-       Annotation : ``int``, ``float`` and Unions and Optionals thereof.
+       Annotation : ``int``, ``float`` and unions thereof, potentially optional.
     """
     STRING = 5
     """A simple string.
 
-       Annotation : ``str`` or ``Optional[str]``. In most cases, this kind of parameter makes sense with choices indicated
+       Annotation : ``str`` or ``str | None``. In most cases, this kind of parameter makes sense with choices indicated
        in the docstring's version of the annotation with curly braces. See :ref:`Defining new indices`.
     """
     DAY_OF_YEAR = 6
@@ -533,12 +531,13 @@ class InputKind(IntEnum):
     NUMBER_SEQUENCE = 8
     """A sequence of numbers
 
-       Annotation : ``Sequence[int]``, ``Sequence[float]`` and ``Union`` thereof, may include single ``int`` and ``float``.
+       Annotation : ``Sequence[int]``, ``Sequence[float]`` and unions thereof,
+       may include single ``int`` and ``float``, may be optional.
     """
     BOOL = 9
     """A boolean flag.
 
-       Annotation : ``bool``, or optional thereof.
+       Annotation : ``bool``, may be optional.
     """
     KWARGS = 50
     """A mapping from argument name to value.
@@ -555,17 +554,6 @@ class InputKind(IntEnum):
 
        Developers : This is the fallback kind, it will raise an error in xclim's unit tests if used.
     """
-
-
-def _typehint_is_in(hint, hints):
-    """Returns whether the first argument is in the other arguments.
-
-    If the first arg is a Union of several typehints, this returns True only
-    if all the members of that Union are in the given list.
-    """
-    # This code makes use of the "set-like" property of Unions and Optionals:
-    # Optional[X, Y] == Union[X, Y, None] == Union[X, Union[X, Y], None] etc.
-    return Union[(hint,) + tuple(hints)] == Union[tuple(hints)]
 
 
 def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> InputKind:
