@@ -11,7 +11,7 @@ import re
 import string
 from ast import literal_eval
 from fnmatch import fnmatch
-from inspect import _empty, signature # noqa
+from inspect import _empty, signature
 from typing import Any, Dict, Mapping, Optional, Sequence, Union
 
 import xarray as xr
