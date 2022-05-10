@@ -105,6 +105,8 @@ from typing import Any, Callable, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 from xarray import DataArray, Dataset
+from xarray.core.merge import merge_attrs
+from xarray.core.options import _get_keep_attrs as xr_keep_attrs
 from yaml import safe_load
 
 from .. import indices
@@ -127,7 +129,13 @@ from .locales import (
     load_locale,
     read_locale_file,
 )
-from .options import METADATA_LOCALES, MISSING_METHODS, MISSING_OPTIONS, OPTIONS
+from .options import (
+    KEEP_ATTRS,
+    METADATA_LOCALES,
+    MISSING_METHODS,
+    MISSING_OPTIONS,
+    OPTIONS,
+)
 from .units import check_units, convert_units_to, declare_units, units
 from .utils import (
     VARIABLES,
@@ -774,6 +782,14 @@ class Indicator(IndicatorRegistrar):
         # params : OrderedDict of parameters (var_kwargs as a single argument, if any)
         das, params = self._parse_variables_from_call(args, kwds)
 
+        if OPTIONS[KEEP_ATTRS] is True or (
+            OPTIONS[KEEP_ATTRS] == "xarray" and xr_keep_attrs(False)
+        ):
+            out_attrs = merge_attrs([da.attrs for da in das.values()], "drop_conflicts")
+        else:
+            out_attrs = {}
+        out_attrs = [out_attrs] * self.n_outs
+
         das, params = self._preprocess_and_checks(das, params)
 
         # Get correct variable names for the compute function.
@@ -802,15 +818,14 @@ class Indicator(IndicatorRegistrar):
 
         # Metadata attributes from templates
         var_id = None
-        cf_attrs = []
-        for attrs in self.cf_attrs:
+        for attrs, base_attrs in zip(out_attrs, self.cf_attrs):
             if self.n_outs > 1:
                 var_id = attrs["var_name"]
-            cf_attrs.append(
+            attrs.update(
                 self._update_attrs(
                     params.copy(),
                     das,
-                    attrs,
+                    base_attrs,
                     names=self._cf_names,
                     var_id=var_id,
                 )
@@ -819,16 +834,16 @@ class Indicator(IndicatorRegistrar):
         # Convert to output units
         outs = [
             convert_units_to(out, attrs.get("units", ""), self.context)
-            for out, attrs in zip(outs, cf_attrs)
+            for out, attrs in zip(outs, out_attrs)
         ]
 
-        # Update variable attributes
-        for out, attrs in zip(outs, cf_attrs):
-            var_name = attrs.pop("var_name")
-            out.attrs.update(attrs)
-            out.name = var_name
-
         outs = self._postprocess(outs, das, params)
+
+        # Update variable attributes
+        for out, attrs in zip(outs, out_attrs):
+            var_name = attrs.pop("var_name")
+            out.attrs = attrs.copy()
+            out.name = var_name
 
         # Return a single DataArray in case of single output, otherwise a tuple
         if self.n_outs == 1:
