@@ -23,6 +23,8 @@ wine grape industry, the climate indices examined could include the length of th
 season, growing degree-days, annual winter minimum temperature and annual number of
 very cold days [Roy2017]_.
 
+See :ref:`Spatial Analogues examples`.
+
 
 Methods to compute the (dis)similarity between samples
 ------------------------------------------------------
