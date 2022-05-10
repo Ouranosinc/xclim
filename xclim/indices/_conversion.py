@@ -1,5 +1,5 @@
 # noqa: D100
-from typing import Optional, Tuple
+from __future__ import annotations
 
 import numpy as np
 import xarray as xr
@@ -28,8 +28,8 @@ __all__ = [
 @declare_units(tas="[temperature]", tdps="[temperature]", hurs="[]")
 def humidex(
     tas: xr.DataArray,
-    tdps: Optional[xr.DataArray] = None,
-    hurs: Optional[xr.DataArray] = None,
+    tdps: xr.DataArray | None = None,
+    hurs: xr.DataArray | None = None,
 ) -> xr.DataArray:
     r"""Humidex index.
 
@@ -212,7 +212,7 @@ def tas(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
 @declare_units(uas="[speed]", vas="[speed]", calm_wind_thresh="[speed]")
 def uas_vas_2_sfcwind(
     uas: xr.DataArray, vas: xr.DataArray, calm_wind_thresh: str = "0.5 m/s"
-) -> Tuple[xr.DataArray, xr.DataArray]:
+) -> tuple[xr.DataArray, xr.DataArray]:
     """Wind speed and direction from the eastward and northward wind components.
 
     Computes the magnitude and angle of the wind vector from its northward and eastward components,
@@ -268,7 +268,7 @@ def uas_vas_2_sfcwind(
 @declare_units(sfcWind="[speed]", sfcWindfromdir="[]")
 def sfcwind_2_uas_vas(
     sfcWind: xr.DataArray, sfcWindfromdir: xr.DataArray  # noqa
-) -> Tuple[xr.DataArray, xr.DataArray]:
+) -> tuple[xr.DataArray, xr.DataArray]:
     """Eastward and northward wind components from the wind speed and direction.
 
     Compute the eastward and northward wind components from the wind speed and direction.
@@ -953,12 +953,12 @@ def clausius_clapeyron_scaled_precipitation(
 
 @declare_units(tasmin="[temperature]", tasmax="[temperature]", tas="[temperature]")
 def potential_evapotranspiration(
-    tasmin: Optional[xr.DataArray] = None,
-    tasmax: Optional[xr.DataArray] = None,
-    tas: Optional[xr.DataArray] = None,
+    tasmin: xr.DataArray | None = None,
+    tasmax: xr.DataArray | None = None,
+    tas: xr.DataArray | None = None,
     method: str = "BR65",
-    peta: Optional[float] = 0.00516409319477,
-    petb: Optional[float] = 0.0874972822289,
+    peta: float | None = 0.00516409319477,
+    petb: float | None = 0.0874972822289,
 ) -> xr.DataArray:
     """Potential evapotranspiration.
 

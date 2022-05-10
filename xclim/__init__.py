@@ -1,4 +1,6 @@
 """Climate indices computation package based on Xarray."""
+from __future__ import annotations
+
 from importlib.resources import contents, path
 
 from xclim.core import units  # noqa

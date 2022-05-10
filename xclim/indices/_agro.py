@@ -1,5 +1,5 @@
 # noqa: D100
-from typing import Optional
+from __future__ import annotations
 
 import numpy as np
 import xarray
@@ -280,7 +280,7 @@ def huglin_index(
 def biologically_effective_degree_days(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
-    lat: Optional[xarray.DataArray] = None,
+    lat: xarray.DataArray | None = None,
     thresh_tasmin: str = "10 degC",
     method: str = "gladstones",
     low_dtr: str = "10 degC",
@@ -542,9 +542,9 @@ def latitude_temperature_index(
 )
 def water_budget(
     pr: xarray.DataArray,
-    tasmin: Optional[xarray.DataArray] = None,
-    tasmax: Optional[xarray.DataArray] = None,
-    tas: Optional[xarray.DataArray] = None,
+    tasmin: xarray.DataArray | None = None,
+    tasmax: xarray.DataArray | None = None,
+    tas: xarray.DataArray | None = None,
     method: str = "BR65",
 ) -> xarray.DataArray:
     r"""Precipitation minus potential evapotranspiration.

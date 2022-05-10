@@ -1,6 +1,7 @@
 # noqa: D100
+from __future__ import annotations
+
 import warnings
-from typing import Optional
 
 import numpy as np
 import xarray
@@ -851,8 +852,8 @@ def heat_wave_total_length(
 )
 def liquid_precip_ratio(
     pr: xarray.DataArray,
-    prsn: Optional[xarray.DataArray] = None,
-    tas: Optional[xarray.DataArray] = None,
+    prsn: xarray.DataArray | None = None,
+    tas: xarray.DataArray | None = None,
     thresh: str = "0 degC",
     freq: str = "QS-DEC",
 ) -> xarray.DataArray:
@@ -910,7 +911,7 @@ def liquid_precip_ratio(
 def precip_accumulation(
     pr: xarray.DataArray,
     tas: xarray.DataArray = None,
-    phase: Optional[str] = None,
+    phase: str | None = None,
     thresh: str = "0 degC",
     freq: str = "YS",
 ) -> xarray.DataArray:

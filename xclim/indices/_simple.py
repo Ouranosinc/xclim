@@ -1,4 +1,6 @@
 # noqa: D100
+from __future__ import annotations
+
 import xarray
 
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units

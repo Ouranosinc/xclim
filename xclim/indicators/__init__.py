@@ -17,3 +17,4 @@ Virtual modules are also inserted here. A normal installation of xclim comes wit
 """
 # The actual code for importing virtual modules is in the top-level __init__.
 # This is for import reasons: we need to make sure all normal indicators are created before.
+from __future__ import annotations

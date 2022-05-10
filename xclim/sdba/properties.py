@@ -9,7 +9,9 @@ Properties submodule
 
  .. [VALUE] http://www.value-cost.eu/
 """
-from typing import Callable, Dict, Union
+from __future__ import annotations
+
+from typing import Callable
 
 import numpy as np
 import xarray as xr
@@ -27,7 +29,7 @@ from xclim.indices.stats import fit, parametric_quantile
 
 from .base import Grouper, map_groups, parse_group
 
-STATISTICAL_PROPERTIES: Dict[str, Callable] = {}
+STATISTICAL_PROPERTIES: dict[str, Callable] = {}
 """ Dictionary of all the statistical properties available."""
 
 
@@ -62,7 +64,7 @@ def register_statistical_properties(
 
 @update_xclim_history
 @register_statistical_properties(aspect="marginal", seasonal=True, annual=True)
-def mean(da: xr.DataArray, *, group: Union[str, Grouper] = "time") -> xr.DataArray:
+def mean(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
     """Mean.
 
     Mean over all years at the time resolution.
@@ -97,7 +99,7 @@ def mean(da: xr.DataArray, *, group: Union[str, Grouper] = "time") -> xr.DataArr
 
 @update_xclim_history
 @register_statistical_properties(aspect="marginal", seasonal=True, annual=True)
-def var(da: xr.DataArray, *, group: Union[str, Grouper] = "time") -> xr.DataArray:
+def var(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
     """Variance.
 
     Variance of the variable over all years at the time resolution.
@@ -135,7 +137,7 @@ def var(da: xr.DataArray, *, group: Union[str, Grouper] = "time") -> xr.DataArra
 
 @update_xclim_history
 @register_statistical_properties(aspect="marginal", seasonal=True, annual=True)
-def skewness(da: xr.DataArray, *, group: Union[str, Grouper] = "time") -> xr.DataArray:
+def skewness(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
     """Skewness.
 
     Skewness of the distribution of the variable over all years at the time resolution.
@@ -182,7 +184,7 @@ def skewness(da: xr.DataArray, *, group: Union[str, Grouper] = "time") -> xr.Dat
 @update_xclim_history
 @register_statistical_properties(aspect="marginal", seasonal=True, annual=True)
 def quantile(
-    da: xr.DataArray, *, q: float = 0.98, group: Union[str, Grouper] = "time"
+    da: xr.DataArray, *, q: float = 0.98, group: str | Grouper = "time"
 ) -> xr.DataArray:
     """Quantile.
 
@@ -225,9 +227,9 @@ def spell_length_distribution(
     *,
     method: str = "amount",
     op: str = ">=",
-    thresh: Union[str, float] = "1 mm d-1",
+    thresh: str | float = "1 mm d-1",
     stat: str = "mean",
-    group: Union[str, Grouper] = "time",
+    group: str | Grouper = "time",
 ) -> xr.DataArray:
     r"""Spell length distribution.
 
@@ -316,7 +318,7 @@ def spell_length_distribution(
 @update_xclim_history
 @register_statistical_properties(aspect="temporal", seasonal=True, annual=False)
 def acf(
-    da: xr.DataArray, *, lag: int = 1, group: Union[str, Grouper] = "time.season"
+    da: xr.DataArray, *, lag: int = 1, group: str | Grouper = "time.season"
 ) -> xr.DataArray:
     r"""Autocorrelation function.
 
@@ -387,7 +389,7 @@ def annual_cycle_amplitude(
     da: xr.DataArray,
     *,
     amplitude_type: str = "absolute",
-    group: Union[str, Grouper] = "time",
+    group: str | Grouper = "time",
 ) -> xr.DataArray:
     r"""Annual cycle amplitude.
 
@@ -431,7 +433,7 @@ def annual_cycle_amplitude(
 @update_xclim_history
 @register_statistical_properties(aspect="temporal", seasonal=False, annual=True)
 def annual_cycle_phase(
-    da: xr.DataArray, *, group: Union[str, Grouper] = "time"
+    da: xr.DataArray, *, group: str | Grouper = "time"
 ) -> xr.DataArray:
     """Annual cycle phase.
 
@@ -488,7 +490,7 @@ def corr_btw_var(
     da2: xr.DataArray,
     *,
     corr_type: str = "Spearman",
-    group: Union[str, Grouper] = "time",
+    group: str | Grouper = "time",
     output: str = "correlation",
 ) -> xr.DataArray:
     r"""Correlation between two variables.
@@ -569,7 +571,7 @@ def relative_frequency(
     *,
     op: str = ">=",
     thresh: str = "1mm d-1",
-    group: Union[str, Grouper] = "time",
+    group: str | Grouper = "time",
 ) -> xr.DataArray:
     r"""Relative Frequency.
 
@@ -632,7 +634,7 @@ def relative_frequency(
 def trend(
     da: xr.DataArray,
     *,
-    group: Union[str, Grouper] = "time",
+    group: str | Grouper = "time",
     output: str = "slope",
 ) -> xr.DataArray:
     r"""Linear Trend.
@@ -701,7 +703,7 @@ def return_value(
     period: int = 20,
     op: str = "max",
     method: str = "ML",
-    group: Union[str, Grouper] = "time",
+    group: str | Grouper = "time",
 ) -> xr.DataArray:
     r"""Return value.
 

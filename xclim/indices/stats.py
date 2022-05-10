@@ -1,6 +1,7 @@
 """Statistic-related functions. See the `frequency_analysis` notebook for examples."""
+from __future__ import annotations
 
-from typing import Dict, Optional, Sequence, Tuple, Union
+from typing import Sequence, Union
 
 import numpy as np
 import xarray as xr
@@ -152,7 +153,7 @@ def fit(
     return out
 
 
-def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]) -> xr.DataArray:
+def parametric_quantile(p: xr.DataArray, q: int | Sequence) -> xr.DataArray:
     """Return the value corresponding to the given distribution parameters and quantile.
 
     Parameters
@@ -221,7 +222,7 @@ def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]) -> xr.DataArra
     return out
 
 
-def parametric_cdf(p: xr.DataArray, v: Union[float, Sequence]) -> xr.DataArray:
+def parametric_cdf(p: xr.DataArray, v: float | Sequence) -> xr.DataArray:
     """Return the cumulative distribution function corresponding to the given distribution parameters and value.
 
     Parameters
@@ -283,7 +284,7 @@ def parametric_cdf(p: xr.DataArray, v: Union[float, Sequence]) -> xr.DataArray:
 
 
 def fa(
-    da: xr.DataArray, t: Union[int, Sequence], dist: str = "norm", mode: str = "max"
+    da: xr.DataArray, t: int | Sequence, dist: str = "norm", mode: str = "max"
 ) -> xr.DataArray:
     """Return the value corresponding to the given return period.
 
@@ -331,10 +332,10 @@ def fa(
 def frequency_analysis(
     da: xr.DataArray,
     mode: str,
-    t: Union[int, Sequence[int]],
+    t: int | Sequence[int],
     dist: str,
     window: int = 1,
-    freq: Optional[str] = None,
+    freq: str | None = None,
     **indexer,
 ) -> xr.DataArray:
     """Return the value corresponding to a return period.
@@ -411,7 +412,7 @@ def get_lm3_dist(dist):
     return getattr(lmoments3.distr, _lm3_dist_map[dist])
 
 
-def _fit_start(x, dist, **fitkwargs) -> Tuple[Tuple, Dict]:
+def _fit_start(x, dist, **fitkwargs) -> tuple[tuple, dict]:
     """Return initial values for distribution parameters.
 
     Providing the ML fit method initial values can help the optimizer find the global optimum.
@@ -496,7 +497,7 @@ def _dist_method_1D(
 def dist_method(
     function: str,
     fit_params: xr.DataArray,
-    arg: Optional[xr.DataArray] = None,
+    arg: xr.DataArray | None = None,
     **kwargs,
 ) -> xr.DataArray:
     """Vectorized statistical function for given argument on given distribution initialized with params.

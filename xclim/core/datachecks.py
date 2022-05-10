@@ -5,7 +5,9 @@ Data checks
 
 Utilities designed to check the validity of data inputs.
 """
-from typing import Sequence, Union
+from __future__ import annotations
+
+from typing import Sequence
 
 import xarray as xr
 
@@ -15,7 +17,7 @@ from .utils import ValidationError
 
 
 @datacheck
-def check_freq(var: xr.DataArray, freq: Union[str, Sequence[str]], strict: bool = True):
+def check_freq(var: xr.DataArray, freq: str | Sequence[str], strict: bool = True):
     """Raise an error if not series has not the expected temporal frequency or is not monotonically increasing.
 
     Parameters

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 """The setup script."""
+from __future__ import annotations
+
 import re
 
 from setuptools import find_packages, setup

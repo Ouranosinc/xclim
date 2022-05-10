@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 import numpy as np
@@ -5,7 +7,6 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-import xclim
 import xclim.testing
 from xclim.core.calendar import max_doy
 from xclim.testing.tests import TD

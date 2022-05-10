@@ -5,9 +5,11 @@ CF-Convention checking
 
 Utilities designed to verify the compliance of metadata with the CF-Convention.
 """
+from __future__ import annotations
+
 import fnmatch
 import re
-from typing import Sequence, Union
+from typing import Sequence
 
 from .options import cfcheck
 from .utils import VARIABLES, ValidationError
@@ -16,7 +18,7 @@ from .utils import VARIABLES, ValidationError
 
 
 @cfcheck
-def check_valid(var, key: str, expected: Union[str, Sequence[str]]):
+def check_valid(var, key: str, expected: str | Sequence[str]):
     r"""Check that a variable's attribute has one of the expected values. Raise a ValidationError otherwise."""
     att = getattr(var, key, None)
     if att is None:

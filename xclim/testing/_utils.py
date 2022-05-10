@@ -1,5 +1,7 @@
 """Testing and tutorial utilities module."""
 # Most of this code copied and adapted from xarray
+from __future__ import annotations
+
 import hashlib
 import importlib
 import json
@@ -113,8 +115,8 @@ def _get(
 # idea copied from raven that it borrowed from xclim that borrowed it from xarray that was borrowed from Seaborn
 def open_dataset(
     name: str,
-    suffix: Optional[str] = None,
-    dap_url: Optional[str] = None,
+    suffix: str | None = None,
+    dap_url: str | None = None,
     github_url: str = "https://github.com/Ouranosinc/xclim-testdata",
     branch: str = "main",
     cache: bool = True,
@@ -405,8 +407,8 @@ def update_variable_yaml(filename=None, xclim_needs_only=True):
 
 
 def publish_release_notes(
-    style: str = "md", file: Optional[Union[os.PathLike, StringIO, TextIO]] = None
-) -> Optional[str]:
+    style: str = "md", file: os.PathLike | StringIO | TextIO | None = None
+) -> str | None:
     """Format release history in Markdown or ReStructuredText.
 
     Parameters
@@ -476,9 +478,7 @@ def publish_release_notes(
     print(history, file=file)
 
 
-def show_versions(
-    file: Optional[Union[os.PathLike, StringIO, TextIO]] = None
-) -> Optional[str]:
+def show_versions(file: os.PathLike | StringIO | TextIO | None = None) -> str | None:
     """Print the versions of xclim and its dependencies.
 
     Parameters

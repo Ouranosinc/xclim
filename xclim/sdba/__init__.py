@@ -67,6 +67,8 @@ notebook for more info on the reasons for this move.
 
 Other restrictions : ``map_blocks`` will remove any "auxiliary" coordinates before calling the wrapped function and will add them back on exit.
 """
+from __future__ import annotations
+
 from . import detrending, processing, utils
 from .adjustment import *
 from .base import Grouper
