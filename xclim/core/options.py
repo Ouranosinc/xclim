@@ -174,9 +174,9 @@ class set_options:
       This should have no impact on the results, but should run much faster in the graph creation phase.
     - ``keep_attrs``:
       Controls attributes handling in indicators. If True, attributes from all inputs are merged
-      using the `drop_conflicts` strategy and then update with xclim-provided attributes.
-      If False, attributes from the inputs are ignored. If "xarray", xclim will use the option
-      as set in xarray's options. Note that xarray's "default" is equivalent to False.
+      using the `drop_conflicts` strategy and then updated with xclim-provided attributes.
+      If False, attributes from the inputs are ignored. If "xarray", xclim will use xarray's `keep_attrs` option.
+      Note that xarray's "default" is equivalent to False.
       Default: ``"xarray"``.
 
     Examples
