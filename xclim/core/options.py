@@ -175,7 +175,7 @@ class set_options:
     - ``keep_attrs``:
       Controls attributes handling in indicators. If True, attributes from all inputs are merged
       using the `drop_conflicts` strategy and then updated with xclim-provided attributes.
-      If False, attributes from the inputs are ignored. If "xarray", xclim will use xarray's `keep_attrs` option. 
+      If False, attributes from the inputs are ignored. If "xarray", xclim will use xarray's `keep_attrs` option.
       Note that xarray's "default" is equivalent to False.
       Default: ``"xarray"``.
 
