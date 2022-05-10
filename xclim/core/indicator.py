@@ -786,9 +786,10 @@ class Indicator(IndicatorRegistrar):
             OPTIONS[KEEP_ATTRS] == "xarray" and xr_keep_attrs(False)
         ):
             out_attrs = merge_attrs([da.attrs for da in das.values()], "drop_conflicts")
+            out_attrs.pop("units", None)
         else:
             out_attrs = {}
-        out_attrs = [out_attrs] * self.n_outs
+        out_attrs = [out_attrs.copy() for i in range(self.n_outs)]
 
         das, params = self._preprocess_and_checks(das, params)
 
@@ -834,7 +835,7 @@ class Indicator(IndicatorRegistrar):
 
         # Convert to output units
         outs = [
-            convert_units_to(out, attrs.get("units", ""), self.context)
+            convert_units_to(out, attrs["units"], self.context)
             for out, attrs in zip(outs, out_attrs)
         ]
 
