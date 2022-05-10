@@ -822,7 +822,7 @@ class Indicator(IndicatorRegistrar):
         for out, attrs, base_attrs in zip(outs, out_attrs, self.cf_attrs):
             if self.n_outs > 1:
                 var_id = base_attrs["var_name"]
-            attrs.update(units=out.units)  # The only attr handled by the compute func
+            attrs.update(units=out.units)
             attrs.update(
                 self._update_attrs(
                     params.copy(),
@@ -844,7 +844,7 @@ class Indicator(IndicatorRegistrar):
         # Update variable attributes
         for out, attrs in zip(outs, out_attrs):
             var_name = attrs.pop("var_name")
-            out.attrs = attrs.copy()
+            out.attrs.update(attrs)
             out.name = var_name
 
         # Return a single DataArray in case of single output, otherwise a tuple
