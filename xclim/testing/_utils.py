@@ -407,8 +407,8 @@ def update_variable_yaml(filename=None, xclim_needs_only=True):
 
 
 def publish_release_notes(
-    style: str = "md", file: Optional[Union[os.PathLike, StringIO, TextIO]] = None
-) -> Optional[str]:
+    style: str = "md", file: os.PathLike | StringIO | TextIO | None = None
+) -> str | None:
     """Format release history in Markdown or ReStructuredText.
 
     Parameters
@@ -478,9 +478,7 @@ def publish_release_notes(
     print(history, file=file)
 
 
-def show_versions(
-    file: Optional[Union[os.PathLike, StringIO, TextIO]] = None
-) -> Optional[str]:
+def show_versions(file: os.PathLike | StringIO | TextIO | None = None) -> str | None:
     """Print the versions of xclim and its dependencies.
 
     Parameters
