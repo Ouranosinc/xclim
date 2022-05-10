@@ -52,8 +52,9 @@ clean-test: ## remove test and coverage artifacts
 
 lint: ## check style with flake8 and black
 	pydocstyle --config=setup.cfg xclim
-	flake8 xclim
-	black --check --target-version py37 xclim
+	flake8 --config=setup.cfg xclim
+	black --check --target-version py38 xclim
+	isort --check --settings-file=setup.cfg
 	pylint --rcfile=setup.cfg --exit-zero xclim
 
 test: ## run tests quickly with the default Python

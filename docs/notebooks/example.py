@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import xarray as xr
 
 from xclim.core.units import declare_units, rate2amount

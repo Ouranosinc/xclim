@@ -2,6 +2,8 @@
 Numba-accelerated utilities
 ---------------------------
 """
+from __future__ import annotations
+
 import numpy as np
 from numba import boolean, float32, float64, guvectorize, njit
 from xarray import DataArray

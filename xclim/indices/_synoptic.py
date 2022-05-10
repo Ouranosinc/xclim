@@ -1,4 +1,6 @@
-import cf_xarray
+from __future__ import annotations
+
+import cf_xarray  # noqa
 import numpy as np
 import xarray
 

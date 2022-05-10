@@ -21,6 +21,8 @@ the implementation of the indices.
     :py:mod:`xclim.indicators.land` and :mod:`xclim.indicators.seaIce` modules, documented in :ref:`Climate Indicators`.
 
 """
+from __future__ import annotations
+
 from ._agro import *
 from ._anuclim import *
 from ._conversion import *

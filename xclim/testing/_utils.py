@@ -1,12 +1,19 @@
 """Testing and tutorial utilities module."""
 # Most of this code copied and adapted from xarray
+from __future__ import annotations
+
 import hashlib
+import importlib
 import json
 import logging
+import os
+import platform
 import re
+import sys
 import warnings
+from io import StringIO
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional, Sequence, TextIO, Union
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin
 from urllib.request import urlopen, urlretrieve
@@ -15,6 +22,8 @@ import pandas as pd
 from xarray import Dataset
 from xarray import open_dataset as _open_dataset
 from yaml import safe_dump, safe_load
+
+from xclim import __version__ as xclim_version
 
 _default_cache_dir = Path.home() / ".xclim_testing_data"
 
@@ -27,6 +36,7 @@ __all__ = [
     "open_dataset",
     "publish_release_notes",
     "update_variable_yaml",
+    "show_versions",
 ]
 
 
@@ -105,8 +115,8 @@ def _get(
 # idea copied from raven that it borrowed from xclim that borrowed it from xarray that was borrowed from Seaborn
 def open_dataset(
     name: str,
-    suffix: Optional[str] = None,
-    dap_url: Optional[str] = None,
+    suffix: str | None = None,
+    dap_url: str | None = None,
     github_url: str = "https://github.com/Ouranosinc/xclim-testdata",
     branch: str = "main",
     cache: bool = True,
@@ -182,7 +192,7 @@ def list_datasets(github_repo="Ouranosinc/xclim-testdata", branch="main"):
     """Return a DataFrame listing all xclim test datasets available on the github repo for the given branch.
 
     The result includes the filepath, as passed to `open_dataset`, the file size (in KB) and the html url to the file.
-    This uses a unauthenticated call to Github's REST API, so it is limited to 60 requests per hour (per IP).
+    This uses an unauthenticated call to GitHub's REST API, so it is limited to 60 requests per hour (per IP).
     A single call of this function triggers one request per subdirectory, so use with parsimony.
     """
     res = urlopen(f"https://api.github.com/repos/{github_repo}/contents?ref={branch}")
@@ -330,7 +340,7 @@ def list_input_variables(
     return variables
 
 
-def get_all_CMIP6_variables(get_cell_methods=True):
+def get_all_CMIP6_variables(get_cell_methods=True):  # noqa
     data = pd.read_excel(
         "http://proj.badc.rl.ac.uk/svn/exarch/CMIP6dreq/tags/01.00.33/dreqPy/docs/CMIP6_MIP_tables.xlsx",
         sheet_name=None,
@@ -396,16 +406,21 @@ def update_variable_yaml(filename=None, xclim_needs_only=True):
         safe_dump(stdvars, f)
 
 
-def publish_release_notes(style: str = "md") -> str:
+def publish_release_notes(
+    style: str = "md", file: os.PathLike | StringIO | TextIO | None = None
+) -> str | None:
     """Format release history in Markdown or ReStructuredText.
 
     Parameters
     ----------
     style: {"rst", "md"}
+      Use ReStructuredText formatting or Markdown. Default: Markdown.
+    file: {os.PathLike, StringIO, TextIO}, optional
+      If provided, prints to the given file-like object. Otherwise, returns a string.
 
     Returns
     -------
-    str
+    str, optional
 
     Notes
     -----
@@ -458,4 +473,66 @@ def publish_release_notes(style: str = "md") -> str:
             replacement = f"[{str(grouping[0]).strip()}]({grouping[1]})"
             history = re.sub(search, replacement, history)
 
-    return history
+    if not file:
+        return history
+    print(history, file=file)
+
+
+def show_versions(file: os.PathLike | StringIO | TextIO | None = None) -> str | None:
+    """Print the versions of xclim and its dependencies.
+
+    Parameters
+    ----------
+    file : {os.PathLike, StringIO, TextIO}, optional
+      If provided, prints to the given file-like object. Otherwise, returns a string.
+
+    Returns
+    -------
+    str, optional
+    """
+
+    deps = [
+        ("xarray", lambda mod: mod.__version__),
+        ("sklearn", lambda mod: mod.__version__),
+        ("scipy", lambda mod: mod.__version__),
+        ("pint", lambda mod: mod.__version__),
+        ("pandas", lambda mod: mod.__version__),
+        ("numba", lambda mod: mod.__version__),
+        ("dask", lambda mod: mod.__version__),
+        ("cf_xarray", lambda mod: mod.__version__),
+        ("cftime", lambda mod: mod.__version__),
+        ("bottleneck", lambda mod: mod.__version__),
+        ("boltons", lambda mod: mod.__version__),
+    ]
+
+    deps_blob = []
+    for (modname, ver_f) in deps:
+        try:
+            if modname in sys.modules:
+                mod = sys.modules[modname]
+            else:
+                mod = importlib.import_module(modname)
+        except (KeyError, ModuleNotFoundError):
+            deps_blob.append((modname, None))
+        else:
+            try:
+                ver = ver_f(mod)
+                deps_blob.append((modname, ver))
+            except Exception:
+                deps_blob.append((modname, "installed"))
+
+    modules_versions = "\n".join([f"{k}: {stat}" for k, stat in sorted(deps_blob)])
+
+    installed_versions = (
+        "\n"
+        "INSTALLED VERSIONS\n"
+        "------------------\n"
+        f"python: {platform.python_version()}\n"
+        f"xclim: {xclim_version}\n"
+        f"{modules_versions}\n"
+        f"Anaconda-based environment: {'yes' if Path(sys.base_prefix).joinpath('conda-meta').exists() else 'no'}"
+    )
+
+    if not file:
+        return installed_versions
+    print(installed_versions, file=file)

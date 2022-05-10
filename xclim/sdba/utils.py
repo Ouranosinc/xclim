@@ -2,8 +2,10 @@
 sdba utilities
 --------------
 """
+from __future__ import annotations
+
 import itertools
-from typing import Callable, Mapping, Optional, Tuple, Union
+from typing import Callable, Mapping, Union
 from warnings import warn
 
 import numpy as np
@@ -140,7 +142,7 @@ def get_correction(x: xr.DataArray, y: xr.DataArray, kind: str) -> xr.DataArray:
 
 @ensure_longest_doy
 def apply_correction(
-    x: xr.DataArray, factor: xr.DataArray, kind: Optional[str] = None
+    x: xr.DataArray, factor: xr.DataArray, kind: str | None = None
 ) -> xr.DataArray:
     """Apply the additive or multiplicative correction/adjustment factors.
 
@@ -157,7 +159,7 @@ def apply_correction(
     return out
 
 
-def invert(x: xr.DataArray, kind: Optional[str] = None) -> xr.DataArray:
+def invert(x: xr.DataArray, kind: str | None = None) -> xr.DataArray:
     """Invert a DataArray either additively (-x) or multiplicatively (1/x).
 
     If kind is not given, default to the one stored in the "kind" attribute of x.
@@ -176,9 +178,9 @@ def broadcast(
     grouped: xr.DataArray,
     x: xr.DataArray,
     *,
-    group: Union[str, Grouper] = "time",
+    group: str | Grouper = "time",
     interp: str = "nearest",
-    sel: Optional[Mapping[str, xr.DataArray]] = None,
+    sel: Mapping[str, xr.DataArray] | None = None,
 ) -> xr.DataArray:
     """Broadcast a grouped array back to the same shape as a given array.
 
@@ -236,7 +238,7 @@ def broadcast(
     return grouped
 
 
-def equally_spaced_nodes(n: int, eps: Optional[float] = None) -> np.array:
+def equally_spaced_nodes(n: int, eps: float | None = None) -> np.array:
     """Return nodes with `n` equally spaced points within [0, 1], optionally adding two end-points.
 
     Parameters
@@ -270,7 +272,7 @@ def equally_spaced_nodes(n: int, eps: Optional[float] = None) -> np.array:
 
 def add_cyclic_bounds(
     da: xr.DataArray, att: str, cyclic_coords: bool = True
-) -> Union[xr.DataArray, xr.Dataset]:
+) -> xr.DataArray | xr.Dataset:
     """Reindex an array to include the last slice at the beginning and the first at the end.
 
     This is done to allow interpolation near the end-points.
@@ -359,7 +361,7 @@ def interp_on_quantiles(
     xq: xr.DataArray,
     yq: xr.DataArray,
     *,
-    group: Union[str, Grouper] = "time",
+    group: str | Grouper = "time",
     method: str = "linear",
     extrapolation: str = "constant",
 ):
@@ -487,7 +489,7 @@ def rank(da: xr.DataArray, dim: str = "time", pct: bool = False) -> xr.DataArray
     return da.rank(dim, pct=pct)
 
 
-def pc_matrix(arr: Union[np.ndarray, dsk.Array]) -> Union[np.ndarray, dsk.Array]:
+def pc_matrix(arr: np.ndarray | dsk.Array) -> np.ndarray | dsk.Array:
     """Construct a Principal Component matrix.
 
     This matrix can be used to transform points in arr to principal components
@@ -624,7 +626,7 @@ def best_pc_orientation_full(
 
 def get_clusters_1d(
     data: np.ndarray, u1: float, u2: float
-) -> Tuple[np.array, np.array, np.array, np.array]:
+) -> tuple[np.array, np.array, np.array, np.array]:
     """Get clusters of a 1D array.
 
     A cluster is defined as a sequence of values larger than u2 with at least one value larger than u1.
@@ -759,7 +761,7 @@ def get_clusters(data: xr.DataArray, u1, u2, dim: str = "time") -> xr.Dataset:
 
 
 def rand_rot_matrix(
-    crd: xr.DataArray, num: int = 1, new_dim: Optional[str] = None
+    crd: xr.DataArray, num: int = 1, new_dim: str | None = None
 ) -> xr.DataArray:
     r"""Generate random rotation matrices.
 
@@ -810,9 +812,7 @@ def rand_rot_matrix(
     ).astype("float32")
 
 
-def copy_all_attrs(
-    ds: Union[xr.Dataset, xr.DataArray], ref: Union[xr.Dataset, xr.DataArray]
-):
+def copy_all_attrs(ds: xr.Dataset | xr.DataArray, ref: xr.Dataset | xr.DataArray):
     """Copies all attributes of ds to ref, including attributes of shared coordinates, and variables in the case of Datasets."""
     ds.attrs.update(ref.attrs)
     extras = ds.variables if isinstance(ds, xr.Dataset) else ds.coords
