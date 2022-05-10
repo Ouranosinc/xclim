@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # Tests for the Indicator objects
+from __future__ import annotations
+
 import gc
 import json
 from inspect import signature
-from typing import Optional, Tuple, Union
+from typing import Tuple, Union
 
 import dask
 import numpy as np
@@ -117,9 +119,9 @@ multiTemp = Daily(
 
 @declare_units(tas="[temperature]", tasmin="[temperature]", tasmax="[temperature]")
 def multioptvar_compute(
-    tas: Optional[xr.DataArray] = None,
-    tasmax: Optional[xr.DataArray] = None,
-    tasmin: Optional[xr.DataArray] = None,
+    tas: xr.DataArray | None = None,
+    tasmax: xr.DataArray | None = None,
+    tasmin: xr.DataArray | None = None,
 ):
     if tas is None:
         with xr.set_options(keep_attrs=True):

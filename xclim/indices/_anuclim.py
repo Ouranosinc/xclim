@@ -1,5 +1,5 @@
 # noqa: D100
-from typing import Optional
+from __future__ import annotations
 
 import numpy as np
 import xarray
@@ -7,7 +7,6 @@ import xarray
 from xclim.core.units import (
     convert_units_to,
     declare_units,
-    pint_multiply,
     rate2amount,
     units,
     units2pint,
@@ -503,8 +502,8 @@ def _from_other_arg(
 
 
 def _to_quarter(
-    pr: Optional[xarray.DataArray] = None,
-    tas: Optional[xarray.DataArray] = None,
+    pr: xarray.DataArray | None = None,
+    tas: xarray.DataArray | None = None,
 ) -> xarray.DataArray:
     """Convert daily, weekly or monthly time series to quarterly time series according to ANUCLIM specifications."""
     if tas is not None and pr is not None:

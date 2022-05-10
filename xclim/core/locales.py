@@ -46,11 +46,13 @@ and all indicator entries) are optional. For xclim-provided translations (for no
 all indicators must have en entry and the "attrs_mapping" entries must match exactly the default formatter.
 Those default translations are found in the `xclim/locales` folder.
 """
+from __future__ import annotations
+
 import json
 import warnings
 from copy import deepcopy
 from pathlib import Path
-from typing import Mapping, Optional, Sequence, Tuple, Union
+from typing import Mapping, Optional, Sequence
 
 from .formatting import AttrFormatter, default_formatter
 
@@ -93,9 +95,7 @@ def _valid_locales(locales):
     )
 
 
-def get_local_dict(
-    locale: Union[str, Sequence[str], Tuple[str, dict]]
-) -> Tuple[str, dict]:
+def get_local_dict(locale: str | Sequence[str] | tuple[str, dict]) -> tuple[str, dict]:
     """Return all translated metadata for a given locale.
 
     Parameters
@@ -140,9 +140,9 @@ def get_local_dict(
 
 
 def get_local_attrs(
-    indicator: Union[str, Sequence[str]],
-    *locales: Union[str, Sequence[str], Tuple[str, dict]],
-    names: Optional[Sequence[str]] = None,
+    indicator: str | Sequence[str],
+    *locales: str | Sequence[str] | tuple[str, dict],
+    names: Sequence[str] | None = None,
     append_locale_name: bool = True,
 ) -> dict:
     """Get all attributes of an indicator in the requested locales.
@@ -200,7 +200,7 @@ def get_local_attrs(
 
 
 def get_local_formatter(
-    locale: Union[str, Sequence[str], Tuple[str, dict]]
+    locale: str | Sequence[str] | tuple[str, dict]
 ) -> AttrFormatter:
     """Return an AttrFormatter instance for the given locale.
 
@@ -233,7 +233,7 @@ class UnavailableLocaleError(ValueError):
 
 
 def read_locale_file(
-    filename, module: Optional[str] = None, encoding: str = "UTF8"
+    filename, module: str | None = None, encoding: str = "UTF8"
 ) -> dict:
     """Read a locale file (.json) and return its dictionary.
 
@@ -259,7 +259,7 @@ def read_locale_file(
     return locdict
 
 
-def load_locale(locdata: Union[str, Path, Mapping[str, dict]], locale: str):
+def load_locale(locdata: str | Path | Mapping[str, dict], locale: str):
     """Load translations from a json file into xclim.
 
     Parameters

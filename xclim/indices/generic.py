@@ -5,8 +5,10 @@ Generic indices submodule
 
 Helper functions for common generic actions done in the computation of indices.
 """
+from __future__ import annotations
+
 import warnings
-from typing import Optional, Sequence, Tuple, Union
+from typing import Sequence, Union
 
 import cftime
 import numpy as np
@@ -59,13 +61,13 @@ binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "n
 
 
 def select_time(
-    da: Union[xr.DataArray, xr.Dataset],
+    da: xr.DataArray | xr.Dataset,
     drop: bool = False,
-    season: Union[str, Sequence[str]] = None,
-    month: Union[int, Sequence[int]] = None,
-    doy_bounds: Tuple[int, int] = None,
-    date_bounds: Tuple[str, str] = None,
-) -> Union[xr.DataArray, xr.Dataset]:
+    season: str | Sequence[str] = None,
+    month: int | Sequence[int] = None,
+    doy_bounds: tuple[int, int] = None,
+    date_bounds: tuple[str, str] = None,
+) -> xr.DataArray | xr.Dataset:
     """Select entries according to a time period."""
     warnings.warn(
         "'select_time()' has moved from `xclim.indices.generic` to `xclim.core.calendar`. "
@@ -161,7 +163,7 @@ def get_op(op: str):
     return xr.core.ops.get_op(op)  # noqa
 
 
-def compare(da: xr.DataArray, op: str, thresh: Union[float, int]) -> xr.DataArray:
+def compare(da: xr.DataArray, op: str, thresh: float | int) -> xr.DataArray:
     """Compare a dataArray to a threshold using given operator.
 
     Parameters
@@ -182,7 +184,7 @@ def compare(da: xr.DataArray, op: str, thresh: Union[float, int]) -> xr.DataArra
 
 
 def threshold_count(
-    da: xr.DataArray, op: str, thresh: Union[float, int, xr.DataArray], freq: str
+    da: xr.DataArray, op: str, thresh: float | int | xr.DataArray, freq: str
 ) -> xr.DataArray:
     """Count number of days where value is above or below threshold.
 
@@ -616,10 +618,10 @@ def extreme_temperature_range(
 
 def aggregate_between_dates(
     data: xr.DataArray,
-    start: Union[xr.DataArray, DayOfYearStr],
-    end: Union[xr.DataArray, DayOfYearStr],
+    start: xr.DataArray | DayOfYearStr,
+    end: xr.DataArray | DayOfYearStr,
     op: str = "sum",
-    freq: Optional[str] = None,
+    freq: str | None = None,
 ) -> xr.DataArray:
     """Aggregate the data over a period between start and end dates and apply the operator on the aggregated data.
 
@@ -749,8 +751,8 @@ def day_lengths(
     lat: xr.DataArray,
     obliquity: float = -0.4091,
     summer_solstice: DayOfYearStr = "06-21",
-    start_date: Optional[Union[xarray.DataArray, DayOfYearStr]] = None,
-    end_date: Optional[Union[xarray.DataArray, DayOfYearStr]] = None,
+    start_date: xarray.DataArray | DayOfYearStr | None = None,
+    end_date: xarray.DataArray | DayOfYearStr | None = None,
     freq: str = "YS",
 ) -> xr.DataArray:
     r"""Day-lengths according to latitude, obliquity, and day of year.

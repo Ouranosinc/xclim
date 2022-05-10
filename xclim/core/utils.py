@@ -5,6 +5,8 @@ Miscellaneous indices utilities
 
 Helper functions for the indices computation, indicator construction and other things.
 """
+from __future__ import annotations
+
 import importlib.util
 import logging
 import os
@@ -13,16 +15,15 @@ from collections import defaultdict
 from enum import IntEnum
 from functools import partial
 from importlib.resources import open_text
-from inspect import Parameter
+from inspect import Parameter, _empty
 from pathlib import Path
 from types import FunctionType
-from typing import Callable, Mapping, NewType, Optional, Sequence, Tuple, Union
+from typing import Callable, Mapping, NewType, Sequence, Union
 
 import numpy as np
 import xarray as xr
 from boltons.funcutils import update_wrapper
 from dask import array as dsk
-from xarray import DataArray, Dataset
 from yaml import safe_dump, safe_load
 
 logger = logging.getLogger("xclim")
@@ -46,7 +47,7 @@ ICM = {
 
 
 def wrapped_partial(
-    func: FunctionType, suggested: Optional[dict] = None, **fixed
+    func: FunctionType, suggested: dict | None = None, **fixed
 ) -> Callable:
     """Wrap a function, updating its signature but keeping its docstring.
 
@@ -116,7 +117,7 @@ def walk_map(d: dict, func: FunctionType) -> dict:
     return out
 
 
-def load_module(path: os.PathLike, name: Optional[str] = None):
+def load_module(path: os.PathLike, name: str | None = None):
     """Load a python module from a python file, optionally changing its name.
 
     Examples
@@ -304,7 +305,7 @@ def _get_gamma(virtual_indexes: np.ndarray, previous_indexes: np.ndarray):
 
 def _get_indexes(
     arr: np.ndarray, virtual_indexes: np.ndarray, valid_values_count: np.ndarray
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Get the valid indexes of arr neighbouring virtual_indexes.
 
@@ -373,7 +374,7 @@ def _nan_quantile(
     axis: int = 0,
     alpha: float = 1.0,
     beta: float = 1.0,
-) -> Union[float, np.ndarray]:
+) -> float | np.ndarray:
     """
     Get the quantiles of the array for the given axis.
     A linear interpolation is performed using alpha and beta.
@@ -435,7 +436,7 @@ def _nan_quantile(
 def raise_warn_or_log(
     err: Exception,
     mode: str,
-    msg: Optional[str] = None,
+    msg: str | None = None,
     err_type=ValueError,
     stacklevel: int = 1,
 ):
@@ -475,7 +476,8 @@ class InputKind(IntEnum):
     of :py:meth:`xclim.core.indicator.Indicator.json`.
 
     For developers : for each constant, the docstring specifies the annotation a parameter of an indice function
-    should use in order to be picked up by the indicator constructor.
+    should use in order to be picked up by the indicator constructor. Notice that we are using the annotation format
+    as described in PEP604/py3.10, i.e. with | indicating an union and without import objects from `typing`.
     """
 
     VARIABLE = 0
@@ -486,7 +488,7 @@ class InputKind(IntEnum):
     OPTIONAL_VARIABLE = 1
     """An optional data variable (DataArray or variable name).
 
-       Annotation : ``xr.DataArray`` or ``Optional[xr.DataArray]``.
+       Annotation : ``xr.DataArray | None``. The default should be None.
     """
     QUANTITY_STR = 2
     """A string representing a quantity with units.
@@ -502,12 +504,12 @@ class InputKind(IntEnum):
     NUMBER = 4
     """A number.
 
-       Annotation : ``int``, ``float`` and Unions and Optionals thereof.
+       Annotation : ``int``, ``float`` and unions thereof, potentially optional.
     """
     STRING = 5
     """A simple string.
 
-       Annotation : ``str`` or ``Optional[str]``. In most cases, this kind of parameter makes sense with choices indicated
+       Annotation : ``str`` or ``str | None``. In most cases, this kind of parameter makes sense with choices indicated
        in the docstring's version of the annotation with curly braces. See :ref:`Defining new indices`.
     """
     DAY_OF_YEAR = 6
@@ -523,12 +525,13 @@ class InputKind(IntEnum):
     NUMBER_SEQUENCE = 8
     """A sequence of numbers
 
-       Annotation : ``Sequence[int]``, ``Sequence[float]`` and ``Union`` thereof, may include single ``int`` and ``float``.
+       Annotation : ``Sequence[int]``, ``Sequence[float]`` and unions thereof,
+       may include single ``int`` and ``float``, may be optional.
     """
     BOOL = 9
     """A boolean flag.
 
-       Annotation : ``bool``, or optional thereof.
+       Annotation : ``bool``, may be optional.
     """
     KWARGS = 50
     """A mapping from argument name to value.
@@ -547,17 +550,6 @@ class InputKind(IntEnum):
     """
 
 
-def _typehint_is_in(hint, hints):
-    """Returns whether the first argument is in the other arguments.
-
-    If the first arg is a Union of several typehints, this returns True only
-    if all the members of that Union are in the given list.
-    """
-    # This code makes use of the "set-like" property of Unions and Optionals:
-    # Optional[X, Y] == Union[X, Y, None] == Union[X, Union[X, Y], None] etc.
-    return Union[(hint,) + tuple(hints)] == Union[tuple(hints)]
-
-
 def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> InputKind:
     """Returns the appropriate InputKind constant from an ``inspect.Parameter`` object.
 
@@ -566,45 +558,45 @@ def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> Inpu
     has been assigned units through the :py:func:`xclim.core.units.declare_units` decorator.
     That can be given with the ``has_units`` flag.
     """
-    if (
-        param.annotation in [DataArray, Union[DataArray, str]]
-        and param.default is not None
-    ):
+    if param.annotation is not _empty:
+        annot = set(
+            param.annotation.replace("xarray.", "").replace("xr.", "").split(" | ")
+        )
+    else:
+        annot = {"no_annotation"}
+    if "DataArray" in annot and "None" not in annot and param.default is not None:
         return InputKind.VARIABLE
 
-    if Optional[param.annotation] in [
-        Optional[DataArray],
-        Optional[Union[DataArray, str]],
-    ]:
-        return InputKind.OPTIONAL_VARIABLE
+    annot = annot - {"None"}
 
-    if _typehint_is_in(param.annotation, (str, None)) and has_units:
-        return InputKind.QUANTITY_STR
+    if "DataArray" in annot:
+        return InputKind.OPTIONAL_VARIABLE
 
     if param.name == "freq":
         return InputKind.FREQ_STR
 
-    if _typehint_is_in(param.annotation, (None, int, float)):
+    if annot == {"str"} and has_units:
+        return InputKind.QUANTITY_STR
+
+    if annot.issubset({"int", "float"}):
         return InputKind.NUMBER
 
-    if _typehint_is_in(
-        param.annotation, (None, int, float, Sequence[int], Sequence[float])
-    ):
+    if annot.issubset({"int", "float", "Sequence[int]", "Sequence[float]"}):
         return InputKind.NUMBER_SEQUENCE
 
-    if _typehint_is_in(param.annotation, (None, str)):
+    if annot == {"str"}:
         return InputKind.STRING
 
-    if _typehint_is_in(param.annotation, (None, DayOfYearStr)):
+    if annot == {"DayOfYearStr"}:
         return InputKind.DAY_OF_YEAR
 
-    if _typehint_is_in(param.annotation, (None, DateStr)):
+    if annot == {"DateStr"}:
         return InputKind.DATE
 
-    if _typehint_is_in(param.annotation, (None, bool)):
+    if annot == {"bool"}:
         return InputKind.BOOL
 
-    if _typehint_is_in(param.annotation, (None, Dataset)):
+    if annot == {"Dataset"}:
         return InputKind.DATASET
 
     if param.kind == param.VAR_KEYWORD:

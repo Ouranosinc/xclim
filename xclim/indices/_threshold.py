@@ -1,6 +1,7 @@
 # noqa: D100
+from __future__ import annotations
+
 import warnings
-from typing import Optional
 
 import numpy as np
 import xarray
@@ -731,7 +732,7 @@ def growing_season_length(
 def frost_season_length(
     tasmin: xarray.DataArray,
     window: int = 5,
-    mid_date: Optional[DayOfYearStr] = "01-01",
+    mid_date: DayOfYearStr | None = "01-01",
     thresh: str = "0.0 degC",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
@@ -901,7 +902,7 @@ def frost_free_season_end(
 def frost_free_season_length(
     tasmin: xarray.DataArray,
     window: int = 5,
-    mid_date: Optional[DayOfYearStr] = "07-01",
+    mid_date: DayOfYearStr | None = "07-01",
     thresh: str = "0.0 degC",
     freq: str = "YS",
 ) -> xarray.DataArray:

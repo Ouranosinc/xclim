@@ -1,4 +1,6 @@
 """xclim command line interface module."""
+from __future__ import annotations
+
 import sys
 import warnings
 
@@ -9,7 +11,7 @@ from dask.diagnostics import ProgressBar
 import xclim as xc
 from xclim.core.dataflags import DataQualityException, data_flags, ecad_compliant
 from xclim.core.utils import InputKind
-from xclim.testing._utils import publish_release_notes  # noqa
+from xclim.testing._utils import publish_release_notes, show_versions  # noqa
 
 try:
     from dask.distributed import Client, progress
@@ -126,6 +128,14 @@ def _create_command(indicator_name):
         help=indicator.abstract,
         short_help=indicator.title,
     )
+
+
+@click.command(short_help="Print versions of dependencies for debugging purposes.")
+@click.pass_context
+def show_version_info(ctx):
+    """Print versions of dependencies for debugging purposes."""
+    click.echo(show_versions())
+    ctx.exit()
 
 
 @click.command(short_help="Print history for publishing purposes.")
@@ -307,7 +317,7 @@ class XclimCli(click.MultiCommand):
 
     def list_commands(self, ctx):
         """Return the available commands (other than the indicators)."""
-        return "indices", "info", "dataflags", "release_notes"
+        return "indices", "info", "dataflags", "release_notes", "show_version_info"
 
     def get_command(self, ctx, name):
         """Return the requested command."""
@@ -316,6 +326,7 @@ class XclimCli(click.MultiCommand):
             "info": info,
             "dataflags": dataflags,
             "release_notes": release_notes,
+            "show_version_info": show_version_info,
         }.get(name)
         if command is None:
             command = _create_command(name)
