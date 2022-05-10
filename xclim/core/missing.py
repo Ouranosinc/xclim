@@ -24,6 +24,8 @@ To define another missing value algorithm, subclass :py:class:`MissingBase` and 
 :py:func:`xclim.core.options.register_missing_method`.
 
 """
+from __future__ import annotations
+
 import numpy as np
 import xarray as xr
 

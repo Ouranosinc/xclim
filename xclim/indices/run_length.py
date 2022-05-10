@@ -5,9 +5,10 @@ Run length algorithms submodule
 
 Computation of statistics on runs of True values in boolean arrays.
 """
+from __future__ import annotations
+
 from datetime import datetime
-from functools import partial
-from typing import Optional, Sequence, Tuple, Union
+from typing import Optional, Sequence, Union
 from warnings import warn
 
 import numpy as np
@@ -27,7 +28,7 @@ the use of the ufunc version of run lengths algorithms.
 
 
 def use_ufunc(
-    ufunc_1dim: Union[bool, str],
+    ufunc_1dim: bool | str,
     da: xr.DataArray,
     dim: str = "time",
     index: str = "first",
@@ -154,7 +155,7 @@ def rle_statistics(
     reducer: str = "max",
     window: int = 1,
     dim: str = "time",
-    ufunc_1dim: Union[str, bool] = "from_context",
+    ufunc_1dim: str | bool = "from_context",
     index: str = "first",
 ) -> xr.DataArray:
     """Return the length of consecutive run of True values, according to a reducing operator.
@@ -199,7 +200,7 @@ def rle_statistics(
 def longest_run(
     da: xr.DataArray,
     dim: str = "time",
-    ufunc_1dim: Union[str, bool] = "from_context",
+    ufunc_1dim: str | bool = "from_context",
     index: str = "first",
 ) -> xr.DataArray:
     """Return the length of the longest consecutive run of True values.
@@ -233,7 +234,7 @@ def windowed_run_events(
     da: xr.DataArray,
     window: int,
     dim: str = "time",
-    ufunc_1dim: Union[str, bool] = "auto",
+    ufunc_1dim: str | bool = "auto",
     index: str = "first",
 ) -> xr.DataArray:
     """Return the number of runs of a minimum length.
@@ -278,7 +279,7 @@ def windowed_run_count(
     da: xr.DataArray,
     window: int,
     dim: str = "time",
-    ufunc_1dim: Union[str, bool] = "from_context",
+    ufunc_1dim: str | bool = "from_context",
     index: str = "first",
 ) -> xr.DataArray:
     """Return the number of consecutive true values in array for runs at least as long as given duration.
@@ -322,8 +323,8 @@ def first_run(
     da: xr.DataArray,
     window: int,
     dim: str = "time",
-    coord: Optional[Union[str, bool]] = False,
-    ufunc_1dim: Union[str, bool] = "from_context",
+    coord: str | bool | None = False,
+    ufunc_1dim: str | bool = "from_context",
 ) -> xr.DataArray:
     """Return the index of the first item of the first run of at least a given length.
 
@@ -386,8 +387,8 @@ def last_run(
     da: xr.DataArray,
     window: int,
     dim: str = "time",
-    coord: Optional[Union[str, bool]] = False,
-    ufunc_1dim: Union[str, bool] = "from_context",
+    coord: str | bool | None = False,
+    ufunc_1dim: str | bool = "from_context",
 ) -> xr.DataArray:
     """Return the index of the last item of the last run of at least a given length.
 
@@ -427,9 +428,7 @@ def last_run(
 
 # TODO: Add window arg
 # TODO: Inverse window arg to tolerate holes?
-def run_bounds(
-    mask: xr.DataArray, dim: str = "time", coord: Optional[Union[bool, str]] = True
-):
+def run_bounds(mask: xr.DataArray, dim: str = "time", coord: bool | str | None = True):
     """Return the start and end dates of boolean runs along a dimension.
 
     Parameters
@@ -522,9 +521,9 @@ def keep_longest_run(da: xr.DataArray, dim: str = "time") -> xr.DataArray:
 def season(
     da: xr.DataArray,
     window: int,
-    date: Optional[DayOfYearStr] = None,
+    date: DayOfYearStr | None = None,
     dim: str = "time",
-    coord: Optional[Union[str, bool]] = False,
+    coord: str | bool | None = False,
 ) -> xr.Dataset:
     """Return the bounds of a season (along dim).
 
@@ -641,7 +640,7 @@ def season(
 def season_length(
     da: xr.DataArray,
     window: int,
-    date: Optional[DayOfYearStr] = None,
+    date: DayOfYearStr | None = None,
     dim: str = "time",
 ) -> xr.DataArray:
     """Return the length of the longest semi-consecutive run of True values (optionally including a given date).
@@ -686,7 +685,7 @@ def run_end_after_date(
     window: int,
     date: DayOfYearStr = "07-01",
     dim: str = "time",
-    coord: Optional[Union[bool, str]] = "dayofyear",
+    coord: bool | str | None = "dayofyear",
 ) -> xr.DataArray:
     """Return the index of the first item after the end of a run after a given date.
 
@@ -739,9 +738,9 @@ def run_end_after_date(
 def first_run_after_date(
     da: xr.DataArray,
     window: int,
-    date: Optional[DayOfYearStr] = "07-01",
+    date: DayOfYearStr | None = "07-01",
     dim: str = "time",
-    coord: Optional[Union[bool, str]] = "dayofyear",
+    coord: bool | str | None = "dayofyear",
 ) -> xr.DataArray:
     """Return the index of the first item of the first run after a given date.
 
@@ -783,7 +782,7 @@ def last_run_before_date(
     window: int,
     date: DayOfYearStr = "07-01",
     dim: str = "time",
-    coord: Optional[Union[bool, str]] = "dayofyear",
+    coord: bool | str | None = "dayofyear",
 ) -> xr.DataArray:
     """Return the index of the last item of the last run before a given date.
 
@@ -827,8 +826,8 @@ def _rle_1d(ia):
 
 
 def rle_1d(
-    arr: Union[int, float, bool, Sequence[Union[int, float, bool]]]
-) -> Tuple[np.array, np.array, np.array]:
+    arr: int | float | bool | Sequence[int | float | bool],
+) -> tuple[np.array, np.array, np.array]:
     """Return the length, starting position and value of consecutive identical values.
 
     Parameters
@@ -863,7 +862,7 @@ def rle_1d(
     return _rle_1d(ia)
 
 
-def first_run_1d(arr: Sequence[Union[int, float]], window: int) -> int:
+def first_run_1d(arr: Sequence[int | float], window: int) -> int:
     """Return the index of the first item of a run of at least a given length.
 
     Parameters
@@ -950,7 +949,7 @@ def windowed_run_events_1d(arr: Sequence[bool], window: int) -> xr.DataArray:
 
 
 def windowed_run_count_ufunc(
-    x: Union[xr.DataArray, Sequence[bool]], window: int, dim: str
+    x: xr.DataArray | Sequence[bool], window: int, dim: str
 ) -> xr.DataArray:
     """Dask-parallel version of windowed_run_count_1d, ie: the number of consecutive true values in array for runs at least as long as given duration.
 
@@ -981,7 +980,7 @@ def windowed_run_count_ufunc(
 
 
 def windowed_run_events_ufunc(
-    x: Union[xr.DataArray, Sequence[bool]], window: int, dim: str
+    x: xr.DataArray | Sequence[bool], window: int, dim: str
 ) -> xr.DataArray:
     """Dask-parallel version of windowed_run_events_1d, ie: the number of runs at least as long as given duration.
 
@@ -1012,7 +1011,7 @@ def windowed_run_events_ufunc(
 
 
 def statistics_run_ufunc(
-    x: Union[xr.DataArray, Sequence[bool]],
+    x: xr.DataArray | Sequence[bool],
     reducer: str,
     window: int = 1,
     dim: str = "time",
@@ -1048,7 +1047,7 @@ def statistics_run_ufunc(
 
 
 def first_run_ufunc(
-    x: Union[xr.DataArray, Sequence[bool]],
+    x: xr.DataArray | Sequence[bool],
     window: int,
     dim: str,
 ) -> xr.DataArray:
@@ -1083,7 +1082,7 @@ def first_run_ufunc(
 
 
 def lazy_indexing(
-    da: xr.DataArray, index: xr.DataArray, dim: Optional[str] = None
+    da: xr.DataArray, index: xr.DataArray, dim: str | None = None
 ) -> xr.DataArray:
     """Get values of `da` at indices `index` in a NaN-aware and lazy manner.
 
@@ -1158,8 +1157,8 @@ def lazy_indexing(
 
 def index_of_date(
     time: xr.DataArray,
-    date: Optional[Union[DateStr, DayOfYearStr]],
-    max_idxs: Optional[int] = None,
+    date: DateStr | DayOfYearStr | None,
+    max_idxs: int | None = None,
     default: int = 0,
 ) -> np.ndarray:
     """Get the index of a date in a time array.
@@ -1209,7 +1208,7 @@ def suspicious_run_1d(
     arr: np.ndarray,
     window: int = 10,
     op: str = ">",
-    thresh: Optional[float] = None,
+    thresh: float | None = None,
 ) -> np.ndarray:
     """Return True where the array contains a run of identical values.
 
@@ -1256,7 +1255,7 @@ def suspicious_run(
     dim: str = "time",
     window: int = 10,
     op: str = ">",
-    thresh: Optional[float] = None,
+    thresh: float | None = None,
 ) -> xr.DataArray:
     """Return True where the array contains has runs of identical values, vectorized version.
 

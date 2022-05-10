@@ -85,6 +85,8 @@ the mapping of `data.input` simply links an argument name from the function give
 to one of those official variables.
 
 """
+from __future__ import annotations
+
 import re
 import warnings
 import weakref
@@ -99,7 +101,7 @@ from inspect import signature
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 from xarray import DataArray, Dataset
@@ -597,8 +599,8 @@ class Indicator(IndicatorRegistrar):
 
     @classmethod
     def _parse_output_attrs(
-        cls, kwds: Dict[str, Any], identifier: str
-    ) -> List[Dict[str, Union[str, Callable]]]:
+        cls, kwds: dict[str, Any], identifier: str
+    ) -> list[dict[str, str | Callable]]:
         """CF-compliant metadata attributes for all output variables."""
         parent_cf_attrs = cls.cf_attrs
         cf_attrs = kwds.get("cf_attrs")
@@ -656,7 +658,7 @@ class Indicator(IndicatorRegistrar):
         cls,
         data: dict,
         identifier: str,
-        module: Optional[str] = None,
+        module: str | None = None,
     ):
         """Create an indicator subclass and instance from a dictionary of parameters.
 
@@ -1029,9 +1031,7 @@ class Indicator(IndicatorRegistrar):
             )
 
     @classmethod
-    def translate_attrs(
-        cls, locale: Union[str, Sequence[str]], fill_missing: bool = True
-    ):
+    def translate_attrs(cls, locale: str | Sequence[str], fill_missing: bool = True):
         """Return a dictionary of unformated translated translatable attributes.
 
         Translatable attributes are defined in :py:const:`xclim.core.locales.TRANSLATABLE_ATTRS`.
@@ -1414,7 +1414,7 @@ def add_iter_indicators(module):
 def build_indicator_module(
     name: str,
     objs: Mapping[str, Indicator],
-    doc: Optional[str] = None,
+    doc: str | None = None,
 ) -> ModuleType:
     """Create or update a module from imported objects.
 
@@ -1458,9 +1458,9 @@ def build_indicator_module(
 
 def build_indicator_module_from_yaml(
     filename: PathLike,
-    name: Optional[str] = None,
-    indices: Optional[Union[Mapping[str, Callable], ModuleType, PathLike]] = None,
-    translations: Optional[Dict[str, Union[dict, PathLike]]] = None,
+    name: str | None = None,
+    indices: Mapping[str, Callable] | ModuleType | PathLike | None = None,
+    translations: dict[str, dict | PathLike] | None = None,
     mode: str = "raise",
     encoding: str = "UTF8",
 ) -> ModuleType:

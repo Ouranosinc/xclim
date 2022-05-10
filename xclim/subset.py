@@ -1,4 +1,6 @@
 """Mock subset module for API compatibility."""
+from __future__ import annotations
+
 import warnings
 
 try:

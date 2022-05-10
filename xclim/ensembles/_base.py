@@ -1,4 +1,6 @@
 """Ensembles creation and statistics."""
+from __future__ import annotations
+
 from pathlib import Path
 from typing import List, Optional, Sequence, Union
 
@@ -11,9 +13,9 @@ from xclim.core.utils import calc_perc
 
 
 def create_ensemble(
-    datasets: List[Union[xr.Dataset, xr.DataArray, Path, str, List[Union[Path, str]]]],
+    datasets: list[xr.Dataset | xr.DataArray | Path | str | list[Path | str]],
     mf_flag: bool = False,
-    resample_freq: Optional[str] = None,
+    resample_freq: str | None = None,
     calendar: str = "default",
     **xr_kwargs,
 ) -> xr.Dataset:
@@ -139,9 +141,9 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
 
 
 def ensemble_percentiles(
-    ens: Union[xr.Dataset, xr.DataArray],
+    ens: xr.Dataset | xr.DataArray,
     values: Sequence[float] = [10, 50, 90],
-    keep_chunk_size: Optional[bool] = None,
+    keep_chunk_size: bool | None = None,
     split: bool = True,
 ) -> xr.Dataset:
     """Calculate ensemble statistics between a results from an ensemble of climate simulations.
@@ -266,12 +268,12 @@ def ensemble_percentiles(
 
 
 def _ens_align_datasets(
-    datasets: List[Union[xr.Dataset, Path, str, List[Union[Path, str]]]],
+    datasets: list[xr.Dataset | Path | str | list[Path | str]],
     mf_flag: bool = False,
     resample_freq: str = None,
     calendar: str = "default",
     **xr_kwargs,
-) -> List[xr.Dataset]:
+) -> list[xr.Dataset]:
     """Create a list of aligned xarray Datasets for ensemble Dataset creation.
 
     Parameters

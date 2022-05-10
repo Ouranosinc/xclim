@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import jsonpickle
 import numpy as np
 import pytest

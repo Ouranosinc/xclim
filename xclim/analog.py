@@ -64,8 +64,9 @@ a single float. See their documentation in :ref:`Analogue metrics API`.
 # TODO: Mahalanobis distance
 # TODO: Comment on "significance" of results.
 # Code adapted from flyingpigeon.dissimilarity, Nov 2020.
+from __future__ import annotations
 
-from typing import Sequence, Tuple, Union
+from typing import Sequence
 
 import numpy as np
 import pandas as pd
@@ -82,7 +83,7 @@ metrics = dict()
 def spatial_analogs(
     target: xr.Dataset,
     candidates: xr.Dataset,
-    dist_dim: Union[str, Sequence[str]] = "time",
+    dist_dim: str | Sequence[str] = "time",
     method: str = "kldiv",
     **kwargs,
 ):
@@ -174,7 +175,7 @@ def spatial_analogs(
 # ---------------------------------------------------------------------------- #
 
 
-def standardize(x: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def standardize(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
     Standardize x and y by the square root of the product of their standard deviation.
 
@@ -540,8 +541,8 @@ def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
 
 @metric
 def kldiv(
-    x: np.ndarray, y: np.ndarray, *, k: Union[int, Sequence[int]] = 1
-) -> Union[float, Sequence[float]]:
+    x: np.ndarray, y: np.ndarray, *, k: int | Sequence[int] = 1
+) -> float | Sequence[float]:
     r"""
     Compute the Kullback-Leibler divergence between two multivariate samples.
 

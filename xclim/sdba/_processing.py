@@ -3,6 +3,8 @@
 Here are defined the functions wrapped by map_blocks or map_groups,
 user-facing, metadata-handling functions should be defined in processing.py.
 """
+from __future__ import annotations
+
 from typing import Sequence
 
 import numpy as np
