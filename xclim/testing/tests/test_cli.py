@@ -373,3 +373,11 @@ def test_release_notes_failure(method, error):
         ["release_notes", *method],
     )
     assert error in results.output
+
+
+def test_show_version_info(capsys):
+    runner = CliRunner()
+    results = runner.invoke(cli, ["show_version_info"])
+    assert "INSTALLED VERSIONS" in results.output
+    assert "python" in results.output
+    assert "boltons: installed" in results.output

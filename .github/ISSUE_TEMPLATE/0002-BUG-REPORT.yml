@@ -26,7 +26,7 @@ body:
       label: Description
       description: Describe what you were trying to get done. Tell us what happened, what went wrong, and what you expected to happen.
   - type: textarea
-    id: steps-to-repduce
+    id: steps-to-reproduce
     attributes:
       label: Steps To Reproduce
       description: Paste the command(s) you ran and the output. If there was a crash, please include the traceback below.

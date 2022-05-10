@@ -14,6 +14,8 @@ New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Add "Celsius" to aliases of "celsius" unit. (:issue:`1067`, :pull:`1068`).
 * All indicators now have indexing enabled, except those computing statistics on spells. (:issue:`1069`, :pull:`1070`).
+* A convenience function for returning the version numbers for relevant xclim dependencies (``xclim.testing.show_versions``) is now offered. (:pull:`1073`).
+  * A CLI version of this function is also available from the command line: `$ xclim show_version_info`. (:pull:`1073`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
