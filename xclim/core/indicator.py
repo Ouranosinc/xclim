@@ -818,9 +818,10 @@ class Indicator(IndicatorRegistrar):
 
         # Metadata attributes from templates
         var_id = None
-        for attrs, base_attrs in zip(out_attrs, self.cf_attrs):
+        for out, attrs, base_attrs in zip(outs, out_attrs, self.cf_attrs):
             if self.n_outs > 1:
-                var_id = attrs["var_name"]
+                var_id = base_attrs["var_name"]
+            attrs.update(units=out.units)  # The only attr handled by the compute func
             attrs.update(
                 self._update_attrs(
                     params.copy(),
