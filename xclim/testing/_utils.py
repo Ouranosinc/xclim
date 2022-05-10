@@ -21,6 +21,8 @@ from xarray import Dataset
 from xarray import open_dataset as _open_dataset
 from yaml import safe_dump, safe_load
 
+from xclim import __version__ as xclim_version
+
 _default_cache_dir = Path.home() / ".xclim_testing_data"
 
 LOGGER = logging.getLogger("xclim")
@@ -32,6 +34,7 @@ __all__ = [
     "open_dataset",
     "publish_release_notes",
     "update_variable_yaml",
+    "show_versions",
 ]
 
 
@@ -525,6 +528,7 @@ def show_versions(
         "INSTALLED VERSIONS\n"
         "------------------\n"
         f"python: {platform.python_version()}\n"
+        f"xclim: {xclim_version}\n"
         f"{modules_versions}\n"
         f"Anaconda-based environment: {'yes' if Path(sys.base_prefix).joinpath('conda-meta').exists() else 'no'}"
     )
