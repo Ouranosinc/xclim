@@ -104,9 +104,8 @@ from types import ModuleType
 from typing import Any, Callable, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
+import xarray
 from xarray import DataArray, Dataset
-from xarray.core.merge import merge_attrs
-from xarray.core.options import _get_keep_attrs as xr_keep_attrs
 from yaml import safe_load
 
 from .. import indices
@@ -783,9 +782,12 @@ class Indicator(IndicatorRegistrar):
         das, params = self._parse_variables_from_call(args, kwds)
 
         if OPTIONS[KEEP_ATTRS] is True or (
-            OPTIONS[KEEP_ATTRS] == "xarray" and xr_keep_attrs(False)
+            OPTIONS[KEEP_ATTRS] == "xarray"
+            and xarray.core.options._get_keep_attrs(False)
         ):
-            out_attrs = merge_attrs([da.attrs for da in das.values()], "drop_conflicts")
+            out_attrs = xarray.core.merge.merge_attrs(
+                [da.attrs for da in das.values()], "drop_conflicts"
+            )
             out_attrs.pop("units", None)
         else:
             out_attrs = {}
@@ -806,7 +808,9 @@ class Indicator(IndicatorRegistrar):
                 var_kwargs = params[nm]
             elif nm not in compute_das and nm in params:
                 kwargs[nm] = params[nm]
-        outs = self.compute(**compute_das, **kwargs, **var_kwargs)
+
+        with xarray.set_options(keep_attrs=False):
+            outs = self.compute(**compute_das, **kwargs, **var_kwargs)
 
         if isinstance(outs, DataArray):
             outs = [outs]
