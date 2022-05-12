@@ -6,7 +6,7 @@ repos:
     rev: v2.32.1
     hooks:
       - id: pyupgrade
-        args: [ --py38-plus ]
+        args: [ "--py38-plus" ]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.2.0
     hooks:
@@ -35,13 +35,16 @@ repos:
     rev: 5.10.1
     hooks:
       - id: isort
-        args: [ '--settings-file=setup.cfg']
+        args: [ '--settings-file=setup.cfg', "add_imports='from __future__ import annotations'" ]
   - repo: https://github.com/nbQA-dev/nbQA
     rev: 1.3.1
     hooks:
       - id: nbqa-black
+        args: [ "--target-version=py38" ]
       - id: nbqa-pyupgrade
-        args: [ --py38-plus ]
+        args: [ "--py38-plus" ]
+      - id: nbqa-isort
+        args: [ "--settings-file=setup.cfg" ]
   - repo: https://github.com/kynan/nbstripout
     rev: 0.5.0
     hooks:
