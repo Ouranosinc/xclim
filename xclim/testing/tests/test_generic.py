@@ -6,6 +6,7 @@ import xarray as xr
 
 from xclim.core.calendar import date_range, doy_to_days_since, select_time
 from xclim.indices import generic
+from xclim.indices._helpers import day_lengths
 
 
 class TestSelectResampleOp:
@@ -271,7 +272,7 @@ class TestDayLength:
             coords={"time": time_data, "lat": [-60, -45, -30, 0, 30, 45, 60]},
         )
 
-        dl = generic.day_lengths(dates=data.time, lat=data.lat)
+        dl = day_lengths(dates=data.time, lat=data.lat)
 
         events = dict(
             solstice=[

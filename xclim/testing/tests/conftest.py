@@ -18,6 +18,20 @@ def tmp_netcdf_filename(tmpdir):
 
 
 @pytest.fixture
+def lat_series():
+    def _lat_series(values):
+        return xr.DataArray(
+            values,
+            dims=("lat",),
+            coords={"lat": values},
+            attrs={"standard_name": "latitude", "units": "degrees_north"},
+            name="lat",
+        )
+
+    return _lat_series
+
+
+@pytest.fixture
 def tas_series():
     def _tas_series(values, start="7/1/2000"):
         coords = pd.date_range(start, periods=len(values), freq="D")
