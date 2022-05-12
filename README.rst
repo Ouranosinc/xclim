@@ -2,7 +2,7 @@
 xclim: Climate indices computations |logo|
 ==========================================
 
-|license| |security| |build| |pypi| |conda| |coveralls| |codefactor| |fossa| |zenodo| |black| |docs| |gitter|
+|license| |security| |fair| |build| |pypi| |conda| |coveralls| |codefactor| |fossa| |zenodo| |black| |docs| |gitter|
 
 ----
 
@@ -92,6 +92,10 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 .. |security| image:: https://bestpractices.coreinfrastructure.org/projects/6041/badge
         :target: https://bestpractices.coreinfrastructure.org/projects/6041
         :alt: Open Source Security Foundation
+        
+.. |fair| image:: https://img.shields.io/badge/fair--software.eu-%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8B-yellow
+        :target: https://fair-software.eu
+        :alt: FAIR Software Compliance
 
 .. |fossa| image:: https://app.fossa.com/api/projects/git%2Bgithub.com%2FOuranosinc%2Fxclim.svg?type=shield
         :target: https://app.fossa.com/projects/git%2Bgithub.com%2FOuranosinc%2Fxclim?ref=badge_shield
