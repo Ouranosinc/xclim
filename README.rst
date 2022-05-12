@@ -2,7 +2,7 @@
 xclim: Climate indices computations |logo|
 ==========================================
 
-|license| |build| |pypi| |conda| |coveralls| |codefactor| |fossa| |zenodo| |black| |docs| |gitter|
+|license| |security| |fair| |build| |pypi| |conda| |coveralls| |codefactor| |fossa| |zenodo| |black| |docs| |gitter|
 
 ----
 
@@ -24,11 +24,9 @@ xclim currently provides over 50 indices related to mean, minimum and maximum da
 .. _xarray: http://xarray.pydata.org/
 .. _dask: https://dask.org/
 
-
 Documentation
 -------------
 The official documentation is at https://xclim.readthedocs.io/
-
 
 Contributing
 ------------
@@ -37,7 +35,6 @@ xclim is in active development and it's being used in production by climate serv
 * If you're interested in participating in the development of xclim by suggesting new features, new indices or report bugs, please leave us a message on the `issue tracker <https://github.com/Ouranosinc/xclim/issues>`_. There is also a chat room on gitter (|gitter|).
 
 * If you would like to contribute code or documentation (which is greatly appreciated!), check out the `Contributing Guidelines <https://github.com/Ouranosinc/xclim/blob/master/.github/CONTRIBUTING.rst>`_ before you begin!
-
 
 How to cite this library
 ------------------------
@@ -91,6 +88,14 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 .. |license| image:: https://img.shields.io/github/license/Ouranosinc/xclim.svg
         :target: https://github.com/Ouranosinc/xclim/blob/master/LICENSE
         :alt: License
+
+.. |security| image:: https://bestpractices.coreinfrastructure.org/projects/6041/badge
+        :target: https://bestpractices.coreinfrastructure.org/projects/6041
+        :alt: Open Source Security Foundation
+
+.. |fair| image:: https://img.shields.io/badge/fair--software.eu-%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8B-yellow
+        :target: https://fair-software.eu
+        :alt: FAIR Software Compliance
 
 .. |fossa| image:: https://app.fossa.com/api/projects/git%2Bgithub.com%2FOuranosinc%2Fxclim.svg?type=shield
         :target: https://app.fossa.com/projects/git%2Bgithub.com%2FOuranosinc%2Fxclim?ref=badge_shield
