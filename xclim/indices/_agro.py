@@ -9,9 +9,9 @@ import xclim.indices.run_length as rl
 from xclim.core.calendar import select_time
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.core.utils import DayOfYearStr
-from xclim.indices._helpers import day_lengths
 from xclim.indices._threshold import first_day_above, first_day_below, freshet_start
 from xclim.indices.generic import aggregate_between_dates
+from xclim.indices.helpers import day_lengths
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -253,7 +253,7 @@ def huglin_index(
             start_date=start_date,
             end_date=end_date,
             freq=freq,
-            method="jones",
+            method="simple",
         )
         k = 1
         k_aggregated = 2.8311e-4 * day_length + 0.30834
@@ -400,7 +400,7 @@ def biologically_effective_degree_days(
                 start_date=start_date,
                 end_date=end_date,
                 freq=freq,
-                method="jones",
+                method="simple",
             )
             k = 1
             k_huglin = 2.8311e-4 * day_length + 0.30834

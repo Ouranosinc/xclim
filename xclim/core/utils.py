@@ -18,7 +18,7 @@ from importlib.resources import open_text
 from inspect import Parameter, _empty
 from pathlib import Path
 from types import FunctionType
-from typing import Callable, Mapping, NewType, Sequence, Union
+from typing import Callable, Mapping, NewType, Sequence
 
 import numpy as np
 import xarray as xr

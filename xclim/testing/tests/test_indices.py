@@ -284,7 +284,7 @@ class TestAgroclimaticIndices:
                 bedd[1], bedd[0]
             )  # Leap-year has slightly higher values
             np.testing.assert_allclose(
-                bedd, np.array([deg_days, deg_days, deg_days, np.NaN]), rtol=3e-4
+                bedd, np.array([deg_days, deg_days, deg_days, np.NaN]), rtol=6e-4
             )
             np.testing.assert_allclose(
                 bedd_hot, [max_deg_days, max_deg_days, max_deg_days, np.NaN], rtol=0.15
@@ -369,7 +369,7 @@ class TestAgroclimaticIndices:
             end_date=end_date,  # noqa
         )
 
-        np.testing.assert_almost_equal(np.mean(hi), values, 2)
+        np.testing.assert_allclose(np.mean(hi), values, rtol=1e-2, atol=0)
 
     def test_qian_weighted_mean_average(self, tas_series):
         mg = np.zeros(365)

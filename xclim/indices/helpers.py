@@ -3,19 +3,14 @@
 Helper functions submodule
 ==========================
 
-Functions that encapsulated some geophysical logic but could be shared by many indices.
+Functions that encapsulate some geophysical logic but could be shared by many indices.
 """
 from __future__ import annotations
 
 import numpy as np
 import xarray as xr
 
-from xclim.core.calendar import (
-    datetime_to_decimal_year,
-    days_in_year,
-    doy_to_days_since,
-    get_calendar,
-)
+from xclim.core.calendar import datetime_to_decimal_year
 from xclim.core.units import convert_units_to
 from xclim.core.utils import DayOfYearStr
 from xclim.indices.generic import aggregate_between_dates
@@ -24,27 +19,27 @@ from xclim.indices.generic import aggregate_between_dates
 def solar_declination(day_angle: xr.DataArray, method="spencer") -> xr.DataArray:
     """Solar declination
 
-    The angle between the sun rays and the earth's equator, in radians, as approximated by [Spencer1971]_.
+    The angle between the sun rays and the earth's equator, in radians, as approximated
+    by [Spencer1971]_ or assuming the orbit is a cirle.
 
     Parameters
     ----------
     day_angle: xr.DataArray
-        Assuming the earth makes a full circle in a year, this is the angle covered from
-        the beginning of the year up to that timestep. Also called the "julian day fraction".
-        See :py:func:`~xclim.core.calendar.datetime_to_decimal_year`.
-    method: {'spencer', 'simple', 'jones'}
-        Which approximation to use. The default ("spencer") uses the first 7 terms of the
-        Fourier series representing the observed declination.
-        The two other methods assume the orbit is a circle with a fixed obliquity.
-        "simple" assumes the solstice/equinox happen at fixed angles on the orbit (the date changes for leap years).
-        "jones" assumes the solcstice/equinox happen at fixed dates (the angle changes for leap years).
+      Assuming the earth makes a full circle in a year, this is the angle covered from
+      the beginning of the year up to that timestep. Also called the "julian day fraction".
+      See :py:func:`~xclim.core.calendar.datetime_to_decimal_year`.
+    method: {'spencer', 'simple'}
+      Which approximation to use. The default ("spencer") uses the first 7 terms of the
+      Fourier series representing the observed declination, while "simple" assumes
+      the orbit is a circle with a fixed obliquity and that the solstice/equinox happen
+      at fixed angles on the orbit (the exact calendar date changes for leap years).
 
     Returns
     -------
     Solar declination angle, [rad]
 
-    Reference
-    ---------
+    References
+    ----------
     .. [Spencer1971] Spencer JW (1971) Fourier series representation of the position of the sun. Search 2(5):172
     """
     # julian day fraction
@@ -54,20 +49,6 @@ def solar_declination(day_angle: xr.DataArray, method="spencer") -> xr.DataArray
         # This assumes the orbit is a perfect circle, the obliquity is 0.4091 rad (23.43°)
         # and the equinox is on the March 21st 17:20 UTC (March 20th 23:14 UTC on leap years)
         return 0.4091 * np.sin(da - 1.39)
-    if method == "jones":
-        # This methods is very similar to the simple one
-        # but assumes the summer solstice _always_ is 06-21 (leap and non-leap)
-        cal = get_calendar(da.time)
-
-        year_length = da.time.copy(
-            data=[days_in_year(x, calendar=cal) for x in da.time.dt.year]
-        )
-
-        julian_date_from_solstice = da.time.copy(
-            data=doy_to_days_since(da.time.dt.dayofyear, start="06-21", calendar=cal)
-        )
-
-        return 0.4091 * (np.cos((2 * np.pi * julian_date_from_solstice) / year_length))
 
     if method == "spencer":
         return (
@@ -79,6 +60,7 @@ def solar_declination(day_angle: xr.DataArray, method="spencer") -> xr.DataArray
             - 0.002697 * np.cos(3 * da)
             + 0.001480 * np.sin(3 * da)
         )
+    raise NotImplementedError(f"Method {method} must be one of 'simple' or 'spencer'")
 
 
 def eccentricity_correction_factor(day_angle: xr.DataArray, method="spencer"):
@@ -90,27 +72,26 @@ def eccentricity_correction_factor(day_angle: xr.DataArray, method="spencer"):
     Parameters
     ----------
     day_angle: xr.DataArray
-        Assuming the earth makes a full circle in a year, this is the angle covered from
-        the beginning of the year up to that timestep. Also called the "julian day fraction".
-        See :py:func:`~xclim.core.calendar.datetime_to_decimal_year`.
+      Assuming the earth makes a full circle in a year, this is the angle covered from
+      the beginning of the year up to that timestep. Also called the "julian day fraction".
+      See :py:func:`~xclim.core.calendar.datetime_to_decimal_year`.
     method:
-        Which approximation to use. The default ("spencer") uses the first five terms of
-        the fourier series of the eccentrencity, while "simple" approximates with only
-        the first two.
+      Which approximation to use. The default ("spencer") uses the first five terms of
+      the fourier series of the eccentrencity, while "simple" approximates with only
+      the first two.
 
     Returns
     -------
     Eccentricity correction factor, [dimensionless]
 
-    Reference
-    ---------
+    References
+    ----------
     Spencer JW (1971) Fourier series representation of the position of the sun. Search 2(5):172
     """
     # julian day fraction
     da = convert_units_to(day_angle, "rad")
     if method == "simple":
         # It is quite used, I think the source is (not available online) : Perrin de Brichambaut, C. (1975). Estimation des ressources énergétiques solaires en France. Ed. Européennes thermique et industrie.
-        # Another approximation is:
         return 1 + 0.033 * np.cos(da)
     if method == "spencer":
         return (
@@ -134,24 +115,23 @@ def cosine_of_solar_zenith_angle(
     Parameters
     ----------
     declination : xr.DataArray
-        Daily solar declination. See :py:func:`solar_declination`.
-    latitude : xr.DataArray
-        Latitude.
+      Daily solar declination. See :py:func:`solar_declination`.
+    lat : xr.DataArray
+      Latitude.
     stat : {'integral', 'average'}
-        Which daily statistic to return. If "integral", this returns the integral of the
-        cosine of the zenith angle from sunrise to sunset. If "average", the integral is
-        divided by the "duration" from sunrise to sunset.
-
+      Which daily statistic to return. If "integral", this returns the integral of the
+      cosine of the zenith angle from sunrise to sunset. If "average", the integral is
+      divided by the "duration" from sunrise to sunset.
 
     Returns
     -------
     Cosine of the solar zenith angle, [rad] or [dimensionless]
-        If stat is "integral", dimensions can be said to be "time" as the integral is on
-        the hour angle. For seconds, multiply by the number of seconds in a comple day
-        cycle (24*60*60) and divide by 2π.
+      If stat is "integral", dimensions can be said to be "time" as the integral is on
+      the hour angle. For seconds, multiply by the number of seconds in a comple day
+      cycle (24*60*60) and divide by 2π.
 
-    Reference
-    ---------
+    References
+    ----------
     Kalogirou, S. A. (2014). Chapter 2 — Environmental Characteristics. In S. A. Kalogirou (Ed.), Solar Energy Engineering (Second Edition) (pp. 51–123). Academic Press. https://doi.org/10.1016/B978-0-12-397270-5.00002-9
     """
     lat = convert_units_to(lat, "rad")
@@ -169,6 +149,7 @@ def cosine_of_solar_zenith_angle(
             np.sin(declination) * np.sin(lat)
             + np.cos(declination) * np.cos(lat) * np.sin(h_s) / h_s
         )
+    raise NotImplementedError("Argument 'stat' must be one of 'integral' or 'average.")
 
 
 def extraterrestrial_solar_radiation(
@@ -186,16 +167,21 @@ def extraterrestrial_solar_radiation(
     Parameters
     ----------
     times: xr.DataArray
-            Daily datetime data. This function makes no sense with data of other frequency.
-    latitude : xr.DataArray
-        Latitude.
+      Daily datetime data. This function makes no sense with data of other frequency.
+    lat : xr.DataArray
+      Latitude.
+    solar_constant : str
+      The solar constant, the energy received on earth from the sun per surface per time.
+    method : {'spencer', 'simple'}
+      Which method to use when computing the solar declination and the eccentricity
+      correction factor. See :py:func:`solar_declination` and :py:func:`eccentricity_correction_factor`.
 
     Returns
     -------
     Extraterrestrial solar radiation, [J m-2 d-1]
 
-    Reference
-    ---------
+    References
+    ----------
     .. [Matthes17] Matthes, K. et al. (2017). Solar forcing for CMIP6 (v3.2). Geoscientific Model Development, 10(6), 2247–2302. https://doi.org/10.5194/gmd-10-2247-2017
     .. [Kalogirou14] Kalogirou, S. A. (2014). Chapter 2 — Environmental Characteristics. In S. A. Kalogirou (Ed.), Solar Energy Engineering (Second Edition) (pp. 51–123). Academic Press. https://doi.org/10.1016/B978-0-12-397270-5.00002-9
     """
@@ -233,7 +219,7 @@ def day_lengths(
       End date to consider for calculating mean day lengths. Default: None.
     freq : str
       Resampling frequency.
-    method : {'spencer', 'simple', 'jones'}
+    method : {'spencer', 'simple'}
       Which approximation to use when computing the solar declination angle.
       See :py:func:`solar_declination`.
 

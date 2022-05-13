@@ -7,8 +7,7 @@ from numba import float32, float64, vectorize
 
 from xclim.core.calendar import date_range
 from xclim.core.units import amount2rate, convert_units_to, declare_units, units2pint
-
-from ._helpers import (
+from xclim.indices.helpers import (
     cosine_of_solar_zenith_angle,
     day_lengths,
     extraterrestrial_solar_radiation,
