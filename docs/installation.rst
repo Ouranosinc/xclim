@@ -12,20 +12,11 @@ To install xclim via pip, run this command in your terminal:
 
     $ pip install xclim
 
-To install xclim with spatial subsetting tools (`clisops`_), ensure you have the necessary system dependencies installed and run:
-
-.. code-block:: console
-
-    $ pip install xclim[gis]
-    # or alternatively;
-    $ pip install xclim clisops
-
 This is the preferred method to install xclim, as it will always install the most recent stable release.
 
 If you don't have `pip`_ installed, this `Python installation guide`_ can guide
 you through the process.
 
-.. _clisops: https://clisops.readthedocs.io/en/latest/readme.html
 .. _pip: https://pip.pypa.io
 .. _Python installation guide: http://docs.python-guide.org/en/latest/starting/installation/
 .. _OSGeo4W installer: https://trac.osgeo.org/osgeo4w/
@@ -41,7 +32,18 @@ To install the xclim Anaconda binary, run this command in your terminal:
 .. code-block:: console
 
     $ conda install -c conda-forge xclim
-    $ conda install -c conda-forge clisops  # for subsetting and bias correction functions
+
+Extra dependencies
+------------------
+To improve performance of xclim, we highly recommend you also install `flox`. This package
+integrates into xarray and improves the performance of the grouping and resampling
+algorithms, especially when using `dask` on large datasets.
+
+We also recommend using the tools in `clisops.core.subset` for spatial manipulation of
+geospatial data.
+
+.. _flox: https://flox.readthedocs.io/en/latest
+.. _clisops: https://clisops.readthedocs.io/en/latest/readme.html
 
 From sources
 ------------
