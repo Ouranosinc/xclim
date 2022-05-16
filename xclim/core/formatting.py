@@ -62,11 +62,10 @@ class AttrFormatter(string.Formatter):
         self.mapping = mapping
 
     def format(self, format_string: str, /, *args: Any, **kwargs: dict) -> str:
-        kw = {**kwargs}
         for k, v in DEFAULT_FORMAT_PARAMS.items():
-            if k not in kw:
-                kw.update({k: v})
-        return super().format(format_string, *args, **kw)
+            if k not in kwargs:
+                kwargs.update({k: v})
+        return super().format(format_string, *args, **kwargs)
 
     def format_field(self, value, format_spec):
         """Format a value given a formatting spec.
