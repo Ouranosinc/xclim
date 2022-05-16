@@ -18,15 +18,21 @@ New features and enhancements
   * A CLI version of this function is also available from the command line: `$ xclim show_version_info`. (:pull:`1073`).
 * New "keep_attrs" option to control the handling of the attributes within the indicators. (:issue:`1026`, :pull:`1076`).
 * Added a notebook showcasing some simple examples of Spatial Analogues. (:issue:`585`, :pull:`1075`).
+* Improved percentile based indicators metadata with the window, threshold and climatology period used to compute percentiles. (:issue:`1047`, :pull:`1050`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Typing syntax has been updated within pre-commit via `isort`. Pre-commit hooks now append `from __future__ import annotations` to all python module imports for backwards compatibility. (:issue:`1065`, :pull:`1071`)
 * `isort` project configurations are now set in `setup.cfg`. (:pull:`1071`).
 
+Breaking changes
+^^^^^^^^^^^^^^^^
+* The signature of the Indicators [cold_spell_duration_index, tg90p, tg10p, tx90p, tx10p, tn90p, tn10p, warm_spell_duration_index, days_over_precip_doy_thresh, days_over_precip_thresh, fraction_over_precip_doy_thresh, fraction_over_precip_thresh, cold_and_dry_days, warm_and_dry_days, warm_and_wet_days, cold_and_wet_days ]
+has been modified. The parameter for percentiles values is now named after the variable it is supposed to be computed upon. (:pull:`1050`)
+
 0.36.0 (29-04-2022)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), David Huard (:user:`huard`), Abel Aoun (:user:`bzah`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), David Huard (:user:`huard`).
 
 Bug fixes
 ^^^^^^^^^
@@ -39,12 +45,6 @@ New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.sdba.measures.rmse`` and ``xclim.sdba.measures.mae`` now use `numpy` instead of `sklearn`. This improves their performances when using `dask`. (:pull:`1051`).
 * Argument ``append_ends`` added to ``sdba.unpack_moving_yearly_window`` (:pull:`1059`).
-* Improve percentile based indicators' metadata with percentile metadata window, threshold and climatology period. (:issue:`1047`, :pull:`1050`).
-
-Breaking changes
-^^^^^^^^^^^^^^^^
-* The signature of the Indicators [cold_spell_duration_index, tg90p, tg10p, tx90p, tx10p, tn90p, tn10p, warm_spell_duration_index, days_over_precip_doy_thresh, days_over_precip_thresh, fraction_over_precip_doy_thresh, fraction_over_precip_thresh, cold_and_dry_days, warm_and_dry_days, warm_and_wet_days, cold_and_wet_days ]
-has been modified. The parameter for percentiles values is now named after the variable it is supposed to be computed upon. (:pull:`1050`)
 
 Internal changes
 ^^^^^^^^^^^^^^^^
