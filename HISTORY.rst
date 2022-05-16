@@ -9,7 +9,7 @@ Contributors to this version:  Abel Aoun (:user:`bzah`), Pascal Bourgault (:user
 Announcements
 ^^^^^^^^^^^^^
 * `xclim` is now compliant with `PEP 563 <https://peps.python.org/pep-0563>`_. Python3.10-style annotations are now permitted. (:issue:`1065`, :pull:`1071`).
-* Works with xarray's flox-enabled `GroupBy` and `resample`.
+* `xclim` is now fully compatible with xarray's `flox`-enabled ``GroupBy`` and ``resample`` operations. (:pull:`1081`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
