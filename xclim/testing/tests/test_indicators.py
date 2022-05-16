@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # Tests for the Indicator objects
+from __future__ import annotations
+
 import gc
 import json
 from inspect import signature
-from typing import Optional, Tuple, Union
+from typing import Tuple, Union
 
 import dask
 import numpy as np
@@ -117,13 +119,13 @@ multiTemp = Daily(
 
 @declare_units(tas="[temperature]", tasmin="[temperature]", tasmax="[temperature]")
 def multioptvar_compute(
-    tas: Optional[xr.DataArray] = None,
-    tasmax: Optional[xr.DataArray] = None,
-    tasmin: Optional[xr.DataArray] = None,
+    tas: xr.DataArray | None = None,
+    tasmax: xr.DataArray | None = None,
+    tasmin: xr.DataArray | None = None,
 ):
     if tas is None:
-        with xr.set_options(keep_attrs=True):
-            return (tasmin + tasmax) / 2
+        tasmax = convert_units_to(tasmax, tasmin)
+        return ((tasmin + tasmax) / 2).assign_attrs(units=tasmin.units)
     return tas
 
 
@@ -149,6 +151,28 @@ def test_attrs(tas_series):
     assert txm.name == "tmin5 degC"
     assert uniIndTemp.standard_name == "{freq} mean temperature"
     assert uniIndTemp.cf_attrs[0]["another_attr"] == "With a value."
+
+
+@pytest.mark.parametrize(
+    "xcopt,xropt,exp",
+    [
+        ("xarray", "default", False),
+        (True, False, True),
+        (False, True, False),
+        ("xarray", True, True),
+    ],
+)
+def test_keep_attrs(tasmin_series, tasmax_series, xcopt, xropt, exp):
+    tx = tasmax_series(np.arange(360.0))
+    tn = tasmin_series(np.arange(360.0))
+    tx.attrs.update(something="blabla", bing="bang", foo="bar")
+    tn.attrs.update(something="blabla", bing="bong")
+    with xclim.set_options(keep_attrs=xcopt):
+        with xr.set_options(keep_attrs=xropt):
+            tg = multiOptVar(tasmin=tn, tasmax=tx)
+    assert (tg.attrs.get("something") == "blabla") is exp
+    assert (tg.attrs.get("foo") == "bar") is exp
+    assert "bing" not in tg.attrs
 
 
 def test_opt_vars(tasmin_series, tasmax_series):
@@ -420,7 +444,14 @@ def test_all_parameters_understood(official_indicators):
 
 def test_signature():
     sig = signature(xclim.atmos.solid_precip_accumulation)
-    assert list(sig.parameters.keys()) == ["pr", "tas", "thresh", "freq", "ds"]
+    assert list(sig.parameters.keys()) == [
+        "pr",
+        "tas",
+        "thresh",
+        "freq",
+        "ds",
+        "indexer",
+    ]
     assert sig.parameters["pr"].annotation == Union[xr.DataArray, str]
     assert sig.parameters["tas"].default == "tas"
     assert sig.parameters["tas"].kind == sig.parameters["tas"].POSITIONAL_OR_KEYWORD

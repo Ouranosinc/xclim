@@ -1,4 +1,6 @@
 # Tests taken from flyingpigeon on Nov 2020
+from __future__ import annotations
+
 import numpy as np
 import pandas as pd
 import pytest

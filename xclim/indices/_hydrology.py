@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 import xarray
 
@@ -155,7 +157,7 @@ def snw_max(snw: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray:
     xarray.DataArray
       The maximum snow amount over a given number of days for each period. [mass/area].
     """
-    return snw.resample(time=freq).max(dim="time", keep_attrs=True)
+    return snw.resample(time=freq).max(dim="time").assign_attrs(units=snw.units)
 
 
 @declare_units(snw="[mass]/[area]")

@@ -1,4 +1,6 @@
 # noqa: D100
+from __future__ import annotations
+
 import xarray
 
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
@@ -58,7 +60,7 @@ def tg_max(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
         TNx_j = max(TN_{ij})
     """
-    return tas.resample(time=freq).max(dim="time", keep_attrs=True)
+    return tas.resample(time=freq).max(dim="time").assign_attrs(units=tas.units)
 
 
 @declare_units(tas="[temperature]")
@@ -97,8 +99,7 @@ def tg_mean(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     >>> t = xr.open_dataset(path_to_tas_file).tas
     >>> tg = tg_mean(t, freq="QS-DEC")
     """
-    arr = tas.resample(time=freq)
-    return arr.mean(dim="time", keep_attrs=True)
+    return tas.resample(time=freq).mean(dim="time").assign_attrs(units=tas.units)
 
 
 @declare_units(tas="[temperature]")
@@ -128,7 +129,7 @@ def tg_min(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
         TGn_j = min(TG_{ij})
     """
-    return tas.resample(time=freq).min(dim="time", keep_attrs=True)
+    return tas.resample(time=freq).min(dim="time").assign_attrs(units=tas.units)
 
 
 @declare_units(tasmin="[temperature]")
@@ -158,7 +159,7 @@ def tn_max(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
         TNx_j = max(TN_{ij})
     """
-    return tasmin.resample(time=freq).max(dim="time", keep_attrs=True)
+    return tasmin.resample(time=freq).max(dim="time").assign_attrs(units=tasmin.units)
 
 
 @declare_units(tasmin="[temperature]")
@@ -188,8 +189,7 @@ def tn_mean(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
         TN_{ij} = \frac{ \sum_{i=1}^{I} TN_{ij} }{I}
     """
-    arr = tasmin.resample(time=freq)
-    return arr.mean(dim="time", keep_attrs=True)
+    return tasmin.resample(time=freq).mean(dim="time").assign_attrs(units=tasmin.units)
 
 
 @declare_units(tasmin="[temperature]")
@@ -219,7 +219,7 @@ def tn_min(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
         TNn_j = min(TN_{ij})
     """
-    return tasmin.resample(time=freq).min(dim="time", keep_attrs=True)
+    return tasmin.resample(time=freq).min(dim="time").assign_attrs(units=tasmin.units)
 
 
 @declare_units(tasmax="[temperature]")
@@ -249,7 +249,7 @@ def tx_max(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
         TXx_j = max(TX_{ij})
     """
-    return tasmax.resample(time=freq).max(dim="time", keep_attrs=True)
+    return tasmax.resample(time=freq).max(dim="time").assign_attrs(units=tasmax.units)
 
 
 @declare_units(tasmax="[temperature]")
@@ -279,8 +279,7 @@ def tx_mean(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
         TX_{ij} = \frac{ \sum_{i=1}^{I} TX_{ij} }{I}
     """
-    arr = tasmax.resample(time=freq)
-    return arr.mean(dim="time", keep_attrs=True)
+    return tasmax.resample(time=freq).mean(dim="time").assign_attrs(units=tasmax.units)
 
 
 @declare_units(tasmax="[temperature]")
@@ -310,7 +309,7 @@ def tx_min(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
         TXn_j = min(TX_{ij})
     """
-    return tasmax.resample(time=freq).min(dim="time", keep_attrs=True)
+    return tasmax.resample(time=freq).min(dim="time").assign_attrs(units=tasmax.units)
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
@@ -422,7 +421,7 @@ def max_1day_precipitation_amount(
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> rx1day = max_1day_precipitation_amount(pr, freq="YS")
     """
-    return pr.resample(time=freq).max(dim="time", keep_attrs=True)
+    return pr.resample(time=freq).max(dim="time").assign_attrs(units=pr.units)
 
 
 @declare_units(pr="[precipitation]")
@@ -460,10 +459,7 @@ def max_n_day_precipitation_amount(
     # Rolling sum of the values
     pram = rate2amount(pr)
     arr = pram.rolling(time=window).sum(skipna=False)
-    out = arr.resample(time=freq).max(dim="time", keep_attrs=True)
-
-    out.attrs["units"] = pram.units
-    return out
+    return arr.resample(time=freq).max(dim="time").assign_attrs(units=pram.units)
 
 
 @declare_units(pr="[precipitation]")
@@ -527,5 +523,4 @@ def snow_depth(
       The mean daily snow depth at the given time frequency
 
     """
-    arr = snd.resample(time=freq)
-    return arr.mean(dim="time", keep_attrs=True)
+    return snd.resample(time=freq).mean(dim="time").assign_attrs(units=snd.units)

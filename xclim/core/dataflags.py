@@ -5,10 +5,12 @@ Data flags
 
 Pseudo-indicators designed to analyse supplied variables for suspicious/erroneous indicator values.
 """
+from __future__ import annotations
+
 from decimal import Decimal
 from functools import reduce
 from inspect import signature
-from typing import Optional, Sequence, Union
+from typing import Sequence, Union
 
 import numpy as np
 import pint
@@ -520,10 +522,10 @@ def percentage_values_outside_of_bounds(da: xarray.DataArray) -> xarray.DataArra
 
 def data_flags(
     da: xarray.DataArray,
-    ds: Optional[xarray.Dataset] = None,
-    flags: Optional[dict] = None,
-    dims: Union[None, str, Sequence[str]] = "all",
-    freq: Optional[str] = None,
+    ds: xarray.Dataset | None = None,
+    flags: dict | None = None,
+    dims: None | str | Sequence[str] = "all",
+    freq: str | None = None,
     raise_flags: bool = False,
 ) -> xarray.Dataset:
     """Evaluate the supplied DataArray for a set of data flag checks.
@@ -686,10 +688,10 @@ def data_flags(
 
 def ecad_compliant(
     ds: xarray.Dataset,
-    dims: Union[None, str, Sequence[str]] = "all",
+    dims: None | str | Sequence[str] = "all",
     raise_flags: bool = False,
     append: bool = True,
-) -> Union[xarray.DataArray, xarray.Dataset, None]:
+) -> xarray.DataArray | xarray.Dataset | None:
     """Run ECAD compliance tests.
 
     Assert file adheres to ECAD-based quality assurance checks.

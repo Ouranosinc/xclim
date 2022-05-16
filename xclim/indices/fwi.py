@@ -148,8 +148,10 @@ Drought Code overwintering:
 # Section 3: Exposed methods and indices.
 #
 # Methods starting with a "_" are not usable with xarray objects, whereas the others are.
+from __future__ import annotations
+
 from collections import OrderedDict
-from typing import Mapping, Optional, Sequence, Union
+from typing import Mapping, Sequence
 
 import numpy as np
 import xarray as xr
@@ -207,7 +209,7 @@ DAY_LENGTH_FACTORS = np.array(
 
 
 @jit
-def _day_length(lat: Union[int, float], mth: int):  # pragma: no cover
+def _day_length(lat: int | float, mth: int):  # pragma: no cover
     """Return the average day length for a month within latitudinal bounds."""
     if -30 > lat >= -90:
         dl = DAY_LENGTHS[0, :]
@@ -544,7 +546,7 @@ def _overwintering_drought_code(DCf, wpr, a, b, minDC):  # pragma: no cover
 
 def _fire_season(
     tas: np.ndarray,
-    snd: Optional[np.ndarray] = None,
+    snd: np.ndarray | None = None,
     method: str = "WF93",
     temp_start_thresh: float = default_params["temp_start_thresh"][0],
     temp_end_thresh: float = default_params["temp_end_thresh"][0],
@@ -871,20 +873,20 @@ def fire_weather_ufunc(
     *,
     tas: xr.DataArray,
     pr: xr.DataArray,
-    hurs: Optional[xr.DataArray] = None,
-    sfcWind: Optional[xr.DataArray] = None,
-    snd: Optional[xr.DataArray] = None,
-    lat: Optional[xr.DataArray] = None,
-    dc0: Optional[xr.DataArray] = None,
-    dmc0: Optional[xr.DataArray] = None,
-    ffmc0: Optional[xr.DataArray] = None,
-    winter_pr: Optional[xr.DataArray] = None,
-    season_mask: Optional[xr.DataArray] = None,
-    start_dates: Optional[Union[str, xr.DataArray]] = None,
+    hurs: xr.DataArray | None = None,
+    sfcWind: xr.DataArray | None = None,
+    snd: xr.DataArray | None = None,
+    lat: xr.DataArray | None = None,
+    dc0: xr.DataArray | None = None,
+    dmc0: xr.DataArray | None = None,
+    ffmc0: xr.DataArray | None = None,
+    winter_pr: xr.DataArray | None = None,
+    season_mask: xr.DataArray | None = None,
+    start_dates: str | xr.DataArray | None = None,
     indexes: Sequence[str] = None,
-    season_method: Optional[str] = None,
+    season_method: str | None = None,
     overwintering: bool = False,
-    dry_start: Optional[str] = None,
+    dry_start: str | None = None,
     initial_start_up: bool = True,
     **params,
 ):
@@ -1148,13 +1150,10 @@ def fire_weather_ufunc(
 def overwintering_drought_code(
     last_dc: xr.DataArray,
     winter_pr: xr.DataArray,
-    carry_over_fraction: Union[xr.DataArray, float] = default_params[
-        "carry_over_fraction"
-    ],
-    wetting_efficiency_fraction: Union[xr.DataArray, float] = default_params[
-        "wetting_efficiency_fraction"
-    ],
-    min_dc: Union[xr.DataArray, float] = default_params["dc_start"],
+    carry_over_fraction: xr.DataArray | float = default_params["carry_over_fraction"],
+    wetting_efficiency_fraction: xr.DataArray
+    | float = default_params["wetting_efficiency_fraction"],
+    min_dc: xr.DataArray | float = default_params["dc_start"],
 ) -> xr.DataArray:
     """Compute the season-starting drought code based on the previous season's last drought code and the total winter precipitation.
 
@@ -1229,9 +1228,7 @@ def overwintering_drought_code(
     return wDC
 
 
-def _convert_parameters(
-    params: Mapping[str, Union[int, float]]
-) -> Mapping[str, Union[int, float]]:
+def _convert_parameters(params: Mapping[str, int | float]) -> Mapping[str, int | float]:
     for param, value in params.copy().items():
         if param not in default_params:
             raise ValueError(
@@ -1260,14 +1257,14 @@ def fire_weather_indexes(
     sfcWind: xr.DataArray,
     hurs: xr.DataArray,
     lat: xr.DataArray,
-    snd: Optional[xr.DataArray] = None,
-    ffmc0: Optional[xr.DataArray] = None,
-    dmc0: Optional[xr.DataArray] = None,
-    dc0: Optional[xr.DataArray] = None,
-    season_mask: Optional[xr.DataArray] = None,
-    season_method: Optional[str] = None,
+    snd: xr.DataArray | None = None,
+    ffmc0: xr.DataArray | None = None,
+    dmc0: xr.DataArray | None = None,
+    dc0: xr.DataArray | None = None,
+    season_mask: xr.DataArray | None = None,
+    season_method: str | None = None,
     overwintering: bool = False,
-    dry_start: Optional[str] = None,
+    dry_start: str | None = None,
     initial_start_up: bool = True,
     **params,
 ):
@@ -1373,12 +1370,12 @@ def drought_code(
     tas: xr.DataArray,
     pr: xr.DataArray,
     lat: xr.DataArray,
-    snd: Optional[xr.DataArray] = None,
-    dc0: Optional[xr.DataArray] = None,
-    season_mask: Optional[xr.DataArray] = None,
-    season_method: Optional[str] = None,
+    snd: xr.DataArray | None = None,
+    dc0: xr.DataArray | None = None,
+    season_mask: xr.DataArray | None = None,
+    season_method: str | None = None,
     overwintering: bool = False,
-    dry_start: Optional[str] = None,
+    dry_start: str | None = None,
     initial_start_up: bool = True,
     **params,
 ):
@@ -1462,9 +1459,9 @@ def drought_code(
 )
 def fire_season(
     tas: xr.DataArray,
-    snd: Optional[xr.DataArray] = None,
+    snd: xr.DataArray | None = None,
     method: str = "WF93",
-    freq: Optional[str] = None,
+    freq: str | None = None,
     temp_start_thresh: str = "12 degC",
     temp_end_thresh: str = "5 degC",
     temp_condition_days: int = 3,

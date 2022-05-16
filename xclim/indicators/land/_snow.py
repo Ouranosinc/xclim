@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from xclim import indices as xci
-from xclim.core.indicator import Daily
+from xclim.core.indicator import Daily, ResamplingIndicatorWithIndexing
 
 __all__ = [
     "blowing_snow",
@@ -20,7 +22,13 @@ class Snow(Daily):
     """Indicators dealing with snow variables."""
 
 
-snow_cover_duration = Snow(
+class SnowWithIndexing(ResamplingIndicatorWithIndexing):
+    """Indicators dealing with snow variables, allowing indexing."""
+
+    src_freq = "D"
+
+
+snow_cover_duration = SnowWithIndexing(
     identifier="snow_cover_duration",
     units="days",
     long_name="Number of days with snow depth above threshold",
@@ -46,7 +54,7 @@ continuous_snow_cover_end = Snow(
     compute=xci.continuous_snow_cover_end,
 )
 
-snd_max_doy = Snow(
+snd_max_doy = SnowWithIndexing(
     identifier="snd_max_doy",
     standard_name="day_of_year",
     var_name="{freq}_snd_max_doy",
@@ -66,7 +74,7 @@ snow_melt_we_max = Snow(
     compute=xci.snow_melt_we_max,
 )
 
-snw_max = Snow(
+snw_max = SnowWithIndexing(
     identifier="snw_max",
     standard_name="surface_snow_amount",
     var_name="{freq}_snw_max",
@@ -76,7 +84,7 @@ snw_max = Snow(
     compute=xci.snw_max,
 )
 
-snw_max_doy = Snow(
+snw_max_doy = SnowWithIndexing(
     identifier="snw_max_doy",
     standard_name="day_of_year",
     var_name="{freq}_snw_max_doy",
@@ -95,7 +103,7 @@ melt_and_precip_max = Snow(
 )
 
 
-winter_storm = Snow(
+winter_storm = SnowWithIndexing(
     identifier="winter_storm",
     var_name="{freq}_winter_storm",
     description="{freq} number of days with snowfall accumulation above {thresh}.",
@@ -113,7 +121,7 @@ blowing_snow = Snow(
     compute=xci.blowing_snow,
 )
 
-snow_depth = Snow(
+snow_depth = SnowWithIndexing(
     identifier="snow_depth",
     units="cm",
     standard_name="surface_snow_thickness",

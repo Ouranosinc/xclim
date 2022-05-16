@@ -2,15 +2,27 @@
 History
 =======
 
-0.36.1 (unreleased)
-------------------
+0.37.0 (unreleased)
+-------------------
+Contributors to this version:  Abel Aoun (:user:`bzah`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
 
-Contributors to this version:  Abel Aoun (:user:`bzah`).
+Announcements
+^^^^^^^^^^^^^
+* `xclim` is now compliant with `PEP 563 <https://peps.python.org/pep-0563>`_. Python3.10-style annotations are now permitted. (:issue:`1065`, :pull:`1071`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* Add "Celsius" to aliases of "celsius" unit.(:issue:`1067`, :pull:`1068`).
+* Add "Celsius" to aliases of "celsius" unit. (:issue:`1067`, :pull:`1068`).
+* All indicators now have indexing enabled, except those computing statistics on spells. (:issue:`1069`, :pull:`1070`).
+* A convenience function for returning the version numbers for relevant xclim dependencies (``xclim.testing.show_versions``) is now offered. (:pull:`1073`).
+  * A CLI version of this function is also available from the command line: `$ xclim show_version_info`. (:pull:`1073`).
+* New "keep_attrs" option to control the handling of the attributes within the indicators. (:issue:`1026`, :pull:`1076`).
+* Added a notebook showcasing some simple examples of Spatial Analogues. (:issue:`585`, :pull:`1075`).
 
+Internal changes
+^^^^^^^^^^^^^^^^
+* Typing syntax has been updated within pre-commit via `isort`. Pre-commit hooks now append `from __future__ import annotations` to all python module imports for backwards compatibility. (:issue:`1065`, :pull:`1071`)
+* `isort` project configurations are now set in `setup.cfg`. (:pull:`1071`).
 
 0.36.0 (29-04-2022)
 -------------------

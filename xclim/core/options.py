@@ -4,8 +4,10 @@ Options submodule
 
 Global or contextual options for xclim, similar to xarray.set_options.
 """
+from __future__ import annotations
+
 from inspect import signature
-from typing import Callable, Dict
+from typing import Callable
 
 from boltons.funcutils import wraps
 
@@ -20,8 +22,9 @@ MISSING_OPTIONS = "missing_options"
 RUN_LENGTH_UFUNC = "run_length_ufunc"
 SDBA_EXTRA_OUTPUT = "sdba_extra_output"
 SDBA_ENCODE_CF = "sdba_encode_cf"
+KEEP_ATTRS = "keep_attrs"
 
-MISSING_METHODS: Dict[str, Callable] = dict()
+MISSING_METHODS: dict[str, Callable] = dict()
 
 OPTIONS = {
     METADATA_LOCALES: list(),
@@ -32,10 +35,12 @@ OPTIONS = {
     RUN_LENGTH_UFUNC: "auto",
     SDBA_EXTRA_OUTPUT: False,
     SDBA_ENCODE_CF: False,
+    KEEP_ATTRS: "xarray",
 }
 
 _LOUDNESS_OPTIONS = frozenset(["log", "warn", "raise"])
 _RUN_LENGTH_UFUNC_OPTIONS = frozenset(["auto", True, False])
+_KEEP_ATTRS_OPTIONS = frozenset(["xarray", True, False])
 
 
 def _valid_missing_options(mopts):
@@ -61,6 +66,7 @@ _VALIDATORS = {
     RUN_LENGTH_UFUNC: _RUN_LENGTH_UFUNC_OPTIONS.__contains__,
     SDBA_EXTRA_OUTPUT: lambda opt: isinstance(opt, bool),
     SDBA_ENCODE_CF: lambda opt: isinstance(opt, bool),
+    KEEP_ATTRS: _KEEP_ATTRS_OPTIONS.__contains__,
 }
 
 
@@ -166,6 +172,12 @@ class set_options:
     - ``sdba_encode_cf``:
       Whether to encode cf coordinates in the ``map_blocks`` optimization that most adjustment methods are based on.
       This should have no impact on the results, but should run much faster in the graph creation phase.
+    - ``keep_attrs``:
+      Controls attributes handling in indicators. If True, attributes from all inputs are merged
+      using the `drop_conflicts` strategy and then updated with xclim-provided attributes.
+      If False, attributes from the inputs are ignored. If "xarray", xclim will use xarray's `keep_attrs` option.
+      Note that xarray's "default" is equivalent to False.
+      Default: ``"xarray"``.
 
     Examples
     --------

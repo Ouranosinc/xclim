@@ -1,6 +1,7 @@
 # noqa: D100
+from __future__ import annotations
+
 import warnings
-from typing import Optional
 
 import numpy as np
 import xarray
@@ -346,15 +347,14 @@ def daily_pr_intensity(
 
     # put pram = 0 for non wet-days
     pram_wd = xarray.where(pr >= t, pram, 0)
-    pram_wd.attrs["units"] = pram.units
 
     # sum over wanted period
-    s = pram_wd.resample(time=freq).sum(dim="time", keep_attrs=True)
+    s = pram_wd.resample(time=freq).sum(dim="time")
 
     # get number of wetdays over period
     wd = wetdays(pr, thresh=thresh, freq=freq)
     out = s / wd
-    out.attrs["units"] = f"{str2pint(s.units) / str2pint(wd.units):~}"
+    out.attrs["units"] = f"{str2pint(pram.units) / str2pint(wd.units):~}"
     return out
 
 
@@ -731,7 +731,7 @@ def growing_season_length(
 def frost_season_length(
     tasmin: xarray.DataArray,
     window: int = 5,
-    mid_date: Optional[DayOfYearStr] = "01-01",
+    mid_date: DayOfYearStr | None = "01-01",
     thresh: str = "0.0 degC",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
@@ -901,7 +901,7 @@ def frost_free_season_end(
 def frost_free_season_length(
     tasmin: xarray.DataArray,
     window: int = 5,
-    mid_date: Optional[DayOfYearStr] = "07-01",
+    mid_date: DayOfYearStr | None = "07-01",
     thresh: str = "0.0 degC",
     freq: str = "YS",
 ) -> xarray.DataArray:

@@ -5,9 +5,11 @@ Calendar handling utilities
 
 Helper function to handle dates, times and different calendars with xarray.
 """
+from __future__ import annotations
+
 import datetime as pydt
 import re
-from typing import Any, List, NewType, Optional, Sequence, Tuple, Union
+from typing import Any, NewType, Optional, Sequence, Union
 
 import cftime
 import numpy as np
@@ -94,7 +96,7 @@ def days_in_year(year: int, calendar: str = "default") -> int:
 
 def date_range(
     *args, calendar: str = "default", **kwargs
-) -> Union[pd.DatetimeIndex, CFTimeIndex]:
+) -> pd.DatetimeIndex | CFTimeIndex:
     """Wrap pd.date_range (if calendar == 'default') or xr.cftime_range (otherwise)."""
     if calendar == "default":
         return pd.date_range(*args, **kwargs)
@@ -147,12 +149,12 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
 
 
 def convert_calendar(
-    source: Union[xr.DataArray, xr.Dataset],
-    target: Union[xr.DataArray, str],
-    align_on: Optional[str] = None,
-    missing: Optional[Any] = None,
+    source: xr.DataArray | xr.Dataset,
+    target: xr.DataArray | str,
+    align_on: str | None = None,
+    missing: Any | None = None,
     dim: str = "time",
-) -> Union[xr.DataArray, xr.Dataset]:
+) -> xr.DataArray | xr.Dataset:
     """Convert a DataArray/Dataset to another calendar using the specified method.
 
     Only converts the individual timestamps, does not modify any data except in dropping invalid/surplus dates or inserting missing dates.
@@ -347,10 +349,10 @@ def convert_calendar(
 
 
 def interp_calendar(
-    source: Union[xr.DataArray, xr.Dataset],
+    source: xr.DataArray | xr.Dataset,
     target: xr.DataArray,
     dim: str = "time",
-) -> Union[xr.DataArray, xr.Dataset]:
+) -> xr.DataArray | xr.Dataset:
     """Interpolates a DataArray/Dataset to another calendar based on decimal year measure.
 
     Each timestamp in source and target are first converted to their decimal year equivalent
@@ -436,7 +438,7 @@ def datetime_to_decimal_year(times: xr.DataArray, calendar: str = "") -> xr.Data
 def percentile_doy(
     arr: xr.DataArray,
     window: int = 5,
-    per: Union[float, Sequence[float]] = 10.0,
+    per: float | Sequence[float] = 10.0,
     alpha: float = 1.0 / 3.0,
     beta: float = 1.0 / 3.0,
     copy: bool = True,
@@ -527,7 +529,7 @@ def percentile_doy(
     return PercentileDataArray.from_da(p.rename("per"))
 
 
-def build_climatology_bounds(da: xr.DataArray) -> List[str]:
+def build_climatology_bounds(da: xr.DataArray) -> list[str]:
     n = len(da.time)
     return da.time[0 :: n - 1].dt.strftime("%Y-%m-%d").values.tolist()
 
@@ -639,7 +641,7 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArra
 
 
 def adjust_doy_calendar(
-    source: xr.DataArray, target: Union[xr.DataArray, xr.Dataset]
+    source: xr.DataArray, target: xr.DataArray | xr.Dataset
 ) -> xr.DataArray:
     """Interpolate from one set of dayofyear range to another calendar.
 
@@ -668,9 +670,7 @@ def adjust_doy_calendar(
     return _interpolate_doy_calendar(source, doy_max)
 
 
-def resample_doy(
-    doy: xr.DataArray, arr: Union[xr.DataArray, xr.Dataset]
-) -> xr.DataArray:
+def resample_doy(doy: xr.DataArray, arr: xr.DataArray | xr.Dataset) -> xr.DataArray:
     """Create a temporal DataArray where each day takes the value defined by the day-of-year.
 
     Parameters
@@ -811,7 +811,7 @@ def cfindex_end_time(cfindex: CFTimeIndex, freq: str) -> CFTimeIndex:
     return CFTimeIndex([cftime_end_time(date, freq) for date in cfindex])  # noqa
 
 
-def time_bnds(group, freq: str) -> Sequence[Tuple[cftime.datetime, cftime.datetime]]:
+def time_bnds(group, freq: str) -> Sequence[tuple[cftime.datetime, cftime.datetime]]:
     """
     Find the time bounds for a pseudo-period index.
 
@@ -869,7 +869,7 @@ def time_bnds(group, freq: str) -> Sequence[Tuple[cftime.datetime, cftime.dateti
 
 def climatological_mean_doy(
     arr: xr.DataArray, window: int = 5
-) -> Tuple[xr.DataArray, xr.DataArray]:
+) -> tuple[xr.DataArray, xr.DataArray]:
     """The climatological mean and standard deviation for each day of the year.
 
     Parameters
@@ -919,8 +919,8 @@ def within_bnds_doy(
 
 
 def _doy_days_since_doys(
-    base: xr.DataArray, start: Optional[DayOfYearStr] = None
-) -> Tuple[xr.DataArray, xr.DataArray, xr.DataArray]:
+    base: xr.DataArray, start: DayOfYearStr | None = None
+) -> tuple[xr.DataArray, xr.DataArray, xr.DataArray]:
     """Common calculation for doy to days since and inverse conversions.
 
     Parameters
@@ -965,8 +965,8 @@ def _doy_days_since_doys(
 
 def doy_to_days_since(
     da: xr.DataArray,
-    start: Optional[DayOfYearStr] = None,
-    calendar: Optional[str] = None,
+    start: DayOfYearStr | None = None,
+    calendar: str | None = None,
 ) -> xr.DataArray:
     """Convert day-of-year data to days since a given date
 
@@ -1035,8 +1035,8 @@ def doy_to_days_since(
 
 def days_since_to_doy(
     da: xr.DataArray,
-    start: Optional[DayOfYearStr] = None,
-    calendar: Optional[str] = None,
+    start: DayOfYearStr | None = None,
+    calendar: str | None = None,
 ) -> xr.DataArray:
     """Reverse the conversion made by :py:func:`doy_to_days_since`.
 
@@ -1153,10 +1153,10 @@ def date_range_like(source: xr.DataArray, calendar: str) -> xr.DataArray:
 
 
 def _convert_datetime(
-    datetime: Union[pydt.datetime, cftime.datetime],
-    new_doy: Optional[Union[float, int]] = None,
+    datetime: pydt.datetime | cftime.datetime,
+    new_doy: float | int | None = None,
     calendar: str = "default",
-) -> Union[cftime.datetime, pydt.datetime, float]:
+) -> cftime.datetime | pydt.datetime | float:
     """Convert a datetime object to another calendar.
 
     Nanosecond information are lost as cftime.datetime doesn't support them.
@@ -1203,13 +1203,13 @@ def _convert_datetime(
 
 
 def select_time(
-    da: Union[xr.DataArray, xr.Dataset],
+    da: xr.DataArray | xr.Dataset,
     drop: bool = False,
-    season: Union[str, Sequence[str]] = None,
-    month: Union[int, Sequence[int]] = None,
-    doy_bounds: Tuple[int, int] = None,
-    date_bounds: Tuple[str, str] = None,
-) -> Union[xr.DataArray, xr.Dataset]:
+    season: str | Sequence[str] = None,
+    month: int | Sequence[int] = None,
+    doy_bounds: tuple[int, int] = None,
+    date_bounds: tuple[str, str] = None,
+) -> xr.DataArray | xr.Dataset:
     """Select entries according to a time period.
 
     This conveniently improves xarray's :py:meth:`xarray.DataArray.where` and

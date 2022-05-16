@@ -3,14 +3,16 @@
 Formatting utilities for indicators
 ===================================
 """
+from __future__ import annotations
+
 import datetime as dt
 import itertools
 import re
 import string
 from ast import literal_eval
 from fnmatch import fnmatch
-from inspect import _empty, signature  # noqa
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
+from inspect import _empty, signature
+from typing import Any, Dict, Mapping, Optional, Sequence, Union
 
 import xarray as xr
 from boltons.funcutils import wraps
@@ -149,7 +151,7 @@ default_formatter = AttrFormatter(
 )
 
 
-def parse_doc(doc: str) -> Dict[str, str]:
+def parse_doc(doc: str) -> dict[str, str]:
     """Crude regex parsing reading an indice docstring and extracting information needed in indicator construction.
 
     The appropriate docstring syntax is detailed in :ref:`Defining new indices`.
@@ -247,10 +249,10 @@ def _parse_returns(section):
 
 def merge_attributes(
     attribute: str,
-    *inputs_list: Union[xr.DataArray, xr.Dataset],
+    *inputs_list: xr.DataArray | xr.Dataset,
     new_line: str = "\n",
-    missing_str: Optional[str] = None,
-    **inputs_kws: Union[xr.DataArray, xr.Dataset],
+    missing_str: str | None = None,
+    **inputs_kws: xr.DataArray | xr.Dataset,
 ):
     r"""
     Merge attributes from several DataArrays or Datasets.
@@ -300,9 +302,9 @@ def merge_attributes(
 
 def update_history(
     hist_str: str,
-    *inputs_list: Sequence[Union[xr.DataArray, xr.Dataset]],
-    new_name: Optional[str] = None,
-    **inputs_kws: Mapping[str, Union[xr.DataArray, xr.Dataset]],
+    *inputs_list: Sequence[xr.DataArray | xr.Dataset],
+    new_name: str | None = None,
+    **inputs_kws: Mapping[str, xr.DataArray | xr.Dataset],
 ):
     """Return a history string with the timestamped message and the combination of the history of all inputs.
 
@@ -429,7 +431,7 @@ def gen_call_string(funcname: str, *args, **kwargs):
     return f"{funcname}({', '.join(elements)})"
 
 
-def prefix_attrs(source: Dict, keys: Sequence, prefix: str):
+def prefix_attrs(source: dict, keys: Sequence, prefix: str):
     """Rename some keys of a dictionary by adding a prefix.
 
     Parameters
@@ -455,7 +457,7 @@ def prefix_attrs(source: Dict, keys: Sequence, prefix: str):
     return out
 
 
-def unprefix_attrs(source: Dict, keys: Sequence, prefix: str):
+def unprefix_attrs(source: dict, keys: Sequence, prefix: str):
     """Remove prefix from keys in a dictionary.
 
     Parameters
@@ -501,7 +503,7 @@ KIND_ANNOTATION = {
 }
 
 
-def _gen_parameters_section(parameters: Mapping, allowed_periods: List[str] = None):
+def _gen_parameters_section(parameters: Mapping, allowed_periods: list[str] = None):
     """Generate the "parameters" section of the indicator docstring.
 
     Parameters
@@ -536,7 +538,7 @@ def _gen_parameters_section(parameters: Mapping, allowed_periods: List[str] = No
     return section
 
 
-def _gen_returns_section(cf_attrs: Sequence[Dict[str, Any]]):
+def _gen_returns_section(cf_attrs: Sequence[dict[str, Any]]):
     """Generate the "Returns" section of an indicator's docstring.
 
     Parameters

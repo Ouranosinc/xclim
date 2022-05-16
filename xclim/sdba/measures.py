@@ -7,6 +7,8 @@ This framework for the diagnostic tests was inspired by the [VALUE]_ project.
 
  .. [VALUE] http://www.value-cost.eu/
 """
+from __future__ import annotations
+
 from typing import Callable
 from warnings import warn
 

@@ -2,7 +2,9 @@
 LOESS smoothing
 ---------------
 """
-from typing import Callable, Optional, Union
+from __future__ import annotations
+
+from typing import Callable
 from warnings import warn
 
 import numba
@@ -173,8 +175,8 @@ def loess_smoothing(
     d: int = 1,
     f: float = 0.5,
     niter: int = 2,
-    weights: Union[str, Callable] = "tricube",
-    equal_spacing: Optional[bool] = None,
+    weights: str | Callable = "tricube",
+    equal_spacing: bool | None = None,
     skipna: bool = True,
 ):
     r"""Locally weighted regression in 1D: fits a nonparametric regression curve to a scatterplot.

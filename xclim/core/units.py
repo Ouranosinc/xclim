@@ -6,10 +6,12 @@ Units handling submodule
 `Pint` is used to define the `units` `UnitRegistry` and `xclim.units.core` defines
 most unit handling methods.
 """
+from __future__ import annotations
+
 import re
 import warnings
 from inspect import signature
-from typing import Any, Callable, Optional, Tuple, Union
+from typing import Any, Callable, Optional, Union
 
 import pint.converters
 import pint.unit
@@ -104,7 +106,7 @@ units.enable_contexts(hydro)
 # @end
 
 
-def units2pint(value: Union[xr.DataArray, str, units.Quantity]) -> Unit:
+def units2pint(value: xr.DataArray | str | units.Quantity) -> Unit:
     """Return the pint Unit for the DataArray units.
 
     Parameters
@@ -215,7 +217,7 @@ def ensure_cf_units(ustr: str) -> str:
     return pint2cfunits(units2pint(ustr))
 
 
-def pint_multiply(da: xr.DataArray, q: Any, out_units: Optional[str] = None):
+def pint_multiply(da: xr.DataArray, q: Any, out_units: str | None = None):
     """Multiply xarray.DataArray by pint.Quantity.
 
     Parameters
@@ -262,10 +264,10 @@ def str2pint(val: str):
 
 
 def convert_units_to(
-    source: Union[str, xr.DataArray, Any],
-    target: Union[str, xr.DataArray, Any],
-    context: Optional[str] = None,
-) -> Union[DataArray, float, int, Any]:
+    source: str | xr.DataArray | Any,
+    target: str | xr.DataArray | Any,
+    context: str | None = None,
+) -> DataArray | float | int | Any:
     """Convert a mathematical expression into a value with the same units as a DataArray.
 
     Parameters
@@ -351,9 +353,9 @@ Mapping from offset base to CF-compliant unit. Only constant-length frequencies 
 
 def infer_sampling_units(
     da: xr.DataArray,
-    deffreq: Optional[str] = "D",
+    deffreq: str | None = "D",
     dim: str = "time",
-) -> Tuple[int, str]:
+) -> tuple[int, str]:
     """Infer a multiplicator and the units corresponding to one sampling period.
 
     Parameters
@@ -604,7 +606,7 @@ def amount2rate(
 
 
 @datacheck
-def check_units(val: Optional[Union[str, int, float]], dim: Optional[str]) -> None:
+def check_units(val: str | int | float | None, dim: str | None) -> None:
     if dim is None or val is None:
         return
 
