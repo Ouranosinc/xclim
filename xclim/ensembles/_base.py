@@ -1,8 +1,9 @@
 """Ensembles creation and statistics."""
 from __future__ import annotations
 
+from glob import glob
 from pathlib import Path
-from typing import List, Optional, Sequence, Union
+from typing import Sequence
 
 import numpy as np
 import xarray as xr
@@ -13,7 +14,7 @@ from xclim.core.utils import calc_perc
 
 
 def create_ensemble(
-    datasets: list[xr.Dataset | xr.DataArray | Path | str | list[Path | str]],
+    datasets: list[xr.Dataset | xr.DataArray | Path | str | list[Path | str]] | str,
     mf_flag: bool = False,
     resample_freq: str | None = None,
     calendar: str = "default",
@@ -30,10 +31,11 @@ def create_ensemble(
 
     Parameters
     ----------
-    datasets : List[Union[xr.Dataset, Path, str, List[Path, str]]]
+    datasets : List[Union[xr.Dataset, Path, str, List[Path, str]]] or str
       List of netcdf file paths or xarray Dataset/DataArray objects . If mf_flag is True, ncfiles should be a list of lists where
       each sublist contains input .nc files of an xarray multifile Dataset.
       If DataArray object are passed, they should have a name in order to be transformed into Datasets.
+      If a string is passed, it is assumed to be a glob pattern for finding datasets.
 
     mf_flag : bool
       If True, climate simulations are treated as xarray multifile Datasets before concatenation.
@@ -268,7 +270,7 @@ def ensemble_percentiles(
 
 
 def _ens_align_datasets(
-    datasets: list[xr.Dataset | Path | str | list[Path | str]],
+    datasets: list[xr.Dataset | Path | str | list[Path | str]] | str,
     mf_flag: bool = False,
     resample_freq: str = None,
     calendar: str = "default",
@@ -278,10 +280,11 @@ def _ens_align_datasets(
 
     Parameters
     ----------
-    datasets : List[Union[xr.Dataset, xr.DataArray, Path, str, List[Path, str]]]
+    datasets : List[Union[xr.Dataset, xr.DataArray, Path, str, List[Path, str]]] or str
       List of netcdf file paths or xarray Dataset/DataArray objects . If mf_flag is True, ncfiles should be a list
       of lists where each sublist contains input NetCDF files of a xarray multifile Dataset.
       DataArrays should have a name, so they can be converted to datasets.
+      If a string, it is assumed to be a glob pattern for finding datasets.
     mf_flag : bool
       If True climate simulations are treated as xarray multifile datasets before concatenation.
       Only applicable when datasets is a sequence of file paths.
@@ -301,6 +304,9 @@ def _ens_align_datasets(
     """
     xr_kwargs.setdefault("chunks", "auto")
     xr_kwargs.setdefault("decode_times", False)
+
+    if isinstance(datasets, str):
+        datasets = glob(datasets)
 
     ds_all = []
     for i, n in enumerate(datasets):
