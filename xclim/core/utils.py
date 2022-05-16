@@ -573,7 +573,6 @@ def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> Inpu
 
     if param.annotation == "PercentileDataArray":
         return InputKind.PERCENTILE_VARIABLE
-        # todo to be tested
 
     if "DataArray" in annot and "None" not in annot and param.default is not None:
         return InputKind.VARIABLE

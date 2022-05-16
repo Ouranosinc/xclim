@@ -1040,8 +1040,7 @@ class Indicator(IndicatorRegistrar):
         # In the history attr, call signature will be all keywords and might be in a
         # different order than the real function (but order doesn't really matter with keywords).
         kwargs = OrderedDict(**das)
-        filtered_args = [(k, v) for k, v in args.items() if k in cls._all_parameters]
-        for k, v in filtered_args:
+        for k, v in args.items():
             if cls._all_parameters[k].kind == InputKind.KWARGS:
                 kwargs.update(**v)
             elif cls._all_parameters[k].kind != InputKind.DATASET:
