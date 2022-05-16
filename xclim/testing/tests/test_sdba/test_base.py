@@ -109,7 +109,10 @@ def test_grouper_apply(tas_series, use_dask, group, n):
         window_dim="window"
     )
     if grouper.prop != "group":
-        exp = rolld.groupby(group).mean(dim=[win_grouper.dim, "window"])
+        # todo: Remove method keyword when issue flox#102 is solved.
+        exp = rolld.groupby(group).mean(
+            method="cohorts", dim=[win_grouper.dim, "window"]
+        )
     else:
         exp = rolld.mean(dim=[grouper.dim, "window"]).expand_dims("group").T
     np.testing.assert_array_equal(out, exp)
@@ -156,7 +159,7 @@ def test_grouper_apply(tas_series, use_dask, group, n):
     else:
         exp = normed.groupby(group).mean().isel(lat=0)
     assert grouper.prop in out.dims
-    np.testing.assert_array_equal(out, exp)
+    np.testing.assert_allclose(out, exp, rtol=1e-10)
 
 
 def test_map_blocks(tas_series):

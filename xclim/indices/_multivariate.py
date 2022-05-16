@@ -199,7 +199,7 @@ def cold_and_dry_days(
     thresh = resample_doy(pr_25, pr)
     pr25 = pr < thresh
 
-    cold_and_dry = np.logical_and(tg25, pr25).resample(time=freq).sum(dim="time")
+    cold_and_dry = (np.logical_and(tg25, pr25) * 1).resample(time=freq).sum(dim="time")
     return to_agg_units(cold_and_dry, tas, "count")
 
 
@@ -263,7 +263,7 @@ def warm_and_dry_days(
     thresh = resample_doy(pr_25, pr)
     pr25 = pr < thresh
 
-    warm_and_dry = np.logical_and(tg75, pr25).resample(time=freq).sum(dim="time")
+    warm_and_dry = (np.logical_and(tg75, pr25) * 1).resample(time=freq).sum(dim="time")
     return to_agg_units(warm_and_dry, tas, "count")
 
 
@@ -327,7 +327,7 @@ def warm_and_wet_days(
     thresh = resample_doy(pr_75, pr)
     pr75 = pr > thresh
 
-    warm_and_wet = np.logical_and(tg75, pr75).resample(time=freq).sum(dim="time")
+    warm_and_wet = (np.logical_and(tg75, pr75) * 1).resample(time=freq).sum(dim="time")
     return to_agg_units(warm_and_wet, tas, "count")
 
 
@@ -391,7 +391,7 @@ def cold_and_wet_days(
     thresh = resample_doy(pr_75, pr)
     pr75 = pr > thresh
 
-    cold_and_wet = np.logical_and(tg25, pr75).resample(time=freq).sum(dim="time")
+    cold_and_wet = (np.logical_and(tg25, pr75) * 1).resample(time=freq).sum(dim="time")
     return to_agg_units(cold_and_wet, tas, "count")
 
 
