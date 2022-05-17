@@ -17,7 +17,7 @@ from typing import Any, Dict, Mapping, Optional, Sequence, Union
 import xarray as xr
 from boltons.funcutils import wraps
 
-from .utils import InputKind
+from xclim.core.utils import InputKind, PercentileDataArray
 
 DEFAULT_FORMAT_PARAMS = {
     "tasmin_per_thresh": "{unkown}",
@@ -498,7 +498,6 @@ KIND_ANNOTATION = {
     InputKind.DATASET: "Dataset, optional",
     InputKind.KWARGS: "",
     InputKind.OTHER_PARAMETER: "Any",
-    InputKind.PERCENTILE_VARIABLE: "PercentileDataArray",
 }
 
 
@@ -599,3 +598,28 @@ def generate_indicator_docstring(ind):
 
     doc = f"{header}\n{special}\n{parameters}\n{returns}\n{extras}"
     return doc
+
+
+def get_percentile_metadata(data: xr.DataArray, prefix: str) -> dict[str, str]:
+    """Get the metadata related to percentiles from the given DataArray as a dictionary.
+
+    Parameters
+    ----------
+    data: xr.DataArray
+        Must be compatible with PercentileDataArray, this means the necessary metadata
+        must be available in its attributes and coordinates.
+    prefix: str
+        The prefix to be used in the metadata key.
+        Usually this takes the form of "tasmin_per" or equivalent.
+
+    Returns
+    -------
+    dict
+        A mapping of the configuration used to compute these percentiles.
+    """
+    per_da = PercentileDataArray.from_da(data)
+    return {
+        f"{prefix}_thresh": per_da.coords["percentiles"].values,
+        f"{prefix}_window": per_da.attrs.get("window", None),
+        f"{prefix}_period": per_da.attrs.get("climatology_bounds"),
+    }

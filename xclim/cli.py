@@ -115,7 +115,6 @@ def _create_command(indicator_name):
                     in [
                         InputKind.VARIABLE,
                         InputKind.OPTIONAL_VARIABLE,
-                        InputKind.PERCENTILE_VARIABLE,
                     ]
                     else "TEXT"
                 ),

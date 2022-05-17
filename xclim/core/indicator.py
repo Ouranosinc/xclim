@@ -117,6 +117,7 @@ from .formatting import (
     default_formatter,
     gen_call_string,
     generate_indicator_docstring,
+    get_percentile_metadata,
     merge_attributes,
     parse_doc,
     update_history,
@@ -592,7 +593,7 @@ class Indicator(IndicatorRegistrar):
                     )
                 if meta.kind == InputKind.OPTIONAL_VARIABLE:
                     meta.default = None
-                elif meta.kind in [InputKind.VARIABLE, InputKind.PERCENTILE_VARIABLE]:
+                elif meta.kind in [InputKind.VARIABLE]:
                     meta.default = name
 
         # Sort parameters : Var, Opt Var, all params, ds, injected params.
@@ -600,7 +601,6 @@ class Indicator(IndicatorRegistrar):
             if not kv[1].injected:
                 if kv[1].kind in [
                     InputKind.VARIABLE,
-                    InputKind.PERCENTILE_VARIABLE,
                     InputKind.OPTIONAL_VARIABLE,
                     InputKind.KWARGS,
                 ]:
@@ -747,7 +747,6 @@ class Indicator(IndicatorRegistrar):
             if meta.kind in [
                 InputKind.VARIABLE,
                 InputKind.OPTIONAL_VARIABLE,
-                InputKind.PERCENTILE_VARIABLE,
             ]:
                 annot = Union[DataArray, str]
                 if meta.kind == InputKind.OPTIONAL_VARIABLE:
@@ -881,10 +880,10 @@ class Indicator(IndicatorRegistrar):
         for name, param in self._all_parameters.items():
             if not param.injected:
                 # If a variable pop the arg
-                if param.kind == InputKind.PERCENTILE_VARIABLE:
+                if PercentileDataArray.is_compatible(params[name]):
                     # duplicate percentiles DA in both das and params
                     das[name] = params[name]
-                if param.kind in [InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE]:
+                elif param.kind in [InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE]:
                     data = params.pop(name)
                     # If a non-optional variable OR None, store the arg
                     if param.kind == InputKind.VARIABLE or data is not None:
@@ -1197,8 +1196,8 @@ class Indicator(IndicatorRegistrar):
                     mba["indexer"] = dv
                 else:
                     mba["indexer"] = args.get("freq") or "YS"
-            elif isinstance(v, PercentileDataArray):
-                mba.update(v.get_metadata(k))
+            elif PercentileDataArray.is_compatible(v):
+                mba.update(get_percentile_metadata(v, k))
             else:
                 mba[k] = v
         out = {}

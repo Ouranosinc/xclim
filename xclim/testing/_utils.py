@@ -336,7 +336,6 @@ def list_input_variables(
             if meta["kind"] in [
                 InputKind.VARIABLE,
                 InputKind.OPTIONAL_VARIABLE,
-                InputKind.PERCENTILE_VARIABLE,
             ]:
                 var = meta.get("default") or varname
                 variables[var].append(ind)

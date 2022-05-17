@@ -1258,7 +1258,7 @@ def test_wsdi__default_percentiles_params():
     tasmax_per = tasmax.sel(time=slice("01-01-1990", "31-12-1991"))
     # WHEN
     tx90 = percentile_doy(tasmax_per, per=[42, 24], window=2)
-    tx90 = xr.DataArray(tx90)
+    del tx90.attrs["climatology_bounds"]
     res = atmos.warm_spell_duration_index(tasmax, tx90, freq="YS")
     # THEN
     assert "{unkown} day(s) window" in res.attrs["description"]

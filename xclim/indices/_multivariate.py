@@ -16,7 +16,6 @@ from xclim.core.units import (
     str2pint,
     to_agg_units,
 )
-from xclim.core.utils import PercentileDataArray
 
 from . import run_length as rl
 from ._conversion import rain_approximation, snowfall_approximation
@@ -66,7 +65,7 @@ __all__ = [
 @percentile_bootstrap
 def cold_spell_duration_index(
     tasmin: xarray.DataArray,
-    tasmin_per: PercentileDataArray,
+    tasmin_per: xarray.DataArray,
     window: int = 6,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa  # noqa
@@ -148,8 +147,8 @@ def cold_spell_duration_index(
 def cold_and_dry_days(
     tas: xarray.DataArray,
     pr: xarray.DataArray,
-    tas_per: PercentileDataArray,
-    pr_per: PercentileDataArray,
+    tas_per: xarray.DataArray,
+    pr_per: xarray.DataArray,
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Cold and dry days.
@@ -212,8 +211,8 @@ def cold_and_dry_days(
 def warm_and_dry_days(
     tas: xarray.DataArray,
     pr: xarray.DataArray,
-    tas_per: PercentileDataArray,
-    pr_per: PercentileDataArray,
+    tas_per: xarray.DataArray,
+    pr_per: xarray.DataArray,
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Warm and dry days.
@@ -276,8 +275,8 @@ def warm_and_dry_days(
 def warm_and_wet_days(
     tas: xarray.DataArray,
     pr: xarray.DataArray,
-    tas_per: PercentileDataArray,
-    pr_per: PercentileDataArray,
+    tas_per: xarray.DataArray,
+    pr_per: xarray.DataArray,
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Warm and wet days.
@@ -340,8 +339,8 @@ def warm_and_wet_days(
 def cold_and_wet_days(
     tas: xarray.DataArray,
     pr: xarray.DataArray,
-    tas_per: PercentileDataArray,
-    pr_per: PercentileDataArray,
+    tas_per: xarray.DataArray,
+    pr_per: xarray.DataArray,
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""cold and wet days.
@@ -1084,7 +1083,7 @@ def high_precip_low_temp(
 @percentile_bootstrap
 def days_over_precip_thresh(
     pr: xarray.DataArray,
-    pr_per: PercentileDataArray,
+    pr_per: xarray.DataArray,
     thresh: str = "1 mm/day",
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
@@ -1142,7 +1141,7 @@ def days_over_precip_thresh(
 @percentile_bootstrap
 def fraction_over_precip_thresh(
     pr: xarray.DataArray,
-    pr_per: PercentileDataArray,
+    pr_per: xarray.DataArray,
     thresh: str = "1 mm/day",
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
@@ -1200,7 +1199,7 @@ def fraction_over_precip_thresh(
 @percentile_bootstrap
 def tg90p(
     tas: xarray.DataArray,
-    tas_per: PercentileDataArray,
+    tas_per: xarray.DataArray,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
 ) -> xarray.DataArray:  # noqa: D401
@@ -1255,7 +1254,7 @@ def tg90p(
 @percentile_bootstrap
 def tg10p(
     tas: xarray.DataArray,
-    tas_per: PercentileDataArray,
+    tas_per: xarray.DataArray,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
 ) -> xarray.DataArray:  # noqa: D401
@@ -1310,7 +1309,7 @@ def tg10p(
 @percentile_bootstrap
 def tn90p(
     tasmin: xarray.DataArray,
-    tasmin_per: PercentileDataArray,
+    tasmin_per: xarray.DataArray,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
 ) -> xarray.DataArray:  # noqa: D401
@@ -1365,7 +1364,7 @@ def tn90p(
 @percentile_bootstrap
 def tn10p(
     tasmin: xarray.DataArray,
-    tasmin_per: PercentileDataArray,
+    tasmin_per: xarray.DataArray,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
 ) -> xarray.DataArray:  # noqa: D401
@@ -1420,7 +1419,7 @@ def tn10p(
 @percentile_bootstrap
 def tx90p(
     tasmax: xarray.DataArray,
-    tasmax_per: PercentileDataArray,
+    tasmax_per: xarray.DataArray,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
 ) -> xarray.DataArray:  # noqa: D401
@@ -1475,7 +1474,7 @@ def tx90p(
 @percentile_bootstrap
 def tx10p(
     tasmax: xarray.DataArray,
-    tasmax_per: PercentileDataArray,
+    tasmax_per: xarray.DataArray,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
 ) -> xarray.DataArray:  # noqa: D401
@@ -1590,7 +1589,7 @@ def tx_tn_days_above(
 @percentile_bootstrap
 def warm_spell_duration_index(
     tasmax: xarray.DataArray,
-    tasmax_per: PercentileDataArray,
+    tasmax_per: xarray.DataArray,
     window: int = 6,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa

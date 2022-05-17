@@ -485,56 +485,50 @@ class InputKind(IntEnum):
 
        Annotation : ``xr.DataArray``.
     """
-    PERCENTILE_VARIABLE = 1
-    """A data variable (PercentileDataArray) which contains percentiles values and
-    the related metadata.
-
-       Annotation : ``xr.PercentileDataArray``.
-    """
-    OPTIONAL_VARIABLE = 2
+    OPTIONAL_VARIABLE = 1
     """An optional data variable (DataArray or variable name).
 
        Annotation : ``xr.DataArray | None``. The default should be None.
     """
-    QUANTITY_STR = 3
+    QUANTITY_STR = 2
     """A string representing a quantity with units.
 
        Annotation : ``str`` +  an entry in the :py:func:`xclim.core.units.declare_units` decorator.
     """
-    FREQ_STR = 4
+    FREQ_STR = 3
     """A string representing an "offset alias", as defined by pandas.
 
        See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases .
        Annotation : ``str`` + ``freq`` as the parameter name.
     """
-    NUMBER = 5
+    NUMBER = 4
     """A number.
 
        Annotation : ``int``, ``float`` and unions thereof, potentially optional.
     """
-    STRING = 6
+    STRING = 5
     """A simple string.
 
        Annotation : ``str`` or ``str | None``. In most cases, this kind of parameter makes sense with choices indicated
        in the docstring's version of the annotation with curly braces. See :ref:`Defining new indices`.
     """
-    DAY_OF_YEAR = 7
+    DAY_OF_YEAR = 6
     """A date, but without a year, in the MM-DD format.
 
        Annotation : :py:obj:`xclim.core.utils.DayOfYearStr` (may be optional).
     """
-    DATE = 8
+    DATE = 7
     """A date in the YYYY-MM-DD format, may include a time.
 
        Annotation : :py:obj:`xclim.core.utils.DateStr` (may be optional).
     """
-    NUMBER_SEQUENCE = 9
+    NUMBER_SEQUENCE = 8
     """A sequence of numbers
 
        Annotation : ``Sequence[int]``, ``Sequence[float]`` and unions thereof,
        may include single ``int`` and ``float``, may be optional.
     """
-    BOOL = 10
+    BOOL = 9
     """A boolean flag.
 
        Annotation : ``bool``, may be optional.
@@ -571,15 +565,12 @@ def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> Inpu
     else:
         annot = {"no_annotation"}
 
-    if param.annotation == "PercentileDataArray":
-        return InputKind.PERCENTILE_VARIABLE
-
     if "DataArray" in annot and "None" not in annot and param.default is not None:
         return InputKind.VARIABLE
 
     annot = annot - {"None"}
 
-    if "DataArray" in annot or "PercentileDataArray" in annot:
+    if "DataArray" in annot:
         return InputKind.OPTIONAL_VARIABLE
 
     if param.name == "freq":
@@ -768,6 +759,17 @@ class PercentileDataArray(xr.DataArray):
     """
 
     @classmethod
+    def is_compatible(cls, source: xr.DataArray) -> bool:
+        """A PercentileDataArray must have climatology_bounds attributes and either a
+        quantile or percentiles coordinate, the window is not mandatory.
+        """
+        return (
+            isinstance(source, xr.DataArray)
+            and source.attrs.get("climatology_bounds", None) is not None
+            and ("quantile" in source.coords or "percentiles" in source.coords)
+        )
+
+    @classmethod
     def from_da(
         cls, source: xr.DataArray, climatology_bounds: list[str] = None
     ) -> PercentileDataArray:
@@ -809,24 +811,3 @@ class PercentileDataArray(xr.DataArray):
             f" PercentileDataArray. The DataArray must have a"
             f" 'percentiles' coordinate variable."
         )
-
-    def get_metadata(self, prefix: str) -> dict[str, str]:
-        """Get this PercentileDataArray metadata as a dictionary.
-        Used to format indicators' own metadata.
-
-        Parameters
-        ----------
-        prefix: str
-            The prefix to be used in the metadata key.
-            Usually this takes the form of "tasmin_per" or equivalent.
-
-        Returns
-        -------
-        dict
-            A mapping of the configuration used to compute these percentiles.
-        """
-        return {
-            f"{prefix}_thresh": self.coords["percentiles"].values,
-            f"{prefix}_window": self.attrs.get("window", None),
-            f"{prefix}_period": self.attrs.get("climatology_bounds"),
-        }
