@@ -1098,6 +1098,18 @@ class TestT90p:
         assert np.isnan(out[1])
         assert out[5] == 25
 
+    def test_tx90p__seasonal_indexer(self, tasmax_series):
+        # GIVEN
+        arr = np.asarray(np.arange(366), "float")
+        tas = tasmax_series(arr, start="1/1/2000")
+        t90 = percentile_doy(tas, window=1, per=90).sel(percentiles=90)
+        # create cold spell in june
+        tas[175:180] = 1
+        # WHEN
+        out = atmos.tx90p(tas, t90, freq="AS", season="DJF")
+        # THEN
+        assert out[0] == np.NAN  # one year without December result in a NaN by default
+
 
 class TestT10p:
     def test_tg10p_simple(self, tas_series):
