@@ -338,7 +338,7 @@ class TestAgroclimaticIndices:
             lti.lon <= 35, drop=True
         )
         lti = lti.groupby_bins(lti.lon, 1).mean().groupby_bins(lti.lat, 5).mean()
-        np.testing.assert_array_almost_equal(lti[0], np.array([values]), 2)
+        np.testing.assert_array_almost_equal(lti[0].squeeze(), np.array(values), 2)
 
     @pytest.mark.parametrize(
         "method, end_date, values",

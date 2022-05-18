@@ -324,7 +324,8 @@ def _ens_align_datasets(
             time = xr.decode_cf(ds).time
 
             if resample_freq is not None:
-                with xr.set_options(use_flox=False):
+                opts = {"use_flox": False} if "use_flox" in xr.get_options() else {}
+                with xr.set_options(**opts):
                     # todo: remove options context when flox#101 and xarray#6613 are fixed.
                     counts = time.resample(time=resample_freq).count()
                 if any(counts > 1):
