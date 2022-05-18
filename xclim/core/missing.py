@@ -91,7 +91,7 @@ class MissingBase:
         if selected.time.size == 0:
             raise ValueError("No data for selected period.")
 
-        null = selected.isnull() * 1
+        null = selected.isnull()
         if freq:
             return null.resample(time=freq)
 
@@ -155,7 +155,7 @@ class MissingBase:
             sda = xr.DataArray(data=np.ones(len(t)), coords={"time": t}, dims=("time",))
             st = select_time(sda, drop=True, **indexer)
             if freq:
-                count = (st.notnull() * 1).resample(time=freq).sum(dim="time")
+                count = st.notnull().resample(time=freq).sum(dim="time")
             else:
                 count = st.notnull().sum(dim="time")
 

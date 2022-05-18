@@ -109,10 +109,7 @@ def test_grouper_apply(tas_series, use_dask, group, n):
         window_dim="window"
     )
     if grouper.prop != "group":
-        # todo: Remove method keyword when issue flox#102 is solved.
-        exp = rolld.groupby(group).mean(
-            method="cohorts", dim=[win_grouper.dim, "window"]
-        )
+        exp = rolld.groupby(group).mean(dim=[win_grouper.dim, "window"])
     else:
         exp = rolld.mean(dim=[grouper.dim, "window"]).expand_dims("group").T
     np.testing.assert_array_equal(out, exp)
