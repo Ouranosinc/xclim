@@ -1106,9 +1106,9 @@ class TestT90p:
         # create cold spell in june
         tas[175:180] = 1
         # WHEN
-        out = atmos.tx90p(tas, t90, freq="AS", season="DJF")
+        out = atmos.tx90p(tas, t90, freq="AS", season="JJA")
         # THEN
-        assert out[0] == np.NAN  # one year without December result in a NaN by default
+        assert out[0] == 87  # non regression test
 
 
 class TestT10p:
