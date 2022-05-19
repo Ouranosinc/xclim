@@ -35,9 +35,9 @@ To install the xclim Anaconda binary, run this command in your terminal:
 
 Extra dependencies
 ------------------
-To improve performance of xclim, we highly recommend you also install `flox`. This package integrates into xarray and significantly improves the performance of the grouping and resampling algorithms, especially when using `dask` on large datasets.
+To improve performance of xclim, we highly recommend you also install `flox`_. This package integrates into xarray and significantly improves the performance of the grouping and resampling algorithms, especially when using `dask` on large datasets.
 
-We also recommend using the tools in `clisops.core.subset` for spatial manipulation of geospatial data.
+We also recommend using the tools in `clisops.core.subset`_ for spatial manipulation of geospatial data.
 
 .. _flox: https://flox.readthedocs.io/en/latest
 .. _clisops: https://clisops.readthedocs.io/en/latest/readme.html
