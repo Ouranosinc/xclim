@@ -124,8 +124,8 @@ def multioptvar_compute(
     tasmin: xr.DataArray | None = None,
 ):
     if tas is None:
-        with xr.set_options(keep_attrs=True):
-            return (tasmin + tasmax) / 2
+        tasmax = convert_units_to(tasmax, tasmin)
+        return ((tasmin + tasmax) / 2).assign_attrs(units=tasmin.units)
     return tas
 
 
@@ -151,6 +151,28 @@ def test_attrs(tas_series):
     assert txm.name == "tmin5 degC"
     assert uniIndTemp.standard_name == "{freq} mean temperature"
     assert uniIndTemp.cf_attrs[0]["another_attr"] == "With a value."
+
+
+@pytest.mark.parametrize(
+    "xcopt,xropt,exp",
+    [
+        ("xarray", "default", False),
+        (True, False, True),
+        (False, True, False),
+        ("xarray", True, True),
+    ],
+)
+def test_keep_attrs(tasmin_series, tasmax_series, xcopt, xropt, exp):
+    tx = tasmax_series(np.arange(360.0))
+    tn = tasmin_series(np.arange(360.0))
+    tx.attrs.update(something="blabla", bing="bang", foo="bar")
+    tn.attrs.update(something="blabla", bing="bong")
+    with xclim.set_options(keep_attrs=xcopt):
+        with xr.set_options(keep_attrs=xropt):
+            tg = multiOptVar(tasmin=tn, tasmax=tx)
+    assert (tg.attrs.get("something") == "blabla") is exp
+    assert (tg.attrs.get("foo") == "bar") is exp
+    assert "bing" not in tg.attrs
 
 
 def test_opt_vars(tasmin_series, tasmax_series):
