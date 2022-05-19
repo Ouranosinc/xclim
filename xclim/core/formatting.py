@@ -176,8 +176,7 @@ def parse_doc(doc: str) -> dict[str, str]:
 
 
 def _parse_parameters(section):
-    """Parse the parameters section of a docstring into a dictionary
-    mapping the parameter name to its description and, potentially, to its set of choices.
+    """Parse the 'parameters' section of a docstring into a dictionary mapping the parameter name to its description and, potentially, to its set of choices.
 
     The type annotation are not parsed, except for fixed sets of values
     (listed as "{'a', 'b', 'c'}"). The annotation parsing only accepts

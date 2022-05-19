@@ -204,6 +204,7 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: Mapping[str, int]) -> xr.Da
 
 
 def uses_dask(da):
+    """Evaluate whether dask is installed and array is loaded as a dask array."""
     if isinstance(da, xr.DataArray) and isinstance(da.data, dsk.Array):
         return True
     if isinstance(da, xr.Dataset) and any(
@@ -220,9 +221,7 @@ def calc_perc(
     beta: float = 1.0,
     copy: bool = True,
 ) -> np.ndarray:
-    """
-    Compute percentiles using nan_calc_percentiles and move the percentiles' axis to the end.
-    """
+    """Compute percentiles using nan_calc_percentiles and move the percentiles' axis to the end."""
     if percentiles is None:
         percentiles = [50.0]
 
@@ -243,9 +242,7 @@ def nan_calc_percentiles(
     beta=1.0,
     copy=True,
 ) -> np.ndarray:
-    """
-    Convert the percentiles to quantiles and compute them using _nan_quantile.
-    """
+    """Convert the percentiles to quantiles and compute them using _nan_quantile."""
     if percentiles is None:
         percentiles = [50.0]
 
@@ -306,11 +303,11 @@ def _get_gamma(virtual_indexes: np.ndarray, previous_indexes: np.ndarray):
 def _get_indexes(
     arr: np.ndarray, virtual_indexes: np.ndarray, valid_values_count: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray]:
-    """
-    Get the valid indexes of arr neighbouring virtual_indexes.
+    """Get the valid indexes of arr neighbouring virtual_indexes.
 
-    Notes:
-    This is a companion function to linear interpolation of quantiles
+    Notes
+    -----
+    This is a companion function to linear interpolation of quantiles.
 
     Returns
     -------
@@ -345,18 +342,20 @@ def _linear_interpolation(
     right: np.ndarray,
     gamma: np.ndarray,
 ) -> np.ndarray:
-    """
-    Compute the linear interpolation weighted by gamma on each point of
-    two same shape arrays.
+    """Compute the linear interpolation weighted by gamma on each point of two same shape arrays.
 
     Parameters
     ----------
     left : array_like
-        Left bound.
+      Left bound.
     right : array_like
-        Right bound.
+      Right bound.
     gamma : array_like
-        The interpolation weight.
+      The interpolation weight.
+
+    Returns
+    -------
+    array_like
     """
     diff_b_a = np.subtract(right, left)
     lerp_interpolation = np.asanyarray(np.add(left, diff_b_a * gamma))
@@ -375,10 +374,12 @@ def _nan_quantile(
     alpha: float = 1.0,
     beta: float = 1.0,
 ) -> float | np.ndarray:
-    """
-    Get the quantiles of the array for the given axis.
+    """Get the quantiles of the array for the given axis.
+
     A linear interpolation is performed using alpha and beta.
 
+    Notes
+    -----
     By default, alpha == beta == 1 which performs the 7th method of [Hyndman&Fan]_.
     with alpha == beta == 1/3 we get the 8th method.
     """
