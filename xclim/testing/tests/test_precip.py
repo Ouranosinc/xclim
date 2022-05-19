@@ -426,6 +426,18 @@ def test_days_over_precip_thresh():
     assert "['1990-01-01', '1993-12-31'] period" in out.attrs["description"]
 
 
+def test_days_over_precip_thresh__seasonal_indexer():
+    # GIVEN
+    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
+    per = pr.quantile(0.8, "time", keep_attrs=True)
+    # WHEN
+    out = atmos.days_over_precip_thresh(
+        pr, per, freq="AS", date_bounds=("01-10", "12-31")
+    )
+    # THEN
+    np.testing.assert_almost_equal(out[0], np.array([82.0, 66.0, 66.0, 74.0]))
+
+
 def test_fraction_over_precip_doy_thresh():
     pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
     per = percentile_doy(pr, window=5, per=80)
