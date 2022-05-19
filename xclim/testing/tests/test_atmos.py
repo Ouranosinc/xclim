@@ -300,12 +300,12 @@ class TestWaterBudget:
             petR = pet * 86400
             petR.attrs["units"] = "mm/day"
 
-        p_pet_br65 = atmos.water_budget(pr, tasmin=tn, tasmax=tx, method="BR65")
-        p_pet_br65C = atmos.water_budget(prR, tasmin=tnC, tasmax=tx, method="BR65")
-        p_pet_hg85 = atmos.water_budget(pr, tasmin=tn, tasmax=tx, method="HG85")
-        p_pet_hg85C = atmos.water_budget(prR, tasmin=tnC, tasmax=tx, method="HG85")
-        p_pet_tw48 = atmos.water_budget(pr, tasmin=tn, tasmax=tx, method="TW48")
-        p_pet_tw48C = atmos.water_budget(prR, tasmin=tnC, tasmax=tx, method="TW48")
+        p_pet_br65 = atmos.water_budget_from_tas(pr, tasmin=tn, tasmax=tx, method="BR65")
+        p_pet_br65C = atmos.water_budget_from_tas(prR, tasmin=tnC, tasmax=tx, method="BR65")
+        p_pet_hg85 = atmos.water_budget_from_tas(pr, tasmin=tn, tasmax=tx, method="HG85")
+        p_pet_hg85C = atmos.water_budget_from_tas(prR, tasmin=tnC, tasmax=tx, method="HG85")
+        p_pet_tw48 = atmos.water_budget_from_tas(pr, tasmin=tn, tasmax=tx, method="TW48")
+        p_pet_tw48C = atmos.water_budget_from_tas(prR, tasmin=tnC, tasmax=tx, method="TW48")
         p_pet_evpot = atmos.water_budget(pr, evspsblpot=pet)
         p_pet_evpotR = atmos.water_budget(prR, evspsblpot=petR)
 
@@ -324,12 +324,12 @@ class TestWaterBudget:
         tn[0, 100] = np.nan
         tx[0, 101] = np.nan
 
-        p_pet_br65 = atmos.water_budget(pr, tasmin=tn, tasmax=tx, method="BR65")
-        p_pet_hg85 = atmos.water_budget(pr, tasmin=tn, tasmax=tx, method="HG85")
+        p_pet_br65 = atmos.water_budget_from_tas(pr, tasmin=tn, tasmax=tx, method="BR65")
+        p_pet_hg85 = atmos.water_budget_from_tas(pr, tasmin=tn, tasmax=tx, method="HG85")
 
         tm[0, 0:31] = np.nan
 
-        p_pet_tw48 = atmos.water_budget(pr, tas=tm, method="TW48")
+        p_pet_tw48 = atmos.water_budget_from_tas(pr, tas=tm, method="TW48")
 
         pet[0, 0:31] = np.nan
 
