@@ -272,7 +272,7 @@ def ensemble_percentiles(
 def _ens_align_datasets(
     datasets: list[xr.Dataset | Path | str | list[Path | str]] | str,
     mf_flag: bool = False,
-    resample_freq: str = None,
+    resample_freq: str | None = None,
     calendar: str = "default",
     **xr_kwargs,
 ) -> list[xr.Dataset]:
@@ -280,27 +280,27 @@ def _ens_align_datasets(
 
     Parameters
     ----------
-    datasets : List[Union[xr.Dataset, xr.DataArray, Path, str, List[Path, str]]] or str
-      List of netcdf file paths or xarray Dataset/DataArray objects . If mf_flag is True, ncfiles should be a list
-      of lists where each sublist contains input NetCDF files of a xarray multifile Dataset.
+    datasets : list[xr.Dataset | xr.DataArray | Path | str | list[Path | str]] or str
+      List of netcdf file paths or xarray Dataset/DataArray objects . If mf_flag is True, 'datasets' should be a list
+      of lists where each sublist contains input NetCDF files of a xarray multi-file Dataset.
       DataArrays should have a name, so they can be converted to datasets.
       If a string, it is assumed to be a glob pattern for finding datasets.
     mf_flag : bool
-      If True climate simulations are treated as xarray multifile datasets before concatenation.
-      Only applicable when datasets is a sequence of file paths.
-    resample_freq : Optional[str]
+      If True climate simulations are treated as xarray multi-file datasets before concatenation.
+      Only applicable when 'datasets' is a sequence of file paths.
+    resample_freq : str or None
       If the members of the ensemble have the same frequency but not the same offset, they cannot be properly aligned.
-      If resample_freq is set, the time coordinate of each members will be modified to fit this frequency.
+      If resample_freq is set, the time coordinate of each member will be modified to fit this frequency.
     calendar : str
       The calendar of the time coordinate of the ensemble. For conversions involving '360_day',
       the align_on='date' option is used.
       See `xclim.core.calendar.convert_calendar`. 'default' is the standard calendar using np.datetime64 objects.
-    xr_kwargs :
+    xr_kwargs
       Any keyword arguments to be given to xarray when opening the files.
 
     Returns
     -------
-    List[xr.Dataset]
+    list[xr.Dataset]
     """
     xr_kwargs.setdefault("chunks", "auto")
     xr_kwargs.setdefault("decode_times", False)
@@ -327,7 +327,8 @@ def _ens_align_datasets(
                 counts = time.resample(time=resample_freq).count()
                 if any(counts > 1):
                     raise ValueError(
-                        f"Alignment of dataset #{i:02d} failed : its time axis cannot be resampled to freq {resample_freq}."
+                        f"Alignment of dataset #{i:02d} failed: "
+                        f"Time axis cannot be resampled to freq {resample_freq}."
                     )
                 time = counts.time
 
