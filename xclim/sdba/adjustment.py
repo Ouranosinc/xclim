@@ -221,7 +221,14 @@ class TrainAdjust(BaseAdjustment):
             if name in scen.coords:
                 scen[name].attrs.update(crd.attrs)
 
-        params = ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
+        params = ", ".join(
+            [
+                f"{k}={repr(v)}"
+                if not isinstance(v, xr.DataArray)
+                else f"{k}=xarray.DataArray '{v.name}'"
+                for k, v in kwargs.items()
+            ]
+        )
         infostr = f"{str(self)}.adjust(sim, {params})"
         scen.attrs["history"] = update_history(f"Bias-adjusted with {infostr}", sim)
         scen.attrs["bias_adjustment"] = infostr
