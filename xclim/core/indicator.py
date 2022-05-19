@@ -1390,13 +1390,14 @@ class ResamplingIndicatorWithIndexing(ResamplingIndicator):
             )
         ]
 
-    def _preprocess_and_checks(self, das, params):
+    def _preprocess_and_checks(self, das: dict[str, DataArray], params: dict[str, Any]):
         """Perform parent's checks and also check if freq is allowed."""
         das, params = super()._preprocess_and_checks(das, params)
 
         indxr = params.get("indexer")
         if indxr:
-            das = {k: select_time(da, **indxr) for k, da in das.items()}
+            for k, da in filter(lambda kda: "time" in kda[1].coords, das.items()):
+                das.update({k: select_time(da, **indxr)})
         return das, params
 
 
