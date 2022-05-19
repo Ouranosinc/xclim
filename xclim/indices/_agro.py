@@ -585,6 +585,7 @@ def water_budget(
             tasmin=tasmin, tasmax=tasmax, tas=tas, method=method
         )
     else:
+        evspsblpot = convert_units_to(pr, "kg m-2 s-1")
         pet = evspsblpot
 
     if xarray.infer_freq(pet.time) == "MS":
