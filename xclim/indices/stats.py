@@ -460,6 +460,16 @@ def _fit_start(x, dist, **fitkwargs) -> tuple[tuple, dict]:
         scale = ((x - loc) ** chat).mean() ** (1 / chat)
         return (chat,), {"loc": loc, "scale": scale}
 
+    if dist == "gamma":
+        x_pos = x[x > 0]
+        m_pos = x_pos.mean()
+        log_of_mean = np.log(m_pos)
+        mean_of_logs = np.log(x_pos).mean()
+        a = log_of_mean - mean_of_logs
+        alpha = (1 + np.sqrt(1 + 4 * a / 3)) / (4 * a)
+        beta = m_pos / alpha
+        return (alpha,), {"scale": beta}
+
     return (), {}
 
 
