@@ -2491,7 +2491,7 @@ def test_water_budget(pr_series, evspsblpot_series):
     pet.attrs["units"] = "mm/day"
 
     out = xci.water_budget(pr, evspsblpot=pet)
-    np.testing.assert_allclose(out, [10, 0, -10], rtol=1e-3)
+    np.testing.assert_allclose(out, [10 / 86400, 0, -10 / 86400], rtol=1e-5)
 
 
 @pytest.mark.parametrize(
