@@ -30,7 +30,7 @@ from xclim.testing import open_dataset
 
 
 @declare_units(da="[temperature]", thresh="[temperature]")
-def uniindtemp_compute(da: xr.DataArray, thresh: str = "0.0 degC", freq: str = "YS"):
+def uniindtemp_compute(da: xr.DataArray, thresh: str = "0.0 degC", freq: str = "YS", method: str = "injected"):
     """Docstring"""
     out = da - convert_units_to(thresh, da)
     out = out.resample(time=freq).mean()
@@ -53,6 +53,7 @@ uniIndTemp = Daily(
         )
     ],
     compute=uniindtemp_compute,
+    parameters={"method": "injected"}
 )
 
 
