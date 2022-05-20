@@ -25,18 +25,26 @@ Ensembles module
 
 .. automodule:: xclim.ensembles
    :members: create_ensemble, ensemble_mean_std_max_min, ensemble_percentiles
+   :noindex:
 
 .. automodule:: xclim.ensembles._reduce
+   :noindex:
 
 .. Use of autofunction is so that paths do not include private modules.
 .. autofunction:: xclim.ensembles.kkz_reduce_ensemble
+    :noindex:
 .. autofunction:: xclim.ensembles.kmeans_reduce_ensemble
+    :noindex:
 .. autofunction:: xclim.ensembles.plot_rsqprofile
+    :noindex:
 
 .. automodule:: xclim.ensembles._robustness
+    :noindeX:
 
 .. autofunction:: xclim.ensembles.change_significance
+    :noindex:
 .. autofunction:: xclim.ensembles.robustness_coefficient
+    :noindex:
 
 Indicator tools
 ===============
@@ -45,6 +53,7 @@ Indicator tools
    :members:
    :member-order: bysource
    :show-inheritance:
+   :noindex:
 
 Unit handling module
 ====================
@@ -53,7 +62,7 @@ Unit handling module
    :members:
    :undoc-members:
    :show-inheritance:
-
+   :noindex:
 
 Other utilities
 ===============
@@ -62,21 +71,24 @@ Other utilities
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: xclim.core.formatting
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: xclim.core.options
    :members: set_options
+   :noindex:
 
 .. automodule:: xclim.core.utils
    :members:
    :undoc-members:
    :member-order: bysource
    :show-inheritance:
-
+   :noindex:
 
 Other xclim modules
 ===================
@@ -91,6 +103,7 @@ Testing module
 
 .. automodule:: xclim.testing
     :members:
+    :noindex:
 
 Subset module
 -------------

@@ -522,10 +522,9 @@ def unpack_moving_yearly_window(
     Unpack DataArrays created with :py:func:`construct_moving_yearly_window` and recreate a timeseries data.
     If `append_ends` is False, only keeps the central non-overlapping years. The final timeseries will be
     (window - step) years shorter than the initial one. If `append_ends` is True, the time points from first and last windows
-     will be be included in the final timeseries.
+    will be included in the final timeseries.
 
     The time points that are not in a window will never be included in the final timeseries.
-
     The window length and window step are inferred from the coordinates.
 
     Parameters

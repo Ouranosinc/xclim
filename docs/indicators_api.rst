@@ -2,16 +2,19 @@
    :members:
    :undoc-members:
    :imported-members:
+   :noindex:
 
 .. automodule:: xclim.indicators.land
    :members:
    :undoc-members:
    :imported-members:
+   :noindex:
 
 .. automodule:: xclim.indicators.seaIce
    :members:
    :undoc-members:
    :imported-members:
+   :noindex:
 
 ============================
 Virtual indicator submodules
@@ -21,13 +24,16 @@ Virtual indicator submodules
    :members:
    :imported-members:
    :undoc-members:
+   :noindex:
 
 .. automodule:: xclim.indicators.icclim
    :members:
    :imported-members:
    :undoc-members:
+   :noindex:
 
 .. automodule:: xclim.indicators.anuclim
    :members:
    :imported-members:
    :undoc-members:
+   :noindex:

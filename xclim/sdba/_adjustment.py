@@ -1,7 +1,7 @@
 # noqa: D205,D400
 """
 Adjustment Algorithms
----------------------
+=====================
 
 This file defines the different steps, to be wrapped into the Adjustment objects.
 """

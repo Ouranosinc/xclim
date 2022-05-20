@@ -1,7 +1,7 @@
 # noqa: D205,D400
 """
-SDBA Adjustment Methods
-=======================
+Adjustment Methods
+==================
 """
 from __future__ import annotations
 

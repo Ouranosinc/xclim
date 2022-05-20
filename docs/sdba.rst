@@ -44,7 +44,6 @@ References
 .. [Hoffman] Hoffmann, H., & Rath, T. (2012). Meteorologically consistent bias correction of climate time series for agricultural models. Theoretical and Applied Climatology, 110(1–2), 129–141. https://doi.org/10.1007/s00704-012-0618-x
 .. [Thrasher] Thrasher, B., Maurer, E. P., McKellar, C., & Duffy, P. B. (2012). Technical Note: Bias correcting climate model simulated daily temperature extremes with quantile mapping. Hydrology and Earth System Sciences, 16(9), 3309–3314. https://doi.org/10.5194/hess-16-3309-2012
 
-
 SDBA's user API
 ===============
 
@@ -53,38 +52,44 @@ SDBA's user API
    :exclude-members: BaseAdjustment
    :special-members:
    :show-inheritance:
-
+   :noindex:
 
 .. automodule:: xclim.sdba.processing
    :members:
+   :noindex:
 
 .. automodule:: xclim.sdba.detrending
    :members:
    :show-inheritance:
    :exclude-members: BaseDetrend
+   :noindex:
 
 .. automodule:: xclim.sdba.utils
    :members:
+   :noindex:
 
 .. autoclass:: xclim.sdba.base.Grouper
    :members:
    :class-doc-from: init
+   :noindex:
 
 .. automodule:: xclim.sdba.nbutils
    :members:
+   :noindex:
 
 .. automodule:: xclim.sdba.loess
    :members:
+   :noindex:
 
 .. automodule:: xclim.sdba.properties
    :members:
    :exclude-members: register_statistical_properties
+   :noindex:
 
 .. automodule:: xclim.sdba.measures
    :members:
    :exclude-members: check_same_units_and_convert
-
-
+   :noindex:
 
 Developer tools
 ===============
@@ -93,16 +98,22 @@ Developer tools
    :members:
    :show-inheritance:
    :exclude-members: Grouper
+   :noindex:
 
 .. autoclass:: xclim.sdba.detrending.BaseDetrend
    :members:
+   :noindex:
 
 .. autoclass:: xclim.sdba.adjustment.TrainAdjust
    :members:
+   :noindex:
 
 .. autoclass:: xclim.sdba.adjustment.Adjust
    :members:
+   :noindex:
 
 .. autofunction:: xclim.sdba.properties.register_statistical_properties
+   :noindex:
 
 .. autofunction:: xclim.sdba.measures.check_same_units_and_convert
+   :noindex:

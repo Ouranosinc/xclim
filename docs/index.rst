@@ -14,7 +14,6 @@ xclim currently provides over 50 indices related to mean, minimum and maximum da
    :maxdepth: 2
    :caption: Contents:
 
-
    installation
    notebooks/usage
    notebooks/index
@@ -26,6 +25,7 @@ xclim currently provides over 50 indices related to mean, minimum and maximum da
    sdba
    analogues
    api
+   modules
    contributing
    authors
    history

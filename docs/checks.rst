@@ -8,13 +8,16 @@ computations (:py:mod:`~xclim.core.cfchecks` for checks on the metadata and :py:
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: xclim.core.datachecks
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: xclim.core.missing
+   :noindex:
 
 Corresponding stand-alone functions are also exposed to run the same missing value checks independent from indicator calculations.
 
@@ -37,3 +40,4 @@ Corresponding stand-alone functions are also exposed to run the same missing val
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
