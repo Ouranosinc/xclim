@@ -11,6 +11,7 @@ from xclim.core.units import convert_units_to, declare_units, rate2amount, to_ag
 from xclim.core.utils import DayOfYearStr
 from xclim.indices._threshold import first_day_above, first_day_below, freshet_start
 from xclim.indices.generic import aggregate_between_dates, day_lengths
+from xclim.indices.stats import dist_method, fit
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -30,6 +31,8 @@ __all__ = [
     "latitude_temperature_index",
     "qian_weighted_mean_average",
     "water_budget",
+    "standardized_precipitation_index",
+    "standardized_precipitation_evapotranspiration_index",
 ]
 
 
@@ -588,6 +591,115 @@ def water_budget(
 
     out.attrs["units"] = pr.attrs["units"]
     return out
+
+
+@declare_units(
+    pr="[precipitation]",
+)
+def standardized_precipitation_index(
+    pr: xarray.DataArray,
+    freq: str = "YS",
+    dist: str = "gamma",
+) -> xarray.DataArray:
+    r"""Standardized Precipitation Index (SPI).
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Daily precipitation.
+    freq : str
+      Resampling frequency.
+    dist : str
+      Name of the distribution function to be used for computing the SPI, such as `gamma`, `pearsonIII`
+
+    Returns
+    -------
+    xarray.DataArray,
+      Standardized Precipitation Index.
+
+
+    References
+    ----------
+    .. [1] McKee, Thomas B., Nolan J. Doesken, and John Kleist. "The relationship of drought frequency and duration to time scales." In Proceedings of the 8th Conference on Applied Climatology, vol. 17, no. 22, pp. 179-183. 1993.
+    """
+    pr_rs = pr.resample(time=freq).mean()
+    params_dist = fit(pr_rs, dist=dist)
+    prob_dist = dist_method("cdf", params_dist, pr_rs.where(pr_rs > 0))
+    prob_of_zero = (pr_rs == 0).sum(axis=0) / pr_rs.shape[0]
+    prob = prob_of_zero + (1 - prob_of_zero) * prob_dist
+
+    params_norm = xarray.DataArray(
+        [0, 1],
+        dims=["dparams"],
+        coords=dict(dparams=(["loc", "scale"])),
+        attrs=dict(scipy_dist="norm"),
+    )
+
+    params_norm.attrs = ""
+    params_norm.attrs["scipy_dist"] = "norm"
+
+    spi = dist_method("ppf", params_norm, prob)
+    spi.attrs["units"] = ""
+
+    return spi
+
+
+@declare_units(
+    pr="[precipitation]",
+    tasmin="[temperature]",
+    tasmax="[temperature]",
+    tas="[temperature]",
+)
+def standardized_precipitation_evapotranspiration_index(
+    pr: xarray.DataArray,
+    tasmin: xarray.DataArray | None = None,
+    tasmax: xarray.DataArray | None = None,
+    tas: xarray.DataArray | None = None,
+    freq: str = "YS",
+    dist: str = "gamma",
+    method: str = "BR65",
+) -> xarray.DataArray:
+    r"""Standardized Precipitation Evapotranspiration Index (SPEI).
+
+    Precipitation minus potential evapotranspiration data fitted to a statistical distribution (dist), transformed to a cdf,  and inverted back to a gaussian normal pdf. The potential evapotranspiration is calculated with a given method (method).
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Daily precipitation.
+    tasmin : xarray.DataArray
+      Minimum daily temperature.
+    tasmax : xarray.DataArray
+      Maximum daily temperature.
+    tas : xarray.DataArray
+      Mean daily temperature.
+    freq : str
+      Resampling frequency.
+    method : str
+      Method to use to calculate the potential evapotranspiration.
+    dist : str
+      Name of the distribution function to be used for computing the SPEI, such as `log-logistic`, `gamma`, `pearsonIII`
+
+    Notes
+    -----
+    Available methods are listed in the description of xclim.indicators.atmos.potential_evapotranspiration.
+
+    Returns
+    -------
+    xarray.DataArray,
+      Standardized Precipitation Evapotranspiration Index.
+    """
+    # Subtract PET from precipiations and add an offset to ensure that the minimal value of this quantity is positive
+    pr_minus_pet = water_budget(pr, tasmin, tasmax, tas, method)
+    # Is this way of extracting the minimal value robust?
+    # At this point, we could multiply the offset by 1.01 to ensure we are *above* zero. What is best?
+    pr_minus_pet_offsetted = pr_minus_pet - pr_minus_pet.min().item() * (
+        pr_minus_pet.min().item() < 0
+    )
+    pr_minus_pet_offsetted.attrs = pr_minus_pet.attrs
+    spei = standardized_precipitation_index(pr_minus_pet_offsetted, freq, dist)
+
+    return spei
 
 
 @declare_units(pr="[precipitation]", thresh="[length]")
