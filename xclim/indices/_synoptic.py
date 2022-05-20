@@ -1,4 +1,4 @@
-import cf_xarray
+# import cf_xarray
 import numpy as np
 import xarray
 
