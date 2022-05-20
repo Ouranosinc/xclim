@@ -668,7 +668,6 @@ def specific_humidity_from_dewpoint(
     ----------
     .. [WMO08] World Meteorological Organization. (2008). Guide to meteorological instruments and methods of observation. Geneva, Switzerland: World Meteorological Organization. https://www.weather.gov/media/epz/mesonet/CWOP-WMO8.pdf
     """
-
     ε = 0.6219569  # weight of water vs dry air []
     e = saturation_vapor_pressure(tas=tdps, method=method)  # vapor pressure [Pa]
     ps = convert_units_to(ps, "Pa")  # total air pressure
@@ -725,7 +724,6 @@ def snowfall_approximation(
 
     https://gitlab.com/cccma/classic/-/blob/master/src/atmosphericVarsCalc.f90
     """
-
     if method == "binary":
         thresh = convert_units_to(thresh, tas)
         prsn = pr.where(tas <= thresh, 0)
@@ -807,9 +805,9 @@ def rain_approximation(
     This method computes the snowfall approximation and subtracts it from the total
     precipitation to estimate the liquid rain precipitation.
 
-    See also
+    See Also
     --------
-    snowfall_approximation
+    :py:func:`xclim.indices.snowfall_approximation`
     """
     prra = pr - snowfall_approximation(pr, tas, thresh=thresh, method=method)
     prra.attrs["units"] = pr.attrs["units"]
@@ -940,7 +938,6 @@ def clausius_clapeyron_scaled_precipitation(
     if `delta_tas` is the climatological difference between a baseline and a future period, then `pr_baseline`
     should be precipitations over a period within the same baseline.
     """
-
     # Get difference in temperature.  Time-invariant baseline temperature (from above) is broadcast.
     delta_tas = convert_units_to(delta_tas, "delta_degreeC")
 
@@ -960,7 +957,7 @@ def potential_evapotranspiration(
     peta: float | None = 0.00516409319477,
     petb: float | None = 0.0874972822289,
 ) -> xr.DataArray:
-    """Potential evapotranspiration.
+    r"""Potential evapotranspiration.
 
     The potential for water evaporation from soil and transpiration by plants if the water supply is
     sufficient, according to a given method.
@@ -996,7 +993,7 @@ def potential_evapotranspiration(
     The McGuinness-Bordne [McGuinness1972]_ equation is:
 
     .. math::
-        PET[mm day^{-1}] = a * \frac{S_0}{\\lambda}T_a + b *\frsc{S_0}{\\lambda}
+        PET[mm day^{-1}] = a * \frac{S_0}{\lambda}T_a + b *\frsc{S_0}{\lambda}
 
     where :math:`a` and :math:`b` are empirical parameters; :math:`S_0` is the extraterrestrial radiation [MJ m-2 day-1]; :math:`\\lambda` is the latent heat of vaporisation [MJ kg-1] and :math:`T_a` is the air temperature [°C]. The equation was originally derived for the USA, with :math:`a=0.0147` and :math:`b=0.07353`. The default parameters used here are calibrated for the UK, using the method described in [Tanguy2018]_.
 
@@ -1008,7 +1005,6 @@ def potential_evapotranspiration(
     .. [McGuinness1972] McGuinness, J. L., & Bordne, E. F. (1972). A comparison of lysimeter-derived potential evapotranspiration with computed values (No. 1452). US Department of Agriculture.
     .. [thornthwaite48] Thornthwaite, C. W. (1948). An approach toward a rational classification of climate. Geographical review, 38(1), 55-94.
     """
-
     if method in ["baierrobertson65", "BR65"]:
         tasmin = convert_units_to(tasmin, "degF")
         tasmax = convert_units_to(tasmax, "degF")

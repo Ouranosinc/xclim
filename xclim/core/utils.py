@@ -552,7 +552,7 @@ class InputKind(IntEnum):
 
 
 def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> InputKind:
-    """Returns the appropriate InputKind constant from an ``inspect.Parameter`` object.
+    """Return the appropriate InputKind constant from an ``inspect.Parameter`` object.
 
     The correspondance between parameters and kinds is documented in :py:class:`xclim.core.utils.InputKind`.
     The only information not inferable through the `inspect` object is whether the parameter
@@ -607,7 +607,7 @@ def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> Inpu
 
 
 def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
-    """Reads in a clix-meta yaml and refactors it to fit xclim's yaml specifications."""
+    """Read in a clix-meta yaml and refactor it to fit xclim's yaml specifications."""
     from xclim.indices import generic
 
     # freq_names = {"annual": "A", "seasonal": "Q", "monthly": "M", "weekly": "W"}

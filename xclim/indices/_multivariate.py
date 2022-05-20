@@ -344,7 +344,7 @@ def cold_and_wet_days(
     pr_75: xarray.DataArray,
     freq: str = "YS",
 ) -> xarray.DataArray:
-    r"""cold and wet days.
+    r"""Cold and wet days.
 
     Returns the total number of days where "cold" and "wet" conditions coincide.
 
@@ -358,14 +358,13 @@ def cold_and_wet_days(
       Daily precipitation.
     pr_75 : xarray.DataArray
       Third quartile of daily total precipitation computed by month.
-
-      .. warning::
-
-        Before computing the percentiles, all the precipitation below 1mm must be filtered out !
-        Otherwise, the percentiles will include non-wet days.
-
     freq : str
       Resampling frequency.
+
+    Warning
+    -------
+    Before computing the percentiles, all the precipitation below 1mm must be filtered out!
+    Otherwise, the percentiles will include non-wet days.
 
     Returns
     -------
@@ -374,7 +373,8 @@ def cold_and_wet_days(
 
     Notes
     -----
-    Bootstrapping is not available for quartiles because it would make no significant difference to bootstrap percentiles so far from the extremes.
+    Bootstrapping is not available for quartiles because it would make no significant
+    difference to bootstrap percentiles so far from the extremes.
 
     Formula to be written [cold_wet_days]_.
 
@@ -1700,8 +1700,7 @@ def blowing_snow(
     window: int = 3,
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
-    """
-    Days with blowing snow events
+    """Days with blowing snow events.
 
     Number of days where both snowfall over the last days and daily wind speeds are above respective thresholds.
 

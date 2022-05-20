@@ -1,5 +1,7 @@
+# noqa: D205,D400
 """
-Adjustment algorithms.
+Adjustment Algorithms
+---------------------
 
 This file defines the different steps, to be wrapped into the Adjustment objects.
 """
@@ -23,10 +25,11 @@ from .processing import escore
     scaling=[Grouper.PROP],
 )
 def dqm_train(ds, *, dim, kind, quantiles) -> xr.Dataset:
-    """DQM: Train step on one group.
+    """Train step on one group.
 
-
-    Dataset variables:
+    Notes
+    -----
+    Dataset must contain the following variables:
       ref : training target
       hist : training data
     """
@@ -87,7 +90,7 @@ def qm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
 
 @map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[], trend=[])
 def dqm_adjust(ds, *, group, interp, kind, extrapolation, detrend):
-    """DQM adjustment on one block
+    """DQM adjustment on one block.
 
     Dataset variables:
       scaling : Scaling factor between ref and hist
@@ -349,6 +352,7 @@ def _extremes_train_1d(ref, hist, ref_params, *, q_thresh, cluster_thresh, dist,
     reduces=["time"], px_hist=["quantiles"], af=["quantiles"], thresh=[Grouper.PROP]
 )
 def extremes_train(ds, *, group, q_thresh, cluster_thresh, dist, quantiles):
+    """Train extremes for a given variable series."""
     px_hist, af, thresh = xr.apply_ufunc(
         _extremes_train_1d,
         ds.ref,
@@ -384,6 +388,7 @@ def _fit_cluster_and_cdf(data, thresh, dist, cluster_thresh):
 def extremes_adjust(
     ds, *, group, frac, power, dist, interp, extrapolation, cluster_thresh
 ):
+    """Adjust extremes to reflect many distribution factors."""
     # Find probabilities of extremes of fut according to its own cluster-fitted dist.
     px_fut = xr.apply_ufunc(
         _fit_cluster_and_cdf,
@@ -401,7 +406,7 @@ def extremes_adjust(
     )
     scen = u.apply_correction(ds.sim, af, "*")
 
-    # Smooth transition function between sim and scen
+    # Smooth transition function between simulation and scenario.
     transition = (
         ((ds.sim - ds.thresh) / ((ds.sim.max("time")) - ds.thresh)) / frac
     ) ** power

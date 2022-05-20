@@ -607,6 +607,7 @@ def amount2rate(
 
 @datacheck
 def check_units(val: str | int | float | None, dim: str | None) -> None:
+    """Check units for appropriate convention compliance."""
     if dim is None or val is None:
         return
 

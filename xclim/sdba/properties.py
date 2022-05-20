@@ -1,13 +1,14 @@
+# noqa: D205,D400
 """
-Properties submodule
+Properties Submodule
 ====================
- SDBA diagnostic tests are made up of statistical properties and measures. Properties are calculated on both simulation
- and reference datasets. They collapse the time dimension to one value.
+SDBA diagnostic tests are made up of statistical properties and measures. Properties are calculated on both simulation
+and reference datasets. They collapse the time dimension to one value.
 
- This framework for the diagnostic tests was inspired by the [VALUE]_ project.
- Statistical Properties is the xclim term for 'indices' in the VALUE project.
+This framework for the diagnostic tests was inspired by the [VALUE]_ project.
+Statistical Properties is the xclim term for 'indices' in the VALUE project.
 
- .. [VALUE] http://www.value-cost.eu/
+.. [VALUE] http://www.value-cost.eu/
 """
 from __future__ import annotations
 
@@ -160,9 +161,9 @@ def skewness(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray
     >>> pr = open_dataset(path_to_pr_file).pr
     >>> skewness(da=pr, group='time.season')
 
-    See also
+    See Also
     --------
-    scipy.stats.skew
+    :ref:`scipy.stats.skew <scipy:stats.skew>`
     """
     attrs = da.attrs
     if group.prop != "group":
@@ -320,7 +321,7 @@ def spell_length_distribution(
 def acf(
     da: xr.DataArray, *, lag: int = 1, group: str | Grouper = "time.season"
 ) -> xr.DataArray:
-    r"""Autocorrelation function.
+    """Autocorrelation function.
 
     Autocorrelation with a lag over a time resolution and averaged over all years.
 
@@ -340,9 +341,9 @@ def acf(
     xr.DataArray
       lag-{lag} autocorrelation of the variable over a {group.prop} and averaged over all years.
 
-    See also
+    See Also
     --------
-    statsmodels.tsa.stattools.acf
+    :ref:`statsmodels.tsa.stattools.acf <statsmodels:tsa.stattools.acf>`
 
     References
     ----------
@@ -357,6 +358,7 @@ def acf(
     attrs = da.attrs
 
     def acf_last(x, nlags):
+        # noqa: D403
         """statsmodels acf calculates acf for lag 0 to nlags, this return only the last one."""
         # As we resample + group, timeseries are quite short and fft=False seems more performant
         out_last = stattools.acf(x, nlags=nlags, fft=False)
@@ -533,7 +535,7 @@ def corr_btw_var(
     index = {"correlation": 0, "pvalue": 1}[output]
 
     def _first_output_1d(a, b, index, corr_type):
-        """Only keep the correlation (first output) from the scipy function"""
+        """Only keep the correlation (first output) from the scipy function."""
         if corr_type == "Pearson":
             # for points in the water with NaNs
             if np.isnan(a).any():
@@ -658,10 +660,10 @@ def trend(
     xr.DataArray
       Trend of the variable.
 
-    See also
+    See Also
     --------
-    scipy.stats.linregress
-    numpy.polyfit
+    :ref:`scipy.stats.lineregress <scipy:stats.lineregress>`
+    :ref:`numpy.polyfit <numpy:polyfit>`
 
     Examples
     --------

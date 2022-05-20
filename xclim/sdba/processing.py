@@ -1,3 +1,4 @@
+# noqa: D205,D400
 """
 Pre and post processing
 -----------------------
@@ -150,29 +151,29 @@ def jitter_over_thresh(x: xr.DataArray, thresh: str, upper_bnd: str) -> xr.DataA
 @update_xclim_history
 def jitter(
     x: xr.DataArray,
-    lower: str = None,
-    upper: str = None,
-    minimum: str = None,
-    maximum: str = None,
+    lower: str | None = None,
+    upper: str | None = None,
+    minimum: str | None = None,
+    maximum: str | None = None,
 ) -> xr.DataArray:
-    """Replaces values under a threshold and values above another by a uniform random noise.
+    """Replace values under a threshold and values above another by a uniform random noise.
 
-    Do not confuse with R's jitter, which adds uniform noise instead of replacing values.
+    Not to be confused with R's `jitter`, which adds uniform noise instead of replacing values.
 
     Parameters
     ----------
     x : xr.DataArray
       Values.
-    lower : str
+    lower : str, optional
       Threshold under which to add uniform random noise to values, a quantity with units.
       If None, no jittering is performed on the lower end.
-    upper : str
+    upper : str, optional
       Threshold over which to add uniform random noise to values, a quantity with units.
       If None, no jittering is performed on the upper end.
-    minimum : str
+    minimum : str, optional
       Lower limit (excluded) for the lower end random noise, a quantity with units.
       If None but `lower` is not None, 0 is used.
-    maximum : str
+    maximum : str, optional
       Upper limit (excluded) for the upper end random noise, a quantity with units.
       If `upper` is not None, it must be given.
 
@@ -398,7 +399,6 @@ def escore(
     .. [Cannon18] Cannon, A. J. (2018). Multivariate quantile mapping bias correction: An N-dimensional probability density function transform for climate model simulations of multiple variables. Climate Dynamics, 50(1), 31–49. https://doi.org/10.1007/s00382-017-3580-6
     .. [SzekelyRizzo] Székely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
     """
-
     pts_dim, obs_dim = dims
 
     if N > 0:
@@ -644,7 +644,7 @@ def to_additive_space(
     This will thus produce `Infinity` and `NaN` values where :math:`X == b_-` or :math:`X == b_+`.
     We recommend using :py:func:`jitter_under_thresh` and :py:func:`jitter_over_thresh` to remove those issues.
 
-    See also
+    See Also
     --------
     from_additive_space : for the inverse transformation.
     jitter_under_thresh : Remove values exactly equal to the lower bound.
@@ -740,7 +740,7 @@ def from_additive_space(
             X' = \frac{1}{1 + e^{-Y}}
             X = X * (b_+ - b_-) + b_-
 
-    See also
+    See Also
     --------
     to_additive_space : for the original transformation.
 

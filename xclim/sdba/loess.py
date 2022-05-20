@@ -1,6 +1,7 @@
+# noqa: D205,D400
 """
-LOESS smoothing
----------------
+LOESS Smoothing Module
+======================
 """
 from __future__ import annotations
 

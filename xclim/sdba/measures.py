@@ -1,6 +1,7 @@
+# noqa: D205,D400
 """
-Measures submodule
-==================
+SDBA Measures Submodule
+=======================
 SDBA diagnostic tests are made up of properties and measures. Measures compare adjusted simulations to a reference,
 through statistical properties or directly.
 This framework for the diagnostic tests was inspired by the [VALUE]_ project.
@@ -23,7 +24,9 @@ from xclim.core.units import convert_units_to, units2pint
 
 def check_same_units_and_convert(func) -> Callable:
     """Verify that the simulation and the reference have the same units.
-    If not, it converts the simulation to the units of the reference"""
+
+    If not, it converts the simulation to the units of the reference.
+    """
 
     @wraps(
         func

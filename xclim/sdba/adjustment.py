@@ -1,6 +1,7 @@
+# noqa: D205,D400
 """
-Adjustment methods
-------------------
+SDBA Adjustment Methods
+=======================
 """
 from __future__ import annotations
 
@@ -77,8 +78,8 @@ class BaseAdjustment(ParametrizableWithDataset):
 
     @classmethod
     def _check_inputs(cls, *inputs, group):
-        """
-        Raises an error if there are chunks along the main dimension.
+        """Raise an error if there are chunks along the main dimension.
+
         Also raises if cls._allow_diff_calendars is False and calendars differ.
         """
         for inda in inputs:
@@ -231,7 +232,7 @@ class TrainAdjust(BaseAdjustment):
         return scen
 
     def set_dataset(self, ds: xr.Dataset):
-        """Stores an xarray dataset in the `ds` attribute.
+        """Store an xarray dataset in the `ds` attribute.
 
         Useful with custom object initialization or if some external processing was performed.
         """

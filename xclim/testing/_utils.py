@@ -377,6 +377,7 @@ def get_all_CMIP6_variables(get_cell_methods=True):  # noqa
 
 
 def update_variable_yaml(filename=None, xclim_needs_only=True):
+    """Update a variable from a yaml file."""
     print("Downloading CMIP6 variables.")
     allvars = get_all_CMIP6_variables(get_cell_methods=False)
 
@@ -488,9 +489,8 @@ def show_versions(file: os.PathLike | StringIO | TextIO | None = None) -> str | 
 
     Returns
     -------
-    str, optional
+    str or None
     """
-
     deps = [
         ("xarray", lambda mod: mod.__version__),
         ("sklearn", lambda mod: mod.__version__),

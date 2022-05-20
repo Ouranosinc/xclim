@@ -195,7 +195,7 @@ def snw_max_doy(snw: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray
 def snow_melt_we_max(
     snw: xarray.DataArray, window: int = 3, freq: str = "AS-JUL"
 ) -> xarray.DataArray:
-    """Maximum snow melt
+    """Maximum snow melt.
 
     The maximum snow melt over a given number of days expressed in snow water equivalent.
 
@@ -213,7 +213,6 @@ def snow_melt_we_max(
     xarray.DataArray
       The maximum snow melt over a given number of days for each period. [mass/area].
     """
-
     # Compute change in SWE. Set melt as a positive change.
     dsnw = snw.diff(dim="time") * -1
 
@@ -230,7 +229,7 @@ def snow_melt_we_max(
 def melt_and_precip_max(
     snw: xarray.DataArray, pr: xarray.DataArray, window: int = 3, freq: str = "AS-JUL"
 ) -> xarray.DataArray:
-    """Maximum snow melt and precipitation
+    """Maximum snow melt and precipitation.
 
     The maximum snow melt plus precipitation over a given number of days expressed in snow water equivalent.
 
@@ -250,7 +249,6 @@ def melt_and_precip_max(
     xarray.DataArray
       The maximum snow melt plus precipitation over a given number of days for each period. [mass/area].
     """
-
     # Compute change in SWE. Set melt as a positive change.
     dsnw = snw.diff(dim="time") * -1
 

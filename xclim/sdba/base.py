@@ -1,6 +1,7 @@
+# noqa: D205,D400
 """
-Base classes and developper tools
----------------------------------
+Base Classes and Developer Tools
+================================
 """
 from __future__ import annotations
 
@@ -84,7 +85,7 @@ class ParametrizableWithDataset(Parametrizable):
         return obj
 
     def set_dataset(self, ds: xr.Dataset):
-        """Stores an xarray dataset in the `ds` attribute.
+        """Store an xarray dataset in the `ds` attribute.
 
         Useful with custom object initialization or if some external processing was performed.
         """
@@ -93,6 +94,7 @@ class ParametrizableWithDataset(Parametrizable):
 
 
 class Grouper(Parametrizable):
+    """Grouper inherited class for parameterizable classes."""
 
     _repr_hide_params = ["dim", "prop"]  # For a concise repr
     # Two constants for use of `map_blocks` and `map_groups`.
@@ -142,6 +144,7 @@ class Grouper(Parametrizable):
 
     @classmethod
     def from_kwargs(cls, **kwargs):
+        """Parameterize groups using kwargs."""
         kwargs["group"] = cls(
             group=kwargs.pop("group"),
             window=kwargs.pop("window", 1),
@@ -151,7 +154,10 @@ class Grouper(Parametrizable):
 
     @property
     def freq(self):
-        """The frequency string corresponding to the group. For use with xarray's resampling."""
+        """Format a frequency string corresponding to the group.
+
+        For use with xarray's resampling functions.
+        """
         return {
             "group": "YS",
             "season": "QS-DEC",
@@ -162,15 +168,15 @@ class Grouper(Parametrizable):
 
     @property
     def prop_name(self):
-        """A significative name of the grouping."""
+        """Create a significant name for the grouping."""
         return "year" if self.prop == "group" else self.prop
 
     def get_coordinate(self, ds=None):
         """Return the coordinate as in the output of group.apply.
 
-        Currently, only implemented for groupings with prop == month or dayofyear.
-        For prop == dayfofyear, a ds (Dataset or DataArray) can be passed to infer
-        the max doy from the available years and calendar.
+        Currently, only implemented for groupings with prop == `month` or `dayofyear`.
+        For prop == `dayfofyear`, a ds (Dataset or DataArray) can be passed to infer
+        the max day of year from the available years and calendar.
         """
         if self.prop == "month":
             return xr.DataArray(np.arange(1, 13), dims=("month",), name="month")
@@ -470,7 +476,7 @@ def duck_empty(dims, sizes, dtype="float64", chunks=None):
 
 
 def _decode_cf_coords(ds):
-    """Decodes coords in-place."""
+    """Decode coords in-place."""
     crds = xr.decode_cf(ds.coords.to_dataset())
     for crdname in ds.coords.keys():
         ds[crdname] = crds[crdname]
@@ -481,12 +487,10 @@ def _decode_cf_coords(ds):
 
 
 def map_blocks(reduces: Sequence[str] = None, **outvars):
-    """
-    Decorator for declaring functions and wrapping them into a map_blocks. It takes care of constructing
-    the template dataset.
+    # noqa: D401
+    """Decorator for declaring functions and wrapping them into a map_blocks.
 
-    Dimension order is not preserved.
-
+    Takes care of constructing the template dataset. Dimension order is not preserved.
     The decorated function must always have the signature: ``func(ds, **kwargs)``, where ds is a DataArray or a Dataset.
     It must always output a dataset matching the mapping passed to the decorator.
 
@@ -686,10 +690,9 @@ def map_blocks(reduces: Sequence[str] = None, **outvars):
     return _decorator
 
 
-def map_groups(reduces: Sequence[str] = None, main_only: bool = False, **outvars):
-    """
-    Decorator for declaring functions acting only on groups and wrapping them into a map_blocks.
-    See :py:func:`map_blocks`.
+def map_groups(reduces: Sequence[str] = None, main_only: bool = False, **out_vars):
+    # noqa: D401
+    """Decorator for declaring functions acting only on groups and wrapping them into a map_blocks.
 
     This is the same as `map_blocks` but adds a call to `group.apply()` in the mapped func and the default
     value of `reduces` is changed.
@@ -704,21 +707,25 @@ def map_groups(reduces: Sequence[str] = None, main_only: bool = False, **outvars
       Dimensions that are removed from the inputs by the function. Defaults to [Grouper.DIM, Grouper.ADD_DIMS] if main_only is False,
       and [Grouper.DIM] if main_only is True. See :py:func:`map_blocks`.
     main_only: bool
-        Same as for :py:meth:`Grouper.apply`.
-    outvars:
-        Mapping from variable names in the output to their *new* dimensions.
+      Same as for :py:meth:`Grouper.apply`.
+    out_vars
+      Mapping from variable names in the output to their *new* dimensions.
       The placeholders `Grouper.PROP`, `Grouper.DIM` and `Grouper.ADD_DIMS` can be used to signify
       `group.prop`,`group.dim` and `group.add_dims` respectively.
       If an output keeps a dimension that another loses, that dimension name must be given in `reduces` and in
       the list of new dimensions of the first output.
+
+    See Also
+    --------
+    :py:func:`map_blocks`.
     """
-    defreduces = [Grouper.DIM]
+    def_reduces = [Grouper.DIM]
     if not main_only:
-        defreduces.append(Grouper.ADD_DIMS)
-    reduces = reduces or defreduces
+        def_reduces.append(Grouper.ADD_DIMS)
+    reduces = reduces or def_reduces
 
     def _decorator(func):
-        decorator = map_blocks(reduces=reduces, **outvars)
+        decorator = map_blocks(reduces=reduces, **out_vars)
 
         def _apply_on_group(dsblock, **kwargs):
             group = kwargs.pop("group")

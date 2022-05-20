@@ -1433,6 +1433,7 @@ def hot_spell_frequency(
 def snow_cover_duration(
     snd: xarray.DataArray, thresh: str = "2 cm", freq: str = "AS-JUL"
 ) -> xarray.DataArray:
+    # noqa: D401
     """Number of days with snow depth above a threshold.
 
     Number of days where surface snow depth is greater or equal to given threshold.
@@ -2178,7 +2179,6 @@ def rprctot(
     xarray.DataArray, [dimensionless]
       The proportion of the total precipitation accounted for by convective precipitation for each period.
     """
-
     thresh = convert_units_to(thresh, pr, "hydro")
     prc = convert_units_to(prc, pr)
 

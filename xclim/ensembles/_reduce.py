@@ -1,7 +1,7 @@
 # noqa: D205,D400
 """
-Ensemble reduction.
-===================
+Ensemble Reduction
+==================
 Ensemble reduction is the process of selecting a subset of members from an ensemble in
 order to reduce the volume of computation needed while still covering a good portion of
 the simulated climate variability.

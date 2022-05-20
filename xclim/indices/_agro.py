@@ -95,7 +95,6 @@ def corn_heat_units(
     Can be found in Audet, R., Côté, H., Bachand, D. and Mailhot, A., 2012: Atlas agroclimatique du Québec. Évaluation
     des opportunités et des risques agroclimatiques dans un climat en évolution.
     """
-
     tasmin = convert_units_to(tasmin, "degC")
     tasmax = convert_units_to(tasmax, "degC")
     thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
@@ -605,9 +604,9 @@ def dry_spell_frequency(
     freq: str = "YS",
     op: str = "sum",
 ) -> xarray.DataArray:
-    """
-    Return the number of dry periods of n days and more, during which the accumulated or maximal daily precipitation
-    amount on a window of n days is under the threshold.
+    """Return the number of dry periods of n days and more.
+
+    Periods during which the accumulated or maximal daily precipitation amount on a window of n days is under the threshold.
 
     Parameters
     ----------
@@ -661,8 +660,7 @@ def dry_spell_total_length(
     freq: str = "YS",
     **indexer,
 ) -> xarray.DataArray:
-    """
-    Total length of dry spells
+    """Total length of dry spells.
 
     Total number of days in dry periods of a minimum length, during which the maximum or
     accumulated precipitation within a window of the same length is under a threshold.

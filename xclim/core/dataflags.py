@@ -34,9 +34,12 @@ _REGISTRY = dict()
 class DataQualityException(Exception):
     """Raised when any data evaluation checks are flagged as True.
 
-    Attributes:
-        data_flags -- Xarray.Dataset of Data Flags
-
+    Attributes
+    ----------
+    flag_array: xarray.Dataset
+      Xarray.Dataset of Data Flags.
+    message: str
+      Message prepended to the error messages.
     """
 
     def __init__(
@@ -54,6 +57,7 @@ class DataQualityException(Exception):
         super().__init__(self.message)
 
     def __str__(self):
+        """Format the errors for history."""
         nl = "\n  - "
         return f"{self.message}{nl.join(self.flags)}"
 
@@ -79,6 +83,7 @@ __all__ = [
 
 
 def register_methods(func):
+    """Summarize all methods used in dataflags checks."""
     _REGISTRY[func.__name__] = func
     return func
 
@@ -447,7 +452,6 @@ def outside_n_standard_deviations_of_climatology(
     >>> average_over = 5
     >>> flagged = outside_n_standard_deviations_of_climatology(ds.tas, n=std_devs, window=average_over)
     """
-
     mu, sig = climatological_mean_doy(da, window=window)
     within_bounds = _sanitize_attrs(
         within_bnds_doy(da, high=(mu + n * sig), low=(mu - n * sig))

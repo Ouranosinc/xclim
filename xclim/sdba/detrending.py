@@ -1,6 +1,7 @@
+# noqa: D205,D400
 """
-Detrending objects
-------------------
+SDBA Detrending Objects
+=======================
 """
 from __future__ import annotations
 
@@ -50,6 +51,7 @@ class BaseDetrend(ParametrizableWithDataset):
 
     @property
     def fitted(self):
+        """Return whether instance is fitted."""
         return hasattr(self, "ds")
 
     def fit(self, da: xr.DataArray):
@@ -63,10 +65,12 @@ class BaseDetrend(ParametrizableWithDataset):
         return new
 
     def _get_trend(self, da: xr.DataArray):
-        """Computes the trend, along the self.group.dim as found on da.
+        """Compute the trend along the self.group.dim as found on da.
 
-        If da is a DataArray (and has a "dtype" attribute), the trend is casted to have the same dtype.
+        If da is a DataArray (and has a `dtype` attribute), the trend is cast to have the same dtype.
 
+        Notes
+        -----
         This method applies `_get_trend_group` with `self.group`.
         """
         out = self.group.apply(
@@ -107,6 +111,7 @@ class BaseDetrend(ParametrizableWithDataset):
         raise NotImplementedError
 
     def __repr__(self):
+        """Format instance representation."""
         rep = super().__repr__()
         if not self.fitted:
             return f"<{rep} | unfitted>"
