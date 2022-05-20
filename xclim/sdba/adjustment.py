@@ -80,7 +80,7 @@ class BaseAdjustment(ParametrizableWithDataset):
     def _check_inputs(cls, *inputs, group):
         """Raise an error if there are chunks along the main dimension.
 
-        Also raises if cls._allow_diff_calendars is False and calendars differ.
+        Also raises if :py:func:cls._allow_diff_calendars is False and calendars differ.
         """
         for inda in inputs:
             if uses_dask(inda) and len(inda.chunks[inda.get_axis_num(group.dim)]) > 1:
@@ -198,7 +198,7 @@ class TrainAdjust(BaseAdjustment):
           Time series to be bias-adjusted, usually a model output.
         args : xr.DataArray
           Other DataArrays needed for the adjustment (usually none).
-        kwargs :
+        kwargs
           Algorithm-specific keyword arguments, see class doc.
         """
         skip_checks = kwargs.pop("skip_input_checks", False)
@@ -631,7 +631,7 @@ class ExtremeValues(TrainAdjust):
     Because of limitations imposed by the lazy computing nature of the dask backend, it
     is not possible to know the number of cluster extremes in `ref` and `hist` at the
     moment the output data structure is created. This is why the code tries to estimate
-    that number and usually overstimates it. In the training dataset, this translated
+    that number and usually overestimates it. In the training dataset, this translated
     into a `quantile` dimension that is too large and variables `af` and `px_hist` are
     assigned NaNs on extra elements. This has no incidence on the calculations
     themselves but requires more memory than is useful.
@@ -699,7 +699,7 @@ class ExtremeValues(TrainAdjust):
         interp: str = "linear",
         extrapolation: str = "constant",
     ):
-        # Quantiles coord : cheat and assign 0 - 1 so we can use `extrapolate_qm`.
+        # Quantiles coord : cheat and assign 0 - 1, so we can use `extrapolate_qm`.
         ds = self.ds.assign(
             quantiles=(np.arange(self.ds.quantiles.size) + 1)
             / (self.ds.quantiles.size + 1)
@@ -845,7 +845,7 @@ class PrincipalComponents(TrainAdjust):
     r"""Principal component adjustment.
 
     This bias-correction method maps model simulation values to the observation
-    space through principal components ([hnilica2017]_). Values in the simulation
+    space through principal components ([Hnilica2017]_). Values in the simulation
     space (multiple variables, or multiple sites) can be thought of as coordinates
     along axes, such as variable, temperature, etc. Principal components (PC) are a
     linear combinations of the original variables where the coefficients are the
@@ -868,7 +868,7 @@ class PrincipalComponents(TrainAdjust):
     best_orientation : {'simple', 'full'}
       Which method to use when searching for the best principal component orientation.
       See :py:func:`~xclim.sdba.utils.best_pc_orientation_simple` and
-      :py:func:`~xclim.sdba.utils.best_pc_orientiation_full`.
+      :py:func:`~xclim.sdba.utils.best_pc_orientation_full`.
       "full" is more precise, but it is much slower.
     crd_dim : str
       The data dimension along which the multiple simulation space dimensions are taken.
@@ -909,9 +909,9 @@ class PrincipalComponents(TrainAdjust):
 
     References
     ----------
-    .. [hnilica2017] Hnilica, J., Hanel, M. and Pš, V. (2017), Multisite bias correction of precipitation data from regional climate models. Int. J. Climatol., 37: 2934-2946. https://doi.org/10.1002/joc.4890
+    .. [Hnilica2017] Hnilica, J., Hanel, M. and Pš, V. (2017), Multisite bias correction of precipitation data from regional climate models. Int. J. Climatol., 37: 2934-2946. https://doi.org/10.1002/joc.4890
     .. Alavoine M., and Grenier P. (under review) The distinct problems of physical inconsistency and of multivariate bias potentially involved in the statistical adjustment of climate simulations.
-                         International Journal of Climatology, Manuscript ID: JOC-21-0789, submitted on September 19th 2021. (Preprint https://doi.org/10.31223/X5C34C)
+        International Journal of Climatology, Manuscript ID: JOC-21-0789, submitted on September 19th 2021. (Preprint https://doi.org/10.31223/X5C34C)
     """
 
     @classmethod
@@ -1029,10 +1029,10 @@ class PrincipalComponents(TrainAdjust):
 class NpdfTransform(Adjust):
     r"""N-dimensional probability density function transform.
 
-    This adjustment object combines both training and adjustent steps in the `adjust` class method.
+    This adjustment object combines both training and adjust steps in the `adjust` class method.
 
-    A multivariate bias-adjustment algorithm described by [Cannon18]_, as part of the MBCn algorithm,
-    based on a color-correction algorithm described by [Pitie05]_.
+    A multivariate bias-adjustment algorithm described by [Cannon2018]_, as part of the MBCn algorithm,
+    based on a color-correction algorithm described by [Pitie2005]_.
 
     This algorithm in itself, when used with QuantileDeltaMapping, is NOT trend-preserving.
     The full MBCn algorithm includes a reordering step provided here by :py:func:`xclim.sdba.processing.reordering`.
@@ -1063,7 +1063,7 @@ class NpdfTransform(Adjust):
     Notes
     -----
     The historical reference (:math:`T`, for "target"), simulated historical (:math:`H`) and simulated projected (:math:`S`)
-    datasets are constructed by stacking the timeseries of N variables together. The algoriths goes into the
+    datasets are constructed by stacking the timeseries of N variables together. The algorithm is broken into the
     following steps:
 
     1. Rotate the datasets in the N-dimensional variable space with :math:`\mathbf{R}`, a random rotation NxN matrix.
@@ -1092,13 +1092,13 @@ class NpdfTransform(Adjust):
     These three steps are repeated a certain number of times, prescribed by argument ``n_iter``. At each
     iteration, a new random rotation matrix is generated.
 
-    The original algorithm ([Pitie05]_), stops the iteration when some distance score converges. Following
-    [Cannon18]_ and the MBCn implementation in [CannonR]_, we instead fix the number of iterations.
+    The original algorithm ([Pitie2005]_), stops the iteration when some distance score converges. Following
+    [Cannon2018]_ and the MBCn implementation in [CannonR]_, we instead fix the number of iterations.
 
-    As done by [Cannon18]_, the distance score chosen is the "Energy distance" from [SkezelyRizzo]_
+    As done by [Cannon2018]_, the distance score chosen is the "Energy distance" from [SkezelyRizzo2004]_
     (see :py:func:`xclim.sdba.processing.escore`).
 
-    The random matrices are generated following a method laid out by [Mezzadri]_.
+    The random matrices are generated following a method laid out by [Mezzadri2006]_.
 
     This is only part of the full MBCn algorithm, see :ref:`Fourth example : Multivariate bias-adjustment with multiple steps - Cannon 2018`
     for an example on how to replicate the full method with xclim. This includes a
@@ -1108,11 +1108,11 @@ class NpdfTransform(Adjust):
 
     References
     ----------
-    .. [Cannon18] Cannon, A. J. (2018). Multivariate quantile mapping bias correction: An N-dimensional probability density function transform for climate model simulations of multiple variables. Climate Dynamics, 50(1), 31–49. https://doi.org/10.1007/s00382-017-3580-6
+    .. [Cannon2018] Cannon, A. J. (2018). Multivariate quantile mapping bias correction: An N-dimensional probability density function transform for climate model simulations of multiple variables. Climate Dynamics, 50(1), 31–49. https://doi.org/10.1007/s00382-017-3580-6
     .. [CannonR] https://CRAN.R-project.org/package=MBC
-    .. [Mezzadri] Mezzadri, F. (2006). How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050.
-    .. [Pitie05] Pitie, F., Kokaram, A. C., & Dahyot, R. (2005). N-dimensional probability density function transfer and its application to color transfer. Tenth IEEE International Conference on Computer Vision (ICCV’05) Volume 1, 2, 1434-1439 Vol. 2. https://doi.org/10.1109/ICCV.2005.166
-    .. [SkezelyRizzo] Szekely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
+    .. [Mezzadri2006] Mezzadri, F. (2006). How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050.
+    .. [Pitie2005] Pitie, F., Kokaram, A. C., & Dahyot, R. (2005). N-dimensional probability density function transfer and its application to color transfer. Tenth IEEE International Conference on Computer Vision (ICCV’05) Volume 1, 2, 1434-1439 Vol. 2. https://doi.org/10.1109/ICCV.2005.166
+    .. [SkezelyRizzo2004] Szekely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
     """
 
     @classmethod
