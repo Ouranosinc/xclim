@@ -9,6 +9,7 @@ Contributors to this version:  Abel Aoun (:user:`bzah`), Pascal Bourgault (:user
 Announcements
 ^^^^^^^^^^^^^
 * `xclim` is now compliant with `PEP 563 <https://peps.python.org/pep-0563>`_. Python3.10-style annotations are now permitted. (:issue:`1065`, :pull:`1071`).
+* `xclim` is now fully compatible with xarray's `flox`-enabled ``GroupBy`` and ``resample`` operations. (:pull:`1081`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -18,6 +19,7 @@ New features and enhancements
   * A CLI version of this function is also available from the command line: `$ xclim show_version_info`. (:pull:`1073`).
 * New "keep_attrs" option to control the handling of the attributes within the indicators. (:issue:`1026`, :pull:`1076`).
 * Added a notebook showcasing some simple examples of Spatial Analogues. (:issue:`585`, :pull:`1075`).
+* ``create_ensembles`` now accepts a glob string to find datasets. (:pull:`1081`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
