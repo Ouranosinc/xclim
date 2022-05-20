@@ -156,7 +156,7 @@ def test_grouper_apply(tas_series, use_dask, group, n):
     else:
         exp = normed.groupby(group).mean().isel(lat=0)
     assert grouper.prop in out.dims
-    np.testing.assert_array_equal(out, exp)
+    np.testing.assert_allclose(out, exp, rtol=1e-10)
 
 
 def test_map_blocks(tas_series):
