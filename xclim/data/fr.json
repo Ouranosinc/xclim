@@ -939,10 +939,16 @@
     "description": "Le potentiel d'évaporation de l'eau du sol et de transpiration par les plantes si l'approvisionnement en eau est suffisant, avec la méthode de {method}.",
     "long_name": "Évapotranspiration potentielle"
   },
-  "WATER_BUDGET": {
+  "WATER_BUDGET_FROM_TAS": {
     "title": "Bilan hydrique",
     "abstract": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface, où l'évapotranspiration potentielle est calculée avec une méthode donnée.",
     "description": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface, où l'évapotranspiration potentielle est calculée avec la méthode {method}.",
+    "long_name": "Bilan hydrique"
+  },
+  "WATER_BUDGET": {
+    "title": "Bilan hydrique",
+    "abstract": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface.",
+    "description": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface.",
     "long_name": "Bilan hydrique"
   },
   "DRY_SPELL_FREQUENCY": {

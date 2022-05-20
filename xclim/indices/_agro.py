@@ -536,12 +536,14 @@ def latitude_temperature_index(
 
 @declare_units(
     pr="[precipitation]",
+    evspsblpot="[precipitation]",
     tasmin="[temperature]",
     tasmax="[temperature]",
     tas="[temperature]",
 )
 def water_budget(
     pr: xarray.DataArray,
+    evspsblpot: xarray.DataArray | None = None,
     tasmin: xarray.DataArray | None = None,
     tasmax: xarray.DataArray | None = None,
     tas: xarray.DataArray | None = None,
@@ -550,12 +552,14 @@ def water_budget(
     r"""Precipitation minus potential evapotranspiration.
 
     Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget,
-    where the potential evapotranspiration is calculated with a given method.
+    where the potential evapotranspiration can be calculated with a given method.
 
     Parameters
     ----------
     pr : xarray.DataArray
       Daily precipitation.
+    evspsblpot: xarray.DataArray
+      Potential evapotranspiration
     tasmin : xarray.DataArray
       Minimum daily temperature.
     tasmax : xarray.DataArray
@@ -576,9 +580,12 @@ def water_budget(
     """
     pr = convert_units_to(pr, "kg m-2 s-1")
 
-    pet = xci.potential_evapotranspiration(
-        tasmin=tasmin, tasmax=tasmax, tas=tas, method=method
-    )
+    if evspsblpot is None:
+        pet = xci.potential_evapotranspiration(
+            tasmin=tasmin, tasmax=tasmax, tas=tas, method=method
+        )
+    else:
+        pet = convert_units_to(evspsblpot, "kg m-2 s-1")
 
     if xarray.infer_freq(pet.time) == "MS":
         with xarray.set_options(keep_attrs=True):
