@@ -4,7 +4,7 @@ History
 
 0.37.0 (unreleased)
 -------------------
-Contributors to this version:  Abel Aoun (:user:`bzah`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Gabriel Rondeau-Genesse (:user:`RondeauG`).
+Contributors to this version:  Abel Aoun (:user:`bzah`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Juliette Lavoie (:user:`juliettelavoie`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -30,6 +30,10 @@ Internal changes
 ^^^^^^^^^^^^^^^^
 * Typing syntax has been updated within pre-commit via `isort`. Pre-commit hooks now append `from __future__ import annotations` to all python module imports for backwards compatibility. (:issue:`1065`, :pull:`1071`)
 * `isort` project configurations are now set in `setup.cfg`. (:pull:`1071`).
+
+Bug fixes
+^^^^^^^^^
+* Clean the `bias_adjustement` and `history` attributes created by `xclim.sdba.adjust` (e.g. when an argument  is an `xr.DataArray`, only print the name instead of the whole array). (:issue:`1083`, :pull:`1087`).
 
 0.36.0 (29-04-2022)
 -------------------
