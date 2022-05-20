@@ -26,7 +26,7 @@ Internal changes
 
 Bug fixes
 ^^^^^^^^^
-* When an argument of `xclim.sdba.adjust` is an `xr.DataArray`, only print the name instead of the whole array. (:issue:`1083`, :pull:`1087`).
+* Clean the `bias_adjustement` and `history` attributes created by `xclim.sdba.adjust` (e.g. when an argument  is an `xr.DataArray`, only print the name instead of the whole array). (:issue:`1083`, :pull:`1087`).
 
 0.36.0 (29-04-2022)
 -------------------
