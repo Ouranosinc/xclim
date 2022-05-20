@@ -4,7 +4,7 @@ History
 
 0.37.0 (unreleased)
 -------------------
-Contributors to this version:  Abel Aoun (:user:`bzah`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version:  Abel Aoun (:user:`bzah`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Gabriel Rondeau-Genesse (:user:`RondeauG`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -16,10 +16,15 @@ New features and enhancements
 * Add "Celsius" to aliases of "celsius" unit. (:issue:`1067`, :pull:`1068`).
 * All indicators now have indexing enabled, except those computing statistics on spells. (:issue:`1069`, :pull:`1070`).
 * A convenience function for returning the version numbers for relevant xclim dependencies (``xclim.testing.show_versions``) is now offered. (:pull:`1073`).
-  * A CLI version of this function is also available from the command line: `$ xclim show_version_info`. (:pull:`1073`).
+    - A CLI version of this function is also available from the command line: `$ xclim show_version_info`. (:pull:`1073`).
 * New "keep_attrs" option to control the handling of the attributes within the indicators. (:issue:`1026`, :pull:`1076`).
 * Added a notebook showcasing some simple examples of Spatial Analogues. (:issue:`585`, :pull:`1075`).
 * ``create_ensembles`` now accepts a glob string to find datasets. (:pull:`1081`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* ``xclim.atmos.water_budget`` has been separated into ``water_budget`` (calculated directly with 'evspsblpot') and ``water_budget_from_tas`` (original function). (:pull:`1086`).
+* Injected parameters in indicators are now left out of a function's signature and will not be included in the history attribute. (:pull:`1086`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
