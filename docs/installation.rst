@@ -21,7 +21,6 @@ you through the process.
 .. _Python installation guide: http://docs.python-guide.org/en/latest/starting/installation/
 .. _OSGeo4W installer: https://trac.osgeo.org/osgeo4w/
 
-
 Anaconda release
 ----------------
 For ease of installation across operating systems, we also offer an Anaconda Python package hosted on conda-forge.
@@ -35,12 +34,12 @@ To install the xclim Anaconda binary, run this command in your terminal:
 
 Extra dependencies
 ------------------
-To improve performance of xclim, we highly recommend you also install `flox`_. This package integrates into xarray and significantly improves the performance of the grouping and resampling algorithms, especially when using `dask` on large datasets.
+To improve performance of xclim, we highly recommend you also install `flox`_ (see: :doc:`flox API <flox:api>`). This package integrates into xarray and significantly improves the performance of the grouping and resampling algorithms, especially when using `dask` on large datasets.
 
-We also recommend using the tools in `clisops.core.subset`_ for spatial manipulation of geospatial data.
+We also recommend using the subsetting tools in `clisops`_ (see: :doc:`clisops.core.subset API <clisops:api>`) for spatial manipulation of geospatial data.
 
-.. _flox: https://flox.readthedocs.io/en/latest
-.. _clisops: https://clisops.readthedocs.io/en/latest/readme.html
+.. _flox: https://github.com/dcherian/flox
+.. _clisops: https://github.com/roocs/clisops
 
 From sources
 ------------
@@ -55,13 +54,13 @@ You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://github.com/Ouranosinc/xclim
+    $ git clone git@github.com:Ouranosinc/xclim.git
 
 Or download the `tarball`_:
 
 .. code-block:: console
 
-    $ curl  -OL https://github.com/Ouranosinc/xclim/tarball/master
+    $ curl -OL https://github.com/Ouranosinc/xclim/tarball/master
 
 Once you have a copy of the source, you can install it with:
 
@@ -85,6 +84,6 @@ To create a conda development environment including all xclim dependencies, ente
 
 .. code-block:: console
 
-    $ conda create -n my_xclim_env python=3.7 --file=environment.yml
+    $ conda create -n my_xclim_env python=3.8 --file=environment.yml
     $ conda activate my_xclim_env
     (my_xclim_env) $ pip install .[dev]
