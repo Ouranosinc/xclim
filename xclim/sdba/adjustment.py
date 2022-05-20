@@ -2,7 +2,9 @@
 Adjustment methods
 ------------------
 """
-from typing import Any, Mapping, Optional, Union
+from __future__ import annotations
+
+from typing import Any, Mapping, Union
 from warnings import warn
 
 import numpy as np
@@ -10,7 +12,7 @@ import xarray as xr
 from xarray.core.dataarray import DataArray
 
 from xclim.core.calendar import get_calendar
-from xclim.core.formatting import update_history
+from xclim.core.formatting import gen_call_string, update_history
 from xclim.core.options import OPTIONS, SDBA_EXTRA_OUTPUT, set_options
 from xclim.core.units import convert_units_to
 from xclim.core.utils import uses_dask
@@ -117,7 +119,7 @@ class BaseAdjustment(ParametrizableWithDataset):
             )
 
     @classmethod
-    def _harmonize_units(cls, *inputs, target: Optional[str] = None):
+    def _harmonize_units(cls, *inputs, target: str | None = None):
         """Convert all inputs to the same units.
 
         If the target unit is not given, the units of the first input are used.
@@ -218,8 +220,7 @@ class TrainAdjust(BaseAdjustment):
         for name, crd in sim.coords.items():
             if name in scen.coords:
                 scen[name].attrs.update(crd.attrs)
-
-        params = ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
+        params = gen_call_string("", **kwargs)[1:-1]  # indexing to remove added ( )
         infostr = f"{str(self)}.adjust(sim, {params})"
         scen.attrs["history"] = update_history(f"Bias-adjusted with {infostr}", sim)
         scen.attrs["bias_adjustment"] = infostr
@@ -348,9 +349,9 @@ class EmpiricalQuantileMapping(TrainAdjust):
         ref: xr.DataArray,
         hist: xr.DataArray,
         *,
-        nquantiles: Union[int, np.ndarray] = 20,
+        nquantiles: int | np.ndarray = 20,
         kind: str = ADDITIVE,
-        group: Union[str, Grouper] = "time",
+        group: str | Grouper = "time",
     ):
         if np.isscalar(nquantiles):
             quantiles = equally_spaced_nodes(nquantiles).astype(ref.dtype)
@@ -440,9 +441,9 @@ class DetrendedQuantileMapping(TrainAdjust):
         ref: xr.DataArray,
         hist: xr.DataArray,
         *,
-        nquantiles: Union[int, np.ndarray] = 20,
+        nquantiles: int | np.ndarray = 20,
         kind: str = ADDITIVE,
-        group: Union[str, Grouper] = "time",
+        group: str | Grouper = "time",
     ):
         if group.prop not in ["group", "dayofyear"]:
             warn(
@@ -770,7 +771,7 @@ class LOCI(TrainAdjust):
         hist: xr.DataArray,
         *,
         thresh: str,
-        group: Union[str, Grouper] = "time",
+        group: str | Grouper = "time",
     ):
         thresh = convert_units_to(thresh, ref)
         ds = loci_train(
@@ -821,7 +822,7 @@ class Scaling(TrainAdjust):
         ref: xr.DataArray,
         hist: xr.DataArray,
         *,
-        group: Union[str, Grouper] = "time",
+        group: str | Grouper = "time",
         kind: str = ADDITIVE,
     ):
         ds = scaling_train(
@@ -920,7 +921,7 @@ class PrincipalComponents(TrainAdjust):
         *,
         crd_dim: str,
         best_orientation: str = "simple",
-        group: Union[str, Grouper] = "time",
+        group: str | Grouper = "time",
     ):
         all_dims = set(ref.dims + hist.dims)
 
@@ -1121,12 +1122,12 @@ class NpdfTransform(Adjust):
         sim: xr.DataArray,
         *,
         base: TrainAdjust = QuantileDeltaMapping,
-        base_kws: Optional[Mapping[str, Any]] = None,
+        base_kws: Mapping[str, Any] | None = None,
         n_escore: int = 0,
         n_iter: int = 20,
         pts_dim: str = "multivar",
-        adj_kws: Optional[Mapping[str, Any]] = None,
-        rot_matrices: Optional[xr.DataArray] = None,
+        adj_kws: Mapping[str, Any] | None = None,
+        rot_matrices: xr.DataArray | None = None,
     ):
         base_kws or {}
         if "kind" in base_kws:

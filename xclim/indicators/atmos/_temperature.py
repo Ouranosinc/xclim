@@ -1,4 +1,5 @@
 """Temperature indicator definitions."""
+from __future__ import annotations
 
 from inspect import _empty  # noqa
 
@@ -747,7 +748,7 @@ tropical_nights = TempWithIndexing(
     parameters={"thresh": {"default": "20.0 degC"}},
 )
 
-tg90p = Temp(
+tg90p = TempWithIndexing(
     identifier="tg90p",
     units="days",
     standard_name="days_with_air_temperature_above_threshold",
@@ -759,7 +760,7 @@ tg90p = Temp(
     compute=indices.tg90p,
 )
 
-tg10p = Temp(
+tg10p = TempWithIndexing(
     identifier="tg10p",
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
@@ -771,7 +772,7 @@ tg10p = Temp(
     compute=indices.tg10p,
 )
 
-tx90p = Temp(
+tx90p = TempWithIndexing(
     identifier="tx90p",
     units="days",
     standard_name="days_with_air_temperature_above_threshold",
@@ -783,7 +784,7 @@ tx90p = Temp(
     compute=indices.tx90p,
 )
 
-tx10p = Temp(
+tx10p = TempWithIndexing(
     identifier="tx10p",
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
@@ -795,7 +796,7 @@ tx10p = Temp(
     compute=indices.tx10p,
 )
 
-tn90p = Temp(
+tn90p = TempWithIndexing(
     identifier="tn90p",
     units="days",
     standard_name="days_with_air_temperature_above_threshold",
@@ -807,7 +808,7 @@ tn90p = Temp(
     compute=indices.tn90p,
 )
 
-tn10p = Temp(
+tn10p = TempWithIndexing(
     identifier="tn10p",
     units="days",
     standard_name="days_with_air_temperature_below_threshold",

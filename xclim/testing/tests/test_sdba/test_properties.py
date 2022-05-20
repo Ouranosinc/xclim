@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 import pytest
 
@@ -304,7 +306,5 @@ def test_return_value():
         .values
     )
 
-    np.testing.assert_array_almost_equal(
-        [out_y.values, out_djf], [313.15443369, 278.07292642], 4
-    )
+    np.testing.assert_array_almost_equal([out_y.values, out_djf], [313.154, 278.072], 3)
     assert out_y.long_name == "20-year max return level"

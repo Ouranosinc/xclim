@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 import numpy as np
@@ -5,7 +7,6 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-import xclim
 import xclim.testing
 from xclim.core.calendar import max_doy
 from xclim.testing.tests import TD
@@ -236,6 +237,25 @@ def ndq_series():
             "standard_name": "water_volume_transport_in_river_channel",
         },
     )
+
+
+@pytest.fixture
+def evspsblpot_series():
+    def _evspsblpot_series(values, start="7/1/2000", units="kg m-2 s-1"):
+        coords = pd.date_range(start, periods=len(values), freq="D")
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="evspsblpot",
+            attrs={
+                "standard_name": "water_evapotranspiration_flux",
+                "cell_methods": "time: mean within days",
+                "units": units,
+            },
+        )
+
+    return _evspsblpot_series
 
 
 @pytest.fixture

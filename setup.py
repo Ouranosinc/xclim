@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 """The setup script."""
+from __future__ import annotations
+
 import re
 
 from setuptools import find_packages, setup
@@ -10,7 +12,7 @@ URL = "https://github.com/Ouranosinc/xclim"
 AUTHOR = "Travis Logan"
 AUTHOR_EMAIL = "logan.travis@ouranos.ca"
 REQUIRES_PYTHON = ">=3.8.0"
-VERSION = "0.36.1"
+VERSION = "0.36.5-beta"
 LICENSE = "Apache Software License 2.0"
 
 with open("README.rst") as readme_file:
@@ -33,7 +35,7 @@ requirements = [
     "bottleneck>=1.3.1",
     "cf-xarray>=0.6.1",
     "cftime>=1.4.1",
-    "Click",
+    "Click>=8.1",
     "dask[array]>=2.6",
     "jsonpickle",
     "numba",

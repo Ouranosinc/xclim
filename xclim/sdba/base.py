@@ -2,9 +2,11 @@
 Base classes and developper tools
 ---------------------------------
 """
+from __future__ import annotations
+
 from inspect import signature
 from types import FunctionType
-from typing import Callable, Mapping, Optional, Sequence, Set, Union
+from typing import Callable, Mapping, Sequence, Union
 
 import dask.array as dsk
 import jsonpickle
@@ -103,7 +105,7 @@ class Grouper(Parametrizable):
         self,
         group: str,
         window: int = 1,
-        add_dims: Optional[Union[Sequence[str], Set[str]]] = None,
+        add_dims: Sequence[str] | set[str] | None = None,
     ):
         """Create the Grouper object.
 
@@ -194,7 +196,7 @@ class Grouper(Parametrizable):
 
     def group(
         self,
-        da: Union[xr.DataArray, xr.Dataset] = None,
+        da: xr.DataArray | xr.Dataset = None,
         main_only=False,
         **das: xr.DataArray,
     ):
@@ -246,8 +248,8 @@ class Grouper(Parametrizable):
 
     def get_index(
         self,
-        da: Union[xr.DataArray, xr.Dataset],
-        interp: Optional[bool] = None,
+        da: xr.DataArray | xr.Dataset,
+        interp: bool | None = None,
     ):
         """Return the group index of each element along the main dimension.
 
@@ -301,8 +303,8 @@ class Grouper(Parametrizable):
 
     def apply(
         self,
-        func: Union[FunctionType, str],
-        da: Union[xr.DataArray, Mapping[str, xr.DataArray], xr.Dataset],
+        func: FunctionType | str,
+        da: xr.DataArray | Mapping[str, xr.DataArray] | xr.Dataset,
         main_only: bool = False,
         **kwargs,
     ):

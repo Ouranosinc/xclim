@@ -1,5 +1,5 @@
 # noqa: D100
-from typing import Optional
+from __future__ import annotations
 
 import numpy as np
 import xarray
@@ -7,7 +7,6 @@ import xarray
 from xclim.core.units import (
     convert_units_to,
     declare_units,
-    pint_multiply,
     rate2amount,
     units,
     units2pint,
@@ -90,9 +89,8 @@ def isothermality(
     """
     dtr = daily_temperature_range(tasmin=tasmin, tasmax=tasmax, freq=freq)
     etr = extreme_temperature_range(tasmin=tasmin, tasmax=tasmax, freq=freq)
-    with xarray.set_options(keep_attrs=True):
-        iso = dtr / etr * 100
-        iso.attrs["units"] = "%"
+    iso = dtr / etr * 100
+    iso.attrs["units"] = "%"
     return iso
 
 
@@ -141,9 +139,7 @@ def temperature_seasonality(
     """
     tas = convert_units_to(tas, "K")
 
-    with xarray.set_options(keep_attrs=True):
-        seas = 100 * _anuclim_coeff_var(tas, freq=freq)
-
+    seas = 100 * _anuclim_coeff_var(tas, freq=freq)
     seas.attrs["units"] = "%"
     return seas
 
@@ -195,9 +191,7 @@ def precip_seasonality(pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArr
     if units2pint(pr) == units("mm / s"):
         pr = convert_units_to(pr, "mm d-1")
 
-    with xarray.set_options(keep_attrs=True):
-        seas = 100 * _anuclim_coeff_var(pr, freq=freq)
-
+    seas = 100 * _anuclim_coeff_var(pr, freq=freq)
     seas.attrs["units"] = "%"
     return seas
 
@@ -292,10 +286,8 @@ def tg_mean_wetdry_quarter(
     pr_qrt = _to_quarter(pr=pr)
 
     xr_op = _xr_argops[op]
-    with xarray.set_options(keep_attrs=True):
-        out = _from_other_arg(criteria=pr_qrt, output=tas_qrt, op=xr_op, freq=freq)
-        out.attrs = tas.attrs
-        return out
+    out = _from_other_arg(criteria=pr_qrt, output=tas_qrt, op=xr_op, freq=freq)
+    return out.assign_attrs(units=tas.units)
 
 
 @declare_units(pr="[precipitation]")
@@ -420,9 +412,8 @@ def prcptot(
        Total {freq} precipitation.
     """
     thresh = convert_units_to(thresh, pr)
-    return (
-        rate2amount(pr.where(pr >= thresh, 0)).resample(time=freq).sum(keep_attrs=True)
-    )
+    pram = rate2amount(pr.where(pr >= thresh, 0))
+    return pram.resample(time=freq).sum().assign_attrs(units=pram.units)
 
 
 @declare_units(pr="[precipitation]")
@@ -455,9 +446,9 @@ def prcptot_wetdry_period(
     pram = rate2amount(pr)
 
     if op == "wettest":
-        return pram.resample(time=freq).max(dim="time", keep_attrs=True)
+        return pram.resample(time=freq).max(dim="time").assign_attrs(units=pram.units)
     if op == "driest":
-        return pram.resample(time=freq).min(dim="time", keep_attrs=True)
+        return pram.resample(time=freq).min(dim="time").assign_attrs(units=pram.units)
     raise NotImplementedError(
         f'Unknown operation "{op}" ; op parameter but be one of "wettest" or "driest"'
     )
@@ -503,8 +494,8 @@ def _from_other_arg(
 
 
 def _to_quarter(
-    pr: Optional[xarray.DataArray] = None,
-    tas: Optional[xarray.DataArray] = None,
+    pr: xarray.DataArray | None = None,
+    tas: xarray.DataArray | None = None,
 ) -> xarray.DataArray:
     """Convert daily, weekly or monthly time series to quarterly time series according to ANUCLIM specifications."""
     if tas is not None and pr is not None:

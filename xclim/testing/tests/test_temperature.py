@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 import numpy as np
@@ -1095,6 +1097,18 @@ class TestT90p:
         assert out[0] == 30
         assert np.isnan(out[1])
         assert out[5] == 25
+
+    def test_tx90p__seasonal_indexer(self, tasmax_series):
+        # GIVEN
+        arr = np.asarray(np.arange(366), "float")
+        tas = tasmax_series(arr, start="1/1/2000")
+        t90 = percentile_doy(tas, window=1, per=90).sel(percentiles=90)
+        # create cold spell in june
+        tas[175:180] = 1
+        # WHEN
+        out = atmos.tx90p(tas, t90, freq="AS", season="JJA")
+        # THEN
+        assert out[0] == 87  # non regression test
 
 
 class TestT10p:

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from xclim import indices
 from xclim.core.indicator import ResamplingIndicatorWithIndexing
 

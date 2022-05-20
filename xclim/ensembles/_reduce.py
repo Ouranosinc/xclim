@@ -6,7 +6,9 @@ Ensemble reduction is the process of selecting a subset of members from an ensem
 order to reduce the volume of computation needed while still covering a good portion of
 the simulated climate variability.
 """
-from typing import Optional, Tuple, Union
+from __future__ import annotations
+
+from typing import Optional, Union
 from warnings import warn
 
 import numpy as np
@@ -104,12 +106,12 @@ def kmeans_reduce_ensemble(
     *,
     method: dict = None,
     make_graph: bool = MPL_INSTALLED,
-    max_clusters: Optional[int] = None,
-    variable_weights: Optional[np.ndarray] = None,
-    model_weights: Optional[np.ndarray] = None,
-    sample_weights: Optional[np.ndarray] = None,
-    random_state: Optional[Union[int, np.random.RandomState]] = None,
-) -> Tuple[list, np.ndarray, dict]:
+    max_clusters: int | None = None,
+    variable_weights: np.ndarray | None = None,
+    model_weights: np.ndarray | None = None,
+    sample_weights: np.ndarray | None = None,
+    random_state: int | np.random.RandomState | None = None,
+) -> tuple[list, np.ndarray, dict]:
     """Return a sample of ensemble members using k-means clustering.
 
     The algorithm attempts to reduce the total number of ensemble members while maintaining adequate coverage of

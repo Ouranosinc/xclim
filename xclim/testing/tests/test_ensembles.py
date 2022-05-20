@@ -12,6 +12,8 @@
 # For correctness, I think it would be useful to use a small dataset and run the original ICCLIM indicators on it,
 # saving the results in a reference netcdf dataset. We could then compare the hailstorm output to this reference as
 # a first line of defense.
+from __future__ import annotations
+
 import os
 import sys
 from copy import deepcopy

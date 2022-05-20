@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 import numpy as np
@@ -415,6 +417,18 @@ def test_days_over_precip_thresh():
     np.testing.assert_allclose(
         out[1, :], np.array([80.0, 63.0, 68.0, 81.0]), atol=0.001
     )
+
+
+def test_days_over_precip_thresh__seasonal_indexer():
+    # GIVEN
+    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
+    per = pr.quantile(0.8, "time", keep_attrs=True)
+    # WHEN
+    out = atmos.days_over_precip_thresh(
+        pr, per, freq="AS", date_bounds=("01-10", "12-31")
+    )
+    # THEN
+    np.testing.assert_almost_equal(out[0], np.array([82.0, 66.0, 66.0, 74.0]))
 
 
 def test_fraction_over_precip_doy_thresh():

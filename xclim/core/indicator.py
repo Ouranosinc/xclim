@@ -85,6 +85,8 @@ the mapping of `data.input` simply links an argument name from the function give
 to one of those official variables.
 
 """
+from __future__ import annotations
+
 import re
 import warnings
 import weakref
@@ -99,9 +101,10 @@ from inspect import signature
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
+import xarray
 from xarray import DataArray, Dataset
 from yaml import safe_load
 
@@ -125,7 +128,13 @@ from .locales import (
     load_locale,
     read_locale_file,
 )
-from .options import METADATA_LOCALES, MISSING_METHODS, MISSING_OPTIONS, OPTIONS
+from .options import (
+    KEEP_ATTRS,
+    METADATA_LOCALES,
+    MISSING_METHODS,
+    MISSING_OPTIONS,
+    OPTIONS,
+)
 from .units import check_units, convert_units_to, declare_units, units
 from .utils import (
     VARIABLES,
@@ -597,8 +606,8 @@ class Indicator(IndicatorRegistrar):
 
     @classmethod
     def _parse_output_attrs(
-        cls, kwds: Dict[str, Any], identifier: str
-    ) -> List[Dict[str, Union[str, Callable]]]:
+        cls, kwds: dict[str, Any], identifier: str
+    ) -> list[dict[str, str | Callable]]:
         """CF-compliant metadata attributes for all output variables."""
         parent_cf_attrs = cls.cf_attrs
         cf_attrs = kwds.get("cf_attrs")
@@ -656,7 +665,7 @@ class Indicator(IndicatorRegistrar):
         cls,
         data: dict,
         identifier: str,
-        module: Optional[str] = None,
+        module: str | None = None,
     ):
         """Create an indicator subclass and instance from a dictionary of parameters.
 
@@ -772,6 +781,18 @@ class Indicator(IndicatorRegistrar):
         # params : OrderedDict of parameters (var_kwargs as a single argument, if any)
         das, params = self._parse_variables_from_call(args, kwds)
 
+        if OPTIONS[KEEP_ATTRS] is True or (
+            OPTIONS[KEEP_ATTRS] == "xarray"
+            and xarray.core.options._get_keep_attrs(False)
+        ):
+            out_attrs = xarray.core.merge.merge_attrs(
+                [da.attrs for da in das.values()], "drop_conflicts"
+            )
+            out_attrs.pop("units", None)
+        else:
+            out_attrs = {}
+        out_attrs = [out_attrs.copy() for i in range(self.n_outs)]
+
         das, params = self._preprocess_and_checks(das, params)
 
         # Get correct variable names for the compute function.
@@ -787,7 +808,9 @@ class Indicator(IndicatorRegistrar):
                 var_kwargs = params[nm]
             elif nm not in compute_das and nm in params:
                 kwargs[nm] = params[nm]
-        outs = self.compute(**compute_das, **kwargs, **var_kwargs)
+
+        with xarray.set_options(keep_attrs=False):
+            outs = self.compute(**compute_das, **kwargs, **var_kwargs)
 
         if isinstance(outs, DataArray):
             outs = [outs]
@@ -800,15 +823,15 @@ class Indicator(IndicatorRegistrar):
 
         # Metadata attributes from templates
         var_id = None
-        cf_attrs = []
-        for attrs in self.cf_attrs:
+        for out, attrs, base_attrs in zip(outs, out_attrs, self.cf_attrs):
             if self.n_outs > 1:
-                var_id = attrs["var_name"]
-            cf_attrs.append(
+                var_id = base_attrs["var_name"]
+            attrs.update(units=out.units)
+            attrs.update(
                 self._update_attrs(
                     params.copy(),
                     das,
-                    attrs,
+                    base_attrs,
                     names=self._cf_names,
                     var_id=var_id,
                 )
@@ -816,17 +839,17 @@ class Indicator(IndicatorRegistrar):
 
         # Convert to output units
         outs = [
-            convert_units_to(out, attrs.get("units", ""), self.context)
-            for out, attrs in zip(outs, cf_attrs)
+            convert_units_to(out, attrs["units"], self.context)
+            for out, attrs in zip(outs, out_attrs)
         ]
 
+        outs = self._postprocess(outs, das, params)
+
         # Update variable attributes
-        for out, attrs in zip(outs, cf_attrs):
+        for out, attrs in zip(outs, out_attrs):
             var_name = attrs.pop("var_name")
             out.attrs.update(attrs)
             out.name = var_name
-
-        outs = self._postprocess(outs, das, params)
 
         # Return a single DataArray in case of single output, otherwise a tuple
         if self.n_outs == 1:
@@ -1005,7 +1028,9 @@ class Indicator(IndicatorRegistrar):
         # different order than the real function (but order doesn't really matter with keywords).
         kwargs = OrderedDict(**das)
         for k, v in args.items():
-            if cls._all_parameters[k].kind == InputKind.KWARGS:
+            if cls._all_parameters[k].injected:
+                continue
+            elif cls._all_parameters[k].kind == InputKind.KWARGS:
                 kwargs.update(**v)
             elif cls._all_parameters[k].kind != InputKind.DATASET:
                 kwargs[k] = v
@@ -1029,9 +1054,7 @@ class Indicator(IndicatorRegistrar):
             )
 
     @classmethod
-    def translate_attrs(
-        cls, locale: Union[str, Sequence[str]], fill_missing: bool = True
-    ):
+    def translate_attrs(cls, locale: str | Sequence[str], fill_missing: bool = True):
         """Return a dictionary of unformated translated translatable attributes.
 
         Translatable attributes are defined in :py:const:`xclim.core.locales.TRANSLATABLE_ATTRS`.
@@ -1369,13 +1392,14 @@ class ResamplingIndicatorWithIndexing(ResamplingIndicator):
             )
         ]
 
-    def _preprocess_and_checks(self, das, params):
+    def _preprocess_and_checks(self, das: dict[str, DataArray], params: dict[str, Any]):
         """Perform parent's checks and also check if freq is allowed."""
         das, params = super()._preprocess_and_checks(das, params)
 
         indxr = params.get("indexer")
         if indxr:
-            das = {k: select_time(da, **indxr) for k, da in das.items()}
+            for k, da in filter(lambda kda: "time" in kda[1].coords, das.items()):
+                das.update({k: select_time(da, **indxr)})
         return das, params
 
 
@@ -1414,7 +1438,7 @@ def add_iter_indicators(module):
 def build_indicator_module(
     name: str,
     objs: Mapping[str, Indicator],
-    doc: Optional[str] = None,
+    doc: str | None = None,
 ) -> ModuleType:
     """Create or update a module from imported objects.
 
@@ -1458,9 +1482,9 @@ def build_indicator_module(
 
 def build_indicator_module_from_yaml(
     filename: PathLike,
-    name: Optional[str] = None,
-    indices: Optional[Union[Mapping[str, Callable], ModuleType, PathLike]] = None,
-    translations: Optional[Dict[str, Union[dict, PathLike]]] = None,
+    name: str | None = None,
+    indices: Mapping[str, Callable] | ModuleType | PathLike | None = None,
+    translations: dict[str, dict | PathLike] | None = None,
     mode: str = "raise",
     encoding: str = "UTF8",
 ) -> ModuleType:
