@@ -254,6 +254,25 @@ def ndq_series():
 
 
 @pytest.fixture
+def evspsblpot_series():
+    def _evspsblpot_series(values, start="7/1/2000", units="kg m-2 s-1"):
+        coords = pd.date_range(start, periods=len(values), freq="D")
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="evspsblpot",
+            attrs={
+                "standard_name": "water_evapotranspiration_flux",
+                "cell_methods": "time: mean within days",
+                "units": units,
+            },
+        )
+
+    return _evspsblpot_series
+
+
+@pytest.fixture
 def per_doy():
     def _per_doy(values, calendar="standard", units="kg m-2 s-1"):
         n = max_doy[calendar]

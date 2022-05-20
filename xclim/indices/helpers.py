@@ -12,8 +12,6 @@ import xarray as xr
 
 from xclim.core.calendar import datetime_to_decimal_year
 from xclim.core.units import convert_units_to
-from xclim.core.utils import DayOfYearStr
-from xclim.indices.generic import aggregate_between_dates
 
 
 def solar_declination(day_angle: xr.DataArray, method="spencer") -> xr.DataArray:
@@ -45,7 +43,6 @@ def solar_declination(day_angle: xr.DataArray, method="spencer") -> xr.DataArray
     # julian day fraction
     da = convert_units_to(day_angle, "rad")
     if method == "simple":
-        # Another approximation is
         # This assumes the orbit is a perfect circle, the obliquity is 0.4091 rad (23.43°)
         # and the equinox is on the March 21st 17:20 UTC (March 20th 23:14 UTC on leap years)
         return 0.4091 * np.sin(da - 1.39)
@@ -198,9 +195,6 @@ def extraterrestrial_solar_radiation(
 def day_lengths(
     dates: xr.DataArray,
     lat: xr.DataArray,
-    start_date: xr.DataArray | DayOfYearStr | None = None,
-    end_date: xr.DataArray | DayOfYearStr | None = None,
-    freq: str = "YS",
     method: str = "spencer",
 ) -> xr.DataArray:
     r"""Day-lengths according to latitude and day of year.
@@ -213,12 +207,6 @@ def day_lengths(
     dates: xr.DataArray
     lat: xarray.DataArray
       Latitude coordinate.
-    start_date: xarray.DataArray or DayOfYearStr, optional
-      Start date to consider for calculating mean day lengths. Default: None.
-    end_date: xarray.DataArray or DayOfYearStr, optional
-      End date to consider for calculating mean day lengths. Default: None.
-    freq : str
-      Resampling frequency.
     method : {'spencer', 'simple'}
       Which approximation to use when computing the solar declination angle.
       See :py:func:`solar_declination`.
@@ -226,8 +214,7 @@ def day_lengths(
     Returns
     -------
     xarray.DataArray, [hours]
-      If start and end date provided, returns total sum of daylight-hour between dates at provided frequency.
-      If no start and end date provided, returns day-length in hours per individual day.
+      Day-lengths in hours per individual day.
 
     References
     ----------
@@ -244,9 +231,4 @@ def day_lengths(
         (24 / np.pi) * np.arccos(-np.tan(lat) * np.tan(declination))
     ).assign_attrs(units="h")
 
-    if start_date and end_date:
-        return aggregate_between_dates(
-            day_length_hours, start=start_date, end=end_date, op="sum", freq=freq
-        )
-    else:
-        return day_length_hours
+    return day_length_hours

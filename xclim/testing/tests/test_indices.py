@@ -338,7 +338,7 @@ class TestAgroclimaticIndices:
             lti.lon <= 35, drop=True
         )
         lti = lti.groupby_bins(lti.lon, 1).mean().groupby_bins(lti.lat, 5).mean()
-        np.testing.assert_array_almost_equal(lti[0].transpose(), np.array([values]), 2)
+        np.testing.assert_array_almost_equal(lti[0].squeeze(), np.array(values), 2)
 
     @pytest.mark.parametrize(
         "method, end_date, values",
@@ -2450,18 +2450,18 @@ class TestPotentialEvapotranspiration:
         np.testing.assert_allclose(out[0, 2], [2.78253138816 / 86400], rtol=1e-2)
 
 
-def test_water_budget(pr_series, tasmin_series, tasmax_series, lat_series):
+def test_water_budget_from_tas(pr_series, tasmin_series, tasmax_series, lat_series):
     lat = lat_series([45])
     pr = pr_series(np.array([10, 10, 10])).expand_dims(lat=lat)
     pr.attrs["units"] = "mm/day"
     tn = tasmin_series(np.array([0, 5, 10]) + K2C).expand_dims(lat=lat)
     tx = tasmax_series(np.array([10, 15, 20]) + K2C).expand_dims(lat=lat)
 
-    out = xci.water_budget(pr, tn, tx, lat=lat, method="BR65")
-    np.testing.assert_allclose(out[0, 2], [6.138921 / 86400], rtol=2e-3)
+    out = xci.water_budget(pr, tasmin=tn, tasmax=tx, lat=lat, method="BR65")
+    np.testing.assert_allclose(out[0, 2], [6.138921 / 86400], rtol=1e-3)
 
-    out = xci.water_budget(pr, tn, tx, lat=lat, method="HG85")
-    np.testing.assert_allclose(out[0, 2], [6.037411 / 86400], rtol=2e-3)
+    out = xci.water_budget(pr, tasmin=tn, tasmax=tx, lat=lat, method="HG85")
+    np.testing.assert_allclose(out[0, 2], [6.037411 / 86400], rtol=1e-3)
 
     time_std = date_range("1990-01-01", "1990-12-01", freq="MS", calendar="standard")
     tm = xr.DataArray(
@@ -2479,6 +2479,16 @@ def test_water_budget(pr_series, tasmin_series, tasmax_series, lat_series):
 
     out = xci.water_budget(prm, tas=tm, lat=lat, method="TW48")
     np.testing.assert_allclose(out[1, 0], [8.5746025 / 86400], rtol=2e-1)
+
+
+def test_water_budget(pr_series, evspsblpot_series):
+    pr = pr_series(np.array([10, 10, 10]))
+    pr.attrs["units"] = "mm/day"
+    pet = evspsblpot_series(np.array([0, 10, 20]))
+    pet.attrs["units"] = "mm/day"
+
+    out = xci.water_budget(pr, evspsblpot=pet)
+    np.testing.assert_allclose(out, [10 / 86400, 0, -10 / 86400], rtol=1e-5)
 
 
 @pytest.mark.parametrize(

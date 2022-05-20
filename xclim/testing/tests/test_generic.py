@@ -6,7 +6,7 @@ import xarray as xr
 
 from xclim.core.calendar import date_range, doy_to_days_since, select_time
 from xclim.indices import generic
-from xclim.indices._helpers import day_lengths
+from xclim.indices.helpers import day_lengths
 
 
 class TestSelectResampleOp:
@@ -259,42 +259,6 @@ class TestAggregateBetweenDates:
         bad_start = "02-31"
         with pytest.raises(ValueError):
             generic.aggregate_between_dates(data, bad_start, end, op="sum", freq="YS")
-
-
-class TestDayLength:
-    def test_multiple_lats(self):
-        time_data = date_range(
-            "1992-12-01", "1994-01-01", freq="D", calendar="standard"
-        )
-        data = xr.DataArray(
-            np.ones((time_data.size, 7)),
-            dims=("time", "lat"),
-            coords={"time": time_data, "lat": [-60, -45, -30, 0, 30, 45, 60]},
-        )
-
-        dl = day_lengths(dates=data.time, lat=data.lat)
-
-        events = dict(
-            solstice=[
-                ["1992-12-21", [[18.49, 15.43, 13.93, 12.0, 10.07, 8.57, 5.51]]],
-                ["1993-06-21", [[5.51, 8.57, 10.07, 12.0, 13.93, 15.43, 18.49]]],
-                ["1993-12-21", [[18.49, 15.43, 13.93, 12.0, 10.07, 8.57, 5.51]]],
-            ],
-            equinox=[
-                ["1993-03-20", [[12] * 7]]
-            ],  # True equinox on 1993-03-20 at 14:41 GMT. Some relative tolerance is needed.
-        )
-
-        for event, evaluations in events.items():
-            for e in evaluations:
-                if event == "solstice":
-                    np.testing.assert_array_almost_equal(
-                        dl.sel(time=e[0]).transpose(), np.array(e[1]), 2
-                    )
-                elif event == "equinox":
-                    np.testing.assert_allclose(
-                        dl.sel(time=e[0]).transpose(), np.array(e[1]), rtol=2e-1
-                    )
 
 
 class TestDegreeDays:

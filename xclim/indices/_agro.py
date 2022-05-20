@@ -247,13 +247,12 @@ def huglin_index(
         )
         k_aggregated = 1
     elif method.lower() == "jones":
-        day_length = day_lengths(
-            dates=tas.time,
-            lat=lat,
-            start_date=start_date,
-            end_date=end_date,
+        day_length = aggregate_between_dates(
+            day_lengths(dates=tas.time, lat=lat, method="simple"),
+            start=start_date,
+            end=end_date,
+            op="sum",
             freq=freq,
-            method="simple",
         )
         k = 1
         k_aggregated = 2.8311e-4 * day_length + 0.30834
@@ -394,13 +393,11 @@ def biologically_effective_degree_days(
             k = 1 + xarray.where(lat_mask, max(((abs(lat) - 40) / 10) * 0.06, 0), 0)
             k_aggregated = 1
         else:
-            day_length = day_lengths(
-                dates=tasmin.time,
-                lat=lat,
+            day_length = aggregate_between_dates(
+                day_lengths(dates=tasmin.time, lat=lat, method="simple"),
                 start_date=start_date,
                 end_date=end_date,
                 freq=freq,
-                method="simple",
             )
             k = 1
             k_huglin = 2.8311e-4 * day_length + 0.30834
@@ -539,6 +536,7 @@ def latitude_temperature_index(
 
 @declare_units(
     pr="[precipitation]",
+    evspsblpot="[precipitation]",
     tasmin="[temperature]",
     tasmax="[temperature]",
     tas="[temperature]",
@@ -546,6 +544,7 @@ def latitude_temperature_index(
 )
 def water_budget(
     pr: xarray.DataArray,
+    evspsblpot: xarray.DataArray | None = None,
     tasmin: xarray.DataArray | None = None,
     tasmax: xarray.DataArray | None = None,
     tas: xarray.DataArray | None = None,
@@ -555,12 +554,14 @@ def water_budget(
     r"""Precipitation minus potential evapotranspiration.
 
     Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget,
-    where the potential evapotranspiration is calculated with a given method.
+    where the potential evapotranspiration can be calculated with a given method.
 
     Parameters
     ----------
     pr : xarray.DataArray
       Daily precipitation.
+    evspsblpot: xarray.DataArray
+      Potential evapotranspiration
     tasmin : xarray.DataArray
       Minimum daily temperature.
     tasmax : xarray.DataArray
@@ -568,7 +569,7 @@ def water_budget(
     tas : xarray.DataArray
       Mean daily temperature.
     lat : xarray.DataArray
-      Latitude.
+      Latitude, needed if evspsblpot is not given.
     method : str
       Method to use to calculate the potential evapotranspiration.
 
@@ -583,9 +584,12 @@ def water_budget(
     """
     pr = convert_units_to(pr, "kg m-2 s-1")
 
-    pet = xci.potential_evapotranspiration(
-        tasmin=tasmin, tasmax=tasmax, tas=tas, lat=lat, method=method
-    )
+    if evspsblpot is None:
+        pet = xci.potential_evapotranspiration(
+            tasmin=tasmin, tasmax=tasmax, tas=tas, lat=lat, method=method
+        )
+    else:
+        pet = convert_units_to(evspsblpot, "kg m-2 s-1")
 
     if xarray.infer_freq(pet.time) == "MS":
         with xarray.set_options(keep_attrs=True):
