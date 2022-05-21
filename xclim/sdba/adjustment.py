@@ -1070,8 +1070,8 @@ class NpdfTransform(Adjust):
 
     ..math ::
 
-        \tilde{\mathbf{T}} = \mathbf{T}\mathbf{R} \\
-        \tilde{\mathbf{H}} = \mathbf{H}\mathbf{R} \\
+        \tilde{\mathbf{T}} = \mathbf{T}\mathbf{R} \
+        \tilde{\mathbf{H}} = \mathbf{H}\mathbf{R} \
         \tilde{\mathbf{S}} = \mathbf{S}\mathbf{R}
 
     2. An univariate bias-adjustment :math:`\mathcal{F}` is used on the rotated datasets.

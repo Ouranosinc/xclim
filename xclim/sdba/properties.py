@@ -232,7 +232,7 @@ def spell_length_distribution(
     stat: str = "mean",
     group: str | Grouper = "time",
 ) -> xr.DataArray:
-    r"""Spell length distribution.
+    """Spell length distribution.
 
     Statistic of spell length distribution when the variable respects a condition (defined by an operation, a method and
      a threshold).
@@ -395,7 +395,7 @@ def annual_cycle_amplitude(
 ) -> xr.DataArray:
     r"""Annual cycle amplitude.
 
-    The amplitudes of the annual cycle are calculated for each year, than averaged over the all years.
+    The amplitudes of the annual cycle are calculated for each year, then averaged over the all years.
 
     Parameters
     ----------
@@ -439,7 +439,7 @@ def annual_cycle_phase(
 ) -> xr.DataArray:
     """Annual cycle phase.
 
-    The phases of the annual cycle are calculated for each year, than averaged over the all years.
+    The phases of the annual cycle are calculated for each year, then averaged over the all years.
 
     Parameters
     ----------
@@ -575,7 +575,7 @@ def relative_frequency(
     thresh: str = "1mm d-1",
     group: str | Grouper = "time",
 ) -> xr.DataArray:
-    r"""Relative Frequency.
+    """Relative Frequency.
 
     Relative Frequency of days with variable  respecting a condition (defined by an operation and a threshold) at the
     time resolution. The relative freqency is the number of days that satisfy the condition divided by the total number
@@ -639,7 +639,7 @@ def trend(
     group: str | Grouper = "time",
     output: str = "slope",
 ) -> xr.DataArray:
-    r"""Linear Trend.
+    """Linear Trend.
 
     The data is averaged over each time resolution and the interannual trend is returned.
 
