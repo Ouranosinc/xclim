@@ -129,8 +129,8 @@ def humidex(
 def heat_index(tasmax: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
     r"""Daily heat index.
 
-    Perceived temperature after relative humidity is taken into account. The
-    index is only valid for temperatures above 20°C.
+    Perceived temperature after relative humidity is taken into account ([Blazejczyk2012]_).
+    The index is only valid for temperatures above 20°C.
 
     Parameters
     ----------
@@ -146,7 +146,7 @@ def heat_index(tasmax: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
 
     References
     ----------
-    .. [blazejczyk2012] Blazejczyk, K., Epstein, Y., Jendritzky, G., Staiger, H., & Tinz, B. (2012). Comparison of UTCI to selected thermal indices. International journal of biometeorology, 56(3), 515-535.
+    .. [Blazejczyk2012] Blazejczyk, K., Epstein, Y., Jendritzky, G., Staiger, H., & Tinz, B. (2012). Comparison of UTCI to selected thermal indices. International journal of biometeorology, 56(3), 515-535.
 
     Notes
     -----
@@ -827,8 +827,8 @@ def wind_chill_index(
     r"""Wind chill index.
 
     The Wind Chill Index is an estimation of how cold the weather feels to the average person.
-    It is computed from the air temperature and the 10-m wind. As defined by the Environment and Climate Change Canada ([MVSZ15]_),
-    two equations exist, the conventional one and one for slow winds (usually < 5 km/h), see Notes.
+    It is computed from the air temperature and the 10-m wind. As defined by the Environment and Climate Change Canada
+    ([MVSZ2015]_), two equations exist, the conventional one and one for slow winds (usually < 5 km/h), see Notes.
 
     Parameters
     ----------
@@ -852,9 +852,9 @@ def wind_chill_index(
     Notes
     -----
     Following the calculations of Environment and Climate Change Canada, this function switches from the standardized index
-    to another one for slow winds. The standard index is the same as used by the National Weather Service of the USA. Given
-    a temperature at surface :math:`T` (in °C) and 10-m wind speed :math:`V` (in km/h), the Wind Chill Index :math:`W` (dimensionless)
-    is computed as:
+    to another one for slow winds. The standard index is the same as used by the National Weather Service of the USA.
+    Given a temperature at surface :math:`T` (in °C) and 10-m wind speed :math:`V` (in km/h), the Wind Chill Index
+    :math:`W` (dimensionless) is computed as:
 
     .. math::
 
@@ -872,10 +872,14 @@ def wind_chill_index(
     The american Wind Chill Temperature index (WCT), as defined by USA's National Weather Service, is computed when
     `method='US'`. In that case, the maximal valid temperature is 50°F (10 °C) and minimal wind speed is 3 mph (4.8 km/h).
 
+    See Also
+    --------
+    National Weather Service FAQ: [NWS]_.
+
     References
     ----------
-    .. [MVSZ15] Éva Mekis, Lucie A. Vincent, Mark W. Shephard & Xuebin Zhang (2015) Observed Trends in Severe Weather Conditions Based on Humidex, Wind Chill, and Heavy Rainfall Events in Canada for 1953–2012, Atmosphere-Ocean, 53:4, 383-397, DOI: 10.1080/07055900.2015.1086970
-    .. [Osczevski&Bluestein05] Osczevski, R., & Bluestein, M. (2005). The New Wind Chill Equivalent Temperature Chart. Bulletin of the American Meteorological Society, 86(10), 1453–1458. https://doi.org/10.1175/BAMS-86-10-1453
+    .. [MVSZ2015] Éva Mekis, Lucie A. Vincent, Mark W. Shephard & Xuebin Zhang (2015) Observed Trends in Severe Weather Conditions Based on Humidex, Wind Chill, and Heavy Rainfall Events in Canada for 1953–2012, Atmosphere-Ocean, 53:4, 383-397, DOI: 10.1080/07055900.2015.1086970
+    .. [Osczevski&Bluestein2005] Osczevski, R., & Bluestein, M. (2005). The New Wind Chill Equivalent Temperature Chart. Bulletin of the American Meteorological Society, 86(10), 1453–1458. https://doi.org/10.1175/BAMS-86-10-1453
     .. [NWS] Wind Chill Questions, Cold Resources, National Weather Service, retrieved 25-05-21. https://www.weather.gov/safety/cold-faqs
     """
     tas = convert_units_to(tas, "degC")

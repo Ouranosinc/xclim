@@ -8,10 +8,10 @@ This submodule defines the :py:func:`xclim.indices.fire_season`, :py:func:`xclim
 and :py:func:`xclim.indices.fire_weather_indexes` indices, which are used by the eponym indicators.
 Users should read this module's documentation and the one of `fire_weather_ufunc`.
 
-First adapted from Matlab code `CalcFWITimeSeriesWithStartup.m` from GFWED made for using
-MERRA2 data, which was a translation of FWI.vba of the Canadian Fire Weather Index system.
-Then, updated and synchronized with the R code of the cffdrs package. When given the correct parameters,
-the current code has an error below 3% when compared with the [GFWED]_ data.
+First adapted from Matlab code `CalcFWITimeSeriesWithStartup.m` from GFWED made for using MERRA2 data, which was a
+translation of FWI.vba of the Canadian Fire Weather Index system. Then, updated and synchronized with the R code of the
+cffdrs package. When given the correct parameters, the current code has an error below 3% when compared with the
+[GFWED]_ data.
 
 Parts of the code and of the documentation in this submodule are directly taken from [cffdrs] which was published with the GPL-2 license.
 
@@ -25,12 +25,11 @@ indicators. However, the `fire_weather_ufunc` and the indicators also accept a `
 fire season can be computed inside the iterator. Passing `season_method=None` switches to an "always on" mode
 replicating the `fwi` method of the R package.
 
-The fire season determination is based on three consecutive daily maximum temperature thresholds ([WF93]_ , [LA08]_).
-A "GFWED" method is also implemented. There, the 12h LST temperature is used instead of the daily maximum.
-The current implementation is slightly different from the description in [GFWED]_, but it replicates the Matlab code
-when `temp_start_thresh` and `temp_end_thresh` are both set to 6 degC.
-In xclim, the number of consecutive days, the start and end temperature thresholds and the snow depth threshold
-can all be modified.
+The fire season determination is based on three consecutive daily maximum temperature thresholds
+([Wotton&Flannigan1993]_, [Lawson&Armitage2008]_). A "GFWED" method is also implemented. There, the 12h LST temperature
+is used instead of the daily maximum. The current implementation is slightly different from the description in [GFWED]_,
+but it replicates the Matlab code when `temp_start_thresh` and `temp_end_thresh` are both set to 6 degC. In xclim, the
+number of consecutive days, the start and end temperature thresholds and the snow depth threshold can all be modified.
 
 Overwintering
 -------------
@@ -38,25 +37,28 @@ Additionnaly, overwintering of the drought code is also directly implemented in 
 The last drought_code of the season is kept in "winter" (where the fire season mask is False) and the precipitation
 is accumulated until the start of the next season. The first drought code is computed as a function of these instead
 of using the default DCStart value. Parameters to :py:func:`_overwintering_drought_code` are listed below.
-The code for the overwintering is based on [ME19]_.
+The code for the overwintering is based on [MBHFJ2020]_.
 
-Finally, a mechanism for dry spring starts is implemented. For now, it is slightly different from what the GFWED, uses, but
-seems to agree with the state of the science of the CFS. When activated, the drought code and Duff-moisture codes are started
-in spring with a value that is function of the number of days since the last significative precipitation event.
+Finally, a mechanism for dry spring starts is implemented. For now, it is slightly different from what the GFWED, uses,
+but seems to agree with the state of the science of the CFS. When activated, the drought code and Duff-moisture codes are
+started in spring with a value that is function of the number of days since the last significative precipitation event.
 The conventionnal start value increased by that number of days times a "dry start" factor. Parameters are controlled in
-the call of the indices and :py:func:`fire_weather_ufunc`. Overwintering of the drought code overrides this mechanism if both are activated.
-GFWED use a more complex approach with an added check on the previous day's snow cover for determining "dry" points. Moreover,
-there, the start values are only the multiplication of a factor to the number of dry days, the conventionnal
+the call of the indices and :py:func:`fire_weather_ufunc`. Overwintering of the drought code overrides this mechanism if
+both are activated. GFWED use a more complex approach with an added check on the previous day's snow cover for
+determining "dry" points.
+# FIXME: unfininshed sentence
+Moreover, there, the start values are only the multiplication of a factor to the number of dry days, the conventionnal
 
 Examples
 --------
 The current litterature seems to agree that climate-oriented series of the fire weather indexes should be computed
-using only the longest fire season of each year and activatting the overwintering of the drought code and
-the "dry start" for the duff-moisture code. The following example uses reasonable parameters when computing over all of Canada.
+using only the longest fire season of each year and activatting the overwintering of the drought code and the "dry start"
+for the duff-moisture code. The following example uses reasonable parameters when computing over all of Canada.
 
+.. note::
 
-**Note:** here the example snippets use the _indices_ defined in this very module, but we always recommend using the _indicators_
-defined in the `xc.atmos` module.
+    Here the example snippets use the _indices_ defined in this very module, but we always recommend using the
+    _indicators_ defined in the `xc.atmos` module.
 
 >>> ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 >>> ds = ds.assign(
@@ -133,18 +135,18 @@ Matlab code of the GFWED obtained through personal communication.
 
 Fire season determination methods:
 
-.. [WF93] Wotton, B.M. and Flannigan, M.D. (1993). Length of the fire season in a changing climate. ForestryChronicle, 69, 187-192.
-.. [LA08] Lawson B.D. and Armitage O.B. 2008. Weather Guide for the Canadian Forest Fire Danger RatingSystem. Natural Resources Canada, Canadian Forest Service, Northern Forestry Centre, Edmonton,Alberta. 84 p.http://cfs.nrcan.gc.ca/pubwarehouse/pdfs/29152.pdf
+.. [Wotton&Flannigan1993] Wotton, B.M. and Flannigan, M.D. (1993). Length of the fire season in a changing climate. ForestryChronicle, 69, 187-192.
+.. [Lawson&Armitage2008] Lawson B.D. and Armitage O.B. 2008. Weather Guide for the Canadian Forest Fire Danger RatingSystem. Natural Resources Canada, Canadian Forest Service, Northern Forestry Centre, Edmonton,Alberta. 84 p.http://cfs.nrcan.gc.ca/pubwarehouse/pdfs/29152.pdf
 .. [GFWED] Field, R. D., Spessa, A. C., Aziz, N. A., Camia, A., Cantin, A., Carr, R., de Groot, W. J., Dowdy, A. J., Flannigan, M. D., Manomaiphiboon, K., Pappenberger, F., Tanpipat, V., and Wang, X. (2015) Development of a Global Fire Weather Database, Nat. Hazards Earth Syst. Sci., 15, 1407–1423, https://doi.org/10.5194/nhess-15-1407-2015
 
 Drought Code overwintering:
 
-.. [VW85] Van Wagner, C.E. 1985. Drought, timelag and fire danger rating. Pages 178-185 in L.R. Donoghueand R.E. Martin, eds.  Proc.  8th Conf.  Fire For.  Meteorol., 29 Apr.-3 May 1985, Detroit, MI. Soc.Am. For., Bethesda, MD.http://cfs.nrcan.gc.ca/pubwarehouse/pdfs/23550.pdf
-.. [ME19] McElhinny, M., Beckers, J. F., Hanes, C., Flannigan, M., and Jain, P.: A high-resolution reanalysis of global fire weather from 1979 to 2018 – overwintering the Drought Code, Earth Syst. Sci. Data, 12, 1823–1833, https://doi.org/10.5194/essd-12-1823-2020, 2020.
+.. [VanWagner1985] Van Wagner, C.E. 1985. Drought, timelag and fire danger rating. Pages 178-185 in L.R. Donoghueand R.E. Martin, eds.  Proc.  8th Conf.  Fire For.  Meteorol., 29 Apr.-3 May 1985, Detroit, MI. Soc.Am. For., Bethesda, MD.http://cfs.nrcan.gc.ca/pubwarehouse/pdfs/23550.pdf
+.. [MBHFJ2020] McElhinny, M., Beckers, J. F., Hanes, C., Flannigan, M., and Jain, P. 2020. A high-resolution reanalysis of global fire weather from 1979 to 2018 – overwintering the Drought Code, Earth Syst. Sci. Data, 12, 1823–1833, https://doi.org/10.5194/essd-12-1823-2020
 """
 # This file is structured in the following way:
 # Section 1: individual codes, numba-accelerated and vectorized functions.
-# Section 2: Larger computing functons (the FWI iterator and the fire_season iterator)
+# Section 2: Larger computing functions (the FWI iterator and the fire_season iterator)
 # Section 3: Exposed methods and indices.
 #
 # Methods starting with a "_" are not usable with xarray objects, whereas the others are.
@@ -250,20 +252,20 @@ def _fine_fuel_moisture_code(t, p, w, h, ffmc0):  # pragma: no cover
 
     Parameters
     ----------
-    t: array
+    t: array_like
       Noon temperature [C].
-    p : array
+    p : array_like
       Rain fall in open over previous 24 hours, at noon [mm].
-    w : array
+    w : array_like
       Noon wind speed [km/h].
-    h : array
+    h : array_like
       Noon relative humidity [%].
-    ffmc0 : array
+    ffmc0 : array_like
       Previous value of the fine fuel moisture code.
 
     Returns
     -------
-    array
+    array_like
       Fine fuel moisture code at the current timestep.
     """
     mo = (147.2 * (101.0 - ffmc0)) / (59.5 + ffmc0)  # *Eq.1*#
@@ -304,6 +306,8 @@ def _fine_fuel_moisture_code(t, p, w, h, ffmc0):  # pragma: no cover
             m = ew - (ew - mo) / 10.0**kw  # *Eq.9*#
         elif mo > ew:
             m = mo
+        else:
+            raise ValueError()
     elif mo == ed:
         m = mo
     else:
@@ -323,18 +327,25 @@ def _fine_fuel_moisture_code(t, p, w, h, ffmc0):  # pragma: no cover
 
 
 @vectorize
-def _duff_moisture_code(t, p, h, mth: int, lat: float, dmc0: float):  # pragma: no cover
+def _duff_moisture_code(
+    t: np.ndarray,
+    p: np.ndarray,
+    h: np.ndarray,
+    mth: int,
+    lat: float,
+    dmc0: float,
+):  # pragma: no cover
     """Compute the Duff moisture code over one time step.
 
     Parameters
     ----------
-    t: array
+    t: array_like
       Noon temperature [C].
-    p : array
+    p : array_like
       Rain fall in open over previous 24 hours, at noon [mm].
-    h : array
+    h : array_like
       Noon relative humidity [%].
-    mth : integer array
+    mth : array_like[int]
       Month of the year [1-12].
     lat : float
       Latitude.
@@ -385,16 +396,18 @@ def _duff_moisture_code(t, p, h, mth: int, lat: float, dmc0: float):  # pragma: 
 
 
 @vectorize
-def _drought_code(t, p, mth, lat, dc0):  # pragma: no cover
+def _drought_code(
+    t: np.ndarray, p: np.ndarray, mth: np.ndarray, lat: float, dc0: float
+) -> np.ndarray:  # pragma: no cover
     """Compute the drought code over one time step.
 
     Parameters
     ----------
-    t: array
+    t: array-like
       Noon temperature [C].
-    p : array
+    p : array_like
       Rain fall in open over previous 24 hours, at noon [mm].
-    mth : integer array
+    mth : array_like[int]
       Month of the year [1-12].
     lat : float
       Latitude.
@@ -403,7 +416,7 @@ def _drought_code(t, p, mth, lat, dc0):  # pragma: no cover
 
     Returns
     -------
-    array
+    array_like
       Drought code at the current timestep
     """
     fl = _day_length_factor(lat, mth)
@@ -430,19 +443,19 @@ def _drought_code(t, p, mth, lat, dc0):  # pragma: no cover
     return dc
 
 
-def initial_spread_index(ws, ffmc):
+def initial_spread_index(ws: np.ndarray, ffmc: np.ndarray) -> np.ndarray:
     """Initialize spread index.
 
     Parameters
     ----------
-    ws : array
+    ws : array_like
       Noon wind speed [km/h].
-    ffmc : array
+    ffmc : array_like
       Fine fuel moisture code.
 
     Returns
     -------
-    array
+    array_like
       Initial spread index.
     """
     mo = 147.2 * (101.0 - ffmc) / (59.5 + ffmc)  # *Eq.1*#
@@ -498,17 +511,17 @@ def fire_weather_index(isi, bui):
     return fwi
 
 
-def daily_severity_rating(fwi):
+def daily_severity_rating(fwi: np.ndarray) -> np.ndarry:
     """Daily severity rating.
 
     Parameters
     ----------
-    fwi : array
+    fwi : array_like
       Fire weather index
 
     Returns
     -------
-    array
+    array_like
       Daily severity rating.
     """
     return 0.0272 * fwi**1.77
@@ -577,7 +590,7 @@ def _fire_season(
 
     Returns
     -------
-    ndarray (bool)
+    ndarray [bool]
       True where the fire season is active, same shape as tas.
     """
     season_mask = np.full_like(tas, False, dtype=bool)
@@ -1116,9 +1129,9 @@ def fire_weather_ufunc(
     )
 
     if tas.ndim == 1:
-        dummy_dim = xr.core.utils.get_temp_dimname(tas.dims, "dummy")
+        dummy_dim = xr.core.utils.get_temp_dimname(tas.dims, "dummy")  # noqa
         # When arrays only have the 'time' dimension, non-temporal inputs of the wrapped ufunc
-        # become scalars. We add a dummy dimension so we don't have to deal with that.
+        # become scalars. We add a dummy dimension so that we don't have to deal with that.
         for i in range(len(args)):
             if isinstance(args[i], xr.DataArray):
                 args[i] = args[i].expand_dims({dummy_dim: [1]})
@@ -1190,7 +1203,7 @@ def overwintering_drought_code(
     conditions) a large error in this spring starting condition can affect the DC for a significant
     portion of the fire season. In areas where overwinter precipitation is 200 mm or more, full moisture
     recharge occurs and DC overwintering is usually unnecessary.  More discussion of overwintering and
-    fuel drying time lag can be found in [LA08]_ and [VW85]_.
+    fuel drying time lag can be found in [Lawson&Armitage2008]_ and [VanWagner1985]_.
 
     Carry-over fraction of last fall's moisture:
         - 1.0, Daily DC calculated up to 1 November; continuous snow cover, or freeze-up, whichever comes first
@@ -1202,13 +1215,15 @@ def overwintering_drought_code(
         - 0.75, Deep ground frost does not occur until late fall, if at all; moderately drained sites that allow infiltration of most of the melting snowpack
         - 0.5, Chinook-prone areas and areas subject to early and deep ground frost; well-drained soils favoring rapid percolation or topography favoring rapid runoff before melting of ground frost
 
-    Source: [LA08]_ - Table 9.
+    Source: [Lawson&Armitage2008]_ - Table 9.
 
     References
     ----------
-    .. [cffdrs] Cantin, A., Wang, X., Parisien M-A., Wotton, M., Anderson, K., Moore, B., Schiks, T., Flannigan, M., Canadian Forest Fire Danger Rating System, R package, CRAN. https://cran.r-project.org/package=cffdrs
-    .. [LA08] Lawson B.D. and Armitage O.B. 2008. Weather Guide for the Canadian Forest Fire Danger RatingSystem. Natural Resources Canada, Canadian Forest Service, Northern Forestry Centre, Edmonton,Alberta. 84 p. http://cfs.nrcan.gc.ca/pubwarehouse/pdfs/29152.pdf
-    .. [VW85] Van Wagner, C.E. 1985. Drought, timelag and fire danger rating. Pages 178-185 in L.R. Donoghueand R.E. Martin, eds.  Proc.  8th Conf.  Fire For.  Meteorol., 29 Apr.-3 May 1985, Detroit, MI. Soc.Am. For., Bethesda, MD. http://cfs.nrcan.gc.ca/pubwarehouse/pdfs/23550.pdf
+    [cffdrs]_
+
+    [Lawson&Armitage2008]_
+
+    [VanWagner1985]_
     """
     winter_pr = convert_units_to(winter_pr, "mm")
 
@@ -1502,8 +1517,9 @@ def fire_season(
 
     References
     ----------
-    Wotton, B.M. and Flannigan, M.D. (1993). Length of the fire season in a changing climate. ForestryChronicle, 69, 187-192.
-    Lawson, B.D. and O.B. Armitage. 2008. Weather guide for the Canadian Forest Fire Danger Rating System. NRCAN, CFS, Edmonton, AB
+    [Wotton&Flannigan1993]_
+
+    [Lawson&Armitage2008]_
     """
     kwargs = dict(
         method=method,

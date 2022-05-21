@@ -3,7 +3,7 @@
 Miscellaneous indices utilities
 ===============================
 
-Helper functions for the indices computation, indicator construction and other things.
+Helper functions for the indices computations, indicator construction and other things.
 """
 from __future__ import annotations
 
@@ -15,10 +15,10 @@ from collections import defaultdict
 from enum import IntEnum
 from functools import partial
 from importlib.resources import open_text
-from inspect import Parameter, _empty
+from inspect import Parameter, _empty  # noqa
 from pathlib import Path
 from types import FunctionType
-from typing import Callable, Mapping, NewType, Sequence, Union
+from typing import Callable, Mapping, NewType, Sequence
 
 import numpy as np
 import xarray as xr
@@ -82,7 +82,7 @@ def wrapped_partial(
     partial_func = partial(func, **suggested, **fixed)
 
     fully_wrapped = update_wrapper(
-        partial_func, func, injected=list(fixed.keys()), hide_wrapped=True
+        partial_func, func, injected=list(fixed.keys()), hide_wrapped=True  # noqa
     )
 
     # Store all injected params,
@@ -259,6 +259,8 @@ def _compute_virtual_index(
 ):
     """Compute the floating point indexes of an array for the linear interpolation of quantiles.
 
+    Based on the approach used by [Hyndman&Fan1996]_.
+
     Parameters
     ----------
     n : array_like
@@ -276,7 +278,7 @@ def _compute_virtual_index(
 
     References
     ----------
-    .. [Hyndman&Fan] Hyndman, R. J., & Fan, Y. (1996). Sample Quantiles in Statistical Packages. The American Statistician, 50(4), 361‑365. https://doi.org/10.1080/00031305.1996.10473566
+    .. [Hyndman&Fan1996] Hyndman, R. J., & Fan, Y. (1996). Sample Quantiles in Statistical Packages. The American Statistician, 50(4), 361‑365. https://doi.org/10.1080/00031305.1996.10473566
     """
     return n * quantiles + (alpha + quantiles * (1 - alpha - beta)) - 1
 
@@ -311,8 +313,8 @@ def _get_indexes(
 
     Returns
     -------
-    (previous_indexes, next_indexes): Tuple
-        A Tuple of virtual_indexes neighbouring indexes
+    array-like, array-like
+        A tuple of virtual_indexes neighbouring indexes (previous and next)
     """
     previous_indexes = np.asanyarray(np.floor(virtual_indexes))
     next_indexes = np.asanyarray(previous_indexes + 1)
@@ -380,7 +382,7 @@ def _nan_quantile(
 
     Notes
     -----
-    By default, alpha == beta == 1 which performs the 7th method of [Hyndman&Fan]_.
+    By default, alpha == beta == 1 which performs the 7th method of [Hyndman&Fan1996]_.
     with alpha == beta == 1/3 we get the 8th method.
     """
     # --- Setup

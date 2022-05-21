@@ -21,10 +21,11 @@ __all__ = [
 @declare_units(ua="[speed]")
 def jetstream_metric_woollings(
     ua: xarray.DataArray,
-) -> xarray.DataArray:
+) -> (xarray.DataArray, xarray.DataArray):
     """Strength and latitude of jetstream.
 
-    Identify latitude and strength of maximum smoothed zonal wind speed in the region from 15 to 75°N and -60 to 0°E.
+    Identify latitude and strength of maximum smoothed zonal wind speed in the region from 15 to 75°N and -60 to 0°E,
+    using the formula outlined in [Woollings2012]_.
 
     Warnings
     --------
@@ -37,14 +38,12 @@ def jetstream_metric_woollings(
 
     Returns
     -------
-    xarray.DataArray
-      Daily time series of latitude of jetstream.
-    xarray.DataArray
-      Daily time series of strength of jetstream.
+    (xarray.DataArray, xarray.DataArray)
+      Daily time series of latitude of jetstream and Daily time series of strength of jetstream.
 
     References
     ----------
-    .. [woollings2010] Woollings, T., Hannachi, A., & Hoskins, B. (2010). Variability of the North Atlantic eddy‐driven jet stream. Quarterly Journal of the Royal Meteorological Society, 136(649), 856-868.
+    .. [Woollings2010] Woollings, T., Hannachi, A., & Hoskins, B. (2010). Variability of the North Atlantic eddy‐driven jet stream. Quarterly Journal of the Royal Meteorological Society, 136(649), 856-868.
 
     """
     lon_min = -60
@@ -62,7 +61,7 @@ def jetstream_metric_woollings(
     ua_units = ua.units
     lat_name = ua.cf["latitude"].name
 
-    # select only relevant hPa levels, compute zonal mean windspeed
+    # select only relevant hPa levels, compute zonal mean wind speed
     pmin = convert_units_to("750 hPa", ua.cf["pressure"])
     pmax = convert_units_to("950 hPa", ua.cf["pressure"])
 
