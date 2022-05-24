@@ -25,15 +25,18 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 * ``xclim.atmos.water_budget`` has been separated into ``water_budget`` (calculated directly with 'evspsblpot') and ``water_budget_from_tas`` (original function). (:pull:`1086`).
 * Injected parameters in indicators are now left out of a function's signature and will not be included in the history attribute. (:pull:`1086`).
+* `pytest-runner` has been removed as a dependency (it was never needed for xclim development). (:pull:`1074`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Typing syntax has been updated within pre-commit via `isort`. Pre-commit hooks now append `from __future__ import annotations` to all python module imports for backwards compatibility. (:issue:`1065`, :pull:`1071`)
 * `isort` project configurations are now set in `setup.cfg`. (:pull:`1071`).
+* Many function docstrings and references have been adjusted to reduce warnings when building the docs. (:pull:`1074`).
 
 Bug fixes
 ^^^^^^^^^
 * Clean the `bias_adjustement` and `history` attributes created by `xclim.sdba.adjust` (e.g. when an argument  is an `xr.DataArray`, only print the name instead of the whole array). (:issue:`1083`, :pull:`1087`).
+* `pydocstyle` checks were silently failing in the `pre-commit` configuration due to a badly-formed regex. This has been adjusted. (:pull:`1074`).
 
 0.36.0 (29-04-2022)
 -------------------
