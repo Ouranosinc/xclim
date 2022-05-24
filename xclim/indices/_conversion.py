@@ -851,10 +851,10 @@ def wind_chill_index(
 
     Notes
     -----
-    Following the calculations of Environment and Climate Change Canada, this function switches from the standardized index
-    to another one for slow winds. The standard index is the same as used by the National Weather Service of the USA.
-    Given a temperature at surface :math:`T` (in °C) and 10-m wind speed :math:`V` (in km/h), the Wind Chill Index
-    :math:`W` (dimensionless) is computed as:
+    Following the calculations of Environment and Climate Change Canada, this function switches from the standardized
+    index to another one for slow winds. The standard index is the same as used by the National Weather Service of the
+    USA ([NWS]_). Given a temperature at surface :math:`T` (in °C) and 10-m wind speed :math:`V` (in km/h), the Wind
+    Chill Index :math:`W` (dimensionless) is computed as:
 
     .. math::
 
@@ -874,7 +874,7 @@ def wind_chill_index(
 
     See Also
     --------
-    National Weather Service FAQ: [NWS]_.
+    National Weather Service FAQ: ([NWS]_).
 
     References
     ----------
