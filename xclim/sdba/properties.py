@@ -163,7 +163,7 @@ def skewness(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray
 
     See Also
     --------
-    :doc:`reference/generated/scipy.stats.skew`
+    scipy.stats.skew
     """
     attrs = da.attrs
     if group.prop != "group":
@@ -343,7 +343,7 @@ def acf(
 
     See Also
     --------
-    :doc:`generated/statsmodels.tsa.stattools.acf`
+    statsmodels.tsa.stattools.acf
 
     References
     ----------
@@ -662,7 +662,9 @@ def trend(
 
     See Also
     --------
-    :doc:`reference/generated/scipy.stats.linregress` and  :doc:`reference/generated/numpy.polyfit`
+    scipy.stats.linregress
+
+    numpy.polyfit
 
     Examples
     --------
