@@ -1,7 +1,7 @@
 # noqa: D205,D400
 """
-SDBA Detrending Objects
-=======================
+Detrending Objects
+==================
 """
 from __future__ import annotations
 

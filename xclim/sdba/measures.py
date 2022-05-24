@@ -1,7 +1,7 @@
 # noqa: D205,D400
 """
-SDBA Measures Submodule
-=======================
+Measures Submodule
+==================
 SDBA diagnostic tests are made up of properties and measures. Measures compare adjusted simulations to a reference,
 through statistical properties or directly.
 This framework for the diagnostic tests was inspired by the [VALUE]_ project.

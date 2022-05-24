@@ -80,7 +80,7 @@ class BaseAdjustment(ParametrizableWithDataset):
     def _check_inputs(cls, *inputs, group):
         """Raise an error if there are chunks along the main dimension.
 
-        Also raises if :py:func:cls._allow_diff_calendars is False and calendars differ.
+        Also raises if :py:attr:`BaseAdjustment._allow_diff_calendars` is False and calendars differ.
         """
         for inda in inputs:
             if uses_dask(inda) and len(inda.chunks[inda.get_axis_num(group.dim)]) > 1:
