@@ -1,7 +1,7 @@
 # noqa: D205,D400
 """
-SDBA Ensembles Creation and Statistics
-======================================
+Ensembles Creation and Statistics
+=================================
 """
 from __future__ import annotations
 
