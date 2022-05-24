@@ -56,10 +56,10 @@ with open("requirements_dev.txt") as dev:
 
 upstream_requirements = [
     "wheel",
-    "git+https://github.com/pydata/bottleneck.git@master#egg=bottleneck",
-    "git+https://github.com/Unidata/cftime.git@master#egg=cftime",
-    "git+https://github.com/dcherian/flox.git@main#egg=flox",
-    "git+https://github.com/pydata/xarray.git@main#egg=xarray",
+    "bottleneck @ git+https://github.com/pydata/bottleneck.git@master#egg=bottleneck",
+    "cftime @ git+https://github.com/Unidata/cftime.git@master#egg=cftime",
+    "flox @ git+https://github.com/dcherian/flox.git@main#egg=flox",
+    "xarray @ git+https://github.com/pydata/xarray.git@main#egg=xarray",
 ]
 
 KEYWORDS = "xclim climate climatology netcdf gridded analysis"
