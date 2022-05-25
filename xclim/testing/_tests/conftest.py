@@ -10,7 +10,7 @@ import xarray as xr
 
 import xclim.testing
 from xclim.core.calendar import max_doy
-from xclim.testing.tests import TD
+from xclim.testing._tests import TD
 
 
 @pytest.fixture

@@ -1,4 +1,10 @@
-"""Mock subset module for API compatibility."""
+"""
+Mock subset module for API compatibility.
+
+See Also
+--------
+clisops.core.subset
+"""
 from __future__ import annotations
 
 import os

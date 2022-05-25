@@ -105,6 +105,12 @@ Testing module
     :members:
     :noindex:
 
+.. automodule:: xclim.testing.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
 Subset module
 -------------
 .. warning::
