@@ -280,9 +280,13 @@ class TestPotentialEvapotranspiration:
 
         pet_tw48 = atmos.potential_evapotranspiration(tas=tm, method="TW48")
 
-        np.testing.assert_allclose(pet_br65[0, 100:102], [np.nan, np.nan])
-        np.testing.assert_allclose(pet_hg85[100:102, 0], [np.nan, np.nan])
-        np.testing.assert_allclose(pet_tw48[0, 0], [np.nan])
+        np.testing.assert_allclose(
+            pet_br65.isel(location=0, time=slice(100, 102)), [np.nan, np.nan]
+        )
+        np.testing.assert_allclose(
+            pet_hg85.isel(location=0, time=slice(100, 102)), [np.nan, np.nan]
+        )
+        np.testing.assert_allclose(pet_tw48.isel(location=0, time=0), [np.nan])
 
 
 class TestWaterBudget:

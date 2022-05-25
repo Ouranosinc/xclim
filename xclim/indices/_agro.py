@@ -395,8 +395,8 @@ def biologically_effective_degree_days(
         else:
             day_length = aggregate_between_dates(
                 day_lengths(dates=tasmin.time, lat=lat, method="simple"),
-                start_date=start_date,
-                end_date=end_date,
+                start=start_date,
+                end=end_date,
                 freq=freq,
             )
             k = 1

@@ -436,12 +436,12 @@ def saturation_vapor_pressure(
                 + 2.7150305 * np.log(tas)
             ),
             np.exp(
-                +-5866.6426 / tas
+                -5866.6426 / tas
                 + 22.32870244
                 + 1.39387003e-2 * tas
                 + -3.4262402e-5 * tas**2
                 + 2.7040955e-8 * tas**3
-                + 3.7063522e-1 * np.log(tas)
+                + 6.7063522e-1 * np.log(tas)
             ),
         )
     else:

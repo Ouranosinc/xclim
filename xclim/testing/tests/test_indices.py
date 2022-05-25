@@ -2458,10 +2458,10 @@ def test_water_budget_from_tas(pr_series, tasmin_series, tasmax_series, lat_seri
     tx = tasmax_series(np.array([10, 15, 20]) + K2C).expand_dims(lat=lat)
 
     out = xci.water_budget(pr, tasmin=tn, tasmax=tx, lat=lat, method="BR65")
-    np.testing.assert_allclose(out[0, 2], [6.138921 / 86400], rtol=1e-3)
+    np.testing.assert_allclose(out[0, 2], 6.138921 / 86400, rtol=2e-3)
 
     out = xci.water_budget(pr, tasmin=tn, tasmax=tx, lat=lat, method="HG85")
-    np.testing.assert_allclose(out[0, 2], [6.037411 / 86400], rtol=1e-3)
+    np.testing.assert_allclose(out[0, 2], 6.037411 / 86400, rtol=2e-3)
 
     time_std = date_range("1990-01-01", "1990-12-01", freq="MS", calendar="standard")
     tm = xr.DataArray(
