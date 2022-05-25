@@ -19,10 +19,8 @@ import sys
 import warnings
 from collections import OrderedDict
 
-import cftime
 import xarray
 
-cftime.datetime.__module__ = "cftime"
 xarray.DataArray.__module__ = "xarray"
 xarray.Dataset.__module__ = "xarray"
 xarray.CFTimeIndex.__module__ = "xarray"
