@@ -11,9 +11,10 @@ Users should read this module's documentation and the one of `fire_weather_ufunc
 First adapted from Matlab code `CalcFWITimeSeriesWithStartup.m` from GFWED made for using MERRA2 data, which was a
 translation of FWI.vba of the Canadian Fire Weather Index system. Then, updated and synchronized with the R code of the
 cffdrs package. When given the correct parameters, the current code has an error below 3% when compared with the
-[GFWED]_ data.
+[GFWED2015]_ data.
 
-Parts of the code and of the documentation in this submodule are directly taken from [cffdrs] which was published with the GPL-2 license.
+Parts of the code and of the documentation in this submodule are directly taken from [cffdrs] which was published with
+the GPLv2 license.
 
 Fire season
 -----------
@@ -27,9 +28,10 @@ replicating the `fwi` method of the R package.
 
 The fire season determination is based on three consecutive daily maximum temperature thresholds
 ([Wotton&Flannigan1993]_, [Lawson&Armitage2008]_). A "GFWED" method is also implemented. There, the 12h LST temperature
-is used instead of the daily maximum. The current implementation is slightly different from the description in [GFWED]_,
-but it replicates the Matlab code when `temp_start_thresh` and `temp_end_thresh` are both set to 6 degC. In xclim, the
-number of consecutive days, the start and end temperature thresholds and the snow depth threshold can all be modified.
+is used instead of the daily maximum. The current implementation is slightly different from the description in
+[GFWED2015]_, but it replicates the Matlab code when `temp_start_thresh` and `temp_end_thresh` are both set to 6 degC.
+In xclim, the number of consecutive days, the start and end temperature thresholds and the snow depth threshold can all
+be modified.
 
 Overwintering
 -------------
@@ -42,18 +44,17 @@ The code for the overwintering is based on [MBHFJ2020]_.
 Finally, a mechanism for dry spring starts is implemented. For now, it is slightly different from what the GFWED, uses,
 but seems to agree with the state of the science of the CFS. When activated, the drought code and Duff-moisture codes are
 started in spring with a value that is function of the number of days since the last significative precipitation event.
-The conventionnal start value increased by that number of days times a "dry start" factor. Parameters are controlled in
+The conventional start value increased by that number of days times a "dry start" factor. Parameters are controlled in
 the call of the indices and :py:func:`fire_weather_ufunc`. Overwintering of the drought code overrides this mechanism if
 both are activated. GFWED use a more complex approach with an added check on the previous day's snow cover for
-determining "dry" points.
-# FIXME: unfininshed sentence
-Moreover, there, the start values are only the multiplication of a factor to the number of dry days, the conventionnal
+determining "dry" points. Moreover, there, the start values are only the multiplication of a factor to the number of dry
+days.
 
 Examples
 --------
 The current litterature seems to agree that climate-oriented series of the fire weather indexes should be computed
-using only the longest fire season of each year and activatting the overwintering of the drought code and the "dry start"
-for the duff-moisture code. The following example uses reasonable parameters when computing over all of Canada.
+using only the longest fire season of each year and activatting the overwintering of the drought code and the "dry
+start" for the duff-moisture code. The following example uses reasonable parameters when computing over all of Canada.
 
 .. note::
 
@@ -137,7 +138,7 @@ Fire season determination methods:
 
 .. [Wotton&Flannigan1993] Wotton, B.M. and Flannigan, M.D. (1993). Length of the fire season in a changing climate. ForestryChronicle, 69, 187-192.
 .. [Lawson&Armitage2008] Lawson B.D. and Armitage O.B. 2008. Weather Guide for the Canadian Forest Fire Danger RatingSystem. Natural Resources Canada, Canadian Forest Service, Northern Forestry Centre, Edmonton,Alberta. 84 p.http://cfs.nrcan.gc.ca/pubwarehouse/pdfs/29152.pdf
-.. [GFWED] Field, R. D., Spessa, A. C., Aziz, N. A., Camia, A., Cantin, A., Carr, R., de Groot, W. J., Dowdy, A. J., Flannigan, M. D., Manomaiphiboon, K., Pappenberger, F., Tanpipat, V., and Wang, X. (2015) Development of a Global Fire Weather Database, Nat. Hazards Earth Syst. Sci., 15, 1407–1423, https://doi.org/10.5194/nhess-15-1407-2015
+.. [GFWED2015] Field, R. D., Spessa, A. C., Aziz, N. A., Camia, A., Cantin, A., Carr, R., de Groot, W. J., Dowdy, A. J., Flannigan, M. D., Manomaiphiboon, K., Pappenberger, F., Tanpipat, V., and Wang, X. (2015) Development of a Global Fire Weather Database, Nat. Hazards Earth Syst. Sci., 15, 1407–1423, https://doi.org/10.5194/nhess-15-1407-2015
 
 Drought Code overwintering:
 
@@ -373,7 +374,7 @@ def _duff_moisture_code(
         wmi = 20.0 + 280.0 / np.exp(
             0.023 * dmc0
         )  # *Eq.12*#  This line replicates cffdrs (R code from CFS)
-        # wmi = 20.0 + np.exp(5.6348 - dmc0 / 43.43)  # *Eq.12*# This line repliacates GFWED (Matlab code)
+        # wmi = 20.0 + np.exp(5.6348 - dmc0 / 43.43)  # *Eq.12*# This line replicates GFWED (Matlab code)
         if dmc0 <= 33.0:
             b = 100.0 / (0.5 + 0.3 * dmc0)  # *Eq.13a*#
         else:
@@ -1321,7 +1322,8 @@ def fire_weather_indexes(
         Whether to activate the DC and DMC "dry start" mechanism or not, see :py:func:`fire_weather_ufunc`.
     initial_start_up : bool
         If True (default), gridpoints where the fire season is active on the first timestep go through a start_up phase
-        for that time step. Otherwise, previous codes must be given as a continuing fire season is assumed for those points.
+        for that time step. Otherwise, previous codes must be given as a continuing fire season is assumed for those
+        points.
     params :
       Any other keyword parameters as defined in :py:func:`fire_weather_ufunc` and in :py:data:`default_params`.
 
@@ -1424,7 +1426,8 @@ def drought_code(
         , see :py:func:`fire_weather_ufunc`.
     initial_start_up : bool
         If True (default), grid points where the fire season is active on the first timestep go through a start_up phase
-        for that time step. Otherwise, previous codes must be given as a continuing fire season is assumed for those points.
+        for that time step. Otherwise, previous codes must be given as a continuing fire season is assumed for those
+        points.
     params :
       Any other keyword parameters as defined in `xclim.indices.fwi.fire_weather_ufunc` and in :py:data:`default_params`.
 
