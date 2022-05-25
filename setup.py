@@ -7,7 +7,7 @@ import re
 from setuptools import find_packages, setup
 
 NAME = "xclim"
-DESCRIPTION = "Derived climate variables built with xarray."
+DESCRIPTION = "Climate indices computation package based on Xarray."
 URL = "https://github.com/Ouranosinc/xclim"
 AUTHOR = "Travis Logan"
 AUTHOR_EMAIL = "logan.travis@ouranos.ca"

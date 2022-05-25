@@ -919,7 +919,7 @@ def within_bnds_doy(
 def _doy_days_since_doys(
     base: xr.DataArray, start: DayOfYearStr | None = None
 ) -> tuple[xr.DataArray, xr.DataArray, xr.DataArray]:
-    """Calculate doy to days since of the inverse.
+    """Calculate dayofyear to days since, or the inverse.
 
     Parameters
     ----------

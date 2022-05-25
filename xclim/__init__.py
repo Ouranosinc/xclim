@@ -1,4 +1,4 @@
-"""Climate indices computation package based on Xarray."""
+# noqa: D104
 from __future__ import annotations
 
 from importlib.resources import contents, path

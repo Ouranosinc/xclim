@@ -1,5 +1,5 @@
-"""Testing and tutorial utilities module."""
-# Most of this code copied and adapted from xarray
+"""Testing and tutorial utilities' module."""
+# Some of this code was copied and adapted from xarray
 from __future__ import annotations
 
 import hashlib

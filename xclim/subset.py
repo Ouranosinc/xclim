@@ -1,6 +1,7 @@
 """Mock subset module for API compatibility."""
 from __future__ import annotations
 
+import os
 import warnings
 
 try:
@@ -18,8 +19,11 @@ try:
     )
 
 except ImportError as e:
-    raise ImportError(
-        f"{__name__} is deprecated in xclim v0.19.1-beta. "
-        f"Subset functions are now dependent on the `clisops` library. This library can be installed via "
-        f'`pip install xclim["gis"]`, `pip install clisops` or `conda install clisops`.'
-    ) from e
+    if not os.getenv("READTHEDOCS"):
+        raise ImportError(
+            f"{__name__} is deprecated in xclim v0.19.1-beta. "
+            f"Subset functions are now dependent on the `clisops` library. This library can be installed via "
+            f'`pip install xclim["gis"]`, `pip install clisops` or `conda install clisops`.'
+        ) from e
+    else:
+        pass
