@@ -616,7 +616,7 @@ def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | N
     -------
     str
       An offset string, conformant to pandas-like naming conventions.
-    
+
     Notes
     -----
     This provides the mirror opposite functionality of :py:func:`parse_offset`.
