@@ -649,38 +649,30 @@ def standardized_precipitation_index(
     ----------
     .. [1] McKee, Thomas B., Nolan J. Doesken, and John Kleist. "The relationship of drought frequency and duration to time scales." In Proceedings of the 8th Conference on Applied Climatology, vol. 17, no. 22, pp. 179-183. 1993.
     """
-    # Obtain fitting params
-    params = fit_group(pr_cal, dist, "MS", window)
+    supported_dists = ["gamma"]
+    if dist not in supported_dists:
+        raise NotImplementedError(f"Distribution `{dist}` not supported.")
 
-    # Unpack attributes of params
-    dist, freq, group, window = (
-        params.attrs[s] for s in ["scipy_dist", "freq", "group", "window"]
-    )
+    freq = "MS"
 
-    # Resampling and rolling
+    # Resampling and rolling precipitations
     pr = pr.resample(time=freq).mean()
     if window > 1:
         attrs = pr.attrs.copy()
         pr = pr.rolling(time=window).mean(skipna=False)
         pr.attrs.update(attrs)
 
-    # Give the time_segment a general name
-    time_segment_dim = list(
-        set(list(params.dims)).difference(list(pr.dims) + ["dparams"])
-    )[0]
-    params = params.rename({time_segment_dim: "time_segment"})
-
-    # Expand params along time dimension
-    grouped_time = list(pr.time.groupby(group))
-
+    # Obtain fitting params and expand along time dimension
+    params = fit_group(pr_cal, dist, freq, window)
+    grouped_time = list(pr.time.groupby("time.month"))
     params = xarray.concat(
         [
-            params.isel(time_segment=i)
-            .drop_vars("time_segment")
+            params.isel(month=i)
+            .drop_vars("month")
             .assign_coords(time=grouped_time[i][1][0].values)
             .expand_dims("time")
             .reindex_like(grouped_time[i][1], method="ffill")
-            for i in range(0, params.sizes["time_segment"])
+            for i in range(0, params.sizes["month"])
         ],
         dim="time",
     )
@@ -694,7 +686,7 @@ def standardized_precipitation_index(
     else:
         raise NotImplementedError(f"Distribution `{dist}` not supported.")
 
-    # Invert to normal distribution with ppf
+    # Invert to normal distribution with ppf and obtain SPI
     params_norm = xarray.DataArray(
         [0, 1],
         dims=["dparams"],
@@ -710,59 +702,55 @@ def standardized_precipitation_index(
 
 
 # @declare_units(
-#     pr="[precipitation]",
-#     tasmin="[temperature]",
-#     tasmax="[temperature]",
-#     tas="[temperature]",
+#     wb="[precipitation]",
+#     wb_cal="[precipitation]",
 # )
 # def standardized_precipitation_evapotranspiration_index(
-#     pr: xarray.DataArray,
-#     tasmin: xarray.DataArray | None = None,
-#     tasmax: xarray.DataArray | None = None,
-#     tas: xarray.DataArray | None = None,
-#     freq: str = "YS",
+#     wb: xarray.DataArray,
+#     wb_cal: xarray.DataArray,
+#     window: int = 1,
 #     dist: str = "gamma",
-#     method: str = "BR65",
+#     shift: int = 0,
 # ) -> xarray.DataArray:
 #     r"""Standardized Precipitation Evapotranspiration Index (SPEI).
 
-#     Precipitation minus potential evapotranspiration data fitted to a statistical distribution (dist), transformed to a cdf,  and inverted back to a gaussian normal pdf. The potential evapotranspiration is calculated with a given method (method).
+#     Precipitation minus potential evapotranspiration data (PET) fitted to a statistical distribution (dist), transformed to a cdf,  and inverted back to a gaussian normal pdf. The potential evapotranspiration is calculated with a given method (method).
 
 #     Parameters
 #     ----------
-#     pr : xarray.DataArray
-#       Daily precipitation.
-#     tasmin : xarray.DataArray
-#       Minimum daily temperature.
-#     tasmax : xarray.DataArray
-#       Maximum daily temperature.
-#     tas : xarray.DataArray
-#       Mean daily temperature.
-#     freq : str
-#       Resampling frequency.
-#     method : str
-#       Method to use to calculate the potential evapotranspiration.
+#     wb : xarray.DataArray
+#       Daily water budget (pr - pet).
+#     wb_cal : xarray.DataArray
+#       Daily water budget used for calibration.
+#     window : int
+#       Averaging window length (in month units).
 #     dist : str
-#       Name of the distribution function to be used for computing the SPEI, such as `log-logistic`, `gamma`, `pearsonIII`
-
-#     Notes
-#     -----
-#     Available methods are listed in the description of xclim.indicators.atmos.potential_evapotranspiration.
+#       Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
+#       (see scipy.stats).
 
 #     Returns
 #     -------
 #     xarray.DataArray,
 #       Standardized Precipitation Evapotranspiration Index.
+
+#     Notes
+#     -----
+#     See Standardized Precipitation Index (SPI) for more details on usage.
 #     """
-#     # Subtract PET from precipiations and add an offset to ensure that the minimal value of this quantity is positive
-#     pr_minus_pet = water_budget(pr, tasmin, tasmax, tas, method)
-#     # Is this way of extracting the minimal value robust?
-#     # At this point, we could multiply the offset by 1.01 to ensure we are *above* zero. What is best?
-#     pr_minus_pet_offsetted = pr_minus_pet - pr_minus_pet.min().item() * (
-#         pr_minus_pet.min().item() < 0
-#     )
-#     pr_minus_pet_offsetted.attrs = pr_minus_pet.attrs
-#     spei = standardized_precipitation_index(pr_minus_pet_offsetted, freq, dist)
+#     # The offset is not very well behaved. pearson3 or log-logistic is probably the way to go
+#     if(dist == "gamma"):
+#         min_value = min(wb.min().item(), wb_cal.min().item())
+#         if(min_value < 0) :
+#             def offset_da(da):
+#                 attrs = da.attrs
+#                 da = da-shift*min_value
+#                 da.attrs.update(attrs)
+#                 return da
+#             wb = offset_da(wb)
+#             wb_cal = offset_da(wb_cal)
+
+
+#     spei = standardized_precipitation_index(wb, wb_cal, window,  dist)
 
 #     return spei
 
