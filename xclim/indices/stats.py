@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Sequence, Union
 
 import numpy as np
+import pandas as pd
 import xarray as xr
 
 from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history
@@ -13,6 +14,7 @@ from . import generic
 
 __all__ = [
     "fit",
+    "fit_group",
     "parametric_quantile",
     "parametric_cdf",
     "fa",
@@ -151,6 +153,62 @@ def fit(
     )
     out.attrs.update(attrs)
     return out
+
+
+def fit_group(
+    da: xr.DataArray,
+    dist: str = "gamma",
+    freq: str = "MS",
+    window: int = 1,
+) -> xr.DataArray:
+    """Fit a resampled array averaged over a rolling window to a univariate distribution along the time dimension.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+      Input data.
+    dist : str
+      Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
+      (see scipy.stats).
+    freq : str
+      Resampling frequency.
+    window : int
+      Averaging window length (In units of the resampling frequency period).
+
+
+    Returns
+    -------
+    xr.DataArray
+      An array of fitted distribution parameters for each time segment
+
+
+    Notes
+    -----
+    The resampling frequency time delta must be an integer number of months. It determines time segments used to fit
+    the array group by group. For example, choosing `freq = 'MS` will give 12 time segment, i.e. months.
+    A time series for each month is used to obtain a set of fitting parameters.
+    """
+    # Freq must have a time delta which is an integer number of month
+    dts = pd.date_range("1950-01-01", periods=2, freq=freq).to_pydatetime()
+    if dts[-1].day - dts[0].day != 0 or dts[-1].second - dts[0].second != 0:
+        raise NotImplementedError(f"Resampling frequency `{freq}` not supported.")
+
+    # groupby argument, depends on the smallest time period allowed with freq
+    group = "time.month"
+
+    # Resampling and rolling
+    da = da.resample(time=freq).mean()
+    if window > 1:
+        attrs = da.attrs.copy()
+        da = da.rolling(time=window).mean(skipna=False)
+        da.attrs.update(attrs)
+
+    fit_params = da.groupby(group).map(lambda x: fit(x, dist=dist))
+    fit_params.attrs["freq"] = freq
+    fit_params.attrs["window"] = window
+    fit_params.attrs["group"] = group
+
+    return fit_params
 
 
 def parametric_quantile(p: xr.DataArray, q: int | Sequence) -> xr.DataArray:
