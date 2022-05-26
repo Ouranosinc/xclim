@@ -21,7 +21,7 @@ indicators:
   R75pdays:
     base: days_over_precip_thresh
     parameters:
-      per:
+      pr_per:
         description: Daily 75th percentile of wet day precipitation flux.
       thresh: 1 mm/day
   fd:
