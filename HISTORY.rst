@@ -21,6 +21,9 @@ New features and enhancements
 * Added a notebook showcasing some simple examples of Spatial Analogues. (:issue:`585`, :pull:`1075`).
 * ``create_ensembles`` now accepts a glob string to find datasets. (:pull:`1081`).
 * Improved percentile based indicators metadata with the window, threshold and climatology period used to compute percentiles. (:issue:`1047`, :pull:`1050`).
+* New ``xclim.core.calendar.construct_offset``, the inverse operation of ``parse_offset``. (:pull:`1090`).
+* Rechunking operations in ``xclim.indices.run_length.rle`` are now synchronized with dask's options. (:pull:`1090`).
+
 
 Breaking changes
 ^^^^^^^^^^^^^^^^

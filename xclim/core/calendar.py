@@ -600,6 +600,32 @@ def parse_offset(freq: str) -> Sequence[str]:
     return mult, base, start == "S", anchor
 
 
+def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | None):
+    """Reconstruct an offset string from its parts.
+
+    Parameters
+    ----------
+    mult: int
+      The period multiplicator (>= 1).
+    base : str
+      The base period string (one char).
+    start_anchored: bool
+      If True, adds the "S" flag.
+    anchor: str, optional
+      The month anchor of the offset.
+
+    Returns
+    -------
+    str
+      An offset string, conformant to pandas-like naming conventions.
+
+    Notes
+    -----
+    This provides the mirror opposite functionality of :py:func:`parse_offset`.
+    """
+    return f"{mult if mult > 1 else ''}{base}{'S' if start_anchored else ''}{'-' if anchor else ''}{anchor or ''}"
+
+
 def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArray:
     """Interpolate from one set of dayofyear range to another.
 
