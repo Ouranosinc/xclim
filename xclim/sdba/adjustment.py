@@ -505,7 +505,7 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
 
     .. math::
 
-        sim\frac{F^{-1}_{ref}\left[F_{sim}(sim)\right]}{F^{-1}_{hist}\left[F_{sim}(sim)\right]}
+        sim\frac{F^{-1}_{hist}\left[F_{sim}(sim)\right]}{F^{-1}_{ref}\left[F_{sim}(sim)\right]}
 
     where :math:`F` is the cumulative distribution function (CDF). This equation is valid for multiplicative adjustment.
     The algorithm is based on the "QDM" method of [Cannon2015]_.
