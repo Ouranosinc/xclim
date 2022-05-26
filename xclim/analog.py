@@ -23,7 +23,7 @@ wine grape industry, the climate indices examined could include the length of th
 season, growing degree-days, annual winter minimum temperature and annual number of
 very cold days [Roy2017]_.
 
-See :ref:`Spatial Analogues examples`.
+See :ref:`notebooks/analogs:Spatial Analogues examples`.
 
 
 Methods to compute the (dis)similarity between samples
@@ -46,7 +46,7 @@ with analogue climate conditions to a target climate.
 All methods accept arrays, the first is the reference (n, D) and
 the second is the candidate (m, D). Where the climate indicators
 vary along D and the distribution dimension along n or m. All methods output
-a single float. See their documentation in :ref:`Analogue metrics API`.
+a single float. See their documentation in :ref:`analogues:Analogue metrics API`.
 
 .. warning::
 

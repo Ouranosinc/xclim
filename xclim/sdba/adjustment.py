@@ -5,7 +5,7 @@ Adjustment Methods
 """
 from __future__ import annotations
 
-from typing import Any, Mapping, Union
+from typing import Any, Mapping
 from warnings import warn
 
 import numpy as np
@@ -1100,7 +1100,7 @@ class NpdfTransform(Adjust):
 
     The random matrices are generated following a method laid out by [Mezzadri2006]_.
 
-    This is only part of the full MBCn algorithm, see :ref:`Fourth example : Multivariate bias-adjustment with multiple steps - Cannon 2018`
+    This is only part of the full MBCn algorithm, see :ref:`notebooks/sdba:Statistical Downscaling and Bias-Adjustment`
     for an example on how to replicate the full method with xclim. This includes a
     standardization of the simulated data beforehand, an initial univariate adjustment
     and the reordering of those adjusted series according to the rank structure of the

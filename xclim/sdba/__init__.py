@@ -7,7 +7,8 @@ Statistical Downscaling and Bias Adjustment
 The `xclim.sdba` submodule provides bias-adjustment methods and will eventually provide statistical downscaling algorithms.
 Almost all adjustment algorithms conform to the `train` - `adjust` scheme, formalized within `TrainAdjust` classes.
 Given a reference time series (ref), historical simulations (hist) and simulations to be adjusted (sim),
-any bias-adjustment method would be applied by first estimating the adjustment factors between the historical simulation and the observations series, and then applying these factors to `sim`, which could be a future simulation::
+any bias-adjustment method would be applied by first estimating the adjustment factors between the historical simulation and
+the observations series, and then applying these factors to `sim`, which could be a future simulation::
 
   # Create the adjustment object by training it with reference and model data, plus certains arguments
   Adj = Adjustment.train(ref, hist, group="time.month")
@@ -42,7 +43,7 @@ A generic bias adjustment process is laid out as follows:
 
 The train-adjust approach allows to inspect the trained adjustment object. The training information is stored in
 the underlying `Adj.ds` dataset and always has a `af` variable with the adjustment factors. Its layout and the
-other available variables vary between the different algorithm, refer to :ref:`Adjustment Methods`.
+other available variables vary between the different algorithm, refer to :ref:`Adjustment methods <sdba:SDBA User API>`.
 
 Parameters needed by the training and the adjustment are saved to the ``Adj.ds`` dataset as a  `adj_params` attribute.
 Other parameters, those only needed by the adjustment are passed in the `adjust` call and written to the history attribute

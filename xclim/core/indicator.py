@@ -1447,7 +1447,7 @@ def build_indicator_module(
 ) -> ModuleType:
     """Create or update a module from imported objects.
 
-    The module is inserted as a submodule of `xclim.indicators`.
+    The module is inserted as a submodule of :py:mod:`xclim.indicators`.
 
     Parameters
     ----------
@@ -1495,7 +1495,7 @@ def build_indicator_module_from_yaml(
 ) -> ModuleType:
     """Build or extend an indicator module from a YAML file.
 
-    The module is inserted as a submodule of `xclim.indicators`. When given only a base filename (no 'yml' extesion), this
+    The module is inserted as a submodule of :py:mod:`xclim.indicators`. When given only a base filename (no 'yml' extesion), this
     tries to find custom indices in a module of the same name (*.py) and translations in json files (*.<lang>.json), see Notes.
 
     Parameters
@@ -1511,7 +1511,7 @@ def build_indicator_module_from_yaml(
       here, then the indicator class will search in xclim.indices.generic and finally in xclim.indices.
     translations  : Mapping of dicts or path, optional
       Translated metadata for the new indicators. Keys of the mapping must be 2-char language tags.
-      Values can be translations dictionaries as defined in :ref:`Internationalization`.
+      Values can be translations dictionaries as defined in :ref:`internationalization:Internationalization`.
       They can also be a path to a json file defining the translations.
     mode: {'raise', 'warn', 'ignore'}
       How to deal with broken indice definitions.
@@ -1522,7 +1522,7 @@ def build_indicator_module_from_yaml(
     Returns
     -------
     ModuleType
-      A submodule of `xclim.indicators`.
+      A submodule of `pym:mod:`xclim.indicators`.
 
     Notes
     -----

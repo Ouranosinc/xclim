@@ -17,7 +17,7 @@ Implement Features, Indices or Indicators
 
 xclim's structure makes it easy to create and register new user-defined indices and indicators.
 For the general implementation of indices and their wrapping into indicators, refer to
-:ref:`Extending xclim`  and  :ref:`Customizing and controlling xclim`.
+:ref:`notebooks/extendxclim:Extending xclim`  and  :ref:`notebooks/customize:Customizing and controlling xclim`.
 
 Look through the GitHub issues for features. Anything tagged with "enhancement"
 and "help wanted" is open to whoever wants to implement it.
@@ -28,7 +28,7 @@ General to-do list for implementing a new Indicator:
 
     * Indices are function wrapped with :py:func:`~xclim.core.units.declare_units`
     * Their input arguments should have type annotations, as documented in :py:class:`~xclim.core.utils.InputKind`
-    * Their docstring should follow the scheme explained in :ref:`Defining new indices`.
+    * Their docstring should follow the scheme explained in :ref:`notebooks/extendxclim:Defining new indices`.
     * They should set the units on their outputs, but no other metadata fields.
     * Their code should be found in the most relevant ``xclim/indices/_*.py``  file. Functions are explicitly added to the ``__all__`` at the top of the file.
 
@@ -39,7 +39,7 @@ General to-do list for implementing a new Indicator:
 
 3. Add the indicator
 
-    * See :ref:`Defining new indicators` for more info and look at the other indicators for inspiration.
+    * See :ref:`notebooks/extendxclim:Defining new indicators` for more info and look at the other indicators for inspiration.
     * They are added in the most relevant ``xclim/indicators/{realm}/_*.py`` file.
     * Indicator are instances of subclasses of :py:class:`xclim.core.indicator.Indicator`.
       They should use a class declared within the ``{realm}`` folder, creating a dummy one if needed. They are explicitly added to the file's ``__all__``.

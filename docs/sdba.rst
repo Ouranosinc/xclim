@@ -2,7 +2,7 @@
 Bias adjustment and downscaling algorithms
 ==========================================
 
-`xarray` data structures allow for relatively straightforward implementations of simple bias-adjustment and downscaling algorithms documented in :ref:`Adjustment methods`. Each algorithm is split into `train` and `adjust` components. The `train` function will compare two DataArrays `x` and `y`, and create a dataset storing the *transfer* information allowing to go from `x` to `y`. This dataset, stored in the adjustment object, can then be used by the `adjust` method to apply this information to `x`. `x` could be the same `DataArray` used for training, or another `DataArray` with similar characteristics.
+`xarray` data structures allow for relatively straightforward implementations of simple bias-adjustment and downscaling algorithms documented in :ref:`Adjustment Methods <sdba:SDBA User API>`. Each algorithm is split into `train` and `adjust` components. The `train` function will compare two DataArrays `x` and `y`, and create a dataset storing the *transfer* information allowing to go from `x` to `y`. This dataset, stored in the adjustment object, can then be used by the `adjust` method to apply this information to `x`. `x` could be the same `DataArray` used for training, or another `DataArray` with similar characteristics.
 
 For example, given a daily time series of observations `ref`, a model simulation over the observational period `hist` and a model simulation over a future period `sim`, we would apply a bias-adjustment method such as *detrended quantile mapping* (DQM) as::
 

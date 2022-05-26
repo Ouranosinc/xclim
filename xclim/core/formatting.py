@@ -12,7 +12,7 @@ import string
 from ast import literal_eval
 from fnmatch import fnmatch
 from inspect import _empty, signature  # noqa
-from typing import Any, Dict, Mapping, Optional, Sequence, Union
+from typing import Any, Mapping, Sequence
 
 import xarray as xr
 from boltons.funcutils import wraps
@@ -132,7 +132,7 @@ default_formatter = AttrFormatter(
 def parse_doc(doc: str) -> dict[str, str]:
     """Crude regex parsing reading an indice docstring and extracting information needed in indicator construction.
 
-    The appropriate docstring syntax is detailed in :ref:`Defining new indices`.
+    The appropriate docstring syntax is detailed in :ref:`notebooks/extendxclim:Defining new indices`.
 
     Parameters
     ----------

@@ -2,7 +2,7 @@
 API
 ===
 
-The API of the statistical downscaling and bias adjustment module (sdba) is documented :ref:`on this page <SDBA user API>`. The API of the ``cfchecks``, ``datachecks``, ``missing`` and ``dataflags`` modules are in :ref:`Health Checks`. Finally, the API of the translating tools is on the :ref:`Internationalization` page.
+The API of the statistical downscaling and bias adjustment module (sdba) is documented :ref:`on this page <sdba:SDBA User API>`. The API of the ``cfchecks``, ``datachecks``, ``missing`` and ``dataflags`` modules are in :ref:`checks:Health Checks`. Finally, the API of the translating tools is on the :ref:`internationalization:Internationalization` page.
 
 
 Indicators
@@ -96,7 +96,7 @@ Other xclim modules
 Spatial Analogs module
 ----------------------
 
-See :ref:`Spatial analogues`.
+See :ref:`analogues:Spatial analogues`.
 
 Testing module
 --------------

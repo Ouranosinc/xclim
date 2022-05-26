@@ -4,7 +4,7 @@ Internationalization
 ====================
 
 This module defines methods and object to help the internationalization of metadata for
-climate indicators computed by xclim. Go to :ref:`Adding translated metadata` to see
+climate indicators computed by xclim. Go to :ref:`notebooks/customize:Adding translated metadata` to see
 how to use this feature.
 
 All the methods and objects in this module use localization data given in json files.
