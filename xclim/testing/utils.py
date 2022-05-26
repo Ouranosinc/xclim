@@ -294,7 +294,7 @@ def list_input_variables(
     """List all possible variables names used in xclim's indicators.
 
     Made for development purposes. Parses all indicator parameters with the
-    :py:attribute:`xclim.core.utils.InputKind.VARIABLE` or `OPTIONAL_VARIABLE` kinds.
+    :py:attr:`xclim.core.utils.InputKind.VARIABLE` or `OPTIONAL_VARIABLE` kinds.
 
     Parameters
     ----------
