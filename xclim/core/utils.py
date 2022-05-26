@@ -567,6 +567,7 @@ def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> Inpu
         )
     else:
         annot = {"no_annotation"}
+
     if "DataArray" in annot and "None" not in annot and param.default is not None:
         return InputKind.VARIABLE
 
@@ -751,3 +752,68 @@ def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
 
     with open(adapted, "w") as f:
         safe_dump(yml, f)
+
+
+class PercentileDataArray(xr.DataArray):
+    """Wrap xarray DataArray for percentiles values.
+
+    This class is used internally with its corresponding InputKind to recognize this
+    sort of input and to retrieve from it the attributes needed to build indicator
+    metadata.
+    """
+
+    @classmethod
+    def is_compatible(cls, source: xr.DataArray) -> bool:
+        """Evaluate whether PecentileDataArray is conformant with expected fields.
+
+        A PercentileDataArray must have climatology_bounds attributes and either a
+        quantile or percentiles coordinate, the window is not mandatory.
+        """
+        return (
+            isinstance(source, xr.DataArray)
+            and source.attrs.get("climatology_bounds", None) is not None
+            and ("quantile" in source.coords or "percentiles" in source.coords)
+        )
+
+    @classmethod
+    def from_da(
+        cls, source: xr.DataArray, climatology_bounds: list[str] = None
+    ) -> PercentileDataArray:
+        """Create a PercentileDataArray from a xarray.DataArray.
+
+        Parameters
+        ----------
+        source: DataArray
+          A DataArray with its content containing percentiles values.
+          It must also have a coordinate variable percentiles or quantile.
+        climatology_bounds: list[str]
+          Optional. A List of size two which contains the period on which the
+          percentiles were computed. See `xclim.core.calendar.build_climatology_bounds`
+          to build this list from a DataArray.
+
+        Returns
+        -------
+        PercentileDataArray
+          The initial `source` DataArray but wrap by PercentileDataArray class.
+          The data is unchanged and only climatology_bounds attributes is overridden
+          if q new value is given in inputs.
+        """
+        if (
+            climatology_bounds is None
+            and source.attrs.get("climatology_bounds", None) is None
+        ):
+            raise ValueError("PercentileDataArray needs a climatology_bounds.")
+        per = PercentileDataArray(source)
+        # handle case where da was create with `quantile()` method
+        if "quantile" in source.coords:
+            per = per.rename({"quantile": "percentiles"})
+            per.coords["percentiles"] = per.coords["percentiles"] * 100
+        clim_bounds = source.attrs.get("climatology_bounds", climatology_bounds)
+        per.attrs["climatology_bounds"] = clim_bounds
+        if "percentiles" in per.coords:
+            return per
+        raise ValueError(
+            f"DataArray {source.name} could not be turned into"
+            f" PercentileDataArray. The DataArray must have a"
+            f" 'percentiles' coordinate variable."
+        )
