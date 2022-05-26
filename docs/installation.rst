@@ -38,6 +38,13 @@ To improve performance of xclim, we highly recommend you also install `flox`_ (s
 
 We also recommend using the subsetting tools in `clisops`_ (see: :doc:`clisops.core.subset API <clisops:api>`) for spatial manipulation of geospatial data.
 
+`xclim` is regularly tested against the main development branches of a handful of key base libraries (xarray, cftime, flox, pint).
+For convenience, these libraries can be installed alongside `xclim` using the following pip-installable recipe:
+
+.. code-block::
+
+    $ pip install -e ".[upstream]"
+
 .. _flox: https://github.com/dcherian/flox
 .. _clisops: https://github.com/roocs/clisops
 
