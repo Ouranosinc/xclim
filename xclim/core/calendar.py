@@ -601,14 +601,12 @@ def parse_offset(freq: str) -> Sequence[str]:
 def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | None):
     """Reconstruct an offset string from its parts.
 
-    This the reverse of :py:func:`parse_offset`.
-
     Parameters
     ----------
     mult: int
       The period multiplicator (>= 1).
     base : str
-      The base period string (one char)
+      The base period string (one char).
     start_anchored: bool
       If True, adds the "S" flag.
     anchor: str, optional
@@ -616,7 +614,12 @@ def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | N
 
     Returns
     -------
-    An offset string as defined by pandas, str
+    str
+      An offset string, conformant to pandas-like naming conventions.
+    
+    Notes
+    -----
+    This provides the mirror opposite functionality of :py:func:`parse_offset`.
     """
     return f"{mult if mult > 1 else ''}{base}{'S' if start_anchored else ''}{'-' if anchor else ''}{anchor or ''}"
 

@@ -139,10 +139,10 @@ def rle(
             if dask.config.get("array.slicing.split-large-chunks") is None:
                 warn(
                     (
-                        f"xclim's run length needs to have a single chunk along {dim} "
-                        "and now needs to rechunks the array. To control this behaviour,"
-                        " use dask's config entries array.chunk-size and "
-                        "array.slicing.split-large-chunks."
+                        f"xclim's run length requires a single chunk along {dim} "
+                        "and must rechunk the provided array. To control this behaviour, "
+                        "use the dask.config entries for `array.chunk-size` and "
+                        "`array.slicing.split-large-chunks`."
                     ),
                     category=dask.array.PerformanceWarning,
                 )
