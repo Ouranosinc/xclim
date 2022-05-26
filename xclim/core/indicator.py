@@ -1040,7 +1040,9 @@ class Indicator(IndicatorRegistrar):
         # different order than the real function (but order doesn't really matter with keywords).
         kwargs = OrderedDict(**das)
         for k, v in args.items():
-            if cls._all_parameters[k].kind == InputKind.KWARGS:
+            if cls._all_parameters[k].injected:
+                continue
+            elif cls._all_parameters[k].kind == InputKind.KWARGS:
                 kwargs.update(**v)
             elif cls._all_parameters[k].kind != InputKind.DATASET:
                 kwargs[k] = v
