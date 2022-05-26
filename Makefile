@@ -91,4 +91,7 @@ dist: clean ## builds source and wheel package
 	ls -l dist
 
 install: clean ## install the package to the active Python's site-packages
-	python setup.py install
+	python -m pip install --no-user .
+
+develop: clean ## install the package and development dependencies in editable mode to the active Python's site-packages
+	python -m pip install --no-user --editable ".[dev]"
