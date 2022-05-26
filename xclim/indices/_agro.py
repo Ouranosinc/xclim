@@ -12,7 +12,7 @@ from xclim.core.units import convert_units_to, declare_units, rate2amount, to_ag
 from xclim.core.utils import DayOfYearStr
 from xclim.indices._threshold import first_day_above, first_day_below, freshet_start
 from xclim.indices.generic import aggregate_between_dates, day_lengths
-from xclim.indices.stats import dist_method
+from xclim.indices.stats import dist_method, fit_group
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -599,7 +599,9 @@ def water_budget(
 )
 def standardized_precipitation_index(
     pr: xarray.DataArray,
-    params: xarray.DataArray,
+    pr_cal: xarray.DataArray,
+    window: int = 1,
+    dist: str = "gamma",
 ) -> xarray.DataArray:
     r"""Standardized Precipitation Index (SPI).
 
@@ -607,8 +609,13 @@ def standardized_precipitation_index(
     ----------
     pr : xarray.DataArray
       Daily precipitation.
-    params : xarray.DataArray
-      Fitting parameters obtained with `xclim.indices.stats.fit_rolling`.
+    pr_cal : xarray.DataArray
+      Daily precipitation used for calibration.
+    window : int
+      Averaging window length (in months).
+    dist : str
+      Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
+      (see scipy.stats).
 
     Returns
     -------
@@ -618,11 +625,13 @@ def standardized_precipitation_index(
 
     Notes
     -----
-    The length `N` of the N-month SPI is determined by choosing the `window = N` when calling `xclim.indices.stats.fit_rolling` to generate `params`.
+    The length `N` of the N-month SPI is determined by choosing the `window = N`.
 
 
     Example
     -------
+    Computing SPI-3 using a gamma distribution for the fit
+
     .. code-block:: python
 
           import xclim.indices as xci
@@ -630,15 +639,19 @@ def standardized_precipitation_index(
 
           ds = xr.open_dataset(filename)
           pr = ds.pr
-          pr_cal = pr.sel(time=slice(calibration_start_date, calibration_end_date))
-          params = xci.stats.fit_rolling(pr_cal, dist='gamma', freq='MS', window=3)
-          spi_3 = xci._agro.standardized_precipitation_index(pr, params)
+          pr_cal = pr.sel(time=slice(calibration_start_date, calibration_end_date)
+          window = 3
+          dist = "gamma"
+          spi_3 = xci._agro.standardized_precipitation_index(pr, pr_cal, window, dist)
 
 
     References
     ----------
     .. [1] McKee, Thomas B., Nolan J. Doesken, and John Kleist. "The relationship of drought frequency and duration to time scales." In Proceedings of the 8th Conference on Applied Climatology, vol. 17, no. 22, pp. 179-183. 1993.
     """
+    # Obtain fitting params
+    params = fit_group(pr_cal, dist, "MS", window)
+
     # Unpack attributes of params
     dist, freq, group, window = (
         params.attrs[s] for s in ["scipy_dist", "freq", "group", "window"]
