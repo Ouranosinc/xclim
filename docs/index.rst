@@ -24,11 +24,21 @@ xclim currently provides over 50 indices related to mean, minimum and maximum da
    notebooks/cli
    sdba
    analogues
-   api
-   modules
    contributing
    authors
    history
+
+.. toctree::
+   :maxdepth: 2
+   :caption: User API
+
+   api
+
+.. toctree::
+   :maxdepth: 1
+   :caption: All Modules
+
+   modules
 
 Indices and tables
 ==================
