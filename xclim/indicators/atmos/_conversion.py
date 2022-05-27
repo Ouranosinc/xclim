@@ -25,6 +25,8 @@ __all__ = [
     "water_budget",
     "corn_heat_units",
     "universal_thermal_climate_index",
+    "wet_bulb_globe_temperature",
+    "mean_radiant_temperature",
 ]
 
 
@@ -286,4 +288,24 @@ universal_thermal_climate_index = Converter(
     cell_methods="",
     var_name="utci",
     compute=indices.universal_thermal_climate_index,
+)
+
+wet_bulb_globe_temperature = Converter(
+    identifier="wet_bulb_globe_temperature",
+    units="K",
+    long_name="Wet bulb globe temperature",
+    description="",
+    cell_methods="",
+    var_name="wbgt",
+    compute=indices.wet_bulb_globe_temperature,
+)
+
+mean_radiant_temperature = Converter(
+    identifier="mean_radiant_temperature",
+    units="K",
+    long_name="Mean radiant temperature",
+    description="",
+    cell_methods="",
+    var_name="tmrt",
+    compute=indices.mean_radiant_temperature,
 )

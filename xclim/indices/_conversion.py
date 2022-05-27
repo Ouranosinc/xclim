@@ -24,6 +24,8 @@ __all__ = [
     "clausius_clapeyron_scaled_precipitation",
     "potential_evapotranspiration",
     "universal_thermal_climate_index",
+    "wet_bulb_globe_temperature",
+    "mean_radiant_temperature",
 ]
 
 
@@ -1455,13 +1457,13 @@ def universal_thermal_climate_index(
     Parameters
     ----------
     tas : xarray.DataArray
-        Mean daily temperature
+        Mean temperature
     hurs : xarray.DataArray
         Relative Humidity
     sfcWind : xarray.DataArray
         Wind velocity
     tmrt: xarray.DataArray, optional
-        Daily mean radiant temperature
+        Mean radiant temperature
     mask_invalid: boolean
         If True (default), UTCI values are NaN where any of the inputs are outside
         their validity ranges : -50°C < tas < 50°C,  -30°C < tas - tmrt < 30°C
@@ -1492,10 +1494,9 @@ def universal_thermal_climate_index(
     tas = convert_units_to(tas, "degC")
     sfcWind = convert_units_to(sfcWind, "m/s")
     if tmrt is None:
-        delta = np.float32(0.0)
-    else:
-        tmrt = convert_units_to(tmrt, "degC")
-        delta = tmrt - tas
+        tmrt = mean_radiant_temperature(tas=tas, sfcWind=sfcWind)
+    tmrt = convert_units_to(tmrt, "degC")
+    delta = tmrt - tas
     pa = convert_units_to(e_sat, "kPa") * convert_units_to(hurs, "1")
 
     utci = _utci(tas, sfcWind, delta, pa)
@@ -1511,3 +1512,85 @@ def universal_thermal_climate_index(
             & (sfcWind < 17.0)
         )
     return utci
+
+
+@declare_units(tas="[temperature]")
+def wet_bulb_globe_temperature(
+    tas: xr.DataArray,
+) -> xr.DataArray:
+    """
+    Wet bulb globe temperature
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+        Mean temperature
+
+    Returns
+    -------
+    xarray.DataArray
+        Wet bulb globe temperature
+
+    Notes
+    -----
+    The calculation uses saturation vapor pressure computed according to the ITS-90 equation.
+
+    This code was inspired by the `thermofeel` package.
+
+    References
+    ----------
+    Blazejczyk, K., Epstein, Y., Jendritzky, G. et al.(2012). Comparison of UTCI to selected thermal indices. Int J Biometeorol 56, 515–535. DOI:10.1007/s00484-011-0453-2
+    Lemke, B., Kjellstrom, T., (2012). Calculating workplace WBGT from meteorogical data: A tool fro climate change asssesment. DOI:10.2486/indhealth.MS1352
+
+    See also
+    --------
+    http://www.bom.gov.au/info/thermal_stress/#approximation
+    """
+    e_sat = saturation_vapor_pressure(tas=tas, method="its90")
+    e_sat = convert_units_to(e_sat, "hPa")
+    tas = convert_units_to(tas, "degC")
+    wbgt = 0.567 * tas + 0.393 * e_sat + 3.38
+    return wbgt.assign_attrs({"units": "degC"})
+
+
+@declare_units(tas="[temperature]", sfcWind="[speed]", wbgt="[temperature]")
+def mean_radiant_temperature(
+    tas: xr.DataArray,
+    sfcWind: xr.DataArray,
+    wbgt: xr.DataArray = None,
+) -> xr.DataArray:
+    """
+    Mean radiant temperature
+
+    Parameters
+    ----------
+    tas: xarray.DataArray
+        Mean temperature
+    sfcWind: xarray.DataArray
+        Wind velocity
+    wbgt: xarray.DataArray, optional
+        Wet bulb globe temperature
+
+    Returns
+    -------
+    xarray.DataArray
+        Mean radiant temperature
+
+    Notes
+    -----
+    This code was inspired by the `thermofeel` package.
+
+    References
+    ----------
+    Guo, H., Teitelbaum, E., Houchois, N., Bozlar, M., Meggers, F. (2018). Revisiting the use of globe thermometers to estimate radiant temperature in studies of heating and ventilation. DOI:10.1016/j.enbuild.2018.08.029
+    """
+    tas = convert_units_to(tas, "degK")
+    sfcWind = convert_units_to(sfcWind, "m/s")
+    f = (1.1e8 * sfcWind**0.6) / (0.98 * 0.15**0.4)
+    if wbgt is None:
+        wbgt = wet_bulb_globe_temperature(tas)
+    wbgt = convert_units_to(wbgt, "K")
+    wbgt4 = wbgt**4
+    tmrt2 = wbgt4 + f * (wbgt - tas)
+    tmrt = np.sqrt(np.sqrt(tmrt2))
+    return tmrt.assign_attrs({"units": "K"})
