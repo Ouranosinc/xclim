@@ -321,7 +321,8 @@ days_with_snow = PrecipWithIndexing(
 days_over_precip_thresh = PrecipWithIndexing(
     identifier="days_over_precip_thresh",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold",
-    description="{freq} number of days with precipitation above percentile."
+    description="{freq} number of days with precipitation above the {pr_per_thresh}th"
+    " percentile of {pr_per_period} period."
     " Only days with at least {thresh} are counted.",
     units="days",
     cell_methods="time: sum over days",
@@ -331,8 +332,10 @@ days_over_precip_thresh = PrecipWithIndexing(
 days_over_precip_doy_thresh = PrecipWithIndexing(
     identifier="days_over_precip_doy_thresh",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_above_daily_threshold",
-    description="{freq} number of days with precipitation above a daily percentile."
-    " Only days with at least {thresh} are counted.",
+    description="{freq} number of days with precipitation above the {pr_per_thresh}th daily percentile."
+    " Only days with at least {thresh} are counted."
+    " A {pr_per_window} day(s) window, centred on each calendar day in the"
+    " {pr_per_period} period, is used to compute the {pr_per_thresh}th percentile(s).",
     units="days",
     cell_methods="time: sum over days",
     compute=indices.days_over_precip_thresh,
@@ -348,8 +351,11 @@ high_precip_low_temp = PrTasxWithIndexing(
 
 fraction_over_precip_doy_thresh = PrecipWithIndexing(
     identifier="fraction_over_precip_doy_thresh",
-    description="{freq} fraction of total precipitation due to days with precipitation above a daily percentile."
-    " Only days with at least {thresh} are included in the total.",
+    description="{freq} fraction of total precipitation due to days with precipitation"
+    " above {pr_per_thresh}th daily percentile."
+    " Only days with at least {thresh} are included in the total."
+    " A {pr_per_window} day(s) window, centred on each calendar day in the"
+    " {pr_per_period} period, is used to compute the {pr_per_thresh}th percentile(s).",
     units="",
     cell_methods="",
     compute=indices.fraction_over_precip_thresh,
@@ -357,7 +363,8 @@ fraction_over_precip_doy_thresh = PrecipWithIndexing(
 
 fraction_over_precip_thresh = PrecipWithIndexing(
     identifier="fraction_over_precip_thresh",
-    description="{freq} fraction of total precipitation due to days with precipitation above percentile."
+    description="{freq} fraction of total precipitation due to days with precipitation"
+    " above {pr_per_thresh}th percentile of {pr_per_period} period."
     " Only days with at least {thresh} are included in the total.",
     units="",
     cell_methods="",
@@ -409,7 +416,7 @@ cold_and_dry_days = PrecipWithIndexing(
     units="days",
     long_name="Cold and dry days",
     title="Cold and dry days",
-    description="{freq} number of days where tas < 25th percentile and pr < 25th percentile",
+    description="{freq} number of days where tas < {tas_per_thresh}th percentile and pr < {pr_per_thresh}th percentile",
     cell_methods="time: sum over days",
     compute=indices.cold_and_dry_days,
 )
@@ -419,7 +426,7 @@ warm_and_dry_days = PrecipWithIndexing(
     units="days",
     long_name="warm and dry days",
     title="warm and dry days",
-    description="{freq} number of days where tas > 75th percentile and pr < 25th percentile",
+    description="{freq} number of days where tas > {tas_per_thresh}th percentile and pr < {pr_per_thresh}th percentile",
     cell_methods="time: sum over days",
     compute=indices.warm_and_dry_days,
 )
@@ -429,7 +436,7 @@ warm_and_wet_days = PrecipWithIndexing(
     units="days",
     long_name="warm and wet days",
     title="warm and wet days",
-    description="{freq} number of days where tas > 75th percentile and pr > 75th percentile",
+    description="{freq} number of days where tas > {tas_per_thresh}th percentile and pr > {pr_per_thresh}th percentile",
     cell_methods="time: sum over days",
     compute=indices.warm_and_wet_days,
 )
@@ -439,7 +446,7 @@ cold_and_wet_days = PrecipWithIndexing(
     units="days",
     long_name="cold and wet days",
     title="cold and wet days",
-    description="{freq} number of days where tas < 25th percentile and pr > 75th percentile",
+    description="{freq} number of days where tas < {tas_per_thresh}th percentile and pr > {pr_per_thresh}th percentile",
     cell_methods="time: sum over days",
     compute=indices.cold_and_wet_days,
 )

@@ -609,7 +609,7 @@ def data_flags(
             if arg in ["da", var_provided]:
                 continue
             kind = infer_kind_from_parameter(val)
-            if kind == InputKind.VARIABLE:
+            if kind in [InputKind.VARIABLE]:
                 if arg in dataset:
                     extra_vars[arg] = dataset[arg]
                 else:

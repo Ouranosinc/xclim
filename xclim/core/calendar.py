@@ -28,7 +28,7 @@ from xarray.coding.cftime_offsets import (
 from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core.resample import DataArrayResample
 
-from xclim.core.utils import uses_dask
+from xclim.core.utils import PercentileDataArray, uses_dask
 
 from .formatting import update_xclim_history
 
@@ -442,7 +442,7 @@ def percentile_doy(
     alpha: float = 1.0 / 3.0,
     beta: float = 1.0 / 3.0,
     copy: bool = True,
-) -> xr.DataArray:
+) -> PercentileDataArray:
     """Percentile value for each day of the year.
 
     Return the climatological percentile over a moving window around each day of the year.
@@ -522,14 +522,16 @@ def percentile_doy(
     p.attrs.update(arr.attrs.copy())
 
     # Saving percentile attributes
-    n = len(arr.time)
-    p.attrs["climatology_bounds"] = (
-        arr.time[0 :: n - 1].dt.strftime("%Y-%m-%d").values.tolist()
-    )
+    p.attrs["climatology_bounds"] = build_climatology_bounds(arr)
     p.attrs["window"] = window
     p.attrs["alpha"] = alpha
     p.attrs["beta"] = beta
-    return p.rename("per")
+    return PercentileDataArray.from_da(p.rename("per"))
+
+
+def build_climatology_bounds(da: xr.DataArray) -> list[str]:
+    n = len(da.time)
+    return da.time[0 :: n - 1].dt.strftime("%Y-%m-%d").values.tolist()
 
 
 def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
@@ -596,6 +598,32 @@ def parse_offset(freq: str) -> Sequence[str]:
         base = "D"
         anchor = ""
     return mult, base, start == "S", anchor
+
+
+def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | None):
+    """Reconstruct an offset string from its parts.
+
+    Parameters
+    ----------
+    mult: int
+      The period multiplicator (>= 1).
+    base : str
+      The base period string (one char).
+    start_anchored: bool
+      If True, adds the "S" flag.
+    anchor: str, optional
+      The month anchor of the offset.
+
+    Returns
+    -------
+    str
+      An offset string, conformant to pandas-like naming conventions.
+
+    Notes
+    -----
+    This provides the mirror opposite functionality of :py:func:`parse_offset`.
+    """
+    return f"{mult if mult > 1 else ''}{base}{'S' if start_anchored else ''}{'-' if anchor else ''}{anchor or ''}"
 
 
 def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArray:

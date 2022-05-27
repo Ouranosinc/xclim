@@ -14,6 +14,7 @@ from xclim.core.calendar import (
     adjust_doy_calendar,
     climatological_mean_doy,
     compare_offsets,
+    construct_offset,
     convert_calendar,
     date_range,
     datetime_to_decimal_year,
@@ -546,3 +547,15 @@ def test_parse_offset_minimal():
     assert b == "M"
     assert s is False
     assert a is None
+
+
+@pytest.mark.parametrize(
+    "m,b,s,a,exp",
+    [
+        (1, "A", True, None, "AS"),
+        (2, "Q", False, "DEC", "2Q-DEC"),
+        (1, "D", False, None, "D"),
+    ],
+)
+def test_construct_offset(m, b, s, a, exp):
+    assert construct_offset(m, b, s, a) == exp

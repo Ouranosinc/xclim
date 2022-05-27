@@ -8,7 +8,8 @@ import pytest
 import xarray as xr
 
 from xclim import atmos, core, set_options
-from xclim.core.calendar import percentile_doy
+from xclim.core.calendar import build_climatology_bounds, percentile_doy
+from xclim.core.utils import PercentileDataArray
 from xclim.testing import open_dataset
 
 K2C = 273.15
@@ -402,21 +403,27 @@ def test_days_over_precip_doy_thresh():
     out1 = atmos.days_over_precip_doy_thresh(pr, per)
     np.testing.assert_array_equal(out1[1, :, 0], np.array([81, 61, 69, 78]))
 
-    out2 = atmos.days_over_precip_thresh(pr, per, thresh="2 mm/d")
+    out2 = atmos.days_over_precip_doy_thresh(pr, per, thresh="2 mm/d")
     np.testing.assert_array_equal(out2[1, :, 0], np.array([81, 61, 66, 78]))
 
     assert "only days with at least 2 mm/d are counted." in out2.description
+    assert "[80]th percentile" in out2.attrs["description"]
+    assert "['1990-01-01', '1993-12-31'] period" in out2.attrs["description"]
+    assert "5 day(s)" in out2.attrs["description"]
 
 
 def test_days_over_precip_thresh():
     pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
     per = pr.quantile(0.8, "time", keep_attrs=True)
+    per = PercentileDataArray.from_da(per, build_climatology_bounds(pr))
 
     out = atmos.days_over_precip_thresh(pr, per)
 
     np.testing.assert_allclose(
         out[1, :], np.array([80.0, 63.0, 68.0, 81.0]), atol=0.001
     )
+    assert "80.0th percentile" in out.attrs["description"]
+    assert "['1990-01-01', '1993-12-31'] period" in out.attrs["description"]
 
 
 def test_days_over_precip_thresh__seasonal_indexer():
@@ -440,23 +447,30 @@ def test_fraction_over_precip_doy_thresh():
         out[1, :, 0], np.array([0.809, 0.770, 0.748, 0.807]), atol=0.001
     )
 
-    out = atmos.fraction_over_precip_thresh(pr, per, thresh="0.002 m/d")
+    out = atmos.fraction_over_precip_doy_thresh(pr, per, thresh="0.002 m/d")
     np.testing.assert_allclose(
         out[1, :, 0], np.array([0.831, 0.803, 0.774, 0.833]), atol=0.001
     )
 
     assert "only days with at least 0.002 m/d are included" in out.description
+    assert "[80]th percentile" in out.attrs["description"]
+    assert "['1990-01-01', '1993-12-31'] period" in out.attrs["description"]
+    assert "5 day(s)" in out.attrs["description"]
 
 
 def test_fraction_over_precip_thresh():
     pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
     per = pr.quantile(0.8, "time", keep_attrs=True)
+    per = PercentileDataArray.from_da(per, build_climatology_bounds(pr))
 
     out = atmos.fraction_over_precip_thresh(pr, per)
 
     np.testing.assert_allclose(
         out[1, :], np.array([0.839, 0.809, 0.798, 0.859]), atol=0.001
     )
+
+    assert "80.0th percentile" in out.attrs["description"]
+    assert "['1990-01-01', '1993-12-31'] period" in out.attrs["description"]
 
 
 def test_liquid_precip_ratio():

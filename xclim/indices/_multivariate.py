@@ -5,7 +5,6 @@ import warnings
 
 import numpy as np
 import xarray
-from xarray.core.dataarray import DataArray
 
 from xclim.core.bootstrapping import percentile_bootstrap
 from xclim.core.calendar import resample_doy
@@ -62,26 +61,26 @@ __all__ = [
 ]
 
 
-@declare_units(tasmin="[temperature]", tn10="[temperature]")
+@declare_units(tasmin="[temperature]", tasmin_per="[temperature]")
 @percentile_bootstrap
 def cold_spell_duration_index(
     tasmin: xarray.DataArray,
-    tn10: xarray.DataArray,
+    tasmin_per: xarray.DataArray,
     window: int = 6,
     freq: str = "YS",
-    bootstrap: bool = False,  # noqa
+    bootstrap: bool = False,  # noqa  # noqa
 ) -> xarray.DataArray:
     r"""Cold spell duration index.
 
-    Number of days with at least six consecutive days where the daily minimum temperature is below the 10th
-    percentile.
+    Number of days with at least `window` consecutive days where the daily minimum temperature is below the
+    `tasmin_per` percentiles.
 
     Parameters
     ----------
     tasmin : xarray.DataArray
       Minimum daily temperature.
-    tn10 : xarray.DataArray
-      10th percentile of daily minimum temperature with `dayofyear` coordinate.
+    tasmin_per : xarray.DataArray
+      nth percentile of daily minimum temperature with `dayofyear` coordinate.
     window : int
       Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
@@ -126,10 +125,10 @@ def cold_spell_duration_index(
     >>> tn10 = percentile_doy(tasmin, per=10).sel(percentiles=10)
     >>> cold_spell_duration_index(tasmin, tn10)
     """
-    tn10 = convert_units_to(tn10, tasmin)
+    tasmin_per = convert_units_to(tasmin_per, tasmin)
 
     # Create time series out of doy values.
-    thresh = resample_doy(tn10, tasmin)
+    thresh = resample_doy(tasmin_per, tasmin)
 
     below = tasmin < thresh
 
@@ -141,15 +140,15 @@ def cold_spell_duration_index(
 
 @declare_units(
     tas="[temperature]",
-    tas_25="[temperature]",
     pr="[precipitation]",
-    pr_25="[precipitation]",
+    tas_per="[temperature]",
+    pr_per="[precipitation]",
 )
 def cold_and_dry_days(
     tas: xarray.DataArray,
-    tas_25: xarray.DataArray,
     pr: xarray.DataArray,
-    pr_25: xarray.DataArray,
+    tas_per: xarray.DataArray,
+    pr_per: xarray.DataArray,
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Cold and dry days.
@@ -160,11 +159,11 @@ def cold_and_dry_days(
     ----------
     tas : xarray.DataArray
       Mean daily temperature values
-    tas_25 : xarray.DataArray
-      First quartile of daily mean temperature computed by month.
     pr : xarray.DataArray
       Daily precipitation.
-    pr_25 : xarray.DataArray
+    tas_per : xarray.DataArray
+      First quartile of daily mean temperature computed by month.
+    pr_per : xarray.DataArray
       First quartile of daily total precipitation computed by month.
 
       .. warning::
@@ -191,12 +190,12 @@ def cold_and_dry_days(
     .. [cold_dry_days] Beniston, M. (2009). Trends in joint quantiles of temperature and precipitation in Europe
         since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
-    tas_25 = convert_units_to(tas_25, tas)
-    thresh = resample_doy(tas_25, tas)
+    tas_per = convert_units_to(tas_per, tas)
+    thresh = resample_doy(tas_per, tas)
     tg25 = tas < thresh
 
-    pr_25 = convert_units_to(pr_25, pr)
-    thresh = resample_doy(pr_25, pr)
+    pr_per = convert_units_to(pr_per, pr)
+    thresh = resample_doy(pr_per, pr)
     pr25 = pr < thresh
 
     cold_and_dry = np.logical_and(tg25, pr25).resample(time=freq).sum(dim="time")
@@ -205,15 +204,15 @@ def cold_and_dry_days(
 
 @declare_units(
     tas="[temperature]",
-    tas_75="[temperature]",
     pr="[precipitation]",
-    pr_25="[precipitation]",
+    tas_per="[temperature]",
+    pr_per="[precipitation]",
 )
 def warm_and_dry_days(
     tas: xarray.DataArray,
-    tas_75: xarray.DataArray,
     pr: xarray.DataArray,
-    pr_25: xarray.DataArray,
+    tas_per: xarray.DataArray,
+    pr_per: xarray.DataArray,
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Warm and dry days.
@@ -224,11 +223,11 @@ def warm_and_dry_days(
     ----------
     tas : xarray.DataArray
       Mean daily temperature values
-    tas_75 : xarray.DataArray
-      Third quartile of daily mean temperature computed by month.
     pr : xarray.DataArray
       Daily precipitation.
-    pr_25 : xarray.DataArray
+    tas_per : xarray.DataArray
+      Third quartile of daily mean temperature computed by month.
+    pr_per : xarray.DataArray
       First quartile of daily total precipitation computed by month.
 
       .. warning::
@@ -255,12 +254,12 @@ def warm_and_dry_days(
     .. [warm_dry_days] Beniston, M. (2009). Trends in joint quantiles of temperature and precipitation in Europe
        since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
-    tas_75 = convert_units_to(tas_75, tas)
-    thresh = resample_doy(tas_75, tas)
+    tas_per = convert_units_to(tas_per, tas)
+    thresh = resample_doy(tas_per, tas)
     tg75 = tas > thresh
 
-    pr_25 = convert_units_to(pr_25, pr)
-    thresh = resample_doy(pr_25, pr)
+    pr_per = convert_units_to(pr_per, pr)
+    thresh = resample_doy(pr_per, pr)
     pr25 = pr < thresh
 
     warm_and_dry = np.logical_and(tg75, pr25).resample(time=freq).sum(dim="time")
@@ -269,15 +268,15 @@ def warm_and_dry_days(
 
 @declare_units(
     tas="[temperature]",
-    tas_75="[temperature]",
     pr="[precipitation]",
-    pr_75="[precipitation]",
+    tas_per="[temperature]",
+    pr_per="[precipitation]",
 )
 def warm_and_wet_days(
     tas: xarray.DataArray,
-    tas_75: xarray.DataArray,
     pr: xarray.DataArray,
-    pr_75: xarray.DataArray,
+    tas_per: xarray.DataArray,
+    pr_per: xarray.DataArray,
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Warm and wet days.
@@ -288,11 +287,11 @@ def warm_and_wet_days(
     ----------
     tas : xarray.DataArray
       Mean daily temperature values
-    tas_75 : xarray.DataArray
-      Third quartile of daily mean temperature computed by month.
     pr : xarray.DataArray
       Daily precipitation.
-    pr_75 : xarray.DataArray
+    tas_per : xarray.DataArray
+      Third quartile of daily mean temperature computed by month.
+    pr_per : xarray.DataArray
       Third quartile of daily total precipitation computed by month.
 
       .. warning::
@@ -319,12 +318,12 @@ def warm_and_wet_days(
     .. [warm_wet_days] Beniston, M. (2009). Trends in joint quantiles of temperature and precipitation in Europe
         since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
-    tas_75 = convert_units_to(tas_75, tas)
-    thresh = resample_doy(tas_75, tas)
+    tas_per = convert_units_to(tas_per, tas)
+    thresh = resample_doy(tas_per, tas)
     tg75 = tas > thresh
 
-    pr_75 = convert_units_to(pr_75, pr)
-    thresh = resample_doy(pr_75, pr)
+    pr_per = convert_units_to(pr_per, pr)
+    thresh = resample_doy(pr_per, pr)
     pr75 = pr > thresh
 
     warm_and_wet = np.logical_and(tg75, pr75).resample(time=freq).sum(dim="time")
@@ -333,15 +332,15 @@ def warm_and_wet_days(
 
 @declare_units(
     tas="[temperature]",
-    tas_25="[temperature]",
     pr="[precipitation]",
-    pr_75="[precipitation]",
+    tas_per="[temperature]",
+    pr_per="[precipitation]",
 )
 def cold_and_wet_days(
     tas: xarray.DataArray,
-    tas_25: xarray.DataArray,
     pr: xarray.DataArray,
-    pr_75: xarray.DataArray,
+    tas_per: xarray.DataArray,
+    pr_per: xarray.DataArray,
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""cold and wet days.
@@ -352,11 +351,11 @@ def cold_and_wet_days(
     ----------
     tas : xarray.DataArray
       Mean daily temperature values
-    tas_25 : xarray.DataArray
-      First quartile of daily mean temperature computed by month.
     pr : xarray.DataArray
       Daily precipitation.
-    pr_75 : xarray.DataArray
+    tas_per : xarray.DataArray
+      First quartile of daily mean temperature computed by month.
+    pr_per : xarray.DataArray
       Third quartile of daily total precipitation computed by month.
 
       .. warning::
@@ -383,12 +382,12 @@ def cold_and_wet_days(
     .. [cold_wet_days] Beniston, M. (2009). Trends in joint quantiles of temperature and precipitation in Europe
         since 1901 and projected for 2100. Geophysical Research Letters, 36(7). https://doi.org/10.1029/2008GL037119
     """
-    tas_25 = convert_units_to(tas_25, tas)
-    thresh = resample_doy(tas_25, tas)
+    tas_per = convert_units_to(tas_per, tas)
+    thresh = resample_doy(tas_per, tas)
     tg25 = tas < thresh
 
-    pr_75 = convert_units_to(pr_75, pr)
-    thresh = resample_doy(pr_75, pr)
+    pr_per = convert_units_to(pr_per, pr)
+    thresh = resample_doy(pr_per, pr)
     pr75 = pr > thresh
 
     cold_and_wet = np.logical_and(tg25, pr75).resample(time=freq).sum(dim="time")
@@ -1080,14 +1079,14 @@ def high_precip_low_temp(
     return to_agg_units(out, pr, "count")
 
 
-@declare_units(pr="[precipitation]", per="[precipitation]", thresh="[precipitation]")
+@declare_units(pr="[precipitation]", pr_per="[precipitation]", thresh="[precipitation]")
 @percentile_bootstrap
 def days_over_precip_thresh(
     pr: xarray.DataArray,
-    per: xarray.DataArray,
+    pr_per: xarray.DataArray,
     thresh: str = "1 mm/day",
     freq: str = "YS",
-    bootstrap: bool = False,
+    bootstrap: bool = False,  # noqa
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of wet days with daily precipitation over a given percentile.
 
@@ -1098,7 +1097,7 @@ def days_over_precip_thresh(
     ----------
     pr : xarray.DataArray
       Mean daily precipitation flux.
-    per : xarray.DataArray
+    pr_per : xarray.DataArray
       Percentile of wet day precipitation flux. Either computed daily (one value per day
       of year) or computed over a period (one value per spatial point).
     thresh : str
@@ -1125,11 +1124,11 @@ def days_over_precip_thresh(
     >>> p75 = pr.quantile(.75, dim="time", keep_attrs=True)
     >>> r75p = days_over_precip_thresh(pr, p75)
     """
-    per = convert_units_to(per, pr)
+    pr_per = convert_units_to(pr_per, pr)
     thresh = convert_units_to(thresh, pr)
 
-    tp = np.maximum(per, thresh)
-    if "dayofyear" in per.coords:
+    tp = np.maximum(pr_per, thresh)
+    if "dayofyear" in pr_per.coords:
         # Create time series out of doy values.
         tp = resample_doy(tp, pr)
 
@@ -1138,14 +1137,14 @@ def days_over_precip_thresh(
     return to_agg_units(out, pr, "count")
 
 
-@declare_units(pr="[precipitation]", per="[precipitation]", thresh="[precipitation]")
+@declare_units(pr="[precipitation]", pr_per="[precipitation]", thresh="[precipitation]")
 @percentile_bootstrap
 def fraction_over_precip_thresh(
     pr: xarray.DataArray,
-    per: xarray.DataArray,
+    pr_per: xarray.DataArray,
     thresh: str = "1 mm/day",
     freq: str = "YS",
-    bootstrap: bool = False,
+    bootstrap: bool = False,  # noqa
 ) -> xarray.DataArray:
     r"""Fraction of precipitation due to wet days with daily precipitation over a given percentile.
 
@@ -1156,7 +1155,7 @@ def fraction_over_precip_thresh(
     ----------
     pr : xarray.DataArray
       Mean daily precipitation flux.
-    per : xarray.DataArray
+    pr_per : xarray.DataArray
       Percentile of wet day precipitation flux. Either computed daily (one value per day
       of year) or computed over a period (one value per spatial point).
     thresh : str
@@ -1177,11 +1176,11 @@ def fraction_over_precip_thresh(
       Fraction of precipitation over threshold during wet days.
 
     """
-    per = convert_units_to(per, pr)
+    pr_per = convert_units_to(pr_per, pr)
     thresh = convert_units_to(thresh, pr)
 
-    tp = np.maximum(per, thresh)
-    if "dayofyear" in per.coords:
+    tp = np.maximum(pr_per, thresh)
+    if "dayofyear" in pr_per.coords:
         # Create time series out of doy values.
         tp = resample_doy(tp, pr)
 
@@ -1196,13 +1195,13 @@ def fraction_over_precip_thresh(
     return out
 
 
-@declare_units(tas="[temperature]", t90="[temperature]")
+@declare_units(tas="[temperature]", tas_per="[temperature]")
 @percentile_bootstrap
 def tg90p(
     tas: xarray.DataArray,
-    t90: xarray.DataArray,
+    tas_per: xarray.DataArray,
     freq: str = "YS",
-    bootstrap: bool = False,
+    bootstrap: bool = False,  # noqa
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily mean temperature over the 90th percentile.
 
@@ -1212,7 +1211,7 @@ def tg90p(
     ----------
     tas : xarray.DataArray
       Mean daily temperature.
-    t90 : xarray.DataArray
+    tas_per : xarray.DataArray
       90th percentile of daily mean temperature.
     freq : str
       Resampling frequency.
@@ -1238,26 +1237,26 @@ def tg90p(
     >>> from xclim.core.calendar import percentile_doy
     >>> from xclim.indices import tg90p
     >>> tas = xr.open_dataset(path_to_tas_file).tas
-    >>> t90 = percentile_doy(tas, per=90).sel(percentiles=90)
-    >>> hot_days = tg90p(tas, t90)
+    >>> tas_per = percentile_doy(tas, per=90).sel(percentiles=90)
+    >>> hot_days = tg90p(tas, tas_per)
     """
-    t90 = convert_units_to(t90, tas)
+    tas_per = convert_units_to(tas_per, tas)
 
     # Create time series out of doy values.
-    thresh = resample_doy(t90, tas)
+    thresh = resample_doy(tas_per, tas)
 
     # Identify the days over the 90th percentile
     out = threshold_count(tas, ">", thresh, freq)
     return to_agg_units(out, tas, "count")
 
 
-@declare_units(tas="[temperature]", t10="[temperature]")
+@declare_units(tas="[temperature]", tas_per="[temperature]")
 @percentile_bootstrap
 def tg10p(
     tas: xarray.DataArray,
-    t10: xarray.DataArray,
+    tas_per: xarray.DataArray,
     freq: str = "YS",
-    bootstrap: bool = False,
+    bootstrap: bool = False,  # noqa
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily mean temperature below the 10th percentile.
 
@@ -1267,7 +1266,7 @@ def tg10p(
     ----------
     tas : xarray.DataArray
       Mean daily temperature.
-    t10 : xarray.DataArray
+    tas_per : xarray.DataArray
       10th percentile of daily mean temperature.
     freq : str
       Resampling frequency.
@@ -1293,26 +1292,26 @@ def tg10p(
     >>> from xclim.core.calendar import percentile_doy
     >>> from xclim.indices import tg10p
     >>> tas = xr.open_dataset(path_to_tas_file).tas
-    >>> t10 = percentile_doy(tas, per=10).sel(percentiles=10)
-    >>> cold_days = tg10p(tas, t10)
+    >>> tas_per = percentile_doy(tas, per=10).sel(percentiles=10)
+    >>> cold_days = tg10p(tas, tas_per)
     """
-    t10 = convert_units_to(t10, tas)
+    tas_per = convert_units_to(tas_per, tas)
 
     # Create time series out of doy values.
-    thresh = resample_doy(t10, tas)
+    thresh = resample_doy(tas_per, tas)
 
     # Identify the days below the 10th percentile
     out = threshold_count(tas, "<", thresh, freq)
     return to_agg_units(out, tas, "count")
 
 
-@declare_units(tasmin="[temperature]", t90="[temperature]")
+@declare_units(tasmin="[temperature]", tasmin_per="[temperature]")
 @percentile_bootstrap
 def tn90p(
     tasmin: xarray.DataArray,
-    t90: xarray.DataArray,
+    tasmin_per: xarray.DataArray,
     freq: str = "YS",
-    bootstrap: bool = False,
+    bootstrap: bool = False,  # noqa
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily minimum temperature over the 90th percentile.
 
@@ -1322,7 +1321,7 @@ def tn90p(
     ----------
     tasmin : xarray.DataArray
       Minimum daily temperature.
-    t90 : xarray.DataArray
+    tasmin_per : xarray.DataArray
       90th percentile of daily minimum temperature.
     freq : str
       Resampling frequency.
@@ -1348,26 +1347,26 @@ def tn90p(
     >>> from xclim.core.calendar import percentile_doy
     >>> from xclim.indices import tn90p
     >>> tas = xr.open_dataset(path_to_tas_file).tas
-    >>> t90 = percentile_doy(tas, per=90).sel(percentiles=90)
-    >>> hot_days = tn90p(tas, t90)
+    >>> tas_per = percentile_doy(tas, per=90).sel(percentiles=90)
+    >>> hot_days = tn90p(tas, tas_per)
     """
-    t90 = convert_units_to(t90, tasmin)
+    tasmin_per = convert_units_to(tasmin_per, tasmin)
 
     # Create time series out of doy values.
-    thresh = resample_doy(t90, tasmin)
+    thresh = resample_doy(tasmin_per, tasmin)
 
     # Identify the days with min temp above 90th percentile.
     out = threshold_count(tasmin, ">", thresh, freq)
     return to_agg_units(out, tasmin, "count")
 
 
-@declare_units(tasmin="[temperature]", t10="[temperature]")
+@declare_units(tasmin="[temperature]", tasmin_per="[temperature]")
 @percentile_bootstrap
 def tn10p(
     tasmin: xarray.DataArray,
-    t10: xarray.DataArray,
+    tasmin_per: xarray.DataArray,
     freq: str = "YS",
-    bootstrap: bool = False,
+    bootstrap: bool = False,  # noqa
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily minimum temperature below the 10th percentile.
 
@@ -1377,7 +1376,7 @@ def tn10p(
     ----------
     tasmin : xarray.DataArray
       Mean daily temperature.
-    t10 : xarray.DataArray
+    tasmin_per : xarray.DataArray
       10th percentile of daily minimum temperature.
     freq : str
       Resampling frequency.
@@ -1403,26 +1402,26 @@ def tn10p(
     >>> from xclim.core.calendar import percentile_doy
     >>> from xclim.indices import tn10p
     >>> tas = xr.open_dataset(path_to_tas_file).tas
-    >>> t10 = percentile_doy(tas, per=10).sel(percentiles=10)
-    >>> cold_days = tn10p(tas, t10)
+    >>> tas_per = percentile_doy(tas, per=10).sel(percentiles=10)
+    >>> cold_days = tn10p(tas, tas_per)
     """
-    t10 = convert_units_to(t10, tasmin)
+    tasmin_per = convert_units_to(tasmin_per, tasmin)
 
     # Create time series out of doy values.
-    thresh = resample_doy(t10, tasmin)
+    thresh = resample_doy(tasmin_per, tasmin)
 
     # Identify the days below the 10th percentile
     out = threshold_count(tasmin, "<", thresh, freq)
     return to_agg_units(out, tasmin, "count")
 
 
-@declare_units(tasmax="[temperature]", t90="[temperature]")
+@declare_units(tasmax="[temperature]", tasmax_per="[temperature]")
 @percentile_bootstrap
 def tx90p(
     tasmax: xarray.DataArray,
-    t90: xarray.DataArray,
+    tasmax_per: xarray.DataArray,
     freq: str = "YS",
-    bootstrap: bool = False,
+    bootstrap: bool = False,  # noqa
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily maximum temperature over the 90th percentile.
 
@@ -1432,7 +1431,7 @@ def tx90p(
     ----------
     tasmax : xarray.DataArray
       Maximum daily temperature.
-    t90 : xarray.DataArray
+    tasmax_per : xarray.DataArray
       90th percentile of daily maximum temperature.
     freq : str
       Resampling frequency.
@@ -1458,26 +1457,26 @@ def tx90p(
     >>> from xclim.core.calendar import percentile_doy
     >>> from xclim.indices import tx90p
     >>> tas = xr.open_dataset(path_to_tas_file).tas
-    >>> t90 = percentile_doy(tas, per=90).sel(percentiles=90)
-    >>> hot_days = tx90p(tas, t90)
+    >>> tasmax_per = percentile_doy(tas, per=90).sel(percentiles=90)
+    >>> hot_days = tx90p(tas, tasmax_per)
     """
-    t90 = convert_units_to(t90, tasmax)
+    tasmax_per = convert_units_to(tasmax_per, tasmax)
 
     # Create time series out of doy values.
-    thresh = resample_doy(t90, tasmax)
+    thresh = resample_doy(tasmax_per, tasmax)
 
     # Identify the days with max temp above 90th percentile.
     out = threshold_count(tasmax, ">", thresh, freq)
     return to_agg_units(out, tasmax, "count")
 
 
-@declare_units(tasmax="[temperature]", t10="[temperature]")
+@declare_units(tasmax="[temperature]", tasmax_per="[temperature]")
 @percentile_bootstrap
 def tx10p(
     tasmax: xarray.DataArray,
-    t10: xarray.DataArray,
+    tasmax_per: xarray.DataArray,
     freq: str = "YS",
-    bootstrap: bool = False,
+    bootstrap: bool = False,  # noqa
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily maximum temperature below the 10th percentile.
 
@@ -1487,7 +1486,7 @@ def tx10p(
     ----------
     tasmax : xarray.DataArray
       Maximum daily temperature.
-    t10 : xarray.DataArray
+    tasmax_per : xarray.DataArray
       10th percentile of daily maximum temperature.
     freq : str
       Resampling frequency.
@@ -1513,13 +1512,13 @@ def tx10p(
     >>> from xclim.core.calendar import percentile_doy
     >>> from xclim.indices import tx10p
     >>> tas = xr.open_dataset(path_to_tas_file).tas
-    >>> t10 = percentile_doy(tas, per=10).sel(percentiles=10)
-    >>> cold_days = tx10p(tas, t10)
+    >>> tasmax_per = percentile_doy(tas, per=10).sel(percentiles=10)
+    >>> cold_days = tx10p(tas, tasmax_per)
     """
-    t10 = convert_units_to(t10, tasmax)
+    tasmax_per = convert_units_to(tasmax_per, tasmax)
 
     # Create time series out of doy values.
-    thresh = resample_doy(t10, tasmax)
+    thresh = resample_doy(tasmax_per, tasmax)
 
     # Identify the days below the 10th percentile
     out = threshold_count(tasmax, "<", thresh, freq)
@@ -1586,14 +1585,14 @@ def tx_tn_days_above(
     return to_agg_units(out, tasmin, "count")
 
 
-@declare_units(tasmax="[temperature]", tx90="[temperature]")
+@declare_units(tasmax="[temperature]", tasmax_per="[temperature]")
 @percentile_bootstrap
 def warm_spell_duration_index(
     tasmax: xarray.DataArray,
-    tx90: xarray.DataArray,
+    tasmax_per: xarray.DataArray,
     window: int = 6,
     freq: str = "YS",
-    bootstrap: bool = False,
+    bootstrap: bool = False,  # noqa
 ) -> xarray.DataArray:
     r"""Warm spell duration index.
 
@@ -1605,8 +1604,8 @@ def warm_spell_duration_index(
     ----------
     tasmax : xarray.DataArray
       Maximum daily temperature.
-    tx90 : xarray.DataArray
-      90th percentile of daily maximum temperature.
+    tasmax_per : xarray.DataArray
+      percentile(s) of daily maximum temperature.
     window : int
       Minimum number of days with temperature above threshold to qualify as a warm spell.
     freq : str
@@ -1624,6 +1623,12 @@ def warm_spell_duration_index(
     xarray.DataArray, [time]
       Warm spell duration index.
 
+    References
+    ----------
+    From the Expert Team on Climate Change Detection, Monitoring and Indices (ETCCDMI).
+    Used in Alexander, L. V., et al. (2006), Global observed changes in daily climate extremes of temperature and
+    precipitation, J. Geophys. Res., 111, D05109, doi: 10.1029/2005JD006290.
+
     Examples
     --------
     Note that this example does not use a proper 1961-1990 reference period.
@@ -1632,22 +1637,15 @@ def warm_spell_duration_index(
     >>> from xclim.indices import warm_spell_duration_index
 
     >>> tasmax = xr.open_dataset(path_to_tasmax_file).tasmax.isel(lat=0, lon=0)
-    >>> tx90 = percentile_doy(tasmax, per=90).sel(percentiles=90)
-    >>> warm_spell_duration_index(tasmax, tx90)
-
-    References
-    ----------
-    From the Expert Team on Climate Change Detection, Monitoring and Indices (ETCCDMI).
-    Used in Alexander, L. V., et al. (2006), Global observed changes in daily climate extremes of temperature and
-    precipitation, J. Geophys. Res., 111, D05109, doi: 10.1029/2005JD006290.
-
+    >>> tasmax_per = percentile_doy(tasmax, per=90).sel(percentiles=90)
+    >>> warm_spell_duration_index(tasmax, tasmax_per)
     """
-    thresh = convert_units_to(tx90, tasmax)
+    thresh = convert_units_to(tasmax_per, tasmax)
 
     # Create time series out of doy values.
     thresh = resample_doy(thresh, tasmax)
 
-    above: DataArray = tasmax > thresh
+    above = tasmax > thresh
 
     out = above.resample(time=freq).map(
         rl.windowed_run_count, window=window, dim="time"
