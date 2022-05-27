@@ -8,6 +8,7 @@ the simulated climate variability.
 """
 from __future__ import annotations
 
+import os
 from typing import Optional, Union
 from warnings import warn
 
@@ -21,7 +22,8 @@ from sklearn.cluster import KMeans
 try:
     from matplotlib import pyplot as plt
 
-    warn("Matplotlib installed. Setting make_graph to True.")
+    if not os.getenv("READTHEDOCS"):
+        warn("Matplotlib installed. Setting make_graph to True.")
     MPL_INSTALLED = True
 
 except ImportError:

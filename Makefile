@@ -71,8 +71,15 @@ coverage: ## check code coverage quickly with the default Python
 	coverage html
 	$(BROWSER) htmlcov/index.html
 
+linkcheck: ## run checks over all external links found throughout the documentation
+	rm -f docs/xclim*.rst
+	rm -f docs/modules.rst
+	sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests
+	$(MAKE) -C docs clean
+	$(MAKE) -C docs linkcheck
+
 docs: ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/xclim.rst
+	rm -f docs/xclim*.rst
 	rm -f docs/modules.rst
 	sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests
 	$(MAKE) -C docs clean

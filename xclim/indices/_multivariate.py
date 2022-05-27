@@ -715,7 +715,7 @@ def heat_wave_frequency(
     References
     ----------
     .. [casati2013] Casati, B., Yagouti, A., & Chaumont, D. (2013). Regional Climate Projections of Extreme Heat Events in Nine Pilot Canadian Communities for Public Health Planning. Journal of Applied Meteorology and Climatology, 52(12), 2669‑2698. https://doi.org/10.1175/JAMC-D-12-0341.1
-    .. [robinson2001] Robinson, P. J. (2001). On the Definition of a Heat Wave. Journal of Applied Meteorology and Climatology, 40(4), 762‑775. https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
+    .. [robinson2001] Robinson, P. J. (2001). On the Definition of a Heat Wave. Journal of Applied Meteorology and Climatology, 40(4), 762‑775. https://doi.org/10.1175/1520-0450%282001%29040<0762:OTDOAH>2.0.CO;2
     """
     thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
@@ -780,7 +780,7 @@ def heat_wave_max_length(
     References
     ----------
     .. [casati2013] Casati, B., Yagouti, A., & Chaumont, D. (2013). Regional Climate Projections of Extreme Heat Events in Nine Pilot Canadian Communities for Public Health Planning. Journal of Applied Meteorology and Climatology, 52(12), 2669‑2698. https://doi.org/10.1175/JAMC-D-12-0341.1
-    .. [robinson2001] Robinson, P. J. (2001). On the Definition of a Heat Wave. Journal of Applied Meteorology and Climatology, 40(4), 762‑775. https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
+    .. [robinson2001] Robinson, P. J. (2001). On the Definition of a Heat Wave. Journal of Applied Meteorology and Climatology, 40(4), 762‑775. https://doi.org/10.1175/1520-0450%282001%29040<0762:OTDOAH>2.0.CO;2
     """
     thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
