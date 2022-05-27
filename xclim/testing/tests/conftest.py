@@ -18,6 +18,20 @@ def tmp_netcdf_filename(tmpdir):
 
 
 @pytest.fixture
+def lat_series():
+    def _lat_series(values):
+        return xr.DataArray(
+            values,
+            dims=("lat",),
+            coords={"lat": values},
+            attrs={"standard_name": "latitude", "units": "degrees_north"},
+            name="lat",
+        )
+
+    return _lat_series
+
+
+@pytest.fixture
 def tas_series():
     def _tas_series(values, start="7/1/2000"):
         coords = pd.date_range(start, periods=len(values), freq="D")
@@ -237,6 +251,25 @@ def ndq_series():
             "standard_name": "water_volume_transport_in_river_channel",
         },
     )
+
+
+@pytest.fixture
+def evspsblpot_series():
+    def _evspsblpot_series(values, start="7/1/2000", units="kg m-2 s-1"):
+        coords = pd.date_range(start, periods=len(values), freq="D")
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="evspsblpot",
+            attrs={
+                "standard_name": "water_evapotranspiration_flux",
+                "cell_methods": "time: mean within days",
+                "units": units,
+            },
+        )
+
+    return _evspsblpot_series
 
 
 @pytest.fixture

@@ -22,6 +22,7 @@ __all__ = [
     "rain_approximation",
     "wind_chill_index",
     "potential_evapotranspiration",
+    "water_budget_from_tas",
     "water_budget",
     "corn_heat_units",
     "universal_thermal_climate_index",
@@ -254,8 +255,8 @@ potential_evapotranspiration = Converter(
     compute=indices.potential_evapotranspiration,
 )
 
-water_budget = Converter(
-    identifier="water_budget",
+water_budget_from_tas = Converter(
+    identifier="water_budget_from_tas",
     units="kg m-2 s-1",
     long_name="Water budget",
     description=(
@@ -263,6 +264,17 @@ water_budget = Converter(
         "where the potential evapotranspiration is calculated with the method {method}."
     ),
     compute=indices.water_budget,
+)
+
+water_budget = Converter(
+    identifier="water_budget",
+    units="kg m-2 s-1",
+    long_name="Water budget",
+    description=(
+        "Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget."
+    ),
+    compute=indices.water_budget,
+    parameters={"method": "dummy"},
 )
 
 
