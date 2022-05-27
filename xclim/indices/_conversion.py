@@ -5,8 +5,13 @@ import numpy as np
 import xarray as xr
 from numba import float32, float64, vectorize
 
-from xclim.core.calendar import date_range, datetime_to_decimal_year
+from xclim.core.calendar import date_range
 from xclim.core.units import amount2rate, convert_units_to, declare_units, units2pint
+from xclim.indices.helpers import (
+    cosine_of_solar_zenith_angle,
+    day_lengths,
+    extraterrestrial_solar_radiation,
+)
 
 __all__ = [
     "humidex",
@@ -431,12 +436,12 @@ def saturation_vapor_pressure(
                 + 2.7150305 * np.log(tas)
             ),
             np.exp(
-                +-5866.6426 / tas
+                -5866.6426 / tas
                 + 22.32870244
                 + 1.39387003e-2 * tas
                 + -3.4262402e-5 * tas**2
                 + 2.7040955e-8 * tas**3
-                + 3.7063522e-1 * np.log(tas)
+                + 6.7063522e-1 * np.log(tas)
             ),
         )
     else:
@@ -978,11 +983,14 @@ def clausius_clapeyron_scaled_precipitation(
     return pr_out
 
 
-@declare_units(tasmin="[temperature]", tasmax="[temperature]", tas="[temperature]")
+@declare_units(
+    tasmin="[temperature]", tasmax="[temperature]", tas="[temperature]", lat="[]"
+)
 def potential_evapotranspiration(
     tasmin: xr.DataArray | None = None,
     tasmax: xr.DataArray | None = None,
     tas: xr.DataArray | None = None,
+    lat: xr.DataArray | None = None,
     method: str = "BR65",
     peta: float | None = 0.00516409319477,
     petb: float | None = 0.0874972822289,
@@ -1000,6 +1008,8 @@ def potential_evapotranspiration(
       Maximum daily temperature.
     tas : xarray.DataArray
       Mean daily temperature.
+    lat : xarray.DataArray, optional
+      Latitude. If not given, it is sought on tasmin or tas with cf-xarray.
     method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48", "mcguinnessbordne05", "MB05"}
       Which method to use, see notes.
     peta : float
@@ -1025,7 +1035,14 @@ def potential_evapotranspiration(
     .. math::
         PET[mm day^{-1}] = a * \frac{S_0}{\\lambda}T_a + b *\frsc{S_0}{\\lambda}
 
-    where :math:`a` and :math:`b` are empirical parameters; :math:`S_0` is the extraterrestrial radiation [MJ m-2 day-1]; :math:`\\lambda` is the latent heat of vaporisation [MJ kg-1] and :math:`T_a` is the air temperature [°C]. The equation was originally derived for the USA, with :math:`a=0.0147` and :math:`b=0.07353`. The default parameters used here are calibrated for the UK, using the method described in [Tanguy2018]_.
+    where :math:`a` and :math:`b` are empirical parameters; :math:`S_0` is the extraterrestrial radiation [MJ m-2 day-1],
+    assuming a solar constant of 1367 W m-2; :math:`\\lambda` is the latent heat of vaporisation [MJ kg-1]
+    and :math:`T_a` is the air temperature [°C]. The equation was originally derived for the USA,
+    with :math:`a=0.0147` and :math:`b=0.07353`. The default parameters used here are calibrated for the UK,
+    using the method described in [Tanguy2018]_.
+
+    Methods "BR65", "HG85" and "MB05" use an approximation of the extraterrestrial
+    radiation. See :py:func:`~xclim.indices._helpers.extraterrestrial_solar_radiation`.
 
     References
     ----------
@@ -1035,30 +1052,15 @@ def potential_evapotranspiration(
     .. [McGuinness1972] McGuinness, J. L., & Bordne, E. F. (1972). A comparison of lysimeter-derived potential evapotranspiration with computed values (No. 1452). US Department of Agriculture.
     .. [thornthwaite48] Thornthwaite, C. W. (1948). An approach toward a rational classification of climate. Geographical review, 38(1), 55-94.
     """
+    if lat is None:
+        lat = (tasmin if tas is None else tas).cf["latitude"]
 
     if method in ["baierrobertson65", "BR65"]:
         tasmin = convert_units_to(tasmin, "degF")
         tasmax = convert_units_to(tasmax, "degF")
 
-        latr = (tasmin.lat * np.pi) / 180
-        gsc = 0.082  # MJ/m2/min
-
-        # julian day fraction
-        jd_frac = (datetime_to_decimal_year(tasmin.time) % 1) * 2 * np.pi
-
-        ds = 0.409 * np.sin(jd_frac - 1.39)
-        dr = 1 + 0.033 * np.cos(jd_frac)
-        omega = np.arccos(-np.tan(latr) * np.tan(ds))
-        re = (
-            (24 * 60 / np.pi)
-            * gsc
-            * dr
-            * (
-                omega * np.sin(latr) * np.sin(ds)
-                + np.cos(latr) * np.cos(ds) * np.sin(omega)
-            )
-        )  # MJ/m2/day
-        re = re / 4.1864e-2  # cal/cm2/day
+        re = extraterrestrial_solar_radiation(tasmin.time, lat)
+        re = convert_units_to(re, "cal cm-2 day-1")
 
         # Baier et Robertson(1965) formula
         out = 0.094 * (
@@ -1074,25 +1076,10 @@ def potential_evapotranspiration(
         else:
             tas = convert_units_to(tas, "degC")
 
-        latr = (tasmin.lat * np.pi) / 180
-        gsc = 0.082  # MJ/m2/min
         lv = 2.5  # MJ/kg
 
-        # julian day fraction
-        jd_frac = (datetime_to_decimal_year(tasmin.time) % 1) * 2 * np.pi
-
-        ds = 0.409 * np.sin(jd_frac - 1.39)
-        dr = 1 + 0.033 * np.cos(jd_frac)
-        omega = np.arccos(-np.tan(latr) * np.tan(ds))
-        ra = (
-            (24 * 60 / np.pi)
-            * gsc
-            * dr
-            * (
-                omega * np.sin(latr) * np.sin(ds)
-                + np.cos(latr) * np.cos(ds) * np.sin(omega)
-            )
-        )  # MJ/m2/day
+        ra = extraterrestrial_solar_radiation(tasmin.time, lat)
+        ra = convert_units_to(ra, "MJ m-2 d-1")
 
         # Hargreaves and Samani(1985) formula
         out = (0.0023 * ra * (tas + 17.8) * (tasmax - tasmin) ** 0.5) / lv
@@ -1108,28 +1095,10 @@ def potential_evapotranspiration(
         tas = convert_units_to(tas, "degC")
         tasK = convert_units_to(tas, "K")
 
-        latr = (tas.lat * np.pi) / 180
-        jd_frac = (datetime_to_decimal_year(tas.time) % 1) * 2 * np.pi
-
-        S = 1367.0  # Set solar constant [W/m2]
-        ds = 0.409 * np.sin(jd_frac - 1.39)  # solar declination ds [radians]
-        omega = np.arccos(-np.tan(latr) * np.tan(ds))  # sunset hour angle [radians]
-        dr = 1.0 + 0.03344 * np.cos(
-            jd_frac - 0.048869
-        )  # Calculate relative distance to sun
-
-        ext_rad = (
-            S
-            * 86400
-            / np.pi
-            * dr
-            * (
-                omega * np.sin(ds) * np.sin(latr)
-                + np.sin(omega) * np.cos(ds) * np.cos(latr)
-            )
+        ext_rad = extraterrestrial_solar_radiation(
+            tas.time, lat, solar_constant="1367 W m-2"
         )
         latentH = 4185.5 * (751.78 - 0.5655 * tasK)
-
         radDIVlat = ext_rad / latentH
 
         # parameters from calibration provided by Dr Maliko Tanguy @ CEH
@@ -1148,8 +1117,6 @@ def potential_evapotranspiration(
             tas = convert_units_to(tas, "degC")
         tas = tas.clip(0)
         tas = tas.resample(time="MS").mean(dim="time")
-
-        latr = (tas.lat * np.pi) / 180  # rad
 
         start = "-".join(
             [
@@ -1173,14 +1140,8 @@ def potential_evapotranspiration(
             name="time",
         )
 
-        # julian day fraction
-        jd_frac = (datetime_to_decimal_year(time_v) % 1) * 2 * np.pi
-
-        ds = 0.409 * np.sin(jd_frac - 1.39)
-        omega = np.arccos(-np.tan(latr) * np.tan(ds)) * 180 / np.pi  # degrees
-
-        # monthly-mean daytime length (multiples of 12 hours)
-        dl = 2 * omega / (15 * 12)
+        # Thornwaith measures half-days
+        dl = day_lengths(time_v, lat) / 12
         dl_m = dl.resample(time="MS").mean(dim="time")
 
         # annual heat index

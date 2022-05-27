@@ -965,8 +965,8 @@ def precip_accumulation(
         pr = rain_approximation(pr, tas=tas, thresh=thresh, method="binary")
     elif phase == "solid":
         pr = snowfall_approximation(pr, tas=tas, thresh=thresh, method="binary")
-
-    return rate2amount(pr).resample(time=freq).sum(dim="time", keep_attrs=True)
+    pram = rate2amount(pr)
+    return pram.resample(time=freq).sum(dim="time").assign_attrs(units=pram.units)
 
 
 @declare_units(pr="[precipitation]", tas="[temperature]", thresh="[precipitation]")

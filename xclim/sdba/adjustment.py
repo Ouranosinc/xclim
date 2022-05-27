@@ -12,7 +12,7 @@ import xarray as xr
 from xarray.core.dataarray import DataArray
 
 from xclim.core.calendar import get_calendar
-from xclim.core.formatting import update_history
+from xclim.core.formatting import gen_call_string, update_history
 from xclim.core.options import OPTIONS, SDBA_EXTRA_OUTPUT, set_options
 from xclim.core.units import convert_units_to
 from xclim.core.utils import uses_dask
@@ -220,8 +220,7 @@ class TrainAdjust(BaseAdjustment):
         for name, crd in sim.coords.items():
             if name in scen.coords:
                 scen[name].attrs.update(crd.attrs)
-
-        params = ", ".join([f"{k}={repr(v)}" for k, v in kwargs.items()])
+        params = gen_call_string("", **kwargs)[1:-1]  # indexing to remove added ( )
         infostr = f"{str(self)}.adjust(sim, {params})"
         scen.attrs["history"] = update_history(f"Bias-adjusted with {infostr}", sim)
         scen.attrs["bias_adjustment"] = infostr

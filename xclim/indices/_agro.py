@@ -10,7 +10,8 @@ from xclim.core.calendar import select_time
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.core.utils import DayOfYearStr
 from xclim.indices._threshold import first_day_above, first_day_below, freshet_start
-from xclim.indices.generic import aggregate_between_dates, day_lengths
+from xclim.indices.generic import aggregate_between_dates
+from xclim.indices.helpers import day_lengths
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -196,8 +197,8 @@ def huglin_index(
                         NaN, & \text{if } |lat| > 50 \\
                     \end{cases}
 
-    A more robust day-length calculation based on latitude, calendar, day-of-year, and obliquity is available with
-    `method="jones"`. See: :py:func:`xclim.indices.generic.day_lengths` or Hall and Jones (2010) for more information.
+    A more robust day-length calculation is available with `method="jones"`.
+    See: :py:func:`xclim.indices.generic.day_lengths` for more information.
 
     References
     ----------
@@ -246,11 +247,11 @@ def huglin_index(
         )
         k_aggregated = 1
     elif method.lower() == "jones":
-        day_length = day_lengths(
-            dates=tas.time,
-            lat=lat,
-            start_date=start_date,
-            end_date=end_date,
+        day_length = aggregate_between_dates(
+            day_lengths(dates=tas.time, lat=lat, method="simple"),
+            start=start_date,
+            end=end_date,
+            op="sum",
             freq=freq,
         )
         k = 1
@@ -392,11 +393,10 @@ def biologically_effective_degree_days(
             k = 1 + xarray.where(lat_mask, max(((abs(lat) - 40) / 10) * 0.06, 0), 0)
             k_aggregated = 1
         else:
-            day_length = day_lengths(
-                dates=tasmin.time,
-                lat=lat,
-                start_date=start_date,
-                end_date=end_date,
+            day_length = aggregate_between_dates(
+                day_lengths(dates=tasmin.time, lat=lat, method="simple"),
+                start=start_date,
+                end=end_date,
                 freq=freq,
             )
             k = 1
@@ -536,32 +536,40 @@ def latitude_temperature_index(
 
 @declare_units(
     pr="[precipitation]",
+    evspsblpot="[precipitation]",
     tasmin="[temperature]",
     tasmax="[temperature]",
     tas="[temperature]",
+    lat="[]",
 )
 def water_budget(
     pr: xarray.DataArray,
+    evspsblpot: xarray.DataArray | None = None,
     tasmin: xarray.DataArray | None = None,
     tasmax: xarray.DataArray | None = None,
     tas: xarray.DataArray | None = None,
+    lat: xarray.DataArray | None = None,
     method: str = "BR65",
 ) -> xarray.DataArray:
     r"""Precipitation minus potential evapotranspiration.
 
     Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget,
-    where the potential evapotranspiration is calculated with a given method.
+    where the potential evapotranspiration can be calculated with a given method.
 
     Parameters
     ----------
     pr : xarray.DataArray
       Daily precipitation.
+    evspsblpot: xarray.DataArray
+      Potential evapotranspiration
     tasmin : xarray.DataArray
       Minimum daily temperature.
     tasmax : xarray.DataArray
       Maximum daily temperature.
     tas : xarray.DataArray
       Mean daily temperature.
+    lat : xarray.DataArray
+      Latitude, needed if evspsblpot is not given.
     method : str
       Method to use to calculate the potential evapotranspiration.
 
@@ -576,9 +584,12 @@ def water_budget(
     """
     pr = convert_units_to(pr, "kg m-2 s-1")
 
-    pet = xci.potential_evapotranspiration(
-        tasmin=tasmin, tasmax=tasmax, tas=tas, method=method
-    )
+    if evspsblpot is None:
+        pet = xci.potential_evapotranspiration(
+            tasmin=tasmin, tasmax=tasmax, tas=tas, lat=lat, method=method
+        )
+    else:
+        pet = convert_units_to(evspsblpot, "kg m-2 s-1")
 
     if xarray.infer_freq(pet.time) == "MS":
         with xarray.set_options(keep_attrs=True):

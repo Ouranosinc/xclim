@@ -280,9 +280,13 @@ class TestPotentialEvapotranspiration:
 
         pet_tw48 = atmos.potential_evapotranspiration(tas=tm, method="TW48")
 
-        np.testing.assert_allclose(pet_br65[0, 100:102], [np.nan, np.nan])
-        np.testing.assert_allclose(pet_hg85[100:102, 0], [np.nan, np.nan])
-        np.testing.assert_allclose(pet_tw48[0, 0], [np.nan])
+        np.testing.assert_allclose(
+            pet_br65.isel(location=0, time=slice(100, 102)), [np.nan, np.nan]
+        )
+        np.testing.assert_allclose(
+            pet_hg85.isel(location=0, time=slice(100, 102)), [np.nan, np.nan]
+        )
+        np.testing.assert_allclose(pet_tw48.isel(location=0, time=0), [np.nan])
 
 
 class TestWaterBudget:
@@ -290,43 +294,71 @@ class TestWaterBudget:
         pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
         tn = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmin
         tx = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
+        pet = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").evspsblpot
 
         with xr.set_options(keep_attrs=True):
             tnC = tn - K2C
             tnC.attrs["units"] = "degC"
             prR = pr * 86400
             prR.attrs["units"] = "mm/day"
+            petR = pet * 86400
+            petR.attrs["units"] = "mm/day"
 
-        p_pet_br65 = atmos.water_budget(pr, tn, tx, method="BR65")
-        p_pet_br65C = atmos.water_budget(prR, tnC, tx, method="BR65")
-        p_pet_hg85 = atmos.water_budget(pr, tn, tx, method="HG85")
-        p_pet_hg85C = atmos.water_budget(prR, tnC, tx, method="HG85")
-        p_pet_tw48 = atmos.water_budget(pr, tn, tx, method="TW48")
-        p_pet_tw48C = atmos.water_budget(prR, tnC, tx, method="TW48")
+        p_pet_br65 = atmos.water_budget_from_tas(
+            pr, tasmin=tn, tasmax=tx, method="BR65"
+        )
+        p_pet_br65C = atmos.water_budget_from_tas(
+            prR, tasmin=tnC, tasmax=tx, method="BR65"
+        )
+        p_pet_hg85 = atmos.water_budget_from_tas(
+            pr, tasmin=tn, tasmax=tx, method="HG85"
+        )
+        p_pet_hg85C = atmos.water_budget_from_tas(
+            prR, tasmin=tnC, tasmax=tx, method="HG85"
+        )
+        p_pet_tw48 = atmos.water_budget_from_tas(
+            pr, tasmin=tn, tasmax=tx, method="TW48"
+        )
+        p_pet_tw48C = atmos.water_budget_from_tas(
+            prR, tasmin=tnC, tasmax=tx, method="TW48"
+        )
+        p_pet_evpot = atmos.water_budget(pr, evspsblpot=pet)
+        p_pet_evpotR = atmos.water_budget(prR, evspsblpot=petR)
 
         np.testing.assert_allclose(p_pet_br65, p_pet_br65C, atol=1)
         np.testing.assert_allclose(p_pet_hg85, p_pet_hg85C, atol=1)
         np.testing.assert_allclose(p_pet_tw48, p_pet_tw48C, atol=1)
+        np.testing.assert_allclose(p_pet_evpot, p_pet_evpotR, atol=1)
 
     def test_nan_values(self):
         pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
         tn = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmin
         tx = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
         tm = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tas
+        pet = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").evspsblpot
 
         tn[0, 100] = np.nan
         tx[0, 101] = np.nan
 
-        p_pet_br65 = atmos.water_budget(pr, tn, tx, method="BR65")
-        p_pet_hg85 = atmos.water_budget(pr, tn, tx, method="HG85")
+        p_pet_br65 = atmos.water_budget_from_tas(
+            pr, tasmin=tn, tasmax=tx, method="BR65"
+        )
+        p_pet_hg85 = atmos.water_budget_from_tas(
+            pr, tasmin=tn, tasmax=tx, method="HG85"
+        )
 
         tm[0, 0:31] = np.nan
 
-        p_pet_tw48 = atmos.water_budget(pr, tas=tm, method="TW48")
+        p_pet_tw48 = atmos.water_budget_from_tas(pr, tas=tm, method="TW48")
+
+        pet[0, 0:31] = np.nan
+
+        p_pet_evpot = atmos.water_budget(pr, evspsblpot=pet)
 
         np.testing.assert_allclose(p_pet_br65[0, 100:102], [np.nan, np.nan])
         np.testing.assert_allclose(p_pet_hg85[0, 100:102], [np.nan, np.nan])
         np.testing.assert_allclose(p_pet_tw48[0, 0], [np.nan])
+        np.testing.assert_allclose(p_pet_evpot[0, 0], [np.nan])
 
 
 def test_universal_thermal_climate_index(atmosds):
