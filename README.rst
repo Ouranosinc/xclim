@@ -2,7 +2,7 @@
 xclim: Climate indices computations |logo|
 ==========================================
 
-|license| |build| |pypi| |conda| |coveralls| |codefactor| |fossa| |zenodo| |black| |docs| |gitter|
+|license| |security| |fair| |build| |pre-commit| |pypi| |conda| |coveralls| |codefactor| |fossa| |zenodo| |black| |docs| |gitter|
 
 ----
 
@@ -24,20 +24,20 @@ xclim currently provides over 50 indices related to mean, minimum and maximum da
 .. _xarray: http://xarray.pydata.org/
 .. _dask: https://dask.org/
 
-
 Documentation
 -------------
 The official documentation is at https://xclim.readthedocs.io/
-
 
 Contributing
 ------------
 xclim is in active development and it's being used in production by climate services specialists.
 
-* If you're interested in participating in the development of xclim by suggesting new features, new indices or report bugs, please leave us a message on the `issue tracker <https://github.com/Ouranosinc/xclim/issues>`_. There is also a chat room on gitter (|gitter|).
+* If you're interested in participating in the development of xclim by suggesting new features, new indices or report bugs, please leave us a message on the `issue tracker`_. There is also a chat room on gitter (|gitter|).
 
-* If you would like to contribute code or documentation (which is greatly appreciated!), check out the `Contributing Guidelines <https://github.com/Ouranosinc/xclim/blob/master/.github/CONTRIBUTING.rst>`_ before you begin!
+* If you would like to contribute code or documentation (which is greatly appreciated!), check out the `Contributing Guidelines`_ before you begin!
 
+.. _issue tracker: https://github.com/Ouranosinc/xclim/issues
+.. _Contributing Guidelines: https://github.com/Ouranosinc/xclim/blob/master/.github/CONTRIBUTING.rst
 
 How to cite this library
 ------------------------
@@ -54,7 +54,6 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
-
 
 .. |pypi| image:: https://img.shields.io/pypi/v/xclim.svg
         :target: https://pypi.python.org/pypi/xclim
@@ -92,6 +91,14 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
         :target: https://github.com/Ouranosinc/xclim/blob/master/LICENSE
         :alt: License
 
+.. |security| image:: https://bestpractices.coreinfrastructure.org/projects/6041/badge
+        :target: https://bestpractices.coreinfrastructure.org/projects/6041
+        :alt: Open Source Security Foundation
+
+.. |fair| image:: https://img.shields.io/badge/fair--software.eu-%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8B-yellow
+        :target: https://fair-software.eu
+        :alt: FAIR Software Compliance
+
 .. |fossa| image:: https://app.fossa.com/api/projects/git%2Bgithub.com%2FOuranosinc%2Fxclim.svg?type=shield
         :target: https://app.fossa.com/projects/git%2Bgithub.com%2FOuranosinc%2Fxclim?ref=badge_shield
         :alt: FOSSA
@@ -102,3 +109,7 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 
 .. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/master/_static/_images/xclim-logo-small.png
         :target: https://github.com/Ouranosinc/xclim
+
+.. |pre-commit| image:: https://results.pre-commit.ci/badge/github/Ouranosinc/xclim/master.svg
+   :target: https://results.pre-commit.ci/latest/github/Ouranosinc/xclim/master
+   :alt: pre-commit.ci status

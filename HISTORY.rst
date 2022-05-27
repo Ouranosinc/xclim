@@ -4,23 +4,42 @@ History
 
 0.37.0 (unreleased)
 -------------------
-Contributors to this version:  Abel Aoun (:user:`bzah`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version:  Abel Aoun (:user:`bzah`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Juliette Lavoie (:user:`juliettelavoie`).
 
 Announcements
 ^^^^^^^^^^^^^
 * `xclim` is now compliant with `PEP 563 <https://peps.python.org/pep-0563>`_. Python3.10-style annotations are now permitted. (:issue:`1065`, :pull:`1071`).
+* `xclim` is now fully compatible with xarray's `flox`-enabled ``GroupBy`` and ``resample`` operations. (:pull:`1081`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Add "Celsius" to aliases of "celsius" unit. (:issue:`1067`, :pull:`1068`).
 * All indicators now have indexing enabled, except those computing statistics on spells. (:issue:`1069`, :pull:`1070`).
 * A convenience function for returning the version numbers for relevant xclim dependencies (``xclim.testing.show_versions``) is now offered. (:pull:`1073`).
-  * A CLI version of this function is also available from the command line: `$ xclim show_version_info`. (:pull:`1073`).
+    - A CLI version of this function is also available from the command line: `$ xclim show_version_info`. (:pull:`1073`).
+* New "keep_attrs" option to control the handling of the attributes within the indicators. (:issue:`1026`, :pull:`1076`).
+* Added a notebook showcasing some simple examples of Spatial Analogues. (:issue:`585`, :pull:`1075`).
+* ``create_ensembles`` now accepts a glob string to find datasets. (:pull:`1081`).
+* Improved percentile based indicators metadata with the window, threshold and climatology period used to compute percentiles. (:issue:`1047`, :pull:`1050`).
+* New ``xclim.core.calendar.construct_offset``, the inverse operation of ``parse_offset``. (:pull:`1090`).
+* Rechunking operations in ``xclim.indices.run_length.rle`` are now synchronized with dask's options. (:pull:`1090`).
+* A convenience recipe for installing key development branches of some dependencies has been added (`$ pip install xclim[upstream]`). (:issue:`1088`, :pull:`1092`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* ``xclim.atmos.water_budget`` has been separated into ``water_budget`` (calculated directly with 'evspsblpot') and ``water_budget_from_tas`` (original function). (:pull:`1086`).
+* Injected parameters in indicators are now left out of a function's signature and will not be included in the history attribute. (:pull:`1086`).
+* The signature of the Indicators [cold_spell_duration_index, tg90p, tg10p, tx90p, tx10p, tn90p, tn10p, warm_spell_duration_index, days_over_precip_doy_thresh, days_over_precip_thresh, fraction_over_precip_doy_thresh, fraction_over_precip_thresh, cold_and_dry_days, warm_and_dry_days, warm_and_wet_days, cold_and_wet_days ]
+has been modified. The parameter for percentiles values is now named after the variable it is supposed to be computed upon. (:pull:`1050`)
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Typing syntax has been updated within pre-commit via `isort`. Pre-commit hooks now append `from __future__ import annotations` to all python module imports for backwards compatibility. (:issue:`1065`, :pull:`1071`)
 * `isort` project configurations are now set in `setup.cfg`. (:pull:`1071`).
+
+Bug fixes
+^^^^^^^^^
+* Clean the `bias_adjustement` and `history` attributes created by `xclim.sdba.adjust` (e.g. when an argument  is an `xr.DataArray`, only print the name instead of the whole array). (:issue:`1083`, :pull:`1087`).
 
 0.36.0 (29-04-2022)
 -------------------

@@ -50,7 +50,7 @@ jobs:
       - name: Test with tox
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: tox -e py38-xarray-lm3
+        run: tox -e py38-upstream-lm3
       - name: report coverage
         uses: AndreMiras/coveralls-python-action@develop
         with:

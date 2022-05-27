@@ -11,9 +11,9 @@ from datetime import datetime
 from typing import Optional, Sequence, Union
 from warnings import warn
 
+import dask
 import numpy as np
 import xarray as xr
-from dask import array as dsk
 from numba import njit
 from xarray.core.utils import get_temp_dimname
 
@@ -70,7 +70,6 @@ def use_ufunc(
 def rle(
     da: xr.DataArray,
     dim: str = "time",
-    max_chunk: int = 1_000_000,
     index: str = "first",
 ) -> xr.DataArray:
     """Generate basic run length function.
@@ -81,8 +80,6 @@ def rle(
       Input array.
     dim : str
       Dimension name.
-    max_chunk : int
-      Maximum chunk size.
     index: {'first', 'last'}
       If 'first' (default), the run length is indexed with the first element in the run.
       If 'last', with the last element in the run.
@@ -92,7 +89,11 @@ def rle(
     xr.DataArray
       Values are 0 where da is False (out of runs).
     """
-    use_dask = isinstance(da.data, dsk.Array)
+    # max chunk based on dask's default (128 MiB) and da's dtype.
+    max_chunk = (
+        dask.utils.parse_bytes(dask.config.get("array.chunk-size")) / da.dtype.itemsize
+    )
+    use_dask = uses_dask(da)
 
     # Ensure boolean
     da = da.astype(bool)
@@ -120,14 +121,31 @@ def rle(
     b = xr.concat([start1, b, end1], dim)
 
     # Ensure bfill operates on entire (unchunked) time dimension
-    # Determine appropriate chunk size for other dims - do not exceed 'max_chunk' total size per chunk (default 1000000)
+    # Determine appropriate chunk size for other dims, follow logic from dask:
+    #   do not exceed 'array.chunk-size' unless array.slicing.split-large-chunks is False.
+    # Skip this if there's already only one chunk along dim
     ndims = len(b.shape)
-    if use_dask:
+    if (
+        use_dask
+        and len(b.chunks[b.get_axis_num(dim)]) > 1
+        and dask.config.get("array.slicing.split-large-chunks") is not False
+        and np.prod(da.data.chunksize) > max_chunk
+    ):
         chunk_dim = b[dim].size
         # divide extra dims into equal size
         # Note : even if calculated chunksize > dim.size result will have chunk==dim.size
         chunksize_ex_dims = None  # TODO: This raises type assignment errors in mypy
         if ndims > 1:
+            if dask.config.get("array.slicing.split-large-chunks") is None:
+                warn(
+                    (
+                        f"xclim's run length requires a single chunk along {dim} "
+                        "and must rechunk the provided array. To control this behaviour, "
+                        "use the dask.config entries for `array.chunk-size` and "
+                        "`array.slicing.split-large-chunks`."
+                    ),
+                    category=dask.array.PerformanceWarning,
+                )
             chunksize_ex_dims = np.round(
                 np.power(max_chunk / chunk_dim, 1 / (ndims - 1))
             )
@@ -174,6 +192,7 @@ def rle_statistics(
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
       for DataArray with a small number of grid points.
+      It can be modified globally through the "run_length_ufunc" global option.
     index: {'first', 'last'}
       If 'first' (default), the run length is indexed with the first element in the run.
       If 'last', with the last element in the run.
@@ -186,8 +205,9 @@ def rle_statistics(
       If there are no runs (but the data is valid), returns 0.
     """
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
-
-    if ufunc_1dim:
+    if window == 1 and reducer == "sum":
+        rl_stat = da.sum("time")
+    elif ufunc_1dim:
         rl_stat = statistics_run_ufunc(da, reducer, window, dim)
     else:
         d = rle(da, dim=dim, index=index)
@@ -215,6 +235,7 @@ def longest_run(
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
       for DataArray with a small number of grid points.
+      It can be modified globally through the "run_length_ufunc" global option.
     index: {'first', 'last'}
       If 'first', the run length is indexed with the first element in the run.
       If 'last', with the last element in the run.
@@ -234,7 +255,7 @@ def windowed_run_events(
     da: xr.DataArray,
     window: int,
     dim: str = "time",
-    ufunc_1dim: str | bool = "auto",
+    ufunc_1dim: str | bool = "from_context",
     index: str = "first",
 ) -> xr.DataArray:
     """Return the number of runs of a minimum length.
@@ -252,7 +273,7 @@ def windowed_run_events(
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
       for DataArray with a small number of grid points.
-      Ignored when `window=1`.
+      Ignored when `window=1`. It can be modified globally through the "run_length_ufunc" global option.
     index: {'first', 'last'}
       If 'first', the run length is indexed with the first element in the run.
       If 'last', with the last element in the run.
@@ -297,7 +318,7 @@ def windowed_run_count(
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points. Using 1D_ufunc=True is typically more efficient
       for DataArray with a small number of grid points.
-      Ignored when `window=1`.
+      Ignored when `window=1`. It can be modified globally through the "run_length_ufunc" global option.
     index: {'first', 'last'}
       If 'first', the run length is indexed with the first element in the run.
       If 'last', with the last element in the run.
@@ -345,7 +366,7 @@ def first_run(
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
       for DataArray with a small number of grid points.
-      Ignored when `window=1`.
+      Ignored when `window=1`. It can be modified globally through the "run_length_ufunc" global option.
 
     Returns
     -------
@@ -364,7 +385,7 @@ def first_run(
         da = da.astype("int")
         i = xr.DataArray(np.arange(da[dim].size), dims=dim)
         ind = xr.broadcast(i, da)[0].transpose(*da.dims)
-        if isinstance(da.data, dsk.Array):
+        if uses_dask(da):
             ind = ind.chunk(da.chunks)
         wind_sum = da.rolling({dim: window}).sum(skipna=False)
         out = ind.where(wind_sum >= window).min(dim=dim) - (window - 1)
@@ -409,7 +430,7 @@ def last_run(
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using `1D_ufunc=True` is typically more efficient
       for a DataArray with a small number of grid points.
-      Ignored when `window=1`.
+      Ignored when `window=1`. It can be modified globally through the "run_length_ufunc" global option.
 
     Returns
     -------

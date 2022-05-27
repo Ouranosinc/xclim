@@ -347,15 +347,14 @@ def daily_pr_intensity(
 
     # put pram = 0 for non wet-days
     pram_wd = xarray.where(pr >= t, pram, 0)
-    pram_wd.attrs["units"] = pram.units
 
     # sum over wanted period
-    s = pram_wd.resample(time=freq).sum(dim="time", keep_attrs=True)
+    s = pram_wd.resample(time=freq).sum(dim="time")
 
     # get number of wetdays over period
     wd = wetdays(pr, thresh=thresh, freq=freq)
     out = s / wd
-    out.attrs["units"] = f"{str2pint(s.units) / str2pint(wd.units):~}"
+    out.attrs["units"] = f"{str2pint(pram.units) / str2pint(wd.units):~}"
     return out
 
 
