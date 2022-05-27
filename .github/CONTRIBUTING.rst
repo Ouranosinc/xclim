@@ -142,9 +142,9 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     $ pytest  # for all unit tests, excluding doctests and notebooks.
     $ tox  # run all testing suites
 
-7. Docs should also be tested to ensure that the the documentation will build on ReadTheDocs. This can be performed in a number of ways::
+7. Docs should also be tested to ensure that the documentation will build correctly on ReadTheDocs. This can be performed in a number of ways::
 
-    $ To run in a contained virtualenv environment
+    # To run in a contained virtualenv environment
     $ tox -e docs
     # or, alternatively, to build the docs directly
     $ make docs
