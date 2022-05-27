@@ -762,6 +762,8 @@ class PercentileDataArray(xr.DataArray):
     metadata.
     """
 
+    __slots__ = ()
+
     @classmethod
     def is_compatible(cls, source: xr.DataArray) -> bool:
         """Evaluate whether PecentileDataArray is conformant with expected fields.
