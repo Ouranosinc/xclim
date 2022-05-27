@@ -132,17 +132,24 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     $ black --check --target-version py38 xclim xclim/testing/tests
     $ black --check --target-version py38 --include "\.ipynb$" docs
     $ flake8 xclim xclim/testing/tests
-    $ pydocstyle --convention=numpy --match='(?!test_).*\.py' xclim
+    $ pydocstyle --config=setup.cfg xclim xclim
     $ yamllint --config-file .yamllint.yaml xclim
 
 6. When unit/doc tests are added or notebooks updated, use ``pytest`` to run them. Alternatively, one can use ``tox`` to run all testing suites as would github do when the PR is submitted and new commits are pushed::
 
-    $ pytest --nbval docs/notebooks  # for notebooks
-    $ pytest --rootdir=xclim/testing/tests --xdoctest xclim  # for all tests, including doctests
-    $ pytest  # for all tests, excluding doctests.
+    $ pytest --nbval docs/notebooks  # for notebooks, exclusively.
+    $ pytest --rootdir xclim/testing/tests/ --xdoctest xclim --ignore=xclim/testing/tests/  # for doctests, exclusively.
+    $ pytest  # for all unit tests, excluding doctests and notebooks.
     $ tox  # run all testing suites
 
-7. Commit your changes and push your branch to GitHub::
+7. Docs should also be tested to ensure that the the documentation will build on ReadTheDocs. This can be performed in a number of ways::
+
+    $ To run in a contained virtualenv environment
+    $ tox -e docs
+    # or, alternatively, to build the docs directly
+    $ make docs
+
+8. After clearing the previous checks, commit your changes and push your branch to GitHub::
 
     $ git add *
 
@@ -152,11 +159,11 @@ If installed, `pre-commit` will run checks at this point:
 
 * If no errors are found, changes will be committed.
 * If errors are found, modifications will be made and warnings will be raised if intervention is needed.
-* After changes, simply `git commit` again::
+* After adding changes, simply `git commit` again::
 
     $ git push origin name-of-your-bugfix-or-feature
 
-8. Submit a pull request through the GitHub website.
+9. Submit a pull request through the GitHub website.
 
 Pull Request Guidelines
 -----------------------

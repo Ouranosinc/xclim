@@ -84,7 +84,9 @@ docs: ## generate Sphinx HTML documentation, including API docs
 	sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
+ifndef READTHEDOCS
 	$(BROWSER) docs/_build/html/index.html
+endif
 
 servedocs: docs ## compile the docs watching for changes
 	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
