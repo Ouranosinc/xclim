@@ -67,7 +67,7 @@ def _get(
         try:
             url = "/".join((github_url, "raw", branch, md5_name.as_posix()))
             LOGGER.info("Attempting to fetch remote file md5: %s" % md5_name.as_posix())
-            urlretrieve(url, md5_file)
+            urlretrieve(url, md5_file)  # nosec
             with open(md5_file) as f:
                 remote_md5 = f.read()
             if local_md5.strip() != remote_md5.strip():
@@ -88,11 +88,11 @@ def _get(
 
         url = "/".join((github_url, "raw", branch, fullname.as_posix()))
         LOGGER.info("Fetching remote file: %s" % fullname.as_posix())
-        urlretrieve(url, local_file)
+        urlretrieve(url, local_file)  # nosec
         try:
             url = "/".join((github_url, "raw", branch, md5_name.as_posix()))
             LOGGER.info("Fetching remote file md5: %s" % md5_name.as_posix())
-            urlretrieve(url, md5_file)
+            urlretrieve(url, md5_file)  # nosec
         except HTTPError as e:
             msg = f"{md5_name.as_posix()} not found. Aborting file retrieval."
             local_file.unlink()
@@ -168,7 +168,7 @@ def open_dataset(
 
     if dap_url is not None:
         if not dap_url.lower().startswith("http"):
-            raise ValueError(f"OPeNDAP URL not safe: '{github_url}'.")
+            raise ValueError(f"OPeNDAP URL not safe: '{dap_url}'.")
 
         dap_file = urljoin(dap_url, str(name))
         try:
@@ -260,7 +260,7 @@ class TestFile:  # noqa: D101
             raise ValueError(f"GitHub URL not safe: '{self.url}'.")
 
         for u, p in zip(as_tuple(self.url), as_tuple(self.path)):
-            urlretrieve(u, str(p))
+            urlretrieve(u, str(p))  # nosec
 
     def __call__(self):  # noqa: D102
         """Return the path to the file."""
