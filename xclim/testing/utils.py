@@ -198,13 +198,15 @@ def open_dataset(
 
 
 def list_datasets(github_repo="Ouranosinc/xclim-testdata", branch="main"):
-    """Return a DataFrame listing all xclim test datasets available on the github repo for the given branch.
+    """Return a DataFrame listing all xclim test datasets available on the GitHub repo for the given branch.
 
     The result includes the filepath, as passed to `open_dataset`, the file size (in KB) and the html url to the file.
     This uses an unauthenticated call to GitHub's REST API, so it is limited to 60 requests per hour (per IP).
     A single call of this function triggers one request per subdirectory, so use with parsimony.
     """
-    res = urlopen(f"https://api.github.com/repos/{github_repo}/contents?ref={branch}")
+    res = urlopen(  # nosec
+        f"https://api.github.com/repos/{github_repo}/contents?ref={branch}"
+    )
     base = json.loads(res.read().decode())
     records = []
     for folder in base:
