@@ -22,7 +22,6 @@ of indicators. Once registered, algorithms can be used within indicators by sett
 
 To define another missing value algorithm, subclass :py:class:`MissingBase` and decorate it with
 :py:func:`xclim.core.options.register_missing_method`.
-
 """
 from __future__ import annotations
 

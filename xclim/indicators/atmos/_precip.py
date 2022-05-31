@@ -81,7 +81,7 @@ class PrTasxWithIndexing(ResamplingIndicatorWithIndexing):
 
 
 class HrPrecip(Hourly):
-    """Indicator involving hourly pr series,"""
+    """Indicator involving hourly pr series."""
 
     context = "hydro"
 

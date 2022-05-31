@@ -296,9 +296,6 @@ def parametric_cdf(p: xr.DataArray, v: float | Sequence) -> xr.DataArray:
     -------
     xarray.DataArray
       An array of parametric CDF values estimated from the distribution parameters.
-
-    Notes
-    -----
     """
     v = np.atleast_1d(v)
 
@@ -457,11 +454,19 @@ def get_dist(dist):
 
 def get_lm3_dist(dist):
     """Return a distribution object from `lmoments3.distr`."""
-    # fmt: off
-    import lmoments3.distr  # isort: skip
-    # The lmoments3 library has to be installed from the `develop` branch.
-    # pip install git+https://github.com/OpenHydrology/lmoments3.git@develop#egg=lmoments3
-    # fmt: on
+    try:
+        # fmt: off
+        import lmoments3.distr  # isort: skip
+        # The lmoments3 library has to be installed from the `develop` branch.
+        # pip install git+https://github.com/OpenHydrology/lmoments3.git@develop#egg=lmoments3
+        # fmt: on
+    except ModuleNotFoundError:
+        msg = (
+            "The lmoments3 library has to be installed from the `develop` branch. Run "
+            "'$ pip install git+https://github.com/OpenHydrology/lmoments3.git@develop#egg=lmoments3'"
+        )
+        raise ModuleNotFoundError(msg)
+
     if dist not in _lm3_dist_map:
         raise ValueError(
             f"The {dist} distribution is not supported by `lmoments3` or `xclim`."
@@ -482,6 +487,8 @@ def _fit_start(x, dist, **fitkwargs) -> tuple[tuple, dict]:
     dist : str
       Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
       (see scipy.stats). Only `genextreme` and `weibull_exp` distributions are supported.
+    fitkwargs
+      Kwargs passed to fit.
 
     Returns
     -------
@@ -490,7 +497,7 @@ def _fit_start(x, dist, **fitkwargs) -> tuple[tuple, dict]:
     References
     ----------
     Coles, S., 2001. An Introduction to Statistical Modeling of Extreme Values. Springer-Verlag, London, U.K., 208pp
-    Cohen & Whittle, (1988) "Parameter Estimation in Reliability and Life Span Models", p. 25 ff, Marcel Dekker.
+    Cohen & Whittle. 1988. Parameter Estimation in Reliability and Life Span Models, p. 25 ff, Marcel Dekker.
     """
     x = np.asarray(x)
     m = x.mean()
@@ -543,7 +550,7 @@ def _dist_method_1D(
     ----------
     params: 1D sequence of floats
       Distribution parameters, in the same order as given by :py:func:`fit`.
-    arg: optional, array_like
+    arg: array_like, optional
       The argument for the requested function.
     dist: str
       The scipy name of the distribution.
@@ -570,7 +577,6 @@ def dist_method(
 ) -> xr.DataArray:
     """Vectorized statistical function for given argument on given distribution initialized with params.
 
-    See :ref:`scipy:scipy.stats.rv_continuous` for all available functions and their arguments.
     Methods where `"*args"` are the distribution parameters can be wrapped, except those
     that return new dimensions (Ex: 'rvs' with size != 1, 'stats' with more than one moment, 'interval', 'support')
 
@@ -581,7 +587,7 @@ def dist_method(
     fit_params: xr.DataArray
       Distribution parameters are along `dparams`, in the same order as given by :py:func:`fit`.
       Must have a `scipy_dist` attribute with the name of the distribution fitted.
-    arg: optional, array_like
+    arg: array_like, optional
       The argument for the requested function.
     kwargs
       Other parameters to pass to the function call.
@@ -590,8 +596,11 @@ def dist_method(
     -------
     array_like
       Same shape as arg.
-    """
 
+    Notes
+    -----
+    See: :ref:`scipy:scipy.stats.rv_continuous` for all available functions and their arguments.
+    """
     args = [fit_params]
     input_core_dims = [["dparams"]]
 

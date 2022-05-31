@@ -1,3 +1,4 @@
+# noqa: D205,D400
 """
 Numba-accelerated utilities
 ---------------------------
@@ -61,11 +62,11 @@ def _quantile(arr, q):
 
 
 def quantile(da, q, dim):
-    """Compute the quantiles from a fixed list "q" """
+    """Compute the quantiles from a fixed list `q`."""
     # We have two cases :
     # - When all dims are processed : we stack them and use _quantile1d
     # - When the quantiles are vectorized over some dims, these are also stacked and then _quantile2D is used.
-    # All this stacking is so we can cover all ND+1D cases with one numba function.
+    # All this stacking is so that we can cover all ND+1D cases with one numba function.
 
     # Stack the dims and send to the last position
     # This is in case there are more than one
@@ -105,7 +106,8 @@ def quantile(da, q, dim):
 
 
 @njit([float32[:, :](float32[:, :]), float64[:, :](float64[:, :])])
-def remove_NaNs(x):
+def remove_NaNs(x):  # noqa
+    """Remove NaN values from series."""
     remove = np.zeros_like(x[0, :], dtype=boolean)
     for i in range(x.shape[0]):
         remove = remove | np.isnan(x[i, :])
@@ -190,9 +192,12 @@ def _first_and_last_nonnull(arr):
 
 
 @njit
-def _extrapolate_on_quantiles(interp, oldx, oldg, oldy, newx, newg, method="constant"):
-    """Apply extrapolation to the output of interpolation on quantiles with a given
-    grouping. Arguments are the same as _interp_on_quantiles_2D.
+def _extrapolate_on_quantiles(
+    interp, oldx, oldg, oldy, newx, newg, method="constant"
+):  # noqa
+    """Apply extrapolation to the output of interpolation on quantiles with a given grouping.
+
+    Arguments are the same as _interp_on_quantiles_2D.
     """
     bnds = _first_and_last_nonnull(oldx)
     xp = np.arange(bnds.shape[0])

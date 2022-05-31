@@ -51,7 +51,7 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint: ## check style with flake8 and black
-	pydocstyle --convention=numpy --match='(?!test_).*\.py' xclim
+	pydocstyle --config=setup.cfg xclim
 	flake8 --config=setup.cfg xclim
 	black --check --target-version py38 xclim
 	isort --check --settings-file=setup.cfg
@@ -71,13 +71,22 @@ coverage: ## check code coverage quickly with the default Python
 	coverage html
 	$(BROWSER) htmlcov/index.html
 
-docs: ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/xclim.rst
+linkcheck: ## run checks over all external links found throughout the documentation
+	rm -f docs/xclim*.rst
 	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ xclim
+	sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests
+	$(MAKE) -C docs clean
+	$(MAKE) -C docs linkcheck
+
+docs: ## generate Sphinx HTML documentation, including API docs
+	rm -f docs/xclim*.rst
+	rm -f docs/modules.rst
+	sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs html
+ifndef READTHEDOCS
 	$(BROWSER) docs/_build/html/index.html
+endif
 
 servedocs: docs ## compile the docs watching for changes
 	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .

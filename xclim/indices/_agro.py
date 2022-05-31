@@ -52,6 +52,7 @@ def corn_heat_units(
     r"""Corn heat units.
 
     Temperature-based index used to estimate the development of corn crops.
+    Formula adapted from [BootsmaTremblay&Filion1999]_.
 
     Parameters
     ----------
@@ -71,6 +72,8 @@ def corn_heat_units(
 
     Notes
     -----
+    Formula used in calculating the Corn Heat Units for the Agroclimatic Atlas of Quebec [Audet&al2012]_.
+
     The thresholds of 4.44°C for minimum temperatures and 10°C for maximum temperatures were selected following
     the assumption that no growth occurs below these values.
 
@@ -92,14 +95,9 @@ def corn_heat_units(
 
     References
     ----------
-    Equations from Bootsma, A., G. Tremblay et P. Filion. 1999: Analyse sur les risques associés aux unités thermiques
-    disponibles pour la production de maïs et de soya au Québec. Centre de recherches de l’Est sur les céréales et
-    oléagineux, Ottawa, 28 p.
-
-    Can be found in Audet, R., Côté, H., Bachand, D. and Mailhot, A., 2012: Atlas agroclimatique du Québec. Évaluation
-    des opportunités et des risques agroclimatiques dans un climat en évolution.
+    .. [BootsmaTremblay&Filion1999] Bootsma, A., G. Tremblay et P. Filion. 1999: Analyse sur les risques associés aux unités thermiques disponibles pour la production de maïs et de soya au Québec. Centre de recherches de l’Est sur les céréales et oléagineux, Ottawa, 28 p.
+    .. [Audet&al2012] Audet, R., Côté, H., Bachand, D. and Mailhot, A., 2012: Atlas agroclimatique du Québec. Évaluation des opportunités et des risques agroclimatiques dans un climat en évolution. https://espace.inrs.ca/id/eprint/2406
     """
-
     tasmin = convert_units_to(tasmin, "degC")
     tasmax = convert_units_to(tasmax, "degC")
     thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
@@ -140,7 +138,7 @@ def huglin_index(
     r"""Huglin Heliothermal Index.
 
     Growing-degree days with a base of 10°C and adjusted for latitudes between 40°N and 50°N for April to September
-    (Northern Hemisphere; October to March in Southern Hemisphere).
+    (Northern Hemisphere; October to March in Southern Hemisphere). Originally proposed in [Huglin1978]_.
     Used as a heat-summation metric in viticulture agroclimatology.
 
     Parameters
@@ -201,17 +199,12 @@ def huglin_index(
                     \end{cases}
 
     A more robust day-length calculation based on latitude, calendar, day-of-year, and obliquity is available with
-    `method="jones"`. See: :py:func:`xclim.indices.generic.day_lengths` or Hall and Jones (2010) for more information.
+    `method="jones"`. See: :py:func:`xclim.indices.generic.day_lengths` or [Hall&Jones2010]_ for more information.
 
     References
     ----------
-    Huglin heliothermal index originally published in Huglin, P. (1978). Nouveau mode d’évaluation des possibilités
-    héliothermiques d’un milieu viticole. Dans Symposium International sur l’Écologie de la Vigne (p. 89‑98). Ministère
-    de l’Agriculture et de l’Industrie Alimentaire.
-
-    Modified day-length for Huglin heliothermal index published in Hall, A., & Jones, G. V. (2010). Spatial analysis of
-    climate in winegrape-growing regions in Australia. Australian Journal of Grape and Wine Research, 16(3), 389‑404.
-    https://doi.org/10.1111/j.1755-0238.2010.00100.x
+    .. [Huglin1978] Huglin, P. (1978). Nouveau mode d’évaluation des possibilités héliothermiques d’un milieu viticole. Dans Symposium International sur l’Écologie de la Vigne (p. 89‑98). Ministère de l’Agriculture et de l’Industrie Alimentaire.
+    .. [Hall&Jones2010] Hall, A., & Jones, G. V. (2010). Spatial analysis of climate in winegrape-growing regions in Australia. Australian Journal of Grape and Wine Research, 16(3), 389‑404. https://doi.org/10.1111/j.1755-0238.2010.00100.x
     """
     tas = convert_units_to(tas, "degC")
     tasmax = convert_units_to(tasmax, "degC")
@@ -341,7 +334,7 @@ def biologically_effective_degree_days(
     Notes
     -----
     The tasmax ceiling of 19°C is assumed to be the max temperature beyond which no further gains from daily temperature
-    occur.
+    occur. Indice originally published in [Gladstones1992]_.
 
     Let :math:`TX_{i}` and :math:`TN_{i}` be the daily maximum and minimum temperature at day :math:`i`, :math:`lat`
     the latitude of the point of interest, :math:`degdays_{max}` the maximum amount of degrees that can be summed per
@@ -362,20 +355,15 @@ def biologically_effective_degree_days(
         k = f(lat) = 1 + \left(\frac{\left| lat  \right|}{50} * 0.06,  \text{if }40 < |lat| <50, \text{else } 0\right)
 
     A second version of the BEDD (`method="icclim"`) does not consider :math:`TR_{adj}` and :math:`k` and employs a
-    different end date (30 September). The simplified formula is as follows:
+    different end date (30 September) ([ECAD]_). The simplified formula is as follows:
 
     .. math::
         BEDD_i = \sum_{i=\text{April 1}}^{\text{September 30}} min\left( max\left(\frac{TX_i  + TN_i)}{2} - 10, 0\right), degdays_{max}\right)
 
     References
     ----------
-    Indice originally from Gladstones, J.S. (1992). Viticulture and environment: a study of the effects of
-    environment on grapegrowing and wine qualities, with emphasis on present and future areas for growing winegrapes
-    in Australia. Adelaide:  Winetitles.
-
-    ICCLIM modified formula originally from Project team ECA&D, KNMI (2013). EUMETNET/ECSN optional programme: European Climate
-    Assessment & Dataset (ECA&D) - Algorithm Theoretical Basis Document (ATBD). (KNMI Project number: EPJ029135, v10.7).
-    https://www.ecad.eu/documents/atbd.pdf
+    .. [Gladstones1992] Gladstones, J.S. (1992). Viticulture and environment: a study of the effects of environment on grapegrowing and wine qualities, with emphasis on present and future areas for growing winegrapes in Australia. Adelaide:  Winetitles.
+    .. [ECAD] Project team ECA&D, KNMI (2013). EUMETNET/ECSN optional programme: European Climate Assessment & Dataset (ECA&D) - Algorithm Theoretical Basis Document (ATBD). (KNMI Project number: EPJ029135, v10.7). https://www.ecad.eu/documents/atbd.pdf
     """
     tasmin = convert_units_to(tasmin, "degC")
     tasmax = convert_units_to(tasmax, "degC")
@@ -433,7 +421,7 @@ def cool_night_index(
     """Cool Night Index.
 
     Mean minimum temperature for September (northern hemisphere) or March (Southern hemishere).
-    Used in calculating the Géoviticulture Multicriteria Classification System.
+    Used in calculating the Géoviticulture Multicriteria Classification System ([Tonetto&Carbonneau2004]_).
 
     Parameters
     ----------
@@ -451,18 +439,17 @@ def cool_night_index(
 
     Notes
     -----
-    Given that this indice only examines September and March months, it possible to send in DataArrays containing only
-    these timesteps. Users should be aware that due to the missing values checks in wrapped Indicators, datasets that
-    are missing several months will be flagged as invalid. This check can be ignored by setting the following context:
+    Given that this indice only examines September and March months, it is possible to send in DataArrays containing
+    only these timesteps. Users should be aware that due to the missing values checks in wrapped Indicators, datasets
+    that are missing several months will be flagged as invalid. This check can be ignored by setting the following
+    context:
 
     >>> with xclim.set_options(check_missing='skip', data_validation='log'):
     >>>     cni = xclim.atmos.cool_night_index(...)  # xdoctest: +SKIP
 
     References
     ----------
-    Indice originally published in Tonietto, J., & Carbonneau, A. (2004). A multicriteria climatic classification system
-    or grape-growing regions worldwide. Agricultural and Forest Meteorology, 124(1–2), 81‑97.
-    https://doi.org/10.1016/j.agrformet.2003.06.001
+    .. [Tonetto&Carbonneau2004] Tonietto, J., & Carbonneau, A. (2004). A multicriteria climatic classification system for grape-growing regions worldwide. Agricultural and Forest Meteorology, 124(1–2), 81‑97. https://doi.org/10.1016/j.agrformet.2003.06.001
     """
     tasmin = convert_units_to(tasmin, "degC")
 
@@ -485,7 +472,7 @@ def latitude_temperature_index(
 ) -> xarray.DataArray:
     """Latitude-Temperature Index.
 
-    Mean temperature of the warmest month with a latitude-based scaling factor.
+    Mean temperature of the warmest month with a latitude-based scaling factor ([Jackson&Cherry1988]_).
     Used for categorizing winegrowing regions.
 
     Parameters
@@ -507,7 +494,7 @@ def latitude_temperature_index(
     Notes
     -----
     The latitude factor of `75` is provided for examining the poleward expansion of winegrowing climates under scenarios
-    of climate change. For comparing 20th century/observed historical records, the original scale factor of `60` is more
+    of climate change (modified from [Kenny&Shao1992]_). For comparing 20th century/observed historical records, the original scale factor of `60` is more
     appropriate.
 
     Let :math:`Tn_{j}` be the average temperature for a given month :math:`j`, :math:`lat_{f}` be the latitude factor,
@@ -518,12 +505,8 @@ def latitude_temperature_index(
 
     References
     ----------
-    Indice originally published in Jackson, D. I., & Cherry, N. J. (1988). Prediction of a District’s Grape-Ripening
-    Capacity Using a Latitude-Temperature Index (LTI). American Journal of Enology and Viticulture, 39(1), 19‑28.
-
-    Modified latitude factor from Kenny, G. J., & Shao, J. (1992). An assessment of a latitude-temperature index for
-    predicting climate suitability for grapes in Europe. Journal of Horticultural Science, 67(2), 239‑246.
-    https://doi.org/10.1080/00221589.1992.11516243
+    .. [Jackson&Cherry1988] Jackson, D. I., & Cherry, N. J. (1988). Prediction of a District’s Grape-Ripening Capacity Using a Latitude-Temperature Index (LTI). American Journal of Enology and Viticulture, 39(1), 19‑28.
+    .. [Kenny&Shao1992] Kenny, G. J., & Shao, J. (1992). An assessment of a latitude-temperature index for predicting climate suitability for grapes in Europe. Journal of Horticultural Science, 67(2), 239‑246. https://doi.org/10.1080/00221589.1992.11516243
     """
     tas = convert_units_to(tas, "degC")
 
@@ -770,9 +753,9 @@ def dry_spell_frequency(
     freq: str = "YS",
     op: str = "sum",
 ) -> xarray.DataArray:
-    """
-    Return the number of dry periods of n days and more, during which the accumulated or maximal daily precipitation
-    amount on a window of n days is under the threshold.
+    """Return the number of dry periods of n days and more.
+
+    Periods during which the accumulated or maximal daily precipitation amount on a window of n days is under threshold.
 
     Parameters
     ----------
@@ -826,8 +809,7 @@ def dry_spell_total_length(
     freq: str = "YS",
     **indexer,
 ) -> xarray.DataArray:
-    """
-    Total length of dry spells
+    """Total length of dry spells.
 
     Total number of days in dry periods of a minimum length, during which the maximum or
     accumulated precipitation within a window of the same length is under a threshold.
@@ -839,7 +821,7 @@ def dry_spell_total_length(
     thresh : str
       Accumulated precipitation value under which a period is considered dry.
     window : int
-      Number of days where the maximum or accumulated precipitation is under threshold.
+      Number of days when the maximum or accumulated precipitation is under threshold.
     op : {"max", "sum"}
       Reduce operation.
     freq : str
@@ -898,6 +880,8 @@ def qian_weighted_mean_average(
 
     Notes
     -----
+    Qian Modified Weighted Mean Indice originally proposed in [Qian&al2009]_, based on [BootsmaGameda&McKenney2005]_.
+
     Let :math:`X_{n}` be the average temperature for day :math:`n` and :math:`X_{t}` be the daily mean temperature
     on day :math:`t`. Then the weighted mean average can be calculated as follows:
 
@@ -906,13 +890,8 @@ def qian_weighted_mean_average(
 
     References
     ----------
-    Indice oririginally published in Qian, B., Zhang, X., Chen, K., Feng, Y., & O’Brien, T. (2009). Observed Long-Term
-    Trends for Agroclimatic Conditions in Canada. Journal of Applied Meteorology and Climatology, 49(4), 604‑618.
-    https://doi.org/10.1175/2009JAMC2275.1
-
-    Inspired by Bootsma, A., & Gameda and D.W. McKenney, S. (2005). Impacts of potential climate change on selected
-    agroclimatic indices in Atlantic Canada. Canadian Journal of Soil Science, 85(2), 329‑343.
-    https://doi.org/10.4141/S04-019
+    .. [Qian&al2009] Qian, B., Zhang, X., Chen, K., Feng, Y., & O’Brien, T. (2009). Observed Long-Term Trends for Agroclimatic Conditions in Canada. Journal of Applied Meteorology and Climatology, 49(4), 604‑618. https://doi.org/10.1175/2009JAMC2275.1
+    .. [BootsmaGameda&McKenney2005] Bootsma, A., & Gameda and D.W. McKenney, S. (2005). Impacts of potential climate change on selected agroclimatic indices in Atlantic Canada. Canadian Journal of Soil Science, 85(2), 329‑343. https://doi.org/10.4141/S04-019
     """
     units = tas.attrs["units"]
 
@@ -940,7 +919,7 @@ def effective_growing_degree_days(
 ) -> xarray.DataArray:
     r"""Effective growing degree days.
 
-    Growing degree days based on a dynamic start and end of the growing season.
+    Growing degree days based on a dynamic start and end of the growing season, as defined in [BootsmaGameda&McKenney2005]_.
 
     Parameters
     ----------
@@ -981,9 +960,7 @@ def effective_growing_degree_days(
 
     References
     ----------
-    Indice originally published in Bootsma, A., & Gameda and D.W. McKenney, S. (2005). Impacts of potential climate
-    change on selected agroclimatic indices in Atlantic Canada. Canadian Journal of Soil Science, 85(2), 329‑343.
-    https://doi.org/10.4141/S04-019
+    .. [BootsmaGameda&McKenney2005] Bootsma, A., & Gameda and D.W. McKenney, S. (2005). Impacts of potential climate change on selected agroclimatic indices in Atlantic Canada. Canadian Journal of Soil Science, 85(2), 329‑343. https://doi.org/10.4141/S04-019
     """
     tasmax = convert_units_to(tasmax, "degC")
     tasmin = convert_units_to(tasmin, "degC")

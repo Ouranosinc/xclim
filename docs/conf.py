@@ -23,6 +23,7 @@ import xarray
 
 xarray.DataArray.__module__ = "xarray"
 xarray.Dataset.__module__ = "xarray"
+xarray.CFTimeIndex.__module__ = "xarray"
 
 import xclim  # noqa
 
@@ -102,6 +103,15 @@ extensions = [
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
     "autodoc_indicator",
+]
+
+autosectionlabel_prefix_document = True
+autosectionlabel_maxdepth = 2
+
+linkcheck_ignore = [
+    r"https://github.com/Ouranosinc/xclim/(pull|issue).*",
+    r"https://doi.org/10.1093/mnras/225.1.155"  # does not allow linkcheck requests (error 403)
+    r"https://clisops.readthedocs.io/en/latest/notebooks/subset.html",  # target link is currently broken
 ]
 
 napoleon_numpy_docstring = True
