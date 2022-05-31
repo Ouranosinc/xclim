@@ -57,10 +57,11 @@ def _loess_nb(
     dx=0,
     skipna=True,
 ):  # pragma: no cover
-    """1D Locally weighted regression: fits a nonparametric regression curve to a scatterplot.
+    """1D Locally weighted regression: fits a nonparametric regression curve to a scatter plot.
 
     The arrays x and y contain an equal number of elements; each pair (x[i], y[i]) defines
-    a data point in the scatterplot. The function returns the estimated (smooth) values of y.
+    a data point in the scatter plot. The function returns the estimated (smooth) values of y.
+    Originally proposed in [Cleveland1979]_.
 
     Users should call `utils.loess_smoothing`. See that function for the main documentation.
 
@@ -71,7 +72,7 @@ def _loess_nb(
     y : np.ndarray
       Y-coordinates of the points.
     f : float
-      Parameter controling the shape of the weight curve. Behavior depends on the weighting function.
+      Parameter controlling the shape of the weight curve. Behavior depends on the weighting function.
     niter : int
       Number of robustness iterations to execute.
     weight_func : numba func
@@ -85,8 +86,9 @@ def _loess_nb(
 
     References
     ----------
+    .. [Cleveland1979] Cleveland, W. S., 1979. Robust Locally Weighted Regression and Smoothing Scatterplot, Journal of the American Statistical Association 74, 829–836. https://www.doi.org/10.1080/01621459.1979.10481038.
+
     Code adapted from https://gist.github.com/agramfort/850437
-    Cleveland, W. S., 1979. Robust Locally Weighted Regression and Smoothing Scatterplot, Journal of the American Statistical Association 74, 829–836.
     """
     if skipna:
         nan = np.isnan(y)
@@ -106,11 +108,11 @@ def _loess_nb(
         HW = min(r + 2, n)
         R = min(2 * HW, n)
     else:
-        # Equal spacing, Nearest odd number equal or above f * n
+        # Equal spacing, the nearest odd number equal or above f * n
         r = int(2 * (f * n // 2) + 1)
         # half width of the weights
         hw = int((r - 1) / 2)
-        # Number of values sent to the weigth func. Just a bit larger than the window.
+        # Number of values sent to the weight func. Just a bit larger than the window.
         R = min(r + 4, n)
         HW = hw + 2
 
@@ -180,10 +182,10 @@ def loess_smoothing(
     equal_spacing: bool | None = None,
     skipna: bool = True,
 ):
-    r"""Locally weighted regression in 1D: fits a nonparametric regression curve to a scatterplot.
+    r"""Locally weighted regression in 1D: fits a nonparametric regression curve to a scatter plot.
 
     Returns a smoothed curve along given dimension. The regression is computed for each point using
-    a subset of neigboring points as given from evaluating the weighting function locally.
+    a subset of neighbouring points as given from evaluating the weighting function locally.
     Follows the procedure of [Cleveland1979]_.
 
     Parameters
@@ -226,7 +228,7 @@ def loess_smoothing(
 
     References
     ----------
-    .. [Cleveland1979] Cleveland, W. S., 1979. Robust Locally Weighted Regression and Smoothing Scatterplot, Journal of the American Statistical Association 74, 829–836.
+    .. [Cleveland1979] Cleveland, W. S., 1979. Robust Locally Weighted Regression and Smoothing Scatterplot, Journal of the American Statistical Association 74, 829–836. https://www.doi.org/10.1080/01621459.1979.10481038
 
     Code adapted from https://gist.github.com/agramfort/850437
     """

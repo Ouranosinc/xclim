@@ -19,7 +19,6 @@ import xarray as xr
 from boltons.funcutils import wraps
 from pint import Unit
 from pint.definitions import UnitDefinition
-from xarray import DataArray
 
 from .calendar import date_range, get_calendar, parse_offset
 from .options import datacheck
@@ -267,7 +266,7 @@ def convert_units_to(
     source: str | xr.DataArray | Any,
     target: str | xr.DataArray | Any,
     context: str | None = None,
-) -> DataArray | float | int | Any:
+) -> xr.DataArray | float | int | str | Any:
     """Convert a mathematical expression into a value with the same units as a DataArray.
 
     Parameters
@@ -281,7 +280,7 @@ def convert_units_to(
 
     Returns
     -------
-    Union[DataArray, float, int, Any]
+    Union[xr.DataArray, float, int, str, Any]
       The source value converted to target's units.
     """
     # Target units
@@ -550,7 +549,11 @@ def rate2amount(
     dim : str
       The time dimension.
     out_units : str, optional
-      Optional output units to convert to.
+      Output units to convert to.
+
+    Returns
+    -------
+    xr.DataArray
 
     Examples
     --------
@@ -600,7 +603,7 @@ def amount2rate(
     dim : str
       The time dimension.
     out_units : str, optional
-      Optional output units to convert to.
+      Output units to convert to.
     """
     return _rate_and_amount_converter(amount, dim=dim, out_units=out_units, to="rate")
 
@@ -675,7 +678,7 @@ def declare_units(
        def func(tas):
           ...
 
-    the decorator will check that `tas` has units of temperature (C, K, F).
+    The decorator will check that `tas` has units of temperature (C, K, F).
     """
 
     def dec(func):

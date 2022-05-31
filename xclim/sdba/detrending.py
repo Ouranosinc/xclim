@@ -219,8 +219,7 @@ class LoessDetrend(BaseDetrend):
 
     Notes
     -----
-    LOESS smoothing is computationally expensive. As it relies on a loop on gridpoints, it
-    can be useful to use smaller than usual chunks.
+    LOESS smoothing is computationally expensive. As it relies on a loop on gridpoints, it can be useful to use smaller than usual chunks.
     Moreover, it suffers from heavy boundary effects. As a rule of thumb, the outermost N * f/2 points
     should be considered dubious. (N is the number of points along each group)
     """
@@ -298,8 +297,7 @@ class RollingMeanDetrend(BaseDetrend):
 
     Notes
     -----
-    As for the :py:class:`LoessDetrend` detrending, important boundary effects are to be
-    expected.
+    As for the :py:class:`LoessDetrend` detrending, important boundary effects are to be expected.
     """
 
     def __init__(

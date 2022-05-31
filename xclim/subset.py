@@ -11,7 +11,7 @@ import os
 import warnings
 
 try:
-    from clisops.core.subset import *
+    from clisops.core.subset import *  # noqa
     from clisops.core.subset import __all__  # noqa
 
     __all__ = [x for x in __all__]
