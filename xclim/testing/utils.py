@@ -1,5 +1,5 @@
-"""Testing and tutorial utilities module."""
-# Most of this code copied and adapted from xarray
+"""Testing and tutorial utilities' module."""
+# Some of this code was copied and adapted from xarray
 from __future__ import annotations
 
 import hashlib
@@ -41,7 +41,7 @@ __all__ = [
 
 
 def file_md5_checksum(fname):
-    hash_md5 = hashlib.md5()
+    hash_md5 = hashlib.md5()  # nosec
     with open(fname, "rb") as f:
         hash_md5.update(f.read())
     return hash_md5.hexdigest()
@@ -56,18 +56,21 @@ def _get(
 ) -> Path:
     cache_dir = cache_dir.absolute()
     local_file = cache_dir / branch / fullname
-    md5name = fullname.with_suffix(f"{suffix}.md5")
-    md5file = cache_dir / branch / md5name
+    md5_name = fullname.with_suffix(f"{suffix}.md5")
+    md5_file = cache_dir / branch / md5_name
+
+    if not github_url.lower().startswith("http"):
+        raise ValueError(f"GitHub URL not safe: '{github_url}'.")
 
     if local_file.is_file():
-        localmd5 = file_md5_checksum(local_file)
+        local_md5 = file_md5_checksum(local_file)
         try:
-            url = "/".join((github_url, "raw", branch, md5name.as_posix()))
-            LOGGER.info("Attempting to fetch remote file md5: %s" % md5name.as_posix())
-            urlretrieve(url, md5file)
-            with open(md5file) as f:
+            url = "/".join((github_url, "raw", branch, md5_name.as_posix()))
+            LOGGER.info("Attempting to fetch remote file md5: %s" % md5_name.as_posix())
+            urlretrieve(url, md5_file)  # nosec
+            with open(md5_file) as f:
                 remote_md5 = f.read()
-            if localmd5.strip() != remote_md5.strip():
+            if local_md5.strip() != remote_md5.strip():
                 local_file.unlink()
                 msg = (
                     f"MD5 checksum for {local_file.as_posix()} does not match upstream md5. "
@@ -75,7 +78,7 @@ def _get(
                 )
                 warnings.warn(msg)
         except (HTTPError, URLError):
-            msg = f"{md5name.as_posix()} not accessible online. Unable to determine validity with upstream repo."
+            msg = f"{md5_name.as_posix()} not accessible online. Unable to determine validity with upstream repo."
             warnings.warn(msg)
 
     if not local_file.is_file():
@@ -85,21 +88,21 @@ def _get(
 
         url = "/".join((github_url, "raw", branch, fullname.as_posix()))
         LOGGER.info("Fetching remote file: %s" % fullname.as_posix())
-        urlretrieve(url, local_file)
+        urlretrieve(url, local_file)  # nosec
         try:
-            url = "/".join((github_url, "raw", branch, md5name.as_posix()))
-            LOGGER.info("Fetching remote file md5: %s" % md5name.as_posix())
-            urlretrieve(url, md5file)
+            url = "/".join((github_url, "raw", branch, md5_name.as_posix()))
+            LOGGER.info("Fetching remote file md5: %s" % md5_name.as_posix())
+            urlretrieve(url, md5_file)  # nosec
         except HTTPError as e:
-            msg = f"{md5name.as_posix()} not found. Aborting file retrieval."
+            msg = f"{md5_name.as_posix()} not found. Aborting file retrieval."
             local_file.unlink()
             raise FileNotFoundError(msg) from e
 
-        localmd5 = file_md5_checksum(local_file)
+        local_md5 = file_md5_checksum(local_file)
         try:
-            with open(md5file) as f:
+            with open(md5_file) as f:
                 remote_md5 = f.read()
-            if localmd5.strip() != remote_md5.strip():
+            if local_md5.strip() != remote_md5.strip():
                 local_file.unlink()
                 msg = (
                     f"{local_file.as_posix()} and md5 checksum do not match. "
@@ -145,7 +148,7 @@ def open_dataset(
     cache : bool
         If True, then cache data locally for use on subsequent calls.
     kwds : dict, optional
-        For NetCDF files, kwds passed to :py:func:`xarray.open_dataset`.
+        For NetCDF files, keywords passed to :py:func:`xarray.open_dataset`.
 
     Returns
     -------
@@ -160,7 +163,13 @@ def open_dataset(
         suffix = ".nc"
     fullname = name.with_suffix(suffix)
 
+    if not github_url.lower().startswith("http"):
+        raise ValueError(f"GitHub URL not safe: '{github_url}'.")
+
     if dap_url is not None:
+        if not dap_url.lower().startswith("http"):
+            raise ValueError(f"OPeNDAP URL not safe: '{dap_url}'.")
+
         dap_file = urljoin(dap_url, str(name))
         try:
             ds = _open_dataset(dap_file, **kwds)
@@ -189,20 +198,22 @@ def open_dataset(
 
 
 def list_datasets(github_repo="Ouranosinc/xclim-testdata", branch="main"):
-    """Return a DataFrame listing all xclim test datasets available on the github repo for the given branch.
+    """Return a DataFrame listing all xclim test datasets available on the GitHub repo for the given branch.
 
     The result includes the filepath, as passed to `open_dataset`, the file size (in KB) and the html url to the file.
     This uses an unauthenticated call to GitHub's REST API, so it is limited to 60 requests per hour (per IP).
     A single call of this function triggers one request per subdirectory, so use with parsimony.
     """
-    res = urlopen(f"https://api.github.com/repos/{github_repo}/contents?ref={branch}")
+    res = urlopen(  # nosec
+        f"https://api.github.com/repos/{github_repo}/contents?ref={branch}"
+    )
     base = json.loads(res.read().decode())
     records = []
     for folder in base:
         if folder["path"].startswith(".") or folder["size"] > 0:
             # drop hidden folders and other files.
             continue
-        res = urlopen(folder["url"])
+        res = urlopen(folder["url"])  # nosec
         listing = json.loads(res.read().decode())
         for file in listing:
             if file["path"].endswith(".nc"):
@@ -247,8 +258,11 @@ class TestFile:  # noqa: D101
 
     def download(self):
         """Download a remote file."""
+        if not self.url.lower().startswith("http"):
+            raise ValueError(f"GitHub URL not safe: '{self.url}'.")
+
         for u, p in zip(as_tuple(self.url), as_tuple(self.path)):
-            urlretrieve(u, str(p))
+            urlretrieve(u, str(p))  # nosec
 
     def __call__(self):  # noqa: D102
         """Return the path to the file."""
@@ -294,7 +308,7 @@ def list_input_variables(
     """List all possible variables names used in xclim's indicators.
 
     Made for development purposes. Parses all indicator parameters with the
-    :py:attribute:`xclim.core.utils.InputKind.VARIABLE` or `OPTIONAL_VARIABLE` kinds.
+    :py:attr:`xclim.core.utils.InputKind.VARIABLE` or `OPTIONAL_VARIABLE` kinds.
 
     Parameters
     ----------
@@ -322,7 +336,7 @@ def list_input_variables(
     variables = defaultdict(list)
     for name, ind in registry.items():
         if "." in name:
-            # external submodule, sub module name is prepened to registry key
+            # external submodule, submodule name is prepended to registry key
             if name.split(".")[0] not in submodules:
                 continue
         elif ind.realm not in submodules:
@@ -380,13 +394,14 @@ def get_all_CMIP6_variables(get_cell_methods=True):  # noqa
 
 
 def update_variable_yaml(filename=None, xclim_needs_only=True):
+    """Update a variable from a yaml file."""
     print("Downloading CMIP6 variables.")
-    allvars = get_all_CMIP6_variables(get_cell_methods=False)
+    all_vars = get_all_CMIP6_variables(get_cell_methods=False)
 
     if xclim_needs_only:
         print("Filtering with xclim-implemented variables.")
-        xcvars = list_input_variables()
-        allvars = {k: v for k, v in allvars.items() if k in xcvars}
+        xc_vars = list_input_variables()
+        all_vars = {k: v for k, v in all_vars.items() if k in xc_vars}
 
     filepath = Path(
         filename or (Path(__file__).parent.parent / "data" / "variables.yml")
@@ -394,19 +409,19 @@ def update_variable_yaml(filename=None, xclim_needs_only=True):
 
     if filepath.exists():
         with filepath.open() as f:
-            stdvars = safe_load(f)
+            std_vars = safe_load(f)
 
-        for var, data in allvars.items():
-            if var not in stdvars["variables"]:
+        for var, data in all_vars.items():
+            if var not in std_vars["variables"]:
                 print(f"Added {var}")
                 new_data = data.copy()
                 new_data.update(description="")
-                stdvars["variables"][var] = new_data
+                std_vars["variables"][var] = new_data
     else:
-        stdvars = allvars
+        std_vars = all_vars
 
     with filepath.open("w") as f:
-        safe_dump(stdvars, f)
+        safe_dump(std_vars, f)
 
 
 def publish_release_notes(
@@ -491,9 +506,8 @@ def show_versions(file: os.PathLike | StringIO | TextIO | None = None) -> str | 
 
     Returns
     -------
-    str, optional
+    str or None
     """
-
     deps = [
         ("xarray", lambda mod: mod.__version__),
         ("sklearn", lambda mod: mod.__version__),

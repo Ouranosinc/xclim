@@ -1,6 +1,7 @@
+# noqa: D205,D400
 """
-Detrending objects
-------------------
+Detrending Objects
+==================
 """
 from __future__ import annotations
 
@@ -50,6 +51,7 @@ class BaseDetrend(ParametrizableWithDataset):
 
     @property
     def fitted(self):
+        """Return whether instance is fitted."""
         return hasattr(self, "ds")
 
     def fit(self, da: xr.DataArray):
@@ -63,10 +65,12 @@ class BaseDetrend(ParametrizableWithDataset):
         return new
 
     def _get_trend(self, da: xr.DataArray):
-        """Computes the trend, along the self.group.dim as found on da.
+        """Compute the trend along the self.group.dim as found on da.
 
-        If da is a DataArray (and has a "dtype" attribute), the trend is casted to have the same dtype.
+        If da is a DataArray (and has a `dtype` attribute), the trend is cast to have the same dtype.
 
+        Notes
+        -----
         This method applies `_get_trend_group` with `self.group`.
         """
         out = self.group.apply(
@@ -107,6 +111,7 @@ class BaseDetrend(ParametrizableWithDataset):
         raise NotImplementedError
 
     def __repr__(self):
+        """Format instance representation."""
         rep = super().__repr__()
         if not self.fitted:
             return f"<{rep} | unfitted>"
@@ -214,8 +219,7 @@ class LoessDetrend(BaseDetrend):
 
     Notes
     -----
-    LOESS smoothing is computationally expensive. As it relies on a loop on gridpoints, it
-    can be useful to use smaller than usual chunks.
+    LOESS smoothing is computationally expensive. As it relies on a loop on gridpoints, it can be useful to use smaller than usual chunks.
     Moreover, it suffers from heavy boundary effects. As a rule of thumb, the outermost N * f/2 points
     should be considered dubious. (N is the number of points along each group)
     """
@@ -293,8 +297,7 @@ class RollingMeanDetrend(BaseDetrend):
 
     Notes
     -----
-    As for the :py:class:`LoessDetrend` detrending, important boundary effects are to be
-    expected.
+    As for the :py:class:`LoessDetrend` detrending, important boundary effects are to be expected.
     """
 
     def __init__(

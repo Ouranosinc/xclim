@@ -1,4 +1,4 @@
-"""Climate indices computation package based on Xarray."""
+# noqa: D104
 from __future__ import annotations
 
 from importlib.resources import contents, path
@@ -11,7 +11,7 @@ from xclim.indicators import atmos, land, seaIce  # noqa
 
 __author__ = """Travis Logan"""
 __email__ = "logan.travis@ouranos.ca"
-__version__ = "0.36.6-beta"
+__version__ = "0.36.7-beta"
 
 
 # Load official locales

@@ -31,6 +31,7 @@ dependencies:
     - ipython
     - matplotlib
     - mypy
+    - nbsphinx
     - nbval
     - nc-time-axis
     - netCDF4>=1.4
@@ -40,7 +41,6 @@ dependencies:
     - pylint
     - pytest
     - pytest-cov
-    - pytest-runner
     - sphinx
     - sphinx_rtd_theme
     - statsmodels

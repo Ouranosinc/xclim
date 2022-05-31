@@ -6,7 +6,7 @@ from urllib.error import HTTPError
 import numpy as np
 import pytest
 
-import xclim.testing._utils as utilities
+import xclim.testing.utils as utilities
 
 from . import TD
 

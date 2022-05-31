@@ -1,3 +1,8 @@
+# noqa: D205,D400
+"""
+SDBA Testing Utilities Module
+=============================
+"""
 from __future__ import annotations
 
 import collections
@@ -13,6 +18,7 @@ __all__ = ["series", "cannon_2015_rvs", "cannon_2015_dist"]
 
 
 def series(values, name, start="2000-01-01"):
+    # noqa: D103
     coords = collections.OrderedDict()
     for dim, n in zip(("time", "lon", "lat"), values.shape):
         if dim == "time":
@@ -45,6 +51,7 @@ def series(values, name, start="2000-01-01"):
 
 
 def cannon_2015_dist():
+    # noqa: D103
     # ref ~ gamma(k=4, theta=7.5)  mu: 30, sigma: 15
     ref = gamma(4, scale=7.5)
 
@@ -58,6 +65,7 @@ def cannon_2015_dist():
 
 
 def cannon_2015_rvs(n, random=True):
+    # noqa: D103
     # Frozen distributions
     fd = cannon_2015_dist()
 

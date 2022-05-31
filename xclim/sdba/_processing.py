@@ -114,7 +114,6 @@ def _normalize(
     kind: str = ADDITIVE,
 ) -> xr.Dataset:
     """Normalize an array by removing its mean.
-    Normalization is performed group-wise.
 
     Parameters
     ----------
@@ -132,8 +131,11 @@ def _normalize(
     -------
     xr.Dataset
       Group-wise anomaly of x
-    """
 
+    Notes
+    -----
+    Normalization is performed group-wise.
+    """
     if "norm" in ds:
         norm = ds.norm
     else:

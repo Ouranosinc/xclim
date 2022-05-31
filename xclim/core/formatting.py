@@ -11,8 +11,8 @@ import re
 import string
 from ast import literal_eval
 from fnmatch import fnmatch
-from inspect import _empty, signature
-from typing import Any, Dict, Mapping, Optional, Sequence, Union
+from inspect import _empty, signature  # noqa
+from typing import Any, Mapping, Sequence
 
 import xarray as xr
 from boltons.funcutils import wraps
@@ -62,6 +62,18 @@ class AttrFormatter(string.Formatter):
         self.mapping = mapping
 
     def format(self, format_string: str, /, *args: Any, **kwargs: dict) -> str:
+        """Format a string.
+
+        Parameters
+        ----------
+        format_string: str
+        args
+        kwargs
+
+        Returns
+        -------
+        str
+        """
         for k, v in DEFAULT_FORMAT_PARAMS.items():
             if k not in kwargs:
                 kwargs.update({k: v})
@@ -153,7 +165,7 @@ default_formatter = AttrFormatter(
 def parse_doc(doc: str) -> dict[str, str]:
     """Crude regex parsing reading an indice docstring and extracting information needed in indicator construction.
 
-    The appropriate docstring syntax is detailed in :ref:`Defining new indices`.
+    The appropriate docstring syntax is detailed in :ref:`notebooks/extendxclim:Defining new indices`.
 
     Parameters
     ----------
@@ -197,8 +209,7 @@ def parse_doc(doc: str) -> dict[str, str]:
 
 
 def _parse_parameters(section):
-    """Parse the parameters section of a docstring into a dictionary
-    mapping the parameter name to its description and, potentially, to its set of choices.
+    """Parse the 'parameters' section of a docstring into a dictionary mapping the parameter name to its description and, potentially, to its set of choices.
 
     The type annotation are not parsed, except for fixed sets of values
     (listed as "{'a', 'b', 'c'}"). The annotation parsing only accepts
@@ -342,11 +353,15 @@ def update_history(
     )
     if len(merged_history) > 0 and not merged_history.endswith("\n"):
         merged_history += "\n"
-    merged_history += f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] {new_name or ''}: {hist_str} - xclim version: {__version__}"
+    merged_history += (
+        f"[{dt.datetime.now():%Y-%m-%d %H:%M:%S}] {new_name or ''}: "
+        f"{hist_str} - xclim version: {__version__}"
+    )
     return merged_history
 
 
 def update_xclim_history(func):
+    # noqa: D401
     """Decorator that auto-generates and fills the history attribute.
 
     The history is generated from the signature of the function and added to the first output.

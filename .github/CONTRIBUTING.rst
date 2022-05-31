@@ -17,7 +17,7 @@ Implement Features, Indices or Indicators
 
 xclim's structure makes it easy to create and register new user-defined indices and indicators.
 For the general implementation of indices and their wrapping into indicators, refer to
-:ref:`Extending xclim`  and  :ref:`Customizing and controlling xclim`.
+:ref:`notebooks/extendxclim:Extending xclim`  and  :ref:`notebooks/customize:Customizing and controlling xclim`.
 
 Look through the GitHub issues for features. Anything tagged with "enhancement"
 and "help wanted" is open to whoever wants to implement it.
@@ -28,7 +28,7 @@ General to-do list for implementing a new Indicator:
 
     * Indices are function wrapped with :py:func:`~xclim.core.units.declare_units`
     * Their input arguments should have type annotations, as documented in :py:class:`~xclim.core.utils.InputKind`
-    * Their docstring should follow the scheme explained in :ref:`Defining new indices`.
+    * Their docstring should follow the scheme explained in :ref:`notebooks/extendxclim:Defining new indices`.
     * They should set the units on their outputs, but no other metadata fields.
     * Their code should be found in the most relevant ``xclim/indices/_*.py``  file. Functions are explicitly added to the ``__all__`` at the top of the file.
 
@@ -39,7 +39,7 @@ General to-do list for implementing a new Indicator:
 
 3. Add the indicator
 
-    * See :ref:`Defining new indicators` for more info and look at the other indicators for inspiration.
+    * See :ref:`notebooks/extendxclim:Defining new indicators` for more info and look at the other indicators for inspiration.
     * They are added in the most relevant ``xclim/indicators/{realm}/_*.py`` file.
     * Indicator are instances of subclasses of :py:class:`xclim.core.indicator.Indicator`.
       They should use a class declared within the ``{realm}`` folder, creating a dummy one if needed. They are explicitly added to the file's ``__all__``.
@@ -132,17 +132,24 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     $ black --check --target-version py38 xclim xclim/testing/tests
     $ black --check --target-version py38 --include "\.ipynb$" docs
     $ flake8 xclim xclim/testing/tests
-    $ pydocstyle --convention=numpy --match='(?!test_).*\.py' xclim
+    $ pydocstyle --config=setup.cfg xclim xclim
     $ yamllint --config-file .yamllint.yaml xclim
 
 6. When unit/doc tests are added or notebooks updated, use ``pytest`` to run them. Alternatively, one can use ``tox`` to run all testing suites as would github do when the PR is submitted and new commits are pushed::
 
-    $ pytest --nbval docs/notebooks  # for notebooks
-    $ pytest --rootdir=xclim/testing/tests --xdoctest xclim  # for all tests, including doctests
-    $ pytest  # for all tests, excluding doctests.
+    $ pytest --nbval docs/notebooks  # for notebooks, exclusively.
+    $ pytest --rootdir xclim/testing/tests/ --xdoctest xclim --ignore=xclim/testing/tests/  # for doctests, exclusively.
+    $ pytest  # for all unit tests, excluding doctests and notebooks.
     $ tox  # run all testing suites
 
-7. Commit your changes and push your branch to GitHub::
+7. Docs should also be tested to ensure that the documentation will build correctly on ReadTheDocs. This can be performed in a number of ways::
+
+    # To run in a contained virtualenv environment
+    $ tox -e docs
+    # or, alternatively, to build the docs directly
+    $ make docs
+
+8. After clearing the previous checks, commit your changes and push your branch to GitHub::
 
     $ git add *
 
@@ -152,11 +159,11 @@ If installed, `pre-commit` will run checks at this point:
 
 * If no errors are found, changes will be committed.
 * If errors are found, modifications will be made and warnings will be raised if intervention is needed.
-* After changes, simply `git commit` again::
+* After adding changes, simply `git commit` again::
 
     $ git push origin name-of-your-bugfix-or-feature
 
-8. Submit a pull request through the GitHub website.
+9. Submit a pull request through the GitHub website.
 
 Pull Request Guidelines
 -----------------------
@@ -330,7 +337,7 @@ Before updating the main conda-forge recipe, we *strongly* suggest performing th
  * Ensure that dependencies and dependency versions correspond with those of the tagged version, with open or pinned versions for the `host` requirements.
  * If possible, configure tests within the conda-forge build CI (e.g. `imports: xclim`, `commands: pytest xclim`)
 
-.. _`numpydoc`: https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt
+.. _`numpydoc`: https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
 .. _`reStructuredText (ReST)`: https://www.jetbrains.com/help/pycharm/using-docstrings-to-specify-types.html
 .. _`reStructuredText Primer`: https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
 .. _`GitHub Repository`: https://github.com/Ouranosinc/xclim
