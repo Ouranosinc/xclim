@@ -9,7 +9,8 @@ Contributors to this version:  Abel Aoun (:user:`bzah`), Pascal Bourgault (:user
 Announcements
 ^^^^^^^^^^^^^
 * `xclim` is now compliant with `PEP 563 <https://peps.python.org/pep-0563>`_. Python3.10-style annotations are now permitted. (:issue:`1065`, :pull:`1071`).
-* `xclim` is now fully compatible with xarray's `flox`-enabled ``GroupBy`` and ``resample`` operations. (:pull:`1081`).
+* `xclim` is now fully compatible with `xarray`'s `flox`-enabled ``GroupBy`` and ``resample`` operations. (:pull:`1081`).
+* `xclim` now (properly) enforces docstring compliance checks using `pydocstyle` with modified `numpy`-style docstrings. Docstring errors will now cause build failures. See the `pydocstyle documentation <http://www.pydocstyle.org/en/stable/error_codes.html>`_ for more information. (:pull:`1074`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -29,20 +30,24 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 * ``xclim.atmos.water_budget`` has been separated into ``water_budget`` (calculated directly with 'evspsblpot') and ``water_budget_from_tas`` (original function). (:pull:`1086`).
 * Injected parameters in indicators are now left out of a function's signature and will not be included in the history attribute. (:pull:`1086`).
-* The signature of the Indicators [cold_spell_duration_index, tg90p, tg10p, tx90p, tx10p, tn90p, tn10p, warm_spell_duration_index, days_over_precip_doy_thresh, days_over_precip_thresh, fraction_over_precip_doy_thresh, fraction_over_precip_thresh, cold_and_dry_days, warm_and_dry_days, warm_and_wet_days, cold_and_wet_days ]
-has been modified. The parameter for percentiles values is now named after the variable it is supposed to be computed upon. (:pull:`1050`)
+* The signature for the following Indicators:
+    - cold_spell_duration_index, tg90p, tg10p, tx90p, tx10p, tn90p, tn10p, warm_spell_duration_index, days_over_precip_doy_thresh, days_over_precip_thresh, fraction_over_precip_doy_thresh, fraction_over_precip_thresh, cold_and_dry_days, warm_and_dry_days, warm_and_wet_days, cold_and_wet_days
+  have been modified. The parameter for percentiles values is now named after the variable it is supposed to be computed upon. (:pull:`1050`)
+* `pytest-runner` has been removed as a dependency (it was never needed for `xclim` development). (:pull:`1074`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Typing syntax has been updated within pre-commit via `isort`. Pre-commit hooks now append `from __future__ import annotations` to all python module imports for backwards compatibility. (:issue:`1065`, :pull:`1071`)
 * `isort` project configurations are now set in `setup.cfg`. (:pull:`1071`).
+* Many function docstrings, external target links, and internal section references have been adjusted to reduce warnings when building the docs. (:pull:`1074`).
 
 Bug fixes
 ^^^^^^^^^
 * Clean the `bias_adjustement` and `history` attributes created by `xclim.sdba.adjust` (e.g. when an argument  is an `xr.DataArray`, only print the name instead of the whole array). (:issue:`1083`, :pull:`1087`).
+* `pydocstyle` checks were silently failing in the `pre-commit` configuration due to a badly-formed regex. This has been adjusted. (:pull:`1074`).
 
-0.36.0 (29-04-2022)
--------------------
+v0.36.0 (29-04-2022)
+--------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), David Huard (:user:`huard`).
 
 Bug fixes
@@ -61,8 +66,8 @@ Internal changes
 ^^^^^^^^^^^^^^^^
 * Ipython was unpinned as version 8.2 fixed the previous issue. (:issue:`1005`, :pull:`1064`).
 
-0.35.0 (01-04-2022)
--------------------
+v0.35.0 (01-04-2022)
+--------------------
 Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`) and Pascal Bourgault (:user:`aulemahal`).
 
 New indicators
@@ -85,8 +90,8 @@ Internal changes
 * `xclim` now uses the ``check-json`` and ``pretty-format-json`` pre-commit checks to validate and format JSON files. (:pull:`1032`).
 * The few `logging` artifacts in the ``xclim.ensembles`` module have been replaced with `warnings.warn` calls or removed. (:issue:`1039`, :pull:`1044`).
 
-0.34.0 (25-02-2022)
--------------------
+v0.34.0 (25-02-2022)
+--------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`), Aoun Abel (:user:`bzah`).
 
 Announcements
@@ -128,8 +133,8 @@ Internal changes
 * The "is_dayofyear" attribute added by several indices is now a ``numpy.int32`` instance, instead of python's ``int``. This ensures a THREDDS server can read it when the variable is saved to a netCDF file with `xarray`/`netCDF4-python`. (:issue:`980`, :pull:`1019`).
 * The `xclim` git repository now offers `Issue Forms <https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository#creating-issue-forms>`_ for some general issue types.
 
-0.33.2 (2022-02-09)
--------------------
+v0.33.2 (2022-02-09)
+--------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Trevor James Smith (:user:`Zeitsperre`).
 
 Announcements
@@ -154,8 +159,8 @@ Internal changes
 * Docstrings and documentation has been adjusted for grammar and typos. (:pull:`1000`).
 * ``sdba.utils.extrapolate_qm`` has been removed, as announced for xclim 0.33. (:pull:`1009`).
 
-0.33.0 (2022-01-28)
--------------------
+v0.33.0 (2022-01-28)
+--------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Tom Keel (:user:`Thomasjkeel`), Jeremy Fyke (:user:`JeremyFyke`), David Huard (:user:`huard`), Abel Aoun (:user:`bzah`), Juliette Lavoie (:user:`juliettelavoie`), Yannick Rousseau (:user:`yrouranos`).
 
 Announcements
@@ -205,15 +210,15 @@ Bug fixes
 ^^^^^^^^^
 * Fix mistake in the units of spell_length_distribution. (:issue:`1003`, :pull:`1004`)
 
-0.32.1 (2021-12-17)
--------------------
+v0.32.1 (2021-12-17)
+--------------------
 
 Bug fixes
 ^^^^^^^^^
 * Adjusted a test (``test_cli::test_release_notes``) that prevented conda-forge test ensemble from passing. (:pull:`962`).
 
-0.32.0 (2021-12-17)
--------------------
+v0.32.0 (2021-12-17)
+--------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), David Huard (:user:`huard`), Clair Barnes (:user:`clairbarnes`), Raquel Alegre (:user:`raquel-ucl`), Jamie Quinn (:user:`JamieJQuinn`), Maliko Tanguy (:user:`malngu`), Aaron Spring (:user:`aaronspring`).
 
 Announcements
@@ -266,8 +271,8 @@ Bug fixes
 * "degrees_north" and "degrees_east" (and their variants) are now considered independent units, so that ``pint`` and ``xclim.core.units.ensure_cf_units`` don't convert them to "deg". (:pull:`959`).
 * Fixed a bug in ``xclim.core.dataflags`` that would misidentify the "extra" variable to be called when running multivariate checks. (:pull:`957`, :issue:`861`).
 
-0.31.0 (2021-11-05)
--------------------
+v0.31.0 (2021-11-05)
+--------------------
 Contributors to this version: Abel Aoun (:user:`bzah`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Juliette Lavoie (:user:`juliettelavoie`), Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`).
 
 New indicators
@@ -328,15 +333,15 @@ Bug fixes
 * Corrected several French indicator translation description strings (bad usages of `"."` in `description` and `long_name` fields). (:pull:`895`).
 * Fixed an error with the formula for ``huglin_index`` where `tasmin` was being used in the calculation instead of `tas`. (:pull:`903`, :issue:`902`).
 
-0.30.1 (2021-10-01)
--------------------
+v0.30.1 (2021-10-01)
+--------------------
 
 Bug fixes
 ^^^^^^^^^
 * Fix a bug in ``xclim.sdba``'s ``map_groups`` where 1D input including an auxiliary coordinate would fail with an obscure error on a reducing operation.
 
-0.30.0 (2021-09-28)
--------------------
+v0.30.0 (2021-09-28)
+--------------------
 
 New indicators
 ^^^^^^^^^^^^^^
@@ -350,7 +355,7 @@ New features and enhancements
 * ``xclim.core.utils.nan_calc_percentiles`` now uses a custom algorithm instead of ``numpy.nanpercentiles`` to have more flexibility on the interpolation method. The performance is also improved.
 * ``xclim.core.calendar.percentile_doy`` now uses the 8th method of Hyndman & Fan for linear interpolation (alpha = beta = 1/3). Previously, the function used Numpy's percentile, which corresponds to the 7th method. This change is motivated by the fact that the 8th is recommended by Hyndman & Fay and it ensures consistency with other climate indices packages (`climdex`, `icclim`). Using `alpha = beta = 1` restores the previous behaviour.
 * ``xclim.core.utils._cal_perc`` is now only a proxy for ``xc.core.utils.nan_calc_percentiles`` with some axis moves.
-* `xclim` now implements many data quality assurance flags (``xclim.core.dataflags``) for temperature and precipitation based on `ICCLIM documentation guidelines <https://eca.knmi.nl/documents/atbd.pdf>`_. These checks include the following:
+* `xclim` now implements many data quality assurance flags (``xclim.core.dataflags``) for temperature and precipitation based on `ICCLIM documentation guidelines <https://www.ecad.eu/documents/atbd.pdf>`_. These checks include the following:
     - Temperature (variables: ``tas``, ``tasmin``, ``tasmax``): ``tasmax_below_tasmin``, ``tas_exceeds_tasmax``, ``tas_below_tasmin``, ``temperature_extremely_low`` (`thresh="-90 degC"`), ``temperature_extremely_high`` (`thresh="60 degC"`).
     - Precipitation-specific (variables: ``pr``, ``prsn``, ):  ``negative_accumulation_values``, ``very_large_precipitation_events`` (`thresh="300 mm d-1"`).
     - Wind-specific (variables: ``sfcWind``, ``wsgsmax``/``sfcWindMax``): ``wind_values_outside_of_bounds``
@@ -385,8 +390,8 @@ Internal Changes
 ^^^^^^^^^^^^^^^^
 * `xclim` code quality checks now use the newest `black` (v21.8-beta). Checks launched via `tox` and `pre-commit` now run formatting modifications over Jupyter notebooks found under `docs`.
 
-0.29.0 (2021-08-30)
--------------------
+v0.29.0 (2021-08-30)
+--------------------
 
 Announcements
 ^^^^^^^^^^^^^
@@ -443,8 +448,8 @@ Internal Changes
 * The behaviour of ``xclim.testing._utils.getfile`` was adjusted to launch file download requests for web-hosted md5 files for every call to compare against local test data.
   This was done to validate that locally-stored test data is identical to test data available online, without resorting to git-based actions. This approach may eventually be revised/optimized in the future.
 
-0.28.1 (2021-07-29)
--------------------
+v0.28.1 (2021-07-29)
+--------------------
 
 Announcements
 ^^^^^^^^^^^^^
@@ -458,8 +463,8 @@ Internal Changes
 ^^^^^^^^^^^^^^^^
 * Minor modifications to many function call signatures (type hinting) and docstrings (numpy docstring compliance).
 
-0.28.0 (2021-07-07)
--------------------
+v0.28.0 (2021-07-07)
+--------------------
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -479,7 +484,7 @@ Bug fixes
 ^^^^^^^^^
 * Various bug fixes in sdba :
 
-    - in ``QDM.adjust``, fix bug occuring with coords of 'object' dtype and ``interp='nearest'``.
+    - in ``QDM.adjust``, fix bug occurring with coords of 'object' dtype and ``interp='nearest'``.
     - in ``nbutils.quantiles``, fix dtype bug when using ``float32`` data.
     - raise a proper error when ``ref`` and ``hist`` have a different calendar for map_blocks-backed adjustments.
 
@@ -511,9 +516,8 @@ Internal Changes
 * Simplification of some yaml elements for virtual modules.
 * Allow injecting ``freq`` without the missing checks failing.
 
-
-0.27.0 (2021-05-28)
--------------------
+v0.27.0 (2021-05-28)
+--------------------
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -556,14 +560,12 @@ Internal Changes
 * Added and adjusted typing in call signatures and docstrings, with grammar fixes, for many `xclim.indices` operations.
 * Added internal function ``aggregate_between_dates`` for array aggregation operations using xarray datetime arrays with start and end DayOfYear values.
 
-
-0.26.1 (2021-05-04)
--------------------
+v0.26.1 (2021-05-04)
+--------------------
 * Bug fix release adding `ExtremeValues` to publicly exposed bias-adjustment methods.
 
-
-0.26.0 (2021-04-30)
--------------------
+v0.26.0 (2021-04-30)
+--------------------
 
 Announcements
 ^^^^^^^^^^^^^
@@ -597,8 +599,8 @@ Internal Changes
 * `pre-commit` linting checks now run formatting hook `black==21.4b2`.
 * Code cleaning (more accurate call signatures, more use of https links, docstring updates, and typo fixes).
 
-0.25.0 (2021-03-31)
--------------------
+v0.25.0 (2021-03-31)
+--------------------
 
 Announcements
 ^^^^^^^^^^^^^
@@ -630,8 +632,8 @@ Internal changes
 ^^^^^^^^^^^^^^^^
 * Small changes in the output of `indices.run_length.rle`.
 
-0.24.0 (2021-03-01)
--------------------
+v0.24.0 (2021-03-01)
+--------------------
 
 New indicators
 ^^^^^^^^^^^^^^
@@ -678,8 +680,8 @@ Bug fixes
 ^^^^^^^^^
 * The unit handling change resolved a bug that prevented the use of `xr.set_options(keep_attrs=True)` with indices.
 
-0.23.0 (2021-01-22)
--------------------
+v0.23.0 (2021-01-22)
+--------------------
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -716,9 +718,8 @@ Internal changes
 * Moved the testing suite to within xclim and simplified `tox` to manage its own tempdir.
 * Indicator class now has a `default_freq` method.
 
-
-0.22.0 (2020-12-07)
--------------------
+v0.22.0 (2020-12-07)
+--------------------
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -756,9 +757,8 @@ Internal changes
 * `clisops` v0.4.0+ is now an optional requirements for non-Windows builds.
 * New `xclim.core.units.str2pint` method to convert quantity strings to quantity objects. Main improvement is to make "3 degC days" a valid string that converts to "3 K days".
 
-
-0.21.0 (2020-10-23)
--------------------
+v0.21.0 (2020-10-23)
+--------------------
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -782,8 +782,8 @@ Bug fixes
 Internal changes
 ^^^^^^^^^^^^^^^^^
 
-0.20.0 (2020-09-18)
--------------------
+v0.20.0 (2020-09-18)
+--------------------
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -831,7 +831,6 @@ Bug fixes
 ^^^^^^^^^
 The ICCLIM module was identified as `icclim` in the documentation but the module available under `ICCLIM`. Now `icclim == ICCLIM` and `ICCLIM will be deprecated in a future release`.
 
-
 Internal changes
 ^^^^^^^^^^^^^^^^
 * `xclim.subset` now attempts to load and expose the functions of `clisops.core.subset`. This is an API workaround preserving backwards compatibility.
@@ -839,9 +838,8 @@ Internal changes
 * New `IndicatorRegistrar` class that takes care of adding indicator classes and instances to the
   appropriate registries. `Indicator` now inherits from it.
 
-
-0.19.0 (2020-08-18)
--------------------
+v0.19.0 (2020-08-18)
+--------------------
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -849,7 +847,7 @@ Breaking changes
   method has been renamed to `datacheck`. More importantly, instantiating `Indicator` creates a new subclass on
   the fly and stores it in a registry, allowing users to subclass existing indicators easily. The algorithm for
   missing values is identified by its registered name, e.g. "any", "pct", etc, along with its `missing_options`.
-* xclim now requires xarray >= 0.16, ensuring that xclim.sdba is fully functional.
+* xclim now requires xarray >= 0.16, ensuring that xclim.sdba is fully functional.
 * The dev requirements now include `xdoctest` -- a rewrite of the standard library module, `doctest`.
 * `xclim.core.locales.get_local_attrs` now uses the indicator's class name instead of the indicator itself and no
   longer accepts the `fill_missing` keyword. Behaviour is now the same as passing `False`.
@@ -861,7 +859,7 @@ New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * New `ensembles.kkz_reduce_ensemble` method to select subsets of an ensemble based on the KKZ algorithm.
 * Create new Indicator `Daily`, `Daily2D` subclasses for indicators using daily input data.
-* The `Indicator` class now supports outputing multiple indices for the same inputs.
+* The `Indicator` class now supports outputting multiple indices for the same inputs.
 * `xclim.core.units.declare_units` now works with indices outputting multiple DataArrays.
 * Doctests now make use of the `xdoctest_namespace` in order to more easily access modules and testdata.
 
@@ -874,14 +872,14 @@ Internal changes
 * `datachecks.check_daily` now uses `xr.infer_freq`.
 * Indicator subclasses `Tas`, `Tasmin`, `Tasmax`, `Pr` and `Streamflow` now inherit from `Daily`.
 * Indicator subclasses `TasminTasmax` and `PrTas` now inherit from `Daily2D`.
-* Docstring style now enforced using the `pydocstyle` with `numpy` doctsring conventions.
+* Docstring style now enforced using the `pydocstyle` with `numpy` docstring conventions.
 * Doctests are now performed for all docstring `Examples` using `xdoctest`. Failing examples must be explicitly skipped otherwise build will now fail.
 * Indicator methods `update_attrs` and `format` are now classmethods, attrs to update must be passed.
 * Indicators definitions without an accompanying translation (presently French) will cause build failures.
 * Major refactoring of the internal machinery of `Indicator` to support multiple outputs.
 
-0.18.0 (2020-06-26)
--------------------
+v0.18.0 (2020-06-26)
+--------------------
 * Optimization options for `xclim.sdba` : different grouping for the normalization steps of DQM and save training or fitting datasets to temporary files.
 * `xclim.sdba.detrending` objects can now act on groups.
 * Replaced `dask[complete]` with `dask[array]` in basic installation and added `distributed` to `docs` build dependencies.
@@ -896,8 +894,8 @@ Internal changes
 * Added `FromContext` subclass of `MissingBase` to have a uniform API for missing value operations.
 * Remove logging commands that captured all xclim warnings. Remove deprecated xr.set_options calls.
 
-0.17.0 (2020-05-15)
--------------------
+v0.17.0 (2020-05-15)
+--------------------
 * Added support for operations on dimensionless variables (`units = '1'`).
 * Moved `xclim.locales` to `xclim.core.locales` in a batch of internal changes aimed to removed most potential cyclic imports cases.
 * Missing checks and input validation refactored with addition of custom missing class registration (`xclim.core.checks.register_missing_method`) and simple validation method decorator (`xclim.core.checks.check`).
@@ -909,8 +907,8 @@ Internal changes
 * Fixed outdated code examples in the docs and docstrings.
 * Doctests are now run as part of the test suite.
 
-0.16.0 (2020-04-23)
--------------------
+v0.16.0 (2020-04-23)
+--------------------
 * Added `vectorize` flag to `subset_shape` and `create_mask_vectorize` function based on `shapely.vectorize` as default backend for mask creation.
 * Removed `start_yr` and `end_yr` flags from subsetting functions.
 * Add multi gridpoints support in `subset.subset_gridpoint`.
@@ -925,8 +923,8 @@ Internal changes
 * Add `missing_wmo` function, identifying null calculations based on criteria from WMO.
 * Add `missing_pct` function, identifying null calculations based on percentage of missing values.
 
-0.15.x (2020-03-12)
--------------------
+v0.15.x (2020-03-12)
+--------------------
 * Improvement in FWI: Vectorization of DC, DMC and FFMC with numba and small code refactoring for better maintainability.
 * Added example notebook for creating a catalog of selected indices
 * Added `growing_season_end`, `last_spring_frost`, `dry_days`,  `hot_spell_frequency`, `hot_spell_max_length`, and `maximum_consecutive_frost_free_days` indices.
@@ -936,8 +934,8 @@ Internal changes
 * Add feature to retrieve coordinate values instead of index in `run_length.first_run`. Add `run_length.last_run`.
 * Fix bug in subset_gridpoint to work on lat/lon coords of any dimension when they are not a dimension of the data.
 
-0.14.x (2020-02-21)
--------------------
+v0.14.x (2020-02-21)
+--------------------
 * Refactoring of the documentation.
 * Added support for pint 0.10
 * Add `atmos.heat_wave_total_length` (fixing a namespace issue)
@@ -951,8 +949,8 @@ Internal changes
 * Better handling of data with atypically named `lat` and `lon` dimensions.
 * Added six Fire Weather indices.
 
-0.13.x (2020-01-10)
--------------------
+v0.13.x (2020-01-10)
+--------------------
 * Documentation improvements: list of indicators, RTD theme, notebook example.
 * Added `sea_ice_extent` and `sea_ice_area` indicators.
 * Reverted #311, removing the `_rolling` util function. Added optimal keywords to `rolling()` calls.
@@ -961,8 +959,8 @@ Internal changes
 * Fixed randomly failing tests of `checks.missing_any`.
 * Improvement of `ensemble.ensemble_percentile` and `ensemble.create_ensemble`.
 
-0.12.x-beta (2019-11-18)
-------------------------
+v0.12.x-beta (2019-11-18)
+-------------------------
 * Added a distance function computing the geodesic distance to a point.
 * Added a `tolerance` argument to `subset_gridpoint` raising an error if distance to closest point is larger than tolerance.
 * Created land module for standardized access to streamflow indices.
@@ -976,8 +974,8 @@ Internal changes
 * Improved `DeprecationWarnings` and `UserWarnings` ensemble for xclim subsetting functions.
 * Dropped support for Python3.5.
 
-0.11.x-beta (2019-10-17)
-------------------------
+v0.11.x-beta (2019-10-17)
+-------------------------
 * Added type hinting to call signatures of many functions for more explicit type-checking.
 * Added Kmeans clustering ensemble reduction algorithms.
 * Added utilities for converting between wind velocity (sfcWind) and wind components (uas, vas) arrays.
@@ -990,8 +988,8 @@ Internal changes
 * Enhancement to precip_accumulation() to allow estimated amounts solid (or liquid) phase precipitation.
 * Bugfix for frequency analysis choking on time series with NaNs only.
 
-0.10.x-beta (2019-06-18)
-------------------------
+v0.10.x-beta (2019-06-18)
+-------------------------
 * Added indices to ICCLIM module.
 * Added indices `days_over_precip_thresh` and `fraction_over_precip_thresh`.
 * Migrated to a `major.minor.patch-release` semantic versioning system.
@@ -1015,15 +1013,15 @@ Internal changes
 * Added a decorator function that verifies validity and reformats subset calls using start_date or end_date signatures.
 * Fixed a bug where 'lon' or 'lon_bounds' would return false values if either signatures were set to 0.
 
-0.10-beta (2019-06-06)
-----------------------
+v0.10-beta (2019-06-06)
+-----------------------
 * Dropped support for Python 2.
 * Added support for *period of the year* subsetting in ``checks.missing_any``.
 * Now allow for passing positive longitude values when subsetting data with negative longitudes.
 * Improved runlength calculations for small grid size arrays via ``ufunc_1dim`` flag.
 
-0.9-beta (2019-05-13)
----------------------
+v0.9-beta (2019-05-13)
+----------------------
 This is a significant jump in the release. Many modifications have been made and will be added to the documentation in the coming days. Among the many changes:
 
 * New indices have been added with documentation and call examples.
@@ -1036,8 +1034,8 @@ This is a significant jump in the release. Many modifications have been made and
 * Refactoring of the code : separation of indices.py into a directory with sub-files (simple, threshold and multivariate); ensembles and subset utilities separated into distinct modules (pulled from utils.py).
 * Indicators are now split into packages named by realms. import xclim.atmos to load indicators related to atmospheric variables.
 
-0.8-beta (2019-02-11)
----------------------
+v0.8-beta (2019-02-11)
+----------------------
 *This was a staging release and is functionally identical to 0.7-beta*.
 
 0.7-beta (2019-02-05)
@@ -1054,29 +1052,29 @@ Major Changes:
 
 Class-based indicators are new methods that allow index calculation with error-checking and provide on-the-fly metadata checks for CF-Compliant (and CF-compliant-like) data that are passed to them. When written to NetCDF, outputs of these indicators will append appropriate metadata based on the indicator, threshold values, moving window length, and time period / resampling frequency examined.
 
-0.6-alpha (2018-10-03)
-----------------------
+v0.6-alpha (2018-10-03)
+-----------------------
 * File attributes checks.
 * Added daily downsampler function.
 * Better documentation on ICCLIM indices.
 
-0.5-alpha (2018-09-26)
-----------------------
+v0.5-alpha (2018-09-26)
+-----------------------
 * Added total precipitation indicator.
 
-0.4-alpha (2018-09-14)
-----------------------
+v0.4-alpha (2018-09-14)
+-----------------------
 * Fully PEP8 compliant and available under MIT License.
 
-0.3-alpha (2018-09-4)
----------------------
+v0.3-alpha (2018-09-4)
+----------------------
 * Added icclim module.
 * Reworked documentation, docs theme.
 
-0.2-alpha (2018-08-27)
-----------------------
+v0.2-alpha (2018-08-27)
+-----------------------
 * Added first indices.
 
-0.1.0-dev (2018-08-23)
-----------------------
+v0.1.0-dev (2018-08-23)
+-----------------------
 * First release on PyPI.

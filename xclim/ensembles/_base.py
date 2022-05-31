@@ -1,4 +1,8 @@
-"""Ensembles creation and statistics."""
+# noqa: D205,D400
+"""
+Ensembles Creation and Statistics
+=================================
+"""
 from __future__ import annotations
 
 from glob import glob

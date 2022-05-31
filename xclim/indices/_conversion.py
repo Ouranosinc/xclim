@@ -129,8 +129,8 @@ def humidex(
 def heat_index(tasmax: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
     r"""Daily heat index.
 
-    Perceived temperature after relative humidity is taken into account. The
-    index is only valid for temperatures above 20°C.
+    Perceived temperature after relative humidity is taken into account ([Blazejczyk2012]_).
+    The index is only valid for temperatures above 20°C.
 
     Parameters
     ----------
@@ -146,7 +146,7 @@ def heat_index(tasmax: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
 
     References
     ----------
-    .. [blazejczyk2012] Blazejczyk, K., Epstein, Y., Jendritzky, G., Staiger, H., & Tinz, B. (2012). Comparison of UTCI to selected thermal indices. International journal of biometeorology, 56(3), 515-535.
+    .. [Blazejczyk2012] Blazejczyk, K., Epstein, Y., Jendritzky, G., Staiger, H., & Tinz, B. (2012). Comparison of UTCI to selected thermal indices. International journal of biometeorology, 56(3), 515-535.
 
     Notes
     -----
@@ -668,7 +668,6 @@ def specific_humidity_from_dewpoint(
     ----------
     .. [WMO08] World Meteorological Organization. (2008). Guide to meteorological instruments and methods of observation. Geneva, Switzerland: World Meteorological Organization. https://www.weather.gov/media/epz/mesonet/CWOP-WMO8.pdf
     """
-
     ε = 0.6219569  # weight of water vs dry air []
     e = saturation_vapor_pressure(tas=tdps, method=method)  # vapor pressure [Pa]
     ps = convert_units_to(ps, "Pa")  # total air pressure
@@ -725,7 +724,6 @@ def snowfall_approximation(
 
     https://gitlab.com/cccma/classic/-/blob/master/src/atmosphericVarsCalc.f90
     """
-
     if method == "binary":
         thresh = convert_units_to(thresh, tas)
         prsn = pr.where(tas <= thresh, 0)
@@ -807,9 +805,9 @@ def rain_approximation(
     This method computes the snowfall approximation and subtracts it from the total
     precipitation to estimate the liquid rain precipitation.
 
-    See also
+    See Also
     --------
-    snowfall_approximation
+    :py:func:`xclim.indices.snowfall_approximation`
     """
     prra = pr - snowfall_approximation(pr, tas, thresh=thresh, method=method)
     prra.attrs["units"] = pr.attrs["units"]
@@ -829,8 +827,8 @@ def wind_chill_index(
     r"""Wind chill index.
 
     The Wind Chill Index is an estimation of how cold the weather feels to the average person.
-    It is computed from the air temperature and the 10-m wind. As defined by the Environment and Climate Change Canada ([MVSZ15]_),
-    two equations exist, the conventional one and one for slow winds (usually < 5 km/h), see Notes.
+    It is computed from the air temperature and the 10-m wind. As defined by the Environment and Climate Change Canada
+    ([MVSZ2015]_), two equations exist, the conventional one and one for slow winds (usually < 5 km/h), see Notes.
 
     Parameters
     ----------
@@ -853,10 +851,10 @@ def wind_chill_index(
 
     Notes
     -----
-    Following the calculations of Environment and Climate Change Canada, this function switches from the standardized index
-    to another one for slow winds. The standard index is the same as used by the National Weather Service of the USA. Given
-    a temperature at surface :math:`T` (in °C) and 10-m wind speed :math:`V` (in km/h), the Wind Chill Index :math:`W` (dimensionless)
-    is computed as:
+    Following the calculations of Environment and Climate Change Canada, this function switches from the standardized
+    index to another one for slow winds. The standard index is the same as used by the National Weather Service of the
+    USA ([NWS]_). Given a temperature at surface :math:`T` (in °C) and 10-m wind speed :math:`V` (in km/h), the Wind
+    Chill Index :math:`W` (dimensionless) is computed as:
 
     .. math::
 
@@ -874,10 +872,14 @@ def wind_chill_index(
     The american Wind Chill Temperature index (WCT), as defined by USA's National Weather Service, is computed when
     `method='US'`. In that case, the maximal valid temperature is 50°F (10 °C) and minimal wind speed is 3 mph (4.8 km/h).
 
+    See Also
+    --------
+    National Weather Service FAQ: ([NWS]_).
+
     References
     ----------
-    .. [MVSZ15] Éva Mekis, Lucie A. Vincent, Mark W. Shephard & Xuebin Zhang (2015) Observed Trends in Severe Weather Conditions Based on Humidex, Wind Chill, and Heavy Rainfall Events in Canada for 1953–2012, Atmosphere-Ocean, 53:4, 383-397, DOI: 10.1080/07055900.2015.1086970
-    .. [Osczevski&Bluestein05] Osczevski, R., & Bluestein, M. (2005). The New Wind Chill Equivalent Temperature Chart. Bulletin of the American Meteorological Society, 86(10), 1453–1458. https://doi.org/10.1175/BAMS-86-10-1453
+    .. [MVSZ2015] Éva Mekis, Lucie A. Vincent, Mark W. Shephard & Xuebin Zhang (2015) Observed Trends in Severe Weather Conditions Based on Humidex, Wind Chill, and Heavy Rainfall Events in Canada for 1953–2012, Atmosphere-Ocean, 53:4, 383-397, DOI: 10.1080/07055900.2015.1086970
+    .. [Osczevski&Bluestein2005] Osczevski, R., & Bluestein, M. (2005). The New Wind Chill Equivalent Temperature Chart. Bulletin of the American Meteorological Society, 86(10), 1453–1458. https://doi.org/10.1175/BAMS-86-10-1453
     .. [NWS] Wind Chill Questions, Cold Resources, National Weather Service, retrieved 25-05-21. https://www.weather.gov/safety/cold-faqs
     """
     tas = convert_units_to(tas, "degC")
@@ -940,7 +942,6 @@ def clausius_clapeyron_scaled_precipitation(
     if `delta_tas` is the climatological difference between a baseline and a future period, then `pr_baseline`
     should be precipitations over a period within the same baseline.
     """
-
     # Get difference in temperature.  Time-invariant baseline temperature (from above) is broadcast.
     delta_tas = convert_units_to(delta_tas, "delta_degreeC")
 
@@ -960,7 +961,7 @@ def potential_evapotranspiration(
     peta: float | None = 0.00516409319477,
     petb: float | None = 0.0874972822289,
 ) -> xr.DataArray:
-    """Potential evapotranspiration.
+    r"""Potential evapotranspiration.
 
     The potential for water evaporation from soil and transpiration by plants if the water supply is
     sufficient, according to a given method.
@@ -988,27 +989,26 @@ def potential_evapotranspiration(
     -----
     Available methods are:
 
-    - "baierrobertson65" or "BR65", based on [baierrobertson65]_. Requires tasmin and tasmax, daily [D] freq.
-    - "hargreaves85" or "HG85", based on [hargreaves85]_. Requires tasmin and tasmax, daily [D] freq. (optional: tas can be given in addition of tasmin and tasmax).
-    - "mcguinnessbordne05" or "MB05", based on [tanguy2018]_. Requires tas, daily [D] freq, with latitudes 'lat'.
-    - "thornthwaite48" or "TW48", based on [thornthwaite48]_. Requires tasmin and tasmax, monthly [MS] or daily [D] freq. (optional: tas can be given instead of tasmin and tasmax).
+    - "baierrobertson65" or "BR65", based on [BaierRobertson1965]_. Requires tasmin and tasmax, daily [D] freq.
+    - "hargreaves85" or "HG85", based on [Hargreaves1985]_. Requires tasmin and tasmax, daily [D] freq. (optional: tas can be given in addition of tasmin and tasmax).
+    - "mcguinnessbordne05" or "MB05", based on [Tanguy2018]_. Requires tas, daily [D] freq, with latitudes 'lat'.
+    - "thornthwaite48" or "TW48", based on [Thornthwaite1948]_. Requires tasmin and tasmax, monthly [MS] or daily [D] freq. (optional: tas can be given instead of tasmin and tasmax).
 
     The McGuinness-Bordne [McGuinness1972]_ equation is:
 
     .. math::
-        PET[mm day^{-1}] = a * \frac{S_0}{\\lambda}T_a + b *\frsc{S_0}{\\lambda}
+        PET[mm day^{-1}] = a * \frac{S_0}{\lambda}T_a + b *\frsc{S_0}{\lambda}
 
     where :math:`a` and :math:`b` are empirical parameters; :math:`S_0` is the extraterrestrial radiation [MJ m-2 day-1]; :math:`\\lambda` is the latent heat of vaporisation [MJ kg-1] and :math:`T_a` is the air temperature [°C]. The equation was originally derived for the USA, with :math:`a=0.0147` and :math:`b=0.07353`. The default parameters used here are calibrated for the UK, using the method described in [Tanguy2018]_.
 
     References
     ----------
-    .. [baierrobertson65] Baier, W., & Robertson, G. W. (1965). Estimation of latent evaporation from simple weather observations. Canadian journal of plant science, 45(3), 276-284.
-    .. [hargreaves85] Hargreaves, G. H., & Samani, Z. A. (1985). Reference crop evapotranspiration from temperature. Applied engineering in agriculture, 1(2), 96-99.
-    .. [tanguy2018] Tanguy, M., Prudhomme, C., Smith, K., & Hannaford, J. (2018). Historical gridded reconstruction of potential evapotranspiration for the UK. Earth System Science Data, 10(2), 951-968.
+    .. [BaierRobertson1965] Baier, W., & Robertson, G. W. (1965). Estimation of latent evaporation from simple weather observations. Canadian journal of plant science, 45(3), 276-284.
+    .. [Hargreaves1985] Hargreaves, G. H., & Samani, Z. A. (1985). Reference crop evapotranspiration from temperature. Applied engineering in agriculture, 1(2), 96-99.
+    .. [Tanguy2018] Tanguy, M., Prudhomme, C., Smith, K., & Hannaford, J. (2018). Historical gridded reconstruction of potential evapotranspiration for the UK. Earth System Science Data, 10(2), 951-968.
     .. [McGuinness1972] McGuinness, J. L., & Bordne, E. F. (1972). A comparison of lysimeter-derived potential evapotranspiration with computed values (No. 1452). US Department of Agriculture.
-    .. [thornthwaite48] Thornthwaite, C. W. (1948). An approach toward a rational classification of climate. Geographical review, 38(1), 55-94.
+    .. [Thornthwaite1948] Thornthwaite, C. W. (1948). An approach toward a rational classification of climate. Geographical review, 38(1), 55-94.
     """
-
     if method in ["baierrobertson65", "BR65"]:
         tasmin = convert_units_to(tasmin, "degF")
         tasmax = convert_units_to(tasmax, "degF")

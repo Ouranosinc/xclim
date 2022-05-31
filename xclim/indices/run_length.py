@@ -57,7 +57,6 @@ def use_ufunc(
       If ufunc_1dim is "auto", returns True if the array is on dask or too large.
       Otherwise, returns ufunc_1dim.
     """
-
     if ufunc_1dim == "from_context":
         ufunc_1dim = OPTIONS[RUN_LENGTH_UFUNC]
 
