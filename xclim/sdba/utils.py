@@ -1,6 +1,7 @@
+# noqa: D205,D400
 """
-sdba utilities
---------------
+Statistical Downscaling and Bias Adjustment Utilities
+=====================================================
 """
 from __future__ import annotations
 
@@ -813,7 +814,7 @@ def rand_rot_matrix(
 
 
 def copy_all_attrs(ds: xr.Dataset | xr.DataArray, ref: xr.Dataset | xr.DataArray):
-    """Copies all attributes of ds to ref, including attributes of shared coordinates, and variables in the case of Datasets."""
+    """Copy all attributes of ds to ref, including attributes of shared coordinates, and variables in the case of Datasets."""
     ds.attrs.update(ref.attrs)
     extras = ds.variables if isinstance(ds, xr.Dataset) else ds.coords
     others = ref.variables if isinstance(ref, xr.Dataset) else ref.coords

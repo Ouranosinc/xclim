@@ -3,7 +3,7 @@
 Miscellaneous indices utilities
 ===============================
 
-Helper functions for the indices computation, indicator construction and other things.
+Helper functions for the indices computations, indicator construction and other things.
 """
 from __future__ import annotations
 
@@ -15,10 +15,10 @@ from collections import defaultdict
 from enum import IntEnum
 from functools import partial
 from importlib.resources import open_text
-from inspect import Parameter, _empty
+from inspect import Parameter, _empty  # noqa
 from pathlib import Path
 from types import FunctionType
-from typing import Callable, Mapping, NewType, Sequence, Union
+from typing import Callable, Mapping, NewType, Sequence
 
 import numpy as np
 import xarray as xr
@@ -82,7 +82,7 @@ def wrapped_partial(
     partial_func = partial(func, **suggested, **fixed)
 
     fully_wrapped = update_wrapper(
-        partial_func, func, injected=list(fixed.keys()), hide_wrapped=True
+        partial_func, func, injected=list(fixed.keys()), hide_wrapped=True  # noqa
     )
 
     # Store all injected params,
@@ -204,6 +204,7 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: Mapping[str, int]) -> xr.Da
 
 
 def uses_dask(da):
+    """Evaluate whether dask is installed and array is loaded as a dask array."""
     if isinstance(da, xr.DataArray) and isinstance(da.data, dsk.Array):
         return True
     if isinstance(da, xr.Dataset) and any(
@@ -220,9 +221,7 @@ def calc_perc(
     beta: float = 1.0,
     copy: bool = True,
 ) -> np.ndarray:
-    """
-    Compute percentiles using nan_calc_percentiles and move the percentiles' axis to the end.
-    """
+    """Compute percentiles using nan_calc_percentiles and move the percentiles' axis to the end."""
     if percentiles is None:
         percentiles = [50.0]
 
@@ -243,9 +242,7 @@ def nan_calc_percentiles(
     beta=1.0,
     copy=True,
 ) -> np.ndarray:
-    """
-    Convert the percentiles to quantiles and compute them using _nan_quantile.
-    """
+    """Convert the percentiles to quantiles and compute them using _nan_quantile."""
     if percentiles is None:
         percentiles = [50.0]
 
@@ -261,6 +258,8 @@ def _compute_virtual_index(
     n: np.ndarray, quantiles: np.ndarray, alpha: float, beta: float
 ):
     """Compute the floating point indexes of an array for the linear interpolation of quantiles.
+
+    Based on the approach used by [Hyndman&Fan1996]_.
 
     Parameters
     ----------
@@ -279,7 +278,7 @@ def _compute_virtual_index(
 
     References
     ----------
-    .. [Hyndman&Fan] Hyndman, R. J., & Fan, Y. (1996). Sample Quantiles in Statistical Packages. The American Statistician, 50(4), 361‑365. https://doi.org/10.1080/00031305.1996.10473566
+    .. [Hyndman&Fan1996] Hyndman, R. J., & Fan, Y. (1996). Sample Quantiles in Statistical Packages. The American Statistician, 50(4), 361‑365. https://doi.org/10.1080/00031305.1996.10473566
     """
     return n * quantiles + (alpha + quantiles * (1 - alpha - beta)) - 1
 
@@ -306,16 +305,16 @@ def _get_gamma(virtual_indexes: np.ndarray, previous_indexes: np.ndarray):
 def _get_indexes(
     arr: np.ndarray, virtual_indexes: np.ndarray, valid_values_count: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray]:
-    """
-    Get the valid indexes of arr neighbouring virtual_indexes.
+    """Get the valid indexes of arr neighbouring virtual_indexes.
 
-    Notes:
-    This is a companion function to linear interpolation of quantiles
+    Notes
+    -----
+    This is a companion function to linear interpolation of quantiles.
 
     Returns
     -------
-    (previous_indexes, next_indexes): Tuple
-        A Tuple of virtual_indexes neighbouring indexes
+    array-like, array-like
+        A tuple of virtual_indexes neighbouring indexes (previous and next)
     """
     previous_indexes = np.asanyarray(np.floor(virtual_indexes))
     next_indexes = np.asanyarray(previous_indexes + 1)
@@ -345,18 +344,20 @@ def _linear_interpolation(
     right: np.ndarray,
     gamma: np.ndarray,
 ) -> np.ndarray:
-    """
-    Compute the linear interpolation weighted by gamma on each point of
-    two same shape arrays.
+    """Compute the linear interpolation weighted by gamma on each point of two same shape arrays.
 
     Parameters
     ----------
     left : array_like
-        Left bound.
+      Left bound.
     right : array_like
-        Right bound.
+      Right bound.
     gamma : array_like
-        The interpolation weight.
+      The interpolation weight.
+
+    Returns
+    -------
+    array_like
     """
     diff_b_a = np.subtract(right, left)
     lerp_interpolation = np.asanyarray(np.add(left, diff_b_a * gamma))
@@ -375,11 +376,13 @@ def _nan_quantile(
     alpha: float = 1.0,
     beta: float = 1.0,
 ) -> float | np.ndarray:
-    """
-    Get the quantiles of the array for the given axis.
+    """Get the quantiles of the array for the given axis.
+
     A linear interpolation is performed using alpha and beta.
 
-    By default, alpha == beta == 1 which performs the 7th method of [Hyndman&Fan]_.
+    Notes
+    -----
+    By default, alpha == beta == 1 which performs the 7th method of [Hyndman&Fan1996]_.
     with alpha == beta == 1/3 we get the 8th method.
     """
     # --- Setup
@@ -510,7 +513,7 @@ class InputKind(IntEnum):
     """A simple string.
 
        Annotation : ``str`` or ``str | None``. In most cases, this kind of parameter makes sense with choices indicated
-       in the docstring's version of the annotation with curly braces. See :ref:`Defining new indices`.
+       in the docstring's version of the annotation with curly braces. See :ref:`notebooks/extendxclim:Defining new indices`.
     """
     DAY_OF_YEAR = 6
     """A date, but without a year, in the MM-DD format.
@@ -551,7 +554,7 @@ class InputKind(IntEnum):
 
 
 def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> InputKind:
-    """Returns the appropriate InputKind constant from an ``inspect.Parameter`` object.
+    """Return the appropriate InputKind constant from an ``inspect.Parameter`` object.
 
     The correspondance between parameters and kinds is documented in :py:class:`xclim.core.utils.InputKind`.
     The only information not inferable through the `inspect` object is whether the parameter
@@ -607,7 +610,7 @@ def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> Inpu
 
 
 def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
-    """Reads in a clix-meta yaml and refactors it to fit xclim's yaml specifications."""
+    """Read in a clix-meta yaml and refactor it to fit xclim's yaml specifications."""
     from xclim.indices import generic
 
     # freq_names = {"annual": "A", "seasonal": "Q", "monthly": "M", "weekly": "W"}
@@ -753,14 +756,19 @@ def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
 
 class PercentileDataArray(xr.DataArray):
     """Wrap xarray DataArray for percentiles values.
+
     This class is used internally with its corresponding InputKind to recognize this
     sort of input and to retrieve from it the attributes needed to build indicator
     metadata.
     """
 
+    __slots__ = ()
+
     @classmethod
     def is_compatible(cls, source: xr.DataArray) -> bool:
-        """A PercentileDataArray must have climatology_bounds attributes and either a
+        """Evaluate whether PecentileDataArray is conformant with expected fields.
+
+        A PercentileDataArray must have climatology_bounds attributes and either a
         quantile or percentiles coordinate, the window is not mandatory.
         """
         return (
@@ -778,19 +786,19 @@ class PercentileDataArray(xr.DataArray):
         Parameters
         ----------
         source: DataArray
-            A DataArray with its content containing percentiles values.
-            It must also have a coordinate variable percentiles or quantile.
+          A DataArray with its content containing percentiles values.
+          It must also have a coordinate variable percentiles or quantile.
         climatology_bounds: list[str]
-            Optional. A List of size two which contains the period on which the
-            percentiles were computed. See `xclim.core.calendar.build_climatology_bounds`
-            to build this list from a DataArray.
+          Optional. A List of size two which contains the period on which the
+          percentiles were computed. See `xclim.core.calendar.build_climatology_bounds`
+          to build this list from a DataArray.
+
         Returns
         -------
         PercentileDataArray
-            The initial `source` DataArray but wrap by PercentileDataArray class.
-            The data is unchanged and only climatology_bounds attributes is overridden
-            if q new value is given in inputs.
-
+          The initial `source` DataArray but wrap by PercentileDataArray class.
+          The data is unchanged and only climatology_bounds attributes is overridden
+          if q new value is given in inputs.
         """
         if (
             climatology_bounds is None

@@ -6,12 +6,12 @@ Climate indicators
 found in the :mod:`xclim.indices` library, but also run a number of health checks on input data
 and assign attributes to the output arrays. So for example, if there are missing values in
 a time series, indices won't notice, but indicators will return NaNs for periods with missing
-values (depending on the missing values algorithm selected, see :ref:`Missing values`). Indicators also check that the input data has the expected frequency (e.g. daily) and that
+values (depending on the missing values algorithm selected, see :ref:`checks:Missing values identification`). Indicators also check that the input data has the expected frequency (e.g. daily) and that
 it is indeed the expected variable (e.g. a precipitation flux). The output is assigned attributes
 that conform as much as possible with the `CF-Convention`_.
 
 Indicators are split into realms (atmos, land, seaIce), according to the variables they operate on.
-See :ref:`Defining new indicators` for instruction on how to create your own indicators. This page
+See :ref:`notebooks/extendxclim:Defining new indicators` for instruction on how to create your own indicators. This page
 lists all indicators with a summary description, click on the names to get to the complete docstring of each indicator.
 
 

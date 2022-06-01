@@ -1,3 +1,4 @@
+"""Module comprising the bootstrapping algorithm for indicators."""
 from __future__ import annotations
 
 import warnings
@@ -18,6 +19,7 @@ BOOTSTRAP_DIM = "_bootstrap"
 
 
 def percentile_bootstrap(func):
+    # noqa: D401
     """Decorator applying a bootstrap step to the calculation of exceedance over a percentile threshold.
 
     This feature is experimental.

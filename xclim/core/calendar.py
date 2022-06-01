@@ -896,7 +896,7 @@ def time_bnds(group, freq: str) -> Sequence[tuple[cftime.datetime, cftime.dateti
 def climatological_mean_doy(
     arr: xr.DataArray, window: int = 5
 ) -> tuple[xr.DataArray, xr.DataArray]:
-    """The climatological mean and standard deviation for each day of the year.
+    """Calculate the climatological mean and standard deviation for each day of the year.
 
     Parameters
     ----------
@@ -947,7 +947,7 @@ def within_bnds_doy(
 def _doy_days_since_doys(
     base: xr.DataArray, start: DayOfYearStr | None = None
 ) -> tuple[xr.DataArray, xr.DataArray, xr.DataArray]:
-    """Common calculation for doy to days since and inverse conversions.
+    """Calculate dayofyear to days since, or the inverse.
 
     Parameters
     ----------
@@ -994,7 +994,7 @@ def doy_to_days_since(
     start: DayOfYearStr | None = None,
     calendar: str | None = None,
 ) -> xr.DataArray:
-    """Convert day-of-year data to days since a given date
+    """Convert day-of-year data to days since a given date.
 
     This is useful for computing meaningful statistics on doy data.
 

@@ -1,4 +1,8 @@
+# noqa: D205,D400
 """
+SDBA Diagnostic Testing Module
+==============================
+
 This module is meant to compare results with those expected from papers, or create figures illustrating the
 behavior of sdba methods and utilities.
 """
@@ -27,7 +31,7 @@ __all__ = ["synth_rainfall", "cannon_2015_figure_2", "adapt_freq_graph"]
 
 
 def synth_rainfall(shape, scale=1, wet_freq=0.25, size=1):
-    """Return gamma distributed rainfall values for wet days.
+    r"""Return gamma distributed rainfall values for wet days.
 
     Notes
     -----
@@ -35,9 +39,9 @@ def synth_rainfall(shape, scale=1, wet_freq=0.25, size=1):
 
     .. math::
 
-        p(x) = x^{k-1}\frac{e^{-x/\theta}}{\theta^k\\Gamma(k)},
+        p(x) = x^{k-1}\frac{e^{-x/\theta}}{\theta^k\Gamma(k)},
 
-    where :math:`k` is the shape and :math:`\theta` the scale, and :math:`\\Gamma` is the Gamma function.
+    where :math:`k` is the shape and :math:`\theta` the scale, and :math:`\Gamma` is the Gamma function.
     """
     is_wet = np.random.binomial(1, p=wet_freq, size=size)
     wet_intensity = np.random.gamma(shape, scale, size)
@@ -45,6 +49,7 @@ def synth_rainfall(shape, scale=1, wet_freq=0.25, size=1):
 
 
 def cannon_2015_figure_2():
+    # noqa: D103
     n = 10000
     ref, hist, sim = tu.cannon_2015_rvs(n, random=False)
     QM = EmpiricalQuantileMapping(kind="*", group="time", interp="linear")
@@ -120,9 +125,7 @@ def cannon_2015_figure_2():
 
 
 def adapt_freq_graph():
-    """
-    Create a graphic with the additive adjustment factors estimated after applying the adapt_freq method.
-    """
+    """Create a graphic with the additive adjustment factors estimated after applying the adapt_freq method."""
     n = 10000
     x = tu.series(synth_rainfall(2, 2, wet_freq=0.25, size=n), "pr")  # sim
     y = tu.series(synth_rainfall(2, 2, wet_freq=0.5, size=n), "pr")  # ref

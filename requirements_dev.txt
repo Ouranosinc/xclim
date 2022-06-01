@@ -12,7 +12,6 @@ pydocstyle>=5.1.1
 pylint
 pytest
 pytest-cov
-pytest-runner
 tokenize-rt
 tox
 wheel

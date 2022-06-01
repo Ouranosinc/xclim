@@ -23,8 +23,7 @@ wine grape industry, the climate indices examined could include the length of th
 season, growing degree-days, annual winter minimum temperature and annual number of
 very cold days [Roy2017]_.
 
-See :ref:`Spatial Analogues examples`.
-
+See :ref:`notebooks/analogs:Spatial Analogues examples`.
 
 Methods to compute the (dis)similarity between samples
 ------------------------------------------------------
@@ -46,7 +45,7 @@ with analogue climate conditions to a target climate.
 All methods accept arrays, the first is the reference (n, D) and
 the second is the candidate (m, D). Where the climate indicators
 vary along D and the distribution dimension along n or m. All methods output
-a single float. See their documentation in :ref:`Analogue metrics API`.
+a single float. See their documentation in :ref:`analogues:Analogue metrics API`.
 
 .. warning::
 
@@ -54,11 +53,10 @@ a single float. See their documentation in :ref:`Analogue metrics API`.
    of the methods as it can change the results significantly. In most cases, scale-invariance
    is desirable and inputs may need to be scaled beforehand for scale-dependent methods.
 
-
 .. rubric:: References
 
-.. [Roy2017] Roy, P., Grenier, P., Barriault, E. et al. Climatic Change (2017) 143: 43. `<doi:10.1007/s10584-017-1960-x>`_
-.. [Grenier2013]  Grenier, P., A.-C. Parent, D. Huard, F. Anctil, and D. Chaumont, 2013: An assessment of six dissimilarity metrics for climate analogs. J. Appl. Meteor. Climatol., 52, 733–752, `<doi:10.1175/JAMC-D-12-0170.1>`_
+.. [Roy2017] Roy, P., Grenier, P., Barriault, E. et al. Climatic Change (2017) 143: 43. https://doi.org/10.1007/s10584-017-1960-x
+.. [Grenier2013]  Grenier, P., A.-C. Parent, D. Huard, F. Anctil, and D. Chaumont, 2013: An assessment of six dissimilarity metrics for climate analogs. J. Appl. Meteor. Climatol., 52, 733–752, https://doi.org/10.1175/JAMC-D-12-0170.1
 """
 # TODO: Hellinger distance
 # TODO: Mahalanobis distance
@@ -112,7 +110,8 @@ def spatial_analogs(
     Returns
     -------
     xr.DataArray
-      The dissimilarity statistic over the union of candidates' and target's dimensions. The range depends on the method.
+      The dissimilarity statistic over the union of candidates' and target's dimensions.
+      The range depends on the method.
     """
     if parse_version(__scipy_version__) < parse_version("1.6.0") and method in [
         "kldiv",
@@ -132,7 +131,8 @@ def spatial_analogs(
     if isinstance(candidates.indexes["_dist_dim"], pd.MultiIndex):
         candidates = candidates.drop_vars(
             ["_dist_dim"] + candidates.indexes["_dist_dim"].names,
-            # in xr <= 2022.3.0 the subindexes are not listed as separate coords, they are dropped when the multiindex is dropped
+            # in xarray <= 2022.3.0 the sub-indexes are not listed as separate coords,
+            # instead, they are dropped when the multiindex is dropped.
             errors="ignore",
         )
 
@@ -163,7 +163,7 @@ def spatial_analogs(
     diss.name = "dissimilarity"
     diss.attrs.update(
         long_name=f"Dissimilarity between target and candidates, using metric {method}.",
-        indices=",".join(target._indices.values),
+        indices=",".join(target._indices.values),  # noqa
         metric=method,
     )
 
@@ -198,7 +198,7 @@ def standardize(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 def metric(func):
     """Register a metric function in the `metrics` mapping and add some preparation/checking code.
 
-    All metric functions accept 2D inputs. This reshape 1D inputs to (n, 1) and (m, 1).
+    All metric functions accept 2D inputs. This reshapes 1D inputs to (n, 1) and (m, 1).
     All metric functions are invalid when any non-finite values are present in the inputs.
     """
 
@@ -257,9 +257,7 @@ def seuclidean(x: np.ndarray, y: np.ndarray) -> float:
 
     References
     ----------
-    Veloz et al. (2011) Identifying climatic analogs for Wisconsin under
-    21st-century climate-change scenarios. Climatic Change,
-    DOI 10.1007/s10584-011-0261-z.
+    Veloz et al. (2011) Identifying climatic analogs for Wisconsin under 21st-century climate-change scenarios. Climatic Change, https://doi.org/10.1007/s10584-011-0261-z.
     """
     mx = x.mean(axis=0)
     my = y.mean(axis=0)
@@ -288,8 +286,7 @@ def nearest_neighbor(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 
     References
     ----------
-    Henze N. (1988) A Multivariate two-sample test based on the number of
-    nearest neighbor type coincidences. Ann. of Stat., Vol. 16, No.2, 772-783.
+    Henze N. (1988) A Multivariate two-sample test based on the number of nearest neighbor type coincidences. Ann. of Stat., Vol. 16, No.2, 772-783. https://doi.org/10.1214/aos/1176350835.
     """
     x, y = standardize(x, y)
 
@@ -358,8 +355,8 @@ def zech_aslan(x: np.ndarray, y: np.ndarray, *, dmin: float = 1e-12) -> float:
 
     References
     ----------
-    .. Zech G. and Aslan B. (2003) A Multivariate two-sample test based on the concept of minimum energy. PHYStat2003, SLAC, Stanford, CA, Sep 8-11.
-    .. [AZ03] Aslan B. and Zech G. (2003) A new class of binning-free, multivariate goodness-of-fit tests: the energy tests. arXiV:hep-ex/0203010.
+    .. Zech G. and Aslan B. (2003) A Multivariate two-sample test based on the concept of minimum energy. PHYStat2003, SLAC, Stanford, CA, Sep 8-11. https://www.slac.stanford.edu/econf/C030908/papers/MOET001.pdf.
+    .. [AZ03] Aslan B. and Zech G. (2003) A new class of binning-free, multivariate goodness-of-fit tests: the energy tests. https://doi.org/10.48550/arXiv.hep-ex/0203010
     """
     nx, d = x.shape
     ny, d = y.shape
@@ -422,7 +419,7 @@ def szekely_rizzo(x: np.ndarray, y: np.ndarray, *, standardize: bool = True) -> 
 
     References
     ----------
-    .. [SR2004] Székely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
+    .. [SR2004] Székely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5). https://www.researchgate.net/publication/228918499_Testing_for_equal_distributions_in_high_dimension
     .. [RS2016] Rizzo, M. L., & Székely, G. J. (2016). Energy distance. Wiley Interdisciplinary Reviews: Computational Statistics, 8(1), 27–38. https://doi.org/10.1002/wics.1375
     """
     n, _ = x.shape
@@ -467,8 +464,7 @@ def friedman_rafsky(x: np.ndarray, y: np.ndarray) -> float:
 
     References
     ----------
-    Friedman J.H. and Rafsky L.C. (1979) Multivariate generalisations of the
-    Wald-Wolfowitz and Smirnov two-sample tests. Annals of Stat. Vol.7, No. 4, 697-717.
+    Friedman J.H. and Rafsky, L.C. (1979) Multivariate generalisations of the Wald-Wolfowitz and Smirnov two-sample tests. Annals of Stat. Vol.7, No. 4, 697-717. https://doi.org/10.1214/aos/1176344722.
     """
     from scipy.sparse.csgraph import minimum_spanning_tree
     from sklearn import neighbors
@@ -627,7 +623,7 @@ def kldiv(
     out = list()
     for ki in ka:
         # The 0th nearest neighbour of x[i] in x is x[i] itself.
-        # Hence we take the k'th + 1, which in 0-based indexing is given by
+        # Hence, we take the k'th + 1, which in 0-based indexing is given by
         # index k.
         out.append(
             -np.log(r[:, ki] / s[:, ki - 1]).sum() * d / nx + np.log(ny / (nx - 1.0))

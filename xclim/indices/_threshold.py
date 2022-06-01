@@ -1322,7 +1322,7 @@ def hot_spell_max_length(
     window: int = 1,
     freq: str = "YS",
 ) -> xarray.DataArray:
-    """Longest hot spell.
+    r"""Longest hot spell.
 
     Longest spell of high temperatures over a given period.
 
@@ -1357,12 +1357,9 @@ def hot_spell_max_length(
 
     References
     ----------
-    Casati, B., A. Yagouti, and D. Chaumont, 2013: Regional Climate Projections of Extreme Heat Events in Nine Pilot
-    Canadian Communities for Public Health Planning. J. Appl. Meteor. Climatol., 52, 2669–2698,
-    https://doi.org/10.1175/JAMC-D-12-0341.1
+    Casati, B., A. Yagouti, and D. Chaumont, 2013: Regional Climate Projections of Extreme Heat Events in Nine Pilot Canadian Communities for Public Health Planning. J. Appl. Meteor. Climatol., 52, 2669–2698, https://doi.org/10.1175/JAMC-D-12-0341.1
 
-    Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775,
-    https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
+    Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775, https://doi.org/10.1175/1520-0450%282001%29040<0762:OTDOAH>2.0.CO;2
     """
     thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
 
@@ -1413,12 +1410,9 @@ def hot_spell_frequency(
 
     References
     ----------
-    Casati, B., A. Yagouti, and D. Chaumont, 2013: Regional Climate Projections of Extreme Heat Events in Nine Pilot
-    Canadian Communities for Public Health Planning. J. Appl. Meteor. Climatol., 52, 2669–2698,
-    https://doi.org/10.1175/JAMC-D-12-0341.1
+    Casati, B., A. Yagouti, and D. Chaumont, 2013: Regional Climate Projections of Extreme Heat Events in Nine Pilot Canadian Communities for Public Health Planning. J. Appl. Meteor. Climatol., 52, 2669–2698, https://doi.org/10.1175/JAMC-D-12-0341.1
 
-    Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775,
-    https://doi.org/10.1175/1520-0450(2001)040<0762:OTDOAH>2.0.CO;2
+    Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775, https://doi.org/10.1175/1520-0450%282001%29040<0762:OTDOAH>2.0.CO;2
     """
     thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
 
@@ -1433,6 +1427,7 @@ def hot_spell_frequency(
 def snow_cover_duration(
     snd: xarray.DataArray, thresh: str = "2 cm", freq: str = "AS-JUL"
 ) -> xarray.DataArray:
+    # noqa: D401
     """Number of days with snow depth above a threshold.
 
     Number of days where surface snow depth is greater or equal to given threshold.
@@ -2178,7 +2173,6 @@ def rprctot(
     xarray.DataArray, [dimensionless]
       The proportion of the total precipitation accounted for by convective precipitation for each period.
     """
-
     thresh = convert_units_to(thresh, pr, "hydro")
     prc = convert_units_to(prc, pr)
 

@@ -1,4 +1,4 @@
-# noqa: D205,D400
+# noqa: D205,D214,D400,D405,D406,D407,D411
 """
 Indicators utilities
 ====================
@@ -27,9 +27,9 @@ details on each.
 .. code-block:: yaml
 
     module: <module name>  # Defaults to the file name
-    realm: <realm>  # If given here, applies to all indicators that do no give it.
+    realm: <realm>  # If given here, applies to all indicators that do not already provide it.
     keywords: <keywords> # Merged with indicator-specific keywords (joined with a space)
-    references: <references> # Merged with indicator-specific referencess (joined with a new line)
+    references: <references> # Merged with indicator-specific references (joined with a new line)
     base: <base indicator class>  # Defaults to "Daily" and applies to all indicators that do not give it.
     doc: <module docstring>  # Defaults to a minimal header, only valid if the module doesn't already exists.
     indicators:
@@ -39,7 +39,7 @@ details on each.
                                       # If the name startswith a '.', the base class is taken from the current module (thus an indicator declared _above_)
                                       # Available classes are listed in `xclim.core.indicator.registry` and `xclim.core.indicator.base_registry`.
 
-        # General metadata, usually parsed from the compute's docstring when possible.
+        # General metadata, usually parsed from the `compute`'s docstring when possible.
         realm: <realm>  # defaults to module-wide realm. One of "atmos", "land", "seaIce", "ocean".
         title: <title>
         abstract: <abstract>
@@ -54,7 +54,7 @@ details on each.
         allowed_periods: [<list>, <of>, <allowed>, <periods>]
 
         # Compute function
-        compute: <function name>  # Refering to a function in the passed indices module, xclim.indices.generic or xclim.indices
+        compute: <function name>  # Referring to a function in the passed indices module, xclim.indices.generic or xclim.indices
         input:  # When "compute" is a generic function this is a mapping from argument
                 # name to what CMIP6/xclim variable is expected. This will allow for
                 # declaring expected input units and have a CF metadata check on the inputs.
@@ -187,7 +187,7 @@ class Parameter:
     choices: set = _empty
     value: Any = _empty
 
-    def update(self, other: dict):
+    def update(self, other: dict) -> None:
         """Update a parameter's values from a dict."""
         for k, v in other.items():
             if hasattr(self, k):
@@ -196,26 +196,28 @@ class Parameter:
                 raise AttributeError(f"Unexpected parameter field '{k}'.")
 
     @classmethod
-    def is_parameter_dict(cls, other: dict):
-        return set(other.keys()).issubset(cls.__dataclass_fields__.keys())
+    def is_parameter_dict(cls, other: dict) -> bool:
+        """Return whether indicator has a parameter dictionary."""
+        return set(other.keys()).issubset(cls.__dataclass_fields__.keys())  # noqa
 
-    # For retro-compatibility
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> str:
+        """Return an item in retro-compatible fashion."""
         try:
             return getattr(self, key)
         except AttributeError as err:
             raise KeyError(key) from err
 
-    def __contains__(self, key):
-        # To imitate previous behaviour where "units" and "choices" were missing,
-        # instead of being "_empty".
+    def __contains__(self, key) -> bool:
+        """Imitate previous behaviour where "units" and "choices" were missing, instead of being "_empty"."""
         return getattr(self, key, _empty) is not _empty
 
-    def asdict(self):
+    def asdict(self) -> dict:
+        """Format indicators as a dictionary."""
         return {k: v for k, v in asdict(self).items() if v is not _empty}
 
     @property
-    def injected(self):
+    def injected(self) -> bool:
+        """Indicate whether values are injected."""
         return self.value is not _empty
 
 
@@ -318,8 +320,8 @@ class Indicator(IndicatorRegistrar):
     -----
     All subclasses created are available in the `registry` attribute and can be used to define custom subclasses
     or parse all available instances.
-
     """
+
     # Officially-supported metadata attributes on the output variables
     _cf_names = [
         "var_name",
@@ -515,7 +517,7 @@ class Indicator(IndicatorRegistrar):
 
     @classmethod
     def _injected_parameters(cls):
-        """A list of tuples for arguments to inject, (name, Parameter)."""
+        """Create a list of tuples for arguments to inject, (name, Parameter)."""
         return [
             (
                 "ds",
@@ -738,7 +740,7 @@ class Indicator(IndicatorRegistrar):
         self.__doc__ = generate_indicator_docstring(self)
 
     def _gen_signature(self):
-        """Generates the correct signature."""
+        """Generate the correct signature."""
         # Update call signature
         variables = []
         parameters = []
@@ -1257,6 +1259,7 @@ class Indicator(IndicatorRegistrar):
                     datachecks.check_freq(da, self.src_freq, strict=True)
 
     def __getattr__(self, attr):
+        """Return the attribute."""
         if attr in self._cf_names:
             out = [meta.get(attr, "") for meta in self.cf_attrs]
             if len(out) == 1:
@@ -1266,11 +1269,12 @@ class Indicator(IndicatorRegistrar):
 
     @property
     def n_outs(self):
+        """Return the length of all cf_attrs."""
         return len(self.cf_attrs)
 
     @property
     def parameters(self):
-        """Dictionary of controlable parameters.
+        """Create a dictionary of controllable parameters.
 
         Similar to :py:attr:`Indicator._all_parameters`, but doesn't include injected parameters.
         """
@@ -1282,7 +1286,7 @@ class Indicator(IndicatorRegistrar):
 
     @property
     def injected_parameters(self):
-        """Dictionary of injected parameters.
+        """Return a dictionary of all injected parameters.
 
         Opposite of :py:meth:`Indicator.parameters`.
         """
@@ -1436,12 +1440,13 @@ base_registry["Daily"] = Daily
 
 
 def add_iter_indicators(module):
+    """Create an iterable of loaded indicators."""
     if not hasattr(module, "iter_indicators"):
 
         def iter_indicators():
-            for indname, ind in module.__dict__.items():
+            for ind_name, ind in module.__dict__.items():
                 if isinstance(ind, Indicator):
-                    yield indname, ind
+                    yield ind_name, ind
 
         iter_indicators.__doc__ = f"Iterate over the (name, indicator) pairs in the {module.__name__} indicator module."
 
@@ -1455,7 +1460,7 @@ def build_indicator_module(
 ) -> ModuleType:
     """Create or update a module from imported objects.
 
-    The module is inserted as a submodule of `xclim.indicators`.
+    The module is inserted as a submodule of :py:mod:`xclim.indicators`.
 
     Parameters
     ----------
@@ -1503,7 +1508,7 @@ def build_indicator_module_from_yaml(
 ) -> ModuleType:
     """Build or extend an indicator module from a YAML file.
 
-    The module is inserted as a submodule of `xclim.indicators`. When given only a base filename (no 'yml' extesion), this
+    The module is inserted as a submodule of :py:mod:`xclim.indicators`. When given only a base filename (no 'yml' extesion), this
     tries to find custom indices in a module of the same name (*.py) and translations in json files (*.<lang>.json), see Notes.
 
     Parameters
@@ -1519,7 +1524,7 @@ def build_indicator_module_from_yaml(
       here, then the indicator class will search in xclim.indices.generic and finally in xclim.indices.
     translations  : Mapping of dicts or path, optional
       Translated metadata for the new indicators. Keys of the mapping must be 2-char language tags.
-      Values can be translations dictionaries as defined in :ref:`Internationalization`.
+      Values can be translations dictionaries as defined in :ref:`internationalization:Internationalization`.
       They can also be a path to a json file defining the translations.
     mode: {'raise', 'warn', 'ignore'}
       How to deal with broken indice definitions.
@@ -1530,7 +1535,7 @@ def build_indicator_module_from_yaml(
     Returns
     -------
     ModuleType
-      A submodule of `xclim.indicators`.
+      A submodule of `pym:mod:`xclim.indicators`.
 
     Notes
     -----
@@ -1545,7 +1550,7 @@ def build_indicator_module_from_yaml(
         - `example.fr.json` : French translations
         - `example.tlh.json` : Klingon translations.
 
-    See also
+    See Also
     --------
     The doc of :py:mod:`xclim.core.indicator` and of :py:func:`build_module`.
     """
