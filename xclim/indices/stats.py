@@ -4,7 +4,6 @@ from __future__ import annotations
 from typing import Sequence, Union
 
 import numpy as np
-import pandas as pd
 import xarray as xr
 
 from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history

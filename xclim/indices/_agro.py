@@ -10,6 +10,7 @@ import xclim.indices.run_length as rl
 from xclim.core.calendar import select_time
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.core.utils import DayOfYearStr
+from xclim.core.calendar import parse_offset
 from xclim.indices._threshold import first_day_above, first_day_below, freshet_start
 from xclim.indices.generic import aggregate_between_dates, day_lengths
 from xclim.indices.stats import dist_method, fit_group
@@ -681,8 +682,6 @@ params['time'] = pr.time
         coords=dict(dparams=(["loc", "scale"])),
         attrs=dict(scipy_dist="norm"),
     )
-    params_norm.attrs = ""
-    params_norm.attrs["scipy_dist"] = "norm"
     spi = dist_method("ppf", params_norm, prob)
     spi.attrs["units"] = ""
 
