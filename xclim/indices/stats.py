@@ -189,8 +189,8 @@ def fit_group(
     A time series for each month is used to obtain a set of fitting parameters.
     """
     # Freq must have a time delta which is an integer number of month
-    dts = pd.date_range("1950-01-01", periods=2, freq=freq).to_pydatetime()
-    if dts[-1].day - dts[0].day != 0 or dts[-1].second - dts[0].second != 0:
+    _, base, _,  _ = parse_offset(freq)
+    if base not in ['Y', 'A', 'Q', 'M']:
         raise NotImplementedError(f"Resampling frequency `{freq}` not supported.")
 
     # groupby argument, depends on the smallest time period allowed with freq
