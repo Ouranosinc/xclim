@@ -171,7 +171,7 @@ def fit_group(
       Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
       (see scipy.stats).
     freq : str
-      Resampling frequency.
+      Resampling frequency. This function only makes sense for monthly or seasonal frequencies.
     window : int
       Averaging window length (In units of the resampling frequency period).
 

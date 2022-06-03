@@ -600,12 +600,12 @@ def standardized_precipitation_index(
     pr : xarray.DataArray
       Daily precipitation.
     pr_cal : xarray.DataArray
-      Daily precipitation used for calibration.
+      Daily precipitation used for calibration. Usually this is a temporal subset of `pr` over some reference period.
     window : int
       Averaging window length (in months).
     dist : str
       Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
-      (see scipy.stats).
+      (see :py:mod:`scipy.stats`).
 
     Returns
     -------
@@ -615,7 +615,7 @@ def standardized_precipitation_index(
 
     Notes
     -----
-    The length `N` of the N-month SPI is determined by choosing the `window = N`.
+    The length `N` of the N-month SPI is determined by choosing the `window = N`. Supported statistical distributions are: ["gamma"]
 
 
     Example
@@ -632,12 +632,12 @@ def standardized_precipitation_index(
           pr_cal = pr.sel(time=slice(calibration_start_date, calibration_end_date)
           window = 3
           dist = "gamma"
-          spi_3 = xci._agro.standardized_precipitation_index(pr, pr_cal, window, dist)
+          spi_3 = xci.standardized_precipitation_index(pr, pr_cal, window, dist)
 
 
     References
     ----------
-    .. [1] McKee, Thomas B., Nolan J. Doesken, and John Kleist. "The relationship of drought frequency and duration to time scales." In Proceedings of the 8th Conference on Applied Climatology, vol. 17, no. 22, pp. 179-183. 1993.
+    McKee, Thomas B., Nolan J. Doesken, and John Kleist. "The relationship of drought frequency and duration to time scales." In Proceedings of the 8th Conference on Applied Climatology, vol. 17, no. 22, pp. 179-183. 1993.
     """
     supported_dists = ["gamma"]
     if dist not in supported_dists:
