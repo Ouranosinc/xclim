@@ -17,7 +17,7 @@ These files are expected to be defined as in this example for french:
             "modifiers": ["", "f", "mpl", "fpl"],
             "YS" : ["annuel", "annuelle", "annuels", "annuelles"],
             "AS-*" : ["annuel", "annuelle", "annuels", "annuelles"],
-            ... and so on for other frequent parameters translation...
+            # ... and so on for other frequent parameters translation...
         },
           "DTRVAR": {
             "long_name": "Variabilité de l'amplitude de la température diurne",
@@ -26,7 +26,7 @@ These files are expected to be defined as in this example for french:
             "comment": "",
             "abstract": "La valeur absolue de la moyenne de l'amplitude de la température diurne."
           },
-        ... and so on for other indicators...
+        # ... and so on for other indicators...
     }
 
 Indicators are named by subclass identifier, the same as in the indicator registry (`xclim.core.indicators.registry`),

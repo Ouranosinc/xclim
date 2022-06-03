@@ -63,38 +63,38 @@ start" for the duff-moisture code. The following example uses reasonable paramet
 
 >>> ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 >>> ds = ds.assign(
-        hurs=xclim.atmos.relative_humidity_from_dewpoint(ds=ds),
-        tas=xclim.core.units.convert_units_to(ds.tas, "degC"),
-        pr=xclim.core.units.convert_units_to(ds.pr, "mm/d"),
-        sfcWind=xclim.atmos.wind_speed_from_vector(ds=ds)[0]
-    )
+...        hurs=xclim.atmos.relative_humidity_from_dewpoint(ds=ds),
+...        tas=xclim.core.units.convert_units_to(ds.tas, "degC"),
+...        pr=xclim.core.units.convert_units_to(ds.pr, "mm/d"),
+...        sfcWind=xclim.atmos.wind_speed_from_vector(ds=ds)[0]
+...    )
 >>> season_mask = fire_season(
-        tas=ds.tas,
-        method="WF93",
-        freq="YS",
-        # Parameters below are at their default values, but listed here for explicitness.
-        temp_start_thresh="12 degC",
-        temp_end_thresh="5 degC",
-        temp_condition_days=3
-    )
+...        tas=ds.tas,
+...        method="WF93",
+...        freq="YS",
+...        # Parameters below are at their default values, but listed here for explicitness.
+...        temp_start_thresh="12 degC",
+...        temp_end_thresh="5 degC",
+...        temp_condition_days=3
+...    )
 >>> out_fwi = fire_weather_indexes(
-        tas=ds.tas,
-        pr=ds.pr,
-        hurs=ds.hurs,
-        sfcWind=ds.sfcWind,
-        lat=ds.lat,
-        season_mask=season_mask,
-        overwintering=True,
-        dry_start="CFS",
-        prec_thresh="1.5 mm/d",
-        dmc_dry_factor=1.2,
-        # Parameters below are at their default values, but listed here for explicitness.
-        carry_over_fraction=0.75,
-        wetting_efficiency_fraction=0.75,
-        dc_start=15,
-        dmc_start=6,
-        ffmc_start=85
-    )
+...        tas=ds.tas,
+...        pr=ds.pr,
+...        hurs=ds.hurs,
+...        sfcWind=ds.sfcWind,
+...        lat=ds.lat,
+...        season_mask=season_mask,
+...        overwintering=True,
+...        dry_start="CFS",
+...        prec_thresh="1.5 mm/d",
+...        dmc_dry_factor=1.2,
+...        # Parameters below are at their default values, but listed here for explicitness.
+...        carry_over_fraction=0.75,
+...        wetting_efficiency_fraction=0.75,
+...        dc_start=15,
+...        dmc_start=6,
+...        ffmc_start=85
+...    )
 
 Similarly, the next lines calculate the fire weather indexes, but according to the parameters and options
 used in NASA's GFWED datasets. Here, no need to split the fire season mask from the rest of the computation
@@ -102,25 +102,25 @@ as _all_ seasons are used, even the very short shoulder seasons.
 
 >>> ds = open_dataset("FWI/GFWED_sample_2017.nc")
 >>> out_fwi = fire_weather_indexes(
-        tas=ds.tas,
-        pr=ds.prbc,
-        snd=ds.snow_depth,
-        hurs=ds.rh,
-        sfcWind=ds.sfcwind,
-        lat=ds.lat,
-        season_method="GFWED",
-        overwintering=False,
-        dry_start="GFWED",
-        temp_start_thresh="6 degC",
-        temp_end_thresh="6 degC",
-        # Parameters below are at their default values, but listed here for explicitness.
-        temp_condition_days=3,
-        snow_condition_days=3,
-        dc_start=15,
-        dmc_start=6,
-        ffmc_start=85,
-        dmc_dry_factor=2
-    )
+...        tas=ds.tas,
+...        pr=ds.prbc,
+...        snd=ds.snow_depth,
+...        hurs=ds.rh,
+...        sfcWind=ds.sfcwind,
+...        lat=ds.lat,
+...        season_method="GFWED",
+...        overwintering=False,
+...        dry_start="GFWED",
+...        temp_start_thresh="6 degC",
+...        temp_end_thresh="6 degC",
+...        # Parameters below are at their default values, but listed here for explicitness.
+...        temp_condition_days=3,
+...        snow_condition_days=3,
+...        dc_start=15,
+...        dmc_start=6,
+...        ffmc_start=85,
+...        dmc_dry_factor=2
+...    )
 
 References
 ----------

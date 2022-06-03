@@ -29,15 +29,16 @@ def percentile_bootstrap(func):
 
     Example of declaration::
 
-    >>> # xdoctest: +SKIP
+    # xdoctest: +SKIP
     >>> @declare_units(tas="[temperature]", t90="[temperature]")
-    >>> @percentile_bootstrap
-    >>> def tg90p(
-    >>>    tas: xarray.DataArray,
-    >>>    t90: xarray.DataArray,
-    >>>    freq: str = "YS",
-    >>>    bootstrap: bool = False
-    >>> ) -> xarray.DataArray:
+    ... @percentile_bootstrap
+    ... def tg90p(
+    ...    tas: xarray.DataArray,
+    ...    t90: xarray.DataArray,
+    ...    freq: str = "YS",
+    ...    bootstrap: bool = False
+    ... ) -> xarray.DataArray:
+    ...     pass
 
     Examples
     --------

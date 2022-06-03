@@ -440,8 +440,11 @@ def cool_night_index(
     that are missing several months will be flagged as invalid. This check can be ignored by setting the following
     context:
 
+    Examples
+    --------
+    # xdoctest: +SKIP
     >>> with xclim.set_options(check_missing='skip', data_validation='log'):
-    >>>     cni = xclim.atmos.cool_night_index(...)  # xdoctest: +SKIP
+    ...     cni = xclim.atmos.cool_night_index(...)
 
     References
     ----------

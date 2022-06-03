@@ -1089,8 +1089,8 @@ def days_since_to_doy(
     >>> from xarray import DataArray
     >>> time = date_range('2020-07-01', '2021-07-01', freq='AS-JUL')
     >>> da = DataArray(
-            [-86, 92], dims=('time',), coords={'time': time}, attrs={'units': 'days since 10-02'}
-        )
+    ...     [-86, 92], dims=('time',), coords={'time': time}, attrs={'units': 'days since 10-02'}
+    ... )
     >>> days_since_to_doy(da).values
     array([190, 2])
     """
