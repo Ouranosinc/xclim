@@ -243,14 +243,14 @@ def convert_calendar(
     passed with `missing`. In order to fill the missing dates with interpolation, one
     can simply use xarray's method:
 
-    >>> tas_nl = convert_calendar(tas, 'noleap')  # For the example
-    >>> with_missing = convert_calendar(tas_nl, 'standard', missing=np.NaN)
-    >>> out = with_missing.interpolate_na('time', method='linear')
+    >>> tas_nl = convert_calendar(tas, "noleap")  # For the example
+    >>> with_missing = convert_calendar(tas_nl, "standard", missing=np.NaN)
+    >>> out = with_missing.interpolate_na("time", method="linear")
 
     Here, if Nans existed in the source data, they will be interpolated too. If that is,
     for some reason, not wanted, the workaround is to do:
 
-    >>> mask = convert_calendar(tas_nl, 'standard').notnull()
+    >>> mask = convert_calendar(tas_nl, "standard").notnull()
     >>> out2 = out.where(mask)
     """
     cal_src = get_calendar(source, dim=dim)
@@ -862,10 +862,17 @@ def time_bnds(group, freq: str) -> Sequence[tuple[cftime.datetime, cftime.dateti
     --------
     >>> from xarray import cftime_range
     >>> from xclim.core.calendar import time_bnds
-    >>> index = cftime_range(start='2000-01-01', periods=3, freq='2QS', calendar='360_day')
-    >>> out = time_bnds(index, '2Q')
+    >>> index = cftime_range(
+    ...     start="2000-01-01", periods=3, freq="2QS", calendar="360_day"
+    ... )
+    >>> out = time_bnds(index, "2Q")
     >>> for bnds in out:
-    ...     print(bnds[0].strftime("%Y-%m-%dT%H:%M:%S"), ' -', bnds[1].strftime("%Y-%m-%dT%H:%M:%S"))
+    ...     print(
+    ...         bnds[0].strftime("%Y-%m-%dT%H:%M:%S"),
+    ...         " -",
+    ...         bnds[1].strftime("%Y-%m-%dT%H:%M:%S"),
+    ...     )
+    ...
     2000-01-01T00:00:00  - 2000-03-30T23:59:59
     2000-07-01T00:00:00  - 2000-09-30T23:59:59
     2001-01-01T00:00:00  - 2001-03-30T23:59:59
@@ -1029,9 +1036,13 @@ def doy_to_days_since(
     Examples
     --------
     >>> from xarray import DataArray
-    >>> time = date_range('2020-07-01', '2021-07-01', freq='AS-JUL')
-    >>> da = DataArray([190, 2], dims=('time',), coords={'time': time})  # July 8th 2020 and Jan 2nd 2022
-    >>> doy_to_days_since(da, start='10-02').values  # Convert to days since Oct. 2nd, of the data's year.
+    >>> time = date_range("2020-07-01", "2021-07-01", freq="AS-JUL")
+    >>> da = DataArray(
+    ...     [190, 2], dims=("time",), coords={"time": time}
+    ... )  # July 8th 2020 and Jan 2nd 2022
+    >>> doy_to_days_since(
+    ...     da, start="10-02"
+    ... ).values  # Convert to days since Oct. 2nd, of the data's year.
     array([-86, 92])
     """
     base_calendar = get_calendar(da)
@@ -1087,9 +1098,12 @@ def days_since_to_doy(
     Examples
     --------
     >>> from xarray import DataArray
-    >>> time = date_range('2020-07-01', '2021-07-01', freq='AS-JUL')
+    >>> time = date_range("2020-07-01", "2021-07-01", freq="AS-JUL")
     >>> da = DataArray(
-    ...     [-86, 92], dims=('time',), coords={'time': time}, attrs={'units': 'days since 10-02'}
+    ...     [-86, 92],
+    ...     dims=("time",),
+    ...     coords={"time": time},
+    ...     attrs={"units": "days since 10-02"},
     ... )
     >>> days_since_to_doy(da).values
     array([190, 2])
@@ -1278,13 +1292,13 @@ def select_time(
     >>> ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
     >>> ds.time.size
     1461
-    >>> out = select_time(ds, drop=True, season=['MAM', 'SON'])
+    >>> out = select_time(ds, drop=True, season=["MAM", "SON"])
     >>> out.time.size
     732
 
     Or all values between two dates (included).
 
-    >>> out = select_time(ds, drop=True, date_bounds=('02-29', '03-02'))
+    >>> out = select_time(ds, drop=True, date_bounds=("02-29", "03-02"))
     >>> out.time.values
     array(['1990-03-01T00:00:00.000000000', '1990-03-02T00:00:00.000000000',
            '1991-03-01T00:00:00.000000000', '1991-03-02T00:00:00.000000000',

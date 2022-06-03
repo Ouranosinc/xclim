@@ -443,8 +443,9 @@ def cool_night_index(
     Examples
     --------
     # xdoctest: +SKIP
-    >>> with xclim.set_options(check_missing='skip', data_validation='log'):
+    >>> with xclim.set_options(check_missing="skip", data_validation="log"):
     ...     cni = xclim.atmos.cool_night_index(...)
+    ...
 
     References
     ----------

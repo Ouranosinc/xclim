@@ -86,7 +86,7 @@ def mean(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
     Examples
     --------
     >>> pr = open_dataset(path_to_pr_file).pr
-    >>> mean(da=pr, group='time.season')
+    >>> mean(da=pr, group="time.season")
     """
     attrs = da.attrs
     if group.prop != "group":
@@ -121,7 +121,7 @@ def var(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
     Examples
     --------
     >>> pr = open_dataset(path_to_pr_file).pr
-    >>> var(da=pr, group='time.season')
+    >>> var(da=pr, group="time.season")
     """
     attrs = da.attrs
     if group.prop != "group":
@@ -159,7 +159,7 @@ def skewness(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray
     Examples
     --------
     >>> pr = open_dataset(path_to_pr_file).pr
-    >>> skewness(da=pr, group='time.season')
+    >>> skewness(da=pr, group="time.season")
 
     See Also
     --------
@@ -209,7 +209,7 @@ def quantile(
     Examples
     --------
     >>> pr = open_dataset(path_to_pr_file).pr
-    >>> quantile(da=pr, q=0.9, group='time.season')
+    >>> quantile(da=pr, q=0.9, group="time.season")
     """
     attrs = da.attrs
     if group.prop != "group":
@@ -267,7 +267,7 @@ def spell_length_distribution(
     Examples
     --------
     >>> pr = open_dataset(path_to_pr_file).pr
-    >>> spell_length_distribution(da=pr, op='<',thresh ='1mm d-1', group='time.season')
+    >>> spell_length_distribution(da=pr, op="<", thresh="1mm d-1", group="time.season")
     """
     attrs = da.attrs
     ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
@@ -353,7 +353,7 @@ def acf(
     --------
     >>> from xclim.testing import open_dataset
     >>> pr = open_dataset(path_to_pr_file).pr
-    >>> acf(da=pr, lag=3, group='time.season')
+    >>> acf(da=pr, lag=3, group="time.season")
     """
     attrs = da.attrs
 
@@ -414,7 +414,7 @@ def annual_cycle_amplitude(
     Examples
     --------
     >>> pr = open_dataset(path_to_pr_file).pr
-    >>> annual_cycle_amplitude(da=pr, amplitude_type='relative')
+    >>> annual_cycle_amplitude(da=pr, amplitude_type="relative")
     """
     attrs = da.attrs
     da = da.resample({group.dim: group.freq})
@@ -522,8 +522,8 @@ def corr_btw_var(
     Examples
     --------
     >>> pr = open_dataset(path_to_pr_file).pr
-    >>> tasmax = open_dataset('NRCANdaily/nrcan_canada_daily_tasmax_1990.nc').tasmax
-    >>> corr_btw_var(da1=pr, da2=tasmax, group='time.season')
+    >>> tasmax = open_dataset("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc").tasmax
+    >>> corr_btw_var(da1=pr, da2=tasmax, group="time.season")
     """
     attrs1 = da1.attrs
 
@@ -603,7 +603,7 @@ def relative_frequency(
     Examples
     --------
     >>> tasmax = open_dataset(path_to_tasmax_file).tasmax
-    >>> relative_frequency(da=tasmax, op= '<', thresh= '0 degC', group='time.season')
+    >>> relative_frequency(da=tasmax, op="<", thresh="0 degC", group="time.season")
     """
     attrs = da.attrs
     mask = ~(da.isel({group.dim: 0}).isnull()).drop_vars(
@@ -669,7 +669,7 @@ def trend(
     Examples
     --------
     >>> tas = open_dataset(path_to_tas_file).tas
-    >>> trend(da=tas, group='time.season')
+    >>> trend(da=tas, group="time.season")
     """
     attrs = da.attrs
     da = da.resample({group.dim: group.freq})  # separate all the {group}
@@ -741,7 +741,7 @@ def return_value(
     Examples
     --------
     >>> tas = open_dataset(path_to_tas_file).tas
-    >>> return_value(da=tas, group='time.season')
+    >>> return_value(da=tas, group="time.season")
     """
 
     @map_groups(out=[Grouper.PROP], main_only=True)

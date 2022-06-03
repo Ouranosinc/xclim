@@ -33,10 +33,10 @@ def percentile_bootstrap(func):
     >>> @declare_units(tas="[temperature]", t90="[temperature]")
     ... @percentile_bootstrap
     ... def tg90p(
-    ...    tas: xarray.DataArray,
-    ...    t90: xarray.DataArray,
-    ...    freq: str = "YS",
-    ...    bootstrap: bool = False
+    ...     tas: xarray.DataArray,
+    ...     t90: xarray.DataArray,
+    ...     freq: str = "YS",
+    ...     bootstrap: bool = False,
     ... ) -> xarray.DataArray:
     ...     pass
 
@@ -46,7 +46,7 @@ def percentile_bootstrap(func):
     >>> from xclim.indices import tg90p
     >>> tas = xr.open_dataset(path_to_tas_file).tas
     >>> # To start bootstrap reference period must not fully overlap the studied period.
-    >>> tas_ref = tas.sel(time=slice("1990-01-01","1992-12-31"))
+    >>> tas_ref = tas.sel(time=slice("1990-01-01", "1992-12-31"))
     >>> t90 = percentile_doy(tas_ref, window=5, per=90)
     >>> tg90p(tas=tas, t90=t90.sel(percentiles=90), freq="YS", bootstrap=True)
     """

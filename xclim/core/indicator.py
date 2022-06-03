@@ -167,14 +167,14 @@ class Parameter:
 
     Example
     -------
-    >>> p = Parameter(InputKind.NUMBER, default=2, description='A simple number')
-    >>> p.units is Parameter._empty # has not been set
+    >>> p = Parameter(InputKind.NUMBER, default=2, description="A simple number")
+    >>> p.units is Parameter._empty  # has not been set
     True
-    >>> 'units' in p  # Easier/retrocompatible way to test if units are set
+    >>> "units" in p  # Easier/retrocompatible way to test if units are set
     False
     >>> p.description
     'A simple number'
-    >>> p['description']  # Same as above, for convenience.
+    >>> p["description"]  # Same as above, for convenience.
     'A simple number'
     """
 
