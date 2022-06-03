@@ -7,10 +7,9 @@ import xarray
 
 import xclim.indices as xci
 import xclim.indices.run_length as rl
-from xclim.core.calendar import select_time
+from xclim.core.calendar import parse_offset, select_time
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.core.utils import DayOfYearStr
-from xclim.core.calendar import parse_offset
 from xclim.indices._threshold import first_day_above, first_day_below, freshet_start
 from xclim.indices.generic import aggregate_between_dates, day_lengths
 from xclim.indices.stats import dist_method, fit_group
