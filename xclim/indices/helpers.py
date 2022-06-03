@@ -7,6 +7,7 @@ Functions that encapsulate some geophysical logic but could be shared by many in
 """
 from __future__ import annotations
 
+import cftime
 import numpy as np
 import xarray as xr
 
@@ -14,8 +15,35 @@ from xclim.core.calendar import datetime_to_decimal_year
 from xclim.core.units import convert_units_to
 
 
+def distance_from_sun(dates: xr.DaraArray) -> xr.DataArray:
+    """
+    Sun-earth distance.
+
+    The distance from sun to earth in astronomical units.
+
+    Parameters
+    ----------
+    dates: xr.DataArray
+      Series of dates and time of days
+
+    Returns
+    -------
+    xr.DataArray
+      Sun-earth distance [astronomical units]
+    """
+    calendar = dates.encoding["calendar"]
+    Jan2000 = cftime.datetime(2000, 1, 1, hour=12, calendar=calendar)
+    days_since = (
+        ((dates - Jan2000).astype("timedelta64[m]"))
+        / np.timedelta64(1, "m")
+        / (60 * 24)
+    )
+    g = ((357.528 + 0.9856003 * days_since) % 360) * np.pi / 180
+    return 1.00014 - 0.01671 * np.cos(g) - 0.00014 * np.cos(2.0 * g)
+
+
 def solar_declination(day_angle: xr.DataArray, method="spencer") -> xr.DataArray:
-    """Solar declination
+    """Solar declination.
 
     The angle between the sun rays and the earth's equator, in radians, as approximated
     by [Spencer1971]_ or assuming the orbit is a cirle.
@@ -39,6 +67,7 @@ def solar_declination(day_angle: xr.DataArray, method="spencer") -> xr.DataArray
     References
     ----------
     .. [Spencer1971] Spencer JW (1971) Fourier series representation of the position of the sun. Search 2(5):172
+
     """
     # julian day fraction
     da = convert_units_to(day_angle, "rad")
@@ -60,8 +89,43 @@ def solar_declination(day_angle: xr.DataArray, method="spencer") -> xr.DataArray
     raise NotImplementedError(f"Method {method} must be one of 'simple' or 'spencer'")
 
 
+def time_correction_for_solar_angle(day_angle: xr.DataArray) -> xr.DataArray:
+    """Time correction for solar angle.
+
+    Every 1° of angular rotation on earth is equal to 4 minutes of time.
+    The time correction helpsis needed to correct local watch time to solar time.
+
+
+    Parameters
+    ----------
+    day_angle: xr.DataArray
+      Assuming the earth makes a full circle in a year, this is the angle covered from
+      the beginning of the year up to that timestep. Also called the "julian day fraction".
+      See :py:func:`~xclim.core.calendar.datetime_to_decimal_year`.
+
+    Returns
+    -------
+    Time correction of solar angle, [rad]
+
+    References
+    ----------
+    Di Napoli, C., Hogan, R.J. & Pappenberger, F. Mean radiant temperature from global-scale numerical weather prediction models.
+    Int J Biometeorol 64, 1233–1245 (2020). https://doi.org/10.1007/s00484-020-01900-5
+    """
+    da = convert_units_to(day_angle, "rad")
+    tc = (
+        0.004297
+        + 0.107029 * np.cos(da)
+        - 1.837877 * np.sin(da)
+        - 0.837378 * np.cos(2 * da)
+        - 2.340475 * np.sin(2 * da)
+    )
+    tc = tc.assign_attrs(units="degrees")
+    return convert_units_to(tc, "rad")
+
+
 def eccentricity_correction_factor(day_angle: xr.DataArray, method="spencer"):
-    """Eccentricity correction factor of the Earth's orbit
+    """Eccentricity correction factor of the Earth's orbit.
 
     The squared ratio of the mean distance Earth-Sun to the distance at a specific moment.
     As approximated by [Spencer1971]_.
@@ -101,13 +165,20 @@ def eccentricity_correction_factor(day_angle: xr.DataArray, method="spencer"):
 
 
 def cosine_of_solar_zenith_angle(
-    declination: xr.DataArray, lat: xr.DataArray, stat: str = "integral"
+    declination: xr.DataArray,
+    lat: xr.DataArray,
+    lon: xr.DataArray = None,
+    time_correction: xr.DataArray = None,
+    hours: xr.DataArray = None,
+    interval: int = None,
+    stat: str = "integral",
 ) -> xr.DataArray:
     """Cosine of the solar zenith angle.
 
     The solar zenith angle is the angle between a vertical line (perpendicular to the ground)
     and the sun rays. This function computes a daily statistic of its cosine : its integral
     from sunrise to sunset or the average over the same period. Based on [Kalogirou14]_.
+    In addition it computes instantaneuos values of tis cosine. Based on [Napoli20]_.
 
     Parameters
     ----------
@@ -115,10 +186,25 @@ def cosine_of_solar_zenith_angle(
       Daily solar declination. See :py:func:`solar_declination`.
     lat : xr.DataArray
       Latitude.
-    stat : {'integral', 'average'}
+    lon : xr.DataArray, optional
+      Longitude
+      This is necessary if stat is "instant".
+    time_correction : xr.DataArray, optional
+      Time correction for solar angle. See :py:func:`time_correction_for_solar_angle`
+      This is necessary if stat is "instant".
+    hours : xr.DataArray, optional
+      Watch time hours.
+      This is necessary if stat is "instant", "interval" or "sunlit".
+    interval : int, optional
+      Time interal between two time steps in hours
+      This is necessary if stat is "interval".
+    stat : {'integral', 'average', 'instant', 'interval', 'sunlit'}
       Which daily statistic to return. If "integral", this returns the integral of the
       cosine of the zenith angle from sunrise to sunset. If "average", the integral is
-      divided by the "duration" from sunrise to sunset.
+      divided by the "duration" from sunrise to sunset. If "instant", this returns the
+      instantaneous cosine of the zenith angle. If "interval", this returns the cosine
+      of the zenith angle during each interval. If "sunlit", this returns the cosine
+      of the zenith angle during the sunlit period of each interval.
 
     Returns
     -------
@@ -127,11 +213,18 @@ def cosine_of_solar_zenith_angle(
       the hour angle. For seconds, multiply by the number of seconds in a comple day
       cycle (24*60*60) and divide by 2π.
 
+    Notes
+    -----
+    This code was inspired by the `thermofeel` and `PyWBGT` package.
+
     References
     ----------
     Kalogirou, S. A. (2014). Chapter 2 — Environmental Characteristics. In S. A. Kalogirou (Ed.), Solar Energy Engineering (Second Edition) (pp. 51–123). Academic Press. https://doi.org/10.1016/B978-0-12-397270-5.00002-9
+    Di Napoli, C., Hogan, R.J. & Pappenberger, F. Mean radiant temperature from global-scale numerical weather prediction models. Int J Biometeorol 64, 1233–1245 (2020). https://doi.org/10.1007/s00484-020-01900-5
     """
     lat = convert_units_to(lat, "rad")
+    if lon is not None:
+        lon = convert_units_to(lon, "rad")
     h_s = np.arccos(
         -np.tan(lat) * np.tan(declination)
     )  # hour angle of sunset (eq. 2.15)
@@ -146,6 +239,37 @@ def cosine_of_solar_zenith_angle(
             np.sin(declination) * np.sin(lat)
             + np.cos(declination) * np.cos(lat) * np.sin(h_s) / h_s
         )
+    if stat == "instant":
+        lon = convert_units_to(lon, "rad")
+        hrad = (hours - 12) * 15 / 180 * np.pi
+        sha = hrad + lon + time_correction
+        csza = np.sin(declination) * np.sin(lat) + np.cos(declination) * np.cos(
+            lat
+        ) * np.cos(sha)
+        return np.clip(csza, 0, None)
+    if stat == "interval":
+        sha = (hours - 12) * 15 / 180 * np.pi + lon
+        k = interval / 2.0
+        h_s = sha - k * 15 * np.pi / 180
+        h_e = sha + k * 15 * np.pi / 180
+        csza = np.sin(declination) * np.sin(lat) + np.cos(declination) * np.cos(lat) * (
+            np.sin(h_e) - np.sin(h_s)
+        ) / (h_e - h_s)
+        return np.clip(csza, 0, None)
+    if stat == "sunlit":
+        sha = (hours - 12) * 15 / 180 * np.pi + lon
+        k = interval / 2.0
+        h_s = sha - k * 15 * np.pi / 180
+        h_e = sha + k * 15 * np.pi / 180
+        h_sr = -np.arccos(-np.tan(lat) * np.tan(declination))
+        h_ss = np.arccos(-np.tan(lat) * np.tan(declination))
+        h_min = xr.where(h_s >= h_sr, h_s, h_sr)
+        h_max = xr.where(h_e <= h_ss, h_e, h_ss)
+        csza = np.sin(declination) * np.sin(lat) + np.cos(declination) * np.cos(lat) * (
+            np.sin(h_max) - np.sin(h_min)
+        ) / (h_max - h_min)
+        csza = xr.where(np.isnan(csza), 0, csza)
+        return np.clip(csza, 0, None)
     raise NotImplementedError("Argument 'stat' must be one of 'integral' or 'average.")
 
 
@@ -155,7 +279,7 @@ def extraterrestrial_solar_radiation(
     solar_constant: str = "1361 W m-2",
     method="spencer",
 ) -> xr.DataArray:
-    """Extraterrestrial solar radiation
+    """Extraterrestrial solar radiation.
 
     This is the daily energy received on a surface parallel to the ground at the mean
     distance of the earth to the sun. It neglects the effect of the atmosphere. Computation
