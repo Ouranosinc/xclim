@@ -5,12 +5,15 @@ import numpy as np
 import xarray as xr
 from numba import float32, float64, vectorize
 
-from xclim.core.calendar import date_range
+from xclim.core.calendar import date_range, datetime_to_decimal_year
 from xclim.core.units import amount2rate, convert_units_to, declare_units, units2pint
 from xclim.indices.helpers import (
     cosine_of_solar_zenith_angle,
     day_lengths,
+    distance_from_sun,
     extraterrestrial_solar_radiation,
+    solar_declination,
+    time_correction_for_solar_angle,
 )
 
 __all__ = [
@@ -29,7 +32,6 @@ __all__ = [
     "clausius_clapeyron_scaled_precipitation",
     "potential_evapotranspiration",
     "universal_thermal_climate_index",
-    "wet_bulb_globe_temperature",
     "mean_radiant_temperature",
 ]
 
@@ -1180,7 +1182,7 @@ def potential_evapotranspiration(
     ],
 )
 def _utci(tas, sfcWind, dt, wvp):
-    """The empirical polynomial function for UTCI. See :py:func:`universal_thermal_climate_index`."""
+    """Return the empirical polynomial function for UTCI. See :py:func:`universal_thermal_climate_index`."""
     # Taken directly from the original Fortran code by Peter Bröde.
     # http://www.utci.org/public/UTCI%20Program%20Code/UTCI_a002.f90
     # tas -> Ta (surface temperature, °C)
@@ -1402,16 +1404,28 @@ def _utci(tas, sfcWind, dt, wvp):
     )
 
 
-@declare_units(tas="[temperature]", hurs="[]", sfcWind="[speed]", tmrt="[temperature]")
+@declare_units(
+    tas="[temperature]",
+    hurs="[]",
+    sfcWind="[speed]",
+    tmrt="[temperature]",
+    rsds="[radiation]",
+    rsus="[radiation]",
+    rlds="[radiation]",
+    rlus="[radiation]",
+)
 def universal_thermal_climate_index(
     tas: xr.DataArray,
     hurs: xr.DataArray,
     sfcWind: xr.DataArray,
     tmrt: xr.DataArray = None,
+    rsds: xr.DataArray = None,
+    rsus: xr.DataArray = None,
+    rlds: xr.DataArray = None,
+    rlus: xr.DataArray = None,
     mask_invalid: bool = True,
 ) -> xr.DataArray:
-    """
-    Universal Thermal Climate Index (UTCI)
+    r"""Universal thermal climate index.
 
     The UTCI is the equivalent temperature for the environment derived from a
     reference environment and is used to evaluate heat stress in outdoor spaces.
@@ -1426,6 +1440,14 @@ def universal_thermal_climate_index(
         Wind velocity
     tmrt: xarray.DataArray, optional
         Mean radiant temperature
+    rsds : xr.DataArray, optional
+       Surface Downwelling Shortwave Radiation
+    rsus : xr.DataArray, optional
+        Surface Upwelling Shortwave Radiation
+    rlds : xr.DataArray, optional
+        Surface Downwelling Longwave Radiation
+    rlus : xr.DataArray, optional
+        Surface Upwelling Longwave Radiation
     mask_invalid: boolean
         If True (default), UTCI values are NaN where any of the inputs are outside
         their validity ranges : -50°C < tas < 50°C,  -30°C < tas - tmrt < 30°C
@@ -1448,7 +1470,7 @@ def universal_thermal_climate_index(
     Bröde, Peter (2009). Program for calculating UTCI Temperature (UTCI), version a 0.002, http://www.utci.org/public/UTCI%20Program%20Code/UTCI_a002.f90
     Błażejczyk, K., Jendritzky, G., Bröde, P., Fiala, D., Havenith, G., Epstein, Y., Psikuta, A., & Kampmann, B. (2013). An introduction to the Universal Thermal Climate Index (UTCI). DOI:10.7163/GPOL.2013.1
 
-    See also
+    See Also
     --------
     http://www.utci.org/utcineu/utcineu.php
     """
@@ -1456,7 +1478,7 @@ def universal_thermal_climate_index(
     tas = convert_units_to(tas, "degC")
     sfcWind = convert_units_to(sfcWind, "m/s")
     if tmrt is None:
-        tmrt = mean_radiant_temperature(tas=tas, sfcWind=sfcWind)
+        tmrt = mean_radiant_temperature(rsds=rsds, rsus=rsus, rlds=rlds, rlus=rlus)
     tmrt = convert_units_to(tmrt, "degC")
     delta = tmrt - tas
     pa = convert_units_to(e_sat, "kPa") * convert_units_to(hurs, "1")
@@ -1476,62 +1498,48 @@ def universal_thermal_climate_index(
     return utci
 
 
-@declare_units(tas="[temperature]")
-def wet_bulb_globe_temperature(
-    tas: xr.DataArray,
-) -> xr.DataArray:
-    """
-    Wet bulb globe temperature
-
-    Parameters
-    ----------
-    tas : xarray.DataArray
-        Mean temperature
-
-    Returns
-    -------
-    xarray.DataArray
-        Wet bulb globe temperature
-
-    Notes
-    -----
-    The calculation uses saturation vapor pressure computed according to the ITS-90 equation.
-
-    This code was inspired by the `thermofeel` package.
-
-    References
-    ----------
-    Blazejczyk, K., Epstein, Y., Jendritzky, G. et al.(2012). Comparison of UTCI to selected thermal indices. Int J Biometeorol 56, 515–535. DOI:10.1007/s00484-011-0453-2
-    Lemke, B., Kjellstrom, T., (2012). Calculating workplace WBGT from meteorogical data: A tool fro climate change asssesment. DOI:10.2486/indhealth.MS1352
-
-    See also
-    --------
-    http://www.bom.gov.au/info/thermal_stress/#approximation
-    """
-    e_sat = saturation_vapor_pressure(tas=tas, method="its90")
-    e_sat = convert_units_to(e_sat, "hPa")
-    tas = convert_units_to(tas, "degC")
-    wbgt = 0.567 * tas + 0.393 * e_sat + 3.38
-    return wbgt.assign_attrs({"units": "degC"})
+def _fdir_ratio(dates, csza_i, csza_s, rsds):
+    """Return ratio of direct solar radiation."""
+    d = distance_from_sun(dates)
+    s_star = rsds * ((1367 * csza_s * (d ** (-2))) ** (-1))
+    s_star = xr.where(s_star > 0.85, 0.85, s_star)
+    fdir_ratio = np.exp(3 - 1.34 * s_star - 1.65 * (s_star ** (-1)))
+    fdir_ratio = xr.where(fdir_ratio > 0.9, 0.9, fdir_ratio)
+    return xr.where(
+        (fdir_ratio <= 0) | (csza_i <= np.cos(89.5 / 180 * np.pi)) | (rsds <= 0),
+        0,
+        fdir_ratio,
+    )
 
 
-@declare_units(tas="[temperature]", sfcWind="[speed]", wbgt="[temperature]")
+@declare_units(
+    rsds="[radiation]", rsus="[radiation]", rlds="[radiation]", rlus="[radiation]"
+)
 def mean_radiant_temperature(
-    tas: xr.DataArray,
-    sfcWind: xr.DataArray,
-    wbgt: xr.DataArray = None,
+    rsds: xr.DataArray,
+    rsus: xr.DataArray,
+    rlds: xr.DataArray,
+    rlus: xr.DataArray,
+    stat: str = "sunlit",
 ) -> xr.DataArray:
-    """
-    Mean radiant temperature
+    r"""Mean radiant temperature.
+
+    The mean radiant temperature is the incidence of radiation on the body from all directions.
 
     Parameters
     ----------
-    tas: xarray.DataArray
-        Mean temperature
-    sfcWind: xarray.DataArray
-        Wind velocity
-    wbgt: xarray.DataArray, optional
-        Wet bulb globe temperature
+    rsds : xr.DataArray
+       Surface Downwelling Shortwave Radiation
+    rsus : xr.DataArray
+        Surface Upwelling Shortwave Radiation
+    rlds : xr.DataArray
+        Surface Downwelling Longwave Radiation
+    rlus : xr.DataArray
+        Surface Upwelling Longwave Radiation
+    stat  : {'sunlit', 'instant'}
+        Which statistic to apply. If "sunlit", the cosine of the solar zenith angle
+        is calculated during the sunlit period of each interval. If "instant" the
+        instantaneous cosine of the solar zenith angle is calculated.
 
     Returns
     -------
@@ -1544,15 +1552,67 @@ def mean_radiant_temperature(
 
     References
     ----------
-    Guo, H., Teitelbaum, E., Houchois, N., Bozlar, M., Meggers, F. (2018). Revisiting the use of globe thermometers to estimate radiant temperature in studies of heating and ventilation. DOI:10.1016/j.enbuild.2018.08.029
+    Di Napoli, C., Hogan, R.J. & Pappenberger, F. Mean radiant temperature from global-scale
+    numerical weather prediction models. Int J Biometeorol 64, 1233–1245 (2020).
+    https://doi.org/10.1007/s00484-020-01900-5
     """
-    tas = convert_units_to(tas, "degK")
-    sfcWind = convert_units_to(sfcWind, "m/s")
-    f = (1.1e8 * sfcWind**0.6) / (0.98 * 0.15**0.4)
-    if wbgt is None:
-        wbgt = wet_bulb_globe_temperature(tas)
-    wbgt = convert_units_to(wbgt, "K")
-    wbgt4 = wbgt**4
-    tmrt2 = wbgt4 + f * (wbgt - tas)
-    tmrt = np.sqrt(np.sqrt(tmrt2))
+    rsds = convert_units_to(rsds, "W m-2")
+    rsus = convert_units_to(rsus, "W m-2")
+    rlds = convert_units_to(rlds, "W m-2")
+    rlus = convert_units_to(rlus, "W m-2")
+
+    dates = rsds.time
+    hours = dates.dt.hour
+    lat = rsds.lat
+    lon = rsds.lon
+    decimal_year = datetime_to_decimal_year(times=dates, calendar=dates.dt.calendar)
+    day_angle = ((decimal_year % 1) * 2 * np.pi).assign_attrs(units="rad")
+    dec = solar_declination(day_angle)
+    if stat == "sunlit":
+        interval = (
+            (dates[1] - dates[0]).values.astype("timedelta64[h]").astype(np.int32)
+        )
+        csza_i = cosine_of_solar_zenith_angle(
+            declination=dec,
+            lat=lat,
+            lon=lon,
+            hours=hours,
+            interval=interval,
+            stat="interval",
+        )
+        csza_s = cosine_of_solar_zenith_angle(
+            declination=dec, lat=lat, lon=lon, hours=hours, interval=interval, stat=stat
+        )
+    elif stat == "instant":
+        tc = time_correction_for_solar_angle(day_angle)
+        csza_i = cosine_of_solar_zenith_angle(
+            declination=dec,
+            lat=lat,
+            lon=lon,
+            time_correction=tc,
+            hours=hours,
+            stat="instant",
+        )
+        csza_s = csza_i.copy()
+
+    fdir_ratio = _fdir_ratio(dates, csza_i, csza_s, rsds)
+
+    rsds_direct = fdir_ratio * rsds
+    rsds_diffuse = rsds - rsds_direct
+
+    gamma = np.arcsin(csza_i)
+    fp = 0.308 * np.cos(gamma * 0.988 - (gamma**2 / 50000))
+    i_star = xr.where(csza_s > 0.001, rsds_direct / csza_s, 0)
+
+    tmrt = np.power(
+        (
+            (1 / 0.0000000567)
+            * (
+                0.5 * rlds
+                + 0.5 * rlus
+                + (0.7 / 0.97) * (0.5 * rsds_diffuse + 0.5 * rsus + fp * i_star)
+            )
+        ),
+        0.25,
+    )
     return tmrt.assign_attrs({"units": "K"})
