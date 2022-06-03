@@ -655,23 +655,21 @@ def standardized_precipitation_index(
     # Obtain fitting params and expand along time dimension
     params = fit_group(pr_cal, dist, freq, window)
     grouped_time = list(pr.time.groupby("time.month"))
-    params = xarray.concat(
-        [
-            params.isel(month=i)
-            .drop_vars("month")
-            .assign_coords(time=grouped_time[i][1][0].values)
-            .expand_dims("time")
-            .reindex_like(grouped_time[i][1], method="ffill")
-            for i in range(0, params.sizes["month"])
-        ],
-        dim="time",
-    )
-    params = params.sortby("time")
+    params = params.rename(month='time').reindex(time=pr.time.dt.month)
+params['time'] = pr.time
 
     # ppf to cdf
-    if dist == "gamma":
+
+    # zero-bounded distributions;  'pearson3' will also go in this group once it's implemented
+    if dist in ["gamma"]:
         prob_pos = dist_method("cdf", params, pr.where(pr > 0))
-        prob_zero = (pr == 0).sum(axis=0) / pr.shape[0]
+        prob_zero = (
+            pr.groupby("time.month")
+            .map(lambda x: (x == 0).sum() / x.dropna(dim="time").shape[0])
+            .rename(month="time")
+            .reindex(time=pr.time.dt.month)
+        )
+    prob_zero["time"]  = pr.time
         prob = prob_zero + (1 - prob_zero) * prob_pos
     else:
         raise NotImplementedError(f"Distribution `{dist}` not supported.")

@@ -199,9 +199,7 @@ def fit_group(
     # Resampling and rolling
     da = da.resample(time=freq).mean()
     if window > 1:
-        attrs = da.attrs.copy()
-        da = da.rolling(time=window).mean(skipna=False)
-        da.attrs.update(attrs)
+        da = da.rolling(time=window).mean(skipna=False, keep_attrs=True)
 
     fit_params = da.groupby(group).map(lambda x: fit(x, dist=dist))
     fit_params.attrs["freq"] = freq
