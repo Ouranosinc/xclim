@@ -7,12 +7,12 @@ import xarray
 
 import xclim.indices as xci
 import xclim.indices.run_length as rl
-from xclim.core.calendar import parse_offset, select_time
+from xclim.core.calendar import parse_offset, resample_doy, select_time
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.core.utils import DayOfYearStr
 from xclim.indices._threshold import first_day_above, first_day_below, freshet_start
 from xclim.indices.generic import aggregate_between_dates, day_lengths
-from xclim.indices.stats import dist_method, fit_group
+from xclim.indices.stats import dist_method, fit
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -590,8 +590,10 @@ def water_budget(
 def standardized_precipitation_index(
     pr: xarray.DataArray,
     pr_cal: xarray.DataArray,
+    freq: str = "MS",
     window: int = 1,
     dist: str = "gamma",
+    method: str = "ML",
 ) -> xarray.DataArray:
     r"""Standardized Precipitation Index (SPI).
 
@@ -601,11 +603,17 @@ def standardized_precipitation_index(
       Daily precipitation.
     pr_cal : xarray.DataArray
       Daily precipitation used for calibration. Usually this is a temporal subset of `pr` over some reference period.
+    freq : str
+      Resampling frequency. A monthly or daily frequency is expected.
     window : int
-      Averaging window length (in months).
+      Averaging window length relative to the resampling frequency. For example, if `freq="MS"`, i.e. a monthly resampling, the window
+      is an integer number of months.
     dist : str
       Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
       (see :py:mod:`scipy.stats`).
+    method : str
+      Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
+      simply uses the parameters output of `_fit_start`.
 
     Returns
     -------
@@ -620,7 +628,7 @@ def standardized_precipitation_index(
 
     Example
     -------
-    Computing SPI-3 using a gamma distribution for the fit
+    Computing SPI-3 months using a gamma distribution for the fit
 
     .. code-block:: python
 
@@ -630,49 +638,63 @@ def standardized_precipitation_index(
           ds = xr.open_dataset(filename)
           pr = ds.pr
           pr_cal = pr.sel(time=slice(calibration_start_date, calibration_end_date)
-          window = 3
-          dist = "gamma"
-          spi_3 = xci.standardized_precipitation_index(pr, pr_cal, window, dist)
+          spi_3 = xci.standardized_precipitation_index(pr, pr_cal, freq="MS", window=3, dist="gamma", method="ML")
 
 
     References
     ----------
     McKee, Thomas B., Nolan J. Doesken, and John Kleist. "The relationship of drought frequency and duration to time scales." In Proceedings of the 8th Conference on Applied Climatology, vol. 17, no. 22, pp. 179-183. 1993.
     """
-    supported_dists = ["gamma"]
-    if dist not in supported_dists:
-        raise NotImplementedError(f"Distribution `{dist}` not supported.")
+    # "WPM" method doesn't seem to work for gamma or pearson3
+    dist_and_methods = {"gamma": ["ML", "APP"]}
+    if dist not in dist_and_methods.keys():
+        raise NotImplementedError(f"The distribution `{dist}` is not supported.")
+    elif method not in dist_and_methods[dist]:
+        raise NotImplementedError(
+            f"The method `{method}` is not supported for distribution `{dist}`."
+        )
 
-    freq = "MS"
+    if freq == "D" or freq is None:
+        freq = "D"
+        group = "time.dayofyear"
+    else:
+        _, base, _, _ = parse_offset(freq)
+        if base in ["Y", "A", "Q", "M"]:
+            group = "time.month"
+        else:
+            raise NotImplementedError(f"Resampling frequency `{freq}` not supported.")
 
     # Resampling and rolling precipitations
-    pr = pr.resample(time=freq).mean()
+    if freq != "D":
+        pr = pr.resample(time=freq).mean()
+        pr_cal = pr_cal.resample(time=freq).mean()
     if window > 1:
-        attrs = pr.attrs.copy()
-        pr = pr.rolling(time=window).mean(skipna=False)
-        pr.attrs.update(attrs)
+        pr = pr_cal.rolling(time=window).mean(skipna=False, keep_attrs=True)
+        pr_cal = pr_cal.rolling(time=window).mean(skipna=False, keep_attrs=True)
 
     # Obtain fitting params and expand along time dimension
-    params = fit_group(pr_cal, dist, freq, window)
-    grouped_time = list(pr.time.groupby("time.month"))
-    params = params.rename(month='time').reindex(time=pr.time.dt.month)
-params['time'] = pr.time
+    def resample_to_time(da, da_ref):
+        if freq == "D":
+            da = resample_doy(da, da_ref)
+        else:
+            da = da.rename(month="time").reindex(time=da_ref.time.dt.month)
+            da["time"] = da_ref.time
+        return da
 
+    params = pr_cal.groupby(group).map(lambda x: fit(x, dist, method))
+    params = resample_to_time(params, pr)
     # ppf to cdf
 
     # zero-bounded distributions;  'pearson3' will also go in this group once it's implemented
     if dist in ["gamma"]:
         prob_pos = dist_method("cdf", params, pr.where(pr > 0))
-        prob_zero = (
-            pr.groupby("time.month")
-            .map(lambda x: (x == 0).sum() / x.dropna(dim="time").shape[0])
-            .rename(month="time")
-            .reindex(time=pr.time.dt.month)
+        prob_zero = resample_to_time(
+            pr.groupby(group).map(
+                lambda x: (x == 0).sum() / x.dropna(dim="time").shape[0]
+            ),
+            pr,
         )
-    prob_zero["time"]  = pr.time
         prob = prob_zero + (1 - prob_zero) * prob_pos
-    else:
-        raise NotImplementedError(f"Distribution `{dist}` not supported.")
 
     # Invert to normal distribution with ppf and obtain SPI
     params_norm = xarray.DataArray(
