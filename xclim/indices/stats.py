@@ -13,7 +13,6 @@ from . import generic
 
 __all__ = [
     "fit",
-    "fit_group",
     "parametric_quantile",
     "parametric_cdf",
     "fa",
@@ -57,6 +56,12 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
         params = dist.fit(x, *args, **kwargs, **fitkwargs)
     elif method == "PWM":
         params = list(dist.lmom_fit(x).values())
+    elif method == "APP":
+        args, kwargs = _fit_start(x, dist.name, **fitkwargs)
+        kwargs_list = kwargs.values()
+        if "loc" not in kwargs.keys():
+            kwargs_list = [0] + kwargs_list
+        params = list(args) + kwargs_list
 
     params = np.asarray(params)
 
@@ -102,7 +107,11 @@ def fit(
     Coordinates for which all values are NaNs will be dropped before fitting the distribution. If the array
     still contains NaNs, the distribution parameters will be returned as NaNs.
     """
-    method_name = {"ML": "maximum likelihood", "PWM": "probability weighted moments"}
+    method_name = {
+        "ML": "maximum likelihood",
+        "PWM": "probability weighted moments",
+        "APP": "approximative method",
+    }
 
     # Get the distribution
     dc = get_dist(dist)
@@ -122,7 +131,8 @@ def fit(
         output_dtypes=[float],
         keep_attrs=True,
         kwargs=dict(
-            dist=dc if method == "ML" else lm3dc,
+            # Don't know how APP should be included, this works for now
+            dist=dc if method in ["ML", "APP"] else lm3dc,
             nparams=len(dist_params),
             method=method,
             **fitkwargs,
@@ -152,60 +162,6 @@ def fit(
     )
     out.attrs.update(attrs)
     return out
-
-
-def fit_group(
-    da: xr.DataArray,
-    dist: str = "gamma",
-    freq: str = "MS",
-    window: int = 1,
-) -> xr.DataArray:
-    """Fit a resampled array averaged over a rolling window to a univariate distribution along the time dimension.
-
-    Parameters
-    ----------
-    da : xarray.DataArray
-      Input data.
-    dist : str
-      Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
-      (see scipy.stats).
-    freq : str
-      Resampling frequency. This function only makes sense for monthly or seasonal frequencies.
-    window : int
-      Averaging window length (In units of the resampling frequency period).
-
-
-    Returns
-    -------
-    xr.DataArray
-      An array of fitted distribution parameters for each time segment
-
-
-    Notes
-    -----
-    The resampling frequency time delta must be an integer number of months. It determines time segments used to fit
-    the array group by group. For example, choosing `freq = 'MS` will give 12 time segment, i.e. months.
-    A time series for each month is used to obtain a set of fitting parameters.
-    """
-    # Freq must have a time delta which is an integer number of month
-    _, base, _, _ = parse_offset(freq)
-    if base not in ["Y", "A", "Q", "M"]:
-        raise NotImplementedError(f"Resampling frequency `{freq}` not supported.")
-
-    # groupby argument, depends on the smallest time period allowed with freq
-    group = "time.month"
-
-    # Resampling and rolling
-    da = da.resample(time=freq).mean()
-    if window > 1:
-        da = da.rolling(time=window).mean(skipna=False, keep_attrs=True)
-
-    fit_params = da.groupby(group).map(lambda x: fit(x, dist=dist))
-    fit_params.attrs["freq"] = freq
-    fit_params.attrs["window"] = window
-    fit_params.attrs["group"] = group
-
-    return fit_params
 
 
 def parametric_quantile(p: xr.DataArray, q: int | Sequence) -> xr.DataArray:
