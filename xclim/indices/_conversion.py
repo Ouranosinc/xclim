@@ -1498,8 +1498,44 @@ def universal_thermal_climate_index(
     return utci
 
 
-def _fdir_ratio(dates, csza_i, csza_s, rsds):
-    """Return ratio of direct solar radiation."""
+def _fdir_ratio(
+        dates: xr.DataArray,
+        csza_i: xr.DataArray,
+        csza_s: xr.DataArray
+        rsds: xr.DataArray,
+) -> xr.DataArray:
+    r"""Return ratio of direct solar radiation.
+
+    The ratio of direct solar radiation is the fraction of the total horizontal 
+    solar irridance due to the direct beam of the sun.
+
+    Parameters
+    ----------
+    dates : xr.DataArray
+        Series of dates and time of day
+    csza_i : xr.DataArray
+        Cosine of the solar zenith angle during each interal
+    csza_s : xr.DataArray
+        Cosine of the solar zenith angle during the sunlit period of each interval
+    rsds : xr.DataArray
+        Surface Downwelling Shortwave Radiation
+
+    Returns
+    -------
+    xarray.DataArray
+        Ratio of direct solar radiation
+
+    Notes
+    -----
+    This code was inspired by the `PyWBGT` package.
+
+    References
+    ----------
+    James C. Liljegren , Richard A. Carhart , Philip Lawday , Stephen Tschopp &
+    Robert Sharp (2008) Modeling the Wet Bulb Globe Temperature Using Standard Meteorological
+    Measurements, Journal of Occupational and Environmental Hygiene, 5:10, 645-655, 
+    https://doi.org/10.1080/15459620802310770
+    """
     d = distance_from_sun(dates)
     s_star = rsds * ((1367 * csza_s * (d ** (-2))) ** (-1))
     s_star = xr.where(s_star > 0.85, 0.85, s_star)
