@@ -33,7 +33,7 @@ __all__ = [
     "qian_weighted_mean_average",
     "water_budget",
     "standardized_precipitation_index",
-    # "standardized_precipitation_evapotranspiration_index",
+    "standardized_precipitation_evapotranspiration_index",
 ]
 
 
@@ -669,7 +669,7 @@ def standardized_precipitation_index(
         pr = pr.resample(time=freq).mean()
         pr_cal = pr_cal.resample(time=freq).mean()
     if window > 1:
-        pr = pr_cal.rolling(time=window).mean(skipna=False, keep_attrs=True)
+        pr = pr.rolling(time=window).mean(skipna=False, keep_attrs=True)
         pr_cal = pr_cal.rolling(time=window).mean(skipna=False, keep_attrs=True)
 
     # Obtain fitting params and expand along time dimension
@@ -709,58 +709,75 @@ def standardized_precipitation_index(
     return spi
 
 
-# @declare_units(
-#     wb="[precipitation]",
-#     wb_cal="[precipitation]",
-# )
-# def standardized_precipitation_evapotranspiration_index(
-#     wb: xarray.DataArray,
-#     wb_cal: xarray.DataArray,
-#     window: int = 1,
-#     dist: str = "gamma",
-#     shift: int = 0,
-# ) -> xarray.DataArray:
-#     r"""Standardized Precipitation Evapotranspiration Index (SPEI).
+@declare_units(
+    wb="[precipitation]",
+    wb_cal="[precipitation]",
+)
+def standardized_precipitation_evapotranspiration_index(
+    wb: xarray.DataArray,
+    wb_cal: xarray.DataArray,
+    freq: str = "MS",
+    window: int = 1,
+    dist: str = "gamma",
+    method: str = "ML",
+) -> xarray.DataArray:
+    r"""Standardized Precipitation Evapotranspiration Index (SPEI).
 
-#     Precipitation minus potential evapotranspiration data (PET) fitted to a statistical distribution (dist), transformed to a cdf,  and inverted back to a gaussian normal pdf. The potential evapotranspiration is calculated with a given method (method).
+    Precipitation minus potential evapotranspiration data (PET) fitted to a statistical distribution (dist), transformed to a cdf,  and inverted back to a gaussian normal pdf. The potential evapotranspiration is calculated with a given method (method).
 
-#     Parameters
-#     ----------
-#     wb : xarray.DataArray
-#       Daily water budget (pr - pet).
-#     wb_cal : xarray.DataArray
-#       Daily water budget used for calibration.
-#     window : int
-#       Averaging window length (in month units).
-#     dist : str
-#       Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
-#       (see scipy.stats).
+    Parameters
+    ----------
+    wb : xarray.DataArray
+      Daily water budget (pr - pet).
+    wb_cal : xarray.DataArray
+      Daily water budget used for calibration.
+    freq : str
+      Resampling frequency. A monthly or daily frequency is expected.
+    window : int
+      Averaging window length relative to the resampling frequency. For example, if `freq="MS"`, i.e. a monthly resampling, the window
+      is an integer number of months.
+    dist : str
+      Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
+      (see :py:mod:`scipy.stats`).
+    method : str
+      Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
+      simply uses the parameters output of `_fit_start`.
 
-#     Returns
-#     -------
-#     xarray.DataArray,
-#       Standardized Precipitation Evapotranspiration Index.
+    Returns
+    -------
+    xarray.DataArray,
+      Standardized Precipitation Evapotranspiration Index.
 
-#     Notes
-#     -----
-#     See Standardized Precipitation Index (SPI) for more details on usage.
-#     """
-#     # The offset is not very well behaved. pearson3 or log-logistic is probably the way to go
-#     if(dist == "gamma"):
-#         min_value = min(wb.min().item(), wb_cal.min().item())
-#         if(min_value < 0) :
-#             def offset_da(da):
-#                 attrs = da.attrs
-#                 da = da-shift*min_value
-#                 da.attrs.update(attrs)
-#                 return da
-#             wb = offset_da(wb)
-#             wb_cal = offset_da(wb_cal)
+    Notes
+    -----
+    See Standardized Precipitation Index (SPI) for more details on usage.
+    """
+    dist_and_methods = {"gamma": ["ML", "APP"]}
+    if dist not in dist_and_methods.keys():
+        raise NotImplementedError(f"The distribution `{dist}` is not supported.")
+    elif method not in dist_and_methods[dist]:
+        raise NotImplementedError(
+            f"The method `{method}` is not supported for distribution `{dist}`."
+        )
 
+    # Using distributions bounded by zero: The water budget must be shifted to ensure  the distribution to have only positive values
+    # that values are positive
+    if dist in ["gamma"]:
 
-#     spei = standardized_precipitation_index(wb, wb_cal, window,  dist)
+        def get_resampled(wb):
+            if freq == "D" or freq is None:
+                return wb
+            else:
+                return wb.resample(time=freq).mean()
 
-#     return spei
+        min_value = min(get_resampled(wb).min(), get_resampled(wb_cal).min())
+        offset = 2 * min_value * (min_value < 0) + 0 * (min_value > 0)
+        with xarray.set_options(keep_attrs=True):
+            wb, wb_cal = wb - offset, wb_cal - offset
+
+    spei = standardized_precipitation_index(wb, wb_cal, freq, window, dist, method)
+
+    return spei
 
 
 @declare_units(pr="[precipitation]", thresh="[length]")
