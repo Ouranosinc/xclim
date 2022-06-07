@@ -190,7 +190,7 @@ def cosine_of_solar_zenith_angle(
     Parameters
     ----------
     declination : xr.DataArray
-      Daily solar declination. See :py:func:`solar_declination`.
+      Solar declination. See :py:func:`solar_declination`.
     lat : xr.DataArray
       Latitude.
     lon : xr.DataArray, optional
