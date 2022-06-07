@@ -93,14 +93,33 @@ class AttrFormatter(string.Formatter):
         In french, the genre of the noun changes the adjective (cat = chat is masculine,
         and goose = oie is feminine) so we initialize the formatter as:
 
-        >>> fmt = AttrFormatter({'nice': ['beau', 'belle'], 'evil' : ['méchant', 'méchante'], 'smart': ['intelligent', 'intelligente']}, ['m', 'f'])
-        >>> fmt.format("Le chien est {adj1:m}, l'oie est {adj2:f}, le gecko est {adj3:r}", adj1='nice', adj2='evil', adj3='smart')
+        >>> fmt = AttrFormatter(
+        ...     {
+        ...         "nice": ["beau", "belle"],
+        ...         "evil": ["méchant", "méchante"],
+        ...         "smart": ["intelligent", "intelligente"],
+        ...     },
+        ...     ["m", "f"],
+        ... )
+        >>> fmt.format(
+        ...     "Le chien est {adj1:m}, l'oie est {adj2:f}, le gecko est {adj3:r}",
+        ...     adj1="nice",
+        ...     adj2="evil",
+        ...     adj3="smart",
+        ... )
         "Le chien est beau, l'oie est méchante, le gecko est smart"
 
         The base values may be given using unix shell-like patterns:
 
-        >>> fmt = AttrFormatter({'AS-*': ['annuel', 'annuelle'], 'MS' : ['mensuel', 'mensuelle']}, ['m', 'f'])
-        >>> fmt.format("La moyenne {freq:f} est faite sur un échantillon {src_timestep:m}", freq='AS-JUL', src_timestep='MS')
+        >>> fmt = AttrFormatter(
+        ...     {"AS-*": ["annuel", "annuelle"], "MS": ["mensuel", "mensuelle"]},
+        ...     ["m", "f"],
+        ... )
+        >>> fmt.format(
+        ...     "La moyenne {freq:f} est faite sur un échantillon {src_timestep:m}",
+        ...     freq="AS-JUL",
+        ...     src_timestep="MS",
+        ... )
         'La moyenne annuelle est faite sur un échantillon mensuel'
         """
         baseval = self._match_value(value)
@@ -423,7 +442,7 @@ def gen_call_string(funcname: str, *args, **kwargs):
 
     Example
     -------
-    >>> A = xr.DataArray([1], dims=('x',), name='A')
+    >>> A = xr.DataArray([1], dims=("x",), name="A")
     >>> gen_call_string("func", A, b=2.0, c="3", d=[4, 5, 6])
     "func(A, b=2.0, c='3', d=<list>)"
     """
