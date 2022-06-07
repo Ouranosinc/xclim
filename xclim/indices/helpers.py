@@ -275,6 +275,13 @@ def cosine_of_solar_zenith_angle(
             np.sin(h_max) - np.sin(h_min)
         ) / (h_max - h_min)
         csza = xr.where(np.isnan(csza), 0, csza)
+        csza = xr.where(
+            ((h_s > h_ss) & (h_e < h_sr))
+            | ((h_s < h_sr) & (h_e < h_sr))
+            | ((h_s > h_ss) & (h_e > h_ss)),
+            0,
+            csza,
+        )
         return np.clip(csza, 0, None)
     raise NotImplementedError(
         "Argument 'stat' must be one of 'integral', 'average', 'instant', 'interval' or 'sunlit'."
