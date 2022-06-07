@@ -204,7 +204,7 @@ def cosine_of_solar_zenith_angle(
       This is necessary if stat is "instant", "interval" or "sunlit".
     interval : int, optional
       Time interal between two time steps in hours
-      This is necessary if stat is "interval".
+      This is necessary if stat is "interval" or "sunlit".
     stat : {'integral', 'average', 'instant', 'interval', 'sunlit'}
       Which daily statistic to return. If "integral", this returns the integral of the
       cosine of the zenith angle from sunrise to sunset. If "average", the integral is
@@ -232,56 +232,47 @@ def cosine_of_solar_zenith_angle(
     lat = convert_units_to(lat, "rad")
     if lon is not None:
         lon = convert_units_to(lon, "rad")
-    h_s = np.arccos(
+    if hours is not None:
+        sha = (hours - 12) * 15 / 180 * np.pi + lon
+    if interval is not None:
+        k = interval / 2.0
+        h_s = sha - k * 15 * np.pi / 180
+        h_e = sha + k * 15 * np.pi / 180
+    h_sr = -np.arccos(-np.tan(lat) * np.tan(declination))
+    h_ss = np.arccos(
         -np.tan(lat) * np.tan(declination)
     )  # hour angle of sunset (eq. 2.15)
     # The following equation is not explictely stated in the reference but it can easily be derived.
     if stat == "integral":
-        return 2 * (
-            h_s * np.sin(declination) * np.sin(lat)
-            + np.cos(declination) * np.cos(lat) * np.sin(h_s)
+        csza = 2 * (
+            h_ss * np.sin(declination) * np.sin(lat)
+            + np.cos(declination) * np.cos(lat) * np.sin(h_ss)
         )
+        return xr.where(np.isnan(csza), 0, csza)
     if stat == "average":
-        return (
+        csza = (
             np.sin(declination) * np.sin(lat)
-            + np.cos(declination) * np.cos(lat) * np.sin(h_s) / h_s
+            + np.cos(declination) * np.cos(lat) * np.sin(h_ss) / h_ss
         )
+        return xr.where(np.isnan(csza), 0, csza)
     if stat == "instant":
-        hrad = (hours - 12) * 15 / 180 * np.pi
-        sha = hrad + lon + time_correction
+        sha = sha + time_correction
         csza = np.sin(declination) * np.sin(lat) + np.cos(declination) * np.cos(
             lat
         ) * np.cos(sha)
         return np.clip(csza, 0, None)
     if stat == "interval":
-        sha = (hours - 12) * 15 / 180 * np.pi + lon
-        k = interval / 2.0
-        h_s = sha - k * 15 * np.pi / 180
-        h_e = sha + k * 15 * np.pi / 180
         csza = np.sin(declination) * np.sin(lat) + np.cos(declination) * np.cos(lat) * (
             np.sin(h_e) - np.sin(h_s)
         ) / (h_e - h_s)
         return np.clip(csza, 0, None)
     if stat == "sunlit":
-        sha = (hours - 12) * 15 / 180 * np.pi + lon
-        k = interval / 2.0
-        h_s = sha - k * 15 * np.pi / 180
-        h_e = sha + k * 15 * np.pi / 180
-        h_sr = -np.arccos(-np.tan(lat) * np.tan(declination))
-        h_ss = np.arccos(-np.tan(lat) * np.tan(declination))
         h_min = xr.where(h_s >= h_sr, h_s, h_sr)
         h_max = xr.where(h_e <= h_ss, h_e, h_ss)
         csza = np.sin(declination) * np.sin(lat) + np.cos(declination) * np.cos(lat) * (
             np.sin(h_max) - np.sin(h_min)
         ) / (h_max - h_min)
         csza = xr.where(np.isnan(csza), 0, csza)
-        csza = xr.where(
-            ((h_s > h_ss) & (h_e < h_sr))
-            | ((h_s < h_sr) & (h_e < h_sr))
-            | ((h_s > h_ss) & (h_e > h_ss)),
-            0,
-            csza,
-        )
         return np.clip(csza, 0, None)
     raise NotImplementedError(
         "Argument 'stat' must be one of 'integral', 'average', 'instant', 'interval' or 'sunlit'."
