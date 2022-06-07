@@ -1,5 +1,6 @@
 # dev tools and testing
 black>=22.3
+blackdoc
 bump2version
 coverage
 flake8

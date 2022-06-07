@@ -124,7 +124,7 @@ def temperature_seasonality(
     >>> import xclim.indices as xci
     >>> t = xr.open_dataset(path_to_tas_file).tas
     >>> tday_seasonality = xci.temperature_seasonality(t)
-    >>> t_weekly = xci.tg_mean(t, freq='7D')
+    >>> t_weekly = xci.tg_mean(t, freq="7D")
     >>> tweek_seasonality = xci.temperature_seasonality(t_weekly)
 
     Notes
@@ -171,10 +171,10 @@ def precip_seasonality(pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArr
     >>> import xclim.indices as xci
     >>> p = xr.open_dataset(path_to_pr_file).pr
     >>> pday_seasonality = xci.precip_seasonality(p)
-    >>> p_weekly = xci.precip_accumulation(p, freq='7D')
+    >>> p_weekly = xci.precip_accumulation(p, freq="7D")
 
     # Input units need to be a rate
-    >>> p_weekly.attrs['units'] = "mm/week"
+    >>> p_weekly.attrs["units"] = "mm/week"
     >>> pweek_seasonality = xci.precip_seasonality(p_weekly)
 
     Notes
@@ -229,7 +229,7 @@ def tg_mean_warmcold_quarter(
 
     >>> import xclim.indices as xci
     >>> t = xr.open_dataset(path_to_tas_file)
-    >>> t_warm_qrt = xci.tg_mean_warmcold_quarter(tas=t.tas, op='warmest')
+    >>> t_warm_qrt = xci.tg_mean_warmcold_quarter(tas=t.tas, op="warmest")
 
     Notes
     -----
@@ -320,7 +320,7 @@ def prcptot_wetdry_quarter(
 
     >>> from xclim.indices import prcptot_wetdry_quarter
     >>> p = xr.open_dataset(path_to_pr_file)
-    >>> pr_warm_qrt = prcptot_wetdry_quarter(pr=p.pr, op='wettest')
+    >>> pr_warm_qrt = prcptot_wetdry_quarter(pr=p.pr, op="wettest")
 
     Notes
     -----

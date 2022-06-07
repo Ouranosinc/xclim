@@ -113,16 +113,18 @@ def change_significance(
 
     >>> from xclim import ensembles
     >>> ens = ensembles.create_ensemble(temperature_datasets)
-    >>> tgmean = xclim.atmos.tg_mean(tas=ens.tas, freq='YS')
-    >>> fut = tgmean.sel(time=slice('2020', '2050'))
-    >>> ref = tgmean.sel(time=slice('1990', '2020'))
-    >>> chng_f, pos_f = ensembles.change_significance(fut, ref, test='ttest')
+    >>> tgmean = xclim.atmos.tg_mean(tas=ens.tas, freq="YS")
+    >>> fut = tgmean.sel(time=slice("2020", "2050"))
+    >>> ref = tgmean.sel(time=slice("1990", "2020"))
+    >>> chng_f, pos_f = ensembles.change_significance(fut, ref, test="ttest")
 
     If the deltas were already computed beforehand, the 'threshold' test can still
     be used, here with a 2 K threshold.
 
-    >>> delta = fut.mean('time') - ref.mean('time')
-    >>> chng_f, pos_f = ensembles.change_significance(delta, test='threshold', abs_thresh=2)
+    >>> delta = fut.mean("time") - ref.mean("time")
+    >>> chng_f, pos_f = ensembles.change_significance(
+    ...     delta, test="threshold", abs_thresh=2
+    ... )
     """
     test_params = {
         "ttest": ["p_change"],
