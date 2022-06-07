@@ -1572,10 +1572,11 @@ def mean_radiant_temperature(
         Surface Downwelling Longwave Radiation
     rlus : xr.DataArray
         Surface Upwelling Longwave Radiation
-    stat  : {'sunlit', 'instant'}
+    stat  : {'sunlit', 'instant', 'average'}
         Which statistic to apply. If "sunlit", the cosine of the solar zenith angle
         is calculated during the sunlit period of each interval. If "instant" the
-        instantaneous cosine of the solar zenith angle is calculated.
+        instantaneous cosine of the solar zenith angle is calculated. If "average"
+        the average of the cosine of the solar zenith angle is calculated.
 
     Returns
     -------
@@ -1621,7 +1622,7 @@ def mean_radiant_temperature(
         )
     elif stat == "instant":
         tc = time_correction_for_solar_angle(day_angle)
-        csza_i = cosine_of_solar_zenith_angle(
+        csza = cosine_of_solar_zenith_angle(
             declination=dec,
             lat=lat,
             lon=lon,
@@ -1629,7 +1630,20 @@ def mean_radiant_temperature(
             hours=hours,
             stat="instant",
         )
-        csza_s = csza_i.copy()
+        csza_i = csza.copy()
+        csza_s = csza.copy()
+    elif stat == "average":
+        csza = cosine_of_solar_zenith_angle(
+            declination=dec,
+            lat=lat,
+            stat="average",
+        )
+        csza_i = csza.copy()
+        csza_s = csza.copy()
+    else:
+        raise NotImplementedError(
+            "Argument 'stat' must be one of 'average', 'instant' or 'sunlit'."
+        )
 
     fdir_ratio = _fdir_ratio(dates, csza_i, csza_s, rsds)
 
