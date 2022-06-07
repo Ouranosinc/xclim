@@ -276,7 +276,9 @@ def cosine_of_solar_zenith_angle(
         ) / (h_max - h_min)
         csza = xr.where(np.isnan(csza), 0, csza)
         return np.clip(csza, 0, None)
-    raise NotImplementedError("Argument 'stat' must be one of 'integral', 'average', 'instant', 'interval' or 'sunlit'.")
+    raise NotImplementedError(
+        "Argument 'stat' must be one of 'integral', 'average', 'instant', 'interval' or 'sunlit'."
+    )
 
 
 def extraterrestrial_solar_radiation(
