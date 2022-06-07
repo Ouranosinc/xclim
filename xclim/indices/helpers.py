@@ -1,4 +1,3 @@
-
 # noqa: D205,D400
 """
 Helper functions submodule
@@ -38,7 +37,7 @@ def distance_from_sun(dates: xr.DaraArray) -> xr.DataArray:
 
     References
     ----------
-    U.S. Naval Observatory:Astronomical Almanac. Washington, D.C.: 
+    U.S. Naval Observatory:Astronomical Almanac. Washington, D.C.:
     U.S. Government Printing Office (1985).
     """
     cal = get_calendar(dates)
@@ -48,6 +47,7 @@ def distance_from_sun(dates: xr.DaraArray) -> xr.DataArray:
     g = ((357.528 + 0.9856003 * days_since) % 360) * np.pi / 180
     sun_earth = 1.00014 - 0.01671 * np.cos(g) - 0.00014 * np.cos(2.0 * g)
     return xr.DataArray(sun_earth, coords=dates.coords, dims=dates.dims)
+
 
 def solar_declination(day_angle: xr.DataArray, method="spencer") -> xr.DataArray:
     """Solar declination.
