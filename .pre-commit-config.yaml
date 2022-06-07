@@ -55,6 +55,12 @@ repos:
     hooks:
       - id: pydocstyle
         args: [ '--config=setup.cfg' ]
+  - repo: https://github.com/keewis/blackdoc
+    rev: v0.3.4
+    hooks:
+      - id: blackdoc
+        exclude: '(xclim/indices/__init__.py|xclim/docs/installation.rst)'
+        additional_dependencies: [ 'black==22.3.0' ]
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.26.3
     hooks:

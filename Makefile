@@ -55,8 +55,8 @@ lint: ## check style with flake8 and black
 	flake8 --config=setup.cfg xclim
 	black --check --target-version py38 xclim
 	black --check --ipynb --target-version py38 docs --include "\.ipynb$$"
-	blackdoc --check --target-version py38 xclim --exclude xclim/indices/__init__.py
-	isort --check --settings-file=setup.cfg xclim
+	blackdoc --check --target-version py38 xclim --exclude xclim/indices/__init__.py,xclim/docs/installation.rst
+	isort --check --settings-file=setup.cfg xclim --add_imports="from __future__ import annotations"
 	pylint --rcfile=setup.cfg --exit-zero xclim
 
 test: ## run tests quickly with the default Python

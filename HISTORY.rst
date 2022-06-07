@@ -107,8 +107,11 @@ Breaking changes
 .. code-block:: python
 
     from xclim import sdba
+
     # NQ is the the number of equally spaced nodes, the argument previously given to nquantiles directly.
-    EQM = sdba.EmpiricalQuantileMapping.train(ref, hist, nquantiles=sdba.equally_spaced_nodes(NQ, eps=1e-6), ...)
+    EQM = sdba.EmpiricalQuantileMapping.train(
+        ref, hist, nquantiles=sdba.equally_spaced_nodes(NQ, eps=1e-6), ...
+    )
 
 * The "history" string attribute added by xclim has been modified for readability: (:issue:`963`, :pull:`1018`).
     - The trailing dot (``.``) was dropped.

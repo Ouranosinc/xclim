@@ -12,10 +12,11 @@ For example, the following would compute monthly mean temperature from daily mea
 
 .. code-block:: python
 
-  import xclim
-  import xarray as xr
-  ds = xr.open_dataset(filename)
-  tg = xclim.icclim.TG(ds.tas, freq='YS')
+    import xclim
+    import xarray as xr
+
+    ds = xr.open_dataset(filename)
+    tg = xclim.icclim.TG(ds.tas, freq="YS")
 
 For applications where meta-data and missing values are important to get right, xclim provides a class for each index that validates inputs, checks for missing values, converts units and assigns metadata attributes to the output. This also provides a mechanism for users to customize the indices to their own specifications and preferences.
 
