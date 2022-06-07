@@ -195,7 +195,7 @@ def cosine_of_solar_zenith_angle(
       Latitude.
     lon : xr.DataArray, optional
       Longitude
-      This is necessary if stat is "instant".
+      This is necessary if stat is "instant", "interval" or "sunlit".
     time_correction : xr.DataArray, optional
       Time correction for solar angle. See :py:func:`time_correction_for_solar_angle`
       This is necessary if stat is "instant".
