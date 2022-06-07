@@ -247,7 +247,6 @@ def cosine_of_solar_zenith_angle(
             + np.cos(declination) * np.cos(lat) * np.sin(h_s) / h_s
         )
     if stat == "instant":
-        lon = convert_units_to(lon, "rad")
         hrad = (hours - 12) * 15 / 180 * np.pi
         sha = hrad + lon + time_correction
         csza = np.sin(declination) * np.sin(lat) + np.cos(declination) * np.cos(
