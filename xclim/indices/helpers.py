@@ -1,3 +1,4 @@
+
 # noqa: D205,D400
 """
 Helper functions submodule
@@ -11,7 +12,11 @@ import cftime
 import numpy as np
 import xarray as xr
 
-from xclim.core.calendar import datetime_to_decimal_year
+from xclim.core.calendar import (
+    datetime_to_decimal_year,
+    ensure_cftime_array,
+    get_calendar,
+)
 from xclim.core.units import convert_units_to
 
 
@@ -30,16 +35,19 @@ def distance_from_sun(dates: xr.DaraArray) -> xr.DataArray:
     -------
     xr.DataArray
       Sun-earth distance [astronomical units]
-    """
-    from xclim.core.calendar import ensure_cftime_array, get_calendar
 
+    References
+    ----------
+    U.S. Naval Observatory:Astronomical Almanac. Washington, D.C.: 
+    U.S. Government Printing Office (1985).
+    """
     cal = get_calendar(dates)
     days_since = cftime.date2num(
         ensure_cftime_array(dates), "days since 2000-01-01 12:00:00", calendar=cal
     )
     g = ((357.528 + 0.9856003 * days_since) % 360) * np.pi / 180
-    return 1.00014 - 0.01671 * np.cos(g) - 0.00014 * np.cos(2.0 * g)
-
+    sun_earth = 1.00014 - 0.01671 * np.cos(g) - 0.00014 * np.cos(2.0 * g)
+    return xr.DataArray(sun_earth, coords=dates.coords, dims=dates.dims)
 
 def solar_declination(day_angle: xr.DataArray, method="spencer") -> xr.DataArray:
     """Solar declination.
