@@ -1499,10 +1499,10 @@ def universal_thermal_climate_index(
 
 
 def _fdir_ratio(
-        dates: xr.DataArray,
-        csza_i: xr.DataArray,
-        csza_s: xr.DataArray
-        rsds: xr.DataArray,
+    dates: xr.DataArray,
+    csza_i: xr.DataArray,
+    csza_s: xr.DataArray,
+    rsds: xr.DataArray,
 ) -> xr.DataArray:
     r"""Return ratio of direct solar radiation.
 
