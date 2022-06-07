@@ -1506,7 +1506,7 @@ def _fdir_ratio(
 ) -> xr.DataArray:
     r"""Return ratio of direct solar radiation.
 
-    The ratio of direct solar radiation is the fraction of the total horizontal 
+    The ratio of direct solar radiation is the fraction of the total horizontal
     solar irridance due to the direct beam of the sun.
 
     Parameters
@@ -1533,7 +1533,7 @@ def _fdir_ratio(
     ----------
     James C. Liljegren , Richard A. Carhart , Philip Lawday , Stephen Tschopp &
     Robert Sharp (2008) Modeling the Wet Bulb Globe Temperature Using Standard Meteorological
-    Measurements, Journal of Occupational and Environmental Hygiene, 5:10, 645-655, 
+    Measurements, Journal of Occupational and Environmental Hygiene, 5:10, 645-655,
     https://doi.org/10.1080/15459620802310770
     """
     d = distance_from_sun(dates)
