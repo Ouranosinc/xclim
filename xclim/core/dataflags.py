@@ -361,7 +361,9 @@ def values_op_thresh_repeating_for_n_or_more_days(
     >>> units = "5 mm d-1"
     >>> days = 5
     >>> comparison = "eq"
-    >>> flagged = values_op_thresh_repeating_for_n_or_more_days(ds.pr, n=days, thresh=units, op=comparison)
+    >>> flagged = values_op_thresh_repeating_for_n_or_more_days(
+    ...     ds.pr, n=days, thresh=units, op=comparison
+    ... )
     """
     thresh = convert_units_to(thresh, da)
     if op not in {"eq", "gt", "lt", "gteq", "lteq"}:
@@ -450,7 +452,9 @@ def outside_n_standard_deviations_of_climatology(
     >>> ds = xr.open_dataset(path_to_tas_file)
     >>> std_devs = 5
     >>> average_over = 5
-    >>> flagged = outside_n_standard_deviations_of_climatology(ds.tas, n=std_devs, window=average_over)
+    >>> flagged = outside_n_standard_deviations_of_climatology(
+    ...     ds.tas, n=std_devs, window=average_over
+    ... )
     """
     mu, sig = climatological_mean_doy(da, window=window)
     within_bounds = _sanitize_attrs(
@@ -575,9 +579,9 @@ def data_flags(
     >>> flagged = data_flags(
     ...     ds.pr,
     ...     ds,
-    ...     flags={'very_large_precipitation_events': {'thresh': '250 mm d-1'}},
+    ...     flags={"very_large_precipitation_events": {"thresh": "250 mm d-1"}},
     ...     dims=None,
-    ...     freq='YS'
+    ...     freq="YS",
     ... )
     """
 

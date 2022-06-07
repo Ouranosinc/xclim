@@ -7,7 +7,7 @@ from typing import Any, Callable
 
 import cftime
 import numpy as np
-import xarray as xr
+import xarray
 from boltons.funcutils import wraps
 from xarray.core.dataarray import DataArray
 
@@ -29,15 +29,16 @@ def percentile_bootstrap(func):
 
     Example of declaration::
 
-    >>> # xdoctest: +SKIP
+    >>> # doctest: +SKIP
     >>> @declare_units(tas="[temperature]", t90="[temperature]")
-    >>> @percentile_bootstrap
-    >>> def tg90p(
-    >>>    tas: xarray.DataArray,
-    >>>    t90: xarray.DataArray,
-    >>>    freq: str = "YS",
-    >>>    bootstrap: bool = False
-    >>> ) -> xarray.DataArray:
+    ... @percentile_bootstrap
+    ... def tg90p(
+    ...     tas: xarray.DataArray,
+    ...     t90: xarray.DataArray,
+    ...     freq: str = "YS",
+    ...     bootstrap: bool = False,
+    ... ) -> xarray.DataArray:
+    ...     pass
 
     Examples
     --------
@@ -45,9 +46,9 @@ def percentile_bootstrap(func):
     >>> from xclim.indices import tg90p
     >>> tas = xr.open_dataset(path_to_tas_file).tas
     >>> # To start bootstrap reference period must not fully overlap the studied period.
-    >>> tas_ref = tas.sel(time=slice("1990-01-01","1992-12-31"))
+    >>> tas_ref = tas.sel(time=slice("1990-01-01", "1992-12-31"))
     >>> t90 = percentile_doy(tas_ref, window=5, per=90)
-    >>> tg90p(tas=tas, t90=t90.sel(percentiles=90), freq="YS", bootstrap=True)
+    >>> tg90p(tas=tas, tas_per=t90.sel(percentiles=90), freq="YS", bootstrap=True)
     """
 
     @wraps(func)
@@ -63,7 +64,7 @@ def percentile_bootstrap(func):
     return wrapper
 
 
-def bootstrap_func(compute_index_func: Callable, **kwargs) -> xr.DataArray:
+def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
     """Bootstrap the computation of percentile-based exceedance indices.
 
     Indices measuring exceedance over percentile-based threshold may contain artificial discontinuities at the
@@ -174,7 +175,7 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xr.DataArray:
                         for d in set(bda.dims).intersection(set(per_template.dims))
                     }
                     per_template = per_template.chunk(chunking)
-            per = xr.map_blocks(
+            per = xarray.map_blocks(
                 percentile_doy.__wrapped__,  # strip history update from percentile_doy
                 obj=bda,
                 kwargs={**pdoy_args, "copy": False},
@@ -189,7 +190,7 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xr.DataArray:
             kw[per_key] = per_da
             value = compute_index_func(**kw)
         acc.append(value)
-    result = xr.concat(acc, dim="time")
+    result = xarray.concat(acc, dim="time")
     result.attrs["units"] = value.attrs["units"]
     return result
 
@@ -263,4 +264,4 @@ def build_bootstrap_year_da(
         else:
             raise NotImplementedError
         out_accumulator.append(out_view)
-    return xr.concat(out_accumulator, dim=BOOTSTRAP_DIM)
+    return xarray.concat(out_accumulator, dim=BOOTSTRAP_DIM)

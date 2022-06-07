@@ -204,26 +204,30 @@ def kmeans_reduce_ensemble(
     First, average annual temperature:
 
     >>> tg = xclim.atmos.tg_mean(tas=ensTas.tas)
-    >>> his_tg = tg.sel(time=slice('1990','2019')).mean(dim='time')
-    >>> fut_tg = tg.sel(time=slice('2020','2050')).mean(dim='time')
+    >>> his_tg = tg.sel(time=slice("1990", "2019")).mean(dim="time")
+    >>> fut_tg = tg.sel(time=slice("2020", "2050")).mean(dim="time")
     >>> dtg = fut_tg - his_tg
 
     Then, Hotspell frequency as second indicator:
 
-    >>> hs = hot_spell_frequency(tasmax=ensTas.tas, window=2, thresh_tasmax='10 degC')
-    >>> his_hs = hs.sel(time=slice('1990','2019')).mean(dim='time')
-    >>> fut_hs = hs.sel(time=slice('2020','2050')).mean(dim='time')
+    >>> hs = hot_spell_frequency(tasmax=ensTas.tas, window=2, thresh_tasmax="10 degC")
+    >>> his_hs = hs.sel(time=slice("1990", "2019")).mean(dim="time")
+    >>> fut_hs = hs.sel(time=slice("2020", "2050")).mean(dim="time")
     >>> dhs = fut_hs - his_hs
 
     Create a selection criteria xr.DataArray:
 
     >>> from xarray import concat
-    >>> crit = concat((dtg, dhs), dim='criteria')
+    >>> crit = concat((dtg, dhs), dim="criteria")
 
     Finally, create clusters and select realization ids of reduced ensemble:
 
-    >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=False)
-    >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_optimize':None}, random_state=42, make_graph=True)
+    >>> ids, cluster, fig_data = kmeans_reduce_ensemble(
+    ...     data=crit, method={"rsq_cutoff": 0.9}, random_state=42, make_graph=False
+    ... )
+    >>> ids, cluster, fig_data = kmeans_reduce_ensemble(
+    ...     data=crit, method={"rsq_optimize": None}, random_state=42, make_graph=True
+    ... )
     """
     if make_graph:
         fig_data = {}
@@ -392,7 +396,9 @@ def plot_rsqprofile(fig_data):
     >>> from xclim.ensembles import kmeans_reduce_ensemble, plot_rsqprofile
     >>> is_matplotlib_installed()
     >>> crit = xr.open_dataset(path_to_ensemble_file).data
-    >>> ids, cluster, fig_data = kmeans_reduce_ensemble(data=crit, method={'rsq_cutoff':0.9}, random_state=42, make_graph=True)
+    >>> ids, cluster, fig_data = kmeans_reduce_ensemble(
+    ...     data=crit, method={"rsq_cutoff": 0.9}, random_state=42, make_graph=True
+    ... )
     >>> plot_rsqprofile(fig_data)
     """
     rsq = fig_data["rsq"]

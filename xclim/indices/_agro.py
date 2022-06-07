@@ -417,7 +417,7 @@ def cool_night_index(
     """Cool Night Index.
 
     Mean minimum temperature for September (northern hemisphere) or March (Southern hemishere).
-    Used in calculating the Géoviticulture Multicriteria Classification System ([Tonetto&Carbonneau2004]_).
+    Used in calculating the Géoviticulture Multicriteria Classification System ([Tonietto&Carbonneau2004]_).
 
     Parameters
     ----------
@@ -440,12 +440,17 @@ def cool_night_index(
     that are missing several months will be flagged as invalid. This check can be ignored by setting the following
     context:
 
-    >>> with xclim.set_options(check_missing='skip', data_validation='log'):
-    >>>     cni = xclim.atmos.cool_night_index(...)  # xdoctest: +SKIP
+    Examples
+    --------
+    >>> with xclim.set_options(
+    ...     check_missing="skip", data_validation="log"
+    ... ):  # doctest: +SKIP
+    ...     cni = xclim.atmos.cool_night_index(...)  # doctest: +SKIP
+    ... # doctest: +SKIP
 
     References
     ----------
-    .. [Tonetto&Carbonneau2004] Tonietto, J., & Carbonneau, A. (2004). A multicriteria climatic classification system for grape-growing regions worldwide. Agricultural and Forest Meteorology, 124(1–2), 81‑97. https://doi.org/10.1016/j.agrformet.2003.06.001
+    .. [Tonietto&Carbonneau2004] Tonietto, J., & Carbonneau, A. (2004). A multicriteria climatic classification system for grape-growing regions worldwide. Agricultural and Forest Meteorology, 124(1–2), 81‑97. https://doi.org/10.1016/j.agrformet.2003.06.001
     """
     tasmin = convert_units_to(tasmin, "degC")
 
@@ -469,7 +474,7 @@ def latitude_temperature_index(
     """Latitude-Temperature Index.
 
     Mean temperature of the warmest month with a latitude-based scaling factor ([Jackson&Cherry1988]_).
-    Used for categorizing winegrowing regions.
+    Used for categorizing wine-growing regions.
 
     Parameters
     ----------
@@ -489,7 +494,7 @@ def latitude_temperature_index(
 
     Notes
     -----
-    The latitude factor of `75` is provided for examining the poleward expansion of winegrowing climates under scenarios
+    The latitude factor of `75` is provided for examining the poleward expansion of wine-growing climates under scenarios
     of climate change (modified from [Kenny&Shao1992]_). For comparing 20th century/observed historical records, the original scale factor of `60` is more
     appropriate.
 

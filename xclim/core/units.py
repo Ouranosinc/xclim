@@ -421,21 +421,33 @@ def to_agg_units(
     `to_agg_units` will infer the units from the sampling rate along "time", so
     we ensure the final units are correct.
 
-    >>> time = xr.cftime_range('2001-01-01', freq='D', periods=365)
-    >>> tas = xr.DataArray(np.arange(365), dims=('time',), coords={'time': time}, attrs={'units': 'degC'})
+    >>> time = xr.cftime_range("2001-01-01", freq="D", periods=365)
+    >>> tas = xr.DataArray(
+    ...     np.arange(365),
+    ...     dims=("time",),
+    ...     coords={"time": time},
+    ...     attrs={"units": "degC"},
+    ... )
     >>> cond = tas > 100  # Which days are boiling
-    >>> Ndays = cond.sum('time')  # Number of boiling days
-    >>> Ndays.attrs.get('units')
+    >>> Ndays = cond.sum("time")  # Number of boiling days
+    >>> Ndays.attrs.get("units")
     None
-    >>> Ndays = to_agg_units(Ndays, tas, op='count')
+    >>> Ndays = to_agg_units(Ndays, tas, op="count")
     >>> Ndays.units
     'd'
 
     Similarly, here we compute the total heating degree-days but we have weekly data:
-    >>> time = xr.cftime_range('2001-01-01', freq='7D', periods=52)
-    >>> tas = xr.DataArray(np.arange(52) + 10, dims=('time',), coords={'time': time}, attrs={'units': 'degC'})
-    >>> degdays = (tas - 16).clip(0).sum('time')   # Integral of  temperature above a threshold
-    >>> degdays = to_agg_units(degdays, tas, op='delta_prod')
+    >>> time = xr.cftime_range("2001-01-01", freq="7D", periods=52)
+    >>> tas = xr.DataArray(
+    ...     np.arange(52) + 10,
+    ...     dims=("time",),
+    ...     coords={"time": time},
+    ...     attrs={"units": "degC"},
+    ... )
+    >>> degdays = (
+    ...     (tas - 16).clip(0).sum("time")
+    ... )  # Integral of  temperature above a threshold
+    >>> degdays = to_agg_units(degdays, tas, op="delta_prod")
     >>> degdays.units
     'week delta_degC'
 
@@ -562,8 +574,10 @@ def rate2amount(
     --------
     The following converts a daily array of precipitation in mm/h to the daily amounts in mm.
 
-    >>> time = xr.cftime_range('2001-01-01', freq='D', periods=365)
-    >>> pr = xr.DataArray([1] * 365, dims=('time',), coords={'time': time}, attrs={'units': 'mm/h'})
+    >>> time = xr.cftime_range("2001-01-01", freq="D", periods=365)
+    >>> pr = xr.DataArray(
+    ...     [1] * 365, dims=("time",), coords={"time": time}, attrs={"units": "mm/h"}
+    ... )
     >>> pram = rate2amount(pr)
     >>> pram.units
     'mm'
@@ -574,14 +588,16 @@ def rate2amount(
     starting on the values timestamp to the next timestamp.
 
     >>> time = time[[0, 9, 30]]  # The time axis is Jan 1st, Jan 10th, Jan 31st
-    >>> pr = xr.DataArray([1] * 3, dims=('time',), coords={'time': time}, attrs={'units': 'mm/h'})
+    >>> pr = xr.DataArray(
+    ...     [1] * 3, dims=("time",), coords={"time": time}, attrs={"units": "mm/h"}
+    ... )
     >>> pram = rate2amount(pr)
     >>> pram.values
     array([216., 504., 504.])
 
     Finally, we can force output units:
 
-    >>> pram = rate2amount(pr, out_units='pc')  # Get rain amount in parsecs. Why not.
+    >>> pram = rate2amount(pr, out_units="pc")  # Get rain amount in parsecs. Why not.
     >>> pram.values
     array([7.00008327e-18, 1.63335276e-17, 1.63335276e-17])
     """
@@ -677,9 +693,9 @@ def declare_units(
 
     .. code::
 
-       @declare_units(tas=["temperature"])
-       def func(tas):
-          ...
+        @declare_units(tas=["temperature"])
+        def func(tas):
+            ...
 
     The decorator will check that `tas` has units of temperature (C, K, F).
     """

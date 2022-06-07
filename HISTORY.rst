@@ -45,6 +45,7 @@ Internal changes
 * Typing syntax has been updated within pre-commit via `isort`. Pre-commit hooks now append `from __future__ import annotations` to all python module imports for backwards compatibility. (:issue:`1065`, :pull:`1071`)
 * `isort` project configurations are now set in `setup.cfg`. (:pull:`1071`).
 * Many function docstrings, external target links, and internal section references have been adjusted to reduce warnings when building the docs. (:pull:`1074`).
+* Code snippets within documentation are now checked and reformatted to `black` conventions with `blackdoc`. A `pre-commit` hook is now in place to run these checks. (:pull:`1098`).
 
 Bug fixes
 ^^^^^^^^^
@@ -112,8 +113,11 @@ Breaking changes
 .. code-block:: python
 
     from xclim import sdba
+
     # NQ is the the number of equally spaced nodes, the argument previously given to nquantiles directly.
-    EQM = sdba.EmpiricalQuantileMapping.train(ref, hist, nquantiles=sdba.equally_spaced_nodes(NQ, eps=1e-6), ...)
+    EQM = sdba.EmpiricalQuantileMapping.train(
+        ref, hist, nquantiles=sdba.equally_spaced_nodes(NQ, eps=1e-6), ...
+    )
 
 * The "history" string attribute added by xclim has been modified for readability: (:issue:`963`, :pull:`1018`).
     - The trailing dot (``.``) was dropped.
