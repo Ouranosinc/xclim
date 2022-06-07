@@ -32,8 +32,11 @@ def distance_from_sun(dates: xr.DaraArray) -> xr.DataArray:
       Sun-earth distance [astronomical units]
     """
     from xclim.core.calendar import ensure_cftime_array, get_calendar
+
     cal = get_calendar(dates)
-    days_since = cftime.date2num(ensure_cftime_array(dates), "days since 2000-01-01 12:00:00", calendar=cal)
+    days_since = cftime.date2num(
+        ensure_cftime_array(dates), "days since 2000-01-01 12:00:00", calendar=cal
+    )
     g = ((357.528 + 0.9856003 * days_since) % 360) * np.pi / 180
     return 1.00014 - 0.01671 * np.cos(g) - 0.00014 * np.cos(2.0 * g)
 
