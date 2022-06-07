@@ -1606,7 +1606,7 @@ def mean_radiant_temperature(
     dec = solar_declination(day_angle)
     if stat == "sunlit":
         interval = (
-            (dates[1] - dates[0]).values.astype("timedelta64[h]").astype(np.int32)
+            (dates.diff('time').dt.seconds / 3600).reindex(time=dates.time, method='bfill')
         )
         csza_i = cosine_of_solar_zenith_angle(
             declination=dec,
