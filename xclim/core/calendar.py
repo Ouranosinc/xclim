@@ -1037,12 +1037,10 @@ def doy_to_days_since(
     --------
     >>> from xarray import DataArray
     >>> time = date_range("2020-07-01", "2021-07-01", freq="AS-JUL")
-    >>> da = DataArray(
-    ...     [190, 2], dims=("time",), coords={"time": time}
-    ... )  # July 8th 2020 and Jan 2nd 2022
-    >>> doy_to_days_since(
-    ...     da, start="10-02"
-    ... ).values  # Convert to days since Oct. 2nd, of the data's year.
+    >>> # July 8th 2020 and Jan 2nd 2022
+    >>> da = DataArray([190, 2], dims=("time",), coords={"time": time})
+    >>> # Convert to days since Oct. 2nd, of the data's year.
+    >>> doy_to_days_since(da, start="10-02").values
     array([-86, 92])
     """
     base_calendar = get_calendar(da)
