@@ -1562,7 +1562,7 @@ def mean_radiant_temperature(
     rlus = convert_units_to(rlus, "W m-2")
 
     dates = rsds.time
-    hours = dates.dt.hour
+    hours = ((dates - dates.dt.floor('D')).dt.seconds / 3600).assign_attrs(units='h')
     lat = rsds.lat
     lon = rsds.lon
     decimal_year = datetime_to_decimal_year(times=dates, calendar=dates.dt.calendar)
