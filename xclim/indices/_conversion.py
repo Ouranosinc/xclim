@@ -1642,7 +1642,7 @@ def mean_radiant_temperature(
 
     tmrt = np.power(
         (
-            (1 / 0.0000000567)
+            (1 / 5.67e-8)  # Stefan-Boltzmann constant
             * (
                 0.5 * rlds
                 + 0.5 * rlus
