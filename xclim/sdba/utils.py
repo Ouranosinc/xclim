@@ -117,9 +117,13 @@ def ensure_longest_doy(func: Callable) -> Callable:
                 stacklevel=4,
             )
             if x.dayofyear.max() < y.dayofyear.max():
-                x = _interpolate_doy_calendar(x, int(y.dayofyear.max()))
+                x = _interpolate_doy_calendar(
+                    x, int(y.dayofyear.max()), int(y.dayofyear.min())
+                )
             else:
-                y = _interpolate_doy_calendar(y, int(x.dayofyear.max()))
+                y = _interpolate_doy_calendar(
+                    y, int(x.dayofyear.max()), int(x.dayofyear.min())
+                )
         return func(x, y, *args, **kwargs)
 
     return _ensure_longest_doy
