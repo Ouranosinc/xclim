@@ -361,16 +361,16 @@ class TestWaterBudget:
         np.testing.assert_allclose(p_pet_evpot[0, 0], [np.nan])
 
 
-def test_universal_thermal_climate_index(atmosds):
-    tas = atmosds.tas
-    hurs = atmosds.hurs
-    sfcWind, sfcWindfromdir = atmos.wind_speed_from_vector(
-        uas=atmosds.uas, vas=atmosds.vas
-    )
-
-    # Expected values
-    utci_exp = [256.94998, 257.25, 237.65, 259.35, 266.65]
-
-    utci = atmos.universal_thermal_climate_index(tas=tas, hurs=hurs, sfcWind=sfcWind)
-
-    np.testing.assert_allclose(utci.isel(time=0), utci_exp)
+# def test_universal_thermal_climate_index(atmosds):
+#    tas = atmosds.tas
+#    hurs = atmosds.hurs
+#    sfcWind, sfcWindfromdir = atmos.wind_speed_from_vector(
+#        uas=atmosds.uas, vas=atmosds.vas
+#    )
+#
+#    # Expected values
+#    utci_exp = [256.94998, 257.25, 237.65, 259.35, 266.65]
+#
+#    utci = atmos.universal_thermal_climate_index(tas=tas, hurs=hurs, sfcWind=sfcWind)
+#
+#    np.testing.assert_allclose(utci.isel(time=0), utci_exp)
