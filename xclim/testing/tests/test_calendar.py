@@ -161,24 +161,23 @@ def test_adjust_doy__max_93_to_max_94():
     assert out[-1] == source[-1]
 
 
-# def test_adjust_doy__leap_to_noleap_djf():
-#     # FIXME:
-#     #    this fails with `ValueError: Index 'dayofyear' must be monotonically increasing`
-#     #      on calendar.py::_interpolate_doy_calendar
-#     #      at`filled_na = da.interpolate_na(dim="dayofyear")`
-#     # GIVEN
-#     # leap source
-#     source = xr.DataArray(np.arange(92), coords=[np.concatenate([np.arange(335,367), np.arange(1, 61)])], dims="dayofyear")
-#     time = xr.cftime_range("2000-12-01", periods=91, freq="D", calendar="noleap")
-#     target = xr.DataArray(np.arange(len(time)), coords=[time], dims="time")
-#     # WHEN
-#     out = adjust_doy_calendar(source, target)
-#     # THEN
-#     assert out[0].dayofyear == 335
-#     assert out[0] == source[0]
-#     assert 366 not in out.dayofyear
-#     assert out[-1].dayofyear == 61
-#     assert out[-1] == source[-1]
+def test_adjust_doy__leap_to_noleap_djf():
+    # GIVEN
+    leap_source = xr.DataArray(
+        np.arange(92),
+        coords=[np.concatenate([np.arange(1, 61), np.arange(335, 367)])],
+        dims="dayofyear",
+    )
+    time = xr.cftime_range("2000-12-01", periods=91, freq="D", calendar="noleap")
+    no_leap_target = xr.DataArray(np.arange(len(time)), coords=[time], dims="time")
+    # WHEN
+    out = adjust_doy_calendar(leap_source, no_leap_target)
+    # THEN
+    assert out[0].dayofyear == 1
+    assert out[0] == leap_source[0]
+    assert 366 not in out.dayofyear
+    assert out[-1].dayofyear == 365
+    assert out[-1] == leap_source[-1]
 
 
 def test_adjust_doy_366_to_360():
