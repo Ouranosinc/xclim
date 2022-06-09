@@ -46,6 +46,7 @@ Bug fixes
 ^^^^^^^^^
 * Clean the `bias_adjustement` and `history` attributes created by `xclim.sdba.adjust` (e.g. when an argument  is an `xr.DataArray`, only print the name instead of the whole array). (:issue:`1083`, :pull:`1087`).
 * `pydocstyle` checks were silently failing in the `pre-commit` configuration due to a badly-formed regex. This has been adjusted. (:pull:`1074`).
+* `adjust_doy_calendar` was broken when the source or the target were seasonal. (:issue:`1097`, :issue:`1091`, :pull:`1099`)
 
 v0.36.0 (29-04-2022)
 --------------------
