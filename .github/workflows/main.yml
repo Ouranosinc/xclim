@@ -1,4 +1,4 @@
-name: "Xclim Testing Suite"
+name: "xclim Testing Suite"
 
 on:
   push:
