@@ -46,11 +46,13 @@ Internal changes
 * `isort` project configurations are now set in `setup.cfg`. (:pull:`1071`).
 * Many function docstrings, external target links, and internal section references have been adjusted to reduce warnings when building the docs. (:pull:`1074`).
 * Code snippets within documentation are now checked and reformatted to `black` conventions with `blackdoc`. A `pre-commit` hook is now in place to run these checks. (:pull:`1098`).
+* Test coverage statistic no longer includes coverage of the test files themselves. Coverage now reflects lines of usable code covered. (:pull:`1101`).
 
 Bug fixes
 ^^^^^^^^^
 * Clean the `bias_adjustement` and `history` attributes created by `xclim.sdba.adjust` (e.g. when an argument  is an `xr.DataArray`, only print the name instead of the whole array). (:issue:`1083`, :pull:`1087`).
 * `pydocstyle` checks were silently failing in the `pre-commit` configuration due to a badly-formed regex. This has been adjusted. (:pull:`1074`).
+* `adjust_doy_calendar` was broken when the source or the target were seasonal. (:issue:`1097`, :issue:`1091`, :pull:`1099`)
 
 v0.36.0 (29-04-2022)
 --------------------

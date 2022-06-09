@@ -147,6 +147,50 @@ def test_adjust_doy_360_to_366():
     assert out.sel(dayofyear=366) == source.sel(dayofyear=360)
 
 
+def test_adjust_doy__max_93_to_max_94():
+    # GIVEN
+    source = xr.DataArray(np.arange(92), coords=[np.arange(152, 244)], dims="dayofyear")
+    time = xr.cftime_range("2000-06-01", periods=92, freq="D", calendar="all_leap")
+    target = xr.DataArray(np.arange(len(time)), coords=[time], dims="time")
+    # WHEN
+    out = adjust_doy_calendar(source, target)
+    # THEN
+    assert out[0].dayofyear == 153
+    assert out[0] == source[0]
+    assert out[-1].dayofyear == 244
+    assert out[-1] == source[-1]
+
+
+def test_adjust_doy__leap_to_noleap_djf():
+    # GIVEN
+    leap_source = xr.DataArray(
+        np.arange(92),
+        coords=[np.concatenate([np.arange(1, 61), np.arange(335, 367)])],
+        dims="dayofyear",
+    )
+    time = xr.cftime_range("2000-12-01", periods=91, freq="D", calendar="noleap")
+    no_leap_target = xr.DataArray(np.arange(len(time)), coords=[time], dims="time")
+    # WHEN
+    out = adjust_doy_calendar(leap_source, no_leap_target)
+    # THEN
+    assert out[0].dayofyear == 1
+    assert out[0] == leap_source[0]
+    assert 366 not in out.dayofyear
+    assert out[-1].dayofyear == 365
+    assert out[-1] == leap_source[-1]
+
+
+def test_adjust_doy_366_to_360():
+    source = xr.DataArray(np.arange(366), coords=[np.arange(1, 367)], dims="dayofyear")
+    time = xr.cftime_range("2000", periods=360, freq="D", calendar="360_day")
+    target = xr.DataArray(np.arange(len(time)), coords=[time], dims="time")
+
+    out = adjust_doy_calendar(source, target)
+
+    assert out.sel(dayofyear=1) == source.sel(dayofyear=1)
+    assert out.sel(dayofyear=360) == source.sel(dayofyear=366)
+
+
 @pytest.mark.parametrize(
     "file,cal,maxdoy",
     [

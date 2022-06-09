@@ -626,7 +626,9 @@ def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | N
     return f"{mult if mult > 1 else ''}{base}{'S' if start_anchored else ''}{'-' if anchor else ''}{anchor or ''}"
 
 
-def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArray:
+def _interpolate_doy_calendar(
+    source: xr.DataArray, doy_max: int, doy_min: int = 1
+) -> xr.DataArray:
     """Interpolate from one set of dayofyear range to another.
 
     Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
@@ -638,6 +640,11 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArra
       Array with `dayofyear` coordinates.
     doy_max : int
       Largest day of the year allowed by calendar.
+    doy_min : int
+      Smallest day of the year in the output.
+      This parameter is necessary when the target time series does not span over a full
+      year (e.g. JJA season).
+      Default is 1.
 
     Returns
     -------
@@ -648,9 +655,6 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArra
     if "dayofyear" not in source.coords.keys():
         raise AttributeError("Source should have `dayofyear` coordinates.")
 
-    # Interpolation of source to target dayofyear range
-    doy_max_source = int(source.dayofyear.max())
-
     # Interpolate to fill na values
     da = source
     if uses_dask(source):
@@ -660,10 +664,10 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArra
 
     # Interpolate to target dayofyear range
     filled_na.coords["dayofyear"] = np.linspace(
-        start=1, stop=doy_max, num=doy_max_source
+        start=doy_min, stop=doy_max, num=len(filled_na.coords["dayofyear"])
     )
 
-    return filled_na.interp(dayofyear=range(1, doy_max + 1))
+    return filled_na.interp(dayofyear=range(doy_min, doy_max + 1))
 
 
 def adjust_doy_calendar(
@@ -687,13 +691,23 @@ def adjust_doy_calendar(
       Interpolated source array over coordinates spanning the target `dayofyear` range.
 
     """
-    doy_max_source = source.dayofyear.max()
+    max_target_doy = int(target.time.dt.dayofyear.max())
+    min_target_doy = int(target.time.dt.dayofyear.min())
 
-    doy_max = max_doy[get_calendar(target)]
-    if doy_max_source == doy_max:
+    def has_same_calendar():
+        # case of full year (doys between 1 and 360|365|366)
+        return source.dayofyear.max() == max_doy[get_calendar(target)]
+
+    def has_similar_doys():
+        # case of partial year (e.g. JJA, doys between 152|153 and 243|244)
+        return (
+            source.dayofyear.min == min_target_doy
+            and source.dayofyear.max == max_target_doy
+        )
+
+    if has_same_calendar() or has_similar_doys():
         return source
-
-    return _interpolate_doy_calendar(source, doy_max)
+    return _interpolate_doy_calendar(source, max_target_doy, min_target_doy)
 
 
 def resample_doy(doy: xr.DataArray, arr: xr.DataArray | xr.Dataset) -> xr.DataArray:
