@@ -41,6 +41,7 @@ Internal changes
 * `isort` project configurations are now set in `setup.cfg`. (:pull:`1071`).
 * Many function docstrings, external target links, and internal section references have been adjusted to reduce warnings when building the docs. (:pull:`1074`).
 * Code snippets within documentation are now checked and reformatted to `black` conventions with `blackdoc`. A `pre-commit` hook is now in place to run these checks. (:pull:`1098`).
+* `xclim` now uses GitHub Actions to manage patch version bumping. Pull Requests now trigger version-bumping automatically when they are merged to the main development branch. (:pull:`1102`).
 
 Bug fixes
 ^^^^^^^^^
