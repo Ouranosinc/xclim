@@ -25,6 +25,7 @@ New features and enhancements
 * New ``xclim.core.calendar.construct_offset``, the inverse operation of ``parse_offset``. (:pull:`1090`).
 * Rechunking operations in ``xclim.indices.run_length.rle`` are now synchronized with dask's options. (:pull:`1090`).
 * A convenience recipe for installing key development branches of some dependencies has been added (`$ pip install xclim[upstream]`). (:issue:`1088`, :pull:`1092`).
+* A mention of the "missing" checks and options is added to the history attribute of indicators, where appropriate. (:issue:`1100`, :pull:`1103`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
