@@ -291,7 +291,7 @@ corn_heat_units = Converter(
 )
 
 universal_thermal_climate_index = Converter(
-    identifier="universal_thermal_climate_index",
+    identifier="utci",
     units="K",
     long_name="Universal Thermal Climate Index",
     description="UTCI is the equivalent temperature for the environment derived from a reference environment "
