@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     container: python:3-slim
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           persist-credentials: false
       - name: Config Commit Bot
@@ -26,10 +26,12 @@ jobs:
       - name: Bump Patch Version
         run: |
           pip install bump2version
+          echo "running `bump2version patch`"
           bump2version patch
+          echo "new_version=$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
       - name: Push Changes
         uses: ad-m/github-push-action@master
         with:
           force: false
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.BUMPVERSION_TOKEN }}
           branch: ${{ github.ref }}

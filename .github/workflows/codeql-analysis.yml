@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - master
+    paths-ignore:
+      - setup.cfg
+      - setup.py
+      - xclim/__init__.py
   schedule:
     - cron: '30 23 * * 5'
 
