@@ -390,9 +390,9 @@ def test_mean_radiant_temperature():
     exp_ins = [277.05178, 274.64285, 243.45034, 268.10062, 309.13426]
     exp_avg = [277.05178, 274.64306, 243.45034, 268.10569, 278.38902]
 
-    mrt_sun = atmos.mean_radinat_temperature(rsds, rsus, rlds, rlus, stat="sunlit")
-    mrt_ins = atmos.mean_radinat_temperature(rsds, rsus, rlds, rlus, stat="instant")
-    mrt_avg = atmos.mean_radinat_temperature(rsds, rsus, rlds, rlus, stat="average")
+    mrt_sun = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="sunlit")
+    mrt_ins = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="instant")
+    mrt_avg = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="average")
 
     np.testing.assert_allclose(mrt_sun.isel(time=0), exp_sun)
     np.testing.assert_allclose(mrt_ins.isel(time=0), exp_ins)
