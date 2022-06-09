@@ -1,0 +1,35 @@
+name: "Bump Patch Version"
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - setup.cfg
+      - setup.py
+      - xclim/__init__.py
+
+jobs:
+  bump_patch_version:
+    runs-on: ubuntu-latest
+    container: python:3-slim
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      - name: Config Commit Bot
+        run: |
+          git config --local user.email "bumpversion[bot]@ouranos.ca"
+          git config --local user.name "bumpversion[bot]"
+      - name: Current Version
+        run: echo "current_version=$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
+      - name: Bump Patch Version
+        run: |
+          pip install bump2version
+          bump2version patch
+      - name: Push Changes
+        uses: ad-m/github-push-action@master
+        with:
+          force: false
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
