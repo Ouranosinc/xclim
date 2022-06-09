@@ -86,10 +86,7 @@ class MissingBase:
     @staticmethod
     def is_null(da, freq, **indexer):
         """Return a boolean array indicating which values are null."""
-        if indexer:
-            indexer.update({"drop": True})
-        else:
-            indexer = {"drop": True}
+        indexer.update({"drop": True})
         selected = select_time(da, **indexer)
         if selected.time.size == 0:
             raise ValueError("No data for selected period.")
@@ -156,10 +153,7 @@ class MissingBase:
             )
 
             sda = xr.DataArray(data=np.ones(len(t)), coords={"time": t}, dims=("time",))
-            if indexer:
-                indexer.update({"drop": True})
-            else:
-                indexer = {"drop": True}
+            indexer.update({"drop": True})
             st = select_time(sda, **indexer)
             if freq:
                 count = st.notnull().resample(time=freq).sum(dim="time")
