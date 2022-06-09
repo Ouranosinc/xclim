@@ -210,17 +210,17 @@ class Test_bootstrap:
     ):
         # -- GIVEN
         arr = self.ar1(alpha=0.8, n=int(4 * 365.25), positive_values=positive_values)
-        climat_variable = series(arr, start="2000-01-01")
+        climate_var = series(arr, start="2000-01-01")
         if use_dask:
-            climat_variable = climat_variable.chunk(dict(time=50))
+            climate_var = climate_var.chunk(dict(time=50))
         in_base_slice = slice("2000-01-01", "2001-12-31")
         out_base_slice = slice("2002-01-01", "2003-12-31")
-        per = percentile_doy(climat_variable.sel(time=in_base_slice), per=per)
+        per = percentile_doy(climate_var.sel(time=in_base_slice), per=per)
         # -- WHEN
-        no_bootstrap = index_fun(climat_variable, per, False)
+        no_bootstrap = index_fun(climate_var, per, False)
         no_bs_in_base = no_bootstrap.sel(time=in_base_slice)
         no_bs_out_base = no_bootstrap.sel(time=out_base_slice)
-        bootstrap = index_fun(climat_variable, per, True)
+        bootstrap = index_fun(climate_var, per, True)
         bootstrapped_in_base = bootstrap.sel(time=in_base_slice)
         bs_out_base = bootstrap.sel(time=out_base_slice)
         # -- THEN
