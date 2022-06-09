@@ -8,6 +8,7 @@ on:
       - setup.cfg
       - setup.py
       - xclim/__init__.py
+      - .github/**.yml
   schedule:
     - cron: '30 23 * * 5'
 

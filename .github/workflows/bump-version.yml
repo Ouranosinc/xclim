@@ -8,6 +8,7 @@ on:
       - setup.cfg
       - setup.py
       - xclim/__init__.py
+      - .github/**.yml
 
 jobs:
   bump_patch_version:
