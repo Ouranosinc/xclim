@@ -12,11 +12,13 @@ on:
 jobs:
   bump_patch_version:
     runs-on: ubuntu-latest
-    container: python:3-slim
     steps:
       - uses: actions/checkout@v3
         with:
           persist-credentials: false
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
       - name: Config Commit Bot
         run: |
           git config --local user.email "bumpversion[bot]@ouranos.ca"
