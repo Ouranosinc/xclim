@@ -41,6 +41,8 @@ def distance_from_sun(dates: xr.DaraArray) -> xr.DataArray:
     U.S. Government Printing Office (1985).
     """
     cal = get_calendar(dates)
+    if cal == "default":
+        cal = "standard"
     days_since = cftime.date2num(
         ensure_cftime_array(dates), "days since 2000-01-01 12:00:00", calendar=cal
     )
