@@ -2665,22 +2665,59 @@ class TestWetDaysProp:
         np.testing.assert_allclose(out, [4 / 31, 0, 0, 2 / 31, 0, 0, 0, 0, 0, 0, 0, 0])
 
 
-def test_universal_thermal_climate_index(
-    tas_series,
-    hurs_series,
-    sfcWind_series,
-):
-    tas = tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C)
-    hurs = hurs_series(np.array([15, 100, 93, 71, 52, 73, 94, 31, 20]))
-    sfcWind = sfcWind_series(np.array([4, 11, 6, 3, 16, 1, 8, 7, 19]))
-    tmrt = tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C)
-    # Expected values
-    utci_exp = [-22.2, -19.9, -3.4, 10.6, 14.0, np.NaN, 35.3, 40.8, np.NaN]
+# def test_universal_thermal_climate_index(
+#    tas_series,
+#    hurs_series,
+#    sfcWind_series,
+# ):
+#    tas = tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C)
+#    hurs = hurs_series(np.array([15, 100, 93, 71, 52, 73, 94, 31, 20]))
+#    sfcWind = sfcWind_series(np.array([4, 11, 6, 3, 16, 1, 8, 7, 19]))
+#    tmrt = tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C)
+#    # Expected values
+#    utci_exp = [-22.2, -19.9, -3.4, 10.6, 14.0, np.NaN, 35.3, 40.8, np.NaN]
+#
+#    utci = xci.universal_thermal_climate_index(
+#        tas=tas,
+#        hurs=hurs,
+#        sfcWind=sfcWind,
+#        tmrt=tmrt,
+#    )
+#    np.testing.assert_allclose(utci, utci_exp)
 
-    utci = xci.universal_thermal_climate_index(
-        tas=tas,
-        hurs=hurs,
-        sfcWind=sfcWind,
-        tmrt=tmrt,
+
+@pytest.mark.parametrize(
+    "stat,expected", [("sunlit", np.nan), ("instant", 295.31777), ("average", 295.1471)]
+)
+def test_mean_radiant_temperature(
+    rsds_series,
+    rsus_series,
+    rlds_series,
+    rlus_series,
+    stat,
+    expected,
+):
+    rsds = rsds_series(np.array([195.08]))
+    rsus = rsus_series(np.array([36.686]))
+    rlds = rlds_series(np.array([294.91]))
+    rlus = rlus_series(np.array([396.19]))
+    lat = xr.DataArray(-21.45, attrs={"units": "degrees_north"})
+    lon = xr.DataArray(133.125, attrs={"units": "degrees_east"})
+    rsds["lat"] = lat
+    rsds["lon"] = lon
+    rsus["lat"] = lat
+    rsus["lon"] = lon
+    rlds["lat"] = lat
+    rlds["lon"] = lon
+    rlus["lat"] = lat
+    rlus["lon"] = lon
+
+    mrt = xci.mean_radiant_temperature(
+        rsds,
+        rsus,
+        rlds,
+        rlus,
+        stat=stat,
     )
-    np.testing.assert_allclose(utci, utci_exp)
+
+    np.testing.assert_allclose(mrt, expected)
