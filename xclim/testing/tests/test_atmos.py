@@ -378,7 +378,7 @@ class TestWaterBudget:
 
 def test_mean_radiant_temperature():
     dataset = open_dataset(
-        "ERA5/daily_surface_cancities_1990-1993.nc", branch="add_radiation"
+        "ERA5/daily_surface_cancities_1990-1993.nc", branch="add-radiation"
     )
     rsds = dataset.rsds
     rsus = dataset.rsds
