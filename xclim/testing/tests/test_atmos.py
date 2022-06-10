@@ -361,19 +361,34 @@ class TestWaterBudget:
         np.testing.assert_allclose(p_pet_evpot[0, 0], [np.nan])
 
 
-# def test_universal_thermal_climate_index(atmosds):
-#    tas = atmosds.tas
-#    hurs = atmosds.hurs
-#    sfcWind, sfcWindfromdir = atmos.wind_speed_from_vector(
-#        uas=atmosds.uas, vas=atmosds.vas
-#    )
-#
-#    # Expected values
-#    utci_exp = [256.94998, 257.25, 237.65, 259.35, 266.65]
-#
-#    utci = atmos.universal_thermal_climate_index(tas=tas, hurs=hurs, sfcWind=sfcWind)
-#
-#    np.testing.assert_allclose(utci.isel(time=0), utci_exp)
+def test_universal_thermal_climate_index():
+    dataset = open_dataset(
+        "ERA5/daily_surface_cancities_1990-1993.nc", branch="add-radiation"
+    )
+    tas = dataset.tas
+    hurs = dataset.hurs
+    sfcWind, sfcWindfromdir = atmos.wind_speed_from_vector(
+        uas=dataset.uas, vas=dataset.vas
+    )
+    rsds = dataset.rsds
+    rsus = dataset.rsus
+    rlds = dataset.rlds
+    rlus = dataset.rlus
+    # Expected values
+    utci_exp = [256.8, 258.0, 237.4, 258.5, 266.2]
+
+    utci = atmos.universal_thermal_climate_index(
+        tas=tas,
+        hurs=hurs,
+        sfcWind=sfcWind,
+        rsds=rsds,
+        rsus=rsus,
+        rlds=rlds,
+        rlus=rlus,
+        stat="average",
+    )
+
+    np.testing.assert_allclose(utci.isel(time=0), utci_exp, rtol=1e-03)
 
 
 def test_mean_radiant_temperature():
@@ -387,13 +402,13 @@ def test_mean_radiant_temperature():
 
     # Expected values
     exp_sun = [np.nan, np.nan, np.nan, np.nan, np.nan]
-    exp_ins = [277.05178, 274.64285, 243.45034, 268.10062, 309.13426]
-    exp_avg = [277.05178, 274.64306, 243.45034, 268.10569, 278.38902]
+    exp_ins = [277.1, 274.6, 243.5, 268.1, 309.1]
+    exp_avg = [277.1, 274.6, 243.5, 268.1, 278.4]
 
     mrt_sun = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="sunlit")
     mrt_ins = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="instant")
     mrt_avg = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="average")
-
-    np.testing.assert_allclose(mrt_sun.isel(time=0), exp_sun)
-    np.testing.assert_allclose(mrt_ins.isel(time=0), exp_ins)
-    np.testing.assert_allclose(mrt_avg.isel(time=0), exp_avg)
+    rtol = 1e-03
+    np.testing.assert_allclose(mrt_sun.isel(time=0), exp_sun, rtol=rtol)
+    np.testing.assert_allclose(mrt_ins.isel(time=0), exp_ins, rtol=rtol)
+    np.testing.assert_allclose(mrt_avg.isel(time=0), exp_avg, rtol=rtol)
