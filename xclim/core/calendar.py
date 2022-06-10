@@ -243,14 +243,14 @@ def convert_calendar(
     passed with `missing`. In order to fill the missing dates with interpolation, one
     can simply use xarray's method:
 
-    >>> tas_nl = convert_calendar(tas, 'noleap')  # For the example
-    >>> with_missing = convert_calendar(tas_nl, 'standard', missing=np.NaN)
-    >>> out = with_missing.interpolate_na('time', method='linear')
+    >>> tas_nl = convert_calendar(tas, "noleap")  # For the example
+    >>> with_missing = convert_calendar(tas_nl, "standard", missing=np.NaN)
+    >>> out = with_missing.interpolate_na("time", method="linear")
 
     Here, if Nans existed in the source data, they will be interpolated too. If that is,
     for some reason, not wanted, the workaround is to do:
 
-    >>> mask = convert_calendar(tas_nl, 'standard').notnull()
+    >>> mask = convert_calendar(tas_nl, "standard").notnull()
     >>> out2 = out.where(mask)
     """
     cal_src = get_calendar(source, dim=dim)
@@ -626,7 +626,9 @@ def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | N
     return f"{mult if mult > 1 else ''}{base}{'S' if start_anchored else ''}{'-' if anchor else ''}{anchor or ''}"
 
 
-def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArray:
+def _interpolate_doy_calendar(
+    source: xr.DataArray, doy_max: int, doy_min: int = 1
+) -> xr.DataArray:
     """Interpolate from one set of dayofyear range to another.
 
     Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
@@ -638,6 +640,11 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArra
       Array with `dayofyear` coordinates.
     doy_max : int
       Largest day of the year allowed by calendar.
+    doy_min : int
+      Smallest day of the year in the output.
+      This parameter is necessary when the target time series does not span over a full
+      year (e.g. JJA season).
+      Default is 1.
 
     Returns
     -------
@@ -648,9 +655,6 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArra
     if "dayofyear" not in source.coords.keys():
         raise AttributeError("Source should have `dayofyear` coordinates.")
 
-    # Interpolation of source to target dayofyear range
-    doy_max_source = int(source.dayofyear.max())
-
     # Interpolate to fill na values
     da = source
     if uses_dask(source):
@@ -660,10 +664,10 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArra
 
     # Interpolate to target dayofyear range
     filled_na.coords["dayofyear"] = np.linspace(
-        start=1, stop=doy_max, num=doy_max_source
+        start=doy_min, stop=doy_max, num=len(filled_na.coords["dayofyear"])
     )
 
-    return filled_na.interp(dayofyear=range(1, doy_max + 1))
+    return filled_na.interp(dayofyear=range(doy_min, doy_max + 1))
 
 
 def adjust_doy_calendar(
@@ -687,13 +691,23 @@ def adjust_doy_calendar(
       Interpolated source array over coordinates spanning the target `dayofyear` range.
 
     """
-    doy_max_source = source.dayofyear.max()
+    max_target_doy = int(target.time.dt.dayofyear.max())
+    min_target_doy = int(target.time.dt.dayofyear.min())
 
-    doy_max = max_doy[get_calendar(target)]
-    if doy_max_source == doy_max:
+    def has_same_calendar():
+        # case of full year (doys between 1 and 360|365|366)
+        return source.dayofyear.max() == max_doy[get_calendar(target)]
+
+    def has_similar_doys():
+        # case of partial year (e.g. JJA, doys between 152|153 and 243|244)
+        return (
+            source.dayofyear.min == min_target_doy
+            and source.dayofyear.max == max_target_doy
+        )
+
+    if has_same_calendar() or has_similar_doys():
         return source
-
-    return _interpolate_doy_calendar(source, doy_max)
+    return _interpolate_doy_calendar(source, max_target_doy, min_target_doy)
 
 
 def resample_doy(doy: xr.DataArray, arr: xr.DataArray | xr.Dataset) -> xr.DataArray:
@@ -862,10 +876,17 @@ def time_bnds(group, freq: str) -> Sequence[tuple[cftime.datetime, cftime.dateti
     --------
     >>> from xarray import cftime_range
     >>> from xclim.core.calendar import time_bnds
-    >>> index = cftime_range(start='2000-01-01', periods=3, freq='2QS', calendar='360_day')
-    >>> out = time_bnds(index, '2Q')
+    >>> index = cftime_range(
+    ...     start="2000-01-01", periods=3, freq="2QS", calendar="360_day"
+    ... )
+    >>> out = time_bnds(index, "2Q")
     >>> for bnds in out:
-    ...     print(bnds[0].strftime("%Y-%m-%dT%H:%M:%S"), ' -', bnds[1].strftime("%Y-%m-%dT%H:%M:%S"))
+    ...     print(
+    ...         bnds[0].strftime("%Y-%m-%dT%H:%M:%S"),
+    ...         " -",
+    ...         bnds[1].strftime("%Y-%m-%dT%H:%M:%S"),
+    ...     )
+    ...
     2000-01-01T00:00:00  - 2000-03-30T23:59:59
     2000-07-01T00:00:00  - 2000-09-30T23:59:59
     2001-01-01T00:00:00  - 2001-03-30T23:59:59
@@ -1029,9 +1050,11 @@ def doy_to_days_since(
     Examples
     --------
     >>> from xarray import DataArray
-    >>> time = date_range('2020-07-01', '2021-07-01', freq='AS-JUL')
-    >>> da = DataArray([190, 2], dims=('time',), coords={'time': time})  # July 8th 2020 and Jan 2nd 2022
-    >>> doy_to_days_since(da, start='10-02').values  # Convert to days since Oct. 2nd, of the data's year.
+    >>> time = date_range("2020-07-01", "2021-07-01", freq="AS-JUL")
+    >>> # July 8th 2020 and Jan 2nd 2022
+    >>> da = DataArray([190, 2], dims=("time",), coords={"time": time})
+    >>> # Convert to days since Oct. 2nd, of the data's year.
+    >>> doy_to_days_since(da, start="10-02").values
     array([-86, 92])
     """
     base_calendar = get_calendar(da)
@@ -1087,10 +1110,13 @@ def days_since_to_doy(
     Examples
     --------
     >>> from xarray import DataArray
-    >>> time = date_range('2020-07-01', '2021-07-01', freq='AS-JUL')
+    >>> time = date_range("2020-07-01", "2021-07-01", freq="AS-JUL")
     >>> da = DataArray(
-            [-86, 92], dims=('time',), coords={'time': time}, attrs={'units': 'days since 10-02'}
-        )
+    ...     [-86, 92],
+    ...     dims=("time",),
+    ...     coords={"time": time},
+    ...     attrs={"units": "days since 10-02"},
+    ... )
     >>> days_since_to_doy(da).values
     array([190, 2])
     """
@@ -1278,13 +1304,13 @@ def select_time(
     >>> ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
     >>> ds.time.size
     1461
-    >>> out = select_time(ds, drop=True, season=['MAM', 'SON'])
+    >>> out = select_time(ds, drop=True, season=["MAM", "SON"])
     >>> out.time.size
     732
 
     Or all values between two dates (included).
 
-    >>> out = select_time(ds, drop=True, date_bounds=('02-29', '03-02'))
+    >>> out = select_time(ds, drop=True, date_bounds=("02-29", "03-02"))
     >>> out.time.values
     array(['1990-03-01T00:00:00.000000000', '1990-03-02T00:00:00.000000000',
            '1991-03-01T00:00:00.000000000', '1991-03-02T00:00:00.000000000',

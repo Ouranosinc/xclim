@@ -67,6 +67,7 @@ def wrapped_partial(
     >>> from inspect import signature
     >>> def func(a, b=1, c=1):
     ...     print(a, b, c)
+    ...
     >>> newf = wrapped_partial(func, b=2)
     >>> signature(newf)
     <Signature (a, *, c=1)>

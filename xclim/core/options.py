@@ -185,13 +185,16 @@ class set_options:
     You can use ``set_options`` either as a context manager:
 
     >>> import xclim
-    >>> ds  = xr.open_dataset(path_to_tas_file).tas
-    >>> with xclim.set_options(metadata_locales=['fr']):
+    >>> ds = xr.open_dataset(path_to_tas_file).tas
+    >>> with xclim.set_options(metadata_locales=["fr"]):
     ...     out = xclim.atmos.tg_mean(ds)
+    ...
 
     Or to set global options:
 
-    >>> xclim.set_options(missing_options={'pct': {'tolerance': 0.04}})  # doctest: +SKIP
+    >>> xclim.set_options(
+    ...     missing_options={"pct": {"tolerance": 0.04}}
+    ... )  # doctest: +SKIP
     <xclim.core.options.set_options object at ...>
     """
 

@@ -338,7 +338,7 @@ def daily_pr_intensity(
 
     >>> from xclim.indices import daily_pr_intensity
     >>> pr = xr.open_dataset(path_to_pr_file).pr
-    >>> daily_int = daily_pr_intensity(pr, thresh='5 mm/day', freq="QS-DEC")
+    >>> daily_int = daily_pr_intensity(pr, thresh="5 mm/day", freq="QS-DEC")
     """
     t = convert_units_to(thresh, pr, "hydro")
 
@@ -710,10 +710,10 @@ def growing_season_length(
     >>> tas = xr.open_dataset(path_to_tas_file).tas
 
     # For the Northern Hemisphere:
-    >>> gsl_nh = growing_season_length(tas, mid_date='07-01', freq='AS')
+    >>> gsl_nh = growing_season_length(tas, mid_date="07-01", freq="AS")
 
     # If working in the Southern Hemisphere, one can use:
-    >>> gsl_sh = growing_season_length(tas, mid_date='01-01', freq='AS-JUL')
+    >>> gsl_sh = growing_season_length(tas, mid_date="01-01", freq="AS-JUL")
     """
     thresh = convert_units_to(thresh, tas)
     cond = tas >= thresh
@@ -783,10 +783,10 @@ def frost_season_length(
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
 
     # For the Northern Hemisphere:
-    >>> fsl_nh = frost_season_length(tasmin, freq='AS-JUL')
+    >>> fsl_nh = frost_season_length(tasmin, freq="AS-JUL")
 
     # If working in the Southern Hemisphere, one can use:
-    >>> fsl_sh = frost_season_length(tasmin, freq='YS')
+    >>> fsl_sh = frost_season_length(tasmin, freq="YS")
     """
     thresh = convert_units_to(thresh, tasmin)
     cond = tasmin < thresh
@@ -953,10 +953,10 @@ def frost_free_season_length(
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
 
     # For the Northern Hemisphere:
-    >>> ffsl_nh = frost_free_season_length(tasmin, freq='YS')
+    >>> ffsl_nh = frost_free_season_length(tasmin, freq="YS")
 
     # If working in the Southern Hemisphere, one can use:
-    >>> ffsl_sh = frost_free_season_length(tasmin, freq='AS-JUL')
+    >>> ffsl_sh = frost_free_season_length(tasmin, freq="AS-JUL")
     """
     thresh = convert_units_to(thresh, tasmin)
     cond = tasmin >= thresh

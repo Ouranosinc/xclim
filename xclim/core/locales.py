@@ -13,20 +13,20 @@ These files are expected to be defined as in this example for french:
 .. code-block::
 
     {
-        "attrs_mapping" : {
+        "attrs_mapping": {
             "modifiers": ["", "f", "mpl", "fpl"],
-            "YS" : ["annuel", "annuelle", "annuels", "annuelles"],
-            "AS-*" : ["annuel", "annuelle", "annuels", "annuelles"],
-            ... and so on for other frequent parameters translation...
+            "YS": ["annuel", "annuelle", "annuels", "annuelles"],
+            "AS-*": ["annuel", "annuelle", "annuels", "annuelles"],
+            # ... and so on for other frequent parameters translation...
         },
-          "DTRVAR": {
+        "DTRVAR": {
             "long_name": "Variabilité de l'amplitude de la température diurne",
             "description": "Variabilité {freq:f} de l'amplitude de la température diurne (définie comme la moyenne de la variation journalière de l'amplitude de température sur une période donnée)",
             "title": "Variation quotidienne absolue moyenne de l'amplitude de la température diurne",
             "comment": "",
-            "abstract": "La valeur absolue de la moyenne de l'amplitude de la température diurne."
-          },
-        ... and so on for other indicators...
+            "abstract": "La valeur absolue de la moyenne de l'amplitude de la température diurne.",
+        },
+        # ... and so on for other indicators...
     }
 
 Indicators are named by subclass identifier, the same as in the indicator registry (`xclim.core.indicators.registry`),

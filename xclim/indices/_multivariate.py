@@ -1069,7 +1069,9 @@ def high_precip_low_temp(
     To compute the number of days with intense rainfall while minimum temperatures dip below -0.2C:
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
-    >>> high_precip_low_temp(pr, tas=tasmin, pr_thresh="10 mm/d", tas_thresh="-0.2 degC")
+    >>> high_precip_low_temp(
+    ...     pr, tas=tasmin, pr_thresh="10 mm/d", tas_thresh="-0.2 degC"
+    ... )
     """
     pr_thresh = convert_units_to(pr_thresh, pr)
     tas_thresh = convert_units_to(tas_thresh, tas)
@@ -1121,7 +1123,7 @@ def days_over_precip_thresh(
     --------
     >>> from xclim.indices import days_over_precip_thresh
     >>> pr = xr.open_dataset(path_to_pr_file).pr
-    >>> p75 = pr.quantile(.75, dim="time", keep_attrs=True)
+    >>> p75 = pr.quantile(0.75, dim="time", keep_attrs=True)
     >>> r75p = days_over_precip_thresh(pr, p75)
     """
     pr_per = convert_units_to(pr_per, pr)

@@ -74,11 +74,11 @@ def create_ensemble(
     Using multifile datasets, through glob patterns.
     Simulation 1 is a list of .nc files (e.g. separated by time):
 
-    >>> datasets = glob.glob('/dir/*.nc')  # doctest: +SKIP
+    >>> datasets = glob.glob("/dir/*.nc")  # doctest: +SKIP
 
     Simulation 2 is also a list of .nc files:
 
-    >>> datasets.append(glob.glob('/dir2/*.nc'))  # doctest: +SKIP
+    >>> datasets.append(glob.glob("/dir2/*.nc"))  # doctest: +SKIP
     >>> ens = create_ensemble(datasets, mf_flag=True)  # doctest: +SKIP
     """
     ds = _ens_align_datasets(
