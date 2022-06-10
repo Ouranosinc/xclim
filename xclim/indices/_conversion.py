@@ -370,7 +370,6 @@ def saturation_vapor_pressure(
         thresh = convert_units_to("0 K", "degK")
     ref_is_water = tas > thresh
     tas = convert_units_to(tas, "K")
-
     if method in ["sonntag90", "SO90"]:
         e_sat = xr.where(
             ref_is_water,
@@ -1423,6 +1422,7 @@ def universal_thermal_climate_index(
     rsus: xr.DataArray = None,
     rlds: xr.DataArray = None,
     rlus: xr.DataArray = None,
+    stat: str = "sunlit",
     mask_invalid: bool = True,
 ) -> xr.DataArray:
     r"""Universal thermal climate index.
@@ -1441,13 +1441,23 @@ def universal_thermal_climate_index(
     tmrt: xarray.DataArray, optional
         Mean radiant temperature
     rsds : xr.DataArray, optional
-       Surface Downwelling Shortwave Radiation
+        Surface Downwelling Shortwave Radiation
+        This is necessary if tmrt is not None.
     rsus : xr.DataArray, optional
         Surface Upwelling Shortwave Radiation
+        This is necessary if tmrt is not None.
     rlds : xr.DataArray, optional
         Surface Downwelling Longwave Radiation
+        This is necessary if tmrt is not None.
     rlus : xr.DataArray, optional
         Surface Upwelling Longwave Radiation
+        This is necessary if tmrt is not None.
+    stat  : {'sunlit', 'instant', 'average'}
+        Which statistic to apply. If "sunlit", the cosine of the solar zenith angle
+        is calculated during the sunlit period of each interval. If "instant" the
+        instantaneous cosine of the solar zenith angle is calculated. If "average"
+        the average of the cosine of the solar zenith angle is calculated.
+        This is necessary if tmrt is not None.
     mask_invalid: boolean
         If True (default), UTCI values are NaN where any of the inputs are outside
         their validity ranges : -50°C < tas < 50°C,  -30°C < tas - tmrt < 30°C
@@ -1478,7 +1488,9 @@ def universal_thermal_climate_index(
     tas = convert_units_to(tas, "degC")
     sfcWind = convert_units_to(sfcWind, "m/s")
     if tmrt is None:
-        tmrt = mean_radiant_temperature(rsds=rsds, rsus=rsus, rlds=rlds, rlus=rlus)
+        tmrt = mean_radiant_temperature(
+            rsds=rsds, rsus=rsus, rlds=rlds, rlus=rlus, stat=stat
+        )
     tmrt = convert_units_to(tmrt, "degC")
     delta = tmrt - tas
     pa = convert_units_to(e_sat, "kPa") * convert_units_to(hurs, "1")
