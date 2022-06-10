@@ -654,6 +654,7 @@ def standardized_precipitation_index(
             f"The method `{method}` is not supported for distribution `{dist}`."
         )
 
+    # Determine group type
     if freq == "D" or freq is None:
         freq = "D"
         group = "time.dayofyear"
@@ -664,10 +665,11 @@ def standardized_precipitation_index(
         else:
             raise NotImplementedError(f"Resampling frequency `{freq}` not supported.")
 
-    # Resampling and rolling precipitations
+    # Resampling precipitations
     if freq != "D":
-        pr = pr.resample(time=freq).mean()
-        pr_cal = pr_cal.resample(time=freq).mean()
+        pr = pr.resample(time=freq).mean(keep_attrs=True)
+        pr_cal = pr_cal.resample(time=freq).mean(keep_attrs=True)
+    # Rolling precipitations
     if window > 1:
         pr = pr.rolling(time=window).mean(skipna=False, keep_attrs=True)
         pr_cal = pr_cal.rolling(time=window).mean(skipna=False, keep_attrs=True)
@@ -683,10 +685,10 @@ def standardized_precipitation_index(
 
     params = pr_cal.groupby(group).map(lambda x: fit(x, dist, method))
     params = resample_to_time(params, pr)
-    # ppf to cdf
 
+    # ppf to cdf
     # zero-bounded distributions;  'pearson3' will also go in this group once it's implemented
-    if dist in ["gamma"]:
+    if dist in ["gamma", "pearson3"]:
         prob_pos = dist_method("cdf", params, pr.where(pr > 0))
         prob_zero = resample_to_time(
             pr.groupby(group).map(
@@ -705,6 +707,8 @@ def standardized_precipitation_index(
     )
     spi = dist_method("ppf", params_norm, prob)
     spi.attrs["units"] = ""
+    spi.attrs["standard name"] = "SPI"
+    spi.attrs["long name"] = "Standardized Precipitation Index"
 
     return spi
 
@@ -752,30 +756,27 @@ def standardized_precipitation_evapotranspiration_index(
     -----
     See Standardized Precipitation Index (SPI) for more details on usage.
     """
-    dist_and_methods = {"gamma": ["ML", "APP"]}
-    if dist not in dist_and_methods.keys():
-        raise NotImplementedError(f"The distribution `{dist}` is not supported.")
-    elif method not in dist_and_methods[dist]:
-        raise NotImplementedError(
-            f"The method `{method}` is not supported for distribution `{dist}`."
-        )
-
-    # Using distributions bounded by zero: The water budget must be shifted to ensure  the distribution to have only positive values
-    # that values are positive
-    if dist in ["gamma"]:
-
-        def get_resampled(wb):
-            if freq == "D" or freq is None:
-                return wb
-            else:
-                return wb.resample(time=freq).mean()
-
-        min_value = min(get_resampled(wb).min(), get_resampled(wb_cal).min())
-        offset = 2 * min_value * (min_value < 0) + 0 * (min_value > 0)
+    # Allowed distributions are constrained by the SPI function
+    if dist in ["gamma", "pearson3"]:
+        # Distributions bounded by zero: Water budget must be shifted, only positive values
+        # are allowed. The offset choice is arbitrary and needs to be revisited.
+        # In monocongo, the offset would be 1000/(60*60*24) in [kg m-2 s-1]
+        # The choice can lead to differences as big as +/-0.2 in the SPEI.
+        # If taken too big, there are problems with the "ML" method  (this should be an
+        # issue with the fitting procedure that also needs attention)
+        offset = xarray.DataArray([1e-04])
+        offset.attrs["units"] = "kg m-2 s-1"
+        convert_units_to(offset, wb.units)
+        offset = offset.values.item()
+        # Increase offset if negative values remain
+        if wb.min() + offset < 0 or wb_cal.min() + offset < 0:
+            offset = offset - 2 * min(wb.min(), wb_cal.min())
         with xarray.set_options(keep_attrs=True):
-            wb, wb_cal = wb - offset, wb_cal - offset
+            wb, wb_cal = wb + offset, wb_cal + offset
 
     spei = standardized_precipitation_index(wb, wb_cal, freq, window, dist, method)
+    spei.attrs["standard name"] = "SPEI"
+    spei.attrs["long name"] = "Standardized Precipitation Evapotranspiration Index"
 
     return spei
 

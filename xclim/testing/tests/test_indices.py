@@ -422,18 +422,44 @@ class TestAgroclimaticIndices:
     # supplied for each sample to be tested. This tolerance can get quite large as the
     # dataset only includes 4 years, i.e. different fitting methods are compared for
     # data with 4 points.
+    # TODO : Add tests for SPI_daily.
     @pytest.mark.parametrize(
-        "window, dist, values, diff_tol",
+        "freq, window, dist, method,  values, diff_tol",
         [
-            (1, "gamma", [-1.65, -1.31, -0.12, 1.44, 0.6, -0.26, 0.19], 1.0),
-            (3, "gamma", [-1.22, -1.07, -1.26, 1.37, 1.24, -0.16, 0.26], 1.25),
-            (12, "gamma", [-1.15, -0.6, -0.4, 0.29, 0.8, 0.9, 1.29], 0.02),
+            (
+                "MS",
+                1,
+                "gamma",
+                "APP",
+                [1.3166409, 1.4506897, 1.9460845, -3.09, 0.8506797],
+                2.6e-05,
+            ),
+            (
+                "MS",
+                12,
+                "gamma",
+                "APP",
+                [0.5982093, 1.5597635, 1.6930935, 0.9963997, 0.7027995],
+                7.4e-05,
+            ),
+            ("MS", 1, "gamma", "ML", [1.317, 1.451, 1.946, -3.09, 0.851], 0.19),
+            ("MS", 12, "gamma", "ML", [0.5982, 1.5598, 1.6931, 0.9964, 0.7028], 0.034),
         ],
     )
-    def test_standardized_precipitation_index(self, window, dist, values, diff_tol):
+    def test_standardized_precipitation_index(
+        self, freq, window, dist, method, values, diff_tol
+    ):
 
-        # Only location=1 (Montreal) is tested
-        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").isel(location=1)
+        # Only location=1 is tested
+        ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
+        pr = ds.pr.sel(time=slice("2000"))
+        pr_cal = ds.pr.sel(time=slice("1950", "1980"))
+        spi = xci.standardized_precipitation_index(
+            pr, pr_cal, freq, window, dist, method
+        )
+
+        # Only a few moments before year 2000 are tested
+        spi = spi.isel(time=slice(-11, -1, 2))
 
         # [Guttman, 1999]: The number of precipitation events (over a month/season or
         # other time period) is generally less than 100 in the US. This suggests that
@@ -441,15 +467,57 @@ class TestAgroclimaticIndices:
         # [-3.09, 3.09] might be non-statistically relevant. In `climate_indices` the SPI
         # index is clipped outside this region of value. In the values chosen above,
         # this doesn't play role, but let's clip it anyways to avoid future problems.
-        pr = ds.pr.clip(-3.09, 3.09)
-
-        pr_cal = pr
-        spi = xci._agro.standardized_precipitation_index(ds.pr, pr_cal, window, dist)
-
         # The last few values in time are tested
-        spi = spi.isel(time=slice(-15, -1, 2))
+        spi = spi.clip(-3.09, 3.09)
 
         np.testing.assert_allclose(spi.values, values, rtol=0, atol=diff_tol)
+
+    # See SPI version
+    @pytest.mark.parametrize(
+        "freq, window, dist, method,  values, diff_tol",
+        [
+            ("MS", 1, "gamma", "APP", [1.505, 1.753, 1.199, -2.474, 0.879], 0.19),
+            ("MS", 12, "gamma", "APP", [0.6407, 1.6118, 1.9268, 1.0727, 0.8486], 0.027),
+            ("MS", 1, "gamma", "ML", [1.505, 1.753, 1.199, -2.474, 0.879], 0.71),
+            ("MS", 12, "gamma", "ML", [0.6407, 1.6118, 1.9268, 1.0727, 0.8486], 0.031),
+        ],
+    )
+    def test_standardized_precipitation_evapotranspiration_index(
+        self, freq, window, dist, method, values, diff_tol
+    ):
+        print(values)
+        # Only location=1 is tested
+        ds = (
+            open_dataset("sdba/CanESM2_1950-2100.nc")
+            .isel(location=1)
+            .sel(time=slice("2000"))
+        )
+        pr = ds.pr
+        # generate water budget
+        with xr.set_options(keep_attrs=True):
+            tasmax = ds.tasmax
+            tas = tasmax - [2 + 1 * 0.5 for i in range(ds.tasmax.shape[0])]
+            tasmin = tasmax - [4 + 2 * 0.5 for i in range(ds.tasmax.shape[0])]
+            wb = xci.water_budget(pr, None, tasmin, tasmax, tas)
+            wb_cal = wb.sel(time=slice("1950", "1980"))
+
+        spei = xci.standardized_precipitation_evapotranspiration_index(
+            wb, wb_cal, freq, window, dist, method
+        )
+
+        # Only a few moments before year 2000 are tested
+        spei = spei.isel(time=slice(-11, -1, 2))
+
+        # [Guttman, 1999]: The number of precipitation events (over a month/season or
+        # other time period) is generally less than 100 in the US. This suggests that
+        # bounds of ± 3.09 correspond to 0.999 and 0.001 probabilities. SPI indices outside
+        # [-3.09, 3.09] might be non-statistically relevant. In `climate_indices` the SPI
+        # index is clipped outside this region of value. In the values chosen above,
+        # this doesn't play role, but let's clip it anyways to avoid future problems.
+        # The last few values in time are tested
+        spei = spei.clip(-3.09, 3.09)
+
+        np.testing.assert_allclose(spei.values, values, rtol=0, atol=diff_tol)
 
 
 class TestDailyFreezeThawCycles:
