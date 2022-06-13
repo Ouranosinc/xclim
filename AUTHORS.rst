@@ -20,15 +20,17 @@ Co-Developers
 Contributors
 ------------
 
-* Clair Barnes <clair.barnes.16@ucl.ac.uk> `@clairbarnes <https://github.com/clairbarnes>`_
-* David Caron `@davidcaron <https://github.com/davidcaron>`_
-* Jamie Quinn <jamiejquinn@jamiejquinn.com> `@JamieJQuinn <https://github.com/JamieJQuinn>`_
-* Jeremy Fyke `@jeremyfyke <https://github.com/jeremyfyke>`_
-* Jwen Fai Low `@jwenfai <https://github.com/jwenfai>`_
-* Maliko Tanguy <malngu@ceh.ac.uk> `@malngu <https://github.com/malngu>`_
-* Marie-Pier Labonté `@marielabonte <https://github.com/marielabonte>`_
-* Philippe Roy <roy.philippe@ouranos.ca> `@Balinus <https://github.com/Balinus>`_
 * Raquel Alegre <raquel.alegre@gmail.com> `@raquel-ucl <https://github.com/raquel-ucl>`_
+* Clair Barnes <clair.barnes.16@ucl.ac.uk> `@clairbarnes <https://github.com/clairbarnes>`_
 * Sébastien Biner <biner.sebastien@ouranos.ca> `@sbiner <https://github.com/sbiner>`_
+* David Caron `@davidcaron <https://github.com/davidcaron>`_
+* Carsten Ehbrecht <ehbrecht@dkrz.de> `@cehbrecht <https://github.com/cehbrecht>`_
+* Jeremy Fyke `@jeremyfyke <https://github.com/jeremyfyke>`_
 * Tom Keel <thomas.keel.18@ucl.ac.uk> `@Thomasjkeel <https://github.com/Thomasjkeel>`_
+* Jwen Fai Low `@jwenfai <https://github.com/jwenfai>`_
+* Marie-Pier Labonté `@marielabonte <https://github.com/marielabonte>`_
+* Jamie Quinn <jamiejquinn@jamiejquinn.com> `@JamieJQuinn <https://github.com/JamieJQuinn>`_
+* Philippe Roy <roy.philippe@ouranos.ca> `@Balinus <https://github.com/Balinus>`_
 * Yannick Rousseau `@yrouranos <https://github.com/yrouranos>`_
+* Ag Stephens <ag.stephens@stfc.ac.uk> `@agstephens <https://github.com/agstephens>`_
+* Maliko Tanguy <malngu@ceh.ac.uk> `@malngu <https://github.com/malngu>`_
