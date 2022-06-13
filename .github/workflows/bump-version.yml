@@ -10,7 +10,7 @@ on:
       - setup.py
       - xclim/__init__.py
       - .github/**.yml
-      - .pre-commit.config.yaml
+      - .pre-commit-config.yaml
 
 jobs:
   bump_patch_version:
