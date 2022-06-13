@@ -5,6 +5,7 @@ on:
     branches:
       - master
     paths-ignore:
+      - HISTORY.rst
       - setup.cfg
       - setup.py
       - xclim/__init__.py
