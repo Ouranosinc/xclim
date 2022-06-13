@@ -81,3 +81,48 @@ class TestFileAssertions:
         callendar = TD / "callendar_1938.txt"
         md5_sum = utilities.file_md5_checksum(callendar)
         assert md5_sum == "9a5d9f94d76d4f9d9b7aaadbe8cbf541"  # noqa
+
+
+class TestReleaseSupportFuncs:
+    def test_show_version_file(self, temp_filename):
+        utilities.show_versions(file=temp_filename)
+
+        with open(temp_filename) as f:
+            assert "INSTALLED VERSIONS" in f.readlines()
+            assert "python" in f.readlines()
+            assert "boltons: installed" in f.readlines()
+
+    @pytest.mark.requires_docs
+    def test_release_notes_file(self, temp_filename):
+        utilities.publish_release_notes(style="md", file=temp_filename)
+
+        with open(temp_filename) as f:
+            assert "# History" in f.readlines()[0]
+
+    def test_release_notes_file_not_implemented(self, temp_filename):
+        with pytest.raises(NotImplementedError):
+            utilities.publish_release_notes(style="qq", file=temp_filename)
+
+
+class TestTestingFileAccessors:
+    def test_unsafe_urls(self):
+        with pytest.raises(
+            ValueError, "GitHub URL not safe: `ftp://domain.does.not.exist/"
+        ):
+            utilities.open_dataset(
+                "doesnt_exist.nc", github_url="ftp://domain.does.not.exist/"
+            )
+
+        with pytest.raises(
+            ValueError, "OPeNDAP URL not safe: `ftp://domain.does.not.exist/"
+        ):
+            utilities.open_dataset(
+                "doesnt_exist.nc", dap_url="ftp://domain.does.not.exist/"
+            )
+
+        with pytest.raises(
+            OSError, "OPeNDAP file not read. Verify that the service is available."
+        ):
+            utilities.open_dataset(
+                "doesnt_exist.nc", dap_url="https://dap.service.does.not.exist/"
+            )
