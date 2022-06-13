@@ -1422,7 +1422,7 @@ def universal_thermal_climate_index(
     rsus: xr.DataArray = None,
     rlds: xr.DataArray = None,
     rlus: xr.DataArray = None,
-    stat: str = "sunlit",
+    stat: str = "average",
     mask_invalid: bool = True,
 ) -> xr.DataArray:
     r"""Universal thermal climate index.
@@ -1452,11 +1452,12 @@ def universal_thermal_climate_index(
     rlus : xr.DataArray, optional
         Surface Upwelling Longwave Radiation
         This is necessary if tmrt is not None.
-    stat  : {'sunlit', 'instant', 'average'}
-        Which statistic to apply. If "sunlit", the cosine of the solar zenith angle
-        is calculated during the sunlit period of each interval. If "instant" the
-        instantaneous cosine of the solar zenith angle is calculated. If "average"
-        the average of the cosine of the solar zenith angle is calculated.
+    stat  : {'average', 'instant', 'sunlit'}
+        Which statistic to apply. If "average", the average of the cosine of the 
+        solar zenith angle is calculated. If "instant", the instantaneous cosine 
+        of the solar zenith angle is calculated. If "sunlit", the cosine of the 
+        solar zenith angle is calculated during the sunlit period of each interval. 
+        If "instant", the instantaneous cosine of the solar zenith angle is calculated.
         This is necessary if tmrt is not None.
     mask_invalid: boolean
         If True (default), UTCI values are NaN where any of the inputs are outside
@@ -1568,7 +1569,7 @@ def mean_radiant_temperature(
     rsus: xr.DataArray,
     rlds: xr.DataArray,
     rlus: xr.DataArray,
-    stat: str = "sunlit",
+    stat: str = "average",
 ) -> xr.DataArray:
     r"""Mean radiant temperature.
 
@@ -1584,11 +1585,13 @@ def mean_radiant_temperature(
         Surface Downwelling Longwave Radiation
     rlus : xr.DataArray
         Surface Upwelling Longwave Radiation
-    stat  : {'sunlit', 'instant', 'average'}
-        Which statistic to apply. If "sunlit", the cosine of the solar zenith angle
-        is calculated during the sunlit period of each interval. If "instant" the
-        instantaneous cosine of the solar zenith angle is calculated. If "average"
-        the average of the cosine of the solar zenith angle is calculated.
+    stat  : {'average', 'instant', 'sunlit'}
+        Which statistic to apply. If "average", the average of the cosine of the 
+        solar zenith angle is calculated. If "instant", the instantaneous cosine 
+        of the solar zenith angle is calculated. If "sunlit", the cosine of the 
+        solar zenith angle is calculated during the sunlit period of each interval. 
+        If "instant", the instantaneous cosine of the solar zenith angle is calculated.
+        This is necessary if tmrt is not None.
 
     Returns
     -------
