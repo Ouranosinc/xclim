@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import platform
 from pathlib import Path
 from urllib.error import HTTPError
 
@@ -7,6 +8,7 @@ import numpy as np
 import pytest
 
 import xclim.testing.utils as utilities
+from xclim import __version__ as __xclim_version__
 
 from . import TD
 
@@ -89,9 +91,12 @@ class TestReleaseSupportFuncs:
         utilities.show_versions(file=temp_filename)
 
         with open(temp_filename) as f:
-            assert "INSTALLED VERSIONS" in f.readlines()
-            assert "python" in f.readlines()
-            assert "boltons: installed" in f.readlines()
+            contents = f.readlines().copy()
+            assert "INSTALLED VERSIONS\n" in contents
+            assert "------------------\n" in contents
+            assert f"python: {platform.python_version()}\n" in contents
+            assert f"xclim: {__xclim_version__}\n" in contents
+            assert "boltons: installed\n" in contents
 
     @pytest.mark.requires_docs
     def test_release_notes_file(self, tmp_path):
@@ -110,14 +115,14 @@ class TestReleaseSupportFuncs:
 class TestTestingFileAccessors:
     def test_unsafe_urls(self):
         with pytest.raises(
-            ValueError, match="GitHub URL not safe: `ftp://domain.does.not.exist/"
+            ValueError, match="GitHub URL not safe: 'ftp://domain.does.not.exist/'."
         ):
             utilities.open_dataset(
                 "doesnt_exist.nc", github_url="ftp://domain.does.not.exist/"
             )
 
         with pytest.raises(
-            ValueError, match="OPeNDAP URL not safe: `ftp://domain.does.not.exist/"
+            ValueError, match="OPeNDAP URL not safe: 'ftp://domain.does.not.exist/'."
         ):
             utilities.open_dataset(
                 "doesnt_exist.nc", dap_url="ftp://domain.does.not.exist/"

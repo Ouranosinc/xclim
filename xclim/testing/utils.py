@@ -493,6 +493,8 @@ def publish_release_notes(
 
     if not file:
         return history
+    elif isinstance(file, (Path, os.PathLike)):
+        file = Path(file).open("w")
     print(history, file=file)
 
 
@@ -535,7 +537,7 @@ def show_versions(file: os.PathLike | StringIO | TextIO | None = None) -> str | 
             try:
                 ver = ver_f(mod)
                 deps_blob.append((modname, ver))
-            except Exception:
+            except AttributeError:
                 deps_blob.append((modname, "installed"))
 
     modules_versions = "\n".join([f"{k}: {stat}" for k, stat in sorted(deps_blob)])
@@ -552,4 +554,6 @@ def show_versions(file: os.PathLike | StringIO | TextIO | None = None) -> str | 
 
     if not file:
         return installed_versions
+    elif isinstance(file, (Path, os.PathLike)):
+        file = Path(file).open("w")
     print(installed_versions, file=file)
