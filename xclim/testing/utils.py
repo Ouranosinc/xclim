@@ -175,9 +175,9 @@ def open_dataset(
             ds = _open_dataset(dap_file, **kwds)
             return ds
         except OSError:
-            msg = "OPeNDAP file not read. Verify that service is available."
+            msg = "OPeNDAP file not read. Verify that the service is available."
             LOGGER.error(msg)
-            raise
+            raise OSError(msg)
 
     local_file = _get(
         fullname=fullname,
