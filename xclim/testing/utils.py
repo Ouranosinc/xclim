@@ -520,6 +520,7 @@ def show_versions(file: os.PathLike | StringIO | TextIO | None = None) -> str | 
         ("dask", lambda mod: mod.__version__),
         ("cf_xarray", lambda mod: mod.__version__),
         ("cftime", lambda mod: mod.__version__),
+        ("clisops", lambda mod: mod.__version__),
         ("bottleneck", lambda mod: mod.__version__),
         ("boltons", lambda mod: mod.__version__),
     ]
