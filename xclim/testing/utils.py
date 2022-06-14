@@ -124,7 +124,7 @@ def open_dataset(
     branch: str = "main",
     cache: bool = True,
     cache_dir: Path = _default_cache_dir,
-    **kwds,
+    **kwargs,
 ) -> Dataset:
     """
     Open a dataset from the online GitHub-like repository.
@@ -147,7 +147,7 @@ def open_dataset(
         The directory in which to search for and write cached data.
     cache : bool
         If True, then cache data locally for use on subsequent calls.
-    kwds : dict, optional
+    kwargs
         For NetCDF files, keywords passed to :py:func:`xarray.open_dataset`.
 
     Returns
@@ -172,7 +172,7 @@ def open_dataset(
 
         dap_file = urljoin(dap_url, str(name))
         try:
-            ds = _open_dataset(dap_file, **kwds)
+            ds = _open_dataset(dap_file, **kwargs)
             return ds
         except OSError:
             msg = "OPeNDAP file not read. Verify that the service is available."
@@ -188,7 +188,7 @@ def open_dataset(
     )
 
     try:
-        ds = _open_dataset(local_file, **kwds)
+        ds = _open_dataset(local_file, **kwargs)
         if not cache:
             ds = ds.load()
             local_file.unlink()
@@ -227,79 +227,6 @@ def list_datasets(github_repo="Ouranosinc/xclim-testdata", branch="main"):
     df = pd.DataFrame.from_records(records).set_index("name")
     print(f"Found {len(df)} datasets.")
     return df
-
-
-def as_tuple(x):  # noqa: D103
-    if isinstance(x, (list, tuple)):
-        return x
-    return (x,)  # noqa
-
-
-class TestFile:  # noqa: D101
-    def __init__(self, name, path=None, url=None):
-        """Register a test file.
-
-        Parameters
-        ----------
-        name : str
-          Short identifier for test file.
-        path : Path
-          Local path.
-        url : str
-          Remote location to retrieve file if it's not on disk.
-        """
-        self.name = name
-        self.path = path
-        self.url = url
-
-    def generate(self):
-        """Create the test file from scratch."""
-        pass
-
-    def download(self):
-        """Download a remote file."""
-        if not self.url.lower().startswith("http"):
-            raise ValueError(f"GitHub URL not safe: '{self.url}'.")
-
-        for u, p in zip(as_tuple(self.url), as_tuple(self.path)):
-            urlretrieve(u, str(p))  # nosec
-
-    def __call__(self):  # noqa: D102
-        """Return the path to the file."""
-        if not self.path.exists():
-            if self.url is not None:
-                self.download()
-            else:
-                self.generate()
-
-        if not self.path.exists():
-            raise FileNotFoundError
-
-        return self.path
-
-
-class TestDataSet:  # noqa: D101
-    def __init__(self, name, path, files=()):
-        self.name = name
-        self.files = list(files)
-        self.path = Path(path)
-        if not self.path.exists():
-            self.path.mkdir()
-
-    def add(self, name, url, path=None):  # noqa: D102
-        if path is None:
-            # Create a relative path
-            path = self.path / Path(url).name
-
-        elif not Path(path).is_absolute():
-            path = self.path / path
-
-        tf = TestFile(name, path, url)
-        setattr(self, name, tf)
-        self.files.append(tf)
-
-    def __call__(self):  # noqa: D102
-        return [f() for f in self.files]
 
 
 def list_input_variables(
