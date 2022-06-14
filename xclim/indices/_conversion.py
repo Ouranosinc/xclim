@@ -932,7 +932,7 @@ def clausius_clapeyron_scaled_precipitation(
     water vapor pressure :math:`e_s` changes approximately exponentially with temperature
 
     .. math::
-        \frac{\\mathrm{d}e_s(T)}{\\mathrm{d}T} \approx 1.07 e_s(T)
+        \frac{\mathrm{d}e_s(T)}{\mathrm{d}T} \approx 1.07 e_s(T)
 
     This function assumes that precipitation can be scaled by the same factor.
 
