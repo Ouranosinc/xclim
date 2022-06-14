@@ -42,6 +42,7 @@ Internal changes
 * Many function docstrings, external target links, and internal section references have been adjusted to reduce warnings when building the docs. (:pull:`1074`).
 * Code snippets within documentation are now checked and reformatted to `black` conventions with `blackdoc`. A `pre-commit` hook is now in place to run these checks. (:pull:`1098`).
 * Test coverage statistic no longer includes coverage of the test files themselves. Coverage now reflects lines of usable code covered. (:pull:`1101`).
+* Reordered listed authors alphabetically. Promoted :user:`bzah` to core contributor. (:pull:`1105`).
 
 Bug fixes
 ^^^^^^^^^
