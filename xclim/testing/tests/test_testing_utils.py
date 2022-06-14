@@ -84,7 +84,8 @@ class TestFileAssertions:
 
 
 class TestReleaseSupportFuncs:
-    def test_show_version_file(self, temp_filename):
+    def test_show_version_file(self, tmp_path):
+        temp_filename = tmp_path.joinpath("version_info.txt")
         utilities.show_versions(file=temp_filename)
 
         with open(temp_filename) as f:
@@ -93,13 +94,15 @@ class TestReleaseSupportFuncs:
             assert "boltons: installed" in f.readlines()
 
     @pytest.mark.requires_docs
-    def test_release_notes_file(self, temp_filename):
+    def test_release_notes_file(self, tmp_path):
+        temp_filename = tmp_path.joinpath("version_info.txt")
         utilities.publish_release_notes(style="md", file=temp_filename)
 
         with open(temp_filename) as f:
             assert "# History" in f.readlines()[0]
 
-    def test_release_notes_file_not_implemented(self, temp_filename):
+    def test_release_notes_file_not_implemented(self, tmp_path):
+        temp_filename = tmp_path.joinpath("version_info.txt")
         with pytest.raises(NotImplementedError):
             utilities.publish_release_notes(style="qq", file=temp_filename)
 
@@ -107,21 +110,22 @@ class TestReleaseSupportFuncs:
 class TestTestingFileAccessors:
     def test_unsafe_urls(self):
         with pytest.raises(
-            ValueError, "GitHub URL not safe: `ftp://domain.does.not.exist/"
+            ValueError, match="GitHub URL not safe: `ftp://domain.does.not.exist/"
         ):
             utilities.open_dataset(
                 "doesnt_exist.nc", github_url="ftp://domain.does.not.exist/"
             )
 
         with pytest.raises(
-            ValueError, "OPeNDAP URL not safe: `ftp://domain.does.not.exist/"
+            ValueError, match="OPeNDAP URL not safe: `ftp://domain.does.not.exist/"
         ):
             utilities.open_dataset(
                 "doesnt_exist.nc", dap_url="ftp://domain.does.not.exist/"
             )
 
         with pytest.raises(
-            OSError, "OPeNDAP file not read. Verify that the service is available."
+            OSError,
+            match="OPeNDAP file not read. Verify that the service is available.",
         ):
             utilities.open_dataset(
                 "doesnt_exist.nc", dap_url="https://dap.service.does.not.exist/"
