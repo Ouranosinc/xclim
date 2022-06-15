@@ -135,3 +135,10 @@ class TestTestingFileAccessors:
             utilities.open_dataset(
                 "doesnt_exist.nc", dap_url="https://dap.service.does.not.exist/"
             )
+
+
+@pytest.mark.xfail(reason="Broken link to the excel file.")
+def test_get_all_cmip6_variables():
+    allvars = utilities.get_all_CMIP6_variables()
+    assert allvars["tasmax"]["standard_name"] == "air_temperature"
+    assert allvars["sfcWind"]["units"] == "m s-1"
