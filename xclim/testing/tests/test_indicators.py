@@ -24,9 +24,9 @@ from xclim.core.formatting import (
 )
 from xclim.core.indicator import Daily, Indicator, ResamplingIndicator, registry
 from xclim.core.units import convert_units_to, declare_units, units
-from xclim.core.utils import InputKind, MissingVariableError
+from xclim.core.utils import VARIABLES, InputKind, MissingVariableError
 from xclim.indices import tg_mean
-from xclim.testing import open_dataset
+from xclim.testing import list_input_variables, open_dataset
 
 
 @declare_units(da="[temperature]", thresh="[temperature]")
@@ -785,3 +785,20 @@ def test_resampling_indicator_with_indexing(tas_series):
         tas, thresh="0 degC", freq="YS", date_bounds=("02-29", "04-01")
     )
     np.testing.assert_allclose(out, [32, 33])
+
+
+def test_all_inputs_known():
+    var_and_inds = list_input_variables()
+    known_vars = (
+        set(var_and_inds.keys())
+        - {"dc0", "season_mask", "ffmc0", "dmc0"}  # FWI optional inputs
+        - {var for var in var_and_inds.keys() if var.endswith("_per")}  # percentiles
+        - {"q", "da"}  # Generic inputs
+    )
+    if not set(VARIABLES.keys()).issuperset(known_vars):
+        raise AssertionError(
+            "All input variables of xclim indicators must be registered in "
+            "data/variables.yml, or skipped explicitely in this test. You can try to "
+            "automatically update the yaml with `xclim.testing.update_variable_yaml(). "
+            f"The yaml file is missing: {known_vars - VARIABLES.keys()}."
+        )

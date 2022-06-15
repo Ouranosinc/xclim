@@ -13,7 +13,7 @@ import sys
 import warnings
 from io import StringIO
 from pathlib import Path
-from typing import Optional, Sequence, TextIO, Union
+from typing import Sequence, TextIO
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin
 from urllib.request import urlopen, urlretrieve
@@ -273,12 +273,12 @@ def list_input_variables(
             continue
 
         # ok we want this one.
-        for varname, meta in ind.iter_parameters():
-            if meta["kind"] in [
+        for varname, meta in ind._all_parameters.items():
+            if meta.kind in [
                 InputKind.VARIABLE,
                 InputKind.OPTIONAL_VARIABLE,
             ]:
-                var = meta.get("default") or varname
+                var = meta.default or varname
                 variables[var].append(ind)
 
     return variables
