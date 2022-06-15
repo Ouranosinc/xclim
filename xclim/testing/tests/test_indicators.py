@@ -152,7 +152,10 @@ def test_attrs(tas_series):
     txm = uniIndTemp(a, thresh="5 degC", freq="YS")
     assert txm.cell_methods == "time: mean within days time: mean within years"
     assert f"{dt.datetime.now():%Y-%m-%d %H}" in txm.attrs["history"]
-    assert "TMIN(da=tas, thresh='5 degC', freq='YS')" in txm.attrs["history"]
+    assert (
+        "TMIN(da=tas, thresh='5 degC', freq='YS') with options check_missing=any"
+        in txm.attrs["history"]
+    )
     assert f"xclim version: {__version__}" in txm.attrs["history"]
     assert txm.name == "tmin5 degC"
     assert uniIndTemp.standard_name == "{freq} mean temperature"
@@ -360,6 +363,7 @@ def test_missing(tas_series):
     ):
         m = uniIndTemp(a, freq="MS")
         assert not m[0].isnull()
+        assert "check_missing=pct, missing_options={'tolerance': 0.05}" in m.history
 
     with xclim.set_options(check_missing="wmo"):
         m = uniIndTemp(a, freq="YS")
