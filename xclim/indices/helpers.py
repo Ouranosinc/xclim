@@ -262,12 +262,12 @@ def cosine_of_solar_zenith_angle(
         csza = np.sin(declination) * np.sin(lat) + np.cos(declination) * np.cos(
             lat
         ) * np.cos(sha)
-        return np.clip(csza, 0, None)
+        return csza.clip(0, None)
     if stat == "interval":
         csza = np.sin(declination) * np.sin(lat) + np.cos(declination) * np.cos(lat) * (
             np.sin(h_e) - np.sin(h_s)
         ) / (h_e - h_s)
-        return np.clip(csza, 0, None)
+        return csza.clip(0, None)
     if stat == "sunlit":
         h_min = xr.where(h_s >= h_sr, h_s, h_sr)
         h_max = xr.where(h_e <= h_ss, h_e, h_ss)
@@ -275,7 +275,7 @@ def cosine_of_solar_zenith_angle(
             np.sin(h_max) - np.sin(h_min)
         ) / (h_max - h_min)
         csza = xr.where(np.isnan(csza), 0, csza)
-        return np.clip(csza, 0, None)
+        return csza.clip(0, None)
     raise NotImplementedError(
         "Argument 'stat' must be one of 'integral', 'average', 'instant', 'interval' or 'sunlit'."
     )
