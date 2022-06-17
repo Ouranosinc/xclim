@@ -1,9 +1,14 @@
-name: xclim
+name: "xclim Testing Suite"
 
 on:
   push:
     branches:
       - master
+    paths-ignore:
+      - HISTORY.rst
+      - setup.cfg
+      - setup.py
+      - xclim/__init__.py
   pull_request:
 
 jobs:
@@ -14,8 +19,8 @@ jobs:
         uses: styfle/cancel-workflow-action@0.9.1
         with:
           access_token: ${{ github.token }}
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: "3.8"
       - name: Install tox
@@ -28,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: "3.8"
       - name: Install tox
@@ -40,9 +45,9 @@ jobs:
     needs: black
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python 3.8
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: "3.8"
       - name: Install tox
@@ -72,7 +77,7 @@ jobs:
           - tox-env: py310
             python-version: "3.10-dev"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       # Python3.10-dev headers not available in Ubuntu-20.04 Bionic
       - name: Set up Python3.10 (deadsnakes version)
         if: "endsWith(matrix.python-version, '-dev')"
@@ -81,7 +86,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Set up Python ${{ matrix.python-version }}
         if: "!endsWith(matrix.python-version, '-dev')"
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install tox
