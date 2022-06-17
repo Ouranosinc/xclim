@@ -2673,7 +2673,7 @@ def test_universal_thermal_climate_index(
     tas = tas_series(np.array([16]) + K2C)
     hurs = hurs_series(np.array([36]))
     sfcWind = sfcWind_series(np.array([2]))
-    tmrt = tas_series(np.array([22]) + K2C)
+    mrt = tas_series(np.array([22]) + K2C)
 
     # Expected values
     utci_exp = [17.7]
@@ -2682,7 +2682,7 @@ def test_universal_thermal_climate_index(
         tas=tas,
         hurs=hurs,
         sfcWind=sfcWind,
-        tmrt=tmrt,
+        mrt=mrt,
     )
     np.testing.assert_allclose(utci, utci_exp, rtol=1e-03)
 

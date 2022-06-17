@@ -305,8 +305,8 @@ mean_radiant_temperature = Converter(
     identifier="mean_radiant_temperature",
     units="K",
     long_name="Mean radiant temperature",
-    description="",
+    description="The incidence of radiation on the body from all directions.",
     cell_methods="",
-    var_name="tmrt",
+    var_name="mrt",
     compute=indices.mean_radiant_temperature,
 )

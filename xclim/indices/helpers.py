@@ -32,13 +32,12 @@ def distance_from_sun(dates: xr.DaraArray) -> xr.DataArray:
 
     Returns
     -------
-    xr.DataArray
-      Sun-earth distance [astronomical units]
+    xr.DataArray, [astronomical units]
+      Sun-earth distance
 
     References
     ----------
-    U.S. Naval Observatory:Astronomical Almanac. Washington, D.C.:
-    U.S. Government Printing Office (1985).
+    U.S. Naval Observatory:Astronomical Almanac. Washington, D.C.: U.S. Government Printing Office (1985).
     """
     cal = get_calendar(dates)
     if cal == "default":
@@ -118,8 +117,7 @@ def time_correction_for_solar_angle(day_angle: xr.DataArray) -> xr.DataArray:
 
     References
     ----------
-    Di Napoli, C., Hogan, R.J. & Pappenberger, F. Mean radiant temperature from global-scale numerical weather prediction models.
-    Int J Biometeorol 64, 1233–1245 (2020). https://doi.org/10.1007/s00484-020-01900-5
+    Di Napoli, C., Hogan, R.J. & Pappenberger, F. Mean radiant temperature from global-scale numerical weather prediction models. Int J Biometeorol 64, 1233–1245 (2020). https://doi.org/10.1007/s00484-020-01900-5
     """
     da = convert_units_to(day_angle, "rad")
     tc = (

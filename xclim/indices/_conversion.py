@@ -1407,7 +1407,7 @@ def _utci(tas, sfcWind, dt, wvp):
     tas="[temperature]",
     hurs="[]",
     sfcWind="[speed]",
-    tmrt="[temperature]",
+    mrt="[temperature]",
     rsds="[radiation]",
     rsus="[radiation]",
     rlds="[radiation]",
@@ -1417,7 +1417,7 @@ def universal_thermal_climate_index(
     tas: xr.DataArray,
     hurs: xr.DataArray,
     sfcWind: xr.DataArray,
-    tmrt: xr.DataArray = None,
+    mrt: xr.DataArray = None,
     rsds: xr.DataArray = None,
     rsus: xr.DataArray = None,
     rlds: xr.DataArray = None,
@@ -1438,30 +1438,30 @@ def universal_thermal_climate_index(
         Relative Humidity
     sfcWind : xarray.DataArray
         Wind velocity
-    tmrt: xarray.DataArray, optional
+    mrt: xarray.DataArray, optional
         Mean radiant temperature
     rsds : xr.DataArray, optional
         Surface Downwelling Shortwave Radiation
-        This is necessary if tmrt is not None.
+        This is necessary if mrt is not None.
     rsus : xr.DataArray, optional
         Surface Upwelling Shortwave Radiation
-        This is necessary if tmrt is not None.
+        This is necessary if mrt is not None.
     rlds : xr.DataArray, optional
         Surface Downwelling Longwave Radiation
-        This is necessary if tmrt is not None.
+        This is necessary if mrt is not None.
     rlus : xr.DataArray, optional
         Surface Upwelling Longwave Radiation
-        This is necessary if tmrt is not None.
+        This is necessary if mrt is not None.
     stat  : {'average', 'instant', 'sunlit'}
         Which statistic to apply. If "average", the average of the cosine of the
         solar zenith angle is calculated. If "instant", the instantaneous cosine
         of the solar zenith angle is calculated. If "sunlit", the cosine of the
         solar zenith angle is calculated during the sunlit period of each interval.
         If "instant", the instantaneous cosine of the solar zenith angle is calculated.
-        This is necessary if tmrt is not None.
+        This is necessary if mrt is not None.
     mask_invalid: boolean
         If True (default), UTCI values are NaN where any of the inputs are outside
-        their validity ranges : -50°C < tas < 50°C,  -30°C < tas - tmrt < 30°C
+        their validity ranges : -50°C < tas < 50°C,  -30°C < tas - mrt < 30°C
         and  0.5 m/s < sfcWind < 17.0 m/s.
 
     Returns
@@ -1474,7 +1474,7 @@ def universal_thermal_climate_index(
     The calculation uses water vapor partial pressure, which is derived from relative
     humidity and saturation vapor pressure computed according to the ITS-90 equation.
 
-    This code was inspired by the `pythermalcomfort` package.
+    This code was inspired by the `pythermalcomfort` and `thermofeel` packages.
 
     References
     ----------
@@ -1488,12 +1488,12 @@ def universal_thermal_climate_index(
     e_sat = saturation_vapor_pressure(tas=tas, method="its90")
     tas = convert_units_to(tas, "degC")
     sfcWind = convert_units_to(sfcWind, "m/s")
-    if tmrt is None:
-        tmrt = mean_radiant_temperature(
+    if mrt is None:
+        mrt = mean_radiant_temperature(
             rsds=rsds, rsus=rsus, rlds=rlds, rlus=rlus, stat=stat
         )
-    tmrt = convert_units_to(tmrt, "degC")
-    delta = tmrt - tas
+    mrt = convert_units_to(mrt, "degC")
+    delta = mrt - tas
     pa = convert_units_to(e_sat, "kPa") * convert_units_to(hurs, "1")
 
     utci = _utci(tas, sfcWind, delta, pa)
@@ -1535,7 +1535,7 @@ def _fdir_ratio(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [dimensionless]
         Ratio of direct solar radiation
 
     Notes
@@ -1544,10 +1544,8 @@ def _fdir_ratio(
 
     References
     ----------
-    James C. Liljegren , Richard A. Carhart , Philip Lawday , Stephen Tschopp &
-    Robert Sharp (2008) Modeling the Wet Bulb Globe Temperature Using Standard Meteorological
-    Measurements, Journal of Occupational and Environmental Hygiene, 5:10, 645-655,
-    https://doi.org/10.1080/15459620802310770
+    James C. Liljegren, Richard A. Carhart, Philip Lawday, Stephen Tschopp and Robert Sharp (2008) Modeling the Wet Bulb Globe Temperature Using Standard Meteorological Measurements, Journal of Occupational and Environmental Hygiene, 5:10, 645-655, https://doi.org/10.1080/15459620802310770
+    Kong, Qinqin, and Matthew Huber. “Explicit Calculations of Wet Bulb Globe Temperature Compared with Approximations and Why It Matters for Labor Productivity.” Earth’s Future, January 31, 2022. https://doi.org/10.1029/2021EF002334.
     """
     d = distance_from_sun(dates)
     s_star = rsds * ((1367 * csza_s * (d ** (-2))) ** (-1))
@@ -1591,11 +1589,11 @@ def mean_radiant_temperature(
         of the solar zenith angle is calculated. If "sunlit", the cosine of the
         solar zenith angle is calculated during the sunlit period of each interval.
         If "instant", the instantaneous cosine of the solar zenith angle is calculated.
-        This is necessary if tmrt is not None.
+        This is necessary if mrt is not None.
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [K]
         Mean radiant temperature
 
     Notes
@@ -1604,9 +1602,8 @@ def mean_radiant_temperature(
 
     References
     ----------
-    Di Napoli, C., Hogan, R.J. & Pappenberger, F. Mean radiant temperature from global-scale
-    numerical weather prediction models. Int J Biometeorol 64, 1233–1245 (2020).
-    https://doi.org/10.1007/s00484-020-01900-5
+    Di Napoli, C., Hogan, R.J. & Pappenberger, F. Mean radiant temperature from global-scale numerical weather prediction models. Int J Biometeorol 64, 1233–1245 (2020). https://doi.org/10.1007/s00484-020-01900-5
+    Brimicombe , C., Di Napoli, C., Quintino, T., Pappenberger, F., Cornforth, R. and Cloke, H., 2021 thermofeel: a python thermal comfort indices library, https://doi.org/10.21957/mp6v-fd16
     """
     rsds = convert_units_to(rsds, "W m-2")
     rsus = convert_units_to(rsus, "W m-2")
@@ -1669,7 +1666,7 @@ def mean_radiant_temperature(
     fp = 0.308 * np.cos(gamma * 0.988 - (gamma**2 / 50000))
     i_star = xr.where(csza_s > 0.001, rsds_direct / csza_s, 0)
 
-    tmrt = np.power(
+    mrt = np.power(
         (
             (1 / 5.67e-8)  # Stefan-Boltzmann constant
             * (
@@ -1680,4 +1677,4 @@ def mean_radiant_temperature(
         ),
         0.25,
     )
-    return tmrt.assign_attrs({"units": "K"})
+    return mrt.assign_attrs({"units": "K"})
