@@ -4,6 +4,14 @@ on:
   push:
     branches:
       - master
+    paths-ignore:
+      - HISTORY.rst
+      - setup.cfg
+      - setup.py
+      - tox.ini
+      - xclim/__init__.py
+      - .github/**.yml
+      - .pre-commit-config.yaml
   schedule:
     - cron: '30 23 * * 5'
 
