@@ -67,6 +67,26 @@ variables:
     cell_methods: "time: mean"
     description: Air pressure at sea level.
     standard_name: air_pressure_at_sea_level
+  rlds:
+    canonical_units: W m-2
+    cell_methods: "time: mean"
+    description: Incoming longwave radiation.
+    standard_name: surface_downwelling_longwave_flux
+  rsds:
+    canonical_units: W m-2
+    cell_methods: "time: mean"
+    description: Incoming shortwave radiation.
+    standard_name: surface_downwelling_shortwave_flux
+  rlus:
+    canonical_units: W m-2
+    cell_methods: "time: mean"
+    description: Outgoing longwave radiation.
+    standard_name: surface_upwelling_longwave_flux
+  rsus:
+    canonical_units: W m-2
+    cell_methods: "time: mean"
+    description: Outgoing shortwave radiation.
+    standard_name: surface_upwelling_shortwave_flux
   sfcWind:
     canonical_units: m s-1
     cell_methods: "time: mean"
