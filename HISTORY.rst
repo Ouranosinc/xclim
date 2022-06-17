@@ -11,6 +11,7 @@ Announcements
 * `xclim` is now compliant with `PEP 563 <https://peps.python.org/pep-0563>`_. Python3.10-style annotations are now permitted. (:issue:`1065`, :pull:`1071`).
 * `xclim` is now fully compatible with `xarray`'s `flox`-enabled ``GroupBy`` and ``resample`` operations. (:pull:`1081`).
 * `xclim` now (properly) enforces docstring compliance checks using `pydocstyle` with modified `numpy`-style docstrings. Docstring errors will now cause build failures. See the `pydocstyle documentation <http://www.pydocstyle.org/en/stable/error_codes.html>`_ for more information. (:pull:`1074`).
+* `xclim` now uses GitHub Actions to manage patch version bumping. Merged Pull Requests that modify `xclim` code now trigger version-bumping automatically when pushed to the main development branch. Running `$ bump2version patch` within development branches is no longer necessary. (:pull:`1102`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -43,7 +44,6 @@ Internal changes
 * Code snippets within documentation are now checked and reformatted to `black` conventions with `blackdoc`. A `pre-commit` hook is now in place to run these checks. (:pull:`1098`).
 * Test coverage statistic no longer includes coverage of the test files themselves. Coverage now reflects lines of usable code covered. (:pull:`1101`).
 * Reordered listed authors alphabetically. Promoted :user:`bzah` to core contributor. (:pull:`1105`).
-* `xclim` now uses GitHub Actions to manage patch version bumping. Pull Requests now trigger version-bumping automatically when they are merged to the main development branch. (:pull:`1102`).
 
 Bug fixes
 ^^^^^^^^^
