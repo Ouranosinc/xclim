@@ -36,6 +36,8 @@ Breaking changes
     - cold_spell_duration_index, tg90p, tg10p, tx90p, tx10p, tn90p, tn10p, warm_spell_duration_index, days_over_precip_doy_thresh, days_over_precip_thresh, fraction_over_precip_doy_thresh, fraction_over_precip_thresh, cold_and_dry_days, warm_and_dry_days, warm_and_wet_days, cold_and_wet_days
   have been modified. The parameter for percentiles values is now named after the variable it is supposed to be computed upon. (:pull:`1050`)
 * `pytest-runner` has been removed as a dependency (it was never needed for `xclim` development). (:pull:`1074`).
+* `xclim.testing._utils.py` has been renamed to `xclim.testing.utils.py` for added documentation visibility. (:pull:`1074`).
+    - Some unused functions and classes (``as_tuple``, ``TestFile``, ``TestDataSet``) have been removed. (:pull:`1107`).
 
 New indicators
 ^^^^^^^^^^^^^^
@@ -50,6 +52,7 @@ Internal changes
 * Code snippets within documentation are now checked and reformatted to `black` conventions with `blackdoc`. A `pre-commit` hook is now in place to run these checks. (:pull:`1098`).
 * Test coverage statistic no longer includes coverage of the test files themselves. Coverage now reflects lines of usable code covered. (:pull:`1101`).
 * Reordered listed authors alphabetically. Promoted :user:`bzah` to core contributor. (:pull:`1105`).
+* Tests have been added for some functions in `xclim.testing.utils`; some previously uncaught bugs in ``list_input_variables``, ``publish_release_notes``, and ``show_versions`` have been patched. (:issue:`1078`, :pull:`1107`).
 
 Bug fixes
 ^^^^^^^^^

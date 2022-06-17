@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import platform
 from pathlib import Path
 from urllib.error import HTTPError
 
@@ -7,6 +8,7 @@ import numpy as np
 import pytest
 
 import xclim.testing.utils as utilities
+from xclim import __version__ as __xclim_version__
 
 from . import TD
 
@@ -81,3 +83,64 @@ class TestFileAssertions:
         callendar = TD / "callendar_1938.txt"
         md5_sum = utilities.file_md5_checksum(callendar)
         assert md5_sum == "9a5d9f94d76d4f9d9b7aaadbe8cbf541"  # noqa
+
+
+class TestReleaseSupportFuncs:
+    def test_show_version_file(self, tmp_path):
+        temp_filename = tmp_path.joinpath("version_info.txt")
+        utilities.show_versions(file=temp_filename)
+
+        with open(temp_filename) as f:
+            contents = f.readlines().copy()
+            assert "INSTALLED VERSIONS\n" in contents
+            assert "------------------\n" in contents
+            assert f"python: {platform.python_version()}\n" in contents
+            assert f"xclim: {__xclim_version__}\n" in contents
+            assert "boltons: installed\n" in contents
+
+    @pytest.mark.requires_docs
+    def test_release_notes_file(self, tmp_path):
+        temp_filename = tmp_path.joinpath("version_info.txt")
+        utilities.publish_release_notes(style="md", file=temp_filename)
+
+        with open(temp_filename) as f:
+            assert "# History" in f.readlines()[0]
+
+    def test_release_notes_file_not_implemented(self, tmp_path):
+        temp_filename = tmp_path.joinpath("version_info.txt")
+        with pytest.raises(NotImplementedError):
+            utilities.publish_release_notes(style="qq", file=temp_filename)
+
+
+class TestTestingFileAccessors:
+    def test_unsafe_urls(self):
+        with pytest.raises(
+            ValueError, match="GitHub URL not safe: 'ftp://domain.does.not.exist/'."
+        ):
+            utilities.open_dataset(
+                "doesnt_exist.nc", github_url="ftp://domain.does.not.exist/"
+            )
+
+        with pytest.raises(
+            ValueError, match="OPeNDAP URL not safe: 'ftp://domain.does.not.exist/'."
+        ):
+            utilities.open_dataset(
+                "doesnt_exist.nc", dap_url="ftp://domain.does.not.exist/"
+            )
+
+    def test_bad_opendap_url(self):
+        with pytest.raises(
+            OSError,
+            match="OPeNDAP file not read. Verify that the service is available.",
+        ):
+            utilities.open_dataset(
+                "doesnt_exist.nc", dap_url="https://dap.service.does.not.exist/"
+            )
+
+
+@pytest.mark.xfail(reason="Broken link to the excel file.")
+class TestCMIP6ControlledVocabulary:
+    def test_get_all_cmip6_variables(self):
+        all_variables = utilities.get_all_CMIP6_variables()
+        assert all_variables["tasmax"]["standard_name"] == "air_temperature"
+        assert all_variables["sfcWind"]["units"] == "m s-1"

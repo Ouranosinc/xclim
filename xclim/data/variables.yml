@@ -4,6 +4,11 @@ variables:
     cell_methods: "area: sum"
     description: Cell area (over the ocean).
     standard_name: cell_area
+  evspsblpot:
+    canonical_units: kg m-2 s-1
+    cell_methods: "time: mean"
+    description: Potential evapotranspiration flux.
+    standard_name: water_potential_evapotranspiration_flux
   hurs:
     canonical_units: '%'
     cell_methods: "time: mean"
@@ -62,6 +67,26 @@ variables:
     cell_methods: "time: mean"
     description: Air pressure at sea level.
     standard_name: air_pressure_at_sea_level
+  rlds:
+    canonical_units: W m-2
+    cell_methods: "time: mean"
+    description: Incoming longwave radiation.
+    standard_name: surface_downwelling_longwave_flux
+  rsds:
+    canonical_units: W m-2
+    cell_methods: "time: mean"
+    description: Incoming shortwave radiation.
+    standard_name: surface_downwelling_shortwave_flux
+  rlus:
+    canonical_units: W m-2
+    cell_methods: "time: mean"
+    description: Outgoing longwave radiation.
+    standard_name: surface_upwelling_longwave_flux
+  rsus:
+    canonical_units: W m-2
+    cell_methods: "time: mean"
+    description: Outgoing shortwave radiation.
+    standard_name: surface_upwelling_shortwave_flux
   sfcWind:
     canonical_units: m s-1
     cell_methods: "time: mean"
@@ -178,15 +203,20 @@ variables:
     cell_methods: "time: mean"
     description: Mean surface dew point temperaure.
     standard_name: dew_point_temperature
+  ua:
+    canonical_units: m s-1
+    cell_methods: "time: mean"
+    description: Eastward component of the wind velocity (in the atmosphere).
+    standard_name: eastward_wind
   uas:
     canonical_units: m s-1
     cell_methods: "time: mean"
-    description: Eastward component of the wind velocity.
+    description: Eastward component of the wind velocity (at the surface).
     standard_name: eastward_wind
   vas:
     canonical_units: m s-1
     cell_methods: "time: mean"
-    description: Northward component of the wind velocity.
+    description: Northward component of the wind velocity (at the surface).
     standard_name: northward_wind
   wsgsmax:
     cmip6: False

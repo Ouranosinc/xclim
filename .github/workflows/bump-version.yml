@@ -33,7 +33,6 @@ jobs:
         run: |
           pip install bump2version
           echo "running `bump2version patch`"
-          bump2version patch
           echo "new_version=$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
       - name: Push Changes
         uses: ad-m/github-push-action@master
