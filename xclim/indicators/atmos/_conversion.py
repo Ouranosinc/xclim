@@ -25,6 +25,8 @@ __all__ = [
     "water_budget_from_tas",
     "water_budget",
     "corn_heat_units",
+    "universal_thermal_climate_index",
+    "mean_radiant_temperature",
 ]
 
 
@@ -286,4 +288,25 @@ corn_heat_units = Converter(
     cell_methods="",
     missing="skip",
     compute=indices.corn_heat_units,
+)
+
+universal_thermal_climate_index = Converter(
+    identifier="utci",
+    units="K",
+    long_name="Universal Thermal Climate Index",
+    description="UTCI is the equivalent temperature for the environment derived from a reference environment "
+    "and is used to evaluate heat stress in outdoor spaces.",
+    cell_methods="",
+    var_name="utci",
+    compute=indices.universal_thermal_climate_index,
+)
+
+mean_radiant_temperature = Converter(
+    identifier="mean_radiant_temperature",
+    units="K",
+    long_name="Mean radiant temperature",
+    description="The incidence of radiation on the body from all directions.",
+    cell_methods="",
+    var_name="mrt",
+    compute=indices.mean_radiant_temperature,
 )

@@ -1022,5 +1022,17 @@
       "Latitude du maximum du vent zonal",
       "Magnitude du maximum du vent zonal"
     ]
+  },
+  "UTCI": {
+    "title": "Indice universel du climat thermique",
+    "abstract": "L'UTCI représente la température ressentie par rapport à un environnement de référence et est utilisé pour évaluer le stress thermique à l'extérieur.",
+    "description": "L'UTCI représente la température ressentie par rapport à un environnement de référence et est utilisé pour évaluer le stress thermique à l'extérieur.",
+    "long_name": "Indice universel du climat thermique"
+  },
+  "MEAN_RADIANT_TEMPERATURE": {
+    "title": "Température radiative moyenne",
+    "abstract": "La température moyenne des rayonnements solaires et thermiques incidents sur un corps à l'extérieur.",
+    "description": "La température moyenne des rayonnements incidents sur un corps.",
+    "long_name": "Température radiative moyenne"
   }
 }
