@@ -1572,6 +1572,7 @@ def mean_radiant_temperature(
     r"""Mean radiant temperature.
 
     The mean radiant temperature is the incidence of radiation on the body from all directions.
+    WARNING: There are some issues in the calculation of mrt in polar regions.
 
     Parameters
     ----------
