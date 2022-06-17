@@ -128,6 +128,7 @@ class TestTestingFileAccessors:
                 "doesnt_exist.nc", dap_url="ftp://domain.does.not.exist/"
             )
 
+    def test_bad_opendap_url(self):
         with pytest.raises(
             OSError,
             match="OPeNDAP file not read. Verify that the service is available.",
@@ -138,7 +139,8 @@ class TestTestingFileAccessors:
 
 
 @pytest.mark.xfail(reason="Broken link to the excel file.")
-def test_get_all_cmip6_variables():
-    allvars = utilities.get_all_CMIP6_variables()
-    assert allvars["tasmax"]["standard_name"] == "air_temperature"
-    assert allvars["sfcWind"]["units"] == "m s-1"
+class TestCMIP6ControlledVocabulary:
+    def test_get_all_cmip6_variables(self):
+        all_variables = utilities.get_all_CMIP6_variables()
+        assert all_variables["tasmax"]["standard_name"] == "air_temperature"
+        assert all_variables["sfcWind"]["units"] == "m s-1"
