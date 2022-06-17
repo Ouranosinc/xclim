@@ -47,7 +47,7 @@ def test_virtual_modules(virtual_indicator, atmosds):
         # skip when missing default values
         mod, indname, ind = virtual_indicator
         for name, param in ind.parameters.items():
-            if param.kind is not InputKind.DATASET and (
+            if param.kind not in [InputKind.DATASET, InputKind.KWARGS] and (
                 param.default in (None, _empty)
                 or (param.default == name and name not in atmosds)
             ):

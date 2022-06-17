@@ -3,9 +3,18 @@ from __future__ import annotations
 
 import numpy as np
 import xarray as xr
+from numba import float32, float64, vectorize
 
 from xclim.core.calendar import date_range, datetime_to_decimal_year
 from xclim.core.units import amount2rate, convert_units_to, declare_units, units2pint
+from xclim.indices.helpers import (
+    cosine_of_solar_zenith_angle,
+    day_lengths,
+    distance_from_sun,
+    extraterrestrial_solar_radiation,
+    solar_declination,
+    time_correction_for_solar_angle,
+)
 
 __all__ = [
     "humidex",
@@ -22,6 +31,8 @@ __all__ = [
     "wind_chill_index",
     "clausius_clapeyron_scaled_precipitation",
     "potential_evapotranspiration",
+    "universal_thermal_climate_index",
+    "mean_radiant_temperature",
 ]
 
 
@@ -325,7 +336,7 @@ def saturation_vapor_pressure(
     ice_thresh : str
       Threshold temperature under which to switch to equations in reference to ice instead of water.
       If None (default) everything is computed with reference to water.
-    method : {"goffgratch46", "sonntag90", "tetens30", "wmo08"}
+    method : {"goffgratch46", "sonntag90", "tetens30", "wmo08", "its90"}
       Which method to use, see notes.
 
     Returns
@@ -342,6 +353,7 @@ def saturation_vapor_pressure(
     - "sonntag90" or "SO90", taken from [sonntag90]_.
     - "tetens30" or "TE30", based on [tetens30]_, values and equation taken from [voemel]_.
     - "wmo08" or "WMO08", taken from [wmo08]_.
+    - "its90" or "ITS90", taken from [its90]_.
 
     References
     ----------
@@ -350,13 +362,14 @@ def saturation_vapor_pressure(
     .. [tetens30] Tetens, O. 1930. Über einige meteorologische Begriffe. Z. Geophys 6: 207-309.
     .. [voemel] https://cires1.colorado.edu/~voemel/vp.html
     .. [wmo08] World Meteorological Organization. (2008). Guide to meteorological instruments and methods of observation. Geneva, Switzerland: World Meteorological Organization. https://www.weather.gov/media/epz/mesonet/CWOP-WMO8.pdf
+    .. [its90] Hardy, B. (1998). ITS-90 formulations for vapor pressure, frostpoint temperature, dewpoint temperature, and enhancement factors in the range–100 to+ 100 C. In The Proceedings of the Third International Symposium on Humidity & Moisture (pp. 1-8). https://www.thunderscientific.com/tech_info/reflibrary/its90formulas.pdf
     """
     if ice_thresh is not None:
         thresh = convert_units_to(ice_thresh, "degK")
     else:
         thresh = convert_units_to("0 K", "degK")
     ref_is_water = tas > thresh
-
+    tas = convert_units_to(tas, "K")
     if method in ["sonntag90", "SO90"]:
         e_sat = xr.where(
             ref_is_water,
@@ -412,9 +425,31 @@ def saturation_vapor_pressure(
             611.2 * np.exp(17.62 * (tas - 273.16) / (tas - 30.04)),
             611.2 * np.exp(22.46 * (tas - 273.16) / (tas - 0.54)),
         )
+    elif method in ["its90", "ITS90"]:
+        e_sat = xr.where(
+            ref_is_water,
+            np.exp(
+                -2836.5744 / tas**2
+                + -6028.076559 / tas
+                + 19.54263612
+                + -2.737830188e-2 * tas
+                + 1.6261698e-5 * tas**2
+                + 7.0229056e-10 * tas**3
+                + -1.8680009e-13 * tas**4
+                + 2.7150305 * np.log(tas)
+            ),
+            np.exp(
+                -5866.6426 / tas
+                + 22.32870244
+                + 1.39387003e-2 * tas
+                + -3.4262402e-5 * tas**2
+                + 2.7040955e-8 * tas**3
+                + 6.7063522e-1 * np.log(tas)
+            ),
+        )
     else:
         raise ValueError(
-            f"Method {method} is not in ['sonntag90', 'tetens30', 'goffgratch46', 'wmo08']"
+            f"Method {method} is not in ['sonntag90', 'tetens30', 'goffgratch46', 'wmo08', 'its90']"
         )
 
     e_sat.attrs["units"] = "Pa"
@@ -932,7 +967,7 @@ def clausius_clapeyron_scaled_precipitation(
     water vapor pressure :math:`e_s` changes approximately exponentially with temperature
 
     .. math::
-        \frac{\\mathrm{d}e_s(T)}{\\mathrm{d}T} \approx 1.07 e_s(T)
+        \frac{\mathrm{d}e_s(T)}{\mathrm{d}T} \approx 1.07 e_s(T)
 
     This function assumes that precipitation can be scaled by the same factor.
 
@@ -952,11 +987,14 @@ def clausius_clapeyron_scaled_precipitation(
     return pr_out
 
 
-@declare_units(tasmin="[temperature]", tasmax="[temperature]", tas="[temperature]")
+@declare_units(
+    tasmin="[temperature]", tasmax="[temperature]", tas="[temperature]", lat="[]"
+)
 def potential_evapotranspiration(
     tasmin: xr.DataArray | None = None,
     tasmax: xr.DataArray | None = None,
     tas: xr.DataArray | None = None,
+    lat: xr.DataArray | None = None,
     method: str = "BR65",
     peta: float | None = 0.00516409319477,
     petb: float | None = 0.0874972822289,
@@ -974,6 +1012,8 @@ def potential_evapotranspiration(
       Maximum daily temperature.
     tas : xarray.DataArray
       Mean daily temperature.
+    lat : xarray.DataArray, optional
+      Latitude. If not given, it is sought on tasmin or tas with cf-xarray.
     method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48", "mcguinnessbordne05", "MB05"}
       Which method to use, see notes.
     peta : float
@@ -999,7 +1039,14 @@ def potential_evapotranspiration(
     .. math::
         PET[mm day^{-1}] = a * \frac{S_0}{\lambda}T_a + b *\frsc{S_0}{\lambda}
 
-    where :math:`a` and :math:`b` are empirical parameters; :math:`S_0` is the extraterrestrial radiation [MJ m-2 day-1]; :math:`\\lambda` is the latent heat of vaporisation [MJ kg-1] and :math:`T_a` is the air temperature [°C]. The equation was originally derived for the USA, with :math:`a=0.0147` and :math:`b=0.07353`. The default parameters used here are calibrated for the UK, using the method described in [Tanguy2018]_.
+    where :math:`a` and :math:`b` are empirical parameters; :math:`S_0` is the extraterrestrial radiation [MJ m-2 day-1],
+    assuming a solar constant of 1367 W m-2; :math:`\\lambda` is the latent heat of vaporisation [MJ kg-1]
+    and :math:`T_a` is the air temperature [°C]. The equation was originally derived for the USA,
+    with :math:`a=0.0147` and :math:`b=0.07353`. The default parameters used here are calibrated for the UK,
+    using the method described in [Tanguy2018]_.
+
+    Methods "BR65", "HG85" and "MB05" use an approximation of the extraterrestrial
+    radiation. See :py:func:`~xclim.indices._helpers.extraterrestrial_solar_radiation`.
 
     References
     ----------
@@ -1009,29 +1056,15 @@ def potential_evapotranspiration(
     .. [McGuinness1972] McGuinness, J. L., & Bordne, E. F. (1972). A comparison of lysimeter-derived potential evapotranspiration with computed values (No. 1452). US Department of Agriculture.
     .. [Thornthwaite1948] Thornthwaite, C. W. (1948). An approach toward a rational classification of climate. Geographical review, 38(1), 55-94.
     """
+    if lat is None:
+        lat = (tasmin if tas is None else tas).cf["latitude"]
+
     if method in ["baierrobertson65", "BR65"]:
         tasmin = convert_units_to(tasmin, "degF")
         tasmax = convert_units_to(tasmax, "degF")
 
-        latr = (tasmin.lat * np.pi) / 180
-        gsc = 0.082  # MJ/m2/min
-
-        # julian day fraction
-        jd_frac = (datetime_to_decimal_year(tasmin.time) % 1) * 2 * np.pi
-
-        ds = 0.409 * np.sin(jd_frac - 1.39)
-        dr = 1 + 0.033 * np.cos(jd_frac)
-        omega = np.arccos(-np.tan(latr) * np.tan(ds))
-        re = (
-            (24 * 60 / np.pi)
-            * gsc
-            * dr
-            * (
-                omega * np.sin(latr) * np.sin(ds)
-                + np.cos(latr) * np.cos(ds) * np.sin(omega)
-            )
-        )  # MJ/m2/day
-        re = re / 4.1864e-2  # cal/cm2/day
+        re = extraterrestrial_solar_radiation(tasmin.time, lat)
+        re = convert_units_to(re, "cal cm-2 day-1")
 
         # Baier et Robertson(1965) formula
         out = 0.094 * (
@@ -1047,25 +1080,10 @@ def potential_evapotranspiration(
         else:
             tas = convert_units_to(tas, "degC")
 
-        latr = (tasmin.lat * np.pi) / 180
-        gsc = 0.082  # MJ/m2/min
         lv = 2.5  # MJ/kg
 
-        # julian day fraction
-        jd_frac = (datetime_to_decimal_year(tasmin.time) % 1) * 2 * np.pi
-
-        ds = 0.409 * np.sin(jd_frac - 1.39)
-        dr = 1 + 0.033 * np.cos(jd_frac)
-        omega = np.arccos(-np.tan(latr) * np.tan(ds))
-        ra = (
-            (24 * 60 / np.pi)
-            * gsc
-            * dr
-            * (
-                omega * np.sin(latr) * np.sin(ds)
-                + np.cos(latr) * np.cos(ds) * np.sin(omega)
-            )
-        )  # MJ/m2/day
+        ra = extraterrestrial_solar_radiation(tasmin.time, lat)
+        ra = convert_units_to(ra, "MJ m-2 d-1")
 
         # Hargreaves and Samani(1985) formula
         out = (0.0023 * ra * (tas + 17.8) * (tasmax - tasmin) ** 0.5) / lv
@@ -1081,28 +1099,10 @@ def potential_evapotranspiration(
         tas = convert_units_to(tas, "degC")
         tasK = convert_units_to(tas, "K")
 
-        latr = (tas.lat * np.pi) / 180
-        jd_frac = (datetime_to_decimal_year(tas.time) % 1) * 2 * np.pi
-
-        S = 1367.0  # Set solar constant [W/m2]
-        ds = 0.409 * np.sin(jd_frac - 1.39)  # solar declination ds [radians]
-        omega = np.arccos(-np.tan(latr) * np.tan(ds))  # sunset hour angle [radians]
-        dr = 1.0 + 0.03344 * np.cos(
-            jd_frac - 0.048869
-        )  # Calculate relative distance to sun
-
-        ext_rad = (
-            S
-            * 86400
-            / np.pi
-            * dr
-            * (
-                omega * np.sin(ds) * np.sin(latr)
-                + np.sin(omega) * np.cos(ds) * np.cos(latr)
-            )
+        ext_rad = extraterrestrial_solar_radiation(
+            tas.time, lat, solar_constant="1367 W m-2"
         )
         latentH = 4185.5 * (751.78 - 0.5655 * tasK)
-
         radDIVlat = ext_rad / latentH
 
         # parameters from calibration provided by Dr Maliko Tanguy @ CEH
@@ -1121,8 +1121,6 @@ def potential_evapotranspiration(
             tas = convert_units_to(tas, "degC")
         tas = tas.clip(0)
         tas = tas.resample(time="MS").mean(dim="time")
-
-        latr = (tas.lat * np.pi) / 180  # rad
 
         start = "-".join(
             [
@@ -1146,14 +1144,8 @@ def potential_evapotranspiration(
             name="time",
         )
 
-        # julian day fraction
-        jd_frac = (datetime_to_decimal_year(time_v) % 1) * 2 * np.pi
-
-        ds = 0.409 * np.sin(jd_frac - 1.39)
-        omega = np.arccos(-np.tan(latr) * np.tan(ds)) * 180 / np.pi  # degrees
-
-        # monthly-mean daytime length (multiples of 12 hours)
-        dl = 2 * omega / (15 * 12)
+        # Thornwaith measures half-days
+        dl = day_lengths(time_v, lat) / 12
         dl_m = dl.resample(time="MS").mean(dim="time")
 
         # annual heat index
@@ -1180,3 +1172,510 @@ def potential_evapotranspiration(
 
     out.attrs["units"] = "mm"
     return amount2rate(out, out_units="kg m-2 s-1")
+
+
+@vectorize(
+    [
+        float64(float64, float64, float64, float64),
+        float32(float32, float32, float32, float32),
+    ],
+)
+def _utci(tas, sfcWind, dt, wvp):
+    """Return the empirical polynomial function for UTCI. See :py:func:`universal_thermal_climate_index`."""
+    # Taken directly from the original Fortran code by Peter Bröde.
+    # http://www.utci.org/public/UTCI%20Program%20Code/UTCI_a002.f90
+    # tas -> Ta (surface temperature, °C)
+    # sfcWind -> va (surface wind speed, m/s)
+    # dt -> D_Tmrt (tas - t_mrt, K)
+    # wvp -> Pa (water vapor partial pressure, kPa)
+    return (
+        tas
+        + 6.07562052e-1
+        + -2.27712343e-2 * tas
+        + 8.06470249e-4 * tas * tas
+        + -1.54271372e-4 * tas * tas * tas
+        + -3.24651735e-6 * tas * tas * tas * tas
+        + 7.32602852e-8 * tas * tas * tas * tas * tas
+        + 1.35959073e-9 * tas * tas * tas * tas * tas * tas
+        + -2.25836520e0 * sfcWind
+        + 8.80326035e-2 * tas * sfcWind
+        + 2.16844454e-3 * tas * tas * sfcWind
+        + -1.53347087e-5 * tas * tas * tas * sfcWind
+        + -5.72983704e-7 * tas * tas * tas * tas * sfcWind
+        + -2.55090145e-9 * tas * tas * tas * tas * tas * sfcWind
+        + -7.51269505e-1 * sfcWind * sfcWind
+        + -4.08350271e-3 * tas * sfcWind * sfcWind
+        + -5.21670675e-5 * tas * tas * sfcWind * sfcWind
+        + 1.94544667e-6 * tas * tas * tas * sfcWind * sfcWind
+        + 1.14099531e-8 * tas * tas * tas * tas * sfcWind * sfcWind
+        + 1.58137256e-1 * sfcWind * sfcWind * sfcWind
+        + -6.57263143e-5 * tas * sfcWind * sfcWind * sfcWind
+        + 2.22697524e-7 * tas * tas * sfcWind * sfcWind * sfcWind
+        + -4.16117031e-8 * tas * tas * tas * sfcWind * sfcWind * sfcWind
+        + -1.27762753e-2 * sfcWind * sfcWind * sfcWind * sfcWind
+        + 9.66891875e-6 * tas * sfcWind * sfcWind * sfcWind * sfcWind
+        + 2.52785852e-9 * tas * tas * sfcWind * sfcWind * sfcWind * sfcWind
+        + 4.56306672e-4 * sfcWind * sfcWind * sfcWind * sfcWind * sfcWind
+        + -1.74202546e-7 * tas * sfcWind * sfcWind * sfcWind * sfcWind * sfcWind
+        + -5.91491269e-6 * sfcWind * sfcWind * sfcWind * sfcWind * sfcWind * sfcWind
+        + 3.98374029e-1 * dt
+        + 1.83945314e-4 * tas * dt
+        + -1.73754510e-4 * tas * tas * dt
+        + -7.60781159e-7 * tas * tas * tas * dt
+        + 3.77830287e-8 * tas * tas * tas * tas * dt
+        + 5.43079673e-10 * tas * tas * tas * tas * tas * dt
+        + -2.00518269e-2 * sfcWind * dt
+        + 8.92859837e-4 * tas * sfcWind * dt
+        + 3.45433048e-6 * tas * tas * sfcWind * dt
+        + -3.77925774e-7 * tas * tas * tas * sfcWind * dt
+        + -1.69699377e-9 * tas * tas * tas * tas * sfcWind * dt
+        + 1.69992415e-4 * sfcWind * sfcWind * dt
+        + -4.99204314e-5 * tas * sfcWind * sfcWind * dt
+        + 2.47417178e-7 * tas * tas * sfcWind * sfcWind * dt
+        + 1.07596466e-8 * tas * tas * tas * sfcWind * sfcWind * dt
+        + 8.49242932e-5 * sfcWind * sfcWind * sfcWind * dt
+        + 1.35191328e-6 * tas * sfcWind * sfcWind * sfcWind * dt
+        + -6.21531254e-9 * tas * tas * sfcWind * sfcWind * sfcWind * dt
+        + -4.99410301e-6 * sfcWind * sfcWind * sfcWind * sfcWind * dt
+        + -1.89489258e-8 * tas * sfcWind * sfcWind * sfcWind * sfcWind * dt
+        + 8.15300114e-8 * sfcWind * sfcWind * sfcWind * sfcWind * sfcWind * dt
+        + 7.55043090e-4 * dt * dt
+        + -5.65095215e-5 * tas * dt * dt
+        + -4.52166564e-7 * tas * tas * dt * dt
+        + 2.46688878e-8 * tas * tas * tas * dt * dt
+        + 2.42674348e-10 * tas * tas * tas * tas * dt * dt
+        + 1.54547250e-4 * sfcWind * dt * dt
+        + 5.24110970e-6 * tas * sfcWind * dt * dt
+        + -8.75874982e-8 * tas * tas * sfcWind * dt * dt
+        + -1.50743064e-9 * tas * tas * tas * sfcWind * dt * dt
+        + -1.56236307e-5 * sfcWind * sfcWind * dt * dt
+        + -1.33895614e-7 * tas * sfcWind * sfcWind * dt * dt
+        + 2.49709824e-9 * tas * tas * sfcWind * sfcWind * dt * dt
+        + 6.51711721e-7 * sfcWind * sfcWind * sfcWind * dt * dt
+        + 1.94960053e-9 * tas * sfcWind * sfcWind * sfcWind * dt * dt
+        + -1.00361113e-8 * sfcWind * sfcWind * sfcWind * sfcWind * dt * dt
+        + -1.21206673e-5 * dt * dt * dt
+        + -2.18203660e-7 * tas * dt * dt * dt
+        + 7.51269482e-9 * tas * tas * dt * dt * dt
+        + 9.79063848e-11 * tas * tas * tas * dt * dt * dt
+        + 1.25006734e-6 * sfcWind * dt * dt * dt
+        + -1.81584736e-9 * tas * sfcWind * dt * dt * dt
+        + -3.52197671e-10 * tas * tas * sfcWind * dt * dt * dt
+        + -3.36514630e-8 * sfcWind * sfcWind * dt * dt * dt
+        + 1.35908359e-10 * tas * sfcWind * sfcWind * dt * dt * dt
+        + 4.17032620e-10 * sfcWind * sfcWind * sfcWind * dt * dt * dt
+        + -1.30369025e-9 * dt * dt * dt * dt
+        + 4.13908461e-10 * tas * dt * dt * dt * dt
+        + 9.22652254e-12 * tas * tas * dt * dt * dt * dt
+        + -5.08220384e-9 * sfcWind * dt * dt * dt * dt
+        + -2.24730961e-11 * tas * sfcWind * dt * dt * dt * dt
+        + 1.17139133e-10 * sfcWind * sfcWind * dt * dt * dt * dt
+        + 6.62154879e-10 * dt * dt * dt * dt * dt
+        + 4.03863260e-13 * tas * dt * dt * dt * dt * dt
+        + 1.95087203e-12 * sfcWind * dt * dt * dt * dt * dt
+        + -4.73602469e-12 * dt * dt * dt * dt * dt * dt
+        + 5.12733497e0 * wvp
+        + -3.12788561e-1 * tas * wvp
+        + -1.96701861e-2 * tas * tas * wvp
+        + 9.99690870e-4 * tas * tas * tas * wvp
+        + 9.51738512e-6 * tas * tas * tas * tas * wvp
+        + -4.66426341e-7 * tas * tas * tas * tas * tas * wvp
+        + 5.48050612e-1 * sfcWind * wvp
+        + -3.30552823e-3 * tas * sfcWind * wvp
+        + -1.64119440e-3 * tas * tas * sfcWind * wvp
+        + -5.16670694e-6 * tas * tas * tas * sfcWind * wvp
+        + 9.52692432e-7 * tas * tas * tas * tas * sfcWind * wvp
+        + -4.29223622e-2 * sfcWind * sfcWind * wvp
+        + 5.00845667e-3 * tas * sfcWind * sfcWind * wvp
+        + 1.00601257e-6 * tas * tas * sfcWind * sfcWind * wvp
+        + -1.81748644e-6 * tas * tas * tas * sfcWind * sfcWind * wvp
+        + -1.25813502e-3 * sfcWind * sfcWind * sfcWind * wvp
+        + -1.79330391e-4 * tas * sfcWind * sfcWind * sfcWind * wvp
+        + 2.34994441e-6 * tas * tas * sfcWind * sfcWind * sfcWind * wvp
+        + 1.29735808e-4 * sfcWind * sfcWind * sfcWind * sfcWind * wvp
+        + 1.29064870e-6 * tas * sfcWind * sfcWind * sfcWind * sfcWind * wvp
+        + -2.28558686e-6 * sfcWind * sfcWind * sfcWind * sfcWind * sfcWind * wvp
+        + -3.69476348e-2 * dt * wvp
+        + 1.62325322e-3 * tas * dt * wvp
+        + -3.14279680e-5 * tas * tas * dt * wvp
+        + 2.59835559e-6 * tas * tas * tas * dt * wvp
+        + -4.77136523e-8 * tas * tas * tas * tas * dt * wvp
+        + 8.64203390e-3 * sfcWind * dt * wvp
+        + -6.87405181e-4 * tas * sfcWind * dt * wvp
+        + -9.13863872e-6 * tas * tas * sfcWind * dt * wvp
+        + 5.15916806e-7 * tas * tas * tas * sfcWind * dt * wvp
+        + -3.59217476e-5 * sfcWind * sfcWind * dt * wvp
+        + 3.28696511e-5 * tas * sfcWind * sfcWind * dt * wvp
+        + -7.10542454e-7 * tas * tas * sfcWind * sfcWind * dt * wvp
+        + -1.24382300e-5 * sfcWind * sfcWind * sfcWind * dt * wvp
+        + -7.38584400e-9 * tas * sfcWind * sfcWind * sfcWind * dt * wvp
+        + 2.20609296e-7 * sfcWind * sfcWind * sfcWind * sfcWind * dt * wvp
+        + -7.32469180e-4 * dt * dt * wvp
+        + -1.87381964e-5 * tas * dt * dt * wvp
+        + 4.80925239e-6 * tas * tas * dt * dt * wvp
+        + -8.75492040e-8 * tas * tas * tas * dt * dt * wvp
+        + 2.77862930e-5 * sfcWind * dt * dt * wvp
+        + -5.06004592e-6 * tas * sfcWind * dt * dt * wvp
+        + 1.14325367e-7 * tas * tas * sfcWind * dt * dt * wvp
+        + 2.53016723e-6 * sfcWind * sfcWind * dt * dt * wvp
+        + -1.72857035e-8 * tas * sfcWind * sfcWind * dt * dt * wvp
+        + -3.95079398e-8 * sfcWind * sfcWind * sfcWind * dt * dt * wvp
+        + -3.59413173e-7 * dt * dt * dt * wvp
+        + 7.04388046e-7 * tas * dt * dt * dt * wvp
+        + -1.89309167e-8 * tas * tas * dt * dt * dt * wvp
+        + -4.79768731e-7 * sfcWind * dt * dt * dt * wvp
+        + 7.96079978e-9 * tas * sfcWind * dt * dt * dt * wvp
+        + 1.62897058e-9 * sfcWind * sfcWind * dt * dt * dt * wvp
+        + 3.94367674e-8 * dt * dt * dt * dt * wvp
+        + -1.18566247e-9 * tas * dt * dt * dt * dt * wvp
+        + 3.34678041e-10 * sfcWind * dt * dt * dt * dt * wvp
+        + -1.15606447e-10 * dt * dt * dt * dt * dt * wvp
+        + -2.80626406e0 * wvp * wvp
+        + 5.48712484e-1 * tas * wvp * wvp
+        + -3.99428410e-3 * tas * tas * wvp * wvp
+        + -9.54009191e-4 * tas * tas * tas * wvp * wvp
+        + 1.93090978e-5 * tas * tas * tas * tas * wvp * wvp
+        + -3.08806365e-1 * sfcWind * wvp * wvp
+        + 1.16952364e-2 * tas * sfcWind * wvp * wvp
+        + 4.95271903e-4 * tas * tas * sfcWind * wvp * wvp
+        + -1.90710882e-5 * tas * tas * tas * sfcWind * wvp * wvp
+        + 2.10787756e-3 * sfcWind * sfcWind * wvp * wvp
+        + -6.98445738e-4 * tas * sfcWind * sfcWind * wvp * wvp
+        + 2.30109073e-5 * tas * tas * sfcWind * sfcWind * wvp * wvp
+        + 4.17856590e-4 * sfcWind * sfcWind * sfcWind * wvp * wvp
+        + -1.27043871e-5 * tas * sfcWind * sfcWind * sfcWind * wvp * wvp
+        + -3.04620472e-6 * sfcWind * sfcWind * sfcWind * sfcWind * wvp * wvp
+        + 5.14507424e-2 * dt * wvp * wvp
+        + -4.32510997e-3 * tas * dt * wvp * wvp
+        + 8.99281156e-5 * tas * tas * dt * wvp * wvp
+        + -7.14663943e-7 * tas * tas * tas * dt * wvp * wvp
+        + -2.66016305e-4 * sfcWind * dt * wvp * wvp
+        + 2.63789586e-4 * tas * sfcWind * dt * wvp * wvp
+        + -7.01199003e-6 * tas * tas * sfcWind * dt * wvp * wvp
+        + -1.06823306e-4 * sfcWind * sfcWind * dt * wvp * wvp
+        + 3.61341136e-6 * tas * sfcWind * sfcWind * dt * wvp * wvp
+        + 2.29748967e-7 * sfcWind * sfcWind * sfcWind * dt * wvp * wvp
+        + 3.04788893e-4 * dt * dt * wvp * wvp
+        + -6.42070836e-5 * tas * dt * dt * wvp * wvp
+        + 1.16257971e-6 * tas * tas * dt * dt * wvp * wvp
+        + 7.68023384e-6 * sfcWind * dt * dt * wvp * wvp
+        + -5.47446896e-7 * tas * sfcWind * dt * dt * wvp * wvp
+        + -3.59937910e-8 * sfcWind * sfcWind * dt * dt * wvp * wvp
+        + -4.36497725e-6 * dt * dt * dt * wvp * wvp
+        + 1.68737969e-7 * tas * dt * dt * dt * wvp * wvp
+        + 2.67489271e-8 * sfcWind * dt * dt * dt * wvp * wvp
+        + 3.23926897e-9 * dt * dt * dt * dt * wvp * wvp
+        + -3.53874123e-2 * wvp * wvp * wvp
+        + -2.21201190e-1 * tas * wvp * wvp * wvp
+        + 1.55126038e-2 * tas * tas * wvp * wvp * wvp
+        + -2.63917279e-4 * tas * tas * tas * wvp * wvp * wvp
+        + 4.53433455e-2 * sfcWind * wvp * wvp * wvp
+        + -4.32943862e-3 * tas * sfcWind * wvp * wvp * wvp
+        + 1.45389826e-4 * tas * tas * sfcWind * wvp * wvp * wvp
+        + 2.17508610e-4 * sfcWind * sfcWind * wvp * wvp * wvp
+        + -6.66724702e-5 * tas * sfcWind * sfcWind * wvp * wvp * wvp
+        + 3.33217140e-5 * sfcWind * sfcWind * sfcWind * wvp * wvp * wvp
+        + -2.26921615e-3 * dt * wvp * wvp * wvp
+        + 3.80261982e-4 * tas * dt * wvp * wvp * wvp
+        + -5.45314314e-9 * tas * tas * dt * wvp * wvp * wvp
+        + -7.96355448e-4 * sfcWind * dt * wvp * wvp * wvp
+        + 2.53458034e-5 * tas * sfcWind * dt * wvp * wvp * wvp
+        + -6.31223658e-6 * sfcWind * sfcWind * dt * wvp * wvp * wvp
+        + 3.02122035e-4 * dt * dt * wvp * wvp * wvp
+        + -4.77403547e-6 * tas * dt * dt * wvp * wvp * wvp
+        + 1.73825715e-6 * sfcWind * dt * dt * wvp * wvp * wvp
+        + -4.09087898e-7 * dt * dt * dt * wvp * wvp * wvp
+        + 6.14155345e-1 * wvp * wvp * wvp * wvp
+        + -6.16755931e-2 * tas * wvp * wvp * wvp * wvp
+        + 1.33374846e-3 * tas * tas * wvp * wvp * wvp * wvp
+        + 3.55375387e-3 * sfcWind * wvp * wvp * wvp * wvp
+        + -5.13027851e-4 * tas * sfcWind * wvp * wvp * wvp * wvp
+        + 1.02449757e-4 * sfcWind * sfcWind * wvp * wvp * wvp * wvp
+        + -1.48526421e-3 * dt * wvp * wvp * wvp * wvp
+        + -4.11469183e-5 * tas * dt * wvp * wvp * wvp * wvp
+        + -6.80434415e-6 * sfcWind * dt * wvp * wvp * wvp * wvp
+        + -9.77675906e-6 * dt * dt * wvp * wvp * wvp * wvp
+        + 8.82773108e-2 * wvp * wvp * wvp * wvp * wvp
+        + -3.01859306e-3 * tas * wvp * wvp * wvp * wvp * wvp
+        + 1.04452989e-3 * sfcWind * wvp * wvp * wvp * wvp * wvp
+        + 2.47090539e-4 * dt * wvp * wvp * wvp * wvp * wvp
+        + 1.48348065e-3 * wvp * wvp * wvp * wvp * wvp * wvp
+    )
+
+
+@declare_units(
+    tas="[temperature]",
+    hurs="[]",
+    sfcWind="[speed]",
+    mrt="[temperature]",
+    rsds="[radiation]",
+    rsus="[radiation]",
+    rlds="[radiation]",
+    rlus="[radiation]",
+)
+def universal_thermal_climate_index(
+    tas: xr.DataArray,
+    hurs: xr.DataArray,
+    sfcWind: xr.DataArray,
+    mrt: xr.DataArray = None,
+    rsds: xr.DataArray = None,
+    rsus: xr.DataArray = None,
+    rlds: xr.DataArray = None,
+    rlus: xr.DataArray = None,
+    stat: str = "average",
+    mask_invalid: bool = True,
+) -> xr.DataArray:
+    r"""Universal thermal climate index.
+
+    The UTCI is the equivalent temperature for the environment derived from a
+    reference environment and is used to evaluate heat stress in outdoor spaces.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+        Mean temperature
+    hurs : xarray.DataArray
+        Relative Humidity
+    sfcWind : xarray.DataArray
+        Wind velocity
+    mrt: xarray.DataArray, optional
+        Mean radiant temperature
+    rsds : xr.DataArray, optional
+        Surface Downwelling Shortwave Radiation
+        This is necessary if mrt is not None.
+    rsus : xr.DataArray, optional
+        Surface Upwelling Shortwave Radiation
+        This is necessary if mrt is not None.
+    rlds : xr.DataArray, optional
+        Surface Downwelling Longwave Radiation
+        This is necessary if mrt is not None.
+    rlus : xr.DataArray, optional
+        Surface Upwelling Longwave Radiation
+        This is necessary if mrt is not None.
+    stat  : {'average', 'instant', 'sunlit'}
+        Which statistic to apply. If "average", the average of the cosine of the
+        solar zenith angle is calculated. If "instant", the instantaneous cosine
+        of the solar zenith angle is calculated. If "sunlit", the cosine of the
+        solar zenith angle is calculated during the sunlit period of each interval.
+        If "instant", the instantaneous cosine of the solar zenith angle is calculated.
+        This is necessary if mrt is not None.
+    mask_invalid: boolean
+        If True (default), UTCI values are NaN where any of the inputs are outside
+        their validity ranges : -50°C < tas < 50°C,  -30°C < tas - mrt < 30°C
+        and  0.5 m/s < sfcWind < 17.0 m/s.
+
+    Returns
+    -------
+    xarray.DataArray
+        Universal Thermal Climate Index.
+
+    Notes
+    -----
+    The calculation uses water vapor partial pressure, which is derived from relative
+    humidity and saturation vapor pressure computed according to the ITS-90 equation.
+
+    This code was inspired by the `pythermalcomfort` and `thermofeel` packages.
+
+    References
+    ----------
+    Bröde, Peter (2009). Program for calculating UTCI Temperature (UTCI), version a 0.002, http://www.utci.org/public/UTCI%20Program%20Code/UTCI_a002.f90
+    Błażejczyk, K., Jendritzky, G., Bröde, P., Fiala, D., Havenith, G., Epstein, Y., Psikuta, A., & Kampmann, B. (2013). An introduction to the Universal Thermal Climate Index (UTCI). DOI:10.7163/GPOL.2013.1
+
+    See Also
+    --------
+    http://www.utci.org/utcineu/utcineu.php
+    """
+    e_sat = saturation_vapor_pressure(tas=tas, method="its90")
+    tas = convert_units_to(tas, "degC")
+    sfcWind = convert_units_to(sfcWind, "m/s")
+    if mrt is None:
+        mrt = mean_radiant_temperature(
+            rsds=rsds, rsus=rsus, rlds=rlds, rlus=rlus, stat=stat
+        )
+    mrt = convert_units_to(mrt, "degC")
+    delta = mrt - tas
+    pa = convert_units_to(e_sat, "kPa") * convert_units_to(hurs, "1")
+
+    utci = _utci(tas, sfcWind, delta, pa)
+
+    utci = utci.assign_attrs({"units": "degC"})
+    if mask_invalid:
+        utci = utci.where(
+            (-50.0 < tas)
+            & (tas < 50.0)
+            & (-30 < delta)
+            & (delta < 30)
+            & (0.5 < sfcWind)
+            & (sfcWind < 17.0)
+        )
+    return utci
+
+
+def _fdir_ratio(
+    dates: xr.DataArray,
+    csza_i: xr.DataArray,
+    csza_s: xr.DataArray,
+    rsds: xr.DataArray,
+) -> xr.DataArray:
+    r"""Return ratio of direct solar radiation.
+
+    The ratio of direct solar radiation is the fraction of the total horizontal
+    solar irridance due to the direct beam of the sun.
+
+    Parameters
+    ----------
+    dates : xr.DataArray
+        Series of dates and time of day
+    csza_i : xr.DataArray
+        Cosine of the solar zenith angle during each interal
+    csza_s : xr.DataArray
+        Cosine of the solar zenith angle during the sunlit period of each interval
+    rsds : xr.DataArray
+        Surface Downwelling Shortwave Radiation
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+        Ratio of direct solar radiation
+
+    Notes
+    -----
+    This code was inspired by the `PyWBGT` package.
+
+    References
+    ----------
+    James C. Liljegren, Richard A. Carhart, Philip Lawday, Stephen Tschopp and Robert Sharp (2008) Modeling the Wet Bulb Globe Temperature Using Standard Meteorological Measurements, Journal of Occupational and Environmental Hygiene, 5:10, 645-655, https://doi.org/10.1080/15459620802310770
+    Kong, Qinqin, and Matthew Huber. “Explicit Calculations of Wet Bulb Globe Temperature Compared with Approximations and Why It Matters for Labor Productivity.” Earth’s Future, January 31, 2022. https://doi.org/10.1029/2021EF002334.
+    """
+    d = distance_from_sun(dates)
+    s_star = rsds * ((1367 * csza_s * (d ** (-2))) ** (-1))
+    s_star = xr.where(s_star > 0.85, 0.85, s_star)
+    fdir_ratio = np.exp(3 - 1.34 * s_star - 1.65 * (s_star ** (-1)))
+    fdir_ratio = xr.where(fdir_ratio > 0.9, 0.9, fdir_ratio)
+    return xr.where(
+        (fdir_ratio <= 0) | (csza_i <= np.cos(89.5 / 180 * np.pi)) | (rsds <= 0),
+        0,
+        fdir_ratio,
+    )
+
+
+@declare_units(
+    rsds="[radiation]", rsus="[radiation]", rlds="[radiation]", rlus="[radiation]"
+)
+def mean_radiant_temperature(
+    rsds: xr.DataArray,
+    rsus: xr.DataArray,
+    rlds: xr.DataArray,
+    rlus: xr.DataArray,
+    stat: str = "average",
+) -> xr.DataArray:
+    r"""Mean radiant temperature.
+
+    The mean radiant temperature is the incidence of radiation on the body from all directions.
+    WARNING: There are some issues in the calculation of mrt in polar regions.
+
+    Parameters
+    ----------
+    rsds : xr.DataArray
+       Surface Downwelling Shortwave Radiation
+    rsus : xr.DataArray
+        Surface Upwelling Shortwave Radiation
+    rlds : xr.DataArray
+        Surface Downwelling Longwave Radiation
+    rlus : xr.DataArray
+        Surface Upwelling Longwave Radiation
+    stat  : {'average', 'instant', 'sunlit'}
+        Which statistic to apply. If "average", the average of the cosine of the
+        solar zenith angle is calculated. If "instant", the instantaneous cosine
+        of the solar zenith angle is calculated. If "sunlit", the cosine of the
+        solar zenith angle is calculated during the sunlit period of each interval.
+        If "instant", the instantaneous cosine of the solar zenith angle is calculated.
+        This is necessary if mrt is not None.
+
+    Returns
+    -------
+    xarray.DataArray, [K]
+        Mean radiant temperature
+
+    Notes
+    -----
+    This code was inspired by the `thermofeel` package.
+
+    References
+    ----------
+    Di Napoli, C., Hogan, R.J. & Pappenberger, F. Mean radiant temperature from global-scale numerical weather prediction models. Int J Biometeorol 64, 1233–1245 (2020). https://doi.org/10.1007/s00484-020-01900-5
+    Brimicombe , C., Di Napoli, C., Quintino, T., Pappenberger, F., Cornforth, R. and Cloke, H., 2021 thermofeel: a python thermal comfort indices library, https://doi.org/10.21957/mp6v-fd16
+    """
+    rsds = convert_units_to(rsds, "W m-2")
+    rsus = convert_units_to(rsus, "W m-2")
+    rlds = convert_units_to(rlds, "W m-2")
+    rlus = convert_units_to(rlus, "W m-2")
+
+    dates = rsds.time
+    hours = ((dates - dates.dt.floor("D")).dt.seconds / 3600).assign_attrs(units="h")
+    lat = rsds.lat
+    lon = rsds.lon
+    decimal_year = datetime_to_decimal_year(times=dates, calendar=dates.dt.calendar)
+    day_angle = ((decimal_year % 1) * 2 * np.pi).assign_attrs(units="rad")
+    dec = solar_declination(day_angle)
+    if stat == "sunlit":
+        interval = (dates.diff("time").dt.seconds / 3600).reindex(
+            time=dates.time, method="bfill"
+        )
+        csza_i = cosine_of_solar_zenith_angle(
+            declination=dec,
+            lat=lat,
+            lon=lon,
+            hours=hours,
+            interval=interval,
+            stat="interval",
+        )
+        csza_s = cosine_of_solar_zenith_angle(
+            declination=dec, lat=lat, lon=lon, hours=hours, interval=interval, stat=stat
+        )
+    elif stat == "instant":
+        tc = time_correction_for_solar_angle(day_angle)
+        csza = cosine_of_solar_zenith_angle(
+            declination=dec,
+            lat=lat,
+            lon=lon,
+            time_correction=tc,
+            hours=hours,
+            stat="instant",
+        )
+        csza_i = csza.copy()
+        csza_s = csza.copy()
+    elif stat == "average":
+        csza = cosine_of_solar_zenith_angle(
+            declination=dec,
+            lat=lat,
+            stat="average",
+        )
+        csza_i = csza.copy()
+        csza_s = csza.copy()
+    else:
+        raise NotImplementedError(
+            "Argument 'stat' must be one of 'average', 'instant' or 'sunlit'."
+        )
+
+    fdir_ratio = _fdir_ratio(dates, csza_i, csza_s, rsds)
+
+    rsds_direct = fdir_ratio * rsds
+    rsds_diffuse = rsds - rsds_direct
+
+    gamma = np.arcsin(csza_i)
+    fp = 0.308 * np.cos(gamma * 0.988 - (gamma**2 / 50000))
+    i_star = xr.where(csza_s > 0.001, rsds_direct / csza_s, 0)
+
+    mrt = np.power(
+        (
+            (1 / 5.67e-8)  # Stefan-Boltzmann constant
+            * (
+                0.5 * rlds
+                + 0.5 * rlus
+                + (0.7 / 0.97) * (0.5 * rsds_diffuse + 0.5 * rsus + fp * i_star)
+            )
+        ),
+        0.25,
+    )
+    return mrt.assign_attrs({"units": "K"})

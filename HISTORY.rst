@@ -4,7 +4,7 @@ History
 
 0.37.0 (unreleased)
 -------------------
-Contributors to this version: Abel Aoun (:user:`bzah`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Juliette Lavoie (:user:`juliettelavoie`).
+Contributors to this version: Abel Aoun (:user:`bzah`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Juliette Lavoie (:user:`juliettelavoie`), Ludwig Lierhammer (:user:`ludwiglierhammer`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -26,6 +26,7 @@ New features and enhancements
 * New ``xclim.core.calendar.construct_offset``, the inverse operation of ``parse_offset``. (:pull:`1090`).
 * Rechunking operations in ``xclim.indices.run_length.rle`` are now synchronized with dask's options. (:pull:`1090`).
 * A convenience recipe for installing key development branches of some dependencies has been added (`$ pip install xclim[upstream]`). (:issue:`1088`, :pull:`1092`).
+* A mention of the "missing" checks and options is added to the history attribute of indicators, where appropriate. (:issue:`1100`, :pull:`1103`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -35,6 +36,11 @@ Breaking changes
     - cold_spell_duration_index, tg90p, tg10p, tx90p, tx10p, tn90p, tn10p, warm_spell_duration_index, days_over_precip_doy_thresh, days_over_precip_thresh, fraction_over_precip_doy_thresh, fraction_over_precip_thresh, cold_and_dry_days, warm_and_dry_days, warm_and_wet_days, cold_and_wet_days
   have been modified. The parameter for percentiles values is now named after the variable it is supposed to be computed upon. (:pull:`1050`)
 * `pytest-runner` has been removed as a dependency (it was never needed for `xclim` development). (:pull:`1074`).
+
+New indicators
+^^^^^^^^^^^^^^
+* ``universal_thermal_climate_index`` and ``mean_radiant_temperature`` for computing the universal thermal climate index from the near-surface temperature, relative humidity, near-surface windspeed and radiation. (:issue:`1060`, :pull:`1062`).
+    - A new method ``ITS90`` has also been added for calculating saturation water vapour pressure. (:issue:`1060`, :pull:`1062`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^

@@ -10,12 +10,12 @@ functions perform units checks to make sure that inputs have the expected dimens
 have units of temperature, whether it is celsius, kelvin or fahrenheit), and set the `units`
 attribute of the output DataArray.
 
-The `calendar`, `fwi`, `generic`, `run_length` and `utils` submodule provide helpers to simplify
-the implementation of the indices.
+The `calendar`, `fwi`, `generic`, `helpers`, `run_length` and `stats` submodules provide
+helpers to simplify the implementation of the indices.
 
 .. note::
 
-    Indices functions do not perform missing value checks, and do not set CF-Convention attributes
+    Indices functions do not perform missing value checks, and usually do not set CF-Convention attributes
     (long_name, standard_name, description, cell_methods, etc.). These functionalities are provided by
     :py:class:`xclim.indicators.Indicator` instances found in the :py:mod:`xclim.indicators.atmos`,
     :py:mod:`xclim.indicators.land` and :mod:`xclim.indicators.seaIce` modules, documented in :ref:`indicators:Climate Indicators`.

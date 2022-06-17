@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import datetime as pydt
 import re
-from typing import Any, NewType, Optional, Sequence, Union
+from typing import Any, NewType, Sequence
 
 import cftime
 import numpy as np
