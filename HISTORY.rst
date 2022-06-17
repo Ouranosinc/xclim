@@ -4,7 +4,7 @@ History
 
 0.37.0 (unreleased)
 -------------------
-Contributors to this version:  Abel Aoun (:user:`bzah`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Juliette Lavoie (:user:`juliettelavoie`).
+Contributors to this version:  Abel Aoun (:user:`bzah`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Juliette Lavoie (:user:`juliettelavoie`), Ludwig Lierhammer (:user:`ludwiglierhammer`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -37,6 +37,11 @@ Breaking changes
 * `pytest-runner` has been removed as a dependency (it was never needed for `xclim` development). (:pull:`1074`).
 * `xclim.testing._utils.py` has been renamed to `xclim.testing.utils.py` for added documentation visibility. (:pull:`1074`).
     - Some unused functions and classes (``as_tuple``, ``TestFile``, ``TestDataSet``) have been removed. (:pull:`1107`).
+
+New indicators
+^^^^^^^^^^^^^^
+* ``universal_thermal_climate_index`` and ``mean_radiant_temperature`` for computing the universal thermal climate index from the near-surface temperature, relative humidity, near-surface windspeed and radiation. (:issue:`1060`, :pull:`1062`).
+    - A new method ``ITS90`` has also been added for calculating saturation water vapour pressure. (:issue:`1060`, :pull:`1062`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^

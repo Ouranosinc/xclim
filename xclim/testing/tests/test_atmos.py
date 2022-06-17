@@ -280,9 +280,13 @@ class TestPotentialEvapotranspiration:
 
         pet_tw48 = atmos.potential_evapotranspiration(tas=tm, method="TW48")
 
-        np.testing.assert_allclose(pet_br65[0, 100:102], [np.nan, np.nan])
-        np.testing.assert_allclose(pet_hg85[100:102, 0], [np.nan, np.nan])
-        np.testing.assert_allclose(pet_tw48[0, 0], [np.nan])
+        np.testing.assert_allclose(
+            pet_br65.isel(location=0, time=slice(100, 102)), [np.nan, np.nan]
+        )
+        np.testing.assert_allclose(
+            pet_hg85.isel(location=0, time=slice(100, 102)), [np.nan, np.nan]
+        )
+        np.testing.assert_allclose(pet_tw48.isel(location=0, time=0), [np.nan])
 
 
 class TestWaterBudget:
@@ -355,3 +359,56 @@ class TestWaterBudget:
         np.testing.assert_allclose(p_pet_hg85[0, 100:102], [np.nan, np.nan])
         np.testing.assert_allclose(p_pet_tw48[0, 0], [np.nan])
         np.testing.assert_allclose(p_pet_evpot[0, 0], [np.nan])
+
+
+def test_universal_thermal_climate_index():
+    dataset = open_dataset(
+        "ERA5/daily_surface_cancities_1990-1993.nc", branch="add-radiation"
+    )
+    tas = dataset.tas
+    hurs = dataset.hurs
+    sfcWind, sfcWindfromdir = atmos.wind_speed_from_vector(
+        uas=dataset.uas, vas=dataset.vas
+    )
+    rsds = dataset.rsds
+    rsus = dataset.rsus
+    rlds = dataset.rlds
+    rlus = dataset.rlus
+    # Expected values
+    utci_exp = [256.8, 258.0, 237.4, 258.5, 266.2]
+
+    utci = atmos.universal_thermal_climate_index(
+        tas=tas,
+        hurs=hurs,
+        sfcWind=sfcWind,
+        rsds=rsds,
+        rsus=rsus,
+        rlds=rlds,
+        rlus=rlus,
+        stat="average",
+    )
+
+    np.testing.assert_allclose(utci.isel(time=0), utci_exp, rtol=1e-03)
+
+
+def test_mean_radiant_temperature():
+    dataset = open_dataset(
+        "ERA5/daily_surface_cancities_1990-1993.nc", branch="add-radiation"
+    )
+    rsds = dataset.rsds
+    rsus = dataset.rsus
+    rlds = dataset.rlds
+    rlus = dataset.rlus
+
+    # Expected values
+    exp_sun = [np.nan, np.nan, np.nan, np.nan, np.nan]
+    exp_ins = [277.1, 274.6, 243.5, 268.1, 309.1]
+    exp_avg = [277.1, 274.6, 243.5, 268.1, 278.4]
+
+    mrt_sun = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="sunlit")
+    mrt_ins = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="instant")
+    mrt_avg = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="average")
+    rtol = 1e-03
+    np.testing.assert_allclose(mrt_sun.isel(time=0), exp_sun, rtol=rtol)
+    np.testing.assert_allclose(mrt_ins.isel(time=0), exp_ins, rtol=rtol)
+    np.testing.assert_allclose(mrt_avg.isel(time=0), exp_avg, rtol=rtol)
