@@ -32,9 +32,9 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 * ``xclim.atmos.water_budget`` has been separated into ``water_budget`` (calculated directly with 'evspsblpot') and ``water_budget_from_tas`` (original function). (:pull:`1086`).
 * Injected parameters in indicators are now left out of a function's signature and will not be included in the history attribute. (:pull:`1086`).
-* The signature for the following Indicators:
+* The signature for the following Indicators have been modified (:pull:`1050`):
     - cold_spell_duration_index, tg90p, tg10p, tx90p, tx10p, tn90p, tn10p, warm_spell_duration_index, days_over_precip_doy_thresh, days_over_precip_thresh, fraction_over_precip_doy_thresh, fraction_over_precip_thresh, cold_and_dry_days, warm_and_dry_days, warm_and_wet_days, cold_and_wet_days
-  have been modified. The parameter for percentiles values is now named after the variable it is supposed to be computed upon. (:pull:`1050`)
+* The parameter for percentile values is now named after the variable it is supposed to be computed upon. (:pull:`1050`).
 * `pytest-runner` has been removed as a dependency (it was never needed for `xclim` development). (:pull:`1074`).
 * `xclim.testing._utils.py` has been renamed to `xclim.testing.utils.py` for added documentation visibility. (:pull:`1074`).
     - Some unused functions and classes (``as_tuple``, ``TestFile``, ``TestDataSet``) have been removed. (:pull:`1107`).
