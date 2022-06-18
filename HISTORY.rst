@@ -2,8 +2,8 @@
 History
 =======
 
-0.37.0 (unreleased)
--------------------
+0.37.0 (17 June 2022)
+---------------------
 Contributors to this version: Abel Aoun (:user:`bzah`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Juliette Lavoie (:user:`juliettelavoie`), Ludwig Lierhammer (:user:`ludwiglierhammer`).
 
 Announcements
@@ -18,7 +18,7 @@ New features and enhancements
 * Add "Celsius" to aliases of "celsius" unit. (:issue:`1067`, :pull:`1068`).
 * All indicators now have indexing enabled, except those computing statistics on spells. (:issue:`1069`, :pull:`1070`).
 * A convenience function for returning the version numbers for relevant xclim dependencies (``xclim.testing.show_versions``) is now offered. (:pull:`1073`).
-    - A CLI version of this function is also available from the command line: `$ xclim show_version_info`. (:pull:`1073`).
+    - A CLI version of this function is also available from the command line (`$ xclim show_version_info`). (:pull:`1073`).
 * New "keep_attrs" option to control the handling of the attributes within the indicators. (:issue:`1026`, :pull:`1076`).
 * Added a notebook showcasing some simple examples of Spatial Analogues. (:issue:`585`, :pull:`1075`).
 * ``create_ensembles`` now accepts a glob string to find datasets. (:pull:`1081`).
@@ -52,7 +52,7 @@ Internal changes
 * Code snippets within documentation are now checked and reformatted to `black` conventions with `blackdoc`. A `pre-commit` hook is now in place to run these checks. (:pull:`1098`).
 * Test coverage statistic no longer includes coverage of the test files themselves. Coverage now reflects lines of usable code covered. (:pull:`1101`).
 * Reordered listed authors alphabetically. Promoted :user:`bzah` to core contributor. (:pull:`1105`).
-* Tests have been added for some functions in `xclim.testing.utils`; some previously uncaught bugs in ``list_input_variables``, ``publish_release_notes``, and ``show_versions`` have been patched. (:issue:`1078`, :pull:`1107`).
+* Tests have been added for some functions in `xclim.testing.utils.py`; some previously uncaught bugs in ``list_input_variables``, ``publish_release_notes``, and ``show_versions`` have been patched. (:issue:`1078`, :pull:`1107`).
 
 Bug fixes
 ^^^^^^^^^
