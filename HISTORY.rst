@@ -25,7 +25,6 @@ New features and enhancements
 * Improved percentile based indicators metadata with the window, threshold and climatology period used to compute percentiles. (:issue:`1047`, :pull:`1050`).
 * New ``xclim.core.calendar.construct_offset``, the inverse operation of ``parse_offset``. (:pull:`1090`).
 * Rechunking operations in ``xclim.indices.run_length.rle`` are now synchronized with dask's options. (:pull:`1090`).
-* A convenience recipe for installing key development branches of some dependencies has been added (`$ pip install xclim[upstream]`). (:issue:`1088`, :pull:`1092`).
 * A mention of the "missing" checks and options is added to the history attribute of indicators, where appropriate. (:issue:`1100`, :pull:`1103`).
 
 Breaking changes
@@ -53,6 +52,8 @@ Internal changes
 * Test coverage statistic no longer includes coverage of the test files themselves. Coverage now reflects lines of usable code covered. (:pull:`1101`).
 * Reordered listed authors alphabetically. Promoted :user:`bzah` to core contributor. (:pull:`1105`).
 * Tests have been added for some functions in `xclim.testing.utils.py`; some previously uncaught bugs in ``list_input_variables``, ``publish_release_notes``, and ``show_versions`` have been patched. (:issue:`1078`, :pull:`1107`).
+* A convenience command for installing xclim with key development branches of some dependencies has been added (`$ make upstream`). (:issue:`1088`, :pull:`1092`; amended in :issue:`1113`, :pull:`1114`).
+    - This build configuration is also available in `tox` for local development purposes (`$ tox -e pyXX-upstream`).
 
 Bug fixes
 ^^^^^^^^^

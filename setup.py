@@ -54,14 +54,6 @@ with open("requirements_dev.txt") as dev:
     for dependency in dev.readlines():
         dev_requirements.append(dependency)
 
-upstream_requirements = [
-    "wheel",
-    "bottleneck @ git+https://github.com/pydata/bottleneck.git@master#egg=bottleneck",
-    "cftime @ git+https://github.com/Unidata/cftime.git@master#egg=cftime",
-    "flox @ git+https://github.com/dcherian/flox.git@main#egg=flox",
-    "xarray @ git+https://github.com/pydata/xarray.git@main#egg=xarray",
-]
-
 KEYWORDS = "xclim climate climatology netcdf gridded analysis"
 
 setup(
@@ -94,7 +86,7 @@ setup(
         [console_scripts]
         xclim=xclim.cli:cli
     """,
-    extras_require={"dev": dev_requirements, "upstream": upstream_requirements},
+    extras_require={"dev": dev_requirements},
     url=URL,
     version=VERSION,
     zip_safe=False,

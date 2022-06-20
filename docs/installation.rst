@@ -43,7 +43,9 @@ For convenience, these libraries can be installed alongside `xclim` using the fo
 
 .. code-block::
 
-    $ pip install -e ".[upstream]"
+    $ pip install -r requirements_upstream.txt
+    # Or, alternatively:
+    $ make upstream
 
 .. _flox: https://github.com/dcherian/flox
 .. _clisops: https://github.com/roocs/clisops
@@ -93,4 +95,4 @@ To create a conda development environment including all xclim dependencies, ente
 
     $ conda create -n my_xclim_env python=3.8 --file=environment.yml
     $ conda activate my_xclim_env
-    (my_xclim_env) $ pip install .[dev]
+    (my_xclim_env) $ pip install ".[dev]"
