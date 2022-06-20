@@ -2,7 +2,7 @@
 History
 =======
 
-0.37.0 (17 June 2022)
+0.37.0 (20 June 2022)
 ---------------------
 Contributors to this version: Abel Aoun (:user:`bzah`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Juliette Lavoie (:user:`juliettelavoie`), Ludwig Lierhammer (:user:`ludwiglierhammer`).
 
