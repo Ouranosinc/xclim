@@ -13,6 +13,8 @@ on:
       - setup.py
       - tox.ini
       - xclim/__init__.py
+      - docs/**.ipynb
+      - docs/**.py
       - docs/**.rst
       - .github/**.yml
       - .pre-commit-config.yaml
