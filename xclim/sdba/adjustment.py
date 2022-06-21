@@ -5,6 +5,7 @@ Adjustment Methods
 """
 from __future__ import annotations
 
+from inspect import signature
 from typing import Any, Mapping
 from warnings import warn
 
@@ -1198,6 +1199,19 @@ else:
 
         @classmethod
         def _adjust(cls, ref, hist, sim, *, multi_dim=None, **kwargs):
+            # Check inputs
+            fit_needs_sim = "X1" in signature(cls.sbck.fit).parameters
+            for k, v in signature(cls.sbck.__init__).parameters.items():
+                if (
+                    v.default == v.empty
+                    and v.kind != v.VAR_KEYWORD
+                    and k != "self"
+                    and k not in kwargs
+                ):
+                    raise ValueError(
+                        f"Argument {k} is not optional for SBCK method {cls.sbck.__name__}."
+                    )
+
             ref = ref.rename(time="time_cal")
             hist = hist.rename(time="time_cal")
             sim = sim.rename(time="time_tgt")
@@ -1217,7 +1231,7 @@ else:
                 hist,
                 sim,
                 input_core_dims=input_core_dims,
-                kwargs={"method": cls.sbck, **kwargs},
+                kwargs={"method": cls.sbck, "fit_needs_sim": fit_needs_sim, **kwargs},
                 vectorize=True,
                 keep_attrs=True,
                 dask="parallelized",
@@ -1226,11 +1240,13 @@ else:
             ).rename(time_tgt="time")
 
         @staticmethod
-        def _apply_sbck(ref, hist, sim, method, **kwargs):
+        def _apply_sbck(ref, hist, sim, method, fit_needs_sim, **kwargs):
             obj = method(**kwargs)
-            obj.fit(ref, hist, sim)
+            if fit_needs_sim:
+                obj.fit(ref, hist, sim)
+            else:
+                obj.fit(ref, hist)
             scen = obj.predict(sim)
-            print("ici")
             if sim.ndim == 1:
                 return scen[:, 0]
             return scen
