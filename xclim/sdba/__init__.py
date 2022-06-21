@@ -57,6 +57,19 @@ Most methods acting on grouped data also accept a `window` int argument to pad t
 Units of `window` are the sampling frequency of the main grouping dimension (usually `time`). For more complex grouping,
 one can pass an instance of :py:class:`xclim.sdba.base.Grouper` directly.
 
+Experimental wrap of SBCK
+=========================
+The `SBCK`_ python package implements various bias-adjustment methods, with an emphasis on multivariate
+methods and with a care for performance. If the package is correctly installed alongside xclim, the methods will be wrapped into
+:py:class:`xclim.sdba.adjustment.Adjust` classes (names beginning with `SBCK_`) with a minimal overhead so they can be
+parallelized with dask and accept xarray objects. For now, these experimental classes can't use the train-adjust approach, instead
+they only provide one method, ``adjust(ref, hist, sim, multi_dim=None, **kwargs)`` which performs all steps : initialization of the
+SBCK object, training (fit) and adjusting (predict). All SBCK wrappers accept a ``multi_dim`` argument for specifying the name of
+the "multivariate" dimension. This wrapping is still experimental and some bugs or inconsistencies might exist.
+To see how one can install that package, see :ref:`Extra dependencies`.
+
+.. _SBCK: https://github.com/yrobink/SBCK
+
 Notes for Developers
 ====================
 To be scalable and performant, the sdba module makes use of the special decorators :py:func`xclim.sdba.base.map_blocks`
@@ -70,18 +83,19 @@ Other restrictions : ``map_blocks`` will remove any "auxiliary" coordinates befo
 """
 from __future__ import annotations
 
-from . import detrending, processing, utils
+from . import adjustment, detrending, measures, processing, properties, utils
 from .adjustment import *
 from .base import Grouper
-from .measures import *
 from .processing import (
     construct_moving_yearly_window,
     stack_variables,
     unpack_moving_yearly_window,
     unstack_variables,
 )
-from .properties import *
 
 # TODO: ISIMIP ? Used for precip freq adjustment in biasCorrection.R
 # Hempel, S., Frieler, K., Warszawski, L., Schewe, J., & Piontek, F. (2013). A trend-preserving bias correction &ndash;
 # The ISI-MIP approach. Earth System Dynamics, 4(2), 219–236. https://doi.org/10.5194/esd-4-219-2013
+if hasattr(adjustment, "_generate_SBCK_classes"):
+    for cls in adjustment._generate_SBCK_classes():
+        adjustment.__dict__[cls.__name__] = cls

@@ -337,9 +337,6 @@ class EmpiricalQuantileMapping(TrainAdjust):
     References
     ----------
     Dequé, M. (2007). Frequency of precipitation and temperature extremes over France in an anthropogenic scenario: Model results and statistical correction according to observed values. Global and Planetary Change, 57(1–2), 16–26. https://doi.org/10.1016/j.gloplacha.2006.11.030
-
-    _allow_diff_calendars = False
-
     """
 
     _allow_diff_calendars = False
@@ -1188,3 +1185,109 @@ class NpdfTransform(Adjust):
         out = out.assign(rotation_matrices=rot_matrices)
         out.scenh.attrs["units"] = hist.units
         return out
+
+
+try:
+    import SBCK
+except ImportError:
+    pass
+else:
+
+    class _SBCKAdjust(Adjust):
+        sbck = None  # The method
+
+        @classmethod
+        def _adjust(cls, ref, hist, sim, *, multi_dim=None, **kwargs):
+            ref = ref.rename(time="time_cal")
+            hist = hist.rename(time="time_cal")
+            sim = sim.rename(time="time_tgt")
+
+            if multi_dim:
+                input_core_dims = [
+                    ("time_cal", multi_dim),
+                    ("time_cal", multi_dim),
+                    ("time_tgt", multi_dim),
+                ]
+            else:
+                input_core_dims = [("time_cal",), ("time_cal",), ("time_tgt",)]
+
+            return xr.apply_ufunc(
+                cls._apply_sbck,
+                ref,
+                hist,
+                sim,
+                input_core_dims=input_core_dims,
+                kwargs={"method": cls.sbck, **kwargs},
+                vectorize=True,
+                keep_attrs=True,
+                dask="parallelized",
+                output_core_dims=[input_core_dims[-1]],
+                output_dtypes=[sim.dtype],
+            ).rename(time_tgt="time")
+
+        @staticmethod
+        def _apply_sbck(ref, hist, sim, method, **kwargs):
+            obj = method(**kwargs)
+            obj.fit(ref, hist, sim)
+            scen = obj.predict(sim)
+            print("ici")
+            if sim.ndim == 1:
+                return scen[:, 0]
+            return scen
+
+    def _parse_sbck_doc(cls):
+        def _parse(s):
+            s = s.replace("\t", "    ")
+            n = min(len(line) - len(line.lstrip()) for line in s.split("\n") if line)
+            lines = []
+            for line in s.split("\n"):
+                line = line[n:] if line else line
+                if set(line).issubset({"=", " "}):
+                    line = line.replace("=", "-")
+                elif set(line).issubset({"-", " "}):
+                    line = line.replace("-", "~")
+                lines.append(line)
+            return lines
+
+        return "\n".join(
+            [
+                f"SBCK_{cls.__name__}",
+                "=" * (5 + len(cls.__name__)),
+                (
+                    f"This Adjustment object was auto-generated from the {cls.__name__} "
+                    " object of package SBCK. See :ref:`Experimental wrap of SBCK`."
+                ),
+                "",
+                (
+                    "The adjust method accepts ref, hist, sim and all arguments listed "
+                    'below in "Parameters". It also accepts a `multi_dim` argument '
+                    "specifying the dimension accross which to take the 'features' and "
+                    "is valid for multivariate methods only. See :py:func:`xclim.sdba.stack_variables`."
+                    "In the description below, `n_features` is the size of the `multi_dim` "
+                    "dimension. There is now way of specifying parameters accross other "
+                    "dimensions for the moment."
+                ),
+                "",
+                *_parse(cls.__doc__),
+                *_parse(cls.__init__.__doc__),
+                " Copyright(c) 2021 Yoann Robin.",
+            ]
+        )
+
+    def _generate_SBCK_classes():
+        classes = []
+        for clsname in dir(SBCK):
+            cls = getattr(SBCK, clsname)
+            if (
+                not clsname.startswith("_")
+                and isinstance(cls, type)
+                and hasattr(cls, "fit")
+                and hasattr(cls, "predict")
+            ):
+                doc = _parse_sbck_doc(cls)
+                classes.append(
+                    type(
+                        f"SBCK_{clsname}", (_SBCKAdjust,), {"sbck": cls, "__doc__": doc}
+                    )
+                )
+        return classes
