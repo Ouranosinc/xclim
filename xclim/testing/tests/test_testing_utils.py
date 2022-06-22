@@ -106,6 +106,7 @@ class TestReleaseSupportFuncs:
         with open(temp_filename) as f:
             assert "# History" in f.readlines()[0]
 
+    @pytest.mark.requires_docs
     def test_release_notes_file_not_implemented(self, tmp_path):
         temp_filename = tmp_path.joinpath("version_info.txt")
         with pytest.raises(NotImplementedError):
