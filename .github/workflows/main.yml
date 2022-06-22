@@ -32,7 +32,7 @@ jobs:
     needs: black
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
           python-version: "3.8"
@@ -40,6 +40,31 @@ jobs:
         run: pip install tox
       - name: Run doctests
         run: tox -e doctests_only
+
+  test-py310-sbck-experimental:
+    needs: black
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup conda
+        uses:  conda-incubator/setup-miniconda@v2.1.1
+        with:
+          activate-environment: base
+          channel-priority: true
+          channels: conda-forge,defaults
+          python-version: "3.10"
+          use-mamba: true
+      - name: Install tox
+        run: mamba install tox tox-conda
+      - name: Test with tox
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: tox -e py310-sbck
+      - name: report coverage
+        uses: AndreMiras/coveralls-python-action@develop
+        with:
+          flag-name: run-py310-sbck
+          parallel: true
 
   test-py38-upstream-dev-dependencies:
     needs: black
