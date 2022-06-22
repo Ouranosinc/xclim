@@ -4,14 +4,13 @@ on:
   push:
     branches:
       - master
+      - sdba-wrap-sbck  # FIXME: REMOVE BEFORE MERGING
     paths-ignore:
       - HISTORY.rst
       - setup.cfg
       - setup.py
       - xclim/__init__.py
   pull_request:
-    branches:
-      - sdba-wrap-sbck
 
 jobs:
   black:
