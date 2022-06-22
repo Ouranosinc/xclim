@@ -134,7 +134,7 @@ jobs:
     needs:
       - tests
       - doctests
-      - test-py38-sbck-conda
+      - test-py38-sbck-slow-conda
     runs-on: ubuntu-latest
     steps:
       - name: Coveralls Finished
