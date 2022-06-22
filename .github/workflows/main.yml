@@ -3,7 +3,8 @@ name: "xclim Testing Suite"
 on:
   push:
     branches:
-      - master
+#      - master
+      - sdba-wrap-sbck  # FIXME: remove before merging!
     paths-ignore:
       - HISTORY.rst
       - setup.cfg
