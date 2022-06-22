@@ -54,12 +54,14 @@ jobs:
           channels: conda-forge,defaults
           python-version: "3.10"
       - name: Install tox
-        run: conda install tox-conda tox
+        run: conda install -n sbck-experimental tox-conda tox
       - name: Test with tox
         env:
           CONDA_EXE: mamba
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: tox -e sbck
+        run: |
+          conda activate sbck-experimental
+          tox -e sbck
       - name: report coverage
         uses: AndreMiras/coveralls-python-action@develop
         with:
