@@ -3,14 +3,15 @@ name: "xclim Testing Suite"
 on:
   push:
     branches:
-#      - master
-      - sdba-wrap-sbck  # FIXME: remove before merging!
+      - master
     paths-ignore:
       - HISTORY.rst
       - setup.cfg
       - setup.py
       - xclim/__init__.py
   pull_request:
+    branches:
+      - sdba-wrap-sbck
 
 jobs:
   black:
@@ -48,9 +49,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Setup conda
-        uses:  conda-incubator/setup-miniconda@v2.1.1
+        uses: conda-incubator/setup-miniconda@v2.1.1
         with:
-          activate-environment: base
+          activate-environment: sbck-experimental
           channel-priority: true
           channels: conda-forge,defaults
           python-version: "3.10"
