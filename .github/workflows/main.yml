@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - sdba-wrap-sbck  # FIXME: REMOVE BEFORE MERGING
     paths-ignore:
       - HISTORY.rst
       - setup.cfg
@@ -56,7 +55,7 @@ jobs:
           python-version: "3.10"
       - name: Install tox
         shell: bash -l {0}
-        run: conda install -n sbck-experimental tox-conda tox
+        run: mamba install -n sbck-experimental tox-conda tox
       - name: Test with tox
         shell: bash -l {0}
         run: |
