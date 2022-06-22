@@ -41,35 +41,6 @@ jobs:
       - name: Run doctests
         run: tox -e doctests_only
 
-  test-py310-sbck-experimental:
-    needs: black
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup conda
-        uses: conda-incubator/setup-miniconda@v2.1.1
-        with:
-          activate-environment: sbck-experimental
-          channels: conda-forge,defaults
-          mamba-version: "*"
-          python-version: "3.10"
-      - name: Install tox
-        shell: bash -l {0}
-        run: mamba install -n sbck-experimental tox-conda tox
-      - name: Test with tox
-        shell: bash -l {0}
-        run: |
-          conda activate sbck-experimental
-          tox -e sbck
-        env:
-          CONDA_EXE: mamba
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: report coverage
-        uses: AndreMiras/coveralls-python-action@develop
-        with:
-          flag-name: run-sbck
-          parallel: true
-
   test-py38-upstream-dev-dependencies:
     needs: black
     runs-on: ubuntu-latest
@@ -91,7 +62,36 @@ jobs:
           flag-name: run-py38-xarray-lm3
           parallel: true
 
-  test:
+  test-py38-sbck-slow-conda:
+    needs: black
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup conda
+        uses: conda-incubator/setup-miniconda@v2.1.1
+        with:
+          activate-environment: sbck-experimental
+          channels: conda-forge,defaults
+          mamba-version: "*"
+          python-version: "3.8"
+      - name: Install tox
+        shell: bash -l {0}
+        run: mamba install -n sbck-experimental tox-conda tox
+      - name: Test with tox
+        shell: bash -l {0}
+        run: |
+          conda activate sbck-experimental
+          tox -e sbck-slow
+        env:
+          CONDA_EXE: mamba
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: report coverage
+        uses: AndreMiras/coveralls-python-action@develop
+        with:
+          flag-name: run-sbck
+          parallel: true
+
+  tests:
     needs: black
     runs-on: ubuntu-latest
     strategy:
@@ -132,8 +132,9 @@ jobs:
 
   finish:
     needs:
-      - test
+      - tests
       - doctests
+      - test-py38-sbck-conda
     runs-on: ubuntu-latest
     steps:
       - name: Coveralls Finished
