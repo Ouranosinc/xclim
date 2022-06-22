@@ -53,11 +53,13 @@ jobs:
           activate-environment: sbck-experimental
           channel-priority: true
           channels: conda-forge,defaults
+          mamba-version: "*"
           python-version: "3.10"
-          use-mamba: true
       - name: Install tox
+        shell: bash -l {0}
         run: mamba install tox tox-conda
       - name: Test with tox
+        shell: bash -l {0}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: tox -e py310-sbck
