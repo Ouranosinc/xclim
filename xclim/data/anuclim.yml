@@ -69,7 +69,9 @@ indicators:
     compute: precip_seasonality
     cf_attrs:
       cell_methods: "time: standard_deviation"
-      description: "The standard deviation of the precipitation estimates expressed as a percentage of the mean of those estimates."
+      description: >
+        "The standard deviation of the precipitation estimates expressed
+        as a percentage of the mean of those estimates."
   P16_PrecipWettestQuarter:
     allowed_periods: [A]
     src_freq: ['D', '7D', 'M']
@@ -140,7 +142,10 @@ indicators:
     compute: temperature_seasonality
     cf_attrs:
       cell_methods: "time: standard_deviation"
-      description: "The standard deviation of the mean temperatures expressed as a percentage of the mean of those temperatures. For this calculation, the mean in degrees Kelvin is used. This avoids the possibility of having to divide by zero, but it does mean that the values are usually quite small."
+      description: >
+        "The standard deviation of the mean temperatures expressed as a percentage of the mean of those temperatures.
+        For this calculation, the mean in degrees Kelvin is used. This avoids the possibility of having to divide by
+        zero, but it does mean that the values are usually quite small."
   P5_MaxTempWarmestPeriod:
     allowed_periods: [A]
     src_freq: ['D', '7D', 'M']
