@@ -1280,7 +1280,7 @@ else:
                     "specifying the dimension accross which to take the 'features' and "
                     "is valid for multivariate methods only. See :py:func:`xclim.sdba.stack_variables`."
                     "In the description below, `n_features` is the size of the `multi_dim` "
-                    "dimension. There is now way of specifying parameters accross other "
+                    "dimension. There is no way of specifying parameters across other "
                     "dimensions for the moment."
                 ),
                 "",
