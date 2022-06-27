@@ -27,6 +27,8 @@ __all__ = [
     "precip_accumulation",
     "liquid_precip_accumulation",
     "solid_precip_accumulation",
+    "standardized_precipitation_index",
+    "standardized_precipitation_evapotranspiration_index",
     "drought_code",
     "fire_weather_indexes",
     "last_snowfall",
@@ -223,6 +225,7 @@ wet_precip_accumulation = PrecipWithIndexing(
     parameters={"thresh": {"default": "1 mm/day"}},
 )
 
+
 liquid_precip_accumulation = PrTasxWithIndexing(
     title="Accumulated liquid precipitation.",
     identifier="liquidprcptot",
@@ -247,6 +250,31 @@ solid_precip_accumulation = PrTasxWithIndexing(
     parameters={"tas": {"kind": InputKind.VARIABLE}, "phase": "solid"},
 )
 
+standardized_precipitation_index = PrecipWithIndexing(
+    title="Standardized Precipitation Index (SPI)",
+    identifier="spi",
+    units="",
+    standard_name="spi",
+    long_name="Standardized Precipitation Index (SPI)",
+    description="Precipitations over rolling window {window}-X window, normalized such that SPI averages to 0. The window unit `X` is the minimal time period defined by resampling frequency {freq}",
+    cell_methods="",
+    compute=indices.standardized_precipitation_index,
+    # the freq parameter seems to cause errors when doing the tests
+    parameters=dict(window=1, dist="gamma", method="ML"),
+)
+
+standardized_precipitation_evapotranspiration_index = PrecipWithIndexing(
+    title="Standardized Precipitation Evapotranspiration Index (SPEI)",
+    identifier="spei",
+    units="",
+    standard_name="spei",
+    long_name="Standardized Precipitation Evapotranspiration Index (SPEI)",
+    description="Water budget (precipitation - evapotranspiration) over rolling window {window}-X window, normalized such that SPEI averages to 0. The window unit `X` is the minimal time period defined by resampling frequency {freq}",
+    cell_methods="",
+    compute=indices.standardized_precipitation_evapotranspiration_index,
+    # parameters=dict(freq="MS", window=1, dist="gamma", method="ML"),
+)
+
 drought_code = FireWeather(
     identifier="dc",
     units="",
@@ -256,6 +284,7 @@ drought_code = FireWeather(
     compute=indices.drought_code,
     missing="skip",
 )
+
 
 fire_weather_indexes = FireWeather(
     identifier="fwi",

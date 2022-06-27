@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
+import xclim.indices as xci
 from xclim import atmos, core, set_options
 from xclim.core.calendar import build_climatology_bounds, percentile_doy
 from xclim.core.utils import PercentileDataArray
@@ -90,6 +91,68 @@ class TestPrecipAccumulation:
         )
 
         np.testing.assert_array_almost_equal(out_liq + out_sol, out_tot, 4)
+
+
+class TestStandardizedPrecip:
+    nc_ds = os.path.join("sdba", "CanESM2_1950-2100.nc")
+
+    def test_3d_data_with_nans(self):
+        # test with data
+        ds = open_dataset(self.nc_ds).isel(location=1)
+        pr = ds.pr.sel(time=slice("2000"))  # kg m-2 s-1
+        prMM = pr
+        prMM *= 86400 * 1000
+        prMM.attrs["units"] = "mm/day"
+        # put a nan somewhere
+        prMM.values[10] = np.nan
+        pr.values[10] = np.nan
+
+        out1 = atmos.standardized_precipitation_index(
+            pr,
+            pr,
+            freq="MS",
+            window=1,
+            dist="gamma",
+            method="ML",
+        )
+        out2 = atmos.standardized_precipitation_index(
+            prMM,
+            prMM,
+            freq="MS",
+            window=1,
+            dist="gamma",
+            method="ML",
+        )
+        np.testing.assert_array_almost_equal(out1, out2, 3)
+
+        # preparing water_budget for SPEI test
+        with xr.set_options(keep_attrs=True):
+            tasmax = ds.tasmax
+            tas = tasmax - [2 + 1 * 0.5 for i in range(ds.tasmax.shape[0])]
+            tasmin = tasmax - [4 + 2 * 0.5 for i in range(ds.tasmax.shape[0])]
+            wb = xci.water_budget(pr, None, tasmin, tasmax, tas)
+            wbMM = wb
+            wbMM *= 86400 * 1000
+            wbMM.attrs["units"] = "mm/day"
+
+        out3 = atmos.standardized_precipitation_evapotranspiration_index(
+            wb,
+            wb,
+            freq="MS",
+            window=1,
+            dist="gamma",
+            method="ML",
+        )
+        out4 = atmos.standardized_precipitation_evapotranspiration_index(
+            wbMM,
+            wbMM,
+            freq="MS",
+            window=1,
+            dist="gamma",
+            method="ML",
+        )
+
+        np.testing.assert_array_almost_equal(out3, out4, 3)
 
 
 class TestWetDays:

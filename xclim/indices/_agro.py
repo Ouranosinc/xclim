@@ -591,6 +591,7 @@ def water_budget(
 
 @declare_units(
     pr="[precipitation]",
+    pr_cal="[precipitation]",
 )
 def standardized_precipitation_index(
     pr: xarray.DataArray,
@@ -637,13 +638,15 @@ def standardized_precipitation_index(
 
     .. code-block:: python
 
-          import xclim.indices as xci
-          import xarray as xr
+        import xclim.indices as xci
+        import xarray as xr
 
-          ds = xr.open_dataset(filename)
-          pr = ds.pr
-          pr_cal = pr.sel(time=slice(calibration_start_date, calibration_end_date)
-          spi_3 = xci.standardized_precipitation_index(pr, pr_cal, freq="MS", window=3, dist="gamma", method="ML")
+        ds = xr.open_dataset(filename)
+        pr = ds.pr
+        pr_cal = pr.sel(time=slice(calibration_start_date, calibration_end_date))
+        spi_3 = xci.standardized_precipitation_index(
+            pr, pr_cal, freq="MS", window=3, dist="gamma", method="ML"
+        )
 
 
     References

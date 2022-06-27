@@ -222,6 +222,18 @@
     "title": "Précipitation solide accumulée totale",
     "abstract": "Précipitation liquide accumulée totale. Les précipitations sont considérées liquides lorsque la température journalière moyenne est sous 0°C."
   },
+  "SPI": {
+    "long_name": "Indice de précipitation standardisé (SPI)",
+    "description": "Précipitations sur une fenêtre roullante {window}-X, normalisées tel que la moyenne de SPI est 0. L'unité `X` de la fenêtre est l'unité de temps minimale  déterminée par la fréquence de rééchantillonage {freq}",
+    "title": "Indice de précipitation standardisé (SPI)",
+    "abstract": "Précipitation accumulée sur une fenêtre roullante puis normalisée autour de zéro."
+  },
+  "SPEI": {
+    "long_name": "Indice de précipitation évapotranspiration standardisé (SPEI)",
+    "description": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre roullante {window}-X, normalisées tel que la moyenne de SPEI est 0. L'unité `X` de la fenêtre est l'unité de temps minimale  déterminée par la fréquence de rééchantillonage {freq}",
+    "title": "Indice de précipitation évapotranspiration standardisé (SPEI)",
+    "abstract": "Budget d'eau accumulé sur une fenêtre roullante puis normalisé autour de zéro."
+  },
   "DC": {
     "long_name": "Indice de sécheresse",
     "description": "Code numérique estimant la teneur en humidité moyenne de couches organiques. Calculée avec la méthode de mise en route '{start_up_mode}'.",
