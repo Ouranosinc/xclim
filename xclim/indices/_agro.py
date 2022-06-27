@@ -1,6 +1,8 @@
 # noqa: D100
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 import pandas as pd
 import xarray
@@ -9,7 +11,7 @@ import xclim.indices as xci
 import xclim.indices.run_length as rl
 from xclim.core.calendar import parse_offset, resample_doy, select_time
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
-from xclim.core.utils import DayOfYearStr
+from xclim.core.utils import DayOfYearStr, uses_dask
 from xclim.indices._threshold import first_day_above, first_day_below, freshet_start
 from xclim.indices.generic import aggregate_between_dates, day_lengths
 from xclim.indices.stats import dist_method, fit
@@ -677,6 +679,25 @@ def standardized_precipitation_index(
     if freq != "D":
         pr = pr.resample(time=freq).mean(keep_attrs=True)
         pr_cal = pr_cal.resample(time=freq).mean(keep_attrs=True)
+
+        def needs_rechunking(da):
+            if uses_dask(da) and len(da.chunks[da.get_axis_num("time")]) > 1:
+                warnings.warn(
+                    "The input data is chunked on time dimension and must be fully rechunked to"
+                    " run `fit` on groups ."
+                    " Beware, this operation can significantly increase the number of tasks dask"
+                    " has to handle.",
+                    stacklevel=2,
+                )
+                return True
+            else:
+                return False
+
+        if needs_rechunking(pr):
+            pr = pr.chunk({"time": -1})
+        if needs_rechunking(pr_cal):
+            pr_cal = pr_cal.chunk({"time": -1})
+
     # Rolling precipitations
     if window > 1:
         pr = pr.rolling(time=window).mean(skipna=False, keep_attrs=True)
