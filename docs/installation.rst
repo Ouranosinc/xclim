@@ -34,7 +34,8 @@ To install the xclim Anaconda binary, run this command in your terminal:
 
 Extra dependencies
 ------------------
-To improve performance of xclim, we highly recommend you also install `flox`_ (see: :doc:`flox API <flox:api>`). This package integrates into xarray and significantly improves the performance of the grouping and resampling algorithms, especially when using `dask` on large datasets.
+To improve performance of xclim, we highly recommend you also install `flox`_ (see: :doc:`flox API <flox:api>`).
+This package integrates into xarray and significantly improves the performance of the grouping and resampling algorithms, especially when using `dask` on large datasets.
 
 We also recommend using the subsetting tools in `clisops`_ (see: :doc:`clisops.core.subset API <clisops:api>`) for spatial manipulation of geospatial data.
 
@@ -57,13 +58,14 @@ docs for the recommended installation instructions. However, Eigen is available 
 
 .. code-block::
 
-   $ conda install Eigen pybind11
+   $ conda install -c conda-forge eigen pybind11
    $ pip install "git+https://github.com/Ouranosinc/SBCK.git@easier-install#egg=sbck&subdirectory=python"
 
-The last line will install SBCK v0.4.0 from Ouranos' fork which implements a small fix that allows this
+The last line will install SBCK>=v0.4.0 from Ouranos' fork which implements a small fix that allows this
 direct installation from pip within a virtual environment.
 
 .. _SBCK: https://github.com/yrobink/SBCK
+.. _Eigen: https://eigen.tuxfamily.org/index.php
 
 From sources
 ------------

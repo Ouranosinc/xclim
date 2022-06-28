@@ -4,12 +4,18 @@ History
 
 0.38.0 (unreleased)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Adjustment methods of `SBCK <https://github.com/yrobink/SBCK>`_ are wrapped into xclim when that package is installed. (:issue:`1109`, :pull:`1115`).
+    - Wrapped SBCK tests are also properly run in the tox testing ensemble. (:pull:`1119`).
 * New indices for droughts: SPI (standardized precipitations) and SPEI (standardized water budgets) (:issue:`131`, :pull:`1096`)
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Marked a test (``test_release_notes_file_not_implemented``) that can only pass when source files are available so that it can easily be skipped on conda-forge build tests. (:issue:`1116`, :pull:`1117`).
+* Split a few YAML strings found in the virtual modules that regularly issued warnings on the code checking CI steps. (:pull:`1118`).
 
 0.37.0 (20 June 2022)
 ---------------------
