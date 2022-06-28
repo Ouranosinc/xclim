@@ -1,9 +1,14 @@
-name: xclim
+name: "xclim Testing Suite"
 
 on:
   push:
     branches:
       - master
+    paths-ignore:
+      - HISTORY.rst
+      - setup.cfg
+      - setup.py
+      - xclim/__init__.py
   pull_request:
 
 jobs:
@@ -14,8 +19,8 @@ jobs:
         uses: styfle/cancel-workflow-action@0.9.1
         with:
           access_token: ${{ github.token }}
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: "3.8"
       - name: Install tox
@@ -27,8 +32,8 @@ jobs:
     needs: black
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: "3.8"
       - name: Install tox
@@ -40,9 +45,9 @@ jobs:
     needs: black
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python 3.8
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: "3.8"
       - name: Install tox
@@ -57,7 +62,36 @@ jobs:
           flag-name: run-py38-xarray-lm3
           parallel: true
 
-  test:
+  test-py38-sbck-slow-conda:
+    needs: black
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup conda
+        uses: conda-incubator/setup-miniconda@v2.1.1
+        with:
+          activate-environment: sbck-experimental
+          channels: conda-forge,defaults
+          mamba-version: "*"
+          python-version: "3.8"
+      - name: Install tox
+        shell: bash -l {0}
+        run: mamba install -n sbck-experimental tox-conda tox
+      - name: Test with tox
+        shell: bash -l {0}
+        run: |
+          conda activate sbck-experimental
+          tox -e sbck-slow
+        env:
+          CONDA_EXE: mamba
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: report coverage
+        uses: AndreMiras/coveralls-python-action@develop
+        with:
+          flag-name: run-sbck
+          parallel: true
+
+  tests:
     needs: black
     runs-on: ubuntu-latest
     strategy:
@@ -72,7 +106,7 @@ jobs:
           - tox-env: py310
             python-version: "3.10-dev"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       # Python3.10-dev headers not available in Ubuntu-20.04 Bionic
       - name: Set up Python3.10 (deadsnakes version)
         if: "endsWith(matrix.python-version, '-dev')"
@@ -81,7 +115,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Set up Python ${{ matrix.python-version }}
         if: "!endsWith(matrix.python-version, '-dev')"
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install tox
@@ -98,8 +132,9 @@ jobs:
 
   finish:
     needs:
-      - test
+      - tests
       - doctests
+      - test-py38-sbck-slow-conda
     runs-on: ubuntu-latest
     steps:
       - name: Coveralls Finished

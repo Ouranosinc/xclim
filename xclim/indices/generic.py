@@ -8,7 +8,7 @@ Helper functions for common generic actions done in the computation of indices.
 from __future__ import annotations
 
 import warnings
-from typing import Sequence, Union
+from typing import Sequence
 
 import cftime
 import numpy as np
@@ -19,7 +19,6 @@ from xarray.coding.cftime_offsets import _MONTH_ABBREVIATIONS
 from xclim.core.calendar import (
     DayOfYearStr,
     convert_calendar,
-    days_in_year,
     doy_to_days_since,
     get_calendar,
 )
@@ -39,7 +38,6 @@ __all__ = [
     "compare",
     "count_level_crossings",
     "count_occurrences",
-    "day_lengths",
     "default_freq",
     "degree_days",
     "diurnal_temperature_range",
@@ -744,91 +742,3 @@ def degree_days(tas: xr.DataArray, thresh: str, condition: str) -> xr.DataArray:
 
     out = to_agg_units(out, tas, op="delta_prod")
     return out
-
-
-def day_lengths(
-    dates: xr.DataArray,
-    lat: xr.DataArray,
-    obliquity: float = -0.4091,
-    summer_solstice: DayOfYearStr = "06-21",
-    start_date: xarray.DataArray | DayOfYearStr | None = None,
-    end_date: xarray.DataArray | DayOfYearStr | None = None,
-    freq: str = "YS",
-) -> xr.DataArray:
-    r"""Day-lengths according to latitude, obliquity, and day of year.
-
-    Parameters
-    ----------
-    dates: xr.DataArray
-    lat: xarray.DataArray
-      Latitude coordinate.
-    obliquity: float
-      Obliquity of the elliptic (radians). Default: -0.4091.
-    summer_solstice: DayOfYearStr
-      Date of summer solstice in northern hemisphere. Used for approximating solar julian dates.
-    start_date: xarray.DataArray or DayOfYearStr, optional
-      Start date to consider for calculating mean day lengths. Default: None.
-    end_date: xarray.DataArray or DayOfYearStr, optional
-      End date to consider for calculating mean day lengths. Default: None.
-    freq : str
-      Resampling frequency.
-
-    Returns
-    -------
-    xarray.DataArray
-      If start and end date provided, returns total sum of daylight-hour between dates at provided frequency.
-      If no start and end date provided, returns day-length in hours per individual day.
-
-    Notes
-    -----
-    Daylight-hours are dependent on latitude, :math:`lat`, the Julian day (solar day) from the summer solstice in the
-    Northern hemisphere, :math:`Jday`, and the axial tilt :math:`Axis`, therefore day-length at any latitude for a given
-    date on Earth, :math:`dayLength_{lat_{Jday}}`, for a given year in days, :math:`Year`, can be approximated as
-    follows:
-
-    .. math::
-        dayLength_{lat_{Jday}} = f({lat}, {Jday}) = \frac{\arccos(1-m_{lat_{Jday}})}{\pi} * 24
-
-    Where:
-
-    .. math::
-        m_{lat_{Jday}} = f({lat}, {Jday}) = 1 - \tan({Lat}) * \tan \left({Axis}*\cos\left[\frac{2*\pi*{Jday}}{||{Year}||} \right] \right)
-
-    The total sum of daylight hours for a given period between two days (:math:`{Jday} = 0` -> :math:`N`) within a solar
-    year then is:
-
-    .. math::
-        \sum({SeasonDayLength_{lat}}) = \sum_{Jday=1}^{N} dayLength_{lat_{Jday}}
-
-    References
-    ----------
-    Modified day-length equations for Huglin heliothermal index published in Hall, A., & Jones, G. V. (2010). Spatial
-    analysis of climate in winegrape-growing regions in Australia. Australian Journal of Grape and Wine Research, 16(3),
-    389‑404. https://doi.org/10.1111/j.1755-0238.2010.00100.x
-
-    Examples available from Glarner, 2006 (http://www.gandraxa.com/length_of_day.xml).
-    """
-    cal = get_calendar(dates)
-
-    year_length = dates.time.copy(
-        data=[days_in_year(x, calendar=cal) for x in dates.time.dt.year]
-    )
-
-    julian_date_from_solstice = dates.time.copy(
-        data=doy_to_days_since(
-            dates.time.dt.dayofyear, start=summer_solstice, calendar=cal
-        )
-    )
-
-    m_lat_dayofyear = 1 - np.tan(np.radians(lat)) * np.tan(
-        obliquity * (np.cos((2 * np.pi * julian_date_from_solstice) / year_length))
-    )
-
-    day_length_hours = (np.arccos(1 - m_lat_dayofyear) / np.pi) * 24
-
-    if start_date and end_date:
-        return aggregate_between_dates(
-            day_length_hours, start=start_date, end=end_date, op="sum", freq=freq
-        )
-    else:
-        return day_length_hours

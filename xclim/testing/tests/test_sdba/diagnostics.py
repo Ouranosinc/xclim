@@ -9,8 +9,7 @@ behavior of sdba methods and utilities.
 from __future__ import annotations
 
 import numpy as np
-from scipy.stats import scoreatpercentile
-from scipy.stats.kde import gaussian_kde
+from scipy.stats import gaussian_kde, scoreatpercentile
 
 from xclim.sdba.adjustment import (
     DetrendedQuantileMapping,

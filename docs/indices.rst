@@ -18,6 +18,9 @@ Indices submodules
    :show-inheritance:
    :noindex:
 
+.. automodule:: xclim.indices.helpers
+   :members:
+
 .. automodule:: xclim.indices.run_length
    :members:
    :undoc-members:

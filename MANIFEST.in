@@ -4,6 +4,7 @@ include HISTORY.rst
 include LICENSE
 include README.rst
 include requirements_dev.txt
+include requirements_upstream.txt
 
 recursive-include xclim *.txt *.json *.yml *.py
 recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif

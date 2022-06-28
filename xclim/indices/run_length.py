@@ -8,7 +8,7 @@ Computation of statistics on runs of True values in boolean arrays.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional, Sequence, Union
+from typing import Sequence
 from warnings import warn
 
 import dask

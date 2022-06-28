@@ -104,6 +104,9 @@ units.enable_contexts(hydro)
 #     [length] / [time] -> [mass] / [length]**2 / [time] : value * 1000 * kg / m ** 3
 # @end
 
+# Radiation units
+units.define("[radiation] = [power] / [length]**2")
+
 
 def units2pint(value: xr.DataArray | str | units.Quantity) -> Unit:
     """Return the pint Unit for the DataArray units.

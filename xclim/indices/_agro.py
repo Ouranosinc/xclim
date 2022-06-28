@@ -13,8 +13,9 @@ from xclim.core.calendar import parse_offset, resample_doy, select_time
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.core.utils import DayOfYearStr, uses_dask
 from xclim.indices._threshold import first_day_above, first_day_below, freshet_start
-from xclim.indices.generic import aggregate_between_dates, day_lengths
+from xclim.indices.generic import aggregate_between_dates
 from xclim.indices.stats import dist_method, fit
+from xclim.indices.helpers import day_lengths
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -245,11 +246,11 @@ def huglin_index(
         )
         k_aggregated = 1
     elif method.lower() == "jones":
-        day_length = day_lengths(
-            dates=tas.time,
-            lat=lat,
-            start_date=start_date,
-            end_date=end_date,
+        day_length = aggregate_between_dates(
+            day_lengths(dates=tas.time, lat=lat, method="simple"),
+            start=start_date,
+            end=end_date,
+            op="sum",
             freq=freq,
         )
         k = 1
@@ -386,11 +387,10 @@ def biologically_effective_degree_days(
             k = 1 + xarray.where(lat_mask, max(((abs(lat) - 40) / 10) * 0.06, 0), 0)
             k_aggregated = 1
         else:
-            day_length = day_lengths(
-                dates=tasmin.time,
-                lat=lat,
-                start_date=start_date,
-                end_date=end_date,
+            day_length = aggregate_between_dates(
+                day_lengths(dates=tasmin.time, lat=lat, method="simple"),
+                start=start_date,
+                end=end_date,
                 freq=freq,
             )
             k = 1
@@ -534,6 +534,7 @@ def latitude_temperature_index(
     tasmin="[temperature]",
     tasmax="[temperature]",
     tas="[temperature]",
+    lat="[]",
 )
 def water_budget(
     pr: xarray.DataArray,
@@ -541,6 +542,7 @@ def water_budget(
     tasmin: xarray.DataArray | None = None,
     tasmax: xarray.DataArray | None = None,
     tas: xarray.DataArray | None = None,
+    lat: xarray.DataArray | None = None,
     method: str = "BR65",
 ) -> xarray.DataArray:
     r"""Precipitation minus potential evapotranspiration.
@@ -560,6 +562,8 @@ def water_budget(
       Maximum daily temperature.
     tas : xarray.DataArray
       Mean daily temperature.
+    lat : xarray.DataArray
+      Latitude, needed if evspsblpot is not given.
     method : str
       Method to use to calculate the potential evapotranspiration.
 
@@ -576,7 +580,7 @@ def water_budget(
 
     if evspsblpot is None:
         pet = xci.potential_evapotranspiration(
-            tasmin=tasmin, tasmax=tasmax, tas=tas, method=method
+            tasmin=tasmin, tasmax=tasmax, tas=tas, lat=lat, method=method
         )
     else:
         pet = convert_units_to(evspsblpot, "kg m-2 s-1")
