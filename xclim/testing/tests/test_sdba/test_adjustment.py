@@ -7,6 +7,7 @@ from scipy.stats import genpareto, norm, uniform
 
 from xclim.core.options import set_options
 from xclim.core.units import convert_units_to
+from xclim.sdba import adjustment
 from xclim.sdba.adjustment import (
     LOCI,
     DetrendedQuantileMapping,
@@ -697,3 +698,77 @@ def test_default_grouper_understood(tas_series):
     EQM = EmpiricalQuantileMapping.train(ref, ref)
     EQM.adjust(ref)
     assert EQM.group.dim == "time"
+
+
+@pytest.mark.slow
+@pytest.mark.parametrize(
+    "method", [m for m in dir(adjustment) if m.startswith("SBCK_")]
+)
+@pytest.mark.parametrize("use_dask", [True])  # do we gain testing both?
+def test_SBCK(method, use_dask):
+    SBCK = pytest.importorskip("SBCK", minversion="0.4.0")
+    n = 10 * 365
+    m = 2  # A dummy dimension to test vectorizing.
+    ref_y = norm.rvs(loc=10, scale=1, size=(m, n))
+    ref_x = norm.rvs(loc=3, scale=2, size=(m, n))
+    hist_x = norm.rvs(loc=11, scale=1.2, size=(m, n))
+    hist_y = norm.rvs(loc=4, scale=2.2, size=(m, n))
+    sim_x = norm.rvs(loc=12, scale=2, size=(m, n))
+    sim_y = norm.rvs(loc=3, scale=1.8, size=(m, n))
+
+    ref = xr.Dataset(
+        {
+            "tasmin": xr.DataArray(
+                ref_x, dims=("lon", "time"), attrs={"units": "degC"}
+            ),
+            "tasmax": xr.DataArray(
+                ref_y, dims=("lon", "time"), attrs={"units": "degC"}
+            ),
+        }
+    )
+    ref["time"] = xr.cftime_range("1990-01-01", periods=n, calendar="noleap")
+
+    hist = xr.Dataset(
+        {
+            "tasmin": xr.DataArray(
+                hist_x, dims=("lon", "time"), attrs={"units": "degC"}
+            ),
+            "tasmax": xr.DataArray(
+                hist_y, dims=("lon", "time"), attrs={"units": "degC"}
+            ),
+        }
+    )
+    hist["time"] = ref["time"]
+
+    sim = xr.Dataset(
+        {
+            "tasmin": xr.DataArray(
+                sim_x, dims=("lon", "time"), attrs={"units": "degC"}
+            ),
+            "tasmax": xr.DataArray(
+                sim_y, dims=("lon", "time"), attrs={"units": "degC"}
+            ),
+        }
+    )
+    sim["time"] = xr.cftime_range("2090-01-01", periods=n, calendar="noleap")
+
+    if use_dask:
+        ref = ref.chunk({"lon": 1})
+        hist = hist.chunk({"lon": 1})
+        sim = sim.chunk({"lon": 1})
+
+    if "TSMBC" in method:
+        kws = {"lag": 1}
+    elif "MBCn" in method:
+        kws = {"metric": SBCK.metrics.energy}
+    else:
+        kws = {}
+
+    scen = getattr(adjustment, method).adjust(
+        stack_variables(ref),
+        stack_variables(hist),
+        stack_variables(sim),
+        multi_dim="multivar",
+        **kws,
+    )
+    scen = unstack_variables(scen).load()
