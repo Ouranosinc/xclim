@@ -476,10 +476,10 @@ class TestAgroclimaticIndices:
     @pytest.mark.parametrize(
         "freq, window, dist, method,  values, diff_tol",
         [
-            ("MS", 1, "gamma", "APP", [1.505, 1.753, 1.199, -2.474, 0.879], 0.19),
-            ("MS", 12, "gamma", "APP", [0.6407, 1.6118, 1.9268, 1.0727, 0.8486], 0.027),
-            ("MS", 1, "gamma", "ML", [1.505, 1.753, 1.199, -2.474, 0.879], 0.71),
-            ("MS", 12, "gamma", "ML", [0.6407, 1.6118, 1.9268, 1.0727, 0.8486], 0.031),
+            ("MS", 1, "gamma", "APP", [1.505, 1.753, 2.334, -2.484, 0.879], 0.2),
+            ("MS", 12, "gamma", "APP", [0.6012, 1.6908, 1.8678, 0.9801, 0.6566], 0.024),
+            ("MS", 1, "gamma", "ML", [1.505, 1.753, 2.334, -2.484, 0.879], 0.76),
+            ("MS", 12, "gamma", "ML", [0.6012, 1.6908, 1.8678, 0.9801, 0.6566], 0.038),
         ],
     )
     def test_standardized_precipitation_evapotranspiration_index(
