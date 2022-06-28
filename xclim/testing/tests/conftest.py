@@ -19,6 +19,20 @@ def tmp_netcdf_filename(tmpdir):
 
 
 @pytest.fixture
+def lat_series():
+    def _lat_series(values):
+        return xr.DataArray(
+            values,
+            dims=("lat",),
+            coords={"lat": values},
+            attrs={"standard_name": "latitude", "units": "degrees_north"},
+            name="lat",
+        )
+
+    return _lat_series
+
+
+@pytest.fixture
 def tas_series():
     def _tas_series(values, start="7/1/2000"):
         coords = pd.date_range(start, periods=len(values), freq="D")
@@ -406,6 +420,78 @@ def ps_series():
         )
 
     return _ps_series
+
+
+@pytest.fixture
+def rsds_series():
+    def _rsds_series(values, start="7/1/2000"):
+        coords = pd.date_range(start, periods=len(values), freq="D")
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="rsds",
+            attrs={
+                "standard_name": "surface_downwelling_shortwave_flux_in_air",
+                "units": "W m-2",
+            },
+        )
+
+    return _rsds_series
+
+
+@pytest.fixture
+def rsus_series():
+    def _rsus_series(values, start="7/1/2000"):
+        coords = pd.date_range(start, periods=len(values), freq="D")
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="rsus",
+            attrs={
+                "standard_name": "surface_upwelling_shortwave_flux_in_air",
+                "units": "W m-2",
+            },
+        )
+
+    return _rsus_series
+
+
+@pytest.fixture
+def rlds_series():
+    def _rlds_series(values, start="7/1/2000"):
+        coords = pd.date_range(start, periods=len(values), freq="D")
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="rlds",
+            attrs={
+                "standard_name": "surface_downwelling_longwave_flux_in_air",
+                "units": "W m-2",
+            },
+        )
+
+    return _rlds_series
+
+
+@pytest.fixture
+def rlus_series():
+    def _rlus_series(values, start="7/1/2000"):
+        coords = pd.date_range(start, periods=len(values), freq="D")
+        return xr.DataArray(
+            values,
+            coords=[coords],
+            dims="time",
+            name="rlus",
+            attrs={
+                "standard_name": "surface_upwelling_longwave_flux_in_air",
+                "units": "W m-2",
+            },
+        )
+
+    return _rlus_series
 
 
 @pytest.fixture(autouse=True)

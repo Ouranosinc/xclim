@@ -6,14 +6,14 @@
       "orcid": "0000-0002-2212-9580"
     },
     {
-      "affiliation": "Ouranos",
-      "name": "Bourgault, Pascal",
-      "orcid": "0000-0003-1192-0403"
+      "affiliation": "CERFACS",
+      "name": "Aoun, Abel",
+      "orcid": "0000-0003-2289-2890"
     },
     {
       "affiliation": "Ouranos",
-      "name": "Smith, Trevor James",
-      "orcid": "0000-0001-5393-8359"
+      "name": "Bourgault, Pascal",
+      "orcid": "0000-0003-1192-0403"
     },
     {
       "affiliation": "Ouranos",
@@ -22,13 +22,8 @@
     },
     {
       "affiliation": "Ouranos",
-      "name": "Biner, Sébastien",
-      "orcid": "0000-0001-7515-490X"
-    },
-    {
-      "affiliation": "Ouranos",
-      "name": "Labonté, Marie-Pier",
-      "orcid": "0000-0003-0738-3940"
+      "name": "Lavoie, Juliette",
+      "orcid": "0000-0002-4708-5182"
     },
     {
       "affiliation": "Ouranos",
@@ -36,53 +31,9 @@
       "orcid": "0000-0003-3389-9406"
     },
     {
-      "affiliation": "ECCC",
-      "name": "Fyke, Jeremy",
-      "orcid": "0000-0002-4522-3019"
-    },
-    {
-      "affiliation": "CERFACS",
-      "name": "Aoun, Abel",
-      "orcid": "0000-0003-2289-2890"
-    },
-    {
-      "name": "Roy, Philippe"
-    },
-    {
-      "name": "Ehbrecht, Carsten"
-    },
-    {
-      "affiliation": "@jakarto3d",
-      "name": "Caron, David"
-    },
-    {
-      "affiliation": "STFC CEDA",
-      "name": "Stephens, Ag"
-    },
-    {
-      "name": "Whelan, Chistopher"
-    },
-    {
-      "name": "Low, Jwen-Fai"
-    },
-    {
-      "affiliation": "University College London",
-      "name": "Keel, Tom",
-      "orcid": "0000-0001-9193-5271"
-    },
-    {
       "affiliation": "Ouranos",
-      "name": "Lavoie, Juliette",
-      "orcid": "0000-0002-4708-5182"
-    },
-    {
-      "affiliation": "CEH",
-      "name": "Tanguy, Maliko"
-    },
-    {
-      "affiliation": "University College London",
-      "name": "Barnes, Clair",
-      "orcid": "0000-0002-7806-7913"
+      "name": "Smith, Trevor James",
+      "orcid": "0000-0001-5393-8359"
     },
     {
       "affiliation": "University College London",
@@ -91,7 +42,61 @@
     },
     {
       "affiliation": "University College London",
+      "name": "Barnes, Clair",
+      "orcid": "0000-0002-7806-7913"
+    },
+    {
+      "affiliation": "Ouranos",
+      "name": "Biner, Sébastien",
+      "orcid": "0000-0001-7515-490X"
+    },
+    {
+      "affiliation": "@jakarto3d",
+      "name": "Caron, David"
+    },
+    {
+      "name": "Ehbrecht, Carsten"
+    },
+    {
+      "affiliation": "ECCC",
+      "name": "Fyke, Jeremy",
+      "orcid": "0000-0002-4522-3019"
+    },
+    {
+      "affiliation": "University College London",
+      "name": "Keel, Tom",
+      "orcid": "0000-0001-9193-5271"
+    },
+    {
+      "affiliation": "Ouranos",
+      "name": "Labonté, Marie-Pier",
+      "orcid": "0000-0003-0738-3940"
+    },
+    {
+      "affiliation": "Helmholtz-Zentrum Hereon",
+      "name": "Lierhammer, Ludwig",
+      "orcid": "0000-0002-7207-0003"
+    },
+    {
+      "name": "Low, Jwen-Fai"
+    },
+    {
+      "affiliation": "University College London",
       "name": "Quinn, Jamie"
+    },
+    {
+      "name": "Roy, Philippe"
+    },
+    {
+      "affiliation": "STFC CEDA",
+      "name": "Stephens, Ag"
+    },
+    {
+      "affiliation": "CEH",
+      "name": "Tanguy, Maliko"
+    },
+    {
+      "name": "Whelan, Chistopher"
     },
     {
       "affiliation": "Ouranos",

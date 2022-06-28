@@ -130,6 +130,7 @@ from .locales import (
     read_locale_file,
 )
 from .options import (
+    CHECK_MISSING,
     KEEP_ATTRS,
     METADATA_LOCALES,
     MISSING_METHODS,
@@ -986,8 +987,7 @@ class Indicator(IndicatorRegistrar):
             append_locale_name=append_locale_name,
         )
 
-    @classmethod
-    def _update_attrs(cls, args, das, attrs, var_id=None, names=None):
+    def _update_attrs(self, args, das, attrs, var_id=None, names=None):
         """Format attributes with the run-time values of `compute` call parameters.
 
         Cell methods and history attributes are updated, adding to existing values.
@@ -1016,11 +1016,11 @@ class Indicator(IndicatorRegistrar):
           Attributes with {} expressions replaced by call argument values. With updated `cell_methods` and `history`.
           `cell_methods` is not added if `names` is given and those not contain `cell_methods`.
         """
-        out = cls._format(attrs, args)
+        out = self._format(attrs, args)
         for locale in OPTIONS[METADATA_LOCALES]:
             out.update(
-                cls._format(
-                    cls._get_translated_metadata(
+                self._format(
+                    self._get_translated_metadata(
                         locale, var_id=var_id, names=names or list(attrs.keys())
                     ),
                     args=args,
@@ -1042,20 +1042,24 @@ class Indicator(IndicatorRegistrar):
         # different order than the real function (but order doesn't really matter with keywords).
         kwargs = OrderedDict(**das)
         for k, v in args.items():
-            if cls._all_parameters[k].injected:
+            if self._all_parameters[k].injected:
                 continue
-            elif cls._all_parameters[k].kind == InputKind.KWARGS:
+            elif self._all_parameters[k].kind == InputKind.KWARGS:
                 kwargs.update(**v)
-            elif cls._all_parameters[k].kind != InputKind.DATASET:
+            elif self._all_parameters[k].kind != InputKind.DATASET:
                 kwargs[k] = v
+
         attrs["history"] = update_history(
-            gen_call_string(cls._registry_id, **kwargs),
+            self._history_string(**kwargs),
             new_name=out.get("var_name"),
             **das,
         )
 
         attrs.update(out)
         return attrs
+
+    def _history_string(self, **kwargs):
+        return gen_call_string(self._registry_id, **kwargs)
 
     @staticmethod
     def _check_identifier(identifier: str) -> None:
@@ -1359,6 +1363,20 @@ class ResamplingIndicator(Indicator):
             )
 
         return das, params
+
+    def _history_string(self, **kwargs):
+        if self.missing == "from_context":
+            missing = OPTIONS[CHECK_MISSING]
+        else:
+            missing = self.missing
+        opt_str = f" with options check_missing={missing}"
+
+        if missing != "skip":
+            mopts = self.missing_options or OPTIONS[MISSING_OPTIONS].get(missing)
+            if mopts:
+                opt_str += f", missing_options={mopts}"
+
+        return super()._history_string(**kwargs) + opt_str
 
     def _postprocess(self, outs, das, params):
         """Masking of missing values."""

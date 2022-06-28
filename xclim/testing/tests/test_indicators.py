@@ -24,9 +24,9 @@ from xclim.core.formatting import (
 )
 from xclim.core.indicator import Daily, Indicator, ResamplingIndicator, registry
 from xclim.core.units import convert_units_to, declare_units, units
-from xclim.core.utils import InputKind, MissingVariableError
+from xclim.core.utils import VARIABLES, InputKind, MissingVariableError
 from xclim.indices import tg_mean
-from xclim.testing import open_dataset
+from xclim.testing import list_input_variables, open_dataset
 
 
 @declare_units(da="[temperature]", thresh="[temperature]")
@@ -152,7 +152,10 @@ def test_attrs(tas_series):
     txm = uniIndTemp(a, thresh="5 degC", freq="YS")
     assert txm.cell_methods == "time: mean within days time: mean within years"
     assert f"{dt.datetime.now():%Y-%m-%d %H}" in txm.attrs["history"]
-    assert "TMIN(da=tas, thresh='5 degC', freq='YS')" in txm.attrs["history"]
+    assert (
+        "TMIN(da=tas, thresh='5 degC', freq='YS') with options check_missing=any"
+        in txm.attrs["history"]
+    )
     assert f"xclim version: {__version__}" in txm.attrs["history"]
     assert txm.name == "tmin5 degC"
     assert uniIndTemp.standard_name == "{freq} mean temperature"
@@ -360,6 +363,7 @@ def test_missing(tas_series):
     ):
         m = uniIndTemp(a, freq="MS")
         assert not m[0].isnull()
+        assert "check_missing=pct, missing_options={'tolerance': 0.05}" in m.history
 
     with xclim.set_options(check_missing="wmo"):
         m = uniIndTemp(a, freq="YS")
@@ -785,3 +789,23 @@ def test_resampling_indicator_with_indexing(tas_series):
         tas, thresh="0 degC", freq="YS", date_bounds=("02-29", "04-01")
     )
     np.testing.assert_allclose(out, [32, 33])
+
+
+@pytest.mark.xfail(reason="Broken link to the excel file.")
+def test_all_inputs_known():
+    var_and_inds = list_input_variables()
+    known_vars = (
+        set(var_and_inds.keys())
+        - {"dc0", "season_mask", "ffmc0", "dmc0"}  # FWI optional inputs
+        - {var for var in var_and_inds.keys() if var.endswith("_per")}  # percentiles
+        - {"q", "da"}  # Generic inputs
+        - {"mrt"}  # TODO: add Mean Radiant Temperature
+    )
+    print(VARIABLES.keys(), "\n", known_vars)
+    if not set(VARIABLES.keys()).issuperset(known_vars):
+        raise AssertionError(
+            "All input variables of xclim indicators must be registered in "
+            "data/variables.yml, or skipped explicitly in this test. You can try to "
+            "automatically update the yaml with `xclim.testing.update_variable_yaml(). "
+            f"The yaml file is missing: {known_vars - VARIABLES.keys()}."
+        )
