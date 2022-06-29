@@ -620,12 +620,12 @@ def standardized_precipitation_index(
     window : int
       Averaging window length relative to the resampling frequency. For example, if `freq="MS"`, i.e. a monthly resampling, the window
       is an integer number of months.
-    dist : str
-      Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
+    dist : {'gamma'}
+      Name of the univariate distribution, only `gamma` is currently implemented
       (see :py:mod:`scipy.stats`).
     method : str
       Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
-      simply uses the parameters output of `_fit_start`.
+      uses a deterministic function that doesn't involve any optimization.
 
     Returns
     -------
@@ -725,7 +725,7 @@ def standardized_precipitation_index(
         prob_pos = dist_method("cdf", params, pr.where(pr > 0))
         prob_zero = resample_to_time(
             pr.groupby(group).map(
-                lambda x: (x == 0).sum() / x.dropna(dim="time").shape[0]
+                lambda x: (x == 0).sum("time") / x.notnull().sum("time")
             ),
             pr,
         )
@@ -740,8 +740,6 @@ def standardized_precipitation_index(
     )
     spi = dist_method("ppf", params_norm, prob)
     spi.attrs["units"] = ""
-    spi.attrs["standard name"] = "SPI"
-    spi.attrs["long name"] = "Standardized Precipitation Index"
 
     return spi
 
@@ -797,19 +795,13 @@ def standardized_precipitation_evapotranspiration_index(
         # The choice can lead to differences as big as +/-0.2 in the SPEI.
         # If taken too big, there are problems with the "ML" method  (this should be an
         # issue with the fitting procedure that also needs attention)
-        offset = xarray.DataArray([1e-04])
-        offset.attrs["units"] = "kg m-2 s-1"
-        convert_units_to(offset, wb.units)
-        offset = offset.values.item()
+        offset = convert_units_to("1e-4 kg m-2 s-1", wb.units)
         # Increase offset if negative values remain
-        if wb.min() + offset < 0 or wb_cal.min() + offset < 0:
-            offset = offset - 2 * min(wb.min(), wb_cal.min())
+        offset = offset - 2 * min(wb.min(), wb_cal.min(), 0)
         with xarray.set_options(keep_attrs=True):
             wb, wb_cal = wb + offset, wb_cal + offset
 
     spei = standardized_precipitation_index(wb, wb_cal, freq, window, dist, method)
-    spei.attrs["standard name"] = "SPEI"
-    spei.attrs["long name"] = "Standardized Precipitation Evapotranspiration Index"
 
     return spei
 
