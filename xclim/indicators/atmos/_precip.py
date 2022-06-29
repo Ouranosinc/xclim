@@ -256,7 +256,7 @@ standardized_precipitation_index = PrecipWithIndexing(
     units="",
     standard_name="spi",
     long_name="Standardized Precipitation Index (SPI)",
-    description="Precipitations over rolling window {window}-X window, normalized such that SPI averages to 0. The window unit `X` is the minimal time period defined by resampling frequency {freq}",
+    description="Precipitations over a rolling window of {window} {freq:noun}, normalized such that SPI averages to 0.",
     cell_methods="",
     compute=indices.standardized_precipitation_index,
 )
