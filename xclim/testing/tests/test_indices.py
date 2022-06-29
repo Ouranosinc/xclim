@@ -450,9 +450,8 @@ class TestAgroclimaticIndices:
         self, freq, window, dist, method, values, diff_tol
     ):
 
-        # Only location=1 is tested
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
-        pr = ds.pr.sel(time=slice("2000"))
+        pr = ds.pr.sel(time=slice("1998", "2000"))
         pr_cal = ds.pr.sel(time=slice("1950", "1980"))
         spi = xci.standardized_precipitation_index(
             pr, pr_cal, freq, window, dist, method
@@ -485,21 +484,20 @@ class TestAgroclimaticIndices:
     def test_standardized_precipitation_evapotranspiration_index(
         self, freq, window, dist, method, values, diff_tol
     ):
-        print(values)
-        # Only location=1 is tested
         ds = (
             open_dataset("sdba/CanESM2_1950-2100.nc")
             .isel(location=1)
-            .sel(time=slice("2000"))
+            .sel(time=slice("1950", "2000"))
         )
         pr = ds.pr
         # generate water budget
         with xr.set_options(keep_attrs=True):
             tasmax = ds.tasmax
-            tas = tasmax - [2 + 1 * 0.5 for i in range(ds.tasmax.shape[0])]
-            tasmin = tasmax - [4 + 2 * 0.5 for i in range(ds.tasmax.shape[0])]
+            tas = tasmax - 2.5
+            tasmin = tasmax - 5
             wb = xci.water_budget(pr, None, tasmin, tasmax, tas)
             wb_cal = wb.sel(time=slice("1950", "1980"))
+            wb = wb.sel(time=slice("1998", "2000"))
 
         spei = xci.standardized_precipitation_evapotranspiration_index(
             wb, wb_cal, freq, window, dist, method
@@ -508,13 +506,7 @@ class TestAgroclimaticIndices:
         # Only a few moments before year 2000 are tested
         spei = spei.isel(time=slice(-11, -1, 2))
 
-        # [Guttman, 1999]: The number of precipitation events (over a month/season or
-        # other time period) is generally less than 100 in the US. This suggests that
-        # bounds of ± 3.09 correspond to 0.999 and 0.001 probabilities. SPI indices outside
-        # [-3.09, 3.09] might be non-statistically relevant. In `climate_indices` the SPI
-        # index is clipped outside this region of value. In the values chosen above,
-        # this doesn't play role, but let's clip it anyways to avoid future problems.
-        # The last few values in time are tested
+        # Same justification for clipping as in SPI tests
         spei = spei.clip(-3.09, 3.09)
 
         np.testing.assert_allclose(spei.values, values, rtol=0, atol=diff_tol)

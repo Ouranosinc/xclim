@@ -9,6 +9,7 @@ from xclim.core.indicator import (
     Daily,
     Hourly,
     Indicator,
+    ResamplingIndicator,
     ResamplingIndicatorWithIndexing,
 )
 from xclim.core.utils import InputKind
@@ -80,6 +81,13 @@ class PrTasxWithIndexing(ResamplingIndicatorWithIndexing):
     def cfcheck(self, pr, tas):
         cfchecks.cfcheck_from_name("pr", pr)
         cfchecks.check_valid(tas, "standard_name", "air_temperature")
+
+
+class StandardizedIndexes(ResamplingIndicator):
+    """Resampling but flexible inputs indicators."""
+
+    src_freq = ["D", "M"]
+    context = "hydro"
 
 
 class HrPrecip(Hourly):
@@ -250,7 +258,7 @@ solid_precip_accumulation = PrTasxWithIndexing(
     parameters={"tas": {"kind": InputKind.VARIABLE}, "phase": "solid"},
 )
 
-standardized_precipitation_index = PrecipWithIndexing(
+standardized_precipitation_index = StandardizedIndexes(
     title="Standardized Precipitation Index (SPI)",
     identifier="spi",
     units="",
@@ -261,7 +269,7 @@ standardized_precipitation_index = PrecipWithIndexing(
     compute=indices.standardized_precipitation_index,
 )
 
-standardized_precipitation_evapotranspiration_index = PrecipWithIndexing(
+standardized_precipitation_evapotranspiration_index = StandardizedIndexes(
     title="Standardized Precipitation Evapotranspiration Index (SPEI)",
     identifier="spei",
     units="",
