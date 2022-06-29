@@ -725,7 +725,7 @@ def standardized_precipitation_index(
         prob_pos = dist_method("cdf", params, pr.where(pr > 0))
         prob_zero = resample_to_time(
             pr.groupby(group).map(
-                lambda x: (x == 0).sum() / x.dropna(dim="time").shape[0]
+                lambda x: (x == 0).sum('time') / x.notnull().sum('time')
             ),
             pr,
         )
@@ -797,13 +797,9 @@ def standardized_precipitation_evapotranspiration_index(
         # The choice can lead to differences as big as +/-0.2 in the SPEI.
         # If taken too big, there are problems with the "ML" method  (this should be an
         # issue with the fitting procedure that also needs attention)
-        offset = xarray.DataArray([1e-04])
-        offset.attrs["units"] = "kg m-2 s-1"
-        convert_units_to(offset, wb.units)
-        offset = offset.values.item()
+        offset = convert_units_to("1e-4 kg m-2 s-1", wb.units)
         # Increase offset if negative values remain
-        if wb.min() + offset < 0 or wb_cal.min() + offset < 0:
-            offset = offset - 2 * min(wb.min(), wb_cal.min())
+         offset = offset - 2 * min(wb.min(), wb_cal.min(), 0)
         with xarray.set_options(keep_attrs=True):
             wb, wb_cal = wb + offset, wb_cal + offset
 
