@@ -47,6 +47,7 @@ requirements = [
     "scipy>=1.2",
     "statsmodels",
     "xarray>=0.17",
+    "Jinja2",
 ]
 
 dev_requirements = []
