@@ -668,6 +668,9 @@ def standardized_precipitation_index(
             f"The method `{method}` is not supported for distribution `{dist}`."
         )
 
+    # calibration period
+    cal_period = [pr_cal.time.values[0], pr_cal.time.values[-1]]
+
     # Determine group type
     if freq == "D" or freq is None:
         freq = "D"
@@ -740,6 +743,7 @@ def standardized_precipitation_index(
     )
     spi = dist_method("ppf", params_norm, prob)
     spi.attrs["units"] = ""
+    spi.attrs["calibration_period"] = cal_period
 
     return spi
 
@@ -788,7 +792,7 @@ def standardized_precipitation_evapotranspiration_index(
     See Standardized Precipitation Index (SPI) for more details on usage.
     """
     # Allowed distributions are constrained by the SPI function
-    if dist in ["gamma", "pearson3"]:
+    if dist in ["gamma"]:
         # Distributions bounded by zero: Water budget must be shifted, only positive values
         # are allowed. The offset choice is arbitrary and needs to be revisited.
         # In monocongo, the offset would be 1000/(60*60*24) in [kg m-2 s-1]
