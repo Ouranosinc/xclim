@@ -82,11 +82,13 @@ class PrTasxWithIndexing(ResamplingIndicatorWithIndexing):
         cfchecks.cfcheck_from_name("pr", pr)
         cfchecks.check_valid(tas, "standard_name", "air_temperature")
 
-class StandardizedIndexes(ResamplingIndicator): 
-    """Resampling but flexible inputs indicators.""" 
-    
-    src_freq = ["D", "M"] 
+
+class StandardizedIndexes(ResamplingIndicator):
+    """Resampling but flexible inputs indicators."""
+
+    src_freq = ["D", "M"]
     context = "hydro"
+
 
 class HrPrecip(Hourly):
     """Indicator involving hourly pr series."""
