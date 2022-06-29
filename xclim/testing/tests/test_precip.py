@@ -98,7 +98,7 @@ class TestStandardizedPrecip:
 
     def test_3d_data_with_nans(self):
         # test with data
-        ds = open_dataset(self.nc_ds).isel(location=1)
+        ds = open_dataset(self.nc_ds)
         pr = ds.pr.sel(time=slice("2000"))  # kg m-2 s-1
         prMM = pr
         prMM *= 86400 * 1000
@@ -128,9 +128,10 @@ class TestStandardizedPrecip:
         # preparing water_budget for SPEI test
         with xr.set_options(keep_attrs=True):
             tasmax = ds.tasmax
-            tas = tasmax - [2 + 1 * 0.5 for i in range(ds.tasmax.shape[0])]
-            tasmin = tasmax - [4 + 2 * 0.5 for i in range(ds.tasmax.shape[0])]
-            wb = xci.water_budget(pr, None, tasmin, tasmax, tas)
+            arr_1 = np.ones(tasmax.shape[1:])
+            tas = tasmax - [(2 + 1 * 0.5) * arr_1 for i in range(tasmax.shape[0])]
+            tasmin = tasmax - [(4 + 2 * 0.5) * arr_1 for i in range(tasmax.shape[0])]
+            wb = xci.water_budget(pr, None, tasmin, tasmax, tas, None)
             wbMM = wb
             wbMM *= 86400 * 1000
             wbMM.attrs["units"] = "mm/day"

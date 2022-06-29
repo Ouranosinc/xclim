@@ -259,8 +259,6 @@ standardized_precipitation_index = PrecipWithIndexing(
     description="Precipitations over rolling window {window}-X window, normalized such that SPI averages to 0. The window unit `X` is the minimal time period defined by resampling frequency {freq}",
     cell_methods="",
     compute=indices.standardized_precipitation_index,
-    # the freq parameter seems to cause errors when doing the tests
-    parameters=dict(window=1, dist="gamma", method="ML"),
 )
 
 standardized_precipitation_evapotranspiration_index = PrecipWithIndexing(
@@ -272,7 +270,6 @@ standardized_precipitation_evapotranspiration_index = PrecipWithIndexing(
     description="Water budget (precipitation - evapotranspiration) over rolling window {window}-X window, normalized such that SPEI averages to 0. The window unit `X` is the minimal time period defined by resampling frequency {freq}",
     cell_methods="",
     compute=indices.standardized_precipitation_evapotranspiration_index,
-    # parameters=dict(freq="MS", window=1, dist="gamma", method="ML"),
 )
 
 drought_code = FireWeather(
