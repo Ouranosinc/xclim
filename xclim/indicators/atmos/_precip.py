@@ -9,6 +9,7 @@ from xclim.core.indicator import (
     Daily,
     Hourly,
     Indicator,
+    ResamplingIndicator,
     ResamplingIndicatorWithIndexing,
 )
 from xclim.core.utils import InputKind
@@ -81,6 +82,11 @@ class PrTasxWithIndexing(ResamplingIndicatorWithIndexing):
         cfchecks.cfcheck_from_name("pr", pr)
         cfchecks.check_valid(tas, "standard_name", "air_temperature")
 
+class StandardizedIndexes(ResamplingIndicator): 
+    """Resampling but flexible inputs indicators.""" 
+    
+    src_freq = ["D", "M"] 
+    context = "hydro"
 
 class HrPrecip(Hourly):
     """Indicator involving hourly pr series."""
@@ -250,24 +256,24 @@ solid_precip_accumulation = PrTasxWithIndexing(
     parameters={"tas": {"kind": InputKind.VARIABLE}, "phase": "solid"},
 )
 
-standardized_precipitation_index = PrecipWithIndexing(
+standardized_precipitation_index = StandardizedIndexes(
     title="Standardized Precipitation Index (SPI)",
     identifier="spi",
     units="",
     standard_name="spi",
     long_name="Standardized Precipitation Index (SPI)",
-    description="Precipitations over a rolling window of {window} {freq:noun}, normalized such that SPI averages to 0.",
+    description="Precipitations over rolling window {window}-X window, normalized such that SPI averages to 0. The window unit `X` is the minimal time period defined by resampling frequency {freq}",
     cell_methods="",
     compute=indices.standardized_precipitation_index,
 )
 
-standardized_precipitation_evapotranspiration_index = PrecipWithIndexing(
+standardized_precipitation_evapotranspiration_index = StandardizedIndexes(
     title="Standardized Precipitation Evapotranspiration Index (SPEI)",
     identifier="spei",
     units="",
     standard_name="spei",
     long_name="Standardized Precipitation Evapotranspiration Index (SPEI)",
-    description="Water budget (precipitation - evapotranspiration) over a rolling window of {window} {freq:noun}, normalized such that SPEI averages to 0.",
+    description="Water budget (precipitation - evapotranspiration) over rolling window {window}-X window, normalized such that SPEI averages to 0. The window unit `X` is the minimal time period defined by resampling frequency {freq}",
     cell_methods="",
     compute=indices.standardized_precipitation_evapotranspiration_index,
 )
