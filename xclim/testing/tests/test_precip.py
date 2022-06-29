@@ -10,6 +10,7 @@ import xarray as xr
 import xclim.indices as xci
 from xclim import atmos, core, set_options
 from xclim.core.calendar import build_climatology_bounds, percentile_doy
+from xclim.core.units import convert_units_to
 from xclim.core.utils import PercentileDataArray
 from xclim.testing import open_dataset
 
@@ -100,9 +101,7 @@ class TestStandardizedPrecip:
         # test with data
         ds = open_dataset(self.nc_ds)
         pr = ds.pr.sel(time=slice("2000"))  # kg m-2 s-1
-        prMM = pr
-        prMM *= 86400 * 1000
-        prMM.attrs["units"] = "mm/day"
+        prMM = convert_units_to(pr, "mm/day")
         # put a nan somewhere
         prMM.values[10] = np.nan
         pr.values[10] = np.nan
@@ -132,9 +131,7 @@ class TestStandardizedPrecip:
             tas = tasmax - [(2 + 1 * 0.5) * arr_1 for i in range(tasmax.shape[0])]
             tasmin = tasmax - [(4 + 2 * 0.5) * arr_1 for i in range(tasmax.shape[0])]
             wb = xci.water_budget(pr, None, tasmin, tasmax, tas, None)
-            wbMM = wb
-            wbMM *= 86400 * 1000
-            wbMM.attrs["units"] = "mm/day"
+            wbMM = convert_units_to(wb, "mm/day")
 
         out3 = atmos.standardized_precipitation_evapotranspiration_index(
             wb,
