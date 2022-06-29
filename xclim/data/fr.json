@@ -232,7 +232,7 @@
     "long_name": "Indice de précipitation évapotranspiration standardisé (SPEI)",
     "description": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile de {window} {freq:nom}, normalisé tel que la moyenne de SPEI est 0.",
     "title": "Indice de précipitation évapotranspiration standardisé (SPEI)",
-    "abstract": ""Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile, normalisé tel que la moyenne de SPEI est 0. L'unité de la fenêtre est l'unité de temps déterminée par la fréquence de rééchantillonage.",
+    "abstract": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile, normalisé tel que la moyenne de SPEI est 0. L'unité de la fenêtre est l'unité de temps déterminée par la fréquence de rééchantillonage.",
   },
   "DC": {
     "long_name": "Indice de sécheresse",
