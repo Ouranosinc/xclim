@@ -485,7 +485,6 @@ class TestAgroclimaticIndices:
     def test_standardized_precipitation_evapotranspiration_index(
         self, freq, window, dist, method, values, diff_tol
     ):
-        print(values)
         # Only location=1 is tested
         ds = (
             open_dataset("sdba/CanESM2_1950-2100.nc")
@@ -496,8 +495,8 @@ class TestAgroclimaticIndices:
         # generate water budget
         with xr.set_options(keep_attrs=True):
             tasmax = ds.tasmax
-            tas = tasmax - [2 + 1 * 0.5 for i in range(ds.tasmax.shape[0])]
-            tasmin = tasmax - [4 + 2 * 0.5 for i in range(ds.tasmax.shape[0])]
+            tas = tasmax - 2.5
+            tasmin = tasmax - 5
             wb = xci.water_budget(pr, None, tasmin, tasmax, tas)
             wb_cal = wb.sel(time=slice("1950", "1980"))
 
