@@ -81,9 +81,8 @@ class AttrFormatter(string.Formatter):
         for k, v in DEFAULT_FORMAT_PARAMS.items():
             if k not in kwargs:
                 kwargs.update({k: v})
-        intermediary_res = jinja_env.from_string(
-            format_string, globals={"np": np}
-        ).render()
+        kwargs.update({"np": np})  # noqa
+        intermediary_res = jinja_env.from_string(format_string, globals=kwargs).render()
         return super().format(intermediary_res, *args, **kwargs)
 
     def format_field(self, value, format_spec):
