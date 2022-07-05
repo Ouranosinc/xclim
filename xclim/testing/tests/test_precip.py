@@ -112,7 +112,7 @@ class TestStandardizedPrecip:
             freq="MS",
             window=1,
             dist="gamma",
-            method="ML",
+            method="APP",
         )
         out2 = atmos.standardized_precipitation_index(
             prMM,
@@ -120,7 +120,7 @@ class TestStandardizedPrecip:
             freq="MS",
             window=1,
             dist="gamma",
-            method="ML",
+            method="APP",
         )
         np.testing.assert_array_almost_equal(out1, out2, 3)
 
@@ -139,7 +139,8 @@ class TestStandardizedPrecip:
             freq="MS",
             window=1,
             dist="gamma",
-            method="ML",
+            method="APP",
+            # method="ML",
         )
         out4 = atmos.standardized_precipitation_evapotranspiration_index(
             wbMM,
@@ -147,7 +148,8 @@ class TestStandardizedPrecip:
             freq="MS",
             window=1,
             dist="gamma",
-            method="ML",
+            method="APP",
+            # method="ML",
         )
 
         np.testing.assert_array_almost_equal(out3, out4, 3)

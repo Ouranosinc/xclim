@@ -605,7 +605,7 @@ def standardized_precipitation_index(
     freq: str = "MS",
     window: int = 1,
     dist: str = "gamma",
-    method: str = "ML",
+    method: str = "APP",
 ) -> xarray.DataArray:
     r"""Standardized Precipitation Index (SPI).
 
@@ -623,7 +623,7 @@ def standardized_precipitation_index(
     dist : {'gamma'}
       Name of the univariate distribution, only `gamma` is currently implemented
       (see :py:mod:`scipy.stats`).
-    method : str
+    method : {'APP', 'ML'}
       Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
       uses a deterministic function that doesn't involve any optimization.
 
@@ -758,7 +758,7 @@ def standardized_precipitation_evapotranspiration_index(
     freq: str = "MS",
     window: int = 1,
     dist: str = "gamma",
-    method: str = "ML",
+    method: str = "APP",
 ) -> xarray.DataArray:
     r"""Standardized Precipitation Evapotranspiration Index (SPEI).
 
@@ -778,9 +778,9 @@ def standardized_precipitation_evapotranspiration_index(
     dist : str
       Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
       (see :py:mod:`scipy.stats`).
-    method : str
+    method : {'APP', 'ML'}
       Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
-      simply uses the parameters output of `_fit_start`.
+      uses a deterministic function that doesn't involve any optimization.
 
     Returns
     -------
