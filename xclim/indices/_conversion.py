@@ -997,8 +997,7 @@ def clausius_clapeyron_scaled_precipitation(
     rsus="[radiation]",
     rlds="[radiation]",
     rlus="[radiation]",
-    uas="[speed]",
-    vas="[speed]",
+    u2="[speed]",
 )
 def potential_evapotranspiration(
     tasmin: xr.DataArray | None = None,
@@ -1010,8 +1009,7 @@ def potential_evapotranspiration(
     rsus: xr.DataArray | None = None,
     rlds: xr.DataArray | None = None,
     rlus: xr.DataArray | None = None,
-    uas: xr.DataArray | None = None,
-    vas: xr.DataArray | None = None,
+    u2: xr.DataArray | None = None,
     method: str = "BR65",
     peta: float | None = 0.00516409319477,
     petb: float | None = 0.0874972822289,
@@ -1034,17 +1032,15 @@ def potential_evapotranspiration(
     hurs : xarray.DataArray
       Relative humidity.
     rsds : xarray.DataArray
-        Surface Downwelling Shortwave Radiation
+      Surface Downwelling Shortwave Radiation
     rsus : xarray.DataArray
-        Surface Upwelling Shortwave Radiation
+      Surface Upwelling Shortwave Radiation
     rlds : xarray.DataArray
-        Surface Downwelling Longwave Radiation
+      Surface Downwelling Longwave Radiation
     rlus : xarray.DataArray
-        Surface Upwelling Longwave Radiation
-    uas : xarray.DataArray
-      Eastward wind velocity
-    vas : xarray.DataArray
-      Northward wind velocity
+      Surface Upwelling Longwave Radiation
+    u2 : xarray.DataArray
+      Wind velocity at 2 meters
     method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48", "mcguinnessbordne05", "MB05"}
       Which method to use, see notes.
     peta : float
@@ -1064,6 +1060,7 @@ def potential_evapotranspiration(
     - "hargreaves85" or "HG85", based on [Hargreaves1985]_. Requires tasmin and tasmax, daily [D] freq. (optional: tas can be given in addition of tasmin and tasmax).
     - "mcguinnessbordne05" or "MB05", based on [Tanguy2018]_. Requires tas, daily [D] freq, with latitudes 'lat'.
     - "thornthwaite48" or "TW48", based on [Thornthwaite1948]_. Requires tasmin and tasmax, monthly [MS] or daily [D] freq. (optional: tas can be given instead of tasmin and tasmax).
+    - "allen98" or "FAO_PM98", based on [Allen1998]_. Modification of Penman-Monteith method. Requires tasmin and tasmax, relative humidity, radiation fluxes, wind speed at two meters.
 
     The McGuinness-Bordne [McGuinness1972]_ equation is:
 
@@ -1203,11 +1200,7 @@ def potential_evapotranspiration(
         tasmax = convert_units_to(tasmax, "degC")
         tasmin = convert_units_to(tasmin, "degC")
         tas = convert_units_to(tas, "degC")
-        u10, _ = uas_vas_2_sfcwind(uas, vas)
-        u10 = convert_units_to(u10, "m s-1")
-        u2 = u10 * 4.87 / np.log(67.8 * 10 - 5.42)
-        # u2, _ = uas_vas_2_sfcwind(uas, vas)
-        # u2 = convert_units_to(u2, "m s-1")
+        u2 = convert_units_to(u2, "m s-1")
 
         with xr.set_options(keep_attrs=True):
             # mean temperature [degC]

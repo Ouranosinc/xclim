@@ -362,3 +362,38 @@ def day_lengths(
     ).assign_attrs(units="h")
 
     return day_length_hours
+
+
+def wind_speed_at_2_meters(
+    uz: xr.DataArray,
+    z: float,
+    method: str = "log",
+) -> xr.DataArray:
+    r"""Wind speed at two meters.
+
+    Parameters
+    ----------
+    uz: xarray.DataArray
+      Wind speed at height z
+    z: float
+      Height [m]
+    method : {'log'}
+      Method to convert uz to wind speed at two meters
+
+    Returns
+    -------
+    xarray.DataArray
+      Wind speed at two meters
+
+    References
+    ----------
+    Allen, R. G., Pereira, L. S., Raes, D., & Smith, M. (1998). Crop evapotranspiration-Guidelines for computing crop water requirements-FAO Irrigation and drainage paper 56. Fao, Rome, 300(9), D05109.
+    """
+    if method == "log":
+        if 67.8 * z - 5.42 < 0:
+            raise ValueError(f"Height {z}m is too small for method {method}.")
+        with xr.set_options(keep_attrs=True):
+            u2 = uz * 4.87 / np.log(67.8 * z - 5.42)
+        return u2
+    else:
+        raise NotImplementedError(f"'{method}' method is not implemented.")
