@@ -1033,6 +1033,18 @@ def potential_evapotranspiration(
       Latitude. If not given, it is sought on tasmin or tas with cf-xarray.
     hurs : xarray.DataArray
       Relative humidity.
+    rsds : xarray.DataArray
+        Surface Downwelling Shortwave Radiation
+    rsus : xarray.DataArray
+        Surface Upwelling Shortwave Radiation
+    rlds : xarray.DataArray
+        Surface Downwelling Longwave Radiation
+    rlus : xarray.DataArray
+        Surface Upwelling Longwave Radiation
+    uas : xarray.DataArray
+      Eastward wind velocity
+    vas : xarray.DataArray
+      Northward wind velocity
     method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48", "mcguinnessbordne05", "MB05"}
       Which method to use, see notes.
     peta : float
