@@ -988,13 +988,30 @@ def clausius_clapeyron_scaled_precipitation(
 
 
 @declare_units(
-    tasmin="[temperature]", tasmax="[temperature]", tas="[temperature]", lat="[]"
+    tasmin="[temperature]",
+    tasmax="[temperature]",
+    tas="[temperature]",
+    lat="[]",
+    hurs="[]",
+    rsds="[radiation]",
+    rsus="[radiation]",
+    rlds="[radiation]",
+    rlus="[radiation]",
+    uas="[speed]",
+    vas="[speed]",
 )
 def potential_evapotranspiration(
     tasmin: xr.DataArray | None = None,
     tasmax: xr.DataArray | None = None,
     tas: xr.DataArray | None = None,
     lat: xr.DataArray | None = None,
+    hurs: xr.DataArray | None = None,
+    rsds: xr.DataArray | None = None,
+    rsus: xr.DataArray | None = None,
+    rlds: xr.DataArray | None = None,
+    rlus: xr.DataArray | None = None,
+    uas: xr.DataArray | None = None,
+    vas: xr.DataArray | None = None,
     method: str = "BR65",
     peta: float | None = 0.00516409319477,
     petb: float | None = 0.0874972822289,
@@ -1014,6 +1031,8 @@ def potential_evapotranspiration(
       Mean daily temperature.
     lat : xarray.DataArray, optional
       Latitude. If not given, it is sought on tasmin or tas with cf-xarray.
+    hurs : xarray.DataArray
+      Relative humidity.
     method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48", "mcguinnessbordne05", "MB05"}
       Which method to use, see notes.
     peta : float
@@ -1055,6 +1074,7 @@ def potential_evapotranspiration(
     .. [Tanguy2018] Tanguy, M., Prudhomme, C., Smith, K., & Hannaford, J. (2018). Historical gridded reconstruction of potential evapotranspiration for the UK. Earth System Science Data, 10(2), 951-968.
     .. [McGuinness1972] McGuinness, J. L., & Bordne, E. F. (1972). A comparison of lysimeter-derived potential evapotranspiration with computed values (No. 1452). US Department of Agriculture.
     .. [Thornthwaite1948] Thornthwaite, C. W. (1948). An approach toward a rational classification of climate. Geographical review, 38(1), 55-94.
+    .. [Allen1998] Allen, R. G., Pereira, L. S., Raes, D., & Smith, M. (1998). Crop evapotranspiration-Guidelines for computing crop water requirements-FAO Irrigation and drainage paper 56. Fao, Rome, 300(9), D05109.
     """
     if lat is None:
         lat = (tasmin if tas is None else tas).cf["latitude"]
@@ -1166,6 +1186,41 @@ def potential_evapotranspiration(
         # Thornthwaite(1948) formula
         out = 1.6 * dl_m * tas_idy_a  # cm/month
         out = 10 * out  # mm/month
+
+    elif method in ["allen98", "FAO_PM98"]:
+        tasmax = convert_units_to(tasmax, "degC")
+        tasmin = convert_units_to(tasmin, "degC")
+        tas = convert_units_to(tas, "degC")
+        u10, _ = uas_vas_2_sfcwind(uas, vas)
+        u10 = convert_units_to(u10, "m s-1")
+        u2 = u10 * 4.87 / np.log(67.8 * 10 - 5.42)
+        # u2, _ = uas_vas_2_sfcwind(uas, vas)
+        # u2 = convert_units_to(u2, "m s-1")
+
+        with xr.set_options(keep_attrs=True):
+            # mean temperature [degC]
+            tas_m = (tasmax + tasmin) / 2
+            # mean saturation vapour pressure [kPa]
+            es = (1 / 2) * (
+                saturation_vapor_pressure(tasmax) + saturation_vapor_pressure(tasmin)
+            )
+            es = convert_units_to(es, "kPa")
+            # mean actual vapour pressure [kPa]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               kPa )
+            ea = hurs * es
+
+            # slope of saturation vapour pressure curve  [kPa degC-1]
+            delta = 4098 * es / (tas_m + 237.3) ** 2
+            # net radiation
+            Rn = convert_units_to(rsds - rsus - (rlus - rlds), "MJ m-2 d-1")
+
+            G = 0  # daily soil heat flux density [MJ m-2 d-1]
+            P = 101.325  # Atmospheric pressure [kPa]
+            gamma = 0.665e-03 * P  # psychrometric const = C_p*P/(eps*lam) [kPa degC-1]
+
+        out = (
+            0.408 * delta * (Rn - G) + gamma * (900 / (tas_m + 273)) * u2 * (es - ea)
+        ) / (delta + gamma * (1 + 0.34 * u2))
+        out = out.clip(0)
 
     else:
         raise NotImplementedError(f"'{method}' method is not implemented.")
