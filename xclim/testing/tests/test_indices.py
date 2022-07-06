@@ -284,7 +284,7 @@ class TestAgroclimaticIndices:
                 bedd[1], bedd[0]
             )  # Leap-year has slightly higher values
             np.testing.assert_allclose(
-                bedd, np.array([deg_days, deg_days, deg_days, np.NaN]), rtol=3e-4
+                bedd, np.array([deg_days, deg_days, deg_days, np.NaN]), rtol=6e-4
             )
             np.testing.assert_allclose(
                 bedd_hot, [max_deg_days, max_deg_days, max_deg_days, np.NaN], rtol=0.15
@@ -369,7 +369,7 @@ class TestAgroclimaticIndices:
             end_date=end_date,  # noqa
         )
 
-        np.testing.assert_almost_equal(np.mean(hi), values, 2)
+        np.testing.assert_allclose(np.mean(hi), values, rtol=1e-2, atol=0)
 
     def test_qian_weighted_mean_average(self, tas_series):
         mg = np.zeros(365)
@@ -2001,7 +2001,9 @@ def test_specific_humidity_from_dewpoint(tas_series, ps_series):
     np.testing.assert_allclose(q, 0.012, 3)
 
 
-@pytest.mark.parametrize("method", ["tetens30", "sonntag90", "goffgratch46", "wmo08"])
+@pytest.mark.parametrize(
+    "method", ["tetens30", "sonntag90", "goffgratch46", "wmo08", "its90"]
+)
 @pytest.mark.parametrize(
     "ice_thresh,exp0", [(None, [125, 286, 568]), ("0 degC", [103, 260, 563])]
 )
@@ -2407,81 +2409,76 @@ class TestClausiusClapeyronScaledPrecip:
 
 
 class TestPotentialEvapotranspiration:
-    def test_baier_robertson(self, tasmin_series, tasmax_series):
-        tn = tasmin_series(np.array([0, 5, 10]) + 273.15)
-        tn = tn.expand_dims(lat=[45])
-        tx = tasmax_series(np.array([10, 15, 20]) + 273.15)
-        tx = tx.expand_dims(lat=[45])
+    def test_baier_robertson(self, tasmin_series, tasmax_series, lat_series):
+        lat = lat_series([45])
+        tn = tasmin_series(np.array([0, 5, 10]) + 273.15).expand_dims(lat=lat)
+        tx = tasmax_series(np.array([10, 15, 20]) + 273.15).expand_dims(lat=lat)
 
-        out = xci.potential_evapotranspiration(tn, tx, method="BR65")
+        out = xci.potential_evapotranspiration(tn, tx, lat=lat, method="BR65")
         np.testing.assert_allclose(out[0, 2], [3.861079 / 86400], rtol=1e-2)
 
-    def test_hargreaves(self, tasmin_series, tasmax_series, tas_series):
-        tn = tasmin_series(np.array([0, 5, 10]) + 273.15)
-        tn = tn.expand_dims(lat=[45])
-        tx = tasmax_series(np.array([10, 15, 20]) + 273.15)
-        tx = tx.expand_dims(lat=[45])
-        tm = tas_series(np.array([5, 10, 15]) + 273.15)
-        tm = tm.expand_dims(lat=[45])
+    def test_hargreaves(self, tasmin_series, tasmax_series, tas_series, lat_series):
+        lat = lat_series([45])
+        tn = tasmin_series(np.array([0, 5, 10]) + 273.15).expand_dims(lat=lat)
+        tx = tasmax_series(np.array([10, 15, 20]) + 273.15).expand_dims(lat=lat)
+        tm = tas_series(np.array([5, 10, 15]) + 273.15).expand_dims(lat=lat)
 
-        out = xci.potential_evapotranspiration(tn, tx, tm, method="HG85")
-        np.testing.assert_allclose(out[2, 0], [3.962589 / 86400], rtol=1e-2)
+        out = xci.potential_evapotranspiration(tn, tx, tm, lat=lat, method="HG85")
+        np.testing.assert_allclose(out[0, 2], [3.962589 / 86400], rtol=1e-2)
 
-    def test_thornthwaite(self, tas_series):
+    def test_thornthwaite(self, tas_series, lat_series):
+        lat = lat_series([45])
         time_std = date_range(
             "1990-01-01", "1990-12-01", freq="MS", calendar="standard"
         )
         tm = xr.DataArray(
             np.ones((time_std.size, 1)),
             dims=("time", "lat"),
-            coords={"time": time_std, "lat": [45]},
+            coords={"time": time_std, "lat": lat},
             attrs={"units": "degC"},
         )
 
-        out = xci.potential_evapotranspiration(tas=tm, method="TW48")
+        out = xci.potential_evapotranspiration(tas=tm, lat=lat, method="TW48")
         np.testing.assert_allclose(out[0, 1], [42.7619242 / (86400 * 30)], rtol=1e-1)
 
-    def test_mcguinnessbordne(self, tasmin_series, tasmax_series):
-        tn = tasmin_series(np.array([0, 5, 10]) + 273.15)
-        tn = tn.expand_dims(lat=[45])
-        tx = tasmax_series(np.array([10, 15, 20]) + 273.15)
-        tx = tx.expand_dims(lat=[45])
+    def test_mcguinnessbordne(self, tasmin_series, tasmax_series, lat_series):
+        lat = lat_series([45])
+        tn = tasmin_series(np.array([0, 5, 10]) + 273.15).expand_dims(lat=lat)
+        tx = tasmax_series(np.array([10, 15, 20]) + 273.15).expand_dims(lat=lat)
 
-        out = xci.potential_evapotranspiration(tn, tx, method="MB05")
-        np.testing.assert_allclose(out[2, 0], [2.78253138816 / 86400], rtol=1e-2)
+        out = xci.potential_evapotranspiration(tn, tx, lat=lat, method="MB05")
+        np.testing.assert_allclose(out[0, 2], [2.78253138816 / 86400], rtol=1e-2)
 
 
-def test_water_budget_from_tas(pr_series, tasmin_series, tasmax_series):
-    pr = pr_series(np.array([10, 10, 10]))
+def test_water_budget_from_tas(pr_series, tasmin_series, tasmax_series, lat_series):
+    lat = lat_series([45])
+    pr = pr_series(np.array([10, 10, 10])).expand_dims(lat=lat)
     pr.attrs["units"] = "mm/day"
-    pr = pr.expand_dims(lat=[45])
-    tn = tasmin_series(np.array([0, 5, 10]) + K2C)
-    tn = tn.expand_dims(lat=[45])
-    tx = tasmax_series(np.array([10, 15, 20]) + K2C)
-    tx = tx.expand_dims(lat=[45])
+    tn = tasmin_series(np.array([0, 5, 10]) + K2C).expand_dims(lat=lat)
+    tx = tasmax_series(np.array([10, 15, 20]) + K2C).expand_dims(lat=lat)
 
-    out = xci.water_budget(pr, tasmin=tn, tasmax=tx, method="BR65")
-    np.testing.assert_allclose(out[0, 2], [6.138921 / 86400], rtol=1e-3)
+    out = xci.water_budget(pr, tasmin=tn, tasmax=tx, lat=lat, method="BR65")
+    np.testing.assert_allclose(out[0, 2], 6.138921 / 86400, rtol=2e-3)
 
-    out = xci.water_budget(pr, tasmin=tn, tasmax=tx, method="HG85")
-    np.testing.assert_allclose(out[0, 2], [6.037411 / 86400], rtol=1e-3)
+    out = xci.water_budget(pr, tasmin=tn, tasmax=tx, lat=lat, method="HG85")
+    np.testing.assert_allclose(out[0, 2], 6.037411 / 86400, rtol=2e-3)
 
     time_std = date_range("1990-01-01", "1990-12-01", freq="MS", calendar="standard")
     tm = xr.DataArray(
         np.ones((time_std.size, 1)),
         dims=("time", "lat"),
-        coords={"time": time_std, "lat": [45]},
+        coords={"time": time_std, "lat": lat},
         attrs={"units": "degC"},
     )
     prm = xr.DataArray(
         np.ones((time_std.size, 1)) * 10,
         dims=("time", "lat"),
-        coords={"time": time_std, "lat": [45]},
+        coords={"time": time_std, "lat": lat},
         attrs={"units": "mm/day"},
     )
 
-    out = xci.water_budget(prm, tas=tm, method="TW48")
-    np.testing.assert_allclose(out[1, 0], [8.5746025 / 86400], rtol=1e-1)
+    out = xci.water_budget(prm, tas=tm, lat=lat, method="TW48")
+    np.testing.assert_allclose(out[1, 0], [8.5746025 / 86400], rtol=2e-1)
 
 
 def test_water_budget(pr_series, evspsblpot_series):
@@ -2666,3 +2663,62 @@ class TestWetDaysProp:
 
         out = xci.wetdays_prop(pr, thresh="5 mm/day", freq="M")
         np.testing.assert_allclose(out, [4 / 31, 0, 0, 2 / 31, 0, 0, 0, 0, 0, 0, 0, 0])
+
+
+def test_universal_thermal_climate_index(
+    tas_series,
+    hurs_series,
+    sfcWind_series,
+):
+    tas = tas_series(np.array([16]) + K2C)
+    hurs = hurs_series(np.array([36]))
+    sfcWind = sfcWind_series(np.array([2]))
+    mrt = tas_series(np.array([22]) + K2C)
+
+    # Expected values
+    utci_exp = [17.7]
+
+    utci = xci.universal_thermal_climate_index(
+        tas=tas,
+        hurs=hurs,
+        sfcWind=sfcWind,
+        mrt=mrt,
+    )
+    np.testing.assert_allclose(utci, utci_exp, rtol=1e-03)
+
+
+@pytest.mark.parametrize(
+    "stat,expected", [("sunlit", np.nan), ("instant", 295.3), ("average", 295.1)]
+)
+def test_mean_radiant_temperature(
+    rsds_series,
+    rsus_series,
+    rlds_series,
+    rlus_series,
+    stat,
+    expected,
+):
+    rsds = rsds_series(np.array([195.08]))
+    rsus = rsus_series(np.array([36.686]))
+    rlds = rlds_series(np.array([294.91]))
+    rlus = rlus_series(np.array([396.19]))
+    lat = xr.DataArray(-21.45, attrs={"units": "degrees_north"})
+    lon = xr.DataArray(133.125, attrs={"units": "degrees_east"})
+    rsds["lat"] = lat
+    rsds["lon"] = lon
+    rsus["lat"] = lat
+    rsus["lon"] = lon
+    rlds["lat"] = lat
+    rlds["lon"] = lon
+    rlus["lat"] = lat
+    rlus["lon"] = lon
+
+    mrt = xci.mean_radiant_temperature(
+        rsds,
+        rsus,
+        rlds,
+        rlus,
+        stat=stat,
+    )
+
+    np.testing.assert_allclose(mrt, expected, rtol=1e-03)

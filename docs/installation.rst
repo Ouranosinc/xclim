@@ -34,7 +34,8 @@ To install the xclim Anaconda binary, run this command in your terminal:
 
 Extra dependencies
 ------------------
-To improve performance of xclim, we highly recommend you also install `flox`_ (see: :doc:`flox API <flox:api>`). This package integrates into xarray and significantly improves the performance of the grouping and resampling algorithms, especially when using `dask` on large datasets.
+To improve performance of xclim, we highly recommend you also install `flox`_ (see: :doc:`flox API <flox:api>`).
+This package integrates into xarray and significantly improves the performance of the grouping and resampling algorithms, especially when using `dask` on large datasets.
 
 We also recommend using the subsetting tools in `clisops`_ (see: :doc:`clisops.core.subset API <clisops:api>`) for spatial manipulation of geospatial data.
 
@@ -43,10 +44,28 @@ For convenience, these libraries can be installed alongside `xclim` using the fo
 
 .. code-block::
 
-    $ pip install -e ".[upstream]"
+    $ pip install -r requirements_upstream.txt
+    # Or, alternatively:
+    $ make upstream
 
 .. _flox: https://github.com/dcherian/flox
 .. _clisops: https://github.com/roocs/clisops
+
+Another optional library is `SBCK`_, which provides experimental adjustment methods to extend
+:ref:`xclim.sdba <Bias adjustment and downscaling algorithms>`. It can't be installed directly
+from pip or conda and has one complex dependency : `Eigen`_. Please refer to Eigen's and SBCK's
+docs for the recommended installation instructions. However, Eigen is available on conda, so one can do:
+
+.. code-block::
+
+   $ conda install -c conda-forge eigen pybind11
+   $ pip install "git+https://github.com/Ouranosinc/SBCK.git@easier-install#egg=sbck&subdirectory=python"
+
+The last line will install SBCK>=v0.4.0 from Ouranos' fork which implements a small fix that allows this
+direct installation from pip within a virtual environment.
+
+.. _SBCK: https://github.com/yrobink/SBCK
+.. _Eigen: https://eigen.tuxfamily.org/index.php
 
 From sources
 ------------
@@ -93,4 +112,4 @@ To create a conda development environment including all xclim dependencies, ente
 
     $ conda create -n my_xclim_env python=3.8 --file=environment.yml
     $ conda activate my_xclim_env
-    (my_xclim_env) $ pip install .[dev]
+    (my_xclim_env) $ pip install ".[dev]"

@@ -2,39 +2,60 @@
 History
 =======
 
-0.37.0 (unreleased)
+0.38.0 (unreleased)
 -------------------
-Contributors to this version:  Abel Aoun (:user:`bzah`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Juliette Lavoie (:user:`juliettelavoie`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Adjustment methods of `SBCK <https://github.com/yrobink/SBCK>`_ are wrapped into xclim when that package is installed. (:issue:`1109`, :pull:`1115`).
+    - Wrapped SBCK tests are also properly run in the tox testing ensemble. (:pull:`1119`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Marked a test (``test_release_notes_file_not_implemented``) that can only pass when source files are available so that it can easily be skipped on conda-forge build tests. (:issue:`1116`, :pull:`1117`).
+* Split a few YAML strings found in the virtual modules that regularly issued warnings on the code checking CI steps. (:pull:`1118`).
+
+0.37.0 (20 June 2022)
+---------------------
+Contributors to this version: Abel Aoun (:user:`bzah`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Juliette Lavoie (:user:`juliettelavoie`), Ludwig Lierhammer (:user:`ludwiglierhammer`).
 
 Announcements
 ^^^^^^^^^^^^^
 * `xclim` is now compliant with `PEP 563 <https://peps.python.org/pep-0563>`_. Python3.10-style annotations are now permitted. (:issue:`1065`, :pull:`1071`).
 * `xclim` is now fully compatible with `xarray`'s `flox`-enabled ``GroupBy`` and ``resample`` operations. (:pull:`1081`).
 * `xclim` now (properly) enforces docstring compliance checks using `pydocstyle` with modified `numpy`-style docstrings. Docstring errors will now cause build failures. See the `pydocstyle documentation <http://www.pydocstyle.org/en/stable/error_codes.html>`_ for more information. (:pull:`1074`).
+* `xclim` now uses GitHub Actions to manage patch version bumping. Merged Pull Requests that modify `xclim` code now trigger version-bumping automatically when pushed to the main development branch. Running `$ bump2version patch` within development branches is no longer necessary. (:pull:`1102`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Add "Celsius" to aliases of "celsius" unit. (:issue:`1067`, :pull:`1068`).
 * All indicators now have indexing enabled, except those computing statistics on spells. (:issue:`1069`, :pull:`1070`).
 * A convenience function for returning the version numbers for relevant xclim dependencies (``xclim.testing.show_versions``) is now offered. (:pull:`1073`).
-    - A CLI version of this function is also available from the command line: `$ xclim show_version_info`. (:pull:`1073`).
+    - A CLI version of this function is also available from the command line (`$ xclim show_version_info`). (:pull:`1073`).
 * New "keep_attrs" option to control the handling of the attributes within the indicators. (:issue:`1026`, :pull:`1076`).
 * Added a notebook showcasing some simple examples of Spatial Analogues. (:issue:`585`, :pull:`1075`).
 * ``create_ensembles`` now accepts a glob string to find datasets. (:pull:`1081`).
 * Improved percentile based indicators metadata with the window, threshold and climatology period used to compute percentiles. (:issue:`1047`, :pull:`1050`).
 * New ``xclim.core.calendar.construct_offset``, the inverse operation of ``parse_offset``. (:pull:`1090`).
 * Rechunking operations in ``xclim.indices.run_length.rle`` are now synchronized with dask's options. (:pull:`1090`).
-* A convenience recipe for installing key development branches of some dependencies has been added (`$ pip install xclim[upstream]`). (:issue:`1088`, :pull:`1092`).
 * A mention of the "missing" checks and options is added to the history attribute of indicators, where appropriate. (:issue:`1100`, :pull:`1103`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * ``xclim.atmos.water_budget`` has been separated into ``water_budget`` (calculated directly with 'evspsblpot') and ``water_budget_from_tas`` (original function). (:pull:`1086`).
 * Injected parameters in indicators are now left out of a function's signature and will not be included in the history attribute. (:pull:`1086`).
-* The signature for the following Indicators:
+* The signature for the following Indicators have been modified (:pull:`1050`):
     - cold_spell_duration_index, tg90p, tg10p, tx90p, tx10p, tn90p, tn10p, warm_spell_duration_index, days_over_precip_doy_thresh, days_over_precip_thresh, fraction_over_precip_doy_thresh, fraction_over_precip_thresh, cold_and_dry_days, warm_and_dry_days, warm_and_wet_days, cold_and_wet_days
-  have been modified. The parameter for percentiles values is now named after the variable it is supposed to be computed upon. (:pull:`1050`)
+* The parameter for percentile values is now named after the variable it is supposed to be computed upon. (:pull:`1050`).
 * `pytest-runner` has been removed as a dependency (it was never needed for `xclim` development). (:pull:`1074`).
+* `xclim.testing._utils.py` has been renamed to `xclim.testing.utils.py` for added documentation visibility. (:pull:`1074`).
+    - Some unused functions and classes (``as_tuple``, ``TestFile``, ``TestDataSet``) have been removed. (:pull:`1107`).
+
+New indicators
+^^^^^^^^^^^^^^
+* ``universal_thermal_climate_index`` and ``mean_radiant_temperature`` for computing the universal thermal climate index from the near-surface temperature, relative humidity, near-surface windspeed and radiation. (:issue:`1060`, :pull:`1062`).
+    - A new method ``ITS90`` has also been added for calculating saturation water vapour pressure. (:issue:`1060`, :pull:`1062`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -44,6 +65,9 @@ Internal changes
 * Code snippets within documentation are now checked and reformatted to `black` conventions with `blackdoc`. A `pre-commit` hook is now in place to run these checks. (:pull:`1098`).
 * Test coverage statistic no longer includes coverage of the test files themselves. Coverage now reflects lines of usable code covered. (:pull:`1101`).
 * Reordered listed authors alphabetically. Promoted :user:`bzah` to core contributor. (:pull:`1105`).
+* Tests have been added for some functions in `xclim.testing.utils.py`; some previously uncaught bugs in ``list_input_variables``, ``publish_release_notes``, and ``show_versions`` have been patched. (:issue:`1078`, :pull:`1107`).
+* A convenience command for installing xclim with key development branches of some dependencies has been added (`$ make upstream`). (:issue:`1088`, :pull:`1092`; amended in :issue:`1113`, :pull:`1114`).
+    - This build configuration is also available in `tox` for local development purposes (`$ tox -e pyXX-upstream`).
 
 Bug fixes
 ^^^^^^^^^
