@@ -669,7 +669,7 @@ def standardized_precipitation_index(
         )
 
     # calibration period
-    cal_period = [pr_cal.time.values[0], pr_cal.time.values[-1]]
+    cal_period = pr_cal.time[[0, -1]].dt.strftime('%Y-%m-%dT%H:%M:%S').values.tolist()
 
     # Determine group type
     if freq == "D" or freq is None:
