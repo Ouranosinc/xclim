@@ -570,6 +570,18 @@ def water_budget(
       Mean daily temperature.
     lat : xarray.DataArray
       Latitude, needed if evspsblpot is not given.
+    hurs : xarray.DataArray
+      Relative humidity.
+    rsds : xarray.DataArray
+      Surface Downwelling Shortwave Radiation
+    rsus : xarray.DataArray
+      Surface Upwelling Shortwave Radiation
+    rlds : xarray.DataArray
+      Surface Downwelling Longwave Radiation
+    rlus : xarray.DataArray
+      Surface Upwelling Longwave Radiation
+    u2 : xarray.DataArray
+      Wind velocity at 2 meters
     method : str
       Method to use to calculate the potential evapotranspiration.
 
