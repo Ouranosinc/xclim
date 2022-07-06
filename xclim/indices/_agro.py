@@ -775,9 +775,8 @@ def standardized_precipitation_evapotranspiration_index(
     window : int
       Averaging window length relative to the resampling frequency. For example, if `freq="MS"`, i.e. a monthly resampling, the window
       is an integer number of months.
-    dist : str
-      Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
-      (see :py:mod:`scipy.stats`).
+    dist : {'gamma'}
+      Name of the univariate distribution. Only "gamma" is currently implemented. (see :py:mod:`scipy.stats`).
     method : {'APP', 'ML'}
       Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
       uses a deterministic function that doesn't involve any optimization.
