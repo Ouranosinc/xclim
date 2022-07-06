@@ -264,7 +264,7 @@ standardized_precipitation_index = StandardizedIndexes(
     units="",
     standard_name="spi",
     long_name="Standardized Precipitation Index (SPI)",
-    description="Precipitations over rolling window {window}-X window, normalized such that SPI averages to 0. The window unit `X` is the minimal time period defined by resampling frequency {freq}",
+    description="Precipitations over rolling window {window}-X window, normalized such that SPI averages to 0 for calibration data. The window unit `X` is the minimal time period defined by resampling frequency {freq}",
     cell_methods="",
     compute=indices.standardized_precipitation_index,
 )
@@ -275,7 +275,7 @@ standardized_precipitation_evapotranspiration_index = StandardizedIndexes(
     units="",
     standard_name="spei",
     long_name="Standardized Precipitation Evapotranspiration Index (SPEI)",
-    description="Water budget (precipitation - evapotranspiration) over rolling window {window}-X window, normalized such that SPEI averages to 0. The window unit `X` is the minimal time period defined by resampling frequency {freq}",
+    description="Water budget (precipitation - evapotranspiration) over rolling window {window}-X window, normalized such that SPEI averages to 0 for calibration data. The window unit `X` is the minimal time period defined by resampling frequency {freq}",
     cell_methods="",
     compute=indices.standardized_precipitation_evapotranspiration_index,
 )

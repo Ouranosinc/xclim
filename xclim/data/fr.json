@@ -231,15 +231,15 @@
   },
   "SPI": {
     "long_name": "Indice de précipitation standardisé (SPI)",
-    "description": "Précipitations sur une fenêtre mobile de {window} {freq:nom}, normalisées tel que la moyenne de SPI est 0.",
+    "description": "Précipitations sur une fenêtre mobile de {window} {freq:nom}, normalisées tel que la moyenne de SPI est 0 pour les données de calibration.",
     "title": "Indice de précipitation standardisé (SPI)",
-    "abstract": "Précipitations sur une fenêtre mobile, normalisées tel que la moyenne de SPI est 0. L'unité de la fenêtre est l'unité de temps déterminée par la fréquence de rééchantillonage"
+    "abstract": "Précipitations sur une fenêtre mobile, normalisées tel que la moyenne de SPI est 0 pour les données de calibration. L'unité de la fenêtre est l'unité de temps déterminée par la fréquence de rééchantillonage"
   },
   "SPEI": {
     "long_name": "Indice de précipitation évapotranspiration standardisé (SPEI)",
-    "description": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile de {window} {freq:nom}, normalisé tel que la moyenne de SPEI est 0.",
+    "description": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile de {window} {freq:nom}, normalisé tel que la moyenne de SPEI est 0 pour les données de calibration.",
     "title": "Indice de précipitation évapotranspiration standardisé (SPEI)",
-    "abstract": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile, normalisé tel que la moyenne de SPEI est 0. L'unité de la fenêtre est l'unité de temps déterminée par la fréquence de rééchantillonage."
+    "abstract": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile, normalisé tel que la moyenne de SPEI est 0 pour les données de calibration. L'unité de la fenêtre est l'unité de temps déterminée par la fréquence de rééchantillonage."
   },
   "DC": {
     "long_name": "Indice de sécheresse",
