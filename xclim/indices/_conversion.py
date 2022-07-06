@@ -1197,11 +1197,10 @@ def potential_evapotranspiration(
         out = 10 * out  # mm/month
 
     elif method in ["allen98", "FAO_PM98"]:
+
         tasmax = convert_units_to(tasmax, "degC")
         tasmin = convert_units_to(tasmin, "degC")
-        tas = convert_units_to(tas, "degC")
         u2 = convert_units_to(u2, "m s-1")
-
         with xr.set_options(keep_attrs=True):
             # mean temperature [degC]
             tas_m = (tasmax + tasmin) / 2
@@ -1222,10 +1221,14 @@ def potential_evapotranspiration(
             P = 101.325  # Atmospheric pressure [kPa]
             gamma = 0.665e-03 * P  # psychrometric const = C_p*P/(eps*lam) [kPa degC-1]
 
-        out = (
-            0.408 * delta * (Rn - G) + gamma * (900 / (tas_m + 273)) * u2 * (es - ea)
-        ) / (delta + gamma * (1 + 0.34 * u2))
-        out = out.clip(0)
+            # Penman-Monteith formula with reference grass:
+            # height = 0.12m, surface resistance = 70 s m-1, albedo  = 0.23
+            # Surface resistance implies a ``moderately dry soil surface resulting from
+            # about a weekly irrigation frequency''
+            out = (
+                0.408 * delta * (Rn - G)
+                + gamma * (900 / (tas_m + 273)) * u2 * (es - ea)
+            ) / (delta + gamma * (1 + 0.34 * u2))
 
     else:
         raise NotImplementedError(f"'{method}' method is not implemented.")

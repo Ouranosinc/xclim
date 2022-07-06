@@ -529,6 +529,12 @@ def latitude_temperature_index(
     tasmax="[temperature]",
     tas="[temperature]",
     lat="[]",
+    hurs="[]",
+    rsds="[radiation]",
+    rsus="[radiation]",
+    rlds="[radiation]",
+    rlus="[radiation]",
+    u2="[speed]",
 )
 def water_budget(
     pr: xarray.DataArray,
@@ -537,6 +543,12 @@ def water_budget(
     tasmax: xarray.DataArray | None = None,
     tas: xarray.DataArray | None = None,
     lat: xarray.DataArray | None = None,
+    hurs: xarray.DataArray | None = None,
+    rsds: xarray.DataArray | None = None,
+    rsus: xarray.DataArray | None = None,
+    rlds: xarray.DataArray | None = None,
+    rlus: xarray.DataArray | None = None,
+    u2: xarray.DataArray | None = None,
     method: str = "BR65",
 ) -> xarray.DataArray:
     r"""Precipitation minus potential evapotranspiration.
@@ -574,7 +586,17 @@ def water_budget(
 
     if evspsblpot is None:
         pet = xci.potential_evapotranspiration(
-            tasmin=tasmin, tasmax=tasmax, tas=tas, lat=lat, method=method
+            tasmin=tasmin,
+            tasmax=tasmax,
+            tas=tas,
+            lat=lat,
+            hurs=hurs,
+            rsds=rsds,
+            rsus=rsus,
+            rlds=rlds,
+            rlus=rlus,
+            u2=u2,
+            method=method,
         )
     else:
         pet = convert_units_to(evspsblpot, "kg m-2 s-1")
