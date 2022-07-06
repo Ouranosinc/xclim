@@ -677,7 +677,7 @@ def standardized_precipitation_index(
         group = "time.dayofyear"
     else:
         _, base, _, _ = parse_offset(freq)
-        if base in ["Y", "A", "Q", "M"]:
+        if base in ["M"]:
             group = "time.month"
         else:
             raise NotImplementedError(f"Resampling frequency `{freq}` not supported.")
