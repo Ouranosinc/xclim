@@ -127,9 +127,8 @@ class TestStandardizedPrecip:
         # preparing water_budget for SPEI test
         with xr.set_options(keep_attrs=True):
             tasmax = ds.tasmax
-            arr_1 = np.ones(tasmax.shape[1:])
-            tas = tasmax - [(2 + 1 * 0.5) * arr_1 for i in range(tasmax.shape[0])]
-            tasmin = tasmax - [(4 + 2 * 0.5) * arr_1 for i in range(tasmax.shape[0])]
+            tas = tasmax - 2.5
+            tasmin = tasmax - 5
             wb = xci.water_budget(pr, None, tasmin, tasmax, tas, None)
             wbMM = convert_units_to(wb, "mm/day")
 
