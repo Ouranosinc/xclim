@@ -148,6 +148,7 @@ class AttrFormatter(string.Formatter):
 default_formatter = AttrFormatter(
     {
         # Arguments to "freq"
+        "D": ["daily", "days"],
         "YS": ["annual", "years"],
         "AS-*": ["annual", "years"],
         "MS": ["monthly", "months"],
