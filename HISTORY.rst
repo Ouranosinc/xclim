@@ -14,8 +14,8 @@ New features and enhancements
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* English indicator metadata has been adjusted to remove automatic formatting in the `long_name` of fields. (:issue:`936`).
-* French indicator metadata translations are now more uniform and follow agreed-upon grammar conventions. (:issue:`936`).
+* English indicator metadata has been adjusted to remove frequencies and other automatically formatted fields in the `long_name` of indicators. (:issue:`936`, :pull:`1123`).
+* French indicator metadata translations are now more uniform and follow agreed-upon grammar conventions. (:issue:`936`, :pull:`1123`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
