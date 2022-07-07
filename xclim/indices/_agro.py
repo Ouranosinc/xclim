@@ -1,17 +1,21 @@
 # noqa: D100
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
+import pandas as pd
 import xarray
 
 import xclim.indices as xci
 import xclim.indices.run_length as rl
-from xclim.core.calendar import select_time
+from xclim.core.calendar import parse_offset, resample_doy, select_time
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
-from xclim.core.utils import DayOfYearStr
+from xclim.core.utils import DayOfYearStr, uses_dask
 from xclim.indices._threshold import first_day_above, first_day_below, freshet_start
 from xclim.indices.generic import aggregate_between_dates
 from xclim.indices.helpers import day_lengths
+from xclim.indices.stats import dist_method, fit
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -31,6 +35,8 @@ __all__ = [
     "latitude_temperature_index",
     "qian_weighted_mean_average",
     "water_budget",
+    "standardized_precipitation_index",
+    "standardized_precipitation_evapotranspiration_index",
 ]
 
 
@@ -587,6 +593,220 @@ def water_budget(
 
     out.attrs["units"] = pr.attrs["units"]
     return out
+
+
+@declare_units(
+    pr="[precipitation]",
+    pr_cal="[precipitation]",
+)
+def standardized_precipitation_index(
+    pr: xarray.DataArray,
+    pr_cal: xarray.DataArray,
+    freq: str = "MS",
+    window: int = 1,
+    dist: str = "gamma",
+    method: str = "APP",
+) -> xarray.DataArray:
+    r"""Standardized Precipitation Index (SPI).
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Daily precipitation.
+    pr_cal : xarray.DataArray
+      Daily precipitation used for calibration. Usually this is a temporal subset of `pr` over some reference period.
+    freq : str
+      Resampling frequency. A monthly or daily frequency is expected.
+    window : int
+      Averaging window length relative to the resampling frequency. For example, if `freq="MS"`, i.e. a monthly resampling, the window
+      is an integer number of months.
+    dist : {'gamma'}
+      Name of the univariate distribution, only `gamma` is currently implemented
+      (see :py:mod:`scipy.stats`).
+    method : {'APP', 'ML'}
+      Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
+      uses a deterministic function that doesn't involve any optimization.
+
+    Returns
+    -------
+    xarray.DataArray,
+      Standardized Precipitation Index.
+
+
+    Notes
+    -----
+    The length `N` of the N-month SPI is determined by choosing the `window = N`. Supported statistical distributions are: ["gamma"]
+
+
+    Example
+    -------
+    Computing SPI-3 months using a gamma distribution for the fit
+
+    .. code-block:: python
+
+        import xclim.indices as xci
+        import xarray as xr
+
+        ds = xr.open_dataset(filename)
+        pr = ds.pr
+        pr_cal = pr.sel(time=slice(calibration_start_date, calibration_end_date))
+        spi_3 = xci.standardized_precipitation_index(
+            pr, pr_cal, freq="MS", window=3, dist="gamma", method="ML"
+        )
+
+
+    References
+    ----------
+    McKee, Thomas B., Nolan J. Doesken, and John Kleist. "The relationship of drought frequency and duration to time scales." In Proceedings of the 8th Conference on Applied Climatology, vol. 17, no. 22, pp. 179-183. 1993.
+    """
+    # "WPM" method doesn't seem to work for gamma or pearson3
+    dist_and_methods = {"gamma": ["ML", "APP"]}
+    if dist not in dist_and_methods.keys():
+        raise NotImplementedError(f"The distribution `{dist}` is not supported.")
+    elif method not in dist_and_methods[dist]:
+        raise NotImplementedError(
+            f"The method `{method}` is not supported for distribution `{dist}`."
+        )
+
+    # calibration period
+    cal_period = pr_cal.time[[0, -1]].dt.strftime("%Y-%m-%dT%H:%M:%S").values.tolist()
+
+    # Determine group type
+    if freq == "D" or freq is None:
+        freq = "D"
+        group = "time.dayofyear"
+    else:
+        _, base, _, _ = parse_offset(freq)
+        if base in ["M"]:
+            group = "time.month"
+        else:
+            raise NotImplementedError(f"Resampling frequency `{freq}` not supported.")
+
+    # Resampling precipitations
+    if freq != "D":
+        pr = pr.resample(time=freq).mean(keep_attrs=True)
+        pr_cal = pr_cal.resample(time=freq).mean(keep_attrs=True)
+
+        def needs_rechunking(da):
+            if uses_dask(da) and len(da.chunks[da.get_axis_num("time")]) > 1:
+                warnings.warn(
+                    "The input data is chunked on time dimension and must be fully rechunked to"
+                    " run `fit` on groups ."
+                    " Beware, this operation can significantly increase the number of tasks dask"
+                    " has to handle.",
+                    stacklevel=2,
+                )
+                return True
+            else:
+                return False
+
+        if needs_rechunking(pr):
+            pr = pr.chunk({"time": -1})
+        if needs_rechunking(pr_cal):
+            pr_cal = pr_cal.chunk({"time": -1})
+
+    # Rolling precipitations
+    if window > 1:
+        pr = pr.rolling(time=window).mean(skipna=False, keep_attrs=True)
+        pr_cal = pr_cal.rolling(time=window).mean(skipna=False, keep_attrs=True)
+
+    # Obtain fitting params and expand along time dimension
+    def resample_to_time(da, da_ref):
+        if freq == "D":
+            da = resample_doy(da, da_ref)
+        else:
+            da = da.rename(month="time").reindex(time=da_ref.time.dt.month)
+            da["time"] = da_ref.time
+        return da
+
+    params = pr_cal.groupby(group).map(lambda x: fit(x, dist, method))
+    params = resample_to_time(params, pr)
+
+    # ppf to cdf
+    # zero-bounded distributions;  'pearson3' will also go in this group once it's implemented
+    if dist in ["gamma", "pearson3"]:
+        prob_pos = dist_method("cdf", params, pr.where(pr > 0))
+        prob_zero = resample_to_time(
+            pr.groupby(group).map(
+                lambda x: (x == 0).sum("time") / x.notnull().sum("time")
+            ),
+            pr,
+        )
+        prob = prob_zero + (1 - prob_zero) * prob_pos
+
+    # Invert to normal distribution with ppf and obtain SPI
+    params_norm = xarray.DataArray(
+        [0, 1],
+        dims=["dparams"],
+        coords=dict(dparams=(["loc", "scale"])),
+        attrs=dict(scipy_dist="norm"),
+    )
+    spi = dist_method("ppf", params_norm, prob)
+    spi.attrs["units"] = ""
+    spi.attrs["calibration_period"] = cal_period
+
+    return spi
+
+
+@declare_units(
+    wb="[precipitation]",
+    wb_cal="[precipitation]",
+)
+def standardized_precipitation_evapotranspiration_index(
+    wb: xarray.DataArray,
+    wb_cal: xarray.DataArray,
+    freq: str = "MS",
+    window: int = 1,
+    dist: str = "gamma",
+    method: str = "APP",
+) -> xarray.DataArray:
+    r"""Standardized Precipitation Evapotranspiration Index (SPEI).
+
+    Precipitation minus potential evapotranspiration data (PET) fitted to a statistical distribution (dist), transformed to a cdf,  and inverted back to a gaussian normal pdf. The potential evapotranspiration is calculated with a given method (method).
+
+    Parameters
+    ----------
+    wb : xarray.DataArray
+      Daily water budget (pr - pet).
+    wb_cal : xarray.DataArray
+      Daily water budget used for calibration.
+    freq : str
+      Resampling frequency. A monthly or daily frequency is expected.
+    window : int
+      Averaging window length relative to the resampling frequency. For example, if `freq="MS"`, i.e. a monthly resampling, the window
+      is an integer number of months.
+    dist : {'gamma'}
+      Name of the univariate distribution. Only "gamma" is currently implemented. (see :py:mod:`scipy.stats`).
+    method : {'APP', 'ML'}
+      Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
+      uses a deterministic function that doesn't involve any optimization.
+
+    Returns
+    -------
+    xarray.DataArray,
+      Standardized Precipitation Evapotranspiration Index.
+
+    Notes
+    -----
+    See Standardized Precipitation Index (SPI) for more details on usage.
+    """
+    # Allowed distributions are constrained by the SPI function
+    if dist in ["gamma"]:
+        # Distributions bounded by zero: Water budget must be shifted, only positive values
+        # are allowed. The offset choice is arbitrary and needs to be revisited.
+        # In monocongo, the offset would be 1000/(60*60*24) in [kg m-2 s-1]
+        # The choice can lead to differences as big as +/-0.2 in the SPEI.
+        # If taken too big, there are problems with the "ML" method  (this should be an
+        # issue with the fitting procedure that also needs attention)
+        offset = convert_units_to("1e-4 kg m-2 s-1", wb.units)
+        # Increase offset if negative values remain
+        offset = offset - 2 * min(wb.min(), wb_cal.min(), 0)
+        with xarray.set_options(keep_attrs=True):
+            wb, wb_cal = wb + offset, wb_cal + offset
+
+    spei = standardized_precipitation_index(wb, wb_cal, freq, window, dist, method)
+
+    return spei
 
 
 @declare_units(pr="[precipitation]", thresh="[length]")
