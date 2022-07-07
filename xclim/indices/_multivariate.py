@@ -1700,7 +1700,7 @@ def blowing_snow(
     window: int = 3,
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
-    """Days with blowing snow events.
+    """Blowing snow days.
 
     Number of days where both snowfall over the last days and daily wind speeds are above respective thresholds.
 

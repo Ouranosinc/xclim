@@ -26,7 +26,7 @@ windy_days = Wind(
     identifier="windy_days",
     units="days",
     standard_name="number_of_days_with_sfcWind_above_threshold",
-    long_name="Number of days with surface wind speed above threshold",
+    long_name="Number of days with surface wind speed at or above threshold",
     description="{freq} number of days with surface wind speed >= {thresh}",
     cell_methods="time: sum over days",
     compute=indices.windy_days,

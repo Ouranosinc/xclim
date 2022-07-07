@@ -31,8 +31,8 @@ class SnowWithIndexing(ResamplingIndicatorWithIndexing):
 snow_cover_duration = SnowWithIndexing(
     identifier="snow_cover_duration",
     units="days",
-    long_name="Number of days with snow depth above threshold",
-    description="{freq} number of days with snow depth greater or equal to {thresh}",
+    long_name="Number of days with snow depth at or above threshold",
+    description="The {freq} number of days with snow depth greater or equal to {thresh}",
     compute=xci.snow_cover_duration,
 )
 
@@ -58,8 +58,8 @@ snd_max_doy = SnowWithIndexing(
     identifier="snd_max_doy",
     standard_name="day_of_year",
     var_name="{freq}_snd_max_doy",
-    long_name="Date when snow depth reaches its maximum value.",
-    description="{freq} day of year when snow depth reaches its maximum value.",
+    long_name="Date when snow depth reaches its maximum value",
+    description="The {freq} day of year when snow depth reaches its maximum value.",
     units="",
     _partial=True,
     compute=xci.snd_max_doy,
@@ -69,7 +69,8 @@ snow_melt_we_max = Snow(
     identifier="snow_melt_we_max",
     standard_name="change_over_time_in_surface_snow_amount",
     var_name="{freq}_snow_melt_we_max",
-    description="{freq} maximum negative change in melt amount over {window} days.",
+    long_name="Maximum snow melt",
+    description="The {freq} maximum negative change in melt amount over {window} days.",
     units="kg m-2",
     compute=xci.snow_melt_we_max,
 )
@@ -78,8 +79,8 @@ snw_max = SnowWithIndexing(
     identifier="snw_max",
     standard_name="surface_snow_amount",
     var_name="{freq}_snw_max",
-    long_name="Maximum daily snow amount",
-    description="{freq} day of year when snow amount on the surface reaches its maximum.",
+    long_name="Maximum snow amount",
+    description="The {freq} day of year when snow amount on the surface reaches its maximum.",
     units="kg m-2",
     compute=xci.snw_max,
 )
@@ -89,7 +90,7 @@ snw_max_doy = SnowWithIndexing(
     standard_name="day_of_year",
     var_name="{freq}_snw_max_doy",
     long_name="Day of year of maximum daily snow amount",
-    description="{freq} maximum snow amount on the surface.",
+    description="The {freq} maximum snow amount on the surface.",
     units="",
     compute=xci.snw_max_doy,
 )
@@ -97,7 +98,8 @@ snw_max_doy = SnowWithIndexing(
 melt_and_precip_max = Snow(
     identifier="melt_and_precip_max",
     var_name="{freq}_melt_and_precip_max",
-    description="{freq} maximum precipitation flux and negative change in snow amount over {window} days.",
+    long_name="Maximum snow melt and precipitation",
+    description="The {freq} maximum precipitation flux and negative change in snow amount over {window} days.",
     units="kg m-2",
     compute=xci.melt_and_precip_max,
 )
@@ -106,7 +108,8 @@ melt_and_precip_max = Snow(
 winter_storm = SnowWithIndexing(
     identifier="winter_storm",
     var_name="{freq}_winter_storm",
-    description="{freq} number of days with snowfall accumulation above {thresh}.",
+    long_name="Days with snowfall at or above threshold",
+    description="The {freq} number of days with snowfall accumulation above {thresh}.",
     units="days",
     compute=xci.winter_storm,
 )
@@ -115,8 +118,9 @@ winter_storm = SnowWithIndexing(
 blowing_snow = Snow(
     identifier="blowing_snow",
     var_name="{freq}_blowing_snow",
-    description="{freq} number of days with snowfall over last {window} days above {snd_thresh} and wind speed above "
-    "{sfcWind_thresh}.",
+    long_name="Blowing snow days",
+    description="The {freq} number of days with snowfall over last {window} days above {snd_thresh} and wind speed "
+    "above {sfcWind_thresh}.",
     units="days",
     compute=xci.blowing_snow,
 )
@@ -126,7 +130,7 @@ snow_depth = SnowWithIndexing(
     units="cm",
     standard_name="surface_snow_thickness",
     long_name="Mean of daily snow depth",
-    description="{freq} mean of daily mean snow depth.",
+    description="The {freq} mean of daily mean snow depth.",
     cell_methods="time: mean over days",
     compute=xci.snow_depth,
 )

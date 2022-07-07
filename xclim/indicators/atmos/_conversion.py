@@ -38,7 +38,7 @@ humidex = Converter(
     identifier="humidex",
     units="C",
     standard_name="air_temperature",
-    long_name="humidex index",
+    long_name="Humidex index",
     description="Humidex index describing the temperature felt by the average person in response to relative humidity.",
     cell_methods="",
     compute=indices.humidex,
@@ -48,7 +48,7 @@ heat_index = Converter(
     identifier="heat_index",
     units="C",
     standard_name="air_temperature",
-    long_name="heat index",
+    long_name="Heat index",
     description="Perceived temperature after relative humidity is taken into account.",
     cell_methods="",
     compute=indices.heat_index,
@@ -75,7 +75,7 @@ wind_speed_from_vector = Converter(
         "Wind direction computed as the angle of the (uas, vas) vector."
         " A direction of 0° is attributed to winds with a speed under {calm_wind_thresh}.",
     ],
-    long_name=["Near-Surface Wind Speed", "Near-Surface Wind from Direction"],
+    long_name=["Near-surface wind speed", "Near-surface wind from direction"],
     cell_methods="",
     compute=indices.uas_vas_2_sfcwind,
 )
@@ -86,7 +86,7 @@ wind_vector_from_speed = Converter(
     var_name=["uas", "vas"],
     units=["m s-1", "m s-1"],
     standard_name=["eastward_wind", "northward_wind"],
-    long_name=["Near-Surface Eastward Wind", "Near-Surface Northward Wind"],
+    long_name=["Near-surface eastward wind", "Near-surface northward wind"],
     description=[
         "Eastward wind speed computed from its speed and direction of origin.",
         "Northward wind speed computed from its speed and direction of origin.",
@@ -101,8 +101,7 @@ saturation_vapor_pressure = Converter(
     units="Pa",
     long_name="Saturation vapor pressure",
     description=lambda **kws: (
-        "The saturation vapor pressure was calculated from a temperature "
-        "according to the {method} method."
+        "The saturation vapor pressure was calculated from a temperature according to the {method} method."
     )
     + (
         " The computation was done in reference to ice for temperatures below {ice_thresh}."
@@ -117,7 +116,7 @@ relative_humidity_from_dewpoint = Converter(
     identifier="hurs_fromdewpoint",
     units="%",
     var_name="hurs",
-    long_name="Relative Humidity",
+    long_name="Relative humidity",
     standard_name="relative_humidity",
     title="Relative humidity from temperature and dewpoint temperature.",
     description=lambda **kws: (
@@ -143,13 +142,12 @@ relative_humidity_from_dewpoint = Converter(
 relative_humidity = Converter(
     identifier="hurs",
     units="%",
-    long_name="Relative Humidity",
+    long_name="Relative humidity",
     standard_name="relative_humidity",
     title="Relative humidity from temperature, pressure and specific humidity.",
     description=lambda **kws: (
-        "Computed from temperature, specific humidity and pressure through the "
-        "saturation vapor pressure, which was calculated from temperature "
-        "according to the {method} method."
+        "Computed from temperature, specific humidity and pressure through the saturation vapor pressure, "
+        "which was calculated from temperature according to the {method} method."
     )
     + (
         " The computation was done in reference to ice for temperatures below {ice_thresh}."
@@ -169,12 +167,11 @@ relative_humidity = Converter(
 specific_humidity = Converter(
     identifier="huss",
     units="",
-    long_name="Specific Humidity",
+    long_name="Specific humidity",
     standard_name="specific_humidity",
     description=lambda **kws: (
-        "Computed from temperature, relative humidity and pressure through the "
-        "saturation vapor pressure, which was calculated from temperature "
-        "according to the {method} method."
+        "Computed from temperature, relative humidity and pressure through the saturation vapor pressure, "
+        "which was calculated from temperature according to the {method} method."
     )
     + (
         " The computation was done in reference to ice for temperatures below {ice_thresh}."
@@ -188,7 +185,7 @@ specific_humidity = Converter(
 specific_humidity_from_dewpoint = Converter(
     identifier="huss_fromdewpoint",
     units="",
-    long_name="Specific Humidity",
+    long_name="Specific humidity",
     standard_name="specific_humidity",
     description=(
         "Computed from dewpoint temperature and pressure through the saturation "
@@ -280,7 +277,7 @@ water_budget = Converter(
 corn_heat_units = Converter(
     identifier="corn_heat_units",
     units="",
-    long_name="Corn heat units (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}).",
+    long_name="Corn heat units",
     description="Temperature-based index used to estimate the development of corn crops. "
     "Corn growth occurs when the minimum and maximum daily temperature both exceeds "
     "specific thresholds : Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}.",
@@ -293,7 +290,7 @@ corn_heat_units = Converter(
 universal_thermal_climate_index = Converter(
     identifier="utci",
     units="K",
-    long_name="Universal Thermal Climate Index",
+    long_name="Universal thermal climate index",
     description="UTCI is the equivalent temperature for the environment derived from a reference environment "
     "and is used to evaluate heat stress in outdoor spaces.",
     cell_methods="",

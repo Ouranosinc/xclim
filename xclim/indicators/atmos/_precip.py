@@ -99,23 +99,19 @@ class HrPrecip(Hourly):
 rain_on_frozen_ground_days = PrTasxWithIndexing(
     identifier="rain_frzgr",
     units="days",
-    standard_name="number_of_days_with_lwe_thickness_of_"
-    "precipitation_amount_above_threshold",
+    standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold",
     long_name="Number of rain on frozen ground days",
-    description="{freq} number of days with rain above {thresh} "
-    "after a series of seven days "
-    "with average daily temperature below 0℃. "
-    "Precipitation is assumed to be rain when the"
-    "daily average temperature is above 0℃.",
+    description="{freq} number of days with rain above {thresh} after a series of seven days with average daily "
+    "temperature below 0℃. Precipitation is assumed to be rain when the daily average temperature is above 0℃.",
     cell_methods="",
     compute=indices.rain_on_frozen_ground_days,
 )
 
 max_1day_precipitation_amount = PrecipWithIndexing(
     identifier="rx1day",
-    units="mm/day",
+    units="mm d-1",
     standard_name="lwe_thickness_of_precipitation_amount",
-    long_name="maximum 1-day total precipitation",
+    long_name="Maximum 1-day total precipitation",
     description="{freq} maximum 1-day total precipitation",
     cell_methods="time: maximum over days",
     compute=indices.max_1day_precipitation_amount,
@@ -126,7 +122,7 @@ max_n_day_precipitation_amount = Precip(
     var_name="rx{window}day",
     units="mm",
     standard_name="lwe_thickness_of_precipitation_amount",
-    long_name="maximum {window}-day total precipitation",
+    long_name="maximum n-day total precipitation",
     description="{freq} maximum {window}-day total precipitation.",
     cell_methods="time: maximum over days",
     compute=indices.max_n_day_precipitation_amount,
@@ -136,8 +132,8 @@ wetdays = PrecipWithIndexing(
     identifier="wetdays",
     units="days",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold",
-    long_name="Number of wet days (precip >= {thresh})",
-    description="{freq} number of days with daily precipitation over {thresh}.",
+    long_name="Number of wet days",
+    description="{freq} number of days with daily precipitation at or above {thresh}.",
     cell_methods="time: sum over days",
     compute=indices.wetdays,
 )
@@ -145,8 +141,8 @@ wetdays = PrecipWithIndexing(
 wetdays_prop = PrecipWithIndexing(
     identifier="wetdays_prop",
     units="1",
-    long_name="Proportion of wet days (precip >= {thresh})",
-    description="{freq} proportion of days with precipitation over {thresh}.",
+    long_name="Proportion of wet days",
+    description="{freq} proportion of days with precipitation at or above {thresh}.",
     cell_methods="time: sum over days",
     compute=indices.wetdays_prop,
 )
@@ -155,7 +151,7 @@ dry_days = PrecipWithIndexing(
     identifier="dry_days",
     units="days",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_below_threshold",
-    long_name="Number of dry days (precip < {thresh})",
+    long_name="Number of dry days",
     description="{freq} number of days with daily precipitation under {thresh}.",
     cell_methods="time: sum over days",
     compute=indices.dry_days,
@@ -164,11 +160,9 @@ dry_days = PrecipWithIndexing(
 maximum_consecutive_wet_days = Precip(
     identifier="cwd",
     units="days",
-    standard_name="number_of_days_with_lwe_thickness_of_"
-    "precipitation_amount_at_or_above_threshold",
-    long_name="Maximum consecutive wet days (Precip >= {thresh})",
-    description="{freq} maximum number of consecutive days with daily "
-    "precipitation over {thresh}.",
+    standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold",
+    long_name="Maximum consecutive wet days",
+    description="{freq} maximum number of consecutive days with daily precipitation at or above {thresh}.",
     cell_methods="time: sum over days",
     compute=indices.maximum_consecutive_wet_days,
 )
@@ -176,32 +170,29 @@ maximum_consecutive_wet_days = Precip(
 maximum_consecutive_dry_days = Precip(
     identifier="cdd",
     units="days",
-    standard_name="number_of_days_with_lwe_thickness_of_"
-    "precipitation_amount_below_threshold",
-    long_name="Maximum consecutive dry days (Precip < {thresh})",
-    description="{freq} maximum number of consecutive days with daily "
-    "precipitation below {thresh}.",
+    standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_below_threshold",
+    long_name="Maximum consecutive dry days",
+    description="{freq} maximum number of consecutive days with daily precipitation below {thresh}.",
     cell_methods="time: sum over days",
     compute=indices.maximum_consecutive_dry_days,
 )
 
 daily_pr_intensity = PrecipWithIndexing(
     identifier="sdii",
-    units="mm/day",
+    units="mm d-1",
     standard_name="lwe_thickness_of_precipitation_amount",
     long_name="Average precipitation during wet days (SDII)",
-    description="{freq} Simple Daily Intensity Index (SDII) : {freq} average precipitation "
-    "for days with daily precipitation over {thresh}. This indicator is also known as the 'Simple Daily "
-    "Intensity Index' (SDII).",
+    description="{freq} average precipitation for days with daily precipitation over {thresh}. "
+    "This indicator is also known as the 'Simple Daily Intensity Index' (SDII).",
     cell_methods="",
     compute=indices.daily_pr_intensity,
 )
 
 max_pr_intensity = HrPrecip(
     identifier="max_pr_intensity",
-    units="mm/h",
+    units="mm h-1",
     standard_name="precipitation",
-    long_name="Maximum precipitation intensity over {window}h duration",
+    long_name="Maximum precipitation intensity over time window",
     description="{freq} maximum precipitation intensity over rolling {window}h window.",
     cell_methods="time: max",
     compute=indices.max_pr_intensity,
@@ -215,7 +206,7 @@ precip_accumulation = PrecipWithIndexing(
     units="mm",
     standard_name="lwe_thickness_of_precipitation_amount",
     long_name="Total precipitation",
-    description="{freq} total precipitation",
+    description="{freq} total precipitation.",
     cell_methods="time: sum over days",
     compute=indices.precip_accumulation,
     parameters=dict(tas=None, phase=None),
@@ -263,8 +254,9 @@ standardized_precipitation_index = StandardizedIndexes(
     identifier="spi",
     units="",
     standard_name="spi",
-    long_name="Standardized Precipitation Index (SPI)",
-    description="Precipitations over rolling window {window}-X window, normalized such that SPI averages to 0 for calibration data. The window unit `X` is the minimal time period defined by resampling frequency {freq}",
+    long_name="Standardized precipitation index",
+    description="Precipitations over rolling window {window}-X window, normalized such that SPI averages to 0 for "
+    "calibration data. The window unit `X` is the minimal time period defined by resampling frequency {freq}",
     cell_methods="",
     compute=indices.standardized_precipitation_index,
 )
@@ -274,8 +266,10 @@ standardized_precipitation_evapotranspiration_index = StandardizedIndexes(
     identifier="spei",
     units="",
     standard_name="spei",
-    long_name="Standardized Precipitation Evapotranspiration Index (SPEI)",
-    description="Water budget (precipitation - evapotranspiration) over rolling window {window}-X window, normalized such that SPEI averages to 0 for calibration data. The window unit `X` is the minimal time period defined by resampling frequency {freq}",
+    long_name="Standardized precipitation evapotranspiration index",
+    description="Water budget (precipitation - evapotranspiration) over rolling window {window}-X window, normalized "
+    "such that SPEI averages to 0 for calibration data. The window unit `X` is the minimal time period defined by "
+    "resampling frequency {freq}",
     cell_methods="",
     compute=indices.standardized_precipitation_evapotranspiration_index,
 )
@@ -304,12 +298,12 @@ fire_weather_indexes = FireWeather(
         "fire_weather_index",
     ],
     long_name=[
-        "Drought Code",
-        "Duff Moisture Code",
-        "Fine Fuel Moisture Code",
-        "Initial Spread Index",
-        "Buildup Index",
-        "Fire Weather Index",
+        "Drought code",
+        "Duff moisture code",
+        "Fine fuel moisture code",
+        "Initial spread index",
+        "Buildup index",
+        "Fire weather index",
     ],
     description=[
         "Numeric rating of the average moisture content of deep, compact organic layers.",
@@ -329,7 +323,7 @@ last_snowfall = PrecipWithIndexing(
     identifier="last_snowfall",
     standard_name="day_of_year",
     long_name="Date of last snowfall",
-    description="{freq} last day where the solid precipitation flux exceeded {thresh}",
+    description="{freq} last day where the solid precipitation flux exceeded {thresh}.",
     units="",
     compute=indices.last_snowfall,
 )
@@ -338,7 +332,7 @@ first_snowfall = PrecipWithIndexing(
     identifier="first_snowfall",
     standard_name="day_of_year",
     long_name="Date of first snowfall",
-    description="{freq} first day where the solid precipitation flux exceeded {thresh}",
+    description="{freq} first day where the solid precipitation flux exceeded {thresh}.",
     units="",
     compute=indices.first_snowfall,
 )
@@ -346,7 +340,7 @@ first_snowfall = PrecipWithIndexing(
 days_with_snow = PrecipWithIndexing(
     identifier="days_with_snow",
     title="Days with snowfall",
-    long_name="Number of days with solid precipitation flux between low and high thresholds.",
+    long_name="Number of days with solid precipitation flux between low and high thresholds",
     description="{freq} number of days with solid precipitation flux larger than {low} and smaller or equal to {high}.",
     units="days",
     compute=indices.days_with_snow,
@@ -355,9 +349,9 @@ days_with_snow = PrecipWithIndexing(
 days_over_precip_thresh = PrecipWithIndexing(
     identifier="days_over_precip_thresh",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold",
-    description="{freq} number of days with precipitation above the {pr_per_thresh}th"
-    " percentile of {pr_per_period} period."
-    " Only days with at least {thresh} are counted.",
+    long_name="Number of days with precipitation flux above base threshold",
+    description="{freq} number of days with precipitation above the {pr_per_thresh}th percentile of {pr_per_period} "
+    "period. Only days with at least {thresh} are counted.",
     units="days",
     cell_methods="time: sum over days",
     compute=indices.days_over_precip_thresh,
@@ -366,10 +360,10 @@ days_over_precip_thresh = PrecipWithIndexing(
 days_over_precip_doy_thresh = PrecipWithIndexing(
     identifier="days_over_precip_doy_thresh",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_above_daily_threshold",
-    description="{freq} number of days with precipitation above the {pr_per_thresh}th daily percentile."
-    " Only days with at least {thresh} are counted."
-    " A {pr_per_window} day(s) window, centred on each calendar day in the"
-    " {pr_per_period} period, is used to compute the {pr_per_thresh}th percentile(s).",
+    long_name="Number of days with daily precipitation flux above base threshold",
+    description="{freq} number of days with precipitation above the {pr_per_thresh}th daily percentile. Only days with "
+    "at least {thresh} are counted. A {pr_per_window} day(s) window, centered on each calendar day in the "
+    "{pr_per_period} period, is used to compute the {pr_per_thresh}th percentile(s).",
     units="days",
     cell_methods="time: sum over days",
     compute=indices.days_over_precip_thresh,
@@ -377,19 +371,20 @@ days_over_precip_doy_thresh = PrecipWithIndexing(
 
 high_precip_low_temp = PrTasxWithIndexing(
     identifier="high_precip_low_temp",
+    long_name="Number of days with precipitation above specified threshold and temperature below specified threshold",
     description="{freq} number of days with precipitation above {pr_thresh} and temperature below {tas_thresh}.",
     units="days",
     cell_methods="time: sum over days",
     compute=indices.high_precip_low_temp,
 )
 
+# FIXME: Are fraction_over_precip_thresh and fraction_over_precip_doy_thresh the same thing?
 fraction_over_precip_doy_thresh = PrecipWithIndexing(
     identifier="fraction_over_precip_doy_thresh",
-    description="{freq} fraction of total precipitation due to days with precipitation"
-    " above {pr_per_thresh}th daily percentile."
-    " Only days with at least {thresh} are included in the total."
-    " A {pr_per_window} day(s) window, centred on each calendar day in the"
-    " {pr_per_period} period, is used to compute the {pr_per_thresh}th percentile(s).",
+    long_name="Fraction of precipitation due to wet days with daily precipitation over a given percentile",
+    description="{freq} fraction of total precipitation due to days with precipitation above {pr_per_thresh}th daily "
+    "percentile. Only days with at least {thresh} are included in the total. A {pr_per_window} day(s) window, centered "
+    "on each calendar day in the {pr_per_period} period, is used to compute the {pr_per_thresh}th percentile(s).",
     units="",
     cell_methods="",
     compute=indices.fraction_over_precip_thresh,
@@ -397,9 +392,9 @@ fraction_over_precip_doy_thresh = PrecipWithIndexing(
 
 fraction_over_precip_thresh = PrecipWithIndexing(
     identifier="fraction_over_precip_thresh",
-    description="{freq} fraction of total precipitation due to days with precipitation"
-    " above {pr_per_thresh}th percentile of {pr_per_period} period."
-    " Only days with at least {thresh} are included in the total.",
+    long_name="Fraction of precipitation due to wet days with precipitation over a given percentile",
+    description="{freq} fraction of total precipitation due to days with precipitation above {pr_per_thresh}th "
+    "percentile of {pr_per_period} period. Only days with at least {thresh} are included in the total.",
     units="",
     cell_methods="",
     compute=indices.fraction_over_precip_thresh,
@@ -407,10 +402,11 @@ fraction_over_precip_thresh = PrecipWithIndexing(
 
 liquid_precip_ratio = PrTasxWithIndexing(
     identifier="liquid_precip_ratio",
-    description="{freq} ratio of rainfall to total precipitation."
-    " Rainfall is estimated as precipitation on days where temperature is above {thresh}.",
-    abstract="The ratio of total liquid precipitation over the total precipitation. Liquid precipitation is"
-    " approximated from total precipitation on days where temperature is above a threshold.",
+    long_name="Ratio of rainfall to total precipitation",
+    description="The {freq} ratio of rainfall to total precipitation. Rainfall is estimated as precipitation on days "
+    "where temperature is above {thresh}.",
+    abstract="The ratio of total liquid precipitation over the total precipitation. Liquid precipitation is "
+    "approximated from total precipitation on days where temperature is above a threshold.",
     units="",
     compute=indices.liquid_precip_ratio,
     parameters={"tas": {"kind": InputKind.VARIABLE}, "prsn": None},
@@ -419,8 +415,9 @@ liquid_precip_ratio = PrTasxWithIndexing(
 
 dry_spell_frequency = Precip(
     identifier="dry_spell_frequency",
-    description="The {freq} number of dry periods of {window} days and more, during which the {op} precipitation "
-    "on a window of {window} days is under {thresh}.",
+    long_name="Dry spell frequency",
+    description="The {freq} number of dry periods of {window} days and more, during which the {op} precipitation on a "
+    "window of {window} day(s) is below {thresh}.",
     units="",
     cell_methods="",
     compute=indices.dry_spell_frequency,
@@ -429,6 +426,7 @@ dry_spell_frequency = Precip(
 
 dry_spell_total_length = Precip(
     identifier="dry_spell_total_length",
+    long_name="Dry spell total length",
     description="The {freq} number of days in dry periods of {window} days and more, during which the {op}"
     "precipitation within windows of {window} days is under {thresh}.",
     units="days",
@@ -438,7 +436,8 @@ dry_spell_total_length = Precip(
 
 rprctot = PrecipWithIndexing(
     identifier="rprctot",
-    description="Proportion of accumulated precipitation arising from convective processes.",
+    long_name="Proportion of accumulated precipitation arising from convective processes",
+    description="Proportion of accumulated precipitation arising from convective processes with threshold of {thresh}.",
     units="",
     cell_methods="time: sum",
     compute=indices.rprctot,
@@ -458,8 +457,8 @@ cold_and_dry_days = PrecipWithIndexing(
 warm_and_dry_days = PrecipWithIndexing(
     identifier="warm_and_dry_days",
     units="days",
-    long_name="warm and dry days",
-    title="warm and dry days",
+    long_name="Warm and dry days",
+    title="Warm and dry days",
     description="{freq} number of days where tas > {tas_per_thresh}th percentile and pr < {pr_per_thresh}th percentile",
     cell_methods="time: sum over days",
     compute=indices.warm_and_dry_days,
@@ -468,8 +467,8 @@ warm_and_dry_days = PrecipWithIndexing(
 warm_and_wet_days = PrecipWithIndexing(
     identifier="warm_and_wet_days",
     units="days",
-    long_name="warm and wet days",
-    title="warm and wet days",
+    long_name="Warm and wet days",
+    title="Warm and wet days",
     description="{freq} number of days where tas > {tas_per_thresh}th percentile and pr > {pr_per_thresh}th percentile",
     cell_methods="time: sum over days",
     compute=indices.warm_and_wet_days,
@@ -478,8 +477,8 @@ warm_and_wet_days = PrecipWithIndexing(
 cold_and_wet_days = PrecipWithIndexing(
     identifier="cold_and_wet_days",
     units="days",
-    long_name="cold and wet days",
-    title="cold and wet days",
+    long_name="Cold and wet days",
+    title="Cold and wet days",
     description="{freq} number of days where tas < {tas_per_thresh}th percentile and pr > {pr_per_thresh}th percentile",
     cell_methods="time: sum over days",
     compute=indices.cold_and_wet_days,
