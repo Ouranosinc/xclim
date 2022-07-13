@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 
-from xclim import atmos
+from xclim import atmos, set_options
 from xclim.testing import open_dataset
 
 K2C = 273.16
@@ -113,7 +113,8 @@ def test_heat_index(atmosds):
         ]
     )
 
-    hi = atmos.heat_index(tas, hurs)
+    with set_options(cf_compliance="raise"):
+        hi = atmos.heat_index(tas, hurs)
     np.testing.assert_array_almost_equal(hi, expected, 0)
     assert hi.name == "heat_index"
 
