@@ -2105,9 +2105,7 @@ def test_specific_humidity_from_dewpoint(tas_series, ps_series):
 @pytest.mark.parametrize(
     "ice_thresh,exp0", [(None, [125, 286, 568]), ("0 degC", [103, 260, 563])]
 )
-@pytest.mark.parametrize(
-    "units", ["degC", "degK"]
-)
+@pytest.mark.parametrize("units", ["degC", "degK"])
 def test_saturation_vapor_pressure(tas_series, method, ice_thresh, exp0, units):
     tas = tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C)
     tas = convert_units_to(tas, units)
