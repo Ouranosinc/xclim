@@ -44,12 +44,6 @@ class Converter(Indicator):
                 pass
 
 
-class DailyConverter(Indicator):
-    """Class for indicators doing variable conversion (dimension-independent 1-to-1 computation), for only on daily variables."""
-
-    src_freq = "D"
-
-
 humidex = Converter(
     identifier="humidex",
     units="C",
@@ -72,7 +66,7 @@ heat_index = Converter(
 )
 
 
-tg = DailyConverter(
+tg = Converter(
     identifier="tg",
     units="K",
     standard_name="air_temperature",
@@ -295,7 +289,7 @@ water_budget = Converter(
 )
 
 
-corn_heat_units = DailyConverter(
+corn_heat_units = Converter(
     identifier="corn_heat_units",
     units="",
     long_name="Corn heat units (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}).",
