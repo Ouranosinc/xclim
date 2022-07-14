@@ -108,7 +108,6 @@ def rle(
         and dask.config.get("array.slicing.split-large-chunks") is not False
         and np.prod(da.data.chunksize) > max_chunk
     ):
-        print("prout")
         chunk_dim = da[dim].size
         # divide extra dims into equal size
         # Note : even if calculated chunksize > dim.size result will have chunk==dim.size
@@ -139,7 +138,7 @@ def rle(
         # 1. Invert the data array      (e.g. 111011001 -> 100110111)
         # 2. Apply the algortihm for "last"  (100110111 -> 100N20NN3)
         # 3. Re-invert the data array        (100N20NN3 -> 3NN02N001)
-        da = da.isel(time=slice(None, None, -1))
+        da = da[{dim: slice(None, None, -1)}]
 
     # Getting the cumulative sum for each series of 1's (cs_s:= CumulativeSum_Series)
     cs = da.cumsum(dim=dim)
@@ -147,7 +146,7 @@ def rle(
     cs2[{dim: 0}] = 0
     cs2 = cs2.ffill(dim=dim)
     cs_s = cs - cs2
-    # e.g.:  da = 111011001
+    # e.g.:  da   = 111011001
     #        cs   = 123345556
     #        cs2  = 000333555
     #        cs_s = 123012001
@@ -157,15 +156,15 @@ def rle(
     # Step 2: Keeps digits at the position of the 1's before a 0 in da (..11[1]0..)
     # Step 3: Putting backing the zeroes from da
     cs_s_2 = (
-        cs_s.isel(time=slice(None, -1))
-        .where(da.diff(dim=dim) == -1)
-        .where(da.isel(time=slice(None, -1)), 0)
+        cs_s[{dim: slice(None, -1)}]
+        .where(da.diff(dim=dim, label="lower") == -1)
+        .where(da[{dim: slice(None, -1)}], 0)
     )
     # Step 4: Treating the last digit dropped in step 1 above
-    res = xr.concat([cs_s_2, cs_s.isel(time=-1)], dim=dim)
+    res = xr.concat([cs_s_2, cs_s[{dim: -1}]], dim=dim)
 
     if index == "first":
-        res = res.isel(time=slice(None, None, -1))
+        res = res[{dim: slice(None, None, -1)}]
 
     return res
 
