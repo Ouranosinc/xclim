@@ -56,6 +56,12 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
         params = dist.fit(x, *args, **kwargs, **fitkwargs)
     elif method == "PWM":
         params = list(dist.lmom_fit(x).values())
+    elif method == "APP":
+        args, kwargs = _fit_start(x, dist.name, **fitkwargs)
+        kwargs_list = list(kwargs.values())
+        if "loc" not in kwargs.keys():
+            kwargs_list = [0] + kwargs_list
+        params = list(args) + kwargs_list
 
     params = np.asarray(params)
 
@@ -101,7 +107,11 @@ def fit(
     Coordinates for which all values are NaNs will be dropped before fitting the distribution. If the array
     still contains NaNs, the distribution parameters will be returned as NaNs.
     """
-    method_name = {"ML": "maximum likelihood", "PWM": "probability weighted moments"}
+    method_name = {
+        "ML": "maximum likelihood",
+        "PWM": "probability weighted moments",
+        "APP": "approximative method",
+    }
 
     # Get the distribution
     dc = get_dist(dist)
@@ -121,7 +131,8 @@ def fit(
         output_dtypes=[float],
         keep_attrs=True,
         kwargs=dict(
-            dist=dc if method == "ML" else lm3dc,
+            # Don't know how APP should be included, this works for now
+            dist=dc if method in ["ML", "APP"] else lm3dc,
             nparams=len(dist_params),
             method=method,
             **fitkwargs,
@@ -466,6 +477,16 @@ def _fit_start(x, dist, **fitkwargs) -> tuple[tuple, dict]:
         chat = np.pi / np.sqrt(6) / (np.log(x - loc)).std()
         scale = ((x - loc) ** chat).mean() ** (1 / chat)
         return (chat,), {"loc": loc, "scale": scale}
+
+    if dist == "gamma":
+        x_pos = x[x > 0]
+        m_pos = x_pos.mean()
+        log_of_mean = np.log(m_pos)
+        mean_of_logs = np.log(x_pos).mean()
+        a = log_of_mean - mean_of_logs
+        alpha = (1 + np.sqrt(1 + 4 * a / 3)) / (4 * a)
+        beta = m_pos / alpha
+        return (alpha,), {"scale": beta}
 
     return (), {}
 

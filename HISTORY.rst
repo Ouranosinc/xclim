@@ -4,13 +4,21 @@ History
 
 0.38.0 (unreleased)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`)
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Adjustment methods of `SBCK <https://github.com/yrobink/SBCK>`_ are wrapped into xclim when that package is installed. (:issue:`1109`, :pull:`1115`).
     - Wrapped SBCK tests are also properly run in the tox testing ensemble. (:pull:`1119`).
-* Method FAO_PM98 (based on Penman-Monteith formula) to compute potential evapotranspiration.
+* Method ``FAO_PM98`` (based on Penman-Monteith formula) to compute potential evapotranspiration. (:pull:`1122`).
+
+New indicators
+^^^^^^^^^^^^^^
+* Drought-related indicators: SPI (standardized precipitations) and SPEI (standardized water budgets). (:issue:`131`, :pull:`1096`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* ``water_budget`` and ``potential_evapotranspiration`` now accept radiation (rlds, rlus, rsds, rsus), wind (u2), and relative humidity (hurs) as optional parameters. (:pull:`1122`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
