@@ -378,7 +378,7 @@ def wind_speed_at_two_meters(
     z: str
       Height with units (e.g. for wind surface at 10 m,  z == "10 m")
     method : {"log"}
-      Method to convert sfcwind to wind speed at two meters
+      Method to convert 'ua' to wind speed at two meters
 
     Returns
     -------
