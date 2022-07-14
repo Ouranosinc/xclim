@@ -389,6 +389,7 @@ def wind_speed_at_two_meters(
     ----------
     Allen, R. G., Pereira, L. S., Raes, D., & Smith, M. (1998). Crop evapotranspiration-Guidelines for computing crop water requirements-FAO Irrigation and drainage paper 56. Fao, Rome, 300(9), D05109.
     """
+    z = convert_units_to(z, "m")
     if method == "log":
         if 67.8 * z - 5.42 < 0:
             raise ValueError(f"Height {z}m is too small for method {method}.")
