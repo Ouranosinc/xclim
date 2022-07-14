@@ -364,21 +364,21 @@ def day_lengths(
     return day_length_hours
 
 
-def wind_speed_at_2_meters(
-    uz: xr.DataArray,
-    z: float,
+def wind_speed_at_two_meters(
+    ua: xr.DataArray,
+    z: str,
     method: str = "log",
 ) -> xr.DataArray:
     r"""Wind speed at two meters.
 
     Parameters
     ----------
-    uz: xarray.DataArray
+    ua: xarray.DataArray
       Wind speed at height z
-    z: float
-      Height [m]
-    method : {'log'}
-      Method to convert uz to wind speed at two meters
+    z: str
+      Height with units (e.g. for wind surface at 10 m,  z == "10 m")
+    method : {"log"}
+      Method to convert sfcwind to wind speed at two meters
 
     Returns
     -------
@@ -393,7 +393,6 @@ def wind_speed_at_2_meters(
         if 67.8 * z - 5.42 < 0:
             raise ValueError(f"Height {z}m is too small for method {method}.")
         with xr.set_options(keep_attrs=True):
-            u2 = uz * 4.87 / np.log(67.8 * z - 5.42)
-        return u2
+            return ua * 4.87 / np.log(67.8 * z - 5.42)
     else:
         raise NotImplementedError(f"'{method}' method is not implemented.")
