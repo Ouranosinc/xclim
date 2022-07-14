@@ -253,9 +253,10 @@ class TestPotentialEvapotranspiration:
         rsus = ds.rsus
         rlds = ds.rlds
         rlus = ds.rlus
-        uas, vas = ds.uas, ds.vas
-        us, _ = xci.uas_vas_2_sfcwind(uas, vas)
-        u2 = xci.helpers.wind_speed_at_2_meters(us, 10)
+        uas = ds.uas
+        vas = ds.vas
+
+        sfcwind, _ = xci.uas_vas_2_sfcwind(uas, vas)
 
         with xr.set_options(keep_attrs=True):
             tnC = tn - K2C
@@ -281,7 +282,7 @@ class TestPotentialEvapotranspiration:
             rsus=rsus,
             rlds=rlds,
             rlus=rlus,
-            u2=u2,
+            sfcwind=sfcwind,
             method="FAO_PM98",
         )
         pet_fao_pm98C = atmos.potential_evapotranspiration(
@@ -291,8 +292,7 @@ class TestPotentialEvapotranspiration:
             rsds=rsds,
             rsus=rsus,
             rlds=rlds,
-            rlus=rlus,
-            u2=u2,
+            sfcwind=sfcwind,
             method="FAO_PM98",
         )
 
@@ -314,9 +314,10 @@ class TestPotentialEvapotranspiration:
         rsus = ds.rsus
         rlds = ds.rlds
         rlus = ds.rlus
-        uas, vas = ds.uas, ds.vas
-        us, _ = xci.uas_vas_2_sfcwind(uas, vas)
-        u2 = xci.helpers.wind_speed_at_2_meters(us, 10)
+        uas = ds.uas
+        vas = ds.vas
+
+        sfcwind, _ = xci.uas_vas_2_sfcwind(uas, vas)
 
         tn[0, 100] = np.nan
         tx[0, 101] = np.nan
@@ -331,7 +332,7 @@ class TestPotentialEvapotranspiration:
             rsus=rsus,
             rlds=rlds,
             rlus=rlus,
-            u2=u2,
+            sfcwind=sfcwind,
             method="FAO_PM98",
         )
 
@@ -367,9 +368,10 @@ class TestWaterBudget:
         rsus = ds.rsus
         rlds = ds.rlds
         rlus = ds.rlus
-        uas, vas = ds.uas, ds.vas
-        us, _ = xci.uas_vas_2_sfcwind(uas, vas)
-        u2 = xci.helpers.wind_speed_at_2_meters(us, 10)
+        uas = ds.uas
+        vas = ds.vas
+
+        sfcwind, _ = xci.uas_vas_2_sfcwind(uas, vas)
 
         with xr.set_options(keep_attrs=True):
             tnC = tn - K2C
@@ -407,7 +409,7 @@ class TestWaterBudget:
             rsus=rsus,
             rlds=rlds,
             rlus=rlus,
-            u2=u2,
+            sfcwind=sfcwind,
             method="FAO_PM98",
         )
         p_pet_fao_pm98R = atmos.water_budget_from_tas(
@@ -419,7 +421,7 @@ class TestWaterBudget:
             rsus=rsus,
             rlds=rlds,
             rlus=rlus,
-            u2=u2,
+            sfcwind=sfcwind,
             method="FAO_PM98",
         )
 
@@ -447,9 +449,10 @@ class TestWaterBudget:
         rsus = ds.rsus
         rlds = ds.rlds
         rlus = ds.rlus
-        uas, vas = ds.uas, ds.vas
-        us, _ = xci.uas_vas_2_sfcwind(uas, vas)
-        u2 = xci.helpers.wind_speed_at_2_meters(us, 10)
+        uas = ds.uas
+        vas = ds.vas
+
+        sfcwind, _ = xci.uas_vas_2_sfcwind(uas, vas)
 
         tn[0, 100] = np.nan
         tx[0, 101] = np.nan
@@ -469,7 +472,7 @@ class TestWaterBudget:
             rsus=rsus,
             rlds=rlds,
             rlus=rlus,
-            u2=u2,
+            sfcwind=sfcwind,
             method="FAO_PM98",
         )
 

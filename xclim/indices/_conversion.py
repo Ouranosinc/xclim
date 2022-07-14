@@ -1013,8 +1013,6 @@ def potential_evapotranspiration(
     rlds: xr.DataArray | None = None,
     rlus: xr.DataArray | None = None,
     sfcwind: xr.DataArray | None = None,
-    uas: xr.DataArray | None = None,
-    vas: xr.DataArray | None = None,
     method: str = "BR65",
     peta: float | None = 0.00516409319477,
     petb: float | None = 0.0874972822289,
@@ -1046,10 +1044,6 @@ def potential_evapotranspiration(
       Surface Upwelling Longwave Radiation
     sfcwind : xarray.DataArray
       Surface wind velocity (at 10 m)
-    uas : xr.DataArray
-      Eastward surface wind velocity (at 10 m)
-    vas : xr.DataArray
-      Northward surface wind velocity (at 10 m)
     method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48", "mcguinnessbordne05", "MB05", "allen98", "FAO_PM98"}
       Which method to use, see notes.
     peta : float
@@ -1210,13 +1204,6 @@ def potential_evapotranspiration(
         tasmax = convert_units_to(tasmax, "degC")
         tasmin = convert_units_to(tasmin, "degC")
 
-        if sfcwind is None:
-            if uas is None or vas is None:
-                raise ValueError(
-                    f"Either 'sfcwind' or both 'uas' and 'vas' must be given as input to be used with method '{method}'"
-                )
-            else:
-                sfcwind = uas_vas_2_sfcwind(uas, vas)
         wa2 = wind_speed_at_two_meters(sfcwind, "10 m")
         wa2 = convert_units_to(wa2, "m s-1")
 

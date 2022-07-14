@@ -540,7 +540,7 @@ def latitude_temperature_index(
     rsus="[radiation]",
     rlds="[radiation]",
     rlus="[radiation]",
-    u2="[speed]",
+    sfcwind="[speed]",
 )
 def water_budget(
     pr: xarray.DataArray,
@@ -554,7 +554,7 @@ def water_budget(
     rsus: xarray.DataArray | None = None,
     rlds: xarray.DataArray | None = None,
     rlus: xarray.DataArray | None = None,
-    u2: xarray.DataArray | None = None,
+    sfcwind: xarray.DataArray | None = None,
     method: str = "BR65",
 ) -> xarray.DataArray:
     r"""Precipitation minus potential evapotranspiration.
@@ -586,8 +586,8 @@ def water_budget(
       Surface Downwelling Longwave Radiation
     rlus : xarray.DataArray
       Surface Upwelling Longwave Radiation
-    u2 : xarray.DataArray
-      Wind velocity at 2 meters
+    sfcwind : xarray.DataArray
+      Surface wind velocity (at 10 m)
     method : str
       Method to use to calculate the potential evapotranspiration.
 
@@ -613,7 +613,7 @@ def water_budget(
             rsus=rsus,
             rlds=rlds,
             rlus=rlus,
-            u2=u2,
+            sfcwind=sfcwind,
             method=method,
         )
     else:
