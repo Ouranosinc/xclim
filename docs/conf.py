@@ -103,6 +103,7 @@ extensions = [
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
     "autodoc_indicator",
+    "sphinxcontrib.bibtex",
 ]
 
 autosectionlabel_prefix_document = True
@@ -132,6 +133,8 @@ extlinks = {
     "pull": ("https://github.com/Ouranosinc/xclim/pull/%s", "PR/"),
     "user": ("https://github.com/", "@"),
 }
+
+bibtex_bibfiles = ["references.bib"]
 
 nbsphinx_execute = "auto"
 nbsphinx_prolog = r"""
