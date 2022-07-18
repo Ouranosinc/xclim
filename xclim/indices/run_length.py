@@ -88,56 +88,13 @@ def rle(
     xr.DataArray
       Values are 0 where da is False (out of runs).
     """
-    # max chunk based on dask's default (128 MiB) and da's dtype.
-    max_chunk = (
-        dask.utils.parse_bytes(dask.config.get("array.chunk-size")) / da.dtype.itemsize
-    )
-    use_dask = uses_dask(da)
-
-    # Ensure int
     da = da.astype(int)
-
-    # Ensure bfill operates on entire (unchunked) time dimension
-    # Determine appropriate chunk size for other dims, follow logic from dask:
-    #   do not exceed 'array.chunk-size' unless array.slicing.split-large-chunks is False.
-    # Skip this if there's already only one chunk along dim
-    ndims = len(da.shape)
-    if (
-        use_dask
-        and len(da.chunks[da.get_axis_num(dim)]) > 1
-        and dask.config.get("array.slicing.split-large-chunks") is not False
-        and np.prod(da.data.chunksize) > max_chunk
-    ):
-        chunk_dim = da[dim].size
-        # divide extra dims into equal size
-        # Note : even if calculated chunksize > dim.size result will have chunk==dim.size
-        chunksize_ex_dims = None  # TODO: This raises type assignment errors in mypy
-        if ndims > 1:
-            if dask.config.get("array.slicing.split-large-chunks") is None:
-                warn(
-                    (
-                        f"xclim's run length requires a single chunk along {dim} "
-                        "and must rechunk the provided array. To control this behaviour, "
-                        "use the dask.config entries for `array.chunk-size` and "
-                        "`array.slicing.split-large-chunks`."
-                    ),
-                    category=dask.array.PerformanceWarning,
-                )
-            chunksize_ex_dims = np.round(
-                np.power(max_chunk / chunk_dim, 1 / (ndims - 1))
-            )
-        chunks = dict()
-        chunks[dim] = -1
-        for dd in da.dims:
-            if dd != dim:
-                chunks[dd] = chunksize_ex_dims
-        da = da.chunk(chunks)
 
     if index == "first":
         # The "first" case is obtained with:
-        # 1. Invert the data array      (e.g. 111011001 -> 100110111)
-        # 2. Apply the algortihm for "last"  (100110111 -> 100N20NN3)
-        # 3. Re-invert the data array        (100N20NN3 -> 3NN02N001)
+        # 1. Invert the data array                     e.g. 111011001  -> 100110111
+        # 2. Apply the algortihm for index=="last"                     -> 1NNN2NNN3
+        # 3. Re-invert the data array                                  -> 3NNN2NNN1
         da = da[{dim: slice(None, None, -1)}]
 
     # Getting the cumulative sum for each series of 1's (cs_s:= CumulativeSum_Series)
@@ -146,27 +103,22 @@ def rle(
     cs2[{dim: 0}] = 0
     cs2 = cs2.ffill(dim=dim)
     cs_s = cs - cs2
-    # e.g.:  da   = 111011001
-    #        cs   = 123345556
-    #        cs2  = 000333555
-    #        cs_s = 123012001
+    # e.g.  da   == 100110111
+    #       cs   == 111233456
+    #       cs2  == 011113333
+    #       cs_s == 100120123
 
-    # Keeping only the end value of cumulative sums obtained (123012001 -> NN30N2001)
-    # Step 1: The last digit is dropped, treated separately later
-    # Step 2: Keeps digits at the position of the 1's before a 0 in da (..11[1]0..)
-    # Step 3: Putting backing the zeroes from da
-    cs_s_2 = (
-        cs_s[{dim: slice(None, -1)}]
-        .where(da.diff(dim=dim, label="lower") == -1)
-        .where(da[{dim: slice(None, -1)}], 0)
-    )
-    # Step 4: Treating the last digit dropped in step 1 above
-    res = xr.concat([cs_s_2, cs_s[{dim: -1}]], dim=dim)
+    # Keeping only lengths of series of 1's
+    # 1) Keep numbers with 0 to the right (& last number too) : 100120123 -> 10NN2NNN3
+    # 2) Remove remaining 0's                                             -> 1NNN2NNN3
+    cs_s = cs_s.where(da.shift({dim: -1}, fill_value=0) == 0)
+    out = cs_s.where(cs_s > 0)
 
+    # Inverting back if needed
     if index == "first":
-        res = res[{dim: slice(None, None, -1)}]
+        out = out[{dim: slice(None, None, -1)}]
 
-    return res
+    return out
 
 
 def rle_old(
