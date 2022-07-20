@@ -90,31 +90,26 @@ def rle(
     """
     da = da.astype(int)
 
+    # "first" case: Algorithm is applied on inverted array and output is inverted back
     if index == "first":
-        # The "first" case is obtained with:
-        # 1. Invert the data array                     e.g. 111011001  -> 100110111
-        # 2. Apply the algortihm for index=="last"                     -> 1NNN2NNN3
-        # 3. Re-invert the data array                                  -> 3NNN2NNN1
         da = da[{dim: slice(None, None, -1)}]
 
     # Getting the cumulative sum for each series of 1's (cs_s:= CumulativeSum_Series)
+    # e.g.  da == 100110111 ->  cs_s == 100120123
     cs = da.cumsum(dim=dim)
     cs2 = cs.where(da == 0)
     cs2[{dim: 0}] = 0
     cs2 = cs2.ffill(dim=dim)
     cs_s = cs - cs2
-    # e.g.  da   == 100110111
-    #       cs   == 111233456
-    #       cs2  == 011113333
-    #       cs_s == 100120123
 
-    # Keeping only lengths of series of 1's
-    # 1) Keep numbers with 0 to the right (& last number too) : 100120123 -> 10NN2NNN3
-    # 2) Reinsert 0's at their original place                             -> 100N20NN3
+    # Keeping only the total length of each series of 1's (and also keeping 0's)
+    # i) Keep numbers with 0 to the right (& last number too) : 100120123 -> 10NN2NNN3
+    # ii) Reinsert 0's at their original place                            -> 100N20NN3
     cs_s = cs_s.where(da.shift({dim: -1}, fill_value=0) == 0)
     out = cs_s.where(da == 1, 0)
 
-    # Inverting back if needed e.g. 100N20NN3 -> 3NN02N001
+    # Inverting if needed e.g. 100N20NN3 -> 3NN02N001. This is the RLE output of
+    # 111011001 with index == "first"
     if index == "first":
         out = out[{dim: slice(None, None, -1)}]
 
