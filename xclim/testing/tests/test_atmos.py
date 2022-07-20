@@ -261,8 +261,6 @@ class TestPotentialEvapotranspiration:
         with xr.set_options(keep_attrs=True):
             tnC = tn - K2C
             tnC.attrs["units"] = "degC"
-            # txC = tx - K2C
-            # txC.attrs["units"] = "degC"
             tmC = tm - K2C
             tmC.attrs["units"] = "degC"
 
@@ -292,6 +290,7 @@ class TestPotentialEvapotranspiration:
             rsds=rsds,
             rsus=rsus,
             rlds=rlds,
+            rlus=rlus,
             sfcwind=sfcwind,
             method="FAO_PM98",
         )
