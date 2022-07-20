@@ -110,11 +110,11 @@ def rle(
 
     # Keeping only lengths of series of 1's
     # 1) Keep numbers with 0 to the right (& last number too) : 100120123 -> 10NN2NNN3
-    # 2) Remove remaining 0's                                             -> 1NNN2NNN3
+    # 2) Reinsert 0's at their original place                             -> 100N20NN3
     cs_s = cs_s.where(da.shift({dim: -1}, fill_value=0) == 0)
-    out = cs_s.where(cs_s > 0)
+    out = cs_s.where(da == 1, 0)
 
-    # Inverting back if needed
+    # Inverting back if needed e.g. 100N20NN3 -> 3NN02N001
     if index == "first":
         out = out[{dim: slice(None, None, -1)}]
 
