@@ -14,7 +14,7 @@ from xclim.indices.helpers import (
     extraterrestrial_solar_radiation,
     solar_declination,
     time_correction_for_solar_angle,
-    wind_speed_at_two_meters,
+    wind_speed_height_conversion,
 )
 
 __all__ = [
@@ -999,8 +999,6 @@ def clausius_clapeyron_scaled_precipitation(
     rlds="[radiation]",
     rlus="[radiation]",
     sfcwind="[speed]",
-    uas="[speed]",
-    vas="[speed]",
 )
 def potential_evapotranspiration(
     tasmin: xr.DataArray | None = None,
@@ -1204,7 +1202,8 @@ def potential_evapotranspiration(
         tasmax = convert_units_to(tasmax, "degC")
         tasmin = convert_units_to(tasmin, "degC")
 
-        wa2 = wind_speed_at_two_meters(sfcwind, "10 m")
+        # wind speed at two meters
+        wa2 = wind_speed_height_conversion(sfcwind, h_source="10 m", h_target="2 m")
         wa2 = convert_units_to(wa2, "m s-1")
 
         with xr.set_options(keep_attrs=True):

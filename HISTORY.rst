@@ -18,7 +18,7 @@ New indicators
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* ``water_budget`` and ``potential_evapotranspiration`` now accept radiation (rlds, rlus, rsds, rsus), wind (u2), and relative humidity (hurs) as optional parameters. (:pull:`1122`).
+* ``water_budget`` and ``potential_evapotranspiration`` now accept radiation (rlds, rlus, rsds, rsus), wind (sfcwind), and relative humidity (hurs) as optional parameters. (:pull:`1122`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^

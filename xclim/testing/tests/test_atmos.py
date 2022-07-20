@@ -256,7 +256,7 @@ class TestPotentialEvapotranspiration:
         uas = ds.uas
         vas = ds.vas
 
-        sfcwind, _ = xci.uas_vas_2_sfcwind(uas, vas)
+        sfcwind, _ = atmos.wind_speed_from_vector(uas, vas)
 
         with xr.set_options(keep_attrs=True):
             tnC = tn - K2C
@@ -317,7 +317,7 @@ class TestPotentialEvapotranspiration:
         uas = ds.uas
         vas = ds.vas
 
-        sfcwind, _ = xci.uas_vas_2_sfcwind(uas, vas)
+        sfcwind, _ = atmos.wind_speed_from_vector(uas, vas)
 
         tn[0, 100] = np.nan
         tx[0, 101] = np.nan
@@ -371,7 +371,7 @@ class TestWaterBudget:
         uas = ds.uas
         vas = ds.vas
 
-        sfcwind, _ = xci.uas_vas_2_sfcwind(uas, vas)
+        sfcwind, _ = atmos.wind_speed_from_vector(uas, vas)
 
         with xr.set_options(keep_attrs=True):
             tnC = tn - K2C
@@ -452,7 +452,7 @@ class TestWaterBudget:
         uas = ds.uas
         vas = ds.vas
 
-        sfcwind, _ = xci.uas_vas_2_sfcwind(uas, vas)
+        sfcwind, _ = atmos.wind_speed_from_vector(uas, vas)
 
         tn[0, 100] = np.nan
         tx[0, 101] = np.nan

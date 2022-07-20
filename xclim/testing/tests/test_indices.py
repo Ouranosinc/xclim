@@ -2569,7 +2569,7 @@ class TestPotentialEvapotranspiration:
         rsus = rsus_series(np.array([12.51, 14.46, 20.36])).expand_dims(lat=lat)
         rlds = rlds_series(np.array([293.65, 228.96, 275.40])).expand_dims(lat=lat)
         rlus = rlus_series(np.array([311.39, 280.50, 311.30])).expand_dims(lat=lat)
-        u2 = sfcWind_series(np.array([14.11, 15.27, 10.70])).expand_dims(lat=lat)
+        sfcwind = sfcWind_series(np.array([14.11, 15.27, 10.70])).expand_dims(lat=lat)
         out = xci.potential_evapotranspiration(
             tn,
             tx,
@@ -2580,7 +2580,7 @@ class TestPotentialEvapotranspiration:
             rsus=rsus,
             rlds=rlds,
             rlus=rlus,
-            u2=u2,
+            sfcwind=sfcwind,
             method="FAO_PM98",
         )
 
