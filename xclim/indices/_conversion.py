@@ -1222,7 +1222,7 @@ def potential_evapotranspiration(
             # net radiation
             Rn = convert_units_to(rsds - rsus - (rlus - rlds), "MJ m-2 d-1")
 
-            G = 0  # daily soil heat flux density [MJ m-2 d-1]
+            G = 0  # Daily soil heat flux density [MJ m-2 d-1]
             P = 101.325  # Atmospheric pressure [kPa]
             gamma = 0.665e-03 * P  # psychrometric const = C_p*P/(eps*lam) [kPa degC-1]
 

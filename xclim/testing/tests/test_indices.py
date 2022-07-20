@@ -2583,8 +2583,7 @@ class TestPotentialEvapotranspiration:
             sfcwind=sfcwind,
             method="FAO_PM98",
         )
-
-        np.testing.assert_allclose(out[0, 2], [1.429600456 / 86400], rtol=1e-2)
+        np.testing.assert_allclose(out[0, 2], [1.208832768 / 86400], rtol=1e-2)
 
 
 def test_water_budget_from_tas(pr_series, tasmin_series, tasmax_series, lat_series):
