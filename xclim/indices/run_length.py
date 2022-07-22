@@ -94,127 +94,24 @@ def rle(
     if index == "first":
         da = da[{dim: slice(None, None, -1)}]
 
-    # Getting the cumulative sum for each series of 1's (cs_s:= CumulativeSum_Series)
-    # e.g.  da == 100110111 ->  cs_s == 100120123
+    # Get cumulative sum for each series of 1, e.g. da == 100110111 -> cs_s == 100120123
     cs = da.cumsum(dim=dim)
     cs2 = cs.where(da == 0)
     cs2[{dim: 0}] = 0
     cs2 = cs2.ffill(dim=dim)
     cs_s = cs - cs2
 
-    # Keeping only the total length of each series of 1's (and also keeping 0's)
-    # i) Keep numbers with 0 to the right (& last number too) : 100120123 -> 10NN2NNN3
-    # ii) Reinsert 0's at their original place                            -> 100N20NN3
+    # Keep total length of each series (and also keep 0's), e.g. 100120123 -> 100N20NN3
+    # Keep numbers with a 0 to the right and also the last number
     cs_s = cs_s.where(da.shift({dim: -1}, fill_value=0) == 0)
-    out = cs_s.where(da == 1, 0)
+    out = cs_s.where(da == 1, 0)  # Reinsert 0's at their original place
 
-    # Inverting if needed e.g. 100N20NN3 -> 3NN02N001. This is the RLE output of
-    # 111011001 with index == "first"
+    # Inverting back if needed e.g. 100N20NN3 -> 3NN02N001. This is the output of
+    # `rle` for 111011001 with index == "first"
     if index == "first":
         out = out[{dim: slice(None, None, -1)}]
 
     return out
-
-
-def rle_old(
-    da: xr.DataArray,
-    dim: str = "time",
-    index: str = "first",
-) -> xr.DataArray:
-    """Generate basic run length function.
-
-    Parameters
-    ----------
-    da : xr.DataArray
-      Input array.
-    dim : str
-      Dimension name.
-    index: {'first', 'last'}
-      If 'first' (default), the run length is indexed with the first element in the run.
-      If 'last', with the last element in the run.
-
-    Returns
-    -------
-    xr.DataArray
-      Values are 0 where da is False (out of runs).
-    """
-    # max chunk based on dask's default (128 MiB) and da's dtype.
-    max_chunk = (
-        dask.utils.parse_bytes(dask.config.get("array.chunk-size")) / da.dtype.itemsize
-    )
-    use_dask = uses_dask(da)
-
-    # Ensure boolean
-    da = da.astype(bool)
-    if index == "last":
-        da = da.reindex({dim: da[dim][::-1]})
-
-    n = len(da[dim])
-    # Need to chunk here to ensure the broadcasting is not made in memory
-    i = xr.DataArray(np.arange(da[dim].size), dims=dim)
-    if use_dask:
-        i = i.chunk({dim: -1})
-
-    ind, da = xr.broadcast(i, da)
-    if use_dask:
-        # Rechunk, but with broadcasted da
-        ind = ind.chunk(da.chunks)
-
-    b = ind.where(~da)  # find indexes where false
-    end1 = (
-        da.where(b[dim] == b[dim][-1], drop=True) * 0 + n
-    )  # add additional end value index (deal with end cases)
-    start1 = (
-        da.where(b[dim] == b[dim][0], drop=True) * 0 - 1
-    )  # add additional start index (deal with end cases)
-    b = xr.concat([start1, b, end1], dim)
-
-    # Ensure bfill operates on entire (unchunked) time dimension
-    # Determine appropriate chunk size for other dims, follow logic from dask:
-    #   do not exceed 'array.chunk-size' unless array.slicing.split-large-chunks is False.
-    # Skip this if there's already only one chunk along dim
-    ndims = len(b.shape)
-    if (
-        use_dask
-        and len(b.chunks[b.get_axis_num(dim)]) > 1
-        and dask.config.get("array.slicing.split-large-chunks") is not False
-        and np.prod(da.data.chunksize) > max_chunk
-    ):
-        chunk_dim = b[dim].size
-        # divide extra dims into equal size
-        # Note : even if calculated chunksize > dim.size result will have chunk==dim.size
-        chunksize_ex_dims = None  # TODO: This raises type assignment errors in mypy
-        if ndims > 1:
-            if dask.config.get("array.slicing.split-large-chunks") is None:
-                warn(
-                    (
-                        f"xclim's run length requires a single chunk along {dim} "
-                        "and must rechunk the provided array. To control this behaviour, "
-                        "use the dask.config entries for `array.chunk-size` and "
-                        "`array.slicing.split-large-chunks`."
-                    ),
-                    category=dask.array.PerformanceWarning,
-                )
-            chunksize_ex_dims = np.round(
-                np.power(max_chunk / chunk_dim, 1 / (ndims - 1))
-            )
-        chunks = dict()
-        chunks[dim] = -1
-        for dd in b.dims:
-            if dd != dim:
-                chunks[dd] = chunksize_ex_dims
-        b = b.chunk(chunks)
-
-    # back-fill nans with first position after
-    z = b.bfill(dim=dim)
-
-    # calculate lengths
-    d = z.diff(dim=dim) - 1
-    d = d.where(d >= 0)
-    d = d.isel({dim: slice(None, -1)}).where(da, 0)
-    if index == "last":
-        d = d.reindex({dim: d[dim][::-1]})
-    return d
 
 
 def rle_statistics(
