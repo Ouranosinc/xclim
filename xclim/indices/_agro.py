@@ -383,8 +383,10 @@ def biologically_effective_degree_days(
             xarray.where(dtr < low_dtr, dtr - low_dtr, 0),
         )
         if method.lower() == "gladstones":
+            if isinstance(lat, (int, float)):
+                lat = xr.DataArray(lat)
             lat_mask = abs(lat) <= 50
-            k = 1 + xarray.where(lat_mask, max(((abs(lat) - 40) / 10) * 0.06, 0), 0)
+            k = 1 + xarray.where(lat_mask, ((abs(lat) - 40) * 0.06 / 10).clip(0, None), 0)
             k_aggregated = 1
         else:
             day_length = aggregate_between_dates(
