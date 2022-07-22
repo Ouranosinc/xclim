@@ -251,7 +251,9 @@ class TestAgroclimaticIndices:
             attrs=dict(units="K"),
         )
 
-        lat = xr.DataArray([35, 45], dims=('lat',), name="lat", attrs={"units": "degrees_north"})
+        lat = xr.DataArray(
+            [35, 45], dims=("lat",), name="lat", attrs={"units": "degrees_north"}
+        )
         high_lat = xr.DataArray(48, name="lat", attrs={"units": "degrees_north"})
 
         bedd = xci.biologically_effective_degree_days(
@@ -270,7 +272,7 @@ class TestAgroclimaticIndices:
             end_date=end_date,  # noqa
             freq="YS",
         )
-        if method != 'icclim':
+        if method != "icclim":
             bedd = bedd.isel(lat=1)
             bedd_hot = bedd_hot.isel(lat=1)
         bedd_high_lat = xci.biologically_effective_degree_days(
