@@ -9,13 +9,15 @@ formats:
 build:
   os: ubuntu-22.04
   tools:
-    python: "3.8"
+    python: "mambaforge-4.10"
   jobs:
     post_install:
       - sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests
 
+conda:
+  environment: environment.yml
+
 python:
-  system_packages: true
   install:
     - method: pip
       path: .
