@@ -12,7 +12,7 @@ build:
     python: "mambaforge-4.10"
   jobs:
     pre_install:
-      - pip install llvmlite<0.39,>=0.38 --ignore-installed
+      - pip install llvmlite~=0.38 --ignore-installed
     pre_build:
       - sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests
 
