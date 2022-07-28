@@ -12,6 +12,10 @@ New features and enhancements
     - Wrapped SBCK tests are also properly run in the tox testing ensemble. (:pull:`1119`).
 * New indices for droughts: SPI (standardized precipitations) and SPEI (standardized water budgets) (:issue:`131`, :pull:`1096`)
 
+Bug fixes
+^^^^^^^^^
+* Fixed ``saturation_vapor_pressure`` for temperatures in other units than Kelvins (also fixes ``relative_humidity_from_dewpoint``). (:issue:`1125`, :pull:`1127`).
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Marked a test (``test_release_notes_file_not_implemented``) that can only pass when source files are available so that it can easily be skipped on conda-forge build tests. (:issue:`1116`, :pull:`1117`).
