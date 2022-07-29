@@ -19,7 +19,7 @@ from xclim.core.calendar import (
 from xclim.core.units import convert_units_to
 
 
-def distance_from_sun(dates: xr.DaraArray) -> xr.DataArray:
+def distance_from_sun(dates: xr.DataArray) -> xr.DataArray:
     """
     Sun-earth distance.
 
@@ -54,7 +54,7 @@ def solar_declination(day_angle: xr.DataArray, method="spencer") -> xr.DataArray
     """Solar declination.
 
     The angle between the sun rays and the earth's equator, in radians, as approximated
-    by [Spencer1971]_ or assuming the orbit is a cirle.
+    by [Spencer1971]_ or assuming the orbit is a circle.
 
     Parameters
     ----------
@@ -145,7 +145,7 @@ def eccentricity_correction_factor(day_angle: xr.DataArray, method="spencer"):
       See :py:func:`~xclim.core.calendar.datetime_to_decimal_year`.
     method:
       Which approximation to use. The default ("spencer") uses the first five terms of
-      the fourier series of the eccentrencity, while "simple" approximates with only
+      the fourier series of the eccentricity, while "simple" approximates with only
       the first two.
 
     Returns
@@ -185,7 +185,7 @@ def cosine_of_solar_zenith_angle(
     The solar zenith angle is the angle between a vertical line (perpendicular to the ground)
     and the sun rays. This function computes a daily statistic of its cosine : its integral
     from sunrise to sunset or the average over the same period. Based on [Kalogirou14]_.
-    In addition it computes instantaneuos values of tis cosine. Based on [Napoli20]_.
+    In addition, it computes instantaneous values of its cosine. Based on [Napoli20]_.
 
     Parameters
     ----------
@@ -203,7 +203,7 @@ def cosine_of_solar_zenith_angle(
       Watch time hours.
       This is necessary if stat is "instant", "interval" or "sunlit".
     interval : int, optional
-      Time interal between two time steps in hours
+      Time interval between two time steps in hours
       This is necessary if stat is "interval" or "sunlit".
     stat : {'integral', 'average', 'instant', 'interval', 'sunlit'}
       Which daily statistic to return. If "integral", this returns the integral of the
@@ -217,7 +217,7 @@ def cosine_of_solar_zenith_angle(
     -------
     Cosine of the solar zenith angle, [rad] or [dimensionless]
       If stat is "integral", dimensions can be said to be "time" as the integral is on
-      the hour angle. For seconds, multiply by the number of seconds in a comple day
+      the hour angle. For seconds, multiply by the number of seconds in a complete day
       cycle (24*60*60) and divide by 2π.
 
     Notes

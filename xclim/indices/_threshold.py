@@ -426,7 +426,6 @@ def maximum_consecutive_wet_days(
 
     .. math::
 
-
        \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [x_{s_j} > 0^\circ C]
 
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
@@ -740,7 +739,7 @@ def frost_season_length(
     The number of days between the first occurrence of at least N (def: 5) consecutive days
     with minimum daily temperature under a threshold (default: 0℃) and the first occurrence
     of at least N (def 5) consecutive days with minimum daily temperature above the same threshold
-    A mid date can be given to limit the earliest day the end of season can take.
+    A mid-date can be given to limit the earliest day the end of season can take.
     WARNING: The default freq and mid_date values are valid for the northern hemisphere.
 
     Parameters
@@ -910,7 +909,7 @@ def frost_free_season_length(
     The number of days between the first occurrence of at least N (def: 5) consecutive days
     with minimum daily temperature above a threshold (default: 0℃) and the first occurrence
     of at least N (def 5) consecutive days with minimum daily temperature below the same threshold
-    A mid date can be given to limit the earliest day the end of season can take.
+    A mid-date can be given to limit the earliest day the end of season can take.
     WARNING: The default freq and mid_date values are valid for the northern hemisphere.
 
     Parameters
@@ -1209,7 +1208,7 @@ def days_with_snow(
 ) -> xarray.DataArray:
     r"""Days with snow.
 
-    Return the number of days where snowfall is within low and high thresholds.
+    Return the number of days when snowfall is within low and high thresholds.
 
     Parameters
     ----------
@@ -1226,7 +1225,7 @@ def days_with_snow(
     Returns
     -------
     xarray.DataArray, [time]
-      Number of days where snowfall is between low and high thresholds.
+      Number of days when snowfall is between low and high thresholds.
 
     References
     ----------
@@ -1379,9 +1378,8 @@ def hot_spell_frequency(
 ) -> xarray.DataArray:
     """Hot spell frequency.
 
-    Number of hot spells over a given period. A hot spell is defined as an event
-    where the maximum daily temperature exceeds a specific threshold
-    over a minimum number of days.
+    Number of hot spells over a given period. A hot spell is defined as an event where the
+    maximum daily temperature exceeds a specific threshold over a minimum number of days.
 
     Parameters
     ----------
@@ -1430,7 +1428,7 @@ def snow_cover_duration(
     # noqa: D401
     """Number of days with snow depth above a threshold.
 
-    Number of days where surface snow depth is greater or equal to given threshold.
+    Number of days when surface snow depth is greater or equal to given threshold.
     WARNING: The default `freq` is valid for the northern hemisphere.
 
     Parameters
@@ -1445,7 +1443,7 @@ def snow_cover_duration(
     Returns
     -------
     xarray.DataArray, [time]
-      Number of days where snow depth is greater or equal to threshold.
+      Number of days when snow depth is greater or equal to threshold.
     """
     thresh = convert_units_to(thresh, snd)
     out = threshold_count(snd, ">=", thresh, freq)
@@ -1566,7 +1564,7 @@ def tg_days_below(
 ):  # noqa: D401
     """Number of days with tas below a threshold.
 
-    Number of days where daily mean temperature is below a threshold.
+    Number of days when daily mean temperature is below a threshold.
 
     Parameters
     ----------
@@ -1602,7 +1600,7 @@ def tx_days_above(
 ) -> xarray.DataArray:  # noqa: D401
     """Number of days with tasmax above a threshold (number of summer days).
 
-    Number of days where daily maximum temperature exceeds a threshold.
+    Number of days when daily maximum temperature exceeds a threshold.
 
     Parameters
     ----------
@@ -1616,7 +1614,7 @@ def tx_days_above(
     Returns
     -------
     xarray.DataArray, [time]
-      Number of days where tasmax > threshold (number of summer days).
+      Number of days when tasmax > threshold (number of summer days).
 
     Notes
     -----
@@ -1638,7 +1636,7 @@ def tx_days_below(
 ):  # noqa: D401
     """Number of days with tmax below a threshold.
 
-    Number of days where daily maximum temperature is below a threshold.
+    Number of days when daily maximum temperature is below a threshold.
 
     Parameters
     ----------
@@ -1698,7 +1696,6 @@ def warm_day_frequency(
     .. math::
 
         TN_{ij} > Threshold [℃]
-
     """
     thresh = convert_units_to(thresh, tasmax)
     events = threshold_count(tasmax, ">", thresh, freq)

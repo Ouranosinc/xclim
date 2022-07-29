@@ -632,11 +632,9 @@ def standardized_precipitation_index(
     xarray.DataArray,
       Standardized Precipitation Index.
 
-
     Notes
     -----
     The length `N` of the N-month SPI is determined by choosing the `window = N`. Supported statistical distributions are: ["gamma"]
-
 
     Example
     -------

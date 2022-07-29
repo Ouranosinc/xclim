@@ -25,7 +25,7 @@ class BaseDetrend(ParametrizableWithDataset):
     detrend(da)  : Return detrended array.
     retrend(da)  : Puts trend back on da.
 
-    A fitted Detrend object is unique to the trend coordinate of the object used in `fit`, (usually 'time').
+    A fitted `Detrend` object is unique to the trend coordinate of the object used in `fit`, (usually 'time').
     The computed trend is stored in ``Detrend.ds.trend``.
 
     Subclasses should implement ``_get_trend_group()`` or ``_get_trend()``.
@@ -219,9 +219,9 @@ class LoessDetrend(BaseDetrend):
 
     Notes
     -----
-    LOESS smoothing is computationally expensive. As it relies on a loop on gridpoints, it can be useful to use smaller than usual chunks.
-    Moreover, it suffers from heavy boundary effects. As a rule of thumb, the outermost N * f/2 points
-    should be considered dubious. (N is the number of points along each group)
+    LOESS smoothing is computationally expensive. As it relies on a loop on gridpoints, it can be useful to use
+    smaller than usual chunks. Moreover, it suffers from heavy boundary effects. As a rule of thumb, the outermost
+    N * f/2 points should be considered dubious. (N is the number of points along each group)
     """
 
     def __init__(

@@ -31,7 +31,7 @@ def adapt_freq(
     *,
     group: Grouper | str,
     thresh: str = "0 mm d-1",
-) -> xr.Dataset:
+) -> (xr.Dataset, xr.Dataset, xr.Dataset):
     r"""
     Adapt frequency of values under thresh of `sim`, in order to match ref.
 
@@ -221,7 +221,7 @@ def normalize(
     *,
     group: Grouper | str,
     kind: str = ADDITIVE,
-) -> xr.Dataset:
+) -> (xr.DataArray, xr.DataArray):
     """Normalize an array by removing its mean.
 
     Normalization if performed group-wise and according to `kind`.
@@ -464,7 +464,7 @@ def construct_moving_yearly_window(
 ):
     """Construct a moving window DataArray.
 
-    Stacks windows of `da` in a new 'movingwin' dimension.
+    Stack windows of `da` in a new 'movingwin' dimension.
     Windows are always made of full years, so calendar with non-uniform year lengths are not supported.
 
     Windows are constructed starting at the beginning of `da`, if number of given years is not
@@ -686,7 +686,7 @@ def from_additive_space(
     trans: str = None,
     units: str = None,
 ):
-    r"""Transform back to the physical space a variable that was transformed with `to_addtitive_space`.
+    r"""Transform back to the physical space a variable that was transformed with `to_additive_space`.
 
     Based on [AlavoineGrenier]_. If parameters are not present on the attributes of the
     data, they must be all given are arguments.

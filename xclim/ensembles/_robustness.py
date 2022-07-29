@@ -242,9 +242,9 @@ def robustness_coefficient(
 
     The robustness metric is defined as R = 1 − A1 / A2 , where A1 is defined
     as the integral of the squared area between two cumulative density functions
-    characterizing the individual model projections and the multi-model mean
+    characterizing the individual model projections and the multimodel mean
     projection and A2 is the integral of the squared area between two cumulative
-    density functions characterizing the multi-model mean projection and the historical
+    density functions characterizing the multimodel mean projection and the historical
     climate. (Description taken from [knutti2013]_)
 
     A value of R equal to one implies perfect model agreement. Higher model spread or
@@ -254,7 +254,7 @@ def robustness_coefficient(
     ----------
     fut : Union[xr.DataArray, xr.Dataset]
       Future ensemble values along 'realization' and 'time' (nr, nt). Can be a dataset,
-      in which case the coeffcient is computed on each variables.
+      in which case the coefficient is computed on each variable.
     ref : Union[xr.DataArray, xr.Dataset]
       Reference period values along 'time' (nt). Same type as `fut`.
 
@@ -291,7 +291,7 @@ def robustness_coefficient(
 
         # Get sorted vectors
         v_fut = np.sort(future.flatten())  # "cumulative" models distribution
-        v_favg = np.sort(future.mean(axis=-1))  # Multi-model mean
+        v_favg = np.sort(future.mean(axis=-1))  # Multimodel mean
         v_ref = np.sort(reference)  # Historical values
 
         A1 = diff_cdf_sq_area_int(v_fut, v_favg)  # noqa

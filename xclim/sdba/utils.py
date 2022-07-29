@@ -165,7 +165,7 @@ def apply_correction(
 
 
 def invert(x: xr.DataArray, kind: str | None = None) -> xr.DataArray:
-    """Invert a DataArray either additively (-x) or multiplicatively (1/x).
+    """Invert a DataArray either by addition (-x) or by multiplication (1/x).
 
     If kind is not given, default to the one stored in the "kind" attribute of x.
     """

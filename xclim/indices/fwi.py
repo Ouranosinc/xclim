@@ -726,8 +726,8 @@ def _fire_weather_calc(
             # active_season = (delta == 0) & (season_mask[it] == 1)
 
             if dry_start:
-                # When we use special start values for dry cells
-                # Cells where the current precipitation is significant
+                # When we use special start values for dry cells,
+                # cells where the current precipitation is significant
                 wetpts = pr[..., it] > params["prec_thresh"]
 
                 if "SNOW" in dry_start and it >= params["snow_cover_days"]:
@@ -779,7 +779,7 @@ def _fire_weather_calc(
                     ow_DC[start_up] = np.nan
                     out["winter_pr"][start_up] = np.nan
                 elif dry_start:
-                    # Dry start-up for DC is overrided by overwintering.
+                    # Dry start-up for DC is overridden by overwintering.
                     ow_DC[shut_down] = params["dc_start"]
 
                     if "GFWED" in dry_start:
@@ -1001,15 +1001,15 @@ def fire_weather_ufunc(
     This "always on" mode replicates the R "fwi" code.
 
     If the "dry start" mechanism is set to "CFS" (but there is no overwintering), the arguments `dc0` and `dmc0` are
-    understood as the potential start-up values from last season. With :math:`DC_{start}` the conventional start-up value,
-    :math:`F_{dry-dc}` the `dc_dry_factor` and  :math:`N_{dry}` the number of days since the last significative precipitation event,
-    the start-up value :math:`DC_0` is computed as:
+    understood as the potential start-up values from last season. With :math:`DC_{start}` the conventional start-up
+    value, :math:`F_{dry-dc}` the `dc_dry_factor` and  :math:`N_{dry}` the number of days since the last significant
+    precipitation event, the start-up value :math:`DC_0` is computed as:
 
     .. math::
 
         DC_0 = DC_{start} +  F_{dry-dc} * N_{dry}
 
-    The last significative precipitation event is the last day where precipitation was greater or equal to "prec_thresh".
+    The last significant precipitation event is the last day when precipitation was greater or equal to "prec_thresh".
     The same happens for the DMC, with corresponding parameters. If overwintering is activated, this mechanism is only used for the DMC.
 
     Alternatively, `dry_start` can be set to "GFWED". In this mode, the start-up values are computed as:

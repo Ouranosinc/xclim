@@ -1527,7 +1527,7 @@ def _fdir_ratio(
     dates : xr.DataArray
         Series of dates and time of day
     csza_i : xr.DataArray
-        Cosine of the solar zenith angle during each interal
+        Cosine of the solar zenith angle during each interval
     csza_s : xr.DataArray
         Cosine of the solar zenith angle during the sunlit period of each interval
     rsds : xr.DataArray

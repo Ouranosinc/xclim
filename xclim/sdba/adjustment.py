@@ -63,7 +63,7 @@ class BaseAdjustment(ParametrizableWithDataset):
     Children classes should implement the `train` and / or the `adjust` method.
 
     This base class defined the basic input and output checks. It should only be used for a real adjustment
-    if neither `TrainAdjust` or `Adjust` fit the algorithm.
+    if neither `TrainAdjust` nor `Adjust` fit the algorithm.
     """
 
     _allow_diff_calendars = True
@@ -1046,7 +1046,7 @@ class NpdfTransform(Adjust):
     n_escore : int
       The number of elements to send to the escore function. The default, 0, means all elements are included.
       Pass -1 to skip computing the escore completely.
-      Small numbers result in less significative scores, but the execution time goes up quickly with large values.
+      Small numbers result in less significant scores, but the execution time goes up quickly with large values.
     n_iter : int
       The number of iterations to perform. Defaults to 20.
     pts_dim : str

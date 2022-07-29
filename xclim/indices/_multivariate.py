@@ -72,7 +72,7 @@ def cold_spell_duration_index(
 ) -> xarray.DataArray:
     r"""Cold spell duration index.
 
-    Number of days with at least `window` consecutive days where the daily minimum temperature is below the
+    Number of days with at least `window` consecutive days when the daily minimum temperature is below the
     `tasmin_per` percentiles.
 
     Parameters
@@ -96,7 +96,7 @@ def cold_spell_duration_index(
     Returns
     -------
     xarray.DataArray, [time]
-      Count of days with at least six consecutive days where the daily minimum temperature is below the 10th
+      Count of days with at least six consecutive days when the daily minimum temperature is below the 10th
       percentile.
 
     Notes
@@ -153,7 +153,7 @@ def cold_and_dry_days(
 ) -> xarray.DataArray:
     r"""Cold and dry days.
 
-    Returns the total number of days where "Cold" and "Dry" conditions coincide.
+    Returns the total number of days when "Cold" and "Dry" conditions coincide.
 
     Parameters
     ----------
@@ -177,7 +177,7 @@ def cold_and_dry_days(
     Returns
     -------
     xarray.DataArray,
-      The total number of days where cold and dry conditions coincide.
+      The total number of days when cold and dry conditions coincide.
 
     Notes
     -----
@@ -217,7 +217,7 @@ def warm_and_dry_days(
 ) -> xarray.DataArray:
     r"""Warm and dry days.
 
-    Returns the total number of days where "warm" and "Dry" conditions coincide.
+    Returns the total number of days when "warm" and "Dry" conditions coincide.
 
     Parameters
     ----------
@@ -241,7 +241,7 @@ def warm_and_dry_days(
     Returns
     -------
     xarray.DataArray,
-      The total number of days where warm and dry conditions coincide.
+      The total number of days when warm and dry conditions coincide.
 
     Notes
     -----
@@ -281,7 +281,7 @@ def warm_and_wet_days(
 ) -> xarray.DataArray:
     r"""Warm and wet days.
 
-    Returns the total number of days where "warm" and "wet" conditions coincide.
+    Returns the total number of days when "warm" and "wet" conditions coincide.
 
     Parameters
     ----------
@@ -305,7 +305,7 @@ def warm_and_wet_days(
     Returns
     -------
     xarray.DataArray,
-      The total number of days where warm and wet conditions coincide.
+      The total number of days when warm and wet conditions coincide.
 
     Notes
     -----
@@ -345,7 +345,7 @@ def cold_and_wet_days(
 ) -> xarray.DataArray:
     r"""Cold and wet days.
 
-    Returns the total number of days where "cold" and "wet" conditions coincide.
+    Returns the total number of days when "cold" and "wet" conditions coincide.
 
     Parameters
     ----------
@@ -368,7 +368,7 @@ def cold_and_wet_days(
     Returns
     -------
     xarray.DataArray,
-      The total number of days where cold and wet conditions coincide.
+      The total number of days when cold and wet conditions coincide.
 
     Notes
     -----
@@ -1043,7 +1043,7 @@ def high_precip_low_temp(
 ) -> xarray.DataArray:  # noqa: D401
     """Number of days with precipitation above threshold and temperature below threshold.
 
-    Number of days where precipitation is greater or equal to some threshold, and temperatures are colder than some
+    Number of days when precipitation is greater or equal to some threshold, and temperatures are colder than some
     threshold. This can be used for example to identify days with the potential for freezing rain or icing conditions.
 
     Parameters
@@ -1287,7 +1287,7 @@ def tg10p(
 
     Notes
     -----
-    The 10th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
+    The 10th percentile should be computed for a 5-day window centered on each calendar day for a reference period.
 
     Examples
     --------
@@ -1342,7 +1342,7 @@ def tn90p(
 
     Notes
     -----
-    The 90th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
+    The 90th percentile should be computed for a 5-day window centered on each calendar day for a reference period.
 
     Examples
     --------
@@ -1397,7 +1397,7 @@ def tn10p(
 
     Notes
     -----
-    The 10th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
+    The 10th percentile should be computed for a 5-day window centered on each calendar day for a reference period.
 
     Examples
     --------
@@ -1507,7 +1507,7 @@ def tx10p(
 
     Notes
     -----
-    The 10th percentile should be computed for a 5 day window centered on each calendar day for a reference period.
+    The 10th percentile should be computed for a 5-day window centered on each calendar day for a reference period.
 
     Examples
     --------
@@ -1702,7 +1702,7 @@ def blowing_snow(
 ) -> xarray.DataArray:
     """Days with blowing snow events.
 
-    Number of days where both snowfall over the last days and daily wind speeds are above respective thresholds.
+    Number of days when both snowfall over the last days and daily wind speeds are above respective thresholds.
 
     Parameters
     ----------
@@ -1722,7 +1722,7 @@ def blowing_snow(
     Returns
     -------
     xarray.DataArray
-      Number of days where snowfall and wind speeds are above respective thresholds.
+      Number of days when snowfall and wind speeds are above respective thresholds.
     """
     snd_thresh = convert_units_to(snd_thresh, snd)
     sfcWind_thresh = convert_units_to(sfcWind_thresh, sfcWind)  # noqa

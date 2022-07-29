@@ -213,7 +213,7 @@ class Grouper(Parametrizable):
         If `Grouper.dim` is 'time', but 'prop' is None, the whole array is grouped together.
 
         When multiple arrays are passed, some of them can be grouped along the same group as self.
-        They are boadcasted, merged to the grouping dataset and regrouped in the output.
+        They are broadcasted, merged to the grouping dataset and regrouped in the output.
         """
         if das:
             from .utils import broadcast  # pylint: disable=cyclic-import
@@ -263,7 +263,7 @@ class Grouper(Parametrizable):
         ----------
         da : Union[xr.DataArray, xr.Dataset]
           The input array/dataset for which the group index is returned.
-          It must have Grouper.dim as a coordinate.
+          It must have `Grouper.dim` as a coordinate.
         interp : bool, optional
           If True, the returned index can be used for interpolation. Only value for month
           grouping, where integer values represent the middle of the month, all other
@@ -350,9 +350,10 @@ class Grouper(Parametrizable):
 
         Notes
         -----
-        For the special case where a Dataset is returned, but only some of its variable where reduced by the grouping, xarray's `GroupBy.map` will
-        broadcast everything back to the ungrouped dimensions. To overcome this issue, function may add a "_group_apply_reshape" attribute set to
-        True on the variables that should be reduced and these will be re-grouped by calling `da.groupby(self.name).first()`.
+        For the special case where a Dataset is returned, but only some of its variable where reduced by the grouping,
+        xarray's `GroupBy.map` will broadcast everything back to the ungrouped dimensions. To overcome this issue,
+        function may add a "_group_apply_reshape" attribute set to `True` on the variables that should be reduced and
+        these will be re-grouped by calling `da.groupby(self.name).first()`.
         """
         if isinstance(da, (dict, xr.Dataset)):
             grpd = self.group(main_only=main_only, **da)
@@ -428,7 +429,7 @@ def parse_group(func: Callable, kwargs=None, allow_only=None) -> Callable:
     This function can be used as a decorator, in which case the parsing and updating of the kwargs is done at call time.
     It can also be called with a function from which extract the default group and kwargs to update, in which case it returns the updated kwargs.
 
-    If allow_only is given, an exception is raised when the parsed group is not within that list.
+    If `allow_only` is given, an exception is raised when the parsed group is not within that list.
     """
     sig = signature(func)
     if "group" in sig.parameters:
@@ -698,7 +699,7 @@ def map_groups(reduces: Sequence[str] = None, main_only: bool = False, **out_var
     value of `reduces` is changed.
 
     The decorated function must have the signature: ``func(ds, dim, **kwargs)``.
-    Where ds is a DataAray or Dataset, dim is the group.dim (and add_dims). The `group` argument
+    Where ds is a DataAray or Dataset, dim is the `group.dim` (and add_dims). The `group` argument
     is stripped from the kwargs, but must evidently be provided in the call.
 
     Parameters
