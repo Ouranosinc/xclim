@@ -368,8 +368,8 @@ def saturation_vapor_pressure(
         thresh = convert_units_to(ice_thresh, "degK")
     else:
         thresh = convert_units_to("0 K", "degK")
-    ref_is_water = tas > thresh
     tas = convert_units_to(tas, "K")
+    ref_is_water = tas > thresh
     if method in ["sonntag90", "SO90"]:
         e_sat = xr.where(
             ref_is_water,
