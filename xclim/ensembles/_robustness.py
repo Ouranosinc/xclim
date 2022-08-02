@@ -6,18 +6,14 @@ Ensemble Robustness metrics.
 Robustness metrics are used to estimate the confidence of the climate change signal
 of an ensemble. This submodule is inspired by and tries to follow the guidelines of
 the IPCC, more specifically the 12th chapter of the Working Group 1's contribution to
-the AR5 [AR5WG1C12]_ (see box 12.1).
-
-References
-----------
-.. [AR5WG1C12] https://www.ipcc.ch/site/assets/uploads/2018/02/WG1AR5_Chapter12_FINAL.pdf
+the AR5 :footcite:t:`collins_long-term_2013` (see box 12.1).
 """
 from __future__ import annotations
 
 from typing import Union
 
 import numpy as np
-import scipy.stats as spstats
+import scipy.stats as spstats  # noqa
 import xarray as xr
 
 from xclim.core.formatting import update_history
@@ -260,7 +256,7 @@ def robustness_coefficient(
 
     Returns
     -------
-    R
+    xr.DataArray or xr.Dataset
       The robustness coeffcient, ]-inf, 1], float. Same type as `fut` or `ref`.
 
     References

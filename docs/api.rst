@@ -4,14 +4,12 @@ API
 
 The API of the statistical downscaling and bias adjustment module (sdba) is documented :ref:`on this page <sdba:SDBA User API>`. The API of the ``cfchecks``, ``datachecks``, ``missing`` and ``dataflags`` modules are in :ref:`checks:Health Checks`. Finally, the API of the translating tools is on the :ref:`internationalization:Internationalization` page.
 
-
 Indicators
 ==========
 
 .. toctree::
 
   indicators_api
-
 
 Indices
 =======
@@ -122,3 +120,8 @@ Subset module
 .. note::
     For more information about `clisops` refer to their documentation here:
     :doc:`CLISOPS documentation <clisops:readme>`
+
+API References
+==============
+
+.. footbibliography::

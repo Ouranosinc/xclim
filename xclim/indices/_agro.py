@@ -337,7 +337,7 @@ def biologically_effective_degree_days(
     Notes
     -----
     The tasmax ceiling of 19°C is assumed to be the max temperature beyond which no further gains from daily temperature
-    occur. Indice originally published in [Gladstones1992]_.
+    occur. Indice originally published in :cite:t:`gladstones_viticulture_1992`.
 
     Let :math:`TX_{i}` and :math:`TN_{i}` be the daily maximum and minimum temperature at day :math:`i`, :math:`lat`
     the latitude of the point of interest, :math:`degdays_{max}` the maximum amount of degrees that can be summed per
@@ -358,15 +358,17 @@ def biologically_effective_degree_days(
         k = f(lat) = 1 + \left(\frac{\left| lat  \right|}{50} * 0.06,  \text{if }40 < |lat| <50, \text{else } 0\right)
 
     A second version of the BEDD (`method="icclim"`) does not consider :math:`TR_{adj}` and :math:`k` and employs a
-    different end date (30 September) ([ECAD]_). The simplified formula is as follows:
+    different end date (30 September) (:cite:p:`project_team_eca&d_algorithm_2013`).
+    The simplified formula is as follows:
 
     .. math::
         BEDD_i = \sum_{i=\text{April 1}}^{\text{September 30}} min\left( max\left(\frac{TX_i  + TN_i)}{2} - 10, 0\right), degdays_{max}\right)
 
     References
     ----------
-    .. [Gladstones1992] Gladstones, J.S. (1992). Viticulture and environment: a study of the effects of environment on grapegrowing and wine qualities, with emphasis on present and future areas for growing winegrapes in Australia. Adelaide:  Winetitles.
-    .. [ECAD] Project team ECA&D, KNMI (2013). EUMETNET/ECSN optional programme: European Climate Assessment & Dataset (ECA&D) - Algorithm Theoretical Basis Document (ATBD). (KNMI Project number: EPJ029135, v10.7). https://www.ecad.eu/documents/atbd.pdf
+    :cite:cts:`gladstones_viticulture_1992`
+
+    :cite:cts:`project_team_eca&d_algorithm_2013`
     """
     tasmin = convert_units_to(tasmin, "degC")
     tasmax = convert_units_to(tasmax, "degC")
@@ -427,7 +429,7 @@ def cool_night_index(
     """Cool Night Index.
 
     Mean minimum temperature for September (northern hemisphere) or March (Southern hemishere).
-    Used in calculating the Géoviticulture Multicriteria Classification System ([Tonietto&Carbonneau2004]_).
+    Used in calculating the Géoviticulture Multicriteria Classification System (:cite:p:`tonietto_multicriteria_200`).
 
     Parameters
     ----------
@@ -460,7 +462,7 @@ def cool_night_index(
 
     References
     ----------
-    .. [Tonietto&Carbonneau2004] Tonietto, J., & Carbonneau, A. (2004). A multicriteria climatic classification system for grape-growing regions worldwide. Agricultural and Forest Meteorology, 124(1–2), 81‑97. https://doi.org/10.1016/j.agrformet.2003.06.001
+    :cite:cts:`tonietto_multicriteria_2004`
     """
     tasmin = convert_units_to(tasmin, "degC")
 
@@ -622,8 +624,8 @@ def standardized_precipitation_index(
     freq : str
       Resampling frequency. A monthly or daily frequency is expected.
     window : int
-      Averaging window length relative to the resampling frequency. For example, if `freq="MS"`, i.e. a monthly resampling, the window
-      is an integer number of months.
+      Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
+      i.e. a monthly resampling, the window is an integer number of months.
     dist : {'gamma'}
       Name of the univariate distribution, only `gamma` is currently implemented
       (see :py:mod:`scipy.stats`).
@@ -638,7 +640,8 @@ def standardized_precipitation_index(
 
     Notes
     -----
-    The length `N` of the N-month SPI is determined by choosing the `window = N`. Supported statistical distributions are: ["gamma"]
+    The length `N` of the N-month SPI is determined by choosing the `window = N`.
+    Supported statistical distributions are: ["gamma"]
 
     Example
     -------
@@ -659,7 +662,7 @@ def standardized_precipitation_index(
 
     References
     ----------
-    McKee, Thomas B., Nolan J. Doesken, and John Kleist. "The relationship of drought frequency and duration to time scales." In Proceedings of the 8th Conference on Applied Climatology, vol. 17, no. 22, pp. 179-183. 1993.
+    :cite:cts:`mckee_relationship_1993`
     """
     # "WPM" method doesn't seem to work for gamma or pearson3
     dist_and_methods = {"gamma": ["ML", "APP"]}
