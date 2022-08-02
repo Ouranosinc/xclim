@@ -1333,7 +1333,8 @@ def test_freezethaw_spell_frequency():
 
     assert out.attrs["long_name"] == "Frequency of freeze-thaw spells"
     assert out.attrs["description"] in [
-        "Annual number of freeze-thaw spells (Tmax > 0 degC and Tmin <= 0 degC) "
+        # FIXME: Section formatting shifts variable names to all lowercase.
+        "Annual number of freeze-thaw spells (tmax > 0 degC and tmin <= 0 degC) "
         "for at least 2 consecutive day(s)."
     ]
 

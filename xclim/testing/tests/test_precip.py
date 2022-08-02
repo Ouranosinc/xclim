@@ -577,11 +577,11 @@ def test_dry_spell(atmosds):
         "during which the total precipitation on a window of 7 day(s) is below 3 mm."
     ) in events.description
     assert (
-        "The annual number of days in dry period(s) of 7 days or more"
+        "The annual number of days in dry periods of 7 day(s) or more"
         in total_d_sum.description
     )
     assert (
-        "The annual number of days in dry period(s) of 7 days or more"
+        "The annual number of days in dry periods of 7 day(s) or more"
         in total_d_max.description
     )
 

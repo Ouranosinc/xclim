@@ -416,6 +416,7 @@ cool_night_index = Temp(
     identifier="cool_night_index",
     units="degC",
     long_name="Cool night index",
+    # FIXME: Section formatting will shift these month names to all lowercase.
     description="Mean minimum temperature for September (northern hemisphere) or March (southern hemisphere).",
     cell_methods="time: mean over days",
     abstract="A night coolness variable which takes into account the mean minimum night temperatures during the "
@@ -428,6 +429,7 @@ daily_freezethaw_cycles = TempWithIndexing(
     identifier="dlyfrzthw",
     units="days",
     long_name="Freeze-thaw cycles",
+    # FIXME: Section formatting will shift variable names to all lowercase.
     description="{freq} number of days with a diurnal freeze-thaw cycle (Tmax > {thresh_tasmax} and "
     "Tmin <= {thresh_tasmin}).",
     cell_methods="",
@@ -446,6 +448,7 @@ freezethaw_spell_frequency = Temp(
     title="Frequency of freeze-thaw spells",
     units="days",
     long_name="Frequency of freeze-thaw spells",
+    # FIXME: Section formatting will shift variable names to all lowercase.
     description="{freq} number of freeze-thaw spells (Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin}) "
     "for at least {window} consecutive day(s).",
     cell_methods="",
@@ -463,6 +466,7 @@ freezethaw_spell_mean_length = Temp(
     title="Average length of freeze-thaw spells",
     units="days",
     long_name="Average length of freeze-thaw spells",
+    # FIXME: Section formatting will shift variable names to all lowercase.
     description="{freq} average length of freeze-thaw spells (Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin}) "
     "for at least {window} consecutive day(s).",
     cell_methods="",
@@ -480,6 +484,7 @@ freezethaw_spell_max_length = Temp(
     title="Maximal length of freeze-thaw spells",
     units="days",
     long_name="Maximal length of freeze-thaw spells",
+    # FIXME: Section formatting will shift variable names to all lowercase.
     description="{freq} maximal length of freeze-thaw spells (Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin}) "
     "for at least {window} consecutive day(s).",
     cell_methods="",
