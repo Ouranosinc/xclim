@@ -1331,7 +1331,11 @@ def test_freezethaw_spell_frequency():
     )
     np.testing.assert_array_equal(out.isel(location=-1), [1, 0, 1, 1])
 
-    assert out.attrs["long_name"] == "Annual number of freeze-thaw spells."
+    assert out.attrs["long_name"] == "Frequency of freeze-thaw spells"
+    assert out.attrs["description"] in [
+        "Annual number of freeze-thaw spells (Tmax > 0 degC and Tmin <= 0 degC) "
+        "for at least 2 consecutive day(s)."
+    ]
 
 
 def test_freezethaw_spell_mean_length():
@@ -1351,7 +1355,11 @@ def test_freezethaw_spell_mean_length():
     )
     np.testing.assert_array_equal(out.isel(location=-1), [2, 0, 2, 2])
 
-    assert out.attrs["long_name"] == "Annual average length of freeze-thaw spells."
+    assert out.attrs["long_name"] == "Average length of freeze-thaw spells"
+    assert out.attrs["description"] in [
+        "Annual average length of freeze-thaw spells (Tmax > 0 degC and Tmin <= 0 degC) "
+        "for at least 2 consecutive day(s)."
+    ]
 
 
 def test_freezethaw_spell_max_length():
@@ -1371,4 +1379,8 @@ def test_freezethaw_spell_max_length():
     )
     np.testing.assert_array_equal(out.isel(location=-1), [2, 0, 2, 2])
 
-    assert out.attrs["long_name"] == "Annual maximal length of freeze-thaw spells."
+    assert out.attrs["long_name"] == "Maximal length of freeze-thaw spells"
+    assert out.attrs["description"] in [
+        "Annual maximal length of freeze-thaw spells (Tmax > 0 degC and Tmin <= 0 degC) "
+        "for at least 2 consecutive day(s)."
+    ]

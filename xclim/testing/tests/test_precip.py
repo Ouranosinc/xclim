@@ -573,15 +573,15 @@ def test_dry_spell(atmosds):
     np.testing.assert_allclose(total_d_max, [76, 97], rtol=1e-1)
 
     assert (
-        "The annual number of dry periods of 7 days and more, during which the total "
-        "precipitation on a window of 7 days is under 3 mm."
+        "The annual number of dry periods of 7 day(s) or more, "
+        "during which the total precipitation on a window of 7 day(s) is below 3 mm."
     ) in events.description
     assert (
-        "The annual number of days in dry periods of 7 days and more"
+        "The annual number of days in dry period(s) of 7 days or more"
         in total_d_sum.description
     )
     assert (
-        "The annual number of days in dry periods of 7 days and more"
+        "The annual number of days in dry period(s) of 7 days or more"
         in total_d_max.description
     )
 
@@ -617,10 +617,10 @@ def test_dry_spell_frequency_op():
     np.testing.assert_allclose(test_sum[0, 2], [1], rtol=1e-1)
     np.testing.assert_allclose(test_max[0, 2], [2], rtol=1e-1)
     assert (
-        "The monthly number of dry periods of 7 days and more, during which the total precipitation "
-        "on a window of 7 days is under 3 mm."
+        "The monthly number of dry periods of 7 day(s) or more, "
+        "during which the total precipitation on a window of 7 day(s) is below 3 mm."
     ) in test_sum.description
     assert (
-        "The monthly number of dry periods of 7 days and more, during which the maximal precipitation "
-        "on a window of 7 days is under 3 mm."
+        "The monthly number of dry periods of 7 day(s) or more, "
+        "during which the maximal precipitation on a window of 7 day(s) is below 3 mm."
     ) in test_max.description

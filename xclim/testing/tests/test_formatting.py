@@ -32,10 +32,7 @@ def test_indicator_docstring():
     )
     assert doc[6] == "Keywords : health,."
     assert doc[12] == "  Default : `ds.tasmin`. [Required units : [temperature]]"
-    assert doc[35] == (
-        "  Number of heat wave events (Tmin > {thresh_tasmin} and Tmax > "
-        "{thresh_tasmax} for >= {window} days) (heat_wave_events)"
-    )
+    assert doc[35] == "  Number of heat wave events (heat_wave_events)"
 
     doc = degree_days_exceedance_date.__doc__.split("\n")
     assert doc[20] == "  Default : >. "

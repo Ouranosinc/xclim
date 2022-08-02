@@ -445,7 +445,7 @@ freezethaw_spell_frequency = Temp(
     identifier="freezethaw_spell_frequency",
     title="Frequency of freeze-thaw spells",
     units="days",
-    long_name="Number of freeze-thaw spells.",
+    long_name="Frequency of freeze-thaw spells",
     description="{freq} number of freeze-thaw spells (Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin}) "
     "for at least {window} consecutive day(s).",
     cell_methods="",
@@ -460,9 +460,9 @@ freezethaw_spell_frequency = Temp(
 
 freezethaw_spell_mean_length = Temp(
     identifier="freezethaw_spell_mean_length",
-    title="Average length of freeze-thaw spells.",
+    title="Average length of freeze-thaw spells",
     units="days",
-    long_name="Average length of freeze-thaw spells.",
+    long_name="Average length of freeze-thaw spells",
     description="{freq} average length of freeze-thaw spells (Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin}) "
     "for at least {window} consecutive day(s).",
     cell_methods="",
@@ -477,9 +477,9 @@ freezethaw_spell_mean_length = Temp(
 
 freezethaw_spell_max_length = Temp(
     identifier="freezethaw_spell_max_length",
-    title="Maximal length of freeze-thaw spells.",
+    title="Maximal length of freeze-thaw spells",
     units="days",
-    long_name="Maximal length of freeze-thaw spells.",
+    long_name="Maximal length of freeze-thaw spells",
     description="{freq} maximal length of freeze-thaw spells (Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin}) "
     "for at least {window} consecutive day(s).",
     cell_methods="",
