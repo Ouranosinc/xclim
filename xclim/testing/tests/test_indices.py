@@ -251,8 +251,10 @@ class TestAgroclimaticIndices:
             attrs=dict(units="K"),
         )
 
-        lat = xr.DataArray(45, name="lat", attrs={"units": "degrees_north"})
-        high_lat = lat.copy(data=48)
+        lat = xr.DataArray(
+            [35, 45], dims=("lat",), name="lat", attrs={"units": "degrees_north"}
+        )
+        high_lat = xr.DataArray(48, name="lat", attrs={"units": "degrees_north"})
 
         bedd = xci.biologically_effective_degree_days(
             tasmin=tn,
@@ -270,6 +272,9 @@ class TestAgroclimaticIndices:
             end_date=end_date,  # noqa
             freq="YS",
         )
+        if method != "icclim":
+            bedd = bedd.isel(lat=1)
+            bedd_hot = bedd_hot.isel(lat=1)
         bedd_high_lat = xci.biologically_effective_degree_days(
             tasmin=tn,
             tasmax=tx,
@@ -2105,8 +2110,10 @@ def test_specific_humidity_from_dewpoint(tas_series, ps_series):
 @pytest.mark.parametrize(
     "ice_thresh,exp0", [(None, [125, 286, 568]), ("0 degC", [103, 260, 563])]
 )
-def test_saturation_vapor_pressure(tas_series, method, ice_thresh, exp0):
+@pytest.mark.parametrize("units", ["degC", "degK"])
+def test_saturation_vapor_pressure(tas_series, method, ice_thresh, exp0, units):
     tas = tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C)
+    tas = convert_units_to(tas, units)
     # Expected values obtained with the Sonntag90 method
     e_sat_exp = exp0 + [1228, 2339, 3169, 4247, 7385, 19947]
 
