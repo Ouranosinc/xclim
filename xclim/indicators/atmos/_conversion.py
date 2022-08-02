@@ -326,8 +326,8 @@ corn_heat_units = Converter(
     long_name="Corn heat units",
     title=" Corn heat units",
     description="Temperature-based index used to estimate the development of corn crops. "
-    "Corn growth occurs when the minimum and maximum daily temperature both exceed "
-    " {thresh_tasmin} and {thresh_tasmax}, respectively.",
+    "Corn growth occurs when the minimum and maximum daily temperatures both exceed "
+    "{thresh_tasmin} and {thresh_tasmax}, respectively.",
     abstract="A temperature-based index used to estimate the development of corn crops. "
     "Corn growth occurs when the daily minimum and maximum temperatures exceed given thresholds.",
     var_name="chu",

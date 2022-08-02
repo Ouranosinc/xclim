@@ -1310,7 +1310,8 @@ def test_corn_heat_units():
     )
 
     assert (
-        "specific thresholds : tmin > 4.44 degc and tmax > 10 degc." in chu.description
+        "minimum and maximum daily temperatures both exceed 4.44 degc and 10 degc, respectively."
+        in chu.description
     )
 
 
