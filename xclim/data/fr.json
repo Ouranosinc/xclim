@@ -317,7 +317,7 @@
     "long_name": "température journalière moyenne",
     "description": "température journalière moyenne estimée par la médiane des températures maximales et minimales.",
     "title": "Moyenne des températures maximales et minimales",
-    "abstract": "La température journalière moyenne en assumant une distribution symétrique des températures.  Tg = (Tx + Tn) / 2"
+    "abstract": "La température journalière moyenne en assumant une distribution symétrique des températures (Tg = (Tx + Tn) / 2)."
   },
   "TG_MIN": {
     "long_name": "Minimum de la température journalière moyenne",
@@ -705,11 +705,11 @@
     "abstract": "Calcul de la magnitude et la direction de la vitesse du vent à partir des deux composantes ouest-est et sud-nord."
   },
   "WIND_SPEED_FROM_VECTOR.sfcWind": {
-    "long_name": "Vitesse du vent de surface",
+    "long_name": "Vitesse du vent près de la surface",
     "description": "Magnitude de la vitesse du vent calculée à partir des deux composantes uas et vas."
   },
   "WIND_SPEED_FROM_VECTOR.sfcWindfromdir": {
-    "long_name": "Direction de provenance du vent de surface",
+    "long_name": "Vent près de la surface en provenance d'une direction",
     "description": "Direction de provenance du vent calculée à partir des deux composantes uas et vas. Les vents du nord ont une direction de 360° et les vents de moins de {calm_wind_thresh} ont une direction de 0°."
   },
   "WIND_VECTOR_FROM_SPEED": {
@@ -717,11 +717,11 @@
     "abstract": "Calcul des deux composantes ouest-est et nord-sud du vent à partir de la magnitude et la direction de provenance de sa vitesse."
   },
   "WIND_VECTOR_FROM_SPEED.uas": {
-    "long_name": "Vent d'ouest de surface",
+    "long_name": "Vent d'ouest près de la surface",
     "description": "Vitesse d'ouest du vent de surface calculé à partir de la norme de sa vitesse et de sa direction de provenance."
   },
   "WIND_VECTOR_FROM_SPEED.vas": {
-    "long_name": "Vent du sud de surface",
+    "long_name": "Vent du sud près de la surface",
     "description": "Vitesse du sud du vent de surface calculé à partir de la norme de sa vitesse et de sa direction de provenance."
   },
   "E_SAT": {
@@ -733,19 +733,19 @@
   "HURS_FROMDEWPOINT": {
     "long_name": "Humidité relative",
     "description": "Calculée à partir de la température et du point de rosée à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}.",
-    "title": "Humidité relative à partir du point de rosée",
-    "abstract": "Calcul de l'humidité relative à partir de la température et du point de rosée à l'aire de la pression de vapeur saturante."
+    "title": "Humidité relative à partir de la température et du point de rosée",
+    "abstract": "Calcul de l'humidité relative à partir de la température et du point de rosée à l'aide de la pression de vapeur saturante."
   },
   "HURS": {
     "long_name": "Humidité relative",
     "description": "Calculée à partir de la température, de l'humidité spécifique et de la pression à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}.",
-    "title": "Humidité relative à partir de l'humidité spécifique et de la pression",
+    "title": "Humidité relative à partir de la température, l'humidité spécifique et de la pression",
     "abstract": "Calcul de l'humidité relative à partir de la température, de l'humidité spécifique et de la pression à l'aide de la pression de vapeur saturante."
   },
   "HUSS": {
     "long_name": "Humidité spécifique",
     "description": "Calculée à partir de la température, de l'humidité relative et de la pression à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}.",
-    "title": "Humidité spécifique à partir de l'humidité relative et de la pression",
+    "title": "Humidité spécifique à partir de la température, l'humidité relative et de la pression",
     "abstract": "Calcul de l'humidité spécifique à partir de la température, de l'humidité relative et de la pression à l'aide de la pression de vapeur saturante."
   },
   "HUSS_FROMDEWPOINT": {
@@ -925,8 +925,8 @@
   "CORN_HEAT_UNITS": {
     "title": "Unités thermiques maïs",
     "abstract": "Indice basé sur la température utilisé pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température journalière minimale et maximale excèdent des seuils donnés.",
-    "description": "Indice basé sur la température utilisé pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température journalière minimale et maximale excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement.)",
-    "long_name": "Unités thermiques maïs (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax})."
+    "description": "Indice basé sur la température utilisé pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température journalière minimale et maximale excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement.",
+    "long_name": "Unités thermiques maïs"
   },
   "FREEZETHAW_SPELL_FREQUENCY": {
     "title": "Fréquence des événements de gel-dégel quotidien",
@@ -948,9 +948,9 @@
   },
   "WIND_CHILL": {
     "title": "Facteur éolien",
-    "abstract": "Le facteur éolien est un indice qui équivaut à la sensation du froid par un individu moyen. Il est calculé à partir de la température et de la vitesse du vent à 10 m. Tel que définit par Environnement et Changement Climatique Canada, une seconde formule est utilisé pour les vents faibles. La formule standard est sinon la même qu'utilisée aux États-Unis.",
-    "description": "Refroiddissement éolien, équivalent à la sensation du froid due au vent par in individu moyen.",
-    "long_name": "Facteur éolien"
+    "abstract": "Le facteur éolien est un indice qui équivaut à la sensation du froid par un individu moyen. Il est calculé à partir de la température et de la vitesse du vent à 10 m. Tel que définit par Environnement et Changement Climatique Canada, une seconde formule est utilisée pour les vents faibles. La formule standard est sinon la même qu'utilisée aux États-Unis.",
+    "description": "L'indice de refroiddissement éolien, équivalent à la température ressentie due au vent froid par un individu moyen.",
+    "long_name": "Indice de facteur éolien"
   },
   "HUMIDEX": {
     "title": "Indice humidex",
