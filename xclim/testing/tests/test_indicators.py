@@ -503,7 +503,7 @@ def test_formatting(pr_series):
     ]
     out = atmos.wetdays(pr_series(np.arange(366)), thresh=1.5 * units.mm / units.day)
     assert out.attrs["long_name"] == "Number of wet days"
-    assert out.attrs["long_name"] in [
+    assert out.attrs["description"] in [
         "Annual number of days with daily precipitation at or above 1.5 mm/d."
     ]
 
