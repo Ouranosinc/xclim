@@ -59,6 +59,7 @@ __all__ = [
     "time_bnds",
     "within_bnds_doy",
     "uniform_calendars",
+    "build_climatology_bounds",
 ]
 
 # Maximum day of year in each calendar.
@@ -530,6 +531,14 @@ def percentile_doy(
 
 
 def build_climatology_bounds(da: xr.DataArray) -> list[str]:
+    """Build the climatology_bounds property with the start and end dates of input data.
+
+    Parameters
+    ----------
+    da: xr.DataArray
+      The input data.
+      Must have a time dimension.
+    """
     n = len(da.time)
     return da.time[0 :: n - 1].dt.strftime("%Y-%m-%d").values.tolist()
 
