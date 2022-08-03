@@ -128,9 +128,9 @@ intersphinx_mapping = {
     "numpy": ("https://numpy.org/doc/stable/", None),
 }
 extlinks = {
-    "issue": ("https://github.com/Ouranosinc/xclim/issues/%s", "GH/"),
-    "pull": ("https://github.com/Ouranosinc/xclim/pull/%s", "PR/"),
-    "user": ("https://github.com/", "@"),
+    "issue": ("https://github.com/Ouranosinc/xclim/issues/%s", "GH/%s"),
+    "pull": ("https://github.com/Ouranosinc/xclim/pull/%s", "PR/%s"),
+    "user": ("https://github.com/%s", "@%s"),
 }
 
 nbsphinx_execute = "auto"
