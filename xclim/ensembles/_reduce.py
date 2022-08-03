@@ -20,7 +20,7 @@ from sklearn.cluster import KMeans
 
 # Avoid having to include matplotlib in xclim requirements
 try:
-    from matplotlib import pyplot as plt
+    from matplotlib import pyplot as plt  # noqa
 
     if not os.getenv("READTHEDOCS"):
         warn("Matplotlib installed. Setting make_graph to True.")

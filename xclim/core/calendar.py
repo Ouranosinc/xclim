@@ -171,15 +171,15 @@ def convert_calendar(
 
     Parameters
     ----------
-    source : xr.DataArray
+    source : xr.DataArray or xr.Dataset
       Input array/dataset with a time coordinate of a valid dtype (datetime64 or a cftime.datetime).
-    target : Union[xr.DataArray, str]
+    target : xr.DataArray or str
       Either a calendar name or the 1D time coordinate to convert to.
       If an array is provided, the output will be reindexed using it and in that case, days in `target`
       that are missing in the converted `source` are filled by `missing` (which defaults to NaN).
     align_on : {None, 'date', 'year', 'random'}
       Must be specified when either source or target is a `360_day` calendar, ignored otherwise. See Notes.
-    missing : Optional[any]
+    missing : Any, optional
       A value to use for filling in dates in the target that were missing in the source.
       If `target` is a string, default (None) is not to fill values. If it is an array, default is to fill with NaN.
     dim : str
@@ -187,7 +187,7 @@ def convert_calendar(
 
     Returns
     -------
-    Union[xr.DataArray, xr.Dataset]
+    xr.DataArray or xr.Dataset
       Copy of source with the time coordinate converted to the target calendar.
       If `target` is given as an array, the output is reindexed to it, with fill value `missing`.
       If `target` was a string and `missing` was None (default), invalid dates in the new calendar are dropped, but missing dates are not inserted.
@@ -202,7 +202,7 @@ def convert_calendar(
       The dates are translated according to their rank in the year (dayofyear), ignoring their original month and day information,
       meaning that the missing/surplus days are added/removed at regular intervals.
 
-      From a `360_day` to a standard calendar, the output will be missing the following dates (day of year in parenthesis):
+      From a `360_day` to a standard calendar, the output will be missing the following dates (day of year in parentheses):
         To a leap year:
           January 31st (31), March 31st (91), June 1st (153), July 31st (213), September 31st (275) and November 30th (335).
         To a non-leap year:
@@ -230,13 +230,13 @@ def convert_calendar(
       the source and target years, here 5 days are chosen randomly, one for each fifth
       of the year. However, February 29th is always missing when converting to a leap year,
       or its value is dropped when converting from a leap year. This is similar to method
-      used in the [LOCA]_ dataset.
+      used in the :cite:t:`pierce_statistical_2014` dataset.
 
       This option best used on daily data.
 
     References
     ----------
-    .. [LOCA] Pierce, D. W., D. R. Cayan, and B. L. Thrasher, 2014: Statistical downscaling using Localized Constructed Analogs (LOCA). Journal of Hydrometeorology, volume 15, page 2558-2585
+    :cite:cts:`pierce_statistical_2014`
 
     Examples
     --------
@@ -365,7 +365,7 @@ def interp_calendar(
 
     Parameters
     ----------
-    source: Union[xr.DataArray, xr.Dataset]
+    source: xr.DataArray or xr.Dataset
       The source data to interpolate, must have a time coordinate of a valid dtype (np.datetime64 or cftime objects)
     target: xr.DataArray
       The target time coordinate of a valid dtype (np.datetime64 or cftime objects)
@@ -374,7 +374,7 @@ def interp_calendar(
 
     Return
     ------
-    Union[xr.DataArray, xr.Dataset]
+    xr.DataArray or xr.Dataset
       The source interpolated on the decimal years of target,
     """
     cal_src = get_calendar(source, dim=dim)
@@ -447,7 +447,9 @@ def percentile_doy(
     """Percentile value for each day of the year.
 
     Return the climatological percentile over a moving window around each day of the year.
-    Different quantile estimators can be used by specifying `alpha` and `beta` according to specifications given by [HyndmanFan]_. The default definition corresponds to method 8, which meets multiple desirable statistical properties for sample quantiles. Note that `numpy.percentile` corresponds to method 7, with alpha and beta set to 1.
+    Different quantile estimators can be used by specifying `alpha` and `beta` according to specifications given by :cite:t:`hyndman_sample_1996`.
+    The default definition corresponds to method 8, which meets multiple desirable statistical properties for sample quantiles.
+    Note that `numpy.percentile` corresponds to method 7, with alpha and beta set to 1.
 
     Parameters
     ----------
@@ -462,8 +464,8 @@ def percentile_doy(
     beta: float
         Plotting position parameter.
     copy: bool
-        If True (default) the input array will be deep copied. It's a necessary step
-        to keep the data integrity but it can be costly.
+        If True (default) the input array will be deep-copied. It's a necessary step
+        to keep the data integrity, but it can be costly.
         If False, no copy is made of the input array. It will be mutated and rendered
         unusable but performances may significantly improve.
         Put this flag to False only if you understand the consequences.
@@ -476,7 +478,7 @@ def percentile_doy(
 
     References
     ----------
-    .. [HyndmanFan] Hyndman, R. J., & Fan, Y. (1996). Sample quantiles in statistical packages. The American Statistician, 50(4), 361-365.
+    :cite:cts:`hyndman_sample_1996`
     """
     from .utils import calc_perc
 
@@ -548,7 +550,7 @@ def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
 
     Offset are compared based on their length approximated for a period starting
     after 1970-01-01 00:00:00. If the offsets are from the same category (same first letter),
-    only the multiplicator prefix is compared (QS-DEC == QS-JAN, MS < 2MS).
+    only the multiplier prefix is compared (QS-DEC == QS-JAN, MS < 2MS).
     "Business" offsets are not implemented.
 
     Parameters
@@ -567,7 +569,7 @@ def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
     """
     from xclim.indices.generic import get_op
 
-    # Get multiplicator and base frequency
+    # Get multiplier and base frequency
     t_a, b_a, _, _ = parse_offset(freqA)
     t_b, b_b, _, _ = parse_offset(freqB)
 
@@ -577,7 +579,7 @@ def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
         t_a = (t[1] - t[0]).total_seconds()
         t = pd.date_range("1970-01-01T00:00:00.000", periods=2, freq=freqB)
         t_b = (t[1] - t[0]).total_seconds()
-    # else Same base freq, compare multiplicator only.
+    # else Same base freq, compare multiplier only.
 
     return get_op(op)(t_a, t_b)
 
@@ -594,7 +596,7 @@ def parse_offset(freq: str) -> Sequence[str]:
 
     Returns
     -------
-    multiplicator (int), offset base (str), is start anchored (bool), anchor (str or None)
+    multiplier (int), offset base (str), is start anchored (bool), anchor (str or None)
       "[n]W" is always replaced with "[7n]D", as xarray doesn't support "W" for cftime indexes.
       "Y" is always replaced with "A".
     """
@@ -615,7 +617,7 @@ def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | N
     Parameters
     ----------
     mult: int
-      The period multiplicator (>= 1).
+      The period multiplier (>= 1).
     base : str
       The base period string (one char).
     start_anchored: bool
@@ -648,9 +650,9 @@ def _interpolate_doy_calendar(
     source : xr.DataArray
       Array with `dayofyear` coordinates.
     doy_max : int
-      Largest day of the year allowed by calendar.
+      The largest day of the year allowed by calendar.
     doy_min : int
-      Smallest day of the year in the output.
+      The smallest day of the year in the output.
       This parameter is necessary when the target time series does not span over a full
       year (e.g. JJA season).
       Default is 1.
@@ -954,7 +956,7 @@ def climatological_mean_doy(
 def within_bnds_doy(
     arr: xr.DataArray, *, low: xr.DataArray, high: xr.DataArray
 ) -> xr.DataArray:
-    """Return whether or not array values are within bounds for each day of the year.
+    """Return whether array values are within bounds for each day of the year.
 
     Parameters
     ----------

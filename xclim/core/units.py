@@ -358,7 +358,7 @@ def infer_sampling_units(
     deffreq: str | None = "D",
     dim: str = "time",
 ) -> tuple[int, str]:
-    """Infer a multiplicator and the units corresponding to one sampling period.
+    """Infer a multiplier and the units corresponding to one sampling period.
 
     Parameters
     ----------

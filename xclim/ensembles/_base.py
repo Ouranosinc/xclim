@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from glob import glob
 from pathlib import Path
-from typing import Sequence
 
 import numpy as np
 import xarray as xr
@@ -36,8 +35,8 @@ def create_ensemble(
     Parameters
     ----------
     datasets : List[Union[xr.Dataset, Path, str, List[Path, str]]] or str
-      List of netcdf file paths or xarray Dataset/DataArray objects . If mf_flag is True, ncfiles should be a list of lists where
-      each sublist contains input .nc files of an xarray multifile Dataset.
+      List of netcdf file paths or xarray Dataset/DataArray objects . If mf_flag is True, ncfiles should be a list of
+      lists where each sublist contains input .nc files of an xarray multifile Dataset.
       If DataArray object are passed, they should have a name in order to be transformed into Datasets.
       If a string is passed, it is assumed to be a glob pattern for finding datasets.
 
@@ -148,7 +147,7 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
 
 def ensemble_percentiles(
     ens: xr.Dataset | xr.DataArray,
-    values: Sequence[float] = [10, 50, 90],
+    values: tuple[int, int, int] | None = None,
     keep_chunk_size: bool | None = None,
     split: bool = True,
 ) -> xr.Dataset:
@@ -197,6 +196,9 @@ def ensemble_percentiles(
 
     >>> ens_percs = ensemble_percentiles(ens, keep_chunk_size=False)
     """
+    if values is None:
+        values = [10, 50, 90]
+
     if isinstance(ens, xr.Dataset):
         out = xr.merge(
             [

@@ -429,7 +429,7 @@ def cool_night_index(
     """Cool Night Index.
 
     Mean minimum temperature for September (northern hemisphere) or March (Southern hemishere).
-    Used in calculating the Géoviticulture Multicriteria Classification System (:cite:p:`tonietto_multicriteria_200`).
+    Used in calculating the Géoviticulture Multicriteria Classification System (:cite:p:`tonietto_multicriteria_2004`).
 
     Parameters
     ----------
@@ -462,7 +462,7 @@ def cool_night_index(
 
     References
     ----------
-    :cite:cts:`tonietto_multicriteria_2004`
+    :footcite:cts:`tonietto_multicriteria_2004`
     """
     tasmin = convert_units_to(tasmin, "degC")
 
