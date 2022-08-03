@@ -89,8 +89,7 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
 
     References
     ----------
-    Zhang, X., Hegerl, G., Zwiers, F. W., & Kenyon, J. (2005). Avoiding Inhomogeneity in Percentile-Based Indices of
-    Temperature Extremes, Journal of Climate, 18(11), 1641-1651, https://doi.org/10.1175/JCLI3366.1
+    :cite:cts:`zhang_avoiding_2005`
 
     Notes
     -----

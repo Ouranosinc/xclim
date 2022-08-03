@@ -393,7 +393,18 @@ def ensure_cftime_array(time: Sequence) -> np.ndarray:
 
     Python's datetime are converted to cftime.DatetimeGregorian ("standard" calendar).
 
-    Raises ValueError when unable to cast the input.
+    Parameters
+    ----------
+    time: sequence
+      A 1D array of datetime-like objects.
+
+    Returns
+    -------
+    np.ndarray
+
+    Raises
+    ------
+    ValueError: When unable to cast the input.
     """
     if isinstance(time, xr.DataArray):
         time = time.indexes["time"]
@@ -415,6 +426,15 @@ def datetime_to_decimal_year(times: xr.DataArray, calendar: str = "") -> xr.Data
 
     Decimal years are the number of years since 0001-01-01 00:00:00 AD.
     Ex: '2000-03-01 12:00' is 2000.1653 in a standard calendar, 2000.16301 in a "noleap" or 2000.16806 in a "360_day".
+
+    Parameters
+    ----------
+    times: xr.DataArray
+    calendar: str
+
+    Returns
+    -------
+    xr.DataArray
     """
     calendar = calendar or get_calendar(times)
     if calendar == "default":

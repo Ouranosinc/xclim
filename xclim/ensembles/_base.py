@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from glob import glob
 from pathlib import Path
+from typing import Sequence
 
 import numpy as np
 import xarray as xr
@@ -147,21 +148,21 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
 
 def ensemble_percentiles(
     ens: xr.Dataset | xr.DataArray,
-    values: tuple[int, int, int] | None = None,
+    values: Sequence[int] | None = None,
     keep_chunk_size: bool | None = None,
     split: bool = True,
-) -> xr.Dataset:
+) -> xr.DataArray | xr.Dataset:
     """Calculate ensemble statistics between a results from an ensemble of climate simulations.
 
     Returns a Dataset containing ensemble percentiles for input climate simulations.
 
     Parameters
     ----------
-    ens: Union[xr.Dataset, xr.DataArray]
+    ens: xr.Dataset or xr.DataArray
       Ensemble dataset or dataarray (see xclim.ensembles.create_ensemble).
-    values : Tuple[int, int, int]
+    values : Sequence[int], optional
       Percentile values to calculate. Default: (10, 50, 90).
-    keep_chunk_size : Optional[bool]
+    keep_chunk_size : bool, optional
       For ensembles using dask arrays, all chunks along the 'realization' axis are merged.
       If True, the dataset is rechunked along the dimension with the largest chunks, so that the chunks keep the same size (approx)
       If False, no shrinking is performed, resulting in much larger chunks
@@ -172,7 +173,7 @@ def ensemble_percentiles(
 
     Returns
     -------
-    Union[xr.Dataset, xr.DataArray]
+    xr.Dataset or xr.DataArray
       If split is True, same type as ens; dataset otherwise,
       containing data variable(s) of requested ensemble statistics
 
@@ -294,7 +295,7 @@ def _ens_align_datasets(
     mf_flag : bool
       If True climate simulations are treated as xarray multi-file datasets before concatenation.
       Only applicable when 'datasets' is a sequence of file paths.
-    resample_freq : str or None
+    resample_freq : str, optional
       If the members of the ensemble have the same frequency but not the same offset, they cannot be properly aligned.
       If resample_freq is set, the time coordinate of each member will be modified to fit this frequency.
     calendar : str
