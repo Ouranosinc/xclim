@@ -164,9 +164,9 @@ def ensemble_percentiles(
       Percentile values to calculate. Default: (10, 50, 90).
     keep_chunk_size : bool, optional
       For ensembles using dask arrays, all chunks along the 'realization' axis are merged.
-      If True, the dataset is rechunked along the dimension with the largest chunks, so that the chunks keep the same size (approx)
-      If False, no shrinking is performed, resulting in much larger chunks
-      If not defined, the function decides which is best
+      If True, the dataset is rechunked along the dimension with the largest chunks, so that the chunks keep the same size (approximately).
+      If False, no shrinking is performed, resulting in much larger chunks.
+      If not defined, the function decides which is best.
     split : bool
       Whether to split each percentile into a new variable of concatenate the ouput along a new
       "percentiles" dimension.

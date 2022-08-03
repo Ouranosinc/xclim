@@ -127,3 +127,4 @@ API References
 ==============
 
 .. footbibliography::
+   :style: unsrt

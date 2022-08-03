@@ -3,4 +3,3 @@ Bibliography
 ============
 
 .. bibliography::
-   :style: alpha

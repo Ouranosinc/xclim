@@ -135,7 +135,7 @@ extlinks = {
 }
 
 bibtex_bibfiles = ["references.bib"]
-bibtex_default_style = "unsrt"
+bibtex_default_style = "alpha"
 
 nbsphinx_execute = "auto"
 nbsphinx_prolog = r"""

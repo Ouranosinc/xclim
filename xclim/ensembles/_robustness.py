@@ -83,7 +83,7 @@ def change_significance(
     Available statistical tests are :
 
       'ttest' :
-        Single sample T-test. Same test as used by [tebaldi2011]_. The future
+        Single sample T-test. Same test as used by :cite:t:`tebaldi_mapping_2011`. The future
         values are compared against the reference mean (over 'time'). Change is qualified
         as 'significant' when the test's p-value is below the user-provided `p_change`
         value.
@@ -99,8 +99,7 @@ def change_significance(
 
     References
     ----------
-    .. [tebaldi2011] Tebaldi C., Arblaster, J.M. and Knutti, R. (2011) Mapping model agreement on future climate projections. GRL. doi:10.1029/2011GL049863
-
+    :cite:cts:`tebaldi_mapping_2011`
 
     Example
     -------
@@ -234,14 +233,14 @@ def robustness_coefficient(
 ) -> xr.DataArray | xr.Dataset:
     """Robustness coefficient quantifying the robustness of a climate change signal in an ensemble.
 
-    Taken from Knutti and Sedlacek (2013).
+    Taken from  :cite:ts:`knutti_robustness_2013`.
 
     The robustness metric is defined as R = 1 − A1 / A2 , where A1 is defined
     as the integral of the squared area between two cumulative density functions
     characterizing the individual model projections and the multimodel mean
     projection and A2 is the integral of the squared area between two cumulative
     density functions characterizing the multimodel mean projection and the historical
-    climate. (Description taken from [knutti2013]_)
+    climate. (Description taken from :cite:t:`knutti_robustness_2013`)
 
     A value of R equal to one implies perfect model agreement. Higher model spread or
     smaller signal decreases the value of R.
@@ -257,11 +256,12 @@ def robustness_coefficient(
     Returns
     -------
     xr.DataArray or xr.Dataset
-      The robustness coeffcient, ]-inf, 1], float. Same type as `fut` or `ref`.
+      The robustness coefficient, ]-inf, 1], float. Same type as `fut` or `ref`.
 
     References
     ----------
-    .. [knutti2013] Knutti, R. and Sedláček, J. (2013) Robustness and uncertainties in the new CMIP5 climate model projections. Nat. Clim. Change. doi:10.1038/nclimate1716
+    :cite:cts:`knutti_robustness_2013`
+
     """
 
     def _knutti_sedlacek(reference, future):

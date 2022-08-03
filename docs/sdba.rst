@@ -28,24 +28,18 @@ Minimum and maximum temperature
 -------------------------------
 
 When adjusting both minimum and maximum temperature, adjustment factors sometimes yield minimum temperatures larger than the maximum temperature on the same day, which of course, is nonsensical.
-One way to avoid this is to first adjust maximum temperature using an additive adjustment, then adjust the diurnal temperature range (DTR) using a multiplicative adjustment, and then determine minimum temperature by subtracting DTR from the maximum temperature\ :footcite:p:`thrasher_technical_2012,agbazo_characterizing_2020`).
+One way to avoid this is to first adjust maximum temperature using an additive adjustment, then adjust the diurnal temperature range (DTR) using a multiplicative adjustment, and then determine minimum temperature by subtracting DTR from the maximum temperature :cite:p:`thrasher_technical_2012,agbazo_characterizing_2020`.
 
 Relative and specific humidity
 ------------------------------
 
 When adjusting both relative and specific humidity, we want to preserve the relationship between both.
-To do this, :footcite:t:`grenier_two_2018` suggests to first adjust the relative humidity using a multiplicative factor, ensure values are within 0-100%, then apply an additive adjustment factor to the surface pressure before estimating the specific humidity from thermodynamic relationships.
+To do this, :cite:t:`grenier_two_2018` suggests to first adjust the relative humidity using a multiplicative factor, ensure values are within 0-100%, then apply an additive adjustment factor to the surface pressure before estimating the specific humidity from thermodynamic relationships.
 
 Radiation and precipitation
 ---------------------------
 
-In theory, short wave radiation should be capped when precipitation is not zero, but there is as of yet no mechanism proposed to do that, see :footcite:t:`hoffmann_meteorologically_2012`.
-
-
-Footnotes
-=========
-
-.. footbibliography::
+In theory, short wave radiation should be capped when precipitation is not zero, but there is as of yet no mechanism proposed to do that, see :cite:t:`hoffmann_meteorologically_2012`.
 
 SDBA User API
 =============
@@ -120,3 +114,10 @@ Developer tools
 
 .. autofunction:: xclim.sdba.measures.check_same_units_and_convert
    :noindex:
+
+Footnotes
+=========
+
+.. bibliography::
+   :filter: docname in docnames
+   :style: unsrt

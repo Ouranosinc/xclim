@@ -43,3 +43,4 @@ Analogues references
 --------------------
 
 .. footbibliography::
+   :style: unsrt
