@@ -592,7 +592,7 @@ frost_season_length = Temp(
     description="{freq} number of days between the first occurrence of at least "
     "{window} consecutive days with minimum daily temperature below freezing and "
     "the first occurrence of at least {window} consecutive days with "
-    "minimuim daily temperature above freezing after {mid_date}.",
+    "minimum daily temperature above freezing after {mid_date}.",
     cell_methods="time: sum over days",
     compute=indices.frost_season_length,
     parameters=dict(thresh="0 degC"),
