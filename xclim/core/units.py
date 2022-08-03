@@ -242,7 +242,7 @@ def pint_multiply(da: xr.DataArray, q: Any, out_units: str | None = None):
     return out
 
 
-def str2pint(val: str):
+def str2pint(val: str) -> pint.Quantity:
     """Convert a string to a pint.Quantity, splitting the magnitude and the units.
 
     Parameters
