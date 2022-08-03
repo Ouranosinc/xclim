@@ -718,7 +718,7 @@ def map_groups(reduces: Sequence[str] = None, main_only: bool = False, **out_var
 
     See Also
     --------
-    :py:func:`map_blocks`.
+    map_blocks
     """
     def_reduces = [Grouper.DIM]
     if not main_only:

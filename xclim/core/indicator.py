@@ -1576,7 +1576,9 @@ def build_indicator_module_from_yaml(
 
     See Also
     --------
-    The doc of :py:mod:`xclim.core.indicator` and of :py:func:`build_module`.
+    xclim.core.indicator
+
+    build_module
     """
     filepath = Path(filename)
 

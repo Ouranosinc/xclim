@@ -841,7 +841,7 @@ def rain_approximation(
 
     See Also
     --------
-    :py:func:`xclim.indices.snowfall_approximation`
+    snowfall_approximation
     """
     prra = pr - snowfall_approximation(pr, tas, thresh=thresh, method=method)
     prra.attrs["units"] = pr.attrs["units"]

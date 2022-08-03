@@ -159,7 +159,7 @@ def kmeans_reduce_ensemble(
     rsq_optimize
         Calculate coefficient of variation (R²) of cluster results for n = 1 to N clusters and determine
         an optimal number of clusters that balances cost/benefit tradeoffs. This is the default setting.
-        See supporting information S2 text in https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0152495
+        See supporting information S2 text in :cite:t:`casajus_objective_2016`.
 
         method={'rsq_optimize':None}
 

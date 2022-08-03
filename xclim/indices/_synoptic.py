@@ -26,7 +26,7 @@ def jetstream_metric_woollings(
     """Strength and latitude of jetstream.
 
     Identify latitude and strength of maximum smoothed zonal wind speed in the region from 15 to 75°N and -60 to 0°E,
-    using the formula outlined in ([Woollings2010]_).
+    using the formula outlined in (:cite:p:`woollings_variability_2010`).
 
     Warnings
     --------
@@ -44,7 +44,8 @@ def jetstream_metric_woollings(
 
     References
     ----------
-    .. [Woollings2010] Woollings, T., Hannachi, A., & Hoskins, B. (2010). Variability of the North Atlantic eddy‐driven jet stream. Quarterly Journal of the Royal Meteorological Society, 136(649), 856-868.
+    :cite:cts:`woollings_variability_2010`
+
     """
     lon_min = -60
     lon_max = 0

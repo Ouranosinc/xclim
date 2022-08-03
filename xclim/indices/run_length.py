@@ -196,10 +196,9 @@ def rle_statistics(
       If 'first' (default), the run length is indexed with the first element in the run.
       If 'last', with the last element in the run.
 
-
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [int]
       Length of runs of True values along dimension, according to the reducing function (float)
       If there are no runs (but the data is valid), returns 0.
     """
@@ -239,10 +238,9 @@ def longest_run(
       If 'first', the run length is indexed with the first element in the run.
       If 'last', with the last element in the run.
 
-
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [int]
       Length of the longest run of True values along dimension (int).
     """
     return rle_statistics(
@@ -279,7 +277,7 @@ def windowed_run_events(
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [int]
       Number of distinct runs of a minimum length (int).
     """
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
@@ -324,7 +322,7 @@ def windowed_run_count(
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [int]
       Total number of `True` values part of a consecutive runs of at least `window` long.
     """
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
@@ -448,7 +446,7 @@ def last_run(
 
 # TODO: Add window arg
 # TODO: Inverse window arg to tolerate holes?
-def run_bounds(mask: xr.DataArray, dim: str = "time", coord: bool | str | None = True):
+def run_bounds(mask: xr.DataArray, dim: str = "time", coord: bool | str = True):
     """Return the start and end dates of boolean runs along a dimension.
 
     Parameters
@@ -523,7 +521,7 @@ def keep_longest_run(da: xr.DataArray, dim: str = "time") -> xr.DataArray:
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [bool]
       Boolean array similar to da but with only one run, the (first) longest.
     """
     # Get run lengths
@@ -577,9 +575,9 @@ def season(
 
     If a date is given, the season start and end are forced to be on each side of this date. This means that
     even if the "real" season has been over for a long time, this is the date used in the length calculation.
-    Example : Length of the "warm season", where T > 25°C, with date = 1st August. Let's say
-    the temperature is over 25 for all june, but july and august have very cold temperatures.
-    Instead of returning 30 days (june), the function will return 61 days (july + june).
+    Example : Length of the "warm season", where T > 25°C, with date = 1st August. Let's say the temperature is over
+    25 for all June, but July and august have very cold temperatures. Instead of returning 30 days (June), the function
+    will return 61 days (July + June).
     """
     beg = first_run(da, window=window, dim=dim)
     # Invert the condition and mask all values after beginning
@@ -682,7 +680,7 @@ def season_length(
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [int]
       Length of the longest run of True values along a given dimension (inclusive of a given date)
       without breaks longer than a given length.
 
@@ -690,11 +688,11 @@ def season_length(
     -----
     The run can include holes of False or NaN values, so long as they do not exceed the window size.
 
-    If a date is given, the season end is forced to be later or equal to this date. This means that
+    If a date is given, the season start and end are forced to be on each side of this date. This means that
     even if the "real" season has been over for a long time, this is the date used in the length calculation.
-    Example : Length of the "warm season", where T > 25°C, with date = 1st August. Let's say
-    the temperature is over 25 for all june, but july and august have very cold temperatures.
-    Instead of returning 30 days (june), the function will return 61 days (july + june).
+    Example : Length of the "warm season", where T > 25°C, with date = 1st August. Let's say the temperature is over
+    25 for all June, but July and august have very cold temperatures. Instead of returning 30 days (June), the function
+    will return 61 days (July + June).
     """
     seas = season(da, window, date, dim, coord=False)
     return seas.length
@@ -882,7 +880,7 @@ def rle_1d(
     return _rle_1d(ia)
 
 
-def first_run_1d(arr: Sequence[int | float], window: int) -> int:
+def first_run_1d(arr: Sequence[int | float], window: int) -> int | np.nan:
     """Return the index of the first item of a run of at least a given length.
 
     Parameters
@@ -894,7 +892,7 @@ def first_run_1d(arr: Sequence[int | float], window: int) -> int:
 
     Returns
     -------
-    int
+    int or np.nan
       Index of first item in first valid run.
       Returns np.nan if there are no valid runs.
     """
@@ -915,7 +913,7 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int = 1) -> int
       Input array (bool)
     reducer : {'mean', 'sum', 'min', 'max', 'std'}
       Reducing function name.
-    window: int
+    window : int
       Minimal length of runs to be included in the statistics
 
     Returns
@@ -961,7 +959,7 @@ def windowed_run_events_1d(arr: Sequence[bool], window: int) -> xr.DataArray:
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [int]
       Number of distinct runs of a minimum length.
     """
     v, rl, pos = rle_1d(arr)
@@ -1106,8 +1104,6 @@ def lazy_indexing(
 ) -> xr.DataArray:
     """Get values of `da` at indices `index` in a NaN-aware and lazy manner.
 
-    Two case
-
     Parameters
     ----------
     da : xr.DataArray
@@ -1115,8 +1111,7 @@ def lazy_indexing(
     index : xr.DataArray
       N-d integer indices, if da is not 1D, all dimensions of index must be in da
     dim : str, optional
-      Dimension along which to index, unused if `da` is 1D,
-      should not be present in `index`.
+      Dimension along which to index, unused if `da` is 1D, should not be present in `index`.
 
     Returns
     -------
@@ -1190,9 +1185,9 @@ def index_of_date(
     date : DayOfYearStr or DateStr, optional
       A string in the "yyyy-mm-dd" or "mm-dd" format.
       If None, returns default.
-    max_idxs: int, optional
+    max_idxs : int, optional
       Maximum number of returned indexes.
-    default: int
+    default : int
       Index to return if date is None.
 
     Raises
@@ -1238,7 +1233,7 @@ def suspicious_run_1d(
       Array of values to be parsed.
     window : int
       Minimum run length
-    op : {">", ">=", "==", "<", "<=", "eq", "gt", "lt", "gteq", "lteq"}, optional
+    op : {">", ">=", "==", "<", "<=", "eq", "gt", "lt", "gteq", "lteq"}
       Operator for threshold comparison. Defaults to ">".
     thresh : float, optional
       Threshold above which values are checked for identical values.
@@ -1289,10 +1284,10 @@ def suspicious_run(
       Dimension along which to check for runs (default: "time").
     window : int
       Minimum run length
-    thresh : float, optional
-      Threshold above which values are checked for identical values.
     op: {">", ">=", "==", "<", "<=", "eq", "gt", "lt", "gteq", "lteq"}
       Operator for threshold comparison, defaults to ">".
+    thresh : float, optional
+      Threshold above which values are checked for identical values.
 
     Returns
     -------

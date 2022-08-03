@@ -27,7 +27,7 @@ def distance_from_sun(dates: xr.DataArray) -> xr.DataArray:
 
     Parameters
     ----------
-    dates: xr.DataArray
+    dates : xr.DataArray
       Series of dates and time of days
 
     Returns
@@ -37,6 +37,7 @@ def distance_from_sun(dates: xr.DataArray) -> xr.DataArray:
 
     References
     ----------
+    # TODO: Find a way to reference this
     U.S. Naval Observatory:Astronomical Almanac. Washington, D.C.: U.S. Government Printing Office (1985).
     """
     cal = get_calendar(dates)
@@ -54,15 +55,15 @@ def solar_declination(day_angle: xr.DataArray, method="spencer") -> xr.DataArray
     """Solar declination.
 
     The angle between the sun rays and the earth's equator, in radians, as approximated
-    by [Spencer1971]_ or assuming the orbit is a circle.
+    by :cite:t:`spencer_fourier_1971` or assuming the orbit is a circle.
 
     Parameters
     ----------
-    day_angle: xr.DataArray
+    day_angle : xr.DataArray
       Assuming the earth makes a full circle in a year, this is the angle covered from
       the beginning of the year up to that timestep. Also called the "julian day fraction".
       See :py:func:`~xclim.core.calendar.datetime_to_decimal_year`.
-    method: {'spencer', 'simple'}
+    method : {'spencer', 'simple'}
       Which approximation to use. The default ("spencer") uses the first 7 terms of the
       Fourier series representing the observed declination, while "simple" assumes
       the orbit is a circle with a fixed obliquity and that the solstice/equinox happen
@@ -74,7 +75,7 @@ def solar_declination(day_angle: xr.DataArray, method="spencer") -> xr.DataArray
 
     References
     ----------
-    .. [Spencer1971] Spencer JW (1971) Fourier series representation of the position of the sun. Search 2(5):172
+    :cite:cts:`spencer_fourier_1971`
 
     """
     # julian day fraction
@@ -101,8 +102,7 @@ def time_correction_for_solar_angle(day_angle: xr.DataArray) -> xr.DataArray:
     """Time correction for solar angle.
 
     Every 1° of angular rotation on earth is equal to 4 minutes of time.
-    The time correction helpsis needed to correct local watch time to solar time.
-
+    The time correction is needed to adjust local watch time to solar time.
 
     Parameters
     ----------
@@ -117,7 +117,8 @@ def time_correction_for_solar_angle(day_angle: xr.DataArray) -> xr.DataArray:
 
     References
     ----------
-    Di Napoli, C., Hogan, R.J. & Pappenberger, F. Mean radiant temperature from global-scale numerical weather prediction models. Int J Biometeorol 64, 1233–1245 (2020). https://doi.org/10.1007/s00484-020-01900-5
+    :cite:cts:`di_napoli_mean_2020`
+
     """
     da = convert_units_to(day_angle, "rad")
     tc = (
@@ -135,18 +136,17 @@ def eccentricity_correction_factor(day_angle: xr.DataArray, method="spencer"):
     """Eccentricity correction factor of the Earth's orbit.
 
     The squared ratio of the mean distance Earth-Sun to the distance at a specific moment.
-    As approximated by [Spencer1971]_.
+    As approximated by :cite:t:`spencer_fourier_1971`.
 
     Parameters
     ----------
-    day_angle: xr.DataArray
-      Assuming the earth makes a full circle in a year, this is the angle covered from
-      the beginning of the year up to that timestep. Also called the "julian day fraction".
+    day_angle : xr.DataArray
+      Assuming the earth makes a full circle in a year, this is the angle covered from the beginning of the year up to
+      that timestep. Also called the "julian day fraction".
       See :py:func:`~xclim.core.calendar.datetime_to_decimal_year`.
-    method:
-      Which approximation to use. The default ("spencer") uses the first five terms of
-      the fourier series of the eccentricity, while "simple" approximates with only
-      the first two.
+    method : str
+      Which approximation to use. The default ("spencer") uses the first five terms of the fourier series of the
+      eccentricity, while "simple" approximates with only the first two.
 
     Returns
     -------
@@ -154,7 +154,7 @@ def eccentricity_correction_factor(day_angle: xr.DataArray, method="spencer"):
 
     References
     ----------
-    Spencer JW (1971) Fourier series representation of the position of the sun. Search 2(5):172
+    :cite:cts:`spencer_fourier_1971`
     """
     # julian day fraction
     da = convert_units_to(day_angle, "rad")
@@ -184,8 +184,8 @@ def cosine_of_solar_zenith_angle(
 
     The solar zenith angle is the angle between a vertical line (perpendicular to the ground)
     and the sun rays. This function computes a daily statistic of its cosine : its integral
-    from sunrise to sunset or the average over the same period. Based on [Kalogirou14]_.
-    In addition, it computes instantaneous values of its cosine. Based on [Napoli20]_.
+    from sunrise to sunset or the average over the same period. Based on :cite:t:`kalogirou_chapter_2014`.
+    In addition, it computes instantaneous values of its cosine. Based on :cite:t:di_napoli_mean_2020.
 
     Parameters
     ----------
@@ -226,8 +226,7 @@ def cosine_of_solar_zenith_angle(
 
     References
     ----------
-    Kalogirou, S. A. (2014). Chapter 2 — Environmental Characteristics. In S. A. Kalogirou (Ed.), Solar Energy Engineering (Second Edition) (pp. 51–123). Academic Press. https://doi.org/10.1016/B978-0-12-397270-5.00002-9
-    Di Napoli, C., Hogan, R.J. & Pappenberger, F. Mean radiant temperature from global-scale numerical weather prediction models. Int J Biometeorol 64, 1233–1245 (2020). https://doi.org/10.1007/s00484-020-01900-5
+    :cite:cts:`kalogirou_chapter_2014,di_napoli_mean_2020`
     """
     lat = convert_units_to(lat, "rad")
     if lon is not None:
@@ -242,7 +241,7 @@ def cosine_of_solar_zenith_angle(
     h_ss = np.arccos(
         -np.tan(lat) * np.tan(declination)
     )  # hour angle of sunset (eq. 2.15)
-    # The following equation is not explictely stated in the reference but it can easily be derived.
+    # The following equation is not explicitly stated in the reference, but it can easily be derived.
     if stat == "integral":
         csza = 2 * (
             h_ss * np.sin(declination) * np.sin(lat)
@@ -287,9 +286,9 @@ def extraterrestrial_solar_radiation(
 ) -> xr.DataArray:
     """Extraterrestrial solar radiation.
 
-    This is the daily energy received on a surface parallel to the ground at the mean
-    distance of the earth to the sun. It neglects the effect of the atmosphere. Computation
-    is based on [Kalogirou14]_ and the default solar constant is taken from [Matthes17]_.
+    This is the daily energy received on a surface parallel to the ground at the mean distance of the earth to the sun.
+    It neglects the effect of the atmosphere. Computation is based on :cite:t:`kalogirou_chapter_2014` and the default
+    solar constant is taken from :cite:t:`matthes_solar_2017`.
 
     Parameters
     ----------
@@ -309,8 +308,7 @@ def extraterrestrial_solar_radiation(
 
     References
     ----------
-    .. [Matthes17] Matthes, K. et al. (2017). Solar forcing for CMIP6 (v3.2). Geoscientific Model Development, 10(6), 2247–2302. https://doi.org/10.5194/gmd-10-2247-2017
-    .. [Kalogirou14] Kalogirou, S. A. (2014). Chapter 2 — Environmental Characteristics. In S. A. Kalogirou (Ed.), Solar Energy Engineering (Second Edition) (pp. 51–123). Academic Press. https://doi.org/10.1016/B978-0-12-397270-5.00002-9
+    :cite:cts:`kalogirou_chapter_2014,matthes_solar_2017`
     """
     da = ((datetime_to_decimal_year(times) % 1) * 2 * np.pi).assign_attrs(units="rad")
     dr = eccentricity_correction_factor(da, method=method)
@@ -329,8 +327,8 @@ def day_lengths(
 ) -> xr.DataArray:
     r"""Day-lengths according to latitude and day of year.
 
-    See :py:func:`solar_declination` for the approximation used to compute the solar
-    declination angle. Based on [Kalogirou14]_.
+    See :py:func:`solar_declination` for the approximation used to compute the solar declination angle.
+    Based on :cite:t:`kalogirou_chapter_2014`.
 
     Parameters
     ----------
@@ -348,7 +346,8 @@ def day_lengths(
 
     References
     ----------
-    Kalogirou, S. A. (2014). Chapter 2 — Environmental Characteristics. In S. A. Kalogirou (Ed.), Solar Energy Engineering (Second Edition) (pp. 51–123). Academic Press. https://doi.org/10.1016/B978-0-12-397270-5.00002-9
+    :cite:cts:`kalogirou_chapter_2014`
+
     """
     day_angle = ((datetime_to_decimal_year(dates.time) % 1) * 2 * np.pi).assign_attrs(
         units="rad"
