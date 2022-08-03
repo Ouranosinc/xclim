@@ -576,10 +576,10 @@ frost_season_length = Temp(
     identifier="frost_season_length",
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
-    long_name="Length of the frost season (Tmin > 0°C)",
+    long_name="Length of the frost season",
     description="{freq} number of days between the first occurrence of at least {window} consecutive days with "
-    "minimum daily temperature below {thresh} and the first occurrence of at least {window} consecutive days with "
-    "minimum daily temperature above {thresh} after {mid_date}.",
+    "minimum daily temperature below frezzing and the first occurrence of at least {window} consecutive days with "
+    "minimum daily temperature above freezing after {mid_date}.",
     cell_methods="time: sum over days",
     compute=indices.frost_season_length,
     parameters=dict(thresh="0 degC"),
