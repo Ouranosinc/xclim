@@ -61,7 +61,7 @@ def _loess_nb(
 
     The arrays x and y contain an equal number of elements; each pair (x[i], y[i]) defines
     a data point in the scatter plot. The function returns the estimated (smooth) values of y.
-    Originally proposed in [Cleveland1979]_.
+    Originally proposed in :cite:t:`cleveland_robust_1979`.
 
     Users should call `utils.loess_smoothing`. See that function for the main documentation.
 
@@ -86,9 +86,9 @@ def _loess_nb(
 
     References
     ----------
-    .. [Cleveland1979] Cleveland, W. S., 1979. Robust Locally Weighted Regression and Smoothing Scatterplot, Journal of the American Statistical Association 74, 829–836. https://www.doi.org/10.1080/01621459.1979.10481038.
+    :cite:cts:`cleveland_robust_1979`
 
-    Code adapted from https://gist.github.com/agramfort/850437
+    Code adapted from: :cite:cts:`gramfort_lowess_2015`
     """
     if skipna:
         nan = np.isnan(y)
@@ -184,9 +184,9 @@ def loess_smoothing(
 ):
     r"""Locally weighted regression in 1D: fits a nonparametric regression curve to a scatter plot.
 
-    Returns a smoothed curve along given dimension. The regression is computed for each point using
-    a subset of neighbouring points as given from evaluating the weighting function locally.
-    Follows the procedure of [Cleveland1979]_.
+    Returns a smoothed curve along given dimension. The regression is computed for each point using a subset of
+    neighbouring points as given from evaluating the weighting function locally.
+    Follows the procedure of :cite:t:`cleveland_robust_1979`.
 
     Parameters
     ----------
@@ -228,9 +228,9 @@ def loess_smoothing(
 
     References
     ----------
-    .. [Cleveland1979] Cleveland, W. S., 1979. Robust Locally Weighted Regression and Smoothing Scatterplot, Journal of the American Statistical Association 74, 829–836. https://www.doi.org/10.1080/01621459.1979.10481038
+    :cite:cts:`cleveland_robust_1979`
 
-    Code adapted from https://gist.github.com/agramfort/850437
+    Code adapted from: :cite:cts:`gramfort_lowess_2015`
     """
     x = da[dim]
     x = ((x - x[0]) / (x[-1] - x[0])).astype(float)

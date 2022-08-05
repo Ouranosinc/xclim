@@ -122,9 +122,3 @@ Subset module
 .. note::
     For more information about `clisops` refer to their documentation here:
     :doc:`CLISOPS documentation <clisops:readme>`
-
-API References
-==============
-
-.. footbibliography::
-   :style: unsrt

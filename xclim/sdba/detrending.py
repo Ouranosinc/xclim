@@ -57,7 +57,8 @@ class BaseDetrend(ParametrizableWithDataset):
     def fit(self, da: xr.DataArray):
         """Extract the trend of a DataArray along a specific dimension.
 
-        Returns a new object that can be used for detrending and retrending. Fitted objects are unique to the fitted coordinate used.
+        Returns a new object that can be used for detrending and retrending.
+        Fitted objects are unique to the fitted coordinate used.
         """
         new = self.__class__(**self.parameters)
         new.set_dataset(new._get_trend(da).rename("trend").to_dataset())
@@ -198,7 +199,7 @@ class LoessDetrend(BaseDetrend):
 
     Parameters
     ----------
-    group : Union[str, Grouper]
+    group : str or Grouper
       The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
       The fit is performed along the group's main dim.
     kind : {'*', '+'}
@@ -277,7 +278,7 @@ class RollingMeanDetrend(BaseDetrend):
 
     Parameters
     ----------
-    group : Union[str, Grouper]
+    group : str or Grouper
       The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
       The fit is performed along the group's main dim.
     kind : {'*', '+'}

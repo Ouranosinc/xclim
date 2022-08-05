@@ -38,9 +38,3 @@ Utilities for developers
 
 .. autofunction:: xclim.analog.standardize
    :noindex:
-
-Analogues references
---------------------
-
-.. footbibliography::
-   :style: unsrt

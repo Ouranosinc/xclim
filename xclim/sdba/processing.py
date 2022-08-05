@@ -6,7 +6,7 @@ Pre and post processing
 from __future__ import annotations
 
 import warnings
-from typing import Sequence, Union
+from typing import Any, Sequence, Tuple, Union
 
 import dask.array as dsk
 import numpy as np
@@ -31,13 +31,13 @@ def adapt_freq(
     *,
     group: Grouper | str,
     thresh: str = "0 mm d-1",
-) -> (xr.Dataset, xr.Dataset, xr.Dataset):
+) -> tuple[xr.DataArray, xr.DataArray, xr.DataArray]:
     r"""
     Adapt frequency of values under thresh of `sim`, in order to match ref.
 
     This is useful when the dry-day frequency in the simulations is higher than in the references. This function
     will create new non-null values for `sim`/`hist`, so that adjustment factors are less wet-biased.
-    Based on [Themessl2012]_.
+    Based on :cite:t:`themesl_empirical-statistical_2012`.
 
     Parameters
     ----------
@@ -57,8 +57,8 @@ def adapt_freq(
       Simulated data with the same frequency of values under threshold than ref.
       Adjustment is made group-wise.
     pth : xr.DataArray
-      For each group, the smallest value of sim that was not frequency-adjusted. All values smaller were
-      either left as zero values or given a random value between thresh and pth.
+      For each group, the smallest value of sim that was not frequency-adjusted. All values smaller were either left as
+      zero values or given a random value between thresh and pth.
       NaN where frequency adaptation wasn't needed.
     dP0 : xr.DataArray
       For each group, the percentage of values that were corrected in sim.
@@ -73,10 +73,10 @@ def adapt_freq(
     number between :math:`T_0` and :math:`P_{th}`, where :math:`P_{th} = F_{ref}^{-1}( F_{sim}( T_0 ) )` and
     `F(x)` is the empirical cumulative distribution function (CDF).
 
-
     References
     ----------
-    .. [Themessl2012] Themeßl et al. (2012), Empirical-statistical downscaling and error correction of regional climate models and its impact on the climate change signal, Climatic Change, DOI 10.1007/s10584-011-0224-4.
+    :cite:cts:`themesl_empirical-statistical_2012`
+
     """
     sim = convert_units_to(sim, ref)
     thresh = convert_units_to(thresh, ref)
@@ -221,7 +221,7 @@ def normalize(
     *,
     group: Grouper | str,
     kind: str = ADDITIVE,
-) -> (xr.DataArray, xr.DataArray):
+) -> tuple[xr.DataArray, xr.DataArray]:
     """Normalize an array by removing its mean.
 
     Normalization if performed group-wise and according to `kind`.
@@ -311,8 +311,8 @@ def unstandardize(da: xr.DataArray, mean: xr.DataArray, std: xr.DataArray):
 def reordering(ref: xr.DataArray, sim: xr.DataArray, group: str = "time") -> xr.Dataset:
     """Reorders data in `sim` following the order of ref.
 
-    The rank structure of `ref` is used to reorder the elements of `sim` along dimension "time",
-    optionally doing the operation group-wise.
+    The rank structure of `ref` is used to reorder the elements of `sim` along dimension "time", optionally doing the
+    operation group-wise.
 
     Parameters
     ----------
@@ -330,7 +330,8 @@ def reordering(ref: xr.DataArray, sim: xr.DataArray, group: str = "time") -> xr.
 
     Reference
     ---------
-    .. [Cannon18] Cannon, A. J. (2018). Multivariate quantile mapping bias correction: An N-dimensional probability density function transform for climate model simulations of multiple variables. Climate Dynamics, 50(1), 31–49. https://doi.org/10.1007/s00382-017-3580-6
+    :cite:cts:`cannon_multivariate_2018`
+
     """
     ds = xr.Dataset({"sim": sim, "ref": ref})
     out = _reordering(ds, group=group).reordered
@@ -346,7 +347,7 @@ def escore(
     N: int = 0,  # noqa
     scale: bool = False,
 ) -> xr.DataArray:
-    r"""Energy score, or energy dissimilarity metric, based on [SzekelyRizzo]_ and [Cannon18]_.
+    r"""Energy score, or energy dissimilarity metric, based on :cite:t:`szekely_testing_2004` and :cite:t:`cannon_multivariate_2018`.
 
     Parameters
     ----------
@@ -389,15 +390,15 @@ def escore(
 
     :math:`\Vert\cdot\Vert` denotes Euclidean norm, :math:`X_{ip}` denotes the p-th observation in the i-th cluster.
 
-    The input scaling and the factor :math:`\frac{1}{2}` in the first equation are additions of [Cannon18]_ to
-    the metric. With that factor, the test becomes identical to the one defined by [BaringhausFranz]_.
-    This version is tested against values taken from Alex Cannon's MBC R package.
+    The input scaling and the factor :math:`\frac{1}{2}` in the first equation are additions of
+    :cite:t:`cannon_multivariate_2018` to the metric. With that factor, the test becomes identical to the one defined by
+    :cite:t:`baringhaus_new_2004`.
+    This version is tested against values taken from Alex Cannon's MBC R package :cite:p:`cannon_mbc_2020`.
 
     References
     ----------
-    .. [BaringhausFranz] Baringhaus, L. and Franz, C. (2004) On a new multivariate two-sample test, Journal of Multivariate Analysis, 88(1), 190–206. https://doi.org/10.1016/s0047-259x(03)00079-4
-    .. [Cannon18] Cannon, A. J. (2018). Multivariate quantile mapping bias correction: An N-dimensional probability density function transform for climate model simulations of multiple variables. Climate Dynamics, 50(1), 31–49. https://doi.org/10.1007/s00382-017-3580-6
-    .. [SzekelyRizzo] Székely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
+    :cite:cts:`baringhaus_new_2004cannon_multivariate_2018,cannon_mbc_2020,szekely_testing_2004`
+
     """
     pts_dim, obs_dim = dims
 
@@ -521,19 +522,19 @@ def unpack_moving_yearly_window(
 
     Unpack DataArrays created with :py:func:`construct_moving_yearly_window` and recreate a timeseries data.
     If `append_ends` is False, only keeps the central non-overlapping years. The final timeseries will be
-    (window - step) years shorter than the initial one. If `append_ends` is True, the time points from first and last windows
-    will be included in the final timeseries.
+    (window - step) years shorter than the initial one. If `append_ends` is True, the time points from first and last
+    windows will be included in the final timeseries.
 
     The time points that are not in a window will never be included in the final timeseries.
     The window length and window step are inferred from the coordinates.
 
     Parameters
     ----------
-    da: xr.DataArray
+    da : xr.DataArray
       As constructed by :py:func:`construct_moving_yearly_window`.
     dim : str
       The window dimension name as given to the construction function.
-    append_ends: bool
+    append_ends : bool
       Whether to append the ends of the timeseries
       If False, the final timeseries will be (window - step) years shorter than the initial one,
       but all windows will contribute equally.
@@ -598,12 +599,12 @@ def to_additive_space(
 ):
     r"""Transform a non-additive variable into an additive space by the means of a log or logit transformation.
 
-    Based on [AlavoineGrenier]_.
+    Based on :cite:t:`alavoine_distinct_2021`.
 
     Parameters
     ----------
     data : xr.DataArray
-      A variable that can't usually be bias-adusted by additive methods.
+      A variable that can't usually be bias-adjusted by additive methods.
     lower_bound : str
       The smallest physical value of the variable, excluded, as a Quantity string.
       The data should only have values strictly larger than this bound.
@@ -616,7 +617,7 @@ def to_additive_space(
 
     Notes
     -----
-    Given a variable that is not usable in an additive adjustment, this apply a transformation to a space where
+    Given a variable that is not usable in an additive adjustment, this applies a transformation to a space where
     additive methods are sensible. Given :math:`X` the variable, :math:`b_-` the lower physical bound of that variable
     and :math:`b_+` the upper physical bound, two transformations are currently implemented to get :math:`Y`,
     the additive-ready variable. :math:`\ln` is the natural logarithm.
@@ -651,8 +652,8 @@ def to_additive_space(
 
     References
     ----------
-    .. [AlavoineGrenier] Alavoine M., and Grenier P. (under review) The distinct problems of physical inconsistency and of multivariate bias potentially involved in the statistical adjustment of climate simulations.
-                         International Journal of Climatology, Manuscript ID: JOC-21-0789, submitted on September 19th 2021. (Preprint https://doi.org/10.31223/X5C34C)
+    :cite:cts:`alavoine_distinct_2021`
+
     """
     lower_bound = convert_units_to(lower_bound, data)
     if upper_bound is not None:
@@ -688,8 +689,8 @@ def from_additive_space(
 ):
     r"""Transform back to the physical space a variable that was transformed with `to_additive_space`.
 
-    Based on [AlavoineGrenier]_. If parameters are not present on the attributes of the
-    data, they must be all given are arguments.
+    Based on :cite:t:`alavoine_distinct_2021`. If parameters are not present on the attributes of the data, they must be
+    all given are arguments.
 
     Parameters
     ----------
@@ -707,7 +708,7 @@ def from_additive_space(
     trans : {'log', 'logit'}, optional
       The transformation to use. See notes.
       If None (the default), the `sdba_transform` attribute is looked up on `data`.
-    units: str, optional
+    units : str, optional
       The units of the data before transformation to the additive space.
       If None (the default), the `sdba_transform_units` attribute is looked up on `data`.
 
@@ -720,11 +721,10 @@ def from_additive_space(
 
     Notes
     -----
-    Given a variable that is not usable in an additive adjustment,
-    :py:func:`to_additive_space` applied a transformation to a space where additive
-    methods are sensible. Given :math:`Y` the transformed variable, :math:`b_-` the
-    lower physical bound of that variable and :math:`b_+` the upper physical bound,
-    two back-transformations are currently implemented to get :math:`X`, the physical variable.
+    Given a variable that is not usable in an additive adjustment, :py:func:`to_additive_space` applied a transformation
+     to a space where additive methods are sensible. Given :math:`Y` the transformed variable, :math:`b_-` the
+    lower physical bound of that variable and :math:`b_+` the upper physical bound, two back-transformations are
+    currently implemented to get :math:`X`, the physical variable.
 
     - `log`
 
@@ -745,8 +745,8 @@ def from_additive_space(
 
     References
     ----------
-    .. [AlavoineGrenier] Alavoine M., and Grenier P. (under review) The distinct problems of physical inconsistency and of multivariate bias potentially involved in the statistical adjustment of climate simulations.
-                         International Journal of Climatology, Manuscript ID: JOC-21-0789, submitted on September 19th 2021. (Preprint https://doi.org/10.31223/X5C34C)
+    :cite:cts:`alavoine_distinct_2021`
+
     """
     if trans is None and lower_bound is None and units is None:
         try:

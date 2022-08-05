@@ -3,10 +3,9 @@
 Measures Submodule
 ==================
 SDBA diagnostic tests are made up of properties and measures. Measures compare adjusted simulations to a reference,
-through statistical properties or directly.
-This framework for the diagnostic tests was inspired by the [VALUE]_ project.
+through statistical properties or directly. This framework for the diagnostic tests was inspired by the
+`VALUE <http://www.value-cost.eu/>`_ project.
 
- .. [VALUE] http://www.value-cost.eu/
 """
 from __future__ import annotations
 
