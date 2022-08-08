@@ -4,17 +4,17 @@ r"""
 Fire Weather Indices Submodule
 ==============================
 
-This submodule defines the :py:func:`xclim.indices.fire_season`, :py:func:`CODE-xclim.indices.drought_code` and
+This submodule defines the :py:func:`xclim.indices.fire_season`, :py:func:`code-xclim.indices.drought_code` and
 :py:func:`xclim.indices.fire_weather_indexes` indices, which are used by the eponym indicators.
 Users should read this module's documentation and the one of :py:func:`fire_weather_ufunc`. They should also consult the
-information available at :cite:t:`CODE-natural_resources_canada_data_nodate`.
+information available at :cite:t:`code-natural_resources_canada_data_nodate`.
 
-First adapted from Matlab code `CalcFWITimeSeriesWithStartup.m` from GFWED :cite:p:`FIRE-wang_updated_2015` made
+First adapted from Matlab code `CalcFWITimeSeriesWithStartup.m` from GFWED :cite:p:`fire-wang_updated_2015` made
 for using MERRA2 data, which was a translation of FWI.vba of the Canadian Fire Weather Index system. Then, updated and
 synchronized with the R code of the cffdrs package. When given the correct parameters, the current code has an error
-below 3% when compared with the :cite:t:`FIRE-field_development_2015` data.
+below 3% when compared with the :cite:t:`fire-field_development_2015` data.
 
-Parts of the code and of the documentation in this submodule are directly taken from :cite:t:`CODE-cantin_canadian_2014`
+Parts of the code and of the documentation in this submodule are directly taken from :cite:t:`code-cantin_canadian_2014`
 which was published with the GPLv2 license.
 
 Fire season
@@ -28,9 +28,9 @@ fire season can be computed inside the iterator. Passing `season_method=None` sw
 replicating the `fwi` method of the R package.
 
 The fire season determination is based on three consecutive daily maximum temperature thresholds
-:cite:p:`FIRE-wotton_length_1993,FIRE-lawson_weather_2008`. A "GFWED" method is also implemented. There, the 12h
+:cite:p:`fire-wotton_length_1993,fire-lawson_weather_2008`. A "GFWED" method is also implemented. There, the 12h
 LST temperature is used instead of the daily maximum. The current implementation is slightly different from the
-description in :cite:t:`FIRE-field_development_2015`, but it replicates the Matlab code when `temp_start_thresh` and
+description in :cite:t:`fire-field_development_2015`, but it replicates the Matlab code when `temp_start_thresh` and
 `temp_end_thresh` are both set to 6 degC. In xclim, the number of consecutive days, the start and end temperature
 thresholds and the snow depth threshold can all be modified.
 
@@ -41,7 +41,7 @@ The last drought_code of the season is kept in "winter" (where the fire season m
 is accumulated until the start of the next season. The first drought code is computed as a function of these instead
 of using the default DCStart value. Parameters to :py:func:`_overwintering_drought_code` are listed below.
 The code for the overwintering is based on
-:cite:t:`DROUGHT-mcelhinny_high-resolution_2020,DROUGHT-van_wagner_drought_1985`.
+:cite:t:`drought-mcelhinny_high-resolution_2020,drought-van_wagner_drought_1985`.
 
 Finally, a mechanism for dry spring starts is implemented. For now, it is slightly different from what the GFWED, uses,
 but seems to agree with the state of the science of the CFS. When activated, the drought code and Duff-moisture codes
@@ -129,22 +129,22 @@ References
 Codes:
 
 .. bibliography::
-   :labelprefix: FWI
-   :keyprefix: CODE-
+   :labelprefix: CODE
+   :keyprefix: code-
 
 Matlab code of the GFWED obtained through personal communication.
 
 Fire season determination methods:
 
 .. bibliography::
-   :labelprefix: FWI
-   :keyprefix: FIRE-
+   :labelprefix: FIRE
+   :keyprefix: fire-
 
 Drought Code overwintering:
 
 .. bibliography::
-   :labelprefix: FWI
-   :keyprefix: DROUGHT-
+   :labelprefix: DROUGHT
+   :keyprefix: drought-
 
 """
 # This file is structured in the following way:
