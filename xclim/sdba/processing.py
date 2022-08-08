@@ -37,7 +37,7 @@ def adapt_freq(
 
     This is useful when the dry-day frequency in the simulations is higher than in the references. This function
     will create new non-null values for `sim`/`hist`, so that adjustment factors are less wet-biased.
-    Based on :cite:t:`themesl_empirical-statistical_2012`.
+    Based on :cite:t:`sdba-themesl_empirical-statistical_2012`.
 
     Parameters
     ----------
@@ -75,7 +75,7 @@ def adapt_freq(
 
     References
     ----------
-    :cite:cts:`themesl_empirical-statistical_2012`
+    :cite:cts:`sdba-themesl_empirical-statistical_2012`
 
     """
     sim = convert_units_to(sim, ref)
@@ -330,7 +330,7 @@ def reordering(ref: xr.DataArray, sim: xr.DataArray, group: str = "time") -> xr.
 
     Reference
     ---------
-    :cite:cts:`cannon_multivariate_2018`
+    :cite:cts:`sdba-cannon_multivariate_2018`
 
     """
     ds = xr.Dataset({"sim": sim, "ref": ref})
@@ -347,7 +347,7 @@ def escore(
     N: int = 0,  # noqa
     scale: bool = False,
 ) -> xr.DataArray:
-    r"""Energy score, or energy dissimilarity metric, based on :cite:t:`szekely_testing_2004` and :cite:t:`cannon_multivariate_2018`.
+    r"""Energy score, or energy dissimilarity metric, based on :cite:t:`sdba-szekely_testing_2004` and :cite:t:`sdba-cannon_multivariate_2018`.
 
     Parameters
     ----------
@@ -391,13 +391,13 @@ def escore(
     :math:`\Vert\cdot\Vert` denotes Euclidean norm, :math:`X_{ip}` denotes the p-th observation in the i-th cluster.
 
     The input scaling and the factor :math:`\frac{1}{2}` in the first equation are additions of
-    :cite:t:`cannon_multivariate_2018` to the metric. With that factor, the test becomes identical to the one defined by
-    :cite:t:`baringhaus_new_2004`.
-    This version is tested against values taken from Alex Cannon's MBC R package :cite:p:`cannon_mbc_2020`.
+    :cite:t:`sdba-cannon_multivariate_2018` to the metric. With that factor, the test becomes identical to the one defined by
+    :cite:t:`sdba-baringhaus_new_2004`.
+    This version is tested against values taken from Alex Cannon's MBC R package :cite:p:`sdba-cannon_mbc_2020`.
 
     References
     ----------
-    :cite:cts:`baringhaus_new_2004,cannon_multivariate_2018,cannon_mbc_2020,szekely_testing_2004`
+    :cite:cts:`sdba-baringhaus_new_2004,sdba-cannon_multivariate_2018,sdba-cannon_mbc_2020,sdba-szekely_testing_2004`
 
     """
     pts_dim, obs_dim = dims
@@ -599,7 +599,7 @@ def to_additive_space(
 ):
     r"""Transform a non-additive variable into an additive space by the means of a log or logit transformation.
 
-    Based on :cite:t:`alavoine_distinct_2021`.
+    Based on :cite:t:`sdba-alavoine_distinct_2021`.
 
     Parameters
     ----------
@@ -652,7 +652,7 @@ def to_additive_space(
 
     References
     ----------
-    :cite:cts:`alavoine_distinct_2021`
+    :cite:cts:`sdba-alavoine_distinct_2021`
 
     """
     lower_bound = convert_units_to(lower_bound, data)
@@ -689,7 +689,7 @@ def from_additive_space(
 ):
     r"""Transform back to the physical space a variable that was transformed with `to_additive_space`.
 
-    Based on :cite:t:`alavoine_distinct_2021`. If parameters are not present on the attributes of the data, they must be
+    Based on :cite:t:`sdba-alavoine_distinct_2021`. If parameters are not present on the attributes of the data, they must be
     all given are arguments.
 
     Parameters
@@ -745,7 +745,7 @@ def from_additive_space(
 
     References
     ----------
-    :cite:cts:`alavoine_distinct_2021`
+    :cite:cts:`sdba-alavoine_distinct_2021`
 
     """
     if trans is None and lower_bound is None and units is None:

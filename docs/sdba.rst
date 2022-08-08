@@ -119,5 +119,6 @@ Footnotes
 =========
 
 .. bibliography::
-   :filter: docname in docnames
    :style: unsrt
+   :labelprefix: SDBA
+   :keyprefix: sdba-

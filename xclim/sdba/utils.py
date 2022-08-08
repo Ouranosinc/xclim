@@ -535,7 +535,7 @@ def best_pc_orientation_simple(
     Given an inverse transform `Hinv` and a transform `R`, this returns the orientation minimizing the projected
     distance for a test point far from the origin.
 
-    This trick is inspired by the one exposed in :cite:t:`hnilica_multisite_2017`. For each possible orientation vector,
+    This trick is inspired by the one exposed in :cite:t:`sdba-hnilica_multisite_2017`. For each possible orientation vector,
     the test point is reprojected and the distance from the original point is computed. The orientation
     minimizing that distance is chosen.
 
@@ -560,7 +560,7 @@ def best_pc_orientation_simple(
 
     References
     ----------
-    :cite:cts:`hnilica_multisite_2017`
+    :cite:cts:`sdba-hnilica_multisite_2017`
     """
     m = R.shape[0]
     P = np.diag(val * np.ones(m))
@@ -578,7 +578,7 @@ def best_pc_orientation_full(
     Hmean: np.ndarray,
     hist: np.ndarray,
 ) -> np.ndarray:
-    """Return best orientation vector for A according to the method of :cite:t:`alavoine_distinct_2021`.
+    """Return best orientation vector for `A` according to the method of :cite:t:`sdba-alavoine_distinct_2021`.
 
     Eigenvectors returned by `pc_matrix` do not have a defined orientation.
     Given an inverse transform Hinv, a transform R, the actual and target origins `Hmean` and `Rmean` and the matrix of
@@ -586,8 +586,8 @@ def best_pc_orientation_full(
     maximizes the Spearman correlation coefficient of all variables. The correlation is computed for each variable
     individually, then averaged.
 
-    This trick is explained in :cite:t:`alavoine_distinct_2021`.
-     See docstring of :py:func:`sdba.adjustment.PrincipalComponentAdjustment`.
+    This trick is explained in :cite:t:`sdba-alavoine_distinct_2021`.
+    See docstring of :py:func:`sdba.adjustment.PrincipalComponentAdjustment`.
 
     Parameters
     ----------
@@ -609,7 +609,7 @@ def best_pc_orientation_full(
 
     References
     ----------
-    :cite:cts:`alavoine_distinct_2021`
+    :cite:cts:`sdba-alavoine_distinct_2021`
 
     """
     # All possible orientation vectors
@@ -650,7 +650,7 @@ def get_clusters_1d(
 
     References
     ----------
-    `getcluster` of Extremes.jl (:cite:cts:`jalbert_extreme_2022`).
+    `getcluster` of Extremes.jl (:cite:cts:`sdba-jalbert_extreme_2022`).
     """
     # Boolean array, True where data is over u2
     # We pad with values under u2, so that clusters never start or end at boundaries.
@@ -791,7 +791,7 @@ def rand_rot_matrix(
 
     References
     ----------
-    :cite:cts:`mezzadri_how_2007`
+    :cite:cts:`sdba-mezzadri_how_2007`
 
     """
     if num > 1:
