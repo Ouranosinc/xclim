@@ -66,7 +66,7 @@ be parallelized with dask and accept xarray objects. For now, these experimental
 approach, instead they only provide one method, ``adjust(ref, hist, sim, multi_dim=None, **kwargs)`` which performs all
 steps : initialization of the SBCK object, training (fit) and adjusting (predict). All SBCK wrappers accept a
 ``multi_dim`` argument for specifying the name of the "multivariate" dimension. This wrapping is still experimental and
-some bugs or inconsistencies might exist. To see how one can install that package, see :ref:`Extra dependencies`.
+some bugs or inconsistencies might exist. To see how one can install that package, see :ref:`extra-dependencies`.
 
 .. _SBCK: https://github.com/yrobink/SBCK
 

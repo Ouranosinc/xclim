@@ -300,28 +300,28 @@ def biologically_effective_degree_days(
 
     Parameters
     ----------
-    tasmin: xarray.DataArray
+    tasmin : xarray.DataArray
       Minimum daily temperature.
-    tasmax: xarray.DataArray
+    tasmax : xarray.DataArray
       Maximum daily temperature.
-    lat: xarray.DataArray, optional
+    lat : xarray.DataArray, optional
       Latitude coordinate.
-    thresh_tasmin: str
+    thresh_tasmin : str
       The minimum temperature threshold.
-    method: {"gladstones", "icclim", "jones"}
+    method : {"gladstones", "icclim", "jones"}
       The formula to use for the calculation.
       The "gladstones" integrates a daily temperature range and latitude coefficient. End_date should be "11-01".
       The "icclim" method ignores daily temperature range and latitude coefficient. End date should be "10-01".
       The "jones" method integrates axial tilt, latitude, and day-of-year on coefficient. End_date should be "11-01".
-    low_dtr: str
+    low_dtr : str
       The lower bound for daily temperature range adjustment (default: 10°C).
-    high_dtr: str
+    high_dtr : str
       The higher bound for daily temperature range adjustment (default: 13°C).
-    max_daily_degree_days: str
+    max_daily_degree_days : str
       The maximum amount of biologically effective degrees days that can be summed daily.
-    start_date: DayOfYearStr
+    start_date : DayOfYearStr
       The hemisphere-based start date to consider (north = April, south = October).
-    end_date: DayOfYearStr
+    end_date : DayOfYearStr
       The hemisphere-based start date to consider (north = October, south = April). This date is non-inclusive.
     freq : str
       Resampling frequency (default: "YS"; For Southern Hemisphere, should be "AS-JUL").
@@ -350,10 +350,10 @@ def biologically_effective_degree_days(
 
     .. math::
         TR_{adj} = f(TX_{i}, TN_{i}) = \begin{cases}
-                                0.25(TX_{i} - TN_{i} - 13), & \text{if } (TX_{i} - TN_{i}) > 13 \\
-                                0, & \text{if } 10 < (TX_{i} - TN_{i}) < 13\\
-                                0.25(TX_{i} - TN_{i} - 10), & \text{if } (TX_{i} - TN_{i}) < 10 \\
-                                       \end{cases}
+            0.25(TX_{i} - TN_{i} - 13), & \text{if } (TX_{i} - TN_{i}) > 13 \\
+            0, & \text{if } 10 < (TX_{i} - TN_{i}) < 13\\
+            0.25(TX_{i} - TN_{i} - 10), & \text{if } (TX_{i} - TN_{i}) < 10 \\
+                \end{cases}
 
     .. math::
         k = f(lat) = 1 + \left(\frac{\left| lat  \right|}{50} * 0.06,  \text{if }40 < |lat| <50, \text{else } 0\right)
@@ -367,9 +367,8 @@ def biologically_effective_degree_days(
 
     References
     ----------
-    :cite:cts:`gladstones_viticulture_1992`
+    :cite:cts:`gladstones_viticulture_1992,project_team_eca&d_algorithm_2013`
 
-    :cite:cts:`project_team_eca&d_algorithm_2013`
     """
     tasmin = convert_units_to(tasmin, "degC")
     tasmax = convert_units_to(tasmax, "degC")
