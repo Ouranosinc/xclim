@@ -347,12 +347,12 @@ def zech_aslan(x: np.ndarray, y: np.ndarray, *, dmin: float = 1e-12) -> float:
     :math:`r \to 0`, it is controllable through the `dmin` parameter.
 
     This version corresponds the :math:`D_{ZAE}` test of :cite:t:`grenier_assessment_2013` (eq. 7), which is a version
-    of :math:`\phi_{NM}` from [AZ03]_, modified by using the standardized  euclidean distance, the log weight function
-    and choosing :math:`d_{min} = 10^{-12}`.
+    of :math:`\phi_{NM}` from :cite:t:`aslan_new_2003`, modified by using the standardized  euclidean distance, the log
+    weight function and choosing :math:`d_{min} = 10^{-12}`.
 
     References
     ----------
-    :cite:cts:`zech_multivariate_2003,aslan_new_2003`
+    :cite:cts:`grenier_assessment_2013,zech_multivariate_2003,aslan_new_2003`
 
     """
     nx, d = x.shape
@@ -394,7 +394,7 @@ def szekely_rizzo(x: np.ndarray, y: np.ndarray, *, standardize: bool = True) -> 
     Notes
     -----
     The e-distance between two variables :math:`X`, :math:`Y` (target and candidates) of sizes :math:`n,d` and
-    :math:`m,d` proposed by [SR2004]_ is defined by:
+    :math:`m,d` proposed by :cite:t:`szekely_testing_2004` is defined by:
 
     .. math::
 
