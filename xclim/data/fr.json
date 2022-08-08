@@ -249,15 +249,15 @@
   },
   "TN_DAYS_ABOVE": {
     "long_name": "Nombre de jours avec Tmin > {thresh}",
-    "description": "Nombre {freq:m} de jours où la température quotidienne minimale est au-dessus de {thresh}.",
+    "description": "Nombre {freq:m} de jours où la température minimale quotidienne est au-dessus de {thresh}.",
     "title": "Nombre de jours avec Tmin au-dessus d'un certain seuil",
-    "abstract": "Nombre de jours où la température quotidienne minimale est au-dessus d'un seuil."
+    "abstract": "Nombre de jours où la température minimale quotidienne est au-dessus d'un seuil."
   },
   "TN_DAYS_BELOW": {
     "long_name": "Nombre de jours avec Tmin < {thresh}",
-    "description": "Nombre {freq:m} de jours où la température quotidienne minimale est sous {thresh}.",
+    "description": "Nombre {freq:m} de jours où la température minimale quotidienne est sous {thresh}.",
     "title": "Nombre de jours avec Tmin sous un certain seuil",
-    "abstract": "Nombre de jours où la température quotidienne minimale est sous un seuil."
+    "abstract": "Nombre de jours où la température minimale quotidienne est sous un seuil."
   },
   "TG_DAYS_ABOVE": {
     "long_name": "Nombre de jours avec Tmoy > {thresh}",
@@ -273,19 +273,19 @@
   },
   "TX_DAYS_ABOVE": {
     "long_name": "Nombre de jours avec Tmax > {thresh}",
-    "description": "Nombre {freq:m} de jours où la température quotidienne maximale est au-dessus de {thresh}.",
+    "description": "Nombre {freq:m} de jours où la température maximale quotidienne est au-dessus de {thresh}.",
     "title": "Nombre de jours avec Tmax au-dessus d'un certain seuil",
-    "abstract": "Nombre de jours où la température quotidienne maximale est au-dessus d'un seuil."
+    "abstract": "Nombre de jours où la température maximale quotidienne est au-dessus d'un seuil."
   },
   "TX_DAYS_BELOW": {
     "long_name": "Nombre de jours avec Tmax < {thresh}",
-    "description": "Nombre {freq:m} de jours où la température quotidienne maximale est sous {thresh}.",
+    "description": "Nombre {freq:m} de jours où la température maximale quotidienne est sous {thresh}.",
     "title": "Nombre de jours avec Tmax sous un certain seuil",
-    "abstract": "Nombre de jours où la température quotidienne maximale est sous un seuil."
+    "abstract": "Nombre de jours où la température maximale quotidienne est sous un seuil."
   },
   "TX_TN_DAYS_ABOVE": {
     "long_name": "Nombre de jours avec Tmax > {thresh_tasmax} et Tmin > {thresh_tasmin}",
-    "description": "Nombre {freq:m} de jours où la température quotidienne maximale excède {thresh_tasmax} et la température quotidienne minimale excède {thresh_tasmin}.",
+    "description": "Nombre {freq:m} de jours où la température maximale quotidienne excède {thresh_tasmax} et la température minimale quotidienne excède {thresh_tasmin}.",
     "title": "Nombre de jours avec des températures quotidiennes minimales et maximales chaudes",
     "abstract": "Nombre de jours où les températures quotidiennes maximales et minimales sont au-dessus de seuils donnés."
   },
@@ -311,7 +311,7 @@
     "long_name": "Nombre de jours de vague de chaleur",
     "description": "Nombre {freq:m} de jours de vague de chaleur, définie comme cinq jours consécutifs ou plus où la température est au-dessus de {thresh}.",
     "title": "Indice de vague de chaleur",
-    "abstract": "Nombre de jours de vagues de chaleur. Une vague de chaleur se produit lorsque la température quotidienne maximale excède un seuil durant au moins 5 jours."
+    "abstract": "Nombre de jours de vagues de chaleur. Une vague de chaleur se produit lorsque la température maximale quotidienne excède un seuil durant au moins 5 jours."
   },
   "TG": {
     "long_name": "température quotidienne moyenne",
@@ -351,21 +351,21 @@
   },
   "TN_MIN": {
     "long_name": "Minimum de la température quotidienne",
-    "description": "Minimum {freq:m} de la température quotidienne minimale.",
-    "title": "Température quotidienne minimale",
-    "abstract": "Température quotidienne minimale."
+    "description": "Minimum {freq:m} de la température minimale quotidienne.",
+    "title": "Température minimale quotidienne",
+    "abstract": "Température minimale quotidienne."
   },
   "TN_MAX": {
-    "long_name": "Maximum de la température quotidienne minimale",
-    "description": "Maximum {freq:m} de la température quotidienne minimale.",
+    "long_name": "Maximum de la température minimale quotidienne",
+    "description": "Maximum {freq:m} de la température minimale quotidienne.",
     "title": "Maximum de la température minimale",
-    "abstract": "Maximum de la température quotidienne minimale."
+    "abstract": "Maximum de la température minimale quotidienne."
   },
   "TN_MEAN": {
-    "long_name": "Moyenne de la température quotidienne minimale",
-    "description": "Moyenne {freq:f} de la température quotidienne minimale.",
+    "long_name": "Moyenne de la température minimale quotidienne",
+    "description": "Moyenne {freq:f} de la température minimale quotidienne.",
     "title": "Moyenne de la température minimale",
-    "abstract": "Moyenne de la température quotidienne minimale."
+    "abstract": "Moyenne de la température minimale quotidienne."
   },
   "TN10P": {
     "long_name": "Nombre de jours où la température minimale est en dessous du {per_base_thresh}e percentile",
@@ -380,22 +380,22 @@
     "abstract": "Nombre de jours où la température minimale est au-dessus du {per_base_thresh}e percentile."
   },
   "TX_MIN": {
-    "long_name": "Minimum de la température quotidienne maximale",
-    "description": "Minimum {freq:m} de la température quotidienne maximale.",
+    "long_name": "Minimum de la température maximale quotidienne",
+    "description": "Minimum {freq:m} de la température maximale quotidienne.",
     "title": "Minimum de la température maximale",
-    "abstract": "Minimum de la température quotidienne maximale."
+    "abstract": "Minimum de la température maximale quotidienne."
   },
   "TX_MAX": {
     "long_name": "Maximum de la température quotidienne",
-    "description": "Maximum {freq:m} de la température quotidienne maximale.",
-    "title": "Température quotidienne maximale",
-    "abstract": "Température quotidienne maximale."
+    "description": "Maximum {freq:m} de la température maximale quotidienne.",
+    "title": "Température maximale quotidienne",
+    "abstract": "Température maximale quotidienne."
   },
   "TX_MEAN": {
-    "long_name": "Moyenne de la température quotidienne maximale",
-    "description": "Moyenne {freq:f} de la température quotidienne maximale.",
+    "long_name": "Moyenne de la température maximale quotidienne",
+    "description": "Moyenne {freq:f} de la température maximale quotidienne.",
     "title": "Moyenne de la température maximale",
-    "abstract": "Moyenne de la température quotidienne maximale."
+    "abstract": "Moyenne de la température maximale quotidienne."
   },
   "TX10P": {
     "long_name": "Nombre de jours où la température maximale est en dessous du {per_base_thresh}e percentile",
@@ -429,31 +429,31 @@
   },
   "ETR": {
     "long_name": "Amplitude des températures extrêmes",
-    "description": "Calcul {freq:m} de l'intervalle entre le maximum de la température quotidienne maximale et le minimum de la température quotidienne minimale.",
+    "description": "Calcul {freq:m} de l'intervalle entre le maximum de la température maximale quotidienne et le minimum de la température minimale quotidienne.",
     "title": "Intervalle des températures extrêmes",
     "abstract": "Le maximum de la température maximale moins le minimum de la température minimale."
   },
   "COLD_SPELL_DURATION_INDEX": {
     "long_name": "Indice de durée des vagues de froid",
-    "description": "Nombre {freq:m} de jours de vague de froid. Une vague de froid se produit lorsque la température quotidienne minimale est sous le {per_base_thresh} percentile durant au moins {window} jours consécutifs. Le {per_base_thresh} percentile est calculé à partir d'une fenêtre de {per_window} jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "description": "Nombre {freq:m} de jours de vague de froid. Une vague de froid se produit lorsque la température minimale quotidienne est sous le {per_base_thresh} percentile durant au moins {window} jours consécutifs. Le {per_base_thresh} percentile est calculé à partir d'une fenêtre de {per_window} jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
     "title": "Indice de durée des vagues de froid",
-    "abstract": "Nombre de jours de vagues de froid. Une vague de froid se produit lorsque la température quotidienne minimale est sous le {per_base_thresh} percentile durant au moins {window} nombre de jours consécutifs."
+    "abstract": "Nombre de jours de vagues de froid. Une vague de froid se produit lorsque la température minimale quotidienne est sous le {per_base_thresh} percentile durant au moins {window} nombre de jours consécutifs."
   },
   "COLD_SPELL_FREQUENCY": {
     "long_name": "Nombre de vagues de froid",
-    "description": "Nombre {freq:m} de vagues de froid. Une vague de froid se produit lorsque la température quotidienne minimale est sous {thresh} durant au moins {window} jours consécutifs.",
+    "description": "Nombre {freq:m} de vagues de froid. Une vague de froid se produit lorsque la température minimale quotidienne est sous {thresh} durant au moins {window} jours consécutifs.",
     "title": "Nombre de vagues de froid",
-    "abstract": "Nombre de vagues de froid. Une vague de froid se produit lorsque la température quotidienne minimale est sous un seuil durant au moins un certain nombre de jours consécutifs."
+    "abstract": "Nombre de vagues de froid. Une vague de froid se produit lorsque la température minimale quotidienne est sous un seuil durant au moins un certain nombre de jours consécutifs."
   },
   "COLD_SPELL_DAYS": {
     "long_name": "Jours de vagues de froid",
-    "description": "Nombre {freq:m} de jours de vague de froid. Une vague de froid se produit lorsque la température quotidienne minimale est sous {thresh} durant au moins {window} jours consécutifs.",
+    "description": "Nombre {freq:m} de jours de vague de froid. Une vague de froid se produit lorsque la température minimale quotidienne est sous {thresh} durant au moins {window} jours consécutifs.",
     "title": "Jours de vague de froid",
-    "abstract": "Nombre de jours de vagues de froid. Une vague de froid se produit lorsque la température quotidienne minimale est sous un seuil durant au moins un certain nombre de jours consécutifs."
+    "abstract": "Nombre de jours de vagues de froid. Une vague de froid se produit lorsque la température minimale quotidienne est sous un seuil durant au moins un certain nombre de jours consécutifs."
   },
   "COOL_NIGHT_INDEX": {
     "long_name": "Indice de fraîcheur des nuits",
-    "description": "Moyenne {freq:f} de la température quotidienne minimale en septembre (hémisphère nord) ou en mars (hémisphère sud).",
+    "description": "Moyenne {freq:f} de la température minimale quotidienne en septembre (hémisphère nord) ou en mars (hémisphère sud).",
     "title": "Indice de fraîcheur des nuits",
     "comment": "Formule prise de Tonietto & Carbonneau, 2004 (10.1016/j.agrformet.2003.06.001).",
     "abstract": "Indicateur des conditions nycthermiques de maturation, qui correspond à la valeur moyenne de la température minimale de l'air sur les 30 jours précédant la date de récolte potentielle."
@@ -496,10 +496,10 @@
   },
   "BIOLOGICALLY_EFFECTIVE_DEGREE_DAYS": {
     "long_name": "Degrés-jours biologiquement actifs",
-    "description": "Accumulation des degrés-jours borné par Tmin > {thresh_tasmin} et Tmax-Tmin < {max_daily_degree_days}. Les degrés jours quotidiens sont corrigés selon Tmax-Tmin et selon un coefficient de longueur du jour dépendent de la latitude.",
+    "description": "Accumulation des degrés-jours borné par Tmin > {thresh_tasmin} et Tmax-Tmin < {max_daily_degree_days}. Les degrés jours quotidiens sont corrigés selon Tmax-Tmin et selon un coefficient de durée du jour dépendent de la latitude.",
     "title": "Degrés-jours biologiquement actifs",
     "comment": "Formule originale prise de Gladstones 1992.",
-    "abstract": "Indice basé sur une relation non linéaire entre la température et les processus physiologiques. Il intègre une borne supérieure du cumul, un coefficient lié à la longueur du jour et une correction liée à l'écart journalier des températures."
+    "abstract": "Indice basé sur une relation non linéaire entre la température et les processus physiologiques. Il intègre une borne supérieure du cumul, un coefficient lié à la durée du jour et une correction liée à l'écart journalier des températures."
   },
   "EFFECTIVE_GROWING_DEGREE_DAYS": {
     "long_name": "Degrés-jours effectives",
@@ -529,21 +529,21 @@
   },
   "FROST_DAYS": {
     "long_name": "Nombre de jours de gel (Tmin < {thresh})",
-    "description": "Nombre {freq:m} de jours où la température quotidienne minimale est sous {thresh}.",
+    "description": "Nombre {freq:m} de jours où la température minimale quotidienne est sous {thresh}.",
     "title": "Nombre de jours de gel",
-    "abstract": "Nombre de jours où la température quotidienne minimale est sous un seuil."
+    "abstract": "Nombre de jours où la température minimale quotidienne est sous un seuil."
   },
   "ICE_DAYS": {
     "long_name": "Nombre de jours de glace (Tmax < {thresh})",
-    "description": "Nombre {freq:m} de jours où la température quotidienne maximale est sous {thresh}.",
+    "description": "Nombre {freq:m} de jours où la température maximale quotidienne est sous {thresh}.",
     "title": "Nombre de jours de glace",
-    "abstract": "Nombre de jours où la température quotidienne maximale est sous un seuil."
+    "abstract": "Nombre de jours où la température maximale quotidienne est sous un seuil."
   },
   "CONSECUTIVE_FROST_DAYS": {
     "long_name": "Durée maximale des périodes de gel (Tmin < 0°C)",
-    "description": "Durée maximale {freq:f} des périodes où la température quotidienne minimale est sous 0°C.",
+    "description": "Durée maximale {freq:f} des périodes où la température minimale quotidienne est sous 0°C.",
     "title": "Durée maximale des périodes de gel (Tmin < 0°C)",
-    "abstract": "Durée maximale des périodes consécutives où la température quotidienne minimale est sous 0°C."
+    "abstract": "Durée maximale des périodes consécutives où la température minimale quotidienne est sous 0°C."
   },
   "FROST_FREE_SEASON_LENGTH": {
     "long_name": "Durée de la saison sans gel",
@@ -637,9 +637,9 @@
   },
   "HOT_SPELL_FREQUENCY": {
     "long_name": "Nombre de périodes chaudes (Tmax > {thresh_tasmax} durant >= {window} jours)",
-    "description": "Nombre {freq} de périodes chaudes. Une période chaude se produit lorsque la température quotidienne maximale excède {thresh_tasmax} durant au moins {window} jours.",
+    "description": "Nombre {freq} de périodes chaudes. Une période chaude se produit lorsque la température maximale quotidienne excède {thresh_tasmax} durant au moins {window} jours.",
     "title": "Fréquences des périodes chaudes",
-    "abstract": "Nombre de périodes chaudes dans un période donnée. Une période chaude se produit lorsque la température quotidienne maximale excède un seuil spécifique durant un minimum de jours."
+    "abstract": "Nombre de périodes chaudes dans un période donnée. Une période chaude se produit lorsque la température maximale quotidienne excède un seuil spécifique durant un minimum de jours."
   },
   "LAST_SPRING_FROST": {
     "long_name": "Jour de l'année du dernier gel printanier",
@@ -649,15 +649,15 @@
   },
   "HOT_SPELL_MAX_LENGTH": {
     "long_name": "Longueur maximale des périodes chaudes (Tmax > {thresh_tasmax} durant >= {window} jours)",
-    "description": "Longueur maximale {freq:f} des périodes chaudes. Une période chaude se produit lorsque la température quotidienne maximale excède {thresh_tasmax} durant au moins {window} jours.",
+    "description": "Longueur maximale {freq:f} des périodes chaudes. Une période chaude se produit lorsque la température maximale quotidienne excède {thresh_tasmax} durant au moins {window} jours.",
     "title": "Longueur maximale des périodes chaudes",
-    "abstract": "Longueur maximale des périodes chaudes dans une période donnée. Une période chaude se produit lorsque la température quotidienne maximale excède un seuil spécifique durant un minimum de jours."
+    "abstract": "Longueur maximale des périodes chaudes dans une période donnée. Une période chaude se produit lorsque la température maximale quotidienne excède un seuil spécifique durant un minimum de jours."
   },
   "CONSECUTIVE_FROST_FREE_DAYS": {
     "long_name": "Nombre maximal de jours consécutifs avec Tmin >= {thresh}",
-    "description": "Nombre maximal {freq} de jours consécutifs où la température quotidienne minimale excède ou est égale à {thresh}.",
+    "description": "Nombre maximal {freq} de jours consécutifs où la température minimale quotidienne excède ou est égale à {thresh}.",
     "title": "Nombre maximal de jours consécutifs sans gel (Tmin >= 0℃)",
-    "abstract": "La nombre maximal de jours consécutifs sans gel: où la température quotidienne minimale est au-dessus ou égale à un seuil."
+    "abstract": "La nombre maximal de jours consécutifs sans gel: où la température minimale quotidienne est au-dessus ou égale à un seuil."
   },
   "GROWING_SEASON_END": {
     "long_name": "Jour de l'année de la fin de la saison de croissance",
@@ -906,7 +906,7 @@
   },
   "WARM_SPELL_DURATION_INDEX": {
     "title": "Indice de durée des vagues de chaleur",
-    "abstract": "Nombre de jours faisant partie de vagues d'une longueur minimale où la température maximale quotidienne excède le {per_base_thresh}e percentile. Le {per_base_thresh} percentile des températures devrait être calculé avec une fenêtre mobile de {per_window} jours.",
+    "abstract": "Nombre de jours faisant partie de vagues d'une durée minimale où la température maximale quotidienne excède le {per_base_thresh}e percentile. Le {per_base_thresh} percentile des températures devrait être calculé avec une fenêtre mobile de {per_window} jours.",
     "description": "Durée totale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque Tmax est au-dessus du {per_base_thresh}e percentile durant au moins {window} jours.",
     "long_name": "Durée des vagues de chaleur"
   },
@@ -924,8 +924,8 @@
   },
   "CORN_HEAT_UNITS": {
     "title": "Unités thermiques maïs",
-    "abstract": "Indice basé sur la température utilisé pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température quotidienne minimale et maximale excèdent des seuils donnés.",
-    "description": "Indice basé sur la température utilisé pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température quotidienne minimale et maximale excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement.",
+    "abstract": "Indice basé sur la température utilisé pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température minimale quotidienne et maximale excèdent des seuils donnés.",
+    "description": "Indice basé sur la température utilisé pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température minimale quotidienne et maximale excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement.",
     "long_name": "Unités thermiques maïs"
   },
   "FREEZETHAW_SPELL_FREQUENCY": {
