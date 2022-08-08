@@ -722,7 +722,7 @@ def from_additive_space(
     Notes
     -----
     Given a variable that is not usable in an additive adjustment, :py:func:`to_additive_space` applied a transformation
-     to a space where additive methods are sensible. Given :math:`Y` the transformed variable, :math:`b_-` the
+    to a space where additive methods are sensible. Given :math:`Y` the transformed variable, :math:`b_-` the
     lower physical bound of that variable and :math:`b_+` the upper physical bound, two back-transformations are
     currently implemented to get :math:`X`, the physical variable.
 

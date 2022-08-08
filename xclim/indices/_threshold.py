@@ -666,7 +666,7 @@ def growing_season_length(
     The number of days between the first occurrence of at least six consecutive days with mean daily temperature over a
     threshold (default: 5℃) and the first occurrence of at least six consecutive days with mean daily temperature below
     the same threshold after a certain date. (Usually July 1st in the northern emisphere and January 1st in the southern
-     hemisphere.)
+    hemisphere.)
 
     Warnings
     --------

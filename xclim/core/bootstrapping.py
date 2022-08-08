@@ -67,13 +67,16 @@ def percentile_bootstrap(func):
 def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
     """Bootstrap the computation of percentile-based indices.
 
-    Indices measuring exceedance over percentile-based thresholds (such as tx90p) may contain artificial discontinuities at the beginning and end of the reference period used to calculate percentiles.
-    The bootstrap procedure can reduce those discontinuities by iteratively computing the percentile estimate and the index on altered reference periods.
-    Theses altered reference periods are themselves built iteratively:
-    When computing the index for year x, the bootstrapping create as many altered reference period as the number of years in the reference period.
-    To build one altered reference period, the values of year x are replaced by the values of another year in the reference period, then the index is computed on this altered period.
-    This is repeated for each year of the reference period, excluding year x,
-    The final result of the index for year x, is then the average of all the index results on altered years.
+    Indices measuring exceedance over percentile-based thresholds (such as tx90p) may contain artificial discontinuities
+    at the beginning and end of the reference period used to calculate percentiles. The bootstrap procedure can reduce
+    those discontinuities by iteratively computing the percentile estimate and the index on altered reference periods.
+
+    Theses altered reference periods are themselves built iteratively: When computing the index for year x, the
+    bootstrapping create as many altered reference period as the number of years in the reference period.
+    To build one altered reference period, the values of year x are replaced by the values of another year in the
+    reference period, then the index is computed on this altered period. This is repeated for each year of the reference
+    period, excluding year x, The final result of the index for year x, is then the average of all the index results on
+    altered years.
 
     Parameters
     ----------

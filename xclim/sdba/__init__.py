@@ -62,8 +62,8 @@ Experimental wrap of SBCK
 The `SBCK`_ python package implements various bias-adjustment methods, with an emphasis on multivariate methods and with
 a care for performance. If the package is correctly installed alongside xclim, the methods will be wrapped into
 :py:class:`xclim.sdba.adjustment.Adjust` classes (names beginning with `SBCK_`) with a minimal overhead so that they can
- be parallelized with dask and accept xarray objects. For now, these experimental classes can't use the train-adjust
- approach, instead they only provide one method, ``adjust(ref, hist, sim, multi_dim=None, **kwargs)`` which performs all
+be parallelized with dask and accept xarray objects. For now, these experimental classes can't use the train-adjust
+approach, instead they only provide one method, ``adjust(ref, hist, sim, multi_dim=None, **kwargs)`` which performs all
 steps : initialization of the SBCK object, training (fit) and adjusting (predict). All SBCK wrappers accept a
 ``multi_dim`` argument for specifying the name of the "multivariate" dimension. This wrapping is still experimental and
 some bugs or inconsistencies might exist. To see how one can install that package, see :ref:`Extra dependencies`.
