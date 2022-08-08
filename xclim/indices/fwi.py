@@ -129,6 +129,7 @@ References
 Codes:
 
 .. bibliography::
+   :labelprefix: FWI
    :keyprefix: CODE-
 
 Matlab code of the GFWED obtained through personal communication.
@@ -136,11 +137,13 @@ Matlab code of the GFWED obtained through personal communication.
 Fire season determination methods:
 
 .. bibliography::
+   :labelprefix: FWI
    :keyprefix: FIRE-
 
 Drought Code overwintering:
 
 .. bibliography::
+   :labelprefix: FWI
    :keyprefix: DROUGHT-
 
 """

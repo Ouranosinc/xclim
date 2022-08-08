@@ -64,7 +64,7 @@ def humidex(
     Notes
     -----
     The humidex is usually computed using hourly observations of dry bulb and dewpoint temperatures. It is computed
-    using the formula based on [masterton79]_:
+    using the formula based on :cite:t:`masterton_humidex_1979`:
 
     .. math::
 
@@ -78,14 +78,14 @@ def humidex(
        e = 6.112 \times \exp(5417.7530\left({\frac {1}{273.16}}-{\frac {1}{T_{\text{dewpoint}}}}\right)
 
     where the constant 5417.753 reflects the molecular weight of water, latent heat of vaporization,
-    and the universal gas constant ([mekis15]_). Alternatively, the term :math:`e` can also be computed from
-    the relative humidity `h` expressed in percent using [sirangelo20]_:
+    and the universal gas constant :cite:p`mekis_observed_2015`. Alternatively, the term :math:`e` can also be computed
+    from the relative humidity `h` expressed in percent using :cite:t:`sirangelo_combining_2020`:
 
     .. math::
 
       e = \frac{h}{100} \times 6.112 * 10^{7.5 T/(T + 237.7)}.
 
-    The humidex *comfort scale* ([eccc]_) can be interpreted as follows:
+    The humidex *comfort scale* :cite:p:`canada_glossary_2011` can be interpreted as follows:
 
     - 20 to 29 : no discomfort;
     - 30 to 39 : some discomfort;
@@ -101,10 +101,8 @@ def humidex(
 
     References
     ----------
-    .. [masterton79] Masterton, J. M., & Richardson, F. A. (1979). HUMIDEX, A method of quantifying human discomfort due to excessive heat and humidity, CLI 1-79. Downsview, Ontario: Environment Canada, Atmospheric Environment Service.
-    .. [mekis15] Éva Mekis, Lucie A. Vincent, Mark W. Shephard & Xuebin Zhang (2015) Observed Trends in Severe Weather Conditions Based on Humidex, Wind Chill, and Heavy Rainfall Events in Canada for 1953–2012, Atmosphere-Ocean, 53:4, 383-397, DOI: 10.1080/07055900.2015.1086970
-    .. [sirangelo20] Sirangelo, B., Caloiero, T., Coscarelli, R. et al. Combining stochastic models of air temperature and vapour pressure for the analysis of the bioclimatic comfort through the Humidex. Sci Rep 10, 11395 (2020). https://doi.org/10.1038/s41598-020-68297-4
-    .. [eccc] https://climate.weather.gc.ca/glossary_e.html
+    :cite:cts:`canada_glossary_2011,masterton_humidex_1979,mekis_observed_2015,sirangelo_combining_2020`
+
     """
     if (tdps is None) == (hurs is None):
         raise ValueError(
@@ -140,7 +138,7 @@ def humidex(
 def heat_index(tasmax: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
     r"""Daily heat index.
 
-    Perceived temperature after relative humidity is taken into account ([Blazejczyk2012]_).
+    Perceived temperature after relative humidity is taken into account :cite:p:`blazejczyk_comparison_2012`.
     The index is only valid for temperatures above 20°C.
 
     Parameters
@@ -157,15 +155,14 @@ def heat_index(tasmax: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
 
     References
     ----------
-    .. [Blazejczyk2012] Blazejczyk, K., Epstein, Y., Jendritzky, G., Staiger, H., & Tinz, B. (2012). Comparison of UTCI to selected thermal indices. International journal of biometeorology, 56(3), 515-535.
+    :cite:cts:`blazejczyk_comparison_2012`
 
     Notes
     -----
-    While both the humidex and the heat index are calculated using dew point,
-    the humidex uses a dew point of 7 °C (45 °F) as a base, whereas the heat
-    index uses a dew point base of 14 °C (57 °F). Further, the heat index uses
-    heat balance equations which account for many variables other than vapor
-    pressure, which is used exclusively in the humidex calculation.
+    While both the humidex and the heat index are calculated using dew point the humidex uses a dew point of 7 °C
+    (45 °F) as a base, whereas the heat index uses a dew point base of 14 °C (57 °F). Further, the heat index uses
+    heat balance equations which account for many variables other than vapour pressure, which is used exclusively in the
+    humidex calculation.
     """
     thresh = "20.0 degC"
     thresh = convert_units_to(thresh, "degC")
@@ -327,7 +324,7 @@ def sfcwind_2_uas_vas(
 def saturation_vapor_pressure(
     tas: xr.DataArray, ice_thresh: str = None, method: str = "sonntag90"  # noqa
 ) -> xr.DataArray:
-    """Saturation vapor pressure from temperature.
+    """Saturation vapour pressure from temperature.
 
     Parameters
     ----------
@@ -342,27 +339,23 @@ def saturation_vapor_pressure(
     Returns
     -------
     xarray.DataArray, [Pa]
-      Saturation vapor pressure.
+      Saturation vapour pressure.
 
     Notes
     -----
     In all cases implemented here :math:`log(e_{sat})` is an empirically fitted function (usually a polynomial)
     where coefficients can be different when ice is taken as reference instead of water. Available methods are:
 
-    - "goffgratch46" or "GG46", based on [goffgratch46]_, values and equation taken from [voemel]_.
-    - "sonntag90" or "SO90", taken from [sonntag90]_.
-    - "tetens30" or "TE30", based on [tetens30]_, values and equation taken from [voemel]_.
-    - "wmo08" or "WMO08", taken from [wmo08]_.
-    - "its90" or "ITS90", taken from [its90]_.
+    - "goffgratch46" or "GG46", based on :cite:t:`goff_low-pressure_1946`, values and equation taken from :cite:t:`vomel_saturation_2016`.
+    - "sonntag90" or "SO90", taken from :cite:t:`sonntag_important_1990`.
+    - "tetens30" or "TE30", based on :cite:t:`tetens_uber_1930`, values and equation taken from :cite:t:`vomel_saturation_2016`.
+    - "wmo08" or "WMO08", taken from :cite:t:`world_meteorological_organization_guide_2008`.
+    - "its90" or "ITS90", taken from :cite:t:`hardy_its-90_1998`.
 
     References
     ----------
-    .. [goffgratch46] Goff, J. A., and S. Gratch (1946) Low-pressure properties of water from -160 to 212 °F, in Transactions of the American Society of Heating and Ventilating Engineers, pp 95-122, presented at the 52nd annual meeting of the American Society of Heating and Ventilating Engineers, New York, 1946.
-    .. [sonntag90] Sonntag, D. (1990). Important new values of the physical constants of 1986, vapour pressure formulations based on the ITS-90, and psychrometer formulae. Zeitschrift für Meteorologie, 40(5), 340-344.
-    .. [tetens30] Tetens, O. 1930. Über einige meteorologische Begriffe. Z. Geophys 6: 207-309.
-    .. [voemel] https://cires1.colorado.edu/~voemel/vp.html
-    .. [wmo08] World Meteorological Organization. (2008). Guide to meteorological instruments and methods of observation. Geneva, Switzerland: World Meteorological Organization. https://www.weather.gov/media/epz/mesonet/CWOP-WMO8.pdf
-    .. [its90] Hardy, B. (1998). ITS-90 formulations for vapor pressure, frostpoint temperature, dewpoint temperature, and enhancement factors in the range–100 to+ 100 C. In The Proceedings of the Third International Symposium on Humidity & Moisture (pp. 1-8). https://www.thunderscientific.com/tech_info/reflibrary/its90formulas.pdf
+    :cite:cts:`goff_low-pressure_1946,hardy_its-90_1998,sonntag_important_1990,tetens_uber_1930,vomel_saturation_2016,world_meteorological_organization_guide_2008`
+
     """
     if ice_thresh is not None:
         thresh = convert_units_to(ice_thresh, "degK")

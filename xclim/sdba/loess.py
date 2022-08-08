@@ -215,7 +215,8 @@ def loess_smoothing(
 
     Notes
     -----
-    As stated in [Cleveland1979]_, the weighting function :math:`W(x)` should respect the following conditions:
+    As stated in :cite:t:`cleveland_robust_1979`, the weighting function :math:`W(x)` should respect the following
+    conditions:
 
     - :math:`W(x) > 0` for :math:`|x| < 1`
     - :math:`W(-x) = W(x)`

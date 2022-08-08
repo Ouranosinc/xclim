@@ -140,8 +140,8 @@ def huglin_index(
 ) -> xarray.DataArray:
     r"""Huglin Heliothermal Index.
 
-    Growing-degree days with a base of 10°C and adjusted for latitudes between 40°N and 50°N for April to September
-    (Northern Hemisphere; October to March in Southern Hemisphere). Originally proposed in [Huglin1978]_.
+    Growing-degree days with a base of 10°C and adjusted for latitudes between 40°N and 50°N for April-September
+    (Northern Hemisphere; October-March in Southern Hemisphere). Originally proposed in :cite:t:`huglin_nouveau_1978`.
     Used as a heat-summation metric in viticulture agroclimatology.
 
     Parameters
@@ -202,12 +202,13 @@ def huglin_index(
                     \end{cases}
 
     A more robust day-length calculation based on latitude, calendar, day-of-year, and obliquity is available with
-    `method="jones"`. See: :py:func:`xclim.indices.generic.day_lengths` or [Hall&Jones2010]_ for more information.
+    `method="jones"`.
+    See: :py:func:`xclim.indices.generic.day_lengths` or :cite:t:`hall_spatial_2010` for more information.
 
     References
     ----------
-    .. [Huglin1978] Huglin, P. (1978). Nouveau mode d’évaluation des possibilités héliothermiques d’un milieu viticole. Dans Symposium International sur l’Écologie de la Vigne (p. 89‑98). Ministère de l’Agriculture et de l’Industrie Alimentaire.
-    .. [Hall&Jones2010] Hall, A., & Jones, G. V. (2010). Spatial analysis of climate in winegrape-growing regions in Australia. Australian Journal of Grape and Wine Research, 16(3), 389‑404. https://doi.org/10.1111/j.1755-0238.2010.00100.x
+    :cite:cts:`huglin_nouveau_1978, hall_spatial_2010`
+
     """
     tas = convert_units_to(tas, "degC")
     tasmax = convert_units_to(tasmax, "degC")

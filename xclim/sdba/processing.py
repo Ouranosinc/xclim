@@ -397,7 +397,7 @@ def escore(
 
     References
     ----------
-    :cite:cts:`baringhaus_new_2004cannon_multivariate_2018,cannon_mbc_2020,szekely_testing_2004`
+    :cite:cts:`baringhaus_new_2004,cannon_multivariate_2018,cannon_mbc_2020,szekely_testing_2004`
 
     """
     pts_dim, obs_dim = dims
