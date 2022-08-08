@@ -20,6 +20,7 @@ Indices submodules
 
 .. automodule:: xclim.indices.helpers
    :members:
+   :noinex:
 
 .. automodule:: xclim.indices.run_length
    :members:

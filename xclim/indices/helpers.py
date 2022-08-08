@@ -182,10 +182,10 @@ def cosine_of_solar_zenith_angle(
 ) -> xr.DataArray:
     """Cosine of the solar zenith angle.
 
-    The solar zenith angle is the angle between a vertical line (perpendicular to the ground)
-    and the sun rays. This function computes a daily statistic of its cosine : its integral
-    from sunrise to sunset or the average over the same period. Based on :cite:t:`kalogirou_chapter_2014`.
-    In addition, it computes instantaneous values of its cosine. Based on :cite:t:di_napoli_mean_2020.
+    The solar zenith angle is the angle between a vertical line (perpendicular to the ground) and the sun rays.
+    This function computes a daily statistic of its cosine : its integral from sunrise to sunset or the average over
+    the same period. Based on :cite:t:`kalogirou_chapter_2014`. In addition, it computes instantaneous values of its
+    cosine. Based on :cite:t:`di_napoli_mean_2020`.
 
     Parameters
     ----------
@@ -206,19 +206,18 @@ def cosine_of_solar_zenith_angle(
       Time interval between two time steps in hours
       This is necessary if stat is "interval" or "sunlit".
     stat : {'integral', 'average', 'instant', 'interval', 'sunlit'}
-      Which daily statistic to return. If "integral", this returns the integral of the
-      cosine of the zenith angle from sunrise to sunset. If "average", the integral is
-      divided by the "duration" from sunrise to sunset. If "instant", this returns the
-      instantaneous cosine of the zenith angle. If "interval", this returns the cosine
-      of the zenith angle during each interval. If "sunlit", this returns the cosine
-      of the zenith angle during the sunlit period of each interval.
+      Which daily statistic to return. If "integral", this returns the integral of the cosine of the zenith angle from
+      sunrise to sunset. If "average", the integral is divided by the "duration" from sunrise to sunset. If "instant",
+      this returns the instantaneous cosine of the zenith angle. If "interval", this returns the cosine of the zenith
+      angle during each interval. If "sunlit", this returns the cosine of the zenith angle during the sunlit period of
+      each interval.
 
     Returns
     -------
-    Cosine of the solar zenith angle, [rad] or [dimensionless]
-      If stat is "integral", dimensions can be said to be "time" as the integral is on
-      the hour angle. For seconds, multiply by the number of seconds in a complete day
-      cycle (24*60*60) and divide by 2π.
+    xr.DataArray, [rad] or [dimensionless]
+      Cosine of the solar zenith angle. If stat is "integral", dimensions can be said to be "time" as the integral is on
+      the hour angle.
+      For seconds, multiply by the number of seconds in a complete day cycle (24*60*60) and divide by 2π.
 
     Notes
     -----
