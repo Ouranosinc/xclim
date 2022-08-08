@@ -43,7 +43,7 @@ russian = (
 def test_local_dict(tmp_path):
     loc, dic = xloc.get_local_dict("fr")
     assert loc == "fr"
-    assert dic["TG_MEAN"]["long_name"] == "Moyenne de la température journalière"
+    assert dic["TG_MEAN"]["long_name"] == "Moyenne de la température quotidienne"
 
     loc, dic = xloc.get_local_dict(esperanto)
     assert loc == "eo"
@@ -109,7 +109,7 @@ def test_indicator_output(tas_series):
     assert "long_name_fr" in tgmean.attrs
     assert (
         tgmean.attrs["description_fr"]
-        == "Moyenne annuelle de la température journalière."
+        == "Moyenne annuelle de la température quotidienne."
     )
 
 
