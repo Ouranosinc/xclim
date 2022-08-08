@@ -62,7 +62,7 @@ def test_local_dict(tmp_path):
     loc, dic = xloc.get_local_dict(("fr", {"TX_MAX": {"long_name": "Fait chaud."}}))
     assert loc == "fr"
     assert dic["TX_MAX"]["long_name"] == "Fait chaud."
-    assert dic["TG_MEAN"]["long_name"] == "Moyenne de la température journalière"
+    assert dic["TG_MEAN"]["long_name"] == "Moyenne de la température quotidienne"
 
 
 def test_local_attrs_sing():
@@ -72,9 +72,7 @@ def test_local_attrs_sing():
     assert "description" not in attrs
 
     with pytest.raises(ValueError):
-        attrs = xloc.get_local_attrs(
-            atmos.tg_mean, "fr", esperanto, append_locale_name=False
-        )
+        xloc.get_local_attrs(atmos.tg_mean, "fr", esperanto, append_locale_name=False)
 
 
 def test_local_attrs_multi(tmp_path):

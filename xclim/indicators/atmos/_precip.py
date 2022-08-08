@@ -100,19 +100,24 @@ rain_on_frozen_ground_days = PrTasxWithIndexing(
     identifier="rain_frzgr",
     units="days",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold",
+    title="Number of rain on frozen ground days",
     long_name="Number of rain on frozen ground days",
     description="{freq} number of days with rain above {thresh} after a series of seven days with average daily "
     "temperature below 0℃. Precipitation is assumed to be rain when the daily average temperature is above 0℃.",
+    abstract="The number of days with rain above a given threshold after a series of seven days with average daily "
+    "temperature below 0°C. Precipitation is assumed to be rain when the daily average temperature is above 0°C.",
     cell_methods="",
     compute=indices.rain_on_frozen_ground_days,
 )
 
 max_1day_precipitation_amount = PrecipWithIndexing(
     identifier="rx1day",
-    units="mm d-1",
+    units="mm/day",
     standard_name="lwe_thickness_of_precipitation_amount",
+    title="Maximum 1-day total precipitation",
     long_name="Maximum 1-day total precipitation",
     description="{freq} maximum 1-day total precipitation",
+    abstract="Maximum total daily precipitation for a given period.",
     cell_methods="time: maximum over days",
     compute=indices.max_1day_precipitation_amount,
 )
@@ -122,8 +127,10 @@ max_n_day_precipitation_amount = Precip(
     var_name="rx{window}day",
     units="mm",
     standard_name="lwe_thickness_of_precipitation_amount",
+    title="maximum n-day total precipitation",
     long_name="maximum n-day total precipitation",
     description="{freq} maximum {window}-day total precipitation.",
+    abstract="Maximum of the moving sum of daily precipitation for a given period.",
     cell_methods="time: maximum over days",
     compute=indices.max_n_day_precipitation_amount,
 )
@@ -132,8 +139,10 @@ wetdays = PrecipWithIndexing(
     identifier="wetdays",
     units="days",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold",
+    title="Number of wet days",
     long_name="Number of wet days",
     description="{freq} number of days with daily precipitation at or above {thresh}.",
+    abstract="The number of days with daily precipitation at or above a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.wetdays,
 )
@@ -141,8 +150,10 @@ wetdays = PrecipWithIndexing(
 wetdays_prop = PrecipWithIndexing(
     identifier="wetdays_prop",
     units="1",
+    title="Proportion of wet days",
     long_name="Proportion of wet days",
     description="{freq} proportion of days with precipitation at or above {thresh}.",
+    abstract="The proportion of days with daily precipitation at or above a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.wetdays_prop,
 )
@@ -151,8 +162,10 @@ dry_days = PrecipWithIndexing(
     identifier="dry_days",
     units="days",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_below_threshold",
+    title="Number of dry days",
     long_name="Number of dry days",
     description="{freq} number of days with daily precipitation under {thresh}.",
+    abstract="The number of days with daily precipitation under a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.dry_days,
 )
@@ -161,8 +174,10 @@ maximum_consecutive_wet_days = Precip(
     identifier="cwd",
     units="days",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_at_or_above_threshold",
+    title="Maximum consecutive wet days",
     long_name="Maximum consecutive wet days",
     description="{freq} maximum number of consecutive days with daily precipitation at or above {thresh}.",
+    abstract="The longest number of consecutive days where daily precipitation is at or above a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.maximum_consecutive_wet_days,
 )
@@ -171,8 +186,10 @@ maximum_consecutive_dry_days = Precip(
     identifier="cdd",
     units="days",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_below_threshold",
+    title="Maximum consecutive dry days",
     long_name="Maximum consecutive dry days",
     description="{freq} maximum number of consecutive days with daily precipitation below {thresh}.",
+    abstract="The longest number of consecutive days where daily precipitation below a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.maximum_consecutive_dry_days,
 )
@@ -181,7 +198,8 @@ daily_pr_intensity = PrecipWithIndexing(
     identifier="sdii",
     units="mm d-1",
     standard_name="lwe_thickness_of_precipitation_amount",
-    long_name="Average precipitation during wet days (SDII)",
+    title="Simple Daily Intensity Index",
+    long_name="Average precipitation during wet days",
     description="{freq} average precipitation for days with daily precipitation over {thresh}. "
     "This indicator is also known as the 'Simple Daily Intensity Index' (SDII).",
     cell_methods="",

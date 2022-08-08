@@ -148,7 +148,7 @@
     "long_name": "Nombre de jours de pluie sur sol gelé",
     "description": "Nombre {freq:m} de jours avec plus de {thresh} de pluie suivant sept jours consécutifs où la température était sous 0°C. Les précipitations sont considérées comme de la pluie lorsque la température moyenne est au-dessus de 0°C.",
     "title": "Nombre de jours de pluie sur sol gelé",
-    "abstract": "Nombre de jours avec des précipitations au-dessus d'un certain seuil après 7 jours consécutifs où la température était sous 0°C. Les précipitations sont considérées comme de la pluie lorsque la température moyenne est au-dessus de 0°C."
+    "abstract": "Nombre de jours avec pluie au-dessus d'un certain seuil après 7 jours consécutifs où la température était sous 0°C. Les précipitations sont considérées comme de la pluie lorsque la température moyenne est au-dessus de 0°C."
   },
   "RX1DAY": {
     "long_name": "Précipitation quotidienne maximale",
@@ -176,7 +176,7 @@
     "abstract": "Proportion de la précipitation totale due aux processus de convections. Seuls les jours avec un flux minimum de précipitation sont considérés."
   },
   "WETDAYS": {
-    "long_name": "Nombre de jours avec précipitation (précip >= {thresh})",
+    "long_name": "Nombre de jours avec précipitation",
     "description": "Nombre {freq:m} de jours où les précipitations sont au-dessus de {thresh}.",
     "title": "Jours mouillés",
     "abstract": "Nombre de jours où les précipitations sont au-dessus d'un seuil."
