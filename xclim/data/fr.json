@@ -176,15 +176,15 @@
     "abstract": "Proportion de la précipitation totale due aux processus de convections. Seuls les jours avec un flux minimum de précipitation sont considérés."
   },
   "WETDAYS": {
-    "long_name": "Nombre de jours pluvieux (précip >= {thresh})",
+    "long_name": "Nombre de jours avec précipitation (précip >= {thresh})",
     "description": "Nombre {freq:m} de jours où les précipitations sont au-dessus de {thresh}.",
     "title": "Jours mouillés",
     "abstract": "Nombre de jours où les précipitations sont au-dessus d'un seuil."
   },
   "WETDAY_PROP": {
-    "long_name": "Proportion de jours pluvieux (précip >= {thresh})",
+    "long_name": "Proportion de jours avec précipitation (précip >= {thresh})",
     "description": "Propotion {freq:m} de jours où les précipitations sont au-dessus de {thresh}.",
-    "title": "Proportion de jours pluvieux",
+    "title": "Proportion de jours avec précipitation",
     "abstract": "Proportion de jours où les précipitations sont au-dessus d'un seuil."
   },
   "CDD": {
@@ -212,10 +212,10 @@
     "abstract": "Précipitation accumulée totale. Si la température quotidienne moyenne est donnée, le paramètre phase peut-être utilisé pour restreindre le calcul aux précipitations d'une seule phase (liquide ou solide). Les précipitations sont considérées solides si la température quotidienne moyenne est sous 0°C (et vice-versa)."
   },
   "WET_PRCPTOT": {
-    "long_name": "Précipitation totale lors de jours pluvieux",
+    "long_name": "Précipitation totale lors de jours avec précipitation",
     "description": "Précipitation totale {freq:f} lorsque la précipitation quotidienne excède {thresh}.",
-    "title": "Précipitation accumulée totale lors de jours pluvieux",
-    "abstract": "Précipitation accumulée totale lors de jours pluvieux. Un jour est considéré pluvieux si la précipitation est supérieure ou égale à un seuil donné."
+    "title": "Précipitation accumulée totale lors de jours avec précipitation",
+    "abstract": "Précipitation accumulée totale lors de jours avec précipitation. Un jour est considéré avec précipitation si la précipitation est supérieure ou égale à un seuil donné."
   },
   "LIQUIDPRCPTOT": {
     "long_name": "Précipitation liquide totale",
@@ -286,26 +286,26 @@
   "TX_TN_DAYS_ABOVE": {
     "long_name": "Nombre de jours avec Tmax > {thresh_tasmax} et Tmin > {thresh_tasmin}",
     "description": "Nombre {freq:m} de jours où la température maximale quotidienne excède {thresh_tasmax} et la température minimale quotidienne excède {thresh_tasmin}.",
-    "title": "Nombre de jours avec des températures quotidiennes minimales et maximales chaudes",
-    "abstract": "Nombre de jours où les températures quotidiennes maximales et minimales sont au-dessus de seuils donnés."
+    "title": "Nombre de jours avec des températures minimales et maximales quotidiennes chaudes",
+    "abstract": "Nombre de jours où les températures maximales et minimales quotidiennes sont au-dessus de seuils donnés."
   },
   "HEAT_WAVE_FREQUENCY": {
     "long_name": "Nombre de vagues de chaleur (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax} pour {window} jours)",
-    "description": "Nombre {freq:m} de vagues de chaleur. Une vague de chaleur se produit lorsque les températures quotidiennes minimales et maximales excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
+    "description": "Nombre {freq:m} de vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
     "title": "Fréquence des vagues de chaleur",
-    "abstract": "Nombre de vagues de chaleur. Une vague de chaleur se produit lorsque les températures quotidiennes minimales et maximales excèdent des seuils donnés durant un certain nombre de jours."
+    "abstract": "Nombre de vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent des seuils donnés durant un certain nombre de jours."
   },
   "HEAT_WAVE_TOTAL_LENGTH": {
     "long_name": "Durée totale des vagues de chaleur (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax} pour >= {window} days)",
-    "description": "Durée totale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les températures quotidiennes minimales et maximales excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
+    "description": "Durée totale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
     "title": "Durée totale des vagues de chaleur",
-    "abstract": "Durée totale des vagues de chaleur. Une vague de chaleur se produit lorsque les températures quotidiennes minimales et maximales excèdent des seuils donnés durant un certain nombre de jours."
+    "abstract": "Durée totale des vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent des seuils donnés durant un certain nombre de jours."
   },
   "HEAT_WAVE_MAX_LENGTH": {
     "long_name": "Longueur maximale des vagues de chaleur (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax} pour {window} jours au moins)",
-    "description": "Longueur maximale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les températures quotidiennes minimales et maximales excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
+    "description": "Longueur maximale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
     "title": "Longueur maximale des vagues de chaleur",
-    "abstract": "Longueur maximale des vagues de chaleur. Une vague de chaleur se produit lorsque les températures quotidiennes minimales et maximales excèdent des seuils donnés durant un certain nombre de jours."
+    "abstract": "Longueur maximale des vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent des seuils donnés durant un certain nombre de jours."
   },
   "HEAT_WAVE_INDEX": {
     "long_name": "Nombre de jours de vague de chaleur",
@@ -413,13 +413,13 @@
     "long_name": "Amplitude diurne maximale de la température",
     "description": "Maximum {freq:m} de l'amplitude diurne de la température.",
     "title": "Amplitude diurne maximale de la température",
-    "abstract": "L'écart maximal entre les températures quotidiennes maximale et minimale."
+    "abstract": "L'écart maximal entre les températures maximale et minimale quotidiennes ."
   },
   "DTR": {
     "long_name": "Amplitude diurne de la température",
     "description": "Moyenne {freq:f} de l'amplitude diurne de la température.",
     "title": "Amplitude diurne de la température",
-    "abstract": "La différence moyenne entre les températures quotidiennes maximale et minimale."
+    "abstract": "La différence moyenne entre les températures maximale et minimale quotidiennes."
   },
   "DTRVAR": {
     "long_name": "Variabilité de l'amplitude diurne de la température",
@@ -549,7 +549,7 @@
     "long_name": "Durée de la saison sans gel",
     "description": "Nombre {freq:m} de jours entre la première occurrence d'au moins {window} jours consécutifs où la température quotidienne moyenne dépasse {thresh} et la première occurrence (après le {mid_date}) d'au moins {window} jours consécutifs où la température est sous {thresh}.",
     "title": "Durée de la saison sans gel",
-    "abstract": "Nombre de jours entre la première série de N jours avec des températures quotidiennes moyennes au-dessus d'un seuil et la première série de N jours avec des températures quotidiennes moyennes sous ce même seuil."
+    "abstract": "Nombre de jours entre la première série de N jours avec une température moyenne quotidienne au-dessus d'un seuil et la première série de N jours avec une température moyenne quotidienne sous ce même seuil."
   },
   "FROST_FREE_SEASON_START": {
     "long_name": "Jour de l'année du début de la saison sans gel",
@@ -561,7 +561,7 @@
     "long_name": "Durée de la saison de croissance",
     "description": "Nombre {freq:m} de jours entre la première occurrence d'au moins {window} jours consécutifs où la température quotidienne moyenne dépasse {thresh} et la première occurrence (après le {mid_date}) d'au moins {window} jours consécutifs où la température est sous {thresh}.",
     "title": "Durée de la saison de croissance",
-    "abstract": "Nombre de jours entre la première série de N jours avec des températures quotidiennes moyennes au-dessus d'un seuil et la première série de N jours avec des températures quotidiennes moyennes sous ce même seuil."
+    "abstract": "Nombre de jours entre la première série de N jours avec une température moyenne quotidienne au-dessus d'un seuil et la première série de N jours avec une température moyenne quotidienne sous ce même seuil."
   },
   "GROWING_SEASON_START": {
     "long_name": "Jour de l'année du début de la saison de croissance",
@@ -875,28 +875,28 @@
     "abstract": "Nombre de jours avec précipitation au-dessus d'un seuil et températures sous un seuil."
   },
   "DAYS_OVER_PRECIP_THRESH": {
-    "title": "Nombre de jours pluvieux où la précipitation est au-dessus du {pr_per_thresh}e centile",
+    "title": "Nombre de jours avec précipitation où la précipitation est au-dessus du {pr_per_thresh}e centile",
     "abstract": "Nombre de jours d'une période où la précipitation est au-dessus du {pr_per_thresh}e centile calculé sur la période {pr_per_period} et d'un seuil fixe.",
     "description": "Nombre {freq:m} de jours où la précipitation est au-dessus du {pr_per_thresh}e centile calculé sur la période {pr_per_period}. Seuls les jours avec au moins {thresh} sont comptés.",
-    "long_name": "Nombre de jours pluvieux où la précipitation est au-dessus du {pr_per_thresh}e centile calculé sur la période {pr_per_period}"
+    "long_name": "Nombre de jours avec précipitation où la précipitation est au-dessus du {pr_per_thresh}e centile calculé sur la période {pr_per_period}"
   },
   "DAYS_OVER_PRECIP_DOY_THRESH": {
-    "title": "Nombre de jours pluvieux où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien",
+    "title": "Nombre de jours avec précipitation où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien",
     "abstract": "Nombre de jours d'une période où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien et d'un seuil fixe.",
     "description": "Nombre {freq:m} de jours où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien. Seuls les jours avec au moins {thresh} sont comptés. Le {pr_per_thresh}e centile est calculé sur une fenêtre glissante de {pr_per_window} jour(s) de la période {pr_per_period}.",
-    "long_name": "Nombre de jours pluvieux où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien"
+    "long_name": "Nombre de jours avec précipitation où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien"
   },
   "FRACTION_OVER_PRECIP_THRESH": {
-    "title": "Fraction des jours pluvieux où la précipitation est au-dessus d'un centile quotidien.",
-    "abstract": "Fraction des jours pluvieux d'une période où la précipitation est au-dessus d'un centile quotidien. La référence est le nombre de jours où la précipitation est au-dessus d'un seuil fixe.",
-    "description": "Fraction {freq:f} des jours pluvieux où la précipitation est au-dessus d'un centile quotidien. La référence est le nombre jours où la précipitation est au-dessus d'un seuil fixe.",
-    "long_name": "Fraction des jours pluvieux où la précipitation est au-dessus d'un centile quotidien."
+    "title": "Fraction des jours avec précipitation où la précipitation est au-dessus d'un centile quotidien.",
+    "abstract": "Fraction des jours avec précipitation d'une période où la précipitation est au-dessus d'un centile quotidien. La référence est le nombre de jours où la précipitation est au-dessus d'un seuil fixe.",
+    "description": "Fraction {freq:f} des jours avec précipitation où la précipitation est au-dessus d'un centile quotidien. La référence est le nombre jours où la précipitation est au-dessus d'un seuil fixe.",
+    "long_name": "Fraction des jours avec précipitation où la précipitation est au-dessus d'un centile quotidien."
   },
   "FRACTION_OVER_PRECIP_DOY_THRESH": {
-    "title": "Fraction de jours pluvieux où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien",
+    "title": "Fraction de jours avec précipitation où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien",
     "abstract": "Fraction de jours d'une période où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien et d'un seuil fixe.",
     "description": "Fraction {freq:m} de jours où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien. Seuls les jours avec au moins {thresh} sont comptés. Le {pr_per_thresh}e centile est calculé sur une fenêtre glissante de {pr_per_window} jour(s) de la période {pr_per_period}.",
-    "long_name": "Fraction de jours pluvieux où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien"
+    "long_name": "Fraction de jours avec précipitation où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien"
   },
   "LIQUID_PRECIP_RATIO": {
     "title": "Fraction liquide de la précipitation totale",
@@ -1007,16 +1007,16 @@
     "long_name": "Nombre {freq:m} de jours chauds et secs"
   },
   "WARM_AND_WET_DAYS": {
-    "title": "Nombre de jours chauds et pluvieux",
+    "title": "Nombre de jours chauds avec précipitation",
     "abstract": "Nombre de jours où la température est au-dessus du {tas_per_thresh}e centile et les précipitations au-dessus du {pr_per_thresh}e centile.",
     "description": "Nombre {freq:m} de jours où la température est au-dessus du {tas_per_thresh}e centile et les précipitations au-dessus du {pr_per_thresh}e centile.",
-    "long_name": "Nombre {freq:m} de jours chauds et pluvieux"
+    "long_name": "Nombre {freq:m} de jours chauds avec précipitation"
   },
   "COLD_AND_WET_DAYS": {
-    "title": "Nombre de jours froids et pluvieux",
+    "title": "Nombre de jours froids avec précipitation",
     "abstract": "Nombre de jours où la température est en dessous du {tas_per_thresh}e centile et les précipitations au-dessus du {pr_per_thresh}e centile.",
     "description": "Nombre {freq:m} de jours où la température est en dessous du {tas_per_thresh}e centile et les précipitations au-dessus du {pr_per_thresh}e centile.",
-    "long_name": "Nombre {freq:m} de jours froids et pluvieux"
+    "long_name": "Nombre {freq:m} de jours froids avec précipitation"
   },
   "CALM_DAYS": {
     "title": "Nombre de jours de vent calme",
