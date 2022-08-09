@@ -27,18 +27,19 @@ def percentile_bootstrap(func):
     Bootstraping avoids discontinuities in the exceedance between the reference period over which percentiles are
     computed, and "out of reference" periods. See `bootstrap_func` for details.
 
-    Example of declaration::
+    Declaration example:
 
-    >>> # doctest: +SKIP
-    >>> @declare_units(tas="[temperature]", t90="[temperature]")
-    ... @percentile_bootstrap
-    ... def tg90p(
-    ...     tas: xarray.DataArray,
-    ...     t90: xarray.DataArray,
-    ...     freq: str = "YS",
-    ...     bootstrap: bool = False,
-    ... ) -> xarray.DataArray:
-    ...     pass
+    .. code-block:: python
+
+        @declare_units(tas="[temperature]", t90="[temperature]")
+        @percentile_bootstrap
+        def tg90p(
+            tas: xarray.DataArray,
+            t90: xarray.DataArray,
+            freq: str = "YS",
+            bootstrap: bool = False,
+        ) -> xarray.DataArray:
+            pass
 
     Examples
     --------
