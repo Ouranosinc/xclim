@@ -31,20 +31,19 @@ Indices submodules
    :noindex:
 
 .. automodule:: xclim.indices.fwi
-   :members:
+   :members: fire_weather_ufunc, fire_season, overwintering_drought_code, drought_code, fire_weather_indexes
    :undoc-members:
    :show-inheritance:
    :noindex:
 
-.. fire_weather_ufunc, fire_season, overwintering_drought_code, drought_code, fire_weather_indexes
 
-.. _FWI-footnotes::
+.. _fwi-footnotes:
 
-FWI Footnotes
-=============
+Fire Weather Indices Footnotes
+------------------------------
 
 Fire weather indices codes
---------------------------
+==========================
 
 .. bibliography::
    :style: unsrt
@@ -54,7 +53,7 @@ Fire weather indices codes
 Matlab code of the GFWED obtained through personal communication.
 
 Fire season determination methods
----------------------------------
+=================================
 
 .. bibliography::
    :style: unsrt
@@ -62,7 +61,7 @@ Fire season determination methods
    :keyprefix: fire-
 
 Drought Code overwintering background
--------------------------------------
+=====================================
 
 .. bibliography::
    :style: unsrt

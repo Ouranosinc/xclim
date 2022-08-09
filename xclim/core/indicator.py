@@ -77,7 +77,7 @@ In the following, the section under `<identifier>` is referred to as `data`. Whe
 a dictionary, with :py:meth:`Indicator.from_dict`, the input dict must follow the same structure of `data`.
 
 The resulting yaml file can be validated using the provided schema (in xclim/data/schema.yml)
-and the YAMALE tool (:cite:p:`lopker_yamale_2022`). See the "Extending xclim" notebook for more info.
+and the YAMALE tool :cite:p:`lopker_yamale_2022`. See the "Extending xclim" notebook for more info.
 
 Inputs
 ~~~~~~

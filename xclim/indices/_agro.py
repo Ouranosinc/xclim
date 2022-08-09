@@ -359,7 +359,7 @@ def biologically_effective_degree_days(
         k = f(lat) = 1 + \left(\frac{\left| lat  \right|}{50} * 0.06,  \text{if }40 < |lat| <50, \text{else } 0\right)
 
     A second version of the BEDD (`method="icclim"`) does not consider :math:`TR_{adj}` and :math:`k` and employs a
-    different end date (30 September) (:cite:p:`project_team_eca&d_algorithm_2013`).
+    different end date (30 September) :cite:p:`project_team_eca&d_algorithm_2013`.
     The simplified formula is as follows:
 
     .. math::
@@ -429,7 +429,7 @@ def cool_night_index(
     """Cool Night Index.
 
     Mean minimum temperature for September (northern hemisphere) or March (Southern hemishere).
-    Used in calculating the Géoviticulture Multicriteria Classification System (:cite:p:`tonietto_multicriteria_2004`).
+    Used in calculating the Géoviticulture Multicriteria Classification System (:cite:t:`tonietto_multicriteria_2004`).
 
     Parameters
     ----------

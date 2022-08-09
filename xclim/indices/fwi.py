@@ -1151,7 +1151,7 @@ def overwintering_drought_code(
 ) -> xr.DataArray:
     """Compute the season-starting drought code based on the previous season's last drought code and the total winter precipitation.
 
-    This method replicates the "wDC" method of the "cffdrs R package (:cite:p:`cantin_canadian_2014`), with an added
+    This method replicates the "wDC" method of the "cffdrs R package :cite:p:`cantin_canadian_2014`, with an added
     control on the "minimum" DC.
 
     Parameters
@@ -1174,7 +1174,7 @@ def overwintering_drought_code(
 
     Notes
     -----
-    Details taken from the "cffdrs" R package documentation (:cite:p:`cantin_canadian_2014`):
+    Details taken from the "cffdrs" R package documentation :cite:p:`drought-cantin_canadian_2014`:
     Of the three fuel moisture codes (i.e.  FFMC, DMC and DC) making up the FWI System, only the DC needs to be
     considered in terms of its values carrying over from one fire season to the next. In Canada both the FFMC and the
     DMC are assumed to reach moisture saturation from overwinter precipitation at or before spring melt; this is a
@@ -1196,11 +1196,11 @@ def overwintering_drought_code(
         - 0.75, Deep ground frost does not occur until late fall, if at all; moderately drained sites that allow infiltration of most of the melting snowpack
         - 0.5, Chinook-prone areas and areas subject to early and deep ground frost; well-drained soils favoring rapid percolation or topography favoring rapid runoff before melting of ground frost
 
-    Source: :cite:cts:`lawson_weather_2008` - Table 9.
+    Source: :cite:cts:`drought-lawson_weather_2008` - Table 9.
 
     References
     ----------
-    :cite:t:`drought-field_development_2015,drought-lawson_weather_2008,drought-van_wagner_drought_1985`
+    :cite:t:`drought-cantin_canadian_2014,drought-field_development_2015,drought-lawson_weather_2008,drought-van_wagner_drought_1985`
     """
     winter_pr = convert_units_to(winter_pr, "mm")
 
@@ -1313,7 +1313,7 @@ def fire_weather_indexes(
 
     Notes
     -----
-    See :cite:t:`natural_resources_canada_data_nodate`, the :py:mod:`xclim.indices.fwi` module documentation,
+    See :cite:t:`code-natural_resources_canada_data_nodate`, the :py:mod:`xclim.indices.fwi` module documentation,
     and the docstring of :py:func:`fire_weather_ufunc` for more information.
 
     References

@@ -11,9 +11,9 @@ General References
 Fire Weather Index References
 -----------------------------
 
-
+See: :ref:`fwi-footnotes`
 
 SDBA References
 ---------------
 
-See: :ref:`SDBA-footnotes`.
+See: :ref:`sdba-footnotes`

@@ -185,7 +185,7 @@ def cold_and_dry_days(
     Bootstrapping is not available for quartiles because it would make no significant difference to bootstrap
     percentiles so far from the extremes.
 
-    Formula to be written (:cite:p:`beniston_trends_2009`)
+    Formula to be written (:cite:t:`beniston_trends_2009`)
 
     References
     ----------
@@ -250,7 +250,7 @@ def warm_and_dry_days(
     Bootstrapping is not available for quartiles because it would make no significant difference to bootstrap
     percentiles so far from the extremes.
 
-    Formula to be written (:cite:p:`beniston_trends_2009`)
+    Formula to be written (:cite:t:`beniston_trends_2009`)
 
     References
     ----------
@@ -314,7 +314,7 @@ def warm_and_wet_days(
     -----
     Bootstrapping is not available for quartiles because it would make no significant difference to bootstrap percentiles so far from the extremes.
 
-    Formula to be written (:cite:p:`beniston_trends_2009`)
+    Formula to be written (:cite:t:`beniston_trends_2009`)
 
     References
     ----------
@@ -377,7 +377,7 @@ def cold_and_wet_days(
     Bootstrapping is not available for quartiles because it would make no significant
     difference to bootstrap percentiles so far from the extremes.
 
-    Formula to be written (:cite:p:`beniston_trends_2009`)
+    Formula to be written (:cite:t:`beniston_trends_2009`)
 
     References
     ----------
@@ -706,7 +706,7 @@ def heat_wave_frequency(
     The thresholds of 22° and 25°C for night temperatures and 30° and 35°C for day temperatures were selected by
     Health Canada professionals, following a temperature–mortality analysis. These absolute temperature thresholds
     characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
-    communities (:cite:p:`casati_regional_2013`).
+    communities :cite:p:`casati_regional_2013`.
 
     In :cite:t:`robinson_definition_2001`, the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
 
@@ -769,7 +769,7 @@ def heat_wave_max_length(
     The thresholds of 22° and 25°C for night temperatures and 30° and 35°C for day temperatures were selected by
     Health Canada professionals, following a temperature–mortality analysis. These absolute temperature thresholds
     characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
-    communities (:cite:p:`casati_regional_2013`).
+    communities :cite:p:`casati_regional_2013`.
 
     In :cite:t:`robinson_definition_2001`, the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
 

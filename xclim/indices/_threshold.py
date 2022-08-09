@@ -1311,7 +1311,7 @@ def heating_degree_days(
 
     Notes
     -----
-    This index intentionally differs from its ECA&D (:cite:p:`project_team_eca&d_algorithm_2013`) equivalent: HD17.
+    This index intentionally differs from its ECA&D :cite:p:`project_team_eca&d_algorithm_2013` equivalent: HD17.
     In HD17, values below zero are not clipped before the sum. The present definition should provide a better
     representation of the energy demand for heating buildings to the given threshold.
 
@@ -1364,7 +1364,7 @@ def hot_spell_max_length(
     The thresholds of 22° and 25°C for night temperatures and 30° and 35°C for day temperatures were selected by
     Health Canada professionals, following a temperature–mortality analysis. These absolute temperature thresholds
     characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
-    communities (:cite:p:`casati_regional_2013`).
+    communities :cite:p:`casati_regional_2013`.
 
     In :cite:t:`robinson_definition_2001`, the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
 
@@ -1414,7 +1414,7 @@ def hot_spell_frequency(
     The thresholds of 22° and 25°C for night temperatures and 30° and 35°C for day temperatures were selected by
     Health Canada professionals, following a temperature–mortality analysis. These absolute temperature thresholds
     characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
-    communities (:cite:p:`casati_regional_2013`).
+    communities :cite:p:`casati_regional_2013`.
 
     In :cite:t:`robinson_definition_2001`, the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
 
@@ -2246,7 +2246,7 @@ def degree_days_exceedance_date(
     The resulting :math:`k` is expressed as a day of year.
 
     Cumulated degree days have numerous applications including plant and insect phenology.
-    See https://en.wikipedia.org/wiki/Growing_degree-day for examples (:cite:p:`wikipedia_contributors_growing_2021`).
+    See https://en.wikipedia.org/wiki/Growing_degree-day for examples (:cite:t:`wikipedia_contributors_growing_2021`).
     """
     thresh = convert_units_to(thresh, "K")
     tas = convert_units_to(tas, "K")

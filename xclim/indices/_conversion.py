@@ -584,7 +584,7 @@ def specific_humidity(
     r"""Specific humidity from temperature, relative humidity and pressure.
 
     Specific humidity is the ratio between the mass of water vapour
-    and the mass of moist air (:cite:p:`world_meteorological_organization_guide_2008`).
+    and the mass of moist air :cite:p:`world_meteorological_organization_guide_2008`.
 
     Parameters
     ----------
@@ -666,7 +666,7 @@ def specific_humidity_from_dewpoint(
     r"""Specific humidity from dewpoint temperature and air pressure.
 
     Specific humidity is the ratio between the mass of water vapour
-    and the mass of moist air (:cite:p:`world_meteorological_organization_guide_2008`).
+    and the mass of moist air :cite:p:`world_meteorological_organization_guide_2008`.
 
     Parameters
     ----------
@@ -736,7 +736,7 @@ def snowfall_approximation(
     Notes
     -----
     The following methods are available to approximate snowfall and are drawn from the
-    Canadian Land Surface Scheme (:cite:p:`verseghy_class_2009,melton_atmosphericvarscalcf90_2019`).
+    Canadian Land Surface Scheme :cite:p:`verseghy_class_2009,melton_atmosphericvarscalcf90_2019`.
 
     - ``'binary'`` : When the temperature is under the freezing threshold, precipitation
       is assumed to be solid. The method is agnostic to the type of temperature used
@@ -881,7 +881,7 @@ def wind_chill_index(
     -----
     Following the calculations of Environment and Climate Change Canada, this function switches from the standardized
     index to another one for slow winds. The standard index is the same as used by the National Weather Service of the
-    USA (:cite:p:`us_department_of_commerce_wind_nodate`). Given a temperature at surface :math:`T` (in °C) and 10-m
+    USA :cite:p:`us_department_of_commerce_wind_nodate`. Given a temperature at surface :math:`T` (in °C) and 10-m
     wind speed :math:`V` (in km/h), the Wind Chill Index :math:`W` (dimensionless) is computed as:
 
     .. math::
@@ -903,8 +903,8 @@ def wind_chill_index(
 
     See Also
     --------
-    National Weather Service FAQ: (:cite:p:`us_department_of_commerce_wind_nodate`).
-    The New Wind Chill Equivalent Temperature Chart: (:cite:p:`osczevski_new_2005`).
+    National Weather Service FAQ: :cite:p:`us_department_of_commerce_wind_nodate`.
+    The New Wind Chill Equivalent Temperature Chart: :cite:p:`osczevski_new_2005`.
 
     References
     ----------
@@ -1029,7 +1029,7 @@ def potential_evapotranspiration(
     - "mcguinnessbordne05" or "MB05", based on :cite:t:`tanguy_historical_2018`. Requires tas, daily [D] freq, with latitudes 'lat'.
     - "thornthwaite48" or "TW48", based on :cite:t:`thornthwaite_approach_1948`. Requires tasmin and tasmax, monthly [MS] or daily [D] freq. (optional: tas can be given instead of tasmin and tasmax).
 
-    The McGuinness-Bordne (:cite:p:`mcguinness_comparison_1972`) equation is:
+    The McGuinness-Bordne :cite:p:`mcguinness_comparison_1972` equation is:
 
     .. math::
         PET[mm day^{-1}] = a * \frac{S_0}{\lambda}T_a + b *\frsc{S_0}{\lambda}
@@ -1593,7 +1593,7 @@ def mean_radiant_temperature(
 
     Notes
     -----
-    This code was inspired by the `thermofeel` package (:cite:p:`brimicombe_thermofeel_2021`).
+    This code was inspired by the `thermofeel` package :cite:p:`brimicombe_thermofeel_2021`.
 
     References
     ----------

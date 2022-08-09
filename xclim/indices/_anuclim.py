@@ -181,7 +181,7 @@ def precip_seasonality(pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArr
 
     Notes
     -----
-    According to the ANUCLIM user-guide (:cite:p:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
+    According to the ANUCLIM user-guide (:cite:t:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
     (or monthly) frequency. However, the xclim.indices implementation here will calculate the result with input data
     with daily frequency as well. As such weekly or monthly input values, if desired, should be calculated prior to
     calling the function.
@@ -235,7 +235,7 @@ def tg_mean_warmcold_quarter(
 
     Notes
     -----
-    According to the ANUCLIM user-guide (:cite:p:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
+    According to the ANUCLIM user-guide (:cite:t:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
     (or monthly) frequency. However, the xclim.indices implementation here will calculate the result with input data
     with daily frequency as well. As such weekly or monthly input values, if desired, should be calculated prior to
     calling the function.
@@ -279,7 +279,7 @@ def tg_mean_wetdry_quarter(
 
     Notes
     -----
-    According to the ANUCLIM user-guide (:cite:p:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
+    According to the ANUCLIM user-guide (:cite:t:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
     (or monthly) frequency. However, the xclim.indices implementation here will calculate the result with input data
     with daily frequency as well. As such weekly or monthly input values, if desired, should be calculated prior to
     calling the function.
@@ -326,7 +326,7 @@ def prcptot_wetdry_quarter(
 
     Notes
     -----
-    According to the ANUCLIM user-guide (:cite:p:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
+    According to the ANUCLIM user-guide (:cite:t:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
     (or monthly) frequency. However, the xclim.indices implementation here will calculate the result with input data
     with daily frequency as well. As such weekly or monthly input values, if desired, should be calculated prior to
     calling the function.
@@ -377,7 +377,7 @@ def prcptot_warmcold_quarter(
 
     Notes
     -----
-    According to the ANUCLIM user-guide (:cite:p:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
+    According to the ANUCLIM user-guide (:cite:t:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
     (or monthly) frequency. However, the xclim.indices implementation here will calculate the result with input data
     with daily frequency as well. As such weekly or monthly input values, if desired, should be calculated prior to
     calling the function.
@@ -440,7 +440,7 @@ def prcptot_wetdry_period(
 
     Notes
     -----
-    According to the ANUCLIM user-guide (:cite:p:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
+    According to the ANUCLIM user-guide (:cite:t:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
     (or monthly) frequency. However, the xclim.indices implementation here will calculate the result with input data
     with daily frequency as well. As such weekly or monthly input values, if desired, should be calculated prior to
     calling the function.
