@@ -596,22 +596,26 @@
   "STATS": {
     "long_name": "Statistique du flux quotidien",
     "description": "{op} du {indexer} {freq:m} du flux quotidien.",
-    "title": "Calcul de statistiques sur des sous-périodes."
+    "title": "Calcul de statistiques sur des sous-périodes.",
+    "abstract": ""
   },
   "FIT": {
     "long_name": "Paramètres d'une distribution {dist:f}",
     "description": "Paramètres d'une distribution {dist:f}.",
-    "title": "Calcul les paramètres d'une distribution univariée pour un ensemble de données"
+    "title": "Calcul les paramètres d'une distribution univariée pour un ensemble de données",
+    "abstract": ""
   },
   "DOY_QMAX": {
     "long_name": "Jour de l'année du maximum le long d'un période de temps",
     "description": "Jour de l'année du maximum le long de {indexer}.",
-    "title": "Jour de l'année du maximum"
+    "title": "Jour de l'année du maximum",
+    "abstract": ""
   },
   "DOY_QMIN": {
     "long_name": "Jour de l'année du minimum le long d'un période de temps'",
     "description": "Jour de l'année du minimum le long de {indexer}.",
-    "title": "Jour de l'année du minimum"
+    "title": "Jour de l'année du minimum",
+    "abstract": ""
   },
   "SEA_ICE_AREA": {
     "long_name": "Surface de la banquise",

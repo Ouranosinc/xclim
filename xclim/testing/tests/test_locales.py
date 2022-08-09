@@ -152,7 +152,10 @@ def test_xclim_translations(locale, official_indicators):
 
     if len(untranslated) > 0 or len(incomplete) > 0:
         pytest.fail(
-            f"Indicators {', '.join(untranslated)} do not have translations and {', '.join(incomplete)} have incomplete ones for official locale {locale}."
+            f"{len(untranslated)} indicators are missing translations"
+            f"{': [' + ', '.join(untranslated) + ']' if len(untranslated) else ''}"
+            f"{' and ' if len(incomplete) else '.'}"
+            f"[{', '.join(incomplete)}] have incomplete translations for official locale `{locale}`."
         )
 
 
