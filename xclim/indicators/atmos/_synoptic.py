@@ -14,6 +14,7 @@ class JetStream(Indicator):
 
 
 jetstream_metric_woollings = JetStream(
+    title="Strength and latitude of jetstream",
     identifier="jetstream_metric_woollings",
     var_name=["jetlat", "jetstr"],
     units=["degrees_North", "m s-1"],

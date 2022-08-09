@@ -583,39 +583,35 @@
   },
   "RB_FLASHINESS_INDEX": {
     "long_name": "Indice Richards-Baker de torrentialité",
-    "description": "Indice Richards-Baker mesurant le caractère torrentiel d'un débit de rivière.",
+    "description": "{freq} de R-B indice, un indice mesurant le caractère torrentiel d'un débit de rivière.",
     "title": "Indice Richards-Baker de torrentialité",
     "abstract": "Mesure des oscillations du débit relatif au débit moyen, quantifiant la fréquence et la rapidité des changements de débits."
   },
   "FREQ_ANALYSIS": {
-    "long_name": "Période de retour {mode} {indexer} du flux de {window} jours",
-    "description": "Analyse de fréquence pour le {mode} {indexer} du flux de {window} jours, estimé avec la distribution {dist:f}.",
+    "long_name": "Période de retour du montant de débit",
+    "description": "Analyse de fréquence de débit du courant pour le {mode} {indexer} du flux de {window} jours, estimé avec la distribution {dist:f}.",
     "title": "Période de retour",
-    "abstract": "Analyse de fréquence selon un mode et une distribution."
+    "abstract": "Analyse de fréquence de débit du courant selon un mode et une distribution."
   },
   "STATS": {
-    "long_name": "{op} du {indexer} {freq:m} du flux quotidien",
+    "long_name": "Statistique du flux quotidien",
     "description": "{op} du {indexer} {freq:m} du flux quotidien.",
-    "title": "Calcul de statistiques sur des sous-périodes.",
-    "abstract": ""
+    "title": "Calcul de statistiques sur des sous-périodes."
   },
   "FIT": {
     "long_name": "Paramètres d'une distribution {dist:f}",
     "description": "Paramètres d'une distribution {dist:f}.",
-    "title": "Calcul les paramètres d'une distribution univariée pour un ensemble de données",
-    "abstract": ""
+    "title": "Calcul les paramètres d'une distribution univariée pour un ensemble de données"
   },
   "DOY_QMAX": {
-    "long_name": "Jour de l'année du maximum le long de {indexer}",
+    "long_name": "Jour de l'année du maximum le long d'un période de temps",
     "description": "Jour de l'année du maximum le long de {indexer}.",
-    "title": "Jour de l'année du maximum",
-    "abstract": ""
+    "title": "Jour de l'année du maximum"
   },
   "DOY_QMIN": {
-    "long_name": "Jour de l'année du minimum le long de {indexer}",
+    "long_name": "Jour de l'année du minimum le long d'un période de temps'",
     "description": "Jour de l'année du minimum le long de {indexer}.",
-    "title": "Jour de l'année du minimum",
-    "abstract": ""
+    "title": "Jour de l'année du minimum"
   },
   "SEA_ICE_AREA": {
     "long_name": "Surface de la banquise",
