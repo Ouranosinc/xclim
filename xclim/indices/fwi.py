@@ -123,32 +123,6 @@ as _all_ seasons are used, even the very short shoulder seasons.
 ...     ffmc_start=85,
 ...     dmc_dry_factor=2,
 ... )
-
-References
-----------
-Codes:
-
-.. bibliography::
-   :style: unsrt
-   :labelprefix: CODE
-   :keyprefix: code-
-
-Matlab code of the GFWED obtained through personal communication.
-
-Fire season determination methods:
-
-.. bibliography::
-   :style: unsrt
-   :labelprefix: FIRE
-   :keyprefix: fire-
-
-Drought Code overwintering:
-
-.. bibliography::
-   :style: unsrt
-   :labelprefix: DROUGHT
-   :keyprefix: drought-
-
 """
 # This file is structured in the following way:
 # Section 1: individual codes, numba-accelerated and vectorized functions.
@@ -911,10 +885,9 @@ def fire_weather_ufunc(
 ):
     """Fire Weather Indexes computation using xarray's apply_ufunc.
 
-    No unit handling. Meant to be used by power users only. Please prefer using the
-    :py:indicator:`DC` and :py:indicator:`FWI` indicators or
-    the :py:func:`drought_code` and :py:func:`fire_weather_indexes` indices defined in the same
-    submodule.
+    No unit handling. Meant to be used by power users only. Please prefer using the :py:indicator:`DC` and
+    :py:indicator:`FWI` indicators or the :py:func:`drought_code` and :py:func:`fire_weather_indexes` indices defined
+    in the same submodule.
 
     Dask arrays must have only one chunk along the "time" dimension.
     User can control which indexes are computed with the `indexes` argument.
@@ -1202,17 +1175,16 @@ def overwintering_drought_code(
     Notes
     -----
     Details taken from the "cffdrs" R package documentation (:cite:p:`cantin_canadian_2014`):
-    Of the three fuel moisture codes (i.e.  FFMC, DMC and DC) making up the FWI System,
-    only the DC needs to be considered in terms of its values carrying over from one fire season to the next.
-    In Canada both the FFMC and the DMC are assumed to reach moisture saturation from overwinter
-    precipitation at or before spring melt; this is a reasonable assumption and any error in these
-    assumed starting conditions quickly disappears.  If snowfall (or other overwinter precipitation)
-    is not large enough however, the fuel layer tracked by the Drought Code may not fully reach saturation
-    after spring snow melt; because of the long response time in this fuel layer (53 days in standard
-    conditions) a large error in this spring starting condition can affect the DC for a significant
-    portion of the fire season. In areas where overwinter precipitation is 200 mm or more, full moisture
-    recharge occurs and DC overwintering is usually unnecessary.  More discussion of overwintering and
-    fuel drying time lag can be found in :cite:t:`lawson_weather_2008` and :cite:t:`van_wagner_drought_1985`.
+    Of the three fuel moisture codes (i.e.  FFMC, DMC and DC) making up the FWI System, only the DC needs to be
+    considered in terms of its values carrying over from one fire season to the next. In Canada both the FFMC and the
+    DMC are assumed to reach moisture saturation from overwinter precipitation at or before spring melt; this is a
+    reasonable assumption and any error in these assumed starting conditions quickly disappears. If snowfall (or other
+    overwinter precipitation) is not large enough however, the fuel layer tracked by the Drought Code may not fully
+    reach saturation after spring snow melt; because of the long response time in this fuel layer (53 days in standard
+    conditions) a large error in this spring starting condition can affect the DC for a significant portion of the fire
+    season. In areas where overwinter precipitation is 200 mm or more, full moisture recharge occurs and DC
+    overwintering is usually unnecessary.  More discussion of overwintering and fuel drying time lag can be found in
+    :cite:t:`drought-lawson_weather_2008` and :cite:t:`drought-van_wagner_drought_1985`.
 
     Carry-over fraction of last fall's moisture:
         - 1.0, Daily DC calculated up to 1 November; continuous snow cover, or freeze-up, whichever comes first
@@ -1228,7 +1200,7 @@ def overwintering_drought_code(
 
     References
     ----------
-    :cite:t:`field_development_2015,lawson_weather_2008,van_wagner_drought_1985`
+    :cite:t:`drought-field_development_2015,drought-lawson_weather_2008,drought-van_wagner_drought_1985`
     """
     winter_pr = convert_units_to(winter_pr, "mm")
 
@@ -1290,9 +1262,8 @@ def fire_weather_indexes(
 ):
     """Fire weather indexes.
 
-    Computes the 6 fire weather indexes as defined by the Canadian Forest Service:
-    the Drought Code, the Duff-Moisture Code, the Fine Fuel Moisture Code,
-    the Initial Spread Index, the Build Up Index and the Fire Weather Index.
+    Computes the 6 fire weather indexes as defined by the Canadian Forest Service: the Drought Code, the Duff-Moisture
+    Code, the Fine Fuel Moisture Code, the Initial Spread Index, the Build Up Index and the Fire Weather Index.
 
     Parameters
     ----------
@@ -1347,7 +1318,7 @@ def fire_weather_indexes(
 
     References
     ----------
-    :cite:cts:`wang_updated_2015`
+    :cite:cts:`fire-wang_updated_2015`
     """
     tas = convert_units_to(tas, "C")
     pr = convert_units_to(pr, "mm/day")
@@ -1442,12 +1413,12 @@ def drought_code(
 
     Notes
     -----
-    See :cite:t:`natural_resources_canada_data_nodate`, the :py:mod:`xclim.indices.fwi` module documentation,
+    See :cite:cts:`code-natural_resources_canada_data_nodate`, the :py:mod:`xclim.indices.fwi` module documentation,
     and the docstring of :py:func:`fire_weather_ufunc` for more information.
 
     References
     ----------
-    :cite:cts:`wang_updated_2015`
+    :cite:cts:`fire-wang_updated_2015`
     """
     tas = convert_units_to(tas, "C")
     pr = convert_units_to(pr, "mm/day")
@@ -1524,7 +1495,7 @@ def fire_season(
 
     References
     ----------
-    :cite:cts:`wotton_length_1993,lawson_weather_2008`
+    :cite:cts:`fire-wotton_length_1993,fire-lawson_weather_2008`
 
     """
     kwargs = dict(

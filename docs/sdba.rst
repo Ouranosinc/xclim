@@ -115,6 +115,8 @@ Developer tools
 .. autofunction:: xclim.sdba.measures.check_same_units_and_convert
    :noindex:
 
+.. _SDBA-footnotes::
+
 Footnotes
 =========
 
