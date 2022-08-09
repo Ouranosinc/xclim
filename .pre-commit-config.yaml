@@ -21,7 +21,7 @@ repos:
       - id: pretty-format-json
         args: ['--autofix', '--no-ensure-ascii', '--no-sort-keys']
   - repo: https://github.com/pycqa/flake8
-    rev: 5.0.2
+    rev: 5.0.4
     hooks:
       - id: flake8
         additional_dependencies: [ 'flake8-rst-docstrings' ]
