@@ -315,8 +315,7 @@ drought_code = FireWeather(
     units="",
     standard_name="drought_code",
     long_name="Drought Code",
-    description="Numerical code estimating the average moisture content of organic layers. "
-    "Calculated with the '{start_up_mode}' method.",
+    description="Numerical code estimating the average moisture content of organic layers.",
     abstract="The Drought Index is part of the Canadian Forest-Weather Index system. "
     "It is a numerical code that estimates the average moisture content of organic layers.",
     compute=indices.drought_code,

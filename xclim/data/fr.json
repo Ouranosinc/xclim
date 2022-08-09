@@ -243,7 +243,7 @@
   },
   "DC": {
     "long_name": "Indice de sécheresse",
-    "description": "Code numérique estimant la teneur en humidité moyenne de couches organiques. Calculée avec la méthode de mise en route '{start_up_mode}'.",
+    "description": "Code numérique estimant la teneur en humidité moyenne de couches organiques.",
     "title": "Indice de sécheresse quotidien",
     "abstract": "L'indice de sécheresse fait partie du système canadien des Indices Forêt-Météo. C'est un code numérique estimant la teneur en humidité moyenne de couches organiques."
   },
@@ -678,15 +678,15 @@
   },
   "FWI.dc": {
     "long_name": "Indice de sécheresse",
-    "description": "Évaluation numérique de la teneur moyenne en eau des épaisses couches organiques compactes. Calculée avec la méthode de mise en route '{start_up_mode}'."
+    "description": "Évaluation numérique de la teneur moyenne en eau des épaisses couches organiques compactes."
   },
   "FWI.dmc": {
     "long_name": "Indice d'humidité de l'humus",
-    "description": "Évaluation numérique de la teneur moyenne en eau des couches organiques peu tassées de moyenne épaisseur. Calculée avec la méthode de mise en route '{start_up_mode}'."
+    "description": "Évaluation numérique de la teneur moyenne en eau des couches organiques peu tassées de moyenne épaisseur."
   },
   "FWI.ffmc": {
     "long_name": "Indice du combustible léger (FFMC)",
-    "description": "Évaluation numérique de la teneur en eau de la litière et d'autres combustibles légers. Calculée avec la méthode de mise en route '{start_up_mode}'."
+    "description": "Évaluation numérique de la teneur en eau de la litière et d'autres combustibles légers."
   },
   "FWI.isi": {
     "long_name": "Indice de propagation initiale",
