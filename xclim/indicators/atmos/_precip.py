@@ -324,6 +324,7 @@ drought_code = FireWeather(
 
 
 fire_weather_indexes = FireWeather(
+    title="Fire weather indexes",
     identifier="fwi",
     realm="atmos",
     var_name=["dc", "dmc", "ffmc", "isi", "bui", "fwi"],

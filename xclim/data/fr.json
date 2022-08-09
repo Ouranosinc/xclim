@@ -778,7 +778,7 @@
     "title": "Approximation de la neige",
     "abstract": "Précipitation solide estimée à partir de la précipitation totale et de la température selon une méthode et un seuil de température donnés."
   },
-  "SD": {
+  "SNOW_DEPTH": {
     "long_name": "Profondeur de neige quotidienne moyenne",
     "description": "Profondeur de neige quotidienne moyenne.",
     "title": "Moyenne de la profondeur de neige",
@@ -860,7 +860,7 @@
     "long_name": "Jours de poudrerie",
     "description": "Nombre {freq:m} de jours avec accumulation de neige supérieure ou égale à {snd_thresh} au cours des {window} jours précédents et vents supérieurs à {sfcwind_thresh}.",
     "title": "Nombre de jours de poudrerie",
-    "abstract": "Nombre de jours où les conditions sont favorables à la poudrerie."
+    "abstract": "Nombre de jours avec des chutes de neige, une épaisseur de neige et une vitesse du vent supérieures à des seuils donnés pendant une période de jours."
   },
   "WINTER_STORM": {
     "long_name": "Jours avec forte accumulation de neige",
@@ -878,7 +878,7 @@
     "title": "Nombre de jours avec précipitation où la précipitation est au-dessus un centile donné",
     "abstract": "Nombre de jours d'une période où la précipitation est au-dessus un centile donné, calculé sur une période donné et un seuil fixe.",
     "description": "Nombre {freq:m} de jours où la précipitation est au-dessus du {pr_per_thresh}e centile calculé sur la période {pr_per_period}. Seuls les jours avec au moins {thresh} sont comptés.",
-    "long_name": "NNombre de jours avec un flux de précipitations supérieur au seuil de base."
+    "long_name": "Nombre de jours avec un flux de précipitations supérieur au seuil de base."
   },
   "DAYS_OVER_PRECIP_DOY_THRESH": {
     "title": "Nombre de jours avec précipitation où la précipitation est au-dessus un centile quotidien donné",
