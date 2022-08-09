@@ -346,16 +346,19 @@ def biologically_effective_degree_days(
     31 October is:
 
     .. math::
+
         BEDD_i = \sum_{i=\text{April 1}}^{\text{October 31}} min\left( \left( max\left( \frac{TX_i  + TN_i)}{2} - 10, 0 \right) * k \right) + TR_{adj}, degdays_{max}\right)
 
     .. math::
+
         TR_{adj} = f(TX_{i}, TN_{i}) = \begin{cases}
-            0.25(TX_{i} - TN_{i} - 13), & \text{if } (TX_{i} - TN_{i}) > 13 \\
-            0, & \text{if } 10 < (TX_{i} - TN_{i}) < 13\\
-            0.25(TX_{i} - TN_{i} - 10), & \text{if } (TX_{i} - TN_{i}) < 10 \\
-                \end{cases}
+        0.25(TX_{i} - TN_{i} - 13), & \text{if } (TX_{i} - TN_{i}) > 13 \\
+        0, & \text{if } 10 < (TX_{i} - TN_{i}) < 13\\
+        0.25(TX_{i} - TN_{i} - 10), & \text{if } (TX_{i} - TN_{i}) < 10 \\
+        \end{cases}
 
     .. math::
+
         k = f(lat) = 1 + \left(\frac{\left| lat  \right|}{50} * 0.06,  \text{if }40 < |lat| <50, \text{else } 0\right)
 
     A second version of the BEDD (`method="icclim"`) does not consider :math:`TR_{adj}` and :math:`k` and employs a
@@ -363,6 +366,7 @@ def biologically_effective_degree_days(
     The simplified formula is as follows:
 
     .. math::
+
         BEDD_i = \sum_{i=\text{April 1}}^{\text{September 30}} min\left( max\left(\frac{TX_i  + TN_i)}{2} - 10, 0\right), degdays_{max}\right)
 
     References
