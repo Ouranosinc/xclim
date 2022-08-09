@@ -35,6 +35,7 @@ class Converter(Indicator):
 
 
 humidex = Converter(
+    title="Humidex",
     identifier="humidex",
     units="C",
     standard_name="air_temperature",
@@ -47,6 +48,7 @@ humidex = Converter(
 )
 
 heat_index = Converter(
+    title="Heat index",
     identifier="heat_index",
     units="C",
     standard_name="air_temperature",
@@ -59,6 +61,7 @@ heat_index = Converter(
 )
 
 tg = Converter(
+    title="Mean temperature",
     identifier="tg",
     units="K",
     standard_name="air_temperature",
@@ -71,6 +74,7 @@ tg = Converter(
 
 
 wind_speed_from_vector = Converter(
+    title="Wind speed and direction from vector",
     identifier="wind_speed_from_vector",
     var_name=["sfcWind", "sfcWindfromdir"],
     units=["m s-1", "degree"],
@@ -89,6 +93,7 @@ wind_speed_from_vector = Converter(
 
 
 wind_vector_from_speed = Converter(
+    title="Wind vector from speed and direction",
     identifier="wind_vector_from_speed",
     var_name=["uas", "vas"],
     units=["m s-1", "m s-1"],
@@ -106,6 +111,7 @@ wind_vector_from_speed = Converter(
 
 
 saturation_vapor_pressure = Converter(
+    title="Saturation vapour pressure (e_sat)",
     identifier="e_sat",
     units="Pa",
     long_name="Saturation vapour pressure",
@@ -117,7 +123,6 @@ saturation_vapor_pressure = Converter(
         if kws["ice_thresh"] is not None
         else ""
     ),
-    title="Saturation vapour pressure (e_sat)",
     abstract="Calculation of the saturation vapour pressure from the temperature, according to a given method. "
     "If ice_thresh is given, the calculation is done with reference to ice for temperatures below this threshold.",
     compute=indices.saturation_vapor_pressure,
@@ -125,12 +130,12 @@ saturation_vapor_pressure = Converter(
 
 
 relative_humidity_from_dewpoint = Converter(
+    title="Relative humidity from temperature and dewpoint temperature",
     identifier="hurs_fromdewpoint",
     units="%",
     var_name="hurs",
     long_name="Relative humidity",
     standard_name="relative_humidity",
-    title="Relative humidity from temperature and dewpoint temperature",
     description=lambda **kws: (
         "Computed from temperature, and dew point temperature through the "
         "saturation vapour pressures, which were calculated "
@@ -153,11 +158,11 @@ relative_humidity_from_dewpoint = Converter(
 
 
 relative_humidity = Converter(
+    title="Relative humidity from temperature, specific humidity, and pressure",
     identifier="hurs",
     units="%",
     long_name="Relative humidity",
     standard_name="relative_humidity",
-    title="Relative humidity from temperature, specific humidity, and pressure",
     description=lambda **kws: (
         "Computed from temperature, specific humidity and pressure through the saturation vapour pressure, "
         "which was calculated from temperature according to the {method} method."
@@ -180,11 +185,11 @@ relative_humidity = Converter(
 
 
 specific_humidity = Converter(
+    title="Specific humidity from temperature, relative humidity, and pressure",
     identifier="huss",
     units="",
     long_name="Specific humidity",
     standard_name="specific_humidity",
-    title="Specific humidity from temperature, relative humidity, and pressure",
     description=lambda **kws: (
         "Computed from temperature, relative humidity and pressure through the saturation vapour pressure, "
         "which was calculated from temperature according to the {method} method."
@@ -201,11 +206,11 @@ specific_humidity = Converter(
 )
 
 specific_humidity_from_dewpoint = Converter(
+    title="Specific humidity from dew point temperature and pressure",
     identifier="huss_fromdewpoint",
     units="",
     long_name="Specific humidity",
     standard_name="specific_humidity",
-    title="Specific humidity from dew point temperature and pressure",
     description=(
         "Computed from dewpoint temperature and pressure through the saturation "
         "vapor pressure, which was calculated according to the {method} method."
@@ -216,11 +221,11 @@ specific_humidity_from_dewpoint = Converter(
 )
 
 snowfall_approximation = Converter(
+    title="Snowfall approximation",
     identifier="prsn",
     units="kg m-2 s-1",
     standard_name="solid_precipitation_flux",
     long_name="Solid precipitation",
-    title="Snowfall approximation",
     description=(
         "Solid precipitation estimated from total precipitation and temperature"
         " with method {method} and threshold temperature {thresh}."
@@ -232,11 +237,11 @@ snowfall_approximation = Converter(
 
 
 rain_approximation = Converter(
+    title="Rainfall approximation",
     identifier="prlp",
     units="kg m-2 s-1",
     standard_name="precipitation_flux",
     long_name="Liquid precipitation",
-    title="Rainfall approximation",
     description=(
         "Liquid precipitation estimated from total precipitation and temperature"
         " with method {method} and threshold temperature {thresh}."
@@ -248,10 +253,10 @@ rain_approximation = Converter(
 
 
 wind_chill_index = Converter(
+    title="Wind chill",
     identifier="wind_chill",
     units="degC",
     long_name="Wind chill factor",
-    title="Wind chill",
     description=lambda **kws: (
         "Wind chill index describing the temperature felt by the average person in response to cold wind."
     )
@@ -271,12 +276,12 @@ wind_chill_index = Converter(
 
 
 potential_evapotranspiration = Converter(
+    title="Potential evapotranspiration",
     identifier="potential_evapotranspiration",
     var_name="evspsblpot",
     units="kg m-2 s-1",
     standard_name="water_potential_evapotranspiration_flux",
     long_name="Potential evapotranspiration",
-    title="Potential evapotranspiration",
     description=(
         "The potential for water evaporation from soil and transpiration by plants if the water "
         "supply is sufficient, calculated with the {method} method."
@@ -289,10 +294,10 @@ potential_evapotranspiration = Converter(
 )
 
 water_budget_from_tas = Converter(
+    title="Water budget",
     identifier="water_budget_from_tas",
     units="kg m-2 s-1",
     long_name="Water budget",
-    title="Water budget",
     description=(
         "Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget, "
         "where the potential evapotranspiration, calculated with the {method} method."
@@ -305,10 +310,10 @@ water_budget_from_tas = Converter(
 )
 
 water_budget = Converter(
+    title="Water budget",
     identifier="water_budget",
     units="kg m-2 s-1",
     long_name="Water budget",
-    title="Water budget",
     description=(
         "Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget."
     ),
@@ -321,10 +326,10 @@ water_budget = Converter(
 
 
 corn_heat_units = Converter(
+    title=" Corn heat units",
     identifier="corn_heat_units",
     units="",
     long_name="Corn heat units",
-    title=" Corn heat units",
     description="Temperature-based index used to estimate the development of corn crops. "
     "Corn growth occurs when the minimum and maximum daily temperatures both exceed "
     "{thresh_tasmin} and {thresh_tasmax}, respectively.",
@@ -337,10 +342,10 @@ corn_heat_units = Converter(
 )
 
 universal_thermal_climate_index = Converter(
+    title="Universal thermal climate index",
     identifier="utci",
     units="K",
     long_name="Universal thermal climate index",
-    title="Universal thermal climate index",
     description="UTCI is the equivalent temperature for the environment derived from a reference environment "
     "and is used to evaluate heat stress in outdoor spaces.",
     abstract="UTCI is the equivalent temperature for the environment derived from a reference environment "
@@ -351,10 +356,10 @@ universal_thermal_climate_index = Converter(
 )
 
 mean_radiant_temperature = Converter(
+    title="Mean radiant temperature",
     identifier="mean_radiant_temperature",
     units="K",
     long_name="Mean radiant temperature",
-    title="Mean radiant temperature",
     description="The incidence of radiation on the body from all directions.",
     abstract="The average temperature of solar and thermal radiation incident on the body's exterior.",
     cell_methods="",
