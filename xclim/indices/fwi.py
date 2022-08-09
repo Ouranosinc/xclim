@@ -4,7 +4,7 @@ r"""
 Fire Weather Indices Submodule
 ==============================
 
-This submodule defines the :py:func:`xclim.indices.fire_season`, :py:func:`code-xclim.indices.drought_code` and
+This submodule defines the :py:func:`xclim.indices.fire_season`, :py:func:`xclim.indices.drought_code` and
 :py:func:`xclim.indices.fire_weather_indexes` indices, which are used by the eponym indicators.
 Users should read this module's documentation and the one of :py:func:`fire_weather_ufunc`. They should also consult the
 information available at :cite:t:`code-natural_resources_canada_data_nodate`.
