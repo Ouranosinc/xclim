@@ -32,6 +32,8 @@ To install the xclim Anaconda binary, run this command in your terminal:
 
     $ conda install -c conda-forge xclim
 
+.. _extra-dependencies:
+
 Extra dependencies
 ------------------
 To improve performance of xclim, we highly recommend you also install `flox`_ (see: :doc:`flox API <flox:api>`).
