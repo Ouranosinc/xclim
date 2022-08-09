@@ -473,7 +473,7 @@ dry_spell_frequency = Precip(
     title="Dry spell frequency",
     identifier="dry_spell_frequency",
     long_name="Dry spell frequency",
-    description="{freq} number of dry periods of {window} day(s) or more, during which the {op} precipitation on a "
+    description="The {freq} number of dry periods of {window} day(s) or more, during which the {op} precipitation on a "
     "window of {window} day(s) is below {thresh}.",
     abstract="The frequency of dry periods of `N` days or more, during which the accumulated or maximum precipitation "
     "over a given time window of days is below a given threshold.",
@@ -487,8 +487,8 @@ dry_spell_total_length = Precip(
     title="Dry spell total length",
     identifier="dry_spell_total_length",
     long_name="Dry spell total length",
-    description="{freq} number of days in dry periods of {window} day(s) or more, during which the {op} precipitation "
-    "within windows of {window} day(s) is under {thresh}.",
+    description="The {freq} number of days in dry periods of {window} day(s) or more, during which the {op} "
+    "precipitation within windows of {window} day(s) is under {thresh}.",
     abstract="The total length of dry periods of `N` days or more, during which the accumulated or maximum "
     "precipitation over a given time window of days is below a given threshold.",
     units="days",
