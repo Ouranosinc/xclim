@@ -479,7 +479,7 @@ def test_doc():
     assert "Based on indice :py:func:`~xclim.indices.fwi.fire_weather_indexes`." in doc
     assert "ffmc0 : str or DataArray, optional" in doc
     assert "Returns\n-------" in doc
-    assert "See :cite:t:`natural_resources_canada_data_nodate`, " in doc
+    assert "See :cite:t:`code-natural_resources_canada_data_nodate`, " in doc
     assert "the :py:mod:`xclim.indices.fwi` module documentation," in doc
     assert (
         "and the docstring of :py:func:`fire_weather_ufunc` for more information."
