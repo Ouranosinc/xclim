@@ -587,12 +587,14 @@ def _gen_returns_section(cf_attrs: Sequence[dict[str, Any]]):
             section += f" ({attrs['standard_name']})"
         if "units" in attrs:
             section += f" [{attrs['units']}]"
-        section += "\n"
+        added_section = ""
         for key, attr in attrs.items():
             if key not in ["long_name", "standard_name", "units", "var_name"]:
                 if callable(attr):
                     attr = "<Dynamically generated string>"
-                section += f"  {key}: {attr}\n"
+                added_section += f"  **{key}**: {attr};"
+        if added_section:
+            section = section + "With additionnal attributes: " + added_section 
     return section
 
 
