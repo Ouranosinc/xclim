@@ -248,70 +248,70 @@
     "abstract": "L'indice de sécheresse fait partie du système canadien des Indices Forêt-Météo. C'est un code numérique estimant la teneur en humidité moyenne de couches organiques."
   },
   "TN_DAYS_ABOVE": {
-    "long_name": "Nombre de jours avec Tmin > seuil",
+    "long_name": "Nombre de jours avec température minimale quotidienne au-dessus d'un seuil donné",
     "description": "Nombre {freq:m} de jours où la température minimale quotidienne est au-dessus de {thresh}.",
-    "title": "Nombre de jours avec Tmin au-dessus d'un certain seuil",
-    "abstract": "Nombre de jours où la température minimale quotidienne est au-dessus d'un seuil."
+    "title": "Nombre de jours avec température minimale quotidienne au-dessus d'un seuil donné",
+    "abstract": "Nombre de jours où la température minimale quotidienne est au-dessus d'un seuil donné."
   },
   "TN_DAYS_BELOW": {
-    "long_name": "Nombre de jours avec Tmin < {thresh}",
+    "long_name": "Nombre de jours avec température minimale quotidienne sous un seuil donné",
     "description": "Nombre {freq:m} de jours où la température minimale quotidienne est sous {thresh}.",
-    "title": "Nombre de jours avec Tmin sous un certain seuil",
-    "abstract": "Nombre de jours où la température minimale quotidienne est sous un seuil."
+    "title": "Nombre de jours avec température minimale quotidienne sous d'un seuil donné",
+    "abstract": "Nombre de jours où la température minimale quotidienne est sous un seuil donné."
   },
   "TG_DAYS_ABOVE": {
-    "long_name": "Nombre de jours avec Tmoy > {thresh}",
+    "long_name": "Nombre de jours avec température moyenne quotidienne au-dessus d'un seuil donné",
     "description": "Nombre {freq:m} de jours où la température quotidienne moyenne est au-dessus de {thresh}.",
-    "title": "Nombre de jours avec tmoy au-dessus d'un certain seuil",
-    "abstract": "Nombre de jours où la température quotidienne moyenne est au-dessus d'un seuil."
+    "title": "Nombre de jours avec température moyenne quotidienne au-dessus d'un seuil donné",
+    "abstract": "Nombre de jours où la température quotidienne moyenne est au-dessus d'un seuil donné."
   },
   "TG_DAYS_BELOW": {
-    "long_name": "Nombre de jours avec Tmoy < {thresh}",
+    "long_name": "Nombre de jours avec température moyenne quotidienne sous un seuil donné",
     "description": "Nombre {freq:m} de jours où la température quotidienne moyenne est sous {thresh}.",
-    "title": "Nombre de jours avec tmoy sous un certain seuil",
-    "abstract": "Nombre de jours où la température quotidienne moyenne est sous un seuil."
+    "title": "Nombre de jours avec température moyenne quotidienne sous d'un seuil donné",
+    "abstract": "Nombre de jours où la température quotidienne moyenne est sous un seuil donné."
   },
   "TX_DAYS_ABOVE": {
-    "long_name": "Nombre de jours avec Tmax > {thresh}",
+    "long_name": "Nombre de jours avec température maximale quotidienne au-dessus d'un seuil donné",
     "description": "Nombre {freq:m} de jours où la température maximale quotidienne est au-dessus de {thresh}.",
-    "title": "Nombre de jours avec Tmax au-dessus d'un certain seuil",
-    "abstract": "Nombre de jours où la température maximale quotidienne est au-dessus d'un seuil."
+    "title": "Nombre de jours avec température maximale quotidienne au-dessus d'un seuil donné",
+    "abstract": "Nombre de jours où la température maximale quotidienne est au-dessus d'un seuil donné."
   },
   "TX_DAYS_BELOW": {
-    "long_name": "Nombre de jours avec Tmax < {thresh}",
+    "long_name": "Nombre de jours avec température maximale quotidienne sous un seuil donné",
     "description": "Nombre {freq:m} de jours où la température maximale quotidienne est sous {thresh}.",
-    "title": "Nombre de jours avec Tmax sous un certain seuil",
-    "abstract": "Nombre de jours où la température maximale quotidienne est sous un seuil."
+    "title": "Nombre de jours avec température maximale quotidienne sous d'un seuil donné",
+    "abstract": "Nombre de jours où la température maximale quotidienne est sous un seuil donné."
   },
   "TX_TN_DAYS_ABOVE": {
-    "long_name": "Nombre de jours avec Tmax > {thresh_tasmax} et Tmin > {thresh_tasmin}",
+    "long_name": "Nombre de jours où les températures minimales et maximales quotidiennes dépassent des seuils donnés.",
     "description": "Nombre {freq:m} de jours où la température maximale quotidienne excède {thresh_tasmax} et la température minimale quotidienne excède {thresh_tasmin}.",
-    "title": "Nombre de jours avec des températures minimales et maximales quotidiennes chaudes",
+    "title": "Nombre de jours où les températures minimales et maximales quotidiennes dépassent les seuils.",
     "abstract": "Nombre de jours où les températures maximales et minimales quotidiennes sont au-dessus de seuils donnés."
   },
   "HEAT_WAVE_FREQUENCY": {
-    "long_name": "Nombre de vagues de chaleur (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax} pour {window} jours)",
+    "long_name": "Nombre de vagues de chaleur",
     "description": "Nombre {freq:m} de vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
     "title": "Fréquence des vagues de chaleur",
     "abstract": "Nombre de vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent des seuils donnés durant un certain nombre de jours."
   },
   "HEAT_WAVE_TOTAL_LENGTH": {
-    "long_name": "Durée totale des vagues de chaleur (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax} pour >= {window} days)",
+    "long_name": "Durée totale des vagues de chaleur",
     "description": "Durée totale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
     "title": "Durée totale des vagues de chaleur",
     "abstract": "Durée totale des vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent des seuils donnés durant un certain nombre de jours."
   },
   "HEAT_WAVE_MAX_LENGTH": {
-    "long_name": "Longueur maximale des vagues de chaleur (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax} pour {window} jours au moins)",
+    "long_name": "Longueur maximale des vagues de chaleur",
     "description": "Longueur maximale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
     "title": "Longueur maximale des vagues de chaleur",
     "abstract": "Longueur maximale des vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent des seuils donnés durant un certain nombre de jours."
   },
   "HEAT_WAVE_INDEX": {
     "long_name": "Nombre de jours de vague de chaleur",
-    "description": "Nombre {freq:m} de jours de vague de chaleur, définie comme cinq jours consécutifs ou plus où la température est au-dessus de {thresh}.",
+    "description": "Nombre {freq:m} de jours de vague de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
     "title": "Indice de vague de chaleur",
-    "abstract": "Nombre de jours de vagues de chaleur. Une vague de chaleur se produit lorsque la température maximale quotidienne excède un seuil durant au moins 5 jours."
+    "abstract": "Nombre de jours de vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent des seuils donnés durant un certain nombre de jours."
   },
   "TG": {
     "long_name": "température quotidienne moyenne",

@@ -92,111 +92,133 @@ class TempWithIndexing(ResamplingIndicatorWithIndexing):
 
 
 tn_days_above = TempWithIndexing(
+    title="Number of days with minimum temperature above a given threshold",
     identifier="tn_days_above",
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
-    long_name="Number of days with Tmin above threshold",
+    long_name="The number of days with minimum temperature above a given threshold",
     description="{freq} number of days where daily minimum temperature exceeds {thresh}.",
+    abstract="The number of days with minimum temperature above a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.tn_days_above,
 )
 
 tn_days_below = TempWithIndexing(
+    title="Number of days with minimum temperature below a given threshold",
     identifier="tn_days_below",
     units="days",
     standard_name="number_of_days_with_air_temperature_below_threshold",
-    long_name="Number of days with Tmin below threshold",
+    long_name="The number of days with minimum temperature below a given threshold",
     description="{freq} number of days where daily minimum temperature is below {thresh}.",
+    abstract="The number of days with minimum temperature below a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.tn_days_below,
 )
 
 tg_days_above = TempWithIndexing(
+    title="Number of days with mean temperature above a given threshold",
     identifier="tg_days_above",
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
-    long_name="Number of days with Tmean above threshold",
+    long_name="The number of days with mean temperature above a given threshold",
     description="{freq} number of days where daily mean temperature exceeds {thresh}.",
+    abstract="The number of days with mean temperature above a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.tg_days_above,
 )
 
 tg_days_below = TempWithIndexing(
+    title="Number of days with mean temperature below a given threshold",
     identifier="tg_days_below",
     units="days",
     standard_name="number_of_days_with_air_temperature_below_threshold",
-    long_name="Number of days with Tmean below threshold",
+    long_name="The number of days with mean temperature below a given threshold",
     description="{freq} number of days where daily mean temperature is below {thresh}.",
+    abstract="The number of days with mean temperature below a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.tg_days_below,
 )
 
 tx_days_above = TempWithIndexing(
+    title="Number of days with maximum temperature above a given threshold",
     identifier="tx_days_above",
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
-    long_name="Number of days with Tmax above threshold",
+    long_name="The number of days with maximum temperature above a given threshold",
     description="{freq} number of days where daily maximum temperature exceeds {thresh}.",
+    abstract="The number of days with maximum temperature above a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.tx_days_above,
 )
 
 tx_days_below = TempWithIndexing(
+    title="Number of days with maximum temperature below a given threshold",
     identifier="tx_days_below",
     units="days",
     standard_name="number_of_days_with_air_temperature_below_threshold",
-    long_name="Number of days with Tmax below threshold",
+    long_name="The number of days with maximum temperature below a given threshold",
     description="{freq} number of days where daily max temperature is below {thresh}.",
+    abstract="The number of days with maximum temperature below a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.tx_days_below,
 )
 
 tx_tn_days_above = TempWithIndexing(
+    title="Number of days with daily minimum and maximum temperatures exceeding thresholds",
     identifier="tx_tn_days_above",
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
-    long_name="Number of days with Tmax above a specified threshold and Tmin above a specified threshold",
+    long_name="Number of days with daily minimum and daily maximum temperatures above given thresholds",
     description="{freq} number of days where daily maximum temperature exceeds {thresh_tasmax} and minimum temperature "
     "exceeds {thresh_tasmin}.",
+    abstract="Number of days with daily maximum and minimum temperatures above given thresholds",
     cell_methods="",
     compute=indices.tx_tn_days_above,
 )
 
 
 heat_wave_frequency = Temp(
+    title="Heat wave frequency",
     identifier="heat_wave_frequency",
     units="",
     standard_name="heat_wave_events",
     long_name="Number of heat wave events",
-    description="{freq} number of heat wave events over a given period. An event occurs when the minimum and maximum "
-    "daily temperature both exceeds specific thresholds : (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) over a "
-    "minimum number of days ({window}).",
+    description="{freq} number of heat wave events within a given period. A heat wave occurs when daily minimum and "
+    "maximum temperatures exceed thresh_tasmin} and {thresh_tasmax}, respectively, over at least {window} days.",
+    abstract="Number of heat waves. A heat wave occurs when daily minimum and maximum temperatures exceed given "
+    "thresholds for a number of days.",
     cell_methods="",
     keywords="health,",
     compute=indices.heat_wave_frequency,
 )
 
 heat_wave_max_length = Temp(
+    title="Heat wave maximum length",
     identifier="heat_wave_max_length",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
     long_name="Maximum length of heat wave events",
-    description="{freq} maximum length of heat wave events occurring in a given period. An event occurs when the "
-    "minimum and maximum daily temperature both exceeds specific thresholds (Tmin > {thresh_tasmin} and Tmax > "
-    "{thresh_tasmax}) over a minimum number of days ({window}).",
+    description="{freq} maximum length of heat wave events occurring within a given period. "
+    "A heat wave occurs when daily minimum and maximum temperatures exceed thresh_tasmin} and {thresh_tasmax}, "
+    "respectively, over at least {window} days.",
+    abstract="Total duration of heat waves. A heat wave occurs when daily minimum and maximum temperatures exceed "
+    "given thresholds for a number of days.",
     cell_methods="",
     keywords="health,",
     compute=indices.heat_wave_max_length,
 )
 
 heat_wave_total_length = Temp(
+    title="Heat wave total length",
     identifier="heat_wave_total_length",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
     long_name="Total length of heat wave events",
-    description="{freq} total length of heat wave events occurring in a given period. An event occurs when the minimum "
-    "and maximum daily temperature both exceeds specific thresholds (Tmin > {thresh_tasmin} and Tmax > "
-    "{thresh_tasmax}) over a minimum number of days ({window}).",
+    description="{freq} total length of heat wave events occurring within a given period. "
+    "A heat wave occurs when daily minimum and maximum temperatures exceed thresh_tasmin} and {thresh_tasmax}, "
+    "respectively, over at least {window} days.",
+    abstract="Maximum length of heat waves. A heat wave occurs when daily minimum and maximum temperatures exceed "
+    "given thresholds for a number of days.",
     cell_methods="",
     keywords="health,",
     compute=indices.heat_wave_total_length,
@@ -204,12 +226,16 @@ heat_wave_total_length = Temp(
 
 
 heat_wave_index = Temp(
+    title="Heat wave index",
     identifier="heat_wave_index",
     units="days",
     standard_name="heat_wave_index",
-    long_name="Number of days that are part of a heatwave",
-    description="{freq} number of days that are part of a heatwave, defined as five or more consecutive days "
-    "over {thresh}.",
+    long_name="Number of days that constitute heatwave events",
+    description="{freq} total number of days that are part of a heatwave within a given period. "
+    "A heat wave occurs when daily minimum and maximum temperatures exceed thresh_tasmin} and {thresh_tasmax}, "
+    "respectively, over at least {window} days.",
+    abstract="Number of days that constitute heatwave events. A heat wave occurs when daily minimum and maximum "
+    "temperatures exceed given thresholds for a number of days.",
     cell_methods="",
     compute=indices.heat_wave_index,
 )
