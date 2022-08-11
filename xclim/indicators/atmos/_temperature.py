@@ -883,7 +883,6 @@ huglin_index = Temp(
     "Integrates a day-length coefficient calculation for higher latitudes. "
     "Metric originally published in Huglin (1978). Day-length coefficient based on Hall & Jones (2010).",
     cell_methods="",
-    comment="",
     var_name="hi",
     compute=indices.huglin_index,
     parameters=dict(method="jones"),
