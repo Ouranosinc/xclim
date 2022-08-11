@@ -635,7 +635,7 @@ class ExtremeValues(TrainAdjust):
     ----------
     :cite:cts:`sdba-roy_juliaclimateclimatetoolsjl_2021`
 
-    Roy, Rondeau-Genesse, Jalbert and Fournier [RRJF2021]_
+    Roy, Rondeau-Genesse, Jalbert, and Fournier [RRJF2021]_
 
     """
 

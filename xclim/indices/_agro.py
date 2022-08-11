@@ -55,7 +55,7 @@ def corn_heat_units(
     r"""Corn heat units.
 
     Temperature-based index used to estimate the development of corn crops.
-    Formula adapted from [BootsmaTremblay&Filion1999]_.
+    Formula adapted from :cite:t:`bootsma_risk_1999`.
 
     Parameters
     ----------
@@ -75,7 +75,7 @@ def corn_heat_units(
 
     Notes
     -----
-    Formula used in calculating the Corn Heat Units for the Agroclimatic Atlas of Quebec [Audet&al2012]_.
+    Formula used in calculating the Corn Heat Units for the Agroclimatic Atlas of Quebec :cite:p:`audet_atlas_2012`.
 
     The thresholds of 4.44°C for minimum temperatures and 10°C for maximum temperatures were selected following
     the assumption that no growth occurs below these values.
@@ -98,8 +98,8 @@ def corn_heat_units(
 
     References
     ----------
-    .. [BootsmaTremblay&Filion1999] Bootsma, A., G. Tremblay et P. Filion. 1999: Analyse sur les risques associés aux unités thermiques disponibles pour la production de maïs et de soya au Québec. Centre de recherches de l’Est sur les céréales et oléagineux, Ottawa, 28 p.
-    .. [Audet&al2012] Audet, R., Côté, H., Bachand, D. and Mailhot, A., 2012: Atlas agroclimatique du Québec. Évaluation des opportunités et des risques agroclimatiques dans un climat en évolution. https://espace.inrs.ca/id/eprint/2406
+    :cite:cts:`audet_atlas_2012,bootsma_risk_1999`
+
     """
     tasmin = convert_units_to(tasmin, "degC")
     tasmax = convert_units_to(tasmax, "degC")
@@ -328,7 +328,7 @@ def biologically_effective_degree_days(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [K days]
       Biologically effective growing degree days (BEDD).
 
     Warnings
@@ -489,7 +489,7 @@ def latitude_temperature_index(
 ) -> xarray.DataArray:
     """Latitude-Temperature Index.
 
-    Mean temperature of the warmest month with a latitude-based scaling factor ([Jackson&Cherry1988]_).
+    Mean temperature of the warmest month with a latitude-based scaling factor :cite:p:`jackson_prediction_1988`.
     Used for categorizing wine-growing regions.
 
     Parameters
@@ -510,20 +510,21 @@ def latitude_temperature_index(
 
     Notes
     -----
-    The latitude factor of `75` is provided for examining the poleward expansion of wine-growing climates under scenarios
-    of climate change (modified from [Kenny&Shao1992]_). For comparing 20th century/observed historical records, the original scale factor of `60` is more
-    appropriate.
+    The latitude factor of `75` is provided for examining the poleward expansion of wine-growing climates under
+    scenarios of climate change (modified from :cite:t:`kenny_assessment_1992`). For comparing 20th century/observed
+    historical records, the original scale factor of `60` is more appropriate.
 
     Let :math:`Tn_{j}` be the average temperature for a given month :math:`j`, :math:`lat_{f}` be the latitude factor,
     and :math:`lat` be the latitude of the area of interest. Then the Latitude-Temperature Index (:math:`LTI`) is:
 
     .. math::
+
         LTI = max(TN_{j}: j = 1..12)(lat_f - |lat|)
 
     References
     ----------
-    .. [Jackson&Cherry1988] Jackson, D. I., & Cherry, N. J. (1988). Prediction of a District’s Grape-Ripening Capacity Using a Latitude-Temperature Index (LTI). American Journal of Enology and Viticulture, 39(1), 19‑28.
-    .. [Kenny&Shao1992] Kenny, G. J., & Shao, J. (1992). An assessment of a latitude-temperature index for predicting climate suitability for grapes in Europe. Journal of Horticultural Science, 67(2), 239‑246. https://doi.org/10.1080/00221589.1992.11516243
+    :cite:cts:`jackson_prediction_1988,kenny_assessment_1992`
+
     """
     tas = convert_units_to(tas, "degC")
 
@@ -667,6 +668,7 @@ def standardized_precipitation_index(
     References
     ----------
     :cite:cts:`mckee_relationship_1993`
+
     """
     # "WPM" method doesn't seem to work for gamma or pearson3
     dist_and_methods = {"gamma": ["ML", "APP"]}
@@ -795,6 +797,10 @@ def standardized_precipitation_evapotranspiration_index(
     xarray.DataArray,
       Standardized Precipitation Evapotranspiration Index.
 
+    See Also
+    --------
+    standardized_precipitation_index
+
     Notes
     -----
     See Standardized Precipitation Index (SPI) for more details on usage.
@@ -911,13 +917,12 @@ def dry_spell_total_length(
 
     Notes
     -----
-    The algorithm assumes days before and after the timeseries are "wet", meaning that
-    the condition for being considered part of a dry spell is stricter on the edges. For
-    example, with `window=3` and `op='sum'`, the first day of the series is considered
-    part of a dry spell only if the accumulated precipitation within the first 3 days is
-    under the threshold. In comparison, a day in the middle of the series is considered
-    part of a dry spell if any of the three 3-day periods of which it is part are
-    considered dry (so a total of five days are included in the computation, compared to only 3.)
+    The algorithm assumes days before and after the timeseries are "wet", meaning that the condition for being
+    considered part of a dry spell is stricter on the edges. For example, with `window=3` and `op='sum'`, the first day
+    of the series is considered part of a dry spell only if the accumulated precipitation within the first three days is
+    under the threshold. In comparison, a day in the middle of the series is considered part of a dry spell if any of
+    the three 3-day periods of which it is part are considered dry (so a total of five days are included in the
+    computation, compared to only three).
     """
     pram = rate2amount(pr, out_units="mm")
     thresh = convert_units_to(thresh, pram)
@@ -953,18 +958,20 @@ def qian_weighted_mean_average(
 
     Notes
     -----
-    Qian Modified Weighted Mean Indice originally proposed in [Qian&al2009]_, based on [BootsmaGameda&McKenney2005]_.
+    Qian Modified Weighted Mean Indice originally proposed in :cite:p:`qian_observed_2010`,
+    based on :cite:p:`bootsma_impacts_2005`.
 
     Let :math:`X_{n}` be the average temperature for day :math:`n` and :math:`X_{t}` be the daily mean temperature
     on day :math:`t`. Then the weighted mean average can be calculated as follows:
 
     .. math::
+
         \overline{X}_{n} = \frac{X_{n-2} + 4X_{n-1} + 6X_{n} + 4X_{n+1} + X_{n+2}}{16}
 
     References
     ----------
-    .. [Qian&al2009] Qian, B., Zhang, X., Chen, K., Feng, Y., & O’Brien, T. (2009). Observed Long-Term Trends for Agroclimatic Conditions in Canada. Journal of Applied Meteorology and Climatology, 49(4), 604‑618. https://doi.org/10.1175/2009JAMC2275.1
-    .. [BootsmaGameda&McKenney2005] Bootsma, A., & Gameda and D.W. McKenney, S. (2005). Impacts of potential climate change on selected agroclimatic indices in Atlantic Canada. Canadian Journal of Soil Science, 85(2), 329‑343. https://doi.org/10.4141/S04-019
+    :cite:cts:`bootsma_impacts_2005,qian_observed_2010`
+
     """
     units = tas.attrs["units"]
 
@@ -992,7 +999,7 @@ def effective_growing_degree_days(
 ) -> xarray.DataArray:
     r"""Effective growing degree days.
 
-    Growing degree days based on a dynamic start and end of the growing season, as defined in [BootsmaGameda&McKenney2005]_.
+    Growing degree days based on a dynamic start and end of the growing season, as defined in :cite:p:`bootsma_impacts_2005`.
 
     Parameters
     ----------
@@ -1022,18 +1029,20 @@ def effective_growing_degree_days(
     The effective growing degree days for a given year :math:`EGDD_i` can be calculated as follows:
 
     .. math::
+
         EGDD_i = \sum_{i=\text{j_{start}}^{\text{j_{end}}} max\left(TG - Thresh, 0 \right)
 
     Where :math:`TG` is the mean daly temperature, and :math:`j_{start}` and :math:`j_{end}` are the start and end dates
     of the growing season. The growing season start date methodology is determined via the `method` flag.
     For "bootsma", the start date is defined as 10 days after the average temperature exceeds a threshold (5 degC).
-    For "qian", the start date is based on a weighted 5-day rolling average, based on `qian_weighted_mean_average()`.
+    For "qian", the start date is based on a weighted 5-day rolling average, based on :py:func:`qian_weighted_mean_average`.
 
     The end date is determined as the day preceding the first day with minimum temperature below 0 degC.
 
     References
     ----------
-    .. [BootsmaGameda&McKenney2005] Bootsma, A., & Gameda and D.W. McKenney, S. (2005). Impacts of potential climate change on selected agroclimatic indices in Atlantic Canada. Canadian Journal of Soil Science, 85(2), 329‑343. https://doi.org/10.4141/S04-019
+    :cite:cts:`bootsma_impacts_2005`
+
     """
     tasmax = convert_units_to(tasmax, "degC")
     tasmin = convert_units_to(tasmin, "degC")
