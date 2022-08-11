@@ -594,7 +594,7 @@ def _gen_returns_section(cf_attrs: Sequence[dict[str, Any]]):
                     attr = "<Dynamically generated string>"
                 added_section += f"  **{key}**: {attr};"
         if added_section:
-            section = section + "With additionnal attributes: " + added_section 
+            section = section + "With additionnal attributes: " + added_section
     return section
 
 
