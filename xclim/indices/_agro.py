@@ -329,7 +329,7 @@ def biologically_effective_degree_days(
     Returns
     -------
     xarray.DataArray, [K days]
-      Biologically effective growing degree days (BEDD).
+      Biologically effective growing degree days (BEDD)
 
     Warnings
     --------
