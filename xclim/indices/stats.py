@@ -12,6 +12,7 @@ from xclim.core.utils import uses_dask
 from . import generic
 
 __all__ = [
+    "dist_method",
     "fit",
     "parametric_quantile",
     "parametric_cdf",

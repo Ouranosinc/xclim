@@ -4,7 +4,6 @@ from __future__ import annotations
 import warnings
 
 import numpy as np
-import pandas as pd
 import xarray
 
 import xclim.indices as xci
@@ -70,7 +69,7 @@ def corn_heat_units(
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
+    xarray.DataArray, [unitless]
       Daily corn heat units.
 
     Notes
@@ -328,7 +327,7 @@ def biologically_effective_degree_days(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [K days]
       Biologically effective growing degree days (BEDD)
 
     Warnings
@@ -640,7 +639,7 @@ def standardized_precipitation_index(
 
     Returns
     -------
-    xarray.DataArray,
+    xarray.DataArray, [unitless]
       Standardized Precipitation Index.
 
     Notes
@@ -773,7 +772,9 @@ def standardized_precipitation_evapotranspiration_index(
 ) -> xarray.DataArray:
     r"""Standardized Precipitation Evapotranspiration Index (SPEI).
 
-    Precipitation minus potential evapotranspiration data (PET) fitted to a statistical distribution (dist), transformed to a cdf,  and inverted back to a gaussian normal pdf. The potential evapotranspiration is calculated with a given method (method).
+    Precipitation minus potential evapotranspiration data (PET) fitted to a statistical distribution (dist), transformed
+    to a cdf,  and inverted back to a gaussian normal pdf. The potential evapotranspiration is calculated with a given
+    method (`method`).
 
     Parameters
     ----------
@@ -784,8 +785,8 @@ def standardized_precipitation_evapotranspiration_index(
     freq : str
       Resampling frequency. A monthly or daily frequency is expected.
     window : int
-      Averaging window length relative to the resampling frequency. For example, if `freq="MS"`, i.e. a monthly resampling, the window
-      is an integer number of months.
+      Averaging window length relative to the resampling frequency. For example, if `freq="MS"`, i.e. a monthly
+      resampling, the window is an integer number of months.
     dist : {'gamma'}
       Name of the univariate distribution. Only "gamma" is currently implemented. (see :py:mod:`scipy.stats`).
     method : {'APP', 'ML'}
@@ -856,7 +857,7 @@ def dry_spell_frequency(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [unitless]
       The {freq} number of dry periods of minimum {window} days.
 
     Examples
@@ -912,7 +913,7 @@ def dry_spell_total_length(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [days]
       The {freq} total number of days in dry periods of minimum {window} days.
 
     Notes
@@ -953,7 +954,7 @@ def qian_weighted_mean_average(
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [same as tas]
       Binomial smoothed, five-day weighted mean average temperature.
 
     Notes
@@ -1022,7 +1023,8 @@ def effective_growing_degree_days(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [K days]
+      Effective growing degree days (EGDD).
 
     Notes
     -----
