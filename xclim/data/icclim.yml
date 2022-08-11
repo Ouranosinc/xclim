@@ -1,18 +1,16 @@
-realm: atmos
 doc: |
   ==============
   ICCLIM indices
   ==============
-  The European Climate Assessment & Dataset project (`ECAD`_) defines
-  a set of 26 core climate indices. Those have been made accessible
-  directly in xclim through their ECAD name for compatibility. However,
-  the methods in this module are only wrappers around the corresponding
-  methods of  `xclim.indices`. Note that none of the checks performed by
-  the `xclim.utils.Indicator` class (like with `xclim.atmos` indicators)
-  are performed in this module.
+
+  The European Climate Assessment & Dataset project (`ECAD`_) defines a set of 26 core climate indices. Those have been
+  made accessible directly in xclim through their ECAD name for compatibility. However, the methods in this module are
+  only wrappers around the corresponding methods of `xclim.indices`. Note that none of the checks performed by the
+  `xclim.utils.Indicator` class (like with `xclim.atmos` indicators)are performed in this module.
 
   .. _ECAD: https://www.ecad.eu/
-references: European Climate Assessment & Dataset, https://www.ecad.eu/
+realm: atmos
+references: European Climate Assessment & Dataset https://www.ecad.eu/
 indicators:
   TG:
     base: tg_mean
@@ -244,7 +242,6 @@ indicators:
       thresh: 1 mm/day
       pr_per:
         description: 75th percentile of wet day precipitation flux.
-
   R95pTOT:
     base: fraction_over_precip_thresh
     cf_attrs:

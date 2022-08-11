@@ -10,7 +10,8 @@ doc: |
   Furthermore, according to the ANUCLIM user-guide :cite:t:`xu_anuclim_2010`, input values should be at a weekly or
   monthly frequency.  However, the implementation here expands these definitions and can calculate the result with daily
   input data.
-
+realm: atmos
+references: ANUCLIM https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6)
 base: ResamplingIndicator
 indicators:
   P10_MeanTempWarmestQuarter:
@@ -199,5 +200,3 @@ indicators:
       units: K
     parameters:
       op: driest
-realm: atmos
-references: ANUCLIM https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6)
