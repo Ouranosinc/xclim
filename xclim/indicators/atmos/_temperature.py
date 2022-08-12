@@ -171,7 +171,7 @@ tx_tn_days_above = TempWithIndexing(
     long_name="Number of days with daily minimum and daily maximum temperatures above given thresholds",
     description="{freq} number of days where daily maximum temperature exceeds {thresh_tasmax} and minimum temperature "
     "exceeds {thresh_tasmin}.",
-    abstract="Number of days with daily maximum and minimum temperatures above given thresholds",
+    abstract="Number of days with daily maximum and minimum temperatures above given thresholds.",
     cell_methods="",
     compute=indices.tx_tn_days_above,
 )
@@ -184,7 +184,7 @@ heat_wave_frequency = Temp(
     standard_name="heat_wave_events",
     long_name="Number of heat wave events",
     description="{freq} number of heat wave events within a given period. A heat wave occurs when daily minimum and "
-    "maximum temperatures exceed thresh_tasmin} and {thresh_tasmax}, respectively, over at least {window} days.",
+    "maximum temperatures exceed {thresh_tasmin} and {thresh_tasmax}, respectively, over at least {window} days.",
     abstract="Number of heat waves. A heat wave occurs when daily minimum and maximum temperatures exceed given "
     "thresholds for a number of days.",
     cell_methods="",
@@ -242,153 +242,179 @@ heat_wave_index = Temp(
 
 
 hot_spell_frequency = Temp(
+    title="Hot spell frequency",
     identifier="hot_spell_frequency",
     units="",
     standard_name="hot_spell_events",
     long_name="Number of hot spell events",
-    description="{freq} number of hot spell events over a given period. An event occurs when the maximum daily "
-    "temperature exceeds a specific threshold: (Tmax > {thresh_tasmax}) over a minimum number of days ({window}).",
+    description="{freq} number of hot spell events within a given period. A hot spell event occurs when the maximum "
+    "daily temperature exceeds {thresh_tasmax} over at least {window} days.",
+    abstract="Number of hot spells events within a given period. A hot spell occurs when the daily maximum temperature"
+    "exceeds a given threshold for a minimum number of days.",
     cell_methods="",
     keywords="health,",
     compute=indices.hot_spell_frequency,
 )
 
 hot_spell_max_length = Temp(
+    title="Hot spell maximum length",
     identifier="hot_spell_max_length",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
     long_name="Maximum length of hot spell events",
-    description="{freq} maximum length of hot spell events occurring in a given period. An event occurs when the "
-    "maximum daily temperature exceeds a specific threshold: (Tmax > {thresh_tasmax}) over a minimum number of days "
-    "({window}).",
+    description="{freq} maximum length of hot spell events occurring within a given period. "
+    "A hot spell event occurs when the maximum daily temperature exceeds {thresh_tasmax} over at least {window} days.",
+    abstract="Maximum length of hot spells events within a given period. A hot spell occurs when the daily maximum "
+    "temperature exceeds a given threshold for a minimum number of days.",
     cell_methods="",
     keywords="health,",
     compute=indices.hot_spell_max_length,
 )
 
 tg_mean = TempWithIndexing(
+    title="Mean temperature",
     identifier="tg_mean",
     units="K",
     standard_name="air_temperature",
     long_name="Mean daily mean temperature",
     description="{freq} mean of daily mean temperature.",
+    abstract="Mean of daily mean temperature.",
     cell_methods="time: mean over days",
     compute=indices.tg_mean,
 )
 
 tg_max = TempWithIndexing(
+    title="Maximum of mean temperature",
     identifier="tg_max",
     units="K",
     standard_name="air_temperature",
     long_name="Maximum daily mean temperature",
     description="{freq} maximum of daily mean temperature.",
+    abstract="Maximum of daily mean temperature.",
     cell_methods="time: maximum over days",
     compute=indices.tg_max,
 )
 
 tg_min = TempWithIndexing(
+    title="Minimum of mean temperature",
     identifier="tg_min",
     units="K",
     standard_name="air_temperature",
     long_name="Minimum daily mean temperature",
     description="{freq} minimum of daily mean temperature.",
+    abstract="Minimum of daily mean temperature.",
     cell_methods="time: minimum over days",
     compute=indices.tg_min,
 )
 
 tx_mean = TempWithIndexing(
+    title="Mean of maximum temperature",
     identifier="tx_mean",
     units="K",
     standard_name="air_temperature",
     long_name="Mean daily maximum temperature",
     description="{freq} mean of daily maximum temperature.",
+    abstract="Mean of daily maximum temperature.",
     cell_methods="time: mean over days",
     compute=indices.tx_mean,
 )
 
 tx_max = TempWithIndexing(
+    title="Maximum temperature",
     identifier="tx_max",
     units="K",
     standard_name="air_temperature",
     long_name="Maximum daily maximum temperature",
     description="{freq} maximum of daily maximum temperature.",
+    abstract="Maximum of daily maximum temperature.",
     cell_methods="time: maximum over days",
     compute=indices.tx_max,
 )
 
 tx_min = TempWithIndexing(
+    title="Minimum of maximum temperature",
     identifier="tx_min",
     units="K",
     standard_name="air_temperature",
     long_name="Minimum daily maximum temperature",
     description="{freq} minimum of daily maximum temperature.",
+    abstract="Minimum of daily maximum temperature.",
     cell_methods="time: minimum over days",
     compute=indices.tx_min,
 )
 
 tn_mean = TempWithIndexing(
+    title="Mean of minimum temperature",
     identifier="tn_mean",
     units="K",
     standard_name="air_temperature",
     long_name="Mean daily minimum temperature",
     description="{freq} mean of daily minimum temperature.",
+    abstract="Mean of daily minimum temperature.",
     cell_methods="time: mean over days",
     compute=indices.tn_mean,
 )
 
 tn_max = TempWithIndexing(
+    title="Maximum of minimum temperature",
     identifier="tn_max",
     units="K",
     standard_name="air_temperature",
     long_name="Maximum daily minimum temperature",
     description="{freq} maximum of daily minimum temperature.",
+    abstract="Maximum of daily minimum temperature.",
     cell_methods="time: maximum over days",
     compute=indices.tn_max,
 )
 
 tn_min = TempWithIndexing(
+    title="Minimum temperature",
     identifier="tn_min",
     units="K",
     standard_name="air_temperature",
     long_name="Minimum daily minimum temperature",
     description="{freq} minimum of daily minimum temperature.",
+    abstract="Minimum of daily minimum temperature.",
     cell_methods="time: minimum over days",
     compute=indices.tn_min,
 )
 
 daily_temperature_range = TempWithIndexing(
-    title="Mean of daily temperature range.",
+    title="Mean of daily temperature range",
     identifier="dtr",
     units="K",
     standard_name="air_temperature",
     long_name="Mean diurnal temperature range",
     description="{freq} mean diurnal temperature range.",
     cell_methods="time range within days time: mean over days",
+    abstract="The average difference between the daily maximum and minimum temperatures.",
     compute=indices.daily_temperature_range,
     parameters=dict(op="mean"),
 )
 
 max_daily_temperature_range = TempWithIndexing(
-    title="Maximum of daily temperature range.",
+    title="Maximum of daily temperature range",
     identifier="dtrmax",
     units="K",
     standard_name="air_temperature",
     long_name="Maximum diurnal temperature range",
     description="{freq} maximum diurnal temperature range.",
     cell_methods="time range within days time: max over days",
+    abstract="The maximum difference between the daily maximum and minimum temperatures.",
     compute=indices.daily_temperature_range,
     parameters=dict(op="max"),
 )
 
 daily_temperature_range_variability = TempWithIndexing(
+    title="Variability of daily temperature range",
     identifier="dtrvar",
     units="K",
     standard_name="air_temperature",
     long_name="Mean diurnal temperature range variability",
     description="{freq} mean diurnal temperature range variability (defined as the average day-to-day variation "
-    "in daily temperature range for the given time period)",
-    cell_methods="time range within days time: difference "
-    "over days time: mean over days",
+    "in daily temperature range for the given time period).",
+    abstract="The average day-to-day variation in daily temperature range.",
+    cell_methods="time range within days time: difference over days time: mean over days",
     compute=indices.daily_temperature_range_variability,
 )
 

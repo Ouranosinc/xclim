@@ -314,28 +314,28 @@
     "abstract": "Nombre de jours de vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent des seuils donnés durant un certain nombre de jours."
   },
   "TG": {
-    "long_name": "température quotidienne moyenne",
+    "long_name": "Moyenne des températures maximales et minimales quotidennes",
     "description": "température quotidienne moyenne estimée par la médiane des températures maximales et minimales.",
-    "title": "Moyenne des températures maximales et minimales",
-    "abstract": "La température quotidienne moyenne en assumant une distribution symétrique des températures (Tg = (Tx + Tn) / 2)."
+    "title": "Température moyenne",
+    "abstract": "La température quotidienne en assumant une distribution symétrique des températures (Tg = (Tx + Tn) / 2)."
   },
   "TG_MIN": {
-    "long_name": "Minimum de la température quotidienne moyenne",
-    "description": "Minimum {freq:m} de la température quotidienne moyenne.",
-    "title": "Minimum de la température quotidienne moyenne",
-    "abstract": "Minimum de la température quotidienne moyenne."
+    "long_name": "Minimum de la température moyenne quotidienne",
+    "description": "Minimum {freq:m} de la température moyenne quotidienne.",
+    "title": "Minimum de la température moyenne",
+    "abstract": "Minimum de la température moyenne quotidienne."
   },
   "TG_MAX": {
-    "long_name": "Maximum de la température quotidienne moyenne",
-    "description": "Maximum {freq:m} de la température quotidienne moyenne.",
-    "title": "Maximum de la température quotidienne moyenne",
-    "abstract": "Maximum de la température quotidienne moyenne."
+    "long_name": "Maximum de la température moyenne quotidienne",
+    "description": "Maximum {freq:m} de la température moyenne quotidienne.",
+    "title": "Maximum de la température moyenne",
+    "abstract": "Maximum de la température moyenne quotidienne."
   },
   "TG_MEAN": {
-    "long_name": "Moyenne de la température quotidienne",
+    "long_name": "Moyenne de la température moyenne quotidienne",
     "description": "Moyenne {freq:f} de la température quotidienne.",
-    "title": "Température quotidienne moyenne",
-    "abstract": "Température quotidienne moyenne."
+    "title": "Température moyenne",
+    "abstract": "Moyenne de la température moyenne quotidienne."
   },
   "TG10P": {
     "long_name": "Nombre de jours où la température quotidienne est au-dessus du {per_base_thresh}e centile",
@@ -350,10 +350,10 @@
     "abstract": "Nombre de jours où la température est au-dessus du {per_base_thresh}e centile."
   },
   "TN_MIN": {
-    "long_name": "Minimum de la température quotidienne",
+    "long_name": "Minimum de la température minimale quotidienne",
     "description": "Minimum {freq:m} de la température minimale quotidienne.",
-    "title": "Température minimale quotidienne",
-    "abstract": "Température minimale quotidienne."
+    "title": "Température minimale",
+    "abstract": "Minimum de la température minimale quotidienne."
   },
   "TN_MAX": {
     "long_name": "Maximum de la température minimale quotidienne",
@@ -388,8 +388,8 @@
   "TX_MAX": {
     "long_name": "Maximum de la température quotidienne",
     "description": "Maximum {freq:m} de la température maximale quotidienne.",
-    "title": "Température maximale quotidienne",
-    "abstract": "Température maximale quotidienne."
+    "title": "Température maximale",
+    "abstract": "Maximum de la température maximale quotidienne."
   },
   "TX_MEAN": {
     "long_name": "Moyenne de la température maximale quotidienne",
@@ -413,7 +413,7 @@
     "long_name": "Amplitude diurne maximale de la température",
     "description": "Maximum {freq:m} de l'amplitude diurne de la température.",
     "title": "Amplitude diurne maximale de la température",
-    "abstract": "L'écart maximal entre les températures maximale et minimale quotidiennes ."
+    "abstract": "L'écart maximal entre les températures maximale et minimale quotidiennes."
   },
   "DTR": {
     "long_name": "Amplitude diurne de la température",
@@ -423,7 +423,7 @@
   },
   "DTRVAR": {
     "long_name": "Variabilité de l'amplitude diurne de la température",
-    "description": "Variation interdiurne moyenne {freq:f} de l'amplitude diurne de la température.",
+    "description": "Variation interdiurne moyenne {freq:f} de l'amplitude diurne de la température (définie comme la variation quotidienne moyenne de l'amplitude diurne des températures quotidiennes pour une période donnée).",
     "title": "Variation interdiurne moyenne de l'amplitude diurne de la température",
     "abstract": "Variation interdiurne moyenne de l'amplitude diurne de la température."
   },
@@ -630,16 +630,16 @@
     "abstract": "Mesure de l'étendue de toutes les régions où la concentration de glace de mer excède un seuil."
   },
   "DRY_DAYS": {
-    "long_name": "Nombre de jours secs (precip < {thresh})",
+    "long_name": "Nombre de jours secs",
     "description": "Nombre {freq} de jours où la précipitation quotidienne est sous {thresh}.",
-    "title": "Jours secs",
+    "title": "Nombre de jours secs",
     "abstract": "Nombre de jours où la précipitation quotidienne est sous un seuil."
   },
   "HOT_SPELL_FREQUENCY": {
-    "long_name": "Nombre de périodes chaudes (Tmax > {thresh_tasmax} durant >= {window} jours)",
-    "description": "Nombre {freq} de périodes chaudes. Une période chaude se produit lorsque la température maximale quotidienne excède {thresh_tasmax} durant au moins {window} jours.",
+    "long_name": "Nombre de périodes chaudes",
+    "description": "Nombre {freq} de périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne excède {thresh_tasmax} durant au moins {window} jours.",
     "title": "Fréquences des périodes chaudes",
-    "abstract": "Nombre de périodes chaudes dans un période donnée. Une période chaude se produit lorsque la température maximale quotidienne excède un seuil spécifique durant un minimum de jours."
+    "abstract": "Nombre de périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne excède un seuil spécifique durant un minimum de jours."
   },
   "LAST_SPRING_FROST": {
     "long_name": "Jour de l'année du dernier gel printanier",
@@ -648,10 +648,10 @@
     "abstract": "Dernier jour où la température est inférieur à un seuil durant un certain nombre de jours, limité par une date finale."
   },
   "HOT_SPELL_MAX_LENGTH": {
-    "long_name": "Longueur maximale des périodes chaudes (Tmax > {thresh_tasmax} durant >= {window} jours)",
-    "description": "Longueur maximale {freq:f} des périodes chaudes. Une période chaude se produit lorsque la température maximale quotidienne excède {thresh_tasmax} durant au moins {window} jours.",
+    "long_name": "Longueur maximale des périodes chaudes",
+    "description": "Longueur maximale {freq:f} des périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne excède {thresh_tasmax} durant au moins {window} jours.",
     "title": "Longueur maximale des périodes chaudes",
-    "abstract": "Longueur maximale des périodes chaudes dans une période donnée. Une période chaude se produit lorsque la température maximale quotidienne excède un seuil spécifique durant un minimum de jours."
+    "abstract": "Longueur maximale des périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne excède un seuil spécifique durant un minimum de jours."
   },
   "CONSECUTIVE_FROST_FREE_DAYS": {
     "long_name": "Nombre maximal de jours consécutifs avec Tmin >= {thresh}",
