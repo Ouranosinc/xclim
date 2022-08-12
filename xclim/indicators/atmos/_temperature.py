@@ -199,7 +199,7 @@ heat_wave_max_length = Temp(
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
     long_name="Maximum length of heat wave events",
     description="{freq} maximum length of heat wave events occurring within a given period. "
-    "A heat wave occurs when daily minimum and maximum temperatures exceed thresh_tasmin} and {thresh_tasmax}, "
+    "A heat wave occurs when daily minimum and maximum temperatures exceed {thresh_tasmin} and {thresh_tasmax}, "
     "respectively, over at least {window} days.",
     abstract="Total duration of heat waves. A heat wave occurs when daily minimum and maximum temperatures exceed "
     "given thresholds for a number of days.",
@@ -215,7 +215,7 @@ heat_wave_total_length = Temp(
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
     long_name="Total length of heat wave events",
     description="{freq} total length of heat wave events occurring within a given period. "
-    "A heat wave occurs when daily minimum and maximum temperatures exceed thresh_tasmin} and {thresh_tasmax}, "
+    "A heat wave occurs when daily minimum and maximum temperatures exceed {thresh_tasmin} and {thresh_tasmax}, "
     "respectively, over at least {window} days.",
     abstract="Maximum length of heat waves. A heat wave occurs when daily minimum and maximum temperatures exceed "
     "given thresholds for a number of days.",
@@ -232,7 +232,7 @@ heat_wave_index = Temp(
     standard_name="heat_wave_index",
     long_name="Number of days that constitute heatwave events",
     description="{freq} total number of days that are part of a heatwave within a given period. "
-    "A heat wave occurs when daily minimum and maximum temperatures exceed thresh_tasmin} and {thresh_tasmax}, "
+    "A heat wave occurs when daily minimum and maximum temperatures exceed {thresh_tasmin} and {thresh_tasmax}, "
     "respectively, over at least {window} days.",
     abstract="Number of days that constitute heatwave events. A heat wave occurs when daily minimum and maximum "
     "temperatures exceed given thresholds for a number of days.",
