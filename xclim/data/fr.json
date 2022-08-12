@@ -311,7 +311,7 @@
     "long_name": "Nombre de jours de vague de chaleur",
     "description": "Nombre {freq:m} de jours de vague de chaleur. Une vague de chaleur se produit lorsque la température maximale quotidienne excède {thresh} durant au moins {window} jours.",
     "title": "Indice de vague de chaleur",
-    "abstract": "Nombre de jours de vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent des seuils donnés durant un certain nombre de jours."
+    "abstract": "Nombre de jours de vagues de chaleur. Une vague de chaleur se produit lorsque la température maximale quotidienne excèdent un seuil donné durant un certain nombre de jours."
   },
   "TG": {
     "long_name": "Moyenne des températures maximales et minimales quotidennes",
