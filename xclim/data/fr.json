@@ -309,7 +309,7 @@
   },
   "HEAT_WAVE_INDEX": {
     "long_name": "Nombre de jours de vague de chaleur",
-    "description": "Nombre {freq:m} de jours de vague de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
+    "description": "Nombre {freq:m} de jours de vague de chaleur. Une vague de chaleur se produit lorsque la température maximale quotidienne excède {thresh} durant au moins {window} jours.",
     "title": "Indice de vague de chaleur",
     "abstract": "Nombre de jours de vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent des seuils donnés durant un certain nombre de jours."
   },
@@ -462,7 +462,7 @@
     "long_name": "Cycles de gel-dégel",
     "description": "Nombre {freq:m} de jours avec un gel-dégel quotidien : Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin}.",
     "title": "Nombre de jours avec un cycle de gel-dégel",
-    "abstract": "Le nombre de jours où Tmax est au-dessus d'un seuil et Tmin en dessous d'un seuil, habituellement 0 °C pour les deux."
+    "abstract": "Le nombre de jours où Tmax est au-dessus d'un seuil et Tmin en dessous d'un seuil, habituellement 0°C pour les deux."
   },
   "COOLING_DEGREE_DAYS": {
     "long_name": "Degrés-jours de climatisation (Tmoy > {thresh})",

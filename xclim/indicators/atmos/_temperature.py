@@ -232,8 +232,7 @@ heat_wave_index = Temp(
     standard_name="heat_wave_index",
     long_name="Number of days that constitute heatwave events",
     description="{freq} total number of days that are part of a heatwave within a given period. "
-    "A heat wave occurs when daily minimum and maximum temperatures exceed {thresh_tasmin} and {thresh_tasmax}, "
-    "respectively, over at least {window} days.",
+    "A heat wave occurs when daily maximum temperatures exceed {thresh} over at least {window} days.",
     abstract="Number of days that constitute heatwave events. A heat wave occurs when daily minimum and maximum "
     "temperatures exceed given thresholds for a number of days.",
     cell_methods="",
