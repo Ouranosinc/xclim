@@ -1061,7 +1061,7 @@ def potential_evapotranspiration(
     - "hargreaves85" or "HG85", based on [Hargreaves1985]_. Requires tasmin and tasmax, daily [D] freq. (optional: tas can be given in addition of tasmin and tasmax).
     - "mcguinnessbordne05" or "MB05", based on [Tanguy2018]_. Requires tas, daily [D] freq, with latitudes 'lat'.
     - "thornthwaite48" or "TW48", based on [Thornthwaite1948]_. Requires tasmin and tasmax, monthly [MS] or daily [D] freq. (optional: tas can be given instead of tasmin and tasmax).
-    - "allen98" or "FAO_PM98", based on [Allen1998]_. Modification of Penman-Monteith method. Requires tasmin and tasmax, relative humidity, radiation fluxes, wind speed at two meters.
+    - "allen98" or "FAO_PM98", based on [Allen1998]_. Modification of Penman-Monteith method. Requires tasmin and tasmax, relative humidity, radiation flux and wind speed (10 m wind will be converted to 2 m).
 
     The McGuinness-Bordne [McGuinness1972]_ equation is:
 
