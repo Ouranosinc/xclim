@@ -83,12 +83,12 @@ SDBA User API
 
 .. automodule:: xclim.sdba.properties
    :members:
-   :exclude-members: register_statistical_properties
+   :exclude-members: StatisticalProperty
    :noindex:
 
 .. automodule:: xclim.sdba.measures
    :members:
-   :exclude-members: check_same_units_and_convert
+   :exclude-members: StatisticalMeasure
    :noindex:
 
 Developer tools
@@ -112,8 +112,8 @@ Developer tools
    :members:
    :noindex:
 
-.. autofunction:: xclim.sdba.properties.register_statistical_properties
+.. autofunction:: xclim.sdba.properties.StatisticalProperty
    :noindex:
 
-.. autofunction:: xclim.sdba.measures.check_same_units_and_convert
+.. autofunction:: xclim.sdba.measures.StatisticalMeasure
    :noindex:

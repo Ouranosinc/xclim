@@ -19,39 +19,50 @@ from boltons.funcutils import wraps
 
 from xclim import sdba
 from xclim.core.formatting import update_xclim_history
-from xclim.core.units import convert_units_to, units2pint
+from xclim.core.indicator import Indicator
+from xclim.core.units import convert_units_to, ensure_delta, units2pint
+from xclim.core.utils import InputKind
 
 
-def check_same_units_and_convert(func) -> Callable:
-    """Verify that the simulation and the reference have the same units.
+class StatisticalMeasure(Indicator):
+    """Base indicator class for statistical measures used when validating bias-adjusted outputs.
 
-    If not, it converts the simulation to the units of the reference.
+    Statistical measures either use input data where the time dimension was reduced, or they combine
+    the reduction with the measure. They usually take two arrays as input: "sim" and "ref", "sim" being
+    measured against "ref".
+
+    Statistical measures are generally unit-generic. If the inputs have different units, "sim" is converted
+    to match "ref".
     """
 
-    @wraps(
-        func
-    )  # in order to keep the docstring of the function where the decorator is applied
-    def _check_same_units(*args):
-        sim = args[0]
-        ref = args[1]
-        units_sim = units2pint(sim.units)
-        units_ref = units2pint(ref.units)
+    realm = "generic"
+
+    @classmethod
+    def _ensure_correct_parameters(cls, parameters):
+        inputs = {k for k, p in parameters.items() if p.kind == InputKind.VARIABLE}
+        if not inputs.issuperset({"sim", "ref"}):
+            raise ValueError(
+                f"{cls.__name__} requires 'sim' and 'ref' as inputs. Got {inputs}."
+            )
+        return super()._ensure_correct_parameters(parameters)
+
+    def _preprocess_and_checks(self, das, params):
+        """Perform parent's checks and also check convert units so that sim matches ref."""
+        das, params = super()._preprocess_and_checks(das, params)
+
+        # Convert grouping and check if allowed:
+        sim = das["sim"]
+        ref = das["ref"]
+        units_sim = units2pint(sim)
+        units_ref = units2pint(ref)
 
         if units_sim != units_ref:
-            warn(
-                f" sim({units_sim}) and ref({units_ref}) don't have the same units."
-                f" sim will be converted to {units_ref}."
-            )
-            sim = convert_units_to(sim, ref)
-        out = func(sim, ref, *args[2:])
-        return out
+            das["sim"] = convert_units_to(sim, ref)
 
-    return _check_same_units
+        return das, params
 
 
-@check_same_units_and_convert
-@update_xclim_history
-def bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
+def _bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     """Bias.
 
     The bias is the simulation minus the reference.
@@ -65,20 +76,19 @@ def bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
 
     Returns
     -------
-    xr.DataArray,
-      Bias between the simulation and the reference
+    xr.DataArray, [same as ref]
+      Absolute bias between the simulation and the reference
 
     """
     out = sim - ref
-    out.attrs.update(sim.attrs)
-    out.attrs["long_name"] = "Bias"
-    out.attrs["units"] = sim.attrs["units"]
+    out.attrs["units"] = ensure_delta(ref.attrs["units"])
     return out
 
 
-@check_same_units_and_convert
-@update_xclim_history
-def relative_bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
+bias = StatisticalMeasure(identifier="bias", compute=_bias)
+
+
+def _relative_bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     """Relative Bias.
 
     The relative bias is the simulation minus reference, divided by the reference.
@@ -92,20 +102,19 @@ def relative_bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
 
     Returns
     -------
-    xr.DataArray,
+    xr.DataArray, [dimensionless]
       Relative bias between the simulation and the reference
-
     """
     out = (sim - ref) / ref
-    out.attrs.update(sim.attrs)
-    out.attrs["long_name"] = "Relative bias"
-    out.attrs["units"] = ""
-    return out
+    return out.assign_attrs(units="")
 
 
-@check_same_units_and_convert
-@update_xclim_history
-def circular_bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
+relative_bias = StatisticalMeasure(
+    identifier="relative_bias", compute=_relative_bias, units=""
+)
+
+
+def _circular_bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     """Circular bias.
 
     Bias considering circular time series.
@@ -120,23 +129,23 @@ def circular_bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
 
     Returns
     -------
-    xr.DataArray,
+    xr.DataArray, [days]
       Circular bias between the simulation and the reference
-
     """
     out = (sim - ref) % 365
     out = out.where(
         out <= 365 / 2, 365 - out
     )  # when condition false, replace by 2nd arg
     out = out.where(ref >= sim, out * -1)  # when condition false, replace by 2nd arg
-    out.attrs.update(sim.attrs)
-    out.attrs["long_name"] = "Circular bias"
-    return out
+    return out.assign_attrs(units="days")
 
 
-@check_same_units_and_convert
-@update_xclim_history
-def ratio(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
+circular_bias = StatisticalMeasure(
+    identifier="circular_bias", compute=_circular_bias, units="days"
+)
+
+
+def _ratio(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     """Ratio.
 
     The ratio is the quotient of the simulation over the reference.
@@ -150,20 +159,19 @@ def ratio(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
 
     Returns
     -------
-    xr.DataArray,
+    xr.DataArray, [dimensionless]
       Ratio between the simulation and the reference
 
     """
     out = sim / ref
-    out.attrs.update(sim.attrs)
-    out.attrs["long_name"] = "Ratio"
     out.attrs["units"] = ""
     return out
 
 
-@check_same_units_and_convert
-@update_xclim_history
-def rmse(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
+ratio = StatisticalMeasure(identifier="ratio", compute=_ratio, units="")
+
+
+def _rmse(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     """Root mean square error.
 
     The root mean square error on the time dimension between the simulation and the reference.
@@ -177,7 +185,7 @@ def rmse(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
 
     Returns
     -------
-    xr.DataArray,
+    xr.DataArray, [same as ref]
       Root mean square error between the simulation and the reference
     """
 
@@ -191,14 +199,13 @@ def rmse(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
         input_core_dims=[["time"], ["time"]],
         dask="parallelized",
     )
-    out.attrs.update(sim.attrs)
-    out.attrs["long_name"] = "Root mean square"
-    return out
+    return out.assign_attrs(units=ensure_delta(ref.units))
 
 
-@check_same_units_and_convert
-@update_xclim_history
-def mae(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
+rmse = StatisticalMeasure(identifier="rmse", compute=_rmse)
+
+
+def _mae(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     """Mean absolute error.
 
     The mean absolute error on the time dimension between the simulation and the reference.
@@ -212,7 +219,7 @@ def mae(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
 
     Returns
     -------
-    xr.DataArray,
+    xr.DataArray, [same as ref]
       Mean absolute error between the simulation and the reference
     """
 
@@ -226,14 +233,15 @@ def mae(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
         input_core_dims=[["time"], ["time"]],
         dask="parallelized",
     )
-    out.attrs.update(sim.attrs)
-    out.attrs["long_name"] = "Mean absolute error"
-    return out
+    return out.assign_attrs(units=ensure_delta(ref.units))
 
 
-@check_same_units_and_convert
-@update_xclim_history
-def annual_cycle_correlation(sim, ref, window: int = 15):
+mae = StatisticalMeasure(identifier="mae", compute=_mae)
+
+
+def _annual_cycle_correlation(
+    sim: xr.DataArray, ref: xr.DataArray, window: int = 15
+) -> xr.DataArray:
     """Annual cycle correlation.
 
     Pearson correlation coefficient between the smooth day-of-year averaged annual cycles of the simulation and
@@ -252,7 +260,7 @@ def annual_cycle_correlation(sim, ref, window: int = 15):
 
     Returns
     -------
-    xr.DataArray,
+    xr.DataArray, [dimensionless]
       Annual cycle correlation between the simulation and the reference
 
     """
@@ -262,6 +270,9 @@ def annual_cycle_correlation(sim, ref, window: int = 15):
     sim_annual_cycle = grouper_test.apply("mean", sim)
     ref_annual_cycle = grouper_test.apply("mean", ref)
     out = xr.corr(ref_annual_cycle, sim_annual_cycle, dim="dayofyear")
-    out.attrs.update(sim.attrs)
-    out.attrs["long_name"] = "Correlation of the annual cycle"
-    return out
+    return out.assign_attrs(units="")
+
+
+annual_cycle_correlation = StatisticalMeasure(
+    identifier="annual_cycle_correlation", compute=_annual_cycle_correlation
+)

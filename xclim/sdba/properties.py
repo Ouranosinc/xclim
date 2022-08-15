@@ -50,9 +50,15 @@ class StatisticalProperty(Indicator):
 
     aspect = None
     """The aspect the statistical property studies: marginal, temporal, multivariate or spatial."""
+
+    measure = "xclim.sdba.measures.BIAS"
+    """The default measure to use when comparing the properties of two datasets.
+    This gives the registry id. See :py:meth:`get_measure`."""
+
     allowed_groups = None
     """A list of allowed groupings. A subset of dayofyear, week, month, season or group.
     The latter stands for no temporal grouping."""
+
     realm = "generic"
 
     @classmethod
@@ -77,9 +83,9 @@ class StatisticalProperty(Indicator):
             and params["group"].prop not in self.allowed_groups
         ):
             raise ValueError(
-                f"Grouping period {params['group'].name} is not allowed for property "
+                f"Grouping period {params['group'].prop_name} is not allowed for property "
                 f"{self.identifier} (needs something in "
-                f"{map(lambda g: '<dim>.' + g.replace('group', ''), self.allowed_periods)})."
+                f"{map(lambda g: '<dim>.' + g.replace('group', ''), self.allowed_groups)})."
             )
 
         return das, params
@@ -93,6 +99,12 @@ class StatisticalProperty(Indicator):
                 outs[i] = outs[i].squeeze("group", drop=True)
 
         return outs
+
+    def get_measure(self):
+        """Get the statistical measure indicator that is best used with this statistical property."""
+        from xclim.core.indicator import registry
+
+        return registry[self.measure].get_instance()
 
 
 def _mean(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
@@ -166,7 +178,11 @@ def _var(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
 
 
 var = StatisticalProperty(
-    identifier="var", aspect="marginal", cell_methods="time: var", compute=_var
+    identifier="var",
+    aspect="marginal",
+    cell_methods="time: var",
+    compute=_var,
+    measure="xclim.sdba.measures.RATIO",
 )
 
 
@@ -337,8 +353,7 @@ def _spell_length_distribution(
         freq=group.freq,
         stat=stat,
     ).out
-    out.attrs["units"] = to_agg_units(out, da, op="count")
-    return out
+    return to_agg_units(out, da, op="count")
 
 
 spell_length_distribution = StatisticalProperty(
@@ -465,8 +480,20 @@ annual_cycle_amplitude = StatisticalProperty(
     identifier="annual_cycle_amplitude",
     aspect="temporal",
     compute=_annual_cycle_amplitude,
+    parameters={"amplitude_type": "absolute"},
     allowed_groups=["group"],
     cell_methods="time: range time: mean",
+)
+
+
+relative_annual_cycle_amplitude = StatisticalProperty(
+    identifier="relative_annual_cycle_amplitude",
+    aspect="temporal",
+    compute=_annual_cycle_amplitude,
+    parameters={"amplitude_type": "relative"},
+    allowed_groups=["group"],
+    cell_methods="time: range time: mean",
+    measure="xclim.sdba.measures.RATIO",
 )
 
 
@@ -524,6 +551,8 @@ annual_cycle_phase = StatisticalProperty(
     units="",
     compute=_annual_cycle_phase,
     cell_methods="time: range",
+    allowed_groups=["group"],
+    measure="xclim.sdba.measures.CIRCULAR_BIAS",
 )
 
 
@@ -769,7 +798,7 @@ def _return_value(
     Returns
     -------
     xr.DataArray, [same as input]
-      {period}-{group} {op} return level of the variable.
+      {period}-{group.prop_name} {op} return level of the variable.
 
     Examples
     --------
