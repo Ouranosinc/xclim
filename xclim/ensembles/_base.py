@@ -95,7 +95,9 @@ def create_ensemble(
     return ens
 
 
-def ensemble_mean_std_max_min(ens: xr.Dataset, weights: xr.DataArray = None) -> xr.Dataset:
+def ensemble_mean_std_max_min(
+    ens: xr.Dataset, weights: xr.DataArray = None
+) -> xr.Dataset:
     """Calculate ensemble statistics between a results from an ensemble of climate simulations.
 
     Returns an xarray Dataset containing ensemble mean, standard-deviation, minimum and maximum for input climate
@@ -135,7 +137,10 @@ def ensemble_mean_std_max_min(ens: xr.Dataset, weights: xr.DataArray = None) -> 
             ds_out[f"{v}_stdev"] = ens[v].weighted(weights).std(dim="realization")
         ds_out[f"{v}_max"] = ens[v].max(dim="realization")
         ds_out[f"{v}_min"] = ens[v].min(dim="realization")
-        for vv in [m+str(n) for m,n in zip([f"{v}"]*4, ["_mean", "_stdev", "_max", "_min"])]:
+        for vv in [
+            m + str(n)
+            for m, n in zip([f"{v}"] * 4, ["_mean", "_stdev", "_max", "_min"])
+        ]:
             ds_out[vv].attrs = ens[v].attrs
             if "description" in ds_out[vv].attrs.keys():
                 vv.split()
@@ -209,7 +214,11 @@ def ensemble_percentiles(
         out = xr.merge(
             [
                 ensemble_percentiles(
-                    da, values, keep_chunk_size=keep_chunk_size, split=split, weights=weights
+                    da,
+                    values,
+                    keep_chunk_size=keep_chunk_size,
+                    split=split,
+                    weights=weights,
                 )
                 for da in ens.data_vars.values()
                 if "realization" in da.dims
@@ -261,8 +270,14 @@ def ensemble_percentiles(
         )
     else:
         # xclim's calc_perc does not support weighted arrays, so xarray's native function is used instead.
-        qt = list(map(lambda x: x / 100, values))  # xarray requires values between 0 and 1
-        out = ens.weighted(weights).quantile(qt, dim="realization", keep_attrs=True).rename({"quantile": "percentiles"})
+        qt = list(
+            map(lambda x: x / 100, values)
+        )  # xarray requires values between 0 and 1
+        out = (
+            ens.weighted(weights)
+            .quantile(qt, dim="realization", keep_attrs=True)
+            .rename({"quantile": "percentiles"})
+        )
 
     out = out.assign_coords(
         percentiles=xr.DataArray(list(values), dims=("percentiles",))

@@ -155,7 +155,9 @@ def change_significance(
 
     if test == "ttest":
         if weights is not None:
-            raise NotImplementedError("'ttest' is not currently supported for weighted arrays.")
+            raise NotImplementedError(
+                "'ttest' is not currently supported for weighted arrays."
+            )
         p_change = kwargs.setdefault("p_change", 0.05)
 
         # Test hypothesis of no significant change
@@ -173,7 +175,9 @@ def change_significance(
         changed = pvals < p_change
     elif test == "welch-ttest":
         if weights is not None:
-            raise NotImplementedError("'welch-ttest' is not currently supported for weighted arrays.")
+            raise NotImplementedError(
+                "'welch-ttest' is not currently supported for weighted arrays."
+            )
         p_change = kwargs.setdefault("p_change", 0.05)
 
         # Test hypothesis of no significant change
@@ -221,7 +225,9 @@ def change_significance(
     if weights is None:
         pos_frac = (delta_chng > 0).sum("realization") / (change_frac * n_valid_real)
     else:
-        pos_frac = (delta_chng > 0).weighted(weights).sum("realization") / (change_frac * n_valid_real)
+        pos_frac = (delta_chng > 0).weighted(weights).sum("realization") / (
+            change_frac * n_valid_real
+        )
 
     # Metadata
     kwargs_str = ", ".join(
