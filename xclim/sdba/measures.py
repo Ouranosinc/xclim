@@ -10,15 +10,10 @@ This framework for the diagnostic tests was inspired by the [VALUE]_ project.
 """
 from __future__ import annotations
 
-from typing import Callable
-from warnings import warn
-
 import numpy as np
 import xarray as xr
-from boltons.funcutils import wraps
 
 from xclim import sdba
-from xclim.core.formatting import update_xclim_history
 from xclim.core.indicator import Indicator
 from xclim.core.units import convert_units_to, ensure_delta, units2pint
 from xclim.core.utils import InputKind
@@ -78,7 +73,6 @@ def _bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     -------
     xr.DataArray, [same as ref]
       Absolute bias between the simulation and the reference
-
     """
     out = sim - ref
     out.attrs["units"] = ensure_delta(ref.attrs["units"])
@@ -161,7 +155,6 @@ def _ratio(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     -------
     xr.DataArray, [dimensionless]
       Ratio between the simulation and the reference
-
     """
     out = sim / ref
     out.attrs["units"] = ""
@@ -262,7 +255,6 @@ def _annual_cycle_correlation(
     -------
     xr.DataArray, [dimensionless]
       Annual cycle correlation between the simulation and the reference
-
     """
     # group by day-of-year and window around each doy
     grouper_test = sdba.base.Grouper("time.dayofyear", window=window)

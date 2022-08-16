@@ -444,7 +444,7 @@ def gen_call_string(funcname: str, *args, **kwargs):
     Example
     -------
     >>> A = xr.DataArray([1], dims=("x",), name="A")
-    >>> gen_call_string("func", A, b=2.0, c="3", d=[4, 5, 6])
+    >>> gen_call_string("func", A, b=2.0, c="3", d=[10] * 100)
     "func(A, b=2.0, c='3', d=<list>)"
     """
     elements = []

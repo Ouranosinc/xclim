@@ -328,7 +328,8 @@ def _ens_align_datasets(
             time = xr.decode_cf(ds).time
 
             if resample_freq is not None:
-                counts = time.resample(time=resample_freq).count()
+                # Cast to bool to avoid bug in flox/numpy_groupies (xarray-contrib/flox#137)
+                counts = time.astype(bool).resample(time=resample_freq).count()
                 if any(counts > 1):
                     raise ValueError(
                         f"Alignment of dataset #{i:02d} failed: "

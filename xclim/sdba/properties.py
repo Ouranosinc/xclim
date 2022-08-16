@@ -12,16 +12,12 @@ Statistical Properties is the xclim term for 'indices' in the VALUE project.
 """
 from __future__ import annotations
 
-from typing import Callable
-
 import numpy as np
 import xarray as xr
-from boltons.funcutils import wraps
 from scipy import stats
 from statsmodels.tsa import stattools
 
 import xclim as xc
-from xclim.core.formatting import update_xclim_history
 from xclim.core.indicator import Indicator
 from xclim.core.units import convert_units_to, to_agg_units
 from xclim.core.utils import uses_dask
@@ -29,7 +25,7 @@ from xclim.indices import run_length as rl
 from xclim.indices.generic import select_resample_op
 from xclim.indices.stats import fit, parametric_quantile
 
-from .base import Grouper, map_groups, parse_group
+from .base import Grouper, map_groups
 
 
 class StatisticalProperty(Indicator):
@@ -124,11 +120,6 @@ def _mean(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
     -------
     xr.DataArray, [same as input]
       Mean of the variable.
-
-    Examples
-    --------
-    >>> pr = open_dataset(path_to_pr_file).pr
-    >>> mean(da=pr, group="time.season")
     """
     units = da.units
     if group.prop != "group":
@@ -162,11 +153,6 @@ def _var(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
     -------
     xr.DataArray, [square of the input units]
       Variance of the variable.
-
-    Examples
-    --------
-    >>> pr = open_dataset(path_to_pr_file).pr
-    >>> var(da=pr, group="time.season")
     """
     units = da.units
     if group.prop != "group":
@@ -203,11 +189,6 @@ def _skewness(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArra
     -------
     xr.DataArray, [dimensionless]
       Skewness of the variable.
-
-    Examples
-    --------
-    >>> pr = open_dataset(path_to_pr_file).pr
-    >>> skewness(da=pr, group="time.season")
 
     See Also
     --------
@@ -252,11 +233,6 @@ def _quantile(
     -------
     xr.DataArray, [same as input]
       Quantile {q} of the variable.
-
-    Examples
-    --------
-    >>> pr = open_dataset(path_to_pr_file).pr
-    >>> quantile(da=pr, q=0.9, group="time.season")
     """
     units = da.units
     if group.prop != "group":
@@ -310,11 +286,6 @@ def _spell_length_distribution(
     -------
     xr.DataArray, [units of the sampling frequency]
       {stat} of spell length distribution when the variable is {op} the {method} {thresh}.
-
-    Examples
-    --------
-    >>> pr = open_dataset(path_to_pr_file).pr
-    >>> spell_length_distribution(da=pr, op="<", thresh="1mm d-1", group="time.season")
     """
     ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
 
@@ -393,12 +364,6 @@ def _acf(
     References
     ----------
     Alavoine M., and Grenier P. (under review) The distinct problems of physical inconsistency and of multivariate bias potentially involved in the statistical adjustment of climate simulations. International Journal of Climatology, submitted on September 19th 2021. (Preprint: https://doi.org/10.31223/X5C34C)
-
-    Examples
-    --------
-    >>> from xclim.testing import open_dataset
-    >>> pr = open_dataset(path_to_pr_file).pr
-    >>> acf(da=pr, lag=3, group="time.season")
     """
 
     def acf_last(x, nlags):
@@ -459,11 +424,6 @@ def _annual_cycle_amplitude(
     -------
     xr.DataArray, [same units as input or dimensionless]
       {amplitude_type} amplitude of the annual cycle.
-
-    Examples
-    --------
-    >>> pr = open_dataset(path_to_pr_file).pr
-    >>> annual_cycle_amplitude(da=pr, amplitude_type="relative")
     """
     units = da.units
     da = da.resample({group.dim: group.freq})
@@ -515,11 +475,6 @@ def _annual_cycle_phase(
     -------
     xr.DataArray, [dimensionless]
       Phase of the annual cycle. The position (day-of-year) of the maximal value.
-
-    Examples
-    --------
-    >>> pr = open_dataset(path_to_pr_file).pr
-    >>> annual_cycle_phase(da=pr)
     """
     mask = ~(da.isel({group.dim: 0}).isnull()).drop_vars(
         group.dim
@@ -587,12 +542,6 @@ def _corr_btw_var(
     -------
     xr.DataArray, [dimensionless]
       {corr_type} correlation coefficient
-
-    Examples
-    --------
-    >>> pr = open_dataset(path_to_pr_file).pr
-    >>> tasmax = open_dataset("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc").tasmax
-    >>> corr_btw_var(da1=pr, da2=tasmax, group="time.season")
     """
     if corr_type.lower() not in {"pearson", "spearman"}:
         raise ValueError(
@@ -666,11 +615,6 @@ def _relative_frequency(
     -------
     xr.DataArray, [dimensionless]
       Relative frequency of values {op} {thresh}.
-
-    Examples
-    --------
-    >>> tasmax = open_dataset(path_to_tasmax_file).tasmax
-    >>> relative_frequency(da=tasmax, op="<", thresh="0 degC", group="time.season")
     """
     # mask of the ocean with NaNs
     mask = ~(da.isel({group.dim: 0}).isnull()).drop_vars(group.dim)
@@ -729,11 +673,6 @@ def _trend(
     scipy.stats.linregress
 
     numpy.polyfit
-
-    Examples
-    --------
-    >>> tas = open_dataset(path_to_tas_file).tas
-    >>> trend(da=tas, group="time.season")
     """
     units = da.units
     da = da.resample({group.dim: group.freq})  # separate all the {group}
@@ -799,11 +738,6 @@ def _return_value(
     -------
     xr.DataArray, [same as input]
       {period}-{group.prop_name} {op} return level of the variable.
-
-    Examples
-    --------
-    >>> tas = open_dataset(path_to_tas_file).tas
-    >>> return_value(da=tas, group="time.season")
     """
 
     @map_groups(out=[Grouper.PROP], main_only=True)
