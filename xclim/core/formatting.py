@@ -455,7 +455,9 @@ def gen_call_string(funcname: str, *args, **kwargs):
         elif isinstance(val, (int, float, str, bool)) or val is None:
             rep = repr(val)
         else:
-            rep = f"<{type(val).__name__}>"
+            rep = repr(val)
+            if len(rep) > 50:
+                rep = f"<{type(val).__name__}>"
 
         if name is not None:
             rep = f"{name}={rep}"

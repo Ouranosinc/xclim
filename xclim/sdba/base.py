@@ -5,9 +5,9 @@ Base Classes and Developer Tools
 """
 from __future__ import annotations
 
-from inspect import signature
+from inspect import _empty, signature
 from types import FunctionType
-from typing import Callable, Mapping, Sequence, Union
+from typing import Callable, Mapping, Sequence
 
 import dask.array as dsk
 import jsonpickle
@@ -57,11 +57,20 @@ class Parametrizable(dict):
 
     def __repr__(self):
         """Return a string representation."""
+        # Get default values from the init signature
+        defaults = {
+            # A default value of None could mean an empty mutable object
+            n: [p.default] if p.default is not None else [[], {}, set(), None]
+            for n, p in signature(self.__init__).parameters.items()
+            if p.default is not _empty
+        }
+        # The representation only includes the parameters with a value different from their default
+        # and those not explicitly excluded.
         params = ", ".join(
             [
                 f"{k}={repr(v)}"
                 for k, v in self.items()
-                if k not in self._repr_hide_params
+                if k not in self._repr_hide_params and v not in defaults.get(k, [])
             ]
         )
         return f"{self.__class__.__name__}({params})"
