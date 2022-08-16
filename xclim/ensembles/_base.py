@@ -95,7 +95,7 @@ def create_ensemble(
     return ens
 
 
-def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
+def ensemble_mean_std_max_min(ens: xr.Dataset, weights: xr.DataArray = None) -> xr.Dataset:
     """Calculate ensemble statistics between a results from an ensemble of climate simulations.
 
     Returns an xarray Dataset containing ensemble mean, standard-deviation, minimum and maximum for input climate
@@ -105,6 +105,8 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
     ----------
     ens: xr.Dataset
       Ensemble dataset (see xclim.ensembles.create_ensemble).
+    weights: xr.DataArray
+      1-D array of weights following the 'realization' dimension. This array cannot contain missing values.
 
     Returns
     -------
@@ -125,12 +127,15 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
     """
     ds_out = xr.Dataset(attrs=ens.attrs)
     for v in ens.data_vars:
-
-        ds_out[f"{v}_mean"] = ens[v].mean(dim="realization")
-        ds_out[f"{v}_stdev"] = ens[v].std(dim="realization")
+        if weights is None:
+            ds_out[f"{v}_mean"] = ens[v].mean(dim="realization")
+            ds_out[f"{v}_stdev"] = ens[v].std(dim="realization")
+        else:
+            ds_out[f"{v}_mean"] = ens[v].weighted(weights).mean(dim="realization")
+            ds_out[f"{v}_stdev"] = ens[v].weighted(weights).std(dim="realization")
         ds_out[f"{v}_max"] = ens[v].max(dim="realization")
         ds_out[f"{v}_min"] = ens[v].min(dim="realization")
-        for vv in ds_out.data_vars:
+        for vv in [m+str(n) for m,n in zip([f"{v}"]*4, ["_mean", "_stdev", "_max", "_min"])]:
             ds_out[vv].attrs = ens[v].attrs
             if "description" in ds_out[vv].attrs.keys():
                 vv.split()
@@ -150,6 +155,7 @@ def ensemble_percentiles(
     ens: xr.Dataset | xr.DataArray,
     values: Sequence[float] = [10, 50, 90],
     keep_chunk_size: bool | None = None,
+    weights: xr.DataArray = None,
     split: bool = True,
 ) -> xr.Dataset:
     """Calculate ensemble statistics between a results from an ensemble of climate simulations.
@@ -167,6 +173,8 @@ def ensemble_percentiles(
       If True, the dataset is rechunked along the dimension with the largest chunks, so that the chunks keep the same size (approx)
       If False, no shrinking is performed, resulting in much larger chunks
       If not defined, the function decides which is best
+    weights: xr.DataArray
+      1-D array of weights following the 'realization' dimension. This array cannot contain missing values.
     split : bool
       Whether to split each percentile into a new variable of concatenate the ouput along a new
       "percentiles" dimension.
@@ -201,7 +209,7 @@ def ensemble_percentiles(
         out = xr.merge(
             [
                 ensemble_percentiles(
-                    da, values, keep_chunk_size=keep_chunk_size, split=split
+                    da, values, keep_chunk_size=keep_chunk_size, split=split, weights=weights
                 )
                 for da in ens.data_vars.values()
                 if "realization" in da.dims
@@ -237,19 +245,24 @@ def ensemble_percentiles(
         else:
             ens = ens.chunk({"realization": -1})
 
-    out = xr.apply_ufunc(
-        calc_perc,
-        ens,
-        input_core_dims=[["realization"]],
-        output_core_dims=[["percentiles"]],
-        keep_attrs=True,
-        kwargs=dict(
-            percentiles=values,
-        ),
-        dask="parallelized",
-        output_dtypes=[ens.dtype],
-        dask_gufunc_kwargs=dict(output_sizes={"percentiles": len(values)}),
-    )
+    if weights is None:
+        out = xr.apply_ufunc(
+            calc_perc,
+            ens,
+            input_core_dims=[["realization"]],
+            output_core_dims=[["percentiles"]],
+            keep_attrs=True,
+            kwargs=dict(
+                percentiles=values,
+            ),
+            dask="parallelized",
+            output_dtypes=[ens.dtype],
+            dask_gufunc_kwargs=dict(output_sizes={"percentiles": len(values)}),
+        )
+    else:
+        # xclim's calc_perc does not support weighted arrays, so xarray's native function is used instead.
+        qt = list(map(lambda x: x / 100, values))  # xarray requires values between 0 and 1
+        out = ens.weighted(weights).quantile(qt, dim="realization", keep_attrs=True).rename({"quantile": "percentiles"})
 
     out = out.assign_coords(
         percentiles=xr.DataArray(list(values), dims=("percentiles",))

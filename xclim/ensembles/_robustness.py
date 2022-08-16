@@ -27,6 +27,7 @@ def change_significance(
     fut: xr.DataArray | xr.Dataset,
     ref: xr.DataArray | xr.Dataset = None,
     test: str = "ttest",
+    weights: xr.DataArray = None,
     **kwargs,
 ) -> tuple[xr.DataArray | xr.Dataset, xr.DataArray | xr.Dataset]:
     """Robustness statistics qualifying how the members of an ensemble agree on the existence of change and on its sign.
@@ -46,6 +47,9 @@ def change_significance(
       Dataset, they must have the same variables (name and coords).
     test : {'ttest', 'welch-ttest', 'threshold', None}
       Name of the statistical test used to determine if there was significant change. See notes.
+    weights: xr.DataArray
+      1-D array of weights following the 'realization' dimension. This array cannot contain missing values.
+      Note: 'ttest' and 'welch-ttest' are currently not supported with weighted arrays.
     kwargs
       Other arguments specific to the statistical test.
 
@@ -134,16 +138,24 @@ def change_significance(
     changed = None
     if ref is None:
         delta = fut
-        n_valid_real = delta.notnull().sum("realization")
+        if weights is None:
+            n_valid_real = delta.notnull().sum("realization")
+        else:
+            n_valid_real = weights.where(delta.notnull()).sum("realization")
         if test not in ["threshold", None]:
             raise ValueError(
                 "When deltas are given (ref=None), 'test' must be one of ['threshold', None]"
             )
     else:
         delta = fut.mean("time") - ref.mean("time")
-        n_valid_real = fut.notnull().all("time").sum("realization")
+        if weights is None:
+            n_valid_real = fut.notnull().all("time").sum("realization")
+        else:
+            n_valid_real = weights.where(fut.notnull().all("time")).sum("realization")
 
     if test == "ttest":
+        if weights is not None:
+            raise NotImplementedError("'ttest' is not currently supported for weighted arrays.")
         p_change = kwargs.setdefault("p_change", 0.05)
 
         # Test hypothesis of no significant change
@@ -160,6 +172,8 @@ def change_significance(
         # When p < p_change, the hypothesis of no significant change is rejected.
         changed = pvals < p_change
     elif test == "welch-ttest":
+        if weights is not None:
+            raise NotImplementedError("'welch-ttest' is not currently supported for weighted arrays.")
         p_change = kwargs.setdefault("p_change", 0.05)
 
         # Test hypothesis of no significant change
@@ -194,14 +208,20 @@ def change_significance(
 
     if test is not None:
         delta_chng = delta.where(changed)
-        change_frac = changed.sum("realization") / n_valid_real
+        if weights is None:
+            change_frac = changed.sum("realization") / n_valid_real
+        else:
+            change_frac = changed.weighted(weights).sum("realization") / n_valid_real
     else:
         delta_chng = delta
         change_frac = xr.ones_like(delta.isel(realization=0))
 
     # Test that models agree on the sign of the change
     # This returns NaN (cause 0 / 0) where no model show significant change.
-    pos_frac = (delta_chng > 0).sum("realization") / (change_frac * n_valid_real)
+    if weights is None:
+        pos_frac = (delta_chng > 0).sum("realization") / (change_frac * n_valid_real)
+    else:
+        pos_frac = (delta_chng > 0).weighted(weights).sum("realization") / (change_frac * n_valid_real)
 
     # Metadata
     kwargs_str = ", ".join(
