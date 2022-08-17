@@ -6,7 +6,7 @@ General References
 ------------------
 
 .. bibliography::
-   :style: unsrt
+   :style: xcstyle
 
 Fire Weather Index References
 -----------------------------

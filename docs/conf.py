@@ -20,6 +20,9 @@ import warnings
 from collections import OrderedDict
 
 import xarray
+from pybtex.plugin import register_plugin
+from pybtex.style.formatting.alpha import Style as AlphaStyle
+from pybtex.style.labels import BaseLabelStyle
 
 xarray.DataArray.__module__ = "xarray"
 xarray.Dataset.__module__ = "xarray"
@@ -134,8 +137,23 @@ extlinks = {
     "user": ("https://github.com/%s", "@%s"),
 }
 
+
+# Bibliography stuff
+# a simple label style which uses the bibtex keys for labels
+class XCLabelStyle(BaseLabelStyle):
+    def format_labels(self, sorted_entries):
+        for entry in sorted_entries:
+            yield entry.key
+
+
+class XCStyle(AlphaStyle):
+
+    default_label_style = XCLabelStyle
+
+
+register_plugin("pybtex.style.formatting", "xcstyle", XCStyle)
 bibtex_bibfiles = ["references.bib"]
-bibtex_default_style = "alpha"
+bibtex_reference_style = "author_year"
 
 nbsphinx_execute = "auto"
 nbsphinx_prolog = r"""

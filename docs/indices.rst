@@ -46,7 +46,7 @@ Fire weather indices codes
 ==========================
 
 .. bibliography::
-   :style: unsrt
+   :style: xcstyle
    :labelprefix: CODE-
    :keyprefix: code-
 
@@ -56,7 +56,7 @@ Fire season determination methods
 =================================
 
 .. bibliography::
-   :style: unsrt
+   :style: xcstyle
    :labelprefix: FIRE-
    :keyprefix: fire-
 
@@ -64,6 +64,6 @@ Drought Code overwintering background
 =====================================
 
 .. bibliography::
-   :style: unsrt
+   :style: xcstyle
    :labelprefix: DROUGHT-
    :keyprefix: drought-
