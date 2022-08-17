@@ -435,64 +435,63 @@
   },
   "COLD_SPELL_DURATION_INDEX": {
     "long_name": "Indice de durée des vagues de froid",
-    "description": "Nombre {freq:m} de jours de vague de froid. Une vague de froid se produit lorsque la température minimale quotidienne est sous le {per_base_thresh} centile durant au moins {window} jours consécutifs. Le {per_base_thresh} centile est calculé à partir d'une fenêtre de {per_window} jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "description": "{freq} nombre de jours avec au moins {window} jours consécutifs où la température minimale quotidienne est inférieure au(x) {tasmin_per_thresh} centile. Une vague de froid se produit lorsque la température minimale quotidienne est inférieure à un percentile donné pendant au moins {window} jours consécutifs.",
     "title": "Indice de durée des vagues de froid",
-    "abstract": "Nombre de jours de vagues de froid. Une vague de froid se produit lorsque la température minimale quotidienne est sous le {per_base_thresh} centile durant au moins {window} nombre de jours consécutifs."
+    "abstract": "Nombre de jours de vagues de froid. Une vague de froid se produit lorsque la température minimale quotidienne est inférieure à un percentile donné pendant au moins {window} jours consécutifs."
   },
   "COLD_SPELL_FREQUENCY": {
-    "long_name": "Nombre de vagues de froid",
+    "long_name": "Fréquence des vagues de froid",
     "description": "Nombre {freq:m} de vagues de froid. Une vague de froid se produit lorsque la température minimale quotidienne est sous {thresh} durant au moins {window} jours consécutifs.",
     "title": "Nombre de vagues de froid",
     "abstract": "Nombre de vagues de froid. Une vague de froid se produit lorsque la température minimale quotidienne est sous un seuil durant au moins un certain nombre de jours consécutifs."
   },
   "COLD_SPELL_DAYS": {
     "long_name": "Jours de vagues de froid",
-    "description": "Nombre {freq:m} de jours de vague de froid. Une vague de froid se produit lorsque la température minimale quotidienne est sous {thresh} durant au moins {window} jours consécutifs.",
-    "title": "Jours de vague de froid",
-    "abstract": "Nombre de jours de vagues de froid. Une vague de froid se produit lorsque la température minimale quotidienne est sous un seuil durant au moins un certain nombre de jours consécutifs."
+    "description": "Nombre {freq:m} de jours faisant partie d'une vague de froid. Une vague de froid se produit lorsque la température minimale quotidienne est sous {thresh} durant au moins {window} jours consécutifs.",
+    "title": "Nombre de jours faisant partie d'une vague de froid",
+    "abstract": "Nombre de jours faisant partie d'une vague de froid. Une vague de froid se produit lorsque la température minimale quotidienne est sous un seuil donné durant au moins un certain nombre de jours consécutifs."
   },
   "COOL_NIGHT_INDEX": {
     "long_name": "Indice de fraîcheur des nuits",
     "description": "Moyenne {freq:f} de la température minimale quotidienne en septembre (hémisphère nord) ou en mars (hémisphère sud).",
     "title": "Indice de fraîcheur des nuits",
-    "comment": "Formule prise de Tonietto & Carbonneau, 2004 (10.1016/j.agrformet.2003.06.001).",
     "abstract": "Indicateur des conditions nycthermiques de maturation, qui correspond à la valeur moyenne de la température minimale de l'air sur les 30 jours précédant la date de récolte potentielle."
   },
   "DLYFRZTHW": {
-    "long_name": "Cycles de gel-dégel",
-    "description": "Nombre {freq:m} de jours avec un gel-dégel quotidien : Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin}.",
-    "title": "Nombre de jours avec un cycle de gel-dégel",
-    "abstract": "Le nombre de jours où Tmax est au-dessus d'un seuil et Tmin en dessous d'un seuil, habituellement 0°C pour les deux."
+    "long_name": "Nombre de jours avec un cycle de gel-dégel",
+    "description": "Nombre {freq:m} de jours avec un gel-dégel quotidien (Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin}).",
+    "title": "Cycles de gel-dégel",
+    "abstract": "Le nombre de jours où Tmax est au-dessus d'un seuil donné et Tmin en dessous d'un seuil donné, habituellement 0°C pour les deux."
   },
   "COOLING_DEGREE_DAYS": {
-    "long_name": "Degrés-jours de climatisation (Tmoy > {thresh})",
+    "long_name": "Degrés-jours de climatisation",
     "description": "Cumul {freq:m} des degrés-jours de climatisation (Température au-dessus de {thresh}).",
     "title": "Degrés-jours de climatisation",
-    "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est au-dessus d'un seuil et que les immeubles doivent être réfrigérés."
+    "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est au-dessus d'un seuil donné et que les immeubles doivent être réfrigérés."
   },
   "HEATING_DEGREE_DAYS": {
-    "long_name": "Degrés-jours de chauffage (Tmoy < {thresh})",
+    "long_name": "Degrés-jours de chauffage",
     "description": "Cumul {freq:m} des degrés-jours de chauffage (Température en dessous de {thresh}).",
     "title": "Degrés-jours de chauffage",
-    "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est sous un seuil et que les immeubles doivent être chauffés."
+    "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est sous un seuil donné et que les immeubles doivent être chauffés."
   },
   "GROWING_DEGREE_DAYS": {
-    "long_name": "Degrés-jours de croissance (Tmoy > {thresh})",
+    "long_name": "Degrés-jours de croissance",
     "description": "Cumul {freq} des degrés-jours de croissance (Température au-dessus de {thresh}).",
     "title": "Degrés-jours de croissance",
-    "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est au-dessus d'un seuil."
+    "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est au-dessus d'un seuil donné."
   },
   "FREEZING_DEGREE_DAYS": {
-    "long_name": "Degrés-jours de gel (Tmoy < {thresh})",
+    "long_name": "Degrés-jours de gel",
     "description": "Cumul {freq:m} des degrés-jours de gel (Température en dessous de {thresh}).",
     "title": "Degrés-jours de gel",
-    "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est sous un seuil."
+    "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est sous un seuil donné, habituellement 0°C."
   },
   "THAWING_DEGREE_DAYS": {
-    "long_name": "Degrés-jours de dégel (Tmoy > {thresh})",
+    "long_name": "Degrés-jours de dégel",
     "description": "Cumul {freq} des degrés-jours de dégel (Température au-dessus de {thresh}).",
     "title": "Degrés-jours de dégel",
-    "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est au-dessus d'un seuil."
+    "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est au-dessus d'un seuil donné, habituellement 0°C."
   },
   "BIOLOGICALLY_EFFECTIVE_DEGREE_DAYS": {
     "long_name": "Degrés-jours biologiquement actifs",
@@ -516,46 +515,46 @@
     "abstract": "indice climatique basé sur la température moyenne du mois le plus chaud et un coefficient basé sur la latitude pour tenir compte de la durée plus longue du jour favorisant les conditions de croissance. Développé spécifiquement pour la viticulture."
   },
   "FRESHET_START": {
-    "long_name": "Jour de l'année du début de la crue nivale",
-    "description": "Jour de l'année du début de la crue nivale, défini comme le {window}e jour consécutif où la température excède {thresh}.",
-    "title": "Nième jour consécutif où la température excède un seuil",
+    "long_name": "Premier jour de dépassement constant du seuil de température",
+    "description": "jour de l'année du début de la crue printanière, défini comme le premier jour où un seuil de température de {thresh} est dépassé pendant au moins {window} jours.",
+    "title": "Jour de l'année du début de la crue nivale",
     "abstract": "Premier jour où la température excède un certain seuil depuis un certain nombre de jours consécutifs."
   },
   "FROST_SEASON_LENGTH": {
-    "long_name": "Durée de la saison de gel (Tmin < 0°C)",
-    "description": "Durée de la saison de gel, définie comme la période où Tmin est sous 0°C sans redoux de {window} jours ou plus.",
+    "long_name": "Durée de la saison de gel",
+    "description": "Nombre {freq} de jours entre la première occurrence d'au moins {window} jours consécutifs avec une température minimale journalière inférieure au point de congélation et la première occurrence d'au moins {window} jours consécutifs avec une température minimale journalière supérieure au point de congélation après {mid_date}.",
     "title": "Durée de la saison de gel",
-    "abstract": "Durée de la saison de gel, définie comme la période où Tmin est sous 0°C sans redoux de {window} jours ou plus."
+    "abstract": "Durée de la saison de gel, définie comme la période pendant laquelle la température minimale quotidnne est inférieure à 0°C sans fenêtre de dégel de plusieurs jours, le dégel se produisant après une date calendaire médiane."
   },
   "FROST_DAYS": {
-    "long_name": "Nombre de jours de gel (Tmin < {thresh})",
+    "long_name": "Nombre de jours de gel",
     "description": "Nombre {freq:m} de jours où la température minimale quotidienne est sous {thresh}.",
     "title": "Nombre de jours de gel",
-    "abstract": "Nombre de jours où la température minimale quotidienne est sous un seuil."
+    "abstract": "Nombre de jours où la température minimale quotidienne est sous un seuil donné."
   },
   "ICE_DAYS": {
-    "long_name": "Nombre de jours de glace (Tmax < {thresh})",
+    "long_name": "Nombre de jours de glace",
     "description": "Nombre {freq:m} de jours où la température maximale quotidienne est sous {thresh}.",
     "title": "Nombre de jours de glace",
-    "abstract": "Nombre de jours où la température maximale quotidienne est sous un seuil."
+    "abstract": "Nombre de jours où la température maximale quotidienne est sous 0°C."
   },
   "CONSECUTIVE_FROST_DAYS": {
     "long_name": "Durée maximale des périodes de gel (Tmin < 0°C)",
-    "description": "Durée maximale {freq:f} des périodes où la température minimale quotidienne est sous 0°C.",
+    "description": "Durée maximale {freq:f} des périodes où la température minimale quotidienne est sous {thresh}.",
     "title": "Durée maximale des périodes de gel (Tmin < 0°C)",
     "abstract": "Durée maximale des périodes consécutives où la température minimale quotidienne est sous 0°C."
   },
   "FROST_FREE_SEASON_LENGTH": {
     "long_name": "Durée de la saison sans gel",
-    "description": "Nombre {freq:m} de jours entre la première occurrence d'au moins {window} jours consécutifs où la température quotidienne moyenne dépasse {thresh} et la première occurrence (après le {mid_date}) d'au moins {window} jours consécutifs où la température est sous {thresh}.",
+    "description": "Nombre {freq} de jours entre la première occurrence d'au moins {window} jours consécutifs avec une température minimale journalière supérieure au point de congélation et la première occurrence d'au moins {window} jours consécutifs avec une température minimale journalière inférieure au point de congélation après {mid_date}.",
     "title": "Durée de la saison sans gel",
-    "abstract": "Nombre de jours entre la première série de N jours avec une température moyenne quotidienne au-dessus d'un seuil et la première série de N jours avec une température moyenne quotidienne sous ce même seuil."
+    "abstract": "Durée de la saison sans gel, définie comme la période pendant laquelle la température minimale quotidnne est supérieure à 0°C sans fenêtre de gel de plusieurs jours, le gel se produisant après une date calendaire médiane."
   },
   "FROST_FREE_SEASON_START": {
-    "long_name": "Jour de l'année du début de la saison sans gel",
+    "long_name": "Premier jour de dépassement constant du seuil de température",
     "description": "Jour de l'année du début de la saison sans gel, défini comme le {window}e jour consécutif où la température excède {thresh}.",
-    "title": "Nième jour consécutif où la température excède un seuil",
-    "abstract": "Premier jour où la température excède un certain seuil depuis un certain nombre de jours consécutifs."
+    "title": "Jour de l'année du début de la saison sans gel",
+    "abstract": "Premier jour où la température excède un certain seuil donné depuis un certain nombre de jours consécutifs."
   },
   "GROWING_SEASON_LENGTH": {
     "long_name": "Durée de la saison de croissance",
@@ -654,10 +653,10 @@
     "abstract": "Longueur maximale des périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne excède un seuil spécifique durant un minimum de jours."
   },
   "CONSECUTIVE_FROST_FREE_DAYS": {
-    "long_name": "Nombre maximal de jours consécutifs avec Tmin >= {thresh}",
+    "long_name": "Nombre maximal de jours consécutifs avec Tmin supérieure à 0°C",
     "description": "Nombre maximal {freq} de jours consécutifs où la température minimale quotidienne excède ou est égale à {thresh}.",
-    "title": "Nombre maximal de jours consécutifs sans gel (Tmin >= 0℃)",
-    "abstract": "La nombre maximal de jours consécutifs sans gel: où la température minimale quotidienne est au-dessus ou égale à un seuil."
+    "title": "Nombre maximal de jours consécutifs sans gel",
+    "abstract": "Nombre maximal de jours consécutifs sans gel où la température minimale quotidienne est au-dessus ou égale à 0°C."
   },
   "GROWING_SEASON_END": {
     "long_name": "Jour de l'année de la fin de la saison de croissance",
@@ -669,7 +668,7 @@
     "long_name": "Jour de l'année de la fin de la saison sans gel",
     "description": "Jour de l'année de la fin de la saison sans gel. La saison sans gel est définie comme l'intervalle entre la première série de {window} jours où la température quotidienne est au-dessus de {thresh} et la première série (après le {mid_date}) de {window} jours où elle est sous {thresh}.",
     "title": "Fin de la saison sans gel",
-    "abstract": "Jour de l'année de la fin de la saison sans gél. La saison sans gel est définie comme l'intervalle entre la première série de N jours où la température quotidienne est au-dessus d'un seuil et la première série (après une certaine date) de N jours où elle est sous ce même seuil."
+    "abstract": "Premier jour où la température est inférieure à un certain seuil donné depuis un certain nombre de jours consécutifs."
   },
   "FWI": {
     "description": "L'IFM est formé de six composantes qui tiennent compte des effets de la teneur en eau des combustibles et des conditions météorologiques sur le comportement du feu.",
@@ -931,20 +930,20 @@
   "FREEZETHAW_SPELL_FREQUENCY": {
     "title": "Fréquence des événements de gel-dégel quotidien",
     "abstract": "Nombre de périodes de gel-dégel. Ces périodes sont des séries de jours consécutifs où la température minimale quotidienne est sous un seuil et la température maximale quotidienne au-dessus d'un autre. En général, ces deux seuils sont 0°C.",
-    "description": "Fréquence {freq:f} des événements de gel-dégel quotidiens : Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consecutif(s).",
+    "description": "Fréquence {freq:f} des événements de gel-dégel quotidiens (Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consecutif(s)).",
     "long_name": "Fréquence {freq:f} des événements de gel-dégel quotidien"
   },
   "FREEZETHAW_SPELL_MAX_LENGTH": {
-    "title": "Durée maximale d'une période de jours consécutifs avec un gel-dégel",
+    "title": "Durée maximale des séries des événements de gel-dégel quotidien",
     "abstract": "Durée maximale des périodes de gel-dégel. Ces périodes sont des séries de jours consécutifs où la température minimale quotidienne est sous un seuil et la température maximale quotidienne au-dessus d'un autre. En général, ces deux seuils sont 0°C.",
-    "description": "Durée maximale {freq:f} des événements de gel-dégel quotidien : Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consecutif(s).",
-    "long_name": "Durée maximale {freq:f} des événements de gel-dégel quotidien"
+    "description": "Durée maximale {freq:f} des séries des événements de gel-dégel quotidiens (Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consecutif(s)).",
+    "long_name": "Durée maximale {freq:f} des séries des événements de gel-dégel quotidien"
   },
   "FREEZETHAW_SPELL_MEAN_LENGTH": {
-    "title": "Durée moyenne d'une période de jours consécutifs avec un gel-dégel",
+    "title": "Durée moyenne des séries des événements de gel-dégel quotidien",
     "abstract": "Durée moyenne des périodes de gel-dégel. Ces périodes sont des séries de jours consécutifs où la température minimale quotidienne est sous un seuil et la température maximale quotidienne au-dessus d'un autre. En général, ces deux seuils sont 0°C.",
-    "description": "Durée moyenne {freq:f} des événements de gel-dégel quotidien : Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consecutif(s).",
-    "long_name": "Durée moyenne {freq:f} des événements de gel-dégel quotidien"
+    "description": "Durée moyenne {freq:f} des séries des événements de gel-dégel quotidien (Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consecutif(s)).",
+    "long_name": "Durée moyenne {freq:f} des séries des événements de gel-dégel quotidien"
   },
   "WIND_CHILL": {
     "title": "Facteur éolien",

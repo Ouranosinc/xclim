@@ -418,71 +418,85 @@ daily_temperature_range_variability = TempWithIndexing(
 )
 
 extreme_temperature_range = TempWithIndexing(
+    title="Extreme temperature range",
     identifier="etr",
     units="K",
     standard_name="air_temperature",
     long_name="Intra-period extreme temperature range",
-    description="{freq} range between the maximum of daily max temperature "
-    "(tx_max) and the minimum of daily min temperature (tn_min)",
+    description="{freq} range between the maximum of daily maximum temperature (tx_max) and the minimum of daily"
+    "minimum temperature (tn_min).",
+    abstract="The maximum of the maximum temperature minus the minimum of the minimum temperature.",
     compute=indices.extreme_temperature_range,
 )
 
 cold_spell_duration_index = Temp(
+    title="Cold spell duration index",
     identifier="cold_spell_duration_index",
     var_name="csdi_{window}",
     units="days",
     standard_name="cold_spell_duration_index",
     long_name="Number of days part of a percentile-defined cold spell",
     description="{freq} number of days with at least {window} consecutive days where the daily minimum temperature "
-    "is below the {tasmin_per_thresh}th percentile(s). A {tasmin_per_window} day(s) window, centered on each calendar "
-    "day in the {tasmin_per_period} period, is used to compute the {tasmin_per_thresh}th percentile(s).",
+    "is below the {tasmin_per}th percentile. A cold spell occurs when the daily minimum temperature is below a given "
+    "percentile for at least {window} consecutive days.",
+    abstract="Number of days part of a percentile-defined cold spell. A cold spell occurs when the daily minimum "
+    "temperature is below a given percentile for at least {window} consecutive days.",
     cell_methods="",
     compute=indices.cold_spell_duration_index,
 )
 
 cold_spell_days = Temp(
+    title="Cold spell days",
     identifier="cold_spell_days",
     units="days",
     standard_name="cold_spell_days",
     long_name="Number of days part of a cold spell",
-    description="{freq} number of days that are part of a cold spell, defined as {window} "
-    "or more consecutive days with mean daily "
-    "temperature below {thresh}.",
+    description="{freq} number of days that are part of a cold spell. A cold spell is defined as {window} or more "
+    "consecutive days with mean daily temperature below {thresh}.",
+    abstract="The number of days that are part of a cold spell. A cold spell is defined as a minimum number of "
+    "consecutive days with mean daily temperature below a given threshold.",
     cell_methods="",
     compute=indices.cold_spell_days,
 )
 
 cold_spell_frequency = Temp(
+    title="Cold spell frequency",
     identifier="cold_spell_frequency",
     units="",
     standard_name="cold_spell_frequency",
     long_name="Number of cold spell events",
-    description="{freq} number cold spell events, defined as {window} or more consecutive days with mean daily "
-    "temperature below {thresh}.",
+    description="{freq} number cold spell events. A cold spell is defined as a minimum number of "
+    "consecutive days with mean daily temperature below a given threshold.",
+    abstract="The number of cold spell events. A cold spell is defined as a minimum number of consecutive days with "
+    "mean daily temperature below a given threshold.",
     cell_methods="",
     compute=indices.cold_spell_frequency,
 )
 
 cool_night_index = Temp(
+    title="Cool night index",
     identifier="cool_night_index",
     units="degC",
     long_name="Cool night index",
     # FIXME: Section formatting will shift these month names to all lowercase.
     description="Mean minimum temperature for September (northern hemisphere) or March (southern hemisphere).",
-    cell_methods="time: mean over days",
     abstract="A night coolness variable which takes into account the mean minimum night temperatures during the "
     "month when ripening usually occurs beyond the ripening period.",
+    cell_methods="time: mean over days",
     allowed_periods=["A"],
     compute=indices.cool_night_index,
 )
 
 daily_freezethaw_cycles = TempWithIndexing(
+    title="Daily freeze-thaw cycles",
     identifier="dlyfrzthw",
     units="days",
-    long_name="Freeze-thaw cycles",
+    long_name="Number of days with a freeze-thaw cycle",
     # FIXME: Section formatting will shift variable names to all lowercase.
-    description="{freq} number of days with a diurnal freeze-thaw cycle (Tmax > {thresh_tasmax} and "
-    "Tmin <= {thresh_tasmin}).",
+    description="{freq} number of days with a diurnal freeze-thaw cycle (Tmax > {thresh_tasmax} and Tmin <= "
+    "{thresh_tasmin}).",
+    abstract="The number of days with a freeze-thaw cycle. A freeze-thaw cycle is defined as a day where Tmax is above "
+    "a given  threshold and Tmin is below a given threshold, usually 0°C for both.",
     cell_methods="",
     compute=indices.multiday_temperature_swing,
     parameters={
@@ -495,13 +509,15 @@ daily_freezethaw_cycles = TempWithIndexing(
 
 
 freezethaw_spell_frequency = Temp(
+    title="Freeze-thaw spell frequency",
     identifier="freezethaw_spell_frequency",
-    title="Frequency of freeze-thaw spells",
     units="days",
-    long_name="Frequency of freeze-thaw spells",
+    long_name="Frequency of daily freeze-thaw spells",
     # FIXME: Section formatting will shift variable names to all lowercase.
     description="{freq} number of freeze-thaw spells (Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin}) "
     "for at least {window} consecutive day(s).",
+    abstract="Frequency of daily freeze-thaw spells. A freeze-thaw spell is defined as a number of consecutive days "
+    "where Tmax is above a given threshold and Tmin is below a given threshold, usually 0°C for both.",
     cell_methods="",
     compute=indices.multiday_temperature_swing,
     parameters={
@@ -513,13 +529,15 @@ freezethaw_spell_frequency = Temp(
 
 
 freezethaw_spell_mean_length = Temp(
+    title="Freeze-thaw spell mean length",
     identifier="freezethaw_spell_mean_length",
-    title="Average length of freeze-thaw spells",
     units="days",
-    long_name="Average length of freeze-thaw spells",
+    long_name="Average length of daily freeze-thaw spells",
     # FIXME: Section formatting will shift variable names to all lowercase.
     description="{freq} average length of freeze-thaw spells (Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin}) "
     "for at least {window} consecutive day(s).",
+    abstract="Average length of daily freeze-thaw spells. A freeze-thaw spell is defined as a number of consecutive "
+    "days where Tmax is above a given threshold and Tmin is below a given threshold, usually 0°C for both.",
     cell_methods="",
     compute=indices.multiday_temperature_swing,
     parameters={
@@ -531,13 +549,15 @@ freezethaw_spell_mean_length = Temp(
 
 
 freezethaw_spell_max_length = Temp(
-    identifier="freezethaw_spell_max_length",
     title="Maximal length of freeze-thaw spells",
+    identifier="freezethaw_spell_max_length",
     units="days",
     long_name="Maximal length of freeze-thaw spells",
     # FIXME: Section formatting will shift variable names to all lowercase.
     description="{freq} maximal length of freeze-thaw spells (Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin}) "
     "for at least {window} consecutive day(s).",
+    abstract="Maximal length of daily freeze-thaw spells. A freeze-thaw spell is defined as a number of consecutive "
+    "days where Tmax is above a given threshold and Tmin is below a threshold, usually 0°C for both.",
     cell_methods="",
     compute=indices.multiday_temperature_swing,
     parameters={
@@ -549,143 +569,175 @@ freezethaw_spell_max_length = Temp(
 
 
 cooling_degree_days = TempWithIndexing(
+    title="Cooling degree days",
     identifier="cooling_degree_days",
     units="K days",
     standard_name="integral_of_air_temperature_excess_wrt_time",
-    long_name="Cooling degree days (Tmean > threshold)",
-    description="{freq} cooling degree days above {thresh}.",
+    long_name="Cooling degree days",
+    description="{freq} cumulative cooling degree days (mean temperature above {thresh}).",
+    abstract="The cumulative degree days for days when the average temperature is above a given threshold and buildings must "
+    "be air conditioned.",
     cell_methods="time: sum over days",
     compute=indices.cooling_degree_days,
     parameters={"thresh": {"default": "18.0 degC"}},
 )
 
 heating_degree_days = TempWithIndexing(
+    title="Heating degree days",
     identifier="heating_degree_days",
     units="K days",
     standard_name="integral_of_air_temperature_deficit_wrt_time",
-    long_name="Heating degree days (Tmean < threshold)",
-    description="{freq} heating degree days below {thresh}.",
+    long_name="Heating degree days",
+    description="{freq} cumulative heating degree days (mean temperature below {thresh}).",
+    abstract="The cumulative degree days for days when the average temperature is below a given threshold and buildings must "
+    "be heated.",
     cell_methods="time: sum over days",
     compute=indices.heating_degree_days,
     parameters={"thresh": {"default": "17.0 degC"}},
 )
 
 growing_degree_days = TempWithIndexing(
+    title="Growing degree days",
     identifier="growing_degree_days",
     units="K days",
     standard_name="integral_of_air_temperature_excess_wrt_time",
     long_name="Growing degree days",
-    description="{freq} growing degree days above {thresh}.",
+    description="{freq} growing degree days (mean temperature above {thresh}).",
+    abstract="The cumulative degree days for days when the average temperature is above a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.growing_degree_days,
     parameters={"thresh": {"default": "4.0 degC"}},
 )
 
 freezing_degree_days = TempWithIndexing(
+    title="Freezing degree days",
     identifier="freezing_degree_days",
     units="K days",
     standard_name="integral_of_air_temperature_deficit_wrt_time",
-    long_name="Freezing degree days (Tmean < threshold)",
-    description="{freq} freezing degree days below {thresh}.",
+    long_name="Freezing degree days",
+    description="{freq} freezing degree days (mean temperature below {thresh}).",
+    abstract="The cumulative degree days for days when the average temperature is below a given threshold, "
+    "typically 0°C.",
     cell_methods="time: sum over days",
     compute=indices.heating_degree_days,
     parameters={"thresh": {"default": "0 degC"}},
 )
 
 thawing_degree_days = TempWithIndexing(
+    title="Thawing degree days",
     identifier="thawing_degree_days",
     units="K days",
     standard_name="integral_of_air_temperature_excess_wrt_time",
-    long_name="Thawing degree days (degree days above 0°C)",
-    description="{freq} thawing degree days above 0°C.",
+    long_name="Thawing degree days",
+    description="{freq} thawing degree days (mean temperature above {thresh}).",
+    abstract="The cumulative degree days for days when the average temperature is above a given threshold, "
+    "typically 0°C.",
     cell_methods="time: sum over days",
     compute=indices.growing_degree_days,
     parameters={"thresh": {"default": "0 degC"}},
 )
 
 freshet_start = Temp(
+    title="Day of year of spring freshet start",
     identifier="freshet_start",
     units="",
     standard_name="day_of_year",
-    long_name="Day of year of spring freshet start",
+    long_name="First day consistently exceeding threshold temperature",
     description="Day of year of spring freshet start, defined as the first day a temperature threshold of {thresh} "
     "is exceeded for at least {window} days.",
+    abstract="First day when the temperature exceeds a certain threshold for a given number of consecutive days",
     compute=indices.freshet_start,
 )
 
 frost_days = TempWithIndexing(
+    title="Frost days",
     identifier="frost_days",
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
     long_name="Number of frost days",
-    description="{freq} number of days with minimum daily temperature below {thresh}.",
+    description="{freq} number of days where the daily minimum temperature is below {thresh}.",
+    abstract="Number of days where the daily minimum temperature is below a given threshold",
     cell_methods="time: sum over days",
     compute=indices.frost_days,
 )
 
 frost_season_length = Temp(
+    title="Frost season length",
     identifier="frost_season_length",
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
     long_name="Length of the frost season",
     description="{freq} number of days between the first occurrence of at least {window} consecutive days with "
-    "minimum daily temperature below frezzing and the first occurrence of at least {window} consecutive days with "
+    "minimum daily temperature below freezing and the first occurrence of at least {window} consecutive days with "
     "minimum daily temperature above freezing after {mid_date}.",
+    abstract="Duration of the freezing season, defined as the period when the daily minimum temperature is below 0°C "
+    "without a thawing window of days, with the thaw occurring after a median calendar date",
     cell_methods="time: sum over days",
     compute=indices.frost_season_length,
     parameters=dict(thresh="0 degC"),
 )
 
 last_spring_frost = Temp(
+    title="Last spring frost",
     identifier="last_spring_frost",
     units="",
     standard_name="day_of_year",
     long_name="Day of year of last spring frost",
     description="Day of year of last spring frost, defined as the last day a minimum temperature "
     "threshold of {thresh} is not exceeded before a given date.",
+    cell_methods="",
     compute=indices.last_spring_frost,
 )
 
 first_day_below = Temp(
+    title="First day below",
     identifier="first_day_below",
     units="",
     standard_name="day_of_year",
     long_name="First day of year with temperature below threshold",
     description="First day of year with temperature below {thresh} for at least {window} days.",
+    cell_methods="",
     compute=indices.first_day_below,
 )
 
 first_day_above = Temp(
+    title="First day above",
     identifier="first_day_above",
     units="",
     standard_name="day_of_year",
     long_name="First day of year with temperature above threshold",
     description="First day of year with temperature above {thresh} for at least {window} days.",
+    cell_methods="",
     compute=indices.first_day_above,
 )
 
 
 ice_days = TempWithIndexing(
+    title="Ice days",
     identifier="ice_days",
     standard_name="days_with_air_temperature_below_threshold",
     units="days",
     long_name="Number of ice days",
-    description="{freq} number of days with maximum daily temperature below {thresh}.",
+    description="{freq} number of days where the maximum daily temperature is below {thresh}.",
+    abstract="Number of days where the daily maximum temperature is below 0°C",
     cell_methods="time: sum over days",
     compute=indices.ice_days,
 )
 
 consecutive_frost_days = Temp(
+    title="Consecutive frost days",
     identifier="consecutive_frost_days",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_below_threshold",
     long_name="Maximum number of consecutive frost days",
-    description="{freq} maximum number of consecutive days with minimum daily temperature below {thresh}.",
+    description="{freq} maximum number of consecutive days where minimum daily temperature is below {thresh}.",
+    abstract="Maximum number of consecutive days where the daily minimum temperature is below 0°C",
     cell_methods="time: maximum over days",
     compute=indices.maximum_consecutive_frost_days,
 )
 
 frost_free_season_length = Temp(
+    title="Frost free season length",
     identifier="frost_free_season_length",
     units="days",
     standard_name="days_with_air_temperature_above_threshold",
@@ -693,45 +745,57 @@ frost_free_season_length = Temp(
     description="{freq} number of days between the first occurrence of at least {window} consecutive days "
     "with minimum daily temperature above or at the freezing point and the first occurrence of at least "
     "{window} consecutive days with minimum daily temperature below freezing after {mid_date}.",
+    abstract="Duration of the frost free season, defined as the period when the daily minimum temperature is above 0°C "
+    "without a freezing window of days, with freezing occurring after a median calendar date.",
     cell_methods="time: sum over days",
     compute=indices.frost_free_season_length,
     parameters={"thresh": {"default": "0 degC"}},
 )
 
 frost_free_season_start = Temp(
+    title="Frost free season start",
     identifier="frost_free_season_start",
     units="",
     standard_name="day_of_year",
     long_name="Day of year of frost free season start",
-    description="Day of year of beginning of frost free season, defined as the first day a minimum temperature "
-    "threshold of {thresh} is equal or exceeded for at least {window} days.",
+    description="Day of the year of the beginning of the frost-free season, defined as the {window}th consecutive day "
+    "when the temperature exceeds {thresh}.",
+    abstract="First day when the temperature exceeds a given threshold for a given number of consecutive days",
     compute=indices.frost_free_season_start,
     parameters={"thresh": {"default": "0 degC"}},
 )
 
 frost_free_season_end = Temp(
+    title="Frost free season end",
     identifier="frost_free_season_end",
     units="",
     standard_name="day_of_year",
     long_name="Day of year of frost free season end",
-    description="Day of year of end of frost free season, defined as the first day minimum temperatures below a "
-    "threshold of {thresh}, after a run of days above this threshold, for at least {window} days.",
+    description="Day of the year of the end of the frost-free season, defined as the interval between the first set of "
+    "{window} days when the daily temperature is above {thresh} and the first set (after {mid_date}) of {window} days "
+    "when it is below {thresh}.",
+    abstract="First day when the temperature is below a given threshold for a given number of consecutive days after "
+    "a median calendar date.",
     cell_methods="",
     compute=indices.frost_free_season_end,
     parameters={"thresh": {"default": "0 degC"}},
 )
 
 maximum_consecutive_frost_free_days = Temp(
+    title="Maximum consecutive frost free days",
+    # FIXME: shouldn't this be `maximum_`? Breaking changes needed.
     identifier="consecutive_frost_free_days",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
-    long_name="Maximum number of consecutive days with Tmin >= threshold",
+    long_name="Maximum number of consecutive days with Tmin at or above 0°C",
     description="{freq} maximum number of consecutive days with minimum daily temperature above or equal to {thresh}.",
+    abstract="Maximum number of consecutive frost-free days: where the daily minimum temperature is above or equal to 0°C",
     cell_methods="time: maximum over days",
     compute=indices.maximum_consecutive_frost_free_days,
 )
 
 growing_season_start = Temp(
+    title="Growing season start",
     identifier="growing_season_start",
     units="",
     standard_name="day_of_year",
@@ -744,6 +808,7 @@ growing_season_start = Temp(
 )
 
 growing_season_length = Temp(
+    title="Growing season length",
     identifier="growing_season_length",
     units="days",
     standard_name="growing_season_length",
@@ -757,6 +822,7 @@ growing_season_length = Temp(
 )
 
 growing_season_end = Temp(
+    title="Growing season end",
     identifier="growing_season_end",
     units="",
     standard_name="day_of_year",
@@ -769,6 +835,7 @@ growing_season_end = Temp(
 )
 
 tropical_nights = TempWithIndexing(
+    title="Tropical nights",
     identifier="tropical_nights",
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
@@ -781,6 +848,7 @@ tropical_nights = TempWithIndexing(
 )
 
 tg90p = TempWithIndexing(
+    title="Days with mean temperature above the 90th percentile",
     identifier="tg90p",
     units="days",
     standard_name="days_with_air_temperature_above_threshold",
@@ -793,6 +861,7 @@ tg90p = TempWithIndexing(
 )
 
 tg10p = TempWithIndexing(
+    title="Days with mean temperature below the 10th percentile",
     identifier="tg10p",
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
@@ -805,6 +874,7 @@ tg10p = TempWithIndexing(
 )
 
 tx90p = TempWithIndexing(
+    title="Days with maximum temperature above the 90th percentile",
     identifier="tx90p",
     units="days",
     standard_name="days_with_air_temperature_above_threshold",
@@ -817,6 +887,7 @@ tx90p = TempWithIndexing(
 )
 
 tx10p = TempWithIndexing(
+    title="Days with maximum temperature below the 10th percentile",
     identifier="tx10p",
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
@@ -829,6 +900,7 @@ tx10p = TempWithIndexing(
 )
 
 tn90p = TempWithIndexing(
+    title="Days with minimum temperature above the 90th percentile",
     identifier="tn90p",
     units="days",
     standard_name="days_with_air_temperature_above_threshold",
@@ -841,6 +913,7 @@ tn90p = TempWithIndexing(
 )
 
 tn10p = TempWithIndexing(
+    title="Days with minimum temperature below the 10th percentile",
     identifier="tn10p",
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
@@ -854,6 +927,7 @@ tn10p = TempWithIndexing(
 
 
 degree_days_exceedance_date = Temp(
+    title="Degree day exceedance date",
     identifier="degree_days_exceedance_date",
     long_name="Day of year when cumulative degree days exceed threshold.",
     units="",
@@ -866,6 +940,7 @@ degree_days_exceedance_date = Temp(
 
 
 warm_spell_duration_index = Temp(
+    title="Warm spell duration index",
     identifier="warm_spell_duration_index",
     long_name="Number of days part of a percentile-defined warm spell",
     description="{freq} number of days with at least {window} consecutive days "
@@ -880,6 +955,7 @@ warm_spell_duration_index = Temp(
 
 
 maximum_consecutive_warm_days = Temp(
+    title="Maximum consecutive warm days",
     identifier="maximum_consecutive_warm_days",
     long_name="Maximum consecutive warm days",
     description="{freq} longest spell of consecutive days with Tmax above {thresh}.",
@@ -907,16 +983,17 @@ fire_season = FireSeasonBase(
 
 
 huglin_index = Temp(
+    title="Huglin heliothermal index",
     identifier="huglin_index",
     units="",
     long_name="Huglin heliothermal index",
     description="Heat-summation index for agroclimatic suitability estimation, developed specifically for viticulture. "
     "Computed with {method} formula (Summation of ((Tmin + Tmax)/2 - {thresh}) * k), where coefficient (`k`) is a "
-    "latitude-based day-length for days typically between 1 April and 30 September. "
-    "Metric originally published in Huglin (1978). Day-length coefficient based on Hall & Jones (2010).",
+    "latitude-based day-length for days typically between 1 April and 30 September.",
     abstract="Heat-summation index for agroclimatic suitability estimation, developed specifically for viticulture. "
-    "Considers daily Tmin and Tmax with a base of {thresh}, typically between 1 April and 30 September, and "
-    "integrates a day-length coefficient calculation for higher latitudes."
+    "Considers daily Tmin and Tmax with a given base threshold, typically between 1 April and 30 September, and "
+    "integrates a day-length coefficient calculation for higher latitudes. "
+    "Metric originally published in Huglin (1978). Day-length coefficient based on Hall & Jones (2010).",
     cell_methods="",
     var_name="hi",
     compute=indices.huglin_index,
@@ -925,16 +1002,16 @@ huglin_index = Temp(
 
 
 biologically_effective_degree_days = Temp(
+    title="Biologically effective degree days",
     identifier="biologically_effective_degree_days",
     units="K days",
     long_name="Biologically effective degree days",
     description="Heat-summation index for agroclimatic suitability estimation, developed specifically for viticulture. "
     "Computed with {method} formula (Summation of min((max((Tmin + Tmax)/2 - {thresh_tasmin}, 0) * k) + TR_adj, 9°C), "
-    "where coefficient (`k`) is a latitude-based day-length for days between {start_date} and {end_date}). "
-    "Original formula published in Gladstones, 1992."
-    abstract="Considers daily Tmin and Tmax with a base of {thresh_tasmin} between 1 April and 31 October, with a maximum daily "
-    "value for degree days (typically 9°C), and integrates a modification coefficient for latitudes "
-    "between 40°N and 50°N as well as swings in daily temperature range. ",
+    "where coefficient (`k`) is a latitude-based day-length for days between {start_date} and {end_date}).",
+    abstract="Considers daily Tmin and Tmax with a given base threshold between 1 April and 31 October, with a maximum "
+    "daily value for degree days (typically 9°C), and integrates a modification coefficient for latitudes between "
+    "40°N and 50°N as well as swings in daily temperature range. Original formula published in Gladstones, 1992.",
     cell_methods="",
     var_name="bedd",
     compute=indices.biologically_effective_degree_days,
@@ -943,6 +1020,7 @@ biologically_effective_degree_days = Temp(
 
 
 effective_growing_degree_days = Temp(
+    title="Effective growing degree days",
     identifier="effective_growing_degree_days",
     units="K days",
     long_name="Effective growing degree days",
@@ -950,12 +1028,12 @@ effective_growing_degree_days = Temp(
     "Computed with {method} formula (Summation of max((Tmin + Tmax)/2 - {thresh}, 0) between dynamically-determined "
     "growing season start and end dates. The 'bootsma' method uses a 10-day average temperature above {thresh} to "
     "identify a start date, while the 'qian' method uses a weighted mean average above {thresh} over 5 days to "
+    "determine start date. The end date of the growing season is the date of first fall frost (Tmin < 0°C). ",
+    abstract="Considers daily Tmin and Tmax with a given base threshold between dynamically-determined growing season "
+    "start and end dates. The 'bootsma' method uses a 10-day mean temperature above a given threshold to identify a "
+    "start date, while the 'qian' method uses a weighted mean temperature above a given threshold over 5 days to "
     "determine start date. The end date of the growing season is the date of first fall frost (Tmin < 0°C). "
     "Original formula published in Bootsma et al. 2005.",
-    abstract="Considers daily Tmin and Tmax with a base of {thresh} between dynamically-determined growing season start"
-    "and end dates. The 'bootsma' method uses a 10-day average temperature above {thresh} to identify a start date, "
-    "while the 'qian' method uses a weighted mean average above {thresh} over 5 days to determine start date. "
-    "The end date of the growing season is the date of first fall frost (Tmin < 0°C)."
     cell_methods="",
     var_name="egdd",
     compute=indices.effective_growing_degree_days,
@@ -963,12 +1041,16 @@ effective_growing_degree_days = Temp(
 
 
 latitude_temperature_index = Temp(
+    title="Latitude temperature index",
     identifier="latitude_temperature_index",
     units="",
     long_name="Latitude-temperature index",
     description="A climate indice based on mean temperature of the warmest month and a latitude-based coefficient to "
     "account for longer day-length favouring growing conditions. Developed specifically for viticulture. "
-    "Mean temperature of warmest month * ({lat_factor} - latitude). "
+    "Mean temperature of warmest month * ({lat_factor} - latitude).",
+    abstract="A climate indice based on mean temperature of the warmest month and a latitude-based coefficient to "
+    "account for longer day-length favouring growing conditions. Developed specifically for viticulture. "
+    "Mean temperature of warmest month * (latitude_factor - latitude). "
     "Indice originally published in Jackson, D. I., & Cherry, N. J. (1988)",
     cell_methods="",
     allowed_periods=["A"],
