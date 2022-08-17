@@ -134,24 +134,24 @@ def humidex(
     return out
 
 
-@declare_units(tasmax="[temperature]", hurs="[]")
-def heat_index(tasmax: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
-    r"""Daily heat index.
+@declare_units(tas="[temperature]", hurs="[]")
+def heat_index(tas: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
+    r"""Heat index.
 
     Perceived temperature after relative humidity is taken into account :cite:p:`blazejczyk_comparison_2012`.
     The index is only valid for temperatures above 20°C.
 
     Parameters
     ----------
-    tasmax : xr.DataArray
-      Maximum daily temperature.
+    tas : xr.DataArray
+      Temperature. The equation assumes an instantaneous value.
     hurs : xr.DataArray
-      Relative humidity.
+      Relative humidity. The equation assumes an instantaneous value.
 
     Returns
     -------
-    xr.DataArray, [time][temperature]
-      Heat index for days with temperature above 20°C.
+    xr.DataArray, [temperature]
+      Heat index for moments with temperature above 20°C.
 
     References
     ----------
@@ -164,33 +164,24 @@ def heat_index(tasmax: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
     heat balance equations which account for many variables other than vapour pressure, which is used exclusively in the
     humidex calculation.
     """
-    thresh = "20.0 degC"
-    thresh = convert_units_to(thresh, "degC")
-    t = convert_units_to(tasmax, "degC")
+    thresh = 20  # degC
+    t = convert_units_to(tas, "degC")
     t = t.where(t > thresh)
     r = convert_units_to(hurs, "%")
-
-    tr = t * r
-    tt = t * t
-    rr = r * r
-    ttr = tt * r
-    trr = t * rr
-    ttrr = tt * rr
 
     out = (
         -8.78469475556
         + 1.61139411 * t
         + 2.33854883889 * r
-        - 0.14611605 * tr
-        - 0.012308094 * tt
-        - 0.0164248277778 * rr
-        + 0.002211732 * ttr
-        + 0.00072546 * trr
-        - 0.000003582 * ttrr
+        - 0.14611605 * t * r
+        - 0.012308094 * t * t
+        - 0.0164248277778 * r * r
+        + 0.002211732 * t * t * r
+        + 0.00072546 * t * r * r
+        - 0.000003582 * t * t * r * r
     )
     out = out.assign_attrs(units="degC")
-
-    return convert_units_to(out, tasmax.units)
+    return convert_units_to(out, tas.units)
 
 
 @declare_units(tasmin="[temperature]", tasmax="[temperature]")

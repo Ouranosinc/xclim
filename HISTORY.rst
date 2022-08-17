@@ -19,7 +19,10 @@ Breaking changes
 Bug fixes
 ^^^^^^^^^
 * Fixed ``saturation_vapor_pressure`` for temperatures in other units than Kelvins (also fixes ``relative_humidity_from_dewpoint``). (:issue:`1125`, :pull:`1127`).
+* Indicators that do not care about the input frequency of the data will not check the cell methods of their inputs. (:pull:`1128`).
+* Fixed the signature and docstring of ``heat_index`` by changing ``tasmax`` to ``tas``. (:issue:`1126`, :pull:`1128`).
 * Fixed a formatting issue with virtual indicator modules (`_gen_returns_section`) that was creating malformed `Returns` sections in `sphinx`-generated documentation. (:pull:`1131`).
+
 
 Internal changes
 ^^^^^^^^^^^^^^^^
