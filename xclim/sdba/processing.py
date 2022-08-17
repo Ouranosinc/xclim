@@ -328,8 +328,8 @@ def reordering(ref: xr.DataArray, sim: xr.DataArray, group: str = "time") -> xr.
     xr.Dataset
       sim reordered according to ref's rank order.
 
-    Reference
-    ---------
+    References
+    ----------
     :cite:cts:`sdba-cannon_multivariate_2018`
 
     """
