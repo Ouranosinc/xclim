@@ -165,7 +165,7 @@ def apply_correction(
 
 
 def invert(x: xr.DataArray, kind: str | None = None) -> xr.DataArray:
-    """Invert a DataArray either additively (-x) or multiplicatively (1/x).
+    """Invert a DataArray either by addition (-x) or by multiplication (1/x).
 
     If kind is not given, default to the one stored in the "kind" attribute of x.
     """
@@ -372,9 +372,9 @@ def interp_on_quantiles(
 ):
     """Interpolate values of yq on new values of x.
 
-    Interpolate in 2D with :py:func:`~scipy.interpolate.griddata` if grouping is used,
-    in 1D otherwise, with :py:class:`~scipy.interpolate.interp1d`. Any NaNs in xq
-    or yq are removed from the input map. Similarly, NaNs in newx are left NaNs.
+    Interpolate in 2D with :py:func:`~scipy.interpolate.griddata` if grouping is used, in 1D otherwise, with
+    :py:class:`~scipy.interpolate.interp1d`. Any NaNs in `xq` or `yq` are removed from the input map.
+    Similarly, NaNs in newx are left NaNs.
 
     Parameters
     ----------
@@ -465,12 +465,10 @@ def interp_on_quantiles(
 def rank(da: xr.DataArray, dim: str = "time", pct: bool = False) -> xr.DataArray:
     """Ranks data along a dimension.
 
-    Replicates `xr.DataArray.rank` but as a function usable in a Grouper.apply().
-    Xarray's docstring is below:
+    Replicates `xr.DataArray.rank` but as a function usable in a Grouper.apply(). Xarray's docstring is below:
 
-    Equal values are assigned a rank that is the average of the ranks that
-    would have been otherwise assigned to all the values within that
-    set. Ranks begin at 1, not 0. If pct, computes percentage ranks.
+    Equal values are assigned a rank that is the average of the ranks that would have been otherwise assigned to all the
+    values within that set. Ranks begin at 1, not 0. If pct, computes percentage ranks.
 
     Parameters
     ----------
@@ -488,8 +486,7 @@ def rank(da: xr.DataArray, dim: str = "time", pct: bool = False) -> xr.DataArray
 
     Notes
     -----
-    The `bottleneck` library is required.
-    NaNs in the input array are returned as NaNs.
+    The `bottleneck` library is required. NaNs in the input array are returned as NaNs.
     """
     return da.rank(dim, pct=pct)
 
@@ -535,14 +532,12 @@ def best_pc_orientation_simple(
     """Return best orientation vector according to a simple test.
 
     Eigenvectors returned by `pc_matrix` do not have a defined orientation.
-    Given an inverse transform Hinv and a transform R, this returns the orientation
-    minimizing the projected distance for a test point far from the origin.
+    Given an inverse transform `Hinv` and a transform `R`, this returns the orientation minimizing the projected
+    distance for a test point far from the origin.
 
-    This trick is inspired by the one exposed in [hnilica2017]_.
-    For each possible orientation vector, the test point is reprojected
-    and the distance from the original point is computed. The orientation
+    This trick is inspired by the one exposed in :cite:t:`sdba-hnilica_multisite_2017`. For each possible orientation vector,
+    the test point is reprojected and the distance from the original point is computed. The orientation
     minimizing that distance is chosen.
-    See documentation of `sdba.adjustment.PrincipalComponentAdjustment`.
 
     Parameters
     ----------
@@ -559,9 +554,13 @@ def best_pc_orientation_simple(
     np.ndarray
       Mx1 vector of orientation correction (1 or -1).
 
+    See Also
+    --------
+    sdba.adjustment.PrincipalComponentAdjustment
+
     References
     ----------
-    .. [hnilica2017] Hnilica, J., Hanel, M. and Pš, V. (2017), Multisite bias correction of precipitation data from regional climate models. Int. J. Climatol., 37: 2934-2946. https://doi.org/10.1002/joc.4890
+    :cite:cts:`sdba-hnilica_multisite_2017`
     """
     m = R.shape[0]
     P = np.diag(val * np.ones(m))
@@ -579,17 +578,16 @@ def best_pc_orientation_full(
     Hmean: np.ndarray,
     hist: np.ndarray,
 ) -> np.ndarray:
-    """Return best orientation vector for A according to the method of Alavoine et al. (2021, preprint).
+    """Return best orientation vector for `A` according to the method of :cite:t:`sdba-alavoine_distinct_2021`.
 
     Eigenvectors returned by `pc_matrix` do not have a defined orientation.
-    Given an inverse transform Hinv, a transform R, the actual and target origins
-    Hmean and Rmean and the matrix of training observations hist, this computes
-    a scenario for all possible orientations and return the orientation that
-    maximizes the Spearman correlation coefficient of all variables. The
-    correlation is computed for each variable individually, then averaged.
+    Given an inverse transform Hinv, a transform R, the actual and target origins `Hmean` and `Rmean` and the matrix of
+    training observations hist, this computes a scenario for all possible orientations and return the orientation that
+    maximizes the Spearman correlation coefficient of all variables. The correlation is computed for each variable
+    individually, then averaged.
 
-    This trick is explained in [alavoine2021]_.
-    See documentation of :py:func:`sdba.adjustment.PrincipalComponentAdjustment`.
+    This trick is explained in :cite:t:`sdba-alavoine_distinct_2021`.
+    See docstring of :py:func:`sdba.adjustment.PrincipalComponentAdjustment`.
 
     Parameters
     ----------
@@ -611,7 +609,8 @@ def best_pc_orientation_full(
 
     References
     ----------
-    .. [alavoine2021] Alavoine, M., & Grenier, P. (2021). The distinct problems of physical inconsistency and of multivariate bias potentially involved in the statistical adjustment of climate simulations. https://eartharxiv.org/repository/view/2876/
+    :cite:cts:`sdba-alavoine_distinct_2021`
+
     """
     # All possible orientation vectors
     m = R.shape[0]
@@ -651,7 +650,7 @@ def get_clusters_1d(
 
     References
     ----------
-    `getcluster` of Extremes.jl (read on 2021-04-20) https://github.com/jojal5/Extremes.jl
+    `getcluster` of Extremes.jl (:cite:cts:`sdba-jalbert_extreme_2022`).
     """
     # Boolean array, True where data is over u2
     # We pad with values under u2, so that clusters never start or end at boundaries.
@@ -792,7 +791,8 @@ def rand_rot_matrix(
 
     References
     ----------
-    Mezzadri, F. (2006). How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050.
+    :cite:cts:`sdba-mezzadri_how_2007`
+
     """
     if num > 1:
         return xr.concat([rand_rot_matrix(crd, num=1) for i in range(num)], "matrices")

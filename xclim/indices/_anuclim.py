@@ -1,6 +1,8 @@
 # noqa: D100
 from __future__ import annotations
 
+from typing import Callable
+
 import numpy as np
 import xarray
 
@@ -133,9 +135,9 @@ def temperature_seasonality(
     divide by zero, but it does mean that the values are usually quite small.
 
     According to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6), input
-    values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
-    the result with input data with daily frequency as well. As such weekly or monthly input values, if desired, should be
-    calculated prior to calling the function.
+    values should be at a weekly (or monthly) frequency. However, the xclim.indices implementation here will calculate
+    the result with input data with daily frequency as well. As such weekly or monthly input values, if desired,
+    should be calculated prior to calling the function.
     """
     tas = convert_units_to(tas, "K")
 
@@ -179,10 +181,10 @@ def precip_seasonality(pr: xarray.DataArray, freq: str = "YS") -> xarray.DataArr
 
     Notes
     -----
-    According to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6), input
-    values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
-    the result with input data with daily frequency as well. As such weekly or monthly input values, if desired,
-    should be calculated prior to calling the function.
+    According to the ANUCLIM user-guide (:cite:t:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
+    (or monthly) frequency. However, the xclim.indices implementation here will calculate the result with input data
+    with daily frequency as well. As such weekly or monthly input values, if desired, should be calculated prior to
+    calling the function.
 
     If input units are in mm s-1 (or equivalent) values are converted to mm/day to avoid potentially small denominator
     values.
@@ -205,16 +207,16 @@ def tg_mean_warmcold_quarter(
     r"""ANUCLIM Mean temperature of warmest/coldest quarter.
 
     The warmest (or coldest) quarter of the year is determined, and the mean temperature of this period is
-    calculated.  If the input data frequency is daily ("D") or weekly ("W"), quarters are defined as 13-week periods,
+    calculated. If the input data frequency is daily ("D") or weekly ("W"), quarters are defined as 13-week periods,
     otherwise as 3 months.
 
     Parameters
     ----------
-    tas : xarray.DataArray
+    tas: xarray.DataArray
       Mean temperature at daily, weekly, or monthly frequency.
-    op : str {'warmest', 'coldest'}
-      Operation to perform:  'warmest' calculate the warmest quarter; 'coldest' calculate the coldest quarter.
-    freq : str
+    op: str {'warmest', 'coldest'}
+      Operation to perform: 'warmest' calculate the warmest quarter; 'coldest' calculate the coldest quarter.
+    freq: str
       Resampling frequency.
 
     Returns
@@ -224,7 +226,7 @@ def tg_mean_warmcold_quarter(
 
     Examples
     --------
-    The following would compute for each grid cell of file `tas.day.nc` the annual temperature
+    The following would compute for each grid cell of file `tas.day.nc` the annual temperature of the
     warmest quarter mean temperature:
 
     >>> import xclim.indices as xci
@@ -233,10 +235,10 @@ def tg_mean_warmcold_quarter(
 
     Notes
     -----
-    According to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6), input
-    values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
-    the result with input data with daily frequency as well. As such weekly or monthly input values, if desired,
-    should be calculated prior to calling the function.
+    According to the ANUCLIM user-guide (:cite:t:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
+    (or monthly) frequency. However, the xclim.indices implementation here will calculate the result with input data
+    with daily frequency as well. As such weekly or monthly input values, if desired, should be calculated prior to
+    calling the function.
     """
     out = _to_quarter(tas=tas)
 
@@ -277,10 +279,10 @@ def tg_mean_wetdry_quarter(
 
     Notes
     -----
-    According to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6), input
-    values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
-    the result with input data with daily frequency as well. As such weekly or monthly input values, if desired,
-    should be calculated prior to calling the function.
+    According to the ANUCLIM user-guide (:cite:t:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
+    (or monthly) frequency. However, the xclim.indices implementation here will calculate the result with input data
+    with daily frequency as well. As such weekly or monthly input values, if desired, should be calculated prior to
+    calling the function.
     """
     tas_qrt = _to_quarter(tas=tas)
     pr_qrt = _to_quarter(pr=pr)
@@ -324,10 +326,10 @@ def prcptot_wetdry_quarter(
 
     Notes
     -----
-    According to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6), input
-    values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
-    the result with input data with daily frequency as well. As such weekly or monthly input values, if desired,
-    should be calculated prior to calling the function.
+    According to the ANUCLIM user-guide (:cite:t:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
+    (or monthly) frequency. However, the xclim.indices implementation here will calculate the result with input data
+    with daily frequency as well. As such weekly or monthly input values, if desired, should be calculated prior to
+    calling the function.
     """
     # returns mm values
     pr_qrt = _to_quarter(pr=pr)
@@ -359,26 +361,26 @@ def prcptot_warmcold_quarter(
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    pr: xarray.DataArray
       Total precipitation rate at daily, weekly, or monthly frequency.
-    tas : xarray.DataArray
+    tas: xarray.DataArray
       Mean temperature at daily, weekly, or monthly frequency.
-    op : {'warmest', 'coldest'}
+    op: {'warmest', 'coldest'}
       Operation to perform: 'warmest' calculate for the warmest quarter ; 'coldest' calculate for the coldest quarter.
-    freq : str
+    freq: str
       Resampling frequency.
 
     Returns
     -------
-    xarray.DataArray : [mm]
+    xarray.DataArray, [mm]
        Precipitation of {op} quarter
 
     Notes
     -----
-    According to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6), input
-    values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
-    the result with input data with daily frequency as well. As such weekly or monthly input values, if desired,
-    should be calculated prior to calling the function.
+    According to the ANUCLIM user-guide (:cite:t:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
+    (or monthly) frequency. However, the xclim.indices implementation here will calculate the result with input data
+    with daily frequency as well. As such weekly or monthly input values, if desired, should be calculated prior to
+    calling the function.
     """
     # determine input data frequency
     tas_qrt = _to_quarter(tas=tas)
@@ -399,11 +401,11 @@ def prcptot(
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    pr: xarray.DataArray
       Total precipitation flux [mm d-1], [mm week-1], [mm month-1] or similar.
-    thresh : str
+    thresh: str
       Threshold over which precipitation starts being cumulated.
-    freq : str
+    freq: str
       Resampling frequency.
 
     Returns
@@ -424,11 +426,11 @@ def prcptot_wetdry_period(
 
     Parameters
     ----------
-    pr : xarray.DataArray
+    pr: xarray.DataArray
       Total precipitation flux [mm d-1], [mm week-1], [mm month-1] or similar.
-    op : {'wettest', 'driest'}
+    op: {'wettest', 'driest'}
       Operation to perform :  'wettest' calculate the wettest period ; 'driest' calculate the driest period.
-    freq : str
+    freq: str
       Resampling frequency.
 
     Returns
@@ -438,10 +440,10 @@ def prcptot_wetdry_period(
 
     Notes
     -----
-    According to the ANUCLIM user-guide https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6), input
-    values should be at a weekly (or monthly) frequency.  However, the xclim.indices implementation here will calculate
-    the result with input data with daily frequency as well. As such weekly or monthly input values, if desired,
-    should be calculated prior to calling the function.
+    According to the ANUCLIM user-guide (:cite:t:`xu_anuclim_2010`, ch. 6), input values should be at a weekly
+    (or monthly) frequency. However, the xclim.indices implementation here will calculate the result with input data
+    with daily frequency as well. As such weekly or monthly input values, if desired, should be calculated prior to
+    calling the function.
     """
     pram = rate2amount(pr)
 
@@ -462,19 +464,19 @@ def _anuclim_coeff_var(arr: xarray.DataArray, freq: str = "YS") -> xarray.DataAr
 
 
 def _from_other_arg(
-    criteria: xarray.DataArray, output: xarray.DataArray, op, freq: str
+    criteria: xarray.DataArray, output: xarray.DataArray, op: Callable, freq: str
 ) -> xarray.DataArray:
     """Pick values from output based on operation returning an index from criteria.
 
     Parameters
     ----------
-    criteria : DataArray
+    criteria: xarray.DataArray
       Series on which operation returning index is applied.
-    output : DataArray
+    output : xarray.DataArray
       Series to be indexed.
-    op : func
+    op: Callable
       Function returning an index, for example `np.argmin`, `np.argmax`, `np.nanargmin`, `np.nanargmax`.
-    freq : str
+    freq: str
       Temporal grouping.
 
     Returns

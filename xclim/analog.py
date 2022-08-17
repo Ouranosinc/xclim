@@ -1,38 +1,34 @@
 # noqa: D205,D400
 """
-Spatial analogues are maps showing which areas have a present-day climate that is analogous
-to the future climate of a given place. This type of map can be useful for climate adaptation
-to see how well regions are coping today under specific climate conditions. For example,
-officials from a city located in a temperate region that may be expecting more heatwaves in
-the future can learn from the experience of another city where heatwaves are a common occurrence,
+Spatial analogues are maps showing which areas have a present-day climate that is analogous to the future climate of a
+given place. This type of map can be useful for climate adaptation to see how well regions are coping today under
+specific climate conditions. For example, officials from a city located in a temperate region that may be expecting more
+heatwaves in the future can learn from the experience of another city where heatwaves are a common occurrence,
 leading to more proactive intervention plans to better deal with new climate conditions.
 
-Spatial analogues are estimated by comparing the distribution of climate indices computed at
-the target location over the future period with the distribution of the same climate indices
-computed over a reference period for multiple candidate regions. A number of methodological
-choices thus enter the computation:
+Spatial analogues are estimated by comparing the distribution of climate indices computed at the target location over
+the future period with the distribution of the same climate indices computed over a reference period for multiple
+candidate regions. A number of methodological choices thus enter the computation:
 
     - Climate indices of interest,
     - Metrics measuring the difference between both distributions,
     - Reference data from which to compute the base indices,
     - A future climate scenario to compute the target indices.
 
-The climate indices chosen to compute the spatial analogues are usually annual values of
-indices relevant to the intended audience of these maps. For example, in the case of the
-wine grape industry, the climate indices examined could include the length of the frost-free
-season, growing degree-days, annual winter minimum temperature and annual number of
-very cold days [Roy2017]_.
+The climate indices chosen to compute the spatial analogues are usually annual values of indices relevant to the
+intended audience of these maps. For example, in the case of the wine grape industry, the climate indices examined could
+include the length of the frost-free season, growing degree-days, annual winter minimum temperature and annual number of
+very cold days :cite:p:`roy_probabilistic_2017`.
 
 See :ref:`notebooks/analogs:Spatial Analogues examples`.
 
 Methods to compute the (dis)similarity between samples
 ------------------------------------------------------
 
-This module implements all methods described in [Grenier2013]_ to measure
-the dissimilarity between two samples, plus the Székely-Rizzo energy distance,
-Some of these algorithms can be used to test whether two samples have been
-drawn from the same distribution. Here, they are used in finding areas
-with analogue climate conditions to a target climate.
+This module implements all methods described in :cite:cts:`grenier_assessment_2013` to measure the dissimilarity between
+two samples, plus the Székely-Rizzo energy distance, some of these algorithms can be used to test whether two samples
+have been drawn from the same distribution. Here, they are used in finding areas with analogue climate conditions to a
+target climate:
 
  * Standardized Euclidean distance
  * Nearest Neighbour distance
@@ -42,10 +38,9 @@ with analogue climate conditions to a target climate.
  * Kolmogorov-Smirnov statistic
  * Kullback-Leibler divergence
 
-All methods accept arrays, the first is the reference (n, D) and
-the second is the candidate (m, D). Where the climate indicators
-vary along D and the distribution dimension along n or m. All methods output
-a single float. See their documentation in :ref:`analogues:Analogue metrics API`.
+All methods accept arrays, the first is the reference (n, D) and the second is the candidate (m, D). Where the climate
+indicators vary along D and the distribution dimension along n or m. All methods output a single float. See their
+documentation in :ref:`analogues:Analogue metrics API`.
 
 .. warning::
 
@@ -55,8 +50,9 @@ a single float. See their documentation in :ref:`analogues:Analogue metrics API`
 
 .. rubric:: References
 
-.. [Roy2017] Roy, P., Grenier, P., Barriault, E. et al. Climatic Change (2017) 143: 43. https://doi.org/10.1007/s10584-017-1960-x
-.. [Grenier2013]  Grenier, P., A.-C. Parent, D. Huard, F. Anctil, and D. Chaumont, 2013: An assessment of six dissimilarity metrics for climate analogs. J. Appl. Meteor. Climatol., 52, 733–752, https://doi.org/10.1175/JAMC-D-12-0170.1
+:cite:cts:`roy_probabilistic_2017`
+:cite:cts:`grenier_assessment_2013`
+
 """
 # TODO: Hellinger distance
 # TODO: Mahalanobis distance
@@ -257,7 +253,8 @@ def seuclidean(x: np.ndarray, y: np.ndarray) -> float:
 
     References
     ----------
-    Veloz et al. (2011) Identifying climatic analogs for Wisconsin under 21st-century climate-change scenarios. Climatic Change, https://doi.org/10.1007/s10584-011-0261-z.
+    :cite:cts:`veloz_identifying_2012`
+
     """
     mx = x.mean(axis=0)
     my = y.mean(axis=0)
@@ -286,7 +283,8 @@ def nearest_neighbor(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 
     References
     ----------
-    Henze N. (1988) A Multivariate two-sample test based on the number of nearest neighbor type coincidences. Ann. of Stat., Vol. 16, No.2, 772-783. https://doi.org/10.1214/aos/1176350835.
+    :cite:cts:`henze_multivariate_1988`
+
     """
     x, y = standardize(x, y)
 
@@ -326,8 +324,8 @@ def zech_aslan(x: np.ndarray, y: np.ndarray, *, dmin: float = 1e-12) -> float:
 
     Notes
     -----
-    The energy measure between two variables :math:`X`, :math:`Y` (target and candidates) of
-    sizes :math:`n,d` and :math:`m,d` proposed by [AZ03]_ is defined by:
+    The energy measure between two variables :math:`X`, :math:`Y` (target and candidates) of sizes :math:`n,d` and
+    :math:`m,d` proposed by :cite:t:`aslan_new_2003` is defined by:
 
     .. math::
 
@@ -336,27 +334,26 @@ def zech_aslan(x: np.ndarray, y: np.ndarray, *, dmin: float = 1e-12) -> float:
         \phi_{xx} &= \frac{1}{n^2} \sum_{i = 1}^n \sum_{j = i + 1}^n R\left[SED(X_i, X_j)\right] \\
         \phi_{yy} &= \frac{1}{m^2} \sum_{i = 1}^m \sum_{j = i + 1}^m R\left[SED(X_i, Y_j)\right] \\
 
-    where :math:`X_i` denotes the i-th observation of :math:`X`. :math:`R` is a weight function
-    and :math:`SED(A, B)` denotes the standardized Euclidean distance.
+    where :math:`X_i` denotes the i-th observation of :math:`X`. :math:`R` is a weight function and :math:`SED(A, B)`
+    denotes the standardized Euclidean distance.
 
     .. math::
 
         R(r) &= \left\{\begin{array}{r l} -\ln r & \text{for } r > d_{min} \\ -\ln d_{min} & \text{for } r \leq d_{min} \end{array}\right. \\
         SED(X_i, Y_j) &= \sqrt{\sum_{k=1}^d \frac{\left(X_i(k) - Y_i(k)\right)^2}{\sigma_x(k)\sigma_y(k)}}
 
-    where :math:`k` is a counter over dimensions (indices in the case of spatial analogs)
-    and :math:`\sigma_x(k)` is the standard deviation of :math:`X` in dimension :math:`k`.
-    Finally, :math:`d_{min}` is a cut-off to avoid poles when :math:`r \to 0`, it is
-    controllable through the `dmin` parameter.
+    where :math:`k` is a counter over dimensions (indices in the case of spatial analogs) and :math:`\sigma_x(k)` is the
+    standard deviation of :math:`X` in dimension :math:`k`. Finally, :math:`d_{min}` is a cut-off to avoid poles when
+    :math:`r \to 0`, it is controllable through the `dmin` parameter.
 
-    This version corresponds the :math:`D_{ZAE}` test of [Grenier2013]_ (eq. 7), which is
-    a version of :math:`\phi_{NM}` from [AZ03]_, modified by using the standardized
-    euclidean distance, the log weight function and choosing :math:`d_{min} = 10^{-12}`.
+    This version corresponds the :math:`D_{ZAE}` test of :cite:t:`grenier_assessment_2013` (eq. 7), which is a version
+    of :math:`\phi_{NM}` from :cite:t:`aslan_new_2003`, modified by using the standardized  euclidean distance, the log
+    weight function and choosing :math:`d_{min} = 10^{-12}`.
 
     References
     ----------
-    .. Zech G. and Aslan B. (2003) A Multivariate two-sample test based on the concept of minimum energy. PHYStat2003, SLAC, Stanford, CA, Sep 8-11. https://www.slac.stanford.edu/econf/C030908/papers/MOET001.pdf.
-    .. [AZ03] Aslan B. and Zech G. (2003) A new class of binning-free, multivariate goodness-of-fit tests: the energy tests. https://doi.org/10.48550/arXiv.hep-ex/0203010
+    :cite:cts:`grenier_assessment_2013,zech_multivariate_2003,aslan_new_2003`
+
     """
     nx, d = x.shape
     ny, d = y.shape
@@ -396,8 +393,8 @@ def szekely_rizzo(x: np.ndarray, y: np.ndarray, *, standardize: bool = True) -> 
 
     Notes
     -----
-    The e-distance between two variables :math:`X`, :math:`Y` (target and candidates) of
-    sizes :math:`n,d` and :math:`m,d` proposed by [SR2004]_ is defined by:
+    The e-distance between two variables :math:`X`, :math:`Y` (target and candidates) of sizes :math:`n,d` and
+    :math:`m,d` proposed by :cite:t:`szekely_testing_2004` is defined by:
 
     .. math::
 
@@ -411,16 +408,16 @@ def szekely_rizzo(x: np.ndarray, y: np.ndarray, *, standardize: bool = True) -> 
         \phi_{xx} &= \frac{1}{n^2} \sum_{i = 1}^n \sum_{j = 1}^n \left\Vert X_i − X_j \right\Vert \\
         \phi_{yy} &= \frac{1}{m^2} \sum_{i = 1}^m \sum_{j = 1}^m \left\Vert X_i − Y_j \right\Vert \\
 
-    and where :math:`\Vert\cdot\Vert` denotes the Euclidean norm, :math:`X_i` denotes the i-th
-    observation of :math:`X`. When `standardized=False`, this corresponds to the :math:`T`
-    test of [RS2016]_ (p. 28) and to the ``eqdist.e`` function of the `energy` R package
-    (with two samples) and gives results twice as big as :py:func:`xclim.sdba.processing.escore`.
-    The standardization was added following the logic of [Grenier2013] to make the metric scale-invariant.
+    and where :math:`\Vert\cdot\Vert` denotes the Euclidean norm, :math:`X_i` denotes the i-th observation of :math:`X`.
+    When `standardized=False`, this corresponds to the :math:`T` test of :cite:t:`rizzo_energy_2016` (p. 28) and to the
+    ``eqdist.e`` function of the `energy` R package (with two samples) and gives results twice as big as
+    :py:func:`xclim.sdba.processing.escore`. The standardization was added following the logic of
+    :cite:p:`grenier_assessment_2013` to make the metric scale-invariant.
 
     References
     ----------
-    .. [SR2004] Székely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5). https://www.researchgate.net/publication/228918499_Testing_for_equal_distributions_in_high_dimension
-    .. [RS2016] Rizzo, M. L., & Székely, G. J. (2016). Energy distance. Wiley Interdisciplinary Reviews: Computational Statistics, 8(1), 27–38. https://doi.org/10.1002/wics.1375
+    :cite:cts:`grenier_assessment_2013,szekely_testing_2004,rizzo_energy_2016`
+
     """
     n, _ = x.shape
     m, _ = y.shape
@@ -445,10 +442,8 @@ def friedman_rafsky(x: np.ndarray, y: np.ndarray) -> float:
     """
     Compute a dissimilarity metric based on the Friedman-Rafsky runs statistics.
 
-    The algorithm builds a minimal spanning tree (the subset of edges
-    connecting all points that minimizes the total edge length) then counts
-    the edges linking points from the same distribution.
-    This method is scale-dependent.
+    The algorithm builds a minimal spanning tree (the subset of edges connecting all points that minimizes the total
+    edge length) then counts the edges linking points from the same distribution. This method is scale-dependent.
 
     Parameters
     ----------
@@ -464,7 +459,8 @@ def friedman_rafsky(x: np.ndarray, y: np.ndarray) -> float:
 
     References
     ----------
-    Friedman J.H. and Rafsky, L.C. (1979) Multivariate generalisations of the Wald-Wolfowitz and Smirnov two-sample tests. Annals of Stat. Vol.7, No. 4, 697-717. https://doi.org/10.1214/aos/1176344722.
+    :cite:cts:`friedman_multivariate_1979`
+
     """
     from scipy.sparse.csgraph import minimum_spanning_tree
     from sklearn import neighbors
@@ -487,8 +483,7 @@ def friedman_rafsky(x: np.ndarray, y: np.ndarray) -> float:
 
 @metric
 def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
-    """
-    Compute the Kolmogorov-Smirnov statistic applied to two multivariate samples as described by Fasano and Franceschini.
+    """Compute the Kolmogorov-Smirnov statistic applied to two multivariate samples as described by Fasano and Franceschini.
 
     This method is scale-dependent.
 
@@ -506,7 +501,7 @@ def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
 
     References
     ----------
-    Fasano, G., & Franceschini, A. (1987). A multidimensional version of the Kolmogorov-Smirnov test. Monthly Notices of the Royal Astronomical Society, 225, 155‑170. https://doi.org/10.1093/mnras/225.1.155
+    :cite:cts:`fasano_multidimensional_1987`
     """
 
     def pivot(x, y):
@@ -539,15 +534,13 @@ def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
 def kldiv(
     x: np.ndarray, y: np.ndarray, *, k: int | Sequence[int] = 1
 ) -> float | Sequence[float]:
-    r"""
-    Compute the Kullback-Leibler divergence between two multivariate samples.
+    r"""Compute the Kullback-Leibler divergence between two multivariate samples.
 
     .. math
         D(P||Q) = \frac{d}{n} \sum_i^n \log\left\{\frac{r_k(x_i)}{s_k(x_i)}\right\} + \log\left\{\frac{m}{n-1}\right\}
 
-    where :math:`r_k(x_i)` and :math:`s_k(x_i)` are, respectively, the euclidean distance
-    to the kth neighbour of :math:`x_i` in the x array (excepting :math:`x_i`) and
-    in the y array. This method is scale-dependent.
+    where :math:`r_k(x_i)` and :math:`s_k(x_i)` are, respectively, the euclidean distance to the kth neighbour of
+    :math:`x_i` in the x array (excepting :math:`x_i`) and in the y array. This method is scale-dependent.
 
     Parameters
     ----------
@@ -569,30 +562,27 @@ def kldiv(
 
     Notes
     -----
-    In information theory, the Kullback–Leibler divergence ([perezcruz08]_) is a non-symmetric
-    measure of the difference between two probability distributions P and Q,
-    where P is the "true" distribution and Q an approximation. This nuance is
-    important because :math:`D(P||Q)` is not equal to :math:`D(Q||P)`.
+    In information theory, the Kullback–Leibler divergence :cite:p:`perez-cruz_kullback-leibler_2008` is a non-symmetric
+    measure of the difference between two probability distributions P and Q, where P is the "true" distribution and Q an
+    approximation. This nuance is important because :math:`D(P||Q)` is not equal to :math:`D(Q||P)`.
 
-    For probability distributions P and Q of a continuous random variable,
-    the K–L  divergence is defined as:
+    For probability distributions P and Q of a continuous random variable, the K–L  divergence is defined as:
 
     .. math::
 
         D_{KL}(P||Q) = \int p(x) \log\left(\frac{p(x)}{q(x)}\right) dx
 
-    This formula assumes we have a representation of the probability
-    densities :math:`p(x)` and :math:`q(x)`.  In many cases, we only have samples from the
-    distribution, and most methods first estimate the densities from the
-    samples and then proceed to compute the K-L divergence. In Perez-Cruz,
-    the authors propose an algorithm to estimate the K-L divergence directly
-    from the sample using an empirical CDF. Even though the CDFs do not
-    converge to their true values, the paper proves that the K-L divergence
-    almost surely does converge to its true value.
+    This formula assumes we have a representation of the probability densities :math:`p(x)` and :math:`q(x)`.
+    In many cases, we only have samples from the distribution, and most methods first estimate the densities from the
+    samples and then proceed to compute the K-L divergence. In :cite:t:`perez-cruz_kullback-leibler_2008`, the author
+    proposes an algorithm to estimate the K-L divergence directly from the sample using an empirical CDF. Even though the
+    CDFs do not converge to their true values, the paper proves that the K-L divergence almost surely does converge to
+    its true value.
 
     References
     ----------
-    .. [perezcruz08] Perez-Cruz, F. (2008). Kullback-Leibler divergence estimation of continuous distributions. 2008 IEEE International Symposium on Information Theory, 1666‑1670. https://doi.org/10.1109/ISIT.2008.4595271
+    :cite:cts:`perez-cruz_kullback-leibler_2008`
+
     """
     mk = np.iterable(k)
     ka = np.atleast_1d(k)

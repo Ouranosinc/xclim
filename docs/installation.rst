@@ -32,6 +32,8 @@ To install the xclim Anaconda binary, run this command in your terminal:
 
     $ conda install -c conda-forge xclim
 
+.. _extra-dependencies:
+
 Extra dependencies
 ------------------
 To improve performance of xclim, we highly recommend you also install `flox`_ (see: :doc:`flox API <flox:api>`).
@@ -51,10 +53,10 @@ For convenience, these libraries can be installed alongside `xclim` using the fo
 .. _flox: https://github.com/dcherian/flox
 .. _clisops: https://github.com/roocs/clisops
 
-Another optional library is `SBCK`_, which provides experimental adjustment methods to extend
-:ref:`xclim.sdba <Bias adjustment and downscaling algorithms>`. It can't be installed directly
-from pip or conda and has one complex dependency : `Eigen`_. Please refer to Eigen's and SBCK's
-docs for the recommended installation instructions. However, Eigen is available on conda, so one can do:
+Another optional library is `SBCK`_, which provides experimental adjustment methods to extend :doc:`xclim.sdba <sdba>`.
+It can't be installed directly from pip or conda and has one complex dependency : `Eigen`_.
+Please refer to Eigen's and SBCK's docs for the recommended installation instructions.
+However, Eigen is available on conda, so one can do:
 
 .. code-block::
 

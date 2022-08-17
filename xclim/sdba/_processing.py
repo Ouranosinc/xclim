@@ -36,7 +36,7 @@ def _adapt_freq(
       and  "sim", Simulated data.
     dim : str, or sequence of strings
       Dimension name(s). If more than one, the probabilities and quantiles are computed within all the dimensions.
-      If  `window` is in the names, it is removed before the correction and the final timeseries is corrected along dim[0] only.
+      If `window` is in the names, it is removed before the correction and the final timeseries is corrected along dim[0] only.
     group : Union[str, Grouper]
       Grouping information, see base.Grouper
     thresh : float
@@ -72,7 +72,7 @@ def _adapt_freq(
         # pth is meaningless when freq. adaptation is not needed
         pth = nbu.vecquantiles(ds.ref, P0_sim, dim).where(dP0 > 0)
 
-        # Probabilites and quantiles computed within all dims, but correction along the first one only.
+        # Probabilities and quantiles computed within all dims, but correction along the first one only.
         if "window" in dim:
             # P0_sim was computed using the window, but only the original time series is corrected.
             # Grouper.apply does this step, but if done here it makes the code faster.
@@ -97,7 +97,7 @@ def _adapt_freq(
         )
 
     # Tell group_apply that these will need reshaping (regrouping)
-    # This is needed since if any variable comes out a groupby with the original group axis,
+    # This is needed since if any variable comes out a `groupby` with the original group axis,
     # the whole output is broadcasted back to the original dims.
     pth.attrs["_group_apply_reshape"] = True
     dP0.attrs["_group_apply_reshape"] = True

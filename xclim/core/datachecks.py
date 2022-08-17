@@ -25,8 +25,8 @@ def check_freq(var: xr.DataArray, freq: str | Sequence[str], strict: bool = True
     var : xr.DataArray
       Input array.
     freq : str or sequence of str
-      The expected temporal frequencies, using Pandas frequency terminology ({'A', 'M', 'D', 'H', 'T', 'S', 'L', 'U'}
-      and multiples thereof). To test strictly for 'W', pass '7D' with `strict=True`.
+      The expected temporal frequencies, using Pandas frequency terminology ({'A', 'M', 'D', 'H', 'T', 'S', 'L', 'U'})
+      and multiples thereof. To test strictly for 'W', pass '7D' with `strict=True`.
       This ignores the start flag and the anchor (ex: 'AS-JUL' will validate against 'Y').
     strict : bool
       Whether multiples of the frequencies are considered invalid or not. With `strict` set to False, a '3H' series
