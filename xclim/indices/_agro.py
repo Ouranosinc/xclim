@@ -4,7 +4,6 @@ from __future__ import annotations
 import warnings
 
 import numpy as np
-import pandas as pd
 import xarray
 
 import xclim.indices as xci
@@ -55,7 +54,7 @@ def corn_heat_units(
     r"""Corn heat units.
 
     Temperature-based index used to estimate the development of corn crops.
-    Formula adapted from [BootsmaTremblay&Filion1999]_.
+    Formula adapted from :cite:t:`bootsma_risk_1999`.
 
     Parameters
     ----------
@@ -70,12 +69,12 @@ def corn_heat_units(
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
+    xarray.DataArray, [unitless]
       Daily corn heat units.
 
     Notes
     -----
-    Formula used in calculating the Corn Heat Units for the Agroclimatic Atlas of Quebec [Audet&al2012]_.
+    Formula used in calculating the Corn Heat Units for the Agroclimatic Atlas of Quebec :cite:p:`audet_atlas_2012`.
 
     The thresholds of 4.44°C for minimum temperatures and 10°C for maximum temperatures were selected following
     the assumption that no growth occurs below these values.
@@ -98,8 +97,8 @@ def corn_heat_units(
 
     References
     ----------
-    .. [BootsmaTremblay&Filion1999] Bootsma, A., G. Tremblay et P. Filion. 1999: Analyse sur les risques associés aux unités thermiques disponibles pour la production de maïs et de soya au Québec. Centre de recherches de l’Est sur les céréales et oléagineux, Ottawa, 28 p.
-    .. [Audet&al2012] Audet, R., Côté, H., Bachand, D. and Mailhot, A., 2012: Atlas agroclimatique du Québec. Évaluation des opportunités et des risques agroclimatiques dans un climat en évolution. https://espace.inrs.ca/id/eprint/2406
+    :cite:cts:`audet_atlas_2012,bootsma_risk_1999`
+
     """
     tasmin = convert_units_to(tasmin, "degC")
     tasmax = convert_units_to(tasmax, "degC")
@@ -140,8 +139,8 @@ def huglin_index(
 ) -> xarray.DataArray:
     r"""Huglin Heliothermal Index.
 
-    Growing-degree days with a base of 10°C and adjusted for latitudes between 40°N and 50°N for April to September
-    (Northern Hemisphere; October to March in Southern Hemisphere). Originally proposed in [Huglin1978]_.
+    Growing-degree days with a base of 10°C and adjusted for latitudes between 40°N and 50°N for April-September
+    (Northern Hemisphere; October-March in Southern Hemisphere). Originally proposed in :cite:t:`huglin_nouveau_1978`.
     Used as a heat-summation metric in viticulture agroclimatology.
 
     Parameters
@@ -202,12 +201,13 @@ def huglin_index(
                     \end{cases}
 
     A more robust day-length calculation based on latitude, calendar, day-of-year, and obliquity is available with
-    `method="jones"`. See: :py:func:`xclim.indices.generic.day_lengths` or [Hall&Jones2010]_ for more information.
+    `method="jones"`.
+    See: :py:func:`xclim.indices.generic.day_lengths` or :cite:t:`hall_spatial_2010` for more information.
 
     References
     ----------
-    .. [Huglin1978] Huglin, P. (1978). Nouveau mode d’évaluation des possibilités héliothermiques d’un milieu viticole. Dans Symposium International sur l’Écologie de la Vigne (p. 89‑98). Ministère de l’Agriculture et de l’Industrie Alimentaire.
-    .. [Hall&Jones2010] Hall, A., & Jones, G. V. (2010). Spatial analysis of climate in winegrape-growing regions in Australia. Australian Journal of Grape and Wine Research, 16(3), 389‑404. https://doi.org/10.1111/j.1755-0238.2010.00100.x
+    :cite:cts:`huglin_nouveau_1978, hall_spatial_2010`
+
     """
     tas = convert_units_to(tas, "degC")
     tasmax = convert_units_to(tasmax, "degC")
@@ -299,36 +299,36 @@ def biologically_effective_degree_days(
 
     Parameters
     ----------
-    tasmin: xarray.DataArray
+    tasmin : xarray.DataArray
       Minimum daily temperature.
-    tasmax: xarray.DataArray
+    tasmax : xarray.DataArray
       Maximum daily temperature.
-    lat: xarray.DataArray, optional
+    lat : xarray.DataArray, optional
       Latitude coordinate.
-    thresh_tasmin: str
+    thresh_tasmin : str
       The minimum temperature threshold.
-    method: {"gladstones", "icclim", "jones"}
+    method : {"gladstones", "icclim", "jones"}
       The formula to use for the calculation.
       The "gladstones" integrates a daily temperature range and latitude coefficient. End_date should be "11-01".
       The "icclim" method ignores daily temperature range and latitude coefficient. End date should be "10-01".
       The "jones" method integrates axial tilt, latitude, and day-of-year on coefficient. End_date should be "11-01".
-    low_dtr: str
+    low_dtr : str
       The lower bound for daily temperature range adjustment (default: 10°C).
-    high_dtr: str
+    high_dtr : str
       The higher bound for daily temperature range adjustment (default: 13°C).
-    max_daily_degree_days: str
+    max_daily_degree_days : str
       The maximum amount of biologically effective degrees days that can be summed daily.
-    start_date: DayOfYearStr
+    start_date : DayOfYearStr
       The hemisphere-based start date to consider (north = April, south = October).
-    end_date: DayOfYearStr
+    end_date : DayOfYearStr
       The hemisphere-based start date to consider (north = October, south = April). This date is non-inclusive.
     freq : str
       Resampling frequency (default: "YS"; For Southern Hemisphere, should be "AS-JUL").
 
     Returns
     -------
-    xarray.DataArray
-      Biologically effective growing degree days (BEDD).
+    xarray.DataArray, [K days]
+      Biologically effective growing degree days (BEDD)
 
     Warnings
     --------
@@ -337,7 +337,7 @@ def biologically_effective_degree_days(
     Notes
     -----
     The tasmax ceiling of 19°C is assumed to be the max temperature beyond which no further gains from daily temperature
-    occur. Indice originally published in [Gladstones1992]_.
+    occur. Indice originally published in :cite:t:`gladstones_viticulture_1992`.
 
     Let :math:`TX_{i}` and :math:`TN_{i}` be the daily maximum and minimum temperature at day :math:`i`, :math:`lat`
     the latitude of the point of interest, :math:`degdays_{max}` the maximum amount of degrees that can be summed per
@@ -345,28 +345,33 @@ def biologically_effective_degree_days(
     31 October is:
 
     .. math::
+
         BEDD_i = \sum_{i=\text{April 1}}^{\text{October 31}} min\left( \left( max\left( \frac{TX_i  + TN_i)}{2} - 10, 0 \right) * k \right) + TR_{adj}, degdays_{max}\right)
 
     .. math::
+
         TR_{adj} = f(TX_{i}, TN_{i}) = \begin{cases}
-                                0.25(TX_{i} - TN_{i} - 13), & \text{if } (TX_{i} - TN_{i}) > 13 \\
-                                0, & \text{if } 10 < (TX_{i} - TN_{i}) < 13\\
-                                0.25(TX_{i} - TN_{i} - 10), & \text{if } (TX_{i} - TN_{i}) < 10 \\
-                                       \end{cases}
+        0.25(TX_{i} - TN_{i} - 13), & \text{if } (TX_{i} - TN_{i}) > 13 \\
+        0, & \text{if } 10 < (TX_{i} - TN_{i}) < 13\\
+        0.25(TX_{i} - TN_{i} - 10), & \text{if } (TX_{i} - TN_{i}) < 10 \\
+        \end{cases}
 
     .. math::
+
         k = f(lat) = 1 + \left(\frac{\left| lat  \right|}{50} * 0.06,  \text{if }40 < |lat| <50, \text{else } 0\right)
 
     A second version of the BEDD (`method="icclim"`) does not consider :math:`TR_{adj}` and :math:`k` and employs a
-    different end date (30 September) ([ECAD]_). The simplified formula is as follows:
+    different end date (30 September) :cite:p:`project_team_eca&d_algorithm_2013`.
+    The simplified formula is as follows:
 
     .. math::
+
         BEDD_i = \sum_{i=\text{April 1}}^{\text{September 30}} min\left( max\left(\frac{TX_i  + TN_i)}{2} - 10, 0\right), degdays_{max}\right)
 
     References
     ----------
-    .. [Gladstones1992] Gladstones, J.S. (1992). Viticulture and environment: a study of the effects of environment on grapegrowing and wine qualities, with emphasis on present and future areas for growing winegrapes in Australia. Adelaide:  Winetitles.
-    .. [ECAD] Project team ECA&D, KNMI (2013). EUMETNET/ECSN optional programme: European Climate Assessment & Dataset (ECA&D) - Algorithm Theoretical Basis Document (ATBD). (KNMI Project number: EPJ029135, v10.7). https://www.ecad.eu/documents/atbd.pdf
+    :cite:cts:`gladstones_viticulture_1992,project_team_eca&d_algorithm_2013`
+
     """
     tasmin = convert_units_to(tasmin, "degC")
     tasmax = convert_units_to(tasmax, "degC")
@@ -427,7 +432,7 @@ def cool_night_index(
     """Cool Night Index.
 
     Mean minimum temperature for September (northern hemisphere) or March (Southern hemishere).
-    Used in calculating the Géoviticulture Multicriteria Classification System ([Tonietto&Carbonneau2004]_).
+    Used in calculating the Géoviticulture Multicriteria Classification System (:cite:t:`tonietto_multicriteria_2004`).
 
     Parameters
     ----------
@@ -460,7 +465,7 @@ def cool_night_index(
 
     References
     ----------
-    .. [Tonietto&Carbonneau2004] Tonietto, J., & Carbonneau, A. (2004). A multicriteria climatic classification system for grape-growing regions worldwide. Agricultural and Forest Meteorology, 124(1–2), 81‑97. https://doi.org/10.1016/j.agrformet.2003.06.001
+    :footcite:cts:`tonietto_multicriteria_2004`
     """
     tasmin = convert_units_to(tasmin, "degC")
 
@@ -483,7 +488,7 @@ def latitude_temperature_index(
 ) -> xarray.DataArray:
     """Latitude-Temperature Index.
 
-    Mean temperature of the warmest month with a latitude-based scaling factor ([Jackson&Cherry1988]_).
+    Mean temperature of the warmest month with a latitude-based scaling factor :cite:p:`jackson_prediction_1988`.
     Used for categorizing wine-growing regions.
 
     Parameters
@@ -504,20 +509,21 @@ def latitude_temperature_index(
 
     Notes
     -----
-    The latitude factor of `75` is provided for examining the poleward expansion of wine-growing climates under scenarios
-    of climate change (modified from [Kenny&Shao1992]_). For comparing 20th century/observed historical records, the original scale factor of `60` is more
-    appropriate.
+    The latitude factor of `75` is provided for examining the poleward expansion of wine-growing climates under
+    scenarios of climate change (modified from :cite:t:`kenny_assessment_1992`). For comparing 20th century/observed
+    historical records, the original scale factor of `60` is more appropriate.
 
     Let :math:`Tn_{j}` be the average temperature for a given month :math:`j`, :math:`lat_{f}` be the latitude factor,
     and :math:`lat` be the latitude of the area of interest. Then the Latitude-Temperature Index (:math:`LTI`) is:
 
     .. math::
+
         LTI = max(TN_{j}: j = 1..12)(lat_f - |lat|)
 
     References
     ----------
-    .. [Jackson&Cherry1988] Jackson, D. I., & Cherry, N. J. (1988). Prediction of a District’s Grape-Ripening Capacity Using a Latitude-Temperature Index (LTI). American Journal of Enology and Viticulture, 39(1), 19‑28.
-    .. [Kenny&Shao1992] Kenny, G. J., & Shao, J. (1992). An assessment of a latitude-temperature index for predicting climate suitability for grapes in Europe. Journal of Horticultural Science, 67(2), 239‑246. https://doi.org/10.1080/00221589.1992.11516243
+    :cite:cts:`jackson_prediction_1988,kenny_assessment_1992`
+
     """
     tas = convert_units_to(tas, "degC")
 
@@ -622,8 +628,8 @@ def standardized_precipitation_index(
     freq : str
       Resampling frequency. A monthly or daily frequency is expected.
     window : int
-      Averaging window length relative to the resampling frequency. For example, if `freq="MS"`, i.e. a monthly resampling, the window
-      is an integer number of months.
+      Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
+      i.e. a monthly resampling, the window is an integer number of months.
     dist : {'gamma'}
       Name of the univariate distribution, only `gamma` is currently implemented
       (see :py:mod:`scipy.stats`).
@@ -633,14 +639,13 @@ def standardized_precipitation_index(
 
     Returns
     -------
-    xarray.DataArray,
+    xarray.DataArray, [unitless]
       Standardized Precipitation Index.
-
 
     Notes
     -----
-    The length `N` of the N-month SPI is determined by choosing the `window = N`. Supported statistical distributions are: ["gamma"]
-
+    The length `N` of the N-month SPI is determined by choosing the `window = N`.
+    Supported statistical distributions are: ["gamma"]
 
     Example
     -------
@@ -661,7 +666,8 @@ def standardized_precipitation_index(
 
     References
     ----------
-    McKee, Thomas B., Nolan J. Doesken, and John Kleist. "The relationship of drought frequency and duration to time scales." In Proceedings of the 8th Conference on Applied Climatology, vol. 17, no. 22, pp. 179-183. 1993.
+    :cite:cts:`mckee_relationship_1993`
+
     """
     # "WPM" method doesn't seem to work for gamma or pearson3
     dist_and_methods = {"gamma": ["ML", "APP"]}
@@ -766,7 +772,9 @@ def standardized_precipitation_evapotranspiration_index(
 ) -> xarray.DataArray:
     r"""Standardized Precipitation Evapotranspiration Index (SPEI).
 
-    Precipitation minus potential evapotranspiration data (PET) fitted to a statistical distribution (dist), transformed to a cdf,  and inverted back to a gaussian normal pdf. The potential evapotranspiration is calculated with a given method (method).
+    Precipitation minus potential evapotranspiration data (PET) fitted to a statistical distribution (dist), transformed
+    to a cdf,  and inverted back to a gaussian normal pdf. The potential evapotranspiration is calculated with a given
+    method (`method`).
 
     Parameters
     ----------
@@ -777,8 +785,8 @@ def standardized_precipitation_evapotranspiration_index(
     freq : str
       Resampling frequency. A monthly or daily frequency is expected.
     window : int
-      Averaging window length relative to the resampling frequency. For example, if `freq="MS"`, i.e. a monthly resampling, the window
-      is an integer number of months.
+      Averaging window length relative to the resampling frequency. For example, if `freq="MS"`, i.e. a monthly
+      resampling, the window is an integer number of months.
     dist : {'gamma'}
       Name of the univariate distribution. Only "gamma" is currently implemented. (see :py:mod:`scipy.stats`).
     method : {'APP', 'ML'}
@@ -789,6 +797,10 @@ def standardized_precipitation_evapotranspiration_index(
     -------
     xarray.DataArray,
       Standardized Precipitation Evapotranspiration Index.
+
+    See Also
+    --------
+    standardized_precipitation_index
 
     Notes
     -----
@@ -845,7 +857,7 @@ def dry_spell_frequency(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [unitless]
       The {freq} number of dry periods of minimum {window} days.
 
     Examples
@@ -901,18 +913,17 @@ def dry_spell_total_length(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [days]
       The {freq} total number of days in dry periods of minimum {window} days.
 
     Notes
     -----
-    The algorithm assumes days before and after the timeseries are "wet", meaning that
-    the condition for being considered part of a dry spell is stricter on the edges. For
-    example, with `window=3` and `op='sum'`, the first day of the series is considered
-    part of a dry spell only if the accumulated precipitation within the first 3 days is
-    under the threshold. In comparison, a day in the middle of the series is considered
-    part of a dry spell if any of the three 3-day periods of which it is part are
-    considered dry (so a total of five days are included in the computation, compared to only 3.)
+    The algorithm assumes days before and after the timeseries are "wet", meaning that the condition for being
+    considered part of a dry spell is stricter on the edges. For example, with `window=3` and `op='sum'`, the first day
+    of the series is considered part of a dry spell only if the accumulated precipitation within the first three days is
+    under the threshold. In comparison, a day in the middle of the series is considered part of a dry spell if any of
+    the three 3-day periods of which it is part are considered dry (so a total of five days are included in the
+    computation, compared to only three).
     """
     pram = rate2amount(pr, out_units="mm")
     thresh = convert_units_to(thresh, pram)
@@ -943,23 +954,25 @@ def qian_weighted_mean_average(
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [same as tas]
       Binomial smoothed, five-day weighted mean average temperature.
 
     Notes
     -----
-    Qian Modified Weighted Mean Indice originally proposed in [Qian&al2009]_, based on [BootsmaGameda&McKenney2005]_.
+    Qian Modified Weighted Mean Indice originally proposed in :cite:p:`qian_observed_2010`,
+    based on :cite:p:`bootsma_impacts_2005`.
 
     Let :math:`X_{n}` be the average temperature for day :math:`n` and :math:`X_{t}` be the daily mean temperature
     on day :math:`t`. Then the weighted mean average can be calculated as follows:
 
     .. math::
+
         \overline{X}_{n} = \frac{X_{n-2} + 4X_{n-1} + 6X_{n} + 4X_{n+1} + X_{n+2}}{16}
 
     References
     ----------
-    .. [Qian&al2009] Qian, B., Zhang, X., Chen, K., Feng, Y., & O’Brien, T. (2009). Observed Long-Term Trends for Agroclimatic Conditions in Canada. Journal of Applied Meteorology and Climatology, 49(4), 604‑618. https://doi.org/10.1175/2009JAMC2275.1
-    .. [BootsmaGameda&McKenney2005] Bootsma, A., & Gameda and D.W. McKenney, S. (2005). Impacts of potential climate change on selected agroclimatic indices in Atlantic Canada. Canadian Journal of Soil Science, 85(2), 329‑343. https://doi.org/10.4141/S04-019
+    :cite:cts:`bootsma_impacts_2005,qian_observed_2010`
+
     """
     units = tas.attrs["units"]
 
@@ -987,7 +1000,7 @@ def effective_growing_degree_days(
 ) -> xarray.DataArray:
     r"""Effective growing degree days.
 
-    Growing degree days based on a dynamic start and end of the growing season, as defined in [BootsmaGameda&McKenney2005]_.
+    Growing degree days based on a dynamic start and end of the growing season, as defined in :cite:p:`bootsma_impacts_2005`.
 
     Parameters
     ----------
@@ -1010,25 +1023,28 @@ def effective_growing_degree_days(
 
     Returns
     -------
-    xarray.DataArray
+    xarray.DataArray, [K days]
+      Effective growing degree days (EGDD).
 
     Notes
     -----
     The effective growing degree days for a given year :math:`EGDD_i` can be calculated as follows:
 
     .. math::
+
         EGDD_i = \sum_{i=\text{j_{start}}^{\text{j_{end}}} max\left(TG - Thresh, 0 \right)
 
     Where :math:`TG` is the mean daly temperature, and :math:`j_{start}` and :math:`j_{end}` are the start and end dates
     of the growing season. The growing season start date methodology is determined via the `method` flag.
     For "bootsma", the start date is defined as 10 days after the average temperature exceeds a threshold (5 degC).
-    For "qian", the start date is based on a weighted 5-day rolling average, based on `qian_weighted_mean_average()`.
+    For "qian", the start date is based on a weighted 5-day rolling average, based on :py:func:`qian_weighted_mean_average`.
 
     The end date is determined as the day preceding the first day with minimum temperature below 0 degC.
 
     References
     ----------
-    .. [BootsmaGameda&McKenney2005] Bootsma, A., & Gameda and D.W. McKenney, S. (2005). Impacts of potential climate change on selected agroclimatic indices in Atlantic Canada. Canadian Journal of Soil Science, 85(2), 329‑343. https://doi.org/10.4141/S04-019
+    :cite:cts:`bootsma_impacts_2005`
+
     """
     tasmax = convert_units_to(tasmax, "degC")
     tasmin = convert_units_to(tasmin, "degC")

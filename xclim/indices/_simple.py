@@ -93,7 +93,7 @@ def tg_mean(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     Examples
     --------
     The following would compute for each grid cell of file `tas.day.nc` the mean temperature
-    at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
+    at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> from xclim.indices import tg_mean
     >>> t = xr.open_dataset(path_to_tas_file).tas
@@ -354,7 +354,7 @@ def ice_days(
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of ice/freezing days.
 
-    Number of days where daily maximum temperatures are below a threshold.
+    Number of days when daily maximum temperatures are below a threshold.
 
     Parameters
     ----------
@@ -491,7 +491,7 @@ def max_pr_intensity(
 
     # The following would compute the maximum 6-hour precipitation intensity.
     # at an annual frequency:
-    # TODO
+    # TODO: Add minimal working example for documentation
     """
     # Rolling sum of the values
     arr = pr.rolling(time=window).mean(skipna=False)

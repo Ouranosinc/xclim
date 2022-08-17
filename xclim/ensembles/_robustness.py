@@ -6,18 +6,14 @@ Ensemble Robustness metrics.
 Robustness metrics are used to estimate the confidence of the climate change signal
 of an ensemble. This submodule is inspired by and tries to follow the guidelines of
 the IPCC, more specifically the 12th chapter of the Working Group 1's contribution to
-the AR5 [AR5WG1C12]_ (see box 12.1).
-
-References
-----------
-.. [AR5WG1C12] https://www.ipcc.ch/site/assets/uploads/2018/02/WG1AR5_Chapter12_FINAL.pdf
+the AR5 (:footcite:p:`collins_long-term_2013`, see box 12.1).
 """
 from __future__ import annotations
 
 from typing import Union
 
 import numpy as np
-import scipy.stats as spstats
+import scipy.stats as spstats  # noqa
 import xarray as xr
 
 from xclim.core.formatting import update_history
@@ -91,7 +87,7 @@ def change_significance(
     Available statistical tests are :
 
       'ttest' :
-        Single sample T-test. Same test as used by [tebaldi2011]_. The future
+        Single sample T-test. Same test as used by :cite:t:`tebaldi_mapping_2011`. The future
         values are compared against the reference mean (over 'time'). Change is qualified
         as 'significant' when the test's p-value is below the user-provided `p_change`
         value.
@@ -107,8 +103,7 @@ def change_significance(
 
     References
     ----------
-    .. [tebaldi2011] Tebaldi C., Arblaster, J.M. and Knutti, R. (2011) Mapping model agreement on future climate projections. GRL. doi:10.1029/2011GL049863
-
+    :cite:cts:`tebaldi_mapping_2011`
 
     Example
     -------
@@ -264,14 +259,14 @@ def robustness_coefficient(
 ) -> xr.DataArray | xr.Dataset:
     """Robustness coefficient quantifying the robustness of a climate change signal in an ensemble.
 
-    Taken from Knutti and Sedlacek (2013).
+    Taken from  :cite:ts:`knutti_robustness_2013`.
 
     The robustness metric is defined as R = 1 − A1 / A2 , where A1 is defined
     as the integral of the squared area between two cumulative density functions
-    characterizing the individual model projections and the multi-model mean
+    characterizing the individual model projections and the multimodel mean
     projection and A2 is the integral of the squared area between two cumulative
-    density functions characterizing the multi-model mean projection and the historical
-    climate. (Description taken from [knutti2013]_)
+    density functions characterizing the multimodel mean projection and the historical
+    climate. (Description taken from :cite:t:`knutti_robustness_2013`)
 
     A value of R equal to one implies perfect model agreement. Higher model spread or
     smaller signal decreases the value of R.
@@ -280,18 +275,19 @@ def robustness_coefficient(
     ----------
     fut : Union[xr.DataArray, xr.Dataset]
       Future ensemble values along 'realization' and 'time' (nr, nt). Can be a dataset,
-      in which case the coeffcient is computed on each variables.
+      in which case the coefficient is computed on each variable.
     ref : Union[xr.DataArray, xr.Dataset]
       Reference period values along 'time' (nt). Same type as `fut`.
 
     Returns
     -------
-    R
-      The robustness coeffcient, ]-inf, 1], float. Same type as `fut` or `ref`.
+    xr.DataArray or xr.Dataset
+      The robustness coefficient, ]-inf, 1], float. Same type as `fut` or `ref`.
 
     References
     ----------
-    .. [knutti2013] Knutti, R. and Sedláček, J. (2013) Robustness and uncertainties in the new CMIP5 climate model projections. Nat. Clim. Change. doi:10.1038/nclimate1716
+    :cite:cts:`knutti_robustness_2013`
+
     """
 
     def _knutti_sedlacek(reference, future):
@@ -317,7 +313,7 @@ def robustness_coefficient(
 
         # Get sorted vectors
         v_fut = np.sort(future.flatten())  # "cumulative" models distribution
-        v_favg = np.sort(future.mean(axis=-1))  # Multi-model mean
+        v_favg = np.sort(future.mean(axis=-1))  # Multimodel mean
         v_ref = np.sort(reference)  # Historical values
 
         A1 = diff_cdf_sq_area_int(v_fut, v_favg)  # noqa
