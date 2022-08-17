@@ -950,7 +950,7 @@ effective_growing_degree_days = Temp(
     "Computed with {method} formula (Summation of max((Tmin + Tmax)/2 - {thresh}, 0) between dynamically-determined "
     "growing season start and end dates. The 'bootsma' method uses a 10-day average temperature above {thresh} to "
     "identify a start date, while the 'qian' method uses a weighted mean average above {thresh} over 5 days to "
-    "determine start date. The end date of the growing season is the date of first fall frost (Tmin < 0°C). " 
+    "determine start date. The end date of the growing season is the date of first fall frost (Tmin < 0°C). "
     "Original formula published in Bootsma et al. 2005.",
     abstract="Considers daily Tmin and Tmax with a base of {thresh} between dynamically-determined growing season start"
     "and end dates. The 'bootsma' method uses a 10-day average temperature above {thresh} to identify a start date, "
