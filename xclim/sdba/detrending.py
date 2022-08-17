@@ -25,7 +25,7 @@ class BaseDetrend(ParametrizableWithDataset):
     detrend(da)  : Return detrended array.
     retrend(da)  : Puts trend back on da.
 
-    A fitted Detrend object is unique to the trend coordinate of the object used in `fit`, (usually 'time').
+    A fitted `Detrend` object is unique to the trend coordinate of the object used in `fit`, (usually 'time').
     The computed trend is stored in ``Detrend.ds.trend``.
 
     Subclasses should implement ``_get_trend_group()`` or ``_get_trend()``.
@@ -57,7 +57,8 @@ class BaseDetrend(ParametrizableWithDataset):
     def fit(self, da: xr.DataArray):
         """Extract the trend of a DataArray along a specific dimension.
 
-        Returns a new object that can be used for detrending and retrending. Fitted objects are unique to the fitted coordinate used.
+        Returns a new object that can be used for detrending and retrending.
+        Fitted objects are unique to the fitted coordinate used.
         """
         new = self.__class__(**self.parameters)
         new.set_dataset(new._get_trend(da).rename("trend").to_dataset())
@@ -198,7 +199,7 @@ class LoessDetrend(BaseDetrend):
 
     Parameters
     ----------
-    group : Union[str, Grouper]
+    group : str or Grouper
       The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
       The fit is performed along the group's main dim.
     kind : {'*', '+'}
@@ -219,9 +220,9 @@ class LoessDetrend(BaseDetrend):
 
     Notes
     -----
-    LOESS smoothing is computationally expensive. As it relies on a loop on gridpoints, it can be useful to use smaller than usual chunks.
-    Moreover, it suffers from heavy boundary effects. As a rule of thumb, the outermost N * f/2 points
-    should be considered dubious. (N is the number of points along each group)
+    LOESS smoothing is computationally expensive. As it relies on a loop on gridpoints, it can be useful to use
+    smaller than usual chunks. Moreover, it suffers from heavy boundary effects. As a rule of thumb, the outermost
+    N * f/2 points should be considered dubious. (N is the number of points along each group)
     """
 
     def __init__(
@@ -277,7 +278,7 @@ class RollingMeanDetrend(BaseDetrend):
 
     Parameters
     ----------
-    group : Union[str, Grouper]
+    group : str or Grouper
       The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
       The fit is performed along the group's main dim.
     kind : {'*', '+'}

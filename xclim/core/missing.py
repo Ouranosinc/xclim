@@ -6,7 +6,7 @@ Missing values identification
 Indicators may use different criteria to determine whether a computed indicator value should be
 considered missing. In some cases, the presence of any missing value in the input time series should result in a
 missing indicator value for that period. In other cases, a minimum number of valid values or a percentage of missing
-values should be enforced. The World Meteorological Organisation  (WMO) suggests criteria based on the number of
+values should be enforced. The World Meteorological Organisation (WMO) suggests criteria based on the number of
 consecutive and overall missing values per month.
 
 `xclim` has a registry of missing value detection algorithms that can be extended by users to customize the behavior
@@ -102,14 +102,14 @@ class MissingBase:
 
         Parameters
         ----------
-        da : xr.DataArray
+        da: xr.DataArray
           Input data.
-        freq : str
+        freq: str
           Resampling frequency defining the periods defined in
           https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
-        src_timestep : {"D", "H"}
+        src_timestep: {"D", "H"}
           Expected input frequency.
-        indexer : {dim: indexer}, optional
+        indexer: {dim: indexer}, optional
           Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
           values, month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given,
           all values are considered.
@@ -197,13 +197,13 @@ class MissingAny(MissingBase):
 
     Parameters
     ----------
-    da : DataArray
+    da: DataArray
       Input array.
-    freq : str
+    freq: str
       Resampling frequency.
-    src_timestep : {"D", "H", "M"}
+    src_timestep: {"D", "H", "M"}
       Expected input frequency.
-    indexer : {dim: indexer, }, optional
+    indexer: {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
       values,
       month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
@@ -236,17 +236,17 @@ class MissingWMO(MissingAny):
 
     Parameters
     ----------
-    da : DataArray
+    da: DataArray
       Input array.
-    freq : str
+    freq: str
       Resampling frequency.
-    nm : int
+    nm: int
       Number of missing values per month that should not be exceeded.
-    nc : int
+    nc: int
       Number of consecutive missing values per month that should not be exceeded.
-    src_timestep : {"D"}
+    src_timestep: {"D"}
       Expected input frequency. Only daily values are supported.
-    indexer : {dim: indexer, }, optional
+    indexer: {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
       values,
@@ -255,7 +255,7 @@ class MissingWMO(MissingAny):
 
     Returns
     -------
-    DataArray
+    xr.DataArray
       A boolean array set to True if period has missing values.
 
     Notes
@@ -314,22 +314,22 @@ class MissingPct(MissingBase):
 
     Parameters
     ----------
-    da : DataArray
+    da: DataArray
       Input array.
-    freq : str
+    freq: str
       Resampling frequency.
-    tolerance : float
+    tolerance: float
       Fraction of missing values that are tolerated [0,1].
-    src_timestep : {"D", "H"}
+    src_timestep: {"D", "H"}
       Expected input frequency.
-    indexer : {dim: indexer, }, optional
+    indexer: {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
       month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
       considered.
 
     Returns
     -------
-    DataArray
+    xr.DataArray
       A boolean array set to True if period has missing values.
     """
 
@@ -351,15 +351,15 @@ class AtLeastNValid(MissingBase):
 
     Parameters
     ----------
-    da : DataArray
+    da: DataArray
       Input array.
-    freq : str
+    freq: str
       Resampling frequency.
-    n : int
+    n: int
       Minimum of valid values required.
-    src_timestep : {"D", "H"}
+    src_timestep: {"D", "H"}
       Expected input frequency.
-    indexer : {dim: indexer, }, optional
+    indexer: {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
       values, month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given,
       all values are considered.

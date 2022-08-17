@@ -1,20 +1,21 @@
 # noqa: D205,D400
-"""
+r"""
 ==============================
 Fire Weather Indices Submodule
 ==============================
 
-This submodule defines the :py:func:`xclim.indices.fire_season`, :py:func:`xclim.indices.drought_code`
-and :py:func:`xclim.indices.fire_weather_indexes` indices, which are used by the eponym indicators.
-Users should read this module's documentation and the one of `fire_weather_ufunc`.
+This submodule defines the :py:func:`xclim.indices.fire_season`, :py:func:`xclim.indices.drought_code` and
+:py:func:`xclim.indices.fire_weather_indexes` indices, which are used by the eponym indicators.
+Users should read this module's documentation and the one of :py:func:`fire_weather_ufunc`. They should also consult the
+information available at :cite:t:`code-natural_resources_canada_data_nodate`.
 
-First adapted from Matlab code `CalcFWITimeSeriesWithStartup.m` from GFWED made for using MERRA2 data, which was a
-translation of FWI.vba of the Canadian Fire Weather Index system. Then, updated and synchronized with the R code of the
-cffdrs package. When given the correct parameters, the current code has an error below 3% when compared with the
-[GFWED2015]_ data.
+First adapted from Matlab code `CalcFWITimeSeriesWithStartup.m` from GFWED :cite:p:`fire-wang_updated_2015` made
+for using MERRA2 data, which was a translation of FWI.vba of the Canadian Fire Weather Index system. Then, updated and
+synchronized with the R code of the cffdrs package. When given the correct parameters, the current code has an error
+below 3% when compared with the :cite:t:`fire-field_development_2015` data.
 
-Parts of the code and of the documentation in this submodule are directly taken from [cffdrs] which was published with
-the GPLv2 license.
+Parts of the code and of the documentation in this submodule are directly taken from :cite:t:`code-cantin_canadian_2014`
+which was published with the GPLv2 license.
 
 Fire season
 -----------
@@ -27,11 +28,11 @@ fire season can be computed inside the iterator. Passing `season_method=None` sw
 replicating the `fwi` method of the R package.
 
 The fire season determination is based on three consecutive daily maximum temperature thresholds
-([Wotton&Flannigan1993]_, [Lawson&Armitage2008]_). A "GFWED" method is also implemented. There, the 12h LST temperature
-is used instead of the daily maximum. The current implementation is slightly different from the description in
-[GFWED2015]_, but it replicates the Matlab code when `temp_start_thresh` and `temp_end_thresh` are both set to 6 degC.
-In xclim, the number of consecutive days, the start and end temperature thresholds and the snow depth threshold can all
-be modified.
+:cite:p:`fire-wotton_length_1993,fire-lawson_weather_2008`. A "GFWED" method is also implemented. There, the 12h
+LST temperature is used instead of the daily maximum. The current implementation is slightly different from the
+description in :cite:t:`fire-field_development_2015`, but it replicates the Matlab code when `temp_start_thresh` and
+`temp_end_thresh` are both set to 6 degC. In xclim, the number of consecutive days, the start and end temperature
+thresholds and the snow depth threshold can all be modified.
 
 Overwintering
 -------------
@@ -39,11 +40,12 @@ Additionnaly, overwintering of the drought code is also directly implemented in 
 The last drought_code of the season is kept in "winter" (where the fire season mask is False) and the precipitation
 is accumulated until the start of the next season. The first drought code is computed as a function of these instead
 of using the default DCStart value. Parameters to :py:func:`_overwintering_drought_code` are listed below.
-The code for the overwintering is based on [MBHFJ2020]_.
+The code for the overwintering is based on
+:cite:t:`drought-mcelhinny_high-resolution_2020,drought-van_wagner_drought_1985`.
 
 Finally, a mechanism for dry spring starts is implemented. For now, it is slightly different from what the GFWED, uses,
-but seems to agree with the state of the science of the CFS. When activated, the drought code and Duff-moisture codes are
-started in spring with a value that is function of the number of days since the last significative precipitation event.
+but seems to agree with the state of the science of the CFS. When activated, the drought code and Duff-moisture codes
+are started in spring with a value that is function of the number of days since the last significative precipitation event.
 The conventional start value increased by that number of days times a "dry start" factor. Parameters are controlled in
 the call of the indices and :py:func:`fire_weather_ufunc`. Overwintering of the drought code overrides this mechanism if
 both are activated. GFWED use a more complex approach with an added check on the previous day's snow cover for
@@ -121,29 +123,6 @@ as _all_ seasons are used, even the very short shoulder seasons.
 ...     ffmc_start=85,
 ...     dmc_dry_factor=2,
 ... )
-
-References
-----------
-Codes:
-
-Updated source code for calculating fire danger indexes in the Canadian Forest Fire Weather Index System, Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
-
-.. [cffdrs] Cantin, A., Wang, X., Parisien M-A., Wotton, M., Anderson, K., Moore, B., Schiks, T., Flannigan, M., Canadian Forest Fire Danger Rating System, R package, CRAN, https://cran.r-project.org/package=cffdrs
-
-https://cwfis.cfs.nrcan.gc.ca/background/dsm/fwi
-
-Matlab code of the GFWED obtained through personal communication.
-
-Fire season determination methods:
-
-.. [Wotton&Flannigan1993] Wotton, B.M. and Flannigan, M.D. (1993). Length of the fire season in a changing climate. ForestryChronicle, 69, 187-192.
-.. [Lawson&Armitage2008] Lawson B.D. and Armitage O.B. 2008. Weather Guide for the Canadian Forest Fire Danger RatingSystem. Natural Resources Canada, Canadian Forest Service, Northern Forestry Centre, Edmonton,Alberta. 84 p.http://cfs.nrcan.gc.ca/pubwarehouse/pdfs/29152.pdf
-.. [GFWED2015] Field, R. D., Spessa, A. C., Aziz, N. A., Camia, A., Cantin, A., Carr, R., de Groot, W. J., Dowdy, A. J., Flannigan, M. D., Manomaiphiboon, K., Pappenberger, F., Tanpipat, V., and Wang, X. (2015) Development of a Global Fire Weather Database, Nat. Hazards Earth Syst. Sci., 15, 1407–1423, https://doi.org/10.5194/nhess-15-1407-2015
-
-Drought Code overwintering:
-
-.. [VanWagner1985] Van Wagner, C.E. 1985. Drought, timelag and fire danger rating. Pages 178-185 in L.R. Donoghueand R.E. Martin, eds.  Proc.  8th Conf.  Fire For.  Meteorol., 29 Apr.-3 May 1985, Detroit, MI. Soc.Am. For., Bethesda, MD.http://cfs.nrcan.gc.ca/pubwarehouse/pdfs/23550.pdf
-.. [MBHFJ2020] McElhinny, M., Beckers, J. F., Hanes, C., Flannigan, M., and Jain, P. 2020. A high-resolution reanalysis of global fire weather from 1979 to 2018 – overwintering the Drought Code, Earth Syst. Sci. Data, 12, 1823–1833, https://doi.org/10.5194/essd-12-1823-2020
 """
 # This file is structured in the following way:
 # Section 1: individual codes, numba-accelerated and vectorized functions.
@@ -726,8 +705,8 @@ def _fire_weather_calc(
             # active_season = (delta == 0) & (season_mask[it] == 1)
 
             if dry_start:
-                # When we use special start values for dry cells
-                # Cells where the current precipitation is significant
+                # When we use special start values for dry cells,
+                # cells where the current precipitation is significant
                 wetpts = pr[..., it] > params["prec_thresh"]
 
                 if "SNOW" in dry_start and it >= params["snow_cover_days"]:
@@ -779,7 +758,7 @@ def _fire_weather_calc(
                     ow_DC[start_up] = np.nan
                     out["winter_pr"][start_up] = np.nan
                 elif dry_start:
-                    # Dry start-up for DC is overrided by overwintering.
+                    # Dry start-up for DC is overridden by overwintering.
                     ow_DC[shut_down] = params["dc_start"]
 
                     if "GFWED" in dry_start:
@@ -906,10 +885,9 @@ def fire_weather_ufunc(
 ):
     """Fire Weather Indexes computation using xarray's apply_ufunc.
 
-    No unit handling. Meant to be used by power users only. Please prefer using the
-    :py:indicator:`DC` and :py:indicator:`FWI` indicators or
-    the :py:func:`drought_code` and :py:func:`fire_weather_indexes` indices defined in the same
-    submodule.
+    No unit handling. Meant to be used by power users only. Please prefer using the :py:indicator:`DC` and
+    :py:indicator:`FWI` indicators or the :py:func:`drought_code` and :py:func:`fire_weather_indexes` indices defined
+    in the same submodule.
 
     Dask arrays must have only one chunk along the "time" dimension.
     User can control which indexes are computed with the `indexes` argument.
@@ -1001,16 +979,17 @@ def fire_weather_ufunc(
     This "always on" mode replicates the R "fwi" code.
 
     If the "dry start" mechanism is set to "CFS" (but there is no overwintering), the arguments `dc0` and `dmc0` are
-    understood as the potential start-up values from last season. With :math:`DC_{start}` the conventional start-up value,
-    :math:`F_{dry-dc}` the `dc_dry_factor` and  :math:`N_{dry}` the number of days since the last significative precipitation event,
-    the start-up value :math:`DC_0` is computed as:
+    understood as the potential start-up values from last season. With :math:`DC_{start}` the conventional start-up
+    value, :math:`F_{dry-dc}` the `dc_dry_factor` and  :math:`N_{dry}` the number of days since the last significant
+    precipitation event, the start-up value :math:`DC_0` is computed as:
 
     .. math::
 
         DC_0 = DC_{start} +  F_{dry-dc} * N_{dry}
 
-    The last significative precipitation event is the last day where precipitation was greater or equal to "prec_thresh".
-    The same happens for the DMC, with corresponding parameters. If overwintering is activated, this mechanism is only used for the DMC.
+    The last significant precipitation event is the last day when precipitation was greater or equal to "prec_thresh".
+    The same happens for the DMC, with corresponding parameters.
+    If overwintering is activated, this mechanism is only used for the DMC.
 
     Alternatively, `dry_start` can be set to "GFWED". In this mode, the start-up values are computed as:
 
@@ -1018,10 +997,11 @@ def fire_weather_ufunc(
 
         DC_0 = F_{dry-dc} * N_{dry}
 
-    Where the current day is also included in the determination of :math:`N_{dry}` (:math:`DC_0` can thus be 0). Finally, for this "GFWED" mode,
-    if snow cover is provided, a second check is performed: the dry start procedure is skipped and conventional start-up values are used for cells
-    where the snow cover of the last `snow_cover_days` was above `snow_thresh` for at least `snow_cover_days` * `snow_min_cover_frac` days and
-    where the mean snow cover over the same period was greater of equal to `snow_min_mean_depth`.
+    Where the current day is also included in the determination of :math:`N_{dry}` (:math:`DC_0` can thus be 0).
+    Finally, for this "GFWED" mode, if snow cover is provided, a second check is performed: the dry start procedure is
+    skipped and conventional start-up values are used for cells where the snow cover of the last `snow_cover_days` was
+    above `snow_thresh` for at least `snow_cover_days` * `snow_min_cover_frac` days and where the mean snow cover over
+    the same period was greater of equal to `snow_min_mean_depth`.
     """
     indexes = set(indexes or ["DC", "DMC", "FFMC", "ISI", "BUI", "FWI", "DSR"])
 
@@ -1171,7 +1151,8 @@ def overwintering_drought_code(
 ) -> xr.DataArray:
     """Compute the season-starting drought code based on the previous season's last drought code and the total winter precipitation.
 
-    This method replicates the "wDC" method of the [cffdrs]_ R package, with an added control on the "minimum" DC.
+    This method replicates the "wDC" method of the "cffdrs R package :cite:p:`cantin_canadian_2014`, with an added
+    control on the "minimum" DC.
 
     Parameters
     ----------
@@ -1193,18 +1174,17 @@ def overwintering_drought_code(
 
     Notes
     -----
-    Details taken from the R package documentation ([cffdrs]_):
-    Of the three fuel moisture codes (i.e.  FFMC, DMC and DC) making up the FWI System,
-    only the DC needs to be considered in terms of its values carrying over from one fire season to the next.
-    In Canada both the FFMC and the DMC are assumed to reach moisture saturation from overwinter
-    precipitation at or before spring melt; this is a reasonable assumption and any error in these
-    assumed starting conditions quickly disappears.  If snowfall (or other overwinter precipitation)
-    is not large enough however, the fuel layer tracked by the Drought Code may not fully reach saturation
-    after spring snow melt; because of the long response time in this fuel layer (53 days in standard
-    conditions) a large error in this spring starting condition can affect the DC for a significant
-    portion of the fire season. In areas where overwinter precipitation is 200 mm or more, full moisture
-    recharge occurs and DC overwintering is usually unnecessary.  More discussion of overwintering and
-    fuel drying time lag can be found in [Lawson&Armitage2008]_ and [VanWagner1985]_.
+    Details taken from the "cffdrs" R package documentation :cite:p:`drought-cantin_canadian_2014`:
+    Of the three fuel moisture codes (i.e.  FFMC, DMC and DC) making up the FWI System, only the DC needs to be
+    considered in terms of its values carrying over from one fire season to the next. In Canada both the FFMC and the
+    DMC are assumed to reach moisture saturation from overwinter precipitation at or before spring melt; this is a
+    reasonable assumption and any error in these assumed starting conditions quickly disappears. If snowfall (or other
+    overwinter precipitation) is not large enough however, the fuel layer tracked by the Drought Code may not fully
+    reach saturation after spring snow melt; because of the long response time in this fuel layer (53 days in standard
+    conditions) a large error in this spring starting condition can affect the DC for a significant portion of the fire
+    season. In areas where overwinter precipitation is 200 mm or more, full moisture recharge occurs and DC
+    overwintering is usually unnecessary.  More discussion of overwintering and fuel drying time lag can be found in
+    :cite:t:`drought-lawson_weather_2008` and :cite:t:`drought-van_wagner_drought_1985`.
 
     Carry-over fraction of last fall's moisture:
         - 1.0, Daily DC calculated up to 1 November; continuous snow cover, or freeze-up, whichever comes first
@@ -1216,15 +1196,11 @@ def overwintering_drought_code(
         - 0.75, Deep ground frost does not occur until late fall, if at all; moderately drained sites that allow infiltration of most of the melting snowpack
         - 0.5, Chinook-prone areas and areas subject to early and deep ground frost; well-drained soils favoring rapid percolation or topography favoring rapid runoff before melting of ground frost
 
-    Source: [Lawson&Armitage2008]_ - Table 9.
+    Source: :cite:cts:`drought-lawson_weather_2008` - Table 9.
 
     References
     ----------
-    [cffdrs]_
-
-    [Lawson&Armitage2008]_
-
-    [VanWagner1985]_
+    :cite:t:`drought-cantin_canadian_2014,drought-field_development_2015,drought-lawson_weather_2008,drought-van_wagner_drought_1985`
     """
     winter_pr = convert_units_to(winter_pr, "mm")
 
@@ -1286,9 +1262,8 @@ def fire_weather_indexes(
 ):
     """Fire weather indexes.
 
-    Computes the 6 fire weather indexes as defined by the Canadian Forest Service:
-    the Drought Code, the Duff-Moisture Code, the Fine Fuel Moisture Code,
-    the Initial Spread Index, the Build Up Index and the Fire Weather Index.
+    Computes the 6 fire weather indexes as defined by the Canadian Forest Service: the Drought Code, the Duff-Moisture
+    Code, the Fine Fuel Moisture Code, the Initial Spread Index, the Build Up Index and the Fire Weather Index.
 
     Parameters
     ----------
@@ -1338,12 +1313,12 @@ def fire_weather_indexes(
 
     Notes
     -----
-    See https://cwfis.cfs.nrcan.gc.ca/background/dsm/fwi, the module's doc and
-    doc of :py:func:`fire_weather_ufunc` for more information.
+    See :cite:t:`code-natural_resources_canada_data_nodate`, the :py:mod:`xclim.indices.fwi` module documentation,
+    and the docstring of :py:func:`fire_weather_ufunc` for more information.
 
     References
     ----------
-    Updated source code for calculating fire danger indexes in the Canadian Forest Fire Weather Index System, Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
+    :cite:cts:`fire-wang_updated_2015`
     """
     tas = convert_units_to(tas, "C")
     pr = convert_units_to(pr, "mm/day")
@@ -1438,12 +1413,12 @@ def drought_code(
 
     Notes
     -----
-    See https://cwfis.cfs.nrcan.gc.ca/background/dsm/fwi, the module's doc and
-    doc of :py:func:`fire_weather_ufunc` for more information.
+    See :cite:cts:`code-natural_resources_canada_data_nodate`, the :py:mod:`xclim.indices.fwi` module documentation,
+    and the docstring of :py:func:`fire_weather_ufunc` for more information.
 
     References
     ----------
-    Updated source code for calculating fire danger indexes in the Canadian Forest Fire Weather Index System, Y. Wang, K.R. Anderson, and R.M. Suddaby, INFORMATION REPORT NOR-X-424, 2015.
+    :cite:cts:`fire-wang_updated_2015`
     """
     tas = convert_units_to(tas, "C")
     pr = convert_units_to(pr, "mm/day")
@@ -1520,9 +1495,8 @@ def fire_season(
 
     References
     ----------
-    [Wotton&Flannigan1993]_
+    :cite:cts:`fire-wotton_length_1993,fire-lawson_weather_2008`
 
-    [Lawson&Armitage2008]_
     """
     kwargs = dict(
         method=method,

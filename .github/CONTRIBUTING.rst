@@ -86,6 +86,10 @@ Write Documentation
 xclim could always use more documentation, whether as part of the official xclim docs, in docstrings, or even on the
 web in blog posts, articles, and such.
 
+To reference documents (article, presentation, thesis, etc) in the documentation or in a docstring, xclim uses
+`sphinxcontrib-bibtex`_. Metadata of the documents is stored in the ``docs/references.bib`` file and they are
+usually cited in the documentation with ``:cite:cts:`label```.
+
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
@@ -342,3 +346,4 @@ Before updating the main conda-forge recipe, we *strongly* suggest performing th
 .. _`reStructuredText Primer`: https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
 .. _`GitHub Repository`: https://github.com/Ouranosinc/xclim
 .. _`PEP8`: https://www.python.org/dev/peps/pep-0008/
+.. _`sphinxcontrib-bibtex`: https://sphinxcontrib-bibtex.readthedocs.io

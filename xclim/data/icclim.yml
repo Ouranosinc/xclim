@@ -1,18 +1,16 @@
-realm: atmos
 doc: |
   ==============
   ICCLIM indices
   ==============
-  The European Climate Assessment & Dataset project (`ECAD`_) defines
-  a set of 26 core climate indices. Those have been made accessible
-  directly in xclim through their ECAD name for compatibility. However,
-  the methods in this module are only wrappers around the corresponding
-  methods of  `xclim.indices`. Note that none of the checks performed by
-  the `xclim.utils.Indicator` class (like with `xclim.atmos` indicators)
-  are performed in this module.
+
+  The European Climate Assessment & Dataset project (`ECAD`_) defines a set of 26 core climate indices. Those have been
+  made accessible directly in xclim through their ECAD name for compatibility. However, the methods in this module are
+  only wrappers around the corresponding methods of `xclim.indices`. Note that none of the checks performed by the
+  `xclim.utils.Indicator` class (like with `xclim.atmos` indicators)are performed in this module.
 
   .. _ECAD: https://www.ecad.eu/
-references: European Climate Assessment & Dataset, https://www.ecad.eu/
+realm: atmos
+references: European Climate Assessment & Dataset https://www.ecad.eu/
 indicators:
   TG:
     base: tg_mean
@@ -62,7 +60,6 @@ indicators:
       long_name: >
         Huglin heliothermal index (Summation of ((Tmean + Tmax)/2 - 10°C) * Latitude-based
         day-length coefficient (`k`), for days between 1 April and 31 October)
-      comment: Metric originally published in Huglin, 1978. Also presented by ECAD/KNMI for ICCLIM, 2013.
     compute: huglin_index
     parameters:
       method: icclim
@@ -75,7 +72,6 @@ indicators:
       long_name: >
         Biologically effective growing degree days (Summation of min(max((Tmin + Tmax)/2 - 10°C, 0), 9°C),
         for days between 1 April and 30 September)
-      comment: Revised formula published by ECAD/KNMI for ICCLIM, 2013.
     compute: biologically_effective_degree_days
     parameters:
       method: icclim
@@ -110,7 +106,6 @@ indicators:
       long_name: Maximum number of consecutive summer day
     parameters:
       thresh: 25 degC
-
   TR:
     base: tropical_nights
     cf_attrs:
@@ -247,7 +242,6 @@ indicators:
       thresh: 1 mm/day
       pr_per:
         description: 75th percentile of wet day precipitation flux.
-
   R95pTOT:
     base: fraction_over_precip_thresh
     cf_attrs:

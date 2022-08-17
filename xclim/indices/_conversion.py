@@ -64,7 +64,7 @@ def humidex(
     Notes
     -----
     The humidex is usually computed using hourly observations of dry bulb and dewpoint temperatures. It is computed
-    using the formula based on [masterton79]_:
+    using the formula based on :cite:t:`masterton_humidex_1979`:
 
     .. math::
 
@@ -78,14 +78,14 @@ def humidex(
        e = 6.112 \times \exp(5417.7530\left({\frac {1}{273.16}}-{\frac {1}{T_{\text{dewpoint}}}}\right)
 
     where the constant 5417.753 reflects the molecular weight of water, latent heat of vaporization,
-    and the universal gas constant ([mekis15]_). Alternatively, the term :math:`e` can also be computed from
-    the relative humidity `h` expressed in percent using [sirangelo20]_:
+    and the universal gas constant :cite:p`mekis_observed_2015`. Alternatively, the term :math:`e` can also be computed
+    from the relative humidity `h` expressed in percent using :cite:t:`sirangelo_combining_2020`:
 
     .. math::
 
       e = \frac{h}{100} \times 6.112 * 10^{7.5 T/(T + 237.7)}.
 
-    The humidex *comfort scale* ([eccc]_) can be interpreted as follows:
+    The humidex *comfort scale* :cite:p:`canada_glossary_2011` can be interpreted as follows:
 
     - 20 to 29 : no discomfort;
     - 30 to 39 : some discomfort;
@@ -101,10 +101,8 @@ def humidex(
 
     References
     ----------
-    .. [masterton79] Masterton, J. M., & Richardson, F. A. (1979). HUMIDEX, A method of quantifying human discomfort due to excessive heat and humidity, CLI 1-79. Downsview, Ontario: Environment Canada, Atmospheric Environment Service.
-    .. [mekis15] Éva Mekis, Lucie A. Vincent, Mark W. Shephard & Xuebin Zhang (2015) Observed Trends in Severe Weather Conditions Based on Humidex, Wind Chill, and Heavy Rainfall Events in Canada for 1953–2012, Atmosphere-Ocean, 53:4, 383-397, DOI: 10.1080/07055900.2015.1086970
-    .. [sirangelo20] Sirangelo, B., Caloiero, T., Coscarelli, R. et al. Combining stochastic models of air temperature and vapour pressure for the analysis of the bioclimatic comfort through the Humidex. Sci Rep 10, 11395 (2020). https://doi.org/10.1038/s41598-020-68297-4
-    .. [eccc] https://climate.weather.gc.ca/glossary_e.html
+    :cite:cts:`canada_glossary_2011,masterton_humidex_1979,mekis_observed_2015,sirangelo_combining_2020`
+
     """
     if (tdps is None) == (hurs is None):
         raise ValueError(
@@ -140,7 +138,7 @@ def humidex(
 def heat_index(tas: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
     r"""Heat index.
 
-    Perceived temperature after relative humidity is taken into account ([Blazejczyk2012]_).
+    Perceived temperature after relative humidity is taken into account :cite:p:`blazejczyk_comparison_2012`.
     The index is only valid for temperatures above 20°C.
 
     Parameters
@@ -157,15 +155,14 @@ def heat_index(tas: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
 
     References
     ----------
-    .. [Blazejczyk2012] Blazejczyk, K., Epstein, Y., Jendritzky, G., Staiger, H., & Tinz, B. (2012). Comparison of UTCI to selected thermal indices. International journal of biometeorology, 56(3), 515-535.
+    :cite:cts:`blazejczyk_comparison_2012`
 
     Notes
     -----
-    While both the humidex and the heat index are calculated using dew point,
-    the humidex uses a dew point of 7 °C (45 °F) as a base, whereas the heat
-    index uses a dew point base of 14 °C (57 °F). Further, the heat index uses
-    heat balance equations which account for many variables other than vapor
-    pressure, which is used exclusively in the humidex calculation.
+    While both the humidex and the heat index are calculated using dew point the humidex uses a dew point of 7 °C
+    (45 °F) as a base, whereas the heat index uses a dew point base of 14 °C (57 °F). Further, the heat index uses
+    heat balance equations which account for many variables other than vapour pressure, which is used exclusively in the
+    humidex calculation.
     """
     thresh = 20  # degC
     t = convert_units_to(tas, "degC")
@@ -318,7 +315,7 @@ def sfcwind_2_uas_vas(
 def saturation_vapor_pressure(
     tas: xr.DataArray, ice_thresh: str = None, method: str = "sonntag90"  # noqa
 ) -> xr.DataArray:
-    """Saturation vapor pressure from temperature.
+    """Saturation vapour pressure from temperature.
 
     Parameters
     ----------
@@ -333,27 +330,23 @@ def saturation_vapor_pressure(
     Returns
     -------
     xarray.DataArray, [Pa]
-      Saturation vapor pressure.
+      Saturation vapour pressure.
 
     Notes
     -----
     In all cases implemented here :math:`log(e_{sat})` is an empirically fitted function (usually a polynomial)
     where coefficients can be different when ice is taken as reference instead of water. Available methods are:
 
-    - "goffgratch46" or "GG46", based on [goffgratch46]_, values and equation taken from [voemel]_.
-    - "sonntag90" or "SO90", taken from [sonntag90]_.
-    - "tetens30" or "TE30", based on [tetens30]_, values and equation taken from [voemel]_.
-    - "wmo08" or "WMO08", taken from [wmo08]_.
-    - "its90" or "ITS90", taken from [its90]_.
+    - "goffgratch46" or "GG46", based on :cite:t:`goff_low-pressure_1946`, values and equation taken from :cite:t:`vomel_saturation_2016`.
+    - "sonntag90" or "SO90", taken from :cite:t:`sonntag_important_1990`.
+    - "tetens30" or "TE30", based on :cite:t:`tetens_uber_1930`, values and equation taken from :cite:t:`vomel_saturation_2016`.
+    - "wmo08" or "WMO08", taken from :cite:t:`world_meteorological_organization_guide_2008`.
+    - "its90" or "ITS90", taken from :cite:t:`hardy_its-90_1998`.
 
     References
     ----------
-    .. [goffgratch46] Goff, J. A., and S. Gratch (1946) Low-pressure properties of water from -160 to 212 °F, in Transactions of the American Society of Heating and Ventilating Engineers, pp 95-122, presented at the 52nd annual meeting of the American Society of Heating and Ventilating Engineers, New York, 1946.
-    .. [sonntag90] Sonntag, D. (1990). Important new values of the physical constants of 1986, vapour pressure formulations based on the ITS-90, and psychrometer formulae. Zeitschrift für Meteorologie, 40(5), 340-344.
-    .. [tetens30] Tetens, O. 1930. Über einige meteorologische Begriffe. Z. Geophys 6: 207-309.
-    .. [voemel] https://cires1.colorado.edu/~voemel/vp.html
-    .. [wmo08] World Meteorological Organization. (2008). Guide to meteorological instruments and methods of observation. Geneva, Switzerland: World Meteorological Organization. https://www.weather.gov/media/epz/mesonet/CWOP-WMO8.pdf
-    .. [its90] Hardy, B. (1998). ITS-90 formulations for vapor pressure, frostpoint temperature, dewpoint temperature, and enhancement factors in the range–100 to+ 100 C. In The Proceedings of the Third International Symposium on Humidity & Moisture (pp. 1-8). https://www.thunderscientific.com/tech_info/reflibrary/its90formulas.pdf
+    :cite:cts:`goff_low-pressure_1946,hardy_its-90_1998,sonntag_important_1990,tetens_uber_1930,vomel_saturation_2016,world_meteorological_organization_guide_2008`
+
     """
     if ice_thresh is not None:
         thresh = convert_units_to(ice_thresh, "degK")
@@ -506,7 +499,7 @@ def relative_humidity(
 
         RH = e^{\frac{-L (T - T_d)}{R_wTT_d}}
 
-    From [BohrenAlbrecht1998]_, formula taken from [Lawrence2005]_. :math:`L = 2.5\times 10^{-6}` J kg-1, exact for :math:`T = 273.15` K, is used.
+    From :cite:t:`bohren_atmospheric_1998`, formula taken from :cite:t:`lawrence_relationship_2005`. :math:`L = 2.5\times 10^{-6}` J kg-1, exact for :math:`T = 273.15` K, is used.
 
     **Other methods**: With :math:`w`, :math:`w_{sat}`, :math:`e_{sat}` the mixing ratio,
     the saturation mixing ratio and the saturation vapor pressure.
@@ -528,8 +521,7 @@ def relative_humidity(
 
     References
     ----------
-    .. [Lawrence2005] Lawrence, M.G. (2005). The Relationship between Relative Humidity and the Dewpoint Temperature in Moist Air: A Simple Conversion and Applications. Bull. Amer. Meteor. Soc., 86, 225–234, https://doi.org/10.1175/BAMS-86-2-225
-    .. [BohrenAlbrecht1998] Craig F. Bohren, Bruce A. Albrecht. Atmospheric Thermodynamics. Oxford University Press, 1998.
+    :cite:cts:`bohren_atmospheric_1998,lawrence_relationship_2005`
     """
     if method in ("bohren98", "BA90"):
         if tdps is None:
@@ -582,7 +574,8 @@ def specific_humidity(
 ) -> xr.DataArray:
     r"""Specific humidity from temperature, relative humidity and pressure.
 
-    Specific humidity is the ratio between the mass of water vapour and the mass of moist air [WMO08]_.
+    Specific humidity is the ratio between the mass of water vapour
+    and the mass of moist air :cite:p:`world_meteorological_organization_guide_2008`.
 
     Parameters
     ----------
@@ -630,7 +623,7 @@ def specific_humidity(
 
     References
     ----------
-    .. [WMO08] World Meteorological Organization. (2008). Guide to meteorological instruments and methods of observation. Geneva, Switzerland: World Meteorological Organization. https://www.weather.gov/media/epz/mesonet/CWOP-WMO8.pdf
+    :cite:cts:`world_meteorological_organization_guide_2008`
     """
     ps = convert_units_to(ps, "Pa")
     hurs = convert_units_to(hurs, "")
@@ -663,7 +656,8 @@ def specific_humidity_from_dewpoint(
 ) -> xr.DataArray:
     r"""Specific humidity from dewpoint temperature and air pressure.
 
-    Specific humidity is the ratio between the mass of water vapour and the mass of moist air [WMO08]_.
+    Specific humidity is the ratio between the mass of water vapour
+    and the mass of moist air :cite:p:`world_meteorological_organization_guide_2008`.
 
     Parameters
     ----------
@@ -692,7 +686,7 @@ def specific_humidity_from_dewpoint(
 
     References
     ----------
-    .. [WMO08] World Meteorological Organization. (2008). Guide to meteorological instruments and methods of observation. Geneva, Switzerland: World Meteorological Organization. https://www.weather.gov/media/epz/mesonet/CWOP-WMO8.pdf
+    :cite:cts:`world_meteorological_organization_guide_2008`
     """
     ε = 0.6219569  # weight of water vs dry air []
     e = saturation_vapor_pressure(tas=tdps, method=method)  # vapor pressure [Pa]
@@ -733,7 +727,7 @@ def snowfall_approximation(
     Notes
     -----
     The following methods are available to approximate snowfall and are drawn from the
-    Canadian Land Surface Scheme (CLASS, [Verseghy09]_).
+    Canadian Land Surface Scheme :cite:p:`verseghy_class_2009,melton_atmosphericvarscalcf90_2019`.
 
     - ``'binary'`` : When the temperature is under the freezing threshold, precipitation
       is assumed to be solid. The method is agnostic to the type of temperature used
@@ -745,10 +739,8 @@ def snowfall_approximation(
 
     References
     ----------
-    .. [Verseghy09] Diana Verseghy (2009), CLASS – The Canadian Land Surface Scheme (Version 3.4), Technical
-       Documentation (Version 1.1), Environment Canada, Climate Research Division, Science and Technology Branch.
+    :cite:cts:`verseghy_class_2009,melton_atmosphericvarscalcf90_2019`
 
-    https://gitlab.com/cccma/classic/-/blob/master/src/atmosphericVarsCalc.f90
     """
     if method == "binary":
         thresh = convert_units_to(thresh, tas)
@@ -833,7 +825,7 @@ def rain_approximation(
 
     See Also
     --------
-    :py:func:`xclim.indices.snowfall_approximation`
+    snowfall_approximation
     """
     prra = pr - snowfall_approximation(pr, tas, thresh=thresh, method=method)
     prra.attrs["units"] = pr.attrs["units"]
@@ -854,7 +846,8 @@ def wind_chill_index(
 
     The Wind Chill Index is an estimation of how cold the weather feels to the average person.
     It is computed from the air temperature and the 10-m wind. As defined by the Environment and Climate Change Canada
-    ([MVSZ2015]_), two equations exist, the conventional one and one for slow winds (usually < 5 km/h), see Notes.
+    (:cite:cts:`mekis_observed_2015`), two equations exist, the conventional one and one for slow winds
+    (usually < 5 km/h), see Notes.
 
     Parameters
     ----------
@@ -879,8 +872,8 @@ def wind_chill_index(
     -----
     Following the calculations of Environment and Climate Change Canada, this function switches from the standardized
     index to another one for slow winds. The standard index is the same as used by the National Weather Service of the
-    USA ([NWS]_). Given a temperature at surface :math:`T` (in °C) and 10-m wind speed :math:`V` (in km/h), the Wind
-    Chill Index :math:`W` (dimensionless) is computed as:
+    USA :cite:p:`us_department_of_commerce_wind_nodate`. Given a temperature at surface :math:`T` (in °C) and 10-m
+    wind speed :math:`V` (in km/h), the Wind Chill Index :math:`W` (dimensionless) is computed as:
 
     .. math::
 
@@ -896,17 +889,17 @@ def wind_chill_index(
     Both equations are invalid for temperature over 0°C in the canadian method.
 
     The american Wind Chill Temperature index (WCT), as defined by USA's National Weather Service, is computed when
-    `method='US'`. In that case, the maximal valid temperature is 50°F (10 °C) and minimal wind speed is 3 mph (4.8 km/h).
+    `method='US'`. In that case, the maximal valid temperature is 50°F (10 °C) and minimal wind speed is 3 mph
+    (4.8 km/h).
 
     See Also
     --------
-    National Weather Service FAQ: ([NWS]_).
+    National Weather Service FAQ: :cite:p:`us_department_of_commerce_wind_nodate`.
+    The New Wind Chill Equivalent Temperature Chart: :cite:p:`osczevski_new_2005`.
 
     References
     ----------
-    .. [MVSZ2015] Éva Mekis, Lucie A. Vincent, Mark W. Shephard & Xuebin Zhang (2015) Observed Trends in Severe Weather Conditions Based on Humidex, Wind Chill, and Heavy Rainfall Events in Canada for 1953–2012, Atmosphere-Ocean, 53:4, 383-397, DOI: 10.1080/07055900.2015.1086970
-    .. [Osczevski&Bluestein2005] Osczevski, R., & Bluestein, M. (2005). The New Wind Chill Equivalent Temperature Chart. Bulletin of the American Meteorological Society, 86(10), 1453–1458. https://doi.org/10.1175/BAMS-86-10-1453
-    .. [NWS] Wind Chill Questions, Cold Resources, National Weather Service, retrieved 25-05-21. https://www.weather.gov/safety/cold-faqs
+    :cite:cts:`mekis_observed_2015,us_department_of_commerce_wind_nodate`
     """
     tas = convert_units_to(tas, "degC")
     sfcWind = convert_units_to(sfcWind, "km/h")
@@ -992,8 +985,8 @@ def potential_evapotranspiration(
 ) -> xr.DataArray:
     r"""Potential evapotranspiration.
 
-    The potential for water evaporation from soil and transpiration by plants if the water supply is
-    sufficient, according to a given method.
+    The potential for water evaporation from soil and transpiration by plants if the water supply is sufficient,
+    according to a given method.
 
     Parameters
     ----------
@@ -1008,9 +1001,11 @@ def potential_evapotranspiration(
     method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48", "mcguinnessbordne05", "MB05"}
       Which method to use, see notes.
     peta : float
-      Used only with method MB05 as :math:`a` for calculation of PET, see Notes section. Default value resulted from calibration of PET over the UK.
+      Used only with method MB05 as :math:`a` for calculation of PET, see Notes section.
+      Default value resulted from calibration of PET over the UK.
     petb : float
-      Used only with method MB05 as :math:`b` for calculation of PET, see Notes section. Default value resulted from calibration of PET over the UK.
+      Used only with method MB05 as :math:`b` for calculation of PET, see Notes section.
+      Default value resulted from calibration of PET over the UK.
 
     Returns
     -------
@@ -1020,12 +1015,12 @@ def potential_evapotranspiration(
     -----
     Available methods are:
 
-    - "baierrobertson65" or "BR65", based on [BaierRobertson1965]_. Requires tasmin and tasmax, daily [D] freq.
-    - "hargreaves85" or "HG85", based on [Hargreaves1985]_. Requires tasmin and tasmax, daily [D] freq. (optional: tas can be given in addition of tasmin and tasmax).
-    - "mcguinnessbordne05" or "MB05", based on [Tanguy2018]_. Requires tas, daily [D] freq, with latitudes 'lat'.
-    - "thornthwaite48" or "TW48", based on [Thornthwaite1948]_. Requires tasmin and tasmax, monthly [MS] or daily [D] freq. (optional: tas can be given instead of tasmin and tasmax).
+    - "baierrobertson65" or "BR65", based on :cite:t:`baier_estimation_1965`. Requires tasmin and tasmax, daily [D] freq.
+    - "hargreaves85" or "HG85", based on :cite:t:`george_h_hargreaves_reference_1985`. Requires tasmin and tasmax, daily [D] freq. (optional: tas can be given in addition of tasmin and tasmax).
+    - "mcguinnessbordne05" or "MB05", based on :cite:t:`tanguy_historical_2018`. Requires tas, daily [D] freq, with latitudes 'lat'.
+    - "thornthwaite48" or "TW48", based on :cite:t:`thornthwaite_approach_1948`. Requires tasmin and tasmax, monthly [MS] or daily [D] freq. (optional: tas can be given instead of tasmin and tasmax).
 
-    The McGuinness-Bordne [McGuinness1972]_ equation is:
+    The McGuinness-Bordne :cite:p:`mcguinness_comparison_1972` equation is:
 
     .. math::
         PET[mm day^{-1}] = a * \frac{S_0}{\lambda}T_a + b *\frsc{S_0}{\lambda}
@@ -1034,18 +1029,15 @@ def potential_evapotranspiration(
     assuming a solar constant of 1367 W m-2; :math:`\\lambda` is the latent heat of vaporisation [MJ kg-1]
     and :math:`T_a` is the air temperature [°C]. The equation was originally derived for the USA,
     with :math:`a=0.0147` and :math:`b=0.07353`. The default parameters used here are calibrated for the UK,
-    using the method described in [Tanguy2018]_.
+    using the method described in :cite:t:`tanguy_historical_2018`.
 
     Methods "BR65", "HG85" and "MB05" use an approximation of the extraterrestrial
     radiation. See :py:func:`~xclim.indices._helpers.extraterrestrial_solar_radiation`.
 
     References
     ----------
-    .. [BaierRobertson1965] Baier, W., & Robertson, G. W. (1965). Estimation of latent evaporation from simple weather observations. Canadian journal of plant science, 45(3), 276-284.
-    .. [Hargreaves1985] Hargreaves, G. H., & Samani, Z. A. (1985). Reference crop evapotranspiration from temperature. Applied engineering in agriculture, 1(2), 96-99.
-    .. [Tanguy2018] Tanguy, M., Prudhomme, C., Smith, K., & Hannaford, J. (2018). Historical gridded reconstruction of potential evapotranspiration for the UK. Earth System Science Data, 10(2), 951-968.
-    .. [McGuinness1972] McGuinness, J. L., & Bordne, E. F. (1972). A comparison of lysimeter-derived potential evapotranspiration with computed values (No. 1452). US Department of Agriculture.
-    .. [Thornthwaite1948] Thornthwaite, C. W. (1948). An approach toward a rational classification of climate. Geographical review, 38(1), 55-94.
+    :cite:cts:`baier_estimation_1965,george_h_hargreaves_reference_1985,tanguy_historical_2018,thornthwaite_approach_1948,mcguinness_comparison_1972`
+
     """
     if lat is None:
         lat = (tasmin if tas is None else tas).cf["latitude"]
@@ -1469,8 +1461,7 @@ def universal_thermal_climate_index(
 
     References
     ----------
-    Bröde, Peter (2009). Program for calculating UTCI Temperature (UTCI), version a 0.002, http://www.utci.org/public/UTCI%20Program%20Code/UTCI_a002.f90
-    Błażejczyk, K., Jendritzky, G., Bröde, P., Fiala, D., Havenith, G., Epstein, Y., Psikuta, A., & Kampmann, B. (2013). An introduction to the Universal Thermal Climate Index (UTCI). DOI:10.7163/GPOL.2013.1
+    :cite:cts:`brode_utci_2009,blazejczyk_introduction_2013`
 
     See Also
     --------
@@ -1510,15 +1501,15 @@ def _fdir_ratio(
 ) -> xr.DataArray:
     r"""Return ratio of direct solar radiation.
 
-    The ratio of direct solar radiation is the fraction of the total horizontal
-    solar irridance due to the direct beam of the sun.
+    The ratio of direct solar radiation is the fraction of the total horizontal solar irradiance
+    due to the direct beam of the sun.
 
     Parameters
     ----------
     dates : xr.DataArray
         Series of dates and time of day
     csza_i : xr.DataArray
-        Cosine of the solar zenith angle during each interal
+        Cosine of the solar zenith angle during each interval
     csza_s : xr.DataArray
         Cosine of the solar zenith angle during the sunlit period of each interval
     rsds : xr.DataArray
@@ -1535,8 +1526,8 @@ def _fdir_ratio(
 
     References
     ----------
-    James C. Liljegren, Richard A. Carhart, Philip Lawday, Stephen Tschopp and Robert Sharp (2008) Modeling the Wet Bulb Globe Temperature Using Standard Meteorological Measurements, Journal of Occupational and Environmental Hygiene, 5:10, 645-655, https://doi.org/10.1080/15459620802310770
-    Kong, Qinqin, and Matthew Huber. “Explicit Calculations of Wet Bulb Globe Temperature Compared with Approximations and Why It Matters for Labor Productivity.” Earth’s Future, January 31, 2022. https://doi.org/10.1029/2021EF002334.
+    :cite:cts:`liljegren_modeling_2008,kong_explicit_2022`
+
     """
     d = distance_from_sun(dates)
     s_star = rsds * ((1367 * csza_s * (d ** (-2))) ** (-1))
@@ -1563,7 +1554,6 @@ def mean_radiant_temperature(
     r"""Mean radiant temperature.
 
     The mean radiant temperature is the incidence of radiation on the body from all directions.
-    WARNING: There are some issues in the calculation of mrt in polar regions.
 
     Parameters
     ----------
@@ -1588,14 +1578,18 @@ def mean_radiant_temperature(
     xarray.DataArray, [K]
         Mean radiant temperature
 
+    Warnings
+    --------
+    There are some issues in the calculation of mrt in polar regions.
+
     Notes
     -----
-    This code was inspired by the `thermofeel` package.
+    This code was inspired by the `thermofeel` package :cite:p:`brimicombe_thermofeel_2021`.
 
     References
     ----------
-    Di Napoli, C., Hogan, R.J. & Pappenberger, F. Mean radiant temperature from global-scale numerical weather prediction models. Int J Biometeorol 64, 1233–1245 (2020). https://doi.org/10.1007/s00484-020-01900-5
-    Brimicombe , C., Di Napoli, C., Quintino, T., Pappenberger, F., Cornforth, R. and Cloke, H., 2021 thermofeel: a python thermal comfort indices library, https://doi.org/10.21957/mp6v-fd16
+    :cite:cts:`di_napoli_mean_2020`
+
     """
     rsds = convert_units_to(rsds, "W m-2")
     rsus = convert_units_to(rsus, "W m-2")

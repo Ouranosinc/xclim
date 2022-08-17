@@ -2,18 +2,22 @@
 Bias adjustment and downscaling algorithms
 ==========================================
 
-`xarray` data structures allow for relatively straightforward implementations of simple bias-adjustment and downscaling algorithms documented in :ref:`Adjustment Methods <sdba:SDBA User API>`. Each algorithm is split into `train` and `adjust` components. The `train` function will compare two DataArrays `x` and `y`, and create a dataset storing the *transfer* information allowing to go from `x` to `y`. This dataset, stored in the adjustment object, can then be used by the `adjust` method to apply this information to `x`. `x` could be the same `DataArray` used for training, or another `DataArray` with similar characteristics.
+`xarray` data structures allow for relatively straightforward implementations of simple bias-adjustment and downscaling algorithms documented in :ref:`Adjustment Methods <sdba:SDBA User API>`.
+Each algorithm is split into `train` and `adjust` components. The `train` function will compare two DataArrays `x` and `y`, and create a dataset storing the *transfer* information allowing to go from `x` to `y`.
+This dataset, stored in the adjustment object, can then be used by the `adjust` method to apply this information to `x`. `x` could be the same `DataArray` used for training, or another `DataArray` with similar characteristics.
 
 For example, given a daily time series of observations `ref`, a model simulation over the observational period `hist` and a model simulation over a future period `sim`, we would apply a bias-adjustment method such as *detrended quantile mapping* (DQM) as::
 
   from xclim import sdba
+
   dqm = sdba.adjustment.DetrendedQuantileMapping.train(ref, hist)
   scen = dqm.adjust(sim)
 
-Most method can either be applied additively or multiplicatively. Also, most methods can be applied independently on different time groupings (monthly, seasonally) or according to the day of the year and a rolling window width.
+Most method can either be applied additively by multiplication. Also, most methods can be applied independently on different time groupings (monthly, seasonally) or according to the day of the year and a rolling window width.
 
-When transfer factors are applied in adjustment, they can be interpolated according to the time grouping. This helps avoid discontinuities in adjustment factors at the beginning of each season or month and is computationally cheaper than computing adjustment factors for each day of the year. (Currently only implemented for monthly grouping)
-
+When transfer factors are applied in adjustment, they can be interpolated according to the time grouping.
+This helps avoid discontinuities in adjustment factors at the beginning of each season or month and is computationally cheaper than computing adjustment factors for each day of the year.
+(Currently only implemented for monthly grouping)
 
 Application in multivariate settings
 ====================================
@@ -23,26 +27,19 @@ When applying univariate adjustment methods to multiple variables, some strategi
 Minimum and maximum temperature
 -------------------------------
 
-When adjusting both minimum and maximum temperature, adjustment factors sometimes yield minimum temperatures larger than the maximum temperature on the same day, which of course, is nonsensical. One way to avoid this is to first adjust maximum temperature using an additive adjustment, then adjust the diurnal temperature range (DTR) using a multiplicative adjustment, and then determine minimum temperature by subtracting DTR from the maximum temperature ([Thrasher2012]_, [AgbazoGrenier2019]_)
+When adjusting both minimum and maximum temperature, adjustment factors sometimes yield minimum temperatures larger than the maximum temperature on the same day, which of course, is nonsensical.
+One way to avoid this is to first adjust maximum temperature using an additive adjustment, then adjust the diurnal temperature range (DTR) using a multiplicative adjustment, and then determine minimum temperature by subtracting DTR from the maximum temperature :cite:p:`thrasher_technical_2012,agbazo_characterizing_2020`.
 
 Relative and specific humidity
 ------------------------------
 
-When adjusting both relative and specific humidity, we want to preserve the relationship between both. To do this, [Grenier2018]_ suggests to first adjust the relative humidity using a multiplicative factor, ensure values are within 0-100%, then apply an additive adjustment factor to the surface pressure before estimating the specific humidity from thermodynamic relationships.
+When adjusting both relative and specific humidity, we want to preserve the relationship between both.
+To do this, :cite:t:`grenier_two_2018` suggests to first adjust the relative humidity using a multiplicative factor, ensure values are within 0-100%, then apply an additive adjustment factor to the surface pressure before estimating the specific humidity from thermodynamic relationships.
 
 Radiation and precipitation
 ---------------------------
 
-In theory, short wave radiation should be capped when precipitation is not zero, but there is as of yet no mechanism proposed to do that, see [HoffmanRath2012]_.
-
-
-References
-==========
-
-.. [AgbazoGrenier2019] Agbazo, M. N., & Grenier, P. (2019). Characterizing and avoiding physical inconsistency generated by the application of univariate quantile mapping on daily minimum and maximum temperatures over Hudson Bay. International Journal of Climatology, joc.6432. https://doi.org/10.1002/joc.6432
-.. [Grenier2018] Grenier, P. (2018). Two Types of Physical Inconsistency to Avoid with Univariate Quantile Mapping: A Case Study over North America Concerning Relative Humidity and Its Parent Variables. Journal of Applied Meteorology and Climatology, 57(2), 347–364. https://doi.org/10.1175/JAMC-D-17-0177.1
-.. [HoffmanRath2012] Hoffmann, H., & Rath, T. (2012). Meteorologically consistent bias correction of climate time series for agricultural models. Theoretical and Applied Climatology, 110(1–2), 129–141. https://doi.org/10.1007/s00704-012-0618-x
-.. [Thrasher2012] Thrasher, B., Maurer, E. P., McKellar, C., & Duffy, P. B. (2012). Technical Note: Bias correcting climate model simulated daily temperature extremes with quantile mapping. Hydrology and Earth System Sciences, 16(9), 3309–3314. https://doi.org/10.5194/hess-16-3309-2012
+In theory, short wave radiation should be capped when precipitation is not zero, but there is as of yet no mechanism proposed to do that, see :cite:t:`hoffmann_meteorologically_2012`.
 
 SDBA User API
 =============
@@ -117,3 +114,15 @@ Developer tools
 
 .. autofunction:: xclim.sdba.measures.check_same_units_and_convert
    :noindex:
+
+.. _sdba-footnotes:
+
+SDBA Footnotes
+==============
+
+.. bibliography::
+   :style: unsrt
+   :labelprefix: SDBA
+   :keyprefix: sdba-
+
+.. [RRJF2021] Roy, P., Rondeau-Genesse, G., Jalbert, J., Fournier, É. 2021. Climate Scenarios of Extreme Precipitation Using a Combination of Parametric and Non-Parametric Bias Correction Methods. Submitted to Climate Services, April 2021.
