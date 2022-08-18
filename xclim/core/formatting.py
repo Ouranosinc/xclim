@@ -20,18 +20,23 @@ from boltons.funcutils import wraps
 from xclim.core.utils import InputKind, PercentileDataArray
 
 DEFAULT_FORMAT_PARAMS = {
-    "tasmin_per_thresh": "{unkown}",
-    "tasmin_per_window": "{unkown}",
-    "tasmin_per_period": "{unkown}",
-    "tas_per_thresh": "{unkown}",
-    "tas_per_window": "{unkown}",
-    "tas_per_period": "{unkown}",
-    "tasmax_per_thresh": "{unkown}",
-    "tasmax_per_window": "{unkown}",
-    "tasmax_per_period": "{unkown}",
-    "pr_per_thresh": "{unkown}",
-    "pr_per_window": "{unkown}",
-    "pr_per_period": "{unkown}",
+    "tasmin_per_thresh": "{unknown}",
+    "tasmin_per_window": "{unknown}",
+    "tasmin_per_period": "{unknown}",
+    "tas_per_thresh": "{unknown}",
+    "tas_per_window": "{unknown}",
+    "tas_per_period": "{unknown}",
+    "tasmax_per_thresh": "{unknown}",
+    "tasmax_per_window": "{unknown}",
+    "tasmax_per_period": "{unknown}",
+    "pr_per_thresh": "{unknown}",
+    "pr_per_window": "{unknown}",
+    "pr_per_period": "{unknown}",
+    # FIXME: The following params can be found in indices._multivariate
+    "tasmax_per": "{unknown}",
+    "tasmin_per": "{unknown}",
+    "tas_per": "{unknown}",
+    "pr_per": "{unknown}",
 }
 
 
@@ -53,7 +58,8 @@ class AttrFormatter(string.Formatter):
         mapping : Mapping[str, Sequence[str]]
             A mapping from values to their possible variations.
         modifiers : Sequence[str]
-            The list of modifiers, must be the as long as the longest value of `mapping`. Cannot include reserved modifier 'r'.
+            The list of modifiers, must be the as long as the longest value of `mapping`.
+            Cannot include reserved modifier 'r'.
         """
         super().__init__()
         if "r" in modifiers:
@@ -427,8 +433,7 @@ def update_xclim_history(func):
 def gen_call_string(funcname: str, *args, **kwargs):
     """Generate a signature string for use in the history attribute.
 
-    DataArrays and Dataset are replaced with their name, while Nones, floats,
-    ints and strings are printed directly.
+    DataArrays and Dataset are replaced with their name, while Nones, floats, ints and strings are printed directly.
     All other objects have their type printed between < >.
 
     Arguments given through positional arguments are printed positionnally and those

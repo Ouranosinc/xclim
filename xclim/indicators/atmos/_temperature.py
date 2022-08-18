@@ -440,7 +440,7 @@ cold_spell_duration_index = Temp(
     "is below the {tasmin_per}th percentile. A cold spell occurs when the daily minimum temperature is below a given "
     "percentile for at least {window} consecutive days.",
     abstract="Number of days part of a percentile-defined cold spell. A cold spell occurs when the daily minimum "
-    "temperature is below a given percentile for at least {window} consecutive days.",
+    "temperature is below a given percentile for aa given number of consecutive days.",
     cell_methods="",
     compute=indices.cold_spell_duration_index,
 )
