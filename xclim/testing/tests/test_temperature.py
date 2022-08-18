@@ -1332,7 +1332,7 @@ def test_freezethaw_spell_frequency():
     )
     np.testing.assert_array_equal(out.isel(location=-1), [1, 0, 1, 1])
 
-    assert out.attrs["long_name"] == "Frequency of freeze-thaw spells"
+    assert out.attrs["long_name"] == "Frequency of daily freeze-thaw spells"
     assert out.attrs["description"] in [
         # FIXME: Section formatting shifts variable names to all lowercase.
         "Annual number of freeze-thaw spells (Tmax > 0 degC and Tmin <= 0 degC) "
@@ -1357,7 +1357,7 @@ def test_freezethaw_spell_mean_length():
     )
     np.testing.assert_array_equal(out.isel(location=-1), [2, 0, 2, 2])
 
-    assert out.attrs["long_name"] == "Average length of freeze-thaw spells"
+    assert out.attrs["long_name"] == "Average length of daily freeze-thaw spells"
     assert out.attrs["description"] in [
         # FIXME: Section formatting shifts variable names to all lowercase.
         "Annual average length of freeze-thaw spells (Tmax > 0 degC and Tmin <= 0 degC) "
