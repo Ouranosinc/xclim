@@ -180,8 +180,8 @@ def rle_statistics(
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
     if ufunc_1dim:
         if freq is not None:
-            rl_stat = da.resample({dim: freq}).map(
-                statistics_run_ufunc, reducer, window, dim
+            raise ValueError(
+                "Resampling after run length operations is not implemented for 1d method"
             )
         else:
             rl_stat = statistics_run_ufunc(da, reducer, window, dim)
@@ -277,7 +277,9 @@ def windowed_run_events(
 
     if ufunc_1dim:
         if freq is not None:
-            out = da.resample({dim: freq}).map(windowed_run_events_ufunc, window, dim)
+            raise ValueError(
+                "Resampling after run length operations is not implemented for 1d method"
+            )
         else:
             out = windowed_run_events_ufunc(da, window, dim)
 
@@ -330,7 +332,9 @@ def windowed_run_count(
 
     if ufunc_1dim:
         if freq is not None:
-            out = da.resample({dim: freq}).map(windowed_run_count_ufunc, window, dim)
+            raise ValueError(
+                "Resampling after run length operations is not implemented for 1d method"
+            )
         else:
             out = windowed_run_count_ufunc(da, window, dim)
 
@@ -348,6 +352,7 @@ def first_run(
     da: xr.DataArray,
     window: int,
     dim: str = "time",
+    freq: str | None = None,
     coord: str | bool | None = False,
     ufunc_1dim: str | bool = "from_context",
 ) -> xr.DataArray:
@@ -362,6 +367,8 @@ def first_run(
       When equal to 1, an optimized version of the algorithm is used.
     dim : str
       Dimension along which to calculate consecutive run (default: 'time').
+    freq : str
+      Resampling frequency.
     coord : Optional[str]
       If not False, the function returns values along `dim` instead of indexes.
       If `dim` has a datetime dtype, `coord` can also be a str of the name of the
@@ -378,11 +385,32 @@ def first_run(
       Index (or coordinate if `coord` is not False) of first item in first valid run.
       Returns np.nan if there are no valid runs.
     """
+    # transforms indexes to coordinates if needed, and drops obsolete dim
+    def coord_transform(out, da):
+        if coord:
+            crd = da[dim]
+            if isinstance(coord, str):
+                crd = getattr(crd.dt, coord)
+
+            out = lazy_indexing(crd, out)
+
+        if dim in out.coords:
+            out = out.drop_vars(dim)
+        return out
+
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim)
 
     da = da.fillna(0)  # We expect a boolean array, but there could be NaNs nonetheless
+
     if ufunc_1dim:
-        out = first_run_ufunc(x=da, window=window, dim=dim)
+        if freq is not None:
+            raise ValueError(
+                "Resampling after run length operations is not implemented for 1d method"
+            )
+        else:
+            out = first_run_ufunc(x=da, window=window, dim=dim)
+            out = coord_transform(out, da)
+
     else:
         if window == 1:
             d = da
@@ -390,19 +418,19 @@ def first_run(
             d = rle(da, dim=dim, index="first")
             d = xr.where(d >= window, 1, -1)
 
-        dmax_ind = d.argmax(dim=dim)
-        # If `d` has no runs, dmax_ind will be 0: We must replace this with NaN
-        out = dmax_ind.where(dmax_ind != d.argmin(dim=dim))
+        def get_out(d):
+            dmax_ind = d.argmax(dim=dim)
+            # If `d` has no runs, dmax_ind will be 0: We must replace this with NaN
+            out = dmax_ind.where(dmax_ind != d.argmin(dim=dim))
 
-    if coord:
-        crd = da[dim]
-        if isinstance(coord, str):
-            crd = getattr(crd.dt, coord)
+            out = coord_transform(out, d)
+            return out
 
-        out = lazy_indexing(crd, out)
+        if freq is not None:
+            out = d.resample({dim: freq}).map(get_out)
 
-    if dim in out.coords:
-        out = out.drop_vars(dim)
+        else:
+            out = get_out(d)
 
     return out
 
@@ -411,6 +439,7 @@ def last_run(
     da: xr.DataArray,
     window: int,
     dim: str = "time",
+    freq: str | None = None,
     coord: str | bool | None = False,
     ufunc_1dim: str | bool = "from_context",
 ) -> xr.DataArray:
@@ -425,6 +454,8 @@ def last_run(
       When equal to 1, an optimized version of the algorithm is used.
     dim : str
       Dimension along which to calculate consecutive run (default: 'time').
+    freq : str
+      Resampling frequency.
     coord : Optional[str]
       If not False, the function returns values along `dim` instead of indexes.
       If `dim` has a datetime dtype, `coord` can also be a str of the name of the
@@ -443,7 +474,12 @@ def last_run(
     """
     reversed_da = da.sortby(dim, ascending=False)
     out = first_run(
-        reversed_da, window=window, dim=dim, coord=coord, ufunc_1dim=ufunc_1dim
+        reversed_da,
+        window=window,
+        dim=dim,
+        freq=freq,
+        coord=coord,
+        ufunc_1dim=ufunc_1dim,
     )
     if not coord:
         return reversed_da[dim].size - out - 1

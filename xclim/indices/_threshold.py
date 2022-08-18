@@ -123,6 +123,7 @@ def cold_spell_days(
     thresh: str = "-10 degC",
     window: int = 5,
     freq: str = "AS-JUL",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Cold spell days.
 
@@ -139,6 +140,9 @@ def cold_spell_days(
       Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
       Resampling frequency.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -159,9 +163,12 @@ def cold_spell_days(
     """
     t = convert_units_to(thresh, tas)
     over = tas < t
-    group = over.resample(time=freq)
-
-    out = group.map(rl.windowed_run_count, window=window, dim="time")
+    if resample_before_rl:
+        out = over.resample(time=freq).map(
+            rl.windowed_run_count, window=window, dim="time"
+        )
+    else:
+        out = rl.windowed_run_count(over, window=window, dim="time", freq=freq)
     return to_agg_units(out, tas, "count")
 
 
@@ -171,6 +178,7 @@ def cold_spell_frequency(
     thresh: str = "-10 degC",
     window: int = 5,
     freq: str = "AS-JUL",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Cold spell frequency.
 
@@ -187,6 +195,9 @@ def cold_spell_frequency(
       Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
       Resampling frequency.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -197,9 +208,10 @@ def cold_spell_frequency(
     """
     t = convert_units_to(thresh, tas)
     over = tas < t
-    group = over.resample(time=freq)
-
-    out = group.map(rl.windowed_run_events, window=window, dim="time")
+    if resample_before_rl:
+        over.resample(time=freq).map(rl.windowed_run_events, window=window, dim="time")
+    else:
+        out = rl.windowed_run_events(over, window=window, dim="time", freq=freq)
     out.attrs["units"] = ""
     return out
 
@@ -397,7 +409,10 @@ def dry_days(
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
 def maximum_consecutive_wet_days(
-    pr: xarray.DataArray, thresh: str = "1 mm/day", freq: str = "YS"
+    pr: xarray.DataArray,
+    thresh: str = "1 mm/day",
+    freq: str = "YS",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Consecutive wet days.
 
@@ -411,6 +426,9 @@ def maximum_consecutive_wet_days(
       Threshold precipitation on which to base evaluation.
     freq : str
       Resampling frequency.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -434,8 +452,12 @@ def maximum_consecutive_wet_days(
     """
     thresh = convert_units_to(thresh, pr, "hydro")
 
-    group = (pr > thresh).resample(time=freq)
-    out = group.map(rl.longest_run, dim="time")
+    cond = pr > thresh
+
+    if resample_before_rl:
+        out = cond.resample(time=freq).map(rl.longest_run, dim="time")
+    else:
+        out = rl.longest_run(cond, dim="time", freq=freq)
     out = to_agg_units(out, pr, "count")
     return out
 
@@ -482,7 +504,11 @@ def cooling_degree_days(
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def freshet_start(
-    tas: xarray.DataArray, thresh: str = "0 degC", window: int = 5, freq: str = "YS"
+    tas: xarray.DataArray,
+    thresh: str = "0 degC",
+    window: int = 5,
+    freq: str = "YS",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""First day consistently exceeding threshold temperature.
 
@@ -499,6 +525,9 @@ def freshet_start(
       Minimum number of days with temperature above threshold needed for evaluation.
     freq : str
       Resampling frequency.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -520,7 +549,12 @@ def freshet_start(
     """
     thresh = convert_units_to(thresh, tas)
     over = tas > thresh
-    out = over.resample(time=freq).map(rl.first_run, window=window, coord="dayofyear")
+    if resample_before_rl:
+        out = over.resample(time=freq).map(
+            rl.first_run, window=window, coord="dayofyear"
+        )
+    else:
+        out = rl.first_run(over, window=window, freq=freq, coord="dayofyear")
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
     return out
 

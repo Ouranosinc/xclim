@@ -815,6 +815,7 @@ def dry_spell_frequency(
     thresh: str = "1.0 mm",
     window: int = 3,
     freq: str = "YS",
+    resample_before_rl: bool = True,
     op: str = "sum",
 ) -> xarray.DataArray:
     """Return the number of dry periods of n days and more.
@@ -832,6 +833,9 @@ def dry_spell_frequency(
       Minimum length of the spells.
     freq : str
       Resampling frequency.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
     op: {"sum","max"}
       Operation to perform on the window.
       Default is "sum", which checks that the sum of accumulated precipitation over the whole window is less than the
@@ -854,11 +858,15 @@ def dry_spell_frequency(
     thresh = convert_units_to(thresh, pram)
 
     agg_pr = getattr(pram.rolling(time=window, center=True), op)()
-    out = (
-        (agg_pr < thresh)
-        .resample(time=freq)
-        .map(rl.windowed_run_events, window=1, dim="time")
-    )
+    cond = agg_pr < thresh
+    if resample_before_rl:
+        out = (
+            (agg_pr < thresh)
+            .resample(time=freq)
+            .map(rl.windowed_run_events, window=1, dim="time")
+        )
+    else:
+        out = rl.windowed_run_events(cond, window=window, dim="time", freq=freq)
 
     out.attrs["units"] = ""
     return out
