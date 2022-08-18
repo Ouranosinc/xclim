@@ -684,7 +684,9 @@ last_spring_frost = Temp(
     standard_name="day_of_year",
     long_name="Day of year of last spring frost",
     description="Day of year of last spring frost, defined as the last day a minimum temperature "
-    "threshold of {thresh} is not exceeded before a given date.",
+    "remains below a threshold of {thresh} for at least {window} days before a given date ({before_date}).",
+    abstract="The last day when temperature is below a given threshold for a certain number of days, "
+    "limited by a final calendar date.",
     cell_methods="",
     compute=indices.last_spring_frost,
 )
@@ -695,7 +697,9 @@ first_day_below = Temp(
     units="",
     standard_name="day_of_year",
     long_name="First day of year with temperature below threshold",
-    description="First day of year with temperature below {thresh} for at least {window} days.",
+    description="First day of year with temperature below {thresh} for at least {window} days after {after_date}.",
+    abstract="Calculates the first day of a period when the temperature is lower than a certain threshold during a "
+    "given number of days, after a given calendar date.",
     cell_methods="",
     compute=indices.first_day_below,
 )
@@ -706,7 +710,9 @@ first_day_above = Temp(
     units="",
     standard_name="day_of_year",
     long_name="First day of year with temperature above threshold",
-    description="First day of year with temperature above {thresh} for at least {window} days.",
+    description="First day of year with temperature above {thresh} for at least {window} days after {after_date}.",
+    abstract="Calculates the first day of a period when the temperature is higher than a certain threshold during a "
+    "given number of days, after a given calendar date.",
     cell_methods="",
     compute=indices.first_day_above,
 )
@@ -789,7 +795,8 @@ maximum_consecutive_frost_free_days = Temp(
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
     long_name="Maximum number of consecutive days with Tmin at or above 0°C",
     description="{freq} maximum number of consecutive days with minimum daily temperature above or equal to {thresh}.",
-    abstract="Maximum number of consecutive frost-free days: where the daily minimum temperature is above or equal to 0°C",
+    abstract="Maximum number of consecutive frost-free days: where the daily minimum temperature is above "
+    "or equal to 0°C",
     cell_methods="time: maximum over days",
     compute=indices.maximum_consecutive_frost_free_days,
 )
@@ -802,6 +809,7 @@ growing_season_start = Temp(
     long_name="Day of year of growing season start",
     description="Day of year of start of growing season, defined as the first day of consistent superior or equal to "
     "threshold temperature of {thresh} after a run of {window} days inferior to threshold temperature.",
+    abstract="The first day when the temperature exceeds a certain threshold for a certain number of consecutive days.",
     cell_methods="",
     compute=indices.growing_season_start,
     parameters={"thresh": {"default": "5.0 degC"}},
@@ -812,10 +820,13 @@ growing_season_length = Temp(
     identifier="growing_season_length",
     units="days",
     standard_name="growing_season_length",
-    long_name="ETCCDI Growing Season Length",
+    long_name="Growing season length",
     description="{freq} number of days between the first occurrence of at least {window} consecutive days "
     "with mean daily temperature over {thresh} and the first occurrence of at least {window} consecutive days with "
     "mean daily temperature below {thresh} after {mid_date}.",
+    abstract="Number of days between the first occurrence of a series of days with a daily average temperature above a "
+    "threshold and the first occurrence of a series of days with a daily average temperature below that same "
+    "threshold, occurring after a given calendar date.",
     cell_methods="",
     compute=indices.growing_season_length,
     parameters={"thresh": {"default": "5.0 degC"}},
@@ -828,7 +839,10 @@ growing_season_end = Temp(
     standard_name="day_of_year",
     long_name="Day of year of growing season end",
     description="Day of year of end of growing season, defined as the first day of consistent inferior threshold "
-    "temperature of {thresh} after a run of {window} days superior to threshold temperature.",
+    "temperature of {thresh} after a run of {window} days superior to threshold temperature, occurring after "
+    "{mid_date}.",
+    abstract="The first day when the temperature is below a certain threshold for a certain number of consecutive days "
+    "after a specific calendar date.",
     cell_methods="",
     compute=indices.growing_season_end,
     parameters={"thresh": {"default": "5.0 degC"}},
@@ -839,23 +853,25 @@ tropical_nights = TempWithIndexing(
     identifier="tropical_nights",
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
-    long_name="Number of Tropical Nights (Tmin > {thresh})",
-    description="{freq} number of Tropical Nights : defined as days with minimum daily temperature"
-    " above {thresh}.",
+    long_name="Number of tropical nights",
+    description="{freq} number of Tropical Nights: defined as days with minimum daily temperature above {thresh}.",
+    abstract="Number of days where minimum temperature is below a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.tn_days_above,
     parameters={"thresh": {"default": "20.0 degC"}},
 )
 
+# FIXME: Is there a "tas_per_period"? French indices mention "per_base_thresh"? I don't see them in the indices.
 tg90p = TempWithIndexing(
     title="Days with mean temperature above the 90th percentile",
     identifier="tg90p",
     units="days",
     standard_name="days_with_air_temperature_above_threshold",
-    long_name="Number of days when Tmean > {tas_per_thresh}th percentile",
-    description="{freq} number of days with mean daily temperature above the 90th percentile. "
+    long_name="Number of days with mean temperature above the 90th percentile",
+    description="{freq} number of days with mean temperature above the 90th percentile. "
     "A {tas_per_window} day(s) window, centered on each calendar day in the {tas_per_period} period, "
     "is used to compute the 90th percentile.",
+    abstract="Number of days with mean temperature above the 90th percentile.",
     cell_methods="time: sum over days",
     compute=indices.tg90p,
 )
@@ -865,10 +881,11 @@ tg10p = TempWithIndexing(
     identifier="tg10p",
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
-    long_name="Number of days when Tmean < {tas_per_thresh}th percentile",
-    description="{freq} number of days with mean daily temperature below the 10th percentile. "
+    long_name="Number of days with mean temperature below the 10th percentile",
+    description="{freq} number of days with mean temperature below the 10th percentile. "
     "A {tas_per_window} day(s) window, centered on each calendar day in the {tas_per_period} period, "
     "is used to compute the 10th percentile.",
+    abstract="Number of days with mean temperature below the 10th percentile.",
     cell_methods="time: sum over days",
     compute=indices.tg10p,
 )
@@ -878,10 +895,11 @@ tx90p = TempWithIndexing(
     identifier="tx90p",
     units="days",
     standard_name="days_with_air_temperature_above_threshold",
-    long_name="Number of days when Tmax > 90th percentile",
-    description="{freq} number of days with maximum daily temperature above the 90th percentile. "
+    long_name="Number of days with maximum temperature above the 90th percentile",
+    description="{freq} number of days with maximum temperature above the 90th percentile. "
     "A {tasmax_per_window} day(s) window, centered on each calendar day in the {tasmax_per_period} period, "
     "is used to compute the 90th percentile.",
+    abstract="Number of days with maximum temperature above the 90th percentile.",
     cell_methods="time: sum over days",
     compute=indices.tx90p,
 )
@@ -891,10 +909,11 @@ tx10p = TempWithIndexing(
     identifier="tx10p",
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
-    long_name="Number of days when Tmax < 10th percentile",
-    description="{freq} number of days with maximum daily temperature below the 10th percentile. "
+    long_name="Number of days with maximum temperature below the 10th percentile",
+    description="{freq} number of days with maximum temperature below the 10th percentile. "
     "A {tasmax_per_window} day(s) window, centered on each calendar day in the {tasmax_per_period} period, "
     "is used to compute the 10th percentile.",
+    abstract="Number of days with maximum temperature below the 10th percentile.",
     cell_methods="time: sum over days",
     compute=indices.tx10p,
 )
@@ -904,10 +923,11 @@ tn90p = TempWithIndexing(
     identifier="tn90p",
     units="days",
     standard_name="days_with_air_temperature_above_threshold",
-    long_name="Number of days when Tmin > 90th percentile",
-    description="{freq} number of days with minimum daily temperature above the 90th percentile. "
+    long_name="Number of days with minimum temperature above the 90th percentile",
+    description="{freq} number of days with minimum temperature above the 90th percentile. "
     "A {tasmin_per_window} day(s) window, centered on each calendar day in the {tasmin_per_period} period, "
     "is used to compute the 90th percentile.",
+    abstract="Number of days with minimum temperature above the 90th percentile.",
     cell_methods="time: sum over days",
     compute=indices.tn90p,
 )
@@ -917,10 +937,11 @@ tn10p = TempWithIndexing(
     identifier="tn10p",
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
-    long_name="Number of days when Tmin < 10th percentile",
-    description="{freq} number of days with minimum daily temperature below the 10th percentile. "
+    long_name="Number of days with minimum temperature below the 10th percentile",
+    description="{freq} number of days with minimum temperature below the 10th percentile. "
     "A {tasmin_per_window} day(s) window, centered on each calendar day in the {tasmin_per_period} period, "
     "is used to compute the 10th percentile.",
+    abstract="Number of days with minimum temperature below the 10th percentile.",
     cell_methods="time: sum over days",
     compute=indices.tn10p,
 )
@@ -929,11 +950,13 @@ tn10p = TempWithIndexing(
 degree_days_exceedance_date = Temp(
     title="Degree day exceedance date",
     identifier="degree_days_exceedance_date",
-    long_name="Day of year when cumulative degree days exceed threshold.",
     units="",
+    long_name="Day of year when cumulative degree days exceed threshold.",
     standard_name="day_of_year",
-    description="Day of year when the integral of degree days (tmean {op} {thresh})"
-    " exceeds {sum_thresh}, the cumulative sum starts on {after_date}.",
+    description="Day of year when the integral of degree days (tmean {op} {thresh}) exceeds {sum_thresh}, "
+    "with the cumulative sum starting from {after_date}.",
+    abstract="The day of the year when the sum of degree days exceeds a threshold. "
+    "Degree days are calculated above or below a given temperature threshold.",
     cell_methods="",
     compute=indices.degree_days_exceedance_date,
 )
@@ -942,13 +965,15 @@ degree_days_exceedance_date = Temp(
 warm_spell_duration_index = Temp(
     title="Warm spell duration index",
     identifier="warm_spell_duration_index",
-    long_name="Number of days part of a percentile-defined warm spell",
-    description="{freq} number of days with at least {window} consecutive days "
-    "where the daily maximum temperature is above the {tasmax_per_thresh}th "
-    "percentile(s). A {tasmax_per_window} day(s) window, centred on each calendar day in the "
-    "{tasmax_per_period} period, is used to compute the {tasmax_per_thresh}th percentile(s).",
     units="days",
+    long_name="Number of days part of a percentile-defined warm spell",
     standard_name="number_of_days_with_air_temperature_above_threshold",
+    description="{freq} number of days with at least {window} consecutive days where the daily maximum temperature is "
+    "above the {tasmax_per_thresh}th percentile(s). A {tasmax_per_window} day(s) window, centred on each calendar day "
+    "in the {tasmax_per_period} period, is used to compute the {tasmax_per_thresh}th percentile(s).",
+    abstract="Number of days in in series with minimum duration where the daily maximum temperature exceeds a given "
+    "percentile. The percentile threshold of temperatures should be calculated with a moving window of a given number "
+    "of days.",
     cell_methods="time: sum over days",
     compute=indices.warm_spell_duration_index,
 )
@@ -957,10 +982,11 @@ warm_spell_duration_index = Temp(
 maximum_consecutive_warm_days = Temp(
     title="Maximum consecutive warm days",
     identifier="maximum_consecutive_warm_days",
-    long_name="Maximum consecutive warm days",
-    description="{freq} longest spell of consecutive days with Tmax above {thresh}.",
     units="days",
+    long_name="Maximum number of consecutive warm days",
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
+    description="{freq} longest spell of consecutive days with Tmax above {thresh}.",
+    abstract="Maximum number of consecutive days where the daily maximum temperature exceeds a certain threshold.",
     cell_methods="time: maximum over days",
     compute=indices.maximum_consecutive_tx_days,
 )
