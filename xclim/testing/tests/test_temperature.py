@@ -1273,9 +1273,9 @@ def test_wsdi__default_percentiles_params():
     del tx90.attrs["climatology_bounds"]
     res = atmos.warm_spell_duration_index(tasmax, tx90, freq="YS")
     # THEN
-    assert "{unkown} day(s) window" in res.attrs["description"]
-    assert "{unkown} period" in res.attrs["description"]
-    assert "{unkown}th percentile(s)" in res.attrs["description"]
+    assert "{unknown} day(s) window" in res.attrs["description"]
+    assert "{unknown} period" in res.attrs["description"]
+    assert "{unknown}th percentile(s)" in res.attrs["description"]
 
 
 def test_maximum_consecutive_warm_days():
