@@ -66,6 +66,34 @@ def use_ufunc(
     return index == "first" and ufunc_1dim
 
 
+def _cumsum_reset_on_zero(
+    da: xr.DataArray,
+    dim: str = "time",
+) -> xr.DataArray:
+    """Compute the cumulative sum for each series of numbers separated by zero.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Input array.
+    dim : str
+      Dimension name along which the cumulative sum is taken.
+
+    Returns
+    -------
+    xr.DataArray
+      An array with the partial cumulative sums.
+    """
+    # Example: da == 100110111 -> cs_s == 100120123
+    cs = da.cumsum(dim=dim)  # cumulative sum  e.g. 111233456
+
+    cs2 = cs.where(da == 0)  # keep only numbers at positions of zeroes e.g. N11NN3NNN
+    cs2[{dim: 0}] = 0  # put a zero in front e.g. 011NN3NNN
+    cs2 = cs2.ffill(dim=dim)  # e.g. 011113333
+
+    return cs - cs2
+
+
 def rle(
     da: xr.DataArray,
     dim: str = "time",
@@ -95,11 +123,7 @@ def rle(
         da = da[{dim: slice(None, None, -1)}]
 
     # Get cumulative sum for each series of 1, e.g. da == 100110111 -> cs_s == 100120123
-    cs = da.cumsum(dim=dim)
-    cs2 = cs.where(da == 0)
-    cs2[{dim: 0}] = 0
-    cs2 = cs2.ffill(dim=dim)
-    cs_s = cs - cs2
+    cs_s = _cumsum_reset_on_zero(da, dim)
 
     # Keep total length of each series (and also keep 0's), e.g. 100120123 -> 100N20NN3
     # Keep numbers with a 0 to the right and also the last number
@@ -323,19 +347,18 @@ def first_run(
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim)
 
     da = da.fillna(0)  # We expect a boolean array, but there could be NaNs nonetheless
-    if window == 1:
-        out = xr.where(da.any(dim=dim), da.argmax(dim=dim), np.NaN)
-    elif ufunc_1dim:
+    if ufunc_1dim:
         out = first_run_ufunc(x=da, window=window, dim=dim)
     else:
-        da = da.astype("int")
-        i = xr.DataArray(np.arange(da[dim].size), dims=dim)
-        ind = xr.broadcast(i, da)[0].transpose(*da.dims)
-        if uses_dask(da):
-            ind = ind.chunk(da.chunks)
-        wind_sum = da.rolling({dim: window}).sum(skipna=False)
-        out = ind.where(wind_sum >= window).min(dim=dim) - (window - 1)
-        # remove window - 1 as rolling result index is last element of the moving window
+        if window == 1:
+            d = da
+        else:
+            d = rle(da, dim=dim, index="first")
+            d = xr.where(d >= window, 1, -1)
+
+        dmax_ind = d.argmax(dim=dim)
+        # If `d` has no runs, dmax_ind will be 0: We must replace this with NaN
+        out = dmax_ind.where(dmax_ind != d.argmin(dim=dim))
 
     if coord:
         crd = da[dim]
