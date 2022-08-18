@@ -715,6 +715,11 @@ def growing_season_length(
 
     # If working in the Southern Hemisphere, one can use:
     >>> gsl_sh = growing_season_length(tas, mid_date="01-01", freq="AS-JUL")
+
+    References
+    ----------
+    :cite:cts:`project_team_eca&d_algorithm_2013`
+
     """
     thresh = convert_units_to(thresh, tas)
     cond = tas >= thresh
