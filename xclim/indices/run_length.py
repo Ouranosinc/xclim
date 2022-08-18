@@ -143,6 +143,7 @@ def rle_statistics(
     reducer: str = "max",
     window: int = 1,
     dim: str = "time",
+    freq: str | None = None,
     ufunc_1dim: str | bool = "from_context",
     index: str = "first",
 ) -> xr.DataArray:
@@ -158,6 +159,8 @@ def rle_statistics(
       Minimal length of consecutive runs to be included in the statistics.
     dim : str
       Dimension along which to calculate consecutive run; Default: 'time'.
+    freq : str
+      Resampling frequency.
     ufunc_1dim : Union[str, bool]
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
@@ -175,14 +178,25 @@ def rle_statistics(
       If there are no runs (but the data is valid), returns 0.
     """
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
-    if window == 1 and reducer == "sum":
-        rl_stat = da.sum("time")
-    elif ufunc_1dim:
-        rl_stat = statistics_run_ufunc(da, reducer, window, dim)
+    if ufunc_1dim:
+        if freq is not None:
+            rl_stat = da.resample({dim: freq}).map(
+                statistics_run_ufunc, reducer, window, dim
+            )
+        else:
+            rl_stat = statistics_run_ufunc(da, reducer, window, dim)
     else:
         d = rle(da, dim=dim, index=index)
-        rl_stat = getattr(d.where(d >= window), reducer)(dim=dim)
-        rl_stat = xr.where((d.isnull() | (d < window)).all(dim=dim), 0, rl_stat)
+
+        def get_rl_stat(d):
+            rl_stat = getattr(d.where(d >= window), reducer)(dim=dim)
+            rl_stat = xr.where((d.isnull() | (d < window)).all(dim=dim), 0, rl_stat)
+            return rl_stat
+
+        if freq is None:
+            rl_stat = get_rl_stat(d)
+        else:
+            rl_stat = d.resample({dim: freq}).map(get_rl_stat)
 
     return rl_stat
 
@@ -190,6 +204,7 @@ def rle_statistics(
 def longest_run(
     da: xr.DataArray,
     dim: str = "time",
+    freq: str | None = None,
     ufunc_1dim: str | bool = "from_context",
     index: str = "first",
 ) -> xr.DataArray:
@@ -201,6 +216,8 @@ def longest_run(
       N-dimensional array (boolean)
     dim : str
       Dimension along which to calculate consecutive run; Default: 'time'.
+    freq : str
+      Resampling frequency.
     ufunc_1dim : Union[str, bool]
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
@@ -217,7 +234,7 @@ def longest_run(
       Length of the longest run of True values along dimension (int).
     """
     return rle_statistics(
-        da, reducer="max", dim=dim, ufunc_1dim=ufunc_1dim, index=index
+        da, reducer="max", dim=dim, freq=freq, ufunc_1dim=ufunc_1dim, index=index
     )
 
 
@@ -227,6 +244,7 @@ def windowed_run_events(
     dim: str = "time",
     ufunc_1dim: str | bool = "from_context",
     index: str = "first",
+    freq: str | None = None,
 ) -> xr.DataArray:
     """Return the number of runs of a minimum length.
 
@@ -239,6 +257,8 @@ def windowed_run_events(
       When equal to 1, an optimized version of the algorithm is used.
     dim : str
       Dimension along which to calculate consecutive run (default: 'time').
+    freq : str
+      Resampling frequency.
     ufunc_1dim : Union[str, bool]
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
@@ -255,14 +275,19 @@ def windowed_run_events(
     """
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
 
-    if window == 1:
-        d = da.pad({dim: (0, 1)}, constant_values=False).astype(int).diff(dim)
-        out = (d == -1).sum(dim=dim)
-    elif ufunc_1dim:
-        out = windowed_run_events_ufunc(da, window, dim)
+    if ufunc_1dim:
+        if freq is not None:
+            out = da.resample({dim: freq}).map(windowed_run_events_ufunc, window, dim)
+        else:
+            out = windowed_run_events_ufunc(da, window, dim)
+
     else:
         d = rle(da, dim=dim, index=index)
-        out = (d >= window).sum(dim=dim)
+        d = xr.where(d >= window, 1, 0)
+        if freq is not None:
+            d = d.resample({dim: freq})
+        out = d.sum(dim=dim)
+
     return out
 
 
@@ -270,6 +295,7 @@ def windowed_run_count(
     da: xr.DataArray,
     window: int,
     dim: str = "time",
+    freq: str | None = None,
     ufunc_1dim: str | bool = "from_context",
     index: str = "first",
 ) -> xr.DataArray:
@@ -284,6 +310,8 @@ def windowed_run_count(
       When equal to 1, an optimized version of the algorithm is used.
     dim : str
       Dimension along which to calculate consecutive run (default: 'time').
+    freq : str
+      Resampling frequency.
     ufunc_1dim : Union[str, bool]
       Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
       usage based on number of data points. Using 1D_ufunc=True is typically more efficient
@@ -300,13 +328,19 @@ def windowed_run_count(
     """
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
 
-    if window == 1:
-        out = da.sum(dim=dim)
-    elif ufunc_1dim:
-        out = windowed_run_count_ufunc(da, window, dim)
+    if ufunc_1dim:
+        if freq is not None:
+            out = da.resample({dim: freq}).map(windowed_run_count_ufunc, window, dim)
+        else:
+            out = windowed_run_count_ufunc(da, window, dim)
+
     else:
         d = rle(da, dim=dim, index=index)
-        out = d.where(d >= window, 0).sum(dim=dim)
+        d = d.where(d >= window, 0)
+        if freq is not None:
+            d = d.resample({dim: freq})
+        out = d.sum(dim=dim)
+
     return out
 
 
@@ -481,7 +515,9 @@ def run_bounds(mask: xr.DataArray, dim: str = "time", coord: bool | str | None =
     return xr.concat((starts, ends), "bounds")
 
 
-def keep_longest_run(da: xr.DataArray, dim: str = "time") -> xr.DataArray:
+def keep_longest_run(
+    da: xr.DataArray, dim: str = "time", freq: str | None = None
+) -> xr.DataArray:
     """Keep the longest run along a dimension.
 
     Parameters
@@ -490,6 +526,8 @@ def keep_longest_run(da: xr.DataArray, dim: str = "time") -> xr.DataArray:
       Boolean array.
     dim : str
       Dimension along which to check for the longest run.
+    freq : str
+      Resampling frequency.
 
     Returns
     -------
@@ -498,14 +536,23 @@ def keep_longest_run(da: xr.DataArray, dim: str = "time") -> xr.DataArray:
     """
     # Get run lengths
     rls = rle(da, dim)
-    out = xr.where(
-        # Construct an integer array and find the max
-        rls[dim].copy(data=np.arange(rls[dim].size)) == rls.argmax(dim),
-        rls + 1,  # Add one to the First longest run
-        rls,
-    )
-    out = out.ffill(dim) == out.max(dim)
-    return da.copy(data=out.transpose(*da.dims).data)  # Keep everything the same
+
+    def get_out(da, dim):
+        out = xr.where(
+            # Construct an integer array and find the max
+            rls[dim].copy(data=np.arange(rls[dim].size)) == rls.argmax(dim),
+            rls + 1,  # Add one to the First longest run
+            rls,
+        )
+        out = out.ffill(dim) == out.max(dim)
+        return da.copy(data=out.transpose(*da.dims).data)
+
+    if freq is not None:
+        out = da.resample({dim: freq}).map(get_out, dim=dim)
+    else:
+        out = get_out(da, dim=dim)
+
+    return out
 
 
 def season(
