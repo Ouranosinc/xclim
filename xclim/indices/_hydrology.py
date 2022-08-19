@@ -9,7 +9,8 @@ from xclim.core.units import declare_units, rate2amount
 
 from . import generic
 
-# from xclim.core.missing import at_least_n_valid  # raises circular import issue, see https://github.com/Ouranosinc/xclim/issues/949
+# FIXME: raises circular import issue, see: https://github.com/Ouranosinc/xclim/issues/949
+# from xclim.core.missing import at_least_n_valid
 
 
 __all__ = [
@@ -33,9 +34,9 @@ def base_flow_index(
 
     Parameters
     ----------
-    q : xarray.DataArray
+    q: xarray.DataArray
       Rate of river discharge.
-    freq : str
+    freq: str
       Resampling frequency.
 
     Returns
@@ -76,13 +77,13 @@ def rb_flashiness_index(
     r"""Richards-Baker flashiness index.
 
     Measures oscillations in flow relative to total flow, quantifying the frequency and rapidity of short term changes
-    in flow, based on Baker et al. (2004; [baker2004]_).
+    in flow, based on :cite:t:`baker_new_2004`.
 
     Parameters
     ----------
-    q : xarray.DataArray
+    q: xarray.DataArray
       Rate of river discharge.
-    freq : str
+    freq: str
       Resampling frequency.
 
     Returns
@@ -100,7 +101,7 @@ def rb_flashiness_index(
 
     References
     ----------
-    .. [baker2004] Baker, D. B., Richards, R. P., Loftus, T. T., & Kramer, J. W. (2004). A New Flashiness Index: Characteristics and Applications to Midwestern Rivers and Streams1. JAWRA Journal of the American Water Resources Association, 40(2), 503‑522. https://doi.org/10.1111/j.1752-1688.2004.tb01046.x
+    :cite:cts:`baker_new_2004`
     """
     d = np.abs(q.diff(dim="time")).resample(time=freq)
     mq = q.resample(time=freq)
@@ -117,9 +118,9 @@ def snd_max_doy(snd: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray
 
     Parameters
     ----------
-    snd : xarray.DataArray
+    snd: xarray.DataArray
       Surface snow depth.
-    freq : str
+    freq: str
       Resampling frequency.
 
     Returns
@@ -148,9 +149,9 @@ def snw_max(snw: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray:
 
     Parameters
     ----------
-    snw : xarray.DataArray
+    snw: xarray.DataArray
       Snow amount (mass per area).
-    freq : str
+    freq: str
       Resampling frequency.
 
     Returns
@@ -169,9 +170,9 @@ def snw_max_doy(snw: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray
 
     Parameters
     ----------
-    snw : xarray.DataArray
+    snw: xarray.DataArray
       Surface snow amount.
-    freq : str
+    freq: str
       Resampling frequency.
 
     Returns
@@ -202,11 +203,11 @@ def snow_melt_we_max(
 
     Parameters
     ----------
-    snw : xarray.DataArray
+    snw: xarray.DataArray
       Snow amount (mass per area).
-    window : int
+    window: int
       Number of days during which the melt is accumulated.
-    freq : str
+    freq: str
       Resampling frequency.
 
     Returns
@@ -236,13 +237,13 @@ def melt_and_precip_max(
 
     Parameters
     ----------
-    snw : xarray.DataArray
+    snw: xarray.DataArray
       Snow amount (mass per area).
-    pr : xarray.DataArray
+    pr: xarray.DataArray
       Daily precipitation flux.
-    window : int
+    window: int
       Number of days during which the water input is accumulated.
-    freq : str
+    freq: str
       Resampling frequency.
 
     Returns

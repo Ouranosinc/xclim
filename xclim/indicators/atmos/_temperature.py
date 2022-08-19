@@ -880,9 +880,9 @@ huglin_index = Temp(
     "coefficient (`k`), for days between {start_date} and {end_date}).",
     description="Heat-summation index for agroclimatic suitability estimation, developed specifically for viticulture. "
     "Considers daily Tmin and Tmax with a base of {thresh}, typically between 1 April and 30 September. "
-    "Integrates a day-length coefficient calculation for higher latitudes.",
+    "Integrates a day-length coefficient calculation for higher latitudes. "
+    "Metric originally published in Huglin (1978). Day-length coefficient based on Hall & Jones (2010).",
     cell_methods="",
-    comment="Metric originally published in Huglin (1978). Day-length coefficient based on Hall & Jones (2010)",
     var_name="hi",
     compute=indices.huglin_index,
     parameters=dict(method="jones"),
@@ -897,9 +897,9 @@ biologically_effective_degree_days = Temp(
     description="Heat-summation index for agroclimatic suitability estimation, developed specifically for viticulture. "
     "Considers daily Tmin and Tmax with a base of {thresh_tasmin} between 1 April and 31 October, with a maximum daily "
     "value for degree days (typically 9°C). It also integrates a modification coefficient for latitudes "
-    "between 40°N and 50°N as well as swings in daily temperature range.",
+    "between 40°N and 50°N as well as swings in daily temperature range. "
+    "Original formula published in Gladstones, 1992.",
     cell_methods="",
-    comment="Original formula published in Gladstones, 1992.",
     var_name="bedd",
     compute=indices.biologically_effective_degree_days,
     parameters={"method": "gladstones", "lat": {"kind": InputKind.VARIABLE}},
@@ -915,9 +915,9 @@ effective_growing_degree_days = Temp(
     "Considers daily Tmin and Tmax with a base of {thresh} between dynamically-determined growing season start"
     "and end dates. The 'bootsma' method uses a 10-day average temperature above {thresh} to identify a start date, "
     "while the 'qian' method uses a weighted mean average above {thresh} over 5 days to determine start date. "
-    "The end date of the growing season is the date of first fall frost (Tmin < 0°C).",
+    "The end date of the growing season is the date of first fall frost (Tmin < 0°C). "
+    "Original formula published in Bootsma et al. 2005.",
     cell_methods="",
-    comment="Original formula published in Bootsma et al. 2005.",
     var_name="egdd",
     compute=indices.effective_growing_degree_days,
 )
@@ -929,10 +929,10 @@ latitude_temperature_index = Temp(
     long_name="Latitude-temperature index",
     description="A climate indice based on mean temperature of the warmest month and a latitude-based coefficient to "
     "account for longer day-length favouring growing conditions. Developed specifically for viticulture. "
-    "Mean temperature of warmest month * ({lat_factor} - latitude).",
+    "Mean temperature of warmest month * ({lat_factor} - latitude). "
+    "Indice originally published in Jackson, D. I., & Cherry, N. J. (1988)",
     cell_methods="",
     allowed_periods=["A"],
-    comment="Indice originally published in Jackson, D. I., & Cherry, N. J. (1988)",
     var_name="lti",
     compute=indices.latitude_temperature_index,
     parameters={"lat_factor": 60, "lat": {"kind": InputKind.VARIABLE}},

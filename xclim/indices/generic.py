@@ -274,13 +274,13 @@ def count_level_crossings(
 
     Parameters
     ----------
-    low_data: xr.DataArray
+    low_data : xr.DataArray
       Variable that must be under the threshold.
-    high_data: xr.DataArray
+    high_data : xr.DataArray
       Variable that must be above the threshold.
-    threshold: str
+    threshold : str
       Quantity.
-    freq: str
+    freq : str
       Resampling frequency.
 
     Returns
@@ -311,6 +311,7 @@ def count_occurrences(
     Parameters
     ----------
     data : xr.DataArray
+      An array.
     threshold : str
       Quantity.
     condition : {">", "<", ">=", "<=", "==", "!="}
@@ -372,10 +373,11 @@ def first_occurrence(
     Parameters
     ----------
     data : xr.DataArray
+      Input data.
     threshold : str
-      Quantity
+      Quantity.
     condition : {">", "<", ">=", "<=", "==", "!="}
-      Operator
+      Operator.
     freq : str
       Resampling frequency.
 
@@ -409,10 +411,11 @@ def last_occurrence(
     Parameters
     ----------
     data : xr.DataArray
+      Input data.
     threshold : str
-      Quantity
+      Quantity.
     condition : {">", "<", ">=", "<=", "==", "!="}
-      Operator
+      Operator.
     freq : str
       Resampling frequency.
 
@@ -446,10 +449,11 @@ def spell_length(
     Parameters
     ----------
     data : xr.DataArray
+      Input data.
     threshold : str
       Quantity.
     condition : {">", "<", ">=", "<=", "==", "!="}
-      Operator
+      Operator.
     reducer : {'max', 'min', 'mean', 'sum'}
       Reducer.
     freq : str
@@ -477,6 +481,7 @@ def statistics(data: xr.DataArray, reducer: str, freq: str) -> xr.DataArray:
     Parameters
     ----------
     data : xr.DataArray
+      Input data.
     reducer : {'max', 'min', 'mean', 'sum'}
       Reducer.
     freq : str
@@ -503,10 +508,11 @@ def thresholded_statistics(
     Parameters
     ----------
     data : xr.DataArray
+      Input data.
     threshold : str
       Quantity.
     condition : {">", "<", ">=", "<=", "==", "!="}
-      Operator
+      Operator.
     reducer : {'max', 'min', 'mean', 'sum'}
       Reducer.
     freq : str
@@ -538,10 +544,11 @@ def temperature_sum(
     Parameters
     ----------
     data : xr.DataArray
+      Input data.
     threshold : str
-      Quantity
+      Quantity.
     condition : {">", "<", ">=", "<=", "==", "!="}
-      Operator
+      Operator.
     freq : str
       Resampling frequency.
 

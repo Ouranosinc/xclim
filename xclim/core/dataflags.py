@@ -455,6 +455,11 @@ def outside_n_standard_deviations_of_climatology(
     >>> flagged = outside_n_standard_deviations_of_climatology(
     ...     ds.tas, n=std_devs, window=average_over
     ... )
+
+    References
+    ----------
+    :cite:cts:`project_team_eca&d_algorithm_2013`
+
     """
     mu, sig = climatological_mean_doy(da, window=window)
     within_bounds = _sanitize_attrs(
@@ -718,7 +723,7 @@ def ecad_compliant(
 
     Returns
     -------
-    Union[xarray.DataArray, xarray.Dataset]
+    xarray.DataArray or xarray.Dataset or None
     """
     flags = xarray.Dataset()
     history = list()

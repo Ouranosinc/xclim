@@ -5,10 +5,9 @@ Properties Submodule
 SDBA diagnostic tests are made up of statistical properties and measures. Properties are calculated on both simulation
 and reference datasets. They collapse the time dimension to one value.
 
-This framework for the diagnostic tests was inspired by the [VALUE]_ project.
+This framework for the diagnostic tests was inspired by the `VALUE <http://www.value-cost.eu/>`_ project.
 Statistical Properties is the xclim term for 'indices' in the VALUE project.
 
-.. [VALUE] http://www.value-cost.eu/
 """
 from __future__ import annotations
 
@@ -363,7 +362,7 @@ def _acf(
 
     References
     ----------
-    Alavoine M., and Grenier P. (under review) The distinct problems of physical inconsistency and of multivariate bias potentially involved in the statistical adjustment of climate simulations. International Journal of Climatology, submitted on September 19th 2021. (Preprint: https://doi.org/10.31223/X5C34C)
+    :cite:cts:`alavoine_distinct_2021`
     """
 
     def acf_last(x, nlags):
@@ -711,10 +710,9 @@ def _return_value(
 ) -> xr.DataArray:
     r"""Return value.
 
-    Return the value corresponding to a return period.
-    On average, the return value will be exceeded (or not exceed for op='min') every return period (eg. 20 years).
-    The return value is computed by first extracting the variable annual maxima/minima,
-    fitting a statistical distribution to the maxima/minima,
+    Return the value corresponding to a return period. On average, the return value will be exceeded
+    (or not exceed for op='min') every return period (e.g. 20 years). The return value is computed by first extracting
+    the variable annual maxima/minima, fitting a statistical distribution to the maxima/minima,
     then estimating the percentile associated with the return period (eg. 95th percentile (1/20) for 20 years)
 
     Parameters

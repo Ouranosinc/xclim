@@ -5,8 +5,7 @@ Indicators module
 
 Indicators are the main tool xclim provides to compute climate indices. In contrast
 to the function defined in `xclim.indices`, Indicators add a layer of health checks
-and metadata handling. Indicator objects are split into realms : atmos, land and
-seaIce.
+and metadata handling. Indicator objects are split into realms : atmos, land and seaIce.
 
 Virtual modules are also inserted here. A normal installation of xclim comes with three virtual modules:
 

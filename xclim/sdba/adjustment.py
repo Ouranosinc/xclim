@@ -63,7 +63,7 @@ class BaseAdjustment(ParametrizableWithDataset):
     Children classes should implement the `train` and / or the `adjust` method.
 
     This base class defined the basic input and output checks. It should only be used for a real adjustment
-    if neither `TrainAdjust` or `Adjust` fit the algorithm.
+    if neither `TrainAdjust` nor `Adjust` fit the algorithm.
     """
 
     _allow_diff_calendars = True
@@ -148,7 +148,7 @@ class TrainAdjust(BaseAdjustment):
 
     - ``_train(ref, hist, **kwargs)``, classmethod receiving the training target and data, returning a training dataset and parameters to store in the object.
 
-    - ``_adjust(sim, **kwargs)``, receiving the projected data and some arguments, returning the `scen` dataarray.
+    - ``_adjust(sim, **kwargs)``, receiving the projected data and some arguments, returning the `scen` DataArray.
 
     """
 
@@ -337,7 +337,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
 
     References
     ----------
-    Dequé, M. (2007). Frequency of precipitation and temperature extremes over France in an anthropogenic scenario: Model results and statistical correction according to observed values. Global and Planetary Change, 57(1–2), 16–26. https://doi.org/10.1016/j.gloplacha.2006.11.030
+    :cite:cts:`sdba-deque_frequency_2007`
     """
 
     _allow_diff_calendars = False
@@ -402,7 +402,7 @@ class DetrendedQuantileMapping(TrainAdjust):
         F^{-1}_{ref}\left\{F_{hist}\left[\frac{\overline{hist}\cdot sim}{\overline{sim}}\right]\right\}\frac{\overline{sim}}{\overline{hist}}
 
     where :math:`F` is the cumulative distribution function (CDF) and :math:`\overline{xyz}` is the linear trend of the data.
-    This equation is valid for multiplicative adjustment. Based on the DQM method of [Cannon2015]_.
+    This equation is valid for multiplicative adjustment. Based on the DQM method of :cite:p:`sdba-cannon_bias_2015`.
 
     Parameters
     ----------
@@ -415,7 +415,7 @@ class DetrendedQuantileMapping(TrainAdjust):
       The adjustment kind, either additive or multiplicative. Defaults to "+".
     group : Union[str, Grouper]
       The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
-      Default is "time", meaning an single adjustment group along dimension "time".
+      Default is "time", meaning a single adjustment group along dimension "time".
 
     Adjust step:
 
@@ -429,7 +429,8 @@ class DetrendedQuantileMapping(TrainAdjust):
 
     References
     ----------
-    .. [Cannon2015] Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias correction of GCM precipitation by quantile mapping: How well do methods preserve changes in quantiles and extremes? Journal of Climate, 28(17), 6938–6959. https://doi.org/10.1175/JCLI-D-14-00754.1
+    :cite:cts:`sdba-cannon_bias_2015`
+
     """
 
     _allow_diff_calendars = False
@@ -507,7 +508,7 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
         sim\frac{F^{-1}_{ref}\left[F_{sim}(sim)\right]}{F^{-1}_{hist}\left[F_{sim}(sim)\right]}
 
     where :math:`F` is the cumulative distribution function (CDF). This equation is valid for multiplicative adjustment.
-    The algorithm is based on the "QDM" method of [Cannon2015]_.
+    The algorithm is based on the "QDM" method of :cite:p:`sdba-cannon_bias_2015`.
 
     Parameters
     ----------
@@ -520,7 +521,7 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
       The adjustment kind, either additive or multiplicative. Defaults to "+".
     group : Union[str, Grouper]
       The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
-      Default is "time", meaning an single adjustment group along dimension "time".
+      Default is "time", meaning a single adjustment group along dimension "time".
 
     Adjust step:
 
@@ -537,7 +538,8 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
 
     References
     ----------
-    .. [Cannon2015] Cannon, A. J., Sobie, S. R., & Murdock, T. Q. (2015). Bias correction of GCM precipitation by quantile mapping: How well do methods preserve changes in quantiles and extremes? Journal of Climate, 28(17), 6938–6959. https://doi.org/10.1175/JCLI-D-14-00754.1
+    :cite:cts:`sdba-cannon_bias_2015`
+
     """
 
     def _adjust(self, sim, interp="nearest", extrapolation="constant"):
@@ -557,20 +559,18 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
 class ExtremeValues(TrainAdjust):
     r"""Adjustment correction for extreme values.
 
-    The tail of the distribution of adjusted data is corrected according to the bias
-    between the parametric Generalized Pareto distributions of the simulatated and
-    reference data, [RRJF2021]_. The distributions are composed of the maximal values of
-    clusters of "large" values.  With "large" values being those above `cluster_thresh`.
-    Only extreme values, whose quantile within the pool of large values are above
-    `q_thresh`, are re-adjusted. See Notes.
+    The tail of the distribution of adjusted data is corrected according to the bias between the parametric Generalized
+    Pareto distributions of the simulated and reference data [RRJF2021]_. The distributions are composed of the
+    maximal values of clusters of "large" values.  With "large" values being those above `cluster_thresh`. Only extreme
+    values, whose quantile within the pool of large values are above `q_thresh`, are re-adjusted. See `Notes`.
 
     This adjustment method should be considered experimental and used with care.
 
     Parameters
     ----------
-    Train step:
+    Train step :
 
-    cluster_thresh: Quantity (str with units)
+    cluster_thresh : Quantity (str with units)
       The threshold value for defining clusters.
     q_thresh : float
       The quantile of "extreme" values, [0, 1[. Defaults to 0.95.
@@ -579,38 +579,35 @@ class ExtremeValues(TrainAdjust):
 
     Adjust step:
 
-    scen: DataArray
+    scen : DataArray
       This is a second-order adjustment, so the adjust method needs the first-order
       adjusted timeseries in addition to the raw "sim".
     interp : {'nearest', 'linear', 'cubic'}
       The interpolation method to use when interpolating the adjustment factors. Defaults to "linear".
     extrapolation : {'constant', 'nan'}
       The type of extrapolation to use. See :py:func:`~xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
-    frac: float
+    frac : float
       Fraction where the cutoff happens between the original scen and the corrected one.
       See Notes, ]0, 1]. Defaults to 0.25.
-    power: float
+    power : float
       Shape of the correction strength, see Notes. Defaults to 1.0.
 
     Notes
     -----
-    Extreme values are extracted from `ref`, `hist` and `sim` by finding all "clusters",
-    i.e. runs of consecutive values above `cluster_thresh`. The `q_thresh`th percentile
-    of these values is taken on `ref` and `hist` and becomes `thresh`, the extreme value
-    threshold. The maximal value of each cluster, if it exceeds that new threshold,
-    is taken and Generalized Pareto distributions are fitted to them, for both `ref` and
-    `hist`. The probabilities associated with each of these extremes in `hist` is used
-    to find the corresponding value according to `ref`'s distribution. Adjustment
-    factors are computed as the bias between those new extremes and the original ones.
+    Extreme values are extracted from `ref`, `hist` and `sim` by finding all "clusters", i.e. runs of consecutive values
+    above `cluster_thresh`. The `q_thresh`th percentile of these values is taken on `ref` and `hist` and becomes
+    `thresh`, the extreme value threshold. The maximal value of each cluster, if it exceeds that new threshold, is taken
+    and Generalized Pareto distributions are fitted to them, for both `ref` and `hist`. The probabilities associated
+    with each of these extremes in `hist` is used to find the corresponding value according to `ref`'s distribution.
+    Adjustment factors are computed as the bias between those new extremes and the original ones.
 
-    In the adjust step, a Generalized Pareto distributions is fitted on the
-    cluster-maximums of `sim` and it is used to associate a probability to each extreme,
-    values over the `thresh` compute in the training, without the clustering. The
-    adjustment factors are computed by interpolating the trained ones using these
-    probabilities and the probabilities computed from `hist`.
+    In the adjust step, a Generalized Pareto distributions is fitted on the cluster-maximums of `sim` and it is used to
+    associate a probability to each extreme, values over the `thresh` compute in the training, without the clustering.
+    The adjustment factors are computed by interpolating the trained ones using these probabilities and the
+    probabilities computed from `hist`.
 
-    Finally, the adjusted values (:math:`C_i`) are mixed with the pre-adjusted ones
-    (`scen`, :math:`D_i`) using the following transition function:
+    Finally, the adjusted values (:math:`C_i`) are mixed with the pre-adjusted ones (`scen`, :math:`D_i`) using the
+    following transition function:
 
     .. math::
 
@@ -623,8 +620,8 @@ class ExtremeValues(TrainAdjust):
 
         \tau = \left(\frac{1}{f}\frac{S - min(S)}{max(S) - min(S)}\right)^p
 
-    Code based on an internal Matlab source and partly ib the `biascorrect_extremes`
-    function of the julia package [ClimateTools]_.
+    Code based on an internal Matlab source and partly ib the `biascorrect_extremes` function of the julia package
+    "ClimateTools.jl" :cite:p:`sdba-roy_juliaclimateclimatetoolsjl_2021`.
 
     Because of limitations imposed by the lazy computing nature of the dask backend, it
     is not possible to know the number of cluster extremes in `ref` and `hist` at the
@@ -636,8 +633,10 @@ class ExtremeValues(TrainAdjust):
 
     References
     ----------
-    .. [RRJF2021] Roy, P., Rondeau-Genesse, G., Jalbert, J., Fournier, É. 2021. Climate Scenarios of Extreme Precipitation Using a Combination of Parametric and Non-Parametric Bias Correction Methods. Submitted to Climate Services, April 2021.
-    .. [ClimateTools] https://juliaclimate.github.io/ClimateTools.jl/stable/
+    :cite:cts:`sdba-roy_juliaclimateclimatetoolsjl_2021`
+
+    Roy, Rondeau-Genesse, Jalbert, and Fournier [RRJF2021]_
+
     """
 
     @classmethod
@@ -721,10 +720,10 @@ class LOCI(TrainAdjust):
     r"""Local Intensity Scaling (LOCI) bias-adjustment.
 
     This bias adjustment method is designed to correct daily precipitation time series by considering wet and dry days
-    separately ([Schmidli2006]_).
+    separately :cite:p:`sdba-schmidli_downscaling_2006`.
 
-    Multiplicative adjustment factors are computed such that the mean of `hist` matches the mean of `ref` for values above a
-    threshold.
+    Multiplicative adjustment factors are computed such that the mean of `hist` matches the mean of `ref` for values
+    above a threshold.
 
     The threshold on the training target `ref` is first mapped to `hist` by finding the quantile in `hist` having the same
     exceedance probability as thresh in `ref`. The adjustment factor is then given by
@@ -747,7 +746,7 @@ class LOCI(TrainAdjust):
 
     group : Union[str, Grouper]
       The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
-      Default is "time", meaning an single adjustment group along dimension "time".
+      Default is "time", meaning a single adjustment group along dimension "time".
     thresh : str
       The threshold in `ref` above which the values are scaled.
 
@@ -758,7 +757,7 @@ class LOCI(TrainAdjust):
 
     References
     ----------
-    .. [Schmidli2006] Schmidli, J., Frei, C., & Vidale, P. L. (2006). Downscaling from GCM precipitation: A benchmark for dynamical and statistical downscaling methods. International Journal of Climatology, 26(5), 679–689. DOI:10.1002/joc.1287
+    :cite:cts:`sdba-schmidli_downscaling_2006`
     """
 
     _allow_diff_calendars = False
@@ -842,18 +841,17 @@ class Scaling(TrainAdjust):
 class PrincipalComponents(TrainAdjust):
     r"""Principal component adjustment.
 
-    This bias-correction method maps model simulation values to the observation
-    space through principal components ([Hnilica2017]_). Values in the simulation
-    space (multiple variables, or multiple sites) can be thought of as coordinates
-    along axes, such as variable, temperature, etc. Principal components (PC) are a
-    linear combinations of the original variables where the coefficients are the
-    eigenvectors of the covariance matrix. Values can then be expressed as coordinates
-    along the PC axes. The method makes the assumption that bias-corrected values have
-    the same coordinates along the PC axes of the observations. By converting from the
-    observation PC space to the original space, we get bias corrected values.
-    See notes for a mathematical explanation.
+    This bias-correction method maps model simulation values to the observation space through principal components
+    :cite:p:`sdba-hnilica_multisite_2017`. Values in the simulation space (multiple variables, or multiple sites) can be
+    thought of as coordinate along axes, such as variable, temperature, etc. Principal components (PC) are a
+    linear combinations of the original variables where the coefficients are the eigenvectors of the covariance matrix.
+    Values can then be expressed as coordinates along the PC axes. The method makes the assumption that bias-corrected
+    values have the same coordinates along the PC axes of the observations. By converting from the observation PC space
+    to the original space, we get bias corrected values. See `Notes` for a mathematical explanation.
 
-    Note that *principal components* is meant here as the algebraic operation defining a coordinate system
+    Warnings
+    --------
+    Be aware that *principal components* is meant here as the algebraic operation defining a coordinate system
     based on the eigenvectors, not statistical principal component analysis.
 
     Parameters
@@ -862,7 +860,7 @@ class PrincipalComponents(TrainAdjust):
       The main dimension and grouping information. See Notes.
       See :py:class:`xclim.sdba.base.Grouper` for details.
       The adjustment will be performed on each group independently.
-      Default is "time", meaning an single adjustment group along dimension "time".
+      Default is "time", meaning a single adjustment group along dimension "time".
     best_orientation : {'simple', 'full'}
       Which method to use when searching for the best principal component orientation.
       See :py:func:`~xclim.sdba.utils.best_pc_orientation_simple` and
@@ -883,9 +881,8 @@ class PrincipalComponents(TrainAdjust):
 
     - :math:`N` is taken along the dimensions given through `group` : (the main `dim` but also, if requested, the `add_dims` and `window`).
 
-    The principal components (PC) of `hist` and `ref` are used to defined new
-    coordinate systems, centered on their respective means. The training step creates a
-    matrix defining the transformation from `hist` to `ref`:
+    The principal components (PC) of `hist` and `ref` are used to defined new coordinate systems, centered on their
+    respective means. The training step creates a matrix defining the transformation from `hist` to `ref`:
 
     .. math::
 
@@ -897,19 +894,16 @@ class PrincipalComponents(TrainAdjust):
 
       \mathrm{\mathbf{T}} = \mathrm{\mathbf{R}}\mathrm{\mathbf{H}}^{-1}
 
-    :math:`\mathrm{\mathbf{R}}` is the matrix transforming from the PC coordinates
-    computed on `ref` to the data coordinates. Similarly, :math:`\mathrm{\mathbf{H}}`
-    is transform from the `hist` PC to the data coordinates
-    (:math:`\mathrm{\mathbf{H}}` is the inverse transformation). :math:`e_R` and
-    :math:`e_H` are the centroids of the `ref` and `hist` distributions respectively.
-    Upon running the  `adjust` step, one may decide to use :math:`e_S`, the centroid
-    of the `sim` distribution, instead of :math:`e_H`.
+    :math:`\mathrm{\mathbf{R}}` is the matrix transforming from the PC coordinates computed on `ref` to the data
+    coordinates. Similarly, :math:`\mathrm{\mathbf{H}}` is transform from the `hist` PC to the data coordinates
+    (:math:`\mathrm{\mathbf{H}}` is the inverse transformation). :math:`e_R` and :math:`e_H` are the centroids of the
+    `ref` and `hist` distributions respectively. Upon running the  `adjust` step, one may decide to use :math:`e_S`,
+    the centroid of the `sim` distribution, instead of :math:`e_H`.
 
     References
     ----------
-    .. [Hnilica2017] Hnilica, J., Hanel, M. and Pš, V. (2017), Multisite bias correction of precipitation data from regional climate models. Int. J. Climatol., 37: 2934-2946. https://doi.org/10.1002/joc.4890
-    .. Alavoine M., and Grenier P. (under review) The distinct problems of physical inconsistency and of multivariate bias potentially involved in the statistical adjustment of climate simulations.
-        International Journal of Climatology, Manuscript ID: JOC-21-0789, submitted on September 19th 2021. (Preprint https://doi.org/10.31223/X5C34C)
+    :cite:cts:`sdba-hnilica_multisite_2017,sdba-alavoine_distinct_2021`
+
     """
 
     @classmethod
@@ -1029,8 +1023,8 @@ class NpdfTransform(Adjust):
 
     This adjustment object combines both training and adjust steps in the `adjust` class method.
 
-    A multivariate bias-adjustment algorithm described by [Cannon2018]_, as part of the MBCn algorithm,
-    based on a color-correction algorithm described by [Pitie2005]_.
+    A multivariate bias-adjustment algorithm described by :cite:t:`sdba-cannon_multivariate_2018`, as part of the MBCn
+    algorithm, based on a color-correction algorithm described by :cite:t:`sdba-pitie_n-dimensional_2005`.
 
     This algorithm in itself, when used with QuantileDeltaMapping, is NOT trend-preserving.
     The full MBCn algorithm includes a reordering step provided here by :py:func:`xclim.sdba.processing.reordering`.
@@ -1046,7 +1040,7 @@ class NpdfTransform(Adjust):
     n_escore : int
       The number of elements to send to the escore function. The default, 0, means all elements are included.
       Pass -1 to skip computing the escore completely.
-      Small numbers result in less significative scores, but the execution time goes up quickly with large values.
+      Small numbers result in less significant scores, but the execution time goes up quickly with large values.
     n_iter : int
       The number of iterations to perform. Defaults to 20.
     pts_dim : str
@@ -1090,27 +1084,24 @@ class NpdfTransform(Adjust):
     These three steps are repeated a certain number of times, prescribed by argument ``n_iter``. At each
     iteration, a new random rotation matrix is generated.
 
-    The original algorithm ([Pitie2005]_), stops the iteration when some distance score converges. Following
-    [Cannon2018]_ and the MBCn implementation in [CannonR]_, we instead fix the number of iterations.
+    The original algorithm :cite:p:`sdba-pitie_n-dimensional_2005`, stops the iteration when some distance score converges.
+    Following cite:t:`sdba-cannon_multivariate_2018` and the MBCn implementation in :cite:t:`sdba-cannon_mbc_2020`, we
+    instead fix the number of iterations.
 
-    As done by [Cannon2018]_, the distance score chosen is the "Energy distance" from [SkezelyRizzo2004]_
-    (see :py:func:`xclim.sdba.processing.escore`).
+    As done by cite:t:`sdba-cannon_multivariate_2018`, the distance score chosen is the "Energy distance" from
+    :cite:t:`sdba-szekely_testing_2004`. (see: :py:func:`xclim.sdba.processing.escore`).
 
-    The random matrices are generated following a method laid out by [Mezzadri2006]_.
+    The random matrices are generated following a method laid out by :cite:t:`sdba-mezzadri_how_2007`.
 
     This is only part of the full MBCn algorithm, see :ref:`notebooks/sdba:Statistical Downscaling and Bias-Adjustment`
-    for an example on how to replicate the full method with xclim. This includes a
-    standardization of the simulated data beforehand, an initial univariate adjustment
-    and the reordering of those adjusted series according to the rank structure of the
-    output of this algorithm.
+    for an example on how to replicate the full method with xclim. This includes a standardization of the simulated data
+    beforehand, an initial univariate adjustment and the reordering of those adjusted series according to the rank
+    structure of the output of this algorithm.
 
     References
     ----------
-    .. [Cannon2018] Cannon, A. J. (2018). Multivariate quantile mapping bias correction: An N-dimensional probability density function transform for climate model simulations of multiple variables. Climate Dynamics, 50(1), 31–49. https://doi.org/10.1007/s00382-017-3580-6
-    .. [CannonR] https://CRAN.R-project.org/package=MBC
-    .. [Mezzadri2006] Mezzadri, F. (2006). How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050.
-    .. [Pitie2005] Pitie, F., Kokaram, A. C., & Dahyot, R. (2005). N-dimensional probability density function transfer and its application to color transfer. Tenth IEEE International Conference on Computer Vision (ICCV’05) Volume 1, 2, 1434-1439 Vol. 2. https://doi.org/10.1109/ICCV.2005.166
-    .. [SkezelyRizzo2004] Szekely, G. J. and Rizzo, M. L. (2004) Testing for Equal Distributions in High Dimension, InterStat, November (5)
+    :cite:cts:`sdba-cannon_multivariate_2018,sdba-cannon_mbc_2020,sdba-pitie_n-dimensional_2005,sdba-mezzadri_how_2007,sdba-szekely_testing_2004`
+
     """
 
     @classmethod

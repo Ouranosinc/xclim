@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 
-from xclim import atmos
+from xclim import atmos, set_options
 from xclim.testing import open_dataset
 
 K2C = 273.16
@@ -88,32 +88,36 @@ def test_humidex(tas_series):
 
 def test_heat_index(atmosds):
     # Keep just Montreal values for summer time as we need tas > 20 degC
-    tas = atmosds.tas[1][193:210]
-    hurs = atmosds.hurs[1][193:210]
+    tas = atmosds.tasmax[1][150:170]
+    hurs = atmosds.hurs[1][150:170]
 
     expected = np.array(
         [
+            25.0,
+            27.0,
+            29.0,
+            27.0,
+            24.0,
+            np.nan,
+            np.nan,
+            23.0,
+            24.0,
             np.nan,
             np.nan,
             24.0,
+            28.0,
             25.0,
-            24.0,
+            30.0,
             26.0,
-            26.0,
-            20.0,
-            22.0,
-            22.0,
-            20.0,
-            22.0,
-            21.0,
-            24.0,
-            25.0,
-            25.0,
-            26.0,
+            31.0,
+            33.0,
+            34.0,
+            28.0,
         ]
     )
 
-    hi = atmos.heat_index(tas, hurs)
+    with set_options(cf_compliance="raise"):
+        hi = atmos.heat_index(tas, hurs)
     np.testing.assert_array_almost_equal(hi, expected, 0)
     assert hi.name == "heat_index"
 
