@@ -121,7 +121,7 @@ SDBA Footnotes
 ==============
 
 .. bibliography::
-   :style: unsrt
+   :style: xcstyle
    :labelprefix: SDBA
    :keyprefix: sdba-
 

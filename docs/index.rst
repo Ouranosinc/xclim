@@ -28,7 +28,7 @@ xclim currently provides over 50 indices related to mean, minimum and maximum da
    contributing
    authors
    history
-   bibliography
+   references
 
 .. toctree::
    :maxdepth: 2
