@@ -284,8 +284,11 @@ def windowed_run_events(
             out = windowed_run_events_ufunc(da, window, dim)
 
     else:
-        d = rle(da, dim=dim, index=index)
-        d = xr.where(d >= window, 1, 0)
+        if window == 1:
+            d = xr.where(da.shift({dim: 1}, fill_value=0) == 0, 1, 0)
+        else:
+            d = rle(da, dim=dim, index=index)
+            d = xr.where(d >= window, 1, 0)
         if freq is not None:
             d = d.resample({dim: freq})
         out = d.sum(dim=dim)
@@ -337,6 +340,9 @@ def windowed_run_count(
             )
         else:
             out = windowed_run_count_ufunc(da, window, dim)
+
+    elif window == 1 and freq is None:
+        out = da.sum(dim=dim)
 
     else:
         d = rle(da, dim=dim, index=index)
@@ -427,7 +433,7 @@ def first_run(
 
     else:
         d = rle(da, dim=dim, index="first")
-        d = xr.where(d >= window, 1, -1)
+        d = xr.where(d >= window, 1, 0)
         if freq is not None:
             out = d.resample({dim: freq}).map(get_out)
         else:
