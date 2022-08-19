@@ -32,7 +32,7 @@ Internal changes
 * Function ``xclim.core.calendar.build_climatology_bounds`` now exposed via `__all__`. (:pull:`1146`).
 * Clarifications added to docstring of ``xclim.core.bootstrapping.bootstrap_func``. (:pull:`1146`).
 * Bibliographic references for supporting scientific articles are now found in a bibtex file (`docs/references.bib`). These are now made available within the generated documentation using ``sphinxcontrib-bibtex``. (:issue:`1094`, :pull:`1131`).
-* Run length encoding (``xclim.indices.run_length.rle``) has been optimized (:pull:`1122`).
+* Run length encoding (``xclim.indices.run_length.rle``) has been optimized (:issue:`956`, :pull:`1122`).
 
 Bug fixes
 ^^^^^^^^^
