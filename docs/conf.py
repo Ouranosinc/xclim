@@ -123,6 +123,9 @@ napoleon_use_rtype = False
 napoleon_use_param = False
 napoleon_use_ivar = True
 
+# see: https://sphinxcontrib-bibtex.readthedocs.io/en/latest/usage.html#unknown-target-name-when-using-footnote-citations-with-numpydoc
+numpydoc_class_members_toctree = False
+
 intersphinx_mapping = {
     "clisops": ("https://clisops.readthedocs.io/en/latest/", None),
     "flox": ("https://flox.readthedocs.io/en/latest/", None),
