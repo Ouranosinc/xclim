@@ -67,7 +67,7 @@ class AttrFormatter(string.Formatter):
         Parameters
         ----------
         format_string: str
-        args
+        args: Any
         kwargs
 
         Returns
@@ -89,8 +89,8 @@ class AttrFormatter(string.Formatter):
         Examples
         --------
         Let's say the string "The dog is {adj1}, the goose is {adj2}" is to be translated
-        to french and that we know that possible values of `adj` are `nice` and `evil`.
-        In french, the genre of the noun changes the adjective (cat = chat is masculine,
+        to French and that we know that possible values of `adj` are `nice` and `evil`.
+        In French, the genre of the noun changes the adjective (cat = chat is masculine,
         and goose = oie is feminine) so we initialize the formatter as:
 
         >>> fmt = AttrFormatter(
@@ -231,9 +231,8 @@ def parse_doc(doc: str) -> dict[str, str]:
 def _parse_parameters(section):
     """Parse the 'parameters' section of a docstring into a dictionary mapping the parameter name to its description and, potentially, to its set of choices.
 
-    The type annotation are not parsed, except for fixed sets of values
-    (listed as "{'a', 'b', 'c'}"). The annotation parsing only accepts
-    strings, numbers, `None` and `nan` (to represent `numpy.nan`).
+    The type annotation are not parsed, except for fixed sets of values (listed as "{'a', 'b', 'c'}").
+    The annotation parsing only accepts strings, numbers, `None` and `nan` (to represent `numpy.nan`).
     """
     curr_key = None
     params = {}
@@ -294,7 +293,8 @@ def merge_attributes(
     attribute : str
       The attribute to merge.
     inputs_list : Union[xr.DataArray, xr.Dataset]
-      The datasets or variables that were used to produce the new object. Inputs given that way will be prefixed by their `name` attribute if available.
+      The datasets or variables that were used to produce the new object.
+      Inputs given that way will be prefixed by their `name` attribute if available.
     new_line : str
       The character to put between each instance of the attributes. Usually, in CF-conventions,
       the history attributes uses '\\n' while cell_methods uses ' '.
@@ -587,12 +587,14 @@ def _gen_returns_section(cf_attrs: Sequence[dict[str, Any]]):
             section += f" ({attrs['standard_name']})"
         if "units" in attrs:
             section += f" [{attrs['units']}]"
-        section += "\n"
+        added_section = ""
         for key, attr in attrs.items():
             if key not in ["long_name", "standard_name", "units", "var_name"]:
                 if callable(attr):
                     attr = "<Dynamically generated string>"
-                section += f"  {key}: {attr}\n"
+                added_section += f" **{key}**: {attr};"
+        if added_section:
+            section = f"{section}, with additional attributes:{added_section[:-1]}"
     return section
 
 

@@ -7,7 +7,8 @@ The `Indicator` class wraps indices computations with pre- and post-processing f
 the class runs data and metadata health checks. After computations, the class masks values that should be considered
 missing and adds metadata attributes to the  object.
 
-There are many ways to construct indicators. A good place to start is `this notebook <notebooks/extendxclim.ipynb#Defining-new-indicators>`_.
+There are many ways to construct indicators. A good place to start is
+`this notebook <notebooks/extendxclim.ipynb#Defining-new-indicators>`_.
 
 Dictionary and YAML parser
 --------------------------
@@ -54,7 +55,7 @@ details on each.
         allowed_periods: [<list>, <of>, <allowed>, <periods>]
 
         # Compute function
-        compute: <function name>  # Referring to a function in the passed indices module, xclim.indices.generic or xclim.indices
+        compute: <function name>  # Referring to a function in the supplied `Indices` module, xclim.indices.generic or xclim.indices
         input:  # When "compute" is a generic function this is a mapping from argument
                 # name to what CMIP6/xclim variable is expected. This will allow for
                 # declaring expected input units and have a CF metadata check on the inputs.
@@ -72,11 +73,11 @@ details on each.
       ...  # and so on.
 
 All fields are optional. Other fields found in the yaml file will trigger errors in xclim.
-In the following, the section under `<identifier>` is refered to as `data`. When creating indicators from
+In the following, the section under `<identifier>` is referred to as `data`. When creating indicators from
 a dictionary, with :py:meth:`Indicator.from_dict`, the input dict must follow the same structure of `data`.
 
-The resulting yaml file can be validated using the provided schema (in xclim/data/schema.yml) and the `yamale <https://github.com/23andMe/Yamale>`_ tool.
-See the "Extending xclim" notebook for more info.
+The resulting yaml file can be validated using the provided schema (in xclim/data/schema.yml)
+and the YAMALE tool :cite:p:`lopker_yamale_2022`. See the "Extending xclim" notebook for more info.
 
 Inputs
 ~~~~~~
@@ -682,7 +683,7 @@ class Indicator(IndicatorRegistrar):
 
         - "base" : A subclass of Indicator or a name of one listed in
           :py:data:`xclim.core.indicator.registry` or
-          :py:data:`xclim.core.indicaotr.base_registry`. When passed, it acts as if
+          :py:data:`xclim.core.indicator.base_registry`. When passed, it acts as if
           `from_dict` was called on that class instead.
         - "compute" : A string function name translates to a
           :py:mod:`xclim.indices.generic` or :py:mod:`xclim.indices` function.
@@ -788,9 +789,9 @@ class Indicator(IndicatorRegistrar):
 
     def __call__(self, *args, **kwds):
         """Call function of Indicator class."""
-        # Put the variables in `das`, parse them according to the annotations
-        # das : OrderedDict of variables (required + non-None optionals)
-        # params : OrderedDict of parameters (var_kwargs as a single argument, if any)
+        # Put the variables in `das`, parse them according to the following annotations:
+        #     das : OrderedDict of variables (required + non-None optionals)
+        #     params : OrderedDict of parameters (var_kwargs as a single argument, if any)
         das, params = self._parse_variables_from_call(args, kwds)
 
         if OPTIONS[KEEP_ATTRS] is True or (
@@ -964,10 +965,10 @@ class Indicator(IndicatorRegistrar):
     def _get_translated_metadata(
         cls, locale, var_id=None, names=None, append_locale_name=True
     ):
-        """Get raw translated metadata for the curent indicator and a given locale.
+        """Get raw translated metadata for the current indicator and a given locale.
 
         All available translated metadata from the current indicator and those it is
-        based on are merged, with highest priority to the current one.
+        based on are merged, with the highest priority set to the current one.
         """
         var_id = var_id or ""
         if var_id:
@@ -1073,13 +1074,13 @@ class Indicator(IndicatorRegistrar):
 
     @classmethod
     def translate_attrs(cls, locale: str | Sequence[str], fill_missing: bool = True):
-        """Return a dictionary of unformated translated translatable attributes.
+        """Return a dictionary of unformatted translated translatable attributes.
 
         Translatable attributes are defined in :py:const:`xclim.core.locales.TRANSLATABLE_ATTRS`.
 
         Parameters
         ----------
-        locale : Union[str, Sequence[str]]
+        locale : str or sequence of str
           The POSIX name of the locale or a tuple of a locale name and a path to a
           json file defining the translations. See `xclim.locale` for details.
         fill_missing : bool
@@ -1166,7 +1167,7 @@ class Indicator(IndicatorRegistrar):
         attrs: dict,
         args: dict = None,
         formatter: AttrFormatter = default_formatter,
-    ):
+    ) -> dict:
         """Format attributes including {} tags with arguments.
 
         Parameters
@@ -1177,6 +1178,10 @@ class Indicator(IndicatorRegistrar):
           Function call arguments. If not given, the default arguments will be used when formatting the attributes.
         formatter : AttrFormatter
           Plaintext mappings for indicator attributes.
+
+        Returns
+        -------
+        dict
         """
         # Use defaults
         if args is None:
@@ -1526,8 +1531,9 @@ def build_indicator_module_from_yaml(
 ) -> ModuleType:
     """Build or extend an indicator module from a YAML file.
 
-    The module is inserted as a submodule of :py:mod:`xclim.indicators`. When given only a base filename (no 'yml' extesion), this
-    tries to find custom indices in a module of the same name (*.py) and translations in json files (*.<lang>.json), see Notes.
+    The module is inserted as a submodule of :py:mod:`xclim.indicators`.
+    When given only a base filename (no 'yml' extension), this tries to find custom indices in a module
+    of the same name (*.py) and translations in json files (*.<lang>.json), see Notes.
 
     Parameters
     ----------
@@ -1570,7 +1576,9 @@ def build_indicator_module_from_yaml(
 
     See Also
     --------
-    The doc of :py:mod:`xclim.core.indicator` and of :py:func:`build_module`.
+    xclim.core.indicator
+
+    build_module
     """
     filepath = Path(filename)
 

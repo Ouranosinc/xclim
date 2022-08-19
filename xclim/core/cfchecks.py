@@ -34,14 +34,14 @@ def check_valid(var, key: str, expected: str | Sequence[str]):
         )
 
 
-def cfcheck_from_name(varname, vardata):
+def cfcheck_from_name(varname, vardata, attrs=["cell_methods", "standard_name"]):
     """Perform cfchecks on a DataArray using specifications from xclim's default variables."""
     data = VARIABLES[varname]
-    if "cell_methods" in data:
+    if "cell_methods" in data and "cell_methods" in attrs:
         _check_cell_methods(
             getattr(vardata, "cell_methods", None), data["cell_methods"]
         )
-    if "standard_name" in data:
+    if "standard_name" in data and "standard_name" in attrs:
         check_valid(vardata, "standard_name", data["standard_name"])
 
 

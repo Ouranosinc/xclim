@@ -20,7 +20,7 @@ from sklearn.cluster import KMeans
 
 # Avoid having to include matplotlib in xclim requirements
 try:
-    from matplotlib import pyplot as plt
+    from matplotlib import pyplot as plt  # noqa
 
     if not os.getenv("READTHEDOCS"):
         warn("Matplotlib installed. Setting make_graph to True.")
@@ -45,7 +45,8 @@ def kkz_reduce_ensemble(
     The algorithm selects `num_select` ensemble members spanning the overall range of the ensemble.
     The selection is ordered, smaller groups are always subsets of larger ones for given criteria.
     The first selected member is the one nearest to the centroid of the ensemble, all subsequent members
-    are selected in a way maximizing the phase-space coverage of the group. Algorithm taken from [CannonKKZ]_.
+    are selected in a way maximizing the phase-space coverage of the group.
+    Algorithm taken from :cite:t:`cannon_selecting_2015`.
 
     Parameters
     ----------
@@ -70,8 +71,8 @@ def kkz_reduce_ensemble(
 
     References
     ----------
-    .. [CannonKKZ] Cannon, Alex J. (2015). Selecting GCM Scenarios that Span the Range of Changes in a Multimodel Ensemble: Application to CMIP5 Climate Extremes Indices. Journal of Climate, (28)3, 1260-1267. https://doi.org/10.1175/JCLI-D-14-00636.1
-    .. Kastsavounidis, I, Kuo, C.-C. Jay, Zhang, Zhen (1994). A new initialization technique for generalized Lloyd iteration. IEEE Signal Processing Letters, 1(10), 144-146. https://doi.org/10.1109/97.329844
+    :cite:cts:`cannon_selecting_2015,katsavounidis_new_1994`
+
     """
     if standardize:
         data = (data - data.mean("realization")) / data.std("realization")
@@ -129,21 +130,21 @@ def kmeans_reduce_ensemble(
       ensemble members and criteria the variables/indicators used in the grouping algorithm.
     method : dict
       Dictionary defining selection method and associated value when required. See Notes.
-    max_clusters : Optional[int]
+    max_clusters : int, optional
       Maximum number of members to include in the output ensemble selection.
       When using 'rsq_optimize' or 'rsq_cutoff' methods, limit the final selection to a maximum number even if method
       results indicate a higher value. Defaults to N.
-    variable_weights: Optional[np.ndarray]
+    variable_weights: np.ndarray, optional
       An array of size P. This weighting can be used to influence of weight of the climate indices (criteria dimension)
       on the clustering itself.
-    model_weights: Optional[np.ndarray]
+    model_weights: np.ndarray, optional
       An array of size N. This weighting can be used to influence which realization is selected
       from within each cluster. This parameter has no influence on the clustering itself.
-    sample_weights: Optional[np.ndarray]
+    sample_weights: np.ndarray, optional
       An array of size N. sklearn.cluster.KMeans() sample_weights parameter. This weighting can be
       used to influence of weight of simulations on the clustering itself.
       See: https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html
-    random_state: Optional[Union[int, np.random.RandomState]]
+    random_state: int or np.random.RandomState, optional
       sklearn.cluster.KMeans() random_state parameter. Determines random number generation for centroid
       initialization. Use an int to make the randomness deterministic.
       See: https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html
@@ -157,8 +158,8 @@ def kmeans_reduce_ensemble(
 
     rsq_optimize
         Calculate coefficient of variation (R²) of cluster results for n = 1 to N clusters and determine
-        an optimal number of clusters that balances cost / benefit tradeoffs. This is the default setting.
-        See supporting information S2 text in https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0152495
+        an optimal number of clusters that balances cost/benefit tradeoffs. This is the default setting.
+        See supporting information S2 text in :cite:t:`casajus_objective_2016`.
 
         method={'rsq_optimize':None}
 
@@ -188,7 +189,7 @@ def kmeans_reduce_ensemble(
 
     References
     ----------
-    Casajus et al. 2016. https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0152495
+    :cite:cts:`casajus_objective_2016`
 
     Examples
     --------
