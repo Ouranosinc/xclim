@@ -87,6 +87,11 @@ setup(
         xclim=xclim.cli:cli
     """,
     extras_require={"dev": dev_requirements},
+    project_urls={
+        "About Ouranos": "https://www.ouranos.ca/en/",
+        "Changelog": "https://xclim.readthedocs.io/en/stable/history.html",
+        "Issue tracker": "https://github.com/Ouranosinc/xclim/issues",
+    },
     url=URL,
     version=VERSION,
     zip_safe=False,
