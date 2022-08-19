@@ -7,6 +7,7 @@ import numpy as np
 import xarray
 
 from xclim.core.calendar import get_calendar
+from xclim.core.options import OPTIONS, RESAMPLE_BEFORE_RL
 from xclim.core.units import (
     convert_units_to,
     declare_units,
@@ -123,7 +124,7 @@ def cold_spell_days(
     thresh: str = "-10 degC",
     window: int = 5,
     freq: str = "AS-JUL",
-    resample_before_rl: bool = True,
+    resample_before_rl: str | bool = "from_context",
 ) -> xarray.DataArray:
     r"""Cold spell days.
 
@@ -163,12 +164,17 @@ def cold_spell_days(
     """
     t = convert_units_to(thresh, tas)
     over = tas < t
+
+    if resample_before_rl == "from_context":
+        resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
     if resample_before_rl:
         out = over.resample(time=freq).map(
             rl.windowed_run_count, window=window, dim="time"
         )
     else:
-        out = rl.windowed_run_count(over, window=window, dim="time", freq=freq)
+        out = rl.windowed_run_count(
+            over, window=window, dim="time", freq=freq, ufunc_1dim=False
+        )
     return to_agg_units(out, tas, "count")
 
 
@@ -178,7 +184,7 @@ def cold_spell_frequency(
     thresh: str = "-10 degC",
     window: int = 5,
     freq: str = "AS-JUL",
-    resample_before_rl: bool = True,
+    resample_before_rl: str | bool = "from_context",
 ) -> xarray.DataArray:
     r"""Cold spell frequency.
 
@@ -208,10 +214,15 @@ def cold_spell_frequency(
     """
     t = convert_units_to(thresh, tas)
     over = tas < t
+
+    if resample_before_rl == "from_context":
+        resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
     if resample_before_rl:
         over.resample(time=freq).map(rl.windowed_run_events, window=window, dim="time")
     else:
-        out = rl.windowed_run_events(over, window=window, dim="time", freq=freq)
+        out = rl.windowed_run_events(
+            over, window=window, dim="time", freq=freq, ufunc_1dim=False
+        )
     out.attrs["units"] = ""
     return out
 
@@ -412,7 +423,7 @@ def maximum_consecutive_wet_days(
     pr: xarray.DataArray,
     thresh: str = "1 mm/day",
     freq: str = "YS",
-    resample_before_rl: bool = True,
+    resample_before_rl: str | bool = "from_context",
 ) -> xarray.DataArray:
     r"""Consecutive wet days.
 
@@ -454,10 +465,12 @@ def maximum_consecutive_wet_days(
 
     cond = pr > thresh
 
+    if resample_before_rl == "from_context":
+        resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
     if resample_before_rl:
         out = cond.resample(time=freq).map(rl.longest_run, dim="time")
     else:
-        out = rl.longest_run(cond, dim="time", freq=freq)
+        out = rl.longest_run(cond, dim="time", freq=freq, ufunc_1dim=False)
     out = to_agg_units(out, pr, "count")
     return out
 
@@ -508,7 +521,7 @@ def freshet_start(
     thresh: str = "0 degC",
     window: int = 5,
     freq: str = "YS",
-    resample_before_rl: bool = True,
+    resample_before_rl: str | bool = "from_context",
 ) -> xarray.DataArray:
     r"""First day consistently exceeding threshold temperature.
 
@@ -549,6 +562,9 @@ def freshet_start(
     """
     thresh = convert_units_to(thresh, tas)
     over = tas > thresh
+
+    if resample_before_rl == "from_context":
+        resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
     if resample_before_rl:
         out = over.resample(time=freq).map(
             rl.first_run, window=window, coord="dayofyear"
@@ -1302,6 +1318,7 @@ def heat_wave_index(
     """
     thresh = convert_units_to(thresh, tasmax)
     over = tasmax > thresh
+
     group = over.resample(time=freq)
 
     out = group.map(rl.windowed_run_count, window=window, dim="time")

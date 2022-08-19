@@ -10,6 +10,7 @@ import xarray
 import xclim.indices as xci
 import xclim.indices.run_length as rl
 from xclim.core.calendar import parse_offset, resample_doy, select_time
+from xclim.core.options import OPTIONS, RESAMPLE_BEFORE_RL
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.core.utils import DayOfYearStr, uses_dask
 from xclim.indices._threshold import first_day_above, first_day_below, freshet_start
@@ -815,7 +816,7 @@ def dry_spell_frequency(
     thresh: str = "1.0 mm",
     window: int = 3,
     freq: str = "YS",
-    resample_before_rl: bool = True,
+    resample_before_rl: str | bool = "from_context",
     op: str = "sum",
 ) -> xarray.DataArray:
     """Return the number of dry periods of n days and more.
@@ -859,6 +860,9 @@ def dry_spell_frequency(
 
     agg_pr = getattr(pram.rolling(time=window, center=True), op)()
     cond = agg_pr < thresh
+
+    if resample_before_rl == "from_context":
+        resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
     if resample_before_rl:
         out = (
             (agg_pr < thresh)
@@ -866,7 +870,9 @@ def dry_spell_frequency(
             .map(rl.windowed_run_events, window=1, dim="time")
         )
     else:
-        out = rl.windowed_run_events(cond, window=window, dim="time", freq=freq)
+        out = rl.windowed_run_events(
+            cond, window=window, dim="time", freq=freq, ufunc_1dim=False
+        )
 
     out.attrs["units"] = ""
     return out

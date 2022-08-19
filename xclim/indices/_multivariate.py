@@ -8,6 +8,7 @@ import xarray
 
 from xclim.core.bootstrapping import percentile_bootstrap
 from xclim.core.calendar import resample_doy
+from xclim.core.options import OPTIONS, RESAMPLE_BEFORE_RL
 from xclim.core.units import (
     convert_units_to,
     declare_units,
@@ -68,7 +69,7 @@ def cold_spell_duration_index(
     tasmin_per: xarray.DataArray,
     window: int = 6,
     freq: str = "YS",
-    resample_before_rl: bool = True,
+    resample_before_rl: str | bool = "from_context",
     bootstrap: bool = False,  # noqa  # noqa
 ) -> xarray.DataArray:
     r"""Cold spell duration index.
@@ -136,12 +137,16 @@ def cold_spell_duration_index(
 
     below = tasmin < thresh
 
+    if resample_before_rl == "from_context":
+        resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
     if resample_before_rl:
         out = below.resample(time=freq).map(
             rl.windowed_run_count, window=window, dim="time"
         )
     else:
-        out = rl.windowed_run_count(below, window=window, dim="time", freq=freq)
+        out = rl.windowed_run_count(
+            below, window=window, dim="time", freq=freq, ufunc_1dim=False
+        )
 
     return to_agg_units(out, tasmin, "count")
 
@@ -488,7 +493,7 @@ def multiday_temperature_swing(
     window: int = 1,
     op: str = "mean",
     freq: str = "YS",
-    resample_before_rl: bool = True,
+    resample_before_rl: str | bool = "from_context",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Statistics of consecutive diurnal temperature swing events.
 
@@ -537,6 +542,8 @@ def multiday_temperature_swing(
     freeze_threshold = convert_units_to(thresh_tasmin, tasmin)
 
     ft = (tasmin <= freeze_threshold) * (tasmax > thaw_threshold)
+    if resample_before_rl == "from_context":
+        resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
     if op == "count":
 
         if resample_before_rl:
@@ -544,7 +551,9 @@ def multiday_temperature_swing(
                 rl.windowed_run_events, window=window, dim="time"
             )
         else:
-            out = rl.windowed_run_events(ft, window=window, dim="time", freq=freq)
+            out = rl.windowed_run_events(
+                ft, window=window, dim="time", freq=freq, ufunc_1dim=False
+            )
     else:
         if resample_before_rl:
             out = ft.resample(time=freq).map(
@@ -698,7 +707,7 @@ def heat_wave_frequency(
     thresh_tasmax: str = "30 degC",
     window: int = 3,
     freq: str = "YS",
-    resample_before_rl: bool = True,
+    resample_before_rl: str | bool = "from_context",
 ) -> xarray.DataArray:
     r"""Heat wave frequency.
 
@@ -747,10 +756,14 @@ def heat_wave_frequency(
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
+    if resample_before_rl == "from_context":
+        resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
     if resample_before_rl:
         out = cond.resample(time=freq).map(rl.windowed_run_events, window=window)
     else:
-        out = rl.windowed_run_events(cond, window=window, dim="time", freq=freq)
+        out = rl.windowed_run_events(
+            cond, window=window, dim="time", freq=freq, ufunc_1dim=False
+        )
     out.attrs["units"] = ""
     return out
 
@@ -768,7 +781,7 @@ def heat_wave_max_length(
     thresh_tasmax: str = "30 degC",
     window: int = 3,
     freq: str = "YS",
-    resample_before_rl: bool = True,
+    resample_before_rl: str | bool = "from_context",
 ) -> xarray.DataArray:
     r"""Heat wave max length.
 
@@ -819,10 +832,12 @@ def heat_wave_max_length(
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
+    if resample_before_rl == "from_context":
+        resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
     if resample_before_rl:
         max_l = cond.resample(time=freq).map(rl.longest_run, dim="time")
     else:
-        max_l = rl.longest_run(cond, dim="time", freq=freq)
+        max_l = rl.longest_run(cond, dim="time", freq=freq, ufunc_1dim=False)
     out = max_l.where(max_l >= window, 0)
     return to_agg_units(out, tasmax, "count")
 
@@ -840,7 +855,7 @@ def heat_wave_total_length(
     thresh_tasmax: str = "30 degC",
     window: int = 3,
     freq: str = "YS",
-    resample_before_rl: bool = True,
+    resample_before_rl: str | bool = "from_context",
 ) -> xarray.DataArray:
     r"""Heat wave total length.
 
@@ -879,10 +894,14 @@ def heat_wave_total_length(
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
+    if resample_before_rl == "from_context":
+        resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
     if resample_before_rl:
         out = cond.resample(time=freq).map(rl.windowed_run_count, window=window)
     else:
-        out = rl.windowed_run_count(cond, window=window, dim="time", freq=freq)
+        out = rl.windowed_run_count(
+            cond, window=window, dim="time", freq=freq, ufunc_1dim=False
+        )
     return to_agg_units(out, tasmin, "count")
 
 
@@ -1637,7 +1656,7 @@ def warm_spell_duration_index(
     tasmax_per: xarray.DataArray,
     window: int = 6,
     freq: str = "YS",
-    resample_before_rl: bool = True,
+    resample_before_rl: str | bool = "from_context",
     bootstrap: bool = False,  # noqa
 ) -> xarray.DataArray:
     r"""Warm spell duration index.
@@ -1696,12 +1715,16 @@ def warm_spell_duration_index(
 
     above = tasmax > thresh
 
+    if resample_before_rl == "from_context":
+        resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
     if resample_before_rl:
         out = above.resample(time=freq).map(
             rl.windowed_run_count, window=window, dim="time"
         )
     else:
-        out = rl.windowed_run_count(above, window=window, dim="time", freq=freq)
+        out = rl.windowed_run_count(
+            above, window=window, dim="time", freq=freq, ufunc_1dim=False
+        )
     return to_agg_units(out, tasmax, "count")
 
 

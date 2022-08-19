@@ -573,7 +573,7 @@ def keep_longest_run(
     # Get run lengths
     rls = rle(da, dim)
 
-    def get_out(da, dim):
+    def get_out(rls):
         out = xr.where(
             # Construct an integer array and find the max
             rls[dim].copy(data=np.arange(rls[dim].size)) == rls.argmax(dim),
@@ -581,14 +581,14 @@ def keep_longest_run(
             rls,
         )
         out = out.ffill(dim) == out.max(dim)
-        return da.copy(data=out.transpose(*da.dims).data)
+        return out
 
     if freq is not None:
-        out = da.resample({dim: freq}).map(get_out, dim=dim)
+        out = rls.resample({dim: freq}).map(get_out)
     else:
-        out = get_out(da, dim=dim)
+        out = get_out(rls)
 
-    return out
+    return da.copy(data=out.transpose(*da.dims).data)
 
 
 def season(
