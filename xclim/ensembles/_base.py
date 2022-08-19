@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from glob import glob
 from pathlib import Path
-from typing import Sequence
+from typing import Any, Sequence
 
 import numpy as np
 import xarray as xr
@@ -18,10 +18,11 @@ from xclim.core.utils import calc_perc
 
 
 def create_ensemble(
-    datasets: list[xr.Dataset | xr.DataArray | Path | str | list[Path | str]] | str,
+    datasets: Any,
     mf_flag: bool = False,
     resample_freq: str | None = None,
     calendar: str = "default",
+    realizations: Sequence[Any] | None = None,
     **xr_kwargs,
 ) -> xr.Dataset:
     """Create an xarray dataset of an ensemble of climate simulation from a list of netcdf files.
@@ -35,15 +36,17 @@ def create_ensemble(
 
     Parameters
     ----------
-    datasets : List[Union[xr.Dataset, Path, str, List[Path, str]]] or str
+    datasets : list or dict or string
       List of netcdf file paths or xarray Dataset/DataArray objects . If mf_flag is True, ncfiles should be a list of
       lists where each sublist contains input .nc files of an xarray multifile Dataset.
-      If DataArray object are passed, they should have a name in order to be transformed into Datasets.
+      If DataArray objects are passed, they should have a name in order to be transformed into Datasets.
+      A dictionary can be passed instead of a list, in which case the keys are used as coordinates along the new
+      `realization` axis.
       If a string is passed, it is assumed to be a glob pattern for finding datasets.
 
     mf_flag : bool
       If True, climate simulations are treated as xarray multifile Datasets before concatenation.
-      Only applicable when "datasets" is a sequence of file paths.
+      Only applicable when "datasets" is sequence of list of file paths.
 
     resample_freq : Optional[str]
       If the members of the ensemble have the same frequency but not the same offset, they cannot be properly aligned.
@@ -52,6 +55,10 @@ def create_ensemble(
     calendar : str
       The calendar of the time coordinate of the ensemble. For conversions involving '360_day', the align_on='date' option is used.
       See `xclim.core.calendar.convert_calendar`. 'default' is the standard calendar using np.datetime64 objects.
+
+    realizations: sequence, optional
+      The coordinate values for the new `realization` axis. If None (default), the new axis has no coordinate.
+      This argument shouldn't be used if `datasets` is a glob pattern as the dataset order is random.
 
     xr_kwargs :
       Any keyword arguments to be given to `xr.open_dataset` when opening the files (or to `xr.open_mfdataset` if mf_flag is True)
@@ -81,11 +88,25 @@ def create_ensemble(
     >>> datasets.append(glob.glob("/dir2/*.nc"))  # doctest: +SKIP
     >>> ens = create_ensemble(datasets, mf_flag=True)  # doctest: +SKIP
     """
+    if isinstance(datasets, dict):
+        if realizations is None:
+            realizations, datasets = zip(*datasets.items())
+        else:
+            datasets = datasets.values()
+    elif isinstance(datasets, str) and realizations is not None:
+        raise ValueError(
+            "Passing `realizations` is not supported when `datasets` "
+            "is a glob pattern, as the final order is random."
+        )
+
     ds = _ens_align_datasets(
         datasets, mf_flag, resample_freq, calendar=calendar, **xr_kwargs
     )
 
-    dim = xr.IndexVariable("realization", np.arange(len(ds)), attrs={"axis": "E"})
+    if realizations is None:
+        realizations = np.arange(len(ds))
+
+    dim = xr.IndexVariable("realization", list(realizations), attrs={"axis": "E"})
 
     ens = xr.concat(ds, dim)
     for vname, var in ds[0].variables.items():
