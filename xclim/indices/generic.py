@@ -12,7 +12,6 @@ from typing import Sequence
 
 import cftime
 import numpy as np
-import xarray
 import xarray as xr
 from xarray.coding.cftime_offsets import _MONTH_ABBREVIATIONS
 
@@ -56,6 +55,32 @@ __all__ = [
 ]
 
 binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "ne"}
+
+
+def _op_validation(op: str, constrain: Sequence[str] | None) -> str:
+    """Validate the operator given to an indice for validity and allowed usage.
+
+    Parameters
+    ----------
+    op : str
+      Operator.
+    constrain : sequence of str, optional
+      A tuple of allowed operators.
+
+    Returns
+    -------
+    str
+    """
+    if op in binary_ops:
+        op = binary_ops[op]
+    elif op in binary_ops.values():
+        pass
+    else:
+        raise ValueError(f"Operation `{op}` not recognized.")
+    if constrain and op not in constrain:
+        raise ValueError("Operation `{op}` not permitted for indice.")
+
+    return op
 
 
 def select_time(
@@ -182,7 +207,11 @@ def compare(da: xr.DataArray, op: str, thresh: float | int) -> xr.DataArray:
 
 
 def threshold_count(
-    da: xr.DataArray, op: str, thresh: float | int | xr.DataArray, freq: str
+    da: xr.DataArray,
+    op: str,
+    thresh: float | int | xr.DataArray,
+    freq: str,
+    constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
     """Count number of days where value is above or below threshold.
 
@@ -197,12 +226,16 @@ def threshold_count(
     freq : str
       Resampling frequency defining the periods as defined in
       https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+    constrain : sequence of str, optional
+      Optionally allowed conditions.
 
     Returns
     -------
     xr.DataArray
       The number of days meeting the constraints for each period.
     """
+    op = _op_validation(op, constrain)
+
     c = compare(da, op, thresh) * 1
     return c.resample(time=freq).sum(dim="time")
 
@@ -239,7 +272,9 @@ def get_daily_events(da: xr.DataArray, da_value: float, operator: str) -> xr.Dat
     Parameters
     ----------
     da : xr.DataArray
+      Input data.
     da_value : float
+      Threshold value.
     operator : {">", "<", ">=", "<=", "gt", "lt", "ge", "le"}
       Logical operator {>, <, >=, <=, gt, lt, ge, le}. e.g. arr > thresh.
 
@@ -494,6 +529,32 @@ def statistics(data: xr.DataArray, reducer: str, freq: str) -> xr.DataArray:
     out = getattr(data.resample(time=freq), reducer)()
     out.attrs["units"] = data.attrs["units"]
     return out
+
+
+def compare_operation(
+    left: xr.DataArray, op: str, right: xr.DataArray, constrain: Sequence[str] | None
+) -> xr.DataArray:
+    """Compare two variables using a binary logical operation.
+
+    Parameters
+    ----------
+    left : xr.DataArray
+      A DatArray being evaluated against `right`.
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+      Operator.
+    right : xr.DataArray
+      A DatArray being evaluated against left`.
+    constrain : tuple of str or None
+      Constrain the binary operations that are accepted.
+
+    Returns
+    -------
+    xr.DataArray
+    """
+    op = _op_validation(op, constrain)
+
+    func = getattr(left, "_binary_op")(get_op(op))
+    return func(left, right)
 
 
 def thresholded_statistics(
