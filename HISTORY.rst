@@ -15,8 +15,8 @@ New features and enhancements
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `scipy` has been temporarily pinned below version 1.9 until lmoments3 tests can be rewritten to account for the new API. (:issue:`1142`, :pull:`1143`).
-* English indicator metadata has been adjusted to remove frequencies and other automatically formatted fields in the `long_name` of indicators. (:issue:`936`, :pull:`1123`).
-* French indicator metadata translations are now more uniform and follow agreed-upon grammar conventions. (:issue:`936`, :pull:`1123`).
+* English indicator metadata has been adjusted to remove frequencies and other variable-sourced fields in the `long_name` of indicators. English indicators now have an explicit `title` and `abstract`. (:issue:`936`, :pull:`1123`).
+* French indicator metadata translations are now more uniform and follow agreed-upon grammar conventions, removing variable-sourced fields in `long_name_fr`. (:issue:`936`, :pull:`1123`).
 
 Bug fixes
 ^^^^^^^^^
@@ -24,7 +24,6 @@ Bug fixes
 * Indicators that do not care about the input frequency of the data will not check the cell methods of their inputs. (:pull:`1128`).
 * Fixed the signature and docstring of ``heat_index`` by changing ``tasmax`` to ``tas``. (:issue:`1126`, :pull:`1128`).
 * Fixed a formatting issue with virtual indicator modules (`_gen_returns_section`) that was creating malformed `Returns` sections in `sphinx`-generated documentation. (:pull:`1131`).
-
 
 Internal changes
 ^^^^^^^^^^^^^^^^
