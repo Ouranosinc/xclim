@@ -479,8 +479,12 @@ def test_doc():
     assert "Based on indice :py:func:`~xclim.indices.fwi.fire_weather_indexes`." in doc
     assert "ffmc0 : str or DataArray, optional" in doc
     assert "Returns\n-------" in doc
-    assert "See https://cwfis.cfs.nrcan.gc.ca/background/dsm/fwi, the module's" in doc
-    assert "Updated source code for calculating fire danger indexes in the" in doc
+    assert "See :cite:t:`code-natural_resources_canada_data_nodate`, " in doc
+    assert "the :py:mod:`xclim.indices.fwi` module documentation," in doc
+    assert (
+        "and the docstring of :py:func:`fire_weather_ufunc` for more information."
+        in doc
+    )
 
 
 def test_delayed(tasmax_series):
@@ -527,7 +531,7 @@ def test_parse_doc():
         doc["parameters"]["ice_thresh"]["description"]
         == "Threshold temperature under which to switch to equations in reference to ice instead of water. If None (default) everything is computed with reference to water."
     )
-    assert "Goff, J. A., and S. Gratch (1946)" in doc["references"]
+    assert "goff_low-pressure_1946" in doc["references"]
 
 
 def test_parsed_doc():

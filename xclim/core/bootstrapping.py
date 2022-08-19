@@ -27,18 +27,19 @@ def percentile_bootstrap(func):
     Bootstraping avoids discontinuities in the exceedance between the reference period over which percentiles are
     computed, and "out of reference" periods. See `bootstrap_func` for details.
 
-    Example of declaration::
+    Declaration example:
 
-    >>> # doctest: +SKIP
-    >>> @declare_units(tas="[temperature]", t90="[temperature]")
-    ... @percentile_bootstrap
-    ... def tg90p(
-    ...     tas: xarray.DataArray,
-    ...     t90: xarray.DataArray,
-    ...     freq: str = "YS",
-    ...     bootstrap: bool = False,
-    ... ) -> xarray.DataArray:
-    ...     pass
+    .. code-block:: python
+
+        @declare_units(tas="[temperature]", t90="[temperature]")
+        @percentile_bootstrap
+        def tg90p(
+            tas: xarray.DataArray,
+            t90: xarray.DataArray,
+            freq: str = "YS",
+            bootstrap: bool = False,
+        ) -> xarray.DataArray:
+            pass
 
     Examples
     --------
@@ -65,17 +66,23 @@ def percentile_bootstrap(func):
 
 
 def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
-    """Bootstrap the computation of percentile-based exceedance indices.
+    """Bootstrap the computation of percentile-based indices.
 
-    Indices measuring exceedance over percentile-based threshold may contain artificial discontinuities at the
-    beginning and end of the reference period used for calculating the percentile. A bootstrap resampling
-    procedure can reduce those discontinuities by iteratively replacing each the year the indice is computed on from
-    the percentile estimate, and replacing it with another year within the reference period.
+    Indices measuring exceedance over percentile-based thresholds (such as tx90p) may contain artificial discontinuities
+    at the beginning and end of the reference period used to calculate percentiles. The bootstrap procedure can reduce
+    those discontinuities by iteratively computing the percentile estimate and the index on altered reference periods.
+
+    Theses altered reference periods are themselves built iteratively: When computing the index for year x, the
+    bootstrapping create as many altered reference period as the number of years in the reference period.
+    To build one altered reference period, the values of year x are replaced by the values of another year in the
+    reference period, then the index is computed on this altered period. This is repeated for each year of the reference
+    period, excluding year x, The final result of the index for year x, is then the average of all the index results on
+    altered years.
 
     Parameters
     ----------
     compute_index_func : Callable
-      Indice function.
+      Index function.
     kwargs : dict
       Arguments to `func`.
 
@@ -86,8 +93,7 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
 
     References
     ----------
-    Zhang, X., Hegerl, G., Zwiers, F. W., & Kenyon, J. (2005). Avoiding Inhomogeneity in Percentile-Based Indices of
-    Temperature Extremes, Journal of Climate, 18(11), 1641-1651, https://doi.org/10.1175/JCLI3366.1
+    :cite:cts:`zhang_avoiding_2005`
 
     Notes
     -----
@@ -96,14 +102,14 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
     are stored in the attributes of the percentile DataArray.
     The bootstrap algorithm implemented here does the following::
 
-        For each temporal grouping in the calculation of the indice
+        For each temporal grouping in the calculation of the index
             If the group `g_t` is in the reference period
                 For every other group `g_s` in the reference period
                     Replace group `g_t` by `g_s`
                     Compute percentile on resampled time series
-                    Compute indice function using percentile
-                Average output from indice function over all resampled time series
-            Else compute indice function using original percentile
+                    Compute index function using percentile
+                Average output from index function over all resampled time series
+            Else compute index function using original percentile
 
     """
     # Identify the input and the percentile arrays from the bound arguments
