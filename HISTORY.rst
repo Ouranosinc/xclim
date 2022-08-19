@@ -22,7 +22,7 @@ Bug fixes
 * Indicators that do not care about the input frequency of the data will not check the cell methods of their inputs. (:pull:`1128`).
 * Fixed the signature and docstring of ``heat_index`` by changing ``tasmax`` to ``tas``. (:issue:`1126`, :pull:`1128`).
 * Fixed a formatting issue with virtual indicator modules (`_gen_returns_section`) that was creating malformed `Returns` sections in `sphinx`-generated documentation. (:pull:`1131`).
-
+* Removed some artefact reference roles introduced in :pull:`1131` that were causing LaTeX builds of the documentation to fail. (:issue:`1154`, :pull:`1156`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -32,12 +32,12 @@ Internal changes
 * Function ``xclim.core.calendar.build_climatology_bounds`` now exposed via `__all__`. (:pull:`1146`).
 * Clarifications added to docstring of ``xclim.core.bootstrapping.bootstrap_func``. (:pull:`1146`).
 * Bibliographic references for supporting scientific articles are now found in a bibtex file (`docs/references.bib`). These are now made available within the generated documentation using ``sphinxcontrib-bibtex``. (:issue:`1094`, :pull:`1131`).
+* Added information URLs to ``setup.py`` in order to showcase issue tracker and other sites on PyPI page (:pull:`1156`).
 * Run length encoding (``xclim.indices.run_length.rle``) has been optimized (:issue:`956`, :pull:`1122`).
 
 Bug fixes
 ^^^^^^^^^
 * Fix ``biological_effective_degree_days`` for non-scalar latitudes, when using method "gladstones". (:issue:`1136`, :pull:`1137`).
-
 
 0.37.0 (2022-06-20)
 -------------------
