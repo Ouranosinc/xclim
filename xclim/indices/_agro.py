@@ -465,7 +465,7 @@ def cool_night_index(
 
     References
     ----------
-    :footcite:cts:`tonietto_multicriteria_2004`
+    :cite:cts:`tonietto_multicriteria_2004`
     """
     tasmin = convert_units_to(tasmin, "degC")
 
