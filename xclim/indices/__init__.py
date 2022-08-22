@@ -32,6 +32,7 @@ from ._simple import *
 from ._synoptic import *
 from ._threshold import *
 from .fwi import drought_code, fire_season, fire_weather_indexes
+from .ffdi import Keech_Byram_drought_index
 
 """
 Notes for docstring
