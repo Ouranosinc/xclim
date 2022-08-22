@@ -315,7 +315,11 @@ def count_level_crossings(
 
 
 def count_occurrences(
-    data: xr.DataArray, threshold: str, condition: str, freq: str
+    data: xr.DataArray,
+    threshold: str,
+    condition: str,
+    freq: str,
+    constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
     """Calculate the number of times some condition is met.
 
@@ -334,6 +338,8 @@ def count_occurrences(
       Operator.
     freq : str
       Resampling frequency.
+    constrain : sequence of str, optional
+      Optionally allowed conditions.
 
     Returns
     -------
@@ -341,7 +347,7 @@ def count_occurrences(
     """
     threshold = convert_units_to(threshold, data)
 
-    cond = compare(data, condition, threshold)
+    cond = compare(data, condition, threshold, constrain)
 
     out = cond.resample(time=freq).sum()
     return to_agg_units(out, data, "count", dim="time")
@@ -378,7 +384,11 @@ def diurnal_temperature_range(
 
 
 def first_occurrence(
-    data: xr.DataArray, threshold: str, condition: str, freq: str
+    data: xr.DataArray,
+    threshold: str,
+    condition: str,
+    freq: str,
+    constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
     """Calculate the first time some condition is met.
 
@@ -396,6 +406,8 @@ def first_occurrence(
       Operator.
     freq : str
       Resampling frequency.
+    constrain : sequence of str, optional
+      Optionally allowed conditions.
 
     Returns
     -------
@@ -403,7 +415,7 @@ def first_occurrence(
     """
     threshold = convert_units_to(threshold, data)
 
-    cond = compare(data, condition, threshold)
+    cond = compare(data, condition, threshold, constrain)
 
     out = cond.resample(time=freq).map(
         rl.first_run,
@@ -416,7 +428,11 @@ def first_occurrence(
 
 
 def last_occurrence(
-    data: xr.DataArray, threshold: str, condition: str, freq: str
+    data: xr.DataArray,
+    threshold: str,
+    condition: str,
+    freq: str,
+    constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
     """Calculate the last time some condition is met.
 
@@ -434,6 +450,7 @@ def last_occurrence(
       Operator.
     freq : str
       Resampling frequency.
+
 
     Returns
     -------
@@ -454,7 +471,11 @@ def last_occurrence(
 
 
 def spell_length(
-    data: xr.DataArray, threshold: str, condition: str, reducer: str, freq: str
+    data: xr.DataArray,
+    threshold: str,
+    condition: str,
+    reducer: str,
+    freq: str,
 ) -> xr.DataArray:
     """Calculate statistics on lengths of spells.
 

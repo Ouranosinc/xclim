@@ -20,7 +20,7 @@ from xclim.core.units import (
 
 from . import run_length as rl
 from ._conversion import rain_approximation, snowfall_approximation
-from .generic import compare, select_resample_op, threshold_count
+from .generic import compare, compare_arrays, select_resample_op, threshold_count
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -70,6 +70,7 @@ def cold_spell_duration_index(
     window: int = 6,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa  # noqa
+    op: str = "<",
 ) -> xarray.DataArray:
     r"""Cold spell duration index.
 
@@ -93,6 +94,8 @@ def cold_spell_duration_index(
       the rest of the time series.
       Keep bootstrap to False when there is no common period, it would give wrong results
       plus, bootstrapping is computationally expensive.
+    op: {"<", "<=", "lt", "le"}
+      Comparison operation. Default: "<".
 
     Returns
     -------
@@ -131,7 +134,7 @@ def cold_spell_duration_index(
     # Create time series out of doy values.
     thresh = resample_doy(tasmin_per, tasmin)
 
-    below = tasmin < thresh
+    below = compare_arrays(tasmin, op, thresh, constrain=("<", "<="))
 
     out = below.resample(time=freq).map(
         rl.windowed_run_count, window=window, dim="time"
@@ -799,6 +802,7 @@ def heat_wave_total_length(
     thresh_tasmax: str = "30 degC",
     window: int = 3,
     freq: str = "YS",
+    op: str = ">",
 ) -> xarray.DataArray:
     r"""Heat wave total length.
 
@@ -820,6 +824,8 @@ def heat_wave_total_length(
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
     freq : str
       Resampling frequency.
+    op: {">", ">=", "gt", "ge"}
+      Comparison operation. Default: ">".
 
     Returns
     -------
@@ -833,7 +839,10 @@ def heat_wave_total_length(
     thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
 
-    cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
+    constrain = (">", ">=")
+    cond = compare(tasmin, op, thresh_tasmin, constrain) & compare(
+        tasmax, op, thresh_tasmax, constrain
+    )
     out = cond.resample(time=freq).map(rl.windowed_run_count, window=window)
     return to_agg_units(out, tasmin, "count")
 
@@ -1084,6 +1093,7 @@ def days_over_precip_thresh(
     thresh: str = "1 mm/day",
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
+    op: str = ">",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of wet days with daily precipitation over a given percentile.
 
@@ -1108,6 +1118,8 @@ def days_over_precip_thresh(
       the rest of the time series.
       Keep bootstrap to False when there is no common period, it would give wrong results
       plus, bootstrapping is computationally expensive.
+    op: {">", ">=", "gt", "ge"}
+      Comparison operation. Default: ">".
 
     Returns
     -------
@@ -1130,7 +1142,7 @@ def days_over_precip_thresh(
         tp = resample_doy(tp, pr)
 
     # Compute the days when precip is both over the wet day threshold and the percentile threshold.
-    out = threshold_count(pr, ">", tp, freq)
+    out = threshold_count(pr, op, tp, freq, constrain=(">", ">="))
     return to_agg_units(out, pr, "count")
 
 
@@ -1221,7 +1233,7 @@ def tg90p(
       Keep bootstrap to False when there is no common period, it would give wrong results
       plus, bootstrapping is computationally expensive.
     op: {">", ">=", "gt", "ge"}
-        Comparison operation. Default: ">".
+      Comparison operation. Default: ">".
 
     Returns
     -------
@@ -1279,7 +1291,7 @@ def tg10p(
       Keep bootstrap to False when there is no common period, it would give wrong results
       plus, bootstrapping is computationally expensive.
     op: {"<", "<=", "lt", "le"}
-        Comparison operation. Default: "<".
+      Comparison operation. Default: "<".
 
     Returns
     -------
@@ -1337,7 +1349,7 @@ def tn90p(
       Keep bootstrap to False when there is no common period, it would give wrong results
       plus, bootstrapping is computationally expensive.
     op: {">", ">=", "gt", "ge"}
-        Comparison operation. Default: ">".
+      Comparison operation. Default: ">".
 
     Returns
     -------
@@ -1571,7 +1583,7 @@ def tx_tn_days_above(
     freq : str
       Resampling frequency.
     op: {">", ">=", "gt", "ge"}
-        Comparison operation. Default: ">".
+      Comparison operation. Default: ">".
 
     Returns
     -------

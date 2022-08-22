@@ -333,9 +333,9 @@ def very_large_precipitation_events(
 @register_methods
 @update_xclim_history
 def values_op_thresh_repeating_for_n_or_more_days(
-    da: xarray.DataArray, *, n: int, thresh: str, op: str = "eq"
+    da: xarray.DataArray, *, n: int, thresh: str, op: str = "=="
 ) -> xarray.DataArray:
-    """Check if array values repeat at a given threshold for 'n' or more days.
+    """Check if array values repeat at a given threshold for `N` or more days.
 
     Parameters
     ----------
@@ -345,7 +345,7 @@ def values_op_thresh_repeating_for_n_or_more_days(
       Number of days needed to trigger flag.
     thresh : str
       Repeating values to search for that will trigger flag.
-    op : {"eq", "gt", "lt", "gteq", "lteq"}
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
       Operator used for comparison with thresh.
 
     Returns
@@ -366,8 +366,7 @@ def values_op_thresh_repeating_for_n_or_more_days(
     ... )
     """
     thresh = convert_units_to(thresh, da)
-    if op not in {"eq", "gt", "lt", "gteq", "lteq"}:
-        raise ValueError("Operator must not be symbolic.")
+
     repetitions = _sanitize_attrs(suspicious_run(da, window=n, op=op, thresh=thresh))
     description = (
         f"Repetitive values at {thresh} for at least {n} days found for {da.name}."

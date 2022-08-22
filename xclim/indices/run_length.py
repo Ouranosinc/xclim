@@ -1236,7 +1236,7 @@ def suspicious_run_1d(
     op : {">", ">=", "==", "<", "<=", "eq", "gt", "lt", "gteq", "lteq", "ge", "le"}
       Operator for threshold comparison. Defaults to ">".
     thresh : float, optional
-      Threshold above which values are checked for identical values.
+      Threshold compared against which values are checked for identical values.
 
     Returns
     -------
@@ -1252,6 +1252,8 @@ def suspicious_run_1d(
             sus_runs = sus_runs & (v < thresh)
         elif op in {"==", "eq"}:
             sus_runs = sus_runs & (v == thresh)
+        elif op in {"!=", "ne"}:
+            sus_runs = sus_runs & (v != thresh)
         elif op in {">=", "gteq", "ge"}:
             sus_runs = sus_runs & (v >= thresh)
         elif op in {"<=", "lteq", "le"}:
