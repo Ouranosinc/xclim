@@ -522,7 +522,7 @@
   },
   "FROST_SEASON_LENGTH": {
     "long_name": "Durée de la saison de gel",
-    "description": "Nombre {freq} de jours entre la première occurrence d'au moins {window} jours consécutifs avec une température minimale journalière inférieure au point de congélation et la première occurrence d'au moins {window} jours consécutifs avec une température minimale journalière supérieure au point de congélation après {mid_date}.",
+    "description": "Nombre {freq} de jours entre la première occurrence d'au moins {window} jours consécutifs ayant une température minimale journalière inférieure au point de congélation et la première occurrence d'au moins {window} jours consécutifs ayant une température minimale journalière supérieure au point de congélation après {mid_date}.",
     "title": "Durée de la saison de gel",
     "abstract": "Durée de la saison de gel, définie comme la période pendant laquelle la température minimale quotidnne est inférieure à 0°C sans fenêtre de dégel de plusieurs jours, le dégel se produisant après une date calendaire médiane."
   },
@@ -542,13 +542,13 @@
     "long_name": "Durée maximale des périodes de gel",
     "description": "Durée maximale {freq:f} des périodes où la température minimale quotidienne est sous {thresh}.",
     "title": "Durée maximale des périodes de gel",
-    "abstract": "Durée maximale des périodes consécutives où la température minimale quotidienne est sous 0°C."
+    "abstract": "Durée maximale des périodes consécutives où la température minimale quotidienne est sous un seuil donné."
   },
   "FROST_FREE_SEASON_LENGTH": {
     "long_name": "Durée de la saison sans gel",
-    "description": "Nombre {freq} de jours entre la première occurrence d'au moins {window} jours consécutifs avec une température minimale journalière supérieure au point de congélation et la première occurrence d'au moins {window} jours consécutifs avec une température minimale journalière inférieure au point de congélation après {mid_date}.",
+    "description": "Nombre {freq} de jours entre la première occurrence d'au moins {window} jours consécutifs ayant une température minimale quoditienne supérieure au point de congélation et la première occurrence d'au moins {window} jours consécutifs ayant une température minimale quotidienne inférieure au point de congélation après {mid_date}.",
     "title": "Durée de la saison sans gel",
-    "abstract": "Durée de la saison sans gel, définie comme la période pendant laquelle la température minimale quotidnne est supérieure à 0°C sans fenêtre de gel de plusieurs jours, le gel se produisant après une date calendaire médiane."
+    "abstract": "Durée de la saison sans gel, définie comme la période pendant laquelle la température minimale quotidienne est supérieure à 0°C sans fenêtre de gel de plusieurs jours, le gel se produisant après une date calendaire médiane."
   },
   "FROST_FREE_SEASON_START": {
     "long_name": "Premier jour de dépassement constant du seuil de température",
@@ -638,7 +638,7 @@
     "long_name": "Nombre de périodes chaudes",
     "description": "Nombre {freq} de périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne excède {thresh_tasmax} durant au moins {window} jours.",
     "title": "Fréquences des périodes chaudes",
-    "abstract": "Nombre de périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne excède un seuil spécifique durant un minimum de jours."
+    "abstract": "Nombre de périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne excède un seuil spécifique durant un minimum de jours donné."
   },
   "LAST_SPRING_FROST": {
     "long_name": "Jour de l'année du dernier gel printanier",
@@ -660,15 +660,15 @@
   },
   "GROWING_SEASON_END": {
     "long_name": "Jour de l'année de la fin de la saison de croissance",
-    "description": "Jour de l'année du début de la saison de croissance, défini comme le premier jour de température constante supérieure ou égale au seuil de {thresh} après une série de {window} jours inférieurs à la température seuil, survenant après {mid_date}.",
+    "description": "Jour de l'année du début de la saison de croissance, défini comme le premier jour après {mid_date} ayant une température supérieure ou égale à {thresh} après une série de {window} jours ayant une température inférieure à {thresh}.",
     "title": "Fin de la saison de croissance",
-    "abstract": "Le premier jour où la température est inférieure à un certain seuil pendant un certain nombre de jours consécutifs après une date de calendrier spécifique."
+    "abstract": "Le premier jour où la température est inférieure à un certain seuil pendant un certain nombre de jours consécutifs après une date de calendrier donnée."
   },
   "FROST_FREE_SEASON_END": {
     "long_name": "Jour de l'année de la fin de la saison sans gel",
     "description": "Jour de l'année de la fin de la saison sans gel. La saison sans gel est définie comme l'intervalle entre la première série de {window} jours où la température quotidienne est au-dessus de {thresh} et la première série (après le {mid_date}) de {window} jours où elle est sous {thresh}.",
     "title": "Fin de la saison sans gel",
-    "abstract": "Premier jour où la température est inférieure à un certain seuil donné depuis un certain nombre de jours consécutifs."
+    "abstract": "Premier jour où la température est inférieure à un seuil donné depuis un certain nombre de jours consécutifs."
   },
   "FWI": {
     "description": "L'IFM est formé de six composantes qui tiennent compte des effets de la teneur en eau des combustibles et des conditions météorologiques sur le comportement du feu.",
@@ -755,7 +755,7 @@
   },
   "FIRST_DAY_BELOW": {
     "long_name": "Premier jour de l'année avec une température sous un seuil",
-    "description": "Premier jour de l'année avec une température sous {thresh} pour au moins {window} jours après {after_date}.",
+    "description": "Premier jour de l'année après {after_date} ayant une température sous {thresh} pour au moins {window} jours .",
     "title": "Premier jour de l'année de températures sous un seuil",
     "abstract": "Calcule le premier jour d'une période où la température est inférieure à un certain seuil pendant un nombre de jours, après une date de calendrier donnée."
   },
@@ -905,7 +905,7 @@
   },
   "WARM_SPELL_DURATION_INDEX": {
     "title": "Indice de durée des vagues de chaleur",
-    "abstract": "Nombre de jours de la série avec durée minimale où la température maximale quotidienne dépasse un percentile donné. Le seuil percentile des températures doit être calculé avec une fenêtre mobile d'un nombre de jours donné.",
+    "abstract": "Nombre de jours de la série avec durée minimale où la température maximale quotidienne dépasse un centile donné. Le seuil de centile des températures doit être calculé avec une fenêtre mobile d'un nombre de jours donné.",
     "description": "Nombre de jours avec au moins {window} jours consécutifs où la température maximale quotidienne est supérieure au(x) {tasmax_per_thresh}e centile(s). Une fenêtre de {tasmax_per_window} jour(s), centrée sur chaque jour du calendrier de la période {tasmax_per_period}, est utilisée pour calculer le(s) {tasmax_per_thresh}e(s) centile(s).",
     "long_name": "Nombre de jours faisant partie d'une vague de chaleur définie par un centile"
   },
@@ -923,8 +923,8 @@
   },
   "CORN_HEAT_UNITS": {
     "title": "Unités thermiques maïs",
-    "abstract": "Indice basé sur la température utilisé pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température minimale quotidienne et maximale excèdent des seuils donnés.",
-    "description": "Indice basé sur la température utilisé pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température minimale quotidienne et maximale excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement.",
+    "abstract": "Indice basé sur la température utilisée pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température minimale quotidienne et la température maximale quotidienne excèdent des seuils donnés.",
+    "description": "Indice basé sur la température utilisée pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température minimale quotidienne et et la température maximale quotidienne excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement.",
     "long_name": "Unités thermiques maïs"
   },
   "FREEZETHAW_SPELL_FREQUENCY": {
