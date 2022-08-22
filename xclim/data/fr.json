@@ -304,7 +304,7 @@
   "HEAT_WAVE_MAX_LENGTH": {
     "long_name": "Durée maximale des vagues de chaleur",
     "description": "Durée maximale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
-    "title": "Longueur maximale des vagues de chaleur",
+    "title": "Durée maximale des vagues de chaleur",
     "abstract": "Durée maximale des vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent des seuils donnés durant un certain nombre de jours."
   },
   "HEAT_WAVE_INDEX": {
