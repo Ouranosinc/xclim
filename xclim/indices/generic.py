@@ -8,7 +8,7 @@ Helper functions for common generic actions done in the computation of indices.
 from __future__ import annotations
 
 import warnings
-from typing import Sequence
+from typing import Callable, Sequence
 
 import cftime
 import numpy as np
@@ -122,7 +122,7 @@ def default_freq(**indexer) -> str:
     return freq
 
 
-def get_op(op: str, constrain: Sequence[str] | None = None):
+def get_op(op: str, constrain: Sequence[str] | None = None) -> Callable:
     """Get python's comparing function according to its name of representation and validate allowed usage.
 
     Accepted op string are keys and values of xclim.indices.generic.binary_ops.
@@ -247,7 +247,13 @@ def domain_count(da: xr.DataArray, low: float, high: float, freq: str) -> xr.Dat
     return c.resample(time=freq).sum(dim="time")
 
 
-def get_daily_events(da: xr.DataArray, da_value: float, operator: str) -> xr.DataArray:
+# FIXME: da_value should be renamed `thresh` for consistency
+def get_daily_events(
+    da: xr.DataArray,
+    da_value: float,
+    operator: str,
+    constrain: Sequence[str] | None = None,
+) -> xr.DataArray:
     """Return a 0/1 mask when a condition is True or False.
 
     Parameters
@@ -258,6 +264,8 @@ def get_daily_events(da: xr.DataArray, da_value: float, operator: str) -> xr.Dat
       Threshold value.
     operator : {">", "<", ">=", "<=", "gt", "lt", "ge", "le"}
       Logical operator {>, <, >=, <=, gt, lt, ge, le}. e.g. arr > thresh.
+    constrain : sequence of str, optional
+      Optionally allowed conditions.
 
     Notes
     -----
@@ -270,8 +278,7 @@ def get_daily_events(da: xr.DataArray, da_value: float, operator: str) -> xr.Dat
     -------
     xr.DataArray
     """
-    func = getattr(da, "_binary_op")(get_op(operator))
-    events = func(da, da_value) * 1
+    events = compare(da, operator, thresh=da_value, constrain=constrain) * 1
     events = events.where(~(np.isnan(da)))
     events = events.rename("events")
     return events
@@ -450,7 +457,8 @@ def last_occurrence(
       Operator.
     freq : str
       Resampling frequency.
-
+    constrain : sequence of str, optional
+      Optionally allowed conditions.
 
     Returns
     -------
@@ -458,7 +466,7 @@ def last_occurrence(
     """
     threshold = convert_units_to(threshold, data)
 
-    cond = compare(data, condition, threshold)
+    cond = compare(data, condition, threshold, constrain)
 
     out = cond.resample(time=freq).map(
         rl.last_run,
@@ -553,8 +561,7 @@ def compare_arrays(
     -------
     xr.DataArray
     """
-    func = getattr(left, "_binary_op")(get_op(op, constrain))
-    return func(left, right)
+    return getattr(left, "_binary_op")(right, get_op(op, constrain))
 
 
 def thresholded_statistics(

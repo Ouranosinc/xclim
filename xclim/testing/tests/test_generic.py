@@ -6,7 +6,6 @@ import xarray as xr
 
 from xclim.core.calendar import date_range, doy_to_days_since, select_time
 from xclim.indices import generic
-from xclim.indices.helpers import day_lengths
 
 
 class TestSelectResampleOp:
@@ -272,139 +271,149 @@ class TestDegreeDays:
         np.testing.assert_allclose(out, out_kelvin)
 
 
-def series(start, end, calendar):
-    time = date_range(start, end, calendar=calendar)
-    return xr.DataArray([1] * time.size, dims=("time",), coords={"time": time})
+class TestGetDailyEvents:
+    def test_simple(self, tas_series):
+        arr = xr.DataArray(np.array([-10, 15, 20, np.NaN, 10]), name="Stuff")
+
+        out = generic.get_daily_events(arr, da_value=10, operator=">=")
+
+        assert out.name == "events"
+        assert out.sum() == 3
+        np.testing.assert_array_equal(out, [0, 1, 1, np.NaN, 1])
 
 
-def test_select_time_month():
-    da = series("1993-01-05", "1994-12-31", "default")
+class TestTimeSelection:
+    @staticmethod
+    def series(start, end, calendar):
+        time = date_range(start, end, calendar=calendar)
+        return xr.DataArray([1] * time.size, dims=("time",), coords={"time": time})
 
-    out = select_time(da, drop=True, month=1)
-    exp = xr.concat(
-        (
-            series("1993-01-05", "1993-01-31", "default"),
-            series("1994-01-01", "1994-01-31", "default"),
-        ),
-        "time",
-    )
-    xr.testing.assert_equal(out, exp)
+    def test_select_time_month(self):
+        da = self.series("1993-01-05", "1994-12-31", "default")
 
-    out = select_time(da, month=1)
-    xr.testing.assert_equal(out.time, da.time)
-    assert out.sum() == 58
+        out = select_time(da, drop=True, month=1)
+        exp = xr.concat(
+            (
+                self.series("1993-01-05", "1993-01-31", "default"),
+                self.series("1994-01-01", "1994-01-31", "default"),
+            ),
+            "time",
+        )
+        xr.testing.assert_equal(out, exp)
 
-    da = series("1993-01-05", "1994-12-30", "360_day")
-    out = select_time(da, drop=True, month=[3, 6])
-    exp = xr.concat(
-        (
-            series("1993-03-01", "1993-03-30", "360_day"),
-            series("1993-06-01", "1993-06-30", "360_day"),
-            series("1994-03-01", "1994-03-30", "360_day"),
-            series("1994-06-01", "1994-06-30", "360_day"),
-        ),
-        "time",
-    )
-    xr.testing.assert_equal(out, exp)
+        out = select_time(da, month=1)
+        xr.testing.assert_equal(out.time, da.time)
+        assert out.sum() == 58
 
+        da = self.series("1993-01-05", "1994-12-30", "360_day")
+        out = select_time(da, drop=True, month=[3, 6])
+        exp = xr.concat(
+            (
+                self.series("1993-03-01", "1993-03-30", "360_day"),
+                self.series("1993-06-01", "1993-06-30", "360_day"),
+                self.series("1994-03-01", "1994-03-30", "360_day"),
+                self.series("1994-06-01", "1994-06-30", "360_day"),
+            ),
+            "time",
+        )
+        xr.testing.assert_equal(out, exp)
 
-def test_select_time_season():
-    da = series("1993-01-05", "1994-12-31", "default")
+    def test_select_time_season(self):
+        da = self.series("1993-01-05", "1994-12-31", "default")
 
-    out = select_time(da, drop=True, season="DJF")
-    exp = xr.concat(
-        (
-            series("1993-01-05", "1993-02-28", "default"),
-            series("1993-12-01", "1994-02-28", "default"),
-            series("1994-12-01", "1994-12-31", "default"),
-        ),
-        "time",
-    )
-    xr.testing.assert_equal(out, exp)
+        out = select_time(da, drop=True, season="DJF")
+        exp = xr.concat(
+            (
+                self.series("1993-01-05", "1993-02-28", "default"),
+                self.series("1993-12-01", "1994-02-28", "default"),
+                self.series("1994-12-01", "1994-12-31", "default"),
+            ),
+            "time",
+        )
+        xr.testing.assert_equal(out, exp)
 
-    da = series("1993-01-05", "1994-12-31", "365_day")
-    out = select_time(da, drop=True, season=["MAM", "SON"])
-    exp = xr.concat(
-        (
-            series("1993-03-01", "1993-05-31", "365_day"),
-            series("1993-09-01", "1993-11-30", "365_day"),
-            series("1994-03-01", "1994-05-31", "365_day"),
-            series("1994-09-01", "1994-11-30", "365_day"),
-        ),
-        "time",
-    )
-    xr.testing.assert_equal(out, exp)
+        da = self.series("1993-01-05", "1994-12-31", "365_day")
+        out = select_time(da, drop=True, season=["MAM", "SON"])
+        exp = xr.concat(
+            (
+                self.series("1993-03-01", "1993-05-31", "365_day"),
+                self.series("1993-09-01", "1993-11-30", "365_day"),
+                self.series("1994-03-01", "1994-05-31", "365_day"),
+                self.series("1994-09-01", "1994-11-30", "365_day"),
+            ),
+            "time",
+        )
+        xr.testing.assert_equal(out, exp)
 
+    def test_select_time_doys(self):
+        da = self.series("2003-02-13", "2004-12-31", "default")
 
-def test_select_time_doys():
-    da = series("2003-02-13", "2004-12-31", "default")
+        out = select_time(da, drop=True, doy_bounds=(360, 75))
+        exp = xr.concat(
+            (
+                self.series("2003-02-13", "2003-03-16", "default"),
+                self.series("2003-12-26", "2004-03-15", "default"),
+                self.series("2004-12-25", "2004-12-31", "default"),
+            ),
+            "time",
+        )
+        xr.testing.assert_equal(out, exp)
 
-    out = select_time(da, drop=True, doy_bounds=(360, 75))
-    exp = xr.concat(
-        (
-            series("2003-02-13", "2003-03-16", "default"),
-            series("2003-12-26", "2004-03-15", "default"),
-            series("2004-12-25", "2004-12-31", "default"),
-        ),
-        "time",
-    )
-    xr.testing.assert_equal(out, exp)
+        da = self.series("2003-02-13", "2004-12-31", "proleptic_gregorian")
 
-    da = series("2003-02-13", "2004-12-31", "proleptic_gregorian")
+        out = select_time(da, drop=True, doy_bounds=(25, 80))
+        exp = xr.concat(
+            (
+                self.series("2003-02-13", "2003-03-21", "proleptic_gregorian"),
+                self.series("2004-01-25", "2004-03-20", "proleptic_gregorian"),
+            ),
+            "time",
+        )
+        xr.testing.assert_equal(out, exp)
 
-    out = select_time(da, drop=True, doy_bounds=(25, 80))
-    exp = xr.concat(
-        (
-            series("2003-02-13", "2003-03-21", "proleptic_gregorian"),
-            series("2004-01-25", "2004-03-20", "proleptic_gregorian"),
-        ),
-        "time",
-    )
-    xr.testing.assert_equal(out, exp)
+    def test_select_time_dates(self):
+        da = self.series("2003-02-13", "2004-11-01", "all_leap")
+        da = da.where(da.time.dt.dayofyear != 92, drop=True)  # no 04-01
 
+        out = select_time(da, drop=True, date_bounds=("04-01", "12-04"))
+        exp = xr.concat(
+            (
+                self.series("2003-04-02", "2003-12-04", "all_leap"),
+                self.series("2004-04-02", "2004-11-01", "all_leap"),
+            ),
+            "time",
+        )
+        xr.testing.assert_equal(out, exp)
 
-def test_select_time_dates():
-    da = series("2003-02-13", "2004-11-01", "all_leap")
-    da = da.where(da.time.dt.dayofyear != 92, drop=True)  # no 04-01
+        da = self.series("2003-02-13", "2005-11-01", "standard")
 
-    out = select_time(da, drop=True, date_bounds=("04-01", "12-04"))
-    exp = xr.concat(
-        (
-            series("2003-04-02", "2003-12-04", "all_leap"),
-            series("2004-04-02", "2004-11-01", "all_leap"),
-        ),
-        "time",
-    )
-    xr.testing.assert_equal(out, exp)
+        out = select_time(da, drop=True, date_bounds=("10-05", "02-29"))
+        exp = xr.concat(
+            (
+                self.series("2003-02-13", "2003-02-28", "standard"),
+                self.series("2003-10-05", "2004-02-29", "standard"),
+                self.series("2004-10-05", "2005-02-28", "standard"),
+                self.series("2005-10-05", "2005-11-01", "standard"),
+            ),
+            "time",
+        )
+        xr.testing.assert_equal(out, exp)
 
-    da = series("2003-02-13", "2005-11-01", "standard")
+    def test_select_time_errors(self):
+        da = self.series("2003-01-01", "2004-01-01", "standard")
 
-    out = select_time(da, drop=True, date_bounds=("10-05", "02-29"))
-    exp = xr.concat(
-        (
-            series("2003-02-13", "2003-02-28", "standard"),
-            series("2003-10-05", "2004-02-29", "standard"),
-            series("2004-10-05", "2005-02-28", "standard"),
-            series("2005-10-05", "2005-11-01", "standard"),
-        ),
-        "time",
-    )
-    xr.testing.assert_equal(out, exp)
+        xr.testing.assert_identical(da, select_time(da))
 
+        with pytest.raises(
+            ValueError, match="Only one method of indexing may be given"
+        ):
+            select_time(da, season="DJF", month=[3, 4, 5])
 
-def test_select_time_errors():
-    da = series("2003-01-01", "2004-01-01", "standard")
+        with pytest.raises(ValueError, match="invalid day number provided in cftime."):
+            select_time(da, date_bounds=("02-30", "03-03"))
 
-    xr.testing.assert_identical(da, select_time(da))
+        with pytest.raises(ValueError):
+            select_time(da, date_bounds=("02-30",))
 
-    with pytest.raises(ValueError, match="Only one method of indexing may be given"):
-        select_time(da, season="DJF", month=[3, 4, 5])
-
-    with pytest.raises(ValueError, match="invalid day number provided in cftime."):
-        select_time(da, date_bounds=("02-30", "03-03"))
-
-    with pytest.raises(ValueError):
-        select_time(da, date_bounds=("02-30",))
-
-    with pytest.raises(TypeError):
-        select_time(da, doy_bounds=(300, 203, 202))
+        with pytest.raises(TypeError):
+            select_time(da, doy_bounds=(300, 203, 202))
