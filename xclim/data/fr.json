@@ -231,15 +231,15 @@
   },
   "SPI": {
     "long_name": "Indice de précipitation standardisé (SPI)",
-    "description": "Précipitation sur une fenêtre mobile de {window} {freq:nom}, normalisée telle que la moyenne de SPI est 0 pour les données de calibration. L'unité de la fenêtre 'X' est l'unité de temps déterminée par la fréquence de ré-échantillonage",
+    "description": "Précipitation sur une fenêtre mobile de {window} {freq:nom}, normalisée telle que la moyenne de SPI est 0 pour les données de calibration. L'unité de la fenêtre 'X' est l'unité de temps déterminée par la fréquence de rééchantillonage",
     "title": "Indice de précipitation standardisé (SPI)",
-    "abstract": "Précipitation sur une fenêtre mobile, normalisée telle que la moyenne de SPI est 0 pour les données de calibration. L'unité de la fenêtre est l'unité de temps déterminée par la fréquence de ré-échantillonnage."
+    "abstract": "Précipitation sur une fenêtre mobile, normalisée telle que la moyenne de SPI est 0 pour les données de calibration. L'unité de la fenêtre est l'unité de temps déterminée par la fréquence de rééchantillonnage."
   },
   "SPEI": {
     "long_name": "Indice de précipitation évapotranspiration standardisé (SPEI)",
-    "description": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile de {window} {freq:nom}, normalisé tel que la moyenne de SPEI est 0 pour les données de calibration. L'unité de fenêtre `X` est l'unité de temps determinée par la fréquence de ré-échantillonnage {freq}.",
+    "description": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile de {window} {freq:nom}, normalisé tel que la moyenne de SPEI est 0 pour les données de calibration. L'unité de fenêtre `X` est l'unité de temps determinée par la fréquence de rééchantillonnage {freq}.",
     "title": "Indice de précipitation évapotranspiration standardisé (SPEI)",
-    "abstract": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile, normalisé tel que la moyenne de SPEI est 0 pour les données de calibration. L'unité de la fenêtre est l'unité de temps déterminée par la fréquence de ré-échantillonnage."
+    "abstract": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile, normalisé tel que la moyenne de SPEI est 0 pour les données de calibration. L'unité de la fenêtre est l'unité de temps déterminée par la fréquence de rééchantillonnage."
   },
   "DC": {
     "long_name": "Indice de sécheresse",
@@ -512,11 +512,11 @@
     "description": "Température moyenne du mois le plus chaud avec un facteur d'échelle basé sur la latitude  : Moyenne de température du mois le plus chaud * ({lat_factor} - latitude).",
     "title": "Indice de latitude-température",
     "comment": "Formule originale prise de Jackson, D. I., & Cherry, N. J. (1988)",
-    "abstract": "indice climatique basé sur la température moyenne du mois le plus chaud et un coefficient basé sur la latitude pour tenir compte de la durée plus longue du jour favorisant les conditions de croissance. Développé spécifiquement pour la viticulture."
+    "abstract": "Indice climatique basé sur la température moyenne du mois le plus chaud et un coefficient basé sur la latitude pour tenir compte de la durée plus longue du jour favorisant les conditions de croissance. Développé spécifiquement pour la viticulture."
   },
   "FRESHET_START": {
     "long_name": "Premier jour de dépassement constant du seuil de température",
-    "description": "jour de l'année du début de la crue printanière, défini comme le premier jour où un seuil de température de {thresh} est dépassé pendant au moins {window} jours.",
+    "description": "Jour de l'année du début de la crue printanière, défini comme le premier jour où un seuil de température de {thresh} est dépassé pendant au moins {window} jours.",
     "title": "Jour de l'année du début de la crue nivale",
     "abstract": "Premier jour où la température excède un certain seuil depuis un certain nombre de jours consécutifs."
   },
@@ -708,7 +708,7 @@
     "description": "Magnitude de la vitesse du vent calculée à partir des deux composantes uas et vas."
   },
   "WIND_SPEED_FROM_VECTOR.sfcWindfromdir": {
-    "long_name": "Vent près de la surface en provenance d'une direction",
+    "long_name": "Vent près de la surface en provenance d'une certaine direction",
     "description": "Direction de provenance du vent calculée à partir des deux composantes uas et vas. Les vents du nord ont une direction de 360° et les vents de moins de {calm_wind_thresh} ont une direction de 0°."
   },
   "WIND_VECTOR_FROM_SPEED": {
@@ -732,26 +732,26 @@
   "HURS_FROMDEWPOINT": {
     "long_name": "Humidité relative",
     "description": "Calculée à partir de la température et du point de rosée à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}.",
-    "title": "Humidité relative à partir de la température et du point de rosée",
-    "abstract": "Calcul de l'humidité relative à partir de la température et du point de rosée à l'aide de la pression de vapeur saturante."
+    "title": "Humidité relative calculée à partir de la température et du point de rosée",
+    "abstract": "Calcul de l'humidité relative calculée à partir de la température et du point de rosée à l'aide de la pression de vapeur saturante."
   },
   "HURS": {
     "long_name": "Humidité relative",
     "description": "Calculée à partir de la température, de l'humidité spécifique et de la pression à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}.",
-    "title": "Humidité relative à partir de la température, l'humidité spécifique et de la pression",
-    "abstract": "Calcul de l'humidité relative à partir de la température, de l'humidité spécifique et de la pression à l'aide de la pression de vapeur saturante."
+    "title": "Humidité relative calculée à partir de la température, l'humidité spécifique et de la pression",
+    "abstract": "Calcul de l'humidité relative calculée à partir de la température, de l'humidité spécifique et de la pression à l'aide de la pression de vapeur saturante."
   },
   "HUSS": {
     "long_name": "Humidité spécifique",
     "description": "Calculée à partir de la température, de l'humidité relative et de la pression à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}.",
-    "title": "Humidité spécifique à partir de la température, l'humidité relative et de la pression",
-    "abstract": "Calcul de l'humidité spécifique à partir de la température, de l'humidité relative et de la pression à l'aide de la pression de vapeur saturante."
+    "title": "Humidité spécifique calculée à partir de la température, l'humidité relative et de la pression",
+    "abstract": "Calcul de l'humidité spécifique calculée à partir de la température, de l'humidité relative et de la pression à l'aide de la pression de vapeur saturante."
   },
   "HUSS_FROMDEWPOINT": {
     "long_name": "Humidité spécifique",
     "description": "Calculée à partir de la température du point de rosée et de la pression à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}.",
-    "title": "Humidité spécifique à partir de la température du point de rosée et de la pression",
-    "abstract": "Calcul de l'humidité spécifique à partir de la température du point de rosée et de la pression à l'aide de la pression de vapeur saturante."
+    "title": "Humidité spécifique calculée à partir de la température du point de rosée et de la pression",
+    "abstract": "Calcul de l'humidité spécifique calculée à partir de la température du point de rosée et de la pression à l'aide de la pression de vapeur saturante."
   },
   "FIRST_DAY_BELOW": {
     "long_name": "Premier jour de l'année avec une température sous un seuil",
@@ -874,28 +874,28 @@
     "abstract": "Nombre de jours avec précipitation au-dessus d'un seuil et températures sous un seuil."
   },
   "DAYS_OVER_PRECIP_THRESH": {
-    "title": "Nombre de jours avec précipitation où la précipitation est au-dessus un centile donné",
-    "abstract": "Nombre de jours d'une période où la précipitation est au-dessus un centile donné, calculé sur une période donné et un seuil fixe.",
+    "title": "Nombre de jours avec précipitation où la précipitation est au-dessus d'un centile donné",
+    "abstract": "Nombre de jours d'une période où la précipitation est au-dessus d'un centile donné, calculé sur une période donné et un seuil fixe.",
     "description": "Nombre {freq:m} de jours où la précipitation est au-dessus du {pr_per_thresh}e centile calculé sur la période {pr_per_period}. Seuls les jours avec au moins {thresh} sont comptés.",
     "long_name": "Nombre de jours avec un flux de précipitations supérieur au seuil de base."
   },
   "DAYS_OVER_PRECIP_DOY_THRESH": {
-    "title": "Nombre de jours avec précipitation où la précipitation est au-dessus un centile quotidien donné",
-    "abstract": "Nombre de jours d'une période où la précipitation est au-dessus un centile quotidien donné et d'un seuil fixe.",
+    "title": "Nombre de jours avec précipitation où la précipitation est au-dessus d'un centile quotidien donné",
+    "abstract": "Nombre de jours d'une période où la précipitation est au-dessus d'un centile quotidien donné et d'un seuil fixe.",
     "description": "Nombre {freq:m} de jours où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien. Seuls les jours avec au moins {thresh} sont comptés. Le {pr_per_thresh}e centile est calculé sur une fenêtre glissante de {pr_per_window} jour(s) de la période {pr_per_period}.",
-    "long_name": "Nombre de jours avec précipitation où la précipitation est au-dessus un centile quotidien donné"
+    "long_name": "Nombre de jours avec précipitation où la précipitation est au-dessus d'un centile quotidien donné"
   },
   "FRACTION_OVER_PRECIP_THRESH": {
     "title": "Fraction des jours avec précipitation où la précipitation est au-dessus d'un centile quotidien.",
     "abstract": "Fraction des jours avec précipitation d'une période où la précipitation est au-dessus d'un centile quotidien. La référence est le nombre de jours où la précipitation est au-dessus d'un seuil fixe.",
-    "description": "Fraction {freq:f} des jours avec précipitation où la précipitation est au-dessus d'un centile quotidien. La référence est le nombre jours où la précipitation est au-dessus d'un seuil fixe.",
+    "description": "Fraction {freq:f} des jours avec précipitation où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien. La référence est le nombre jours où la précipitation est au-dessus d'un seuil fixe.",
     "long_name": "Fraction des jours avec précipitation où la précipitation est au-dessus d'un centile quotidien."
   },
   "FRACTION_OVER_PRECIP_DOY_THRESH": {
-    "title": "Fraction de jours avec précipitation où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien",
+    "title": "Fraction de jours avec précipitation où la précipitation est au-dessus d'un centile quotidien",
     "abstract": "Fraction de jours d'une période où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien et d'un seuil fixe.",
     "description": "Fraction {freq:m} de jours où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien. Seuls les jours avec au moins {thresh} sont comptés. Le {pr_per_thresh}e centile est calculé sur une fenêtre glissante de {pr_per_window} jour(s) de la période {pr_per_period}.",
-    "long_name": "Fraction de jours avec précipitation où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien"
+    "long_name": "Fraction de jours avec précipitation où la précipitation est au-dessus d'un centile quotidien"
   },
   "LIQUID_PRECIP_RATIO": {
     "title": "Fraction liquide de la précipitation totale",
@@ -948,7 +948,7 @@
   "WIND_CHILL": {
     "title": "Facteur éolien",
     "abstract": "Le facteur éolien est un indice qui équivaut à la sensation du froid par un individu moyen. Il est calculé à partir de la température et de la vitesse du vent à 10 m. Tel que définit par Environnement et Changement Climatique Canada, une seconde formule est utilisée pour les vents faibles. La formule standard est sinon la même qu'utilisée aux États-Unis.",
-    "description": "L'indice de refroiddissement éolien, équivalent à la température ressentie due au vent froid par un individu moyen.",
+    "description": "L'indice de refroiddissement éolien, équivalent à la température ressentie due au vent par un individu moyen.",
     "long_name": "Indice de facteur éolien"
   },
   "HUMIDEX": {
@@ -983,38 +983,38 @@
   },
   "DRY_SPELL_FREQUENCY": {
     "title": "Fréquence des périodes sèches",
-    "abstract": "Fréquence des périodes sèches de `N` jours et plus, pendant lesquelles les précipitations accumulées ou maximales sur une fenêtre de jours donné sont inférieurs à un seuil donné.",
+    "abstract": "Fréquence des périodes sèches de `N` jours et plus, pendant lesquelles les précipitations accumulées ou maximales sur une fenêtre de jours donné sont inférieures à un seuil donné.",
     "description": "Fréquence {freq:f} des périodes sèches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}.",
     "long_name": "Fréquence des périodes sèches"
   },
   "DRY_SPELL_TOTAL_LENGTH": {
-    "title": "Durée totale en jours des périodes séches",
-    "abstract": "Durée totale en jours des périodes séches de `N` jours et plus, pendant lesquelles les précipitations accumulées ou maximales sur une fenêtre de jours donné sont inférieures à un seuil donné.",
-    "description": "Durée totale {freq:f} en jours des périodes séches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}.",
-    "long_name": "Durée totale en jours des périodes séches"
+    "title": "Durée totale en jours des périodes sèches",
+    "abstract": "Durée totale en jours des périodes sèches de `N` jours et plus, pendant lesquelles les précipitations accumulées ou maximales sur une fenêtre de jours donné sont inférieures à un seuil donné.",
+    "description": "Durée totale {freq:f} en jours des périodes sèches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}.",
+    "long_name": "Durée totale en jours des périodes sèches"
   },
   "COLD_AND_DRY_DAYS": {
     "title": "Nombre de jours froide et secs",
-    "abstract": "Nombre de jours où la température est en dessous un centile donné et les précipitations en dessous un centile donné.",
-    "description": "Nombre {freq:m} de jours où la température est en dessous du {tas_per_thresh}e centile et les précipitations en dessous du {pr_per_thresh}e centile.",
+    "abstract": "Nombre de jours où la température et la précipitation sont en dessous de centiles donnés.",
+    "description": "Nombre {freq:m} de jours où la température est en dessous du {tas_per_thresh}e centile et la précipitation en dessous du {pr_per_thresh}e centile.",
     "long_name": "Nombre {freq:m} de jours froids et secs"
   },
   "WARM_AND_DRY_DAYS": {
     "title": "Nombre de jours chauds et secs",
-    "abstract": "Nombre de jours où la température est au-dessus du un centile donné et les précipitations en dessous un centile donné.",
-    "description": "Nombre {freq:m} de jours où la température est au-dessus du {tas_per_thresh}e centile et les précipitations en dessous du {pr_per_thresh}e centile.",
+    "abstract": "Nombre de jours où la température est au-dessus d'un centile donné et la précipitation en dessous d'un centile donné.",
+    "description": "Nombre {freq:m} de jours où la température est au-dessus du {tas_per_thresh}e centile et la précipitation en dessous du {pr_per_thresh}e centile.",
     "long_name": "Nombre {freq:m} de jours chauds et secs"
   },
   "WARM_AND_WET_DAYS": {
     "title": "Nombre de jours chauds avec précipitation",
-    "abstract": "Nombre de jours où la température est au-dessus du un centile donné et les précipitations au-dessus du un centile donné.",
-    "description": "Nombre {freq:m} de jours où la température est au-dessus du {tas_per_thresh}e centile et les précipitations au-dessus du {pr_per_thresh}e centile.",
+    "abstract": "Nombre de jours où la température et la précipitation sont au-dessus de centiles donnés.",
+    "description": "Nombre {freq:m} de jours où la température est au-dessus du {tas_per_thresh}e centile et la précipitation au-dessus du {pr_per_thresh}e centile.",
     "long_name": "Nombre {freq:m} de jours chauds avec précipitation"
   },
   "COLD_AND_WET_DAYS": {
     "title": "Nombre de jours froids avec précipitation",
-    "abstract": "Nombre de jours où la température est en dessous un centile donné et les précipitations au-dessus du un centile donné.",
-    "description": "Nombre {freq:m} de jours où la température est en dessous du {tas_per_thresh}e centile et les précipitations au-dessus du {pr_per_thresh}e centile.",
+    "abstract": "Nombre de jours où la température est en dessous d'un centile donné et la précipitation au-dessus d'un centile donné.",
+    "description": "Nombre {freq:m} de jours où la température est en dessous du {tas_per_thresh}e centile et la précipitation au-dessus du {pr_per_thresh}e centile.",
     "long_name": "Nombre {freq:m} de jours froids avec précipitation"
   },
   "CALM_DAYS": {
