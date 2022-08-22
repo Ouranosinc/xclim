@@ -1233,7 +1233,7 @@ def suspicious_run_1d(
       Array of values to be parsed.
     window : int
       Minimum run length
-    op : {">", ">=", "==", "<", "<=", "eq", "gt", "lt", "gteq", "lteq"}
+    op : {">", ">=", "==", "<", "<=", "eq", "gt", "lt", "gteq", "lteq", "ge", "le"}
       Operator for threshold comparison. Defaults to ">".
     thresh : float, optional
       Threshold above which values are checked for identical values.
@@ -1252,9 +1252,9 @@ def suspicious_run_1d(
             sus_runs = sus_runs & (v < thresh)
         elif op in {"==", "eq"}:
             sus_runs = sus_runs & (v == thresh)
-        elif op in {">=", "gteq"}:
+        elif op in {">=", "gteq", "ge"}:
             sus_runs = sus_runs & (v >= thresh)
-        elif op in {"<=", "lteq"}:
+        elif op in {"<=", "lteq", "le"}:
             sus_runs = sus_runs & (v <= thresh)
         else:
             raise NotImplementedError(f"{op}")

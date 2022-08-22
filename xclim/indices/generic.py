@@ -7,6 +7,7 @@ Helper functions for common generic actions done in the computation of indices.
 """
 from __future__ import annotations
 
+import warnings
 from typing import Sequence
 
 import cftime
@@ -133,10 +134,17 @@ def get_op(op: str, constrain: Sequence[str] | None = None):
     constrain : sequence of str, optional
       A tuple of allowed operators.
     """
+    if op == "gteq":
+        warnings.warn(f"`{op}` is being renamed `ge` for compatibility.")
+        op = "ge"
+    if op == "lteq":
+        warnings.warn(f"`{op}` is being renamed `le` for compatibility.")
+        op = "le"
+
     if op in binary_ops.keys():
-        op = binary_ops[op]
+        binary_op = binary_ops[op]
     elif op in binary_ops.values():
-        pass
+        binary_op = op
     else:
         raise ValueError(f"Operation `{op}` not recognized.")
 
@@ -149,9 +157,9 @@ def get_op(op: str, constrain: Sequence[str] | None = None):
 
     if constrain:
         if op not in constraints:
-            raise ValueError("Operation `{op}` not permitted for indice.")
+            raise ValueError(f"Operation `{op}` not permitted for indice.")
 
-    return xr.core.ops.get_op(op)  # noqa
+    return xr.core.ops.get_op(binary_op)  # noqa
 
 
 def compare(
@@ -504,7 +512,7 @@ def statistics(data: xr.DataArray, reducer: str, freq: str) -> xr.DataArray:
     return out
 
 
-def compare_operation(
+def compare_arrays(
     left: xr.DataArray, op: str, right: xr.DataArray, constrain: Sequence[str] | None
 ) -> xr.DataArray:
     """Compare two variables using a binary logical operation.
@@ -524,9 +532,7 @@ def compare_operation(
     -------
     xr.DataArray
     """
-    op = get_op(op, constrain)
-
-    func = getattr(left, "_binary_op")(get_op(op))
+    func = getattr(left, "_binary_op")(get_op(op, constrain))
     return func(left, right)
 
 

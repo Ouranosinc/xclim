@@ -1091,7 +1091,7 @@ class TestTnDays:
 
     def test_below_simple(self, tasmin_series):
         a = np.zeros(365)
-        a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 above 30
+        a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 below -30
         mn = tasmin_series(a + K2C)
 
         out = xci.tn_days_below(mn, thresh="-10 C")
@@ -1100,6 +1100,29 @@ class TestTnDays:
         out = xci.tn_days_below(mn, thresh="-30 C")
         np.testing.assert_array_equal(out[:1], [2])
         np.testing.assert_array_equal(out[1:], [0])
+
+    def test_above_operator(self, tasmin_series):
+        a = np.zeros(365)
+        a[:6] += [27, 28, 29, 30, 31, 32]  # 3 at or above 30
+        mn = tasmin_series(a + K2C)
+
+        out = xci.tn_days_above(mn, thresh="30 C", op="gteq")
+        np.testing.assert_array_equal(out[:1], [3])
+        np.testing.assert_array_equal(out[1:], [0])
+
+        with pytest.raises(ValueError):
+            xci.tn_days_above(mn, thresh="30 C", op="lteq")
+
+        a = np.zeros(365)
+        a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 at or below -31
+        mn = tasmin_series(a + K2C)
+
+        out = xci.tn_days_below(mn, thresh="-31 C", op="<=")
+        np.testing.assert_array_equal(out[:1], [2])
+        np.testing.assert_array_equal(out[1:], [0])
+
+        with pytest.raises(ValueError):
+            xci.tn_days_below(mn, thresh="30 C", op=">=")
 
 
 class TestTgDays:
@@ -1114,7 +1137,7 @@ class TestTgDays:
 
     def test_below_simple(self, tas_series):
         a = np.zeros(365)
-        a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 above 30
+        a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 below -30
         mg = tas_series(a + K2C)
 
         out = xci.tg_days_below(mg, thresh="-10 C")
@@ -1123,6 +1146,29 @@ class TestTgDays:
         out = xci.tg_days_below(mg, thresh="-30 C")
         np.testing.assert_array_equal(out[:1], [2])
         np.testing.assert_array_equal(out[1:], [0])
+
+    def test_operators(self, tas_series):
+        a = np.zeros(365)
+        a[:6] += [27, 28, 29, 30, 31, 32]  # 4 at or above 29
+        mg = tas_series(a + K2C)
+
+        out = xci.tn_days_above(mg, thresh="29 C", op=">=")
+        np.testing.assert_array_equal(out[:1], [4])
+        np.testing.assert_array_equal(out[1:], [0])
+
+        with pytest.raises(ValueError):
+            xci.tn_days_above(mg, thresh="30 C", op="<=")
+
+        a = np.zeros(365)
+        a[:6] -= [27, 28, 29, 30, 31, 32]  # 3 at or below -30
+        mg = tas_series(a + K2C)
+
+        out = xci.tn_days_below(mg, thresh="-30 C", op="lteq")
+        np.testing.assert_array_equal(out[:1], [3])
+        np.testing.assert_array_equal(out[1:], [0])
+
+        with pytest.raises(ValueError):
+            xci.tn_days_below(mg, thresh="30 C", op="gt")
 
 
 class TestTxDays:
@@ -1137,7 +1183,7 @@ class TestTxDays:
 
     def test_below_simple(self, tasmax_series):
         a = np.zeros(365)
-        a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 above 30
+        a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 below -30
         mx = tasmax_series(a + K2C)
 
         out = xci.tx_days_below(mx, thresh="-10 C")
@@ -1146,6 +1192,29 @@ class TestTxDays:
         out = xci.tx_days_below(mx, thresh="-30 C")
         np.testing.assert_array_equal(out[:1], [2])
         np.testing.assert_array_equal(out[1:], [0])
+
+    def test_operators(self, tas_series):
+        a = np.zeros(365)
+        a[:6] += [27, 28, 29, 30, 31, 32]  # 5 at or above 28
+        mg = tas_series(a + K2C)
+
+        out = xci.tn_days_above(mg, thresh="28 C", op=">=")
+        np.testing.assert_array_equal(out[:1], [5])
+        np.testing.assert_array_equal(out[1:], [0])
+
+        with pytest.raises(ValueError):
+            xci.tn_days_above(mg, thresh="20 C", op="lt")
+
+        a = np.zeros(365)
+        a[:6] -= [27, 28, 29, 30, 31, 32]  # 5 at or below -28
+        mg = tas_series(a + K2C)
+
+        out = xci.tn_days_below(mg, thresh="-28 C", op="<=")
+        np.testing.assert_array_equal(out[:1], [5])
+        np.testing.assert_array_equal(out[1:], [0])
+
+        with pytest.raises(ValueError):
+            xci.tn_days_below(mg, thresh="-27 C", op="gt")
 
 
 class TestJetStreamIndices:
@@ -1949,14 +2018,26 @@ class TestWindIndices:
 class TestTxTnDaysAbove:
     def test_1d(self, tasmax_series, tasmin_series):
         tn = tasmin_series(np.asarray([20, 23, 23, 23, 23, 22, 23, 23, 23, 23]) + K2C)
-        tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
+        tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 30, 31, 31, 31]) + K2C)
 
         wmmtf = xci.tx_tn_days_above(tn, tx)
-        np.testing.assert_allclose(wmmtf.values, [7])
+        np.testing.assert_allclose(wmmtf.values, [6])
+
+        # No days valid
         wmmtf = xci.tx_tn_days_above(tn, tx, thresh_tasmax="50 C")
         np.testing.assert_allclose(wmmtf.values, [0])
+
+        # All days valid
         wmmtf = xci.tx_tn_days_above(tn, tx, thresh_tasmax="0 C", thresh_tasmin="0 C")
         np.testing.assert_allclose(wmmtf.values, [10])
+
+        # One day in each series is exactly at threshold
+        wmmtf = xci.tx_tn_days_above(tn, tx, op=">=")
+        np.testing.assert_allclose(wmmtf.values, [8])
+
+        # Forbidden comparison operation
+        with pytest.raises(ValueError):
+            xci.tx_tn_days_above(tn, tx, op="<")
 
 
 class TestWarmSpellDurationIndex:

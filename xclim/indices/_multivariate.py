@@ -20,7 +20,7 @@ from xclim.core.units import (
 
 from . import run_length as rl
 from ._conversion import rain_approximation, snowfall_approximation
-from .generic import select_resample_op, threshold_count
+from .generic import compare, select_resample_op, threshold_count
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -1199,6 +1199,7 @@ def tg90p(
     tas_per: xarray.DataArray,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
+    op: str = ">",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily mean temperature over the 90th percentile.
 
@@ -1219,6 +1220,8 @@ def tg90p(
       the rest of the time series.
       Keep bootstrap to False when there is no common period, it would give wrong results
       plus, bootstrapping is computationally expensive.
+    op: {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">".
 
     Returns
     -------
@@ -1243,7 +1246,7 @@ def tg90p(
     thresh = resample_doy(tas_per, tas)
 
     # Identify the days over the 90th percentile
-    out = threshold_count(tas, ">", thresh, freq)
+    out = threshold_count(tas, op, thresh, freq, constrain=(">", ">="))
     return to_agg_units(out, tas, "count")
 
 
@@ -1254,6 +1257,7 @@ def tg10p(
     tas_per: xarray.DataArray,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
+    op: str = "<",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily mean temperature below the 10th percentile.
 
@@ -1274,6 +1278,8 @@ def tg10p(
       the rest of the time series.
       Keep bootstrap to False when there is no common period, it would give wrong results
       plus, bootstrapping is computationally expensive.
+    op: {"<", "<=", "lt", "le"}
+        Comparison operation. Default: "<".
 
     Returns
     -------
@@ -1298,7 +1304,7 @@ def tg10p(
     thresh = resample_doy(tas_per, tas)
 
     # Identify the days below the 10th percentile
-    out = threshold_count(tas, "<", thresh, freq)
+    out = threshold_count(tas, op, thresh, freq, constrain=("<", "<="))
     return to_agg_units(out, tas, "count")
 
 
@@ -1309,6 +1315,7 @@ def tn90p(
     tasmin_per: xarray.DataArray,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
+    op: str = ">",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily minimum temperature over the 90th percentile.
 
@@ -1329,6 +1336,8 @@ def tn90p(
       the rest of the time series.
       Keep bootstrap to False when there is no common period, it would give wrong results
       plus, bootstrapping is computationally expensive.
+    op: {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">".
 
     Returns
     -------
@@ -1353,7 +1362,7 @@ def tn90p(
     thresh = resample_doy(tasmin_per, tasmin)
 
     # Identify the days with min temp above 90th percentile.
-    out = threshold_count(tasmin, ">", thresh, freq)
+    out = threshold_count(tasmin, op, thresh, freq, constrain=(">", ">="))
     return to_agg_units(out, tasmin, "count")
 
 
@@ -1364,6 +1373,7 @@ def tn10p(
     tasmin_per: xarray.DataArray,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
+    op: str = "<",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily minimum temperature below the 10th percentile.
 
@@ -1384,6 +1394,8 @@ def tn10p(
       the rest of the time series.
       Keep bootstrap to False when there is no common period, it would give wrong results
       plus, bootstrapping is computationally expensive.
+    op: {"<", "<=", "lt", "le"}
+      Comparison operation. Default: "<".
 
     Returns
     -------
@@ -1408,7 +1420,7 @@ def tn10p(
     thresh = resample_doy(tasmin_per, tasmin)
 
     # Identify the days below the 10th percentile
-    out = threshold_count(tasmin, "<", thresh, freq)
+    out = threshold_count(tasmin, op, thresh, freq, constrain=("<", "<="))
     return to_agg_units(out, tasmin, "count")
 
 
@@ -1419,6 +1431,7 @@ def tx90p(
     tasmax_per: xarray.DataArray,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
+    op: str = ">",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily maximum temperature over the 90th percentile.
 
@@ -1439,6 +1452,8 @@ def tx90p(
       the rest of the time series.
       Keep bootstrap to False when there is no common period, it would give wrong results
       plus, bootstrapping is computationally expensive.
+    op: {">", ">=", "gt", "ge"}
+      Comparison operation. Default: ">".
 
     Returns
     -------
@@ -1463,7 +1478,7 @@ def tx90p(
     thresh = resample_doy(tasmax_per, tasmax)
 
     # Identify the days with max temp above 90th percentile.
-    out = threshold_count(tasmax, ">", thresh, freq)
+    out = threshold_count(tasmax, op, thresh, freq, constrain=(">", ">="))
     return to_agg_units(out, tasmax, "count")
 
 
@@ -1474,6 +1489,7 @@ def tx10p(
     tasmax_per: xarray.DataArray,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
+    op: str = "<",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily maximum temperature below the 10th percentile.
 
@@ -1494,6 +1510,8 @@ def tx10p(
       the rest of the time series.
       Keep bootstrap to False when there is no common period, it would give wrong results
       plus, bootstrapping is computationally expensive.
+    op: {"<", "<=", "lt", "le"}
+      Comparison operation. Default: "<".
 
     Returns
     -------
@@ -1518,7 +1536,7 @@ def tx10p(
     thresh = resample_doy(tasmax_per, tasmax)
 
     # Identify the days below the 10th percentile
-    out = threshold_count(tasmax, "<", thresh, freq)
+    out = threshold_count(tasmax, op, thresh, freq, constrain=("<", "<="))
     return to_agg_units(out, tasmax, "count")
 
 
@@ -1534,6 +1552,7 @@ def tx_tn_days_above(
     thresh_tasmin: str = "22 degC",
     thresh_tasmax: str = "30 degC",
     freq: str = "YS",
+    op: str = ">",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with both hot maximum and minimum daily temperatures.
 
@@ -1551,6 +1570,8 @@ def tx_tn_days_above(
       Threshold temperature for tasmax on which to base evaluation.
     freq : str
       Resampling frequency.
+    op: {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">".
 
     Returns
     -------
@@ -1577,7 +1598,12 @@ def tx_tn_days_above(
     """
     thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
-    events = ((tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)) * 1
+
+    constrain = (">", ">=")
+    events = (
+        compare(tasmin, op, thresh_tasmin, constrain)
+        & compare(tasmax, op, thresh_tasmax, constrain)
+    ) * 1
     out = events.resample(time=freq).sum(dim="time")
     return to_agg_units(out, tasmin, "count")
 
