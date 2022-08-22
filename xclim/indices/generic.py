@@ -7,7 +7,6 @@ Helper functions for common generic actions done in the computation of indices.
 """
 from __future__ import annotations
 
-import warnings
 from typing import Sequence
 
 import cftime
@@ -20,8 +19,8 @@ from xclim.core.calendar import (
     convert_calendar,
     doy_to_days_since,
     get_calendar,
+    select_time,
 )
-from xclim.core.calendar import select_time as _select_time
 from xclim.core.units import (
     convert_units_to,
     declare_units,
@@ -57,56 +56,6 @@ __all__ = [
 binary_ops = {">": "gt", "<": "lt", ">=": "ge", "<=": "le", "==": "eq", "!=": "ne"}
 
 
-def _op_validation(op: str, constrain: Sequence[str] | None) -> str:
-    """Validate the operator given to an indice for validity and allowed usage.
-
-    Parameters
-    ----------
-    op : str
-      Operator.
-    constrain : sequence of str, optional
-      A tuple of allowed operators.
-
-    Returns
-    -------
-    str
-    """
-    if op in binary_ops:
-        op = binary_ops[op]
-    elif op in binary_ops.values():
-        pass
-    else:
-        raise ValueError(f"Operation `{op}` not recognized.")
-    if constrain and op not in constrain:
-        raise ValueError("Operation `{op}` not permitted for indice.")
-
-    return op
-
-
-def select_time(
-    da: xr.DataArray | xr.Dataset,
-    drop: bool = False,
-    season: str | Sequence[str] = None,
-    month: int | Sequence[int] = None,
-    doy_bounds: tuple[int, int] = None,
-    date_bounds: tuple[str, str] = None,
-) -> xr.DataArray | xr.Dataset:
-    """Select entries according to a time period."""
-    warnings.warn(
-        "'select_time()' has moved from `xclim.indices.generic` to `xclim.core.calendar`. "
-        "Please update your scripts accordingly.",
-        DeprecationWarning,
-    )
-    return _select_time(
-        da,
-        drop=drop,
-        season=season,
-        month=month,
-        doy_bounds=doy_bounds,
-        date_bounds=date_bounds,
-    )
-
-
 def select_resample_op(
     da: xr.DataArray, op: str, freq: str = "YS", **indexer
 ) -> xr.DataArray:
@@ -131,7 +80,7 @@ def select_resample_op(
     xarray.DataArray
       The maximum value for each period.
     """
-    da = _select_time(da, **indexer)
+    da = select_time(da, **indexer)
     r = da.resample(time=freq)
     if isinstance(op, str):
         return getattr(r, op)(dim="time", keep_attrs=True)
@@ -172,10 +121,17 @@ def default_freq(**indexer) -> str:
     return freq
 
 
-def get_op(op: str):
-    """Get python's comparing function according to its name of representation.
+def get_op(op: str, constrain: Sequence[str] | None = None):
+    """Get python's comparing function according to its name of representation and validate allowed usage.
 
     Accepted op string are keys and values of xclim.indices.generic.binary_ops.
+
+    Parameters
+    ----------
+    op : str
+      Operator.
+    constrain : sequence of str, optional
+      A tuple of allowed operators.
     """
     if op in binary_ops:
         op = binary_ops[op]
@@ -183,10 +139,19 @@ def get_op(op: str):
         pass
     else:
         raise ValueError(f"Operation `{op}` not recognized.")
+
+    if constrain and op not in constrain:
+        raise ValueError("Operation `{op}` not permitted for indice.")
+
     return xr.core.ops.get_op(op)  # noqa
 
 
-def compare(da: xr.DataArray, op: str, thresh: float | int) -> xr.DataArray:
+def compare(
+    da: xr.DataArray,
+    op: str,
+    thresh: float | int,
+    constrain: Sequence[str] | None = None,
+) -> xr.DataArray:
     """Compare a dataArray to a threshold using given operator.
 
     Parameters
@@ -197,13 +162,15 @@ def compare(da: xr.DataArray, op: str, thresh: float | int) -> xr.DataArray:
       Logical operator {>, <, >=, <=, gt, lt, ge, le }. e.g. arr > thresh.
     thresh : Union[float, int]
       Threshold value.
+    constrain : sequence of str, optional
+      Optionally allowed conditions.
 
     Returns
     -------
     xr.DataArray
         Boolean mask of the comparison.
     """
-    return get_op(op)(da, thresh)
+    return get_op(op, constrain)(da, thresh)
 
 
 def threshold_count(
@@ -234,7 +201,7 @@ def threshold_count(
     xr.DataArray
       The number of days meeting the constraints for each period.
     """
-    op = _op_validation(op, constrain)
+    op = get_op(op, constrain)
 
     c = compare(da, op, thresh) * 1
     return c.resample(time=freq).sum(dim="time")
@@ -544,21 +511,26 @@ def compare_operation(
       Operator.
     right : xr.DataArray
       A DatArray being evaluated against left`.
-    constrain : tuple of str or None
-      Constrain the binary operations that are accepted.
+    constrain : sequence of str, optional
+      Optionally allowed conditions.
 
     Returns
     -------
     xr.DataArray
     """
-    op = _op_validation(op, constrain)
+    op = get_op(op, constrain)
 
     func = getattr(left, "_binary_op")(get_op(op))
     return func(left, right)
 
 
 def thresholded_statistics(
-    data: xr.DataArray, threshold: str, condition: str, reducer: str, freq: str
+    data: xr.DataArray,
+    threshold: str,
+    condition: str,
+    reducer: str,
+    freq: str,
+    constrain: Sequence[str] | None,
 ) -> xr.DataArray:
     """Calculate a simple statistic of the data for which some condition is met.
 
@@ -578,6 +550,8 @@ def thresholded_statistics(
       Reducer.
     freq : str
       Resampling frequency.
+    constrain : sequence of str, optional
+      Optionally allowed conditions.
 
     Returns
     -------
@@ -585,7 +559,7 @@ def thresholded_statistics(
     """
     threshold = convert_units_to(threshold, data)
 
-    cond = compare(data, condition, threshold)
+    cond = compare(data, condition, threshold, constrain)
 
     out = getattr(data.where(cond).resample(time=freq), reducer)()
     out.attrs["units"] = data.attrs["units"]
@@ -593,14 +567,18 @@ def thresholded_statistics(
 
 
 def temperature_sum(
-    data: xr.DataArray, threshold: str, condition: str, freq: str
+    data: xr.DataArray,
+    threshold: str,
+    condition: str,
+    freq: str,
+    constrain: Sequence[str] | None,
 ) -> xr.DataArray:
     """Calculate the temperature sum above/below a threshold.
 
     First, the threshold is transformed to the same standard_name and units as the input data.
     Then the thresholding is performed as condition(data, threshold), i.e. if condition is <, data < threshold.
-    Finally, the sum is calculated for those data values that fulfill the condition after subtraction of the threshold value.
-    If the sum is for values below the threshold the result is multiplied by -1.
+    Finally, the sum is calculated for those data values that fulfill the condition after subtraction of the threshold
+    value. If the sum is for values below the threshold the result is multiplied by -1.
 
     Parameters
     ----------
@@ -612,6 +590,8 @@ def temperature_sum(
       Operator.
     freq : str
       Resampling frequency.
+    constrain : sequence of str, optional
+      Optionally allowed conditions.
 
     Returns
     -------
@@ -619,7 +599,7 @@ def temperature_sum(
     """
     threshold = convert_units_to(threshold, data)
 
-    cond = compare(data, condition, threshold)
+    cond = compare(data, condition, threshold, constrain)
     direction = -1 if "<" in condition else 1
 
     out = (data - threshold).where(cond).resample(time=freq).sum()
