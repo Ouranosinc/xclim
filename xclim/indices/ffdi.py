@@ -18,7 +18,7 @@ details of the methods used to calculate each index.
 # Methods starting with a "_" are not usable with xarray objects, whereas the others are.
 import numpy as np
 import xarray as xr
-from numba import guvectorize, float64
+from numba import guvectorize, int64, float64
 
 from xclim.core.units import convert_units_to, declare_units
 
@@ -97,6 +97,107 @@ def _Keech_Byram_drought_index(p, t, pa, rr0, kbdi0, rr, kbdi):  # pragma: no co
     kbdi[0] = kbdi_curr
 
 
+@guvectorize(
+    [
+        (
+            float64[:],
+            float64[:],
+            int64,
+            float64[:],
+        )
+    ],
+    "(n),(n),()->(n)",
+)
+def _Griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
+    """
+    Compute the Griffiths drought factor following
+    :cite:p:`fire-finkele_2006`
+
+    Parameters
+    ----------
+    p : array_like
+        Total rainfall over previous 24 hours, at 9am [mm].
+    smd : array_like
+        Soil moisture deficit (e.g. KBDI), at 9am
+    lim : integer
+        How to limit the drought factor
+            - if 0 : use Eq 14 in :cite:p:`fire-finkele_2006`
+            - if 1 : use Eq 13 in :cite:p:`fire-finkele_2006`
+
+    Returns
+    -------
+    df : array_like
+        The limited Griffiths drought factor at 9am
+    """
+    wl = 20  # 20 day window length
+
+    for d in range(wl - 1, len(p)):
+        pw = p[d - wl + 1 : d + 1]
+
+        # Calculate the x-function from significant rainfall
+        # events
+        conseq = 0
+        pmax = 0.0
+        P = 0.0
+        x = 1.0
+        for iw in range(wl):
+            event = pw[iw] > 2.0
+            event_end = ~event & (conseq != 0)
+            final_event = event & (iw == (wl - 1))
+
+            if event:
+                conseq = conseq + 1
+                P = P + pw[iw]
+                if pw[iw] >= pmax:
+                    N = wl - iw
+                    pmax = pw[iw]
+
+            if event_end | final_event:
+                # N = 0 defines a rainfall event since 9am today,
+                # so doesn't apply here, where p is the rainfall
+                # over previous 24 hours, at 9am.
+                x_ = N**1.3 / (N**1.3 + P - 2.0)
+                x = min(x_, x)
+
+                conseq = 0
+                P = 0.0
+                pmax = 0.0
+
+        if lim == 0:
+            if smd[d] < 20:
+                l = 1 / (1 + 0.1135 * smd[d])
+            else:
+                l = 75 / (270.525 - 1.267 * smd[d])
+            if x > l:
+                x = l
+
+        dfw = (
+            10.5
+            * (1 - np.exp(-(smd[d] + 30) / 40))
+            * (41 * x**2 + x)
+            / (40 * x**2 + x + 1)
+        )
+
+        if lim == 1:
+            if smd[d] < 25.0:
+                l = 6.0
+            elif (smd[d] >= 25.0) & (smd[d] < 42.0):
+                l = 7.0
+            elif (smd[d] >= 42.0) & (smd[d] < 65.0):
+                l = 8.0
+            elif (smd[d] >= 65.0) & (smd[d] < 100.0):
+                l = 9.0
+            else:
+                l = 10.0
+            if dfw > l:
+                dfw = l
+
+        if dfw > 10.0:
+            dfw = 10.0
+
+        df[d] = dfw
+
+
 # SECTION 2 : Iterators
 
 
@@ -120,6 +221,19 @@ def _Keech_Byram_drought_index_calc(pr, tasmax, pr_annual, kbdi0):
         kbdi_prev = kbdi[..., it]
 
     return kbdi
+
+
+def _Griffiths_drought_factor_calc(pr, smd, lim):
+    """
+    Primary function computing the Griffiths drought factor.
+    DO NOT CALL DIRECTLY, use `Griffiths_drought_factor` instead.
+
+    This function is actually only required as xr.apply_ufunc will
+    not allow `func=_Griffiths_drought_factor` since this is
+    guvectorized and has the output in its function signature
+    """
+
+    return _Griffiths_drought_factor(pr, smd, lim)
 
 
 # SECTION 3 - Public methods and indices
@@ -200,3 +314,56 @@ def Keech_Byram_drought_index(
     )
 
     return kbdi
+
+
+# @declare_units(
+#     pr="[precipitation]",
+#     smd="[precipitation]",
+# )
+def Griffiths_drought_factor(
+    pr: xr.DataArray,
+    smd: xr.DataArray,
+    limiting_func: str = "xlim",
+):
+    """
+    Calculate the Griffiths (1998) drought factor based on the soil
+    moisture deficit.
+
+    Parameters
+    ----------
+    pr : xr.DataArray
+        Total rainfall over previous 24 hours, at 9am.
+    smd : xarray DataArray
+        Daily soil moisture deficit (often KBDI) at 9am
+    limiting_func : str, optional
+        The approach to use to limit the values of the drought factor.
+        Options are:
+        - 'xlim' : drought factor values are limited according to
+            equation (14) of :cite:p:`fire-finkele_2006`
+        - 'discrete': drought factor values are limited according to
+            equation (13) of :cite:p:`fire-finkele_2006`
+    """
+    # pr = convert_units_to(pr, "mm/day")
+    # smd = convert_units_to(smd, "mm/day")
+
+    if limiting_func == "xlim":
+        lim = 0
+    elif limiting_func == "discrete":
+        lim = 1
+    else:
+        raise ValueError(f"{limiting_func} is not a valid input for `limiting_func`")
+
+    df = xr.apply_ufunc(
+        _Griffiths_drought_factor_calc,
+        pr,
+        smd,
+        kwargs=dict(lim=lim),
+        input_core_dims=[["time"], ["time"]],
+        output_core_dims=[["time"]],
+        dask="parallelized",
+        output_dtypes=[pr.dtype],
+    )
+
+    # First non-zero entry is at the 19th time point since df is calculated
+    # from a 20 day rolling window
+    return df.isel(time=slice(19, None))
