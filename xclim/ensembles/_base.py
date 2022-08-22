@@ -57,7 +57,7 @@ def create_ensemble(
       See `xclim.core.calendar.convert_calendar`. 'default' is the standard calendar using np.datetime64 objects.
 
     realizations: sequence, optional
-      The coordinate values for the new `realization` axis. If None (default), the new axis has no coordinate.
+      The coordinate values for the new `realization` axis. If None (default), the new axis has a simple integer coordinate.
       This argument shouldn't be used if `datasets` is a glob pattern as the dataset order is random.
 
     xr_kwargs :
