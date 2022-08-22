@@ -231,9 +231,9 @@
   },
   "SPI": {
     "long_name": "Indice de précipitation standardisé (SPI)",
-    "description": "Précipitations sur une fenêtre mobile de {window} {freq:nom}, normalisées tel que la moyenne de SPI est 0 pour les données de calibration. L'unité de la fenêtre 'X' est l'unité de temps déterminée par la fréquence de rééchantillonage",
+    "description": "Précipitation sur une fenêtre mobile de {window} {freq:nom}, normalisée telle que la moyenne de SPI est 0 pour les données de calibration. L'unité de la fenêtre 'X' est l'unité de temps déterminée par la fréquence de ré-échantillonage",
     "title": "Indice de précipitation standardisé (SPI)",
-    "abstract": "Précipitations sur une fenêtre mobile, normalisée telles que la moyenne de SPI est 0 pour les données de calibration. L'unité de la fenêtre est l'unité de temps déterminée par la fréquence de ré-échantillonnage."
+    "abstract": "Précipitation sur une fenêtre mobile, normalisée telle que la moyenne de SPI est 0 pour les données de calibration. L'unité de la fenêtre est l'unité de temps déterminée par la fréquence de ré-échantillonnage."
   },
   "SPEI": {
     "long_name": "Indice de précipitation évapotranspiration standardisé (SPEI)",
@@ -248,46 +248,46 @@
     "abstract": "L'indice de sécheresse fait partie du système canadien des Indices Forêt-Météo. C'est un code numérique estimant la teneur en humidité moyenne de couches organiques."
   },
   "TN_DAYS_ABOVE": {
-    "long_name": "Nombre de jours avec température minimale quotidienne au-dessus d'un seuil donné",
+    "long_name": "Nombre de jours ayant une température minimale quotidienne au-dessus d'un seuil donné",
     "description": "Nombre {freq:m} de jours où la température minimale quotidienne est au-dessus de {thresh}.",
-    "title": "Nombre de jours avec température minimale quotidienne au-dessus d'un seuil donné",
+    "title": "Nombre de jours ayant une température minimale quotidienne au-dessus d'un seuil donné",
     "abstract": "Nombre de jours où la température minimale quotidienne est au-dessus d'un seuil donné."
   },
   "TN_DAYS_BELOW": {
-    "long_name": "Nombre de jours avec température minimale quotidienne sous un seuil donné",
+    "long_name": "Nombre de jours ayant une température minimale quotidienne sous un seuil donné",
     "description": "Nombre {freq:m} de jours où la température minimale quotidienne est sous {thresh}.",
-    "title": "Nombre de jours avec température minimale quotidienne sous d'un seuil donné",
+    "title": "Nombre de jours ayant une température minimale quotidienne sous un seuil donné",
     "abstract": "Nombre de jours où la température minimale quotidienne est sous un seuil donné."
   },
   "TG_DAYS_ABOVE": {
-    "long_name": "Nombre de jours avec température moyenne quotidienne au-dessus d'un seuil donné",
+    "long_name": "Nombre de jours ayant une température moyenne quotidienne au-dessus d'un seuil donné",
     "description": "Nombre {freq:m} de jours où la température quotidienne moyenne est au-dessus de {thresh}.",
-    "title": "Nombre de jours avec température moyenne quotidienne au-dessus d'un seuil donné",
+    "title": "Nombre de jours ayant une température moyenne quotidienne au-dessus d'un seuil donné",
     "abstract": "Nombre de jours où la température quotidienne moyenne est au-dessus d'un seuil donné."
   },
   "TG_DAYS_BELOW": {
-    "long_name": "Nombre de jours avec température moyenne quotidienne sous un seuil donné",
+    "long_name": "Nombre de jours ayant une température moyenne quotidienne sous un seuil donné",
     "description": "Nombre {freq:m} de jours où la température quotidienne moyenne est sous {thresh}.",
-    "title": "Nombre de jours avec température moyenne quotidienne sous d'un seuil donné",
+    "title": "Nombre de jours ayant une température moyenne quotidienne sous un seuil donné",
     "abstract": "Nombre de jours où la température quotidienne moyenne est sous un seuil donné."
   },
   "TX_DAYS_ABOVE": {
-    "long_name": "Nombre de jours avec température maximale quotidienne au-dessus d'un seuil donné",
+    "long_name": "Nombre de jours ayant une température maximale quotidienne au-dessus d'un seuil donné",
     "description": "Nombre {freq:m} de jours où la température maximale quotidienne est au-dessus de {thresh}.",
-    "title": "Nombre de jours avec température maximale quotidienne au-dessus d'un seuil donné",
+    "title": "Nombre de jours ayant une température maximale quotidienne au-dessus d'un seuil donné",
     "abstract": "Nombre de jours où la température maximale quotidienne est au-dessus d'un seuil donné."
   },
   "TX_DAYS_BELOW": {
-    "long_name": "Nombre de jours avec température maximale quotidienne sous un seuil donné",
+    "long_name": "Nombre de jours ayant une température maximale quotidienne sous un seuil donné",
     "description": "Nombre {freq:m} de jours où la température maximale quotidienne est sous {thresh}.",
-    "title": "Nombre de jours avec température maximale quotidienne sous d'un seuil donné",
+    "title": "Nombre de jours ayant une température maximale quotidienne sous un seuil donné",
     "abstract": "Nombre de jours où la température maximale quotidienne est sous un seuil donné."
   },
   "TX_TN_DAYS_ABOVE": {
-    "long_name": "Nombre de jours où les températures minimales et maximales quotidiennes dépassent des seuils donnés.",
+    "long_name": "Nombre de jours ayant des températures minimale et maximale quotidiennes au-dessus de seuils donnés.",
     "description": "Nombre {freq:m} de jours où la température maximale quotidienne excède {thresh_tasmax} et la température minimale quotidienne excède {thresh_tasmin}.",
-    "title": "Nombre de jours où les températures minimales et maximales quotidiennes dépassent les seuils.",
-    "abstract": "Nombre de jours où les températures maximales et minimales quotidiennes sont au-dessus de seuils donnés."
+    "title": "Nombre de jours ayant des températures minimale et maximale quotidiennes au-dessus de seuils donnés.",
+    "abstract": "Nombre de jours où les températures maximale et minimale quotidiennes sont au-dessus de seuils donnés."
   },
   "HEAT_WAVE_FREQUENCY": {
     "long_name": "Nombre de vagues de chaleur",
@@ -302,20 +302,20 @@
     "abstract": "Durée totale des vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent des seuils donnés durant un certain nombre de jours."
   },
   "HEAT_WAVE_MAX_LENGTH": {
-    "long_name": "Longueur maximale des vagues de chaleur",
-    "description": "Longueur maximale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
+    "long_name": "Durée maximale des vagues de chaleur",
+    "description": "Durée maximale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
     "title": "Longueur maximale des vagues de chaleur",
-    "abstract": "Longueur maximale des vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent des seuils donnés durant un certain nombre de jours."
+    "abstract": "Durée maximale des vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimales et maximales quotidiennes excèdent des seuils donnés durant un certain nombre de jours."
   },
   "HEAT_WAVE_INDEX": {
     "long_name": "Nombre de jours de vague de chaleur",
     "description": "Nombre {freq:m} de jours de vague de chaleur. Une vague de chaleur se produit lorsque la température maximale quotidienne excède {thresh} durant au moins {window} jours.",
     "title": "Indice de vague de chaleur",
-    "abstract": "Nombre de jours de vagues de chaleur. Une vague de chaleur se produit lorsque la température maximale quotidienne excèdent un seuil donné durant un certain nombre de jours."
+    "abstract": "Nombre de jours de vagues de chaleur. Une vague de chaleur se produit lorsque la température maximale quotidienne excède un seuil donné durant un certain nombre de jours."
   },
   "TG": {
     "long_name": "Moyenne des températures maximales et minimales quotidennes",
-    "description": "température quotidienne moyenne estimée par la médiane des températures maximales et minimales.",
+    "description": "Température quotidienne moyenne estimée par la moyenne des températures maximale et minimale",
     "title": "Température moyenne",
     "abstract": "La température quotidienne en assumant une distribution symétrique des températures (Tg = (Tx + Tn) / 2)."
   },
@@ -338,16 +338,16 @@
     "abstract": "Moyenne de la température moyenne quotidienne."
   },
   "TG10P": {
-    "long_name": "Nombre de jours où la température quotidienne est sous du 10e centile",
-    "description": "Nombre {freq:m} de jours où la température est sous du {per_base_thresh}e centile. Le {per_base_thresh}e centile est calculé à partir d'une fenêtre de {per_window} jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
-    "title": "Nombre de jours où la température quotidienne est sous du 10e centile",
-    "abstract": "Nombre de jours où la température quotidienne est sous du 10e centile."
+    "long_name": "Nombre de jours ayant une température moyenne quotidienne sous le 10ᵉ centile",
+    "description": "Nombre {freq:m} de jours où la température moyenne est sous le {per_base_thresh}ᵉ centile. Le {per_base_thresh}ᵉ centile est calculé à partir d'une fenêtre de {per_window} jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours ayant une température moyenne quotidienne sous le 10ᵉ centile",
+    "abstract": "Nombre de jours où la température moyenne quotidienne est sous le 10ᵉ centile."
   },
   "TG90P": {
-    "long_name": "Nombre de jours où la température quotidienne est au-dessus du 90e centile",
-    "description": "Nombre {freq:m} de jours où la température est au-dessus du {per_base_thresh}e centile. Le {per_base_thresh}e centile est calculé à partir d'une fenêtre de {per_window} jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
-    "title": "Nombre de jours où la température quotidienne est au-dessus du 90e centile",
-    "abstract": "Nombre de jours où la température quotidienne est au-dessus du 90e centile."
+    "long_name": "Nombre de jours ayant une température moyenne quotidienne au-dessus du 90ᵉ centile",
+    "description": "Nombre {freq:m} de jours où la température est au-dessus du {per_base_thresh}ᵉ centile. Le {per_base_thresh}ᵉ centile est calculé à partir d'une fenêtre de {per_window} jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours ayant une température moyenne quotidienne au-dessus du 90ᵉ centile",
+    "abstract": "Nombre de jours où la température moyenne quotidienne est au-dessus du 90ᵉ centile."
   },
   "TN_MIN": {
     "long_name": "Minimum de la température minimale quotidienne",
@@ -368,16 +368,16 @@
     "abstract": "Moyenne de la température minimale quotidienne."
   },
   "TN10P": {
-    "long_name": "Nombre de jours où la température minimale est sous du 10e centile",
-    "description": "Nombre {freq:m} de jours où la température minimale est sous du {per_base_thresh}e centile. Le {per_base_thresh}e centile est calculé à partir d'une fenêtre de {per_window} jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
-    "title": "Nombre de jours où la température minimale est sous du 10e centile",
-    "abstract": "Nombre de jours où la température minimale est sous du 10e centile."
+    "long_name": "Nombre de jours ayant une température minimale sous le 10ᵉ centile",
+    "description": "Nombre {freq:m} de jours où la température minimale est sous le {per_base_thresh}ᵉ centile. Le {per_base_thresh}ᵉ centile est calculé à partir d'une fenêtre de {per_window} jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours ayant une température minimale sous le 10ᵉ centile",
+    "abstract": "Nombre de jours où la température minimale est sous le 10ᵉ centile."
   },
   "TN90P": {
-    "long_name": "Nombre de jours où la température minimale est au-dessus du 90e centile",
-    "description": "Nombre {freq:m} de jours où la température minimale est au-dessus du {per_base_thresh}e centile. Le {per_base_thresh}e centile est calculé à partir d'une fenêtre de {per_window} jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
-    "title": "Nombre de jours où la température minimale est au-dessus du 90e centile",
-    "abstract": "Nombre de jours où la température minimale est au-dessus du 90e centile."
+    "long_name": "Nombre de jours ayant une température minimale au-dessus du 90ᵉ centile",
+    "description": "Nombre {freq:m} de jours où la température minimale est au-dessus du {per_base_thresh}ᵉ centile. Le {per_base_thresh}ᵉ centile est calculé à partir d'une fenêtre de {per_window} jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours ayant une température minimale au-dessus du 90ᵉ centile",
+    "abstract": "Nombre de jours où la température minimale est au-dessus du 90ᵉ centile."
   },
   "TX_MIN": {
     "long_name": "Minimum de la température maximale quotidienne",
@@ -398,16 +398,16 @@
     "abstract": "Moyenne de la température maximale quotidienne."
   },
   "TX10P": {
-    "long_name": "Nombre de jours où la température maximale est sous du 10e centile",
-    "description": "Nombre {freq:m} de jours où la température maximale est en dessous du {per_base_thresh}e centile. Le {per_base_thresh}e centile est calculé à partir d'une fenêtre de {per_window} jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
-    "title": "Nombre de jours où la température maximale est sous du 10e centile",
-    "abstract": "Nombre de jours où la température maximale est sous du 10e centile."
+    "long_name": "Nombre de jours ayant une température maximale sous le 10ᵉ centile",
+    "description": "Nombre {freq:m} de jours où la température maximale est en dessous du {per_base_thresh}ᵉ centile. Le {per_base_thresh}ᵉ centile est calculé à partir d'une fenêtre de {per_window} jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours ayant une température maximale sous le 10ᵉ centile",
+    "abstract": "Nombre de jours où la température maximale est sous le 10ᵉ centile."
   },
   "TX90P": {
-    "long_name": "Nombre de jours où la température maximale est au-dessus du 90e centile",
-    "description": "Nombre {freq:m} de jours où la température maximale est au-dessus du {per_base_thresh}e centile. Le {per_base_thresh}e centile est calculé à partir d'une fenêtre de {per_window} jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
-    "title": "Nombre de jours où la température maximale est au-dessus du 90e centile",
-    "abstract": "Nombre de jours où la température maximale est au-dessus du 90e centile."
+    "long_name": "Nombre de jours ayant une température maximale au-dessus du 90ᵉ centile",
+    "description": "Nombre {freq:m} de jours où la température maximale est au-dessus du {per_base_thresh}ᵉ centile. Le {per_base_thresh}ᵉ centile est calculé à partir d'une fenêtre de {per_window} jours centrée sur chaque jour du calendrier à l'intérieur d'une période de référence.",
+    "title": "Nombre de jours ayant la température maximale au-dessus du 90ᵉ centile",
+    "abstract": "Nombre de jours où la température maximale est au-dessus du 90ᵉ centile."
   },
   "DTRMAX": {
     "long_name": "Amplitude diurne maximale de la température",
