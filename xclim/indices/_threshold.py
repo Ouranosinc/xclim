@@ -1482,7 +1482,7 @@ def tn_days_above(
       Threshold temperature on which to base evaluation.
     freq : str
       Resampling frequency.
-    op : {">", ">=", "gt", "gteq"}
+    op : {">", ">=", "gt", "ge"}
       Comparison operation. Default: ">".
 
     Returns
@@ -1523,7 +1523,7 @@ def tn_days_below(
       Threshold temperature on which to base evaluation.
     freq : str
       Resampling frequency.
-    op : {"<", "<=", "lt", "lteq"}
+    op : {"<", "<=", "lt", "le"}
       Comparison operation. Default: "<".
 
     Returns
@@ -1564,7 +1564,7 @@ def tg_days_above(
       Threshold temperature on which to base evaluation.
     freq : str
       Resampling frequency.
-    op : {">", ">=", "gt", "gteq"}
+    op : {">", ">=", "gt", "ge"}
       Comparison operation. Default: ">".
 
     Returns
@@ -1605,7 +1605,7 @@ def tg_days_below(
       Threshold temperature on which to base evaluation.
     freq : str
       Resampling frequency.
-    op : {"<", "<=", "lt", "lteq"}
+    op : {"<", "<=", "lt", "le"}
       Comparison operation. Default: "<".
 
     Returns
@@ -1646,7 +1646,7 @@ def tx_days_above(
       Threshold temperature on which to base evaluation.
     freq : str
       Resampling frequency.
-    op : {">", ">=", "gt", "gteq"}
+    op : {">", ">=", "gt", "ge"}
       Comparison operation. Default: ">".
 
     Returns
@@ -1687,7 +1687,7 @@ def tx_days_below(
       Threshold temperature on which to base evaluation.
     freq : str
       Resampling frequency.
-    op : {"<", "<=", "lt", "lteq"}
+    op : {"<", "<=", "lt", "le"}
       Comparison operation. Default: "<".
 
     Returns

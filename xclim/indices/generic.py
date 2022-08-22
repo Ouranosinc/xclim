@@ -133,15 +133,23 @@ def get_op(op: str, constrain: Sequence[str] | None = None):
     constrain : sequence of str, optional
       A tuple of allowed operators.
     """
-    if op in binary_ops:
+    if op in binary_ops.keys():
         op = binary_ops[op]
     elif op in binary_ops.values():
         pass
     else:
         raise ValueError(f"Operation `{op}` not recognized.")
 
-    if constrain and op not in constrain:
-        raise ValueError("Operation `{op}` not permitted for indice.")
+    constraints = list()
+    if isinstance(constrain, (list, tuple, set)):
+        constraints.extend([binary_ops[c] for c in constrain])
+        constraints.extend(constrain)
+    elif isinstance(constrain, str):
+        constraints.extend([binary_ops[constrain], constrain])
+
+    if constrain:
+        if op not in constraints:
+            raise ValueError("Operation `{op}` not permitted for indice.")
 
     return xr.core.ops.get_op(op)  # noqa
 
@@ -201,9 +209,7 @@ def threshold_count(
     xr.DataArray
       The number of days meeting the constraints for each period.
     """
-    op = get_op(op, constrain)
-
-    c = compare(da, op, thresh) * 1
+    c = compare(da, op, thresh, constrain) * 1
     return c.resample(time=freq).sum(dim="time")
 
 
