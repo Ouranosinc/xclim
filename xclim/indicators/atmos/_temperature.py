@@ -99,6 +99,7 @@ tn_days_above = TempWithIndexing(
     description="{freq} number of days where daily minimum temperature exceeds {thresh}.",
     cell_methods="time: sum over days",
     compute=indices.tn_days_above,
+    parameters=dict(op=">"),
 )
 
 tn_days_below = TempWithIndexing(
@@ -109,6 +110,7 @@ tn_days_below = TempWithIndexing(
     description="{freq} number of days where daily minimum temperature is below {thresh}.",
     cell_methods="time: sum over days",
     compute=indices.tn_days_below,
+    parameters=dict(op="<"),
 )
 
 tg_days_above = TempWithIndexing(
@@ -119,6 +121,7 @@ tg_days_above = TempWithIndexing(
     description="{freq} number of days where daily mean temperature exceeds {thresh}.",
     cell_methods="time: sum over days",
     compute=indices.tg_days_above,
+    parameters=dict(op=">"),
 )
 
 tg_days_below = TempWithIndexing(
@@ -129,6 +132,7 @@ tg_days_below = TempWithIndexing(
     description="{freq} number of days where daily mean temperature is below {thresh}.",
     cell_methods="time: sum over days",
     compute=indices.tg_days_below,
+    parameters=dict(op="<"),
 )
 
 tx_days_above = TempWithIndexing(
@@ -139,6 +143,7 @@ tx_days_above = TempWithIndexing(
     description="{freq} number of days where daily maximum temperature exceeds {thresh}.",
     cell_methods="time: sum over days",
     compute=indices.tx_days_above,
+    parameters=dict(op=">"),
 )
 
 tx_days_below = TempWithIndexing(
@@ -149,6 +154,7 @@ tx_days_below = TempWithIndexing(
     description="{freq} number of days where daily max temperature is below {thresh}.",
     cell_methods="time: sum over days",
     compute=indices.tx_days_below,
+    parameters=dict(op="<"),
 )
 
 tx_tn_days_above = TempWithIndexing(

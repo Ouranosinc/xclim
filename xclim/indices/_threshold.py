@@ -1500,7 +1500,7 @@ def tn_days_above(
         TN_{ij} > Threshold [℃]
     """
     thresh = convert_units_to(thresh, tasmin)
-    f = threshold_count(tasmin, op, thresh, freq, constrain=(">", ">=", "gt", "gteq"))
+    f = threshold_count(tasmin, op, thresh, freq, constrain=(">", ">="))
     return to_agg_units(f, tasmin, "count")
 
 
@@ -1541,7 +1541,7 @@ def tn_days_below(
         TN_{ij} < Threshold [℃]
     """
     thresh = convert_units_to(thresh, tasmin)
-    f1 = threshold_count(tasmin, op, thresh, freq, constrain=("<", "<=", "lt", "lteq"))
+    f1 = threshold_count(tasmin, op, thresh, freq, constrain=("<", "<="))
     return to_agg_units(f1, tasmin, "count")
 
 
@@ -1582,7 +1582,7 @@ def tg_days_above(
         TG_{ij} > Threshold [℃]
     """
     thresh = convert_units_to(thresh, tas)
-    f = threshold_count(tas, op, thresh, freq, constrain=(">", ">=", "gt", "gteq"))
+    f = threshold_count(tas, op, thresh, freq, constrain=(">", ">="))
     return to_agg_units(f, tas, "count")
 
 
@@ -1623,7 +1623,7 @@ def tg_days_below(
         TG_{ij} < Threshold [℃]
     """
     thresh = convert_units_to(thresh, tas)
-    f1 = threshold_count(tas, op, thresh, freq, constrain=("<", "<=", "lt", "lteq"))
+    f1 = threshold_count(tas, op, thresh, freq, constrain=("<", "<="))
     return to_agg_units(f1, tas, "count")
 
 
@@ -1664,7 +1664,7 @@ def tx_days_above(
         TX_{ij} > Threshold [℃]
     """
     thresh = convert_units_to(thresh, tasmax)
-    f = threshold_count(tasmax, op, thresh, freq, constrain=(">", ">=", "gt", "gteq"))
+    f = threshold_count(tasmax, op, thresh, freq, constrain=(">", ">="))
     return to_agg_units(f, tasmax, "count")
 
 
@@ -1705,7 +1705,7 @@ def tx_days_below(
         TN_{ij} < Threshold [℃]
     """
     thresh = convert_units_to(thresh, tasmax)
-    f1 = threshold_count(tasmax, op, thresh, freq, constrain=("<", "<=", "lt", "lteq"))
+    f1 = threshold_count(tasmax, op, thresh, freq, constrain=("<", "<="))
     return to_agg_units(f1, tasmax, "count")
 
 
