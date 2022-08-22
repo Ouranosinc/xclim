@@ -12,7 +12,7 @@ from typing import Sequence
 import cftime
 import numpy as np
 import xarray as xr
-from xarray.coding.cftime_offsets import _MONTH_ABBREVIATIONS
+from xarray.coding.cftime_offsets import _MONTH_ABBREVIATIONS  # noqa
 
 from xclim.core.calendar import (
     DayOfYearStr,
