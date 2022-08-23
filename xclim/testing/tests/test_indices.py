@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # Tests for `xclim` package.
 #
-# We want to tests multiple things here:
+# We want to test multiple things here:
 #  - that data results are correct
 #  - that metadata is correct and complete
 #  - that missing data are handled appropriately
@@ -470,7 +470,7 @@ class TestAgroclimaticIndices:
         # bounds of ± 3.09 correspond to 0.999 and 0.001 probabilities. SPI indices outside
         # [-3.09, 3.09] might be non-statistically relevant. In `climate_indices` the SPI
         # index is clipped outside this region of value. In the values chosen above,
-        # this doesn't play role, but let's clip it anyways to avoid future problems.
+        # this doesn't play role, but let's clip it anyway to avoid future problems.
         # The last few values in time are tested
         spi = spi.clip(-3.09, 3.09)
 
@@ -532,7 +532,7 @@ class TestDailyFreezeThawCycles:
 
         mn = tasmin_series(mn + K2C)
         mx = tasmax_series(mx + K2C)
-        out = xci.daily_freezethaw_cycles(mn, mx, freq="M")
+        out = xci.multiday_temperature_swing(mn, mx, op="count", window=1, freq="M")
         np.testing.assert_array_equal(out[:2], [5, 1])
         np.testing.assert_array_equal(out[2:], 0)
 
@@ -550,8 +550,8 @@ class TestDailyFreezeThawCycles:
 
         mn = tasmin_series(mn + K2C)
         mx = tasmax_series(mx + K2C)
-        out = xci.daily_freezethaw_cycles(
-            mn, mx, thresh_tasmax="0 degC", thresh_tasmin="0 degC", freq="M"
+        out = xci.multiday_temperature_swing(
+            mn, mx, thresh_tasmax="0 degC", thresh_tasmin="0 degC", window=1, freq="M"
         )
         np.testing.assert_array_equal(out[:2], [5, 1])
         np.testing.assert_array_equal(out[2:], 0)
@@ -1268,7 +1268,7 @@ class TestJetStreamIndices:
         np.testing.assert_equal(jetlat.max().data, 16.0)
         np.testing.assert_equal(
             jetstr.max().data, 0.999276877412766
-        )  # manually checked (sum of lanzcos weights for 61 day window and 0.1 cutoff)
+        )  # manually checked (sum of lanzcos weights for 61-day window and 0.1 cutoff)
         assert jetlat.units == da_ua.cf["latitude"].units
         assert jetstr.units == da_ua.units
 
@@ -1636,14 +1636,30 @@ class TestTgMaxTgMinIndices:
             tasmax_series(temp_values + 5 + K2C),
             tasmin_series(temp_values - 5 + K2C),
         )
-        ft = xci.daily_freezethaw_cycles(tasmin, tasmax, freq="YS")
+        ft = xci.multiday_temperature_swing(
+            tasmin,
+            tasmax,
+            thresh_tasmin="0 degC",
+            thresh_tasmax="0 degC",
+            op="count",
+            window=1,
+            freq="YS",
+        )
 
         np.testing.assert_array_equal([np.sum(ft)], [365])
 
     def test_static_freeze_thaw_cycles(self, tasmin_series, tasmax_series):
         tasmin, tasmax = self.static_tmin_tmax_setup(tasmin_series, tasmax_series)
         tasmin -= 15
-        ft = xci.daily_freezethaw_cycles(tasmin, tasmax, freq="YS")
+        ft = xci.multiday_temperature_swing(
+            tasmin,
+            tasmax,
+            thresh_tasmin="0 degC",
+            thresh_tasmax="0 degC",
+            op="count",
+            window=1,
+            freq="YS",
+        )
 
         np.testing.assert_array_equal([np.sum(ft)], [4])
 
@@ -2072,7 +2088,7 @@ class TestWinterRainRatio:
         np.testing.assert_almost_equal(out.isel(dim0=0), [10.0 / (31 + 31 + 28), 0])
 
 
-# I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
+# I'd like to parametrize some of these tests, so that we don't have to write individual tests for each indicator.
 class TestTG:
     @pytest.mark.parametrize(
         "ind,exp",
