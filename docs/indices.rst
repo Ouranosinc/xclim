@@ -54,7 +54,7 @@ Indices submodules
 
     .. bibliography::
        :labelprefix: FFDI-
-       :keprefix: ffdi-
+       :keyprefix: ffdi-
 
     .. _fwi-footnotes:
 
