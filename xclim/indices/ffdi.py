@@ -7,8 +7,8 @@ McArthur Forest Fire Danger Indices Submodule
 This submodule defines the :py:func:`xclim.indices.Keech_Byram_drought_index`,
 :py:func:`xclim.indices.Griffiths_drought_factor` and
 :py:func:`xclim.indices.McArthur_forest_fire_danger_index` indices, which are used by the eponym indicators.
-Users should read this module's documentation and consult the :cite:t:`fire-finkele_2006` which provides
-details of the methods used to calculate each index.
+Users should read this module's documentation and consult :cite:t:`fire-finkele_2006` which provides details
+of the methods used to calculate each index.
 """
 # This file is structured in the following way:
 # Section 1: individual codes, numba-accelerated and vectorized functions.
@@ -115,11 +115,11 @@ def _Griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
     p : array_like
         Total rainfall over previous 24 hours, at 9am [mm].
     smd : array_like
-        Soil moisture deficit (e.g. KBDI), at 9am
+        Soil moisture deficit (e.g. KBDI), at 9am.
     lim : integer
-        How to limit the drought factor
-            - if 0 : use Eq 14 in :cite:p:`fire-finkele_2006`
-            - if 1 : use Eq 13 in :cite:p:`fire-finkele_2006`
+        How to limit the drought factor. If 0, use equation (14) in
+        :cite:t:`fire-finkele_2006`. If 1, use equation Eq (13) in
+        :cite:t:`fire-finkele_2006`.
 
     Returns
     -------
@@ -242,7 +242,7 @@ def Keech_Byram_drought_index(
     """
     Calculate the Keetch-Byram drought index (KBDI).
 
-    This method implements the methodology and formula described in :cite:p:`fire-finkele_2006`
+    This method implements the methodology and formula described in :cite:t:`fire-finkele_2006`
     (section 2.1.1) for calculating the KBDI.
 
     Parameters
@@ -294,7 +294,7 @@ def Griffiths_drought_factor(
     """
     Calculate the Griffiths drought factor based on the soil moisture deficit.
 
-    This method implements the methodology and formula described in :cite:p:`fire-finkele_2006`
+    This method implements the methodology and formula described in :cite:t:`fire-finkele_2006`
     (section 2.2) for calculating the Griffiths drought factor.
 
     Parameters
@@ -303,13 +303,11 @@ def Griffiths_drought_factor(
         Total rainfall over previous 24 hours, at 9am.
     smd : xarray DataArray
         Daily soil moisture deficit (often KBDI) at 9am
-    limiting_func : str, optional
-        The approach to use to limit the values of the drought factor.
-        Options are:
-        - 'xlim' : drought factor values are limited according to
-            equation (14) of :cite:p:`fire-finkele_2006`
-        - 'discrete': drought factor values are limited according to
-            equation (13) of :cite:p:`fire-finkele_2006`
+    limiting_func : {"xlim", "discrete"}
+        How to limit the values of the drought factor. If "xlim" (default), use equation (14) in
+        :cite:t:`fire-finkele_2006`. If "discrete", use equation Eq (13) in
+        :cite:t:`fire-finkele_2006`.
+
 
     References
     ----------
