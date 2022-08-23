@@ -539,7 +539,7 @@ class TestDailyFreezeThawCycles:
         mn = tasmin_series(mn + K2C)
         mx = tasmax_series(mx + K2C)
         out = xci.multiday_temperature_swing(
-            mn, mx, **thresholds, op="count", window=1, freq="M"
+            mn, mx, **thresholds, op="sum", window=1, freq="M"
         )
         np.testing.assert_array_equal(out[:2], [5, 1])
         np.testing.assert_array_equal(out[2:], 0)
@@ -1629,7 +1629,7 @@ class TestTgMaxTgMinIndices:
             tasmax,
             thresh_tasmin="0 degC",
             thresh_tasmax="0 degC",
-            op="count",
+            op="sum",
             window=1,
             freq="YS",
         )
@@ -1644,7 +1644,7 @@ class TestTgMaxTgMinIndices:
             tasmax,
             thresh_tasmin="0 degC",
             thresh_tasmax="0 degC",
-            op="count",
+            op="sum",
             window=1,
             freq="YS",
         )
