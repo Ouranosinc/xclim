@@ -30,6 +30,12 @@ Indices submodules
    :show-inheritance:
    :noindex:
 
+.. automodule:: xclim.indices.ffdi
+   :members: Griffiths_drought_factor, Keetch_Byram_drought_index, McArthur_forest_fire_danger_index
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
 .. automodule:: xclim.indices.fwi
    :members: fire_weather_ufunc, fire_season, overwintering_drought_code, drought_code, fire_weather_indexes
    :undoc-members:
@@ -38,16 +44,24 @@ Indices submodules
 
 .. only:: html or text
 
+    Fire-based Indices Footnotes
+    ----------------------------
+
+    .. _ffdi_footnotes:
+
+    McArthur Forest Fire Danger Indices methods
+    ===========================================
+
+    .. bibliography::
+       :labelprefix: FFDI-
+       :keprefix: ffdi-
+
     .. _fwi-footnotes:
 
-    Fire Weather Indices Footnotes
-    ------------------------------
-
-    Fire weather indices codes
+    Fire Weather Indices codes
     ==========================
 
     .. bibliography::
-       :style: xcstyle
        :labelprefix: CODE-
        :keyprefix: code-
 
@@ -57,7 +71,6 @@ Indices submodules
     =================================
 
     .. bibliography::
-       :style: xcstyle
        :labelprefix: FIRE-
        :keyprefix: fire-
 
@@ -65,6 +78,5 @@ Indices submodules
     =====================================
 
     .. bibliography::
-       :style: xcstyle
        :labelprefix: DROUGHT-
        :keyprefix: drought-

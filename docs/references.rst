@@ -8,7 +8,11 @@
     ------------------
 
     .. bibliography::
-       :style: xcstyle
+
+    McArthur Forest Fire Danger Index References
+    --------------------------------------------
+
+    See: :ref:`ffdi-footnotes`
 
     Fire Weather Index References
     -----------------------------

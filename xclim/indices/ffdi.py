@@ -5,10 +5,9 @@ McArthur Forest Fire Danger Indices Submodule
 =============================================
 
 This submodule defines the :py:func:`xclim.indices.Keetch_Byram_drought_index`,
-:py:func:`xclim.indices.Griffiths_drought_factor` and
-:py:func:`xclim.indices.McArthur_forest_fire_danger_index` indices, which are used by the eponym indicators.
-Users should read this module's documentation and consult :cite:t:`fire-finkele_2006` which provides details
-of the methods used to calculate each index.
+:py:func:`xclim.indices.Griffiths_drought_factor` and :py:func:`xclim.indices.McArthur_forest_fire_danger_index`
+indices, which are used by the eponym indicators. Users should read this module's documentation and consult
+:cite:t:`ffdi-finkele_2006` which provides details of the methods used to calculate each index.
 """
 # This file is structured in the following way:
 # Section 1: individual codes, numba-accelerated and vectorized functions.
@@ -20,8 +19,6 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 from numba import float64, guvectorize, int64
-
-from xclim.core.units import convert_units_to, declare_units
 
 # SECTION 1 - Codes - Numba accelerated and vectorized functions
 
@@ -38,21 +35,19 @@ from xclim.core.units import convert_units_to, declare_units
     ],
     "(n),(n),(),()->(n)",
 )
-def _Keetch_Byram_drought_index(p, t, pa, kbdi0, kbdi):  # pragma: no cover
-    """
-    Compute the Keetch-Byram drought (KBDI) index.
+def _Keetch_Byram_drought_index(p, t, pa, kbdi0, kbdi: float):  # pragma: no cover
+    """Compute the Keetch-Byram drought (KBDI) index.
 
     Parameters
     ----------
     p : array_like
         Total rainfall over previous 24 hours [mm].
-    t: array_like
+    t : array_like
         Maximum temperature near the surface over previous 24 hours [C].
-    pa: array_like
+    pa : array_like
         Mean annual accumulated rainfall.
     kbdi0 : float
-        Previous value of the Keetch-Byram drought index used to initialise the
-        KBDI calculation.
+        Previous value of the Keetch-Byram drought index used to initialise the KBDI calculation.
 
     Returns
     -------
@@ -104,8 +99,7 @@ def _Keetch_Byram_drought_index(p, t, pa, kbdi0, kbdi):  # pragma: no cover
     "(n),(n),()->(n)",
 )
 def _Griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
-    """
-    Compute the Griffiths drought factor.
+    """Compute the Griffiths drought factor.
 
     Parameters
     ----------
@@ -114,16 +108,16 @@ def _Griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
     smd : array_like
         Soil moisture deficit (e.g. KBDI).
     lim : integer
-        How to limit the drought factor. If 0, use equation (14) in
-        :cite:t:`fire-finkele_2006`. If 1, use equation Eq (13) in
-        :cite:t:`fire-finkele_2006`.
+        How to limit the drought factor.
+        If 0, use equation (14) in :cite:t:`ffdi-finkele_2006`.
+        If 1, use equation (13) in :cite:t:`ffdi-finkele_2006`.
 
     Returns
     -------
     df : array_like
         The limited Griffiths drought factor
     """
-    wl = 20  # 20 day window length
+    wl = 20  # 20-day window length
 
     for d in range(wl - 1, len(p)):
         pw = p[d - wl + 1 : d + 1]
@@ -213,11 +207,10 @@ def Keetch_Byram_drought_index(
     tasmax: xr.DataArray,
     pr_annual: xr.DataArray,
     kbdi0: xr.DataArray | None = None,
-):
-    """
-    Calculate the Keetch-Byram drought index (KBDI).
+) -> xr.DataArray:
+    """Calculate the Keetch-Byram drought index (KBDI).
 
-    This method implements the methodology and formula described in :cite:t:`fire-finkele_2006`
+    This method implements the methodology and formula described in :cite:t:`ffdi-finkele_2006`
     (section 2.1.1) for calculating the KBDI. See Notes below.
 
     Parameters
@@ -227,7 +220,7 @@ def Keetch_Byram_drought_index(
     tasmax : xr.DataArray
         Maximum temperature near the surface over previous 24 hours.
     pr_annual: xr.DataArray
-        Mean (over years) annual accumulated rainfall
+        Mean (over years) annual accumulated rainfall.
     kbdi0 : xr.DataArray, optional
         Previous KBDI map used to initialise the KBDI calculation. Defaults to 0.
 
@@ -238,15 +231,13 @@ def Keetch_Byram_drought_index(
 
     Notes
     -----
-    :cite:t:`fire-finkele_2006` limit the maximum KBDI to 200 mm to represent the
-    maximum field capacity of the soil (8 in according to :cite:t:`fire-keetch_1968`).
-    However, it is more common in the literature to limit the KBDI to 203.2 mm which
-    is a more accurate conversion from in to mm. In the function, the KBDI is limited
-    to 203.2 mm.
+    :cite:t:`ffdi-finkele_2006` limits the maximum KBDI to 200 mm to represent the maximum field capacity of the soil
+    (8 in according to :cite:t:`ffdi-keetch_1968`). However, it is more common in the literature to limit the KBDI to
+    203.2 mm which is a more accurate conversion from in to mm. In the function, the KBDI is limited to 203.2 mm.
 
     References
     ----------
-    :cite:t:`fire-keetch_1968,fire-finkele_2006,fire-holgate_2017,fire-dolling_2005`
+    :cite:cts:`ffdi-keetch_1968,ffdi-finkele_2006,ffdi-holgate_2017,ffdi-dolling_2005`
     """
     # pr = convert_units_to(pr, "mm/day")
     # tasmax = convert_units_to(tasmax, "C")
@@ -284,28 +275,27 @@ def Griffiths_drought_factor(
     pr: xr.DataArray,
     smd: xr.DataArray,
     limiting_func: str = "xlim",
-):
-    """
-    Calculate the Griffiths drought factor based on the soil moisture deficit.
+) -> xr.DataArray:
+    """Calculate the Griffiths drought factor based on the soil moisture deficit.
 
-    This method implements the methodology and formula described in :cite:t:`fire-finkele_2006`
+    This method implements the methodology and formula described in :cite:t:`ffdi-finkele_2006`
     (section 2.2) for calculating the Griffiths drought factor.
 
     Parameters
     ----------
     pr : xr.DataArray
-        Total rainfall over previous 24 hours.
+      Total rainfall over previous 24 hours.
     smd : xarray DataArray
-        Daily soil moisture deficit (often KBDI).
+      Daily soil moisture deficit (often KBDI).
     limiting_func : {"xlim", "discrete"}
-        How to limit the values of the drought factor. If "xlim" (default), use equation (14) in
-        :cite:t:`fire-finkele_2006`. If "discrete", use equation Eq (13) in
-        :cite:t:`fire-finkele_2006`.
+      How to limit the values of the drought factor.
+      If "xlim" (default), use equation (14) in :cite:t:`ffdi-finkele_2006`.
+      If "discrete", use equation Eq (13) in :cite:t:`ffdi-finkele_2006`.
 
     Returns
     -------
     df : xr.DataArray
-        The limited Griffiths drought factor.
+      The limited Griffiths drought factor.
 
     Notes
     -----
@@ -315,7 +305,7 @@ def Griffiths_drought_factor(
 
     References
     ----------
-    :cite:t:`fire-griffiths_1999,fire-finkele_2006,fire-holgate_2017`
+    :cite:cts:`ffdi-griffiths_1999,ffdi-finkele_2006,ffdi-holgate_2017`
     """
     # pr = convert_units_to(pr, "mm/day")
     # smd = convert_units_to(smd, "mm/day")
@@ -339,7 +329,7 @@ def Griffiths_drought_factor(
     )
 
     # First non-zero entry is at the 19th time point since df is calculated
-    # from a 20 day rolling window
+    # from a 20-day rolling window
     return df.isel(time=slice(19, None))
 
 
@@ -355,10 +345,9 @@ def McArthur_forest_fire_danger_index(
     H: xr.DataArray,
     V: xr.DataArray,
 ):
-    """
-    Calculate the McArthur forest fire danger index (FFDI) Mark 5.
+    """Calculate the McArthur forest fire danger index (FFDI) Mark 5.
 
-    This method calculates the FFDI using the formula in :cite:t:`fire-noble_1980`.
+    This method calculates the FFDI using the formula in :cite:t:`ffdi-noble_1980`.
 
     Parameters
     ----------
@@ -373,7 +362,7 @@ def McArthur_forest_fire_danger_index(
         near the time of the maximum temperature used for T.
     V : xr.DataArray
         The wind velocity to use in the FFDI calculation. Often mid-afternoon wind speed
-        at a height of 10 m.
+        at a height of 10m.
 
     Returns
     -------
@@ -382,7 +371,7 @@ def McArthur_forest_fire_danger_index(
 
     References
     ----------
-    :cite:t:`fire-noble_1980,fire-dowdy_2018,fire-holgate_2017`
+    :cite:cts:`ffdi-noble_1980,ffdi-dowdy_2018,ffdi-holgate_2017`
     """
     # D = convert_units_to(D, "mm")
     # T = convert_units_to(T, "C")
