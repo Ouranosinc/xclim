@@ -25,6 +25,7 @@ from .options import datacheck
 from .utils import ValidationError
 
 __all__ = [
+    "ValidationError",
     "check_units",
     "convert_units_to",
     "declare_units",

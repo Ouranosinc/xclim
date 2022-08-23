@@ -743,6 +743,8 @@ def standardized_precipitation_index(
             pr,
         )
         prob = prob_zero + (1 - prob_zero) * prob_pos
+    else:
+        raise NotImplementedError(f"dist: {dist}.")
 
     # Invert to normal distribution with ppf and obtain SPI
     params_norm = xarray.DataArray(
