@@ -108,7 +108,7 @@ def ensemble_mean_std_max_min(
     ens: xr.Dataset
       Ensemble dataset (see xclim.ensembles.create_ensemble).
     weights: xr.DataArray
-      1-D array of weights following the 'realization' dimension. This array cannot contain missing values.
+      Weights to apply along the 'realization' dimension. This array cannot contain missing values.
 
     Returns
     -------
@@ -137,10 +137,10 @@ def ensemble_mean_std_max_min(
             ds_out[f"{v}_stdev"] = ens[v].weighted(weights).std(dim="realization")
         ds_out[f"{v}_max"] = ens[v].max(dim="realization")
         ds_out[f"{v}_min"] = ens[v].min(dim="realization")
-        for vv in [
-            m + str(n)
-            for m, n in zip([f"{v}"] * 4, ["_mean", "_stdev", "_max", "_min"])
-        ]:
+
+        # Re-add attributes
+        for stat in ["mean", "stdev", "max", "min"]:
+            vv = f"{v}_{stat}"
             ds_out[vv].attrs = ens[v].attrs
             if "description" in ds_out[vv].attrs.keys():
                 vv.split()
@@ -179,7 +179,7 @@ def ensemble_percentiles(
       If False, no shrinking is performed, resulting in much larger chunks.
       If not defined, the function decides which is best.
     weights: xr.DataArray
-      1-D array of weights following the 'realization' dimension. This array cannot contain missing values.
+      Weights to apply along the 'realization' dimension. This array cannot contain missing values.
       When given, the function uses xarray's quantile method which is slower than xclim's NaN-optimized algorithm.
     split : bool
       Whether to split each percentile into a new variable of concatenate the ouput along a new

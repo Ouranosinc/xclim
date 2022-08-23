@@ -44,8 +44,8 @@ def change_significance(
     test : {'ttest', 'welch-ttest', 'threshold', None}
       Name of the statistical test used to determine if there was significant change. See notes.
     weights: xr.DataArray
-      1-D array of weights following the 'realization' dimension. This array cannot contain missing values.
-      Note: 'ttest' and 'welch-ttest' are currently not supported with weighted arrays.
+      Weights to apply along the 'realization' dimension. This array cannot contain missing values.
+      Note: 'ttest' and 'welch-ttest' are not currently supported with weighted arrays.
     kwargs
       Other arguments specific to the statistical test.
 
