@@ -166,7 +166,7 @@ def get_op(op: str, constrain: Sequence[str] | None = None) -> Callable:
 def compare(
     da: xr.DataArray,
     op: str,
-    thresh: float | int,
+    threshold: float | int,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
     """Compare a dataArray to a threshold using given operator.
@@ -177,7 +177,7 @@ def compare(
       Input data.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
       Logical operator. e.g. arr > thresh.
-    thresh : Union[float, int]
+    threshold : Union[float, int]
       Threshold value.
     constrain : sequence of str, optional
       Optionally allowed conditions.
@@ -187,13 +187,13 @@ def compare(
     xr.DataArray
         Boolean mask of the comparison.
     """
-    return get_op(op, constrain)(da, thresh)
+    return get_op(op, constrain)(da, threshold)
 
 
 def threshold_count(
     da: xr.DataArray,
     op: str,
-    thresh: float | int | xr.DataArray,
+    threshold: float | int | xr.DataArray,
     freq: str,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
@@ -205,7 +205,7 @@ def threshold_count(
       Input data.
     op : {">", "<", ">=", "<=", "gt", "lt", "ge", "le"}
       Logical operator. e.g. arr > thresh.
-    thresh : Union[float, int]
+    threshold : Union[float, int]
       Threshold value.
     freq : str
       Resampling frequency defining the periods as defined in
@@ -221,7 +221,7 @@ def threshold_count(
     if constrain is None:
         constrain = (">", "<", ">=", "<=")
 
-    c = compare(da, op, thresh, constrain) * 1
+    c = compare(da, op, threshold, constrain) * 1
     return c.resample(time=freq).sum(dim="time")
 
 
@@ -253,7 +253,7 @@ def domain_count(da: xr.DataArray, low: float, high: float, freq: str) -> xr.Dat
 
 def get_daily_events(
     da: xr.DataArray,
-    thresh: float,
+    threshold: float,
     op: str,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
@@ -263,7 +263,7 @@ def get_daily_events(
     ----------
     da : xr.DataArray
       Input data.
-    thresh : float
+    threshold : float
       Threshold value.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
       Logical operator. e.g. arr > thresh.
@@ -281,7 +281,7 @@ def get_daily_events(
     -------
     xr.DataArray
     """
-    events = compare(da, op, thresh, constrain) * 1
+    events = compare(da, op, threshold, constrain) * 1
     events = events.where(~(np.isnan(da)))
     events = events.rename("events")
     return events
@@ -293,7 +293,7 @@ def get_daily_events(
 def count_level_crossings(
     low_data: xr.DataArray,
     high_data: xr.DataArray,
-    thresh: str,
+    threshold: str,
     freq: str,
     *,
     op_low: str = "<",
@@ -310,7 +310,7 @@ def count_level_crossings(
       Variable that must be under the threshold.
     high_data : xr.DataArray
       Variable that must be above the threshold.
-    thresh : str
+    threshold : str
       Quantity.
     freq : str
       Resampling frequency.
@@ -325,7 +325,7 @@ def count_level_crossings(
     """
     # Convert units to low_data
     high_data = convert_units_to(high_data, low_data)
-    threshold = convert_units_to(thresh, low_data)
+    threshold = convert_units_to(threshold, low_data)
 
     lower = compare(low_data, op_low, threshold, constrain=("<", "<="))
     higher = compare(high_data, op_high, threshold, constrain=(">", ">="))
@@ -805,14 +805,14 @@ def aggregate_between_dates(
 
 
 @declare_units(tas="[temperature]")
-def degree_days(tas: xr.DataArray, thresh: str, op: str) -> xr.DataArray:
+def degree_days(tas: xr.DataArray, threshold: str, op: str) -> xr.DataArray:
     """Calculate the degree days below/above the temperature threshold.
 
     Parameters
     ----------
     tas : xr.DataArray
       Mean daily temperature.
-    thresh : str
+    threshold : str
       The temperature threshold.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
       Logical operator. e.g. arr > thresh.
@@ -821,12 +821,12 @@ def degree_days(tas: xr.DataArray, thresh: str, op: str) -> xr.DataArray:
     -------
     xarray.DataArray
     """
-    thresh = convert_units_to(thresh, tas)
+    threshold = convert_units_to(threshold, tas)
 
     if op in ["<", "<=", "lt", "le"]:
-        out = (thresh - tas).clip(0)
+        out = (threshold - tas).clip(0)
     elif op in [">", ">=", "gt", "ge"]:
-        out = (tas - thresh).clip(0)
+        out = (tas - threshold).clip(0)
     else:
         raise NotImplementedError(f"Condition not supported: '{op}'.")
 

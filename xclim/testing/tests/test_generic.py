@@ -270,8 +270,8 @@ class TestDegreeDays:
     def test_simple(self, tas_series, op, expected):
         tas = tas_series(np.array([-10, 15, 20, 3, 10]) + K2C)
 
-        out = generic.degree_days(tas, thresh="10 degC", op=op)
-        out_kelvin = generic.degree_days(tas, thresh="283.15 degK", op=op)
+        out = generic.degree_days(tas, threshold="10 degC", op=op)
+        out_kelvin = generic.degree_days(tas, threshold="283.15 degK", op=op)
 
         np.testing.assert_allclose(out, expected)
         np.testing.assert_allclose(out, out_kelvin)
@@ -280,14 +280,14 @@ class TestDegreeDays:
         tas = tas_series(np.array([-10, 15, 20, 3, 10]) + K2C)
 
         with pytest.raises(NotImplementedError):
-            generic.degree_days(tas, thresh="10 degC", op="!=")
+            generic.degree_days(tas, threshold="10 degC", op="!=")
 
 
 class TestGetDailyEvents:
     def test_simple(self, tas_series):
         arr = xr.DataArray(np.array([-10, 15, 20, np.NaN, 10]), name="Stuff")
 
-        out = generic.get_daily_events(arr, thresh=10, op=">=")
+        out = generic.get_daily_events(arr, threshold=10, op=">=")
 
         assert out.name == "events"
         assert out.sum() == 3
@@ -306,7 +306,12 @@ class TestGenericCountingIndices:
         tasmax = tasmax_series(np.array([5, 7, 3, 6, 13, 5, 4]) + K2C)
 
         crossings = generic.count_level_crossings(
-            tasmin, tasmax, thresh="5 degC", freq="YS", op_high=op_high, op_low=op_low
+            tasmin,
+            tasmax,
+            threshold="5 degC",
+            freq="YS",
+            op_high=op_high,
+            op_low=op_low,
         )
         np.testing.assert_array_equal(crossings, [expected])
 
@@ -321,7 +326,7 @@ class TestGenericCountingIndices:
             generic.count_level_crossings(
                 tasmin,
                 tasmax,
-                thresh="0.5 degC",
+                threshold="0.5 degC",
                 freq="YS",
                 op_high=op_high,
                 op_low=op_low,
