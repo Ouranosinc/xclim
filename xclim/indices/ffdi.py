@@ -4,7 +4,7 @@ r"""
 McArthur Forest Fire Danger Indices Submodule
 =============================================
 
-This submodule defines the :py:func:`xclim.indices.Keech_Byram_drought_index`, 
+This submodule defines the :py:func:`xclim.indices.Keech_Byram_drought_index`,
 :py:func:`xclim.indices.Griffiths_drought_factor` and
 :py:func:`xclim.indices.McArthur_forest_fire_danger_index` indices, which are used by the eponym indicators.
 Users should read this module's documentation and consult the :cite:t:`fire-finkele_2006` which provides
@@ -18,10 +18,9 @@ details of the methods used to calculate each index.
 # Methods starting with a "_" are not usable with xarray objects, whereas the others are.
 import numpy as np
 import xarray as xr
-from numba import guvectorize, int64, float64
+from numba import float64, guvectorize, int64
 
 from xclim.core.units import convert_units_to, declare_units
-
 
 # SECTION 1 - Codes - Numba accelerated and vectorized functions
 
@@ -42,8 +41,7 @@ from xclim.core.units import convert_units_to, declare_units
 )
 def _Keech_Byram_drought_index(p, t, pa, rr0, kbdi0, rr, kbdi):  # pragma: no cover
     """
-    Compute the Keech-Byram drought index over one time step
-    following :cite:p:`fire-finkele_2006`
+    Compute the Keech-Byram drought index over one time step.
 
     Parameters
     ----------
@@ -110,8 +108,7 @@ def _Keech_Byram_drought_index(p, t, pa, rr0, kbdi0, rr, kbdi):  # pragma: no co
 )
 def _Griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
     """
-    Compute the Griffiths drought factor following
-    :cite:p:`fire-finkele_2006`
+    Compute the Griffiths drought factor.
 
     Parameters
     ----------
@@ -165,11 +162,11 @@ def _Griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
 
         if lim == 0:
             if smd[d] < 20:
-                l = 1 / (1 + 0.1135 * smd[d])
+                xlim = 1 / (1 + 0.1135 * smd[d])
             else:
-                l = 75 / (270.525 - 1.267 * smd[d])
-            if x > l:
-                x = l
+                xlim = 75 / (270.525 - 1.267 * smd[d])
+            if x > xlim:
+                x = xlim
 
         dfw = (
             10.5
@@ -180,17 +177,17 @@ def _Griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
 
         if lim == 1:
             if smd[d] < 25.0:
-                l = 6.0
+                dflim = 6.0
             elif (smd[d] >= 25.0) & (smd[d] < 42.0):
-                l = 7.0
+                dflim = 7.0
             elif (smd[d] >= 42.0) & (smd[d] < 65.0):
-                l = 8.0
+                dflim = 8.0
             elif (smd[d] >= 65.0) & (smd[d] < 100.0):
-                l = 9.0
+                dflim = 9.0
             else:
-                l = 10.0
-            if dfw > l:
-                dfw = l
+                dflim = 10.0
+            if dfw > dflim:
+                dfw = dflim
 
         if dfw > 10.0:
             dfw = 10.0
@@ -202,10 +199,7 @@ def _Griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
 
 
 def _Keech_Byram_drought_index_calc(pr, tasmax, pr_annual, kbdi0):
-    """
-    Primary function computing the Keech-Byram drought index.
-    DO NOT CALL DIRECTLY, use `Keech_Byram_drought_index` instead.
-    """
+    """Primary function computing the Keech-Byram drought index. DO NOT CALL DIRECTLY, use `Keech_Byram_drought_index` instead."""
     kbdi = np.zeros_like(pr)
     runoff_remain = 5.0
     kbdi_prev = kbdi0
@@ -224,15 +218,10 @@ def _Keech_Byram_drought_index_calc(pr, tasmax, pr_annual, kbdi0):
 
 
 def _Griffiths_drought_factor_calc(pr, smd, lim):
-    """
-    Primary function computing the Griffiths drought factor.
-    DO NOT CALL DIRECTLY, use `Griffiths_drought_factor` instead.
-
-    This function is actually only required as xr.apply_ufunc will
-    not allow `func=_Griffiths_drought_factor` since this is
-    guvectorized and has the output in its function signature
-    """
-
+    """Primary function computing the Griffiths drought factor. DO NOT CALL DIRECTLY, use `Griffiths_drought_factor` instead."""
+    # This function is actually only required as xr.apply_ufunc will not allow
+    # `func=_Griffiths_drought_factor` since this is guvectorized and has the
+    # output in its function signature
     return _Griffiths_drought_factor(pr, smd, lim)
 
 
@@ -251,26 +240,10 @@ def Keech_Byram_drought_index(
     kbdi0: xr.DataArray | None = None,
 ):
     """
-    Calculate the Keetch-Byram drought index (KBDI), defined as:
+    Calculate the Keetch-Byram drought index (KBDI).
 
-        KBDI_n = KBDI_n-1 − Peff + ET
-
-    Peff is the previous 24-hour rainfall amount, pr_n-1, decreased by an amount to allow
-    for interception and/or runoff:
-
-        Peff = pr_n-1 - (interception/runoff)
-
-    where the interception and/or runoff is approximated as the first 5 mm within consecutive
-    days with nonzero rainfall.
-
-    ET is the evapotransporation, estimated as:
-
-        ET = (203.2 - KBDI_n-1) * (0.968 * exp(0.0875 * tasmax_n-1 + 1.5552) - 8.3)
-             ---------------------------------------------------------------------- * 10 ** (-3)
-                          1 + 10.88 * exp(-0.00173 * pr_annual)
-
-    where tasmax_n-1 is the previous day's max temperature and pr_annual is the annual accumulated
-    rainfall averaged over a number of years.
+    This method implements the methodology and formula described in :cite:p:`fire-finkele_2006`
+    (section 2.1.1) for calculating the KBDI.
 
     Parameters
     ----------
@@ -279,20 +252,13 @@ def Keech_Byram_drought_index(
     tasmax : xr.DataArray
         Maximum temperature over previous 24 hours, at 9am.
     pr_annual: xr.DataArray
-        Mean annual accumulated rainfall
+        Mean (over years) annual accumulated rainfall
     kbdi0 : xr.DataArray, optional
         Previous KBDI map used to initialise the KBDI calculation. Defaults to 0.
 
     References
     ----------
-    Keetch & Byram 1968 (on calculation):
-        https://www.srs.fs.usda.gov/pubs/viewpub.php?index=40
-    Finkele et al. 2006 (on calculation):
-        https://webarchive.nla.gov.au/awa/20060903105143/http://www.bom.gov.au/bmrc/pubs/researchreports/RR119.pdf
-    Holgate et al. 2017 (on calculation):
-        https://www.publish.csiro.au/wf/WF16217
-    Dolling et al. 2005 (on initialisation):
-        https://www.sciencedirect.com/science/article/pii/S0168192305001802#bib5
+    :cite:t:`fire-keetch_1968,fire-finkele_2006,fire-holgate_2017,fire-dolling_2005`
     """
     # pr = convert_units_to(pr, "mm/day")
     # tasmax = convert_units_to(tasmax, "C")
@@ -326,8 +292,10 @@ def Griffiths_drought_factor(
     limiting_func: str = "xlim",
 ):
     """
-    Calculate the Griffiths (1998) drought factor based on the soil
-    moisture deficit.
+    Calculate the Griffiths drought factor based on the soil moisture deficit.
+
+    This method implements the methodology and formula described in :cite:p:`fire-finkele_2006`
+    (section 2.2) for calculating the Griffiths drought factor.
 
     Parameters
     ----------
@@ -342,6 +310,10 @@ def Griffiths_drought_factor(
             equation (14) of :cite:p:`fire-finkele_2006`
         - 'discrete': drought factor values are limited according to
             equation (13) of :cite:p:`fire-finkele_2006`
+
+    References
+    ----------
+    :cite:t:`fire-griffiths_1999,fire-finkele_2006,fire-holgate_2017`
     """
     # pr = convert_units_to(pr, "mm/day")
     # smd = convert_units_to(smd, "mm/day")

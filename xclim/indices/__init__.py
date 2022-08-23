@@ -31,8 +31,8 @@ from ._multivariate import *
 from ._simple import *
 from ._synoptic import *
 from ._threshold import *
+from .ffdi import Griffiths_drought_factor, Keech_Byram_drought_index
 from .fwi import drought_code, fire_season, fire_weather_indexes
-from .ffdi import Keech_Byram_drought_index, Griffiths_drought_factor
 
 """
 Notes for docstring
