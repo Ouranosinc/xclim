@@ -41,14 +41,14 @@ from xclim.core.units import convert_units_to, declare_units
 )
 def _Keetch_Byram_drought_index(p, t, pa, rr0, kbdi0, rr, kbdi):  # pragma: no cover
     """
-    Compute the Keetch-Byram drought index over one time step.
+    Compute the Keetch-Byram drought index (KBDI) over one time step.
 
     Parameters
     ----------
     p : float
-        Total rainfall over previous 24 hours, at 9am [mm].
+        Total rainfall over previous 24 hours [mm].
     t: float
-        Maximum temperature over previous 24 hours, at 9am [C].
+        Maximum temperature near the surface over previous 24 hours [C].
     pa: float
         Mean annual accumulated rainfall
     rr0: float
@@ -63,7 +63,7 @@ def _Keetch_Byram_drought_index(p, t, pa, rr0, kbdi0, rr, kbdi):  # pragma: no c
     rr : array_like
         Remaining rainfall to be assigned to runoff.
     kbdi : array_like
-        Keetch-Byram drought index at 9am.
+        Keetch-Byram drought index.
     """
     # Reset remaining runoff if there is zero rainfall
     if p == 0.0:
@@ -88,8 +88,8 @@ def _Keetch_Byram_drought_index(p, t, pa, rr0, kbdi0, rr, kbdi):  # pragma: no c
     if kbdi_curr < 0.0:
         kbdi_curr = 0.0
 
-    if kbdi_curr > 200.0:
-        kbdi_curr = 200.0
+    if kbdi_curr > 203.2:
+        kbdi_curr = 203.2
 
     rr[0] = rr0 - r
     kbdi[0] = kbdi_curr
@@ -113,9 +113,9 @@ def _Griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
     Parameters
     ----------
     p : array_like
-        Total rainfall over previous 24 hours, at 9am [mm].
+        Total rainfall over previous 24 hours [mm].
     smd : array_like
-        Soil moisture deficit (e.g. KBDI), at 9am.
+        Soil moisture deficit (e.g. KBDI).
     lim : integer
         How to limit the drought factor. If 0, use equation (14) in
         :cite:t:`fire-finkele_2006`. If 1, use equation Eq (13) in
@@ -124,7 +124,7 @@ def _Griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
     Returns
     -------
     df : array_like
-        The limited Griffiths drought factor at 9am
+        The limited Griffiths drought factor
     """
     wl = 20  # 20 day window length
 
@@ -152,7 +152,7 @@ def _Griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
             if event_end | final_event:
                 # N = 0 defines a rainfall event since 9am today,
                 # so doesn't apply here, where p is the rainfall
-                # over previous 24 hours, at 9am.
+                # over previous 24 hours.
                 x_ = N**1.3 / (N**1.3 + P - 2.0)
                 x = min(x_, x)
 
@@ -243,18 +243,31 @@ def Keetch_Byram_drought_index(
     Calculate the Keetch-Byram drought index (KBDI).
 
     This method implements the methodology and formula described in :cite:t:`fire-finkele_2006`
-    (section 2.1.1) for calculating the KBDI.
+    (section 2.1.1) for calculating the KBDI. See Notes below.
 
     Parameters
     ----------
     pr : xr.DataArray
-        Total rainfall over previous 24 hours, at 9am.
+        Total rainfall over previous 24 hours.
     tasmax : xr.DataArray
-        Maximum temperature over previous 24 hours, at 9am.
+        Maximum temperature near the surface over previous 24 hours.
     pr_annual: xr.DataArray
         Mean (over years) annual accumulated rainfall
     kbdi0 : xr.DataArray, optional
         Previous KBDI map used to initialise the KBDI calculation. Defaults to 0.
+
+    Returns
+    -------
+    kbdi : xr.DataArray
+        Keetch-Byram drought index.
+
+    Notes
+    -----
+    :cite:t:`fire-finkele_2006` limit the maximum KBDI to 200 mm to represent the
+    maximum field capacity of the soil (8 in according to :cite:t:`fire-keetch_1968`).
+    However, it is more common in the literature to limit the KBDI to 203.2 mm which
+    is a more accurate conversion from in to mm. In the function, the KBDI is limited
+    to 203.2 mm.
 
     References
     ----------
@@ -267,7 +280,7 @@ def Keetch_Byram_drought_index(
     if kbdi0 is None:
         kbdi0 = xr.full_like(pr.isel(time=0), 0)
 
-    kbdi = xr.apply_ufunc(
+    return xr.apply_ufunc(
         _Keetch_Byram_drought_index_calc,
         pr,
         tasmax,
@@ -278,8 +291,6 @@ def Keetch_Byram_drought_index(
         dask="parallelized",
         output_dtypes=[pr.dtype],
     )
-
-    return kbdi
 
 
 # @declare_units(
@@ -300,14 +311,24 @@ def Griffiths_drought_factor(
     Parameters
     ----------
     pr : xr.DataArray
-        Total rainfall over previous 24 hours, at 9am.
+        Total rainfall over previous 24 hours.
     smd : xarray DataArray
-        Daily soil moisture deficit (often KBDI) at 9am
+        Daily soil moisture deficit (often KBDI).
     limiting_func : {"xlim", "discrete"}
         How to limit the values of the drought factor. If "xlim" (default), use equation (14) in
         :cite:t:`fire-finkele_2006`. If "discrete", use equation Eq (13) in
         :cite:t:`fire-finkele_2006`.
 
+    Returns
+    -------
+    df : xr.DataArray
+        The limited Griffiths drought factor.
+
+    Notes
+    -----
+    Calculation of the Griffiths drought factor depends on the rainfall over the previous 20 days.
+    Thus, the first available time point in the drought factor returned by this function
+    corresponds to the 20th day of the input data.
 
     References
     ----------
@@ -337,3 +358,52 @@ def Griffiths_drought_factor(
     # First non-zero entry is at the 19th time point since df is calculated
     # from a 20 day rolling window
     return df.isel(time=slice(19, None))
+
+
+# @declare_units(
+#     D="[precipitation]",
+#     T="[temperature]",
+#     H="[humidity]",
+#     V="[wind]",
+# )
+def McArthur_forest_fire_danger_index(
+    D: xr.DataArray,
+    T: xr.DataArray,
+    H: xr.DataArray,
+    V: xr.DataArray,
+):
+    """
+    Calculate the McArthur forest fire danger index (FFDI) Mark 5.
+
+    This method calculates the FFDI using the formula in :cite:t:`fire-noble_1980`.
+
+    Parameters
+    ----------
+    D : xr.DataArray
+        The drought factor to use in the FFDI calculation. Often the daily Griffiths
+        drought factor (see `Griffiths_drought_factor`).
+    T : xr.DataArray
+        The temperature to use in the FFDI calculation. Often the current or previous
+        day's maximum daily temperature near the surface.
+    H : xr.DataArray
+        The relative humidity to use in the FFDI calculation. Often the relative humidity
+        near the time of the maximum temperature used for T.
+    V : xr.DataArray
+        The wind velocity to use in the FFDI calculation. Often mid-afternoon wind speed
+        at a height of 10 m.
+
+    Returns
+    -------
+    ffdi : xr.DataArray
+        The McArthur forest fire danger index.
+
+    References
+    ----------
+    :cite:t:`fire-noble_1980,fire-dowdy_2018,fire-holgate_2017`
+    """
+    # D = convert_units_to(D, "mm")
+    # T = convert_units_to(T, "C")
+    # H = convert_units_to(H, "%")
+    # V = convert_units_to(V, "km/h")
+
+    return D**0.987 * np.exp(0.0338 * T - 0.0345 * H + 0.0234 * V + 0.243147)

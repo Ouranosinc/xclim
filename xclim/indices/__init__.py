@@ -31,7 +31,11 @@ from ._multivariate import *
 from ._simple import *
 from ._synoptic import *
 from ._threshold import *
-from .ffdi import Griffiths_drought_factor, Keech_Byram_drought_index
+from .ffdi import (
+    Griffiths_drought_factor,
+    Keetch_Byram_drought_index,
+    McArthur_forest_fire_danger_index,
+)
 from .fwi import drought_code, fire_season, fire_weather_indexes
 
 """
