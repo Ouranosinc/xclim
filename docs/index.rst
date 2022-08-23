@@ -42,8 +42,10 @@ xclim currently provides over 50 indices related to mean, minimum and maximum da
 
    modules
 
-Indices and tables
-==================
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. only:: html
+
+    Indices and tables
+    ==================
+    * :ref:`genindex`
+    * :ref:`modindex`
+    * :ref:`search`
