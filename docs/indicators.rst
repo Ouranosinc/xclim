@@ -19,7 +19,8 @@ atmos: Atmosphere
 =================
 
 .. raw:: html
-    <dl>
+
+   <dl>
    {% for indname, ind in indicators['atmos'].items() %}
      <dt><code>atmos.{{ indname | safe}}</code> : <a class="reference_internal" href="indicators_api.html#xclim.indicators.atmos.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
      <dd>
@@ -36,7 +37,8 @@ land: Land surface
 ==================
 
 .. raw:: html
-    <dl>
+
+   <dl>
    {% for indname, ind in indicators['land'].items() %}
      <dt><code>land.{{ indname | safe}}</code> : <a class="reference_internal" href="indicators_api.html#xclim.indicators.land.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
      <dd>
@@ -53,7 +55,8 @@ seaIce: Sea ice
 ===============
 
 .. raw:: html
-    <dl>
+
+   <dl>
    {% for indname, ind in indicators['seaIce'].items() %}
      <dt><code>seaIce.{{ indname | safe}}</code> : <a class="reference_internal" href="indicators_api.html#xclim.indicators.seaIce.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
      <dd>
@@ -75,7 +78,8 @@ Virtual submodules
     :noindex:
 
 .. raw:: html
-    <dl>
+
+   <dl>
    {% for indname, ind in indicators['cf'].items() %}
      <dt><code>cf.{{ indname | safe}}</code> : <a class="reference_internal" href="indicators_api.html#xclim.indicators.cf.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
      <dd>
@@ -91,7 +95,8 @@ Virtual submodules
     :noindex:
 
 .. raw:: html
-    <dl>
+
+   <dl>
    {% for indname, ind in indicators['icclim'].items() %}
      <dt><code>icclim.{{ indname | safe}}</code> : <a class="reference_internal" href="indicators_api.html#xclim.indicators.icclim.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
      <dd>
@@ -107,7 +112,8 @@ Virtual submodules
     :noindex:
 
 .. raw:: html
-    <dl>
+
+   <dl>
    {% for indname, ind in indicators['anuclim'].items() %}
      <dt><code>anuclim.{{ indname | safe}}</code> : <a class="reference_internal" href="indicators_api.html#xclim.indicators.anuclim.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
      <dd>

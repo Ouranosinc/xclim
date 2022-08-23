@@ -27,7 +27,7 @@ from scipy.stats.mstats import mquantiles
 
 from xclim import ensembles
 from xclim.indices.stats import get_dist
-from xclim.testing import open_dataset
+from xclim.testing.utils import _default_cache_dir, open_dataset
 
 
 class TestEnsembleStats:
@@ -70,6 +70,15 @@ class TestEnsembleStats:
             np.testing.assert_array_equal(
                 ens1.isel(realization=i).tg_mean.values, ds_all[i].tg_mean.values
             )
+        reals = ["_".join(f.split("_")[1:4:2]) for f in self.nc_files]
+        ens2 = ensembles.create_ensemble(ds_all, realizations=reals)
+
+        # Kinda a hack? Alternative is to open and rewrite in a temp folder.
+        files = [
+            _default_cache_dir / "main" / "EnsembleStats" / f for f in self.nc_files
+        ]
+        ens3 = ensembles.create_ensemble(dict(zip(reals, files)))
+        xr.testing.assert_identical(ens2, ens3)
 
     def test_no_time(self, tmp_path):
         # create again using xr.Dataset objects

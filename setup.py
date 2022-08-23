@@ -12,7 +12,7 @@ URL = "https://github.com/Ouranosinc/xclim"
 AUTHOR = "Travis Logan"
 AUTHOR_EMAIL = "logan.travis@ouranos.ca"
 REQUIRES_PYTHON = ">=3.8.0"
-VERSION = "0.37.12-beta"
+VERSION = "0.37.14-beta"
 LICENSE = "Apache Software License 2.0"
 
 with open("README.rst") as readme_file:
@@ -87,6 +87,11 @@ setup(
         xclim=xclim.cli:cli
     """,
     extras_require={"dev": dev_requirements},
+    project_urls={
+        "About Ouranos": "https://www.ouranos.ca/en/",
+        "Changelog": "https://xclim.readthedocs.io/en/stable/history.html",
+        "Issue tracker": "https://github.com/Ouranosinc/xclim/issues",
+    },
     url=URL,
     version=VERSION,
     zip_safe=False,
