@@ -4,7 +4,7 @@ r"""
 McArthur Forest Fire Danger Indices Submodule
 =============================================
 
-This submodule defines the :py:func:`xclim.indices.Keech_Byram_drought_index`,
+This submodule defines the :py:func:`xclim.indices.Keetch_Byram_drought_index`,
 :py:func:`xclim.indices.Griffiths_drought_factor` and
 :py:func:`xclim.indices.McArthur_forest_fire_danger_index` indices, which are used by the eponym indicators.
 Users should read this module's documentation and consult :cite:t:`fire-finkele_2006` which provides details
@@ -39,9 +39,9 @@ from xclim.core.units import convert_units_to, declare_units
     ],
     "(),(),(),(),()->(),()",
 )
-def _Keech_Byram_drought_index(p, t, pa, rr0, kbdi0, rr, kbdi):  # pragma: no cover
+def _Keetch_Byram_drought_index(p, t, pa, rr0, kbdi0, rr, kbdi):  # pragma: no cover
     """
-    Compute the Keech-Byram drought index over one time step.
+    Compute the Keetch-Byram drought index over one time step.
 
     Parameters
     ----------
@@ -56,14 +56,14 @@ def _Keech_Byram_drought_index(p, t, pa, rr0, kbdi0, rr, kbdi):  # pragma: no co
         Runoff is approximated as the first 5 mm of rain within consecutive
         days with nonzero rainfall.
     kbdi0 : float
-        Previous value of the Keech-Byram drought index.
+        Previous value of the Keetch-Byram drought index.
 
     Returns
     -------
     rr : array_like
         Remaining rainfall to be assigned to runoff.
     kbdi : array_like
-        Keech-Byram drought index at 9am.
+        Keetch-Byram drought index at 9am.
     """
     # Reset remaining runoff if there is zero rainfall
     if p == 0.0:
@@ -198,14 +198,14 @@ def _Griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
 # SECTION 2 : Iterators
 
 
-def _Keech_Byram_drought_index_calc(pr, tasmax, pr_annual, kbdi0):
-    """Primary function computing the Keech-Byram drought index. DO NOT CALL DIRECTLY, use `Keech_Byram_drought_index` instead."""
+def _Keetch_Byram_drought_index_calc(pr, tasmax, pr_annual, kbdi0):
+    """Primary function computing the Keetch-Byram drought index. DO NOT CALL DIRECTLY, use `Keetch_Byram_drought_index` instead."""
     kbdi = np.zeros_like(pr)
     runoff_remain = 5.0
     kbdi_prev = kbdi0
 
     for it in range(pr.shape[-1]):
-        runoff_remain, kbdi[..., it] = _Keech_Byram_drought_index(
+        runoff_remain, kbdi[..., it] = _Keetch_Byram_drought_index(
             pr[..., it],
             tasmax[..., it],
             pr_annual,
@@ -233,7 +233,7 @@ def _Griffiths_drought_factor_calc(pr, smd, lim):
 #     tasmax="[temperature]",
 #     pr_annual="[precipitation]",
 # )
-def Keech_Byram_drought_index(
+def Keetch_Byram_drought_index(
     pr: xr.DataArray,
     tasmax: xr.DataArray,
     pr_annual: xr.DataArray,
@@ -268,7 +268,7 @@ def Keech_Byram_drought_index(
         kbdi0 = xr.full_like(pr.isel(time=0), 0)
 
     kbdi = xr.apply_ufunc(
-        _Keech_Byram_drought_index_calc,
+        _Keetch_Byram_drought_index_calc,
         pr,
         tasmax,
         pr_annual,
