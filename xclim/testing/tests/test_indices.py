@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Tests for `xclim` package.
 #
 # We want to test multiple things here:
@@ -518,25 +517,14 @@ class TestAgroclimaticIndices:
 
 
 class TestDailyFreezeThawCycles:
-    def test_simple(self, tasmin_series, tasmax_series):
-        mn = np.zeros(365)
-        mx = np.zeros(365)
-
-        # 5 days in 1st month
-        mn[10:20] -= 1
-        mx[10:15] += 1
-
-        # 1 day in 2nd month
-        mn[40:44] += [1, 1, -1, -1]
-        mx[40:44] += [1, -1, 1, -1]
-
-        mn = tasmin_series(mn + K2C)
-        mx = tasmax_series(mx + K2C)
-        out = xci.multiday_temperature_swing(mn, mx, op="count", window=1, freq="M")
-        np.testing.assert_array_equal(out[:2], [5, 1])
-        np.testing.assert_array_equal(out[2:], 0)
-
-    def test_zeroed_thresholds(self, tasmin_series, tasmax_series):
+    @pytest.mark.parametrize(
+        "thresholds",
+        [
+            dict(),
+            dict(thresh_tasmax="0 degC", thresh_tasmin="0 degC"),
+        ],
+    )
+    def test_simple(self, tasmin_series, tasmax_series, thresholds):
         mn = np.zeros(365)
         mx = np.zeros(365)
 
@@ -551,7 +539,7 @@ class TestDailyFreezeThawCycles:
         mn = tasmin_series(mn + K2C)
         mx = tasmax_series(mx + K2C)
         out = xci.multiday_temperature_swing(
-            mn, mx, thresh_tasmax="0 degC", thresh_tasmin="0 degC", window=1, freq="M"
+            mn, mx, **thresholds, op="count", window=1, freq="M"
         )
         np.testing.assert_array_equal(out[:2], [5, 1])
         np.testing.assert_array_equal(out[2:], 0)
@@ -1101,7 +1089,7 @@ class TestTnDays:
         np.testing.assert_array_equal(out[:1], [2])
         np.testing.assert_array_equal(out[1:], [0])
 
-    def test_above_operator(self, tasmin_series):
+    def test_operator(self, tasmin_series):
         a = np.zeros(365)
         a[:6] += [27, 28, 29, 30, 31, 32]  # 3 at or above 30
         mn = tasmin_series(a + K2C)
