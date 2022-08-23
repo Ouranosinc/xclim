@@ -180,6 +180,7 @@ def ensemble_percentiles(
       If not defined, the function decides which is best.
     weights: xr.DataArray
       1-D array of weights following the 'realization' dimension. This array cannot contain missing values.
+      When given, the function uses xarray's quantile method which is slower than xclim's NaN-optimized algorithm.
     split : bool
       Whether to split each percentile into a new variable of concatenate the ouput along a new
       "percentiles" dimension.
