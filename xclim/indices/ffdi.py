@@ -15,6 +15,8 @@ of the methods used to calculate each index.
 # Section 2: Exposed methods and indices.
 #
 # Methods starting with a "_" are not usable with xarray objects, whereas the others are.
+from __future__ import annotations
+
 import numpy as np
 import xarray as xr
 from numba import float64, guvectorize, int64
