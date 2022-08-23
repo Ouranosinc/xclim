@@ -263,14 +263,24 @@ class TestAggregateBetweenDates:
 
 
 class TestDegreeDays:
-    def test_simple(self, tas_series):
+    @pytest.mark.parametrize(
+        "op, expected",
+        [("gt", [0, 5, 10, 0, 0]), (">=", [0, 5, 10, 0, 0]), ("<", [20, 0, 0, 7, 0])],
+    )
+    def test_simple(self, tas_series, op, expected):
         tas = tas_series(np.array([-10, 15, 20, 3, 10]) + K2C)
 
-        out = generic.degree_days(tas, thresh="10 degC", op=">")
-        out_kelvin = generic.degree_days(tas, thresh="283.15 degK", op=">")
+        out = generic.degree_days(tas, thresh="10 degC", op=op)
+        out_kelvin = generic.degree_days(tas, thresh="283.15 degK", op=op)
 
-        np.testing.assert_allclose(out, [0, 5, 10, 0, 0])
+        np.testing.assert_allclose(out, expected)
         np.testing.assert_allclose(out, out_kelvin)
+
+    def test_forbidden(self, tas_series):
+        tas = tas_series(np.array([-10, 15, 20, 3, 10]) + K2C)
+
+        with pytest.raises(NotImplementedError):
+            generic.degree_days(tas, thresh="10 degC", op="!=")
 
 
 class TestGetDailyEvents:
@@ -327,6 +337,7 @@ class TestGenericCountingIndices:
             ("==", (">", ">="), 1, True),
             ("!=", ("!=", ">"), 9, False),
             ("!=", (">", "=="), 9, True),
+            ("%", ("%", "$", "@"), 5.29e-11, True),
         ],
     )
     def test_count_occurrences(self, tas_series, op, constrain, expected, should_fail):
