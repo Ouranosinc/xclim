@@ -12,10 +12,18 @@ New features and enhancements
     - Wrapped SBCK tests are also properly run in the tox testing ensemble. (:pull:`1119`).
 * New indices for droughts: SPI (standardized precipitations) and SPEI (standardized water budgets) (:issue:`131`, :pull:`1096`)
 * ``ensembles.create_ensembles`` now accepts a ``realizations`` argument to assign a coordinate to the "realization" axis. It also accepts a dictionary as input so that keys are used as that coordinate. (:pull:`1153`).
+* Many generic indicators that compare arrays or against thresholds or now accept an `op` keyword for specifying the logical comparison operation to use in their calculations (i.e. `{">", ">=", "<", "<=, "!=", "=="}`). (:issue:`389`, :pull:`1157`).
+    - In order to prevent user error, many of these generic indices now have a `constrain` variable that prevents calling an indice with an inappropriate comparison operator. (e.g. The following will raise an error: `op=">", constrain=("<", "<=")`). This behaviour has been added to indices accepting `op` where appropriate.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `scipy` has been temporarily pinned below version 1.9 until lmoments3 tests can be rewritten to account for the new API. (:issue:`1142`, :pull:`1143`).
+* Call signatures for generic indices have been reordered and/or modified to accept `op`, and optionally `constrain`, in many cases, and `condition`/`conditional`/`operation` has been renamed to `op` for consistency. (:pull:`1157`). The affected indices are as follows:
+    - `get_op`, `compare`, `threshold_count`, `get_daily_events`, `count_level_crossings`, `count_occurrences`, `first_occurrence`, `last_occurrence`, `spell_length`, `thresholded_statistics`, `temperature_sum`, `degree_days`.
+* All indices in `xclim.indices.generic` now use `threshold` in lieu of `thresh` for consistency. (:pull:`1157`).
+* Two deprecated indices have been removed from `xclim`. (:pull:`1157`):
+    - ``xclim.indices._multivariate.daily_freezethaw_cycles`` -> Replaceable with the generic ``multiday_temperature_swing`` with `thresh_tasmax='0 degC'`, `thresh_tasmin='0 degC'`, `window=1`, and `op='sum'`. The indicator version (``xclim.atmos.daily_freezethaw_cycles``) is unaffected.
+    - ``xclim.indices.generic.select_time`` -> Was previously moved to ``xclim.core.calendar``.
 
 Bug fixes
 ^^^^^^^^^
@@ -35,6 +43,8 @@ Internal changes
 * Bibliographic references for supporting scientific articles are now found in a bibtex file (`docs/references.bib`). These are now made available within the generated documentation using ``sphinxcontrib-bibtex``. (:issue:`1094`, :pull:`1131`).
 * Added information URLs to ``setup.py`` in order to showcase issue tracker and other sites on PyPI page (:pull:`1156`).
 * Set the LaTeX to `xelatex` and configured the LaTeX build of the documentation to ignore the custom bibliographies, as they were redundant in the generated PDF. (:pull:`1158`).
+* A new function ``xclim.indices.generic.compare_arrays`` can now be used to construct operations with `op` and `constrain` variables to allow for dynamic comparisons with user input handling. (:pull:`1157`).
+* The generic indices `count_level_crossings`, `count_occurrences`, `first_occurrence`, and `last_occurrence` are now fully tested. (:pull:`1157`).
 
 Bug fixes
 ^^^^^^^^^
