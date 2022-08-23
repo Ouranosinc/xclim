@@ -7,6 +7,8 @@ import xarray as xr
 from xclim.core.calendar import date_range, doy_to_days_since, select_time
 from xclim.indices import generic
 
+K2C = 273.15
+
 
 class TestSelectResampleOp:
     def test_month(self, q_series):
@@ -262,7 +264,7 @@ class TestAggregateBetweenDates:
 
 class TestDegreeDays:
     def test_simple(self, tas_series):
-        tas = tas_series(np.array([-10, 15, 20, 3, 10]) + 273.15)
+        tas = tas_series(np.array([-10, 15, 20, 3, 10]) + K2C)
 
         out = generic.degree_days(tas, thresh="10 degC", op=">")
         out_kelvin = generic.degree_days(tas, thresh="283.15 degK", op=">")
@@ -280,6 +282,120 @@ class TestGetDailyEvents:
         assert out.name == "events"
         assert out.sum() == 3
         np.testing.assert_array_equal(out, [0, 1, 1, np.NaN, 1])
+
+
+class TestGenericCountingIndices:
+    @pytest.mark.parametrize(
+        "op_high, op_low, expected",
+        [(">", "<", 1), (">", "<=", 2), (">=", "<", 3), (">=", "<=", 4)],
+    )
+    def test_simple_count_level_crossings(
+        self, tasmin_series, tasmax_series, op_high, op_low, expected
+    ):
+        tasmin = tasmin_series(np.array([-1, -3, 0, 5, 9, 1, 3]) + K2C)
+        tasmax = tasmax_series(np.array([5, 7, 3, 6, 13, 5, 4]) + K2C)
+
+        crossings = generic.count_level_crossings(
+            tasmin, tasmax, thresh="5 degC", freq="YS", op_high=op_high, op_low=op_low
+        )
+        np.testing.assert_array_equal(crossings, [expected])
+
+    @pytest.mark.parametrize(
+        "op_high, op_low", [("<=", "<="), (">=", ">="), ("<", ">"), ("==", "!=")]
+    )
+    def test_forbidden_op(self, tasmin_series, tasmax_series, op_high, op_low):
+        tasmin = tasmin_series(np.zeros(7) + K2C)
+        tasmax = tasmax_series(np.ones(7) + K2C)
+
+        with pytest.raises(ValueError):
+            generic.count_level_crossings(
+                tasmin,
+                tasmax,
+                thresh="0.5 degC",
+                freq="YS",
+                op_high=op_high,
+                op_low=op_low,
+            )
+
+    @pytest.mark.parametrize(
+        "op, constrain, expected, should_fail",
+        [
+            ("<", ("!=", "<"), 4, False),
+            (">", (">", "<="), 5, False),
+            (">=", (">=", "=="), 6, False),
+            ("==", ("==", "!="), 1, False),
+            ("==", (">", ">="), 1, True),
+            ("!=", ("!=", ">"), 9, False),
+            ("!=", (">", "=="), 9, True),
+        ],
+    )
+    def test_count_occurrences(self, tas_series, op, constrain, expected, should_fail):
+        tas = tas_series(np.arange(10) + K2C)
+
+        if should_fail:
+            with pytest.raises(ValueError):
+                generic.count_occurrences(
+                    tas, "4 degC", freq="YS", op=op, constrain=constrain
+                )
+        else:
+            occurrences = generic.count_occurrences(
+                tas, "4 degC", freq="YS", op=op, constrain=constrain
+            )
+            np.testing.assert_array_equal(occurrences, [expected])
+
+    @pytest.mark.parametrize(
+        "op, constrain, expected, should_fail",
+        [
+            ("<", None, np.NaN, False),
+            ("<=", None, 3, False),
+            ("!=", ("!=",), 1, False),
+            ("==", ("==", "!="), 3, False),
+            ("==", (">=", ">", "<"), 3, True),
+        ],
+    )
+    def test_first_occurrence(self, tas_series, op, constrain, expected, should_fail):
+        tas = tas_series(
+            np.array([15, 12, 11, 12, 14, 13, 18, 11, 13]) + K2C, start="1/1/2000"
+        )
+
+        if should_fail:
+            with pytest.raises(ValueError):
+                generic.first_occurrence(
+                    tas, threshold="11 degC", freq="YS", op=op, constrain=constrain
+                )
+        else:
+            first = generic.first_occurrence(
+                tas, threshold="11 degC", freq="YS", op=op, constrain=constrain
+            )
+
+            np.testing.assert_array_equal(first, [expected])
+
+    @pytest.mark.parametrize(
+        "op, constrain, expected, should_fail",
+        [
+            ("<", None, np.NaN, False),
+            ("<=", None, 8, False),
+            ("!=", ("!=",), 9, False),
+            ("==", ("==", "!="), 8, False),
+            ("==", (">=", ">", "<"), 5, True),
+        ],
+    )
+    def test_last_occurrence(self, tas_series, op, constrain, expected, should_fail):
+        tas = tas_series(
+            np.array([15, 12, 11, 12, 14, 13, 18, 11, 13]) + K2C, start="1/1/2000"
+        )
+
+        if should_fail:
+            with pytest.raises(ValueError):
+                generic.last_occurrence(
+                    tas, threshold="11 degC", freq="YS", op=op, constrain=constrain
+                )
+        else:
+            first = generic.last_occurrence(
+                tas, threshold="11 degC", freq="YS", op=op, constrain=constrain
+            )
+
+            np.testing.assert_array_equal(first, [expected])
 
 
 class TestTimeSelection:

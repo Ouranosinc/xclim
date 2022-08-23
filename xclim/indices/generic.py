@@ -295,6 +295,7 @@ def count_level_crossings(
     high_data: xr.DataArray,
     thresh: str,
     freq: str,
+    *,
     op_low: str = "<",
     op_high: str = ">=",
 ) -> xr.DataArray:
