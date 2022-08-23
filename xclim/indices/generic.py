@@ -35,6 +35,7 @@ from . import run_length as rl
 __all__ = [
     "aggregate_between_dates",
     "compare",
+    "compare_arrays",
     "count_level_crossings",
     "count_occurrences",
     "default_freq",
@@ -174,8 +175,8 @@ def compare(
     ----------
     da : xr.DataArray
       Input data.
-    op : {">", "<", ">=", "<=", "gt", "lt", "ge", "le"}
-      Logical operator {>, <, >=, <=, gt, lt, ge, le }. e.g. arr > thresh.
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+      Logical operator. e.g. arr > thresh.
     thresh : Union[float, int]
       Threshold value.
     constrain : sequence of str, optional
@@ -203,7 +204,7 @@ def threshold_count(
     da : xr.DataArray
       Input data.
     op : {">", "<", ">=", "<=", "gt", "lt", "ge", "le"}
-      Logical operator {>, <, >=, <=, gt, lt, ge, le }. e.g. arr > thresh.
+      Logical operator. e.g. arr > thresh.
     thresh : Union[float, int]
       Threshold value.
     freq : str
@@ -217,6 +218,9 @@ def threshold_count(
     xr.DataArray
       The number of days meeting the constraints for each period.
     """
+    if constrain is None:
+        constrain = (">", "<", ">=", "<=")
+
     c = compare(da, op, thresh, constrain) * 1
     return c.resample(time=freq).sum(dim="time")
 
@@ -247,11 +251,10 @@ def domain_count(da: xr.DataArray, low: float, high: float, freq: str) -> xr.Dat
     return c.resample(time=freq).sum(dim="time")
 
 
-# FIXME: da_value should be renamed `thresh` for consistency
 def get_daily_events(
     da: xr.DataArray,
-    da_value: float,
-    operator: str,
+    thresh: float,
+    op: str,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
     """Return a 0/1 mask when a condition is True or False.
@@ -260,10 +263,10 @@ def get_daily_events(
     ----------
     da : xr.DataArray
       Input data.
-    da_value : float
+    thresh : float
       Threshold value.
-    operator : {">", "<", ">=", "<=", "gt", "lt", "ge", "le"}
-      Logical operator {>, <, >=, <=, gt, lt, ge, le}. e.g. arr > thresh.
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+      Logical operator. e.g. arr > thresh.
     constrain : sequence of str, optional
       Optionally allowed conditions.
 
@@ -278,7 +281,7 @@ def get_daily_events(
     -------
     xr.DataArray
     """
-    events = compare(da, operator, thresh=da_value, constrain=constrain) * 1
+    events = compare(da, op, thresh, constrain) * 1
     events = events.where(~(np.isnan(da)))
     events = events.rename("events")
     return events
@@ -288,7 +291,12 @@ def get_daily_events(
 
 
 def count_level_crossings(
-    low_data: xr.DataArray, high_data: xr.DataArray, threshold: str, freq: str
+    low_data: xr.DataArray,
+    high_data: xr.DataArray,
+    thresh: str,
+    freq: str,
+    op_low: str = "<",
+    op_high: str = ">=",
 ) -> xr.DataArray:
     """Calculate the number of times low_data is below threshold while high_data is above threshold.
 
@@ -301,10 +309,14 @@ def count_level_crossings(
       Variable that must be under the threshold.
     high_data : xr.DataArray
       Variable that must be above the threshold.
-    threshold : str
+    thresh : str
       Quantity.
     freq : str
       Resampling frequency.
+    op_low : {"<", "<=", "lt", "le"}
+      Comparison operator for low_data. Default: "<".
+    op_high : {">", ">=", "gt", "ge"}
+      Comparison operator for high_data. Default: ">=".
 
     Returns
     -------
@@ -312,10 +324,10 @@ def count_level_crossings(
     """
     # Convert units to low_data
     high_data = convert_units_to(high_data, low_data)
-    threshold = convert_units_to(threshold, low_data)
+    threshold = convert_units_to(thresh, low_data)
 
-    lower = compare(low_data, "<", threshold)
-    higher = compare(high_data, ">=", threshold)
+    lower = compare(low_data, op_low, threshold, constrain=("<", "<="))
+    higher = compare(high_data, op_high, threshold, constrain=(">", ">="))
 
     out = (lower & higher).resample(time=freq).sum()
     return to_agg_units(out, low_data, "count", dim="time")
@@ -324,8 +336,8 @@ def count_level_crossings(
 def count_occurrences(
     data: xr.DataArray,
     threshold: str,
-    condition: str,
     freq: str,
+    op: str,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
     """Calculate the number of times some condition is met.
@@ -341,10 +353,10 @@ def count_occurrences(
       An array.
     threshold : str
       Quantity.
-    condition : {">", "<", ">=", "<=", "==", "!="}
-      Operator.
     freq : str
       Resampling frequency.
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+      Logical operator. e.g. arr > thresh.
     constrain : sequence of str, optional
       Optionally allowed conditions.
 
@@ -354,7 +366,7 @@ def count_occurrences(
     """
     threshold = convert_units_to(threshold, data)
 
-    cond = compare(data, condition, threshold, constrain)
+    cond = compare(data, op, threshold, constrain)
 
     out = cond.resample(time=freq).sum()
     return to_agg_units(out, data, "count", dim="time")
@@ -393,8 +405,8 @@ def diurnal_temperature_range(
 def first_occurrence(
     data: xr.DataArray,
     threshold: str,
-    condition: str,
     freq: str,
+    op: str,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
     """Calculate the first time some condition is met.
@@ -409,10 +421,10 @@ def first_occurrence(
       Input data.
     threshold : str
       Quantity.
-    condition : {">", "<", ">=", "<=", "==", "!="}
-      Operator.
     freq : str
       Resampling frequency.
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+      Logical operator. e.g. arr > thresh.
     constrain : sequence of str, optional
       Optionally allowed conditions.
 
@@ -422,7 +434,7 @@ def first_occurrence(
     """
     threshold = convert_units_to(threshold, data)
 
-    cond = compare(data, condition, threshold, constrain)
+    cond = compare(data, op, threshold, constrain)
 
     out = cond.resample(time=freq).map(
         rl.first_run,
@@ -437,8 +449,8 @@ def first_occurrence(
 def last_occurrence(
     data: xr.DataArray,
     threshold: str,
-    condition: str,
     freq: str,
+    op: str,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
     """Calculate the last time some condition is met.
@@ -453,10 +465,10 @@ def last_occurrence(
       Input data.
     threshold : str
       Quantity.
-    condition : {">", "<", ">=", "<=", "==", "!="}
-      Operator.
     freq : str
       Resampling frequency.
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+      Logical operator. e.g. arr > thresh.
     constrain : sequence of str, optional
       Optionally allowed conditions.
 
@@ -466,7 +478,7 @@ def last_occurrence(
     """
     threshold = convert_units_to(threshold, data)
 
-    cond = compare(data, condition, threshold, constrain)
+    cond = compare(data, op, threshold, constrain)
 
     out = cond.resample(time=freq).map(
         rl.last_run,
@@ -479,11 +491,7 @@ def last_occurrence(
 
 
 def spell_length(
-    data: xr.DataArray,
-    threshold: str,
-    condition: str,
-    reducer: str,
-    freq: str,
+    data: xr.DataArray, threshold: str, reducer: str, freq: str, op: str
 ) -> xr.DataArray:
     """Calculate statistics on lengths of spells.
 
@@ -497,12 +505,12 @@ def spell_length(
       Input data.
     threshold : str
       Quantity.
-    condition : {">", "<", ">=", "<=", "==", "!="}
-      Operator.
     reducer : {'max', 'min', 'mean', 'sum'}
       Reducer.
     freq : str
       Resampling frequency.
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+      Logical operator. e.g. arr > thresh.
 
     Returns
     -------
@@ -510,7 +518,7 @@ def spell_length(
     """
     threshold = convert_units_to(threshold, data)
 
-    cond = compare(data, condition, threshold)
+    cond = compare(data, op, threshold)
 
     out = cond.resample(time=freq).map(
         rl.rle_statistics,
@@ -551,7 +559,7 @@ def compare_arrays(
     left : xr.DataArray
       A DatArray being evaluated against `right`.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-      Operator.
+      Logical operator. e.g. array1 > array2.
     right : xr.DataArray
       A DatArray being evaluated against left`.
     constrain : sequence of str, optional
@@ -566,8 +574,8 @@ def compare_arrays(
 
 def thresholded_statistics(
     data: xr.DataArray,
+    op: str,
     threshold: str,
-    condition: str,
     reducer: str,
     freq: str,
     constrain: Sequence[str] | None,
@@ -582,10 +590,10 @@ def thresholded_statistics(
     ----------
     data : xr.DataArray
       Input data.
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+      Logical operator. e.g. arr > thresh.
     threshold : str
       Quantity.
-    condition : {">", "<", ">=", "<=", "==", "!="}
-      Operator.
     reducer : {'max', 'min', 'mean', 'sum'}
       Reducer.
     freq : str
@@ -599,7 +607,7 @@ def thresholded_statistics(
     """
     threshold = convert_units_to(threshold, data)
 
-    cond = compare(data, condition, threshold, constrain)
+    cond = compare(data, op, threshold, constrain)
 
     out = getattr(data.where(cond).resample(time=freq), reducer)()
     out.attrs["units"] = data.attrs["units"]
@@ -607,11 +615,7 @@ def thresholded_statistics(
 
 
 def temperature_sum(
-    data: xr.DataArray,
-    threshold: str,
-    condition: str,
-    freq: str,
-    constrain: Sequence[str] | None,
+    data: xr.DataArray, op: str, threshold: str, freq: str
 ) -> xr.DataArray:
     """Calculate the temperature sum above/below a threshold.
 
@@ -624,14 +628,12 @@ def temperature_sum(
     ----------
     data : xr.DataArray
       Input data.
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
+      Logical operator. e.g. arr > thresh.
     threshold : str
       Quantity.
-    condition : {">", "<", ">=", "<=", "==", "!="}
-      Operator.
     freq : str
       Resampling frequency.
-    constrain : sequence of str, optional
-      Optionally allowed conditions.
 
     Returns
     -------
@@ -639,8 +641,8 @@ def temperature_sum(
     """
     threshold = convert_units_to(threshold, data)
 
-    cond = compare(data, condition, threshold, constrain)
-    direction = -1 if "<" in condition else 1
+    cond = compare(data, op, threshold, constrain=("<", "<=", ">", ">="))
+    direction = -1 if op in ["<", "<=", "lt", "le"] else 1
 
     out = (data - threshold).where(cond).resample(time=freq).sum()
     out = direction * out
@@ -798,12 +800,11 @@ def aggregate_between_dates(
             out.append(res)
             continue
 
-    out = xr.concat(out, dim="time")
-    return out
+    return xr.concat(out, dim="time")
 
 
 @declare_units(tas="[temperature]")
-def degree_days(tas: xr.DataArray, thresh: str, condition: str) -> xr.DataArray:
+def degree_days(tas: xr.DataArray, thresh: str, op: str) -> xr.DataArray:
     """Calculate the degree days below/above the temperature threshold.
 
     Parameters
@@ -812,8 +813,8 @@ def degree_days(tas: xr.DataArray, thresh: str, condition: str) -> xr.DataArray:
       Mean daily temperature.
     thresh : str
       The temperature threshold.
-    condition : {"<", ">"}
-      Operator.
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
+      Logical operator. e.g. arr > thresh.
 
     Returns
     -------
@@ -821,12 +822,11 @@ def degree_days(tas: xr.DataArray, thresh: str, condition: str) -> xr.DataArray:
     """
     thresh = convert_units_to(thresh, tas)
 
-    if "<" in condition:
+    if op in ["<", "<=", "lt", "le"]:
         out = (thresh - tas).clip(0)
-    elif ">" in condition:
+    elif op in [">", ">=", "gt", "ge"]:
         out = (tas - thresh).clip(0)
     else:
-        raise NotImplementedError(f"Condition not supported: '{condition}'.")
+        raise NotImplementedError(f"Condition not supported: '{op}'.")
 
-    out = to_agg_units(out, tas, op="delta_prod")
-    return out
+    return to_agg_units(out, tas, op="delta_prod")

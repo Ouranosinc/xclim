@@ -264,8 +264,8 @@ class TestDegreeDays:
     def test_simple(self, tas_series):
         tas = tas_series(np.array([-10, 15, 20, 3, 10]) + 273.15)
 
-        out = generic.degree_days(tas, thresh="10 degC", condition=">")
-        out_kelvin = generic.degree_days(tas, thresh="283.15 degK", condition=">")
+        out = generic.degree_days(tas, thresh="10 degC", op=">")
+        out_kelvin = generic.degree_days(tas, thresh="283.15 degK", op=">")
 
         np.testing.assert_allclose(out, [0, 5, 10, 0, 0])
         np.testing.assert_allclose(out, out_kelvin)
@@ -275,7 +275,7 @@ class TestGetDailyEvents:
     def test_simple(self, tas_series):
         arr = xr.DataArray(np.array([-10, 15, 20, np.NaN, 10]), name="Stuff")
 
-        out = generic.get_daily_events(arr, da_value=10, operator=">=")
+        out = generic.get_daily_events(arr, thresh=10, op=">=")
 
         assert out.name == "events"
         assert out.sum() == 3

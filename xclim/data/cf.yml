@@ -30,7 +30,7 @@ indicators:
     input:
       data: pr
     parameters:
-      condition: <
+      op: <
       freq:
         default: YS
       reducer: max
@@ -47,7 +47,7 @@ indicators:
     input:
       data: tas
     parameters:
-      condition: '>'
+      op: '>'
       freq:
         default: YS
       threshold:
@@ -66,7 +66,7 @@ indicators:
     input:
       data: tasmin
     parameters:
-      condition: <
+      op: <
       freq:
         default: YS
       threshold: 0 degree_Celsius
@@ -83,7 +83,7 @@ indicators:
     input:
       data: tasmax
     parameters:
-      condition: '>'
+      op: '>'
       freq:
         default: YS
       threshold: 25 degree_Celsius
@@ -91,7 +91,7 @@ indicators:
   ctmgeTT:
     cf_attrs:
     - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consequtive days with Tmean >= {threshold}C
+      long_name: Maximum number of consecutive days with Tmean >= {threshold}C
       proposed_standard_name: spell_length_with_air_temperature_at_or_above_threshold
       standard_name: spell_length_of_days_with_air_temperature_above_threshold
       units: day
@@ -100,7 +100,7 @@ indicators:
     input:
       data: tas
     parameters:
-      condition: '>'
+      op: '>'
       freq:
         default: YS
       reducer: max
@@ -111,7 +111,7 @@ indicators:
   ctmgtTT:
     cf_attrs:
     - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consequtive days with Tmean > {threshold}C
+      long_name: Maximum number of consecutive days with Tmean > {threshold}C
       proposed_standard_name: spell_length_with_air_temperature_above_threshold
       standard_name: spell_length_of_days_with_air_temperature_above_threshold
       units: day
@@ -120,7 +120,7 @@ indicators:
     input:
       data: tas
     parameters:
-      condition: '>'
+      op: '>'
       freq:
         default: YS
       reducer: max
@@ -131,7 +131,7 @@ indicators:
   ctmleTT:
     cf_attrs:
     - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consequtive days with Tmean <= {threshold}C
+      long_name: Maximum number of consecutive days with Tmean <= {threshold}C
       proposed_standard_name: spell_length_with_air_temperature_at_or_below_threshold
       standard_name: spell_length_of_days_with_air_temperature_below_threshold
       units: day
@@ -140,7 +140,7 @@ indicators:
     input:
       data: tas
     parameters:
-      condition: <
+      op: <
       freq:
         default: YS
       reducer: max
@@ -151,7 +151,7 @@ indicators:
   ctmltTT:
     cf_attrs:
     - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consequtive days with Tmean < {threshold}C
+      long_name: Maximum number of consecutive days with Tmean < {threshold}C
       proposed_standard_name: spell_length_with_air_temperature_below_threshold
       standard_name: spell_length_of_days_with_air_temperature_below_threshold
       units: day
@@ -160,7 +160,7 @@ indicators:
     input:
       data: tas
     parameters:
-      condition: <
+      op: <
       freq:
         default: YS
       reducer: max
@@ -171,7 +171,7 @@ indicators:
   ctngeTT:
     cf_attrs:
     - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consequtive days with Tmin >= {threshold}C
+      long_name: Maximum number of consecutive days with Tmin >= {threshold}C
       proposed_standard_name: spell_length_with_air_temperature_at_or_above_threshold
       standard_name: spell_length_of_days_with_air_temperature_above_threshold
       units: day
@@ -180,7 +180,7 @@ indicators:
     input:
       data: tasmin
     parameters:
-      condition: '>'
+      op: '>'
       freq:
         default: YS
       reducer: max
@@ -191,7 +191,7 @@ indicators:
   ctngtTT:
     cf_attrs:
     - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consequtive days with Tmin > {threshold}C
+      long_name: Maximum number of consecutive days with Tmin > {threshold}C
       proposed_standard_name: spell_length_with_air_temperature_above_threshold
       standard_name: spell_length_of_days_with_air_temperature_above_threshold
       units: day
@@ -200,7 +200,7 @@ indicators:
     input:
       data: tasmin
     parameters:
-      condition: '>'
+      op: '>'
       freq:
         default: YS
       reducer: max
@@ -211,7 +211,7 @@ indicators:
   ctnleTT:
     cf_attrs:
     - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consequtive days with Tmin <= {threshold}C
+      long_name: Maximum number of consecutive days with Tmin <= {threshold}C
       proposed_standard_name: spell_length_with_air_temperature_at_or_below_threshold
       standard_name: spell_length_of_days_with_air_temperature_below_threshold
       units: day
@@ -220,7 +220,7 @@ indicators:
     input:
       data: tasmin
     parameters:
-      condition: <
+      op: <
       freq:
         default: YS
       reducer: max
@@ -231,7 +231,7 @@ indicators:
   ctnltTT:
     cf_attrs:
     - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consequtive days with Tmin < {threshold}C
+      long_name: Maximum number of consecutive days with Tmin < {threshold}C
       proposed_standard_name: spell_length_with_air_temperature_below_threshold
       standard_name: spell_length_of_days_with_air_temperature_below_threshold
       units: day
@@ -240,7 +240,7 @@ indicators:
     input:
       data: tasmin
     parameters:
-      condition: <
+      op: <
       freq:
         default: YS
       reducer: max
@@ -251,7 +251,7 @@ indicators:
   ctxgeTT:
     cf_attrs:
     - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consequtive days with Tmax >= {threshold}C
+      long_name: Maximum number of consecutive days with Tmax >= {threshold}C
       proposed_standard_name: spell_length_with_air_temperature_at_or_above_threshold
       standard_name: spell_length_of_days_with_air_temperature_above_threshold
       units: day
@@ -260,7 +260,7 @@ indicators:
     input:
       data: tasmax
     parameters:
-      condition: '>'
+      op: '>'
       freq:
         default: YS
       reducer: max
@@ -271,7 +271,7 @@ indicators:
   ctxgtTT:
     cf_attrs:
     - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consequtive days with Tmax > {threshold}C
+      long_name: Maximum number of consecutive days with Tmax > {threshold}C
       proposed_standard_name: spell_length_with_air_temperature_above_threshold
       standard_name: spell_length_of_days_with_air_temperature_above_threshold
       units: day
@@ -280,7 +280,7 @@ indicators:
     input:
       data: tasmax
     parameters:
-      condition: '>'
+      op: '>'
       freq:
         default: YS
       reducer: max
@@ -291,7 +291,7 @@ indicators:
   ctxleTT:
     cf_attrs:
     - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consequtive days with Tmax <= {threshold}C
+      long_name: Maximum number of consecutive days with Tmax <= {threshold}C
       proposed_standard_name: spell_length_with_air_temperature_at_or_below_threshold
       standard_name: spell_length_of_days_with_air_temperature_below_threshold
       units: day
@@ -300,7 +300,7 @@ indicators:
     input:
       data: tasmax
     parameters:
-      condition: <
+      op: <
       freq:
         default: YS
       reducer: max
@@ -311,7 +311,7 @@ indicators:
   ctxltTT:
     cf_attrs:
     - cell_methods: 'time: maximum over days'
-      long_name: Maximum number of consequtive days with Tmax < {threshold}C
+      long_name: Maximum number of consecutive days with Tmax < {threshold}C
       proposed_standard_name: spell_length_with_air_temperature_below_threshold
       standard_name: spell_length_of_days_with_air_temperature_below_threshold
       units: day
@@ -320,7 +320,7 @@ indicators:
     input:
       data: tasmax
     parameters:
-      condition: <
+      op: <
       freq:
         default: YS
       reducer: max
@@ -340,7 +340,7 @@ indicators:
     input:
       data: pr
     parameters:
-      condition: '>'
+      op: '>'
       freq:
         default: YS
       reducer: max
@@ -357,7 +357,7 @@ indicators:
     input:
       data: tas
     parameters:
-      condition: '>'
+      op: '>'
       freq:
         default: YS
       threshold:
@@ -375,7 +375,7 @@ indicators:
     input:
       data: tas
     parameters:
-      condition: <
+      op: <
       freq:
         default: YS
       threshold:
@@ -454,7 +454,7 @@ indicators:
     input:
       data: tas
     parameters:
-      condition: '>'
+      op: '>'
       freq:
         default: YS
       threshold: 4 degree_Celsius
@@ -470,7 +470,7 @@ indicators:
     input:
       data: tas
     parameters:
-      condition: '>'
+      op: '>'
       freq:
         default: YS
       threshold:
@@ -488,7 +488,7 @@ indicators:
     input:
       data: tas
     parameters:
-      condition: <
+      op: <
       freq:
         default: YS
       threshold: 17 degree_Celsius
@@ -504,7 +504,7 @@ indicators:
     input:
       data: tas
     parameters:
-      condition: <
+      op: <
       freq:
         default: YS
       threshold:
@@ -583,7 +583,7 @@ indicators:
     input:
       data: pr
     parameters:
-      condition: '>'
+      op: '>'
       freq:
         default: YS
       reducer: mean
