@@ -47,7 +47,7 @@ Indices submodules
     Fire-based Indices Footnotes
     ----------------------------
 
-    .. _ffdi_footnotes:
+    .. _ffdi-footnotes:
 
     McArthur Forest Fire Danger Indices methods
     ===========================================
