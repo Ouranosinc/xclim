@@ -273,9 +273,7 @@ def ensemble_percentiles(
         )
     else:
         # xclim's calc_perc does not support weighted arrays, so xarray's native function is used instead.
-        qt = list(
-            map(lambda x: x / 100, values)
-        )  # xarray requires values between 0 and 1
+        qt = np.array(values) / 100  # xarray requires values between 0 and 1
         out = (
             ens.weighted(weights)
             .quantile(qt, dim="realization", keep_attrs=True)
