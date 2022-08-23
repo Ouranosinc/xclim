@@ -185,7 +185,9 @@ class TestEnsembleStats:
             out1["tg_mean_p10"], out3.tg_mean.sel(percentiles=10, drop=True)
         )
 
-        weights = xr.DataArray([1, .1, 3.5, 5], coords={"realization": ens.realization})
+        weights = xr.DataArray(
+            [1, 0.1, 3.5, 5], coords={"realization": ens.realization}
+        )
         out4 = ensembles.ensemble_percentiles(ens, weights=weights)
         np.testing.assert_array_almost_equal(
             ens["tg_mean"].isel(time=0, lon=5, lat=5).weighted(weights).quantile(0.5),
@@ -248,7 +250,9 @@ class TestEnsembleStats:
         )
         assert "Computation of statistics on" in out1.attrs["history"]
 
-        weights = xr.DataArray([1, .1, 3.5, 5], coords={"realization": ens.realization})
+        weights = xr.DataArray(
+            [1, 0.1, 3.5, 5], coords={"realization": ens.realization}
+        )
         out2 = ensembles.ensemble_mean_std_max_min(ens, weights=weights)
         values = ens["tg_mean"][:, 0, 5, 5]
         np.testing.assert_array_equal(
@@ -574,14 +578,14 @@ def test_change_significance(robust_data, test, exp_chng, exp_sign, kws):
 
 def test_change_significance_weighted(robust_data):
     ref, fut = robust_data
-    weights = xr.DataArray([1, .1, 3.5, 5], coords={"realization": ref.realization})
+    weights = xr.DataArray([1, 0.1, 3.5, 5], coords={"realization": ref.realization})
     chng, sign = ensembles.change_significance(fut, ref, test=None, weights=weights)
-    assert chng.attrs["test"] == 'None'
+    assert chng.attrs["test"] == "None"
     if isinstance(ref, xr.Dataset):
         chng = chng.tas
         sign = sign.tas
     np.testing.assert_array_equal(chng, [1, 1, 1, 1])
-    np.testing.assert_array_almost_equal(sign, [0.88541667, 0.88541667, 1., 1.])
+    np.testing.assert_array_almost_equal(sign, [0.88541667, 0.88541667, 1.0, 1.0])
 
 
 def test_change_significance_delta(robust_data):
@@ -594,8 +598,10 @@ def test_change_significance_delta(robust_data):
     np.testing.assert_array_equal(chng, [0, 0, 0.5, 0])
     np.testing.assert_array_equal(sign, [np.nan, np.nan, 1, np.nan])
 
-    weights = xr.DataArray([1, .1, 3.5, 5], coords={"realization": delta.realization})
-    chng, sign = ensembles.change_significance(delta, test="threshold", abs_thresh=2, weights=weights)
+    weights = xr.DataArray([1, 0.1, 3.5, 5], coords={"realization": delta.realization})
+    chng, sign = ensembles.change_significance(
+        delta, test="threshold", abs_thresh=2, weights=weights
+    )
     if isinstance(ref, xr.Dataset):
         chng = chng.tas
         sign = sign.tas
