@@ -136,12 +136,22 @@ class TestStatisticsRun:
         assert lt[0] == 10
         np.testing.assert_array_equal(lt[1:], 0)
 
+        # resample after
+        lt = rl.rle_statistics(da, freq="M", reducer="max", ufunc_1dim=False)
+        assert lt[0] == 10
+        np.testing.assert_array_equal(lt[1:], 0)
+
     def test_start_at_0(self):
         values = np.zeros(365)
         time = pd.date_range("7/1/2000", periods=len(values), freq="D")
         values[0:10] = 1
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
         lt = da.resample(time="M").map(rl.rle_statistics, reducer="max")
+        assert lt[0] == 10
+        np.testing.assert_array_equal(lt[1:], 0)
+
+        # resample after
+        lt = rl.rle_statistics(da, freq="M", reducer="max", ufunc_1dim=False)
         assert lt[0] == 10
         np.testing.assert_array_equal(lt[1:], 0)
 
@@ -155,6 +165,11 @@ class TestStatisticsRun:
         assert lt[-1] == 10
         np.testing.assert_array_equal(lt[:-1], 0)
 
+        # resample after
+        lt = rl.rle_statistics(da, freq="M", reducer="max", ufunc_1dim=False)
+        assert lt[-1] == 10
+        np.testing.assert_array_equal(lt[:-1], 0)
+
     def test_all_true(self):
         values = np.ones(365)
         time = pd.date_range("7/1/2000", periods=len(values), freq="D")
@@ -162,6 +177,13 @@ class TestStatisticsRun:
 
         lt = da.resample(time="M").map(rl.rle_statistics, reducer="max")
         np.testing.assert_array_equal(lt, da.resample(time="M").count(dim="time"))
+
+        # resample after
+        lt = rl.rle_statistics(da, freq="M", reducer="max", ufunc_1dim=False)
+        expected = np.zeros(12)
+        expected[0] = 365
+        np.testing.assert_array_equal(lt, expected)
+        assert (lt.values == expected).any()
 
     def test_almost_all_true(self):
         values = np.ones(365)
@@ -173,6 +195,13 @@ class TestStatisticsRun:
         n = da.resample(time="M").count(dim="time")
         np.testing.assert_array_equal(lt[0], n[0])
         np.testing.assert_array_equal(lt[1], 26)
+
+        # resample after
+        lt = rl.rle_statistics(da, freq="M", reducer="max", ufunc_1dim=False)
+        expected = np.zeros(12)
+        expected[0], expected[1] = 35, 365 - 35 - 1
+        np.testing.assert_array_equal(lt[0], expected[0])
+        np.testing.assert_array_equal(lt[1], expected[1])
 
     def test_other_stats(self):
         values = np.ones(365)
@@ -189,6 +218,44 @@ class TestStatisticsRun:
         lt = da.resample(time="YS").map(rl.rle_statistics, reducer="std")
         assert lt == 147
 
+        # resample after
+        lt = rl.rle_statistics(da, freq="YS", reducer="min", ufunc_1dim=False)
+        assert lt == 35
+
+        lt = rl.rle_statistics(
+            da, freq="YS", reducer="mean", window=36, ufunc_1dim=False
+        )
+        assert lt == 329
+
+        lt = rl.rle_statistics(da, freq="YS", reducer="std", ufunc_1dim=False)
+        assert lt == 147
+
+    @pytest.mark.parametrize("op", ["min", "max"])
+    def test_resampling_order(self, op):
+        values = np.ones(365)
+        values[35:45] = 0
+        time = pd.date_range("1/1/2000", periods=len(values), freq="D")
+        da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
+        lt_resample_before = da.resample(time="MS").map(
+            rl.rle_statistics, reducer=op, ufunc_1dim=False
+        )
+        lt_resample_after = rl.rle_statistics(
+            da, freq="MS", reducer=op, ufunc_1dim=False
+        )
+        assert (lt_resample_before != lt_resample_after).any()
+
+        values = np.zeros(365)
+        values[0:-1:31] = 1
+        time = pd.date_range("1/1/2000", periods=len(values), freq="D")
+        da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
+        lt_resample_before = da.resample(time="MS").map(
+            rl.rle_statistics, reducer=op, ufunc_1dim=False
+        )
+        lt_resample_after = rl.rle_statistics(
+            da, freq="MS", reducer=op, ufunc_1dim=False
+        )
+        assert (lt_resample_before == lt_resample_after).any()
+
 
 class TestFirstRun:
     nc_pr = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
@@ -200,6 +267,7 @@ class TestFirstRun:
         assert 10 == i
 
     def test_real_data(self):
+        # !!! No test here?  !!!
         # n-dim version versus ufunc
         da3d = open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
         da3d.resample(time="M").map(rl.first_run, window=5)
