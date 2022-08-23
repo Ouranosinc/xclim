@@ -12,8 +12,7 @@ of the methods used to calculate each index.
 """
 # This file is structured in the following way:
 # Section 1: individual codes, numba-accelerated and vectorized functions.
-# Section 2: Larger computing functions (the KBDI iterator)
-# Section 3: Exposed methods and indices.
+# Section 2: Exposed methods and indices.
 #
 # Methods starting with a "_" are not usable with xarray objects, whereas the others are.
 import numpy as np
@@ -28,71 +27,67 @@ from xclim.core.units import convert_units_to, declare_units
 @guvectorize(
     [
         (
-            float64,
-            float64,
-            float64,
-            float64,
-            float64,
             float64[:],
+            float64[:],
+            float64,
+            float64,
             float64[:],
         )
     ],
-    "(),(),(),(),()->(),()",
+    "(n),(n),(),()->(n)",
 )
-def _Keetch_Byram_drought_index(p, t, pa, rr0, kbdi0, rr, kbdi):  # pragma: no cover
+def _Keetch_Byram_drought_index(p, t, pa, kbdi0, kbdi):  # pragma: no cover
     """
-    Compute the Keetch-Byram drought index (KBDI) over one time step.
+    Compute the Keetch-Byram drought (KBDI) index.
 
     Parameters
     ----------
-    p : float
+    p : array_like
         Total rainfall over previous 24 hours [mm].
-    t: float
+    t: array_like
         Maximum temperature near the surface over previous 24 hours [C].
-    pa: float
-        Mean annual accumulated rainfall
-    rr0: float
-        Remaining rainfall to be assigned to runoff from previous iteration.
-        Runoff is approximated as the first 5 mm of rain within consecutive
-        days with nonzero rainfall.
+    pa: array_like
+        Mean annual accumulated rainfall.
     kbdi0 : float
-        Previous value of the Keetch-Byram drought index.
+        Previous value of the Keetch-Byram drought index used to initialise the
+        KBDI calculation.
 
     Returns
     -------
-    rr : array_like
-        Remaining rainfall to be assigned to runoff.
-    kbdi : array_like
+    array_like
         Keetch-Byram drought index.
     """
-    # Reset remaining runoff if there is zero rainfall
-    if p == 0.0:
-        rr0 = 5.0
+    rr = 5.0
 
-    # Calculate the runoff for this timestep
-    if p < rr0:
-        r = p
-    else:
-        r = rr0
+    for d in range(len(p)):
+        # Reset remaining runoff if there is zero rainfall
+        if p[d] == 0.0:
+            rr = 5.0
 
-    Peff = p - r
-    ET = (
-        1e-3
-        * (203.2 - kbdi0)
-        * (0.968 * np.exp(0.0875 * t + 1.5552) - 8.3)
-        / (1 + 10.88 * np.exp(-0.00173 * pa))
-    )
-    kbdi_curr = kbdi0 - Peff + ET
+        # Calculate the runoff for this timestep
+        if p[d] < rr:
+            r = p[d]
+        else:
+            r = rr
 
-    # Limit kbdi to between 0 and 200 mm
-    if kbdi_curr < 0.0:
-        kbdi_curr = 0.0
+        Peff = p[d] - r
+        ET = (
+            1e-3
+            * (203.2 - kbdi0)
+            * (0.968 * np.exp(0.0875 * t[d] + 1.5552) - 8.3)
+            / (1 + 10.88 * np.exp(-0.00173 * pa))
+        )
+        kbdi0 = kbdi0 - Peff + ET
 
-    if kbdi_curr > 203.2:
-        kbdi_curr = 203.2
+        # Limit kbdi to between 0 and 200 mm
+        if kbdi0 < 0.0:
+            kbdi0 = 0.0
 
-    rr[0] = rr0 - r
-    kbdi[0] = kbdi_curr
+        if kbdi0 > 203.2:
+            kbdi0 = 203.2
+
+        rr = rr - r
+        kbdi[d] = kbdi0
 
 
 @guvectorize(
@@ -195,37 +190,15 @@ def _Griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
         df[d] = dfw
 
 
-# SECTION 2 : Iterators
+# SECTION 2 - Public methods and indices
 
 
-def _Keetch_Byram_drought_index_calc(pr, tasmax, pr_annual, kbdi0):
-    """Primary function computing the Keetch-Byram drought index. DO NOT CALL DIRECTLY, use `Keetch_Byram_drought_index` instead."""
-    kbdi = np.zeros_like(pr)
-    runoff_remain = 5.0
-    kbdi_prev = kbdi0
-
-    for it in range(pr.shape[-1]):
-        runoff_remain, kbdi[..., it] = _Keetch_Byram_drought_index(
-            pr[..., it],
-            tasmax[..., it],
-            pr_annual,
-            runoff_remain,
-            kbdi_prev,
-        )
-        kbdi_prev = kbdi[..., it]
-
-    return kbdi
-
-
-def _Griffiths_drought_factor_calc(pr, smd, lim):
-    """Primary function computing the Griffiths drought factor. DO NOT CALL DIRECTLY, use `Griffiths_drought_factor` instead."""
+def _Keetch_Byram_drought_index_pass(pr, tasmax, pr_annual, kbdi0):
+    """Pass inputs on to guvectorized function `_Keetch_Byram_drought_index`."""
     # This function is actually only required as xr.apply_ufunc will not allow
-    # `func=_Griffiths_drought_factor` since this is guvectorized and has the
+    # `func=_Keetch_Byram_drought_index` since this is guvectorized and has the
     # output in its function signature
-    return _Griffiths_drought_factor(pr, smd, lim)
-
-
-# SECTION 3 - Public methods and indices
+    return _Keetch_Byram_drought_index(pr, tasmax, pr_annual, kbdi0)
 
 
 # @declare_units(
@@ -281,7 +254,7 @@ def Keetch_Byram_drought_index(
         kbdi0 = xr.full_like(pr.isel(time=0), 0)
 
     return xr.apply_ufunc(
-        _Keetch_Byram_drought_index_calc,
+        _Keetch_Byram_drought_index_pass,
         pr,
         tasmax,
         pr_annual,
@@ -291,6 +264,14 @@ def Keetch_Byram_drought_index(
         dask="parallelized",
         output_dtypes=[pr.dtype],
     )
+
+
+def _Griffiths_drought_factor_pass(pr, smd, lim):
+    """Pass inputs on to guvectorized function `_Griffiths_drought_factor`."""
+    # This function is actually only required as xr.apply_ufunc will not allow
+    # `func=_Griffiths_drought_factor` since this is guvectorized and has the
+    # output in its function signature
+    return _Griffiths_drought_factor(pr, smd, lim)
 
 
 # @declare_units(
@@ -345,7 +326,7 @@ def Griffiths_drought_factor(
         raise ValueError(f"{limiting_func} is not a valid input for `limiting_func`")
 
     df = xr.apply_ufunc(
-        _Griffiths_drought_factor_calc,
+        _Griffiths_drought_factor_pass,
         pr,
         smd,
         kwargs=dict(lim=lim),
