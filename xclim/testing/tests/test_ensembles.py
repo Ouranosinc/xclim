@@ -256,7 +256,8 @@ class TestEnsembleStats:
         out2 = ensembles.ensemble_mean_std_max_min(ens, weights=weights)
         values = ens["tg_mean"][:, 0, 5, 5]
         np.testing.assert_array_equal(
-            (values[0]*1 + values[1]*.1 + values[2]*3.5 + values[3]*5) / np.sum(weights),
+            (values[0] * 1 + values[1] * 0.1 + values[2] * 3.5 + values[3] * 5)
+            / np.sum(weights),
             out2.tg_mean_mean[0, 5, 5],
         )
         np.testing.assert_array_equal(
