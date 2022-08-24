@@ -501,9 +501,9 @@
     "abstract": "Indice basé sur une relation non linéaire entre la température et les processus physiologiques. Il intègre une borne supérieure du cumul, un coefficient lié à la durée du jour et une correction liée à l'écart journalier des températures."
   },
   "EFFECTIVE_GROWING_DEGREE_DAYS": {
-    "long_name": "Degrés-jours effectives",
+    "long_name": "Degrés-jours de croissance effectifs",
     "description": "Accumulation des degrés-jours borné par (Tmax + Tmin)/2 > {thresh} et des dates de début et fin de la saison de croissance generés dynamiquement.",
-    "title": "Degrés-jours effectives",
+    "title": "Degrés-jours effectifs",
     "comment": "Formule originale prise de Bootsma et al. 2005.",
     "abstract": "Indice de degrés-jours de croissance basés sur un début et une fin dynamiques de la saison de croissance."
   },
@@ -539,9 +539,9 @@
     "abstract": "Nombre de jours où la température maximale quotidienne est sous 0°C."
   },
   "CONSECUTIVE_FROST_DAYS": {
-    "long_name": "Durée maximale des périodes de gel",
+    "long_name": "Nombre maximal de jours de gel consécutifs",
     "description": "Durée maximale {freq:f} des périodes où la température minimale quotidienne est sous {thresh}.",
-    "title": "Durée maximale des périodes de gel",
+    "title": "Nombre maximal de jours de gel consécutifs",
     "abstract": "Durée maximale des périodes consécutives où la température minimale quotidienne est sous un seuil donné."
   },
   "FROST_FREE_SEASON_LENGTH": {
