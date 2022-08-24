@@ -185,6 +185,24 @@ class TestEnsembleStats:
             out1["tg_mean_p10"], out3.tg_mean.sel(percentiles=10, drop=True)
         )
 
+        weights = xr.DataArray(
+            [1, 0.1, 3.5, 5], coords={"realization": ens.realization}
+        )
+        out4 = ensembles.ensemble_percentiles(ens, weights=weights)
+        np.testing.assert_array_almost_equal(
+            ens["tg_mean"].isel(time=0, lon=5, lat=5).weighted(weights).quantile(0.5),
+            out4["tg_mean_p50"].isel(time=0, lon=5, lat=5),
+        )
+        np.testing.assert_array_almost_equal(
+            ens["tg_mean"].isel(time=0, lon=5, lat=5).weighted(weights).quantile(0.1),
+            out4["tg_mean_p10"].isel(time=0, lon=5, lat=5),
+        )
+        np.testing.assert_array_almost_equal(
+            ens["tg_mean"].isel(time=0, lon=5, lat=5).weighted(weights).quantile(0.9),
+            out4["tg_mean_p90"].isel(time=0, lon=5, lat=5),
+        )
+        assert np.all(out4["tg_mean_p90"] > out4["tg_mean_p10"])
+
     @pytest.mark.parametrize("keep_chunk_size", [False, True, None])
     def test_calc_perc_dask(self, keep_chunk_size):
         ens = ensembles.create_ensemble(self.nc_datasets_simple)
@@ -231,6 +249,27 @@ class TestEnsembleStats:
             ens["tg_mean"][:, 0, 5, 5].min(dim="realization"), out1.tg_mean_min[0, 5, 5]
         )
         assert "Computation of statistics on" in out1.attrs["history"]
+
+        weights = xr.DataArray(
+            [1, 0.1, 3.5, 5], coords={"realization": ens.realization}
+        )
+        out2 = ensembles.ensemble_mean_std_max_min(ens, weights=weights)
+        values = ens["tg_mean"][:, 0, 5, 5]
+        np.testing.assert_array_equal(
+            (values[0] * 1 + values[1] * 0.1 + values[2] * 3.5 + values[3] * 5)
+            / np.sum(weights),
+            out2.tg_mean_mean[0, 5, 5],
+        )
+        np.testing.assert_array_equal(
+            ens["tg_mean"][:, 0, 5, 5].weighted(weights).std(dim="realization"),
+            out2.tg_mean_stdev[0, 5, 5],
+        )
+        np.testing.assert_array_equal(
+            out1.tg_mean_max[0, 5, 5], out2.tg_mean_max[0, 5, 5]
+        )
+        np.testing.assert_array_equal(
+            out1.tg_mean_min[0, 5, 5], out2.tg_mean_min[0, 5, 5]
+        )
 
 
 @pytest.mark.slow
@@ -538,6 +577,18 @@ def test_change_significance(robust_data, test, exp_chng, exp_sign, kws):
     np.testing.assert_array_almost_equal(sign, exp_sign)
 
 
+def test_change_significance_weighted(robust_data):
+    ref, fut = robust_data
+    weights = xr.DataArray([1, 0.1, 3.5, 5], coords={"realization": ref.realization})
+    chng, sign = ensembles.change_significance(fut, ref, test=None, weights=weights)
+    assert chng.attrs["test"] == "None"
+    if isinstance(ref, xr.Dataset):
+        chng = chng.tas
+        sign = sign.tas
+    np.testing.assert_array_equal(chng, [1, 1, 1, 1])
+    np.testing.assert_array_almost_equal(sign, [0.88541667, 0.88541667, 1.0, 1.0])
+
+
 def test_change_significance_delta(robust_data):
     ref, fut = robust_data
     delta = fut.mean("time") - ref.mean("time")
@@ -546,6 +597,16 @@ def test_change_significance_delta(robust_data):
         chng = chng.tas
         sign = sign.tas
     np.testing.assert_array_equal(chng, [0, 0, 0.5, 0])
+    np.testing.assert_array_equal(sign, [np.nan, np.nan, 1, np.nan])
+
+    weights = xr.DataArray([1, 0.1, 3.5, 5], coords={"realization": delta.realization})
+    chng, sign = ensembles.change_significance(
+        delta, test="threshold", abs_thresh=2, weights=weights
+    )
+    if isinstance(ref, xr.Dataset):
+        chng = chng.tas
+        sign = sign.tas
+    np.testing.assert_array_almost_equal(chng, [0, 0, 0.88541667, 0])
     np.testing.assert_array_equal(sign, [np.nan, np.nan, 1, np.nan])
 
 

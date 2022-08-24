@@ -46,7 +46,7 @@ requirements = [
     "scikit-learn>=0.21.3",
     "scipy>=1.2,<1.9",  # see: https://github.com/Ouranosinc/xclim/issues/1142
     "statsmodels",
-    "xarray>=0.17",
+    "xarray>=2022.06.0",
 ]
 
 dev_requirements = []
