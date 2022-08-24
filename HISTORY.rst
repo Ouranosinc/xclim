@@ -4,7 +4,7 @@ History
 
 0.38.0 (unreleased)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), Gabriel Rondeau-Genesse (:user:`RondeauG`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -12,10 +12,12 @@ New features and enhancements
     - Wrapped SBCK tests are also properly run in the tox testing ensemble. (:pull:`1119`).
 * New indices for droughts: SPI (standardized precipitations) and SPEI (standardized water budgets) (:issue:`131`, :pull:`1096`)
 * ``ensembles.create_ensembles`` now accepts a ``realizations`` argument to assign a coordinate to the "realization" axis. It also accepts a dictionary as input so that keys are used as that coordinate. (:pull:`1153`).
+* ``ensembles.ensemble_percentiles``, ``ensembles.ensemble_mean_std_max_min`` and ``ensembles.change_significance`` now support weights (:pull:`1151`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `scipy` has been temporarily pinned below version 1.9 until lmoments3 tests can be rewritten to account for the new API. (:issue:`1142`, :pull:`1143`).
+* Now requires `xarray>=2022.06.0` (:pull:`1151`).
 
 Bug fixes
 ^^^^^^^^^
