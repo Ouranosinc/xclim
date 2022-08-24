@@ -231,15 +231,15 @@
   },
   "SPI": {
     "long_name": "Indice de précipitation standardisé (SPI)",
-    "description": "Précipitation sur une fenêtre mobile de {window} {freq:nom}, normalisée telle que la moyenne de SPI est 0 pour les données de calibration. L'unité de la fenêtre 'X' est l'unité de temps déterminée par la fréquence de rééchantillonage",
+    "description": "Précipitation sur une fenêtre mobile de {window} {freq:nom}, normalisée telle que la moyenne du SPI est 0 pour les données de calibration. L'unité de la fenêtre 'X' est l'unité de temps déterminée par la fréquence de rééchantillonage,",
     "title": "Indice de précipitation standardisé (SPI)",
-    "abstract": "Précipitation sur une fenêtre mobile, normalisée telle que la moyenne de SPI est 0 pour les données de calibration. L'unité de la fenêtre est l'unité de temps déterminée par la fréquence de rééchantillonnage."
+    "abstract": "Précipitation sur une fenêtre mobile, normalisée telle que la moyenne du SPI est 0 pour les données de calibration. L'unité de la fenêtre est l'unité de temps déterminée par la fréquence de rééchantillonnage."
   },
   "SPEI": {
     "long_name": "Indice de précipitation évapotranspiration standardisé (SPEI)",
-    "description": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile de {window} {freq:nom}, normalisé tel que la moyenne de SPEI est 0 pour les données de calibration. L'unité de la fenêtre `X` est l'unité de temps determinée par la fréquence de rééchantillonnage {freq}.",
+    "description": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile de {window} {freq:nom}, normalisé tel que la moyenne du SPEI est 0 pour les données de calibration. L'unité de la fenêtre `X` est l'unité de temps determinée par la fréquence de rééchantillonnage {freq}.",
     "title": "Indice de précipitation évapotranspiration standardisé (SPEI)",
-    "abstract": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile, normalisé tel que la moyenne de SPEI est 0 pour les données de calibration. L'unité de la fenêtre est l'unité de temps déterminée par la fréquence de rééchantillonnage."
+    "abstract": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile, normalisé tel que la moyenne du SPEI est 0 pour les données de calibration. L'unité de la fenêtre est l'unité de temps déterminée par la fréquence de rééchantillonnage."
   },
   "DC": {
     "long_name": "Indice de sécheresse",
@@ -435,9 +435,9 @@
   },
   "COLD_SPELL_DURATION_INDEX": {
     "long_name": "Indice de durée des vagues de froid",
-    "description": "{freq} nombre de jours avec au moins {window} jours consécutifs où la température minimale quotidienne est inférieure au(x) {tasmin_per_thresh} centile. Une vague de froid se produit lorsque la température minimale quotidienne est inférieure à un percentile donné pendant au moins {window} jours consécutifs.",
+    "description": "{freq} nombre de jours avec au moins {window} jours consécutifs où la température minimale quotidienne est inférieure au(x) {tasmin_per_thresh}ᵉ centile. Une vague de froid se produit lorsque la température minimale quotidienne est inférieure à un centile donné pendant au moins {window} jours consécutifs.",
     "title": "Indice de durée des vagues de froid",
-    "abstract": "Nombre de jours de vagues de froid. Une vague de froid se produit lorsque la température minimale quotidienne est inférieure à un percentile donné pendant au moins {window} jours consécutifs."
+    "abstract": "Nombre de jours de vagues de froid. Une vague de froid se produit lorsque la température minimale quotidienne est inférieure à un centile donné pendant au moins {window} jours consécutifs."
   },
   "COLD_SPELL_FREQUENCY": {
     "long_name": "Fréquence des vagues de froid",
@@ -660,7 +660,7 @@
   },
   "GROWING_SEASON_END": {
     "long_name": "Jour de l'année de la fin de la saison de croissance",
-    "description": "Jour de l'année du début de la saison de croissance, défini comme le premier jour après {mid_date} ayant une température supérieure ou égale à {thresh} après une série de {window} jours ayant une température inférieure à {thresh}.",
+    "description": "Jour de l'année de la fin de la saison de croissance, défini comme le premier jour après {mid_date} ayant une température supérieure ou égale à {thresh} après une série de {window} jours ayant une température inférieure à {thresh}.",
     "title": "Fin de la saison de croissance",
     "abstract": "Le premier jour où la température est inférieure à un certain seuil pendant un certain nombre de jours consécutifs après une date de calendrier donnée."
   },
@@ -930,19 +930,19 @@
   "FREEZETHAW_SPELL_FREQUENCY": {
     "title": "Fréquence des événements de gel-dégel quotidien",
     "abstract": "Nombre de périodes de gel-dégel. Ces périodes sont des séries de jours consécutifs où la température minimale quotidienne est sous un seuil et la température maximale quotidienne au-dessus d'un autre. En général, ces deux seuils sont 0°C.",
-    "description": "Fréquence {freq:f} des événements de gel-dégel quotidiens (Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consecutif(s)).",
+    "description": "Fréquence {freq:f} des événements de gel-dégel quotidiens (Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consécutif(s)).",
     "long_name": "Fréquence {freq:f} des événements de gel-dégel quotidien"
   },
   "FREEZETHAW_SPELL_MAX_LENGTH": {
     "title": "Durée maximale des séries des événements de gel-dégel quotidien",
     "abstract": "Durée maximale des périodes de gel-dégel. Ces périodes sont des séries de jours consécutifs où la température minimale quotidienne est sous un seuil et la température maximale quotidienne au-dessus d'un autre. En général, ces deux seuils sont 0°C.",
-    "description": "Durée maximale {freq:f} des séries des événements de gel-dégel quotidiens (Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consecutif(s)).",
+    "description": "Durée maximale {freq:f} des séries des événements de gel-dégel quotidiens (Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consécutif(s)).",
     "long_name": "Durée maximale {freq:f} des séries des événements de gel-dégel quotidien"
   },
   "FREEZETHAW_SPELL_MEAN_LENGTH": {
     "title": "Durée moyenne des séries des événements de gel-dégel quotidien",
     "abstract": "Durée moyenne des périodes de gel-dégel. Ces périodes sont des séries de jours consécutifs où la température minimale quotidienne est sous un seuil et la température maximale quotidienne au-dessus d'un autre. En général, ces deux seuils sont 0°C.",
-    "description": "Durée moyenne {freq:f} des séries des événements de gel-dégel quotidien (Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consecutif(s)).",
+    "description": "Durée moyenne {freq:f} des séries des événements de gel-dégel quotidien (Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consécutif(s)).",
     "long_name": "Durée moyenne {freq:f} des séries des événements de gel-dégel quotidien"
   },
   "WIND_CHILL": {
