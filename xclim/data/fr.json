@@ -183,7 +183,7 @@
   },
   "WETDAY_PROP": {
     "long_name": "Proportion de jours avec précipitation (précip >= {thresh})",
-    "description": "Propotion {freq:m} de jours où les précipitations sont au-dessus de {thresh}.",
+    "description": "Proportion {freq:m} de jours où les précipitations sont au-dessus de {thresh}.",
     "title": "Proportion de jours avec précipitation",
     "abstract": "Proportion de jours où les précipitations sont au-dessus d'un seuil."
   },
@@ -237,7 +237,7 @@
   },
   "SPEI": {
     "long_name": "Indice de précipitation évapotranspiration standardisé (SPEI)",
-    "description": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile de {window} {freq:nom}, normalisé tel que la moyenne de SPEI est 0 pour les données de calibration. L'unité de fenêtre `X` est l'unité de temps determinée par la fréquence de rééchantillonnage {freq}.",
+    "description": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile de {window} {freq:nom}, normalisé tel que la moyenne de SPEI est 0 pour les données de calibration. L'unité de la fenêtre `X` est l'unité de temps determinée par la fréquence de rééchantillonnage {freq}.",
     "title": "Indice de précipitation évapotranspiration standardisé (SPEI)",
     "abstract": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile, normalisé tel que la moyenne de SPEI est 0 pour les données de calibration. L'unité de la fenêtre est l'unité de temps déterminée par la fréquence de rééchantillonnage."
   },
@@ -495,7 +495,7 @@
   },
   "BIOLOGICALLY_EFFECTIVE_DEGREE_DAYS": {
     "long_name": "Degrés-jours biologiquement actifs",
-    "description": "Accumulation des degrés-jours borné par Tmin > {thresh_tasmin} et Tmax-Tmin < {max_daily_degree_days}. Les degrés jours quotidiens sont corrigés selon Tmax-Tmin et selon un coefficient de durée du jour dépendent de la latitude.",
+    "description": "Cumul des degrés-jours borné par Tmin > {thresh_tasmin} et Tmax-Tmin < {max_daily_degree_days}. Les degrés jours quotidiens sont corrigés selon Tmax-Tmin et selon un coefficient de durée du jour dépendant de la latitude.",
     "title": "Degrés-jours biologiquement actifs",
     "comment": "Formule originale prise de Gladstones 1992.",
     "abstract": "Indice basé sur une relation non linéaire entre la température et les processus physiologiques. Il intègre une borne supérieure du cumul, un coefficient lié à la durée du jour et une correction liée à l'écart journalier des températures."
@@ -515,7 +515,7 @@
     "abstract": "Indice climatique basé sur la température moyenne du mois le plus chaud et un coefficient basé sur la latitude pour tenir compte de la durée plus longue du jour favorisant les conditions de croissance. Développé spécifiquement pour la viticulture."
   },
   "FRESHET_START": {
-    "long_name": "Premier jour de dépassement constant du seuil de température",
+    "long_name": "Premier jour ayant un dépassement constant du seuil de température",
     "description": "Jour de l'année du début de la crue printanière, défini comme le premier jour où un seuil de température de {thresh} est dépassé pendant au moins {window} jours.",
     "title": "Jour de l'année du début de la crue nivale",
     "abstract": "Premier jour où la température excède un certain seuil depuis un certain nombre de jours consécutifs."
@@ -551,7 +551,7 @@
     "abstract": "Durée de la saison sans gel, définie comme la période pendant laquelle la température minimale quotidienne est supérieure à 0°C sans fenêtre de gel de plusieurs jours, le gel se produisant après une date du calendrier médiane."
   },
   "FROST_FREE_SEASON_START": {
-    "long_name": "Premier jour de dépassement constant du seuil de température",
+    "long_name": "Premier jour ayant un dépassement constant du seuil de température",
     "description": "Jour de l'année du début de la saison sans gel, défini comme le {window}e jour consécutif où la température excède {thresh}.",
     "title": "Jour de l'année du début de la saison sans gel",
     "abstract": "Premier jour où la température excède un certain seuil donné depuis un certain nombre de jours consécutifs."
@@ -563,7 +563,7 @@
     "abstract": "Nombre de jours entre la première occurrence d'une série de jours avec une température moyenne quotidienne supérieure à un seuil et la première occurrence d'une série de jours avec une température moyenne quotidienne inférieure à ce même seuil, survenant après une date de calendrier donnée."
   },
   "GROWING_SEASON_START": {
-    "long_name": "Nième jour consécutif où la température excède un seuil",
+    "long_name": "Premier jour ayant un dépassement constant du seuil de température",
     "description": "Jour de l'année du début de la saison de croissance, défini comme le premier jour de température constante supérieure ou égale au seuil de {thresh} après une série de {window} jours inférieurs à la température seuil.",
     "title": "Jour de l'année du début de la saison de croissance",
     "abstract": "Premier jour où la température excède un certain seuil depuis un certain nombre de jours consécutifs."
@@ -587,10 +587,10 @@
     "abstract": "Mesure des oscillations du débit relatif au débit moyen, quantifiant la fréquence et la rapidité des changements de débits."
   },
   "FREQ_ANALYSIS": {
-    "long_name": "Période de retour du montant de débit",
+    "long_name": "Période de retour du débit",
     "description": "Analyse de fréquence de débit du courant pour le {mode} {indexer} du flux de {window} jours, estimé avec la distribution {dist:f}.",
     "title": "Période de retour",
-    "abstract": "Analyse de fréquence de débit du courant selon un mode et une distribution."
+    "abstract": "Analyse fréquentielle des débits selon un mode et une distribution."
   },
   "STATS": {
     "long_name": "Statistique du flux quotidien",
