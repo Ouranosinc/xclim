@@ -172,7 +172,11 @@ heat_wave_frequency = Temp(
     description="{freq} number of heat wave events over a given period. "
     "An event occurs when the minimum and maximum daily "
     "temperature both exceeds specific thresholds : "
+    "{% if np.isscalar(thresh_tasmin) and np.isscalar(thresh_tasmax)%}"
     "(Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax}) "
+    "{% else %}"
+    "(Tmin > per_gridcell_tmin_thresholds and Tmax > per_gridcell_tmax_thresholds) "
+    "{% endif %}"
     "over a minimum number of days ({window}).",
     cell_methods="",
     keywords="health,",

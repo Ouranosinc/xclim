@@ -14,8 +14,10 @@ from fnmatch import fnmatch
 from inspect import _empty, signature  # noqa
 from typing import Any, Mapping, Sequence
 
+import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
+from jinja2 import Environment
 
 from xclim.core.utils import InputKind, PercentileDataArray
 
@@ -33,6 +35,8 @@ DEFAULT_FORMAT_PARAMS = {
     "pr_per_window": "{unkown}",
     "pr_per_period": "{unkown}",
 }
+
+jinja_env = Environment(autoescape=True)
 
 
 class AttrFormatter(string.Formatter):
@@ -77,7 +81,9 @@ class AttrFormatter(string.Formatter):
         for k, v in DEFAULT_FORMAT_PARAMS.items():
             if k not in kwargs:
                 kwargs.update({k: v})
-        return super().format(format_string, *args, **kwargs)
+        kwargs.update({"np": np})  # noqa
+        intermediary_res = jinja_env.from_string(format_string, globals=kwargs).render()
+        return super().format(intermediary_res, *args, **kwargs)
 
     def format_field(self, value, format_spec):
         """Format a value given a formatting spec.

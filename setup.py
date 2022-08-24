@@ -47,6 +47,7 @@ requirements = [
     "scipy>=1.2,<1.9",  # see: https://github.com/Ouranosinc/xclim/issues/1142
     "statsmodels",
     "xarray>=0.17",
+    "Jinja2",
 ]
 
 dev_requirements = []
