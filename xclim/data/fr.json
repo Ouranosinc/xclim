@@ -503,7 +503,7 @@
   "EFFECTIVE_GROWING_DEGREE_DAYS": {
     "long_name": "Degrés-jours de croissance effectifs",
     "description": "Accumulation des degrés-jours borné par (Tmax + Tmin)/2 > {thresh} et des dates de début et fin de la saison de croissance generés dynamiquement.",
-    "title": "Degrés-jours effectifs",
+    "title": "Degrés-jours de croissance effectifs",
     "comment": "Formule originale prise de Bootsma et al. 2005.",
     "abstract": "Indice de degrés-jours de croissance basés sur un début et une fin dynamiques de la saison de croissance."
   },
