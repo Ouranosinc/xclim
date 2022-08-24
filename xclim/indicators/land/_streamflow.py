@@ -99,7 +99,7 @@ stats = Stats(
     identifier="stats",
     var_name="q{indexer}{op:r}",
     long_name="Daily flow statistics",
-    description="{freq} {op} of {indexer} daily flow",
+    description="{freq} {op} of daily flow ({indexer})",
     units="m^3 s-1",
     compute=declare_units(da=None)(generic.select_resample_op),
 )
