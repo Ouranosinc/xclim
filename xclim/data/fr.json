@@ -467,7 +467,7 @@
     "long_name": "Degrés-jours de climatisation",
     "description": "Cumul {freq:m} des degrés-jours de climatisation (Température au-dessus de {thresh}).",
     "title": "Degrés-jours de climatisation",
-    "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est au-dessus d'un seuil donné et que les immeubles doivent être réfrigérés."
+    "abstract": "Cumul des degrés-jours pour les jours où la température moyenne est au-dessus d'un seuil donné et que les immeubles doivent être climatisés."
   },
   "HEATING_DEGREE_DAYS": {
     "long_name": "Degrés-jours de chauffage",
