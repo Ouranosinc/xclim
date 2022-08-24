@@ -17,6 +17,7 @@ New features and enhancements
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `scipy` has been temporarily pinned below version 1.9 until lmoments3 tests can be rewritten to account for the new API. (:issue:`1142`, :pull:`1143`).
+* Now requires `xarray>=2022.06.0` (:pull:`1151`).
 
 Bug fixes
 ^^^^^^^^^
