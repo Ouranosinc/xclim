@@ -4,7 +4,7 @@ History
 
 0.38.0 (unreleased)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), Gabriel Rondeau-Genesse (:user:`RondeauG`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -12,12 +12,14 @@ New features and enhancements
     - Wrapped SBCK tests are also properly run in the tox testing ensemble. (:pull:`1119`).
 * New indices for droughts: SPI (standardized precipitations) and SPEI (standardized water budgets) (:issue:`131`, :pull:`1096`)
 * ``ensembles.create_ensembles`` now accepts a ``realizations`` argument to assign a coordinate to the "realization" axis. It also accepts a dictionary as input so that keys are used as that coordinate. (:pull:`1153`).
+* ``ensembles.ensemble_percentiles``, ``ensembles.ensemble_mean_std_max_min`` and ``ensembles.change_significance`` now support weights (:pull:`1151`).
 * Many generic indicators that compare arrays or against thresholds or now accept an `op` keyword for specifying the logical comparison operation to use in their calculations (i.e. `{">", ">=", "<", "<=, "!=", "=="}`). (:issue:`389`, :pull:`1157`).
     - In order to prevent user error, many of these generic indices now have a `constrain` variable that prevents calling an indice with an inappropriate comparison operator. (e.g. The following will raise an error: `op=">", constrain=("<", "<=")`). This behaviour has been added to indices accepting `op` where appropriate.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `scipy` has been temporarily pinned below version 1.9 until lmoments3 tests can be rewritten to account for the new API. (:issue:`1142`, :pull:`1143`).
+* Now requires `xarray>=2022.06.0` (:pull:`1151`).
 * Call signatures for generic indices have been reordered and/or modified to accept `op`, and optionally `constrain`, in many cases, and `condition`/`conditional`/`operation` has been renamed to `op` for consistency. (:pull:`1157`). The affected indices are as follows:
     - `get_op`, `compare`, `threshold_count`, `get_daily_events`, `count_level_crossings`, `count_occurrences`, `first_occurrence`, `last_occurrence`, `spell_length`, `thresholded_statistics`, `temperature_sum`, `degree_days`.
 * All indices in `xclim.indices.generic` now use `threshold` in lieu of `thresh` for consistency. (:pull:`1157`).
