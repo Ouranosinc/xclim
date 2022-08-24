@@ -905,7 +905,7 @@
   },
   "WARM_SPELL_DURATION_INDEX": {
     "title": "Indice de durée des vagues de chaleur",
-    "abstract": "Nombre de jours de la série avec durée minimale où la température maximale quotidienne dépasse un centile donné. Le seuil de centile des températures doit être calculé avec une fenêtre mobile d'un nombre de jours donné.",
+    "abstract": "Nombre de jours consécutifs plus grand qu'un nombre de jour minimal donnée et ayant une température maximale quotidienne plus grande qu'un centile donné. Le seuil de centile des températures doit être calculé avec une fenêtre mobile d'un nombre de jours donné.",
     "description": "Nombre de jours avec au moins {window} jours consécutifs où la température maximale quotidienne est supérieure au(x) {tasmax_per_thresh}e centile(s). Une fenêtre de {tasmax_per_window} jour(s), centrée sur chaque jour du calendrier de la période {tasmax_per_period}, est utilisée pour calculer le(s) {tasmax_per_thresh}e(s) centile(s).",
     "long_name": "Nombre de jours faisant partie d'une vague de chaleur définie par un centile"
   },
