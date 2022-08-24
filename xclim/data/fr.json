@@ -524,7 +524,7 @@
     "long_name": "Durée de la saison de gel",
     "description": "Nombre {freq} de jours entre la première occurrence d'au moins {window} jours consécutifs ayant une température minimale journalière inférieure au point de congélation et la première occurrence d'au moins {window} jours consécutifs ayant une température minimale journalière supérieure au point de congélation après {mid_date}.",
     "title": "Durée de la saison de gel",
-    "abstract": "Durée de la saison de gel, définie comme la période pendant laquelle la température minimale quotidnne est inférieure à 0°C sans fenêtre de dégel de plusieurs jours, le dégel se produisant après une date calendaire médiane."
+    "abstract": "Durée de la saison de gel, définie comme la période pendant laquelle la température minimale quotidnne est inférieure à 0°C sans fenêtre de dégel de plusieurs jours, le dégel se produisant après une date du calendrier médiane."
   },
   "FROST_DAYS": {
     "long_name": "Nombre de jours de gel",
@@ -548,7 +548,7 @@
     "long_name": "Durée de la saison sans gel",
     "description": "Nombre {freq} de jours entre la première occurrence d'au moins {window} jours consécutifs ayant une température minimale quoditienne supérieure au point de congélation et la première occurrence d'au moins {window} jours consécutifs ayant une température minimale quotidienne inférieure au point de congélation après {mid_date}.",
     "title": "Durée de la saison sans gel",
-    "abstract": "Durée de la saison sans gel, définie comme la période pendant laquelle la température minimale quotidienne est supérieure à 0°C sans fenêtre de gel de plusieurs jours, le gel se produisant après une date calendaire médiane."
+    "abstract": "Durée de la saison sans gel, définie comme la période pendant laquelle la température minimale quotidienne est supérieure à 0°C sans fenêtre de gel de plusieurs jours, le gel se produisant après une date du calendrier médiane."
   },
   "FROST_FREE_SEASON_START": {
     "long_name": "Premier jour de dépassement constant du seuil de température",
