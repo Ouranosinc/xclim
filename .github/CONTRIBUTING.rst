@@ -345,5 +345,5 @@ Before updating the main conda-forge recipe, we *strongly* suggest performing th
 .. _`reStructuredText (ReST)`: https://www.jetbrains.com/help/pycharm/using-docstrings-to-specify-types.html
 .. _`reStructuredText Primer`: https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
 .. _`GitHub Repository`: https://github.com/Ouranosinc/xclim
-.. _`PEP8`: https://www.python.org/dev/peps/pep-0008/
+.. _`PEP8`: https://peps.python.org/pep-0008/
 .. _`sphinxcontrib-bibtex`: https://sphinxcontrib-bibtex.readthedocs.io

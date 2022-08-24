@@ -195,11 +195,11 @@ Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Juliette Lav
 
 Announcements
 ^^^^^^^^^^^^^
-* `xclim` no longer supports Python3.7. Code conventions and new features for Python3.8 (`PEP 569 <https://www.python.org/dev/peps/pep-0569/>`_) are now accepted. (:issue:`966`, :pull:`1000`).
+* `xclim` no longer supports Python3.7. Code conventions and new features for Python3.8 (`PEP 569 <https://peps.python.org/pep-0569/>`_) are now accepted. (:issue:`966`, :pull:`1000`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* Python3.7 (`PEP 537 <https://www.python.org/dev/peps/pep-0537/>`_) support has been officially deprecated. Continuous integration testing is no longer run against this version of Python. (:issue:`966`, :pull:`1000`).
+* Python3.7 (`PEP 537 <https://peps.python.org/pep-0537/>`_) support has been officially deprecated. Continuous integration testing is no longer run against this version of Python. (:issue:`966`, :pull:`1000`).
 
 Bug fixes
 ^^^^^^^^^
@@ -625,7 +625,7 @@ v0.26.0 (2021-04-30)
 
 Announcements
 ^^^^^^^^^^^^^
-* `xclim` no longer supports Python3.6. Code conventions and new features from Python3.7 (`PEP 537 Features <https://www.python.org/dev/peps/pep-0537/#features-for-3-7>`_) are now accepted.
+* `xclim` no longer supports Python3.6. Code conventions and new features from Python3.7 (`PEP 537 Features <https://peps.python.org/pep-0537/#features-for-3-7>`_) are now accepted.
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
