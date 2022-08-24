@@ -158,7 +158,11 @@ register_plugin("pybtex.style.formatting", "xcstyle", XCStyle)
 bibtex_bibfiles = ["references.bib"]
 bibtex_reference_style = "author_year"
 
-nbsphinx_execute = "auto"
+if os.getenv("SKIPNOTEBOOKS"):
+    warnings.warn("Not executing notebooks.")
+    nbsphinx_execute = "never"
+else:
+    nbsphinx_execute = "auto"
 nbsphinx_prolog = r"""
 {% set docname = env.doc2path(env.docname, base=None) %}
 

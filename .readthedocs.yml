@@ -16,7 +16,7 @@ build:
       - pip install llvmlite~=0.38 --ignore-installed
     pre_build:
       - sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests
-      - sphinx-build -b linkcheck docs/ _build/linkcheck
+      - env SKIPNOTEBOOKS=1 sphinx-build -b linkcheck docs/ _build/linkcheck
 
 conda:
   environment: environment.yml

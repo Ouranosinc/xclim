@@ -79,6 +79,9 @@ linkcheck: ## run checks over all external links found throughout the documentat
 	sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs linkcheck
+ifndef READTHEDOCS
+	$(BROWSER) docs/_build/html/index.html
+endif
 
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/xclim*.rst
