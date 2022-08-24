@@ -50,18 +50,17 @@ General to-do list for implementing a new Indicator:
       In addition to the ``atmos_ds`` fixture, only datasets that can be accessed with :py:func:`xclim.testing.open_dataset` should be used.
     * Tests are added in the most relevant ``xclim/testing/tests/test_{variable}.py`` file.
 
-5. Add french translations
+5. Add French translations
 
     xclim comes with an internationalization module and all "official" indicators
     (those in ``xclim.atmos.indicators``) must have a french translation added to ``xclim/data/fr.json``.
-    This part can be done by the core team after you open a PR.
+    This part can be done by the core team after you open a Pull Request.
 
 General notes for implementing new bias-adjustment methods:
 
 * Method are implemented as classes in ``xclim/sdba/adjustment.py``.
-* If the algorithm gets complicated and would generate many dask tasks, it should be
-  implemented as functions wrapped by :py:func:`~xclim.sdba.map_blocks` or :py:func:`~xclim.sdba.map_groups`
-  in ``xclim/sdba/_adjustment.py``.
+* If the algorithm gets complicated and would generate many dask tasks, it should be implemented as functions wrapped
+  by :py:func:`~xclim.sdba.map_blocks` or :py:func:`~xclim.sdba.map_groups` in ``xclim/sdba/_adjustment.py``.
 * xclim doesn't implement monolithic multi-parameter methods, but rather smaller modular functions to construct post-processing workflows.
 
 Report Bugs
@@ -87,13 +86,20 @@ xclim could always use more documentation, whether as part of the official xclim
 web in blog posts, articles, and such.
 
 To reference documents (article, presentation, thesis, etc) in the documentation or in a docstring, xclim uses
-`sphinxcontrib-bibtex`_. Metadata of the documents is stored in the ``docs/references.bib`` file and they are
-usually cited in the documentation with ``:cite:cts:`label```.
+`sphinxcontrib-bibtex`_. Metadata of the documents is stored as BibTeX entries in the ``docs/references.bib`` file.
+To properly generate internal reference links, we suggest using the following roles:
+
+- For references cited in the `References` section of function docstrings, use ``:cite:cts:`label```.
+- For in-text references with first author and year, use ``:cite:t:`label```.
+- For reference citations in parentheses, use ``:cite:p:`label```.
+
+Multiple references can be added to a single role using commas (e.g. ``:cite:cts:`label1,label2,label3```).
+For more information see: `sphinxcontrib-bibtex`_.
 
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
-The best way to send feedback is to file an issue at https://github.com/Ouranosinc/xclim/issues.
+The best way to send feedback is to file an issue at: https://github.com/Ouranosinc/xclim/issues.
 
 If you are proposing a feature:
 
@@ -200,8 +206,7 @@ Before you submit a pull request, please follow these guidelines:
 5. The pull request should work for Python 3.8, 3.9, and 3.10 as well as raise test coverage.
    Pull requests are also checked for documentation build status and for `PEP8`_ compliance.
 
-   The build statuses and build errors for pull requests can be found at:
-    https://github.com/Ouranosinc/xclim/actions
+   The build statuses and build errors for pull requests can be found at: https://github.com/Ouranosinc/xclim/actions
 
 .. warning::
     PEP8, black, pytest (with xdoctest) and pydocstyle (for numpy docstrings) conventions are strongly enforced.
@@ -218,7 +223,8 @@ Before you submit a pull request, please follow these guidelines:
      ^^^^^^^^^^^^^^^^
      * Updated the contribution guidelines. (:issue:`868`, :pull:`869`).
 
-   If this is your first contribution to Ouranosinc/xclim, we ask that you also add your name to the `AUTHORS.rst <https://github.com/Ouranosinc/xclim/blob/master/AUTHORS.rst>`_, under *Contributors*.
+   If this is your first contribution to Ouranosinc/xclim, we ask that you also add your name to the `AUTHORS.rst <https://github.com/Ouranosinc/xclim/blob/master/AUTHORS.rst>`_,
+   under *Contributors* as well as to the `.zenodo.json <https://github.com/Ouranosinc/xclim/blob/master/.zenodo.json>`_, at the end of the *creators* block.
 
 Tips
 ----
@@ -278,7 +284,7 @@ Be sure to only tag from the `main` branch when all changes from PRs have been m
 
 .. note::
     Starting from October, 2021, all tags pushed to GitHub will trigger a build and publish a package to TestPyPI by default. TestPyPI is a testing ground that is not indexed or easily available to `pip`.
-    The test package can be found at: https://test.pypi.org/project/xclim/
+    The test package can be found at `xclim on TestPyPI`_.
 
 Packaging
 ---------
@@ -347,3 +353,4 @@ Before updating the main conda-forge recipe, we *strongly* suggest performing th
 .. _`GitHub Repository`: https://github.com/Ouranosinc/xclim
 .. _`PEP8`: https://peps.python.org/pep-0008/
 .. _`sphinxcontrib-bibtex`: https://sphinxcontrib-bibtex.readthedocs.io
+.. _`xclim on TestPyPI`: https://test.pypi.org/project/xclim/
