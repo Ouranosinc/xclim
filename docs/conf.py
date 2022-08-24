@@ -257,7 +257,7 @@ htmlhelp_basename = "xclimdoc"
 
 # -- Options for LaTeX output ------------------------------------------
 
-latex_engine = "pdflatex"
+latex_engine = "xelatex"
 latex_logo = "_static/_images/xclim-logo.png"
 
 latex_elements = {
