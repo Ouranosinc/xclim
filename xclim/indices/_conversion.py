@@ -14,6 +14,7 @@ from xclim.indices.helpers import (
     extraterrestrial_solar_radiation,
     solar_declination,
     time_correction_for_solar_angle,
+    wind_speed_height_conversion,
 )
 
 __all__ = [
@@ -972,13 +973,28 @@ def clausius_clapeyron_scaled_precipitation(
 
 
 @declare_units(
-    tasmin="[temperature]", tasmax="[temperature]", tas="[temperature]", lat="[]"
+    tasmin="[temperature]",
+    tasmax="[temperature]",
+    tas="[temperature]",
+    lat="[]",
+    hurs="[]",
+    rsds="[radiation]",
+    rsus="[radiation]",
+    rlds="[radiation]",
+    rlus="[radiation]",
+    sfcwind="[speed]",
 )
 def potential_evapotranspiration(
     tasmin: xr.DataArray | None = None,
     tasmax: xr.DataArray | None = None,
     tas: xr.DataArray | None = None,
     lat: xr.DataArray | None = None,
+    hurs: xr.DataArray | None = None,
+    rsds: xr.DataArray | None = None,
+    rsus: xr.DataArray | None = None,
+    rlds: xr.DataArray | None = None,
+    rlus: xr.DataArray | None = None,
+    sfcwind: xr.DataArray | None = None,
     method: str = "BR65",
     peta: float | None = 0.00516409319477,
     petb: float | None = 0.0874972822289,
@@ -998,7 +1014,19 @@ def potential_evapotranspiration(
       Mean daily temperature.
     lat : xarray.DataArray, optional
       Latitude. If not given, it is sought on tasmin or tas with cf-xarray.
-    method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48", "mcguinnessbordne05", "MB05"}
+    hurs : xarray.DataArray
+      Relative humidity.
+    rsds : xarray.DataArray
+      Surface Downwelling Shortwave Radiation
+    rsus : xarray.DataArray
+      Surface Upwelling Shortwave Radiation
+    rlds : xarray.DataArray
+      Surface Downwelling Longwave Radiation
+    rlus : xarray.DataArray
+      Surface Upwelling Longwave Radiation
+    sfcwind : xarray.DataArray
+      Surface wind velocity (at 10 m)
+    method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48", "mcguinnessbordne05", "MB05", "allen98", "FAO_PM98"}
       Which method to use, see notes.
     peta : float
       Used only with method MB05 as :math:`a` for calculation of PET, see Notes section.
@@ -1019,6 +1047,7 @@ def potential_evapotranspiration(
     - "hargreaves85" or "HG85", based on :cite:t:`george_h_hargreaves_reference_1985`. Requires tasmin and tasmax, daily [D] freq. (optional: tas can be given in addition of tasmin and tasmax).
     - "mcguinnessbordne05" or "MB05", based on :cite:t:`tanguy_historical_2018`. Requires tas, daily [D] freq, with latitudes 'lat'.
     - "thornthwaite48" or "TW48", based on :cite:t:`thornthwaite_approach_1948`. Requires tasmin and tasmax, monthly [MS] or daily [D] freq. (optional: tas can be given instead of tasmin and tasmax).
+    - "allen98" or "FAO_PM98", based on :cite:t:`allen_crop_1998`. Modification of Penman-Monteith method. Requires tasmin and tasmax, relative humidity, radiation flux and wind speed (10 m wind will be converted to 2 m).
 
     The McGuinness-Bordne :cite:p:`mcguinness_comparison_1972` equation is:
 
@@ -1036,8 +1065,7 @@ def potential_evapotranspiration(
 
     References
     ----------
-    :cite:cts:`baier_estimation_1965,george_h_hargreaves_reference_1985,tanguy_historical_2018,thornthwaite_approach_1948,mcguinness_comparison_1972`
-
+    :cite:cts:`baier_estimation_1965,george_h_hargreaves_reference_1985,tanguy_historical_2018,thornthwaite_approach_1948,mcguinness_comparison_1972,allen_crop_1998`
     """
     if lat is None:
         lat = (tasmin if tas is None else tas).cf["latitude"]
@@ -1149,6 +1177,44 @@ def potential_evapotranspiration(
         # Thornthwaite(1948) formula
         out = 1.6 * dl_m * tas_idy_a  # cm/month
         out = 10 * out  # mm/month
+
+    elif method in ["allen98", "FAO_PM98"]:
+
+        tasmax = convert_units_to(tasmax, "degC")
+        tasmin = convert_units_to(tasmin, "degC")
+
+        # wind speed at two meters
+        wa2 = wind_speed_height_conversion(sfcwind, h_source="10 m", h_target="2 m")
+        wa2 = convert_units_to(wa2, "m s-1")
+
+        with xr.set_options(keep_attrs=True):
+            # mean temperature [degC]
+            tas_m = (tasmax + tasmin) / 2
+            # mean saturation vapour pressure [kPa]
+            es = (1 / 2) * (
+                saturation_vapor_pressure(tasmax) + saturation_vapor_pressure(tasmin)
+            )
+            es = convert_units_to(es, "kPa")
+            # mean actual vapour pressure [kPa]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               kPa )
+            ea = hurs * es
+
+            # slope of saturation vapour pressure curve  [kPa degC-1]
+            delta = 4098 * es / (tas_m + 237.3) ** 2
+            # net radiation
+            Rn = convert_units_to(rsds - rsus - (rlus - rlds), "MJ m-2 d-1")
+
+            G = 0  # Daily soil heat flux density [MJ m-2 d-1]
+            P = 101.325  # Atmospheric pressure [kPa]
+            gamma = 0.665e-03 * P  # psychrometric const = C_p*P/(eps*lam) [kPa degC-1]
+
+            # Penman-Monteith formula with reference grass:
+            # height = 0.12m, surface resistance = 70 s m-1, albedo  = 0.23
+            # Surface resistance implies a ``moderately dry soil surface resulting from
+            # about a weekly irrigation frequency''
+            out = (
+                0.408 * delta * (Rn - G)
+                + gamma * (900 / (tas_m + 273)) * wa2 * (es - ea)
+            ) / (delta + gamma * (1 + 0.34 * wa2))
 
     else:
         raise NotImplementedError(f"'{method}' method is not implemented.")
