@@ -570,7 +570,9 @@ def freshet_start(
             rl.first_run, window=window, coord="dayofyear"
         )
     else:
-        out = rl.first_run(over, window=window, freq=freq, coord="dayofyear")
+        out = rl.first_run(
+            over, window=window, freq=freq, coord="dayofyear", ufunc_1dim=False
+        )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
     return out
 

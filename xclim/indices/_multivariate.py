@@ -561,7 +561,7 @@ def multiday_temperature_swing(
             )
         else:
             out = rl.rle_statistics(
-                ft, reducer=op, window=window, dim="time", freq=freq
+                ft, reducer=op, window=window, dim="time", freq=freq, ufunc_1dim=False
             )
 
     return to_agg_units(out, tasmin, "count")
