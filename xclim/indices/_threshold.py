@@ -188,8 +188,8 @@ def cold_spell_frequency(
 ) -> xarray.DataArray:
     r"""Cold spell frequency.
 
-    The number of cold spell events, defined as a sequence of consecutive days with mean daily
-    temperature below a threshold.
+    The number of cold spell events, defined as a sequence of consecutive days with mean daily temperature below a
+    threshold.
 
     Parameters
     ----------
@@ -209,7 +209,6 @@ def cold_spell_frequency(
     -------
     xarray.DataArray, [dimensionless]
       Cold spell frequency.
-
 
     """
     t = convert_units_to(thresh, tas)
@@ -235,7 +234,10 @@ def continuous_snow_cover_end(
 
     First day after the start of the continuous snow cover when snow depth is below `threshold` for at least
     `window` consecutive days.
-    WARNING: The default `freq` is valid for the northern hemisphere.
+
+    Warnings
+    --------
+    The default `freq` is valid for the northern hemisphere.
 
     Parameters
     ----------
@@ -257,8 +259,7 @@ def continuous_snow_cover_end(
 
     References
     ----------
-    Chaumont D., Mailhot A., Diaconescu E.P., Fournier É., Logan T. 2017: Élaboration du portrait bioclimatique futur
-    du Nunavik – Tome II. [Rapport présenté au Ministère de la forêt, de la faune et des parcs], Ouranos.
+    :cite:cts:`chaumont_elaboration_2017`
     """
     thresh = convert_units_to(thresh, snd)
     cond = snd >= thresh
@@ -279,7 +280,10 @@ def continuous_snow_cover_start(
     r"""Start date of continuous snow cover.
 
     Day of year when snow depth is above or equal `threshold` for at least `window` consecutive days.
-    WARNING: The default `freq` is valid for the northern hemisphere.
+
+    Warnings
+    --------
+    The default `freq` is valid for the northern hemisphere.
 
     Parameters
     ----------
@@ -300,8 +304,7 @@ def continuous_snow_cover_start(
 
     References
     ----------
-    Chaumont D., Mailhot A., Diaconescu E.P., Fournier É., Logan T. 2017: Élaboration du portrait bioclimatique futur
-    du Nunavik – Tome II. [Rapport présenté au Ministère de la forêt, de la faune et des parcs], Ouranos.
+    :cite:cts:`chaumont_elaboration_2017`
     """
     thresh = convert_units_to(thresh, snd)
     cond = snd >= thresh
@@ -345,7 +348,7 @@ def daily_pr_intensity(
     Notes
     -----
     Let :math:`\mathbf{p} = p_0, p_1, \ldots, p_n` be the daily precipitation and :math:`thresh` be the precipitation
-    threshold defining wet days. Then the daily precipitation intensity is defined as
+    threshold defining wet days. Then the daily precipitation intensity is defined as:
 
     .. math::
 
@@ -355,9 +358,8 @@ def daily_pr_intensity(
 
     Examples
     --------
-    The following would compute for each grid cell of file `pr.day.nc` the average
-    precipitation fallen over days with precipitation >= 5 mm at seasonal
-    frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
+    The following would compute for each grid cell of file `pr.day.nc` the average precipitation fallen over days with
+    precipitation >= 5 mm at seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> from xclim.indices import daily_pr_intensity
     >>> pr = xr.open_dataset(path_to_pr_file).pr
@@ -448,13 +450,11 @@ def maximum_consecutive_wet_days(
 
     Notes
     -----
-    Let :math:`\mathbf{x}=x_0, x_1, \ldots, x_n` be a daily precipitation series and
-    :math:`\mathbf{s}` be the sorted vector of indices :math:`i` where :math:`[p_i > thresh] \neq [p_{i+1} >
-    thresh]`, that is, the days when the precipitation crosses the *wet day* threshold.
-    Then the maximum number of consecutive wet days is given by
+    Let :math:`\mathbf{x}=x_0, x_1, \ldots, x_n` be a daily precipitation series and :math:`\mathbf{s}` be the sorted
+    vector of indices :math:`i` where :math:`[p_i > thresh] \neq [p_{i+1} > thresh]`, that is, the days where the
+    precipitation crosses the *wet day* threshold. Then the maximum number of consecutive wet days is given by:
 
     .. math::
-
 
        \max(\mathbf{d}) \quad \mathrm{where} \quad d_j = (s_j - s_{j-1}) [x_{s_j} > 0^\circ C]
 
@@ -617,8 +617,8 @@ def growing_season_start(
 ) -> xarray.DataArray:
     r"""Start of the growing season.
 
-    Day of the year of the start of a sequence of days with mean temperatures consistently
-    above or equal to a threshold, after a period with mean temperatures consistently above the same threshold.
+    Day of the year of the start of a sequence of days with mean temperatures consistently above or equal to a
+    threshold, after a period with mean temperatures consistently above the same threshold.
 
     Parameters
     ----------
@@ -666,8 +666,8 @@ def growing_season_end(
 ) -> xarray.DataArray:
     r"""End of the growing season.
 
-    Day of the year of the start of a sequence of days with mean temperatures consistently
-    below a threshold, after a period with mean temperatures consistently above the same threshold.
+    Day of the year of the start of a sequence of days with mean temperatures consistently below a threshold, after a
+    period with mean temperatures consistently above the same threshold.
 
     Parameters
     ----------
@@ -713,13 +713,14 @@ def growing_season_length(
 ) -> xarray.DataArray:
     r"""Growing season length.
 
-    The number of days between the first occurrence of at least six consecutive days
-    with mean daily temperature over a threshold (default: 5℃) and the first occurrence
-    of at least six consecutive days with mean daily temperature below the same threshold
-    after a certain date.
-    (Usually July 1st in the northern emisphere and January 1st in the southern hemisphere.)
+    The number of days between the first occurrence of at least six consecutive days with mean daily temperature over a
+    threshold (default: 5℃) and the first occurrence of at least six consecutive days with mean daily temperature below
+    the same threshold after a certain date. (Usually July 1st in the northern emisphere and January 1st in the southern
+    hemisphere.)
 
-    WARNING: The default calendar values are only valid for the northern hemisphere.
+    Warnings
+    --------
+    The default `freq` is valid for the northern hemisphere.
 
     Parameters
     ----------
@@ -787,11 +788,14 @@ def frost_season_length(
 ) -> xarray.DataArray:
     r"""Frost season length.
 
-    The number of days between the first occurrence of at least N (def: 5) consecutive days
-    with minimum daily temperature under a threshold (default: 0℃) and the first occurrence
-    of at least N (def 5) consecutive days with minimum daily temperature above the same threshold
-    A mid date can be given to limit the earliest day the end of season can take.
-    WARNING: The default freq and mid_date values are valid for the northern hemisphere.
+    The number of days between the first occurrence of at least N (def: 5) consecutive days with minimum daily
+    temperature under a threshold (default: 0℃) and the first occurrence of at least N (def 5) consecutive days with
+    minimum daily temperature above the same threshold.
+    A mid-date can be given to limit the earliest day the end of season can take.
+
+    Warnings
+    --------
+    The default `freq` is valid for the northern hemisphere.
 
     Parameters
     ----------
@@ -859,8 +863,8 @@ def frost_free_season_start(
 ) -> xarray.DataArray:
     r"""Start of the frost free season.
 
-    Day of the year of the start of a sequence of days with minimum temperatures consistently
-    above or equal to a threshold, after a period with minimum temperatures consistently above the same threshold.
+    Day of the year of the start of a sequence of days with minimum temperatures consistently above or equal to a
+    threshold, after a period with minimum temperatures consistently above the same threshold.
 
     Parameters
     ----------
@@ -928,8 +932,7 @@ def frost_free_season_end(
     Returns
     -------
     xarray.DataArray, [dimensionless]
-      Day of the year when minimum temperature is inferior to a threshold
-      over a given number of days for the first time.
+      Day of the year when minimum temperature is inferior to a threshold over a given number of days for the first time.
       If there is no such day or if a frost free season is not detected, returns np.nan.
       If the frost free season does not end within the time period, returns the last day of the period.
     """
@@ -957,11 +960,14 @@ def frost_free_season_length(
 ) -> xarray.DataArray:
     r"""Frost free season length.
 
-    The number of days between the first occurrence of at least N (def: 5) consecutive days
-    with minimum daily temperature above a threshold (default: 0℃) and the first occurrence
-    of at least N (def 5) consecutive days with minimum daily temperature below the same threshold
-    A mid date can be given to limit the earliest day the end of season can take.
-    WARNING: The default freq and mid_date values are valid for the northern hemisphere.
+    The number of days between the first occurrence of at least N (def: 5) consecutive days with minimum daily
+    temperature above a threshold (default: 0℃) and the first occurrence of at least N (def 5) consecutive days with
+    minimum daily temperature below the same threshold.
+    A mid-date can be given to limit the earliest day the end of season can take.
+
+    Warnings
+    --------
+    The default `freq` is valid for the northern hemisphere.
 
     Parameters
     ----------
@@ -1030,8 +1036,8 @@ def last_spring_frost(
 ) -> xarray.DataArray:
     r"""Last day of temperatures inferior to a threshold temperature.
 
-    Returns last day of period where a temperature is inferior to a threshold
-    over a given number of days and limited to a final calendar date.
+    Returns last day of period where a temperature is inferior to a threshold over a given number of days and limited
+    to a final calendar date.
 
     Parameters
     ----------
@@ -1076,10 +1082,12 @@ def first_day_below(
 ) -> xarray.DataArray:
     r"""First day of temperatures inferior to a threshold temperature.
 
-    Returns first day of period where a temperature is inferior to a threshold
-    over a given number of days, limited to a starting calendar date.
+    Returns first day of period where a temperature is inferior to a threshold over a given number of days, limited to
+    a starting calendar date.
 
-    WARNING: The default date and freq are valid for the northern hemisphere.
+    Warnings
+    --------
+    The default `freq` is valid for the northern hemisphere.
 
     Parameters
     ----------
@@ -1124,10 +1132,12 @@ def first_day_above(
 ) -> xarray.DataArray:
     r"""First day of temperatures superior to a threshold temperature.
 
-    Returns first day of period where a temperature is superior to a threshold
-    over a given number of days, limited to a starting calendar date.
+    Returns first day of period where a temperature is superior to a threshold over a given number of days, limited to
+    a starting calendar date.
 
-    WARNING: The default date and freq are valid for the northern hemisphere.
+    Warnings
+    --------
+    The default `freq` is valid for the northern hemisphere.
 
     Parameters
     ----------
@@ -1171,7 +1181,10 @@ def first_snowfall(
     r"""First day with solid precipitation above a threshold.
 
     Returns the first day of a period where the solid precipitation exceeds a threshold.
-    WARNING: The default `freq` is valid for the northern hemisphere.
+
+    Warnings
+    --------
+    The default `freq` is valid for the northern hemisphere.
 
     Parameters
     ----------
@@ -1190,8 +1203,7 @@ def first_snowfall(
 
     References
     ----------
-    Climate Projections for the National Capital Region (2020), Volume 1: Results and Interpretation for Key Climate
-    Indices, Report 193600.00, Prepared for Ottawa by CBCL.
+    :cite:cts:`cbcl_climate_2020`.
     """
     thresh = convert_units_to(thresh, prsn)
     cond = prsn >= thresh
@@ -1215,7 +1227,10 @@ def last_snowfall(
     r"""Last day with solid precipitation above a threshold.
 
     Returns the last day of a period where the solid precipitation exceeds a threshold.
-    WARNING: The default freq is valid for the northern hemisphere.
+
+    Warnings
+    --------
+    The default `freq` is valid for the northern hemisphere.
 
     Parameters
     ----------
@@ -1234,8 +1249,7 @@ def last_snowfall(
 
     References
     ----------
-    Climate Projections for the National Capital Region (2020), Volume 1: Results and Interpretation for Key Climate
-    Indices, Report 193600.00, Prepared for Ottawa by CBCL.
+    :cite:cts:`cbcl_climate_2020`.
     """
     thresh = convert_units_to(thresh, prsn)
     cond = prsn >= thresh
@@ -1280,8 +1294,7 @@ def days_with_snow(
 
     References
     ----------
-    Matthews, L., Andrey, J., & Picketts, I. (2017). Planning for Winter Road Maintenance in the Context of Climate
-    Change, Weather, Climate, and Society, 9(3), 521-532, https://doi.org/10.1175/WCAS-D-16-0103.1
+    :cite:cts:`matthews_planning_2017`
     """
     low = convert_units_to(low, prsn)
     high = convert_units_to(high, prsn)
@@ -1349,9 +1362,9 @@ def heating_degree_days(
 
     Notes
     -----
-    This index intentionally differs from its ECA&D equivalent: HD17. In HD17, values below zero are
-    not clipped before the sum. The present definition should provide a better representation of the energy
-    demand for heating buildings to the given threshold.
+    This index intentionally differs from its ECA&D :cite:p:`project_team_eca&d_algorithm_2013` equivalent: HD17.
+    In HD17, values below zero are not clipped before the sum. The present definition should provide a better
+    representation of the energy demand for heating buildings to the given threshold.
 
     Let :math:`TG_{ij}` be the daily mean temperature at day :math:`i` of period :math:`j`. Then the
     heating degree days are:
@@ -1402,15 +1415,13 @@ def hot_spell_max_length(
     The thresholds of 22° and 25°C for night temperatures and 30° and 35°C for day temperatures were selected by
     Health Canada professionals, following a temperature–mortality analysis. These absolute temperature thresholds
     characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
-    communities (Casati et al., 2013).
+    communities :cite:p:`casati_regional_2013`.
 
-    In Robinson (2001), the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
+    In :cite:t:`robinson_definition_2001`, the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
 
     References
     ----------
-    Casati, B., A. Yagouti, and D. Chaumont, 2013: Regional Climate Projections of Extreme Heat Events in Nine Pilot Canadian Communities for Public Health Planning. J. Appl. Meteor. Climatol., 52, 2669–2698, https://doi.org/10.1175/JAMC-D-12-0341.1
-
-    Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775, https://doi.org/10.1175/1520-0450%282001%29040<0762:OTDOAH>2.0.CO;2
+    :cite:cts:`casati_regional_2013,robinson_definition_2001`
     """
     thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
 
@@ -1430,9 +1441,8 @@ def hot_spell_frequency(
 ) -> xarray.DataArray:
     """Hot spell frequency.
 
-    Number of hot spells over a given period. A hot spell is defined as an event
-    where the maximum daily temperature exceeds a specific threshold
-    over a minimum number of days.
+    Number of hot spells over a given period. A hot spell is defined as an event where the
+    maximum daily temperature exceeds a specific threshold over a minimum number of days.
 
     Parameters
     ----------
@@ -1455,15 +1465,13 @@ def hot_spell_frequency(
     The thresholds of 22° and 25°C for night temperatures and 30° and 35°C for day temperatures were selected by
     Health Canada professionals, following a temperature–mortality analysis. These absolute temperature thresholds
     characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
-    communities (Casati et al., 2013).
+    communities :cite:p:`casati_regional_2013`.
 
-    In Robinson (2001), the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
+    In :cite:t:`robinson_definition_2001`, the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
 
     References
     ----------
-    Casati, B., A. Yagouti, and D. Chaumont, 2013: Regional Climate Projections of Extreme Heat Events in Nine Pilot Canadian Communities for Public Health Planning. J. Appl. Meteor. Climatol., 52, 2669–2698, https://doi.org/10.1175/JAMC-D-12-0341.1
-
-    Robinson, P.J., 2001: On the Definition of a Heat Wave. J. Appl. Meteor., 40, 762–775, https://doi.org/10.1175/1520-0450%282001%29040<0762:OTDOAH>2.0.CO;2
+    :cite:cts:`casati_regional_2013,robinson_definition_2001`
     """
     thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
 
@@ -1482,7 +1490,10 @@ def snow_cover_duration(
     """Number of days with snow depth above a threshold.
 
     Number of days where surface snow depth is greater or equal to given threshold.
-    WARNING: The default `freq` is valid for the northern hemisphere.
+
+    Warnings
+    --------
+    The default `freq` is valid for the northern hemisphere.
 
     Parameters
     ----------
@@ -1635,8 +1646,8 @@ def tg_days_below(
 
     Notes
     -----
-    Let :math:`TG_{ij}` be the daily mean temperature at day :math:`i` of period :math:`j`. Then
-    counted is the number of days where:
+    Let :math:`TG_{ij}` be the daily mean temperature at day :math:`i` of period :math:`j`. Then counted is the number
+    of days where:
 
     .. math::
 
@@ -1749,7 +1760,6 @@ def warm_day_frequency(
     .. math::
 
         TN_{ij} > Threshold [℃]
-
     """
     thresh = convert_units_to(thresh, tasmax)
     events = threshold_count(tasmax, ">", thresh, freq)
@@ -1888,7 +1898,7 @@ def maximum_consecutive_frost_days(
     -----
     Let :math:`\mathbf{t}=t_0, t_1, \ldots, t_n` be a daily minimum temperature series and :math:`thresh` the threshold
     below which a day is considered a frost day. Let :math:`\mathbf{s}` be the sorted vector of indices :math:`i`
-    where :math:`[t_i < thresh] \neq [t_{i+1} < thresh]`, that is, the days when the temperature crosses the threshold.
+    where :math:`[t_i < thresh] \neq [t_{i+1} < thresh]`, that is, the days where the temperature crosses the threshold.
     Then the maximum number of consecutive frost free days is given by
 
     .. math::
@@ -1910,8 +1920,7 @@ def maximum_consecutive_dry_days(
 ) -> xarray.DataArray:
     r"""Maximum number of consecutive dry days.
 
-    Return the maximum number of consecutive days within the period where precipitation
-    is below a certain threshold.
+    Return the maximum number of consecutive days within the period where precipitation is below a certain threshold.
 
     Parameters
     ----------
@@ -1931,7 +1940,7 @@ def maximum_consecutive_dry_days(
     -----
     Let :math:`\mathbf{p}=p_0, p_1, \ldots, p_n` be a daily precipitation series and :math:`thresh` the threshold
     under which a day is considered dry. Then let :math:`\mathbf{s}` be the sorted vector of indices :math:`i` where
-    :math:`[p_i < thresh] \neq [p_{i+1} < thresh]`, that is, the days when the precipitation crosses the threshold.
+    :math:`[p_i < thresh] \neq [p_{i+1} < thresh]`, that is, the days where the precipitation crosses the threshold.
     Then the maximum number of consecutive dry days is given by
 
     .. math::
@@ -1974,9 +1983,8 @@ def maximum_consecutive_frost_free_days(
     -----
     Let :math:`\mathbf{t}=t_0, t_1, \ldots, t_n` be a daily minimum temperature series and :math:`thresh` the threshold
     above or equal to which a day is considered a frost free day. Let :math:`\mathbf{s}` be the sorted vector of
-    indices :math:`i` where :math:`[t_i <= thresh] \neq [t_{i+1} <= thresh]`, that is, the days when the temperature
-    crosses the threshold.
-    Then the maximum number of consecutive frost free days is given by
+    indices :math:`i` where :math:`[t_i <= thresh] \neq [t_{i+1} <= thresh]`, that is, the days where the temperature
+    crosses the threshold. Then the maximum number of consecutive frost free days is given by:
 
     .. math::
 
@@ -1997,8 +2005,8 @@ def maximum_consecutive_tx_days(
 ) -> xarray.DataArray:
     r"""Maximum number of consecutive days with tasmax above a threshold (summer days).
 
-    Return the maximum number of consecutive days within the period where
-    the maximum temperature is above a certain threshold.
+    Return the maximum number of consecutive days within the period where the maximum temperature is above a certain
+    threshold.
 
     Parameters
     ----------
@@ -2018,8 +2026,8 @@ def maximum_consecutive_tx_days(
     -----
     Let :math:`\mathbf{t}=t_0, t_1, \ldots, t_n` be a daily maximum temperature series and :math:`thresh` the threshold
     above which a day is considered a summer day. Let :math:`\mathbf{s}` be the sorted vector of indices :math:`i`
-    where :math:`[t_i < thresh] \neq [t_{i+1} < thresh]`, that is, the days when the temperature crosses the threshold.
-    Then the maximum number of consecutive dry days is given by
+    where :math:`[t_i < thresh] \neq [t_{i+1} < thresh]`, that is, the days where the temperature crosses the threshold.
+    Then the maximum number of consecutive dry days is given by:
 
     .. math::
 
@@ -2063,8 +2071,7 @@ def sea_ice_area(
 
     References
     ----------
-    `What is the difference between sea ice area and extent
-    <https://nsidc.org/arcticseaicenews/faq/#area_extent>`_
+    "What is the difference between sea ice area and extent?" - :cite:cts:`nsidc_frequently_2008`
 
     """
     t = convert_units_to(thresh, siconc)
@@ -2103,8 +2110,8 @@ def sea_ice_extent(
 
     References
     ----------
-    `What is the difference between sea ice area and extent
-    <https://nsidc.org/arcticseaicenews/faq/#area_extent>`_
+    "What is the difference between sea ice area and extent?" - :cite:cts:`nsidc_frequently_2008`
+
     """
     t = convert_units_to(thresh, siconc)
     out = xarray.dot(siconc >= t, areacello)
@@ -2206,7 +2213,8 @@ def rprctot(
 ) -> xarray.DataArray:
     """Proportion of accumulated precipitation arising from convective processes.
 
-    Return the proportion of total accumulated precipitation due to convection on days with total precipitation exceeding a specified threshold during the given period.
+    Return the proportion of total accumulated precipitation due to convection on days with total precipitation
+    exceeding a specified threshold during the given period.
 
     Parameters
     ----------
@@ -2246,17 +2254,17 @@ def degree_days_exceedance_date(
     after_date: DayOfYearStr = None,
     freq: str = "YS",
 ) -> xarray.DataArray:
-    r"""Degree days exceedance date.
+    r"""Degree-days exceedance date.
 
-    Day of year when the sum of degree days exceeds a threshold. Degree days are
-    computed above or below a given temperature threshold.
+    Day of year when the sum of degree days exceeds a threshold. Degree days are computed above or below a given
+    temperature threshold.
 
     Parameters
     ----------
     tas : xarray.DataArray
       Mean daily temperature.
     thresh : str
-      Threshold temperature on which to base degree days evaluation.
+      Threshold temperature on which to base degree-days evaluation.
     sum_thresh : str
       Threshold of the degree days sum.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
@@ -2289,7 +2297,7 @@ def degree_days_exceedance_date(
     The resulting :math:`k` is expressed as a day of year.
 
     Cumulated degree days have numerous applications including plant and insect phenology.
-    See https://en.wikipedia.org/wiki/Growing_degree-day for examples.
+    See https://en.wikipedia.org/wiki/Growing_degree-day for examples (:cite:t:`wikipedia_contributors_growing_2021`).
     """
     thresh = convert_units_to(thresh, "K")
     tas = convert_units_to(tas, "K")

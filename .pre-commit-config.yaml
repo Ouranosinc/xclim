@@ -3,7 +3,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.37.2
+    rev: v2.37.3
     hooks:
       - id: pyupgrade
         args: [ "--py38-plus" ]
@@ -21,7 +21,7 @@ repos:
       - id: pretty-format-json
         args: ['--autofix', '--no-ensure-ascii', '--no-sort-keys']
   - repo: https://github.com/pycqa/flake8
-    rev: 4.0.1
+    rev: 5.0.4
     hooks:
       - id: flake8
         additional_dependencies: [ 'flake8-rst-docstrings' ]
@@ -56,7 +56,7 @@ repos:
       - id: pydocstyle
         args: [ '--config=setup.cfg' ]
   - repo: https://github.com/keewis/blackdoc
-    rev: v0.3.4
+    rev: v0.3.5
     hooks:
       - id: blackdoc
         exclude: '(xclim/indices/__init__.py|docs/installation.rst)'

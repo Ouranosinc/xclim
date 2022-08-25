@@ -1,15 +1,22 @@
-doc: "  ===================\n  CF Standard indices\n  ===================\n\n  Indicator\
-  \ found here are defined by the team at `clix-meta`_.\n  Adapted documentation from\
-  \ that repository follows:\n\n  The repository aims to provide a platform for thinking\
-  \ about, and developing,\n  a unified view of metadata elements required to describe\
-  \ climate indices (aka climate indicators).\n\n  To facilitate data exchange and\
-  \ dissemination the metadata should, as far as possible,\n  follow the Climate and\
-  \ Forecasting (CF) Conventions. Considering the very rich and diverse flora of\n\
-  \  climate indices this is however not always possible. By collecting a wide range\
-  \ of different indices\n  it is easier to discover any common patterns and features\
-  \ that are currently not well covered by the\n  CF Conventions. Currently identified\
-  \ issues frequently relate to standard_name or/and cell_methods\n  which both are\
-  \ controlled vocabularies of the CF Conventions.\n\n  .. _clix-meta: https://github.com/clix-meta/clix-meta\n"
+doc: |
+  ===================
+  CF Standard indices
+  ===================
+
+  Indicators found here are defined by the team at `clix-meta`_. Adapted documentation from that repository follows:
+
+  The repository aims to provide a platform for thinking about, and developing, a unified view of metadata elements
+  required to describe climate indices (aka climate indicators).
+
+  To facilitate data exchange and dissemination the metadata should, as far as possible, follow the Climate and
+  Forecasting (CF) Conventions. Considering the very rich and diverse flora of climate indices, this is however not
+  always possible. By collecting a wide range of different indices it is easier to discover any common patterns and
+  features that are currently not well covered by the CF Conventions. Currently identified issues frequently relate to
+  standard_name and/or cell_methods which both are controlled vocabularies of the CF Conventions.
+
+  .. _clix-meta: https://github.com/clix-meta/clix-meta\n"
+realm: atmos
+references: clix-meta https://github.com/clix-meta/clix-meta
 indicators:
   cdd:
     cf_attrs:
@@ -925,5 +932,3 @@ indicators:
       freq:
         default: MS
     references: ECA&D
-realm: atmos
-references: clix-meta https://github.com/clix-meta/clix-meta

@@ -18,6 +18,7 @@ xclim currently provides over 50 indices related to mean, minimum and maximum da
    notebooks/usage
    notebooks/index
    indicators
+   indices
    checks
    notebooks/units
    internationalization
@@ -27,6 +28,7 @@ xclim currently provides over 50 indices related to mean, minimum and maximum da
    contributing
    authors
    history
+   references
 
 .. toctree::
    :maxdepth: 2
@@ -40,8 +42,10 @@ xclim currently provides over 50 indices related to mean, minimum and maximum da
 
    modules
 
-Indices and tables
-==================
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. only:: html
+
+    Indices and tables
+    ==================
+    * :ref:`genindex`
+    * :ref:`modindex`
+    * :ref:`search`
