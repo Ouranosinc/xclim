@@ -471,7 +471,7 @@ class Indicator(IndicatorRegistrar):
             new.__module__ = f"xclim.indicators.{kwds['module']}"
         else:
             # If the module was not forced, set the module to the base class' module.
-            # Otherwise all indicators will have module `xclim.core.indicator`.
+            # Otherwise, all indicators will have module `xclim.core.indicator`.
             new.__module__ = cls.__module__
 
         #  Add the created class to the registry

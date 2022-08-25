@@ -30,27 +30,24 @@ Indices submodules
    :show-inheritance:
    :noindex:
 
-.. automodule:: xclim.indices.ffdi
-   :members: Griffiths_drought_factor, Keetch_Byram_drought_index, McArthur_forest_fire_danger_index
-   :undoc-members:
-   :show-inheritance:
-   :noindex:
+Fire submodule
+--------------
 
-.. automodule:: xclim.indices.fwi
-   :members: fire_weather_ufunc, fire_season, overwintering_drought_code, drought_code, fire_weather_indexes
+.. automodule:: xclim.indices.fire
+   :members:
    :undoc-members:
    :show-inheritance:
    :noindex:
 
 .. only:: html or text
 
-    Fire-based Indices Footnotes
-    ----------------------------
+    Fire Indices footnotes
+    ======================
 
     .. _ffdi-footnotes:
 
     McArthur Forest Fire Danger Indices methods
-    ===========================================
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     .. bibliography::
        :labelprefix: FFDI-
@@ -59,7 +56,7 @@ Indices submodules
     .. _fwi-footnotes:
 
     Fire Weather Indices codes
-    ==========================
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     .. bibliography::
        :labelprefix: CODE-
@@ -68,14 +65,14 @@ Indices submodules
     Matlab code of the GFWED obtained through personal communication.
 
     Fire season determination methods
-    =================================
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     .. bibliography::
        :labelprefix: FIRE-
        :keyprefix: fire-
 
     Drought Code overwintering background
-    =====================================
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     .. bibliography::
        :labelprefix: DROUGHT-
