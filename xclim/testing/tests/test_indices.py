@@ -2554,6 +2554,44 @@ class TestPotentialEvapotranspiration:
         out = xci.potential_evapotranspiration(tn, tx, lat=lat, method="MB05")
         np.testing.assert_allclose(out[0, 2], [2.78253138816 / 86400], rtol=1e-2)
 
+    def test_allen(
+        self,
+        tasmin_series,
+        tasmax_series,
+        tas_series,
+        lat_series,
+        hurs_series,
+        rsds_series,
+        rsus_series,
+        rlds_series,
+        rlus_series,
+        sfcWind_series,
+    ):
+        lat = lat_series([45])
+        tn = tasmin_series(np.array([0, 5, 10]) + 273.15).expand_dims(lat=lat)
+        tx = tasmax_series(np.array([10, 15, 20]) + 273.15).expand_dims(lat=lat)
+        tm = tas_series(np.array([5, 10, 15]) + 273.15).expand_dims(lat=lat)
+        hurs = hurs_series(np.array([0.8, 0.7, 0.73])).expand_dims(lat=lat)
+        rsds = rsds_series(np.array([43.09, 43.57, 70.20])).expand_dims(lat=lat)
+        rsus = rsus_series(np.array([12.51, 14.46, 20.36])).expand_dims(lat=lat)
+        rlds = rlds_series(np.array([293.65, 228.96, 275.40])).expand_dims(lat=lat)
+        rlus = rlus_series(np.array([311.39, 280.50, 311.30])).expand_dims(lat=lat)
+        sfcwind = sfcWind_series(np.array([14.11, 15.27, 10.70])).expand_dims(lat=lat)
+        out = xci.potential_evapotranspiration(
+            tn,
+            tx,
+            tm,
+            lat=lat,
+            hurs=hurs,
+            rsds=rsds,
+            rsus=rsus,
+            rlds=rlds,
+            rlus=rlus,
+            sfcwind=sfcwind,
+            method="FAO_PM98",
+        )
+        np.testing.assert_allclose(out[0, 2], [1.208832768 / 86400], rtol=1e-2)
+
 
 def test_water_budget_from_tas(pr_series, tasmin_series, tasmax_series, lat_series):
     lat = lat_series([45])
