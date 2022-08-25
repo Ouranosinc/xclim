@@ -267,7 +267,7 @@ class TestFirstRun:
         assert 10 == i
 
     def test_real_data(self):
-        # !!! No test here?  !!!
+        # FIXME: No test here?!
         # n-dim version versus ufunc
         da3d = open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
         da3d.resample(time="M").map(rl.first_run, window=5)
