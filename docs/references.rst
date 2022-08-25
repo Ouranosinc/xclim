@@ -1,19 +1,21 @@
-============
-Bibliography
-============
+.. only:: html or text
 
-General References
-------------------
+    ============
+    Bibliography
+    ============
 
-.. bibliography::
-   :style: xcstyle
+    General References
+    ------------------
 
-Fire Weather Index References
------------------------------
+    .. bibliography::
+       :style: xcstyle
 
-See: :ref:`fwi-footnotes`
+    Fire Weather Index References
+    -----------------------------
 
-SDBA References
----------------
+    See: :ref:`fwi-footnotes`
 
-See: :ref:`sdba-footnotes`
+    SDBA References
+    ---------------
+
+    See: :ref:`sdba-footnotes`
