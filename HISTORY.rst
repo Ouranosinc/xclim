@@ -18,10 +18,6 @@ New indicators
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* ``water_budget`` and ``potential_evapotranspiration`` now accept radiation (rlds, rlus, rsds, rsus), wind (sfcwind), and relative humidity (hurs) as optional parameters. (:pull:`1122`).
-
-Breaking changes
-^^^^^^^^^^^^^^^^
 * `scipy` has been temporarily pinned below version 1.9 until lmoments3 tests can be rewritten to account for the new API. (:issue:`1142`, :pull:`1143`).
 
 Bug fixes
