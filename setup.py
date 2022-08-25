@@ -12,7 +12,7 @@ URL = "https://github.com/Ouranosinc/xclim"
 AUTHOR = "Travis Logan"
 AUTHOR_EMAIL = "logan.travis@ouranos.ca"
 REQUIRES_PYTHON = ">=3.8.0"
-VERSION = "0.37.13-beta"
+VERSION = "0.37.15-beta"
 LICENSE = "Apache Software License 2.0"
 
 with open("README.rst") as readme_file:
@@ -46,7 +46,7 @@ requirements = [
     "scikit-learn>=0.21.3",
     "scipy>=1.2,<1.9",  # see: https://github.com/Ouranosinc/xclim/issues/1142
     "statsmodels",
-    "xarray>=0.17",
+    "xarray>=2022.06.0",
 ]
 
 dev_requirements = []
