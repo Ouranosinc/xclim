@@ -17,7 +17,7 @@ from scipy import stats
 from statsmodels.tsa import stattools
 
 import xclim as xc
-from xclim.core.indicator import Indicator
+from xclim.core.indicator import Indicator, base_registry
 from xclim.core.units import convert_units_to, to_agg_units
 from xclim.core.utils import uses_dask
 from xclim.indices import run_length as rl
@@ -100,6 +100,9 @@ class StatisticalProperty(Indicator):
         from xclim.core.indicator import registry
 
         return registry[self.measure].get_instance()
+
+
+base_registry["StatisticalProperty"] = StatisticalProperty
 
 
 def _mean(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:

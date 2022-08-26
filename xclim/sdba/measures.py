@@ -13,7 +13,7 @@ import numpy as np
 import xarray as xr
 
 from xclim import sdba
-from xclim.core.indicator import Indicator
+from xclim.core.indicator import Indicator, base_registry
 from xclim.core.units import convert_units_to, ensure_delta, units2pint
 from xclim.core.utils import InputKind
 
@@ -54,6 +54,9 @@ class StatisticalMeasure(Indicator):
             das["sim"] = convert_units_to(sim, ref)
 
         return das, params
+
+
+base_registry["StatisticalMeasure"] = StatisticalMeasure
 
 
 def _bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
