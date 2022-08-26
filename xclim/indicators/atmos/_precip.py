@@ -267,7 +267,7 @@ standardized_precipitation_index = StandardizedIndexes(
     standard_name="spi",
     long_name="Standardized Precipitation Index (SPI)",
     description="Precipitations over rolling window {window}-X window, normalized such that SPI averages to 0 for "
-                "calibration data. The window unit `X` is the minimal time period defined by resampling frequency {freq}",
+    "calibration data. The window unit `X` is the minimal time period defined by resampling frequency {freq}",
     cell_methods="",
     compute=indices.standardized_precipitation_index,
 )
@@ -294,17 +294,21 @@ drought_code = FireWeather(
 )
 
 
-def fire_weather_indexes(*args, **kwargs):
+def fire_weather_indexes(*args, **kwargs):  # noqa: D103
 
-    warnings.warn(f"`fire_weather_indexes` indicator is deprecated as of xclim v0.37.18-beta. This indicator "
-                  f"has been renamed to `cffwis_indices` to better support international collaboration. "
-                  f"The `fire_weather_indexes` alias will be removed in xclim v0.39."
-                  f" See the xclim release notes for more information.", DeprecationWarning, stacklevel=2)
+    warnings.warn(
+        "`fire_weather_indexes` indicator is deprecated as of xclim v0.37.18-beta. This indicator "
+        "has been renamed to `cffwis_indices` to better support international collaboration. "
+        "The `fire_weather_indexes` alias will be removed in xclim v0.39. "
+        "See the xclim release notes for more information.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
     return FireWeather(
         identifier="fire",
         realm="atmos",
-        var_name=["dc", "dmc", "ffmc", "isi", "bui", "fire"],
+        var_name=["dc", "dmc", "ffmc", "isi", "bui", "fwi"],
         standard_name=[
             "drought_code",
             "duff_moisture_code",
@@ -332,20 +336,20 @@ def fire_weather_indexes(*args, **kwargs):
         units="",
         compute=indices.cffwis_indices,
         missing="skip",
-        )(*args, **kwargs)
+    )(*args, **kwargs)
 
 
 cffwis_indices = FireWeather(
-    identifier="fire",
+    identifier="cffwis",
     realm="atmos",
-    var_name=["dc", "dmc", "ffmc", "isi", "bui", "fire"],
+    var_name=["dc", "dmc", "ffmc", "isi", "bui", "fwi"],
     standard_name=[
         "drought_code",
         "duff_moisture_code",
         "fine_fuel_moisture_code",
         "initial_spread_index",
         "buildup_index",
-        "cffw_index",
+        "fire_weather_index",
     ],
     long_name=[
         "Drought Code",
