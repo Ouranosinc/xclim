@@ -1,5 +1,6 @@
 # noqa: D205,D400
 """
+# TODO: Remove default values from
 Run length algorithms submodule
 ===============================
 
@@ -17,7 +18,7 @@ import xarray as xr
 from numba import njit
 from xarray.core.utils import get_temp_dimname
 
-from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
+from xclim.core.options import OPTIONS, RESAMPLE_BEFORE_RL, RUN_LENGTH_UFUNC
 from xclim.core.utils import DateStr, DayOfYearStr, uses_dask
 
 npts_opt = 9000
@@ -32,6 +33,7 @@ def use_ufunc(
     da: xr.DataArray,
     dim: str = "time",
     index: str = "first",
+    freq: str | None = None,
 ) -> bool:
     """Return whether the ufunc version of run length algorithms should be used with this DataArray or not.
 
@@ -57,13 +59,62 @@ def use_ufunc(
       If ufunc_1dim is "auto", returns True if the array is on dask or too large.
       Otherwise, returns ufunc_1dim.
     """
+    if ufunc_1dim is False and freq is not None:
+        raise ValueError(
+            "Resampling after run length operations is not implemented for 1d method"
+        )
+
     if ufunc_1dim == "from_context":
         ufunc_1dim = OPTIONS[RUN_LENGTH_UFUNC]
 
     if ufunc_1dim == "auto":
         ufunc_1dim = not uses_dask(da) and (da.size // da[dim].size) < npts_opt
+    # If resampling after run length is set up for the computation, the 1d method is not implemented
+    # Unless ufunc_1dim is specifically set to False (in which case we flag an error above),
+    # we simply forbid this possibility.
+    return (index == "first") and (ufunc_1dim) and (freq is None)
 
-    return index == "first" and ufunc_1dim
+
+def resample_and_rl(
+    da: xr.DataArray,
+    resample_before_rl: str | bool,
+    compute,
+    dim: str = "time",
+    freq: str | None = None,
+    **kwargs,
+) -> xr.DataArray | xr.Dataset:
+    """Wrap run length algorithms to control if resampling occurs before or after the algorithms.
+
+    If resample_before_rl is 'from_context', the parameter is read from xclim's global (or context) options.
+
+    Parameters
+    ----------
+    da: xr.DataArray
+      N-dimensional array (boolean).
+    resample_before_rl : {"from_context", True, False}
+      Determines whether if input arrays of runs `da` should be separated in period before
+      or after the run length algorithms are applied
+    compute
+      Run length function to apply
+    dim: str
+      The dimension along which to find runs.
+    freq : str
+      Resampling frequency.
+    kwargs
+      Keyword arguments needed for compute
+
+    Returns
+    -------
+    xr.DataArray
+      Output of compute resampled according to frequency {freq}.
+    """
+    if resample_before_rl == "from_context":
+        resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
+    if resample_before_rl:
+        out = da.resample({dim: freq}).map(compute, dim=dim, **kwargs)
+    else:
+        out = compute(da, dim=dim, freq=freq, **kwargs)
+    return out
 
 
 def _cumsum_reset_on_zero(
@@ -140,7 +191,7 @@ def rle(
 
 def rle_statistics(
     da: xr.DataArray,
-    reducer: str = "max",
+    reducer: str,
     window: int = 1,
     dim: str = "time",
     freq: str | None = None,
@@ -178,12 +229,7 @@ def rle_statistics(
     """
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
     if ufunc_1dim:
-        if freq is not None:
-            raise ValueError(
-                "Resampling after run length operations is not implemented for 1d method"
-            )
-        else:
-            rl_stat = statistics_run_ufunc(da, reducer, window, dim)
+        rl_stat = statistics_run_ufunc(da, reducer, window, dim)
     else:
         d = rle(da, dim=dim, index=index)
 
@@ -238,7 +284,7 @@ def longest_run(
 
 def windowed_run_events(
     da: xr.DataArray,
-    window: int,
+    window: int = 1,
     dim: str = "time",
     ufunc_1dim: str | bool = "from_context",
     index: str = "first",
@@ -274,16 +320,13 @@ def windowed_run_events(
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
 
     if ufunc_1dim:
-        if freq is not None:
-            raise ValueError(
-                "Resampling after run length operations is not implemented for 1d method"
-            )
-        else:
-            out = windowed_run_events_ufunc(da, window, dim)
+        out = windowed_run_events_ufunc(da, window, dim)
 
     else:
         if window == 1:
-            d = xr.where(da.shift({dim: 1}, fill_value=0) == 0, 1, 0)
+            shift = 1 * (index == "first") + -1 * (index == "last")
+            d = xr.where(da.shift({dim: shift}, fill_value=0) == 0, 1, 0)
+            d = d.where(da == 1, 0)
         else:
             d = rle(da, dim=dim, index=index)
             d = xr.where(d >= window, 1, 0)
@@ -296,7 +339,7 @@ def windowed_run_events(
 
 def windowed_run_count(
     da: xr.DataArray,
-    window: int,
+    window: int = 1,
     dim: str = "time",
     freq: str | None = None,
     ufunc_1dim: str | bool = "from_context",
@@ -332,12 +375,7 @@ def windowed_run_count(
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
 
     if ufunc_1dim:
-        if freq is not None:
-            raise ValueError(
-                "Resampling after run length operations is not implemented for 1d method"
-            )
-        else:
-            out = windowed_run_count_ufunc(da, window, dim)
+        out = windowed_run_count_ufunc(da, window, dim)
 
     elif window == 1 and freq is None:
         out = da.sum(dim=dim)
@@ -354,7 +392,7 @@ def windowed_run_count(
 
 def first_run(
     da: xr.DataArray,
-    window: int,
+    window: int = 1,
     dim: str = "time",
     freq: str | None = None,
     coord: str | bool | None = False,
@@ -421,13 +459,8 @@ def first_run(
             out = coord_transform(out, da)
 
     elif ufunc_1dim:
-        if freq is not None:
-            raise ValueError(
-                "Resampling after run length operations is not implemented for 1d method"
-            )
-        else:
-            out = first_run_ufunc(x=da, window=window, dim=dim)
-            out = coord_transform(out, da)
+        out = first_run_ufunc(x=da, window=window, dim=dim)
+        out = coord_transform(out, da)
 
     else:
         d = rle(da, dim=dim, index="first")
@@ -442,7 +475,7 @@ def first_run(
 
 def last_run(
     da: xr.DataArray,
-    window: int,
+    window: int = 1,
     dim: str = "time",
     freq: str | None = None,
     coord: str | bool | None = False,
@@ -598,7 +631,7 @@ def keep_longest_run(
 
 def season(
     da: xr.DataArray,
-    window: int,
+    window: int = 1,
     date: DayOfYearStr | None = None,
     dim: str = "time",
     coord: str | bool | None = False,
@@ -717,7 +750,7 @@ def season(
 
 def season_length(
     da: xr.DataArray,
-    window: int,
+    window: int = 1,
     date: DayOfYearStr | None = None,
     dim: str = "time",
 ) -> xr.DataArray:
@@ -760,7 +793,7 @@ def season_length(
 
 def run_end_after_date(
     da: xr.DataArray,
-    window: int,
+    window: int = 1,
     date: DayOfYearStr = "07-01",
     dim: str = "time",
     coord: bool | str | None = "dayofyear",
@@ -815,7 +848,7 @@ def run_end_after_date(
 
 def first_run_after_date(
     da: xr.DataArray,
-    window: int,
+    window: int = 1,
     date: DayOfYearStr | None = "07-01",
     dim: str = "time",
     coord: bool | str | None = "dayofyear",
@@ -857,7 +890,7 @@ def first_run_after_date(
 
 def last_run_before_date(
     da: xr.DataArray,
-    window: int,
+    window: int = 1,
     date: DayOfYearStr = "07-01",
     dim: str = "time",
     coord: bool | str | None = "dayofyear",
@@ -964,7 +997,7 @@ def first_run_1d(arr: Sequence[int | float], window: int) -> int | np.nan:
     return ind
 
 
-def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int = 1) -> int:
+def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int) -> int:
     """Return statistics on lengths of run of identical values.
 
     Parameters
@@ -1091,7 +1124,7 @@ def windowed_run_events_ufunc(
 def statistics_run_ufunc(
     x: xr.DataArray | Sequence[bool],
     reducer: str,
-    window: int = 1,
+    window: int,
     dim: str = "time",
 ) -> xr.DataArray:
     """Dask-parallel version of statistics_run_1d, ie: the {reducer} number of consecutive true values in array.

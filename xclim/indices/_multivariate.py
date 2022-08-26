@@ -88,7 +88,7 @@ def cold_spell_duration_index(
       Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
       Resampling frequency.
-    resample_before_rl : bool
+    resample_before_rl : {"from_context", True, False}
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
     bootstrap : bool
@@ -137,17 +137,13 @@ def cold_spell_duration_index(
     thresh = resample_doy(tasmin_per, tasmin)
 
     below = tasmin < thresh
-
-    if resample_before_rl == "from_context":
-        resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
-    if resample_before_rl:
-        out = below.resample(time=freq).map(
-            rl.windowed_run_count, window=window, dim="time"
-        )
-    else:
-        out = rl.windowed_run_count(
-            below, window=window, dim="time", freq=freq, ufunc_1dim=False
-        )
+    out = rl.resample_and_rl(
+        below,
+        resample_before_rl,
+        rl.windowed_run_count,
+        window=window,
+        freq=freq,
+    )
 
     return to_agg_units(out, tasmin, "count")
 
@@ -517,7 +513,7 @@ def multiday_temperature_swing(
       The statistical operation to use when reducing the list of spell lengths.
     freq : str
       Resampling frequency.
-    resample_before_rl : bool
+    resample_before_rl : {"from_context", True, False}
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
 
@@ -542,27 +538,23 @@ def multiday_temperature_swing(
     freeze_threshold = convert_units_to(thresh_tasmin, tasmin)
 
     ft = (tasmin <= freeze_threshold) * (tasmax > thaw_threshold)
-    if resample_before_rl == "from_context":
-        resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
     if op == "count":
-
-        if resample_before_rl:
-            out = ft.resample(time=freq).map(
-                rl.windowed_run_events, window=window, dim="time"
-            )
-        else:
-            out = rl.windowed_run_events(
-                ft, window=window, dim="time", freq=freq, ufunc_1dim=False
-            )
+        out = rl.resample_and_rl(
+            ft,
+            resample_before_rl,
+            rl.windowed_run_events,
+            window=window,
+            freq=freq,
+        )
     else:
-        if resample_before_rl:
-            out = ft.resample(time=freq).map(
-                rl.rle_statistics, reducer=op, window=window, dim="time"
-            )
-        else:
-            out = rl.rle_statistics(
-                ft, reducer=op, window=window, dim="time", freq=freq, ufunc_1dim=False
-            )
+        out = rl.resample_and_rl(
+            ft,
+            resample_before_rl,
+            rl.rle_statistics,
+            op,
+            window=window,
+            freq=freq,
+        )
 
     return to_agg_units(out, tasmin, "count")
 
@@ -727,7 +719,7 @@ def heat_wave_frequency(
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
     freq : str
       Resampling frequency.
-    resample_before_rl : bool
+    resample_before_rl : {"from_context", True, False}
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
 
@@ -753,14 +745,13 @@ def heat_wave_frequency(
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
-    if resample_before_rl == "from_context":
-        resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
-    if resample_before_rl:
-        out = cond.resample(time=freq).map(rl.windowed_run_events, window=window)
-    else:
-        out = rl.windowed_run_events(
-            cond, window=window, dim="time", freq=freq, ufunc_1dim=False
-        )
+    out = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.windowed_run_events,
+        window=window,
+        freq=freq,
+    )
     out.attrs["units"] = ""
     return out
 
@@ -801,7 +792,7 @@ def heat_wave_max_length(
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
     freq : str
       Resampling frequency.
-    resample_before_rl : bool
+    resample_before_rl : {"from_context", True, False}
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
 
@@ -827,12 +818,13 @@ def heat_wave_max_length(
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
-    if resample_before_rl == "from_context":
-        resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
-    if resample_before_rl:
-        max_l = cond.resample(time=freq).map(rl.longest_run, dim="time")
-    else:
-        max_l = rl.longest_run(cond, dim="time", freq=freq, ufunc_1dim=False)
+    max_l = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.longest_run,
+        freq=freq,
+    )
+    # TODO: Should this step be integrated as an option in longest_run?
     out = max_l.where(max_l >= window, 0)
     return to_agg_units(out, tasmax, "count")
 
@@ -872,7 +864,7 @@ def heat_wave_total_length(
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
     freq : str
       Resampling frequency.
-    resample_before_rl : bool
+    resample_before_rl : {"from_context", True, False}
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
 
@@ -889,14 +881,13 @@ def heat_wave_total_length(
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
 
     cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
-    if resample_before_rl == "from_context":
-        resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
-    if resample_before_rl:
-        out = cond.resample(time=freq).map(rl.windowed_run_count, window=window)
-    else:
-        out = rl.windowed_run_count(
-            cond, window=window, dim="time", freq=freq, ufunc_1dim=False
-        )
+    out = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.windowed_run_count,
+        window=window,
+        freq=freq,
+    )
     return to_agg_units(out, tasmin, "count")
 
 
@@ -1670,7 +1661,7 @@ def warm_spell_duration_index(
       Minimum number of days with temperature above threshold to qualify as a warm spell.
     freq : str
       Resampling frequency.
-    resample_before_rl : bool
+    resample_before_rl : {"from_context", True, False}
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
     bootstrap : bool
@@ -1708,17 +1699,13 @@ def warm_spell_duration_index(
     thresh = resample_doy(thresh, tasmax)
 
     above = tasmax > thresh
-
-    if resample_before_rl == "from_context":
-        resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
-    if resample_before_rl:
-        out = above.resample(time=freq).map(
-            rl.windowed_run_count, window=window, dim="time"
-        )
-    else:
-        out = rl.windowed_run_count(
-            above, window=window, dim="time", freq=freq, ufunc_1dim=False
-        )
+    out = rl.resample_and_rl(
+        above,
+        resample_before_rl,
+        rl.windowed_run_count,
+        window=window,
+        freq=freq,
+    )
     return to_agg_units(out, tasmax, "count")
 
 

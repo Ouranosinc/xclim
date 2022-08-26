@@ -141,7 +141,7 @@ def cold_spell_days(
       Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
       Resampling frequency.
-    resample_before_rl : bool
+    resample_before_rl : {"from_context", True, False}
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
 
@@ -164,17 +164,13 @@ def cold_spell_days(
     """
     t = convert_units_to(thresh, tas)
     over = tas < t
-
-    if resample_before_rl == "from_context":
-        resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
-    if resample_before_rl:
-        out = over.resample(time=freq).map(
-            rl.windowed_run_count, window=window, dim="time"
-        )
-    else:
-        out = rl.windowed_run_count(
-            over, window=window, dim="time", freq=freq, ufunc_1dim=False
-        )
+    out = rl.resample_and_rl(
+        over,
+        resample_before_rl,
+        rl.windowed_run_count,
+        window=window,
+        freq=freq,
+    )
     return to_agg_units(out, tas, "count")
 
 
@@ -201,7 +197,7 @@ def cold_spell_frequency(
       Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
       Resampling frequency.
-    resample_before_rl : bool
+    resample_before_rl : {"from_context", True, False}
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
 
@@ -213,15 +209,13 @@ def cold_spell_frequency(
     """
     t = convert_units_to(thresh, tas)
     over = tas < t
-
-    if resample_before_rl == "from_context":
-        resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
-    if resample_before_rl:
-        over.resample(time=freq).map(rl.windowed_run_events, window=window, dim="time")
-    else:
-        out = rl.windowed_run_events(
-            over, window=window, dim="time", freq=freq, ufunc_1dim=False
-        )
+    out = rl.resample_and_rl(
+        over,
+        resample_before_rl,
+        rl.windowed_run_events,
+        window=window,
+        freq=freq,
+    )
     out.attrs["units"] = ""
     return out
 
@@ -439,7 +433,7 @@ def maximum_consecutive_wet_days(
       Threshold precipitation on which to base evaluation.
     freq : str
       Resampling frequency.
-    resample_before_rl : bool
+    resample_before_rl : {"from_context", True, False}
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
 
@@ -464,13 +458,12 @@ def maximum_consecutive_wet_days(
     thresh = convert_units_to(thresh, pr, "hydro")
 
     cond = pr > thresh
-
-    if resample_before_rl == "from_context":
-        resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
-    if resample_before_rl:
-        out = cond.resample(time=freq).map(rl.longest_run, dim="time")
-    else:
-        out = rl.longest_run(cond, dim="time", freq=freq, ufunc_1dim=False)
+    out = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.longest_run,
+        freq=freq,
+    )
     out = to_agg_units(out, pr, "count")
     return out
 
@@ -538,7 +531,7 @@ def freshet_start(
       Minimum number of days with temperature above threshold needed for evaluation.
     freq : str
       Resampling frequency.
-    resample_before_rl : bool
+    resample_before_rl : {"from_context", True, False}
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
 
@@ -562,17 +555,13 @@ def freshet_start(
     """
     thresh = convert_units_to(thresh, tas)
     over = tas > thresh
-
-    if resample_before_rl == "from_context":
-        resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
-    if resample_before_rl:
-        out = over.resample(time=freq).map(
-            rl.first_run, window=window, coord="dayofyear"
-        )
-    else:
-        out = rl.first_run(
-            over, window=window, freq=freq, coord="dayofyear", ufunc_1dim=False
-        )
+    out = rl.resample_and_rl(
+        over,
+        resample_before_rl,
+        rl.first_run,
+        window=window,
+        freq=freq,
+    )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
     return out
 

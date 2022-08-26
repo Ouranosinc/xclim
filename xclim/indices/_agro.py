@@ -850,7 +850,7 @@ def dry_spell_frequency(
       Minimum length of the spells.
     freq : str
       Resampling frequency.
-    resample_before_rl : bool
+    resample_before_rl : str | bool
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
     op: {"sum","max"}
@@ -876,19 +876,14 @@ def dry_spell_frequency(
 
     agg_pr = getattr(pram.rolling(time=window, center=True), op)()
     cond = agg_pr < thresh
-
-    if resample_before_rl == "from_context":
-        resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
-    if resample_before_rl:
-        out = (
-            (agg_pr < thresh)
-            .resample(time=freq)
-            .map(rl.windowed_run_events, window=1, dim="time")
-        )
-    else:
-        out = rl.windowed_run_events(
-            cond, window=window, dim="time", freq=freq, ufunc_1dim=False
-        )
+    win = 1
+    out = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.windowed_run_events,
+        win,
+        freq=freq,
+    )
 
     out.attrs["units"] = ""
     return out
@@ -901,6 +896,7 @@ def dry_spell_total_length(
     window: int = 3,
     op: str = "sum",
     freq: str = "YS",
+    resample_before_rl: str | bool = "from_context",
     **indexer,
 ) -> xarray.DataArray:
     """Total length of dry spells.
@@ -947,7 +943,16 @@ def dry_spell_total_length(
     dry = (mask.rolling(time=window).sum() >= 1).shift(time=-(window - 1))
     dry = dry.isel(time=slice(0, pram.time.size)).astype(float)
 
-    out = select_time(dry, **indexer).resample(time=freq).sum("time")
+    dry = select_time(dry, **indexer)
+
+    win = 1
+    out = rl.resample_and_rl(
+        dry,
+        resample_before_rl,
+        rl.windowed_run_count,
+        win,
+        freq=freq,
+    )
     return to_agg_units(out, pram, "count")
 
 
