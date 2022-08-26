@@ -294,49 +294,39 @@ drought_code = FireWeather(
 )
 
 
-def fire_weather_indexes(*args, **kwargs):  # noqa: D103
-
-    warnings.warn(
-        "`fire_weather_indexes` indicator is deprecated as of xclim v0.37.18-beta. This indicator "
-        "has been renamed to `cffwis_indices` to better support international collaboration. "
-        "The `fire_weather_indexes` alias will be removed in xclim v0.39. "
-        "See the xclim release notes for more information.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-
-    return FireWeather(
-        identifier="fire",
-        realm="atmos",
-        var_name=["dc", "dmc", "ffmc", "isi", "bui", "fwi"],
-        standard_name=[
-            "drought_code",
-            "duff_moisture_code",
-            "fine_fuel_moisture_code",
-            "initial_spread_index",
-            "buildup_index",
-            "fire_weather_index",
-        ],
-        long_name=[
-            "Drought Code",
-            "Duff Moisture Code",
-            "Fine Fuel Moisture Code",
-            "Initial Spread Index",
-            "Buildup Index",
-            "Fire Weather Index",
-        ],
-        description=[
-            "Numeric rating of the average moisture content of deep, compact organic layers.",
-            "Numeric rating of the average moisture content of loosely compacted organic layers of moderate depth.",
-            "Numeric rating of the average moisture content of litter and other cured fine fuels.",
-            "Numeric rating of the expected rate of fire spread.",
-            "Numeric rating of the total amount of fuel available for combustion.",
-            "Numeric rating of fire intensity.",
-        ],
-        units="",
-        compute=indices.cffwis_indices,
-        missing="skip",
-    )(*args, **kwargs)
+fire_weather_indexes = FireWeather(
+    identifier="fwi",
+    realm="atmos",
+    var_name=["dc", "dmc", "ffmc", "isi", "bui", "fwi"],
+    standard_name=[
+        "drought_code",
+        "duff_moisture_code",
+        "fine_fuel_moisture_code",
+        "initial_spread_index",
+        "buildup_index",
+        "fire_weather_index",
+    ],
+    long_name=[
+        "Drought Code",
+        "Duff Moisture Code",
+        "Fine Fuel Moisture Code",
+        "Initial Spread Index",
+        "Buildup Index",
+        "Fire Weather Index",
+    ],
+    description=[
+        "Numeric rating of the average moisture content of deep, compact organic layers.",
+        "Numeric rating of the average moisture content of loosely compacted organic layers of moderate depth.",
+        "Numeric rating of the average moisture content of litter and other cured fine fuels.",
+        "Numeric rating of the expected rate of fire spread.",
+        "Numeric rating of the total amount of fuel available for combustion.",
+        "Numeric rating of fire intensity.",
+    ],
+    units="",
+    compute=indices.cffwis_indices,
+    missing="skip",
+    _version_deprecated="0.38.0",
+)
 
 
 cffwis_indices = FireWeather(
