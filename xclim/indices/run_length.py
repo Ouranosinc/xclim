@@ -20,9 +20,11 @@ from xarray.core.utils import get_temp_dimname
 from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
 from xclim.core.utils import DateStr, DayOfYearStr, uses_dask
 
-# Arrays with less than this number of data points per slice will trigger
-# the use of the ufunc version of run lengths algorithms.
 npts_opt = 9000
+"""
+Arrays with less than this number of data points per slice will trigger
+the use of the ufunc version of run lengths algorithms.
+"""
 
 
 def use_ufunc(
