@@ -19,7 +19,7 @@ from xclim.core.units import (
 
 from . import run_length as rl
 from ._conversion import rain_approximation, snowfall_approximation
-from .generic import compare, compare_arrays, select_resample_op, threshold_count
+from .generic import compare, select_resample_op, threshold_count
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -132,7 +132,7 @@ def cold_spell_duration_index(
     # Create time series out of doy values.
     thresh = resample_doy(tasmin_per, tasmin)
 
-    below = compare_arrays(tasmin, op, thresh, constrain=("<", "<="))
+    below = compare(tasmin, op, thresh, constrain=("<", "<="))
 
     out = below.resample(time=freq).map(
         rl.windowed_run_count, window=window, dim="time"
@@ -1152,11 +1152,7 @@ def fraction_over_precip_thresh(
     )
 
     # Compute the days when precip is both over the wet day threshold and the percentile threshold.
-    over = (
-        pr.where(compare_arrays(pr, op, tp, constrain))
-        .resample(time=freq)
-        .sum(dim="time")
-    )
+    over = pr.where(compare(pr, op, tp, constrain)).resample(time=freq).sum(dim="time")
 
     out = over / total
     out.attrs["units"] = ""
@@ -1641,7 +1637,7 @@ def warm_spell_duration_index(
     # Create time series out of doy values.
     thresh = resample_doy(thresh, tasmax)
 
-    above = compare_arrays(tasmax, op, thresh, constrain=(">", ">="))
+    above = compare(tasmax, op, thresh, constrain=(">", ">="))
 
     out = above.resample(time=freq).map(
         rl.windowed_run_count, window=window, dim="time"

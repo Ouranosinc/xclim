@@ -35,7 +35,6 @@ from . import run_length as rl
 __all__ = [
     "aggregate_between_dates",
     "compare",
-    "compare_arrays",
     "count_level_crossings",
     "count_occurrences",
     "default_freq",
@@ -164,21 +163,21 @@ def get_op(op: str, constrain: Sequence[str] | None = None) -> Callable:
 
 
 def compare(
-    da: xr.DataArray,
+    left: xr.DataArray,
     op: str,
-    threshold: float | int,
+    right: float | int | np.ndarray | xr.DataArray,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
     """Compare a dataArray to a threshold using given operator.
 
     Parameters
     ----------
-    da : xr.DataArray
-      Input data.
+    left : xr.DataArray
+      A DatArray being evaluated against `right`.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
       Logical operator. e.g. arr > thresh.
-    threshold : Union[float, int]
-      Threshold value.
+    right : float, int, np.ndarray, or xr.DataArray
+      A value or array-like being evaluated against left`.
     constrain : sequence of str, optional
       Optionally allowed conditions.
 
@@ -187,7 +186,7 @@ def compare(
     xr.DataArray
         Boolean mask of the comparison.
     """
-    return get_op(op, constrain)(da, threshold)
+    return get_op(op, constrain)(left, right)
 
 
 def threshold_count(
@@ -548,29 +547,6 @@ def statistics(data: xr.DataArray, reducer: str, freq: str) -> xr.DataArray:
     out = getattr(data.resample(time=freq), reducer)()
     out.attrs["units"] = data.attrs["units"]
     return out
-
-
-def compare_arrays(
-    left: xr.DataArray, op: str, right: xr.DataArray, constrain: Sequence[str] | None
-) -> xr.DataArray:
-    """Compare two variables using a binary logical operation.
-
-    Parameters
-    ----------
-    left : xr.DataArray
-      A DatArray being evaluated against `right`.
-    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-      Logical operator. e.g. array1 > array2.
-    right : xr.DataArray
-      A DatArray being evaluated against left`.
-    constrain : sequence of str, optional
-      Optionally allowed conditions.
-
-    Returns
-    -------
-    xr.DataArray
-    """
-    return getattr(left, "_binary_op")(right, get_op(op, constrain))
 
 
 def thresholded_statistics(
