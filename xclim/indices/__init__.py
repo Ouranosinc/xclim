@@ -10,7 +10,7 @@ functions perform units checks to make sure that inputs have the expected dimens
 have units of temperature, whether it is celsius, kelvin or fahrenheit), and set the `units`
 attribute of the output DataArray.
 
-The `calendar`, `fwi`, `generic`, `helpers`, `run_length` and `stats` submodules provide
+The `calendar`, `fire`, `generic`, `helpers`, `run_length` and `stats` submodules provide
 helpers to simplify the implementation of the indices.
 
 .. note::
@@ -31,12 +31,15 @@ from ._multivariate import *
 from ._simple import *
 from ._synoptic import *
 from ._threshold import *
-from .ffdi import (
+from .fire import (
     Griffiths_drought_factor,
     Keetch_Byram_drought_index,
     McArthur_forest_fire_danger_index,
+    cffwis_indices,
+    drought_code,
+    fire_season,
+    fire_weather_indexes,
 )
-from .fwi import drought_code, fire_season, fire_weather_indexes
 
 """
 Notes for docstring

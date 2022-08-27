@@ -355,6 +355,7 @@ class Indicator(IndicatorRegistrar):
     keywords = ""
     references = ""
     notes = ""
+    _version_deprecated = ""
 
     _all_parameters: Mapping[str, Parameter] = {}
     """A dictionary mapping metadata about the input parameters to the indicator.
@@ -441,8 +442,8 @@ class Indicator(IndicatorRegistrar):
         # All updates done.
         kwds["_all_parameters"] = parameters
 
-        # Parse kwds to organize `cf_attrs`
-        # And before converting callables to staticmethods
+        # Parse keywords to organize `cf_attrs`
+        # And before converting callables to static methods
         kwds["cf_attrs"] = cls._parse_output_attrs(kwds, identifier)
 
         # Convert function objects to static methods.
@@ -471,7 +472,7 @@ class Indicator(IndicatorRegistrar):
             new.__module__ = f"xclim.indicators.{kwds['module']}"
         else:
             # If the module was not forced, set the module to the base class' module.
-            # Otherwise all indicators will have module `xclim.core.indicator`.
+            # Otherwise, all indicators will have module `xclim.core.indicator`.
             new.__module__ = cls.__module__
 
         #  Add the created class to the registry
@@ -497,7 +498,8 @@ class Indicator(IndicatorRegistrar):
             params_dict.setdefault(name, {})["units"] = unit
 
         compute_sig = signature(compute)
-        # Check that the `Parameters` section of the docstring does not include parameters that are not in the `compute` function signature.
+        # Check that the `Parameters` section of the docstring does not include parameters
+        # that are not in the `compute` function signature.
         if not set(params_dict.keys()).issubset(compute_sig.parameters.keys()):
             raise ValueError(
                 f"Malformed docstring on {compute} : the parameters "
@@ -507,7 +509,8 @@ class Indicator(IndicatorRegistrar):
         for name, param in compute_sig.parameters.items():
             meta = params_dict.setdefault(name, {})
             meta["default"] = param.default
-            # Units read from compute.in_units or units passed explicitly, will be added to "meta" elsewhere in the __new__.
+            # Units read from compute.in_units or units passed explicitly,
+            # will be added to "meta" elsewhere in the __new__.
             passed_meta = passed_parameters.get(name, {})
             has_units = ("units" in meta) or (
                 isinstance(passed_meta, dict) and "units" in passed_meta
@@ -636,7 +639,7 @@ class Indicator(IndicatorRegistrar):
                     n_outs = len(arg)
 
             # Populate new cf_attrs from parsing cf_names passed directly.
-            cf_attrs = [{} for i in range(n_outs)]
+            cf_attrs = [{} for _ in range(n_outs)]
             for name in cls._cf_names:
                 values = kwds.pop(name, None)
                 if values is None:  # None passed, skip
@@ -649,11 +652,11 @@ class Indicator(IndicatorRegistrar):
                         f"Attribute {name} has {len(values)} elements but should xclim expected {n_outs}."
                     )
                 for attrs, value in zip(cf_attrs, values):
-                    if value:  # Skip the empty ones (None or '')
+                    if value:  # Skip the empty ones (None or "")
                         attrs[name] = value
         # else we assume a list of dicts
 
-        # For single output, var_name defauls to identifer.
+        # For single output, var_name defaults to identifier.
         if len(cf_attrs) == 1 and "var_name" not in cf_attrs[0]:
             cf_attrs[0]["var_name"] = identifier
 
@@ -792,6 +795,10 @@ class Indicator(IndicatorRegistrar):
         # Put the variables in `das`, parse them according to the following annotations:
         #     das : OrderedDict of variables (required + non-None optionals)
         #     params : OrderedDict of parameters (var_kwargs as a single argument, if any)
+
+        if self._version_deprecated:
+            self._show_deprecation_warning()  # noqa
+
         das, params = self._parse_variables_from_call(args, kwds)
 
         if OPTIONS[KEEP_ATTRS] is True or (
@@ -1304,6 +1311,14 @@ class Indicator(IndicatorRegistrar):
             for name, param in self._all_parameters.items()
             if param.injected
         }
+
+    def _show_deprecation_warning(self):
+        warnings.warn(
+            f"`{self.title}` is deprecated as of xclim v{self._version_deprecated}. "
+            f"See the xclim release notes for more information.",
+            DeprecationWarning,
+            stacklevel=3,
+        )
 
 
 class ResamplingIndicator(Indicator):
