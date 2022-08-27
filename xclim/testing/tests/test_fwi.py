@@ -8,6 +8,7 @@ from xclim import atmos
 from xclim.core.options import set_options
 from xclim.core.units import convert_units_to
 from xclim.indices.fire import (
+    Griffiths_drought_factor,
     Keetch_Byram_drought_index,
     _day_length,
     _day_length_factor,
@@ -557,4 +558,61 @@ def test_keetch_byram_drought_index():
     )
 
     kbdi_final = Keetch_Byram_drought_index(pr, tasmax, pr_annual, kbdi0).isel(time=-1)
-    np.testing.assert_allclose(kbdi_final, exp, rtol=1e-6)
+    np.testing.assert_allclose(kbdi_final, exp, atol=1e-5)
+
+
+def test_griffiths_drought_factor():
+    """Compare output for a single window to calculation by hand for a few cases"""
+    # Check DF for series that don't need limiting
+    pr = xr.DataArray(
+        [
+            17 * [0] + [5, 10, 20],
+            [0, 10, 5, 0, 0, 50, 100, 0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 1, 3, 1],
+            [0, 300, 5, 0, 0, 50, 100, 0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 1, 3, 1],
+            [0, 10, 5, 0, 0, 5, 10, 0, 0, 20, 0, 0, 0, 20, 0, 0, 0, 5, 4, 3],
+        ],
+        dims=("dim0", "time"),
+        attrs={"units": "mm"},
+    )
+    smd = xr.DataArray(
+        2 * [20 * [10]] + 2 * [20 * [30]],
+        dims=("dim0", "time"),
+    )
+
+    exp = xr.DataArray(
+        [0.40471, 3.91578, 3.76635, 6.59186],
+        dims=("dim0"),
+    )
+
+    df = Griffiths_drought_factor(pr, smd, "xlim").squeeze()
+    np.testing.assert_allclose(df, exp, atol=1e-5)
+
+    # Check the different limiting functions
+    pr = xr.DataArray(
+        [
+            [20, 10, 5] + 17 * [0],
+            [0, 30, 5, 0, 0, 5, 10, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 3, 1],
+        ],
+        dims=("dim0", "time"),
+        attrs={"units": "mm"},
+    )
+    smd = xr.DataArray(
+        [20 * [10], 20 * [30]],
+        dims=("dim0", "time"),
+    )
+
+    # limiting_func = "xlim"
+    exp = xr.DataArray(
+        [6.13148, 6.82454],
+        dims=("dim0"),
+    )
+    df = Griffiths_drought_factor(pr, smd, "xlim").squeeze()
+    np.testing.assert_allclose(df, exp, atol=1e-5)
+
+    # limiting_func = "discrete"
+    exp = xr.DataArray(
+        [6, 7],
+        dims=("dim0"),
+    )
+    df = Griffiths_drought_factor(pr, smd, "discrete").squeeze()
+    np.testing.assert_allclose(df, exp, atol=1e-5)
