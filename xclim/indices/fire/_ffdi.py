@@ -50,7 +50,7 @@ def _Keetch_Byram_drought_index(p, t, pa, kbdi0, kbdi: float):  # pragma: no cov
         Total rainfall over previous 24 hours [mm].
     t : array_like
         Maximum temperature near the surface over previous 24 hours [C].
-    pa : array_like
+    pa : float
         Mean annual accumulated rainfall.
     kbdi0 : float
         Previous value of the Keetch-Byram drought index used to initialise the KBDI calculation.
@@ -196,10 +196,9 @@ def _Griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
 
 
 def _Keetch_Byram_drought_index_pass(pr, tasmax, pr_annual, kbdi0):
-    """Pass inputs on to guvectorized function `_Keetch_Byram_drought_index`."""
-    # This function is actually only required as xr.apply_ufunc will not allow
-    # `func=_Keetch_Byram_drought_index` since this is guvectorized and has the
-    # output in its function signature
+    """Pass inputs on to guvectorized function `_Keetch_Byram_drought_index`. DO NOT CALL DIRECTLY, use `Keetch_Byram_drought_index` instead."""
+    # This function is actually only required as xr.apply_ufunc will not receive
+    # a guvectorized function which has the output(s) in its function signature
     return _Keetch_Byram_drought_index(pr, tasmax, pr_annual, kbdi0)
 
 
@@ -266,10 +265,9 @@ def Keetch_Byram_drought_index(
 
 
 def _Griffiths_drought_factor_pass(pr, smd, lim):
-    """Pass inputs on to guvectorized function `_Griffiths_drought_factor`."""
-    # This function is actually only required as xr.apply_ufunc will not allow
-    # `func=_Griffiths_drought_factor` since this is guvectorized and has the
-    # output in its function signature
+    """Pass inputs on to guvectorized function `_Griffiths_drought_factor`. DO NOT CALL DIRECTLY, use `Griffiths_drought_factor` instead."""
+    # This function is actually only required as xr.apply_ufunc will not receive
+    # a guvectorized function which has the output(s) in its function signature
     return _Griffiths_drought_factor(pr, smd, lim)
 
 

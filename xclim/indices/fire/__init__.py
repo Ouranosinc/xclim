@@ -41,9 +41,9 @@ def fire_weather_indexes(
     **params,
 ):
     warnings.warn(
-        f"`fire_weather_indexes` is deprecated in xclim v0.37.18-beta and has been renamed to `cffwis_indices` "
-        f"to better support international collaboration. The `fire_weather_indexes` alias will be removed "
-        f"in xclim v0.39.\n"
+        "`fire_weather_indexes` is deprecated in xclim v0.37.18-beta and has been renamed to `cffwis_indices` "
+        "to better support international collaboration. The `fire_weather_indexes` alias will be removed "
+        "in xclim v0.39.\n"
         "Please take note that xclim now offers a dedicated `fire` submodule under `xclim.indices` that houses all "
         "fire-based indices.",
         DeprecationWarning,

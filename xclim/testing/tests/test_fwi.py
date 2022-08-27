@@ -8,6 +8,7 @@ from xclim import atmos
 from xclim.core.options import set_options
 from xclim.core.units import convert_units_to
 from xclim.indices.fire import (
+    Keetch_Byram_drought_index,
     _day_length,
     _day_length_factor,
     _drought_code,
@@ -502,3 +503,65 @@ def test_deprecated_gfwed_and_indicators():
 
     for exp, out in zip([ds2.DC, ds2.DMC, ds2.FFMC, ds2.ISI, ds2.BUI, ds2.FWI], outs):
         np.testing.assert_allclose(out, exp, rtol=0.03)
+
+
+@pytest.mark.parametrize(
+    "p,t,exp",
+    [
+        (10 * [100], 10 * [0], 0.0),
+        (10 * [0], 10 * [100], 203.2),
+        (10 * [0], [20, 30, 20, 30, 30, 25, 40, 35, 20, 20], 8.46632),
+        ([10, 0, 0.1, 6, 0, 0, 0.5, 0.3, 0, 1], 10 * [30], 7.25278),
+        (
+            [10, 0, 0.1, 6, 0, 0, 0.5, 0.3, 0, 1],
+            [20, 30, 20, 30, 30, 25, 40, 35, 20, 20],
+            7.10174,
+        ),
+    ],
+)
+def test_keetch_byram_drought_index(p, t, exp):
+    """Compare output to calculation by hand"""
+    pr_annual = 1.0
+    pr = xr.DataArray(p, dims=("time",), attrs={"units": "mm"})
+    tasmax = xr.DataArray(t, dims=("time",), attrs={"units": "degC"})
+
+    kbdi_final = Keetch_Byram_drought_index(pr, tasmax, pr_annual).isel(time=-1).item()
+    np.testing.assert_allclose(kbdi_final, exp, rtol=1e-6)
+
+
+@pytest.mark.parametrize(
+    "kbdi0,exp",
+    [
+        (2 * [10], 2 * [12.18341]),
+        (2 * [203.2], 2 * [197.33375]),
+        ([10, 203.2], [12.18341, 197.33375]),
+    ],
+)
+def test_keetch_byram_drought_index_initialized(kbdi0, exp):
+    """Compare output to calculation by hand for different initializations"""
+    p = [10, 0, 0.1, 6, 0, 0, 0.5, 0.3, 0, 1]
+    t = [20, 30, 20, 30, 30, 25, 40, 35, 20, 20]
+
+    pr = xr.DataArray(
+        len(kbdi0) * [p],
+        dims=(
+            "dim0",
+            "time",
+        ),
+        attrs={"units": "mm"},
+    )
+    tasmax = xr.DataArray(
+        len(kbdi0) * [t],
+        dims=(
+            "dim0",
+            "time",
+        ),
+        attrs={"units": "degC"},
+    )
+    pr_annual = xr.DataArray(len(kbdi0) * [1.0], dims=("dim0"), attrs={"units": "mm"})
+    kbdi_init = xr.DataArray(kbdi0, dims=("dim0"), attrs={"units": "mm"})
+
+    kbdi_final = Keetch_Byram_drought_index(pr, tasmax, pr_annual, kbdi_init).isel(
+        time=-1
+    )
+    np.testing.assert_allclose(kbdi_final, exp, rtol=1e-6)
