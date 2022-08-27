@@ -20,7 +20,6 @@ import numpy as np
 import xarray as xr
 from numba import float64, guvectorize, int64
 
-
 __all__ = [
     "Griffiths_drought_factor",
     "Keetch_Byram_drought_index",
@@ -151,7 +150,7 @@ def _Griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
                 # N = 0 defines a rainfall event since 9am today,
                 # so doesn't apply here, where p is the rainfall
                 # over previous 24 hours.
-                x_ = N ** 1.3 / (N ** 1.3 + P - 2.0)
+                x_ = N**1.3 / (N**1.3 + P - 2.0)
                 x = min(x_, x)
 
                 conseq = 0
@@ -169,8 +168,8 @@ def _Griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
         dfw = (
             10.5
             * (1 - np.exp(-(smd[d] + 30) / 40))
-            * (41 * x ** 2 + x)
-            / (40 * x ** 2 + x + 1)
+            * (41 * x**2 + x)
+            / (40 * x**2 + x + 1)
         )
 
         if lim == 1:
@@ -385,4 +384,4 @@ def McArthur_forest_fire_danger_index(
     # H = convert_units_to(H, "%")
     # V = convert_units_to(V, "km/h")
 
-    return D ** 0.987 * np.exp(0.0338 * T - 0.0345 * H + 0.0234 * V + 0.243147)
+    return D**0.987 * np.exp(0.0338 * T - 0.0345 * H + 0.0234 * V + 0.243147)

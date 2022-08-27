@@ -10,5 +10,5 @@ warnings.warn(
     stacklevel=2,
 )
 
-from .fire._cffwis import *  # noqa
 from .fire import fire_weather_indexes  # noqa
+from .fire._cffwis import *  # noqa

@@ -1,12 +1,14 @@
 # noqa: D205,D400
 from __future__ import annotations
-import xarray as xr
 
 import warnings
 
-from ._ffdi import *
-from ._cffwis import *
+import xarray as xr
+
 from xclim.core.units import declare_units
+
+from ._cffwis import *
+from ._ffdi import *
 
 
 @declare_units(
