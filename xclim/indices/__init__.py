@@ -32,13 +32,13 @@ from ._simple import *
 from ._synoptic import *
 from ._threshold import *
 from .fire import (
-    Griffiths_drought_factor,
-    Keetch_Byram_drought_index,
-    McArthur_forest_fire_danger_index,
     cffwis_indices,
     drought_code,
     fire_season,
     fire_weather_indexes,
+    griffiths_drought_factor,
+    keetch_byram_drought_index,
+    mcarthur_forest_fire_danger_index,
 )
 
 """

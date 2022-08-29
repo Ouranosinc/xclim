@@ -8,9 +8,6 @@ from xclim import atmos
 from xclim.core.options import set_options
 from xclim.core.units import convert_units_to
 from xclim.indices.fire import (
-    Griffiths_drought_factor,
-    Keetch_Byram_drought_index,
-    McArthur_forest_fire_danger_index,
     _day_length,
     _day_length_factor,
     _drought_code,
@@ -22,7 +19,10 @@ from xclim.indices.fire import (
     fire_weather_index,
     fire_weather_indexes,
     fire_weather_ufunc,
+    griffiths_drought_factor,
     initial_spread_index,
+    keetch_byram_drought_index,
+    mcarthur_forest_fire_danger_index,
     overwintering_drought_code,
 )
 from xclim.indices.run_length import run_bounds
@@ -559,7 +559,7 @@ def test_keetch_byram_drought_index():
         dims=("dim0",),
     )
 
-    kbdi_final = Keetch_Byram_drought_index(pr, tasmax, pr_annual, kbdi0).isel(time=-1)
+    kbdi_final = keetch_byram_drought_index(pr, tasmax, pr_annual, kbdi0).isel(time=-1)
     np.testing.assert_allclose(kbdi_final, exp, atol=1e-5)
 
 
@@ -579,7 +579,7 @@ def test_griffiths_drought_factor():
     smd = xr.DataArray(
         2 * [20 * [10]] + 2 * [20 * [30]],
         dims=("dim0", "time"),
-        attrs={"units": "mm/day"}
+        attrs={"units": "mm/day"},
     )
 
     exp = xr.DataArray(
@@ -587,7 +587,7 @@ def test_griffiths_drought_factor():
         dims=("dim0"),
     )
 
-    df = Griffiths_drought_factor(pr, smd, "xlim").squeeze()
+    df = griffiths_drought_factor(pr, smd, "xlim").squeeze()
     np.testing.assert_allclose(df, exp, atol=1e-5)
 
     # Check the different limiting functions
@@ -600,9 +600,7 @@ def test_griffiths_drought_factor():
         attrs={"units": "mm/day"},
     )
     smd = xr.DataArray(
-        [20 * [10], 20 * [30]],
-        dims=("dim0", "time"),
-        attrs={"units": "mm/day"}
+        [20 * [10], 20 * [30]], dims=("dim0", "time"), attrs={"units": "mm/day"}
     )
 
     # limiting_func = "xlim"
@@ -610,7 +608,7 @@ def test_griffiths_drought_factor():
         [6.13148, 6.82454],
         dims=("dim0"),
     )
-    df = Griffiths_drought_factor(pr, smd, "xlim").squeeze()
+    df = griffiths_drought_factor(pr, smd, "xlim").squeeze()
     np.testing.assert_allclose(df, exp, atol=1e-5)
 
     # limiting_func = "discrete"
@@ -618,7 +616,7 @@ def test_griffiths_drought_factor():
         [6, 7],
         dims=("dim0"),
     )
-    df = Griffiths_drought_factor(pr, smd, "discrete").squeeze()
+    df = griffiths_drought_factor(pr, smd, "discrete").squeeze()
     np.testing.assert_allclose(df, exp, atol=1e-5)
 
 
@@ -662,5 +660,5 @@ def test_mcarthur_forest_fire_danger_index():
         ).reshape((5, 2)),
         dims=("time", "dim0"),
     )
-    ffdi = McArthur_forest_fire_danger_index(D, T, H, V)
+    ffdi = mcarthur_forest_fire_danger_index(D, T, H, V)
     np.testing.assert_allclose(ffdi, exp, atol=1e-5)

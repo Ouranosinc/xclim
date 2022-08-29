@@ -4,8 +4,8 @@ r"""
 McArthur Forest Fire Danger Indices Submodule
 =============================================
 
-This submodule defines the :py:func:`xclim.indices.Keetch_Byram_drought_index`,
-:py:func:`xclim.indices.Griffiths_drought_factor` and :py:func:`xclim.indices.McArthur_forest_fire_danger_index`
+This submodule defines the :py:func:`xclim.indices.keetch_byram_drought_index`,
+:py:func:`xclim.indices.griffiths_drought_factor` and :py:func:`xclim.indices.mcarthur_forest_fire_danger_index`
 indices, which are used by the eponym indicators. Users should read this module's documentation and consult
 :cite:t:`ffdi-finkele_2006` which provides details of the methods used to calculate each index.
 """
@@ -23,9 +23,9 @@ from numba import float64, guvectorize, int64
 from xclim.core.units import convert_units_to, declare_units
 
 __all__ = [
-    "Griffiths_drought_factor",
-    "Keetch_Byram_drought_index",
-    "McArthur_forest_fire_danger_index",
+    "griffiths_drought_factor",
+    "keetch_byram_drought_index",
+    "mcarthur_forest_fire_danger_index",
 ]
 
 # SECTION 1 - Codes - Numba accelerated and vectorized functions
@@ -43,7 +43,7 @@ __all__ = [
     ],
     "(n),(n),(),()->(n)",
 )
-def _Keetch_Byram_drought_index(p, t, pa, kbdi0, kbdi: float):  # pragma: no cover
+def _keetch_byram_drought_index(p, t, pa, kbdi0, kbdi: float):  # pragma: no cover
     """Compute the Keetch-Byram drought (KBDI) index.
 
     Parameters
@@ -106,7 +106,7 @@ def _Keetch_Byram_drought_index(p, t, pa, kbdi0, kbdi: float):  # pragma: no cov
     ],
     "(n),(n),()->(n)",
 )
-def _Griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
+def _griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
     """Compute the Griffiths drought factor.
 
     Parameters
@@ -197,11 +197,11 @@ def _Griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
 # SECTION 2 - Public methods and indices
 
 
-def _Keetch_Byram_drought_index_pass(pr, tasmax, pr_annual, kbdi0):
-    """Pass inputs on to guvectorized function `_Keetch_Byram_drought_index`. DO NOT CALL DIRECTLY, use `Keetch_Byram_drought_index` instead."""
+def _keetch_byram_drought_index_pass(pr, tasmax, pr_annual, kbdi0):
+    """Pass inputs on to guvectorized function `_keetch_byram_drought_index`. DO NOT CALL DIRECTLY, use `keetch_byram_drought_index` instead."""
     # This function is actually only required as xr.apply_ufunc will not receive
     # a guvectorized function which has the output(s) in its function signature
-    return _Keetch_Byram_drought_index(pr, tasmax, pr_annual, kbdi0)
+    return _keetch_byram_drought_index(pr, tasmax, pr_annual, kbdi0)
 
 
 # @declare_units(
@@ -210,7 +210,7 @@ def _Keetch_Byram_drought_index_pass(pr, tasmax, pr_annual, kbdi0):
 #     pr_annual="[precipitation]",
 #     kbdi0="[]",
 # )
-def Keetch_Byram_drought_index(
+def keetch_byram_drought_index(
     pr: xr.DataArray,
     tasmax: xr.DataArray,
     pr_annual: xr.DataArray,
@@ -257,7 +257,7 @@ def Keetch_Byram_drought_index(
         kbdi0 = xr.full_like(pr.isel(time=0), 0)
 
     return xr.apply_ufunc(
-        _Keetch_Byram_drought_index_pass,
+        _keetch_byram_drought_index_pass,
         pr,
         tasmax,
         pr_annual,
@@ -269,18 +269,18 @@ def Keetch_Byram_drought_index(
     )
 
 
-def _Griffiths_drought_factor_pass(pr, smd, lim):
-    """Pass inputs on to guvectorized function `_Griffiths_drought_factor`. DO NOT CALL DIRECTLY, use `Griffiths_drought_factor` instead."""
+def _griffiths_drought_factor_pass(pr, smd, lim):
+    """Pass inputs on to guvectorized function `_griffiths_drought_factor`. DO NOT CALL DIRECTLY, use `griffiths_drought_factor` instead."""
     # This function is actually only required as xr.apply_ufunc will not receive
     # a guvectorized function which has the output(s) in its function signature
-    return _Griffiths_drought_factor(pr, smd, lim)
+    return _griffiths_drought_factor(pr, smd, lim)
 
 
 # @declare_units(
 #     pr="[precipitation]",
 #     smd="[precipitation]",
 # )
-def Griffiths_drought_factor(
+def griffiths_drought_factor(
     pr: xr.DataArray,
     smd: xr.DataArray,
     limiting_func: str = "xlim",
@@ -327,7 +327,7 @@ def Griffiths_drought_factor(
         raise ValueError(f"{limiting_func} is not a valid input for `limiting_func`")
 
     df = xr.apply_ufunc(
-        _Griffiths_drought_factor_pass,
+        _griffiths_drought_factor_pass,
         pr,
         smd,
         kwargs=dict(lim=lim),
@@ -348,7 +348,7 @@ def Griffiths_drought_factor(
 #     H="[]",
 #     V="[speed]",
 # )
-def McArthur_forest_fire_danger_index(
+def mcarthur_forest_fire_danger_index(
     D: xr.DataArray,
     T: xr.DataArray,
     H: xr.DataArray,
@@ -362,7 +362,7 @@ def McArthur_forest_fire_danger_index(
     ----------
     D : xr.DataArray
         The drought factor to use in the FFDI calculation. Often the daily Griffiths
-        drought factor (see `Griffiths_drought_factor`).
+        drought factor (see `griffiths_drought_factor`).
     T : xr.DataArray
         The temperature to use in the FFDI calculation [degC]. Often the current or previous
         day's maximum daily temperature near the surface.
