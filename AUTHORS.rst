@@ -20,7 +20,7 @@ Co-Developers
 Contributors
 ------------
 
-* Raquel Alegre <raquel.alegre@gmail.com> `@raquel-ucl <https://github.com/raquel-ucl>`_
+* Raquel Alegre <raquel.alegre@gmail.com> `@raquelalegre <https://github.com/raquelalegre>`_
 * Clair Barnes <clair.barnes.16@ucl.ac.uk> `@clairbarnes <https://github.com/clairbarnes>`_
 * Sébastien Biner <biner.sebastien@ouranos.ca> `@sbiner <https://github.com/sbiner>`_
 * David Caron `@davidcaron <https://github.com/davidcaron>`_

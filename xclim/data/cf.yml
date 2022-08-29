@@ -14,7 +14,7 @@ doc: |
   features that are currently not well covered by the CF Conventions. Currently identified issues frequently relate to
   standard_name and/or cell_methods which both are controlled vocabularies of the CF Conventions.
 
-  .. _clix-meta: https://github.com/clix-meta/clix-meta\n"
+  .. _clix-meta: https://github.com/clix-meta/clix-meta
 realm: atmos
 references: clix-meta https://github.com/clix-meta/clix-meta
 indicators:
