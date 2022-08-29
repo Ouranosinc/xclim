@@ -1,3 +1,4 @@
+# noqa: D100
 import warnings
 
 warnings.warn(

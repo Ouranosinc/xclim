@@ -1,4 +1,9 @@
 # noqa: D205,D400
+"""
+Fire Indices Module
+===================
+"""
+
 from __future__ import annotations
 
 import warnings
@@ -8,6 +13,7 @@ import xarray as xr
 from xclim.core.units import declare_units
 
 from ._cffwis import *
+from ._cffwis import cffwis_indices  # noqa
 from ._ffdi import *
 
 
@@ -39,7 +45,7 @@ def fire_weather_indexes(
     dry_start: str | None = None,
     initial_start_up: bool = True,
     **params,
-):
+):  # noqa:  D103
     warnings.warn(
         "`fire_weather_indexes` is deprecated in xclim v0.37.18-beta and has been renamed to `cffwis_indices` "
         "to better support international collaboration. The `fire_weather_indexes` alias will be removed "
