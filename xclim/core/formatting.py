@@ -132,7 +132,7 @@ class AttrFormatter(string.Formatter):
             raise ValueError(
                 f"No known mapping for string '{value}' with modifier '{format_spec}'"
             )
-        elif format_spec == "r":
+        if format_spec == "r":
             return super().format_field(value, "")
         return super().format_field(value, format_spec)
 

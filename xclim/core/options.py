@@ -225,6 +225,6 @@ class set_options:
             else:
                 OPTIONS[k] = v
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, option_type, value, traceback):
         """Context management."""
         self._update(self.old)

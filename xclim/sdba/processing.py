@@ -759,7 +759,7 @@ def from_additive_space(
             raise ValueError(
                 f"Attribute {err!s} must be present on the input data "
                 "or all parameters must be given as arguments."
-            )
+            ) from err
     elif (
         trans is not None
         and lower_bound is not None

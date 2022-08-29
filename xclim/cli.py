@@ -14,7 +14,7 @@ from xclim.core.utils import InputKind
 from xclim.testing.utils import publish_release_notes, show_versions
 
 try:
-    from dask.distributed import Client, progress  # pylint: ungrouped-imports
+    from dask.distributed import Client, progress  # pylint: disable=ungrouped-imports
 except ImportError:
     # Distributed is not a dependency of xclim
     Client = None

@@ -200,7 +200,9 @@ class Parameter:
     @classmethod
     def is_parameter_dict(cls, other: dict) -> bool:
         """Return whether indicator has a parameter dictionary."""
-        return set(other.keys()).issubset(cls.__dataclass_fields__.keys())  # noqa
+        return set(other.keys()).issubset(
+            cls.__dataclass_fields__.keys()
+        )  # pylint disable=no-member
 
     def __getitem__(self, key) -> str:
         """Return an item in retro-compatible fashion."""
@@ -451,7 +453,7 @@ class Indicator(IndicatorRegistrar):
                 kwds[key] = staticmethod(kwds[key])
 
         # Infer realm for built-in xclim instances
-        if cls.__module__.startswith(__package__.split(".")[0]):
+        if cls.__module__.startswith(__package__.split(".", maxsplit=1)[0]):
             xclim_realm = cls.__module__.split(".")[2]
         else:
             xclim_realm = None
@@ -907,11 +909,11 @@ class Indicator(IndicatorRegistrar):
                 if ds is not None:
                     try:
                         ba.arguments[name] = ds[ba.arguments[name]]
-                    except KeyError:
+                    except KeyError as err:
                         raise MissingVariableError(
                             f"For input '{name}', variable '{ba.arguments[name]}' "
                             "was not found in the input dataset."
-                        )
+                        ) from err
                 else:
                     raise ValueError(
                         "Passing variable names as string requires giving the `ds` "
@@ -1684,6 +1686,7 @@ def build_indicator_module_from_yaml(
                 data, identifier=identifier, module=module_name
             )
 
+        # FIXME: Handle the potential exceptions explicitly
         except Exception as err:
             raise_warn_or_log(
                 err, mode, msg=f"Constructing {identifier} failed with {err!r}"

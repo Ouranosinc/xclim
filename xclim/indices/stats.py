@@ -45,7 +45,7 @@ _lm3_dist_map = {
 # This would also be the place to impose constraints on the series minimum length if needed.
 def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
     """Fit distribution parameters."""
-    x = np.ma.masked_invalid(arr).compressed()
+    x = np.ma.masked_invalid(arr).compressed()  # pylint: disable=no-member
 
     # Return NaNs if array is empty.
     if len(x) <= 1:
@@ -60,7 +60,7 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
     elif method == "APP":
         args, kwargs = _fit_start(x, dist.name, **fitkwargs)
         kwargs_list = list(kwargs.values())
-        if "loc" not in kwargs.keys():
+        if "loc" not in kwargs:
             kwargs_list = [0] + kwargs_list
         params = list(args) + kwargs_list
 
