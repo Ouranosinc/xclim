@@ -1288,7 +1288,7 @@ def cffwis_indices(
     initial_start_up: bool = True,
     **params,
 ):
-    """Fire weather indexes.
+    """Canadian Fire Weather Index System indices.
 
     Computes the 6 fire weather indexes as defined by the Canadian Forest Service: the Drought Code, the Duff-Moisture
     Code, the Fine Fuel Moisture Code, the Initial Spread Index, the Build Up Index and the Fire Weather Index.
@@ -1296,23 +1296,23 @@ def cffwis_indices(
     Parameters
     ----------
     tas : xr.DataArray
-      Noon temperature.
+        Noon temperature.
     pr : xr.DataArray
-      Rain fall in open over previous 24 hours, at noon.
+        Rain fall in open over previous 24 hours, at noon.
     sfcWind : xr.DataArray
-      Noon wind speed.
+        Noon wind speed.
     hurs : xr.DataArray
-      Noon relative humidity.
+        Noon relative humidity.
     lat : xr.DataArray
-      Latitude coordinate
+        Latitude coordinate
     snd : xr.DataArray
-      Noon snow depth, only used if `season_method='LA08'` is passed.
+        Noon snow depth, only used if `season_method='LA08'` is passed.
     ffmc0 : xr.DataArray
-      Initial values of the fine fuel moisture code.
+        Initial values of the fine fuel moisture code.
     dmc0 : xr.DataArray
-      Initial values of the Duff moisture code.
+        Initial values of the Duff moisture code.
     dc0 : xr.DataArray
-      Initial values of the drought code.
+        Initial values of the drought code.
     season_mask : xr.DataArray, optional
         Boolean mask, True where/when the fire season is active.
     season_method : {None, "WF93", "LA08", "GFWED"}
@@ -1327,8 +1327,8 @@ def cffwis_indices(
         If True (default), gridpoints where the fire season is active on the first timestep go through a start_up phase
         for that time step. Otherwise, previous codes must be given as a continuing fire season is assumed for those
         points.
-    params :
-      Any other keyword parameters as defined in :py:func:`fire_weather_ufunc` and in :py:data:`default_params`.
+    params
+        Any other keyword parameters as defined in :py:func:`fire_weather_ufunc` and in :py:data:`default_params`.
 
     Returns
     -------

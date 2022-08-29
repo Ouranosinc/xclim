@@ -474,9 +474,11 @@ def test_signature():
 
 def test_doc():
     doc = xclim.atmos.cffwis_indices.__doc__
-    assert doc.startswith("Fire weather indexes. (realm: atmos)")
+    assert doc.startswith("Canadian Fire Weather Index System indices. (realm: atmos)")
     assert "This indicator will check for missing values according to the method" in doc
-    assert "Based on indice :py:func:`~xclim.indices.fire.cffwis_indices`." in doc
+    assert (
+        "Based on indice :py:func:`~xclim.indices.fire._cffwis.cffwis_indices`." in doc
+    )
     assert "ffmc0 : str or DataArray, optional" in doc
     assert "Returns\n-------" in doc
     assert "See :cite:t:`code-natural_resources_canada_data_nodate`, " in doc
