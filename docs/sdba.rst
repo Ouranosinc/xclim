@@ -115,14 +115,16 @@ Developer tools
 .. autofunction:: xclim.sdba.measures.StatisticalMeasure
    :noindex:
 
-.. _sdba-footnotes:
+.. only:: html or text
 
-SDBA Footnotes
-==============
+    .. _sdba-footnotes:
 
-.. bibliography::
-   :style: xcstyle
-   :labelprefix: SDBA
-   :keyprefix: sdba-
+    SDBA Footnotes
+    ==============
+
+    .. bibliography::
+       :style: xcstyle
+       :labelprefix: SDBA-
+       :keyprefix: sdba-
 
 .. [RRJF2021] Roy, P., Rondeau-Genesse, G., Jalbert, J., Fournier, É. 2021. Climate Scenarios of Extreme Precipitation Using a Combination of Parametric and Non-Parametric Bias Correction Methods. Submitted to Climate Services, April 2021.
