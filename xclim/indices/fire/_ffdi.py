@@ -20,6 +20,8 @@ import numpy as np
 import xarray as xr
 from numba import float64, guvectorize, int64
 
+from xclim.core.units import convert_units_to, declare_units
+
 __all__ = [
     "Griffiths_drought_factor",
     "Keetch_Byram_drought_index",
@@ -206,6 +208,7 @@ def _Keetch_Byram_drought_index_pass(pr, tasmax, pr_annual, kbdi0):
 #     pr="[precipitation]",
 #     tasmax="[temperature]",
 #     pr_annual="[precipitation]",
+#     kbdi0="[]",
 # )
 def Keetch_Byram_drought_index(
     pr: xr.DataArray,
@@ -221,13 +224,13 @@ def Keetch_Byram_drought_index(
     Parameters
     ----------
     pr : xr.DataArray
-        Total rainfall over previous 24 hours.
+        Total rainfall over previous 24 hours [mm/day].
     tasmax : xr.DataArray
-        Maximum temperature near the surface over previous 24 hours.
+        Maximum temperature near the surface over previous 24 hours [degC].
     pr_annual: xr.DataArray
-        Mean (over years) annual accumulated rainfall.
+        Mean (over years) annual accumulated rainfall [mm/year].
     kbdi0 : xr.DataArray, optional
-        Previous KBDI map used to initialise the KBDI calculation. Defaults to 0.
+        Previous KBDI map used to initialise the KBDI calculation [mm/day]. Defaults to 0.
 
     Returns
     -------
@@ -244,9 +247,11 @@ def Keetch_Byram_drought_index(
     ----------
     :cite:cts:`ffdi-keetch_1968,ffdi-finkele_2006,ffdi-holgate_2017,ffdi-dolling_2005`
     """
-    # pr = convert_units_to(pr, "mm/day")
-    # tasmax = convert_units_to(tasmax, "C")
-    # pr_annual = convert_units_to(pr_annual, "mm/day")
+    pr = convert_units_to(pr, "mm/day")
+    tasmax = convert_units_to(tasmax, "C")
+    pr_annual = convert_units_to(pr_annual, "mm/year")
+    if kbdi0 is not None:
+        kbdi0 = convert_units_to(kbdi0, "mm/day")
 
     if kbdi0 is None:
         kbdi0 = xr.full_like(pr.isel(time=0), 0)
@@ -288,9 +293,9 @@ def Griffiths_drought_factor(
     Parameters
     ----------
     pr : xr.DataArray
-      Total rainfall over previous 24 hours.
+      Total rainfall over previous 24 hours [mm/day].
     smd : xarray DataArray
-      Daily soil moisture deficit (often KBDI).
+      Daily soil moisture deficit (often KBDI) [mm/day].
     limiting_func : {"xlim", "discrete"}
       How to limit the values of the drought factor.
       If "xlim" (default), use equation (14) in :cite:t:`ffdi-finkele_2006`.
@@ -311,8 +316,8 @@ def Griffiths_drought_factor(
     ----------
     :cite:cts:`ffdi-griffiths_1999,ffdi-finkele_2006,ffdi-holgate_2017`
     """
-    # pr = convert_units_to(pr, "mm/day")
-    # smd = convert_units_to(smd, "mm/day")
+    pr = convert_units_to(pr, "mm/day")
+    smd = convert_units_to(smd, "mm/day")
 
     if limiting_func == "xlim":
         lim = 0
@@ -338,10 +343,10 @@ def Griffiths_drought_factor(
 
 
 # @declare_units(
-#     D="[precipitation]",
+#     D="[]",
 #     T="[temperature]",
-#     H="[humidity]",
-#     V="[wind]",
+#     H="[]",
+#     V="[speed]",
 # )
 def McArthur_forest_fire_danger_index(
     D: xr.DataArray,
@@ -359,14 +364,14 @@ def McArthur_forest_fire_danger_index(
         The drought factor to use in the FFDI calculation. Often the daily Griffiths
         drought factor (see `Griffiths_drought_factor`).
     T : xr.DataArray
-        The temperature to use in the FFDI calculation. Often the current or previous
+        The temperature to use in the FFDI calculation [degC]. Often the current or previous
         day's maximum daily temperature near the surface.
     H : xr.DataArray
-        The relative humidity to use in the FFDI calculation. Often the relative humidity
+        The relative humidity to use in the FFDI calculation [%]. Often the relative humidity
         near the time of the maximum temperature used for T.
     V : xr.DataArray
-        The wind velocity to use in the FFDI calculation. Often mid-afternoon wind speed
-        at a height of 10m.
+        The wind speed to use in the FFDI calculation [km/h]. Often mid-afternoon wind speed at
+        a height of 10m.
 
     Returns
     -------
@@ -377,9 +382,8 @@ def McArthur_forest_fire_danger_index(
     ----------
     :cite:cts:`ffdi-noble_1980,ffdi-dowdy_2018,ffdi-holgate_2017`
     """
-    # D = convert_units_to(D, "mm")
-    # T = convert_units_to(T, "C")
-    # H = convert_units_to(H, "%")
-    # V = convert_units_to(V, "km/h")
+    T = convert_units_to(T, "C")
+    H = convert_units_to(H, "pct")
+    V = convert_units_to(V, "km/h")
 
     return D**0.987 * np.exp(0.0338 * T - 0.0345 * H + 0.0234 * V + 0.243147)

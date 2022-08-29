@@ -10,6 +10,7 @@ from xclim.core.units import convert_units_to
 from xclim.indices.fire import (
     Griffiths_drought_factor,
     Keetch_Byram_drought_index,
+    McArthur_forest_fire_danger_index,
     _day_length,
     _day_length_factor,
     _drought_code,
@@ -523,7 +524,7 @@ def test_keetch_byram_drought_index():
             "dim0",
             "time",
         ),
-        attrs={"units": "mm"},
+        attrs={"units": "mm/day"},
     )
     tasmax = xr.DataArray(
         [
@@ -545,11 +546,12 @@ def test_keetch_byram_drought_index():
     pr_annual = xr.DataArray(
         [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 100.0],
         dims=("dim0",),
-        attrs={"units": "mm"},
+        attrs={"units": "mm/year"},
     )
     kbdi0 = xr.DataArray(
         [0.0, 0.0, 0.0, 0.0, 0.0, 10.0, 203.2, 0.0],
         dims=("dim0",),
+        attrs={"units": "mm/day"},
     )
 
     exp = xr.DataArray(
@@ -572,11 +574,12 @@ def test_griffiths_drought_factor():
             [0, 10, 5, 0, 0, 5, 10, 0, 0, 20, 0, 0, 0, 20, 0, 0, 0, 5, 4, 3],
         ],
         dims=("dim0", "time"),
-        attrs={"units": "mm"},
+        attrs={"units": "mm/day"},
     )
     smd = xr.DataArray(
         2 * [20 * [10]] + 2 * [20 * [30]],
         dims=("dim0", "time"),
+        attrs={"units": "mm/day"}
     )
 
     exp = xr.DataArray(
@@ -594,11 +597,12 @@ def test_griffiths_drought_factor():
             [0, 30, 5, 0, 0, 5, 10, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 1, 3, 1],
         ],
         dims=("dim0", "time"),
-        attrs={"units": "mm"},
+        attrs={"units": "mm/day"},
     )
     smd = xr.DataArray(
         [20 * [10], 20 * [30]],
         dims=("dim0", "time"),
+        attrs={"units": "mm/day"}
     )
 
     # limiting_func = "xlim"
@@ -616,3 +620,47 @@ def test_griffiths_drought_factor():
     )
     df = Griffiths_drought_factor(pr, smd, "discrete").squeeze()
     np.testing.assert_allclose(df, exp, atol=1e-5)
+
+
+def test_mcarthur_forest_fire_danger_index():
+    """Compare output to calculation by hand for a few cases"""
+    D = xr.DataArray(
+        np.array(list(range(1, 11))).reshape((5, 2)),
+        dims=("time", "dim0"),
+    )
+    T = xr.DataArray(
+        np.array(list(range(30, 40))).reshape((5, 2)),
+        dims=("time", "dim0"),
+        attrs={"units": "degC"},
+    )
+    H = xr.DataArray(
+        np.array(list(range(10, 20))).reshape((5, 2)),
+        dims=("time", "dim0"),
+        attrs={"units": "%"},
+    )
+    V = xr.DataArray(
+        np.array(list(range(10, 20))).reshape((5, 2)),
+        dims=("time", "dim0"),
+        attrs={"units": "km/h"},
+    )
+    # Caluculated by hand using the original arrangement of the FFDI:
+    # FFDI = 2*np.exp(-0.450+0.987*ln(D)-0.0345*H+0.0338*T+0.0234*V)
+    exp = xr.DataArray(
+        np.array(
+            [
+                3.14605,
+                6.37882,
+                9.73646,
+                13.23043,
+                16.86874,
+                20.65823,
+                24.60527,
+                28.71604,
+                32.99671,
+                37.45344,
+            ]
+        ).reshape((5, 2)),
+        dims=("time", "dim0"),
+    )
+    ffdi = McArthur_forest_fire_danger_index(D, T, H, V)
+    np.testing.assert_allclose(ffdi, exp, atol=1e-5)
