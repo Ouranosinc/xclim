@@ -74,7 +74,7 @@ def _bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     Returns
     -------
     xr.DataArray, [same as ref]
-      Absolute bias between the simulation and the reference
+      Absolute bias
     """
     out = sim - ref
     out.attrs["units"] = ensure_delta(ref.attrs["units"])
@@ -99,7 +99,7 @@ def _relative_bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     Returns
     -------
     xr.DataArray, [dimensionless]
-      Relative bias between the simulation and the reference
+      Relative bias
     """
     out = (sim - ref) / ref
     return out.assign_attrs(units="")
@@ -126,7 +126,7 @@ def _circular_bias(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     Returns
     -------
     xr.DataArray, [days]
-      Circular bias between the simulation and the reference
+      Circular bias
     """
     out = (sim - ref) % 365
     out = out.where(
@@ -156,7 +156,7 @@ def _ratio(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     Returns
     -------
     xr.DataArray, [dimensionless]
-      Ratio between the simulation and the reference
+      Ratio
     """
     out = sim / ref
     out.attrs["units"] = ""
@@ -181,7 +181,7 @@ def _rmse(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     Returns
     -------
     xr.DataArray, [same as ref]
-      Root mean square error between the simulation and the reference
+      Root mean square error
     """
 
     def _rmse(sim, ref):
@@ -215,7 +215,7 @@ def _mae(sim: xr.DataArray, ref: xr.DataArray) -> xr.DataArray:
     Returns
     -------
     xr.DataArray, [same as ref]
-      Mean absolute error between the simulation and the reference
+      Mean absolute error
     """
 
     def _mae(sim, ref):
@@ -256,7 +256,7 @@ def _annual_cycle_correlation(
     Returns
     -------
     xr.DataArray, [dimensionless]
-      Annual cycle correlation between the simulation and the reference
+      Annual cycle correlation
     """
     # group by day-of-year and window around each doy
     grouper_test = sdba.base.Grouper("time.dayofyear", window=window)
