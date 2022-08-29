@@ -559,21 +559,21 @@ class Indicator(IndicatorRegistrar):
             meta = parameters[new_name] = parameters.pop(old_name)
             try:
                 varmeta = VARIABLES[new_name]
-            except KeyError:
+            except KeyError as err:
                 raise ValueError(
                     f"Compute argument {old_name} was mapped to variable "
                     f"{new_name} which is not understood by xclim or CMIP6. Please"
                     " use names listed in `xclim.core.utils.VARIABLES`."
-                )
+                ) from err
             if meta.units is not _empty:
                 try:
                     check_units(varmeta["canonical_units"], meta.units)
-                except ValidationError:
+                except ValidationError as err:
                     raise ValueError(
                         "When changing the name of a variable by passing `input`, "
                         "the units dimensionality must stay the same. Got: old = "
                         f"{meta.units}, new = {varmeta['canonical_units']}"
-                    )
+                    ) from err
             meta.units = varmeta["canonical_units"]
             meta.description = varmeta["description"]
 
@@ -1686,8 +1686,7 @@ def build_indicator_module_from_yaml(
                 data, identifier=identifier, module=module_name
             )
 
-        # FIXME: Handle the potential exceptions explicitly
-        except Exception as err:
+        except Exception as err:  # pylint: disable=broad-except
             raise_warn_or_log(
                 err, mode, msg=f"Constructing {identifier} failed with {err!r}"
             )
@@ -1697,7 +1696,7 @@ def build_indicator_module_from_yaml(
 
     # If there are translations, load them
     if translations:
-        for locale, locdict in translations.items():
-            load_locale(locdict, locale)
+        for locale, loc_dict in translations.items():
+            load_locale(loc_dict, locale)
 
     return mod
