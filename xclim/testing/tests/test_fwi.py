@@ -579,7 +579,7 @@ def test_griffiths_drought_factor():
     smd = xr.DataArray(
         2 * [20 * [10]] + 2 * [20 * [30]],
         dims=("dim0", "time"),
-        attrs={"units": "mm/day"}
+        attrs={"units": "mm/day"},
     )
 
     exp = xr.DataArray(
@@ -600,9 +600,7 @@ def test_griffiths_drought_factor():
         attrs={"units": "mm/day"},
     )
     smd = xr.DataArray(
-        [20 * [10], 20 * [30]],
-        dims=("dim0", "time"),
-        attrs={"units": "mm/day"}
+        [20 * [10], 20 * [30]], dims=("dim0", "time"), attrs={"units": "mm/day"}
     )
 
     # limiting_func = "xlim"
