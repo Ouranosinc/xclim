@@ -21,6 +21,7 @@ from sklearn.cluster import KMeans
 # Avoid having to include matplotlib in xclim requirements
 try:
     from matplotlib import pyplot as plt  # noqa
+
     MPL_INSTALLED = True
 except ImportError:
     plt = None
