@@ -462,8 +462,10 @@ def friedman_rafsky(x: np.ndarray, y: np.ndarray) -> float:
     :cite:cts:`friedman_multivariate_1979`
 
     """
-    from scipy.sparse.csgraph import minimum_spanning_tree
-    from sklearn import neighbors
+    from scipy.sparse.csgraph import (  # pylint: disable=import-outside-toplevel
+        minimum_spanning_tree,
+    )
+    from sklearn import neighbors  # pylint: disable=import-outside-toplevel
 
     nx, _ = x.shape
     ny, _ = y.shape

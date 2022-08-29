@@ -49,7 +49,7 @@ class DataQualityException(Exception):
     ):
         self.message = message
         self.flags = []
-        for flag, value in flag_array.data_vars.items():
+        for value in flag_array.data_vars.values():
             if value.any():
                 for attribute in value.attrs.keys():
                     if str(attribute) == "description":

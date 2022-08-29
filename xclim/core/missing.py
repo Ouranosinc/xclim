@@ -291,7 +291,7 @@ class MissingWMO(MissingAny):
 
     def is_missing(self, null, count, nm=11, nc=5):
         from ..indices import (
-            run_length as rl,  # pyling: disable=import-outside-toplevel
+            run_length as rl,  # pylint: disable=import-outside-toplevel
         )
 
         # Check total number of days

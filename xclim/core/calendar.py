@@ -929,15 +929,11 @@ def time_bnds(group, freq: str) -> Sequence[tuple[cftime.datetime, cftime.dateti
             cfindex = group._full_index
         else:
             raise TypeError(
-                "Index must be a CFTimeIndex, but got an instance of {}".format(
-                    type(group).__name__
-                )
+                f"Index must be a CFTimeIndex, but got an instance of {type(group).__name__}"
             )
     else:
         raise TypeError(
-            "Index must be a CFTimeIndex, but got an instance of {}".format(
-                type(group).__name__
-            )
+            f"Index must be a CFTimeIndex, but got an instance of {type(group).__name__}"
         )
 
     return tuple(
