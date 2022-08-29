@@ -39,7 +39,7 @@ jobs:
       - name: Install pylint
         run: pip install pylint
       - name: Run pylint
-        run: pylint --exit-zero xclim
+        run: pylint --rcfile=pylintrc --disable=import-error --exit-zero xclim
       - name: Install tox
         run: pip install tox
       - name: Run doctests
