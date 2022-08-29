@@ -34,6 +34,9 @@ __all__ = [
     "drought_code",
     "fire_weather_indexes",
     "cffwis_indices",
+    "keetch_byram_drought_index",
+    "griffiths_drought_factor",
+    "mcarthur_forest_fire_danger_index",
     "last_snowfall",
     "first_snowfall",
     "days_with_snow",
@@ -359,6 +362,39 @@ cffwis_indices = FireWeather(
     ],
     units="",
     compute=indices.cffwis_indices,
+    missing="skip",
+)
+
+
+keetch_byram_drought_index = FireWeather(
+    identifier="kbdi",
+    units="mm/day",
+    standard_name="keetch_byram_drought_index",
+    long_name="Keetch-Byran Drought Index",
+    description="Amount of water necessary to bring the soil moisture content back to field capacity",
+    compute=indices.keetch_byram_drought_index,
+    missing="skip",
+)
+
+
+griffiths_drought_factor = FireWeather(
+    identifier="df",
+    units="",
+    standard_name="griffiths_drought_factor",
+    long_name="Griffiths Drought Factor",
+    description="Numeric indicator of the forest fire fuel availability in the deep litter bed",
+    compute=indices.griffiths_drought_factor,
+    missing="skip",
+)
+
+
+mcarthur_forest_fire_danger_index = FireWeather(
+    identifier="ffdi",
+    units="",
+    standard_name="mcarthur_forest_fire_danger_index",
+    long_name="McArthur Forest Fire Danger Index",
+    description="Numeric rating of the potential danger of a forest fire",
+    compute=indices.mcarthur_forest_fire_danger_index,
     missing="skip",
 )
 

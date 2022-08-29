@@ -204,19 +204,19 @@ def _keetch_byram_drought_index_pass(pr, tasmax, pr_annual, kbdi0):
     return _keetch_byram_drought_index(pr, tasmax, pr_annual, kbdi0)
 
 
-# @declare_units(
-#     pr="[precipitation]",
-#     tasmax="[temperature]",
-#     pr_annual="[precipitation]",
-#     kbdi0="[]",
-# )
+@declare_units(
+    pr="[precipitation]",
+    tasmax="[temperature]",
+    pr_annual="[precipitation]",
+    kbdi0="[precipitation]",
+)
 def keetch_byram_drought_index(
     pr: xr.DataArray,
     tasmax: xr.DataArray,
     pr_annual: xr.DataArray,
     kbdi0: xr.DataArray | None = None,
 ) -> xr.DataArray:
-    """Calculate the Keetch-Byram drought index (KBDI).
+    """Calculate the Keetch-Byram drought index (KBDI) for soil moisture deficit.
 
     This method implements the methodology and formula described in :cite:t:`ffdi-finkele_2006`
     (section 2.1.1) for calculating the KBDI. See Notes below.
@@ -256,7 +256,7 @@ def keetch_byram_drought_index(
     if kbdi0 is None:
         kbdi0 = xr.full_like(pr.isel(time=0), 0)
 
-    return xr.apply_ufunc(
+    kbdi = xr.apply_ufunc(
         _keetch_byram_drought_index_pass,
         pr,
         tasmax,
@@ -267,6 +267,8 @@ def keetch_byram_drought_index(
         dask="parallelized",
         output_dtypes=[pr.dtype],
     )
+    kbdi.attrs["units"] = "mm/day"
+    return kbdi
 
 
 def _griffiths_drought_factor_pass(pr, smd, lim):
@@ -276,10 +278,10 @@ def _griffiths_drought_factor_pass(pr, smd, lim):
     return _griffiths_drought_factor(pr, smd, lim)
 
 
-# @declare_units(
-#     pr="[precipitation]",
-#     smd="[precipitation]",
-# )
+@declare_units(
+    pr="[precipitation]",
+    smd="[precipitation]",
+)
 def griffiths_drought_factor(
     pr: xr.DataArray,
     smd: xr.DataArray,
@@ -336,18 +338,19 @@ def griffiths_drought_factor(
         dask="parallelized",
         output_dtypes=[pr.dtype],
     )
+    df.attrs["units"] = ""
 
     # First non-zero entry is at the 19th time point since df is calculated
     # from a 20-day rolling window
     return df.isel(time=slice(19, None))
 
 
-# @declare_units(
-#     D="[]",
-#     T="[temperature]",
-#     H="[]",
-#     V="[speed]",
-# )
+@declare_units(
+    D="[]",
+    T="[temperature]",
+    H="[]",
+    V="[speed]",
+)
 def mcarthur_forest_fire_danger_index(
     D: xr.DataArray,
     T: xr.DataArray,
@@ -386,4 +389,6 @@ def mcarthur_forest_fire_danger_index(
     H = convert_units_to(H, "pct")
     V = convert_units_to(V, "km/h")
 
-    return D**0.987 * np.exp(0.0338 * T - 0.0345 * H + 0.0234 * V + 0.243147)
+    ffdi = D**0.987 * np.exp(0.0338 * T - 0.0345 * H + 0.0234 * V + 0.243147)
+    ffdi.attrs["units"] = ""
+    return ffdi

@@ -625,6 +625,7 @@ def test_mcarthur_forest_fire_danger_index():
     D = xr.DataArray(
         np.array(list(range(1, 11))).reshape((5, 2)),
         dims=("time", "dim0"),
+        attrs={"units": ""},
     )
     T = xr.DataArray(
         np.array(list(range(30, 40))).reshape((5, 2)),
