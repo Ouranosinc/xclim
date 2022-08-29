@@ -10,7 +10,7 @@ mypy
 nbval
 pre-commit>=2.9
 pydocstyle>=5.1.1
-pylint
+pylint <2.15
 pytest
 pytest-cov
 tokenize-rt
