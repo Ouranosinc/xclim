@@ -372,7 +372,8 @@ class Indicator(IndicatorRegistrar):
     fields could also be present if the indicator was created from outside xclim.
 
     var_name:
-      Output variable(s) name(s).
+      Output variable(s) name(s). For derived single-output indicators, this field is not
+      inherited from the parent indicator and defaults to the identifier.
     standard_name:
       Variable name, must be in the CF standard names table (this is not checked).
     long_name:
@@ -628,8 +629,6 @@ class Indicator(IndicatorRegistrar):
         if isinstance(cf_attrs, dict):
             # Single output indicator, but we store as a list anyway.
             cf_attrs = [cf_attrs]
-        elif cf_attrs is None and parent_cf_attrs:
-            cf_attrs = deepcopy(parent_cf_attrs)
         elif cf_attrs is None:
             # Attributes were passed the "old" way, with lists or strings directly (only _cf_names)
             # We need to get the number of outputs first, defaulting to the length of parent's cf_attrs or 1
@@ -657,7 +656,7 @@ class Indicator(IndicatorRegistrar):
                         attrs[name] = value
         # else we assume a list of dicts
 
-        # For single output, var_name defauls to identifer.
+        # For single output, var_name defaults to identifer.
         if len(cf_attrs) == 1 and "var_name" not in cf_attrs[0]:
             cf_attrs[0]["var_name"] = identifier
 
