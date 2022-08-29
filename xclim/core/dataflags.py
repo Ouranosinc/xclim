@@ -89,7 +89,7 @@ def register_methods(func):
 
 
 def _sanitize_attrs(da: xarray.DataArray) -> xarray.DataArray:
-    to_remove = {}
+    to_remove = []
     for attr in da.attrs.keys():
         if str(attr) != "history":
             to_remove.append(attr)

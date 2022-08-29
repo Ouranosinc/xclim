@@ -926,7 +926,7 @@ class Indicator(IndicatorRegistrar):
 
         return das, params
 
-    def _postprocess(self, outs, **kwargs):
+    def _postprocess(self, outs, das, params):
         """Actions to done after computing."""
         return outs
 
