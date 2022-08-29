@@ -20,17 +20,18 @@ New indicators
 * Many generic indicators that compare arrays or against thresholds or now accept an `op` keyword for specifying the logical comparison operation to use in their calculations (i.e. `{">", ">=", "<", "<=, "!=", "=="}`). (:issue:`389`, :pull:`1157`).
     - In order to prevent user error, many of these generic indices now have a `constrain` variable that prevents calling an indice with an inappropriate comparison operator. (e.g. The following will raise an error: `op=">", constrain=("<", "<=")`). This behaviour has been added to indices accepting `op` where appropriate.
 
-
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `scipy` has been temporarily pinned below version 1.9 until lmoments3 tests can be rewritten to account for the new API. (:issue:`1142`, :pull:`1143`).
 * Now requires `xarray>=2022.06.0` (:pull:`1151`).
+* Documentation CI (ReadTheDocs) builds will now fail if there are any misconfigured pages, internal link/reference warnings, or broken external hyperlinks. (:issue:`1094`, :pull:`1131`, :issue:`1139`, :pull:`1140`, :pull:`1160`).
 * Call signatures for generic indices have been reordered and/or modified to accept `op`, and optionally `constrain`, in many cases, and `condition`/`conditional`/`operation` has been renamed to `op` for consistency. (:pull:`1157`). The affected indices are as follows:
     - `get_op`, `compare`, `threshold_count`, `get_daily_events`, `count_level_crossings`, `count_occurrences`, `first_occurrence`, `last_occurrence`, `spell_length`, `thresholded_statistics`, `temperature_sum`, `degree_days`.
 * All indices in `xclim.indices.generic` now use `threshold` in lieu of `thresh` for consistency. (:pull:`1157`).
 * Two deprecated indices have been removed from `xclim`. (:pull:`1157`):
     - ``xclim.indices._multivariate.daily_freezethaw_cycles`` -> Replaceable with the generic ``multiday_temperature_swing`` with `thresh_tasmax='0 degC'`, `thresh_tasmin='0 degC'`, `window=1`, and `op='sum'`. The indicator version (``xclim.atmos.daily_freezethaw_cycles``) is unaffected.
     - ``xclim.indices.generic.select_time`` -> Was previously moved to ``xclim.core.calendar``.
+* Existing function ``xclim.indices.generic.compare_arrays`` can now be used to construct operations with `op` and `constrain` variables to allow for dynamic comparisons with user input handling. (:pull:`1157`).
 
 Bug fixes
 ^^^^^^^^^
@@ -44,19 +45,20 @@ Internal changes
 ^^^^^^^^^^^^^^^^
 * Marked a test (``test_release_notes_file_not_implemented``) that can only pass when source files are available so that it can easily be skipped on conda-forge build tests. (:issue:`1116`, :pull:`1117`).
 * Split a few YAML strings found in the virtual modules that regularly issued warnings on the code checking CI steps. (:pull:`1118`).
-* Fixed a few extlink warnings found in `sphinx` and configured ReadTheDocs to use `mamba` as the dependency solver. (:issue:`1139`, :pull:`1140`).
 * Function ``xclim.core.calendar.build_climatology_bounds`` now exposed via `__all__`. (:pull:`1146`).
 * Clarifications added to docstring of ``xclim.core.bootstrapping.bootstrap_func``. (:pull:`1146`).
 * Bibliographic references for supporting scientific articles are now found in a bibtex file (`docs/references.bib`). These are now made available within the generated documentation using ``sphinxcontrib-bibtex``. (:issue:`1094`, :pull:`1131`).
 * Added information URLs to ``setup.py`` in order to showcase issue tracker and other sites on PyPI page (:pull:`1156`).
-* Set the LaTeX to `xelatex` and configured the LaTeX build of the documentation to ignore the custom bibliographies, as they were redundant in the generated PDF. (:pull:`1158`).
+* Configured the LaTeX build of the documentation to ignore the custom bibliographies, as they were redundant in the generated PDF. (:pull:`1158`).
 * Run length encoding (``xclim.indices.run_length.rle``) has been optimized. (:issue:`956`, :pull:`1122`).
-* A new function ``xclim.indices.generic.compare_arrays`` can now be used to construct operations with `op` and `constrain` variables to allow for dynamic comparisons with user input handling. (:pull:`1157`).
+* Added a `sphinx-build -b linkcheck` step to the `tox`-based `"docs"` build as well as to the ReadTheDocs configuration. (:pull:`1160`).
 * The generic indices `count_level_crossings`, `count_occurrences`, `first_occurrence`, and `last_occurrence` are now fully tested. (:pull:`1157`).
 
 Bug fixes
 ^^^^^^^^^
 * Fix ``biological_effective_degree_days`` for non-scalar latitudes, when using method "gladstones". (:issue:`1136`, :pull:`1137`).
+* Fixed some ``extlink`` warnings found in `sphinx` and configured ReadTheDocs to use `mamba` as the dependency solver. (:issue:`1139`, :pull:`1140`).
+* Fixed some broken hyperlinks to articles, users, and external documentation throughout the code base and jupyter notebooks. (:pull:`1160`).
 
 0.37.0 (2022-06-20)
 -------------------
@@ -213,11 +215,11 @@ Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Juliette Lav
 
 Announcements
 ^^^^^^^^^^^^^
-* `xclim` no longer supports Python3.7. Code conventions and new features for Python3.8 (`PEP 569 <https://www.python.org/dev/peps/pep-0569/>`_) are now accepted. (:issue:`966`, :pull:`1000`).
+* `xclim` no longer supports Python3.7. Code conventions and new features for Python3.8 (`PEP 569 <https://peps.python.org/pep-0569/>`_) are now accepted. (:issue:`966`, :pull:`1000`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* Python3.7 (`PEP 537 <https://www.python.org/dev/peps/pep-0537/>`_) support has been officially deprecated. Continuous integration testing is no longer run against this version of Python. (:issue:`966`, :pull:`1000`).
+* Python3.7 (`PEP 537 <https://peps.python.org/pep-0537/>`_) support has been officially deprecated. Continuous integration testing is no longer run against this version of Python. (:issue:`966`, :pull:`1000`).
 
 Bug fixes
 ^^^^^^^^^
@@ -293,7 +295,7 @@ Bug fixes
 
 v0.32.0 (2021-12-17)
 --------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), David Huard (:user:`huard`), Clair Barnes (:user:`clairbarnes`), Raquel Alegre (:user:`raquel-ucl`), Jamie Quinn (:user:`JamieJQuinn`), Maliko Tanguy (:user:`malngu`), Aaron Spring (:user:`aaronspring`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Travis Logan (:user:`tlogan2000`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), David Huard (:user:`huard`), Clair Barnes (:user:`clairbarnes`), Raquel Alegre (:user:`raquelalegre`), Jamie Quinn (:user:`JamieJQuinn`), Maliko Tanguy (:user:`malngu`), Aaron Spring (:user:`aaronspring`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -643,7 +645,7 @@ v0.26.0 (2021-04-30)
 
 Announcements
 ^^^^^^^^^^^^^
-* `xclim` no longer supports Python3.6. Code conventions and new features from Python3.7 (`PEP 537 Features <https://www.python.org/dev/peps/pep-0537/#features-for-3-7>`_) are now accepted.
+* `xclim` no longer supports Python3.6. Code conventions and new features from Python3.7 (`PEP 537 Features <https://peps.python.org/pep-0537/#features-for-3-7>`_) are now accepted.
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
