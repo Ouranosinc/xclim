@@ -2,7 +2,7 @@
 xclim: Climate indices computations |logo|
 ==========================================
 
-|license| |security| |fair| |build| |pre-commit| |pypi| |conda| |coveralls| |codefactor| |fossa| |zenodo| |black| |docs| |gitter|
+|license| |security| |fair| |build| |pre-commit| |pypi| |conda| |coveralls| |fossa| |zenodo| |black| |docs| |gitter|
 
 ----
 
@@ -75,10 +75,6 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 .. |coveralls| image:: https://coveralls.io/repos/github/Ouranosinc/xclim/badge.svg
         :target: https://coveralls.io/github/Ouranosinc/xclim
         :alt: Coveralls
-
-.. |codefactor| image:: https://www.codefactor.io/repository/github/ouranosinc/xclim/badge
-        :target: https://www.codefactor.io/repository/github/ouranosinc/xclim
-        :alt: CodeFactor
 
 .. |docs| image:: https://readthedocs.org/projects/xclim/badge
         :target: https://xclim.readthedocs.io/en/latest
