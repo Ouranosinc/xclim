@@ -34,7 +34,7 @@ def lat_series():
 
 @pytest.fixture
 def tas_series():
-    def _tas_series(values, start="7/1/2000"):
+    def _tas_series(values, start="7/1/2000", units="K"):
         coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
@@ -44,7 +44,7 @@ def tas_series():
             attrs={
                 "standard_name": "air_temperature",
                 "cell_methods": "time: mean within days",
-                "units": "K",
+                "units": units,
             },
         )
 
@@ -53,7 +53,7 @@ def tas_series():
 
 @pytest.fixture
 def tasmax_series():
-    def _tasmax_series(values, start="7/1/2000"):
+    def _tasmax_series(values, start="7/1/2000", units="K"):
         coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
@@ -63,7 +63,7 @@ def tasmax_series():
             attrs={
                 "standard_name": "air_temperature",
                 "cell_methods": "time: maximum within days",
-                "units": "K",
+                "units": units,
             },
         )
 
@@ -72,7 +72,7 @@ def tasmax_series():
 
 @pytest.fixture
 def tasmin_series():
-    def _tasmin_series(values, start="7/1/2000"):
+    def _tasmin_series(values, start="7/1/2000", units="K"):
         coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
@@ -82,7 +82,7 @@ def tasmin_series():
             attrs={
                 "standard_name": "air_temperature",
                 "cell_methods": "time: minimum within days",
-                "units": "K",
+                "units": units,
             },
         )
 

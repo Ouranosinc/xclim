@@ -252,8 +252,7 @@ def keetch_byram_drought_index(
     pr_annual = convert_units_to(pr_annual, "mm/year")
     if kbdi0 is not None:
         kbdi0 = convert_units_to(kbdi0, "mm/day")
-
-    if kbdi0 is None:
+    else:
         kbdi0 = xr.full_like(pr.isel(time=0), 0)
 
     kbdi = xr.apply_ufunc(
