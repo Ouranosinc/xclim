@@ -48,7 +48,7 @@ class DataQualityException(Exception):
         message="Data quality flags indicate suspicious values. Flags raised are:\n  - ",
     ):
         self.message = message
-        self.flags = {}
+        self.flags = []
         for flag, value in flag_array.data_vars.items():
             if value.any():
                 for attribute in value.attrs.keys():
