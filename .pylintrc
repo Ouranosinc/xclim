@@ -42,14 +42,15 @@ fail-under=10
 #from-stdin=
 
 # Files or directories to be skipped. They should be base names, not paths.
-ignore=docs,
-       tests,
+ignore=
 
 # Add files or directories matching the regular expressions patterns to the
 # ignore-list. The regex matches against paths and can be in Posix or Windows
 # format. Because '\' represents the directory delimiter on Windows systems, it
 # can't be used as an escape character.
 ignore-paths=
+    docs,
+    xclim/testing/tests,
 
 # Files or directories matching the regular expression patterns are skipped.
 # The regex matches against base names, not paths. The default value ignores
@@ -147,19 +148,30 @@ confidence=HIGH,
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use "--disable=all --enable=classes
 # --disable=W".
-disable=bad-inline-option,
+disable=arguments-differ,
+        arguments-out-of-order,
+        bad-inline-option,
 	    deprecated-pragma,
 	    file-ignored,
 	    invalid-name,
+	    invalid-unary-operand-type,
 	    line-too-long,
 	    locally-disabled,
+	    missing-function-docstring,
 	    missing-module-docstring,
 	    non-ascii-name,
+	    pointless-string-statement,
 	    protected-access,
 	    raw-checker-failed,
 	    suppressed-message,
 	    too-few-public-methods,
 	    too-many-arguments,
+	    too-many-branches,
+	    too-many-lines,
+	    too-many-locals,
+	    too-many-nested-blocks,
+	    too-many-statements,
+	    unspecified-encoding,
 	    unused-argument,
 	    use-symbolic-message-instead,
 	    useless-suppression,
