@@ -25,14 +25,14 @@ SDBA_EXTRA_OUTPUT = "sdba_extra_output"
 SDBA_ENCODE_CF = "sdba_encode_cf"
 KEEP_ATTRS = "keep_attrs"
 
-MISSING_METHODS: dict[str, Callable] = dict()
+MISSING_METHODS: dict[str, Callable] = {}
 
 OPTIONS = {
-    METADATA_LOCALES: list(),
+    METADATA_LOCALES: [],
     DATA_VALIDATION: "raise",
     CF_COMPLIANCE: "warn",
     CHECK_MISSING: "any",
-    MISSING_OPTIONS: dict(),
+    MISSING_OPTIONS: {},
     RUN_LENGTH_UFUNC: "auto",
     SDBA_EXTRA_OUTPUT: False,
     SDBA_ENCODE_CF: False,

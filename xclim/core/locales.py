@@ -286,7 +286,7 @@ def generate_local_dict(locale: str, init_english: bool = False) -> dict:
       If True, fills the initial dictionary with the english versions of the attributes.
       Defaults to False.
     """
-    from xclim.core.indicator import registry
+    from ..core.indicator import registry  # pylint: disable=import-outside-toplevel
 
     if locale in _LOCALES:
         locname, attrs = get_local_dict(locale)

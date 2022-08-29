@@ -134,10 +134,10 @@ class BaseAdjustment(ParametrizableWithDataset):
         return (convert_units_to(inda, target) for inda in inputs), target
 
     @classmethod
-    def _train(ref, hist, **kwargs):
+    def _train(cls, hist, **kwargs):
         raise NotImplementedError()
 
-    def _adjust(sim, *args, **kwargs):
+    def _adjust(self, *args, **kwargs):
         raise NotImplementedError()
 
 

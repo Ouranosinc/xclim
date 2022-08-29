@@ -500,7 +500,7 @@ def percentile_doy(
     ----------
     :cite:cts:`hyndman_sample_1996`
     """
-    from .utils import calc_perc
+    from .utils import calc_perc  # pylint: disable=import-outside-toplevel
 
     # Ensure arr sampling frequency is daily or coarser
     # but cowardly escape the non-inferrable case.
@@ -587,7 +587,7 @@ def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
     bool
       freqA op freqB
     """
-    from xclim.indices.generic import get_op
+    from ..indices.generic import get_op  # pylint: disable=import-outside-toplevel
 
     # Get multiplier and base frequency
     t_a, b_a, _, _ = parse_offset(freqA)

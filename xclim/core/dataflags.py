@@ -10,7 +10,7 @@ from __future__ import annotations
 from decimal import Decimal
 from functools import reduce
 from inspect import signature
-from typing import Sequence, Union
+from typing import Sequence
 
 import numpy as np
 import pint
@@ -28,7 +28,7 @@ from .utils import (
     raise_warn_or_log,
 )
 
-_REGISTRY = dict()
+_REGISTRY = {}
 
 
 class DataQualityException(Exception):
@@ -48,7 +48,7 @@ class DataQualityException(Exception):
         message="Data quality flags indicate suspicious values. Flags raised are:\n  - ",
     ):
         self.message = message
-        self.flags = list()
+        self.flags = {}
         for flag, value in flag_array.data_vars.items():
             if value.any():
                 for attribute in value.attrs.keys():
@@ -89,9 +89,9 @@ def register_methods(func):
 
 
 def _sanitize_attrs(da: xarray.DataArray) -> xarray.DataArray:
-    to_remove = list()
+    to_remove = {}
     for attr in da.attrs.keys():
-        if not str(attr) == "history":
+        if str(attr) != "history":
             to_remove.append(attr)
     for attr in to_remove:
         del da.attrs[attr]
@@ -617,7 +617,7 @@ def data_flags(
         """Handle missing variables in passed datasets."""
         sig = signature(function)
         sig = sig.parameters
-        extra_vars = dict()
+        extra_vars = {}
         for arg, val in sig.items():
             if arg in ["da", var_provided]:
                 continue
@@ -656,7 +656,7 @@ def data_flags(
 
     ds = ds or xarray.Dataset()
 
-    flags = dict()
+    flags = {}
     for flag_func in flag_funcs:
         for name, kwargs in flag_func.items():
             func = _REGISTRY[name]
@@ -678,9 +678,9 @@ def data_flags(
             else:
                 with xarray.set_options(keep_attrs=True):
                     if named_da_variable:
-                        out = func(**named_da_variable, **extras, **(kwargs or dict()))
+                        out = func(**named_da_variable, **extras, **(kwargs or {}))
                     else:
-                        out = func(da, **extras, **(kwargs or dict()))
+                        out = func(da, **extras, **(kwargs or {}))
 
                     # Aggregation
                     if freq is not None:
@@ -726,7 +726,7 @@ def ecad_compliant(
     xarray.DataArray or xarray.Dataset or None
     """
     flags = xarray.Dataset()
-    history = list()
+    history = []
     for var in ds.data_vars:
         df = data_flags(ds[var], ds, dims=dims)
         for flag_name, flag_data in df.data_vars.items():
@@ -753,8 +753,7 @@ def ecad_compliant(
     if raise_flags:
         if np.any([flags[dv] for dv in flags.data_vars]):
             raise DataQualityException(flags)
-        else:
-            return
+        return
 
     ecad_flag = xarray.DataArray(
         # TODO: Test for this change concerning data of type None in dataflag variables

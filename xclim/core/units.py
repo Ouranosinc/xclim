@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 import warnings
 from inspect import signature
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable
 
 import pint.converters
 import pint.unit

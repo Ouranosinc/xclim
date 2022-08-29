@@ -151,8 +151,8 @@ from .utils import (
 )
 
 # Indicators registry
-registry = dict()  # Main class registry
-base_registry = dict()
+registry = {}  # Main class registry
+base_registry = {}
 _indicators_registry = defaultdict(list)  # Private instance registry
 
 
@@ -641,7 +641,7 @@ class Indicator(IndicatorRegistrar):
                 values = kwds.pop(name, None)
                 if values is None:  # None passed, skip
                     continue
-                elif not isinstance(values, (tuple, list)):
+                if not isinstance(values, (tuple, list)):
                     # a single string or callable, same for all outputs
                     values = [values] * n_outs
                 elif len(values) != n_outs:  # A sequence of the wrong length.
@@ -926,7 +926,7 @@ class Indicator(IndicatorRegistrar):
 
         return das, params
 
-    def _postprocess(self, outs, das, params):
+    def _postprocess(self, outs, **kwargs):
         """Actions to done after computing."""
         return outs
 
@@ -1045,7 +1045,7 @@ class Indicator(IndicatorRegistrar):
         for k, v in args.items():
             if self._all_parameters[k].injected:
                 continue
-            elif self._all_parameters[k].kind == InputKind.KWARGS:
+            if self._all_parameters[k].kind == InputKind.KWARGS:
                 kwargs.update(**v)
             elif self._all_parameters[k].kind != InputKind.DATASET:
                 kwargs[k] = v

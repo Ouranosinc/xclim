@@ -616,7 +616,7 @@ def relative_frequency(
         cond = cond.groupby(group.name)
         # length of the groupBy groups
         length = np.array([len(v) for k, v in cond.groups.items()])
-        for i in range(da.ndim - 1):  # add empty dimension(s) to match input
+        for _ in range(da.ndim - 1):  # add empty dimension(s) to match input
             length = np.expand_dims(length, axis=-1)
     # count days with the condition and divide by total nb of days
     out = cond.sum(dim=group.dim, skipna=False) / length

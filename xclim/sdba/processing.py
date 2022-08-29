@@ -6,7 +6,7 @@ Pre and post processing
 from __future__ import annotations
 
 import warnings
-from typing import Any, Sequence, Tuple, Union
+from typing import Sequence
 
 import dask.array as dsk
 import numpy as np
@@ -46,7 +46,7 @@ def adapt_freq(
       and  "sim", Simulated data.
     dim : str
       Dimension name.
-    group : Union[str, Grouper]
+    group : str or Grouper
       Grouping information, see base.Grouper
     thresh : str
       Threshold below which values are considered zero, a quantity with units.
@@ -232,7 +232,7 @@ def normalize(
       The variable to normalize.
     norm : xr.DataArray, optional
       If present, it is used instead of computing the norm again.
-    group : Union[str, Grouper]
+    group : str or Grouper
       Grouping information. See :py:class:`xclim.sdba.base.Grouper` for details..
     kind : {'+', '*'}
       If `kind` is "+", the mean is subtracted from the mean and if it is '*', it is divided from the data.

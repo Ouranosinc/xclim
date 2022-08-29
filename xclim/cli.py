@@ -14,7 +14,7 @@ from xclim.core.utils import InputKind
 from xclim.testing.utils import publish_release_notes, show_versions
 
 try:
-    from dask.distributed import Client, progress
+    from dask.distributed import Client, progress  # pylint: ungrouped-imports
 except ImportError:
     # Distributed is not a dependency of xclim
     Client = None
@@ -24,10 +24,10 @@ except ImportError:
 def _get_indicator(indicator_name):
     try:
         return xc.core.indicator.registry[indicator_name.upper()].get_instance()  # noqa
-    except KeyError:
+    except KeyError as e:
         raise click.BadArgumentUsage(
             f"Indicator '{indicator_name}' not found in xclim."
-        )
+        ) from e
 
 
 def _get_input(ctx):
@@ -259,7 +259,7 @@ def indices(info):
     """List all indicators."""
     formatter = click.HelpFormatter()
     formatter.write_heading("Listing all available indicators for computation.")
-    rows = list()
+    rows = []
     for name, indcls in xc.core.indicator.registry.items():  # noqa
         left = click.style(name.lower(), fg="yellow")
         right = ", ".join(

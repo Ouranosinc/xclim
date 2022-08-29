@@ -403,7 +403,7 @@ def frequency_analysis(
 
 def get_dist(dist):
     """Return a distribution object from `scipy.stats`."""
-    from scipy import stats
+    from scipy import stats  # pylint: disable=import-outside-toplevel
 
     dc = getattr(stats, dist, None)
     if dc is None:
@@ -416,16 +416,17 @@ def get_lm3_dist(dist):
     """Return a distribution object from `lmoments3.distr`."""
     try:
         # fmt: off
-        import lmoments3.distr  # isort: skip
+        import lmoments3.distr  # pylint: disable=import-outside-toplevel
+
         # The lmoments3 library has to be installed from the `develop` branch.
         # pip install git+https://github.com/OpenHydrology/lmoments3.git@develop#egg=lmoments3
         # fmt: on
-    except ModuleNotFoundError:
+    except ModuleNotFoundError as e:
         msg = (
             "The lmoments3 library has to be installed from the `develop` branch. Run "
             "'$ pip install git+https://github.com/OpenHydrology/lmoments3.git@develop#egg=lmoments3'"
         )
-        raise ModuleNotFoundError(msg)
+        raise ModuleNotFoundError(msg) from e
 
     if dist not in _lm3_dist_map:
         raise ValueError(
