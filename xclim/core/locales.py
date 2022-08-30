@@ -207,7 +207,7 @@ def get_local_formatter(
       IETF language tag or a tuple of the language tag and a translation dict, or a tuple of the language tag
       and a path to a json file defining translation of attributes.
     """
-    loc_name, loc_dict = get_local_dict(locale)
+    _, loc_dict = get_local_dict(locale)
     if "attrs_mapping" in loc_dict:
         attrs_mapping = loc_dict["attrs_mapping"].copy()
         mods = attrs_mapping.pop("modifiers")
@@ -286,10 +286,10 @@ def generate_local_dict(locale: str, init_english: bool = False) -> dict:
       If True, fills the initial dictionary with the english versions of the attributes.
       Defaults to False.
     """
-    from xclim.core.indicator import registry
+    from ..core.indicator import registry  # pylint: disable=import-outside-toplevel
 
     if locale in _LOCALES:
-        locname, attrs = get_local_dict(locale)
+        _, attrs = get_local_dict(locale)
         for ind_name in attrs.copy().keys():
             if ind_name != "attrs_mapping" and ind_name not in registry:
                 attrs.pop(ind_name)
