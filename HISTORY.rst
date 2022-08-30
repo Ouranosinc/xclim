@@ -46,6 +46,7 @@ Bug fixes
 * Fixed some ``extlink`` warnings found in `sphinx` and configured ReadTheDocs to use `mamba` as the dependency solver. (:issue:`1139`, :pull:`1140`).
 * Fixed some broken hyperlinks to articles, users, and external documentation throughout the code base and jupyter notebooks. (:pull:`1160`).
 * Addressed a bug that was causing `pylint` to stackoverflow by removing it from the tox configuration. `pylint` should only be called from an active environment. (:pull:`1163`)
+* Fixed an issue with ``xclim.ensembles.kmeans_reduce_ensemble`` which caused it to fail when using dask arrays. (:pull:`1170`).
 * Fixed a formatting issue with virtual indicator modules (`_gen_returns_section`) that was creating malformed `Returns` sections in `sphinx`-generated documentation. (:pull:`1131`).
 
 Internal changes
