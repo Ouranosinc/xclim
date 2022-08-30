@@ -47,7 +47,7 @@ class Parametrizable(dict):
             return self.__getitem__(attr)
         except KeyError as err:
             # Raise the proper error type for getattr
-            raise AttributeError(*err.args)
+            raise AttributeError(*err.args) from err
 
     @property
     def parameters(self):
@@ -514,7 +514,7 @@ def map_blocks(reduces: Sequence[str] = None, **outvars):
         out = seqs[0].copy()
         for seq in seqs[1:]:
             last_index = 0
-            for i, e in enumerate(seq):
+            for e in seq:
                 if e in out:
                     indx = out.index(e)
                     if indx < last_index:

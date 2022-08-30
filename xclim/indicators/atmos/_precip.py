@@ -1,8 +1,6 @@
 """Precipitation indicator definitions."""
 from __future__ import annotations
 
-from inspect import _empty  # noqa
-
 from xclim import indices
 from xclim.core import cfchecks
 from xclim.core.indicator import (

@@ -66,7 +66,7 @@ def _get(
         local_md5 = file_md5_checksum(local_file)
         try:
             url = "/".join((github_url, "raw", branch, md5_name.as_posix()))
-            LOGGER.info("Attempting to fetch remote file md5: %s" % md5_name.as_posix())
+            LOGGER.info(f"Attempting to fetch remote file md5: {md5_name.as_posix()}")
             urlretrieve(url, md5_file)  # nosec
             with open(md5_file) as f:
                 remote_md5 = f.read()
@@ -87,11 +87,11 @@ def _get(
         local_file.parent.mkdir(parents=True, exist_ok=True)
 
         url = "/".join((github_url, "raw", branch, fullname.as_posix()))
-        LOGGER.info("Fetching remote file: %s" % fullname.as_posix())
+        LOGGER.info(f"Fetching remote file: {fullname.as_posix()}")
         urlretrieve(url, local_file)  # nosec
         try:
             url = "/".join((github_url, "raw", branch, md5_name.as_posix()))
-            LOGGER.info("Fetching remote file md5: %s" % md5_name.as_posix())
+            LOGGER.info(f"Fetching remote file md5: {md5_name.as_posix()}")
             urlretrieve(url, md5_file)  # nosec
         except HTTPError as e:
             msg = f"{md5_name.as_posix()} not found. Aborting file retrieval."
@@ -174,10 +174,10 @@ def open_dataset(
         try:
             ds = _open_dataset(dap_file, **kwargs)
             return ds
-        except OSError:
+        except OSError as err:
             msg = "OPeNDAP file not read. Verify that the service is available."
             LOGGER.error(msg)
-            raise OSError(msg)
+            raise OSError(msg) from err
 
     local_file = _get(
         fullname=fullname,
@@ -193,8 +193,8 @@ def open_dataset(
             ds = ds.load()
             local_file.unlink()
         return ds
-    except OSError:
-        raise
+    except OSError as err:
+        raise err
 
 
 def list_datasets(github_repo="Ouranosinc/xclim-testdata", branch="main"):
@@ -204,17 +204,17 @@ def list_datasets(github_repo="Ouranosinc/xclim-testdata", branch="main"):
     This uses an unauthenticated call to GitHub's REST API, so it is limited to 60 requests per hour (per IP).
     A single call of this function triggers one request per subdirectory, so use with parsimony.
     """
-    res = urlopen(  # nosec
+    with urlopen(  # nosec
         f"https://api.github.com/repos/{github_repo}/contents?ref={branch}"
-    )
-    base = json.loads(res.read().decode())
+    ) as res:
+        base = json.loads(res.read().decode())
     records = []
     for folder in base:
         if folder["path"].startswith(".") or folder["size"] > 0:
             # drop hidden folders and other files.
             continue
-        res = urlopen(folder["url"])  # nosec
-        listing = json.loads(res.read().decode())
+        with urlopen(folder["url"]) as res:  # nosec
+            listing = json.loads(res.read().decode())
         for file in listing:
             if file["path"].endswith(".nc"):
                 records.append(
@@ -249,11 +249,11 @@ def list_input_variables(
     dict
       A mapping from variable name to indicator class.
     """
-    from collections import defaultdict
+    from collections import defaultdict  # pylint: disable=import-outside-toplevel
 
-    from xclim import indicators
-    from xclim.core.indicator import registry
-    from xclim.core.utils import InputKind
+    from xclim import indicators  # pylint: disable=import-outside-toplevel
+    from xclim.core.indicator import registry  # pylint: disable=import-outside-toplevel
+    from xclim.core.utils import InputKind  # pylint: disable=import-outside-toplevel
 
     submodules = submodules or [
         sub for sub in dir(indicators) if not sub.startswith("__")
@@ -297,13 +297,13 @@ def get_all_CMIP6_variables(get_cell_methods=True):  # noqa
         words = str(rawstr).split(" ")
         iskey = [word.endswith(":") for word in words]
         cms = {}
-        for i in range(len(words)):
+        for i, _ in enumerate(words):
             if iskey[i] and i + 1 < len(words) and not iskey[i + 1]:
                 cms[words[i][:-1]] = words[i + 1]
         return cms
 
-    for table, df in data.items():
-        for i, row in df.iterrows():
+    for _, df in data.items():
+        for _, row in df.iterrows():
             varname = row["Variable Name"]
             vardata = {
                 "standard_name": row["CF Standard Name"],
@@ -420,7 +420,7 @@ def publish_release_notes(
 
     if not file:
         return history
-    elif isinstance(file, (Path, os.PathLike)):
+    if isinstance(file, (Path, os.PathLike)):
         file = Path(file).open("w")
     print(history, file=file)
 
@@ -482,6 +482,6 @@ def show_versions(file: os.PathLike | StringIO | TextIO | None = None) -> str | 
 
     if not file:
         return installed_versions
-    elif isinstance(file, (Path, os.PathLike)):
+    if isinstance(file, (Path, os.PathLike)):
         file = Path(file).open("w")
     print(installed_versions, file=file)
