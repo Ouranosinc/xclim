@@ -95,11 +95,11 @@ def test_griffiths_drought_factor(p, exp, s, test_discrete, pr_series):
     pr = pr_series(p, units="mm/day")
     smd = pr_series(s, units="mm/day")
 
-    df = griffiths_drought_factor(pr, smd, "xlim")
+    df = griffiths_drought_factor(pr, smd, "xlim").isel(time=-1)
     np.testing.assert_allclose(df, exp, atol=1e-5)
 
     if test_discrete:
-        df = griffiths_drought_factor(pr, smd, "discrete")
+        df = griffiths_drought_factor(pr, smd, "discrete").isel(time=-1)
         np.testing.assert_allclose(df, round(exp), atol=1e-5)
 
 
@@ -111,7 +111,7 @@ def test_griffiths_drought_factor_sliding(pr_series):
     smd = pr_series(20 * np.ones(24), units="mm/day")
     exp = np.array([1.07024, 3.14744, 4.71645, 5.64112, 6.14665])
 
-    df = griffiths_drought_factor(pr, smd, "xlim")
+    df = griffiths_drought_factor(pr, smd, "xlim").isel(time=slice(19, None))
     np.testing.assert_allclose(df, exp, atol=1e-5)
 
 

@@ -197,13 +197,6 @@ def _griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
 # SECTION 2 - Public methods and indices
 
 
-def _keetch_byram_drought_index_pass(pr, tasmax, pr_annual, kbdi0):
-    """Pass inputs on to guvectorized function `_keetch_byram_drought_index`. DO NOT CALL DIRECTLY, use `keetch_byram_drought_index` instead."""
-    # This function is actually only required as xr.apply_ufunc will not receive
-    # a guvectorized function which has the output(s) in its function signature
-    return _keetch_byram_drought_index(pr, tasmax, pr_annual, kbdi0)
-
-
 @declare_units(
     pr="[precipitation]",
     tasmax="[temperature]",
@@ -247,6 +240,13 @@ def keetch_byram_drought_index(
     ----------
     :cite:cts:`ffdi-keetch_1968,ffdi-finkele_2006,ffdi-holgate_2017,ffdi-dolling_2005`
     """
+
+    def _keetch_byram_drought_index_pass(pr, tasmax, pr_annual, kbdi0):
+        """Pass inputs on to guvectorized function `_keetch_byram_drought_index`. DO NOT CALL DIRECTLY, use `keetch_byram_drought_index` instead."""
+        # This function is actually only required as xr.apply_ufunc will not receive
+        # a guvectorized function which has the output(s) in its function signature
+        return _keetch_byram_drought_index(pr, tasmax, pr_annual, kbdi0)
+
     pr = convert_units_to(pr, "mm/day")
     tasmax = convert_units_to(tasmax, "C")
     pr_annual = convert_units_to(pr_annual, "mm/year")
@@ -268,13 +268,6 @@ def keetch_byram_drought_index(
     )
     kbdi.attrs["units"] = "mm/day"
     return kbdi
-
-
-def _griffiths_drought_factor_pass(pr, smd, lim):
-    """Pass inputs on to guvectorized function `_griffiths_drought_factor`. DO NOT CALL DIRECTLY, use `griffiths_drought_factor` instead."""
-    # This function is actually only required as xr.apply_ufunc will not receive
-    # a guvectorized function which has the output(s) in its function signature
-    return _griffiths_drought_factor(pr, smd, lim)
 
 
 @declare_units(
@@ -317,6 +310,13 @@ def griffiths_drought_factor(
     ----------
     :cite:cts:`ffdi-griffiths_1999,ffdi-finkele_2006,ffdi-holgate_2017`
     """
+
+    def _griffiths_drought_factor_pass(pr, smd, lim):
+        """Pass inputs on to guvectorized function `_griffiths_drought_factor`. DO NOT CALL DIRECTLY, use `griffiths_drought_factor` instead."""
+        # This function is actually only required as xr.apply_ufunc will not receive
+        # a guvectorized function which has the output(s) in its function signature
+        return _griffiths_drought_factor(pr, smd, lim)
+
     pr = convert_units_to(pr, "mm/day")
     smd = convert_units_to(smd, "mm/day")
 
@@ -340,8 +340,8 @@ def griffiths_drought_factor(
     df.attrs["units"] = ""
 
     # First non-zero entry is at the 19th time point since df is calculated
-    # from a 20-day rolling window
-    return df.isel(time=slice(19, None))
+    # from a 20-day rolling window. Make prior points NaNs.
+    return df.where(df.time >= df.time.isel(time=19))
 
 
 @declare_units(
@@ -355,7 +355,7 @@ def mcarthur_forest_fire_danger_index(
     T: xr.DataArray,
     H: xr.DataArray,
     V: xr.DataArray,
-):
+):  # noqa: D403
     """McArthur forest fire danger index (FFDI) Mark 5.
 
     This method calculates the FFDI using the formula in :cite:t:`ffdi-noble_1980`.

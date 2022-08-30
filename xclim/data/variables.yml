@@ -113,6 +113,11 @@ variables:
     standard_name: sea_ice_area_fraction
     data_flags:
       - percentage_values_outside_of_bounds:
+  smd:
+    canonical_units: mm
+    cell_methods: "time: mean"
+    description: Soil moisture deficit.
+    standard_name: soil_moisture_deficit
   snc:
     canonical_units: '%'
     cell_methods: "time: mean"
