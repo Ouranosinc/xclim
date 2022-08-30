@@ -33,7 +33,7 @@ def test_indicator_docstring():
     assert doc[6] == "Keywords : health,."
     assert doc[12] == "  Default : `ds.tasmin`. [Required units : [temperature]]"
     assert (
-        doc[35]
+        doc[38]
         == "  Number of heat wave events (heat_wave_events), with additional attributes: **description**: "
         "{freq} number of heat wave events within a given period. A heat wave occurs when daily "
         "minimum and maximum temperatures exceed {thresh_tasmin} and {thresh_tasmax}, respectively, "
