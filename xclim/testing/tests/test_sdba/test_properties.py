@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from xclim import sdba
+from xclim.core.units import convert_units_to
 from xclim.testing import open_dataset
 
 
@@ -22,7 +23,7 @@ def test_mean():
         out_season.values, [4.6115547e-05, 1.7220482e-05, 2.8805329e-05, 2.825359e-05]
     )
 
-    assert out_season.long_name == "Mean"
+    assert out_season.long_name.startswith("Mean")
 
 
 def test_var():
@@ -39,7 +40,7 @@ def test_var():
     np.testing.assert_array_almost_equal(
         out_season.values, [3.9270796e-09, 1.2538864e-09, 1.9057025e-09, 2.8776632e-09]
     )
-    assert out_season.long_name == "Variance"
+    assert out_season.long_name.startswith("Variance")
     assert out_season.units == "kg^2 m-4 s-2"
 
 
@@ -58,7 +59,7 @@ def test_skewness():
         out_season.values,
         [2.036650744163691, 3.7909534745807147, 2.416590445325826, 3.3521301798559566],
     )
-    assert out_season.long_name == "Skewness"
+    assert out_season.long_name.startswith("Skewness")
     assert out_season.units == ""
 
 
@@ -82,7 +83,7 @@ def test_quantile():
             4.135342521749408e-07,
         ],
     )
-    assert out_season.long_name == "Quantile 0.2"
+    assert out_season.long_name.startswith("Quantile 0.2")
 
 
 def test_spell_length_distribution():
@@ -144,7 +145,10 @@ def test_spell_length_distribution():
     ):
         sdba.properties.spell_length_distribution(simt, method="percentile")
 
-    assert tmean.long_name == "mean of spell length when input variable >= quantile 0.9"
+    assert (
+        tmean.long_name
+        == "Average of spell length distribution when the variable is >= the quantile 0.9."
+    )
 
 
 def test_acf():
@@ -156,13 +160,10 @@ def test_acf():
     out = sdba.properties.acf(sim, lag=1, group="time.month").sel(month=1)
     np.testing.assert_array_almost_equal(out.values, [0.11242357313756905])
 
-    with pytest.raises(
-        ValueError,
-        match="Grouping on year is not allowed for this function.",
-    ):
+    with pytest.raises(ValueError, match="Grouping period year is not allowed for"):
         sdba.properties.acf(sim, group="time")
 
-    assert out.long_name == "lag-1 autocorrelation"
+    assert out.long_name.startswith("Lag-1 autocorrelation")
     assert out.units == ""
 
 
@@ -172,8 +173,8 @@ def test_annual_cycle():
         .sel(time=slice("1950", "1952"), location="Vancouver")
         .tasmax
     )
-    amp = sdba.properties.annual_cycle_amplitude(simt, amplitude_type="absolute")
-    relamp = sdba.properties.annual_cycle_amplitude(simt, amplitude_type="relative")
+    amp = sdba.properties.annual_cycle_amplitude(simt)
+    relamp = sdba.properties.relative_annual_cycle_amplitude(simt)
     phase = sdba.properties.annual_cycle_phase(simt)
 
     np.testing.assert_array_almost_equal(
@@ -182,19 +183,19 @@ def test_annual_cycle():
     )
     with pytest.raises(
         ValueError,
-        match="Grouping on season is not allowed for this function.",
+        match="Grouping period season is not allowed for property",
     ):
         sdba.properties.annual_cycle_amplitude(simt, group="time.season")
 
     with pytest.raises(
         ValueError,
-        match="Grouping on month is not allowed for this function.",
+        match="Grouping period month is not allowed for property",
     ):
         sdba.properties.annual_cycle_phase(simt, group="time.month")
 
-    assert amp.long_name == "absolute amplitude of the annual cycle"
-    assert phase.long_name == "Phase of the annual cycle"
-    assert amp.units == "delta_degC"
+    assert amp.long_name.startswith("Absolute amplitude of the annual cycle")
+    assert phase.long_name.startswith("Phase of the annual cycle")
+    assert amp.units == "K"
     assert relamp.units == "%"
     assert phase.units == ""
 
@@ -261,9 +262,7 @@ def test_relative_frequency():
     np.testing.assert_array_almost_equal(
         [test.values, testjan], [0.0045662100456621, 0.010752688172043012]
     )
-    assert (
-        test.long_name == "Relative frequency of days with input variable >= 25 mm d-1"
-    )
+    assert test.long_name == "Relative frequency of values >= 25 mm d-1."
     assert test.units == ""
 
 
@@ -289,7 +288,7 @@ def test_trend():
         [slope.values, pvalue], [0.8254349999999988, 0.6085783558202086], 4
     )
 
-    assert slope.long_name == "slope of the interannual linear trend"
+    assert slope.long_name.startswith("Slope of the interannual linear trend")
     assert slope.units == "K/year"
 
 
@@ -307,4 +306,25 @@ def test_return_value():
     )
 
     np.testing.assert_array_almost_equal([out_y.values, out_djf], [313.154, 278.072], 3)
-    assert out_y.long_name == "20-year max return level"
+    assert out_y.long_name.startswith("20-year maximal return level")
+
+
+def test_get_measure():
+    sim = (
+        open_dataset("sdba/CanESM2_1950-2100.nc")
+        .sel(time=slice("1981", "2010"), location="Vancouver")
+        .pr
+    )
+
+    ref = (
+        open_dataset("sdba/ahccd_1950-2013.nc")
+        .sel(time=slice("1981", "2010"), location="Vancouver")
+        .pr
+    )
+
+    sim = convert_units_to(sim, ref)
+    sim_var = sdba.properties.var(sim)
+    ref_var = sdba.properties.var(ref)
+
+    meas = sdba.properties.var.get_measure()(sim_var, ref_var)
+    np.testing.assert_allclose(meas, [0.408327], rtol=1e-3)

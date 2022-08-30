@@ -374,7 +374,8 @@ class Indicator(IndicatorRegistrar):
     fields could also be present if the indicator was created from outside xclim.
 
     var_name:
-      Output variable(s) name(s).
+      Output variable(s) name(s). For derived single-output indicators, this field is not
+      inherited from the parent indicator and defaults to the identifier.
     standard_name:
       Variable name, must be in the CF standard names table (this is not checked).
     long_name:
@@ -428,7 +429,11 @@ class Indicator(IndicatorRegistrar):
         parameters = cls._ensure_correct_parameters(parameters)
 
         # If needed, wrap compute with declare units
-        if "compute" in kwds and not hasattr(kwds["compute"], "in_units"):
+        if (
+            "compute" in kwds
+            and not hasattr(kwds["compute"], "in_units")
+            and "_variable_mapping" in kwds
+        ):
             # We actually need the inverse mapping (to get cmip6 name -> arg name)
             inv_var_map = dict(map(reversed, kwds["_variable_mapping"].items()))
             # parameters has already been update above.
@@ -460,9 +465,9 @@ class Indicator(IndicatorRegistrar):
 
         # Priority given to passed realm -> parent's realm -> location of the class declaration (official inds only)
         kwds.setdefault("realm", cls.realm or xclim_realm)
-        if kwds["realm"] not in ["atmos", "seaIce", "land", "ocean"]:
+        if kwds["realm"] not in ["atmos", "seaIce", "land", "ocean", "generic"]:
             raise AttributeError(
-                "Indicator's realm must be given as one of 'atmos', 'seaIce', 'land' or 'ocean'"
+                "Indicator's realm must be given as one of 'atmos', 'seaIce', 'land', 'ocean' or 'generic'"
             )
 
         # Create new class object
@@ -591,12 +596,12 @@ class Indicator(IndicatorRegistrar):
         """
         for name, meta in parameters.items():
             if not meta.injected:
-                if meta.kind <= InputKind.OPTIONAL_VARIABLE and meta.units is _empty:
-                    raise ValueError(
-                        f"Input variable {name} is missing expected units. Units are "
-                        "parsed either from the declare_units decorator or from the "
-                        "variable mapping (arg name to CMIP6 name) passed in `input`"
-                    )
+                # if meta.kind <= InputKind.OPTIONAL_VARIABLE and meta.units is _empty:
+                #     raise ValueError(
+                #         f"Input variable {name} is missing expected units. Units are "
+                #         "parsed either from the declare_units decorator or from the "
+                #         "variable mapping (arg name to CMIP6 name) passed in `input`"
+                #     )
                 if meta.kind == InputKind.OPTIONAL_VARIABLE:
                     meta.default = None
                 elif meta.kind in [InputKind.VARIABLE]:
@@ -626,8 +631,6 @@ class Indicator(IndicatorRegistrar):
         if isinstance(cf_attrs, dict):
             # Single output indicator, but we store as a list anyway.
             cf_attrs = [cf_attrs]
-        elif cf_attrs is None and parent_cf_attrs:
-            cf_attrs = deepcopy(parent_cf_attrs)
         elif cf_attrs is None:
             # Attributes were passed the "old" way, with lists or strings directly (only _cf_names)
             # We need to get the number of outputs first, defaulting to the length of parent's cf_attrs or 1
@@ -655,7 +658,7 @@ class Indicator(IndicatorRegistrar):
                         attrs[name] = value
         # else we assume a list of dicts
 
-        # For single output, var_name defauls to identifer.
+        # For single output, var_name defaults to identifier.
         if len(cf_attrs) == 1 and "var_name" not in cf_attrs[0]:
             cf_attrs[0]["var_name"] = identifier
 
@@ -703,9 +706,9 @@ class Indicator(IndicatorRegistrar):
         data = data.copy()
         if "base" in data:
             if isinstance(data["base"], str):
-                cls = registry.get(
-                    data["base"].upper(), base_registry.get(data["base"])
-                )
+                parts = data["base"].split(".")
+                registry_id = ".".join([*parts[:-1], parts[-1].upper()])
+                cls = registry.get(registry_id, base_registry.get(data["base"]))
                 if cls is None:
                     raise ValueError(
                         f"Requested base class {data['base']} is neither in the "

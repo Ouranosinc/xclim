@@ -451,7 +451,7 @@ def gen_call_string(funcname: str, *args, **kwargs):
     Example
     -------
     >>> A = xr.DataArray([1], dims=("x",), name="A")
-    >>> gen_call_string("func", A, b=2.0, c="3", d=[4, 5, 6])
+    >>> gen_call_string("func", A, b=2.0, c="3", d=[10] * 100)
     "func(A, b=2.0, c='3', d=<list>)"
     """
     elements = []
@@ -462,7 +462,9 @@ def gen_call_string(funcname: str, *args, **kwargs):
         elif isinstance(val, (int, float, str, bool)) or val is None:
             rep = repr(val)
         else:
-            rep = f"<{type(val).__name__}>"
+            rep = repr(val)
+            if len(rep) > 50:
+                rep = f"<{type(val).__name__}>"
 
         if name is not None:
             rep = f"{name}={rep}"

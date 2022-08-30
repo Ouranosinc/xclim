@@ -11,6 +11,9 @@ New features and enhancements
 * Adjustment methods of `SBCK <https://github.com/yrobink/SBCK>`_ are wrapped into xclim when that package is installed. (:issue:`1109`, :pull:`1115`).
     - Wrapped SBCK tests are also properly run in the tox testing ensemble. (:pull:`1119`).
 * Method ``FAO_PM98`` (based on Penman-Monteith formula) to compute potential evapotranspiration. (:pull:`1122`).
+* New indices for droughts: SPI (standardized precipitations) and SPEI (standardized water budgets) (:issue:`131`, :pull:`1096`)
+* Most numba functions of ``sdba.nbutils`` now use the lazy compilation mode. This significantly accelerates the import time of xclim. (:issue:`1135`, :pull:`1167`).
+* Statistical properties and measures from ``xclim.sdba`` are now Indicator subclasses (:pull:`1149`).
 
 New indicators
 ^^^^^^^^^^^^^^
@@ -23,7 +26,7 @@ New indicators
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * `scipy` has been temporarily pinned below version 1.9 until lmoments3 tests can be rewritten to account for the new API. (:issue:`1142`, :pull:`1143`).
-* Now requires `xarray>=2022.06.0` (:pull:`1151`).
+* `xclim` now requires `xarray>=2022.06.0`. (:pull:`1151`).
 * Documentation CI (ReadTheDocs) builds will now fail if there are any misconfigured pages, internal link/reference warnings, or broken external hyperlinks. (:issue:`1094`, :pull:`1131`, :issue:`1139`, :pull:`1140`, :pull:`1160`).
 * Call signatures for generic indices have been reordered and/or modified to accept `op`, and optionally `constrain`, in many cases, and `condition`/`conditional`/`operation` has been renamed to `op` for consistency. (:issue:`389`, :pull:`1157`). The affected indices are as follows:
     - `get_op`, `compare`, `threshold_count`, `get_daily_events`, `count_level_crossings`, `count_occurrences`, `first_occurrence`, `last_occurrence`, `spell_length`, `thresholded_statistics`, `temperature_sum`, `degree_days`.
@@ -33,6 +36,7 @@ Breaking changes
     - ``xclim.indices._multivariate.daily_freezethaw_cycles`` -> Replaceable with the generic ``multiday_temperature_swing`` with `thresh_tasmax='0 degC'`, `thresh_tasmin='0 degC'`, `window=1`, and `op='sum'`. The indicator version (``xclim.atmos.daily_freezethaw_cycles``) is unaffected.
     - ``xclim.indices.generic.select_time`` -> Was previously moved to ``xclim.core.calendar``.
 * The `clix-meta` indicator table parsing function (``xclim.core.utils.adapt_clix_meta_yaml``) has been adapted to support the new "op" operator handler. (:pull:`1157`).
+* Because they have been reimplmented as Indicator subclasses, statistical properties and measures of ``xclim.sdba`` no longer preserve attributes of their inputs by default. Use ``xclim.set_options(keep_attrs=True)`` to get the previous behaviour. (:pull:`1149`).
 * English indicator metadata has been adjusted to remove frequencies and other variable-sourced fields in the `long_name` of indicators. English indicators now have an explicit `title` and `abstract`. (:issue:`936`, :pull:`1123`).
 * French indicator metadata translations are now more uniform and follow agreed-upon grammar conventions, removing variable-sourced fields in `long_name_fr`. (:issue:`936`, :pull:`1123`).
 
@@ -62,6 +66,7 @@ Internal changes
 * Added a `sphinx-build -b linkcheck` step to the `tox`-based `"docs"` build as well as to the ReadTheDocs configuration. (:pull:`1160`).
 * `pylint` is now setup to use a `pylintrc` file, allowing for more granular control of warnings and exceptions. Many errors are still present, so addressing them will need to occur gradually. (:pull:`1163`).
 * The generic indices `count_level_crossings`, `count_occurrences`, `first_occurrence`, and `last_occurrence` are now fully tested. (:pull:`1157`).
+* Adjusted the ANUCLIM indices by removing "ANUCLIM" from their titles, modifying their docstrings, and handling `"op"` input in a more user-friendly way. (:issue:`1055`, :pull:`1169`).
 
 0.37.0 (2022-06-20)
 -------------------
