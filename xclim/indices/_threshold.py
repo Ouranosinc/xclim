@@ -1461,7 +1461,7 @@ def snow_cover_duration(
     Returns
     -------
     xarray.DataArray, [time]
-      Number of days where snow depth is greater or equal to threshold.
+      Number of days where snow depth is greater than or equal to threshold.
     """
     thresh = convert_units_to(thresh, snd)
     out = threshold_count(snd, ">=", thresh, freq)
@@ -1470,7 +1470,10 @@ def snow_cover_duration(
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def tn_days_above(
-    tasmin: xarray.DataArray, thresh: str = "20.0 degC", freq: str = "YS"
+    tasmin: xarray.DataArray,
+    thresh: str = "20.0 degC",
+    freq: str = "YS",
+    op: str = ">",
 ):  # noqa: D401
     """Number of days with tasmin above a threshold (number of tropical nights).
 
@@ -1484,6 +1487,8 @@ def tn_days_above(
       Threshold temperature on which to base evaluation.
     freq : str
       Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+      Comparison operation. Default: ">".
 
     Returns
     -------
@@ -1500,13 +1505,16 @@ def tn_days_above(
         TN_{ij} > Threshold [℃]
     """
     thresh = convert_units_to(thresh, tasmin)
-    f = threshold_count(tasmin, ">", thresh, freq)
+    f = threshold_count(tasmin, op, thresh, freq, constrain=(">", ">="))
     return to_agg_units(f, tasmin, "count")
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def tn_days_below(
-    tasmin: xarray.DataArray, thresh: str = "-10.0 degC", freq: str = "YS"
+    tasmin: xarray.DataArray,
+    thresh: str = "-10.0 degC",
+    freq: str = "YS",
+    op: str = "<",
 ) -> xarray.DataArray:  # noqa: D401
     """Number of days with tasmin below a threshold.
 
@@ -1520,6 +1528,8 @@ def tn_days_below(
       Threshold temperature on which to base evaluation.
     freq : str
       Resampling frequency.
+    op : {"<", "<=", "lt", "le"}
+      Comparison operation. Default: "<".
 
     Returns
     -------
@@ -1536,13 +1546,16 @@ def tn_days_below(
         TN_{ij} < Threshold [℃]
     """
     thresh = convert_units_to(thresh, tasmin)
-    f1 = threshold_count(tasmin, "<", thresh, freq)
+    f1 = threshold_count(tasmin, op, thresh, freq, constrain=("<", "<="))
     return to_agg_units(f1, tasmin, "count")
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def tg_days_above(
-    tas: xarray.DataArray, thresh: str = "10.0 degC", freq: str = "YS"
+    tas: xarray.DataArray,
+    thresh: str = "10.0 degC",
+    freq: str = "YS",
+    op: str = ">",
 ):  # noqa: D401
     """Number of days with tas above a threshold.
 
@@ -1556,6 +1569,8 @@ def tg_days_above(
       Threshold temperature on which to base evaluation.
     freq : str
       Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+      Comparison operation. Default: ">".
 
     Returns
     -------
@@ -1572,13 +1587,16 @@ def tg_days_above(
         TG_{ij} > Threshold [℃]
     """
     thresh = convert_units_to(thresh, tas)
-    f = threshold_count(tas, ">", thresh, freq)
+    f = threshold_count(tas, op, thresh, freq, constrain=(">", ">="))
     return to_agg_units(f, tas, "count")
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def tg_days_below(
-    tas: xarray.DataArray, thresh: str = "10.0 degC", freq: str = "YS"
+    tas: xarray.DataArray,
+    thresh: str = "10.0 degC",
+    freq: str = "YS",
+    op: str = "<",
 ):  # noqa: D401
     """Number of days with tas below a threshold.
 
@@ -1592,6 +1610,8 @@ def tg_days_below(
       Threshold temperature on which to base evaluation.
     freq : str
       Resampling frequency.
+    op : {"<", "<=", "lt", "le"}
+      Comparison operation. Default: "<".
 
     Returns
     -------
@@ -1608,13 +1628,16 @@ def tg_days_below(
         TG_{ij} < Threshold [℃]
     """
     thresh = convert_units_to(thresh, tas)
-    f1 = threshold_count(tas, "<", thresh, freq)
+    f1 = threshold_count(tas, op, thresh, freq, constrain=("<", "<="))
     return to_agg_units(f1, tas, "count")
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def tx_days_above(
-    tasmax: xarray.DataArray, thresh: str = "25.0 degC", freq: str = "YS"
+    tasmax: xarray.DataArray,
+    thresh: str = "25.0 degC",
+    freq: str = "YS",
+    op: str = ">",
 ) -> xarray.DataArray:  # noqa: D401
     """Number of days with tasmax above a threshold (number of summer days).
 
@@ -1628,6 +1651,8 @@ def tx_days_above(
       Threshold temperature on which to base evaluation.
     freq : str
       Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+      Comparison operation. Default: ">".
 
     Returns
     -------
@@ -1644,13 +1669,16 @@ def tx_days_above(
         TX_{ij} > Threshold [℃]
     """
     thresh = convert_units_to(thresh, tasmax)
-    f = threshold_count(tasmax, ">", thresh, freq)
+    f = threshold_count(tasmax, op, thresh, freq, constrain=(">", ">="))
     return to_agg_units(f, tasmax, "count")
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def tx_days_below(
-    tasmax: xarray.DataArray, thresh: str = "25.0 degC", freq: str = "YS"
+    tasmax: xarray.DataArray,
+    thresh: str = "25.0 degC",
+    freq: str = "YS",
+    op: str = "<",
 ):  # noqa: D401
     """Number of days with tmax below a threshold.
 
@@ -1664,6 +1692,8 @@ def tx_days_below(
       Threshold temperature on which to base evaluation.
     freq : str
       Resampling frequency.
+    op : {"<", "<=", "lt", "le"}
+      Comparison operation. Default: "<".
 
     Returns
     -------
@@ -1680,7 +1710,7 @@ def tx_days_below(
         TN_{ij} < Threshold [℃]
     """
     thresh = convert_units_to(thresh, tasmax)
-    f1 = threshold_count(tasmax, "<", thresh, freq)
+    f1 = threshold_count(tasmax, op, thresh, freq, constrain=("<", "<="))
     return to_agg_units(f1, tasmax, "count")
 
 

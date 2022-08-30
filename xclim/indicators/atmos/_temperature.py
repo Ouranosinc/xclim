@@ -99,6 +99,7 @@ tn_days_above = TempWithIndexing(
     abstract="The number of days with minimum temperature above a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.tn_days_above,
+    parameters=dict(op=">"),
 )
 
 tn_days_below = TempWithIndexing(
@@ -111,6 +112,7 @@ tn_days_below = TempWithIndexing(
     abstract="The number of days with minimum temperature below a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.tn_days_below,
+    parameters=dict(op="<"),
 )
 
 tg_days_above = TempWithIndexing(
@@ -123,6 +125,7 @@ tg_days_above = TempWithIndexing(
     abstract="The number of days with mean temperature above a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.tg_days_above,
+    parameters=dict(op=">"),
 )
 
 tg_days_below = TempWithIndexing(
@@ -135,6 +138,7 @@ tg_days_below = TempWithIndexing(
     abstract="The number of days with mean temperature below a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.tg_days_below,
+    parameters=dict(op="<"),
 )
 
 tx_days_above = TempWithIndexing(
@@ -147,6 +151,7 @@ tx_days_above = TempWithIndexing(
     abstract="The number of days with maximum temperature above a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.tx_days_above,
+    parameters=dict(op=">"),
 )
 
 tx_days_below = TempWithIndexing(
@@ -159,6 +164,7 @@ tx_days_below = TempWithIndexing(
     abstract="The number of days with maximum temperature below a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.tx_days_below,
+    parameters=dict(op="<"),
 )
 
 tx_tn_days_above = TempWithIndexing(
@@ -502,6 +508,8 @@ daily_freezethaw_cycles = TempWithIndexing(
         "window": 1,
         "thresh_tasmax": {"default": "0 degC"},
         "thresh_tasmin": {"default": "0 degC"},
+        "op_tasmax": ">",
+        "op_tasmin": "<=",
     },
 )
 
@@ -522,6 +530,8 @@ freezethaw_spell_frequency = Temp(
         "op": "count",
         "thresh_tasmax": {"default": "0 degC"},
         "thresh_tasmin": {"default": "0 degC"},
+        "op_tasmax": ">",
+        "op_tasmin": "<=",
     },
 )
 
@@ -542,6 +552,8 @@ freezethaw_spell_mean_length = Temp(
         "op": "mean",
         "thresh_tasmax": {"default": "0 degC"},
         "thresh_tasmin": {"default": "0 degC"},
+        "op_tasmax": ">",
+        "op_tasmin": "<=",
     },
 )
 
@@ -562,6 +574,8 @@ freezethaw_spell_max_length = Temp(
         "op": "max",
         "thresh_tasmax": {"default": "0 degC"},
         "thresh_tasmin": {"default": "0 degC"},
+        "op_tasmax": ">",
+        "op_tasmin": "<=",
     },
 )
 

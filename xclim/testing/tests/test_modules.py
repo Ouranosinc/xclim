@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from inspect import _empty
+from inspect import _empty  # noqa
 from pathlib import Path
 
 import pytest
 import xarray as xr
 import yamale
+from yaml import safe_load
 
+import xclim.core.utils
 from xclim import indicators
 from xclim.core.indicator import build_indicator_module_from_yaml
 from xclim.core.locales import read_locale_file
@@ -51,7 +53,6 @@ def test_virtual_modules(virtual_indicator, atmosds):
                 param.default in (None, _empty)
                 or (param.default == name and name not in atmosds)
             ):
-
                 pytest.skip(f"Indicator {mod}.{indname} has no default for {name}.")
         ind(ds=atmosds)
 
@@ -104,9 +105,9 @@ def test_custom_indices():
 @pytest.mark.requires_docs
 def test_indicator_module_translations():
     # Use the example in the Extending Xclim notebook for testing.
-    nbpath = Path(__file__).parent.parent.parent.parent / "docs" / "notebooks"
+    notebook_path = Path(__file__).parent.parent.parent.parent / "docs" / "notebooks"
 
-    ex = build_indicator_module_from_yaml(nbpath / "example", name="ex_trans")
+    ex = build_indicator_module_from_yaml(notebook_path / "example", name="ex_trans")
     assert ex.RX5day.translate_attrs("fr")["cf_attrs"][0]["long_name"].startswith(
         "Cumul maximal"
     )
@@ -143,7 +144,55 @@ def test_build_indicator_module_from_yaml_edge_cases():
     )
 
 
-class TestOfficalYaml(yamale.YamaleTestCase):
+class TestClixMeta:
+    cdd = """
+indices:
+  cdd:
+    reference: ETCCDI
+    default_period: annual
+    output:
+      var_name: "cdd"
+      standard_name: spell_length_of_days_with_lwe_thickness_of_precipitation_amount_below_threshold
+      proposed_standard_name: spell_length_with_lwe_thickness_of_precipitation_amount_below_threshold
+      long_name: "Maximum consecutive dry days (Precip < 1mm)"
+      units: "day"
+      cell_methods:
+        - time: sum within days
+        - time: sum over days
+    input:
+      data: pr
+    index_function:
+      name: spell_length
+      parameters:
+        threshold:
+          kind: quantity
+          standard_name: lwe_precipitation_rate
+          long_name: "Wet day threshold"
+          data: 1
+          units: "mm day-1"
+        condition:
+          kind: operator
+          operator: "<"
+        reducer:
+          kind: reducer
+          reducer: max
+    ET:
+      short_name: "cdd"
+      long_name: "Consecutive dry days"
+      definition: "Maximum number of consecutive days with P<1mm"
+      comment: "maximum consecutive days when daily total precipitation is below 1 mm"
+"""
+
+    def test_simple_clix_meta_adaptor(self, tmp_path):
+        test_yaml = tmp_path.joinpath("test.yaml")
+
+        xclim.core.utils.adapt_clix_meta_yaml(self.cdd, test_yaml)
+
+        converted = safe_load(Path(test_yaml).open())
+        assert "cdd" in converted["indicators"]
+
+
+class TestOfficialYaml(yamale.YamaleTestCase):
     base_dir = str(Path(__file__).parent.parent.parent / "data")
     schema = "schema.yml"
     yaml = ["cf.yml", "anuclim.yml", "icclim.yml"]
