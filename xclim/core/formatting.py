@@ -132,7 +132,7 @@ class AttrFormatter(string.Formatter):
             raise ValueError(
                 f"No known mapping for string '{value}' with modifier '{format_spec}'"
             )
-        elif format_spec == "r":
+        if format_spec == "r":
             return super().format_field(value, "")
         return super().format_field(value, format_spec)
 
@@ -198,9 +198,9 @@ def parse_doc(doc: str) -> dict[str, str]:
       A dictionary with all parsed sections.
     """
     if doc is None:
-        return dict()
+        return {}
 
-    out = dict()
+    out = {}
 
     sections = re.split(r"(\w+\s?\w+)\n\s+-{3,50}", doc)  # obj.__doc__.split('\n\n')
     intro = sections.pop(0)
@@ -362,7 +362,9 @@ def update_history(
     --------
     merge_attributes
     """
-    from xclim import __version__  # pylint: disable=cyclic-import
+    from xclim import (  # pylint: disable=cyclic-import,import-outside-toplevel
+        __version__,
+    )
 
     merged_history = merge_attributes(
         "history",
