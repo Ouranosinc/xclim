@@ -35,7 +35,7 @@ indicators:
       units: days
       var_name: fd
     parameters:
-      condition: <
+      op: <
       threshold: 0 degC
       freq:
         default: YS
