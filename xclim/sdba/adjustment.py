@@ -134,10 +134,10 @@ class BaseAdjustment(ParametrizableWithDataset):
         return (convert_units_to(inda, target) for inda in inputs), target
 
     @classmethod
-    def _train(ref, hist, **kwargs):
+    def _train(cls, ref, hist, **kwargs):
         raise NotImplementedError()
 
-    def _adjust(sim, *args, **kwargs):
+    def _adjust(self, sim, *args, **kwargs):
         raise NotImplementedError()
 
 
@@ -1119,7 +1119,8 @@ class NpdfTransform(Adjust):
         adj_kws: Mapping[str, Any] | None = None,
         rot_matrices: xr.DataArray | None = None,
     ):
-        base_kws or {}
+        if base_kws is None:
+            base_kws = {}
         if "kind" in base_kws:
             warn(
                 f'The adjustment kind cannot be controlled when using {cls.__name__}, it defaults to "+".'

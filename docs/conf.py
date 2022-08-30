@@ -158,7 +158,11 @@ register_plugin("pybtex.style.formatting", "xcstyle", XCStyle)
 bibtex_bibfiles = ["references.bib"]
 bibtex_reference_style = "author_year"
 
-nbsphinx_execute = "auto"
+if os.getenv("SKIPNOTEBOOKS"):
+    warnings.warn("Not executing notebooks.")
+    nbsphinx_execute = "never"
+else:
+    nbsphinx_execute = "auto"
 nbsphinx_prolog = r"""
 {% set docname = env.doc2path(env.docname, base=None) %}
 
@@ -184,7 +188,7 @@ project = "xclim"
 copyright = (
     f"2018-{datetime.datetime.now().year}, Ouranos Inc., Travis Logan, and contributors"
 )
-author = "Travis Logan"
+author = "xclim Project Development Team"
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout
@@ -257,15 +261,10 @@ htmlhelp_basename = "xclimdoc"
 
 # -- Options for LaTeX output ------------------------------------------
 
-latex_engine = "xelatex"
+latex_engine = "pdflatex"
 latex_logo = "_static/_images/xclim-logo.png"
 
 latex_elements = {
-    "fontpkg": r"""
-\setmainfont{DejaVu Serif}
-\setsansfont{DejaVu Sans}
-\setmonofont{DejaVu Sans Mono}
-""",
     # The paper size ('letterpaper' or 'a4paper').
     "papersize": "letterpaper",
     # The font size ('10pt', '11pt' or '12pt').
@@ -282,7 +281,13 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass
 # [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "xclim.tex", "xclim Documentation", "Travis Logan", "manual")
+    (
+        master_doc,
+        "xclim.tex",
+        "xclim Documentation",
+        "xclim Project Development Team",
+        "manual",
+    )
 ]
 
 # -- Options for manual page output ------------------------------------

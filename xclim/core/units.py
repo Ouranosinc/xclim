@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 import warnings
 from inspect import signature
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable
 
 import pint.converters
 import pint.unit
@@ -202,7 +202,7 @@ def pint2cfunits(value: UnitDefinition) -> str:
 
         return f"{u}{neg}{p}"
 
-    out, n = re.subn(pat, repl, s)
+    out, _ = re.subn(pat, repl, s)
 
     # Remove multiplications
     out = out.replace(" * ", " ")
@@ -389,8 +389,10 @@ def infer_sampling_units(
     multi, base, _, _ = parse_offset(freq)
     try:
         out = multi, FREQ_UNITS[base]
-    except KeyError:
-        raise ValueError(f"Sampling frequency {freq} has no corresponding units.")
+    except KeyError as err:
+        raise ValueError(
+            f"Sampling frequency {freq} has no corresponding units."
+        ) from err
     if out == (7, "d"):
         # Special case for weekly frequency. xarray's CFTimeOffsets do not have "W".
         return 1, "week"

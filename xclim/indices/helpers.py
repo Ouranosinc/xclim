@@ -360,3 +360,44 @@ def day_lengths(
     ).assign_attrs(units="h")
 
     return day_length_hours
+
+
+def wind_speed_height_conversion(
+    ua: xr.DataArray,
+    h_source: str,
+    h_target: str,
+    method: str = "log",
+) -> xr.DataArray:
+    r"""Wind speed at two meters.
+
+    Parameters
+    ----------
+    ua: xarray.DataArray
+      Wind speed at height h
+    h_source: str
+      Height of the input wind speed `ua` (e.g. `h == "10 m"` for a wind speed at `10 meters`)
+    h_target: str
+      Height of the output wind speed
+    method : {"log"}
+      Method used to convert wind speed from one height to another
+
+    Returns
+    -------
+    xarray.DataArray
+      Wind speed at height `h_target`
+
+    References
+    ----------
+    Allen, R. G., Pereira, L. S., Raes, D., & Smith, M. (1998). Crop evapotranspiration-Guidelines for computing crop water requirements-FAO Irrigation and drainage paper 56. Fao, Rome, 300(9), D05109.
+    """
+    h_source = convert_units_to(h_source, "m")
+    h_target = convert_units_to(h_target, "m")
+    if method == "log":
+        if min(h_source, h_target) < 1 + 5.42 / 67.8:
+            raise ValueError(
+                f"The height {min(h_source, h_target)}m is too small for method {method}. Heights must be greater than {1 + 5.42 / 67.8}"
+            )
+        with xr.set_options(keep_attrs=True):
+            return ua * np.log(67.8 * h_target - 5.42) / np.log(67.8 * h_source - 5.42)
+    else:
+        raise NotImplementedError(f"'{method}' method is not implemented.")

@@ -545,6 +545,12 @@ def latitude_temperature_index(
     tasmax="[temperature]",
     tas="[temperature]",
     lat="[]",
+    hurs="[]",
+    rsds="[radiation]",
+    rsus="[radiation]",
+    rlds="[radiation]",
+    rlus="[radiation]",
+    sfcwind="[speed]",
 )
 def water_budget(
     pr: xarray.DataArray,
@@ -553,6 +559,12 @@ def water_budget(
     tasmax: xarray.DataArray | None = None,
     tas: xarray.DataArray | None = None,
     lat: xarray.DataArray | None = None,
+    hurs: xarray.DataArray | None = None,
+    rsds: xarray.DataArray | None = None,
+    rsus: xarray.DataArray | None = None,
+    rlds: xarray.DataArray | None = None,
+    rlus: xarray.DataArray | None = None,
+    sfcwind: xarray.DataArray | None = None,
     method: str = "BR65",
 ) -> xarray.DataArray:
     r"""Precipitation minus potential evapotranspiration.
@@ -574,6 +586,18 @@ def water_budget(
       Mean daily temperature.
     lat : xarray.DataArray
       Latitude, needed if evspsblpot is not given.
+    hurs : xarray.DataArray
+      Relative humidity.
+    rsds : xarray.DataArray
+      Surface Downwelling Shortwave Radiation
+    rsus : xarray.DataArray
+      Surface Upwelling Shortwave Radiation
+    rlds : xarray.DataArray
+      Surface Downwelling Longwave Radiation
+    rlus : xarray.DataArray
+      Surface Upwelling Longwave Radiation
+    sfcwind : xarray.DataArray
+      Surface wind velocity (at 10 m)
     method : str
       Method to use to calculate the potential evapotranspiration.
 
@@ -590,7 +614,17 @@ def water_budget(
 
     if evspsblpot is None:
         pet = xci.potential_evapotranspiration(
-            tasmin=tasmin, tasmax=tasmax, tas=tas, lat=lat, method=method
+            tasmin=tasmin,
+            tasmax=tasmax,
+            tas=tas,
+            lat=lat,
+            hurs=hurs,
+            rsds=rsds,
+            rsus=rsus,
+            rlds=rlds,
+            rlus=rlus,
+            sfcwind=sfcwind,
+            method=method,
         )
     else:
         pet = convert_units_to(evspsblpot, "kg m-2 s-1")
@@ -671,9 +705,9 @@ def standardized_precipitation_index(
     """
     # "WPM" method doesn't seem to work for gamma or pearson3
     dist_and_methods = {"gamma": ["ML", "APP"]}
-    if dist not in dist_and_methods.keys():
+    if dist not in dist_and_methods:
         raise NotImplementedError(f"The distribution `{dist}` is not supported.")
-    elif method not in dist_and_methods[dist]:
+    if method not in dist_and_methods[dist]:
         raise NotImplementedError(
             f"The method `{method}` is not supported for distribution `{dist}`."
         )
@@ -707,8 +741,7 @@ def standardized_precipitation_index(
                     stacklevel=2,
                 )
                 return True
-            else:
-                return False
+            return False
 
         if needs_rechunking(pr):
             pr = pr.chunk({"time": -1})

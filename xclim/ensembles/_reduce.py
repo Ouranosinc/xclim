@@ -9,7 +9,6 @@ the simulated climate variability.
 from __future__ import annotations
 
 import os
-from typing import Optional, Union
 from warnings import warn
 
 import numpy as np
@@ -22,12 +21,8 @@ from sklearn.cluster import KMeans
 try:
     from matplotlib import pyplot as plt  # noqa
 
-    if not os.getenv("READTHEDOCS"):
-        warn("Matplotlib installed. Setting make_graph to True.")
     MPL_INSTALLED = True
-
 except ImportError:
-    warn("Matplotlib not found. No graph data will be produced.")
     plt = None
     MPL_INSTALLED = False
 
@@ -91,7 +86,7 @@ def kkz_reduce_ensemble(
     )
     selected.append(unselected.pop(dist0.argmin()))
 
-    for i in range(1, num_select):
+    for _ in range(1, num_select):
         dist = cdist(
             data.isel(realization=selected),
             data.isel(realization=unselected),

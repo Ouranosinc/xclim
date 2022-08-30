@@ -18,6 +18,8 @@ on:
       - docs/*.rst
       - .github/**.yml
       - .pre-commit-config.yaml
+      - .readthedocs.yml
+      - .yamllint.yaml
 
 jobs:
   bump_patch_version:
