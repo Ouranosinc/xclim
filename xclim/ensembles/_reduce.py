@@ -238,9 +238,8 @@ def kmeans_reduce_ensemble(
     n_idx = np.shape(data)[1]  # number of indicators
 
     # normalize the data matrix
-    z = xarray.DataArray(
-        scipy.stats.zscore(data.data, axis=0, ddof=1), coords=data.coords
-    )  # ddof=1 to be the same as Matlab's zscore
+    std = data.std(dim="realization", ddof=1)
+    z = (data - data.mean(dim="realization")) / std.where(std > 0)
 
     if sample_weights is None:
         sample_weights = np.ones(n_sim)
