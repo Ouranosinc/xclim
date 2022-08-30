@@ -34,6 +34,7 @@ Breaking changes
     - ``xclim.indices._multivariate.daily_freezethaw_cycles`` -> Replaceable with the generic ``multiday_temperature_swing`` with `thresh_tasmax='0 degC'`, `thresh_tasmin='0 degC'`, `window=1`, and `op='sum'`. The indicator version (``xclim.atmos.daily_freezethaw_cycles``) is unaffected.
     - ``xclim.indices.generic.select_time`` -> Was previously moved to ``xclim.core.calendar``.
 * The `clix-meta` indicator table parsing function (``xclim.core.utils.adapt_clix_meta_yaml``) has been adapted to support the new "op" operator handler. (:pull:`1157`).
+* The ``xclim.indices.generic.extreme_temperature_range`` function has been fixed so it now does what its definition says. Results from ``xclim.indicators.cf.etr`` will change. (:issue:`1172`, :pull:`1173`).
 
 Bug fixes
 ^^^^^^^^^
