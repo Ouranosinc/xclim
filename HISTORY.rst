@@ -52,6 +52,7 @@ Internal changes
 * Configured the LaTeX build of the documentation to ignore the custom bibliographies, as they were redundant in the generated PDF. (:pull:`1158`).
 * Run length encoding (``xclim.indices.run_length.rle``) has been optimized. (:issue:`956`, :pull:`1122`).
 * Added a `sphinx-build -b linkcheck` step to the `tox`-based `"docs"` build as well as to the ReadTheDocs configuration. (:pull:`1160`).
+* `pylint` is now setup to use a `pylintrc` file, allowing for more granular control of warnings and exceptions. Many errors are still present, so addressing them will need to occur gradually. (:pull:`1163`).
 * The generic indices `count_level_crossings`, `count_occurrences`, `first_occurrence`, and `last_occurrence` are now fully tested. (:pull:`1157`).
 
 Bug fixes
@@ -59,6 +60,7 @@ Bug fixes
 * Fix ``biological_effective_degree_days`` for non-scalar latitudes, when using method "gladstones". (:issue:`1136`, :pull:`1137`).
 * Fixed some ``extlink`` warnings found in `sphinx` and configured ReadTheDocs to use `mamba` as the dependency solver. (:issue:`1139`, :pull:`1140`).
 * Fixed some broken hyperlinks to articles, users, and external documentation throughout the code base and jupyter notebooks. (:pull:`1160`).
+* Addressed a bug that was causing `pylint` to stackoverflow by removing it from the tox configuration. `pylint` should only be called from an active environment. (:pull:`1163`)
 
 0.37.0 (2022-06-20)
 -------------------

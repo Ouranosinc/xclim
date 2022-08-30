@@ -705,9 +705,9 @@ def standardized_precipitation_index(
     """
     # "WPM" method doesn't seem to work for gamma or pearson3
     dist_and_methods = {"gamma": ["ML", "APP"]}
-    if dist not in dist_and_methods.keys():
+    if dist not in dist_and_methods:
         raise NotImplementedError(f"The distribution `{dist}` is not supported.")
-    elif method not in dist_and_methods[dist]:
+    if method not in dist_and_methods[dist]:
         raise NotImplementedError(
             f"The method `{method}` is not supported for distribution `{dist}`."
         )
@@ -741,8 +741,7 @@ def standardized_precipitation_index(
                     stacklevel=2,
                 )
                 return True
-            else:
-                return False
+            return False
 
         if needs_rechunking(pr):
             pr = pr.chunk({"time": -1})

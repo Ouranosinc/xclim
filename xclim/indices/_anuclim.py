@@ -336,10 +336,10 @@ def prcptot_wetdry_quarter(
 
     try:
         oper = _np_ops[op]
-    except KeyError:
+    except KeyError as err:
         raise NotImplementedError(
             f'Unknown operation "{op}" ; not one of "wettest" or "driest"'
-        )
+        ) from err
 
     out = select_resample_op(pr_qrt, oper, freq)
     out.attrs["units"] = pr_qrt.units
