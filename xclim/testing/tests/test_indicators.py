@@ -636,7 +636,7 @@ def test_indicator_from_dict():
         compute="thresholded_statistics",
         parameters=dict(
             threshold={"description": "A threshold temp"},
-            condition="<",
+            op="<",
             reducer="mean",
         ),
         input={"data": "tas"},
@@ -647,8 +647,8 @@ def test_indicator_from_dict():
     assert ind.realm == "atmos"
     # Parameters metadata modification
     assert ind.parameters["threshold"].description == "A threshold temp"
-    # Injection of paramters
-    assert ind.injected_parameters["condition"] == "<"
+    # Injection of parameters
+    assert ind.injected_parameters["op"] == "<"
     # Default value for input variable injected and meta injected
     assert ind._variable_mapping["data"] == "tas"
     assert signature(ind).parameters["tas"].default == "tas"
@@ -660,7 +660,7 @@ def test_indicator_from_dict():
 
 
 def test_indicator_errors():
-    def func(data: xr.DataArray, thresh: str = "0 degC", freq: str = "YS"):
+    def func(data: xr.DataArray, thresh: str = "0 degC", freq: str = "YS"):  # noqa
         return data
 
     doc = [
@@ -752,7 +752,7 @@ def test_indicator_errors():
         input={"data": "tas"},
     )
     with pytest.raises(ValueError, match="ResamplingIndicator require a 'freq'"):
-        ind = Daily(identifier="indi", module="test", **d)
+        Daily(identifier="indi", module="test", **d)
 
 
 def test_indicator_call_errors(tas_series):

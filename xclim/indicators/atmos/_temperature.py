@@ -97,6 +97,7 @@ tn_days_above = TempWithIndexing(
     description="{freq} number of days where daily minimum temperature exceeds {thresh}.",
     cell_methods="time: sum over days",
     compute=indices.tn_days_above,
+    parameters=dict(op=">"),
 )
 
 tn_days_below = TempWithIndexing(
@@ -107,6 +108,7 @@ tn_days_below = TempWithIndexing(
     description="{freq} number of days where daily minimum temperature is below {thresh}.",
     cell_methods="time: sum over days",
     compute=indices.tn_days_below,
+    parameters=dict(op="<"),
 )
 
 tg_days_above = TempWithIndexing(
@@ -117,6 +119,7 @@ tg_days_above = TempWithIndexing(
     description="{freq} number of days where daily mean temperature exceeds {thresh}.",
     cell_methods="time: sum over days",
     compute=indices.tg_days_above,
+    parameters=dict(op=">"),
 )
 
 tg_days_below = TempWithIndexing(
@@ -127,6 +130,7 @@ tg_days_below = TempWithIndexing(
     description="{freq} number of days where daily mean temperature is below {thresh}.",
     cell_methods="time: sum over days",
     compute=indices.tg_days_below,
+    parameters=dict(op="<"),
 )
 
 tx_days_above = TempWithIndexing(
@@ -137,6 +141,7 @@ tx_days_above = TempWithIndexing(
     description="{freq} number of days where daily maximum temperature exceeds {thresh}.",
     cell_methods="time: sum over days",
     compute=indices.tx_days_above,
+    parameters=dict(op=">"),
 )
 
 tx_days_below = TempWithIndexing(
@@ -147,6 +152,7 @@ tx_days_below = TempWithIndexing(
     description="{freq} number of days where daily max temperature is below {thresh}.",
     cell_methods="time: sum over days",
     compute=indices.tx_days_below,
+    parameters=dict(op="<"),
 )
 
 tx_tn_days_above = TempWithIndexing(
@@ -441,7 +447,7 @@ daily_freezethaw_cycles = TempWithIndexing(
     units="days",
     long_name="daily freezethaw cycles",
     description="{freq} number of days with a diurnal freeze-thaw cycle "
-    ": Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin}.",
+    ": Tmax {op_tasmax} {thresh_tasmax} and Tmin {op_tasmin} {thresh_tasmin}.",
     cell_methods="",
     compute=indices.multiday_temperature_swing,
     parameters={
@@ -449,6 +455,8 @@ daily_freezethaw_cycles = TempWithIndexing(
         "window": 1,
         "thresh_tasmax": {"default": "0 degC"},
         "thresh_tasmin": {"default": "0 degC"},
+        "op_tasmax": ">",
+        "op_tasmin": "<=",
     },
 )
 
@@ -459,7 +467,7 @@ freezethaw_spell_frequency = Temp(
     units="days",
     long_name="{freq} number of freeze-thaw spells.",
     description="{freq} number of freeze-thaw spells"
-    ": Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin} "
+    ": Tmax {op_tasmax} {thresh_tasmax} and Tmin {op_tasmin} {thresh_tasmin} "
     "for at least {window} consecutive day(s).",
     cell_methods="",
     compute=indices.multiday_temperature_swing,
@@ -467,6 +475,8 @@ freezethaw_spell_frequency = Temp(
         "op": "count",
         "thresh_tasmax": {"default": "0 degC"},
         "thresh_tasmin": {"default": "0 degC"},
+        "op_tasmax": ">",
+        "op_tasmin": "<=",
     },
 )
 
@@ -477,7 +487,7 @@ freezethaw_spell_mean_length = Temp(
     units="days",
     long_name="{freq} average length of freeze-thaw spells.",
     description="{freq} average length of freeze-thaw spells"
-    ": Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin} "
+    ": Tmax {op_tasmax} {thresh_tasmax} and Tmin {op_tasmin} {thresh_tasmin} "
     "for at least {window} consecutive day(s).",
     cell_methods="",
     compute=indices.multiday_temperature_swing,
@@ -485,6 +495,8 @@ freezethaw_spell_mean_length = Temp(
         "op": "mean",
         "thresh_tasmax": {"default": "0 degC"},
         "thresh_tasmin": {"default": "0 degC"},
+        "op_tasmax": ">",
+        "op_tasmin": "<=",
     },
 )
 
@@ -495,7 +507,7 @@ freezethaw_spell_max_length = Temp(
     units="days",
     long_name="{freq} maximal length of freeze-thaw spells.",
     description="{freq} maximal length of freeze-thaw spells"
-    ": Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin} "
+    ": Tmax {op_tasmax} {thresh_tasmax} and Tmin {op_tasmin} {thresh_tasmin} "
     "for at least {window} consecutive day(s).",
     cell_methods="",
     compute=indices.multiday_temperature_swing,
@@ -503,6 +515,8 @@ freezethaw_spell_max_length = Temp(
         "op": "max",
         "thresh_tasmax": {"default": "0 degC"},
         "thresh_tasmin": {"default": "0 degC"},
+        "op_tasmax": ">",
+        "op_tasmin": "<=",
     },
 )
 
