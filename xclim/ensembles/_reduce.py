@@ -21,12 +21,8 @@ from sklearn.cluster import KMeans
 try:
     from matplotlib import pyplot as plt  # noqa
 
-    if not os.getenv("READTHEDOCS"):
-        warn("Matplotlib installed. Setting make_graph to True.")
     MPL_INSTALLED = True
-
 except ImportError:
-    warn("Matplotlib not found. No graph data will be produced.")
     plt = None
     MPL_INSTALLED = False
 
