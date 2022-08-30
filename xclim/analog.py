@@ -71,7 +71,7 @@ from scipy import __version__ as __scipy_version__
 from scipy import spatial
 from scipy.spatial import cKDTree as KDTree
 
-metrics = dict()
+metrics = {}
 
 
 def spatial_analogs(
@@ -134,10 +134,10 @@ def spatial_analogs(
 
     try:
         metric = metrics[method]
-    except KeyError:
+    except KeyError as e:
         raise ValueError(
             f"Method {method} is not implemented. Available methods are : {','.join(metrics.keys())}."
-        )
+        ) from e
 
     if candidates.chunks is not None:
         candidates = candidates.chunk({"_indices": -1})
@@ -355,8 +355,8 @@ def zech_aslan(x: np.ndarray, y: np.ndarray, *, dmin: float = 1e-12) -> float:
     :cite:cts:`grenier_assessment_2013,zech_multivariate_2003,aslan_new_2003`
 
     """
-    nx, d = x.shape
-    ny, d = y.shape
+    nx, _ = x.shape
+    ny, _ = y.shape
 
     v = (x.std(axis=0, ddof=1) * y.std(axis=0, ddof=1)).astype(np.double)
 
@@ -462,8 +462,10 @@ def friedman_rafsky(x: np.ndarray, y: np.ndarray) -> float:
     :cite:cts:`friedman_multivariate_1979`
 
     """
-    from scipy.sparse.csgraph import minimum_spanning_tree
-    from sklearn import neighbors
+    from scipy.sparse.csgraph import (  # pylint: disable=import-outside-toplevel
+        minimum_spanning_tree,
+    )
+    from sklearn import neighbors  # pylint: disable=import-outside-toplevel
 
     nx, _ = x.shape
     ny, _ = y.shape
@@ -610,7 +612,7 @@ def kldiv(
 
     # There is a mistake in the paper. In Eq. 14, the right side misses a
     # negative sign on the first term of the right-hand side.
-    out = list()
+    out = []
     for ki in ka:
         # The 0th nearest neighbour of x[i] in x is x[i] itself.
         # Hence, we take the k'th + 1, which in 0-based indexing is given by
