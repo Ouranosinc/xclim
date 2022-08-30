@@ -48,6 +48,7 @@ Bug fixes
 * Fixed some ``extlink`` warnings found in `sphinx` and configured ReadTheDocs to use `mamba` as the dependency solver. (:issue:`1139`, :pull:`1140`).
 * Fixed some broken hyperlinks to articles, users, and external documentation throughout the code base and jupyter notebooks. (:pull:`1160`).
 * Addressed a bug that was causing `pylint` to stackoverflow by removing it from the tox configuration. `pylint` should only be called from an active environment. (:pull:`1163`)
+* Fixed kmeans_reduce_ensemble breaking when using dask arrays (:pull:`1170`)
 
 Internal changes
 ^^^^^^^^^^^^^^^^
