@@ -690,7 +690,7 @@ def heat_wave_frequency(
     cond = (compare(tasmin, op, thresh_tasmin, constrain)) & (
         compare(tasmax, op, thresh_tasmax, constrain)
     )
-    
+
     out = rl.resample_and_rl(
         cond,
         resample_before_rl,
@@ -1705,7 +1705,7 @@ def warm_spell_duration_index(
         window=window,
         freq=freq,
     )
-    
+
     return to_agg_units(out, tasmax, "count")
 
 
