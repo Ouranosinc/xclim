@@ -22,7 +22,6 @@ New indicators
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* `scipy` has been temporarily pinned below version 1.9 until lmoments3 tests can be rewritten to account for the new API. (:issue:`1142`, :pull:`1143`).
 * Now requires `xarray>=2022.06.0` (:pull:`1151`).
 * Documentation CI (ReadTheDocs) builds will now fail if there are any misconfigured pages, internal link/reference warnings, or broken external hyperlinks. (:issue:`1094`, :pull:`1131`, :issue:`1139`, :pull:`1140`, :pull:`1160`).
 * Call signatures for generic indices have been reordered and/or modified to accept `op`, and optionally `constrain`, in many cases, and `condition`/`conditional`/`operation` has been renamed to `op` for consistency. (:issue:`389`, :pull:`1157`). The affected indices are as follows:
@@ -59,6 +58,7 @@ Internal changes
 * Added a `sphinx-build -b linkcheck` step to the `tox`-based `"docs"` build as well as to the ReadTheDocs configuration. (:pull:`1160`).
 * `pylint` is now setup to use a `pylintrc` file, allowing for more granular control of warnings and exceptions. Many errors are still present, so addressing them will need to occur gradually. (:pull:`1163`).
 * The generic indices `count_level_crossings`, `count_occurrences`, `first_occurrence`, and `last_occurrence` are now fully tested. (:pull:`1157`).
+* (`xclim` 0.37.x development builds) `scipy` was temporarily pinned below version 1.9 until lmoments3 tests could be adapted to account for the new API. (:issue:`1142`, :pull:`1143`, :pull:`1171`).
 
 0.37.0 (2022-06-20)
 -------------------
@@ -517,7 +517,7 @@ Bug fixes
 * Dimensions in a grouper's ``add_dims`` are now taken into consideration in function wrapped with ``map_blocks/groups``. This feature is still not fully tested throughout ``sdba`` though, so use with caution.
 * Better dtype preservation throughout ``sdba``.
 * "constant" extrapolation in the quantile mappings' adjustment is now padding values just above and under the target's max and min, instead of ``±np.inf``.
-* Fixes in ``sdba.LOCI`` for the case where a grouping with additionnal dimensions is used.
+* Fixes in ``sdba.LOCI`` for the case where a grouping with additional dimensions is used.
 
 Internal Changes
 ^^^^^^^^^^^^^^^^
