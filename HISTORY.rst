@@ -31,6 +31,7 @@ Bug fixes
 * Fixed the signature and docstring of ``heat_index`` by changing ``tasmax`` to ``tas``. (:issue:`1126`, :pull:`1128`).
 * Fixed a formatting issue with virtual indicator modules (`_gen_returns_section`) that was creating malformed `Returns` sections in `sphinx`-generated documentation. (:pull:`1131`).
 * Removed some artefact reference roles introduced in :pull:`1131` that were causing LaTeX builds of the documentation to fail. (:issue:`1154`, :pull:`1156`).
+* Fixed kmeans_reduce_ensemble breaking when using dask arrays (:pull:`1170`)
 
 Internal changes
 ^^^^^^^^^^^^^^^^
