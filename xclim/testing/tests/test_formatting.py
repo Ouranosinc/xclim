@@ -59,5 +59,5 @@ def test_update_xclim_history(atmosds):
     assert dt.timedelta(0) < (dt.datetime.now() - date) < dt.timedelta(seconds=3)
     assert matches[1] == "tas"
     assert matches[2] == "func"
-    assert matches[3] == "da=tas, arg1=1, arg2=<list>, arg3=None"
+    assert matches[3] == "da=tas, arg1=1, arg2=[1, 2], arg3=None"
     assert matches[4] == __version__
