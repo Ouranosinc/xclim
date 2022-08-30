@@ -151,7 +151,7 @@ def bootstrap_series():
 
 @pytest.fixture
 def prsn_series():
-    def _prsn_series(values, start="7/1/2000"):
+    def _prsn_series(values, start="7/1/2000", units="kg m-2 s-1"):
         coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
@@ -161,7 +161,7 @@ def prsn_series():
             attrs={
                 "standard_name": "solid_precipitation_flux",
                 "cell_methods": "time: mean within days",
-                "units": "kg m-2 s-1",
+                "units": units,
             },
         )
 
@@ -172,7 +172,7 @@ def prsn_series():
 def pr_hr_series():
     """Return hourly time series."""
 
-    def _pr_hr_series(values, start="1/1/2000"):
+    def _pr_hr_series(values, start="1/1/2000", units="kg m-2 s-1"):
         coords = pd.date_range(start, periods=len(values), freq="1H")
         return xr.DataArray(
             values,
@@ -182,7 +182,7 @@ def pr_hr_series():
             attrs={
                 "standard_name": "precipitation_flux",
                 "cell_methods": "time: mean within hours",
-                "units": "kg m-2 s-1",
+                "units": units,
             },
         )
 
@@ -191,7 +191,7 @@ def pr_hr_series():
 
 @pytest.fixture
 def pr_ndseries():
-    def _pr_series(values, start="1/1/2000"):
+    def _pr_series(values, start="1/1/2000", units="kg m-2 s-1"):
         nt, nx, ny = np.atleast_3d(values).shape
         time = pd.date_range(start, periods=nt, freq="D")
         x = np.arange(nx)
@@ -204,7 +204,7 @@ def pr_ndseries():
             attrs={
                 "standard_name": "precipitation_flux",
                 "cell_methods": "time: mean within days",
-                "units": "kg m-2 s-1",
+                "units": units,
             },
         )
 
@@ -213,7 +213,7 @@ def pr_ndseries():
 
 @pytest.fixture
 def q_series():
-    def _q_series(values, start="1/1/2000"):
+    def _q_series(values, start="1/1/2000", units="m3 s-1"):
         coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
@@ -222,7 +222,7 @@ def q_series():
             name="q",
             attrs={
                 "standard_name": "water_volume_transport_in_river_channel",
-                "units": "m3 s-1",
+                "units": units,
             },
         )
 
@@ -319,7 +319,7 @@ areacello = areacella
 
 @pytest.fixture
 def hurs_series():
-    def _hurs_series(values, start="7/1/2000"):
+    def _hurs_series(values, start="7/1/2000", units="%"):
         coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
@@ -328,7 +328,7 @@ def hurs_series():
             name="hurs",
             attrs={
                 "standard_name": "relative humidity",
-                "units": "%",
+                "units": units,
             },
         )
 
@@ -337,7 +337,7 @@ def hurs_series():
 
 @pytest.fixture
 def sfcWind_series():
-    def _sfcWind_series(values, start="7/1/2000"):
+    def _sfcWind_series(values, start="7/1/2000", units="km h-1"):
         coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
@@ -346,7 +346,7 @@ def sfcWind_series():
             name="sfcWind",
             attrs={
                 "standard_name": "wind_speed",
-                "units": "km h-1",
+                "units": units,
             },
         )
 
@@ -355,7 +355,7 @@ def sfcWind_series():
 
 @pytest.fixture
 def huss_series():
-    def _huss_series(values, start="7/1/2000"):
+    def _huss_series(values, start="7/1/2000", units=""):
         coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
@@ -364,7 +364,7 @@ def huss_series():
             name="huss",
             attrs={
                 "standard_name": "specific_humidity",
-                "units": "",
+                "units": units,
             },
         )
 
@@ -373,7 +373,7 @@ def huss_series():
 
 @pytest.fixture
 def snd_series():
-    def _snd_series(values, start="7/1/2000"):
+    def _snd_series(values, start="7/1/2000", units="m"):
         coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
@@ -382,7 +382,7 @@ def snd_series():
             name="snd",
             attrs={
                 "standard_name": "surface_snow_thickness",
-                "units": "m",
+                "units": units,
             },
         )
 
@@ -391,7 +391,7 @@ def snd_series():
 
 @pytest.fixture
 def snw_series():
-    def _snw_series(values, start="7/1/2000"):
+    def _snw_series(values, start="7/1/2000", units="kg/m2"):
         coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
@@ -400,7 +400,7 @@ def snw_series():
             name="snw",
             attrs={
                 "standard_name": "surface_snow_amount",
-                "units": "kg/m2",
+                "units": units,
             },
         )
 
@@ -424,7 +424,7 @@ def ps_series():
 
 @pytest.fixture
 def rsds_series():
-    def _rsds_series(values, start="7/1/2000"):
+    def _rsds_series(values, start="7/1/2000", units="W m-2"):
         coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
@@ -433,7 +433,7 @@ def rsds_series():
             name="rsds",
             attrs={
                 "standard_name": "surface_downwelling_shortwave_flux_in_air",
-                "units": "W m-2",
+                "units": units,
             },
         )
 
@@ -442,7 +442,7 @@ def rsds_series():
 
 @pytest.fixture
 def rsus_series():
-    def _rsus_series(values, start="7/1/2000"):
+    def _rsus_series(values, start="7/1/2000", units="W m-2"):
         coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
@@ -451,7 +451,7 @@ def rsus_series():
             name="rsus",
             attrs={
                 "standard_name": "surface_upwelling_shortwave_flux_in_air",
-                "units": "W m-2",
+                "units": units,
             },
         )
 
@@ -460,7 +460,7 @@ def rsus_series():
 
 @pytest.fixture
 def rlds_series():
-    def _rlds_series(values, start="7/1/2000"):
+    def _rlds_series(values, start="7/1/2000", units="W m-2"):
         coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
@@ -469,7 +469,7 @@ def rlds_series():
             name="rlds",
             attrs={
                 "standard_name": "surface_downwelling_longwave_flux_in_air",
-                "units": "W m-2",
+                "units": units,
             },
         )
 
@@ -478,7 +478,7 @@ def rlds_series():
 
 @pytest.fixture
 def rlus_series():
-    def _rlus_series(values, start="7/1/2000"):
+    def _rlus_series(values, start="7/1/2000", units="W m-2"):
         coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
@@ -487,7 +487,7 @@ def rlus_series():
             name="rlus",
             attrs={
                 "standard_name": "surface_upwelling_longwave_flux_in_air",
-                "units": "W m-2",
+                "units": units,
             },
         )
 
