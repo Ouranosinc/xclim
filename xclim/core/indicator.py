@@ -658,7 +658,7 @@ class Indicator(IndicatorRegistrar):
                         attrs[name] = value
         # else we assume a list of dicts
 
-        # For single output, var_name defaults to identifer.
+        # For single output, var_name defaults to identifier.
         if len(cf_attrs) == 1 and "var_name" not in cf_attrs[0]:
             cf_attrs[0]["var_name"] = identifier
 
