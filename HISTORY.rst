@@ -11,6 +11,7 @@ New features and enhancements
 * Adjustment methods of `SBCK <https://github.com/yrobink/SBCK>`_ are wrapped into xclim when that package is installed. (:issue:`1109`, :pull:`1115`).
     - Wrapped SBCK tests are also properly run in the tox testing ensemble. (:pull:`1119`).
 * Method ``FAO_PM98`` (based on Penman-Monteith formula) to compute potential evapotranspiration. (:pull:`1122`).
+* Most numba functions of ``sdba.nbutils`` now use the lazy compilation mode. This significantly accelerates the import time of xclim. (:issue:`1135`, :pull:`1167`).
 
 New indicators
 ^^^^^^^^^^^^^^
