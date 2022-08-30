@@ -674,7 +674,7 @@ def extreme_temperature_range(
     """
     high_data = convert_units_to(high_data, low_data)
 
-    out = (high_data - low_data).resample(time=freq).mean()
+    out = high_data.resample(time=freq).max() - low_data.resample(time=freq).min()
 
     u = str2pint(low_data.units)
     out.attrs["units"] = pint2cfunits(u - u)
