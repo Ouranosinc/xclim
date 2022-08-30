@@ -6,7 +6,7 @@ Statistical Downscaling and Bias Adjustment Utilities
 from __future__ import annotations
 
 import itertools
-from typing import Callable, Mapping, Union
+from typing import Callable, Mapping
 from warnings import warn
 
 import numpy as np
@@ -195,7 +195,7 @@ def broadcast(
       The grouped array to broadcast like `x`.
     x : xr.DataArray
       The array to broadcast grouped to.
-    group : Union[str, Grouper]
+    group : str or Grouper
       Grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
     interp : {'nearest', 'linear', 'cubic'}
       The interpolation method to use,
@@ -284,7 +284,7 @@ def add_cyclic_bounds(
 
     Parameters
     ----------
-    da : Union[xr.DataArray, xr.Dataset]
+    da : xr.DataArray or xr.Dataset
         An array
     att : str
         The name of the coordinate to make cyclic
@@ -294,7 +294,7 @@ def add_cyclic_bounds(
 
     Returns
     -------
-    Union[xr.DataArray, xr.Dataset]
+    xr.DataArray or xr.Dataset
         da but with the last element along att prepended and the last one appended.
     """
     qmf = da.pad({att: (1, 1)}, mode="wrap")
@@ -386,7 +386,7 @@ def interp_on_quantiles(
       Coordinates and values on which to interpolate. The interpolation is done
       along the "quantiles" dimension if `group` has no group information.
       If it does, interpolation is done in 2D on "quantiles" and on the group dimension.
-    group : Union[str, Grouper]
+    group : str or Grouper
       The dimension and grouping information. (ex: "time" or "time.month").
       Defaults to "time".
     method : {'nearest', 'linear', 'cubic'}

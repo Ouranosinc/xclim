@@ -134,7 +134,7 @@ def load_module(path: os.PathLike, name: str | None = None):
     The two following imports are equivalent, the second uses this method.
 
     >>> os.chdir(path.parent)
-    >>> import example as mod1
+    >>> import example as mod1  # noqa
     >>> os.chdir(previous_working_dir)
     >>> mod2 = load_module(path)
     >>> mod1 == mod2
@@ -180,7 +180,7 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: Mapping[str, int]) -> xr.Da
         return da
 
     all_chunks = dict(zip(da.dims, da.chunks))
-    chunking = dict()
+    chunking = {}
     for dim, minchunk in minchunks.items():
         chunks = all_chunks[dim]
         if minchunk == -1 and len(chunks) > 1:
@@ -632,7 +632,7 @@ def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> Inpu
 
 def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
     """Read in a clix-meta yaml and refactor it to fit xclim's yaml specifications."""
-    from xclim.indices import generic
+    from ..indices import generic  # pylint: disable=import-outside-toplevel
 
     # freq_names = {"annual": "A", "seasonal": "Q", "monthly": "M", "weekly": "W"}
     freq_defs = {"annual": "YS", "seasonal": "QS-DEC", "monthly": "MS", "weekly": "W"}

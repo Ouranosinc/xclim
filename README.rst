@@ -2,7 +2,7 @@
 xclim: Climate indices computations |logo|
 ==========================================
 
-|license| |security| |fair| |build| |pre-commit| |pypi| |conda| |coveralls| |codefactor| |fossa| |zenodo| |black| |docs| |gitter|
+|license| |security| |fair| |build| |pre-commit| |pypi| |conda| |coveralls| |fossa| |zenodo| |black| |docs| |gitter|
 
 ----
 
@@ -22,8 +22,8 @@ For applications where meta-data and missing values are important to get right, 
 
 xclim currently provides over 50 indices related to mean, minimum and maximum daily temperature, daily precipitation, streamflow and sea ice concentration.
 
-.. _xarray: http://xarray.pydata.org/
-.. _dask: https://dask.org/
+.. _xarray: https://docs.xarray.dev/
+.. _dask: https://docs.dask.org/
 
 Documentation
 -------------
@@ -53,8 +53,8 @@ This work is made possible thanks to the contribution of the Canadian Center for
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 
-.. _Cookiecutter: https://github.com/audreyr/cookiecutter
-.. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
+.. _Cookiecutter: https://github.com/audreyr/cookiecutter/
+.. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage/
 
 .. |pypi| image:: https://img.shields.io/pypi/v/xclim.svg
         :target: https://pypi.python.org/pypi/xclim
@@ -75,10 +75,6 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 .. |coveralls| image:: https://coveralls.io/repos/github/Ouranosinc/xclim/badge.svg
         :target: https://coveralls.io/github/Ouranosinc/xclim
         :alt: Coveralls
-
-.. |codefactor| image:: https://www.codefactor.io/repository/github/ouranosinc/xclim/badge
-        :target: https://www.codefactor.io/repository/github/ouranosinc/xclim
-        :alt: CodeFactor
 
 .. |docs| image:: https://readthedocs.org/projects/xclim/badge
         :target: https://xclim.readthedocs.io/en/latest

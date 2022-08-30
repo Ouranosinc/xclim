@@ -57,7 +57,7 @@ lint: ## check style with flake8 and black
 	black --check --ipynb --target-version py38 docs --include "\.ipynb$$"
 	blackdoc --check --target-version py38 xclim --exclude xclim/indices/__init__.py,xclim/docs/installation.rst
 	isort --check --settings-file=setup.cfg xclim --add_imports="from __future__ import annotations"
-	pylint --rcfile=setup.cfg --exit-zero xclim
+	pylint --rcfile=pylintrc --exit-zero xclim
 
 test: ## run tests quickly with the default Python
 	pytest xclim/testing/tests
@@ -79,6 +79,9 @@ linkcheck: ## run checks over all external links found throughout the documentat
 	sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests
 	$(MAKE) -C docs clean
 	$(MAKE) -C docs linkcheck
+ifndef READTHEDOCS
+	$(BROWSER) docs/_build/html/index.html
+endif
 
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/xclim*.rst
