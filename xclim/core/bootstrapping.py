@@ -249,7 +249,7 @@ def build_bootstrap_year_da(
     # With dask, mutating the views of out is not working, thus the accumulator
     out_accumulator = []
     # Replace `bloc` by every other group
-    for i, (key, group_slice) in enumerate(gr.items()):
+    for i, (_, group_slice) in enumerate(gr.items()):
         source = da.isel({dim: group_slice})
         out_view = out.loc[{BOOTSTRAP_DIM: i}]
         if len(source[dim]) < 360 and len(source[dim]) < len(bloc):

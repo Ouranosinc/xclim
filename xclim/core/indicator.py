@@ -151,8 +151,8 @@ from .utils import (
 )
 
 # Indicators registry
-registry = dict()  # Main class registry
-base_registry = dict()
+registry = {}  # Main class registry
+base_registry = {}
 _indicators_registry = defaultdict(list)  # Private instance registry
 
 
@@ -200,7 +200,9 @@ class Parameter:
     @classmethod
     def is_parameter_dict(cls, other: dict) -> bool:
         """Return whether indicator has a parameter dictionary."""
-        return set(other.keys()).issubset(cls.__dataclass_fields__.keys())  # noqa
+        return set(other.keys()).issubset(
+            cls.__dataclass_fields__.keys()
+        )  # pylint disable=no-member
 
     def __getitem__(self, key) -> str:
         """Return an item in retro-compatible fashion."""
@@ -455,7 +457,7 @@ class Indicator(IndicatorRegistrar):
                 kwds[key] = staticmethod(kwds[key])
 
         # Infer realm for built-in xclim instances
-        if cls.__module__.startswith(__package__.split(".")[0]):
+        if cls.__module__.startswith(__package__.split(".", maxsplit=1)[0]):
             xclim_realm = cls.__module__.split(".")[2]
         else:
             xclim_realm = None
@@ -561,21 +563,21 @@ class Indicator(IndicatorRegistrar):
             meta = parameters[new_name] = parameters.pop(old_name)
             try:
                 varmeta = VARIABLES[new_name]
-            except KeyError:
+            except KeyError as err:
                 raise ValueError(
                     f"Compute argument {old_name} was mapped to variable "
                     f"{new_name} which is not understood by xclim or CMIP6. Please"
                     " use names listed in `xclim.core.utils.VARIABLES`."
-                )
+                ) from err
             if meta.units is not _empty:
                 try:
                     check_units(varmeta["canonical_units"], meta.units)
-                except ValidationError:
+                except ValidationError as err:
                     raise ValueError(
                         "When changing the name of a variable by passing `input`, "
                         "the units dimensionality must stay the same. Got: old = "
                         f"{meta.units}, new = {varmeta['canonical_units']}"
-                    )
+                    ) from err
             meta.units = varmeta["canonical_units"]
             meta.description = varmeta["description"]
 
@@ -645,7 +647,7 @@ class Indicator(IndicatorRegistrar):
                 values = kwds.pop(name, None)
                 if values is None:  # None passed, skip
                     continue
-                elif not isinstance(values, (tuple, list)):
+                if not isinstance(values, (tuple, list)):
                     # a single string or callable, same for all outputs
                     values = [values] * n_outs
                 elif len(values) != n_outs:  # A sequence of the wrong length.
@@ -911,11 +913,11 @@ class Indicator(IndicatorRegistrar):
                 if ds is not None:
                     try:
                         ba.arguments[name] = ds[ba.arguments[name]]
-                    except KeyError:
+                    except KeyError as err:
                         raise MissingVariableError(
                             f"For input '{name}', variable '{ba.arguments[name]}' "
                             "was not found in the input dataset."
-                        )
+                        ) from err
                 else:
                     raise ValueError(
                         "Passing variable names as string requires giving the `ds` "
@@ -1049,7 +1051,7 @@ class Indicator(IndicatorRegistrar):
         for k, v in args.items():
             if self._all_parameters[k].injected:
                 continue
-            elif self._all_parameters[k].kind == InputKind.KWARGS:
+            if self._all_parameters[k].kind == InputKind.KWARGS:
                 kwargs.update(**v)
             elif self._all_parameters[k].kind != InputKind.DATASET:
                 kwargs[k] = v
@@ -1688,7 +1690,7 @@ def build_indicator_module_from_yaml(
                 data, identifier=identifier, module=module_name
             )
 
-        except Exception as err:
+        except Exception as err:  # pylint: disable=broad-except
             raise_warn_or_log(
                 err, mode, msg=f"Constructing {identifier} failed with {err!r}"
             )
@@ -1698,7 +1700,7 @@ def build_indicator_module_from_yaml(
 
     # If there are translations, load them
     if translations:
-        for locale, locdict in translations.items():
-            load_locale(locdict, locale)
+        for locale, loc_dict in translations.items():
+            load_locale(loc_dict, locale)
 
     return mod
