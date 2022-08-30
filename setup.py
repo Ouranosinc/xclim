@@ -44,7 +44,7 @@ requirements = [
     "pint>=0.10",
     "pyyaml",
     "scikit-learn>=0.21.3",
-    "scipy>=1.2,<1.9",  # see: https://github.com/Ouranosinc/xclim/issues/1142
+    "scipy>=1.2",
     "statsmodels",
     "xarray>=2022.06.0",
 ]
