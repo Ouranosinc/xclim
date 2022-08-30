@@ -1,7 +1,6 @@
 # noqa: D100
 from __future__ import annotations
 
-import warnings
 from typing import Callable
 
 import numpy as np
@@ -20,7 +19,7 @@ from xclim.core.units import (
 
 from . import run_length as rl
 from ._conversion import rain_approximation, snowfall_approximation
-from .generic import select_resample_op, threshold_count
+from .generic import compare, select_resample_op, threshold_count
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -36,7 +35,6 @@ __all__ = [
     "warm_and_dry_days",
     "warm_and_wet_days",
     "cold_and_wet_days",
-    "daily_freezethaw_cycles",
     "multiday_temperature_swing",
     "daily_temperature_range",
     "daily_temperature_range_variability",
@@ -70,6 +68,7 @@ def cold_spell_duration_index(
     window: int = 6,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa  # noqa
+    op: str = "<",
 ) -> xarray.DataArray:
     r"""Cold spell duration index.
 
@@ -93,6 +92,8 @@ def cold_spell_duration_index(
       the rest of the time series.
       Keep bootstrap to False when there is no common period, it would give wrong results
       plus, bootstrapping is computationally expensive.
+    op: {"<", "<=", "lt", "le"}
+      Comparison operation. Default: "<".
 
     Returns
     -------
@@ -131,7 +132,7 @@ def cold_spell_duration_index(
     # Create time series out of doy values.
     thresh = resample_doy(tasmin_per, tasmin)
 
-    below = tasmin < thresh
+    below = compare(tasmin, op, thresh, constrain=("<", "<="))
 
     out = below.resample(time=freq).map(
         rl.windowed_run_count, window=window, dim="time"
@@ -312,7 +313,8 @@ def warm_and_wet_days(
 
     Notes
     -----
-    Bootstrapping is not available for quartiles because it would make no significant difference to bootstrap percentiles so far from the extremes.
+    Bootstrapping is not available for quartiles because it would make no significant difference
+    to bootstrap percentiles so far from the extremes.
 
     Formula to be written (:cite:t:`beniston_trends_2009`)
 
@@ -401,78 +403,6 @@ def cold_and_wet_days(
     thresh_tasmin="[temperature]",
     thresh_tasmax="[temperature]",
 )
-def daily_freezethaw_cycles(
-    tasmin: xarray.DataArray,
-    tasmax: xarray.DataArray,
-    thresh_tasmin: str = "0 degC",
-    thresh_tasmax: str = "0 degC",
-    freq: str = "YS",
-) -> xarray.DataArray:  # noqa: D401
-    r"""Number of days with a diurnal freeze-thaw cycle.
-
-    The number of days when Tmax > thresh_tasmax and Tmin <= thresh_tasmin.
-
-    Parameters
-    ----------
-    tasmin : xarray.DataArray
-      Minimum daily temperature.
-    tasmax : xarray.DataArray
-      Maximum daily temperature.
-    thresh_tasmin : str
-      The temperature threshold needed to trigger a freeze event.
-    thresh_tasmax : str
-      The temperature threshold needed to trigger a thaw event.
-    freq : str
-      Resampling frequency.
-
-    Returns
-    -------
-    xarray.DataArray, [time]
-      Number of days with a diurnal freeze-thaw cycle
-
-    Notes
-    -----
-    Let :math:`TX_{i}` be the maximum temperature at day :math:`i` and :math:`TN_{i}` be
-    the daily minimum temperature at day :math:`i`. Then the number of freeze thaw cycles
-    during period :math:`\phi` is given by :
-
-    .. math::
-
-        \sum_{i \in \phi} [ TX_{i} > 0℃ ] [ TN_{i} <  0℃ ]
-
-    where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
-
-    Warnings
-    --------
-    The `daily_freezethaw_cycles` indice is being deprecated in favour of `multiday_temperature_swing` with
-    `thresh_tasmax='0 degC, thresh_tasmin='0 degC', window=1, op='sum'` by default. The indicator reflects this change.
-    This indice will be removed in a future version of xclim.
-    """
-    warnings.warn(
-        "The `daily_freezethaw_cycles` indice is being deprecated in favour of `multiday_temperature_swing` with "
-        "`thresh_tasmax='0 degC, thresh_tasmin='0 degC', window=1, op='sum'` by default. "
-        "This indice will be removed in `xclim>=0.28.0`. Please update your scripts accordingly.",
-        UserWarning,
-        stacklevel=3,
-    )
-
-    return multiday_temperature_swing(
-        tasmin=tasmin,
-        tasmax=tasmax,
-        thresh_tasmin=thresh_tasmin,
-        thresh_tasmax=thresh_tasmax,
-        window=1,
-        op="sum",
-        freq=freq,
-    )
-
-
-@declare_units(
-    tasmin="[temperature]",
-    tasmax="[temperature]",
-    thresh_tasmin="[temperature]",
-    thresh_tasmax="[temperature]",
-)
 def multiday_temperature_swing(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
@@ -480,6 +410,8 @@ def multiday_temperature_swing(
     thresh_tasmax: str = "0 degC",
     window: int = 1,
     op: str = "mean",
+    op_tasmin: str = "<=",
+    op_tasmax: str = ">",
     freq: str = "YS",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Statistics of consecutive diurnal temperature swing events.
@@ -501,6 +433,10 @@ def multiday_temperature_swing(
       The minimal length of spells to be included in the statistics.
     op : {'mean', 'sum', 'max', 'min', 'std', 'count'}
       The statistical operation to use when reducing the list of spell lengths.
+    op_tasmin : {"<", "<=", "lt", "le"}
+      Comparison operation for tasmin. Default: "<=".
+    op_tasmax : {">", ">=", "gt", "ge"}
+      Comparison operation for tasmax. Default: ">".
     freq : str
       Resampling frequency.
 
@@ -524,7 +460,10 @@ def multiday_temperature_swing(
     thaw_threshold = convert_units_to(thresh_tasmax, tasmax)
     freeze_threshold = convert_units_to(thresh_tasmin, tasmin)
 
-    ft = (tasmin <= freeze_threshold) * (tasmax > thaw_threshold)
+    freeze = compare(tasmin, op_tasmin, freeze_threshold, constrain=("<", "<="))
+    thaw = compare(tasmax, op_tasmax, thaw_threshold, constrain=(">", ">="))
+    ft = freeze * thaw
+
     if op == "count":
         out = ft.resample(time=freq).map(
             rl.windowed_run_events, window=window, dim="time"
@@ -675,6 +614,7 @@ def heat_wave_frequency(
     thresh_tasmax: str = "30 degC",
     window: int = 3,
     freq: str = "YS",
+    op: str = ">",
 ) -> xarray.DataArray:
     r"""Heat wave frequency.
 
@@ -695,6 +635,8 @@ def heat_wave_frequency(
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
     freq : str
       Resampling frequency.
+    op: {">", ">=", "gt", "ge"}
+      Comparison operation. Default: ">".
 
     Returns
     -------
@@ -717,7 +659,10 @@ def heat_wave_frequency(
     thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
 
-    cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
+    constrain = (">", ">=")
+    cond = (compare(tasmin, op, thresh_tasmin, constrain)) & (
+        compare(tasmax, op, thresh_tasmax, constrain)
+    )
     out = cond.resample(time=freq).map(rl.windowed_run_events, window=window)
     out.attrs["units"] = ""
     return out
@@ -736,6 +681,7 @@ def heat_wave_max_length(
     thresh_tasmax: str = "30 degC",
     window: int = 3,
     freq: str = "YS",
+    op: str = ">",
 ) -> xarray.DataArray:
     r"""Heat wave max length.
 
@@ -758,6 +704,8 @@ def heat_wave_max_length(
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
     freq : str
       Resampling frequency.
+    op: {">", ">=", "gt", "ge"}
+      Comparison operation. Default: ">".
 
     Returns
     -------
@@ -771,7 +719,8 @@ def heat_wave_max_length(
     characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
     communities :cite:p:`casati_regional_2013`.
 
-    In :cite:t:`robinson_definition_2001`, the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
+    In :cite:t:`robinson_definition_2001`, the parameters would be:
+    `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
 
     References
     ----------
@@ -780,7 +729,10 @@ def heat_wave_max_length(
     thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
 
-    cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
+    constrain = (">", ">=")
+    cond = (compare(tasmin, op, thresh_tasmin, constrain)) & (
+        compare(tasmax, op, thresh_tasmax, constrain)
+    )
     max_l = cond.resample(time=freq).map(rl.longest_run, dim="time")
     out = max_l.where(max_l >= window, 0)
     return to_agg_units(out, tasmax, "count")
@@ -799,6 +751,7 @@ def heat_wave_total_length(
     thresh_tasmax: str = "30 degC",
     window: int = 3,
     freq: str = "YS",
+    op: str = ">",
 ) -> xarray.DataArray:
     r"""Heat wave total length.
 
@@ -820,6 +773,8 @@ def heat_wave_total_length(
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
     freq : str
       Resampling frequency.
+    op: {">", ">=", "gt", "ge"}
+      Comparison operation. Default: ">".
 
     Returns
     -------
@@ -833,7 +788,10 @@ def heat_wave_total_length(
     thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
 
-    cond = (tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)
+    constrain = (">", ">=")
+    cond = compare(tasmin, op, thresh_tasmin, constrain) & compare(
+        tasmax, op, thresh_tasmax, constrain
+    )
     out = cond.resample(time=freq).map(rl.windowed_run_count, window=window)
     return to_agg_units(out, tasmin, "count")
 
@@ -1084,6 +1042,7 @@ def days_over_precip_thresh(
     thresh: str = "1 mm/day",
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
+    op: str = ">",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of wet days with daily precipitation over a given percentile.
 
@@ -1108,6 +1067,8 @@ def days_over_precip_thresh(
       the rest of the time series.
       Keep bootstrap to False when there is no common period, it would give wrong results
       plus, bootstrapping is computationally expensive.
+    op: {">", ">=", "gt", "ge"}
+      Comparison operation. Default: ">".
 
     Returns
     -------
@@ -1130,7 +1091,7 @@ def days_over_precip_thresh(
         tp = resample_doy(tp, pr)
 
     # Compute the days when precip is both over the wet day threshold and the percentile threshold.
-    out = threshold_count(pr, ">", tp, freq)
+    out = threshold_count(pr, op, tp, freq, constrain=(">", ">="))
     return to_agg_units(out, pr, "count")
 
 
@@ -1142,6 +1103,7 @@ def fraction_over_precip_thresh(
     thresh: str = "1 mm/day",
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
+    op: str = ">",
 ) -> xarray.DataArray:
     r"""Fraction of precipitation due to wet days with daily precipitation over a given percentile.
 
@@ -1166,6 +1128,8 @@ def fraction_over_precip_thresh(
       the rest of the time series.
       Keep bootstrap to False when there is no common period, it would give wrong results
       plus, bootstrapping is computationally expensive.
+    op: {">", ">=", "gt", "ge"}
+      Comparison operation. Default: ">".
 
     Returns
     -------
@@ -1181,11 +1145,14 @@ def fraction_over_precip_thresh(
         # Create time series out of doy values.
         tp = resample_doy(tp, pr)
 
+    constrain = (">", ">=")
     # Total precip during wet days over period
-    total = pr.where(pr > thresh).resample(time=freq).sum(dim="time")
+    total = (
+        pr.where(compare(pr, op, thresh, constrain)).resample(time=freq).sum(dim="time")
+    )
 
     # Compute the days when precip is both over the wet day threshold and the percentile threshold.
-    over = pr.where(pr > tp).resample(time=freq).sum(dim="time")
+    over = pr.where(compare(pr, op, tp, constrain)).resample(time=freq).sum(dim="time")
 
     out = over / total
     out.attrs["units"] = ""
@@ -1199,6 +1166,7 @@ def tg90p(
     tas_per: xarray.DataArray,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
+    op: str = ">",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily mean temperature over the 90th percentile.
 
@@ -1219,6 +1187,8 @@ def tg90p(
       the rest of the time series.
       Keep bootstrap to False when there is no common period, it would give wrong results
       plus, bootstrapping is computationally expensive.
+    op: {">", ">=", "gt", "ge"}
+      Comparison operation. Default: ">".
 
     Returns
     -------
@@ -1243,7 +1213,7 @@ def tg90p(
     thresh = resample_doy(tas_per, tas)
 
     # Identify the days over the 90th percentile
-    out = threshold_count(tas, ">", thresh, freq)
+    out = threshold_count(tas, op, thresh, freq, constrain=(">", ">="))
     return to_agg_units(out, tas, "count")
 
 
@@ -1254,6 +1224,7 @@ def tg10p(
     tas_per: xarray.DataArray,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
+    op: str = "<",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily mean temperature below the 10th percentile.
 
@@ -1274,6 +1245,8 @@ def tg10p(
       the rest of the time series.
       Keep bootstrap to False when there is no common period, it would give wrong results
       plus, bootstrapping is computationally expensive.
+    op: {"<", "<=", "lt", "le"}
+      Comparison operation. Default: "<".
 
     Returns
     -------
@@ -1298,7 +1271,7 @@ def tg10p(
     thresh = resample_doy(tas_per, tas)
 
     # Identify the days below the 10th percentile
-    out = threshold_count(tas, "<", thresh, freq)
+    out = threshold_count(tas, op, thresh, freq, constrain=("<", "<="))
     return to_agg_units(out, tas, "count")
 
 
@@ -1309,6 +1282,7 @@ def tn90p(
     tasmin_per: xarray.DataArray,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
+    op: str = ">",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily minimum temperature over the 90th percentile.
 
@@ -1329,6 +1303,8 @@ def tn90p(
       the rest of the time series.
       Keep bootstrap to False when there is no common period, it would give wrong results
       plus, bootstrapping is computationally expensive.
+    op: {">", ">=", "gt", "ge"}
+      Comparison operation. Default: ">".
 
     Returns
     -------
@@ -1353,7 +1329,7 @@ def tn90p(
     thresh = resample_doy(tasmin_per, tasmin)
 
     # Identify the days with min temp above 90th percentile.
-    out = threshold_count(tasmin, ">", thresh, freq)
+    out = threshold_count(tasmin, op, thresh, freq, constrain=(">", ">="))
     return to_agg_units(out, tasmin, "count")
 
 
@@ -1364,6 +1340,7 @@ def tn10p(
     tasmin_per: xarray.DataArray,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
+    op: str = "<",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily minimum temperature below the 10th percentile.
 
@@ -1384,6 +1361,8 @@ def tn10p(
       the rest of the time series.
       Keep bootstrap to False when there is no common period, it would give wrong results
       plus, bootstrapping is computationally expensive.
+    op: {"<", "<=", "lt", "le"}
+      Comparison operation. Default: "<".
 
     Returns
     -------
@@ -1408,7 +1387,7 @@ def tn10p(
     thresh = resample_doy(tasmin_per, tasmin)
 
     # Identify the days below the 10th percentile
-    out = threshold_count(tasmin, "<", thresh, freq)
+    out = threshold_count(tasmin, op, thresh, freq, constrain=("<", "<="))
     return to_agg_units(out, tasmin, "count")
 
 
@@ -1419,6 +1398,7 @@ def tx90p(
     tasmax_per: xarray.DataArray,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
+    op: str = ">",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily maximum temperature over the 90th percentile.
 
@@ -1439,6 +1419,8 @@ def tx90p(
       the rest of the time series.
       Keep bootstrap to False when there is no common period, it would give wrong results
       plus, bootstrapping is computationally expensive.
+    op: {">", ">=", "gt", "ge"}
+      Comparison operation. Default: ">".
 
     Returns
     -------
@@ -1463,7 +1445,7 @@ def tx90p(
     thresh = resample_doy(tasmax_per, tasmax)
 
     # Identify the days with max temp above 90th percentile.
-    out = threshold_count(tasmax, ">", thresh, freq)
+    out = threshold_count(tasmax, op, thresh, freq, constrain=(">", ">="))
     return to_agg_units(out, tasmax, "count")
 
 
@@ -1474,6 +1456,7 @@ def tx10p(
     tasmax_per: xarray.DataArray,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
+    op: str = "<",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with daily maximum temperature below the 10th percentile.
 
@@ -1494,6 +1477,8 @@ def tx10p(
       the rest of the time series.
       Keep bootstrap to False when there is no common period, it would give wrong results
       plus, bootstrapping is computationally expensive.
+    op: {"<", "<=", "lt", "le"}
+      Comparison operation. Default: "<".
 
     Returns
     -------
@@ -1518,7 +1503,7 @@ def tx10p(
     thresh = resample_doy(tasmax_per, tasmax)
 
     # Identify the days below the 10th percentile
-    out = threshold_count(tasmax, "<", thresh, freq)
+    out = threshold_count(tasmax, op, thresh, freq, constrain=("<", "<="))
     return to_agg_units(out, tasmax, "count")
 
 
@@ -1534,6 +1519,7 @@ def tx_tn_days_above(
     thresh_tasmin: str = "22 degC",
     thresh_tasmax: str = "30 degC",
     freq: str = "YS",
+    op: str = ">",
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of days with both hot maximum and minimum daily temperatures.
 
@@ -1551,6 +1537,8 @@ def tx_tn_days_above(
       Threshold temperature for tasmax on which to base evaluation.
     freq : str
       Resampling frequency.
+    op: {">", ">=", "gt", "ge"}
+      Comparison operation. Default: ">".
 
     Returns
     -------
@@ -1577,7 +1565,12 @@ def tx_tn_days_above(
     """
     thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
     thresh_tasmin = convert_units_to(thresh_tasmin, tasmin)
-    events = ((tasmin > thresh_tasmin) & (tasmax > thresh_tasmax)) * 1
+
+    constrain = (">", ">=")
+    events = (
+        compare(tasmin, op, thresh_tasmin, constrain)
+        & compare(tasmax, op, thresh_tasmax, constrain)
+    ) * 1
     out = events.resample(time=freq).sum(dim="time")
     return to_agg_units(out, tasmin, "count")
 
@@ -1590,6 +1583,7 @@ def warm_spell_duration_index(
     window: int = 6,
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
+    op: str = ">",
 ) -> xarray.DataArray:
     r"""Warm spell duration index.
 
@@ -1614,6 +1608,8 @@ def warm_spell_duration_index(
       the rest of the time series.
       Keep bootstrap to False when there is no common period, it would give wrong results
       plus, bootstrapping is computationally expensive.
+    op: {">", ">=", "gt", "ge"}
+      Comparison operation. Default: ">".
 
     Returns
     -------
@@ -1641,7 +1637,7 @@ def warm_spell_duration_index(
     # Create time series out of doy values.
     thresh = resample_doy(thresh, tasmax)
 
-    above = tasmax > thresh
+    above = compare(tasmax, op, thresh, constrain=(">", ">="))
 
     out = above.resample(time=freq).map(
         rl.windowed_run_count, window=window, dim="time"

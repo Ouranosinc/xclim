@@ -23,7 +23,7 @@ from xclim.core.utils import ValidationError
 class TestUnits:
     def test_temperature(self):
         assert 4 * units.d == 4 * units.day
-        Q_ = units.Quantity
+        Q_ = units.Quantity  # noqa
         assert Q_(1, units.C) == Q_(1, units.degC)
 
     def test_hydro(self):
@@ -68,7 +68,7 @@ class TestConvertUnitsTo:
 
         with pytest.warns(FutureWarning):
             tas = tas_series(np.arange(365), start="1/1/2001")
-            out = indices.tx_days_above(tas, 30)
+            out = indices.tx_days_above(tas, 30)  # noqa
 
         out1 = indices.tx_days_above(tas, "30 degC")
         out2 = indices.tx_days_above(tas, "303.15 K")
@@ -138,7 +138,7 @@ class TestUnitConversion:
         assert out.units == "kg m-2"
 
     def test_str2pint(self):
-        Q_ = units.Quantity
+        Q_ = units.Quantity  # noqa
         assert str2pint("-0.78 m") == Q_(-0.78, units="meter")
         assert str2pint("m kg/s") == Q_(1, units="meter kilogram/second")
         assert str2pint("11.8 degC days") == Q_(11.8, units="delta_degree_Celsius days")
