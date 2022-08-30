@@ -114,7 +114,7 @@ variables:
     data_flags:
       - percentage_values_outside_of_bounds:
   smd:
-    canonical_units: mm
+    canonical_units: mm d-1
     cell_methods: "time: mean"
     description: Soil moisture deficit.
     standard_name: soil_moisture_deficit
