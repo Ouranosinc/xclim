@@ -9,7 +9,6 @@ the simulated climate variability.
 from __future__ import annotations
 
 import os
-from typing import Optional, Union
 from warnings import warn
 
 import numpy as np
@@ -87,7 +86,7 @@ def kkz_reduce_ensemble(
     )
     selected.append(unselected.pop(dist0.argmin()))
 
-    for i in range(1, num_select):
+    for _ in range(1, num_select):
         dist = cdist(
             data.isel(realization=selected),
             data.isel(realization=unselected),

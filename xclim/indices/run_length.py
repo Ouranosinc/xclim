@@ -11,7 +11,6 @@ from datetime import datetime
 from typing import Sequence
 from warnings import warn
 
-import dask
 import numpy as np
 import xarray as xr
 from numba import njit
@@ -932,7 +931,7 @@ def windowed_run_events_1d(arr: Sequence[bool], window: int) -> xr.DataArray:
     xr.DataArray, [int]
       Number of distinct runs of a minimum length.
     """
-    v, rl, pos = rle_1d(arr)
+    v, rl, _ = rle_1d(arr)
     return (v * rl >= window).sum()
 
 
