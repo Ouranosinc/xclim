@@ -259,7 +259,9 @@ def tg_mean_warmcold_quarter(
     out = _to_quarter(tas=tas)
 
     if op not in ["warmest", "coldest"]:
-        raise ValueError(f'op parameter ({op}) may only be one of "warmest", "coldest"')
+        raise NotImplementedError(
+            f'op parameter ({op}) may only be one of "warmest", "coldest"'
+        )
     oper = _np_ops[op]
 
     out = select_resample_op(out, oper, freq)
@@ -313,7 +315,7 @@ def tg_mean_wetdry_quarter(
     pr_qrt = _to_quarter(pr=pr)
 
     if op not in ["wettest", "driest", "dryest"]:
-        raise ValueError(
+        raise NotImplementedError(
             f'op parameter ({op}) may only be one of "wettest" or "driest"'
         )
     xr_op = _xr_argops[op]
@@ -369,7 +371,7 @@ def prcptot_wetdry_quarter(
     pr_qrt = _to_quarter(pr=pr)
 
     if op not in ["wettest", "driest", "dryest"]:
-        raise ValueError(
+        raise NotImplementedError(
             f'op parameter ({op}) may only be one of "wettest" or "driest"'
         )
     op = _np_ops[op]
@@ -425,7 +427,9 @@ def prcptot_warmcold_quarter(
     pr_qrt = _to_quarter(pr=pr)
 
     if op not in ["warmest", "coldest"]:
-        raise ValueError(f'op parameter ({op}) may only be one of "warmest", "coldest"')
+        raise NotImplementedError(
+            f'op parameter ({op}) may only be one of "warmest", "coldest"'
+        )
     xr_op = _xr_argops[op]
 
     out = _from_other_arg(criteria=tas_qrt, output=pr_qrt, op=xr_op, freq=freq)
@@ -497,7 +501,7 @@ def prcptot_wetdry_period(
     pram = rate2amount(pr)
 
     if op not in ["wettest", "driest", "dryest"]:
-        raise ValueError(
+        raise NotImplementedError(
             f'op parameter ({op}) may only be one of "wettest" or "driest"'
         )
     op = _np_ops[op]
