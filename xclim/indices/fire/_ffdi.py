@@ -216,7 +216,7 @@ def keetch_byram_drought_index(
     pr_annual: xr.DataArray,
     kbdi0: xr.DataArray | None = None,
 ) -> xr.DataArray:
-    """Calculate the Keetch-Byram drought index (KBDI) for soil moisture deficit.
+    """Keetch-Byram drought index (KBDI) for soil moisture deficit.
 
     This method implements the methodology and formula described in :cite:t:`ffdi-finkele_2006`
     (section 2.1.1) for calculating the KBDI. See Notes below.
@@ -286,7 +286,7 @@ def griffiths_drought_factor(
     smd: xr.DataArray,
     limiting_func: str = "xlim",
 ) -> xr.DataArray:
-    """Calculate the Griffiths drought factor based on the soil moisture deficit.
+    """Griffiths drought factor based on the soil moisture deficit.
 
     This method implements the methodology and formula described in :cite:t:`ffdi-finkele_2006`
     (section 2.2) for calculating the Griffiths drought factor.
@@ -356,7 +356,7 @@ def mcarthur_forest_fire_danger_index(
     H: xr.DataArray,
     V: xr.DataArray,
 ):
-    """Calculate the McArthur forest fire danger index (FFDI) Mark 5.
+    """McArthur forest fire danger index (FFDI) Mark 5.
 
     This method calculates the FFDI using the formula in :cite:t:`ffdi-noble_1980`.
 
@@ -364,7 +364,7 @@ def mcarthur_forest_fire_danger_index(
     ----------
     D : xr.DataArray
         The drought factor to use in the FFDI calculation. Often the daily Griffiths
-        drought factor (see `griffiths_drought_factor`).
+        drought factor (see :py:func:`griffiths_drought_factor`).
     T : xr.DataArray
         The temperature to use in the FFDI calculation [degC]. Often the current or previous
         day's maximum daily temperature near the surface.
