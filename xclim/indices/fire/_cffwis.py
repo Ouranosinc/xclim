@@ -285,8 +285,7 @@ def _fine_fuel_moisture_code(t, p, w, h, ffmc0):  # pragma: no cover
                 1.0 - np.exp(-6.93 / rf)
             )
             # *Eq.3a*#
-        if mo > 250.0:
-            mo = 250.0
+        mo = min(mo, 250.0)
 
     ed = (
         0.942 * (h**0.679)
@@ -390,11 +389,9 @@ def _duff_moisture_code(
     else:  # p <= 1.5
         pr = dmc0
 
-    if pr < 0.0:
-        pr = 0.0
+    pr = max(pr, 0.0)
     dmc = pr + rk
-    if dmc < 0:
-        dmc = 0.0
+    dmc = max(dmc, 0.0)
     return dmc
 
 
@@ -427,8 +424,7 @@ def _drought_code(
     if t < -2.8:
         t = -2.8
     pe = (0.36 * (t + 2.8) + fl) / 2  # *Eq.22*#
-    if pe < 0.0:
-        pe = 0.0
+    pe = max(pe, 0.0)
 
     if p > 2.8:
         ra = p
@@ -553,8 +549,7 @@ def _overwintering_drought_code(DCf, wpr, a, b, minDC):  # pragma: no cover
     Qf = 800 * np.exp(-DCf / 400)
     Qs = a * Qf + b * (3.94 * wpr)
     DCs = 400 * np.log(800 / Qs)
-    if DCs < minDC:
-        DCs = minDC
+    DCs = max(DCs, minDC)
     return DCs
 
 
@@ -1254,7 +1249,7 @@ def _convert_parameters(
             raise ValueError(
                 f"{param} is not a valid parameter for fire weather indices. See list in xc.indices.fire.default_params."
             )
-        elif isinstance(default_params[param], tuple):
+        if isinstance(default_params[param], tuple):
             params[param] = convert_units_to(value, default_params[param][1])
     return params
 
