@@ -1,7 +1,7 @@
 # noqa: D100
 from __future__ import annotations
 
-import cf_xarray  # noqa
+import cf_xarray  # noqa: F401, pylint: disable=unused-import
 import numpy as np
 import xarray
 

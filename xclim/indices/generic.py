@@ -12,7 +12,6 @@ from typing import Sequence
 
 import cftime
 import numpy as np
-import xarray
 import xarray as xr
 from xarray.coding.cftime_offsets import _MONTH_ABBREVIATIONS
 
@@ -103,7 +102,7 @@ def select_resample_op(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
       The maximum value for each period.
     """
     da = _select_time(da, **indexer)
@@ -285,7 +284,7 @@ def count_level_crossings(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
     """
     # Convert units to low_data
     high_data = convert_units_to(high_data, low_data)
@@ -321,7 +320,7 @@ def count_occurrences(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
     """
     threshold = convert_units_to(threshold, data)
 
@@ -349,7 +348,7 @@ def diurnal_temperature_range(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
     """
     high_data = convert_units_to(high_data, low_data)
 
@@ -383,7 +382,7 @@ def first_occurrence(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
     """
     threshold = convert_units_to(threshold, data)
 
@@ -421,7 +420,7 @@ def last_occurrence(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
     """
     threshold = convert_units_to(threshold, data)
 
@@ -461,7 +460,7 @@ def spell_length(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
     """
     threshold = convert_units_to(threshold, data)
 
@@ -489,7 +488,7 @@ def statistics(data: xr.DataArray, reducer: str, freq: str) -> xr.DataArray:
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
     """
     out = getattr(data.resample(time=freq), reducer)()
     out.attrs["units"] = data.attrs["units"]
@@ -520,7 +519,7 @@ def thresholded_statistics(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
     """
     threshold = convert_units_to(threshold, data)
 
@@ -554,7 +553,7 @@ def temperature_sum(
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
     """
     threshold = convert_units_to(threshold, data)
 
@@ -577,12 +576,12 @@ def interday_diurnal_temperature_range(
       The lowest daily temperature (tasmin).
     high_data : xr.DataArray
       The highest daily temperature (tasmax).
-    freq: str
+    freq : str
       Resampling frequency.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
     """
     high_data = convert_units_to(high_data, low_data)
 
@@ -605,12 +604,12 @@ def extreme_temperature_range(
       The lowest daily temperature (tasmin).
     high_data : xr.DataArray
       The highest daily temperature (tasmax).
-    freq: str
+    freq : str
       Resampling frequency.
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
     """
     high_data = convert_units_to(high_data, low_data)
 
@@ -645,7 +644,7 @@ def aggregate_between_dates(
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
+    xr.DataArray, [dimensionless]
       Aggregated data between the start and end dates. If the end date is before the start date, returns np.nan.
       If there is no start and/or end date, returns np.nan.
     """
@@ -654,7 +653,7 @@ def aggregate_between_dates(
         """Get bound in number of days since base_time. Bound can be a days_since array or a DayOfYearStr."""
         if isinstance(_bound, str):
             b_i = rl.index_of_date(_group.time, _bound, max_idxs=1)  # noqa
-            if not len(b_i):
+            if not b_i:
                 return None
             return (_group.time.isel(time=b_i[0]) - _group.time.isel(time=0)).dt.days
         if _base_time in _bound.time:
@@ -663,7 +662,7 @@ def aggregate_between_dates(
 
     if freq is None:
         frequencies = []
-        for i, bound in enumerate([start, end], start=1):
+        for _, bound in enumerate([start, end], start=1):
             try:
                 frequencies.append(xr.infer_freq(bound.time))
             except AttributeError:
@@ -689,7 +688,7 @@ def aggregate_between_dates(
         end.attrs["calendar"] = cal
         end = doy_to_days_since(end)
 
-    out = list()
+    out = []
     for base_time, indexes in data.resample(time=freq).groups.items():
         # get group slice
         group = data.isel(time=indexes)
@@ -736,7 +735,7 @@ def degree_days(tas: xr.DataArray, thresh: str, condition: str) -> xr.DataArray:
 
     Returns
     -------
-    xarray.DataArray
+    xr.DataArray
     """
     thresh = convert_units_to(thresh, tas)
 
