@@ -12,6 +12,7 @@ New features and enhancements
     - Wrapped SBCK tests are also properly run in the tox testing ensemble. (:pull:`1119`).
 * Method ``FAO_PM98`` (based on Penman-Monteith formula) to compute potential evapotranspiration. (:pull:`1122`).
 * New indices for droughts: SPI (standardized precipitations) and SPEI (standardized water budgets) (:issue:`131`, :pull:`1096`)
+* Most numba functions of ``sdba.nbutils`` now use the lazy compilation mode. This significantly accelerates the import time of xclim. (:issue:`1135`, :pull:`1167`).
 * Statistical properties and measures from ``xclim.sdba`` are now Indicator subclasses (:pull:`1149`).
 
 New indicators

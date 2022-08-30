@@ -1224,10 +1224,10 @@ def potential_evapotranspiration(
 
 
 @vectorize(
-    [
-        float64(float64, float64, float64, float64),
-        float32(float32, float32, float32, float32),
-    ],
+    # [
+    #     float64(float64, float64, float64, float64),
+    #     float32(float32, float32, float32, float32),
+    # ],
 )
 def _utci(tas, sfcWind, dt, wvp):
     """Return the empirical polynomial function for UTCI. See :py:func:`universal_thermal_climate_index`."""
@@ -1544,7 +1544,16 @@ def universal_thermal_climate_index(
     delta = mrt - tas
     pa = convert_units_to(e_sat, "kPa") * convert_units_to(hurs, "1")
 
-    utci = _utci(tas, sfcWind, delta, pa)
+    utci = xr.apply_ufunc(
+        _utci,
+        tas,
+        sfcWind,
+        delta,
+        pa,
+        input_core_dims=[[], [], [], []],
+        dask="parallelized",
+        output_dtypes=[tas.dtype],
+    )
 
     utci = utci.assign_attrs({"units": "degC"})
     if mask_invalid:
