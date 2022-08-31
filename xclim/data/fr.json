@@ -516,9 +516,9 @@
   },
   "FRESHET_START": {
     "long_name": "Premier jour ayant un dépassement constant du seuil de température",
-    "description": "Jour de l'année du début de la crue printanière, défini comme le premier jour où un seuil de température moyenne quotidienne de {thresh} est dépassé pendant au moins {window} jours.",
+    "description": "Jour de l'année du début de la crue printanière, défini comme le premier jour la température moyenne quotidienne est au-dessus de {thresh} pendant au moins {window} jours.",
     "title": "Jour de l'année du début de la crue nivale",
-    "abstract": "Premier jour où la température moyenne quotidienne est au-dessus d'un certain seuil depuis un certain nombre de jours consécutifs."
+    "abstract": "Premier jour où la température moyenne quotidienne est au-dessus d'un seuil donné depuis un certain nombre de jours consécutifs."
   },
   "FROST_SEASON_LENGTH": {
     "long_name": "Durée de la saison de gel",
@@ -790,16 +790,16 @@
     "abstract": "Précipitation liquide estimée à partir de la précipitation totale et de la température selon une méthode et un seuil de température donnés."
   },
   "LAST_SNOWFALL": {
-    "long_name": "Date de la dernière neige",
+    "long_name": "Date de la dernière chute de neige",
     "description": "Dernier jour {freq:m} où la précipitation solide est au-dessus de {thresh}.",
-    "title": "Dernier jour avec une précipitation solide au-dessus d'un seuil",
-    "abstract": "Dernier jour d'une période où la précipitation solide est au-dessus d'un certain seuil."
+    "title": "Dernier jour avec une précipitation solide au-dessus d'un seuil donné",
+    "abstract": "Dernier jour d'une période où la précipitation solide est au-dessus d'un certain seuil donné."
   },
   "FIRST_SNOWFALL": {
-    "long_name": "Date de la première neige",
+    "long_name": "Date de la première chute de neige",
     "description": "Premier jour {freq:m} où la précipitation solide est au-dessus de {thresh}.",
-    "title": "Premier jour avec une précipitation solide au-dessus d'un seuil",
-    "abstract": "Premier jour d'une période où la précipitation solide est au-dessus d'un certain seuil."
+    "title": "Premier jour avec une précipitation solide au-dessus d'un seuil donné",
+    "abstract": "Premier jour d'une période où la précipitation solide est au-dessus d'un certain seuil donné."
   },
   "DAYS_WITH_SNOW": {
     "long_name": "Nombre de jours où la précipitation solide se trouve entre une borne inférieure et supérieure.",
@@ -808,22 +808,22 @@
     "abstract": "Nombre de jours où la neige est entre une borne inférieure et supérieure."
   },
   "SNOW_COVER_DURATION": {
-    "long_name": "Nombre de jour où la profondeur de neige est au-dessus d'un seuil",
-    "description": "Nombre {freq:m} de jours où la profondeur de neige est au-dessus ou égale à {thresh}.",
+    "long_name": "Nombre de jour où l'épaisseur de neige est au-dessus d'un seuil",
+    "description": "Nombre {freq:m} de jours où l'épaisseur de neige est au-dessus ou égale à {thresh}.",
     "title": "Durée du couvert de neige",
-    "abstract": "Nombre de jours pendant lesquels la profondeur de neige est au-dessus ou égale à un seuil donné."
+    "abstract": "Nombre de jours pendant lesquels l'épaisseur de neige est au-dessus ou égale à un seuil donné."
   },
   "CONTINUOUS_SNOW_COVER_START": {
-    "long_name": "Date d'établissement du couvert de neige",
-    "description": "Première date à laquelle la profondeur de neige est au-dessus ou égale à {thresh} pendant au moins {window} jours.",
+    "long_name": "Date du début du couvert de neige continu",
+    "description": "Première date à laquelle l'épaisseur de neige est au-dessus ou égale à {thresh} pendant au moins {window} jours consécutifs.",
     "title": "Date du début du couvert de neige",
-    "abstract": "Première date à partir de laquelle la profondeur de neige est au-dessus ou égale à un seuil pendant un nombre de jours consécutifs."
+    "abstract": "Première date à partir de laquelle l'épaisseur de neige est au-dessus ou égale à un seuil donné pendant un nombre de jours consécutifs."
   },
   "CONTINUOUS_SNOW_COVER_END": {
-    "long_name": "Date de disparition du couvert de neige",
-    "description": "Première date à laquelle la profondeur de neige passe sous {thresh} pendant au moins {window} jours suite à l'établissement du couvert de neige.",
+    "long_name": "Date de fin du couvert de neige continu",
+    "description": "Première date à laquelle l'épaisseur de neige passe sous {thresh} pendant au moins {window} jours suite à l'établissement du couvert de neige.",
     "title": "Date du fin du couvert de neige",
-    "abstract": "Première date à partir de laquelle la profondeur de neige est inférieure à un seuil pendant un nombre de jours consécutifs suite à l'établissement du couvert de neige."
+    "abstract": "Première date à partir de laquelle l'épaisseur de neige est inférieure à un seuil pendant un nombre de jours consécutifs suite à l'établissement du couvert de neige."
   },
   "SND_MAX_DOY": {
     "long_name": "Date de la profondeur de neige maximale",
@@ -1019,15 +1019,15 @@
   },
   "CALM_DAYS": {
     "title": "Nombre de jours de vent calme",
-    "abstract": "Nombre de jours où la vitesse du vent de surface est en dessous d'un seuil.",
-    "description": "Nombre {freq:m} de jours où la vitesse du vent de surface < {thresh}.",
-    "long_name": "Nombre de jours où la vitesse du vent de surface est sous un seuil"
+    "abstract": "Nombre de jours où la vitesse du vent de surface est sous un seuil donné.",
+    "description": "Nombre {freq:m} de jours où la vitesse du vent de surface est sous {thresh}.",
+    "long_name": "Nombre de jours où la vitesse du vent de surface est sous un seuil donné"
   },
   "WINDY_DAYS": {
     "title": "Nombre de jours venteux",
-    "abstract": "Nombre de jours où la vitesse du vent de surface est au-dessus d'un seuil.",
-    "description": "Nombre {freq:m} de jours où la vitesse du vent de surface >= {thresh}.",
-    "long_name": "Nombre de jours où la vitesse du vent de surface est au-dessus d'un seuil"
+    "abstract": "Nombre de jours où la vitesse du vent de surface est au-dessus ou égale à un seuil donné.",
+    "description": "Nombre {freq:m} de jours où la vitesse du vent de surface est au-deesus ou égale à {thresh}.",
+    "long_name": "Nombre de jours où la vitesse du vent de surface est au-dessus ou égale à un seuil donné"
   },
   "JETSTREAM_METRIC_WOOLLINGS": {
     "title": "Force et latitude du courant-jet",
