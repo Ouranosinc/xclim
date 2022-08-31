@@ -965,7 +965,7 @@ degree_days_exceedance_date = Temp(
     units="",
     long_name="Day of year when cumulative degree days exceed threshold.",
     standard_name="day_of_year",
-    description="Day of year when the integral of degree days (tmean {op} {thresh}) exceeds {sum_thresh}, "
+    description="Day of year when the integral of degree days (mean temperature {op} {thresh}) exceeds {sum_thresh}, "
     "with the cumulative sum starting from {after_date}.",
     abstract="The day of the year when the sum of degree days exceeds a threshold. "
     "Degree days are calculated above or below a given temperature threshold.",
