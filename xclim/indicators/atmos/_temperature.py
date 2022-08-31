@@ -99,7 +99,7 @@ tn_days_above = TempWithIndexing(
     abstract="The number of days with minimum temperature above a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.tn_days_above,
-    parameters=dict(op=">"),
+    parameters={"op": {"default": ">"}},
 )
 
 tn_days_below = TempWithIndexing(
@@ -112,7 +112,7 @@ tn_days_below = TempWithIndexing(
     abstract="The number of days with minimum temperature below a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.tn_days_below,
-    parameters=dict(op="<"),
+    parameters={"op": {"default": "<"}},
 )
 
 tg_days_above = TempWithIndexing(
@@ -125,7 +125,7 @@ tg_days_above = TempWithIndexing(
     abstract="The number of days with mean temperature above a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.tg_days_above,
-    parameters=dict(op=">"),
+    parameters={"op": {"default": ">"}},
 )
 
 tg_days_below = TempWithIndexing(
@@ -138,7 +138,7 @@ tg_days_below = TempWithIndexing(
     abstract="The number of days with mean temperature below a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.tg_days_below,
-    parameters=dict(op="<"),
+    parameters={"op": {"default": "<"}},
 )
 
 tx_days_above = TempWithIndexing(
@@ -151,7 +151,7 @@ tx_days_above = TempWithIndexing(
     abstract="The number of days with maximum temperature above a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.tx_days_above,
-    parameters=dict(op=">"),
+    parameters={"op": {"default": ">"}},
 )
 
 tx_days_below = TempWithIndexing(
@@ -164,7 +164,7 @@ tx_days_below = TempWithIndexing(
     abstract="The number of days with maximum temperature below a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.tx_days_below,
-    parameters=dict(op="<"),
+    parameters={"op": {"default": "<"}},
 )
 
 tx_tn_days_above = TempWithIndexing(
@@ -392,7 +392,7 @@ daily_temperature_range = TempWithIndexing(
     cell_methods="time range within days time: mean over days",
     abstract="The average difference between the daily maximum and minimum temperatures.",
     compute=indices.daily_temperature_range,
-    parameters=dict(op="mean"),
+    parameters={"op": "mean"},
 )
 
 max_daily_temperature_range = TempWithIndexing(
@@ -405,7 +405,7 @@ max_daily_temperature_range = TempWithIndexing(
     cell_methods="time range within days time: max over days",
     abstract="The maximum difference between the daily maximum and minimum temperatures.",
     compute=indices.daily_temperature_range,
-    parameters=dict(op="max"),
+    parameters={"op": "max"},
 )
 
 daily_temperature_range_variability = TempWithIndexing(
@@ -508,8 +508,8 @@ daily_freezethaw_cycles = TempWithIndexing(
         "window": 1,
         "thresh_tasmax": {"default": "0 degC"},
         "thresh_tasmin": {"default": "0 degC"},
-        "op_tasmax": ">",
-        "op_tasmin": "<=",
+        "op_tasmax": {"default": ">"},
+        "op_tasmin": {"default": "<="},
     },
 )
 
@@ -530,8 +530,8 @@ freezethaw_spell_frequency = Temp(
         "op": "count",
         "thresh_tasmax": {"default": "0 degC"},
         "thresh_tasmin": {"default": "0 degC"},
-        "op_tasmax": ">",
-        "op_tasmin": "<=",
+        "op_tasmax": {"default": ">"},
+        "op_tasmin": {"default": "<="},
     },
 )
 
@@ -574,8 +574,8 @@ freezethaw_spell_max_length = Temp(
         "op": "max",
         "thresh_tasmax": {"default": "0 degC"},
         "thresh_tasmin": {"default": "0 degC"},
-        "op_tasmax": ">",
-        "op_tasmin": "<=",
+        "op_tasmax": {"default": ">"},
+        "op_tasmin": {"default": "<="},
     },
 )
 
@@ -686,7 +686,7 @@ frost_season_length = Temp(
     "without a thawing window of days, with the thaw occurring after a median calendar date",
     cell_methods="time: sum over days",
     compute=indices.frost_season_length,
-    parameters=dict(thresh="0 degC"),
+    parameters={"thresh": {"default": "0 degC"}},
 )
 
 last_spring_frost = Temp(
@@ -701,6 +701,7 @@ last_spring_frost = Temp(
     "limited by a final calendar date.",
     cell_methods="",
     compute=indices.last_spring_frost,
+    parameters={"before_date": {"default": "07-01"}},
 )
 
 first_day_below = Temp(
@@ -714,6 +715,7 @@ first_day_below = Temp(
     "given number of days, after a given calendar date.",
     cell_methods="",
     compute=indices.first_day_below,
+    parameters={"after_date": {"default": "07-01"}},
 )
 
 first_day_above = Temp(
@@ -727,6 +729,7 @@ first_day_above = Temp(
     "given number of days, after a given calendar date.",
     cell_methods="",
     compute=indices.first_day_above,
+    parameters={"before_date": {"default": "07-01"}},
 )
 
 ice_days = TempWithIndexing(
@@ -1036,7 +1039,12 @@ huglin_index = Temp(
     cell_methods="",
     var_name="hi",
     compute=indices.huglin_index,
-    parameters=dict(method="jones"),
+    parameters={
+        "lat": {"kind": InputKind.VARIABLE},
+        "method": {"default": "jones"},
+        "start_date": {"default": "04-01"},
+        "end_date": {"default": "10-01"},
+    },
 )
 
 
@@ -1054,7 +1062,12 @@ biologically_effective_degree_days = Temp(
     cell_methods="",
     var_name="bedd",
     compute=indices.biologically_effective_degree_days,
-    parameters={"method": "gladstones", "lat": {"kind": InputKind.VARIABLE}},
+    parameters={
+        "lat": {"kind": InputKind.VARIABLE},
+        "method": {"default": "gladstones"},
+        "start_date": {"default": "04-01"},
+        "end_date": {"default": "11-01"},
+    },
 )
 
 
@@ -1076,6 +1089,11 @@ effective_growing_degree_days = Temp(
     cell_methods="",
     var_name="egdd",
     compute=indices.effective_growing_degree_days,
+    parameters={
+        "method": {"default": "bootsma"},
+        "thresh": {"default": "5 degC"},
+        "after_date": {"default": "07-01"},
+    },
 )
 
 
@@ -1095,5 +1113,5 @@ latitude_temperature_index = Temp(
     allowed_periods=["A"],
     var_name="lti",
     compute=indices.latitude_temperature_index,
-    parameters={"lat_factor": 60, "lat": {"kind": InputKind.VARIABLE}},
+    parameters={"lat": {"kind": InputKind.VARIABLE}, "lat_factor": 60},
 )
