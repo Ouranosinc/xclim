@@ -212,7 +212,11 @@ def keetch_byram_drought_index(
     """Keetch-Byram drought index (KBDI) for soil moisture deficit.
 
     This method implements the methodology and formula described in :cite:t:`ffdi-finkele_2006`
-    (section 2.1.1) for calculating the KBDI. See Notes below.
+    (section 2.1.1) for calculating the KBDI, with one small difference: in
+    :cite:t:`ffdi-finkele_2006` the maximum KBDI is limited to 200 mm to represent the maximum
+    field capacity of the soil (8 inches according to :cite:t:`ffdi-keetch_1968`). However, it
+    is more common in the literature to limit the KBDI to 203.2 mm which is a more accurate
+    conversion from inches to mm. In this function, the KBDI is limited to 203.2 mm.
 
     Parameters
     ----------
@@ -229,12 +233,6 @@ def keetch_byram_drought_index(
     -------
     kbdi : xr.DataArray
         Keetch-Byram drought index.
-
-    Notes
-    -----
-    :cite:t:`ffdi-finkele_2006` limits the maximum KBDI to 200 mm to represent the maximum field capacity of the soil
-    (8 in according to :cite:t:`ffdi-keetch_1968`). However, it is more common in the literature to limit the KBDI to
-    203.2 mm which is a more accurate conversion from in to mm. In the function, the KBDI is limited to 203.2 mm.
 
     References
     ----------
@@ -293,7 +291,8 @@ def griffiths_drought_factor(
     limiting_func : {"xlim", "discrete"}
       How to limit the values of the drought factor.
       If "xlim" (default), use equation (14) in :cite:t:`ffdi-finkele_2006`.
-      If "discrete", use equation Eq (13) in :cite:t:`ffdi-finkele_2006`.
+      If "discrete", use equation Eq (13) in :cite:t:`ffdi-finkele_2006`, but with the lower
+      limit of each category bound adjusted to match the upper limit of the previous bound.
 
     Returns
     -------
@@ -303,7 +302,7 @@ def griffiths_drought_factor(
     Notes
     -----
     Calculation of the Griffiths drought factor depends on the rainfall over the previous 20 days.
-    Thus, the first available time point in the drought factor returned by this function
+    Thus, the first non-NaN time point in the drought factor returned by this function
     corresponds to the 20th day of the input data.
 
     References
