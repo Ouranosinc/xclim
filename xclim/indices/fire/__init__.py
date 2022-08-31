@@ -1,7 +1,7 @@
 # noqa: D205,D400
 """
-Fire Indices Module
-===================
+Fire indices submodule
+======================
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ import xarray as xr
 from xclim.core.units import declare_units
 
 from ._cffwis import *
-from ._cffwis import cffwis_indices  # noqa
+from ._cffwis import cffwis_indices
 from ._ffdi import *
 
 

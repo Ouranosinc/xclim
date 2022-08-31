@@ -30,10 +30,17 @@ Indices submodules
    :show-inheritance:
    :noindex:
 
-Fire submodule
---------------
+Fire indices submodule
+^^^^^^^^^^^^^^^^^^^^^^
+Indices related to fire and fire weather. Currently, submodules exist for calculating indices from the Canadian Forest Fire Weather Index System and the McArthur Forest Fire Danger (Mark 5) System. All fire indices can be accessed from the :py:mod:`xclim.indices.fire` submodule.
 
-.. automodule:: xclim.indices.fire
+.. automodule:: xclim.indices.fire._cffwis
+   :members: fire_weather_ufunc, fire_season, overwintering_drought_code, drought_code, cffwis_indices
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
+.. automodule:: xclim.indices.fire._ffdi
    :members:
    :undoc-members:
    :show-inheritance:
@@ -41,13 +48,13 @@ Fire submodule
 
 .. only:: html or text
 
-    Fire Indices footnotes
-    ======================
+    Fire indices footnotes
+    ~~~~~~~~~~~~~~~~~~~~~~
 
     .. _ffdi-footnotes:
 
     McArthur Forest Fire Danger Indices methods
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    *******************************************
 
     .. bibliography::
        :labelprefix: FFDI-
@@ -55,8 +62,8 @@ Fire submodule
 
     .. _fwi-footnotes:
 
-    Fire Weather Indices codes
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    Canadian Forest Fire Weather Index System codes
+    ***********************************************
 
     .. bibliography::
        :labelprefix: CODE-
@@ -65,14 +72,14 @@ Fire submodule
     Matlab code of the GFWED obtained through personal communication.
 
     Fire season determination methods
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    *********************************
 
     .. bibliography::
        :labelprefix: FIRE-
        :keyprefix: fire-
 
     Drought Code overwintering background
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    *************************************
 
     .. bibliography::
        :labelprefix: DROUGHT-

@@ -1,11 +1,10 @@
 # noqa: D205,D400
 r"""
-=====================================================
-Canadian Forest Fire Weather Indices System Submodule
-=====================================================
+Canadian Forest Fire Weather Index System
+=========================================
 
-This submodule defines the :py:func:`xclim.indices.fire_season`, :py:func:`xclim.indices.drought_code` and
-:py:func:`xclim.indices.cffwis_indices` indices, which are used by the eponym indicators.
+This submodule defines the :py:func:`xclim.indices.fire.fire_season`, :py:func:`xclim.indices.fire.drought_code` and
+:py:func:`xclim.indices.fire.cffwis_indices` indices, which are used by the eponym indicators.
 Users should read this module's documentation and the one of :py:func:`fire_weather_ufunc`. They should also consult the
 information available at :cite:t:`code-natural_resources_canada_data_nodate`.
 
@@ -36,7 +35,7 @@ thresholds and the snow depth threshold can all be modified.
 
 Overwintering
 -------------
-Additionnaly, overwintering of the drought code is also directly implemented in :py:func:`fire_weather_ufunc`.
+Additionaly, overwintering of the drought code is also directly implemented in :py:func:`fire_weather_ufunc`.
 The last drought_code of the season is kept in "winter" (where the fire season mask is False) and the precipitation
 is accumulated until the start of the next season. The first drought code is computed as a function of these instead
 of using the default DCStart value. Parameters to :py:func:`_overwintering_drought_code` are listed below.
@@ -45,7 +44,7 @@ The code for the overwintering is based on
 
 Finally, a mechanism for dry spring starts is implemented. For now, it is slightly different from what the GFWED, uses,
 but seems to agree with the state of the science of the CFS. When activated, the drought code and Duff-moisture codes
-are started in spring with a value that is function of the number of days since the last significative precipitation event.
+are started in spring with a value that is function of the number of days since the last significant precipitation event.
 The conventional start value increased by that number of days times a "dry start" factor. Parameters are controlled in
 the call of the indices and :py:func:`fire_weather_ufunc`. Overwintering of the drought code overrides this mechanism if
 both are activated. GFWED use a more complex approach with an added check on the previous day's snow cover for
@@ -54,8 +53,8 @@ days.
 
 Examples
 --------
-The current litterature seems to agree that climate-oriented series of the fire weather indexes should be computed
-using only the longest fire season of each year and activatting the overwintering of the drought code and the "dry
+The current literature seems to agree that climate-oriented series of the fire weather indexes should be computed
+using only the longest fire season of each year and activating the overwintering of the drought code and the "dry
 start" for the duff-moisture code. The following example uses reasonable parameters when computing over all of Canada.
 
 .. note::

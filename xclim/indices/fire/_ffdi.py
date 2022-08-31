@@ -1,13 +1,15 @@
 # noqa: D205,D400
 r"""
-=============================================
-McArthur Forest Fire Danger Indices Submodule
-=============================================
+McArthur Forest Fire Danger (Mark 5) System
+===========================================
 
-This submodule defines the :py:func:`xclim.indices.keetch_byram_drought_index`,
-:py:func:`xclim.indices.griffiths_drought_factor` and :py:func:`xclim.indices.mcarthur_forest_fire_danger_index`
-indices, which are used by the eponym indicators. Users should read this module's documentation and consult
-:cite:t:`ffdi-finkele_2006` which provides details of the methods used to calculate each index.
+This submodule defines indices related to the McArthur Forest Fire Danger Index Mark 5. Currently
+implemented are the :py:func:`xclim.indices.fire.keetch_byram_drought_index`,
+:py:func:`xclim.indices.fire.griffiths_drought_factor` and :py:func:`xclim.indices.fire.mcarthur_forest_fire_danger_index`
+indices, which are used by the eponym indicators. The implementation of these indices follows :cite:t:`ffdi-finkele_2006` and :cite:t:`ffdi-noble_1980`, with any differences described in the
+documentation for each index. Users are encouraged to read this module's documentation and consult
+:cite:t:`ffdi-finkele_2006` for a full description of the methods used to calculate each index.
+
 """
 # This file is structured in the following way:
 # Section 1: individual codes, numba-accelerated and vectorized functions.
@@ -211,12 +213,11 @@ def keetch_byram_drought_index(
 ) -> xr.DataArray:
     """Keetch-Byram drought index (KBDI) for soil moisture deficit.
 
-    This method implements the methodology and formula described in :cite:t:`ffdi-finkele_2006`
-    (section 2.1.1) for calculating the KBDI, with one small difference: in
-    :cite:t:`ffdi-finkele_2006` the maximum KBDI is limited to 200 mm to represent the maximum
-    field capacity of the soil (8 inches according to :cite:t:`ffdi-keetch_1968`). However, it
-    is more common in the literature to limit the KBDI to 203.2 mm which is a more accurate
-    conversion from inches to mm. In this function, the KBDI is limited to 203.2 mm.
+    The KBDI indicates the amount of water necessary to bring the soil moisture content back to
+    field capacity. It is often used in the calculation of the McArthur Forest Fire Danger
+    Index. The method implemented here follows :cite:t:`ffdi-finkele_2006` but limits the
+    maximum KBDI to 203.2 mm, rather than 200 mm, in order to align best with the majority of
+    the literature.
 
     Parameters
     ----------
@@ -227,12 +228,21 @@ def keetch_byram_drought_index(
     pr_annual: xr.DataArray
         Mean (over years) annual accumulated rainfall [mm/year].
     kbdi0 : xr.DataArray, optional
-        Previous KBDI map used to initialise the KBDI calculation [mm/day]. Defaults to 0.
+        Previous KBDI values used to initialise the KBDI calculation [mm/day]. Defaults to 0.
 
     Returns
     -------
     kbdi : xr.DataArray
         Keetch-Byram drought index.
+
+    Notes
+    -----
+    This method implements the method described in :cite:t:`ffdi-finkele_2006` (section 2.1.1) for
+    calculating the KBDI with one small difference: in :cite:t:`ffdi-finkele_2006` the maximum
+    KBDI is limited to 200 mm to represent the maximum field capacity of the soil (8 inches
+    according to :cite:t:`ffdi-keetch_1968`). However, it is more common in the literature to limit
+    the KBDI to 203.2 mm which is a more accurate conversion from inches to mm. In this function,
+    the KBDI is limited to 203.2 mm.
 
     References
     ----------
@@ -279,8 +289,9 @@ def griffiths_drought_factor(
 ) -> xr.DataArray:
     """Griffiths drought factor based on the soil moisture deficit.
 
-    This method implements the methodology and formula described in :cite:t:`ffdi-finkele_2006`
-    (section 2.2) for calculating the Griffiths drought factor.
+    The drought factor is a numeric indicator of the forest fire fuel availability in the
+    deep litter bed. It is often used in the calculation of the McArthur Forest Fire Danger
+    Index. The method implemented here follows :cite:t:`ffdi-finkele_2006`.
 
     Parameters
     ----------
@@ -357,7 +368,7 @@ def mcarthur_forest_fire_danger_index(
 ):  # noqa: D403
     """McArthur forest fire danger index (FFDI) Mark 5.
 
-    This method calculates the FFDI using the formula in :cite:t:`ffdi-noble_1980`.
+    The FFDI is a numeric indicator of the potential danger of a forest fire.
 
     Parameters
     ----------
@@ -381,7 +392,7 @@ def mcarthur_forest_fire_danger_index(
 
     References
     ----------
-    :cite:cts:`ffdi-noble_1980,ffdi-dowdy_2018,ffdi-holgate_2017`
+    :cite:cts:`ffdi-noble_1980,ffdi-noble_1980,ffdi-dowdy_2018,ffdi-holgate_2017`
     """
     T = convert_units_to(T, "C")
     H = convert_units_to(H, "pct")
