@@ -237,7 +237,7 @@
   },
   "SPEI": {
     "long_name": "Indice de précipitation évapotranspiration standardisé (SPEI)",
-    "description": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile de {window} {freq:nom}, normalisé tel que la moyenne du SPEI est 0 pour les données de calibration. L'unité de la fenêtre `X` est l'unité de temps determinée par la fréquence de rééchantillonnage {freq}.",
+    "description": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile de {window} {freq:nom}, normalisé tel que la moyenne du SPEI est 0 pour les données de calibration. L'unité de la fenêtre `X` est l'unité de temps determinée par la fréquence de rééchantillonnage {freq:f}.",
     "title": "Indice de précipitation évapotranspiration standardisé (SPEI)",
     "abstract": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile, normalisé tel que la moyenne du SPEI est 0 pour les données de calibration. L'unité de la fenêtre est l'unité de temps déterminée par la fréquence de rééchantillonnage."
   },
@@ -435,7 +435,7 @@
   },
   "COLD_SPELL_DURATION_INDEX": {
     "long_name": "Indice de durée des vagues de froid",
-    "description": "{freq} nombre de jours avec au moins {window} jours consécutifs où la température minimale quotidienne est inférieure au(x) {tasmin_per_thresh}ᵉ centile. Une vague de froid se produit lorsque la température minimale quotidienne est inférieure à un centile donné pendant au moins {window} jours consécutifs.",
+    "description": "{freq:m} nombre de jours avec au moins {window} jours consécutifs où la température minimale quotidienne est inférieure au(x) {tasmin_per_thresh}ᵉ centile. Une vague de froid se produit lorsque la température minimale quotidienne est inférieure à un centile donné pendant au moins {window} jours consécutifs.",
     "title": "Indice de durée des vagues de froid",
     "abstract": "Nombre de jours de vagues de froid. Une vague de froid se produit lorsque la température minimale quotidienne est sous un centile donné pendant au moins {window} jours consécutifs."
   },
@@ -477,7 +477,7 @@
   },
   "GROWING_DEGREE_DAYS": {
     "long_name": "Degrés-jours de croissance",
-    "description": "Cumul {freq} des degrés-jours de croissance (température moyenne quotidienne au-dessus de {thresh}).",
+    "description": "Cumul {freq:m} des degrés-jours de croissance (température moyenne quotidienne au-dessus de {thresh}).",
     "title": "Degrés-jours de croissance",
     "abstract": "Cumul des degrés-jours pour les jours où la température moyenne quotidienne est au-dessus d'un seuil donné."
   },
@@ -489,7 +489,7 @@
   },
   "THAWING_DEGREE_DAYS": {
     "long_name": "Degrés-jours de dégel",
-    "description": "Cumul {freq} des degrés-jours de dégel (température moyenne quotidienne au-dessus de {thresh}).",
+    "description": "Cumul {freq:m} des degrés-jours de dégel (température moyenne quotidienne au-dessus de {thresh}).",
     "title": "Degrés-jours de dégel",
     "abstract": "Cumul des degrés-jours pour les jours où la température moyenne quotidienne est au-dessus d'un seuil donné, habituellement 0°C."
   },
@@ -522,7 +522,7 @@
   },
   "FROST_SEASON_LENGTH": {
     "long_name": "Durée de la saison de gel",
-    "description": "Nombre {freq} de jours entre la première occurrence d'au moins {window} jours consécutifs ayant une température minimale quotidienne inférieure au point de congélation et la première occurrence d'au moins {window} jours consécutifs ayant une température minimale quotidienne supérieure au point de congélation après {mid_date}.",
+    "description": "Nombre {freq:m} de jours entre la première occurrence d'au moins {window} jours consécutifs ayant une température minimale quotidienne inférieure au point de congélation et la première occurrence d'au moins {window} jours consécutifs ayant une température minimale quotidienne supérieure au point de congélation après {mid_date}.",
     "title": "Durée de la saison de gel",
     "abstract": "Durée de la saison de gel, définie comme la période pendant laquelle la température minimale quotidienne est inférieure à 0°C sans fenêtre de dégel de plusieurs jours, le dégel se produisant après une date du calendrier médiane."
   },
@@ -546,7 +546,7 @@
   },
   "FROST_FREE_SEASON_LENGTH": {
     "long_name": "Durée de la saison sans gel",
-    "description": "Nombre {freq} de jours entre la première occurrence d'au moins {window} jours consécutifs ayant une température minimale quoditienne supérieure au point de congélation et la première occurrence d'au moins {window} jours consécutifs ayant une température minimale quotidienne inférieure au point de congélation après {mid_date}.",
+    "description": "Nombre {freq:m} de jours entre la première occurrence d'au moins {window} jours consécutifs ayant une température minimale quoditienne supérieure au point de congélation et la première occurrence d'au moins {window} jours consécutifs ayant une température minimale quotidienne inférieure au point de congélation après {mid_date}.",
     "title": "Durée de la saison sans gel",
     "abstract": "Durée de la saison sans gel, définie comme la période pendant laquelle la température minimale quotidienne est au-dessus de 0°C sans fenêtre de gel de plusieurs jours, le gel se produisant après une date du calendrier médiane."
   },
@@ -582,7 +582,7 @@
   },
   "RB_FLASHINESS_INDEX": {
     "long_name": "Indice Richards-Baker de torrentialité",
-    "description": "Indice R-B {freq}, un indice mesurant le caractère torrentiel d'un débit de rivière.",
+    "description": "Indice R-B {freq:m}, un indice mesurant le caractère torrentiel d'un débit de rivière.",
     "title": "Indice Richards-Baker de torrentialité",
     "abstract": "Mesure des oscillations du débit relatif au débit moyen, quantifiant la fréquence et la rapidité des changements de débits."
   },
@@ -630,13 +630,13 @@
   },
   "DRY_DAYS": {
     "long_name": "Nombre de jours secs",
-    "description": "Nombre {freq} de jours où la précipitation quotidienne est sous {thresh}.",
+    "description": "Nombre {freq:m} de jours où la précipitation quotidienne est sous {thresh}.",
     "title": "Nombre de jours secs",
     "abstract": "Nombre de jours où la précipitation quotidienne est sous un seuil."
   },
   "HOT_SPELL_FREQUENCY": {
     "long_name": "Nombre de périodes chaudes",
-    "description": "Nombre {freq} de périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne excède {thresh_tasmax} durant au moins {window} jours.",
+    "description": "Nombre {freq:m} de périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne excède {thresh_tasmax} durant au moins {window} jours.",
     "title": "Fréquences des périodes chaudes",
     "abstract": "Nombre de périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne excède un seuil spécifique durant un minimum de jours donné."
   },
@@ -654,7 +654,7 @@
   },
   "CONSECUTIVE_FROST_FREE_DAYS": {
     "long_name": "Nombre maximal de jours consécutifs avec Tmin supérieur à 0°C",
-    "description": "Nombre maximal {freq} de jours consécutifs où la température minimale quotidienne excède ou est égale à {thresh}.",
+    "description": "Nombre maximal {freq:m} de jours consécutifs où la température minimale quotidienne excède ou est égale à {thresh}.",
     "title": "Nombre maximal de jours consécutifs sans gel",
     "abstract": "Nombre maximal de jours consécutifs sans gel où la température minimale quotidienne est au-dessus ou égale à 0°C."
   },
@@ -931,19 +931,19 @@
     "title": "Fréquence des périodes d'événements consécutifs de gel-dégel",
     "abstract": "Fréquence des périodes d'événements consécutifs de gel-dégel. Ces périodes sont des séries de jours consécutifs où la température minimale quotidienne est sous un seuil et la température maximale quotidienne au-dessus d'un autre. En général, ces deux seuils sont 0°C.",
     "description": "Fréquence {freq:f} périodes d'événements consécutifs de gel-dégel (Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consécutif(s)).",
-    "long_name": "Fréquence {freq:f} périodes d'événements consécutifs de gel-dégel"
+    "long_name": "Fréquence périodes d'événements consécutifs de gel-dégel"
   },
   "FREEZETHAW_SPELL_MAX_LENGTH": {
     "title": "Durée maximale des périodes d'événements consécutifs de gel-dégel",
     "abstract": "Durée maximale des périodes d'événements consécutifs de gel-dégel. Ces périodes sont des séries de jours consécutifs où la température minimale quotidienne est sous un seuil et la température maximale quotidienne au-dessus d'un autre. En général, ces deux seuils sont 0°C.",
     "description": "Durée maximale {freq:f} des périodes d'événements consécutifs de gel-dégel (Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consécutif(s)).",
-    "long_name": "Durée maximale {freq:f} des périodes d'événements consécutifs de gel-dégel"
+    "long_name": "Durée maximale des périodes d'événements consécutifs de gel-dégel"
   },
   "FREEZETHAW_SPELL_MEAN_LENGTH": {
     "title": "Durée moyenne des périodes d'événements consécutifs de gel-dégel",
     "abstract": "Durée moyenne des périodes d'événements consécutifs de gel-dégel. Ces périodes sont des séries de jours consécutifs où la température minimale quotidienne est sous un seuil et la température maximale quotidienne au-dessus d'un autre. En général, ces deux seuils sont 0°C.",
     "description": "Durée moyenne {freq:f} des spériodes d'événements consécutifs de gel-dégel (Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consécutif(s)).",
-    "long_name": "Durée moyenne {freq:f} des périodes d'événements consécutifs de gel-dégel"
+    "long_name": "Durée moyenne des périodes d'événements consécutifs de gel-dégel"
   },
   "WIND_CHILL": {
     "title": "Facteur éolien",
@@ -997,37 +997,37 @@
     "title": "Nombre de jours froids et secs",
     "abstract": "Nombre de jours où la température et la précipitation sont en dessous de centiles donnés.",
     "description": "Nombre {freq:m} de jours où la température est en dessous du {tas_per_thresh}e centile et la précipitation en dessous du {pr_per_thresh}e centile.",
-    "long_name": "Nombre {freq:m} de jours froids et secs"
+    "long_name": "Nombre de jours froids et secs"
   },
   "WARM_AND_DRY_DAYS": {
     "title": "Nombre de jours chauds et secs",
     "abstract": "Nombre de jours où la température est au-dessus d'un centile donné et la précipitation en dessous d'un centile donné.",
     "description": "Nombre {freq:m} de jours où la température est au-dessus du {tas_per_thresh}e centile et la précipitation en dessous du {pr_per_thresh}e centile.",
-    "long_name": "Nombre {freq:m} de jours chauds et secs"
+    "long_name": "Nombre de jours chauds et secs"
   },
   "WARM_AND_WET_DAYS": {
     "title": "Nombre de jours chauds et humide",
     "abstract": "Nombre de jours où la température et la précipitation sont au-dessus de centiles donnés.",
     "description": "Nombre {freq:m} de jours où la température est au-dessus du {tas_per_thresh}e centile et la précipitation au-dessus du {pr_per_thresh}e centile.",
-    "long_name": "Nombre {freq:m} de jours chauds et humides"
+    "long_name": "Nombre de jours chauds et humides"
   },
   "COLD_AND_WET_DAYS": {
     "title": "Nombre de jours froids et humide",
     "abstract": "Nombre de jours où la température est en dessous d'un centile donné et la précipitation au-dessus d'un centile donné.",
     "description": "Nombre {freq:m} de jours où la température est en dessous du {tas_per_thresh}e centile et la précipitation au-dessus du {pr_per_thresh}e centile.",
-    "long_name": "Nombre {freq:m} de jours froids et humides"
+    "long_name": "Nombre de jours froids et humides"
   },
   "CALM_DAYS": {
     "title": "Nombre de jours de vent calme",
     "abstract": "Nombre de jours où la vitesse du vent de surface est en dessous d'un seuil.",
     "description": "Nombre {freq:m} de jours où la vitesse du vent de surface < {thresh}.",
-    "long_name": "Nombre {freq:m} de jours où la vitesse du vent de surface est sous un seuil"
+    "long_name": "Nombre de jours où la vitesse du vent de surface est sous un seuil"
   },
   "WINDY_DAYS": {
     "title": "Nombre de jours venteux",
     "abstract": "Nombre de jours où la vitesse du vent de surface est au-dessus d'un seuil.",
     "description": "Nombre {freq:m} de jours où la vitesse du vent de surface >= {thresh}.",
-    "long_name": "Nombre {freq:m} de jours où la vitesse du vent de surface est au-dessus d'un seuil"
+    "long_name": "Nombre de jours où la vitesse du vent de surface est au-dessus d'un seuil"
   },
   "JETSTREAM_METRIC_WOOLLINGS": {
     "title": "Force et latitude du courant-jet",
