@@ -995,6 +995,10 @@ def last_spring_frost(
     Returns last day of period where a temperature is inferior to a threshold over a given number of days and limited
     to a final calendar date.
 
+    Warnings
+    --------
+    The default `before_date` and `freq` call parameters are valid for the northern hemisphere.
+
     Parameters
     ----------
     tas : xarray.DataArray
@@ -1044,7 +1048,7 @@ def first_day_below(
 
     Warnings
     --------
-    The default `freq` is valid for the northern hemisphere.
+    The default `after_date` and `freq` call parameters are valid for the northern hemisphere.
 
     Parameters
     ----------
