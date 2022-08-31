@@ -13,7 +13,7 @@ import xarray as xr
 from xclim.core.units import declare_units
 
 from ._cffwis import *
-from ._cffwis import cffwis_indices
+from ._cffwis import cffwis_indices  # noqa
 from ._ffdi import *
 
 

@@ -392,7 +392,7 @@ def mcarthur_forest_fire_danger_index(
 
     References
     ----------
-    :cite:cts:`ffdi-noble_1980,ffdi-noble_1980,ffdi-dowdy_2018,ffdi-holgate_2017`
+    :cite:cts:`ffdi-noble_1980,ffdi-dowdy_2018,ffdi-holgate_2017`
     """
     T = convert_units_to(T, "C")
     H = convert_units_to(H, "pct")
