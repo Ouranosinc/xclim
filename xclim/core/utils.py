@@ -18,7 +18,6 @@ from importlib.resources import open_text
 from inspect import Parameter, _empty  # noqa
 from io import StringIO
 from pathlib import Path
-from types import FunctionType
 from typing import Callable, Mapping, NewType, Sequence
 
 import numpy as np
@@ -47,14 +46,12 @@ ICM = {
 }
 
 
-def wrapped_partial(
-    func: FunctionType, suggested: dict | None = None, **fixed
-) -> Callable:
+def wrapped_partial(func: Callable, suggested: dict | None = None, **fixed) -> Callable:
     """Wrap a function, updating its signature but keeping its docstring.
 
     Parameters
     ----------
-    func: FunctionType
+    func: Callable
       The function to be wrapped
     suggested : dict, optional
       Keyword arguments that should have new default values but still appear in the signature.
@@ -97,14 +94,14 @@ def wrapped_partial(
 
 
 # TODO Reconsider the utility of this
-def walk_map(d: dict, func: FunctionType) -> dict:
+def walk_map(d: dict, func: Callable) -> dict:
     """Apply a function recursively to values of dictionary.
 
     Parameters
     ----------
     d: dict
       Input dictionary, possibly nested.
-    func: FunctionType
+    func: Callable
       Function to apply to dictionary values.
 
     Returns
