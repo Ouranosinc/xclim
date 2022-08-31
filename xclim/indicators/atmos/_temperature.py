@@ -729,7 +729,7 @@ first_day_above = Temp(
     "given number of days, after a given calendar date.",
     cell_methods="",
     compute=indices.first_day_above,
-    parameters={"before_date": {"default": "07-01"}},
+    parameters={"after_date": {"default": "07-01"}},
 )
 
 ice_days = TempWithIndexing(
