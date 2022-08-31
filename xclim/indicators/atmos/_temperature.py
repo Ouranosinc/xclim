@@ -729,7 +729,6 @@ first_day_above = Temp(
     compute=indices.first_day_above,
 )
 
-
 ice_days = TempWithIndexing(
     title="Ice days",
     identifier="ice_days",
@@ -752,6 +751,7 @@ consecutive_frost_days = Temp(
     abstract="Maximum number of consecutive days where the daily minimum temperature is below 0°C",
     cell_methods="time: maximum over days",
     compute=indices.maximum_consecutive_frost_days,
+    parameters={"thresh": {"default": "0 degC"}},
 )
 
 frost_free_season_length = Temp(
@@ -811,6 +811,7 @@ maximum_consecutive_frost_free_days = Temp(
     "or equal to 0°C",
     cell_methods="time: maximum over days",
     compute=indices.maximum_consecutive_frost_free_days,
+    parameters={"thresh": {"default": "0 degC"}},
 )
 
 growing_season_start = Temp(

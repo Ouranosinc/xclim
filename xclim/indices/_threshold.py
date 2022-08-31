@@ -981,6 +981,7 @@ def frost_free_season_length(
     return to_agg_units(out, tasmin, "count")
 
 
+# FIXME: `tas` should instead be `tasmin` if we want to follow expected definitions.
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def last_spring_frost(
     tas: xarray.DataArray,
@@ -1027,6 +1028,7 @@ def last_spring_frost(
     return out
 
 
+# FIXME: should first_day_X indices accept tas instead of tasmin? This indicator should be relevant for any temperature
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def first_day_below(
     tasmin: xarray.DataArray,
@@ -1077,6 +1079,7 @@ def first_day_below(
     return out
 
 
+# FIXME: should first_day_X indices accept tas instead of tasmin? This indicator should be relevant for any temperature
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def first_day_above(
     tasmin: xarray.DataArray,

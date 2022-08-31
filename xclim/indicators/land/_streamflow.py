@@ -99,7 +99,7 @@ stats = Stats(
     identifier="stats",
     var_name="q{indexer}{op:r}",
     long_name="Daily flow statistics",
-    description="{freq} {op} of daily flow ({indexer})",
+    description="{freq} {op} of daily flow ({indexer}).",
     units="m^3 s-1",
     compute=declare_units(da=None)(generic.select_resample_op),
 )
@@ -111,18 +111,18 @@ fit = Fit(
     units="",
     standard_name="{dist} parameters",
     long_name="Distribution parameters",
-    description="Parameters of the {dist} distribution",
+    description="Parameters of the {dist} distribution.",
     cell_methods="time: fit",
     compute=declare_units(da=None)(_fit),
 )
 
 
 doy_qmax = Streamflow(
-    title="Day of year of the maximum.",
+    title="Day of year of the maximum streamflow",
     identifier="doy_qmax",
     var_name="q{indexer}_doy_qmax",
-    long_name="Day of the year of the maximum over time period",
-    description="Day of the year of the maximum over {indexer}",
+    long_name="Day of the year of the maximum streamflow over time period",
+    description="Day of the year of the maximum streamflow over {indexer}.",
     units="",
     compute=declare_units(da=None)(generic.select_resample_op),
     parameters=dict(op=generic.doymax),
@@ -130,11 +130,11 @@ doy_qmax = Streamflow(
 
 
 doy_qmin = Streamflow(
-    title="Day of year of the minimum.",
+    title="Day of year of the minimum streamflow",
     identifier="doy_qmin",
     var_name="q{indexer}_doy_qmin",
-    long_name="Day of the year of the minimum over time period",
-    description="Day of the year of the minimum over {indexer}",
+    long_name="Day of the year of the minimum streamflow over time period",
+    description="Day of the year of the minimum streamflow over {indexer}.",
     units="",
     compute=declare_units(da=None)(generic.select_resample_op),
     parameters=dict(op=generic.doymin),
