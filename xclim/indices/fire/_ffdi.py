@@ -354,16 +354,16 @@ def griffiths_drought_factor(
 
 
 @declare_units(
-    D="[]",
-    T="[temperature]",
-    H="[]",
-    V="[speed]",
+    drought_factor="[]",
+    tasmax="[temperature]",
+    hurs="[]",
+    sfcWind="[speed]",
 )
 def mcarthur_forest_fire_danger_index(
-    D: xr.DataArray,
-    T: xr.DataArray,
-    H: xr.DataArray,
-    V: xr.DataArray,
+    drought_factor: xr.DataArray,
+    tasmax: xr.DataArray,
+    hurs: xr.DataArray,
+    sfcWind: xr.DataArray,
 ):  # noqa: D403
     """McArthur forest fire danger index (FFDI) Mark 5.
 
@@ -371,18 +371,20 @@ def mcarthur_forest_fire_danger_index(
 
     Parameters
     ----------
-    D : xr.DataArray
-        The drought factor to use in the FFDI calculation. Often the daily Griffiths
-        drought factor (see :py:func:`griffiths_drought_factor`).
-    T : xr.DataArray
-        The temperature to use in the FFDI calculation [degC]. Often the current or previous
-        day's maximum daily temperature near the surface.
-    H : xr.DataArray
-        The relative humidity to use in the FFDI calculation [%]. Often the relative humidity
-        near the time of the maximum temperature used for T.
-    V : xr.DataArray
-        The wind speed to use in the FFDI calculation [km/h]. Often mid-afternoon wind speed at
-        a height of 10m.
+    drought_factor : xr.DataArray
+        The drought factor, often the daily Griffiths drought factor (see :py:func:`griffiths_drought_factor`).
+    tasmax : xr.DataArray
+        The daily maximum temperature near the surface, or similar. Different applications have used
+        different inputs here, including the previous/current day's maximum daily temperature at a height of
+        2m, and the daily mean temperature at a height of 2m.
+    hurs : xr.DataArray
+        The relative humidity near the surface and near the time of the maximum daily temperature, or similar.
+        Different applications have used different inputs here, including the mid-afternoon relative humidity
+        at a height of 2m, and the daily mean relative humidity at a height of 2m.
+    sfcWind : xr.DataArray
+        The wind speed near the surface and near the time of the maximum daily temperature, or similar.
+        Different applications have used different inputs here, including the mid-afternoon wind speed at a
+        height of 10m, and the daily mean wind speed at a height of 10m.
 
     Returns
     -------
@@ -393,10 +395,12 @@ def mcarthur_forest_fire_danger_index(
     ----------
     :cite:cts:`ffdi-noble_1980,ffdi-dowdy_2018,ffdi-holgate_2017`
     """
-    T = convert_units_to(T, "C")
-    H = convert_units_to(H, "pct")
-    V = convert_units_to(V, "km/h")
+    tasmax = convert_units_to(tasmax, "C")
+    hurs = convert_units_to(hurs, "pct")
+    sfcWind = convert_units_to(sfcWind, "km/h")
 
-    ffdi = D**0.987 * np.exp(0.0338 * T - 0.0345 * H + 0.0234 * V + 0.243147)
+    ffdi = drought_factor**0.987 * np.exp(
+        0.0338 * tasmax - 0.0345 * hurs + 0.0234 * sfcWind + 0.243147
+    )
     ffdi.attrs["units"] = ""
     return ffdi
