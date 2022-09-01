@@ -64,18 +64,17 @@ def _keetch_byram_drought_index(p, t, pa, kbdi0, kbdi: float):  # pragma: no cov
     array_like
         Keetch-Byram drought index.
     """
-    rr = 5.0
+    no_p = 0.0  # Where to define zero rainfall
+    rr = 5.0  # Initialise remaining runoff
 
     for d in range(len(p)):
-        # Reset remaining runoff if there is zero rainfall
-        if p[d] == 0.0:
-            rr = 5.0
-
-        # Calculate the runoff for this timestep
-        if p[d] < rr:
+        # Calculate the runoff and remaining runoff for this timestep
+        if p[d] <= no_p:
             r = p[d]
+            rr = 5.0
         else:
-            r = rr
+            r = min(p[d], rr)
+            rr -= r
 
         Peff = p[d] - r
         ET = (
@@ -84,7 +83,8 @@ def _keetch_byram_drought_index(p, t, pa, kbdi0, kbdi: float):  # pragma: no cov
             * (0.968 * np.exp(0.0875 * t[d] + 1.5552) - 8.3)
             / (1 + 10.88 * np.exp(-0.00173 * pa))
         )
-        kbdi0 = kbdi0 - Peff + ET
+
+        kbdi0 += ET - Peff
 
         # Limit kbdi to between 0 and 200 mm
         if kbdi0 < 0.0:
@@ -93,7 +93,6 @@ def _keetch_byram_drought_index(p, t, pa, kbdi0, kbdi: float):  # pragma: no cov
         if kbdi0 > 203.2:
             kbdi0 = 203.2
 
-        rr = rr - r
         kbdi[d] = kbdi0
 
 

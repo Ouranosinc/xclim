@@ -4,11 +4,15 @@ import numpy as np
 import pytest
 import xarray as xr
 
+from xclim import atmos
 from xclim.indices.fire import (
     griffiths_drought_factor,
     keetch_byram_drought_index,
     mcarthur_forest_fire_danger_index,
 )
+from xclim.testing import open_dataset
+
+data_url = "ERA5/daily_surface_cancities_1990-1993.nc"
 
 
 @pytest.mark.parametrize(
@@ -48,7 +52,7 @@ from xclim.indices.fire import (
         ),
     ],
 )
-def test_keetch_byram_drought_index_2(p, t, pa, k0, exp, pr_series, tasmax_series):
+def test_keetch_byram_drought_index(p, t, pa, k0, exp, pr_series, tasmax_series):
     """Compare output to calculation by hand"""
     pr = pr_series(p, units="mm/day")
     tasmax = tasmax_series(t, units="degC")
@@ -125,6 +129,53 @@ def test_mcarthur_forest_fire_danger_index(
     V = sfcWind_series(range(10, 20))
 
     # Compare FFDI to values calculated using original arrangement of the FFDI:
-    exp = 2 * np.exp(-0.450 + 0.987 * np.log(D) - 0.0345 * H + 0.0338 * T + 0.0234 * V)
+    exp = 2.0 * np.exp(
+        -0.450 + 0.987 * np.log(D) - 0.0345 * H + 0.0338 * T + 0.0234 * V
+    )
     ffdi = mcarthur_forest_fire_danger_index(D, T, H, V)
     np.testing.assert_allclose(ffdi, exp, rtol=1e-6)
+
+
+@pytest.mark.parametrize("init_kbdi", [True, False])
+@pytest.mark.parametrize("limiting_func", ["xlim", "discrete"])
+def test_ffdi_indicators(init_kbdi, limiting_func):
+    """Test the FFDI indicators using real data"""
+    # I couldn't find any high quality data or code to test against. I considered
+    # the CEMS GEFF dataset, and the R packages ClimInd and ecbtools but all use
+    # older definitions of the KBDI and DF that differ from our code and I don't
+    # think reflect the modern literature.
+    # For now we just test that the indicators run using real data and that the
+    # outputs look sensible
+    test_data = open_dataset(data_url)
+
+    pr_annual = test_data["pr"].resample(time="A").mean().mean("time")
+    pr_annual.attrs["units"] = test_data["pr"].attrs["units"]
+
+    if init_kbdi:
+        kbdi0 = xr.ones_like(pr_annual) + 203.2
+        kbdi0.attrs["units"] = test_data["pr"].attrs["units"]
+    else:
+        kbdi0 = None
+
+    kbdi = atmos.keetch_byram_drought_index(
+        test_data["pr"], test_data["tasmax"], pr_annual, kbdi0
+    )
+    assert (kbdi >= 0).all()
+    assert (kbdi <= 203.2).all()
+    assert kbdi.shape == test_data["pr"].shape
+
+    if limiting_func == "xlim":
+        df_max = 10.7216381
+    else:
+        df_max = 10
+
+    df = atmos.griffiths_drought_factor(test_data["pr"], kbdi)
+    assert (df.isel(time=slice(19, None)) >= 0).all()
+    assert (df.isel(time=slice(19, None)) <= df_max).all()
+    assert df.shape == test_data["pr"].shape
+
+    ffdi = atmos.mcarthur_forest_fire_danger_index(
+        df, test_data["tasmax"], test_data["rh"], test_data["wsgsmax"]
+    )
+    assert (ffdi.isel(time=slice(19, None)) >= 0).all()
+    assert ffdi.shape == test_data["pr"].shape

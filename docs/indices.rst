@@ -32,7 +32,7 @@ Indices submodules
 
 Fire indices submodule
 ^^^^^^^^^^^^^^^^^^^^^^
-Indices related to fire and fire weather. Currently, submodules exist for calculating indices from the Canadian Forest Fire Weather Index System and the McArthur Forest Fire Danger (Mark 5) System. All fire indices can be accessed from the :py:mod:`xclim.indices.fire` submodule.
+Indices related to fire and fire weather. Currently, submodules exist for calculating indices from the Canadian Forest Fire Weather Index System and the McArthur Forest Fire Danger (Mark 5) System. All fire indices can be accessed from the :py:mod:`xclim.indices` module.
 
 .. automodule:: xclim.indices.fire._cffwis
    :members: fire_weather_ufunc, fire_season, overwintering_drought_code, drought_code, cffwis_indices
