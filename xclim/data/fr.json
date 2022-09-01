@@ -146,9 +146,9 @@
   },
   "RAIN_FRZGR": {
     "long_name": "Nombre de jours de pluie sur sol gelé",
-    "description": "Nombre {freq:m} de jours avec plus de {thresh} de pluie suivant sept jours consécutifs où la température était sous 0°C. Les précipitations sont considérées comme de la pluie lorsque la température moyenne est au-dessus de 0°C.",
+    "description": "Nombre {freq:m} de jours avec plus de {thresh} de pluie suivant sept (7) jours consécutifs où la température était sous 0°C. Les précipitations sont considérées comme de la pluie lorsque la température moyenne est au-dessus de 0°C.",
     "title": "Nombre de jours de pluie sur sol gelé",
-    "abstract": "Nombre de jours avec pluie au-dessus d'un certain seuil après 7 jours consécutifs où la température était sous 0°C. Les précipitations sont considérées comme de la pluie lorsque la température moyenne est au-dessus de 0°C."
+    "abstract": "Nombre de jours avec pluie au-dessus d'un seuil donné après 7 jours consécutifs où la température était sous 0°C. Les précipitations sont considérées comme de la pluie lorsque la température moyenne est au-dessus de 0°C."
   },
   "RX1DAY": {
     "long_name": "Précipitation quotidienne maximale",
@@ -179,31 +179,31 @@
     "long_name": "Nombre de jours avec précipitation",
     "description": "Nombre {freq:m} de jours où la précipitation est au-dessus de {thresh}.",
     "title": "Jours mouillés",
-    "abstract": "Nombre de jours où la précipitation est au-dessus d'un seuil."
+    "abstract": "Nombre de jours où la précipitation est au-dessus d'un seuil donné."
   },
   "WETDAY_PROP": {
     "long_name": "Proportion de jours avec précipitation (précip >= {thresh})",
     "description": "Proportion {freq:m} de jours où les précipitations sont au-dessus de {thresh}.",
     "title": "Proportion de jours avec précipitation",
-    "abstract": "Proportion de jours où la précipitation est au-dessus d'un seuil."
+    "abstract": "Proportion de jours où la précipitation est au-dessus d'un seuil donné."
   },
   "CDD": {
     "long_name": "Durée maximale d'une période sèche",
     "description": "Nombre {freq:m} maximal de jours consécutifs où la précipitation est sous {thresh}.",
     "title": "Nombre maximal de jours secs consécutifs",
-    "abstract": "Période la plus longue où la précipitation est sous un seuil."
+    "abstract": "Période la plus longue où la précipitation est sous un seuil donné."
   },
   "CWD": {
     "long_name": "Durée maximale d'une période pluvieuse",
     "description": "Nombre {freq:m} maximal de jours consécutifs où les précipitations sont au-dessus de {thresh}.",
     "title": "Durée de période pluvieuse",
-    "abstract": "Période la plus longue où la précipitation est au-dessus d'un seuil."
+    "abstract": "Période la plus longue où la précipitation est au-dessus d'un seuil donné."
   },
   "SDII": {
     "long_name": "Indice simple de l'intensité des précipitations (SDII)",
     "description": "Indice simple d'intensité des précipitations {freq:m} [SDII]. Moyenne {freq:f} de la précipitation quotidienne pour les jours où la précipitation est au-dessus de {thresh}.",
     "title": "Indice simple de l'intensité des précipitations (SDII)",
-    "abstract": "Moyenne de la précipitation quotidienne pour les jours où la précipitation est au-dessus d'un seuil."
+    "abstract": "Moyenne de la précipitation quotidienne pour les jours où la précipitation est au-dessus d'un seuil donné."
   },
   "PRCPTOT": {
     "long_name": "Précipitation totale",
@@ -564,7 +564,7 @@
   },
   "GROWING_SEASON_START": {
     "long_name": "Premier jour ayant un dépassement constant du seuil de température",
-    "description": "Jour de l'année du début de la saison de croissance, défini comme le premier jour de température constante est au-dessus ou égale au seuil de {thresh} après une série de {window} jours inférieurs à la température seuil.",
+    "description": "Jour de l’année marquant le début de la saison de croissance, défini comme le premier jour de la première série de {window} jours ayant une température au-dessus ou égale à {thresh}",
     "title": "Jour de l'année du début de la saison de croissance",
     "abstract": "Premier jour où la température moyenne quotidienne est au-dessus d'un seuil donné depuis un certain nombre de jours consécutifs."
   },
@@ -626,13 +626,13 @@
     "long_name": "Étendue de banquise",
     "description": "L'aire totale de toutes les régions où la concentration de glace de mer est d'au moins {thresh}.",
     "title": "Étendue de la banquise",
-    "abstract": "Mesure de l'étendue de toutes les régions où la concentration de glace de mer est au-dessus ou égale à un seuil."
+    "abstract": "Mesure de l'étendue de toutes les régions où la concentration de glace de mer est au-dessus ou égale à un seuil donné."
   },
   "DRY_DAYS": {
     "long_name": "Nombre de jours secs",
     "description": "Nombre {freq:m} de jours où la précipitation quotidienne est sous {thresh}.",
     "title": "Nombre de jours secs",
-    "abstract": "Nombre de jours où la précipitation quotidienne est sous un seuil."
+    "abstract": "Nombre de jours où la précipitation quotidienne est sous un seuil donné."
   },
   "HOT_SPELL_FREQUENCY": {
     "long_name": "Nombre de périodes chaudes",
@@ -793,13 +793,13 @@
     "long_name": "Date de la dernière chute de neige",
     "description": "Dernier jour {freq:m} où la précipitation solide est au-dessus de {thresh}.",
     "title": "Dernier jour avec une précipitation solide au-dessus d'un seuil donné",
-    "abstract": "Dernier jour d'une période où la précipitation solide est au-dessus d'un certain seuil donné."
+    "abstract": "Dernier jour d'une période où la précipitation solide est au-dessus d'un seuil donné."
   },
   "FIRST_SNOWFALL": {
     "long_name": "Date de la première chute de neige",
     "description": "Premier jour {freq:m} où la précipitation solide est au-dessus de {thresh}.",
     "title": "Premier jour avec une précipitation solide au-dessus d'un seuil donné",
-    "abstract": "Premier jour d'une période où la précipitation solide est au-dessus d'un certain seuil donné."
+    "abstract": "Premier jour d'une période où la précipitation solide est au-dessus d'un seuil donné."
   },
   "DAYS_WITH_SNOW": {
     "long_name": "Nombre de jours où la précipitation solide se trouve entre une borne inférieure et supérieure.",
@@ -821,15 +821,15 @@
   },
   "CONTINUOUS_SNOW_COVER_END": {
     "long_name": "Date de fin du couvert de neige continu",
-    "description": "Première date à laquelle l'épaisseur de neige passe sous {thresh} pendant au moins {window} jours suite à l'établissement du couvert de neige.",
+    "description": "Première date à laquelle l'épaisseur de neige passe sous {thresh} pendant au moins {window} jours consécutifs suite à l'établissementau début du couvert de neige.",
     "title": "Date du fin du couvert de neige",
-    "abstract": "Première date à partir de laquelle l'épaisseur de neige est inférieure à un seuil pendant un nombre de jours consécutifs suite à l'établissement du couvert de neige."
+    "abstract": "Première date à partir de laquelle l'épaisseur de neige est sous à un seuil donné pendant un nombre de jours consécutifs suite au début du couvert de neige."
   },
   "SND_MAX_DOY": {
-    "long_name": "Date de la profondeur de neige maximale",
-    "description": "Date {freq:f} à laquelle la profondeur de neige atteint sa valeur maximale.",
-    "title": "Date où la profondeur de neige est maximale",
-    "abstract": "Jour de l'année où la profondeur de neige atteint sa valeur maximale."
+    "long_name": "Date de l'épaisseur de neige maximale",
+    "description": "Date {freq:f} à laquelle l'épaisseur de neige atteint sa valeur maximale.",
+    "title": "Date où l'épaisseur de neige est maximale",
+    "abstract": "Jour de l'année où l'épaisseur de neige atteint sa valeur maximale."
   },
   "SNOW_MELT_WE_MAX": {
     "long_name": "Fonte de neige maximale",
@@ -838,16 +838,16 @@
     "abstract": "Équivalent en eau de la fonte de neige maximale."
   },
   "SNW_MAX": {
-    "long_name": "Quantité de neige maximale",
-    "description": "Quantité maximale {freq:f} de neige.",
-    "title": "Quantité de neige maximale",
+    "long_name": "Équivalent en eau de la neige maximale",
+    "description": "Équivalent en eau maximale {freq:f} de la neige.",
+    "title": "Équivalent en eau de la neige maximale",
     "abstract": "Maximum de la quantité de neige quotidienne."
   },
   "SNW_MAX_DOY": {
     "long_name": "Date de la quantité de neige maximale",
     "description": "Date {freq:f} à laquelle la quantité de neige atteint sa valeur maximale.",
     "title": "Date où la quantité de neige est maximale",
-    "abstract": "Jour de l'année où la quantité de neige atteint sa valeur maximale."
+    "abstract": "Jour de l'année où l'équivalent en eau de la neige quotidien atteint sa valeur maximale."
   },
   "MELT_AND_PRECIP_MAX": {
     "long_name": "Maximum des apports en eau incluant la fonte de neige et les précipitations",
@@ -871,7 +871,7 @@
     "long_name": "Jours avec des précipitations au dessus d'un seuil et des températures sous un seuil",
     "description": "Nombre {freq:m} de jours avec précipitation plus grande ou égale à {pr_thresh} et température inférieure à {tas_thresh}.",
     "title": "Jours avec précipitations et températures froides",
-    "abstract": "Nombre de jours avec précipitation au-dessus d'un seuil et températures sous un seuil."
+    "abstract": "Nombre de jours avec précipitation au-dessus d'un seuil et températures sous un seuil donné."
   },
   "DAYS_OVER_PRECIP_THRESH": {
     "title": "Nombre de jours avec précipitation où la précipitation est au-dessus d'un centile donné",
@@ -911,7 +911,7 @@
   },
   "MAXIMUM_CONSECUTIVE_WARM_DAYS": {
     "title": "Nombre maximal de jours chauds consécutifs",
-    "abstract": "Nombre maximal de jours consécutifs où la température maximale quotidienne est au-dessus d'un certain seuil donné.",
+    "abstract": "Nombre maximal de jours consécutifs où la température maximale quotidienne est au-dessus d'un seuil donné.",
     "description": "Nombre {freq:m} maximal de jours chauds consécutifs (température maximale quotidienne > {thresh}).",
     "long_name": "Nombre maximal de jours chauds consécutifs"
   },
