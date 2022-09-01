@@ -37,6 +37,7 @@ Breaking changes
     - ``xclim.indices.generic.select_time`` -> Was previously moved to ``xclim.core.calendar``.
 * The `clix-meta` indicator table parsing function (``xclim.core.utils.adapt_clix_meta_yaml``) has been adapted to support the new "op" operator handler. (:pull:`1157`).
 * Because they have been reimplmented as Indicator subclasses, statistical properties and measures of ``xclim.sdba`` no longer preserve attributes of their inputs by default. Use ``xclim.set_options(keep_attrs=True)`` to get the previous behaviour. (:pull:`1149`).
+* The ``xclim.indices.generic.extreme_temperature_range`` function has been fixed so it now does what its definition says. Results from ``xclim.indicators.cf.etr`` will change. (:issue:`1172`, :pull:`1173`).
 * English indicator metadata has been adjusted to remove frequencies and other variable-sourced fields in the `long_name` of indicators. English indicators now have an explicit `title` and `abstract`. (:issue:`936`, :pull:`1123`).
 * French indicator metadata translations are now more uniform and follow agreed-upon grammar conventions, removing variable-sourced fields in `long_name_fr`. (:issue:`936`, :pull:`1123`).
 
