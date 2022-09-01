@@ -279,7 +279,7 @@ def spell_length_distribution(
     @map_groups(out=[Grouper.PROP], main_only=True)
     def _spell_stats(ds, *, dim, method, thresh, op, freq, resample_before_rl, stat):
         # PB: This prevents an import error in the distributed dask scheduler, but I don't know why.
-        import xarray.core.resample_cftime  # noqa
+        import xarray.core.resample_cftime  # noqa: F401, pylint: disable=unused-import
 
         da = ds.data
         mask = ~(da.isel({dim: 0}).isnull()).drop_vars(
@@ -630,7 +630,7 @@ def relative_frequency(
         cond = cond.groupby(group.name)
         # length of the groupBy groups
         length = np.array([len(v) for k, v in cond.groups.items()])
-        for i in range(da.ndim - 1):  # add empty dimension(s) to match input
+        for _ in range(da.ndim - 1):  # add empty dimension(s) to match input
             length = np.expand_dims(length, axis=-1)
     # count days with the condition and divide by total nb of days
     out = cond.sum(dim=group.dim, skipna=False) / length

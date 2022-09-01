@@ -127,15 +127,15 @@ class MissingBase:
         # This function can probably be made simpler once CFPeriodIndex is implemented.
         null = self.is_null(da, freq, **indexer)
 
-        pfreq, anchor = self.split_freq(freq)
+        p_freq, _ = self.split_freq(freq)
 
         c = null.sum(dim="time")
 
         # Otherwise, simply use the start and end dates to find the expected number of days.
-        if pfreq.endswith("S"):
+        if p_freq.endswith("S"):
             start_time = c.indexes["time"]
             end_time = start_time.shift(1, freq=freq)
-        elif pfreq:
+        elif p_freq:
             end_time = c.indexes["time"]
             start_time = end_time.shift(-1, freq=freq)
         else:
@@ -290,7 +290,9 @@ class MissingWMO(MissingAny):
         return MissingAny(mda, freq, "M", **indexer)()
 
     def is_missing(self, null, count, nm=11, nc=5):
-        from xclim.indices import run_length as rl
+        from ..indices import (
+            run_length as rl,  # pylint: disable=import-outside-toplevel
+        )
 
         # Check total number of days
         cond0 = null.count(dim="time") != count
@@ -394,7 +396,7 @@ class Skip(MissingBase):
         pass
 
     def is_missing(self, null, count):
-        """Return whether or not the values within each period should be considered missing or not."""
+        """Return whether the values within each period should be considered missing or not."""
         return False
 
     def __call__(self):
@@ -421,7 +423,7 @@ class FromContext(MissingBase):
 # --------------------------
 # --- Shortcut functions ---
 # --------------------------
-# These stand-alone functions hide the fact the the algorithms are implemented in a class and make their use more
+# These stand-alone functions hide the fact the algorithms are implemented in a class and make their use more
 # user-friendly. This can also be useful for testing.
 
 

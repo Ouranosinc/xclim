@@ -16,6 +16,7 @@ from enum import IntEnum
 from functools import partial
 from importlib.resources import open_text
 from inspect import Parameter, _empty  # noqa
+from io import StringIO
 from pathlib import Path
 from types import FunctionType
 from typing import Callable, Mapping, NewType, Sequence
@@ -134,7 +135,7 @@ def load_module(path: os.PathLike, name: str | None = None):
     The two following imports are equivalent, the second uses this method.
 
     >>> os.chdir(path.parent)
-    >>> import example as mod1
+    >>> import example as mod1  # noqa
     >>> os.chdir(previous_working_dir)
     >>> mod2 = load_module(path)
     >>> mod1 == mod2
@@ -180,7 +181,7 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: Mapping[str, int]) -> xr.Da
         return da
 
     all_chunks = dict(zip(da.dims, da.chunks))
-    chunking = dict()
+    chunking = {}
     for dim, minchunk in minchunks.items():
         chunks = all_chunks[dim]
         if minchunk == -1 and len(chunks) > 1:
@@ -630,15 +631,18 @@ def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> Inpu
     return InputKind.OTHER_PARAMETER
 
 
-def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
-    """Read in a clix-meta yaml and refactor it to fit xclim's yaml specifications."""
-    from xclim.indices import generic
+def adapt_clix_meta_yaml(raw: os.PathLike | StringIO | str, adapted: os.PathLike):
+    """Read in a clix-meta yaml representation and refactor it to fit xclim's yaml specifications."""
+    from ..indices import generic  # pylint: disable=import-outside-toplevel
 
     # freq_names = {"annual": "A", "seasonal": "Q", "monthly": "M", "weekly": "W"}
     freq_defs = {"annual": "YS", "seasonal": "QS-DEC", "monthly": "MS", "weekly": "W"}
 
-    with open(raw) as f:
-        yml = safe_load(f)
+    if isinstance(raw, os.PathLike):
+        with open(raw) as f:
+            yml = safe_load(f)
+    else:
+        yml = safe_load(raw)
 
     yml["realm"] = "atmos"
     yml[
@@ -703,7 +707,12 @@ def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
             data["parameters"] = index_function["parameters"]
             for name, param in data["parameters"].copy().items():
                 if param["kind"] in ["operator", "reducer"]:
-                    data["parameters"][name] = param[param["kind"]]
+                    # Compatibility with xclim `op` notation for comparison symbols
+                    if name == "condition":
+                        data["parameters"]["op"] = param[param["kind"]]
+                        del data["parameters"][name]
+                    else:
+                        data["parameters"][name] = param[param["kind"]]
                 else:  # kind = quantity
                     if param.get("proposed_standard_name") == "temporal_window_size":
                         # Window, nothing to do.

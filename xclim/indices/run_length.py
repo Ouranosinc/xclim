@@ -12,7 +12,6 @@ from datetime import datetime
 from typing import Sequence
 from warnings import warn
 
-import dask
 import numpy as np
 import xarray as xr
 from numba import njit
@@ -1055,7 +1054,7 @@ def windowed_run_events_1d(arr: Sequence[bool], window: int) -> xr.DataArray:
     xr.DataArray, [int]
       Number of distinct runs of a minimum length.
     """
-    v, rl, pos = rle_1d(arr)
+    v, rl, _ = rle_1d(arr)
     return (v * rl >= window).sum()
 
 
@@ -1326,10 +1325,10 @@ def suspicious_run_1d(
       Array of values to be parsed.
     window : int
       Minimum run length
-    op : {">", ">=", "==", "<", "<=", "eq", "gt", "lt", "gteq", "lteq"}
+    op : {">", ">=", "==", "<", "<=", "eq", "gt", "lt", "gteq", "lteq", "ge", "le"}
       Operator for threshold comparison. Defaults to ">".
     thresh : float, optional
-      Threshold above which values are checked for identical values.
+      Threshold compared against which values are checked for identical values.
 
     Returns
     -------
@@ -1345,9 +1344,11 @@ def suspicious_run_1d(
             sus_runs = sus_runs & (v < thresh)
         elif op in {"==", "eq"}:
             sus_runs = sus_runs & (v == thresh)
-        elif op in {">=", "gteq"}:
+        elif op in {"!=", "ne"}:
+            sus_runs = sus_runs & (v != thresh)
+        elif op in {">=", "gteq", "ge"}:
             sus_runs = sus_runs & (v >= thresh)
-        elif op in {"<=", "lteq"}:
+        elif op in {"<=", "lteq", "le"}:
             sus_runs = sus_runs & (v <= thresh)
         else:
             raise NotImplementedError(f"{op}")
