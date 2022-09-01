@@ -9,13 +9,13 @@
 
     .. bibliography::
 
-    McArthur Forest Fire Danger Index References
-    --------------------------------------------
+    McArthur Forest Fire Danger System References
+    ---------------------------------------------
 
     See: :ref:`ffdi-footnotes`
 
-    Fire Weather Index References
-    -----------------------------
+    Canadian Forest Fire Weather Index System References
+    ----------------------------------------------------
 
     See: :ref:`fwi-footnotes`
 
