@@ -38,6 +38,7 @@ Breaking changes
     - ``xclim.indices.generic.select_time`` -> Was previously moved to ``xclim.core.calendar``.
 * The `clix-meta` indicator table parsing function (``xclim.core.utils.adapt_clix_meta_yaml``) has been adapted to support the new "op" operator handler. (:pull:`1157`).
 * Because they have been reimplmented as Indicator subclasses, statistical properties and measures of ``xclim.sdba`` no longer preserve attributes of their inputs by default. Use ``xclim.set_options(keep_attrs=True)`` to get the previous behaviour. (:pull:`1149`).
+* The ``xclim.indices.generic.extreme_temperature_range`` function has been fixed so it now does what its definition says. Results from ``xclim.indicators.cf.etr`` will change. (:issue:`1172`, :pull:`1173`).
 * ``xclim`` now has a dedicated ``indices.fire`` submodule that houses all fire-related indices. The previous ``xclim.indices.fwi`` submodule is deprecated and will be removed in a future version. (:issue:`1152`, :pull:`1159`).
 * The indicator ``xclim.indicators.atmos.fire_weather_indexes`` and indice ``xclim.indices.fire_weather_indexes` have both been deprecated and renamed to ``cffwis_indices``. Calls using the previous naming will be removed in a future version. (:pull:`1159`).
 
