@@ -823,9 +823,9 @@ growing_season_start = Temp(
     units="",
     standard_name="day_of_year",
     long_name="Day of year of growing season start",
-    description="Day of year of start of growing season, defined as the first day of consistent superior or equal to "
-    "threshold temperature of {thresh} after a run of {window} days inferior to threshold temperature.",
-    abstract="The first day when the temperature exceeds a certain threshold for a certain number of consecutive days.",
+    description="Day of the year marking the beginning of the growing season, defined as the first day of the first "
+    "series of {window} days with a temperature above or equal to {thresh}.",
+    abstract="The first day when the temperature exceeds a certain threshold for a given number of consecutive days.",
     cell_methods="",
     compute=indices.growing_season_start,
     parameters={"thresh": {"default": "5.0 degC"}},
@@ -845,7 +845,7 @@ growing_season_length = Temp(
     "threshold, occurring after a given calendar date.",
     cell_methods="",
     compute=indices.growing_season_length,
-    parameters={"thresh": {"default": "5.0 degC"}},
+    parameters={"thresh": {"default": "5.0 degC"}, "mid_date": {"default": "07-01"}},
 )
 
 growing_season_end = Temp(
@@ -858,10 +858,10 @@ growing_season_end = Temp(
     "temperature of {thresh} after a run of {window} days superior to threshold temperature, occurring after "
     "{mid_date}.",
     abstract="The first day when the temperature is below a certain threshold for a certain number of consecutive days "
-    "after a specific calendar date.",
+    "after a given calendar date.",
     cell_methods="",
     compute=indices.growing_season_end,
-    parameters={"thresh": {"default": "5.0 degC"}},
+    parameters={"thresh": {"default": "5.0 degC"}, "mid_date": {"default": "07-01"}},
 )
 
 tropical_nights = TempWithIndexing(
