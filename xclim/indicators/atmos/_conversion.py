@@ -312,11 +312,11 @@ water_budget_from_tas = Converter(
     long_name="Water budget",
     description=(
         "Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget, "
-        "where the potential evapotranspiration, calculated with the {method} method."
+        "where the potential evapotranspiration is calculated with the {method} method."
     ),
     abstract=(
         "Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget, "
-        "where the potential evapotranspiration, calculated with a given method."
+        "where the potential evapotranspiration is calculated with a given method."
     ),
     compute=indices.water_budget,
 )
