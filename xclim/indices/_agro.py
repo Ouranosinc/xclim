@@ -742,7 +742,7 @@ def standardized_precipitation_index(
                     stacklevel=2,
                 )
                 return True
-            return False
+                return False
 
         if needs_rechunking(pr):
             pr = pr.chunk({"time": -1})
@@ -883,7 +883,7 @@ def dry_spell_frequency(
       Minimum length of the spells.
     freq : str
       Resampling frequency.
-    resample_before_rl : str | bool
+    resample_before_rl : {"from_context", True, False}
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
     op: {"sum","max"}
@@ -909,12 +909,11 @@ def dry_spell_frequency(
 
     agg_pr = getattr(pram.rolling(time=window, center=True), op)()
     cond = agg_pr < thresh
-    win = 1
     out = rl.resample_and_rl(
         cond,
         resample_before_rl,
         rl.windowed_run_events,
-        win,
+        window=1,
         freq=freq,
     )
 
@@ -978,12 +977,11 @@ def dry_spell_total_length(
 
     dry = select_time(dry, **indexer)
 
-    win = 1
     out = rl.resample_and_rl(
         dry,
         resample_before_rl,
         rl.windowed_run_count,
-        win,
+        window=1,
         freq=freq,
     )
     return to_agg_units(out, pram, "count")
