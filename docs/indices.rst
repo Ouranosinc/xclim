@@ -36,9 +36,9 @@ Indices submodules
    :show-inheritance:
    :noindex:
 
-.. _fwi-footnotes:
-
 .. only:: html
+
+   .. _fwi-footnotes:
 
    Fire Weather Indices Footnotes
    ------------------------------
