@@ -117,6 +117,7 @@ ENV/
 /docs/xclim.indicators.rst
 /docs/xclim.indicators.seaIce.rst
 /docs/xclim.indices.rst
+/docs/xclim.indices.fire.rst
 /docs/xclim.locales.rst
 /docs/xclim.rst
 /docs/xclim.sdba.rst

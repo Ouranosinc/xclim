@@ -4,7 +4,7 @@ History
 
 0.38.0 (unreleased)
 -------------------
-Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), Gabriel Rondeau-Genesse (:user:`RondeauG`).
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Dougie Squire (:user:`dougiesquire`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -17,6 +17,7 @@ New features and enhancements
 
 New indicators
 ^^^^^^^^^^^^^^
+* `xclim` now has the McArthur Forest Fire Danger Index and related indices under a new ``xclim.indices.fire`` module. These indices are also available as indicators. (:issue:`1152`, :pull:`1159`)
 * Drought-related indicators: SPI (standardized precipitations) and SPEI (standardized water budgets). (:issue:`131`, :pull:`1096`).
 * ``ensembles.create_ensembles`` now accepts a ``realizations`` argument to assign a coordinate to the "realization" axis. It also accepts a dictionary as input so that keys are used as that coordinate. (:pull:`1153`).
 * ``ensembles.ensemble_percentiles``, ``ensembles.ensemble_mean_std_max_min`` and ``ensembles.change_significance`` now support weights (:pull:`1151`).
@@ -38,6 +39,9 @@ Breaking changes
 * The `clix-meta` indicator table parsing function (``xclim.core.utils.adapt_clix_meta_yaml``) has been adapted to support the new "op" operator handler. (:pull:`1157`).
 * Because they have been reimplmented as Indicator subclasses, statistical properties and measures of ``xclim.sdba`` no longer preserve attributes of their inputs by default. Use ``xclim.set_options(keep_attrs=True)`` to get the previous behaviour. (:pull:`1149`).
 * The ``xclim.indices.generic.extreme_temperature_range`` function has been fixed so it now does what its definition says. Results from ``xclim.indicators.cf.etr`` will change. (:issue:`1172`, :pull:`1173`).
+
+* ``xclim`` now has a dedicated ``indices.fire`` submodule that houses all fire-related indices. The previous ``xclim.indices.fwi`` submodule is deprecated and will be removed in a future version. (:issue:`1152`, :pull:`1159`).
+* The indicator ``xclim.indicators.atmos.fire_weather_indexes`` and indice ``xclim.indices.fire_weather_indexes` have both been deprecated and renamed to ``cffwis_indices``. Calls using the previous naming will be removed in a future version. (:pull:`1159`).
 * English indicator metadata has been adjusted to remove frequencies and other variable-sourced fields in the `long_name` of indicators. English indicators now have an explicit `title` and `abstract`. (:issue:`936`, :pull:`1123`).
 * French indicator metadata translations are now more uniform and follow agreed-upon grammar conventions, removing variable-sourced fields in `long_name_fr`. (:issue:`936`, :pull:`1123`).
 
@@ -46,13 +50,17 @@ Bug fixes
 * Fixed ``saturation_vapor_pressure`` for temperatures in other units than Kelvins (also fixes ``relative_humidity_from_dewpoint``). (:issue:`1125`, :pull:`1127`).
 * Indicators that do not care about the input frequency of the data will not check the cell methods of their inputs. (:pull:`1128`).
 * Fixed the signature and docstring of ``heat_index`` by changing ``tasmax`` to ``tas``. (:issue:`1126`, :pull:`1128`).
+* Fixed a formatting issue with virtual indicator modules (`_gen_returns_section`) that was creating malformed `Returns` sections in `sphinx`-generated documentation. (:pull:`1131`).
+* Fix ``biological_effective_degree_days`` for non-scalar latitudes, when using method "gladstones". (:issue:`1136`, :pull:`1137`).
+* Fixed some ``extlink`` warnings found in `sphinx` and configured ReadTheDocs to use `mamba` as the dependency solver. (:issue:`1139`, :pull:`1140`).
+* Fixed some broken hyperlinks to articles, users, and external documentation throughout the code base and jupyter notebooks. (:pull:`1160`).
 * Removed some artefact reference roles introduced in :pull:`1131` that were causing LaTeX builds of the documentation to fail. (:issue:`1154`, :pull:`1156`).
 * Fix ``biological_effective_degree_days`` for non-scalar latitudes, when using method "gladstones". (:issue:`1136`, :pull:`1137`).
 * Fixed some ``extlink`` warnings found in `sphinx` and configured ReadTheDocs to use `mamba` as the dependency solver. (:issue:`1139`, :pull:`1140`).
 * Fixed some broken hyperlinks to articles, users, and external documentation throughout the code base and jupyter notebooks. (:pull:`1160`).
 * Addressed a bug that was causing `pylint` to stackoverflow by removing it from the tox configuration. `pylint` should only be called from an active environment. (:pull:`1163`)
 * Fixed an issue with ``xclim.ensembles.kmeans_reduce_ensemble`` which caused it to fail when using dask arrays. (:pull:`1170`).
-* Fixed a formatting issue with virtual indicator modules (`_gen_returns_section`) that was creating malformed `Returns` sections in `sphinx`-generated documentation. (:pull:`1131`).
+* Addressed a bug that was causing `pylint` to stackoverflow by removing it from the tox configuration. `pylint` should only be called from an active environment. (:pull:`1163`)
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -68,6 +76,7 @@ Internal changes
 * `pylint` is now setup to use a `pylintrc` file, allowing for more granular control of warnings and exceptions. Many errors are still present, so addressing them will need to occur gradually. (:pull:`1163`).
 * The generic indices `count_level_crossings`, `count_occurrences`, `first_occurrence`, and `last_occurrence` are now fully tested. (:pull:`1157`).
 * Adjusted the ANUCLIM indices by removing "ANUCLIM" from their titles, modifying their docstrings, and handling `"op"` input in a more user-friendly way. (:issue:`1055`, :pull:`1169`).
+* Documentation for fire-based indices/indicators has been reorganized to reflect the new submodule structure. (:pull:`1159`).
 
 0.37.0 (2022-06-20)
 -------------------

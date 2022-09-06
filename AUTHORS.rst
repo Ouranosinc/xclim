@@ -34,3 +34,4 @@ Contributors
 * Yannick Rousseau `@yrouranos <https://github.com/yrouranos>`_
 * Ag Stephens <ag.stephens@stfc.ac.uk> `@agstephens <https://github.com/agstephens>`_
 * Maliko Tanguy <malngu@ceh.ac.uk> `@malngu <https://github.com/malngu>`_
+* Dougie Squire <dougiesquire@gmail.com> `@dougiesquire <https://github.com/dougiesquire>`_

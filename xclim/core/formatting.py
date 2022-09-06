@@ -607,12 +607,16 @@ def _gen_returns_section(cf_attrs: Sequence[dict[str, Any]]):
     return section
 
 
-def generate_indicator_docstring(ind):
+def generate_indicator_docstring(ind) -> str:
     """Generate an indicator's docstring from keywords.
 
     Parameters
     ----------
     ind: Indicator instance
+
+    Returns
+    -------
+    str
     """
     header = f"{ind.title} (realm: {ind.realm})\n\n{ind.abstract}\n"
 
