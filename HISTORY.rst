@@ -41,6 +41,7 @@ Breaking changes
 * The ``xclim.indices.generic.extreme_temperature_range`` function has been fixed so it now does what its definition says. Results from ``xclim.indicators.cf.etr`` will change. (:issue:`1172`, :pull:`1173`).
 * ``xclim`` now has a dedicated ``indices.fire`` submodule that houses all fire-related indices. The previous ``xclim.indices.fwi`` submodule is deprecated and will be removed in a future version. (:issue:`1152`, :pull:`1159`).
 * The indicator ``xclim.indicators.atmos.fire_weather_indexes`` and indice ``xclim.indices.fire_weather_indexes` have both been deprecated and renamed to ``cffwis_indices``. Calls using the previous naming will be removed in a future version. (:pull:`1159`).
+* `xclim` now explicitly requires `pybtex` in order to generate documentation. (:pull:`1176`).
 
 Bug fixes
 ^^^^^^^^^
