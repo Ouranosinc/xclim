@@ -75,16 +75,6 @@ Indices related to fire and fire weather. Currently, submodules exist for calcul
 
     Matlab code of the GFWED obtained through personal communication.
 
-    fire season determination methods
-    *********************************
-
-.. bibliography::
-   :style: xcstyle
-   :labelprefix: FIRE-
-   :keyprefix: fire-
-
-.. only:: html
-
     Fire season determination methods
     *********************************
 
