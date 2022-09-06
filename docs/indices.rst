@@ -30,33 +30,53 @@ Indices submodules
    :show-inheritance:
    :noindex:
 
-.. automodule:: xclim.indices.fwi
-   :members: fire_weather_ufunc, fire_season, overwintering_drought_code, drought_code, fire_weather_indexes
+Fire indices submodule
+^^^^^^^^^^^^^^^^^^^^^^
+Indices related to fire and fire weather. Currently, submodules exist for calculating indices from the Canadian Forest Fire Weather Index System and the McArthur Forest Fire Danger (Mark 5) System. All fire indices can be accessed from the :py:mod:`xclim.indices` module.
+
+.. automodule:: xclim.indices.fire._cffwis
+   :members: fire_weather_ufunc, fire_season, overwintering_drought_code, drought_code, cffwis_indices
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
+.. automodule:: xclim.indices.fire._ffdi
+   :members:
    :undoc-members:
    :show-inheritance:
    :noindex:
 
 .. only:: html
 
-   .. _fwi-footnotes:
+    Fire indices footnotes
+    ~~~~~~~~~~~~~~~~~~~~~~
 
-   Fire Weather Indices Footnotes
-   ------------------------------
+    .. _ffdi-footnotes:
 
-   Fire weather indices codes
-   ==========================
+    McArthur Forest Fire Danger Indices methods
+    *******************************************
 
 .. bibliography::
-   :style: xcstyle
+   :labelprefix: FFDI-
+   :keyprefix: ffdi-
+
+.. only:: html
+
+    .. _fwi-footnotes:
+
+    Canadian Forest Fire Weather Index System codes
+    ***********************************************
+
+.. bibliography::
    :labelprefix: CODE-
    :keyprefix: code-
 
 .. only:: html
 
-   Matlab code of the GFWED obtained through personal communication.
+    Matlab code of the GFWED obtained through personal communication.
 
-   Fire season determination methods
-   =================================
+    fire season determination methods
+    *********************************
 
 .. bibliography::
    :style: xcstyle
@@ -65,10 +85,18 @@ Indices submodules
 
 .. only:: html
 
-   Drought Code overwintering background
-   =====================================
+    Fire season determination methods
+    *********************************
 
 .. bibliography::
-   :style: xcstyle
+   :labelprefix: FIRE-
+   :keyprefix: fire-
+
+.. only:: html
+
+    Drought Code overwintering background
+    *************************************
+
+.. bibliography::
    :labelprefix: DROUGHT-
    :keyprefix: drought-
