@@ -59,7 +59,7 @@ Internal changes
 * Added a `sphinx-build -b linkcheck` step to the `tox`-based `"docs"` build as well as to the ReadTheDocs configuration. (:pull:`1160`).
 * `pylint` is now setup to use a `pylintrc` file, allowing for more granular control of warnings and exceptions. Many errors are still present, so addressing them will need to occur gradually. (:pull:`1163`).
 * The generic indices `count_level_crossings`, `count_occurrences`, `first_occurrence`, and `last_occurrence` are now fully tested. (:pull:`1157`).
-* (`xclim` 0.37.x development builds) `scipy` was temporarily pinned below version 1.9 until lmoments3 tests could be adapted to account for the new API. (:issue:`1142`, :pull:`1143`, :pull:`1171`).
+* Removed `scipy' version pin (`<1.9`) from environment configuration. (:issue:`1142`, :pull:`1143`, :pull:`1171`).
 
 0.37.0 (2022-06-20)
 -------------------
