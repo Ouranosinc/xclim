@@ -38,29 +38,35 @@ Indices submodules
 
 .. _fwi-footnotes:
 
-Fire Weather Indices Footnotes
-------------------------------
+.. only:: html
 
-Fire weather indices codes
-==========================
+   Fire Weather Indices Footnotes
+   ------------------------------
+
+   Fire weather indices codes
+   ==========================
 
 .. bibliography::
    :style: xcstyle
    :labelprefix: CODE-
    :keyprefix: code-
 
-Matlab code of the GFWED obtained through personal communication.
+.. only:: html
 
-Fire season determination methods
-=================================
+   Matlab code of the GFWED obtained through personal communication.
+
+   Fire season determination methods
+   =================================
 
 .. bibliography::
    :style: xcstyle
    :labelprefix: FIRE-
    :keyprefix: fire-
 
-Drought Code overwintering background
-=====================================
+.. only:: html
+
+   Drought Code overwintering background
+   =====================================
 
 .. bibliography::
    :style: xcstyle

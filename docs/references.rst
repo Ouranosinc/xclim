@@ -1,4 +1,4 @@
-.. only:: html or text
+.. only:: html
 
     ============
     Bibliography
@@ -7,8 +7,10 @@
     General References
     ------------------
 
-    .. bibliography::
-       :style: xcstyle
+.. bibliography::
+   :style: xcstyle
+
+.. only:: html
 
     Fire Weather Index References
     -----------------------------
