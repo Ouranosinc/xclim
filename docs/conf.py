@@ -273,6 +273,7 @@ latex_elements = {
     # Additional stuff for the LaTeX preamble.
     "preamble": r"""
 \renewcommand{\v}[1]{\mathbf{#1}}
+\nocite{*}
 """,
     # Latex figure (float) alignment
     "figure_align": "htbp",

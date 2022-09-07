@@ -1,4 +1,4 @@
-.. only:: html or text
+.. only:: html
 
     ============
     Bibliography
@@ -7,7 +7,9 @@
     General References
     ------------------
 
-    .. bibliography::
+.. bibliography::
+
+.. only:: html
 
     McArthur Forest Fire Danger System References
     ---------------------------------------------
