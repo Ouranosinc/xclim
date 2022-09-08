@@ -13,7 +13,7 @@ from xclim.core.units import convert_units_to, declare_units, rate2amount, to_ag
 from xclim.core.utils import DayOfYearStr, uses_dask
 from xclim.indices._threshold import first_day_above, first_day_below, freshet_start
 from xclim.indices.generic import aggregate_between_dates
-from xclim.indices.helpers import day_lengths, gather_lat
+from xclim.indices.helpers import _gather_lat, day_lengths
 from xclim.indices.stats import dist_method, fit
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
@@ -215,7 +215,7 @@ def huglin_index(
     thresh = convert_units_to(thresh, "degC")
 
     if lat is None:
-        lat = gather_lat(tas)
+        lat = _gather_lat(tas)
 
     if method.lower() == "smoothed":
         lat_mask = abs(lat) <= 50
@@ -384,7 +384,7 @@ def biologically_effective_degree_days(
     thresh_tasmin = convert_units_to(thresh_tasmin, "degC")
     max_daily_degree_days = convert_units_to(max_daily_degree_days, "degC")
 
-    if method.lower() in ["gladstones", "jones"] and lat is not None:
+    if method.lower() in ["gladstones", "jones"]:
         low_dtr = convert_units_to(low_dtr, "degC")
         high_dtr = convert_units_to(high_dtr, "degC")
         dtr = tasmax - tasmin
@@ -395,7 +395,7 @@ def biologically_effective_degree_days(
         )
 
         if lat is None:
-            lat = gather_lat(tasmin)
+            lat = _gather_lat(tasmin)
 
         if method.lower() == "gladstones":
             if isinstance(lat, (int, float)):
@@ -486,7 +486,7 @@ def cool_night_index(
     months = tasmin.time.dt.month
 
     if lat is None:
-        lat = gather_lat(tasmin)
+        lat = _gather_lat(tasmin)
     if isinstance(lat, xarray.DataArray):
         month = xarray.where(lat > 0, 9, 3)
     elif isinstance(lat, str):
@@ -559,7 +559,7 @@ def latitude_temperature_index(
     mtwm = tas.resample(time=freq).max(dim="time")
 
     if lat is None:
-        lat = gather_lat(tas)
+        lat = _gather_lat(tas)
 
     lat_mask = (abs(lat) >= 0) & (abs(lat) <= lat_factor)
     lat_coeff = xarray.where(lat_mask, lat_factor - abs(lat), 0)
@@ -645,7 +645,7 @@ def water_budget(
     pr = convert_units_to(pr, "kg m-2 s-1")
 
     if lat is None and evspsblpot is None:
-        lat = gather_lat(pr)
+        lat = _gather_lat(pr)
 
     if evspsblpot is None:
         pet = xci.potential_evapotranspiration(

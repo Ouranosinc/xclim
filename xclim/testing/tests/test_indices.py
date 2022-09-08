@@ -310,7 +310,7 @@ class TestAgroclimaticIndices:
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
         ds = ds.rename(dict(tas="tasmin"))
 
-        cni = xci.cool_night_index(tasmin=ds.tasmin, lat=ds.lat)
+        cni = xci.cool_night_index(tasmin=ds.tasmin)  # find latitude implicitly
         tasmin = convert_units_to(ds.tasmin, "degC")
 
         cni_nh = cni.where(cni.lat >= 0, drop=True)
@@ -321,6 +321,12 @@ class TestAgroclimaticIndices:
 
         np.testing.assert_array_equal(cni_nh, tn_nh)
         np.testing.assert_array_equal(cni_sh, tn_sh)
+
+        # Treat all areas as northern hemisphere
+        cni_all_nh = xci.cool_night_index(tasmin=ds.tasmin, lat="north")
+        tn_all_nh = tasmin.where(tasmin.time.dt.month == 9, drop=True)
+
+        np.testing.assert_array_equal(cni_all_nh, tn_all_nh)
 
     @pytest.mark.parametrize(
         "lat_factor, values",
@@ -333,9 +339,8 @@ class TestAgroclimaticIndices:
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
         ds = ds.drop_isel(time=0)  # drop time=2006/12 for one year of data
 
-        lti = xci.latitude_temperature_index(
-            tas=ds.tas, lat=ds.lat, lat_factor=lat_factor
-        )
+        # find lat implicitly
+        lti = xci.latitude_temperature_index(tas=ds.tas, lat_factor=lat_factor)
         assert lti.where(abs(lti.lat) > lat_factor).sum() == 0
 
         lti = lti.where(abs(lti.lat) <= lat_factor, drop=True).where(
@@ -365,10 +370,10 @@ class TestAgroclimaticIndices:
         )
         tasmax.attrs["units"], tas.attrs["units"] = "K", "K"
 
+        # find lat implicitly
         hi = xci.huglin_index(
             tasmax=tasmax,
             tas=tas,
-            lat=ds.lat,
             method=method,
             end_date=end_date,  # noqa
         )
@@ -2633,7 +2638,8 @@ class TestPotentialEvapotranspiration:
             attrs={"units": "degC"},
         )
 
-        out = xci.potential_evapotranspiration(tas=tm, lat=lat, method="TW48")
+        # find lat implicitly
+        out = xci.potential_evapotranspiration(tas=tm, method="TW48")
         np.testing.assert_allclose(out[0, 1], [42.7619242 / (86400 * 30)], rtol=1e-1)
 
     def test_mcguinnessbordne(self, tasmin_series, tasmax_series, lat_series):
@@ -2710,7 +2716,8 @@ def test_water_budget_from_tas(pr_series, tasmin_series, tasmax_series, lat_seri
         attrs={"units": "mm/day"},
     )
 
-    out = xci.water_budget(prm, tas=tm, lat=lat, method="TW48")
+    # find lat implicitly
+    out = xci.water_budget(prm, tas=tm, method="TW48")
     np.testing.assert_allclose(out[1, 0], [8.5746025 / 86400], rtol=2e-1)
 
 

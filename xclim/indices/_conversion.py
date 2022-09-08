@@ -8,12 +8,12 @@ from numba import float32, float64, vectorize  # noqa
 from xclim.core.calendar import date_range, datetime_to_decimal_year
 from xclim.core.units import amount2rate, convert_units_to, declare_units, units2pint
 from xclim.indices.helpers import (
+    _gather_lat,
+    _gather_lon,
     cosine_of_solar_zenith_angle,
     day_lengths,
     distance_from_sun,
     extraterrestrial_solar_radiation,
-    gather_lat,
-    gather_lon,
     solar_declination,
     time_correction_for_solar_angle,
     wind_speed_height_conversion,
@@ -1070,7 +1070,7 @@ def potential_evapotranspiration(
     :cite:cts:`baier_estimation_1965,george_h_hargreaves_reference_1985,tanguy_historical_2018,thornthwaite_approach_1948,mcguinness_comparison_1972,allen_crop_1998`
     """
     if lat is None:
-        lat = gather_lat(tasmin if tas is None else tas)
+        lat = _gather_lat(tasmin if tas is None else tas)
 
     if method in ["baierrobertson65", "BR65"]:
         tasmin = convert_units_to(tasmin, "degF")
@@ -1676,8 +1676,8 @@ def mean_radiant_temperature(
     dates = rsds.time
     hours = ((dates - dates.dt.floor("D")).dt.seconds / 3600).assign_attrs(units="h")
 
-    lat = gather_lat(rsds)
-    lon = gather_lon(rsds)
+    lat = _gather_lat(rsds)
+    lon = _gather_lon(rsds)
 
     decimal_year = datetime_to_decimal_year(times=dates, calendar=dates.dt.calendar)
     day_angle = ((decimal_year % 1) * 2 * np.pi).assign_attrs(units="rad")

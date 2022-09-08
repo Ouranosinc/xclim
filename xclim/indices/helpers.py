@@ -406,7 +406,7 @@ def wind_speed_height_conversion(
         raise NotImplementedError(f"'{method}' method is not implemented.")
 
 
-def gather_lat(da: xr.DataArray) -> xr.DataArray:
+def _gather_lat(da: xr.DataArray) -> xr.DataArray:
     """Gather latitude coordinate using cf-xarray.
 
     Parameters
@@ -431,7 +431,7 @@ def gather_lat(da: xr.DataArray) -> xr.DataArray:
         raise ValueError(msg) from err
 
 
-def gather_lon(da: xr.DataArray) -> xr.DataArray:
+def _gather_lon(da: xr.DataArray) -> xr.DataArray:
     """Gather longitude coordinate using cf-xarray.
 
     Parameters
