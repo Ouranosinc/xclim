@@ -451,7 +451,7 @@ def cool_night_index(
     tasmin : xarray.DataArray
         Minimum daily temperature.
     lat : xarray.DataArray or {"north", "south"}, optional
-        Latitude coordinate.
+        Latitude coordinate as an array, float or string.
         If None, a CF-conformant "latitude" field must be available within the passed DataArray.
     freq : str
         Resampling frequency.

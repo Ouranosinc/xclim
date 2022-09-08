@@ -8,7 +8,7 @@ Functions that encapsulate some geophysical logic but could be shared by many in
 from __future__ import annotations
 
 from inspect import stack
-
+import cf_xarray  # noqa
 import cftime
 import numpy as np
 import xarray as xr
