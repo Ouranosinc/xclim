@@ -665,8 +665,7 @@ def water_budget(
         pet = convert_units_to(evspsblpot, "kg m-2 s-1")
 
     if xarray.infer_freq(pet.time) == "MS":
-        with xarray.set_options(keep_attrs=True):
-            pr = pr.resample(time="MS").mean(dim="time", keep_attrs=True)
+        pr = pr.resample(time="MS").mean(dim="time", keep_attrs=True)
 
     out = pr - pet
 
