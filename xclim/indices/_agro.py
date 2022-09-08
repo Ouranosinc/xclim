@@ -501,7 +501,7 @@ def cool_night_index(
 
     tasmin = tasmin.where(months == month, drop=True)
 
-    cni = tasmin.resample(time=freq).mean()
+    cni = tasmin.resample(time=freq).mean(keep_attrs=True)
     cni.attrs["units"] = "degC"
     return cni
 
@@ -555,8 +555,8 @@ def latitude_temperature_index(
     """
     tas = convert_units_to(tas, "degC")
 
-    tas = tas.resample(time="MS").mean(dim="time")
-    mtwm = tas.resample(time=freq).max(dim="time")
+    tas = tas.resample(time="MS").mean(dim="time", keep_attrs=True)
+    mtwm = tas.resample(time=freq).max(dim="time", keep_attrs=True)
 
     if lat is None:
         lat = _gather_lat(tas)
@@ -666,7 +666,7 @@ def water_budget(
 
     if xarray.infer_freq(pet.time) == "MS":
         with xarray.set_options(keep_attrs=True):
-            pr = pr.resample(time="MS").mean(dim="time")
+            pr = pr.resample(time="MS").mean(dim="time", keep_attrs=True)
 
     out = pr - pet
 
