@@ -435,7 +435,7 @@ def biologically_effective_degree_days(
     return bedd
 
 
-@declare_units(tasmin="[temperature]", lat="[]")
+@declare_units(tasmin="[temperature]")
 def cool_night_index(
     tasmin: xarray.DataArray,
     lat: xarray.DataArray | str | None = None,
