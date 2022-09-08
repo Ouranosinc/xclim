@@ -13,7 +13,7 @@ from xclim.core.units import convert_units_to, declare_units, rate2amount, to_ag
 from xclim.core.utils import DayOfYearStr, uses_dask
 from xclim.indices._threshold import first_day_above, first_day_below, freshet_start
 from xclim.indices.generic import aggregate_between_dates
-from xclim.indices.helpers import day_lengths
+from xclim.indices.helpers import day_lengths, gather_lat
 from xclim.indices.stats import dist_method, fit
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
@@ -130,7 +130,7 @@ def corn_heat_units(
 def huglin_index(
     tas: xarray.DataArray,
     tasmax: xarray.DataArray,
-    lat: xarray.DataArray,
+    lat: xarray.DataArray | None = None,
     thresh: str = "10 degC",
     method: str = "smoothed",
     start_date: DayOfYearStr = "04-01",
@@ -151,6 +151,7 @@ def huglin_index(
       Maximum daily temperature.
     lat: xarray.DataArray
       Latitude coordinate.
+      If None, a CF-conformant "latitude" field must be available within the passed DataArray.
     thresh: str
       The temperature threshold.
     method: {"smoothed", "icclim", "jones"}
@@ -212,6 +213,9 @@ def huglin_index(
     tas = convert_units_to(tas, "degC")
     tasmax = convert_units_to(tasmax, "degC")
     thresh = convert_units_to(thresh, "degC")
+
+    if lat is None:
+        lat = gather_lat(tas)
 
     if method.lower() == "smoothed":
         lat_mask = abs(lat) <= 50
@@ -305,6 +309,8 @@ def biologically_effective_degree_days(
       Maximum daily temperature.
     lat : xarray.DataArray, optional
       Latitude coordinate.
+      If None and method in ["gladstones", "icclim"],
+      a CF-conformant "latitude" field must be available within the passed DataArray.
     thresh_tasmin : str
       The minimum temperature threshold.
     method : {"gladstones", "icclim", "jones"}
@@ -387,6 +393,10 @@ def biologically_effective_degree_days(
             dtr - high_dtr,
             xarray.where(dtr < low_dtr, dtr - low_dtr, 0),
         )
+
+        if lat is None:
+            lat = gather_lat(tasmin)
+
         if method.lower() == "gladstones":
             if isinstance(lat, (int, float)):
                 lat = xarray.DataArray(lat)
@@ -427,7 +437,9 @@ def biologically_effective_degree_days(
 
 @declare_units(tasmin="[temperature]", lat="[]")
 def cool_night_index(
-    tasmin: xarray.DataArray, lat: xarray.DataArray, freq: str = "YS"
+    tasmin: xarray.DataArray,
+    lat: xarray.DataArray | str | None = None,
+    freq: str = "YS",
 ) -> xarray.DataArray:
     """Cool Night Index.
 
@@ -437,11 +449,12 @@ def cool_night_index(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature.
-    lat: xarray.DataArray, optional
-      Latitude coordinate.
+        Minimum daily temperature.
+    lat : xarray.DataArray or {"north", "south"}, optional
+        Latitude coordinate.
+        If None, a CF-conformant "latitude" field must be available within the passed DataArray.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
@@ -471,7 +484,21 @@ def cool_night_index(
 
     # Use September in northern hemisphere, March in southern hemisphere.
     months = tasmin.time.dt.month
-    month = xarray.where(lat > 0, 9, 3)
+
+    if lat is None:
+        lat = gather_lat(tasmin)
+    if isinstance(lat, xarray.DataArray):
+        month = xarray.where(lat > 0, 9, 3)
+    elif isinstance(lat, str):
+        if lat.lower() == "north":
+            month = 9
+        elif lat.lower() == "south":
+            month = 3
+        else:
+            raise ValueError(f"Latitude value unsupported: {lat}.")
+    else:
+        raise ValueError(f"Latitude: {lat}.")
+
     tasmin = tasmin.where(months == month, drop=True)
 
     cni = tasmin.resample(time=freq).mean()
@@ -482,7 +509,7 @@ def cool_night_index(
 @declare_units(tas="[temperature]", lat="[]")
 def latitude_temperature_index(
     tas: xarray.DataArray,
-    lat: xarray.DataArray,
+    lat: xarray.DataArray | None = None,
     lat_factor: float = 75,
     freq: str = "YS",
 ) -> xarray.DataArray:
@@ -495,8 +522,9 @@ def latitude_temperature_index(
     ----------
     tas: xarray.DataArray
       Mean daily temperature.
-    lat: xarray.DataArray
+    lat: xarray.DataArray, optional
       Latitude coordinate.
+      If None, a CF-conformant "latitude" field must be available within the passed DataArray.
     lat_factor: float
       Latitude factor. Maximum poleward latitude. Default: 75.
     freq : str
@@ -529,6 +557,9 @@ def latitude_temperature_index(
 
     tas = tas.resample(time="MS").mean(dim="time")
     mtwm = tas.resample(time=freq).max(dim="time")
+
+    if lat is None:
+        lat = gather_lat(tas)
 
     lat_mask = (abs(lat) >= 0) & (abs(lat) <= lat_factor)
     lat_coeff = xarray.where(lat_mask, lat_factor - abs(lat), 0)
@@ -576,27 +607,28 @@ def water_budget(
     ----------
     pr : xarray.DataArray
       Daily precipitation.
-    evspsblpot: xarray.DataArray
+    evspsblpot: xarray.DataArray, optional
       Potential evapotranspiration
-    tasmin : xarray.DataArray
+    tasmin : xarray.DataArray, optional
       Minimum daily temperature.
-    tasmax : xarray.DataArray
+    tasmax : xarray.DataArray, optional
       Maximum daily temperature.
-    tas : xarray.DataArray
+    tas : xarray.DataArray, optional
       Mean daily temperature.
-    lat : xarray.DataArray
-      Latitude, needed if evspsblpot is not given.
-    hurs : xarray.DataArray
+    lat : xarray.DataArray, optional
+      Latitude coordinate, needed if evspsblpot is not given.
+      If None, a CF-conformant "latitude" field must be available within the `pr` DataArray.
+    hurs : xarray.DataArray, optional
       Relative humidity.
-    rsds : xarray.DataArray
+    rsds : xarray.DataArray, optional
       Surface Downwelling Shortwave Radiation
-    rsus : xarray.DataArray
+    rsus : xarray.DataArray, optional
       Surface Upwelling Shortwave Radiation
-    rlds : xarray.DataArray
+    rlds : xarray.DataArray, optional
       Surface Downwelling Longwave Radiation
-    rlus : xarray.DataArray
+    rlus : xarray.DataArray, optional
       Surface Upwelling Longwave Radiation
-    sfcwind : xarray.DataArray
+    sfcwind : xarray.DataArray, optional
       Surface wind velocity (at 10 m)
     method : str
       Method to use to calculate the potential evapotranspiration.
@@ -611,6 +643,9 @@ def water_budget(
       Precipitation minus potential evapotranspiration.
     """
     pr = convert_units_to(pr, "kg m-2 s-1")
+
+    if lat is None and evspsblpot is None:
+        lat = gather_lat(pr)
 
     if evspsblpot is None:
         pet = xci.potential_evapotranspiration(

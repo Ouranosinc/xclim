@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import numpy as np
 import xarray as xr
-from numba import float32, float64, vectorize
+from numba import float32, float64, vectorize  # noqa
 
 from xclim.core.calendar import date_range, datetime_to_decimal_year
 from xclim.core.units import amount2rate, convert_units_to, declare_units, units2pint
@@ -12,6 +12,8 @@ from xclim.indices.helpers import (
     day_lengths,
     distance_from_sun,
     extraterrestrial_solar_radiation,
+    gather_lat,
+    gather_lon,
     solar_declination,
     time_correction_for_solar_angle,
     wind_speed_height_conversion,
@@ -996,8 +998,8 @@ def potential_evapotranspiration(
     rlus: xr.DataArray | None = None,
     sfcwind: xr.DataArray | None = None,
     method: str = "BR65",
-    peta: float | None = 0.00516409319477,
-    petb: float | None = 0.0874972822289,
+    peta: float = 0.00516409319477,
+    petb: float = 0.0874972822289,
 ) -> xr.DataArray:
     r"""Potential evapotranspiration.
 
@@ -1006,25 +1008,25 @@ def potential_evapotranspiration(
 
     Parameters
     ----------
-    tasmin : xarray.DataArray
+    tasmin : xarray.DataArray, optional
       Minimum daily temperature.
-    tasmax : xarray.DataArray
+    tasmax : xarray.DataArray, optional
       Maximum daily temperature.
-    tas : xarray.DataArray
+    tas : xarray.DataArray, optional
       Mean daily temperature.
     lat : xarray.DataArray, optional
-      Latitude. If not given, it is sought on tasmin or tas with cf-xarray.
-    hurs : xarray.DataArray
+      Latitude. If not given, it is sought on tasmin or tas using cf-xarray accessors.
+    hurs : xarray.DataArray, optional
       Relative humidity.
-    rsds : xarray.DataArray
+    rsds : xarray.DataArray, optional
       Surface Downwelling Shortwave Radiation
-    rsus : xarray.DataArray
+    rsus : xarray.DataArray, optional
       Surface Upwelling Shortwave Radiation
-    rlds : xarray.DataArray
+    rlds : xarray.DataArray, optional
       Surface Downwelling Longwave Radiation
-    rlus : xarray.DataArray
+    rlus : xarray.DataArray, optional
       Surface Upwelling Longwave Radiation
-    sfcwind : xarray.DataArray
+    sfcwind : xarray.DataArray, optional
       Surface wind velocity (at 10 m)
     method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48", "mcguinnessbordne05", "MB05", "allen98", "FAO_PM98"}
       Which method to use, see notes.
@@ -1068,7 +1070,7 @@ def potential_evapotranspiration(
     :cite:cts:`baier_estimation_1965,george_h_hargreaves_reference_1985,tanguy_historical_2018,thornthwaite_approach_1948,mcguinness_comparison_1972,allen_crop_1998`
     """
     if lat is None:
-        lat = (tasmin if tas is None else tas).cf["latitude"]
+        lat = gather_lat(tasmin if tas is None else tas)
 
     if method in ["baierrobertson65", "BR65"]:
         tasmin = convert_units_to(tasmin, "degF")
@@ -1096,7 +1098,7 @@ def potential_evapotranspiration(
         ra = extraterrestrial_solar_radiation(tasmin.time, lat)
         ra = convert_units_to(ra, "MJ m-2 d-1")
 
-        # Hargreaves and Samani(1985) formula
+        # Hargreaves and Samani (1985) formula
         out = (0.0023 * ra * (tas + 17.8) * (tasmax - tasmin) ** 0.5) / lv
         out = out.clip(0)
 
@@ -1155,7 +1157,7 @@ def potential_evapotranspiration(
             name="time",
         )
 
-        # Thornwaith measures half-days
+        # Thornthwaite measures half-days
         dl = day_lengths(time_v, lat) / 12
         dl_m = dl.resample(time="MS").mean(dim="time")
 
@@ -1474,7 +1476,7 @@ def universal_thermal_climate_index(
     stat: str = "average",
     mask_invalid: bool = True,
 ) -> xr.DataArray:
-    r"""Universal thermal climate index.
+    r"""Universal thermal climate index (UTCI).
 
     The UTCI is the equivalent temperature for the environment derived from a
     reference environment and is used to evaluate heat stress in outdoor spaces.
@@ -1508,7 +1510,7 @@ def universal_thermal_climate_index(
         solar zenith angle is calculated during the sunlit period of each interval.
         If "instant", the instantaneous cosine of the solar zenith angle is calculated.
         This is necessary if mrt is not None.
-    mask_invalid: boolean
+    mask_invalid: bool
         If True (default), UTCI values are NaN where any of the inputs are outside
         their validity ranges : -50°C < tas < 50°C,  -30°C < tas - mrt < 30°C
         and  0.5 m/s < sfcWind < 17.0 m/s.
@@ -1673,8 +1675,10 @@ def mean_radiant_temperature(
 
     dates = rsds.time
     hours = ((dates - dates.dt.floor("D")).dt.seconds / 3600).assign_attrs(units="h")
-    lat = rsds.lat
-    lon = rsds.lon
+
+    lat = gather_lat(rsds)
+    lon = gather_lon(rsds)
+
     decimal_year = datetime_to_decimal_year(times=dates, calendar=dates.dt.calendar)
     day_angle = ((decimal_year % 1) * 2 * np.pi).assign_attrs(units="rad")
     dec = solar_declination(day_angle)
