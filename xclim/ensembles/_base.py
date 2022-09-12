@@ -75,17 +75,18 @@ def create_ensemble(
 
     Examples
     --------
+    >>> from pathlib import Path  # doctest: +SKIP
     >>> from xclim.ensembles import create_ensemble
     >>> ens = create_ensemble(temperature_datasets)
 
     Using multifile datasets, through glob patterns.
     Simulation 1 is a list of .nc files (e.g. separated by time):
 
-    >>> datasets = glob.glob("/dir/*.nc")  # doctest: +SKIP
+    >>> datasets = list(Path("/dir").glob("*.nc"))  # doctest: +SKIP
 
     Simulation 2 is also a list of .nc files:
 
-    >>> datasets.append(glob.glob("/dir2/*.nc"))  # doctest: +SKIP
+    >>> datasets.extend(Path("/dir2").glob("*.nc"))  # doctest: +SKIP
     >>> ens = create_ensemble(datasets, mf_flag=True)  # doctest: +SKIP
     """
     if isinstance(datasets, dict):

@@ -102,6 +102,7 @@ extensions = [
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.intersphinx",
     "sphinx.ext.extlinks",
+    "sphinx.ext.doctest",
     "rstjinja",
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
@@ -115,8 +116,7 @@ autosectionlabel_maxdepth = 2
 
 linkcheck_ignore = [
     r"https://github.com/Ouranosinc/xclim/(pull|issue).*",
-    r"https://doi.org/10.1093/mnras/225.1.155"  # does not allow linkcheck requests (error 403)
-    r"https://clisops.readthedocs.io/en/latest/notebooks/subset.html",  # target link is currently broken
+    r"https://doi.org/10.1093/mnras/225.1.155",  # does not allow linkcheck requests (error 403)
 ]
 
 napoleon_numpy_docstring = True
@@ -139,6 +139,12 @@ extlinks = {
     "issue": ("https://github.com/Ouranosinc/xclim/issues/%s", "GH/%s"),
     "pull": ("https://github.com/Ouranosinc/xclim/pull/%s", "PR/%s"),
     "user": ("https://github.com/%s", "@%s"),
+}
+
+# Needed for sphinx-codeautolink when running over docstrings
+codeautolink_custom_blocks = {
+    "python3": None,
+    "pycon3": "sphinx_codeautolink.clean_pycon",
 }
 
 
