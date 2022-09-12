@@ -102,7 +102,6 @@ extensions = [
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.intersphinx",
     "sphinx.ext.extlinks",
-    # "sphinx.ext.doctest",
     "rstjinja",
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
@@ -139,12 +138,6 @@ extlinks = {
     "issue": ("https://github.com/Ouranosinc/xclim/issues/%s", "GH/%s"),
     "pull": ("https://github.com/Ouranosinc/xclim/pull/%s", "PR/%s"),
     "user": ("https://github.com/%s", "@%s"),
-}
-
-# Needed for sphinx-codeautolink when running over docstrings
-codeautolink_custom_blocks = {
-    "python3": None,
-    "pycon3": "sphinx_codeautolink.clean_pycon",
 }
 
 
