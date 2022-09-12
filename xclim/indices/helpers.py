@@ -7,6 +7,9 @@ Functions that encapsulate some geophysical logic but could be shared by many in
 """
 from __future__ import annotations
 
+from inspect import stack
+
+import cf_xarray  # noqa
 import cftime
 import numpy as np
 import xarray as xr
@@ -401,3 +404,53 @@ def wind_speed_height_conversion(
             return ua * np.log(67.8 * h_target - 5.42) / np.log(67.8 * h_source - 5.42)
     else:
         raise NotImplementedError(f"'{method}' method is not implemented.")
+
+
+def _gather_lat(da: xr.DataArray) -> xr.DataArray:
+    """Gather latitude coordinate using cf-xarray.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+        CF-conformant DataArray with a "latitude" coordinate.
+
+    Returns
+    -------
+    xarray.DataArray
+        Latitude coordinate.
+    """
+    try:
+        lat = da.cf["latitude"]
+        return lat
+    except KeyError as err:
+        n_func = stack()[1].function
+        msg = (
+            f"{n_func} could not find latitude coordinate in DataArray. "
+            "Try passing it explicitly (`lat=ds.lat`)."
+        )
+        raise ValueError(msg) from err
+
+
+def _gather_lon(da: xr.DataArray) -> xr.DataArray:
+    """Gather longitude coordinate using cf-xarray.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+        CF-conformant DataArray with a "longitude" coordinate.
+
+    Returns
+    -------
+    xarray.DataArray
+        Longitude coordinate.
+    """
+    try:
+        lat = da.cf["longitude"]
+        return lat
+    except KeyError as err:
+        n_func = stack()[1].function
+        msg = (
+            f"{n_func} could not find longitude coordinate in DataArray. "
+            "Try passing it explicitly (`lon=ds.lon`)."
+        )
+        raise ValueError(msg) from err
