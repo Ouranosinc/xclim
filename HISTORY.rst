@@ -4,6 +4,11 @@ History
 
 0.39.0 (unreleased)
 -------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Documentation now supports intersphinx mapping references within code examples via `sphinx-codeautolink` and copying of code blocks via `sphinx-copybutton`. (:pull:`1182`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -15,6 +20,10 @@ Bug fixes
 ^^^^^^^^^
 * The docstring of ``cool_night_index`` suggested that `lat` was an optional parameter. This has been corrected. (:issue:`1179`, :pull:`1180`).
 * The ``mean_radiant_temperature`` indice was accessing hardcoded `lat` and `lon` coordinates from passed DataArrays. This now uses `cf-xarray` accessors. (:pull:`1180`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* The documentation build now relies on `sphinx-codeautolink` and `sphinx-copybutton`. (:pull:`1182`).
 
 0.38.0 (2022-09-06)
 -------------------
