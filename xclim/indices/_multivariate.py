@@ -119,10 +119,9 @@ def cold_spell_duration_index(
 
     Examples
     --------
-    # Note that this example does not use a proper 1961-1990 reference period.
+    Note that this example does not use a proper 1961-1990 reference period.
     >>> from xclim.core.calendar import percentile_doy
     >>> from xclim.indices import cold_spell_duration_index
-
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin.isel(lat=0, lon=0)
     >>> tn10 = percentile_doy(tasmin, per=10).sel(percentiles=10)
     >>> cold_spell_duration_index(tasmin, tn10)
