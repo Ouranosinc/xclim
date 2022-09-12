@@ -45,6 +45,7 @@ dependencies:
     - pytest-cov
     - sphinx
     - sphinx_rtd_theme
+    - sphinxcontrib-bibtex
     - statsmodels
     - tokenize-rt
     - tox
