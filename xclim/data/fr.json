@@ -297,9 +297,9 @@
   },
   "HEAT_WAVE_TOTAL_LENGTH": {
     "long_name": "Durée totale des vagues de chaleur",
-    "description": "Durée totale {freq:f} des vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimale et maximale quotidiennes excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
+    "description": "Durée totale {freq:f} des vagues de chaleur en somme des jours. Une vague de chaleur se produit lorsque les températures minimale et maximale quotidiennes excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
     "title": "Durée totale des vagues de chaleur",
-    "abstract": "Durée totale des vagues de chaleur. Une vague de chaleur se produit lorsque les températures minimale et maximale quotidiennes excèdent des seuils donnés durant un certain nombre de jours."
+    "abstract": "Durée totale des vagues de chaleur en somme des jours. Une vague de chaleur se produit lorsque les températures minimale et maximale quotidiennes excèdent des seuils donnés durant un certain nombre de jours."
   },
   "HEAT_WAVE_MAX_LENGTH": {
     "long_name": "Durée maximale des vagues de chaleur",
@@ -317,7 +317,7 @@
     "long_name": "Moyenne des températures maximale et minimale quotidennes",
     "description": "Température moyenne quotidienne moyenne estimée par la moyenne des températures maximale et minimale quotidiennnes.",
     "title": "Température moyenne",
-    "abstract": "La température moyenne quotidienne en assumant une distribution symétrique des températures maximale et minmale quotidiennes (Tg = (Tx + Tn) / 2)."
+    "abstract": "La température moyenne quotidienne en supposant une distribution symétrique des températures maximale et minimale quotidiennes (Tg = (Tx + Tn) / 2)."
   },
   "TG_MIN": {
     "long_name": "Minimum de la température moyenne quotidienne",
@@ -430,7 +430,7 @@
   "ETR": {
     "long_name": "Amplitude des températures extrêmes",
     "description": "Calcul {freq:m} de l'intervalle entre le maximum de la température maximale quotidienne et le minimum de la température minimale quotidienne.",
-    "title": "Intervalle des températures extrêmes",
+    "title": "Amplitude des températures extrêmes",
     "abstract": "Le maximum de la température maximale moins le minimum de la température minimale."
   },
   "COLD_SPELL_DURATION_INDEX": {
