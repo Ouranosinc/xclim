@@ -44,6 +44,7 @@ dependencies:
     - pytest
     - pytest-cov
     - sphinx
+    - sphinx-copybutton
     - sphinx_rtd_theme
     - sphinxcontrib-bibtex
     - statsmodels

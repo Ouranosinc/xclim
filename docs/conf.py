@@ -108,6 +108,7 @@ extensions = [
     "autodoc_indicator",
     "sphinxcontrib.bibtex",
     "sphinx_codeautolink",
+    "sphinx_copybutton",
 ]
 
 autosectionlabel_prefix_document = True
