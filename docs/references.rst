@@ -1,4 +1,4 @@
-.. only:: html or text
+.. only:: html
 
     ============
     Bibliography
@@ -7,11 +7,17 @@
     General References
     ------------------
 
-    .. bibliography::
-       :style: xcstyle
+.. bibliography::
 
-    Fire Weather Index References
-    -----------------------------
+.. only:: html
+
+    McArthur Forest Fire Danger System References
+    ---------------------------------------------
+
+    See: :ref:`ffdi-footnotes`
+
+    Canadian Forest Fire Weather Index System References
+    ----------------------------------------------------
 
     See: :ref:`fwi-footnotes`
 

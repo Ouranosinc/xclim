@@ -38,6 +38,7 @@ dependencies:
     - netCDF4>=1.4
     - pooch
     - pre_commit
+    - pybtex
     - pydocstyle
     - pylint
     - pytest

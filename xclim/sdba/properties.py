@@ -11,60 +11,101 @@ Statistical Properties is the xclim term for 'indices' in the VALUE project.
 """
 from __future__ import annotations
 
-from typing import Callable
-
 import numpy as np
 import xarray as xr
-from boltons.funcutils import wraps
 from scipy import stats
 from statsmodels.tsa import stattools
 
 import xclim as xc
-from xclim.core.formatting import update_xclim_history
-from xclim.core.units import convert_units_to
+from xclim.core.indicator import Indicator, base_registry
+from xclim.core.units import convert_units_to, to_agg_units
 from xclim.core.utils import uses_dask
 from xclim.indices import run_length as rl
 from xclim.indices.generic import select_resample_op
 from xclim.indices.stats import fit, parametric_quantile
 
-from .base import Grouper, map_groups, parse_group
-
-STATISTICAL_PROPERTIES: dict[str, Callable] = {}
-""" Dictionary of all the statistical properties available."""
+from .base import Grouper, map_groups
 
 
-def register_statistical_properties(
-    aspect: str, seasonal: bool, annual: bool
-) -> Callable:
-    """Register statistical properties in the STATISTICAL_PROPERTIES dictionary with its aspect and time resolutions."""
+class StatisticalProperty(Indicator):
+    """Base indicator class for statistical properties used for validating bias-adjusted outputs.
 
-    def _register_statistical_properties(func):
-        func.aspect = aspect
-        func.seasonal = seasonal
-        func.annual = annual
-        allowed = []
-        if annual:
-            allowed.append("group")
-        if seasonal:
-            allowed.extend(["season", "month"])
+    Statistical properties reduce the time dimension, sometimes adding a grouping dimension
+    according to the passed value of `group` (e.g.: group='time.month' means the loss of the
+    time dimension and the addition of a month one).
 
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            kwargs = parse_group(func, kwargs=kwargs, allow_only=allowed)
-            out = func(*args, **kwargs)
-            if "group" in out.dims:
-                out = out.squeeze("group", drop=True)
-            return out
+    Statistical properties are generally unit-generic. To use those indicator in a workflow, it
+    is recommended to wrap them with a virtual submodule, creating one specific indicator for
+    each variable input (or at least for each possible dimensionality).
 
-        STATISTICAL_PROPERTIES[func.__name__] = wrapper
-        return wrapper
+    Statistical properties may restrict the sampling frequency of the input, they usually take in a
+    single variable (named "da" in unit-generic instances).
 
-    return _register_statistical_properties
+    """
+
+    aspect = None
+    """The aspect the statistical property studies: marginal, temporal, multivariate or spatial."""
+
+    measure = "xclim.sdba.measures.BIAS"
+    """The default measure to use when comparing the properties of two datasets.
+    This gives the registry id. See :py:meth:`get_measure`."""
+
+    allowed_groups = None
+    """A list of allowed groupings. A subset of dayofyear, week, month, season or group.
+    The latter stands for no temporal grouping."""
+
+    realm = "generic"
+
+    @classmethod
+    def _ensure_correct_parameters(cls, parameters):
+        if "group" not in parameters:
+            raise ValueError(
+                f"{cls.__name__} require a 'group' argument, use the base Indicator"
+                " class if your computation doesn't perform any regrouping."
+            )
+        return super()._ensure_correct_parameters(parameters)
+
+    def _preprocess_and_checks(self, das, params):
+        """Perform parent's checks and also check if group is allowed."""
+        das, params = super()._preprocess_and_checks(das, params)
+
+        # Convert grouping and check if allowed:
+        if isinstance(params["group"], str):
+            params["group"] = Grouper(params["group"])
+
+        if (
+            self.allowed_groups is not None
+            and params["group"].prop not in self.allowed_groups
+        ):
+            raise ValueError(
+                f"Grouping period {params['group'].prop_name} is not allowed for property "
+                f"{self.identifier} (needs something in "
+                f"{map(lambda g: '<dim>.' + g.replace('group', ''), self.allowed_groups)})."
+            )
+
+        return das, params
+
+    def _postprocess(self, outs, das, params):
+        """Squeeze `group` dim if needed."""
+        outs = super()._postprocess(outs, das, params)
+
+        for i in range(len(outs)):
+            if "group" in outs[i].dims:
+                outs[i] = outs[i].squeeze("group", drop=True)
+
+        return outs
+
+    def get_measure(self):
+        """Get the statistical measure indicator that is best used with this statistical property."""
+        from xclim.core.indicator import registry
+
+        return registry[self.measure].get_instance()
 
 
-@update_xclim_history
-@register_statistical_properties(aspect="marginal", seasonal=True, annual=True)
-def mean(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
+base_registry["StatisticalProperty"] = StatisticalProperty
+
+
+def _mean(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
     """Mean.
 
     Mean over all years at the time resolution.
@@ -79,27 +120,25 @@ def mean(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
 
     Returns
     -------
-    xr.DataArray,
+    xr.DataArray, [same as input]
       Mean of the variable.
-
-    Examples
-    --------
-    >>> pr = open_dataset(path_to_pr_file).pr
-    >>> mean(da=pr, group="time.season")
     """
-    attrs = da.attrs
+    units = da.units
     if group.prop != "group":
         da = da.groupby(group.name)
     out = da.mean(dim=group.dim)
-    out.attrs.update(attrs)
-    out.attrs["long_name"] = "Mean"
-    out.name = "mean"
-    return out
+    return out.assign_attrs(units=units)
 
 
-@update_xclim_history
-@register_statistical_properties(aspect="marginal", seasonal=True, annual=True)
-def var(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
+mean = StatisticalProperty(
+    identifier="mean",
+    aspect="marginal",
+    cell_methods="time: mean",
+    compute=_mean,
+)
+
+
+def _var(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
     """Variance.
 
     Variance of the variable over all years at the time resolution.
@@ -114,30 +153,28 @@ def var(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [square of the input units]
       Variance of the variable.
-
-    Examples
-    --------
-    >>> pr = open_dataset(path_to_pr_file).pr
-    >>> var(da=pr, group="time.season")
     """
-    attrs = da.attrs
+    units = da.units
     if group.prop != "group":
         da = da.groupby(group.name)
     out = da.var(dim=group.dim)
-    out.attrs.update(attrs)
-    out.attrs["long_name"] = "Variance"
-    u = xc.core.units.units2pint(attrs["units"])
-    u2 = u**2
+    u2 = xc.core.units.units2pint(units) ** 2
     out.attrs["units"] = xc.core.units.pint2cfunits(u2)
-    out.name = "variance"
     return out
 
 
-@update_xclim_history
-@register_statistical_properties(aspect="marginal", seasonal=True, annual=True)
-def skewness(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
+var = StatisticalProperty(
+    identifier="var",
+    aspect="marginal",
+    cell_methods="time: var",
+    compute=_var,
+    measure="xclim.sdba.measures.RATIO",
+)
+
+
+def _skewness(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
     """Skewness.
 
     Skewness of the distribution of the variable over all years at the time resolution.
@@ -152,19 +189,13 @@ def skewness(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [dimensionless]
       Skewness of the variable.
-
-    Examples
-    --------
-    >>> pr = open_dataset(path_to_pr_file).pr
-    >>> skewness(da=pr, group="time.season")
 
     See Also
     --------
     scipy.stats.skew
     """
-    attrs = da.attrs
     if group.prop != "group":
         da = da.groupby(group.name)
     out = xr.apply_ufunc(
@@ -174,16 +205,16 @@ def skewness(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray
         vectorize=True,
         dask="parallelized",
     )
-    out.attrs.update(attrs)
-    out.attrs["long_name"] = "Skewness"
     out.attrs["units"] = ""
-    out.name = "skewness"
     return out
 
 
-@update_xclim_history
-@register_statistical_properties(aspect="marginal", seasonal=True, annual=True)
-def quantile(
+skewness = StatisticalProperty(
+    identifier="skewness", aspect="marginal", compute=_skewness, units=""
+)
+
+
+def _quantile(
     da: xr.DataArray, *, q: float = 0.98, group: str | Grouper = "time"
 ) -> xr.DataArray:
     """Quantile.
@@ -202,22 +233,19 @@ def quantile(
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [same as input]
       Quantile {q} of the variable.
-
-    Examples
-    --------
-    >>> pr = open_dataset(path_to_pr_file).pr
-    >>> quantile(da=pr, q=0.9, group="time.season")
     """
-    attrs = da.attrs
+    units = da.units
     if group.prop != "group":
         da = da.groupby(group.name)
     out = da.quantile(q, dim=group.dim, keep_attrs=True).drop_vars("quantile")
-    out.attrs.update(attrs)
-    out.attrs["long_name"] = f"Quantile {q}"
-    out.name = "quantile"
-    return out
+    return out.assign_attrs(units=units)
+
+
+quantile = StatisticalProperty(
+    identifier="quantile", aspect="marginal", compute=_quantile
+)
 
 
 # FIXME: Resample before/after
@@ -228,7 +256,7 @@ def spell_length_distribution(
     *,
     method: str = "amount",
     op: str = ">=",
-    thresh: str | float = "1 mm d-1",
+    thresh: str = "1 mm d-1",
     stat: str = "mean",
     group: str | Grouper = "time",
     resample_before_rl: str | bool = "from_context",
@@ -265,15 +293,9 @@ def spell_length_distribution(
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [units of the sampling frequency]
       {stat} of spell length distribution when the variable is {op} the {method} {thresh}.
-
-    Examples
-    --------
-    >>> pr = open_dataset(path_to_pr_file).pr
-    >>> spell_length_distribution(da=pr, op="<", thresh="1mm d-1", group="time.season")
     """
-    attrs = da.attrs
     ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
 
     @map_groups(out=[Grouper.PROP], main_only=True)
@@ -320,21 +342,20 @@ def spell_length_distribution(
         resample_before_rl=resample_before_rl,
         stat=stat,
     ).out
-    out.attrs.update(attrs)
-    out.attrs[
-        "long_name"
-    ] = f"{stat} of spell length when input variable {op} {method} {thresh}"
-    out.name = "spell_length_distribution"
-    out.attrs["units"] = "day"
-    return out
+    return to_agg_units(out, da, op="count")
 
 
-@update_xclim_history
-@register_statistical_properties(aspect="temporal", seasonal=True, annual=False)
-def acf(
+spell_length_distribution = StatisticalProperty(
+    identifier="spell_length_distribution",
+    aspect="temporal",
+    compute=_spell_length_distribution,
+)
+
+
+def _acf(
     da: xr.DataArray, *, lag: int = 1, group: str | Grouper = "time.season"
 ) -> xr.DataArray:
-    """Autocorrelation function.
+    """Autocorrelation.
 
     Autocorrelation with a lag over a time resolution and averaged over all years.
 
@@ -351,8 +372,8 @@ def acf(
 
     Returns
     -------
-    xr.DataArray
-      lag-{lag} autocorrelation of the variable over a {group.prop} and averaged over all years.
+    xr.DataArray, [dimensionless]
+      Lag-{lag} autocorrelation of the variable over a {group.prop} and averaged over all years.
 
     See Also
     --------
@@ -361,14 +382,7 @@ def acf(
     References
     ----------
     :cite:cts:`alavoine_distinct_2021`
-
-    Examples
-    --------
-    >>> from xclim.testing import open_dataset
-    >>> pr = open_dataset(path_to_pr_file).pr
-    >>> acf(da=pr, lag=3, group="time.season")
     """
-    attrs = da.attrs
 
     def acf_last(x, nlags):
         # noqa: D403
@@ -381,7 +395,7 @@ def acf(
     def _acf(ds, *, dim, lag, freq):
         out = xr.apply_ufunc(
             acf_last,
-            ds.dat.resample({dim: freq}),
+            ds.data.resample({dim: freq}),
             input_core_dims=[[dim]],
             vectorize=True,
             kwargs={"nlags": lag},
@@ -389,18 +403,23 @@ def acf(
         out = out.mean("__resample_dim__")
         return out.rename("out").to_dataset()
 
-    out = _acf(da.rename("dat").to_dataset(), group=group, lag=lag, freq=group.freq).out
-    out.attrs.update(attrs)
-    out.attrs["long_name"] = f"lag-{lag} autocorrelation"
+    out = _acf(
+        da.rename("data").to_dataset(), group=group, lag=lag, freq=group.freq
+    ).out
     out.attrs["units"] = ""
-    out.name = "acf"
     return out
 
 
+acf = StatisticalProperty(
+    identifier="acf",
+    aspect="temporal",
+    allowed_groups=["season", "month"],
+    compute=_acf,
+)
+
+
 # group was kept even though "time" is the only acceptable arg to keep the signature similar to other properties
-@update_xclim_history
-@register_statistical_properties(aspect="temporal", seasonal=False, annual=True)
-def annual_cycle_amplitude(
+def _annual_cycle_amplitude(
     da: xr.DataArray,
     *,
     amplitude_type: str = "absolute",
@@ -421,33 +440,42 @@ def annual_cycle_amplitude(
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [same units as input or dimensionless]
       {amplitude_type} amplitude of the annual cycle.
-
-    Examples
-    --------
-    >>> pr = open_dataset(path_to_pr_file).pr
-    >>> annual_cycle_amplitude(da=pr, amplitude_type="relative")
     """
-    attrs = da.attrs
+    units = da.units
     da = da.resample({group.dim: group.freq})
     # amplitude
     amp = da.max(dim=group.dim) - da.min(dim=group.dim)
-    amp.attrs.update(attrs)
-    amp.attrs["units"] = xc.core.units.ensure_delta(attrs["units"])
+    amp.attrs["units"] = xc.core.units.ensure_delta(units)
     if amplitude_type == "relative":
         amp = amp * 100 / da.mean(dim=group.dim, keep_attrs=True)
-        amp.attrs["units"] = "%"
-    amp = amp.mean(dim=group.dim, keep_attrs=True)
-    amp.attrs["long_name"] = f"{amplitude_type} amplitude of the annual cycle"
-    amp.name = "annual_cycle_amplitude"
-    return amp
+    amp = amp.mean(dim=group.dim)
+    return amp.assign_attrs(units="%" if amplitude_type == "relative" else units)
 
 
-# group was kept even though "time" is the only acceptable arg to keep the signature similar to other properties
-@update_xclim_history
-@register_statistical_properties(aspect="temporal", seasonal=False, annual=True)
-def annual_cycle_phase(
+annual_cycle_amplitude = StatisticalProperty(
+    identifier="annual_cycle_amplitude",
+    aspect="temporal",
+    compute=_annual_cycle_amplitude,
+    parameters={"amplitude_type": "absolute"},
+    allowed_groups=["group"],
+    cell_methods="time: range time: mean",
+)
+
+
+relative_annual_cycle_amplitude = StatisticalProperty(
+    identifier="relative_annual_cycle_amplitude",
+    aspect="temporal",
+    compute=_annual_cycle_amplitude,
+    parameters={"amplitude_type": "relative"},
+    allowed_groups=["group"],
+    cell_methods="time: range time: mean",
+    measure="xclim.sdba.measures.RATIO",
+)
+
+
+def _annual_cycle_phase(
     da: xr.DataArray, *, group: str | Grouper = "time"
 ) -> xr.DataArray:
     """Annual cycle phase.
@@ -463,15 +491,9 @@ def annual_cycle_phase(
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [dimensionless]
       Phase of the annual cycle. The position (day-of-year) of the maximal value.
-
-    Examples
-    --------
-    >>> pr = open_dataset(path_to_pr_file).pr
-    >>> annual_cycle_phase(da=pr)
     """
-    attrs = da.attrs
     mask = ~(da.isel({group.dim: 0}).isnull()).drop_vars(
         group.dim
     )  # mask of the ocean with NaNs
@@ -491,16 +513,23 @@ def annual_cycle_phase(
     phase = phase.mean(dim="__resample_dim__")
     # put nan where there was nan in the input, if not phase = 0 + 1
     phase = phase.where(mask, np.nan)
-    phase.attrs.update(attrs)
-    phase.attrs["long_name"] = "Phase of the annual cycle"
     phase.attrs.update(units="", is_dayofyear=1)
-    phase.name = "annual_cycle_phase"
     return phase
 
 
-@update_xclim_history
-@register_statistical_properties(aspect="multivariate", seasonal=True, annual=True)
-def corr_btw_var(
+annual_cycle_phase = StatisticalProperty(
+    identifier="annual_cycle_phase",
+    aspect="temporal",
+    long_name="Phase of the annual cycle",
+    units="",
+    compute=_annual_cycle_phase,
+    cell_methods="time: range",
+    allowed_groups=["group"],
+    measure="xclim.sdba.measures.CIRCULAR_BIAS",
+)
+
+
+def _corr_btw_var(
     da1: xr.DataArray,
     da2: xr.DataArray,
     *,
@@ -529,17 +558,9 @@ def corr_btw_var(
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [dimensionless]
       {corr_type} correlation coefficient
-
-    Examples
-    --------
-    >>> pr = open_dataset(path_to_pr_file).pr
-    >>> tasmax = open_dataset("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc").tasmax
-    >>> corr_btw_var(da1=pr, da2=tasmax, group="time.season")
     """
-    attrs1 = da1.attrs
-
     if corr_type.lower() not in {"pearson", "spearman"}:
         raise ValueError(
             f"{corr_type} is not a valid type. Choose 'Pearson' or 'Spearman'."
@@ -572,25 +593,25 @@ def corr_btw_var(
     out = _first_output(
         xr.Dataset({"a": da1, "b": da2}), group=group, index=index, corr_type=corr_type
     ).out
-    out.attrs.update(attrs1)
-    out.attrs["long_name"] = f"{corr_type} correlation coefficient"
     out.attrs["units"] = ""
-    out.name = "corr_btw_varr"
     return out
 
 
-@update_xclim_history
-@register_statistical_properties(aspect="temporal", seasonal=True, annual=True)
-def relative_frequency(
+corr_btw_var = StatisticalProperty(
+    identifier="corr_btw_var", aspect="multivariate", compute=_corr_btw_var
+)
+
+
+def _relative_frequency(
     da: xr.DataArray,
     *,
     op: str = ">=",
-    thresh: str = "1mm d-1",
+    thresh: str = "1 mm d-1",
     group: str | Grouper = "time",
 ) -> xr.DataArray:
     """Relative Frequency.
 
-    Relative Frequency of days with variable  respecting a condition (defined by an operation and a threshold) at the
+    Relative Frequency of days with variable respecting a condition (defined by an operation and a threshold) at the
     time resolution. The relative freqency is the number of days that satisfy the condition divided by the total number
     of days.
 
@@ -610,18 +631,11 @@ def relative_frequency(
 
     Returns
     -------
-    xr.DataArray
-      Relative frequency of the variable.
-
-    Examples
-    --------
-    >>> tasmax = open_dataset(path_to_tasmax_file).tasmax
-    >>> relative_frequency(da=tasmax, op="<", thresh="0 degC", group="time.season")
+    xr.DataArray, [dimensionless]
+      Relative frequency of values {op} {thresh}.
     """
-    attrs = da.attrs
-    mask = ~(da.isel({group.dim: 0}).isnull()).drop_vars(
-        group.dim
-    )  # mask of the ocean with NaNs
+    # mask of the ocean with NaNs
+    mask = ~(da.isel({group.dim: 0}).isnull()).drop_vars(group.dim)
     ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
     t = convert_units_to(thresh, da)
     length = da.sizes[group.dim]
@@ -635,18 +649,16 @@ def relative_frequency(
     # count days with the condition and divide by total nb of days
     out = cond.sum(dim=group.dim, skipna=False) / length
     out = out.where(mask, np.nan)
-    out.attrs.update(attrs)
-    out.attrs[
-        "long_name"
-    ] = f"Relative frequency of days with input variable {op} {thresh}"
     out.attrs["units"] = ""
-    out.name = "relative frequency"
     return out
 
 
-@update_xclim_history
-@register_statistical_properties(aspect="temporal", seasonal=True, annual=True)
-def trend(
+relative_frequency = StatisticalProperty(
+    identifier="relative_frequency", aspect="temporal", compute=_relative_frequency
+)
+
+
+def _trend(
     da: xr.DataArray,
     *,
     group: str | Grouper = "time",
@@ -655,6 +667,7 @@ def trend(
     """Linear Trend.
 
     The data is averaged over each time resolution and the interannual trend is returned.
+    This function will rechunk along the grouping dimension.
 
     Parameters
     ----------
@@ -670,21 +683,16 @@ def trend(
 
     Returns
     -------
-    xr.DataArray
-      Trend of the variable.
+    xr.DataArray, [units of input per year or dimensionless]
+      {output} of the interannual linear trend.
 
     See Also
     --------
     scipy.stats.linregress
 
     numpy.polyfit
-
-    Examples
-    --------
-    >>> tas = open_dataset(path_to_tas_file).tas
-    >>> trend(da=tas, group="time.season")
     """
-    attrs = da.attrs
+    units = da.units
     da = da.resample({group.dim: group.freq})  # separate all the {group}
     da_mean = da.mean(dim=group.dim)  # avg over all {group}
     if uses_dask(da_mean):
@@ -704,16 +712,14 @@ def trend(
         vectorize=True,
         dask="parallelized",
     )
-    out.attrs.update(attrs)
-    out.attrs["long_name"] = f"{output} of the interannual linear trend"
-    out.attrs["units"] = f"{attrs['units']}/year"
-    out.name = "trend"
+    out.attrs["units"] = f"{units}/year"
     return out
 
 
-@update_xclim_history
-@register_statistical_properties(aspect="marginal", seasonal=True, annual=True)
-def return_value(
+trend = StatisticalProperty(identifier="trend", aspect="temporal", compute=_trend)
+
+
+def _return_value(
     da: xr.DataArray,
     *,
     period: int = 20,
@@ -747,13 +753,8 @@ def return_value(
 
     Returns
     -------
-    xr.DataArray
-      {period}-{group} {op} return level of the variable.
-
-    Examples
-    --------
-    >>> tas = open_dataset(path_to_tas_file).tas
-    >>> return_value(da=tas, group="time.season")
+    xr.DataArray, [same as input]
+      {period}-{group.prop_name} {op} return level of the variable.
     """
 
     @map_groups(out=[Grouper.PROP], main_only=True)
@@ -766,7 +767,9 @@ def return_value(
     out = frequency_analysis_method(
         da.rename("x").to_dataset(), method=method, group=group
     ).out
-    out.attrs.update(da.attrs)
-    out.attrs["long_name"] = f"{period}-{group.prop_name} {op} return level"
-    out.name = "return_value"
-    return out
+    return out.assign_attrs(units=da.units)
+
+
+return_value = StatisticalProperty(
+    identifier="return_value", aspect="temporal", compute=_return_value
+)

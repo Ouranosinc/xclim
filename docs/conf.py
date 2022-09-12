@@ -156,6 +156,7 @@ class XCStyle(AlphaStyle):
 
 register_plugin("pybtex.style.formatting", "xcstyle", XCStyle)
 bibtex_bibfiles = ["references.bib"]
+bibtex_default_style = "xcstyle"
 bibtex_reference_style = "author_year"
 
 if os.getenv("SKIPNOTEBOOKS"):
@@ -272,6 +273,7 @@ latex_elements = {
     # Additional stuff for the LaTeX preamble.
     "preamble": r"""
 \renewcommand{\v}[1]{\mathbf{#1}}
+\nocite{*}
 """,
     # Latex figure (float) alignment
     "figure_align": "htbp",

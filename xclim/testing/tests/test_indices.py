@@ -310,7 +310,7 @@ class TestAgroclimaticIndices:
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
         ds = ds.rename(dict(tas="tasmin"))
 
-        cni = xci.cool_night_index(tasmin=ds.tasmin, lat=ds.lat)
+        cni = xci.cool_night_index(tasmin=ds.tasmin)  # find latitude implicitly
         tasmin = convert_units_to(ds.tasmin, "degC")
 
         cni_nh = cni.where(cni.lat >= 0, drop=True)
@@ -321,6 +321,12 @@ class TestAgroclimaticIndices:
 
         np.testing.assert_array_equal(cni_nh, tn_nh)
         np.testing.assert_array_equal(cni_sh, tn_sh)
+
+        # Treat all areas as northern hemisphere
+        cni_all_nh = xci.cool_night_index(tasmin=ds.tasmin, lat="north")
+        tn_all_nh = tasmin.where(tasmin.time.dt.month == 9, drop=True)
+
+        np.testing.assert_array_equal(cni_all_nh, tn_all_nh)
 
     @pytest.mark.parametrize(
         "lat_factor, values",
@@ -333,9 +339,8 @@ class TestAgroclimaticIndices:
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
         ds = ds.drop_isel(time=0)  # drop time=2006/12 for one year of data
 
-        lti = xci.latitude_temperature_index(
-            tas=ds.tas, lat=ds.lat, lat_factor=lat_factor
-        )
+        # find lat implicitly
+        lti = xci.latitude_temperature_index(tas=ds.tas, lat_factor=lat_factor)
         assert lti.where(abs(lti.lat) > lat_factor).sum() == 0
 
         lti = lti.where(abs(lti.lat) <= lat_factor, drop=True).where(
@@ -365,10 +370,10 @@ class TestAgroclimaticIndices:
         )
         tasmax.attrs["units"], tas.attrs["units"] = "K", "K"
 
+        # find lat implicitly
         hi = xci.huglin_index(
             tasmax=tasmax,
             tas=tas,
-            lat=ds.lat,
             method=method,
             end_date=end_date,  # noqa
         )
@@ -1838,17 +1843,20 @@ class TestTempWetDryPrecipWarmColdQuarter:
 
 
 class TestTempWarmestColdestQuarter:
-    def test_simple(self, tas_series):
+    @staticmethod
+    def get_data(tas_series, units="K"):
         a = np.zeros(365 * 2)
-        a = tas_series(a + K2C, start="1971-01-01")
+        a = tas_series(
+            a + (K2C if units == "K" else 0), start="1971-01-01", units=units
+        )
         a[(a.time.dt.season == "JJA") & (a.time.dt.year == 1971)] += 22
         a[(a.time.dt.season == "SON") & (a.time.dt.year == 1972)] += 25
+        return a
 
+    def test_simple(self, tas_series):
+        a = self.get_data(tas_series)
         a[(a.time.dt.season == "DJF") & (a.time.dt.year == 1971)] += -15
         a[(a.time.dt.season == "MAM") & (a.time.dt.year == 1972)] += -10
-
-        with pytest.raises(KeyError):
-            xci.tg_mean_warmcold_quarter(a, op="toto")
 
         out = xci.tg_mean_warmcold_quarter(a, op="warmest")
         np.testing.assert_array_almost_equal(out, [294.66648352, 298.15])
@@ -1864,12 +1872,8 @@ class TestTempWarmestColdestQuarter:
         out = xci.tg_mean_warmcold_quarter(t_month, op="coldest")
         np.testing.assert_array_almost_equal(out, [263.15, 263.15])
 
-    def test_Celsius(self, tas_series):
-        a = np.zeros(365 * 2)
-        a = tas_series(a, start="1971-01-01")
-        a.attrs["units"] = "°C"
-        a[(a.time.dt.season == "JJA") & (a.time.dt.year == 1971)] += 22
-        a[(a.time.dt.season == "SON") & (a.time.dt.year == 1972)] += 25
+    def test_celsius(self, tas_series):
+        a = self.get_data(tas_series, units="°C")
 
         a[
             (a.time.dt.month >= 1) & (a.time.dt.month <= 3) & (a.time.dt.year == 1971)
@@ -1881,6 +1885,12 @@ class TestTempWarmestColdestQuarter:
 
         out = xci.tg_mean_warmcold_quarter(a, op="coldest")
         np.testing.assert_array_almost_equal(out, [-14.835165, -9.89011])
+
+    def test_exceptions(self, tas_series):
+        a = self.get_data(tas_series)
+
+        with pytest.raises(NotImplementedError):
+            xci.tg_mean_warmcold_quarter(a, op="toto")
 
 
 class TestPrcptot:
@@ -2628,7 +2638,8 @@ class TestPotentialEvapotranspiration:
             attrs={"units": "degC"},
         )
 
-        out = xci.potential_evapotranspiration(tas=tm, lat=lat, method="TW48")
+        # find lat implicitly
+        out = xci.potential_evapotranspiration(tas=tm, method="TW48")
         np.testing.assert_allclose(out[0, 1], [42.7619242 / (86400 * 30)], rtol=1e-1)
 
     def test_mcguinnessbordne(self, tasmin_series, tasmax_series, lat_series):
@@ -2705,7 +2716,8 @@ def test_water_budget_from_tas(pr_series, tasmin_series, tasmax_series, lat_seri
         attrs={"units": "mm/day"},
     )
 
-    out = xci.water_budget(prm, tas=tm, lat=lat, method="TW48")
+    # find lat implicitly
+    out = xci.water_budget(prm, tas=tm, method="TW48")
     np.testing.assert_allclose(out[1, 0], [8.5746025 / 86400], rtol=2e-1)
 
 
