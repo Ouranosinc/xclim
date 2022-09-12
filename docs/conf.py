@@ -107,6 +107,7 @@ extensions = [
     "IPython.sphinxext.ipython_console_highlighting",
     "autodoc_indicator",
     "sphinxcontrib.bibtex",
+    "sphinx_codeautolink",
 ]
 
 autosectionlabel_prefix_document = True

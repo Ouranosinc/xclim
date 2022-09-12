@@ -29,5 +29,6 @@ nc-time-axis
 netCDF4
 pooch
 sphinx
+sphinx-codeautolink
 sphinx-rtd-theme
 sphinxcontrib-bibtex
