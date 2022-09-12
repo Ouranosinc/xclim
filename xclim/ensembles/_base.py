@@ -75,19 +75,21 @@ def create_ensemble(
 
     Examples
     --------
-    >>> from pathlib import Path  # doctest: +SKIP
-    >>> from xclim.ensembles import create_ensemble
-    >>> ens = create_ensemble(temperature_datasets)
+    .. autolink-skip::
+    .. code-block:: python
 
-    Using multifile datasets, through glob patterns.
-    Simulation 1 is a list of .nc files (e.g. separated by time):
+        from pathlib import Path
+        from xclim.ensembles import create_ensemble
 
-    >>> datasets = list(Path("/dir").glob("*.nc"))  # doctest: +SKIP
+        ens = create_ensemble(temperature_datasets)
 
-    Simulation 2 is also a list of .nc files:
+        # Using multifile datasets, through glob patterns.
+        # Simulation 1 is a list of .nc files (e.g. separated by time):
+        datasets = list(Path("/dir").glob("*.nc"))
 
-    >>> datasets.extend(Path("/dir2").glob("*.nc"))  # doctest: +SKIP
-    >>> ens = create_ensemble(datasets, mf_flag=True)  # doctest: +SKIP
+        # Simulation 2 is also a list of .nc files:
+        datasets.extend(Path("/dir2").glob("*.nc"))
+        ens = create_ensemble(datasets, mf_flag=True)
     """
     if isinstance(datasets, dict):
         if realizations is None:
@@ -215,23 +217,22 @@ def ensemble_percentiles(
 
     Examples
     --------
-    >>> from xclim.ensembles import create_ensemble, ensemble_percentiles
+    .. autolink-skip::
+    .. code-block:: python
 
-    Create ensemble dataset:
+        from xclim.ensembles import create_ensemble, ensemble_percentiles
 
-    >>> ens = create_ensemble(temperature_datasets)
+        # Create ensemble dataset:
+        ens = create_ensemble(temperature_datasets)
 
-    Calculate default ensemble percentiles:
+        # Calculate default ensemble percentiles:
+        ens_percs = ensemble_percentiles(ens)
 
-    >>> ens_percs = ensemble_percentiles(ens)
+        # Calculate non-default percentiles (25th and 75th)
+        ens_percs = ensemble_percentiles(ens, values=(25, 50, 75))
 
-    Calculate non-default percentiles (25th and 75th)
-
-    >>> ens_percs = ensemble_percentiles(ens, values=(25, 50, 75))
-
-    If the original array has many small chunks, it might be more efficient to do:
-
-    >>> ens_percs = ensemble_percentiles(ens, keep_chunk_size=False)
+        # If the original array has many small chunks, it might be more efficient to do:
+        ens_percs = ensemble_percentiles(ens, keep_chunk_size=False)
     """
     if values is None:
         values = [10, 50, 90]

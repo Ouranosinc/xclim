@@ -192,10 +192,10 @@ class set_options:
 
     Or to set global options:
 
-    >>> xclim.set_options(
-    ...     missing_options={"pct": {"tolerance": 0.04}}
-    ... )  # doctest: +SKIP
-    <xclim.core.options.set_options object at ...>
+    .. autolink-skip::
+    .. code-block:: python
+
+        xclim.set_options(missing_options={"pct": {"tolerance": 0.04}})
     """
 
     def __init__(self, **kwargs):

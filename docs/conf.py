@@ -102,7 +102,7 @@ extensions = [
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.intersphinx",
     "sphinx.ext.extlinks",
-    "sphinx.ext.doctest",
+    # "sphinx.ext.doctest",
     "rstjinja",
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
