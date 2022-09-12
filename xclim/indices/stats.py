@@ -13,6 +13,7 @@ from xclim.core.utils import uses_dask
 from . import generic
 
 __all__ = [
+    "dist_method",
     "fit",
     "parametric_quantile",
     "parametric_cdf",
@@ -45,7 +46,7 @@ _lm3_dist_map = {
 # This would also be the place to impose constraints on the series minimum length if needed.
 def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
     """Fit distribution parameters."""
-    x = np.ma.masked_invalid(arr).compressed()
+    x = np.ma.masked_invalid(arr).compressed()  # pylint: disable=no-member
 
     # Return NaNs if array is empty.
     if len(x) <= 1:
@@ -60,7 +61,7 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
     elif method == "APP":
         args, kwargs = _fit_start(x, dist.name, **fitkwargs)
         kwargs_list = list(kwargs.values())
-        if "loc" not in kwargs.keys():
+        if "loc" not in kwargs:
             kwargs_list = [0] + kwargs_list
         params = list(args) + kwargs_list
 
@@ -95,7 +96,7 @@ def fit(
       The PWM method is usually more robust to outliers.
     dim : str
       The dimension upon which to perform the indexing (default: "time").
-    fitkwargs
+    **fitkwargs
       Other arguments passed directly to :py:func:`_fitstart` and to the distribution's `fit`.
 
     Returns
@@ -105,8 +106,8 @@ def fit(
 
     Notes
     -----
-    Coordinates for which all values are NaNs will be dropped before fitting the distribution. If the array
-    still contains NaNs, the distribution parameters will be returned as NaNs.
+    Coordinates for which all values are NaNs will be dropped before fitting the distribution. If the array still
+    contains NaNs, the distribution parameters will be returned as NaNs.
     """
     method_name = {
         "ML": "maximum likelihood",
@@ -306,7 +307,6 @@ def fa(
       yearly, then the return period is in years.
     dist : str
       Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
-      (see scipy.stats).
     mode : {'min', 'max}
       Whether we are looking for a probability of exceedance (max) or a probability of non-exceedance (min).
 
@@ -314,6 +314,10 @@ def fa(
     -------
     xarray.DataArray
       An array of values with a 1/t probability of exceedance (if mode=='max').
+
+    See Also
+    --------
+    scipy.stats : For descriptions of univariate distribution types.
     """
     # Fit the parameters of the distribution
     p = fit(da, dist)
@@ -360,7 +364,6 @@ def frequency_analysis(
       yearly, then the return period is in years.
     dist : str
       Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
-      (see scipy.stats).
     window : int
       Averaging window length (days).
     freq : str
@@ -375,6 +378,10 @@ def frequency_analysis(
     -------
     xarray.DataArray
       An array of values with a 1/t probability of exceedance or non-exceedance when mode is high or low respectively.
+
+    See Also
+    --------
+    scipy.stats : For descriptions of univariate distribution types.
 
     """
     # Apply rolling average
@@ -397,7 +404,7 @@ def frequency_analysis(
 
 def get_dist(dist):
     """Return a distribution object from `scipy.stats`."""
-    from scipy import stats
+    from scipy import stats  # pylint: disable=import-outside-toplevel
 
     dc = getattr(stats, dist, None)
     if dc is None:
@@ -410,16 +417,17 @@ def get_lm3_dist(dist):
     """Return a distribution object from `lmoments3.distr`."""
     try:
         # fmt: off
-        import lmoments3.distr  # isort: skip
+        import lmoments3.distr  # pylint: disable=import-outside-toplevel
+
         # The lmoments3 library has to be installed from the `develop` branch.
         # pip install git+https://github.com/OpenHydrology/lmoments3.git@develop#egg=lmoments3
         # fmt: on
-    except ModuleNotFoundError:
+    except ModuleNotFoundError as e:
         msg = (
             "The lmoments3 library has to be installed from the `develop` branch. Run "
             "'$ pip install git+https://github.com/OpenHydrology/lmoments3.git@develop#egg=lmoments3'"
         )
-        raise ModuleNotFoundError(msg)
+        raise ModuleNotFoundError(msg) from e
 
     if dist not in _lm3_dist_map:
         raise ValueError(
@@ -450,8 +458,8 @@ def _fit_start(x, dist, **fitkwargs) -> tuple[tuple, dict]:
 
     References
     ----------
-    Coles, S., 2001. An Introduction to Statistical Modeling of Extreme Values. Springer-Verlag, London, U.K., 208pp
-    Cohen & Whittle. 1988. Parameter Estimation in Reliability and Life Span Models, p. 25 ff, Marcel Dekker.
+    :cite:cts:`coles_introduction_2001,cohen_parameter_2019`
+
     """
     x = np.asarray(x)
     m = x.mean()
@@ -538,8 +546,8 @@ def dist_method(
 ) -> xr.DataArray:
     """Vectorized statistical function for given argument on given distribution initialized with params.
 
-    Methods where `"*args"` are the distribution parameters can be wrapped, except those
-    that return new dimensions (Ex: 'rvs' with size != 1, 'stats' with more than one moment, 'interval', 'support')
+    Methods where `"*args"` are the distribution parameters can be wrapped, except those that return new dimensions
+    (Ex: 'rvs' with size != 1, 'stats' with more than one moment, 'interval', 'support')
 
     Parameters
     ----------
@@ -558,9 +566,9 @@ def dist_method(
     array_like
       Same shape as arg.
 
-    Notes
-    -----
-    See: :ref:`scipy:scipy.stats.rv_continuous` for all available functions and their arguments.
+    See Also
+    --------
+    scipy:scipy.stats.rv_continuous : for all available functions and their arguments.
     """
     args = [fit_params]
     input_core_dims = [["dparams"]]

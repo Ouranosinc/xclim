@@ -11,7 +11,7 @@ from __future__ import annotations
 import re
 import warnings
 from inspect import signature
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable
 
 import pint.converters
 import pint.unit
@@ -25,6 +25,8 @@ from .options import datacheck
 from .utils import ValidationError
 
 __all__ = [
+    "ValidationError",
+    "amount2rate",
     "check_units",
     "convert_units_to",
     "declare_units",
@@ -113,7 +115,7 @@ def units2pint(value: xr.DataArray | str | units.Quantity) -> Unit:
 
     Parameters
     ----------
-    value : Union[xr.DataArray, str. pint.Quantity]
+    value: xr.DataArray or str or pint.Quantity
       Input data array or string representing a unit (with no magnitude).
 
     Returns
@@ -178,12 +180,12 @@ def pint2cfunits(value: UnitDefinition) -> str:
 
     Parameters
     ----------
-    value : pint.Unit
+    value: pint.Unit
       Input unit.
 
     Returns
     -------
-    out : str
+    str
       Units following CF-Convention, using symbols.
     """
     if isinstance(value, pint.Quantity):
@@ -202,7 +204,7 @@ def pint2cfunits(value: UnitDefinition) -> str:
 
         return f"{u}{neg}{p}"
 
-    out, n = re.subn(pat, repl, s)
+    out, _ = re.subn(pat, repl, s)
 
     # Remove multiplications
     out = out.replace(" * ", " ")
@@ -224,11 +226,11 @@ def pint_multiply(da: xr.DataArray, q: Any, out_units: str | None = None):
 
     Parameters
     ----------
-    da : xr.DataArray
+    da: xr.DataArray
       Input array.
-    q : pint.Quantity
+    q: pint.Quantity
       Multiplicative factor.
-    out_units : Optional[str]
+    out_units: str, optional
       Units the output array should be converted into.
     """
     a = 1 * units2pint(da)  # noqa
@@ -242,13 +244,13 @@ def pint_multiply(da: xr.DataArray, q: Any, out_units: str | None = None):
     return out
 
 
-def str2pint(val: str):
+def str2pint(val: str) -> pint.Quantity:
     """Convert a string to a pint.Quantity, splitting the magnitude and the units.
 
     Parameters
     ----------
-    val : str
-      A quantity in the form "[{magnitude} ]{units}", where magnitude is castable to a float and
+    val: str
+      A quantity in the form "[{magnitude} ]{units}", where magnitude can be cast to a float and
       units is understood by `units2pint`.
 
     Returns
@@ -274,16 +276,16 @@ def convert_units_to(
 
     Parameters
     ----------
-    source : Union[str, xr.DataArray, Any]
+    source: str or xr.DataArray or Any
       The value to be converted, e.g. '4C' or '1 mm/d'.
-    target : Union[str, xr.DataArray, Any]
+    target: str or xr.DataArray or Any
       Target array of values to which units must conform.
-    context : str, optional
+    context: str, optional
       The unit definition context. Default: None.
 
     Returns
     -------
-    Union[xr.DataArray, float, int, str, Any]
+    xr.DataArray or float or int or str or Any
       The source value converted to target's units.
     """
     # Target units
@@ -358,15 +360,15 @@ def infer_sampling_units(
     deffreq: str | None = "D",
     dim: str = "time",
 ) -> tuple[int, str]:
-    """Infer a multiplicator and the units corresponding to one sampling period.
+    """Infer a multiplier and the units corresponding to one sampling period.
 
     Parameters
     ----------
-    da : xr.DataArray
+    da: xr.DataArray
       A DataArray from which to take coordinate `dim`.
-    deffreq : str
+    deffreq: str, optional
       If no frequency is inferred from `da[dim]`, take this one.
-    dim : str
+    dim: str
       Dimension from which to infer the frequency.
 
     Raises
@@ -376,9 +378,9 @@ def infer_sampling_units(
 
     Returns
     -------
-    m : int
+    int
       The magnitude (number of base periods per period)
-    u : str
+    str
       Units as a string, understandable by pint.
     """
     dimmed = getattr(da, dim)
@@ -389,8 +391,10 @@ def infer_sampling_units(
     multi, base, _, _ = parse_offset(freq)
     try:
         out = multi, FREQ_UNITS[base]
-    except KeyError:
-        raise ValueError(f"Sampling frequency {freq} has no corresponding units.")
+    except KeyError as err:
+        raise ValueError(
+            f"Sampling frequency {freq} has no corresponding units."
+        ) from err
     if out == (7, "d"):
         # Special case for weekly frequency. xarray's CFTimeOffsets do not have "W".
         return 1, "week"
@@ -404,16 +408,20 @@ def to_agg_units(
 
     Parameters
     ----------
-    out : xr.DataArray
+    out: xr.DataArray
       The output array of the aggregation operation, no units operation done yet.
-    orig : xr.DataArray
+    orig: xr.DataArray
       The original array before the aggregation operation,
       used to infer the sampling units and get the variable units.
-    op : {'count', 'prod', 'delta_prod'}
+    op: {'count', 'prod', 'delta_prod'}
       The type of aggregation operation performed. The special "delta_*" ops are used
       with temperature units needing conversion to their "delta" counterparts (e.g. degree days)
-    dim : str
+    dim: str
       The time dimension along which the aggregation was performed.
+
+    Returns
+    -------
+    xr.DataArray
 
     Examples
     --------
@@ -559,9 +567,9 @@ def rate2amount(
 
     Parameters
     ----------
-    rate : xr.DataArray
+    rate: xr.DataArray
       "Rate" variable, with units of "amount" per time. Ex: Precipitation in "mm / d".
-    dim : str
+    dim: str
       The time dimension.
     out_units : str, optional
       Output units to convert to.
@@ -617,12 +625,16 @@ def amount2rate(
 
     Parameters
     ----------
-    amount : xr.DataArray
+    amount: xr.DataArray
       "amount" variable. Ex: Precipitation amount in "mm".
-    dim : str
+    dim: str
       The time dimension.
-    out_units : str, optional
+    out_units: str, optional
       Output units to convert to.
+
+    Returns
+    -------
+    xr.DataArray
     """
     return _rate_and_amount_converter(amount, dim=dim, out_units=out_units, to="rate")
 
@@ -684,8 +696,12 @@ def declare_units(
 
     Parameters
     ----------
-    units_by_name : Mapping[str, str]
+    units_by_name: Mapping[str, str]
       Mapping from the input parameter names to their units or dimensionality ("[...]").
+
+    Returns
+    -------
+    Callable
 
     Examples
     --------
@@ -738,8 +754,7 @@ def declare_units(
 
 
 def ensure_delta(unit: str = None):
-    """
-    Return delta units for temperature.
+    """Return delta units for temperature.
 
     For dimensions where delta exist in pint (Temperature), it replaces the temperature unit by delta_degC or
     delta_degF based on the input unit.
@@ -747,7 +762,7 @@ def ensure_delta(unit: str = None):
 
     Parameters
     ----------
-    unit : str
+    unit: str
       unit to transform in delta (or not)
     """
     u = units2pint(unit)

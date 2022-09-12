@@ -4,6 +4,7 @@ from __future__ import annotations
 from inspect import _empty  # noqa
 
 from xclim import indices
+from xclim.core.cfchecks import cfcheck_from_name
 from xclim.core.indicator import Indicator
 from xclim.core.utils import InputKind
 
@@ -33,6 +34,15 @@ __all__ = [
 class Converter(Indicator):
     """Class for indicators doing variable conversion (dimension-independent 1-to-1 computation)."""
 
+    def cfcheck(self, **das):
+        for varname, vardata in das.items():
+            try:
+                # Only check standard_name, and not cell_methods which depends on the variable's frequency.
+                cfcheck_from_name(varname, vardata, attrs=["standard_name"])
+            except KeyError:
+                # Silently ignore unknown variables.
+                pass
+
 
 humidex = Converter(
     identifier="humidex",
@@ -44,6 +54,7 @@ humidex = Converter(
     compute=indices.humidex,
 )
 
+
 heat_index = Converter(
     identifier="heat_index",
     units="C",
@@ -53,6 +64,7 @@ heat_index = Converter(
     cell_methods="",
     compute=indices.heat_index,
 )
+
 
 tg = Converter(
     identifier="tg",

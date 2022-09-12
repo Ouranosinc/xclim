@@ -18,8 +18,8 @@ dependencies:
     - poppler>=0.67
     - pyyaml
     - scikit-learn>=0.21.3
-    - scipy>=1.2
-    - xarray>=0.17
+    - scipy>=1.2,<1.9  # See https://github.com/Ouranosinc/xclim/issues/1142
+    - xarray>=2022.06.0
     # Testing and development dependencies
     - black>=22.3
     - blackdoc
@@ -38,6 +38,7 @@ dependencies:
     - netCDF4>=1.4
     - pooch
     - pre_commit
+    - pybtex
     - pydocstyle
     - pylint
     - pytest

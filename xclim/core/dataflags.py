@@ -10,7 +10,7 @@ from __future__ import annotations
 from decimal import Decimal
 from functools import reduce
 from inspect import signature
-from typing import Sequence, Union
+from typing import Sequence
 
 import numpy as np
 import pint
@@ -28,7 +28,7 @@ from .utils import (
     raise_warn_or_log,
 )
 
-_REGISTRY = dict()
+_REGISTRY = {}
 
 
 class DataQualityException(Exception):
@@ -48,8 +48,8 @@ class DataQualityException(Exception):
         message="Data quality flags indicate suspicious values. Flags raised are:\n  - ",
     ):
         self.message = message
-        self.flags = list()
-        for flag, value in flag_array.data_vars.items():
+        self.flags = []
+        for value in flag_array.data_vars.values():
             if value.any():
                 for attribute in value.attrs.keys():
                     if str(attribute) == "description":
@@ -89,9 +89,9 @@ def register_methods(func):
 
 
 def _sanitize_attrs(da: xarray.DataArray) -> xarray.DataArray:
-    to_remove = list()
+    to_remove = []
     for attr in da.attrs.keys():
-        if not str(attr) == "history":
+        if str(attr) != "history":
             to_remove.append(attr)
     for attr in to_remove:
         del da.attrs[attr]
@@ -333,9 +333,9 @@ def very_large_precipitation_events(
 @register_methods
 @update_xclim_history
 def values_op_thresh_repeating_for_n_or_more_days(
-    da: xarray.DataArray, *, n: int, thresh: str, op: str = "eq"
+    da: xarray.DataArray, *, n: int, thresh: str, op: str = "=="
 ) -> xarray.DataArray:
-    """Check if array values repeat at a given threshold for 'n' or more days.
+    """Check if array values repeat at a given threshold for `N` or more days.
 
     Parameters
     ----------
@@ -345,7 +345,7 @@ def values_op_thresh_repeating_for_n_or_more_days(
       Number of days needed to trigger flag.
     thresh : str
       Repeating values to search for that will trigger flag.
-    op : {"eq", "gt", "lt", "gteq", "lteq"}
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
       Operator used for comparison with thresh.
 
     Returns
@@ -366,8 +366,7 @@ def values_op_thresh_repeating_for_n_or_more_days(
     ... )
     """
     thresh = convert_units_to(thresh, da)
-    if op not in {"eq", "gt", "lt", "gteq", "lteq"}:
-        raise ValueError("Operator must not be symbolic.")
+
     repetitions = _sanitize_attrs(suspicious_run(da, window=n, op=op, thresh=thresh))
     description = (
         f"Repetitive values at {thresh} for at least {n} days found for {da.name}."
@@ -455,6 +454,11 @@ def outside_n_standard_deviations_of_climatology(
     >>> flagged = outside_n_standard_deviations_of_climatology(
     ...     ds.tas, n=std_devs, window=average_over
     ... )
+
+    References
+    ----------
+    :cite:cts:`project_team_eca&d_algorithm_2013`
+
     """
     mu, sig = climatological_mean_doy(da, window=window)
     within_bounds = _sanitize_attrs(
@@ -612,7 +616,7 @@ def data_flags(
         """Handle missing variables in passed datasets."""
         sig = signature(function)
         sig = sig.parameters
-        extra_vars = dict()
+        extra_vars = {}
         for arg, val in sig.items():
             if arg in ["da", var_provided]:
                 continue
@@ -651,7 +655,7 @@ def data_flags(
 
     ds = ds or xarray.Dataset()
 
-    flags = dict()
+    flags = {}
     for flag_func in flag_funcs:
         for name, kwargs in flag_func.items():
             func = _REGISTRY[name]
@@ -673,9 +677,9 @@ def data_flags(
             else:
                 with xarray.set_options(keep_attrs=True):
                     if named_da_variable:
-                        out = func(**named_da_variable, **extras, **(kwargs or dict()))
+                        out = func(**named_da_variable, **extras, **(kwargs or {}))
                     else:
-                        out = func(da, **extras, **(kwargs or dict()))
+                        out = func(da, **extras, **(kwargs or {}))
 
                     # Aggregation
                     if freq is not None:
@@ -718,10 +722,10 @@ def ecad_compliant(
 
     Returns
     -------
-    Union[xarray.DataArray, xarray.Dataset]
+    xarray.DataArray or xarray.Dataset or None
     """
     flags = xarray.Dataset()
-    history = list()
+    history = []
     for var in ds.data_vars:
         df = data_flags(ds[var], ds, dims=dims)
         for flag_name, flag_data in df.data_vars.items():
@@ -748,8 +752,7 @@ def ecad_compliant(
     if raise_flags:
         if np.any([flags[dv] for dv in flags.data_vars]):
             raise DataQualityException(flags)
-        else:
-            return
+        return
 
     ecad_flag = xarray.DataArray(
         # TODO: Test for this change concerning data of type None in dataflag variables

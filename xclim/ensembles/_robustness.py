@@ -6,18 +6,14 @@ Ensemble Robustness metrics.
 Robustness metrics are used to estimate the confidence of the climate change signal
 of an ensemble. This submodule is inspired by and tries to follow the guidelines of
 the IPCC, more specifically the 12th chapter of the Working Group 1's contribution to
-the AR5 [AR5WG1C12]_ (see box 12.1).
-
-References
-----------
-.. [AR5WG1C12] https://www.ipcc.ch/site/assets/uploads/2018/02/WG1AR5_Chapter12_FINAL.pdf
+the AR5 :cite:p:`collins_long-term_2013` (see box 12.1).
 """
 from __future__ import annotations
 
 from typing import Union
 
 import numpy as np
-import scipy.stats as spstats
+import scipy.stats as spstats  # noqa
 import xarray as xr
 
 from xclim.core.formatting import update_history
@@ -27,6 +23,7 @@ def change_significance(
     fut: xr.DataArray | xr.Dataset,
     ref: xr.DataArray | xr.Dataset = None,
     test: str = "ttest",
+    weights: xr.DataArray = None,
     **kwargs,
 ) -> tuple[xr.DataArray | xr.Dataset, xr.DataArray | xr.Dataset]:
     """Robustness statistics qualifying how the members of an ensemble agree on the existence of change and on its sign.
@@ -46,6 +43,9 @@ def change_significance(
       Dataset, they must have the same variables (name and coords).
     test : {'ttest', 'welch-ttest', 'threshold', None}
       Name of the statistical test used to determine if there was significant change. See notes.
+    weights: xr.DataArray
+      Weights to apply along the 'realization' dimension. This array cannot contain missing values.
+      Note: 'ttest' and 'welch-ttest' are not currently supported with weighted arrays.
     kwargs
       Other arguments specific to the statistical test.
 
@@ -87,7 +87,7 @@ def change_significance(
     Available statistical tests are :
 
       'ttest' :
-        Single sample T-test. Same test as used by [tebaldi2011]_. The future
+        Single sample T-test. Same test as used by :cite:t:`tebaldi_mapping_2011`. The future
         values are compared against the reference mean (over 'time'). Change is qualified
         as 'significant' when the test's p-value is below the user-provided `p_change`
         value.
@@ -103,8 +103,7 @@ def change_significance(
 
     References
     ----------
-    .. [tebaldi2011] Tebaldi C., Arblaster, J.M. and Knutti, R. (2011) Mapping model agreement on future climate projections. GRL. doi:10.1029/2011GL049863
-
+    :cite:cts:`tebaldi_mapping_2011`
 
     Example
     -------
@@ -134,16 +133,26 @@ def change_significance(
     changed = None
     if ref is None:
         delta = fut
-        n_valid_real = delta.notnull().sum("realization")
+        if weights is None:
+            n_valid_real = delta.notnull().sum("realization")
+        else:
+            n_valid_real = weights.where(delta.notnull()).sum("realization")
         if test not in ["threshold", None]:
             raise ValueError(
                 "When deltas are given (ref=None), 'test' must be one of ['threshold', None]"
             )
     else:
         delta = fut.mean("time") - ref.mean("time")
-        n_valid_real = fut.notnull().all("time").sum("realization")
+        if weights is None:
+            n_valid_real = fut.notnull().all("time").sum("realization")
+        else:
+            n_valid_real = weights.where(fut.notnull().all("time")).sum("realization")
 
     if test == "ttest":
+        if weights is not None:
+            raise NotImplementedError(
+                "'ttest' is not currently supported for weighted arrays."
+            )
         p_change = kwargs.setdefault("p_change", 0.05)
 
         # Test hypothesis of no significant change
@@ -160,6 +169,10 @@ def change_significance(
         # When p < p_change, the hypothesis of no significant change is rejected.
         changed = pvals < p_change
     elif test == "welch-ttest":
+        if weights is not None:
+            raise NotImplementedError(
+                "'welch-ttest' is not currently supported for weighted arrays."
+            )
         p_change = kwargs.setdefault("p_change", 0.05)
 
         # Test hypothesis of no significant change
@@ -194,14 +207,22 @@ def change_significance(
 
     if test is not None:
         delta_chng = delta.where(changed)
-        change_frac = changed.sum("realization") / n_valid_real
+        if weights is None:
+            change_frac = changed.sum("realization") / n_valid_real
+        else:
+            change_frac = changed.weighted(weights).sum("realization") / n_valid_real
     else:
         delta_chng = delta
         change_frac = xr.ones_like(delta.isel(realization=0))
 
     # Test that models agree on the sign of the change
     # This returns NaN (cause 0 / 0) where no model show significant change.
-    pos_frac = (delta_chng > 0).sum("realization") / (change_frac * n_valid_real)
+    if weights is None:
+        pos_frac = (delta_chng > 0).sum("realization") / (change_frac * n_valid_real)
+    else:
+        pos_frac = (delta_chng > 0).weighted(weights).sum("realization") / (
+            change_frac * n_valid_real
+        )
 
     # Metadata
     kwargs_str = ", ".join(
@@ -238,14 +259,14 @@ def robustness_coefficient(
 ) -> xr.DataArray | xr.Dataset:
     """Robustness coefficient quantifying the robustness of a climate change signal in an ensemble.
 
-    Taken from Knutti and Sedlacek (2013).
+    Taken from  :cite:ts:`knutti_robustness_2013`.
 
     The robustness metric is defined as R = 1 − A1 / A2 , where A1 is defined
     as the integral of the squared area between two cumulative density functions
-    characterizing the individual model projections and the multi-model mean
+    characterizing the individual model projections and the multimodel mean
     projection and A2 is the integral of the squared area between two cumulative
-    density functions characterizing the multi-model mean projection and the historical
-    climate. (Description taken from [knutti2013]_)
+    density functions characterizing the multimodel mean projection and the historical
+    climate. (Description taken from :cite:t:`knutti_robustness_2013`)
 
     A value of R equal to one implies perfect model agreement. Higher model spread or
     smaller signal decreases the value of R.
@@ -254,18 +275,19 @@ def robustness_coefficient(
     ----------
     fut : Union[xr.DataArray, xr.Dataset]
       Future ensemble values along 'realization' and 'time' (nr, nt). Can be a dataset,
-      in which case the coeffcient is computed on each variables.
+      in which case the coefficient is computed on each variable.
     ref : Union[xr.DataArray, xr.Dataset]
       Reference period values along 'time' (nt). Same type as `fut`.
 
     Returns
     -------
-    R
-      The robustness coeffcient, ]-inf, 1], float. Same type as `fut` or `ref`.
+    xr.DataArray or xr.Dataset
+      The robustness coefficient, ]-inf, 1], float. Same type as `fut` or `ref`.
 
     References
     ----------
-    .. [knutti2013] Knutti, R. and Sedláček, J. (2013) Robustness and uncertainties in the new CMIP5 climate model projections. Nat. Clim. Change. doi:10.1038/nclimate1716
+    :cite:cts:`knutti_robustness_2013`
+
     """
 
     def _knutti_sedlacek(reference, future):
@@ -291,7 +313,7 @@ def robustness_coefficient(
 
         # Get sorted vectors
         v_fut = np.sort(future.flatten())  # "cumulative" models distribution
-        v_favg = np.sort(future.mean(axis=-1))  # Multi-model mean
+        v_favg = np.sort(future.mean(axis=-1))  # Multimodel mean
         v_ref = np.sort(reference)  # Historical values
 
         A1 = diff_cdf_sq_area_int(v_fut, v_favg)  # noqa

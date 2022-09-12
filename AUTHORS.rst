@@ -20,7 +20,7 @@ Co-Developers
 Contributors
 ------------
 
-* Raquel Alegre <raquel.alegre@gmail.com> `@raquel-ucl <https://github.com/raquel-ucl>`_
+* Raquel Alegre <raquel.alegre@gmail.com> `@raquelalegre <https://github.com/raquelalegre>`_
 * Clair Barnes <clair.barnes.16@ucl.ac.uk> `@clairbarnes <https://github.com/clairbarnes>`_
 * Sébastien Biner <biner.sebastien@ouranos.ca> `@sbiner <https://github.com/sbiner>`_
 * David Caron `@davidcaron <https://github.com/davidcaron>`_
@@ -34,3 +34,4 @@ Contributors
 * Yannick Rousseau `@yrouranos <https://github.com/yrouranos>`_
 * Ag Stephens <ag.stephens@stfc.ac.uk> `@agstephens <https://github.com/agstephens>`_
 * Maliko Tanguy <malngu@ceh.ac.uk> `@malngu <https://github.com/malngu>`_
+* Dougie Squire <dougiesquire@gmail.com> `@dougiesquire <https://github.com/dougiesquire>`_

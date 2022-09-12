@@ -16,6 +16,7 @@ from enum import IntEnum
 from functools import partial
 from importlib.resources import open_text
 from inspect import Parameter, _empty  # noqa
+from io import StringIO
 from pathlib import Path
 from types import FunctionType
 from typing import Callable, Mapping, NewType, Sequence
@@ -53,14 +54,16 @@ def wrapped_partial(
 
     Parameters
     ----------
-    func : FunctionType
-        The function to be wrapped
-    suggested : dict
-        Keyword arguments that should have new default values
-        but still appear in the signature.
-    fixed : kwargs
-        Keyword arguments that should be fixed by the wrapped
-        and removed from the signature.
+    func: FunctionType
+      The function to be wrapped
+    suggested : dict, optional
+      Keyword arguments that should have new default values but still appear in the signature.
+    fixed
+      Keyword arguments that should be fixed by the wrapped and removed from the signature.
+
+    Returns
+    -------
+    Callable
 
     Examples
     --------
@@ -99,9 +102,9 @@ def walk_map(d: dict, func: FunctionType) -> dict:
 
     Parameters
     ----------
-    d : dict
+    d: dict
       Input dictionary, possibly nested.
-    func : FunctionType
+    func: FunctionType
       Function to apply to dictionary values.
 
     Returns
@@ -132,7 +135,7 @@ def load_module(path: os.PathLike, name: str | None = None):
     The two following imports are equivalent, the second uses this method.
 
     >>> os.chdir(path.parent)
-    >>> import example as mod1
+    >>> import example as mod1  # noqa
     >>> os.chdir(previous_working_dir)
     >>> mod2 = load_module(path)
     >>> mod1 == mod2
@@ -164,17 +167,21 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: Mapping[str, int]) -> xr.Da
 
     Parameters
     ----------
-    da : xr.DataArray
+    da: xr.DataArray
       The input DataArray, with or without the dask backend. Does nothing when passed a non-dask array.
-    minchunks : Mapping[str, int]
+    minchunks: Mapping[str, int]
       A kwarg mapping from dimension name to minimum chunk size.
       Pass -1 to force a single chunk along that dimension.
+
+    Returns
+    -------
+    xr.DataArray
     """
     if not uses_dask(da):
         return da
 
     all_chunks = dict(zip(da.dims, da.chunks))
-    chunking = dict()
+    chunking = {}
     for dim, minchunk in minchunks.items():
         chunks = all_chunks[dim]
         if minchunk == -1 and len(chunks) > 1:
@@ -204,8 +211,17 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: Mapping[str, int]) -> xr.Da
     return da
 
 
-def uses_dask(da):
-    """Evaluate whether dask is installed and array is loaded as a dask array."""
+def uses_dask(da: xr.DataArray) -> bool:
+    """Evaluate whether dask is installed and array is loaded as a dask array.
+
+    Parameters
+    ----------
+    da: xr.DataArray
+
+    Returns
+    -------
+    bool
+    """
     if isinstance(da, xr.DataArray) and isinstance(da.data, dsk.Array):
         return True
     if isinstance(da, xr.Dataset) and any(
@@ -260,18 +276,18 @@ def _compute_virtual_index(
 ):
     """Compute the floating point indexes of an array for the linear interpolation of quantiles.
 
-    Based on the approach used by [Hyndman&Fan1996]_.
+    Based on the approach used by :cite:t:`hyndman_sample_1996`.
 
     Parameters
     ----------
-    n : array_like
-        The sample sizes.
-    quantiles : array_like
-        The quantiles values.
-    alpha : float
-        A constant used to correct the index computed.
-    beta : float
-        A constant used to correct the index computed.
+    n: array_like
+      The sample sizes.
+    quantiles: array_like
+      The quantiles values.
+    alpha: float
+      A constant used to correct the index computed.
+    beta: float
+      A constant used to correct the index computed.
 
     Notes
     -----
@@ -279,21 +295,20 @@ def _compute_virtual_index(
 
     References
     ----------
-    .. [Hyndman&Fan1996] Hyndman, R. J., & Fan, Y. (1996). Sample Quantiles in Statistical Packages. The American Statistician, 50(4), 361‑365. https://doi.org/10.1080/00031305.1996.10473566
+    :cite:cts:`hyndman_sample_1996`
     """
     return n * quantiles + (alpha + quantiles * (1 - alpha - beta)) - 1
 
 
 def _get_gamma(virtual_indexes: np.ndarray, previous_indexes: np.ndarray):
-    """
-    Compute gamma (AKA 'm' or 'weight') for the linear interpolation of quantiles.
+    """Compute gamma (AKA 'm' or 'weight') for the linear interpolation of quantiles.
 
     Parameters
     ----------
-    virtual_indexes : array_like
-        The indexes where the percentile is supposed to be found in the sorted sample.
-    previous_indexes : array_like
-        The floor values of virtual_indexes.
+    virtual_indexes: array_like
+      The indexes where the percentile is supposed to be found in the sorted sample.
+    previous_indexes: array_like
+      The floor values of virtual_indexes.
 
     Notes
     -----
@@ -311,6 +326,12 @@ def _get_indexes(
     Notes
     -----
     This is a companion function to linear interpolation of quantiles.
+
+    Parameters
+    ----------
+    arr: array-like
+    virtual_indexes: array-like
+    valid_values_count: array-like
 
     Returns
     -------
@@ -383,7 +404,7 @@ def _nan_quantile(
 
     Notes
     -----
-    By default, alpha == beta == 1 which performs the 7th method of [Hyndman&Fan1996]_.
+    By default, alpha == beta == 1 which performs the 7th method of :cite:t:`hyndman_sample_1996`.
     with alpha == beta == 1/3 we get the 8th method.
     """
     # --- Setup
@@ -441,23 +462,23 @@ def raise_warn_or_log(
     err: Exception,
     mode: str,
     msg: str | None = None,
-    err_type=ValueError,
+    err_type: type = ValueError,
     stacklevel: int = 1,
 ):
     """Raise, warn or log an error according.
 
     Parameters
     ----------
-    err : Exception
+    err: Exception
       An error.
-    mode : {'ignore', 'log', 'warn', 'raise'}
+    mode: {'ignore', 'log', 'warn', 'raise'}
       What to do with the error.
-    msg : str, optional
+    msg: str, optional
       The string used when logging or warning.
       Defaults to the `msg` attr of the error (if present) or to "Failed with <err>".
-    err_type : type
+    err_type: type
       The type of error/exception to raise.
-    stacklevel : int
+    stacklevel: int
       Stacklevel when warning. Relative to the call of this function (1 is added).
     """
     msg = msg or getattr(err, "msg", f"Failed with {err!r}.")
@@ -557,7 +578,7 @@ class InputKind(IntEnum):
 def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> InputKind:
     """Return the appropriate InputKind constant from an ``inspect.Parameter`` object.
 
-    The correspondance between parameters and kinds is documented in :py:class:`xclim.core.utils.InputKind`.
+    The correspondence between parameters and kinds is documented in :py:class:`xclim.core.utils.InputKind`.
     The only information not inferable through the `inspect` object is whether the parameter
     has been assigned units through the :py:func:`xclim.core.units.declare_units` decorator.
     That can be given with the ``has_units`` flag.
@@ -610,15 +631,18 @@ def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> Inpu
     return InputKind.OTHER_PARAMETER
 
 
-def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
-    """Read in a clix-meta yaml and refactor it to fit xclim's yaml specifications."""
-    from xclim.indices import generic
+def adapt_clix_meta_yaml(raw: os.PathLike | StringIO | str, adapted: os.PathLike):
+    """Read in a clix-meta yaml representation and refactor it to fit xclim's yaml specifications."""
+    from ..indices import generic  # pylint: disable=import-outside-toplevel
 
     # freq_names = {"annual": "A", "seasonal": "Q", "monthly": "M", "weekly": "W"}
     freq_defs = {"annual": "YS", "seasonal": "QS-DEC", "monthly": "MS", "weekly": "W"}
 
-    with open(raw) as f:
-        yml = safe_load(f)
+    if isinstance(raw, os.PathLike):
+        with open(raw) as f:
+            yml = safe_load(f)
+    else:
+        yml = safe_load(raw)
 
     yml["realm"] = "atmos"
     yml[
@@ -683,7 +707,12 @@ def adapt_clix_meta_yaml(raw: os.PathLike, adapted: os.PathLike):
             data["parameters"] = index_function["parameters"]
             for name, param in data["parameters"].copy().items():
                 if param["kind"] in ["operator", "reducer"]:
-                    data["parameters"][name] = param[param["kind"]]
+                    # Compatibility with xclim `op` notation for comparison symbols
+                    if name == "condition":
+                        data["parameters"]["op"] = param[param["kind"]]
+                        del data["parameters"][name]
+                    else:
+                        data["parameters"][name] = param[param["kind"]]
                 else:  # kind = quantity
                     if param.get("proposed_standard_name") == "temporal_window_size":
                         # Window, nothing to do.
@@ -786,7 +815,7 @@ class PercentileDataArray(xr.DataArray):
 
         Parameters
         ----------
-        source: DataArray
+        source: xr.DataArray
           A DataArray with its content containing percentiles values.
           It must also have a coordinate variable percentiles or quantile.
         climatology_bounds: list[str]
@@ -807,7 +836,7 @@ class PercentileDataArray(xr.DataArray):
         ):
             raise ValueError("PercentileDataArray needs a climatology_bounds.")
         per = PercentileDataArray(source)
-        # handle case where da was create with `quantile()` method
+        # handle case where da was created with `quantile()` method
         if "quantile" in source.coords:
             per = per.rename({"quantile": "percentiles"})
             per.coords["percentiles"] = per.coords["percentiles"] * 100

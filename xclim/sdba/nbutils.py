@@ -43,12 +43,12 @@ def vecquantiles(da, rnk, dim):
 
 
 @njit(
-    [
-        float32[:, :](float32[:, :], float32[:]),
-        float64[:, :](float64[:, :], float64[:]),
-        float32[:](float32[:], float32[:]),
-        float64[:](float64[:], float64[:]),
-    ],
+    # [
+    #     float32[:, :](float32[:, :], float32[:]),
+    #     float64[:, :](float64[:, :], float64[:]),
+    #     float32[:](float32[:], float32[:]),
+    #     float64[:](float64[:], float64[:]),
+    # ],
 )
 def _quantile(arr, q):
     if arr.ndim == 1:
@@ -105,7 +105,9 @@ def quantile(da, q, dim):
     return res
 
 
-@njit([float32[:, :](float32[:, :]), float64[:, :](float64[:, :])])
+@njit(
+    #  [float32[:, :](float32[:, :]), float64[:, :](float64[:, :])]
+)
 def remove_NaNs(x):  # noqa
     """Remove NaN values from series."""
     remove = np.zeros_like(x[0, :], dtype=boolean)
@@ -114,14 +116,17 @@ def remove_NaNs(x):  # noqa
     return x[:, ~remove]
 
 
-@njit([float32(float32[:]), float64(float64[:])], fastmath=True)
+@njit(
+    #  [float32(float32[:]), float64(float64[:])]
+    fastmath=True
+)
 def _euclidean_norm(v):
     """Compute the euclidean norm of vector v."""
     return np.sqrt(np.sum(v**2))
 
 
 @njit(
-    [float32(float32[:, :], float32[:, :]), float64(float64[:, :], float64[:, :])],
+    #  [float32(float32[:, :], float32[:, :]), float64(float64[:, :], float64[:, :])],
     fastmath=True,
 )
 def _correlation(X, Y):
@@ -137,7 +142,10 @@ def _correlation(X, Y):
     return d / (X.shape[1] * Y.shape[1])
 
 
-@njit([float32(float32[:, :]), float64(float64[:, :])], fastmath=True)
+@njit(
+    #  [float32(float32[:, :]), float64(float64[:, :])],
+    fastmath=True
+)
 def _autocorrelation(X):
     """Mean of the NxN pairwise distances of points in X of shape KxN.
 

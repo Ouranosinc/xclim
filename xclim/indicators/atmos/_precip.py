@@ -32,6 +32,10 @@ __all__ = [
     "standardized_precipitation_evapotranspiration_index",
     "drought_code",
     "fire_weather_indexes",
+    "cffwis_indices",
+    "keetch_byram_drought_index",
+    "griffiths_drought_factor",
+    "mcarthur_forest_fire_danger_index",
     "last_snowfall",
     "first_snowfall",
     "days_with_snow",
@@ -264,7 +268,8 @@ standardized_precipitation_index = StandardizedIndexes(
     units="",
     standard_name="spi",
     long_name="Standardized Precipitation Index (SPI)",
-    description="Precipitations over rolling window {window}-X window, normalized such that SPI averages to 0 for calibration data. The window unit `X` is the minimal time period defined by resampling frequency {freq}",
+    description="Precipitations over rolling window {window}-X window, normalized such that SPI averages to 0 for "
+    "calibration data. The window unit `X` is the minimal time period defined by resampling frequency {freq}",
     cell_methods="",
     compute=indices.standardized_precipitation_index,
 )
@@ -320,7 +325,75 @@ fire_weather_indexes = FireWeather(
         "Numeric rating of fire intensity.",
     ],
     units="",
-    compute=indices.fire_weather_indexes,
+    compute=indices.cffwis_indices,
+    missing="skip",
+    _version_deprecated="0.38.0",
+)
+
+
+cffwis_indices = FireWeather(
+    identifier="cffwis",
+    realm="atmos",
+    var_name=["dc", "dmc", "ffmc", "isi", "bui", "fwi"],
+    standard_name=[
+        "drought_code",
+        "duff_moisture_code",
+        "fine_fuel_moisture_code",
+        "initial_spread_index",
+        "buildup_index",
+        "fire_weather_index",
+    ],
+    long_name=[
+        "Drought Code",
+        "Duff Moisture Code",
+        "Fine Fuel Moisture Code",
+        "Initial Spread Index",
+        "Buildup Index",
+        "Fire Weather Index",
+    ],
+    description=[
+        "Numeric rating of the average moisture content of deep, compact organic layers.",
+        "Numeric rating of the average moisture content of loosely compacted organic layers of moderate depth.",
+        "Numeric rating of the average moisture content of litter and other cured fine fuels.",
+        "Numeric rating of the expected rate of fire spread.",
+        "Numeric rating of the total amount of fuel available for combustion.",
+        "Numeric rating of fire intensity.",
+    ],
+    units="",
+    compute=indices.cffwis_indices,
+    missing="skip",
+)
+
+
+keetch_byram_drought_index = FireWeather(
+    identifier="kbdi",
+    units="mm/day",
+    standard_name="keetch_byram_drought_index",
+    long_name="Keetch-Byran Drought Index",
+    description="Amount of water necessary to bring the soil moisture content back to field capacity",
+    compute=indices.keetch_byram_drought_index,
+    missing="skip",
+)
+
+
+griffiths_drought_factor = FireWeather(
+    identifier="df",
+    units="",
+    standard_name="griffiths_drought_factor",
+    long_name="Griffiths Drought Factor",
+    description="Numeric indicator of the forest fire fuel availability in the deep litter bed",
+    compute=indices.griffiths_drought_factor,
+    missing="skip",
+)
+
+
+mcarthur_forest_fire_danger_index = FireWeather(
+    identifier="ffdi",
+    units="",
+    standard_name="mcarthur_forest_fire_danger_index",
+    long_name="McArthur Forest Fire Danger Index",
+    description="Numeric rating of the potential danger of a forest fire",
+    compute=indices.mcarthur_forest_fire_danger_index,
     missing="skip",
 )
 
