@@ -1060,7 +1060,7 @@ class NpdfTransform(Adjust):
 
     1. Rotate the datasets in the N-dimensional variable space with :math:`\mathbf{R}`, a random rotation NxN matrix.
 
-    ..math ::
+    .. math::
 
         \tilde{\mathbf{T}} = \mathbf{T}\mathbf{R} \
         \tilde{\mathbf{H}} = \mathbf{H}\mathbf{R} \

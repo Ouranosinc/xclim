@@ -717,20 +717,14 @@ def standardized_precipitation_index(
 
     Example
     -------
-    Computing SPI-3 months using a gamma distribution for the fit
-
-    .. code-block:: python
-
-        import xclim.indices as xci
-        import xarray as xr
-
-        ds = xr.open_dataset(filename)
-        pr = ds.pr
-        pr_cal = pr.sel(time=slice(calibration_start_date, calibration_end_date))
-        spi_3 = xci.standardized_precipitation_index(
-            pr, pr_cal, freq="MS", window=3, dist="gamma", method="ML"
-        )
-
+    # Computing SPI-3 months using a gamma distribution for the fit
+    >>> from datetime import datetime
+    >>> ds = xr.open_dataset(path_to_pr_file)
+    >>> pr = ds.pr
+    >>> pr_cal = pr.sel(time=slice(datetime(1990, 5, 1), datetime(1990, 8, 31)))
+    >>> spi_3 = xci.standardized_precipitation_index(
+    ...     pr, pr_cal, freq="MS", window=3, dist="gamma", method="ML"
+    ... )
 
     References
     ----------
