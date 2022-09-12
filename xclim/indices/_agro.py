@@ -620,8 +620,8 @@ def standardized_precipitation_index(
     window : int
       Averaging window length relative to the resampling frequency. For example, if `freq="MS"`, i.e. a monthly resampling, the window
       is an integer number of months.
-    dist : {'gamma'}
-      Name of the univariate distribution, only `gamma` is currently implemented
+    dist : {'gamma', 'fisk'}
+      Name of the univariate distribution.
       (see :py:mod:`scipy.stats`).
     method : {'APP', 'ML'}
       Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
@@ -660,7 +660,7 @@ def standardized_precipitation_index(
     McKee, Thomas B., Nolan J. Doesken, and John Kleist. "The relationship of drought frequency and duration to time scales." In Proceedings of the 8th Conference on Applied Climatology, vol. 17, no. 22, pp. 179-183. 1993.
     """
     # "WPM" method doesn't seem to work for gamma or pearson3
-    dist_and_methods = {"gamma": ["ML", "APP"]}
+    dist_and_methods = {"gamma": ["ML", "APP"], "fisk": ["ML"]}
     if dist not in dist_and_methods.keys():
         raise NotImplementedError(f"The distribution `{dist}` is not supported.")
     elif method not in dist_and_methods[dist]:
@@ -723,8 +723,7 @@ def standardized_precipitation_index(
     params = resample_to_time(params, pr)
 
     # ppf to cdf
-    # zero-bounded distributions;  'pearson3' will also go in this group once it's implemented
-    if dist in ["gamma", "pearson3"]:
+    if dist in ["gamma", "fisk"]:
         prob_pos = dist_method("cdf", params, pr.where(pr > 0))
         prob_zero = resample_to_time(
             pr.groupby(group).map(
@@ -775,11 +774,12 @@ def standardized_precipitation_evapotranspiration_index(
     window : int
       Averaging window length relative to the resampling frequency. For example, if `freq="MS"`, i.e. a monthly resampling, the window
       is an integer number of months.
-    dist : {'gamma'}
-      Name of the univariate distribution. Only "gamma" is currently implemented. (see :py:mod:`scipy.stats`).
+    dist : {'gamma', 'fisk'}
+      Name of the univariate distribution (see :py:mod:`scipy.stats`).
     method : {'APP', 'ML'}
       Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
-      uses a deterministic function that doesn't involve any optimization.
+      uses a deterministic function that doesn't involve any optimization. Available methods
+      vary with the distribution: 'gamma':{'APP', 'ML'}, 'fisk':{'ML'}
 
     Returns
     -------
@@ -791,7 +791,7 @@ def standardized_precipitation_evapotranspiration_index(
     See Standardized Precipitation Index (SPI) for more details on usage.
     """
     # Allowed distributions are constrained by the SPI function
-    if dist in ["gamma"]:
+    if dist in ["gamma", "fisk"]:
         # Distributions bounded by zero: Water budget must be shifted, only positive values
         # are allowed. The offset choice is arbitrary and needs to be revisited.
         # In monocongo, the offset would be 1000/(60*60*24) in [kg m-2 s-1]
@@ -803,6 +803,11 @@ def standardized_precipitation_evapotranspiration_index(
         offset = offset - 2 * min(wb.min(), wb_cal.min(), 0)
         with xarray.set_options(keep_attrs=True):
             wb, wb_cal = wb + offset, wb_cal + offset
+
+    if dist in ["fisk"]:
+        with xarray.set_options(keep_attrs=True):
+            # Including a big overall factor improves results of the fitting procedure
+            wb, wb_cal = 1e4 * wb, 1e4 * wb_cal
 
     spei = standardized_precipitation_index(wb, wb_cal, freq, window, dist, method)
 

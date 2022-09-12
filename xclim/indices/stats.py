@@ -5,6 +5,7 @@ from typing import Sequence
 
 import numpy as np
 import xarray as xr
+from scipy.optimize import fsolve, root
 
 from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history
 from xclim.core.utils import uses_dask
@@ -89,8 +90,8 @@ def fit(
       Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
       (see scipy.stats for full list). If the PWM method is used, only the following distributions are
       currently supported: 'expon', 'gamma', 'genextreme', 'genpareto', 'gumbel_r', 'pearson3', 'weibull_min'.
-    method : {"ML", "PWM"}
-      Fitting method, either maximum likelihood (ML) or probability weighted moments (PWM), also called L-Moments.
+    method : {"ML", "PWM", "APP"}
+      Fitting method, either maximum likelihood (ML), probability weighted moments (PWM), also called L-Moments, or approximate method (APP)
       The PWM method is usually more robust to outliers.
     dim : str
       The dimension upon which to perform the indexing (default: "time").
@@ -478,16 +479,23 @@ def _fit_start(x, dist, **fitkwargs) -> tuple[tuple, dict]:
         scale = ((x - loc) ** chat).mean() ** (1 / chat)
         return (chat,), {"loc": loc, "scale": scale}
 
-    if dist == "gamma":
+    if dist in ["gamma"]:
         x_pos = x[x > 0]
-        m_pos = x_pos.mean()
-        log_of_mean = np.log(m_pos)
+        m = x_pos.mean()
+        log_of_mean = np.log(m)
         mean_of_logs = np.log(x_pos).mean()
         a = log_of_mean - mean_of_logs
         alpha = (1 + np.sqrt(1 + 4 * a / 3)) / (4 * a)
-        beta = m_pos / alpha
+        beta = m / alpha
         return (alpha,), {"scale": beta}
 
+    if dist in ["fisk"]:
+        x_pos = x[x > 0]
+        m = x_pos.mean()
+        v = x_pos.var()
+        alpha_0, beta_0 = m, m / np.sqrt(v)
+        alpha, beta = alpha_0, beta_0
+        return (beta,), {"scale": alpha}
     return (), {}
 
 
