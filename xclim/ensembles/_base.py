@@ -37,36 +37,35 @@ def create_ensemble(
     Parameters
     ----------
     datasets : list or dict or string
-      List of netcdf file paths or xarray Dataset/DataArray objects . If mf_flag is True, ncfiles should be a list of
-      lists where each sublist contains input .nc files of an xarray multifile Dataset.
-      If DataArray objects are passed, they should have a name in order to be transformed into Datasets.
-      A dictionary can be passed instead of a list, in which case the keys are used as coordinates along the new
-      `realization` axis.
-      If a string is passed, it is assumed to be a glob pattern for finding datasets.
-
+        List of netcdf file paths or xarray Dataset/DataArray objects . If mf_flag is True, ncfiles should be a list of
+        lists where each sublist contains input .nc files of an xarray multifile Dataset.
+        If DataArray objects are passed, they should have a name in order to be transformed into Datasets.
+        A dictionary can be passed instead of a list, in which case the keys are used as coordinates along the new
+        `realization` axis.
+        If a string is passed, it is assumed to be a glob pattern for finding datasets.
     mf_flag : bool
-      If True, climate simulations are treated as xarray multifile Datasets before concatenation.
-      Only applicable when "datasets" is sequence of list of file paths.
-
+        If True, climate simulations are treated as xarray multifile Datasets before concatenation.
+        Only applicable when "datasets" is sequence of list of file paths.
     resample_freq : Optional[str]
-      If the members of the ensemble have the same frequency but not the same offset, they cannot be properly aligned.
-      If resample_freq is set, the time coordinate of each members will be modified to fit this frequency.
-
+        If the members of the ensemble have the same frequency but not the same offset, they cannot be properly aligned.
+        If resample_freq is set, the time coordinate of each member will be modified to fit this frequency.
     calendar : str
-      The calendar of the time coordinate of the ensemble. For conversions involving '360_day', the align_on='date' option is used.
-      See `xclim.core.calendar.convert_calendar`. 'default' is the standard calendar using np.datetime64 objects.
-
+        The calendar of the time coordinate of the ensemble.
+        For conversions involving '360_day', the align_on='date' option is used.
+        See :py:func:`xclim.core.calendar.convert_calendar`.
+        'default' is the standard calendar using np.datetime64 objects.
     realizations: sequence, optional
-      The coordinate values for the new `realization` axis. If None (default), the new axis has a simple integer coordinate.
+      The coordinate values for the new `realization` axis.
+      If None (default), the new axis has a simple integer coordinate.
       This argument shouldn't be used if `datasets` is a glob pattern as the dataset order is random.
-
-    xr_kwargs :
-      Any keyword arguments to be given to `xr.open_dataset` when opening the files (or to `xr.open_mfdataset` if mf_flag is True)
+    **xr_kwargs
+      Any keyword arguments to be given to `xr.open_dataset` when opening the files
+      (or to `xr.open_mfdataset` if mf_flag is True)
 
     Returns
     -------
     xr.Dataset
-      Dataset containing concatenated data from all input files.
+        Dataset containing concatenated data from all input files.
 
     Notes
     -----
@@ -128,27 +127,27 @@ def ensemble_mean_std_max_min(
 
     Parameters
     ----------
-    ens: xr.Dataset
-      Ensemble dataset (see xclim.ensembles.create_ensemble).
-    weights: xr.DataArray
-      Weights to apply along the 'realization' dimension. This array cannot contain missing values.
+    ens : xr.Dataset
+        Ensemble dataset (see xclim.ensembles.create_ensemble).
+    weights : xr.DataArray
+        Weights to apply along the 'realization' dimension. This array cannot contain missing values.
 
     Returns
     -------
     xr.Dataset
-      Dataset with data variables of ensemble statistics.
+        Dataset with data variables of ensemble statistics.
 
     Examples
     --------
-    >>> from xclim.ensembles import create_ensemble, ensemble_mean_std_max_min
+    .. code-block:: python
 
-    Create the ensemble dataset:
+        from xclim.ensembles import create_ensemble, ensemble_mean_std_max_min
 
-    >>> ens = create_ensemble(temperature_datasets)
+        # Create the ensemble dataset:
+        ens = create_ensemble(temperature_datasets)
 
-    Calculate ensemble statistics:
-
-    >>> ens_mean_std = ensemble_mean_std_max_min(ens)
+        # Calculate ensemble statistics:
+        ens_mean_std = ensemble_mean_std_max_min(ens)
     """
     ds_out = xr.Dataset(attrs=ens.attrs)
     for v in ens.data_vars:
@@ -212,8 +211,8 @@ def ensemble_percentiles(
     Returns
     -------
     xr.Dataset or xr.DataArray
-      If split is True, same type as ens; dataset otherwise,
-      containing data variable(s) of requested ensemble statistics
+        If split is True, same type as ens; dataset otherwise,
+        containing data variable(s) of requested ensemble statistics
 
     Examples
     --------
@@ -352,7 +351,7 @@ def _ens_align_datasets(
         the align_on='date' option is used.
         See :py:func:`xclim.core.calendar.convert_calendar`.
         'default' is the standard calendar using np.datetime64 objects.
-    xr_kwargs
+    **xr_kwargs
         Any keyword arguments to be given to xarray when opening the files.
 
     Returns

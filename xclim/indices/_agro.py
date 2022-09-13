@@ -469,10 +469,9 @@ def cool_night_index(
 
     Examples
     --------
-    .. code-block:: python
-
-        with xclim.set_options(check_missing="skip", data_validation="log"):
-            cni = xclim.atmos.cool_night_index(...)
+    >>> from xclim.indices import cool_night_index
+    >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
+    >>> cni = cool_night_index(tasmin)
 
     References
     ----------
@@ -630,9 +629,9 @@ def water_budget(
     method : str
         Method to use to calculate the potential evapotranspiration.
 
-    Notes
-    -----
-    Available methods are listed in the description of xclim.indicators.atmos.potential_evapotranspiration.
+    See Also
+    --------
+    xclim.indicators.atmos.potential_evapotranspiration
 
     Returns
     -------
@@ -714,14 +713,14 @@ def standardized_precipitation_index(
 
     Example
     -------
-    # Computing SPI-3 months using a gamma distribution for the fit
     >>> from datetime import datetime
+    >>> from xclim.indices import standardized_precipitation_index
     >>> ds = xr.open_dataset(path_to_pr_file)
     >>> pr = ds.pr
     >>> pr_cal = pr.sel(time=slice(datetime(1990, 5, 1), datetime(1990, 8, 31)))
-    >>> spi_3 = xci.standardized_precipitation_index(
+    >>> spi_3 = standardized_precipitation_index(
     ...     pr, pr_cal, freq="MS", window=3, dist="gamma", method="ML"
-    ... )
+    ... )  # Computing SPI-3 months using a gamma distribution for the fit
 
     References
     ----------
@@ -920,9 +919,10 @@ def dry_spell_frequency(
 
     Examples
     --------
+    >>> from xclim.indices import dry_spell_frequency
     >>> pr = xr.open_dataset(path_to_pr_file).pr
-    >>> dry_spell_frequency(pr=pr, op="sum")
-    >>> dry_spell_frequency(pr=pr, op="max")
+    >>> dsf = dry_spell_frequency(pr=pr, op="sum")
+    >>> dsf = dry_spell_frequency(pr=pr, op="max")
     """
     pram = rate2amount(pr, out_units="mm")
     thresh = convert_units_to(thresh, pram)
@@ -1030,7 +1030,6 @@ def qian_weighted_mean_average(
     References
     ----------
     :cite:cts:`bootsma_impacts_2005,qian_observed_2010`
-
     """
     units = tas.attrs["units"]
 

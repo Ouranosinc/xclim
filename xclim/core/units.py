@@ -115,13 +115,13 @@ def units2pint(value: xr.DataArray | str | units.Quantity) -> Unit:
 
     Parameters
     ----------
-    value: xr.DataArray or str or pint.Quantity
-      Input data array or string representing a unit (with no magnitude).
+    value : xr.DataArray or str or pint.Quantity
+        Input data array or string representing a unit (with no magnitude).
 
     Returns
     -------
     pint.unit.UnitDefinition
-      Units of the data array.
+        Units of the data array.
     """
 
     def _transform(s):
@@ -180,13 +180,13 @@ def pint2cfunits(value: UnitDefinition) -> str:
 
     Parameters
     ----------
-    value: pint.Unit
-      Input unit.
+    value : pint.Unit
+        Input unit.
 
     Returns
     -------
     str
-      Units following CF-Convention, using symbols.
+        Units following CF-Convention, using symbols.
     """
     if isinstance(value, pint.Quantity):
         value = value.units
@@ -226,12 +226,12 @@ def pint_multiply(da: xr.DataArray, q: Any, out_units: str | None = None):
 
     Parameters
     ----------
-    da: xr.DataArray
-      Input array.
-    q: pint.Quantity
-      Multiplicative factor.
-    out_units: str, optional
-      Units the output array should be converted into.
+    da : xr.DataArray
+        Input array.
+    q : pint.Quantity
+        Multiplicative factor.
+    out_units : str, optional
+        Units the output array should be converted into.
     """
     a = 1 * units2pint(da)  # noqa
     f = a * q.to_base_units()
@@ -249,14 +249,14 @@ def str2pint(val: str) -> pint.Quantity:
 
     Parameters
     ----------
-    val: str
-      A quantity in the form "[{magnitude} ]{units}", where magnitude can be cast to a float and
-      units is understood by `units2pint`.
+    val : str
+        A quantity in the form "[{magnitude} ]{units}", where magnitude can be cast to a float and
+        units is understood by `units2pint`.
 
     Returns
     -------
     pint.Quantity
-      Magnitude is 1 if no magnitude was present in the string.
+        Magnitude is 1 if no magnitude was present in the string.
     """
     mstr, *ustr = val.split(" ", maxsplit=1)
     try:
@@ -276,17 +276,17 @@ def convert_units_to(
 
     Parameters
     ----------
-    source: str or xr.DataArray or Any
-      The value to be converted, e.g. '4C' or '1 mm/d'.
-    target: str or xr.DataArray or Any
-      Target array of values to which units must conform.
-    context: str, optional
-      The unit definition context. Default: None.
+    source : str or xr.DataArray or Any
+        The value to be converted, e.g. '4C' or '1 mm/d'.
+    target : str or xr.DataArray or Any
+        Target array of values to which units must conform.
+    context : str, optional
+        The unit definition context. Default: None.
 
     Returns
     -------
     xr.DataArray or float or int or str or Any
-      The source value converted to target's units.
+        The source value converted to target's units.
     """
     # Target units
     if isinstance(target, units.Unit):
@@ -364,24 +364,24 @@ def infer_sampling_units(
 
     Parameters
     ----------
-    da: xr.DataArray
-      A DataArray from which to take coordinate `dim`.
-    deffreq: str, optional
-      If no frequency is inferred from `da[dim]`, take this one.
-    dim: str
-      Dimension from which to infer the frequency.
+    da : xr.DataArray
+        A DataArray from which to take coordinate `dim`.
+    deffreq : str, optional
+        If no frequency is inferred from `da[dim]`, take this one.
+    dim : str
+        Dimension from which to infer the frequency.
 
     Raises
     ------
     ValueError
-      If the frequency has no exact corresponding units.
+        If the frequency has no exact corresponding units.
 
     Returns
     -------
     int
-      The magnitude (number of base periods per period)
+        The magnitude (number of base periods per period)
     str
-      Units as a string, understandable by pint.
+        Units as a string, understandable by pint.
     """
     dimmed = getattr(da, dim)
     freq = xr.infer_freq(dimmed)
@@ -408,16 +408,16 @@ def to_agg_units(
 
     Parameters
     ----------
-    out: xr.DataArray
-      The output array of the aggregation operation, no units operation done yet.
-    orig: xr.DataArray
-      The original array before the aggregation operation,
-      used to infer the sampling units and get the variable units.
-    op: {'count', 'prod', 'delta_prod'}
-      The type of aggregation operation performed. The special "delta_*" ops are used
-      with temperature units needing conversion to their "delta" counterparts (e.g. degree days)
-    dim: str
-      The time dimension along which the aggregation was performed.
+    out : xr.DataArray
+        The output array of the aggregation operation, no units operation done yet.
+    orig : xr.DataArray
+        The original array before the aggregation operation,
+        used to infer the sampling units and get the variable units.
+    op : {'count', 'prod', 'delta_prod'}
+        The type of aggregation operation performed. The special "delta_*" ops are used
+        with temperature units needing conversion to their "delta" counterparts (e.g. degree days)
+    dim : str
+        The time dimension along which the aggregation was performed.
 
     Returns
     -------
@@ -427,7 +427,7 @@ def to_agg_units(
     --------
     Take a daily array of temperature and count number of days above a threshold.
     `to_agg_units` will infer the units from the sampling rate along "time", so
-    we ensure the final units are correct.
+    we ensure the final units are correct:
 
     >>> time = xr.cftime_range("2001-01-01", freq="D", periods=365)
     >>> tas = xr.DataArray(
@@ -444,7 +444,8 @@ def to_agg_units(
     >>> Ndays.units
     'd'
 
-    Similarly, here we compute the total heating degree-days but we have weekly data:
+    Similarly, here we compute the total heating degree-days, but we have weekly data:
+
     >>> time = xr.cftime_range("2001-01-01", freq="7D", periods=52)
     >>> tas = xr.DataArray(
     ...     np.arange(52) + 10,
@@ -567,12 +568,12 @@ def rate2amount(
 
     Parameters
     ----------
-    rate: xr.DataArray
-      "Rate" variable, with units of "amount" per time. Ex: Precipitation in "mm / d".
-    dim: str
-      The time dimension.
+    rate : xr.DataArray
+        "Rate" variable, with units of "amount" per time. Ex: Precipitation in "mm / d".
+    dim : str
+        The time dimension.
     out_units : str, optional
-      Output units to convert to.
+        Output units to convert to.
 
     Returns
     -------
@@ -580,7 +581,7 @@ def rate2amount(
 
     Examples
     --------
-    The following converts a daily array of precipitation in mm/h to the daily amounts in mm.
+    The following converts a daily array of precipitation in mm/h to the daily amounts in mm:
 
     >>> time = xr.cftime_range("2001-01-01", freq="D", periods=365)
     >>> pr = xr.DataArray(
@@ -593,7 +594,7 @@ def rate2amount(
     24.0
 
     Also works if the time axis is irregular : the rates are assumed constant for the whole period
-    starting on the values timestamp to the next timestamp.
+    starting on the values timestamp to the next timestamp:
 
     >>> time = time[[0, 9, 30]]  # The time axis is Jan 1st, Jan 10th, Jan 31st
     >>> pr = xr.DataArray(
@@ -625,12 +626,12 @@ def amount2rate(
 
     Parameters
     ----------
-    amount: xr.DataArray
-      "amount" variable. Ex: Precipitation amount in "mm".
-    dim: str
-      The time dimension.
-    out_units: str, optional
-      Output units to convert to.
+    amount : xr.DataArray
+        "amount" variable. Ex: Precipitation amount in "mm".
+    dim : str
+        The time dimension.
+    out_units : str, optional
+        Output units to convert to.
 
     Returns
     -------
@@ -696,8 +697,8 @@ def declare_units(
 
     Parameters
     ----------
-    units_by_name: Mapping[str, str]
-      Mapping from the input parameter names to their units or dimensionality ("[...]").
+    units_by_name : Mapping[str, str]
+        Mapping from the input parameter names to their units or dimensionality ("[...]").
 
     Returns
     -------
@@ -707,7 +708,7 @@ def declare_units(
     --------
     In the following function definition:
 
-    .. code::
+    .. code-block:: python
 
         @declare_units(tas=["temperature"])
         def func(tas):
@@ -762,8 +763,8 @@ def ensure_delta(unit: str = None):
 
     Parameters
     ----------
-    unit: str
-      unit to transform in delta (or not)
+    unit : str
+        unit to transform in delta (or not)
     """
     u = units2pint(unit)
     d = 1 * u
