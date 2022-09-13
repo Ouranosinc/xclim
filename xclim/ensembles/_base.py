@@ -75,7 +75,6 @@ def create_ensemble(
 
     Examples
     --------
-    .. autolink-skip::
     .. code-block:: python
 
         from pathlib import Path
@@ -193,21 +192,22 @@ def ensemble_percentiles(
 
     Parameters
     ----------
-    ens: xr.Dataset or xr.DataArray
-      Ensemble dataset or dataarray (see xclim.ensembles.create_ensemble).
+    ens : xr.Dataset or xr.DataArray
+        Ensemble dataset or dataarray (see xclim.ensembles.create_ensemble).
     values : Sequence[int], optional
-      Percentile values to calculate. Default: (10, 50, 90).
+        Percentile values to calculate. Default: (10, 50, 90).
     keep_chunk_size : bool, optional
-      For ensembles using dask arrays, all chunks along the 'realization' axis are merged.
-      If True, the dataset is rechunked along the dimension with the largest chunks, so that the chunks keep the same size (approximately).
-      If False, no shrinking is performed, resulting in much larger chunks.
-      If not defined, the function decides which is best.
-    weights: xr.DataArray
-      Weights to apply along the 'realization' dimension. This array cannot contain missing values.
-      When given, the function uses xarray's quantile method which is slower than xclim's NaN-optimized algorithm.
+        For ensembles using dask arrays, all chunks along the 'realization' axis are merged.
+        If True, the dataset is rechunked along the dimension with the largest chunks,
+        so that the chunks keep the same size (approximately).
+        If False, no shrinking is performed, resulting in much larger chunks.
+        If not defined, the function decides which is best.
+    weights : xr.DataArray
+        Weights to apply along the 'realization' dimension. This array cannot contain missing values.
+        When given, the function uses xarray's quantile method which is slower than xclim's NaN-optimized algorithm.
     split : bool
-      Whether to split each percentile into a new variable of concatenate the ouput along a new
-      "percentiles" dimension.
+        Whether to split each percentile into a new variable
+        or concatenate the output along a new "percentiles" dimension.
 
     Returns
     -------
@@ -217,7 +217,6 @@ def ensemble_percentiles(
 
     Examples
     --------
-    .. autolink-skip::
     .. code-block:: python
 
         from xclim.ensembles import create_ensemble, ensemble_percentiles
@@ -338,22 +337,23 @@ def _ens_align_datasets(
     Parameters
     ----------
     datasets : list[xr.Dataset | xr.DataArray | Path | str | list[Path | str]] or str
-      List of netcdf file paths or xarray Dataset/DataArray objects . If mf_flag is True, 'datasets' should be a list
-      of lists where each sublist contains input NetCDF files of a xarray multi-file Dataset.
-      DataArrays should have a name, so they can be converted to datasets.
-      If a string, it is assumed to be a glob pattern for finding datasets.
+        List of netcdf file paths or xarray Dataset/DataArray objects . If mf_flag is True, 'datasets' should be a list
+        of lists where each sublist contains input NetCDF files of a xarray multi-file Dataset.
+        DataArrays should have a name, so they can be converted to datasets.
+        If a string, it is assumed to be a glob pattern for finding datasets.
     mf_flag : bool
-      If True climate simulations are treated as xarray multi-file datasets before concatenation.
-      Only applicable when 'datasets' is a sequence of file paths.
+        If True climate simulations are treated as xarray multi-file datasets before concatenation.
+        Only applicable when 'datasets' is a sequence of file paths.
     resample_freq : str, optional
-      If the members of the ensemble have the same frequency but not the same offset, they cannot be properly aligned.
-      If resample_freq is set, the time coordinate of each member will be modified to fit this frequency.
+        If the members of the ensemble have the same frequency but not the same offset, they cannot be properly aligned.
+        If resample_freq is set, the time coordinate of each member will be modified to fit this frequency.
     calendar : str
-      The calendar of the time coordinate of the ensemble. For conversions involving '360_day',
-      the align_on='date' option is used.
-      See `xclim.core.calendar.convert_calendar`. 'default' is the standard calendar using np.datetime64 objects.
+        The calendar of the time coordinate of the ensemble. For conversions involving '360_day',
+        the align_on='date' option is used.
+        See :py:func:`xclim.core.calendar.convert_calendar`.
+        'default' is the standard calendar using np.datetime64 objects.
     xr_kwargs
-      Any keyword arguments to be given to xarray when opening the files.
+        Any keyword arguments to be given to xarray when opening the files.
 
     Returns
     -------

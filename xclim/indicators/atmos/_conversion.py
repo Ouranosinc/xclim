@@ -202,7 +202,6 @@ specific_humidity = Converter(
 specific_humidity_from_dewpoint = Converter(
     identifier="huss_fromdewpoint",
     units="",
-    var_name="huss",
     long_name="Specific Humidity",
     standard_name="specific_humidity",
     description=(
