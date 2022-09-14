@@ -60,7 +60,7 @@ start" for the duff-moisture code. The following example uses reasonable paramet
 .. note::
 
     Here the example snippets use the _indices_ defined in this very module, but we always recommend using the
-    _indicators_ defined in the `xc.atmos` module.
+    _indicators_ defined in the :py:mod:`xclim.atmos` module.
 
 >>> ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 >>> ds = ds.assign(
