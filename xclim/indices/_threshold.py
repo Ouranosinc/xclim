@@ -783,8 +783,10 @@ def frost_season_length(
     --------
     >>> from xclim.indices import frost_season_length
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
+
     # For the Northern Hemisphere:
     >>> fsl_nh = frost_season_length(tasmin, freq="AS-JUL")
+
     # If working in the Southern Hemisphere, one can use:
     >>> fsl_sh = frost_season_length(tasmin, freq="YS")
     """

@@ -414,10 +414,9 @@ def max_1day_precipitation_amount(
 
     Examples
     --------
-    >>> from xclim.indices import max_1day_precipitation_amount
+    The following would compute for each grid cell the highest 1-day total at an annual frequency:
 
-    # The following would compute for each grid cell the highest 1-day total
-    # at an annual frequency:
+    >>> from xclim.indices import max_1day_precipitation_amount
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> rx1day = max_1day_precipitation_amount(pr, freq="YS")
     """
@@ -449,9 +448,9 @@ def max_n_day_precipitation_amount(
 
     Examples
     --------
+    The following would compute for each grid cell the highest 5-day total precipitation at an annual frequency:
+
     >>> from xclim.indices import max_n_day_precipitation_amount
-    # The following would compute for each grid cell the highest 5-day total precipitation
-    # at an annual frequency:
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> out = max_n_day_precipitation_amount(pr, window=5, freq="YS")
     """
@@ -486,11 +485,11 @@ def max_pr_intensity(
 
     Examples
     --------
-    >>> from xclim.indices import max_pr_intensity
+    The following would compute the maximum 6-hour precipitation intensity at an annual frequency:
 
-    # The following would compute the maximum 6-hour precipitation intensity.
-    # at an annual frequency:
-    # TODO: Add minimal working example for documentation
+    >>> from xclim.indices import max_pr_intensity
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> out = max_pr_intensity(pr, window=5, freq="YS")
     """
     # Rolling sum of the values
     arr = pr.rolling(time=window).mean(skipna=False)
@@ -520,6 +519,5 @@ def snow_depth(
     -------
     xarray.DataArray, [same units as snd]
         The mean daily snow depth at the given time frequency
-
     """
     return snd.resample(time=freq).mean(dim="time").assign_attrs(units=snd.units)
