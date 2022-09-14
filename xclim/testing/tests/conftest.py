@@ -501,7 +501,11 @@ def add_imports(xdoctest_namespace):
     ns["np"] = np
     ns["xr"] = xclim.testing  # xr.open_dataset(...) -> xclim.testing.open_dataset(...)
     ns["xclim"] = xclim
-    ns["open_dataset"] = xclim.testing.open_dataset  # Needed for modules where xarray is imported as `xr`
+    ns[
+        "open_dataset"
+    ] = (
+        xclim.testing.open_dataset
+    )  # Needed for modules where xarray is imported as `xr`
 
 
 @pytest.fixture(autouse=True)

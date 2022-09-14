@@ -302,7 +302,9 @@ def sfcwind_2_uas_vas(
     Examples
     --------
     >>> from xclim.indices import sfcwind_2_uas_vas
-    >>> uas, vas = sfcwind_2_uas_vas(sfcWind=sfcWind_dataset, sfcWindfromdir=sfcWindfromdir_dataset)
+    >>> uas, vas = sfcwind_2_uas_vas(
+    ...     sfcWind=sfcWind_dataset, sfcWindfromdir=sfcWindfromdir_dataset
+    ... )
     """
     # Converts the wind speed to m s-1
     sfcWind = convert_units_to(sfcWind, "m/s")  # noqa
