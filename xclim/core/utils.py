@@ -58,7 +58,7 @@ def wrapped_partial(
         The function to be wrapped
     suggested : dict, optional
         Keyword arguments that should have new default values but still appear in the signature.
-    fixed
+    **fixed
         Keyword arguments that should be fixed by the wrapped and removed from the signature.
 
     Returns
@@ -175,7 +175,7 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: Mapping[str, int]) -> xr.Da
     ----------
     da : xr.DataArray
         The input DataArray, with or without the dask backend. Does nothing when passed a non-dask array.
-    minchunks : Mapping[str, int]
+    **minchunks : Mapping[str, int]
         A kwarg mapping from dimension name to minimum chunk size.
         Pass -1 to force a single chunk along that dimension.
 

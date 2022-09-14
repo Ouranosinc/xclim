@@ -95,12 +95,10 @@ def humidex(
     - 40 to 45 : great discomfort, avoid exertion;
     - 46 and over : dangerous, possible heat stroke;
 
-    Please note that while both the humidex and the heat index are calculated
-    using dew point, the humidex uses a dew point of 7 °C (45 °F) as a base,
-    whereas the heat index uses a dew point base of 14 °C (57 °F). Further,
-    the heat index uses heat balance equations which account for many variables
-    other than vapor pressure, which is used exclusively in the humidex
-    calculation.
+    Please note that while both the humidex and the heat index are calculated using dew point, the humidex uses
+    a dew point of 7 °C (45 °F) as a base, whereas the heat index uses a dew point base of 14 °C (57 °F). Further,
+    the heat index uses heat balance equations which account for many variables other than vapour pressure,
+    which is used exclusively in the humidex calculation.
 
     References
     ----------
@@ -203,6 +201,11 @@ def tas(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
     -------
     xarray.DataArray
         Mean (daily) temperature [same units as tasmin]
+
+    Examples
+    --------
+    >>> from xclim.indices import tas
+    >>> tas = tas(tasmin_dataset, tasmax_dataset)
     """
     tasmax = convert_units_to(tasmax, tasmin)
     tas = (tasmax + tasmin) / 2
@@ -236,6 +239,13 @@ def uas_vas_2_sfcwind(
     wind_from_dir : xr.DataArray, [°]
         Direction from which the wind blows, following the meteorological convention where
         360 stands for North and 0 for calm winds.
+
+    Examples
+    --------
+    >>> from xclim.indices import uas_vas_2_sfcwind
+    >>> sfcwind = uas_vas_2_sfcwind(
+    ...     uas=uas_dataset, vas=vas_dataset, calm_wind_thresh="0.5 m/s"
+    ... )
 
     Notes
     -----
@@ -289,6 +299,10 @@ def sfcwind_2_uas_vas(
     vas : xr.DataArray, [m s-1]
         Northward wind velocity.
 
+    Examples
+    --------
+    >>> from xclim.indices import sfcwind_2_uas_vas
+    >>> uas, vas = sfcwind_2_uas_vas(sfcWind=sfcWind_dataset, sfcWindfromdir=sfcWindfromdir_dataset)
     """
     # Converts the wind speed to m s-1
     sfcWind = convert_units_to(sfcWind, "m/s")  # noqa
@@ -345,10 +359,16 @@ def saturation_vapor_pressure(
     - "wmo08" or "WMO08", taken from :cite:t:`world_meteorological_organization_guide_2008`.
     - "its90" or "ITS90", taken from :cite:t:`hardy_its-90_1998`.
 
+    Examples
+    --------
+    >>> from xclim.indices import saturation_vapor_pressure
+    >>> rh = saturation_vapor_pressure(
+    ...     tas=tas_dataset, ice_thresh="0 degC", method="wmo08"
+    ... )
+
     References
     ----------
     :cite:cts:`goff_low-pressure_1946,hardy_its-90_1998,sonntag_important_1990,tetens_uber_1930,vomel_saturation_2016,world_meteorological_organization_guide_2008`
-
     """
     if ice_thresh is not None:
         thresh = convert_units_to(ice_thresh, "degK")
@@ -461,7 +481,7 @@ def relative_humidity(
     r"""Relative humidity.
 
     Compute relative humidity from temperature and either dewpoint temperature or specific humidity and pressure through
-    the saturation vapor pressure.
+    the saturation vapour pressure.
 
     Parameters
     ----------
@@ -477,7 +497,7 @@ def relative_humidity(
         Threshold temperature under which to switch to equations in reference to ice instead of water.
         If None (default) everything is computed with reference to water. Does nothing if 'method' is "bohren98".
     method : {"bohren98", "goffgratch46", "sonntag90", "tetens30", "wmo08"}
-        Which method to use, see notes of this function and of `saturation_vapor_pressure`.
+        Which method to use, see notes of this function and of :py:func:`saturation_vapor_pressure`.
     invalid_values : {"clip", "mask", None}
         What to do with values outside the 0-100 range. If "clip" (default), clips everything to 0 - 100,
         if "mask", replaces values outside the range by np.nan, and if `None`, does nothing.
@@ -492,9 +512,9 @@ def relative_humidity(
     In the following, let :math:`T`, :math:`T_d`, :math:`q` and :math:`p` be the temperature,
     the dew point temperature, the specific humidity and the air pressure.
 
-    **For the "bohren98" method** : This method does not use the saturation vapor pressure directly,
+    **For the "bohren98" method** : This method does not use the saturation vapour pressure directly,
     but rather uses an approximation of the ratio of :math:`\frac{e_{sat}(T_d)}{e_{sat}(T)}`.
-    With :math:`L` the enthalpy of vaporization of water and :math:`R_w` the gas constant for water vapor,
+    With :math:`L` the enthalpy of vaporization of water and :math:`R_w` the gas constant for water vapour,
     the relative humidity is computed as:
 
     .. math::
@@ -504,7 +524,7 @@ def relative_humidity(
     From :cite:t:`bohren_atmospheric_1998`, formula taken from :cite:t:`lawrence_relationship_2005`. :math:`L = 2.5\times 10^{-6}` J kg-1, exact for :math:`T = 273.15` K, is used.
 
     **Other methods**: With :math:`w`, :math:`w_{sat}`, :math:`e_{sat}` the mixing ratio,
-    the saturation mixing ratio and the saturation vapor pressure.
+    the saturation mixing ratio and the saturation vapour pressure.
     If the dewpoint temperature is given, relative humidity is computed as:
 
     .. math::
@@ -519,7 +539,20 @@ def relative_humidity(
         w = \frac{q}{1-q}
         w_{sat} = 0.622\frac{e_{sat}}{P - e_{sat}}
 
-    The methods differ by how :math:`e_{sat}` is computed. See the doc of :py:meth:`xclim.core.utils.saturation_vapor_pressure`.
+    The methods differ by how :math:`e_{sat}` is computed. See the doc of :py:func:`xclim.core.utils.saturation_vapor_pressure`.
+
+    Examples
+    --------
+    >>> from xclim.indices import relative_humidity
+    >>> rh = relative_humidity(
+    ...     tas=tas_dataset,
+    ...     tdps=tdps_dataset,
+    ...     huss=huss_dataset,
+    ...     ps=ps_dataset,
+    ...     ice_thresh="0 degC",
+    ...     method="wmo08",
+    ...     invalid_values="clip",
+    ... )
 
     References
     ----------
@@ -591,7 +624,7 @@ def specific_humidity(
         Threshold temperature under which to switch to equations in reference to ice instead of water.
         If None (default) everything is computed with reference to water.
     method : {"goffgratch46", "sonntag90", "tetens30", "wmo08"}
-        Which method to use, see notes of this function and of `saturation_vapor_pressure`.
+        Which method to use, see notes of this function and of :py:func:`saturation_vapor_pressure`.
     invalid_values : {"clip", "mask", None}
         What to do with values larger than the saturation specific humidity and lower than 0.
         If "clip" (default), clips everything to 0 - q_sat
@@ -607,7 +640,7 @@ def specific_humidity(
     -----
     In the following, let :math:`T`, :math:`hurs` (in %) and :math:`p` be the temperature,
     the relative humidity and the air pressure. With :math:`w`, :math:`w_{sat}`, :math:`e_{sat}` the mixing ratio,
-    the saturation mixing ratio and the saturation vapor pressure, specific humidity :math:`q` is computed as:
+    the saturation mixing ratio and the saturation vapour pressure, specific humidity :math:`q` is computed as:
 
     .. math::
 
@@ -615,13 +648,25 @@ def specific_humidity(
         w = w_{sat} * hurs / 100
         q = w / (1 + w)
 
-    The methods differ by how :math:`e_{sat}` is computed. See the doc of `xclim.core.utils.saturation_vapor_pressure`.
+    The methods differ by how :math:`e_{sat}` is computed. See :py:func:`xclim.core.utils.saturation_vapor_pressure`.
 
     If `invalid_values` is not `None`, the saturation specific humidity :math:`q_{sat}` is computed as:
 
     .. math::
 
         q_{sat} = w_{sat} / (1 + w_{sat})
+
+    Examples
+    --------
+    >>> from xclim.indices import specific_humidity
+    >>> rh = specific_humidity(
+    ...     tas=tas_dataset,
+    ...     hurs=hurs_dataset,
+    ...     ps=ps_dataset,
+    ...     ice_thresh="0 degC",
+    ...     method="wmo08",
+    ...     invalid_values="mask",
+    ... )
 
     References
     ----------
@@ -668,7 +713,7 @@ def specific_humidity_from_dewpoint(
     ps : xr.DataArray
         Air pressure array.
     method : {"goffgratch46", "sonntag90", "tetens30", "wmo08"}
-        Method to compute the saturation vapor pressure.
+        Method to compute the saturation vapour pressure.
 
     Returns
     -------
@@ -677,7 +722,7 @@ def specific_humidity_from_dewpoint(
 
     Notes
     -----
-    If :math:`e` is the water vapor pressure, and :math:`p` the total air pressure, then specific humidity is given by
+    If :math:`e` is the water vapour pressure, and :math:`p` the total air pressure, then specific humidity is given by
 
     .. math::
 
@@ -686,12 +731,21 @@ def specific_humidity_from_dewpoint(
     where :math:`m_w` and :math:`m_a` are the molecular weights of water and dry air respectively. This formula is often
     written with :math:`ε = m_w / m_a`, which simplifies to :math:`q = ε e / (p - e (1 - ε))`.
 
+    Examples
+    --------
+    >>> from xclim.indices import specific_humidity_from_dewpoint
+    >>> rh = specific_humidity_from_dewpoint(
+    ...     tdps=tas_dataset,
+    ...     ps=ps_dataset,
+    ...     method="wmo08",
+    ... )
+
     References
     ----------
     :cite:cts:`world_meteorological_organization_guide_2008`
     """
     ε = 0.6219569  # weight of water vs dry air []
-    e = saturation_vapor_pressure(tas=tdps, method=method)  # vapor pressure [Pa]
+    e = saturation_vapor_pressure(tas=tdps, method=method)  # vapour pressure [Pa]
     ps = convert_units_to(ps, "Pa")  # total air pressure
 
     q = ε * e / (ps - e * (1 - ε))
@@ -948,8 +1002,8 @@ def clausius_clapeyron_scaled_precipitation(
 
     Notes
     -----
-    The Clausius-Clapeyron equation for water vapor under typical atmospheric conditions states that the saturation
-    water vapor pressure :math:`e_s` changes approximately exponentially with temperature
+    The Clausius-Clapeyron equation for water vapour under typical atmospheric conditions states that the saturation
+    water vapour pressure :math:`e_s` changes approximately exponentially with temperature
 
     .. math::
         \frac{\mathrm{d}e_s(T)}{\mathrm{d}T} \approx 1.07 e_s(T)
@@ -1236,7 +1290,7 @@ def _utci(tas, sfcWind, dt, wvp):
     # tas -> Ta (surface temperature, °C)
     # sfcWind -> va (surface wind speed, m/s)
     # dt -> D_Tmrt (tas - t_mrt, K)
-    # wvp -> Pa (water vapor partial pressure, kPa)
+    # wvp -> Pa (water vapour partial pressure, kPa)
     return (
         tas
         + 6.07562052e-1
@@ -1520,8 +1574,8 @@ def universal_thermal_climate_index(
 
     Notes
     -----
-    The calculation uses water vapor partial pressure, which is derived from relative
-    humidity and saturation vapor pressure computed according to the ITS-90 equation.
+    The calculation uses water vapour partial pressure, which is derived from relative
+    humidity and saturation vapour pressure computed according to the ITS-90 equation.
 
     This code was inspired by the `pythermalcomfort` and `thermofeel` packages.
 

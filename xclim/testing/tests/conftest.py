@@ -499,9 +499,9 @@ def add_imports(xdoctest_namespace):
     """Add these imports into the doctests scope."""
     ns = xdoctest_namespace
     ns["np"] = np
-    ns["xr"] = xclim.testing
+    ns["xr"] = xclim.testing  # xr.open_dataset(...) -> xclim.testing.open_dataset(...)
     ns["xclim"] = xclim
-    ns["open_dataset"] = xclim.testing.open_dataset
+    ns["open_dataset"] = xclim.testing.open_dataset  # Needed for modules where xarray is imported as `xr`
 
 
 @pytest.fixture(autouse=True)
@@ -590,8 +590,8 @@ def official_indicators():
     return registry_cp
 
 
-@pytest.fixture(scope="session")
-def atmosds():
+@pytest.fixture(autouse=True, scope="session")
+def atmosds(xdoctest_namespace, tmp_path_factory):
     ds = xclim.testing.open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
     sfcWind, sfcWindfromdir = xclim.atmos.wind_speed_from_vector(ds=ds)
@@ -631,4 +631,17 @@ def atmosds():
         t90=t90,
         tx90=tx90,
     )
+
+    # Create a file in session scoped temporary directory
+    atmos_file = tmp_path_factory.mktemp("data").joinpath("atmosds.nc")
+    ds.to_netcdf(atmos_file)
+
+    # Give access to this file within xdoctest namespace
+    ns = xdoctest_namespace
+    ns["path_to_atmos_file"] = atmos_file
+
+    # Give access to dataset variables by name in xdoctest namespace
+    for variable in ds.data_vars:
+        ns[f"{variable}_dataset"] = ds.get(variable)
+
     return ds

@@ -402,9 +402,10 @@ def wind_values_outside_of_bounds(
     To gain access to the flag_array:
 
     >>> from xclim.core.dataflags import wind_values_outside_of_bounds
-    >>> ds = xr.open_dataset(path_to_tas_file)
     >>> ceiling, floor = "46 m s-1", "0 m s-1"
-    >>> flagged = wind_values_outside_of_bounds(ds.wsgsmax, upper=ceiling, lower=floor)
+    >>> flagged = wind_values_outside_of_bounds(
+    ...     sfcWind_dataset, upper=ceiling, lower=floor
+    ... )
     """
     lower, upper = convert_units_to(lower, da), convert_units_to(upper, da)
     unbounded_percentages = _sanitize_attrs((da < lower) | (da > upper))
@@ -524,8 +525,7 @@ def percentage_values_outside_of_bounds(da: xarray.DataArray) -> xarray.DataArra
     To gain access to the flag_array:
 
     >>> from xclim.core.dataflags import percentage_values_outside_of_bounds
-    >>> ds = xr.open_dataset(path_to_huss_file)  # doctest: +SKIP
-    >>> flagged = percentage_values_outside_of_bounds(ds.huss)  # doctest: +SKIP
+    >>> flagged = percentage_values_outside_of_bounds(huss_dataset)
     """
     unbounded_percentages = _sanitize_attrs((da < 0) | (da > 100))
     description = f"Percentage values beyond bounds found for {da.name}."
