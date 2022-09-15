@@ -11,7 +11,6 @@ from datetime import datetime
 from typing import Sequence
 from warnings import warn
 
-import dask
 import numpy as np
 import xarray as xr
 from numba import njit
@@ -66,6 +65,34 @@ def use_ufunc(
     return index == "first" and ufunc_1dim
 
 
+def _cumsum_reset_on_zero(
+    da: xr.DataArray,
+    dim: str = "time",
+) -> xr.DataArray:
+    """Compute the cumulative sum for each series of numbers separated by zero.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Input array.
+    dim : str
+      Dimension name along which the cumulative sum is taken.
+
+    Returns
+    -------
+    xr.DataArray
+      An array with the partial cumulative sums.
+    """
+    # Example: da == 100110111 -> cs_s == 100120123
+    cs = da.cumsum(dim=dim)  # cumulative sum  e.g. 111233456
+
+    cs2 = cs.where(da == 0)  # keep only numbers at positions of zeroes e.g. N11NN3NNN
+    cs2[{dim: 0}] = 0  # put a zero in front e.g. 011NN3NNN
+    cs2 = cs2.ffill(dim=dim)  # e.g. 011113333
+
+    return cs - cs2
+
+
 def rle(
     da: xr.DataArray,
     dim: str = "time",
@@ -88,83 +115,26 @@ def rle(
     xr.DataArray
       Values are 0 where da is False (out of runs).
     """
-    # max chunk based on dask's default (128 MiB) and da's dtype.
-    max_chunk = (
-        dask.utils.parse_bytes(dask.config.get("array.chunk-size")) / da.dtype.itemsize
-    )
-    use_dask = uses_dask(da)
+    da = da.astype(int)
 
-    # Ensure boolean
-    da = da.astype(bool)
-    if index == "last":
-        da = da.reindex({dim: da[dim][::-1]})
+    # "first" case: Algorithm is applied on inverted array and output is inverted back
+    if index == "first":
+        da = da[{dim: slice(None, None, -1)}]
 
-    n = len(da[dim])
-    # Need to chunk here to ensure the broadcasting is not made in memory
-    i = xr.DataArray(np.arange(da[dim].size), dims=dim)
-    if use_dask:
-        i = i.chunk({dim: -1})
+    # Get cumulative sum for each series of 1, e.g. da == 100110111 -> cs_s == 100120123
+    cs_s = _cumsum_reset_on_zero(da, dim)
 
-    ind, da = xr.broadcast(i, da)
-    if use_dask:
-        # Rechunk, but with broadcasted da
-        ind = ind.chunk(da.chunks)
+    # Keep total length of each series (and also keep 0's), e.g. 100120123 -> 100N20NN3
+    # Keep numbers with a 0 to the right and also the last number
+    cs_s = cs_s.where(da.shift({dim: -1}, fill_value=0) == 0)
+    out = cs_s.where(da == 1, 0)  # Reinsert 0's at their original place
 
-    b = ind.where(~da)  # find indexes where false
-    end1 = (
-        da.where(b[dim] == b[dim][-1], drop=True) * 0 + n
-    )  # add additional end value index (deal with end cases)
-    start1 = (
-        da.where(b[dim] == b[dim][0], drop=True) * 0 - 1
-    )  # add additional start index (deal with end cases)
-    b = xr.concat([start1, b, end1], dim)
+    # Inverting back if needed e.g. 100N20NN3 -> 3NN02N001. This is the output of
+    # `rle` for 111011001 with index == "first"
+    if index == "first":
+        out = out[{dim: slice(None, None, -1)}]
 
-    # Ensure bfill operates on entire (unchunked) time dimension
-    # Determine appropriate chunk size for other dims, follow logic from dask:
-    #   do not exceed 'array.chunk-size' unless array.slicing.split-large-chunks is False.
-    # Skip this if there's already only one chunk along dim
-    ndims = len(b.shape)
-    if (
-        use_dask
-        and len(b.chunks[b.get_axis_num(dim)]) > 1
-        and dask.config.get("array.slicing.split-large-chunks") is not False
-        and np.prod(da.data.chunksize) > max_chunk
-    ):
-        chunk_dim = b[dim].size
-        # divide extra dims into equal size
-        # Note : even if calculated chunksize > dim.size result will have chunk==dim.size
-        chunksize_ex_dims = None  # TODO: This raises type assignment errors in mypy
-        if ndims > 1:
-            if dask.config.get("array.slicing.split-large-chunks") is None:
-                warn(
-                    (
-                        f"xclim's run length requires a single chunk along {dim} "
-                        "and must rechunk the provided array. To control this behaviour, "
-                        "use the dask.config entries for `array.chunk-size` and "
-                        "`array.slicing.split-large-chunks`."
-                    ),
-                    category=dask.array.PerformanceWarning,
-                )
-            chunksize_ex_dims = np.round(
-                np.power(max_chunk / chunk_dim, 1 / (ndims - 1))
-            )
-        chunks = dict()
-        chunks[dim] = -1
-        for dd in b.dims:
-            if dd != dim:
-                chunks[dd] = chunksize_ex_dims
-        b = b.chunk(chunks)
-
-    # back-fill nans with first position after
-    z = b.bfill(dim=dim)
-
-    # calculate lengths
-    d = z.diff(dim=dim) - 1
-    d = d.where(d >= 0)
-    d = d.isel({dim: slice(None, -1)}).where(da, 0)
-    if index == "last":
-        d = d.reindex({dim: d[dim][::-1]})
-    return d
+    return out
 
 
 def rle_statistics(
@@ -196,10 +166,9 @@ def rle_statistics(
       If 'first' (default), the run length is indexed with the first element in the run.
       If 'last', with the last element in the run.
 
-
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [int]
       Length of runs of True values along dimension, according to the reducing function (float)
       If there are no runs (but the data is valid), returns 0.
     """
@@ -239,10 +208,9 @@ def longest_run(
       If 'first', the run length is indexed with the first element in the run.
       If 'last', with the last element in the run.
 
-
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [int]
       Length of the longest run of True values along dimension (int).
     """
     return rle_statistics(
@@ -279,7 +247,7 @@ def windowed_run_events(
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [int]
       Number of distinct runs of a minimum length (int).
     """
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
@@ -324,7 +292,7 @@ def windowed_run_count(
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [int]
       Total number of `True` values part of a consecutive runs of at least `window` long.
     """
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
@@ -376,19 +344,18 @@ def first_run(
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim)
 
     da = da.fillna(0)  # We expect a boolean array, but there could be NaNs nonetheless
-    if window == 1:
-        out = xr.where(da.any(dim=dim), da.argmax(dim=dim), np.NaN)
-    elif ufunc_1dim:
+    if ufunc_1dim:
         out = first_run_ufunc(x=da, window=window, dim=dim)
     else:
-        da = da.astype("int")
-        i = xr.DataArray(np.arange(da[dim].size), dims=dim)
-        ind = xr.broadcast(i, da)[0].transpose(*da.dims)
-        if uses_dask(da):
-            ind = ind.chunk(da.chunks)
-        wind_sum = da.rolling({dim: window}).sum(skipna=False)
-        out = ind.where(wind_sum >= window).min(dim=dim) - (window - 1)
-        # remove window - 1 as rolling result index is last element of the moving window
+        if window == 1:
+            d = da
+        else:
+            d = rle(da, dim=dim, index="first")
+            d = xr.where(d >= window, 1, -1)
+
+        dmax_ind = d.argmax(dim=dim)
+        # If `d` has no runs, dmax_ind will be 0: We must replace this with NaN
+        out = dmax_ind.where(dmax_ind != d.argmin(dim=dim))
 
     if coord:
         crd = da[dim]
@@ -448,7 +415,7 @@ def last_run(
 
 # TODO: Add window arg
 # TODO: Inverse window arg to tolerate holes?
-def run_bounds(mask: xr.DataArray, dim: str = "time", coord: bool | str | None = True):
+def run_bounds(mask: xr.DataArray, dim: str = "time", coord: bool | str = True):
     """Return the start and end dates of boolean runs along a dimension.
 
     Parameters
@@ -523,7 +490,7 @@ def keep_longest_run(da: xr.DataArray, dim: str = "time") -> xr.DataArray:
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [bool]
       Boolean array similar to da but with only one run, the (first) longest.
     """
     # Get run lengths
@@ -577,9 +544,9 @@ def season(
 
     If a date is given, the season start and end are forced to be on each side of this date. This means that
     even if the "real" season has been over for a long time, this is the date used in the length calculation.
-    Example : Length of the "warm season", where T > 25°C, with date = 1st August. Let's say
-    the temperature is over 25 for all june, but july and august have very cold temperatures.
-    Instead of returning 30 days (june), the function will return 61 days (july + june).
+    Example : Length of the "warm season", where T > 25°C, with date = 1st August. Let's say the temperature is over
+    25 for all June, but July and august have very cold temperatures. Instead of returning 30 days (June), the function
+    will return 61 days (July + June).
     """
     beg = first_run(da, window=window, dim=dim)
     # Invert the condition and mask all values after beginning
@@ -682,7 +649,7 @@ def season_length(
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [int]
       Length of the longest run of True values along a given dimension (inclusive of a given date)
       without breaks longer than a given length.
 
@@ -690,11 +657,11 @@ def season_length(
     -----
     The run can include holes of False or NaN values, so long as they do not exceed the window size.
 
-    If a date is given, the season end is forced to be later or equal to this date. This means that
+    If a date is given, the season start and end are forced to be on each side of this date. This means that
     even if the "real" season has been over for a long time, this is the date used in the length calculation.
-    Example : Length of the "warm season", where T > 25°C, with date = 1st August. Let's say
-    the temperature is over 25 for all june, but july and august have very cold temperatures.
-    Instead of returning 30 days (june), the function will return 61 days (july + june).
+    Example : Length of the "warm season", where T > 25°C, with date = 1st August. Let's say the temperature is over
+    25 for all June, but July and august have very cold temperatures. Instead of returning 30 days (June), the function
+    will return 61 days (July + June).
     """
     seas = season(da, window, date, dim, coord=False)
     return seas.length
@@ -882,7 +849,7 @@ def rle_1d(
     return _rle_1d(ia)
 
 
-def first_run_1d(arr: Sequence[int | float], window: int) -> int:
+def first_run_1d(arr: Sequence[int | float], window: int) -> int | np.nan:
     """Return the index of the first item of a run of at least a given length.
 
     Parameters
@@ -894,7 +861,7 @@ def first_run_1d(arr: Sequence[int | float], window: int) -> int:
 
     Returns
     -------
-    int
+    int or np.nan
       Index of first item in first valid run.
       Returns np.nan if there are no valid runs.
     """
@@ -915,7 +882,7 @@ def statistics_run_1d(arr: Sequence[bool], reducer: str, window: int = 1) -> int
       Input array (bool)
     reducer : {'mean', 'sum', 'min', 'max', 'std'}
       Reducing function name.
-    window: int
+    window : int
       Minimal length of runs to be included in the statistics
 
     Returns
@@ -961,10 +928,10 @@ def windowed_run_events_1d(arr: Sequence[bool], window: int) -> xr.DataArray:
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [int]
       Number of distinct runs of a minimum length.
     """
-    v, rl, pos = rle_1d(arr)
+    v, rl, _ = rle_1d(arr)
     return (v * rl >= window).sum()
 
 
@@ -1106,8 +1073,6 @@ def lazy_indexing(
 ) -> xr.DataArray:
     """Get values of `da` at indices `index` in a NaN-aware and lazy manner.
 
-    Two case
-
     Parameters
     ----------
     da : xr.DataArray
@@ -1115,8 +1080,7 @@ def lazy_indexing(
     index : xr.DataArray
       N-d integer indices, if da is not 1D, all dimensions of index must be in da
     dim : str, optional
-      Dimension along which to index, unused if `da` is 1D,
-      should not be present in `index`.
+      Dimension along which to index, unused if `da` is 1D, should not be present in `index`.
 
     Returns
     -------
@@ -1190,9 +1154,9 @@ def index_of_date(
     date : DayOfYearStr or DateStr, optional
       A string in the "yyyy-mm-dd" or "mm-dd" format.
       If None, returns default.
-    max_idxs: int, optional
+    max_idxs : int, optional
       Maximum number of returned indexes.
-    default: int
+    default : int
       Index to return if date is None.
 
     Raises
@@ -1238,10 +1202,10 @@ def suspicious_run_1d(
       Array of values to be parsed.
     window : int
       Minimum run length
-    op : {">", ">=", "==", "<", "<=", "eq", "gt", "lt", "gteq", "lteq"}, optional
+    op : {">", ">=", "==", "<", "<=", "eq", "gt", "lt", "gteq", "lteq", "ge", "le"}
       Operator for threshold comparison. Defaults to ">".
     thresh : float, optional
-      Threshold above which values are checked for identical values.
+      Threshold compared against which values are checked for identical values.
 
     Returns
     -------
@@ -1257,9 +1221,11 @@ def suspicious_run_1d(
             sus_runs = sus_runs & (v < thresh)
         elif op in {"==", "eq"}:
             sus_runs = sus_runs & (v == thresh)
-        elif op in {">=", "gteq"}:
+        elif op in {"!=", "ne"}:
+            sus_runs = sus_runs & (v != thresh)
+        elif op in {">=", "gteq", "ge"}:
             sus_runs = sus_runs & (v >= thresh)
-        elif op in {"<=", "lteq"}:
+        elif op in {"<=", "lteq", "le"}:
             sus_runs = sus_runs & (v <= thresh)
         else:
             raise NotImplementedError(f"{op}")
@@ -1289,10 +1255,10 @@ def suspicious_run(
       Dimension along which to check for runs (default: "time").
     window : int
       Minimum run length
-    thresh : float, optional
-      Threshold above which values are checked for identical values.
     op: {">", ">=", "==", "<", "<=", "eq", "gt", "lt", "gteq", "lteq"}
       Operator for threshold comparison, defaults to ">".
+    thresh : float, optional
+      Threshold above which values are checked for identical values.
 
     Returns
     -------

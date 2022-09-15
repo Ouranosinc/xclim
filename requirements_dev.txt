@@ -10,7 +10,8 @@ mypy
 nbval
 pre-commit>=2.9
 pydocstyle>=5.1.1
-pylint
+pybtex
+pylint <2.15
 pytest
 pytest-cov
 tokenize-rt
@@ -29,3 +30,4 @@ netCDF4
 pooch
 sphinx
 sphinx-rtd-theme
+sphinxcontrib-bibtex

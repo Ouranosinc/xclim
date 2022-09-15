@@ -67,7 +67,7 @@ class AttrFormatter(string.Formatter):
         Parameters
         ----------
         format_string: str
-        args
+        args: Any
         kwargs
 
         Returns
@@ -89,8 +89,8 @@ class AttrFormatter(string.Formatter):
         Examples
         --------
         Let's say the string "The dog is {adj1}, the goose is {adj2}" is to be translated
-        to french and that we know that possible values of `adj` are `nice` and `evil`.
-        In french, the genre of the noun changes the adjective (cat = chat is masculine,
+        to French and that we know that possible values of `adj` are `nice` and `evil`.
+        In French, the genre of the noun changes the adjective (cat = chat is masculine,
         and goose = oie is feminine) so we initialize the formatter as:
 
         >>> fmt = AttrFormatter(
@@ -132,7 +132,7 @@ class AttrFormatter(string.Formatter):
             raise ValueError(
                 f"No known mapping for string '{value}' with modifier '{format_spec}'"
             )
-        elif format_spec == "r":
+        if format_spec == "r":
             return super().format_field(value, "")
         return super().format_field(value, format_spec)
 
@@ -198,9 +198,9 @@ def parse_doc(doc: str) -> dict[str, str]:
       A dictionary with all parsed sections.
     """
     if doc is None:
-        return dict()
+        return {}
 
-    out = dict()
+    out = {}
 
     sections = re.split(r"(\w+\s?\w+)\n\s+-{3,50}", doc)  # obj.__doc__.split('\n\n')
     intro = sections.pop(0)
@@ -231,9 +231,8 @@ def parse_doc(doc: str) -> dict[str, str]:
 def _parse_parameters(section):
     """Parse the 'parameters' section of a docstring into a dictionary mapping the parameter name to its description and, potentially, to its set of choices.
 
-    The type annotation are not parsed, except for fixed sets of values
-    (listed as "{'a', 'b', 'c'}"). The annotation parsing only accepts
-    strings, numbers, `None` and `nan` (to represent `numpy.nan`).
+    The type annotation are not parsed, except for fixed sets of values (listed as "{'a', 'b', 'c'}").
+    The annotation parsing only accepts strings, numbers, `None` and `nan` (to represent `numpy.nan`).
     """
     curr_key = None
     params = {}
@@ -294,7 +293,8 @@ def merge_attributes(
     attribute : str
       The attribute to merge.
     inputs_list : Union[xr.DataArray, xr.Dataset]
-      The datasets or variables that were used to produce the new object. Inputs given that way will be prefixed by their `name` attribute if available.
+      The datasets or variables that were used to produce the new object.
+      Inputs given that way will be prefixed by their `name` attribute if available.
     new_line : str
       The character to put between each instance of the attributes. Usually, in CF-conventions,
       the history attributes uses '\\n' while cell_methods uses ' '.
@@ -362,7 +362,9 @@ def update_history(
     --------
     merge_attributes
     """
-    from xclim import __version__  # pylint: disable=cyclic-import
+    from xclim import (  # pylint: disable=cyclic-import,import-outside-toplevel
+        __version__,
+    )
 
     merged_history = merge_attributes(
         "history",
@@ -444,7 +446,7 @@ def gen_call_string(funcname: str, *args, **kwargs):
     Example
     -------
     >>> A = xr.DataArray([1], dims=("x",), name="A")
-    >>> gen_call_string("func", A, b=2.0, c="3", d=[4, 5, 6])
+    >>> gen_call_string("func", A, b=2.0, c="3", d=[10] * 100)
     "func(A, b=2.0, c='3', d=<list>)"
     """
     elements = []
@@ -455,7 +457,9 @@ def gen_call_string(funcname: str, *args, **kwargs):
         elif isinstance(val, (int, float, str, bool)) or val is None:
             rep = repr(val)
         else:
-            rep = f"<{type(val).__name__}>"
+            rep = repr(val)
+            if len(rep) > 50:
+                rep = f"<{type(val).__name__}>"
 
         if name is not None:
             rep = f"{name}={rep}"
@@ -587,21 +591,27 @@ def _gen_returns_section(cf_attrs: Sequence[dict[str, Any]]):
             section += f" ({attrs['standard_name']})"
         if "units" in attrs:
             section += f" [{attrs['units']}]"
-        section += "\n"
+        added_section = ""
         for key, attr in attrs.items():
             if key not in ["long_name", "standard_name", "units", "var_name"]:
                 if callable(attr):
                     attr = "<Dynamically generated string>"
-                section += f"  {key}: {attr}\n"
+                added_section += f" **{key}**: {attr};"
+        if added_section:
+            section = f"{section}, with additional attributes:{added_section[:-1]}"
     return section
 
 
-def generate_indicator_docstring(ind):
+def generate_indicator_docstring(ind) -> str:
     """Generate an indicator's docstring from keywords.
 
     Parameters
     ----------
     ind: Indicator instance
+
+    Returns
+    -------
+    str
     """
     header = f"{ind.title} (realm: {ind.realm})\n\n{ind.abstract}\n"
 

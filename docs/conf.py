@@ -20,6 +20,9 @@ import warnings
 from collections import OrderedDict
 
 import xarray
+from pybtex.plugin import register_plugin
+from pybtex.style.formatting.alpha import Style as AlphaStyle
+from pybtex.style.labels import BaseLabelStyle
 
 xarray.DataArray.__module__ = "xarray"
 xarray.Dataset.__module__ = "xarray"
@@ -103,6 +106,7 @@ extensions = [
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
     "autodoc_indicator",
+    "sphinxcontrib.bibtex",
 ]
 
 autosectionlabel_prefix_document = True
@@ -119,6 +123,9 @@ napoleon_use_rtype = False
 napoleon_use_param = False
 napoleon_use_ivar = True
 
+# see: https://sphinxcontrib-bibtex.readthedocs.io/en/latest/usage.html#unknown-target-name-when-using-footnote-citations-with-numpydoc
+numpydoc_class_members_toctree = False
+
 intersphinx_mapping = {
     "clisops": ("https://clisops.readthedocs.io/en/latest/", None),
     "flox": ("https://flox.readthedocs.io/en/latest/", None),
@@ -128,12 +135,35 @@ intersphinx_mapping = {
     "numpy": ("https://numpy.org/doc/stable/", None),
 }
 extlinks = {
-    "issue": ("https://github.com/Ouranosinc/xclim/issues/%s", "GH/"),
-    "pull": ("https://github.com/Ouranosinc/xclim/pull/%s", "PR/"),
-    "user": ("https://github.com/", "@"),
+    "issue": ("https://github.com/Ouranosinc/xclim/issues/%s", "GH/%s"),
+    "pull": ("https://github.com/Ouranosinc/xclim/pull/%s", "PR/%s"),
+    "user": ("https://github.com/%s", "@%s"),
 }
 
-nbsphinx_execute = "auto"
+
+# Bibliography stuff
+# a simple label style which uses the bibtex keys for labels
+class XCLabelStyle(BaseLabelStyle):
+    def format_labels(self, sorted_entries):
+        for entry in sorted_entries:
+            yield entry.key
+
+
+class XCStyle(AlphaStyle):
+
+    default_label_style = XCLabelStyle
+
+
+register_plugin("pybtex.style.formatting", "xcstyle", XCStyle)
+bibtex_bibfiles = ["references.bib"]
+bibtex_default_style = "xcstyle"
+bibtex_reference_style = "author_year"
+
+if os.getenv("SKIPNOTEBOOKS"):
+    warnings.warn("Not executing notebooks.")
+    nbsphinx_execute = "never"
+else:
+    nbsphinx_execute = "auto"
 nbsphinx_prolog = r"""
 {% set docname = env.doc2path(env.docname, base=None) %}
 
@@ -159,7 +189,7 @@ project = "xclim"
 copyright = (
     f"2018-{datetime.datetime.now().year}, Ouranos Inc., Travis Logan, and contributors"
 )
-author = "Travis Logan"
+author = "xclim Project Development Team"
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout
@@ -236,11 +266,6 @@ latex_engine = "pdflatex"
 latex_logo = "_static/_images/xclim-logo.png"
 
 latex_elements = {
-    "fontpkg": r"""
-\setmainfont{DejaVu Serif}
-\setsansfont{DejaVu Sans}
-\setmonofont{DejaVu Sans Mono}
-""",
     # The paper size ('letterpaper' or 'a4paper').
     "papersize": "letterpaper",
     # The font size ('10pt', '11pt' or '12pt').
@@ -248,6 +273,7 @@ latex_elements = {
     # Additional stuff for the LaTeX preamble.
     "preamble": r"""
 \renewcommand{\v}[1]{\mathbf{#1}}
+\nocite{*}
 """,
     # Latex figure (float) alignment
     "figure_align": "htbp",
@@ -257,7 +283,13 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass
 # [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "xclim.tex", "xclim Documentation", "Travis Logan", "manual")
+    (
+        master_doc,
+        "xclim.tex",
+        "xclim Documentation",
+        "xclim Project Development Team",
+        "manual",
+    )
 ]
 
 # -- Options for manual page output ------------------------------------

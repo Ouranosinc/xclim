@@ -5,9 +5,9 @@ Base Classes and Developer Tools
 """
 from __future__ import annotations
 
-from inspect import signature
+from inspect import _empty, signature
 from types import FunctionType
-from typing import Callable, Mapping, Sequence, Union
+from typing import Callable, Mapping, Sequence
 
 import dask.array as dsk
 import jsonpickle
@@ -26,9 +26,9 @@ class Parametrizable(dict):
 
     This object is _completely_ defined by the content of its internal dictionary, accessible through item access
     (`self['attr']`) or in `self.parameters`. When serializing and restoring this object, only members of that internal
-    dict are preserved. All other attributes set directly with `self.attr = value` will not be preserved upon serialization
-    and restoration of the object with `[json]pickle`.
-    dictionary. Other variables set with `self.var = data` will be lost in the serialization process.
+    dict are preserved. All other attributes set directly with `self.attr = value` will not be preserved upon
+    serialization and restoration of the object with `[json]pickle` dictionary. Other variables set with
+    `self.var = data` will be lost in the serialization process.
     This class is best serialized and restored with `jsonpickle`.
     """
 
@@ -48,7 +48,7 @@ class Parametrizable(dict):
             return self.__getitem__(attr)
         except KeyError as err:
             # Raise the proper error type for getattr
-            raise AttributeError(*err.args)
+            raise AttributeError(*err.args) from err
 
     @property
     def parameters(self):
@@ -57,11 +57,20 @@ class Parametrizable(dict):
 
     def __repr__(self):
         """Return a string representation."""
+        # Get default values from the init signature
+        defaults = {
+            # A default value of None could mean an empty mutable object
+            n: [p.default] if p.default is not None else [[], {}, set(), None]
+            for n, p in signature(self.__init__).parameters.items()
+            if p.default is not _empty
+        }
+        # The representation only includes the parameters with a value different from their default
+        # and those not explicitly excluded.
         params = ", ".join(
             [
                 f"{k}={repr(v)}"
                 for k, v in self.items()
-                if k not in self._repr_hide_params
+                if k not in self._repr_hide_params and v not in defaults.get(k, [])
             ]
         )
         return f"{self.__class__.__name__}({params})"
@@ -122,7 +131,7 @@ class Grouper(Parametrizable):
           Units are the sampling frequency of the data along the main dimension.
         add_dims : Optional[Union[Sequence[str], str]]
           Additional dimensions that should be reduced in grouping operations. This behaviour is also controlled
-          by the `main_only` parameter of the `apply` method. If any of these dimensions are absent from the dataarrays,
+          by the `main_only` parameter of the `apply` method. If any of these dimensions are absent from the DataArrays,
           they will be omitted.
         """
         if "." in group:
@@ -213,7 +222,7 @@ class Grouper(Parametrizable):
         If `Grouper.dim` is 'time', but 'prop' is None, the whole array is grouped together.
 
         When multiple arrays are passed, some of them can be grouped along the same group as self.
-        They are boadcasted, merged to the grouping dataset and regrouped in the output.
+        They are broadcasted, merged to the grouping dataset and regrouped in the output.
         """
         if das:
             from .utils import broadcast  # pylint: disable=cyclic-import
@@ -261,9 +270,9 @@ class Grouper(Parametrizable):
 
         Parameters
         ----------
-        da : Union[xr.DataArray, xr.Dataset]
+        da : xr.DataArray or xr.Dataset
           The input array/dataset for which the group index is returned.
-          It must have Grouper.dim as a coordinate.
+          It must have `Grouper.dim` as a coordinate.
         interp : bool, optional
           If True, the returned index can be used for interpolation. Only value for month
           grouping, where integer values represent the middle of the month, all other
@@ -309,7 +318,7 @@ class Grouper(Parametrizable):
 
     def apply(
         self,
-        func: FunctionType | str,
+        func: Callable | str,
         da: xr.DataArray | Mapping[str, xr.DataArray] | xr.Dataset,
         main_only: bool = False,
         **kwargs,
@@ -318,17 +327,18 @@ class Grouper(Parametrizable):
 
         Parameters
         ----------
-        func : Union[FunctionType, str]
+        func : Callable or str
           The function to apply to the groups, either a callable or a `xr.core.groupby.GroupBy` method name as a string.
           The function will be called as `func(group, dim=dims, **kwargs)`. See `main_only` for the behaviour of `dims`.
-        da : Union[xr.DataArray, Mapping[str, xr.DataArray], xr.Dataset]
-          The DataArray on which to apply the function. Multiple arrays can be passed through a dictionary. A dataset will be created before grouping.
+        da : xr.DataArray or Mapping[str, xr.DataArray] or xr.Dataset
+          The DataArray on which to apply the function. Multiple arrays can be passed through a dictionary.
+          A dataset will be created before grouping.
         main_only : bool
           Whether to call the function with the main dimension only (if True)
           or with all grouping dims (if False, default) (including the window and dimensions given through `add_dims`).
           The dimensions used are also written in the "group_compute_dims" attribute.
           If all the input arrays are missing one of the 'add_dims', it is silently omitted.
-        kwargs :
+        **kwargs
           Other keyword arguments to pass to the function.
 
         Returns
@@ -340,7 +350,8 @@ class Grouper(Parametrizable):
 
           - The output is sorted along the main dimension.
           - The output is rechunked to match the chunks on the input
-            If multiple inputs with differing chunking were given as inputs, the chunking with the smallest number of chunks is used.
+            If multiple inputs with differing chunking were given as inputs,
+            the chunking with the smallest number of chunks is used.
 
           If the function reduces the array:
 
@@ -350,9 +361,10 @@ class Grouper(Parametrizable):
 
         Notes
         -----
-        For the special case where a Dataset is returned, but only some of its variable where reduced by the grouping, xarray's `GroupBy.map` will
-        broadcast everything back to the ungrouped dimensions. To overcome this issue, function may add a "_group_apply_reshape" attribute set to
-        True on the variables that should be reduced and these will be re-grouped by calling `da.groupby(self.name).first()`.
+        For the special case where a Dataset is returned, but only some of its variable where reduced by the grouping,
+        xarray's `GroupBy.map` will broadcast everything back to the ungrouped dimensions. To overcome this issue,
+        function may add a "_group_apply_reshape" attribute set to `True` on the variables that should be reduced and
+        these will be re-grouped by calling `da.groupby(self.name).first()`.
         """
         if isinstance(da, (dict, xr.Dataset)):
             grpd = self.group(main_only=main_only, **da)
@@ -362,7 +374,7 @@ class Grouper(Parametrizable):
                     for d in da.values()
                     if uses_dask(d) and self.dim in d.dims
                 ]
-                or [[]],  # pass [[]] if no dataarrays have chunks so min doesnt fail
+                or [[]],  # pass [[]] if no DataArrays have chunks so min doesn't fail
                 key=len,
             )
         else:
@@ -385,7 +397,7 @@ class Grouper(Parametrizable):
         else:
             out = grpd.map(func, dim=dims, **kwargs)
 
-        # Case where the function wants to return more than one variables
+        # Case where the function wants to return more than one variable.
         # and that some have grouped dims and other have the same dimensions as the input.
         # In that specific case, groupby broadcasts everything back to the input's dim, copying the grouped data.
         if isinstance(out, xr.Dataset):
@@ -426,9 +438,10 @@ def parse_group(func: Callable, kwargs=None, allow_only=None) -> Callable:
     """Parse the kwargs given to a function to set the `group` arg with a Grouper object.
 
     This function can be used as a decorator, in which case the parsing and updating of the kwargs is done at call time.
-    It can also be called with a function from which extract the default group and kwargs to update, in which case it returns the updated kwargs.
+    It can also be called with a function from which extract the default group and kwargs to update,
+    in which case it returns the updated kwargs.
 
-    If allow_only is given, an exception is raised when the parsed group is not within that list.
+    If `allow_only` is given, an exception is raised when the parsed group is not within that list.
     """
     sig = signature(func)
     if "group" in sig.parameters:
@@ -498,7 +511,7 @@ def map_blocks(reduces: Sequence[str] = None, **outvars):
     ----------
     reduces : sequence of strings
       Name of the dimensions that are removed by the function.
-    outvars
+    **outvars
       Mapping from variable names in the output to their *new* dimensions.
       The placeholders `Grouper.PROP`, `Grouper.DIM` and `Grouper.ADD_DIMS` can be used to signify
       `group.prop`,`group.dim` and `group.add_dims` respectively.
@@ -511,7 +524,7 @@ def map_blocks(reduces: Sequence[str] = None, **outvars):
         out = seqs[0].copy()
         for seq in seqs[1:]:
             last_index = 0
-            for i, e in enumerate(seq):
+            for e in seq:
                 if e in out:
                     indx = out.index(e)
                     if indx < last_index:
@@ -698,7 +711,7 @@ def map_groups(reduces: Sequence[str] = None, main_only: bool = False, **out_var
     value of `reduces` is changed.
 
     The decorated function must have the signature: ``func(ds, dim, **kwargs)``.
-    Where ds is a DataAray or Dataset, dim is the group.dim (and add_dims). The `group` argument
+    Where ds is a DataAray or Dataset, dim is the `group.dim` (and add_dims). The `group` argument
     is stripped from the kwargs, but must evidently be provided in the call.
 
     Parameters
@@ -708,7 +721,7 @@ def map_groups(reduces: Sequence[str] = None, main_only: bool = False, **out_var
       and [Grouper.DIM] if main_only is True. See :py:func:`map_blocks`.
     main_only: bool
       Same as for :py:meth:`Grouper.apply`.
-    out_vars
+    **out_vars
       Mapping from variable names in the output to their *new* dimensions.
       The placeholders `Grouper.PROP`, `Grouper.DIM` and `Grouper.ADD_DIMS` can be used to signify
       `group.prop`,`group.dim` and `group.add_dims` respectively.
@@ -717,7 +730,7 @@ def map_groups(reduces: Sequence[str] = None, main_only: bool = False, **out_var
 
     See Also
     --------
-    :py:func:`map_blocks`.
+    map_blocks
     """
     def_reduces = [Grouper.DIM]
     if not main_only:

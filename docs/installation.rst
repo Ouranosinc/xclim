@@ -17,8 +17,8 @@ This is the preferred method to install xclim, as it will always install the mos
 If you don't have `pip`_ installed, this `Python installation guide`_ can guide
 you through the process.
 
-.. _pip: https://pip.pypa.io
-.. _Python installation guide: http://docs.python-guide.org/en/latest/starting/installation/
+.. _pip: https://pip.pypa.io/
+.. _Python installation guide: https://docs.python-guide.org/starting/installation/
 .. _OSGeo4W installer: https://trac.osgeo.org/osgeo4w/
 
 Anaconda release
@@ -31,6 +31,8 @@ To install the xclim Anaconda binary, run this command in your terminal:
 .. code-block:: console
 
     $ conda install -c conda-forge xclim
+
+.. _extra-dependencies:
 
 Extra dependencies
 ------------------
@@ -48,13 +50,13 @@ For convenience, these libraries can be installed alongside `xclim` using the fo
     # Or, alternatively:
     $ make upstream
 
-.. _flox: https://github.com/dcherian/flox
+.. _flox: https://github.com/xarray-contrib/flox
 .. _clisops: https://github.com/roocs/clisops
 
-Another optional library is `SBCK`_, which provides experimental adjustment methods to extend
-:ref:`xclim.sdba <Bias adjustment and downscaling algorithms>`. It can't be installed directly
-from pip or conda and has one complex dependency : `Eigen`_. Please refer to Eigen's and SBCK's
-docs for the recommended installation instructions. However, Eigen is available on conda, so one can do:
+Another optional library is `SBCK`_, which provides experimental adjustment methods to extend :doc:`xclim.sdba <sdba>`.
+It can't be installed directly from pip or conda and has one complex dependency : `Eigen`_.
+Please refer to Eigen's and SBCK's docs for the recommended installation instructions.
+However, Eigen is available on conda, so one can do:
 
 .. code-block::
 

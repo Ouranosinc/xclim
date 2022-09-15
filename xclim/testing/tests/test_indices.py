@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 # Tests for `xclim` package.
 #
-# We want to tests multiple things here:
+# We want to test multiple things here:
 #  - that data results are correct
 #  - that metadata is correct and complete
 #  - that missing data are handled appropriately
@@ -251,8 +250,10 @@ class TestAgroclimaticIndices:
             attrs=dict(units="K"),
         )
 
-        lat = xr.DataArray(45, name="lat", attrs={"units": "degrees_north"})
-        high_lat = lat.copy(data=48)
+        lat = xr.DataArray(
+            [35, 45], dims=("lat",), name="lat", attrs={"units": "degrees_north"}
+        )
+        high_lat = xr.DataArray(48, name="lat", attrs={"units": "degrees_north"})
 
         bedd = xci.biologically_effective_degree_days(
             tasmin=tn,
@@ -270,6 +271,9 @@ class TestAgroclimaticIndices:
             end_date=end_date,  # noqa
             freq="YS",
         )
+        if method != "icclim":
+            bedd = bedd.isel(lat=1)
+            bedd_hot = bedd_hot.isel(lat=1)
         bedd_high_lat = xci.biologically_effective_degree_days(
             tasmin=tn,
             tasmax=tx,
@@ -306,7 +310,7 @@ class TestAgroclimaticIndices:
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
         ds = ds.rename(dict(tas="tasmin"))
 
-        cni = xci.cool_night_index(tasmin=ds.tasmin, lat=ds.lat)
+        cni = xci.cool_night_index(tasmin=ds.tasmin)  # find latitude implicitly
         tasmin = convert_units_to(ds.tasmin, "degC")
 
         cni_nh = cni.where(cni.lat >= 0, drop=True)
@@ -317,6 +321,12 @@ class TestAgroclimaticIndices:
 
         np.testing.assert_array_equal(cni_nh, tn_nh)
         np.testing.assert_array_equal(cni_sh, tn_sh)
+
+        # Treat all areas as northern hemisphere
+        cni_all_nh = xci.cool_night_index(tasmin=ds.tasmin, lat="north")
+        tn_all_nh = tasmin.where(tasmin.time.dt.month == 9, drop=True)
+
+        np.testing.assert_array_equal(cni_all_nh, tn_all_nh)
 
     @pytest.mark.parametrize(
         "lat_factor, values",
@@ -329,9 +339,8 @@ class TestAgroclimaticIndices:
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
         ds = ds.drop_isel(time=0)  # drop time=2006/12 for one year of data
 
-        lti = xci.latitude_temperature_index(
-            tas=ds.tas, lat=ds.lat, lat_factor=lat_factor
-        )
+        # find lat implicitly
+        lti = xci.latitude_temperature_index(tas=ds.tas, lat_factor=lat_factor)
         assert lti.where(abs(lti.lat) > lat_factor).sum() == 0
 
         lti = lti.where(abs(lti.lat) <= lat_factor, drop=True).where(
@@ -361,10 +370,10 @@ class TestAgroclimaticIndices:
         )
         tasmax.attrs["units"], tas.attrs["units"] = "K", "K"
 
+        # find lat implicitly
         hi = xci.huglin_index(
             tasmax=tasmax,
             tas=tas,
-            lat=ds.lat,
             method=method,
             end_date=end_date,  # noqa
         )
@@ -465,7 +474,7 @@ class TestAgroclimaticIndices:
         # bounds of ± 3.09 correspond to 0.999 and 0.001 probabilities. SPI indices outside
         # [-3.09, 3.09] might be non-statistically relevant. In `climate_indices` the SPI
         # index is clipped outside this region of value. In the values chosen above,
-        # this doesn't play role, but let's clip it anyways to avoid future problems.
+        # this doesn't play role, but let's clip it anyway to avoid future problems.
         # The last few values in time are tested
         spi = spi.clip(-3.09, 3.09)
 
@@ -517,7 +526,14 @@ class TestAgroclimaticIndices:
 
 
 class TestDailyFreezeThawCycles:
-    def test_simple(self, tasmin_series, tasmax_series):
+    @pytest.mark.parametrize(
+        "thresholds",
+        [
+            dict(),
+            dict(thresh_tasmax="0 degC", thresh_tasmin="0 degC"),
+        ],
+    )
+    def test_simple(self, tasmin_series, tasmax_series, thresholds):
         mn = np.zeros(365)
         mx = np.zeros(365)
 
@@ -531,26 +547,8 @@ class TestDailyFreezeThawCycles:
 
         mn = tasmin_series(mn + K2C)
         mx = tasmax_series(mx + K2C)
-        out = xci.daily_freezethaw_cycles(mn, mx, freq="M")
-        np.testing.assert_array_equal(out[:2], [5, 1])
-        np.testing.assert_array_equal(out[2:], 0)
-
-    def test_zeroed_thresholds(self, tasmin_series, tasmax_series):
-        mn = np.zeros(365)
-        mx = np.zeros(365)
-
-        # 5 days in 1st month
-        mn[10:20] -= 1
-        mx[10:15] += 1
-
-        # 1 day in 2nd month
-        mn[40:44] += [1, 1, -1, -1]
-        mx[40:44] += [1, -1, 1, -1]
-
-        mn = tasmin_series(mn + K2C)
-        mx = tasmax_series(mx + K2C)
-        out = xci.daily_freezethaw_cycles(
-            mn, mx, thresh_tasmax="0 degC", thresh_tasmin="0 degC", freq="M"
+        out = xci.multiday_temperature_swing(
+            mn, mx, **thresholds, op="sum", window=1, freq="M"
         )
         np.testing.assert_array_equal(out[:2], [5, 1])
         np.testing.assert_array_equal(out[2:], 0)
@@ -1090,7 +1088,7 @@ class TestTnDays:
 
     def test_below_simple(self, tasmin_series):
         a = np.zeros(365)
-        a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 above 30
+        a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 below -30
         mn = tasmin_series(a + K2C)
 
         out = xci.tn_days_below(mn, thresh="-10 C")
@@ -1099,6 +1097,29 @@ class TestTnDays:
         out = xci.tn_days_below(mn, thresh="-30 C")
         np.testing.assert_array_equal(out[:1], [2])
         np.testing.assert_array_equal(out[1:], [0])
+
+    def test_operator(self, tasmin_series):
+        a = np.zeros(365)
+        a[:6] += [27, 28, 29, 30, 31, 32]  # 3 at or above 30
+        mn = tasmin_series(a + K2C)
+
+        out = xci.tn_days_above(mn, thresh="30 C", op="gteq")
+        np.testing.assert_array_equal(out[:1], [3])
+        np.testing.assert_array_equal(out[1:], [0])
+
+        with pytest.raises(ValueError):
+            xci.tn_days_above(mn, thresh="30 C", op="lteq")
+
+        a = np.zeros(365)
+        a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 at or below -31
+        mn = tasmin_series(a + K2C)
+
+        out = xci.tn_days_below(mn, thresh="-31 C", op="<=")
+        np.testing.assert_array_equal(out[:1], [2])
+        np.testing.assert_array_equal(out[1:], [0])
+
+        with pytest.raises(ValueError):
+            xci.tn_days_below(mn, thresh="30 C", op=">=")
 
 
 class TestTgDays:
@@ -1113,7 +1134,7 @@ class TestTgDays:
 
     def test_below_simple(self, tas_series):
         a = np.zeros(365)
-        a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 above 30
+        a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 below -30
         mg = tas_series(a + K2C)
 
         out = xci.tg_days_below(mg, thresh="-10 C")
@@ -1122,6 +1143,29 @@ class TestTgDays:
         out = xci.tg_days_below(mg, thresh="-30 C")
         np.testing.assert_array_equal(out[:1], [2])
         np.testing.assert_array_equal(out[1:], [0])
+
+    def test_operators(self, tas_series):
+        a = np.zeros(365)
+        a[:6] += [27, 28, 29, 30, 31, 32]  # 4 at or above 29
+        mg = tas_series(a + K2C)
+
+        out = xci.tn_days_above(mg, thresh="29 C", op=">=")
+        np.testing.assert_array_equal(out[:1], [4])
+        np.testing.assert_array_equal(out[1:], [0])
+
+        with pytest.raises(ValueError):
+            xci.tn_days_above(mg, thresh="30 C", op="<=")
+
+        a = np.zeros(365)
+        a[:6] -= [27, 28, 29, 30, 31, 32]  # 3 at or below -30
+        mg = tas_series(a + K2C)
+
+        out = xci.tn_days_below(mg, thresh="-30 C", op="lteq")
+        np.testing.assert_array_equal(out[:1], [3])
+        np.testing.assert_array_equal(out[1:], [0])
+
+        with pytest.raises(ValueError):
+            xci.tn_days_below(mg, thresh="30 C", op="gt")
 
 
 class TestTxDays:
@@ -1136,7 +1180,7 @@ class TestTxDays:
 
     def test_below_simple(self, tasmax_series):
         a = np.zeros(365)
-        a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 above 30
+        a[:6] -= [27, 28, 29, 30, 31, 32]  # 2 below -30
         mx = tasmax_series(a + K2C)
 
         out = xci.tx_days_below(mx, thresh="-10 C")
@@ -1145,6 +1189,29 @@ class TestTxDays:
         out = xci.tx_days_below(mx, thresh="-30 C")
         np.testing.assert_array_equal(out[:1], [2])
         np.testing.assert_array_equal(out[1:], [0])
+
+    def test_operators(self, tas_series):
+        a = np.zeros(365)
+        a[:6] += [27, 28, 29, 30, 31, 32]  # 5 at or above 28
+        mg = tas_series(a + K2C)
+
+        out = xci.tn_days_above(mg, thresh="28 C", op=">=")
+        np.testing.assert_array_equal(out[:1], [5])
+        np.testing.assert_array_equal(out[1:], [0])
+
+        with pytest.raises(ValueError):
+            xci.tn_days_above(mg, thresh="20 C", op="lt")
+
+        a = np.zeros(365)
+        a[:6] -= [27, 28, 29, 30, 31, 32]  # 5 at or below -28
+        mg = tas_series(a + K2C)
+
+        out = xci.tn_days_below(mg, thresh="-28 C", op="<=")
+        np.testing.assert_array_equal(out[:1], [5])
+        np.testing.assert_array_equal(out[1:], [0])
+
+        with pytest.raises(ValueError):
+            xci.tn_days_below(mg, thresh="-27 C", op="gt")
 
 
 class TestJetStreamIndices:
@@ -1198,7 +1265,7 @@ class TestJetStreamIndices:
         np.testing.assert_equal(jetlat.max().data, 16.0)
         np.testing.assert_equal(
             jetstr.max().data, 0.999276877412766
-        )  # manually checked (sum of lanzcos weights for 61 day window and 0.1 cutoff)
+        )  # manually checked (sum of lanzcos weights for 61-day window and 0.1 cutoff)
         assert jetlat.units == da_ua.cf["latitude"].units
         assert jetstr.units == da_ua.units
 
@@ -1566,14 +1633,30 @@ class TestTgMaxTgMinIndices:
             tasmax_series(temp_values + 5 + K2C),
             tasmin_series(temp_values - 5 + K2C),
         )
-        ft = xci.daily_freezethaw_cycles(tasmin, tasmax, freq="YS")
+        ft = xci.multiday_temperature_swing(
+            tasmin,
+            tasmax,
+            thresh_tasmin="0 degC",
+            thresh_tasmax="0 degC",
+            op="sum",
+            window=1,
+            freq="YS",
+        )
 
         np.testing.assert_array_equal([np.sum(ft)], [365])
 
     def test_static_freeze_thaw_cycles(self, tasmin_series, tasmax_series):
         tasmin, tasmax = self.static_tmin_tmax_setup(tasmin_series, tasmax_series)
         tasmin -= 15
-        ft = xci.daily_freezethaw_cycles(tasmin, tasmax, freq="YS")
+        ft = xci.multiday_temperature_swing(
+            tasmin,
+            tasmax,
+            thresh_tasmin="0 degC",
+            thresh_tasmax="0 degC",
+            op="sum",
+            window=1,
+            freq="YS",
+        )
 
         np.testing.assert_array_equal([np.sum(ft)], [4])
 
@@ -1764,17 +1847,20 @@ class TestTempWetDryPrecipWarmColdQuarter:
 
 
 class TestTempWarmestColdestQuarter:
-    def test_simple(self, tas_series):
+    @staticmethod
+    def get_data(tas_series, units="K"):
         a = np.zeros(365 * 2)
-        a = tas_series(a + K2C, start="1971-01-01")
+        a = tas_series(
+            a + (K2C if units == "K" else 0), start="1971-01-01", units=units
+        )
         a[(a.time.dt.season == "JJA") & (a.time.dt.year == 1971)] += 22
         a[(a.time.dt.season == "SON") & (a.time.dt.year == 1972)] += 25
+        return a
 
+    def test_simple(self, tas_series):
+        a = self.get_data(tas_series)
         a[(a.time.dt.season == "DJF") & (a.time.dt.year == 1971)] += -15
         a[(a.time.dt.season == "MAM") & (a.time.dt.year == 1972)] += -10
-
-        with pytest.raises(KeyError):
-            xci.tg_mean_warmcold_quarter(a, op="toto")
 
         out = xci.tg_mean_warmcold_quarter(a, op="warmest")
         np.testing.assert_array_almost_equal(out, [294.66648352, 298.15])
@@ -1790,12 +1876,8 @@ class TestTempWarmestColdestQuarter:
         out = xci.tg_mean_warmcold_quarter(t_month, op="coldest")
         np.testing.assert_array_almost_equal(out, [263.15, 263.15])
 
-    def test_Celsius(self, tas_series):
-        a = np.zeros(365 * 2)
-        a = tas_series(a, start="1971-01-01")
-        a.attrs["units"] = "°C"
-        a[(a.time.dt.season == "JJA") & (a.time.dt.year == 1971)] += 22
-        a[(a.time.dt.season == "SON") & (a.time.dt.year == 1972)] += 25
+    def test_celsius(self, tas_series):
+        a = self.get_data(tas_series, units="°C")
 
         a[
             (a.time.dt.month >= 1) & (a.time.dt.month <= 3) & (a.time.dt.year == 1971)
@@ -1807,6 +1889,12 @@ class TestTempWarmestColdestQuarter:
 
         out = xci.tg_mean_warmcold_quarter(a, op="coldest")
         np.testing.assert_array_almost_equal(out, [-14.835165, -9.89011])
+
+    def test_exceptions(self, tas_series):
+        a = self.get_data(tas_series)
+
+        with pytest.raises(NotImplementedError):
+            xci.tg_mean_warmcold_quarter(a, op="toto")
 
 
 class TestPrcptot:
@@ -1948,14 +2036,26 @@ class TestWindIndices:
 class TestTxTnDaysAbove:
     def test_1d(self, tasmax_series, tasmin_series):
         tn = tasmin_series(np.asarray([20, 23, 23, 23, 23, 22, 23, 23, 23, 23]) + K2C)
-        tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
+        tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 30, 31, 31, 31]) + K2C)
 
         wmmtf = xci.tx_tn_days_above(tn, tx)
-        np.testing.assert_allclose(wmmtf.values, [7])
+        np.testing.assert_allclose(wmmtf.values, [6])
+
+        # No days valid
         wmmtf = xci.tx_tn_days_above(tn, tx, thresh_tasmax="50 C")
         np.testing.assert_allclose(wmmtf.values, [0])
+
+        # All days valid
         wmmtf = xci.tx_tn_days_above(tn, tx, thresh_tasmax="0 C", thresh_tasmin="0 C")
         np.testing.assert_allclose(wmmtf.values, [10])
+
+        # One day in each series is exactly at threshold
+        wmmtf = xci.tx_tn_days_above(tn, tx, op=">=")
+        np.testing.assert_allclose(wmmtf.values, [8])
+
+        # Forbidden comparison operation
+        with pytest.raises(ValueError):
+            xci.tx_tn_days_above(tn, tx, op="<")
 
 
 class TestWarmSpellDurationIndex:
@@ -1990,7 +2090,7 @@ class TestWinterRainRatio:
         np.testing.assert_almost_equal(out.isel(dim0=0), [10.0 / (31 + 31 + 28), 0])
 
 
-# I'd like to parametrize some of these tests so we don't have to write individual tests for each indicator.
+# I'd like to parametrize some of these tests, so that we don't have to write individual tests for each indicator.
 class TestTG:
     @pytest.mark.parametrize(
         "ind,exp",
@@ -2542,7 +2642,8 @@ class TestPotentialEvapotranspiration:
             attrs={"units": "degC"},
         )
 
-        out = xci.potential_evapotranspiration(tas=tm, lat=lat, method="TW48")
+        # find lat implicitly
+        out = xci.potential_evapotranspiration(tas=tm, method="TW48")
         np.testing.assert_allclose(out[0, 1], [42.7619242 / (86400 * 30)], rtol=1e-1)
 
     def test_mcguinnessbordne(self, tasmin_series, tasmax_series, lat_series):
@@ -2552,6 +2653,44 @@ class TestPotentialEvapotranspiration:
 
         out = xci.potential_evapotranspiration(tn, tx, lat=lat, method="MB05")
         np.testing.assert_allclose(out[0, 2], [2.78253138816 / 86400], rtol=1e-2)
+
+    def test_allen(
+        self,
+        tasmin_series,
+        tasmax_series,
+        tas_series,
+        lat_series,
+        hurs_series,
+        rsds_series,
+        rsus_series,
+        rlds_series,
+        rlus_series,
+        sfcWind_series,
+    ):
+        lat = lat_series([45])
+        tn = tasmin_series(np.array([0, 5, 10]) + 273.15).expand_dims(lat=lat)
+        tx = tasmax_series(np.array([10, 15, 20]) + 273.15).expand_dims(lat=lat)
+        tm = tas_series(np.array([5, 10, 15]) + 273.15).expand_dims(lat=lat)
+        hurs = hurs_series(np.array([0.8, 0.7, 0.73])).expand_dims(lat=lat)
+        rsds = rsds_series(np.array([43.09, 43.57, 70.20])).expand_dims(lat=lat)
+        rsus = rsus_series(np.array([12.51, 14.46, 20.36])).expand_dims(lat=lat)
+        rlds = rlds_series(np.array([293.65, 228.96, 275.40])).expand_dims(lat=lat)
+        rlus = rlus_series(np.array([311.39, 280.50, 311.30])).expand_dims(lat=lat)
+        sfcwind = sfcWind_series(np.array([14.11, 15.27, 10.70])).expand_dims(lat=lat)
+        out = xci.potential_evapotranspiration(
+            tn,
+            tx,
+            tm,
+            lat=lat,
+            hurs=hurs,
+            rsds=rsds,
+            rsus=rsus,
+            rlds=rlds,
+            rlus=rlus,
+            sfcwind=sfcwind,
+            method="FAO_PM98",
+        )
+        np.testing.assert_allclose(out[0, 2], [1.208832768 / 86400], rtol=1e-2)
 
 
 def test_water_budget_from_tas(pr_series, tasmin_series, tasmax_series, lat_series):
@@ -2581,7 +2720,8 @@ def test_water_budget_from_tas(pr_series, tasmin_series, tasmax_series, lat_seri
         attrs={"units": "mm/day"},
     )
 
-    out = xci.water_budget(prm, tas=tm, lat=lat, method="TW48")
+    # find lat implicitly
+    out = xci.water_budget(prm, tas=tm, method="TW48")
     np.testing.assert_allclose(out[1, 0], [8.5746025 / 86400], rtol=2e-1)
 
 

@@ -6,7 +6,7 @@ Missing values identification
 Indicators may use different criteria to determine whether a computed indicator value should be
 considered missing. In some cases, the presence of any missing value in the input time series should result in a
 missing indicator value for that period. In other cases, a minimum number of valid values or a percentage of missing
-values should be enforced. The World Meteorological Organisation  (WMO) suggests criteria based on the number of
+values should be enforced. The World Meteorological Organisation (WMO) suggests criteria based on the number of
 consecutive and overall missing values per month.
 
 `xclim` has a registry of missing value detection algorithms that can be extended by users to customize the behavior
@@ -102,14 +102,14 @@ class MissingBase:
 
         Parameters
         ----------
-        da : xr.DataArray
+        da: xr.DataArray
           Input data.
-        freq : str
+        freq: str
           Resampling frequency defining the periods defined in
           https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
-        src_timestep : {"D", "H"}
+        src_timestep: {"D", "H"}
           Expected input frequency.
-        indexer : {dim: indexer}, optional
+        indexer: {dim: indexer}, optional
           Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
           values, month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given,
           all values are considered.
@@ -127,15 +127,15 @@ class MissingBase:
         # This function can probably be made simpler once CFPeriodIndex is implemented.
         null = self.is_null(da, freq, **indexer)
 
-        pfreq, anchor = self.split_freq(freq)
+        p_freq, _ = self.split_freq(freq)
 
         c = null.sum(dim="time")
 
         # Otherwise, simply use the start and end dates to find the expected number of days.
-        if pfreq.endswith("S"):
+        if p_freq.endswith("S"):
             start_time = c.indexes["time"]
             end_time = start_time.shift(1, freq=freq)
-        elif pfreq:
+        elif p_freq:
             end_time = c.indexes["time"]
             start_time = end_time.shift(-1, freq=freq)
         else:
@@ -197,13 +197,13 @@ class MissingAny(MissingBase):
 
     Parameters
     ----------
-    da : DataArray
+    da: DataArray
       Input array.
-    freq : str
+    freq: str
       Resampling frequency.
-    src_timestep : {"D", "H", "M"}
+    src_timestep: {"D", "H", "M"}
       Expected input frequency.
-    indexer : {dim: indexer, }, optional
+    indexer: {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
       values,
       month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
@@ -236,17 +236,17 @@ class MissingWMO(MissingAny):
 
     Parameters
     ----------
-    da : DataArray
+    da: DataArray
       Input array.
-    freq : str
+    freq: str
       Resampling frequency.
-    nm : int
+    nm: int
       Number of missing values per month that should not be exceeded.
-    nc : int
+    nc: int
       Number of consecutive missing values per month that should not be exceeded.
-    src_timestep : {"D"}
+    src_timestep: {"D"}
       Expected input frequency. Only daily values are supported.
-    indexer : {dim: indexer, }, optional
+    indexer: {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
       values,
@@ -255,7 +255,7 @@ class MissingWMO(MissingAny):
 
     Returns
     -------
-    DataArray
+    xr.DataArray
       A boolean array set to True if period has missing values.
 
     Notes
@@ -290,7 +290,9 @@ class MissingWMO(MissingAny):
         return MissingAny(mda, freq, "M", **indexer)()
 
     def is_missing(self, null, count, nm=11, nc=5):
-        from xclim.indices import run_length as rl
+        from ..indices import (
+            run_length as rl,  # pylint: disable=import-outside-toplevel
+        )
 
         # Check total number of days
         cond0 = null.count(dim="time") != count
@@ -314,22 +316,22 @@ class MissingPct(MissingBase):
 
     Parameters
     ----------
-    da : DataArray
+    da: DataArray
       Input array.
-    freq : str
+    freq: str
       Resampling frequency.
-    tolerance : float
+    tolerance: float
       Fraction of missing values that are tolerated [0,1].
-    src_timestep : {"D", "H"}
+    src_timestep: {"D", "H"}
       Expected input frequency.
-    indexer : {dim: indexer, }, optional
+    indexer: {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
       month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
       considered.
 
     Returns
     -------
-    DataArray
+    xr.DataArray
       A boolean array set to True if period has missing values.
     """
 
@@ -351,15 +353,15 @@ class AtLeastNValid(MissingBase):
 
     Parameters
     ----------
-    da : DataArray
+    da: DataArray
       Input array.
-    freq : str
+    freq: str
       Resampling frequency.
-    n : int
+    n: int
       Minimum of valid values required.
-    src_timestep : {"D", "H"}
+    src_timestep: {"D", "H"}
       Expected input frequency.
-    indexer : {dim: indexer, }, optional
+    indexer: {dim: indexer, }, optional
       Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
       values, month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given,
       all values are considered.
@@ -394,7 +396,7 @@ class Skip(MissingBase):
         pass
 
     def is_missing(self, null, count):
-        """Return whether or not the values within each period should be considered missing or not."""
+        """Return whether the values within each period should be considered missing or not."""
         return False
 
     def __call__(self):
@@ -421,7 +423,7 @@ class FromContext(MissingBase):
 # --------------------------
 # --- Shortcut functions ---
 # --------------------------
-# These stand-alone functions hide the fact the the algorithms are implemented in a class and make their use more
+# These stand-alone functions hide the fact the algorithms are implemented in a class and make their use more
 # user-friendly. This can also be useful for testing.
 
 
