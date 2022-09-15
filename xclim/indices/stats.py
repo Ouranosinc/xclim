@@ -501,8 +501,13 @@ def _fit_start(x, dist, **fitkwargs) -> tuple[tuple, dict]:
         x_pos = x[x > 0]
         m = x_pos.mean()
         v = x_pos.var()
+        # pdf =  (beta/alpha) (x/alpha)^{beta-1}/ (1+(x/alpha)^{beta})^2
+        # Compute f_1 and f_2 which only depend on beta:
+        # f_1 := mean/alpha = <x>/alpha
+        # f_2 := variance/alpha^2 = (<x^2> - <x>^2)/alpha^2
+        # In the large beta limit, f_1 -> 1 and f_1/sqrt(f_2) -> 0.56*beta - 0.25
+        # Solve for alpha and beta below:
         alpha_0, beta_0 = m, (1 / 0.56) * (m / np.sqrt(v) + 1 / 4)
-        alpha_0, beta_0 = m, m / np.sqrt(v)
         alpha, beta = alpha_0, beta_0
         return (beta,), {"scale": alpha}
     return (), {}
