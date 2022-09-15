@@ -241,9 +241,9 @@ def tg_mean_warmcold_quarter(
     The following would compute for each grid cell of file `tas.day.nc` the annual temperature of the
     warmest quarter mean temperature:
 
-    >>> import xclim.indices as xci
+    >>> from xclim.indices import tg_mean_warmcold_quarter
     >>> t = xr.open_dataset(path_to_tas_file)
-    >>> t_warm_qrt = xci.tg_mean_warmcold_quarter(tas=t.tas, op="warmest")
+    >>> t_warm_qrt = tg_mean_warmcold_quarter(tas=t.tas, op="warmest")
 
     Notes
     -----
