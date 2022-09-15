@@ -65,21 +65,21 @@ def select_resample_op(
     Parameters
     ----------
     da : xr.DataArray
-      Input data.
+        Input data.
     op : str {'min', 'max', 'mean', 'std', 'var', 'count', 'sum', 'argmax', 'argmin'} or func
-      Reduce operation. Can either be a DataArray method or a function that can be applied to a DataArray.
+        Reduce operation. Can either be a DataArray method or a function that can be applied to a DataArray.
     freq : str
-      Resampling frequency defining the periods as defined in
-      https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+        Resampling frequency defining the periods as defined in
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
     indexer : {dim: indexer, }, optional
-      Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
-      month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
-      considered.
+        Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
+        month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
+        considered.
 
     Returns
     -------
     xr.DataArray
-      The maximum value for each period.
+        The maximum value for each period.
     """
     da = select_time(da, **indexer)
     r = da.resample(time=freq)
@@ -130,9 +130,9 @@ def get_op(op: str, constrain: Sequence[str] | None = None) -> Callable:
     Parameters
     ----------
     op : str
-      Operator.
+        Operator.
     constrain : sequence of str, optional
-      A tuple of allowed operators.
+        A tuple of allowed operators.
     """
     if op == "gteq":
         warnings.warn(f"`{op}` is being renamed `ge` for compatibility.")
@@ -173,13 +173,13 @@ def compare(
     Parameters
     ----------
     left : xr.DataArray
-      A DatArray being evaluated against `right`.
+        A DatArray being evaluated against `right`.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-      Logical operator. e.g. arr > thresh.
+        Logical operator. e.g. arr > thresh.
     right : float, int, np.ndarray, or xr.DataArray
-      A value or array-like being evaluated against left`.
+        A value or array-like being evaluated against left`.
     constrain : sequence of str, optional
-      Optionally allowed conditions.
+        Optionally allowed conditions.
 
     Returns
     -------
@@ -201,21 +201,21 @@ def threshold_count(
     Parameters
     ----------
     da : xr.DataArray
-      Input data.
+        Input data.
     op : {">", "<", ">=", "<=", "gt", "lt", "ge", "le"}
-      Logical operator. e.g. arr > thresh.
+        Logical operator. e.g. arr > thresh.
     threshold : Union[float, int]
-      Threshold value.
+        Threshold value.
     freq : str
-      Resampling frequency defining the periods as defined in
-      https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+        Resampling frequency defining the periods as defined in
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
     constrain : sequence of str, optional
-      Optionally allowed conditions.
+        Optionally allowed conditions.
 
     Returns
     -------
     xr.DataArray
-      The number of days meeting the constraints for each period.
+        The number of days meeting the constraints for each period.
     """
     if constrain is None:
         constrain = (">", "<", ">=", "<=")
@@ -232,19 +232,19 @@ def domain_count(da: xr.DataArray, low: float, high: float, freq: str) -> xr.Dat
     Parameters
     ----------
     da : xr.DataArray
-      Input data.
+        Input data.
     low : float
-      Minimum threshold value.
+        Minimum threshold value.
     high : float
-      Maximum threshold value.
+        Maximum threshold value.
     freq : str
-      Resampling frequency defining the periods defined in
-      https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+        Resampling frequency defining the periods defined in
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
 
     Returns
     -------
     xr.DataArray
-      The number of days where value is within [low, high] for each period.
+        The number of days where value is within [low, high] for each period.
     """
     c = compare(da, ">", low) * compare(da, "<=", high) * 1
     return c.resample(time=freq).sum(dim="time")
@@ -261,20 +261,21 @@ def get_daily_events(
     Parameters
     ----------
     da : xr.DataArray
-      Input data.
+        Input data.
     threshold : float
-      Threshold value.
+        Threshold value.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-      Logical operator. e.g. arr > thresh.
+        Logical operator. e.g. arr > thresh.
     constrain : sequence of str, optional
-      Optionally allowed conditions.
+        Optionally allowed conditions.
 
     Notes
     -----
-    the function returns::
-        - 1 where operator(da, da_value) is True
-        - 0 where operator(da, da_value) is False
-        - nan where da is nan
+    The function returns:
+
+    - ``1`` where operator(da, da_value) is ``True``
+    - ``0`` where operator(da, da_value) is ``False``
+    - ``nan`` where da is ``nan``
 
     Returns
     -------
@@ -306,17 +307,17 @@ def count_level_crossings(
     Parameters
     ----------
     low_data : xr.DataArray
-      Variable that must be under the threshold.
+        Variable that must be under the threshold.
     high_data : xr.DataArray
-      Variable that must be above the threshold.
+        Variable that must be above the threshold.
     threshold : str
-      Quantity.
+        Quantity.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
     op_low : {"<", "<=", "lt", "le"}
-      Comparison operator for low_data. Default: "<".
+        Comparison operator for low_data. Default: "<".
     op_high : {">", ">=", "gt", "ge"}
-      Comparison operator for high_data. Default: ">=".
+        Comparison operator for high_data. Default: ">=".
 
     Returns
     -------
@@ -350,15 +351,15 @@ def count_occurrences(
     Parameters
     ----------
     data : xr.DataArray
-      An array.
+        An array.
     threshold : str
-      Quantity.
+        Quantity.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-      Logical operator. e.g. arr > thresh.
+        Logical operator. e.g. arr > thresh.
     constrain : sequence of str, optional
-      Optionally allowed conditions.
+        Optionally allowed conditions.
 
     Returns
     -------
@@ -380,13 +381,13 @@ def diurnal_temperature_range(
     Parameters
     ----------
     low_data : xr.DataArray
-      The lowest daily temperature (tasmin).
+        The lowest daily temperature (tasmin).
     high_data : xr.DataArray
-      The highest daily temperature (tasmax).
+        The highest daily temperature (tasmax).
     reducer : {'max', 'min', 'mean', 'sum'}
-      Reducer.
+        Reducer.
     freq: str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
@@ -418,15 +419,15 @@ def first_occurrence(
     Parameters
     ----------
     data : xr.DataArray
-      Input data.
+        Input data.
     threshold : str
-      Quantity.
+        Quantity.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-      Logical operator. e.g. arr > thresh.
+        Logical operator. e.g. arr > thresh.
     constrain : sequence of str, optional
-      Optionally allowed conditions.
+        Optionally allowed conditions.
 
     Returns
     -------
@@ -462,15 +463,15 @@ def last_occurrence(
     Parameters
     ----------
     data : xr.DataArray
-      Input data.
+        Input data.
     threshold : str
-      Quantity.
+        Quantity.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-      Logical operator. e.g. arr > thresh.
+        Logical operator. e.g. arr > thresh.
     constrain : sequence of str, optional
-      Optionally allowed conditions.
+        Optionally allowed conditions.
 
     Returns
     -------
@@ -502,15 +503,15 @@ def spell_length(
     Parameters
     ----------
     data : xr.DataArray
-      Input data.
+        Input data.
     threshold : str
-      Quantity.
+        Quantity.
     reducer : {'max', 'min', 'mean', 'sum'}
-      Reducer.
+        Reducer.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-      Logical operator. e.g. arr > thresh.
+        Logical operator. e.g. arr > thresh.
 
     Returns
     -------
@@ -534,11 +535,11 @@ def statistics(data: xr.DataArray, reducer: str, freq: str) -> xr.DataArray:
     Parameters
     ----------
     data : xr.DataArray
-      Input data.
+        Input data.
     reducer : {'max', 'min', 'mean', 'sum'}
-      Reducer.
+        Reducer.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
@@ -566,17 +567,17 @@ def thresholded_statistics(
     Parameters
     ----------
     data : xr.DataArray
-      Input data.
+        Input data.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-      Logical operator. e.g. arr > thresh.
+        Logical operator. e.g. arr > thresh.
     threshold : str
-      Quantity.
+        Quantity.
     reducer : {'max', 'min', 'mean', 'sum'}
-      Reducer.
+        Reducer.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
     constrain : sequence of str, optional
-      Optionally allowed conditions.
+        Optionally allowed conditions.
 
     Returns
     -------
@@ -604,13 +605,13 @@ def temperature_sum(
     Parameters
     ----------
     data : xr.DataArray
-      Input data.
+        Input data.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
-      Logical operator. e.g. arr > thresh.
+        Logical operator. e.g. arr > thresh.
     threshold : str
-      Quantity.
+        Quantity.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
@@ -634,11 +635,11 @@ def interday_diurnal_temperature_range(
     Parameters
     ----------
     low_data : xr.DataArray
-      The lowest daily temperature (tasmin).
+        The lowest daily temperature (tasmin).
     high_data : xr.DataArray
-      The highest daily temperature (tasmax).
+        The highest daily temperature (tasmax).
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
@@ -662,11 +663,11 @@ def extreme_temperature_range(
     Parameters
     ----------
     low_data : xr.DataArray
-      The lowest daily temperature (tasmin).
+        The lowest daily temperature (tasmin).
     high_data : xr.DataArray
-      The highest daily temperature (tasmax).
+        The highest daily temperature (tasmax).
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
@@ -693,21 +694,21 @@ def aggregate_between_dates(
     Parameters
     ----------
     data : xr.DataArray
-      Data to aggregate between start and end dates.
+        Data to aggregate between start and end dates.
     start : xr.DataArray or DayOfYearStr
-      Start dates (as day-of-year) for the aggregation periods.
+        Start dates (as day-of-year) for the aggregation periods.
     end : xr.DataArray or DayOfYearStr
-      End (as day-of-year) dates for the aggregation periods.
+        End (as day-of-year) dates for the aggregation periods.
     op : {'min', 'max', 'sum', 'mean', 'std'}
-      Operator.
+        Operator.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xr.DataArray, [dimensionless]
-      Aggregated data between the start and end dates. If the end date is before the start date, returns np.nan.
-      If there is no start and/or end date, returns np.nan.
+        Aggregated data between the start and end dates. If the end date is before the start date, returns np.nan.
+        If there is no start and/or end date, returns np.nan.
     """
 
     def _get_days(_bound, _group, _base_time):
@@ -787,11 +788,11 @@ def degree_days(tas: xr.DataArray, threshold: str, op: str) -> xr.DataArray:
     Parameters
     ----------
     tas : xr.DataArray
-      Mean daily temperature.
+        Mean daily temperature.
     threshold : str
-      The temperature threshold.
+        The temperature threshold.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
-      Logical operator. e.g. arr > thresh.
+        Logical operator. e.g. arr > thresh.
 
     Returns
     -------
