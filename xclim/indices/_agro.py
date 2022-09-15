@@ -793,21 +793,11 @@ def standardized_precipitation_evapotranspiration_index(
     # Allowed distributions are constrained by the SPI function
     if dist in ["gamma", "fisk"]:
         # Distributions bounded by zero: Water budget must be shifted, only positive values
-        # are allowed. The offset choice is arbitrary and needs to be revisited.
-        # In monocongo, the offset would be 1000/(60*60*24) in [kg m-2 s-1]
-        # The choice can lead to differences as big as +/-0.2 in the SPEI.
-        # If taken too big, there are problems with the "ML" method  (this should be an
-        # issue with the fitting procedure that also needs attention)
-        offset = convert_units_to("1e-4 kg m-2 s-1", wb.units)
-        # Increase offset if negative values remain
-        offset = offset - 2 * min(wb.min(), wb_cal.min(), 0)
+        # are allowed. The offset choice is arbitrary and the same offset as the monocongo
+        # library is taken
+        offset = convert_units_to(f"{1e3 / (24*60*60*1000)} kg m-2 s-1", wb.units)
         with xarray.set_options(keep_attrs=True):
             wb, wb_cal = wb + offset, wb_cal + offset
-
-    if dist in ["fisk"]:
-        with xarray.set_options(keep_attrs=True):
-            # Including a big overall factor improves results of the fitting procedure
-            wb, wb_cal = 1e4 * wb, 1e4 * wb_cal
 
     spei = standardized_precipitation_index(wb, wb_cal, freq, window, dist, method)
 
