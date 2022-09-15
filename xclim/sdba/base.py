@@ -5,8 +5,7 @@ Base Classes and Developer Tools
 """
 from __future__ import annotations
 
-from inspect import _empty, signature
-from types import FunctionType
+from inspect import _empty, signature  # noqa
 from typing import Callable, Mapping, Sequence
 
 import dask.array as dsk
@@ -123,16 +122,16 @@ class Grouper(Parametrizable):
         Parameters
         ----------
         group : str
-          The usual grouping name as xarray understands it. Ex: "time.month" or "time".
-          The dimension name before the dot is the "main dimension" stored in `Grouper.dim` and
-          the property name after is stored in `Grouper.prop`.
+            The usual grouping name as xarray understands it. Ex: "time.month" or "time".
+            The dimension name before the dot is the "main dimension" stored in `Grouper.dim` and
+            the property name after is stored in `Grouper.prop`.
         window : int
-          If larger than 1, a centered rolling window along the main dimension is created when grouping data.
-          Units are the sampling frequency of the data along the main dimension.
+            If larger than 1, a centered rolling window along the main dimension is created when grouping data.
+            Units are the sampling frequency of the data along the main dimension.
         add_dims : Optional[Union[Sequence[str], str]]
-          Additional dimensions that should be reduced in grouping operations. This behaviour is also controlled
-          by the `main_only` parameter of the `apply` method. If any of these dimensions are absent from the DataArrays,
-          they will be omitted.
+            Additional dimensions that should be reduced in grouping operations. This behaviour is also controlled
+            by the `main_only` parameter of the `apply` method. If any of these dimensions are absent from the
+            DataArrays, they will be omitted.
         """
         if "." in group:
             dim, prop = group.split(".")
@@ -222,7 +221,7 @@ class Grouper(Parametrizable):
         If `Grouper.dim` is 'time', but 'prop' is None, the whole array is grouped together.
 
         When multiple arrays are passed, some of them can be grouped along the same group as self.
-        They are broadcasted, merged to the grouping dataset and regrouped in the output.
+        They are broadcast, merged to the grouping dataset and regrouped in the output.
         """
         if das:
             from .utils import broadcast  # pylint: disable=cyclic-import
@@ -271,21 +270,21 @@ class Grouper(Parametrizable):
         Parameters
         ----------
         da : xr.DataArray or xr.Dataset
-          The input array/dataset for which the group index is returned.
-          It must have `Grouper.dim` as a coordinate.
+            The input array/dataset for which the group index is returned.
+            It must have `Grouper.dim` as a coordinate.
         interp : bool, optional
-          If True, the returned index can be used for interpolation. Only value for month
-          grouping, where integer values represent the middle of the month, all other
-          days are linearly interpolated in between.
+            If True, the returned index can be used for interpolation. Only value for month
+            grouping, where integer values represent the middle of the month, all other
+            days are linearly interpolated in between.
 
         Returns
         -------
         xr.DataArray
-          The index of each element along `Grouper.dim`.
-          If `Grouper.dim` is `time` and `Grouper.prop` is None, an uniform array of True is returned.
-          If `Grouper.prop` is a time accessor (month, dayofyear, etc), an numerical array is returned,
-          with a special case of `month` and `interp=True`.
-          If `Grouper.dim` is not `time`, the dim is simply returned.
+            The index of each element along `Grouper.dim`.
+            If `Grouper.dim` is `time` and `Grouper.prop` is None, a uniform array of True is returned.
+            If `Grouper.prop` is a time accessor (month, dayofyear, etc), an numerical array is returned,
+            with a special case of `month` and `interp=True`.
+            If `Grouper.dim` is not `time`, the dim is simply returned.
         """
         if self.prop == "group":
             if self.dim == "time":
@@ -328,35 +327,35 @@ class Grouper(Parametrizable):
         Parameters
         ----------
         func : Callable or str
-          The function to apply to the groups, either a callable or a `xr.core.groupby.GroupBy` method name as a string.
-          The function will be called as `func(group, dim=dims, **kwargs)`. See `main_only` for the behaviour of `dims`.
+            The function to apply to the groups, either a callable or a `xr.core.groupby.GroupBy` method name as a string.
+            The function will be called as `func(group, dim=dims, **kwargs)`. See `main_only` for the behaviour of `dims`.
         da : xr.DataArray or Mapping[str, xr.DataArray] or xr.Dataset
-          The DataArray on which to apply the function. Multiple arrays can be passed through a dictionary.
-          A dataset will be created before grouping.
+            The DataArray on which to apply the function. Multiple arrays can be passed through a dictionary.
+            A dataset will be created before grouping.
         main_only : bool
-          Whether to call the function with the main dimension only (if True)
-          or with all grouping dims (if False, default) (including the window and dimensions given through `add_dims`).
-          The dimensions used are also written in the "group_compute_dims" attribute.
-          If all the input arrays are missing one of the 'add_dims', it is silently omitted.
+            Whether to call the function with the main dimension only (if True)
+            or with all grouping dims (if False, default) (including the window and dimensions given through `add_dims`).
+            The dimensions used are also written in the "group_compute_dims" attribute.
+            If all the input arrays are missing one of the 'add_dims', it is silently omitted.
         **kwargs
-          Other keyword arguments to pass to the function.
+            Other keyword arguments to pass to the function.
 
         Returns
         -------
         DataArray or Dataset
-          Attributes "group", "group_window" and "group_compute_dims" are added.
+            Attributes "group", "group_window" and "group_compute_dims" are added.
 
-          If the function did not reduce the array:
+            If the function did not reduce the array:
 
-          - The output is sorted along the main dimension.
-          - The output is rechunked to match the chunks on the input
-            If multiple inputs with differing chunking were given as inputs,
-            the chunking with the smallest number of chunks is used.
+            - The output is sorted along the main dimension.
+            - The output is rechunked to match the chunks on the input
+              If multiple inputs with differing chunking were given as inputs,
+              the chunking with the smallest number of chunks is used.
 
-          If the function reduces the array:
+            If the function reduces the array:
 
-          - If there is only one group, the singleton dimension is squeezed out of the output
-          - The output is rechunked as to have only 1 chunk along the new dimension.
+            - If there is only one group, the singleton dimension is squeezed out of the output
+            - The output is rechunked as to have only 1 chunk along the new dimension.
 
 
         Notes
@@ -510,13 +509,13 @@ def map_blocks(reduces: Sequence[str] = None, **outvars):
     Parameters
     ----------
     reduces : sequence of strings
-      Name of the dimensions that are removed by the function.
+        Name of the dimensions that are removed by the function.
     **outvars
-      Mapping from variable names in the output to their *new* dimensions.
-      The placeholders `Grouper.PROP`, `Grouper.DIM` and `Grouper.ADD_DIMS` can be used to signify
-      `group.prop`,`group.dim` and `group.add_dims` respectively.
-      If an output keeps a dimension that another loses, that dimension name must be given in `reduces` and in
-      the list of new dimensions of the first output.
+        Mapping from variable names in the output to their *new* dimensions.
+        The placeholders ``Grouper.PROP``, ``Grouper.DIM`` and ``Grouper.ADD_DIMS`` can be used to signify
+        ``group.prop``,``group.dim`` and ``group.add_dims`` respectively.
+        If an output keeps a dimension that another loses, that dimension name must be given in ``reduces`` and in
+        the list of new dimensions of the first output.
     """
 
     def merge_dimensions(*seqs):
@@ -716,17 +715,17 @@ def map_groups(reduces: Sequence[str] = None, main_only: bool = False, **out_var
 
     Parameters
     ----------
-    reduces: sequence of str
-      Dimensions that are removed from the inputs by the function. Defaults to [Grouper.DIM, Grouper.ADD_DIMS] if main_only is False,
-      and [Grouper.DIM] if main_only is True. See :py:func:`map_blocks`.
-    main_only: bool
-      Same as for :py:meth:`Grouper.apply`.
+    reduces : sequence of str
+        Dimensions that are removed from the inputs by the function. Defaults to [Grouper.DIM, Grouper.ADD_DIMS] if main_only is False,
+        and [Grouper.DIM] if main_only is True. See :py:func:`map_blocks`.
+    main_only : bool
+        Same as for :py:meth:`Grouper.apply`.
     **out_vars
-      Mapping from variable names in the output to their *new* dimensions.
-      The placeholders `Grouper.PROP`, `Grouper.DIM` and `Grouper.ADD_DIMS` can be used to signify
-      `group.prop`,`group.dim` and `group.add_dims` respectively.
-      If an output keeps a dimension that another loses, that dimension name must be given in `reduces` and in
-      the list of new dimensions of the first output.
+        Mapping from variable names in the output to their *new* dimensions.
+        The placeholders ``Grouper.PROP``, ``Grouper.DIM`` and ``Grouper.ADD_DIMS`` can be used to signify
+      ``group.prop``,``group.dim`` and ``group.add_dims``, respectively.
+        If an output keeps a dimension that another loses, that dimension name must be given in `reduces` and in
+        the list of new dimensions of the first output.
 
     See Also
     --------
