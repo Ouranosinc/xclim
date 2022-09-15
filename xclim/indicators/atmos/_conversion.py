@@ -173,7 +173,8 @@ relative_humidity = Converter(
     title="Relative humidity from temperature, specific humidity, and pressure",
     identifier="hurs",
     units="%",
-    long_name="Relative humidity",
+    var_name="hurs",
+    long_name="Relative Humidity",
     standard_name="relative_humidity",
     description=lambda **kws: (
         "Computed from temperature, specific humidity and pressure through the saturation vapour pressure, "
@@ -200,7 +201,8 @@ specific_humidity = Converter(
     title="Specific humidity from temperature, relative humidity, and pressure",
     identifier="huss",
     units="",
-    long_name="Specific humidity",
+    var_name="huss",
+    long_name="Specific Humidity",
     standard_name="specific_humidity",
     description=lambda **kws: (
         "Computed from temperature, relative humidity and pressure through the saturation vapour pressure, "

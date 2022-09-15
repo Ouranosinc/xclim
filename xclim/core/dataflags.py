@@ -36,10 +36,10 @@ class DataQualityException(Exception):
 
     Attributes
     ----------
-    flag_array: xarray.Dataset
-      Xarray.Dataset of Data Flags.
-    message: str
-      Message prepended to the error messages.
+    flag_array : xarray.Dataset
+        Xarray.Dataset of Data Flags.
+    message : str
+        Message prepended to the error messages.
     """
 
     def __init__(
@@ -305,9 +305,9 @@ def very_large_precipitation_events(
     Parameters
     ----------
     da : xarray.DataArray
-      The DataArray being examined.
+        The DataArray being examined.
     thresh : str
-      Threshold to search array for that will trigger flag if any day exceeds value.
+        Threshold to search array for that will trigger flag if any day exceeds value.
 
     Returns
     -------
@@ -340,13 +340,13 @@ def values_op_thresh_repeating_for_n_or_more_days(
     Parameters
     ----------
     da : xarray.DataArray
-      The DataArray being examined.
+        The DataArray being examined.
     n : int
-      Number of days needed to trigger flag.
+        Number of days needed to trigger flag.
     thresh : str
-      Repeating values to search for that will trigger flag.
+        Repeating values to search for that will trigger flag.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
-      Operator used for comparison with thresh.
+        Operator used for comparison with thresh.
 
     Returns
     -------
@@ -387,11 +387,11 @@ def wind_values_outside_of_bounds(
     Parameters
     ----------
     da : xarray.DataArray
-      The DataArray being examined.
+        The DataArray being examined.
     lower : str
-      The lower limit for wind speed.
+        The lower limit for wind speed.
     upper : str
-      The upper limit for wind speed.
+        The upper limit for wind speed.
 
     Returns
     -------
@@ -400,10 +400,12 @@ def wind_values_outside_of_bounds(
     Examples
     --------
     To gain access to the flag_array:
+
     >>> from xclim.core.dataflags import wind_values_outside_of_bounds
-    >>> ds = xr.open_dataset(path_to_tas_file)
     >>> ceiling, floor = "46 m s-1", "0 m s-1"
-    >>> flagged = wind_values_outside_of_bounds(ds.wsgsmax, upper=ceiling, lower=floor)
+    >>> flagged = wind_values_outside_of_bounds(
+    ...     sfcWind_dataset, upper=ceiling, lower=floor
+    ... )
     """
     lower, upper = convert_units_to(lower, da), convert_units_to(upper, da)
     unbounded_percentages = _sanitize_attrs((da < lower) | (da > upper))
@@ -429,11 +431,11 @@ def outside_n_standard_deviations_of_climatology(
     Parameters
     ----------
     da : xarray.DataArray
-      The DataArray being examined.
+        The DataArray being examined.
     n : int
-      Number of standard deviations.
+        Number of standard deviations.
     window : int
-      Moving window used to determining climatological mean. Default: 5.
+        Moving window used to determining climatological mean. Default: 5.
 
     Returns
     -------
@@ -458,7 +460,6 @@ def outside_n_standard_deviations_of_climatology(
     References
     ----------
     :cite:cts:`project_team_eca&d_algorithm_2013`
-
     """
     mu, sig = climatological_mean_doy(da, window=window)
     within_bounds = _sanitize_attrs(
@@ -483,9 +484,9 @@ def values_repeating_for_n_or_more_days(
     Parameters
     ----------
     da : xarray.DataArray
-      The DataArray being examined.
+        The DataArray being examined.
     n : int
-      Number of days to trigger flag.
+        Number of days to trigger flag.
 
     Returns
     -------
@@ -522,9 +523,9 @@ def percentage_values_outside_of_bounds(da: xarray.DataArray) -> xarray.DataArra
     Examples
     --------
     To gain access to the flag_array:
+
     >>> from xclim.core.dataflags import percentage_values_outside_of_bounds
-    >>> ds = xr.open_dataset(path_to_huss_file)  # doctest: +SKIP
-    >>> flagged = percentage_values_outside_of_bounds(ds.huss)  # doctest: +SKIP
+    >>> flagged = percentage_values_outside_of_bounds(huss_dataset)
     """
     unbounded_percentages = _sanitize_attrs((da < 0) | (da > 100))
     description = f"Percentage values beyond bounds found for {da.name}."
@@ -548,21 +549,21 @@ def data_flags(
     Parameters
     ----------
     da : xarray.DataArray
-      The variable to check.
-      Must have a name that is a valid CMIP6 variable name and appears in :py:obj:`xclim.core.utils.VARIABLES`.
+        The variable to check.
+        Must have a name that is a valid CMIP6 variable name and appears in :py:obj:`xclim.core.utils.VARIABLES`.
     ds : xarray.Dataset, optional
-      An optional dataset with extra variables needed by some checks.
+        An optional dataset with extra variables needed by some checks.
     flags : dict, optional
-      A dictionary where the keys are the name of the flags to check and the values are parameter dictionaries.
-      The value can be None if there are no parameters to pass (i.e. default will be used).
-      The default, None, means that the data flags list will be taken from :py:obj:`xclim.core.utils.VARIABLES`.
+        A dictionary where the keys are the name of the flags to check and the values are parameter dictionaries.
+        The value can be None if there are no parameters to pass (i.e. default will be used).
+        The default, None, means that the data flags list will be taken from :py:obj:`xclim.core.utils.VARIABLES`.
     dims : {"all", None} or str or a sequence of strings
-      Dimenions upon which aggregation should be performed. Default: "all".
+        Dimenions upon which aggregation should be performed. Default: "all".
     freq : str, optional
-      Resampling frequency to have data_flags aggregated over periods.
-      Defaults to None, which means the "time" axis is treated as any other dimension (see `dims`).
+        Resampling frequency to have data_flags aggregated over periods.
+        Defaults to None, which means the "time" axis is treated as any other dimension (see `dims`).
     raise_flags : bool
-      Raise exception if any of the quality assessment flags are raised. Default: False.
+        Raise exception if any of the quality assessment flags are raised. Default: False.
 
     Returns
     -------
@@ -575,11 +576,9 @@ def data_flags(
     >>> from xclim.core.dataflags import data_flags
     >>> ds = xr.open_dataset(path_to_pr_file)
     >>> flagged = data_flags(ds.pr, ds)
-
-    The next example evaluates only one data flag, passing specific parameters. It also aggregates the flags
-    yearly over the "time" dimension only, such that a True means there is a bad data point for that year
-    at that location.
-
+    >>> # The next example evaluates only one data flag, passing specific parameters. It also aggregates the flags
+    >>> # yearly over the "time" dimension only, such that a True means there is a bad data point for that year
+    >>> # at that location.
     >>> flagged = data_flags(
     ...     ds.pr,
     ...     ds,
@@ -711,14 +710,14 @@ def ecad_compliant(
     Parameters
     ----------
     ds : xarray.Dataset
-      Dataset containing variables to be examined.
+        Dataset containing variables to be examined.
     dims : {"all", None} or str or a sequence of strings
-      Dimensions upon which aggregation should be performed. Default: "all".
+        Dimensions upon which aggregation should be performed. Default: ``"all"``.
     raise_flags : bool
-      Raise exception if any of the quality assessment flags are raised, otherwise returns None. Default: False.
+        Raise exception if any of the quality assessment flags are raised, otherwise returns None. Default: ``False``.
     append : bool
-      If `True`, returns the Dataset with the `ecad_qc_flag` array appended to data_vars.
-      If `False`, returns the DataArray of the `ecad_qc_flag` variable.
+        If `True`, returns the Dataset with the `ecad_qc_flag` array appended to data_vars.
+        If `False`, returns the DataArray of the `ecad_qc_flag` variable.
 
     Returns
     -------

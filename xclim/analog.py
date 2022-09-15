@@ -91,23 +91,23 @@ def spatial_analogs(
     Parameters
     ----------
     target : xr.Dataset
-      Dataset of the target indices. Only indice variables should be included in the
-      dataset's `data_vars`. They should have only the dimension(s) `dist_dim `in common with `candidates`.
+        Dataset of the target indices. Only indice variables should be included in the
+        dataset's `data_vars`. They should have only the dimension(s) `dist_dim `in common with `candidates`.
     candidates : xr.Dataset
-      Dataset of the candidate indices. Only indice variables should be included in
-      the dataset's `data_vars`.
+        Dataset of the candidate indices. Only indice variables should be included in
+        the dataset's `data_vars`.
     dist_dim : str
-      The dimension over which the *distributions* are constructed. This can be a multi-index dimension.
+        The dimension over which the *distributions* are constructed. This can be a multi-index dimension.
     method : {'seuclidean', 'nearest_neighbor', 'zech_aslan', 'kolmogorov_smirnov', 'friedman_rafsky', 'kldiv'}
-      Which method to use when computing the dissimilarity statistic.
-    kwargs
-      Any other parameter passed directly to the dissimilarity method.
+        Which method to use when computing the dissimilarity statistic.
+    **kwargs
+        Any other parameter passed directly to the dissimilarity method.
 
     Returns
     -------
     xr.DataArray
-      The dissimilarity statistic over the union of candidates' and target's dimensions.
-      The range depends on the method.
+        The dissimilarity statistic over the union of candidates' and target's dimensions.
+        The range depends on the method.
     """
     if parse_version(__scipy_version__) < parse_version("1.6.0") and method in [
         "kldiv",
@@ -177,10 +177,10 @@ def standardize(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
     Parameters
     ----------
-    x: np.ndarray
-      Array to be compared.
-    y: np.ndarray
-      Array to be compared.
+    x : np.ndarray
+        Array to be compared.
+    y : np.ndarray
+        Array to be compared.
 
     Returns
     -------
@@ -228,17 +228,16 @@ def metric(func):
 
 @metric
 def seuclidean(x: np.ndarray, y: np.ndarray) -> float:
-    """
-    Compute the Euclidean distance between the mean of a multivariate candidate sample with respect to the mean of a reference sample.
+    """Compute the Euclidean distance between the mean of a multivariate candidate sample with respect to the mean of a reference sample.
 
     This method is scale-invariant.
 
     Parameters
     ----------
     x : np.ndarray (n,d)
-      Reference sample.
+        Reference sample.
     y : np.ndarray (m,d)
-      Candidate sample.
+        Candidate sample.
 
     Returns
     -------
@@ -254,7 +253,6 @@ def seuclidean(x: np.ndarray, y: np.ndarray) -> float:
     References
     ----------
     :cite:cts:`veloz_identifying_2012`
-
     """
     mx = x.mean(axis=0)
     my = y.mean(axis=0)
@@ -272,19 +270,18 @@ def nearest_neighbor(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     Parameters
     ----------
     x : np.ndarray (n,d)
-      Reference sample.
+        Reference sample.
     y : np.ndarray (m,d)
-      Candidate sample.
+        Candidate sample.
 
     Returns
     -------
     float
-      Nearest-Neighbor dissimilarity metric ranging from 0 to 1.
+        Nearest-Neighbor dissimilarity metric ranging from 0 to 1.
 
     References
     ----------
     :cite:cts:`henze_multivariate_1988`
-
     """
     x, y = standardize(x, y)
 
@@ -311,16 +308,16 @@ def zech_aslan(x: np.ndarray, y: np.ndarray, *, dmin: float = 1e-12) -> float:
     Parameters
     ----------
     x : np.ndarray (n,d)
-      Reference sample.
+        Reference sample.
     y : np.ndarray (m,d)
-      Candidate sample.
+        Candidate sample.
     dmin : float
-      The cut-off for low distances to avoid singularities on identical points.
+        The cut-off for low distances to avoid singularities on identical points.
 
     Returns
     -------
     float
-      Zech-Aslan dissimilarity metric ranging from -infinity to infinity.
+        Zech-Aslan dissimilarity metric ranging from -infinity to infinity.
 
     Notes
     -----
@@ -353,7 +350,6 @@ def zech_aslan(x: np.ndarray, y: np.ndarray, *, dmin: float = 1e-12) -> float:
     References
     ----------
     :cite:cts:`grenier_assessment_2013,zech_multivariate_2003,aslan_new_2003`
-
     """
     nx, _ = x.shape
     ny, _ = y.shape
@@ -380,16 +376,16 @@ def szekely_rizzo(x: np.ndarray, y: np.ndarray, *, standardize: bool = True) -> 
     Parameters
     ----------
     x : ndarray (n,d)
-      Reference sample.
+        Reference sample.
     y : ndarray (m,d)
-      Candidate sample.
+        Candidate sample.
     standardize : bool
-      If True (default), the standardized euclidean norm is used, instead of the conventional one.
+        If True (default), the standardized euclidean norm is used, instead of the conventional one.
 
     Returns
     -------
     float
-      Székely-Rizzo's energy distance dissimilarity metric ranging from 0 to infinity.
+        Székely-Rizzo's energy distance dissimilarity metric ranging from 0 to infinity.
 
     Notes
     -----
@@ -417,7 +413,6 @@ def szekely_rizzo(x: np.ndarray, y: np.ndarray, *, standardize: bool = True) -> 
     References
     ----------
     :cite:cts:`grenier_assessment_2013,szekely_testing_2004,rizzo_energy_2016`
-
     """
     n, _ = x.shape
     m, _ = y.shape
@@ -439,8 +434,7 @@ def szekely_rizzo(x: np.ndarray, y: np.ndarray, *, standardize: bool = True) -> 
 
 @metric
 def friedman_rafsky(x: np.ndarray, y: np.ndarray) -> float:
-    """
-    Compute a dissimilarity metric based on the Friedman-Rafsky runs statistics.
+    """Compute a dissimilarity metric based on the Friedman-Rafsky runs statistics.
 
     The algorithm builds a minimal spanning tree (the subset of edges connecting all points that minimizes the total
     edge length) then counts the edges linking points from the same distribution. This method is scale-dependent.
@@ -448,19 +442,18 @@ def friedman_rafsky(x: np.ndarray, y: np.ndarray) -> float:
     Parameters
     ----------
     x : np.ndarray (n,d)
-      Reference sample.
+        Reference sample.
     y : np.ndarray (m,d)
-      Candidate sample.
+        Candidate sample.
 
     Returns
     -------
     float
-      Friedman-Rafsky dissimilarity metric ranging from 0 to (m+n-1)/(m+n).
+        Friedman-Rafsky dissimilarity metric ranging from 0 to (m+n-1)/(m+n).
 
     References
     ----------
     :cite:cts:`friedman_multivariate_1979`
-
     """
     from scipy.sparse.csgraph import (  # pylint: disable=import-outside-toplevel
         minimum_spanning_tree,
@@ -499,7 +492,7 @@ def kolmogorov_smirnov(x: np.ndarray, y: np.ndarray) -> float:
     Returns
     -------
     float
-      Kolmogorov-Smirnov dissimilarity metric ranging from 0 to 1.
+        Kolmogorov-Smirnov dissimilarity metric ranging from 0 to 1.
 
     References
     ----------
@@ -547,20 +540,17 @@ def kldiv(
     Parameters
     ----------
     x : np.ndarray (n,d)
-      Samples from distribution P, which typically represents the true
-      distribution (reference).
+        Samples from distribution P, which typically represents the true distribution (reference).
     y : np.ndarray (m,d)
-      Samples from distribution Q, which typically represents the
-      approximate distribution (candidate)
+        Samples from distribution Q, which typically represents the approximate distribution (candidate)
     k : int or sequence
-      The kth neighbours to look for when estimating the density of the
-      distributions. Defaults to 1, which can be noisy.
+        The kth neighbours to look for when estimating the density of the distributions.
+        Defaults to 1, which can be noisy.
 
     Returns
     -------
     float or sequence
-      The estimated Kullback-Leibler divergence D(P||Q) computed from
-      the distances to the kth neighbour.
+        The estimated Kullback-Leibler divergence D(P||Q) computed from the distances to the kth neighbour.
 
     Notes
     -----
@@ -584,7 +574,6 @@ def kldiv(
     References
     ----------
     :cite:cts:`perez-cruz_kullback-leibler_2008`
-
     """
     mk = np.iterable(k)
     ka = np.atleast_1d(k)

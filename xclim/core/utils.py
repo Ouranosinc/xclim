@@ -51,12 +51,12 @@ def wrapped_partial(func: Callable, suggested: dict | None = None, **fixed) -> C
 
     Parameters
     ----------
-    func: Callable
-      The function to be wrapped
+    func : Callable
+        The function to be wrapped
     suggested : dict, optional
-      Keyword arguments that should have new default values but still appear in the signature.
-    fixed
-      Keyword arguments that should be fixed by the wrapped and removed from the signature.
+        Keyword arguments that should have new default values but still appear in the signature.
+    **fixed
+        Keyword arguments that should be fixed by the wrapped and removed from the signature.
 
     Returns
     -------
@@ -99,15 +99,15 @@ def walk_map(d: dict, func: Callable) -> dict:
 
     Parameters
     ----------
-    d: dict
-      Input dictionary, possibly nested.
-    func: Callable
-      Function to apply to dictionary values.
+    d : dict
+        Input dictionary, possibly nested.
+    func : Callable
+        Function to apply to dictionary values.
 
     Returns
     -------
     dict
-      Dictionary whose values are the output of the given function.
+        Dictionary whose values are the output of the given function.
     """
     out = {}
     for k, v in d.items():
@@ -123,19 +123,25 @@ def load_module(path: os.PathLike, name: str | None = None):
 
     Examples
     --------
-    Given a path to a module file (.py)
+    Given a path to a module file (.py):
 
-    >>> # xdoctest: +SKIP
-    >>> from pathlib import Path
-    >>> path = Path("path/to/example.py")
+    .. code-block:: python
+
+        from pathlib import Path
+        import os
+
+        path = Path("path/to/example.py")
 
     The two following imports are equivalent, the second uses this method.
 
-    >>> os.chdir(path.parent)
-    >>> import example as mod1  # noqa
-    >>> os.chdir(previous_working_dir)
-    >>> mod2 = load_module(path)
-    >>> mod1 == mod2
+    .. code-block:: python
+
+        os.chdir(path.parent)
+        import example as mod1  # noqa
+
+        os.chdir(previous_working_dir)
+        mod2 = load_module(path)
+        mod1 == mod2
     """
     path = Path(path)
     spec = importlib.util.spec_from_file_location(name or path.stem, path)
@@ -164,11 +170,11 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: Mapping[str, int]) -> xr.Da
 
     Parameters
     ----------
-    da: xr.DataArray
-      The input DataArray, with or without the dask backend. Does nothing when passed a non-dask array.
-    minchunks: Mapping[str, int]
-      A kwarg mapping from dimension name to minimum chunk size.
-      Pass -1 to force a single chunk along that dimension.
+    da : xr.DataArray
+        The input DataArray, with or without the dask backend. Does nothing when passed a non-dask array.
+    **minchunks : Mapping[str, int]
+        A kwarg mapping from dimension name to minimum chunk size.
+        Pass -1 to force a single chunk along that dimension.
 
     Returns
     -------
@@ -277,14 +283,14 @@ def _compute_virtual_index(
 
     Parameters
     ----------
-    n: array_like
-      The sample sizes.
-    quantiles: array_like
-      The quantiles values.
-    alpha: float
-      A constant used to correct the index computed.
-    beta: float
-      A constant used to correct the index computed.
+    n : array_like
+        The sample sizes.
+    quantiles : array_like
+        The quantiles values.
+    alpha : float
+        A constant used to correct the index computed.
+    beta : float
+        A constant used to correct the index computed.
 
     Notes
     -----
@@ -326,9 +332,9 @@ def _get_indexes(
 
     Parameters
     ----------
-    arr: array-like
-    virtual_indexes: array-like
-    valid_values_count: array-like
+    arr : array-like
+    virtual_indexes : array-like
+    valid_values_count : array-like
 
     Returns
     -------
@@ -368,11 +374,11 @@ def _linear_interpolation(
     Parameters
     ----------
     left : array_like
-      Left bound.
+        Left bound.
     right : array_like
-      Right bound.
+        Right bound.
     gamma : array_like
-      The interpolation weight.
+        The interpolation weight.
 
     Returns
     -------
@@ -466,17 +472,17 @@ def raise_warn_or_log(
 
     Parameters
     ----------
-    err: Exception
-      An error.
-    mode: {'ignore', 'log', 'warn', 'raise'}
-      What to do with the error.
-    msg: str, optional
-      The string used when logging or warning.
-      Defaults to the `msg` attr of the error (if present) or to "Failed with <err>".
-    err_type: type
-      The type of error/exception to raise.
-    stacklevel: int
-      Stacklevel when warning. Relative to the call of this function (1 is added).
+    err : Exception
+        An error.
+    mode : {'ignore', 'log', 'warn', 'raise'}
+        What to do with the error.
+    msg : str, optional
+        The string used when logging or warning.
+        Defaults to the `msg` attr of the error (if present) or to "Failed with <err>".
+    err_type : type
+        The type of error/exception to raise.
+    stacklevel : int
+        Stacklevel when warning. Relative to the call of this function (1 is added).
     """
     msg = msg or getattr(err, "msg", f"Failed with {err!r}.")
     if mode == "ignore":
@@ -812,20 +818,20 @@ class PercentileDataArray(xr.DataArray):
 
         Parameters
         ----------
-        source: xr.DataArray
-          A DataArray with its content containing percentiles values.
-          It must also have a coordinate variable percentiles or quantile.
-        climatology_bounds: list[str]
-          Optional. A List of size two which contains the period on which the
-          percentiles were computed. See `xclim.core.calendar.build_climatology_bounds`
-          to build this list from a DataArray.
+        source : xr.DataArray
+            A DataArray with its content containing percentiles values.
+            It must also have a coordinate variable percentiles or quantile.
+        climatology_bounds : list[str]
+            Optional. A List of size two which contains the period on which the
+            percentiles were computed. See `xclim.core.calendar.build_climatology_bounds`
+            to build this list from a DataArray.
 
         Returns
         -------
         PercentileDataArray
-          The initial `source` DataArray but wrap by PercentileDataArray class.
-          The data is unchanged and only climatology_bounds attributes is overridden
-          if q new value is given in inputs.
+            The initial `source` DataArray but wrap by PercentileDataArray class.
+            The data is unchanged and only climatology_bounds attributes is overridden
+            if q new value is given in inputs.
         """
         if (
             climatology_bounds is None

@@ -35,17 +35,16 @@ def jetstream_metric_woollings(
     Parameters
     ----------
     ua : xarray.DataArray
-      Eastward wind component (u) at between 750 and 950 hPa.
+        Eastward wind component (u) at between 750 and 950 hPa.
 
     Returns
     -------
     (xarray.DataArray, xarray.DataArray)
-      Daily time series of latitude of jetstream and Daily time series of strength of jetstream.
+        Daily time series of latitude of jetstream and Daily time series of strength of jetstream.
 
     References
     ----------
     :cite:cts:`woollings_variability_2010`
-
     """
     lon_min = -60
     lon_max = 0
