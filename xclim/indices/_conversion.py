@@ -81,7 +81,7 @@ def humidex(
        e = 6.112 \times \exp(5417.7530\left({\frac {1}{273.16}}-{\frac {1}{T_{\text{dewpoint}}}}\right)
 
     where the constant 5417.753 reflects the molecular weight of water, latent heat of vaporization,
-    and the universal gas constant :cite:p`mekis_observed_2015`. Alternatively, the term :math:`e` can also be computed
+    and the universal gas constant :cite:p:`mekis_observed_2015`. Alternatively, the term :math:`e` can also be computed
     from the relative humidity `h` expressed in percent using :cite:t:`sirangelo_combining_2020`:
 
     .. math::
