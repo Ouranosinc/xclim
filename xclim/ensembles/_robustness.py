@@ -1,12 +1,11 @@
 # noqa: D205,D400
 """
-Ensemble Robustness metrics.
-============================
+Ensemble Robustness metrics
+===========================
 
-Robustness metrics are used to estimate the confidence of the climate change signal
-of an ensemble. This submodule is inspired by and tries to follow the guidelines of
-the IPCC, more specifically the 12th chapter of the Working Group 1's contribution to
-the AR5 :cite:p:`collins_long-term_2013` (see box 12.1).
+Robustness metrics are used to estimate the confidence of the climate change signal of an ensemble.
+This submodule is inspired by and tries to follow the guidelines of the IPCC, more specifically
+the 12th chapter of the Working Group 1's contribution to the AR5 :cite:p:`collins_long-term_2013` (see box 12.1).
 """
 from __future__ import annotations
 
@@ -36,7 +35,7 @@ def change_significance(
     ref : Union[xr.DataArray, xr.Dataset], optional
         Reference period values along realization' and 'time'  (..., nt2, nr).
         The size of the 'time' axis does not need to match the one of `fut`.
-         But their 'realization' axes must be identical.
+        But their 'realization' axes must be identical.
         If `None` (default), values of `fut` are assumed to be deltas instead of
         a distribution across the future period.
         `fut` and `ref` must be of the same type (Dataset or DataArray). If they are
@@ -87,16 +86,13 @@ def change_significance(
     Available statistical tests are :
 
       'ttest' :
-        Single sample T-test. Same test as used by :cite:t:`tebaldi_mapping_2011`. The future
-        values are compared against the reference mean (over 'time'). Change is qualified
-        as 'significant' when the test's p-value is below the user-provided `p_change`
-        value.
+        Single sample T-test. Same test as used by :cite:t:`tebaldi_mapping_2011`.
+        The future values are compared against the reference mean (over 'time').
+        Change is qualified as 'significant' when the test's p-value is below the user-provided `p_change` value.
       'welch-ttest' :
-        Two-sided T-test, without assuming equal population variance. Same
-        significance criterion as 'ttest'.
+        Two-sided T-test, without assuming equal population variance. Same significance criterion as 'ttest'.
       'threshold' :
-        Change is considered significative if the absolute delta exceeds a given
-        threshold (absolute or relative).
+        Change is considered significative if the absolute delta exceeds a given threshold (absolute or relative).
       None :
         Significant change is not tested and, thus, members showing no change are
         included in the `sign_frac` output.
