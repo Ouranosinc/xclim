@@ -501,6 +501,7 @@ def _fit_start(x, dist, **fitkwargs) -> tuple[tuple, dict]:
         x_pos = x[x > 0]
         m = x_pos.mean()
         v = x_pos.var()
+        alpha_0, beta_0 = m, (1 / 0.56) * (m / np.sqrt(v) + 1 / 4)
         alpha_0, beta_0 = m, m / np.sqrt(v)
         alpha, beta = alpha_0, beta_0
         return (beta,), {"scale": alpha}
