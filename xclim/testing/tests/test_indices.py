@@ -422,175 +422,175 @@ class TestAgroclimaticIndices:
         )
         np.testing.assert_array_equal(out, np.array([np.NaN, expected]))
 
-
-# gamma reference results: Obtained with `monocongo/climate_indices` library
-# fisk reference results: Obtained with R package `SPEI`
-# Using the method `APP` in XClim matches the method from monocongo, hence the very low
-# tolerance possible.
-# Repeated tests with lower tolerance means we want a more precise comparison, so we compare
-# the current version of XClim with the version where the test was implemented
-# TODO : Add tests for SPI_daily.
-@pytest.mark.parametrize(
-    "freq, window, dist, method,  values, diff_tol",
-    [
-        (
-            "MS",
-            1,
-            "gamma",
-            "APP",
-            [1.31664, 1.45069, 1.94609, -3.09, 0.850681],
-            1e-4,
-        ),
-        (
-            "MS",
-            12,
-            "gamma",
-            "APP",
-            [0.598209, 1.55976, 1.69309, 0.9964, 0.7028],
-            1e-4,
-        ),
-        ("MS", 1, "gamma", "ML", [1.3166, 1.4507, 1.9461, -3.09, 0.85068], 0.2),
-        ("MS", 1, "gamma", "ML", [1.4586, 1.6028, 2.0668, -3.09, 0.84841], 1e-4),
-        ("MS", 12, "gamma", "ML", [0.59821, 1.5598, 1.6931, 0.9964, 0.7028], 0.04),
-        (
-            "MS",
-            12,
-            "gamma",
-            "ML",
-            [0.62578, 1.5417, 1.7164, 0.99776, 0.69889],
-            1e-4,
-        ),
-        ("MS", 1, "fisk", "ML", [1.7296, 1.5135, 2.0072, -2.7331, 0.89206], 0.35),
-        (
-            "MS",
-            1,
-            "fisk",
-            "ML",
-            [1.41236, 1.51192, 1.93324, -2.74089, 0.932674],
-            1e-4,
-        ),
-        (
-            "MS",
-            12,
-            "fisk",
-            "ML",
-            [0.683273, 1.51189, 1.61597, 1.03875, 0.72531],
-            0.035,
-        ),
-        (
-            "MS",
-            12,
-            "fisk",
-            "ML",
-            [0.683273, 1.51189, 1.61597, 1.03875, 0.72531],
-            1e-4,
-        ),
-    ],
-)
-def test_standardized_precipitation_index(
-    self, freq, window, dist, method, values, diff_tol
-):
-
-    ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
-    pr = ds.pr.sel(time=slice("1998", "2000"))
-    pr_cal = ds.pr.sel(time=slice("1950", "1980"))
-    spi = xci.standardized_precipitation_index(pr, pr_cal, freq, window, dist, method)
-
-    # Only a few moments before year 2000 are tested
-    spi = spi.isel(time=slice(-11, -1, 2))
-
-    # [Guttman, 1999]: The number of precipitation events (over a month/season or
-    # other time period) is generally less than 100 in the US. This suggests that
-    # bounds of ± 3.09 correspond to 0.999 and 0.001 probabilities. SPI indices outside
-    # [-3.09, 3.09] might be non-statistically relevant. In `climate_indices` the SPI
-    # index is clipped outside this region of value. In the values chosen above,
-    # this doesn't play role, but let's clip it anyways to avoid future problems.
-    # The last few values in time are tested
-    spi = spi.clip(-3.09, 3.09)
-
-    np.testing.assert_allclose(spi.values, values, rtol=0, atol=diff_tol)
-
-
-# See SPI version
-@pytest.mark.parametrize(
-    "freq, window, dist, method,  values, diff_tol",
-    [
-        (
-            "MS",
-            1,
-            "gamma",
-            "APP",
-            [1.3750, 1.5776, 2.1033, -3.09, 0.8681],
-            1e-4,
-        ),
-        (
-            "MS",
-            12,
-            "gamma",
-            "APP",
-            [0.6242, 1.6479, 1.8005, 0.9857, 0.6706],
-            1e-4,
-        ),
-        ("MS", 1, "gamma", "ML", [1.38, 1.58, 2.1, -3.09, 0.868], 0.1),
-        ("MS", 1, "gamma", "ML", [1.4631, 1.6053, 2.1625, -3.09, 0.87996], 1e-4),
-        (
-            "MS",
-            12,
-            "gamma",
-            "ML",
-            [0.62417, 1.6479, 1.8005, 0.98574, 0.67063],
-            0.06,
-        ),
-        (
-            "MS",
-            12,
-            "gamma",
-            "ML",
-            [0.65635, 1.5976, 1.7909, 0.98453, 0.66396],
-            1e-4,
-        ),
-        ("MS", 1, "fisk", "ML", [1.73, 1.51, 2.05, -3.09, 0.892], 0.35),
-        ("MS", 1, "fisk", "ML", [1.41675, 1.51174, 1.98248, -3.09, 0.942175], 1e-4),
-        ("MS", 12, "fisk", "ML", [0.71228, 1.5347, 1.6498, 1.0241, 0.72203], 0.03),
-        (
-            "MS",
-            12,
-            "fisk",
-            "ML",
-            [0.70921, 1.55079, 1.6697, 1.02186, 0.695148],
-            1e-4,
-        ),
-    ],
-)
-def test_standardized_precipitation_evapotranspiration_index(
-    self, freq, window, dist, method, values, diff_tol
-):
-    ds = (
-        open_dataset("sdba/CanESM2_1950-2100.nc")
-        .isel(location=1)
-        .sel(time=slice("1950", "2000"))
+    # gamma reference results: Obtained with `monocongo/climate_indices` library
+    # fisk reference results: Obtained with R package `SPEI`
+    # Using the method `APP` in XClim matches the method from monocongo, hence the very low
+    # tolerance possible.
+    # Repeated tests with lower tolerance means we want a more precise comparison, so we compare
+    # the current version of XClim with the version where the test was implemented
+    # TODO : Add tests for SPI_daily.
+    @pytest.mark.parametrize(
+        "freq, window, dist, method,  values, diff_tol",
+        [
+            (
+                "MS",
+                1,
+                "gamma",
+                "APP",
+                [1.31664, 1.45069, 1.94609, -3.09, 0.850681],
+                1e-4,
+            ),
+            (
+                "MS",
+                12,
+                "gamma",
+                "APP",
+                [0.598209, 1.55976, 1.69309, 0.9964, 0.7028],
+                1e-4,
+            ),
+            ("MS", 1, "gamma", "ML", [1.3166, 1.4507, 1.9461, -3.09, 0.85068], 0.2),
+            ("MS", 1, "gamma", "ML", [1.4586, 1.6028, 2.0668, -3.09, 0.84841], 1e-4),
+            ("MS", 12, "gamma", "ML", [0.59821, 1.5598, 1.6931, 0.9964, 0.7028], 0.04),
+            (
+                "MS",
+                12,
+                "gamma",
+                "ML",
+                [0.62578, 1.5417, 1.7164, 0.99776, 0.69889],
+                1e-4,
+            ),
+            ("MS", 1, "fisk", "ML", [1.7296, 1.5135, 2.0072, -2.7331, 0.89206], 0.35),
+            (
+                "MS",
+                1,
+                "fisk",
+                "ML",
+                [1.41236, 1.51192, 1.93324, -2.74089, 0.932674],
+                1e-4,
+            ),
+            (
+                "MS",
+                12,
+                "fisk",
+                "ML",
+                [0.683273, 1.51189, 1.61597, 1.03875, 0.72531],
+                0.035,
+            ),
+            (
+                "MS",
+                12,
+                "fisk",
+                "ML",
+                [0.683273, 1.51189, 1.61597, 1.03875, 0.72531],
+                1e-4,
+            ),
+        ],
     )
-    pr = ds.pr
-    # generate water budget
-    with xr.set_options(keep_attrs=True):
-        tasmax = ds.tasmax
-        tas = tasmax - 2.5
-        tasmin = tasmax - 5
-        wb = xci.water_budget(pr, None, tasmin, tasmax, tas)
-        wb_cal = wb.sel(time=slice("1950", "1980"))
-        wb = wb.sel(time=slice("1998", "2000"))
+    def test_standardized_precipitation_index(
+        self, freq, window, dist, method, values, diff_tol
+    ):
 
-    spei = xci.standardized_precipitation_evapotranspiration_index(
-        wb, wb_cal, freq, window, dist, method
+        ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
+        pr = ds.pr.sel(time=slice("1998", "2000"))
+        pr_cal = ds.pr.sel(time=slice("1950", "1980"))
+        spi = xci.standardized_precipitation_index(
+            pr, pr_cal, freq, window, dist, method
+        )
+
+        # Only a few moments before year 2000 are tested
+        spi = spi.isel(time=slice(-11, -1, 2))
+
+        # [Guttman, 1999]: The number of precipitation events (over a month/season or
+        # other time period) is generally less than 100 in the US. This suggests that
+        # bounds of ± 3.09 correspond to 0.999 and 0.001 probabilities. SPI indices outside
+        # [-3.09, 3.09] might be non-statistically relevant. In `climate_indices` the SPI
+        # index is clipped outside this region of value. In the values chosen above,
+        # this doesn't play role, but let's clip it anyways to avoid future problems.
+        # The last few values in time are tested
+        spi = spi.clip(-3.09, 3.09)
+
+        np.testing.assert_allclose(spi.values, values, rtol=0, atol=diff_tol)
+
+    # See SPI version
+    @pytest.mark.parametrize(
+        "freq, window, dist, method,  values, diff_tol",
+        [
+            (
+                "MS",
+                1,
+                "gamma",
+                "APP",
+                [1.3750, 1.5776, 2.1033, -3.09, 0.8681],
+                1e-4,
+            ),
+            (
+                "MS",
+                12,
+                "gamma",
+                "APP",
+                [0.6242, 1.6479, 1.8005, 0.9857, 0.6706],
+                1e-4,
+            ),
+            ("MS", 1, "gamma", "ML", [1.38, 1.58, 2.1, -3.09, 0.868], 0.1),
+            ("MS", 1, "gamma", "ML", [1.4631, 1.6053, 2.1625, -3.09, 0.87996], 1e-4),
+            (
+                "MS",
+                12,
+                "gamma",
+                "ML",
+                [0.62417, 1.6479, 1.8005, 0.98574, 0.67063],
+                0.06,
+            ),
+            (
+                "MS",
+                12,
+                "gamma",
+                "ML",
+                [0.65635, 1.5976, 1.7909, 0.98453, 0.66396],
+                1e-4,
+            ),
+            ("MS", 1, "fisk", "ML", [1.73, 1.51, 2.05, -3.09, 0.892], 0.35),
+            ("MS", 1, "fisk", "ML", [1.41675, 1.51174, 1.98248, -3.09, 0.942175], 1e-4),
+            ("MS", 12, "fisk", "ML", [0.71228, 1.5347, 1.6498, 1.0241, 0.72203], 0.03),
+            (
+                "MS",
+                12,
+                "fisk",
+                "ML",
+                [0.70921, 1.55079, 1.6697, 1.02186, 0.695148],
+                1e-4,
+            ),
+        ],
     )
+    def test_standardized_precipitation_evapotranspiration_index(
+        self, freq, window, dist, method, values, diff_tol
+    ):
+        ds = (
+            open_dataset("sdba/CanESM2_1950-2100.nc")
+            .isel(location=1)
+            .sel(time=slice("1950", "2000"))
+        )
+        pr = ds.pr
+        # generate water budget
+        with xr.set_options(keep_attrs=True):
+            tasmax = ds.tasmax
+            tas = tasmax - 2.5
+            tasmin = tasmax - 5
+            wb = xci.water_budget(pr, None, tasmin, tasmax, tas)
+            wb_cal = wb.sel(time=slice("1950", "1980"))
+            wb = wb.sel(time=slice("1998", "2000"))
 
-    # Only a few moments before year 2000 are tested
-    spei = spei.isel(time=slice(-11, -1, 2))
+        spei = xci.standardized_precipitation_evapotranspiration_index(
+            wb, wb_cal, freq, window, dist, method
+        )
 
-    # Same justification for clipping as in SPI tests
-    spei = spei.clip(-3.09, 3.09)
+        # Only a few moments before year 2000 are tested
+        spei = spei.isel(time=slice(-11, -1, 2))
 
-    np.testing.assert_allclose(spei.values, values, rtol=0, atol=diff_tol)
+        # Same justification for clipping as in SPI tests
+        spei = spei.clip(-3.09, 3.09)
+
+        np.testing.assert_allclose(spei.values, values, rtol=0, atol=diff_tol)
 
 
 class TestDailyFreezeThawCycles:
