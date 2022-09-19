@@ -626,7 +626,8 @@ first_day_below = Temp(
     standard_name="day_of_year",
     long_name="First day of year with temperature below {thresh}",
     description="First day of year with temperature below {thresh} for at least {window} days.",
-    compute=indices.first_day_below,
+    compute=indices.first_day_temperature_below,
+    input=dict(tas="tasmin"),
     _version_deprecated="0.39.0",
 )
 
@@ -668,7 +669,8 @@ first_day_above = Temp(
     standard_name="day_of_year",
     long_name="First day of year with temperature above {thresh}",
     description="First day of year with temperature above {thresh} for at least {window} days.",
-    compute=indices.first_day_above,
+    compute=indices.first_day_temperature_above,
+    input=dict(tas="tasmin"),
     _version_deprecated="0.39.0",
 )
 
