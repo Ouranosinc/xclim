@@ -11,7 +11,11 @@ import xclim.indices.run_length as rl
 from xclim.core.calendar import parse_offset, resample_doy, select_time
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.core.utils import DayOfYearStr, uses_dask
-from xclim.indices._threshold import first_day_above, first_day_below, freshet_start
+from xclim.indices._threshold import (
+    first_day_tg_above,
+    first_day_tn_below,
+    freshet_start,
+)
 from xclim.indices.generic import aggregate_between_dates
 from xclim.indices.helpers import _gather_lat, day_lengths
 from xclim.indices.stats import dist_method, fit
@@ -1069,7 +1073,7 @@ def effective_growing_degree_days(
         The minimum temperature threshold.
     method : {"bootsma", "qian"}
         The window method used to determine the temperature-based start date.
-        For "bootsma", the start date is defined as 10 days after the average temperature exceeds a threshold (5 degC).
+        For "bootsma", the start date is defined as 10 days after the average temperature exceeds a threshold.
         For "qian", the start date is based on a weighted 5-day rolling average,
         based on :py:func`qian_weighted_mean_average`.
     after_date : str
@@ -1111,7 +1115,7 @@ def effective_growing_degree_days(
     tas.attrs["units"] = "degC"
 
     if method.lower() == "bootsma":
-        fda = first_day_above(tasmin=tas, thresh="5.0 degC", window=1, freq=freq)
+        fda = first_day_tg_above(tas=tas, thresh=thresh, window=1, freq=freq)
         start = fda + 10
     elif method.lower() == "qian":
         tas_weighted = qian_weighted_mean_average(tas=tas, dim=dim)
@@ -1121,7 +1125,7 @@ def effective_growing_degree_days(
 
     # The day before the first day below 0 degC
     end = (
-        first_day_below(
+        first_day_tn_below(
             tasmin=tasmin,
             thresh="0 degC",
             after_date=after_date,

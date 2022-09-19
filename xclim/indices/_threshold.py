@@ -1028,40 +1028,30 @@ def last_spring_frost(
 
 def first_day_above(
     tasmin: xarray.DataArray,
-    thresh: str = "0 degC",
-    after_date: DayOfYearStr = "07-01",
-    window: int = 1,
-    freq: str = "YS",
+    **kwargs,
 ) -> xarray.DataArray:  # noqa: D103
     warnings.warn(
         "The `first_day_above` indice is being deprecated in favour of `first_day_tn_above` with `thresh='0 degC'`. "
         "This indice will be removed in `xclim>=0.40.0`. Please update your scripts accordingly.",
-        UserWarning,
+        DeprecationWarning,
         stacklevel=3,
     )
 
-    return first_day_tn_above(
-        tasmin, thresh=thresh, after_date=after_date, window=window, freq=freq
-    )
+    return first_day_tn_above(tasmin, **kwargs)
 
 
 def first_day_below(
     tasmin: xarray.DataArray,
-    thresh: str = "0 degC",
-    after_date: DayOfYearStr = "07-01",
-    window: int = 1,
-    freq: str = "YS",
+    **kwargs,
 ) -> xarray.DataArray:  # noqa: D103
     warnings.warn(
         "The `first_day_below` indice is being deprecated in favour of `first_day_tn_below` with `thresh='0 degC'`. "
         "This indice will be removed in `xclim>=0.40.0`. Please update your scripts accordingly.",
-        UserWarning,
+        DeprecationWarning,
         stacklevel=3,
     )
 
-    return first_day_tn_below(
-        tasmin, thresh=thresh, after_date=after_date, window=window, freq=freq
-    )
+    return first_day_tn_below(tasmin, **kwargs)
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
@@ -2376,7 +2366,7 @@ def tropical_nights(
     warnings.warn(
         "The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with `thresh='20 degC'`. "
         "This indice will be removed in `xclim>=0.28.0`. Please update your scripts accordingly.",
-        UserWarning,
+        DeprecationWarning,
         stacklevel=3,
     )
 
