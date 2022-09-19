@@ -549,13 +549,7 @@ def freshet_start(
     """
     thresh = convert_units_to(thresh, tas)
     over = tas > thresh
-    out = rl.resample_and_rl(
-        over,
-        resample_before_rl,
-        rl.first_run,
-        window=window,
-        freq=freq,
-    )
+    out = over.resample(time=freq).map(rl.first_run, window=window, coord="dayofyear")
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
     return out
 

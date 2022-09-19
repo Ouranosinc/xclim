@@ -78,6 +78,7 @@ def resample_and_rl(
     da: xr.DataArray,
     resample_before_rl: str | bool,
     compute,
+    *args,
     dim: str = "time",
     freq: str | None = None,
     **kwargs,
@@ -95,6 +96,8 @@ def resample_and_rl(
       or after the run length algorithms are applied
     compute
       Run length function to apply
+    args
+      Non-optional arguments needed for compute
     dim: str
       The dimension along which to find runs.
     freq : str
@@ -109,10 +112,10 @@ def resample_and_rl(
     """
     if resample_before_rl == "from_context":
         resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
-    if resample_before_rl:
-        out = da.resample({dim: freq}).map(compute, dim=dim, **kwargs)
+    if resample_before_rl and freq is not None:
+        out = da.resample({dim: freq}).map(compute, args=args, dim=dim, **kwargs)
     else:
-        out = compute(da, dim=dim, freq=freq, **kwargs)
+        out = compute(da, *args, dim=dim, freq=freq, **kwargs)
     return out
 
 
@@ -226,7 +229,7 @@ def rle_statistics(
         Length of runs of True values along dimension, according to the reducing function (float)
         If there are no runs (but the data is valid), returns 0.
     """
-    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
+    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index, freq=freq)
     if ufunc_1dim:
         rl_stat = statistics_run_ufunc(da, reducer, window, dim)
     else:
@@ -316,7 +319,7 @@ def windowed_run_events(
     xr.DataArray, [int]
         Number of distinct runs of a minimum length (int).
     """
-    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
+    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index, freq=freq)
 
     if ufunc_1dim:
         out = windowed_run_events_ufunc(da, window, dim)
@@ -447,7 +450,7 @@ def first_run(
         out = coord_transform(out, d)
         return out
 
-    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim)
+    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, freq=freq)
 
     da = da.fillna(0)  # We expect a boolean array, but there could be NaNs nonetheless
     if window == 1:

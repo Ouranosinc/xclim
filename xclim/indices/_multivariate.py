@@ -977,6 +977,7 @@ def precip_accumulation(
     return pram.resample(time=freq).sum(dim="time").assign_attrs(units=pram.units)
 
 
+# FIXME: Resample after run length?
 @declare_units(pr="[precipitation]", tas="[temperature]", thresh="[precipitation]")
 def rain_on_frozen_ground_days(
     pr: xarray.DataArray,
