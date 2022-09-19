@@ -1107,7 +1107,7 @@ def first_day_tn_below(
     )
 
 
-@declare_units(tasmin="[temperature]", thresh="[temperature]")
+@declare_units(tas="[temperature]", thresh="[temperature]")
 def first_day_tg_below(
     tas: xarray.DataArray,
     thresh: str = "0 degC",
@@ -1150,7 +1150,7 @@ def first_day_tg_below(
     )
 
 
-@declare_units(tasmin="[temperature]", thresh="[temperature]")
+@declare_units(tasmax="[temperature]", thresh="[temperature]")
 def first_day_tx_below(
     tasmax: xarray.DataArray,
     thresh: str = "0 degC",
@@ -1236,7 +1236,7 @@ def first_day_tn_above(
     )
 
 
-@declare_units(tasmin="[temperature]", thresh="[temperature]")
+@declare_units(tas="[temperature]", thresh="[temperature]")
 def first_day_tg_above(
     tas: xarray.DataArray,
     thresh: str = "0 degC",
@@ -1279,7 +1279,7 @@ def first_day_tg_above(
     )
 
 
-@declare_units(tasmin="[temperature]", thresh="[temperature]")
+@declare_units(tasmax="[temperature]", thresh="[temperature]")
 def first_day_tx_above(
     tasmax: xarray.DataArray,
     thresh: str = "0 degC",
