@@ -46,8 +46,14 @@ __all__ = [
     "frost_free_season_end",
     "frost_free_season_length",
     "frost_season_length",
-    "first_day_below",
     "first_day_above",
+    "first_day_below",
+    "first_day_tg_above",
+    "first_day_tn_above",
+    "first_day_tx_above",
+    "first_day_tg_below",
+    "first_day_tn_below",
+    "first_day_tx_below",
     "first_snowfall",
     "last_snowfall",
     "heat_wave_index",
@@ -1020,18 +1026,56 @@ def last_spring_frost(
     return out
 
 
-@declare_units(tasmin="[temperature]", thresh="[temperature]")
+def first_day_above(
+    tasmin: xarray.DataArray,
+    thresh: str = "0 degC",
+    after_date: DayOfYearStr = "07-01",
+    window: int = 1,
+    freq: str = "YS",
+) -> xarray.DataArray:  # noqa: D103
+    warnings.warn(
+        "The `first_day_above` indice is being deprecated in favour of `first_day_tn_above` with `thresh='0 degC'`. "
+        "This indice will be removed in `xclim>=0.40.0`. Please update your scripts accordingly.",
+        UserWarning,
+        stacklevel=3,
+    )
+
+    return first_day_tn_above(
+        tasmin, thresh=thresh, after_date=after_date, window=window, freq=freq
+    )
+
+
 def first_day_below(
     tasmin: xarray.DataArray,
     thresh: str = "0 degC",
     after_date: DayOfYearStr = "07-01",
     window: int = 1,
     freq: str = "YS",
-) -> xarray.DataArray:
-    r"""First day of temperatures inferior to a threshold temperature.
+) -> xarray.DataArray:  # noqa: D103
+    warnings.warn(
+        "The `first_day_below` indice is being deprecated in favour of `first_day_tn_below` with `thresh='0 degC'`. "
+        "This indice will be removed in `xclim>=0.40.0`. Please update your scripts accordingly.",
+        UserWarning,
+        stacklevel=3,
+    )
 
-    Returns first day of period where a temperature is inferior to a threshold over a given number of days, limited to
-    a starting calendar date.
+    return first_day_tn_below(
+        tasmin, thresh=thresh, after_date=after_date, window=window, freq=freq
+    )
+
+
+@declare_units(tasmin="[temperature]", thresh="[temperature]")
+def first_day_tn_below(
+    tasmin: xarray.DataArray,
+    thresh: str = "0 degC",
+    after_date: DayOfYearStr = "07-01",
+    window: int = 1,
+    freq: str = "YS",
+) -> xarray.DataArray:
+    r"""First day of minimum temperatures inferior to a threshold temperature.
+
+    Returns first day of period where minimum temperature is inferior to a threshold over a given number of days,
+    limited to a starting calendar date.
 
     Warnings
     --------
@@ -1044,7 +1088,7 @@ def first_day_below(
     thresh : str
         Threshold temperature on which to base evaluation.
     after_date : str
-        Date of the year after which to look for the first frost event. Should have the format '%m-%d'.
+        Date of the year after which to look for the first event. Should have the format '%m-%d'.
     window : int
         Minimum number of days with temperature below threshold needed for evaluation.
     freq : str
@@ -1056,29 +1100,108 @@ def first_day_below(
         Day of the year when minimum temperature is inferior to a threshold over a given number of days for the first time.
         If there is no such day, returns np.nan.
     """
-    thresh = convert_units_to(thresh, tasmin)
-    cond = tasmin < thresh
+    from .generic import first_day_below  # noqa
 
-    out = cond.resample(time=freq).map(
-        rl.first_run_after_date,
-        window=window,
-        date=after_date,
-        dim="time",
-        coord="dayofyear",
+    return first_day_below(
+        tasmin, threshold=thresh, after_date=after_date, window=window, freq=freq
     )
-    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tasmin))
-    return out
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
-def first_day_above(
+def first_day_tg_below(
+    tas: xarray.DataArray,
+    thresh: str = "0 degC",
+    after_date: DayOfYearStr = "07-01",
+    window: int = 1,
+    freq: str = "YS",
+) -> xarray.DataArray:
+    r"""First day of mean temperatures inferior to a threshold temperature.
+
+    Returns first day of period where mean temperature is inferior to a threshold over a given number of days, limited to
+    a starting calendar date.
+
+    Warnings
+    --------
+    The default `freq` is valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+        Mean daily temperature.
+    thresh : str
+        Threshold temperature on which to base evaluation.
+    after_date : str
+        Date of the year after which to look for the first event. Should have the format '%m-%d'.
+    window : int
+        Minimum number of days with temperature below threshold needed for evaluation.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+        Day of the year when mean temperature is inferior to a threshold over a given number of days for the first time.
+        If there is no such day, returns np.nan.
+    """
+    from .generic import first_day_below  # noqa
+
+    return first_day_below(
+        tas, threshold=thresh, after_date=after_date, window=window, freq=freq
+    )
+
+
+@declare_units(tasmin="[temperature]", thresh="[temperature]")
+def first_day_tx_below(
+    tasmax: xarray.DataArray,
+    thresh: str = "0 degC",
+    after_date: DayOfYearStr = "07-01",
+    window: int = 1,
+    freq: str = "YS",
+) -> xarray.DataArray:
+    r"""First day of maximum temperatures inferior to a threshold temperature.
+
+    Returns first day of period where a temperature is inferior to a threshold over a given number of days, limited to
+    a starting calendar date.
+
+    Warnings
+    --------
+    The default `freq` is valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+        Maximum daily temperature.
+    thresh : str
+        Threshold temperature on which to base evaluation.
+    after_date : str
+        Date of the year after which to look for the first event. Should have the format '%m-%d'.
+    window : int
+        Minimum number of days with temperature below threshold needed for evaluation.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+        Day of the year when minimum temperature is inferior to a threshold over a given number of days for the first time.
+        If there is no such day, returns np.nan.
+    """
+    from .generic import first_day_below  # noqa
+
+    return first_day_below(
+        tasmax, threshold=thresh, after_date=after_date, window=window, freq=freq
+    )
+
+
+@declare_units(tasmin="[temperature]", thresh="[temperature]")
+def first_day_tn_above(
     tasmin: xarray.DataArray,
     thresh: str = "0 degC",
     after_date: DayOfYearStr = "01-01",
     window: int = 1,
     freq: str = "YS",
 ) -> xarray.DataArray:
-    r"""First day of temperatures superior to a threshold temperature.
+    r"""First day of minimum temperatures superior to a threshold temperature.
 
     Returns first day of period where a temperature is superior to a threshold over a given number of days, limited to
     a starting calendar date.
@@ -1106,18 +1229,97 @@ def first_day_above(
         Day of the year when minimum temperature is superior to a threshold over a given number of days for the first time.
         If there is no such day, returns np.nan.
     """
-    thresh = convert_units_to(thresh, tasmin)
-    cond = tasmin > thresh
+    from .generic import first_day_above  # noqa
 
-    out = cond.resample(time=freq).map(
-        rl.first_run_after_date,
-        window=window,
-        date=after_date,
-        dim="time",
-        coord="dayofyear",
+    return first_day_above(
+        tasmin, threshold=thresh, after_date=after_date, window=window, freq=freq
     )
-    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tasmin))
-    return out
+
+
+@declare_units(tasmin="[temperature]", thresh="[temperature]")
+def first_day_tg_above(
+    tas: xarray.DataArray,
+    thresh: str = "0 degC",
+    after_date: DayOfYearStr = "01-01",
+    window: int = 1,
+    freq: str = "YS",
+) -> xarray.DataArray:
+    r"""First day of mean temperatures superior to a threshold temperature.
+
+    Returns first day of period where mean temperature is superior to a threshold over a given number of days,
+    limited to a starting calendar date.
+
+    Warnings
+    --------
+    The default `freq` is valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+        Mean daily temperature.
+    thresh : str
+        Threshold temperature on which to base evaluation.
+    after_date : str
+        Date of the year after which to look for the first event. Should have the format '%m-%d'.
+    window : int
+        Minimum number of days with temperature above threshold needed for evaluation.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+        Day of the year when mean temperature is superior to a threshold over a given number of days for the first time.
+        If there is no such day, returns np.nan.
+    """
+    from .generic import first_day_above  # noqa
+
+    return first_day_above(
+        tas, threshold=thresh, after_date=after_date, window=window, freq=freq
+    )
+
+
+@declare_units(tasmin="[temperature]", thresh="[temperature]")
+def first_day_tx_above(
+    tasmax: xarray.DataArray,
+    thresh: str = "0 degC",
+    after_date: DayOfYearStr = "01-01",
+    window: int = 1,
+    freq: str = "YS",
+) -> xarray.DataArray:
+    r"""First day of maximum temperatures superior to a threshold temperature.
+
+    Returns first day of period where maximum temperature is superior to a threshold over a given number of days,
+    limited to a starting calendar date.
+
+    Warnings
+    --------
+    The default `freq` is valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+        Minimum daily temperature.
+    thresh : str
+        Threshold temperature on which to base evaluation.
+    after_date : str
+        Date of the year after which to look for the first event. Should have the format '%m-%d'.
+    window : int
+        Minimum number of days with temperature above threshold needed for evaluation.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+        Day of the year when maximum temperature is superior to a threshold over a given number of days for the first time.
+        If there is no such day, returns np.nan.
+    """
+    from .generic import first_day_above  # noqa
+
+    return first_day_above(
+        tasmax, threshold=thresh, after_date=after_date, window=window, freq=freq
+    )
 
 
 @declare_units(prsn="[precipitation]", thresh="[precipitation]")
