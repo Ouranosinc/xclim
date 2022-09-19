@@ -145,27 +145,27 @@ def cfcheck(func: Callable) -> Callable:
 class set_options:
     """Set options for xclim in a controlled context.
 
-    Currently-supported options:
-
-    - ``metadata_locales``:
-      List of IETF language tags or tuples of language tags and a translation dict, or
-      tuples of language tags and a path to a json file defining translation of attributes.
-      Default: ``[]``.
-    - ``data_validation``:
-      Whether to 'log',  'raise' an error or 'warn' the user on inputs that fail the data checks in `xclim.core.datachecks`.
-      Default: ``'raise'``.
-    - ``cf_compliance``:
-      Whether to 'log',  'raise' an error or 'warn' the user on inputs that fail the CF compliance checks in `xclim.core.cfchecks`.
-      Default: ``'warn'``.
-    - ``check_missing``:
-      How to check for missing data and flag computed indicators.
-      Default available methods are "any", "wmo", "pct", "at_least_n" and "skip".
-      Missing method can be registered through the `xclim.core.options.register_missing_method` decorator.
-      Default: ``'any'``
-    - ``missing_options``:
-      Dictionary of options to pass to the missing method. Keys must the name of
-      missing method and values must be mappings from option names to values.
-    - ``run_length_ufunc``:
+    Attributes
+    ----------
+    metadata_locales : list[Any]
+        List of IETF language tags or tuples of language tags and a translation dict, or
+        tuples of language tags and a path to a json file defining translation of attributes.
+        Default: ``[]``.
+    data_validation : {"log", "raise", "error"}
+        Whether to "log", "raise" an error or 'warn' the user on inputs that fail the data checks in
+        :py:func:`xclim.core.datachecks`. Default: ``"raise"``.
+    cf_compliance : {"log", "raise", "error"}
+        Whether to "log", "raise" an error or "warn" the user on inputs that fail the CF compliance checks in
+        :py:func:`xclim.core.cfchecks`. Default: ``"warn"``.
+    check_missing : {"any", "wmo", "pct", "at_least_n", "skip"}
+        How to check for missing data and flag computed indicators.
+        Available methods are "any", "wmo", "pct", "at_least_n" and "skip".
+        Missing method can be registered through the `xclim.core.options.register_missing_method` decorator.
+        Default: ``"any"``
+    missing_options : dict
+        Dictionary of options to pass to the missing method. Keys must the name of
+        missing method and values must be mappings from option names to values.
+    run_length_ufunc : str
       Whether to use the 1D ufunc version of run length algorithms or the dask-ready broadcasting version.
       Default is ``'auto'`` which means the latter is used for dask-backed and large arrays.
     - ``resample_before_rl``:
@@ -203,10 +203,11 @@ class set_options:
 
     Or to set global options:
 
-    >>> xclim.set_options(
-    ...     missing_options={"pct": {"tolerance": 0.04}}
-    ... )  # doctest: +SKIP
-    <xclim.core.options.set_options object at ...>
+    .. code-block:: python
+
+        import xclim
+
+        xclim.set_options(missing_options={"pct": {"tolerance": 0.04}})
     """
 
     def __init__(self, **kwargs):

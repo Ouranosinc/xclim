@@ -23,14 +23,14 @@ def check_freq(var: xr.DataArray, freq: str | Sequence[str], strict: bool = True
     Parameters
     ----------
     var : xr.DataArray
-      Input array.
+        Input array.
     freq : str or sequence of str
-      The expected temporal frequencies, using Pandas frequency terminology ({'A', 'M', 'D', 'H', 'T', 'S', 'L', 'U'})
-      and multiples thereof. To test strictly for 'W', pass '7D' with `strict=True`.
-      This ignores the start flag and the anchor (ex: 'AS-JUL' will validate against 'Y').
+        The expected temporal frequencies, using Pandas frequency terminology ({'A', 'M', 'D', 'H', 'T', 'S', 'L', 'U'})
+        and multiples thereof. To test strictly for 'W', pass '7D' with `strict=True`.
+        This ignores the start flag and the anchor (ex: 'AS-JUL' will validate against 'Y').
     strict : bool
-      Whether multiples of the frequencies are considered invalid or not. With `strict` set to False, a '3H' series
-      will not raise an error if freq is set to 'H'.
+        Whether multiples of the frequencies are considered invalid or not. With `strict` set to False, a '3H' series
+        will not raise an error if freq is set to 'H'.
     """
     if isinstance(freq, str):
         freq = [freq]
@@ -54,6 +54,8 @@ def check_freq(var: xr.DataArray, freq: str | Sequence[str], strict: bool = True
 def check_daily(var: xr.DataArray):
     """Raise an error if not series has a frequency other that daily, or is not monotonically increasing.
 
-    Note that this does not check for gaps in the series.
+    Notes
+    -----
+    This does not check for gaps in series.
     """
     return check_freq(var, "D")

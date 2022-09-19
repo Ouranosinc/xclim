@@ -116,7 +116,7 @@ def _griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
         Total rainfall over previous 24 hours [mm].
     smd : array_like
         Soil moisture deficit (e.g. KBDI).
-    lim : integer
+    lim : int
         How to limit the drought factor.
         If 0, use equation (14) in :cite:t:`ffdi-finkele_2006`.
         If 1, use equation (13) in :cite:t:`ffdi-finkele_2006`.
@@ -231,7 +231,7 @@ def keetch_byram_drought_index(
 
     Returns
     -------
-    kbdi : xr.DataArray
+    xr.DataArray
         Keetch-Byram drought index.
 
     Notes
@@ -295,19 +295,19 @@ def griffiths_drought_factor(
     Parameters
     ----------
     pr : xr.DataArray
-      Total rainfall over previous 24 hours [mm/day].
+        Total rainfall over previous 24 hours [mm/day].
     smd : xarray DataArray
-      Daily soil moisture deficit (often KBDI) [mm/day].
+        Daily soil moisture deficit (often KBDI) [mm/day].
     limiting_func : {"xlim", "discrete"}
-      How to limit the values of the drought factor.
-      If "xlim" (default), use equation (14) in :cite:t:`ffdi-finkele_2006`.
-      If "discrete", use equation Eq (13) in :cite:t:`ffdi-finkele_2006`, but with the lower
-      limit of each category bound adjusted to match the upper limit of the previous bound.
+        How to limit the values of the drought factor.
+        If "xlim" (default), use equation (14) in :cite:t:`ffdi-finkele_2006`.
+        If "discrete", use equation Eq (13) in :cite:t:`ffdi-finkele_2006`, but with the lower
+        limit of each category bound adjusted to match the upper limit of the previous bound.
 
     Returns
     -------
     df : xr.DataArray
-      The limited Griffiths drought factor.
+        The limited Griffiths drought factor.
 
     Notes
     -----
@@ -388,7 +388,7 @@ def mcarthur_forest_fire_danger_index(
 
     Returns
     -------
-    ffdi : xr.DataArray
+    xr.DataArray
         The McArthur forest fire danger index.
 
     References

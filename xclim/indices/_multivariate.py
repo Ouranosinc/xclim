@@ -80,31 +80,31 @@ def cold_spell_duration_index(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature.
+        Minimum daily temperature.
     tasmin_per : xarray.DataArray
-      nth percentile of daily minimum temperature with `dayofyear` coordinate.
+        nth percentile of daily minimum temperature with `dayofyear` coordinate.
     window : int
-      Minimum number of days with temperature below threshold to qualify as a cold spell.
+        Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
       Resampling frequency.
     resample_before_rl : {"from_context", True, False}
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
     bootstrap : bool
-      Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
-      Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
-      This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
-      the rest of the time series.
-      Keep bootstrap to False when there is no common period, it would give wrong results
-      plus, bootstrapping is computationally expensive.
-    op: {"<", "<=", "lt", "le"}
-      Comparison operation. Default: "<".
+        Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
+        Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
+        This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+        the rest of the time series.
+        Keep bootstrap to False when there is no common period, it would give wrong results
+        plus, bootstrapping is computationally expensive.
+    op : {"<", "<=", "lt", "le"}
+        Comparison operation. Default: "<".
 
     Returns
     -------
     xarray.DataArray, [time]
-      Count of days with at least six consecutive days when the daily minimum temperature is below the 10th
-      percentile.
+        Count of days with at least six consecutive days when the daily minimum temperature is below the 10th
+        percentile.
 
     Notes
     -----
@@ -124,13 +124,13 @@ def cold_spell_duration_index(
 
     Examples
     --------
-    # Note that this example does not use a proper 1961-1990 reference period.
     >>> from xclim.core.calendar import percentile_doy
     >>> from xclim.indices import cold_spell_duration_index
-
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin.isel(lat=0, lon=0)
     >>> tn10 = percentile_doy(tasmin, per=10).sel(percentiles=10)
     >>> cold_spell_duration_index(tasmin, tn10)
+
+    Note that this example does not use a proper 1961-1990 reference period.
     """
     tasmin_per = convert_units_to(tasmin_per, tasmin)
 

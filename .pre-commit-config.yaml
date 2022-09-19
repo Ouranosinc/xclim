@@ -62,7 +62,7 @@ repos:
         exclude: '(xclim/indices/__init__.py|docs/installation.rst)'
         additional_dependencies: [ 'black==22.3.0' ]
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.27.1
+    rev: v1.28.0
     hooks:
       - id: yamllint
         args: [ '--config-file=.yamllint.yaml' ]
