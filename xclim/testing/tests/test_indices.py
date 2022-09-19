@@ -600,18 +600,18 @@ class TestLastSpringFrost:
 
 
 class TestFirstDayBelow:
-    def test_tg(self, tas_series):
+    def test_simple(self, tas_series):
         a = np.zeros(365)
         a[180:270] = 303.15
         tas = tas_series(a, start="2000/1/1")
 
-        fdb = xci.first_day_tg_below(tas)
+        fdb = xci.first_day_temperature_below(tas)
         assert fdb == 271
 
         a[:] = 303.15
         tas = tas_series(a, start="2000/1/1")
 
-        fdb = xci.first_day_tg_below(tas)
+        fdb = xci.first_day_temperature_below(tas)
         assert np.isnan(fdb)
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in fdb.attrs.keys()
@@ -640,21 +640,21 @@ class TestFirstDayBelow:
 
 
 class TestFirstDayAbove:
-    def test_tg(self, tas_series):
+    def test_simple(self, tas_series):
         a = np.zeros(365) + 307
         a[180:270] = 270
         tas = tas_series(a, start="2000/1/1")
 
-        fda = xci.first_day_tg_above(tas)
+        fda = xci.first_day_temperature_above(tas)
         assert fda == 1
 
-        fda = xci.first_day_tg_above(tas, after_date="07-01")
+        fda = xci.first_day_temperature_above(tas, after_date="07-01")
         assert fda == 271
 
         a[:] = 270
         tas = tas_series(a, start="2000/1/1")
 
-        fda = xci.first_day_tg_above(tas)
+        fda = xci.first_day_temperature_above(tas)
         assert np.isnan(fda)
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in fda.attrs.keys()
