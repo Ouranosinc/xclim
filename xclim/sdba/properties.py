@@ -248,10 +248,7 @@ quantile = StatisticalProperty(
 )
 
 
-# FIXME: Resample before/after
-@update_xclim_history
-@register_statistical_properties(aspect="temporal", seasonal=True, annual=True)
-def spell_length_distribution(
+def _spell_length_distribution(
     da: xr.DataArray,
     *,
     method: str = "amount",
