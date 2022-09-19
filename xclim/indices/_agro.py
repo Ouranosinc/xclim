@@ -12,8 +12,8 @@ from xclim.core.calendar import parse_offset, resample_doy, select_time
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.core.utils import DayOfYearStr, uses_dask
 from xclim.indices._threshold import (
-    first_day_tg_above,
-    first_day_tn_below,
+    first_day_temperature_above,
+    first_day_temperature_below,
     freshet_start,
 )
 from xclim.indices.generic import aggregate_between_dates
@@ -1115,7 +1115,7 @@ def effective_growing_degree_days(
     tas.attrs["units"] = "degC"
 
     if method.lower() == "bootsma":
-        fda = first_day_tg_above(tas=tas, thresh=thresh, window=1, freq=freq)
+        fda = first_day_temperature_above(tas=tas, thresh=thresh, window=1, freq=freq)
         start = fda + 10
     elif method.lower() == "qian":
         tas_weighted = qian_weighted_mean_average(tas=tas, dim=dim)
@@ -1125,8 +1125,8 @@ def effective_growing_degree_days(
 
     # The day before the first day below 0 degC
     end = (
-        first_day_tn_below(
-            tasmin=tasmin,
+        first_day_temperature_below(
+            tasmin,
             thresh="0 degC",
             after_date=after_date,
             window=1,
