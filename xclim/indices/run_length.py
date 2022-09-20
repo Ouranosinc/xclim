@@ -58,7 +58,7 @@ def use_ufunc(
         If ufunc_1dim is "auto", returns True if the array is on dask or too large.
         Otherwise, returns ufunc_1dim.
     """
-    if ufunc_1dim is False and freq is not None:
+    if ufunc_1dim is True and freq is not None:
         raise ValueError(
             "Resampling after run length operations is not implemented for 1d method"
         )

@@ -168,7 +168,7 @@ class set_options:
     run_length_ufunc : str
       Whether to use the 1D ufunc version of run length algorithms or the dask-ready broadcasting version.
       Default is ``'auto'`` which means the latter is used for dask-backed and large arrays.
-    - ``resample_before_rl``:
+    resample_before_rl: {"from_context", True, False}
       Statistics of runs are often separated in samples with a given frequency. Using run length encoding
       (and variants of the algortithm) before the resampling of the dataset leads to runs that can overlap
       on different resampling period, which in turn leads to different statistics for the runs. No such
