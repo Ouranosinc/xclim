@@ -25,8 +25,7 @@ from xclim import indices as xci
 from xclim.core.calendar import date_range, percentile_doy
 from xclim.core.options import set_options
 from xclim.core.units import ValidationError, convert_units_to, units
-from xclim.indices.generic import first_day_above as first_day_above_generic
-from xclim.indices.generic import first_day_below as first_day_below_generic
+from xclim.indices.generic import first_day_threshold_reached
 from xclim.testing import open_dataset
 
 K2C = 273.15
@@ -618,7 +617,7 @@ class TestFirstDayBelow:
         assert fdb.attrs["units"] == ""
         assert fdb.attrs["is_dayofyear"] == 1
 
-    def test_tn_deprecated(self, tasmin_series):
+    def test_below_deprecated(self, tasmin_series):
         a = np.zeros(365)
         a[180:270] = 303.15
         tas = tasmin_series(a, start="2000/1/1")
@@ -627,16 +626,13 @@ class TestFirstDayBelow:
             fdb = xci.first_day_below(tas)
         assert fdb == 271
 
-    def test_generic_precip(self, pr_series):
-        a = np.zeros(365)
-        precip = np.arange(8) / 1000
-        a[:8] = np.flip(precip)
-        pr = pr_series(a, start="1/1/2000")
+    def test_below_forbidden(self, tasmax_series):
+        a = np.zeros(365) + 307
+        a[180:270] = 270
+        tasmax = tasmax_series(a, start="2000/1/1")
 
-        fdb = first_day_below_generic(
-            pr, threshold="0.004 kg m-2 s-1", after_date="01-01", window=1, freq="YS"
-        )
-        assert fdb == 5
+        with pytest.raises(ValueError):
+            xci.first_day_temperature_below(tasmax, op=">=")
 
 
 class TestFirstDayAbove:
@@ -661,7 +657,7 @@ class TestFirstDayAbove:
         assert fda.attrs["units"] == ""
         assert fda.attrs["is_dayofyear"] == 1
 
-    def test_tn_deprecated(self, tasmin_series):
+    def test_above_deprecated(self, tasmin_series):
         a = np.zeros(365) + 307
         a[180:270] = 270
         tas = tasmin_series(a, start="2000/1/1")
@@ -670,15 +666,13 @@ class TestFirstDayAbove:
             fda = xci.first_day_above(tas)
         assert fda == 1
 
-    def test_generic_precip(self, pr_series):
-        a = np.zeros(365)
-        a[:8] = np.arange(8) / 1000
-        pr = pr_series(a, start="1/1/2000")
+    def test_above_forbidden(self, tasmax_series):
+        a = np.zeros(365) + 307
+        a[180:270] = 270
+        tasmax = tasmax_series(a, start="2000/1/1")
 
-        fda = first_day_above_generic(
-            pr, threshold="0.004 kg m-2 s-1", after_date="01-01", window=1, freq="YS"
-        )
-        assert fda == 6
+        with pytest.raises(ValueError):
+            xci.first_day_temperature_above(tasmax, op="<")
 
 
 class TestDaysOverPrecipThresh:

@@ -17,7 +17,7 @@ from xclim.core.units import (
 from xclim.core.utils import DayOfYearStr
 
 from . import run_length as rl
-from .generic import compare, domain_count, threshold_count
+from .generic import compare, domain_count, first_day_threshold_reached, threshold_count
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -1027,7 +1027,8 @@ def first_day_above(
     **kwargs,
 ) -> xarray.DataArray:  # noqa: D103
     warnings.warn(
-        "The `first_day_above` indice is being deprecated in favour of `first_day_temperature_above` with `thresh='0 degC'`. "
+        "The `first_day_above` indice is being deprecated in favour of `first_day_temperature_above` "
+        "with `thresh='0 degC'`. "
         "This indice will be removed in `xclim>=0.40.0`. Please update your scripts accordingly.",
         DeprecationWarning,
         stacklevel=3,
@@ -1041,7 +1042,8 @@ def first_day_below(
     **kwargs,
 ) -> xarray.DataArray:  # noqa: D103
     warnings.warn(
-        "The `first_day_below` indice is being deprecated in favour of `first_day_temperature_below` with `thresh='0 degC'`. "
+        "The `first_day_below` indice is being deprecated in favour of `first_day_temperature_below` "
+        "with `thresh='0 degC'`. "
         "This indice will be removed in `xclim>=0.40.0`. Please update your scripts accordingly.",
         DeprecationWarning,
         stacklevel=3,
@@ -1054,6 +1056,7 @@ def first_day_below(
 def first_day_temperature_below(
     tas: xarray.DataArray,
     thresh: str = "0 degC",
+    op: str = "<",
     after_date: DayOfYearStr = "07-01",
     window: int = 1,
     freq: str = "YS",
@@ -1073,6 +1076,8 @@ def first_day_temperature_below(
         Daily temperature.
     thresh : str
         Threshold temperature on which to base evaluation.
+    op : {"<", "<=", "lt", "le"}
+        Comparison operation. Default: ">".
     after_date : str
         Date of the year after which to look for the first event. Should have the format '%m-%d'.
     window : int
@@ -1086,10 +1091,16 @@ def first_day_temperature_below(
         Day of the year when temperature is inferior to a threshold over a given number of days for the first time.
         If there is no such day, returns np.nan.
     """
-    from .generic import first_day_below  # noqa
+    # noqa
 
-    return first_day_below(
-        tas, threshold=thresh, after_date=after_date, window=window, freq=freq
+    return first_day_threshold_reached(
+        tas,
+        threshold=thresh,
+        op=op,
+        after_date=after_date,
+        window=window,
+        freq=freq,
+        constrain=("<", "<="),
     )
 
 
@@ -1097,6 +1108,7 @@ def first_day_temperature_below(
 def first_day_temperature_above(
     tas: xarray.DataArray,
     thresh: str = "0 degC",
+    op: str = ">",
     after_date: DayOfYearStr = "01-01",
     window: int = 1,
     freq: str = "YS",
@@ -1116,6 +1128,8 @@ def first_day_temperature_above(
         Daily temperature.
     thresh : str
         Threshold temperature on which to base evaluation.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">".
     after_date : str
         Date of the year after which to look for the first event. Should have the format '%m-%d'.
     window : int
@@ -1129,10 +1143,14 @@ def first_day_temperature_above(
         Day of the year when temperature is superior to a threshold over a given number of days for the first time.
         If there is no such day, returns np.nan.
     """
-    from .generic import first_day_above  # noqa
-
-    return first_day_above(
-        tas, threshold=thresh, after_date=after_date, window=window, freq=freq
+    return first_day_threshold_reached(
+        tas,
+        threshold=thresh,
+        op=op,
+        after_date=after_date,
+        window=window,
+        freq=freq,
+        constrain=(">", ">="),
     )
 
 

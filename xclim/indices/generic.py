@@ -44,8 +44,7 @@ __all__ = [
     "doymax",
     "doymin",
     "extreme_temperature_range",
-    "first_day_above",
-    "first_day_below",
+    "first_day_threshold_reached",
     "first_occurrence",
     "get_daily_events",
     "get_op",
@@ -815,24 +814,20 @@ def degree_days(tas: xr.DataArray, threshold: str, op: str) -> xr.DataArray:
     return to_agg_units(out, tas, op="delta_prod")
 
 
-def first_day_above(
+def first_day_threshold_reached(
     data: xr.DataArray,
     *,
     threshold: str,
+    op: str,
     after_date: DayOfYearStr,
     window: int = 1,
     freq: str = "YS",
+    constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
-    r"""First day of values superior to a given threshold.
+    r"""First day of values exceeding threshold.
 
-    Returns first day of period where values are superior to a threshold over a given number of days,
+    Returns first day of period where values reach or exceed a threshold over a given number of days,
     limited to a starting calendar date.
-
-    Warnings
-    --------
-    :py:func:`xclim.indices.generic.first_day_above` is a base and unitless indice used for building more complex
-    indices and indicators, and should not be confused with the now-deprecated temperature indice
-    :py:func:`xclim.indices._threshold.first_day_above`.
 
     Parameters
     ----------
@@ -840,73 +835,26 @@ def first_day_above(
         Dataset being evaluated.
     threshold : str
         Threshold on which to base evaluation.
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        Logical operator. e.g. arr > thresh.
     after_date : str
         Date of the year after which to look for the first event. Should have the format '%m-%d'.
     window : int
         Minimum number of days with values above threshold needed for evaluation.
     freq : str
         Resampling frequency.
+    constrain : sequence of str, optional
+        Optionally allowed conditions.
 
     Returns
     -------
     xarray.DataArray, [dimensionless]
-        Day of the year when value is superior to a threshold over a given number of days for the first time.
+        Day of the year when value reaches or exceeds a threshold over a given number of days for the first time.
         If there is no such day, returns np.nan.
     """
     threshold = convert_units_to(threshold, data)
-    cond = data > threshold
 
-    out = cond.resample(time=freq).map(
-        rl.first_run_after_date,
-        window=window,
-        date=after_date,
-        dim="time",
-        coord="dayofyear",
-    )
-    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(data))
-    return out
-
-
-def first_day_below(
-    data: xr.DataArray,
-    *,
-    threshold: str,
-    after_date: DayOfYearStr,
-    window: int = 1,
-    freq: str = "YS",
-) -> xr.DataArray:
-    r"""First day of values inferior to a given threshold.
-
-    Returns first day of period where values are inferior to a threshold over a given number of days,
-    limited to a starting calendar date.
-
-    Warnings
-    --------
-    :py:func:`xclim.indices.generic.first_day_below` is a base and unitless indice used for building more complex
-    indices and indicators, and should not be confused with the now-deprecated temperature indice
-    :py:func:`xclim.indices._threshold.first_day_below`.
-
-    Parameters
-    ----------
-    data : xarray.DataArray
-        Dataset being evaluated.
-    threshold : str
-        Threshold on which to base evaluation.
-    after_date : str
-        Date of the year after which to look for the first event. Should have the format '%m-%d'.
-    window : int
-        Minimum number of days with values below threshold needed for evaluation.
-    freq : str
-        Resampling frequency.
-
-    Returns
-    -------
-    xarray.DataArray, [dimensionless]
-        Day of the year when value is inferior to a threshold over a given number of days for the first time.
-        If there is no such day, returns np.nan.
-    """
-    threshold = convert_units_to(threshold, data)
-    cond = data < threshold
+    cond = compare(data, op, threshold, constrain=constrain)
 
     out = cond.resample(time=freq).map(
         rl.first_run_after_date,
