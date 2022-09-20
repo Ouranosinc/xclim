@@ -44,7 +44,7 @@ class TestDomainCount:
 
 
 class TestFlowGeneric:
-    def test_doyminmax(q_series):
+    def test_doyminmax(self, q_series):
         a = np.ones(365)
         a[9] = 2
         a[19] = -2

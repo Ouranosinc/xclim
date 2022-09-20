@@ -1034,7 +1034,7 @@ def first_day_above(
         stacklevel=3,
     )
 
-    return first_day_temperature_below(tas=tasmin, **kwargs)
+    return first_day_temperature_above(tas=tasmin, **kwargs)
 
 
 def first_day_below(

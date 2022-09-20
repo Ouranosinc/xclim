@@ -660,10 +660,10 @@ class TestFirstDayAbove:
     def test_above_deprecated(self, tasmin_series):
         a = np.zeros(365) + 307
         a[180:270] = 270
-        tas = tasmin_series(a, start="2000/1/1")
+        tasmin = tasmin_series(a, start="2000/1/1")
 
         with pytest.warns(DeprecationWarning):
-            fda = xci.first_day_above(tas)
+            fda = xci.first_day_above(tasmin)
         assert fda == 1
 
     def test_above_forbidden(self, tasmax_series):
