@@ -765,7 +765,7 @@ def standardized_precipitation_index(
                     stacklevel=2,
                 )
                 return True
-                return False
+            return False
 
         if needs_rechunking(pr):
             pr = pr.chunk({"time": -1})

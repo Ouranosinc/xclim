@@ -1309,7 +1309,6 @@ def heat_wave_index(
     """
     thresh = convert_units_to(thresh, tasmax)
     over = tasmax > thresh
-
     group = over.resample(time=freq)
 
     out = group.map(rl.windowed_run_count, window=window, dim="time")
