@@ -506,8 +506,7 @@ def _fit_start(x, dist, **fitkwargs) -> tuple[tuple, dict]:
         # f_2 := variance/alpha^2 = (<x^2> - <x>^2)/alpha^2
         # In the large beta limit, f_1 -> 1 and f_1/sqrt(f_2) -> 0.56*beta - 0.25
         # Solve for alpha and beta below:
-        alpha_0, beta_0 = m, (1 / 0.56) * (m / np.sqrt(v) + 1 / 4)
-        alpha, beta = alpha_0, beta_0
+        alpha, beta = m, (1 / 0.56) * (m / np.sqrt(v) + 1 / 4)
         return (beta,), {"scale": alpha}
     return (), {}
 
