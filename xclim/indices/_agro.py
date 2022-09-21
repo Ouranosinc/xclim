@@ -9,7 +9,6 @@ import xarray
 import xclim.indices as xci
 import xclim.indices.run_length as rl
 from xclim.core.calendar import parse_offset, resample_doy, select_time
-from xclim.core.options import OPTIONS, RESAMPLE_BEFORE_RL
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.core.utils import DayOfYearStr, uses_dask
 from xclim.indices._threshold import first_day_above, first_day_below, freshet_start
@@ -889,7 +888,7 @@ def dry_spell_frequency(
     thresh: str = "1.0 mm",
     window: int = 3,
     freq: str = "YS",
-    resample_before_rl: str | bool = "from_context",
+    resample_before_rl: bool = True,
     op: str = "sum",
 ) -> xarray.DataArray:
     """Return the number of dry periods of n days and more.
@@ -907,7 +906,7 @@ def dry_spell_frequency(
         Minimum length of the spells.
     freq : str
       Resampling frequency.
-    resample_before_rl : {"from_context", True, False}
+    resample_before_rl : bool
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
     op: {"sum","max"}
@@ -953,7 +952,7 @@ def dry_spell_total_length(
     window: int = 3,
     op: str = "sum",
     freq: str = "YS",
-    resample_before_rl: str | bool = "from_context",
+    resample_before_rl: bool = True,
     **indexer,
 ) -> xarray.DataArray:
     """Total length of dry spells.

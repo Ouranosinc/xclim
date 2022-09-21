@@ -8,7 +8,6 @@ import xarray
 
 from xclim.core.bootstrapping import percentile_bootstrap
 from xclim.core.calendar import resample_doy
-from xclim.core.options import OPTIONS, RESAMPLE_BEFORE_RL
 from xclim.core.units import (
     convert_units_to,
     declare_units,
@@ -68,7 +67,7 @@ def cold_spell_duration_index(
     tasmin_per: xarray.DataArray,
     window: int = 6,
     freq: str = "YS",
-    resample_before_rl: str | bool = "from_context",
+    resample_before_rl: bool = True,
     bootstrap: bool = False,  # noqa  # noqa
     op: str = "<",
 ) -> xarray.DataArray:
@@ -87,7 +86,7 @@ def cold_spell_duration_index(
         Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
       Resampling frequency.
-    resample_before_rl : {"from_context", True, False}
+    resample_before_rl : bool
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
     bootstrap : bool
@@ -422,7 +421,7 @@ def multiday_temperature_swing(
     op_tasmin: str = "<=",
     op_tasmax: str = ">",
     freq: str = "YS",
-    resample_before_rl: str | bool = "from_context",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:  # noqa: D401
     r"""Statistics of consecutive diurnal temperature swing events.
 
@@ -449,7 +448,7 @@ def multiday_temperature_swing(
       Comparison operation for tasmax. Default: ">".
     freq : str
       Resampling frequency.
-    resample_before_rl : {"from_context", True, False}
+    resample_before_rl : bool
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
 
@@ -638,7 +637,7 @@ def heat_wave_frequency(
     window: int = 3,
     freq: str = "YS",
     op: str = ">",
-    resample_before_rl: str | bool = "from_context",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Heat wave frequency.
 
@@ -661,7 +660,7 @@ def heat_wave_frequency(
       Resampling frequency.
     op: {">", ">=", "gt", "ge"}
       Comparison operation. Default: ">".
-    resample_before_rl : {"from_context", True, False}
+    resample_before_rl : bool
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
 
@@ -716,7 +715,7 @@ def heat_wave_max_length(
     window: int = 3,
     freq: str = "YS",
     op: str = ">",
-    resample_before_rl: str | bool = "from_context",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Heat wave max length.
 
@@ -741,7 +740,7 @@ def heat_wave_max_length(
       Resampling frequency.
     op : {">", ">=", "gt", "ge"}
       Comparison operation. Default: ">".
-    resample_before_rl : {"from_context", True, False}
+    resample_before_rl : bool
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
 
@@ -797,7 +796,7 @@ def heat_wave_total_length(
     window: int = 3,
     freq: str = "YS",
     op: str = ">",
-    resample_before_rl: str | bool = "from_context",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Heat wave total length.
 
@@ -821,7 +820,7 @@ def heat_wave_total_length(
       Resampling frequency.
     op: {">", ">=", "gt", "ge"}
       Comparison operation. Default: ">".
-    resample_before_rl : {"from_context", True, False}
+    resample_before_rl : bool
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
 
@@ -1639,7 +1638,7 @@ def warm_spell_duration_index(
     tasmax_per: xarray.DataArray,
     window: int = 6,
     freq: str = "YS",
-    resample_before_rl: str | bool = "from_context",
+    resample_before_rl: bool = True,
     bootstrap: bool = False,  # noqa
     op: str = ">",
 ) -> xarray.DataArray:
@@ -1659,7 +1658,7 @@ def warm_spell_duration_index(
       Minimum number of days with temperature above threshold to qualify as a warm spell.
     freq : str
       Resampling frequency.
-    resample_before_rl : {"from_context", True, False}
+    resample_before_rl : bool
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
     bootstrap : bool

@@ -17,7 +17,7 @@ import xarray as xr
 from numba import njit
 from xarray.core.utils import get_temp_dimname
 
-from xclim.core.options import OPTIONS, RESAMPLE_BEFORE_RL, RUN_LENGTH_UFUNC
+from xclim.core.options import OPTIONS, RUN_LENGTH_UFUNC
 from xclim.core.utils import DateStr, DayOfYearStr, uses_dask
 
 npts_opt = 9000
@@ -76,7 +76,7 @@ def use_ufunc(
 
 def resample_and_rl(
     da: xr.DataArray,
-    resample_before_rl: str | bool,
+    resample_before_rl: bool,
     compute,
     *args,
     dim: str = "time",
@@ -91,7 +91,7 @@ def resample_and_rl(
     ----------
     da: xr.DataArray
       N-dimensional array (boolean).
-    resample_before_rl : {"from_context", True, False}
+    resample_before_rl : bool
       Determines whether if input arrays of runs `da` should be separated in period before
       or after the run length algorithms are applied
     compute
@@ -110,8 +110,6 @@ def resample_and_rl(
     xr.DataArray
       Output of compute resampled according to frequency {freq}.
     """
-    if resample_before_rl == "from_context":
-        resample_before_rl = OPTIONS[RESAMPLE_BEFORE_RL]
     if resample_before_rl and freq is not None:
         out = da.resample({dim: freq}).map(compute, args=args, dim=dim, **kwargs)
     else:

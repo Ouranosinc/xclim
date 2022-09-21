@@ -7,7 +7,6 @@ import numpy as np
 import xarray
 
 from xclim.core.calendar import get_calendar
-from xclim.core.options import OPTIONS, RESAMPLE_BEFORE_RL
 from xclim.core.units import (
     convert_units_to,
     declare_units,
@@ -124,7 +123,7 @@ def cold_spell_days(
     thresh: str = "-10 degC",
     window: int = 5,
     freq: str = "AS-JUL",
-    resample_before_rl: str | bool = "from_context",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Cold spell days.
 
@@ -141,7 +140,7 @@ def cold_spell_days(
         Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
       Resampling frequency.
-    resample_before_rl : {"from_context", True, False}
+    resample_before_rl : bool
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
 
@@ -179,7 +178,7 @@ def cold_spell_frequency(
     thresh: str = "-10 degC",
     window: int = 5,
     freq: str = "AS-JUL",
-    resample_before_rl: str | bool = "from_context",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Cold spell frequency.
 
@@ -196,7 +195,7 @@ def cold_spell_frequency(
         Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
       Resampling frequency.
-    resample_before_rl : {"from_context", True, False}
+    resample_before_rl : bool
       Determines if the resampling should take place before or after the run
 
         Cold spell frequency.
@@ -414,7 +413,7 @@ def maximum_consecutive_wet_days(
     pr: xarray.DataArray,
     thresh: str = "1 mm/day",
     freq: str = "YS",
-    resample_before_rl: str | bool = "from_context",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Consecutive wet days.
 
@@ -428,7 +427,7 @@ def maximum_consecutive_wet_days(
         Threshold precipitation on which to base evaluation.
     freq : str
       Resampling frequency.
-    resample_before_rl : {"from_context", True, False}
+    resample_before_rl : bool
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
 
@@ -509,7 +508,7 @@ def freshet_start(
     thresh: str = "0 degC",
     window: int = 5,
     freq: str = "YS",
-    resample_before_rl: str | bool = "from_context",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""First day consistently exceeding threshold temperature.
 
@@ -525,7 +524,7 @@ def freshet_start(
         Minimum number of days with temperature above threshold needed for evaluation.
     freq : str
       Resampling frequency.
-    resample_before_rl : {"from_context", True, False}
+    resample_before_rl : bool
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
 

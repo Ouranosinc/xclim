@@ -256,7 +256,7 @@ def _spell_length_distribution(
     thresh: str = "1 mm d-1",
     stat: str = "mean",
     group: str | Grouper = "time",
-    resample_before_rl: str | bool = "from_context",
+    resample_before_rl: bool = True,
 ) -> xr.DataArray:
     """Spell length distribution.
 
@@ -284,7 +284,7 @@ def _spell_length_distribution(
     group : {'time', 'time.season', 'time.month'}
       Grouping of the output.
       E.g. If 'time.month', the spell lengths are coputed separately for each month.
-    resample_before_rl : {"from_context", True, False}
+    resample_before_rl : bool
       Determines if the resampling should take place before or after the run
       length encoding (or a similar algorithm) is applied to runs.
 
