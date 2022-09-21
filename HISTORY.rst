@@ -37,7 +37,7 @@ Internal changes
 * Many docstrings did not fully adhere to the `numpy docstring format <https://numpydoc.readthedocs.io/en/latest/format.html>`_. Fields and entries for many classes and functions have been adjusted to adhere better. (:pull:`1182`).
 * The xdoctest namespace now provides access to session-scoped ``{variable}_dataset`` accessors, as well as a ``path_to_atmos_file`` object. These can be used for running doctests on all variables made in the pytest ``atmosds()`` fixture. (:pull:`1882`).
 * Upgrade CodeQL GitHub Action to v2. (:issue:`1188`, :pull:`1189`).
-* New generic indice ``first_day_threshold_reached`` is now used to compose all ``first_day_XYZ`` indices. (:issue:`1175`, :pull:`1186`).
+* New generic index ``first_day_threshold_reached`` is now used to compose all ``first_day_XYZ`` indices. (:issue:`1175`, :pull:`1186`).
 
 0.38.0 (2022-09-06)
 -------------------
