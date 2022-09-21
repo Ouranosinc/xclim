@@ -1705,7 +1705,6 @@ def warm_spell_duration_index(
         window=window,
         freq=freq,
     )
-
     return to_agg_units(out, tasmax, "count")
 
 

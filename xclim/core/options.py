@@ -179,7 +179,6 @@ class set_options:
         If False, attributes from the inputs are ignored. If "xarray", xclim will use xarray's `keep_attrs` option.
         Note that xarray's "default" is equivalent to False. Default: ``"xarray"``.
 
-
     Examples
     --------
     You can use ``set_options`` either as a context manager:

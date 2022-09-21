@@ -97,13 +97,13 @@ def resample_and_rl(
     compute
       Run length function to apply
     args
-      Non-optional arguments needed for compute
+      Positional arguments needed in `compute`
     dim: str
       The dimension along which to find runs.
     freq : str
       Resampling frequency.
     kwargs
-      Keyword arguments needed for compute
+      Keyword arguments needed in `compute`
 
     Returns
     -------
