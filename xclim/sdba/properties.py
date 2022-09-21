@@ -312,9 +312,10 @@ def _spell_length_distribution(
             cond,
             resample_before_rl,
             rl.rle_statistics,
+            reducer=stat,
+            window=1,
             dim=dim,
             freq=freq,
-            reducer=stat,
         )
         # out = cond.resample(time=freq).map(rl.rle_statistics, dim=dim, reducer=stat)
         out = getattr(out, stat)(dim=dim)
