@@ -489,7 +489,7 @@ def multiday_temperature_swing(
             ft,
             resample_before_rl,
             rl.rle_statistics,
-            op,
+            reducer=op,
             window=window,
             freq=freq,
         )
@@ -1705,6 +1705,7 @@ def warm_spell_duration_index(
         window=window,
         freq=freq,
     )
+
     return to_agg_units(out, tasmax, "count")
 
 

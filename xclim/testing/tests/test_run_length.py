@@ -132,12 +132,12 @@ class TestStatisticsRun:
         time = pd.date_range("7/1/2000", periods=len(values), freq="D")
         values[1:11] = 1
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
-        lt = da.resample(time="M").map(rl.rle_statistics, reducer="max")
+        lt = da.resample(time="M").map(rl.rle_statistics, reducer="max", window=1)
         assert lt[0] == 10
         np.testing.assert_array_equal(lt[1:], 0)
 
         # resample after
-        lt = rl.rle_statistics(da, freq="M", reducer="max", ufunc_1dim=False)
+        lt = rl.rle_statistics(da, freq="M", reducer="max", window=1, ufunc_1dim=False)
         assert lt[0] == 10
         np.testing.assert_array_equal(lt[1:], 0)
 
@@ -146,12 +146,12 @@ class TestStatisticsRun:
         time = pd.date_range("7/1/2000", periods=len(values), freq="D")
         values[0:10] = 1
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
-        lt = da.resample(time="M").map(rl.rle_statistics, reducer="max")
+        lt = da.resample(time="M").map(rl.rle_statistics, reducer="max", window=1)
         assert lt[0] == 10
         np.testing.assert_array_equal(lt[1:], 0)
 
         # resample after
-        lt = rl.rle_statistics(da, freq="M", reducer="max", ufunc_1dim=False)
+        lt = rl.rle_statistics(da, freq="M", reducer="max", window=1, ufunc_1dim=False)
         assert lt[0] == 10
         np.testing.assert_array_equal(lt[1:], 0)
 
@@ -161,12 +161,12 @@ class TestStatisticsRun:
         values[-10:] = 1
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
 
-        lt = da.resample(time="M").map(rl.rle_statistics, reducer="max")
+        lt = da.resample(time="M").map(rl.rle_statistics, reducer="max", window=1)
         assert lt[-1] == 10
         np.testing.assert_array_equal(lt[:-1], 0)
 
         # resample after
-        lt = rl.rle_statistics(da, freq="M", reducer="max", ufunc_1dim=False)
+        lt = rl.rle_statistics(da, freq="M", reducer="max", window=1, ufunc_1dim=False)
         assert lt[-1] == 10
         np.testing.assert_array_equal(lt[:-1], 0)
 
@@ -175,11 +175,11 @@ class TestStatisticsRun:
         time = pd.date_range("7/1/2000", periods=len(values), freq="D")
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
 
-        lt = da.resample(time="M").map(rl.rle_statistics, reducer="max")
+        lt = da.resample(time="M").map(rl.rle_statistics, reducer="max", window=1)
         np.testing.assert_array_equal(lt, da.resample(time="M").count(dim="time"))
 
         # resample after
-        lt = rl.rle_statistics(da, freq="M", reducer="max", ufunc_1dim=False)
+        lt = rl.rle_statistics(da, freq="M", reducer="max", window=1, ufunc_1dim=False)
         expected = np.zeros(12)
         expected[0] = 365
         np.testing.assert_array_equal(lt, expected)
@@ -191,13 +191,13 @@ class TestStatisticsRun:
         time = pd.date_range("7/1/2000", periods=len(values), freq="D")
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
 
-        lt = da.resample(time="M").map(rl.rle_statistics, reducer="max")
+        lt = da.resample(time="M").map(rl.rle_statistics, reducer="max", window=1)
         n = da.resample(time="M").count(dim="time")
         np.testing.assert_array_equal(lt[0], n[0])
         np.testing.assert_array_equal(lt[1], 26)
 
         # resample after
-        lt = rl.rle_statistics(da, freq="M", reducer="max", ufunc_1dim=False)
+        lt = rl.rle_statistics(da, freq="M", reducer="max", window=1, ufunc_1dim=False)
         expected = np.zeros(12)
         expected[0], expected[1] = 35, 365 - 35 - 1
         np.testing.assert_array_equal(lt[0], expected[0])
@@ -209,17 +209,17 @@ class TestStatisticsRun:
         time = pd.date_range("1/1/2000", periods=len(values), freq="D")
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
 
-        lt = da.resample(time="YS").map(rl.rle_statistics, reducer="min")
+        lt = da.resample(time="YS").map(rl.rle_statistics, reducer="min", window=1)
         assert lt == 35
 
         lt = da.resample(time="YS").map(rl.rle_statistics, reducer="mean", window=36)
         assert lt == 329
 
-        lt = da.resample(time="YS").map(rl.rle_statistics, reducer="std")
+        lt = da.resample(time="YS").map(rl.rle_statistics, reducer="std", window=1)
         assert lt == 147
 
         # resample after
-        lt = rl.rle_statistics(da, freq="YS", reducer="min", ufunc_1dim=False)
+        lt = rl.rle_statistics(da, freq="YS", reducer="min", window=1, ufunc_1dim=False)
         assert lt == 35
 
         lt = rl.rle_statistics(
@@ -227,7 +227,7 @@ class TestStatisticsRun:
         )
         assert lt == 329
 
-        lt = rl.rle_statistics(da, freq="YS", reducer="std", ufunc_1dim=False)
+        lt = rl.rle_statistics(da, freq="YS", reducer="std", window=1, ufunc_1dim=False)
         assert lt == 147
 
     @pytest.mark.parametrize("op", ["min", "max"])
@@ -237,10 +237,10 @@ class TestStatisticsRun:
         time = pd.date_range("1/1/2000", periods=len(values), freq="D")
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
         lt_resample_before = da.resample(time="MS").map(
-            rl.rle_statistics, reducer=op, ufunc_1dim=False
+            rl.rle_statistics, reducer=op, window=1, ufunc_1dim=False
         )
         lt_resample_after = rl.rle_statistics(
-            da, freq="MS", reducer=op, ufunc_1dim=False
+            da, freq="MS", reducer=op, window=1, ufunc_1dim=False
         )
         assert (lt_resample_before != lt_resample_after).any()
 
@@ -249,10 +249,10 @@ class TestStatisticsRun:
         time = pd.date_range("1/1/2000", periods=len(values), freq="D")
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
         lt_resample_before = da.resample(time="MS").map(
-            rl.rle_statistics, reducer=op, ufunc_1dim=False
+            rl.rle_statistics, reducer=op, window=1, ufunc_1dim=False
         )
         lt_resample_after = rl.rle_statistics(
-            da, freq="MS", reducer=op, ufunc_1dim=False
+            da, freq="MS", reducer=op, window=1, ufunc_1dim=False
         )
         assert (lt_resample_before == lt_resample_after).any()
 

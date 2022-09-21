@@ -192,7 +192,7 @@ def rle(
 def rle_statistics(
     da: xr.DataArray,
     reducer: str,
-    window: int = 1,
+    window: int,
     dim: str = "time",
     freq: str | None = None,
     ufunc_1dim: str | bool = "from_context",
@@ -278,13 +278,19 @@ def longest_run(
         Length of the longest run of True values along dimension (int).
     """
     return rle_statistics(
-        da, reducer="max", dim=dim, freq=freq, ufunc_1dim=ufunc_1dim, index=index
+        da,
+        reducer="max",
+        window=1,
+        dim=dim,
+        freq=freq,
+        ufunc_1dim=ufunc_1dim,
+        index=index,
     )
 
 
 def windowed_run_events(
     da: xr.DataArray,
-    window: int = 1,
+    window: int,
     dim: str = "time",
     ufunc_1dim: str | bool = "from_context",
     index: str = "first",
@@ -339,7 +345,7 @@ def windowed_run_events(
 
 def windowed_run_count(
     da: xr.DataArray,
-    window: int = 1,
+    window: int,
     dim: str = "time",
     freq: str | None = None,
     ufunc_1dim: str | bool = "from_context",
@@ -392,7 +398,7 @@ def windowed_run_count(
 
 def first_run(
     da: xr.DataArray,
-    window: int = 1,
+    window: int,
     dim: str = "time",
     freq: str | None = None,
     coord: str | bool | None = False,
@@ -475,7 +481,7 @@ def first_run(
 
 def last_run(
     da: xr.DataArray,
-    window: int = 1,
+    window: int,
     dim: str = "time",
     freq: str | None = None,
     coord: str | bool | None = False,
@@ -631,7 +637,7 @@ def keep_longest_run(
 
 def season(
     da: xr.DataArray,
-    window: int = 1,
+    window: int,
     date: DayOfYearStr | None = None,
     dim: str = "time",
     coord: str | bool | None = False,
@@ -750,7 +756,7 @@ def season(
 
 def season_length(
     da: xr.DataArray,
-    window: int = 1,
+    window: int,
     date: DayOfYearStr | None = None,
     dim: str = "time",
 ) -> xr.DataArray:
@@ -793,7 +799,7 @@ def season_length(
 
 def run_end_after_date(
     da: xr.DataArray,
-    window: int = 1,
+    window: int,
     date: DayOfYearStr = "07-01",
     dim: str = "time",
     coord: bool | str | None = "dayofyear",
@@ -848,7 +854,7 @@ def run_end_after_date(
 
 def first_run_after_date(
     da: xr.DataArray,
-    window: int = 1,
+    window: int,
     date: DayOfYearStr | None = "07-01",
     dim: str = "time",
     coord: bool | str | None = "dayofyear",
@@ -890,7 +896,7 @@ def first_run_after_date(
 
 def last_run_before_date(
     da: xr.DataArray,
-    window: int = 1,
+    window: int,
     date: DayOfYearStr = "07-01",
     dim: str = "time",
     coord: bool | str | None = "dayofyear",
