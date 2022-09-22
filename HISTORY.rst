@@ -16,7 +16,7 @@ Breaking changes
 * Indices that accept `lat` or `lon` coordinates in their call signatures will now use `cf-xarray` accessors to gather these variables in the event that they are not explicitly supplied. (:pull:`1180`). This affects the following
     - ``huglin_index``, ``biologically_effective_degree_days``, ``cool_night_index``, ``latitude_temperature_index``, ``water_budget``, ``potential_evapotranspiration``
 * ``cool_night_index`` now accepts ``lat: str = "north" | "south"`` for calculating CNI over DataArrays lacking a latitude coordinate. (:pull:`1180`).
-* The offset value in `standardized_precipitation_evapotranspiration_index` is changed to better reproduce results in the reference library `monocongo/climate_indices`.
+* The offset value in ``standardized_precipitation_evapotranspiration_index`` is changed to better reproduce results in the reference library ``monocongo/climate_indices``.
 
 Bug fixes
 ^^^^^^^^^

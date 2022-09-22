@@ -728,7 +728,7 @@ def standardized_precipitation_index(
 
     """
     # "WPM" method doesn't seem to work for gamma or pearson3
-    dist_and_methods = {"gamma": ["ML", "APP"], "fisk": ["ML"]}
+    dist_and_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
     if dist not in dist_and_methods:
         raise NotImplementedError(f"The distribution `{dist}` is not supported.")
     if method not in dist_and_methods[dist]:
@@ -868,7 +868,7 @@ def standardized_precipitation_evapotranspiration_index(
         # Distributions bounded by zero: Water budget must be shifted, only positive values
         # are allowed. The offset choice is arbitrary and the same offset as the monocongo
         # library is taken
-        offset = convert_units_to(f"{1e3 / (24*60*60*1000)} kg m-2 s-1", wb.units)
+        offset = convert_units_to("1 mm/d", wb.units)
         with xarray.set_options(keep_attrs=True):
             wb, wb_cal = wb + offset, wb_cal + offset
 
