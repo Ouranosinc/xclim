@@ -524,6 +524,7 @@ def spell_length(
     out = cond.resample(time=freq).map(
         rl.rle_statistics,
         reducer=reducer,
+        window=1,
         dim="time",
     )
     return to_agg_units(out, data, "count")
