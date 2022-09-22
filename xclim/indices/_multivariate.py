@@ -770,15 +770,14 @@ def heat_wave_max_length(
     cond = (compare(tasmin, op, thresh_tasmin, constrain)) & (
         compare(tasmax, op, thresh_tasmax, constrain)
     )
-    max_l = rl.resample_and_rl(
+    out = rl.resample_and_rl(
         cond,
         resample_before_rl,
-        rl.longest_run,
+        rl.rle_statistics,
+        reducer="max",
+        window=window,
         freq=freq,
     )
-    # TODO: Should this step be integrated as an option in longest_run?
-
-    out = max_l.where(max_l >= window, 0)
     return to_agg_units(out, tasmax, "count")
 
 
