@@ -317,7 +317,6 @@ def _spell_length_distribution(
             dim=dim,
             freq=freq,
         )
-        # out = cond.resample(time=freq).map(rl.rle_statistics, dim=dim, reducer=stat)
         out = getattr(out, stat)(dim=dim)
         out = out.where(mask)
         return out.rename("out").to_dataset()
