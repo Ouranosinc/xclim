@@ -5,6 +5,7 @@ from typing import Sequence
 
 import numpy as np
 import xarray as xr
+from scipy.optimize import fsolve, root
 
 from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history
 from xclim.core.utils import uses_dask
@@ -90,8 +91,8 @@ def fit(
         Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
         (see :py:mod:scipy.stats for full list). If the PWM method is used, only the following distributions are
         currently supported: 'expon', 'gamma', 'genextreme', 'genpareto', 'gumbel_r', 'pearson3', 'weibull_min'.
-    method : {"ML", "PWM"}
-        Fitting method, either maximum likelihood (ML) or probability weighted moments (PWM), also called L-Moments.
+    method : {"ML", "PWM", "APP"}
+        Fitting method, either maximum likelihood (ML), probability weighted moments (PWM), also called L-Moments, or approximate method (APP)
         The PWM method is usually more robust to outliers.
     dim : str
         The dimension upon which to perform the indexing (default: "time").
@@ -485,16 +486,28 @@ def _fit_start(x, dist, **fitkwargs) -> tuple[tuple, dict]:
         scale = ((x - loc) ** chat).mean() ** (1 / chat)
         return (chat,), {"loc": loc, "scale": scale}
 
-    if dist == "gamma":
+    if dist in ["gamma"]:
         x_pos = x[x > 0]
-        m_pos = x_pos.mean()
-        log_of_mean = np.log(m_pos)
+        m = x_pos.mean()
+        log_of_mean = np.log(m)
         mean_of_logs = np.log(x_pos).mean()
         a = log_of_mean - mean_of_logs
         alpha = (1 + np.sqrt(1 + 4 * a / 3)) / (4 * a)
-        beta = m_pos / alpha
+        beta = m / alpha
         return (alpha,), {"scale": beta}
 
+    if dist in ["fisk"]:
+        x_pos = x[x > 0]
+        m = x_pos.mean()
+        v = x_pos.var()
+        # pdf =  (beta/alpha) (x/alpha)^{beta-1}/ (1+(x/alpha)^{beta})^2
+        # Compute f_1 and f_2 which only depend on beta:
+        # f_1 := mean/alpha = <x>/alpha
+        # f_2 := variance/alpha^2 = (<x^2> - <x>^2)/alpha^2
+        # In the large beta limit, f_1 -> 1 and f_1/sqrt(f_2) -> 0.56*beta - 0.25
+        # Solve for alpha and beta below:
+        alpha, beta = m, (1 / 0.56) * (m / np.sqrt(v) + 1 / 4)
+        return (beta,), {"scale": alpha}
     return (), {}
 
 
