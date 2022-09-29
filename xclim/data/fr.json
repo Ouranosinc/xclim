@@ -760,19 +760,19 @@
     "title": "Premier jour de l'année de températures sous un seuil",
     "abstract": "Calcule le premier jour d'une période où la température est plus basse qu'un certain seuil durant un nombre de jours donné, limité par une date minimale."
   },
-      "FIRST_DAY_TG_BELOW": {
+  "FIRST_DAY_TG_BELOW": {
     "long_name": "Premier jour de l'année avec une température moyenne quotidienne sous {thresh}",
     "description": "Premier jour de l'année avec une température moyenne quotidienne sous {thresh} pour au moins {window} jours.",
     "title": "Premier jour de l'année de températures moyennes quotidiennes sous un seuil",
     "abstract": "Calcule le premier jour d'une période où la température moyenne quotidienne est plus basse qu'un certain seuil durant un nombre de jours donné, limité par une date minimale."
   },
-      "FIRST_DAY_TN_BELOW": {
+  "FIRST_DAY_TN_BELOW": {
     "long_name": "Premier jour de l'année avec une température minimale quotidienne sous {thresh}",
     "description": "Premier jour de l'année avec une température minimale quotidienne sous {thresh} pour au moins {window} jours.",
     "title": "Premier jour de l'année de températures minimales quotidiennes sous un seuil",
     "abstract": "Calcule le premier jour d'une période où la température minimale quotidienne est plus basse qu'un certain seuil durant un nombre de jours donné, limité par une date minimale."
   },
-      "FIRST_DAY_TX_BELOW": {
+  "FIRST_DAY_TX_BELOW": {
     "long_name": "Premier jour de l'année avec une température maximale quotidienne sous {thresh}",
     "description": "Premier jour de l'année avec une température maximale quotidienne sous {thresh} pour au moins {window} jours.",
     "title": "Premier jour de l'année de températures maximales quotidiennes sous un seuil",
@@ -784,25 +784,24 @@
     "title": "Premier jour de l'année de températures au-dessus d'un seuil",
     "abstract": "Calcule le premier jour d'une période où la température est plus élevée qu'un certain seuil durant un nombre de jours donné, limité par une date minimale."
   },
-      "FIRST_DAY_TG_ABOVE": {
+  "FIRST_DAY_TG_ABOVE": {
     "long_name": "Premier jour de l'année avec une température moyenne quotidienne au-dessus de {thresh}",
     "description": "Premier jour de l'année avec une température moyenne quotidienne au-dessus de {thresh} pour au moins {window} jours.",
     "title": "Premier jour de l'année de températures moyennes quotidiennes au-dessus d'un seuil",
     "abstract": "Calcule le premier jour d'une période où la température moyenne quotidienne est plus élevée qu'un certain seuil durant un nombre de jours donné, limité par une date minimale."
   },
-      "FIRST_DAY_TN_ABOVE": {
+  "FIRST_DAY_TN_ABOVE": {
     "long_name": "Premier jour de l'année avec une température minimale quotidienne au-dessus de {thresh}",
     "description": "Premier jour de l'année avec une température minimale quotidienne au-dessus de {thresh} pour au moins {window} jours.",
     "title": "Premier jour de l'année de températures minimales quotidiennes au-dessus d'un seuil",
     "abstract": "Calcule le premier jour d'une période où la température minimale quotidienne est plus élevée qu'un certain seuil durant un nombre de jours donné, limité par une date minimale."
   },
-      "FIRST_DAY_TX_ABOVE": {
+  "FIRST_DAY_TX_ABOVE": {
     "long_name": "Premier jour de l'année avec une température maximale quotidienne au-dessus de {thresh}",
     "description": "Premier jour de l'année avec une température maximale quotidienne au-dessus de {thresh} pour au moins {window} jours.",
     "title": "Premier jour de l'année de températures maximales quotidiennes au-dessus d'un seuil",
     "abstract": "Calcule le premier jour d'une période où la température maximale quotidienne est plus élevée qu'un certain seuil durant un nombre de jours donné, limité par une date minimale."
   },
-
   "DEGREE_DAYS_EXCEEDANCE_DATE": {
     "long_name": "Premier jour de l'année où la somme des degrés-jours excède {sum_thresh}",
     "description": "Premier jour de l'année où la somme des degrés-jours (Tmoy {op} {thresh}) excède {sum_thresh}, la somme commençant le {start_date}.",
