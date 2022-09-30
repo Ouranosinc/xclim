@@ -721,7 +721,7 @@ first_day_below = Temp(
     "given number of days, after a given calendar date.",
     cell_methods="",
     compute=indices.first_day_temperature_below,
-    input=dict(tas="tasmin")
+    input=dict(tas="tasmin"),
     parameters={"after_date": {"default": "07-01"}},
     _version_deprecated="0.39.0",
 )
