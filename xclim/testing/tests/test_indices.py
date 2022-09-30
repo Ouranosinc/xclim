@@ -25,6 +25,7 @@ from xclim import indices as xci
 from xclim.core.calendar import date_range, percentile_doy
 from xclim.core.options import set_options
 from xclim.core.units import ValidationError, convert_units_to, units
+from xclim.indices.generic import first_day_threshold_reached
 from xclim.testing import open_dataset
 
 K2C = 273.15
@@ -675,18 +676,35 @@ class TestFirstDayBelow:
         a[180:270] = 303.15
         tas = tas_series(a, start="2000/1/1")
 
-        fdb = xci.first_day_below(tas)
+        fdb = xci.first_day_temperature_below(tas)
         assert fdb == 271
 
         a[:] = 303.15
         tas = tas_series(a, start="2000/1/1")
 
-        fdb = xci.first_day_below(tas)
+        fdb = xci.first_day_temperature_below(tas)
         assert np.isnan(fdb)
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in fdb.attrs.keys()
         assert fdb.attrs["units"] == ""
         assert fdb.attrs["is_dayofyear"] == 1
+
+    def test_below_deprecated(self, tasmin_series):
+        a = np.zeros(365)
+        a[180:270] = 303.15
+        tas = tasmin_series(a, start="2000/1/1")
+
+        with pytest.warns(DeprecationWarning):
+            fdb = xci.first_day_below(tas)
+        assert fdb == 271
+
+    def test_below_forbidden(self, tasmax_series):
+        a = np.zeros(365) + 307
+        a[180:270] = 270
+        tasmax = tasmax_series(a, start="2000/1/1")
+
+        with pytest.raises(ValueError):
+            xci.first_day_temperature_below(tasmax, op=">=")
 
 
 class TestFirstDayAbove:
@@ -695,21 +713,38 @@ class TestFirstDayAbove:
         a[180:270] = 270
         tas = tas_series(a, start="2000/1/1")
 
-        fdb = xci.first_day_above(tas)
-        assert fdb == 1
+        fda = xci.first_day_temperature_above(tas)
+        assert fda == 1
 
-        fdb = xci.first_day_above(tas, after_date="07-01")
-        assert fdb == 271
+        fda = xci.first_day_temperature_above(tas, after_date="07-01")
+        assert fda == 271
 
         a[:] = 270
         tas = tas_series(a, start="2000/1/1")
 
-        fdb = xci.first_day_above(tas)
-        assert np.isnan(fdb)
+        fda = xci.first_day_temperature_above(tas)
+        assert np.isnan(fda)
         for attr in ["units", "is_dayofyear", "calendar"]:
-            assert attr in fdb.attrs.keys()
-        assert fdb.attrs["units"] == ""
-        assert fdb.attrs["is_dayofyear"] == 1
+            assert attr in fda.attrs.keys()
+        assert fda.attrs["units"] == ""
+        assert fda.attrs["is_dayofyear"] == 1
+
+    def test_above_deprecated(self, tasmin_series):
+        a = np.zeros(365) + 307
+        a[180:270] = 270
+        tasmin = tasmin_series(a, start="2000/1/1")
+
+        with pytest.warns(DeprecationWarning):
+            fda = xci.first_day_above(tasmin)
+        assert fda == 1
+
+    def test_above_forbidden(self, tasmax_series):
+        a = np.zeros(365) + 307
+        a[180:270] = 270
+        tasmax = tasmax_series(a, start="2000/1/1")
+
+        with pytest.raises(ValueError):
+            xci.first_day_temperature_above(tasmax, op="<")
 
 
 class TestDaysOverPrecipThresh:
