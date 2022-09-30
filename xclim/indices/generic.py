@@ -16,7 +16,6 @@ import xarray as xr
 from xarray.coding.cftime_offsets import _MONTH_ABBREVIATIONS  # noqa
 
 from xclim.core.calendar import (
-    DayOfYearStr,
     convert_calendar,
     doy_to_days_since,
     get_calendar,
@@ -29,6 +28,7 @@ from xclim.core.units import (
     str2pint,
     to_agg_units,
 )
+from xclim.core.utils import DayOfYearStr
 
 from . import run_length as rl
 
@@ -43,11 +43,15 @@ __all__ = [
     "domain_count",
     "doymax",
     "doymin",
+    "extreme_temperature_range",
+    "first_day_threshold_reached",
+    "first_occurrence",
     "get_daily_events",
     "get_op",
     "interday_diurnal_temperature_range",
     "last_occurrence",
     "select_resample_op",
+    "spell_length",
     "statistics",
     "temperature_sum",
     "threshold_count",
@@ -808,3 +812,56 @@ def degree_days(tas: xr.DataArray, threshold: str, op: str) -> xr.DataArray:
         raise NotImplementedError(f"Condition not supported: '{op}'.")
 
     return to_agg_units(out, tas, op="delta_prod")
+
+
+def first_day_threshold_reached(
+    data: xr.DataArray,
+    *,
+    threshold: str,
+    op: str,
+    after_date: DayOfYearStr,
+    window: int = 1,
+    freq: str = "YS",
+    constrain: Sequence[str] | None = None,
+) -> xr.DataArray:
+    r"""First day of values exceeding threshold.
+
+    Returns first day of period where values reach or exceed a threshold over a given number of days,
+    limited to a starting calendar date.
+
+    Parameters
+    ----------
+    data : xarray.DataArray
+        Dataset being evaluated.
+    threshold : str
+        Threshold on which to base evaluation.
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        Logical operator. e.g. arr > thresh.
+    after_date : str
+        Date of the year after which to look for the first event. Should have the format '%m-%d'.
+    window : int
+        Minimum number of days with values above threshold needed for evaluation.
+    freq : str
+        Resampling frequency.
+    constrain : sequence of str, optional
+        Optionally allowed conditions.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+        Day of the year when value reaches or exceeds a threshold over a given number of days for the first time.
+        If there is no such day, returns np.nan.
+    """
+    threshold = convert_units_to(threshold, data)
+
+    cond = compare(data, op, threshold, constrain=constrain)
+
+    out = cond.resample(time=freq).map(
+        rl.first_run_after_date,
+        window=window,
+        date=after_date,
+        dim="time",
+        coord="dayofyear",
+    )
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(data))
+    return out

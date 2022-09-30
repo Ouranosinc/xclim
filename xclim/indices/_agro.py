@@ -11,7 +11,11 @@ import xclim.indices.run_length as rl
 from xclim.core.calendar import parse_offset, resample_doy, select_time
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.core.utils import DayOfYearStr, uses_dask
-from xclim.indices._threshold import first_day_above, first_day_below, freshet_start
+from xclim.indices._threshold import (
+    first_day_temperature_above,
+    first_day_temperature_below,
+    freshet_start,
+)
 from xclim.indices.generic import aggregate_between_dates
 from xclim.indices.helpers import _gather_lat, day_lengths
 from xclim.indices.stats import dist_method, fit
@@ -694,8 +698,8 @@ def standardized_precipitation_index(
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
-    dist : {'gamma'}
-         Name of the univariate distribution, only `gamma` is currently implemented
+    dist : {"gamma", "fisk"}
+        Name of the univariate distribution.
         (see :py:mod:`scipy.stats`).
     method : {'APP', 'ML'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
@@ -728,7 +732,7 @@ def standardized_precipitation_index(
 
     """
     # "WPM" method doesn't seem to work for gamma or pearson3
-    dist_and_methods = {"gamma": ["ML", "APP"]}
+    dist_and_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
     if dist not in dist_and_methods:
         raise NotImplementedError(f"The distribution `{dist}` is not supported.")
     if method not in dist_and_methods[dist]:
@@ -790,8 +794,7 @@ def standardized_precipitation_index(
     params = resample_to_time(params, pr)
 
     # ppf to cdf
-    # zero-bounded distributions;  'pearson3' will also go in this group once it's implemented
-    if dist in ["gamma", "pearson3"]:
+    if dist in ["gamma", "fisk"]:
         prob_pos = dist_method("cdf", params, pr.where(pr > 0))
         prob_zero = resample_to_time(
             pr.groupby(group).map(
@@ -844,11 +847,12 @@ def standardized_precipitation_evapotranspiration_index(
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`, i.e. a monthly
         resampling, the window is an integer number of months.
-    dist : {'gamma'}
-        Name of the univariate distribution. Only "gamma" is currently implemented. (see :py:mod:`scipy.stats`).
+    dist : {'gamma', 'fisk'}
+        Name of the univariate distribution. (see :py:mod:`scipy.stats`).
     method : {'APP', 'ML'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
-        uses a deterministic function that doesn't involve any optimization.
+        uses a deterministic function that doesn't involve any optimization. Available methods
+        vary with the distribution: 'gamma':{'APP', 'ML'}, 'fisk':{'ML'}
 
     Returns
     -------
@@ -864,16 +868,11 @@ def standardized_precipitation_evapotranspiration_index(
     See Standardized Precipitation Index (SPI) for more details on usage.
     """
     # Allowed distributions are constrained by the SPI function
-    if dist in ["gamma"]:
+    if dist in ["gamma", "fisk"]:
         # Distributions bounded by zero: Water budget must be shifted, only positive values
-        # are allowed. The offset choice is arbitrary and needs to be revisited.
-        # In monocongo, the offset would be 1000/(60*60*24) in [kg m-2 s-1]
-        # The choice can lead to differences as big as +/-0.2 in the SPEI.
-        # If taken too big, there are problems with the "ML" method  (this should be an
-        # issue with the fitting procedure that also needs attention)
-        offset = convert_units_to("1e-4 kg m-2 s-1", wb.units)
-        # Increase offset if negative values remain
-        offset = offset - 2 * min(wb.min(), wb_cal.min(), 0)
+        # are allowed. The offset choice is arbitrary and the same offset as the monocongo
+        # library is taken
+        offset = convert_units_to("1 mm/d", wb.units)
         with xarray.set_options(keep_attrs=True):
             wb, wb_cal = wb + offset, wb_cal + offset
 
@@ -1069,7 +1068,7 @@ def effective_growing_degree_days(
         The minimum temperature threshold.
     method : {"bootsma", "qian"}
         The window method used to determine the temperature-based start date.
-        For "bootsma", the start date is defined as 10 days after the average temperature exceeds a threshold (5 degC).
+        For "bootsma", the start date is defined as 10 days after the average temperature exceeds a threshold.
         For "qian", the start date is based on a weighted 5-day rolling average,
         based on :py:func`qian_weighted_mean_average`.
     after_date : str
@@ -1111,7 +1110,7 @@ def effective_growing_degree_days(
     tas.attrs["units"] = "degC"
 
     if method.lower() == "bootsma":
-        fda = first_day_above(tasmin=tas, thresh="5.0 degC", window=1, freq=freq)
+        fda = first_day_temperature_above(tas=tas, thresh=thresh, window=1, freq=freq)
         start = fda + 10
     elif method.lower() == "qian":
         tas_weighted = qian_weighted_mean_average(tas=tas, dim=dim)
@@ -1121,8 +1120,8 @@ def effective_growing_degree_days(
 
     # The day before the first day below 0 degC
     end = (
-        first_day_below(
-            tasmin=tasmin,
+        first_day_temperature_below(
+            tasmin,
             thresh="0 degC",
             after_date=after_date,
             window=1,

@@ -4,17 +4,29 @@ History
 
 0.39.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), Éric Dupuis (:user:`coxipi`)
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Documentation now supports intersphinx mapping references within code examples via `sphinx-codeautolink` and copying of code blocks via `sphinx-copybutton`. (:pull:`1182`).
+* Log-logistic distribution added to `stats.py` for use with `standardized_precipitation_index` and `standardized_precipitation_evapotranspiration_index` (:issue:`1141`, :pull:`1183`).
+
+New indicators
+^^^^^^^^^^^^^^
+* New indices ``first_day_temperature_{above|below}`` and indicators ``xclim.indices.first_day_{tn|tg|tx}_{above|below}``. These indices/indicators accept operator (``op``) keyword for finer threshold comparison controls. (:issue:`1175`, :pull:`1186`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * Indices that accept `lat` or `lon` coordinates in their call signatures will now use `cf-xarray` accessors to gather these variables in the event that they are not explicitly supplied. (:pull:`1180`). This affects the following
     - ``huglin_index``, ``biologically_effective_degree_days``, ``cool_night_index``, ``latitude_temperature_index``, ``water_budget``, ``potential_evapotranspiration``
-* ``cool_night_index`` now accepts ``lat: str = "north" | "south"`` for calculating CNI over DataArrays lacking a latitude coordinate. (:pull:`1180`).
+* ``cool_night_index`` now optionally accepts ``lat: str = "north" | "south"`` for calculating CNI over DataArrays lacking a latitude coordinate. (:pull:`1180`).
+* The offset value in ``standardized_precipitation_evapotranspiration_index`` is changed to better reproduce results in the reference library ``monocongo/climate_indices``.
+* The ``first_day_below`` and ``first_day_above`` indices are now deprecated in order to clearly communicate the variables they act upon (:issue:`1175`, :pull:`1186`). The suggested migrations are as follows:
+    - ``xclim.indices.first_day_above`` -> ``xclim.indices.first_day_temperature_above``
+    - ``xclim.indices.first_day_below`` -> ``xclim.indices.first_day_temperature_below``
+* The ``first_day_below`` and ``first_day_above`` atmos indicators are now deprecated in order to clearly communicate the variables they act upon (:issue:`1175`, :pull:`1186`). The suggested migrations are as follows:
+    - ``xclim.atmos.first_day_above`` -> ``xclim.indices.first_day_{tn|tg|tx}_above``
+    - ``xclim.atmos.first_day_below`` -> ``xclim.indices.first_day_{tn|tg|tx}_below``
 * English indicator metadata has been adjusted to remove frequencies and other variable-sourced fields in the `long_name` of indicators. English indicators now have an explicit `title` and `abstract`. (:issue:`936`, :pull:`1123`).
 * French indicator metadata translations are now more uniform and follow agreed-upon grammar conventions, removing variable-sourced fields in `long_name_fr`. (:issue:`936`, :pull:`1123`).
 
@@ -28,6 +40,8 @@ Internal changes
 * The documentation build now relies on `sphinx-codeautolink` and `sphinx-copybutton`. (:pull:`1182`).
 * Many docstrings did not fully adhere to the `numpy docstring format <https://numpydoc.readthedocs.io/en/latest/format.html>`_. Fields and entries for many classes and functions have been adjusted to adhere better. (:pull:`1182`).
 * The xdoctest namespace now provides access to session-scoped ``{variable}_dataset`` accessors, as well as a ``path_to_atmos_file`` object. These can be used for running doctests on all variables made in the pytest ``atmosds()`` fixture. (:pull:`1882`).
+* Upgrade CodeQL GitHub Action to v2. (:issue:`1188`, :pull:`1189`).
+* New generic index ``first_day_threshold_reached`` is now used to compose all ``first_day_XYZ`` indices. (:issue:`1175`, :pull:`1186`).
 
 0.38.0 (2022-09-06)
 -------------------
