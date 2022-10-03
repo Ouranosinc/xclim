@@ -181,7 +181,7 @@
     "title": "Jours mouillés",
     "abstract": "Nombre de jours où la précipitation est au-dessus d'un seuil donné."
   },
-  "WETDAY_PROP": {
+  "WETDAYS_PROP": {
     "long_name": "Proportion de jours avec précipitation (précip >= {thresh})",
     "description": "Proportion {freq:m} de jours où les précipitations sont au-dessus de {thresh}.",
     "title": "Proportion de jours avec précipitation",
@@ -509,10 +509,16 @@
   },
   "LATITUDE_TEMPERATURE_INDEX": {
     "long_name": "Indice latitude-température",
-    "description": "Température moyenne du mois le plus chaud avec un facteur d'échelle basé sur la latitude  : Moyenne de température du mois le plus chaud * ({lat_factor} - latitude).",
+    "description": "Température moyenne du mois le plus chaud avec un facteur d'échelle basé sur la latitude : Moyenne de température du mois le plus chaud * ({lat_factor} - latitude).",
     "title": "Indice de latitude-température",
     "comment": "Formule originale prise de Jackson, D. I., & Cherry, N. J. (1988)",
     "abstract": "Indice climatique basé sur la température moyenne du mois le plus chaud et un coefficient basé sur la latitude pour tenir compte de la durée plus longue du jour favorisant les conditions de croissance. Développé spécifiquement pour la viticulture."
+  },
+  "HUGLIN_INDEX": {
+    "long_name": "Indice héliothermique de Huglin",
+    "description": "Indice de sommation de chaleur pour l'estimation de l'adéquation agroclimatique, développé spécifiquement pour la viticulture. Calculé avec la formule {méthode} (Somme de ((Tmin + Tmax)/2 - {thresh}) * k), où le coefficient (`k`) est une longueur de jour basée sur la latitude pour les jours typiquement compris entre le 1er avril et le 30 septembre.",
+    "title": "Indice héliothermique de Huglin",
+    "abstract": "Indice de sommation de chaleur pour l'estimation de l'adéquation agroclimatique, développé spécifiquement pour la viticulture. Il prend en compte les Tmin et Tmax quotidiennes avec un seuil de base donné, généralement entre le 1er avril et le 30 septembre, et intègre un calcul de coefficient de longueur de jour pour les latitudes plus élevées. Métrique initialement publiée dans Huglin (1978). Le coefficient de longueur du jour est basé sur Hall & Jones (2010)."
   },
   "FRESHET_START": {
     "long_name": "Premier jour ayant un dépassement constant du seuil de température",
