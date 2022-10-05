@@ -502,11 +502,11 @@ daily_freezethaw_cycles = TempWithIndexing(
     identifier="dlyfrzthw",
     units="days",
     long_name="Number of days with a freeze-thaw cycle",
-    # FIXME: Section formatting will shift variable names to all lowercase.
-    description="{freq} number of days with a diurnal freeze-thaw cycle (Tmax > {thresh_tasmax} and Tmin <= "
-    "{thresh_tasmin}).",
-    abstract="The number of days with a freeze-thaw cycle. A freeze-thaw cycle is defined as a day where Tmax is above "
-    "a given  threshold and Tmin is below a given threshold, usually 0°C for both.",
+    description="{freq} number of days with a diurnal freeze-thaw cycle, where maximum daily temperatures are above "
+    "{thresh_tasmax} and minimum daily temperatures are at or below {thresh_tasmin}).",
+    abstract="The number of days with a freeze-thaw cycle. A freeze-thaw cycle is defined as a day where maximum daily "
+    "temperature is above a given threshold and minimum daily temperature is at or below a given threshold, "
+    "usually 0°C for both.",
     cell_methods="",
     compute=indices.multiday_temperature_swing,
     parameters={
@@ -525,11 +525,11 @@ freezethaw_spell_frequency = Temp(
     identifier="freezethaw_spell_frequency",
     units="days",
     long_name="Frequency of daily freeze-thaw spells",
-    # FIXME: Section formatting will shift variable names to all lowercase.
-    description="{freq} number of freeze-thaw spells (Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin}) "
-    "for at least {window} consecutive day(s).",
+    description="{freq} number of freeze-thaw spells, where maximum daily temperatures are above {thresh_tasmax} "
+    "and minimum daily temperatures are at or below {thresh_tasmin}) for at least {window} consecutive day(s).",
     abstract="Frequency of daily freeze-thaw spells. A freeze-thaw spell is defined as a number of consecutive days "
-    "where Tmax is above a given threshold and Tmin is below a given threshold, usually 0°C for both.",
+    "where maximum daily temperatures are above a given threshold and minimum daily temperatures are at or below a "
+    "given threshold, usually 0°C for both.",
     cell_methods="",
     compute=indices.multiday_temperature_swing,
     parameters={
@@ -547,11 +547,12 @@ freezethaw_spell_mean_length = Temp(
     identifier="freezethaw_spell_mean_length",
     units="days",
     long_name="Average length of daily freeze-thaw spells",
-    # FIXME: Section formatting will shift variable names to all lowercase.
-    description="{freq} average length of freeze-thaw spells (Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin}) "
-    "for at least {window} consecutive day(s).",
+    description="{freq} average length of freeze-thaw spells, where maximum daily temperatures are above "
+    "{thresh_tasmax} and minimum daily temperatures are at or below {thresh_tasmin}) for at least {window} consecutive "
+    "day(s).",
     abstract="Average length of daily freeze-thaw spells. A freeze-thaw spell is defined as a number of consecutive "
-    "days where Tmax is above a given threshold and Tmin is below a given threshold, usually 0°C for both.",
+    "days where maximum daily temperatures are above a given threshold and minimum daily temperatures are at or below "
+    "a given threshold, usually 0°C for both.",
     cell_methods="",
     compute=indices.multiday_temperature_swing,
     parameters={
@@ -569,11 +570,12 @@ freezethaw_spell_max_length = Temp(
     identifier="freezethaw_spell_max_length",
     units="days",
     long_name="Maximal length of freeze-thaw spells",
-    # FIXME: Section formatting will shift variable names to all lowercase.
-    description="{freq} maximal length of freeze-thaw spells (Tmax > {thresh_tasmax} and Tmin <= {thresh_tasmin}) "
-    "for at least {window} consecutive day(s).",
+    description="{freq} maximal length of freeze-thaw spells, where maximum daily temperatures are above "
+    "{thresh_tasmax} and minimum daily temperatures are at or below {thresh_tasmin} for at least {window} consecutive "
+    "day(s).",
     abstract="Maximal length of daily freeze-thaw spells. A freeze-thaw spell is defined as a number of consecutive "
-    "days where Tmax is above a given threshold and Tmin is below a threshold, usually 0°C for both.",
+    "days where maximum daily temperatures are above a given threshold and minimum daily temperatures are at or below "
+    "a threshold, usually 0°C for both.",
     cell_methods="",
     compute=indices.multiday_temperature_swing,
     parameters={
@@ -593,8 +595,8 @@ cooling_degree_days = TempWithIndexing(
     standard_name="integral_of_air_temperature_excess_wrt_time",
     long_name="Cooling degree days",
     description="{freq} cumulative cooling degree days (mean temperature above {thresh}).",
-    abstract="The cumulative degree days for days when the average temperature is above a given threshold and buildings must "
-    "be air conditioned.",
+    abstract="The cumulative degree days for days when the average temperature is above a given threshold and "
+    "buildings must be air conditioned.",
     cell_methods="time: sum over days",
     compute=indices.cooling_degree_days,
     parameters={"thresh": {"default": "18.0 degC"}},
@@ -607,8 +609,8 @@ heating_degree_days = TempWithIndexing(
     standard_name="integral_of_air_temperature_deficit_wrt_time",
     long_name="Heating degree days",
     description="{freq} cumulative heating degree days (mean temperature below {thresh}).",
-    abstract="The cumulative degree days for days when the average temperature is below a given threshold and buildings must "
-    "be heated.",
+    abstract="The cumulative degree days for days when the average temperature is below a given threshold and "
+    "buildings must be heated.",
     cell_methods="time: sum over days",
     compute=indices.heating_degree_days,
     parameters={"thresh": {"default": "17.0 degC"}},
