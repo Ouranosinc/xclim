@@ -581,9 +581,9 @@
     "abstract": "Nombre de jours où la température minimale quotidienne est au-dessus d'un seuil donné."
   },
   "BASE_FLOW_INDEX": {
-    "long_name": "Flux de base",
+    "long_name": "Écoulement de base",
     "description": "Minimum de la moyenne mobile sur 7 jours du flux moyen divisé par le flux moyen.",
-    "title": "Flux de base",
+    "title": "Écoulement de base",
     "abstract": "Minimum de la moyenne mobile sur 7 jours du flux moyen divisé par le flux moyen."
   },
   "RB_FLASHINESS_INDEX": {
@@ -737,9 +737,9 @@
   },
   "HURS_FROMDEWPOINT": {
     "long_name": "Humidité relative",
-    "description": "Humidité relative calculée à partir de la température et du point de rosée à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}.",
-    "title": "Humidité relative calculée à partir de la température et du point de rosée",
-    "abstract": "Humidité relative calculée à partir de la température et du point de rosée à l'aide de la pression de vapeur saturante."
+    "description": "Humidité relative calculée à partir de la température du point de rosée à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}.",
+    "title": "Humidité relative calculée à partir de la température du point de rosée",
+    "abstract": "Humidité relative calculée à partir de la température du point de rosée à l'aide de la pression de vapeur saturante."
   },
   "HURS": {
     "long_name": "Humidité relative",
@@ -820,7 +820,7 @@
     "abstract": "Précipitation solide estimée à partir de la précipitation totale et de la température selon une méthode et un seuil de température donnés."
   },
   "SNOW_DEPTH": {
-    "long_name": "Épaisseur de neige moyenne quotidiennee",
+    "long_name": "Épaisseur de neige moyenne quotidienne",
     "description": "Épaisseur de neige moyenne quotidienne.",
     "title": "Moyenne de la profondeur de neige",
     "abstract": "Épaisseur de neige moyenne quotidienne."
@@ -947,7 +947,7 @@
   },
   "WARM_SPELL_DURATION_INDEX": {
     "title": "Indice de durée des vagues de chaleur",
-    "abstract": "Nombre de jours consécutifs plus grand qu'un nombre de jour minimal donnée et ayant une température maximale quotidienne plus grande qu'un centile donné. Le seuil de centile des températures doit être calculé avec une fenêtre mobile d'un nombre de jours donné.",
+    "abstract": "Nombre de jours consécutifs plus grand qu'un nombre de jours minimal donnée et ayant une température maximale quotidienne plus grande qu'un centile donné. Le seuil de centile des températures doit être calculé avec une fenêtre mobile d'un nombre de jours donné.",
     "description": "Nombre de jours avec au moins {window} jours consécutifs où la température maximale quotidienne est au-dessus ou égale au(x) {tasmax_per_thresh}e centile(s). Une fenêtre de {tasmax_per_window} jour(s), centrée sur chaque jour du calendrier de la période {tasmax_per_period}, est utilisée pour calculer le(s) {tasmax_per_thresh}e(s) centile(s).",
     "long_name": "Nombre de jours faisant partie d'une vague de chaleur définie par un centile"
   },
@@ -1025,7 +1025,7 @@
   },
   "DRY_SPELL_FREQUENCY": {
     "title": "Fréquence des périodes sèches",
-    "abstract": "Fréquence des périodes sèches d'une durée minimale donnée, pendant lesquelles les précipitations accumulées ou maximales sur une fenêtre de jours donné sont inférieures à un seuil donné.",
+    "abstract": "Fréquence des périodes sèches d'une durée minimale donnée, pendant lesquelles les précipitations accumulées ou maximales sur une fenêtre de jours donnée sont inférieures à un seuil donné.",
     "description": "Fréquence {freq:f} des périodes sèches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}.",
     "long_name": "Fréquence des périodes sèches"
   },
@@ -1068,7 +1068,7 @@
   "WINDY_DAYS": {
     "title": "Nombre de jours venteux",
     "abstract": "Nombre de jours où la vitesse du vent de surface est au-dessus ou égale à un seuil donné.",
-    "description": "Nombre {freq:m} de jours où la vitesse du vent de surface est au-deesus ou égale à {thresh}.",
+    "description": "Nombre {freq:m} de jours où la vitesse du vent de surface est au-dessus ou égale à {thresh}.",
     "long_name": "Nombre de jours où la vitesse du vent de surface est au-dessus ou égale à un seuil donné"
   },
   "JETSTREAM_METRIC_WOOLLINGS": {
