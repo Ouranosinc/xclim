@@ -1253,7 +1253,9 @@ class TestWarmSpellDurationIndex:
         np.testing.assert_array_equal(
             out.isel(location=0, percentiles=0), np.array([np.nan, 3, 0, 0, np.nan])
         )
-        assert "Annual number of days with at least 3 consecutive days" in out.description
+        assert (
+            "Annual number of days with at least 3 consecutive days" in out.description
+        )
 
     def test_wsdi_custom_percentiles_parameters(self):
         # GIVEN
@@ -1348,7 +1350,9 @@ class TestFreezeThawSpell:
         out = atmos.freezethaw_spell_mean_length(
             tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS"
         )
-        np.testing.assert_allclose(out.isel(location=0), [2.09375, 2, 1.8648648, 1.7666666])
+        np.testing.assert_allclose(
+            out.isel(location=0), [2.09375, 2, 1.8648648, 1.7666666]
+        )
 
         # At location -1, year 2 has no spells of length >=2
         out = atmos.freezethaw_spell_mean_length(
