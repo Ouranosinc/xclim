@@ -47,7 +47,7 @@
       "hivernale",
       "hivernaux",
       "hivernales",
-      "hivers"
+      "hiver"
     ],
     "MAM": [
       "printanier",
@@ -61,14 +61,14 @@
       "estivale",
       "estivaux",
       "estivales",
-      "étés"
+      "été"
     ],
     "SON": [
       "automnal",
       "automnale",
       "automnaux",
       "automnales",
-      "automnes"
+      "automne"
     ],
     "norm": [
       "normal",
@@ -611,14 +611,14 @@
     "abstract": ""
   },
   "DOY_QMAX": {
-    "long_name": "Jour de l'année du maximum du débit le long d'un période de temps",
-    "description": "Jour de l'année du maximum du débit de le long de {indexer}.",
+    "long_name": "Jour de l'année du maximum du débit",
+    "description": "Jour de l'année du maximum du débit en {indexer:nom}.",
     "title": "Jour de l'année du maximum du débit",
     "abstract": ""
   },
   "DOY_QMIN": {
-    "long_name": "Jour de l'année du minimum du débit le long d'un période de temps'",
-    "description": "Jour de l'année du minimum du débit le long de {indexer}.",
+    "long_name": "Jour de l'année du minimum du débit",
+    "description": "Jour de l'année du minimum du débit en {indexer:nom}.",
     "title": "Jour de l'année du minimum du débit",
     "abstract": ""
   },
@@ -1048,16 +1048,16 @@
     "long_name": "Nombre de jours chauds et secs"
   },
   "WARM_AND_WET_DAYS": {
-    "title": "Nombre de jours chauds et humide",
+    "title": "Nombre de jours chauds et pluvieux",
     "abstract": "Nombre de jours où la température et la précipitation sont au-dessus de centiles donnés.",
     "description": "Nombre {freq:m} de jours où la température est au-dessus du {tas_per_thresh}e centile et la précipitation au-dessus du {pr_per_thresh}e centile.",
-    "long_name": "Nombre de jours chauds et humides"
+    "long_name": "Nombre de jours chauds et pluvieux"
   },
   "COLD_AND_WET_DAYS": {
-    "title": "Nombre de jours froids et humide",
+    "title": "Nombre de jours froids et pluvieux",
     "abstract": "Nombre de jours où la température est en dessous d'un centile donné et la précipitation au-dessus d'un centile donné.",
     "description": "Nombre {freq:m} de jours où la température est en dessous du {tas_per_thresh}e centile et la précipitation au-dessus du {pr_per_thresh}e centile.",
-    "long_name": "Nombre de jours froids et humides"
+    "long_name": "Nombre de jours froids et pluvieux"
   },
   "CALM_DAYS": {
     "title": "Nombre de jours de vent calme",
@@ -1073,10 +1073,10 @@
   },
   "JETSTREAM_METRIC_WOOLLINGS": {
     "title": "Force et latitude du courant-jet",
-    "abstract": "Latitude et magnitude du maximum de la vitesse du vent zonal entre 15 à 75°N et -60 à 0°E.",
+    "abstract": "Latitude et magnitude du maximum de la vitesse du vent zonal entre 15 à 75°N et -60 à 0°E. Le vent est lissé par un fenêtrage de Lanczos.",
     "description": [
-      "Latitude quotidienne du maximum du vent zonal lissé",
-      "Magnitude quotidienne du maximum du vent zonal lissé"
+      "Latitude quotidienne du maximum du vent zonal lissé par un fenêtrage de Lanczos.",
+      "Magnitude quotidienne du maximum du vent zonal lissé par un fenêtrage de Lanczos."
     ],
     "long_name": [
       "Latitude du maximum du vent zonal",

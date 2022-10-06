@@ -23,9 +23,8 @@ jetstream_metric_woollings = JetStream(
         "Maximum strength of smoothed zonal wind speed",
     ],
     description=[
-        "Daily latitude of maximum smoothed zonal wind speed.",
-        "Daily maximum strength of smoothed zonal wind speed.",
+        "Daily latitude of maximum Lanczos smoothed zonal wind speed.",
+        "Daily maximum strength of Lanczos smoothed zonal wind speed.",
     ],
-    abstract="Latitude and magnitude of maximum zonal wind speed between 15 to 75°N and -60 to 0°E.",
     compute=indices.jetstream_metric_woollings,
 )
