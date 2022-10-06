@@ -1242,44 +1242,43 @@ def test_degree_days_exceedance_date():
         np.testing.assert_array_equal(out, np.array([[np.nan, 280, 241, 244]]).T)
 
 
-def test_warm_spell_duration_index():
-    tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
-    tx90 = percentile_doy(tasmax, window=5, per=90)
+class TestWarmSpellDurationIndex:
+    def test_warm_spell_duration_index(self):
+        tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
+        tx90 = percentile_doy(tasmax, window=5, per=90)
 
-    out = atmos.warm_spell_duration_index(
-        tasmax=tasmax, tasmax_per=tx90, window=3, freq="AS-JUL"
-    )
-    np.testing.assert_array_equal(
-        out.isel(location=0, percentiles=0), np.array([np.nan, 3, 0, 0, np.nan])
-    )
-    assert "Annual number of days with at least 3 consecutive days" in out.description
+        out = atmos.warm_spell_duration_index(
+            tasmax=tasmax, tasmax_per=tx90, window=3, freq="AS-JUL"
+        )
+        np.testing.assert_array_equal(
+            out.isel(location=0, percentiles=0), np.array([np.nan, 3, 0, 0, np.nan])
+        )
+        assert "Annual number of days with at least 3 consecutive days" in out.description
 
+    def test_wsdi_custom_percentiles_parameters(self):
+        # GIVEN
+        tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
+        tasmax_per = tasmax.sel(time=slice("01-01-1990", "31-12-1991"))
+        # WHEN
+        tx90 = percentile_doy(tasmax_per, per=[42, 24], window=2)
+        out = atmos.warm_spell_duration_index(tasmax, tx90, freq="YS")
+        # THEN
+        assert "[42 24]th" in out.attrs["description"]
+        assert "2 day(s) window" in out.attrs["description"]
+        assert "['1990-01-01', '1991-12-31']" in out.attrs["description"]
 
-def test_wsdi__custom_percentiles_params():
-    # GIVEN
-    tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
-    tasmax_per = tasmax.sel(time=slice("01-01-1990", "31-12-1991"))
-    # WHEN
-    tx90 = percentile_doy(tasmax_per, per=[42, 24], window=2)
-    out = atmos.warm_spell_duration_index(tasmax, tx90, freq="YS")
-    # THEN
-    assert "[42 24]th" in out.attrs["description"]
-    assert "2 day(s) window" in out.attrs["description"]
-    assert "['1990-01-01', '1991-12-31']" in out.attrs["description"]
-
-
-def test_wsdi__default_percentiles_params():
-    # GIVEN
-    tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
-    tasmax_per = tasmax.sel(time=slice("01-01-1990", "31-12-1991"))
-    # WHEN
-    tx90 = percentile_doy(tasmax_per, per=[42, 24], window=2)
-    del tx90.attrs["climatology_bounds"]
-    res = atmos.warm_spell_duration_index(tasmax, tx90, freq="YS")
-    # THEN
-    assert "{unknown} day(s) window" in res.attrs["description"]
-    assert "{unknown} period" in res.attrs["description"]
-    assert "{unknown}th percentile(s)" in res.attrs["description"]
+    def test_wsdi_default_percentiles_parameters(self):
+        # GIVEN
+        tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
+        tasmax_per = tasmax.sel(time=slice("01-01-1990", "31-12-1991"))
+        # WHEN
+        tx90 = percentile_doy(tasmax_per, per=[42, 24], window=2)
+        del tx90.attrs["climatology_bounds"]
+        res = atmos.warm_spell_duration_index(tasmax, tx90, freq="YS")
+        # THEN
+        assert "{unknown} day(s) window" in res.attrs["description"]
+        assert "{unknown} period" in res.attrs["description"]
+        assert "{unknown}th percentile(s)" in res.attrs["description"]
 
 
 def test_maximum_consecutive_warm_days():
@@ -1319,76 +1318,72 @@ def test_corn_heat_units():
     )
 
 
-def test_freezethaw_spell_frequency():
-    ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+class TestFreezeThawSpell:
+    def test_freezethaw_spell_frequency(self):
+        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
-    out = atmos.freezethaw_spell_frequency(
-        tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS"
-    )
-    np.testing.assert_array_equal(out.isel(location=0), [32, 38, 37, 30])
+        out = atmos.freezethaw_spell_frequency(
+            tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS"
+        )
+        np.testing.assert_array_equal(out.isel(location=0), [32, 38, 37, 30])
 
-    # At location -1, year 2 has no spells of length >=2
-    out = atmos.freezethaw_spell_frequency(
-        tasmin=convert_units_to(ds.tasmin, "degF"),
-        tasmax=ds.tasmax,
-        window=2,
-        freq="YS",
-    )
-    np.testing.assert_array_equal(out.isel(location=-1), [1, 0, 1, 1])
+        # At location -1, year 2 has no spells of length >=2
+        out = atmos.freezethaw_spell_frequency(
+            tasmin=convert_units_to(ds.tasmin, "degF"),
+            tasmax=ds.tasmax,
+            window=2,
+            freq="YS",
+        )
+        np.testing.assert_array_equal(out.isel(location=-1), [1, 0, 1, 1])
 
-    assert out.attrs["long_name"] == "Frequency of daily freeze-thaw spells"
-    assert out.attrs["description"] in [
-        # FIXME: Section formatting shifts variable names to all lowercase.
-        "Annual number of freeze-thaw spells (Tmax > 0 degC and Tmin <= 0 degC) "
-        "for at least 2 consecutive day(s).".lower().capitalize()
-    ]
+        assert out.attrs["long_name"] == "Frequency of daily freeze-thaw spells"
+        assert out.attrs["description"] in [
+            "Annual number of freeze-thaw spells, where maximum daily temperatures are above 0 degc and minimum daily "
+            "temperatures are at or below 0 degc for at least 2 consecutive day(s)"
+        ]
 
+    def test_freezethaw_spell_mean_length(self):
+        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
-def test_freezethaw_spell_mean_length():
-    ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+        out = atmos.freezethaw_spell_mean_length(
+            tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS"
+        )
+        np.testing.assert_allclose(out.isel(location=0), [2.09375, 2, 1.8648648, 1.7666666])
 
-    out = atmos.freezethaw_spell_mean_length(
-        tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS"
-    )
-    np.testing.assert_allclose(out.isel(location=0), [2.09375, 2, 1.8648648, 1.7666666])
+        # At location -1, year 2 has no spells of length >=2
+        out = atmos.freezethaw_spell_mean_length(
+            tasmin=convert_units_to(ds.tasmin, "degF"),
+            tasmax=ds.tasmax,
+            window=2,
+            freq="YS",
+        )
+        np.testing.assert_array_equal(out.isel(location=-1), [2, 0, 2, 2])
 
-    # At location -1, year 2 has no spells of length >=2
-    out = atmos.freezethaw_spell_mean_length(
-        tasmin=convert_units_to(ds.tasmin, "degF"),
-        tasmax=ds.tasmax,
-        window=2,
-        freq="YS",
-    )
-    np.testing.assert_array_equal(out.isel(location=-1), [2, 0, 2, 2])
+        assert out.attrs["long_name"] == "Average length of daily freeze-thaw spells"
+        assert out.attrs["description"] in [
+            "Annual average length of freeze-thaw spells, where maximum daily temperatures are above 0 degc and "
+            "minimum daily temperatures are at or below 0 degc for at least 2 consecutive day(s)."
+        ]
 
-    assert out.attrs["long_name"] == "Average length of daily freeze-thaw spells"
-    assert out.attrs["description"] in [
-        # FIXME: Section formatting shifts variable names to all lowercase.
-        "Annual average length of freeze-thaw spells (Tmax > 0 degC and Tmin <= 0 degC) "
-        "for at least 2 consecutive day(s).".lower().capitalize()
-    ]
+    def test_freezethaw_spell_max_length(self):
+        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
+        out = atmos.freezethaw_spell_max_length(
+            tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS"
+        )
+        np.testing.assert_array_equal(out.isel(location=0), [12, 7, 7, 4])
 
-def test_freezethaw_spell_max_length():
-    ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+        # At location -1, year 2 has no spells of length >=2
+        out = atmos.freezethaw_spell_max_length(
+            tasmin=convert_units_to(ds.tasmin, "degF"),
+            tasmax=ds.tasmax,
+            window=2,
+            freq="YS",
+        )
+        np.testing.assert_array_equal(out.isel(location=-1), [2, 0, 2, 2])
 
-    out = atmos.freezethaw_spell_max_length(
-        tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS"
-    )
-    np.testing.assert_array_equal(out.isel(location=0), [12, 7, 7, 4])
-
-    # At location -1, year 2 has no spells of length >=2
-    out = atmos.freezethaw_spell_max_length(
-        tasmin=convert_units_to(ds.tasmin, "degF"),
-        tasmax=ds.tasmax,
-        window=2,
-        freq="YS",
-    )
-    np.testing.assert_array_equal(out.isel(location=-1), [2, 0, 2, 2])
-
-    assert out.attrs["long_name"] == "Maximal length of freeze-thaw spells"
-    assert out.attrs["description"] in [
-        # FIXME: Section formatting shifts variable names to all lowercase.
-        "Annual maximal length of freeze-thaw spells (Tmax > 0 degC and Tmin <= 0 degC) "
-        "for at least 2 consecutive day(s).".lower().capitalize()
-    ]
+        assert out.attrs["long_name"] == "Maximal length of freeze-thaw spells"
+        assert out.attrs["description"] in [
+            "Annual maximal length of freeze-thaw spells, where maximum daily temperatures are above 0 degc and "
+            "minimum daily temperatures are at or below 0 degc for at least 2 consecutive day(s)."
+        ]

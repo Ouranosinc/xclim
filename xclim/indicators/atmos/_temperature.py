@@ -526,7 +526,7 @@ freezethaw_spell_frequency = Temp(
     units="days",
     long_name="Frequency of daily freeze-thaw spells",
     description="{freq} number of freeze-thaw spells, where maximum daily temperatures are above {thresh_tasmax} "
-    "and minimum daily temperatures are at or below {thresh_tasmin}) for at least {window} consecutive day(s).",
+    "and minimum daily temperatures are at or below {thresh_tasmin} for at least {window} consecutive day(s).",
     abstract="Frequency of daily freeze-thaw spells. A freeze-thaw spell is defined as a number of consecutive days "
     "where maximum daily temperatures are above a given threshold and minimum daily temperatures are at or below a "
     "given threshold, usually 0°C for both.",
@@ -548,7 +548,7 @@ freezethaw_spell_mean_length = Temp(
     units="days",
     long_name="Average length of daily freeze-thaw spells",
     description="{freq} average length of freeze-thaw spells, where maximum daily temperatures are above "
-    "{thresh_tasmax} and minimum daily temperatures are at or below {thresh_tasmin}) for at least {window} consecutive "
+    "{thresh_tasmax} and minimum daily temperatures are at or below {thresh_tasmin} for at least {window} consecutive "
     "day(s).",
     abstract="Average length of daily freeze-thaw spells. A freeze-thaw spell is defined as a number of consecutive "
     "days where maximum daily temperatures are above a given threshold and minimum daily temperatures are at or below "
