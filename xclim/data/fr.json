@@ -970,22 +970,22 @@
     "long_name": "Unités thermiques maïs"
   },
   "FREEZETHAW_SPELL_FREQUENCY": {
-    "title": "Fréquence des périodes d'événements consécutifs de gel-dégel",
-    "abstract": "Fréquence des périodes d'événements consécutifs de gel-dégel. Une période de gel-dégel est définie comme un nombre de jours consécutifs où les températures maximales quotidiennes sont au-dessus d'un seuil donné et les températures minimales quotidiennes sont en dessous ou égales à un seuil donné, généralement 0°C pour les deux..",
-    "description": "Fréquence {freq:f} périodes d'événements consécutifs de gel-dégel (Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consécutif(s)).",
-    "long_name": "Fréquence périodes d'événements consécutifs de gel-dégel"
+    "title": "Fréquence des périodes des événements consécutifs de gel-dégel",
+    "abstract": "Fréquence des périodes des événements consécutifs de gel-dégel. Une période de gel-dégel est définie comme un nombre de jours consécutifs où les températures maximales quotidiennes sont au-dessus d'un seuil donné et les températures minimales quotidiennes sont en dessous ou égales à un seuil donné, généralement 0°C pour les deux..",
+    "description": "Fréquence {freq:f} périodes des événements consécutifs de gel-dégel (Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consécutif(s)).",
+    "long_name": "Fréquence périodes des événements consécutifs de gel-dégel"
   },
   "FREEZETHAW_SPELL_MAX_LENGTH": {
-    "title": "Durée maximale des périodes d'événements consécutifs de gel-dégel",
-    "abstract": "Durée maximale des périodes d'événements consécutifs de gel-dégel. Une période de gel-dégel est définie comme un nombre de jours consécutifs où les températures maximales quotidiennes sont au-dessus d'un seuil donné et les températures minimales quotidiennes sont en dessous ou égales à un seuil donné, généralement 0°C pour les deux..",
-    "description": "Durée maximale {freq:f} des périodes d'événements consécutifs de gel-dégel (Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consécutif(s)).",
-    "long_name": "Durée maximale des périodes d'événements consécutifs de gel-dégel"
+    "title": "Durée maximale des périodes des événements consécutifs de gel-dégel",
+    "abstract": "Durée maximale des périodes des événements consécutifs de gel-dégel. Une période de gel-dégel est définie comme un nombre de jours consécutifs où les températures maximales quotidiennes sont au-dessus d'un seuil donné et les températures minimales quotidiennes sont en dessous ou égales à un seuil donné, généralement 0°C pour les deux..",
+    "description": "Durée maximale {freq:f} des périodes des événements consécutifs de gel-dégel (Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consécutif(s)).",
+    "long_name": "Durée maximale des périodes des événements consécutifs de gel-dégel"
   },
   "FREEZETHAW_SPELL_MEAN_LENGTH": {
-    "title": "Durée moyenne des périodes d'événements consécutifs de gel-dégel",
-    "abstract": "Durée moyenne des périodes d'événements consécutifs de gel-dégel. Une période de gel-dégel est définie comme un nombre de jours consécutifs où les températures maximales quotidiennes sont au-dessus d'un seuil donné et les températures minimales quotidiennes sont en dessous ou égales à un seuil donné, généralement 0°C pour les deux..",
-    "description": "Durée moyenne {freq:f} des spériodes d'événements consécutifs de gel-dégel (Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consécutif(s)).",
-    "long_name": "Durée moyenne des périodes d'événements consécutifs de gel-dégel"
+    "title": "Durée moyenne des périodes des événements consécutifs de gel-dégel",
+    "abstract": "Durée moyenne des périodes des événements consécutifs de gel-dégel. Une période de gel-dégel est définie comme un nombre de jours consécutifs où les températures maximales quotidiennes sont au-dessus d'un seuil donné et les températures minimales quotidiennes sont en dessous ou égales à un seuil donné, généralement 0°C pour les deux..",
+    "description": "Durée moyenne {freq:f} des spériodes des événements consécutifs de gel-dégel (Tmax > {thresh_tasmax} et Tmin <= {thresh_tasmin} pour au moins {window} jour(s) consécutif(s)).",
+    "long_name": "Durée moyenne des périodes des événements consécutifs de gel-dégel"
   },
   "WIND_CHILL": {
     "title": "Facteur éolien",
