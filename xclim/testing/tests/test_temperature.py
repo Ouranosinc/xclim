@@ -1341,7 +1341,7 @@ class TestFreezeThawSpell:
         assert out.attrs["long_name"] == "Frequency of daily freeze-thaw spells"
         assert out.attrs["description"] in [
             "Annual number of freeze-thaw spells, where maximum daily temperatures are above 0 degc and minimum daily "
-            "temperatures are at or below 0 degc for at least 2 consecutive day(s)"
+            "temperatures are at or below 0 degc for at least 2 consecutive day(s)."
         ]
 
     def test_freezethaw_spell_mean_length(self):
