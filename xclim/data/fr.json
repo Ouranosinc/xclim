@@ -213,7 +213,7 @@
   },
   "WET_PRCPTOT": {
     "long_name": "Précipitation totale lors de jours avec précipitation",
-    "description": "Précipitation totale {freq:f} lorsque la précipitation quotidienne est au-dessus {thresh}.",
+    "description": "Précipitation totale {freq:f} lorsque la précipitation quotidienne est au-dessus de {thresh}.",
     "title": "Précipitation accumulée totale lors de jours avec précipitation",
     "abstract": "Précipitation accumulée totale lors de jours avec précipitation. Un jour est considéré avec précipitation si la précipitation est au-dessus ou égale à un seuil donné."
   },
@@ -225,7 +225,7 @@
   },
   "SOLIDPRCPTOT": {
     "long_name": "Précipitation solide totale",
-    "description": "Précipitation solide totale {freq:f}, estimée comme la précipitation lorsque la température moyenne est < {thresh}.",
+    "description": "Précipitation solide totale {freq:f}, estimée comme la précipitation lorsque la température moyenne est en dessous de {thresh}.",
     "title": "Précipitation solide accumulée totale",
     "abstract": "Précipitation solide accumulée totale. La précipitation est considéré solide lorsque la température quotidienne moyenne est sous 0°C."
   },
@@ -297,9 +297,9 @@
   },
   "HEAT_WAVE_TOTAL_LENGTH": {
     "long_name": "Durée totale des vagues de chaleur",
-    "description": "Durée totale {freq:f} des vagues de chaleur en somme des jours. Une vague de chaleur se produit lorsque les températures minimale et maximale quotidiennes excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
+    "description": "Durée totale {freq:f} des vagues de chaleur en somme de jours. Une vague de chaleur se produit lorsque les températures minimale et maximale quotidiennes excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement, durant au moins {window} jours.",
     "title": "Durée totale des vagues de chaleur",
-    "abstract": "Durée totale des vagues de chaleur en somme des jours. Une vague de chaleur se produit lorsque les températures minimale et maximale quotidiennes excèdent des seuils donnés durant un certain nombre de jours."
+    "abstract": "Durée totale des vagues de chaleur en somme de jours. Une vague de chaleur se produit lorsque les températures minimale et maximale quotidiennes excèdent des seuils donnés durant un certain nombre de jours."
   },
   "HEAT_WAVE_MAX_LENGTH": {
     "long_name": "Durée maximale des vagues de chaleur",
@@ -659,7 +659,7 @@
     "abstract": "Longueur maximale des périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne est au-dessus d'un seuil spécifique durant un minimum de jours."
   },
   "CONSECUTIVE_FROST_FREE_DAYS": {
-    "long_name": "Nombre maximal de jours consécutifs avec température minimale supérieur à 0°C",
+    "long_name": "Nombre maximal de jours consécutifs ayant une température minimale supérieure à 0°C",
     "description": "Nombre maximal {freq:m} de jours consécutifs où la température minimale quotidienne est au-dessus ou égale à {thresh}.",
     "title": "Nombre maximal de jours consécutifs sans gel",
     "abstract": "Nombre maximal de jours consécutifs sans gel où la température minimale quotidienne est au-dessus ou égale à 0°C."
@@ -811,7 +811,7 @@
     "long_name": "Premier jour de l'année où la somme des degrés-jours est au-dessus d'un seuil donné",
     "description": "Premier jour de l'année où la somme des degrés-jours (température moyenne quotidienne {op} {thresh}) est au-dessus de {sum_thresh}, avec la somme cumulative à partir de {start_date}.",
     "title": "Jour du dépassement des degrés-jours",
-    "abstract": "Jour de l'année où la somme des degrés-jours est au-dessus d'un seuil donné. Les degrés-jours sont calculés au-dessus ou au-dessous d'un seuil de température donné."
+    "abstract": "Jour de l'année où la somme des degrés-jours est au-dessus d'un seuil donné. Les degrés-jours sont calculés au-dessus ou en dessous d'un seuil de température donné."
   },
   "PRSN": {
     "long_name": "Précipitation solide",
@@ -863,7 +863,7 @@
   },
   "CONTINUOUS_SNOW_COVER_END": {
     "long_name": "Date de fin du couvert de neige continu",
-    "description": "Première date à laquelle l'épaisseur de neige passe sous {thresh} pendant au moins {window} jours consécutifs suite à l'établissementau début du couvert de neige.",
+    "description": "Première date à laquelle l'épaisseur de neige passe sous {thresh} pendant au moins {window} jours consécutifs suite à l'établissement du couvert de neige.",
     "title": "Date du fin du couvert de neige",
     "abstract": "Première date à partir de laquelle l'épaisseur de neige est sous à un seuil donné pendant un nombre de jours consécutifs suite au début du couvert de neige."
   },
@@ -889,7 +889,7 @@
     "long_name": "Date de la quantité de neige maximale",
     "description": "Date {freq:f} à laquelle la quantité de neige atteint sa valeur maximale.",
     "title": "Date où la quantité de neige est maximale",
-    "abstract": "Jour de l'année où l'équivalent en eau de la neige quotidien atteint sa valeur maximale."
+    "abstract": "Jour de l'année où l'équivalent en eau de la neige quotidienne atteint sa valeur maximale."
   },
   "MELT_AND_PRECIP_MAX": {
     "long_name": "Maximum des apports en eau incluant la fonte de neige et les précipitations",
