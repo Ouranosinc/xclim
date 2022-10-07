@@ -10,10 +10,12 @@ New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Documentation now supports intersphinx mapping references within code examples via `sphinx-codeautolink` and copying of code blocks via `sphinx-copybutton`. (:pull:`1182`).
 * Log-logistic distribution added to `stats.py` for use with `standardized_precipitation_index` and `standardized_precipitation_evapotranspiration_index` (:issue:`1141`, :pull:`1183`).
+* New base indicator class for sdba: ``StatisticalPropertyMeasure``, those measures that also reduce the time (as a property does) (:pull:`1198`).
 
 New indicators
 ^^^^^^^^^^^^^^
 * New indices ``first_day_temperature_{above|below}`` and indicators ``xclim.indices.first_day_{tn|tg|tx}_{above|below}``. These indices/indicators accept operator (``op``) keyword for finer threshold comparison controls. (:issue:`1175`, :pull:`1186`).
+* New spatial sdba properties and measures : ``spatial_correlogram``, ``scorr`` and ``first_eof``. The later needs the optional dependency "eofs" (:pull:`1198`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -27,6 +29,7 @@ Breaking changes
 * The ``first_day_below`` and ``first_day_above`` atmos indicators are now deprecated in order to clearly communicate the variables they act upon (:issue:`1175`, :pull:`1186`). The suggested migrations are as follows:
     - ``xclim.atmos.first_day_above`` -> ``xclim.indices.first_day_{tn|tg|tx}_above``
     - ``xclim.atmos.first_day_below`` -> ``xclim.indices.first_day_{tn|tg|tx}_below``
+* The ``relative_annual_cycle_amplitude`` and ``annual_cycle_amplitude`` have been rewritten to match the version defined in the VALUE project, outputs will change drastically (for the better) (:pull:`1198`).
 
 Bug fixes
 ^^^^^^^^^
