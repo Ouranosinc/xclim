@@ -481,48 +481,18 @@ def cooling_degree_days(
     return out
 
 
-@declare_units(tas="[temperature]", thresh="[temperature]")
 def freshet_start(
-    tas: xarray.DataArray, thresh: str = "0 degC", window: int = 5, freq: str = "YS"
-) -> xarray.DataArray:
-    r"""First day consistently exceeding threshold temperature.
+    tas: xarray.DataArray, thresh="0 degC", window: int = 5, **kwargs
+) -> xarray.DataArray:  # noqa: D103
+    warnings.warn(
+        "The `freshet_start` indice is being deprecated in favour of `first_day_temperature_above` "
+        "with `thresh='0 degC'` and `window=5`. "
+        "This indice will be removed in `xclim>=0.40.0`. Please update your scripts accordingly.",
+        DeprecationWarning,
+        stacklevel=3,
+    )
 
-    Returns first day of period where a temperature threshold is exceeded over a given number of days.
-
-    Parameters
-    ----------
-    tas : xarray.DataArray
-        Mean daily temperature.
-    thresh : str
-        Threshold temperature on which to base evaluation.
-    window : int
-        Minimum number of days with temperature above threshold needed for evaluation.
-    freq : str
-        Resampling frequency.
-
-    Returns
-    -------
-    xarray.DataArray, [dimensionless]
-        Day of the year when temperature exceeds threshold over a given number of days for the first time. If there is
-        no such day, return np.nan.
-
-    Notes
-    -----
-    Let :math:`x_i` be the daily mean temperature at day of the year :math:`i` for values of :math:`i` going from 1
-    to 365 or 366. The start date of the freshet is given by the smallest index :math:`i` for which
-
-    .. math::
-
-       \prod_{j=i}^{i+w} [x_j > thresh]
-
-    is true, where :math:`w` is the number of days the temperature threshold should be exceeded, and :math:`[P]` is
-    1 if :math:`P` is true, and 0 if false.
-    """
-    thresh = convert_units_to(thresh, tas)
-    over = tas > thresh
-    out = over.resample(time=freq).map(rl.first_run, window=window, coord="dayofyear")
-    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
-    return out
+    return first_day_temperature_above(tas=tas, thresh=thresh, window=window, **kwargs)
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -1152,6 +1122,18 @@ def first_day_temperature_above(
     xarray.DataArray, [dimensionless]
         Day of the year when temperature is superior to a threshold over a given number of days for the first time.
         If there is no such day, returns np.nan.
+
+    Notes
+    -----
+    Let :math:`x_i` be the daily mean|max|min temperature at day of the year :math:`i` for values of :math:`i` going
+    from 1 to 365 or 366. The first day above temperature threshold is given by the smallest index :math:`i` for which
+
+    .. math::
+
+       \prod_{j=i}^{i+w} [x_j > thresh]
+
+    is true, where :math:`w` is the number of days the temperature threshold should be exceeded, and :math:`[P]` is
+    1 if :math:`P` is true, and 0 if false.
     """
     return first_day_threshold_reached(
         tas,
