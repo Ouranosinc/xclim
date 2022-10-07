@@ -247,7 +247,6 @@ heat_wave_index = Temp(
     "temperatures exceed given thresholds for a number of days.",
     cell_methods="",
     compute=indices.heat_wave_index,
-    parameters={"op": {"default": ">"}},
 )
 
 
@@ -264,7 +263,6 @@ hot_spell_frequency = Temp(
     cell_methods="",
     keywords="health,",
     compute=indices.hot_spell_frequency,
-    parameters={"op": {"default": ">"}},
 )
 
 hot_spell_max_length = Temp(
@@ -280,7 +278,6 @@ hot_spell_max_length = Temp(
     cell_methods="",
     keywords="health,",
     compute=indices.hot_spell_max_length,
-    parameters={"op": {"default": ">"}},
 )
 
 tg_mean = TempWithIndexing(
@@ -470,7 +467,6 @@ cold_spell_days = Temp(
     "consecutive days with mean daily temperature below a given threshold.",
     cell_methods="",
     compute=indices.cold_spell_days,
-    parameters={"op": {"default": "<"}},
 )
 
 cold_spell_frequency = Temp(
@@ -485,7 +481,6 @@ cold_spell_frequency = Temp(
     "mean daily temperature below a given threshold.",
     cell_methods="",
     compute=indices.cold_spell_frequency,
-    parameters={"op": {"default": "<"}},
 )
 
 cool_night_index = Temp(
