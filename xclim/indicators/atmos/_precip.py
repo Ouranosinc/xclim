@@ -149,6 +149,7 @@ wetdays = PrecipWithIndexing(
     abstract="The number of days with daily precipitation at or above a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.wetdays,
+    parameters={"op": {"default": ">="}},
 )
 
 wetdays_prop = PrecipWithIndexing(
@@ -160,6 +161,7 @@ wetdays_prop = PrecipWithIndexing(
     abstract="The proportion of days with daily precipitation at or above a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.wetdays_prop,
+    parameters={"op": {"default": ">="}},
 )
 
 dry_days = PrecipWithIndexing(
@@ -172,6 +174,7 @@ dry_days = PrecipWithIndexing(
     abstract="The number of days with daily precipitation under a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.dry_days,
+    parameters={"op": {"default": "<"}},
 )
 
 maximum_consecutive_wet_days = Precip(

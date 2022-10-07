@@ -125,6 +125,7 @@ def cold_spell_days(
     thresh: str = "-10 degC",
     window: int = 5,
     freq: str = "AS-JUL",
+    op: str = "<",
 ) -> xarray.DataArray:
     r"""Cold spell days.
 
@@ -141,6 +142,8 @@ def cold_spell_days(
         Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
         Resampling frequency.
+    op : {"<", "<=", "lt", "le"}
+        Comparison operation. Default: "<".
 
     Returns
     -------
@@ -159,7 +162,7 @@ def cold_spell_days(
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
     t = convert_units_to(thresh, tas)
-    over = tas < t
+    over = compare(tas, op, t, constrain=("<", "<="))
     group = over.resample(time=freq)
 
     out = group.map(rl.windowed_run_count, window=window, dim="time")
@@ -172,6 +175,7 @@ def cold_spell_frequency(
     thresh: str = "-10 degC",
     window: int = 5,
     freq: str = "AS-JUL",
+    op: str = "<",
 ) -> xarray.DataArray:
     r"""Cold spell frequency.
 
@@ -188,6 +192,8 @@ def cold_spell_frequency(
         Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
         Resampling frequency.
+    op : {"<", "<=", "lt", "le"}
+        Comparison operation. Default: "<".
 
     Returns
     -------
@@ -196,7 +202,7 @@ def cold_spell_frequency(
 
     """
     t = convert_units_to(thresh, tas)
-    over = tas < t
+    over = compare(tas, op, t, constrain=("<", "<="))
     group = over.resample(time=freq)
 
     out = group.map(rl.windowed_run_events, window=window, dim="time")
@@ -363,7 +369,10 @@ def daily_pr_intensity(
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
 def dry_days(
-    pr: xarray.DataArray, thresh: str = "0.2 mm/d", freq: str = "YS"
+    pr: xarray.DataArray,
+    thresh: str = "0.2 mm/d",
+    freq: str = "YS",
+    op: str = "<",
 ) -> xarray.DataArray:
     r"""Dry days.
 
@@ -377,6 +386,8 @@ def dry_days(
         Threshold temperature on which to base evaluation.
     freq : str
         Resampling frequency.
+    op : {"<", "<=", "lt", "le"}
+        Comparison operation. Default: "<".
 
     Returns
     -------
@@ -393,7 +404,7 @@ def dry_days(
         \sum PR_{ij} < Threshold [mm/day]
     """
     thresh = convert_units_to(thresh, pr)
-    out = threshold_count(pr, "<", thresh, freq)
+    out = threshold_count(pr, op, thresh, freq, constrain=("<", "<="))
     out = to_agg_units(out, pr, "count")
     return out
 
@@ -1300,6 +1311,7 @@ def heat_wave_index(
     thresh: str = "25.0 degC",
     window: int = 5,
     freq: str = "YS",
+    op: str = ">",
 ) -> xarray.DataArray:
     """Heat wave index.
 
@@ -1315,6 +1327,8 @@ def heat_wave_index(
         Minimum number of days with temperature above threshold to qualify as a heatwave.
     freq : str
         Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">".
 
     Returns
     -------
@@ -1322,7 +1336,7 @@ def heat_wave_index(
         Heat wave index.
     """
     thresh = convert_units_to(thresh, tasmax)
-    over = tasmax > thresh
+    over = compare(tasmax, op, thresh, constrain=(">", ">="))
     group = over.resample(time=freq)
 
     out = group.map(rl.windowed_run_count, window=window, dim="time")
@@ -1376,6 +1390,7 @@ def hot_spell_max_length(
     thresh_tasmax: str = "30 degC",
     window: int = 1,
     freq: str = "YS",
+    op: str = ">",
 ) -> xarray.DataArray:
     r"""Longest hot spell.
 
@@ -1394,6 +1409,8 @@ def hot_spell_max_length(
         Minimum number of days with temperatures above thresholds to qualify as a heatwave.
     freq : str
         Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">".
 
     Returns
     -------
@@ -1407,7 +1424,8 @@ def hot_spell_max_length(
     characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
     communities :cite:p:`casati_regional_2013`.
 
-    In :cite:t:`robinson_definition_2001`, the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
+    In :cite:t:`robinson_definition_2001`, the parameters would be
+    `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
 
     References
     ----------
@@ -1415,7 +1433,7 @@ def hot_spell_max_length(
     """
     thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
 
-    cond = tasmax > thresh_tasmax
+    cond = compare(tasmax, thresh_tasmax, op, constrain=(">", ">="))
     group = cond.resample(time=freq)
     max_l = group.map(rl.longest_run, dim="time")
     out = max_l.where(max_l >= window, 0)
@@ -1428,6 +1446,7 @@ def hot_spell_frequency(
     thresh_tasmax: str = "30 degC",
     window: int = 3,
     freq: str = "YS",
+    op: str = ">",
 ) -> xarray.DataArray:
     """Hot spell frequency.
 
@@ -1444,6 +1463,8 @@ def hot_spell_frequency(
         Minimum number of days with temperatures above thresholds to qualify as a heatwave.
     freq : str
         Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">".
 
     Returns
     -------
@@ -1465,7 +1486,7 @@ def hot_spell_frequency(
     """
     thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
 
-    cond = tasmax > thresh_tasmax
+    cond = compare(tasmax, thresh_tasmax, op, constrain=(">", ">="))
     group = cond.resample(time=freq)
     out = group.map(rl.windowed_run_events, window=window, dim="time")
     out.attrs["units"] = ""
@@ -1752,11 +1773,11 @@ def tx_days_below(
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def warm_day_frequency(
-    tasmax: xarray.DataArray, thresh: str = "30 degC", freq: str = "YS"
+    tasmax: xarray.DataArray, thresh: str = "30 degC", freq: str = "YS", op: str = ">"
 ) -> xarray.DataArray:
     """Frequency of extreme warm days.
 
-    Return the number of days with tasmax > thresh per period
+    Return the number of days with tasmax exceeding threshold per period.
 
     Parameters
     ----------
@@ -1766,6 +1787,8 @@ def warm_day_frequency(
         Threshold temperature on which to base evaluation.
     freq : str
         Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">".
 
     Returns
     -------
@@ -1782,17 +1805,17 @@ def warm_day_frequency(
         TN_{ij} > Threshold [℃]
     """
     thresh = convert_units_to(thresh, tasmax)
-    events = threshold_count(tasmax, ">", thresh, freq)
+    events = threshold_count(tasmax, op, thresh, freq, constrain=(">", ">="))
     return to_agg_units(events, tasmax, "count")
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def warm_night_frequency(
-    tasmin: xarray.DataArray, thresh: str = "22 degC", freq: str = "YS"
+    tasmin: xarray.DataArray, thresh: str = "22 degC", freq: str = "YS", op: str = ">"
 ) -> xarray.DataArray:
     """Frequency of extreme warm nights.
 
-    Return the number of days with tasmin > thresh per period
+    Return the number of days with tasmin exceeding threshold per period.
 
     Parameters
     ----------
@@ -1802,6 +1825,8 @@ def warm_night_frequency(
         Threshold temperature on which to base evaluation.
     freq : str
         Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">".
 
     Returns
     -------
@@ -1809,13 +1834,16 @@ def warm_night_frequency(
         Number of days with tasmin > threshold per period.
     """
     thresh = convert_units_to(thresh, tasmin)
-    events = threshold_count(tasmin, ">", thresh, freq)
+    events = threshold_count(tasmin, op, thresh, freq, constrain=(">", ">="))
     return to_agg_units(events, tasmin, "count")
 
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
 def wetdays(
-    pr: xarray.DataArray, thresh: str = "1.0 mm/day", freq: str = "YS"
+    pr: xarray.DataArray,
+    thresh: str = "1.0 mm/day",
+    freq: str = "YS",
+    op: str = ">=",
 ) -> xarray.DataArray:
     """Wet days.
 
@@ -1829,6 +1857,8 @@ def wetdays(
         Precipitation value over which a day is considered wet.
     freq : str
         Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">=".
 
     Returns
     -------
@@ -1846,13 +1876,16 @@ def wetdays(
     """
     thresh = convert_units_to(thresh, pr, "hydro")
 
-    wd = threshold_count(pr, ">=", thresh, freq)
+    wd = threshold_count(pr, op, thresh, freq, constrain=(">", ">="))
     return to_agg_units(wd, pr, "count")
 
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
 def wetdays_prop(
-    pr: xarray.DataArray, thresh: str = "1.0 mm/day", freq: str = "YS"
+    pr: xarray.DataArray,
+    thresh: str = "1.0 mm/day",
+    freq: str = "YS",
+    op: str = ">=",
 ) -> xarray.DataArray:
     """Proportion of wet days.
 
@@ -1866,6 +1899,8 @@ def wetdays_prop(
         Precipitation value over which a day is considered wet.
     freq : str
         Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">=".
 
     Returns
     -------
@@ -1883,7 +1918,7 @@ def wetdays_prop(
     """
     thresh = convert_units_to(thresh, pr, "hydro")
 
-    wd = compare(pr, ">=", thresh)
+    wd = threshold_count(pr, op, thresh, freq, constrain=(">", ">="))
     fwd = wd.resample(time=freq).mean(dim="time").assign_attrs(units="1")
     return fwd
 
