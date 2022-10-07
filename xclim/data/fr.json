@@ -521,10 +521,10 @@
     "abstract": "Indice de sommation de chaleur pour l'estimation de l'adéquation agroclimatique, développé spécifiquement pour la viticulture. Il prend en compte les Tmin et Tmax quotidiennes avec un seuil de base donné, généralement entre le 1er avril et le 30 septembre, et intègre un calcul de coefficient de longueur de jour pour les latitudes plus élevées. Métrique initialement publiée dans Huglin (1978). Le coefficient de longueur du jour est basé sur Hall & Jones (2010)."
   },
   "FRESHET_START": {
-    "long_name": "Premier jour ayant un dépassement constant du seuil de température",
+    "long_name": "Jour de l'année du début de la crue printanière",
     "description": "Jour de l'année du début de la crue printanière, défini comme le premier jour la température moyenne quotidienne est au-dessus de {thresh} pendant au moins {window} jours.",
-    "title": "Jour de l'année du début de la crue nivale",
-    "abstract": "Premier jour où la température moyenne quotidienne est au-dessus d'un seuil donné depuis un certain nombre de jours consécutifs."
+    "title": "Jour de l'année du début de la crue printanière",
+    "abstract": "Jour de l'année du début de la crue printanière, défini comme le premier jour où la température moyenne quotidienne est au-dessus d'un seuil donné depuis un certain nombre de jours consécutifs."
   },
   "FROST_SEASON_LENGTH": {
     "long_name": "Durée de la saison de gel",

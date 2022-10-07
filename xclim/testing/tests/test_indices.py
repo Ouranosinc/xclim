@@ -807,7 +807,11 @@ class TestFreshetStart:
         tg[i : i + w + 1] += 6  # Second valid condition, should be ignored.
 
         tg = tas_series(tg + K2C, start="1/1/2000")
-        out = xci.freshet_start(tg, window=w)
+
+        # Check for DeprecationWarning
+        with pytest.warns(DeprecationWarning):
+            out = xci.freshet_start(tg, window=w)
+
         assert out[0] == tg.indexes["time"][30].dayofyear
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
