@@ -1433,7 +1433,7 @@ def hot_spell_max_length(
     """
     thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
 
-    cond = compare(tasmax, thresh_tasmax, op, constrain=(">", ">="))
+    cond = compare(tasmax, op, thresh_tasmax, constrain=(">", ">="))
     group = cond.resample(time=freq)
     max_l = group.map(rl.longest_run, dim="time")
     out = max_l.where(max_l >= window, 0)
@@ -1486,7 +1486,7 @@ def hot_spell_frequency(
     """
     thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
 
-    cond = compare(tasmax, thresh_tasmax, op, constrain=(">", ">="))
+    cond = compare(tasmax, op, thresh_tasmax, constrain=(">", ">="))
     group = cond.resample(time=freq)
     out = group.map(rl.windowed_run_events, window=window, dim="time")
     out.attrs["units"] = ""
@@ -1918,7 +1918,7 @@ def wetdays_prop(
     """
     thresh = convert_units_to(thresh, pr, "hydro")
 
-    wd = threshold_count(pr, op, thresh, freq, constrain=(">", ">="))
+    wd = compare(pr, op, thresh, constrain=(">", ">="))
     fwd = wd.resample(time=freq).mean(dim="time").assign_attrs(units="1")
     return fwd
 
