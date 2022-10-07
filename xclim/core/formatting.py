@@ -171,12 +171,14 @@ default_formatter = AttrFormatter(
         "m10": ["october"],
         "m11": ["november"],
         "m12": ["december"],
-        # Arguments to "op / reducer"
+        # Arguments to "op / reducer / stat"
         "mean": ["average"],
         "max": ["maximal", "maximum"],
         "min": ["minimal", "minimum"],
         "sum": ["total", "sum"],
         "std": ["standard deviation"],
+        "absamp": ["absolute amplitude"],
+        "relamp": ["relative amplitude"],
     },
     ["adj", "noun"],
 )

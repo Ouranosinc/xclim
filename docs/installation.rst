@@ -66,8 +66,11 @@ However, Eigen is available on conda, so one can do:
 The last line will install SBCK>=v0.4.0 from Ouranos' fork which implements a small fix that allows this
 direct installation from pip within a virtual environment.
 
+Finally, the function :py:indicator:`xclim.sdba.property.first_eof` makes use of `Eofs`_, another optional dependency, which is available on both pip and conda.
+
 .. _SBCK: https://github.com/yrobink/SBCK
 .. _Eigen: https://eigen.tuxfamily.org/index.php
+.. _Eofs: https://ajdawson.github.io/eofs/
 
 From sources
 ------------

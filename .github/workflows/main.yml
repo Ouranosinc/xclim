@@ -66,7 +66,7 @@ jobs:
           flag-name: run-py38-xarray-lm3
           parallel: true
 
-  test-py38-sbck-slow-conda:
+  test-py38-opt-slow-conda:
     needs: black
     runs-on: ubuntu-latest
     steps:
@@ -85,7 +85,7 @@ jobs:
         shell: bash -l {0}
         run: |
           conda activate sbck-experimental
-          tox -e sbck-slow
+          tox -e opt-slow
         env:
           CONDA_EXE: mamba
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
