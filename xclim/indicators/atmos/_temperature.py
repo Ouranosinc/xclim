@@ -662,11 +662,13 @@ freshet_start = Temp(
     identifier="freshet_start",
     units="",
     standard_name="day_of_year",
-    long_name="First day consistently exceeding threshold temperature",
-    description="Day of year of spring freshet start, defined as the first day a temperature threshold of {thresh} "
+    long_name="Day of year of the spring freshet start",
+    description="Day of year of the spring freshet start, defined as the first day a temperature threshold of {thresh} "
     "is exceeded for at least {window} days.",
-    abstract="First day when the temperature exceeds a certain threshold for a given number of consecutive days",
-    compute=indices.freshet_start,
+    abstract="Day of year of the spring freshet start, defined as the first day when the temperature exceeds a certain "
+    "threshold for a given number of consecutive days.",
+    compute=indices.first_day_temperature_above,
+    parameters={"thresh": {"default": "0 degC"}, "window": {"default": 5}},
 )
 
 frost_days = TempWithIndexing(
