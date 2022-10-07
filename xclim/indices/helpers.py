@@ -7,6 +7,9 @@ Functions that encapsulate some geophysical logic but could be shared by many in
 """
 from __future__ import annotations
 
+from inspect import stack
+
+import cf_xarray  # noqa
 import cftime
 import numpy as np
 import xarray as xr
@@ -28,12 +31,12 @@ def distance_from_sun(dates: xr.DataArray) -> xr.DataArray:
     Parameters
     ----------
     dates : xr.DataArray
-      Series of dates and time of days
+        Series of dates and time of days.
 
     Returns
     -------
     xr.DataArray, [astronomical units]
-      Sun-earth distance
+        Sun-earth distance.
 
     References
     ----------
@@ -71,12 +74,12 @@ def solar_declination(day_angle: xr.DataArray, method="spencer") -> xr.DataArray
 
     Returns
     -------
-    Solar declination angle, [rad]
+    xr.DataArray, [rad]
+        Solar declination angle.
 
     References
     ----------
     :cite:cts:`spencer_fourier_1971`
-
     """
     # julian day fraction
     da = convert_units_to(day_angle, "rad")
@@ -106,19 +109,19 @@ def time_correction_for_solar_angle(day_angle: xr.DataArray) -> xr.DataArray:
 
     Parameters
     ----------
-    day_angle: xr.DataArray
-      Assuming the earth makes a full circle in a year, this is the angle covered from
-      the beginning of the year up to that timestep. Also called the "julian day fraction".
-      See :py:func:`~xclim.core.calendar.datetime_to_decimal_year`.
+    day_angle : xr.DataArray
+        Assuming the earth makes a full circle in a year, this is the angle covered from
+        the beginning of the year up to that timestep. Also called the "julian day fraction".
+        See :py:func:`~xclim.core.calendar.datetime_to_decimal_year`.
 
     Returns
     -------
-    Time correction of solar angle, [rad]
+    xr.DataArray, [rad]
+        Time correction of solar angle.
 
     References
     ----------
     :cite:cts:`di_napoli_mean_2020`
-
     """
     da = convert_units_to(day_angle, "rad")
     tc = (
@@ -141,25 +144,28 @@ def eccentricity_correction_factor(day_angle: xr.DataArray, method="spencer"):
     Parameters
     ----------
     day_angle : xr.DataArray
-      Assuming the earth makes a full circle in a year, this is the angle covered from the beginning of the year up to
-      that timestep. Also called the "julian day fraction".
-      See :py:func:`~xclim.core.calendar.datetime_to_decimal_year`.
+        Assuming the earth makes a full circle in a year, this is the angle covered from the beginning of the year up to
+        that timestep. Also called the "julian day fraction".
+        See :py:func:`~xclim.core.calendar.datetime_to_decimal_year`.
     method : str
-      Which approximation to use. The default ("spencer") uses the first five terms of the fourier series of the
-      eccentricity, while "simple" approximates with only the first two.
+        Which approximation to use. The default ("spencer") uses the first five terms of the fourier series of the
+        eccentricity, while "simple" approximates with only the first two.
 
     Returns
     -------
-    Eccentricity correction factor, [dimensionless]
+    xr.DataArray, [dimensionless]
+        Eccentricity correction factor.
 
     References
     ----------
-    :cite:cts:`spencer_fourier_1971`
+    :cite:cts:`spencer_fourier_1971,perrin_estimation_1975`
     """
     # julian day fraction
     da = convert_units_to(day_angle, "rad")
     if method == "simple":
-        # It is quite used, I think the source is (not available online) : Perrin de Brichambaut, C. (1975). Estimation des ressources énergétiques solaires en France. Ed. Européennes thermique et industrie.
+        # It is quite used, I think the source is (not available online):
+        # Perrin de Brichambaut, C. (1975).
+        # Estimation des ressources énergétiques solaires en France. Ed. Européennes thermique et industrie.
         return 1 + 0.033 * np.cos(da)
     if method == "spencer":
         return (
@@ -190,34 +196,34 @@ def cosine_of_solar_zenith_angle(
     Parameters
     ----------
     declination : xr.DataArray
-      Solar declination. See :py:func:`solar_declination`.
+        Solar declination. See :py:func:`solar_declination`.
     lat : xr.DataArray
-      Latitude.
+        Latitude.
     lon : xr.DataArray, optional
-      Longitude
-      This is necessary if stat is "instant", "interval" or "sunlit".
+        Longitude.
+        This is necessary if stat is "instant", "interval" or "sunlit".
     time_correction : xr.DataArray, optional
-      Time correction for solar angle. See :py:func:`time_correction_for_solar_angle`
-      This is necessary if stat is "instant".
+        Time correction for solar angle. See :py:func:`time_correction_for_solar_angle`
+        This is necessary if stat is "instant".
     hours : xr.DataArray, optional
-      Watch time hours.
-      This is necessary if stat is "instant", "interval" or "sunlit".
+        Watch time hours.
+        This is necessary if stat is "instant", "interval" or "sunlit".
     interval : int, optional
-      Time interval between two time steps in hours
-      This is necessary if stat is "interval" or "sunlit".
+        Time interval between two time steps in hours
+        This is necessary if stat is "interval" or "sunlit".
     stat : {'integral', 'average', 'instant', 'interval', 'sunlit'}
-      Which daily statistic to return. If "integral", this returns the integral of the cosine of the zenith angle from
-      sunrise to sunset. If "average", the integral is divided by the "duration" from sunrise to sunset. If "instant",
-      this returns the instantaneous cosine of the zenith angle. If "interval", this returns the cosine of the zenith
-      angle during each interval. If "sunlit", this returns the cosine of the zenith angle during the sunlit period of
-      each interval.
+        Which daily statistic to return. If "integral", this returns the integral of the cosine of the zenith angle from
+        sunrise to sunset. If "average", the integral is divided by the "duration" from sunrise to sunset. If "instant",
+        this returns the instantaneous cosine of the zenith angle. If "interval", this returns the cosine of the zenith
+        angle during each interval. If "sunlit", this returns the cosine of the zenith angle during the sunlit period of
+        each interval.
 
     Returns
     -------
     xr.DataArray, [rad] or [dimensionless]
-      Cosine of the solar zenith angle. If stat is "integral", dimensions can be said to be "time" as the integral is on
-      the hour angle.
-      For seconds, multiply by the number of seconds in a complete day cycle (24*60*60) and divide by 2π.
+        Cosine of the solar zenith angle. If stat is "integral", dimensions can be said to be "time" as the integral
+        is on the hour angle.
+        For seconds, multiply by the number of seconds in a complete day cycle (24*60*60) and divide by 2π.
 
     Notes
     -----
@@ -291,15 +297,15 @@ def extraterrestrial_solar_radiation(
 
     Parameters
     ----------
-    times: xr.DataArray
-      Daily datetime data. This function makes no sense with data of other frequency.
+    times : xr.DataArray
+        Daily datetime data. This function makes no sense with data of other frequency.
     lat : xr.DataArray
-      Latitude.
+        Latitude.
     solar_constant : str
-      The solar constant, the energy received on earth from the sun per surface per time.
+        The solar constant, the energy received on earth from the sun per surface per time.
     method : {'spencer', 'simple'}
-      Which method to use when computing the solar declination and the eccentricity
-      correction factor. See :py:func:`solar_declination` and :py:func:`eccentricity_correction_factor`.
+        Which method to use when computing the solar declination and the eccentricity
+        correction factor. See :py:func:`solar_declination` and :py:func:`eccentricity_correction_factor`.
 
     Returns
     -------
@@ -332,21 +338,21 @@ def day_lengths(
     Parameters
     ----------
     dates: xr.DataArray
+        Daily datetime data. This function makes no sense with data of other frequency.
     lat: xarray.DataArray
-      Latitude coordinate.
+        Latitude coordinate.
     method : {'spencer', 'simple'}
-      Which approximation to use when computing the solar declination angle.
-      See :py:func:`solar_declination`.
+        Which approximation to use when computing the solar declination angle.
+        See :py:func:`solar_declination`.
 
     Returns
     -------
     xarray.DataArray, [hours]
-      Day-lengths in hours per individual day.
+        Day-lengths in hours per individual day.
 
     References
     ----------
     :cite:cts:`kalogirou_chapter_2014`
-
     """
     day_angle = ((datetime_to_decimal_year(dates.time) % 1) * 2 * np.pi).assign_attrs(
         units="rad"
@@ -372,23 +378,23 @@ def wind_speed_height_conversion(
 
     Parameters
     ----------
-    ua: xarray.DataArray
-      Wind speed at height h
-    h_source: str
-      Height of the input wind speed `ua` (e.g. `h == "10 m"` for a wind speed at `10 meters`)
-    h_target: str
-      Height of the output wind speed
+    ua : xarray.DataArray
+        Wind speed at height h
+    h_source : str
+        Height of the input wind speed `ua` (e.g. `h == "10 m"` for a wind speed at `10 meters`)
+    h_target : str
+        Height of the output wind speed
     method : {"log"}
-      Method used to convert wind speed from one height to another
+        Method used to convert wind speed from one height to another
 
     Returns
     -------
     xarray.DataArray
-      Wind speed at height `h_target`
+        Wind speed at height `h_target`
 
     References
     ----------
-    Allen, R. G., Pereira, L. S., Raes, D., & Smith, M. (1998). Crop evapotranspiration-Guidelines for computing crop water requirements-FAO Irrigation and drainage paper 56. Fao, Rome, 300(9), D05109.
+    :cite:cts:`allen_crop_1998`
     """
     h_source = convert_units_to(h_source, "m")
     h_target = convert_units_to(h_target, "m")
@@ -401,3 +407,53 @@ def wind_speed_height_conversion(
             return ua * np.log(67.8 * h_target - 5.42) / np.log(67.8 * h_source - 5.42)
     else:
         raise NotImplementedError(f"'{method}' method is not implemented.")
+
+
+def _gather_lat(da: xr.DataArray) -> xr.DataArray:
+    """Gather latitude coordinate using cf-xarray.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+        CF-conformant DataArray with a "latitude" coordinate.
+
+    Returns
+    -------
+    xarray.DataArray
+        Latitude coordinate.
+    """
+    try:
+        lat = da.cf["latitude"]
+        return lat
+    except KeyError as err:
+        n_func = stack()[1].function
+        msg = (
+            f"{n_func} could not find latitude coordinate in DataArray. "
+            "Try passing it explicitly (`lat=ds.lat`)."
+        )
+        raise ValueError(msg) from err
+
+
+def _gather_lon(da: xr.DataArray) -> xr.DataArray:
+    """Gather longitude coordinate using cf-xarray.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+        CF-conformant DataArray with a "longitude" coordinate.
+
+    Returns
+    -------
+    xarray.DataArray
+        Longitude coordinate.
+    """
+    try:
+        lat = da.cf["longitude"]
+        return lat
+    except KeyError as err:
+        n_func = stack()[1].function
+        msg = (
+            f"{n_func} could not find longitude coordinate in DataArray. "
+            "Try passing it explicitly (`lon=ds.lon`)."
+        )
+        raise ValueError(msg) from err

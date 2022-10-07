@@ -5,6 +5,7 @@ from typing import Sequence
 
 import numpy as np
 import xarray as xr
+from scipy.optimize import fsolve, root
 
 from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history
 from xclim.core.utils import uses_dask
@@ -85,23 +86,23 @@ def fit(
     Parameters
     ----------
     da : xr.DataArray
-      Time series to be fitted along the time dimension.
+        Time series to be fitted along the time dimension.
     dist : str
-      Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
-      (see scipy.stats for full list). If the PWM method is used, only the following distributions are
-      currently supported: 'expon', 'gamma', 'genextreme', 'genpareto', 'gumbel_r', 'pearson3', 'weibull_min'.
-    method : {"ML", "PWM"}
-      Fitting method, either maximum likelihood (ML) or probability weighted moments (PWM), also called L-Moments.
-      The PWM method is usually more robust to outliers.
+        Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
+        (see :py:mod:scipy.stats for full list). If the PWM method is used, only the following distributions are
+        currently supported: 'expon', 'gamma', 'genextreme', 'genpareto', 'gumbel_r', 'pearson3', 'weibull_min'.
+    method : {"ML", "PWM", "APP"}
+        Fitting method, either maximum likelihood (ML), probability weighted moments (PWM), also called L-Moments, or approximate method (APP)
+        The PWM method is usually more robust to outliers.
     dim : str
-      The dimension upon which to perform the indexing (default: "time").
+        The dimension upon which to perform the indexing (default: "time").
     **fitkwargs
-      Other arguments passed directly to :py:func:`_fitstart` and to the distribution's `fit`.
+        Other arguments passed directly to :py:func:`_fitstart` and to the distribution's `fit`.
 
     Returns
     -------
     xr.DataArray
-      An array of fitted distribution parameters.
+        An array of fitted distribution parameters.
 
     Notes
     -----
@@ -171,16 +172,16 @@ def parametric_quantile(p: xr.DataArray, q: int | Sequence) -> xr.DataArray:
     Parameters
     ----------
     p : xr.DataArray
-      Distribution parameters returned by the `fit` function.
-      The array should have dimension `dparams` storing the distribution parameters,
-      and attribute `scipy_dist`, storing the name of the distribution.
+        Distribution parameters returned by the `fit` function.
+        The array should have dimension `dparams` storing the distribution parameters,
+        and attribute `scipy_dist`, storing the name of the distribution.
     q : Union[float, Sequence]
-      Quantile to compute, which must be between `0` and `1`, inclusive.
+        Quantile to compute, which must be between `0` and `1`, inclusive.
 
     Returns
     -------
     xarray.DataArray
-      An array of parametric quantiles estimated from the distribution parameters.
+        An array of parametric quantiles estimated from the distribution parameters.
 
     Notes
     -----
@@ -240,16 +241,16 @@ def parametric_cdf(p: xr.DataArray, v: float | Sequence) -> xr.DataArray:
     Parameters
     ----------
     p : xr.DataArray
-      Distribution parameters returned by the `fit` function.
-      The array should have dimension `dparams` storing the distribution parameters,
-      and attribute `scipy_dist`, storing the name of the distribution.
+        Distribution parameters returned by the `fit` function.
+        The array should have dimension `dparams` storing the distribution parameters,
+        and attribute `scipy_dist`, storing the name of the distribution.
     v : Union[float, Sequence]
-      Value to compute the CDF.
+        Value to compute the CDF.
 
     Returns
     -------
     xarray.DataArray
-      An array of parametric CDF values estimated from the distribution parameters.
+        An array of parametric CDF values estimated from the distribution parameters.
     """
     v = np.atleast_1d(v)
 
@@ -300,19 +301,19 @@ def fa(
     Parameters
     ----------
     da : xr.DataArray
-      Maximized/minimized input data with a `time` dimension.
+        Maximized/minimized input data with a `time` dimension.
     t : Union[int, Sequence]
-      Return period. The period depends on the resolution of the input data. If the input array's resolution is
-      yearly, then the return period is in years.
+        Return period. The period depends on the resolution of the input data. If the input array's resolution is
+        yearly, then the return period is in years.
     dist : str
-      Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
+        Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
     mode : {'min', 'max}
-      Whether we are looking for a probability of exceedance (max) or a probability of non-exceedance (min).
+        Whether we are looking for a probability of exceedance (max) or a probability of non-exceedance (min).
 
     Returns
     -------
     xarray.DataArray
-      An array of values with a 1/t probability of exceedance (if mode=='max').
+        An array of values with a 1/t probability of exceedance (if mode=='max').
 
     See Also
     --------
@@ -355,33 +356,32 @@ def frequency_analysis(
     Parameters
     ----------
     da : xarray.DataArray
-      Input data.
+        Input data.
     mode : {'min', 'max'}
-      Whether we are looking for a probability of exceedance (high) or a probability of non-exceedance (low).
+        Whether we are looking for a probability of exceedance (high) or a probability of non-exceedance (low).
     t : int or sequence
-      Return period. The period depends on the resolution of the input data. If the input array's resolution is
-      yearly, then the return period is in years.
+        Return period. The period depends on the resolution of the input data. If the input array's resolution is
+        yearly, then the return period is in years.
     dist : str
-      Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
+        Name of the univariate distribution, e.g. `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`.
     window : int
-      Averaging window length (days).
+        Averaging window length (days).
     freq : str
-      Resampling frequency. If None, the frequency is assumed to be 'YS' unless the indexer is season='DJF',
-      in which case `freq` would be set to `AS-DEC`.
+        Resampling frequency. If None, the frequency is assumed to be 'YS' unless the indexer is season='DJF',
+        in which case `freq` would be set to `AS-DEC`.
     indexer : {dim: indexer, }, optional
-      Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
-      month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
-      considered.
+        Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
+        month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
+        considered.
 
     Returns
     -------
     xarray.DataArray
-      An array of values with a 1/t probability of exceedance or non-exceedance when mode is high or low respectively.
+        An array of values with a 1/t probability of exceedance or non-exceedance when mode is high or low respectively.
 
     See Also
     --------
     scipy.stats : For descriptions of univariate distribution types.
-
     """
     # Apply rolling average
     attrs = da.attrs.copy()
@@ -444,12 +444,12 @@ def _fit_start(x, dist, **fitkwargs) -> tuple[tuple, dict]:
     Parameters
     ----------
     x : array-like
-      Input data.
+        Input data.
     dist : str
-      Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
-      (see scipy.stats). Only `genextreme` and `weibull_exp` distributions are supported.
-    fitkwargs
-      Kwargs passed to fit.
+        Name of the univariate distribution, e.g. `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`.
+        (see :py:mod:scipy.stats). Only `genextreme` and `weibull_exp` distributions are supported.
+    **fitkwargs
+        Kwargs passed to fit.
 
     Returns
     -------
@@ -486,16 +486,28 @@ def _fit_start(x, dist, **fitkwargs) -> tuple[tuple, dict]:
         scale = ((x - loc) ** chat).mean() ** (1 / chat)
         return (chat,), {"loc": loc, "scale": scale}
 
-    if dist == "gamma":
+    if dist in ["gamma"]:
         x_pos = x[x > 0]
-        m_pos = x_pos.mean()
-        log_of_mean = np.log(m_pos)
+        m = x_pos.mean()
+        log_of_mean = np.log(m)
         mean_of_logs = np.log(x_pos).mean()
         a = log_of_mean - mean_of_logs
         alpha = (1 + np.sqrt(1 + 4 * a / 3)) / (4 * a)
-        beta = m_pos / alpha
+        beta = m / alpha
         return (alpha,), {"scale": beta}
 
+    if dist in ["fisk"]:
+        x_pos = x[x > 0]
+        m = x_pos.mean()
+        v = x_pos.var()
+        # pdf =  (beta/alpha) (x/alpha)^{beta-1}/ (1+(x/alpha)^{beta})^2
+        # Compute f_1 and f_2 which only depend on beta:
+        # f_1 := mean/alpha = <x>/alpha
+        # f_2 := variance/alpha^2 = (<x^2> - <x>^2)/alpha^2
+        # In the large beta limit, f_1 -> 1 and f_1/sqrt(f_2) -> 0.56*beta - 0.25
+        # Solve for alpha and beta below:
+        alpha, beta = m, (1 / 0.56) * (m / np.sqrt(v) + 1 / 4)
+        return (beta,), {"scale": alpha}
     return (), {}
 
 
@@ -509,21 +521,21 @@ def _dist_method_1D(
 
     Parameters
     ----------
-    params: 1D sequence of floats
-      Distribution parameters, in the same order as given by :py:func:`fit`.
-    arg: array_like, optional
-      The argument for the requested function.
-    dist: str
-      The scipy name of the distribution.
+    params : 1D sequence of floats
+        Distribution parameters, in the same order as given by :py:func:`fit`.
+    arg : array_like, optional
+        The argument for the requested function.
+    dist : str
+        The scipy name of the distribution.
     function : str
-      The name of the function to call.
-    kwargs
-      Other parameters to pass to the function call.
+        The name of the function to call.
+    **kwargs
+        Other parameters to pass to the function call.
 
     Returns
     -------
     array_like
-      Same shape as arg in most cases.
+        Same shape as arg in most cases.
     """
     dist = get_dist(dist)
     args = ([arg] if arg is not None else []) + list(params)
@@ -544,19 +556,19 @@ def dist_method(
     Parameters
     ----------
     function : str
-      The name of the function to call.
-    fit_params: xr.DataArray
-      Distribution parameters are along `dparams`, in the same order as given by :py:func:`fit`.
-      Must have a `scipy_dist` attribute with the name of the distribution fitted.
-    arg: array_like, optional
-      The argument for the requested function.
-    kwargs
-      Other parameters to pass to the function call.
+        The name of the function to call.
+    fit_params : xr.DataArray
+        Distribution parameters are along `dparams`, in the same order as given by :py:func:`fit`.
+        Must have a `scipy_dist` attribute with the name of the distribution fitted.
+    arg : array_like, optional
+        The argument for the requested function.
+    **kwargs
+        Other parameters to pass to the function call.
 
     Returns
     -------
     array_like
-      Same shape as arg.
+        Same shape as arg.
 
     See Also
     --------
