@@ -178,7 +178,9 @@ def test_annual_cycle():
     phase = sdba.properties.annual_cycle_phase(simt)
 
     np.testing.assert_array_almost_equal(
-        [amp.values, relamp.values, phase.values], [16.74645996, 5.802083, 167]
+        [amp.values, relamp.values, phase.values],
+        [16.74645996, 5.802083, 167],
+        rtol=1e-6,
     )
     with pytest.raises(
         ValueError,
