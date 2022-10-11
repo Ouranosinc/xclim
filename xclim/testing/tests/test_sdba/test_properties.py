@@ -177,7 +177,7 @@ def test_annual_cycle():
     relamp = sdba.properties.relative_annual_cycle_amplitude(simt)
     phase = sdba.properties.annual_cycle_phase(simt)
 
-    np.testing.assert_array_almost_equal(
+    np.testing.assert_allclose(
         [amp.values, relamp.values, phase.values],
         [16.74645996, 5.802083, 167],
         rtol=1e-6,
@@ -212,7 +212,7 @@ def test_annual_range():
     relamp = sdba.properties.mean_annual_relative_range(simt, window=1)
     phase = sdba.properties.mean_annual_phase(simt, window=1)
 
-    np.testing.assert_array_almost_equal(
+    np.testing.assert_allclose(
         [amp.values, relamp.values, phase.values],
         [34.039806, 11.793684020675501, 165.33333333333334],
     )
