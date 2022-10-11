@@ -482,7 +482,6 @@ annual_cycle_amplitude = StatisticalProperty(
     cell_methods="time: range time: mean",
 )
 
-
 relative_annual_cycle_amplitude = StatisticalProperty(
     identifier="relative_annual_cycle_amplitude",
     aspect="temporal",
@@ -502,6 +501,91 @@ annual_cycle_phase = StatisticalProperty(
     parameters={"stat": "phase"},
     cell_methods="time: range",
     allowed_groups=["group"],
+    measure="xclim.sdba.measures.CIRCULAR_BIAS",
+)
+
+annual_cycle_asymmetry = StatisticalProperty(
+    identifier="annual_cycle_asymmetry",
+    aspect="temporal",
+    compute=_annual_cycle,
+    parameters={"stat": "asymmetry"},
+    allowed_groups=["group"],
+    units="yr",
+)
+
+
+def _annual_statistic(
+    da: xr.DataArray,
+    *,
+    stat: str = "absamp",
+    window: int = 31,
+    group: str | Grouper = "time",
+):
+    """Annual range statistics.
+
+    Compute a statistic on each year of data and return the interannual average. This is similar
+    to the annual cycle, but with the statistic and average operations inverted.
+
+    Parameters
+    ----------
+    da: xr.DataArray
+      Data.
+    stat : {'absamp', 'relamp', 'phase'}
+      The statistic to return.
+    window : int
+      Size of the window for the moving average filtering. Deactivate this feature by passing window = 1.
+
+    Returns
+    -------
+    xr.DataArray, [same units as input or dimensionless]
+      Average annual {stat}.
+    """
+    units = da.units
+
+    if window > 1:
+        da = da.rolling(time=window, center=True).mean()
+
+    yrs = da.resample(time="YS")
+
+    if stat == "absamp":
+        out = yrs.max() - yrs.min()
+        out.attrs["units"] = xc.core.units.ensure_delta(units)
+    elif stat == "relamp":
+        out = (yrs.max() - yrs.min()) * 100 / yrs.mean()
+        out.attrs["units"] = "%"
+    elif stat == "phase":
+        out = yrs.map(xr.DataArray.idxmax).dt.dayofyear
+        out.attrs.update(units="", is_dayofyear=np.int32(1))
+    else:
+        raise NotImplementedError(f"{stat} is not a valid annual cycle statistic.")
+    return out.mean("time", keep_attrs=True)
+
+
+mean_annual_range = StatisticalProperty(
+    identifier="mean_annual_range",
+    aspect="temporal",
+    compute=_annual_statistic,
+    parameters={"stat": "absamp"},
+    allowed_groups=["group"],
+)
+
+mean_annual_relative_range = StatisticalProperty(
+    identifier="mean_annual_relative_range",
+    aspect="temporal",
+    compute=_annual_statistic,
+    parameters={"stat": "relamp"},
+    allowed_groups=["group"],
+    units="%",
+    measure="xclim.sdba.measures.RATIO",
+)
+
+mean_annual_phase = StatisticalProperty(
+    identifier="mean_annual_phase",
+    aspect="temporal",
+    compute=_annual_statistic,
+    parameters={"stat": "phase"},
+    allowed_groups=["group"],
+    units="",
     measure="xclim.sdba.measures.CIRCULAR_BIAS",
 )
 

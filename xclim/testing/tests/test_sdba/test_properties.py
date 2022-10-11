@@ -199,6 +199,48 @@ def test_annual_cycle():
     assert phase.units == ""
 
 
+def test_annual_range():
+    simt = (
+        open_dataset("sdba/CanESM2_1950-2100.nc")
+        .sel(time=slice("1950", "1952"), location="Vancouver")
+        .tasmax
+    )
+    # Initial annual cycle was this with window = 1
+    amp = sdba.properties.mean_annual_range(simt, window=1)
+    relamp = sdba.properties.mean_annual_relative_range(simt, window=1)
+    phase = sdba.properties.mean_annual_phase(simt, window=1)
+
+    np.testing.assert_array_almost_equal(
+        [amp.values, relamp.values, phase.values],
+        [34.039806, 11.793684020675501, 165.33333333333334],
+    )
+
+    amp = sdba.properties.mean_annual_range(simt)
+    relamp = sdba.properties.mean_annual_relative_range(simt)
+    phase = sdba.properties.mean_annual_phase(simt)
+
+    np.testing.assert_array_almost_equal(
+        [amp.values, relamp.values, phase.values], [18.715261, 6.480101, 181.6666667]
+    )
+    with pytest.raises(
+        ValueError,
+        match="Grouping period season is not allowed for property",
+    ):
+        sdba.properties.mean_annual_range(simt, group="time.season")
+
+    with pytest.raises(
+        ValueError,
+        match="Grouping period month is not allowed for property",
+    ):
+        sdba.properties.mean_annual_phase(simt, group="time.month")
+
+    assert amp.long_name.startswith("Average annual absolute amplitude")
+    assert phase.long_name.startswith("Average annual phase")
+    assert amp.units == "delta_degC"
+    assert relamp.units == "%"
+    assert phase.units == ""
+
+
 def test_corr_btw_var():
     simt = (
         open_dataset("sdba/CanESM2_1950-2100.nc")
@@ -230,7 +272,7 @@ def test_corr_btw_var():
             -0.3449358561881698,
             5.97619379511559e-32,
             0.28329503745038936,
-            np.nan,
+            -0.2090292,
         ],
     )
     assert pc.long_name == "Pearson correlation coefficient"
@@ -336,7 +378,9 @@ def test_first_eof():
     pytest.importorskip("eofs")
     sim = open_dataset("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc").tasmax
     out = sdba.properties.first_eof(sim)
-    np.testing.assert_allclose([out.mean(), out.max()], [0.01031839, 0.01171101])
+    np.testing.assert_allclose(
+        [out.mean(), out.max()], [0.01031839, 0.01171101], rtol=1e-6
+    )
     assert out.isnull().sum() == sim.isnull().any("time").sum()
 
 
