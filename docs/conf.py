@@ -160,9 +160,16 @@ bibtex_bibfiles = ["references.bib"]
 bibtex_default_style = "xcstyle"
 bibtex_reference_style = "author_year"
 
-if os.getenv("SKIP_NOTEBOOKS"):
-    warnings.warn("Not executing notebooks.")
+skip_notebooks = os.getenv("SKIP_NOTEBOOKS")
+if skip_notebooks or os.getenv("READTHEDOCS_VERSION_TYPE") in [
+    "branch",
+    "external",
+]:
+    if skip_notebooks:
+        warnings.warn("Not executing notebooks.")
     nbsphinx_execute = "never"
+elif os.getenv("READTHEDOCS_VERSION_NAME") in ["latest", "stable"]:
+    nbsphinx_execute = "always"
 else:
     nbsphinx_execute = "auto"
 nbsphinx_prolog = r"""
