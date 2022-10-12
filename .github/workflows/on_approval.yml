@@ -1,0 +1,37 @@
+name: "xclim Documentation Build Test"
+
+on:
+  push:
+    branches:
+      - master
+  pull_request_target:
+    types:
+      - ready_for_review
+  pull_request_review:
+    types:
+      - submitted
+
+jobs:
+  documentation:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Cancel previous runs
+        uses: styfle/cancel-workflow-action@0.9.1
+        with:
+          access_token: ${{ github.token }}
+      - uses: actions/checkout@v3
+      - name: Install pandoc
+        run: |
+          sudo apt-get install pandoc
+          pandoc --version
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.8"
+      - name: Install xclim
+        run: pip install -e ".[dev]"
+      - name: Build docs
+        run: make docs
+        env:
+          READTHEDOCS: 1
+          SKIP_NOTEBOOKS: 1
