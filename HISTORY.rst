@@ -13,7 +13,8 @@ New features and enhancements
 
 New indicators
 ^^^^^^^^^^^^^^
-* New indices ``first_day_temperature_{above|below}`` and indicators ``xclim.indices.first_day_{tn|tg|tx}_{above|below}``. These indices/indicators accept operator (``op``) keyword for finer threshold comparison controls. (:issue:`1175`, :pull:`1186`).
+* New indices ``first_day_temperature_{above | below}`` and indicators ``xclim.indices.first_day_{tn | tg | tx}_{above | below}``. These indices/indicators accept operator (``op``) keyword for finer threshold comparison controls. (:issue:`1175`, :pull:`1186`).
+* New generic indice ``cumulative_difference`` for calculating difference between values and thresholds across time (e.g. temperature: degree-days, precipitation: moisture deficit), with or without resampling/accumulating by frequency. (:pull:`1202`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -25,8 +26,9 @@ Breaking changes
     - ``xclim.indices.first_day_above`` -> ``xclim.indices.first_day_temperature_above``
     - ``xclim.indices.first_day_below`` -> ``xclim.indices.first_day_temperature_below``
 * The ``first_day_below`` and ``first_day_above`` atmos indicators are now deprecated in order to clearly communicate the variables they act upon (:issue:`1175`, :pull:`1186`). The suggested migrations are as follows:
-    - ``xclim.atmos.first_day_above`` -> ``xclim.indices.first_day_{tn|tg|tx}_above``
-    - ``xclim.atmos.first_day_below`` -> ``xclim.indices.first_day_{tn|tg|tx}_below``
+    - ``xclim.atmos.first_day_above`` -> ``xclim.indices.first_day_{tn | tg | tx}_above``
+    - ``xclim.atmos.first_day_below`` -> ``xclim.indices.first_day_{tn | tg | tx}_below``
+* The ``degree_days`` generic indice has been deprecated in favour of ``cumulative_difference`` that is not limited only to temperature variables (:issue:`1200`, :pull:`1202`). The indices for ``atmos.{heating | cooling | growing}_degree_days`` are now built from ``generic.cumulative_difference``.
 * English indicator metadata has been adjusted to remove frequencies and other variable-sourced fields in the `long_name` of indicators. English indicators now have an explicit `title` and `abstract`. (:issue:`936`, :pull:`1123`).
 * French indicator metadata translations are now more uniform and follow agreed-upon grammar conventions, removing variable-sourced fields in `long_name_fr`. (:issue:`936`, :pull:`1123`).
 * The ``freshet_start`` indice is now deprecated in favour of ``first_day_temperature_above`` with `thresh='0 degC', window=5`. The `freshet_start` indicator is now based on ``first_day_temperature_above``, but is otherwise unaffected. (:issue:`1195`, :pull:`1196`).

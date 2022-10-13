@@ -17,7 +17,13 @@ from xclim.core.units import (
 from xclim.core.utils import DayOfYearStr
 
 from . import run_length as rl
-from .generic import compare, domain_count, first_day_threshold_reached, threshold_count
+from .generic import (
+    compare,
+    cumulative_difference,
+    domain_count,
+    first_day_threshold_reached,
+    threshold_count,
+)
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -485,11 +491,7 @@ def cooling_degree_days(
 
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
-    thresh = convert_units_to(thresh, tas)
-
-    out = (tas - thresh).clip(min=0).resample(time=freq).sum(dim="time")
-    out = to_agg_units(out, tas, "delta_prod")
-    return out
+    return cumulative_difference(tas, threshold=thresh, op=">", freq=freq)
 
 
 def freshet_start(
@@ -537,9 +539,7 @@ def growing_degree_days(
 
         GD4_j = \sum_{i=1}^I (TG_{ij}-{4} | TG_{ij} > {4}℃)
     """
-    thresh = convert_units_to(thresh, tas)
-    out = (tas - thresh).clip(min=0).resample(time=freq).sum(dim="time")
-    return to_agg_units(out, tas, "delta_prod")
+    return cumulative_difference(tas, threshold=thresh, op=">", freq=freq)
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -1360,10 +1360,7 @@ def heating_degree_days(
 
         HD17_j = \sum_{i=1}^{I} (17℃ - TG_{ij}) | TG_{ij} < 17℃)
     """
-    thresh = convert_units_to(thresh, tas)
-
-    out = (thresh - tas).clip(0).resample(time=freq).sum(dim="time")
-    return to_agg_units(out, tas, "delta_prod")
+    return cumulative_difference(tas, threshold=thresh, op="<", freq=freq)
 
 
 @declare_units(tasmax="[temperature]", thresh_tasmax="[temperature]")
