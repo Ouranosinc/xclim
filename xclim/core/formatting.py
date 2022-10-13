@@ -32,11 +32,6 @@ DEFAULT_FORMAT_PARAMS = {
     "pr_per_thresh": "{unknown}",
     "pr_per_window": "{unknown}",
     "pr_per_period": "{unknown}",
-    # FIXME: The following params can be found in indices._multivariate
-    "tasmax_per": "{unknown}",
-    "tasmin_per": "{unknown}",
-    "tas_per": "{unknown}",
-    "pr_per": "{unknown}",
 }
 
 
