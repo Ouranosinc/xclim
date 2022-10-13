@@ -10,7 +10,6 @@ on:
 
 jobs:
   doctests:
-    needs: black
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
