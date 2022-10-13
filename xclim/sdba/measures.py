@@ -322,7 +322,7 @@ def _mae(
         data from the simulation (a time-series for each grid-point)
     ref : xr.DataArray
         data from the reference (observations) (a time-series for each grid-point)
-    group: str
+    group : str
         Compute the property and measure for each temporal groups individually.
         Currently not implemented.
 
@@ -345,7 +345,7 @@ def _mae(
     return out.assign_attrs(units=ensure_delta(ref.units))
 
 
-mae = StatisticalMeasure(
+mae = StatisticalPropertyMeasure(
     identifier="mae",
     aspect="temporal",
     compute=_mae,
@@ -372,10 +372,10 @@ def _annual_cycle_correlation(
         data from the simulation (a time-series for each grid-point)
     ref : xr.DataArray
         data from the reference (observations) (a time-series for each grid-point)
-    window: int
+    window : int
         Size of window around each day of year around which to take the mean.
         E.g. If window=31, Jan 1st is averaged over from December 17th to January 16th.
-    group: str
+    group : str
         Compute the property and measure for each temporal groups individually.
         Currently not implemented.
 
@@ -393,7 +393,7 @@ def _annual_cycle_correlation(
     return out.assign_attrs(units="")
 
 
-annual_cycle_correlation = StatisticalMeasure(
+annual_cycle_correlation = StatisticalPropertyMeasure(
     identifier="annual_cycle_correlation",
     aspect="temporal",
     compute=_annual_cycle_correlation,
@@ -419,15 +419,15 @@ def _scorr(
         data from the simulation (a time-series for each grid-point)
     ref : xr.DataArray
         data from the reference (observations) (a time-series for each grid-point)
-    dims: sequence of strings, optional
+    dims : sequence of strings, optional
         Name of the spatial dimensions. If None (default), all dimensions except 'time' are used.
-    group: str
+    group : str
         Compute the property and measure for each temporal groups individually.
         Currently not implemented.
 
     Returns
     -------
-    s_corr : xr.DataArray, [dimensionless]
+    xr.DataArray, [dimensionless]
       Sum of the inter-site correlation differences.
     """
     if dims is None:

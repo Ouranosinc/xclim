@@ -15,7 +15,7 @@ New features and enhancements
 New indicators
 ^^^^^^^^^^^^^^
 * New indices ``first_day_temperature_{above|below}`` and indicators ``xclim.indices.first_day_{tn|tg|tx}_{above|below}``. These indices/indicators accept operator (``op``) keyword for finer threshold comparison controls. (:issue:`1175`, :pull:`1186`).
-* New spatial sdba properties and measures : ``spatial_correlogram``, ``scorr`` and ``first_eof``. The later needs the optional dependency "eofs" (:pull:`1198`).
+* New spatial sdba properties and measures : ``spatial_correlogram``, ``scorr`` and ``first_eof``. The later needs the optional dependency `eofs <https://ajdawson.github.io/eofs/>`_. (:pull:`1198`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
