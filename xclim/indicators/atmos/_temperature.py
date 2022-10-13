@@ -447,10 +447,10 @@ cold_spell_duration_index = Temp(
     standard_name="cold_spell_duration_index",
     long_name="Number of days part of a percentile-defined cold spell",
     description="{freq} number of days with at least {window} consecutive days where the daily minimum temperature "
-    "is below the {tasmin_per}th percentile. A cold spell occurs when the daily minimum temperature is below a given "
-    "percentile for at least {window} consecutive days.",
+    "is below the {tasmin_per_thresh}th percentile. A {tasmin_per_window} day(s) window, centred on each calendar day "
+    "in the {tasmin_per_period} period, is used to compute the {tasmin_per_thresh}th percentile(s).",
     abstract="Number of days part of a percentile-defined cold spell. A cold spell occurs when the daily minimum "
-    "temperature is below a given percentile for aa given number of consecutive days.",
+    "temperature is below a given percentile for a given number of consecutive days.",
     cell_methods="",
     compute=indices.cold_spell_duration_index,
 )
@@ -1090,9 +1090,8 @@ warm_spell_duration_index = Temp(
     description="{freq} number of days with at least {window} consecutive days where the daily maximum temperature is "
     "above the {tasmax_per_thresh}th percentile(s). A {tasmax_per_window} day(s) window, centred on each calendar day "
     "in the {tasmax_per_period} period, is used to compute the {tasmax_per_thresh}th percentile(s).",
-    abstract="Number of days in in series with minimum duration where the daily maximum temperature exceeds a given "
-    "percentile. The percentile threshold of temperatures should be calculated with a moving window of a given number "
-    "of days.",
+    abstract="Number of days part of a percentile-defined warm spell. A warm spell occurs when the daily maximum "
+    "temperature is above a given percentile for a given number of consecutive days.",
     cell_methods="time: sum over days",
     compute=indices.warm_spell_duration_index,
 )
