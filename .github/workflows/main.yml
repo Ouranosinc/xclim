@@ -28,7 +28,7 @@ jobs:
       - name: Run linting suite
         run: tox -e black
 
-  test-py38-sbck-slow-conda:
+  test-py39-sbck-slow-conda:
     needs: black
     runs-on: ubuntu-22.04
     steps:
@@ -39,7 +39,7 @@ jobs:
           activate-environment: sbck-experimental
           channels: conda-forge,defaults
           mamba-version: "*"
-          python-version: "3.8"
+          python-version: "3.9"
       - name: Install tox
         shell: bash -l {0}
         run: mamba install -n sbck-experimental tox-conda tox
