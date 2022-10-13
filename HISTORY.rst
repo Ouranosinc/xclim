@@ -13,7 +13,8 @@ New features and enhancements
 
 New indicators
 ^^^^^^^^^^^^^^
-* New indices ``first_day_temperature_{above|below}`` and indicators ``xclim.indices.first_day_{tn|tg|tx}_{above|below}``. These indices/indicators accept operator (``op``) keyword for finer threshold comparison controls. (:issue:`1175`, :pull:`1186`).
+* New indices ``first_day_temperature_{above | below}`` and indicators ``xclim.indices.first_day_{tn | tg | tx}_{above | below}``. These indices/indicators accept operator (``op``) keyword for finer threshold comparison controls. (:issue:`1175`, :pull:`1186`).
+* New generic indice ``cumulative_difference`` for calculating difference between values and thresholds across time (e.g. temperature: degree-days, precipitation: moisture deficit), with or without resampling/accumulating by frequency. (:pull:`1202`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -25,8 +26,9 @@ Breaking changes
     - ``xclim.indices.first_day_above`` -> ``xclim.indices.first_day_temperature_above``
     - ``xclim.indices.first_day_below`` -> ``xclim.indices.first_day_temperature_below``
 * The ``first_day_below`` and ``first_day_above`` atmos indicators are now deprecated in order to clearly communicate the variables they act upon (:issue:`1175`, :pull:`1186`). The suggested migrations are as follows:
-    - ``xclim.atmos.first_day_above`` -> ``xclim.indices.first_day_{tn|tg|tx}_above``
-    - ``xclim.atmos.first_day_below`` -> ``xclim.indices.first_day_{tn|tg|tx}_below``
+    - ``xclim.atmos.first_day_above`` -> ``xclim.indices.first_day_{tn | tg | tx}_above``
+    - ``xclim.atmos.first_day_below`` -> ``xclim.indices.first_day_{tn | tg | tx}_below``
+* The ``degree_days`` generic indice has been deprecated in favour of ``cumulative_difference`` that is not limited only to temperature variables (:issue:`1200`, :pull:`1202`). The indices for ``atmos.{heating | cooling | growing}_degree_days`` are now built from ``generic.cumulative_difference``.
 
 Bug fixes
 ^^^^^^^^^
