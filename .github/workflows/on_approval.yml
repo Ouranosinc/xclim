@@ -9,26 +9,19 @@ on:
       - submitted
 
 jobs:
-  documentation:
+  doctests:
+    needs: black
     runs-on: ubuntu-22.04
     steps:
-      - name: Cancel previous runs
-        uses: styfle/cancel-workflow-action@0.9.1
-        with:
-          access_token: ${{ github.token }}
       - uses: actions/checkout@v3
-      - name: Install pandoc
-        run: |
-          sudo apt-get install pandoc
-          pandoc --version
-      - name: Setup Python
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: "3.8"
-      - name: Install xclim
-        run: pip install -e ".[dev]"
-      - name: Build docs
-        run: make docs
-        env:
-          READTHEDOCS: 1
-          SKIP_NOTEBOOKS: 1
+      - name: Install pylint
+        run: pip install pylint
+      - name: Run pylint
+        run: pylint --rcfile=pylintrc --disable=import-error --exit-zero xclim
+      - name: Install tox
+        run: pip install tox
+      - name: Run doctests
+        run: tox -e doctests_only
