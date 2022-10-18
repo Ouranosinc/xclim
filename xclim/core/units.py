@@ -94,6 +94,8 @@ hydro.add_transformation(
 units.add_context(hydro)
 units.enable_contexts(hydro)
 
+PR_AMOUNT_STANDARD_NAME = "thickness_of_rainfall_amount"
+
 # These are the changes that could be included in a units definition file.
 
 # degrees_north = degree = degrees_N = degreesN = degree_north = degree_N = degreeN
@@ -290,53 +292,69 @@ def convert_units_to(
     """
     # Target units
     if isinstance(target, units.Unit):
-        tu = target
+        target_unit = target
     elif isinstance(target, (str, xr.DataArray)):
-        tu = units2pint(target)
+        target_unit = units2pint(target)
     else:
         raise NotImplementedError
 
     if isinstance(source, str):
         q = str2pint(source)
         # Return magnitude of converted quantity. This is going to fail if units are not compatible.
-        return q.to(tu).m
+        return q.to(target_unit).m
 
     if isinstance(source, units.Quantity):
-        return source.to(tu).m
+        return source.to(target_unit).m
 
     if isinstance(source, xr.DataArray):
-        fu = units2pint(source)
-        tu_u = pint2cfunits(tu)
+        source_unit = units2pint(source)
+        target_cf_unit = pint2cfunits(target_unit)
 
-        if fu == tu:
+        if source_unit == target_unit:
             # The units are the same, but the symbol may not be.
-            source.attrs["units"] = tu_u
+            source.attrs["units"] = target_cf_unit
             return source
 
         with units.context(context or "none"):
+            if (
+                _is_precipitation_amount(source, source_unit)
+                and target_unit.dimensionality.get("[time]") == -1
+            ):
+                source = amount2rate(source)
+                source_unit = units2pint(source)
             out = xr.DataArray(
-                data=units.convert(source.data, fu, tu),  # noqa
+                data=units.convert(source.data, source_unit, target_unit),  # noqa
                 coords=source.coords,
                 attrs=source.attrs,
                 name=source.name,
             )
-            out.attrs["units"] = tu_u
+            out.attrs["units"] = target_cf_unit
             return out
 
     # TODO remove backwards compatibility of int/float thresholds after v1.0 release
     if isinstance(source, (float, int)):
         if context == "hydro":
-            fu = units.mm / units.day
+            source_unit = units.mm / units.day
         else:
-            fu = units.degC
+            source_unit = units.degC
         warnings.warn(
             "Future versions of xclim will require explicit unit specifications.",
             FutureWarning,
             stacklevel=3,
         )
-        return units.Quantity(source, units=fu).to(tu).m
+        return units.Quantity(source, units=source_unit).to(target_unit).m
 
     raise NotImplementedError(f"Source of type `{type(source)}` is not supported.")
+
+
+def _is_precipitation_amount(source: xr.DataArray, source_unit: Unit) -> bool:
+    standard_name = source.attrs.get("standard_name", None)
+    return standard_name == PR_AMOUNT_STANDARD_NAME and _is_amount(source_unit)
+
+
+def _is_amount(source_unit: Unit) -> bool:
+    quantity = units.Quantity(1, source_unit)
+    return quantity.check("[length]") or quantity.check("[mass] / [length]**2")
 
 
 FREQ_UNITS = {
@@ -536,10 +554,9 @@ def _rate_and_amount_converter(
             tu = (str2pint(da.units) / str2pint("s")).to_reduced_units()
             out = (da / dt) * tu.m
         else:
-            raise ValueError("Argument `to` must be one of 'amout' or 'rate'.")
+            raise ValueError("Argument `to` must be one of 'amount' or 'rate'.")
 
         out.attrs["units"] = pint2cfunits(tu)
-
     else:
         q = units.Quantity(m, u)
         if to == "amount":
@@ -547,7 +564,7 @@ def _rate_and_amount_converter(
         elif to == "rate":
             out = pint_multiply(da, 1 / q)
         else:
-            raise ValueError("Argument `to` must be one of 'amout' or 'rate'.")
+            raise ValueError("Argument `to` must be one of 'amount' or 'rate'.")
 
     if out_units:
         out = convert_units_to(out, out_units)

@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import numpy as np
+import pandas as pd
+import pint
 import pytest
 import xarray as xr
 from dask import array as dsk
 
 from xclim import indices, set_options
 from xclim.core.units import (
+    PR_AMOUNT_STANDARD_NAME,
     amount2rate,
     check_units,
     convert_units_to,
@@ -94,6 +97,22 @@ class TestConvertUnitsTo:
     def test_offset_confusion(self):
         out = convert_units_to("10 degC days", "K days")
         assert out == 10
+
+    def test_precip_amount__cant_convert_error(self):
+        not_thickness_data = xr.DataArray([1, 2, 3], attrs={"units": "mm"})
+        with pytest.raises(pint.errors.DimensionalityError):
+            convert_units_to(not_thickness_data, "kg/m**2/day")
+
+    def test_precip_amount__call_rate2amount(self):
+        thickness_data = xr.DataArray(
+            [1, 2, 3],
+            coords={"time": pd.date_range("1990-01-01", periods=3, freq="D")},
+            dims=["time"],
+            attrs={"units": "mm", "standard_name": PR_AMOUNT_STANDARD_NAME},
+        )
+        out = convert_units_to(thickness_data, "kg/m**2/day")
+        np.testing.assert_array_almost_equal(out, thickness_data)
+        assert out.attrs["units"] == "kg d-1 m-2"  # CF equivalent unit
 
 
 class TestUnitConversion:
