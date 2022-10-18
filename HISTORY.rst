@@ -9,7 +9,8 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Abel Aoun
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Documentation now supports intersphinx mapping references within code examples via `sphinx-codeautolink` and copying of code blocks via `sphinx-copybutton`. (:pull:`1182`).
-* Log-logistic distribution added to `stats.py` for use with `standardized_precipitation_index` and `standardized_precipitation_evapotranspiration_index` (:issue:`1141`, :pull:`1183`).
+* Log-logistic distribution added to `stats.py` for use with `standardized_precipitation_index` and `standardized_precipitation_evapotranspiration_index`. (:issue:`1141`, :pull:`1183`).
+* Add auto conversion from ``[length]`` to ``[length]/[time]`` to `convert_units_to` when the input is a valid "thickness_of_rainfall_amount". (:issue:`1205`, :pull:`1206`).
 
 New indicators
 ^^^^^^^^^^^^^^
