@@ -5,13 +5,16 @@ on:
     branches:
       - master
   issue_comment:
+    types:
+      - created
+      - edited
   pull_request_review:
     types:
       - submitted
 
 jobs:
   doctests:
-    if: ${{ (github.event.review.state == 'approved') || (github.event_name == 'push') || ((github.event.issue.pull_request == true) && (github.event.comment.body == '!run doctests')) }}
+    if: ${{ contains(fromJson('["issue_comment", "push", "pull_request_review"]'), github.event_name) && ((github.event.review.state == 'approved') || (github.event.comment.body == '!run doctests')) }}
     runs-on: ubuntu-22.04
     steps:
       - name: Cancel previous runs
