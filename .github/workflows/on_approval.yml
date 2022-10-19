@@ -4,16 +4,16 @@ on:
   push:
     branches:
       - master
-  issue_comment:
+  pull_request:
     types:
-      - created
+      - synchronize
   pull_request_review:
     types:
       - submitted
 
 jobs:
   doctests:
-    if: ${{ (github.event.review.state == 'approved') || (github.event.issue.pull_request && (github.event.comment.body == '!run doctests')) || (github.event_name == 'push') }}
+    if: ${{ ((github.event.review.state == 'approved') || (github.event_name == 'push') }}
     runs-on: ubuntu-22.04
     steps:
       - name: Cancel previous runs
