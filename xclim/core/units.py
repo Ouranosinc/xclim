@@ -11,14 +11,13 @@ from __future__ import annotations
 import re
 import warnings
 from inspect import signature
-from typing import Any, Callable
+from typing import Any, Callable, TypeVar
 
 import pint.converters
 import pint.unit
 import xarray as xr
 from boltons.funcutils import wraps
 from pint import Unit
-from pint.definitions import UnitDefinition
 
 from .calendar import date_range, get_calendar, parse_offset
 from .options import datacheck
@@ -42,6 +41,7 @@ __all__ = [
 
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True, on_redefinition="ignore")
+Convertible = TypeVar("Convertible", str, xr.DataArray, units.Unit, units.Quantity)
 units.define(
     pint.unit.UnitDefinition(
         "percent", "%", ("pct",), pint.converters.ScaleConverter(0.01)
@@ -177,7 +177,7 @@ def units2pint(value: xr.DataArray | str | units.Quantity) -> Unit:
 
 
 # Note: The pint library does not have a generic Unit or Quantity type at the moment. Using "Any" as a stand-in.
-def pint2cfunits(value: UnitDefinition) -> str:
+def pint2cfunits(value: units.Quantity | units.Unit) -> str:
     """Return a CF-compliant unit string from a `pint` unit.
 
     Parameters
@@ -190,8 +190,8 @@ def pint2cfunits(value: UnitDefinition) -> str:
     str
         Units following CF-Convention, using symbols.
     """
-    if isinstance(value, pint.Quantity):
-        value = value.units
+    if isinstance(value, (pint.Quantity, units.Quantity)):
+        value = value.units  # noqa reason: units.Quantity really have .units property
 
     # Print units using abbreviations (millimeter -> mm)
     s = f"{value:~}"
@@ -270,15 +270,15 @@ def str2pint(val: str) -> pint.Quantity:
 
 
 def convert_units_to(
-    source: str | xr.DataArray | Any,
-    target: str | xr.DataArray | Any,
+    source: Convertible,
+    target: str | xr.DataArray | units.Unit,
     context: str | None = None,
-) -> xr.DataArray | float | int | str | Any:
+) -> Convertible:
     """Convert a mathematical expression into a value with the same units as a DataArray.
 
     Parameters
     ----------
-    source : str or xr.DataArray or Any
+    source : str or xr.DataArray or units.Unit or units.Quantity
         The value to be converted, e.g. '4C' or '1 mm/d'.
     target : str or xr.DataArray or Any
         Target array of values to which units must conform.
@@ -287,8 +287,9 @@ def convert_units_to(
 
     Returns
     -------
-    xr.DataArray or float or int or str or Any
+    str or xr.DataArray or units.Unit or units.Quantity
         The source value converted to target's units.
+        The outputted type is always similar to `source` initial type.
     """
     # Target units
     if isinstance(target, units.Unit):
@@ -296,7 +297,9 @@ def convert_units_to(
     elif isinstance(target, (str, xr.DataArray)):
         target_unit = units2pint(target)
     else:
-        raise NotImplementedError
+        raise NotImplementedError(
+            "target must be either a pint Unit or a xarray DataArray."
+        )
 
     if isinstance(source, str):
         q = str2pint(source)
@@ -347,12 +350,12 @@ def convert_units_to(
     raise NotImplementedError(f"Source of type `{type(source)}` is not supported.")
 
 
-def _is_precipitation_amount(source: xr.DataArray, source_unit: Unit) -> bool:
+def _is_precipitation_amount(source: xr.DataArray, source_unit: units.Unit) -> bool:
     standard_name = source.attrs.get("standard_name", None)
     return standard_name == PR_AMOUNT_STANDARD_NAME and _is_amount(source_unit)
 
 
-def _is_amount(source_unit: Unit) -> bool:
+def _is_amount(source_unit: units.Unit) -> bool:
     quantity = units.Quantity(1, source_unit)
     return quantity.check("[length]") or quantity.check("[mass] / [length]**2")
 
