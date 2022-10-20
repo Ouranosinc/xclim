@@ -20,9 +20,9 @@ jobs:
   black:
     runs-on: ubuntu-22.04
     if: |
-      (contains(fromJson('["opened", "reopened", "synchronize]'), github.event.pull_request.action)) ||
-      ((github.event.pull_request.action == 'labeled') && (contains(github.event.pull_request.labels.*.name, 'approved')) ) ||
-      (github.event_name == 'push')
+      contains(fromJson('["opened", "reopened", "synchronize]'), github.event.pull_request.action) ||
+      ((github.event.pull_request.action == 'labeled') && contains(github.event.pull_request.labels.*.name, 'approved')) ||
+      github.event_name == 'push'
     steps:
       - name: Cancel previous runs
         uses: styfle/cancel-workflow-action@0.9.1
