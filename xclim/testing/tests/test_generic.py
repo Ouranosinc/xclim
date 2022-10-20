@@ -263,7 +263,7 @@ class TestAggregateBetweenDates:
             generic.aggregate_between_dates(data, bad_start, end, op="sum", freq="YS")
 
 
-class TestDegreeDays:
+class TestCumulativeDifference:
     @pytest.mark.parametrize(
         "op, expected",
         [("gt", [0, 5, 10, 0, 0]), (">=", [0, 5, 10, 0, 0]), ("<", [20, 0, 0, 7, 0])],
@@ -271,8 +271,8 @@ class TestDegreeDays:
     def test_simple(self, tas_series, op, expected):
         tas = tas_series(np.array([-10, 15, 20, 3, 10]) + K2C)
 
-        out = generic.degree_days(tas, threshold="10 degC", op=op)
-        out_kelvin = generic.degree_days(tas, threshold="283.15 degK", op=op)
+        out = generic.cumulative_difference(tas, threshold="10 degC", op=op)
+        out_kelvin = generic.cumulative_difference(tas, threshold="283.15 degK", op=op)
 
         np.testing.assert_allclose(out, expected)
         np.testing.assert_allclose(out, out_kelvin)
@@ -281,7 +281,13 @@ class TestDegreeDays:
         tas = tas_series(np.array([-10, 15, 20, 3, 10]) + K2C)
 
         with pytest.raises(NotImplementedError):
-            generic.degree_days(tas, threshold="10 degC", op="!=")
+            generic.cumulative_difference(tas, threshold="10 degC", op="!=")
+
+    def test_deprecated(self, tas_series):
+        tas = tas_series(np.array([-10, 15, 20, 3, 10]) + K2C)
+
+        with pytest.warns(DeprecationWarning):
+            generic.degree_days(tas, threshold="10 degC", op=">=")
 
 
 class TestFirstDayThreshold:
