@@ -21,13 +21,7 @@ from xclim.core.calendar import (
     get_calendar,
     select_time,
 )
-from xclim.core.units import (
-    convert_units_to,
-    declare_units,
-    pint2cfunits,
-    str2pint,
-    to_agg_units,
-)
+from xclim.core.units import convert_units_to, pint2cfunits, str2pint, to_agg_units
 from xclim.core.utils import DayOfYearStr
 
 from . import run_length as rl
@@ -37,6 +31,7 @@ __all__ = [
     "compare",
     "count_level_crossings",
     "count_occurrences",
+    "cumulative_difference",
     "default_freq",
     "degree_days",
     "diurnal_temperature_range",
@@ -317,7 +312,8 @@ def count_level_crossings(
     threshold : str
         Quantity.
     freq : str
-        Resampling frequency.
+        Resampling frequency defining the periods as defined in
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
     op_low : {"<", "<=", "lt", "le"}
         Comparison operator for low_data. Default: "<".
     op_high : {">", ">=", "gt", "ge"}
@@ -359,7 +355,8 @@ def count_occurrences(
     threshold : str
         Quantity.
     freq : str
-        Resampling frequency.
+        Resampling frequency defining the periods as defined in
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical operator. e.g. arr > thresh.
     constrain : sequence of str, optional
@@ -391,7 +388,8 @@ def diurnal_temperature_range(
     reducer : {'max', 'min', 'mean', 'sum'}
         Reducer.
     freq: str
-        Resampling frequency.
+        Resampling frequency defining the periods as defined in
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
 
     Returns
     -------
@@ -427,7 +425,8 @@ def first_occurrence(
     threshold : str
         Quantity.
     freq : str
-        Resampling frequency.
+        Resampling frequency defining the periods as defined in
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical operator. e.g. arr > thresh.
     constrain : sequence of str, optional
@@ -471,7 +470,8 @@ def last_occurrence(
     threshold : str
         Quantity.
     freq : str
-        Resampling frequency.
+        Resampling frequency defining the periods as defined in
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical operator. e.g. arr > thresh.
     constrain : sequence of str, optional
@@ -513,7 +513,8 @@ def spell_length(
     reducer : {'max', 'min', 'mean', 'sum'}
         Reducer.
     freq : str
-        Resampling frequency.
+        Resampling frequency defining the periods as defined in
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical operator. e.g. arr > thresh.
 
@@ -544,7 +545,8 @@ def statistics(data: xr.DataArray, reducer: str, freq: str) -> xr.DataArray:
     reducer : {'max', 'min', 'mean', 'sum'}
         Reducer.
     freq : str
-        Resampling frequency.
+        Resampling frequency defining the periods as defined in
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
 
     Returns
     -------
@@ -561,7 +563,7 @@ def thresholded_statistics(
     threshold: str,
     reducer: str,
     freq: str,
-    constrain: Sequence[str] | None,
+    constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
     """Calculate a simple statistic of the data for which some condition is met.
 
@@ -580,9 +582,10 @@ def thresholded_statistics(
     reducer : {'max', 'min', 'mean', 'sum'}
         Reducer.
     freq : str
-        Resampling frequency.
+        Resampling frequency defining the periods as defined in
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
     constrain : sequence of str, optional
-        Optionally allowed conditions.
+        Optionally allowed conditions. Default: None.
 
     Returns
     -------
@@ -616,7 +619,8 @@ def temperature_sum(
     threshold : str
         Quantity.
     freq : str
-        Resampling frequency.
+        Resampling frequency defining the periods as defined in
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
 
     Returns
     -------
@@ -644,7 +648,9 @@ def interday_diurnal_temperature_range(
     high_data : xr.DataArray
         The highest daily temperature (tasmax).
     freq : str
-        Resampling frequency.
+        Resampling frequency defining the periods as defined in
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+
 
     Returns
     -------
@@ -672,7 +678,8 @@ def extreme_temperature_range(
     high_data : xr.DataArray
         The highest daily temperature (tasmax).
     freq : str
-        Resampling frequency.
+        Resampling frequency defining the periods as defined in
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
 
     Returns
     -------
@@ -706,8 +713,10 @@ def aggregate_between_dates(
         End (as day-of-year) dates for the aggregation periods.
     op : {'min', 'max', 'sum', 'mean', 'std'}
         Operator.
-    freq : str
-        Resampling frequency.
+    freq : str, optional
+        Resampling frequency defining the periods as defined in
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+        Default: `None`.
 
     Returns
     -------
@@ -729,7 +738,7 @@ def aggregate_between_dates(
 
     if freq is None:
         frequencies = []
-        for _, bound in enumerate([start, end], start=1):
+        for bound in [start, end]:
             try:
                 frequencies.append(xr.infer_freq(bound.time))
             except AttributeError:
@@ -786,33 +795,54 @@ def aggregate_between_dates(
     return xr.concat(out, dim="time")
 
 
-@declare_units(tas="[temperature]")
-def degree_days(tas: xr.DataArray, threshold: str, op: str) -> xr.DataArray:
-    """Calculate the degree days below/above the temperature threshold.
+def cumulative_difference(
+    data: xr.DataArray, threshold: str, op: str, freq: str | None = None
+) -> xr.DataArray:
+    """Calculate the cumulative difference below/above a given value threshold.
 
     Parameters
     ----------
-    tas : xr.DataArray
-        Mean daily temperature.
+    data : xr.DataArray
+        Data for which to determine the cumulative difference.
     threshold : str
-        The temperature threshold.
+        The value threshold.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
         Logical operator. e.g. arr > thresh.
+    freq : str, optional
+        Resampling frequency defining the periods as defined in
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+        If `None`, no resampling is performed. Default: `None`.
 
     Returns
     -------
     xr.DataArray
     """
-    threshold = convert_units_to(threshold, tas)
+    threshold = convert_units_to(threshold, data)
 
     if op in ["<", "<=", "lt", "le"]:
-        out = (threshold - tas).clip(0)
+        diff = (threshold - data).clip(0)
     elif op in [">", ">=", "gt", "ge"]:
-        out = (tas - threshold).clip(0)
+        diff = (data - threshold).clip(0)
     else:
         raise NotImplementedError(f"Condition not supported: '{op}'.")
 
-    return to_agg_units(out, tas, op="delta_prod")
+    if freq is not None:
+        diff = diff.resample(time=freq).sum(dim="time")
+
+    return to_agg_units(diff, data, op="delta_prod")
+
+
+def degree_days(
+    data: xr.DataArray, threshold: str, op: str, freq=None
+) -> xr.DataArray:  # noqa: D103
+    warnings.warn(
+        "The `degree_days` generic indice is being deprecated in favour of `cumulative_difference`. "
+        "This indice will be removed in `xclim>=0.40.0`. Please update your scripts accordingly.",
+        DeprecationWarning,
+        stacklevel=3,
+    )
+
+    return cumulative_difference(data, threshold=threshold, op=op, freq=freq)
 
 
 def first_day_threshold_reached(
@@ -841,9 +871,11 @@ def first_day_threshold_reached(
     after_date : str
         Date of the year after which to look for the first event. Should have the format '%m-%d'.
     window : int
-        Minimum number of days with values above threshold needed for evaluation.
+        Minimum number of days with values above threshold needed for evaluation. Default: 1.
     freq : str
-        Resampling frequency.
+        Resampling frequency defining the periods as defined in
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+        Default: "YS".
     constrain : sequence of str, optional
         Optionally allowed conditions.
 
