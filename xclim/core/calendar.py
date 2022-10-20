@@ -26,7 +26,7 @@ from xarray.coding.cftime_offsets import (
     to_offset,
 )
 from xarray.coding.cftimeindex import CFTimeIndex
-from xarray.core.resample import DataArrayResample
+from xarray.core.resample import DataArrayResample, DatasetResample
 
 from xclim.core.utils import PercentileDataArray, uses_dask
 
@@ -35,10 +35,6 @@ from .formatting import update_xclim_history
 __all__ = [
     "DayOfYearStr",
     "adjust_doy_calendar",
-    "cfindex_end_time",
-    "cfindex_start_time",
-    "cftime_end_time",
-    "cftime_start_time",
     "climatological_mean_doy",
     "compare_offsets",
     "convert_calendar",
@@ -619,6 +615,7 @@ def parse_offset(freq: str) -> Sequence[str]:
     multiplier (int), offset base (str), is start anchored (bool), anchor (str or None)
       "[n]W" is always replaced with "[7n]D", as xarray doesn't support "W" for cftime indexes.
       "Y" is always replaced with "A".
+      xclim assumes frequencies finer than monthly are all start-anchored.
     """
     patt = r"(\d*)(\w)(S)?(?:-(\w{2,3}))?"
     mult, base, start, anchor = re.search(patt, freq).groups()
@@ -628,7 +625,7 @@ def parse_offset(freq: str) -> Sequence[str]:
         mult = 7 * mult
         base = "D"
         anchor = ""
-    return mult, base, start == "S", anchor
+    return mult, base, (start == "S") or (base not in "AQM"), anchor
 
 
 def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | None):
@@ -641,7 +638,7 @@ def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | N
     base : str
       The base period string (one char).
     start_anchored: bool
-      If True, adds the "S" flag.
+      If True, adds the "S" flag for frequencies coarser than weekly.
     anchor: str, optional
       The month anchor of the offset.
 
@@ -654,7 +651,7 @@ def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | N
     -----
     This provides the mirror opposite functionality of :py:func:`parse_offset`.
     """
-    return f"{mult if mult > 1 else ''}{base}{'S' if start_anchored else ''}{'-' if anchor else ''}{anchor or ''}"
+    return f"{mult if mult > 1 else ''}{base}{'S' if start_anchored and base in 'YAQM' else ''}{'-' if anchor else ''}{anchor or ''}"
 
 
 def _interpolate_doy_calendar(
@@ -770,175 +767,88 @@ def resample_doy(doy: xr.DataArray, arr: xr.DataArray | xr.Dataset) -> xr.DataAr
     return out
 
 
-def cftime_start_time(date: cftime.datetime, freq: str) -> cftime.datetime:
-    """Get the cftime.datetime for the start of a period.
-
-    As we are not supplying actual period objects, assumptions regarding the period are made based on
-    the given freq. IMPORTANT NOTE: this function cannot be used on greater-than-day freq that start at the
-    beginning of a month, e.g. 'MS', 'QS', 'AS' -- this mirrors pandas behavior.
-
-    Parameters
-    ----------
-    date : cftime.datetime
-        The original datetime object as a proxy representation for period.
-    freq : str
-        String specifying the frequency/offset such as 'MS', '2D', 'H', or '3T'
-
-    Returns
-    -------
-    cftime.datetime
-        The starting datetime of the period inferred from date and freq.
-    """
-    freq = to_offset(freq)
-    if isinstance(freq, (YearBegin, QuarterBegin, MonthBegin)):
-        raise ValueError("Invalid frequency: " + freq.rule_code())
-    if isinstance(freq, YearEnd):
-        month = freq.month
-        return date - YearEnd(n=1, month=month) + pydt.timedelta(days=1)
-    if isinstance(freq, QuarterEnd):
-        month = freq.month
-        return date - QuarterEnd(n=1, month=month) + pydt.timedelta(days=1)
-    if isinstance(freq, MonthEnd):
-        return date - MonthEnd(n=1) + pydt.timedelta(days=1)
-    return date
-
-
-def cftime_end_time(date: cftime.datetime, freq: str) -> cftime.datetime:
-    """Get the cftime.datetime for the end of a period.
-
-    As we are not supplying actual period objects, assumptions regarding the period are made based on
-    the given freq. IMPORTANT NOTE: this function cannot be used on greater-than-day freq that start at the
-    beginning of a month, e.g. 'MS', 'QS', 'AS' -- this mirrors pandas behavior.
-
-    Parameters
-    ----------
-    date : cftime.datetime
-        The original datetime object as a proxy representation for period.
-    freq : str
-        String specifying the frequency/offset such as 'MS', '2D', 'H', or '3T'
-
-    Returns
-    -------
-    cftime.datetime
-        The ending datetime of the period inferred from date and freq.
-    """
-    freq = to_offset(freq)
-    if isinstance(freq, (YearBegin, QuarterBegin, MonthBegin)):
-        raise ValueError("Invalid frequency: " + freq.rule_code())
-    if isinstance(freq, YearEnd):
-        mod_freq = YearBegin(n=freq.n, month=freq.month)
-    elif isinstance(freq, QuarterEnd):
-        mod_freq = QuarterBegin(n=freq.n, month=freq.month)
-    elif isinstance(freq, MonthEnd):
-        mod_freq = MonthBegin(n=freq.n)
-    else:
-        mod_freq = freq
-    return cftime_start_time(date + mod_freq, freq) - pydt.timedelta(microseconds=1)
-
-
-def cfindex_start_time(cfindex: CFTimeIndex, freq: str) -> CFTimeIndex:
-    """
-    Get the start of a period for a pseudo-period index.
-
-    As we are using datetime indices to stand in for period indices, assumptions regarding the
-    period are made based on the given freq. IMPORTANT NOTE: this function cannot be used on greater-than-day
-    freq that start at the beginning of a month, e.g. 'MS', 'QS', 'AS' -- this mirrors pandas behavior.
-
-    Parameters
-    ----------
-    cfindex : CFTimeIndex
-        CFTimeIndex as a proxy representation for CFPeriodIndex
-    freq : str
-        String specifying the frequency/offset such as 'MS', '2D', 'H', or '3T'
-
-    Returns
-    -------
-    CFTimeIndex
-        The starting datetimes of periods inferred from dates and freq
-    """
-    return CFTimeIndex([cftime_start_time(date, freq) for date in cfindex])  # noqa
-
-
-def cfindex_end_time(cfindex: CFTimeIndex, freq: str) -> CFTimeIndex:
-    """
-    Get the end of a period for a pseudo-period index.
-
-    As we are using datetime indices to stand in for period indices, assumptions regarding the
-    period are made based on the given freq. IMPORTANT NOTE: this function cannot be used on greater-than-day
-    freq that start at the beginning of a month, e.g. 'MS', 'QS', 'AS' -- this mirrors pandas behavior.
-
-    Parameters
-    ----------
-    cfindex : CFTimeIndex
-        CFTimeIndex as a proxy representation for CFPeriodIndex
-    freq : str
-        String specifying the frequency/offset such as 'MS', '2D', 'H', or '3T'
-
-    Returns
-    -------
-    CFTimeIndex
-        The ending datetimes of periods inferred from dates and freq
-    """
-    return CFTimeIndex([cftime_end_time(date, freq) for date in cfindex])  # noqa
-
-
-def time_bnds(group, freq: str) -> Sequence[tuple[cftime.datetime, cftime.datetime]]:
+def time_bnds(time, freq=None, precision=None):
     """
     Find the time bounds for a pseudo-period index.
 
     As we are using datetime indices to stand in for period indices, assumptions regarding the period
-    are made based on the given freq. IMPORTANT NOTE: this function cannot be used on greater-than-day freq
-    that start at the beginning of a month, e.g. 'MS', 'QS', 'AS' -- this mirrors pandas behavior.
+    are made based on the given freq.
 
     Parameters
     ----------
-    group : CFTimeIndex or DataArrayResample
-        Object which contains CFTimeIndex as a proxy representation for
-        CFPeriodIndex
-    freq : str
+    time : DataArray, Dataset, CFTimeIndex, DatetimeIndex, DataArrayResample or DatasetResample
+        Object which contains a time index as a proxy representation for a period index.
+    freq : str, optional
         String specifying the frequency/offset such as 'MS', '2D', or '3T'
+        If not given, it is inferred from the time index, which means that index must
+        have at least three elements.
+    precision : str, optional
+        A timedelta representation that :py:class:`pandas.Timedelta` understands.
+        The time bounds will be correct up to that precision. If not given,
+        1 ms ("1U") is used for CFtime indexes and 1 ns ("1N") for numpy datetime64 indexes.
 
     Returns
     -------
-    Sequence[(cftime.datetime, cftime.datetime)]
-        The start and end times of the period inferred from datetime and freq.
+    DataArray
+        The time bounds: start and end times of the periods inferred from the time index and a frequency.
+        It has the original time index along it's `time` coordinate and a new `bnds` coordinate.
+        The dtype and calendar of the array are the same as the index.
 
-    Examples
-    --------
-    >>> from xarray import cftime_range
-    >>> from xclim.core.calendar import time_bnds
-    >>> index = cftime_range(
-    ...     start="2000-01-01", periods=3, freq="2QS", calendar="360_day"
-    ... )
-    >>> out = time_bnds(index, "2Q")
-    >>> for bnds in out:
-    ...     print(
-    ...         bnds[0].strftime("%Y-%m-%dT%H:%M:%S"),
-    ...         " -",
-    ...         bnds[1].strftime("%Y-%m-%dT%H:%M:%S"),
-    ...     )
-    ...
-    2000-01-01T00:00:00  - 2000-03-30T23:59:59
-    2000-07-01T00:00:00  - 2000-09-30T23:59:59
-    2001-01-01T00:00:00  - 2001-03-30T23:59:59
+    Notes
+    -----
+    xclim assumes that indexes for greater-than-day frequencies are "floored" down to a daily resolution.
+    For example, the coordinate "2000-01-31 00:00:00" with a "M" frequency is assumed to mean a period
+    going from "2000-01-01 00:00:00" to "2000-01-31 23:59:59.999999".
+
+    Similarly, it assumes that daily and finer frequencies yield indexes pointing to the period's start.
+    So "2000-01-31 00:00:00" with a "3H" frequency, means a period going from "2000-01-31 00:00:00" to
+    "2000-01-31 02:59:59.999999".
     """
-    if isinstance(group, CFTimeIndex):
-        cfindex = group
-    elif isinstance(group, DataArrayResample):
-        if isinstance(group._full_index, CFTimeIndex):
-            cfindex = group._full_index
-        else:
-            raise TypeError(
-                f"Index must be a CFTimeIndex, but got an instance of {type(group).__name__}"
-            )
-    else:
-        raise TypeError(
-            f"Index must be a CFTimeIndex, but got an instance of {type(group).__name__}"
-        )
+    if isinstance(time, (xr.DataArray, xr.Dataset)):
+        time = time.indexes[time.name]
+    elif isinstance(time, (DataArrayResample, DatasetResample)):
+        time = time._full_index
 
-    return tuple(
-        zip(cfindex_start_time(cfindex, freq), cfindex_end_time(cfindex, freq))
-    )
+    if freq is None and hasattr(time, "freq"):
+        freq = time.freq
+    if freq is None:
+        freq = xr.infer_freq(time)
+    elif hasattr(freq, "freqstr"):
+        # When freq is a Offset
+        freq = freq.freqstr
+
+    freq_is_start = parse_offset(freq)[2]
+
+    if isinstance(time, xr.CFTimeIndex):
+        period = xr.coding.cftime_offsets.to_offset(freq)
+        is_on = period.onOffset(time[0])
+        eps = pd.Timedelta(precision or "1U").to_pytimedelta()
+        day = pd.Timedelta("1D").to_pytimedelta()
+    else:
+        period = pd.tseries.frequencies.to_offset(freq)
+        is_on = period.is_on_offset(time[0])
+        eps = pd.Timedelta(precision or "1N")
+        day = pd.Timedelta("1D")
+
+    if not is_on:
+        if freq_is_start:
+            time_real = [period.rollback(t) for t in time]
+        else:
+            time_real = [period.rollforward(t) for t in time]
+    else:
+        time_real = time
+
+    cls = time.__class__
+    if freq_is_start:
+        tbnds = [cls(time_real), cls([t + period - eps for t in time_real])]
+    else:
+        tbnds = [
+            cls([t - period + day for t in time_real]),
+            cls([t + day - eps for t in time_real]),
+        ]
+    return xr.DataArray(
+        tbnds, dims=("bnds", "time"), coords={"time": time}, name="time_bnds"
+    ).transpose()
 
 
 def climatological_mean_doy(

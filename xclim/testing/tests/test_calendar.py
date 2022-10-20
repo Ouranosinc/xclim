@@ -55,17 +55,16 @@ def da(index):
     )
 
 
-@pytest.mark.parametrize(
-    "freq", ["3A-MAY", "5Q-JUN", "7M", "6480H", "302431T", "23144781S"]
-)
+@pytest.mark.parametrize("freq", ["6480H", "302431T", "23144781S"])
 def test_time_bnds(freq, datetime_index, cftime_index):
     da_datetime = da(datetime_index).resample(time=freq)
     da_cftime = da(cftime_index).resample(time=freq)
 
     cftime_bounds = time_bnds(da_cftime, freq=freq)
-    cftime_starts, cftime_ends = zip(*cftime_bounds)
-    cftime_starts = CFTimeIndex(cftime_starts).to_datetimeindex()
-    cftime_ends = CFTimeIndex(cftime_ends).to_datetimeindex()
+    cftime_starts = cftime_bounds.isel(bnds=0)
+    cftime_ends = cftime_bounds.isel(bnds=1)
+    cftime_starts = CFTimeIndex(cftime_starts.values).to_datetimeindex()
+    cftime_ends = CFTimeIndex(cftime_ends.values).to_datetimeindex()
 
     # cftime resolution goes down to microsecond only, code below corrects
     # that to allow for comparison with pandas datetime
