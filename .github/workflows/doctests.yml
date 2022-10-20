@@ -18,7 +18,7 @@ on:
 
 jobs:
   doctests:
-#    if: {{ (contains(github.event.pull_request.labels.*.name, "approved")) || (contains(fromJson('["push"]'), github.event_name)) }}
+    if: {{ contains(github.event.pull_request.labels.*.name, 'approved') || (github.event_name == "push") }}
     runs-on: ubuntu-22.04
     steps:
       - name: Cancel previous runs
