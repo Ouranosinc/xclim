@@ -1,4 +1,4 @@
-name: "xclim Testing Suite"
+name: "xclim Simple Tests"
 
 on:
   push:
@@ -28,8 +28,35 @@ jobs:
       - name: Run linting suite
         run: tox -e black
 
+  test-py38:
+    needs: black
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python3.8
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.8"
+      - name: Install tox
+        run: pip install tox
+      - name: Test with tox
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: tox -e py38
+      - name: report coverage
+        if: |
+          contains(github.event.pull_request.labels.*.name, 'approved') ||
+          (github.event_name == 'push')
+        uses: AndreMiras/coveralls-python-action@develop
+        with:
+          flag-name: run-py38
+          parallel: true
+
   test-py39-sbck-slow-conda:
     needs: black
+    if: |
+      contains(github.event.pull_request.labels.*.name, 'approved') ||
+      (github.event_name == 'push')
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
@@ -54,49 +81,38 @@ jobs:
       - name: report coverage
         uses: AndreMiras/coveralls-python-action@develop
         with:
-          flag-name: run-sbck
+          flag-name: run-py39-sbck-slow-conda
           parallel: true
 
-  tests:
+  test-py310-upstream-lm3:
     needs: black
+    if: |
+      contains(github.event.pull_request.labels.*.name, 'approved') ||
+      (github.event_name == 'push')
     runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        include:
-          - tox-env: py38-upstream-lm3
-            python-version: "3.8"
-          # Warning: Bottleneck does not yet officially support PEP 405
-          # https://github.com/pydata/bottleneck/issues/348#issuecomment-776165418
-          - tox-env: py310
-            python-version: "3.10-dev"
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }} (deadsnakes version)
-        if: "endsWith(matrix.python-version, '-dev')"
-        uses: deadsnakes/action@v2.1.1
-        with:
-          python-version: ${{ matrix.python-version }}
       - name: Set up Python ${{ matrix.python-version }}
-        if: "!endsWith(matrix.python-version, '-dev')"
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.10"
       - name: Install tox
         run: pip install tox
       - name: Test with tox
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: tox -e ${{ matrix.tox-env }}
+        run: tox -e py310-upstream-lm3
       - name: report coverage
         uses: AndreMiras/coveralls-python-action@develop
         with:
-          flag-name: run-${{ matrix.tox-env }}
+          flag-name: run-py310-upstream-lm3
           parallel: true
 
   finish:
     needs:
-      - tests
+      - test-py310-upstream-lm3
       - test-py39-sbck-slow-conda
+      - test-py38
     runs-on: ubuntu-latest
     steps:
       - name: Coveralls Finished
