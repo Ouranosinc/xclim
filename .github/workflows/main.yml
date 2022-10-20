@@ -10,19 +10,16 @@ on:
       - setup.py
       - xclim/__init__.py
   pull_request:
+  pull_request_review:
     types:
-      - labeled
-      - opened
-      - synchronize
-      - reopened
+      - submitted
 
 jobs:
   black:
     runs-on: ubuntu-22.04
     if: |
-      ((github.event.pull_request.action == 'labeled') && (contains(github.event.pull_request.labels.*.name, 'approved'))) ||
-      contains(fromJson('["opened", "synchronize", "reopened"]'), github.event.pull_request.action) ||
-      (github.event_name == 'push')
+      (github.event.review.state == 'approved') ||
+      contains(fromJson('["push", "pull_request"]'), github.event_name)
     steps:
       - name: Cancel previous runs
         uses: styfle/cancel-workflow-action@0.9.1
