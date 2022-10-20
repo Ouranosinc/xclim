@@ -20,7 +20,7 @@ jobs:
   black:
     runs-on: ubuntu-22.04
     if: |
-      (github.event_name == 'pull_request') && (github.event.pull_request.action != 'labeled') ||
+      ((github.event_name == 'pull_request') && (github.event.pull_request.action != 'labeled')) ||
       ((github.event.pull_request.action == 'labeled') && (contains(github.event.pull_request.labels.*.name, 'approved'))) ||
       (github.event_name == 'push')
     steps:
