@@ -1,4 +1,4 @@
-name: "xclim Simple Tests"
+name: "xclim Testing Suite"
 
 on:
   push:
@@ -10,10 +10,19 @@ on:
       - setup.py
       - xclim/__init__.py
   pull_request:
+    types:
+      - labeled
+      - opened
+      - synchronize
+      - reopened
 
 jobs:
   black:
     runs-on: ubuntu-22.04
+    if: |
+      ((github.event.pull_request.action == 'labeled') && contains(github.event.pull_request.labels.*.name, 'approved')) ||
+      contains(fromJson('["opened", "synchronize", "reopened"]'), github.event.pull_request.action) ||
+      (github.event_name == 'push')
     steps:
       - name: Cancel previous runs
         uses: styfle/cancel-workflow-action@0.9.1
@@ -30,6 +39,7 @@ jobs:
 
   test-py38:
     needs: black
+    if: (github.event_name == 'pull_request') && !contains(github.event.pull_request.labels.*.name, 'approved')
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
@@ -43,20 +53,34 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: tox -e py38
+
+  test-py38-upstream-lm3:
+    needs: black
+    if: |
+      contains(github.event.pull_request.labels.*.name, 'approved') || (github.event_name == 'push')
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.8"
+      - name: Install tox
+        run: pip install tox
+      - name: Test with tox
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: tox -e py38-upstream-lm3
       - name: report coverage
-        if: |
-          contains(github.event.pull_request.labels.*.name, 'approved') ||
-          (github.event_name == 'push')
         uses: AndreMiras/coveralls-python-action@develop
         with:
-          flag-name: run-py38
+          flag-name: run-py38-upstream-lm3
           parallel: true
 
   test-py39-sbck-slow-conda:
     needs: black
     if: |
-      contains(github.event.pull_request.labels.*.name, 'approved') ||
-      (github.event_name == 'push')
+      contains(github.event.pull_request.labels.*.name, 'approved') || (github.event_name == 'push')
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
@@ -74,7 +98,7 @@ jobs:
         shell: bash -l {0}
         run: |
           conda activate sbck-experimental
-          tox -e sbck-slow
+          tox -e py39-sbck-slow
         env:
           CONDA_EXE: mamba
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -84,7 +108,7 @@ jobs:
           flag-name: run-py39-sbck-slow-conda
           parallel: true
 
-  test-py310-upstream-lm3:
+  test-py310:
     needs: black
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
@@ -101,18 +125,39 @@ jobs:
       - name: Test with tox
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: tox -e py310-upstream-lm3
+        run: tox -e py310
       - name: report coverage
         uses: AndreMiras/coveralls-python-action@develop
         with:
-          flag-name: run-py310-upstream-lm3
+          flag-name: run-py310
           parallel: true
+
+  doctests:
+    needs: black
+    if: |
+      contains(github.event.pull_request.labels.*.name, 'approved') ||
+      (github.event_name == 'push')
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.8"
+      - name: Install pylint
+        run: pip install pylint
+      - name: Run pylint
+        run: pylint --rcfile=pylintrc --disable=import-error --exit-zero xclim
+      - name: Install tox
+        run: pip install tox
+      - name: Run doctests
+        run: tox -e doctests_only
 
   finish:
     needs:
-      - test-py310-upstream-lm3
+      - doctests
+      - test-py38-upstream-lm3
       - test-py39-sbck-slow-conda
-      - test-py38
+      - test-py310
     runs-on: ubuntu-latest
     steps:
       - name: Coveralls Finished
