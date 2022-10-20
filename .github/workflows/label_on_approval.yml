@@ -1,4 +1,4 @@
-name: "Label Pull Request on Review Approval"
+name: "Label Pull Request on review approval"
 
 on:
   pull_request_review:

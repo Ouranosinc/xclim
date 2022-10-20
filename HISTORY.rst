@@ -42,7 +42,7 @@ Internal changes
 * The xdoctest namespace now provides access to session-scoped ``{variable}_dataset`` accessors, as well as a ``path_to_atmos_file`` object. These can be used for running doctests on all variables made in the pytest ``atmosds()`` fixture. (:pull:`1882`).
 * Upgrade CodeQL GitHub Action to v2. (:issue:`1188`, :pull:`1189`).
 * New generic index ``first_day_threshold_reached`` is now used to compose all ``first_day_XYZ`` indices. (:issue:`1175`, :pull:`1186`).
-* In order to reduce computation footprint, GitHub CI Doctests are now only run once a pull request has been reviewed. The number of simultaneously triggered builds has also been reduced. (:issue:`1155`, :pull:`1203`).
+* In order to reduce computation footprint, the GitHub CI full testing suite and doctests are now only run once a pull request has been reviewed and approved. The number of simultaneously triggered builds has also been reduced. (:issue:`1155`, :pull:`1203`).
 * ReadTheDocs now only builds full documentation (including running notebooks) when pull requests are merged to the main branch. (:issue:`1155`, :pull:`1203`).
 
 0.38.0 (2022-09-06)
