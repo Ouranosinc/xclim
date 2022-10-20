@@ -110,7 +110,7 @@ jobs:
           flag-name: run-py39-sbck-slow-conda
           parallel: true
 
-  test-py310:
+  test-py310-lm3:
     needs: black
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
@@ -127,7 +127,7 @@ jobs:
       - name: Test with tox
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: tox -e py310
+        run: tox -e py310-lm3
       - name: report coverage
         uses: AndreMiras/coveralls-python-action@develop
         with:
@@ -155,9 +155,8 @@ jobs:
   finish:
     needs:
       - doctests
-      - test-py38-upstream-lm3
       - test-py39-sbck-slow-conda
-      - test-py310
+      - test-py310-lm3
     runs-on: ubuntu-latest
     steps:
       - name: Coveralls Finished
