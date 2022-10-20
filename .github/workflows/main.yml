@@ -10,16 +10,19 @@ on:
       - setup.py
       - xclim/__init__.py
   pull_request:
-  pull_request_review:
     types:
-      - submitted
+      - labeled
+      - opened
+      - reopened
+      - synchronize
 
 jobs:
   black:
     runs-on: ubuntu-22.04
     if: |
-      (github.event.review.state == 'approved') ||
-      contains(fromJson('["push", "pull_request"]'), github.event_name)
+      (contains(fromJson('["opened", "reopened", "synchronize]'), github.event.pull_request.action)) ||
+      ((github.event.pull_request.action == 'labeled') && (contains(github.event.pull_request.labels.*.name, 'approved')) ) ||
+      (github.event_name == 'push')
     steps:
       - name: Cancel previous runs
         uses: styfle/cancel-workflow-action@0.9.1
@@ -54,7 +57,6 @@ jobs:
   test-py38-upstream-lm3:
     needs: black
     if: |
-      (github.event.review.state == 'approved') ||
       contains(github.event.pull_request.labels.*.name, 'approved') ||
       (github.event_name == 'push')
     runs-on: ubuntu-22.04
@@ -79,7 +81,6 @@ jobs:
   test-py39-sbck-slow-conda:
     needs: black
     if: |
-      (github.event.review.state == 'approved') ||
       contains(github.event.pull_request.labels.*.name, 'approved') ||
       (github.event_name == 'push')
     runs-on: ubuntu-22.04
@@ -112,7 +113,6 @@ jobs:
   test-py310:
     needs: black
     if: |
-      (github.event.review.state == 'approved') ||
       contains(github.event.pull_request.labels.*.name, 'approved') ||
       (github.event_name == 'push')
     runs-on: ubuntu-22.04
@@ -137,7 +137,6 @@ jobs:
   doctests:
     needs: black
     if: |
-      (github.event.review.state == 'approved') ||
       contains(github.event.pull_request.labels.*.name, 'approved') ||
       (github.event_name == 'push')
     runs-on: ubuntu-22.04
