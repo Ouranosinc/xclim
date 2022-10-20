@@ -3,7 +3,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.37.3
+    rev: v3.1.0
     hooks:
       - id: pyupgrade
         args: [ "--py38-plus" ]
@@ -27,7 +27,7 @@ repos:
         additional_dependencies: [ 'flake8-rst-docstrings' ]
         args: [ '--config=setup.cfg' ]
   - repo: https://github.com/psf/black
-    rev: 22.8.0
+    rev: 22.10.0
     hooks:
       - id: black
         args: [ "--target-version=py38" ]
@@ -37,7 +37,7 @@ repos:
       - id: isort
         args: [ '--settings-file=setup.cfg', "--add_imports='from __future__ import annotations'" ]
   - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.4.0
+    rev: 1.5.2
     hooks:
       - id: nbqa-black
         args: [ "--target-version=py38" ]
@@ -46,7 +46,7 @@ repos:
       - id: nbqa-isort
         args: [ "--settings-file=setup.cfg" ]
   - repo: https://github.com/kynan/nbstripout
-    rev: 0.6.0
+    rev: 0.6.1
     hooks:
       - id: nbstripout
         files: ".ipynb"
@@ -56,13 +56,13 @@ repos:
       - id: pydocstyle
         args: [ '--config=setup.cfg' ]
   - repo: https://github.com/keewis/blackdoc
-    rev: v0.3.6
+    rev: v0.3.7
     hooks:
       - id: blackdoc
         exclude: '(xclim/indices/__init__.py|docs/installation.rst)'
         additional_dependencies: [ 'black==22.3.0' ]
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.27.1
+    rev: v1.28.0
     hooks:
       - id: yamllint
         args: [ '--config-file=.yamllint.yaml' ]

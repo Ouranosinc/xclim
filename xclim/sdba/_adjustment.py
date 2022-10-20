@@ -223,25 +223,25 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
 
     Parameters
     ----------
-    ds: xr.Dataset
-      Dataset variables:
-        ref : Reference multivariate timeseries
-        hist : simulated timeseries on the reference period
-        sim : Simulated timeseries on the projected period.
-        rot_matrices : Random rotation matrices.
+    ds : xr.Dataset
+        Dataset variables:
+            ref : Reference multivariate timeseries
+            hist : simulated timeseries on the reference period
+            sim : Simulated timeseries on the projected period.
+            rot_matrices : Random rotation matrices.
 
-    kwargs:
-      pts_dim : multivariate dimension name
-      base : Adjustment class
-      base_kws : Kwargs for initialising the adjustment object
-      adj_kws : Kwargs of the `adjust` call
-      n_escore : Number of elements to include in the e_score test (0 for all, < 0 to skip)
+    **kwargs
+        pts_dim : multivariate dimension name
+        base : Adjustment class
+        base_kws : Kwargs for initialising the adjustment object
+        adj_kws : Kwargs of the `adjust` call
+        n_escore : Number of elements to include in the e_score test (0 for all, < 0 to skip)
 
     Returns
     -------
     xr.Dataset
-      Dataset with `scenh`, `scens` and `escores` DataArrays, where `scenh` and `scens` are `hist` and `sim`
-      respectively after adjustment according to `ref`. If `n_escore` is negative, `escores` will be filled with NaNs.
+        Dataset with `scenh`, `scens` and `escores` DataArrays, where `scenh` and `scens` are `hist` and `sim`
+        respectively after adjustment according to `ref`. If `n_escore` is negative, `escores` will be filled with NaNs.
     """
     ref = ds.ref.rename(time_hist="time")
     hist = ds.hist.rename(time_hist="time")

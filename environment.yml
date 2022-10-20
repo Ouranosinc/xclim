@@ -38,12 +38,15 @@ dependencies:
     - netCDF4>=1.4
     - pooch
     - pre_commit
+    - pybtex
     - pydocstyle
     - pylint
     - pytest
     - pytest-cov
     - sphinx
+    - sphinx-copybutton
     - sphinx_rtd_theme
+    - sphinxcontrib-bibtex
     - statsmodels
     - tokenize-rt
     - tox

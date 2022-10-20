@@ -46,7 +46,7 @@ Indices related to fire and fire weather. Currently, submodules exist for calcul
    :show-inheritance:
    :noindex:
 
-.. only:: html or text
+.. only:: html
 
     Fire indices footnotes
     ~~~~~~~~~~~~~~~~~~~~~~
@@ -56,31 +56,37 @@ Indices related to fire and fire weather. Currently, submodules exist for calcul
     McArthur Forest Fire Danger Indices methods
     *******************************************
 
-    .. bibliography::
-       :labelprefix: FFDI-
-       :keyprefix: ffdi-
+.. bibliography::
+   :labelprefix: FFDI-
+   :keyprefix: ffdi-
+
+.. only:: html
 
     .. _fwi-footnotes:
 
     Canadian Forest Fire Weather Index System codes
     ***********************************************
 
-    .. bibliography::
-       :labelprefix: CODE-
-       :keyprefix: code-
+.. bibliography::
+   :labelprefix: CODE-
+   :keyprefix: code-
+
+.. only:: html
 
     Matlab code of the GFWED obtained through personal communication.
 
     Fire season determination methods
     *********************************
 
-    .. bibliography::
-       :labelprefix: FIRE-
-       :keyprefix: fire-
+.. bibliography::
+   :labelprefix: FIRE-
+   :keyprefix: fire-
+
+.. only:: html
 
     Drought Code overwintering background
     *************************************
 
-    .. bibliography::
-       :labelprefix: DROUGHT-
-       :keyprefix: drought-
+.. bibliography::
+   :labelprefix: DROUGHT-
+   :keyprefix: drought-

@@ -28,7 +28,7 @@ from xarray.coding.cftime_offsets import (
 from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core.resample import DataArrayResample, DatasetResample
 
-from xclim.core.utils import PercentileDataArray, uses_dask
+from xclim.core.utils import DayOfYearStr, PercentileDataArray, uses_dask
 
 from .formatting import update_xclim_history
 
@@ -74,9 +74,6 @@ max_doy = {
 
 # Some xclim.core.utils functions made accessible here for backwards compatibility reasons.
 datetime_classes = {"default": pydt.datetime, **cftime._cftime.DATE_TYPES}  # noqa
-
-#: Type annotation for strings representing dates without a year (MM-DD).
-DayOfYearStr = NewType("DayOfYearStr", str)
 
 # Names of calendars that have the same number of days for all years
 uniform_calendars = ("noleap", "all_leap", "365_day", "366_day", "360_day")

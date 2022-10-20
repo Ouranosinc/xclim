@@ -10,6 +10,7 @@ mypy
 nbval
 pre-commit>=2.9
 pydocstyle>=5.1.1
+pybtex
 pylint <2.15
 pytest
 pytest-cov
@@ -28,5 +29,7 @@ nc-time-axis
 netCDF4
 pooch
 sphinx
+sphinx-codeautolink
+sphinx-copybutton
 sphinx-rtd-theme
 sphinxcontrib-bibtex

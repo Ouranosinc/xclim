@@ -1,13 +1,8 @@
-.. only:: html or text
+.. only:: html
 
     ============
     Bibliography
     ============
-
-    General References
-    ------------------
-
-    .. bibliography::
 
     McArthur Forest Fire Danger System References
     ---------------------------------------------
@@ -23,3 +18,8 @@
     ---------------
 
     See: :ref:`sdba-footnotes`
+
+    General References
+    ------------------
+
+.. bibliography::

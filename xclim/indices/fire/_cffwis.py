@@ -60,7 +60,7 @@ start" for the duff-moisture code. The following example uses reasonable paramet
 .. note::
 
     Here the example snippets use the _indices_ defined in this very module, but we always recommend using the
-    _indicators_ defined in the `xc.atmos` module.
+    _indicators_ defined in the :py:mod:`xclim.atmos` module.
 
 >>> ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 >>> ds = ds.assign(
@@ -255,20 +255,20 @@ def _fine_fuel_moisture_code(t, p, w, h, ffmc0):  # pragma: no cover
     Parameters
     ----------
     t: array_like
-      Noon temperature [C].
+        Noon temperature [C].
     p : array_like
-      Rain fall in open over previous 24 hours, at noon [mm].
+        Rain fall in open over previous 24 hours, at noon [mm].
     w : array_like
-      Noon wind speed [km/h].
+        Noon wind speed [km/h].
     h : array_like
-      Noon relative humidity [%].
+        Noon relative humidity [%].
     ffmc0 : array_like
-      Previous value of the fine fuel moisture code.
+        Previous value of the fine fuel moisture code.
 
     Returns
     -------
     array_like
-      Fine fuel moisture code at the current timestep.
+        Fine fuel moisture code at the current timestep.
     """
     mo = (147.2 * (101.0 - ffmc0)) / (59.5 + ffmc0)  # *Eq.1*#
     if p > 0.5:
@@ -341,22 +341,22 @@ def _duff_moisture_code(
     Parameters
     ----------
     t: array_like
-      Noon temperature [C].
+        Noon temperature [C].
     p : array_like
-      Rain fall in open over previous 24 hours, at noon [mm].
+        Rain fall in open over previous 24 hours, at noon [mm].
     h : array_like
-      Noon relative humidity [%].
+        Noon relative humidity [%].
     mth : array_like[int]
-      Month of the year [1-12].
+        Month of the year [1-12].
     lat : float
-      Latitude.
+        Latitude.
     dmc0 : float
-      Previous value of the Duff moisture code.
+        Previous value of the Duff moisture code.
 
     Returns
     -------
     array
-      Duff moisture code at the current timestep
+        Duff moisture code at the current timestep
     """
     if np.isnan(dmc0):
         return np.nan
@@ -403,20 +403,20 @@ def _drought_code(
     Parameters
     ----------
     t: array-like
-      Noon temperature [C].
+        Noon temperature [C].
     p : array_like
-      Rain fall in open over previous 24 hours, at noon [mm].
+        Rain fall in open over previous 24 hours, at noon [mm].
     mth : array_like[int]
-      Month of the year [1-12].
+        Month of the year [1-12].
     lat : float
-      Latitude.
+        Latitude.
     dc0 : float
-      Previous value of the drought code.
+        Previous value of the drought code.
 
     Returns
     -------
     array_like
-      Drought code at the current timestep
+        Drought code at the current timestep
     """
     fl = _day_length_factor(lat, mth)
 
@@ -447,14 +447,14 @@ def initial_spread_index(ws: np.ndarray, ffmc: np.ndarray) -> np.ndarray:
     Parameters
     ----------
     ws : array_like
-      Noon wind speed [km/h].
+        Noon wind speed [km/h].
     ffmc : array_like
-      Fine fuel moisture code.
+        Fine fuel moisture code.
 
     Returns
     -------
     array_like
-      Initial spread index.
+        Initial spread index.
     """
     mo = 147.2 * (101.0 - ffmc) / (59.5 + ffmc)  # *Eq.1*#
     ff = 19.1152 * np.exp(mo * -0.1386) * (1.0 + (mo**5.31) / 49300000.0)  # *Eq.25*#
@@ -468,14 +468,14 @@ def build_up_index(dmc, dc):
     Parameters
     ----------
     dmc : array
-      Duff moisture code.
+        Duff moisture code.
     dc : array
-      Drought code.
+        Drought code.
 
     Returns
     -------
     array
-      Build up index.
+        Build up index.
     """
     bui = np.where(
         dmc <= 0.4 * dc,
@@ -492,14 +492,14 @@ def fire_weather_index(isi, bui):
     Parameters
     ----------
     isi : array
-      Initial spread index
+        Initial spread index
     bui : array
-      Build up index.
+        Build up index.
 
     Returns
     -------
     array
-      Build up index.
+        Build up index.
     """
     fwi = np.where(
         bui <= 80.0,
@@ -516,12 +516,12 @@ def daily_severity_rating(fwi: np.ndarray) -> np.ndarry:
     Parameters
     ----------
     fwi : array_like
-      Fire weather index
+        Fire weather index
 
     Returns
     -------
     array_like
-      Daily severity rating.
+        Daily severity rating.
     """
     return 0.0272 * fwi**1.77
 
@@ -533,15 +533,15 @@ def _overwintering_drought_code(DCf, wpr, a, b, minDC):  # pragma: no cover
     Parameters
     ----------
     DCf : ndarray
-      The previous season's last drought code
+        The previous season's last drought code
     wpr : ndarray
-      The accumulated precipitation since the end of the fire season.
+        The accumulated precipitation since the end of the fire season.
     a : float
-      The carryover fraction from the previous season.
+        The carryover fraction from the previous season.
     b : float
-      The wetting efficiency fraction.
+        The wetting efficiency fraction.
     minDC : int
-      The overwintered DC cannot be below this value, usually the normal "dc_start" value.
+        The overwintered DC cannot be below this value, usually the normal "dc_start" value.
     """
     if np.isnan(DCf) or np.isnan(wpr):
         return np.nan
@@ -570,26 +570,26 @@ def _fire_season(
     Parameters
     ----------
     tas : ndarray
-      Temperature [degC], the time axis on the last position.
+        Temperature [degC], the time axis on the last position.
     snd : ndarray, optional
-      Snow depth [m], time axis on the last position, used with method == 'LA08'.
+        Snow depth [m], time axis on the last position, used with method == 'LA08'.
     method : {"WF93", "LA08", "GFWED"}
-      Which method to use.
+        Which method to use.
     temp_start_thresh : float
-      Starting temperature threshold.
+        Starting temperature threshold.
     temp_end_thresh : float
-      Ending temperature threshold.
+        Ending temperature threshold.
     temp_condition_days : int
-      The number of days' temperature condition to consider.
+        The number of days' temperature condition to consider.
     snow_condition_days : int
-      The number of days' snow condition to consider.
+        The number of days' snow condition to consider.
     snow_thresh : float
-      Numerical parameters of the methods.
+        Numerical parameters of the methods.
 
     Returns
     -------
     ndarray [bool]
-      True where the fire season is active, same shape as tas.
+        `True` where the fire season is active, same shape as tas.
     """
     season_mask = np.full_like(tas, False, dtype=bool)
 
@@ -711,7 +711,8 @@ def _fire_weather_calc(
                     delta = season_mask[..., it]
                 else:
                     # Continue the previous state
-                    # Meant for special corner cases when we use the season mask but some points are already "on" on the first day AND we know previous DC DMC and FFMC.
+                    # Meant for special corner cases when we use the season mask
+                    # but some points are already "on" on the first day AND we know previous DC DMC and FFMC.
                     delta = 0 * season_mask[..., it]
             else:
                 delta = season_mask[..., it] - season_mask[..., it - 1]
@@ -950,8 +951,8 @@ def fire_weather_ufunc(
     initial_start_up : bool
         If True (default), grid points where the fire season is active on the first timestep go through a start-up phase
         for that time step. Otherwise, previous codes must be given as a continuing fire season is assumed for those points.
-    carry_over_fraction: float
-    wetting_efficiency_fraction: float
+    carry_over_fraction : float
+    wetting_efficiency_fraction : float
         Drought code overwintering parameters, see :py:func:`overwintering_drought_code`.
     temp_start_thresh : float
       Starting temperature threshold.
@@ -959,21 +960,21 @@ def fire_weather_ufunc(
       Ending temperature threshold.
     temp_condition_days : int
       The number of days' temperature condition to consider.
-    snow_thresh: float
-    snow_condition_days: int
+    snow_thresh : float
+    snow_condition_days : int
         Parameters for the fire season determination. See :py:func:`fire_season`. Temperature is in degC, snow in m.
         The `snow_thresh` parameters is also used when `dry_start` is set to "GFWED", see Notes.
-    dc_start: float
-    dmc_start: float
-    ffmc_start: float
+    dc_start : float
+    dmc_start : float
+    ffmc_start : float
         Default starting values for the three base codes.
-    prec_thresh: float
+    prec_thresh : float
         If the "dry start" is activated, this is the "wet" day precipitation threshold, see Notes. In mm/d.
     dc_dry_factor : float
         DC's start-up values for the "dry start" mechanism, see Notes.
     dmc_dry_factor : float
         DMC's start-up values for the "dry start" mechanism, see Notes.
-    snow_cover_days: int
+    snow_cover_days : int
     snow_min_cover_frac : float
     snow_min_mean_depth : float
         Additional parameters for GFWED's version of the "dry start" mechanism. See Notes. Snow depth is in m.
@@ -1176,20 +1177,20 @@ def overwintering_drought_code(
     Parameters
     ----------
     last_dc : xr.DataArray
-      The previous season's last drought code.
+        The previous season's last drought code.
     winter_pr : xr.DataArray
-      The accumulated precipitation since the end of the fire season.
+        The accumulated precipitation since the end of the fire season.
     carry_over_fraction : xr.DataArray or float
-      Carry-over fraction of last fall’s moisture
+        Carry-over fraction of last fall’s moisture
     wetting_efficiency_fraction : xr.DataArray or float
-      Effectiveness of winter precipitation in recharging moisture reserves in spring
+        Effectiveness of winter precipitation in recharging moisture reserves in spring
     min_dc : xr.DataArray or float
-      Minimum drought code starting value.
+        Minimum drought code starting value.
 
     Returns
     -------
     wDC : xr.DataArray
-       Overwintered drought code.
+        Overwintered drought code.
 
     Notes
     -----
@@ -1401,37 +1402,37 @@ def drought_code(
     Parameters
     ----------
     tas : xr.DataArray
-      Noon temperature.
+        Noon temperature.
     pr : xr.DataArray
-      Rain fall in open over previous 24 hours, at noon.
+        Rain fall in open over previous 24 hours, at noon.
     lat : xr.DataArray
-      Latitude coordinate
+        Latitude coordinate
     snd : xr.DataArray
-      Noon snow depth.
+        Noon snow depth.
     dc0 : xr.DataArray
-      Initial values of the drought code.
+        Initial values of the drought code.
     season_mask : xr.DataArray, optional
-      Boolean mask, True where/when the fire season is active.
+        Boolean mask, True where/when the fire season is active.
     season_method : {None, "WF93", "LA08", "GFWED"}
-      How to compute the start-up and shutdown of the fire season.
-      If "None", no start-ups or shutdowns are computed, similar to the R fire function.
-      Ignored if `season_mask` is given.
+        How to compute the start-up and shutdown of the fire season.
+        If "None", no start-ups or shutdowns are computed, similar to the R fire function.
+        Ignored if `season_mask` is given.
     overwintering: bool
-      Whether to activate DC overwintering or not. If True, either season_method or season_mask must be given.
+        Whether to activate DC overwintering or not. If True, either season_method or season_mask must be given.
     dry_start: {None, "CFS", 'GFWED'}
         Whether to activate the DC and DMC "dry start" mechanism and which method to use.
-        , see :py:func:`fire_weather_ufunc`.
+        See :py:func:`fire_weather_ufunc`.
     initial_start_up : bool
         If True (default), grid points where the fire season is active on the first timestep go through a start_up phase
         for that time step. Otherwise, previous codes must be given as a continuing fire season is assumed for those
         points.
-    params :
-      Any other keyword parameters as defined in `xclim.indices.fire.fire_weather_ufunc` and in :py:data:`default_params`.
+    params
+        Any other keyword parameters as defined in `xclim.indices.fire.fire_weather_ufunc` and in :py:data:`default_params`.
 
     Returns
     -------
     xr.DataArray, [dimensionless]
-       Drought code
+        Drought code
 
     Notes
     -----
@@ -1490,35 +1491,34 @@ def fire_season(
     Parameters
     ----------
     tas : xr.DataArray
-      Daily surface temperature, cffdrs recommends using maximum daily temperature.
+        Daily surface temperature, cffdrs recommends using maximum daily temperature.
     snd : xr.DataArray, optional
-      Snow depth, used with method == 'LA08'.
+        Snow depth, used with method == 'LA08'.
     method : {"WF93", "LA08", "GFWED"}
-      Which method to use. "LA08"  and "GFWED" need the snow depth.
+        Which method to use. "LA08"  and "GFWED" need the snow depth.
     freq : str, optional
-      If given only the longest fire season for each period defined by this frequency,
-      Every "seasons" are returned if None, including the short shoulder seasons.
+        If given only the longest fire season for each period defined by this frequency,
+        Every "seasons" are returned if None, including the short shoulder seasons.
     temp_start_thresh: str
-      Minimal temperature needed to start the season.
+        Minimal temperature needed to start the season.
     temp_end_thresh : str
-      Maximal temperature needed to end the season.
+        Maximal temperature needed to end the season.
     temp_condition_days: int
-      Number of days with temperature above or below the thresholds to trigger a start or an end of the fire season.
+        Number of days with temperature above or below the thresholds to trigger a start or an end of the fire season.
     snow_condition_days: int
-      Parameters for the fire season determination. See :py:func:`fire_season`. Temperature is in degC, snow in m.
-      The `snow_thresh` parameters is also used when `dry_start` is set to "GFWED".
+        Parameters for the fire season determination. See :py:func:`fire_season`. Temperature is in degC, snow in m.
+        The `snow_thresh` parameters is also used when `dry_start` is set to "GFWED".
     snow_thresh: str
-      Minimal snow depth level to end a fire season, only used with method "LA08".
+        Minimal snow depth level to end a fire season, only used with method "LA08".
 
     Returns
     -------
-    fire_season : xr.DataArray
-      Fire season mask
+    xr.DataArray
+        Fire season mask
 
     References
     ----------
     :cite:cts:`fire-wotton_length_1993,fire-lawson_weather_2008`
-
     """
     kwargs = dict(
         method=method,

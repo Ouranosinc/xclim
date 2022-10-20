@@ -107,6 +107,8 @@ extensions = [
     "IPython.sphinxext.ipython_console_highlighting",
     "autodoc_indicator",
     "sphinxcontrib.bibtex",
+    "sphinx_codeautolink",
+    "sphinx_copybutton",
 ]
 
 autosectionlabel_prefix_document = True
@@ -114,8 +116,7 @@ autosectionlabel_maxdepth = 2
 
 linkcheck_ignore = [
     r"https://github.com/Ouranosinc/xclim/(pull|issue).*",
-    r"https://doi.org/10.1093/mnras/225.1.155"  # does not allow linkcheck requests (error 403)
-    r"https://clisops.readthedocs.io/en/latest/notebooks/subset.html",  # target link is currently broken
+    r"https://doi.org/10.1093/mnras/225.1.155",  # does not allow linkcheck requests (error 403)
 ]
 
 napoleon_numpy_docstring = True
@@ -273,6 +274,7 @@ latex_elements = {
     # Additional stuff for the LaTeX preamble.
     "preamble": r"""
 \renewcommand{\v}[1]{\mathbf{#1}}
+\nocite{*}
 """,
     # Latex figure (float) alignment
     "figure_align": "htbp",
