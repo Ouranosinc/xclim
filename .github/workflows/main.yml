@@ -72,7 +72,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: tox -e py38-upstream-lm3
-      - name: report coverage
+      - name: Report coverage
         uses: AndreMiras/coveralls-python-action@develop
         with:
           flag-name: run-py38-upstream-lm3
@@ -104,7 +104,7 @@ jobs:
         env:
           CONDA_EXE: mamba
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: report coverage
+      - name: Report coverage
         uses: AndreMiras/coveralls-python-action@develop
         with:
           flag-name: run-py39-sbck-slow-conda
@@ -128,7 +128,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: tox -e py310-lm3
-      - name: report coverage
+      - name: Report coverage
         uses: AndreMiras/coveralls-python-action@develop
         with:
           flag-name: run-py310
