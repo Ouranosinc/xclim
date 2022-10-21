@@ -829,9 +829,9 @@ def time_bnds(time, freq=None, precision=None):
 
     if not is_on:
         if freq_is_start:
-            time_real = [period.rollback(t) for t in time]
+            time_real = [period.rollback(t).normalize() for t in time]
         else:
-            time_real = [period.rollforward(t) for t in time]
+            time_real = [period.rollforward(t).normalize() for t in time]
     else:
         time_real = time
 

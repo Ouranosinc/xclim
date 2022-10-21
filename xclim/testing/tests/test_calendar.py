@@ -76,11 +76,16 @@ def test_time_bnds(freq, datetime_index, cftime_index):
     assert_array_equal(cftime_ends, datetime_ends)
 
 
-@pytest.mark.xfail
-def test_time_bnds_irregular():
+@pytest.mark.parametrize("typ", ["pd", "xr"])
+def test_time_bnds_irregular(typ):
     """Test time_bnds for irregular `middle of the month` time series."""
-    start = xr.cftime_range("1990-01-01", periods=24, freq="MS")
-    end = xr.cftime_range("1990-01-01", periods=24, freq="M")
+    if typ == "xr":
+        start = xr.cftime_range("1990-01-01", periods=24, freq="MS")
+        end = xr.cftime_range("1990-01-01T23:59:59", periods=24, freq="M")
+    elif typ == "pd":
+        start = pd.date_range("1990-01-01", periods=24, freq="MS")
+        end = pd.date_range("1990-01-01 23:59:59.999999999", periods=24, freq="M")
+
     time = start + (end - start) / 2
 
     bounds = time_bnds(time, freq="M")
