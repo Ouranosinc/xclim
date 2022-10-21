@@ -1,6 +1,7 @@
 # noqa: D104
 from __future__ import annotations
 
+from copy import deepcopy
 from pathlib import Path
 
 import numpy as np
@@ -649,3 +650,30 @@ def atmosds(xdoctest_namespace, tmp_path_factory):
         ns[f"{variable}_dataset"] = ds.get(variable)
 
     return ds
+
+
+@pytest.fixture(autouse=True, scope="session")
+def ensemble_dataset_objects(tmp_path_factory) -> dict:
+    edo = dict()
+
+    edo["nc_files"] = [
+        "BCCAQv2+ANUSPLIN300_ACCESS1-0_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
+        "BCCAQv2+ANUSPLIN300_BNU-ESM_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
+        "BCCAQv2+ANUSPLIN300_CCSM4_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
+        "BCCAQv2+ANUSPLIN300_CCSM4_historical+rcp45_r2i1p1_1950-2100_tg_mean_YS.nc",
+    ]
+    edo[
+        "nc_file_extra"
+    ] = "BCCAQv2+ANUSPLIN300_CNRM-CM5_historical+rcp45_r1i1p1_1970-2050_tg_mean_YS.nc"
+    edo["nc_datasets_simple"] = [
+        xclim.testing.open_dataset(Path("EnsembleStats").joinpath(f))
+        for f in edo["nc_files"]
+    ]
+
+    ncd = deepcopy(edo["nc_datasets_simple"])
+    ncd.append(
+        xclim.testing.open_dataset(Path("EnsembleStats").joinpath(edo["nc_file_extra"]))
+    )
+    edo["nc_datasets"] = ncd
+
+    return edo
