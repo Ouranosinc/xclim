@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # Tests for `xclim` package.
 #
-# We want to tests multiple things here:
+# We want to test multiple things here:
 #  - that data results are correct
 #  - that metadata is correct and complete
 #  - that missing data are handled appropriately
@@ -30,6 +30,7 @@ from xclim.indices.stats import get_dist
 from xclim.testing.utils import _default_cache_dir, open_dataset
 
 
+@pytest.mark.xdist_group(name="group1")
 class TestEnsembleStats:
     nc_files = [
         "BCCAQv2+ANUSPLIN300_ACCESS1-0_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
