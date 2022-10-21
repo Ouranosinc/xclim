@@ -151,6 +151,12 @@ jobs:
         run: pylint --rcfile=pylintrc --disable=import-error --exit-zero xclim
       - name: Test with tox
         run: tox -e doctests_only
+      - name: Report coverage
+        uses: AndreMiras/coveralls-python-action@develop
+        with:
+          flag-name: run-doctests
+          parallel: true
+
 
   finish:
     needs:

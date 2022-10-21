@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from functools import partial
 from pathlib import Path
 
 import numpy as np
@@ -15,8 +16,13 @@ from xclim.testing.tests import TD
 
 
 @pytest.fixture
-def tmp_netcdf_filename(tmpdir):
+def tmp_netcdf_filename(tmpdir) -> Path:
     return Path(tmpdir).joinpath("testfile.nc")
+
+
+@pytest.fixture(autouse=True, scope="session")
+def threadsafe_data_dir(tmp_path_factory) -> Path:
+    return Path(tmp_path_factory.getbasetemp().joinpath("data"))
 
 
 @pytest.fixture
@@ -291,21 +297,21 @@ def per_doy():
 
 
 @pytest.fixture
-def areacella():
+def areacella() -> xr.DataArray:
     """Return a rectangular grid of grid cell area."""
     r = 6100000
     lon_bnds = np.arange(-180, 181, 1)
     lat_bnds = np.arange(-90, 91, 1)
-    dlon = np.diff(lon_bnds)
-    dlat = np.diff(lat_bnds)
+    d_lon = np.diff(lon_bnds)
+    d_lat = np.diff(lat_bnds)
     lon = np.convolve(lon_bnds, [0.5, 0.5], "valid")
     lat = np.convolve(lat_bnds, [0.5, 0.5], "valid")
     area = (
         r
-        * np.radians(dlat)[:, np.newaxis]
+        * np.radians(d_lat)[:, np.newaxis]
         * r
         * np.cos(np.radians(lat)[:, np.newaxis])
-        * np.radians(dlon)
+        * np.radians(d_lon)
     )
     return xr.DataArray(
         data=area,
@@ -337,8 +343,8 @@ def hurs_series():
 
 
 @pytest.fixture
-def sfcWind_series():
-    def _sfcWind_series(values, start="7/1/2000", units="km h-1"):
+def sfcWind_series():  # noqa
+    def _sfcWind_series(values, start="7/1/2000", units="km h-1"):  # noqa
         coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
@@ -495,22 +501,20 @@ def rlus_series():
     return _rlus_series
 
 
-@pytest.fixture(autouse=True)
-def add_imports(xdoctest_namespace):
+@pytest.fixture(autouse=True, scope="session")
+def add_imports(xdoctest_namespace, threadsafe_data_dir) -> None:
     """Add these imports into the doctests scope."""
     ns = xdoctest_namespace
     ns["np"] = np
     ns["xr"] = xclim.testing  # xr.open_dataset(...) -> xclim.testing.open_dataset(...)
     ns["xclim"] = xclim
-    ns[
-        "open_dataset"
-    ] = (
-        xclim.testing.open_dataset
+    ns["open_dataset"] = partial(
+        xclim.testing.open_dataset, cache_dir=threadsafe_data_dir
     )  # Needed for modules where xarray is imported as `xr`
 
 
 @pytest.fixture(autouse=True)
-def add_example_file_paths(xdoctest_namespace, tas_series):
+def add_example_file_paths(xdoctest_namespace, tas_series) -> None:
     """Add these datasets in the doctests scope."""
     ns = xdoctest_namespace
 
@@ -566,13 +570,13 @@ def add_example_file_paths(xdoctest_namespace, tas_series):
 
 
 @pytest.fixture(autouse=True)
-def add_example_dataarray(xdoctest_namespace, tas_series):
+def add_example_dataarray(xdoctest_namespace, tas_series) -> None:
     ns = xdoctest_namespace
     ns["tas"] = tas_series(np.random.rand(365) * 20 + 253.15)
 
 
 @pytest.fixture(autouse=True)
-def is_matplotlib_installed(xdoctest_namespace):
+def is_matplotlib_installed(xdoctest_namespace) -> None:
     def _is_matplotlib_installed():
         try:
             import matplotlib  # noqa
@@ -596,13 +600,13 @@ def official_indicators():
 
 
 @pytest.fixture(autouse=True, scope="session")
-def atmosds(xdoctest_namespace, tmp_path_factory):
+def atmosds(xdoctest_namespace, tmp_path_factory, threadsafe_data_dir) -> xr.Dataset:
     ds = xclim.testing.open_dataset(
         "ERA5/daily_surface_cancities_1990-1993.nc",
-        cache_dir=tmp_path_factory.getbasetemp().parent,
+        cache_dir=threadsafe_data_dir,
     )
 
-    sfcWind, sfcWindfromdir = xclim.atmos.wind_speed_from_vector(ds=ds)
+    sfcWind, sfcWindfromdir = xclim.atmos.wind_speed_from_vector(ds=ds)  # noqa
     sfcWind.attrs.update(cell_methods="time: mean within days")
     huss = xclim.atmos.specific_humidity(ds=ds)
     snw = ds.swe * 1000
@@ -641,7 +645,7 @@ def atmosds(xdoctest_namespace, tmp_path_factory):
     )
 
     # Create a file in session scoped temporary directory
-    atmos_file = tmp_path_factory.mktemp("data").joinpath("atmosds.nc")
+    atmos_file = threadsafe_data_dir.joinpath("atmosds.nc")
     ds.to_netcdf(atmos_file)
 
     # Give access to this file within xdoctest namespace
@@ -656,7 +660,7 @@ def atmosds(xdoctest_namespace, tmp_path_factory):
 
 
 @pytest.fixture(autouse=True, scope="session")
-def ensemble_dataset_objects(tmp_path_factory, worker_id) -> dict:
+def ensemble_dataset_objects(tmp_path_factory, threadsafe_data_dir) -> dict:
     edo = dict()
 
     edo["nc_files"] = [
@@ -671,17 +675,19 @@ def ensemble_dataset_objects(tmp_path_factory, worker_id) -> dict:
     edo["nc_datasets_simple"] = [
         xclim.testing.open_dataset(
             Path("EnsembleStats").joinpath(f),
-            cache_dir=tmp_path_factory.getbasetemp().parent,
+            cache_dir=threadsafe_data_dir,
         )
         for f in edo["nc_files"]
     ]
 
     ncd = deepcopy(edo["nc_datasets_simple"])
-    ncd.append(
-        xclim.testing.open_dataset(
-            Path("EnsembleStats").joinpath(edo["nc_file_extra"]),
-            cache_dir=tmp_path_factory.getbasetemp().parent,
-        )
+    ncd.extend(
+        [
+            xclim.testing.open_dataset(
+                Path("EnsembleStats").joinpath(edo["nc_file_extra"]),
+                cache_dir=threadsafe_data_dir,
+            )
+        ]
     )
     edo["nc_datasets"] = ncd
 
