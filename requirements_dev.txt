@@ -14,6 +14,7 @@ pybtex
 pylint <2.15
 pytest
 pytest-cov
+pytest-xdist[psutil]
 tokenize-rt
 tox
 wheel
