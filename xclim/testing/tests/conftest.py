@@ -597,7 +597,10 @@ def official_indicators():
 
 @pytest.fixture(autouse=True, scope="session")
 def atmosds(xdoctest_namespace, tmp_path_factory):
-    ds = xclim.testing.open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+    ds = xclim.testing.open_dataset(
+        "ERA5/daily_surface_cancities_1990-1993.nc",
+        cache_dir=tmp_path_factory.getbasetemp().parent,
+    )
 
     sfcWind, sfcWindfromdir = xclim.atmos.wind_speed_from_vector(ds=ds)
     sfcWind.attrs.update(cell_methods="time: mean within days")
@@ -653,7 +656,7 @@ def atmosds(xdoctest_namespace, tmp_path_factory):
 
 
 @pytest.fixture(autouse=True, scope="session")
-def ensemble_dataset_objects(tmp_path_factory) -> dict:
+def ensemble_dataset_objects(tmp_path_factory, worker_id) -> dict:
     edo = dict()
 
     edo["nc_files"] = [
@@ -666,13 +669,19 @@ def ensemble_dataset_objects(tmp_path_factory) -> dict:
         "nc_file_extra"
     ] = "BCCAQv2+ANUSPLIN300_CNRM-CM5_historical+rcp45_r1i1p1_1970-2050_tg_mean_YS.nc"
     edo["nc_datasets_simple"] = [
-        xclim.testing.open_dataset(Path("EnsembleStats").joinpath(f))
+        xclim.testing.open_dataset(
+            Path("EnsembleStats").joinpath(f),
+            cache_dir=tmp_path_factory.getbasetemp().parent,
+        )
         for f in edo["nc_files"]
     ]
 
     ncd = deepcopy(edo["nc_datasets_simple"])
     ncd.append(
-        xclim.testing.open_dataset(Path("EnsembleStats").joinpath(edo["nc_file_extra"]))
+        xclim.testing.open_dataset(
+            Path("EnsembleStats").joinpath(edo["nc_file_extra"]),
+            cache_dir=tmp_path_factory.getbasetemp().parent,
+        )
     )
     edo["nc_datasets"] = ncd
 
