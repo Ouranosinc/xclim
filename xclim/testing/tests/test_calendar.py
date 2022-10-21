@@ -76,6 +76,21 @@ def test_time_bnds(freq, datetime_index, cftime_index):
     assert_array_equal(cftime_ends, datetime_ends)
 
 
+@pytest.mark.xfail
+def test_time_bnds_irregular():
+    """Test time_bnds for irregular `middle of the month` time series."""
+    start = xr.cftime_range("1990-01-01", periods=24, freq="MS")
+    end = xr.cftime_range("1990-01-01", periods=24, freq="M")
+    time = start + (end - start) / 2
+
+    bounds = time_bnds(time, freq="M")
+    bs = bounds.isel(bnds=0)
+    be = bounds.isel(bnds=1)
+
+    assert_array_equal(bs, start)
+    assert_array_equal(be, end)
+
+
 @pytest.mark.parametrize("use_dask", [True, False])
 def test_percentile_doy(tas_series, use_dask):
     tas = tas_series(np.arange(365), start="1/1/2001")
