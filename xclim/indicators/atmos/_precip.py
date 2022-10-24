@@ -105,7 +105,7 @@ rain_on_frozen_ground_days = PrTasxWithIndexing(
     identifier="rain_frzgr",
     units="days",
     standard_name="number_of_days_with_lwe_thickness_of_precipitation_amount_above_threshold",
-    long_name="Number of rain on frozen ground days",
+    long_name="Number of rain on frozen ground days (mean daily temperature > 0℃ and precipitation > {thresh})",
     description="{freq} number of days with rain above {thresh} after a series of seven days with average daily "
     "temperature below 0℃. Precipitation is assumed to be rain when the daily average temperature is above 0℃.",
     abstract="The number of days with rain above a given threshold after a series of seven days with average daily "
