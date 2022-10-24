@@ -24,7 +24,7 @@ For example, the following would compute monthly mean temperature from daily mea
     tg = xclim.atmos.tg_mean(ds.tas, freq="YS")
 
 For applications where meta-data and missing values are important to get right, xclim provides a class for each index that validates inputs, checks for missing values, converts units and assigns metadata attributes to the output. This also provides a mechanism for users to customize the indices to their own specifications and preferences.
-xclim currently provides over 50 indices related to mean, minimum and maximum daily temperature, daily precipitation, streamflow and sea ice concentration, numerous bias-adjustment algorithms, as well as a dedicated module for ensembles dataset analysis.
+xclim currently provides over 50 indices related to mean, minimum and maximum daily temperature, daily precipitation, streamflow and sea ice concentration, numerous bias-adjustment algorithms, as well as a dedicated module for ensemble analysis.
 
 .. _xarray: https://docs.xarray.dev/
 .. _dask: https://docs.dask.org/
