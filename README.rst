@@ -2,15 +2,18 @@
 xclim: Climate services library |logo|
 ==========================================
 
-|license| |security| |fair| |build| |pre-commit| |pypi| |conda| |coveralls| |fossa| |zenodo| |black| |docs| |gitter|
+| Downloads | Documentation / Support | Open Source | Development Status |
+| --------- | ------------- | ----------- | ------------ |
+| |pypi| |conda| | |docs| |gitter| | |license| |fair| |fossa| |zenodo| | |build| |pre-commit| |coveralls|  |black| |security| |
 
 ----
 
-``xclim`` is an operational Python library for climate services, providing an extensible framework for the
-computation of climate indicators, statistical downscaling and bias adjustment of climate model simulations, as well as ensemble
-analyses.
+``xclim`` is an operational Python library for climate services, providing numerous climate-related indicator tools
+with an extensible framework for constructing custom climate indicators, statistical downscaling and bias
+adjustment of climate model simulations, as well as climate model ensemble analysis tools.
 
-It is built using `xarray`_ and can benefit from the parallelization handling provided by `dask`_. Its objective is to make it as simple as possible for users to perform typical climate services data treatment workflows.
+``xclim`` is built using `xarray`_ and can seamlessly benefit from the parallelization handling provided by `dask`_.
+Its objective is to make it as simple as possible for users to perform typical climate services data treatment workflows.
 Leveraging xarray and dask, users can easily bias-adjust climate simulations over large spatial domains or compute indices from large climate datasets.
 
 For example, the following would compute monthly mean temperature from daily mean temperature:
@@ -23,8 +26,11 @@ For example, the following would compute monthly mean temperature from daily mea
     ds = xr.open_dataset(filename)
     tg = xclim.atmos.tg_mean(ds.tas, freq="YS")
 
-For applications where meta-data and missing values are important to get right, xclim provides a class for each index that validates inputs, checks for missing values, converts units and assigns metadata attributes to the output. This also provides a mechanism for users to customize the indices to their own specifications and preferences.
-xclim currently provides over 50 indices related to mean, minimum and maximum daily temperature, daily precipitation, streamflow and sea ice concentration, numerous bias-adjustment algorithms, as well as a dedicated module for ensemble analysis.
+For applications where metadata and missing values are important to get right, xclim provides a class for each index
+that validates inputs, checks for missing values, converts units and assigns metadata attributes to the output.
+This also provides a mechanism for users to customize the indices to their own specifications and preferences.
+xclim currently provides over 150 indices related to mean, minimum and maximum daily temperature, daily precipitation,
+streamflow and sea ice concentration, numerous bias-adjustment algorithms, as well as a dedicated module for ensemble analysis.
 
 .. _xarray: https://docs.xarray.dev/
 .. _dask: https://docs.dask.org/
@@ -35,7 +41,7 @@ The official documentation is at https://xclim.readthedocs.io/
 
 Contributing
 ------------
-xclim is in active development and it's being used in production by climate services specialists.
+xclim is in active development and is being used in production by climate services specialists around the world.
 
 * If you're interested in participating in the development of xclim by suggesting new features, new indices or report bugs, please leave us a message on the `issue tracker`_. There is also a chat room on gitter (|gitter|).
 
@@ -110,7 +116,8 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 
 .. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/master/_static/_images/xclim-logo-small.png
         :target: https://github.com/Ouranosinc/xclim
+        :alt: Xclim
 
 .. |pre-commit| image:: https://results.pre-commit.ci/badge/github/Ouranosinc/xclim/master.svg
-   :target: https://results.pre-commit.ci/latest/github/Ouranosinc/xclim/master
-   :alt: pre-commit.ci status
+        :target: https://results.pre-commit.ci/latest/github/Ouranosinc/xclim/master
+        :alt: pre-commit.ci status
