@@ -730,31 +730,31 @@
     "description": "Vitesse du vent du sud près de la surface calculé à partir de la vitesse et de la direction du vent."
   },
   "E_SAT": {
-    "long_name": "Pression de vapeur saturante",
+    "long_name": "Pression de vapeur saturante (méthode \"{method}\")",
     "description": "Pression de vapeur saturante calculée à partir de la température en suivant la méthode {method}.",
     "title": "Pression de vapeur saturante (e_sat)",
     "abstract": "Calcul de la pression de vapeur saturante à partir de la température, selon une méthode donnée. Si ice_thresh est donné, le calcul se fait en référence à la glace pour les températures sous ce seuil."
   },
   "HURS_FROMDEWPOINT": {
-    "long_name": "Humidité relative",
+    "long_name": "Humidité relative (méthode \"{method}\")",
     "description": "Humidité relative calculée à partir de la température du point de rosée à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}.",
     "title": "Humidité relative calculée à partir de la température du point de rosée",
     "abstract": "Humidité relative calculée à partir de la température du point de rosée à l'aide de la pression de vapeur saturante."
   },
   "HURS": {
-    "long_name": "Humidité relative",
+    "long_name": "Humidité relative (méthode \"{method}\")",
     "description": "Humidité relative calculée à partir de la température, de l'humidité spécifique et de la pression à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}.",
     "title": "Humidité relative calculée à partir de la température, de l'humidité spécifique et de la pression",
     "abstract": "Humidité relative calculée à partir de la température, de l'humidité spécifique et de la pression à l'aide de la pression de vapeur saturante."
   },
   "HUSS": {
-    "long_name": "Humidité spécifique",
+    "long_name": "Humidité spécifique (méthode \"{method}\")",
     "description": "Humidité spécifique calculée à partir de la température, de l'humidité relative et de la pression à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}.",
     "title": "Humidité spécifique calculée à partir de la température, de l'humidité relative et de la pression",
     "abstract": "Humidité spécifique calculée à partir de la température, de l'humidité relative et de la pression à l'aide de la pression de vapeur saturante."
   },
   "HUSS_FROMDEWPOINT": {
-    "long_name": "Humidité spécifique",
+    "long_name": "Humidité spécifique (méthode \"{method}\")",
     "description": "Humidité spécifique calculée à partir de la température du point de rosée et de la pression à l'aide de la pression de vapeur saturante, laquelle fut calculée en suivant la méthode {method}.",
     "title": "Humidité spécifique calculée à partir de la température du point de rosée et de la pression",
     "abstract": "Humidité spécifique calculée à partir de la température du point de rosée et de la pression à l'aide de la pression de vapeur saturante."
@@ -814,7 +814,7 @@
     "abstract": "Jour de l'année où la somme des degrés-jours est au-dessus d'un seuil donné. Les degrés-jours sont calculés au-dessus ou en dessous d'un seuil de température donné."
   },
   "PRSN": {
-    "long_name": "Précipitation solide",
+    "long_name": "Précipitation solide (méthode \"{methode}\" avec une température égale ou inférieure à {thresh})",
     "description": "Précipitation solide estimée à partir de la précipitation totale et de la température selon la méthode {method} et le seuil de température {thresh}.",
     "title": "Approximation de la neige",
     "abstract": "Précipitation solide estimée à partir de la précipitation totale et de la température selon une méthode et un seuil de température donnés."
@@ -826,7 +826,7 @@
     "abstract": "Épaisseur de neige moyenne quotidienne."
   },
   "PRLP": {
-    "long_name": "Précipitation liquide",
+    "long_name": "Précipitation liquide (méthode \"{methode}\" avec une température égale ou inférieure à {thresh})",
     "description": "Précipitation liquide estimée à partir de la précipitation totale et de la température selon la méthode {method} et le seuil de température {thresh}.",
     "title": "Approximation de la pluie",
     "abstract": "Précipitation liquide estimée à partir de la précipitation totale et de la température selon une méthode et un seuil de température donnés."
@@ -967,7 +967,7 @@
     "title": "Unités thermiques maïs",
     "abstract": "Indice basé sur la température utilisée pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température minimale quotidienne et la température maximale quotidienne excèdent des seuils donnés.",
     "description": "Indice basé sur la température utilisée pour estimer le développement des cultures de maïs. La croissance du maïs se produit lorsque la température minimale quotidienne et et la température maximale quotidienne excèdent {thresh_tasmin} et {thresh_tasmax}, respectivement.",
-    "long_name": "Unités thermiques maïs"
+    "long_name": "Unités thermiques maïs (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax})"
   },
   "FREEZETHAW_SPELL_FREQUENCY": {
     "title": "Fréquence des périodes des événements consécutifs de gel-dégel",
@@ -1009,13 +1009,13 @@
     "title": "Évapotranspiration potentielle",
     "abstract": "Le potentiel d'évaporation de l'eau du sol et de transpiration par les plantes si l'approvisionnement en eau est suffisant, avec une méthode donnée.",
     "description": "Le potentiel d'évaporation de l'eau du sol et de transpiration par les plantes si l'approvisionnement en eau est suffisant, avec la méthode de {method}.",
-    "long_name": "Évapotranspiration potentielle"
+    "long_name": "Évapotranspiration potentielle (méthode \"{methode}\")"
   },
   "WATER_BUDGET_FROM_TAS": {
     "title": "Bilan hydrique",
     "abstract": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface, où l'évapotranspiration potentielle est calculée avec une méthode donnée.",
     "description": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface, où l'évapotranspiration potentielle est calculée avec la méthode {method}.",
-    "long_name": "Bilan hydrique"
+    "long_name": "Bilan hydrique (méthode \"{methode}\")"
   },
   "WATER_BUDGET": {
     "title": "Bilan hydrique",

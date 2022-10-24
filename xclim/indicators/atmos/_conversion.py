@@ -126,7 +126,7 @@ saturation_vapor_pressure = Converter(
     title="Saturation vapour pressure (e_sat)",
     identifier="e_sat",
     units="Pa",
-    long_name="Saturation vapour pressure",
+    long_name='Saturation vapour pressure ("{method}" method)',
     description=lambda **kws: (
         "The saturation vapour pressure was calculated from a temperature according to the {method} method."
     )
@@ -146,7 +146,7 @@ relative_humidity_from_dewpoint = Converter(
     identifier="hurs_fromdewpoint",
     units="%",
     var_name="hurs",
-    long_name="Relative humidity",
+    long_name='Relative humidity ("{method}" method)',
     standard_name="relative_humidity",
     description=lambda **kws: (
         "Computed from temperature, and dew point temperature through the "
@@ -174,7 +174,7 @@ relative_humidity = Converter(
     identifier="hurs",
     units="%",
     var_name="hurs",
-    long_name="Relative Humidity",
+    long_name='Relative Humidity ("{method}" method)',
     standard_name="relative_humidity",
     description=lambda **kws: (
         "Computed from temperature, specific humidity and pressure through the saturation vapour pressure, "
@@ -202,7 +202,7 @@ specific_humidity = Converter(
     identifier="huss",
     units="",
     var_name="huss",
-    long_name="Specific Humidity",
+    long_name='Specific Humidity ("{method}" method)',
     standard_name="specific_humidity",
     description=lambda **kws: (
         "Computed from temperature, relative humidity and pressure through the saturation vapour pressure, "
@@ -223,7 +223,7 @@ specific_humidity_from_dewpoint = Converter(
     title="Specific humidity from dew point temperature and pressure",
     identifier="huss_fromdewpoint",
     units="",
-    long_name="Specific humidity",
+    long_name='Specific humidity ("{method}" method)',
     standard_name="specific_humidity",
     description=(
         "Computed from dewpoint temperature and pressure through the saturation "
@@ -239,7 +239,7 @@ snowfall_approximation = Converter(
     identifier="prsn",
     units="kg m-2 s-1",
     standard_name="solid_precipitation_flux",
-    long_name="Solid precipitation",
+    long_name='Solid precipitation ("{method}" method with temperature at or below {thresh})',
     description=(
         "Solid precipitation estimated from total precipitation and temperature"
         " with method {method} and threshold temperature {thresh}."
@@ -255,7 +255,7 @@ rain_approximation = Converter(
     identifier="prlp",
     units="kg m-2 s-1",
     standard_name="precipitation_flux",
-    long_name="Liquid precipitation",
+    long_name='Liquid precipitation ("{method}" method with temperature at or above {thresh})',
     description=(
         "Liquid precipitation estimated from total precipitation and temperature"
         " with method {method} and threshold temperature {thresh}."
@@ -295,7 +295,7 @@ potential_evapotranspiration = Converter(
     var_name="evspsblpot",
     units="kg m-2 s-1",
     standard_name="water_potential_evapotranspiration_flux",
-    long_name="Potential evapotranspiration",
+    long_name='Potential evapotranspiration ("{method}" method)',
     description=(
         "The potential for water evaporation from soil and transpiration by plants if the water "
         "supply is sufficient, calculated with the {method} method."
@@ -311,7 +311,7 @@ water_budget_from_tas = Converter(
     title="Water budget",
     identifier="water_budget_from_tas",
     units="kg m-2 s-1",
-    long_name="Water budget",
+    long_name='Water budget ("{method}" method)',
     description=(
         "Precipitation minus potential evapotranspiration as a measure of an approximated surface water budget, "
         "where the potential evapotranspiration is calculated with the {method} method."
@@ -343,7 +343,7 @@ corn_heat_units = Converter(
     title=" Corn heat units",
     identifier="corn_heat_units",
     units="",
-    long_name="Corn heat units",
+    long_name="Corn heat units (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax})",
     description="Temperature-based index used to estimate the development of corn crops. "
     "Corn growth occurs when the minimum and maximum daily temperatures both exceed "
     "{thresh_tasmin} and {thresh_tasmax}, respectively.",
