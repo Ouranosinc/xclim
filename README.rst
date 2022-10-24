@@ -1,12 +1,17 @@
 ==========================================
-xclim: Climate indices computations |logo|
+xclim: Climate services library |logo|
 ==========================================
 
 |license| |security| |fair| |build| |pre-commit| |pypi| |conda| |coveralls| |fossa| |zenodo| |black| |docs| |gitter|
 
 ----
 
-``xclim`` is a library of functions to compute climate indices from observations or model simulations. It is built using `xarray`_ and can benefit from the parallelization handling provided by `dask`_. Its objective is to make it as simple as possible for users to compute indices from large climate datasets and for scientists to write new indices with very little boilerplate.
+``xclim`` is an operational Python library for climate services, providing an extensible framework for the
+computation of climate indicators, statistical downscaling and bias adjustment of climate model simulations, as well as ensemble
+analyses.
+
+It is built using `xarray`_ and can benefit from the parallelization handling provided by `dask`_. Its objective is to make it as simple as possible for users to perform typical climate services data treatment workflows.
+Leveraging xarray and dask, users can easily bias-adjust climate simulations over large spatial domains or compute indices from large climate datasets.
 
 For example, the following would compute monthly mean temperature from daily mean temperature:
 
@@ -16,11 +21,10 @@ For example, the following would compute monthly mean temperature from daily mea
     import xarray as xr
 
     ds = xr.open_dataset(filename)
-    tg = xclim.icclim.TG(ds.tas, freq="YS")
+    tg = xclim.atmos.tg_mean(ds.tas, freq="YS")
 
 For applications where meta-data and missing values are important to get right, xclim provides a class for each index that validates inputs, checks for missing values, converts units and assigns metadata attributes to the output. This also provides a mechanism for users to customize the indices to their own specifications and preferences.
-
-xclim currently provides over 50 indices related to mean, minimum and maximum daily temperature, daily precipitation, streamflow and sea ice concentration.
+xclim currently provides over 50 indices related to mean, minimum and maximum daily temperature, daily precipitation, streamflow and sea ice concentration, numerous bias-adjustment algorithms, as well as a dedicated module for ensembles dataset analysis.
 
 .. _xarray: https://docs.xarray.dev/
 .. _dask: https://docs.dask.org/
@@ -49,7 +53,7 @@ If you wish to cite `xclim` in a research publication, we kindly ask that you us
 Credits
 -------
 
-This work is made possible thanks to the contribution of the Canadian Center for Climate Services.
+xclim development is funded through Ouranos, Environment and Climate Change Canada (ECCC), the Fonds Vert and the Fonds d’électrification et de changements climatiques, the Canadian Foundation for Innovation (CFI), and the Fonds de Recherche du Québec (FRQ).
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 
