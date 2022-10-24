@@ -2,9 +2,9 @@
 xclim: Climate services library |logo|
 ==========================================
 
-| Downloads | Documentation and Support | Open Source | Development Status |
-| :---: | :---: | :---: | :---: |
-| |pypi| |conda| | |docs| |gitter| | |license| |fair| |fossa| |zenodo| | |build| |pre-commit| |coveralls| |black| |security| |
+ **Downloads**  | **Documentation and Support** | **Open Source**                   | **Development Status**
+:--------------:|:-----------------------------:|:---------------------------------:|:---------------------------------------------------:
+ |pypi| |conda| | |docs| |gitter|               | |license| |fair| |fossa| |zenodo| | |build| |pre-commit| |coveralls| |black| |security|
 
 ----
 
