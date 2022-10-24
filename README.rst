@@ -2,11 +2,12 @@
 xclim: Climate services library |logo|
 ==========================================
 
- **Downloads**  | **Documentation and Support** | **Open Source**                   | **Development Status**
-:--------------:|:-----------------------------:|:---------------------------------:|:---------------------------------------------------:
- |pypi| |conda| | |docs| |gitter|               | |license| |fair| |fossa| |zenodo| | |build| |pre-commit| |coveralls| |black| |security|
++----------------+----------------------------+-----------------------------------+-----------------------------------------------------+
+| Downloads      | Documentation and Support  | Open Source                       | Development Status                                  |
++----------------+----------------------------+-----------------------------------+-----------------------------------------------------+
+| |pypi| |conda| | |docs| |gitter|            | |license| |fair| |fossa| |zenodo| | |build| |pre-commit| |coveralls| |black| |security| |
++----------------+----------------------------+-----------------------------------+-----------------------------------------------------+
 
-----
 
 ``xclim`` is an operational Python library for climate services, providing numerous climate-related indicator tools
 with an extensible framework for constructing custom climate indicators, statistical downscaling and bias
