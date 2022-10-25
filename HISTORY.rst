@@ -30,6 +30,7 @@ Breaking changes
     - ``xclim.atmos.first_day_above`` -> ``xclim.indices.first_day_{tn | tg | tx}_above``
     - ``xclim.atmos.first_day_below`` -> ``xclim.indices.first_day_{tn | tg | tx}_below``
 * The ``degree_days`` generic indice has been deprecated in favour of ``cumulative_difference`` that is not limited only to temperature variables (:issue:`1200`, :pull:`1202`). The indices for ``atmos.{heating | cooling | growing}_degree_days`` are now built from ``generic.cumulative_difference``.
+* Running `pytest` now requires the `pytest-dist` distributed testing dependency. This library has been added to the `dev` requirements and conda environment configuration. (:pull:`1203`).
 
 Bug fixes
 ^^^^^^^^^
@@ -44,6 +45,9 @@ Internal changes
 * The xdoctest namespace now provides access to session-scoped ``{variable}_dataset`` accessors, as well as a ``path_to_atmos_file`` object. These can be used for running doctests on all variables made in the pytest ``atmosds()`` fixture. (:pull:`1882`).
 * Upgrade CodeQL GitHub Action to v2. (:issue:`1188`, :pull:`1189`).
 * New generic index ``first_day_threshold_reached`` is now used to compose all ``first_day_XYZ`` indices. (:issue:`1175`, :pull:`1186`).
+* In order to reduce computation footprint, the GitHub CI full testing suite and doctests are now only run once a pull request has been reviewed and approved. The number of simultaneously triggered builds has also been reduced. (:issue:`1155`, :pull:`1203`).
+* ReadTheDocs now only builds full documentation (including running notebooks) when pull requests are merged to the main branch. (:issue:`1155`, :pull:`1203`).
+* `xclim` now leverages `pytest-xdist` to distribute tests among Python workers and significantly speed up the testing suite. (:pull:`1203`).
 
 0.38.0 (2022-09-06)
 -------------------
@@ -297,7 +301,7 @@ Internal changes
 
 v0.33.0 (2022-01-28)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Tom Keel (:user:`Thomasjkeel`), Jeremy Fyke (:user:`JeremyFyke`), David Huard (:user:`huard`), Abel Aoun (:user:`bzah`), Juliette Lavoie (:user:`juliettelavoie`), Yannick Rousseau (:user:`yrouranos`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Tom Keel (:user:`Thomasjkeel`), Jeremy Fyke (:user:`JeremyFyke`), David Huard (:user:`huard`), Abel Aoun (:user:`bzah`), Juliette Lavoie (:user:`juliettelavoie`), Yannick Rousseau.
 
 Announcements
 ^^^^^^^^^^^^^
