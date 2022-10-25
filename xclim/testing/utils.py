@@ -117,7 +117,7 @@ def _get(
 
 # idea copied from raven that it borrowed from xclim that borrowed it from xarray that was borrowed from Seaborn
 def open_dataset(
-    name: str,
+    name: str | os.PathLike,
     suffix: str | None = None,
     dap_url: str | None = None,
     github_url: str = "https://github.com/Ouranosinc/xclim-testdata",
@@ -133,7 +133,7 @@ def open_dataset(
 
     Parameters
     ----------
-    name : str
+    name : str or os.PathLike
         Name of the file containing the dataset.
     suffix : str, optional
         If no suffix is given, assumed to be netCDF ('.nc' is appended). For no suffix, set "".
@@ -158,7 +158,8 @@ def open_dataset(
     --------
     xarray.open_dataset
     """
-    name = Path(name)
+    if isinstance(name, str):
+        name = Path(name)
     if suffix is None:
         suffix = ".nc"
     fullname = name.with_suffix(suffix)
