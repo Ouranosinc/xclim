@@ -20,9 +20,9 @@ import warnings
 from collections import OrderedDict
 
 import xarray
-from pybtex.plugin import register_plugin
-from pybtex.style.formatting.alpha import Style as AlphaStyle
-from pybtex.style.labels import BaseLabelStyle
+from pybtex.plugin import register_plugin  # noqa
+from pybtex.style.formatting.alpha import Style as AlphaStyle  # noqa
+from pybtex.style.labels import BaseLabelStyle  # noqa
 
 xarray.DataArray.__module__ = "xarray"
 xarray.Dataset.__module__ = "xarray"
@@ -48,7 +48,7 @@ def _get_indicators(module):
 
     out = {}
     for key, val in module.__dict__.items():
-        if hasattr(val, "_registry_id") and val._registry_id in registry:
+        if hasattr(val, "_registry_id") and val._registry_id in registry:  # noqa
             out[key] = val
 
     return OrderedDict(sorted(out.items()))
@@ -160,9 +160,16 @@ bibtex_bibfiles = ["references.bib"]
 bibtex_default_style = "xcstyle"
 bibtex_reference_style = "author_year"
 
-if os.getenv("SKIPNOTEBOOKS"):
-    warnings.warn("Not executing notebooks.")
+skip_notebooks = os.getenv("SKIP_NOTEBOOKS")
+if skip_notebooks or os.getenv("READTHEDOCS_VERSION_TYPE") in [
+    "branch",
+    "external",
+]:
+    if skip_notebooks:
+        warnings.warn("Not executing notebooks.")
     nbsphinx_execute = "never"
+elif os.getenv("READTHEDOCS_VERSION_NAME") in ["latest", "stable"]:
+    nbsphinx_execute = "always"
 else:
     nbsphinx_execute = "auto"
 nbsphinx_prolog = r"""

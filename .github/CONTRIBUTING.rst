@@ -148,7 +148,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 6. When unit/doc tests are added or notebooks updated, use ``pytest`` to run them. Alternatively, one can use ``tox`` to run all testing suites as would github do when the PR is submitted and new commits are pushed::
 
     $ pytest --nbval docs/notebooks  # for notebooks, exclusively.
-    $ pytest --rootdir xclim/testing/tests/ --xdoctest xclim --ignore=xclim/testing/tests/  # for doctests, exclusively.
+    $ pytest --no-cov --rootdir xclim/testing/tests/ --xdoctest xclim --ignore=xclim/testing/tests/  # for doctests, exclusively.
     $ pytest  # for all unit tests, excluding doctests and notebooks.
     $ tox  # run all testing suites
 

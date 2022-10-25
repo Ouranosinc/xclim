@@ -38,6 +38,11 @@ clean-build: ## remove build artifacts
 	find . -name '*.egg-info' -exec rm -fr {} +
 	find . -name '*.egg' -exec rm -f {} +
 
+clean-docs: ## remove docs artifacts
+	rm -f docs/xclim*.rst
+	rm -f docs/modules.rst
+	$(MAKE) -C docs clean
+
 clean-pyc: ## remove Python file artifacts
 	find . -name '*.pyc' -exec rm -f {} +
 	find . -name '*.pyo' -exec rm -f {} +
@@ -73,21 +78,13 @@ coverage: ## check code coverage quickly with the default Python
 	coverage html
 	$(BROWSER) htmlcov/index.html
 
-linkcheck: ## run checks over all external links found throughout the documentation
-	rm -f docs/xclim*.rst
-	rm -f docs/modules.rst
+autodoc: clean-docs ## create sphinx-apidoc files:
 	sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests
-	$(MAKE) -C docs clean
-	$(MAKE) -C docs linkcheck
-ifndef READTHEDOCS
-	$(BROWSER) docs/_build/html/index.html
-endif
 
-docs: ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/xclim*.rst
-	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests
-	$(MAKE) -C docs clean
+linkcheck: autodoc ## run checks over all external links found throughout the documentation
+	$(MAKE) -C docs linkcheck
+
+docs: linkcheck ## generate Sphinx HTML documentation, including API docs
 	$(MAKE) -C docs html
 ifndef READTHEDOCS
 	$(BROWSER) docs/_build/html/index.html
