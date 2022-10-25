@@ -4,10 +4,11 @@ History
 
 0.39.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), Éric Dupuis (:user:`coxipi`)
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), Éric Dupuis (:user:`coxipi`), Travis Logan (:user:`tlogan2000`)
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* The general ``xclim`` description and ReadMe have been updated to reflect recent enhancements. (:issue:`1185`, :pull:`1209`).
 * Documentation now supports intersphinx mapping references within code examples via `sphinx-codeautolink` and copying of code blocks via `sphinx-copybutton`. (:pull:`1182`).
 * Log-logistic distribution added to `stats.py` for use with `standardized_precipitation_index` and `standardized_precipitation_evapotranspiration_index` (:issue:`1141`, :pull:`1183`).
 
@@ -34,6 +35,7 @@ Bug fixes
 ^^^^^^^^^
 * The docstring of ``cool_night_index`` suggested that `lat` was an optional parameter. This has been corrected. (:issue:`1179`, :pull:`1180`).
 * The ``mean_radiant_temperature`` indice was accessing hardcoded `lat` and `lon` coordinates from passed DataArrays. This now uses `cf-xarray` accessors. (:pull:`1180`).
+* Adopt (and adapt) unit registry declaration and preprocessors from ``cf-xarray`` to circumvent bugs caused by a refactor in ``pint`` 0.20. It also cleans the code a little bit. (:issue:`1211`, :pull:`1212`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
