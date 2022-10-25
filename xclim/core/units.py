@@ -8,6 +8,7 @@ most unit handling methods.
 """
 from __future__ import annotations
 
+import functools
 import re
 import warnings
 from inspect import signature
@@ -38,9 +39,22 @@ __all__ = [
 ]
 
 
-units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True, on_redefinition="ignore")
-# The % is a valid python operator and thus an invalid pint unit name
-units.define("percent = 0.01 count = pct")
+# shamelessly adapted from `cf-xarray` (which adopted it from MetPy and xclim itself)
+units = pint.UnitRegistry(
+    autoconvert_offset_to_baseunit=True,
+    preprocessors=[
+        functools.partial(
+            re.compile(
+                r"(?<=[A-Za-z])(?![A-Za-z])(?<![0-9\-][eE])(?<![0-9\-])(?=[0-9\-])"
+            ).sub,
+            "**",
+        ),
+        lambda string: string.replace("%", "percent"),
+    ],
+)
+
+units.define("percent = 0.01 = % = pct")
+
 # In pint, the default symbol for year is "a" which is not CF-compliant (stands for "are")
 units.define("year = 365.25 * day = yr")
 
@@ -117,11 +131,6 @@ def units2pint(value: xr.DataArray | str | units.Quantity) -> pint.Unit:
     pint.Unit
         Units of the data array.
     """
-
-    def _transform(s):
-        """Convert a CF-unit string to a pint expression."""
-        return re.subn(r"([a-zA-Z]+)\^?(-?\d)", r"\g<1>**\g<2>", s)[0]
-
     if isinstance(value, str):
         unit = value
     elif isinstance(value, xr.DataArray):
@@ -154,15 +163,7 @@ def units2pint(value: xr.DataArray | str | units.Quantity) -> pint.Unit:
             "Remove white space from temperature units, e.g. use `degC`."
         )
 
-    try:  # Pint compatible
-        return units.parse_units(unit)
-    except (
-        pint.UndefinedUnitError,
-        pint.DimensionalityError,
-        AttributeError,
-        TypeError,
-    ):  # Convert from CF-units to pint-compatible
-        return units.parse_units(_transform(unit))
+    return units.parse_units(unit)
 
 
 # Note: The pint library does not have a generic Unit or Quantity type at the moment. Using "Any" as a stand-in.
