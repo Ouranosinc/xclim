@@ -35,6 +35,7 @@ Bug fixes
 ^^^^^^^^^
 * The docstring of ``cool_night_index`` suggested that `lat` was an optional parameter. This has been corrected. (:issue:`1179`, :pull:`1180`).
 * The ``mean_radiant_temperature`` indice was accessing hardcoded `lat` and `lon` coordinates from passed DataArrays. This now uses `cf-xarray` accessors. (:pull:`1180`).
+* Adopt (and adapt) unit registry declaration and preprocessors from ``cf-xarray`` to circumvent bugs caused by a refactor in ``pint`` 0.20. It also cleans the code a little bit. (:issue:`1211`, :pull:`1212`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
