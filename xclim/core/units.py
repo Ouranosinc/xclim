@@ -13,12 +13,9 @@ import warnings
 from inspect import signature
 from typing import Any, Callable
 
-import pint.converters
-import pint.unit
+import pint
 import xarray as xr
 from boltons.funcutils import wraps
-from pint import Unit
-from pint.definitions import UnitDefinition
 
 from .calendar import date_range, get_calendar, parse_offset
 from .options import datacheck
@@ -42,11 +39,8 @@ __all__ = [
 
 
 units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True, on_redefinition="ignore")
-units.define(
-    pint.unit.UnitDefinition(
-        "percent", "%", ("pct",), pint.converters.ScaleConverter(0.01)
-    )
-)
+# The % is a valid python operator and thus an invalid pint unit name
+units.define("percent = 0.01 count = pct")
 # In pint, the default symbol for year is "a" which is not CF-compliant (stands for "are")
 units.define("year = 365.25 * day = yr")
 
@@ -110,7 +104,7 @@ units.enable_contexts(hydro)
 units.define("[radiation] = [power] / [length]**2")
 
 
-def units2pint(value: xr.DataArray | str | units.Quantity) -> Unit:
+def units2pint(value: xr.DataArray | str | units.Quantity) -> pint.Unit:
     """Return the pint Unit for the DataArray units.
 
     Parameters
@@ -120,15 +114,12 @@ def units2pint(value: xr.DataArray | str | units.Quantity) -> Unit:
 
     Returns
     -------
-    pint.unit.UnitDefinition
+    pint.Unit
         Units of the data array.
     """
 
     def _transform(s):
         """Convert a CF-unit string to a pint expression."""
-        if s == "%":
-            return "percent"
-
         return re.subn(r"([a-zA-Z]+)\^?(-?\d)", r"\g<1>**\g<2>", s)[0]
 
     if isinstance(value, str):
@@ -175,7 +166,7 @@ def units2pint(value: xr.DataArray | str | units.Quantity) -> Unit:
 
 
 # Note: The pint library does not have a generic Unit or Quantity type at the moment. Using "Any" as a stand-in.
-def pint2cfunits(value: UnitDefinition) -> str:
+def pint2cfunits(value: pint.Unit) -> str:
     """Return a CF-compliant unit string from a `pint` unit.
 
     Parameters
@@ -210,7 +201,8 @@ def pint2cfunits(value: UnitDefinition) -> str:
     out = out.replace(" * ", " ")
     # Delta degrees:
     out = out.replace("Δ°", "delta_deg")
-    return out.replace("percent", "%")
+    # Percents
+    return out.replace("percent", "%").replace("pct", "%")
 
 
 def ensure_cf_units(ustr: str) -> str:
