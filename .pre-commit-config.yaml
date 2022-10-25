@@ -37,7 +37,7 @@ repos:
       - id: isort
         args: [ '--settings-file=setup.cfg', "--add_imports='from __future__ import annotations'" ]
   - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.5.2
+    rev: 1.5.3
     hooks:
       - id: nbqa-black
         args: [ "--target-version=py38" ]
