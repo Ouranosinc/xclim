@@ -78,7 +78,7 @@ jobs:
           flag-name: run-py38-upstream-lm3
           parallel: true
 
-  test-py38-opt-slow-conda:
+  test-py39-opt-slow-conda:
     needs: black
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
