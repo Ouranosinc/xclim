@@ -7,7 +7,6 @@
   - [ ] (If applicable) Documentation has been added / updated (for bug fixes / features)
 - [ ] HISTORY.rst has been updated (with summary of main changes)
   - [ ] Link to issue (:issue:`number`) and pull request (:pull:`number`) has been added
-- [ ] The relevant author information has been added to `AUTHORS.rst` and `.zenodo.json`
 
 ### What kind of change does this PR introduce?
 
