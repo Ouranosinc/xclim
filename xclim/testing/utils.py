@@ -23,10 +23,8 @@ from xarray import Dataset
 from xarray import open_dataset as _open_dataset
 from yaml import safe_dump, safe_load
 
-from xclim import __version__
-
-_xclim_version = dict(xclim=__version__)
 _xclim_deps = [
+    "xclim",
     "xarray",
     "sklearn",
     "scipy",
@@ -445,7 +443,6 @@ def publish_release_notes(
 
 def show_versions(
     file: os.PathLike | StringIO | TextIO | None = None,
-    main_version: dict = "xclim",
     deps: list = "xclim",
 ) -> str | None:
     """Print the versions of xclim and its dependencies.
@@ -454,8 +451,6 @@ def show_versions(
     ----------
     file : {os.PathLike, StringIO, TextIO}, optional
         If provided, prints to the given file-like object. Otherwise, returns a string.
-    main_version : dict
-        A dictionary with the name of the primary library and its version string as value, e.g. {"xclim"="1.0"}
     deps : list
         A list of dependencies to gather and print version information from.
 
@@ -463,8 +458,6 @@ def show_versions(
     -------
     str or None
     """
-    if main_version == "xclim":
-        main_version = _xclim_version
     if deps == "xclim":
         deps = _xclim_deps
 
@@ -492,18 +485,10 @@ def show_versions(
         "INSTALLED VERSIONS",
         "------------------",
         f"python: {platform.python_version()}",
+        f"{modules_versions}",
+        f"Anaconda-based environment: {'yes' if Path(sys.base_prefix).joinpath('conda-meta').exists() else 'no'}",
     ]
 
-    if main_version:
-        main = [f"{key}: {value}" for key, value in main_version.items()]
-        installed_versions.extend(main)
-
-    installed_versions.extend(
-        [
-            f"{modules_versions}",
-            f"Anaconda-based environment: {'yes' if Path(sys.base_prefix).joinpath('conda-meta').exists() else 'no'}",
-        ]
-    )
     message = "\n".join(installed_versions)
 
     if not file:
