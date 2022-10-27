@@ -8,8 +8,7 @@ Helper function to handle dates, times and different calendars with xarray.
 from __future__ import annotations
 
 import datetime as pydt
-import re
-from typing import Any, NewType, Sequence
+from typing import Any, Sequence
 
 import cftime
 import numpy as np
@@ -144,6 +143,44 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
         return obj.calendar
 
     raise ValueError(f"Calendar could not be inferred from object of type {type(obj)}.")
+
+
+def common_calendar(*calendars, join="outer") -> str:
+    """Return a calendar common to all calendars from a list.
+
+    Uses the hierarchy: 360_day < noleap < standard < all_leap.
+    If join == 'outer', it returns the smallest calendar (in number of days by year)
+    that will include all the dates of the other calendars. When converting the data to this
+    calendar, no timeseries will lose elements, but some might be missing.
+    If join == 'inner', it returns the smallest calendar of the list. When converting the data
+    to this calendar, no timeseries will have missing elements, but some might be dropped.
+
+    Returns "default" only if all calendars are "default."
+
+    Examples
+    --------
+    >>> common_calendar("360_day", "noleap", "default", join="outer")
+    "standard"
+    >>> common_calendar("360_day", "noleap", "default", join="inner")
+    "360_day"
+    """
+    if all(cal == "default" for cal in calendars):
+        return "default"
+
+    trans = {
+        "proleptic_gregorian": "standard",
+        "gregorian": "standard",
+        "default": "standard",
+        "366_day": "all_leap",
+        "365_day": "noleap",
+        "julian": "standard",
+    }
+    ranks = {"360_day": 0, "noleap": 1, "standard": 2, "all_leap": 3}
+    calendars = sorted([trans.get(cal, cal) for cal in calendars], key=ranks.get)
+
+    if join == "outer":
+        return calendars[-1]
+    return calendars[0]
 
 
 def convert_calendar(
@@ -613,19 +650,28 @@ def parse_offset(freq: str) -> Sequence[str]:
 
     Returns
     -------
-    multiplier (int), offset base (str), is start anchored (bool), anchor (str or None)
-      "[n]W" is always replaced with "[7n]D", as xarray doesn't support "W" for cftime indexes.
+    multiplier : int
+       "[n]W" is always replaced with "[7n]D", as xarray doesn't support "W" for cftime indexes.
+    offset_base : str
       "Y" is always replaced with "A".
+    is_start_anchored : bool
+      Whether coordinates of this frequency should correspond to the beginning of the period (True) or it's end (False).
+      Can only be False when base is A, Q or M.
+    anchor : str or None
+      Given for bases A or Q. As xarray doesn't support "W", so doesn't xclim and anchor information is lost when given.
     """
-    patt = r"(\d*)(\w)(S)?(?:-(\w{2,3}))?"
-    mult, base, start, anchor = re.search(patt, freq).groups()
-    mult = int(mult or "1")
-    base = base.replace("Y", "A")
+    # Useful to raise on invalid freqs, convert Y to A and get default anchor (A, Q)
+    offset = pd.tseries.frequencies.to_offset(freq)
+    base, *anchor = offset.name.split("-")
+    anchor = anchor[0] if len(anchor) > 0 else None
+    start = ("S" in base) or (base[0] not in "AQM")
+    base = base[0]
+    mult = offset.n
     if base == "W":
         mult = 7 * mult
         base = "D"
-        anchor = ""
-    return mult, base, start == "S", anchor
+        anchor = None
+    return mult, base, start, anchor
 
 
 def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | None):
@@ -638,9 +684,9 @@ def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | N
     base : str
       The base period string (one char).
     start_anchored: bool
-      If True, adds the "S" flag.
+      If True and base in [Y, A, Q, M], adds the "S" flag.
     anchor: str, optional
-      The month anchor of the offset.
+      The month anchor of the offset. Defaults to JAN for bases AS, Y and QS and to DEC for bases A and Q.
 
     Returns
     -------
@@ -651,7 +697,12 @@ def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | N
     -----
     This provides the mirror opposite functionality of :py:func:`parse_offset`.
     """
-    return f"{mult if mult > 1 else ''}{base}{'S' if start_anchored else ''}{'-' if anchor else ''}{anchor or ''}"
+    start = "S" if start_anchored and base in "YAQM" else ""
+    if anchor is None and base in "AQY":
+        anchor = "JAN" if start_anchored else "DEC"
+    return (
+        f"{mult if mult > 1 else ''}{base}{start}{'-' if anchor else ''}{anchor or ''}"
+    )
 
 
 def _interpolate_doy_calendar(
