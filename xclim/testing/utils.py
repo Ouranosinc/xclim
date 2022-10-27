@@ -23,7 +23,24 @@ from xarray import Dataset
 from xarray import open_dataset as _open_dataset
 from yaml import safe_dump, safe_load
 
-from xclim import __version__ as xclim_version
+from xclim import __version__
+
+_xclim_version = dict(xclim=__version__)
+_xclim_deps = [
+    "xarray",
+    "sklearn",
+    "scipy",
+    "pint",
+    "pandas",
+    "numba",
+    "dask",
+    "cf_xarray",
+    "cftime",
+    "clisops",
+    "bottleneck",
+    "boltons",
+]
+
 
 _default_cache_dir = Path.home() / ".xclim_testing_data"
 
@@ -426,35 +443,35 @@ def publish_release_notes(
     print(history, file=file)
 
 
-def show_versions(file: os.PathLike | StringIO | TextIO | None = None) -> str | None:
+def show_versions(
+    file: os.PathLike | StringIO | TextIO | None = None,
+    main_version: dict = "xclim",
+    deps: list = "xclim",
+) -> str | None:
     """Print the versions of xclim and its dependencies.
 
     Parameters
     ----------
     file : {os.PathLike, StringIO, TextIO}, optional
-      If provided, prints to the given file-like object. Otherwise, returns a string.
+        If provided, prints to the given file-like object. Otherwise, returns a string.
+    main_version : dict
+        A dictionary with the name of the primary library and its version string as value, e.g. {"xclim"="1.0"}
+    deps : list
+        A list of dependencies to gather and print version information from.
 
     Returns
     -------
     str or None
     """
-    deps = [
-        ("xarray", lambda mod: mod.__version__),
-        ("sklearn", lambda mod: mod.__version__),
-        ("scipy", lambda mod: mod.__version__),
-        ("pint", lambda mod: mod.__version__),
-        ("pandas", lambda mod: mod.__version__),
-        ("numba", lambda mod: mod.__version__),
-        ("dask", lambda mod: mod.__version__),
-        ("cf_xarray", lambda mod: mod.__version__),
-        ("cftime", lambda mod: mod.__version__),
-        ("clisops", lambda mod: mod.__version__),
-        ("bottleneck", lambda mod: mod.__version__),
-        ("boltons", lambda mod: mod.__version__),
-    ]
+    if main_version == "xclim":
+        main_version = _xclim_version
+    if deps == "xclim":
+        deps = _xclim_deps
+
+    dependency_versions = [(d, lambda mod: mod.__version__) for d in deps]
 
     deps_blob = []
-    for (modname, ver_f) in deps:
+    for (modname, ver_f) in dependency_versions:
         try:
             if modname in sys.modules:
                 mod = sys.modules[modname]
@@ -471,18 +488,26 @@ def show_versions(file: os.PathLike | StringIO | TextIO | None = None) -> str | 
 
     modules_versions = "\n".join([f"{k}: {stat}" for k, stat in sorted(deps_blob)])
 
-    installed_versions = (
-        "\n"
-        "INSTALLED VERSIONS\n"
-        "------------------\n"
-        f"python: {platform.python_version()}\n"
-        f"xclim: {xclim_version}\n"
-        f"{modules_versions}\n"
-        f"Anaconda-based environment: {'yes' if Path(sys.base_prefix).joinpath('conda-meta').exists() else 'no'}"
+    installed_versions = [
+        "INSTALLED VERSIONS",
+        "------------------",
+        f"python: {platform.python_version()}",
+    ]
+
+    if main_version:
+        main = [f"{key}: {value}" for key, value in main_version.items()]
+        installed_versions.extend(main)
+
+    installed_versions.extend(
+        [
+            f"{modules_versions}",
+            f"Anaconda-based environment: {'yes' if Path(sys.base_prefix).joinpath('conda-meta').exists() else 'no'}",
+        ]
     )
+    message = "\n".join(installed_versions)
 
     if not file:
-        return installed_versions
+        return message
     if isinstance(file, (Path, os.PathLike)):
         file = Path(file).open("w")
-    print(installed_versions, file=file)
+    print(message, file=file)
