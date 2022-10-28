@@ -623,13 +623,13 @@
     "abstract": ""
   },
   "SEA_ICE_AREA": {
-    "long_name": "Surface de la banquise",
+    "long_name": "Somme des surfaces recouvertes de glace de mer là où sa concentration est d'au moins {thresh}",
     "description": "La somme des surfaces recouvertes de glace de mer là où sa concentration est d'au moins {thresh}.",
     "title": "Surface de la banquise",
     "abstract": "Mesure de surface totale des océans couverte de glace de mer."
   },
   "SEA_ICE_EXTENT": {
-    "long_name": "Étendue de banquise",
+    "long_name": "Aire totale de toutes les régions où la concentration de glace de mer est d'au moins {thresh}",
     "description": "L'aire totale de toutes les régions où la concentration de glace de mer est d'au moins {thresh}.",
     "title": "Étendue de la banquise",
     "abstract": "Mesure de l'étendue de toutes les régions où la concentration de glace de mer est au-dessus ou égale à un seuil donné."
