@@ -81,7 +81,10 @@ def test_time_bnds_irregular(typ):
     """Test time_bnds for irregular `middle of the month` time series."""
     if typ == "xr":
         start = xr.cftime_range("1990-01-01", periods=24, freq="MS")
-        end = xr.cftime_range("1990-01-01T23:59:59", periods=24, freq="M")
+        # Well. xarray string parsers do not support sub-second resolution, but cftime does.
+        end = xr.cftime_range(
+            "1990-01-01T23:59:59", periods=24, freq="M"
+        ) + pd.Timedelta(0.999999, "s")
     elif typ == "pd":
         start = pd.date_range("1990-01-01", periods=24, freq="MS")
         end = pd.date_range("1990-01-01 23:59:59.999999999", periods=24, freq="M")

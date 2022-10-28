@@ -766,7 +766,7 @@ def resample_doy(doy: xr.DataArray, arr: xr.DataArray | xr.Dataset) -> xr.DataAr
 
 def time_bnds(time, freq=None, precision=None):
     """
-    Find the time bounds for a pseudo-period index.
+    Find the time bounds for a datetime index.
 
     As we are using datetime indices to stand in for period indices, assumptions regarding the period
     are made based on the given freq.
@@ -814,26 +814,42 @@ def time_bnds(time, freq=None, precision=None):
         # When freq is a Offset
         freq = freq.freqstr
 
-    freq_is_start = parse_offset(freq)[2]
+    freq_base, freq_is_start = parse_offset(freq)[1:3]
+
+    # Normalizing without using `.normalize` because cftime doesn't have it
+    floor = {"hour": 0, "minute": 0, "second": 0, "microsecond": 0, "nanosecond": 0}
+    if freq_base in "HTSLUN":  # This is verbose, is there a better way?
+        floor.pop("hour")
+    if freq_base in "TSLUN":
+        floor.pop("minute")
+    if freq_base in "SLUN":
+        floor.pop("second")
+    if freq_base in "UN":
+        floor.pop("microsecond")
+    if freq_base in "N":
+        floor.pop("nanosecond")
 
     if isinstance(time, xr.CFTimeIndex):
         period = xr.coding.cftime_offsets.to_offset(freq)
-        is_on = period.onOffset(time[0])
+        is_on_offset = period.onOffset
         eps = pd.Timedelta(precision or "1U").to_pytimedelta()
         day = pd.Timedelta("1D").to_pytimedelta()
+        floor.pop("nanosecond")  # unsuported by cftime
     else:
         period = pd.tseries.frequencies.to_offset(freq)
-        is_on = period.is_on_offset(time[0])
+        is_on_offset = period.is_on_offset
         eps = pd.Timedelta(precision or "1N")
         day = pd.Timedelta("1D")
 
-    if not is_on:
-        if freq_is_start:
-            time_real = [period.rollback(t).normalize() for t in time]
-        else:
-            time_real = [period.rollforward(t).normalize() for t in time]
-    else:
-        time_real = time
+    def shift_time(t):
+        if not is_on_offset(t):
+            if freq_is_start:
+                t = period.rollback(t)
+            else:
+                t = period.rollforward(t)
+        return t.replace(**floor)
+
+    time_real = list(map(shift_time, time))
 
     cls = time.__class__
     if freq_is_start:
