@@ -611,13 +611,13 @@
     "abstract": ""
   },
   "DOY_QMAX": {
-    "long_name": "Jour de l'année du maximum du débit",
+    "long_name": "Jour de l'année du maximum du débit en {indexer:nom}",
     "description": "Jour de l'année du maximum du débit en {indexer:nom}.",
     "title": "Jour de l'année du maximum du débit",
     "abstract": ""
   },
   "DOY_QMIN": {
-    "long_name": "Jour de l'année du minimum du débit",
+    "long_name": "Jour de l'année du minimum du débit en {indexer:nom}",
     "description": "Jour de l'année du minimum du débit en {indexer:nom}.",
     "title": "Jour de l'année du minimum du débit",
     "abstract": ""

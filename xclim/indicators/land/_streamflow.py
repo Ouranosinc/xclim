@@ -83,12 +83,12 @@ freq_analysis = FA(
 )
 
 rb_flashiness_index = Streamflow(
-    title="Richards-Baker flashiness index",
+    title="Richards-Baker Flashiness Index",
     identifier="rb_flashiness_index",
     units="",
     var_name="rbi",
-    long_name="Richards-Baker flashiness index",
-    description="{freq} de R-B Index, an index measuring the flashiness of flow.",
+    long_name="Richards-Baker Flashiness Index",
+    description="{freq} of Richards-Baker Index, an index measuring the flashiness of flow.",
     abstract="Measurement of flow oscillations relative to average flow, "
     "quantifying the frequency and speed of flow changes.",
     compute=rb_flashiness_index,
@@ -110,7 +110,7 @@ fit = Fit(
     var_name="params",
     units="",
     standard_name="{dist} parameters",
-    long_name="Distribution parameters",
+    long_name="{dist} distribution parameters",
     description="Parameters of the {dist} distribution.",
     cell_methods="time: fit",
     compute=declare_units(da=None)(_fit),
@@ -121,7 +121,7 @@ doy_qmax = Streamflow(
     title="Day of year of the maximum streamflow",
     identifier="doy_qmax",
     var_name="q{indexer}_doy_qmax",
-    long_name="Day of the year of the maximum streamflow over time period",
+    long_name="Day of the year of the maximum streamflow over {indexer}",
     description="Day of the year of the maximum streamflow over {indexer}.",
     units="",
     compute=declare_units(da=None)(generic.select_resample_op),
@@ -133,7 +133,7 @@ doy_qmin = Streamflow(
     title="Day of year of the minimum streamflow",
     identifier="doy_qmin",
     var_name="q{indexer}_doy_qmin",
-    long_name="Day of the year of the minimum streamflow over time period",
+    long_name="Day of the year of the minimum streamflow over {indexer}",
     description="Day of the year of the minimum streamflow over {indexer}.",
     units="",
     compute=declare_units(da=None)(generic.select_resample_op),
