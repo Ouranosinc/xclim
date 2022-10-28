@@ -527,37 +527,37 @@
     "abstract": "Jour de l'année du début de la crue printanière, défini comme le premier jour où la température moyenne quotidienne est au-dessus d'un seuil donné depuis un certain nombre de jours consécutifs."
   },
   "FROST_SEASON_LENGTH": {
-    "long_name": "Durée de la saison de gel",
-    "description": "Nombre {freq:m} de jours entre la première occurrence d'au moins {window} jours consécutifs ayant une température minimale quotidienne inférieure au point de congélation et la première occurrence d'au moins {window} jours consécutifs ayant une température minimale quotidienne au-dessus ou égale au point de congélation après {mid_date}.",
+    "long_name": "Nombre de jours entre la première occurrence d'au moins {fenêtre} jours consécutifs avec une température minimale quotidienne en dessous de {thresh} et la première occurrence d'au moins {window} jours consécutifs ayant une température minimale quotidienne au-dessus ou égale à {thresh} après {mid_date}",
+    "description": "Nombre {freq:m} de jours entre la première occurrence d'au moins {window} jours consécutifs ayant une température minimale quotidienne sous {thresh} et la première occurrence d'au moins {window} jours consécutifs ayant une température minimale quotidienne au-dessus ou égale à {thresh} après {mid_date}.",
     "title": "Durée de la saison de gel",
     "abstract": "Durée de la saison de gel, définie comme la période pendant laquelle la température minimale quotidienne est inférieure à 0°C sans fenêtre de dégel de plusieurs jours, le dégel se produisant après une date du calendrier médiane."
   },
   "FROST_DAYS": {
-    "long_name": "Nombre de jours de gel",
+    "long_name": "Nombre de jours où la température minimale quotidienne est sous {thresh}",
     "description": "Nombre {freq:m} de jours où la température minimale quotidienne est sous {thresh}.",
     "title": "Nombre de jours de gel",
     "abstract": "Nombre de jours où la température minimale quotidienne est sous un seuil donné."
   },
   "ICE_DAYS": {
-    "long_name": "Nombre de jours de glace",
+    "long_name": "Nombre de jours où la température maximale quotidienne est sous {thresh}.",
     "description": "Nombre {freq:m} de jours où la température maximale quotidienne est sous {thresh}.",
     "title": "Nombre de jours de glace",
     "abstract": "Nombre de jours où la température maximale quotidienne est sous 0°C."
   },
   "CONSECUTIVE_FROST_DAYS": {
-    "long_name": "Nombre maximal de jours de gel consécutifs",
+    "long_name": "Nombre maximal de jours consécutifs où la température minimale quotidienne est en dessous de {thresh}",
     "description": "Durée maximale {freq:f} des périodes où la température minimale quotidienne est sous {thresh}.",
     "title": "Nombre maximal de jours de gel consécutifs",
     "abstract": "Durée maximale des périodes consécutives où la température minimale quotidienne est sous un seuil donné."
   },
   "FROST_FREE_SEASON_LENGTH": {
-    "long_name": "Durée de la saison sans gel",
-    "description": "Nombre {freq:m} de jours entre la première occurrence d'au moins {window} jours consécutifs ayant une température minimale quoditienne supérieure au point de congélation et la première occurrence d'au moins {window} jours consécutifs ayant une température minimale quotidienne inférieure au point de congélation après {mid_date}.",
+    "long_name": "Nombre de jours entre la première occurrence d'au moins {window} jours consécutifs ayant une température minimale quotidienne au-dessus ou égale à {thresh} et la première occurrence d'au moins {window} jours consécutifs ayant une température minimale quotidienne sous {thresh} après {mid_date}",
+    "description": "Nombre {freq:m} de jours entre la première occurrence d'au moins {window} jours consécutifs ayant une température minimale quotidienne au-dessus ou égale à {thresh} et la première occurrence d'au moins {window} jours consécutifs ayant une température minimale quotidienne sous {thresh} après {mid_date}.",
     "title": "Durée de la saison sans gel",
     "abstract": "Durée de la saison sans gel, définie comme la période pendant laquelle la température minimale quotidienne est au-dessus de 0°C sans fenêtre de gel de plusieurs jours, le gel se produisant après une date du calendrier médiane."
   },
   "FROST_FREE_SEASON_START": {
-    "long_name": "Premier jour ayant un dépassement constant du seuil de température",
+    "long_name": "Premier jour suivant une période de {window} jours ayant une température minimale quotidienne au-dessus ou égale à {thresh}",
     "description": "Jour de l'année du début de la saison sans gel, défini comme le {window}e jour consécutif où la température minimale quotidienne est au-dessus {thresh}.",
     "title": "Jour de l'année du début de la saison sans gel",
     "abstract": "Premier jour où la température minimale quotidienne est au-dessus un seuil donné depuis un certain nombre de jours consécutifs."
@@ -566,11 +566,11 @@
     "long_name": "Durée de la saison de croissance",
     "description": "Nombre {freq:m} de jours entre la première occurrence d'au moins {window} jours consécutifs où la température moyenne quotidienne dépasse {thresh} et la première occurrence d'au moins {window} jours consécutifs où la température est sous {thresh} après le {mid_date}.",
     "title": "Durée de la saison de croissance",
-    "abstract": "Nombre de jours entre la première occurrence d'une série de jours avec une température moyenne quotidienne au-dessus d'un seuil et la première occurrence d'une série de jours avec une température moyenne quotidienne sous ce même seuil, survenant après une date de calendrier donnée."
+    "abstract": "Nombre de jours entre la première occurrence d'une série de jours ayant une température moyenne quotidienne au-dessus d'un seuil et la première occurrence d'une série de jours avec une température moyenne quotidienne sous ce même seuil, survenant après une date de calendrier donnée."
   },
   "GROWING_SEASON_START": {
-    "long_name": "Premier jour ayant un dépassement constant du seuil de température",
-    "description": "Jour de l’année marquant le début de la saison de croissance, défini comme le premier jour de la première série de {window} jours ayant une température au-dessus ou égale à {thresh}",
+    "long_name": "Premier jour de la première série de {window} jours dont la température moyenne quotidienne est égale ou au-dessus de {thresh}",
+    "description": "Jour de l’année marquant le début de la saison de croissance, défini comme le premier jour de la première série de {window} jours ayant une température moyenne quotidienne au-dessus ou égale à {thresh}",
     "title": "Jour de l'année du début de la saison de croissance",
     "abstract": "Premier jour où la température moyenne quotidienne est au-dessus d'un seuil donné depuis un certain nombre de jours consécutifs."
   },
@@ -647,7 +647,7 @@
     "abstract": "Nombre de périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne est au-dessus d'un seuil spécifique durant un minimum de jours donné."
   },
   "LAST_SPRING_FROST": {
-    "long_name": "Jour de l'année du dernier gel printanier",
+    "long_name": "Dernier jour de température minimale quotidienne en dessous d'un seuil de {thresh} pendant au moins {window} jours avant une date donnée ({before_date})",
     "description": "Jour de l'année du dernier gel printanier, défini comme le dernier jour où la température minimale quotidienne reste sous {thresh} durant au moins {window} jours avant une certaine date ({before_date}).",
     "title": "Jour de l'année du dernier gel printanier",
     "abstract": "Dernier jour où la température minimale quotidienne reste sous un seuil donné durant un certain nombre de jours, limité par une date de calendrier finale."
@@ -659,7 +659,7 @@
     "abstract": "Longueur maximale des périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne est au-dessus d'un seuil spécifique durant un minimum de jours."
   },
   "CONSECUTIVE_FROST_FREE_DAYS": {
-    "long_name": "Nombre maximal de jours consécutifs ayant une température minimale supérieure à 0°C",
+    "long_name": "Nombre maximal de jours consécutifs ayant une température minimale au-dessus ou égale à {thresh}",
     "description": "Nombre maximal {freq:m} de jours consécutifs où la température minimale quotidienne est au-dessus ou égale à {thresh}.",
     "title": "Nombre maximal de jours consécutifs sans gel",
     "abstract": "Nombre maximal de jours consécutifs sans gel où la température minimale quotidienne est au-dessus ou égale à 0°C."
@@ -671,8 +671,8 @@
     "abstract": "Le premier jour où la température moyenne quotidienne est sous un seuil donné pendant un certain nombre de jours consécutifs après une date de calendrier donnée."
   },
   "FROST_FREE_SEASON_END": {
-    "long_name": "Jour de l'année de la fin de la saison sans gel",
-    "description": "Jour de l'année de la fin de la saison sans gel. La saison sans gel est définie comme l'intervalle entre la première série de {window} jours où la température minimale quotidienne est sous {thresh} et la première série (après le {mid_date}) de {window} jours où elle est sous {thresh}.",
+    "long_name": "Premier jour, après {mid_date}, suivant une période de {window} jours ayant une température minimale quotidienne sous {thresh}",
+    "description": "Jour de l'année de la fin de la saison sans gel. La saison sans gel est définie comme l'intervalle entre la première série de {window} jours où la température minimale quotidienne est au-dessus ou égale à {thresh} et la première série (après le {mid_date}) de {window} jours où elle est sous {thresh}.",
     "title": "Fin de la saison sans gel",
     "abstract": "Premier jour où la température minimale quotidienne est sous un seuil donné depuis un certain nombre de jours consécutifs."
   },
@@ -766,20 +766,20 @@
     "abstract": "Calcule le premier jour d'une période où la température moyenne quotidienne est sous un seuil donné pendant un nombre de jours, après une date de calendrier donnée."
   },
   "FIRST_DAY_TG_BELOW": {
-    "long_name": "Premier jour de l'année avec une température moyenne quotidienne sous {thresh}",
-    "description": "Premier jour de l'année avec une température moyenne quotidienne sous {thresh} pour au moins {window} jours.",
+    "long_name": "Premier jour de l'année avec une température moyenne quotidienne sous {thresh} durant au moins {window} jours",
+    "description": "Premier jour de l'année avec une température moyenne quotidienne sous {thresh} durant au moins {window} jours.",
     "title": "Premier jour de l'année de températures moyennes quotidiennes sous un seuil",
     "abstract": "Calcule le premier jour d'une période où la température moyenne quotidienne est plus basse qu'un certain seuil durant un nombre de jours donné, limité par une date minimale."
   },
   "FIRST_DAY_TN_BELOW": {
-    "long_name": "Premier jour de l'année avec une température minimale quotidienne sous {thresh}",
-    "description": "Premier jour de l'année avec une température minimale quotidienne sous {thresh} pour au moins {window} jours.",
+    "long_name": "Premier jour de l'année avec une température minimale quotidienne sous {thresh} durant au moins {window} jours",
+    "description": "Premier jour de l'année avec une température minimale quotidienne sous {thresh} durant au moins {window} jours.",
     "title": "Premier jour de l'année de températures minimales quotidiennes sous un seuil",
     "abstract": "Calcule le premier jour d'une période où la température minimale quotidienne est plus basse qu'un certain seuil durant un nombre de jours donné, limité par une date minimale."
   },
   "FIRST_DAY_TX_BELOW": {
-    "long_name": "Premier jour de l'année avec une température maximale quotidienne sous {thresh}",
-    "description": "Premier jour de l'année avec une température maximale quotidienne sous {thresh} pour au moins {window} jours.",
+    "long_name": "Premier jour de l'année avec une température maximale quotidienne sous {thresh} durant au moins {window} jours",
+    "description": "Premier jour de l'année avec une température maximale quotidienne sous {thresh} durant au moins {window} jours.",
     "title": "Premier jour de l'année de températures maximales quotidiennes sous un seuil",
     "abstract": "Calcule le premier jour d'une période où la température maximale quotidienne est plus basse qu'un certain seuil durant un nombre de jours donné, limité par une date minimale."
   },
@@ -790,20 +790,20 @@
     "abstract": "Calcule le premier jour d'une période où la température quotidienne est au-dessus d'un seuil donné pendant un nombre de jours, après une date de calendrier donnée."
   },
   "FIRST_DAY_TG_ABOVE": {
-    "long_name": "Premier jour de l'année avec une température moyenne quotidienne au-dessus de {thresh}",
-    "description": "Premier jour de l'année avec une température moyenne quotidienne au-dessus de {thresh} pour au moins {window} jours.",
+    "long_name": "Premier jour de l'année avec une température moyenne quotidienne au-dessus de {thresh} durant au moins {window} jours",
+    "description": "Premier jour de l'année avec une température moyenne quotidienne au-dessus de {thresh} durant au moins {window} jours.",
     "title": "Premier jour de l'année de températures moyennes quotidiennes au-dessus d'un seuil",
     "abstract": "Calcule le premier jour d'une période où la température moyenne quotidienne est plus élevée qu'un certain seuil durant un nombre de jours donné, limité par une date minimale."
   },
   "FIRST_DAY_TN_ABOVE": {
-    "long_name": "Premier jour de l'année avec une température minimale quotidienne au-dessus de {thresh}",
-    "description": "Premier jour de l'année avec une température minimale quotidienne au-dessus de {thresh} pour au moins {window} jours.",
+    "long_name": "Premier jour de l'année avec une température minimale quotidienne au-dessus de {thresh} durant au moins {window} jours",
+    "description": "Premier jour de l'année avec une température minimale quotidienne au-dessus de {thresh} durant au moins {window} jours.",
     "title": "Premier jour de l'année de températures minimales quotidiennes au-dessus d'un seuil",
     "abstract": "Calcule le premier jour d'une période où la température minimale quotidienne est plus élevée qu'un certain seuil durant un nombre de jours donné, limité par une date minimale."
   },
   "FIRST_DAY_TX_ABOVE": {
-    "long_name": "Premier jour de l'année avec une température maximale quotidienne au-dessus de {thresh}",
-    "description": "Premier jour de l'année avec une température maximale quotidienne au-dessus de {thresh} pour au moins {window} jours.",
+    "long_name": "Premier jour de l'année avec une température maximale quotidienne au-dessus de {thresh} durant au moins {window} jours",
+    "description": "Premier jour de l'année avec une température maximale quotidienne au-dessus de {thresh} durant au moins {window} jours.",
     "title": "Premier jour de l'année de températures maximales quotidiennes au-dessus d'un seuil",
     "abstract": "Calcule le premier jour d'une période où la température maximale quotidienne est plus élevée qu'un certain seuil durant un nombre de jours donné, limité par une date minimale."
   },

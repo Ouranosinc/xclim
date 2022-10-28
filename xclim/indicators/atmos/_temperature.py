@@ -690,9 +690,9 @@ frost_days = TempWithIndexing(
     identifier="frost_days",
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
-    long_name="Number of frost days",
+    long_name="Number of days where the daily minimum temperature is below {thresh}",
     description="{freq} number of days where the daily minimum temperature is below {thresh}.",
-    abstract="Number of days where the daily minimum temperature is below a given threshold",
+    abstract="Number of days where the daily minimum temperature is below a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.frost_days,
 )
@@ -702,12 +702,14 @@ frost_season_length = Temp(
     identifier="frost_season_length",
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
-    long_name="Length of the frost season",
+    long_name="Number of days between the first occurrence of at least {window} consecutive days with "
+    "minimum daily temperature below {thresh} and the first occurrence of at least {window} consecutive days with "
+    "minimum daily temperature at or above {thresh} after {mid_date}",
     description="{freq} number of days between the first occurrence of at least {window} consecutive days with "
-    "minimum daily temperature below freezing and the first occurrence of at least {window} consecutive days with "
-    "minimum daily temperature above freezing after {mid_date}.",
+    "minimum daily temperature below {thresh} and the first occurrence of at least {window} consecutive days with "
+    "minimum daily temperature at or above {thresh} after {mid_date}.",
     abstract="Duration of the freezing season, defined as the period when the daily minimum temperature is below 0°C "
-    "without a thawing window of days, with the thaw occurring after a median calendar date",
+    "without a thawing window of days, with the thaw occurring after a median calendar date.",
     cell_methods="time: sum over days",
     compute=indices.frost_season_length,
     parameters={"thresh": {"default": "0 degC"}},
@@ -718,7 +720,8 @@ last_spring_frost = Temp(
     identifier="last_spring_frost",
     units="",
     standard_name="day_of_year",
-    long_name="Day of year of last spring frost",
+    long_name="Last day of minimum daily temperature below a threshold of {thresh} "
+    "for at least {window} days before a given date ({before_date})",
     description="Day of year of last spring frost, defined as the last day a minimum temperature "
     "remains below a threshold of {thresh} for at least {window} days before a given date ({before_date}).",
     abstract="The last day when temperature is below a given threshold for a certain number of days, "
@@ -748,7 +751,7 @@ first_day_tn_below = Temp(
     identifier="first_day_tn_below",
     units="",
     standard_name="day_of_year",
-    long_name="First day of year with minimum temperature below {thresh}",
+    long_name="First day of year with a period of at least {window} days of minimum temperature below {thresh}",
     description="First day of year with minimum temperature below {thresh} for at least {window} days.",
     compute=indices.first_day_temperature_below,
     input=dict(tas="tasmin"),
@@ -763,7 +766,7 @@ first_day_tg_below = Temp(
     identifier="first_day_tg_below",
     units="",
     standard_name="day_of_year",
-    long_name="First day of year with mean temperature below {thresh}",
+    long_name="First day of year with a period of at least {window} days of mean temperature below {thresh}",
     description="First day of year with mean temperature below {thresh} for at least {window} days.",
     compute=indices.first_day_temperature_below,
     parameters=dict(
@@ -777,7 +780,7 @@ first_day_tx_below = Temp(
     identifier="first_day_tx_below",
     units="",
     standard_name="day_of_year",
-    long_name="First day of year with maximum temperature below {thresh}",
+    long_name="First day of year with a period of at least {window} days of maximum temperature below {thresh}",
     description="First day of year with maximum temperature below {thresh} for at least {window} days.",
     compute=indices.first_day_temperature_below,
     input=dict(tas="tasmax"),
@@ -808,7 +811,7 @@ first_day_tn_above = Temp(
     identifier="first_day_tn_above",
     units="",
     standard_name="day_of_year",
-    long_name="First day of year with minimum temperature above {thresh}",
+    long_name="First day of year with a period of at least {window} days of minimum temperature above {thresh}",
     description="First day of year with minimum temperature above {thresh} for at least {window} days.",
     compute=indices.first_day_temperature_above,
     input=dict(tas="tasmin"),
@@ -824,7 +827,7 @@ first_day_tg_above = Temp(
     identifier="first_day_tg_above",
     units="",
     standard_name="day_of_year",
-    long_name="First day of year with mean temperature above {thresh}",
+    long_name="First day of year with a period of at least {window} days of mean temperature above {thresh}",
     description="First day of year with mean temperature above {thresh} for at least {window} days.",
     compute=indices.first_day_temperature_above,
     parameters=dict(
@@ -838,7 +841,7 @@ first_day_tx_above = Temp(
     identifier="first_day_tx_above",
     units="",
     standard_name="day_of_year",
-    long_name="First day of year with maximum temperature above {thresh}",
+    long_name="First day of year with a period of at least {window} days of maximum temperature above {thresh}",
     description="First day of year with maximum temperature above {thresh} for at least {window} days.",
     compute=indices.first_day_temperature_above,
     input=dict(tas="tasmax"),
@@ -854,7 +857,7 @@ ice_days = TempWithIndexing(
     identifier="ice_days",
     standard_name="days_with_air_temperature_below_threshold",
     units="days",
-    long_name="Number of ice days",
+    long_name="Number of days with maximum daily temperature below {thresh}",
     description="{freq} number of days where the maximum daily temperature is below {thresh}.",
     abstract="Number of days where the daily maximum temperature is below 0°C",
     cell_methods="time: sum over days",
@@ -866,7 +869,7 @@ consecutive_frost_days = Temp(
     identifier="consecutive_frost_days",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_below_threshold",
-    long_name="Maximum number of consecutive frost days",
+    long_name="Maximum number of consecutive days where minimum daily temperature is below {thresh}",
     description="{freq} maximum number of consecutive days where minimum daily temperature is below {thresh}.",
     abstract="Maximum number of consecutive days where the daily minimum temperature is below 0°C",
     cell_methods="time: maximum over days",
@@ -879,12 +882,14 @@ frost_free_season_length = Temp(
     identifier="frost_free_season_length",
     units="days",
     standard_name="days_with_air_temperature_above_threshold",
-    long_name="Length of the frost free season",
+    long_name="Number of days between the first occurrence of at least {window} consecutive days "
+    "with minimum daily temperature at or above {thresh} and the first occurrence of at least "
+    "{window} consecutive days with minimum daily temperature below {thresh} after {mid_date}",
     description="{freq} number of days between the first occurrence of at least {window} consecutive days "
-    "with minimum daily temperature above or at the freezing point and the first occurrence of at least "
-    "{window} consecutive days with minimum daily temperature below freezing after {mid_date}.",
-    abstract="Duration of the frost free season, defined as the period when the daily minimum temperature is above 0°C "
-    "without a freezing window of days, with freezing occurring after a median calendar date.",
+    "with minimum daily temperature at or above {thresh} and the first occurrence of at least "
+    "{window} consecutive days with minimum daily temperature below {thresh} after {mid_date}.",
+    abstract="Duration of the frost free season, defined as the period when the minimum daily temperature is above 0°C "
+    "without a freezing window of `N` days, with freezing occurring after a median calendar date.",
     cell_methods="time: sum over days",
     compute=indices.frost_free_season_length,
     parameters={"thresh": {"default": "0 degC"}},
@@ -895,10 +900,10 @@ frost_free_season_start = Temp(
     identifier="frost_free_season_start",
     units="",
     standard_name="day_of_year",
-    long_name="Day of year of frost free season start",
+    long_name="First day following a period of {window} days with minimum daily temperature at or above {thresh}",
     description="Day of the year of the beginning of the frost-free season, defined as the {window}th consecutive day "
-    "when the temperature exceeds {thresh}.",
-    abstract="First day when the temperature exceeds a given threshold for a given number of consecutive days",
+    "when minimum daily temperature exceeds {thresh}.",
+    abstract="First day when minimum daily temperature exceeds a given threshold for a given number of consecutive days",
     compute=indices.frost_free_season_start,
     parameters={"thresh": {"default": "0 degC"}},
 )
@@ -908,10 +913,11 @@ frost_free_season_end = Temp(
     identifier="frost_free_season_end",
     units="",
     standard_name="day_of_year",
-    long_name="Day of year of frost free season end",
+    long_name="First day, after {mid_date}, following a period of {window} days "
+    "with minimum daily temperature below {thresh}",
     description="Day of the year of the end of the frost-free season, defined as the interval between the first set of "
-    "{window} days when the daily temperature is above {thresh} and the first set (after {mid_date}) of {window} days "
-    "when it is below {thresh}.",
+    "{window} days when the minimum daily temperature is at or above {thresh} "
+    "and the first set (after {mid_date}) of {window} days when it is below {thresh}.",
     abstract="First day when the temperature is below a given threshold for a given number of consecutive days after "
     "a median calendar date.",
     cell_methods="",
@@ -925,8 +931,8 @@ maximum_consecutive_frost_free_days = Temp(
     identifier="consecutive_frost_free_days",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
-    long_name="Maximum number of consecutive days with Tmin at or above 0°C",
-    description="{freq} maximum number of consecutive days with minimum daily temperature above or equal to {thresh}.",
+    long_name="Maximum number of consecutive days with minimum temperature at or above {thresh}",
+    description="{freq} maximum number of consecutive days with minimum daily temperature at or above {thresh}.",
     abstract="Maximum number of consecutive frost-free days: where the daily minimum temperature is above "
     "or equal to 0°C",
     cell_methods="time: maximum over days",
@@ -939,9 +945,9 @@ growing_season_start = Temp(
     identifier="growing_season_start",
     units="",
     standard_name="day_of_year",
-    long_name="Day of year of growing season start",
+    long_name="First day of the first series of {window} days with mean daily temperature above or equal to {thresh}",
     description="Day of the year marking the beginning of the growing season, defined as the first day of the first "
-    "series of {window} days with a temperature above or equal to {thresh}.",
+    "series of {window} days with mean daily temperature above or equal to {thresh}.",
     abstract="The first day when the temperature exceeds a certain threshold for a given number of consecutive days.",
     cell_methods="",
     compute=indices.growing_season_start,
