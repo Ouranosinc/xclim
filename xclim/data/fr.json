@@ -145,7 +145,7 @@
     ]
   },
   "RAIN_FRZGR": {
-    "long_name": "Nombre de jours de pluie sur sol gelé (température > 0℃ and précipitation > {thresh})",
+    "long_name": "Nombre de jours de pluie sur sol gelé (température > 0℃ et précipitation > {thresh})",
     "description": "Nombre {freq:m} de jours avec plus de {thresh} de pluie suivant sept (7) jours consécutifs où la température était sous 0°C. Les précipitations sont considérées comme de la pluie lorsque la température moyenne est au-dessus de 0°C.",
     "title": "Nombre de jours de pluie sur sol gelé",
     "abstract": "Nombre de jours avec pluie au-dessus d'un seuil donné après sept (7) jours consécutifs où la température était sous 0°C. Les précipitations sont considérées comme de la pluie lorsque la température moyenne est au-dessus de 0°C."
@@ -163,46 +163,46 @@
     "abstract": "Maximum de la somme mobile des précipitations quotidiennes pour une période donnée."
   },
   "MAX_PR_INTENSITY": {
-    "long_name": "Intensité maximale de précipitation horaire durant une fenêtre mobile temporelle",
+    "long_name": "Intensité maximale de précipitation horaire durant une fenêtre mobile temporelle de {window} h",
     "description": "Intensité maximale {freq:f} de précipitation horaire durant une fenêtre mobile de {window} h.",
     "title": "Intensité maximale de précipitation horaire durant une fenêtre mobile temporelle donnée",
     "keywords": "courbes IDF",
     "abstract": "Maximum de l'intensité de précipitation horaire durant une fenêtre mobile temporelle donnée."
   },
   "RPRCTOT": {
-    "long_name": "Proportion convective de la précipitation totale",
+    "long_name": "Proportion convective de la précipitation totale pour les jours avec une précipitation d'au moins {thresh}",
     "description": "Proportion de la précipitation totale {freq:f} due à la précipitation convective pour les jours avec une précipitation d'au moins {thresh}.",
     "title": "Proportion convective de la précipitation totale.",
     "abstract": "Proportion de la précipitation totale due aux processus de convections. Seuls les jours avec un flux minimum de précipitation sont considérés."
   },
   "WETDAYS": {
-    "long_name": "Nombre de jours avec précipitation",
+    "long_name": "Nombre de jours où la précipitation est au-dessus ou égale à {thresh}",
     "description": "Nombre {freq:m} de jours où la précipitation est au-dessus ou égale à {thresh}.",
     "title": "Jours mouillés",
     "abstract": "Nombre de jours où la précipitation est au-dessus ou égale à un seuil donné."
   },
   "WETDAYS_PROP": {
-    "long_name": "Proportion de jours avec précipitation",
+    "long_name": "Proportion de jours où les précipitations sont au-dessus ou égale à {thresh}",
     "description": "Proportion {freq:m} de jours où les précipitations sont au-dessus ou égale à {thresh}.",
     "title": "Proportion de jours avec précipitation",
     "abstract": "Proportion de jours où la précipitation est au-dessus ou égale à un seuil donné."
   },
   "CDD": {
-    "long_name": "Durée maximale d'une période sèche",
+    "long_name": "Durée maximale d'une période où la précipitation est sous {thresh}",
     "description": "Nombre {freq:m} maximal de jours consécutifs où la précipitation est sous {thresh}.",
     "title": "Nombre maximal de jours secs consécutifs",
     "abstract": "Période la plus longue où la précipitation est sous un seuil donné."
   },
   "CWD": {
-    "long_name": "Durée maximale d'une période pluvieuse",
+    "long_name": "Durée maximale d'une période où les précipitations sont au-dessus de {thresh}",
     "description": "Nombre {freq:m} maximal de jours consécutifs où les précipitations sont au-dessus de {thresh}.",
     "title": "Durée de période pluvieuse",
     "abstract": "Période la plus longue où la précipitation est au-dessus d'un seuil donné."
   },
   "SDII": {
-    "long_name": "Indice simple de l'intensité des précipitations (SDII)",
+    "long_name": "Moyenne de la précipitation quotidienne pour les jours où la précipitation est au-dessus de {thresh}. [Indice simple de l'intensité des précipitations: SDII]",
     "description": "Indice simple d'intensité des précipitations {freq:m} [SDII]. Moyenne {freq:f} de la précipitation quotidienne pour les jours où la précipitation est au-dessus de {thresh}.",
-    "title": "Indice simple de l'intensité des précipitations (SDII)",
+    "title": "Indice simple de l'intensité des précipitations [SDII]",
     "abstract": "Moyenne de la précipitation quotidienne pour les jours où la précipitation est au-dessus d'un seuil donné."
   },
   "PRCPTOT": {
@@ -212,22 +212,22 @@
     "abstract": "Précipitation accumulée totale. Si la température quotidienne moyenne est donnée, le paramètre phase peut-être utilisé pour restreindre le calcul aux précipitations d'une seule phase (liquide ou solide). Les précipitations sont considérées solides si la température quotidienne moyenne est sous 0°C (et vice-versa)."
   },
   "WET_PRCPTOT": {
-    "long_name": "Précipitation totale lors de jours avec précipitation",
+    "long_name": "Précipitation totale lors de jours avec précipitation au-dessus de {thresh}",
     "description": "Précipitation totale {freq:f} lorsque la précipitation quotidienne est au-dessus de {thresh}.",
     "title": "Précipitation accumulée totale lors de jours avec précipitation",
     "abstract": "Précipitation accumulée totale lors de jours avec précipitation. Un jour est considéré avec précipitation si la précipitation est au-dessus ou égale à un seuil donné."
   },
   "LIQUIDPRCPTOT": {
-    "long_name": "Précipitation liquide totale",
+    "long_name": "Précipitation totale lorsque la température moyenne est au-dessus de {thresh}",
     "description": "Précipitation liquide totale {freq:f}, estimée comme la précipitation lorsque la température moyenne est au-dessus de {thresh}.",
     "title": "Précipitation liquide accumulée totale",
     "abstract": "Précipitation liquide accumulée totale. Les précipitations sont considérées liquides lorsque la température quotidienne moyenne est au-dessus de 0°C."
   },
   "SOLIDPRCPTOT": {
-    "long_name": "Précipitation solide totale",
-    "description": "Précipitation solide totale {freq:f}, estimée comme la précipitation lorsque la température moyenne est en dessous de {thresh}.",
+    "long_name": "Précipitation totale lorsque la température moyenne est sous ou égale à {thresh}",
+    "description": "Précipitation solide totale {freq:f}, estimée comme la précipitation lorsque la température moyenne est sous ou égale à {thresh}.",
     "title": "Précipitation solide accumulée totale",
-    "abstract": "Précipitation solide accumulée totale. La précipitation est considéré solide lorsque la température quotidienne moyenne est sous 0°C."
+    "abstract": "Précipitation solide accumulée totale. La précipitation est considéré solide lorsque la température quotidienne moyenne est sous ou égale à 0°C."
   },
   "SPI": {
     "long_name": "Indice de précipitation standardisé (SPI)",
@@ -237,7 +237,7 @@
   },
   "SPEI": {
     "long_name": "Indice de précipitation évapotranspiration standardisé (SPEI)",
-    "description": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile de {window} {freq:nom}, normalisé tel que la moyenne du SPEI est 0 pour les données de calibration. L'unité de la fenêtre `X` est l'unité de temps determinée par la fréquence de rééchantillonnage {freq:f}.",
+    "description": "Budget d'eau (précipitation moins évapotranspiration) sur une fenêtre mobile de {window} {freq:nom}, normalisé tel que la moyenne du SPEI est 0 pour les données de calibration. L'unité de la fenêtre `X` est l'unité de temps determinée par la fréquence de rééchantillonnage {freq:f}.",
     "title": "Indice de précipitation évapotranspiration standardisé (SPEI)",
     "abstract": "Budget d'eau (précipitation - évapotranspiration) sur une fenêtre mobile, normalisé tel que la moyenne du SPEI est 0 pour les données de calibration. L'unité de la fenêtre est l'unité de temps déterminée par la fréquence de rééchantillonnage."
   },
@@ -832,19 +832,19 @@
     "abstract": "Précipitation liquide estimée à partir de la précipitation totale et de la température selon une méthode et un seuil de température donnés."
   },
   "LAST_SNOWFALL": {
-    "long_name": "Date de la dernière chute de neige",
+    "long_name": "Date du dernier jour où la précipitation solide est au-dessus de {thresh}",
     "description": "Dernier jour {freq:m} où la précipitation solide est au-dessus de {thresh}.",
     "title": "Dernier jour avec une précipitation solide au-dessus d'un seuil donné",
     "abstract": "Dernier jour d'une période où la précipitation solide est au-dessus d'un seuil donné."
   },
   "FIRST_SNOWFALL": {
-    "long_name": "Date de la première chute de neige",
+    "long_name": "Date du premier jour où la précipitation solide est au-dessus de {thresh}",
     "description": "Premier jour {freq:m} où la précipitation solide est au-dessus de {thresh}.",
     "title": "Premier jour avec une précipitation solide au-dessus d'un seuil donné",
     "abstract": "Premier jour d'une période où la précipitation solide est au-dessus d'un seuil donné."
   },
   "DAYS_WITH_SNOW": {
-    "long_name": "Nombre de jours où la précipitation solide se trouve entre une borne inférieure et supérieure.",
+    "long_name": "Nombre de jours où la précipitation solide se trouve entre une borne de {low} et {high}",
     "description": "Nombre {freq:m} de jours où la précipitation solide est plus grande que {low} et plus petite ou égale à {high}.",
     "title": "Jours avec neige",
     "abstract": "Nombre de jours où la neige est entre une borne inférieure et supérieure."
@@ -910,40 +910,40 @@
     "abstract": "Nombre de jours où l'accumulation de neige est au-dessus ou égale à un seuil donné."
   },
   "HIGH_PRECIP_LOW_TEMP": {
-    "long_name": "Jours avec des précipitations au dessus d'un seuil et des températures sous un seuil",
+    "long_name": "Jours avec des précipitations au dessus de {pr_thresh} et des températures sous {tas_thresh}",
     "description": "Nombre {freq:m} de jours avec précipitation plus grande ou égale à {pr_thresh} et température inférieure à {tas_thresh}.",
     "title": "Jours avec précipitations et températures froides",
     "abstract": "Nombre de jours avec précipitation au-dessus d'un seuil et températures sous un seuil donné."
   },
   "DAYS_OVER_PRECIP_THRESH": {
+    "long_name": "Nombre de jours avec précipitation où la précipitation est au-dessus du {pr_per_thresh}e centile calculé sur la période {pr_per_period}.",
     "title": "Nombre de jours avec précipitation où la précipitation est au-dessus d'un centile donné",
     "abstract": "Nombre de jours d'une période où la précipitation est au-dessus d'un centile donné, calculé sur une période donnée et un seuil fixe.",
-    "description": "Nombre {freq:m} de jours où la précipitation est au-dessus du {pr_per_thresh}e centile calculé sur la période {pr_per_period}. Seuls les jours avec au moins {thresh} sont comptés.",
-    "long_name": "Nombre de jours avec un flux de précipitations supérieur au seuil de base."
+    "description": "Nombre {freq:m} de jours où la précipitation est au-dessus du {pr_per_thresh}e centile calculé sur la période {pr_per_period}. Seuls les jours avec au moins {thresh} sont comptés."
   },
   "DAYS_OVER_PRECIP_DOY_THRESH": {
+    "long_name": "Nombre de jours avec précipitation quotidien où la précipitation est au-dessus du {pr_per_thresh}e centile calculé sur la période {pr_per_period}",
     "title": "Nombre de jours avec précipitation où la précipitation est au-dessus d'un centile quotidien donné",
     "abstract": "Nombre de jours d'une période où la précipitation est au-dessus d'un centile quotidien donné et d'un seuil fixe.",
-    "description": "Nombre {freq:m} de jours où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien. Seuls les jours avec au moins {thresh} sont comptés. Le {pr_per_thresh}e centile est calculé sur une fenêtre glissante de {pr_per_window} jour(s) de la période {pr_per_period}.",
-    "long_name": "Nombre de jours avec précipitation où la précipitation est au-dessus d'un centile quotidien donné"
+    "description": "Nombre {freq:m} de jours où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien. Seuls les jours avec au moins {thresh} sont comptés. Le {pr_per_thresh}e centile est calculé sur une fenêtre glissante de {pr_per_window} jour(s) de la période {pr_per_period}."
   },
   "FRACTION_OVER_PRECIP_THRESH": {
+    "long_name": "Fraction des jours avec précipitation où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien",
     "title": "Fraction des jours avec précipitation où la précipitation est au-dessus d'un centile quotidien.",
     "abstract": "Fraction des jours avec précipitation d'une période où la précipitation est au-dessus d'un centile quotidien. La référence est le nombre de jours où la précipitation est au-dessus d'un seuil fixe.",
-    "description": "Fraction {freq:f} des jours avec précipitation où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien. La référence est le nombre jours où la précipitation est au-dessus d'un seuil fixe.",
-    "long_name": "Fraction des jours avec précipitation où la précipitation est au-dessus d'un centile quotidien."
+    "description": "Fraction {freq:f} des jours avec précipitation où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien. La référence est le nombre jours où la précipitation est au-dessus d'un seuil fixe."
   },
   "FRACTION_OVER_PRECIP_DOY_THRESH": {
+    "long_name": "Fraction de jours avec précipitation où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien",
     "title": "Fraction de jours avec précipitation où la précipitation est au-dessus d'un centile quotidien",
-    "abstract": "Fraction de jours d'une période où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien et d'un seuil fixe.",
-    "description": "Fraction {freq:m} de jours où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien. Seuls les jours avec au moins {thresh} sont comptés. Le {pr_per_thresh}e centile est calculé sur une fenêtre glissante de {pr_per_window} jour(s) de la période {pr_per_period}.",
-    "long_name": "Fraction de jours avec précipitation où la précipitation est au-dessus d'un centile quotidien"
+    "abstract": "Fraction de jours d'une période où la précipitation quotidien est au-dessus du {pr_per_thresh}e centile quotidien et d'un seuil fixe.",
+    "description": "Fraction {freq:m} de jours où la précipitation est au-dessus du {pr_per_thresh}e centile quotidien. Seuls les jours avec au moins {thresh} sont comptés. Le {pr_per_thresh}e centile est calculé sur une fenêtre glissante de {pr_per_window} jour(s) de la période {pr_per_period}."
   },
   "LIQUID_PRECIP_RATIO": {
+    "long_name": "Fraction liquide de la précipitation totale (température au-dessus de {thresh})",
     "title": "Fraction liquide de la précipitation totale",
     "abstract": "Le ratio entre la précipitation liquide et la précipitation totale. La précipitation liquide est approximée par la précipitation lorsque la température est au-dessus d'un seuil donné.",
-    "description": "Le ratio {freq:m} entre la précipitation liquide et la précipitation totale. La précipitation liquide est approximée par la précipitation lorsque la température est au-dessus de {thresh}.",
-    "long_name": "Fraction liquide de la précipitation totale"
+    "description": "Le ratio {freq:m} entre la précipitation liquide et la précipitation totale. La précipitation liquide est approximée par la précipitation lorsque la température est au-dessus de {thresh}."
   },
   "WARM_SPELL_DURATION_INDEX": {
     "title": "Indice de durée des vagues de chaleur",
@@ -1027,37 +1027,37 @@
     "title": "Fréquence des périodes sèches",
     "abstract": "Fréquence des périodes sèches d'une durée minimale donnée, pendant lesquelles les précipitations accumulées ou maximales sur une fenêtre de jours donnée sont inférieures à un seuil donné.",
     "description": "Fréquence {freq:f} des périodes sèches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}.",
-    "long_name": "Fréquence des périodes sèches"
+    "long_name": "Fréquence des périodes sèches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}"
   },
   "DRY_SPELL_TOTAL_LENGTH": {
     "title": "Durée totale en jours des périodes sèches",
     "abstract": "Durée totale en jours des périodes sèches d'une durée minimale donnée, pendant lesquelles les précipitations accumulées ou maximales sur une fenêtre de jours donné sont inférieures à un seuil donné.",
     "description": "Durée totale {freq:f} en jours des périodes sèches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}.",
-    "long_name": "Durée totale en jours des périodes sèches"
+    "long_name": "Durée totale en jours des périodes sèches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}"
   },
   "COLD_AND_DRY_DAYS": {
     "title": "Nombre de jours froids et secs",
     "abstract": "Nombre de jours où la température et la précipitation sont en dessous de centiles donnés.",
     "description": "Nombre {freq:m} de jours où la température est en dessous du {tas_per_thresh}e centile et la précipitation en dessous du {pr_per_thresh}e centile.",
-    "long_name": "Nombre de jours froids et secs"
+    "long_name": "Nombre de jours où la température est en dessous du {tas_per_thresh}e centile et la précipitation en dessous du {pr_per_thresh}e centile"
   },
   "WARM_AND_DRY_DAYS": {
     "title": "Nombre de jours chauds et secs",
     "abstract": "Nombre de jours où la température est au-dessus d'un centile donné et la précipitation en dessous d'un centile donné.",
     "description": "Nombre {freq:m} de jours où la température est au-dessus du {tas_per_thresh}e centile et la précipitation en dessous du {pr_per_thresh}e centile.",
-    "long_name": "Nombre de jours chauds et secs"
+    "long_name": "Nombre de jours où la température est au-dessus du {tas_per_thresh}e centile et la précipitation en dessous du {pr_per_thresh}e centile"
   },
   "WARM_AND_WET_DAYS": {
     "title": "Nombre de jours chauds et pluvieux",
     "abstract": "Nombre de jours où la température et la précipitation sont au-dessus de centiles donnés.",
     "description": "Nombre {freq:m} de jours où la température est au-dessus du {tas_per_thresh}e centile et la précipitation au-dessus du {pr_per_thresh}e centile.",
-    "long_name": "Nombre de jours chauds et pluvieux"
+    "long_name": "Nombre de jours où la température est au-dessus du {tas_per_thresh}e centile et la précipitation au-dessus du {pr_per_thresh}e centile"
   },
   "COLD_AND_WET_DAYS": {
     "title": "Nombre de jours froids et pluvieux",
     "abstract": "Nombre de jours où la température est en dessous d'un centile donné et la précipitation au-dessus d'un centile donné.",
     "description": "Nombre {freq:m} de jours où la température est en dessous du {tas_per_thresh}e centile et la précipitation au-dessus du {pr_per_thresh}e centile.",
-    "long_name": "Nombre de jours froids et pluvieux"
+    "long_name": "Nombre de jours où la température est en dessous du {tas_per_thresh}e centile et la précipitation au-dessus du {pr_per_thresh}e centile"
   },
   "CALM_DAYS": {
     "title": "Nombre de jours de vent calme",
