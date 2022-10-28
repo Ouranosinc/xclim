@@ -1063,13 +1063,13 @@
     "title": "Nombre de jours de vent calme",
     "abstract": "Nombre de jours où la vitesse du vent de surface est sous un seuil donné.",
     "description": "Nombre {freq:m} de jours où la vitesse du vent de surface est sous {thresh}.",
-    "long_name": "Nombre de jours où la vitesse du vent de surface est sous un seuil donné"
+    "long_name": "Nombre de jours où la vitesse du vent de surface est sous {thresh}"
   },
   "WINDY_DAYS": {
     "title": "Nombre de jours venteux",
     "abstract": "Nombre de jours où la vitesse du vent de surface est au-dessus ou égale à un seuil donné.",
     "description": "Nombre {freq:m} de jours où la vitesse du vent de surface est au-dessus ou égale à {thresh}.",
-    "long_name": "Nombre de jours où la vitesse du vent de surface est au-dessus ou égale à un seuil donné"
+    "long_name": "Nombre de jours où la vitesse du vent de surface est au-dessus ou égale à {thresh}"
   },
   "JETSTREAM_METRIC_WOOLLINGS": {
     "title": "Force et latitude du courant-jet",
@@ -1084,10 +1084,10 @@
     ]
   },
   "UTCI": {
-    "title": "Indice universel du climat thermique",
+    "title": "Indice universel du climat thermique [UTCI]",
     "abstract": "L'UTCI représente la température ressentie par rapport à un environnement de référence et est utilisé pour évaluer le stress thermique à l'extérieur.",
     "description": "L'UTCI représente la température ressentie par rapport à un environnement de référence et est utilisé pour évaluer le stress thermique à l'extérieur.",
-    "long_name": "Indice universel du climat thermique"
+    "long_name": "Indice universel du climat thermique [UTCI]"
   },
   "MEAN_RADIANT_TEMPERATURE": {
     "title": "Température radiative moyenne",

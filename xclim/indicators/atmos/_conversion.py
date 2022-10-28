@@ -78,7 +78,7 @@ tg = Converter(
     units="K",
     standard_name="air_temperature",
     long_name="Daily mean temperature",
-    description="Estimated mean temperature from maximum and minimum temperatures",
+    description="Estimated mean temperature from maximum and minimum temperatures.",
     cell_methods="time: mean within days",
     abstract="The average daily temperature assuming a symmetrical temperature distribution (Tg = (Tx + Tn) / 2).",
     compute=indices.tas,
@@ -356,10 +356,10 @@ corn_heat_units = Converter(
 )
 
 universal_thermal_climate_index = Converter(
-    title="Universal thermal climate index",
+    title="Universal Thermal Climate Index (UTCI)",
     identifier="utci",
     units="K",
-    long_name="Universal thermal climate index",
+    long_name="Universal Thermal Climate Index (UTCI)",
     description="UTCI is the equivalent temperature for the environment derived from a reference environment "
     "and is used to evaluate heat stress in outdoor spaces.",
     abstract="UTCI is the equivalent temperature for the environment derived from a reference environment "
