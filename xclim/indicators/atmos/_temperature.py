@@ -100,7 +100,7 @@ tn_days_above = TempWithIndexing(
     identifier="tn_days_above",
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
-    long_name="The number of days with minimum temperature above a given threshold",
+    long_name="The number of days with minimum temperature above {thresh}",
     description="{freq} number of days where daily minimum temperature exceeds {thresh}.",
     abstract="The number of days with minimum temperature above a given threshold.",
     cell_methods="time: sum over days",
@@ -113,7 +113,7 @@ tn_days_below = TempWithIndexing(
     identifier="tn_days_below",
     units="days",
     standard_name="number_of_days_with_air_temperature_below_threshold",
-    long_name="The number of days with minimum temperature below a given threshold",
+    long_name="The number of days with minimum temperature below {thresh}",
     description="{freq} number of days where daily minimum temperature is below {thresh}.",
     abstract="The number of days with minimum temperature below a given threshold.",
     cell_methods="time: sum over days",
@@ -126,7 +126,7 @@ tg_days_above = TempWithIndexing(
     identifier="tg_days_above",
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
-    long_name="The number of days with mean temperature above a given threshold",
+    long_name="The number of days with mean temperature above {thresh}",
     description="{freq} number of days where daily mean temperature exceeds {thresh}.",
     abstract="The number of days with mean temperature above a given threshold.",
     cell_methods="time: sum over days",
@@ -139,7 +139,7 @@ tg_days_below = TempWithIndexing(
     identifier="tg_days_below",
     units="days",
     standard_name="number_of_days_with_air_temperature_below_threshold",
-    long_name="The number of days with mean temperature below a given threshold",
+    long_name="The number of days with mean temperature below {thresh}",
     description="{freq} number of days where daily mean temperature is below {thresh}.",
     abstract="The number of days with mean temperature below a given threshold.",
     cell_methods="time: sum over days",
@@ -152,7 +152,7 @@ tx_days_above = TempWithIndexing(
     identifier="tx_days_above",
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
-    long_name="The number of days with maximum temperature above a given threshold",
+    long_name="The number of days with maximum temperature above {thresh}",
     description="{freq} number of days where daily maximum temperature exceeds {thresh}.",
     abstract="The number of days with maximum temperature above a given threshold.",
     cell_methods="time: sum over days",
@@ -165,7 +165,7 @@ tx_days_below = TempWithIndexing(
     identifier="tx_days_below",
     units="days",
     standard_name="number_of_days_with_air_temperature_below_threshold",
-    long_name="The number of days with maximum temperature below a given threshold",
+    long_name="The number of days with maximum temperature below {thresh}",
     description="{freq} number of days where daily max temperature is below {thresh}.",
     abstract="The number of days with maximum temperature below a given threshold.",
     cell_methods="time: sum over days",
@@ -178,7 +178,8 @@ tx_tn_days_above = TempWithIndexing(
     identifier="tx_tn_days_above",
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
-    long_name="Number of days with daily minimum and daily maximum temperatures above given thresholds",
+    long_name="Number of days with daily minimum above {thresh_tasmin} "
+    "and daily maximum temperatures above {thresh_tasmax}",
     description="{freq} number of days where daily maximum temperature exceeds {thresh_tasmax} and minimum temperature "
     "exceeds {thresh_tasmin}.",
     abstract="Number of days with daily maximum and minimum temperatures above given thresholds.",
@@ -192,7 +193,8 @@ heat_wave_frequency = Temp(
     identifier="heat_wave_frequency",
     units="",
     standard_name="heat_wave_events",
-    long_name="Number of heat wave events",
+    long_name="Total number of series of at least {window} consecutive days with daily minimum temperature above "
+    "{thresh_tasmin} and daily maximum temperature above {thresh_tasmax}",
     description="{freq} number of heat wave events within a given period. A heat wave occurs when daily minimum and "
     "maximum temperatures exceed {thresh_tasmin} and {thresh_tasmax}, respectively, over at least {window} days.",
     abstract="Number of heat waves. A heat wave occurs when daily minimum and maximum temperatures exceed given "
@@ -207,7 +209,8 @@ heat_wave_max_length = Temp(
     identifier="heat_wave_max_length",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
-    long_name="Maximum length of heat wave events",
+    long_name="Longest series of at least {window} consecutive days with daily minimum temperature above "
+    "{thresh_tasmin} and daily maximum temperature above {thresh_tasmax}",
     description="{freq} maximum length of heat wave events occurring within a given period. "
     "A heat wave occurs when daily minimum and maximum temperatures exceed {thresh_tasmin} and {thresh_tasmax}, "
     "respectively, over at least {window} days.",
@@ -223,7 +226,8 @@ heat_wave_total_length = Temp(
     identifier="heat_wave_total_length",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
-    long_name="Total length of heat wave events",
+    long_name="Total length of events of at least {window} consecutive days with daily minimum temperature above "
+    "{thresh_tasmin} and daily maximum temperature above {thresh_tasmax}",
     description="{freq} total length of heat wave events occurring within a given period. "
     "A heat wave occurs when daily minimum and maximum temperatures exceed {thresh_tasmin} and {thresh_tasmax}, "
     "respectively, over at least {window} days.",
@@ -240,7 +244,8 @@ heat_wave_index = Temp(
     identifier="heat_wave_index",
     units="days",
     standard_name="heat_wave_index",
-    long_name="Number of days that constitute heatwave events",
+    long_name="Total number of days constituting events of at least {window} consecutive days "
+    "with daily maximum temperature above {thresh_tasmax}",
     description="{freq} total number of days that are part of a heatwave within a given period. "
     "A heat wave occurs when daily maximum temperatures exceed {thresh} over at least {window} days.",
     abstract="Number of days that constitute heatwave events. A heat wave occurs when daily minimum and maximum "
@@ -255,7 +260,8 @@ hot_spell_frequency = Temp(
     identifier="hot_spell_frequency",
     units="",
     standard_name="hot_spell_events",
-    long_name="Number of hot spell events",
+    long_name="Total number of series of at least {window} consecutive days "
+    "with daily maximum temperature above {thresh_tasmax}",
     description="{freq} number of hot spell events within a given period. A hot spell event occurs when the maximum "
     "daily temperature exceeds {thresh_tasmax} over at least {window} days.",
     abstract="Number of hot spells events within a given period. A hot spell occurs when the daily maximum temperature"
@@ -270,7 +276,8 @@ hot_spell_max_length = Temp(
     identifier="hot_spell_max_length",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
-    long_name="Maximum length of hot spell events",
+    long_name="Longest series of at least {window} consecutive days "
+    "with daily maximum temperature above {thresh_tasmax}",
     description="{freq} maximum length of hot spell events occurring within a given period. "
     "A hot spell event occurs when the maximum daily temperature exceeds {thresh_tasmax} over at least {window} days.",
     abstract="Maximum length of hot spells events within a given period. A hot spell occurs when the daily maximum "
@@ -420,8 +427,8 @@ daily_temperature_range_variability = TempWithIndexing(
     units="K",
     standard_name="air_temperature",
     long_name="Mean diurnal temperature range variability",
-    description="{freq} mean diurnal temperature range variability (defined as the average day-to-day variation "
-    "in daily temperature range for the given time period).",
+    description="{freq} mean diurnal temperature range variability, defined as the average day-to-day variation "
+    "in daily temperature range for the given time period.",
     abstract="The average day-to-day variation in daily temperature range.",
     cell_methods="time range within days time: difference over days time: mean over days",
     compute=indices.daily_temperature_range_variability,
@@ -433,19 +440,20 @@ extreme_temperature_range = TempWithIndexing(
     units="K",
     standard_name="air_temperature",
     long_name="Intra-period extreme temperature range",
-    description="{freq} range between the maximum of daily maximum temperature (tx_max) and the minimum of daily"
-    "minimum temperature (tn_min).",
+    description="{freq} range between the maximum of daily maximum temperature and the minimum of daily"
+    "minimum temperature.",
     abstract="The maximum of the maximum temperature minus the minimum of the minimum temperature.",
     compute=indices.extreme_temperature_range,
 )
 
 cold_spell_duration_index = Temp(
-    title="Cold spell duration index",
+    title="Cold Spell Duration Index (CSDI)",
     identifier="cold_spell_duration_index",
     var_name="csdi_{window}",
     units="days",
     standard_name="cold_spell_duration_index",
-    long_name="Number of days part of a percentile-defined cold spell",
+    long_name="Total number of days constituting events of at least {window} consecutive days "
+    "where the daily minimum temperature is below the {tasmin_per_thresh}th percentile",
     description="{freq} number of days with at least {window} consecutive days where the daily minimum temperature "
     "is below the {tasmin_per_thresh}th percentile. A {tasmin_per_window} day(s) window, centred on each calendar day "
     "in the {tasmin_per_period} period, is used to compute the {tasmin_per_thresh}th percentile(s).",
@@ -460,7 +468,8 @@ cold_spell_days = Temp(
     identifier="cold_spell_days",
     units="days",
     standard_name="cold_spell_days",
-    long_name="Number of days part of a cold spell",
+    long_name="Total number of days constituting events of at least {window} consecutive days "
+    "where the mean daily temperature is below {thresh}",
     description="{freq} number of days that are part of a cold spell. A cold spell is defined as {window} or more "
     "consecutive days with mean daily temperature below {thresh}.",
     abstract="The number of days that are part of a cold spell. A cold spell is defined as a minimum number of "
@@ -474,9 +483,10 @@ cold_spell_frequency = Temp(
     identifier="cold_spell_frequency",
     units="",
     standard_name="cold_spell_frequency",
-    long_name="Number of cold spell events",
+    long_name="Total number of series of at least {window} consecutive days "
+    "where the mean daily temperature is below {thresh}",
     description="{freq} number cold spell events. A cold spell is defined as a minimum number of "
-    "consecutive days with mean daily temperature below a given threshold.",
+    "consecutive days with mean daily temperature below {thresh}.",
     abstract="The number of cold spell events. A cold spell is defined as a minimum number of consecutive days with "
     "mean daily temperature below a given threshold.",
     cell_methods="",
@@ -501,9 +511,10 @@ daily_freezethaw_cycles = TempWithIndexing(
     title="Daily freeze-thaw cycles",
     identifier="dlyfrzthw",
     units="days",
-    long_name="Number of days with a freeze-thaw cycle",
+    long_name="Number of days where maximum daily temperatures are above {thresh_tasmax} "
+    "and minimum daily temperatures are at or below {thresh_tasmin}",
     description="{freq} number of days with a diurnal freeze-thaw cycle, where maximum daily temperatures are above "
-    "{thresh_tasmax} and minimum daily temperatures are at or below {thresh_tasmin}).",
+    "{thresh_tasmax} and minimum daily temperatures are at or below {thresh_tasmin}.",
     abstract="The number of days with a freeze-thaw cycle. A freeze-thaw cycle is defined as a day where maximum daily "
     "temperature is above a given threshold and minimum daily temperature is at or below a given threshold, "
     "usually 0°C for both.",
@@ -524,7 +535,8 @@ freezethaw_spell_frequency = Temp(
     title="Freeze-thaw spell frequency",
     identifier="freezethaw_spell_frequency",
     units="days",
-    long_name="Frequency of daily freeze-thaw spells",
+    long_name="Frequency of events where maximum daily temperatures are above {thresh_tasmax} "
+    "and minimum daily temperatures are at or below {thresh_tasmin} for at least {window} consecutive day(s).",
     description="{freq} number of freeze-thaw spells, where maximum daily temperatures are above {thresh_tasmax} "
     "and minimum daily temperatures are at or below {thresh_tasmin} for at least {window} consecutive day(s).",
     abstract="Frequency of daily freeze-thaw spells. A freeze-thaw spell is defined as a number of consecutive days "
@@ -546,7 +558,8 @@ freezethaw_spell_mean_length = Temp(
     title="Freeze-thaw spell mean length",
     identifier="freezethaw_spell_mean_length",
     units="days",
-    long_name="Average length of daily freeze-thaw spells",
+    long_name="Average length of events where maximum daily temperatures are above {thresh_tasmax} "
+    "and minimum daily temperatures are at or below {thresh_tasmin} for at least {window} consecutive day(s).",
     description="{freq} average length of freeze-thaw spells, where maximum daily temperatures are above "
     "{thresh_tasmax} and minimum daily temperatures are at or below {thresh_tasmin} for at least {window} consecutive "
     "day(s).",
@@ -569,7 +582,8 @@ freezethaw_spell_max_length = Temp(
     title="Maximal length of freeze-thaw spells",
     identifier="freezethaw_spell_max_length",
     units="days",
-    long_name="Maximal length of freeze-thaw spells",
+    long_name="Maximal length of events where maximum daily temperatures are above {thresh_tasmax} "
+    "and minimum daily temperatures are at or below {thresh_tasmin} for at least {window} consecutive day(s).",
     description="{freq} maximal length of freeze-thaw spells, where maximum daily temperatures are above "
     "{thresh_tasmax} and minimum daily temperatures are at or below {thresh_tasmin} for at least {window} consecutive "
     "day(s).",
@@ -593,9 +607,9 @@ cooling_degree_days = TempWithIndexing(
     identifier="cooling_degree_days",
     units="K days",
     standard_name="integral_of_air_temperature_excess_wrt_time",
-    long_name="Cooling degree days",
+    long_name="Cumulative sum of temperature degrees for mean daily temperature above {thresh}",
     description="{freq} cumulative cooling degree days (mean temperature above {thresh}).",
-    abstract="The cumulative degree days for days when the average temperature is above a given threshold and "
+    abstract="The cumulative degree days for days when the mean daily temperature is above a given threshold and "
     "buildings must be air conditioned.",
     cell_methods="time: sum over days",
     compute=indices.cooling_degree_days,
@@ -607,9 +621,9 @@ heating_degree_days = TempWithIndexing(
     identifier="heating_degree_days",
     units="K days",
     standard_name="integral_of_air_temperature_deficit_wrt_time",
-    long_name="Heating degree days",
+    long_name="Cumulative sum of temperature degrees for mean daily temperature below {thresh}",
     description="{freq} cumulative heating degree days (mean temperature below {thresh}).",
-    abstract="The cumulative degree days for days when the average temperature is below a given threshold and "
+    abstract="The cumulative degree days for days when the mean daily temperature is below a given threshold and "
     "buildings must be heated.",
     cell_methods="time: sum over days",
     compute=indices.heating_degree_days,
@@ -621,7 +635,7 @@ growing_degree_days = TempWithIndexing(
     identifier="growing_degree_days",
     units="K days",
     standard_name="integral_of_air_temperature_excess_wrt_time",
-    long_name="Growing degree days",
+    long_name="Cumulative sum of temperature degrees for mean daily temperature above {thresh}",
     description="{freq} growing degree days (mean temperature above {thresh}).",
     abstract="The cumulative degree days for days when the average temperature is above a given threshold.",
     cell_methods="time: sum over days",
@@ -634,7 +648,7 @@ freezing_degree_days = TempWithIndexing(
     identifier="freezing_degree_days",
     units="K days",
     standard_name="integral_of_air_temperature_deficit_wrt_time",
-    long_name="Freezing degree days",
+    long_name="Cumulative sum of temperature degrees for mean daily temperature below {thresh}",
     description="{freq} freezing degree days (mean temperature below {thresh}).",
     abstract="The cumulative degree days for days when the average temperature is below a given threshold, "
     "typically 0°C.",
@@ -648,7 +662,7 @@ thawing_degree_days = TempWithIndexing(
     identifier="thawing_degree_days",
     units="K days",
     standard_name="integral_of_air_temperature_excess_wrt_time",
-    long_name="Thawing degree days",
+    long_name="Cumulative sum of temperature degrees for mean daily temperature above {thresh}",
     description="{freq} thawing degree days (mean temperature above {thresh}).",
     abstract="The cumulative degree days for days when the average temperature is above a given threshold, "
     "typically 0°C.",
@@ -662,7 +676,7 @@ freshet_start = Temp(
     identifier="freshet_start",
     units="",
     standard_name="day_of_year",
-    long_name="Day of year of the spring freshet start",
+    long_name="First day where temperature threshold of {thresh} is exceeded for at least {window} days",
     description="Day of year of the spring freshet start, defined as the first day a temperature threshold of {thresh} "
     "is exceeded for at least {window} days.",
     abstract="Day of year of the spring freshet start, defined as the first day when the temperature exceeds a certain "
