@@ -31,8 +31,8 @@ def use_ufunc(
     ufunc_1dim: bool | str,
     da: xr.DataArray,
     dim: str = "time",
-    index: str = "first",
     freq: str | None = None,
+    index: str = "first",
 ) -> bool:
     """Return whether the ufunc version of run length algorithms should be used with this DataArray or not.
 
@@ -79,8 +79,8 @@ def resample_and_rl(
     resample_before_rl: bool,
     compute,
     *args,
+    freq: str,
     dim: str = "time",
-    freq: str | None = None,
     **kwargs,
 ) -> xr.DataArray | xr.Dataset:
     """Wrap run length algorithms to control if resampling occurs before or after the algorithms.
@@ -110,8 +110,10 @@ def resample_and_rl(
     xr.DataArray
       Output of compute resampled according to frequency {freq}.
     """
-    if resample_before_rl and freq is not None:
-        out = da.resample({dim: freq}).map(compute, args=args, dim=dim, **kwargs)
+    if resample_before_rl:
+        out = da.resample({dim: freq}).map(
+            compute, args=args, freq=None, dim=dim, **kwargs
+        )
     else:
         out = compute(da, *args, dim=dim, freq=freq, **kwargs)
     return out
@@ -292,9 +294,9 @@ def windowed_run_events(
     da: xr.DataArray,
     window: int,
     dim: str = "time",
+    freq: str | None = None,
     ufunc_1dim: str | bool = "from_context",
     index: str = "first",
-    freq: str | None = None,
 ) -> xr.DataArray:
     """Return the number of runs of a minimum length.
 
