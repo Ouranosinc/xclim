@@ -1126,9 +1126,9 @@ maximum_consecutive_warm_days = Temp(
     identifier="maximum_consecutive_warm_days",
     units="days",
     standard_name="spell_length_of_days_with_air_temperature_above_threshold",
-    long_name="Maximum number of consecutive warm days",
-    description="{freq} longest spell of consecutive days with Tmax above {thresh}.",
-    abstract="Maximum number of consecutive days where the daily maximum temperature exceeds a certain threshold.",
+    long_name="Maximum number of consecutive days with maximum daily temperature above {thresh}",
+    description="{freq} longest spell of consecutive days with maximum daily temperature above {thresh}.",
+    abstract="Maximum number of consecutive days where the maximum daily temperature exceeds a certain threshold.",
     cell_methods="time: maximum over days",
     compute=indices.maximum_consecutive_tx_days,
 )
@@ -1154,13 +1154,14 @@ huglin_index = Temp(
     title="Huglin heliothermal index",
     identifier="huglin_index",
     units="",
-    long_name="Huglin heliothermal index",
-    description="Heat-summation index for agroclimatic suitability estimation, developed specifically for viticulture. "
-    "Computed with {method} formula (Summation of ((Tmin + Tmax)/2 - {thresh}) * k), where coefficient (`k`) is a "
-    "latitude-based day-length for days typically between 1 April and 30 September.",
+    long_name="Integral of mean daily temperature above {thresh} multiplied by day-length coefficient with {method} "
+    "method for days between {start_date} and {end_date}",
+    description="Heat-summation index for agroclimatic suitability estimation, developed specifically for viticulture, "
+    "computed with {method} formula (Summation of ((Tn + Tx)/2 - {thresh}) * k), where coefficient `k` is a "
+    "latitude-based day-length for days between {start_date} and {end_date}.",
     abstract="Heat-summation index for agroclimatic suitability estimation, developed specifically for viticulture. "
-    "Considers daily Tmin and Tmax with a given base threshold, typically between 1 April and 30 September, and "
-    "integrates a day-length coefficient calculation for higher latitudes. "
+    "Considers daily minimum and maximum temperature with a given base threshold, typically between 1 April and 30"
+    "September, and integrates a day-length coefficient calculation for higher latitudes. "
     "Metric originally published in Huglin (1978). Day-length coefficient based on Hall & Jones (2010).",
     cell_methods="",
     var_name="hi",
@@ -1178,13 +1179,18 @@ biologically_effective_degree_days = Temp(
     title="Biologically effective degree days",
     identifier="biologically_effective_degree_days",
     units="K days",
-    long_name="Biologically effective degree days",
+    long_name="Integral of mean daily temperature above {thresh}, with maximum value of {max_daily_degree_days}, "
+    "multiplied by day-length coefficient and temperature range modifier based on {method} method for days between "
+    "{start_date} and {end_date}",
     description="Heat-summation index for agroclimatic suitability estimation, developed specifically for viticulture. "
-    "Computed with {method} formula (Summation of min((max((Tmin + Tmax)/2 - {thresh_tasmin}, 0) * k) + TR_adj, 9°C), "
-    "where coefficient (`k`) is a latitude-based day-length for days between {start_date} and {end_date}).",
-    abstract="Considers daily Tmin and Tmax with a given base threshold between 1 April and 31 October, with a maximum "
-    "daily value for degree days (typically 9°C), and integrates a modification coefficient for latitudes between "
-    "40°N and 50°N as well as swings in daily temperature range. Original formula published in Gladstones, 1992.",
+    "Computed with {method} formula (Summation of min((max((Tn + Tx)/2 - {thresh_tasmin}, 0) * k) + TR_adj, Dmax), "
+    "where coefficient `k` is a latitude-based day-length for days between {start_date} and {end_date}), "
+    "coefficient `TR_adj` is a modifier accounting for large temperature swings, and `Dmax` is the maximum possible"
+    "amount of degree days that can be gained within a day ({max_daily_degree_days}).",
+    abstract="Considers daily minimum and maximum temperature with a given base threshold between 1 April and 31 "
+    "October, with a maximum daily value for cumulative degree days (typically 9°C), and integrates modification "
+    "coefficients for latitudes between 40°N and 50°N as well as for swings in daily temperature range. "
+    "Metric originally published in Gladstones (1992).",
     cell_methods="",
     var_name="bedd",
     compute=indices.biologically_effective_degree_days,
@@ -1201,17 +1207,20 @@ effective_growing_degree_days = Temp(
     title="Effective growing degree days",
     identifier="effective_growing_degree_days",
     units="K days",
-    long_name="Effective growing degree days",
+    long_name="Integral of mean daily temperature above {thresh} for days between start and end dates "
+    "dynamically determined using {method} method",
     description="Heat-summation index for agroclimatic suitability estimation."
-    "Computed with {method} formula (Summation of max((Tmin + Tmax)/2 - {thresh}, 0) between dynamically-determined "
-    "growing season start and end dates. The 'bootsma' method uses a 10-day average temperature above {thresh} to "
-    "identify a start date, while the 'qian' method uses a weighted mean average above {thresh} over 5 days to "
-    "determine start date. The end date of the growing season is the date of first fall frost (Tmin < 0°C). ",
-    abstract="Considers daily Tmin and Tmax with a given base threshold between dynamically-determined growing season "
-    "start and end dates. The 'bootsma' method uses a 10-day mean temperature above a given threshold to identify a "
-    "start date, while the 'qian' method uses a weighted mean temperature above a given threshold over 5 days to "
-    "determine start date. The end date of the growing season is the date of first fall frost (Tmin < 0°C). "
-    "Original formula published in Bootsma et al. 2005.",
+    "Computed with {method} formula (Summation of max((Tn + Tx)/2 - {thresh}, 0) between dynamically-determined "
+    "growing season start and end dates. The `bootsma` method uses a 10-day average temperature above {thresh} to "
+    "identify a start date, while the `qian` method uses a weighted mean average above {thresh} over 5 days to "
+    "determine the start date. The end date of the growing season is the date of first fall frost (Tn < 0°C) occurring"
+    "after {after_date}.",
+    abstract="Considers daily minimum and maximum temperature with a given base threshold between "
+    "dynamically-determined growing season start and end dates. The `bootsma` method uses a 10-day mean temperature "
+    "above a given threshold to identify a start date, while the `qian` method uses a weighted mean temperature above "
+    "a given threshold over 5 days to determine the start date. The end date of the growing season is the date of "
+    "first fall frost (Tn < 0°C) occurring after a given date (typically, July 1). "
+    "Metric originally published in Bootsma et al. (2005).",
     cell_methods="",
     var_name="egdd",
     compute=indices.effective_growing_degree_days,
@@ -1227,14 +1236,14 @@ latitude_temperature_index = Temp(
     title="Latitude temperature index",
     identifier="latitude_temperature_index",
     units="",
-    long_name="Latitude-temperature index",
+    long_name="Mean temperature of warmest month multiplied by the difference of {lat_factor} minus latitude",
     description="A climate indice based on mean temperature of the warmest month and a latitude-based coefficient to "
     "account for longer day-length favouring growing conditions. Developed specifically for viticulture. "
-    "Mean temperature of warmest month * ({lat_factor} - latitude).",
+    "Mean temperature of warmest month multiplied by the difference of {lat_factor} minus latitude.",
     abstract="A climate indice based on mean temperature of the warmest month and a latitude-based coefficient to "
     "account for longer day-length favouring growing conditions. Developed specifically for viticulture. "
-    "Mean temperature of warmest month * (latitude_factor - latitude). "
-    "Indice originally published in Jackson, D. I., & Cherry, N. J. (1988)",
+    "Mean temperature of warmest month multiplied by the difference of latitude factor coefficient minus latitude. "
+    "Metric originally published in Jackson, D. I., & Cherry, N. J. (1988).",
     cell_methods="",
     allowed_periods=["A"],
     var_name="lti",

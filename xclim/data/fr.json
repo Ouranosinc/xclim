@@ -500,31 +500,31 @@
     "abstract": "Cumul des degrés-jours pour les jours où la température moyenne quotidienne est au-dessus d'un seuil donné, habituellement 0°C."
   },
   "BIOLOGICALLY_EFFECTIVE_DEGREE_DAYS": {
-    "long_name": "Degrés-jours biologiquement actifs",
-    "description": "Cumul des degrés-jours borné par la température minimale quotidienne sous {thresh_tasmin} et la différence entre les températures maximale et minimale quotiennes sous {max_daily_degree_days} . Les degrés jours quotidiens sont corrigés selon la différence entre les températures maximale et minimale quotiennes et selon un coefficient de durée du jour dépendant de la latitude.",
+    "long_name": "Intégrale de la température moyenne quotidienne au-dessus de {thresh}, avec une valeur maximale de {max_daily_degree_days}, multipliée par un coefficient de longueur de jour et un modificateur de plage de température basé sur la méthode {method} pour les jours compris entre {start_date} et {end_date}",
+    "description": "Cumul des degrés-jours borné par la température minimale quotidienne sous {thresh_tasmin} et la différence entre les températures maximale et minimale quotiennes sous {max_daily_degree_days} . Les degrés jours quotidiens sont corrigés selon la différence entre les températures maximale et minimale quotiennes et selon un coefficient de durée du jour `k` dépendant de la latitude et le coefficient `TR_adj` est un modificateur qui tient compte des grandes variations de température.",
     "title": "Degrés-jours biologiquement actifs",
     "comment": "Formule originale prise de Gladstones 1992.",
-    "abstract": "Indice basé sur une relation non linéaire entre la température et les processus physiologiques. Il intègre une borne supérieure du cumul, un coefficient lié à la durée du jour et une correction liée à l'écart journalier des températures."
+    "abstract": "Prend en compte les températures minimales et maximales quotidiennes avec un seuil de base donné entre le 1er avril et le 31 octobre, avec une valeur quotidienne maximale pour les degrés-jours cumulés (généralement 9°C), et intègre des coefficients de modification pour les latitudes comprises entre 40°N et 50°N ainsi que pour les variations de l'amplitude thermique quotidienne."
   },
   "EFFECTIVE_GROWING_DEGREE_DAYS": {
-    "long_name": "Degrés-jours de croissance effectifs",
-    "description": "Accumulation des degrés-jours borné par (Tmax + Tmin)/2 > {thresh} et des dates de début et fin de la saison de croissance generés dynamiquement.",
+    "long_name": "Intégrale de la température journalière moyenne supérieure à {thresh} pour les jours compris entre les dates de début et de fin déterminées dynamiquement à l'aide de la méthode {method}",
+    "description": "Indice de sommation de chaleur pour l'estimation de l'adéquation agroclimatique. Calculé avec la formule {method} (Somme de max((Tn + Tx)/2 - {thresh}, 0) entre les dates de début et de fin de saison de croissance déterminées dynamiquement. La méthode `bootsma` utilise une température moyenne sur 10 jours au-dessus de {thresh} pour identifier une date de début, tandis que la méthode `qian` utilise une moyenne pondérée au-dessus de {thresh} sur 5 jours pour déterminer la date de début. La date de fin de la saison de croissance est la date de la première gelée d'automne (Tn < 0°C) survenant après {after_date}.",
     "title": "Degrés-jours de croissance effectifs",
     "comment": "Formule originale prise de Bootsma et al. 2005.",
-    "abstract": "Indice de degrés-jours de croissance basés sur un début et une fin dynamiques de la saison de croissance."
+    "abstract": "Considère la température minimale et maximale quotidienne avec un seuil de base donné entre les dates de début et de fin de saison de croissance déterminées dynamiquement. La méthode `bootsma` utilise une température moyenne sur 10 jours au-dessus d'un seuil donné pour identifier une date de début, tandis que la méthode `qian` utilise une température moyenne pondérée au-dessus d'un seuil donné sur 5 jours pour déterminer la date de début. La date de fin de la saison de croissance est la date de la première gelée d'automne (Tn < 0°C) survenant après une date donnée (généralement le 1er juillet)."
   },
   "LATITUDE_TEMPERATURE_INDEX": {
-    "long_name": "Indice latitude-température",
-    "description": "Température moyenne du mois le plus chaud avec un facteur d'échelle basé sur la latitude : Moyenne de température du mois le plus chaud * ({lat_factor} - latitude).",
+    "long_name": "Température moyenne du mois le plus chaud multipliée par la différence de {lat_factor} moins la latitude",
+    "description": "Température moyenne du mois le plus chaud avec un facteur d'échelle basé sur la latitude. Température moyenne du mois le plus chaud multipliée par la différence de {lat_factor} moins la latitude.",
     "title": "Indice de latitude-température",
     "comment": "Formule originale prise de Jackson, D. I., & Cherry, N. J. (1988)",
-    "abstract": "Indice climatique basé sur la température moyenne du mois le plus chaud et un coefficient basé sur la latitude pour tenir compte de la durée plus longue du jour favorisant les conditions de croissance. Développé spécifiquement pour la viticulture."
+    "abstract": "Indice climatique basé sur la température moyenne du mois le plus chaud et un coefficient basé sur la latitude pour tenir compte de la durée plus longue du jour favorisant les conditions de croissance. Développé spécifiquement pour la viticulture. Température moyenne du mois le plus chaud multipliée par la différence de coéffient de facteur latitude moins la latitude."
   },
   "HUGLIN_INDEX": {
-    "long_name": "Indice héliothermique de Huglin",
-    "description": "Indice de sommation de chaleur pour l'estimation de l'adéquation agroclimatique, développé spécifiquement pour la viticulture. Calculé avec la formule {méthode} (Somme de ((Tmin + Tmax)/2 - {thresh}) * k), où le coefficient (`k`) est une longueur de jour basée sur la latitude pour les jours typiquement compris entre le 1er avril et le 30 septembre.",
+    "long_name": "Intégrale de la température moyenne quotidienne au-dessus de {thresh} multipliée par le coefficient de longueur du jour du méthode {method} pour les jours compris entre {start_date} et {end_date}",
+    "description": "Indice de sommation de chaleur pour l'estimation de l'adéquation agroclimatique, développé spécifiquement pour la viticulture. Calculé avec la formule {méthode} (Somme de ((Tn + Tx)/2 - {thresh}) * k), où le coefficient (`k`) est une longueur de jour basée sur la latitude pour les jours typiquement compris entre {start_date} et {end_date}.",
     "title": "Indice héliothermique de Huglin",
-    "abstract": "Indice de sommation de chaleur pour l'estimation de l'adéquation agroclimatique, développé spécifiquement pour la viticulture. Il prend en compte les Tmin et Tmax quotidiennes avec un seuil de base donné, généralement entre le 1er avril et le 30 septembre, et intègre un calcul de coefficient de longueur de jour pour les latitudes plus élevées. Métrique initialement publiée dans Huglin (1978). Le coefficient de longueur du jour est basé sur Hall & Jones (2010)."
+    "abstract": "Indice de sommation de chaleur pour l'estimation de l'adéquation agroclimatique, développé spécifiquement pour la viticulture. Il prend en compte les temperature minimales et maximales quotidiennes avec un seuil de base donné, généralement entre le 1er avril et le 30 septembre, et intègre un calcul de coefficient de longueur de jour pour les latitudes plus élevées. Métrique initialement publiée dans Huglin (1978). Le coefficient de longueur du jour est basé sur Hall & Jones (2010)."
   },
   "FRESHET_START": {
     "long_name": "Premier jour où le seuil de température de {thresh} est dépassé pendant au moins {windows} jours",
@@ -958,10 +958,10 @@
     "description": "Nombre de jours avec au moins {window} jours consécutifs où la température maximale quotidienne est au-dessus ou égale au(x) {tasmax_per_thresh}e centile(s). Une fenêtre de {tasmax_per_window} jour(s), centrée sur chaque jour du calendrier de la période {tasmax_per_period}, est utilisée pour calculer le(s) {tasmax_per_thresh}e(s) centile(s)."
   },
   "MAXIMUM_CONSECUTIVE_WARM_DAYS": {
-    "long_name": "Nombre maximal de jours chauds consécutifs",
-    "description": "Nombre {freq:m} maximal de jours chauds consécutifs (température maximale quotidienne > {thresh}).",
+    "long_name": "Nombre maximal de jours consécutifs ayant une température maximale quotidienne au-dessus de {thresh}",
+    "description": "La plus longue période {freq:m} de jours consécutifs ayant une température maximale quotidienne au-dessus de {thresh}.",
     "title": "Nombre maximal de jours chauds consécutifs",
-    "abstract": "Nombre maximal de jours consécutifs où la température maximale quotidienne est au-dessus d'un seuil donné."
+    "abstract": "Nombre maximal de jours consécutifs ayant une température maximale quotidienne au-dessus d'un seuil donné."
   },
   "FIRE_SEASON": {
     "long_name": "Saison des incendies",
