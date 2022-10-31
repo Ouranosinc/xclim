@@ -952,7 +952,7 @@
     "description": "Le ratio {freq:m} entre la précipitation liquide et la précipitation totale. La précipitation liquide est approximée par la précipitation lorsque la température est au-dessus de {thresh}."
   },
   "WARM_SPELL_DURATION_INDEX": {
-    "long_name": "Nombre de jours faisant partie d'une vague de chaleur définie par un centile",
+    "long_name": "Nombre de jours avec au moins {window} jours consécutifs ayant une température maximale quotidienne au-dessus du ou des {tasmax_per_thresh}ème(s) percentile(s)",
     "title": "Indice de durée des vagues de chaleur",
     "abstract": "Nombre de jours consécutifs plus grand qu'un nombre de jours minimal donnée et ayant une température maximale quotidienne plus grande qu'un centile donné. Le seuil de centile des températures doit être calculé avec une fenêtre mobile d'un nombre de jours donné.",
     "description": "Nombre de jours avec au moins {window} jours consécutifs où la température maximale quotidienne est au-dessus ou égale au(x) {tasmax_per_thresh}e centile(s). Une fenêtre de {tasmax_per_window} jour(s), centrée sur chaque jour du calendrier de la période {tasmax_per_period}, est utilisée pour calculer le(s) {tasmax_per_thresh}e(s) centile(s)."

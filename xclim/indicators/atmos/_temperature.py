@@ -1109,11 +1109,12 @@ warm_spell_duration_index = Temp(
     identifier="warm_spell_duration_index",
     units="days",
     standard_name="number_of_days_with_air_temperature_above_threshold",
-    long_name="Number of days part of a percentile-defined warm spell",
-    description="{freq} number of days with at least {window} consecutive days where the daily maximum temperature is "
+    long_name="Number of days with at least {window} consecutive days where the maximum daily temperature is above "
+    "the {tasmax_per_thresh}th percentile(s)",
+    description="{freq} number of days with at least {window} consecutive days where the maximum daily temperature is "
     "above the {tasmax_per_thresh}th percentile(s). A {tasmax_per_window} day(s) window, centred on each calendar day "
     "in the {tasmax_per_period} period, is used to compute the {tasmax_per_thresh}th percentile(s).",
-    abstract="Number of days part of a percentile-defined warm spell. A warm spell occurs when the daily maximum "
+    abstract="Number of days part of a percentile-defined warm spell. A warm spell occurs when the maximum daily "
     "temperature is above a given percentile for a given number of consecutive days.",
     cell_methods="time: sum over days",
     compute=indices.warm_spell_duration_index,
