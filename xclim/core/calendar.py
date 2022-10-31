@@ -655,7 +655,7 @@ def parse_offset(freq: str) -> Sequence[str]:
     offset_base : str
       "Y" is always replaced with "A".
     is_start_anchored : bool
-      Whether coordinates of this frequency should correspond to the beginning of the period (True) or it's end (False).
+      Whether coordinates of this frequency should correspond to the beginning of the period (`True`) or its end (`False`).
       Can only be False when base is A, Q or M.
     anchor : str or None
       Given for bases A or Q. As xarray doesn't support "W", so doesn't xclim and anchor information is lost when given.
