@@ -160,9 +160,9 @@ def common_calendar(*calendars, join="outer") -> str:
     Examples
     --------
     >>> common_calendar("360_day", "noleap", "default", join="outer")
-    "standard"
+    'standard'
     >>> common_calendar("360_day", "noleap", "default", join="inner")
-    "360_day"
+    '360_day'
     """
     if all(cal == "default" for cal in calendars):
         return "default"
