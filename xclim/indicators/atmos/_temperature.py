@@ -535,7 +535,7 @@ freezethaw_spell_frequency = Temp(
     title="Freeze-thaw spell frequency",
     identifier="freezethaw_spell_frequency",
     units="days",
-    long_name="Frequency of events where maximum daily temperatures are above {thresh_tasmax}"
+    long_name="Frequency of events where maximum daily temperatures are above {thresh_tasmax} "
     "and minimum daily temperatures are at or below {thresh_tasmin} for at least {window} consecutive day(s).",
     description="{freq} number of freeze-thaw spells, where maximum daily temperatures are above {thresh_tasmax} "
     "and minimum daily temperatures are at or below {thresh_tasmin} for at least {window} consecutive day(s).",
