@@ -1232,7 +1232,7 @@ def test_degree_days_exceedance_date():
     out = atmos.degree_days_exceedance_date(
         tas=tas, thresh="4 degC", op=">", sum_thresh="200 K days", after_date="07-01"
     )
-    np.testing.assert_array_equal(out, np.array([[153, 136, 9, 6]]).T)
+    np.testing.assert_array_equal(out, np.array([[199, 193, 190, 190]]).T)
     assert (
         "Day of year when the integral of degree days (mean daily temperature > 4 degc) "
         "exceeds 200 k days, with the cumulative sum starting from 07-01."
