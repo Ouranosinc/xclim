@@ -256,6 +256,7 @@ def _spell_length_distribution(
     thresh: str = "1 mm d-1",
     stat: str = "mean",
     group: str | Grouper = "time",
+    resample_before_rl: bool = True,
 ) -> xr.DataArray:
     """Spell length distribution.
 
@@ -283,6 +284,9 @@ def _spell_length_distribution(
     group : {'time', 'time.season', 'time.month'}
       Grouping of the output.
       E.g. If 'time.month', the spell lengths are coputed separately for each month.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -292,7 +296,7 @@ def _spell_length_distribution(
     ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
 
     @map_groups(out=[Grouper.PROP], main_only=True)
-    def _spell_stats(ds, *, dim, method, thresh, op, freq, stat):
+    def _spell_stats(ds, *, dim, method, thresh, op, freq, resample_before_rl, stat):
         # PB: This prevents an import error in the distributed dask scheduler, but I don't know why.
         import xarray.core.resample_cftime  # noqa: F401, pylint: disable=unused-import
 
@@ -304,7 +308,15 @@ def _spell_length_distribution(
             thresh = da.quantile(thresh, dim=dim).drop_vars("quantile")
 
         cond = op(da, thresh)
-        out = cond.resample(time=freq).map(rl.rle_statistics, dim=dim, reducer=stat)
+        out = rl.resample_and_rl(
+            cond,
+            resample_before_rl,
+            rl.rle_statistics,
+            reducer=stat,
+            window=1,
+            dim=dim,
+            freq=freq,
+        )
         out = getattr(out, stat)(dim=dim)
         out = out.where(mask)
         return out.rename("out").to_dataset()
@@ -324,6 +336,7 @@ def _spell_length_distribution(
         thresh=thresh,
         op=ops[op],
         freq=group.freq,
+        resample_before_rl=resample_before_rl,
         stat=stat,
     ).out
     return to_agg_units(out, da, op="count")

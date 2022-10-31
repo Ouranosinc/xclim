@@ -131,6 +131,7 @@ def cold_spell_days(
     window: int = 5,
     freq: str = "AS-JUL",
     op: str = "<",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Cold spell days.
 
@@ -149,6 +150,9 @@ def cold_spell_days(
         Resampling frequency.
     op : {"<", "<=", "lt", "le"}
         Comparison operation. Default: "<".
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -167,10 +171,15 @@ def cold_spell_days(
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
     t = convert_units_to(thresh, tas)
-    over = compare(tas, op, t, constrain=("<", "<="))
-    group = over.resample(time=freq)
-
-    out = group.map(rl.windowed_run_count, window=window, dim="time")
+    over = compare(tas, op, t, constrain=("<", "<="))    
+    
+    out = rl.resample_and_rl(
+        over,
+        resample_before_rl,
+        rl.windowed_run_count,
+        window=window,
+        freq=freq,
+    )
     return to_agg_units(out, tas, "count")
 
 
@@ -181,6 +190,7 @@ def cold_spell_frequency(
     window: int = 5,
     freq: str = "AS-JUL",
     op: str = "<",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Cold spell frequency.
 
@@ -199,18 +209,25 @@ def cold_spell_frequency(
         Resampling frequency.
     op : {"<", "<=", "lt", "le"}
         Comparison operation. Default: "<".
-
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run
+        
     Returns
     -------
-    xarray.DataArray, [dimensionless]
+    xarray.DataArray, [time]
         Cold spell frequency.
 
     """
     t = convert_units_to(thresh, tas)
     over = compare(tas, op, t, constrain=("<", "<="))
-    group = over.resample(time=freq)
-
-    out = group.map(rl.windowed_run_events, window=window, dim="time")
+    
+    out = rl.resample_and_rl(
+        over,
+        resample_before_rl,
+        rl.windowed_run_events,
+        window=window,
+        freq=freq,
+    )
     out.attrs["units"] = ""
     return out
 
@@ -418,7 +435,10 @@ def dry_days(
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
 def maximum_consecutive_wet_days(
-    pr: xarray.DataArray, thresh: str = "1 mm/day", freq: str = "YS"
+    pr: xarray.DataArray,
+    thresh: str = "1 mm/day",
+    freq: str = "YS",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Consecutive wet days.
 
@@ -431,7 +451,10 @@ def maximum_consecutive_wet_days(
     thresh : str
         Threshold precipitation on which to base evaluation.
     freq : str
-        Resampling frequency.
+      Resampling frequency.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -453,8 +476,13 @@ def maximum_consecutive_wet_days(
     """
     thresh = convert_units_to(thresh, pr, "hydro")
 
-    group = (pr > thresh).resample(time=freq)
-    out = group.map(rl.longest_run, dim="time")
+    cond = pr > thresh
+    out = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.longest_run,
+        freq=freq,
+    )
     out = to_agg_units(out, pr, "count")
     return out
 
