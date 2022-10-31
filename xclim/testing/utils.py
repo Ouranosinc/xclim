@@ -443,7 +443,7 @@ def publish_release_notes(
 
 def show_versions(
     file: os.PathLike | StringIO | TextIO | None = None,
-    deps: list = "xclim",
+    deps: list | None = None,
 ) -> str | None:
     """Print the versions of xclim and its dependencies.
 
@@ -451,14 +451,14 @@ def show_versions(
     ----------
     file : {os.PathLike, StringIO, TextIO}, optional
         If provided, prints to the given file-like object. Otherwise, returns a string.
-    deps : list
-        A list of dependencies to gather and print version information from.
+    deps : list, optional
+        A list of dependencies to gather and print version information from. Otherwise, prints `xclim` dependencies.
 
     Returns
     -------
     str or None
     """
-    if deps == "xclim":
+    if deps is None:
         deps = _xclim_deps
 
     dependency_versions = [(d, lambda mod: mod.__version__) for d in deps]
