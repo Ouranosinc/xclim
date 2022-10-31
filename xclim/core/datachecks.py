@@ -31,6 +31,12 @@ def check_freq(var: xr.DataArray, freq: str | Sequence[str], strict: bool = True
     strict : bool
         Whether multiples of the frequencies are considered invalid or not. With `strict` set to False, a '3H' series
         will not raise an error if freq is set to 'H'.
+
+    Raises
+    ------
+    ValidationError
+        - If the frequency of `var` is not inferrable.
+        - If the frequency of `var` does not match the requested `freq`.
     """
     if isinstance(freq, str):
         freq = [freq]
@@ -65,10 +71,12 @@ def check_daily(var: xr.DataArray):
 def check_common_time(*inputs):
     """Raise an error if the list of inputs doesn't have a single common frequency.
 
-    This raises if:
-    - the frequency of any input can't be inferred
-    - inputs have differing frequencies
-    - inputs have a daily or hourly frequency, but they are not given at the same time of day.
+    Raises
+    ------
+    ValidationError
+        - if the frequency of any input can't be inferred
+        - if inputs have differing frequencies
+        - if inputs have a daily or hourly frequency, but they are not given at the same time of day.
 
     Parameters
     ----------
