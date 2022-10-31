@@ -563,20 +563,20 @@
     "abstract": "Premier jour où la température minimale quotidienne est au-dessus un seuil donné depuis un certain nombre de jours consécutifs."
   },
   "GROWING_SEASON_LENGTH": {
-    "long_name": "Durée de la saison de croissance",
-    "description": "Nombre {freq:m} de jours entre la première occurrence d'au moins {window} jours consécutifs où la température moyenne quotidienne dépasse {thresh} et la première occurrence d'au moins {window} jours consécutifs où la température est sous {thresh} après le {mid_date}.",
+    "long_name": "Nombre de jours entre la première occurrence d'au moins {window} jours consécutifs ayant une température moyenne quotidienne au-dessus de {fourchette} et la première occurrence d'au moins {window} jours consécutifs ayant une température moyenne quotidienne sous {thresh}, survenant après {mid_date}",
+    "description": "Nombre {freq:m} de jours entre la première occurrence d'au moins {window} jours consécutifs ayant une température moyenne quotidienne au-dessus de {thresh} et la première occurrence d'au moins {window} jours consécutifs ayant une température moyenne quotidienne est sous {thresh}, survenant après {mid_date}.",
     "title": "Durée de la saison de croissance",
     "abstract": "Nombre de jours entre la première occurrence d'une série de jours ayant une température moyenne quotidienne au-dessus d'un seuil et la première occurrence d'une série de jours avec une température moyenne quotidienne sous ce même seuil, survenant après une date de calendrier donnée."
   },
   "GROWING_SEASON_START": {
-    "long_name": "Premier jour de la première série de {window} jours dont la température moyenne quotidienne est égale ou au-dessus de {thresh}",
+    "long_name": "Premier jour de la première série de {window} jours ayant une température moyenne quotidienne égale ou au-dessus de {thresh}",
     "description": "Jour de l’année marquant le début de la saison de croissance, défini comme le premier jour de la première série de {window} jours ayant une température moyenne quotidienne au-dessus ou égale à {thresh}",
     "title": "Jour de l'année du début de la saison de croissance",
     "abstract": "Premier jour où la température moyenne quotidienne est au-dessus d'un seuil donné depuis un certain nombre de jours consécutifs."
   },
   "TROPICAL_NIGHTS": {
-    "long_name": "Nombre de nuits tropicales",
-    "description": "Nombre {freq:m} de nuits tropicales : définies comme des jours avec une température minimale quotidienne au-dessus de {thresh}.",
+    "long_name": "Nombre de jours où la température minimale quotidienne est au-dessus de {thresh}",
+    "description": "Nombre {freq:m} de nuits tropicales, définies comme des jours ayant une température minimale quotidienne au-dessus de {thresh}.",
     "title": "Nombre de nuits tropicales",
     "abstract": "Nombre de jours où la température minimale quotidienne est au-dessus d'un seuil donné."
   },
@@ -665,7 +665,7 @@
     "abstract": "Nombre maximal de jours consécutifs sans gel où la température minimale quotidienne est au-dessus ou égale à 0°C."
   },
   "GROWING_SEASON_END": {
-    "long_name": "Jour de l'année de la fin de la saison de croissance",
+    "long_name": "Premier jour de la première série de {window} jours ayant une température journalière moyenne sous {thresh}, survenant après {mid_date}",
     "description": "Jour de l'année de la fin de la saison de croissance, défini comme le premier jour après {mid_date} ayant une température moyenne quotidienne au-dessus ou égale à {thresh} après une série de {window} jours ayant une température moyenne quotidienne sous {thresh}.",
     "title": "Fin de la saison de croissance",
     "abstract": "Le premier jour où la température moyenne quotidienne est sous un seuil donné pendant un certain nombre de jours consécutifs après une date de calendrier donnée."
@@ -808,10 +808,10 @@
     "abstract": "Calcule le premier jour d'une période où la température maximale quotidienne est plus élevée qu'un certain seuil durant un nombre de jours donné, limité par une date minimale."
   },
   "DEGREE_DAYS_EXCEEDANCE_DATE": {
-    "long_name": "Premier jour de l'année où la somme des degrés-jours est au-dessus d'un seuil donné",
-    "description": "Premier jour de l'année où la somme des degrés-jours (température moyenne quotidienne {op} {thresh}) est au-dessus de {sum_thresh}, avec la somme cumulative à partir de {start_date}.",
+    "long_name": "Premier jour de l'année où l'intégral de la température moyenne quotidienne {op} {thresh} est au-dessus de {sum_thresh}, avec la somme cumulative à partir de {after_date}",
+    "description": "Premier jour de l'année où l'intégral des degrés-jours (ou température moyenne quotidienne {op} {thresh}) est au-dessus de {sum_thresh}, avec la somme cumulative à partir de {after_date}.",
     "title": "Jour du dépassement des degrés-jours",
-    "abstract": "Jour de l'année où la somme des degrés-jours est au-dessus d'un seuil donné. Les degrés-jours sont calculés au-dessus ou en dessous d'un seuil de température donné."
+    "abstract": "Jour de l'année où la somme des degrés-jours est au-dessus d'un seuil donné, survenant après une date donnée. Les degrés-jours sont calculés au-dessus ou en dessous d'un seuil de température donné."
   },
   "PRSN": {
     "long_name": "Précipitation solide (méthode \"{methode}\" avec une température égale ou inférieure à {thresh})",
@@ -946,22 +946,22 @@
     "description": "Le ratio {freq:m} entre la précipitation liquide et la précipitation totale. La précipitation liquide est approximée par la précipitation lorsque la température est au-dessus de {thresh}."
   },
   "WARM_SPELL_DURATION_INDEX": {
+    "long_name": "Nombre de jours faisant partie d'une vague de chaleur définie par un centile",
     "title": "Indice de durée des vagues de chaleur",
     "abstract": "Nombre de jours consécutifs plus grand qu'un nombre de jours minimal donnée et ayant une température maximale quotidienne plus grande qu'un centile donné. Le seuil de centile des températures doit être calculé avec une fenêtre mobile d'un nombre de jours donné.",
-    "description": "Nombre de jours avec au moins {window} jours consécutifs où la température maximale quotidienne est au-dessus ou égale au(x) {tasmax_per_thresh}e centile(s). Une fenêtre de {tasmax_per_window} jour(s), centrée sur chaque jour du calendrier de la période {tasmax_per_period}, est utilisée pour calculer le(s) {tasmax_per_thresh}e(s) centile(s).",
-    "long_name": "Nombre de jours faisant partie d'une vague de chaleur définie par un centile"
+    "description": "Nombre de jours avec au moins {window} jours consécutifs où la température maximale quotidienne est au-dessus ou égale au(x) {tasmax_per_thresh}e centile(s). Une fenêtre de {tasmax_per_window} jour(s), centrée sur chaque jour du calendrier de la période {tasmax_per_period}, est utilisée pour calculer le(s) {tasmax_per_thresh}e(s) centile(s)."
   },
   "MAXIMUM_CONSECUTIVE_WARM_DAYS": {
-    "title": "Nombre maximal de jours chauds consécutifs",
-    "abstract": "Nombre maximal de jours consécutifs où la température maximale quotidienne est au-dessus d'un seuil donné.",
+    "long_name": "Nombre maximal de jours chauds consécutifs",
     "description": "Nombre {freq:m} maximal de jours chauds consécutifs (température maximale quotidienne > {thresh}).",
-    "long_name": "Nombre maximal de jours chauds consécutifs"
+    "title": "Nombre maximal de jours chauds consécutifs",
+    "abstract": "Nombre maximal de jours consécutifs où la température maximale quotidienne est au-dessus d'un seuil donné."
   },
   "FIRE_SEASON": {
-    "title": "Saison des incendies",
-    "abstract": "Masque binaire de la saison des incendies, défini selon des conditions de températures quotidiennes consécutives et, optionnellement, d'épaisseurs du couvert de neige.",
+    "long_name": "Saison des incendies",
     "description": "Masque de la saison des incendies, calculé selon la méthode {method}",
-    "long_name": "Saison des incendies"
+    "title": "Saison des incendies",
+    "abstract": "Masque binaire de la saison des incendies, défini selon des conditions de températures quotidiennes consécutives et, optionnellement, d'épaisseurs du couvert de neige."
   },
   "CORN_HEAT_UNITS": {
     "title": "Unités thermiques maïs",
@@ -970,110 +970,108 @@
     "long_name": "Unités thermiques maïs (Tmin > {thresh_tasmin} et Tmax > {thresh_tasmax})"
   },
   "FREEZETHAW_SPELL_FREQUENCY": {
-    "title": "Fréquence des périodes des événements consécutifs de gel-dégel",
-    "abstract": "Fréquence des périodes des événements consécutifs de gel-dégel. Une période de gel-dégel est définie comme un nombre de jours consécutifs où les températures maximales quotidiennes sont au-dessus d'un seuil donné et les températures minimales quotidiennes sont en dessous ou égales à un seuil donné, généralement 0°C pour les deux..",
+    "long_name": "Fréquence des périodes où les températures maximales quotidiennes sont au-dessus de {thresh_tasmax} et les températures minimales quotidiennes sont égales ou en dessous de {thresh_tasmin} pendant au moins {window} jour(s) consécutif(s)",
     "description": "Fréquence {freq:f} périodes des événements consécutifs de gel-dégel (températures maximales au-dessus de {thresh_tasmax} et températures minimales en dessous ou égales à {thresh_tasmin} pour au moins {window} jour(s) consécutif(s)).",
-    "long_name": "Fréquence des périodes où les températures maximales quotidiennes sont au-dessus de {thresh_tasmax} et les températures minimales quotidiennes sont égales ou en dessous de {thresh_tasmin} pendant au moins {window} jour(s) consécutif(s)"
+    "title": "Fréquence des périodes des événements consécutifs de gel-dégel",
+    "abstract": "Fréquence des périodes des événements consécutifs de gel-dégel. Une période de gel-dégel est définie comme un nombre de jours consécutifs où les températures maximales quotidiennes sont au-dessus d'un seuil donné et les températures minimales quotidiennes sont en dessous ou égales à un seuil donné, généralement 0°C pour les deux."
   },
   "FREEZETHAW_SPELL_MAX_LENGTH": {
-    "title": "Durée maximale des périodes des événements consécutifs de gel-dégel",
-    "abstract": "Durée maximale des périodes des événements consécutifs de gel-dégel. Une période de gel-dégel est définie comme un nombre de jours consécutifs où les températures maximales quotidiennes sont au-dessus d'un seuil donné et les températures minimales quotidiennes sont en dessous ou égales à un seuil donné, généralement 0°C pour les deux..",
+    "long_name": "Durée maximale des périodes où les températures maximales quotidiennes sont au-dessus de {thresh_tasmax} et les températures minimales quotidiennes sont égales ou en dessous de {thresh_tasmin} pendant au moins {window} jour(s) consécutif(s)",
     "description": "Durée maximale {freq:f} des périodes des événements consécutifs de gel-dégel (températures maximales au-dessus de {thresh_tasmax} et températures minimales en dessous ou égales à {thresh_tasmin} pour au moins {window} jour(s) consécutif(s)).",
-    "long_name": "Durée maximale des périodes où les températures maximales quotidiennes sont au-dessus de {thresh_tasmax} et les températures minimales quotidiennes sont égales ou en dessous de {thresh_tasmin} pendant au moins {window} jour(s) consécutif(s)"
+    "title": "Durée maximale des périodes des événements consécutifs de gel-dégel",
+    "abstract": "Durée maximale des périodes des événements consécutifs de gel-dégel. Une période de gel-dégel est définie comme un nombre de jours consécutifs où les températures maximales quotidiennes sont au-dessus d'un seuil donné et les températures minimales quotidiennes sont en dessous ou égales à un seuil donné, généralement 0°C pour les deux."
   },
   "FREEZETHAW_SPELL_MEAN_LENGTH": {
-    "title": "Durée moyenne des périodes des événements consécutifs de gel-dégel",
-    "abstract": "Durée moyenne des périodes des événements consécutifs de gel-dégel. Une période de gel-dégel est définie comme un nombre de jours consécutifs où les températures maximales quotidiennes sont au-dessus d'un seuil donné et les températures minimales quotidiennes sont en dessous ou égales à un seuil donné, généralement 0°C pour les deux..",
+    "long_name": "Durée moyenne des périodes où les températures maximales quotidiennes sont au-dessus de {thresh_tasmax} et les températures minimales quotidiennes sont égales ou en dessous de {thresh_tasmin} pendant au moins {window} jour(s) consécutif(s)",
     "description": "Durée moyenne {freq:f} des spériodes des événements consécutifs de gel-dégel (températures maximales au-dessus de {thresh_tasmax} et températures minimales en dessous ou égales à {thresh_tasmin} pour au moins {window} jour(s) consécutif(s)).",
-    "long_name": "Durée moyenne des périodes où les températures maximales quotidiennes sont au-dessus de {thresh_tasmax} et les températures minimales quotidiennes sont égales ou en dessous de {thresh_tasmin} pendant au moins {window} jour(s) consécutif(s)"
+    "title": "Durée moyenne des périodes des événements consécutifs de gel-dégel",
+    "abstract": "Durée moyenne des périodes des événements consécutifs de gel-dégel. Une période de gel-dégel est définie comme un nombre de jours consécutifs où les températures maximales quotidiennes sont au-dessus d'un seuil donné et les températures minimales quotidiennes sont en dessous ou égales à un seuil donné, généralement 0°C pour les deux."
   },
   "WIND_CHILL": {
-    "title": "Facteur éolien",
-    "abstract": "Le facteur éolien est un indice qui équivaut à la sensation du froid par un individu moyen. Il est calculé à partir de la température et de la vitesse du vent à 10 m. Tel que définit par Environnement et Changement Climatique Canada, une seconde formule est utilisée pour les vents faibles. La formule standard est sinon la même qu'utilisée aux États-Unis.",
+    "long_name": "Indice de facteur éolien",
     "description": "L'indice de refroiddissement éolien, équivalent à la température ressentie due au vent par un individu moyen.",
-    "long_name": "Indice de facteur éolien"
+    "title": "Facteur éolien",
+    "abstract": "Le facteur éolien est un indice qui équivaut à la sensation du froid par un individu moyen. Il est calculé à partir de la température et de la vitesse du vent à 10 m. Tel que définit par Environnement et Changement Climatique Canada, une seconde formule est utilisée pour les vents faibles. La formule standard est sinon la même qu'utilisée aux États-Unis."
   },
   "HUMIDEX": {
-    "title": "Indice humidex",
-    "abstract": "L'indice humidex décrit la température ressentie par une personne lorsqu'on tient compte de l'humidité relative. Il peut être interpreté comme la température équivalente ressentie lorsque l'air est sec.",
+    "long_name": "indice humidex",
     "description": "Indice humidex décrivant la température ressentie par une personne en réponse à l'humidité relative.",
-    "long_name": "indice humidex"
+    "title": "Indice humidex",
+    "abstract": "L'indice humidex décrit la température ressentie par une personne lorsqu'on tient compte de l'humidité relative. Il peut être interpreté comme la température équivalente ressentie lorsque l'air est sec."
   },
   "HEAT_INDEX": {
-    "title": "Indice de chaleur",
-    "abstract": "L'indice de chaleur est une estimation de la température ressentie par une personne à l'ombre lorsqu'on tient compte de l'humidité relative.",
+    "long_name": "Indice de chaleur",
     "description": "Température ressentie estimée avec l'humidité relative et la température ambiante.",
-    "long_name": "Indice de chaleur"
+    "title": "Indice de chaleur",
+    "abstract": "L'indice de chaleur est une estimation de la température ressentie par une personne à l'ombre lorsqu'on tient compte de l'humidité relative."
   },
   "POTENTIAL_EVAPOTRANSPIRATION": {
-    "title": "Évapotranspiration potentielle",
-    "abstract": "Le potentiel d'évaporation de l'eau du sol et de transpiration par les plantes si l'approvisionnement en eau est suffisant, avec une méthode donnée.",
+    "long_name": "Évapotranspiration potentielle (méthode \"{methode}\")",
     "description": "Le potentiel d'évaporation de l'eau du sol et de transpiration par les plantes si l'approvisionnement en eau est suffisant, avec la méthode de {method}.",
-    "long_name": "Évapotranspiration potentielle (méthode \"{methode}\")"
+    "title": "Évapotranspiration potentielle",
+    "abstract": "Le potentiel d'évaporation de l'eau du sol et de transpiration par les plantes si l'approvisionnement en eau est suffisant, avec une méthode donnée."
   },
   "WATER_BUDGET_FROM_TAS": {
-    "title": "Bilan hydrique",
-    "abstract": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface, où l'évapotranspiration potentielle est calculée avec une méthode donnée.",
+    "long_name": "Bilan hydrique (méthode \"{methode}\")",
     "description": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface, où l'évapotranspiration potentielle est calculée avec la méthode {method}.",
-    "long_name": "Bilan hydrique (méthode \"{methode}\")"
+    "title": "Bilan hydrique",
+    "abstract": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface, où l'évapotranspiration potentielle est calculée avec une méthode donnée."
   },
   "WATER_BUDGET": {
-    "title": "Bilan hydrique",
-    "abstract": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface.",
+    "long_name": "Bilan hydrique",
     "description": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface.",
-    "long_name": "Bilan hydrique"
+    "title": "Bilan hydrique",
+    "abstract": "Précipitations moins l'évapotranspiration potentielle en tant que mesure approximative d'un bilan hydrique de surface."
   },
   "DRY_SPELL_FREQUENCY": {
-    "title": "Fréquence des périodes sèches",
-    "abstract": "Fréquence des périodes sèches d'une durée minimale donnée, pendant lesquelles les précipitations accumulées ou maximales sur une fenêtre de jours donnée sont inférieures à un seuil donné.",
+    "long_name": "Fréquence des périodes sèches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}",
     "description": "Fréquence {freq:f} des périodes sèches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}.",
-    "long_name": "Fréquence des périodes sèches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}"
+    "title": "Fréquence des périodes sèches",
+    "abstract": "Fréquence des périodes sèches d'une durée minimale donnée, pendant lesquelles les précipitations accumulées ou maximales sur une fenêtre de jours donnée sont inférieures à un seuil donné."
   },
   "DRY_SPELL_TOTAL_LENGTH": {
-    "title": "Durée totale en jours des périodes sèches",
-    "abstract": "Durée totale en jours des périodes sèches d'une durée minimale donnée, pendant lesquelles les précipitations accumulées ou maximales sur une fenêtre de jours donné sont inférieures à un seuil donné.",
+    "long_name": "Durée totale en jours des périodes sèches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}",
     "description": "Durée totale {freq:f} en jours des périodes sèches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}.",
-    "long_name": "Durée totale en jours des périodes sèches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}"
+    "title": "Durée totale en jours des périodes sèches",
+    "abstract": "Durée totale en jours des périodes sèches d'une durée minimale donnée, pendant lesquelles les précipitations accumulées ou maximales sur une fenêtre de jours donné sont inférieures à un seuil donné."
   },
   "COLD_AND_DRY_DAYS": {
-    "title": "Nombre de jours froids et secs",
-    "abstract": "Nombre de jours où la température et la précipitation sont en dessous de centiles donnés.",
+    "long_name": "Nombre de jours où la température est en dessous du {tas_per_thresh}e centile et la précipitation en dessous du {pr_per_thresh}e centile",
     "description": "Nombre {freq:m} de jours où la température est en dessous du {tas_per_thresh}e centile et la précipitation en dessous du {pr_per_thresh}e centile.",
-    "long_name": "Nombre de jours où la température est en dessous du {tas_per_thresh}e centile et la précipitation en dessous du {pr_per_thresh}e centile"
+    "title": "Nombre de jours froids et secs",
+    "abstract": "Nombre de jours où la température et la précipitation sont en dessous de centiles donnés."
   },
   "WARM_AND_DRY_DAYS": {
-    "title": "Nombre de jours chauds et secs",
-    "abstract": "Nombre de jours où la température est au-dessus d'un centile donné et la précipitation en dessous d'un centile donné.",
+    "long_name": "Nombre de jours où la température est au-dessus du {tas_per_thresh}e centile et la précipitation en dessous du {pr_per_thresh}e centile",
     "description": "Nombre {freq:m} de jours où la température est au-dessus du {tas_per_thresh}e centile et la précipitation en dessous du {pr_per_thresh}e centile.",
-    "long_name": "Nombre de jours où la température est au-dessus du {tas_per_thresh}e centile et la précipitation en dessous du {pr_per_thresh}e centile"
+    "title": "Nombre de jours chauds et secs",
+    "abstract": "Nombre de jours où la température est au-dessus d'un centile donné et la précipitation en dessous d'un centile donné."
   },
   "WARM_AND_WET_DAYS": {
-    "title": "Nombre de jours chauds et pluvieux",
-    "abstract": "Nombre de jours où la température et la précipitation sont au-dessus de centiles donnés.",
+    "long_name": "Nombre de jours où la température est au-dessus du {tas_per_thresh}e centile et la précipitation au-dessus du {pr_per_thresh}e centile",
     "description": "Nombre {freq:m} de jours où la température est au-dessus du {tas_per_thresh}e centile et la précipitation au-dessus du {pr_per_thresh}e centile.",
-    "long_name": "Nombre de jours où la température est au-dessus du {tas_per_thresh}e centile et la précipitation au-dessus du {pr_per_thresh}e centile"
+    "title": "Nombre de jours chauds et pluvieux",
+    "abstract": "Nombre de jours où la température et la précipitation sont au-dessus de centiles donnés."
   },
   "COLD_AND_WET_DAYS": {
-    "title": "Nombre de jours froids et pluvieux",
-    "abstract": "Nombre de jours où la température est en dessous d'un centile donné et la précipitation au-dessus d'un centile donné.",
+    "long_name": "Nombre de jours où la température est en dessous du {tas_per_thresh}e centile et la précipitation au-dessus du {pr_per_thresh}e centile",
     "description": "Nombre {freq:m} de jours où la température est en dessous du {tas_per_thresh}e centile et la précipitation au-dessus du {pr_per_thresh}e centile.",
-    "long_name": "Nombre de jours où la température est en dessous du {tas_per_thresh}e centile et la précipitation au-dessus du {pr_per_thresh}e centile"
+    "title": "Nombre de jours froids et pluvieux",
+    "abstract": "Nombre de jours où la température est en dessous d'un centile donné et la précipitation au-dessus d'un centile donné."
   },
   "CALM_DAYS": {
-    "title": "Nombre de jours de vent calme",
-    "abstract": "Nombre de jours où la vitesse du vent de surface est sous un seuil donné.",
+    "long_name": "Nombre de jours où la vitesse du vent de surface est sous {thresh}",
     "description": "Nombre {freq:m} de jours où la vitesse du vent de surface est sous {thresh}.",
-    "long_name": "Nombre de jours où la vitesse du vent de surface est sous {thresh}"
+    "title": "Nombre de jours de vent calme",
+    "abstract": "Nombre de jours où la vitesse du vent de surface est sous un seuil donné."
   },
   "WINDY_DAYS": {
-    "title": "Nombre de jours venteux",
-    "abstract": "Nombre de jours où la vitesse du vent de surface est au-dessus ou égale à un seuil donné.",
+    "long_name": "Nombre de jours où la vitesse du vent de surface est au-dessus ou égale à {thresh}",
     "description": "Nombre {freq:m} de jours où la vitesse du vent de surface est au-dessus ou égale à {thresh}.",
-    "long_name": "Nombre de jours où la vitesse du vent de surface est au-dessus ou égale à {thresh}"
+    "title": "Nombre de jours venteux",
+    "abstract": "Nombre de jours où la vitesse du vent de surface est au-dessus ou égale à un seuil donné."
   },
   "JETSTREAM_METRIC_WOOLLINGS": {
-    "title": "Force et latitude du courant-jet",
-    "abstract": "Latitude et magnitude du maximum de la vitesse du vent zonal entre 15 à 75°N et -60 à 0°E. Le vent est lissé par un fenêtrage de Lanczos.",
     "description": [
       "Latitude quotidienne du maximum du vent zonal lissé par un fenêtrage de Lanczos.",
       "Magnitude quotidienne du maximum du vent zonal lissé par un fenêtrage de Lanczos."
@@ -1081,18 +1079,20 @@
     "long_name": [
       "Latitude du maximum du vent zonal",
       "Magnitude du maximum du vent zonal"
-    ]
+    ],
+    "title": "Force et latitude du courant-jet",
+    "abstract": "Latitude et magnitude du maximum de la vitesse du vent zonal entre 15 à 75°N et -60 à 0°E. Le vent est lissé par un fenêtrage de Lanczos."
   },
   "UTCI": {
-    "title": "Indice universel du climat thermique [UTCI]",
-    "abstract": "L'UTCI représente la température ressentie par rapport à un environnement de référence et est utilisé pour évaluer le stress thermique à l'extérieur.",
+    "long_name": "Indice universel du climat thermique [UTCI]",
     "description": "L'UTCI représente la température ressentie par rapport à un environnement de référence et est utilisé pour évaluer le stress thermique à l'extérieur.",
-    "long_name": "Indice universel du climat thermique [UTCI]"
+    "title": "Indice universel du climat thermique [UTCI]",
+    "abstract": "L'UTCI représente la température ressentie par rapport à un environnement de référence et est utilisé pour évaluer le stress thermique à l'extérieur."
   },
   "MEAN_RADIANT_TEMPERATURE": {
-    "title": "Température radiative moyenne",
-    "abstract": "La température moyenne des rayonnements solaires et thermiques incidents sur un corps à l'extérieur.",
+    "long_name": "Température radiative moyenne",
     "description": "La température moyenne des rayonnements incidents sur un corps.",
-    "long_name": "Température radiative moyenne"
+    "title": "Température radiative moyenne",
+    "abstract": "La température moyenne des rayonnements solaires et thermiques incidents sur un corps à l'extérieur."
   }
 }
