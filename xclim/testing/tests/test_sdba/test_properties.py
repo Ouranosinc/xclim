@@ -287,11 +287,13 @@ def test_corr_btw_var():
         sdba.properties.corr_btw_var(sim, simt, group="time", corr_type="pear")
 
 
+
+
 def test_relative_frequency():
     sim = (
         open_dataset("sdba/CanESM2_1950-2100.nc")
-        .sel(time=slice("1950", "1952"), location="Vancouver")
-        .pr
+            .sel(time=slice("1950", "1952"), location="Vancouver")
+            .pr
     )
 
     test = sdba.properties.relative_frequency(sim, thresh="25 mm d-1", op=">=")
@@ -299,8 +301,8 @@ def test_relative_frequency():
         sdba.properties.relative_frequency(
             sim, thresh="25 mm d-1", op=">=", group="time.month"
         )
-        .sel(month=1)
-        .values
+            .sel(month=1)
+            .values
     )
     np.testing.assert_array_almost_equal(
         [test.values, testjan], [0.0045662100456621, 0.010752688172043012]
@@ -308,6 +310,20 @@ def test_relative_frequency():
     assert test.long_name == "Relative frequency of values >= 25 mm d-1."
     assert test.units == ""
 
+def test_transition():
+    sim = (
+        open_dataset("sdba/CanESM2_1950-2100.nc")
+        .sel(time=slice("1950", "1952"), location="Vancouver")
+        .pr
+    )
+
+    test = sdba.properties.transition_probability(da= sim, initial_op='<', final_op='>=')
+
+    np.testing.assert_array_almost_equal(
+        [test.values], [0.14076782449725778]
+    )
+    assert test.long_name ==  "Transition probablity of values < 1 mm d-1 to values >= 1 mm d-1."
+    assert test.units == ""
 
 def test_trend():
     simt = (

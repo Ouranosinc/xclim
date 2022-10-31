@@ -740,6 +740,56 @@ relative_frequency = StatisticalProperty(
 )
 
 
+def _transition_probability(
+    da: xr.DataArray,
+    *,
+    initial_op: str = ">=",
+    final_op:str = '>=',
+    thresh: str = "1 mm d-1",
+    group: str | Grouper = "time",
+) -> xr.DataArray:
+    """Transition probability.
+
+    Probability of transition from the inital state
+    (less than the threshold or more than the threshold) to the final state (less than the threshold or more than the threshold)
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Variable on which to calculate the diagnostic.
+    initial_op: {">", "<", ">=", "<="}
+      Operation to verify the condition for the initial state.
+      The condition is variable {op} threshold.
+    final_op: {">", "<", ">=", "<="}
+      Operation to verify the condition for the final state.
+      The condition is variable {op} threshold.
+    thresh: str
+      Threshold on which to evaluate the condition.
+    group : {'time', 'time.season', 'time.month'}
+      Grouping on the output.
+      Eg. For 'time.month', the relative frequency would be calculated on each month,
+      with all years included.
+
+    Returns
+    -------
+    xr.DataArray, [dimensionless]
+      Transition probablity of values {initial_op} {thresh} to values {final_op} {thresh}.
+    """
+    today = da.isel(time=slice(0, -1))
+    tomorrow= da.shift(time=-1).isel(time=slice(0,-1))
+
+    ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
+    t = convert_units_to(thresh, da)
+    out = np.mean(ops[initial_op](today, t) * ops[final_op](tomorrow, t))
+    out.attrs["units"] = ""
+    return out
+
+
+transition_probability = StatisticalProperty(
+    identifier="transition_probability", aspect="temporal", compute=_transition_probability
+)
+
+
 def _trend(
     da: xr.DataArray,
     *,
@@ -929,6 +979,43 @@ spatial_correlogram = StatisticalProperty(
     identifier="spatial_correlogram",
     aspect="spatial",
     compute=_spatial_correlogram,
+    allowed_groups=["group"],
+)
+
+
+def _correlation_length(da: xr.DataArray, *, dims=None, bins=100, group="time"):
+    """Correlation length.
+
+
+
+    Parameters
+    ----------
+    da: xr.DataArray
+      Data.
+    dims: sequence of strings
+      Name of the spatial dimensions. Once these are stacked, the longitude and latitude coordinates must be 1D.
+    bins:
+      Same as argument `bins` from :py:meth:`xarray.DataArray.groupby_bins`.
+      If given as a scalar, the equal-width bin limits are generated here
+      (instead of letting xarray do it) to improve performance.
+    group: str
+      Useless for now.
+
+    Returns
+    -------
+    xr.DataArray, [dimensionless]
+      Inter-site correlogram as a function of distance.
+    """
+
+
+
+    return out
+
+
+correlation_length = StatisticalProperty(
+    identifier="correlation_length",
+    aspect="spatial",
+    compute=_correlation_length,
     allowed_groups=["group"],
 )
 
