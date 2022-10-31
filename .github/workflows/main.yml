@@ -161,7 +161,7 @@ jobs:
   finish:
     needs:
       - doctests
-      - test-py39-opt-slow-conda
+      - test-py39-opt-slow
       - test-py310-lm3
     runs-on: ubuntu-latest
     steps:
