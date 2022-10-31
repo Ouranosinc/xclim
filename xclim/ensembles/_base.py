@@ -108,7 +108,7 @@ def create_ensemble(
         mf_flag,
         resample_freq,
         calendar=calendar,
-        cal_kwargs=cal_kwargs,
+        cal_kwargs=cal_kwargs or {},
         **xr_kwargs,
     )
 
@@ -400,14 +400,15 @@ def _ens_align_datasets(
                 time = counts.time
 
             ds["time"] = time
+            calendars.append(get_calendar(time))
 
         ds_all.append(ds)
-        calendars.append(get_calendar(time))
+
+    if not calendars:
+        # no time
+        return ds_all
 
     if calendar is None:
         calendar = common_calendar(*calendars, join="outer")
     cal_kwargs.setdefault("align_on", "date")
-    return [
-        convert_calendar(ds, calendar, **cal_kwargs) if "time" in ds.coords else ds
-        for ds in ds_all
-    ]
+    return [convert_calendar(ds, calendar, **cal_kwargs) for ds in ds_all]
