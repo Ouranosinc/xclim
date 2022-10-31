@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 import xarray as xr
 
 from xclim import sdba
@@ -68,3 +69,12 @@ def test_annual_cycle_correlation():
         .values
     )
     np.testing.assert_array_almost_equal(test, [0.94580488], 4)
+
+
+@pytest.mark.slow
+def test_scorr():
+    ref = open_dataset("NRCANdaily/nrcan_canada_daily_tasmin_1990.nc").tasmin
+    sim = open_dataset("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc").tasmax
+    scorr = sdba.measures.scorr(sim.isel(lon=slice(0, 50)), ref.isel(lon=slice(0, 50)))
+
+    np.testing.assert_allclose(scorr, [97374.2146243])

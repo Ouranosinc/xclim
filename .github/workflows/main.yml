@@ -78,7 +78,7 @@ jobs:
           flag-name: run-py38-upstream-lm3
           parallel: true
 
-  test-py39-sbck-slow-conda:
+  test-py39-opt-slow-mamba:
     needs: black
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
@@ -89,25 +89,26 @@ jobs:
       - name: Setup conda
         uses: conda-incubator/setup-miniconda@v2.1.1
         with:
-          activate-environment: sbck-experimental
+          activate-environment: xclim39
           channels: conda-forge,defaults
           mamba-version: "*"
           python-version: "3.9"
       - name: Install tox
         shell: bash -l {0}
-        run: mamba install -n sbck-experimental tox-conda tox
+        run: |
+          mamba install -n xclim39 tox-conda
       - name: Test with tox
         shell: bash -l {0}
         run: |
-          conda activate sbck-experimental
-          tox -e py39-sbck-slow
+          conda activate xclim39
+          tox -e opt-slow-mamba
         env:
           CONDA_EXE: mamba
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Report coverage
         uses: AndreMiras/coveralls-python-action@develop
         with:
-          flag-name: run-py39-sbck-slow-conda
+          flag-name: run-py39-opt-slow-mamba
           parallel: true
 
   test-py310-lm3:
@@ -161,7 +162,7 @@ jobs:
   finish:
     needs:
       - doctests
-      - test-py39-sbck-slow-conda
+      - test-py39-opt-slow-mamba
       - test-py310-lm3
     runs-on: ubuntu-latest
     steps:

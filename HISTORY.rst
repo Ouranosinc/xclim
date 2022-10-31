@@ -4,13 +4,15 @@ History
 
 0.39.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), Éric Dupuis (:user:`coxipi`), Travis Logan (:user:`tlogan2000`)
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), Éric Dupuis (:user:`coxipi`), Travis Logan (:user:`tlogan2000`), Pascal Bourgault (:user:`aulemahal`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * The general ``xclim`` description and ReadMe have been updated to reflect recent enhancements. (:issue:`1185`, :pull:`1209`).
 * Documentation now supports intersphinx mapping references within code examples via `sphinx-codeautolink` and copying of code blocks via `sphinx-copybutton`. (:pull:`1182`).
 * Log-logistic distribution added to `stats.py` for use with `standardized_precipitation_index` and `standardized_precipitation_evapotranspiration_index` (:issue:`1141`, :pull:`1183`).
+* New option in many indices allowing for resampling in given periods after `run_length` operations. (:issue:`505`, :issue:`916`, :issue:`917`, :pull:`1161`).
+* New base indicator class for sdba: ``StatisticalPropertyMeasure``, those measures that also reduce the time (as a property does) (:pull:`1198`).
 * ``xclim.core.calendar.common_calendar`` to find the best calendar to use when uniformizing an heteroclite collection of data. (:pull:`1217`).
 * ``xclim.ensembles.create_ensemble`` now accepts ``calendar=None``, and uses the above function to guess the best one. It also now accepts ``cal_kwargs`` to fine tune the calendar conversion. (:issue:`1190`, :pull:`1217`).
 * New data check : ``xclim.core.datachecks.check_common_time`` that ensures all inputs of multivariate indicators have the same frequency (and the same time anchoring for daily and hourly data). (:issue:`1111`, :pull:`1217`).
@@ -19,6 +21,7 @@ New indicators
 ^^^^^^^^^^^^^^
 * New indices ``first_day_temperature_{above | below}`` and indicators ``xclim.indices.first_day_{tn | tg | tx}_{above | below}``. These indices/indicators accept operator (``op``) keyword for finer threshold comparison controls. (:issue:`1175`, :pull:`1186`).
 * New generic indice ``cumulative_difference`` for calculating difference between values and thresholds across time (e.g. temperature: degree-days, precipitation: moisture deficit), with or without resampling/accumulating by frequency. (:pull:`1202`).
+* New spatial sdba properties and measures : ``spatial_correlogram``, ``scorr`` and ``first_eof``. The later needs the optional dependency `eofs <https://ajdawson.github.io/eofs/>`_. (:pull:`1198`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -34,6 +37,8 @@ Breaking changes
     - ``xclim.atmos.first_day_below`` -> ``xclim.indices.first_day_{tn | tg | tx}_below``
 * The ``degree_days`` generic indice has been deprecated in favour of ``cumulative_difference`` that is not limited only to temperature variables (:issue:`1200`, :pull:`1202`). The indices for ``atmos.{heating | cooling | growing}_degree_days`` are now built from ``generic.cumulative_difference``.
 * Running `pytest` now requires the `pytest-dist` distributed testing dependency. This library has been added to the `dev` requirements and conda environment configuration. (:pull:`1203`).
+* Parameters ``reducer`` and ``window`` in ``xclim.indices.rle_statistics`` are now positional. (:pull:`1161`).
+* The ``relative_annual_cycle_amplitude`` and ``annual_cycle_amplitude`` have been rewritten to match the version defined in the VALUE project, outputs will change drastically (for the better) (:pull:`1198`).
 * Cleaner ``xclim.core.calendar.parse_offset`` : fails on invalid frequencies, return implicit anchors (YS -> JAN, Y -> DEC) and implicit ``is_start_anchored`` (D -> True). (:issue:`1213`, , :pull:`1217`).
 
 Bug fixes

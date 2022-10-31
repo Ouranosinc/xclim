@@ -131,6 +131,7 @@ def cold_spell_days(
     thresh: str = "-10 degC",
     window: int = 5,
     freq: str = "AS-JUL",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Cold spell days.
 
@@ -146,7 +147,10 @@ def cold_spell_days(
     window : int
         Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
-         Resampling frequency.
+      Resampling frequency.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -166,9 +170,13 @@ def cold_spell_days(
     """
     t = convert_units_to(thresh, tas)
     over = tas < t
-    group = over.resample(time=freq)
-
-    out = group.map(rl.windowed_run_count, window=window, dim="time")
+    out = rl.resample_and_rl(
+        over,
+        resample_before_rl,
+        rl.windowed_run_count,
+        window=window,
+        freq=freq,
+    )
     return to_agg_units(out, tas, "count")
 
 
@@ -178,6 +186,7 @@ def cold_spell_frequency(
     thresh: str = "-10 degC",
     window: int = 5,
     freq: str = "AS-JUL",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Cold spell frequency.
 
@@ -193,19 +202,22 @@ def cold_spell_frequency(
     window : int
         Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
-        Resampling frequency.
+      Resampling frequency.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
 
-    Returns
-    -------
-    xarray.DataArray, [dimensionless]
         Cold spell frequency.
 
     """
     t = convert_units_to(thresh, tas)
     over = tas < t
-    group = over.resample(time=freq)
-
-    out = group.map(rl.windowed_run_events, window=window, dim="time")
+    out = rl.resample_and_rl(
+        over,
+        resample_before_rl,
+        rl.windowed_run_events,
+        window=window,
+        freq=freq,
+    )
     out.attrs["units"] = ""
     return out
 
@@ -406,7 +418,10 @@ def dry_days(
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
 def maximum_consecutive_wet_days(
-    pr: xarray.DataArray, thresh: str = "1 mm/day", freq: str = "YS"
+    pr: xarray.DataArray,
+    thresh: str = "1 mm/day",
+    freq: str = "YS",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Consecutive wet days.
 
@@ -419,7 +434,10 @@ def maximum_consecutive_wet_days(
     thresh : str
         Threshold precipitation on which to base evaluation.
     freq : str
-        Resampling frequency.
+      Resampling frequency.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -441,8 +459,13 @@ def maximum_consecutive_wet_days(
     """
     thresh = convert_units_to(thresh, pr, "hydro")
 
-    group = (pr > thresh).resample(time=freq)
-    out = group.map(rl.longest_run, dim="time")
+    cond = pr > thresh
+    out = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.longest_run,
+        freq=freq,
+    )
     out = to_agg_units(out, pr, "count")
     return out
 
@@ -485,7 +508,11 @@ def cooling_degree_days(
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def freshet_start(
-    tas: xarray.DataArray, thresh: str = "0 degC", window: int = 5, freq: str = "YS"
+    tas: xarray.DataArray,
+    thresh: str = "0 degC",
+    window: int = 5,
+    freq: str = "YS",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""First day consistently exceeding threshold temperature.
 
@@ -500,7 +527,10 @@ def freshet_start(
     window : int
         Minimum number of days with temperature above threshold needed for evaluation.
     freq : str
-         Resampling frequency.
+      Resampling frequency.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
