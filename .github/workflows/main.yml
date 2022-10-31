@@ -78,7 +78,7 @@ jobs:
           flag-name: run-py38-upstream-lm3
           parallel: true
 
-  test-py39-opt-slow-conda:
+  test-py39-opt-slow:
     needs: black
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
@@ -107,7 +107,7 @@ jobs:
       - name: Report coverage
         uses: AndreMiras/coveralls-python-action@develop
         with:
-          flag-name: run-py39-sbck-slow-conda
+          flag-name: run-py39-opt-slow
           parallel: true
 
   test-py310-lm3:
