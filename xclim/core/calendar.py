@@ -658,7 +658,7 @@ def parse_offset(freq: str) -> Sequence[str]:
       Whether coordinates of this frequency should correspond to the beginning of the period (`True`) or its end (`False`).
       Can only be False when base is A, Q or M.
     anchor : str or None
-      Given for bases A or Q. As xarray doesn't support "W", so doesn't xclim and anchor information is lost when given.
+      Given for bases A or Q. As xarray doesn't support "W", neither does xclim (anchor information is lost when given).
     """
     # Useful to raise on invalid freqs, convert Y to A and get default anchor (A, Q)
     offset = pd.tseries.frequencies.to_offset(freq)
