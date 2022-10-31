@@ -535,7 +535,7 @@ freezethaw_spell_frequency = Temp(
     title="Freeze-thaw spell frequency",
     identifier="freezethaw_spell_frequency",
     units="days",
-    long_name="Frequency of events where maximum daily temperatures are above {thresh_tasmax} "
+    long_name="Frequency of events where maximum daily temperatures are above {thresh_tasmax}"
     "and minimum daily temperatures are at or below {thresh_tasmin} for at least {window} consecutive day(s).",
     description="{freq} number of freeze-thaw spells, where maximum daily temperatures are above {thresh_tasmax} "
     "and minimum daily temperatures are at or below {thresh_tasmin} for at least {window} consecutive day(s).",
@@ -1093,10 +1093,19 @@ degree_days_exceedance_date = Temp(
     identifier="degree_days_exceedance_date",
     units="",
     standard_name="day_of_year",
-    long_name="Day of year when the integral of mean daily temperature {op} {thresh} exceeds {sum_thresh}, "
-    "with the cumulative sum starting from {after_date}",
-    description="Day of year when the integral of degree days (or mean daily temperature {op} {thresh}) exceeds "
-    "{sum_thresh}, with the cumulative sum starting from {after_date}.",
+    long_name=lambda **kws: "Day of year when the integral of mean daily temperature {op} {thresh} exceeds {sum_thresh}"
+    + (
+        ", with the cumulative sum starting from {after_date}"
+        if kws["after_date"] is not None
+        else ""
+    ),
+    description=lambda **kws: "Day of year when the integral of degree days (mean daily temperature {op} {thresh}) "
+    "exceeds {sum_thresh}"
+    + (
+        ", with the cumulative sum starting from {after_date}."
+        if kws["after_date"] is not None
+        else "."
+    ),
     abstract="The day of the year when the sum of degree days exceeds a threshold, occurring after a given date. "
     "Degree days are calculated above or below a given temperature threshold.",
     cell_methods="",

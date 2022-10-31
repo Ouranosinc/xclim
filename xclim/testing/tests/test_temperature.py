@@ -362,7 +362,7 @@ class TestConsecutiveFrostFreeDays:
         test = atmos.maximum_consecutive_frost_free_days(tasmin)
         np.testing.assert_allclose(test[2, 0], [68], rtol=1e-1)
         assert (
-            "Annual maximum number of consecutive days with minimum daily temperature above or equal to 0 degc."
+            "Annual maximum number of consecutive days with minimum daily temperature at or above 0 degc."
         ) in test.description
 
 
@@ -1225,7 +1225,7 @@ def test_degree_days_exceedance_date():
     )
     np.testing.assert_array_equal(out, np.array([[153, 136, 9, 6]]).T)
     assert (
-        "Day of year when the integral of degree days (mean temperature > 4 degc) "
+        "Day of year when the integral of degree days (mean daily temperature > 4 degc) "
         "exceeds 200 k days, with the cumulative sum starting from none."
         in out.attrs["description"]
     )
@@ -1288,7 +1288,7 @@ def test_maximum_consecutive_warm_days():
     out = atmos.maximum_consecutive_warm_days(tasmax)
     np.testing.assert_array_equal(out[1, :], np.array([13, 21, 6, 10]))
     assert (
-        "Annual longest spell of consecutive days with tmax above 25 degc."
+        "Annual longest spell of consecutive days with maximum daily temperature above 25 degc."
         in out.description
     )
 
@@ -1338,10 +1338,13 @@ class TestFreezeThawSpell:
         )
         np.testing.assert_array_equal(out.isel(location=-1), [1, 0, 1, 1])
 
-        assert out.attrs["long_name"] == "Frequency of daily freeze-thaw spells"
+        assert out.attrs["long_name"] == (
+            "Frequency of events where maximum daily temperatures are above 0 degc "
+            "and minimum daily temperatures are at or below 0 degc for at least 2 consecutive day(s)."
+        )
         assert out.attrs["description"] in [
-            "Annual number of freeze-thaw spells, where maximum daily temperatures are above 0 degc and minimum daily "
-            "temperatures are at or below 0 degc for at least 2 consecutive day(s)."
+            "Annual number of freeze-thaw spells, where maximum daily temperatures are above 0 degc "
+            "and minimum daily temperatures are at or below 0 degc for at least 2 consecutive day(s)."
         ]
 
     def test_freezethaw_spell_mean_length(self):
@@ -1363,10 +1366,13 @@ class TestFreezeThawSpell:
         )
         np.testing.assert_array_equal(out.isel(location=-1), [2, 0, 2, 2])
 
-        assert out.attrs["long_name"] == "Average length of daily freeze-thaw spells"
+        assert out.attrs["long_name"] == (
+            "Average length of events where maximum daily temperatures are above 0 degc "
+            "and minimum daily temperatures are at or below 0 degc for at least 2 consecutive day(s)."
+        )
         assert out.attrs["description"] in [
-            "Annual average length of freeze-thaw spells, where maximum daily temperatures are above 0 degc and "
-            "minimum daily temperatures are at or below 0 degc for at least 2 consecutive day(s)."
+            "Annual average length of freeze-thaw spells, where maximum daily temperatures are above 0 degc "
+            "and minimum daily temperatures are at or below 0 degc for at least 2 consecutive day(s)."
         ]
 
     def test_freezethaw_spell_max_length(self):
@@ -1386,8 +1392,11 @@ class TestFreezeThawSpell:
         )
         np.testing.assert_array_equal(out.isel(location=-1), [2, 0, 2, 2])
 
-        assert out.attrs["long_name"] == "Maximal length of freeze-thaw spells"
+        assert out.attrs["long_name"] == (
+            "Maximal length of events where maximum daily temperatures are above 0 degc "
+            "and minimum daily temperatures are at or below 0 degc for at least 2 consecutive day(s)."
+        )
         assert out.attrs["description"] in [
-            "Annual maximal length of freeze-thaw spells, where maximum daily temperatures are above 0 degc and "
-            "minimum daily temperatures are at or below 0 degc for at least 2 consecutive day(s)."
+            "Annual maximal length of freeze-thaw spells, where maximum daily temperatures are above 0 degc "
+            "and minimum daily temperatures are at or below 0 degc for at least 2 consecutive day(s)."
         ]

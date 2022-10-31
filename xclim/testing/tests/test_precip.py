@@ -79,8 +79,8 @@ class TestPrecipAccumulation:
 
         np.testing.assert_array_almost_equal(out_liq + out_sol, out_tot, 4)
 
-        assert "solid" in out_sol.long_name
-        assert "liquid" in out_liq.long_name
+        assert "solid" in out_sol.description
+        assert "liquid" in out_liq.description
         assert out_sol.standard_name == "lwe_thickness_of_snowfall_amount"
 
         # With a non-default threshold
