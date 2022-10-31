@@ -95,7 +95,8 @@ jobs:
           python-version: "3.9"
       - name: Install tox
         shell: bash -l {0}
-        run: mamba install -n sbck-experimental tox-conda
+        run: |
+          mamba install -n xclim39 tox-conda
       - name: Test with tox
         shell: bash -l {0}
         run: |
