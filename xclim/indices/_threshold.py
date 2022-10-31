@@ -171,8 +171,8 @@ def cold_spell_days(
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
     t = convert_units_to(thresh, tas)
-    over = compare(tas, op, t, constrain=("<", "<="))    
-    
+    over = compare(tas, op, t, constrain=("<", "<="))
+
     out = rl.resample_and_rl(
         over,
         resample_before_rl,
@@ -211,7 +211,7 @@ def cold_spell_frequency(
         Comparison operation. Default: "<".
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run
-        
+
     Returns
     -------
     xarray.DataArray, [time]
@@ -220,7 +220,7 @@ def cold_spell_frequency(
     """
     t = convert_units_to(thresh, tas)
     over = compare(tas, op, t, constrain=("<", "<="))
-    
+
     out = rl.resample_and_rl(
         over,
         resample_before_rl,
