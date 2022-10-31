@@ -63,7 +63,18 @@ def check_daily(var: xr.DataArray):
 
 @datacheck
 def check_common_time(*inputs):
-    """Raise an error if the list of inputs doesn't have a single common frequency."""
+    """Raise an error if the list of inputs doesn't have a single common frequency.
+
+    This raises if:
+    - the frequency of any input can't be inferred
+    - inputs have differing frequencies
+    - inputs have a daily or hourly frequency, but they are not given at the same time of day.
+
+    Parameters
+    ----------
+    inputs : xr.DataArray
+        Input arrays.
+    """
     # Check all have the same freq
     freqs = {xr.infer_freq(da.time) for da in inputs}
     if None in freqs:

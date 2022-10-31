@@ -168,3 +168,35 @@ class TestDataCheck:
 
         with pytest.raises(ValidationError, match="Unable to infer the frequency of"):
             datachecks.check_freq(da.where(da.time.dt.dayofyear != 5, drop=True), "3H")
+
+    def test_common_time(self, tas_series, date_range):
+        tas_attrs = {
+            "units": "K",
+            "standard_name": "air_temperature",
+        }
+
+        n = 100
+        time = date_range("2000-01-01", freq="H", periods=n)
+        da = xr.DataArray(np.random.rand(n), [("time", time)], attrs=tas_attrs)
+
+        # No freq
+        db = da[np.array([0, 1, 4, 6, 10])]
+        with pytest.raises(
+            ValidationError, match="Unable to infer the frequency of the time series."
+        ):
+            datachecks.check_common_time(db, da)
+
+        # Not same freq
+        time = date_range("2000-01-01", freq="6H", periods=n)
+        db = xr.DataArray(np.random.rand(n), [("time", time)], attrs=tas_attrs)
+        with pytest.raises(ValidationError, match="Inputs have different frequencies"):
+            datachecks.check_common_time(db, da)
+
+        # Not same minutes
+        db = da.copy(deep=True)
+        db["time"] = db.time + pd.Timedelta(30, "min")
+        with pytest.raises(
+            ValidationError,
+            match=r"All inputs have the same frequency \(H\), but they are not anchored on the same minutes",
+        ):
+            datachecks.check_common_time(db, da)
