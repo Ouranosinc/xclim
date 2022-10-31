@@ -11,6 +11,7 @@ New features and enhancements
 * The general ``xclim`` description and ReadMe have been updated to reflect recent enhancements. (:issue:`1185`, :pull:`1209`).
 * Documentation now supports intersphinx mapping references within code examples via `sphinx-codeautolink` and copying of code blocks via `sphinx-copybutton`. (:pull:`1182`).
 * Log-logistic distribution added to `stats.py` for use with `standardized_precipitation_index` and `standardized_precipitation_evapotranspiration_index` (:issue:`1141`, :pull:`1183`).
+* New option in many indices allowing for resampling in given periods after `run_length` operations. (:issue:`505`, :issue:`916`, :issue:`917`, :pull:`1161`).
 * New base indicator class for sdba: ``StatisticalPropertyMeasure``, those measures that also reduce the time (as a property does) (:pull:`1198`).
 
 New indicators
@@ -33,6 +34,7 @@ Breaking changes
     - ``xclim.atmos.first_day_below`` -> ``xclim.indices.first_day_{tn | tg | tx}_below``
 * The ``degree_days`` generic indice has been deprecated in favour of ``cumulative_difference`` that is not limited only to temperature variables (:issue:`1200`, :pull:`1202`). The indices for ``atmos.{heating | cooling | growing}_degree_days`` are now built from ``generic.cumulative_difference``.
 * Running `pytest` now requires the `pytest-dist` distributed testing dependency. This library has been added to the `dev` requirements and conda environment configuration. (:pull:`1203`).
+* Parameters ``reducer`` and ``window`` in ``xclim.indices.rle_statistics`` are now positional. (:pull:`1161`).
 * The ``relative_annual_cycle_amplitude`` and ``annual_cycle_amplitude`` have been rewritten to match the version defined in the VALUE project, outputs will change drastically (for the better) (:pull:`1198`).
 
 Bug fixes

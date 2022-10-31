@@ -887,6 +887,7 @@ def dry_spell_frequency(
     thresh: str = "1.0 mm",
     window: int = 3,
     freq: str = "YS",
+    resample_before_rl: bool = True,
     op: str = "sum",
 ) -> xarray.DataArray:
     """Return the number of dry periods of n days and more.
@@ -903,13 +904,16 @@ def dry_spell_frequency(
     window : int
         Minimum length of the spells.
     freq : str
-        Resampling frequency.
-    op : {"sum","max"}
-        Operation to perform on the window.
-        Default is "sum", which checks that the sum of accumulated precipitation over the whole window is less than the
-        threshold.
-        "max" checks that the maximal daily precipitation amount within the window is less than the threshold.
-        This is the same as verifying that each individual day is below the threshold.
+      Resampling frequency.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
+    op: {"sum","max"}
+      Operation to perform on the window.
+      Default is "sum", which checks that the sum of accumulated precipitation over the whole window is less than the
+      threshold.
+      "max" checks that the maximal daily precipitation amount within the window is less than the threshold.
+      This is the same as verifying that each individual day is below the threshold.
 
     Returns
     -------
@@ -927,10 +931,13 @@ def dry_spell_frequency(
     thresh = convert_units_to(thresh, pram)
 
     agg_pr = getattr(pram.rolling(time=window, center=True), op)()
-    out = (
-        (agg_pr < thresh)
-        .resample(time=freq)
-        .map(rl.windowed_run_events, window=1, dim="time")
+    cond = agg_pr < thresh
+    out = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.windowed_run_events,
+        window=1,
+        freq=freq,
     )
 
     out.attrs["units"] = ""
@@ -944,6 +951,7 @@ def dry_spell_total_length(
     window: int = 3,
     op: str = "sum",
     freq: str = "YS",
+    resample_before_rl: bool = True,
     **indexer,
 ) -> xarray.DataArray:
     """Total length of dry spells.
@@ -990,7 +998,15 @@ def dry_spell_total_length(
     dry = (mask.rolling(time=window).sum() >= 1).shift(time=-(window - 1))
     dry = dry.isel(time=slice(0, pram.time.size)).astype(float)
 
-    out = select_time(dry, **indexer).resample(time=freq).sum("time")
+    dry = select_time(dry, **indexer)
+
+    out = rl.resample_and_rl(
+        dry,
+        resample_before_rl,
+        rl.windowed_run_count,
+        window=1,
+        freq=freq,
+    )
     return to_agg_units(out, pram, "count")
 
 
