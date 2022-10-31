@@ -177,9 +177,10 @@ def test_annual_cycle():
     relamp = sdba.properties.relative_annual_cycle_amplitude(simt)
     phase = sdba.properties.annual_cycle_phase(simt)
 
-    np.testing.assert_array_almost_equal(
+    np.testing.assert_allclose(
         [amp.values, relamp.values, phase.values],
-        [34.039806, 11.793684020675501, 165.33333333333334],
+        [16.74645996, 5.802083, 167],
+        rtol=1e-6,
     )
     with pytest.raises(
         ValueError,
@@ -195,7 +196,49 @@ def test_annual_cycle():
 
     assert amp.long_name.startswith("Absolute amplitude of the annual cycle")
     assert phase.long_name.startswith("Phase of the annual cycle")
-    assert amp.units == "K"
+    assert amp.units == "delta_degC"
+    assert relamp.units == "%"
+    assert phase.units == ""
+
+
+def test_annual_range():
+    simt = (
+        open_dataset("sdba/CanESM2_1950-2100.nc")
+        .sel(time=slice("1950", "1952"), location="Vancouver")
+        .tasmax
+    )
+    # Initial annual cycle was this with window = 1
+    amp = sdba.properties.mean_annual_range(simt, window=1)
+    relamp = sdba.properties.mean_annual_relative_range(simt, window=1)
+    phase = sdba.properties.mean_annual_phase(simt, window=1)
+
+    np.testing.assert_allclose(
+        [amp.values, relamp.values, phase.values],
+        [34.039806, 11.793684020675501, 165.33333333333334],
+    )
+
+    amp = sdba.properties.mean_annual_range(simt)
+    relamp = sdba.properties.mean_annual_relative_range(simt)
+    phase = sdba.properties.mean_annual_phase(simt)
+
+    np.testing.assert_array_almost_equal(
+        [amp.values, relamp.values, phase.values], [18.715261, 6.480101, 181.6666667]
+    )
+    with pytest.raises(
+        ValueError,
+        match="Grouping period season is not allowed for property",
+    ):
+        sdba.properties.mean_annual_range(simt, group="time.season")
+
+    with pytest.raises(
+        ValueError,
+        match="Grouping period month is not allowed for property",
+    ):
+        sdba.properties.mean_annual_phase(simt, group="time.month")
+
+    assert amp.long_name.startswith("Average annual absolute amplitude")
+    assert phase.long_name.startswith("Average annual phase")
+    assert amp.units == "delta_degC"
     assert relamp.units == "%"
     assert phase.units == ""
 
@@ -231,7 +274,7 @@ def test_corr_btw_var():
             -0.3449358561881698,
             5.97619379511559e-32,
             0.28329503745038936,
-            np.nan,
+            -0.2090292,
         ],
     )
     assert pc.long_name == "Pearson correlation coefficient"
@@ -307,6 +350,40 @@ def test_return_value():
 
     np.testing.assert_array_almost_equal([out_y.values, out_djf], [313.154, 278.072], 3)
     assert out_y.long_name.startswith("20-year maximal return level")
+
+
+@pytest.mark.slow
+def test_spatial_correlogram():
+    # This also tests sdba.utils._pairwise_spearman and sdba.nbutils._pairwise_haversine_and_bins
+    # Test 1, does it work with 1D data?
+    sim = (
+        open_dataset("sdba/CanESM2_1950-2100.nc").sel(time=slice("1981", "2010")).tasmax
+    )
+    out = sdba.properties.spatial_correlogram(sim, dims=["location"], bins=3)
+    np.testing.assert_allclose(out, [-1, np.nan, 0], atol=1e-6)
+
+    # Test 2, not very exhaustive, this is more of a detect-if-we-break-it test.
+    sim = open_dataset("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc").tasmax
+    out = sdba.properties.spatial_correlogram(
+        sim.isel(lon=slice(0, 50)), dims=["lon", "lat"], bins=20
+    )
+    np.testing.assert_allclose(
+        out[:5],
+        [0.95099902, 0.83028772, 0.66874473, 0.48893958, 0.30915054],
+    )
+    np.testing.assert_allclose(
+        out.distance[:5], [26.543199, 67.716227, 108.889254, 150.062282, 191.23531]
+    )
+
+
+def test_first_eof():
+    pytest.importorskip("eofs")
+    sim = open_dataset("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc").tasmax
+    out = sdba.properties.first_eof(sim)
+    np.testing.assert_allclose(
+        [out.mean(), out.max()], [0.01031839, 0.01171101], rtol=1e-6
+    )
+    assert out.isnull().sum() == sim.isnull().any("time").sum()
 
 
 def test_get_measure():

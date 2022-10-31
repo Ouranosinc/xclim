@@ -4,7 +4,7 @@ History
 
 0.39.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), Éric Dupuis (:user:`coxipi`), Travis Logan (:user:`tlogan2000`)
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), Éric Dupuis (:user:`coxipi`), Travis Logan (:user:`tlogan2000`), Pascal Bourgault (:user:`aulemahal`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -12,11 +12,13 @@ New features and enhancements
 * Documentation now supports intersphinx mapping references within code examples via `sphinx-codeautolink` and copying of code blocks via `sphinx-copybutton`. (:pull:`1182`).
 * Log-logistic distribution added to `stats.py` for use with `standardized_precipitation_index` and `standardized_precipitation_evapotranspiration_index` (:issue:`1141`, :pull:`1183`).
 * New option in many indices allowing for resampling in given periods after `run_length` operations. (:issue:`505`, :issue:`916`, :issue:`917`, :pull:`1161`).
+* New base indicator class for sdba: ``StatisticalPropertyMeasure``, those measures that also reduce the time (as a property does) (:pull:`1198`).
 
 New indicators
 ^^^^^^^^^^^^^^
 * New indices ``first_day_temperature_{above | below}`` and indicators ``xclim.indices.first_day_{tn | tg | tx}_{above | below}``. These indices/indicators accept operator (``op``) keyword for finer threshold comparison controls. (:issue:`1175`, :pull:`1186`).
 * New generic indice ``cumulative_difference`` for calculating difference between values and thresholds across time (e.g. temperature: degree-days, precipitation: moisture deficit), with or without resampling/accumulating by frequency. (:pull:`1202`).
+* New spatial sdba properties and measures : ``spatial_correlogram``, ``scorr`` and ``first_eof``. The later needs the optional dependency `eofs <https://ajdawson.github.io/eofs/>`_. (:pull:`1198`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -33,6 +35,7 @@ Breaking changes
 * The ``degree_days`` generic indice has been deprecated in favour of ``cumulative_difference`` that is not limited only to temperature variables (:issue:`1200`, :pull:`1202`). The indices for ``atmos.{heating | cooling | growing}_degree_days`` are now built from ``generic.cumulative_difference``.
 * Running `pytest` now requires the `pytest-dist` distributed testing dependency. This library has been added to the `dev` requirements and conda environment configuration. (:pull:`1203`).
 * Parameters ``reducer`` and ``window`` in ``xclim.indices.rle_statistics`` are now positional. (:pull:`1161`).
+* The ``relative_annual_cycle_amplitude`` and ``annual_cycle_amplitude`` have been rewritten to match the version defined in the VALUE project, outputs will change drastically (for the better) (:pull:`1198`).
 * English indicator metadata has been adjusted to remove frequencies and other variable-sourced fields in the `long_name` of indicators. English indicators now have an explicit `title` and `abstract`. (:issue:`936`, :pull:`1123`).
 * French indicator metadata translations are now more uniform and follow agreed-upon grammar conventions, removing variable-sourced fields in `long_name_fr`. (:issue:`936`, :pull:`1123`).
 * The ``freshet_start`` indice is now deprecated in favour of ``first_day_temperature_above`` with `thresh='0 degC', window=5`. The `freshet_start` indicator is now based on ``first_day_temperature_above``, but is otherwise unaffected. (:issue:`1195`, :pull:`1196`).
