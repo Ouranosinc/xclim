@@ -28,6 +28,7 @@ docs:
 indicators:
   - xclim/indicators/**/*
   - xclim/indicators/**/*
+  - xclim/indices/**/_*.py
   - xclim/data/**/*.json
   - xclim/data/**/*.yml
 
