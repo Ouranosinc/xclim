@@ -479,7 +479,7 @@ annual_cycle_amplitude = StatisticalProperty(
     compute=_annual_cycle,
     parameters={"stat": "absamp"},
     allowed_groups=["group"],
-    cell_methods="time: range time: mean",
+    cell_methods="time: mean time: range",
 )
 
 relative_annual_cycle_amplitude = StatisticalProperty(
@@ -489,7 +489,7 @@ relative_annual_cycle_amplitude = StatisticalProperty(
     units="%",
     parameters={"stat": "relamp"},
     allowed_groups=["group"],
-    cell_methods="time: range time: mean",
+    cell_methods="time: mean time: range",
     measure="xclim.sdba.measures.RATIO",
 )
 
@@ -511,6 +511,25 @@ annual_cycle_asymmetry = StatisticalProperty(
     parameters={"stat": "asymmetry"},
     allowed_groups=["group"],
     units="yr",
+)
+
+annual_cycle_minimum = StatisticalProperty(
+    identifier="annual_cycle_minimum",
+    aspect="temporal",
+    units="",
+    compute=_annual_cycle,
+    parameters={"stat": "min"},
+    cell_methods="time: mean time: min",
+    allowed_groups=["group"],
+)
+
+annual_cycle_maximum = StatisticalProperty(
+    identifier="annual_cycle_maximum",
+    aspect="temporal",
+    compute=_annual_cycle,
+    parameters={"stat": "max"},
+    cell_methods="time: mean time: max",
+    allowed_groups=["group"],
 )
 
 
