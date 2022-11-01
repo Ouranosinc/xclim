@@ -74,7 +74,7 @@ __all__ = [
     "growing_season_end",
     "growing_season_length",
     "tropical_nights",
-    "degree_days_exceedance_date",
+    # "degree_days_exceedance_date",  # temporarily disabled
     "warm_spell_duration_index",
     "maximum_consecutive_warm_days",
     "fire_season",
@@ -1087,30 +1087,30 @@ tn10p = TempWithIndexing(
     compute=indices.tn10p,
 )
 
-
-degree_days_exceedance_date = Temp(
-    title="Degree day exceedance date",
-    identifier="degree_days_exceedance_date",
-    units="",
-    standard_name="day_of_year",
-    long_name=lambda **kws: "Day of year when the integral of mean daily temperature {op} {thresh} exceeds {sum_thresh}"
-    + (
-        ", with the cumulative sum starting from {after_date}"
-        if kws["after_date"] is not None
-        else ""
-    ),
-    description=lambda **kws: "Day of year when the integral of degree days (mean daily temperature {op} {thresh}) "
-    "exceeds {sum_thresh}"
-    + (
-        ", with the cumulative sum starting from {after_date}."
-        if kws["after_date"] is not None
-        else "."
-    ),
-    abstract="The day of the year when the sum of degree days exceeds a threshold, occurring after a given date. "
-    "Degree days are calculated above or below a given temperature threshold.",
-    cell_methods="",
-    compute=indices.degree_days_exceedance_date,
-)
+# FIXME: This is crashing CLI tests
+# degree_days_exceedance_date = Temp(
+#     title="Degree day exceedance date",
+#     identifier="degree_days_exceedance_date",
+#     units="",
+#     standard_name="day_of_year",
+#     long_name=lambda **kws: "Day of year when the integral of mean daily temperature {op} {thresh} exceeds {sum_thresh}"
+#     + (
+#         ", with the cumulative sum starting from {after_date}"
+#         if kws["after_date"] is not None
+#         else ""
+#     ),
+#     description=lambda **kws: "Day of year when the integral of degree days (mean daily temperature {op} {thresh}) "
+#     "exceeds {sum_thresh}"
+#     + (
+#         ", with the cumulative sum starting from {after_date}."
+#         if kws["after_date"] is not None
+#         else "."
+#     ),
+#     abstract="The day of the year when the sum of degree days exceeds a threshold, occurring after a given date. "
+#     "Degree days are calculated above or below a given temperature threshold.",
+#     cell_methods="",
+#     compute=indices.degree_days_exceedance_date,
+# )
 
 
 warm_spell_duration_index = Temp(
