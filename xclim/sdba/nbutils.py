@@ -221,3 +221,30 @@ def _extrapolate_on_quantiles(
         interp[toolow] = np.NaN
         interp[toohigh] = np.NaN
     return interp
+
+
+@njit
+def _pairwise_haversine_and_bins(lond, latd):
+    """Inter-site distances with the haversine approximation."""
+    N = lond.shape[0]
+    lon = np.deg2rad(lond)
+    lat = np.deg2rad(latd)
+    dists = np.full((N, N), np.nan)
+    for i in range(N - 1):
+        for j in range(i + 1, N):
+            dlon = lon[j] - lon[i]
+            dists[i, j] = 6367 * np.arctan2(
+                np.sqrt(
+                    (np.cos(lat[j]) * np.sin(dlon)) ** 2
+                    + (
+                        np.cos(lat[i]) * np.sin(lat[j])
+                        - np.sin(lat[i]) * np.cos(lat[j]) * np.cos(dlon)
+                    )
+                    ** 2
+                ),
+                np.sin(lat[i]) * np.sin(lat[j])
+                + np.cos(lat[i]) * np.cos(lat[j]) * np.cos(dlon),
+            )
+    mn = np.nanmin(dists)
+    mx = np.nanmax(dists)
+    return dists, mn, mx
