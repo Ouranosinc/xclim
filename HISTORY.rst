@@ -36,8 +36,8 @@ Breaking changes
 * Running `pytest` now requires the `pytest-dist` distributed testing dependency. This library has been added to the `dev` requirements and conda environment configuration. (:pull:`1203`).
 * Parameters ``reducer`` and ``window`` in ``xclim.indices.rle_statistics`` are now positional. (:pull:`1161`).
 * The ``relative_annual_cycle_amplitude`` and ``annual_cycle_amplitude`` have been rewritten to match the version defined in the VALUE project, outputs will change drastically (for the better) (:pull:`1198`).
-* English indicator metadata has been adjusted to remove frequencies and other variable-sourced fields in the `long_name` of indicators. English indicators now have an explicit `title` and `abstract`. (:issue:`936`, :pull:`1123`).
-* French indicator metadata translations are now more uniform and follow agreed-upon grammar conventions, removing variable-sourced fields in `long_name_fr`. (:issue:`936`, :pull:`1123`).
+* English indicator metadata has been adjusted to remove frequencies from fields in the `long_name` of indicators. English indicators now have an explicit `title` and `abstract`. (:issue:`936`, :pull:`1123`).
+* French indicator metadata translations are now more uniform and more closely follow agreed-upon grammar conventions, while also removing frequency fields in `long_name_fr`. (:issue:`936`, :pull:`1123`).
 * The ``freshet_start`` indice is now deprecated in favour of ``first_day_temperature_above`` with `thresh='0 degC', window=5`. The `freshet_start` indicator is now based on ``first_day_temperature_above``, but is otherwise unaffected. (:issue:`1195`, :pull:`1196`).
 * Call signatures for several indices/indicators have been modified to optionally accept `op` for manually setting threshold comparison operators (:issue:`1194`, :pull:`1197`). The affected indices and indicators as follows:
    - ``hot_spell_max_length``, ``hot_spell_frequency``, ``cold_spell_days``, ``cold_spell_frequency``, ``heat_wave_index``, ``warm_day_frequency`` (indice only), ``warm_night_frequency`` (indice only), ``dry_days``, ``wetdays``, ``wetdays_prop``.
