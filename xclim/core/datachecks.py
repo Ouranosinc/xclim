@@ -68,7 +68,7 @@ def check_daily(var: xr.DataArray):
 
 
 @datacheck
-def check_common_time(*inputs):
+def check_common_time(inputs: Sequence[xr.DataArray]):
     """Raise an error if the list of inputs doesn't have a single common frequency.
 
     Raises
@@ -80,21 +80,24 @@ def check_common_time(*inputs):
 
     Parameters
     ----------
-    inputs : xr.DataArray
+    inputs : Sequence of xr.DataArray
         Input arrays.
     """
     # Check all have the same freq
-    freqs = {xr.infer_freq(da.time) for da in inputs}
+    freqs = [xr.infer_freq(da.time) for da in inputs]
     if None in freqs:
         raise ValidationError(
             "Unable to infer the frequency of the time series. "
             "To mute this, set xclim's option data_validation='log'."
         )
-    if len(freqs) != 1:
-        raise ValidationError(f"Inputs have different frequencies. Got : {freqs}.")
+    if len(set(freqs)) != 1:
+        raise ValidationError(
+            f"Inputs have different frequencies. Got : {freqs}."
+            "To mute this, set xclim's option data_validation='log'."
+        )
 
     # Check if anchor is the same
-    freq = freqs.pop()
+    freq = freqs[0]
     base = parse_offset(freq)[1]
     fmt = {"H": ":%M", "D": "%H:%M"}
     if base in fmt:
@@ -103,4 +106,5 @@ def check_common_time(*inputs):
             raise ValidationError(
                 f"All inputs have the same frequency ({freq}), but they are not anchored on the same minutes (got {outs}). "
                 f"xarray's alignment would silently fail. You can try to fix this with `da.resample('{freq}').mean()`."
+                "To mute this, set xclim's option data_validation='log'."
             )

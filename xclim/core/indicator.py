@@ -1273,11 +1273,20 @@ class Indicator(IndicatorRegistrar):
         * assert no temperature has the same value 5 days in a row
 
         This base datacheck checks that the input data has a valid sampling frequency, as given in self.src_freq.
+        If there are multiple inputs, it also checks if they all have the same frequency and the same anchor.
         """
         if self.src_freq is not None:
             for key, da in das.items():
                 if "time" in da.coords and da.time.ndim == 1 and len(da.time) > 3:
                     datachecks.check_freq(da, self.src_freq, strict=True)
+
+            datachecks.check_common_time(
+                [
+                    da
+                    for da in das.values()
+                    if "time" in da.coords and da.time.ndim == 1 and len(da.time) > 3
+                ]
+            )
 
     def __getattr__(self, attr):
         """Return the attribute."""

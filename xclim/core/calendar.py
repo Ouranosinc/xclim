@@ -145,31 +145,32 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
     raise ValueError(f"Calendar could not be inferred from object of type {type(obj)}.")
 
 
-def common_calendar(*calendars, join="outer") -> str:
+def common_calendar(calendars: Sequence[str], join="outer") -> str:
     """Return a calendar common to all calendars from a list.
 
-Parameters
-----------
-calendars: Sequence
-  List of calendar names.
-join : {'inner', 'outer'}
-  ... 
-   
-
     Uses the hierarchy: 360_day < noleap < standard < all_leap.
-    If join == 'outer', it returns the smallest calendar (in number of days by year)
-    that will include all the dates of the other calendars. When converting the data to this
-    calendar, no timeseries will lose elements, but some might be missing.
-    If join == 'inner', it returns the smallest calendar of the list. When converting the data
-    to this calendar, no timeseries will have missing elements, but some might be dropped.
-
     Returns "default" only if all calendars are "default."
+
+    Parameters
+    ----------
+    calendars: Sequence of string
+      List of calendar names.
+    join : {'inner', 'outer'}
+      The criterion for the common calendar.
+
+      - 'outer': the common calendar is the smallest calendar (in number of days by year)
+                 that will include all the dates of the other calendars. When converting
+                 the data to this calendar, no timeseries will lose elements, but some
+                 might be missing (gaps or NaNs in the series).
+      - 'inner': the common calender is the smallest calendar of the list. When converting
+                 the data to this calendar, no timeseries will have missing elements (no gaps or NaNs),
+                 but some might be dropped.
 
     Examples
     --------
-    >>> common_calendar("360_day", "noleap", "default", join="outer")
+    >>> common_calendar(["360_day", "noleap", "default"], join="outer")
     'standard'
-    >>> common_calendar("360_day", "noleap", "default", join="inner")
+    >>> common_calendar(["360_day", "noleap", "default"], join="inner")
     '360_day'
     """
     if all(cal == "default" for cal in calendars):
@@ -188,10 +189,9 @@ join : {'inner', 'outer'}
 
     if join == "outer":
         return calendars[-1]
-  elif join == "inner":
-    return calendars[0]
-  else:
-    raise ValueError(join)
+    if join == "inner":
+        return calendars[0]
+    raise NotImplementedError(f"Unknown join criterion `{join}`.")
 
 
 def convert_calendar(
@@ -662,14 +662,14 @@ def parse_offset(freq: str) -> Sequence[str]:
     Returns
     -------
     multiplier : int
-       "[n]W" is always replaced with "[7n]D", as xarray doesn't support "W" for cftime indexes.
+      Multiplier of the base frequency. "[n]W" is always replaced with "[7n]D", as xarray doesn't support "W" for cftime indexes.
     offset_base : str
-      "Y" is always replaced with "A".
+      Base frequency. "Y" is always replaced with "A".
     is_start_anchored : bool
       Whether coordinates of this frequency should correspond to the beginning of the period (`True`) or its end (`False`).
       Can only be False when base is A, Q or M.
     anchor : str or None
-      Given for bases A or Q. As xarray doesn't support "W", neither does xclim (anchor information is lost when given).
+      Anchor date for bases A or Q. As xarray doesn't support "W", neither does xclim (anchor information is lost when given).
     """
     # Useful to raise on invalid freqs, convert Y to A and get default anchor (A, Q)
     offset = pd.tseries.frequencies.to_offset(freq)
