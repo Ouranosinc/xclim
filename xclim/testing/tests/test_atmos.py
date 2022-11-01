@@ -5,7 +5,6 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 
-import xclim.indices as xci
 from xclim import atmos, set_options
 from xclim.testing import open_dataset
 
@@ -245,9 +244,11 @@ def test_wind_chill_index(atmosds):
 
 
 class TestPotentialEvapotranspiration:
-    def test_convert_units(self):
+    def test_convert_units(self, threadsafe_data_dir):
         ds = open_dataset(
-            "ERA5/daily_surface_cancities_1990-1993.nc", branch="add-radiation"
+            "ERA5/daily_surface_cancities_1990-1993.nc",
+            branch="add-radiation",
+            cache_dir=threadsafe_data_dir,
         )
         tn = ds.tasmin
         tx = ds.tasmax
@@ -305,9 +306,11 @@ class TestPotentialEvapotranspiration:
         np.testing.assert_allclose(pet_mb05, pet_mb05C, atol=1)
         np.testing.assert_allclose(pet_fao_pm98, pet_fao_pm98C, atol=1)
 
-    def test_nan_values(self):
+    def test_nan_values(self, threadsafe_data_dir):
         ds = open_dataset(
-            "ERA5/daily_surface_cancities_1990-1993.nc", branch="add-radiation"
+            "ERA5/daily_surface_cancities_1990-1993.nc",
+            branch="add-radiation",
+            cache_dir=threadsafe_data_dir,
         )
         tn = ds.tasmin
         tx = ds.tasmax
@@ -357,9 +360,11 @@ class TestPotentialEvapotranspiration:
 
 
 class TestWaterBudget:
-    def test_convert_units(self):
+    def test_convert_units(self, threadsafe_data_dir):
         ds = open_dataset(
-            "ERA5/daily_surface_cancities_1990-1993.nc", branch="add-radiation"
+            "ERA5/daily_surface_cancities_1990-1993.nc",
+            branch="add-radiation",
+            cache_dir=threadsafe_data_dir,
         )
 
         tn = ds.tasmin
@@ -437,9 +442,11 @@ class TestWaterBudget:
         np.testing.assert_allclose(p_pet_fao_pm98, p_pet_fao_pm98R, atol=1)
         np.testing.assert_allclose(p_pet_evpot, p_pet_evpotR, atol=1)
 
-    def test_nan_values(self):
+    def test_nan_values(self, threadsafe_data_dir):
         ds = open_dataset(
-            "ERA5/daily_surface_cancities_1990-1993.nc", branch="add-radiation"
+            "ERA5/daily_surface_cancities_1990-1993.nc",
+            branch="add-radiation",
+            cache_dir=threadsafe_data_dir,
         )
 
         tn = ds.tasmin
@@ -494,54 +501,60 @@ class TestWaterBudget:
         np.testing.assert_allclose(p_pet_evpot[0, 0], [np.nan])
 
 
-def test_universal_thermal_climate_index():
-    dataset = open_dataset(
-        "ERA5/daily_surface_cancities_1990-1993.nc", branch="add-radiation"
-    )
-    tas = dataset.tas
-    hurs = dataset.hurs
-    sfcWind, sfcWindfromdir = atmos.wind_speed_from_vector(
-        uas=dataset.uas, vas=dataset.vas
-    )
-    rsds = dataset.rsds
-    rsus = dataset.rsus
-    rlds = dataset.rlds
-    rlus = dataset.rlus
-    # Expected values
-    utci_exp = [256.8, 258.0, 237.4, 258.5, 266.2]
+class TestUTCI:
+    def test_universal_thermal_climate_index(self, threadsafe_data_dir):
+        dataset = open_dataset(
+            "ERA5/daily_surface_cancities_1990-1993.nc",
+            branch="add-radiation",
+            cache_dir=threadsafe_data_dir,
+        )
+        tas = dataset.tas
+        hurs = dataset.hurs
+        sfcWind, sfcWindfromdir = atmos.wind_speed_from_vector(
+            uas=dataset.uas, vas=dataset.vas
+        )
+        rsds = dataset.rsds
+        rsus = dataset.rsus
+        rlds = dataset.rlds
+        rlus = dataset.rlus
+        # Expected values
+        utci_exp = [256.8, 258.0, 237.4, 258.5, 266.2]
 
-    utci = atmos.universal_thermal_climate_index(
-        tas=tas,
-        hurs=hurs,
-        sfcWind=sfcWind,
-        rsds=rsds,
-        rsus=rsus,
-        rlds=rlds,
-        rlus=rlus,
-        stat="average",
-    )
+        utci = atmos.universal_thermal_climate_index(
+            tas=tas,
+            hurs=hurs,
+            sfcWind=sfcWind,
+            rsds=rsds,
+            rsus=rsus,
+            rlds=rlds,
+            rlus=rlus,
+            stat="average",
+        )
 
-    np.testing.assert_allclose(utci.isel(time=0), utci_exp, rtol=1e-03)
+        np.testing.assert_allclose(utci.isel(time=0), utci_exp, rtol=1e-03)
 
 
-def test_mean_radiant_temperature():
-    dataset = open_dataset(
-        "ERA5/daily_surface_cancities_1990-1993.nc", branch="add-radiation"
-    )
-    rsds = dataset.rsds
-    rsus = dataset.rsus
-    rlds = dataset.rlds
-    rlus = dataset.rlus
+class TestMeanRadiantTemperature:
+    def test_mean_radiant_temperature(self, threadsafe_data_dir):
+        dataset = open_dataset(
+            "ERA5/daily_surface_cancities_1990-1993.nc",
+            branch="add-radiation",
+            cache_dir=threadsafe_data_dir,
+        )
+        rsds = dataset.rsds
+        rsus = dataset.rsus
+        rlds = dataset.rlds
+        rlus = dataset.rlus
 
-    # Expected values
-    exp_sun = [np.nan, np.nan, np.nan, np.nan, np.nan]
-    exp_ins = [277.1, 274.6, 243.5, 268.1, 309.1]
-    exp_avg = [277.1, 274.6, 243.5, 268.1, 278.4]
+        # Expected values
+        exp_sun = [np.nan, np.nan, np.nan, np.nan, np.nan]
+        exp_ins = [277.1, 274.6, 243.5, 268.1, 309.1]
+        exp_avg = [277.1, 274.6, 243.5, 268.1, 278.4]
 
-    mrt_sun = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="sunlit")
-    mrt_ins = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="instant")
-    mrt_avg = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="average")
-    rtol = 1e-03
-    np.testing.assert_allclose(mrt_sun.isel(time=0), exp_sun, rtol=rtol)
-    np.testing.assert_allclose(mrt_ins.isel(time=0), exp_ins, rtol=rtol)
-    np.testing.assert_allclose(mrt_avg.isel(time=0), exp_avg, rtol=rtol)
+        mrt_sun = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="sunlit")
+        mrt_ins = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="instant")
+        mrt_avg = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="average")
+        rtol = 1e-03
+        np.testing.assert_allclose(mrt_sun.isel(time=0), exp_sun, rtol=rtol)
+        np.testing.assert_allclose(mrt_ins.isel(time=0), exp_ins, rtol=rtol)
+        np.testing.assert_allclose(mrt_avg.isel(time=0), exp_avg, rtol=rtol)
