@@ -13,7 +13,7 @@ New features and enhancements
 * Log-logistic distribution added to `stats.py` for use with `standardized_precipitation_index` and `standardized_precipitation_evapotranspiration_index` (:issue:`1141`, :pull:`1183`).
 * New option in many indices allowing for resampling in given periods after `run_length` operations. (:issue:`505`, :issue:`916`, :issue:`917`, :pull:`1161`).
 * New base indicator class for sdba: ``StatisticalPropertyMeasure``, those measures that also reduce the time (as a property does) (:pull:`1198`).
-* ``xclim.core.calendar.common_calendar`` to find the best calendar to use when uniformizing an heteroclite collection of data. (:pull:`1217`).
+* ``xclim.core.calendar.common_calendar`` to find the best calendar to use when uniformizing an heterogeneous collection of data. (:pull:`1217`).
 * ``xclim.ensembles.create_ensemble`` now accepts ``calendar=None``, and uses the above function to guess the best one. It also now accepts ``cal_kwargs`` to fine tune the calendar conversion. (:issue:`1190`, :pull:`1217`).
 * New data check : ``xclim.core.datachecks.check_common_time`` that ensures all inputs of multivariate indicators have the same frequency (and the same time anchoring for daily and hourly data). (:issue:`1111`, :pull:`1217`).
 

@@ -75,7 +75,7 @@ def check_common_time(*inputs):
     ------
     ValidationError
         - if the frequency of any input can't be inferred
-        - if inputs have differing frequencies
+        - if inputs have different frequencies
         - if inputs have a daily or hourly frequency, but they are not given at the same time of day.
 
     Parameters
@@ -93,7 +93,7 @@ def check_common_time(*inputs):
     if len(freqs) != 1:
         raise ValidationError(f"Inputs have different frequencies. Got : {freqs}.")
 
-    # Check if anchor is commont
+    # Check if anchor is the same
     freq = freqs.pop()
     base = parse_offset(freq)[1]
     fmt = {"H": ":%M", "D": "%H:%M"}

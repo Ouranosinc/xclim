@@ -148,6 +148,14 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
 def common_calendar(*calendars, join="outer") -> str:
     """Return a calendar common to all calendars from a list.
 
+Parameters
+----------
+calendars: Sequence
+  List of calendar names.
+join : {'inner', 'outer'}
+  ... 
+   
+
     Uses the hierarchy: 360_day < noleap < standard < all_leap.
     If join == 'outer', it returns the smallest calendar (in number of days by year)
     that will include all the dates of the other calendars. When converting the data to this
@@ -180,7 +188,10 @@ def common_calendar(*calendars, join="outer") -> str:
 
     if join == "outer":
         return calendars[-1]
+  elif join == "inner":
     return calendars[0]
+  else:
+    raise ValueError(join)
 
 
 def convert_calendar(
