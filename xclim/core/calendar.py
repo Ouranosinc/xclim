@@ -153,8 +153,8 @@ Parameters
 calendars: Sequence
   List of calendar names.
 join : {'inner', 'outer'}
-  ... 
-   
+  ...
+
 
     Uses the hierarchy: 360_day < noleap < standard < all_leap.
     If join == 'outer', it returns the smallest calendar (in number of days by year)
