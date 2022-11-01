@@ -1188,9 +1188,9 @@ biologically_effective_degree_days = Temp(
     title="Biologically effective degree days",
     identifier="biologically_effective_degree_days",
     units="K days",
-    long_name="Integral of mean daily temperature above {thresh}, with maximum value of {max_daily_degree_days}, "
-    "multiplied by day-length coefficient and temperature range modifier based on {method} method for days between "
-    "{start_date} and {end_date}",
+    long_name="Integral of mean daily temperature above {thresh_tasmin}, with maximum value of "
+    "{max_daily_degree_days}, multiplied by day-length coefficient and temperature range modifier based on {method} "
+    "method for days between {start_date} and {end_date}",
     description="Heat-summation index for agroclimatic suitability estimation, developed specifically for viticulture. "
     "Computed with {method} formula (Summation of min((max((Tn + Tx)/2 - {thresh_tasmin}, 0) * k) + TR_adj, Dmax), "
     "where coefficient `k` is a latitude-based day-length for days between {start_date} and {end_date}), "
