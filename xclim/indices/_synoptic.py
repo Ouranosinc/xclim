@@ -26,7 +26,8 @@ def jetstream_metric_woollings(
     """Strength and latitude of jetstream.
 
     Identify latitude and strength of maximum smoothed zonal wind speed in the region from 15 to 75°N and -60 to 0°E,
-    using the formula outlined in :cite:p:`woollings_variability_2010`.
+    using the formula outlined in :cite:p:`woollings_variability_2010`. Wind is smoothened using a Lanczos filter
+    approach.
 
     Warnings
     --------

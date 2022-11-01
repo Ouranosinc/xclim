@@ -22,10 +22,10 @@ New indicators
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* Indices that accept `lat` or `lon` coordinates in their call signatures will now use `cf-xarray` accessors to gather these variables in the event that they are not explicitly supplied. (:pull:`1180`). This affects the following
+* Indices that accept `lat` or `lon` coordinates in their call signatures will now use `cf-xarray` accessors to gather these variables in the event that they are not explicitly supplied. (:pull:`1180`). This affects the following:
     - ``huglin_index``, ``biologically_effective_degree_days``, ``cool_night_index``, ``latitude_temperature_index``, ``water_budget``, ``potential_evapotranspiration``
 * ``cool_night_index`` now optionally accepts ``lat: str = "north" | "south"`` for calculating CNI over DataArrays lacking a latitude coordinate. (:pull:`1180`).
-* The offset value in ``standardized_precipitation_evapotranspiration_index`` is changed to better reproduce results in the reference library ``monocongo/climate_indices``.
+* The offset value in ``standardized_precipitation_evapotranspiration_index`` is changed to better reproduce results in the reference library ``monocongo/climate_indices``. (:issue:`1141`, :pull:`1183`).
 * The ``first_day_below`` and ``first_day_above`` indices are now deprecated in order to clearly communicate the variables they act upon (:issue:`1175`, :pull:`1186`). The suggested migrations are as follows:
     - ``xclim.indices.first_day_above`` -> ``xclim.indices.first_day_temperature_above``
     - ``xclim.indices.first_day_below`` -> ``xclim.indices.first_day_temperature_below``
@@ -36,6 +36,11 @@ Breaking changes
 * Running `pytest` now requires the `pytest-dist` distributed testing dependency. This library has been added to the `dev` requirements and conda environment configuration. (:pull:`1203`).
 * Parameters ``reducer`` and ``window`` in ``xclim.indices.rle_statistics`` are now positional. (:pull:`1161`).
 * The ``relative_annual_cycle_amplitude`` and ``annual_cycle_amplitude`` have been rewritten to match the version defined in the VALUE project, outputs will change drastically (for the better) (:pull:`1198`).
+* English indicator metadata has been adjusted to remove frequencies from fields in the `long_name` of indicators. English indicators now have an explicit `title` and `abstract`. (:issue:`936`, :pull:`1123`).
+* French indicator metadata translations are now more uniform and more closely follow agreed-upon grammar conventions, while also removing frequency fields in `long_name_fr`. (:issue:`936`, :pull:`1123`).
+* The ``freshet_start`` indice is now deprecated in favour of ``first_day_temperature_above`` with `thresh='0 degC', window=5`. The `freshet_start` indicator is now based on ``first_day_temperature_above``, but is otherwise unaffected. (:issue:`1195`, :pull:`1196`).
+* Call signatures for several indices/indicators have been modified to optionally accept `op` for manually setting threshold comparison operators (:issue:`1194`, :pull:`1197`). The affected indices and indicators as follows:
+   - ``hot_spell_max_length``, ``hot_spell_frequency``, ``cold_spell_days``, ``cold_spell_frequency``, ``heat_wave_index``, ``warm_day_frequency`` (indice only), ``warm_night_frequency`` (indice only), ``dry_days``, ``wetdays``, ``wetdays_prop``.
 * Rewrite of ``xclim.core.calendar.time_bnds``. It should now be more resilient and versatile, but all ``cftime_*`` and ``cfindex_*`` functions were removed. (:issue:`74`, :pull:`1207`).
 
 Bug fixes
@@ -112,7 +117,7 @@ Bug fixes
 * Fixed some ``extlink`` warnings found in `sphinx` and configured ReadTheDocs to use `mamba` as the dependency solver. (:issue:`1139`, :pull:`1140`).
 * Fixed some broken hyperlinks to articles, users, and external documentation throughout the code base and jupyter notebooks. (:pull:`1160`).
 * Addressed a bug that was causing `pylint` to stackoverflow by removing it from the tox configuration. `pylint` should only be called from an active environment. (:pull:`1163`)
-* Fixed kmeans_reduce_ensemble breaking when using dask arrays (:pull:`1170`)
+* Fixed an issue with ``xclim.ensembles.kmeans_reduce_ensemble`` which caused it to fail when using dask arrays. (:pull:`1170`).
 * Addressed a bug that was causing `pylint` to stackoverflow by removing it from the tox configuration. `pylint` should only be called from an active environment. (:pull:`1163`)
 
 Internal changes
