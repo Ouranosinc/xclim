@@ -409,6 +409,6 @@ def _ens_align_datasets(
         return ds_all
 
     if calendar is None:
-        calendar = common_calendar(*calendars, join="outer")
+        calendar = common_calendar(calendars, join="outer")
     cal_kwargs.setdefault("align_on", "date")
     return [convert_calendar(ds, calendar, **cal_kwargs) for ds in ds_all]

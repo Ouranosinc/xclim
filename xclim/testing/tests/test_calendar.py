@@ -619,4 +619,4 @@ def test_construct_offset(m, b, s, a, exp):
     ],
 )
 def test_common_calendars(inputs, join, expected):
-    assert expected == common_calendar(*inputs, join=join)
+    assert expected == common_calendar(inputs, join=join)
