@@ -23,7 +23,6 @@ from .options import datacheck
 from .utils import ValidationError
 
 __all__ = [
-    "ValidationError",
     "amount2rate",
     "check_units",
     "convert_units_to",
