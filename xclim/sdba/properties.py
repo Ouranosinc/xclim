@@ -15,6 +15,7 @@ import numpy as np
 import xarray as xr
 from scipy import stats
 from statsmodels.tsa import stattools
+import warnings
 
 import xclim as xc
 from xclim.core.indicator import Indicator, base_registry
@@ -983,9 +984,8 @@ spatial_correlogram = StatisticalProperty(
 )
 
 
-def _correlation_length(da: xr.DataArray, *, dims=None, bins=100, group="time"):
+def _correlation_length(da: xr.DataArray, *, radius='1000 km', dims=None, bins=100, group="time"):
     """Correlation length.
-
 
 
     Parameters
@@ -1007,7 +1007,86 @@ def _correlation_length(da: xr.DataArray, *, dims=None, bins=100, group="time"):
       Inter-site correlogram as a function of distance.
     """
 
+    name = da.name
+    sim = da.to_dataset()
+    sim_stack = sim.stack({'_spatial': ['lat', 'lon']})
 
+    radius = 200
+    bins = 100
+    thresh = 0.98
+    dls = []
+    for i in range(len(sim_stack._spatial))[:]:
+        # cur = sim_stack.isel(_spatial=i).copy()
+        if not sim_stack[name].isel(_spatial=i).isnull().all():
+            neighbour = sim_stack.copy()
+            # calculate distance between current point and all its neighbours
+            dists_ind, mn_ind, mx_ind = _individual_haversine_and_bins(
+                neighbour["lon"].values[i], neighbour.cf["lat"].values[i],
+                neighbour["lon"].values, neighbour.cf["lat"].values
+            )
+            # add distance as coord
+            neighbour = neighbour.assign_coords(distance=("_spatial", dists_ind))
+
+            # only keep neighbours that are closer than the radius
+            neighbour = neighbour.where(neighbour.distance <= radius, drop=True)
+
+            # drop nans
+            neighbour = neighbour.dropna(dim='_spatial')
+
+            # create a current variable. It is the same dimensions as neighbour but is filled with only the current timeseries
+            neighbour['cur'] = neighbour[name].where(neighbour.distance == 0).ffill(
+                dim='_spatial').bfill(dim='_spatial')
+
+            # calculate correlations between current and neighbours
+            neighbour['corr'] = xc.sdba.properties.corr_btw_var(neighbour['cur'],
+                                                                neighbour[name])
+
+            if np.isscalar(bins):
+                bins = np.linspace(mn_ind * 0.9999, mx_ind * 1.0001, bins + 1)
+            # if uses_dask(corr):
+            #     dists = dists.chunk()
+
+            # bin the correlations
+            w = np.diff(bins)
+            centers = xr.DataArray(
+                bins[:-1] + w / 2,
+                dims=("distance_bins",),
+                attrs={
+                    "units": "km",
+                    "long_name": f"Centers of the intersite distance bins (width of {w[0]:.3f} km)",
+                },
+            )
+            ds = xr.Dataset(
+                {"corr": neighbour['corr'], "distance": neighbour['distance']})
+            corlg = xr.map_blocks(
+                lambda ds, b: ds.corr.groupby_bins(ds.distance, b)
+                    .mean()
+                    .drop_vars(["distance_bins"]),
+                ds,
+                (bins,),
+                template=neighbour['corr'].isel(_spatial=0, drop=True).expand_dims(
+                    distance_bins=bins.size - 1
+                ),
+            )
+
+            corlg = corlg.assign_coords(distance_bins=centers).rename(
+                distance_bins="distance").assign_attrs(units="")
+
+            if corlg.min() > thresh:
+                warnings.warn(
+                    f" The minimum correlation found is higher than the threshold."
+                    f" Raise the threshold or the radius.")
+            # get decorrelation lenght
+            closest = abs(corlg - thresh).argmin()
+            dl = corlg.isel(distance=closest.values).distance.values
+            dls.append(dl)
+        else:
+            dls.append(np.nan)
+
+    # reconstruct map with dl
+    out = xr.Dataset(data_vars={'decorrelation_length': ('_spatial', np.array(dls))},
+                     coords=sim_stack.isel(time=0).coords, attrs={'units': 'km'})
+    out = out.unstack().drop('time')
 
     return out
 
