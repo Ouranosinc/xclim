@@ -20,7 +20,7 @@ jobs:
   black:
     runs-on: ubuntu-22.04
     if: |
-      ((github.event_name == 'pull_request') && (contains(fromJson('["opened", "reopened", "synchronize"]'), github.event.action)) ||
+      ((github.event_name == 'pull_request') && (contains(fromJson('["edited", "opened", "reopened", "synchronize"]'), github.event.action)) ||
       ((github.event.action == 'labeled') && (contains(github.event.pull_request.labels.*.name, 'approved'))) ||
       (github.event_name == 'push')
     steps:
