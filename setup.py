@@ -20,6 +20,8 @@ with open("README.rst") as readme_file:
 
 with open("HISTORY.rst") as history_file:
     history = history_file.read()
+    # remove disallowed directives for PyPI publishing
+    history = history.replace(".. autolink-skip::", "")
 
 hyperlink_replacements = {
     r":issue:`([0-9]+)`": r"`GH/\1 <https://github.com/Ouranosinc/xclim/issues/\1>`_",
