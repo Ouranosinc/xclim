@@ -2,6 +2,13 @@
 History
 =======
 
+0.40.0 (unreleased)
+-------------------
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Minor adjustments to GitHub Actions workflows.
+
 0.39.0 (2022-11-02)
 -------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), Éric Dupuis (:user:`coxipi`), Travis Logan (:user:`tlogan2000`), Pascal Bourgault (:user:`aulemahal`).
