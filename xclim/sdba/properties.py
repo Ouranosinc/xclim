@@ -984,7 +984,7 @@ spatial_correlogram = StatisticalProperty(
 )
 
 
-def _correlation_length(da: xr.DataArray, *, radius='1000 km', dims=None, bins=100, group="time"):
+def _correlation_length(da: xr.DataArray, *, radius='200 km', thresh=0.90, dims=None, bins=100, group="time"):
     """Correlation length.
 
 
@@ -1011,9 +1011,6 @@ def _correlation_length(da: xr.DataArray, *, radius='1000 km', dims=None, bins=1
     sim = da.to_dataset()
     sim_stack = sim.stack({'_spatial': ['lat', 'lon']})
 
-    radius = 200
-    bins = 100
-    thresh = 0.98
     dls = []
     for i in range(len(sim_stack._spatial))[:]:
         # cur = sim_stack.isel(_spatial=i).copy()
@@ -1028,18 +1025,23 @@ def _correlation_length(da: xr.DataArray, *, radius='1000 km', dims=None, bins=1
             neighbour = neighbour.assign_coords(distance=("_spatial", dists_ind))
 
             # only keep neighbours that are closer than the radius
-            neighbour = neighbour.where(neighbour.distance <= radius, drop=True)
+            neighbour = neighbour.where(neighbour.distance <= radius)
 
             # drop nans
             neighbour = neighbour.dropna(dim='_spatial')
 
-            # create a current variable. It is the same dimensions as neighbour but is filled with only the current timeseries
-            neighbour['cur'] = neighbour[name].where(neighbour.distance == 0).ffill(
-                dim='_spatial').bfill(dim='_spatial')
-
+            # # create a current variable. It is the same dimensions as neighbour but is filled with only the current timeseries
+            # neighbour['cur'] = neighbour[name].where(neighbour.distance == 0).ffill(
+            #     dim='_spatial').bfill(dim='_spatial')
+            # 
+            # # calculate correlations between current and neighbours
+            # neighbour['corr'] = xc.sdba.properties.corr_btw_var(neighbour['cur'],
+            #                                                     neighbour[name])
+            
             # calculate correlations between current and neighbours
-            neighbour['corr'] = xc.sdba.properties.corr_btw_var(neighbour['cur'],
-                                                                neighbour[name])
+            cur = sim_stack[name].isel(_spatial=i).values
+            neighbour['corr'] = ('_spatial',[stats.spearmanr(cur,x).correlation for x in  neighbour[name].values.T])
+
 
             if np.isscalar(bins):
                 bins = np.linspace(mn_ind * 0.9999, mx_ind * 1.0001, bins + 1)
