@@ -1011,18 +1011,20 @@ def _correlation_length(da: xr.DataArray, *, radius='200 km', thresh=0.90, dims=
     sim = da.to_dataset()
     sim_stack = sim.stack({'_spatial': ['lat', 'lon']})
 
-    dls = []
-    for i in range(len(sim_stack._spatial))[:]:
-        # cur = sim_stack.isel(_spatial=i).copy()
-        if not sim_stack[name].isel(_spatial=i).isnull().all():
+    def _dl_for_1_point(cur, cur_lat, cur_lon, bins, radius, thresh):
+        if not np.isnan(cur).all():
             neighbour = sim_stack.copy()
+            # display(neighbour)
+
             # calculate distance between current point and all its neighbours
             dists_ind, mn_ind, mx_ind = _individual_haversine_and_bins(
-                neighbour["lon"].values[i], neighbour.cf["lat"].values[i],
-                neighbour["lon"].values, neighbour.cf["lat"].values
+                cur_lon, cur_lat,
+                neighbour["lon"].values, neighbour["lat"].values
             )
+
             # add distance as coord
             neighbour = neighbour.assign_coords(distance=("_spatial", dists_ind))
+            # display(neighbour)
 
             # only keep neighbours that are closer than the radius
             neighbour = neighbour.where(neighbour.distance <= radius)
@@ -1030,23 +1032,12 @@ def _correlation_length(da: xr.DataArray, *, radius='200 km', thresh=0.90, dims=
             # drop nans
             neighbour = neighbour.dropna(dim='_spatial')
 
-            # # create a current variable. It is the same dimensions as neighbour but is filled with only the current timeseries
-            # neighbour['cur'] = neighbour[name].where(neighbour.distance == 0).ffill(
-            #     dim='_spatial').bfill(dim='_spatial')
-            # 
-            # # calculate correlations between current and neighbours
-            # neighbour['corr'] = xc.sdba.properties.corr_btw_var(neighbour['cur'],
-            #                                                     neighbour[name])
-            
-            # calculate correlations between current and neighbours
-            cur = sim_stack[name].isel(_spatial=i).values
-            neighbour['corr'] = ('_spatial',[stats.spearmanr(cur,x).correlation for x in  neighbour[name].values.T])
-
+            neighbour['corr'] = ('_spatial',
+                                 [stats.spearmanr(cur, x).correlation for x in
+                                  neighbour[name].values.T])
 
             if np.isscalar(bins):
                 bins = np.linspace(mn_ind * 0.9999, mx_ind * 1.0001, bins + 1)
-            # if uses_dask(corr):
-            #     dists = dists.chunk()
 
             # bin the correlations
             w = np.diff(bins)
@@ -1060,6 +1051,8 @@ def _correlation_length(da: xr.DataArray, *, radius='200 km', thresh=0.90, dims=
             )
             ds = xr.Dataset(
                 {"corr": neighbour['corr'], "distance": neighbour['distance']})
+            # display(ds)
+            # display(neighbour)
             corlg = xr.map_blocks(
                 lambda ds, b: ds.corr.groupby_bins(ds.distance, b)
                     .mean()
@@ -1081,14 +1074,26 @@ def _correlation_length(da: xr.DataArray, *, radius='200 km', thresh=0.90, dims=
             # get decorrelation lenght
             closest = abs(corlg - thresh).argmin()
             dl = corlg.isel(distance=closest.values).distance.values
-            dls.append(dl)
+
+            return dl
+
         else:
-            dls.append(np.nan)
+            return np.nan
+
+    out = xr.apply_ufunc(_dl_for_1_point, sim_stack.tasmax, sim_stack.lat,
+                         sim_stack.lon,
+                         input_core_dims=[["time"], [], []],
+                         # output_core_dims=[["_spatial"]],
+                         dask='parallelized',
+                         # dask= 'allowed',
+                         vectorize=True,
+                         output_dtypes=[float],
+                         kwargs={'bins': bins, 'radius': radius, 'thresh': thresh},
+                         dask_gufunc_kwargs={"allow_rechunk": True}
+                         ).rename('decorrelation_length').to_dataset()
 
     # reconstruct map with dl
-    out = xr.Dataset(data_vars={'decorrelation_length': ('_spatial', np.array(dls))},
-                     coords=sim_stack.isel(time=0).coords, attrs={'units': 'km'})
-    out = out.unstack().drop('time')
+    out = out.unstack()
 
     return out
 
