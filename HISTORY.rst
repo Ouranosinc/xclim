@@ -7,7 +7,7 @@ History
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* Minor adjustments to GitHub Actions workflows.
+* Minor adjustments to GitHub Actions workflows (newest Ubuntu images, updated actions version, better CI triggering). (:pull:`1221`).
 
 0.39.0 (2022-11-02)
 -------------------
