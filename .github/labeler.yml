@@ -14,8 +14,6 @@ CI:
   - Makefile
 
 docs:
-  - "*.rst"
-  - "*.example"
   - ".readthedocs.yml"
   - docs/**/*
   - AUTHORS.rst
