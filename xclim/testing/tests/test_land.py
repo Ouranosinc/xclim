@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 import xarray as xr
 
+import xclim.core.utils
 from xclim import land, set_options
 
 
@@ -54,6 +56,12 @@ class Test_FA:
             q, mode="max", t=2, dist="genextreme", window=6, freq="YS"
         )
         assert np.isnan(out.values[:, 0, 0]).all()
+
+    def test_wrong_variable(self, pr_series):
+        with pytest.raises(xclim.core.utils.ValidationError):
+            land.freq_analysis(
+                pr_series(np.random.rand(100)), mode="max", t=2, dist="gamma"
+            )
 
 
 class TestStats:

@@ -79,7 +79,7 @@ freq_analysis = FA(
     "distribution.",
     abstract="Streamflow frequency analysis on the basis of a given mode and distribution.",
     units="m^3 s-1",
-    compute=declare_units(da=None)(frequency_analysis),
+    compute=declare_units(da="[discharge]")(frequency_analysis),
 )
 
 rb_flashiness_index = Streamflow(
@@ -101,7 +101,7 @@ stats = Stats(
     long_name="Daily flow statistics",
     description="{freq} {op} of daily flow ({indexer}).",
     units="m^3 s-1",
-    compute=declare_units(da=None)(generic.select_resample_op),
+    compute=declare_units(da="[discharge]")(generic.select_resample_op),
 )
 
 fit = Fit(
@@ -113,7 +113,7 @@ fit = Fit(
     long_name="{dist} distribution parameters",
     description="Parameters of the {dist} distribution.",
     cell_methods="time: fit",
-    compute=declare_units(da=None)(_fit),
+    compute=declare_units(da="[discharge]")(_fit),
 )
 
 
@@ -124,7 +124,7 @@ doy_qmax = Streamflow(
     long_name="Day of the year of the maximum streamflow over {indexer}",
     description="Day of the year of the maximum streamflow over {indexer}.",
     units="",
-    compute=declare_units(da=None)(generic.select_resample_op),
+    compute=declare_units(da="[discharge]")(generic.select_resample_op),
     parameters=dict(op=generic.doymax),
 )
 
@@ -136,6 +136,6 @@ doy_qmin = Streamflow(
     long_name="Day of the year of the minimum streamflow over {indexer}",
     description="Day of the year of the minimum streamflow over {indexer}.",
     units="",
-    compute=declare_units(da=None)(generic.select_resample_op),
+    compute=declare_units(da="[discharge]")(generic.select_resample_op),
     parameters=dict(op=generic.doymin),
 )
