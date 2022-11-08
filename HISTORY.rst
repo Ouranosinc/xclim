@@ -7,7 +7,12 @@ History
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* Add auto conversion from ``[length]`` to ``[length]/[time]`` to `convert_units_to` when the input is a valid "thickness_of_rainfall_amount". (:issue:`1205`, :pull:`1206`).
+* Add auto conversion from ``[length]`` to ``[length]/[time]`` to `convert_units_to` when the input is a valid precipitation amount (e.g. "thickness_of_rainfall_amount"). (:issue:`1205`, :pull:`1206`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Minor adjustments to GitHub Actions workflows (newest Ubuntu images, updated actions version, better CI triggering). (:pull:`1221`).
+
 
 0.39.0 (2022-11-02)
 -------------------
@@ -43,7 +48,7 @@ Breaking changes
     - ``xclim.atmos.first_day_above`` -> ``xclim.indices.first_day_{tn | tg | tx}_above``
     - ``xclim.atmos.first_day_below`` -> ``xclim.indices.first_day_{tn | tg | tx}_below``
 * The ``degree_days`` generic indice has been deprecated in favour of ``cumulative_difference`` that is not limited only to temperature variables (:issue:`1200`, :pull:`1202`). The indices for ``atmos.{heating | cooling | growing}_degree_days`` are now built from ``generic.cumulative_difference``.
-* Running `pytest` now requires the `pytest-dist` distributed testing dependency. This library has been added to the `dev` requirements and conda environment configuration. (:pull:`1203`).
+* Running `pytest` now requires the `pytest-xdist` distributed testing dependency. This library has been added to the `dev` requirements and conda environment configuration. (:pull:`1203`).
 * Parameters ``reducer`` and ``window`` in ``xclim.indices.rle_statistics`` are now positional. (:pull:`1161`).
 * The ``relative_annual_cycle_amplitude`` and ``annual_cycle_amplitude`` have been rewritten to match the version defined in the VALUE project, outputs will change drastically (for the better) (:pull:`1198`).
 * English indicator metadata has been adjusted to remove frequencies from fields in the `long_name` of indicators. English indicators now have an explicit `title` and `abstract`. (:issue:`936`, :pull:`1123`).
