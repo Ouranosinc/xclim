@@ -4,6 +4,10 @@ History
 
 0.40 (unreleased)
 -----------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
 * Rewrite of ``xclim.core.calendar.time_bnds``. It should now be more resilient and versatile, but all ``cftime_*`` and ``cfindex_*`` functions were removed. (:issue:`74`, :pull:`1207`).
 
 0.39.0 (2022-11-02)
