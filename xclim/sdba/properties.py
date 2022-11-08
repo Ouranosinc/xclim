@@ -695,7 +695,7 @@ def _relative_frequency(
     """Relative Frequency.
 
     Relative Frequency of days with variable respecting a condition (defined by an operation and a threshold) at the
-    time resolution. The relative freqency is the number of days that satisfy the condition divided by the total number
+    time resolution. The relative frequency is the number of days that satisfy the condition divided by the total number
     of days.
 
     Parameters
@@ -751,8 +751,10 @@ def _transition_probability(
 ) -> xr.DataArray:
     """Transition probability.
 
-    Probability of transition from the inital state
-    (less than the threshold or more than the threshold) to the final state (less than the threshold or more than the threshold)
+    Probability of transition from the inital state to the final state. The states are
+     booleans comparing the value of the day to the threshold with the operator.
+
+     The transition occurs when consecutive days are both in the given states.
 
     Parameters
     ----------
@@ -781,7 +783,10 @@ def _transition_probability(
 
     ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
     t = convert_units_to(thresh, da)
-    out = np.mean(ops[initial_op](today, t) * ops[final_op](tomorrow, t))
+    cond= ops[initial_op](today, t) * ops[final_op](tomorrow, t)
+    if group.prop != "group":
+        cond = cond.groupby(group.name)
+    out = cond.mean( dim=group.dim)
     out.attrs["units"] = ""
     return out
 
@@ -984,124 +989,116 @@ spatial_correlogram = StatisticalProperty(
 )
 
 
-def _correlation_length(da: xr.DataArray, *, radius='200 km', thresh=0.90, dims=None, bins=100, group="time"):
-    """Correlation length.
+def _decorrelation_length(da: xr.DataArray, *, radius=300, thresh=0.50, dims=None, bins=100, group="time"):
+    """Decorrelation length.
 
 
     Parameters
     ----------
     da: xr.DataArray
       Data.
+    radius: int
+        Radius (in km) defining the region where correlations will be calculate between a point and its neighbours.
+    thresh: float
+      Threshold correlation defining decorrelation.
+       The decorrelation length is defined as the center of the distance bin that has a correlation closest to this threshold.
     dims: sequence of strings
       Name of the spatial dimensions. Once these are stacked, the longitude and latitude coordinates must be 1D.
     bins:
-      Same as argument `bins` from :py:meth:`xarray.DataArray.groupby_bins`.
-      If given as a scalar, the equal-width bin limits are generated here
-      (instead of letting xarray do it) to improve performance.
+      Same as argument `bins` from :py:meth:`scipy.stats.binned_statistic`.
+      If given as a scalar, the equal-width bin limits from 0 to radius are generated here
+      (instead of letting scipy do it) to improve performance.
     group: str
       Useless for now.
 
     Returns
     -------
     xr.DataArray, [dimensionless]
-      Inter-site correlogram as a function of distance.
+      Decorrelation length.
     """
+    # save attrs
+    coords_attrs = {}
+    for c in da.coords:
+        coords_attrs[c] = da[c].attrs
 
-    name = da.name
-    sim = da.to_dataset()
-    sim_stack = sim.stack({'_spatial': ['lat', 'lon']})
 
-    def _dl_for_1_point(cur, cur_lat, cur_lon, bins, radius, thresh):
-        if not np.isnan(cur).all():
-            neighbour = sim_stack.copy()
-            # display(neighbour)
+    if dims is None:
+        dims = [d for d in da.dims if d != "time"]
 
-            # calculate distance between current point and all its neighbours
-            dists_ind, mn_ind, mx_ind = _individual_haversine_and_bins(
-                cur_lon, cur_lat,
-                neighbour["lon"].values, neighbour["lat"].values
-            )
+    corr = _pairwise_spearman(da, dims)
 
-            # add distance as coord
-            neighbour = neighbour.assign_coords(distance=("_spatial", dists_ind))
-            # display(neighbour)
+    dists, mn, mx = _pairwise_haversine_and_bins(
+        corr.cf["longitude"].values, corr.cf["latitude"].values
+    )
 
-            # only keep neighbours that are closer than the radius
-            neighbour = neighbour.where(neighbour.distance <= radius)
+    # fill bottom triangle
+    np.nan_to_num(dists, 0)
+    dists = dists + dists.T - np.diag(np.diag(dists))
 
-            # drop nans
-            neighbour = neighbour.dropna(dim='_spatial')
+    dists = xr.DataArray(dists, dims=corr.dims, coords=corr.coords, name="distance")
 
-            neighbour['corr'] = ('_spatial',
-                                 [stats.spearmanr(cur, x).correlation for x in
-                                  neighbour[name].values.T])
+    if np.isscalar(bins):
+        bins = np.linspace(0, radius, bins + 1)
 
-            if np.isscalar(bins):
-                bins = np.linspace(mn_ind * 0.9999, mx_ind * 1.0001, bins + 1)
+    if uses_dask(corr):
+        dists = dists.chunk()
 
-            # bin the correlations
-            w = np.diff(bins)
-            centers = xr.DataArray(
-                bins[:-1] + w / 2,
-                dims=("distance_bins",),
-                attrs={
-                    "units": "km",
-                    "long_name": f"Centers of the intersite distance bins (width of {w[0]:.3f} km)",
-                },
-            )
-            ds = xr.Dataset(
-                {"corr": neighbour['corr'], "distance": neighbour['distance']})
-            # display(ds)
-            # display(neighbour)
-            corlg = xr.map_blocks(
-                lambda ds, b: ds.corr.groupby_bins(ds.distance, b)
-                    .mean()
-                    .drop_vars(["distance_bins"]),
-                ds,
-                (bins,),
-                template=neighbour['corr'].isel(_spatial=0, drop=True).expand_dims(
-                    distance_bins=bins.size - 1
-                ),
-            )
+    w = np.diff(bins)
+    centers = xr.DataArray(
+        bins[:-1] + w / 2,
+        dims=("distance_bins",),
+        attrs={
+            "units": "km",
+            "long_name": f"Centers of the intersite distance bins (width of {w[0]:.3f} km)",
+        },
+    )
+    ds = xr.Dataset({"corr": corr, "distance": dists})
 
-            corlg = corlg.assign_coords(distance_bins=centers).rename(
-                distance_bins="distance").assign_attrs(units="")
+    # only keep points inside the radius
+    ds = ds.where(ds.distance < radius)
 
-            if corlg.min() > thresh:
-                warnings.warn(
-                    f" The minimum correlation found is higher than the threshold."
-                    f" Raise the threshold or the radius.")
-            # get decorrelation lenght
-            closest = abs(corlg - thresh).argmin()
-            dl = corlg.isel(distance=closest.values).distance.values
 
-            return dl
+    def _bin_corr(corr, distance):
+        """ Bin and mean"""
+        return stats.binned_statistic(distance, corr, statistic='mean',
+                                            bins=bins).statistic
+    # (_spatial, _spatial2) -> (_spatial, distance_bins)
+    binned = xr.apply_ufunc(_bin_corr,
+                            ds.corr,
+                            ds.distance,
+                            input_core_dims=[["_spatial2"], ["_spatial2"]],
+                            output_core_dims=[["distance_bins"]],
+                            dask='parallelized',
+                            vectorize=True,
+                            output_dtypes=[float],
+                            dask_gufunc_kwargs={"allow_rechunk": True,
+                                                'output_sizes': {'distance_bins': 100}}
+                            ).rename('corr').to_dataset()
 
-        else:
-            return np.nan
+    binned = binned.assign_coords(distance_bins=centers).rename(
+        distance_bins="distance").assign_attrs(units="")
 
-    out = xr.apply_ufunc(_dl_for_1_point, sim_stack.tasmax, sim_stack.lat,
-                         sim_stack.lon,
-                         input_core_dims=[["time"], [], []],
-                         # output_core_dims=[["_spatial"]],
-                         dask='parallelized',
-                         # dask= 'allowed',
-                         vectorize=True,
-                         output_dtypes=[float],
-                         kwargs={'bins': bins, 'radius': radius, 'thresh': thresh},
-                         dask_gufunc_kwargs={"allow_rechunk": True}
-                         ).rename('decorrelation_length').to_dataset()
+    #find correlation closest to thresh
+    closest = abs(binned.corr - thresh).argmin(dim='distance').values
+    # get corresponding distance
+    binned['decorrelation_length'] = xr.DataArray(
+        data=[binned.distance.values[i] for i in closest], dims='_spatial')
+    # get back to 2d lat and lon
+    #if 'lat' in dims and 'lon' in dims:
+    binned = binned.set_index({'_spatial': dims})
+    out = binned.decorrelation_length.unstack()
 
-    # reconstruct map with dl
-    out = out.unstack()
-
+    # put back coords attrs
+    for c in out.coords:
+        out[c].attrs = coords_attrs[c]
+    out.attrs['units']= "km"
     return out
 
 
-correlation_length = StatisticalProperty(
-    identifier="correlation_length",
+decorrelation_length = StatisticalProperty(
+    identifier="decorrelation_length",
     aspect="spatial",
-    compute=_correlation_length,
+    compute=_decorrelation_length,
     allowed_groups=["group"],
 )
 
