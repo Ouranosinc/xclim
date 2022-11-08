@@ -7,7 +7,7 @@ History
 
 Bug fixes
 ^^^^^^^^^
-* Streamflow indicators relying on indices defined in `xclim.indices.stats` were not checking input variable units. These indicators will now raise an error if input data units are not m^3/s. (:issue:`1130`).
+* Streamflow indicators relying on indices defined in `xclim.indices.stats` were not checking input variable units. These indicators will now raise an error if input data units are not m^3/s. (:issue:`1130`, :pull:`1225`).
 
 0.39.0 (2022-11-02)
 -------------------
