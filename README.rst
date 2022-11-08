@@ -71,7 +71,7 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 .. _FECC: https://www.environnement.gouv.qc.ca/ministere/fonds-electrification-changements-climatiques/index.htm
 .. _Fonds vert: https://www.environnement.gouv.qc.ca/ministere/fonds-vert/index.htm
 .. _FRQ: https://frq.gouv.qc.ca/
-.. _Ouranos: https://ouranos.ca/
+.. _Ouranos: https://www.ouranos.ca/
 
 .. |pypi| image:: https://img.shields.io/pypi/v/xclim.svg
         :target: https://pypi.python.org/pypi/xclim
