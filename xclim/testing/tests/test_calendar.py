@@ -13,6 +13,7 @@ from xarray.coding.cftimeindex import CFTimeIndex
 from xclim.core.calendar import (
     adjust_doy_calendar,
     climatological_mean_doy,
+    common_calendar,
     compare_offsets,
     construct_offset,
     convert_calendar,
@@ -571,35 +572,51 @@ def test_doy_to_days_since():
     xr.testing.assert_identical(da, da2)
 
 
-def test_parse_offset_full():
-    # GIVEN
-    freq = "4AS-JUL"
-    # WHEN
+@pytest.mark.parametrize(
+    "freq,em,eb,es,ea",
+    [
+        ("4AS-JUL", 4, "A", True, "JUL"),
+        ("M", 1, "M", False, None),
+        ("YS", 1, "A", True, "JAN"),
+        ("3A", 3, "A", False, "DEC"),
+        ("D", 1, "D", True, None),
+        ("3W", 21, "D", True, None),
+    ],
+)
+def test_parse_offset_valid(freq, em, eb, es, ea):
     m, b, s, a = parse_offset(freq)
-    assert m == 4
-    assert b == "A"
-    assert s is True
-    assert a == "JUL"
+    assert m == em
+    assert b == eb
+    assert s is es
+    assert a == ea
 
 
-def test_parse_offset_minimal():
-    # GIVEN
-    freq = "M"
-    # WHEN
-    m, b, s, a = parse_offset(freq)
-    assert m == 1
-    assert b == "M"
-    assert s is False
-    assert a is None
+def test_parse_offset_invalid():
+    # This error actually comes from pandas, but why not test it anyway
+    with pytest.raises(ValueError, match="Invalid frequency"):
+        parse_offset("day")
 
 
 @pytest.mark.parametrize(
     "m,b,s,a,exp",
     [
-        (1, "A", True, None, "AS"),
+        (1, "A", True, None, "AS-JAN"),
         (2, "Q", False, "DEC", "2Q-DEC"),
         (1, "D", False, None, "D"),
     ],
 )
 def test_construct_offset(m, b, s, a, exp):
     assert construct_offset(m, b, s, a) == exp
+
+
+@pytest.mark.parametrize(
+    "inputs,join,expected",
+    [
+        (["noleap", "standard"], "outer", "standard"),
+        (["noleap", "standard"], "inner", "noleap"),
+        (["default", "default"], "outer", "default"),
+        (["all_leap", "default"], "inner", "standard"),
+    ],
+)
+def test_common_calendars(inputs, join, expected):
+    assert expected == common_calendar(inputs, join=join)

@@ -14,8 +14,6 @@ from typing import Sequence
 from .options import cfcheck
 from .utils import VARIABLES, ValidationError
 
-# TODO: Implement pandas infer_freq in xarray with CFTimeIndex. >> PR pydata/xarray#4033
-
 
 @cfcheck
 def check_valid(var, key: str, expected: str | Sequence[str]):

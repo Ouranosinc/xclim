@@ -208,6 +208,11 @@ variables:
     cell_methods: "time: mean"
     description: Mean surface dew point temperaure.
     standard_name: dew_point_temperature
+  thickness_of_rainfall_amount:
+    canonical_units: m
+    cell_methods: "time: sum"
+    description: Accumulated depth of rainfall, i.e. the thickness of a layer of liquid water having the same mass per unit area as the rainfall amount.
+    standard_name: thickness_of_rainfall_amount
   ua:
     canonical_units: m s-1
     cell_methods: "time: mean"

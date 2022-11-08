@@ -8,23 +8,21 @@ most unit handling methods.
 """
 from __future__ import annotations
 
+import functools
 import re
 import warnings
 from inspect import signature
 from typing import Any, Callable, TypeVar
 
-import pint.converters
-import pint.unit
+import pint
 import xarray as xr
 from boltons.funcutils import wraps
-from pint import Unit
 
 from .calendar import date_range, get_calendar, parse_offset
 from .options import datacheck
 from .utils import ValidationError
 
 __all__ = [
-    "ValidationError",
     "amount2rate",
     "check_units",
     "convert_units_to",
@@ -40,13 +38,23 @@ __all__ = [
 ]
 
 
-units = pint.UnitRegistry(autoconvert_offset_to_baseunit=True, on_redefinition="ignore")
-Convertible = TypeVar("Convertible", str, xr.DataArray, units.Unit, units.Quantity)
-units.define(
-    pint.unit.UnitDefinition(
-        "percent", "%", ("pct",), pint.converters.ScaleConverter(0.01)
-    )
+# shamelessly adapted from `cf-xarray` (which adopted it from MetPy and xclim itself)
+units = pint.UnitRegistry(
+    autoconvert_offset_to_baseunit=True,
+    preprocessors=[
+        functools.partial(
+            re.compile(
+                r"(?<=[A-Za-z])(?![A-Za-z])(?<![0-9\-][eE])(?<![0-9\-])(?=[0-9\-])"
+            ).sub,
+            "**",
+        ),
+        lambda string: string.replace("%", "percent"),
+    ],
 )
+
+Convertible = TypeVar("Convertible", str, xr.DataArray, units.Unit, units.Quantity)
+units.define("percent = 0.01 = % = pct")
+
 # In pint, the default symbol for year is "a" which is not CF-compliant (stands for "are")
 units.define("year = 365.25 * day = yr")
 
@@ -94,7 +102,20 @@ hydro.add_transformation(
 units.add_context(hydro)
 units.enable_contexts(hydro)
 
-PR_AMOUNT_STANDARD_NAME = "thickness_of_rainfall_amount"
+PR_AMOUNT_STANDARD_NAMES = (
+    "thickness_of_rainfall_amount",
+    "thickness_of_convective_rainfall_amount",
+    "thickness_of_stratiform_rainfall_amount",
+    "thickness_of_large_scale_rainfall_amount",
+    "lwe_thickness_of_convective_precipitation_amount",
+    "lwe_thickness_of_convective_snowfall_amount",
+    "lwe_thickness_of_precipitation_amount",
+    "lwe_thickness_of_snowfall_amount",
+    "lwe_thickness_of_stratiform_precipitation_amount",
+    "lwe_thickness_of_large_scale_precipitation_amount",
+    "lwe_thickness_of_stratiform_snowfall_amount",
+    "lwe_thickness_of_large_scale_snowfall_amount",
+)
 
 # These are the changes that could be included in a units definition file.
 
@@ -112,7 +133,7 @@ PR_AMOUNT_STANDARD_NAME = "thickness_of_rainfall_amount"
 units.define("[radiation] = [power] / [length]**2")
 
 
-def units2pint(value: xr.DataArray | str | units.Quantity) -> Unit:
+def units2pint(value: xr.DataArray | str | units.Quantity) -> pint.Unit:
     """Return the pint Unit for the DataArray units.
 
     Parameters
@@ -122,17 +143,9 @@ def units2pint(value: xr.DataArray | str | units.Quantity) -> Unit:
 
     Returns
     -------
-    pint.unit.UnitDefinition
+    pint.Unit
         Units of the data array.
     """
-
-    def _transform(s):
-        """Convert a CF-unit string to a pint expression."""
-        if s == "%":
-            return "percent"
-
-        return re.subn(r"([a-zA-Z]+)\^?(-?\d)", r"\g<1>**\g<2>", s)[0]
-
     if isinstance(value, str):
         unit = value
     elif isinstance(value, xr.DataArray):
@@ -165,18 +178,9 @@ def units2pint(value: xr.DataArray | str | units.Quantity) -> Unit:
             "Remove white space from temperature units, e.g. use `degC`."
         )
 
-    try:  # Pint compatible
-        return units.parse_units(unit)
-    except (
-        pint.UndefinedUnitError,
-        pint.DimensionalityError,
-        AttributeError,
-        TypeError,
-    ):  # Convert from CF-units to pint-compatible
-        return units.parse_units(_transform(unit))
+    return units.parse_units(unit)
 
 
-# Note: The pint library does not have a generic Unit or Quantity type at the moment. Using "Any" as a stand-in.
 def pint2cfunits(value: units.Quantity | units.Unit) -> str:
     """Return a CF-compliant unit string from a `pint` unit.
 
@@ -212,7 +216,8 @@ def pint2cfunits(value: units.Quantity | units.Unit) -> str:
     out = out.replace(" * ", " ")
     # Delta degrees:
     out = out.replace("Δ°", "delta_deg")
-    return out.replace("percent", "%")
+    # Percents
+    return out.replace("percent", "%").replace("pct", "%")
 
 
 def ensure_cf_units(ustr: str) -> str:
@@ -323,8 +328,16 @@ def convert_units_to(
                 _is_precipitation_amount(source, source_unit)
                 and target_unit.dimensionality.get("[time]") == -1
             ):
-                source = amount2rate(source)
-                source_unit = units2pint(source)
+                # Source is a precipitation amount and target is a precipitation rate
+                try:
+                    # Try converting amount to rate. Will only work if `infer_freq` raises no error, implying the
+                    # time index is well-behaved.
+                    xr.infer_freq(source.time)
+                    source = amount2rate(source)
+                    source_unit = units2pint(source)
+                except ValueError:
+                    pass
+
             out = xr.DataArray(
                 data=units.convert(source.data, source_unit, target_unit),  # noqa
                 coords=source.coords,
@@ -351,11 +364,13 @@ def convert_units_to(
 
 
 def _is_precipitation_amount(source: xr.DataArray, source_unit: units.Unit) -> bool:
+    """Return True if variable is a precipitation amount (flux accumulated over time)."""
     standard_name = source.attrs.get("standard_name", None)
-    return standard_name == PR_AMOUNT_STANDARD_NAME and _is_amount(source_unit)
+    return standard_name in PR_AMOUNT_STANDARD_NAMES and _is_amount(source_unit)
 
 
 def _is_amount(source_unit: units.Unit) -> bool:
+    """Return True if unit is a length or a mass / area."""
     quantity = units.Quantity(1, source_unit)
     return quantity.check("[length]") or quantity.check("[mass] / [length]**2")
 

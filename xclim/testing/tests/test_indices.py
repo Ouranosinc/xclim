@@ -807,7 +807,11 @@ class TestFreshetStart:
         tg[i : i + w + 1] += 6  # Second valid condition, should be ignored.
 
         tg = tas_series(tg + K2C, start="1/1/2000")
-        out = xci.freshet_start(tg, window=w)
+
+        # Check for DeprecationWarning
+        with pytest.warns(DeprecationWarning):
+            out = xci.freshet_start(tg, window=w)
+
         assert out[0] == tg.indexes["time"][30].dayofyear
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
@@ -1147,35 +1151,43 @@ class TestHeatWaveTotalLength:
 
 class TestHotSpellFrequency:
     @pytest.mark.parametrize(
-        "thresh_tasmax,window,expected",
+        "thresh_tasmax,window,op,expected",
         [
-            ("30 C", 3, 2),  # Some HS
-            ("30 C", 4, 1),  # One long HS
-            ("10 C", 3, 1),  # No HS
-            ("40 C", 5, 0),  # Windowed
+            ("30 C", 3, ">", 2),  # Some HS
+            ("30 C", 4, ">", 1),  # One long HS
+            ("29 C", 3, ">", 2),  # Two HS
+            ("29 C", 3, ">=", 1),  # One long HS
+            ("10 C", 3, ">", 1),  # No HS
+            ("40 C", 5, ">", 0),  # Windowed
         ],
     )
-    def test_1d(self, tasmax_series, thresh_tasmax, window, expected):
+    def test_1d(self, tasmax_series, thresh_tasmax, window, op, expected):
         tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
 
-        hsf = xci.hot_spell_frequency(tx, thresh_tasmax=thresh_tasmax, window=window)
+        hsf = xci.hot_spell_frequency(
+            tx, thresh_tasmax=thresh_tasmax, window=window, op=op
+        )
         np.testing.assert_allclose(hsf.values, expected)
 
 
 class TestHotSpellMaxLength:
     @pytest.mark.parametrize(
-        "thresh_tasmax,window,expected",
+        "thresh_tasmax,window,op,expected",
         [
-            ("30 C", 3, 5),  # Some HS
-            ("10 C", 3, 10),  # One long HS
-            ("40 C", 3, 0),  # No HS
-            ("30 C", 5, 5),  # Windowed
+            ("30 C", 3, ">", 5),  # Some HS
+            ("10 C", 3, ">", 10),  # One long HS
+            ("29 C", 3, ">", 5),  # Two HS
+            ("29 C", 3, ">=", 9),  # One long HS, minus a day
+            ("40 C", 3, ">", 0),  # No HS
+            ("30 C", 5, ">", 5),  # Windowed
         ],
     )
-    def test_1d(self, tasmax_series, thresh_tasmax, window, expected):
-        tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
+    def test_1d(self, tasmax_series, thresh_tasmax, window, op, expected):
+        tx = tasmax_series(np.asarray([28, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
 
-        hsml = xci.hot_spell_max_length(tx, thresh_tasmax=thresh_tasmax, window=window)
+        hsml = xci.hot_spell_max_length(
+            tx, thresh_tasmax=thresh_tasmax, window=window, op=op
+        )
         np.testing.assert_allclose(hsml.values, expected)
 
 
@@ -2989,26 +3001,32 @@ class TestRPRCTot:
 class TestWetDays:
     def test_simple(self, pr_series):
         a = np.zeros(365)
-        a[:6] += [4, 5.5, 6, 6, 2, 7]  # 4 above 5 in Jan
-        a[100:105] += [1, 6, 7, 2, 1]  # 2 above 5 in Mar
+        a[:7] += [4, 5.5, 6, 6, 2, 7, 5]  # 4 above 5 and 1 at 5 in Jan
+        a[100:106] += [1, 6, 7, 5, 2, 1]  # 2 above 5 and 1 at 5 in Mar
 
         pr = pr_series(a)
         pr.attrs["units"] = "mm/day"
 
         out = xci.wetdays(pr, thresh="5 mm/day", freq="M")
+        np.testing.assert_allclose(out, [5, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0])
+
+        out = xci.wetdays(pr, thresh="5 mm/day", freq="M", op=">")
         np.testing.assert_allclose(out, [4, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0])
 
 
 class TestWetDaysProp:
     def test_simple(self, pr_series):
         a = np.zeros(365)
-        a[:6] += [4, 5.5, 6, 6, 2, 7]  # 4 above 5 in Jan
-        a[100:105] += [1, 6, 7, 2, 1]  # 2 above 5 in Mar
+        a[:7] += [4, 5.5, 6, 6, 2, 7, 5]  # 4 above 5 and 1 at 5 in Jan
+        a[100:106] += [1, 6, 7, 5, 2, 1]  # 2 above 5 and 1 at 5 in Mar
 
         pr = pr_series(a)
         pr.attrs["units"] = "mm/day"
 
         out = xci.wetdays_prop(pr, thresh="5 mm/day", freq="M")
+        np.testing.assert_allclose(out, [5 / 31, 0, 0, 3 / 31, 0, 0, 0, 0, 0, 0, 0, 0])
+
+        out = xci.wetdays_prop(pr, thresh="5 mm/day", freq="M", op=">")
         np.testing.assert_allclose(out, [4 / 31, 0, 0, 2 / 31, 0, 0, 0, 0, 0, 0, 0, 0])
 
 

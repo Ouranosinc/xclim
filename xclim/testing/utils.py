@@ -23,7 +23,22 @@ from xarray import Dataset
 from xarray import open_dataset as _open_dataset
 from yaml import safe_dump, safe_load
 
-from xclim import __version__ as xclim_version
+_xclim_deps = [
+    "xclim",
+    "xarray",
+    "sklearn",
+    "scipy",
+    "pint",
+    "pandas",
+    "numba",
+    "dask",
+    "cf_xarray",
+    "cftime",
+    "clisops",
+    "bottleneck",
+    "boltons",
+]
+
 
 _default_cache_dir = Path.home() / ".xclim_testing_data"
 
@@ -117,7 +132,7 @@ def _get(
 
 # idea copied from raven that it borrowed from xclim that borrowed it from xarray that was borrowed from Seaborn
 def open_dataset(
-    name: str,
+    name: str | os.PathLike,
     suffix: str | None = None,
     dap_url: str | None = None,
     github_url: str = "https://github.com/Ouranosinc/xclim-testdata",
@@ -133,7 +148,7 @@ def open_dataset(
 
     Parameters
     ----------
-    name : str
+    name : str or os.PathLike
         Name of the file containing the dataset.
     suffix : str, optional
         If no suffix is given, assumed to be netCDF ('.nc' is appended). For no suffix, set "".
@@ -158,7 +173,8 @@ def open_dataset(
     --------
     xarray.open_dataset
     """
-    name = Path(name)
+    if isinstance(name, str):
+        name = Path(name)
     if suffix is None:
         suffix = ".nc"
     fullname = name.with_suffix(suffix)
@@ -425,35 +441,30 @@ def publish_release_notes(
     print(history, file=file)
 
 
-def show_versions(file: os.PathLike | StringIO | TextIO | None = None) -> str | None:
+def show_versions(
+    file: os.PathLike | StringIO | TextIO | None = None,
+    deps: list | None = None,
+) -> str | None:
     """Print the versions of xclim and its dependencies.
 
     Parameters
     ----------
     file : {os.PathLike, StringIO, TextIO}, optional
-      If provided, prints to the given file-like object. Otherwise, returns a string.
+        If provided, prints to the given file-like object. Otherwise, returns a string.
+    deps : list, optional
+        A list of dependencies to gather and print version information from. Otherwise, prints `xclim` dependencies.
 
     Returns
     -------
     str or None
     """
-    deps = [
-        ("xarray", lambda mod: mod.__version__),
-        ("sklearn", lambda mod: mod.__version__),
-        ("scipy", lambda mod: mod.__version__),
-        ("pint", lambda mod: mod.__version__),
-        ("pandas", lambda mod: mod.__version__),
-        ("numba", lambda mod: mod.__version__),
-        ("dask", lambda mod: mod.__version__),
-        ("cf_xarray", lambda mod: mod.__version__),
-        ("cftime", lambda mod: mod.__version__),
-        ("clisops", lambda mod: mod.__version__),
-        ("bottleneck", lambda mod: mod.__version__),
-        ("boltons", lambda mod: mod.__version__),
-    ]
+    if deps is None:
+        deps = _xclim_deps
+
+    dependency_versions = [(d, lambda mod: mod.__version__) for d in deps]
 
     deps_blob = []
-    for (modname, ver_f) in deps:
+    for (modname, ver_f) in dependency_versions:
         try:
             if modname in sys.modules:
                 mod = sys.modules[modname]
@@ -470,18 +481,18 @@ def show_versions(file: os.PathLike | StringIO | TextIO | None = None) -> str | 
 
     modules_versions = "\n".join([f"{k}: {stat}" for k, stat in sorted(deps_blob)])
 
-    installed_versions = (
-        "\n"
-        "INSTALLED VERSIONS\n"
-        "------------------\n"
-        f"python: {platform.python_version()}\n"
-        f"xclim: {xclim_version}\n"
-        f"{modules_versions}\n"
-        f"Anaconda-based environment: {'yes' if Path(sys.base_prefix).joinpath('conda-meta').exists() else 'no'}"
-    )
+    installed_versions = [
+        "INSTALLED VERSIONS",
+        "------------------",
+        f"python: {platform.python_version()}",
+        f"{modules_versions}",
+        f"Anaconda-based environment: {'yes' if Path(sys.base_prefix).joinpath('conda-meta').exists() else 'no'}",
+    ]
+
+    message = "\n".join(installed_versions)
 
     if not file:
-        return installed_versions
+        return message
     if isinstance(file, (Path, os.PathLike)):
         file = Path(file).open("w")
-    print(installed_versions, file=file)
+    print(message, file=file)

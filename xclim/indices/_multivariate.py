@@ -67,6 +67,7 @@ def cold_spell_duration_index(
     tasmin_per: xarray.DataArray,
     window: int = 6,
     freq: str = "YS",
+    resample_before_rl: bool = True,
     bootstrap: bool = False,  # noqa  # noqa
     op: str = "<",
 ) -> xarray.DataArray:
@@ -84,7 +85,10 @@ def cold_spell_duration_index(
     window : int
         Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
-        Resampling frequency.
+      Resampling frequency.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
     bootstrap : bool
         Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
         Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
@@ -133,10 +137,14 @@ def cold_spell_duration_index(
     thresh = resample_doy(tasmin_per, tasmin)
 
     below = compare(tasmin, op, thresh, constrain=("<", "<="))
-
-    out = below.resample(time=freq).map(
-        rl.windowed_run_count, window=window, dim="time"
+    out = rl.resample_and_rl(
+        below,
+        resample_before_rl,
+        rl.windowed_run_count,
+        window=window,
+        freq=freq,
     )
+
     return to_agg_units(out, tasmin, "count")
 
 
@@ -413,6 +421,7 @@ def multiday_temperature_swing(
     op_tasmin: str = "<=",
     op_tasmax: str = ">",
     freq: str = "YS",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:  # noqa: D401
     r"""Statistics of consecutive diurnal temperature swing events.
 
@@ -439,6 +448,9 @@ def multiday_temperature_swing(
       Comparison operation for tasmax. Default: ">".
     freq : str
       Resampling frequency.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -465,13 +477,23 @@ def multiday_temperature_swing(
     ft = freeze * thaw
 
     if op == "count":
-        out = ft.resample(time=freq).map(
-            rl.windowed_run_events, window=window, dim="time"
+        out = rl.resample_and_rl(
+            ft,
+            resample_before_rl,
+            rl.windowed_run_events,
+            window=window,
+            freq=freq,
         )
     else:
-        out = ft.resample(time=freq).map(
-            rl.rle_statistics, reducer=op, window=window, dim="time"
+        out = rl.resample_and_rl(
+            ft,
+            resample_before_rl,
+            rl.rle_statistics,
+            reducer=op,
+            window=window,
+            freq=freq,
         )
+
     return to_agg_units(out, tasmin, "count")
 
 
@@ -615,6 +637,7 @@ def heat_wave_frequency(
     window: int = 3,
     freq: str = "YS",
     op: str = ">",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Heat wave frequency.
 
@@ -637,6 +660,9 @@ def heat_wave_frequency(
       Resampling frequency.
     op: {">", ">=", "gt", "ge"}
       Comparison operation. Default: ">".
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -663,7 +689,14 @@ def heat_wave_frequency(
     cond = (compare(tasmin, op, thresh_tasmin, constrain)) & (
         compare(tasmax, op, thresh_tasmax, constrain)
     )
-    out = cond.resample(time=freq).map(rl.windowed_run_events, window=window)
+
+    out = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.windowed_run_events,
+        window=window,
+        freq=freq,
+    )
     out.attrs["units"] = ""
     return out
 
@@ -682,6 +715,7 @@ def heat_wave_max_length(
     window: int = 3,
     freq: str = "YS",
     op: str = ">",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Heat wave max length.
 
@@ -704,8 +738,11 @@ def heat_wave_max_length(
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
     freq : str
       Resampling frequency.
-    op: {">", ">=", "gt", "ge"}
+    op : {">", ">=", "gt", "ge"}
       Comparison operation. Default: ">".
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -733,8 +770,14 @@ def heat_wave_max_length(
     cond = (compare(tasmin, op, thresh_tasmin, constrain)) & (
         compare(tasmax, op, thresh_tasmax, constrain)
     )
-    max_l = cond.resample(time=freq).map(rl.longest_run, dim="time")
-    out = max_l.where(max_l >= window, 0)
+    out = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.rle_statistics,
+        reducer="max",
+        window=window,
+        freq=freq,
+    )
     return to_agg_units(out, tasmax, "count")
 
 
@@ -752,6 +795,7 @@ def heat_wave_total_length(
     window: int = 3,
     freq: str = "YS",
     op: str = ">",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Heat wave total length.
 
@@ -775,6 +819,9 @@ def heat_wave_total_length(
       Resampling frequency.
     op: {">", ">=", "gt", "ge"}
       Comparison operation. Default: ">".
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -792,7 +839,14 @@ def heat_wave_total_length(
     cond = compare(tasmin, op, thresh_tasmin, constrain) & compare(
         tasmax, op, thresh_tasmax, constrain
     )
-    out = cond.resample(time=freq).map(rl.windowed_run_count, window=window)
+    out = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.windowed_run_count,
+        window=window,
+        freq=freq,
+    )
+
     return to_agg_units(out, tasmin, "count")
 
 
@@ -921,6 +975,7 @@ def precip_accumulation(
     return pram.resample(time=freq).sum(dim="time").assign_attrs(units=pram.units)
 
 
+# FIXME: Resample after run length?
 @declare_units(pr="[precipitation]", tas="[temperature]", thresh="[precipitation]")
 def rain_on_frozen_ground_days(
     pr: xarray.DataArray,
@@ -1582,6 +1637,7 @@ def warm_spell_duration_index(
     tasmax_per: xarray.DataArray,
     window: int = 6,
     freq: str = "YS",
+    resample_before_rl: bool = True,
     bootstrap: bool = False,  # noqa
     op: str = ">",
 ) -> xarray.DataArray:
@@ -1601,6 +1657,9 @@ def warm_spell_duration_index(
       Minimum number of days with temperature above threshold to qualify as a warm spell.
     freq : str
       Resampling frequency.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
     bootstrap : bool
       Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
       Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
@@ -1638,10 +1697,14 @@ def warm_spell_duration_index(
     thresh = resample_doy(thresh, tasmax)
 
     above = compare(tasmax, op, thresh, constrain=(">", ">="))
-
-    out = above.resample(time=freq).map(
-        rl.windowed_run_count, window=window, dim="time"
+    out = rl.resample_and_rl(
+        above,
+        resample_before_rl,
+        rl.windowed_run_count,
+        window=window,
+        freq=freq,
     )
+
     return to_agg_units(out, tasmax, "count")
 
 
@@ -1690,7 +1753,7 @@ def blowing_snow(
     window: int = 3,
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
-    """Days with blowing snow events.
+    """Blowing snow days.
 
     Number of days when both snowfall over the last days and daily wind speeds are above respective thresholds.
 

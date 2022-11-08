@@ -9,7 +9,6 @@ from dask import array as dsk
 
 from xclim import indices, set_options
 from xclim.core.units import (
-    PR_AMOUNT_STANDARD_NAME,
     amount2rate,
     check_units,
     convert_units_to,
@@ -108,7 +107,7 @@ class TestConvertUnitsTo:
             [1, 2, 3],
             coords={"time": pd.date_range("1990-01-01", periods=3, freq="D")},
             dims=["time"],
-            attrs={"units": "mm", "standard_name": PR_AMOUNT_STANDARD_NAME},
+            attrs={"units": "mm", "standard_name": "thickness_of_rainfall_amount"},
         )
         out = convert_units_to(thickness_data, "kg/m**2/day")
         np.testing.assert_array_almost_equal(out, thickness_data)
