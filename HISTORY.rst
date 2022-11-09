@@ -9,7 +9,7 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bo
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Minor adjustments to GitHub Actions workflows (newest Ubuntu images, updated actions version, better CI triggering). (:pull:`1221`).
-* Merge of sdba documentation from the module and the rst files, some cleanup and addition of a section refering to github issues.
+* Merge of sdba documentation from the module and the rst files, some cleanup and addition of a section refering to github issues. (:pull:`1230`).
 
 0.39.0 (2022-11-02)
 -------------------
