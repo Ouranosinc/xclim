@@ -13,7 +13,7 @@ from xclim import indicators
 from xclim.core.indicator import build_indicator_module_from_yaml
 from xclim.core.locales import read_locale_file
 from xclim.core.options import set_options
-from xclim.core.utils import InputKind, load_module
+from xclim.core.utils import VARIABLES, InputKind, load_module
 from xclim.testing import open_dataset
 
 
@@ -78,6 +78,9 @@ def test_custom_indices():
         nbpath / "example.yml", name="ex1", indices=example
     )
 
+    # Did this register the new variable?
+    assert "prveg" in VARIABLES
+
     # From mapping
     exinds = {
         "extreme_precip_accumulation_and_days": example.extreme_precip_accumulation_and_days
@@ -94,7 +97,10 @@ def test_custom_indices():
     xr.testing.assert_equal(out1[0], out2[0])
 
     # Check that missing was not modified even with injecting `freq`.
-    assert ex1.RX5day.missing == indicators.atmos.max_n_day_precipitation_amount.missing
+    assert (
+        ex1.RX5day_canopy.missing
+        == indicators.atmos.max_n_day_precipitation_amount.missing
+    )
 
     # Error when missing
     with pytest.raises(ImportError, match="extreme_precip_accumulation_and_days"):
@@ -108,9 +114,9 @@ def test_indicator_module_translations():
     notebook_path = Path(__file__).parent.parent.parent.parent / "docs" / "notebooks"
 
     ex = build_indicator_module_from_yaml(notebook_path / "example", name="ex_trans")
-    assert ex.RX5day.translate_attrs("fr")["cf_attrs"][0]["long_name"].startswith(
-        "Cumul maximal"
-    )
+    assert ex.RX5day_canopy.translate_attrs("fr")["cf_attrs"][0][
+        "long_name"
+    ].startswith("Cumul maximal")
     assert indicators.atmos.max_n_day_precipitation_amount.translate_attrs("fr")[
         "cf_attrs"
     ][0]["long_name"].startswith("Maximum du cumul")
