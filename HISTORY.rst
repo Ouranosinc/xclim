@@ -4,10 +4,12 @@ History
 
 0.40.0 (unreleased)
 -------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Minor adjustments to GitHub Actions workflows (newest Ubuntu images, updated actions version, better CI triggering). (:pull:`1221`).
+* Merge of sdba documentation from the module and the rst files, some cleanup and addition of a section refering to github issues.
 
 0.39.0 (2022-11-02)
 -------------------

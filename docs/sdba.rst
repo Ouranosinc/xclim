@@ -2,22 +2,64 @@
 Bias adjustment and downscaling algorithms
 ==========================================
 
-`xarray` data structures allow for relatively straightforward implementations of simple bias-adjustment and downscaling algorithms documented in :ref:`Adjustment Methods <sdba:SDBA User API>`.
-Each algorithm is split into `train` and `adjust` components. The `train` function will compare two DataArrays `x` and `y`, and create a dataset storing the *transfer* information allowing to go from `x` to `y`.
-This dataset, stored in the adjustment object, can then be used by the `adjust` method to apply this information to `x`. `x` could be the same `DataArray` used for training, or another `DataArray` with similar characteristics.
 
-For example, given a daily time series of observations `ref`, a model simulation over the observational period `hist` and a model simulation over a future period `sim`, we would apply a bias-adjustment method such as *detrended quantile mapping* (DQM) as::
+The `xclim.sdba` submodule provides bias-adjustment methods and will eventually provide statistical downscaling algorithms.
+Almost all adjustment algorithms conform to the `train` - `adjust` scheme, formalized within `TrainAdjust` classes.
+Given a reference time series (ref), historical simulations (hist) and simulations to be adjusted (sim),
+any bias-adjustment method would be applied by first estimating the adjustment factors between the historical simulation
+and the observation series, and then applying these factors to `sim`, which could be a future simulation::
 
-  from xclim import sdba
+  # Create the adjustment object by training it with reference and model data, plus certain arguments
+  Adj = Adjustment.train(ref, hist, group="time.month")
+  # Get a scenario by applying the adjustment to a simulated timeseries.
+  scen = Adj.adjust(sim, interp="linear")
+  Adj.ds.af  # adjustment factors.
 
-  dqm = sdba.adjustment.DetrendedQuantileMapping.train(ref, hist)
-  scen = dqm.adjust(sim)
+Most method can either be applied additively by multiplication.
+Also, the `group` argument allows adjustment factors to be estimated independently for different periods: the full
+time series,  months, seasons or day of the year. The `interp` argument then allows for interpolation between these
+adjustment factors to avoid discontinuities in the bias-adjusted series (only applicable for monthly grouping).
+See :ref:`Grouping` below.
 
-Most method can either be applied additively by multiplication. Also, most methods can be applied independently on different time groupings (monthly, seasonally) or according to the day of the year and a rolling window width.
+The same interpolation principle is also used for quantiles. Indeed, for methods extracting adjustment factors by
+quantile, interpolation is also done between quantiles. This can help reduce discontinuities in the adjusted time
+series, and possibly reduce the number of quantile bins that needs to be used.
 
-When transfer factors are applied in adjustment, they can be interpolated according to the time grouping.
-This helps avoid discontinuities in adjustment factors at the beginning of each season or month and is computationally cheaper than computing adjustment factors for each day of the year.
-(Currently only implemented for monthly grouping)
+Modular Approach
+================
+
+The module atempts to adopt a modular approach instead of implementing published and named methods directly.
+A generic bias adjustment process is laid out as follows:
+
+- preprocessing on ``ref``, ``hist`` and ``sim`` (using methods in :py:mod:`xclim.sdba.processing` or :py:mod:`xclim.sdba.detrending`)
+- creating and training the adjustment object ``Adj = Adjustment.train(obs, sim, **kwargs)`` (from :py:mod:`xclim.sdba.adjustment`)
+- adjustment ``scen = Adj.adjust(sim, **kwargs)``
+- post-processing on ``scen`` (for example: re-trending)
+
+The train-adjust approach allows to inspect the trained adjustment object. The training information is stored in
+the underlying `Adj.ds` dataset and usually has a `af` variable with the adjustment factors. Its layout and the
+other available variables vary between the different algorithm, refer to :ref:`Adjustment methods <sdbauserapi>`.
+
+Parameters needed by the training and the adjustment are saved to the ``Adj.ds`` dataset as a `adj_params` attribute.
+Other parameters, those only needed by the adjustment are passed in the `adjust` call and written to the history
+attribute in the output scenario DataArray.
+
+.. _grouping:
+
+Grouping
+========
+
+For basic time period grouping (months, day of year, season), passing a string to the methods needing it is sufficient.
+Most methods acting on grouped data also accept a `window` int argument to pad the groups with data from adjacent ones.
+Units of `window` are the sampling frequency of the main grouping dimension (usually `time`). For more complex grouping,
+one can pass an instance of :py:class:`xclim.sdba.base.Grouper` directly.
+
+.. warning::
+    If grouping according to the day of the year is needed, the :py:mod:`xclim.core.calendar` submodule contains useful
+    tools to manage the different calendars that the input data can have. By default, if 2 different calendars are
+    passed, the adjustment factors will always be interpolated to the largest range of day of the years but this can
+    lead to strange values, so we recommend converting the data beforehand to a common calendar.
+
 
 Application in multivariate settings
 ====================================
@@ -40,6 +82,44 @@ Radiation and precipitation
 ---------------------------
 
 In theory, short wave radiation should be capped when precipitation is not zero, but there is as of yet no mechanism proposed to do that, see :cite:t:`hoffmann_meteorologically_2012`.
+
+Other documentation
+===================
+The usage of this module is documented in two example notebooks: `SDBA <notebooks/sdba.ipynb>`_ and `SDBA advanced <notebooks/sdba-advanced.ipynb>`_.
+
+Some issues were also discussed on the Github repository. Most of these are still open questions, feel free to participate to the discussion!
+
+* Number quantiles to use in quantile mapping methods: :issue:`1162`
+* How to choose the quantiles: :issue:`1015`
+* Bias-adjustment when the trend goes to zero: :issue:`1145`
+* Spatial downscaling: :issue:`1150`
+
+Experimental wrap of SBCK
+=========================
+The `SBCK`_ python package implements various bias-adjustment methods, with an emphasis on multivariate methods and with
+a care for performance. If the package is correctly installed alongside xclim, the methods will be wrapped into
+:py:class:`xclim.sdba.adjustment.Adjust` classes (names beginning with `SBCK_`) with a minimal overhead so that they can
+be parallelized with dask and accept xarray objects. For now, these experimental classes can't use the train-adjust
+approach, instead they only provide one method, ``adjust(ref, hist, sim, multi_dim=None, **kwargs)`` which performs all
+steps : initialization of the SBCK object, training (fit) and adjusting (predict). All SBCK wrappers accept a
+``multi_dim`` argument for specifying the name of the "multivariate" dimension. This wrapping is still experimental and
+some bugs or inconsistencies might exist. To see how one can install that package, see :ref:`extra-dependencies`.
+
+.. _SBCK: https://github.com/yrobink/SBCK
+
+Notes for Developers
+====================
+To be scalable and performant, the sdba module makes use of the special decorators :py:func`xclim.sdba.base.map_blocks`
+and :py:func:`xclim.sdba.base.map_groups`. However, they have the inconvenient that functions wrapped by them are unable
+to manage xarray attributes (including units) correctly and their signatures are sometime wrong and often unclear. For
+this reason, the module is often divided in two parts : the (decorated) compute functions in a "private" file
+(ex: ``_adjustment.py``) and the user-facing functions or objects in corresponding public file (ex: ``adjustment.py``).
+See the `sdba-advanced` notebook for more info on the reasons for this move.
+
+Other restrictions : ``map_blocks`` will remove any "auxiliary" coordinates before calling the wrapped function and will
+add them back on exit.
+
+.. _sdbauserapi:
 
 SDBA User API
 =============
@@ -126,5 +206,3 @@ Developer tools
        :style: xcstyle
        :labelprefix: SDBA-
        :keyprefix: sdba-
-
-.. [RRJF2021] Roy, P., Rondeau-Genesse, G., Jalbert, J., Fournier, É. 2021. Climate Scenarios of Extreme Precipitation Using a Combination of Parametric and Non-Parametric Bias Correction Methods. Submitted to Climate Services, April 2021.
