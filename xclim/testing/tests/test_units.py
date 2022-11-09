@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pint.errors
 import pytest
 import xarray as xr
 from dask import array as dsk
@@ -27,6 +28,9 @@ class TestUnits:
         assert Q_(1, units.C) == Q_(1, units.degC)
 
     def test_hydro(self):
+        with pytest.raises(pint.errors.DimensionalityError):
+            convert_units_to("1 kg m-2", "m")
+
         with units.context("hydro"):
             q = 1 * units.kg / units.m**2 / units.s
             assert q.to("mm/day") == q.to("mm/d")
@@ -82,7 +86,7 @@ class TestConvertUnitsTo:
 
     def test_lazy(self, pr_series):
         pr = pr_series(np.arange(365), start="1/1/2001").chunk({"time": 100})
-        out = convert_units_to(pr, "mm/day")
+        out = convert_units_to(pr, "mm/day", context="hydro")
         assert isinstance(out.data, dsk.Array)
 
     @pytest.mark.parametrize(

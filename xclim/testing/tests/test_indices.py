@@ -1953,7 +1953,9 @@ class TestTempWetDryPrecipWarmColdQuarter:
     )
     def test_pr_warmcold(self, tas_series, pr_series, freq, op, expected):
         tas, pr = self.get_data(tas_series, pr_series)
-        pr = convert_units_to(pr.resample(time=freq).mean(keep_attrs=True), "mm/d")
+        pr = convert_units_to(
+            pr.resample(time=freq).mean(keep_attrs=True), "mm/d", context="hydro"
+        )
 
         tas = xci.tg_mean(tas, freq=freq)
 

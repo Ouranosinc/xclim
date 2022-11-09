@@ -322,7 +322,7 @@ def very_large_precipitation_events(
     >>> rate = "300 mm d-1"
     >>> flagged = very_large_precipitation_events(ds.pr, thresh=rate)
     """
-    thresh_converted = convert_units_to(thresh, da)
+    thresh_converted = convert_units_to(thresh, da, context="hydro")
     very_large_events = _sanitize_attrs(da > thresh_converted)
     description = f"Precipitation events in excess of {thresh} for {da.name}."
     very_large_events.attrs["description"] = description

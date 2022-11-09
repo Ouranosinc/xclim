@@ -642,7 +642,7 @@ def water_budget(
     xarray.DataArray
         Precipitation minus potential evapotranspiration.
     """
-    pr = convert_units_to(pr, "kg m-2 s-1")
+    pr = convert_units_to(pr, "kg m-2 s-1", context="hydro")
 
     if lat is None and evspsblpot is None:
         lat = _gather_lat(pr)
@@ -662,7 +662,7 @@ def water_budget(
             method=method,
         )
     else:
-        pet = convert_units_to(evspsblpot, "kg m-2 s-1")
+        pet = convert_units_to(evspsblpot, "kg m-2 s-1", context="hydro")
 
     if xarray.infer_freq(pet.time) == "MS":
         pr = pr.resample(time="MS").mean(dim="time", keep_attrs=True)
@@ -872,7 +872,7 @@ def standardized_precipitation_evapotranspiration_index(
         # Distributions bounded by zero: Water budget must be shifted, only positive values
         # are allowed. The offset choice is arbitrary and the same offset as the monocongo
         # library is taken
-        offset = convert_units_to("1 mm/d", wb.units)
+        offset = convert_units_to("1 mm/d", wb.units, context="hydro")
         with xarray.set_options(keep_attrs=True):
             wb, wb_cal = wb + offset, wb_cal + offset
 
@@ -927,7 +927,7 @@ def dry_spell_frequency(
     >>> dsf = dry_spell_frequency(pr=pr, op="sum")
     >>> dsf = dry_spell_frequency(pr=pr, op="max")
     """
-    pram = rate2amount(pr, out_units="mm")
+    pram = rate2amount(convert_units_to(pr, "mm/d", context="hydro"), out_units="mm")
     thresh = convert_units_to(thresh, pram)
 
     agg_pr = getattr(pram.rolling(time=window, center=True), op)()

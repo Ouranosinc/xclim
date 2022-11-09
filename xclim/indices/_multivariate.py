@@ -205,7 +205,7 @@ def cold_and_dry_days(
     thresh = resample_doy(tas_per, tas)
     tg25 = tas < thresh
 
-    pr_per = convert_units_to(pr_per, pr)
+    pr_per = convert_units_to(pr_per, pr, context="hydro")
     thresh = resample_doy(pr_per, pr)
     pr25 = pr < thresh
 
@@ -270,7 +270,7 @@ def warm_and_dry_days(
     thresh = resample_doy(tas_per, tas)
     tg75 = tas > thresh
 
-    pr_per = convert_units_to(pr_per, pr)
+    pr_per = convert_units_to(pr_per, pr, context="hydro")
     thresh = resample_doy(pr_per, pr)
     pr25 = pr < thresh
 
@@ -334,7 +334,7 @@ def warm_and_wet_days(
     thresh = resample_doy(tas_per, tas)
     tg75 = tas > thresh
 
-    pr_per = convert_units_to(pr_per, pr)
+    pr_per = convert_units_to(pr_per, pr, context="hydro")
     thresh = resample_doy(pr_per, pr)
     pr75 = pr > thresh
 
@@ -397,7 +397,7 @@ def cold_and_wet_days(
     thresh = resample_doy(tas_per, tas)
     tg25 = tas < thresh
 
-    pr_per = convert_units_to(pr_per, pr)
+    pr_per = convert_units_to(pr_per, pr, context="hydro")
     thresh = resample_doy(pr_per, pr)
     pr75 = pr > thresh
 
@@ -1021,7 +1021,7 @@ def rain_on_frozen_ground_days(
 
     is true for continuous periods where :math:`i ≥ 7`
     """
-    t = convert_units_to(thresh, pr)
+    t = convert_units_to(thresh, pr, context="hydro")
     frz = convert_units_to("0 C", tas)
 
     def func(x, axis):
@@ -1081,7 +1081,7 @@ def high_precip_low_temp(
     ...     pr, tas=tasmin, pr_thresh="10 mm/d", tas_thresh="-0.2 degC"
     ... )
     """
-    pr_thresh = convert_units_to(pr_thresh, pr)
+    pr_thresh = convert_units_to(pr_thresh, pr, context="hydro")
     tas_thresh = convert_units_to(tas_thresh, tas)
 
     cond = (pr >= pr_thresh) * (tas < tas_thresh) * 1
@@ -1137,8 +1137,8 @@ def days_over_precip_thresh(
     >>> p75 = pr.quantile(0.75, dim="time", keep_attrs=True)
     >>> r75p = days_over_precip_thresh(pr, p75)
     """
-    pr_per = convert_units_to(pr_per, pr)
-    thresh = convert_units_to(thresh, pr)
+    pr_per = convert_units_to(pr_per, pr, context="hydro")
+    thresh = convert_units_to(thresh, pr, context="hydro")
 
     tp = np.maximum(pr_per, thresh)
     if "dayofyear" in pr_per.coords:
@@ -1192,8 +1192,8 @@ def fraction_over_precip_thresh(
       Fraction of precipitation over threshold during wet days.
 
     """
-    pr_per = convert_units_to(pr_per, pr)
-    thresh = convert_units_to(thresh, pr)
+    pr_per = convert_units_to(pr_per, pr, context="hydro")
+    thresh = convert_units_to(thresh, pr, context="hydro")
 
     tp = np.maximum(pr_per, thresh)
     if "dayofyear" in pr_per.coords:

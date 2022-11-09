@@ -99,7 +99,6 @@ hydro.add_transformation(
     lambda ureg, x: x * (1000 * ureg.kg / ureg.m**3),
 )
 units.add_context(hydro)
-units.enable_contexts(hydro)
 
 # These are the changes that could be included in a units definition file.
 
@@ -280,6 +279,8 @@ def convert_units_to(
     xr.DataArray or float or int or str or Any
         The source value converted to target's units.
     """
+    context = context or "none"
+
     # Target units
     if isinstance(target, units.Unit):
         tu = target
@@ -291,10 +292,10 @@ def convert_units_to(
     if isinstance(source, str):
         q = str2pint(source)
         # Return magnitude of converted quantity. This is going to fail if units are not compatible.
-        return q.to(tu).m
+        return q.to(tu, context).m
 
     if isinstance(source, units.Quantity):
-        return source.to(tu).m
+        return source.to(tu, context).m
 
     if isinstance(source, xr.DataArray):
         fu = units2pint(source)
@@ -305,7 +306,7 @@ def convert_units_to(
             source.attrs["units"] = tu_u
             return source
 
-        with units.context(context or "none"):
+        with units.context(context):
             out = xr.DataArray(
                 data=units.convert(source.data, fu, tu),  # noqa
                 coords=source.coords,
@@ -667,12 +668,17 @@ def check_units(val: str | int | float | None, dim: str | None) -> None:
     if val_dim == expected:
         return
 
+    # Automatically assume units context is `hydro` if one of the dimension is `precipitation`.
+    pr_dim = units.get_dimensionality("[precipitation]")
+    context = "hydro" if pr_dim in [val_dim, expected] else "none"
+
     # Check if there is a transformation available
-    start = pint.util.to_units_container(val_dim)
-    end = pint.util.to_units_container(expected)
-    graph = units._active_ctx.graph  # noqa
-    if pint.util.find_shortest_path(graph, start, end):
-        return
+    with units.context(context):
+        start = pint.util.to_units_container(val_dim)
+        end = pint.util.to_units_container(expected)
+        graph = units._active_ctx.graph  # noqa
+        if pint.util.find_shortest_path(graph, start, end):
+            return
 
     raise ValidationError(
         f"Data units {val_units} are not compatible with requested {dim}."
