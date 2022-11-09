@@ -1087,10 +1087,14 @@ def _decorrelation_length(da: xr.DataArray, *, radius=300, thresh=0.50, dims=Non
     #display(binned)
     #find correlation closest to thresh
     #TODO: thresh instead of argmin
-    closest = abs(binned.corr - thresh).argmin(dim='distance').values
-    # get corresponding distance
-    binned['decorrelation_length'] = xr.DataArray(
-        data=[binned.distance.values[i] for i in closest], dims='_spatial')
+    # closest = abs(binned.corr - thresh).argmin(dim='distance').values
+    # # get corresponding distance
+    # binned['decorrelation_length'] = xr.DataArray(
+    #     data=[binned.distance.values[i] for i in closest], dims='_spatial')
+    closest = abs(binned.corr - thresh).idxmin(dim='distance')
+    binned['decorrelation_length'] = closest
+
+
     # get back to 2d lat and lon
     #if 'lat' in dims and 'lon' in dims:
     binned = binned.set_index({'_spatial': dims})
