@@ -1033,15 +1033,18 @@ def _decorrelation_length(da: xr.DataArray, *, radius=300, thresh=0.50, dims=Non
 
     # fill bottom triangle
     np.nan_to_num(dists, 0)
-    dists = dists + dists.T - np.diag(np.diag(dists))
-
+    # TODO: do it in 2 shots instead?
+    dists = dists + dists.T #- np.diag(np.diag(dists))
+    dists = dists.astype(int)
     dists = xr.DataArray(dists, dims=corr.dims, coords=corr.coords, name="distance")
+    trans_dists = xr.DataArray(dists.T, dims=corr.dims, coords=corr.coords, name="distance")
 
     if np.isscalar(bins):
         bins = np.linspace(0, radius, bins + 1)
 
     if uses_dask(corr):
         dists = dists.chunk()
+        trans_dists = trans_dists.chunk()
 
     w = np.diff(bins)
     centers = xr.DataArray(
@@ -1052,10 +1055,12 @@ def _decorrelation_length(da: xr.DataArray, *, radius=300, thresh=0.50, dims=Non
             "long_name": f"Centers of the intersite distance bins (width of {w[0]:.3f} km)",
         },
     )
-    ds = xr.Dataset({"corr": corr, "distance": dists})
+    ds = xr.Dataset({"corr": corr, "distance": dists, 'distance2': trans_dists})
 
     # only keep points inside the radius
     ds = ds.where(ds.distance < radius)
+
+    ds = ds.where(ds.distance2 < radius)
 
 
     def _bin_corr(corr, distance):
@@ -1078,7 +1083,10 @@ def _decorrelation_length(da: xr.DataArray, *, radius=300, thresh=0.50, dims=Non
     binned = binned.assign_coords(distance_bins=centers).rename(
         distance_bins="distance").assign_attrs(units="")
 
+
+    #display(binned)
     #find correlation closest to thresh
+    #TODO: thresh instead of argmin
     closest = abs(binned.corr - thresh).argmin(dim='distance').values
     # get corresponding distance
     binned['decorrelation_length'] = xr.DataArray(
