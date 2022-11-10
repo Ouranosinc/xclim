@@ -512,8 +512,8 @@ def cool_night_index(
 def dryness_index(
     pr: xarray.DataArray,
     evspsblpot: xarray.DataArray,
+    lat: xarray.DataArray | str | None = None,
     wo: str = "200 mm",
-    hemisphere: str = "n",
     freq: str = "MS",
 ) -> xarray.DataArray:
     """Dryness Index.
@@ -529,8 +529,9 @@ def dryness_index(
       Potential evapotranspiration.
     wo : str
       The initial soil water reserve accessible to root systems.
-    hemisphere: {"n", "s"}
-      The hemisphere of interest (affects month choices used in summation).
+    lat : xarray.DataArray or {"north", "south"}, optional
+        Latitude coordinate as an array, float or string.
+        If None, a CF-conformant "latitude" field must be available within the passed DataArray.
     freq : str
       Resampling frequency.
 
@@ -545,12 +546,8 @@ def dryness_index(
 
     References
     ----------
-    Indice originally published in Tonietto, J., & Carbonneau, A. (2004). A multicriteria climatic classification system
-    or grape-growing regions worldwide. Agricultural and Forest Meteorology, 124(1–2), 81‑97.
-    https://doi.org/10.1016/j.agrformet.2003.06.001
+    :cite:cts:`tonietto_multicriteria_2004,riou_determinisme_1994`
 
-    Riou, C. (1994). Le déterminisme climatique de la maturation du raisin : Application au zonage de la teneur en sucre
-    dans la Communauté Européenne (EUR–15863). Commission Européenne. https://hal.inrae.fr/hal-02843898
     """
     # Resample all variables to monthly totals in mm units.
     evspsblpot = rate2amount(evspsblpot, out_units="mm")
@@ -562,15 +559,31 @@ def dryness_index(
 
     # Different potential evapotranspiration rates for northern hemisphere and southern hemisphere.
     # wo_adjustment is the initial soil moisture rate at beginning of season.
-    if hemisphere.lower() == "n":
-        adjustment = [0, 0, 0, 0.1, 0.3, 0.5, 0.5, 0.5, 0.5, 0, 0, 0]
-        wo_adjustment = [0, 0, 0, wo, 0, 0, 0, 0, 0, 0, 0, 0]  # noqa
-    elif hemisphere.lower() == "s":
-        adjustment = [0.5, 0.5, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0.1, 0.3]
-        wo_adjustment = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, wo, 0]  # noqa
+    if lat is None:
+        lat = _gather_lat(pr)
+    if isinstance(lat, xarray.DataArray):
+        adjustment = xarray.where(
+            lat > 0,
+            [0, 0, 0, 0.1, 0.3, 0.5, 0.5, 0.5, 0.5, 0, 0, 0],
+            [0.5, 0.5, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0.1, 0.3],
+        )
+        wo_adjustment = xarray.where(  # noqa
+            lat > 0,
+            [0, 0, 0, wo, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, wo, 0],
+        )
 
+    elif isinstance(lat, str):
+        if lat.lower() == "north":
+            adjustment = [0, 0, 0, 0.1, 0.3, 0.5, 0.5, 0.5, 0.5, 0, 0, 0]
+            wo_adjustment = [0, 0, 0, wo, 0, 0, 0, 0, 0, 0, 0, 0]  # noqa
+        elif lat.lower() == "s":
+            adjustment = [0.5, 0.5, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0.1, 0.3]
+            wo_adjustment = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, wo, 0]  # noqa
+        else:
+            raise ValueError(f"Latitude value unsupported: {lat}.")
     else:
-        raise ValueError(hemisphere)
+        raise ValueError()
 
     adjustment_array = xarray.DataArray(
         adjustment,
