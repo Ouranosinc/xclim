@@ -139,6 +139,7 @@ import xarray as xr
 from numba import jit, vectorize
 
 from xclim.core.units import convert_units_to, declare_units
+from xclim.core.utils import Quantity
 from xclim.indices import run_length as rl
 
 # TODO: Protected functions will be removed from __all__ in xclim v0.39
@@ -1478,11 +1479,11 @@ def fire_season(
     snd: xr.DataArray | None = None,
     method: str = "WF93",
     freq: str | None = None,
-    temp_start_thresh: str = "12 degC",
-    temp_end_thresh: str = "5 degC",
+    temp_start_thresh: Quantity = "12 degC",
+    temp_end_thresh: Quantity = "5 degC",
     temp_condition_days: int = 3,
     snow_condition_days: int = 3,
-    snow_thresh: str = "0.01 m",
+    snow_thresh: Quantity = "0.01 m",
 ):
     """Fire season mask.
 
@@ -1499,17 +1500,18 @@ def fire_season(
     freq : str, optional
         If given only the longest fire season for each period defined by this frequency,
         Every "seasons" are returned if None, including the short shoulder seasons.
-    temp_start_thresh: str
-        Minimal temperature needed to start the season.
-    temp_end_thresh : str
-        Maximal temperature needed to end the season.
+    temp_start_thresh: Quantity
+        Minimal temperature needed to start the season. Must be scalar.
+    temp_end_thresh : Quantity
+        Maximal temperature needed to end the season. Must be scalar.
     temp_condition_days: int
         Number of days with temperature above or below the thresholds to trigger a start or an end of the fire season.
     snow_condition_days: int
         Parameters for the fire season determination. See :py:func:`fire_season`. Temperature is in degC, snow in m.
         The `snow_thresh` parameters is also used when `dry_start` is set to "GFWED".
-    snow_thresh: str
+    snow_thresh: Quantity
         Minimal snow depth level to end a fire season, only used with method "LA08".
+        Must be scalar.
 
     Returns
     -------
@@ -1520,6 +1522,12 @@ def fire_season(
     ----------
     :cite:cts:`fire-wotton_length_1993,fire-lawson_weather_2008`
     """
+    # TODO: `map_blocks` as currently implemented, does not mix well with non-scalar thresholds, as they are being passed through kwargs
+    if not all(
+        np.isscalar(v) for v in [temp_start_thresh, temp_end_thresh, snow_thresh]
+    ):
+        raise ValueError("Thresholds must be scalar.")
+
     kwargs = dict(
         method=method,
         temp_start_thresh=convert_units_to(temp_start_thresh, "degC"),

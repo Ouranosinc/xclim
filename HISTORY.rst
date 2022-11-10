@@ -5,6 +5,10 @@ History
 0.40.0 (unreleased)
 -------------------
 
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Thresholds and other quantities passed as parameters of indicators can now be multi-dimensional `DataArray`s. xArray broadcasting mechanisms will apply. Those parameters are now annotated as "Quantity" in the signatures (``xclim.core.utils.Quantity``), instead of "str" as before. Attributes where such thresholds where included will now read "<an array>" (french: "<une matrice>") for these new cases. Multi-dimensional quantities are still unsupported in a very few cases, where it is documented in the docstring. (:issue:`1093`, :pull:`1236`).
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Minor adjustments to GitHub Actions workflows (newest Ubuntu images, updated actions version, better CI triggering). (:pull:`1221`).

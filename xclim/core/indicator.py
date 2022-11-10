@@ -935,7 +935,6 @@ class Indicator(IndicatorRegistrar):
         # Pre-computation validation checks on DataArray arguments
         self._bind_call(self.datacheck, **das)
         self._bind_call(self.cfcheck, **das)
-
         return das, params
 
     def _postprocess(self, outs, das, params):
@@ -1223,6 +1222,11 @@ class Indicator(IndicatorRegistrar):
                     mba["indexer"] = args.get("freq") or "YS"
             elif PercentileDataArray.is_compatible(v):
                 mba.update(get_percentile_metadata(v, k))
+            elif (
+                isinstance(v, DataArray)
+                and cls._all_parameters[k].kind == InputKind.QUANTITY
+            ):
+                mba[k] = "<an array>"
             else:
                 mba[k] = v
         out = {}

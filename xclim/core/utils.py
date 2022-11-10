@@ -24,6 +24,7 @@ import numpy as np
 import xarray as xr
 from boltons.funcutils import update_wrapper
 from dask import array as dsk
+from pint import Quantity as pint_quantity
 from yaml import safe_dump, safe_load
 
 logger = logging.getLogger("xclim")
@@ -33,6 +34,9 @@ DateStr = NewType("DateStr", str)
 
 #: Type annotation for strings representing dates without a year (MM-DD).
 DayOfYearStr = NewType("DayOfYearStr", str)
+
+#: Type annotation for thresholds and other not-exactly-a-variable quantities
+Quantity = xr.DataArray | str | pint_quantity
 
 # Official variables definitions
 VARIABLES = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
@@ -518,10 +522,11 @@ class InputKind(IntEnum):
 
        Annotation : ``xr.DataArray | None``. The default should be None.
     """
-    QUANTITY_STR = 2
-    """A string representing a quantity with units.
+    QUANTITY = 2
+    """A quantity with units, either as a string (scalar), a pint.Quantity (scalar) or a DataArray (with units set).
 
-       Annotation : ``str`` +  an entry in the :py:func:`xclim.core.units.declare_units` decorator.
+       Annotation : ``str | xr.DataArray | pint.util.Quantity`` +  an entry in the :py:func:`xclim.core.units.declare_units` decorator.
+       However, it is best to use :py:data:`xclim.core.utils.Quantity` for explicit code.
     """
     FREQ_STR = 3
     """A string representing an "offset alias", as defined by pandas.
@@ -598,14 +603,14 @@ def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> Inpu
 
     annot = annot - {"None"}
 
-    if "DataArray" in annot:
+    if annot.issubset({"DataArray", "str"}) and has_units:
         return InputKind.OPTIONAL_VARIABLE
 
     if param.name == "freq":
         return InputKind.FREQ_STR
 
-    if annot == {"str"} and has_units:
-        return InputKind.QUANTITY_STR
+    if annot == {"Quantity"} and has_units:
+        return InputKind.QUANTITY
 
     if annot.issubset({"int", "float"}):
         return InputKind.NUMBER
