@@ -5,6 +5,10 @@ History
 0.40.0 (unreleased)
 -------------------
 
+New indicators
+^^^^^^^^^^^^^^
+* New agroclimatic indice and indicator ``dryness_index`` for estimating soil humidity classifications for winegrowing regions (based on Riou et al. (1994)). (:issue:`355`, :pull:`1235`).
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Minor adjustments to GitHub Actions workflows (newest Ubuntu images, updated actions version, better CI triggering). (:pull:`1221`).
