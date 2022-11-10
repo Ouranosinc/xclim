@@ -6,7 +6,6 @@ import warnings
 import numpy as np
 import xarray
 
-import xclim.core.units
 import xclim.indices as xci
 import xclim.indices.run_length as rl
 from xclim.core.calendar import parse_offset, resample_doy, select_time
@@ -30,17 +29,18 @@ from xclim.indices.stats import dist_method, fit
 
 __all__ = [
     "biologically_effective_degree_days",
-    "huglin_index",
     "cool_night_index",
     "corn_heat_units",
     "dry_spell_frequency",
     "dry_spell_total_length",
+    "dryness_index",
     "effective_growing_degree_days",
+    "huglin_index",
     "latitude_temperature_index",
     "qian_weighted_mean_average",
-    "water_budget",
-    "standardized_precipitation_index",
     "standardized_precipitation_evapotranspiration_index",
+    "standardized_precipitation_index",
+    "water_budget",
 ]
 
 
@@ -499,7 +499,7 @@ def cool_night_index(
         else:
             raise ValueError(f"Latitude value unsupported: {lat}.")
     else:
-        raise ValueError(f"Latitude: {lat}.")
+        raise ValueError(f"Latitude not understood {lat}.")
 
     tasmin = tasmin.where(months == month, drop=True)
 
@@ -514,7 +514,7 @@ def dryness_index(
     evspsblpot: xarray.DataArray,
     lat: xarray.DataArray | str | None = None,
     wo: str = "200 mm",
-    freq: str = "MS",
+    freq: str = "YS",
 ) -> xarray.DataArray:
     """Dryness Index.
 
@@ -524,21 +524,21 @@ def dryness_index(
     Parameters
     ----------
     pr : xarray.DataArray
-      Precipitation.
-    evspsblpot: xarray.DataArray
-      Potential evapotranspiration.
+        Precipitation.
+    evspsblpot : xarray.DataArray
+        Potential evapotranspiration.
     wo : str
-      The initial soil water reserve accessible to root systems.
+        The initial soil water reserve accessible to root systems.
     lat : xarray.DataArray or {"north", "south"}, optional
         Latitude coordinate as an array, float or string.
         If None, a CF-conformant "latitude" field must be available within the passed DataArray.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [mm]
-      Absolute Dryness Index values.
+        Absolute Dryness Index values.
 
     Notes
     -----
@@ -549,59 +549,83 @@ def dryness_index(
     :cite:cts:`tonietto_multicriteria_2004,riou_determinisme_1994`
 
     """
-    # Resample all variables to monthly totals in mm units.
-    evspsblpot = rate2amount(evspsblpot, out_units="mm")
-    pr = rate2amount(pr, out_units="mm")
-    wo = convert_units_to(wo, "mm")
+    if parse_offset(freq) != (1, "A", True, "JAN"):
+        raise ValueError(f"Freq not allowed: {freq}. Must be `YS` or `AS-JAN`")
+    has_north, has_south = False, False
 
-    evspsblpot = evspsblpot.resample(time="MS").sum(dim="time")
-    pr = pr.resample(time="MS").sum(dim="time")
+    # Resample all variables to monthly totals in mm units.
+    evspsblpot = rate2amount(evspsblpot, out_units="mm").resample(time="MS").sum()
+    pr = rate2amount(pr, out_units="mm").resample(time="MS").sum()
+    wo = convert_units_to(wo, "mm")
 
     # Different potential evapotranspiration rates for northern hemisphere and southern hemisphere.
     # wo_adjustment is the initial soil moisture rate at beginning of season.
-    if lat is None:
-        lat = _gather_lat(pr)
-    if isinstance(lat, xarray.DataArray):
-        adjustment = xarray.where(
-            lat > 0,
-            [0, 0, 0, 0.1, 0.3, 0.5, 0.5, 0.5, 0.5, 0, 0, 0],
-            [0.5, 0.5, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0.1, 0.3],
-        )
-        wo_adjustment = xarray.where(  # noqa
-            lat > 0,
-            [0, 0, 0, wo, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, wo, 0],
-        )
-
-    elif isinstance(lat, str):
-        if lat.lower() == "north":
-            adjustment = [0, 0, 0, 0.1, 0.3, 0.5, 0.5, 0.5, 0.5, 0, 0, 0]
-            wo_adjustment = [0, 0, 0, wo, 0, 0, 0, 0, 0, 0, 0, 0]  # noqa
-        elif lat.lower() == "s":
-            adjustment = [0.5, 0.5, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0.1, 0.3]
-            wo_adjustment = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, wo, 0]  # noqa
-        else:
-            raise ValueError(f"Latitude value unsupported: {lat}.")
-    else:
-        raise ValueError()
-
-    adjustment_array = xarray.DataArray(
-        adjustment,
+    adjustment_array_north = xarray.DataArray(
+        [0, 0, 0, 0.1, 0.3, 0.5, 0.5, 0.5, 0.5, 0, 0, 0],
+        dims="month",
+        coords=dict(month=np.arange(1, 13)),
+    )
+    adjustment_array_south = xarray.DataArray(
+        [0.5, 0.5, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0.1, 0.3],
         dims="month",
         coords=dict(month=np.arange(1, 13)),
     )
 
+    if lat is None:
+        lat = _gather_lat(pr)
+    if isinstance(lat, xarray.DataArray):
+        if (lat >= 0).any():
+            has_north = True
+        if (lat < 0).any():
+            has_south = True
+
+        adjustment = xarray.where(
+            lat >= 0,
+            adjustment_array_north,
+            adjustment_array_south,
+        )
+    elif isinstance(lat, str):
+        if lat.lower() == "north":
+            adjustment = adjustment_array_north
+            has_north = True
+        elif lat.lower() == "south":
+            adjustment = adjustment_array_south
+            has_south = True
+        else:
+            raise ValueError(f"Latitude value unsupported: {lat}.")
+    else:
+        raise ValueError(f"Latitude not understood: {lat}.")
+
     # Monthly weights array
-    k = adjustment_array.sel(month=evspsblpot.time.dt.month)
+    k = adjustment.sel(month=evspsblpot.time.dt.month)
+
+    # Drop all pr outside seasonal bounds
+    pr_masked = (k > 0) * pr
 
     # Potential transpiration of the vineyard
     t_v = evspsblpot * k
 
     # Direct soil evaporation
-    e_s = (evspsblpot / evspsblpot.time.dt.daysinmonth) * (1 - k) * (pr / 5)
+    # TODO: What the hell is JPM?
+    e_s = (evspsblpot / evspsblpot.time.dt.daysinmonth) * (1 - k) * (pr_masked / 5)
 
     # Dryness index
-    di = (pr - t_v - e_s).resample(time=freq).mean()
+    if has_north:
+        di_north = wo + (pr_masked - t_v - e_s).resample(time="AS-JAN").sum()
+    if has_south:
+        di_south = wo + (pr_masked - t_v - e_s).resample(time="AS-JUL").sum()
+        di_south = di_south.shift(time=1).isel(time=slice(1, None))
+        di_south["time"] = di_south.time.dt.replace(month=1)
+
+    if has_north and has_south:
+        di = di_north.where(lat >= 0, di_south)  # noqa
+    elif has_north:
+        di = di_north  # noqa
+    elif has_south:
+        di = di_south  # noqa
+    else:
+        raise
+
     di.attrs["units"] = "mm"
     return di
 
