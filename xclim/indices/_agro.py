@@ -531,11 +531,11 @@ def dryness_index(
         Precipitation.
     evspsblpot : xarray.DataArray
         Potential evapotranspiration.
-    wo : str
-        The initial soil water reserve accessible to root systems.
     lat : xarray.DataArray or {"north", "south"}, optional
         Latitude coordinate as an array, float or string.
         If None, a CF-conformant "latitude" field must be available within the passed DataArray.
+    wo : str
+        The initial soil water reserve accessible to root systems.
     freq : str
         Resampling frequency.
 
