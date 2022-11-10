@@ -21,6 +21,7 @@ __all__ = [
     "wetdays",
     "wetdays_prop",
     "dry_days",
+    "dryness_index",
     "maximum_consecutive_dry_days",
     "maximum_consecutive_wet_days",
     "daily_pr_intensity",
@@ -172,6 +173,23 @@ dry_days = PrecipWithIndexing(
     abstract="The number of days with daily precipitation under a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.dry_days,
+)
+
+dryness_index = Precip(
+    title="Dryness index",
+    identifier="dryness_index",
+    units="mm",
+    long_name="Estimation of growing season humidity (precipitation minus adjusted evapotranspiration) for the period "
+    "of April to September (Northern Hemisphere) or October to March (Southern Hemisphere), "
+    "with initial soil moisture content set to {wo}",
+    description="Estimation of growing season humidity (precipitation minus adjusted evapotranspiration) for the "
+    "period of April to September (Northern Hemisphere) or October to March (Southern Hemisphere), with initial soil "
+    "moisture content set to {wo} and an adjustment based on monthly precipitation and evapotranspiration limits.",
+    abstract="The dryness index is a characterization of the water component in winegrowing regions which considers "
+    "the precipitation and evapotranspiration factors without deduction for surface runoff or drainage. "
+    "Metric originally published in Riou et al. (1994). ",
+    cell_methods="",
+    compute=indices.dryness_index,
 )
 
 maximum_consecutive_wet_days = Precip(

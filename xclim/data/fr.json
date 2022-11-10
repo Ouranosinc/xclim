@@ -646,6 +646,12 @@
     "title": "Nombre de jours secs",
     "abstract": "Nombre de jours où la précipitation quotidienne est sous un seuil donné."
   },
+  "DRYNESS_INDEX": {
+    "long_name": "Estimation de l'humidité de la saison de croissance (précipitations moins évapotranspiration ajustée) pour la période d'avril à septembre (hémisphère nord) ou d'octobre à mars (hémisphère sud), avec une humidité initiale du sol fixée à {wo}",
+    "description": "Estimation de l'humidité de la saison de croissance (précipitations moins évapotranspiration ajustée) pour la période d'avril à septembre (hémisphère nord) ou d'octobre à mars (hémisphère sud), avec une humidité initiale du sol fixée à {wo} et un ajustement basé sur les limites mensuelles des précipitations et de l'évapotranspiration.",
+    "title": "Indice de sécheresse",
+    "abstract": "L'indice de sécheresse est une caractérisation de la composante hydrique des régions viticoles qui prend en compte les facteurs de précipitation et d'évapotranspiration sans déduction pour le ruissellement ou le drainage de surface. Métrique initialement publiée dans Riou et al. (1994)."
+  },
   "HOT_SPELL_FREQUENCY": {
     "long_name": "Nombre total de séries d'au moins {window} jours consécutifs ayant une température maximale quotidienne au-dessus de {thresh_tasmax}",
     "description": "Nombre {freq:m} de périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne est au-dessus de {thresh_tasmax} durant au moins {window} jours.",
