@@ -1,23 +1,22 @@
 """Statistic-related functions. See the `frequency_analysis` notebook for examples."""
+from __future__ import annotations
 
-from typing import Dict, Optional, Sequence, Tuple, Union
+from typing import Sequence
 
-import dask.array
 import numpy as np
 import xarray as xr
+from scipy.optimize import fsolve, root
 
-from xclim.core.formatting import (
-    merge_attributes,
-    prefix_attrs,
-    unprefix_attrs,
-    update_history,
-)
+from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history
+from xclim.core.utils import uses_dask
 
 from . import generic
 
 __all__ = [
+    "dist_method",
     "fit",
     "parametric_quantile",
+    "parametric_cdf",
     "fa",
     "frequency_analysis",
     "get_dist",
@@ -47,11 +46,11 @@ _lm3_dist_map = {
 # This would also be the place to impose constraints on the series minimum length if needed.
 def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
     """Fit distribution parameters."""
-    x = np.ma.masked_invalid(arr).compressed()
+    x = np.ma.masked_invalid(arr).compressed()  # pylint: disable=no-member
 
     # Return NaNs if array is empty.
     if len(x) <= 1:
-        return [np.nan] * nparams
+        return np.asarray([np.nan] * nparams)
 
     # Estimate parameters
     if method == "ML":
@@ -59,6 +58,14 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
         params = dist.fit(x, *args, **kwargs, **fitkwargs)
     elif method == "PWM":
         params = list(dist.lmom_fit(x).values())
+    elif method == "APP":
+        args, kwargs = _fit_start(x, dist.name, **fitkwargs)
+        kwargs_list = list(kwargs.values())
+        if "loc" not in kwargs:
+            kwargs_list = [0] + kwargs_list
+        params = list(args) + kwargs_list
+
+    params = np.asarray(params)
 
     # Fill with NaNs if one of the parameters is NaN
     if np.isnan(params).any():
@@ -79,30 +86,34 @@ def fit(
     Parameters
     ----------
     da : xr.DataArray
-      Time series to be fitted along the time dimension.
+        Time series to be fitted along the time dimension.
     dist : str
-      Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
-      (see scipy.stats for full list). If the PWM method is used, only the following distributions are
-      currently supported: 'expon', 'gamma', 'genextreme', 'genpareto', 'gumbel_r', 'pearson3', 'weibull_min'.
-    method : {"ML", "PWM"}
-      Fitting method, either maximum likelihood (ML) or probability weighted moments (PWM), also called L-Moments.
-      The PWM method is usually more robust to outliers.
+        Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
+        (see :py:mod:scipy.stats for full list). If the PWM method is used, only the following distributions are
+        currently supported: 'expon', 'gamma', 'genextreme', 'genpareto', 'gumbel_r', 'pearson3', 'weibull_min'.
+    method : {"ML", "PWM", "APP"}
+        Fitting method, either maximum likelihood (ML), probability weighted moments (PWM), also called L-Moments, or approximate method (APP)
+        The PWM method is usually more robust to outliers.
     dim : str
-      The dimension upon which to perform the indexing (default: "time").
+        The dimension upon which to perform the indexing (default: "time").
     **fitkwargs
-      Other arguments passed directly to :py:func:`_fitstart` and to the distribution's `fit`.
+        Other arguments passed directly to :py:func:`_fitstart` and to the distribution's `fit`.
 
     Returns
     -------
     xr.DataArray
-      An array of fitted distribution parameters.
+        An array of fitted distribution parameters.
 
     Notes
     -----
-    Coordinates for which all values are NaNs will be dropped before fitting the distribution. If the array
-    still contains NaNs, the distribution parameters will be returned as NaNs.
+    Coordinates for which all values are NaNs will be dropped before fitting the distribution. If the array still
+    contains NaNs, the distribution parameters will be returned as NaNs.
     """
-    method_name = {"ML": "maximum likelihood", "PWM": "probability weighted moments"}
+    method_name = {
+        "ML": "maximum likelihood",
+        "PWM": "probability weighted moments",
+        "APP": "approximative method",
+    }
 
     # Get the distribution
     dc = get_dist(dist)
@@ -112,28 +123,29 @@ def fit(
     shape_params = [] if dc.shapes is None else dc.shapes.split(",")
     dist_params = shape_params + ["loc", "scale"]
 
-    # xarray.apply_ufunc does not yet support multiple outputs with dask parallelism.
-    duck = dask.array if isinstance(da.data, dask.array.Array) else np
-    data = duck.apply_along_axis(
+    data = xr.apply_ufunc(
         _fitfunc_1d,
-        da.get_axis_num(dim),
         da,
-        dist=dc if method == "ML" else lm3dc,
-        nparams=len(dist_params),
-        method=method,
-        **fitkwargs,
+        input_core_dims=[[dim]],
+        output_core_dims=[["dparams"]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[float],
+        keep_attrs=True,
+        kwargs=dict(
+            # Don't know how APP should be included, this works for now
+            dist=dc if method in ["ML", "APP"] else lm3dc,
+            nparams=len(dist_params),
+            method=method,
+            **fitkwargs,
+        ),
+        dask_gufunc_kwargs={"output_sizes": {"dparams": len(dist_params)}},
     )
 
-    # Coordinates for the distribution parameters
-    coords = dict(da.coords.items())
-    if dim in coords:
-        coords.pop(dim)
-    coords["dparams"] = dist_params
-
-    # Dimensions for the distribution parameters
+    # Add coordinates for the distribution parameters and transpose to original shape (with dim -> dparams)
     dims = [d if d != dim else "dparams" for d in da.dims]
+    out = data.assign_coords(dparams=dist_params).transpose(*dims)
 
-    out = xr.DataArray(data=data, coords=coords, dims=dims)
     out.attrs = prefix_attrs(
         da.attrs, ["standard_name", "long_name", "units", "description"], "original_"
     )
@@ -154,22 +166,22 @@ def fit(
     return out
 
 
-def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]) -> xr.DataArray:
+def parametric_quantile(p: xr.DataArray, q: int | Sequence) -> xr.DataArray:
     """Return the value corresponding to the given distribution parameters and quantile.
 
     Parameters
     ----------
     p : xr.DataArray
-      Distribution parameters returned by the `fit` function.
-      The array should have dimension `dparams` storing the distribution parameters,
-      and attribute `scipy_dist`, storing the name of the distribution.
+        Distribution parameters returned by the `fit` function.
+        The array should have dimension `dparams` storing the distribution parameters,
+        and attribute `scipy_dist`, storing the name of the distribution.
     q : Union[float, Sequence]
-      Quantile to compute, which must be between `0` and `1`, inclusive.
+        Quantile to compute, which must be between `0` and `1`, inclusive.
 
     Returns
     -------
     xarray.DataArray
-      An array of parametric quantiles estimated from the distribution parameters.
+        An array of parametric quantiles estimated from the distribution parameters.
 
     Notes
     -----
@@ -192,23 +204,27 @@ def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]) -> xr.DataArra
         def func(x):
             return dc.ppf(q, *x)
 
-    duck = dask.array if isinstance(p.data, dask.array.Array) else np
-    data = duck.apply_along_axis(func, p.get_axis_num("dparams"), p)
+    data = xr.apply_ufunc(
+        func,
+        p,
+        input_core_dims=[["dparams"]],
+        output_core_dims=[["quantile"]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[float],
+        keep_attrs=True,
+        dask_gufunc_kwargs={"output_sizes": {"quantile": len(q)}},
+    )
 
-    # Create coordinate for the return periods
-    coords = dict(p.coords.items())
-    coords.pop("dparams")
-    coords["quantile"] = q
-    # Create dimensions
+    # Assign quantile coordinates and transpose to preserve original dimension order
     dims = [d if d != "dparams" else "quantile" for d in p.dims]
-
-    out = xr.DataArray(data=data, coords=coords, dims=dims)
+    out = data.assign_coords(quantile=q).transpose(*dims)
     out.attrs = unprefix_attrs(p.attrs, ["units", "standard_name"], "original_")
 
     attrs = dict(
         long_name=f"{dist} quantiles",
         description=f"Quantiles estimated by the {dist} distribution",
-        cell_methods=merge_attributes("dparams: ppf", out, new_line=" "),
+        cell_methods="dparams: ppf",
         history=update_history(
             "Compute parametric quantiles from distribution parameters",
             new_name="parametric_quantile",
@@ -219,28 +235,89 @@ def parametric_quantile(p: xr.DataArray, q: Union[int, Sequence]) -> xr.DataArra
     return out
 
 
+def parametric_cdf(p: xr.DataArray, v: float | Sequence) -> xr.DataArray:
+    """Return the cumulative distribution function corresponding to the given distribution parameters and value.
+
+    Parameters
+    ----------
+    p : xr.DataArray
+        Distribution parameters returned by the `fit` function.
+        The array should have dimension `dparams` storing the distribution parameters,
+        and attribute `scipy_dist`, storing the name of the distribution.
+    v : Union[float, Sequence]
+        Value to compute the CDF.
+
+    Returns
+    -------
+    xarray.DataArray
+        An array of parametric CDF values estimated from the distribution parameters.
+    """
+    v = np.atleast_1d(v)
+
+    # Get the distribution
+    dist = p.attrs["scipy_dist"]
+    dc = get_dist(dist)
+
+    # Create a lambda function to facilitate passing arguments to dask. There is probably a better way to do this.
+    def func(x):
+        return dc.cdf(v, *x)
+
+    data = xr.apply_ufunc(
+        func,
+        p,
+        input_core_dims=[["dparams"]],
+        output_core_dims=[["cdf"]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[float],
+        keep_attrs=True,
+        dask_gufunc_kwargs={"output_sizes": {"cdf": len(v)}},
+    )
+
+    # Assign quantile coordinates and transpose to preserve original dimension order
+    dims = [d if d != "dparams" else "cdf" for d in p.dims]
+    out = data.assign_coords(cdf=v).transpose(*dims)
+    out.attrs = unprefix_attrs(p.attrs, ["units", "standard_name"], "original_")
+
+    attrs = dict(
+        long_name=f"{dist} cdf",
+        description=f"CDF estimated by the {dist} distribution",
+        cell_methods="dparams: cdf",
+        history=update_history(
+            "Compute parametric cdf from distribution parameters",
+            new_name="parametric_cdf",
+            parameters=p,
+        ),
+    )
+    out.attrs.update(attrs)
+    return out
+
+
 def fa(
-    da: xr.DataArray, t: Union[int, Sequence], dist: str = "norm", mode: str = "max"
+    da: xr.DataArray, t: int | Sequence, dist: str = "norm", mode: str = "max"
 ) -> xr.DataArray:
     """Return the value corresponding to the given return period.
 
     Parameters
     ----------
     da : xr.DataArray
-      Maximized/minimized input data with a `time` dimension.
+        Maximized/minimized input data with a `time` dimension.
     t : Union[int, Sequence]
-      Return period. The period depends on the resolution of the input data. If the input array's resolution is
-      yearly, then the return period is in years.
+        Return period. The period depends on the resolution of the input data. If the input array's resolution is
+        yearly, then the return period is in years.
     dist : str
-      Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
-      (see scipy.stats).
+        Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
     mode : {'min', 'max}
-      Whether we are looking for a probability of exceedance (max) or a probability of non-exceedance (min).
+        Whether we are looking for a probability of exceedance (max) or a probability of non-exceedance (min).
 
     Returns
     -------
     xarray.DataArray
-      An array of values with a 1/t probability of exceedance (if mode=='max').
+        An array of values with a 1/t probability of exceedance (if mode=='max').
+
+    See Also
+    --------
+    scipy.stats : For descriptions of univariate distribution types.
     """
     # Fit the parameters of the distribution
     p = fit(da, dist)
@@ -268,10 +345,10 @@ def fa(
 def frequency_analysis(
     da: xr.DataArray,
     mode: str,
-    t: Union[int, Sequence[int]],
+    t: int | Sequence[int],
     dist: str,
     window: int = 1,
-    freq: Optional[str] = None,
+    freq: str | None = None,
     **indexer,
 ) -> xr.DataArray:
     """Return the value corresponding to a return period.
@@ -279,30 +356,32 @@ def frequency_analysis(
     Parameters
     ----------
     da : xarray.DataArray
-      Input data.
+        Input data.
     mode : {'min', 'max'}
-      Whether we are looking for a probability of exceedance (high) or a probability of non-exceedance (low).
+        Whether we are looking for a probability of exceedance (high) or a probability of non-exceedance (low).
     t : int or sequence
-      Return period. The period depends on the resolution of the input data. If the input array's resolution is
-      yearly, then the return period is in years.
+        Return period. The period depends on the resolution of the input data. If the input array's resolution is
+        yearly, then the return period is in years.
     dist : str
-      Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
-      (see scipy.stats).
+        Name of the univariate distribution, e.g. `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`.
     window : int
-      Averaging window length (days).
+        Averaging window length (days).
     freq : str
-      Resampling frequency. If None, the frequency is assumed to be 'YS' unless the indexer is season='DJF',
-      in which case `freq` would be set to `AS-DEC`.
+        Resampling frequency. If None, the frequency is assumed to be 'YS' unless the indexer is season='DJF',
+        in which case `freq` would be set to `AS-DEC`.
     indexer : {dim: indexer, }, optional
-      Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
-      month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
-      considered.
+        Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
+        month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
+        considered.
 
     Returns
     -------
     xarray.DataArray
-      An array of values with a 1/t probability of exceedance or non-exceedance when mode is high or low respectively.
+        An array of values with a 1/t probability of exceedance or non-exceedance when mode is high or low respectively.
 
+    See Also
+    --------
+    scipy.stats : For descriptions of univariate distribution types.
     """
     # Apply rolling average
     attrs = da.attrs.copy()
@@ -316,13 +395,15 @@ def frequency_analysis(
     # Extract the time series of min or max over the period
     sel = generic.select_resample_op(da, op=mode, freq=freq, **indexer)
 
+    if uses_dask(sel):
+        sel = sel.chunk({"time": -1})
     # Frequency analysis
     return fa(sel, t, dist, mode)
 
 
 def get_dist(dist):
     """Return a distribution object from `scipy.stats`."""
-    from scipy import stats
+    from scipy import stats  # pylint: disable=import-outside-toplevel
 
     dc = getattr(stats, dist, None)
     if dc is None:
@@ -333,11 +414,20 @@ def get_dist(dist):
 
 def get_lm3_dist(dist):
     """Return a distribution object from `lmoments3.distr`."""
-    # fmt: off
-    import lmoments3.distr  # isort: skip
-    # The lmoments3 library has to be installed from the `develop` branch.
-    # pip install git+https://github.com/OpenHydrology/lmoments3.git@develop#egg=lmoments3
-    # fmt: on
+    try:
+        # fmt: off
+        import lmoments3.distr  # pylint: disable=import-outside-toplevel
+
+        # The lmoments3 library has to be installed from the `develop` branch.
+        # pip install git+https://github.com/OpenHydrology/lmoments3.git@develop#egg=lmoments3
+        # fmt: on
+    except ModuleNotFoundError as e:
+        msg = (
+            "The lmoments3 library has to be installed from the `develop` branch. Run "
+            "'$ pip install git+https://github.com/OpenHydrology/lmoments3.git@develop#egg=lmoments3'"
+        )
+        raise ModuleNotFoundError(msg) from e
+
     if dist not in _lm3_dist_map:
         raise ValueError(
             f"The {dist} distribution is not supported by `lmoments3` or `xclim`."
@@ -346,7 +436,7 @@ def get_lm3_dist(dist):
     return getattr(lmoments3.distr, _lm3_dist_map[dist])
 
 
-def _fit_start(x, dist, **fitkwargs) -> Tuple[Tuple, Dict]:
+def _fit_start(x, dist, **fitkwargs) -> tuple[tuple, dict]:
     """Return initial values for distribution parameters.
 
     Providing the ML fit method initial values can help the optimizer find the global optimum.
@@ -354,10 +444,12 @@ def _fit_start(x, dist, **fitkwargs) -> Tuple[Tuple, Dict]:
     Parameters
     ----------
     x : array-like
-      Input data.
+        Input data.
     dist : str
-      Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
-      (see scipy.stats). Only `genextreme` and `weibull_exp` distributions are supported.
+        Name of the univariate distribution, e.g. `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`.
+        (see :py:mod:scipy.stats). Only `genextreme` and `weibull_exp` distributions are supported.
+    **fitkwargs
+        Kwargs passed to fit.
 
     Returns
     -------
@@ -365,8 +457,8 @@ def _fit_start(x, dist, **fitkwargs) -> Tuple[Tuple, Dict]:
 
     References
     ----------
-    Coles, S., 2001. An Introduction to Statistical Modeling of Extreme Values. Springer-Verlag, London, U.K., 208pp
-    Cohen & Whittle, (1988) "Parameter Estimation in Reliability and Life Span Models", p. 25 ff, Marcel Dekker.
+    :cite:cts:`coles_introduction_2001,cohen_parameter_2019`
+
     """
     x = np.asarray(x)
     m = x.mean()
@@ -383,7 +475,7 @@ def _fit_start(x, dist, **fitkwargs) -> Tuple[Tuple, Dict]:
             m = (x - t).mean()
             v = (x - t).var()
 
-        c = 0.5 * (1 - m ** 2 / v)
+        c = 0.5 * (1 - m**2 / v)
         scale = (1 - c) * m
         return (c,), {"scale": scale}
 
@@ -394,6 +486,28 @@ def _fit_start(x, dist, **fitkwargs) -> Tuple[Tuple, Dict]:
         scale = ((x - loc) ** chat).mean() ** (1 / chat)
         return (chat,), {"loc": loc, "scale": scale}
 
+    if dist in ["gamma"]:
+        x_pos = x[x > 0]
+        m = x_pos.mean()
+        log_of_mean = np.log(m)
+        mean_of_logs = np.log(x_pos).mean()
+        a = log_of_mean - mean_of_logs
+        alpha = (1 + np.sqrt(1 + 4 * a / 3)) / (4 * a)
+        beta = m / alpha
+        return (alpha,), {"scale": beta}
+
+    if dist in ["fisk"]:
+        x_pos = x[x > 0]
+        m = x_pos.mean()
+        v = x_pos.var()
+        # pdf =  (beta/alpha) (x/alpha)^{beta-1}/ (1+(x/alpha)^{beta})^2
+        # Compute f_1 and f_2 which only depend on beta:
+        # f_1 := mean/alpha = <x>/alpha
+        # f_2 := variance/alpha^2 = (<x^2> - <x>^2)/alpha^2
+        # In the large beta limit, f_1 -> 1 and f_1/sqrt(f_2) -> 0.56*beta - 0.25
+        # Solve for alpha and beta below:
+        alpha, beta = m, (1 / 0.56) * (m / np.sqrt(v) + 1 / 4)
+        return (beta,), {"scale": alpha}
     return (), {}
 
 
@@ -402,26 +516,26 @@ def _dist_method_1D(
 ) -> xr.DataArray:
     """Statistical function for given argument on given distribution initialized with params.
 
-    See :ref:`scipy:scipy.stats.rv_continuous` for a available functions and their arguments.
-    Every method where "*args" are the distribution parameters can be wrapped.
+    See :py:ref:`scipy:scipy.stats.rv_continuous` for all available functions and their arguments.
+    Every method where `"*args"` are the distribution parameters can be wrapped.
 
     Parameters
     ----------
-    params: 1D sequence of floats
-      Distribution parameters, in the same order as given by :py:func:`fit`.
-    arg: optional, array_like
-      The argument for the requested function.
-    dist: str
-      The scipy name of the distribution.
+    params : 1D sequence of floats
+        Distribution parameters, in the same order as given by :py:func:`fit`.
+    arg : array_like, optional
+        The argument for the requested function.
+    dist : str
+        The scipy name of the distribution.
     function : str
-      The name of the function to call.
-    kwargs
-      Other parameters to pass to the function call.
+        The name of the function to call.
+    **kwargs
+        Other parameters to pass to the function call.
 
     Returns
     -------
     array_like
-      Same shape as arg in most cases.
+        Same shape as arg in most cases.
     """
     dist = get_dist(dist)
     args = ([arg] if arg is not None else []) + list(params)
@@ -431,33 +545,35 @@ def _dist_method_1D(
 def dist_method(
     function: str,
     fit_params: xr.DataArray,
-    arg: Optional[xr.DataArray] = None,
+    arg: xr.DataArray | None = None,
     **kwargs,
 ) -> xr.DataArray:
     """Vectorized statistical function for given argument on given distribution initialized with params.
 
-    See :ref:`scipy:scipy.stats.rv_continuous` for a available functions and their arguments.
-    Methods where "*args" are the distribution parameters can be wrapped, except those
-    that return new dimensions (Ex: 'rvs' with size != 1, 'stats' with more than one moment, 'interval', 'support')
+    Methods where `"*args"` are the distribution parameters can be wrapped, except those that return new dimensions
+    (Ex: 'rvs' with size != 1, 'stats' with more than one moment, 'interval', 'support')
 
     Parameters
     ----------
     function : str
-      The name of the function to call.
-    fit_params: xr.DataArray
-      Distribution parameters are along `dparams`, in the same order as given by :py:func:`fit`.
-      Must have a `scipy_dist` attribute with the name of the distribution fitted.
-    arg: optional, array_like
-      The argument for the requested function.
-    kwargs
-      Other parameters to pass to the function call.
+        The name of the function to call.
+    fit_params : xr.DataArray
+        Distribution parameters are along `dparams`, in the same order as given by :py:func:`fit`.
+        Must have a `scipy_dist` attribute with the name of the distribution fitted.
+    arg : array_like, optional
+        The argument for the requested function.
+    **kwargs
+        Other parameters to pass to the function call.
 
     Returns
     -------
     array_like
-      Same shape as arg.
-    """
+        Same shape as arg.
 
+    See Also
+    --------
+    scipy:scipy.stats.rv_continuous : for all available functions and their arguments.
+    """
     args = [fit_params]
     input_core_dims = [["dparams"]]
 

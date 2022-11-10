@@ -1,9 +1,11 @@
 # This File is for testing atmos indicators that fit neither in test_precip or test_temperature
 # Expected values might be the same as for the indices tests, see test_indices comments.
+from __future__ import annotations
+
 import numpy as np
 import xarray as xr
 
-from xclim import atmos
+from xclim import atmos, set_options
 from xclim.testing import open_dataset
 
 K2C = 273.16
@@ -84,6 +86,42 @@ def test_humidex(tas_series):
     assert h.name == "humidex"
 
 
+def test_heat_index(atmosds):
+    # Keep just Montreal values for summertime as we need tas > 20 degC
+    tas = atmosds.tasmax[1][150:170]
+    hurs = atmosds.hurs[1][150:170]
+
+    expected = np.array(
+        [
+            25.0,
+            27.0,
+            29.0,
+            27.0,
+            24.0,
+            np.nan,
+            np.nan,
+            23.0,
+            24.0,
+            np.nan,
+            np.nan,
+            24.0,
+            28.0,
+            25.0,
+            30.0,
+            26.0,
+            31.0,
+            33.0,
+            34.0,
+            28.0,
+        ]
+    )
+
+    with set_options(cf_compliance="raise"):
+        hi = atmos.heat_index(tas, hurs)
+    np.testing.assert_array_almost_equal(hi, expected, 0)
+    assert hi.name == "heat_index"
+
+
 def test_saturation_vapor_pressure(tas_series):
     tas = tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C)
     e_sat_exp = [103, 260, 563, 1228, 2339, 3169, 4247, 7385, 19947]
@@ -130,6 +168,25 @@ def test_specific_humidity(tas_series, hurs_series, huss_series, ps_series):
     )
     np.testing.assert_allclose(huss, huss_exp, atol=1e-4, rtol=0.05)
     assert huss.name == "huss"
+
+
+def test_specific_humidity_from_dewpoint(tas_series, ps_series, huss_series):
+    tdps = tas_series([272, 283, 293])
+    ps = ps_series([100000, 105000, 110000])
+    # Computed from MetPy
+    # >>> from metpy.units import units as u
+    # >>> from metpy.calc import specific_humidity_from_dewpoint as sh
+    # >>> sh([100000, 105000, 110000] * u.Pa, [272, 283, 293] * u.degK)
+    # array([0.0035031, 0.00722795, 0.01319614]) < Unit('dimensionless') >
+    huss_exp = huss_series([0.0035031, 0.00722795, 0.01319614])
+
+    huss = atmos.specific_humidity_from_dewpoint(
+        tdps=tdps,
+        ps=ps,
+        method="sonntag90",
+    )
+    np.testing.assert_allclose(huss, huss_exp, atol=1e-4, rtol=0.05)
+    assert huss.name == "huss_fromdewpoint"
 
 
 def test_snowfall_approximation(pr_series, tasmax_series):
@@ -187,10 +244,24 @@ def test_wind_chill_index(atmosds):
 
 
 class TestPotentialEvapotranspiration:
-    def test_convert_units(self):
-        tn = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmin
-        tx = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
-        tm = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tas
+    def test_convert_units(self, threadsafe_data_dir):
+        ds = open_dataset(
+            "ERA5/daily_surface_cancities_1990-1993.nc",
+            branch="add-radiation",
+            cache_dir=threadsafe_data_dir,
+        )
+        tn = ds.tasmin
+        tx = ds.tasmax
+        tm = ds.tas
+        hurs = ds.hurs
+        rsds = ds.rsds
+        rsus = ds.rsus
+        rlds = ds.rlds
+        rlus = ds.rlus
+        uas = ds.uas
+        vas = ds.vas
+
+        sfcwind, _ = atmos.wind_speed_from_vector(uas, vas)
 
         with xr.set_options(keep_attrs=True):
             tnC = tn - K2C
@@ -204,70 +275,286 @@ class TestPotentialEvapotranspiration:
         pet_hg85C = atmos.potential_evapotranspiration(tnC, tx, method="HG85")
         pet_tw48 = atmos.potential_evapotranspiration(tas=tm, method="TW48")
         pet_tw48C = atmos.potential_evapotranspiration(tas=tmC, method="TW48")
+        pet_mb05 = atmos.potential_evapotranspiration(tn, tx, method="MB05")
+        pet_mb05C = atmos.potential_evapotranspiration(tnC, tx, method="MB05")
+        pet_fao_pm98 = atmos.potential_evapotranspiration(
+            tn,
+            tx,
+            hurs=hurs,
+            rsds=rsds,
+            rsus=rsus,
+            rlds=rlds,
+            rlus=rlus,
+            sfcwind=sfcwind,
+            method="FAO_PM98",
+        )
+        pet_fao_pm98C = atmos.potential_evapotranspiration(
+            tnC,
+            tx,
+            hurs=hurs,
+            rsds=rsds,
+            rsus=rsus,
+            rlds=rlds,
+            rlus=rlus,
+            sfcwind=sfcwind,
+            method="FAO_PM98",
+        )
 
         np.testing.assert_allclose(pet_br65, pet_br65C, atol=1)
         np.testing.assert_allclose(pet_hg85, pet_hg85C, atol=1)
         np.testing.assert_allclose(pet_tw48, pet_tw48C, atol=1)
+        np.testing.assert_allclose(pet_mb05, pet_mb05C, atol=1)
+        np.testing.assert_allclose(pet_fao_pm98, pet_fao_pm98C, atol=1)
 
-    def test_nan_values(self):
-        tn = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmin
-        tx = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
-        tm = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tas
+    def test_nan_values(self, threadsafe_data_dir):
+        ds = open_dataset(
+            "ERA5/daily_surface_cancities_1990-1993.nc",
+            branch="add-radiation",
+            cache_dir=threadsafe_data_dir,
+        )
+        tn = ds.tasmin
+        tx = ds.tasmax
+        tm = ds.tas
+        hurs = ds.hurs
+        rsds = ds.rsds
+        rsus = ds.rsus
+        rlds = ds.rlds
+        rlus = ds.rlus
+        uas = ds.uas
+        vas = ds.vas
+
+        sfcwind, _ = atmos.wind_speed_from_vector(uas, vas)
 
         tn[0, 100] = np.nan
         tx[0, 101] = np.nan
 
         pet_br65 = atmos.potential_evapotranspiration(tn, tx, method="BR65")
         pet_hg85 = atmos.potential_evapotranspiration(tn, tx, method="HG85")
+        pet_fao_pm98 = atmos.potential_evapotranspiration(
+            tn,
+            tx,
+            hurs=hurs,
+            rsds=rsds,
+            rsus=rsus,
+            rlds=rlds,
+            rlus=rlus,
+            sfcwind=sfcwind,
+            method="FAO_PM98",
+        )
 
         tm[0, 0:31] = np.nan
 
         pet_tw48 = atmos.potential_evapotranspiration(tas=tm, method="TW48")
 
-        np.testing.assert_allclose(pet_br65[0, 100:102], [np.nan, np.nan])
-        np.testing.assert_allclose(pet_hg85[100:102, 0], [np.nan, np.nan])
-        np.testing.assert_allclose(pet_tw48[0, 0], [np.nan])
+        np.testing.assert_allclose(
+            pet_br65.isel(location=0, time=slice(100, 102)), [np.nan, np.nan]
+        )
+        np.testing.assert_allclose(
+            pet_hg85.isel(location=0, time=slice(100, 102)), [np.nan, np.nan]
+        )
+        np.testing.assert_allclose(
+            pet_fao_pm98.isel(location=0, time=slice(100, 102)),
+            [np.nan, np.nan],
+        )
+        np.testing.assert_allclose(pet_tw48.isel(location=0, time=0), [np.nan])
 
 
 class TestWaterBudget:
-    def test_convert_units(self):
-        pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
-        tn = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmin
-        tx = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
+    def test_convert_units(self, threadsafe_data_dir):
+        ds = open_dataset(
+            "ERA5/daily_surface_cancities_1990-1993.nc",
+            branch="add-radiation",
+            cache_dir=threadsafe_data_dir,
+        )
+
+        tn = ds.tasmin
+        tx = ds.tasmax
+        pr = ds.pr
+        pet = ds.evspsblpot
+        hurs = ds.hurs
+        rsds = ds.rsds
+        rsus = ds.rsus
+        rlds = ds.rlds
+        rlus = ds.rlus
+        uas = ds.uas
+        vas = ds.vas
+
+        sfcwind, _ = atmos.wind_speed_from_vector(uas, vas)
 
         with xr.set_options(keep_attrs=True):
             tnC = tn - K2C
             tnC.attrs["units"] = "degC"
             prR = pr * 86400
             prR.attrs["units"] = "mm/day"
+            petR = pet * 86400
+            petR.attrs["units"] = "mm/day"
 
-        p_pet_br65 = atmos.water_budget(pr, tn, tx, method="BR65")
-        p_pet_br65C = atmos.water_budget(prR, tnC, tx, method="BR65")
-        p_pet_hg85 = atmos.water_budget(pr, tn, tx, method="HG85")
-        p_pet_hg85C = atmos.water_budget(prR, tnC, tx, method="HG85")
-        p_pet_tw48 = atmos.water_budget(pr, tn, tx, method="TW48")
-        p_pet_tw48C = atmos.water_budget(prR, tnC, tx, method="TW48")
+        p_pet_br65 = atmos.water_budget_from_tas(
+            pr, tasmin=tn, tasmax=tx, method="BR65"
+        )
+        p_pet_br65C = atmos.water_budget_from_tas(
+            prR, tasmin=tnC, tasmax=tx, method="BR65"
+        )
+        p_pet_hg85 = atmos.water_budget_from_tas(
+            pr, tasmin=tn, tasmax=tx, method="HG85"
+        )
+        p_pet_hg85C = atmos.water_budget_from_tas(
+            prR, tasmin=tnC, tasmax=tx, method="HG85"
+        )
+        p_pet_tw48 = atmos.water_budget_from_tas(
+            pr, tasmin=tn, tasmax=tx, method="TW48"
+        )
+        p_pet_tw48C = atmos.water_budget_from_tas(
+            prR, tasmin=tnC, tasmax=tx, method="TW48"
+        )
+
+        p_pet_fao_pm98 = atmos.water_budget_from_tas(
+            pr=pr,
+            tasmin=tn,
+            tasmax=tx,
+            hurs=hurs,
+            rsds=rsds,
+            rsus=rsus,
+            rlds=rlds,
+            rlus=rlus,
+            sfcwind=sfcwind,
+            method="FAO_PM98",
+        )
+        p_pet_fao_pm98R = atmos.water_budget_from_tas(
+            pr=prR,
+            tasmin=tn,
+            tasmax=tx,
+            hurs=hurs,
+            rsds=rsds,
+            rsus=rsus,
+            rlds=rlds,
+            rlus=rlus,
+            sfcwind=sfcwind,
+            method="FAO_PM98",
+        )
+
+        p_pet_evpot = atmos.water_budget(pr, evspsblpot=pet)
+        p_pet_evpotR = atmos.water_budget(prR, evspsblpot=petR)
 
         np.testing.assert_allclose(p_pet_br65, p_pet_br65C, atol=1)
         np.testing.assert_allclose(p_pet_hg85, p_pet_hg85C, atol=1)
         np.testing.assert_allclose(p_pet_tw48, p_pet_tw48C, atol=1)
+        np.testing.assert_allclose(p_pet_fao_pm98, p_pet_fao_pm98R, atol=1)
+        np.testing.assert_allclose(p_pet_evpot, p_pet_evpotR, atol=1)
 
-    def test_nan_values(self):
-        pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
-        tn = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmin
-        tx = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
-        tm = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tas
+    def test_nan_values(self, threadsafe_data_dir):
+        ds = open_dataset(
+            "ERA5/daily_surface_cancities_1990-1993.nc",
+            branch="add-radiation",
+            cache_dir=threadsafe_data_dir,
+        )
+
+        tn = ds.tasmin
+        tx = ds.tasmax
+        tm = ds.tas
+        pr = ds.pr
+        pet = ds.evspsblpot
+        hurs = ds.hurs
+        rsds = ds.rsds
+        rsus = ds.rsus
+        rlds = ds.rlds
+        rlus = ds.rlus
+        uas = ds.uas
+        vas = ds.vas
+
+        sfcwind, _ = atmos.wind_speed_from_vector(uas, vas)
 
         tn[0, 100] = np.nan
         tx[0, 101] = np.nan
 
-        p_pet_br65 = atmos.water_budget(pr, tn, tx, method="BR65")
-        p_pet_hg85 = atmos.water_budget(pr, tn, tx, method="HG85")
+        p_pet_br65 = atmos.water_budget_from_tas(
+            pr, tasmin=tn, tasmax=tx, method="BR65"
+        )
+        p_pet_hg85 = atmos.water_budget_from_tas(
+            pr, tasmin=tn, tasmax=tx, method="HG85"
+        )
+        p_pet_fao_pm98 = atmos.water_budget_from_tas(
+            pr=pr,
+            tasmin=tn,
+            tasmax=tx,
+            hurs=hurs,
+            rsds=rsds,
+            rsus=rsus,
+            rlds=rlds,
+            rlus=rlus,
+            sfcwind=sfcwind,
+            method="FAO_PM98",
+        )
 
         tm[0, 0:31] = np.nan
 
-        p_pet_tw48 = atmos.water_budget(pr, tas=tm, method="TW48")
+        p_pet_tw48 = atmos.water_budget_from_tas(pr, tas=tm, method="TW48")
+
+        pet[0, 0:31] = np.nan
+
+        p_pet_evpot = atmos.water_budget(pr, evspsblpot=pet)
 
         np.testing.assert_allclose(p_pet_br65[0, 100:102], [np.nan, np.nan])
         np.testing.assert_allclose(p_pet_hg85[0, 100:102], [np.nan, np.nan])
+        np.testing.assert_allclose(p_pet_fao_pm98[0, 100:102], [np.nan, np.nan])
         np.testing.assert_allclose(p_pet_tw48[0, 0], [np.nan])
+        np.testing.assert_allclose(p_pet_evpot[0, 0], [np.nan])
+
+
+class TestUTCI:
+    def test_universal_thermal_climate_index(self, threadsafe_data_dir):
+        dataset = open_dataset(
+            "ERA5/daily_surface_cancities_1990-1993.nc",
+            branch="add-radiation",
+            cache_dir=threadsafe_data_dir,
+        )
+        tas = dataset.tas
+        hurs = dataset.hurs
+        sfcWind, sfcWindfromdir = atmos.wind_speed_from_vector(
+            uas=dataset.uas, vas=dataset.vas
+        )
+        rsds = dataset.rsds
+        rsus = dataset.rsus
+        rlds = dataset.rlds
+        rlus = dataset.rlus
+        # Expected values
+        utci_exp = [256.8, 258.0, 237.4, 258.5, 266.2]
+
+        utci = atmos.universal_thermal_climate_index(
+            tas=tas,
+            hurs=hurs,
+            sfcWind=sfcWind,
+            rsds=rsds,
+            rsus=rsus,
+            rlds=rlds,
+            rlus=rlus,
+            stat="average",
+        )
+
+        np.testing.assert_allclose(utci.isel(time=0), utci_exp, rtol=1e-03)
+
+
+class TestMeanRadiantTemperature:
+    def test_mean_radiant_temperature(self, threadsafe_data_dir):
+        dataset = open_dataset(
+            "ERA5/daily_surface_cancities_1990-1993.nc",
+            branch="add-radiation",
+            cache_dir=threadsafe_data_dir,
+        )
+        rsds = dataset.rsds
+        rsus = dataset.rsus
+        rlds = dataset.rlds
+        rlus = dataset.rlus
+
+        # Expected values
+        exp_sun = [np.nan, np.nan, np.nan, np.nan, np.nan]
+        exp_ins = [277.1, 274.6, 243.5, 268.1, 309.1]
+        exp_avg = [277.1, 274.6, 243.5, 268.1, 278.4]
+
+        mrt_sun = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="sunlit")
+        mrt_ins = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="instant")
+        mrt_avg = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="average")
+        rtol = 1e-03
+        np.testing.assert_allclose(mrt_sun.isel(time=0), exp_sun, rtol=rtol)
+        np.testing.assert_allclose(mrt_ins.isel(time=0), exp_ins, rtol=rtol)
+        np.testing.assert_allclose(mrt_avg.isel(time=0), exp_avg, rtol=rtol)

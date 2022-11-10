@@ -5,10 +5,12 @@ Data flags
 
 Pseudo-indicators designed to analyse supplied variables for suspicious/erroneous indicator values.
 """
+from __future__ import annotations
+
 from decimal import Decimal
 from functools import reduce
 from inspect import signature
-from typing import Optional, Sequence, Union
+from typing import Sequence
 
 import numpy as np
 import pint
@@ -26,15 +28,18 @@ from .utils import (
     raise_warn_or_log,
 )
 
-_REGISTRY = dict()
+_REGISTRY = {}
 
 
 class DataQualityException(Exception):
     """Raised when any data evaluation checks are flagged as True.
 
-    Attributes:
-        data_flags -- Xarray.Dataset of Data Flags
-
+    Attributes
+    ----------
+    flag_array : xarray.Dataset
+        Xarray.Dataset of Data Flags.
+    message : str
+        Message prepended to the error messages.
     """
 
     def __init__(
@@ -43,8 +48,8 @@ class DataQualityException(Exception):
         message="Data quality flags indicate suspicious values. Flags raised are:\n  - ",
     ):
         self.message = message
-        self.flags = list()
-        for flag, value in flag_array.data_vars.items():
+        self.flags = []
+        for value in flag_array.data_vars.values():
             if value.any():
                 for attribute in value.attrs.keys():
                     if str(attribute) == "description":
@@ -52,12 +57,14 @@ class DataQualityException(Exception):
         super().__init__(self.message)
 
     def __str__(self):
+        """Format the errors for history."""
         nl = "\n  - "
         return f"{self.message}{nl.join(self.flags)}"
 
 
 __all__ = [
     "data_flags",
+    "DataQualityException",
     "ecad_compliant",
     "negative_accumulation_values",
     "outside_n_standard_deviations_of_climatology",
@@ -76,14 +83,15 @@ __all__ = [
 
 
 def register_methods(func):
+    """Summarize all methods used in dataflags checks."""
     _REGISTRY[func.__name__] = func
     return func
 
 
 def _sanitize_attrs(da: xarray.DataArray) -> xarray.DataArray:
-    to_remove = list()
+    to_remove = []
     for attr in da.attrs.keys():
-        if not str(attr) == "history":
+        if str(attr) != "history":
             to_remove.append(attr)
     for attr in to_remove:
         del da.attrs[attr]
@@ -297,8 +305,9 @@ def very_large_precipitation_events(
     Parameters
     ----------
     da : xarray.DataArray
+        The DataArray being examined.
     thresh : str
-      Threshold to search array for that will trigger flag if any day exceeds value.
+        Threshold to search array for that will trigger flag if any day exceeds value.
 
     Returns
     -------
@@ -324,19 +333,20 @@ def very_large_precipitation_events(
 @register_methods
 @update_xclim_history
 def values_op_thresh_repeating_for_n_or_more_days(
-    da: xarray.DataArray, *, n: int, thresh: str, op: str = "eq"
+    da: xarray.DataArray, *, n: int, thresh: str, op: str = "=="
 ) -> xarray.DataArray:
-    """Check if array values repeat at a given threshold for 'n' or more days.
+    """Check if array values repeat at a given threshold for `N` or more days.
 
     Parameters
     ----------
     da : xarray.DataArray
+        The DataArray being examined.
     n : int
-      Number of days needed to trigger flag.
+        Number of days needed to trigger flag.
     thresh : str
-      Repeating values to search for that will trigger flag.
-    op : {"eq", "gt", "lt", "gteq", "lteq"}
-      Operator used for comparison with thresh.
+        Repeating values to search for that will trigger flag.
+    op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        Operator used for comparison with thresh.
 
     Returns
     -------
@@ -351,11 +361,12 @@ def values_op_thresh_repeating_for_n_or_more_days(
     >>> units = "5 mm d-1"
     >>> days = 5
     >>> comparison = "eq"
-    >>> flagged = values_op_thresh_repeating_for_n_or_more_days(ds.pr, n=days, thresh=units, op=comparison)
+    >>> flagged = values_op_thresh_repeating_for_n_or_more_days(
+    ...     ds.pr, n=days, thresh=units, op=comparison
+    ... )
     """
     thresh = convert_units_to(thresh, da)
-    if op not in {"eq", "gt", "lt", "gteq", "lteq"}:
-        raise ValueError("Operator must not be symbolic.")
+
     repetitions = _sanitize_attrs(suspicious_run(da, window=n, op=op, thresh=thresh))
     description = (
         f"Repetitive values at {thresh} for at least {n} days found for {da.name}."
@@ -376,10 +387,11 @@ def wind_values_outside_of_bounds(
     Parameters
     ----------
     da : xarray.DataArray
+        The DataArray being examined.
     lower : str
-      Lower limit for wind speed.
+        The lower limit for wind speed.
     upper : str
-      Upper limit for wind speed.
+        The upper limit for wind speed.
 
     Returns
     -------
@@ -388,10 +400,12 @@ def wind_values_outside_of_bounds(
     Examples
     --------
     To gain access to the flag_array:
+
     >>> from xclim.core.dataflags import wind_values_outside_of_bounds
-    >>> ds = xr.open_dataset(path_to_tas_file)
     >>> ceiling, floor = "46 m s-1", "0 m s-1"
-    >>> flagged = wind_values_outside_of_bounds(ds.wsgsmax, upper=ceiling, lower=floor)
+    >>> flagged = wind_values_outside_of_bounds(
+    ...     sfcWind_dataset, upper=ceiling, lower=floor
+    ... )
     """
     lower, upper = convert_units_to(lower, da), convert_units_to(upper, da)
     unbounded_percentages = _sanitize_attrs((da < lower) | (da > upper))
@@ -417,10 +431,11 @@ def outside_n_standard_deviations_of_climatology(
     Parameters
     ----------
     da : xarray.DataArray
+        The DataArray being examined.
     n : int
-      Number of standard deviations.
+        Number of standard deviations.
     window : int
-      Moving window used to determining climatological mean. Default: 5.
+        Moving window used to determining climatological mean. Default: 5.
 
     Returns
     -------
@@ -438,9 +453,14 @@ def outside_n_standard_deviations_of_climatology(
     >>> ds = xr.open_dataset(path_to_tas_file)
     >>> std_devs = 5
     >>> average_over = 5
-    >>> flagged = outside_n_standard_deviations_of_climatology(ds.tas, n=std_devs, window=average_over)
-    """
+    >>> flagged = outside_n_standard_deviations_of_climatology(
+    ...     ds.tas, n=std_devs, window=average_over
+    ... )
 
+    References
+    ----------
+    :cite:cts:`project_team_eca&d_algorithm_2013`
+    """
     mu, sig = climatological_mean_doy(da, window=window)
     within_bounds = _sanitize_attrs(
         within_bnds_doy(da, high=(mu + n * sig), low=(mu - n * sig))
@@ -464,8 +484,9 @@ def values_repeating_for_n_or_more_days(
     Parameters
     ----------
     da : xarray.DataArray
+        The DataArray being examined.
     n : int
-      Number of days to trigger flag.
+        Number of days to trigger flag.
 
     Returns
     -------
@@ -502,9 +523,9 @@ def percentage_values_outside_of_bounds(da: xarray.DataArray) -> xarray.DataArra
     Examples
     --------
     To gain access to the flag_array:
+
     >>> from xclim.core.dataflags import percentage_values_outside_of_bounds
-    >>> ds = xr.open_dataset(path_to_huss_file)  # doctest: +SKIP
-    >>> flagged = percentage_values_outside_of_bounds(ds.huss)  # doctest: +SKIP
+    >>> flagged = percentage_values_outside_of_bounds(huss_dataset)
     """
     unbounded_percentages = _sanitize_attrs((da < 0) | (da > 100))
     description = f"Percentage values beyond bounds found for {da.name}."
@@ -514,10 +535,10 @@ def percentage_values_outside_of_bounds(da: xarray.DataArray) -> xarray.DataArra
 
 def data_flags(
     da: xarray.DataArray,
-    ds: Optional[xarray.Dataset] = None,
-    flags: Optional[dict] = None,
-    dims: Union[None, str, Sequence[str]] = "all",
-    freq: Optional[str] = None,
+    ds: xarray.Dataset | None = None,
+    flags: dict | None = None,
+    dims: None | str | Sequence[str] = "all",
+    freq: str | None = None,
     raise_flags: bool = False,
 ) -> xarray.Dataset:
     """Evaluate the supplied DataArray for a set of data flag checks.
@@ -528,21 +549,21 @@ def data_flags(
     Parameters
     ----------
     da : xarray.DataArray
-      The variable to check.
-      Must have a name that is a valid CMIP6 variable name and appears in :py:obj:`xclim.core.utils.VARIABLES`.
+        The variable to check.
+        Must have a name that is a valid CMIP6 variable name and appears in :py:obj:`xclim.core.utils.VARIABLES`.
     ds : xarray.Dataset, optional
-      An optional dataset with extra variables needed by some checks.
+        An optional dataset with extra variables needed by some checks.
     flags : dict, optional
-      A dictionary where the keys are the name of the flags to check and the values are parameter dictionaries.
-      The value can be None if there are no parameters to pass (i.e. default will be used).
-      The default, None, means that the data flags list will be taken from :py:obj:`xclim.core.utils.VARIABLES`.
+        A dictionary where the keys are the name of the flags to check and the values are parameter dictionaries.
+        The value can be None if there are no parameters to pass (i.e. default will be used).
+        The default, None, means that the data flags list will be taken from :py:obj:`xclim.core.utils.VARIABLES`.
     dims : {"all", None} or str or a sequence of strings
-      Dimenions upon which aggregation should be performed. Default: "all".
+        Dimenions upon which aggregation should be performed. Default: "all".
     freq : str, optional
-      Resampling frequency to have data_flags aggregated over periods.
-      Defaults to None, which means the "time" axis is treated as any other dimension (see `dims`).
+        Resampling frequency to have data_flags aggregated over periods.
+        Defaults to None, which means the "time" axis is treated as any other dimension (see `dims`).
     raise_flags : bool
-      Raise exception if any of the quality assessment flags are raised. Default: False.
+        Raise exception if any of the quality assessment flags are raised. Default: False.
 
     Returns
     -------
@@ -555,17 +576,15 @@ def data_flags(
     >>> from xclim.core.dataflags import data_flags
     >>> ds = xr.open_dataset(path_to_pr_file)
     >>> flagged = data_flags(ds.pr, ds)
-
-    The next example evaluates only one data flag, passing specific parameters. It also aggregates the flags
-    yearly over the "time" dimension only, such that a True means there is a bad data point for that year
-    at that location.
-
+    >>> # The next example evaluates only one data flag, passing specific parameters. It also aggregates the flags
+    >>> # yearly over the "time" dimension only, such that a True means there is a bad data point for that year
+    >>> # at that location.
     >>> flagged = data_flags(
     ...     ds.pr,
     ...     ds,
-    ...     flags={'very_large_precipitation_events': {'thresh': '250 mm d-1'}},
+    ...     flags={"very_large_precipitation_events": {"thresh": "250 mm d-1"}},
     ...     dims=None,
-    ...     freq='YS'
+    ...     freq="YS",
     ... )
     """
 
@@ -592,16 +611,16 @@ def data_flags(
 
         return var_name
 
-    def _missing_vars(function, dataset: xarray.Dataset):
+    def _missing_vars(function, dataset: xarray.Dataset, var_provided: str):
         """Handle missing variables in passed datasets."""
         sig = signature(function)
         sig = sig.parameters
-        extra_vars = dict()
-        for i, (arg, val) in enumerate(sig.items()):
-            if i == 0:
+        extra_vars = {}
+        for arg, val in sig.items():
+            if arg in ["da", var_provided]:
                 continue
             kind = infer_kind_from_parameter(val)
-            if kind == InputKind.VARIABLE:
+            if kind in [InputKind.VARIABLE]:
                 if arg in dataset:
                     extra_vars[arg] = dataset[arg]
                 else:
@@ -612,7 +631,7 @@ def data_flags(
     if dims == "all":
         dims = da.dims
     elif isinstance(dims, str):
-        # thus a single dimension name, we allow this option to mirror xarray.
+        # Thus, a single dimension name, we allow this option to mirror xarray.
         dims = {dims}
     if freq is not None and dims is not None:
         dims = (
@@ -635,22 +654,31 @@ def data_flags(
 
     ds = ds or xarray.Dataset()
 
-    flags = dict()
+    flags = {}
     for flag_func in flag_funcs:
         for name, kwargs in flag_func.items():
             func = _REGISTRY[name]
             variable_name = str(name)
+            named_da_variable = None
 
             if kwargs:
                 for param, value in kwargs.items():
                     variable_name = _convert_value_to_str(variable_name, value)
             try:
-                extras = _missing_vars(func, ds)
+                extras = _missing_vars(func, ds, str(da.name))
+                # Entries in extras implies that there are two variables being compared
+                # Both variables will be sent in as dict entries
+                if extras:
+                    named_da_variable = {da.name: da}
+
             except MissingVariableError:
                 flags[variable_name] = None
             else:
                 with xarray.set_options(keep_attrs=True):
-                    out = func(da, **extras, **(kwargs or dict()))
+                    if named_da_variable:
+                        out = func(**named_da_variable, **extras, **(kwargs or {}))
+                    else:
+                        out = func(da, **extras, **(kwargs or {}))
 
                     # Aggregation
                     if freq is not None:
@@ -671,10 +699,10 @@ def data_flags(
 
 def ecad_compliant(
     ds: xarray.Dataset,
-    dims: Union[None, str, Sequence[str]] = "all",
+    dims: None | str | Sequence[str] = "all",
     raise_flags: bool = False,
     append: bool = True,
-) -> Union[xarray.DataArray, xarray.Dataset, None]:
+) -> xarray.DataArray | xarray.Dataset | None:
     """Run ECAD compliance tests.
 
     Assert file adheres to ECAD-based quality assurance checks.
@@ -682,21 +710,21 @@ def ecad_compliant(
     Parameters
     ----------
     ds : xarray.Dataset
-      Dataset containing variables to be examined.
+        Dataset containing variables to be examined.
     dims : {"all", None} or str or a sequence of strings
-      Dimenions upon which aggregation should be performed. Default: "all".
+        Dimensions upon which aggregation should be performed. Default: ``"all"``.
     raise_flags : bool
-      Raise exception if any of the quality assessment flags are raised, otherwise returns None. Default: False.
+        Raise exception if any of the quality assessment flags are raised, otherwise returns None. Default: ``False``.
     append : bool
-      If `True`, returns the Dataset with the `ecad_qc_flag` array appended to data_vars.
-      If `False`, returns the DataArray of the `ecad_qc_flag` variable.
+        If `True`, returns the Dataset with the `ecad_qc_flag` array appended to data_vars.
+        If `False`, returns the DataArray of the `ecad_qc_flag` variable.
 
     Returns
     -------
-    Union[xarray.DataArray, xarray.Dataset]
+    xarray.DataArray or xarray.Dataset or None
     """
     flags = xarray.Dataset()
-    history = list()
+    history = []
     for var in ds.data_vars:
         df = data_flags(ds[var], ds, dims=dims)
         for flag_name, flag_data in df.data_vars.items():
@@ -723,11 +751,14 @@ def ecad_compliant(
     if raise_flags:
         if np.any([flags[dv] for dv in flags.data_vars]):
             raise DataQualityException(flags)
-        else:
-            return
+        return
 
     ecad_flag = xarray.DataArray(
-        ~reduce(np.logical_or, flags.data_vars.values()),  # noqa
+        # TODO: Test for this change concerning data of type None in dataflag variables
+        ~reduce(
+            np.logical_or,
+            filter(lambda x: x.dtype == bool, flags.data_vars.values()),  # noqa
+        ),
         name="ecad_qc_flag",
         attrs=dict(
             comment="Adheres to ECAD quality control checks.",

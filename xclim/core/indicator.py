@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# noqa: D205,D400
+# noqa: D205,D214,D400,D405,D406,D407,D411
 """
 Indicators utilities
 ====================
@@ -8,7 +7,8 @@ The `Indicator` class wraps indices computations with pre- and post-processing f
 the class runs data and metadata health checks. After computations, the class masks values that should be considered
 missing and adds metadata attributes to the  object.
 
-There are many ways to construct indicators. A good place to start is `this notebook <notebooks/extendxclim.ipynb#Defining-new-indicators>`_.
+There are many ways to construct indicators. A good place to start is
+`this notebook <notebooks/extendxclim.ipynb#Defining-new-indicators>`_.
 
 Dictionary and YAML parser
 --------------------------
@@ -28,9 +28,9 @@ details on each.
 .. code-block:: yaml
 
     module: <module name>  # Defaults to the file name
-    realm: <realm>  # If given here, applies to all indicators that do no give it.
+    realm: <realm>  # If given here, applies to all indicators that do not already provide it.
     keywords: <keywords> # Merged with indicator-specific keywords (joined with a space)
-    references: <references> # Merged with indicator-specific referencess (joined with a new line)
+    references: <references> # Merged with indicator-specific references (joined with a new line)
     base: <base indicator class>  # Defaults to "Daily" and applies to all indicators that do not give it.
     doc: <module docstring>  # Defaults to a minimal header, only valid if the module doesn't already exists.
     indicators:
@@ -40,7 +40,7 @@ details on each.
                                       # If the name startswith a '.', the base class is taken from the current module (thus an indicator declared _above_)
                                       # Available classes are listed in `xclim.core.indicator.registry` and `xclim.core.indicator.base_registry`.
 
-        # General metadata, usually parsed from the compute's docstring when possible.
+        # General metadata, usually parsed from the `compute`'s docstring when possible.
         realm: <realm>  # defaults to module-wide realm. One of "atmos", "land", "seaIce", "ocean".
         title: <title>
         abstract: <abstract>
@@ -55,7 +55,7 @@ details on each.
         allowed_periods: [<list>, <of>, <allowed>, <periods>]
 
         # Compute function
-        compute: <function name>  # Refering to a function in the passed indices module, xclim.indices.generic or xclim.indices
+        compute: <function name>  # Referring to a function in the supplied `Indices` module, xclim.indices.generic or xclim.indices
         input:  # When "compute" is a generic function this is a mapping from argument
                 # name to what CMIP6/xclim variable is expected. This will allow for
                 # declaring expected input units and have a CF metadata check on the inputs.
@@ -73,11 +73,11 @@ details on each.
       ...  # and so on.
 
 All fields are optional. Other fields found in the yaml file will trigger errors in xclim.
-In the following, the section under `<identifier>` is refered to as `data`. When creating indicators from
+In the following, the section under `<identifier>` is referred to as `data`. When creating indicators from
 a dictionary, with :py:meth:`Indicator.from_dict`, the input dict must follow the same structure of `data`.
 
-The resulting yaml file can be validated using the provided schema (in xclim/data/schema.yml) and the `yamale <https://github.com/23andMe/Yamale>`_ tool.
-See the "Extending xclim" notebook for more info.
+The resulting yaml file can be validated using the provided schema (in xclim/data/schema.yml)
+and the YAMALE tool :cite:p:`lopker_yamale_2022`. See the "Extending xclim" notebook for more info.
 
 Inputs
 ~~~~~~
@@ -86,6 +86,8 @@ the mapping of `data.input` simply links an argument name from the function give
 to one of those official variables.
 
 """
+from __future__ import annotations
+
 import re
 import warnings
 import weakref
@@ -95,26 +97,28 @@ from dataclasses import asdict, dataclass
 from functools import reduce
 from inspect import Parameter as _Parameter
 from inspect import Signature
-from inspect import _empty as _empty_default
+from inspect import _empty as _empty_default  # noqa
 from inspect import signature
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
+import xarray
 from xarray import DataArray, Dataset
 from yaml import safe_load
 
 from .. import indices
 from . import datachecks
-from .calendar import parse_offset
+from .calendar import parse_offset, select_time
 from .cfchecks import cfcheck_from_name
 from .formatting import (
     AttrFormatter,
     default_formatter,
     gen_call_string,
     generate_indicator_docstring,
+    get_percentile_metadata,
     merge_attributes,
     parse_doc,
     update_history,
@@ -126,12 +130,20 @@ from .locales import (
     load_locale,
     read_locale_file,
 )
-from .options import METADATA_LOCALES, MISSING_METHODS, MISSING_OPTIONS, OPTIONS
+from .options import (
+    CHECK_MISSING,
+    KEEP_ATTRS,
+    METADATA_LOCALES,
+    MISSING_METHODS,
+    MISSING_OPTIONS,
+    OPTIONS,
+)
 from .units import check_units, convert_units_to, declare_units, units
 from .utils import (
     VARIABLES,
     InputKind,
     MissingVariableError,
+    PercentileDataArray,
     ValidationError,
     infer_kind_from_parameter,
     load_module,
@@ -139,8 +151,8 @@ from .utils import (
 )
 
 # Indicators registry
-registry = dict()  # Main class registry
-base_registry = dict()
+registry = {}  # Main class registry
+base_registry = {}
 _indicators_registry = defaultdict(list)  # Private instance registry
 
 
@@ -157,14 +169,14 @@ class Parameter:
 
     Example
     -------
-    >>> p = Parameter(InputKind.NUMBER, default=2, description='A simple number')
-    >>> p.units is Parameter._empty # has not been set
+    >>> p = Parameter(InputKind.NUMBER, default=2, description="A simple number")
+    >>> p.units is Parameter._empty  # has not been set
     True
-    >>> 'units' in p  # Easier/retrocompatible way to test if units are set
+    >>> "units" in p  # Easier/retrocompatible way to test if units are set
     False
     >>> p.description
     'A simple number'
-    >>> p['description']  # Same as above, for convenience.
+    >>> p["description"]  # Same as above, for convenience.
     'A simple number'
     """
 
@@ -177,7 +189,7 @@ class Parameter:
     choices: set = _empty
     value: Any = _empty
 
-    def update(self, other: dict):
+    def update(self, other: dict) -> None:
         """Update a parameter's values from a dict."""
         for k, v in other.items():
             if hasattr(self, k):
@@ -186,26 +198,30 @@ class Parameter:
                 raise AttributeError(f"Unexpected parameter field '{k}'.")
 
     @classmethod
-    def is_parameter_dict(cls, other: dict):
-        return set(other.keys()).issubset(cls.__dataclass_fields__.keys())
+    def is_parameter_dict(cls, other: dict) -> bool:
+        """Return whether indicator has a parameter dictionary."""
+        return set(other.keys()).issubset(
+            cls.__dataclass_fields__.keys()
+        )  # pylint disable=no-member
 
-    # For retro-compatibility
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> str:
+        """Return an item in retro-compatible fashion."""
         try:
             return getattr(self, key)
         except AttributeError as err:
             raise KeyError(key) from err
 
-    def __contains__(self, key):
-        # To imitate previous behaviour where "units" and "choices" were missing,
-        # instead of being "_empty".
+    def __contains__(self, key) -> bool:
+        """Imitate previous behaviour where "units" and "choices" were missing, instead of being "_empty"."""
         return getattr(self, key, _empty) is not _empty
 
-    def asdict(self):
+    def asdict(self) -> dict:
+        """Format indicators as a dictionary."""
         return {k: v for k, v in asdict(self).items() if v is not _empty}
 
     @property
-    def injected(self):
+    def injected(self) -> bool:
+        """Indicate whether values are injected."""
         return self.value is not _empty
 
 
@@ -261,7 +277,7 @@ class Indicator(IndicatorRegistrar):
     in :py:data:`xclim.core.indicator.registry`.
 
     Attributes in `Indicator.cf_attrs` will be formatted and added to the output variable(s).
-    This attribute is a list of dictionaries. For convenience and retrocompatibility,
+    This attribute is a list of dictionaries. For convenience and retro-compatibility,
     standard CF attributes (names listed in :py:attr:`xclim.core.indicator.Indicator._cf_names`)
     can be passed as strings or list of strings directly to the indicator constructor.
 
@@ -308,8 +324,8 @@ class Indicator(IndicatorRegistrar):
     -----
     All subclasses created are available in the `registry` attribute and can be used to define custom subclasses
     or parse all available instances.
-
     """
+
     # Officially-supported metadata attributes on the output variables
     _cf_names = [
         "var_name",
@@ -341,6 +357,7 @@ class Indicator(IndicatorRegistrar):
     keywords = ""
     references = ""
     notes = ""
+    _version_deprecated = ""
 
     _all_parameters: Mapping[str, Parameter] = {}
     """A dictionary mapping metadata about the input parameters to the indicator.
@@ -358,7 +375,8 @@ class Indicator(IndicatorRegistrar):
     fields could also be present if the indicator was created from outside xclim.
 
     var_name:
-      Output variable(s) name(s).
+      Output variable(s) name(s). For derived single-output indicators, this field is not
+      inherited from the parent indicator and defaults to the identifier.
     standard_name:
       Variable name, must be in the CF standard names table (this is not checked).
     long_name:
@@ -412,7 +430,11 @@ class Indicator(IndicatorRegistrar):
         parameters = cls._ensure_correct_parameters(parameters)
 
         # If needed, wrap compute with declare units
-        if "compute" in kwds and not hasattr(kwds["compute"], "in_units"):
+        if (
+            "compute" in kwds
+            and not hasattr(kwds["compute"], "in_units")
+            and "_variable_mapping" in kwds
+        ):
             # We actually need the inverse mapping (to get cmip6 name -> arg name)
             inv_var_map = dict(map(reversed, kwds["_variable_mapping"].items()))
             # parameters has already been update above.
@@ -427,8 +449,8 @@ class Indicator(IndicatorRegistrar):
         # All updates done.
         kwds["_all_parameters"] = parameters
 
-        # Parse kwds to organize `cf_attrs`
-        # And before converting callables to staticmethods
+        # Parse keywords to organize `cf_attrs`
+        # And before converting callables to static methods
         kwds["cf_attrs"] = cls._parse_output_attrs(kwds, identifier)
 
         # Convert function objects to static methods.
@@ -437,16 +459,16 @@ class Indicator(IndicatorRegistrar):
                 kwds[key] = staticmethod(kwds[key])
 
         # Infer realm for built-in xclim instances
-        if cls.__module__.startswith(__package__.split(".")[0]):
+        if cls.__module__.startswith(__package__.split(".", maxsplit=1)[0]):
             xclim_realm = cls.__module__.split(".")[2]
         else:
             xclim_realm = None
 
         # Priority given to passed realm -> parent's realm -> location of the class declaration (official inds only)
         kwds.setdefault("realm", cls.realm or xclim_realm)
-        if kwds["realm"] not in ["atmos", "seaIce", "land", "ocean"]:
+        if kwds["realm"] not in ["atmos", "seaIce", "land", "ocean", "generic"]:
             raise AttributeError(
-                "Indicator's realm must be given as one of 'atmos', 'seaIce', 'land' or 'ocean'"
+                "Indicator's realm must be given as one of 'atmos', 'seaIce', 'land', 'ocean' or 'generic'"
             )
 
         # Create new class object
@@ -457,7 +479,7 @@ class Indicator(IndicatorRegistrar):
             new.__module__ = f"xclim.indicators.{kwds['module']}"
         else:
             # If the module was not forced, set the module to the base class' module.
-            # Otherwise all indicators will have module `xclim.core.indicator`.
+            # Otherwise, all indicators will have module `xclim.core.indicator`.
             new.__module__ = cls.__module__
 
         #  Add the created class to the registry
@@ -483,7 +505,8 @@ class Indicator(IndicatorRegistrar):
             params_dict.setdefault(name, {})["units"] = unit
 
         compute_sig = signature(compute)
-        # Check that the `Parameters` section of the docstring does not include parameters that are not in the `compute` function signature.
+        # Check that the `Parameters` section of the docstring does not include parameters
+        # that are not in the `compute` function signature.
         if not set(params_dict.keys()).issubset(compute_sig.parameters.keys()):
             raise ValueError(
                 f"Malformed docstring on {compute} : the parameters "
@@ -493,7 +516,8 @@ class Indicator(IndicatorRegistrar):
         for name, param in compute_sig.parameters.items():
             meta = params_dict.setdefault(name, {})
             meta["default"] = param.default
-            # Units read from compute.in_units or units passed explicitly, will be added to "meta" elsewhere in the __new__.
+            # Units read from compute.in_units or units passed explicitly,
+            # will be added to "meta" elsewhere in the __new__.
             passed_meta = passed_parameters.get(name, {})
             has_units = ("units" in meta) or (
                 isinstance(passed_meta, dict) and "units" in passed_meta
@@ -505,7 +529,7 @@ class Indicator(IndicatorRegistrar):
 
     @classmethod
     def _injected_parameters(cls):
-        """A list of tuples for arguments to inject, (name, Parameter)."""
+        """Create a list of tuples for arguments to inject, (name, Parameter)."""
         return [
             (
                 "ds",
@@ -543,21 +567,21 @@ class Indicator(IndicatorRegistrar):
             meta = parameters[new_name] = parameters.pop(old_name)
             try:
                 varmeta = VARIABLES[new_name]
-            except KeyError:
+            except KeyError as err:
                 raise ValueError(
                     f"Compute argument {old_name} was mapped to variable "
                     f"{new_name} which is not understood by xclim or CMIP6. Please"
                     " use names listed in `xclim.core.utils.VARIABLES`."
-                )
+                ) from err
             if meta.units is not _empty:
                 try:
                     check_units(varmeta["canonical_units"], meta.units)
-                except ValidationError:
+                except ValidationError as err:
                     raise ValueError(
                         "When changing the name of a variable by passing `input`, "
                         "the units dimensionality must stay the same. Got: old = "
                         f"{meta.units}, new = {varmeta['canonical_units']}"
-                    )
+                    ) from err
             meta.units = varmeta["canonical_units"]
             meta.description = varmeta["description"]
 
@@ -575,21 +599,25 @@ class Indicator(IndicatorRegistrar):
         """
         for name, meta in parameters.items():
             if not meta.injected:
-                if meta.kind <= InputKind.OPTIONAL_VARIABLE and meta.units is _empty:
-                    raise ValueError(
-                        f"Input variable {name} is missing expected units. Units are "
-                        "parsed either from the declare_units decorator or from the "
-                        "variable mapping (arg name to CMIP6 name) passed in `input`"
-                    )
+                # if meta.kind <= InputKind.OPTIONAL_VARIABLE and meta.units is _empty:
+                #     raise ValueError(
+                #         f"Input variable {name} is missing expected units. Units are "
+                #         "parsed either from the declare_units decorator or from the "
+                #         "variable mapping (arg name to CMIP6 name) passed in `input`"
+                #     )
                 if meta.kind == InputKind.OPTIONAL_VARIABLE:
                     meta.default = None
-                elif meta.kind == InputKind.VARIABLE:
+                elif meta.kind in [InputKind.VARIABLE]:
                     meta.default = name
 
         # Sort parameters : Var, Opt Var, all params, ds, injected params.
         def sortkey(kv):
             if not kv[1].injected:
-                if kv[1].kind in [0, 1, 50]:
+                if kv[1].kind in [
+                    InputKind.VARIABLE,
+                    InputKind.OPTIONAL_VARIABLE,
+                    InputKind.KWARGS,
+                ]:
                     return kv[1].kind
                 return 2
             return 99
@@ -598,16 +626,14 @@ class Indicator(IndicatorRegistrar):
 
     @classmethod
     def _parse_output_attrs(
-        cls, kwds: Dict[str, Any], identifier: str
-    ) -> List[Dict[str, Union[str, Callable]]]:
+        cls, kwds: dict[str, Any], identifier: str
+    ) -> list[dict[str, str | Callable]]:
         """CF-compliant metadata attributes for all output variables."""
         parent_cf_attrs = cls.cf_attrs
         cf_attrs = kwds.get("cf_attrs")
         if isinstance(cf_attrs, dict):
             # Single output indicator, but we store as a list anyway.
             cf_attrs = [cf_attrs]
-        elif cf_attrs is None and parent_cf_attrs:
-            cf_attrs = deepcopy(parent_cf_attrs)
         elif cf_attrs is None:
             # Attributes were passed the "old" way, with lists or strings directly (only _cf_names)
             # We need to get the number of outputs first, defaulting to the length of parent's cf_attrs or 1
@@ -618,12 +644,12 @@ class Indicator(IndicatorRegistrar):
                     n_outs = len(arg)
 
             # Populate new cf_attrs from parsing cf_names passed directly.
-            cf_attrs = [{} for i in range(n_outs)]
+            cf_attrs = [{} for _ in range(n_outs)]
             for name in cls._cf_names:
                 values = kwds.pop(name, None)
                 if values is None:  # None passed, skip
                     continue
-                elif not isinstance(values, (tuple, list)):
+                if not isinstance(values, (tuple, list)):
                     # a single string or callable, same for all outputs
                     values = [values] * n_outs
                 elif len(values) != n_outs:  # A sequence of the wrong length.
@@ -631,11 +657,11 @@ class Indicator(IndicatorRegistrar):
                         f"Attribute {name} has {len(values)} elements but should xclim expected {n_outs}."
                     )
                 for attrs, value in zip(cf_attrs, values):
-                    if value:  # Skip the empty ones (None or '')
+                    if value:  # Skip the empty ones (None or "")
                         attrs[name] = value
         # else we assume a list of dicts
 
-        # For single output, var_name defauls to identifer.
+        # For single output, var_name defaults to identifier.
         if len(cf_attrs) == 1 and "var_name" not in cf_attrs[0]:
             cf_attrs[0]["var_name"] = identifier
 
@@ -657,7 +683,7 @@ class Indicator(IndicatorRegistrar):
         cls,
         data: dict,
         identifier: str,
-        module: Optional[str] = None,
+        module: str | None = None,
     ):
         """Create an indicator subclass and instance from a dictionary of parameters.
 
@@ -665,7 +691,7 @@ class Indicator(IndicatorRegistrar):
 
         - "base" : A subclass of Indicator or a name of one listed in
           :py:data:`xclim.core.indicator.registry` or
-          :py:data:`xclim.core.indicaotr.base_registry`. When passed, it acts as if
+          :py:data:`xclim.core.indicator.base_registry`. When passed, it acts as if
           `from_dict` was called on that class instead.
         - "compute" : A string function name translates to a
           :py:mod:`xclim.indices.generic` or :py:mod:`xclim.indices` function.
@@ -683,9 +709,9 @@ class Indicator(IndicatorRegistrar):
         data = data.copy()
         if "base" in data:
             if isinstance(data["base"], str):
-                cls = registry.get(
-                    data["base"].upper(), base_registry.get(data["base"])
-                )
+                parts = data["base"].split(".")
+                registry_id = ".".join([*parts[:-1], parts[-1].upper()])
+                cls = registry.get(registry_id, base_registry.get(data["base"]))
                 if cls is None:
                     raise ValueError(
                         f"Requested base class {data['base']} is neither in the "
@@ -724,13 +750,16 @@ class Indicator(IndicatorRegistrar):
         self.__doc__ = generate_indicator_docstring(self)
 
     def _gen_signature(self):
-        """Generates the correct signature."""
+        """Generate the correct signature."""
         # Update call signature
         variables = []
         parameters = []
         compute_sig = signature(self.compute)
         for name, meta in self.parameters.items():
-            if meta.kind <= InputKind.OPTIONAL_VARIABLE:
+            if meta.kind in [
+                InputKind.VARIABLE,
+                InputKind.OPTIONAL_VARIABLE,
+            ]:
                 annot = Union[DataArray, str]
                 if meta.kind == InputKind.OPTIONAL_VARIABLE:
                     annot = Optional[annot]
@@ -768,10 +797,26 @@ class Indicator(IndicatorRegistrar):
 
     def __call__(self, *args, **kwds):
         """Call function of Indicator class."""
-        # Put the variables in `das`, parse them according to the annotations
-        # das : OrderedDict of variables (required + non-None optionals)
-        # params : OrderedDict of parameters (var_kwargs as a single argument, if any)
+        # Put the variables in `das`, parse them according to the following annotations:
+        #     das : OrderedDict of variables (required + non-None optionals)
+        #     params : OrderedDict of parameters (var_kwargs as a single argument, if any)
+
+        if self._version_deprecated:
+            self._show_deprecation_warning()  # noqa
+
         das, params = self._parse_variables_from_call(args, kwds)
+
+        if OPTIONS[KEEP_ATTRS] is True or (
+            OPTIONS[KEEP_ATTRS] == "xarray"
+            and xarray.core.options._get_keep_attrs(False)
+        ):
+            out_attrs = xarray.core.merge.merge_attrs(
+                [da.attrs for da in das.values()], "drop_conflicts"
+            )
+            out_attrs.pop("units", None)
+        else:
+            out_attrs = {}
+        out_attrs = [out_attrs.copy() for i in range(self.n_outs)]
 
         das, params = self._preprocess_and_checks(das, params)
 
@@ -788,7 +833,9 @@ class Indicator(IndicatorRegistrar):
                 var_kwargs = params[nm]
             elif nm not in compute_das and nm in params:
                 kwargs[nm] = params[nm]
-        outs = self.compute(**compute_das, **kwargs, **var_kwargs)
+
+        with xarray.set_options(keep_attrs=False):
+            outs = self.compute(**compute_das, **kwargs, **var_kwargs)
 
         if isinstance(outs, DataArray):
             outs = [outs]
@@ -801,15 +848,15 @@ class Indicator(IndicatorRegistrar):
 
         # Metadata attributes from templates
         var_id = None
-        cf_attrs = []
-        for attrs in self.cf_attrs:
+        for out, attrs, base_attrs in zip(outs, out_attrs, self.cf_attrs):
             if self.n_outs > 1:
-                var_id = attrs["var_name"]
-            cf_attrs.append(
+                var_id = base_attrs["var_name"]
+            attrs.update(units=out.units)
+            attrs.update(
                 self._update_attrs(
                     params.copy(),
                     das,
-                    attrs,
+                    base_attrs,
                     names=self._cf_names,
                     var_id=var_id,
                 )
@@ -817,24 +864,24 @@ class Indicator(IndicatorRegistrar):
 
         # Convert to output units
         outs = [
-            convert_units_to(out, attrs.get("units", ""), self.context)
-            for out, attrs in zip(outs, cf_attrs)
+            convert_units_to(out, attrs["units"], self.context)
+            for out, attrs in zip(outs, out_attrs)
         ]
 
+        outs = self._postprocess(outs, das, params)
+
         # Update variable attributes
-        for out, attrs in zip(outs, cf_attrs):
+        for out, attrs in zip(outs, out_attrs):
             var_name = attrs.pop("var_name")
             out.attrs.update(attrs)
             out.name = var_name
-
-        outs = self._postprocess(outs, das, params)
 
         # Return a single DataArray in case of single output, otherwise a tuple
         if self.n_outs == 1:
             return outs[0]
         return tuple(outs)
 
-    def _parse_variables_from_call(self, args, kwds):
+    def _parse_variables_from_call(self, args, kwds) -> (OrderedDict, dict):
         """Extract variable and optional variables from call arguments."""
         # Bind call arguments to `compute` arguments and set defaults.
         ba = self.__signature__.bind(*args, **kwds)
@@ -849,7 +896,10 @@ class Indicator(IndicatorRegistrar):
         for name, param in self._all_parameters.items():
             if not param.injected:
                 # If a variable pop the arg
-                if param.kind <= InputKind.OPTIONAL_VARIABLE:
+                if PercentileDataArray.is_compatible(params[name]):
+                    # duplicate percentiles DA in both das and params
+                    das[name] = params[name]
+                elif param.kind in [InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE]:
                     data = params.pop(name)
                     # If a non-optional variable OR None, store the arg
                     if param.kind == InputKind.VARIABLE or data is not None:
@@ -869,11 +919,11 @@ class Indicator(IndicatorRegistrar):
                 if ds is not None:
                     try:
                         ba.arguments[name] = ds[ba.arguments[name]]
-                    except KeyError:
+                    except KeyError as err:
                         raise MissingVariableError(
                             f"For input '{name}', variable '{ba.arguments[name]}' "
                             "was not found in the input dataset."
-                        )
+                        ) from err
                 else:
                     raise ValueError(
                         "Passing variable names as string requires giving the `ds` "
@@ -927,10 +977,10 @@ class Indicator(IndicatorRegistrar):
     def _get_translated_metadata(
         cls, locale, var_id=None, names=None, append_locale_name=True
     ):
-        """Get raw translated metadata for the curent indicator and a given locale.
+        """Get raw translated metadata for the current indicator and a given locale.
 
         All available translated metadata from the current indicator and those it is
-        based on are merged, with highest priority to the current one.
+        based on are merged, with the highest priority set to the current one.
         """
         var_id = var_id or ""
         if var_id:
@@ -950,8 +1000,7 @@ class Indicator(IndicatorRegistrar):
             append_locale_name=append_locale_name,
         )
 
-    @classmethod
-    def _update_attrs(cls, args, das, attrs, var_id=None, names=None):
+    def _update_attrs(self, args, das, attrs, var_id=None, names=None):
         """Format attributes with the run-time values of `compute` call parameters.
 
         Cell methods and history attributes are updated, adding to existing values.
@@ -980,11 +1029,11 @@ class Indicator(IndicatorRegistrar):
           Attributes with {} expressions replaced by call argument values. With updated `cell_methods` and `history`.
           `cell_methods` is not added if `names` is given and those not contain `cell_methods`.
         """
-        out = cls._format(attrs, args)
+        out = self._format(attrs, args)
         for locale in OPTIONS[METADATA_LOCALES]:
             out.update(
-                cls._format(
-                    cls._get_translated_metadata(
+                self._format(
+                    self._get_translated_metadata(
                         locale, var_id=var_id, names=names or list(attrs.keys())
                     ),
                     args=args,
@@ -1006,18 +1055,24 @@ class Indicator(IndicatorRegistrar):
         # different order than the real function (but order doesn't really matter with keywords).
         kwargs = OrderedDict(**das)
         for k, v in args.items():
-            if cls._all_parameters[k].kind == InputKind.KWARGS:
+            if self._all_parameters[k].injected:
+                continue
+            if self._all_parameters[k].kind == InputKind.KWARGS:
                 kwargs.update(**v)
-            elif cls._all_parameters[k].kind != InputKind.DATASET:
+            elif self._all_parameters[k].kind != InputKind.DATASET:
                 kwargs[k] = v
+
         attrs["history"] = update_history(
-            gen_call_string(cls._registry_id, **kwargs),
+            self._history_string(**kwargs),
             new_name=out.get("var_name"),
             **das,
         )
 
         attrs.update(out)
         return attrs
+
+    def _history_string(self, **kwargs):
+        return gen_call_string(self._registry_id, **kwargs)
 
     @staticmethod
     def _check_identifier(identifier: str) -> None:
@@ -1030,20 +1085,18 @@ class Indicator(IndicatorRegistrar):
             )
 
     @classmethod
-    def translate_attrs(
-        cls, locale: Union[str, Sequence[str]], fill_missing: bool = True
-    ):
-        """Return a dictionary of unformated translated translatable attributes.
+    def translate_attrs(cls, locale: str | Sequence[str], fill_missing: bool = True):
+        """Return a dictionary of unformatted translated translatable attributes.
 
         Translatable attributes are defined in :py:const:`xclim.core.locales.TRANSLATABLE_ATTRS`.
 
         Parameters
         ----------
-        locale : Union[str, Sequence[str]]
-            The POSIX name of the locale or a tuple of a locale name and a path to a
-            json file defining the translations. See `xclim.locale` for details.
+        locale : str or sequence of str
+          The POSIX name of the locale or a tuple of a locale name and a path to a
+          json file defining the translations. See `xclim.locale` for details.
         fill_missing : bool
-            If True (default fill the missing attributes by their english values.
+           If True (default) fill the missing attributes by their english values.
         """
 
         def _translate(cf_attrs, names, var_id=None):
@@ -1086,8 +1139,8 @@ class Indicator(IndicatorRegistrar):
         Parameters
         ----------
         args : mapping, optional
-            Arguments as passed to the call method of the indicator.
-            If not given, the default arguments will be used when formatting the attributes.
+          Arguments as passed to the call method of the indicator.
+          If not given, the default arguments will be used when formatting the attributes.
 
         Notes
         -----
@@ -1126,7 +1179,7 @@ class Indicator(IndicatorRegistrar):
         attrs: dict,
         args: dict = None,
         formatter: AttrFormatter = default_formatter,
-    ):
+    ) -> dict:
         """Format attributes including {} tags with arguments.
 
         Parameters
@@ -1136,6 +1189,11 @@ class Indicator(IndicatorRegistrar):
         args : dict, optional
           Function call arguments. If not given, the default arguments will be used when formatting the attributes.
         formatter : AttrFormatter
+          Plaintext mappings for indicator attributes.
+
+        Returns
+        -------
+        dict
         """
         # Use defaults
         if args is None:
@@ -1149,9 +1207,9 @@ class Indicator(IndicatorRegistrar):
         # Add formatting {} around values to be able to replace them with _attrs_mapping using format.
         for k, v in args.items():
             if isinstance(v, units.Quantity):
-                mba[k] = "{:g~P}".format(v)
+                mba[k] = f"{v:g~P}"
             elif isinstance(v, (int, float)):
-                mba[k] = "{:g}".format(v)
+                mba[k] = f"{v:g}"
             # TODO: What about InputKind.NUMBER_SEQUENCE
             elif k == "indexer":
                 if v and v not in [_empty, _empty_default]:
@@ -1163,9 +1221,10 @@ class Indicator(IndicatorRegistrar):
                     mba["indexer"] = dv
                 else:
                     mba["indexer"] = args.get("freq") or "YS"
+            elif PercentileDataArray.is_compatible(v):
+                mba.update(get_percentile_metadata(v, k))
             else:
                 mba[k] = v
-
         out = {}
         for key, val in attrs.items():
             if callable(val):
@@ -1214,13 +1273,23 @@ class Indicator(IndicatorRegistrar):
         * assert no temperature has the same value 5 days in a row
 
         This base datacheck checks that the input data has a valid sampling frequency, as given in self.src_freq.
+        If there are multiple inputs, it also checks if they all have the same frequency and the same anchor.
         """
         if self.src_freq is not None:
             for key, da in das.items():
                 if "time" in da.coords and da.time.ndim == 1 and len(da.time) > 3:
                     datachecks.check_freq(da, self.src_freq, strict=True)
 
+            datachecks.check_common_time(
+                [
+                    da
+                    for da in das.values()
+                    if "time" in da.coords and da.time.ndim == 1 and len(da.time) > 3
+                ]
+            )
+
     def __getattr__(self, attr):
+        """Return the attribute."""
         if attr in self._cf_names:
             out = [meta.get(attr, "") for meta in self.cf_attrs]
             if len(out) == 1:
@@ -1230,11 +1299,12 @@ class Indicator(IndicatorRegistrar):
 
     @property
     def n_outs(self):
+        """Return the length of all cf_attrs."""
         return len(self.cf_attrs)
 
     @property
     def parameters(self):
-        """Dictionary of controlable parameters.
+        """Create a dictionary of controllable parameters.
 
         Similar to :py:attr:`Indicator._all_parameters`, but doesn't include injected parameters.
         """
@@ -1246,7 +1316,7 @@ class Indicator(IndicatorRegistrar):
 
     @property
     def injected_parameters(self):
-        """Dictionary of injected parameters.
+        """Return a dictionary of all injected parameters.
 
         Opposite of :py:meth:`Indicator.parameters`.
         """
@@ -1255,6 +1325,14 @@ class Indicator(IndicatorRegistrar):
             for name, param in self._all_parameters.items()
             if param.injected
         }
+
+    def _show_deprecation_warning(self):
+        warnings.warn(
+            f"`{self.title}` is deprecated as of xclim v{self._version_deprecated}. "
+            f"See the xclim release notes for more information.",
+            DeprecationWarning,
+            stacklevel=3,
+        )
 
 
 class ResamplingIndicator(Indicator):
@@ -1320,6 +1398,20 @@ class ResamplingIndicator(Indicator):
 
         return das, params
 
+    def _history_string(self, **kwargs):
+        if self.missing == "from_context":
+            missing = OPTIONS[CHECK_MISSING]
+        else:
+            missing = self.missing
+        opt_str = f" with options check_missing={missing}"
+
+        if missing != "skip":
+            mopts = self.missing_options or OPTIONS[MISSING_OPTIONS].get(missing)
+            if mopts:
+                opt_str += f", missing_options={mopts}"
+
+        return super()._history_string(**kwargs) + opt_str
+
     def _postprocess(self, outs, das, params):
         """Masking of missing values."""
         outs = super()._postprocess(outs, das, params)
@@ -1369,13 +1461,14 @@ class ResamplingIndicatorWithIndexing(ResamplingIndicator):
             )
         ]
 
-    def _preprocess_and_checks(self, das, params):
+    def _preprocess_and_checks(self, das: dict[str, DataArray], params: dict[str, Any]):
         """Perform parent's checks and also check if freq is allowed."""
         das, params = super()._preprocess_and_checks(das, params)
 
         indxr = params.get("indexer")
         if indxr:
-            das = {k: indices.generic.select_time(da, **indxr) for k, da in das.items()}
+            for k, da in filter(lambda kda: "time" in kda[1].coords, das.items()):
+                das.update({k: select_time(da, **indxr)})
         return das, params
 
 
@@ -1399,12 +1492,13 @@ base_registry["Daily"] = Daily
 
 
 def add_iter_indicators(module):
+    """Create an iterable of loaded indicators."""
     if not hasattr(module, "iter_indicators"):
 
         def iter_indicators():
-            for indname, ind in module.__dict__.items():
+            for ind_name, ind in module.__dict__.items():
                 if isinstance(ind, Indicator):
-                    yield indname, ind
+                    yield ind_name, ind
 
         iter_indicators.__doc__ = f"Iterate over the (name, indicator) pairs in the {module.__name__} indicator module."
 
@@ -1414,11 +1508,11 @@ def add_iter_indicators(module):
 def build_indicator_module(
     name: str,
     objs: Mapping[str, Indicator],
-    doc: Optional[str] = None,
+    doc: str | None = None,
 ) -> ModuleType:
     """Create or update a module from imported objects.
 
-    The module is inserted as a submodule of `xclim.indicators`.
+    The module is inserted as a submodule of :py:mod:`xclim.indicators`.
 
     Parameters
     ----------
@@ -1458,16 +1552,17 @@ def build_indicator_module(
 
 def build_indicator_module_from_yaml(
     filename: PathLike,
-    name: Optional[str] = None,
-    indices: Optional[Union[Mapping[str, Callable], ModuleType]] = None,
-    translations: Optional[Mapping[str, dict]] = None,
+    name: str | None = None,
+    indices: Mapping[str, Callable] | ModuleType | PathLike | None = None,
+    translations: dict[str, dict | PathLike] | None = None,
     mode: str = "raise",
     encoding: str = "UTF8",
 ) -> ModuleType:
     """Build or extend an indicator module from a YAML file.
 
-    The module is inserted as a submodule of `xclim.indicators`. When given only a base filename (no 'yml' extesion), this
-    tries to find custom indices in a module of the same name (*.py) and translations in json files (*.<lang>.json), see Notes.
+    The module is inserted as a submodule of :py:mod:`xclim.indicators`.
+    When given only a base filename (no 'yml' extension), this tries to find custom indices in a module
+    of the same name (*.py) and translations in json files (*.<lang>.json), see Notes.
 
     Parameters
     ----------
@@ -1476,12 +1571,14 @@ def build_indicator_module_from_yaml(
     name: str, optional
       The name of the new or existing module, defaults to the basename of the file.
       (e.g: `atmos.yml` -> `atmos`)
-    indices : Mapping of callables or module, optional
-      A mapping or module of indice functions. When creating the indicator, the name in the `index_function` field is
-      first sought here, then in xclim.indices.generic and finally in xclim.indices.
-    translations  : Mapping of dicts, optional
+    indices : Mapping of callables or module or path, optional
+      A mapping or module of indice functions or a python file declaring such a file.
+      When creating the indicator, the name in the `index_function` field is first sought
+      here, then the indicator class will search in xclim.indices.generic and finally in xclim.indices.
+    translations  : Mapping of dicts or path, optional
       Translated metadata for the new indicators. Keys of the mapping must be 2-char language tags.
-      See Notes and :ref:`Internationalization` for more details.
+      Values can be translations dictionaries as defined in :ref:`internationalization:Internationalization`.
+      They can also be a path to a json file defining the translations.
     mode: {'raise', 'warn', 'ignore'}
       How to deal with broken indice definitions.
     encoding: str
@@ -1491,7 +1588,7 @@ def build_indicator_module_from_yaml(
     Returns
     -------
     ModuleType
-      A submodule of `xclim.indicators`.
+      A submodule of `pym:mod:`xclim.indicators`.
 
     Notes
     -----
@@ -1506,9 +1603,11 @@ def build_indicator_module_from_yaml(
         - `example.fr.json` : French translations
         - `example.tlh.json` : Klingon translations.
 
-    See also
+    See Also
     --------
-    The doc of :py:mod:`xclim.core.indicator` and of :py:func:`build_module`.
+    xclim.core.indicator
+
+    build_module
     """
     filepath = Path(filename)
 
@@ -1530,21 +1629,33 @@ def build_indicator_module_from_yaml(
     )
     doc = yml.get("doc")
 
-    # When given as a stem, we try to load indices and translations
-    if not filepath.suffix:
-        if indices is None:
-            try:
-                indices = load_module(filepath.with_suffix(".py"))
-            except ModuleNotFoundError:
-                pass
+    if (
+        not filepath.suffix
+        and indices is None
+        and (indfile := filepath.with_suffix(".py")).is_file()
+    ):
+        # No suffix means we try to automatically detect the python file
+        indices = indfile
 
-        if translations is None:
-            translations = {}
-            for locfile in filepath.parent.glob(filepath.stem + ".*.json"):
-                locale = locfile.suffixes[0][1:]
-                translations[locale] = read_locale_file(
-                    locfile, module=module_name, encoding=encoding
-                )
+    if isinstance(indices, (str, Path)):
+        indices = load_module(indices, name=module_name)
+
+    if not filepath.suffix and translations is None:
+        # No suffix mean we try to automatically detect the json files.
+        translations = {}
+        for locfile in filepath.parent.glob(f"{filepath.stem}.*.json"):
+            locale = locfile.suffixes[0][1:]
+            translations[locale] = read_locale_file(
+                locfile, module=module_name, encoding=encoding
+            )
+    elif translations is not None:
+        # A mapping was passed, we read paths is any.
+        translations = {
+            lng: read_locale_file(trans, module=module_name, encoding=encoding)
+            if isinstance(trans, (str, Path))
+            else trans
+            for lng, trans in translations.items()
+        }
 
     # Module-wide default values for some attributes
     defkwargs = {
@@ -1602,7 +1713,7 @@ def build_indicator_module_from_yaml(
                 data, identifier=identifier, module=module_name
             )
 
-        except Exception as err:
+        except Exception as err:  # pylint: disable=broad-except
             raise_warn_or_log(
                 err, mode, msg=f"Constructing {identifier} failed with {err!r}"
             )
@@ -1612,7 +1723,7 @@ def build_indicator_module_from_yaml(
 
     # If there are translations, load them
     if translations:
-        for locale, locdict in translations.items():
-            load_locale(locdict, locale)
+        for locale, loc_dict in translations.items():
+            load_locale(loc_dict, locale)
 
     return mod

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # noqa: D205,D400
 """
 Calendar handling utilities
@@ -6,9 +5,10 @@ Calendar handling utilities
 
 Helper function to handle dates, times and different calendars with xarray.
 """
+from __future__ import annotations
+
 import datetime as pydt
-import re
-from typing import Any, Optional, Sequence, Tuple, Union
+from typing import Any, Sequence
 
 import cftime
 import numpy as np
@@ -21,16 +21,45 @@ from xarray.coding.cftime_offsets import (
     QuarterEnd,
     YearBegin,
     YearEnd,
+    to_cftime_datetime,
     to_offset,
 )
 from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core.resample import DataArrayResample
 
-from xclim.core.formatting import update_xclim_history
-from xclim.core.utils import DayOfYearStr, calc_perc
+from xclim.core.utils import DayOfYearStr, PercentileDataArray, uses_dask
 
-# cftime and datetime classes to use for each calendar name
-datetime_classes = {"default": pydt.datetime, **cftime._cftime.DATE_TYPES}  # noqa
+from .formatting import update_xclim_history
+
+__all__ = [
+    "DayOfYearStr",
+    "adjust_doy_calendar",
+    "cfindex_end_time",
+    "cfindex_start_time",
+    "cftime_end_time",
+    "cftime_start_time",
+    "climatological_mean_doy",
+    "compare_offsets",
+    "convert_calendar",
+    "date_range",
+    "date_range_like",
+    "datetime_to_decimal_year",
+    "days_in_year",
+    "days_since_to_doy",
+    "doy_to_days_since",
+    "ensure_cftime_array",
+    "get_calendar",
+    "interp_calendar",
+    "max_doy",
+    "parse_offset",
+    "percentile_doy",
+    "resample_doy",
+    "select_time",
+    "time_bnds",
+    "within_bnds_doy",
+    "uniform_calendars",
+    "build_climatology_bounds",
+]
 
 # Maximum day of year in each calendar.
 max_doy = {
@@ -46,8 +75,29 @@ max_doy = {
     "360_day": 360,
 }
 
+# Some xclim.core.utils functions made accessible here for backwards compatibility reasons.
+datetime_classes = {"default": pydt.datetime, **cftime._cftime.DATE_TYPES}  # noqa
+
 # Names of calendars that have the same number of days for all years
 uniform_calendars = ("noleap", "all_leap", "365_day", "366_day", "360_day")
+
+
+def days_in_year(year: int, calendar: str = "default") -> int:
+    """Return the number of days in the input year according to the input calendar."""
+    return (
+        (datetime_classes[calendar](year + 1, 1, 1) - pydt.timedelta(days=1))
+        .timetuple()
+        .tm_yday
+    )
+
+
+def date_range(
+    *args, calendar: str = "default", **kwargs
+) -> pd.DatetimeIndex | CFTimeIndex:
+    """Wrap pd.date_range (if calendar == 'default') or xr.cftime_range (otherwise)."""
+    if calendar == "default":
+        return pd.date_range(*args, **kwargs)
+    return xr.cftime_range(*args, calendar=calendar, **kwargs)
 
 
 def get_calendar(obj: Any, dim: str = "time") -> str:
@@ -95,13 +145,62 @@ def get_calendar(obj: Any, dim: str = "time") -> str:
     raise ValueError(f"Calendar could not be inferred from object of type {type(obj)}.")
 
 
+def common_calendar(calendars: Sequence[str], join="outer") -> str:
+    """Return a calendar common to all calendars from a list.
+
+    Uses the hierarchy: 360_day < noleap < standard < all_leap.
+    Returns "default" only if all calendars are "default."
+
+    Parameters
+    ----------
+    calendars: Sequence of string
+      List of calendar names.
+    join : {'inner', 'outer'}
+      The criterion for the common calendar.
+
+      - 'outer': the common calendar is the smallest calendar (in number of days by year)
+                 that will include all the dates of the other calendars. When converting
+                 the data to this calendar, no timeseries will lose elements, but some
+                 might be missing (gaps or NaNs in the series).
+      - 'inner': the common calender is the smallest calendar of the list. When converting
+                 the data to this calendar, no timeseries will have missing elements (no gaps or NaNs),
+                 but some might be dropped.
+
+    Examples
+    --------
+    >>> common_calendar(["360_day", "noleap", "default"], join="outer")
+    'standard'
+    >>> common_calendar(["360_day", "noleap", "default"], join="inner")
+    '360_day'
+    """
+    if all(cal == "default" for cal in calendars):
+        return "default"
+
+    trans = {
+        "proleptic_gregorian": "standard",
+        "gregorian": "standard",
+        "default": "standard",
+        "366_day": "all_leap",
+        "365_day": "noleap",
+        "julian": "standard",
+    }
+    ranks = {"360_day": 0, "noleap": 1, "standard": 2, "all_leap": 3}
+    calendars = sorted([trans.get(cal, cal) for cal in calendars], key=ranks.get)
+
+    if join == "outer":
+        return calendars[-1]
+    if join == "inner":
+        return calendars[0]
+    raise NotImplementedError(f"Unknown join criterion `{join}`.")
+
+
 def convert_calendar(
-    source: Union[xr.DataArray, xr.Dataset],
-    target: Union[xr.DataArray, str],
-    align_on: Optional[str] = None,
-    missing: Optional[Any] = None,
+    source: xr.DataArray | xr.Dataset,
+    target: xr.DataArray | str,
+    align_on: str | None = None,
+    missing: Any | None = None,
     dim: str = "time",
-) -> Union[xr.DataArray, xr.Dataset]:
+) -> xr.DataArray | xr.Dataset:
     """Convert a DataArray/Dataset to another calendar using the specified method.
 
     Only converts the individual timestamps, does not modify any data except in dropping invalid/surplus dates or inserting missing dates.
@@ -117,15 +216,15 @@ def convert_calendar(
 
     Parameters
     ----------
-    source : xr.DataArray
+    source : xr.DataArray or xr.Dataset
       Input array/dataset with a time coordinate of a valid dtype (datetime64 or a cftime.datetime).
-    target : Union[xr.DataArray, str]
+    target : xr.DataArray or str
       Either a calendar name or the 1D time coordinate to convert to.
       If an array is provided, the output will be reindexed using it and in that case, days in `target`
       that are missing in the converted `source` are filled by `missing` (which defaults to NaN).
     align_on : {None, 'date', 'year', 'random'}
       Must be specified when either source or target is a `360_day` calendar, ignored otherwise. See Notes.
-    missing : Optional[any]
+    missing : Any, optional
       A value to use for filling in dates in the target that were missing in the source.
       If `target` is a string, default (None) is not to fill values. If it is an array, default is to fill with NaN.
     dim : str
@@ -133,7 +232,7 @@ def convert_calendar(
 
     Returns
     -------
-    Union[xr.DataArray, xr.Dataset]
+    xr.DataArray or xr.Dataset
       Copy of source with the time coordinate converted to the target calendar.
       If `target` is given as an array, the output is reindexed to it, with fill value `missing`.
       If `target` was a string and `missing` was None (default), invalid dates in the new calendar are dropped, but missing dates are not inserted.
@@ -148,7 +247,7 @@ def convert_calendar(
       The dates are translated according to their rank in the year (dayofyear), ignoring their original month and day information,
       meaning that the missing/surplus days are added/removed at regular intervals.
 
-      From a `360_day` to a standard calendar, the output will be missing the following dates (day of year in parenthesis):
+      From a `360_day` to a standard calendar, the output will be missing the following dates (day of year in parentheses):
         To a leap year:
           January 31st (31), March 31st (91), June 1st (153), July 31st (213), September 31st (275) and November 30th (335).
         To a non-leap year:
@@ -176,13 +275,13 @@ def convert_calendar(
       the source and target years, here 5 days are chosen randomly, one for each fifth
       of the year. However, February 29th is always missing when converting to a leap year,
       or its value is dropped when converting from a leap year. This is similar to method
-      used in the [LOCA]_ dataset.
+      used in the :cite:t:`pierce_statistical_2014` dataset.
 
       This option best used on daily data.
 
     References
     ----------
-    .. [LOCA] Pierce, D. W., D. R. Cayan, and B. L. Thrasher, 2014: Statistical downscaling using Localized Constructed Analogs (LOCA). Journal of Hydrometeorology, volume 15, page 2558-2585
+    :cite:cts:`pierce_statistical_2014`
 
     Examples
     --------
@@ -190,14 +289,14 @@ def convert_calendar(
     passed with `missing`. In order to fill the missing dates with interpolation, one
     can simply use xarray's method:
 
-    >>> tas_nl = convert_calendar(tas, 'noleap')  # For the example
-    >>> with_missing = convert_calendar(tas_nl, 'standard', missing=np.NaN)
-    >>> out = with_missing.interpolate_na('time', method='linear')
+    >>> tas_nl = convert_calendar(tas, "noleap")  # For the example
+    >>> with_missing = convert_calendar(tas_nl, "standard", missing=np.NaN)
+    >>> out = with_missing.interpolate_na("time", method="linear")
 
     Here, if Nans existed in the source data, they will be interpolated too. If that is,
     for some reason, not wanted, the workaround is to do:
 
-    >>> mask = convert_calendar(tas_nl, 'standard').notnull()
+    >>> mask = convert_calendar(tas_nl, "standard").notnull()
     >>> out2 = out.where(mask)
     """
     cal_src = get_calendar(source, dim=dim)
@@ -296,10 +395,10 @@ def convert_calendar(
 
 
 def interp_calendar(
-    source: Union[xr.DataArray, xr.Dataset],
+    source: xr.DataArray | xr.Dataset,
     target: xr.DataArray,
     dim: str = "time",
-) -> Union[xr.DataArray, xr.Dataset]:
+) -> xr.DataArray | xr.Dataset:
     """Interpolates a DataArray/Dataset to another calendar based on decimal year measure.
 
     Each timestamp in source and target are first converted to their decimal year equivalent
@@ -311,7 +410,7 @@ def interp_calendar(
 
     Parameters
     ----------
-    source: Union[xr.DataArray, xr.Dataset]
+    source: xr.DataArray or xr.Dataset
       The source data to interpolate, must have a time coordinate of a valid dtype (np.datetime64 or cftime objects)
     target: xr.DataArray
       The target time coordinate of a valid dtype (np.datetime64 or cftime objects)
@@ -320,7 +419,7 @@ def interp_calendar(
 
     Return
     ------
-    Union[xr.DataArray, xr.Dataset]
+    xr.DataArray or xr.Dataset
       The source interpolated on the decimal years of target,
     """
     cal_src = get_calendar(source, dim=dim)
@@ -334,130 +433,23 @@ def interp_calendar(
     return out
 
 
-def date_range(
-    *args, calendar: str = "default", **kwargs
-) -> Union[pd.DatetimeIndex, CFTimeIndex]:
-    """Wrap pd.date_range (if calendar == 'default') or xr.cftime_range (otherwise)."""
-    if calendar == "default":
-        return pd.date_range(*args, **kwargs)
-    return xr.cftime_range(*args, calendar=calendar, **kwargs)
-
-
-def date_range_like(source: xr.DataArray, calendar: str) -> xr.DataArray:
-    """Generate a datetime array with the same frequency, start and end as another one, but in a different calendar.
-
-    Parameters
-    ----------
-    source : xr.DataArray
-      1D datetime coordinate DataArray
-    calendar : str
-      New calendar name.
-
-    Raises
-    ------
-    ValueError
-      If the source's frequency was not found.
-
-    Returns
-    -------
-    xr.DataArray
-      1D datetime coordinate with the same start, end and frequency as the source, but in the new calendar.
-        The start date is assumed to exist in the target calendar.
-        If the end date doesn't exist, the code tries 1 and 2 calendar days before.
-        Exception when the source is in 360_day and the end of the range is the 30th of a 31-days month,
-        then the 31st is appended to the range.
-    """
-    freq = xr.infer_freq(source)
-    if freq is None:
-        raise ValueError(
-            "`date_range_like` was unable to generate a range as the source frequency was not inferrable."
-        )
-
-    src_cal = get_calendar(source)
-    if src_cal == calendar:
-        return source
-
-    index = source.indexes[source.dims[0]]
-    end_src = index[-1]
-    end = _convert_datetime(end_src, calendar=calendar)
-    if end is np.nan:  # Day is invalid, happens at the end of months.
-        end = _convert_datetime(end_src.replace(day=end_src.day - 1), calendar=calendar)
-        if end is np.nan:  # Still invalid : 360_day to non-leap february.
-            end = _convert_datetime(
-                end_src.replace(day=end_src.day - 2), calendar=calendar
-            )
-    if src_cal == "360_day" and end_src.day == 30 and end.daysinmonth == 31:
-        # For the specific case of daily data from 360_day source, the last day is expected to be "missing"
-        end = end.replace(day=31)
-
-    return xr.DataArray(
-        date_range(
-            _convert_datetime(index[0], calendar=calendar),
-            end,
-            freq=freq,
-            calendar=calendar,
-        ),
-        dims=source.dims,
-        name=source.dims[0],
-    )
-
-
-def _convert_datetime(
-    datetime: Union[pydt.datetime, cftime.datetime],
-    new_doy: Optional[Union[float, int]] = None,
-    calendar: str = "default",
-) -> Union[cftime.datetime, pydt.datetime, float]:
-    """Convert a datetime object to another calendar.
-
-    Nanosecond information are lost as cftime.datetime doesn't support them.
-
-    Parameters
-    ----------
-    datetime: Union[datetime.datetime, cftime.datetime]
-      A datetime object to convert.
-    new_doy:  Optional[Union[float, int]]
-      Allows for redefining the day of year (thus ignoring month and day information from the source datetime).
-      -1 is understood as a nan.
-    calendar: str
-      The target calendar
-
-    Returns
-    -------
-    Union[cftime.datetime, datetime.datetime, np.nan]
-      A datetime object of the target calendar with the same year, month, day and time
-      as the source (month and day according to `new_doy` if given).
-      If the month and day doesn't exist in the target calendar, returns np.nan. (Ex. 02-29 in "noleap")
-    """
-    if new_doy in [np.nan, -1]:
-        return np.nan
-    if new_doy is not None:
-        new_date = cftime.num2date(
-            new_doy - 1,
-            f"days since {datetime.year}-01-01",
-            calendar=calendar if calendar != "default" else "standard",
-        )
-    else:
-        new_date = datetime
-    try:
-        return datetime_classes[calendar](
-            datetime.year,
-            new_date.month,
-            new_date.day,
-            datetime.hour,
-            datetime.minute,
-            datetime.second,
-            datetime.microsecond,
-        )
-    except ValueError:
-        return np.nan
-
-
 def ensure_cftime_array(time: Sequence) -> np.ndarray:
     """Convert an input 1D array to a numpy array of cftime objects.
 
     Python's datetime are converted to cftime.DatetimeGregorian ("standard" calendar).
 
-    Raises ValueError when unable to cast the input.
+    Parameters
+    ----------
+    time: sequence
+      A 1D array of datetime-like objects.
+
+    Returns
+    -------
+    np.ndarray
+
+    Raises
+    ------
+    ValueError: When unable to cast the input.
     """
     if isinstance(time, xr.DataArray):
         time = time.indexes["time"]
@@ -479,6 +471,15 @@ def datetime_to_decimal_year(times: xr.DataArray, calendar: str = "") -> xr.Data
 
     Decimal years are the number of years since 0001-01-01 00:00:00 AD.
     Ex: '2000-03-01 12:00' is 2000.1653 in a standard calendar, 2000.16301 in a "noleap" or 2000.16806 in a "360_day".
+
+    Parameters
+    ----------
+    times: xr.DataArray
+    calendar: str
+
+    Returns
+    -------
+    xr.DataArray
     """
     calendar = calendar or get_calendar(times)
     if calendar == "default":
@@ -499,27 +500,21 @@ def datetime_to_decimal_year(times: xr.DataArray, calendar: str = "") -> xr.Data
     return times.groupby("time.year").map(_make_index)
 
 
-def days_in_year(year: int, calendar: str = "default") -> int:
-    """Return the number of days in the input year according to the input calendar."""
-    return (
-        (datetime_classes[calendar](year + 1, 1, 1) - pydt.timedelta(days=1))
-        .timetuple()
-        .tm_yday
-    )
-
-
 @update_xclim_history
 def percentile_doy(
     arr: xr.DataArray,
     window: int = 5,
-    per: Union[float, Sequence[float]] = 10.0,
+    per: float | Sequence[float] = 10.0,
     alpha: float = 1.0 / 3.0,
     beta: float = 1.0 / 3.0,
-) -> xr.DataArray:
+    copy: bool = True,
+) -> PercentileDataArray:
     """Percentile value for each day of the year.
 
     Return the climatological percentile over a moving window around each day of the year.
-    Different quantile estimators can be used by specifying `alpha` and `beta` according to specifications given by [HyndmanFan]_. The default definition corresponds to method 8, which meets multiple desirable statistical properties for sample quantiles. Note that `numpy.percentile` corresponds to method 7, with alpha and beta set to 1.
+    Different quantile estimators can be used by specifying `alpha` and `beta` according to specifications given by :cite:t:`hyndman_sample_1996`.
+    The default definition corresponds to method 8, which meets multiple desirable statistical properties for sample quantiles.
+    Note that `numpy.percentile` corresponds to method 7, with alpha and beta set to 1.
 
     Parameters
     ----------
@@ -533,6 +528,12 @@ def percentile_doy(
         Plotting position parameter.
     beta: float
         Plotting position parameter.
+    copy: bool
+        If True (default) the input array will be deep-copied. It's a necessary step
+        to keep the data integrity, but it can be costly.
+        If False, no copy is made of the input array. It will be mutated and rendered
+        unusable but performances may significantly improve.
+        Put this flag to False only if you understand the consequences.
 
     Returns
     -------
@@ -542,8 +543,9 @@ def percentile_doy(
 
     References
     ----------
-    .. [HyndmanFan] Hyndman, R. J., & Fan, Y. (1996). Sample quantiles in statistical packages. The American Statistician, 50(4), 361-365.
+    :cite:cts:`hyndman_sample_1996`
     """
+    from .utils import calc_perc  # pylint: disable=import-outside-toplevel
 
     # Ensure arr sampling frequency is daily or coarser
     # but cowardly escape the non-inferrable case.
@@ -559,7 +561,10 @@ def percentile_doy(
     rrr = rr.assign_coords(time=ind).unstack("time").stack(stack_dim=("year", "window"))
 
     if rrr.chunks is not None and len(rrr.chunks[rrr.get_axis_num("stack_dim")]) > 1:
-        rrr = rrr.chunk(dict(stack_dim=-1))
+        # Preserve chunk size
+        time_chunks_count = len(arr.chunks[arr.get_axis_num("time")])
+        doy_chunk_size = np.ceil(len(rrr.dayofyear) / (window * time_chunks_count))
+        rrr = rrr.chunk(dict(stack_dim=-1, dayofyear=doy_chunk_size))
 
     if np.isscalar(per):
         per = [per]
@@ -570,7 +575,7 @@ def percentile_doy(
         input_core_dims=[["stack_dim"]],
         output_core_dims=[["percentiles"]],
         keep_attrs=True,
-        kwargs=dict(percentiles=per, alpha=alpha, beta=beta),
+        kwargs=dict(percentiles=per, alpha=alpha, beta=beta, copy=copy),
         dask="parallelized",
         output_dtypes=[rrr.dtype],
         dask_gufunc_kwargs=dict(output_sizes={"percentiles": len(per)}),
@@ -585,14 +590,24 @@ def percentile_doy(
     p.attrs.update(arr.attrs.copy())
 
     # Saving percentile attributes
-    n = len(arr.time)
-    p.attrs["climatology_bounds"] = (
-        arr.time[0 :: n - 1].dt.strftime("%Y-%m-%d").values.tolist()
-    )
+    p.attrs["climatology_bounds"] = build_climatology_bounds(arr)
     p.attrs["window"] = window
     p.attrs["alpha"] = alpha
     p.attrs["beta"] = beta
-    return p.rename("per")
+    return PercentileDataArray.from_da(p.rename("per"))
+
+
+def build_climatology_bounds(da: xr.DataArray) -> list[str]:
+    """Build the climatology_bounds property with the start and end dates of input data.
+
+    Parameters
+    ----------
+    da: xr.DataArray
+      The input data.
+      Must have a time dimension.
+    """
+    n = len(da.time)
+    return da.time[0 :: n - 1].dt.strftime("%Y-%m-%d").values.tolist()
 
 
 def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
@@ -600,7 +615,7 @@ def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
 
     Offset are compared based on their length approximated for a period starting
     after 1970-01-01 00:00:00. If the offsets are from the same category (same first letter),
-    only the multiplicator prefix is compared (QS-DEC == QS-JAN, MS < 2MS).
+    only the multiplier prefix is compared (QS-DEC == QS-JAN, MS < 2MS).
     "Business" offsets are not implemented.
 
     Parameters
@@ -617,9 +632,9 @@ def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
     bool
       freqA op freqB
     """
-    from xclim.indices.generic import get_op
+    from ..indices.generic import get_op  # pylint: disable=import-outside-toplevel
 
-    # Get multiplicator and base frequency
+    # Get multiplier and base frequency
     t_a, b_a, _, _ = parse_offset(freqA)
     t_b, b_b, _, _ = parse_offset(freqB)
 
@@ -629,7 +644,7 @@ def compare_offsets(freqA: str, op: str, freqB: str) -> bool:  # noqa
         t_a = (t[1] - t[0]).total_seconds()
         t = pd.date_range("1970-01-01T00:00:00.000", periods=2, freq=freqB)
         t_b = (t[1] - t[0]).total_seconds()
-    # else Same base freq, compare multiplicator only.
+    # else Same base freq, compare multiplier only.
 
     return get_op(op)(t_a, t_b)
 
@@ -646,22 +661,64 @@ def parse_offset(freq: str) -> Sequence[str]:
 
     Returns
     -------
-    multiplicator (int), offset base (str), is start anchored (bool), anchor (str or None)
-      "[n]W" is always replaced with "[7n]D", as xarray doesn't support "W" for cftime indexes.
-      "Y" is always replaced with "A".
+    multiplier : int
+      Multiplier of the base frequency. "[n]W" is always replaced with "[7n]D", as xarray doesn't support "W" for cftime indexes.
+    offset_base : str
+      Base frequency. "Y" is always replaced with "A".
+    is_start_anchored : bool
+      Whether coordinates of this frequency should correspond to the beginning of the period (`True`) or its end (`False`).
+      Can only be False when base is A, Q or M.
+    anchor : str or None
+      Anchor date for bases A or Q. As xarray doesn't support "W", neither does xclim (anchor information is lost when given).
     """
-    patt = r"(\d*)(\w)(S)?(?:-(\w{2,3}))?"
-    mult, base, start, anchor = re.search(patt, freq).groups()
-    mult = int(mult or "1")
-    base = base.replace("Y", "A")
+    # Useful to raise on invalid freqs, convert Y to A and get default anchor (A, Q)
+    offset = pd.tseries.frequencies.to_offset(freq)
+    base, *anchor = offset.name.split("-")
+    anchor = anchor[0] if len(anchor) > 0 else None
+    start = ("S" in base) or (base[0] not in "AQM")
+    base = base[0]
+    mult = offset.n
     if base == "W":
         mult = 7 * mult
         base = "D"
-        anchor = ""
-    return mult, base, start == "S", anchor
+        anchor = None
+    return mult, base, start, anchor
 
 
-def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArray:
+def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | None):
+    """Reconstruct an offset string from its parts.
+
+    Parameters
+    ----------
+    mult: int
+      The period multiplier (>= 1).
+    base : str
+      The base period string (one char).
+    start_anchored: bool
+      If True and base in [Y, A, Q, M], adds the "S" flag.
+    anchor: str, optional
+      The month anchor of the offset. Defaults to JAN for bases AS, Y and QS and to DEC for bases A and Q.
+
+    Returns
+    -------
+    str
+      An offset string, conformant to pandas-like naming conventions.
+
+    Notes
+    -----
+    This provides the mirror opposite functionality of :py:func:`parse_offset`.
+    """
+    start = "S" if start_anchored and base in "YAQM" else ""
+    if anchor is None and base in "AQY":
+        anchor = "JAN" if start_anchored else "DEC"
+    return (
+        f"{mult if mult > 1 else ''}{base}{start}{'-' if anchor else ''}{anchor or ''}"
+    )
+
+
+def _interpolate_doy_calendar(
+    source: xr.DataArray, doy_max: int, doy_min: int = 1
+) -> xr.DataArray:
     """Interpolate from one set of dayofyear range to another.
 
     Interpolate an array defined over a `dayofyear` range (say 1 to 360) to another `dayofyear` range (say 1
@@ -672,7 +729,12 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArra
     source : xr.DataArray
       Array with `dayofyear` coordinates.
     doy_max : int
-      Largest day of the year allowed by calendar.
+      The largest day of the year allowed by calendar.
+    doy_min : int
+      The smallest day of the year in the output.
+      This parameter is necessary when the target time series does not span over a full
+      year (e.g. JJA season).
+      Default is 1.
 
     Returns
     -------
@@ -683,20 +745,23 @@ def _interpolate_doy_calendar(source: xr.DataArray, doy_max: int) -> xr.DataArra
     if "dayofyear" not in source.coords.keys():
         raise AttributeError("Source should have `dayofyear` coordinates.")
 
-    # Interpolation of source to target dayofyear range
-    doy_max_source = int(source.dayofyear.max())
-
     # Interpolate to fill na values
-    tmp = source.interpolate_na(dim="dayofyear")
+    da = source
+    if uses_dask(source):
+        # interpolate_na cannot run on chunked dayofyear.
+        da = source.chunk(dict(dayofyear=-1))
+    filled_na = da.interpolate_na(dim="dayofyear")
 
     # Interpolate to target dayofyear range
-    tmp.coords["dayofyear"] = np.linspace(start=1, stop=doy_max, num=doy_max_source)
+    filled_na.coords["dayofyear"] = np.linspace(
+        start=doy_min, stop=doy_max, num=len(filled_na.coords["dayofyear"])
+    )
 
-    return tmp.interp(dayofyear=range(1, doy_max + 1))
+    return filled_na.interp(dayofyear=range(doy_min, doy_max + 1))
 
 
 def adjust_doy_calendar(
-    source: xr.DataArray, target: Union[xr.DataArray, xr.Dataset]
+    source: xr.DataArray, target: xr.DataArray | xr.Dataset
 ) -> xr.DataArray:
     """Interpolate from one set of dayofyear range to another calendar.
 
@@ -716,18 +781,26 @@ def adjust_doy_calendar(
       Interpolated source array over coordinates spanning the target `dayofyear` range.
 
     """
-    doy_max_source = source.dayofyear.max()
+    max_target_doy = int(target.time.dt.dayofyear.max())
+    min_target_doy = int(target.time.dt.dayofyear.min())
 
-    doy_max = max_doy[get_calendar(target)]
-    if doy_max_source == doy_max:
+    def has_same_calendar():
+        # case of full year (doys between 1 and 360|365|366)
+        return source.dayofyear.max() == max_doy[get_calendar(target)]
+
+    def has_similar_doys():
+        # case of partial year (e.g. JJA, doys between 152|153 and 243|244)
+        return (
+            source.dayofyear.min == min_target_doy
+            and source.dayofyear.max == max_target_doy
+        )
+
+    if has_same_calendar() or has_similar_doys():
         return source
+    return _interpolate_doy_calendar(source, max_target_doy, min_target_doy)
 
-    return _interpolate_doy_calendar(source, doy_max)
 
-
-def resample_doy(
-    doy: xr.DataArray, arr: Union[xr.DataArray, xr.Dataset]
-) -> xr.DataArray:
+def resample_doy(doy: xr.DataArray, arr: xr.DataArray | xr.Dataset) -> xr.DataArray:
     """Create a temporal DataArray where each day takes the value defined by the day-of-year.
 
     Parameters
@@ -868,7 +941,7 @@ def cfindex_end_time(cfindex: CFTimeIndex, freq: str) -> CFTimeIndex:
     return CFTimeIndex([cftime_end_time(date, freq) for date in cfindex])  # noqa
 
 
-def time_bnds(group, freq: str) -> Sequence[Tuple[cftime.datetime, cftime.datetime]]:
+def time_bnds(group, freq: str) -> Sequence[tuple[cftime.datetime, cftime.datetime]]:
     """
     Find the time bounds for a pseudo-period index.
 
@@ -893,10 +966,17 @@ def time_bnds(group, freq: str) -> Sequence[Tuple[cftime.datetime, cftime.dateti
     --------
     >>> from xarray import cftime_range
     >>> from xclim.core.calendar import time_bnds
-    >>> index = cftime_range(start='2000-01-01', periods=3, freq='2QS', calendar='360_day')
-    >>> out = time_bnds(index, '2Q')
+    >>> index = cftime_range(
+    ...     start="2000-01-01", periods=3, freq="2QS", calendar="360_day"
+    ... )
+    >>> out = time_bnds(index, "2Q")
     >>> for bnds in out:
-    ...     print(bnds[0].strftime("%Y-%m-%dT%H:%M:%S"), ' -', bnds[1].strftime("%Y-%m-%dT%H:%M:%S"))
+    ...     print(
+    ...         bnds[0].strftime("%Y-%m-%dT%H:%M:%S"),
+    ...         " -",
+    ...         bnds[1].strftime("%Y-%m-%dT%H:%M:%S"),
+    ...     )
+    ...
     2000-01-01T00:00:00  - 2000-03-30T23:59:59
     2000-07-01T00:00:00  - 2000-09-30T23:59:59
     2001-01-01T00:00:00  - 2001-03-30T23:59:59
@@ -908,15 +988,11 @@ def time_bnds(group, freq: str) -> Sequence[Tuple[cftime.datetime, cftime.dateti
             cfindex = group._full_index
         else:
             raise TypeError(
-                "Index must be a CFTimeIndex, but got an instance of {}".format(
-                    type(group).__name__
-                )
+                f"Index must be a CFTimeIndex, but got an instance of {type(group).__name__}"
             )
     else:
         raise TypeError(
-            "Index must be a CFTimeIndex, but got an instance of {}".format(
-                type(group).__name__
-            )
+            f"Index must be a CFTimeIndex, but got an instance of {type(group).__name__}"
         )
 
     return tuple(
@@ -926,8 +1002,8 @@ def time_bnds(group, freq: str) -> Sequence[Tuple[cftime.datetime, cftime.dateti
 
 def climatological_mean_doy(
     arr: xr.DataArray, window: int = 5
-) -> Tuple[xr.DataArray, xr.DataArray]:
-    """The climatological mean and standard deviation for each day of the year.
+) -> tuple[xr.DataArray, xr.DataArray]:
+    """Calculate the climatological mean and standard deviation for each day of the year.
 
     Parameters
     ----------
@@ -955,7 +1031,7 @@ def climatological_mean_doy(
 def within_bnds_doy(
     arr: xr.DataArray, *, low: xr.DataArray, high: xr.DataArray
 ) -> xr.DataArray:
-    """Return whether or not array values are within bounds for each day of the year.
+    """Return whether array values are within bounds for each day of the year.
 
     Parameters
     ----------
@@ -976,9 +1052,9 @@ def within_bnds_doy(
 
 
 def _doy_days_since_doys(
-    base: xr.DataArray, start: Optional[DayOfYearStr] = None
-) -> Tuple[xr.DataArray, xr.DataArray, xr.DataArray]:
-    """Common calculation for doy to days since and inverse conversions.
+    base: xr.DataArray, start: DayOfYearStr | None = None
+) -> tuple[xr.DataArray, xr.DataArray, xr.DataArray]:
+    """Calculate dayofyear to days since, or the inverse.
 
     Parameters
     ----------
@@ -1022,10 +1098,10 @@ def _doy_days_since_doys(
 
 def doy_to_days_since(
     da: xr.DataArray,
-    start: Optional[DayOfYearStr] = None,
-    calendar: Optional[str] = None,
+    start: DayOfYearStr | None = None,
+    calendar: str | None = None,
 ) -> xr.DataArray:
-    """Convert day-of-year data to days since a given date
+    """Convert day-of-year data to days since a given date.
 
     This is useful for computing meaningful statistics on doy data.
 
@@ -1060,9 +1136,11 @@ def doy_to_days_since(
     Examples
     --------
     >>> from xarray import DataArray
-    >>> time = date_range('2020-07-01', '2021-07-01', freq='AS-JUL')
-    >>> da = DataArray([190, 2], dims=('time',), coords={'time': time})  # July 8th 2020 and Jan 2nd 2022
-    >>> doy_to_days_since(da, start='10-02').values  # Convert to days since Oct. 2nd, of the data's year.
+    >>> time = date_range("2020-07-01", "2021-07-01", freq="AS-JUL")
+    >>> # July 8th 2020 and Jan 2nd 2022
+    >>> da = DataArray([190, 2], dims=("time",), coords={"time": time})
+    >>> # Convert to days since Oct. 2nd, of the data's year.
+    >>> doy_to_days_since(da, start="10-02").values
     array([-86, 92])
     """
     base_calendar = get_calendar(da)
@@ -1092,8 +1170,8 @@ def doy_to_days_since(
 
 def days_since_to_doy(
     da: xr.DataArray,
-    start: Optional[DayOfYearStr] = None,
-    calendar: Optional[str] = None,
+    start: DayOfYearStr | None = None,
+    calendar: str | None = None,
 ) -> xr.DataArray:
     """Reverse the conversion made by :py:func:`doy_to_days_since`.
 
@@ -1118,10 +1196,13 @@ def days_since_to_doy(
     Examples
     --------
     >>> from xarray import DataArray
-    >>> time = date_range('2020-07-01', '2021-07-01', freq='AS-JUL')
+    >>> time = date_range("2020-07-01", "2021-07-01", freq="AS-JUL")
     >>> da = DataArray(
-            [-86, 92], dims=('time',), coords={'time': time}, attrs={'units': 'days since 10-02'}
-        )
+    ...     [-86, 92],
+    ...     dims=("time",),
+    ...     coords={"time": time},
+    ...     attrs={"units": "days since 10-02"},
+    ... )
     >>> days_since_to_doy(da).values
     array([190, 2])
     """
@@ -1148,3 +1229,226 @@ def days_since_to_doy(
     )
     out.attrs.update(calendar=calendar, is_dayofyear=1)
     return convert_calendar(out, base_calendar).rename(da.name)
+
+
+def date_range_like(source: xr.DataArray, calendar: str) -> xr.DataArray:
+    """Generate a datetime array with the same frequency, start and end as another one, but in a different calendar.
+
+    Parameters
+    ----------
+    source : xr.DataArray
+      1D datetime coordinate DataArray
+    calendar : str
+      New calendar name.
+
+    Raises
+    ------
+    ValueError
+      If the source's frequency was not found.
+
+    Returns
+    -------
+    xr.DataArray
+      1D datetime coordinate with the same start, end and frequency as the source, but in the new calendar.
+        The start date is assumed to exist in the target calendar.
+        If the end date doesn't exist, the code tries 1 and 2 calendar days before.
+        Exception when the source is in 360_day and the end of the range is the 30th of a 31-days month,
+        then the 31st is appended to the range.
+    """
+    freq = xr.infer_freq(source)
+    if freq is None:
+        raise ValueError(
+            "`date_range_like` was unable to generate a range as the source frequency was not inferrable."
+        )
+
+    src_cal = get_calendar(source)
+    if src_cal == calendar:
+        return source
+
+    index = source.indexes[source.dims[0]]
+    end_src = index[-1]
+    end = _convert_datetime(end_src, calendar=calendar)
+    if end is np.nan:  # Day is invalid, happens at the end of months.
+        end = _convert_datetime(end_src.replace(day=end_src.day - 1), calendar=calendar)
+        if end is np.nan:  # Still invalid : 360_day to non-leap february.
+            end = _convert_datetime(
+                end_src.replace(day=end_src.day - 2), calendar=calendar
+            )
+    if src_cal == "360_day" and end_src.day == 30 and end.daysinmonth == 31:
+        # For the specific case of daily data from 360_day source, the last day is expected to be "missing"
+        end = end.replace(day=31)
+
+    return xr.DataArray(
+        date_range(
+            _convert_datetime(index[0], calendar=calendar),
+            end,
+            freq=freq,
+            calendar=calendar,
+        ),
+        dims=source.dims,
+        name=source.dims[0],
+    )
+
+
+def _convert_datetime(
+    datetime: pydt.datetime | cftime.datetime,
+    new_doy: float | int | None = None,
+    calendar: str = "default",
+) -> cftime.datetime | pydt.datetime | float:
+    """Convert a datetime object to another calendar.
+
+    Nanosecond information are lost as cftime.datetime doesn't support them.
+
+    Parameters
+    ----------
+    datetime: Union[datetime.datetime, cftime.datetime]
+      A datetime object to convert.
+    new_doy:  Optional[Union[float, int]]
+      Allows for redefining the day of year (thus ignoring month and day information from the source datetime).
+      -1 is understood as a nan.
+    calendar: str
+      The target calendar
+
+    Returns
+    -------
+    Union[cftime.datetime, datetime.datetime, np.nan]
+      A datetime object of the target calendar with the same year, month, day and time
+      as the source (month and day according to `new_doy` if given).
+      If the month and day doesn't exist in the target calendar, returns np.nan. (Ex. 02-29 in "noleap")
+    """
+    if new_doy in [np.nan, -1]:
+        return np.nan
+    if new_doy is not None:
+        new_date = cftime.num2date(
+            new_doy - 1,
+            f"days since {datetime.year}-01-01",
+            calendar=calendar if calendar != "default" else "standard",
+        )
+    else:
+        new_date = datetime
+    try:
+        return datetime_classes[calendar](
+            datetime.year,
+            new_date.month,
+            new_date.day,
+            datetime.hour,
+            datetime.minute,
+            datetime.second,
+            datetime.microsecond,
+        )
+    except ValueError:
+        return np.nan
+
+
+def select_time(
+    da: xr.DataArray | xr.Dataset,
+    drop: bool = False,
+    season: str | Sequence[str] = None,
+    month: int | Sequence[int] = None,
+    doy_bounds: tuple[int, int] = None,
+    date_bounds: tuple[str, str] = None,
+) -> xr.DataArray | xr.Dataset:
+    """Select entries according to a time period.
+
+    This conveniently improves xarray's :py:meth:`xarray.DataArray.where` and
+    :py:meth:`xarray.DataArray.sel` with fancier ways of indexing over time elements.
+    In addition to the data `da` and argument `drop`, only one of `season`, `month`,
+    `doy_bounds` or `date_bounds` may be passed.
+
+    Parameters
+    ----------
+    da : xr.DataArray or xr.Dataset
+      Input data.
+    drop: boolean
+      Whether to drop elements outside the period of interest or
+      to simply mask them (default).
+    season: string or sequence of strings
+      One or more of 'DJF', 'MAM', 'JJA' and 'SON'.
+    month: integer or sequence of integers
+      Sequence of month numbers (January = 1 ... December = 12)
+    doy_bounds: 2-tuple of integers
+      The bounds as (start, end) of the period of interest expressed in day-of-year,
+      integers going from 1 (January 1st) to 365 or 366 (December 31st). If calendar
+      awareness is needed, consider using ``date_bounds`` instead.
+      Bounds are inclusive.
+    date_bounds: 2-tuple of strings
+      The bounds as (start, end) of the period of interest expressed as dates in the
+      month-day (%m-%d) format.
+      Bounds are inclusive.
+
+    Returns
+    -------
+    xr.DataArray or xr.Dataset
+      Selected input values. If ``drop=False``, this has the same length as ``da``
+      (along dimension 'time'), but with masked (NaN) values outside the period of
+      interest.
+
+    Examples
+    --------
+    Keep only the values of fall and spring.
+
+    >>> ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+    >>> ds.time.size
+    1461
+    >>> out = select_time(ds, drop=True, season=["MAM", "SON"])
+    >>> out.time.size
+    732
+
+    Or all values between two dates (included).
+
+    >>> out = select_time(ds, drop=True, date_bounds=("02-29", "03-02"))
+    >>> out.time.values
+    array(['1990-03-01T00:00:00.000000000', '1990-03-02T00:00:00.000000000',
+           '1991-03-01T00:00:00.000000000', '1991-03-02T00:00:00.000000000',
+           '1992-02-29T00:00:00.000000000', '1992-03-01T00:00:00.000000000',
+           '1992-03-02T00:00:00.000000000', '1993-03-01T00:00:00.000000000',
+           '1993-03-02T00:00:00.000000000'], dtype='datetime64[ns]')
+    """
+    N = sum(arg is not None for arg in [season, month, doy_bounds, date_bounds])
+    if N > 1:
+        raise ValueError(f"Only one method of indexing may be given, got {N}.")
+
+    if N == 0:
+        return da
+
+    def get_doys(start, end):
+        if start <= end:
+            return np.arange(start, end + 1)
+        return np.concatenate((np.arange(start, 367), np.arange(0, end + 1)))
+
+    if season is not None:
+        if isinstance(season, str):
+            season = [season]
+        mask = da.time.dt.season.isin(season)
+
+    elif month is not None:
+        if isinstance(month, int):
+            month = [month]
+        mask = da.time.dt.month.isin(month)
+
+    elif doy_bounds is not None:
+        mask = da.time.dt.dayofyear.isin(get_doys(*doy_bounds))
+
+    elif date_bounds is not None:
+        # This one is a bit trickier.
+        start, end = date_bounds
+        time = da.time
+        calendar = get_calendar(time)
+        if calendar not in uniform_calendars:
+            # For non-uniform calendars, we can't simply convert dates to doys
+            # conversion to all_leap is safe for all non-uniform calendar as it doesn't remove any date.
+            time = convert_calendar(time, "all_leap")
+            # values of time are the _old_ calendar
+            # and the new calendar is in the coordinate
+            calendar = "all_leap"
+
+        # Get doy of date, this is now safe because the calendar is uniform.
+        doys = get_doys(
+            to_cftime_datetime("2000-" + start, calendar).dayofyr,
+            to_cftime_datetime("2000-" + end, calendar).dayofyr,
+        )
+        mask = time.time.dt.dayofyear.isin(doys)
+        # Needed if we converted calendar, this puts back the correct coord
+        mask["time"] = da.time
+
+    return da.where(mask, drop=drop)

@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Tests for the Indicator objects
+from __future__ import annotations
+
 import gc
 import json
 from inspect import signature
-from typing import Optional, Tuple, Union
+from typing import Tuple, Union
 
 import dask
 import numpy as np
@@ -13,6 +14,7 @@ import xarray as xr
 
 import xclim
 from xclim import __version__, atmos
+from xclim.core.calendar import select_time
 from xclim.core.formatting import (
     AttrFormatter,
     default_formatter,
@@ -22,14 +24,18 @@ from xclim.core.formatting import (
 )
 from xclim.core.indicator import Daily, Indicator, ResamplingIndicator, registry
 from xclim.core.units import convert_units_to, declare_units, units
-from xclim.core.utils import InputKind, MissingVariableError
+from xclim.core.utils import VARIABLES, InputKind, MissingVariableError
 from xclim.indices import tg_mean
-from xclim.indices.generic import select_time
-from xclim.testing import open_dataset
+from xclim.testing import list_input_variables, open_dataset
 
 
 @declare_units(da="[temperature]", thresh="[temperature]")
-def uniindtemp_compute(da: xr.DataArray, thresh: str = "0.0 degC", freq: str = "YS"):
+def uniindtemp_compute(
+    da: xr.DataArray,
+    thresh: str = "0.0 degC",
+    freq: str = "YS",
+    method: str = "injected",
+):
     """Docstring"""
     out = da - convert_units_to(thresh, da)
     out = out.resample(time=freq).mean()
@@ -52,6 +58,7 @@ uniIndTemp = Daily(
         )
     ],
     compute=uniindtemp_compute,
+    parameters={"method": "injected"},
 )
 
 
@@ -118,13 +125,13 @@ multiTemp = Daily(
 
 @declare_units(tas="[temperature]", tasmin="[temperature]", tasmax="[temperature]")
 def multioptvar_compute(
-    tas: Optional[xr.DataArray] = None,
-    tasmax: Optional[xr.DataArray] = None,
-    tasmin: Optional[xr.DataArray] = None,
+    tas: xr.DataArray | None = None,
+    tasmax: xr.DataArray | None = None,
+    tasmin: xr.DataArray | None = None,
 ):
     if tas is None:
-        with xr.set_options(keep_attrs=True):
-            return (tasmin + tasmax) / 2
+        tasmax = convert_units_to(tasmax, tasmin)
+        return ((tasmin + tasmax) / 2).assign_attrs(units=tasmin.units)
     return tas
 
 
@@ -145,11 +152,36 @@ def test_attrs(tas_series):
     txm = uniIndTemp(a, thresh="5 degC", freq="YS")
     assert txm.cell_methods == "time: mean within days time: mean within years"
     assert f"{dt.datetime.now():%Y-%m-%d %H}" in txm.attrs["history"]
-    assert "TMIN(da=tas, thresh='5 degC', freq='YS')" in txm.attrs["history"]
-    assert f"xclim version: {__version__}." in txm.attrs["history"]
+    assert (
+        "TMIN(da=tas, thresh='5 degC', freq='YS') with options check_missing=any"
+        in txm.attrs["history"]
+    )
+    assert f"xclim version: {__version__}" in txm.attrs["history"]
     assert txm.name == "tmin5 degC"
     assert uniIndTemp.standard_name == "{freq} mean temperature"
     assert uniIndTemp.cf_attrs[0]["another_attr"] == "With a value."
+
+
+@pytest.mark.parametrize(
+    "xcopt,xropt,exp",
+    [
+        ("xarray", "default", False),
+        (True, False, True),
+        (False, True, False),
+        ("xarray", True, True),
+    ],
+)
+def test_keep_attrs(tasmin_series, tasmax_series, xcopt, xropt, exp):
+    tx = tasmax_series(np.arange(360.0))
+    tn = tasmin_series(np.arange(360.0))
+    tx.attrs.update(something="blabla", bing="bang", foo="bar")
+    tn.attrs.update(something="blabla", bing="bong")
+    with xclim.set_options(keep_attrs=xcopt):
+        with xr.set_options(keep_attrs=xropt):
+            tg = multiOptVar(tasmin=tn, tasmax=tx)
+    assert (tg.attrs.get("something") == "blabla") is exp
+    assert (tg.attrs.get("foo") == "bar") is exp
+    assert "bing" not in tg.attrs
 
 
 def test_opt_vars(tasmin_series, tasmax_series):
@@ -331,6 +363,7 @@ def test_missing(tas_series):
     ):
         m = uniIndTemp(a, freq="MS")
         assert not m[0].isnull()
+        assert "check_missing=pct, missing_options={'tolerance': 0.05}" in m.history
 
     with xclim.set_options(check_missing="wmo"):
         m = uniIndTemp(a, freq="YS")
@@ -391,15 +424,18 @@ def test_json(pr_series):
 
 def test_all_jsonable(official_indicators):
     problems = []
+    err = None
     for identifier, ind in official_indicators.items():
         indinst = ind.get_instance()
+        json.dumps(indinst.json())
         try:
             json.dumps(indinst.json())
-        except (TypeError, KeyError):
+        except (TypeError, KeyError) as e:
             problems.append(identifier)
+            err = e
     if problems:
         raise ValueError(
-            f"Indicators {problems} provide problematic json serialization."
+            f"Indicators {problems} provide problematic json serialization.: {err}"
         )
 
 
@@ -418,7 +454,14 @@ def test_all_parameters_understood(official_indicators):
 
 def test_signature():
     sig = signature(xclim.atmos.solid_precip_accumulation)
-    assert list(sig.parameters.keys()) == ["pr", "tas", "thresh", "freq", "ds"]
+    assert list(sig.parameters.keys()) == [
+        "pr",
+        "tas",
+        "thresh",
+        "freq",
+        "ds",
+        "indexer",
+    ]
     assert sig.parameters["pr"].annotation == Union[xr.DataArray, str]
     assert sig.parameters["tas"].default == "tas"
     assert sig.parameters["tas"].kind == sig.parameters["tas"].POSITIONAL_OR_KEYWORD
@@ -430,14 +473,20 @@ def test_signature():
 
 
 def test_doc():
-    doc = xclim.atmos.fire_weather_indexes.__doc__
-    assert doc.startswith("Fire weather indexes. (realm: atmos)")
+    doc = xclim.atmos.cffwis_indices.__doc__
+    assert doc.startswith("Canadian Fire Weather Index System indices. (realm: atmos)")
     assert "This indicator will check for missing values according to the method" in doc
-    assert "Based on indice :py:func:`~xclim.indices.fwi.fire_weather_indexes`." in doc
+    assert (
+        "Based on indice :py:func:`~xclim.indices.fire._cffwis.cffwis_indices`." in doc
+    )
     assert "ffmc0 : str or DataArray, optional" in doc
     assert "Returns\n-------" in doc
-    assert "See https://cwfis.cfs.nrcan.gc.ca/background/dsm/fwi, the module's" in doc
-    assert "Updated source code for calculating fire danger indexes in the" in doc
+    assert "See :cite:t:`code-natural_resources_canada_data_nodate`, " in doc
+    assert "the :py:mod:`xclim.indices.fire` module documentation," in doc
+    assert (
+        "and the docstring of :py:func:`fire_weather_ufunc` for more information."
+        in doc
+    )
 
 
 def test_delayed(tasmax_series):
@@ -454,14 +503,20 @@ def test_identifier():
 def test_formatting(pr_series):
     out = atmos.wetdays(pr_series(np.arange(366)), thresh=1.0 * units.mm / units.day)
     # pint 0.10 now pretty print day as d.
-    assert out.attrs["long_name"] in [
-        "Number of wet days (precip >= 1 mm/day)",
-        "Number of wet days (precip >= 1 mm/d)",
+    assert (
+        out.attrs["long_name"]
+        == "Number of days with daily precipitation at or above 1 mm/d"
+    )
+    assert out.attrs["description"] in [
+        "Annual number of days with daily precipitation at or above 1 mm/d."
     ]
     out = atmos.wetdays(pr_series(np.arange(366)), thresh=1.5 * units.mm / units.day)
-    assert out.attrs["long_name"] in [
-        "Number of wet days (precip >= 1.5 mm/day)",
-        "Number of wet days (precip >= 1.5 mm/d)",
+    assert (
+        out.attrs["long_name"]
+        == "Number of days with daily precipitation at or above 1.5 mm/d"
+    )
+    assert out.attrs["description"] in [
+        "Annual number of days with daily precipitation at or above 1.5 mm/d."
     ]
 
 
@@ -484,7 +539,7 @@ def test_parse_doc():
         doc["parameters"]["ice_thresh"]["description"]
         == "Threshold temperature under which to switch to equations in reference to ice instead of water. If None (default) everything is computed with reference to water."
     )
-    assert "Goff, J. A., and S. Gratch (1946)" in doc["references"]
+    assert "goff_low-pressure_1946" in doc["references"]
 
 
 def test_parsed_doc():
@@ -587,7 +642,7 @@ def test_indicator_from_dict():
         compute="thresholded_statistics",
         parameters=dict(
             threshold={"description": "A threshold temp"},
-            condition="<",
+            op="<",
             reducer="mean",
         ),
         input={"data": "tas"},
@@ -598,8 +653,8 @@ def test_indicator_from_dict():
     assert ind.realm == "atmos"
     # Parameters metadata modification
     assert ind.parameters["threshold"].description == "A threshold temp"
-    # Injection of paramters
-    assert ind.injected_parameters["condition"] == "<"
+    # Injection of parameters
+    assert ind.injected_parameters["op"] == "<"
     # Default value for input variable injected and meta injected
     assert ind._variable_mapping["data"] == "tas"
     assert signature(ind).parameters["tas"].default == "tas"
@@ -611,7 +666,7 @@ def test_indicator_from_dict():
 
 
 def test_indicator_errors():
-    def func(data: xr.DataArray, thresh: str = "0 degC", freq: str = "YS"):
+    def func(data: xr.DataArray, thresh: str = "0 degC", freq: str = "YS"):  # noqa
         return data
 
     doc = [
@@ -677,8 +732,8 @@ def test_indicator_errors():
         ind.__class__(**d2)
 
     del d["input"]
-    with pytest.raises(ValueError, match="variable data is missing expected units"):
-        Daily(**d)
+    # with pytest.raises(ValueError, match="variable data is missing expected units"):
+    #     Daily(**d)
 
     d["parameters"]["thresh"] = {"units": "K"}
     d["realm"] = "mercury"
@@ -703,7 +758,7 @@ def test_indicator_errors():
         input={"data": "tas"},
     )
     with pytest.raises(ValueError, match="ResamplingIndicator require a 'freq'"):
-        ind = Daily(identifier="indi", module="test", **d)
+        Daily(identifier="indi", module="test", **d)
 
 
 def test_indicator_call_errors(tas_series):
@@ -746,3 +801,23 @@ def test_resampling_indicator_with_indexing(tas_series):
         tas, thresh="0 degC", freq="YS", date_bounds=("02-29", "04-01")
     )
     np.testing.assert_allclose(out, [32, 33])
+
+
+@pytest.mark.xfail(reason="Broken link to the excel file.")
+def test_all_inputs_known():
+    var_and_inds = list_input_variables()
+    known_vars = (
+        set(var_and_inds.keys())
+        - {"dc0", "season_mask", "ffmc0", "dmc0"}  # FWI optional inputs
+        - {var for var in var_and_inds.keys() if var.endswith("_per")}  # percentiles
+        - {"q", "da"}  # Generic inputs
+        - {"mrt"}  # TODO: add Mean Radiant Temperature
+    )
+    print(VARIABLES.keys(), "\n", known_vars)
+    if not set(VARIABLES.keys()).issuperset(known_vars):
+        raise AssertionError(
+            "All input variables of xclim indicators must be registered in "
+            "data/variables.yml, or skipped explicitly in this test. You can try to "
+            "automatically update the yaml with `xclim.testing.update_variable_yaml(). "
+            f"The yaml file is missing: {known_vars - VARIABLES.keys()}."
+        )

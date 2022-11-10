@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Tests for `xclim` package, command line interface
+from __future__ import annotations
+
 import numpy as np
 import pytest
 import xarray as xr
@@ -14,6 +15,9 @@ try:
     from dask.distributed import Client
 except ImportError:
     Client = None
+
+
+K2C = 273.15
 
 
 @pytest.mark.parametrize(
@@ -251,6 +255,50 @@ def test_global_options(tas_series, tmp_path, options, output):
     assert output in results.output
 
 
+def test_suspicious_precipitation_flags(pr_series, tmp_path):
+    bad_pr = pr_series(np.zeros(365), start="1971-01-01")
+    # Add some strangeness
+    bad_pr[8] = -1e-6  # negative values
+    bad_pr[120] = 301 / 3600 / 24  # 301mm/day
+    bad_pr[121:141] = 1.1574074074074072e-05  # 1mm/day
+    bad_pr[200:300] = 5.787037037037036e-05  # 5mm/day
+    input_file = tmp_path / "bad_pr.nc"
+    output_file = tmp_path / "out.nc"
+
+    bad_pr.to_netcdf(input_file)
+
+    runner = CliRunner()
+    runner.invoke(
+        cli, ["-i", str(input_file), "-o", str(output_file), "dataflags", "pr"]
+    )
+    with xr.open_dataset(output_file) as ds:
+        for var in ds.data_vars:
+            assert var
+
+
+@pytest.mark.slow
+def test_dataflags_output(tmp_path, tas_series, tasmax_series, tasmin_series):
+    ds = xr.Dataset()
+    for series, val in zip([tas_series, tasmax_series, tasmin_series], [0, 10, -10]):
+        vals = val + K2C + np.sin(np.pi * np.arange(366 * 3) / 366)
+        arr = series(vals, start="1971-01-01")
+        ds = xr.merge([ds, arr])
+    input_file = tmp_path / "ws_in.nc"
+    ds.to_netcdf(input_file)
+
+    runner = CliRunner()
+    results = runner.invoke(
+        cli,
+        [
+            "-i",
+            str(input_file),
+            "dataflags",
+            "-r",
+        ],
+    )
+    assert "Dataset passes quality control checks!" in results.output
+
+
 def test_bad_usage(tas_series, tmp_path):
     tas = tas_series(np.ones(366), start="1/1/2000")
     input_file = tmp_path / "tas.nc"
@@ -294,6 +342,7 @@ def test_bad_usage(tas_series, tmp_path):
         assert "'--dask-maxmem' must be given" in results.output
 
 
+@pytest.mark.requires_docs
 @pytest.mark.parametrize("method, pattern", [("-r", "`GH/"), ("-m", "[GH/")])
 def test_release_notes(method, pattern):
     runner = CliRunner()
@@ -324,3 +373,11 @@ def test_release_notes_failure(method, error):
         ["release_notes", *method],
     )
     assert error in results.output
+
+
+def test_show_version_info(capsys):
+    runner = CliRunner()
+    results = runner.invoke(cli, ["show_version_info"])
+    assert "INSTALLED VERSIONS" in results.output
+    assert "python" in results.output
+    assert "boltons: installed" in results.output

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 import pytest
 import xarray as xr
@@ -5,13 +7,12 @@ from scipy.stats import genpareto, norm, uniform
 
 from xclim.core.options import set_options
 from xclim.core.units import convert_units_to
+from xclim.sdba import adjustment
 from xclim.sdba.adjustment import (
     LOCI,
-    BaseAdjustment,
     DetrendedQuantileMapping,
     EmpiricalQuantileMapping,
     ExtremeValues,
-    NpdfTransform,
     PrincipalComponents,
     QuantileDeltaMapping,
     Scaling,
@@ -19,9 +20,7 @@ from xclim.sdba.adjustment import (
 from xclim.sdba.base import Grouper
 from xclim.sdba.processing import (
     jitter_under_thresh,
-    reordering,
     stack_variables,
-    standardize,
     uniform_noise_like,
     unstack_variables,
 )
@@ -524,16 +523,9 @@ class TestQM:
 
 class TestPrincipalComponents:
     @pytest.mark.parametrize(
-        "group,crd_dims,pts_dims",
-        (
-            ["time", ["lat"], None],  # Lon as vectorizing dim
-            ["time", None, None],  # Lon as second coord dims
-            ["time", ["lat"], ["lon"]],  # Lon as a Points dim
-            # Testing time grouping, vectorization on lon
-            [Grouper("time.month"), ["lat"], None],
-        ),
+        "group", (Grouper("time.month"), Grouper("time", add_dims=["lon"]))
     )
-    def test_simple(self, group, crd_dims, pts_dims):
+    def test_simple(self, group):
         n = 15 * 365
         m = 2  # A dummy dimension to test vectorizing.
         ref_y = norm.rvs(loc=10, scale=1, size=(m, n))
@@ -550,24 +542,13 @@ class TestPrincipalComponents:
         )
         sim["time"] = ref["time"]
 
-        PCA = PrincipalComponents.train(
-            ref, sim, group=group, crd_dims=crd_dims, pts_dims=pts_dims
-        )
+        PCA = PrincipalComponents.train(ref, sim, group=group, crd_dim="lat")
         scen = PCA.adjust(sim)
 
-        group = group if isinstance(group, Grouper) else Grouper("time")
-        crds = crd_dims or ["lat", "lon"]
-        pts = (pts_dims or []) + ["time"]
-
-        vec = list({"lat", "lon"} - set(crds) - set(pts))
-        refs = ref.stack(crd=crds)
-        sims = sim.stack(crd=crds)
-        scens = scen.stack(crd=crds)
-
         def _assert(ds):
-            cov_ref = nancov(ds.ref.transpose("crd", "pt"))
-            cov_sim = nancov(ds.sim.transpose("crd", "pt"))
-            cov_scen = nancov(ds.scen.transpose("crd", "pt"))
+            cov_ref = nancov(ds.ref.transpose("lat", "pt"))
+            cov_sim = nancov(ds.sim.transpose("lat", "pt"))
+            cov_scen = nancov(ds.scen.transpose("lat", "pt"))
 
             # PC adjustment makes the covariance of scen match the one of ref.
             np.testing.assert_allclose(cov_ref - cov_scen, 0, atol=1e-6)
@@ -575,37 +556,58 @@ class TestPrincipalComponents:
                 np.testing.assert_allclose(cov_ref - cov_sim, 0, atol=1e-6)
 
         def _group_assert(ds, dim):
-            ds = ds.stack(pt=pts)
-            if len(vec) == 1:
-                for v in ds[vec[0]]:
-                    _assert(ds.sel({vec[0]: 0}))
+            if "lon" not in dim:
+                for lon in ds.lon:
+                    _assert(ds.sel(lon=lon).stack(pt=dim))
             else:
-                _assert(ds)
-            return ds.unstack("pt")
+                _assert(ds.stack(pt=dim))
+            return ds
 
-        group.apply(_group_assert, {"ref": refs, "sim": sims, "scen": scens})
+        group.apply(_group_assert, {"ref": ref, "sim": sim, "scen": scen})
 
-    @pytest.mark.parametrize(
-        "group", [Grouper("time"), Grouper("time.month", window=11)]
-    )
-    def test_real_data(self, group):
-        ds = xr.tutorial.open_dataset("air_temperature")
+    @pytest.mark.parametrize("use_dask", [True, False])
+    @pytest.mark.parametrize("pcorient", ["full", "simple"])
+    def test_real_data(self, atmosds, use_dask, pcorient):
+        ref = stack_variables(
+            xr.Dataset(
+                {"tasmax": atmosds.tasmax, "tasmin": atmosds.tasmin, "tas": atmosds.tas}
+            )
+        ).isel(location=3)
+        hist = stack_variables(
+            xr.Dataset(
+                {
+                    "tasmax": 1.001 * atmosds.tasmax,
+                    "tasmin": atmosds.tasmin - 0.25,
+                    "tas": atmosds.tas + 1,
+                }
+            )
+        ).isel(location=3)
+        with xr.set_options(keep_attrs=True):
+            sim = hist + 5
+            sim["time"] = sim.time + np.timedelta64(10, "Y").astype("<m8[ns]")
 
-        ref = ds.air.isel(lat=21, lon=[40, 52]).drop_vars(["lon", "lat"])
-        sim = ds.air.isel(lat=18, lon=[17, 35]).drop_vars(["lon", "lat"])
+        if use_dask:
+            ref = ref.chunk()
+            hist = hist.chunk()
+            sim = sim.chunk()
 
-        PCA = PrincipalComponents.train(ref, sim, group=group)
+        PCA = PrincipalComponents.train(
+            ref, hist, crd_dim="multivar", best_orientation=pcorient
+        )
         scen = PCA.adjust(sim)
 
         def dist(ref, sim):
             """Pointwise distance between ref and sim in the PC space."""
-            return np.sqrt(((ref - sim) ** 2).sum("lon"))
+            sim["time"] = ref.time
+            return np.sqrt(((ref - sim) ** 2).sum("multivar"))
 
         # Most points are closer after transform.
-        assert (dist(ref, sim) < dist(ref, scen)).mean() < 0.05
+        assert (dist(ref, sim) < dist(ref, scen)).mean() < 0.01
 
+        ref = unstack_variables(ref)
+        scen = unstack_variables(scen)
         # "Error" is very small
-        assert (ref - scen).mean() < 5e-3
+        assert (ref - scen).mean().tasmin < 5e-3
 
 
 class TestExtremeValues:
@@ -658,6 +660,7 @@ class TestExtremeValues:
             scen.where(exval) > EX.ds.thresh
         ).sum()
 
+    @pytest.mark.slow
     def test_real_data(self):
 
         dsim = open_dataset("sdba/CanESM2_1950-2100.nc").chunk()
@@ -695,3 +698,79 @@ def test_default_grouper_understood(tas_series):
     EQM = EmpiricalQuantileMapping.train(ref, ref)
     EQM.adjust(ref)
     assert EQM.group.dim == "time"
+
+
+class TestSBCKutils:
+    @pytest.mark.slow
+    @pytest.mark.parametrize(
+        "method", [m for m in dir(adjustment) if m.startswith("SBCK_")]
+    )
+    @pytest.mark.parametrize("use_dask", [True])  # do we gain testing both?
+    def test_sbck(self, method, use_dask):
+        SBCK = pytest.importorskip("SBCK", minversion="0.4.0")
+
+        n = 10 * 365
+        m = 2  # A dummy dimension to test vectorizing.
+        ref_y = norm.rvs(loc=10, scale=1, size=(m, n))
+        ref_x = norm.rvs(loc=3, scale=2, size=(m, n))
+        hist_x = norm.rvs(loc=11, scale=1.2, size=(m, n))
+        hist_y = norm.rvs(loc=4, scale=2.2, size=(m, n))
+        sim_x = norm.rvs(loc=12, scale=2, size=(m, n))
+        sim_y = norm.rvs(loc=3, scale=1.8, size=(m, n))
+
+        ref = xr.Dataset(
+            {
+                "tasmin": xr.DataArray(
+                    ref_x, dims=("lon", "time"), attrs={"units": "degC"}
+                ),
+                "tasmax": xr.DataArray(
+                    ref_y, dims=("lon", "time"), attrs={"units": "degC"}
+                ),
+            }
+        )
+        ref["time"] = xr.cftime_range("1990-01-01", periods=n, calendar="noleap")
+
+        hist = xr.Dataset(
+            {
+                "tasmin": xr.DataArray(
+                    hist_x, dims=("lon", "time"), attrs={"units": "degC"}
+                ),
+                "tasmax": xr.DataArray(
+                    hist_y, dims=("lon", "time"), attrs={"units": "degC"}
+                ),
+            }
+        )
+        hist["time"] = ref["time"]
+
+        sim = xr.Dataset(
+            {
+                "tasmin": xr.DataArray(
+                    sim_x, dims=("lon", "time"), attrs={"units": "degC"}
+                ),
+                "tasmax": xr.DataArray(
+                    sim_y, dims=("lon", "time"), attrs={"units": "degC"}
+                ),
+            }
+        )
+        sim["time"] = xr.cftime_range("2090-01-01", periods=n, calendar="noleap")
+
+        if use_dask:
+            ref = ref.chunk({"lon": 1})
+            hist = hist.chunk({"lon": 1})
+            sim = sim.chunk({"lon": 1})
+
+        if "TSMBC" in method:
+            kws = {"lag": 1}
+        elif "MBCn" in method:
+            kws = {"metric": SBCK.metrics.energy}
+        else:
+            kws = {}
+
+        scen = getattr(adjustment, method).adjust(
+            stack_variables(ref),
+            stack_variables(hist),
+            stack_variables(sim),
+            multi_dim="multivar",
+            **kws,
+        )
+        unstack_variables(scen).load()

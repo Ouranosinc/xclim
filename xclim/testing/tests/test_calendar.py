@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 import cftime
@@ -11,7 +13,9 @@ from xarray.coding.cftimeindex import CFTimeIndex
 from xclim.core.calendar import (
     adjust_doy_calendar,
     climatological_mean_doy,
+    common_calendar,
     compare_offsets,
+    construct_offset,
     convert_calendar,
     date_range,
     datetime_to_decimal_year,
@@ -76,7 +80,6 @@ def test_time_bnds(freq, datetime_index, cftime_index):
 
 @pytest.mark.parametrize("use_dask", [True, False])
 def test_percentile_doy(tas_series, use_dask):
-
     tas = tas_series(np.arange(365), start="1/1/2001")
     if use_dask:
         tas = tas.chunk(dict(time=10))
@@ -96,6 +99,19 @@ def test_percentile_doy_nan(tas_series, use_dask):
     pnan = percentile_doy(tas, window=5, per=50)
     assert pnan.sel(dayofyear=3, dim0=0).data == 2.5
     assert pnan.attrs["units"] == "K"
+
+
+@pytest.mark.parametrize("use_dask", [True, False])
+def test_percentile_doy_no_copy(tas_series, use_dask):
+    tas = tas_series(np.arange(365), start="1/1/2001")
+    if use_dask:
+        tas = tas.chunk(dict(time=10))
+    tas = xr.concat((tas, tas), "dim0")
+    original_tas = tas.copy(deep=True)
+    p1 = percentile_doy(tas, window=5, per=50, copy=False)
+    assert p1.sel(dayofyear=3, dim0=0).data == 2
+    assert p1.attrs["units"] == "K"
+    assert not np.testing.assert_array_equal(original_tas, tas)
 
 
 def test_percentile_doy_invalid():
@@ -130,6 +146,50 @@ def test_adjust_doy_360_to_366():
 
     assert out.sel(dayofyear=1) == source.sel(dayofyear=1)
     assert out.sel(dayofyear=366) == source.sel(dayofyear=360)
+
+
+def test_adjust_doy__max_93_to_max_94():
+    # GIVEN
+    source = xr.DataArray(np.arange(92), coords=[np.arange(152, 244)], dims="dayofyear")
+    time = xr.cftime_range("2000-06-01", periods=92, freq="D", calendar="all_leap")
+    target = xr.DataArray(np.arange(len(time)), coords=[time], dims="time")
+    # WHEN
+    out = adjust_doy_calendar(source, target)
+    # THEN
+    assert out[0].dayofyear == 153
+    assert out[0] == source[0]
+    assert out[-1].dayofyear == 244
+    assert out[-1] == source[-1]
+
+
+def test_adjust_doy__leap_to_noleap_djf():
+    # GIVEN
+    leap_source = xr.DataArray(
+        np.arange(92),
+        coords=[np.concatenate([np.arange(1, 61), np.arange(335, 367)])],
+        dims="dayofyear",
+    )
+    time = xr.cftime_range("2000-12-01", periods=91, freq="D", calendar="noleap")
+    no_leap_target = xr.DataArray(np.arange(len(time)), coords=[time], dims="time")
+    # WHEN
+    out = adjust_doy_calendar(leap_source, no_leap_target)
+    # THEN
+    assert out[0].dayofyear == 1
+    assert out[0] == leap_source[0]
+    assert 366 not in out.dayofyear
+    assert out[-1].dayofyear == 365
+    assert out[-1] == leap_source[-1]
+
+
+def test_adjust_doy_366_to_360():
+    source = xr.DataArray(np.arange(366), coords=[np.arange(1, 367)], dims="dayofyear")
+    time = xr.cftime_range("2000", periods=360, freq="D", calendar="360_day")
+    target = xr.DataArray(np.arange(len(time)), coords=[time], dims="time")
+
+    out = adjust_doy_calendar(source, target)
+
+    assert out.sel(dayofyear=1) == source.sel(dayofyear=1)
+    assert out.sel(dayofyear=360) == source.sel(dayofyear=366)
 
 
 @pytest.mark.parametrize(
@@ -512,23 +572,51 @@ def test_doy_to_days_since():
     xr.testing.assert_identical(da, da2)
 
 
-def test_parse_offset_full():
-    # GIVEN
-    freq = "4AS-JUL"
-    # WHEN
+@pytest.mark.parametrize(
+    "freq,em,eb,es,ea",
+    [
+        ("4AS-JUL", 4, "A", True, "JUL"),
+        ("M", 1, "M", False, None),
+        ("YS", 1, "A", True, "JAN"),
+        ("3A", 3, "A", False, "DEC"),
+        ("D", 1, "D", True, None),
+        ("3W", 21, "D", True, None),
+    ],
+)
+def test_parse_offset_valid(freq, em, eb, es, ea):
     m, b, s, a = parse_offset(freq)
-    assert m == 4
-    assert b == "A"
-    assert s is True
-    assert a == "JUL"
+    assert m == em
+    assert b == eb
+    assert s is es
+    assert a == ea
 
 
-def test_parse_offset_minimal():
-    # GIVEN
-    freq = "M"
-    # WHEN
-    m, b, s, a = parse_offset(freq)
-    assert m == 1
-    assert b == "M"
-    assert s is False
-    assert a is None
+def test_parse_offset_invalid():
+    # This error actually comes from pandas, but why not test it anyway
+    with pytest.raises(ValueError, match="Invalid frequency"):
+        parse_offset("day")
+
+
+@pytest.mark.parametrize(
+    "m,b,s,a,exp",
+    [
+        (1, "A", True, None, "AS-JAN"),
+        (2, "Q", False, "DEC", "2Q-DEC"),
+        (1, "D", False, None, "D"),
+    ],
+)
+def test_construct_offset(m, b, s, a, exp):
+    assert construct_offset(m, b, s, a) == exp
+
+
+@pytest.mark.parametrize(
+    "inputs,join,expected",
+    [
+        (["noleap", "standard"], "outer", "standard"),
+        (["noleap", "standard"], "inner", "noleap"),
+        (["default", "default"], "outer", "default"),
+        (["all_leap", "default"], "inner", "standard"),
+    ],
+)
+def test_common_calendars(inputs, join, expected):
+    assert expected == common_calendar(inputs, join=join)

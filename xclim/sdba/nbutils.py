@@ -1,7 +1,10 @@
+# noqa: D205,D400
 """
 Numba-accelerated utilities
 ---------------------------
 """
+from __future__ import annotations
+
 import numpy as np
 from numba import boolean, float32, float64, guvectorize, njit
 from xarray import DataArray
@@ -40,12 +43,12 @@ def vecquantiles(da, rnk, dim):
 
 
 @njit(
-    [
-        float32[:, :](float32[:, :], float32[:]),
-        float64[:, :](float64[:, :], float64[:]),
-        float32[:](float32[:], float32[:]),
-        float64[:](float64[:], float64[:]),
-    ],
+    # [
+    #     float32[:, :](float32[:, :], float32[:]),
+    #     float64[:, :](float64[:, :], float64[:]),
+    #     float32[:](float32[:], float32[:]),
+    #     float64[:](float64[:], float64[:]),
+    # ],
 )
 def _quantile(arr, q):
     if arr.ndim == 1:
@@ -59,11 +62,11 @@ def _quantile(arr, q):
 
 
 def quantile(da, q, dim):
-    """Compute the quantiles from a fixed list "q" """
+    """Compute the quantiles from a fixed list `q`."""
     # We have two cases :
     # - When all dims are processed : we stack them and use _quantile1d
     # - When the quantiles are vectorized over some dims, these are also stacked and then _quantile2D is used.
-    # All this stacking is so we can cover all ND+1D cases with one numba function.
+    # All this stacking is so that we can cover all ND+1D cases with one numba function.
 
     # Stack the dims and send to the last position
     # This is in case there are more than one
@@ -102,22 +105,28 @@ def quantile(da, q, dim):
     return res
 
 
-@njit([float32[:, :](float32[:, :]), float64[:, :](float64[:, :])])
-def remove_NaNs(x):
+@njit(
+    #  [float32[:, :](float32[:, :]), float64[:, :](float64[:, :])]
+)
+def remove_NaNs(x):  # noqa
+    """Remove NaN values from series."""
     remove = np.zeros_like(x[0, :], dtype=boolean)
     for i in range(x.shape[0]):
         remove = remove | np.isnan(x[i, :])
     return x[:, ~remove]
 
 
-@njit([float32(float32[:]), float64(float64[:])], fastmath=True)
+@njit(
+    #  [float32(float32[:]), float64(float64[:])]
+    fastmath=True
+)
 def _euclidean_norm(v):
     """Compute the euclidean norm of vector v."""
-    return np.sqrt(np.sum(v ** 2))
+    return np.sqrt(np.sum(v**2))
 
 
 @njit(
-    [float32(float32[:, :], float32[:, :]), float64(float64[:, :], float64[:, :])],
+    #  [float32(float32[:, :], float32[:, :]), float64(float64[:, :], float64[:, :])],
     fastmath=True,
 )
 def _correlation(X, Y):
@@ -133,7 +142,10 @@ def _correlation(X, Y):
     return d / (X.shape[1] * Y.shape[1])
 
 
-@njit([float32(float32[:, :]), float64(float64[:, :])], fastmath=True)
+@njit(
+    #  [float32(float32[:, :]), float64(float64[:, :])],
+    fastmath=True
+)
 def _autocorrelation(X):
     """Mean of the NxN pairwise distances of points in X of shape KxN.
 
@@ -141,9 +153,9 @@ def _autocorrelation(X):
     """
     d = 0
     for i in range(X.shape[1]):
-        for j in range(i + 1):
-            d += (int(i != j) + 1) * _euclidean_norm(X[:, i] - X[:, j])
-    return d / X.shape[1] ** 2
+        for j in range(i):
+            d += _euclidean_norm(X[:, i] - X[:, j])
+    return (2 * d) / X.shape[1] ** 2
 
 
 @guvectorize(
@@ -154,7 +166,7 @@ def _autocorrelation(X):
     "(k, n),(k, m)->()",
 )
 def _escore(tgt, sim, out):
-    """E-score based on the Skezely-Rizzo e-distances between clusters.
+    """E-score based on the Székely-Rizzo e-distances between clusters.
 
     tgt and sim are KxN and KxM, where dimensions are along K and observations along M and N.
     When N > 0, only this many points of target and sim are used, taken evenly distributed in the series.
@@ -172,3 +184,67 @@ def _escore(tgt, sim, out):
 
     w = n1 * n2 / (n1 + n2)
     out[0] = w * (sXY + sXY - sXX - sYY) / 2
+
+
+@njit
+def _first_and_last_nonnull(arr):
+    """For each row of arr, get the first and last non NaN elements."""
+    out = np.empty((arr.shape[0], 2))
+    for i in range(arr.shape[0]):
+        idxs = np.where(~np.isnan(arr[i]))[0]
+        if idxs.size > 0:
+            out[i] = arr[i][idxs[np.array([0, -1])]]
+        else:
+            out[i] = np.array([np.NaN, np.NaN])
+    return out
+
+
+@njit
+def _extrapolate_on_quantiles(
+    interp, oldx, oldg, oldy, newx, newg, method="constant"
+):  # noqa
+    """Apply extrapolation to the output of interpolation on quantiles with a given grouping.
+
+    Arguments are the same as _interp_on_quantiles_2D.
+    """
+    bnds = _first_and_last_nonnull(oldx)
+    xp = np.arange(bnds.shape[0])
+    toolow = newx < np.interp(newg, xp, bnds[:, 0])
+    toohigh = newx > np.interp(newg, xp, bnds[:, 1])
+    if method == "constant":
+        constants = _first_and_last_nonnull(oldy)
+        cnstlow = np.interp(newg, xp, constants[:, 0])
+        cnsthigh = np.interp(newg, xp, constants[:, 1])
+        interp[toolow] = cnstlow[toolow]
+        interp[toohigh] = cnsthigh[toohigh]
+    else:  # 'nan'
+        interp[toolow] = np.NaN
+        interp[toohigh] = np.NaN
+    return interp
+
+
+@njit
+def _pairwise_haversine_and_bins(lond, latd):
+    """Inter-site distances with the haversine approximation."""
+    N = lond.shape[0]
+    lon = np.deg2rad(lond)
+    lat = np.deg2rad(latd)
+    dists = np.full((N, N), np.nan)
+    for i in range(N - 1):
+        for j in range(i + 1, N):
+            dlon = lon[j] - lon[i]
+            dists[i, j] = 6367 * np.arctan2(
+                np.sqrt(
+                    (np.cos(lat[j]) * np.sin(dlon)) ** 2
+                    + (
+                        np.cos(lat[i]) * np.sin(lat[j])
+                        - np.sin(lat[i]) * np.cos(lat[j]) * np.cos(dlon)
+                    )
+                    ** 2
+                ),
+                np.sin(lat[i]) * np.sin(lat[j])
+                + np.cos(lat[i]) * np.cos(lat[j]) * np.cos(dlon),
+            )
+    mn = np.nanmin(dists)
+    mx = np.nanmax(dists)
+    return dists, mn, mx

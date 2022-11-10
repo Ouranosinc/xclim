@@ -1,11 +1,14 @@
+# noqa: D205,D400
 """
 Options submodule
 =================
 
 Global or contextual options for xclim, similar to xarray.set_options.
 """
+from __future__ import annotations
+
 from inspect import signature
-from typing import Callable, Dict
+from typing import Callable
 
 from boltons.funcutils import wraps
 
@@ -20,22 +23,25 @@ MISSING_OPTIONS = "missing_options"
 RUN_LENGTH_UFUNC = "run_length_ufunc"
 SDBA_EXTRA_OUTPUT = "sdba_extra_output"
 SDBA_ENCODE_CF = "sdba_encode_cf"
+KEEP_ATTRS = "keep_attrs"
 
-MISSING_METHODS: Dict[str, Callable] = dict()
+MISSING_METHODS: dict[str, Callable] = {}
 
 OPTIONS = {
-    METADATA_LOCALES: list(),
+    METADATA_LOCALES: [],
     DATA_VALIDATION: "raise",
     CF_COMPLIANCE: "warn",
     CHECK_MISSING: "any",
-    MISSING_OPTIONS: dict(),
+    MISSING_OPTIONS: {},
     RUN_LENGTH_UFUNC: "auto",
     SDBA_EXTRA_OUTPUT: False,
     SDBA_ENCODE_CF: False,
+    KEEP_ATTRS: "xarray",
 }
 
 _LOUDNESS_OPTIONS = frozenset(["log", "warn", "raise"])
 _RUN_LENGTH_UFUNC_OPTIONS = frozenset(["auto", True, False])
+_KEEP_ATTRS_OPTIONS = frozenset(["xarray", True, False])
 
 
 def _valid_missing_options(mopts):
@@ -61,6 +67,7 @@ _VALIDATORS = {
     RUN_LENGTH_UFUNC: _RUN_LENGTH_UFUNC_OPTIONS.__contains__,
     SDBA_EXTRA_OUTPUT: lambda opt: isinstance(opt, bool),
     SDBA_ENCODE_CF: lambda opt: isinstance(opt, bool),
+    KEEP_ATTRS: _KEEP_ATTRS_OPTIONS.__contains__,
 }
 
 
@@ -134,52 +141,61 @@ def cfcheck(func: Callable) -> Callable:
 class set_options:
     """Set options for xclim in a controlled context.
 
-    Currently supported options:
-
-    - ``metadata_locales``:
-      List of IETF language tags or tuples of language tags and a translation dict, or
-      tuples of language tags and a path to a json file defining translation of attributes.
-      Default: ``[]``.
-    - ``data_validation``:
-      Whether to 'log',  'raise' an error or 'warn' the user on inputs that fail the data checks in `xclim.core.datachecks`.
-      Default: ``'raise'``.
-    - ``cf_compliance``:
-      Whether to 'log',  'raise' an error or 'warn' the user on inputs that fail the CF compliance checks in `xclim.core.cfchecks`.
-      Default: ``'warn'``.
-    - ``check_missing``:
-      How to check for missing data and flag computed indicators.
-      Default available methods are "any", "wmo", "pct", "at_least_n" and "skip".
-      Missing method can be registered through the `xclim.core.options.register_missing_method` decorator.
-      Default: ``'any'``
-    - ``missing_options``:
-      Dictionary of options to pass to the missing method. Keys must the name of
-      missing method and values must be mappings from option names to values.
-    - ``run_length_ufunc``:
+    Attributes
+    ----------
+    metadata_locales : list[Any]
+        List of IETF language tags or tuples of language tags and a translation dict, or
+        tuples of language tags and a path to a json file defining translation of attributes.
+        Default: ``[]``.
+    data_validation : {"log", "raise", "error"}
+        Whether to "log", "raise" an error or 'warn' the user on inputs that fail the data checks in
+        :py:func:`xclim.core.datachecks`. Default: ``"raise"``.
+    cf_compliance : {"log", "raise", "error"}
+        Whether to "log", "raise" an error or "warn" the user on inputs that fail the CF compliance checks in
+        :py:func:`xclim.core.cfchecks`. Default: ``"warn"``.
+    check_missing : {"any", "wmo", "pct", "at_least_n", "skip"}
+        How to check for missing data and flag computed indicators.
+        Available methods are "any", "wmo", "pct", "at_least_n" and "skip".
+        Missing method can be registered through the `xclim.core.options.register_missing_method` decorator.
+        Default: ``"any"``
+    missing_options : dict
+        Dictionary of options to pass to the missing method. Keys must the name of
+        missing method and values must be mappings from option names to values.
+    run_length_ufunc : str
       Whether to use the 1D ufunc version of run length algorithms or the dask-ready broadcasting version.
-      Default is ``'auto'`` which means the latter is used for dask-backed and large arrays.
-    - ``sdba_extra_output``:
-      Whether to add diagnostic variables to outputs of sdba's `train`, `adjust`
-      and `processing` operations.  Details about these additional variables are given in the object's
-      docstring. When activated,  `adjust` will return a Dataset with `scen`  and those extra diagnostics
-      For `processing` functions, see the doc, the output type might change, or not depending on the
-      algorithm. Default: ``False``.
-    - ``sdba_encode_cf``:
-      Whether to encode cf coordinates in the ``map_blocks`` optimization most of adjustment methods are based on.
-      This should have no impact on the results, but should run much faster in the graph creation phase.
+      Default is ``"auto"``, which means the latter is used for dask-backed and large arrays.
+    sdba_extra_output : bool
+        Whether to add diagnostic variables to outputs of sdba's `train`, `adjust`
+        and `processing` operations. Details about these additional variables are given in the object's
+        docstring. When activated, `adjust` will return a Dataset with `scen` and those extra diagnostics
+        For `processing` functions, see the doc, the output type might change, or not depending on the
+        algorithm. Default: ``False``.
+    sdba_encode_cf : bool
+        Whether to encode cf coordinates in the ``map_blocks`` optimization that most adjustment methods are based on.
+        This should have no impact on the results, but should run much faster in the graph creation phase.
+    keep_attrs : bool or str
+        Controls attributes handling in indicators. If True, attributes from all inputs are merged
+        using the `drop_conflicts` strategy and then updated with xclim-provided attributes.
+        If False, attributes from the inputs are ignored. If "xarray", xclim will use xarray's `keep_attrs` option.
+        Note that xarray's "default" is equivalent to False. Default: ``"xarray"``.
 
     Examples
     --------
     You can use ``set_options`` either as a context manager:
 
     >>> import xclim
-    >>> ds  = xr.open_dataset(path_to_tas_file).tas
-    >>> with xclim.set_options(metadata_locales=['fr']):
+    >>> ds = xr.open_dataset(path_to_tas_file).tas
+    >>> with xclim.set_options(metadata_locales=["fr"]):
     ...     out = xclim.atmos.tg_mean(ds)
+    ...
 
     Or to set global options:
 
-    >>> xclim.set_options(missing_options={'pct': {'tolerance': 0.04}})  # doctest: +SKIP
-    <xclim.core.options.set_options object at ...>
+    .. code-block:: python
+
+        import xclim
+
+        xclim.set_options(missing_options={"pct": {"tolerance": 0.04}})
     """
 
     def __init__(self, **kwargs):
@@ -209,6 +225,6 @@ class set_options:
             else:
                 OPTIONS[k] = v
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, option_type, value, traceback):
         """Context management."""
         self._update(self.old)

@@ -1,0 +1,48 @@
+name: "CodeQL Scan"
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - HISTORY.rst
+      - Makefile
+      - MANIFEST.in
+      - requirements_upstream.txt
+      - setup.cfg
+      - setup.py
+      - tox.ini
+      - xclim/__init__.py
+      - docs/**.ipynb
+      - docs/**.py
+      - docs/**.rst
+      - .github/**.yml
+      - .pre-commit-config.yaml
+  schedule:
+    - cron: '30 23 * * 5'
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-22.04
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language:
+          - 'python'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      # Initializes the CodeQL tools for scanning.
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2

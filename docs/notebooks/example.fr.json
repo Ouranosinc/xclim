@@ -1,7 +1,7 @@
 {
   "FD": {
     "title": "Nombre de jours de gel",
-    "long_name" : "Nombre de jours de gel (Tmin < 0°C)",
+    "long_name": "Nombre de jours de gel (Tmin < 0°C)",
     "description": "Nombre de jours où la température minimale passe sous 0°C."
   },
   "R95P": {
@@ -9,7 +9,7 @@
   },
   "R95P.R95p": {
     "long_name": "Accumulation {freq:f} des précipitations lors des jours de fortes pluies (> {perc}e percentile)",
-    "description": "Épaisseur équivalent des précipitations accumulées lors des jours où la pluie est plus forte que le {perc}e percentile de la série."
+    "description": "Épaisseur équivalente des précipitations accumulées lors des jours où la pluie est plus forte que le {perc}e percentile de la série."
   },
   "R95P.R95p_days": {
     "long_name": "Nombre de jours de fortes pluies (> {perc}e percentile)",
@@ -17,10 +17,13 @@
   },
   "R99P.R99p": {
     "long_name": "Accumulation {freq:f} des précipitations lors des jours de fortes pluies (> {perc}e percentile)",
-    "description": "Épaisseur équivalent des précipitations accumulées lors des jours où la pluie est plus forte que le {perc}e percentile de la série."
+    "description": "Épaisseur équivalente des précipitations accumulées lors des jours où la pluie est plus forte que le {perc}e percentile de la série."
   },
   "R99P.R99p_days": {
     "long_name": "Nombre de jours de fortes pluies (> {perc}e percentile)",
     "description": "Nombre de jours où la pluie est plus forte que le {perc}e percentile de la série."
+  },
+  "RX5DAY": {
+    "long_name": "Cumul maximal de la précipitation quotidienne sur 5 jours."
   }
 }

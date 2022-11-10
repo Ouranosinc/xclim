@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Tests for `xclim.core.options`
+from __future__ import annotations
+
 import pytest
 
 from xclim import set_options

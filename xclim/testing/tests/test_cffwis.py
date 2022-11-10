@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 import pytest
 import xarray as xr
@@ -5,7 +7,7 @@ import xarray as xr
 from xclim import atmos
 from xclim.core.options import set_options
 from xclim.core.units import convert_units_to
-from xclim.indices.fwi import (
+from xclim.indices.fire import (
     _day_length,
     _day_length_factor,
     _drought_code,
@@ -148,10 +150,10 @@ def test_day_lengh_factor():
     assert _day_length_factor(44, 1) == -1.6
 
 
-def test_fire_weather_indicator():
+def test_cffwis_indicator():
     fwi_data = open_dataset(fwi_url)
     fwi_data.lat.attrs["units"] = "degrees_north"
-    dc, dmc, ffmc, isi, bui, fwi = atmos.fire_weather_indexes(
+    dc, dmc, ffmc, isi, bui, fwi = atmos.cffwis_indices(
         tas=fwi_data.tas,
         pr=fwi_data.pr,
         hurs=fwi_data.rh,
@@ -159,7 +161,7 @@ def test_fire_weather_indicator():
         lat=fwi_data.lat,
     )
 
-    dc2, dmc2, ffmc2, isi2, bui2, fwi2 = atmos.fire_weather_indexes(
+    dc2, dmc2, ffmc2, isi2, bui2, fwi2 = atmos.cffwis_indices(
         tas=fwi_data.tas,
         pr=fwi_data.pr,
         hurs=fwi_data.rh,
@@ -169,6 +171,45 @@ def test_fire_weather_indicator():
         dmc0=dmc[-1],
         dc0=dc[-1],
     )
+    xr.testing.assert_allclose(dc, fwi_data.dc.isel(test=0), rtol=1e-6)
+    xr.testing.assert_allclose(dmc, fwi_data.dmc.isel(test=0), rtol=1e-6)
+    xr.testing.assert_allclose(ffmc, fwi_data.ffmc.isel(test=0), rtol=1e-6)
+    xr.testing.assert_allclose(isi, fwi_data.isi.isel(test=0), rtol=1e-6)
+    xr.testing.assert_allclose(bui, fwi_data.bui.isel(test=0), rtol=1e-6)
+    xr.testing.assert_allclose(fwi, fwi_data.fwi.isel(test=0), rtol=1e-6)
+    xr.testing.assert_allclose(dc2, fwi_data.dc.isel(test=1), rtol=1e-6)
+    xr.testing.assert_allclose(dmc2, fwi_data.dmc.isel(test=1), rtol=1e-6)
+    xr.testing.assert_allclose(ffmc2, fwi_data.ffmc.isel(test=1), rtol=1e-6)
+    xr.testing.assert_allclose(isi2, fwi_data.isi.isel(test=1), rtol=1e-6)
+    xr.testing.assert_allclose(bui2, fwi_data.bui.isel(test=1), rtol=1e-6)
+    xr.testing.assert_allclose(fwi2, fwi_data.fwi.isel(test=1), rtol=1e-6)
+
+
+def test_deprecated_fire_weather_indicator():
+    fwi_data = open_dataset(fwi_url)
+    fwi_data.lat.attrs["units"] = "degrees_north"
+
+    with pytest.deprecated_call():
+        dc, dmc, ffmc, isi, bui, fwi = atmos.fire_weather_indexes(
+            tas=fwi_data.tas,
+            pr=fwi_data.pr,
+            hurs=fwi_data.rh,
+            sfcWind=fwi_data.ws,
+            lat=fwi_data.lat,
+        )
+
+    with pytest.deprecated_call():
+        dc2, dmc2, ffmc2, isi2, bui2, fwi2 = atmos.fire_weather_indexes(
+            tas=fwi_data.tas,
+            pr=fwi_data.pr,
+            hurs=fwi_data.rh,
+            sfcWind=fwi_data.ws,
+            lat=fwi_data.lat,
+            ffmc0=ffmc[-1],
+            dmc0=dmc[-1],
+            dc0=dc[-1],
+        )
+
     xr.testing.assert_allclose(dc, fwi_data.dc.isel(test=0), rtol=1e-6)
     xr.testing.assert_allclose(dmc, fwi_data.dmc.isel(test=0), rtol=1e-6)
     xr.testing.assert_allclose(ffmc, fwi_data.ffmc.isel(test=0), rtol=1e-6)
@@ -401,25 +442,26 @@ cffdrs_fire_season = {
 }
 
 
-def test_gfwed_and_indicators():
+def test_deprecated_gfwed_and_indicators():
     # Also tests passing parameters as quantity strings
     ds = open_dataset("FWI/GFWED_sample_2017.nc")
 
-    outs = fire_weather_indexes(
-        tas=ds.tas,
-        pr=ds.prbc,
-        snd=ds.snow_depth,
-        hurs=ds.rh,
-        sfcWind=ds.sfcwind,
-        lat=ds.lat,
-        season_method="GFWED",
-        overwintering=False,
-        dry_start="GFWED",
-        temp_condition_days=3,
-        snow_condition_days=3,
-        temp_start_thresh="6 degC",
-        temp_end_thresh="6 degC",
-    )
+    with pytest.deprecated_call():
+        outs = fire_weather_indexes(
+            tas=ds.tas,
+            pr=ds.prbc,
+            snd=ds.snow_depth,
+            hurs=ds.rh,
+            sfcWind=ds.sfcwind,
+            lat=ds.lat,
+            season_method="GFWED",
+            overwintering=False,
+            dry_start="GFWED",
+            temp_condition_days=3,
+            snow_condition_days=3,
+            temp_start_thresh="6 degC",
+            temp_end_thresh="6 degC",
+        )
 
     for exp, out in zip([ds.DC, ds.DMC, ds.FFMC, ds.ISI, ds.BUI, ds.FWI], outs):
         np.testing.assert_allclose(
@@ -441,21 +483,22 @@ def test_gfwed_and_indicators():
         # 3 first days are false by default assume same as 4th day.
         mask = mask.where(mask.time > mask.time[2]).bfill("time")
 
-        outs = atmos.fire_weather_indexes(
-            tas=ds2.tas,
-            pr=ds2.prbc,
-            snd=ds2.snow_depth,
-            hurs=ds2.rh,
-            sfcWind=ds2.sfcwind,
-            lat=ds2.lat,
-            dc0=ds.DC.isel(time=0),
-            dmc0=ds.DMC.isel(time=0),
-            ffmc0=ds.FFMC.isel(time=0),
-            season_mask=mask,
-            overwintering=False,
-            dry_start="GFWED",
-            initial_start_up=False,
-        )
+        with pytest.deprecated_call():
+            outs = atmos.fire_weather_indexes(
+                tas=ds2.tas,
+                pr=ds2.prbc,
+                snd=ds2.snow_depth,
+                hurs=ds2.rh,
+                sfcWind=ds2.sfcwind,
+                lat=ds2.lat,
+                dc0=ds.DC.isel(time=0),
+                dmc0=ds.DMC.isel(time=0),
+                ffmc0=ds.FFMC.isel(time=0),
+                season_mask=mask,
+                overwintering=False,
+                dry_start="GFWED",
+                initial_start_up=False,
+            )
 
     for exp, out in zip([ds2.DC, ds2.DMC, ds2.FFMC, ds2.ISI, ds2.BUI, ds2.FWI], outs):
         np.testing.assert_allclose(out, exp, rtol=0.03)

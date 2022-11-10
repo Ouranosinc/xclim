@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import numpy as np
-import pandas as pd
 import pytest
 import xarray as xr
 from scipy.stats import norm
 
+from xclim.sdba import nbutils as nbu
 from xclim.sdba import utils as u
 from xclim.sdba.base import Grouper
 
@@ -44,73 +46,162 @@ def test_map_cdf(series):
 
 
 def test_equally_spaced_nodes():
-    x = u.equally_spaced_nodes(5)
+    x = u.equally_spaced_nodes(5, eps=1e-4)
     assert len(x) == 7
     d = np.diff(x)
     np.testing.assert_almost_equal(d[0], d[1] / 2, 3)
 
-    x = u.equally_spaced_nodes(1, eps=None)
+    x = u.equally_spaced_nodes(1)
     np.testing.assert_almost_equal(x[0], 0.5)
 
 
 @pytest.mark.parametrize(
-    "method,exp", [("nan", [np.NaN, -np.inf]), ("constant", [0, -np.inf])]
+    "interp,expi", [("nearest", 2.9), ("linear", 2.95), ("cubic", 2.95)]
 )
-def test_extrapolate_qm(make_qm, method, exp):
-    qm = make_qm(np.arange(6).reshape(2, 3))
-    xq = make_qm(np.arange(6).reshape(2, 3))
-
-    q, x = u.extrapolate_qm(qm, xq, method=method)
-
-    assert isinstance(q, xr.DataArray)
-    assert isinstance(x, xr.DataArray)
-    if np.isnan(exp[0]):
-        assert q[0, 0].isnull()
-    else:
-        assert q[0, 0] == exp[0]
-    assert x[0, 0] == exp[1]
-
-
-@pytest.mark.parametrize("shape", [(2920,), (2920, 5, 5)])
-@pytest.mark.parametrize("group", ["time", "time.month"])
-@pytest.mark.parametrize("method", ["nearest", "linear", "cubic"])
-def test_interp_on_quantiles(shape, group, method):
-    group = Grouper(group)
-    raw = np.random.random_sample(shape)  # [0, 1]
-    t = pd.date_range("2000-01-01", periods=shape[0], freq="D")
-    # obs : [9, 11]
-    obs = xr.DataArray(
-        raw * 2 + 9, dims=("time", "lat", "lon")[: len(shape)], coords={"time": t}
+@pytest.mark.parametrize("extrap,expe", [("constant", 4.4), ("nan", np.NaN)])
+def test_interp_on_quantiles_constant(interp, expi, extrap, expe):
+    quantiles = np.linspace(0, 1, num=25)
+    xq = xr.DataArray(
+        np.linspace(205, 229, num=25),
+        dims=("quantiles",),
+        coords={"quantiles": quantiles},
     )
-    # sim [9, 11.4] (x1.2 + 0.2)
+
+    yq = xr.DataArray(
+        np.linspace(2, 4.4, num=25),
+        dims=("quantiles",),
+        coords={"quantiles": quantiles},
+    )
+
+    newx = xr.DataArray(
+        np.linspace(240, 200, num=41) - 0.5,
+        dims=("time",),
+        coords={"time": xr.cftime_range("1900-03-01", freq="D", periods=41)},
+    )
+    newx = newx.where(newx > 201)  # Put some NaNs in newx
+
+    xq = xq.expand_dims(lat=[1, 2, 3])
+    yq = yq.expand_dims(lat=[1, 2, 3])
+    newx = newx.expand_dims(lat=[1, 2, 3])
+
+    out = u.interp_on_quantiles(
+        newx, xq, yq, group="time", method=interp, extrapolation=extrap
+    )
+
+    if np.isnan(expe):
+        assert out.isel(time=0).isnull().all()
+    else:
+        assert out.isel(lat=1, time=0) == expe
+    np.testing.assert_allclose(out.isel(time=25), expi)
+    assert out.isel(time=-1).isnull().all()
+
+    xq = xq.where(xq != 220)
+    yq = yq.where(yq != 3)
+    out = u.interp_on_quantiles(
+        newx, xq, yq, group="time", method=interp, extrapolation=extrap
+    )
+
+    if np.isnan(expe):
+        assert out.isel(time=0).isnull().all()
+    else:
+        assert out.isel(lat=1, time=0) == expe
+    np.testing.assert_allclose(out.isel(time=25), expi)
+    assert out.isel(time=-1).isnull().all()
+
+
+def test_interp_on_quantiles_monthly():
+    t = xr.cftime_range("2000-01-01", "2030-12-31", freq="D", calendar="noleap")
+    ref = xr.DataArray(
+        (
+            -20 * np.cos(2 * np.pi * t.dayofyear / 365)
+            + 2 * np.random.random_sample((t.size,))
+            + 273.15
+            + 0.1 * (t - t[0]).days / 365
+        ),  # "warming" of 1K per decade,
+        dims=("time",),
+        coords={"time": t},
+        attrs={"units": "K"},
+    )
     sim = xr.DataArray(
-        raw * 2.4 + 9, dims=("time", "lat", "lon")[: len(shape)], coords={"time": t}
-    )
-    # fut [9.02, 11.38] (x1.18 + 0.2) In order to have every point of fut inside the range of sim
-    fut_raw = raw * 2.36 + 9.02
-    fut_raw[
-        np.array([100, 300, 500, 700])
-    ] = 1000  # Points outside the sim range will be NaN
-    fut = xr.DataArray(
-        fut_raw, dims=("time", "lat", "lon")[: len(shape)], coords={"time": t}
-    )
-
-    q = np.linspace(0, 1, 11)
-    xq = group.apply("quantile", sim, q=q).rename(quantile="quantiles")
-    yq = group.apply("quantile", obs, q=q).rename(quantile="quantiles")
-
-    fut_corr = u.interp_on_quantiles(fut, xq, yq, group=group, method=method).transpose(
-        *("time", "lat", "lon")[: len(shape)]
+        (
+            -18 * np.cos(2 * np.pi * t.dayofyear / 365)
+            + 2 * np.random.random_sample((t.size,))
+            + 273.15
+            + 0.11 * (t - t[0]).days / 365
+        ),  # "warming" of 1.1K per decade
+        dims=("time",),
+        coords={"time": t},
+        attrs={"units": "K"},
     )
 
-    if method == "nearest":
-        np.testing.assert_allclose(fut_corr.values, obs.values, rtol=0.3)
-        assert fut_corr.isnull().sum() == 0
-    else:
-        np.testing.assert_allclose(
-            fut_corr.values, obs.where(fut != 1000).values, rtol=2e-3
+    ref = ref.sel(time=slice(None, "2015-01-01"))
+    hist = sim.sel(time=slice(None, "2015-01-01"))
+
+    group = Grouper("time.month")
+    quantiles = u.equally_spaced_nodes(15, eps=1e-6)
+    ref_q = group.apply(nbu.quantile, ref, main_only=True, q=quantiles)
+    hist_q = group.apply(nbu.quantile, hist, main_only=True, q=quantiles)
+    af = u.get_correction(hist_q, ref_q, "+")
+
+    for interp in ["nearest", "linear", "cubic"]:
+        afi = u.interp_on_quantiles(
+            sim, hist_q, af, group="time.month", method=interp, extrapolation="constant"
         )
-        xr.testing.assert_equal(fut_corr.isnull(), fut == 1000)
+        assert afi.isnull().sum("time") == 0, interp
+
+
+@pytest.mark.parametrize(
+    "interp,expi", [("nearest", 2.9), ("linear", 2.95), ("cubic", 2.95)]
+)
+@pytest.mark.parametrize("extrap,expe", [("constant", 4.4), ("nan", np.NaN)])
+def test_interp_on_quantiles_constant_with_nan(interp, expi, extrap, expe):
+    quantiles = np.linspace(0, 1, num=30)
+    xq = xr.DataArray(
+        np.append(np.linspace(205, 229, num=25), [np.nan] * 5),
+        dims=("quantiles",),
+        coords={"quantiles": quantiles},
+    )
+
+    yq = xr.DataArray(
+        np.append(np.linspace(2, 4.4, num=25), [np.nan] * 5),
+        dims=("quantiles",),
+        coords={"quantiles": quantiles},
+    )
+
+    newx = xr.DataArray(
+        np.linspace(240, 200, num=41) - 0.5,
+        dims=("time",),
+        coords={"time": xr.cftime_range("1900-03-01", freq="D", periods=41)},
+    )
+    newx = newx.where(newx > 201)  # Put some NaNs in newx
+
+    xq = xq.expand_dims(lat=[1, 2, 3])
+    yq = yq.expand_dims(lat=[1, 2, 3])
+    newx = newx.expand_dims(lat=[1, 2, 3])
+
+    out = u.interp_on_quantiles(
+        newx, xq, yq, group="time", method=interp, extrapolation=extrap
+    )
+
+    if np.isnan(expe):
+        assert out.isel(time=0).isnull().all()
+    else:
+        assert out.isel(lat=1, time=0) == expe
+    np.testing.assert_allclose(out.isel(time=25), expi)
+    assert out.isel(time=-1).isnull().all()
+
+    xq = xq.where(xq != 220)
+    yq = yq.where(yq != 3)
+    out = u.interp_on_quantiles(
+        newx, xq, yq, group="time", method=interp, extrapolation=extrap
+    )
+
+    if np.isnan(expe):
+        assert out.isel(time=0).isnull().all()
+    else:
+        assert out.isel(lat=1, time=0) == expe
+    np.testing.assert_allclose(out.isel(time=25), expi)
+    assert out.isel(time=-1).isnull().all()
 
 
 def test_rank():

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 import pytest
 import xarray as xr
@@ -21,13 +23,14 @@ from xclim.core.utils import ValidationError
 class TestUnits:
     def test_temperature(self):
         assert 4 * units.d == 4 * units.day
-        Q_ = units.Quantity
+        Q_ = units.Quantity  # noqa
         assert Q_(1, units.C) == Q_(1, units.degC)
 
     def test_hydro(self):
         with units.context("hydro"):
-            q = 1 * units.kg / units.m ** 2 / units.s
+            q = 1 * units.kg / units.m**2 / units.s
             assert q.to("mm/day") == q.to("mm/d")
+            assert q.to("mmday").magnitude == 24 * 60**2
 
     def test_lat_lon(self):
         assert 100 * units.degreeN == 100 * units.degree
@@ -65,7 +68,7 @@ class TestConvertUnitsTo:
 
         with pytest.warns(FutureWarning):
             tas = tas_series(np.arange(365), start="1/1/2001")
-            out = indices.tx_days_above(tas, 30)
+            out = indices.tx_days_above(tas, 30)  # noqa
 
         out1 = indices.tx_days_above(tas, "30 degC")
         out2 = indices.tx_days_above(tas, "303.15 K")
@@ -81,6 +84,12 @@ class TestConvertUnitsTo:
         pr = pr_series(np.arange(365), start="1/1/2001").chunk({"time": 100})
         out = convert_units_to(pr, "mm/day")
         assert isinstance(out.data, dsk.Array)
+
+    @pytest.mark.parametrize(
+        "alias", [units("Celsius"), units("degC"), units("C"), units("deg_C")]
+    )
+    def test_temperature_aliases(self, alias):
+        assert alias == units("celsius")
 
     def test_offset_confusion(self):
         out = convert_units_to("10 degC days", "K days")
@@ -119,6 +128,9 @@ class TestUnitConversion:
         u = units2pint("mm s-1")
         assert str(u) == "millimeter / second"
 
+        u = units2pint("degrees_north")
+        assert str(u) == "degrees_north"
+
     def test_pint_multiply(self, pr_series):
         a = pr_series([1, 2, 3])
         out = pint_multiply(a, 1 * units.days)
@@ -126,7 +138,7 @@ class TestUnitConversion:
         assert out.units == "kg m-2"
 
     def test_str2pint(self):
-        Q_ = units.Quantity
+        Q_ = units.Quantity  # noqa
         assert str2pint("-0.78 m") == Q_(-0.78, units="meter")
         assert str2pint("m kg/s") == Q_(1, units="meter kilogram/second")
         assert str2pint("11.8 degC days") == Q_(11.8, units="delta_degree_Celsius days")

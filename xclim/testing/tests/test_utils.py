@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Test for utils
+from __future__ import annotations
+
 from inspect import signature
 
 import numpy as np
 import xarray as xr
 
-from xclim.core.indicator import Daily
 from xclim.core.utils import (
     ensure_chunk_size,
     nan_calc_percentiles,
@@ -70,7 +70,7 @@ class Test_nan_calc_percentiles:
         assert res[()] == 29
 
     def test_calc_perc_type8(self):
-        # Exemple array from: https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
+        # Example array from: https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
         arr = np.asarray(
             [[15.0, 20.0, 35.0, 40.0, 50.0], [15.0, 20.0, 35.0, 40.0, 50.0]]
         )

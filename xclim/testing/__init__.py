@@ -1,2 +1,4 @@
 """Helpers for testing xclim."""
-from ._utils import *
+from __future__ import annotations
+
+from .utils import *

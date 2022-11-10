@@ -1,74 +1,111 @@
 {
   "creators": [
     {
-      "affiliation": "Ouranos",
       "name": "Logan, Travis",
+      "affiliation": "Ouranos",
       "orcid": "0000-0002-2212-9580"
     },
     {
-      "affiliation": "Ouranos",
+      "name": "Aoun, Abel",
+      "affiliation": "CERFACS",
+      "orcid": "0000-0003-2289-2890"
+    },
+    {
       "name": "Bourgault, Pascal",
+      "affiliation": "Ouranos",
       "orcid": "0000-0003-1192-0403"
     },
     {
       "affiliation": "Ouranos",
-      "name": "Smith, Trevor James",
-      "orcid": "0000-0001-5393-8359"
+      "name": "Dupuis, Éric",
+      "orcid": "0000-0001-7976-4596"
     },
     {
-      "affiliation": "Ouranos",
       "name": "Huard, David",
+      "affiliation": "Ouranos",
       "orcid": "0000-0003-0311-5498"
     },
     {
+      "name": "Lavoie, Juliette",
       "affiliation": "Ouranos",
+      "orcid": "0000-0002-4708-5182"
+    },
+    {
+      "name": "Rondeau-Genesse, Gabriel",
+      "affiliation": "Ouranos",
+      "orcid": "0000-0003-3389-9406"
+    },
+    {
+      "name": "Smith, Trevor James",
+      "affiliation": "Ouranos",
+      "orcid": "0000-0001-5393-8359"
+    },
+    {
+      "name": "Alegre, Raquel",
+      "affiliation": "University College London",
+      "orcid": "0000-0002-6081-0721"
+    },
+    {
+      "name": "Barnes, Clair",
+      "affiliation": "University College London",
+      "orcid": "0000-0002-7806-7913"
+    },
+    {
       "name": "Biner, Sébastien",
       "orcid": "0000-0001-7515-490X"
     },
     {
-      "affiliation": "Ouranos",
-      "name": "Labonté, Marie-Pier",
-      "orcid": "0000-0003-0738-3940"
-    },
-    {
-      "affiliation": "Ouranos",
-      "name": "Rondeau-Genesse, Gabriel",
-      "orcid": "0000-0003-3389-9406"
-    },
-    {
-      "affiliation": "ECCC",
-      "name": "Fyke, Jeremy",
-      "orcid": "0000-0002-4522-3019"
-    },
-    {
-      "affiliation": "CERFACS",
-      "name": "Aoun, Abel",
-      "orcid": "0000-0003-2289-2890"
-    },
-    {
-      "name": "Roy, Philippe"
+      "name": "Caron, David",
+      "affiliation": "@jakarto3d"
     },
     {
       "name": "Ehbrecht, Carsten"
     },
     {
-      "affiliation": "@jakarto3d",
-      "name": "Caron, David"
+      "name": "Fyke, Jeremy",
+      "affiliation": "ECCC",
+      "orcid": "0000-0002-4522-3019"
     },
     {
-      "affiliation": "STFC CEDA",
-      "name": "Stephens, Ag"
+      "name": "Keel, Tom",
+      "affiliation": "University College London",
+      "orcid": "0000-0001-9193-5271"
     },
     {
-      "name": "Whelan, Chistopher"
+      "name": "Labonté, Marie-Pier",
+      "affiliation": "Ouranos",
+      "orcid": "0000-0003-0738-3940"
+    },
+    {
+      "name": "Lierhammer, Ludwig",
+      "affiliation": "Helmholtz-Zentrum Hereon",
+      "orcid": "0000-0002-7207-0003"
     },
     {
       "name": "Low, Jwen-Fai"
     },
     {
-      "affiliation": "Ouranos",
-      "name": "Lavoie, Juliette",
-      "orcid": "0000-0002-4708-5182"
+      "name": "Quinn, Jamie",
+      "affiliation": "University College London"
+    },
+    {
+      "name": "Roy, Philippe"
+    },
+    {
+      "name": "Squire, Dougie",
+      "affiliation": "CSIRO",
+      "orcid": "0000-0003-3271-6874"
+    },
+    {
+      "name": "Stephens, Ag",
+      "affiliation": "STFC CEDA"
+    },
+    {
+      "name": "Tanguy, Maliko",
+      "affiliation": "CEH"
+    },
+    {
+      "name": "Whelan, Chistopher"
     }
   ],
   "keywords": [
@@ -77,7 +114,7 @@
     "climate",
     "climatology",
     "climate change",
-    "indicators",
+    "climate indicators",
     "prediction",
     "analysis"
   ],

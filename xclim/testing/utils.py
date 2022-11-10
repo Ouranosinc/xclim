@@ -1,12 +1,19 @@
-"""Testing and tutorial utilities module."""
-# Most of this code copied and adapted from xarray
+"""Testing and tutorial utilities' module."""
+# Some of this code was copied and adapted from xarray
+from __future__ import annotations
+
 import hashlib
+import importlib
 import json
 import logging
+import os
+import platform
 import re
+import sys
 import warnings
+from io import StringIO
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Sequence, TextIO
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin
 from urllib.request import urlopen, urlretrieve
@@ -15,6 +22,23 @@ import pandas as pd
 from xarray import Dataset
 from xarray import open_dataset as _open_dataset
 from yaml import safe_dump, safe_load
+
+_xclim_deps = [
+    "xclim",
+    "xarray",
+    "sklearn",
+    "scipy",
+    "pint",
+    "pandas",
+    "numba",
+    "dask",
+    "cf_xarray",
+    "cftime",
+    "clisops",
+    "bottleneck",
+    "boltons",
+]
+
 
 _default_cache_dir = Path.home() / ".xclim_testing_data"
 
@@ -27,11 +51,12 @@ __all__ = [
     "open_dataset",
     "publish_release_notes",
     "update_variable_yaml",
+    "show_versions",
 ]
 
 
 def file_md5_checksum(fname):
-    hash_md5 = hashlib.md5()
+    hash_md5 = hashlib.md5()  # nosec
     with open(fname, "rb") as f:
         hash_md5.update(f.read())
     return hash_md5.hexdigest()
@@ -46,18 +71,21 @@ def _get(
 ) -> Path:
     cache_dir = cache_dir.absolute()
     local_file = cache_dir / branch / fullname
-    md5name = fullname.with_suffix("{}.md5".format(suffix))
-    md5file = cache_dir / branch / md5name
+    md5_name = fullname.with_suffix(f"{suffix}.md5")
+    md5_file = cache_dir / branch / md5_name
+
+    if not github_url.lower().startswith("http"):
+        raise ValueError(f"GitHub URL not safe: '{github_url}'.")
 
     if local_file.is_file():
-        localmd5 = file_md5_checksum(local_file)
+        local_md5 = file_md5_checksum(local_file)
         try:
-            url = "/".join((github_url, "raw", branch, md5name.as_posix()))
-            LOGGER.info("Attempting to fetch remote file md5: %s" % md5name.as_posix())
-            urlretrieve(url, md5file)
-            with open(md5file) as f:
+            url = "/".join((github_url, "raw", branch, md5_name.as_posix()))
+            LOGGER.info(f"Attempting to fetch remote file md5: {md5_name.as_posix()}")
+            urlretrieve(url, md5_file)  # nosec
+            with open(md5_file) as f:
                 remote_md5 = f.read()
-            if localmd5.strip() != remote_md5.strip():
+            if local_md5.strip() != remote_md5.strip():
                 local_file.unlink()
                 msg = (
                     f"MD5 checksum for {local_file.as_posix()} does not match upstream md5. "
@@ -65,7 +93,7 @@ def _get(
                 )
                 warnings.warn(msg)
         except (HTTPError, URLError):
-            msg = f"{md5name.as_posix()} not accessible online. Unable to determine validity with upstream repo."
+            msg = f"{md5_name.as_posix()} not accessible online. Unable to determine validity with upstream repo."
             warnings.warn(msg)
 
     if not local_file.is_file():
@@ -74,22 +102,22 @@ def _get(
         local_file.parent.mkdir(parents=True, exist_ok=True)
 
         url = "/".join((github_url, "raw", branch, fullname.as_posix()))
-        LOGGER.info("Fetching remote file: %s" % fullname.as_posix())
-        urlretrieve(url, local_file)
+        LOGGER.info(f"Fetching remote file: {fullname.as_posix()}")
+        urlretrieve(url, local_file)  # nosec
         try:
-            url = "/".join((github_url, "raw", branch, md5name.as_posix()))
-            LOGGER.info("Fetching remote file md5: %s" % md5name.as_posix())
-            urlretrieve(url, md5file)
+            url = "/".join((github_url, "raw", branch, md5_name.as_posix()))
+            LOGGER.info(f"Fetching remote file md5: {md5_name.as_posix()}")
+            urlretrieve(url, md5_file)  # nosec
         except HTTPError as e:
-            msg = f"{md5name.as_posix()} not found. Aborting file retrieval."
+            msg = f"{md5_name.as_posix()} not found. Aborting file retrieval."
             local_file.unlink()
             raise FileNotFoundError(msg) from e
 
-        localmd5 = file_md5_checksum(local_file)
+        local_md5 = file_md5_checksum(local_file)
         try:
-            with open(md5file) as f:
+            with open(md5_file) as f:
                 remote_md5 = f.read()
-            if localmd5.strip() != remote_md5.strip():
+            if local_md5.strip() != remote_md5.strip():
                 local_file.unlink()
                 msg = (
                     f"{local_file.as_posix()} and md5 checksum do not match. "
@@ -104,14 +132,14 @@ def _get(
 
 # idea copied from raven that it borrowed from xclim that borrowed it from xarray that was borrowed from Seaborn
 def open_dataset(
-    name: str,
-    suffix: Optional[str] = None,
-    dap_url: Optional[str] = None,
+    name: str | os.PathLike,
+    suffix: str | None = None,
+    dap_url: str | None = None,
     github_url: str = "https://github.com/Ouranosinc/xclim-testdata",
     branch: str = "main",
     cache: bool = True,
     cache_dir: Path = _default_cache_dir,
-    **kwds,
+    **kwargs,
 ) -> Dataset:
     """
     Open a dataset from the online GitHub-like repository.
@@ -120,22 +148,22 @@ def open_dataset(
 
     Parameters
     ----------
-    name : str
+    name : str or os.PathLike
         Name of the file containing the dataset.
     suffix : str, optional
         If no suffix is given, assumed to be netCDF ('.nc' is appended). For no suffix, set "".
     dap_url : str, optional
         URL to OPeNDAP folder where the data is stored. If supplied, supersedes github_url.
     github_url : str
-        URL to Github repository where the data is stored.
+        URL to GitHub repository where the data is stored.
     branch : str, optional
         For GitHub-hosted files, the branch to download from.
     cache_dir : Path
         The directory in which to search for and write cached data.
     cache : bool
         If True, then cache data locally for use on subsequent calls.
-    kwds : dict, optional
-        For NetCDF files, **kwds passed to xarray.open_dataset.
+    kwargs
+        For NetCDF files, keywords passed to :py:func:`xarray.open_dataset`.
 
     Returns
     -------
@@ -145,20 +173,27 @@ def open_dataset(
     --------
     xarray.open_dataset
     """
-    name = Path(name)
+    if isinstance(name, str):
+        name = Path(name)
     if suffix is None:
         suffix = ".nc"
     fullname = name.with_suffix(suffix)
 
+    if not github_url.lower().startswith("http"):
+        raise ValueError(f"GitHub URL not safe: '{github_url}'.")
+
     if dap_url is not None:
+        if not dap_url.lower().startswith("http"):
+            raise ValueError(f"OPeNDAP URL not safe: '{dap_url}'.")
+
         dap_file = urljoin(dap_url, str(name))
         try:
-            ds = _open_dataset(dap_file, **kwds)
+            ds = _open_dataset(dap_file, **kwargs)
             return ds
-        except OSError:
-            msg = "OPeNDAP file not read. Verify that service is available."
+        except OSError as err:
+            msg = "OPeNDAP file not read. Verify that the service is available."
             LOGGER.error(msg)
-            raise
+            raise OSError(msg) from err
 
     local_file = _get(
         fullname=fullname,
@@ -169,37 +204,39 @@ def open_dataset(
     )
 
     try:
-        ds = _open_dataset(local_file, **kwds)
+        ds = _open_dataset(local_file, **kwargs)
         if not cache:
             ds = ds.load()
             local_file.unlink()
         return ds
-    except OSError:
-        raise
+    except OSError as err:
+        raise err
 
 
 def list_datasets(github_repo="Ouranosinc/xclim-testdata", branch="main"):
-    """Return a DataFrame listing all xclim test datasets available on the github repo for the given branch.
+    """Return a DataFrame listing all xclim test datasets available on the GitHub repo for the given branch.
 
     The result includes the filepath, as passed to `open_dataset`, the file size (in KB) and the html url to the file.
-    This uses a unauthenticated call to Github's REST API, so it is limited to 60 requests per hour (per IP).
+    This uses an unauthenticated call to GitHub's REST API, so it is limited to 60 requests per hour (per IP).
     A single call of this function triggers one request per subdirectory, so use with parsimony.
     """
-    res = urlopen(f"https://api.github.com/repos/{github_repo}/contents?ref={branch}")
-    base = json.loads(res.read().decode())
+    with urlopen(  # nosec
+        f"https://api.github.com/repos/{github_repo}/contents?ref={branch}"
+    ) as res:
+        base = json.loads(res.read().decode())
     records = []
     for folder in base:
         if folder["path"].startswith(".") or folder["size"] > 0:
             # drop hidden folders and other files.
             continue
-        res = urlopen(folder["url"])
-        listing = json.loads(res.read().decode())
+        with urlopen(folder["url"]) as res:  # nosec
+            listing = json.loads(res.read().decode())
         for file in listing:
             if file["path"].endswith(".nc"):
                 records.append(
                     {
                         "name": file["path"],
-                        "size": file["size"] / 2 ** 10,
+                        "size": file["size"] / 2**10,
                         "url": file["html_url"],
                     }
                 )
@@ -208,83 +245,13 @@ def list_datasets(github_repo="Ouranosinc/xclim-testdata", branch="main"):
     return df
 
 
-def as_tuple(x):  # noqa: D103
-    if isinstance(x, (list, tuple)):
-        return x
-    return (x,)  # noqa
-
-
-class TestFile:  # noqa: D101
-    def __init__(self, name, path=None, url=None):
-        """Register a test file.
-
-        Parameters
-        ----------
-        name : str
-          Short identifier for test file.
-        path : Path
-          Local path.
-        url : str
-          Remote location to retrieve file if it's not on disk.
-        """
-        self.name = name
-        self.path = path
-        self.url = url
-
-    def generate(self):
-        """Create the test file from scratch."""
-        pass
-
-    def download(self):
-        """Download a remote file."""
-        for u, p in zip(as_tuple(self.url), as_tuple(self.path)):
-            urlretrieve(u, str(p))
-
-    def __call__(self):  # noqa: D102
-        """Return the path to the file."""
-        if not self.path.exists():
-            if self.url is not None:
-                self.download()
-            else:
-                self.generate()
-
-        if not self.path.exists():
-            raise FileNotFoundError
-
-        return self.path
-
-
-class TestDataSet:  # noqa: D101
-    def __init__(self, name, path, files=()):
-        self.name = name
-        self.files = list(files)
-        self.path = Path(path)
-        if not self.path.exists():
-            self.path.mkdir()
-
-    def add(self, name, url, path=None):  # noqa: D102
-        if path is None:
-            # Create a relative path
-            path = self.path / Path(url).name
-
-        elif not Path(path).is_absolute():
-            path = self.path / path
-
-        tf = TestFile(name, path, url)
-        setattr(self, name, tf)
-        self.files.append(tf)
-
-    def __call__(self):  # noqa: D102
-        return [f() for f in self.files]
-
-
 def list_input_variables(
     submodules: Sequence[str] = None, realms: Sequence[str] = None
 ) -> dict:
     """List all possible variables names used in xclim's indicators.
 
     Made for development purposes. Parses all indicator parameters with the
-    :py:attribute:`xclim.core.utils.InputKind.VARIABLE` or `OPTIONAL_VARIABLE` kinds.
+    :py:attr:`xclim.core.utils.InputKind.VARIABLE` or `OPTIONAL_VARIABLE` kinds.
 
     Parameters
     ----------
@@ -298,11 +265,11 @@ def list_input_variables(
     dict
       A mapping from variable name to indicator class.
     """
-    from collections import defaultdict
+    from collections import defaultdict  # pylint: disable=import-outside-toplevel
 
-    from xclim import indicators
-    from xclim.core.indicator import registry
-    from xclim.core.utils import InputKind
+    from xclim import indicators  # pylint: disable=import-outside-toplevel
+    from xclim.core.indicator import registry  # pylint: disable=import-outside-toplevel
+    from xclim.core.utils import InputKind  # pylint: disable=import-outside-toplevel
 
     submodules = submodules or [
         sub for sub in dir(indicators) if not sub.startswith("__")
@@ -312,7 +279,7 @@ def list_input_variables(
     variables = defaultdict(list)
     for name, ind in registry.items():
         if "." in name:
-            # external submodule, sub module name is prepened to registry key
+            # external submodule, submodule name is prepended to registry key
             if name.split(".")[0] not in submodules:
                 continue
         elif ind.realm not in submodules:
@@ -322,15 +289,18 @@ def list_input_variables(
             continue
 
         # ok we want this one.
-        for varname, meta in ind.iter_parameters():
-            if meta["kind"] in [InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE]:
-                var = meta.get("default") or varname
+        for varname, meta in ind._all_parameters.items():
+            if meta.kind in [
+                InputKind.VARIABLE,
+                InputKind.OPTIONAL_VARIABLE,
+            ]:
+                var = meta.default or varname
                 variables[var].append(ind)
 
     return variables
 
 
-def get_all_CMIP6_variables(get_cell_methods=True):
+def get_all_CMIP6_variables(get_cell_methods=True):  # noqa
     data = pd.read_excel(
         "http://proj.badc.rl.ac.uk/svn/exarch/CMIP6dreq/tags/01.00.33/dreqPy/docs/CMIP6_MIP_tables.xlsx",
         sheet_name=None,
@@ -343,13 +313,13 @@ def get_all_CMIP6_variables(get_cell_methods=True):
         words = str(rawstr).split(" ")
         iskey = [word.endswith(":") for word in words]
         cms = {}
-        for i in range(len(words)):
+        for i, _ in enumerate(words):
             if iskey[i] and i + 1 < len(words) and not iskey[i + 1]:
                 cms[words[i][:-1]] = words[i + 1]
         return cms
 
-    for table, df in data.items():
-        for i, row in df.iterrows():
+    for _, df in data.items():
+        for _, row in df.iterrows():
             varname = row["Variable Name"]
             vardata = {
                 "standard_name": row["CF Standard Name"],
@@ -367,13 +337,14 @@ def get_all_CMIP6_variables(get_cell_methods=True):
 
 
 def update_variable_yaml(filename=None, xclim_needs_only=True):
+    """Update a variable from a yaml file."""
     print("Downloading CMIP6 variables.")
-    allvars = get_all_CMIP6_variables(get_cell_methods=False)
+    all_vars = get_all_CMIP6_variables(get_cell_methods=False)
 
     if xclim_needs_only:
         print("Filtering with xclim-implemented variables.")
-        xcvars = list_input_variables()
-        allvars = {k: v for k, v in allvars.items() if k in xcvars}
+        xc_vars = list_input_variables()
+        all_vars = {k: v for k, v in all_vars.items() if k in xc_vars}
 
     filepath = Path(
         filename or (Path(__file__).parent.parent / "data" / "variables.yml")
@@ -381,31 +352,36 @@ def update_variable_yaml(filename=None, xclim_needs_only=True):
 
     if filepath.exists():
         with filepath.open() as f:
-            stdvars = safe_load(f)
+            std_vars = safe_load(f)
 
-        for var, data in allvars.items():
-            if var not in stdvars["variables"]:
+        for var, data in all_vars.items():
+            if var not in std_vars["variables"]:
                 print(f"Added {var}")
                 new_data = data.copy()
                 new_data.update(description="")
-                stdvars["variables"][var] = new_data
+                std_vars["variables"][var] = new_data
     else:
-        stdvars = allvars
+        std_vars = all_vars
 
     with filepath.open("w") as f:
-        safe_dump(stdvars, f)
+        safe_dump(std_vars, f)
 
 
-def publish_release_notes(style: str = "md") -> str:
+def publish_release_notes(
+    style: str = "md", file: os.PathLike | StringIO | TextIO | None = None
+) -> str | None:
     """Format release history in Markdown or ReStructuredText.
 
     Parameters
     ----------
     style: {"rst", "md"}
+      Use ReStructuredText formatting or Markdown. Default: Markdown.
+    file: {os.PathLike, StringIO, TextIO}, optional
+      If provided, prints to the given file-like object. Otherwise, returns a string.
 
     Returns
     -------
-    str
+    str, optional
 
     Notes
     -----
@@ -423,13 +399,13 @@ def publish_release_notes(style: str = "md") -> str:
         hyperlink_replacements = {
             r":issue:`([0-9]+)`": r"`GH/\1 <https://github.com/Ouranosinc/xclim/issues/\1>`_",
             r":pull:`([0-9]+)`": r"`PR/\1 <https://github.com/Ouranosinc/xclim/pull/\>`_",
-            r":user:`([a-zA-Z0-9_]+)`": r"`@\1 <https://github.com/\1>`_",
+            r":user:`([a-zA-Z0-9_.-]+)`": r"`@\1 <https://github.com/\1>`_",
         }
     elif style == "md":
         hyperlink_replacements = {
             r":issue:`([0-9]+)`": r"[GH/\1](https://github.com/Ouranosinc/xclim/issues/\1)",
             r":pull:`([0-9]+)`": r"[PR/\1](https://github.com/Ouranosinc/xclim/pull/\1)",
-            r":user:`([a-zA-Z0-9_]+)`": r"[@\1](https://github.com/\1)",
+            r":user:`([a-zA-Z0-9_.-]+)`": r"[@\1](https://github.com/\1)",
         }
     else:
         raise NotImplementedError()
@@ -437,4 +413,86 @@ def publish_release_notes(style: str = "md") -> str:
     for search, replacement in hyperlink_replacements.items():
         history = re.sub(search, replacement, history)
 
-    return history
+    if style == "md":
+        history = history.replace("=======\nHistory\n=======", "# History")
+
+        titles = {r"\n(.*?)\n([\-]{1,})": "-", r"\n(.*?)\n([\^]{1,})": "^"}
+        for title_expression, level in titles.items():
+            found = re.findall(title_expression, history)
+            for grouping in found:
+                fixed_grouping = (
+                    str(grouping[0]).replace("(", r"\(").replace(")", r"\)")
+                )
+                search = rf"({fixed_grouping})\n([\{level}]{'{' + str(len(grouping[1])) + '}'})"
+                replacement = f"{'##' if level=='-' else '###'} {grouping[0]}"
+                history = re.sub(search, replacement, history)
+
+        link_expressions = r"[\`]{1}([\w\s]+)\s<(.+)>`\_"
+        found = re.findall(link_expressions, history)
+        for grouping in found:
+            search = rf"`{grouping[0]} <.+>`\_"
+            replacement = f"[{str(grouping[0]).strip()}]({grouping[1]})"
+            history = re.sub(search, replacement, history)
+
+    if not file:
+        return history
+    if isinstance(file, (Path, os.PathLike)):
+        file = Path(file).open("w")
+    print(history, file=file)
+
+
+def show_versions(
+    file: os.PathLike | StringIO | TextIO | None = None,
+    deps: list | None = None,
+) -> str | None:
+    """Print the versions of xclim and its dependencies.
+
+    Parameters
+    ----------
+    file : {os.PathLike, StringIO, TextIO}, optional
+        If provided, prints to the given file-like object. Otherwise, returns a string.
+    deps : list, optional
+        A list of dependencies to gather and print version information from. Otherwise, prints `xclim` dependencies.
+
+    Returns
+    -------
+    str or None
+    """
+    if deps is None:
+        deps = _xclim_deps
+
+    dependency_versions = [(d, lambda mod: mod.__version__) for d in deps]
+
+    deps_blob = []
+    for (modname, ver_f) in dependency_versions:
+        try:
+            if modname in sys.modules:
+                mod = sys.modules[modname]
+            else:
+                mod = importlib.import_module(modname)
+        except (KeyError, ModuleNotFoundError):
+            deps_blob.append((modname, None))
+        else:
+            try:
+                ver = ver_f(mod)
+                deps_blob.append((modname, ver))
+            except AttributeError:
+                deps_blob.append((modname, "installed"))
+
+    modules_versions = "\n".join([f"{k}: {stat}" for k, stat in sorted(deps_blob)])
+
+    installed_versions = [
+        "INSTALLED VERSIONS",
+        "------------------",
+        f"python: {platform.python_version()}",
+        f"{modules_versions}",
+        f"Anaconda-based environment: {'yes' if Path(sys.base_prefix).joinpath('conda-meta').exists() else 'no'}",
+    ]
+
+    message = "\n".join(installed_versions)
+
+    if not file:
+        return message
+    if isinstance(file, (Path, os.PathLike)):
+        file = Path(file).open("w")
+    print(message, file=file)

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 
 import numpy as np
@@ -5,8 +7,11 @@ import pandas as pd
 import pytest
 import xarray as xr
 
+import xclim.indices as xci
 from xclim import atmos, core, set_options
-from xclim.core.calendar import percentile_doy
+from xclim.core.calendar import build_climatology_bounds, percentile_doy
+from xclim.core.units import convert_units_to
+from xclim.core.utils import PercentileDataArray
 from xclim.testing import open_dataset
 
 K2C = 273.15
@@ -74,8 +79,8 @@ class TestPrecipAccumulation:
 
         np.testing.assert_array_almost_equal(out_liq + out_sol, out_tot, 4)
 
-        assert "solid" in out_sol.long_name
-        assert "liquid" in out_liq.long_name
+        assert "solid" in out_sol.description
+        assert "liquid" in out_liq.description
         assert out_sol.standard_name == "lwe_thickness_of_snowfall_amount"
 
         # With a non-default threshold
@@ -87,6 +92,66 @@ class TestPrecipAccumulation:
         )
 
         np.testing.assert_array_almost_equal(out_liq + out_sol, out_tot, 4)
+
+
+class TestStandardizedPrecip:
+    nc_ds = os.path.join("sdba", "CanESM2_1950-2100.nc")
+
+    def test_3d_data_with_nans(self):
+        # test with data
+        ds = open_dataset(self.nc_ds)
+        pr = ds.pr.sel(time=slice("2000"))  # kg m-2 s-1
+        prMM = convert_units_to(pr, "mm/day")
+        # put a nan somewhere
+        prMM.values[10] = np.nan
+        pr.values[10] = np.nan
+
+        out1 = atmos.standardized_precipitation_index(
+            pr,
+            pr,
+            freq="MS",
+            window=1,
+            dist="gamma",
+            method="APP",
+        )
+        out2 = atmos.standardized_precipitation_index(
+            prMM,
+            prMM,
+            freq="MS",
+            window=1,
+            dist="gamma",
+            method="APP",
+        )
+        np.testing.assert_array_almost_equal(out1, out2, 3)
+
+        # preparing water_budget for SPEI test
+        with xr.set_options(keep_attrs=True):
+            tasmax = ds.tasmax
+            tas = tasmax - 2.5
+            tasmin = tasmax - 5
+            wb = xci.water_budget(pr, None, tasmin, tasmax, tas, None)
+            wbMM = convert_units_to(wb, "mm/day")
+
+        out3 = atmos.standardized_precipitation_evapotranspiration_index(
+            wb,
+            wb,
+            freq="MS",
+            window=1,
+            dist="gamma",
+            method="APP",
+            # method="ML",
+        )
+        out4 = atmos.standardized_precipitation_evapotranspiration_index(
+            wbMM,
+            wbMM,
+            freq="MS",
+            window=1,
+            dist="gamma",
+            method="APP",
+            # method="ML",
+        )
+
+        np.testing.assert_array_almost_equal(out3, out4, 3)
 
 
 class TestWetDays:
@@ -393,34 +458,81 @@ class TestDaysWithSnow:
         np.testing.assert_array_equal(out[1], [np.nan, 224, 263, 123, np.nan])
 
 
-def test_days_over_precip_thresh():
+def test_days_over_precip_doy_thresh():
     pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
     per = percentile_doy(pr, window=5, per=80)
 
-    out1 = atmos.days_over_precip_thresh(pr, per)
+    out1 = atmos.days_over_precip_doy_thresh(pr, per)
     np.testing.assert_array_equal(out1[1, :, 0], np.array([81, 61, 69, 78]))
 
-    out2 = atmos.days_over_precip_thresh(pr, per, thresh="2 mm/d")
+    out2 = atmos.days_over_precip_doy_thresh(pr, per, thresh="2 mm/d")
     np.testing.assert_array_equal(out2[1, :, 0], np.array([81, 61, 66, 78]))
 
     assert "only days with at least 2 mm/d are counted." in out2.description
+    assert "[80]th percentile" in out2.attrs["description"]
+    assert "['1990-01-01', '1993-12-31'] period" in out2.attrs["description"]
+    assert "5 day(s)" in out2.attrs["description"]
 
 
-def test_fraction_over_precip_thresh():
+def test_days_over_precip_thresh():
+    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
+    per = pr.quantile(0.8, "time", keep_attrs=True)
+    per = PercentileDataArray.from_da(per, build_climatology_bounds(pr))
+
+    out = atmos.days_over_precip_thresh(pr, per)
+
+    np.testing.assert_allclose(
+        out[1, :], np.array([80.0, 63.0, 68.0, 81.0]), atol=0.001
+    )
+    assert "80.0th percentile" in out.attrs["description"]
+    assert "['1990-01-01', '1993-12-31'] period" in out.attrs["description"]
+
+
+def test_days_over_precip_thresh__seasonal_indexer():
+    # GIVEN
+    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
+    per = pr.quantile(0.8, "time", keep_attrs=True)
+    # WHEN
+    out = atmos.days_over_precip_thresh(
+        pr, per, freq="AS", date_bounds=("01-10", "12-31")
+    )
+    # THEN
+    np.testing.assert_almost_equal(out[0], np.array([82.0, 66.0, 66.0, 74.0]))
+
+
+def test_fraction_over_precip_doy_thresh():
     pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
     per = percentile_doy(pr, window=5, per=80)
 
-    out = atmos.fraction_over_precip_thresh(pr, per)
+    out = atmos.fraction_over_precip_doy_thresh(pr, per)
     np.testing.assert_allclose(
         out[1, :, 0], np.array([0.809, 0.770, 0.748, 0.807]), atol=0.001
     )
 
-    out = atmos.fraction_over_precip_thresh(pr, per, thresh="0.002 m/d")
+    out = atmos.fraction_over_precip_doy_thresh(pr, per, thresh="0.002 m/d")
     np.testing.assert_allclose(
         out[1, :, 0], np.array([0.831, 0.803, 0.774, 0.833]), atol=0.001
     )
 
     assert "only days with at least 0.002 m/d are included" in out.description
+    assert "[80]th percentile" in out.attrs["description"]
+    assert "['1990-01-01', '1993-12-31'] period" in out.attrs["description"]
+    assert "5 day(s)" in out.attrs["description"]
+
+
+def test_fraction_over_precip_thresh():
+    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
+    per = pr.quantile(0.8, "time", keep_attrs=True)
+    per = PercentileDataArray.from_da(per, build_climatology_bounds(pr))
+
+    out = atmos.fraction_over_precip_thresh(pr, per)
+
+    np.testing.assert_allclose(
+        out[1, :], np.array([0.839, 0.809, 0.798, 0.859]), atol=0.001
+    )
+
+    assert "80.0th percentile" in out.attrs["description"]
+    assert "['1990-01-01', '1993-12-31'] period" in out.attrs["description"]
 
 
 def test_liquid_precip_ratio():
@@ -442,23 +554,55 @@ def test_liquid_precip_ratio():
         assert "where temperature is above 33 degf." in out.description
 
 
-def test_dry_spell():
-    pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
+def test_dry_spell(atmosds):
+    pr = atmosds.pr
 
     events = atmos.dry_spell_frequency(pr, thresh="3 mm", window=7, freq="YS")
-    total_d = atmos.dry_spell_total_length(pr, thresh="3 mm", window=7, freq="YS")
+    total_d_sum = atmos.dry_spell_total_length(
+        pr, thresh="3 mm", window=7, op="sum", freq="YS"
+    )
+    total_d_max = atmos.dry_spell_total_length(
+        pr, thresh="3 mm", window=7, op="max", freq="YS"
+    )
+
+    total_d_sum = total_d_sum.sel(location="Halifax", drop=True).isel(time=slice(0, 2))
+    total_d_max = total_d_max.sel(location="Halifax", drop=True).isel(time=slice(0, 2))
 
     np.testing.assert_allclose(events[0:2, 0], [5, 8], rtol=1e-1)
-    np.testing.assert_allclose(total_d[0:2, 0], [50, 67], rtol=1e-1)
+    np.testing.assert_allclose(total_d_sum, [50, 60], rtol=1e-1)
+    np.testing.assert_allclose(total_d_max, [76, 97], rtol=1e-1)
 
     assert (
-        "The annual number of dry periods of 7 days and more, during which the total "
-        "precipitation on a window of 7 days is under 3 mm."
+        "The annual number of dry periods of 7 day(s) or more, "
+        "during which the total precipitation on a window of 7 day(s) is below 3 mm."
     ) in events.description
     assert (
-        "The annual number of days in dry periods of 7 days and more"
-        in total_d.description
+        "The annual number of days in dry periods of 7 day(s) or more"
+        in total_d_sum.description
     )
+    assert (
+        "The annual number of days in dry periods of 7 day(s) or more"
+        in total_d_max.description
+    )
+
+
+def test_dry_spell_total_length_indexer(pr_series):
+    pr = pr_series(
+        [np.NaN] + [1] * 4 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d"
+    )
+    out = atmos.dry_spell_total_length(
+        pr,
+        window=7,
+        op="sum",
+        thresh="3 mm",
+        freq="MS",
+    )
+    np.testing.assert_allclose(out, [np.NaN] + [0] * 11)
+
+    out = atmos.dry_spell_total_length(
+        pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31")
+    )
+    np.testing.assert_allclose(out, [9] + [0] * 11)
 
 
 def test_dry_spell_frequency_op():
@@ -473,10 +617,10 @@ def test_dry_spell_frequency_op():
     np.testing.assert_allclose(test_sum[0, 2], [1], rtol=1e-1)
     np.testing.assert_allclose(test_max[0, 2], [2], rtol=1e-1)
     assert (
-        "The monthly number of dry periods of 7 days and more, during which the total precipitation "
-        "on a window of 7 days is under 3 mm."
+        "The monthly number of dry periods of 7 day(s) or more, "
+        "during which the total precipitation on a window of 7 day(s) is below 3 mm."
     ) in test_sum.description
     assert (
-        "The monthly number of dry periods of 7 days and more, during which the maximal precipitation "
-        "on a window of 7 days is under 3 mm."
+        "The monthly number of dry periods of 7 day(s) or more, "
+        "during which the maximal precipitation on a window of 7 day(s) is below 3 mm."
     ) in test_max.description

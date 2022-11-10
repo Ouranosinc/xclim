@@ -7,30 +7,45 @@ For applications where meta-data and missing values are important to get right, 
 
 xclim currently provides over 50 indices related to mean, minimum and maximum daily temperature, daily precipitation, streamflow and sea ice concentration.
 
-.. _xarray: http://xarray.pydata.org/
-.. _dask: https://dask.org/
+.. _xarray: https://docs.xarray.dev/
+.. _dask: https://www.dask.org/
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-
    installation
    notebooks/usage
    notebooks/index
    indicators
+   indices
    checks
    notebooks/units
    internationalization
    notebooks/cli
    sdba
-   api
+   analogues
    contributing
    authors
    history
+   references
 
-Indices and tables
-==================
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. toctree::
+   :maxdepth: 2
+   :caption: User API
+
+   api
+
+.. toctree::
+   :maxdepth: 1
+   :caption: All Modules
+
+   modules
+
+.. only:: html
+
+    Indices and tables
+    ==================
+    * :ref:`genindex`
+    * :ref:`modindex`
+    * :ref:`search`

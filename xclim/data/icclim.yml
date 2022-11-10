@@ -1,18 +1,16 @@
-realm: atmos
 doc: |
   ==============
   ICCLIM indices
   ==============
-  The European Climate Assessment & Dataset project (`ECAD`_) defines
-  a set of 26 core climate indices. Those have been made accessible
-  directly in xclim through their ECAD name for compatibility. However,
-  the methods in this module are only wrappers around the corresponding
-  methods of  `xclim.indices`. Note that none of the checks performed by
-  the `xclim.utils.Indicator` class (like with `xclim.atmos` indicators)
-  are performed in this module.
+
+  The European Climate Assessment & Dataset project (`ECAD`_) defines a set of 26 core climate indices. Those have been
+  made accessible directly in xclim through their ECAD name for compatibility. However, the methods in this module are
+  only wrappers around the corresponding methods of `xclim.indices`. Note that none of the checks performed by the
+  `xclim.utils.Indicator` class (like with `xclim.atmos` indicators)are performed in this module.
 
   .. _ECAD: https://www.ecad.eu/
-references: European Climate Assessment & Dataset, https://www.ecad.eu/
+realm: atmos
+references: European Climate Assessment & Dataset https://www.ecad.eu/
 indicators:
   TG:
     base: tg_mean
@@ -59,8 +57,9 @@ indicators:
   HI:
     base: huglin_index
     cf_attrs:
-      long_name: Huglin heliothermal index (Summation of ((Tmean + Tmax)/2 - {thresh}) * Latitude-based day-length coefficient (`k`), for days between 1 April and 31 October)
-      comment: Metric originally published in Huglin, 1978. Also presented by ECAD/KNMI for ICCLIM, 2013.
+      long_name: >
+        Huglin heliothermal index (Summation of ((Tmean + Tmax)/2 - 10°C) * Latitude-based
+        day-length coefficient (`k`), for days between 1 April and 31 October)
     compute: huglin_index
     parameters:
       method: icclim
@@ -70,8 +69,9 @@ indicators:
   BEDD:
     base: biologically_effective_degree_days
     cf_attrs:
-      long_name: Biologically effective growing degree days (Summation of min((max((Tmin + Tmax)/2 - {thresh_tasmin}, 0)), 9°C), for days between 1 April and 30 September)
-      comment: Revised formula published by ECAD/KNMI for ICCLIM, 2013.
+      long_name: >
+        Biologically effective growing degree days (Summation of min(max((Tmin + Tmax)/2 - 10°C, 0), 9°C),
+        for days between 1 April and 30 September)
     compute: biologically_effective_degree_days
     parameters:
       method: icclim
@@ -106,7 +106,6 @@ indicators:
       long_name: Maximum number of consecutive summer day
     parameters:
       thresh: 25 degC
-
   TR:
     base: tropical_nights
     cf_attrs:
@@ -220,20 +219,20 @@ indicators:
     base: days_over_precip_thresh
     parameters:
       thresh: 1 mm/day
-      per:
+      pr_per:
         description: 75th percentile of wet day precipitation flux.
 
   R95p:
     base: days_over_precip_thresh
     parameters:
       thresh: 1 mm/day
-      per:
+      pr_per:
         description: 95th percentile of wet day precipitation flux.
   R99p:
     base: days_over_precip_thresh
     parameters:
       thresh: 1 mm/day
-      per:
+      pr_per:
         description: 99th percentile of wet day precipitation flux.
   R75pTOT:
     base: fraction_over_precip_thresh
@@ -241,16 +240,15 @@ indicators:
       long_name: Precipitation fraction due to moderate wet days (>75th percentile)
     parameters:
       thresh: 1 mm/day
-      per:
+      pr_per:
         description: 75th percentile of wet day precipitation flux.
-
   R95pTOT:
     base: fraction_over_precip_thresh
     cf_attrs:
       long_name: Precipitation fraction due to very wet days (>95th percentile)
     parameters:
       thresh: 1 mm/day
-      per:
+      pr_per:
         description: 95th percentile of wet day precipitation flux.
   R99pTOT:
     base: fraction_over_precip_thresh
@@ -258,7 +256,7 @@ indicators:
       long_name: Precipitation fraction due to extremely wet days (>99th percentile)
     parameters:
       thresh: 1 mm/day
-      per:
+      pr_per:
         description: 99th percentile of wet day precipitation flux.
   SD:
     realm: land
@@ -291,34 +289,34 @@ indicators:
     cf_attrs:
       long_name: Cold and dry days
     parameters:
-      tas_25:
+      tas_per:
         description: Daily 25th percentile of temperature.
-      pr_25:
+      pr_per:
         description: Daily 25th percentile of wet day precipitation flux.
   WD:
     base: warm_and_dry_days
     cf_attrs:
       long_name: Warm and dry days
     parameters:
-      tas_75:
+      tas_per:
         description: Daily 75th percentile of temperature.
-      pr_25:
+      pr_per:
         description: Daily 25th percentile of wet day precipitation flux.
   WW:
     base: warm_and_wet_days
     cf_attrs:
       long_name: Warm and wet days
     parameters:
-      tas_75:
+      tas_per:
         description: Daily 75th percentile of temperature.
-      pr_75:
+      pr_per:
         description: Daily 75th percentile of wet day precipitation flux.
   CW:
     base: cold_and_wet_days
     cf_attrs:
       long_name: cold and wet days
     parameters:
-      tas_25:
+      tas_per:
         description: Daily 25th percentile of temperature.
-      pr_75:
+      pr_per:
         description: Daily 75th percentile of wet day precipitation flux.

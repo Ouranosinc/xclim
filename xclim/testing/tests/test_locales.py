@@ -1,6 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Tests for `xclim.locales`
+from __future__ import annotations
+
 import json
 
 import numpy as np
@@ -42,7 +43,9 @@ russian = (
 def test_local_dict(tmp_path):
     loc, dic = xloc.get_local_dict("fr")
     assert loc == "fr"
-    assert dic["TG_MEAN"]["long_name"] == "Moyenne de la température journalière"
+    assert (
+        dic["TG_MEAN"]["long_name"] == "Moyenne de la température moyenne quotidienne"
+    )
 
     loc, dic = xloc.get_local_dict(esperanto)
     assert loc == "eo"
@@ -61,7 +64,9 @@ def test_local_dict(tmp_path):
     loc, dic = xloc.get_local_dict(("fr", {"TX_MAX": {"long_name": "Fait chaud."}}))
     assert loc == "fr"
     assert dic["TX_MAX"]["long_name"] == "Fait chaud."
-    assert dic["TG_MEAN"]["long_name"] == "Moyenne de la température journalière"
+    assert (
+        dic["TG_MEAN"]["long_name"] == "Moyenne de la température moyenne quotidienne"
+    )
 
 
 def test_local_attrs_sing():
@@ -71,9 +76,7 @@ def test_local_attrs_sing():
     assert "description" not in attrs
 
     with pytest.raises(ValueError):
-        attrs = xloc.get_local_attrs(
-            atmos.tg_mean, "fr", esperanto, append_locale_name=False
-        )
+        xloc.get_local_attrs(atmos.tg_mean, "fr", esperanto, append_locale_name=False)
 
 
 def test_local_attrs_multi(tmp_path):
@@ -108,7 +111,7 @@ def test_indicator_output(tas_series):
     assert "long_name_fr" in tgmean.attrs
     assert (
         tgmean.attrs["description_fr"]
-        == "Moyenne annuelle de la température journalière."
+        == "Moyenne annuelle de la température quotidienne."
     )
 
 
@@ -153,7 +156,10 @@ def test_xclim_translations(locale, official_indicators):
 
     if len(untranslated) > 0 or len(incomplete) > 0:
         pytest.fail(
-            f"Indicators {', '.join(untranslated)} do not have translations and {', '.join(incomplete)} have incomplete ones for official locale {locale}."
+            f"{len(untranslated)} indicators are missing translations"
+            f"{': [' + ', '.join(untranslated) + ']' if len(untranslated) else ''}"
+            f"{' and ' if len(incomplete) else '.'}"
+            f"[{', '.join(incomplete)}] have incomplete translations for official locale `{locale}`."
         )
 
 

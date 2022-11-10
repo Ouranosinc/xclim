@@ -11,8 +11,10 @@ The concept followed here is to define Indicator subclasses for each input varia
 for each indicator.
 
 """
+from __future__ import annotations
+
 from ._conversion import *
 from ._precip import *
-from ._preciptemp import *
+from ._synoptic import *
 from ._temperature import *
 from ._wind import *

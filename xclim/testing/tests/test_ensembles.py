@@ -1,8 +1,7 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Tests for `xclim` package.
 #
-# We want to tests multiple things here:
+# We want to test multiple things here:
 #  - that data results are correct
 #  - that metadata is correct and complete
 #  - that missing data are handled appropriately
@@ -13,9 +12,10 @@
 # For correctness, I think it would be useful to use a small dataset and run the original ICCLIM indicators on it,
 # saving the results in a reference netcdf dataset. We could then compare the hailstorm output to this reference as
 # a first line of defense.
+from __future__ import annotations
+
 import os
 import sys
-from copy import deepcopy
 from pathlib import Path
 
 import numpy as np
@@ -26,35 +26,20 @@ from scipy.stats.mstats import mquantiles
 
 from xclim import ensembles
 from xclim.indices.stats import get_dist
-from xclim.testing import open_dataset
+from xclim.testing.utils import _default_cache_dir, open_dataset
 
 
 class TestEnsembleStats:
-    nc_files = [
-        "BCCAQv2+ANUSPLIN300_ACCESS1-0_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
-        "BCCAQv2+ANUSPLIN300_BNU-ESM_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
-        "BCCAQv2+ANUSPLIN300_CCSM4_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
-        "BCCAQv2+ANUSPLIN300_CCSM4_historical+rcp45_r2i1p1_1950-2100_tg_mean_YS.nc",
-    ]
-
-    nc_file_extra = (
-        "BCCAQv2+ANUSPLIN300_CNRM-CM5_historical+rcp45_r1i1p1_1970-2050_tg_mean_YS.nc"
-    )
-
-    nc_datasets_simple = [
-        open_dataset(os.path.join("EnsembleStats", f)) for f in nc_files
-    ]
-    nc_datasets = deepcopy(nc_datasets_simple)
-    nc_datasets.append(open_dataset(os.path.join("EnsembleStats", nc_file_extra)))
-
-    def test_create_ensemble(self):
-        ens = ensembles.create_ensemble(self.nc_datasets_simple)
-        assert len(ens.realization) == len(self.nc_datasets_simple)
+    def test_create_ensemble(self, ensemble_dataset_objects):
+        ens = ensembles.create_ensemble(ensemble_dataset_objects["nc_datasets_simple"])
+        assert len(ens.realization) == len(
+            ensemble_dataset_objects["nc_datasets_simple"]
+        )
         assert len(ens.time) == 151
 
         # create again using xr.Dataset objects
         ds_all = []
-        for n in self.nc_files:
+        for n in ensemble_dataset_objects["nc_files"]:
             ds = open_dataset(os.path.join("EnsembleStats", n), decode_times=False)
             ds["time"] = xr.decode_cf(ds).time
             ds_all.append(ds)
@@ -69,13 +54,25 @@ class TestEnsembleStats:
             np.testing.assert_array_equal(
                 ens1.isel(realization=i).tg_mean.values, ds_all[i].tg_mean.values
             )
+        reals = [
+            "_".join(f.split("_")[1:4:2]) for f in ensemble_dataset_objects["nc_files"]
+        ]
+        ens2 = ensembles.create_ensemble(ds_all, realizations=reals)
 
-    def test_no_time(self, tmp_path):
+        # Kinda a hack? Alternative is to open and rewrite in a temp folder.
+        files = [
+            _default_cache_dir / "main" / "EnsembleStats" / f
+            for f in ensemble_dataset_objects["nc_files"]
+        ]
+        ens3 = ensembles.create_ensemble(dict(zip(reals, files)))
+        xr.testing.assert_identical(ens2, ens3)
+
+    def test_no_time(self, tmp_path, ensemble_dataset_objects):
         # create again using xr.Dataset objects
         f1 = Path(tmp_path / "notime")
         f1.mkdir()
         ds_all = []
-        for n in self.nc_files:
+        for n in ensemble_dataset_objects["nc_files"]:
             ds = open_dataset(os.path.join("EnsembleStats", n), decode_times=False)
             ds["time"] = xr.decode_cf(ds).time
             ds_all.append(ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True))
@@ -84,20 +81,24 @@ class TestEnsembleStats:
             )
 
         ens = ensembles.create_ensemble(ds_all)
-        assert len(ens.realization) == len(self.nc_files)
+        assert len(ens.realization) == len(ensemble_dataset_objects["nc_files"])
 
         in_ncs = list(Path(f1).glob("*.nc"))
         ens = ensembles.create_ensemble(in_ncs)
-        assert len(ens.realization) == len(self.nc_files)
+        assert len(ens.realization) == len(ensemble_dataset_objects["nc_files"])
 
-    def test_create_unequal_times(self):
-        ens = ensembles.create_ensemble(self.nc_datasets)
-        assert len(ens.realization) == len(self.nc_datasets)
+    def test_create_unequal_times(self, ensemble_dataset_objects):
+        ens = ensembles.create_ensemble(ensemble_dataset_objects["nc_datasets"])
+        assert len(ens.realization) == len(ensemble_dataset_objects["nc_datasets"])
         assert ens.time.dt.year.min() == 1950
         assert ens.time.dt.year.max() == 2100
         assert len(ens.time) == 151
 
-        ii = [i for i, s in enumerate(self.nc_datasets) if "1970-2050" in s]
+        ii = [
+            i
+            for i, s in enumerate(ensemble_dataset_objects["nc_datasets"])
+            if "1970-2050" in s
+        ]
         # assert padded with nans
         assert np.all(
             np.isnan(ens.tg_mean.isel(realization=ii).sel(time=ens.time.dt.year < 1970))
@@ -139,25 +140,25 @@ class TestEnsembleStats:
         np.testing.assert_equal(ens.isel(time=0), [0, 0])
 
     @pytest.mark.parametrize("transpose", [False, True])
-    def test_calc_perc(self, transpose):
-        ens = ensembles.create_ensemble(self.nc_datasets_simple)
+    def test_calc_perc(self, transpose, ensemble_dataset_objects):
+        ens = ensembles.create_ensemble(ensemble_dataset_objects["nc_datasets_simple"])
         if transpose:
             ens = ens.transpose()
 
         out1 = ensembles.ensemble_percentiles(ens, split=True)
-        np.testing.assert_array_equal(
+        np.testing.assert_array_almost_equal(
             mquantiles(
                 ens["tg_mean"].isel(time=0, lon=5, lat=5), 0.1, alphap=1, betap=1
             ),
             out1["tg_mean_p10"].isel(time=0, lon=5, lat=5),
         )
-        np.testing.assert_array_equal(
+        np.testing.assert_array_almost_equal(
             mquantiles(
                 ens["tg_mean"].isel(time=0, lon=5, lat=5), alphap=1, betap=1, prob=0.50
             ),
             out1["tg_mean_p50"].isel(time=0, lon=5, lat=5),
         )
-        np.testing.assert_array_equal(
+        np.testing.assert_array_almost_equal(
             mquantiles(
                 ens["tg_mean"].isel(time=0, lon=5, lat=5), alphap=1, betap=1, prob=0.90
             ),
@@ -175,36 +176,56 @@ class TestEnsembleStats:
             out1["tg_mean_p10"], out3.tg_mean.sel(percentiles=10, drop=True)
         )
 
+        weights = xr.DataArray(
+            [1, 0.1, 3.5, 5], coords={"realization": ens.realization}
+        )
+        out4 = ensembles.ensemble_percentiles(ens, weights=weights)
+        np.testing.assert_array_almost_equal(
+            ens["tg_mean"].isel(time=0, lon=5, lat=5).weighted(weights).quantile(0.5),
+            out4["tg_mean_p50"].isel(time=0, lon=5, lat=5),
+        )
+        np.testing.assert_array_almost_equal(
+            ens["tg_mean"].isel(time=0, lon=5, lat=5).weighted(weights).quantile(0.1),
+            out4["tg_mean_p10"].isel(time=0, lon=5, lat=5),
+        )
+        np.testing.assert_array_almost_equal(
+            ens["tg_mean"].isel(time=0, lon=5, lat=5).weighted(weights).quantile(0.9),
+            out4["tg_mean_p90"].isel(time=0, lon=5, lat=5),
+        )
+        assert np.all(out4["tg_mean_p90"] > out4["tg_mean_p10"])
+
     @pytest.mark.parametrize("keep_chunk_size", [False, True, None])
-    def test_calc_perc_dask(self, keep_chunk_size):
-        ens = ensembles.create_ensemble(self.nc_datasets_simple)
+    def test_calc_perc_dask(self, keep_chunk_size, ensemble_dataset_objects):
+        ens = ensembles.create_ensemble(ensemble_dataset_objects["nc_datasets_simple"])
         out2 = ensembles.ensemble_percentiles(
             ens.chunk({"time": 2}), keep_chunk_size=keep_chunk_size, split=False
         )
         out1 = ensembles.ensemble_percentiles(ens.load(), split=False)
         np.testing.assert_array_equal(out1["tg_mean"], out2["tg_mean"])
 
-    def test_calc_perc_nans(self):
-        ens = ensembles.create_ensemble(self.nc_datasets_simple).load()
+    def test_calc_perc_nans(self, ensemble_dataset_objects):
+        ens = ensembles.create_ensemble(
+            ensemble_dataset_objects["nc_datasets_simple"]
+        ).load()
 
         ens.tg_mean[2, 0, 5, 5] = np.nan
         ens.tg_mean[2, 7, 5, 5] = np.nan
         out1 = ensembles.ensemble_percentiles(ens, split=True)
         masked_arr = np.ma.fix_invalid(ens["tg_mean"][:, 0, 5, 5])
-        np.testing.assert_array_equal(
+        np.testing.assert_array_almost_equal(
             mquantiles(masked_arr, 0.10, alphap=1, betap=1),
             out1["tg_mean_p10"][0, 5, 5],
         )
         masked_arr = np.ma.fix_invalid(ens["tg_mean"][:, 7, 5, 5])
-        np.testing.assert_array_equal(
+        np.testing.assert_array_almost_equal(
             mquantiles(masked_arr, 0.10, alphap=1, betap=1),
             out1["tg_mean_p10"][7, 5, 5],
         )
         assert np.all(out1["tg_mean_p90"] > out1["tg_mean_p50"])
         assert np.all(out1["tg_mean_p50"] > out1["tg_mean_p10"])
 
-    def test_calc_mean_std_min_max(self):
-        ens = ensembles.create_ensemble(self.nc_datasets_simple)
+    def test_calc_mean_std_min_max(self, ensemble_dataset_objects):
+        ens = ensembles.create_ensemble(ensemble_dataset_objects["nc_datasets_simple"])
         out1 = ensembles.ensemble_mean_std_max_min(ens)
         np.testing.assert_array_equal(
             ens["tg_mean"][:, 0, 5, 5].mean(dim="realization"),
@@ -221,6 +242,27 @@ class TestEnsembleStats:
             ens["tg_mean"][:, 0, 5, 5].min(dim="realization"), out1.tg_mean_min[0, 5, 5]
         )
         assert "Computation of statistics on" in out1.attrs["history"]
+
+        weights = xr.DataArray(
+            [1, 0.1, 3.5, 5], coords={"realization": ens.realization}
+        )
+        out2 = ensembles.ensemble_mean_std_max_min(ens, weights=weights)
+        values = ens["tg_mean"][:, 0, 5, 5]
+        np.testing.assert_array_equal(
+            (values[0] * 1 + values[1] * 0.1 + values[2] * 3.5 + values[3] * 5)
+            / np.sum(weights),
+            out2.tg_mean_mean[0, 5, 5],
+        )
+        np.testing.assert_array_equal(
+            ens["tg_mean"][:, 0, 5, 5].weighted(weights).std(dim="realization"),
+            out2.tg_mean_stdev[0, 5, 5],
+        )
+        np.testing.assert_array_equal(
+            out1.tg_mean_max[0, 5, 5], out2.tg_mean_max[0, 5, 5]
+        )
+        np.testing.assert_array_equal(
+            out1.tg_mean_min[0, 5, 5], out2.tg_mean_min[0, 5, 5]
+        )
 
 
 @pytest.mark.slow
@@ -528,6 +570,18 @@ def test_change_significance(robust_data, test, exp_chng, exp_sign, kws):
     np.testing.assert_array_almost_equal(sign, exp_sign)
 
 
+def test_change_significance_weighted(robust_data):
+    ref, fut = robust_data
+    weights = xr.DataArray([1, 0.1, 3.5, 5], coords={"realization": ref.realization})
+    chng, sign = ensembles.change_significance(fut, ref, test=None, weights=weights)
+    assert chng.attrs["test"] == "None"
+    if isinstance(ref, xr.Dataset):
+        chng = chng.tas
+        sign = sign.tas
+    np.testing.assert_array_equal(chng, [1, 1, 1, 1])
+    np.testing.assert_array_almost_equal(sign, [0.88541667, 0.88541667, 1.0, 1.0])
+
+
 def test_change_significance_delta(robust_data):
     ref, fut = robust_data
     delta = fut.mean("time") - ref.mean("time")
@@ -536,6 +590,16 @@ def test_change_significance_delta(robust_data):
         chng = chng.tas
         sign = sign.tas
     np.testing.assert_array_equal(chng, [0, 0, 0.5, 0])
+    np.testing.assert_array_equal(sign, [np.nan, np.nan, 1, np.nan])
+
+    weights = xr.DataArray([1, 0.1, 3.5, 5], coords={"realization": delta.realization})
+    chng, sign = ensembles.change_significance(
+        delta, test="threshold", abs_thresh=2, weights=weights
+    )
+    if isinstance(ref, xr.Dataset):
+        chng = chng.tas
+        sign = sign.tas
+    np.testing.assert_array_almost_equal(chng, [0, 0, 0.88541667, 0])
     np.testing.assert_array_equal(sign, [np.nan, np.nan, 1, np.nan])
 
 

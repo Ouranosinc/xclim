@@ -38,6 +38,11 @@ clean-build: ## remove build artifacts
 	find . -name '*.egg-info' -exec rm -fr {} +
 	find . -name '*.egg' -exec rm -f {} +
 
+clean-docs: ## remove docs artifacts
+	rm -f docs/xclim*.rst
+	rm -f docs/modules.rst
+	$(MAKE) -C docs clean
+
 clean-pyc: ## remove Python file artifacts
 	find . -name '*.pyc' -exec rm -f {} +
 	find . -name '*.pyo' -exec rm -f {} +
@@ -51,10 +56,13 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint: ## check style with flake8 and black
-	pydocstyle --convention=numpy --match='(?!test_).*\.py' xclim
-	flake8 xclim
-	black --check --target-version py37 xclim
-	pylint --rcfile=setup.cfg --exit-zero xclim
+	pydocstyle --config=setup.cfg xclim
+	flake8 --config=setup.cfg xclim
+	black --check --target-version py38 xclim
+	black --check --ipynb --target-version py38 docs --include "\.ipynb$$"
+	blackdoc --check --target-version py38 xclim --exclude xclim/indices/__init__.py,xclim/docs/installation.rst
+	isort --check --settings-file=setup.cfg xclim --add_imports="from __future__ import annotations"
+	pylint --rcfile=pylintrc --exit-zero xclim
 
 test: ## run tests quickly with the default Python
 	pytest xclim/testing/tests
@@ -70,13 +78,17 @@ coverage: ## check code coverage quickly with the default Python
 	coverage html
 	$(BROWSER) htmlcov/index.html
 
-docs: ## generate Sphinx HTML documentation, including API docs
-	rm -f docs/xclim.rst
-	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ xclim
-	$(MAKE) -C docs clean
+autodoc: clean-docs ## create sphinx-apidoc files:
+	sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests
+
+linkcheck: autodoc ## run checks over all external links found throughout the documentation
+	$(MAKE) -C docs linkcheck
+
+docs: linkcheck ## generate Sphinx HTML documentation, including API docs
 	$(MAKE) -C docs html
+ifndef READTHEDOCS
 	$(BROWSER) docs/_build/html/index.html
+endif
 
 servedocs: docs ## compile the docs watching for changes
 	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
@@ -90,4 +102,10 @@ dist: clean ## builds source and wheel package
 	ls -l dist
 
 install: clean ## install the package to the active Python's site-packages
-	python setup.py install
+	python -m pip install --no-user .
+
+develop: clean ## install the package and development dependencies in editable mode to the active Python's site-packages
+	python -m pip install --no-user --editable ".[dev]"
+
+upstream: clean develop ## install the GitHub-based development branches of dependencies in editable mode to the active Python's site-packages
+	python -m pip install --no-user --requirement requirements_upstream.txt

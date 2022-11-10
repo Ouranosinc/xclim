@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 
 from xclim import atmos
@@ -18,7 +20,7 @@ class TestColdAndDry:
         pr = pr_series(raw_prec)
         pr_per = percentile_doy(pr, 5, 25).sel(percentiles=25)
         # WHEN
-        result = atmos.cold_and_dry_days(ts, ts_per, pr, pr_per, freq="MS")
+        result = atmos.cold_and_dry_days(ts, pr, ts_per, pr_per, freq="MS")
         # THEN january has 10 cold and dry days
         assert result.data[0] == 10
 
@@ -35,7 +37,7 @@ class TestWarmAndDry:
         pr = pr_series(raw_prec)
         pr_per = percentile_doy(pr, 5, 25).sel(percentiles=25)
         # WHEN
-        result = atmos.warm_and_dry_days(ts, ts_per, pr, pr_per, freq="MS")
+        result = atmos.warm_and_dry_days(ts, pr, ts_per, pr_per, freq="MS")
         # THEN january has 20 warm and dry days
         assert result.data[0] == 20
 
@@ -52,7 +54,7 @@ class TestWarmAndWet:
         pr = pr_series(raw_prec)
         pr_per = percentile_doy(pr, 5, 75).sel(percentiles=75)
         # WHEN
-        result = atmos.warm_and_wet_days(ts, ts_per, pr, pr_per, freq="MS")
+        result = atmos.warm_and_wet_days(ts, pr, ts_per, pr_per, freq="MS")
         # THEN january has 20 warm and wet days
         assert result.data[0] == 20
 
@@ -69,6 +71,6 @@ class TestColdAndWet:
         pr = pr_series(raw_prec)
         pr_per = percentile_doy(pr, 5, 75).sel(percentiles=75)
         # WHEN
-        result = atmos.cold_and_wet_days(ts, ts_per, pr, pr_per, freq="MS")
+        result = atmos.cold_and_wet_days(ts, pr, ts_per, pr_per, freq="MS")
         # THEN january has 10 cold and wet days
         assert result.data[0] == 10

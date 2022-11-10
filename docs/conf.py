@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # xclim documentation build configuration file, created by
 # sphinx-quickstart on Fri Jun  9 13:47:02 2017.
@@ -12,13 +11,24 @@
 #
 # All configuration values have a default; values that are commented out
 # serve to show the default.
+from __future__ import annotations
+
 import datetime
 import os
 import sys
 import warnings
 from collections import OrderedDict
 
-import xclim
+import xarray
+from pybtex.plugin import register_plugin  # noqa
+from pybtex.style.formatting.alpha import Style as AlphaStyle  # noqa
+from pybtex.style.labels import BaseLabelStyle  # noqa
+
+xarray.DataArray.__module__ = "xarray"
+xarray.Dataset.__module__ = "xarray"
+xarray.CFTimeIndex.__module__ = "xarray"
+
+import xclim  # noqa
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory is
@@ -38,7 +48,7 @@ def _get_indicators(module):
 
     out = {}
     for key, val in module.__dict__.items():
-        if hasattr(val, "_registry_id") and val._registry_id in registry:
+        if hasattr(val, "_registry_id") and val._registry_id in registry:  # noqa
             out[key] = val
 
     return OrderedDict(sorted(out.items()))
@@ -96,6 +106,17 @@ extensions = [
     "nbsphinx",
     "IPython.sphinxext.ipython_console_highlighting",
     "autodoc_indicator",
+    "sphinxcontrib.bibtex",
+    "sphinx_codeautolink",
+    "sphinx_copybutton",
+]
+
+autosectionlabel_prefix_document = True
+autosectionlabel_maxdepth = 2
+
+linkcheck_ignore = [
+    r"https://github.com/Ouranosinc/xclim/(pull|issue).*",
+    r"https://doi.org/10.1093/mnras/225.1.155",  # does not allow linkcheck requests (error 403)
 ]
 
 napoleon_numpy_docstring = True
@@ -103,17 +124,54 @@ napoleon_use_rtype = False
 napoleon_use_param = False
 napoleon_use_ivar = True
 
+# see: https://sphinxcontrib-bibtex.readthedocs.io/en/latest/usage.html#unknown-target-name-when-using-footnote-citations-with-numpydoc
+numpydoc_class_members_toctree = False
+
 intersphinx_mapping = {
     "clisops": ("https://clisops.readthedocs.io/en/latest/", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
+    "flox": ("https://flox.readthedocs.io/en/latest/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
+    "sklearn": ("https://scikit-learn.org/stable/", None),
+    "statsmodels": ("https://www.statsmodels.org/stable/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
 }
 extlinks = {
-    "issue": ("https://github.com/Ouranosinc/xclim/issues/%s", "GH/"),
-    "pull": ("https://github.com/Ouranosinc/xclim/pull/%s", "PR/"),
-    "user": ("https://github.com/", "@"),
+    "issue": ("https://github.com/Ouranosinc/xclim/issues/%s", "GH/%s"),
+    "pull": ("https://github.com/Ouranosinc/xclim/pull/%s", "PR/%s"),
+    "user": ("https://github.com/%s", "@%s"),
 }
 
-nbsphinx_execute = "auto"
+
+# Bibliography stuff
+# a simple label style which uses the bibtex keys for labels
+class XCLabelStyle(BaseLabelStyle):
+    def format_labels(self, sorted_entries):
+        for entry in sorted_entries:
+            yield entry.key
+
+
+class XCStyle(AlphaStyle):
+
+    default_label_style = XCLabelStyle
+
+
+register_plugin("pybtex.style.formatting", "xcstyle", XCStyle)
+bibtex_bibfiles = ["references.bib"]
+bibtex_default_style = "xcstyle"
+bibtex_reference_style = "author_year"
+
+skip_notebooks = os.getenv("SKIP_NOTEBOOKS")
+if skip_notebooks or os.getenv("READTHEDOCS_VERSION_TYPE") in [
+    "branch",
+    "external",
+]:
+    if skip_notebooks:
+        warnings.warn("Not executing notebooks.")
+    nbsphinx_execute = "never"
+elif os.getenv("READTHEDOCS_VERSION_NAME") in ["latest", "stable"]:
+    nbsphinx_execute = "always"
+else:
+    nbsphinx_execute = "auto"
 nbsphinx_prolog = r"""
 {% set docname = env.doc2path(env.docname, base=None) %}
 
@@ -139,7 +197,7 @@ project = "xclim"
 copyright = (
     f"2018-{datetime.datetime.now().year}, Ouranos Inc., Travis Logan, and contributors"
 )
-author = "Travis Logan"
+author = "xclim Project Development Team"
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout
@@ -155,7 +213,7 @@ release = xclim.__version__
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -212,28 +270,34 @@ htmlhelp_basename = "xclimdoc"
 
 # -- Options for LaTeX output ------------------------------------------
 
+latex_engine = "pdflatex"
+latex_logo = "_static/_images/xclim-logo.png"
+
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
-    #
-    # 'papersize': 'letterpaper',
+    "papersize": "letterpaper",
     # The font size ('10pt', '11pt' or '12pt').
-    #
-    # 'pointsize': '10pt',
+    "pointsize": "10pt",
     # Additional stuff for the LaTeX preamble.
-    #
-    # 'preamble': r"""
-    # \renewcommand{\v}[1]{\mathbf{#1}}
-    # """,
+    "preamble": r"""
+\renewcommand{\v}[1]{\mathbf{#1}}
+\nocite{*}
+""",
     # Latex figure (float) alignment
-    #
-    # 'figure_align': 'htbp',
+    "figure_align": "htbp",
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass
 # [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "xclim.tex", "xclim Documentation", "Travis Logan", "manual")
+    (
+        master_doc,
+        "xclim.tex",
+        "xclim Documentation",
+        "xclim Project Development Team",
+        "manual",
+    )
 ]
 
 # -- Options for manual page output ------------------------------------

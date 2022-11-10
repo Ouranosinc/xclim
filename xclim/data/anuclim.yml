@@ -3,15 +3,15 @@ doc: |
   ANUCLIM indices
   ===============
 
-  The ANUCLIM (v6.1) software package BIOCLIM sub-module produces a set of bioclimatic
-  parameters derived values of temperature and precipitation. The methods in this
-  module are wrappers around a subset of corresponding methods of `xclim.indices`.
+  The ANUCLIM (v6.1) software package BIOCLIM sub-module produces a set of bioclimatic parameters derived values of
+  temperature and precipitation. The methods in this module are wrappers around a subset of corresponding methods of
+  :py:mod:`xclim.indices`.
 
-  Furthermore, according to the ANUCLIM user-guide ([ANUCLIM]_), input values should be at
-  a weekly or monthly frequency.  However, the implementation here expands these
-  definitions and can calculate the result with daily input data.
-
-  .. [ANUCLIM] https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6)
+  Furthermore, according to the ANUCLIM user-guide :cite:p:`xu_anuclim_2010`, input values should be at a weekly or
+  monthly frequency.  However, the implementation here expands these definitions and can calculate the result with daily
+  input data.
+realm: atmos
+references: ANUCLIM https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6)
 base: ResamplingIndicator
 indicators:
   P10_MeanTempWarmestQuarter:
@@ -69,7 +69,9 @@ indicators:
     compute: precip_seasonality
     cf_attrs:
       cell_methods: "time: standard_deviation"
-      description: "The standard deviation of the precipitation estimates expressed as a percentage of the mean of those estimates."
+      description: >
+        "The standard deviation of the precipitation estimates expressed
+        as a percentage of the mean of those estimates."
   P16_PrecipWettestQuarter:
     allowed_periods: [A]
     src_freq: ['D', '7D', 'M']
@@ -140,7 +142,10 @@ indicators:
     compute: temperature_seasonality
     cf_attrs:
       cell_methods: "time: standard_deviation"
-      description: "The standard deviation of the mean temperatures expressed as a percentage of the mean of those temperatures. For this calculation, the mean in degrees Kelvin is used. This avoids the possibility of having to divide by zero, but it does mean that the values are usually quite small."
+      description: >
+        "The standard deviation of the mean temperatures expressed as a percentage of the mean of those temperatures.
+        For this calculation, the mean in degrees Kelvin is used. This avoids the possibility of having to divide by
+        zero, but it does mean that the values are usually quite small."
   P5_MaxTempWarmestPeriod:
     allowed_periods: [A]
     src_freq: ['D', '7D', 'M']
@@ -195,5 +200,3 @@ indicators:
       units: K
     parameters:
       op: driest
-realm: atmos
-references: ANUCLIM https://fennerschool.anu.edu.au/files/anuclim61.pdf (ch. 6)
