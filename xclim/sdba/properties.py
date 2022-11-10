@@ -778,6 +778,9 @@ def _transition_probability(
     xr.DataArray, [dimensionless]
       Transition probablity of values {initial_op} {thresh} to values {final_op} {thresh}.
     """
+    # mask of the ocean with NaNs
+    mask = ~(da.isel({group.dim: 0}).isnull()).drop_vars(group.dim)
+
     today = da.isel(time=slice(0, -1))
     tomorrow= da.shift(time=-1).isel(time=slice(0,-1))
 
@@ -787,7 +790,9 @@ def _transition_probability(
     if group.prop != "group":
         cond = cond.groupby(group.name)
     out = cond.mean( dim=group.dim)
+    out = out.where(mask, np.nan)
     out.attrs["units"] = ""
+    print('test')
     return out
 
 
