@@ -523,7 +523,7 @@ def dryness_index(
 
     Warnings
     --------
-    Dryness Index expects CF-Convention conformant potential evapotranspiration (negative up).
+    Dryness Index expects CF-Convention conformant potential evapotranspiration (positive up).
 
     Parameters
     ----------
@@ -558,7 +558,7 @@ def dryness_index(
     has_north, has_south = False, False
 
     # Resample all variables to monthly totals in mm units.
-    evspsblpot_pos = -rate2amount(evspsblpot, out_units="mm").resample(time="MS").sum()
+    evspsblpot = rate2amount(evspsblpot, out_units="mm").resample(time="MS").sum()
     pr = rate2amount(pr, out_units="mm").resample(time="MS").sum()
     wo = convert_units_to(wo, "mm")
 
@@ -601,21 +601,17 @@ def dryness_index(
         raise ValueError(f"Latitude not understood: {lat}.")
 
     # Monthly weights array
-    k = adjustment.sel(month=evspsblpot_pos.time.dt.month)
+    k = adjustment.sel(month=evspsblpot.time.dt.month)
 
     # Drop all pr outside seasonal bounds
     pr_masked = (k > 0) * pr
 
     # Potential transpiration of the vineyard
-    t_v = evspsblpot_pos * k
+    t_v = evspsblpot * k
 
     # Direct soil evaporation
     # TODO: What the hell is JPM? To be confirmed.
-    e_s = (
-        (evspsblpot_pos / evspsblpot_pos.time.dt.daysinmonth)
-        * (1 - k)
-        * (pr_masked / 5)
-    )
+    e_s = (evspsblpot / evspsblpot.time.dt.daysinmonth) * (1 - k) * (pr_masked / 5)
 
     # Dryness index
     if has_north:
