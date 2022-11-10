@@ -157,7 +157,6 @@ def ensemble_mean_std_max_min(
         # Calculate ensemble statistics:
         ens_mean_std = ensemble_mean_std_max_min(ens)
     """
-    
     ds_out = xr.Dataset(attrs=ens.attrs)
     for v in ens.data_vars:
         if weights is None:
