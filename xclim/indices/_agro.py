@@ -555,7 +555,6 @@ def dryness_index(
     """
     if parse_offset(freq) != (1, "A", True, "JAN"):
         raise ValueError(f"Freq not allowed: {freq}. Must be `YS` or `AS-JAN`")
-    has_north, has_south = False, False
 
     # Resample all variables to monthly totals in mm units.
     evspsblpot = rate2amount(evspsblpot, out_units="mm").resample(time="MS").sum()
@@ -575,6 +574,7 @@ def dryness_index(
         coords=dict(month=np.arange(1, 13)),
     )
 
+    has_north, has_south = False, False
     if lat is None:
         lat = _gather_lat(pr)
     if isinstance(lat, xarray.DataArray):
@@ -610,7 +610,7 @@ def dryness_index(
     t_v = evspsblpot * k
 
     # Direct soil evaporation
-    # TODO: What the hell is JPM? To be confirmed.
+    # TODO: What exactly is JPM? To be confirmed.
     e_s = (evspsblpot / evspsblpot.time.dt.daysinmonth) * (1 - k) * (pr_masked / 5)
 
     # Dryness index
@@ -627,10 +627,8 @@ def dryness_index(
         di = di_north  # noqa
     elif has_south:
         di = di_south  # noqa
-    else:
-        raise
 
-    di.attrs["units"] = "mm"
+    di.attrs["units"] = "mm"  # noqa
     return di
 
 
