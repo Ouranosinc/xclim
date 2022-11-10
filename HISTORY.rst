@@ -9,6 +9,10 @@ Internal changes
 ^^^^^^^^^^^^^^^^
 * Minor adjustments to GitHub Actions workflows (newest Ubuntu images, updated actions version, better CI triggering). (:pull:`1221`).
 
+Bug fixes
+^^^^^^^^^
+* The weighted ensemble statistics are done in a context to keep the attributes.  (:issue:`1232`, :pull:`1234`).
+
 0.39.0 (2022-11-02)
 -------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), Éric Dupuis (:user:`coxipi`), Travis Logan (:user:`tlogan2000`), Pascal Bourgault (:user:`aulemahal`).
