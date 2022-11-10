@@ -4,6 +4,7 @@ History
 
 0.40.0 (unreleased)
 -------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
 
 New indicators
 ^^^^^^^^^^^^^^
