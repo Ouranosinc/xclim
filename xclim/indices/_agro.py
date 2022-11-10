@@ -610,8 +610,11 @@ def dryness_index(
     t_v = evspsblpot * k
 
     # Direct soil evaporation
-    # TODO: What exactly is JPM? To be confirmed.
-    e_s = (evspsblpot / evspsblpot.time.dt.daysinmonth) * (1 - k) * (pr_masked / 5)
+    e_s = (
+        (evspsblpot / evspsblpot.time.dt.daysinmonth)
+        * (1 - k)
+        * (pr_masked / 5).clip(max=evspsblpot.time.dt.daysinmonth)
+    )
 
     # Dryness index
     if has_north:
