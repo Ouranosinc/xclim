@@ -9,6 +9,19 @@ Internal changes
 ^^^^^^^^^^^^^^^^
 * Minor adjustments to GitHub Actions workflows (newest Ubuntu images, updated actions version, better CI triggering). (:pull:`1221`).
 
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Many previously deprecated indices and indicators have been removed from `xclim`, with replacement indices/indicators suggested as follows:
+ - ``xclim.indicators.atmos.fire_weather_indexes`` → ``xclim.indicators.atmos.cffwis_indices``
+ - ``xclim.indices.freshet_start`` → ``xclim.indices.first_day_temperature_above``
+ - ``xclim.indices.first_day_above`` → ``xclim.indices.first_day_temperature_above``
+ - ``xclim.indices.first_day_below`` → ``xclim.indices.first_day_temperature_below``
+ - ``xclim.indices.tropical_nights`` → ``xclim.indices.tn_days_above``
+ - ``xclim.indices.generic.degree_days` → ``xclim.indices.generic.cumulative_difference``
+* The following *modules* have been removed:
+ - `xclim.indices.fwi` → moved to `indices.fire`
+ - `xclim.subset` (mock submodule) → `clisops.core.subset`
+
 0.39.0 (2022-11-02)
 -------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), Éric Dupuis (:user:`coxipi`), Travis Logan (:user:`tlogan2000`), Pascal Bourgault (:user:`aulemahal`).
