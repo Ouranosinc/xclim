@@ -36,10 +36,10 @@ details on each.
     variables:  # Optional section if indicators declared below rely on variables unknown to xclim (no in `xclim.core.utils.VARIABLES`)
                 # The variables are not module-dependent and will overwrite any already existing with the same name.
       <varname>:
-        canonical_units: <units>
-        description: <description>
-        standard_name: <expected standard_name>
-        cell_methods: <exptected cell_methods>
+        canonical_units: <units> # required
+        description: <description> # required
+        standard_name: <expected standard_name> # optional
+        cell_methods: <exptected cell_methods> # optional
     indicators:
       <identifier>:
         # From which Indicator to inherit
@@ -63,7 +63,7 @@ details on each.
 
         # Compute function
         compute: <function name>  # Referring to a function in the supplied `Indices` module, xclim.indices.generic or xclim.indices
-        input:  # When "compute" is a generic function this is a mapping from argument name to the expected variable.
+        input:  # When "compute" is a generic function, this is a mapping from argument name to the expected variable.
                 # This will allow the input units and CF metadata checks to run on the inputs.
                 # Can also be used to modify the expected variable, as long as it has the same dimensionality
                 # Ex: tas instead of tasmin.
