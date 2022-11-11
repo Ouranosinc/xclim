@@ -88,6 +88,7 @@ def corn_heat_units(
     corn heat unit is:
 
     .. math::
+
         CHU_i = \frac{YX_{i} + YN_{i}}{2}
 
     with
@@ -98,12 +99,11 @@ def corn_heat_units(
 
         YN_i & = 1.8(TN_i -4.44), &\text{if } TN_i > 4.44°C
 
-    where :math:`YX_{i}` and :math:`YN_{i}` is 0 when :math:`TX_i \leq 10°C` and :math:`TN_i \leq 4.44°C`, respectively.
+    Where :math:`YX_{i}` and :math:`YN_{i}` is 0 when :math:`TX_i \leq 10°C` and :math:`TN_i \leq 4.44°C`, respectively.
 
     References
     ----------
     :cite:cts:`audet_atlas_2012,bootsma_risk_1999`
-
     """
     tasmin = convert_units_to(tasmin, "degC")
     tasmax = convert_units_to(tasmax, "degC")
@@ -181,11 +181,13 @@ def huglin_index(
     1 April and 30 September is:
 
     .. math::
+
         HI = \sum_{i=\text{April 1}}^{\text{September 30}} \left( \frac{TX_i  + TG_i)}{2} - T_{thresh} \right) * k
 
     For the `smoothed` method, the day-length multiplication factor, :math:`k`, is calculated as follows:
 
     .. math::
+
         k = f(lat) = \begin{cases}
                         1, & \text{if } |lat| <= 40 \\
                         1 + ((abs(lat) - 40) / 10) * 0.06, & \text{if } 40 < |lat| <= 50 \\
@@ -196,6 +198,7 @@ def huglin_index(
     day-length multiplication factor, :math:`k`, is calculated as follows:
 
     .. math::
+
         k = f(lat) = \begin{cases}
                         1.0, & \text{if } |lat| <= 40 \\
                         1.02, & \text{if } 40 < |lat| <= 42 \\
@@ -207,13 +210,12 @@ def huglin_index(
                     \end{cases}
 
     A more robust day-length calculation based on latitude, calendar, day-of-year, and obliquity is available with
-    `method="jones"`.
-    See: :py:func:`xclim.indices.generic.day_lengths` or :cite:t:`hall_spatial_2010` for more information.
+    `method="jones"`. See: :py:func:`xclim.indices.generic.day_lengths` or :cite:t:`hall_spatial_2010` for more
+    information.
 
     References
     ----------
     :cite:cts:`huglin_nouveau_1978, hall_spatial_2010`
-
     """
     tas = convert_units_to(tas, "degC")
     tasmax = convert_units_to(tasmax, "degC")
@@ -450,6 +452,11 @@ def cool_night_index(
     Mean minimum temperature for September (northern hemisphere) or March (Southern hemisphere).
     Used in calculating the Géoviticulture Multicriteria Classification System (:cite:t:`tonietto_multicriteria_2004`).
 
+    Warnings
+    --------
+    This indice is calculated using minimum temperature resampled to monthly average, and therefore will accept monthly
+    averaged data as inputs.
+
     Parameters
     ----------
     tasmin : xarray.DataArray
@@ -471,6 +478,11 @@ def cool_night_index(
     only these timesteps. Users should be aware that due to the missing values checks in wrapped Indicators, datasets
     that are missing several months will be flagged as invalid. This check can be ignored by setting the following
     context:
+
+    .. code-block:: python
+
+        with xclim.set_options(check_missing="skip"):
+            cni = cool_night_index(tasmin)
 
     Examples
     --------
@@ -525,7 +537,9 @@ def dryness_index(
 
     Warnings
     --------
-    Dryness Index expects CF-Convention conformant potential evapotranspiration (positive up).
+    Dryness Index expects CF-Convention conformant potential evapotranspiration (positive up). This indice is calculated
+    using evapotranspiration and precipitation resampled and converted to monthly total accumulations, and therefore
+    will accept monthly fluxes as inputs.
 
     Parameters
     ----------
@@ -548,6 +562,16 @@ def dryness_index(
 
     Notes
     -----
+    Given that this indice only examines monthly total accumulations for six-month periods depending on the hemisphere,
+    it is possible to send in DataArrays containing only these timesteps. Users should be aware that due to the missing
+    values checks in wrapped Indicators, datasets that are missing several months will be flagged as invalid. This check
+    can be ignored by setting the following context:
+
+    .. code-block:: python
+
+        with xclim.set_options(check_missing="skip"):
+            di = dryness_index(pr, evspsblpot)
+
     Let :math:`Wo` be the initial useful soil water reserve (typically "200 mm"), :math:`P` be precipitation,
     :math:`T_{v}` be the potential transpiration in the vineyard, and :math:`E_{s}` be the direct evaporation from the
     soil. Then the Dryness Index, or the estimate of soil water reserve at the end of a period (1 April to 30 September
