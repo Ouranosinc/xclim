@@ -598,7 +598,7 @@ def dryness_index(
 
     .. math::
 
-        E_{s} = \frac{ETP}{N}\left( 1 - k ) * JPm
+        E_{s} = \frac{ETP}{N}\left( 1 - k \right) * JPm
 
     Where :math:`ETP` is evapotranspiration, :math:`N` is the number of days in the given month. :math:`k` is the
     coefficient for radiative absorption given by the vine plant architecture, and :math:`JPm` is the number of days of
