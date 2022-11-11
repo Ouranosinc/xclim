@@ -383,7 +383,7 @@ def test_first_eof():
     )
     out = sdba.properties.first_eof(sim)
     np.testing.assert_allclose(
-        [out.mean(), out.max()], [0.02233494, 0.02068308], rtol=1e-6
+        [out.mean(), out.max()], [0.02068308, 0.02233494], rtol=1e-6
     )
     assert (out.isnull() == sim.isnull().any("time")).all()
 
