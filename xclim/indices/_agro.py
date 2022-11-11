@@ -516,10 +516,12 @@ def dryness_index(
     wo: str = "200 mm",
     freq: str = "YS",
 ) -> xarray.DataArray:
-    """Dryness Index.
+    r"""Dryness Index.
 
-    Mean minimum temperature for September (northern hemisphere) or March (Southern hemisphere).
-    Used in calculating the Géoviticulture Multicriteria Classification System.
+    Approximation of the water balance for the categorizing the winegrowing season. Uses both precipitation and an
+    adjustment of potential evapotranspiration between April and September (Northern Hemisphere) or October and March
+    (Southern hemisphere). Used in calculating the Géoviticulture Multicriteria Classification System
+    (:cite:t:`tonietto_multicriteria_2004`).
 
     Warnings
     --------
@@ -546,7 +548,54 @@ def dryness_index(
 
     Notes
     -----
-    TODO: Describe this indice.
+    Let :math:`Wo` be the initial useful soil water reserve (typically "200 mm"), :math:`P` be precipitation,
+    :math:`T_{v}` be the potential transpiration in the vineyard, and :math:`E_{s}` be the direct evaporation from the
+    soil. Then the Dryness Index, or the estimate of soil water reserve at the end of a period (1 April to 30 September
+    in the Northern Hemispherere or 1 October to 31 March in the Southern Hemisphere), can be given by the following
+    formulae:
+
+    .. math::
+
+        W = \sum_{\text{April 1}}^{\text{September 30}} \left( Wo + P - T_{v} - E_{s} \right)
+
+    or (for the Southern Hemisphere):
+
+    .. math::
+
+        W = \sum_{\text{October 1}}^{\text{March 31}} \left( Wo + P - T_{v} - E_{s} \right)
+
+    Where :math:`T_{v}` and :math:`E_{s}` are given by the following formulae:
+
+    .. math::
+
+        T_{v} = ETP * k
+
+    and
+
+    .. math::
+
+        E_{s} = \frac{ETP}{N}\left( 1 - k ) * JPm
+
+    Where :math:`ETP` is evapotranspiration, :math:`N` is the number of days in the given month. :math:`k` is the
+    coefficient for radiative absorption given by the vine plant architecture, and :math:`JPm` is the number of days of
+    effective evaporation from the soil per month, both provided by the following formulae:
+
+    .. math::
+
+        k = \begin{cases}
+            0.1, & \text{if month = April (NH) or October (SH)}  \\
+            0.3, & \text{if month = May (NH) or November (SH)}  \\
+            0.5, & \text{if month = June - September (NH) or December - March (SH)} \\
+            \end{cases}
+
+    .. math::
+
+        JPm = \max\left( P / 5, N \right)
+
+    Examples
+    --------
+    >>> from xclim.indices import dryness_index
+    >>> cni = cool_night_index(pr_dataset, evspsblpot_dataset, wo="200 mm")
 
     References
     ----------
@@ -569,7 +618,7 @@ def dryness_index(
         coords=dict(month=np.arange(1, 13)),
     )
     adjustment_array_south = xarray.DataArray(
-        [0.5, 0.5, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0.1, 0.3],
+        [0.5, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0.1, 0.3, 0.5],
         dims="month",
         coords=dict(month=np.arange(1, 13)),
     )
@@ -621,8 +670,9 @@ def dryness_index(
         di_north = wo + (pr_masked - t_v - e_s).resample(time="AS-JAN").sum()
     if has_south:
         di_south = wo + (pr_masked - t_v - e_s).resample(time="AS-JUL").sum()
+        # Shift time for Southern Hemisphere to allow for concatenation with Northern Hemisphere
         di_south = di_south.shift(time=1).isel(time=slice(1, None))
-        di_south["time"] = di_south.time.dt.replace(month=1)
+        di_south["time"] = di_south.indexes["time"].shift(-6, "MS")
 
     if has_north and has_south:
         di = di_north.where(lat >= 0, di_south)  # noqa

@@ -632,15 +632,15 @@ def atmosds(xdoctest_namespace, tmp_path_factory, threadsafe_data_dir) -> xr.Dat
     tx90 = xclim.core.calendar.percentile_doy(ds.tasmax, per=90)
 
     ds = ds.assign(
-        sfcWind=sfcWind,
-        sfcWindfromdir=sfcWindfromdir,
         huss=huss,
         psl=psl,
-        snw=snw,
+        sfcWind=sfcWind,
+        sfcWindfromdir=sfcWindfromdir,
         snd=snd,
-        tn10=tn10,
+        snw=snw,
         t10=t10,
         t90=t90,
+        tn10=tn10,
         tx90=tx90,
     )
 
@@ -680,14 +680,12 @@ def ensemble_dataset_objects(tmp_path_factory, threadsafe_data_dir) -> dict:
         for f in edo["nc_files"]
     ]
 
-    ncd = deepcopy(edo["nc_datasets_simple"])
-    ncd.extend(
-        [
-            xclim.testing.open_dataset(
-                Path("EnsembleStats").joinpath(edo["nc_file_extra"]),
-                cache_dir=threadsafe_data_dir,
-            )
-        ]
+    ncd: list = deepcopy(edo["nc_datasets_simple"])
+    ncd.append(
+        xclim.testing.open_dataset(
+            Path("EnsembleStats").joinpath(edo["nc_file_extra"]),
+            cache_dir=threadsafe_data_dir,
+        )
     )
     edo["nc_datasets"] = ncd
 
