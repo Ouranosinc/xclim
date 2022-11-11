@@ -11,7 +11,7 @@ Internal changes
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* Many previously deprecated indices and indicators have been removed from `xclim`, with replacement indices/indicators suggested as follows:
+* Many previously deprecated indices and indicators have been removed from `xclim` (:pull:`1228`), with replacement indices/indicators suggested as follows:
  - ``xclim.indicators.atmos.fire_weather_indexes`` → ``xclim.indicators.atmos.cffwis_indices``
  - ``xclim.indices.freshet_start`` → ``xclim.indices.first_day_temperature_above``
  - ``xclim.indices.first_day_above`` → ``xclim.indices.first_day_temperature_above``
@@ -19,7 +19,7 @@ Breaking changes
  - ``xclim.indices.tropical_nights`` → ``xclim.indices.tn_days_above``
  - ``xclim.indices.generic.degree_days` → ``xclim.indices.generic.cumulative_difference``
 * The following *modules* have been removed:
- - `xclim.indices.fwi` → moved to `indices.fire`
+ - `xclim.indices.fwi` → moved to `xclim.indices.fire`
  - `xclim.subset` (mock submodule) → `clisops.core.subset`
 
 0.39.0 (2022-11-02)
