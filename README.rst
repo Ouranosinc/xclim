@@ -66,9 +66,9 @@ Credits
 
 xclim development is funded through Ouranos_, Environment and Climate Change Canada (ECCC_), the `Fonds vert`_ and the Fonds d’électrification et de changements climatiques (FECC_), the Canadian Foundation for Innovation (CFI_), and the Fonds de recherche du Québec (FRQ_).
 
-This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
+This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-pypackage`_ project template.
 
-.. _audreyr/cookiecutter-pypackage: https://github.com/audreyr/cookiecutter-pypackage/
+.. _audreyfeldroy/cookiecutter-pypackage: https://github.com/audreyfeldroy/cookiecutter-pypackage/
 .. _CFI: https://www.innovation.ca/
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter/
 .. _ECCC: https://www.canada.ca/en/environment-climate-change.html
@@ -122,7 +122,7 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
         :alt: FOSSA
 
 .. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
-        :target: https://github.com/python/black
+        :target: https://github.com/psf/black
         :alt: Python Black
 
 .. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/master/_static/_images/xclim-logo-small.png

@@ -1,9 +1,16 @@
-.. include:: ../README.rst
+xclim Official Documentation
+============================
+
+.. toctree::
+   :hidden:
+
+   self
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Table of Contents:
 
+   readme
    installation
    notebooks/usage
    notebooks/index
