@@ -2,9 +2,9 @@
 History
 =======
 
-0.40 (unreleased)
------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`).
+0.40.0 (unreleased)
+-------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Juliette Lavoie (:user:`juliettelavoie`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -13,6 +13,10 @@ Breaking changes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Minor adjustments to GitHub Actions workflows (newest Ubuntu images, updated actions version, better CI triggering). (:pull:`1221`).
+
+Bug fixes
+^^^^^^^^^
+* The weighted ensemble statistics are now performed within a context in order to preserve data attributes. (:issue:`1232`, :pull:`1234`).
 
 0.39.0 (2022-11-02)
 -------------------
