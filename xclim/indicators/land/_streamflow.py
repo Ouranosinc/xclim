@@ -7,15 +7,13 @@ from xclim.core.cfchecks import check_valid
 from xclim.core.indicator import Indicator, ResamplingIndicator
 from xclim.core.units import declare_units
 from xclim.indices import base_flow_index, generic, rb_flashiness_index
-from xclim.indices.stats import fit as _fit
 from xclim.indices.stats import frequency_analysis
 
 __all__ = [
     "base_flow_index",
+    "discharge_return_level",
     "rb_flashiness_index",
-    "freq_analysis",
-    "stats",
-    "fit",
+    "discharge_stats",
     "doy_qmax",
     "doy_qmin",
 ]
@@ -30,36 +28,6 @@ class Streamflow(ResamplingIndicator):
         check_valid(q, "standard_name", "water_volume_transport_in_river_channel")
 
 
-class Stats(Streamflow):
-    missing = "any"
-
-
-class FA(Streamflow):
-    """Frequency analysis.
-
-    Notes
-    -----
-    FA performs three steps:
-     1. Compute stats over time series (min, max)
-     2. Fit statistical distribution parameters
-     3. Compute parametric quantiles for given return periods
-
-    Missing value functionality cannot be meaningfully applied here, because indicators apply missing value
-    operations on input and apply the mask on output. The `freq` of the input could be "YS", but this same
-    `freq` would then be used to compute the mask, which makes no sense.
-    """
-
-    missing = "skip"
-
-
-# Disable the daily checks because the inputs are period extremes.
-class Fit(Indicator):
-    src_freq = None
-
-    def cfcheck(self, **das):
-        pass
-
-
 base_flow_index = Streamflow(
     title="Base flow index",
     identifier="base_flow_index",
@@ -70,17 +38,18 @@ base_flow_index = Streamflow(
     compute=base_flow_index,
 )
 
-freq_analysis = FA(
-    title="Return period flow amount",
+discharge_return_level = Streamflow(
+    title="Return level",
     identifier="freq_analysis",
     var_name="q{window}{mode:r}{indexer}",
-    long_name="N-year return period flow amount",
+    long_name="N-year return level discharge",
     description="Streamflow frequency analysis for the {mode} {indexer} {window}-day flow estimated using the {dist} "
     "distribution.",
     abstract="Streamflow frequency analysis on the basis of a given mode and distribution.",
     units="m^3 s-1",
     compute=frequency_analysis,
-    inputs={'da': 'discharge'}
+    missing="skip",
+    input={"da": "discharge"},
 )
 
 rb_flashiness_index = Streamflow(
@@ -95,26 +64,17 @@ rb_flashiness_index = Streamflow(
     compute=rb_flashiness_index,
 )
 
-stats = Stats(
+
+discharge_stats = Streamflow(
     title="Statistic of the daily flow for a given period.",
-    identifier="stats",
+    identifier="discharge_stats",
     var_name="q{indexer}{op:r}",
     long_name="Daily flow statistics",
     description="{freq} {op} of daily flow ({indexer}).",
     units="m^3 s-1",
-    compute=declare_units(da="[discharge]")(generic.select_resample_op),
-)
-
-fit = Fit(
-    title="Distribution parameters fitted over the time dimension.",
-    identifier="fit",
-    var_name="params",
-    units="",
-    standard_name="{dist} parameters",
-    long_name="{dist} distribution parameters",
-    description="Parameters of the {dist} distribution.",
-    cell_methods="time: fit",
-    compute=declare_units(da="[discharge]")(_fit),
+    compute=generic.select_resample_op,
+    missing="any",
+    input={"da": "discharge"},
 )
 
 

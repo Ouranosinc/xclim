@@ -4,7 +4,15 @@ History
 
 0.40.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`)
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New `generic` indicator realm. Now holds indicators previously meant for streamflow analysis in the `land` realm: `fit`, `return_level` (previously `freq_analysis`) and `stats`.
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Indicator `land.stats` moved to `generic.stats`, `land.freq_analysis` renamed to `land.discharge_return_level`, and `land.fit` moved to `generic.fit`.
 
 Bug fixes
 ^^^^^^^^^
