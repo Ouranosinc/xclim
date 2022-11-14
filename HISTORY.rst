@@ -4,7 +4,7 @@ History
 
 0.40.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user:`juliettelavoie`), David Huard (:user:`huard`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -16,6 +16,7 @@ Breaking changes
 
 Bug fixes
 ^^^^^^^^^
+* The weighted ensemble statistics are now performed within a context in order to preserve data attributes. (:issue:`1232`, :pull:`1234`).
 * Streamflow indicators relying on indices defined in `xclim.indices.stats` were not checking input variable units. These indicators will now raise an error if input data units are not m^3/s. (:issue:`1130`, :pull:`1225`).
 
 Internal changes
