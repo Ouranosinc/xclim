@@ -4,10 +4,12 @@ History
 
 0.40.0 (unreleased)
 -------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Minor adjustments to GitHub Actions workflows (newest Ubuntu images, updated actions version, better CI triggering). (:pull:`1221`).
+* Added relevant variable dataflag checks for potential evaporation, convective precipitation, and air pressure at sea level. (:pull:`1241`).
 
 0.39.0 (2022-11-02)
 -------------------
