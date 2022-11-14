@@ -4,6 +4,7 @@ History
 
 0.40.0 (unreleased)
 -------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -18,9 +19,10 @@ Breaking changes
  - ``xclim.indices.first_day_below`` → ``xclim.indices.first_day_temperature_below``
  - ``xclim.indices.tropical_nights`` → ``xclim.indices.tn_days_above``
  - ``xclim.indices.generic.degree_days` → ``xclim.indices.generic.cumulative_difference``
+
 * The following *modules* have been removed:
- - `xclim.indices.fwi` → moved to `xclim.indices.fire`
- - `xclim.subset` (mock submodule) → `clisops.core.subset`
+ - `xclim.indices.fwi` → functions migrated to `xclim.indices.fire`
+ - `xclim.subset` (mock submodule) → functions migrated to `clisops.core.subset`
 
 0.39.0 (2022-11-02)
 -------------------
