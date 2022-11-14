@@ -599,14 +599,26 @@
     "abstract": "Mesure des oscillations du débit relatif au débit moyen, quantifiant la fréquence et la rapidité des changements de débits."
   },
   "FREQ_ANALYSIS": {
-    "long_name": "Période de retour du débit",
+    "long_name": "Valeur de retour du débit",
     "description": "Analyse fréquentielle de type {dist:f} des débits moyens sur {window} jours, pour le {mode} {indexer}.",
-    "title": "Période de retour",
+    "title": "Valeur de retour",
     "abstract": "Analyse fréquentielle des débits selon un mode et une distribution."
   },
-  "STATS": {
+  "RETURN_LEVEL": {
+    "long_name": "Valeur de retour",
+    "description": "Analyse fréquentielle de type {dist:f} des moyennes sur {window} jours, pour le {mode} {indexer}.",
+    "title": "Valeur de retour",
+    "abstract": "Analyse fréquentielle selon un mode et une distribution."
+  },
+  "DISCHARGE_STATS": {
     "long_name": "Statistique des débits quotidiens",
     "description": "{op} {freq:f} des débits quotidiens ({indexer}).",
+    "title": "Calcul de statistiques sur des sous-périodes.",
+    "abstract": ""
+  },
+  "STATS": {
+    "long_name": "Statistique des valeurs quotidiennes",
+    "description": "{op} {freq:f} des valeurs quotidiennes ({indexer}).",
     "title": "Calcul de statistiques sur des sous-périodes.",
     "abstract": ""
   },

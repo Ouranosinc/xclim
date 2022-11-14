@@ -12,7 +12,7 @@ New features and enhancements
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* Indicator `land.stats` moved to `generic.stats`, `land.freq_analysis` renamed to `land.discharge_return_level`, and `land.fit` moved to `generic.fit`.
+* Indicator `land.stats`, `land.fit` and `land.freq_analysis` are now deprecated and will be removed in version 0.43. They are being phased out in favor of generic indicators `generic.stats`, `generic.fit` and `generic.return_level` respectively.
 
 Bug fixes
 ^^^^^^^^^
