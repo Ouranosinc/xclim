@@ -80,7 +80,7 @@ freq_analysis = FA(
     abstract="Streamflow frequency analysis on the basis of a given mode and distribution.",
     units="m^3 s-1",
     compute=frequency_analysis,
-    inputs={'da': 'discharge'}
+    inputs={"da": "discharge"},
 )
 
 rb_flashiness_index = Streamflow(
