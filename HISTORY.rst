@@ -4,6 +4,7 @@ History
 
 0.40.0 (unreleased)
 -------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user:`juliettelavoie`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -11,7 +12,7 @@ Internal changes
 
 Bug fixes
 ^^^^^^^^^
-* The weighted ensemble statistics are done in a context to keep the attributes.  (:issue:`1232`, :pull:`1234`).
+* The weighted ensemble statistics are now performed within a context in order to preserve data attributes. (:issue:`1232`, :pull:`1234`).
 
 0.39.0 (2022-11-02)
 -------------------
