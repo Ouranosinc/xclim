@@ -974,8 +974,7 @@ def rle_1d(
     n = len(ia)
 
     if n == 0:
-        e = "run length array empty"
-        warn(e)
+        warn("run length array empty")
         # Returning None makes some other 1d func below fail.
         return np.array(np.nan), 0, np.array(np.nan)
     return _rle_1d(ia)
