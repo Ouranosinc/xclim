@@ -114,8 +114,8 @@ Testing module
 Subset module
 -------------
 .. warning::
-    Subsetting is now offered via `clisops.core.subset`. The subsetting functions offered by `clisops`
-    are available at the following link:
+    The `xclim.subset` module was removed in `xclim==0.40`. Subsetting is now offered via `clisops.core.subset`.
+    The subsetting functions offered by `clisops` are available at the following link:
 
 :doc:`CLISOPS API <clisops:api>`
 
