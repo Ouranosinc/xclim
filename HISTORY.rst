@@ -4,7 +4,11 @@ History
 
 0.40.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user:`juliettelavoie`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Juliette Lavoie (:user:`juliettelavoie`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Rewrite of ``xclim.core.calendar.time_bnds``. It should now be more resilient and versatile, but all ``cftime_*`` and ``cfindex_*`` functions were removed. (:issue:`74`, :pull:`1207`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
