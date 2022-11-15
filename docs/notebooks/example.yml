@@ -6,15 +6,22 @@ doc: |
   This module is an example of YAML generated xclim submodule.
 realm: atmos
 references: xclim documentation https://xclim.readthedocs.io
+variables:
+  prveg:
+    canonical_units: kg m-2 s-1
+    description: Precipitation flux on the outer surface of the forest
+    standard_name: precipitation_flux_onto_canopy
 indicators:
   RX1day:
     base: rx1day
     cf_attrs:
       long_name: Highest 1-day precipitation amount
-  RX5day:
+  RX5day_canopy:
     base: max_n_day_precipitation_amount
     cf_attrs:
-      long_name: Highest 5-day precipitation amount
+      long_name: Highest 5-day precipitation amount on the canopy
+    input:
+      pr: prveg
     parameters:
       freq: QS-DEC
       window: 5
