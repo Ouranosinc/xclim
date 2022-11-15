@@ -18,7 +18,8 @@ helpers to simplify the implementation of the indices.
     Indices functions do not perform missing value checks, and usually do not set CF-Convention attributes
     (long_name, standard_name, description, cell_methods, etc.). These functionalities are provided by
     :py:class:`xclim.indicators.Indicator` instances found in the :py:mod:`xclim.indicators.atmos`,
-    :py:mod:`xclim.indicators.land` and :mod:`xclim.indicators.seaIce` modules, documented in :ref:`indicators:Climate Indicators`.
+    :py:mod:`xclim.indicators.land` and :mod:`xclim.indicators.seaIce` modules,
+    documented in :ref:`indicators:Climate Indicators`.
 
 """
 from __future__ import annotations
@@ -35,7 +36,6 @@ from .fire import (
     cffwis_indices,
     drought_code,
     fire_season,
-    fire_weather_indexes,
     griffiths_drought_factor,
     keetch_byram_drought_index,
     mcarthur_forest_fire_danger_index,
