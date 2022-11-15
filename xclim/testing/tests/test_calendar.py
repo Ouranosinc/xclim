@@ -56,17 +56,16 @@ def da(index):
     )
 
 
-@pytest.mark.parametrize(
-    "freq", ["3A-MAY", "5Q-JUN", "7M", "6480H", "302431T", "23144781S"]
-)
+@pytest.mark.parametrize("freq", ["6480H", "302431T", "23144781S"])
 def test_time_bnds(freq, datetime_index, cftime_index):
     da_datetime = da(datetime_index).resample(time=freq)
     da_cftime = da(cftime_index).resample(time=freq)
 
     cftime_bounds = time_bnds(da_cftime, freq=freq)
-    cftime_starts, cftime_ends = zip(*cftime_bounds)
-    cftime_starts = CFTimeIndex(cftime_starts).to_datetimeindex()
-    cftime_ends = CFTimeIndex(cftime_ends).to_datetimeindex()
+    cftime_starts = cftime_bounds.isel(bnds=0)
+    cftime_ends = cftime_bounds.isel(bnds=1)
+    cftime_starts = CFTimeIndex(cftime_starts.values).to_datetimeindex()
+    cftime_ends = CFTimeIndex(cftime_ends.values).to_datetimeindex()
 
     # cftime resolution goes down to microsecond only, code below corrects
     # that to allow for comparison with pandas datetime
@@ -76,6 +75,29 @@ def test_time_bnds(freq, datetime_index, cftime_index):
 
     assert_array_equal(cftime_starts, datetime_starts)
     assert_array_equal(cftime_ends, datetime_ends)
+
+
+@pytest.mark.parametrize("typ", ["pd", "xr"])
+def test_time_bnds_irregular(typ):
+    """Test time_bnds for irregular `middle of the month` time series."""
+    if typ == "xr":
+        start = xr.cftime_range("1990-01-01", periods=24, freq="MS")
+        # Well. xarray string parsers do not support sub-second resolution, but cftime does.
+        end = xr.cftime_range(
+            "1990-01-01T23:59:59", periods=24, freq="M"
+        ) + pd.Timedelta(0.999999, "s")
+    elif typ == "pd":
+        start = pd.date_range("1990-01-01", periods=24, freq="MS")
+        end = pd.date_range("1990-01-01 23:59:59.999999999", periods=24, freq="M")
+
+    time = start + (end - start) / 2
+
+    bounds = time_bnds(time, freq="M")
+    bs = bounds.isel(bnds=0)
+    be = bounds.isel(bnds=1)
+
+    assert_array_equal(bs, start)
+    assert_array_equal(be, end)
 
 
 @pytest.mark.parametrize("use_dask", [True, False])
