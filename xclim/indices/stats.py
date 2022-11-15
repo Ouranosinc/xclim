@@ -5,7 +5,6 @@ from typing import Sequence
 
 import numpy as np
 import xarray as xr
-from scipy.optimize import fsolve, root
 
 from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history
 from xclim.core.utils import uses_dask
@@ -92,7 +91,8 @@ def fit(
         (see :py:mod:scipy.stats for full list). If the PWM method is used, only the following distributions are
         currently supported: 'expon', 'gamma', 'genextreme', 'genpareto', 'gumbel_r', 'pearson3', 'weibull_min'.
     method : {"ML", "PWM", "APP"}
-        Fitting method, either maximum likelihood (ML), probability weighted moments (PWM), also called L-Moments, or approximate method (APP)
+        Fitting method, either maximum likelihood (ML), probability weighted moments (PWM),
+        also called L-Moments, or approximate method (APP).
         The PWM method is usually more robust to outliers.
     dim : str
         The dimension upon which to perform the indexing (default: "time").
