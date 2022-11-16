@@ -87,7 +87,8 @@ def adapt_freq(
     copy_all_attrs(out, sim)
     out.sim_ad.attrs.update(sim.attrs)
     out.sim_ad.attrs.update(
-        references="Themeßl et al. (2012), Empirical-statistical downscaling and error correction of regional climate models and its impact on the climate change signal, Climatic Change, DOI 10.1007/s10584-011-0224-4."
+        references="Themeßl et al. (2012), Empirical-statistical downscaling and error correction of regional climate "
+        "models and its impact on the climate change signal, Climatic Change, DOI 10.1007/s10584-011-0224-4."
     )
     out.pth.attrs.update(
         long_name="Smallest value of the timeseries not corrected by frequency adaptation.",
@@ -103,7 +104,9 @@ def adapt_freq(
 def jitter_under_thresh(x: xr.DataArray, thresh: str) -> xr.DataArray:
     """Replace values smaller than threshold by a uniform random noise.
 
-    Do not confuse with R's jitter, which adds uniform noise instead of replacing values.
+    Warnings
+    --------
+    Not to be confused with R's jitter, which adds uniform noise instead of replacing values.
 
     Parameters
     ----------
@@ -126,7 +129,9 @@ def jitter_under_thresh(x: xr.DataArray, thresh: str) -> xr.DataArray:
 def jitter_over_thresh(x: xr.DataArray, thresh: str, upper_bnd: str) -> xr.DataArray:
     """Replace values greater than threshold by a uniform random noise.
 
-    Do not confuse with R's jitter, which adds uniform noise instead of replacing values.
+    Warnings
+    --------
+    Not to be confused with R's jitter, which adds uniform noise instead of replacing values.
 
     Parameters
     ----------
@@ -158,6 +163,8 @@ def jitter(
 ) -> xr.DataArray:
     """Replace values under a threshold and values above another by a uniform random noise.
 
+    Warnings
+    --------
     Not to be confused with R's `jitter`, which adds uniform noise instead of replacing values.
 
     Parameters
@@ -288,7 +295,14 @@ def standardize(
 
     Either of both of mean and std can be provided if need be.
 
-    Returns the standardized data, the mean and the standard deviation.
+    Returns
+    -------
+    out : xr.DataArray or xr.Dataset
+        Standardized data.
+    mean : xr.DataArray
+        Mean.
+    std : xr.DataArrau
+        Standard Deviation.
     """
     if mean is None:
         mean = da.mean(dim, keep_attrs=True)
@@ -317,16 +331,16 @@ def reordering(ref: xr.DataArray, sim: xr.DataArray, group: str = "time") -> xr.
     Parameters
     ----------
     sim : xr.DataArray
-      Array to reorder.
+        Array to reorder.
     ref : xr.DataArray
-      Array whose rank order sim should replicate.
+        Array whose rank order sim should replicate.
     group : str
-      Grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+        Grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
 
     Returns
     -------
     xr.Dataset
-      sim reordered according to ref's rank order.
+        sim reordered according to ref's rank order.
 
     References
     ----------
@@ -352,20 +366,20 @@ def escore(
     Parameters
     ----------
     tgt: xr.DataArray
-      Target observations.
+        Target observations.
     sim: xr.DataArray
-      Candidate observations. Must have the same dimensions as `tgt`.
+        Candidate observations. Must have the same dimensions as `tgt`.
     dims: sequence of 2 strings
-      The name of the dimensions along which the variables and observation points are listed.
-      `tgt` and `sim` can have different length along the second one, but must be equal along the first one.
-      The result will keep all other dimensions.
+        The name of the dimensions along which the variables and observation points are listed.
+        `tgt` and `sim` can have different length along the second one, but must be equal along the first one.
+        The result will keep all other dimensions.
     N : int
-      If larger than 0, the number of observations to use in the score computation. The points are taken
-      evenly distributed along `obs_dim`.
-    scale: bool
-      Whether to scale the data before computing the score. If True, both arrays as scaled according
-      to the mean and standard deviation of `tgt` along `obs_dim`. (std computed with `ddof=1` and both
-      statistics excluding NaN values).
+        If larger than 0, the number of observations to use in the score computation. The points are taken
+        evenly distributed along `obs_dim`.
+    scale : bool
+        Whether to scale the data before computing the score. If True, both arrays as scaled according
+        to the mean and standard deviation of `tgt` along `obs_dim`. (std computed with `ddof=1` and both
+        statistics excluding NaN values).
 
     Returns
     -------
@@ -376,7 +390,7 @@ def escore(
     -----
     Explanation adapted from the "energy" R package documentation.
     The e-distance between two clusters :math:`C_i`, :math:`C_j` (tgt and sim) of size :math:`n_i,n_j`
-    proposed by Székely and Rizzo (2004) is defined by:
+    proposed by :cite:t:`sdba-szekely_testing_2004` is defined by:
 
     .. math::
 
@@ -391,8 +405,8 @@ def escore(
     :math:`\Vert\cdot\Vert` denotes Euclidean norm, :math:`X_{ip}` denotes the p-th observation in the i-th cluster.
 
     The input scaling and the factor :math:`\frac{1}{2}` in the first equation are additions of
-    :cite:t:`sdba-cannon_multivariate_2018` to the metric. With that factor, the test becomes identical to the one defined by
-    :cite:t:`sdba-baringhaus_new_2004`.
+    :cite:t:`sdba-cannon_multivariate_2018` to the metric. With that factor, the test becomes identical to the one
+    defined by :cite:t:`sdba-baringhaus_new_2004`.
     This version is tested against values taken from Alex Cannon's MBC R package :cite:p:`sdba-cannon_mbc_2020`.
 
     References
@@ -474,21 +488,22 @@ def construct_moving_yearly_window(
     Parameters
     ----------
     da : xr.Dataset
-      A DataArray with a `time` dimension.
+        A DataArray with a `time` dimension.
     window : int
-      The length of the moving window as a number of years.
+        The length of the moving window as a number of years.
     step : int
-      The step between each window as a number of years.
+        The step between each window as a number of years.
     dim : str
-      The new dimension name. If given, must also be given to `unpack_moving_yearly_window`.
+        The new dimension name. If given, must also be given to `unpack_moving_yearly_window`.
 
     Return
     ------
     xr.DataArray
-      A DataArray with a new `movingwin` dimension and a `time` dimension with a length of 1 window.
-      This assumes downstream algorithms do not make use of the _absolute_ year of the data.
-      The correct timeseries can be reconstructed with :py:func:`unpack_moving_yearly_window`.
-      The coordinates of `movingwin` are the first date of the windows.
+        A DataArray with a new `movingwin` dimension and a `time` dimension with a length of 1 window.
+        This assumes downstream algorithms do not make use of the _absolute_ year of the data.
+        The correct timeseries can be reconstructed with :py:func:`unpack_moving_yearly_window`.
+        The coordinates of `movingwin` are the first date of the windows.
+
     """
     # Get number of samples per year (and perform checks)
     N_in_year = _get_number_of_elements_by_year(da.time)
@@ -531,17 +546,18 @@ def unpack_moving_yearly_window(
     Parameters
     ----------
     da : xr.DataArray
-      As constructed by :py:func:`construct_moving_yearly_window`.
+        As constructed by :py:func:`construct_moving_yearly_window`.
     dim : str
-      The window dimension name as given to the construction function.
+        The window dimension name as given to the construction function.
     append_ends : bool
-      Whether to append the ends of the timeseries
-      If False, the final timeseries will be (window - step) years shorter than the initial one,
-      but all windows will contribute equally.
-      If True, the year before the middle years of the first window and the years after the middle years of the last
-      window are appended to the middle years. The final timeseries will be the same length as the initial timeseries
-      if the windows span the whole timeseries.
-      The time steps that are not in a window will be left out of the final timeseries.
+        Whether to append the ends of the timeseries
+        If False, the final timeseries will be (window - step) years shorter than the initial one,
+        but all windows will contribute equally.
+        If True, the year before the middle years of the first window and the years after the middle years of the last
+        window are appended to the middle years. The final timeseries will be the same length as the initial timeseries
+        if the windows span the whole timeseries.
+        The time steps that are not in a window will be left out of the final timeseries.
+
     """
     # Get number of samples by year (and perform checks)
     N_in_year = _get_number_of_elements_by_year(da.time)
@@ -604,16 +620,16 @@ def to_additive_space(
     Parameters
     ----------
     data : xr.DataArray
-      A variable that can't usually be bias-adjusted by additive methods.
+        A variable that can't usually be bias-adjusted by additive methods.
     lower_bound : str
-      The smallest physical value of the variable, excluded, as a Quantity string.
-      The data should only have values strictly larger than this bound.
+        The smallest physical value of the variable, excluded, as a Quantity string.
+        The data should only have values strictly larger than this bound.
     upper_bound : str, optional
-      The largest physical value of the variable, excluded, as a Quantity string.
-      Only relevant for the logit transformation.
-      The data should only have values strictly smaller than this bound.
+        The largest physical value of the variable, excluded, as a Quantity string.
+        Only relevant for the logit transformation.
+        The data should only have values strictly smaller than this bound.
     trans : {'log', 'logit'}
-      The transformation to use. See notes.
+        The transformation to use. See notes.
 
     Notes
     -----
@@ -695,29 +711,29 @@ def from_additive_space(
     Parameters
     ----------
     data : xr.DataArray
-      A variable that was transform by :py:func:`to_additive_space`.
+        A variable that was transform by :py:func:`to_additive_space`.
     lower_bound : str, optional
-      The smallest physical value of the variable, as a Quantity string.
-      The final data will have no value smaller or equal to this bound.
-      If None (default), the `sdba_transform_lower` attribute is looked up on `data`.
+        The smallest physical value of the variable, as a Quantity string.
+        The final data will have no value smaller or equal to this bound.
+        If None (default), the `sdba_transform_lower` attribute is looked up on `data`.
     upper_bound : str, optional
-      The largest physical value of the variable, as a Quantity string.
-      Only relevant for the logit transformation.
-      The final data will have no value larger or equal to this bound.
-      If None (default), the `sdba_transform_upper` attribute is looked up on `data`.
+        The largest physical value of the variable, as a Quantity string.
+        Only relevant for the logit transformation.
+        The final data will have no value larger or equal to this bound.
+        If None (default), the `sdba_transform_upper` attribute is looked up on `data`.
     trans : {'log', 'logit'}, optional
-      The transformation to use. See notes.
-      If None (the default), the `sdba_transform` attribute is looked up on `data`.
+        The transformation to use. See notes.
+        If None (the default), the `sdba_transform` attribute is looked up on `data`.
     units : str, optional
-      The units of the data before transformation to the additive space.
-      If None (the default), the `sdba_transform_units` attribute is looked up on `data`.
+        The units of the data before transformation to the additive space.
+        If None (the default), the `sdba_transform_units` attribute is looked up on `data`.
 
     Returns
     -------
     xr.DataArray
-      The physical variable. Attributes are conserved, even if some might be incorrect.
-      Except units which are taken from `sdba_transform_units` if available.
-      All `sdba_transform*` attributes are deleted.
+        The physical variable. Attributes are conserved, even if some might be incorrect.
+        Except units which are taken from `sdba_transform_units` if available.
+        All `sdba_transform*` attributes are deleted.
 
     Notes
     -----
@@ -803,21 +819,22 @@ def stack_variables(ds: xr.Dataset, rechunk: bool = True, dim: str = "multivar")
     Parameters
     ----------
     ds : xr.Dataset
-      Input dataset.
+        Input dataset.
     rechunk : bool
-      If True (default), dask arrays are rechunked with `variables : -1`.
+        If True (default), dask arrays are rechunked with `variables : -1`.
     dim : str
-      Name of dimension along which variables are indexed.
+        Name of dimension along which variables are indexed.
 
     Returns
     -------
     xr.DataArray
-      The transformed variable. Attributes are conserved, even if some might be incorrect.
-      Except units, which are replaced with "". Old units are stored in `sdba_transformation_units`.
-      A `sdba_transform` attribute is added, set to the transformation method.
-      `sdba_transform_lower` and `sdba_transform_upper` are also set if the requested bounds are different from the defaults.
+        The transformed variable. Attributes are conserved, even if some might be incorrect, except for units,
+        which are replaced with `""`. Old units are stored in `sdba_transformation_units`.
+        A `sdba_transform` attribute is added, set to the transformation method. `sdba_transform_lower` and
+        `sdba_transform_upper` are also set if the requested bounds are different from the defaults.
 
-      Array with variables stacked along `dim` dimension. Units are set to "".
+        Array with variables stacked along `dim` dimension. Units are set to "".
+
     """
     # Store original arrays' attributes
     attrs = {}
@@ -849,15 +866,15 @@ def unstack_variables(da: xr.DataArray, dim: str = None):
     Parameters
     ----------
     da : xr.DataArray
-      Array holding different variables along `dim` dimension.
+        Array holding different variables along `dim` dimension.
     dim : str
-      Name of dimension along which the variables are stacked. If not specified (default),
-      `dim` is inferred from attributes of the coordinate.
+        Name of dimension along which the variables are stacked.
+        If not specified (default), `dim` is inferred from attributes of the coordinate.
 
     Returns
     -------
     xr.Dataset
-      Dataset holding each variable in an individual DataArray.
+        Dataset holding each variable in an individual DataArray.
     """
     if dim is None:
         for dim, crd in da.coords.items():
