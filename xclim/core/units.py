@@ -27,6 +27,7 @@ __all__ = [
     "check_units",
     "convert_units_to",
     "declare_units",
+    "infer_context",
     "infer_sampling_units",
     "pint_multiply",
     "pint2cfunits",
@@ -639,6 +640,8 @@ def check_units(val: str | int | float | None, dim: str | None) -> None:
     if dim is None or val is None:
         return
 
+    context = infer_context(dimension=dim)
+
     if str(val).startswith("UNSET "):
         warnings.warn(
             "This index calculation will soon require user-specified thresholds.",
@@ -667,10 +670,6 @@ def check_units(val: str | int | float | None, dim: str | None) -> None:
 
     if val_dim == expected:
         return
-
-    # Automatically assume units context is `hydro` if one of the dimension is `precipitation`.
-    pr_dim = units.get_dimensionality("[precipitation]")
-    context = "hydro" if pr_dim in [val_dim, expected] else "none"
 
     # Check if there is a transformation available
     with units.context(context):
@@ -774,3 +773,28 @@ def ensure_delta(unit: str = None):
     if "degree_Rankine" in u._units:
         delta_unit = pint2cfunits(u / units2pint("°R") * units2pint("delta_degF"))
     return delta_unit
+
+
+def infer_context(standard_name=None, dimension=None):
+    """Return units context based on either the variable's standard name or the pint dimension.
+
+    Parameters
+    ----------
+    standard_name: str
+      CF-Convention standard name.
+    dimension: str
+      Pint dimension, e.g. '[time]'.
+
+    Returns
+    -------
+    str
+      "hydro" if variable is a precipitation, otherwise "none"
+    """
+    csn = standard_name in [
+        "precipitation_flux",
+        "convective_precipitation_flux",
+        "water_potential_evapotranspiration_flux",
+    ]
+    cdim = (dimension == "[precipitation]") if dimension is not None else False
+
+    return "hydro" if csn or cdim else "none"

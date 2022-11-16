@@ -156,11 +156,13 @@ class TestCheckUnits:
         check_units("mm/day", "[precipitation]")
         check_units("mm/s", "[precipitation]")
         check_units("kg/m2/s", "[precipitation]")
-        check_units("kg/m2", "[length]")
         check_units("cms", "[discharge]")
         check_units("m3/s", "[discharge]")
         check_units("m/s", "[speed]")
         check_units("km/h", "[speed]")
+
+        with units.context("hydro"):
+            check_units("kg/m2", "[length]")
 
         with set_options(data_validation="raise"):
             with pytest.raises(ValidationError):

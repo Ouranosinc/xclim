@@ -21,7 +21,13 @@ from xclim.core.calendar import (
     get_calendar,
     select_time,
 )
-from xclim.core.units import convert_units_to, pint2cfunits, str2pint, to_agg_units
+from xclim.core.units import (
+    convert_units_to,
+    infer_context,
+    pint2cfunits,
+    str2pint,
+    to_agg_units,
+)
 from xclim.core.utils import DayOfYearStr
 
 from . import run_length as rl
@@ -522,7 +528,11 @@ def spell_length(
     -------
     xr.DataArray
     """
-    threshold = convert_units_to(threshold, data)
+    threshold = convert_units_to(
+        threshold,
+        data,
+        context=infer_context(standard_name=data.attrs.get("standard_name")),
+    )
 
     cond = compare(data, op, threshold)
 

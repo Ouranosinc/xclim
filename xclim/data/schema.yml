@@ -23,6 +23,7 @@ indicator:
   realm: str(required=False)
   references: str(required=False)
   title: str(required=False)
+  context: str(required=False)
 
 cf_attrs: map(str(), key=str(), required=False)
 

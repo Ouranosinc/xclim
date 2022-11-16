@@ -928,7 +928,7 @@ def dry_spell_frequency(
     >>> dsf = dry_spell_frequency(pr=pr, op="max")
     """
     pram = rate2amount(convert_units_to(pr, "mm/d", context="hydro"), out_units="mm")
-    thresh = convert_units_to(thresh, pram)
+    thresh = convert_units_to(thresh, pram, context="hydro")
 
     agg_pr = getattr(pram.rolling(time=window, center=True), op)()
     cond = agg_pr < thresh
@@ -990,8 +990,8 @@ def dry_spell_total_length(
     the three 3-day periods of which it is part are considered dry (so a total of five days are included in the
     computation, compared to only three).
     """
-    pram = rate2amount(pr, out_units="mm")
-    thresh = convert_units_to(thresh, pram)
+    pram = rate2amount(convert_units_to(pr, "mm/d", context="hydro"), out_units="mm")
+    thresh = convert_units_to(thresh, pram, context="hydro")
 
     pram_pad = pram.pad(time=(0, window))
     mask = getattr(pram_pad.rolling(time=window), op)() < thresh
