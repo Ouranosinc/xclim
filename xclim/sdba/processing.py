@@ -599,7 +599,7 @@ def to_additive_space(
 ):
     r"""Transform a non-additive variable into an additive space by the means of a log or logit transformation.
 
-    Based on :cite:t:`sdba-alavoine_distinct_2021`.
+    Based on :cite:t:`sdba-alavoine_distinct_2022`.
 
     Parameters
     ----------
@@ -652,7 +652,7 @@ def to_additive_space(
 
     References
     ----------
-    :cite:cts:`sdba-alavoine_distinct_2021`
+    :cite:cts:`sdba-alavoine_distinct_2022`
 
     """
     lower_bound = convert_units_to(lower_bound, data)
@@ -689,8 +689,8 @@ def from_additive_space(
 ):
     r"""Transform back to the physical space a variable that was transformed with `to_additive_space`.
 
-    Based on :cite:t:`sdba-alavoine_distinct_2021`. If parameters are not present on the attributes of the data, they must be
-    all given are arguments.
+    Based on :cite:t:`sdba-alavoine_distinct_2022`.
+    If parameters are not present on the attributes of the data, they must be all given are arguments.
 
     Parameters
     ----------
@@ -745,7 +745,7 @@ def from_additive_space(
 
     References
     ----------
-    :cite:cts:`sdba-alavoine_distinct_2021`
+    :cite:cts:`sdba-alavoine_distinct_2022`
 
     """
     if trans is None and lower_bound is None and units is None:
