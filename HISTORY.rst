@@ -4,7 +4,15 @@ History
 
 0.40.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user:`juliettelavoie`), David Huard (:user:`huard`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Juliette Lavoie (:user:`juliettelavoie`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Rewrite of ``xclim.core.calendar.time_bnds``. It should now be more resilient and versatile, but all ``cftime_*`` and ``cfindex_*`` functions were removed. (:issue:`74`, :pull:`1207`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Virtual modules can add variables to ``xclim.core.utils.VARIABLES`` through the new `variables` section of the yaml files. (:issue:`1129`, :pull:`1231`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -13,6 +21,19 @@ New features and enhancements
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * Indicator `land.stats`, `land.fit` and `land.freq_analysis` are now deprecated and will be removed in version 0.43. They are being phased out in favor of generic indicators `generic.stats`, `generic.fit` and `generic.return_level` respectively.
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Many previously deprecated indices and indicators have been removed from `xclim` (:pull:`1228`), with replacement indices/indicators suggested as follows:
+    - ``xclim.indicators.atmos.fire_weather_indexes`` → ``xclim.indicators.atmos.cffwis_indices``
+    - ``xclim.indices.freshet_start`` → ``xclim.indices.first_day_temperature_above``
+    - ``xclim.indices.first_day_above`` → ``xclim.indices.first_day_temperature_above``
+    - ``xclim.indices.first_day_below`` → ``xclim.indices.first_day_temperature_below``
+    - ``xclim.indices.tropical_nights`` → ``xclim.indices.tn_days_above``
+    - ``xclim.indices.generic.degree_days` → ``xclim.indices.generic.cumulative_difference``
+* The following *modules* have been removed:
+    - `xclim.indices.fwi` → functions migrated to `xclim.indices.fire`
+    - `xclim.subset` (mock submodule) → functions migrated to `clisops.core.subset`
 
 Bug fixes
 ^^^^^^^^^

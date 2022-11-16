@@ -284,12 +284,6 @@ class TestCumulativeDifference:
         with pytest.raises(NotImplementedError):
             generic.cumulative_difference(tas, threshold="10 degC", op="!=")
 
-    def test_deprecated(self, tas_series):
-        tas = tas_series(np.array([-10, 15, 20, 3, 10]) + K2C)
-
-        with pytest.warns(DeprecationWarning):
-            generic.degree_days(tas, threshold="10 degC", op=">=")
-
 
 class TestFirstDayThreshold:
     @pytest.mark.parametrize(
