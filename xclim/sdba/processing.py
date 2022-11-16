@@ -42,26 +42,25 @@ def adapt_freq(
     Parameters
     ----------
     ds : xr.Dataset
-      With variables :  "ref", Target/reference data, usually observed data.
-      and  "sim", Simulated data.
+        With variables : "ref", Target/reference data, usually observed data, and  "sim", Simulated data.
     dim : str
-      Dimension name.
+        Dimension name.
     group : str or Grouper
-      Grouping information, see base.Grouper
+        Grouping information, see base.Grouper
     thresh : str
-      Threshold below which values are considered zero, a quantity with units.
+        Threshold below which values are considered zero, a quantity with units.
 
     Returns
     -------
     sim_adj : xr.DataArray
-      Simulated data with the same frequency of values under threshold than ref.
-      Adjustment is made group-wise.
+        Simulated data with the same frequency of values under threshold than ref.
+        Adjustment is made group-wise.
     pth : xr.DataArray
-      For each group, the smallest value of sim that was not frequency-adjusted. All values smaller were either left as
-      zero values or given a random value between thresh and pth.
-      NaN where frequency adaptation wasn't needed.
+        For each group, the smallest value of sim that was not frequency-adjusted.
+        All values smaller were either left as zero values or given a random value between thresh and pth.
+        NaN where frequency adaptation wasn't needed.
     dP0 : xr.DataArray
-      For each group, the percentage of values that were corrected in sim.
+        For each group, the percentage of values that were corrected in sim.
 
     Notes
     -----
@@ -111,9 +110,9 @@ def jitter_under_thresh(x: xr.DataArray, thresh: str) -> xr.DataArray:
     Parameters
     ----------
     x : xr.DataArray
-      Values.
+        Values.
     thresh : str
-      Threshold under which to add uniform random noise to values, a quantity with units.
+        Threshold under which to add uniform random noise to values, a quantity with units.
 
     Returns
     -------
@@ -136,11 +135,11 @@ def jitter_over_thresh(x: xr.DataArray, thresh: str, upper_bnd: str) -> xr.DataA
     Parameters
     ----------
     x : xr.DataArray
-      Values.
+        Values.
     thresh : str
-      Threshold over which to add uniform random noise to values, a quantity with units.
+        Threshold over which to add uniform random noise to values, a quantity with units.
     upper_bnd : str
-      Maximum possible value for the random noise, a quantity with units.
+        Maximum possible value for the random noise, a quantity with units.
 
     Returns
     -------
@@ -149,6 +148,7 @@ def jitter_over_thresh(x: xr.DataArray, thresh: str, upper_bnd: str) -> xr.DataA
     Notes
     -----
     If thresh is low, this will change the mean value of x.
+
     """
     return jitter(x, lower=None, upper=thresh, minimum=None, maximum=upper_bnd)
 
@@ -170,26 +170,26 @@ def jitter(
     Parameters
     ----------
     x : xr.DataArray
-      Values.
+        Values.
     lower : str, optional
-      Threshold under which to add uniform random noise to values, a quantity with units.
-      If None, no jittering is performed on the lower end.
+        Threshold under which to add uniform random noise to values, a quantity with units.
+        If None, no jittering is performed on the lower end.
     upper : str, optional
-      Threshold over which to add uniform random noise to values, a quantity with units.
-      If None, no jittering is performed on the upper end.
+        Threshold over which to add uniform random noise to values, a quantity with units.
+        If None, no jittering is performed on the upper end.
     minimum : str, optional
-      Lower limit (excluded) for the lower end random noise, a quantity with units.
-      If None but `lower` is not None, 0 is used.
+        Lower limit (excluded) for the lower end random noise, a quantity with units.
+        If None but `lower` is not None, 0 is used.
     maximum : str, optional
-      Upper limit (excluded) for the upper end random noise, a quantity with units.
-      If `upper` is not None, it must be given.
+        Upper limit (excluded) for the upper end random noise, a quantity with units.
+        If `upper` is not None, it must be given.
 
     Returns
     -------
     xr.DataArray
-      Same as  `x` but values < lower are replaced by a uniform noise in range (minimum, lower)
-      and values >= upper are replaced by a uniform noise in range [upper, maximum).
-      The two noise distributions are independent.
+        Same as  `x` but values < lower are replaced by a uniform noise in range (minimum, lower)
+        and values >= upper are replaced by a uniform noise in range [upper, maximum).
+        The two noise distributions are independent.
     """
     out = x
     notnull = x.notnull()
@@ -235,21 +235,21 @@ def normalize(
 
     Parameters
     ----------
-    data: xr.DataArray
-      The variable to normalize.
+    data : xr.DataArray
+        The variable to normalize.
     norm : xr.DataArray, optional
-      If present, it is used instead of computing the norm again.
+        If present, it is used instead of computing the norm again.
     group : str or Grouper
-      Grouping information. See :py:class:`xclim.sdba.base.Grouper` for details..
+        Grouping information. See :py:class:`xclim.sdba.base.Grouper` for details..
     kind : {'+', '*'}
-      If `kind` is "+", the mean is subtracted from the mean and if it is '*', it is divided from the data.
+        If `kind` is "+", the mean is subtracted from the mean and if it is '*', it is divided from the data.
 
     Returns
     -------
     xr.DataArray
-      Groupwise anomaly.
+        Groupwise anomaly.
     norm : xr.DataArray
-      Mean over each group.
+        Mean over each group.
     """
     ds = xr.Dataset(dict(data=data))
 
@@ -301,7 +301,7 @@ def standardize(
         Standardized data.
     mean : xr.DataArray
         Mean.
-    std : xr.DataArrau
+    std : xr.DataArray
         Standard Deviation.
     """
     if mean is None:
