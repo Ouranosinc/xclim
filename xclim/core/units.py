@@ -11,12 +11,14 @@ from __future__ import annotations
 import functools
 import re
 import warnings
+from importlib.resources import open_text
 from inspect import signature
 from typing import Any, Callable, TypeVar
 
 import pint
 import xarray as xr
 from boltons.funcutils import wraps
+from yaml import safe_load
 
 from .calendar import date_range, get_calendar, parse_offset
 from .options import datacheck
@@ -102,20 +104,9 @@ hydro.add_transformation(
 units.add_context(hydro)
 units.enable_contexts(hydro)
 
-PR_AMOUNT_STANDARD_NAMES = (
-    "thickness_of_rainfall_amount",
-    "thickness_of_convective_rainfall_amount",
-    "thickness_of_stratiform_rainfall_amount",
-    "thickness_of_large_scale_rainfall_amount",
-    "lwe_thickness_of_convective_precipitation_amount",
-    "lwe_thickness_of_convective_snowfall_amount",
-    "lwe_thickness_of_precipitation_amount",
-    "lwe_thickness_of_snowfall_amount",
-    "lwe_thickness_of_stratiform_precipitation_amount",
-    "lwe_thickness_of_large_scale_precipitation_amount",
-    "lwe_thickness_of_stratiform_snowfall_amount",
-    "lwe_thickness_of_large_scale_snowfall_amount",
-)
+
+CF_CONVERSIONS = safe_load(open_text("xclim.data", "variables.yml"))["conversions"]
+
 
 # These are the changes that could be included in a units definition file.
 
@@ -318,32 +309,50 @@ def convert_units_to(
         source_unit = units2pint(source)
         target_cf_unit = pint2cfunits(target_unit)
 
+        # Pre-conversions based on the dimensionalities and CF standard names
+        standard_name = source.attrs.get("standard_name")
+        if (
+            standard_name is not None
+            and source_unit.dimensionality != target_unit.dimensionality
+        ):
+            std_name = "_" + standard_name + "_"  # for easier pattern search
+            time_order_diff = (source_unit.dimensionality / target_unit.dimensionality)[
+                "[time]"
+            ]
+            if (time_order_diff == 1 and "_amount_" in std_name)(
+                time_order_diff == -1 and ("_flux_" in std_name or "_rate_" in std_name)
+            ):
+                # amount <-> flux or thickness <-> rate, with a standard name that supports it
+                try:
+                    if time_order_diff == 1:
+                        source = amount2rate(source)
+                    else:  # -1
+                        source = rate2amount(source)
+                except ValueError:
+                    # if the time coordinate is irregular. pass and let the convert below raise the appropriate error
+                    pass
+                else:
+                    if time_order_diff == 1 and "_thickness_of_" in std_name:
+                        source.attrs["standard_name"] = standard_name.replace(
+                            "thickness_of_", ""
+                        ).replace("amount", "rate")
+                    elif time_order_diff == 1:
+                        source.attrs["standard_name"] = standard_name.replace(
+                            "amount", "flux"
+                        )
+                    elif time_order_diff == -1 and "_flux_" in std_name:
+                        source.attrs["standard_name"] = standard_name.replace(
+                            "flux", "amount"
+                        )
+                    elif time_order_diff == -1 and "_rate_" in std_name:
+                        pass
         if source_unit == target_unit:
             # The units are the same, but the symbol may not be.
             source.attrs["units"] = target_cf_unit
             return source
 
         with units.context(context or "none"):
-            if (
-                _is_precipitation_amount(source, source_unit)
-                and target_unit.dimensionality.get("[time]") == -1
-            ):
-                # Source is a precipitation amount and target is a precipitation rate
-                try:
-                    # Try converting amount to rate. Will only work if `infer_freq` raises no error, implying the
-                    # time index is well-behaved.
-                    xr.infer_freq(source.time)
-                    source = amount2rate(source)
-                    source_unit = units2pint(source)
-                except ValueError:
-                    pass
-
-            out = xr.DataArray(
-                data=units.convert(source.data, source_unit, target_unit),  # noqa
-                coords=source.coords,
-                attrs=source.attrs,
-                name=source.name,
-            )
+            out = source.copy(data=units.convert(source.data, source_unit, target_unit))
             out.attrs["units"] = target_cf_unit
             return out
 
@@ -361,18 +370,6 @@ def convert_units_to(
         return units.Quantity(source, units=source_unit).to(target_unit).m
 
     raise NotImplementedError(f"Source of type `{type(source)}` is not supported.")
-
-
-def _is_precipitation_amount(source: xr.DataArray, source_unit: units.Unit) -> bool:
-    """Return True if variable is a precipitation amount (flux accumulated over time)."""
-    standard_name = source.attrs.get("standard_name", None)
-    return standard_name in PR_AMOUNT_STANDARD_NAMES and _is_amount(source_unit)
-
-
-def _is_amount(source_unit: units.Unit) -> bool:
-    """Return True if unit is a length or a mass / area."""
-    quantity = units.Quantity(1, source_unit)
-    return quantity.check("[length]") or quantity.check("[mass] / [length]**2")
 
 
 FREQ_UNITS = {
@@ -519,7 +516,11 @@ def to_agg_units(
 
 
 def _rate_and_amount_converter(
-    da: xr.DataArray, dim: str = "time", to: str = "amount", out_units: str = None
+    da: xr.DataArray,
+    dim: str = "time",
+    to: str = "amount",
+    sampling_rate_from_coord: bool = False,
+    out_units: str = None,
 ) -> xr.DataArray:
     """Private function performing the actual conversion for :py:func:`rate2amount` and :py:func:`amount2rate`."""
     m = 1
@@ -529,8 +530,14 @@ def _rate_and_amount_converter(
 
     try:
         freq = xr.infer_freq(da[dim])
-    except ValueError:
-        freq = None
+    except ValueError as err:
+        if sampling_rate_from_coord:
+            freq = None
+        else:
+            raise ValueError(
+                "The variables' sampling frequency could not be inferred, which is needed for conversions between rates and amounts. "
+                f"If the derivative of the variables' {dim} coodinate can be used as the sampling rate, pass `sampling_rate_from_coord=True`."
+            ) from err
     if freq is not None:
         multi, base, start_anchor, _ = parse_offset(freq)
         if base in ["M", "Q", "A"]:
@@ -591,7 +598,10 @@ def _rate_and_amount_converter(
 
 
 def rate2amount(
-    rate: xr.DataArray, dim: str = "time", out_units: str = None
+    rate: xr.DataArray,
+    dim: str = "time",
+    sampling_rate_from_coord: bool = False,
+    out_units: str = None,
 ) -> xr.DataArray:
     """Convert a rate variable to an amount by multiplying by the sampling period length.
 
@@ -607,8 +617,17 @@ def rate2amount(
         "Rate" variable, with units of "amount" per time. Ex: Precipitation in "mm / d".
     dim : str
         The time dimension.
+    sampling_rate_from_coord : boolean
+        For data with irregular time coordinates. If True, the diff of the time coordinate will be used as the sampling rate,
+        meaning each data point will be assumed to apply for the interval ending at the next point. See notes.
+        Defaults to False, which raises an error if the time coordiante is irregular.
     out_units : str, optional
         Output units to convert to.
+
+    Raises
+    ------
+    ValueError
+        If the time coordinate is irregular and `sampling_rate_from_coord` is False (default).
 
     Returns
     -------
@@ -629,13 +648,13 @@ def rate2amount(
     24.0
 
     Also works if the time axis is irregular : the rates are assumed constant for the whole period
-    starting on the values timestamp to the next timestamp:
+    starting on the values timestamp to the next timestamp. This option is activated with `sampling_rate_from_coord=True`.
 
     >>> time = time[[0, 9, 30]]  # The time axis is Jan 1st, Jan 10th, Jan 31st
     >>> pr = xr.DataArray(
     ...     [1] * 3, dims=("time",), coords={"time": time}, attrs={"units": "mm/h"}
     ... )
-    >>> pram = rate2amount(pr)
+    >>> pram = rate2amount(pr, sampling_rate_from_coord=True)
     >>> pram.values
     array([216., 504., 504.])
 
@@ -644,12 +663,25 @@ def rate2amount(
     >>> pram = rate2amount(pr, out_units="pc")  # Get rain amount in parsecs. Why not.
     >>> pram.values
     array([7.00008327e-18, 1.63335276e-17, 1.63335276e-17])
+
+    See Also
+    --------
+    amount2rate
     """
-    return _rate_and_amount_converter(rate, dim=dim, to="amount", out_units=out_units)
+    return _rate_and_amount_converter(
+        rate,
+        dim=dim,
+        to="amount",
+        sampling_rate_from_coord=sampling_rate_from_coord,
+        out_units=out_units,
+    )
 
 
 def amount2rate(
-    amount: xr.DataArray, dim: str = "time", out_units: str = None
+    amount: xr.DataArray,
+    dim: str = "time",
+    sampling_rate_from_coord: bool = False,
+    out_units: str = None,
 ) -> xr.DataArray:
     """Convert an amount variable to a rate by dividing by the sampling period length.
 
@@ -665,14 +697,36 @@ def amount2rate(
         "amount" variable. Ex: Precipitation amount in "mm".
     dim : str
         The time dimension.
+    sampling_rate_from_coord : boolean
+        For data with irregular time coordinates. If True, the diff of the time coordinate will be used as the sampling rate,
+        meaning each data point will be assumed to apply for the interval ending at the next point. See notes of :py:func:`rate2amount`.
+        Defaults to False, which raises an error if the time coordiante is irregular.
+    out_units : str, optional
+        Output units to convert to.
+
+    Raises
+    ------
+    ValueError
+        If the time coordinate is irregular and `sampling_rate_from_coord` is False (default).
+
     out_units : str, optional
         Output units to convert to.
 
     Returns
     -------
     xr.DataArray
+
+    See Also
+    --------
+    rate2amount
     """
-    return _rate_and_amount_converter(amount, dim=dim, out_units=out_units, to="rate")
+    return _rate_and_amount_converter(
+        amount,
+        dim=dim,
+        to="rate",
+        sampling_rate_from_coord=sampling_rate_from_coord,
+        out_units=out_units,
+    )
 
 
 @datacheck
