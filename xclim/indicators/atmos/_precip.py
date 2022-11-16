@@ -32,7 +32,6 @@ __all__ = [
     "standardized_precipitation_index",
     "standardized_precipitation_evapotranspiration_index",
     "drought_code",
-    "fire_weather_indexes",
     "cffwis_indices",
     "keetch_byram_drought_index",
     "griffiths_drought_factor",
@@ -344,42 +343,6 @@ drought_code = FireWeather(
     "It is a numerical code that estimates the average moisture content of organic layers.",
     compute=indices.drought_code,
     missing="skip",
-)
-
-
-fire_weather_indexes = FireWeather(
-    title="Fire weather indexes",
-    identifier="fwi",
-    realm="atmos",
-    var_name=["dc", "dmc", "ffmc", "isi", "bui", "fwi"],
-    standard_name=[
-        "drought_code",
-        "duff_moisture_code",
-        "fine_fuel_moisture_code",
-        "initial_spread_index",
-        "buildup_index",
-        "fire_weather_index",
-    ],
-    long_name=[
-        "Drought code",
-        "Duff moisture code",
-        "Fine fuel moisture code",
-        "Initial spread index",
-        "Buildup index",
-        "Fire weather index",
-    ],
-    description=[
-        "Numeric rating of the average moisture content of deep, compact organic layers.",
-        "Numeric rating of the average moisture content of loosely compacted organic layers of moderate depth.",
-        "Numeric rating of the average moisture content of litter and other cured fine fuels.",
-        "Numeric rating of the expected rate of fire spread.",
-        "Numeric rating of the total amount of fuel available for combustion.",
-        "Numeric rating of fire intensity.",
-    ],
-    units="",
-    compute=indices.cffwis_indices,
-    missing="skip",
-    _version_deprecated="0.38.0",
 )
 
 

@@ -4,15 +4,38 @@ History
 
 0.40.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Juliette Lavoie (:user:`juliettelavoie`).
 
 New indicators
 ^^^^^^^^^^^^^^
 * New agroclimatic indice and indicator ``dryness_index`` for estimating soil humidity classifications for winegrowing regions (based on Riou et al. (1994)). (:issue:`355`, :pull:`1235`).
 
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Virtual modules can add variables to ``xclim.core.utils.VARIABLES`` through the new `variables` section of the yaml files. (:issue:`1129`, :pull:`1231`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Rewrite of ``xclim.core.calendar.time_bnds``. It should now be more resilient and versatile, but all ``cftime_*`` and ``cfindex_*`` functions were removed. (:issue:`74`, :pull:`1207`).
+* Many previously deprecated indices and indicators have been removed from `xclim` (:pull:`1228`), with replacement indices/indicators suggested as follows:
+    - ``xclim.indicators.atmos.fire_weather_indexes`` → ``xclim.indicators.atmos.cffwis_indices``
+    - ``xclim.indices.freshet_start`` → ``xclim.indices.first_day_temperature_above``
+    - ``xclim.indices.first_day_above`` → ``xclim.indices.first_day_temperature_above``
+    - ``xclim.indices.first_day_below`` → ``xclim.indices.first_day_temperature_below``
+    - ``xclim.indices.tropical_nights`` → ``xclim.indices.tn_days_above``
+    - ``xclim.indices.generic.degree_days` → ``xclim.indices.generic.cumulative_difference``
+* The following *modules* have been removed:
+    - `xclim.indices.fwi` → functions migrated to `xclim.indices.fire`
+    - `xclim.subset` (mock submodule) → functions migrated to `clisops.core.subset`
+
+Bug fixes
+^^^^^^^^^
+* The weighted ensemble statistics are now performed within a context in order to preserve data attributes. (:issue:`1232`, :pull:`1234`).
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Minor adjustments to GitHub Actions workflows (newest Ubuntu images, updated actions version, better CI triggering). (:pull:`1221`).
+* Updated article from Alavoine & Grenier (2022) within documentation. Many article reference URLs have been updated to use HTTPS where possible. (:issue:`1246`, :pull:`1247`).
 
 0.39.0 (2022-11-02)
 -------------------
