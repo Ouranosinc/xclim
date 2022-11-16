@@ -882,7 +882,8 @@ def _spatial_correlogram(da: xr.DataArray, *, dims=None, bins=100, group="time")
     Needs coordinates for longitude and latitude. This property is heavy to compute and it will
     need to create a NxN array in memory (outside of dask), where N is the number of spatial points.
     There are shortcuts for all-nan time-slices or spatial points, but scipy's nan-omitting algorithm
-    is extremely slow, so the presence of any lone NaN will increase the computation time.
+    is extremely slow, so the presence of any lone NaN will increase the computation time. Based on an idea
+    from :cite:p:`francois_multivariate_2020`.
 
     Parameters
     ----------
@@ -955,7 +956,8 @@ def _first_eof(da: xr.DataArray, *, dims=None, kind="+", thresh="1 mm/d", group=
 
     Through principal component analysis (PCA), compute the predominant empirical orthogonal function.
     The temporal dimension is reduced. The Eof is multiplied by the sign of its mean to ensure coherent
-    signs as much as possible. Needs the eofs package to run.
+    signs as much as possible. Needs the eofs package to run. Based on an idea from :cite:p:`vrac_multivariate_2018`,
+    using an implementation from :cite:p:`dawson_eofs_2016`.
 
     Parameters
     ----------

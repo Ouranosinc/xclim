@@ -163,8 +163,9 @@ def ensemble_mean_std_max_min(
             ds_out[f"{v}_mean"] = ens[v].mean(dim="realization")
             ds_out[f"{v}_stdev"] = ens[v].std(dim="realization")
         else:
-            ds_out[f"{v}_mean"] = ens[v].weighted(weights).mean(dim="realization")
-            ds_out[f"{v}_stdev"] = ens[v].weighted(weights).std(dim="realization")
+            with xr.set_options(keep_attrs=True):
+                ds_out[f"{v}_mean"] = ens[v].weighted(weights).mean(dim="realization")
+                ds_out[f"{v}_stdev"] = ens[v].weighted(weights).std(dim="realization")
         ds_out[f"{v}_max"] = ens[v].max(dim="realization")
         ds_out[f"{v}_min"] = ens[v].min(dim="realization")
 
@@ -302,13 +303,14 @@ def ensemble_percentiles(
             dask_gufunc_kwargs=dict(output_sizes={"percentiles": len(values)}),
         )
     else:
-        # xclim's calc_perc does not support weighted arrays, so xarray's native function is used instead.
-        qt = np.array(values) / 100  # xarray requires values between 0 and 1
-        out = (
-            ens.weighted(weights)
-            .quantile(qt, dim="realization", keep_attrs=True)
-            .rename({"quantile": "percentiles"})
-        )
+        with xr.set_options(keep_attrs=True):
+            # xclim's calc_perc does not support weighted arrays, so xarray's native function is used instead.
+            qt = np.array(values) / 100  # xarray requires values between 0 and 1
+            out = (
+                ens.weighted(weights)
+                .quantile(qt, dim="realization", keep_attrs=True)
+                .rename({"quantile": "percentiles"})
+            )
 
     out = out.assign_coords(
         percentiles=xr.DataArray(list(values), dims=("percentiles",))
