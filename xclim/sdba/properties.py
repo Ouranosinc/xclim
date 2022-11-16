@@ -381,7 +381,7 @@ def _acf(
 
     References
     ----------
-    :cite:cts:`alavoine_distinct_2021`
+    :cite:cts:`alavoine_distinct_2022`
     """
 
     def acf_last(x, nlags):

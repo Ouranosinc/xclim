@@ -13,6 +13,7 @@ New features and enhancements
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Minor adjustments to GitHub Actions workflows (newest Ubuntu images, updated actions version, better CI triggering). (:pull:`1221`).
+* Updated article from Alavoine & Grenier (2022) within documentation. Many article reference URLs have been updated to use HTTPS where possible. (:issue:`1246`, :pull:`1247`).
 * Merge of sdba documentation from the module and the rst files, some cleanup and addition of a section refering to github issues. (:pull:`1230`).
 
 Breaking changes
