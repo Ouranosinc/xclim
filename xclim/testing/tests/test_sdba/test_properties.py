@@ -379,12 +379,10 @@ def test_spatial_correlogram():
 def test_first_eof():
     pytest.importorskip("eofs")
     sim = open_dataset("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc").tasmax.isel(
-        lon=slice(0, 50), lat=slice(30, 80)
+        lon=slice(0, 10), lat=slice(50, 60)
     )
     out = sdba.properties.first_eof(sim)
-    np.testing.assert_allclose(
-        [out.mean(), out.max()], [0.02068308, 0.02233494], rtol=1e-6
-    )
+    np.testing.assert_allclose([out.mean(), out.max()], [0.099976, 0.103867], rtol=1e-5)
     assert (out.isnull() == sim.isnull().any("time")).all()
 
 
