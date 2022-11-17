@@ -3,7 +3,7 @@
 Units handling submodule
 ========================
 
-`Pint` is used to define the `units` `UnitRegistry` and `xclim.units.core` defines
+`Pint` is used to define the `units` `UnitRegistry` and `xclim.core.unis` defines
 most unit handling methods.
 """
 from __future__ import annotations
@@ -26,10 +26,12 @@ from .utils import ValidationError
 
 __all__ = [
     "amount2rate",
+    "amount2lwethickness",
     "check_units",
     "convert_units_to",
     "declare_units",
     "infer_sampling_units",
+    "lwethickness2amount",
     "pint_multiply",
     "pint2cfunits",
     "rate2amount",
@@ -106,6 +108,25 @@ units.enable_contexts(hydro)
 
 
 CF_CONVERSIONS = safe_load(open_text("xclim.data", "variables.yml"))["conversions"]
+_CONVERSIONS = {}
+
+
+def _register_conversion(conversion, direction):
+    """Register a conversion function to be automatically picked up in `convert_units_to`.
+
+    The function must correspond to a name in `CF_CONVERSIONS`, so to a section in
+    `xclim/data/variables.yml::conversions`.
+    """
+    if conversion not in CF_CONVERSIONS:
+        raise NotImplementedError(
+            "Automatic conversion functions must have a corresponding section in xclim/data/variables.yml"
+        )
+
+    def _func_register(func):
+        _CONVERSIONS[(conversion, direction)] = func
+        return func
+
+    return _func_register
 
 
 # These are the changes that could be included in a units definition file.
@@ -309,43 +330,29 @@ def convert_units_to(
         source_unit = units2pint(source)
         target_cf_unit = pint2cfunits(target_unit)
 
-        # Pre-conversions based on the dimensionalities and CF standard names
+        # Automatic pre-conversions based on the dimensionalities and CF standard names
         standard_name = source.attrs.get("standard_name")
         if (
             standard_name is not None
             and source_unit.dimensionality != target_unit.dimensionality
         ):
-            std_name = "_" + standard_name + "_"  # for easier pattern search
-            time_order_diff = (source_unit.dimensionality / target_unit.dimensionality)[
-                "[time]"
-            ]
-            if (time_order_diff == 1 and "_amount_" in std_name)(
-                time_order_diff == -1 and ("_flux_" in std_name or "_rate_" in std_name)
-            ):
-                # amount <-> flux or thickness <-> rate, with a standard name that supports it
-                try:
-                    if time_order_diff == 1:
-                        source = amount2rate(source)
-                    else:  # -1
-                        source = rate2amount(source)
-                except ValueError:
-                    # if the time coordinate is irregular. pass and let the convert below raise the appropriate error
-                    pass
-                else:
-                    if time_order_diff == 1 and "_thickness_of_" in std_name:
-                        source.attrs["standard_name"] = standard_name.replace(
-                            "thickness_of_", ""
-                        ).replace("amount", "rate")
-                    elif time_order_diff == 1:
-                        source.attrs["standard_name"] = standard_name.replace(
-                            "amount", "flux"
-                        )
-                    elif time_order_diff == -1 and "_flux_" in std_name:
-                        source.attrs["standard_name"] = standard_name.replace(
-                            "flux", "amount"
-                        )
-                    elif time_order_diff == -1 and "_rate_" in std_name:
-                        pass
+            dim_order_diff = source_unit.dimensionality / target_unit.dimensionality
+            for convname, convconf in CF_CONVERSIONS.items():
+                for direction, sign in [("to", 1), ("from", -1)]:
+                    # If the dimensionality diff compatible with this conversion
+                    compatible = all(
+                        [
+                            dimdiff == (sign * dim_order_diff.get(f"[{dim}]"))
+                            for dim, dimdiff in convconf["dimensionality"].items()
+                        ]
+                    )
+                    # Does the input cf standard name have an equivalent after conversion
+                    valid = cf_conversion(standard_name, convname, direction)
+                    if compatible and valid:
+                        # The new cf standard name is inserted by the converter
+                        source = _CONVERSIONS[(convname, direction)](source)
+                        source_unit = units2pint(source)
+
         if source_unit == target_unit:
             # The units are the same, but the symbol may not be.
             source.attrs["units"] = target_cf_unit
@@ -370,6 +377,34 @@ def convert_units_to(
         return units.Quantity(source, units=source_unit).to(target_unit).m
 
     raise NotImplementedError(f"Source of type `{type(source)}` is not supported.")
+
+
+def cf_conversion(standard_name: str, conversion: str, direction: str):
+    """Get the standard name of the specific conversion for the given standard name.
+
+    Parameters
+    ----------
+    standard_name : str
+        Standard name of the input.
+    conversion : {'amount2rate', 'amount2lwethickness'}
+        Type of conversion. Available conversions are the keys of the `conversion` entry in `xclim/data/variables.yml`.
+        See :py:data:`CF_CONVERSIONS`. They also correspond to functions in this module.
+    direction : {'to', 'from'}
+        The direction of the requested conversion. "to" means the conversion as given by the `conversion` name,
+        while "from" means the reverse operation. For example `conversion="amount2rate"` and `direction="from"`
+        will search for a conversion from a rate or flux to an amount or thickness for the given standard name.
+
+    Returns
+    -------
+    converted_standard_name or None
+        If a string, this means the conversion is possible and the result should have this standard name.
+        If None, the conversion is not possible within the CF standards.
+    """
+    i = ["to", "from"].index(direction)
+    for conversions in CF_CONVERSIONS[conversion]["valid_names"]:
+        if conversion[i] == standard_name:
+            return conversion[int(not i)]
+    return None
 
 
 FREQ_UNITS = {
@@ -597,6 +632,7 @@ def _rate_and_amount_converter(
     return out
 
 
+@_register_conversion("amount2rate", "from")
 def rate2amount(
     rate: xr.DataArray,
     dim: str = "time",
@@ -677,6 +713,7 @@ def rate2amount(
     )
 
 
+@_register_conversion("amount2rate", "to")
 def amount2rate(
     amount: xr.DataArray,
     dim: str = "time",
@@ -727,6 +764,68 @@ def amount2rate(
         sampling_rate_from_coord=sampling_rate_from_coord,
         out_units=out_units,
     )
+
+
+@_register_conversion("amount2lwethickness", "to")
+def amount2lwethickness(amount: xr.DataArray, out_units: str = None):
+    """Convert a liquid water amount (mass over area) to its equivalent area-averaged thickness (length).
+
+    This will simply divide the amount by the density of liquid water, 1000 kg/m³.
+    This is equivalent to using the "hydro" context of :py:data:`units`.
+
+    Parameters
+    ----------
+    amount: xr.DataArray
+        A DataArray storing a liquid water amount quantity.
+    out_units: str
+        Specific output units if needed.
+
+    Returns
+    -------
+    lwe_thickness
+        The standard_name of `amount` is modified if a conversion is found (see :py:func:`cf_conversion`),
+        it is removed otherwise. Other attributes are left untouched.
+    """
+    water_density = str2pint("1000 kg m-3")
+    out = pint_multiply(amount, 1 / water_density)
+    old_name = out.attrs.pop("standard_name")
+    if old_name and (new_name := cf_conversion(old_name, "lwe_amount2thickness", "to")):
+        out.attrs["standard_name"] = new_name
+    if out_units:
+        out = convert_units_to(out, out_units)
+    return out
+
+
+@_register_conversion("amount2lwethickness", "from")
+def lwethickness2amount(thickness: xr.DataArray, out_units: str = None):
+    """Convert a liquid water thickness (length) to its equivalent amount (mass over area).
+
+    This will simply multiply the thickness by the density of liquid water, 1000 kg/m³.
+    This is equivalent to using the "hydro" context of :py:data:`units`.
+
+    Parameters
+    ----------
+    thickness: xr.DataArray
+        A DataArray storing a liquid water thickness quantity.
+    out_units: str
+        Specific output units if needed.
+
+    Returns
+    -------
+    amount
+        The standard_name of `amount` is modified if a conversion is found (see :py:func:`cf_conversion`),
+        it is removed otherwise. Other attributes are left untouched.
+    """
+    water_density = str2pint("1000 kg m-3")
+    out = pint_multiply(thickness, water_density)
+    old_name = out.attrs.pop("standard_name")
+    if old_name and (
+        new_name := cf_conversion(old_name, "lwe_amount2thickness", "from")
+    ):
+        out.attrs["standard_name"] = new_name
+    if out_units:
+        out = convert_units_to(out, out_units)
+    return out
 
 
 @datacheck

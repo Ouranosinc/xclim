@@ -7,7 +7,10 @@ History
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* Add auto conversion from ``[length]`` to ``[length]/[time]`` to `convert_units_to` when the input is a valid precipitation amount (e.g. "thickness_of_rainfall_amount"). (:issue:`1205`, :pull:`1206`).
+* ``xclim.core.units.convert_units_to`` can now perform automatic conversions based on the standard name of the input when needed. (:issue:`1205`, :pull:`1206`).
+    - Conversion from amount (thickness) to flux (rate), using ``amount2rate`` and ``rate2amount``.
+    - Conversion from amount to thickness for liquid water quantities, using the new ``amount2lwethickness`` and ``lwethickness2amount``. This is similar to the implicit transformations enabled by the "hydro" unit context.
+
 
 Internal changes
 ^^^^^^^^^^^^^^^^
