@@ -307,6 +307,8 @@ def convert_units_to(
     str or xr.DataArray or units.Unit or units.Quantity
         The source value converted to target's units.
         The outputted type is always similar to `source` initial type.
+        Attributes are preserved unless an automatic CF conversion is performed,
+        in which case only the new `standard_name` appears in the result.
     """
     # Target units
     if isinstance(target, units.Unit):
@@ -350,8 +352,14 @@ def convert_units_to(
                     valid = cf_conversion(standard_name, convname, direction)
                     if compatible and valid:
                         # The new cf standard name is inserted by the converter
-                        source = _CONVERSIONS[(convname, direction)](source)
-                        source_unit = units2pint(source)
+                        try:
+                            source = _CONVERSIONS[(convname, direction)](source)
+                        except Exception:
+                            # Failing automatic conversion
+                            # It will anyway fail further down with a correct error message.
+                            pass
+                        else:
+                            source_unit = units2pint(source)
 
         if source_unit == target_unit:
             # The units are the same, but the symbol may not be.
@@ -387,7 +395,7 @@ def cf_conversion(standard_name: str, conversion: str, direction: str):
     standard_name : str
         Standard name of the input.
     conversion : {'amount2rate', 'amount2lwethickness'}
-        Type of conversion. Available conversions are the keys of the `conversion` entry in `xclim/data/variables.yml`.
+        Type of conversion. Available conversions are the keys of the `conversions` entry in `xclim/data/variables.yml`.
         See :py:data:`CF_CONVERSIONS`. They also correspond to functions in this module.
     direction : {'to', 'from'}
         The direction of the requested conversion. "to" means the conversion as given by the `conversion` name,
@@ -401,9 +409,9 @@ def cf_conversion(standard_name: str, conversion: str, direction: str):
         If None, the conversion is not possible within the CF standards.
     """
     i = ["to", "from"].index(direction)
-    for conversions in CF_CONVERSIONS[conversion]["valid_names"]:
-        if conversion[i] == standard_name:
-            return conversion[int(not i)]
+    for names in CF_CONVERSIONS[conversion]["valid_names"]:
+        if names[i] == standard_name:
+            return names[int(not i)]
     return None
 
 
@@ -626,6 +634,14 @@ def _rate_and_amount_converter(
         else:
             raise ValueError("Argument `to` must be one of 'amount' or 'rate'.")
 
+    old_name = da.attrs.get("standard_name")
+    if old_name and (
+        new_name := cf_conversion(
+            old_name, "amount2rate", "to" if to == "rate" else "from"
+        )
+    ):
+        out.attrs["standard_name"] = new_name
+
     if out_units:
         out = convert_units_to(out, out_units)
 
@@ -788,8 +804,8 @@ def amount2lwethickness(amount: xr.DataArray, out_units: str = None):
     """
     water_density = str2pint("1000 kg m-3")
     out = pint_multiply(amount, 1 / water_density)
-    old_name = out.attrs.pop("standard_name")
-    if old_name and (new_name := cf_conversion(old_name, "lwe_amount2thickness", "to")):
+    old_name = amount.attrs.get("standard_name", None)
+    if old_name and (new_name := cf_conversion(old_name, "amount2lwethickness", "to")):
         out.attrs["standard_name"] = new_name
     if out_units:
         out = convert_units_to(out, out_units)
@@ -818,9 +834,9 @@ def lwethickness2amount(thickness: xr.DataArray, out_units: str = None):
     """
     water_density = str2pint("1000 kg m-3")
     out = pint_multiply(thickness, water_density)
-    old_name = out.attrs.pop("standard_name")
+    old_name = thickness.attrs.get("standard_name")
     if old_name and (
-        new_name := cf_conversion(old_name, "lwe_amount2thickness", "from")
+        new_name := cf_conversion(old_name, "amount2lwethickness", "from")
     ):
         out.attrs["standard_name"] = new_name
     if out_units:
