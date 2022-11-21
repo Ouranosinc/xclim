@@ -23,7 +23,7 @@
     "long_name": "Nombre de jours de fortes pluies (> {perc}e percentile)",
     "description": "Nombre de jours où la pluie est plus forte que le {perc}e percentile de la série."
   },
-  "RX5DAY": {
-    "long_name": "Cumul maximal de la précipitation quotidienne sur 5 jours."
+  "RX5DAY_CANOPY": {
+    "long_name": "Cumul maximal de la précipitation quotidienne sur 5 jours au-dessus de la canopée."
   }
 }
