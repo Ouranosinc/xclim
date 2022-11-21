@@ -14,7 +14,6 @@ from xclim.core.utils import DayOfYearStr, uses_dask
 from xclim.indices._threshold import (
     first_day_temperature_above,
     first_day_temperature_below,
-    freshet_start,
 )
 from xclim.indices.generic import aggregate_between_dates
 from xclim.indices.helpers import _gather_lat, day_lengths
@@ -1130,7 +1129,9 @@ def effective_growing_degree_days(
         start = fda + 10
     elif method.lower() == "qian":
         tas_weighted = qian_weighted_mean_average(tas=tas, dim=dim)
-        start = freshet_start(tas_weighted, thresh=thresh, window=5, freq=freq)
+        start = first_day_temperature_above(
+            tas_weighted, thresh=thresh, window=5, freq=freq
+        )
     else:
         raise NotImplementedError(f"Method: {method}.")
 
