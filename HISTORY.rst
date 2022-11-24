@@ -19,7 +19,7 @@ Breaking changes
     - ``xclim.indices.first_day_above`` → ``xclim.indices.first_day_temperature_above``
     - ``xclim.indices.first_day_below`` → ``xclim.indices.first_day_temperature_below``
     - ``xclim.indices.tropical_nights`` → ``xclim.indices.tn_days_above``
-    - ``xclim.indices.generic.degree_days` → ``xclim.indices.generic.cumulative_difference``
+    - ``xclim.indices.generic.degree_days`` → ``xclim.indices.generic.cumulative_difference``
 * The following *modules* have been removed:
     - `xclim.indices.fwi` → functions migrated to `xclim.indices.fire`
     - `xclim.subset` (mock submodule) → functions migrated to `clisops.core.subset`
