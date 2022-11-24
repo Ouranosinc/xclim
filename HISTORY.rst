@@ -27,6 +27,7 @@ Breaking changes
 Bug fixes
 ^^^^^^^^^
 * The weighted ensemble statistics are now performed within a context in order to preserve data attributes. (:issue:`1232`, :pull:`1234`).
+* The MBCn example in documentation has been fixed to properly imitate the source. (:issue:`1249`, :pull:`1250`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
