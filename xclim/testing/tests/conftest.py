@@ -513,7 +513,7 @@ def add_imports(xdoctest_namespace, threadsafe_data_dir) -> None:
     )  # Needed for modules where xarray is imported as `xr`
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True, scope="session")
 def add_example_file_paths(xdoctest_namespace, tas_series) -> None:
     """Add these datasets in the doctests scope."""
     ns = xdoctest_namespace
@@ -569,13 +569,13 @@ def add_example_file_paths(xdoctest_namespace, tas_series) -> None:
     )
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True, scope="session")
 def add_example_dataarray(xdoctest_namespace, tas_series) -> None:
     ns = xdoctest_namespace
     ns["tas"] = tas_series(np.random.rand(365) * 20 + 253.15)
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True, scope="session")
 def is_matplotlib_installed(xdoctest_namespace) -> None:
     def _is_matplotlib_installed():
         try:
