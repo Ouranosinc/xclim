@@ -84,7 +84,7 @@ autodoc: clean-docs ## create sphinx-apidoc files:
 linkcheck: autodoc ## run checks over all external links found throughout the documentation
 	$(MAKE) -C docs linkcheck
 
-docs: linkcheck ## generate Sphinx HTML documentation, including API docs
+docs: autodoc ## generate Sphinx HTML documentation, including API docs
 	$(MAKE) -C docs html
 ifndef READTHEDOCS
 	$(BROWSER) docs/_build/html/index.html
