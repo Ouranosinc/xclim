@@ -2,16 +2,6 @@
 xclim: Climate services library |logo|
 ======================================
 
-+----------------------------+-----------------------------------------------------+
-| Downloads                  | |pypi| |conda|                                      |
-+----------------------------+-----------------------------------------------------+
-| Documentation and Support  | |docs| |gitter|                                     |
-+----------------------------+-----------------------------------------------------+
-| Open Source                | |license| |fair| |fossa| |zenodo|                   |
-+----------------------------+-----------------------------------------------------+
-| Development Status         | |build| |pre-commit| |coveralls| |black| |security| |
-+----------------------------+-----------------------------------------------------+
-
 `xclim` is an operational Python library for climate services, providing numerous climate-related indicator tools
 with an extensible framework for constructing custom climate indicators, statistical downscaling and bias
 adjustment of climate model simulations, as well as climate model ensemble analysis tools.
@@ -76,58 +66,10 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 .. _FRQ: https://frq.gouv.qc.ca/
 .. _Ouranos: https://www.ouranos.ca/
 
-.. |pypi| image:: https://img.shields.io/pypi/v/xclim.svg
-        :target: https://pypi.python.org/pypi/xclim
-        :alt: Python Package Index Build
-
-.. |conda| image:: https://img.shields.io/conda/vn/conda-forge/xclim.svg
-        :target: https://anaconda.org/conda-forge/xclim
-        :alt: Conda-forge Build Version
-
 .. |gitter| image:: https://badges.gitter.im/Ouranosinc/xclim.svg
         :target: https://gitter.im/Ouranosinc/xclim?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
         :alt: Gitter Chat
 
-.. |build| image:: https://github.com/Ouranosinc/xclim/workflows/xclim/badge.svg
-        :target: https://github.com/Ouranosinc/xclim/actions
-        :alt: Build Status
-
-.. |coveralls| image:: https://coveralls.io/repos/github/Ouranosinc/xclim/badge.svg
-        :target: https://coveralls.io/github/Ouranosinc/xclim
-        :alt: Coveralls
-
-.. |docs| image:: https://readthedocs.org/projects/xclim/badge
-        :target: https://xclim.readthedocs.io/en/latest
-        :alt: Documentation Status
-
-.. |zenodo| image:: https://zenodo.org/badge/142608764.svg
-        :target: https://zenodo.org/badge/latestdoi/142608764
-        :alt: DOI
-
-.. |license| image:: https://img.shields.io/github/license/Ouranosinc/xclim.svg
-        :target: https://github.com/Ouranosinc/xclim/blob/master/LICENSE
-        :alt: License
-
-.. |security| image:: https://bestpractices.coreinfrastructure.org/projects/6041/badge
-        :target: https://bestpractices.coreinfrastructure.org/projects/6041
-        :alt: Open Source Security Foundation
-
-.. |fair| image:: https://img.shields.io/badge/fair--software.eu-%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8B-yellow
-        :target: https://fair-software.eu
-        :alt: FAIR Software Compliance
-
-.. |fossa| image:: https://app.fossa.com/api/projects/git%2Bgithub.com%2FOuranosinc%2Fxclim.svg?type=shield
-        :target: https://app.fossa.com/projects/git%2Bgithub.com%2FOuranosinc%2Fxclim?ref=badge_shield
-        :alt: FOSSA
-
-.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
-        :target: https://github.com/psf/black
-        :alt: Python Black
-
 .. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/master/_static/_images/xclim-logo-small.png
         :target: https://github.com/Ouranosinc/xclim
         :alt: Xclim
-
-.. |pre-commit| image:: https://results.pre-commit.ci/badge/github/Ouranosinc/xclim/master.svg
-        :target: https://results.pre-commit.ci/latest/github/Ouranosinc/xclim/master
-        :alt: pre-commit.ci status
