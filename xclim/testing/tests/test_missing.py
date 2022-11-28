@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 
 import numpy as np
@@ -222,3 +224,58 @@ class TestAtLeastNValid:
         tas = tas.sel(time=tas.time.dt.month.isin([1, 2, 3, 4, 12]))
         out = missing.missing_pct(tas, freq="MS", tolerance=0.9, src_timestep="D")
         np.testing.assert_array_equal(out, [False] * 4 + [True] * 7 + [False])
+
+
+class TestHourly:
+    """Test that missing algorithms also work on resampling from hourly to daily."""
+
+    def pr(self, pr_hr_series):
+        a = np.arange(24.0 * 10)
+        a[10] = np.nan
+        a[-12:] = np.nan
+        return pr_hr_series(a)
+
+    def test_any(self, pr_hr_series):
+        pr = self.pr(pr_hr_series)
+        out = missing.missing_any(pr, "D", src_timestep="H")
+        np.testing.assert_array_equal(
+            out,
+            [
+                True,
+            ]
+            + 8
+            * [
+                False,
+            ]
+            + [
+                True,
+            ],
+        )
+
+    def test_pct(self, pr_hr_series):
+        pr = self.pr(pr_hr_series)
+        out = missing.missing_pct(pr, "D", src_timestep="H", tolerance=0.1)
+        np.testing.assert_array_equal(
+            out,
+            9
+            * [
+                False,
+            ]
+            + [
+                True,
+            ],
+        )
+
+    def test_at_least_n_valid(self, pr_hr_series):
+        pr = self.pr(pr_hr_series)
+        out = missing.at_least_n_valid(pr, "D", src_timestep="H", n=20)
+        np.testing.assert_array_equal(
+            out,
+            9
+            * [
+                False,
+            ]
+            + [
+                True,
+            ],
+        )

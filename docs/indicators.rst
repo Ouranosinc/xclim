@@ -6,12 +6,12 @@ Climate indicators
 found in the :mod:`xclim.indices` library, but also run a number of health checks on input data
 and assign attributes to the output arrays. So for example, if there are missing values in
 a time series, indices won't notice, but indicators will return NaNs for periods with missing
-values (depending on the missing values algorithm selected, see :ref:`Missing values`). Indicators also check that the input data has the expected frequency (e.g. daily) and that
+values (depending on the missing values algorithm selected, see :ref:`checks:Missing values identification`). Indicators also check that the input data has the expected frequency (e.g. daily) and that
 it is indeed the expected variable (e.g. a precipitation flux). The output is assigned attributes
 that conform as much as possible with the `CF-Convention`_.
 
 Indicators are split into realms (atmos, land, seaIce), according to the variables they operate on.
-See :ref:`Defining new indicators` for instruction on how to create your own indicators. This page
+See :ref:`notebooks/extendxclim:Defining new indicators` for instruction on how to create your own indicators. This page
 lists all indicators with a summary description, click on the names to get to the complete docstring of each indicator.
 
 
@@ -19,7 +19,8 @@ atmos: Atmosphere
 =================
 
 .. raw:: html
-    <dl>
+
+   <dl>
    {% for indname, ind in indicators['atmos'].items() %}
      <dt><code>atmos.{{ indname | safe}}</code> : <a class="reference_internal" href="indicators_api.html#xclim.indicators.atmos.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
      <dd>
@@ -36,7 +37,8 @@ land: Land surface
 ==================
 
 .. raw:: html
-    <dl>
+
+   <dl>
    {% for indname, ind in indicators['land'].items() %}
      <dt><code>land.{{ indname | safe}}</code> : <a class="reference_internal" href="indicators_api.html#xclim.indicators.land.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
      <dd>
@@ -53,7 +55,8 @@ seaIce: Sea ice
 ===============
 
 .. raw:: html
-    <dl>
+
+   <dl>
    {% for indname, ind in indicators['seaIce'].items() %}
      <dt><code>seaIce.{{ indname | safe}}</code> : <a class="reference_internal" href="indicators_api.html#xclim.indicators.seaIce.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
      <dd>
@@ -72,9 +75,11 @@ Virtual submodules
 ==================
 
 .. automodule:: xclim.indicators.cf
+    :noindex:
 
 .. raw:: html
-    <dl>
+
+   <dl>
    {% for indname, ind in indicators['cf'].items() %}
      <dt><code>cf.{{ indname | safe}}</code> : <a class="reference_internal" href="indicators_api.html#xclim.indicators.cf.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
      <dd>
@@ -87,9 +92,11 @@ Virtual submodules
    </dl>
 
 .. automodule:: xclim.indicators.icclim
+    :noindex:
 
 .. raw:: html
-    <dl>
+
+   <dl>
    {% for indname, ind in indicators['icclim'].items() %}
      <dt><code>icclim.{{ indname | safe}}</code> : <a class="reference_internal" href="indicators_api.html#xclim.indicators.icclim.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
      <dd>
@@ -102,9 +109,11 @@ Virtual submodules
    </dl>
 
 .. automodule:: xclim.indicators.anuclim
+    :noindex:
 
 .. raw:: html
-    <dl>
+
+   <dl>
    {% for indname, ind in indicators['anuclim'].items() %}
      <dt><code>anuclim.{{ indname | safe}}</code> : <a class="reference_internal" href="indicators_api.html#xclim.indicators.anuclim.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
      <dd>

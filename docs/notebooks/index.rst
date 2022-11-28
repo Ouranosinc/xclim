@@ -13,3 +13,4 @@ Examples
    extendxclim
    sdba
    sdba-advanced
+   analogs

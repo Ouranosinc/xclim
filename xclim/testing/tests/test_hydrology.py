@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 
 from xclim import indices as xci
@@ -21,6 +23,26 @@ class TestRBIndex:
         np.testing.assert_array_equal(out, 2)
 
 
+class TestSnwMax:
+    def test_simple(self, snw_series):
+        a = np.zeros(366)
+        a[10:20] = np.arange(0, 10)
+        snw = snw_series(a, start="1999-01-01")
+        out = xci.snw_max(snw, freq="YS")
+        np.testing.assert_array_equal(out, [9, 0])
+        assert out.units == "kg m-2"
+
+
+class TestSnwMaxDoy:
+    def test_simple(self, snw_series):
+        a = np.zeros(366)
+        a[10] = 10
+        snw = snw_series(a, start="1999-01-01")
+        out = xci.snw_max_doy(snw, freq="YS")
+        np.testing.assert_array_equal(out, [11, np.nan])
+        assert out.units == ""
+
+
 class TestSnowMeltWEMax:
     def test_simple(self, snw_series):
         a = np.zeros(365)
@@ -42,7 +64,7 @@ class TestMeltandPrecipMax:
 
         # 1 kg/ m2 /d of rain on day 11
         b = np.zeros(365)
-        b[11] = 1.0 / 60 ** 2 / 24
+        b[11] = 1.0 / 60**2 / 24
         pr = pr_series(b, start="1999-07-01")
 
         out = xci.melt_and_precip_max(snw, pr)

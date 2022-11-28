@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import numpy as np
 import pytest
 import xarray as xr
@@ -5,7 +7,7 @@ import xarray as xr
 from xclim import atmos
 from xclim.core.options import set_options
 from xclim.core.units import convert_units_to
-from xclim.indices.fwi import (
+from xclim.indices.fire import (
     _day_length,
     _day_length_factor,
     _drought_code,
@@ -15,7 +17,6 @@ from xclim.indices.fwi import (
     build_up_index,
     fire_season,
     fire_weather_index,
-    fire_weather_indexes,
     fire_weather_ufunc,
     initial_spread_index,
     overwintering_drought_code,
@@ -121,7 +122,7 @@ def test_overwintering_drought_code(inputs, exp):
     ],
 )
 def test_overwintering_drought_code_indice(inputs, exp):
-    last_dc = xr.DataArray([inputs[0]], dims=("x",))
+    last_dc = xr.DataArray([inputs[0]], dims=("x",), attrs={"units": ""})
     winter_pr = xr.DataArray([inputs[1]], dims=("x",), attrs={"units": "mm"})
 
     out = overwintering_drought_code(last_dc, winter_pr, *inputs[2:])
@@ -148,9 +149,10 @@ def test_day_lengh_factor():
     assert _day_length_factor(44, 1) == -1.6
 
 
-def test_fire_weather_indicator():
+def test_cffwis_indicator():
     fwi_data = open_dataset(fwi_url)
-    dc, dmc, ffmc, isi, bui, fwi = atmos.fire_weather_indexes(
+    fwi_data.lat.attrs["units"] = "degrees_north"
+    dc, dmc, ffmc, isi, bui, fwi = atmos.cffwis_indices(
         tas=fwi_data.tas,
         pr=fwi_data.pr,
         hurs=fwi_data.rh,
@@ -158,7 +160,7 @@ def test_fire_weather_indicator():
         lat=fwi_data.lat,
     )
 
-    dc2, dmc2, ffmc2, isi2, bui2, fwi2 = atmos.fire_weather_indexes(
+    dc2, dmc2, ffmc2, isi2, bui2, fwi2 = atmos.cffwis_indices(
         tas=fwi_data.tas,
         pr=fwi_data.pr,
         hurs=fwi_data.rh,
@@ -404,7 +406,7 @@ def test_gfwed_and_indicators():
     # Also tests passing parameters as quantity strings
     ds = open_dataset("FWI/GFWED_sample_2017.nc")
 
-    outs = fire_weather_indexes(
+    outs = atmos.cffwis_indices(
         tas=ds.tas,
         pr=ds.prbc,
         snd=ds.snow_depth,
@@ -440,7 +442,7 @@ def test_gfwed_and_indicators():
         # 3 first days are false by default assume same as 4th day.
         mask = mask.where(mask.time > mask.time[2]).bfill("time")
 
-        outs = atmos.fire_weather_indexes(
+        outs = atmos.cffwis_indices(
             tas=ds2.tas,
             pr=ds2.prbc,
             snd=ds2.snow_depth,

@@ -5,9 +5,11 @@ CF-Convention checking
 
 Utilities designed to verify the compliance of metadata with the CF-Convention.
 """
+from __future__ import annotations
+
 import fnmatch
 import re
-from typing import Sequence, Union
+from typing import Sequence
 
 from .options import cfcheck
 from .utils import VARIABLES, ValidationError
@@ -16,7 +18,7 @@ from .utils import VARIABLES, ValidationError
 
 
 @cfcheck
-def check_valid(var, key: str, expected: Union[str, Sequence[str]]):
+def check_valid(var, key: str, expected: str | Sequence[str]):
     r"""Check that a variable's attribute has one of the expected values. Raise a ValidationError otherwise."""
     att = getattr(var, key, None)
     if att is None:
@@ -32,14 +34,17 @@ def check_valid(var, key: str, expected: Union[str, Sequence[str]]):
         )
 
 
-def cfcheck_from_name(varname, vardata):
+def cfcheck_from_name(varname, vardata, attrs: list[str] = None):
     """Perform cfchecks on a DataArray using specifications from xclim's default variables."""
+    if attrs is None:
+        attrs = ["cell_methods", "standard_name"]
+
     data = VARIABLES[varname]
-    if "cell_methods" in data:
+    if "cell_methods" in data and "cell_methods" in attrs:
         _check_cell_methods(
             getattr(vardata, "cell_methods", None), data["cell_methods"]
         )
-    if "standard_name" in data:
+    if "standard_name" in data and "standard_name" in attrs:
         check_valid(vardata, "standard_name", data["standard_name"])
 
 
@@ -49,6 +54,7 @@ def _check_cell_methods(data_cell_methods: str, expected_method: str) -> None:
         raise ValidationError("Variable does not have a `cell_methods` attribute.")
     EXTRACT_CELL_METHOD_REGEX = r"(\s*\S+\s*:(\s+[\w()-]+)+)(?!\S*:)"
     for m in re.compile(EXTRACT_CELL_METHOD_REGEX).findall(data_cell_methods):
+        # FIXME: Can this be replaced by "in"?
         if m[0].__contains__(expected_method):
             return None
     raise ValidationError(

@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Test for utils
+from __future__ import annotations
+
 from inspect import signature
 
 import numpy as np
 import xarray as xr
 
-from xclim.core.indicator import Daily
 from xclim.core.utils import (
     ensure_chunk_size,
     nan_calc_percentiles,
@@ -45,42 +45,6 @@ def test_wrapped_partial():
     assert newf() == (2, 2, 2)
 
 
-def test_wrapped_indicator(tas_series):
-    def indice(
-        tas: xr.DataArray,
-        tas2: xr.DataArray = None,
-        thresh: int = float,
-        freq: str = "YS",
-    ):
-        if tas2 is None:
-            out = tas < thresh
-        else:
-            out = tas < tas2
-        out = out.resample(time="YS").sum()
-        out.attrs["units"] = "days"
-        return out
-
-    ind1 = Daily(
-        realm="atmos",
-        identifier="test_ind1",
-        units="days",
-        compute=wrapped_partial(indice, tas2=None),
-    )
-
-    ind2 = Daily(
-        realm="atmos",
-        identifier="test_ind2",
-        units="days",
-        compute=wrapped_partial(indice, thresh=None),
-    )
-
-    tas = tas_series(np.arange(366), start="2000-01-01")
-    tas2 = tas_series(1 + np.arange(366), start="2000-01-01")
-
-    assert ind2(tas, tas2) == 366
-    assert ind1(tas, thresh=1111) == 366
-
-
 def test_ensure_chunk_size():
     da = xr.DataArray(np.zeros((20, 21, 20)), dims=("x", "y", "z"))
 
@@ -106,7 +70,7 @@ class Test_nan_calc_percentiles:
         assert res[()] == 29
 
     def test_calc_perc_type8(self):
-        # Exemple array from: https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
+        # Example array from: https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
         arr = np.asarray(
             [[15.0, 20.0, 35.0, 40.0, 50.0], [15.0, 20.0, 35.0, 40.0, 50.0]]
         )

@@ -2,14 +2,26 @@ version: 2
 
 sphinx:
   configuration: docs/conf.py
+  fail_on_warning: true
 
-formats: []
+formats:
+  - pdf
 
 build:
-  image: latest
+  os: ubuntu-22.04
+  tools:
+    python: "mambaforge-4.10"
+  jobs:
+    pre_install:
+      - pip install llvmlite~=0.38 --ignore-installed
+    pre_build:
+      - sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests
+      - sphinx-build -b linkcheck docs/ _build/linkcheck
+
+conda:
+  environment: environment.yml
 
 python:
-  version: 3.7
   install:
     - method: pip
       path: .

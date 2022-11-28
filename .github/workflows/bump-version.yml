@@ -1,0 +1,54 @@
+name: "Bump Patch Version"
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - .*
+      - .github/**.yml
+      - HISTORY.rst
+      - MANIFEST.in
+      - Makefile
+      - docs/**.ipynb
+      - docs/**.py
+      - docs/**.rst
+      - docs/Makefile
+      - docs/make.bat
+      - docs/references.bib
+      - environment.yml
+      - pylintrc
+      - requirements_dev.txt
+      - requirements_upstream.txt
+      - setup.cfg
+      - setup.py
+      - tox.ini
+      - xclim/__init__.py
+
+jobs:
+  bump_patch_version:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+      - name: Config Commit Bot
+        run: |
+          git config --local user.email "bumpversion[bot]@ouranos.ca"
+          git config --local user.name "bumpversion[bot]"
+      - name: Current Version
+        run: echo "current_version=$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
+      - name: Bump Patch Version
+        run: |
+          pip install bump2version
+          echo "running `bump2version patch`"
+          echo "new_version=$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
+      - name: Push Changes
+        uses: ad-m/github-push-action@master
+        with:
+          force: false
+          github_token: ${{ secrets.BUMPVERSION_TOKEN }}
+          branch: ${{ github.ref }}

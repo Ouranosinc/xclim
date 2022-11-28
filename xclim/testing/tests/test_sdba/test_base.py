@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import jsonpickle
 import numpy as np
 import pytest
@@ -51,8 +53,8 @@ def test_grouper_group(tas_series, group, window, nvals):
 )
 def test_grouper_get_index(tas_series, group, interp, val90):
     tas = tas_series(np.ones(366), start="2000-01-01")
-    grouper = Grouper(group, interp=interp)
-    indx = grouper.get_index(tas)
+    grouper = Grouper(group)
+    indx = grouper.get_index(tas, interp=interp)
     # 90 is March 31st
     assert indx[90] == val90
 
@@ -154,7 +156,7 @@ def test_grouper_apply(tas_series, use_dask, group, n):
     else:
         exp = normed.groupby(group).mean().isel(lat=0)
     assert grouper.prop in out.dims
-    np.testing.assert_array_equal(out, exp)
+    np.testing.assert_allclose(out, exp, rtol=1e-10)
 
 
 def test_map_blocks(tas_series):

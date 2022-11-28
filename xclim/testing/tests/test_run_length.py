@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 import os
 
 import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+from dask import compute
 
 from xclim.core.options import set_options
 from xclim.indices import run_length as rl
@@ -126,77 +129,132 @@ class TestStatisticsRun:
 
     def test_simple(self):
         values = np.zeros(365)
-        time = pd.date_range(
-            "7/1/2000", periods=len(values), freq=pd.DateOffset(days=1)
-        )
+        time = pd.date_range("7/1/2000", periods=len(values), freq="D")
         values[1:11] = 1
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
-        lt = da.resample(time="M").map(rl.rle_statistics, reducer="max")
+        lt = da.resample(time="M").map(rl.rle_statistics, reducer="max", window=1)
+        assert lt[0] == 10
+        np.testing.assert_array_equal(lt[1:], 0)
+
+        # resample after
+        lt = rl.rle_statistics(da, freq="M", reducer="max", window=1, ufunc_1dim=False)
         assert lt[0] == 10
         np.testing.assert_array_equal(lt[1:], 0)
 
     def test_start_at_0(self):
         values = np.zeros(365)
-        time = pd.date_range(
-            "7/1/2000", periods=len(values), freq=pd.DateOffset(days=1)
-        )
+        time = pd.date_range("7/1/2000", periods=len(values), freq="D")
         values[0:10] = 1
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
-        lt = da.resample(time="M").map(rl.rle_statistics, reducer="max")
+        lt = da.resample(time="M").map(rl.rle_statistics, reducer="max", window=1)
+        assert lt[0] == 10
+        np.testing.assert_array_equal(lt[1:], 0)
+
+        # resample after
+        lt = rl.rle_statistics(da, freq="M", reducer="max", window=1, ufunc_1dim=False)
         assert lt[0] == 10
         np.testing.assert_array_equal(lt[1:], 0)
 
     def test_end_start_at_0(self):
         values = np.zeros(365)
-        time = pd.date_range(
-            "7/1/2000", periods=len(values), freq=pd.DateOffset(days=1)
-        )
+        time = pd.date_range("7/1/2000", periods=len(values), freq="D")
         values[-10:] = 1
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
 
-        lt = da.resample(time="M").map(rl.rle_statistics, reducer="max")
+        lt = da.resample(time="M").map(rl.rle_statistics, reducer="max", window=1)
+        assert lt[-1] == 10
+        np.testing.assert_array_equal(lt[:-1], 0)
+
+        # resample after
+        lt = rl.rle_statistics(da, freq="M", reducer="max", window=1, ufunc_1dim=False)
         assert lt[-1] == 10
         np.testing.assert_array_equal(lt[:-1], 0)
 
     def test_all_true(self):
         values = np.ones(365)
-        time = pd.date_range(
-            "7/1/2000", periods=len(values), freq=pd.DateOffset(days=1)
-        )
+        time = pd.date_range("7/1/2000", periods=len(values), freq="D")
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
 
-        lt = da.resample(time="M").map(rl.rle_statistics, reducer="max")
+        lt = da.resample(time="M").map(rl.rle_statistics, reducer="max", window=1)
         np.testing.assert_array_equal(lt, da.resample(time="M").count(dim="time"))
+
+        # resample after
+        lt = rl.rle_statistics(da, freq="M", reducer="max", window=1, ufunc_1dim=False)
+        expected = np.zeros(12)
+        expected[0] = 365
+        np.testing.assert_array_equal(lt, expected)
+        assert (lt.values == expected).any()
 
     def test_almost_all_true(self):
         values = np.ones(365)
         values[35] = 0
-        time = pd.date_range(
-            "7/1/2000", periods=len(values), freq=pd.DateOffset(days=1)
-        )
+        time = pd.date_range("7/1/2000", periods=len(values), freq="D")
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
 
-        lt = da.resample(time="M").map(rl.rle_statistics, reducer="max")
+        lt = da.resample(time="M").map(rl.rle_statistics, reducer="max", window=1)
         n = da.resample(time="M").count(dim="time")
         np.testing.assert_array_equal(lt[0], n[0])
         np.testing.assert_array_equal(lt[1], 26)
 
+        # resample after
+        lt = rl.rle_statistics(da, freq="M", reducer="max", window=1, ufunc_1dim=False)
+        expected = np.zeros(12)
+        expected[0], expected[1] = 35, 365 - 35 - 1
+        np.testing.assert_array_equal(lt[0], expected[0])
+        np.testing.assert_array_equal(lt[1], expected[1])
+
     def test_other_stats(self):
         values = np.ones(365)
         values[35] = 0
-        time = pd.date_range(
-            "1/1/2000", periods=len(values), freq=pd.DateOffset(days=1)
-        )
+        time = pd.date_range("1/1/2000", periods=len(values), freq="D")
         da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
 
-        lt = da.resample(time="YS").map(rl.rle_statistics, reducer="min")
+        lt = da.resample(time="YS").map(rl.rle_statistics, reducer="min", window=1)
         assert lt == 35
 
         lt = da.resample(time="YS").map(rl.rle_statistics, reducer="mean", window=36)
         assert lt == 329
 
-        lt = da.resample(time="YS").map(rl.rle_statistics, reducer="std")
+        lt = da.resample(time="YS").map(rl.rle_statistics, reducer="std", window=1)
         assert lt == 147
+
+        # resample after
+        lt = rl.rle_statistics(da, freq="YS", reducer="min", window=1, ufunc_1dim=False)
+        assert lt == 35
+
+        lt = rl.rle_statistics(
+            da, freq="YS", reducer="mean", window=36, ufunc_1dim=False
+        )
+        assert lt == 329
+
+        lt = rl.rle_statistics(da, freq="YS", reducer="std", window=1, ufunc_1dim=False)
+        assert lt == 147
+
+    @pytest.mark.parametrize("op", ["min", "max"])
+    def test_resampling_order(self, op):
+        values = np.ones(365)
+        values[35:45] = 0
+        time = pd.date_range("1/1/2000", periods=len(values), freq="D")
+        da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
+        lt_resample_before = da.resample(time="MS").map(
+            rl.rle_statistics, reducer=op, window=1, ufunc_1dim=False
+        )
+        lt_resample_after = rl.rle_statistics(
+            da, freq="MS", reducer=op, window=1, ufunc_1dim=False
+        )
+        assert (lt_resample_before != lt_resample_after).any()
+
+        values = np.zeros(365)
+        values[0:-1:31] = 1
+        time = pd.date_range("1/1/2000", periods=len(values), freq="D")
+        da = xr.DataArray(values != 0, coords={"time": time}, dims="time")
+        lt_resample_before = da.resample(time="MS").map(
+            rl.rle_statistics, reducer=op, window=1, ufunc_1dim=False
+        )
+        lt_resample_after = rl.rle_statistics(
+            da, freq="MS", reducer=op, window=1, ufunc_1dim=False
+        )
+        assert (lt_resample_before == lt_resample_after).any()
 
 
 class TestFirstRun:
@@ -209,6 +267,7 @@ class TestFirstRun:
         assert 10 == i
 
     def test_real_data(self):
+        # FIXME: No test here?!
         # n-dim version versus ufunc
         da3d = open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
         da3d.resample(time="M").map(rl.first_run, window=5)
@@ -509,6 +568,24 @@ class TestRunsWithDates:
         tas = tas_series(np.zeros(730), start="2000-01-01")
         with pytest.raises(ValueError, match="More than 1 instance of date"):
             func((tas == 0), date="03-01", window=5)
+
+
+@pytest.mark.parametrize("use_dask", [True, False])
+def test_lazy_indexing(use_dask):
+    idx = xr.DataArray([[0, 10], [33, 99]], dims=("x", "y"))
+    da = xr.DataArray(np.arange(100), dims=("time",))
+    db = xr.DataArray(-np.arange(100), dims=("time",))
+
+    if use_dask:
+        idx = idx.chunk({"x": 1})
+
+    # Ensure tasks are different
+    outa, outb = compute(rl.lazy_indexing(da, idx), rl.lazy_indexing(db, idx))
+
+    assert set(outa.dims) == {"x", "y"}
+    np.testing.assert_array_equal(idx, outa)
+    np.testing.assert_array_equal(idx, -outb)
+    assert "time" not in outa.coords
 
 
 @pytest.mark.parametrize("use_dask", [True, False])

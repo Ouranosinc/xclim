@@ -1,5 +1,11 @@
-"""LOESS smoothing module."""
-from typing import Callable, Optional, Union
+# noqa: D205,D400
+"""
+LOESS Smoothing Module
+======================
+"""
+from __future__ import annotations
+
+from typing import Callable
 from warnings import warn
 
 import numba
@@ -14,7 +20,7 @@ def _gaussian_weighting(x):  # pragma: no cover
 
     The span f covers 95% of the gaussian.
     """
-    w = np.exp(-(x ** 2) / (2 * (1 / 1.96) ** 2))
+    w = np.exp(-(x**2) / (2 * (1 / 1.96) ** 2))
     w[x >= 1] = 0
     return w
 
@@ -22,7 +28,7 @@ def _gaussian_weighting(x):  # pragma: no cover
 @numba.njit
 def _tricube_weighting(x):  # pragma: no cover
     """Kernel function for loess with a tricubic shape."""
-    w = (1 - x ** 3) ** 3
+    w = (1 - x**3) ** 3
     w[x >= 1] = 0
     return w
 
@@ -49,11 +55,13 @@ def _loess_nb(
     weight_func=_tricube_weighting,
     reg_func=_linear_regression,
     dx=0,
+    skipna=True,
 ):  # pragma: no cover
-    """1D Locally weighted regression: fits a nonparametric regression curve to a scatterplot.
+    """1D Locally weighted regression: fits a nonparametric regression curve to a scatter plot.
 
     The arrays x and y contain an equal number of elements; each pair (x[i], y[i]) defines
-    a data point in the scatterplot. The function returns the estimated (smooth) values of y.
+    a data point in the scatter plot. The function returns the estimated (smooth) values of y.
+    Originally proposed in :cite:t:`sdba-cleveland_robust_1979`.
 
     Users should call `utils.loess_smoothing`. See that function for the main documentation.
 
@@ -64,7 +72,7 @@ def _loess_nb(
     y : np.ndarray
       Y-coordinates of the points.
     f : float
-      Parameter controling the shape of the weight curve. Behavior depends on the weighting function.
+      Parameter controlling the shape of the weight curve. Behavior depends on the weighting function.
     niter : int
       Number of robustness iterations to execute.
     weight_func : numba func
@@ -72,12 +80,22 @@ def _loess_nb(
     dx : float
       The spacing of the x coordinates. If above 0, this enables the optimization for equally spaced x coordinates.
       Must be 0 if spacing is unequal (default).
+    skipna : bool
+      If True (default), remove NaN values before computing the loess. The output has the
+      same missing values as the input.
 
     References
     ----------
-    Code adapted from https://gist.github.com/agramfort/850437
-    Cleveland, W. S., 1979. Robust Locally Weighted Regression and Smoothing Scatterplot, Journal of the American Statistical Association 74, 829–836.
+    :cite:cts:`sdba-cleveland_robust_1979`
+
+    Code adapted from: :cite:cts:`sdba-gramfort_lowess_2015`
     """
+    if skipna:
+        nan = np.isnan(y)
+        out = np.full(x.size, np.NaN)
+        y = y[~nan]
+        x = x[~nan]
+
     n = x.size
     yest = np.zeros(n)
     delta = np.ones(n)
@@ -90,11 +108,11 @@ def _loess_nb(
         HW = min(r + 2, n)
         R = min(2 * HW, n)
     else:
-        # Equal spacing, Nearest odd number equal or above f * n
+        # Equal spacing, the nearest odd number equal or above f * n
         r = int(2 * (f * n // 2) + 1)
         # half width of the weights
         hw = int((r - 1) / 2)
-        # Number of values sent to the weigth func. Just a bit larger than the window.
+        # Number of values sent to the weight func. Just a bit larger than the window.
         R = min(r + 4, n)
         HW = hw + 2
 
@@ -145,9 +163,12 @@ def _loess_nb(
             residuals = y - yest
             s = np.median(np.abs(residuals))
             xres = residuals / (6.0 * s)
-            delta = (1 - xres ** 2) ** 2
+            delta = (1 - xres**2) ** 2
             delta[np.abs(xres) >= 1] = 0
 
+    if skipna:
+        out[~nan] = yest
+        return out
     return yest
 
 
@@ -157,14 +178,15 @@ def loess_smoothing(
     d: int = 1,
     f: float = 0.5,
     niter: int = 2,
-    weights: Union[str, Callable] = "tricube",
-    equal_spacing: Optional[bool] = None,
+    weights: str | Callable = "tricube",
+    equal_spacing: bool | None = None,
+    skipna: bool = True,
 ):
-    r"""Locally weighted regression in 1D: fits a nonparametric regression curve to a scatterplot.
+    r"""Locally weighted regression in 1D: fits a nonparametric regression curve to a scatter plot.
 
-    Returns a smoothed curve along given dimension. The regression is computed for each point using
-    a subset of neigboring points as given from evaluating the weighting function locally.
-    Follows the procedure of [Cleveland1979]_.
+    Returns a smoothed curve along given dimension. The regression is computed for each point using a subset of
+    neighbouring points as given from evaluating the weighting function locally.
+    Follows the procedure of :cite:t:`sdba-cleveland_robust_1979`.
 
     Parameters
     ----------
@@ -185,26 +207,31 @@ def loess_smoothing(
       "tricube" : a smooth top-hat like curve.
       "gaussian" : a gaussian curve, f gives the span for 95% of the values.
     equal_spacing : bool, optional
-      Whether to use the equal spacing optimization. If None (the default), it is activated only if the
-      x axis is equally-spaced. When activated, `dx = x[1] - x[0]`.
+      Whether to use the equal spacing optimization. If `None` (the default), it is activated only if the
+      x-axis is equally-spaced. When activated, `dx = x[1] - x[0]`.
+    skipna : bool
+        If True (default), skip missing values (as marked by NaN). The output will have the
+        same missing values as the input.
 
     Notes
     -----
-    As stated in [Cleveland1979]_, the weighting function :math:`W(x)` should respect the following conditions:
+    As stated in :cite:t:`sdba-cleveland_robust_1979`, the weighting function :math:`W(x)` should respect the following
+    conditions:
 
-        - :math:`W(x) > 0` for :math:`|x| < 1`
-        - :math:`W(-x) = W(x)`
-        - :math:`W(x)` is nonincreasing for :math:`x \ge 0`
-        - :math:`W(x) = 0` for :math:`|x| \ge 0`
+    - :math:`W(x) > 0` for :math:`|x| < 1`
+    - :math:`W(-x) = W(x)`
+    - :math:`W(x)` is non-increasing for :math:`x \ge 0`
+    - :math:`W(x) = 0` for :math:`|x| \ge 0`
 
-    If a callable is provided, it should only accept the 1D `np.ndarray` :math:`x` which is an absolute value
+    If a Callable is provided, it should only accept the 1D `np.ndarray` :math:`x` which is an absolute value
     function going from 1 to 0 to 1 around :math:`x_i`, for all values where :math:`x - x_i < h_i` with
     :math:`h_i` the distance of the rth nearest neighbor of  :math:`x_i`, :math:`r = f * size(x)`.
 
     References
     ----------
-    Code adapted from https://gist.github.com/agramfort/850437
-    [Cleveland1979] Cleveland, W. S., 1979. Robust Locally Weighted Regression and Smoothing Scatterplot, Journal of the American Statistical Association 74, 829–836.
+    :cite:cts:`sdba-cleveland_robust_1979`
+
+    Code adapted from: :cite:cts:`sdba-gramfort_lowess_2015`
     """
     x = da[dim]
     x = ((x - x[0]) / (x[-1] - x[0])).astype(float)
@@ -241,6 +268,7 @@ def loess_smoothing(
             "niter": niter,
             "reg_func": reg_func,
             "dx": dx,
+            "skipna": skipna,
         },
         dask="parallelized",
         output_dtypes=[float],

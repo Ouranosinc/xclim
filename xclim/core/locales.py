@@ -1,11 +1,11 @@
-# -*- coding: utf-8 -*-
 # noqa: D205,D400
 """
 Internationalization
 ====================
 
-Defines methods and object to help the internationalization of metadata for the
-climate indicators computed by xclim.
+This module defines methods and object to help the internationalization of metadata for
+climate indicators computed by xclim. Go to :ref:`notebooks/customize:Adding translated metadata` to see
+how to use this feature.
 
 All the methods and objects in this module use localization data given in json files.
 These files are expected to be defined as in this example for french:
@@ -13,20 +13,20 @@ These files are expected to be defined as in this example for french:
 .. code-block::
 
     {
-        "attrs_mapping" : {
+        "attrs_mapping": {
             "modifiers": ["", "f", "mpl", "fpl"],
-            "YS" : ["annuel", "annuelle", "annuels", "annuelles"],
-            "AS-*" : ["annuel", "annuelle", "annuels", "annuelles"],
-            ... and so on for other frequent parameters translation...
+            "YS": ["annuel", "annuelle", "annuels", "annuelles"],
+            "AS-*": ["annuel", "annuelle", "annuels", "annuelles"],
+            # ... and so on for other frequent parameters translation...
         },
-          "DTRVAR": {
+        "DTRVAR": {
             "long_name": "Variabilité de l'amplitude de la température diurne",
             "description": "Variabilité {freq:f} de l'amplitude de la température diurne (définie comme la moyenne de la variation journalière de l'amplitude de température sur une période donnée)",
             "title": "Variation quotidienne absolue moyenne de l'amplitude de la température diurne",
             "comment": "",
-            "abstract": "La valeur absolue de la moyenne de l'amplitude de la température diurne."
-          },
-        ... and so on for other indicators...
+            "abstract": "La valeur absolue de la moyenne de l'amplitude de la température diurne.",
+        },
+        # ... and so on for other indicators...
     }
 
 Indicators are named by subclass identifier, the same as in the indicator registry (`xclim.core.indicators.registry`),
@@ -34,27 +34,23 @@ but which can differ from the callable name. In this case, the indicator is call
 `atmos.daily_temperature_range_variability`, but its identifier is `DTRVAR`.
 Use the `ind.__class__.__name__` accessor to get its registry name.
 
-Here, the usual parameter passed to the formatting of "description" is "freq" and is usually
-translated from "YS" to "annual". However, in french and in this sentence, the feminine
-form should be used, so the "f" modifier is added by the translator so that the
-formatting function knows which translation to use. Acceptable entries for the mappings
+Here, the usual parameter passed to the formatting of "description" is "freq" and is usually translated from "YS"
+to "annual". However, in french and in this sentence, the feminine form should be used, so the "f" modifier is added
+by the translator so that the formatting function knows which translation to use. Acceptable entries for the mappings
 are limited to what is already defined in `xclim.core.indicators.utils.default_formatter`.
 
-For user-provided internationalization dictionaries, only the "attrs_mapping" and
-its "modifiers" key are mandatory, all other entries (translations of frequent parameters
-and all indicator entries) are optional. For xclim-provided translations (for now only french),
-all indicators must have en entry and the "attrs_mapping" entries must match exactly the default formatter.
-Those default translations are found in the `xclim/locales` folder.
-
-Attributes
-----------
-TRANSLATABLE_ATTRS
-    List of attributes to consider translatable when generating locale dictionaries.
+For user-provided internationalization dictionaries, only the "attrs_mapping" and its "modifiers" key are mandatory,
+all other entries (translations of frequent parameters and all indicator entries) are optional.
+For xclim-provided translations (for now only French), all indicators must have en entry and the "attrs_mapping"
+entries must match exactly the default formatter. Those default translations are found in the `xclim/locales` folder.
 """
+from __future__ import annotations
+
 import json
 import warnings
+from copy import deepcopy
 from pathlib import Path
-from typing import Mapping, Optional, Sequence, Tuple, Union
+from typing import Mapping, Optional, Sequence
 
 from .formatting import AttrFormatter, default_formatter
 
@@ -66,6 +62,9 @@ TRANSLATABLE_ATTRS = [
     "abstract",
     "keywords",
 ]
+"""
+List of attributes to consider translatable when generating locale dictionaries.
+"""
 
 _LOCALES = {}
 
@@ -76,7 +75,7 @@ def list_locales():
 
 
 def _valid_locales(locales):
-    """Check if the lcoales are valid."""
+    """Check if the locales are valid."""
     if isinstance(locales, str):
         return True
     return all(
@@ -94,15 +93,14 @@ def _valid_locales(locales):
     )
 
 
-def get_local_dict(locale: Union[str, Sequence[str], Tuple[str, dict]]):
+def get_local_dict(locale: str | Sequence[str] | tuple[str, dict]) -> tuple[str, dict]:
     """Return all translated metadata for a given locale.
 
     Parameters
     ----------
-    locale : str or sequence of str
-        IETF language tag or a tuple of the language tag and a translation dict, or
-        a tuple of the language tag and a path to a json file defining translation
-        of attributes.
+    locale: str or sequence of str
+        IETF language tag or a tuple of the language tag and a translation dict, or a tuple of the language
+        tag and a path to a json file defining translation of attributes.
 
     Raises
     ------
@@ -122,26 +120,26 @@ def get_local_dict(locale: Union[str, Sequence[str], Tuple[str, dict]]):
         if locale not in _LOCALES:
             raise UnavailableLocaleError(locale)
 
-        return (locale, _LOCALES[locale])
+        return locale, deepcopy(_LOCALES[locale])
 
     if isinstance(locale[1], dict):
         trans = locale[1]
     else:
-        # Thus a string pointing to a json file
+        # Thus, a string pointing to a json file
         trans = read_locale_file(locale[1])
 
     if locale[0] in _LOCALES:
-        loaded_trans = _LOCALES[locale[0]]
+        loaded_trans = deepcopy(_LOCALES[locale[0]])
         # Passed translations have priority
         loaded_trans.update(trans)
         trans = loaded_trans
-    return (locale[0], trans)
+    return locale[0], trans
 
 
 def get_local_attrs(
-    indicator: Union[str, Sequence[str]],
-    *locales: Union[str, Sequence[str], Tuple[str, dict]],
-    names: Optional[Sequence[str]] = None,
+    indicator: str | Sequence[str],
+    *locales: str | Sequence[str] | tuple[str, dict],
+    names: Sequence[str] | None = None,
     append_locale_name: bool = True,
 ) -> dict:
     """Get all attributes of an indicator in the requested locales.
@@ -150,16 +148,15 @@ def get_local_attrs(
     ----------
     indicator : str or sequence of strings
         Indicator's class name, usually the same as in `xc.core.indicator.registry`.
-        If multiple names are passed, te attrs from each indicators are merged, with highest priority to the first name.
-    *locales : str
-        IETF language tag or a tuple of the language tag and a translation dict, or
-        a tuple of the language tag and a path to a json file defining translation
-        of attributes.
-    names : Optional[Sequence[str]]
+        If multiple names are passed, the attrs from each indicator are merged,
+        with the highest priority set to the first name.
+    locales : str or tuple of str
+        IETF language tag or a tuple of the language tag and a translation dict, or a tuple of the language tag
+        and a path to a json file defining translation of attributes.
+    names : sequence of str, optional
         If given, only returns translations of attributes in this list.
     append_locale_name : bool
-        If True (default), append the language tag (as "{attr_name}_{locale}") to the
-        returned attributes.
+        If True (default), append the language tag (as "{attr_name}_{locale}") to the returned attributes.
 
     Raises
     ------
@@ -199,18 +196,17 @@ def get_local_attrs(
 
 
 def get_local_formatter(
-    locale: Union[str, Sequence[str], Tuple[str, dict]]
+    locale: str | Sequence[str] | tuple[str, dict]
 ) -> AttrFormatter:
     """Return an AttrFormatter instance for the given locale.
 
     Parameters
     ----------
-    locale : str or tuple of str
-        IETF language tag or a tuple of the language tag and a translation dict, or
-        a tuple of the language tag and a path to a json file defining translation
-        of attributes.
+    locale: str or tuple of str
+        IETF language tag or a tuple of the language tag and a translation dict, or a tuple of the language tag
+        and a path to a json file defining translation of attributes.
     """
-    loc_name, loc_dict = get_local_dict(locale)
+    _, loc_dict = get_local_dict(locale)
     if "attrs_mapping" in loc_dict:
         attrs_mapping = loc_dict["attrs_mapping"].copy()
         mods = attrs_mapping.pop("modifiers")
@@ -231,21 +227,23 @@ class UnavailableLocaleError(ValueError):
         )
 
 
-def read_locale_file(filename, module=None, encoding="UTF8"):
-    """Read a locale file (*.json) and return its dictionary.
+def read_locale_file(
+    filename, module: str | None = None, encoding: str = "UTF8"
+) -> dict:
+    """Read a locale file (.json) and return its dictionary.
 
     Parameters
     ----------
-    filename: PathLike
-      The file to read.
-    module: string, optional
-      If module is a string, this module name is added to all identifiers translated in this file.
-      Defaults to None, and no module name is added (as if the indicator was an official xclim indicator).
-    encoding : string
-      The encoding to use when reading the file.
-      Defaults to UTF-8, overriding python's default mechanism which is machine dependent.
+    filename : PathLike
+        The file to read.
+    module : str, optional
+        If module is a string, this module name is added to all identifiers translated in this file.
+        Defaults to None, and no module name is added (as if the indicator was an official xclim indicator).
+    encoding : str
+        The encoding to use when reading the file.
+        Defaults to UTF-8, overriding python's default mechanism which is machine dependent.
     """
-    with open(filename, "r", encoding=encoding) as f:
+    with open(filename, encoding=encoding) as f:
         locdict = json.load(f)
 
     if module is not None:
@@ -256,15 +254,15 @@ def read_locale_file(filename, module=None, encoding="UTF8"):
     return locdict
 
 
-def load_locale(locdata: Union[str, Path, Mapping[str, dict]], locale: str):
+def load_locale(locdata: str | Path | Mapping[str, dict], locale: str):
     """Load translations from a json file into xclim.
 
     Parameters
     ----------
     locdata : str or dictionary
-      Either a loaded locale dictionary or a path to a json file.
+        Either a loaded locale dictionary or a path to a json file.
     locale : str
-      The locale name (IETF tag).
+        The locale name (IETF tag).
     """
     if isinstance(locdata, (str, Path)):
         filename = Path(locdata)
@@ -276,8 +274,8 @@ def load_locale(locdata: Union[str, Path, Mapping[str, dict]], locale: str):
         _LOCALES[locale] = locdata
 
 
-def generate_local_dict(locale: str, init_english: bool = False):
-    """Generate a dictionary with keys for each indicators and translatable attributes.
+def generate_local_dict(locale: str, init_english: bool = False) -> dict:
+    """Generate a dictionary with keys for each indicator and translatable attributes.
 
     Parameters
     ----------
@@ -287,10 +285,10 @@ def generate_local_dict(locale: str, init_english: bool = False):
         If True, fills the initial dictionary with the english versions of the attributes.
         Defaults to False.
     """
-    from xclim.core.indicator import registry
+    from ..core.indicator import registry  # pylint: disable=import-outside-toplevel
 
     if locale in _LOCALES:
-        locname, attrs = get_local_dict(locale)
+        _, attrs = get_local_dict(locale)
         for ind_name in attrs.copy().keys():
             if ind_name != "attrs_mapping" and ind_name not in registry:
                 attrs.pop(ind_name)
@@ -306,7 +304,7 @@ def generate_local_dict(locale: str, init_english: bool = False):
     for ind_name, indicator in registry.items():
         ind_attrs = attrs.setdefault(ind_name, {})
         for translatable_attr in set(TRANSLATABLE_ATTRS).difference(
-            set(indicator._cf_names)
+            set(indicator._cf_names)  # noqa
         ):
             if init_english:
                 eng_attr = getattr(indicator, translatable_attr)
@@ -320,7 +318,7 @@ def generate_local_dict(locale: str, init_english: bool = False):
                 ind_attrs = attrs.setdefault(f"{ind_name}.{cf_attrs['var_name']}", {})
 
             for translatable_attr in set(TRANSLATABLE_ATTRS).intersection(
-                set(indicator._cf_names)
+                set(indicator._cf_names)  # noqa
             ):
                 if init_english:
                     eng_attr = cf_attrs.get(translatable_attr)

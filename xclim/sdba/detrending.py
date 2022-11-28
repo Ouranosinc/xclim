@@ -1,4 +1,10 @@
-"""Detrending objects."""
+# noqa: D205,D400
+"""
+Detrending Objects
+==================
+"""
+from __future__ import annotations
+
 from typing import Union
 
 import xarray as xr
@@ -19,20 +25,18 @@ class BaseDetrend(ParametrizableWithDataset):
     detrend(da)  : Return detrended array.
     retrend(da)  : Puts trend back on da.
 
-    A fitted Detrend object is unique to the trend coordinate of the object used in `fit`, (usually 'time').
-    The computed trend is stored in `Detrend.trend`.
+    A fitted `Detrend` object is unique to the trend coordinate of the object used in `fit`, (usually 'time').
+    The computed trend is stored in ``Detrend.ds.trend``.
 
-    * Subclasses should implement _get_trend_group() or _get_trend().
-    The first will be called in a `group.apply(..., main_only=True)`, and should return a single DataArray.
-    The second allows the use of functions wrapped in `map_groups` and should also return a single DataArray.
+    Subclasses should implement ``_get_trend_group()`` or ``_get_trend()``.
+    The first will be called in a ``group.apply(..., main_only=True)``, and should return a single DataArray.
+    The second allows the use of functions wrapped in :py:func:`map_groups` and should also return a single DataArray.
 
-    The subclasses may reimplement `_detrend` and `_retrend`.
+    The subclasses may reimplement ``_detrend`` and ``_retrend``.
     """
 
     @parse_group
-    def __init__(
-        self, *, group: Union[Grouper, str] = "time", kind: str = "+", **kwargs
-    ):
+    def __init__(self, *, group: Grouper | str = "time", kind: str = "+", **kwargs):
         """Initialize Detrending object.
 
         Parameters
@@ -47,12 +51,14 @@ class BaseDetrend(ParametrizableWithDataset):
 
     @property
     def fitted(self):
+        """Return whether instance is fitted."""
         return hasattr(self, "ds")
 
     def fit(self, da: xr.DataArray):
         """Extract the trend of a DataArray along a specific dimension.
 
-        Returns a new object that can be used for detrending and retrending. Fitted objects are unique to the fitted coordinate used.
+        Returns a new object that can be used for detrending and retrending.
+        Fitted objects are unique to the fitted coordinate used.
         """
         new = self.__class__(**self.parameters)
         new.set_dataset(new._get_trend(da).rename("trend").to_dataset())
@@ -60,10 +66,12 @@ class BaseDetrend(ParametrizableWithDataset):
         return new
 
     def _get_trend(self, da: xr.DataArray):
-        """Computes the trend, along the self.group.dim as found on da.
+        """Compute the trend along the self.group.dim as found on da.
 
-        If da is a DataArray (and has a "dtype" attribute), the trend is casted to have the same dtype.
+        If da is a DataArray (and has a `dtype` attribute), the trend is cast to have the same dtype.
 
+        Notes
+        -----
         This method applies `_get_trend_group` with `self.group`.
         """
         out = self.group.apply(
@@ -104,6 +112,7 @@ class BaseDetrend(ParametrizableWithDataset):
         raise NotImplementedError
 
     def __repr__(self):
+        """Format instance representation."""
         rep = super().__repr__()
         if not self.fitted:
             return f"<{rep} | unfitted>"
@@ -176,7 +185,8 @@ def _polydetrend_get_trend(da, *, dim, degree, preserve_mean, kind):
 
     if preserve_mean:
         trend = apply_correction(trend, invert(trend.mean(dim=dim), kind), kind)
-    return trend.rename("trend").to_dataset()
+    out = trend.rename("trend").to_dataset()
+    return out
 
 
 class LoessDetrend(BaseDetrend):
@@ -185,11 +195,11 @@ class LoessDetrend(BaseDetrend):
 
     The fit is a piecewise linear regression. For each point, the contribution of all
     neighbors is weighted by a bell-shaped curve (gaussian) with parameters sigma (std).
-    The x-coordinate of the dataarray is scaled to [0,1] before the regression is computed.
+    The x-coordinate of the DataArray is scaled to [0,1] before the regression is computed.
 
     Parameters
     ----------
-    group : Union[str, Grouper]
+    group : str or Grouper
       The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
       The fit is performed along the group's main dim.
     kind : {'*', '+'}
@@ -197,20 +207,22 @@ class LoessDetrend(BaseDetrend):
     d: [0, 1]
       Order of the local regression. Only 0 and 1 currently implemented.
     f : float
-      Parameter controling the span of the weights, between 0 and 1.
+      Parameter controlling the span of the weights, between 0 and 1.
     niter : int
       Number of robustness iterations to execute.
     weights : ["tricube", "gaussian"]
       Shape of the weighting function:
       "tricube" : a smooth top-hat like curve, f gives the span of non-zero values.
       "gaussian" : a gaussian curve, f gives the span for 95% of the values.
+    skipna : bool
+      If True (default), missing values are not included in the loess trend computation
+      and thus are not propagated. The output will have the same missing values as the input.
 
     Notes
     -----
-    LOESS smoothing is computationally expensive. As it relies on a loop on gridpoints, it
-    can be useful to use smaller than usual chunks.
-    Moreover, it suffers from heavy boundary effects. As a rule of thumb, the outermost N * f/2 points
-    should be considered dubious. (N is the number of points along each group)
+    LOESS smoothing is computationally expensive. As it relies on a loop on gridpoints, it can be useful to use
+    smaller than usual chunks. Moreover, it suffers from heavy boundary effects. As a rule of thumb, the outermost
+    N * f/2 points should be considered dubious. (N is the number of points along each group)
     """
 
     def __init__(
@@ -222,6 +234,7 @@ class LoessDetrend(BaseDetrend):
         d=0,
         weights="tricube",
         equal_spacing=None,
+        skipna=True,
     ):
         super().__init__(
             group=group,
@@ -231,6 +244,7 @@ class LoessDetrend(BaseDetrend):
             d=0,
             weights=weights,
             equal_spacing=equal_spacing,
+            skipna=skipna,
         )
 
     def _get_trend(self, da):
@@ -240,7 +254,9 @@ class LoessDetrend(BaseDetrend):
 
 
 @map_groups(trend=[Grouper.DIM])
-def _loessdetrend_get_trend(da, *, dim, f, niter, d, weights, equal_spacing, kind):
+def _loessdetrend_get_trend(
+    da, *, dim, f, niter, d, weights, equal_spacing, skipna, kind
+):
     if len(dim) > 1:
         da = da.mean(dim[1:])
     trend = loess_smoothing(
@@ -251,6 +267,7 @@ def _loessdetrend_get_trend(da, *, dim, f, niter, d, weights, equal_spacing, kin
         d=d,
         weights=weights,
         equal_spacing=equal_spacing,
+        skipna=skipna,
     )
     return trend.rename("trend").to_dataset()
 
@@ -261,7 +278,7 @@ class RollingMeanDetrend(BaseDetrend):
 
     Parameters
     ----------
-    group : Union[str, Grouper]
+    group : str or Grouper
       The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
       The fit is performed along the group's main dim.
     kind : {'*', '+'}
@@ -276,13 +293,12 @@ class RollingMeanDetrend(BaseDetrend):
     min_periods: int, optional
       Minimum number of observations in window required to have a value, otherwise the
       result is NaN. See :py:meth:`xarray.DataArray.rolling`.
-      Defauls to None, which sets it equal to `win`. Setting both `weights` and this
+      Defaults to None, which sets it equal to `win`. Setting both `weights` and this
       is not implemented yet.
 
     Notes
     -----
-    As for the :py:class:`LoessDetrend` detrending, important boundary effects are to be
-    expected.
+    As for the :py:class:`LoessDetrend` detrending, important boundary effects are to be expected.
     """
 
     def __init__(

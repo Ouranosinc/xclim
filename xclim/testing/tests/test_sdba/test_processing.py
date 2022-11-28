@@ -1,18 +1,41 @@
+from __future__ import annotations
+
 import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
 
+from xclim.sdba.adjustment import EmpiricalQuantileMapping
 from xclim.sdba.base import Grouper
 from xclim.sdba.processing import (
     adapt_freq,
     escore,
+    from_additive_space,
+    jitter,
     jitter_over_thresh,
     jitter_under_thresh,
+    normalize,
     reordering,
+    stack_variables,
     standardize,
+    to_additive_space,
+    unstack_variables,
     unstandardize,
 )
+from xclim.testing import open_dataset
+
+
+def test_jitter_both():
+    da = xr.DataArray([0.5, 2.1, np.nan], attrs={"units": "K"})
+    out = jitter(da, lower="1 K", upper="2 K", maximum="3 K")
+
+    assert da[0] != out[0]
+    assert da[0] < 1
+    assert da[0] > 0
+
+    assert da[1] != out[1]
+    assert da[1] < 3
+    assert da[1] > 2
 
 
 def test_jitter_under_thresh():
@@ -23,7 +46,10 @@ def test_jitter_under_thresh():
     assert da[0] < 1
     assert da[0] > 0
     np.testing.assert_allclose(da[1:], out[1:])
-    assert "jitter_under_thresh(<array>, '1 K') - xclim version" in out.attrs["history"]
+    assert (
+        "jitter(x=<array>, lower='1 K', upper=None, minimum=None, maximum=None) - xclim version"
+        in out.attrs["history"]
+    )
 
 
 def test_jitter_over_thresh():
@@ -127,7 +153,7 @@ def test_escore():
     out = escore(x, y)
     np.testing.assert_allclose(out, 1.90018550338863)
     assert "escore(" in out.attrs["history"]
-    assert out.attrs["references"].startswith("Skezely")
+    assert out.attrs["references"].startswith("Székely")
 
 
 def test_standardize():
@@ -158,3 +184,95 @@ def test_reordering():
     np.testing.assert_array_equal(out, np.arange(1, 11)[::-1])
     out.attrs.pop("history")
     assert out.attrs == y.attrs
+
+
+def test_to_additive(pr_series, hurs_series):
+    # log
+    pr = pr_series(np.array([0, 1e-5, 1, np.e**10]))
+
+    prlog = to_additive_space(pr, lower_bound="0 mm/d", trans="log")
+    np.testing.assert_allclose(prlog, [-np.Inf, -11.512925, 0, 10])
+    assert prlog.attrs["sdba_transform"] == "log"
+    assert prlog.attrs["sdba_transform_units"] == "kg m-2 s-1"
+
+    with xr.set_options(keep_attrs=True):
+        pr1 = pr + 1
+    prlog2 = to_additive_space(pr1, trans="log", lower_bound="1.0 kg m-2 s-1")
+    np.testing.assert_allclose(prlog2, [-np.Inf, -11.512925, 0, 10])
+    assert prlog2.attrs["sdba_transform_lower"] == 1.0
+
+    # logit
+    hurs = hurs_series(np.array([0, 1e-3, 90, 100]))
+
+    hurslogit = to_additive_space(
+        hurs, lower_bound="0 %", trans="logit", upper_bound="100 %"
+    )
+    np.testing.assert_allclose(
+        hurslogit, [-np.Inf, -11.5129154649, 2.197224577, np.Inf]
+    )
+    assert hurslogit.attrs["sdba_transform"] == "logit"
+    assert hurslogit.attrs["sdba_transform_units"] == "%"
+
+    with xr.set_options(keep_attrs=True):
+        hursscl = hurs * 4 + 200
+    hurslogit2 = to_additive_space(
+        hursscl, trans="logit", lower_bound="2", upper_bound="6"
+    )
+    np.testing.assert_allclose(
+        hurslogit2, [-np.Inf, -11.5129154649, 2.197224577, np.Inf]
+    )
+    assert hurslogit2.attrs["sdba_transform_lower"] == 200.0
+    assert hurslogit2.attrs["sdba_transform_upper"] == 600.0
+
+
+def test_from_additive(pr_series, hurs_series):
+    # log
+    pr = pr_series(np.array([0, 1e-5, 1, np.e**10]))
+    pr2 = from_additive_space(to_additive_space(pr, lower_bound="0 mm/d", trans="log"))
+    np.testing.assert_allclose(pr[1:], pr2[1:])
+    pr2.attrs.pop("history")
+    assert pr.attrs == pr2.attrs
+
+    # logit
+    hurs = hurs_series(np.array([0, 1e-5, 0.9, 1]))
+    hurs2 = from_additive_space(
+        to_additive_space(hurs, lower_bound="0 %", trans="logit", upper_bound="100 %")
+    )
+    np.testing.assert_allclose(hurs[1:-1], hurs2[1:-1])
+
+
+def test_normalize(tas_series):
+    tas = tas_series(
+        np.random.standard_normal((int(365.25 * 36),)) + 273.15, start="2000-01-01"
+    )
+
+    xp, norm = normalize(tas, group="time.dayofyear")
+    np.testing.assert_allclose(norm, 273.15, atol=1)
+
+    xp2, norm = normalize(tas, norm=norm, group="time.dayofyear")
+    np.testing.assert_allclose(xp, xp2)
+
+
+def test_stack_variables():
+    ds1 = open_dataset("sdba/CanESM2_1950-2100.nc")
+    ds2 = open_dataset("sdba/ahccd_1950-2013.nc")
+
+    da1 = stack_variables(ds1)
+    da2 = stack_variables(ds2)
+
+    assert list(da1.multivar.values) == ["pr", "tasmax"]
+    assert da1.multivar.attrs["_standard_name"] == [
+        "precipitation_flux",
+        "air_temperature",
+    ]
+    assert da2.multivar.attrs["is_variables"]
+    assert da1.multivar.equals(da2.multivar)
+
+    da1p = da1.sortby("multivar", ascending=False)
+
+    with pytest.raises(ValueError, match="Inputs have different multivariate"):
+        EmpiricalQuantileMapping.train(da1p, da2)
+
+    ds1p = unstack_variables(da1)
+
+    xr.testing.assert_equal(ds1, ds1p)

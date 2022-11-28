@@ -1,3 +1,6 @@
+# noqa: D100
+from __future__ import annotations
+
 import numpy as np
 import xarray
 
@@ -6,12 +9,18 @@ from xclim.core.units import declare_units, rate2amount
 
 from . import generic
 
+# FIXME: raises circular import issue, see: https://github.com/Ouranosinc/xclim/issues/949
+# from xclim.core.missing import at_least_n_valid
+
+
 __all__ = [
     "base_flow_index",
     "rb_flashiness_index",
     "snd_max_doy",
     "snow_melt_we_max",
     "melt_and_precip_max",
+    "snw_max",
+    "snw_max_doy",
 ]
 
 
@@ -26,14 +35,14 @@ def base_flow_index(
     Parameters
     ----------
     q : xarray.DataArray
-      Rate of river discharge.
+        Rate of river discharge.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [dimensionless]
-      Base flow index.
+        Base flow index.
 
     Notes
     -----
@@ -68,19 +77,19 @@ def rb_flashiness_index(
     r"""Richards-Baker flashiness index.
 
     Measures oscillations in flow relative to total flow, quantifying the frequency and rapidity of short term changes
-    in flow.
+    in flow, based on :cite:t:`baker_new_2004`.
 
     Parameters
     ----------
     q : xarray.DataArray
-      Rate of river discharge.
+        Rate of river discharge.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [dimensionless]
-      R-B Index.
+        R-B Index.
 
     Notes
     -----
@@ -92,8 +101,7 @@ def rb_flashiness_index(
 
     References
     ----------
-    Baker, D.B., R.P. Richards, T.T. Loftus, and J.W. Kramer, 2004. A new Flashiness Index: Characteristics and
-    Applications to Midwestern Rivers and Streams. Journal of the American Water Resources Association 40(2):503-522.
+    :cite:cts:`baker_new_2004`
     """
     d = np.abs(q.diff(dim="time")).resample(time=freq)
     mq = q.resample(time=freq)
@@ -111,23 +119,79 @@ def snd_max_doy(snd: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray
     Parameters
     ----------
     snd : xarray.DataArray
-      Surface snow depth.
+        Surface snow depth.
     freq : str
-      Resampling frequency.
+         Resampling frequency.
 
     Returns
     -------
     xarray.DataArray
-      The day of year at which snow depth reaches its maximum value.
+        The day of year at which snow depth reaches its maximum value.
     """
-    from xclim.core.missing import at_least_n_valid
+    from xclim.core.missing import (  # pylint: disable=import-outside-toplevel
+        at_least_n_valid,
+    )
 
     # Identify periods where there is at least one non-null value for snow depth
     valid = at_least_n_valid(snd.where(snd > 0), n=1, freq=freq)
 
     # Compute doymax. Will return first time step if all snow depths are 0.
     out = generic.select_resample_op(snd, op=generic.doymax, freq=freq)
-    out.attrs.update(units="", is_dayofyear=1, calendar=get_calendar(snd))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd))
+
+    # Mask arrays that miss at least one non-null snd.
+    return out.where(~valid)
+
+
+@declare_units(snw="[mass]/[area]")
+def snw_max(snw: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray:
+    """Maximum snow amount.
+
+    The maximum daily snow amount.
+
+    Parameters
+    ----------
+    snw : xarray.DataArray
+        Snow amount (mass per area).
+    freq: str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+        The maximum snow amount over a given number of days for each period. [mass/area].
+    """
+    return snw.resample(time=freq).max(dim="time").assign_attrs(units=snw.units)
+
+
+@declare_units(snw="[mass]/[area]")
+def snw_max_doy(snw: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray:
+    """Maximum snow amount day of year.
+
+    Day of year when surface snow amount reaches its peak value. If snow amount is 0 over entire period, return NaN.
+
+    Parameters
+    ----------
+    snw : xarray.DataArray
+        Surface snow amount.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+        The day of year at which snow amount reaches its maximum value.
+    """
+    from xclim.core.missing import (  # pylint: disable=import-outside-toplevel
+        at_least_n_valid,
+    )
+
+    # Identify periods where there is at least one non-null value for snow depth
+    valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
+
+    # Compute doymax. Will return first time step if all snow depths are 0.
+    out = generic.select_resample_op(snw, op=generic.doymax, freq=freq)
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snw))
 
     # Mask arrays that miss at least one non-null snd.
     return out.where(~valid)
@@ -137,25 +201,24 @@ def snd_max_doy(snd: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray
 def snow_melt_we_max(
     snw: xarray.DataArray, window: int = 3, freq: str = "AS-JUL"
 ) -> xarray.DataArray:
-    """Maximum snow melt
+    """Maximum snow melt.
 
     The maximum snow melt over a given number of days expressed in snow water equivalent.
 
     Parameters
     ----------
     snw : xarray.DataArray
-      Snow amount (mass per area).
+        Snow amount (mass per area).
     window : int
-      Number of days during which the melt is accumulated.
+        Number of days during which the melt is accumulated.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray
-      The maximum snow melt over a given number of days for each period. [mass/area].
+        The maximum snow melt over a given number of days for each period. [mass/area].
     """
-
     # Compute change in SWE. Set melt as a positive change.
     dsnw = snw.diff(dim="time") * -1
 
@@ -172,27 +235,26 @@ def snow_melt_we_max(
 def melt_and_precip_max(
     snw: xarray.DataArray, pr: xarray.DataArray, window: int = 3, freq: str = "AS-JUL"
 ) -> xarray.DataArray:
-    """Maximum snow melt and precipitation
+    """Maximum snow melt and precipitation.
 
     The maximum snow melt plus precipitation over a given number of days expressed in snow water equivalent.
 
     Parameters
     ----------
     snw : xarray.DataArray
-      Snow amount (mass per area).
+        Snow amount (mass per area).
     pr : xarray.DataArray
-      Daily precipitation flux.
+        Daily precipitation flux.
     window : int
-      Number of days during which the water input is accumulated.
-    freq : str
-      Resampling frequency.
+        Number of days during which the water input is accumulated.
+    freq: str
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray
-      The maximum snow melt plus precipitation over a given number of days for each period. [mass/area].
+        The maximum snow melt plus precipitation over a given number of days for each period. [mass/area].
     """
-
     # Compute change in SWE. Set melt as a positive change.
     dsnw = snw.diff(dim="time") * -1
 

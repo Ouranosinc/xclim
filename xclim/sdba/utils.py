@@ -1,5 +1,12 @@
-"""SDBA utilities module."""
-from typing import Callable, List, Mapping, Optional, Tuple, Union
+# noqa: D205,D400
+"""
+Statistical Downscaling and Bias Adjustment Utilities
+=====================================================
+"""
+from __future__ import annotations
+
+import itertools
+from typing import Callable, Mapping
 from warnings import warn
 
 import numpy as np
@@ -7,11 +14,13 @@ import xarray as xr
 from boltons.funcutils import wraps
 from dask import array as dsk
 from scipy.interpolate import griddata, interp1d
+from scipy.stats import spearmanr
 
 from xclim.core.calendar import _interpolate_doy_calendar  # noqa
 from xclim.core.utils import ensure_chunk_size
 
 from .base import Grouper, parse_group
+from .nbutils import _extrapolate_on_quantiles
 
 MULTIPLICATIVE = "*"
 ADDITIVE = "+"
@@ -108,9 +117,13 @@ def ensure_longest_doy(func: Callable) -> Callable:
                 stacklevel=4,
             )
             if x.dayofyear.max() < y.dayofyear.max():
-                x = _interpolate_doy_calendar(x, int(y.dayofyear.max()))
+                x = _interpolate_doy_calendar(
+                    x, int(y.dayofyear.max()), int(y.dayofyear.min())
+                )
             else:
-                y = _interpolate_doy_calendar(y, int(x.dayofyear.max()))
+                y = _interpolate_doy_calendar(
+                    y, int(x.dayofyear.max()), int(x.dayofyear.min())
+                )
         return func(x, y, *args, **kwargs)
 
     return _ensure_longest_doy
@@ -134,7 +147,7 @@ def get_correction(x: xr.DataArray, y: xr.DataArray, kind: str) -> xr.DataArray:
 
 @ensure_longest_doy
 def apply_correction(
-    x: xr.DataArray, factor: xr.DataArray, kind: Optional[str] = None
+    x: xr.DataArray, factor: xr.DataArray, kind: str | None = None
 ) -> xr.DataArray:
     """Apply the additive or multiplicative correction/adjustment factors.
 
@@ -151,8 +164,8 @@ def apply_correction(
     return out
 
 
-def invert(x: xr.DataArray, kind: Optional[str] = None) -> xr.DataArray:
-    """Invert a DataArray either additively (-x) or multiplicatively (1/x).
+def invert(x: xr.DataArray, kind: str | None = None) -> xr.DataArray:
+    """Invert a DataArray either by addition (-x) or by multiplication (1/x).
 
     If kind is not given, default to the one stored in the "kind" attribute of x.
     """
@@ -170,9 +183,9 @@ def broadcast(
     grouped: xr.DataArray,
     x: xr.DataArray,
     *,
-    group: Union[str, Grouper] = "time",
+    group: str | Grouper = "time",
     interp: str = "nearest",
-    sel: Optional[Mapping[str, xr.DataArray]] = None,
+    sel: Mapping[str, xr.DataArray] | None = None,
 ) -> xr.DataArray:
     """Broadcast a grouped array back to the same shape as a given array.
 
@@ -182,7 +195,7 @@ def broadcast(
       The grouped array to broadcast like `x`.
     x : xr.DataArray
       The array to broadcast grouped to.
-    group : Union[str, Grouper]
+    group : str or Grouper
       Grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
     interp : {'nearest', 'linear', 'cubic'}
       The interpolation method to use,
@@ -197,7 +210,7 @@ def broadcast(
         sel = {}
 
     if group.prop != "group" and group.prop not in sel:
-        sel.update({group.prop: group.get_index(x, interp=interp)})
+        sel.update({group.prop: group.get_index(x, interp=interp != "nearest")})
 
     if sel:
         # Extract the correct mean factor for each time step.
@@ -230,20 +243,26 @@ def broadcast(
     return grouped
 
 
-def equally_spaced_nodes(n: int, eps: Union[float, None] = 1e-4) -> np.array:
-    """Return nodes with `n` equally spaced points within [0, 1] plus two end-points.
+def equally_spaced_nodes(n: int, eps: float | None = None) -> np.array:
+    """Return nodes with `n` equally spaced points within [0, 1], optionally adding two end-points.
 
     Parameters
     ----------
     n : int
       Number of equally spaced nodes.
-    eps : float, None
-      Distance from 0 and 1 of end nodes. If None, do not add endpoints.
+    eps : float, optional
+      Distance from 0 and 1 of added end nodes. If None (default), do not add endpoints.
 
     Returns
     -------
     np.array
-      Nodes between 0 and 1.
+      Nodes between 0 and 1. Nodes can be seen as the middle points of `n` equal bins.
+
+    Warnings
+    --------
+    Passing a small `eps` will effectively clip the scenario to the bounds of the reference
+    on the historical period in most cases. With normal quantile mapping algorithms, this can
+    give strange result when the reference does not show as many extremes as the simulation does.
 
     Notes
     -----
@@ -258,14 +277,14 @@ def equally_spaced_nodes(n: int, eps: Union[float, None] = 1e-4) -> np.array:
 
 def add_cyclic_bounds(
     da: xr.DataArray, att: str, cyclic_coords: bool = True
-) -> Union[xr.DataArray, xr.Dataset]:
+) -> xr.DataArray | xr.Dataset:
     """Reindex an array to include the last slice at the beginning and the first at the end.
 
     This is done to allow interpolation near the end-points.
 
     Parameters
     ----------
-    da : Union[xr.DataArray, xr.Dataset]
+    da : xr.DataArray or xr.Dataset
         An array
     att : str
         The name of the coordinate to make cyclic
@@ -275,7 +294,7 @@ def add_cyclic_bounds(
 
     Returns
     -------
-    Union[xr.DataArray, xr.Dataset]
+    xr.DataArray or xr.Dataset
         da but with the last element along att prepended and the last one appended.
     """
     qmf = da.pad({att: (1, 1)}, mode="wrap")
@@ -290,97 +309,55 @@ def add_cyclic_bounds(
     return ensure_chunk_size(qmf, **{att: -1})
 
 
-def extrapolate_qm(
-    qf: xr.DataArray,
-    xq: xr.DataArray,
-    method: str = "constant",
-    abs_bounds: Optional[tuple] = (-np.inf, np.inf),
-) -> Tuple[xr.DataArray, xr.DataArray]:
-    """Extrapolate quantile adjustment factors beyond the computed quantiles.
+def _interp_on_quantiles_1D(newx, oldx, oldy, method, extrap):
+    mask_new = np.isnan(newx)
+    mask_old = np.isnan(oldy) | np.isnan(oldx)
+    out = np.full_like(newx, np.NaN, dtype=f"float{oldy.dtype.itemsize * 8}")
+    if np.all(mask_new) or np.all(mask_old):
+        warn(
+            "All-NaN slice encountered in interp_on_quantiles",
+            category=RuntimeWarning,
+        )
+        return out
 
-    Parameters
-    ----------
-    qf : xr.DataArray
-      Adjustment factors over `quantile` coordinates.
-    xq : xr.DataArray
-      Values at each `quantile`.
-    method : {"constant"}
-      Extrapolation method. See notes below.
-    abs_bounds : 2-tuple
-      The absolute bounds for the "constant*" methods. Defaults to (-inf, inf).
+    if extrap == "constant":
+        fill_value = (
+            oldy[~np.isnan(oldy)][0],
+            oldy[~np.isnan(oldy)][-1],
+        )
+    else:  # extrap == 'nan'
+        fill_value = np.NaN
 
-    Returns
-    -------
-    xr.Dataset or xr.DataArray
-        Extrapolated adjustment factors.
-    xr.Dataset or xr.DataArray
-        Extrapolated x-values.
-
-    Notes
-    -----
-    qf: xr.DataArray
-      Estimating values above or below the computed values will return a NaN.
-    xq: xr.DataArray
-      The adjustment factor above and below the computed values are equal to the last and first values
-      respectively.
-    """
-    # constant_iqr
-    #   Same as `constant`, but values are set to NaN if farther than one interquartile range from the min and max.
-    if method == "nan":
-        return qf, xq
-
-    if method == "constant":
-        q_l, q_r = [0], [1]
-        x_l, x_r = [abs_bounds[0]], [abs_bounds[1]]
-        qf_l, qf_r = qf.isel(quantiles=0), qf.isel(quantiles=-1)
-
-    elif (
-        method == "constant_iqr"
-    ):  # This won't work because add_endpoints does not support mixed y (float and DA)
-        raise NotImplementedError
-        # iqr = np.diff(xq.interp(quantile=[0.25, 0.75]))[0]
-        # ql, qr = [0, 0], [1, 1]
-        # xl, xr = [-np.inf, xq.isel(quantile=0) - iqr], [xq.isel(quantile=-1) + iqr, np.inf]
-        # qml, qmr = [np.nan, qm.isel(quantile=0)], [qm.isel(quantile=-1), np.nan]
-    else:
-        raise ValueError
-
-    qf = add_endpoints(qf, left=[q_l, qf_l], right=[q_r, qf_r])
-    xq = add_endpoints(xq, left=[q_l, x_l], right=[q_r, x_r])
-    return qf, xq
+    out[~mask_new] = interp1d(
+        oldx[~mask_old],
+        oldy[~mask_old],
+        kind=method,
+        bounds_error=False,
+        fill_value=fill_value,
+    )(newx[~mask_new])
+    return out
 
 
-def add_endpoints(
-    da: xr.DataArray,
-    left: List[Union[int, float, xr.DataArray, List[int], List[float]]],
-    right: List[Union[int, float, xr.DataArray, List[int], List[float]]],
-    dim: str = "quantiles",
-) -> xr.DataArray:
-    """Add left and right endpoints to a DataArray.
-
-    Parameters
-    ----------
-    da : DataArray
-      Source array.
-    left : [x, y]
-      Values to prepend
-    right : [x, y]
-      Values to append.
-    dim : str
-      Dimension along which to add endpoints.
-    """
-    elems = []
-    for (x, y) in (left, right):
-        if isinstance(y, xr.DataArray):
-            if "quantiles" not in y.dims:
-                y = y.expand_dims("quantiles")
-            y = y.assign_coords(quantiles=x)
-        else:
-            y = xr.DataArray(y, coords={dim: x}, dims=(dim,))
-        elems.append(y)
-    l, r = elems  # pylint: disable=unbalanced-tuple-unpacking
-    out = xr.concat((l, da, r), dim=dim)
-    return ensure_chunk_size(out, **{dim: -1})
+def _interp_on_quantiles_2D(newx, newg, oldx, oldy, oldg, method, extrap):  # noqa
+    mask_new = np.isnan(newx) | np.isnan(newg)
+    mask_old = np.isnan(oldy) | np.isnan(oldx) | np.isnan(oldg)
+    out = np.full_like(newx, np.NaN, dtype=f"float{oldy.dtype.itemsize * 8}")
+    if np.all(mask_new) or np.all(mask_old):
+        warn(
+            "All-NaN slice encountered in interp_on_quantiles",
+            category=RuntimeWarning,
+        )
+        return out
+    out[~mask_new] = griddata(
+        (oldx[~mask_old], oldg[~mask_old]),
+        oldy[~mask_old],
+        (newx[~mask_new], newg[~mask_new]),
+        method=method,
+    )
+    if method == "nearest" or extrap != "nan":
+        # 'nan' extrapolation implicit for cubic and linear interpolation.
+        out = _extrapolate_on_quantiles(out, oldx, oldg, oldy, newx, newg, extrap)
+    return out
 
 
 @parse_group
@@ -389,81 +366,87 @@ def interp_on_quantiles(
     xq: xr.DataArray,
     yq: xr.DataArray,
     *,
-    group: Union[str, Grouper] = "time",
+    group: str | Grouper = "time",
     method: str = "linear",
+    extrapolation: str = "constant",
 ):
     """Interpolate values of yq on new values of x.
 
-    Interpolate in 2D if grouping is used, in 1D otherwise.
+    Interpolate in 2D with :py:func:`~scipy.interpolate.griddata` if grouping is used, in 1D otherwise, with
+    :py:class:`~scipy.interpolate.interp1d`. Any NaNs in `xq` or `yq` are removed from the input map.
+    Similarly, NaNs in newx are left NaNs.
 
     Parameters
     ----------
     newx : xr.DataArray
-        The values at which to evaluate `yq`. If `group` has group information,
-        `new` should have a coordinate with the same name as the group name
-         In that case, 2D interpolation is used.
+      The values at which to evaluate `yq`. If `group` has group information,
+      `new` should have a coordinate with the same name as the group name
+      In that case, 2D interpolation is used.
     xq, yq : xr.DataArray
-        coordinates and values on which to interpolate. The interpolation is done
-        along the "quantiles" dimension if `group` has no group information.
-        If it does, interpolation is done in 2D on "quantiles" and on the group dimension.
-    group : Union[str, Grouper]
-        The dimension and grouping information. (ex: "time" or "time.month").
-        Defaults to the "group" attribute of xq, or "time" if there is none.
+      Coordinates and values on which to interpolate. The interpolation is done
+      along the "quantiles" dimension if `group` has no group information.
+      If it does, interpolation is done in 2D on "quantiles" and on the group dimension.
+    group : str or Grouper
+      The dimension and grouping information. (ex: "time" or "time.month").
+      Defaults to "time".
     method : {'nearest', 'linear', 'cubic'}
-        The interpolation method.
+      The interpolation method.
+    extrapolation : {'constant', 'nan'}
+      The extrapolation method used for values of `newx` outside the range of `xq`.
+      See notes.
+
+    Notes
+    -----
+    Extrapolation methods:
+
+    - 'nan' : Any value of `newx` outside the range of `xq` is set to NaN.
+    - 'constant' : Values of `newx` smaller than the minimum of `xq` are set to the first
+      value of `yq` and those larger than the maximum, set to the last one (first and
+      last non-nan values along the "quantiles" dimension). When the grouping is "time.month",
+      these limits are linearly interpolated along the month dimension.
     """
     dim = group.dim
     prop = group.prop
 
     if prop == "group":
-        fill_value = "extrapolate" if method == "nearest" else np.nan
+        if "group" in xq.dims:
+            xq = xq.squeeze("group", drop=True)
+        if "group" in yq.dims:
+            yq = yq.squeeze("group", drop=True)
 
-        def _interp_quantiles_1D(newx, oldx, oldy):
-            return interp1d(
-                oldx, oldy, bounds_error=False, kind=method, fill_value=fill_value
-            )(newx)
-
-        return xr.apply_ufunc(
-            _interp_quantiles_1D,
+        out = xr.apply_ufunc(
+            _interp_on_quantiles_1D,
             newx,
-            xq.squeeze("group", drop=True),
-            yq.squeeze("group", drop=True),
+            xq,
+            yq,
+            kwargs={"method": method, "extrap": extrapolation},
             input_core_dims=[[dim], ["quantiles"], ["quantiles"]],
             output_core_dims=[[dim]],
             vectorize=True,
             dask="parallelized",
-            output_dtypes=[float],
+            output_dtypes=[yq.dtype],
         )
-    # else:
+        return out
 
-    def _interp_quantiles_2D(_newx, _newg, _oldx, _oldy, _oldg):  # noqa
-        if method != "nearest":
-            _oldx = np.clip(_oldx, _newx.min() - 1, _newx.max() + 1)
-        if np.all(np.isnan(_newx)):
-            warn(
-                "All-NaN slice encountered in interp_on_quantiles",
-                category=RuntimeWarning,
-            )
-            return _newx
-        return griddata(
-            (_oldx.flatten(), _oldg.flatten()),
-            _oldy.flatten(),
-            (_newx, _newg),
-            method=method,
-        )
+    # else:
+    if prop not in xq.dims:
+        xq = xq.expand_dims({prop: group.get_coordinate()})
+    if prop not in yq.dims:
+        yq = yq.expand_dims({prop: group.get_coordinate()})
 
     xq = add_cyclic_bounds(xq, prop, cyclic_coords=False)
     yq = add_cyclic_bounds(yq, prop, cyclic_coords=False)
-    newg = group.get_index(newx)
+    newg = group.get_index(newx, interp=method != "nearest")
     oldg = xq[prop].expand_dims(quantiles=xq.coords["quantiles"])
 
     return xr.apply_ufunc(
-        _interp_quantiles_2D,
+        _interp_on_quantiles_2D,
         newx,
         newg,
         xq,
         yq,
         oldg,
+        kwargs={"method": method, "extrap": extrapolation},
         input_core_dims=[
             [dim],
             [dim],
@@ -482,34 +465,33 @@ def interp_on_quantiles(
 def rank(da: xr.DataArray, dim: str = "time", pct: bool = False) -> xr.DataArray:
     """Ranks data along a dimension.
 
-    Replicates `xr.DataArray.rank` but as a function usable in a Grouper.apply().
-    Xarray's docstring is below:
+    Replicates `xr.DataArray.rank` but as a function usable in a Grouper.apply(). Xarray's docstring is below:
 
-    Equal values are assigned a rank that is the average of the ranks that
-    would have been otherwise assigned to all of the values within that
-    set.  Ranks begin at 1, not 0. If pct, computes percentage ranks.
-
-    NaNs in the input array are returned as NaNs.
-
-    The `bottleneck` library is required.
+    Equal values are assigned a rank that is the average of the ranks that would have been otherwise assigned to all the
+    values within that set. Ranks begin at 1, not 0. If pct, computes percentage ranks.
 
     Parameters
     ----------
     da: xr.DataArray
+      Source array.
     dim : str, hashable
-        Dimension over which to compute rank.
+      Dimension over which to compute rank.
     pct : bool, optional
-        If True, compute percentage ranks, otherwise compute integer ranks.
+      If True, compute percentage ranks, otherwise compute integer ranks.
 
     Returns
     -------
     DataArray
         DataArray with the same coordinates and dtype 'float64'.
+
+    Notes
+    -----
+    The `bottleneck` library is required. NaNs in the input array are returned as NaNs.
     """
     return da.rank(dim, pct=pct)
 
 
-def pc_matrix(arr: Union[np.ndarray, dsk.Array]) -> Union[np.ndarray, dsk.Array]:
+def pc_matrix(arr: np.ndarray | dsk.Array) -> np.ndarray | dsk.Array:
     """Construct a Principal Component matrix.
 
     This matrix can be used to transform points in arr to principal components
@@ -544,23 +526,24 @@ def pc_matrix(arr: Union[np.ndarray, dsk.Array]) -> Union[np.ndarray, dsk.Array]
     return eig_vec * mod.sqrt(eig_vals)
 
 
-def best_pc_orientation(
-    A: np.ndarray, Binv: np.ndarray, val: float = 1000
+def best_pc_orientation_simple(
+    R: np.ndarray, Hinv: np.ndarray, val: float = 1000
 ) -> np.ndarray:
-    """Return best orientation vector for A.
+    """Return best orientation vector according to a simple test.
 
     Eigenvectors returned by `pc_matrix` do not have a defined orientation.
-    Given an inverse transform Binv and a transform A, this returns the orientation
-    minimizing the projected distance for a test point far from the origin.
+    Given an inverse transform `Hinv` and a transform `R`, this returns the orientation minimizing the projected
+    distance for a test point far from the origin.
 
-    This trick is explained in [hnilica2017]_. See documentation of
-    `sdba.adjustment.PrincipalComponentAdjustment`.
+    This trick is inspired by the one exposed in :cite:t:`sdba-hnilica_multisite_2017`. For each possible orientation vector,
+    the test point is reprojected and the distance from the original point is computed. The orientation
+    minimizing that distance is chosen.
 
     Parameters
     ----------
-    A : np.ndarray
+    R : np.ndarray
       MxM Matrix defining the final transformation.
-    Binv : np.ndarray
+    Hinv : np.ndarray
       MxM Matrix defining the (inverse) first transformation.
     val : float
       The coordinate of the test point (same for all axes). It should be much
@@ -570,30 +553,84 @@ def best_pc_orientation(
     -------
     np.ndarray
       Mx1 vector of orientation correction (1 or -1).
-    """
-    m = A.shape[0]
-    orient = np.ones(m)
-    P = np.diag(val * np.ones(m))
 
-    # Compute first reference error
-    err = np.linalg.norm(P - A @ Binv @ P)
-    for i in range(m):
-        # Switch the ith axis orientation
-        orient[i] = -1
+    See Also
+    --------
+    sdba.adjustment.PrincipalComponentAdjustment
+
+    References
+    ----------
+    :cite:cts:`sdba-hnilica_multisite_2017`
+    """
+    m = R.shape[0]
+    P = np.diag(val * np.ones(m))
+    signes = dict(itertools.zip_longest(itertools.product(*[[1, -1]] * m), [None]))
+    for orient in list(signes.keys()):
         # Compute new error
-        new_err = np.linalg.norm(P - (A * orient) @ Binv @ P)
-        if new_err > err:
-            # Previous error was lower, switch back
-            orient[i] = 1
-        else:
-            # New orientation is better, keep and remember error.
-            err = new_err
-    return orient
+        signes[orient] = np.linalg.norm(P - ((orient * R) @ Hinv) @ P)
+    return np.array(min(signes, key=lambda o: signes[o]))
+
+
+def best_pc_orientation_full(
+    R: np.ndarray,
+    Hinv: np.ndarray,
+    Rmean: np.ndarray,
+    Hmean: np.ndarray,
+    hist: np.ndarray,
+) -> np.ndarray:
+    """Return best orientation vector for `A` according to the method of :cite:t:`sdba-alavoine_distinct_2021`.
+
+    Eigenvectors returned by `pc_matrix` do not have a defined orientation.
+    Given an inverse transform Hinv, a transform R, the actual and target origins `Hmean` and `Rmean` and the matrix of
+    training observations hist, this computes a scenario for all possible orientations and return the orientation that
+    maximizes the Spearman correlation coefficient of all variables. The correlation is computed for each variable
+    individually, then averaged.
+
+    This trick is explained in :cite:t:`sdba-alavoine_distinct_2021`.
+    See docstring of :py:func:`sdba.adjustment.PrincipalComponentAdjustment`.
+
+    Parameters
+    ----------
+    R : np.ndarray
+      MxM Matrix defining the final transformation.
+    Hinv : np.ndarray
+      MxM Matrix defining the (inverse) first transformation.
+    Rmean : np.ndarray
+      M vector defining the target distribution center point.
+    Hmean : np.ndarray
+      M vector defining the original distribution center point.
+    hist : np.ndarray
+      MxN matrix of all training observations of the M variables/sites.
+
+    Returns
+    -------
+    np.ndarray
+      M vector of orientation correction (1 or -1).
+
+    References
+    ----------
+    :cite:cts:`sdba-alavoine_distinct_2021`
+
+    """
+    # All possible orientation vectors
+    m = R.shape[0]
+    signes = dict(itertools.zip_longest(itertools.product(*[[1, -1]] * m), [None]))
+    for orient in list(signes.keys()):
+        # Calculate scen for hist
+        scen = np.atleast_2d(Rmean).T + ((orient * R) @ Hinv) @ (
+            hist - np.atleast_2d(Hmean).T
+        )
+        # Correlation for each variable
+        corr = [spearmanr(hist[i, :], scen[i, :])[0] for i in range(hist.shape[0])]
+        # Store mean correlation
+        signes[orient] = np.mean(corr)
+    # Return orientation that maximizes the correlation
+    return np.array(max(signes, key=lambda o: signes[o]))
 
 
 def get_clusters_1d(
     data: np.ndarray, u1: float, u2: float
-) -> Tuple[np.array, np.array, np.array, np.array]:
+) -> tuple[np.array, np.array, np.array, np.array]:
     """Get clusters of a 1D array.
 
     A cluster is defined as a sequence of values larger than u2 with at least one value larger than u1.
@@ -613,7 +650,7 @@ def get_clusters_1d(
 
     References
     ----------
-    `getcluster` of Extremes.jl (read on 2021-04-20) https://github.com/jojal5/Extremes.jl
+    `getcluster` of Extremes.jl (:cite:cts:`sdba-jalbert_extreme_2022`).
     """
     # Boolean array, True where data is over u2
     # We pad with values under u2, so that clusters never start or end at boundaries.
@@ -674,7 +711,7 @@ def get_clusters(data: xr.DataArray, u1, u2, dim: str = "time") -> xr.Dataset:
         - `maximum` : Maximal value within the cluster (`dim` reduced, new `cluster`), same dtype as data.
 
       For `start`, `end` and `maxpos`, -1 means NaN and should always correspond to a `NaN` in `maximum`.
-      The length along `cluster` is half the size of "dim", the maximal theoritical number of clusters.
+      The length along `cluster` is half the size of "dim", the maximal theoretical number of clusters.
     """
 
     def _get_clusters(arr, u1, u2, N):
@@ -728,7 +765,7 @@ def get_clusters(data: xr.DataArray, u1, u2, dim: str = "time") -> xr.Dataset:
 
 
 def rand_rot_matrix(
-    crd: xr.DataArray, num: int = 1, new_dim: Optional[str] = None
+    crd: xr.DataArray, num: int = 1, new_dim: str | None = None
 ) -> xr.DataArray:
     r"""Generate random rotation matrices.
 
@@ -754,7 +791,8 @@ def rand_rot_matrix(
 
     References
     ----------
-    .. [Mezzadri] Mezzadri, F. (2006). How to generate random matrices from the classical compact groups. arXiv preprint math-ph/0609050.
+    :cite:cts:`sdba-mezzadri_how_2007`
+
     """
     if num > 1:
         return xr.concat([rand_rot_matrix(crd, num=1) for i in range(num)], "matrices")
@@ -777,3 +815,66 @@ def rand_rot_matrix(
     return xr.DataArray(
         Q @ lam, dims=(dim, new_dim), coords={dim: crd, new_dim: crd2}
     ).astype("float32")
+
+
+def copy_all_attrs(ds: xr.Dataset | xr.DataArray, ref: xr.Dataset | xr.DataArray):
+    """Copy all attributes of ds to ref, including attributes of shared coordinates, and variables in the case of Datasets."""
+    ds.attrs.update(ref.attrs)
+    extras = ds.variables if isinstance(ds, xr.Dataset) else ds.coords
+    others = ref.variables if isinstance(ref, xr.Dataset) else ref.coords
+    for name, var in extras.items():
+        if name in others:
+            var.attrs.update(ref[name].attrs)
+
+
+def _pairwise_spearman(da, dims):
+    """Area-averaged pairwise temporal correlation.
+
+    With skipna-shortcuts for cases where all times or all points are NaN.
+    """
+    da = da - da.mean(dims)
+    da = (
+        da.stack(_spatial=dims)
+        .reset_index("_spatial")
+        .drop_vars(["_spatial"], errors=["ignore"])
+    )
+
+    def _skipna_correlation(data):
+        nv, nt = data.shape
+        # Mask of which variable are all NaN
+        mask_omit = np.isnan(data).all(axis=1)
+        # Remove useless variables
+        data_noallnan = data[~mask_omit, :]
+        # Mask of which times are nan on all variables
+        mask_skip = np.isnan(data_noallnan).all(axis=0)
+        # Remove those times (they'll be omitted anyway)
+        data_nonan = data_noallnan[:, ~mask_skip]
+
+        # We still have a possibility that a NaN was unique to a variable and time.
+        # If this is the case, it will be a lot longer, but what can we do.
+        coef = spearmanr(data_nonan, axis=1, nan_policy="omit").correlation
+
+        # The output
+        out = np.empty((nv, nv), dtype=coef.dtype)
+        # A 2D mask of removed variables
+        M = (mask_omit)[:, np.newaxis] | (mask_omit)[np.newaxis, :]
+        out[~M] = coef.flatten()
+        out[M] = np.nan
+        return out
+
+    return xr.apply_ufunc(
+        _skipna_correlation,
+        da,
+        input_core_dims=[["_spatial", "time"]],
+        output_core_dims=[["_spatial", "_spatial2"]],
+        vectorize=True,
+        output_dtypes=[float],
+        dask="parallelized",
+        dask_gufunc_kwargs={
+            "output_sizes": {
+                "_spatial": da._spatial.size,
+                "_spatial2": da._spatial.size,
+            },
+            "allow_rechunk": True,
+        },
+    ).rename("correlation")

@@ -1,21 +1,29 @@
-"""Ensembles creation and statistics."""
-import logging
+# noqa: D205,D400
+"""
+Ensembles Creation and Statistics
+=================================
+"""
+from __future__ import annotations
+
+from glob import glob
 from pathlib import Path
-from typing import List, Optional, Sequence, Union
+from typing import Any, Sequence
 
 import numpy as np
 import xarray as xr
 
-from xclim.core.calendar import convert_calendar, get_calendar
+from xclim.core.calendar import common_calendar, convert_calendar, get_calendar
 from xclim.core.formatting import update_history
 from xclim.core.utils import calc_perc
 
 
 def create_ensemble(
-    datasets: List[Union[xr.Dataset, xr.DataArray, Path, str, List[Union[Path, str]]]],
+    datasets: Any,
     mf_flag: bool = False,
-    resample_freq: Optional[str] = None,
-    calendar: str = "default",
+    resample_freq: str | None = None,
+    calendar: str | None = None,
+    realizations: Sequence[Any] | None = None,
+    cal_kwargs: dict | None = None,
     **xr_kwargs,
 ) -> xr.Dataset:
     """Create an xarray dataset of an ensemble of climate simulation from a list of netcdf files.
@@ -29,30 +37,38 @@ def create_ensemble(
 
     Parameters
     ----------
-    datasets : List[Union[xr.Dataset, Path, str, List[Path, str]]]
-      List of netcdf file paths or xarray Dataset/DataArray objects . If mf_flag is True, ncfiles should be a list of lists where
-      each sublist contains input .nc files of an xarray multifile Dataset.
-      If DataArray object are passed, they should have a name in order to be transformed into Datasets.
-
+    datasets : list or dict or string
+      List of netcdf file paths or xarray Dataset/DataArray objects . If mf_flag is True, ncfiles should be a list of
+      lists where each sublist contains input .nc files of an xarray multifile Dataset.
+      If DataArray objects are passed, they should have a name in order to be transformed into Datasets.
+      A dictionary can be passed instead of a list, in which case the keys are used as coordinates along the new
+      `realization` axis.
+      If a string is passed, it is assumed to be a glob pattern for finding datasets.
     mf_flag : bool
       If True, climate simulations are treated as xarray multifile Datasets before concatenation.
-      Only applicable when "datasets" is a sequence of file paths.
-
+      Only applicable when "datasets" is sequence of list of file paths.
     resample_freq : Optional[str]
       If the members of the ensemble have the same frequency but not the same offset, they cannot be properly aligned.
-      If resample_freq is set, the time coordinate of each members will be modified to fit this frequency.
-
-    calendar : str
-      The calendar of the time coordinate of the ensemble. For conversions involving '360_day', the align_on='date' option is used.
-      See `xclim.core.calendar.convert_calendar`. 'default' is the standard calendar using np.datetime64 objects.
-
-    xr_kwargs :
-      Any keyword arguments to be given to `xr.open_dataset` when opening the files (or to `xr.open_mfdataset` if mf_flag is True)
+      If resample_freq is set, the time coordinate of each member will be modified to fit this frequency.
+    calendar : str, optional
+      The calendar of the time coordinate of the ensemble.
+      By default, the smallest common calendar is chosen. For example, a mixed input of "noleap" and "360_day" will default to "noleap".
+      'default' is the standard calendar using np.datetime64 objects (xarray's "standard" with `use_cftime=False`).
+    realizations: sequence, optional
+      The coordinate values for the new `realization` axis.
+      If None (default), the new axis has a simple integer coordinate.
+      This argument shouldn't be used if `datasets` is a glob pattern as the dataset order is random.
+    cal_kwargs : dict, optional
+      Additionnal arguments to pass to py:func:`xclim.core.calendar.convert_calendar`.
+      For conversions involving '360_day', the align_on='date' option is used by default.
+    **xr_kwargs
+      Any keyword arguments to be given to `xr.open_dataset` when opening the files
+      (or to `xr.open_mfdataset` if mf_flag is True)
 
     Returns
     -------
     xr.Dataset
-      Dataset containing concatenated data from all input files.
+        Dataset containing concatenated data from all input files.
 
     Notes
     -----
@@ -61,24 +77,45 @@ def create_ensemble(
 
     Examples
     --------
-    >>> from xclim.ensembles import create_ensemble
-    >>> ens = create_ensemble(temperature_datasets)
+    .. code-block:: python
 
-    Using multifile datasets, through glob patterns.
-    Simulation 1 is a list of .nc files (e.g. separated by time):
+        from pathlib import Path
+        from xclim.ensembles import create_ensemble
 
-    >>> datasets = glob.glob('/dir/*.nc')  # doctest: +SKIP
+        ens = create_ensemble(temperature_datasets)
 
-    Simulation 2 is also a list of .nc files:
+        # Using multifile datasets, through glob patterns.
+        # Simulation 1 is a list of .nc files (e.g. separated by time):
+        datasets = list(Path("/dir").glob("*.nc"))
 
-    >>> datasets.append(glob.glob('/dir2/*.nc'))  # doctest: +SKIP
-    >>> ens = create_ensemble(datasets, mf_flag=True)  # doctest: +SKIP
+        # Simulation 2 is also a list of .nc files:
+        datasets.extend(Path("/dir2").glob("*.nc"))
+        ens = create_ensemble(datasets, mf_flag=True)
     """
+    if isinstance(datasets, dict):
+        if realizations is None:
+            realizations, datasets = zip(*datasets.items())
+        else:
+            datasets = datasets.values()
+    elif isinstance(datasets, str) and realizations is not None:
+        raise ValueError(
+            "Passing `realizations` is not supported when `datasets` "
+            "is a glob pattern, as the final order is random."
+        )
+
     ds = _ens_align_datasets(
-        datasets, mf_flag, resample_freq, calendar=calendar, **xr_kwargs
+        datasets,
+        mf_flag,
+        resample_freq,
+        calendar=calendar,
+        cal_kwargs=cal_kwargs or {},
+        **xr_kwargs,
     )
 
-    dim = xr.IndexVariable("realization", np.arange(len(ds)), attrs={"axis": "E"})
+    if realizations is None:
+        realizations = np.arange(len(ds))
+
+    dim = xr.IndexVariable("realization", list(realizations), attrs={"axis": "E"})
 
     ens = xr.concat(ds, dim)
     for vname, var in ds[0].variables.items():
@@ -88,7 +125,9 @@ def create_ensemble(
     return ens
 
 
-def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
+def ensemble_mean_std_max_min(
+    ens: xr.Dataset, weights: xr.DataArray = None
+) -> xr.Dataset:
     """Calculate ensemble statistics between a results from an ensemble of climate simulations.
 
     Returns an xarray Dataset containing ensemble mean, standard-deviation, minimum and maximum for input climate
@@ -96,34 +135,43 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
 
     Parameters
     ----------
-    ens: xr.Dataset
-      Ensemble dataset (see xclim.ensembles.create_ensemble).
+    ens : xr.Dataset
+        Ensemble dataset (see xclim.ensembles.create_ensemble).
+    weights : xr.DataArray
+        Weights to apply along the 'realization' dimension. This array cannot contain missing values.
 
     Returns
     -------
     xr.Dataset
-      Dataset with data variables of ensemble statistics.
+        Dataset with data variables of ensemble statistics.
 
     Examples
     --------
-    >>> from xclim.ensembles import create_ensemble, ensemble_mean_std_max_min
+    .. code-block:: python
 
-    Create the ensemble dataset:
+        from xclim.ensembles import create_ensemble, ensemble_mean_std_max_min
 
-    >>> ens = create_ensemble(temperature_datasets)
+        # Create the ensemble dataset:
+        ens = create_ensemble(temperature_datasets)
 
-    Calculate ensemble statistics:
-
-    >>> ens_mean_std = ensemble_mean_std_max_min(ens)
+        # Calculate ensemble statistics:
+        ens_mean_std = ensemble_mean_std_max_min(ens)
     """
     ds_out = xr.Dataset(attrs=ens.attrs)
     for v in ens.data_vars:
-
-        ds_out[f"{v}_mean"] = ens[v].mean(dim="realization")
-        ds_out[f"{v}_stdev"] = ens[v].std(dim="realization")
+        if weights is None:
+            ds_out[f"{v}_mean"] = ens[v].mean(dim="realization")
+            ds_out[f"{v}_stdev"] = ens[v].std(dim="realization")
+        else:
+            with xr.set_options(keep_attrs=True):
+                ds_out[f"{v}_mean"] = ens[v].weighted(weights).mean(dim="realization")
+                ds_out[f"{v}_stdev"] = ens[v].weighted(weights).std(dim="realization")
         ds_out[f"{v}_max"] = ens[v].max(dim="realization")
         ds_out[f"{v}_min"] = ens[v].min(dim="realization")
-        for vv in ds_out.data_vars:
+
+        # Re-add attributes
+        for stat in ["mean", "stdev", "max", "min"]:
+            vv = f"{v}_{stat}"
             ds_out[vv].attrs = ens[v].attrs
             if "description" in ds_out[vv].attrs.keys():
                 vv.split()
@@ -140,61 +188,71 @@ def ensemble_mean_std_max_min(ens: xr.Dataset) -> xr.Dataset:
 
 
 def ensemble_percentiles(
-    ens: Union[xr.Dataset, xr.DataArray],
-    values: Sequence[float] = [10, 50, 90],
-    keep_chunk_size: Optional[bool] = None,
+    ens: xr.Dataset | xr.DataArray,
+    values: Sequence[int] | None = None,
+    keep_chunk_size: bool | None = None,
+    weights: xr.DataArray = None,
     split: bool = True,
-) -> xr.Dataset:
+) -> xr.DataArray | xr.Dataset:
     """Calculate ensemble statistics between a results from an ensemble of climate simulations.
 
     Returns a Dataset containing ensemble percentiles for input climate simulations.
 
     Parameters
     ----------
-    ens: Union[xr.Dataset, xr.DataArray]
-      Ensemble dataset or dataarray (see xclim.ensembles.create_ensemble).
-    values : Tuple[int, int, int]
-      Percentile values to calculate. Default: (10, 50, 90).
-    keep_chunk_size : Optional[bool]
-      For ensembles using dask arrays, all chunks along the 'realization' axis are merged.
-      If True, the dataset is rechunked along the dimension with the largest chunks, so that the chunks keep the same size (approx)
-      If False, no shrinking is performed, resulting in much larger chunks
-      If not defined, the function decides which is best
+    ens : xr.Dataset or xr.DataArray
+        Ensemble dataset or dataarray (see xclim.ensembles.create_ensemble).
+    values : Sequence[int], optional
+        Percentile values to calculate. Default: (10, 50, 90).
+    keep_chunk_size : bool, optional
+        For ensembles using dask arrays, all chunks along the 'realization' axis are merged.
+        If True, the dataset is rechunked along the dimension with the largest chunks,
+        so that the chunks keep the same size (approximately).
+        If False, no shrinking is performed, resulting in much larger chunks.
+        If not defined, the function decides which is best.
+    weights : xr.DataArray
+        Weights to apply along the 'realization' dimension. This array cannot contain missing values.
+        When given, the function uses xarray's quantile method which is slower than xclim's NaN-optimized algorithm.
     split : bool
-      Whether to split each percentile into a new variable of concatenate the ouput along a new
-      "percentiles" dimension.
+        Whether to split each percentile into a new variable
+        or concatenate the output along a new "percentiles" dimension.
 
     Returns
     -------
-    Union[xr.Dataset, xr.DataArray]
-      If split is True, same type as ens; dataset otherwise,
-      containing data variable(s) of requested ensemble statistics
+    xr.Dataset or xr.DataArray
+        If split is True, same type as ens; dataset otherwise,
+        containing data variable(s) of requested ensemble statistics
 
     Examples
     --------
-    >>> from xclim.ensembles import create_ensemble, ensemble_percentiles
+    .. code-block:: python
 
-    Create ensemble dataset:
+        from xclim.ensembles import create_ensemble, ensemble_percentiles
 
-    >>> ens = create_ensemble(temperature_datasets)
+        # Create ensemble dataset:
+        ens = create_ensemble(temperature_datasets)
 
-    Calculate default ensemble percentiles:
+        # Calculate default ensemble percentiles:
+        ens_percs = ensemble_percentiles(ens)
 
-    >>> ens_percs = ensemble_percentiles(ens)
+        # Calculate non-default percentiles (25th and 75th)
+        ens_percs = ensemble_percentiles(ens, values=(25, 50, 75))
 
-    Calculate non-default percentiles (25th and 75th)
-
-    >>> ens_percs = ensemble_percentiles(ens, values=(25, 50, 75))
-
-    If the original array has many small chunks, it might be more efficient to do:
-
-    >>> ens_percs = ensemble_percentiles(ens, keep_chunk_size=False)
+        # If the original array has many small chunks, it might be more efficient to do:
+        ens_percs = ensemble_percentiles(ens, keep_chunk_size=False)
     """
+    if values is None:
+        values = [10, 50, 90]
+
     if isinstance(ens, xr.Dataset):
         out = xr.merge(
             [
                 ensemble_percentiles(
-                    da, values, keep_chunk_size=keep_chunk_size, split=split
+                    da,
+                    values,
+                    keep_chunk_size=keep_chunk_size,
+                    split=split,
+                    weights=weights,
                 )
                 for da in ens.data_vars.values()
                 if "realization" in da.dims
@@ -230,19 +288,29 @@ def ensemble_percentiles(
         else:
             ens = ens.chunk({"realization": -1})
 
-    out = xr.apply_ufunc(
-        calc_perc,
-        ens,
-        input_core_dims=[["realization"]],
-        output_core_dims=[["percentiles"]],
-        keep_attrs=True,
-        kwargs=dict(
-            percentiles=values,
-        ),
-        dask="parallelized",
-        output_dtypes=[ens.dtype],
-        dask_gufunc_kwargs=dict(output_sizes={"percentiles": len(values)}),
-    )
+    if weights is None:
+        out = xr.apply_ufunc(
+            calc_perc,
+            ens,
+            input_core_dims=[["realization"]],
+            output_core_dims=[["percentiles"]],
+            keep_attrs=True,
+            kwargs=dict(
+                percentiles=values,
+            ),
+            dask="parallelized",
+            output_dtypes=[ens.dtype],
+            dask_gufunc_kwargs=dict(output_sizes={"percentiles": len(values)}),
+        )
+    else:
+        with xr.set_options(keep_attrs=True):
+            # xclim's calc_perc does not support weighted arrays, so xarray's native function is used instead.
+            qt = np.array(values) / 100  # xarray requires values between 0 and 1
+            out = (
+                ens.weighted(weights)
+                .quantile(qt, dim="realization", keep_attrs=True)
+                .rename({"quantile": "percentiles"})
+            )
 
     out = out.assign_coords(
         percentiles=xr.DataArray(list(values), dims=("percentiles",))
@@ -267,41 +335,49 @@ def ensemble_percentiles(
 
 
 def _ens_align_datasets(
-    datasets: List[Union[xr.Dataset, Path, str, List[Union[Path, str]]]],
+    datasets: list[xr.Dataset | Path | str | list[Path | str]] | str,
     mf_flag: bool = False,
-    resample_freq: str = None,
+    resample_freq: str | None = None,
     calendar: str = "default",
+    cal_kwargs: dict | None = None,
     **xr_kwargs,
-) -> List[xr.Dataset]:
+) -> list[xr.Dataset]:
     """Create a list of aligned xarray Datasets for ensemble Dataset creation.
 
     Parameters
     ----------
-    datasets : List[Union[xr.Dataset, xr.DataArray, Path, str, List[Path, str]]]
-      List of netcdf file paths or xarray Dataset/DataArray objects . If mf_flag is True, ncfiles should be a list of lists where
-      each sublist contains input .nc files of an xarray multifile Dataset. DataArrays should have a name so they can be converted to datasets.
+    datasets : list[xr.Dataset | xr.DataArray | Path | str | list[Path | str]] or str
+        List of netcdf file paths or xarray Dataset/DataArray objects . If mf_flag is True, 'datasets' should be a list
+        of lists where each sublist contains input NetCDF files of a xarray multi-file Dataset.
+        DataArrays should have a name, so they can be converted to datasets.
+        If a string, it is assumed to be a glob pattern for finding datasets.
     mf_flag : bool
-      If True climate simulations are treated as xarray multifile datasets before concatenation.
-      Only applicable when datasets is a sequence of file paths.
-    resample_freq : Optional[str]
-      If the members of the ensemble have the same frequency but not the same offset, they cannot be properly aligned.
-      If resample_freq is set, the time coordinate of each members will be modified to fit this frequency.
+        If True climate simulations are treated as xarray multi-file datasets before concatenation.
+        Only applicable when 'datasets' is a sequence of file paths.
+    resample_freq : str, optional
+        If the members of the ensemble have the same frequency but not the same offset, they cannot be properly aligned.
+        If resample_freq is set, the time coordinate of each member will be modified to fit this frequency.
     calendar : str
-      The calendar of the time coordinate of the ensemble. For conversions involving '360_day', the align_on='date' option is used.
-      See `xclim.core.calendar.convert_calendar`. 'default' is the standard calendar using np.datetime64 objects.
-    xr_kwargs :
-      Any keyword arguments to be given to xarray when opening the files.
+        The calendar of the time coordinate of the ensemble. For conversions involving '360_day',
+        the align_on='date' option is used.
+        See :py:func:`xclim.core.calendar.convert_calendar`.
+        'default' is the standard calendar using np.datetime64 objects.
+    **xr_kwargs
+        Any keyword arguments to be given to xarray when opening the files.
 
     Returns
     -------
-    List[xr.Dataset]
+    list[xr.Dataset]
     """
     xr_kwargs.setdefault("chunks", "auto")
     xr_kwargs.setdefault("decode_times", False)
 
+    if isinstance(datasets, str):
+        datasets = glob(datasets)
+
     ds_all = []
+    calendars = []
     for i, n in enumerate(datasets):
-        logging.info(f"Accessing {n} of {len(datasets)}")
         if mf_flag:
             ds = xr.open_mfdataset(n, combine="by_coords", **xr_kwargs)
         else:
@@ -316,22 +392,25 @@ def _ens_align_datasets(
             time = xr.decode_cf(ds).time
 
             if resample_freq is not None:
-                counts = time.resample(time=resample_freq).count()
+                # Cast to bool to avoid bug in flox/numpy_groupies (xarray-contrib/flox#137)
+                counts = time.astype(bool).resample(time=resample_freq).count()
                 if any(counts > 1):
                     raise ValueError(
-                        f"Alignment of dataset #{i:02d} failed : its time axis cannot be resampled to freq {resample_freq}."
+                        f"Alignment of dataset #{i:02d} failed: "
+                        f"Time axis cannot be resampled to freq {resample_freq}."
                     )
                 time = counts.time
 
             ds["time"] = time
-
-            cal = get_calendar(time)
-            ds = convert_calendar(
-                ds,
-                calendar,
-                align_on="date" if "360_day" in [cal, calendar] else None,
-            )
+            calendars.append(get_calendar(time))
 
         ds_all.append(ds)
 
-    return ds_all
+    if not calendars:
+        # no time
+        return ds_all
+
+    if calendar is None:
+        calendar = common_calendar(calendars, join="outer")
+    cal_kwargs.setdefault("align_on", "date")
+    return [convert_calendar(ds, calendar, **cal_kwargs) for ds in ds_all]
