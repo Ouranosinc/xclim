@@ -117,6 +117,7 @@ autosectionlabel_maxdepth = 2
 linkcheck_ignore = [
     r"https://github.com/Ouranosinc/xclim/(pull|issue).*",
     r"https://doi.org/10.1093/mnras/225.1.155",  # does not allow linkcheck requests (error 403)
+    r"https://www.ouranos.ca/",  # bad ssl certificate
 ]
 
 napoleon_numpy_docstring = True
