@@ -900,7 +900,7 @@ class PrincipalComponents(TrainAdjust):
 
     References
     ----------
-    :cite:cts:`sdba-hnilica_multisite_2017,sdba-alavoine_distinct_2021`
+    :cite:cts:`sdba-hnilica_multisite_2017,sdba-alavoine_distinct_2022`
 
     """
 

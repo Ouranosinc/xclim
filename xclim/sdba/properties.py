@@ -260,6 +260,7 @@ def _spell_length_distribution(
     thresh: str = "1 mm d-1",
     stat: str = "mean",
     group: str | Grouper = "time",
+    resample_before_rl: bool = True,
 ) -> xr.DataArray:
     """Spell length distribution.
 
@@ -287,6 +288,9 @@ def _spell_length_distribution(
     group : {'time', 'time.season', 'time.month'}
       Grouping of the output.
       E.g. If 'time.month', the spell lengths are coputed separately for each month.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -296,7 +300,7 @@ def _spell_length_distribution(
     ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
 
     @map_groups(out=[Grouper.PROP], main_only=True)
-    def _spell_stats(ds, *, dim, method, thresh, op, freq, stat):
+    def _spell_stats(ds, *, dim, method, thresh, op, freq, resample_before_rl, stat):
         # PB: This prevents an import error in the distributed dask scheduler, but I don't know why.
         import xarray.core.resample_cftime  # noqa: F401, pylint: disable=unused-import
 
@@ -308,7 +312,15 @@ def _spell_length_distribution(
             thresh = da.quantile(thresh, dim=dim).drop_vars("quantile")
 
         cond = op(da, thresh)
-        out = cond.resample(time=freq).map(rl.rle_statistics, dim=dim, reducer=stat)
+        out = rl.resample_and_rl(
+            cond,
+            resample_before_rl,
+            rl.rle_statistics,
+            reducer=stat,
+            window=1,
+            dim=dim,
+            freq=freq,
+        )
         out = getattr(out, stat)(dim=dim)
         out = out.where(mask)
         return out.rename("out").to_dataset()
@@ -328,6 +340,7 @@ def _spell_length_distribution(
         thresh=thresh,
         op=ops[op],
         freq=group.freq,
+        resample_before_rl=resample_before_rl,
         stat=stat,
     ).out
     return to_agg_units(out, da, op="count")
@@ -369,7 +382,7 @@ def _acf(
 
     References
     ----------
-    :cite:cts:`alavoine_distinct_2021`
+    :cite:cts:`alavoine_distinct_2022`
     """
 
     def acf_last(x, nlags):
@@ -926,7 +939,8 @@ def _spatial_correlogram(da: xr.DataArray, *, dims=None, bins=100, group="time")
     Needs coordinates for longitude and latitude. This property is heavy to compute and it will
     need to create a NxN array in memory (outside of dask), where N is the number of spatial points.
     There are shortcuts for all-nan time-slices or spatial points, but scipy's nan-omitting algorithm
-    is extremely slow, so the presence of any lone NaN will increase the computation time.
+    is extremely slow, so the presence of any lone NaN will increase the computation time. Based on an idea
+    from :cite:p:`francois_multivariate_2020`.
 
     Parameters
     ----------
@@ -1125,7 +1139,8 @@ def _first_eof(da: xr.DataArray, *, dims=None, kind="+", thresh="1 mm/d", group=
 
     Through principal component analysis (PCA), compute the predominant empirical orthogonal function.
     The temporal dimension is reduced. The Eof is multiplied by the sign of its mean to ensure coherent
-    signs as much as possible. Needs the eofs package to run.
+    signs as much as possible. Needs the eofs package to run. Based on an idea from :cite:p:`vrac_multivariate_2018`,
+    using an implementation from :cite:p:`dawson_eofs_2016`.
 
     Parameters
     ----------

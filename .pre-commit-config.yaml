@@ -3,7 +3,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.1.0
+    rev: v3.2.0
     hooks:
       - id: pyupgrade
         args: [ "--py38-plus" ]
@@ -56,7 +56,7 @@ repos:
       - id: pydocstyle
         args: [ '--config=setup.cfg' ]
   - repo: https://github.com/keewis/blackdoc
-    rev: v0.3.7
+    rev: v0.3.8
     hooks:
       - id: blackdoc
         exclude: '(xclim/indices/__init__.py|docs/installation.rst)'
@@ -79,6 +79,6 @@ ci:
   autofix_prs: true
   autoupdate_branch: ''
   autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
-  autoupdate_schedule: weekly
+  autoupdate_schedule: monthly
   skip: [ nbstripout ]
   submodules: false

@@ -33,6 +33,13 @@ details on each.
     references: <references> # Merged with indicator-specific references (joined with a new line)
     base: <base indicator class>  # Defaults to "Daily" and applies to all indicators that do not give it.
     doc: <module docstring>  # Defaults to a minimal header, only valid if the module doesn't already exists.
+    variables:  # Optional section if indicators declared below rely on variables unknown to xclim (no in `xclim.core.utils.VARIABLES`)
+                # The variables are not module-dependent and will overwrite any already existing with the same name.
+      <varname>:
+        canonical_units: <units> # required
+        description: <description> # required
+        standard_name: <expected standard_name> # optional
+        cell_methods: <exptected cell_methods> # optional
     indicators:
       <identifier>:
         # From which Indicator to inherit
@@ -56,11 +63,11 @@ details on each.
 
         # Compute function
         compute: <function name>  # Referring to a function in the supplied `Indices` module, xclim.indices.generic or xclim.indices
-        input:  # When "compute" is a generic function this is a mapping from argument
-                # name to what CMIP6/xclim variable is expected. This will allow for
-                # declaring expected input units and have a CF metadata check on the inputs.
-                # Can also be used to modify the expected variable, as long as it has
-                # the same units. Ex: tas instead of tasmin.
+        input:  # When "compute" is a generic function, this is a mapping from argument name to the expected variable.
+                # This will allow the input units and CF metadata checks to run on the inputs.
+                # Can also be used to modify the expected variable, as long as it has the same dimensionality
+                # Ex: tas instead of tasmin.
+                # Can refer to a variable declared in the `variables` section above.
           <var name in compute> : <variable official name>
           ...
         parameters:
@@ -1273,11 +1280,20 @@ class Indicator(IndicatorRegistrar):
         * assert no temperature has the same value 5 days in a row
 
         This base datacheck checks that the input data has a valid sampling frequency, as given in self.src_freq.
+        If there are multiple inputs, it also checks if they all have the same frequency and the same anchor.
         """
         if self.src_freq is not None:
             for key, da in das.items():
                 if "time" in da.coords and da.time.ndim == 1 and len(da.time) > 3:
                     datachecks.check_freq(da, self.src_freq, strict=True)
+
+            datachecks.check_common_time(
+                [
+                    da
+                    for da in das.values()
+                    if "time" in da.coords and da.time.ndim == 1 and len(da.time) > 3
+                ]
+            )
 
     def __getattr__(self, attr):
         """Return the attribute."""
@@ -1669,6 +1685,14 @@ def build_indicator_module_from_yaml(
         # also fills when a is simply missing
         elif b:
             dbase[attr] = b
+
+    # Parse the variables:
+    for varname, vardata in yml.get("variables", {}).items():
+        if varname in VARIABLES and VARIABLES[varname] != vardata:
+            warnings.warn(
+                f"Variable {varname} from module {module_name} will overwrite the one already defined in `xclim.core.utils.VARIABLES`"
+            )
+        VARIABLES[varname] = vardata.copy()
 
     # Parse the indicators:
     mapping = {}

@@ -578,7 +578,7 @@ def best_pc_orientation_full(
     Hmean: np.ndarray,
     hist: np.ndarray,
 ) -> np.ndarray:
-    """Return best orientation vector for `A` according to the method of :cite:t:`sdba-alavoine_distinct_2021`.
+    """Return best orientation vector for `A` according to the method of :cite:t:`sdba-alavoine_distinct_2022`.
 
     Eigenvectors returned by `pc_matrix` do not have a defined orientation.
     Given an inverse transform Hinv, a transform R, the actual and target origins `Hmean` and `Rmean` and the matrix of
@@ -586,7 +586,7 @@ def best_pc_orientation_full(
     maximizes the Spearman correlation coefficient of all variables. The correlation is computed for each variable
     individually, then averaged.
 
-    This trick is explained in :cite:t:`sdba-alavoine_distinct_2021`.
+    This trick is explained in :cite:t:`sdba-alavoine_distinct_2022`.
     See docstring of :py:func:`sdba.adjustment.PrincipalComponentAdjustment`.
 
     Parameters
@@ -609,7 +609,7 @@ def best_pc_orientation_full(
 
     References
     ----------
-    :cite:cts:`sdba-alavoine_distinct_2021`
+    :cite:cts:`sdba-alavoine_distinct_2022`
 
     """
     # All possible orientation vectors

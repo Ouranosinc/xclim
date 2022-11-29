@@ -12,7 +12,7 @@ URL = "https://github.com/Ouranosinc/xclim"
 AUTHOR = "Travis Logan"
 AUTHOR_EMAIL = "logan.travis@ouranos.ca"
 REQUIRES_PYTHON = ">=3.8.0"
-VERSION = "0.38.8-beta"
+VERSION = "0.39.9-beta"
 LICENSE = "Apache Software License 2.0"
 
 with open("README.rst") as readme_file:
@@ -20,6 +20,8 @@ with open("README.rst") as readme_file:
 
 with open("HISTORY.rst") as history_file:
     history = history_file.read()
+    # remove disallowed directives for PyPI publishing
+    history = history.replace(".. autolink-skip::", "")
 
 hyperlink_replacements = {
     r":issue:`([0-9]+)`": r"`GH/\1 <https://github.com/Ouranosinc/xclim/issues/\1>`_",

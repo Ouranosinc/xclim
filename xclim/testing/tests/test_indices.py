@@ -689,15 +689,6 @@ class TestFirstDayBelow:
         assert fdb.attrs["units"] == ""
         assert fdb.attrs["is_dayofyear"] == 1
 
-    def test_below_deprecated(self, tasmin_series):
-        a = np.zeros(365)
-        a[180:270] = 303.15
-        tas = tasmin_series(a, start="2000/1/1")
-
-        with pytest.warns(DeprecationWarning):
-            fdb = xci.first_day_below(tas)
-        assert fdb == 271
-
     def test_below_forbidden(self, tasmax_series):
         a = np.zeros(365) + 307
         a[180:270] = 270
@@ -729,14 +720,30 @@ class TestFirstDayAbove:
         assert fda.attrs["units"] == ""
         assert fda.attrs["is_dayofyear"] == 1
 
-    def test_above_deprecated(self, tasmin_series):
-        a = np.zeros(365) + 307
-        a[180:270] = 270
-        tasmin = tasmin_series(a, start="2000/1/1")
+    def test_thresholds(self, tas_series):
+        tg = np.zeros(365) - 1
+        w = 5
 
-        with pytest.warns(DeprecationWarning):
-            fda = xci.first_day_above(tasmin)
-        assert fda == 1
+        i = 10
+        tg[i : i + w - 1] += 6  # too short
+
+        i = 20
+        tg[i : i + w] += 1  # does not cross threshold
+
+        i = 30
+        tg[i : i + w] += 6  # ok
+
+        i = 40
+        tg[i : i + w + 1] += 6  # Second valid condition, should be ignored.
+
+        tg = tas_series(tg + K2C, start="1/1/2000")
+        out = xci.first_day_temperature_above(tg, thresh="0 degC", window=w)
+
+        assert out[0] == tg.indexes["time"][30].dayofyear
+        for attr in ["units", "is_dayofyear", "calendar"]:
+            assert attr in out.attrs.keys()
+        assert out.attrs["units"] == ""
+        assert out.attrs["is_dayofyear"] == 1
 
     def test_above_forbidden(self, tasmax_series):
         a = np.zeros(365) + 307
@@ -745,6 +752,12 @@ class TestFirstDayAbove:
 
         with pytest.raises(ValueError):
             xci.first_day_temperature_above(tasmax, op="<")
+
+    def test_no_start(self, tas_series):
+        tg = np.zeros(365) - 1
+        tg = tas_series(tg, start="1/1/2000")
+        out = xci.first_day_temperature_above(tg, thresh="0 degC", window=5)
+        np.testing.assert_equal(out, [np.nan])
 
 
 class TestDaysOverPrecipThresh:
@@ -787,38 +800,6 @@ class TestDaysOverPrecipThresh:
 
         out = xci.days_over_precip_thresh(pr, per, thresh="0.5 kg/m**2/s")
         np.testing.assert_array_almost_equal(out, 300)
-
-
-class TestFreshetStart:
-    def test_simple(self, tas_series):
-        tg = np.zeros(365) - 1
-        w = 5
-
-        i = 10
-        tg[i : i + w - 1] += 6  # too short
-
-        i = 20
-        tg[i : i + w] += 1  # does not cross threshold
-
-        i = 30
-        tg[i : i + w] += 6  # ok
-
-        i = 40
-        tg[i : i + w + 1] += 6  # Second valid condition, should be ignored.
-
-        tg = tas_series(tg + K2C, start="1/1/2000")
-        out = xci.freshet_start(tg, window=w)
-        assert out[0] == tg.indexes["time"][30].dayofyear
-        for attr in ["units", "is_dayofyear", "calendar"]:
-            assert attr in out.attrs.keys()
-        assert out.attrs["units"] == ""
-        assert out.attrs["is_dayofyear"] == 1
-
-    def test_no_start(self, tas_series):
-        tg = np.zeros(365) - 1
-        tg = tas_series(tg, start="1/1/2000")
-        out = xci.freshet_start(tg)
-        np.testing.assert_equal(out, [np.nan])
 
 
 class TestGrowingDegreeDays:
@@ -1147,35 +1128,43 @@ class TestHeatWaveTotalLength:
 
 class TestHotSpellFrequency:
     @pytest.mark.parametrize(
-        "thresh_tasmax,window,expected",
+        "thresh_tasmax,window,op,expected",
         [
-            ("30 C", 3, 2),  # Some HS
-            ("30 C", 4, 1),  # One long HS
-            ("10 C", 3, 1),  # No HS
-            ("40 C", 5, 0),  # Windowed
+            ("30 C", 3, ">", 2),  # Some HS
+            ("30 C", 4, ">", 1),  # One long HS
+            ("29 C", 3, ">", 2),  # Two HS
+            ("29 C", 3, ">=", 1),  # One long HS
+            ("10 C", 3, ">", 1),  # No HS
+            ("40 C", 5, ">", 0),  # Windowed
         ],
     )
-    def test_1d(self, tasmax_series, thresh_tasmax, window, expected):
+    def test_1d(self, tasmax_series, thresh_tasmax, window, op, expected):
         tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
 
-        hsf = xci.hot_spell_frequency(tx, thresh_tasmax=thresh_tasmax, window=window)
+        hsf = xci.hot_spell_frequency(
+            tx, thresh_tasmax=thresh_tasmax, window=window, op=op
+        )
         np.testing.assert_allclose(hsf.values, expected)
 
 
 class TestHotSpellMaxLength:
     @pytest.mark.parametrize(
-        "thresh_tasmax,window,expected",
+        "thresh_tasmax,window,op,expected",
         [
-            ("30 C", 3, 5),  # Some HS
-            ("10 C", 3, 10),  # One long HS
-            ("40 C", 3, 0),  # No HS
-            ("30 C", 5, 5),  # Windowed
+            ("30 C", 3, ">", 5),  # Some HS
+            ("10 C", 3, ">", 10),  # One long HS
+            ("29 C", 3, ">", 5),  # Two HS
+            ("29 C", 3, ">=", 9),  # One long HS, minus a day
+            ("40 C", 3, ">", 0),  # No HS
+            ("30 C", 5, ">", 5),  # Windowed
         ],
     )
-    def test_1d(self, tasmax_series, thresh_tasmax, window, expected):
-        tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
+    def test_1d(self, tasmax_series, thresh_tasmax, window, op, expected):
+        tx = tasmax_series(np.asarray([28, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
 
-        hsml = xci.hot_spell_max_length(tx, thresh_tasmax=thresh_tasmax, window=window)
+        hsml = xci.hot_spell_max_length(
+            tx, thresh_tasmax=thresh_tasmax, window=window, op=op
+        )
         np.testing.assert_allclose(hsml.values, expected)
 
 
@@ -2989,26 +2978,32 @@ class TestRPRCTot:
 class TestWetDays:
     def test_simple(self, pr_series):
         a = np.zeros(365)
-        a[:6] += [4, 5.5, 6, 6, 2, 7]  # 4 above 5 in Jan
-        a[100:105] += [1, 6, 7, 2, 1]  # 2 above 5 in Mar
+        a[:7] += [4, 5.5, 6, 6, 2, 7, 5]  # 4 above 5 and 1 at 5 in Jan
+        a[100:106] += [1, 6, 7, 5, 2, 1]  # 2 above 5 and 1 at 5 in Mar
 
         pr = pr_series(a)
         pr.attrs["units"] = "mm/day"
 
         out = xci.wetdays(pr, thresh="5 mm/day", freq="M")
+        np.testing.assert_allclose(out, [5, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0])
+
+        out = xci.wetdays(pr, thresh="5 mm/day", freq="M", op=">")
         np.testing.assert_allclose(out, [4, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0])
 
 
 class TestWetDaysProp:
     def test_simple(self, pr_series):
         a = np.zeros(365)
-        a[:6] += [4, 5.5, 6, 6, 2, 7]  # 4 above 5 in Jan
-        a[100:105] += [1, 6, 7, 2, 1]  # 2 above 5 in Mar
+        a[:7] += [4, 5.5, 6, 6, 2, 7, 5]  # 4 above 5 and 1 at 5 in Jan
+        a[100:106] += [1, 6, 7, 5, 2, 1]  # 2 above 5 and 1 at 5 in Mar
 
         pr = pr_series(a)
         pr.attrs["units"] = "mm/day"
 
         out = xci.wetdays_prop(pr, thresh="5 mm/day", freq="M")
+        np.testing.assert_allclose(out, [5 / 31, 0, 0, 3 / 31, 0, 0, 0, 0, 0, 0, 0, 0])
+
+        out = xci.wetdays_prop(pr, thresh="5 mm/day", freq="M", op=">")
         np.testing.assert_allclose(out, [4 / 31, 0, 0, 2 / 31, 0, 0, 0, 0, 0, 0, 0, 0])
 
 

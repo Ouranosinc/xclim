@@ -2,7 +2,39 @@
 History
 =======
 
-0.39.0 (unreleased)
+0.40.0 (unreleased)
+-------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Juliette Lavoie (:user:`juliettelavoie`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Virtual modules can add variables to ``xclim.core.utils.VARIABLES`` through the new `variables` section of the yaml files. (:issue:`1129`, :pull:`1231`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Rewrite of ``xclim.core.calendar.time_bnds``. It should now be more resilient and versatile, but all ``cftime_*`` and ``cfindex_*`` functions were removed. (:issue:`74`, :pull:`1207`).
+* Many previously deprecated indices and indicators have been removed from `xclim` (:pull:`1228`), with replacement indices/indicators suggested as follows:
+    - ``xclim.indicators.atmos.fire_weather_indexes`` → ``xclim.indicators.atmos.cffwis_indices``
+    - ``xclim.indices.freshet_start`` → ``xclim.indices.first_day_temperature_above``
+    - ``xclim.indices.first_day_above`` → ``xclim.indices.first_day_temperature_above``
+    - ``xclim.indices.first_day_below`` → ``xclim.indices.first_day_temperature_below``
+    - ``xclim.indices.tropical_nights`` → ``xclim.indices.tn_days_above``
+    - ``xclim.indices.generic.degree_days` → ``xclim.indices.generic.cumulative_difference``
+* The following *modules* have been removed:
+    - `xclim.indices.fwi` → functions migrated to `xclim.indices.fire`
+    - `xclim.subset` (mock submodule) → functions migrated to `clisops.core.subset`
+
+Bug fixes
+^^^^^^^^^
+* The weighted ensemble statistics are now performed within a context in order to preserve data attributes. (:issue:`1232`, :pull:`1234`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Minor adjustments to GitHub Actions workflows (newest Ubuntu images, updated actions version, better CI triggering). (:pull:`1221`).
+* Updated article from Alavoine & Grenier (2022) within documentation. Many article reference URLs have been updated to use HTTPS where possible. (:issue:`1246`, :pull:`1247`).
+* Added relevant variable dataflag checks for potential evaporation, convective precipitation, and air pressure at sea level. (:pull:`1241`).
+
+0.39.0 (2022-11-02)
 -------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), Éric Dupuis (:user:`coxipi`), Travis Logan (:user:`tlogan2000`), Pascal Bourgault (:user:`aulemahal`).
 
@@ -10,8 +42,12 @@ New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * The general ``xclim`` description and ReadMe have been updated to reflect recent enhancements. (:issue:`1185`, :pull:`1209`).
 * Documentation now supports intersphinx mapping references within code examples via `sphinx-codeautolink` and copying of code blocks via `sphinx-copybutton`. (:pull:`1182`).
-* Log-logistic distribution added to `stats.py` for use with `standardized_precipitation_index` and `standardized_precipitation_evapotranspiration_index` (:issue:`1141`, :pull:`1183`).
-* New base indicator class for sdba: ``StatisticalPropertyMeasure``, those measures that also reduce the time (as a property does) (:pull:`1198`).
+* Log-logistic distribution added to `stats.py` for use with ``standardized_precipitation_index`` and ``standardized_precipitation_evapotranspiration_index``. (:issue:`1141`, :pull:`1183`).
+* New option in many indices allowing for resampling in given periods after ``run_length`` operations. (:issue:`505`, :issue:`916`, :issue:`917`, :pull:`1161`).
+* New base indicator class for sdba: ``StatisticalPropertyMeasure``, those measures that also reduce the time (as a property does). (:pull:`1198`).
+* ``xclim.core.calendar.common_calendar`` to find the best calendar to use when uniformizing an heterogeneous collection of data. (:pull:`1217`).
+* ``xclim.ensembles.create_ensemble`` now accepts ``calendar=None``, and uses the above function to guess the best one. It also now accepts ``cal_kwargs`` to fine tune the calendar conversion. (:issue:`1190`, :pull:`1217`).
+* New data check : ``xclim.core.datachecks.check_common_time`` that ensures all inputs of multivariate indicators have the same frequency (and the same time anchoring for daily and hourly data). (:issue:`1111`, :pull:`1217`).
 
 New indicators
 ^^^^^^^^^^^^^^
@@ -21,10 +57,10 @@ New indicators
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* Indices that accept `lat` or `lon` coordinates in their call signatures will now use `cf-xarray` accessors to gather these variables in the event that they are not explicitly supplied. (:pull:`1180`). This affects the following
+* Indices that accept `lat` or `lon` coordinates in their call signatures will now use `cf-xarray` accessors to gather these variables in the event that they are not explicitly supplied. (:pull:`1180`). This affects the following:
     - ``huglin_index``, ``biologically_effective_degree_days``, ``cool_night_index``, ``latitude_temperature_index``, ``water_budget``, ``potential_evapotranspiration``
 * ``cool_night_index`` now optionally accepts ``lat: str = "north" | "south"`` for calculating CNI over DataArrays lacking a latitude coordinate. (:pull:`1180`).
-* The offset value in ``standardized_precipitation_evapotranspiration_index`` is changed to better reproduce results in the reference library ``monocongo/climate_indices``.
+* The offset value in ``standardized_precipitation_evapotranspiration_index`` is changed to better reproduce results in the reference library ``monocongo/climate_indices``. (:issue:`1141`, :pull:`1183`).
 * The ``first_day_below`` and ``first_day_above`` indices are now deprecated in order to clearly communicate the variables they act upon (:issue:`1175`, :pull:`1186`). The suggested migrations are as follows:
     - ``xclim.indices.first_day_above`` -> ``xclim.indices.first_day_temperature_above``
     - ``xclim.indices.first_day_below`` -> ``xclim.indices.first_day_temperature_below``
@@ -32,14 +68,21 @@ Breaking changes
     - ``xclim.atmos.first_day_above`` -> ``xclim.indices.first_day_{tn | tg | tx}_above``
     - ``xclim.atmos.first_day_below`` -> ``xclim.indices.first_day_{tn | tg | tx}_below``
 * The ``degree_days`` generic indice has been deprecated in favour of ``cumulative_difference`` that is not limited only to temperature variables (:issue:`1200`, :pull:`1202`). The indices for ``atmos.{heating | cooling | growing}_degree_days`` are now built from ``generic.cumulative_difference``.
-* Running `pytest` now requires the `pytest-dist` distributed testing dependency. This library has been added to the `dev` requirements and conda environment configuration. (:pull:`1203`).
+* Running `pytest` now requires the `pytest-xdist` distributed testing dependency. This library has been added to the `dev` requirements and conda environment configuration. (:pull:`1203`).
+* Parameters ``reducer`` and ``window`` in ``xclim.indices.rle_statistics`` are now positional. (:pull:`1161`).
 * The ``relative_annual_cycle_amplitude`` and ``annual_cycle_amplitude`` have been rewritten to match the version defined in the VALUE project, outputs will change drastically (for the better) (:pull:`1198`).
+* English indicator metadata has been adjusted to remove frequencies from fields in the `long_name` of indicators. English indicators now have an explicit `title` and `abstract`. (:issue:`936`, :pull:`1123`).
+* French indicator metadata translations are now more uniform and more closely follow agreed-upon grammar conventions, while also removing frequency fields in `long_name_fr`. (:issue:`936`, :pull:`1123`).
+* The ``freshet_start`` indice is now deprecated in favour of ``first_day_temperature_above`` with `thresh='0 degC', window=5`. The `freshet_start` indicator is now based on ``first_day_temperature_above``, but is otherwise unaffected. (:issue:`1195`, :pull:`1196`).
+* Call signatures for several indices/indicators have been modified to optionally accept `op` for manually setting threshold comparison operators (:issue:`1194`, :pull:`1197`). The affected indices and indicators as follows:
+   - ``hot_spell_max_length``, ``hot_spell_frequency``, ``cold_spell_days``, ``cold_spell_frequency``, ``heat_wave_index``, ``warm_day_frequency`` (indice only), ``warm_night_frequency`` (indice only), ``dry_days``, ``wetdays``, ``wetdays_prop``.
+* Cleaner ``xclim.core.calendar.parse_offset`` : fails on invalid frequencies, return implicit anchors (YS -> JAN, Y -> DEC) and implicit ``is_start_anchored`` (D -> True). (:issue:`1213`, , :pull:`1217`).
 
 Bug fixes
 ^^^^^^^^^
 * The docstring of ``cool_night_index`` suggested that `lat` was an optional parameter. This has been corrected. (:issue:`1179`, :pull:`1180`).
 * The ``mean_radiant_temperature`` indice was accessing hardcoded `lat` and `lon` coordinates from passed DataArrays. This now uses `cf-xarray` accessors. (:pull:`1180`).
-* Adopt (and adapt) unit registry declaration and preprocessors from ``cf-xarray`` to circumvent bugs caused by a refactor in ``pint`` 0.20. It also cleans the code a little bit. (:issue:`1211`, :pull:`1212`).
+* Adopt (and adapt) unit registry declaration and preprocessors from `cf-xarray` to circumvent bugs caused by a refactor in `pint` 0.20. It also cleans the code a little bit. (:issue:`1211`, :pull:`1212`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -51,6 +94,8 @@ Internal changes
 * In order to reduce computation footprint, the GitHub CI full testing suite and doctests are now only run once a pull request has been reviewed and approved. The number of simultaneously triggered builds has also been reduced. (:issue:`1155`, :pull:`1203`).
 * ReadTheDocs now only builds full documentation (including running notebooks) when pull requests are merged to the main branch. (:issue:`1155`, :pull:`1203`).
 * `xclim` now leverages `pytest-xdist` to distribute tests among Python workers and significantly speed up the testing suite. (:pull:`1203`).
+* ``show_versions`` can now accept a list of dependencies so that other libraries can make use of this utility. (:pull:`1215`).
+* Pull Requests now are automatically tagged (``CI``, ``docs``, ``indicators``, and/or ``sdba``) according to files modified using the `GitHub Labeler Action <https://github.com/actions/labeler>`_. (:pull:`1214`).
 
 0.38.0 (2022-09-06)
 -------------------
@@ -107,7 +152,7 @@ Bug fixes
 * Fixed some ``extlink`` warnings found in `sphinx` and configured ReadTheDocs to use `mamba` as the dependency solver. (:issue:`1139`, :pull:`1140`).
 * Fixed some broken hyperlinks to articles, users, and external documentation throughout the code base and jupyter notebooks. (:pull:`1160`).
 * Addressed a bug that was causing `pylint` to stackoverflow by removing it from the tox configuration. `pylint` should only be called from an active environment. (:pull:`1163`)
-* Fixed kmeans_reduce_ensemble breaking when using dask arrays (:pull:`1170`)
+* Fixed an issue with ``xclim.ensembles.kmeans_reduce_ensemble`` which caused it to fail when using dask arrays. (:pull:`1170`).
 * Addressed a bug that was causing `pylint` to stackoverflow by removing it from the tox configuration. `pylint` should only be called from an active environment. (:pull:`1163`)
 
 Internal changes

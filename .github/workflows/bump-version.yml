@@ -5,25 +5,29 @@ on:
     branches:
       - master
     paths-ignore:
+      - .*
+      - .github/**.yml
       - HISTORY.rst
-      - Makefile
       - MANIFEST.in
+      - Makefile
+      - docs/**.ipynb
+      - docs/**.py
+      - docs/**.rst
+      - docs/Makefile
+      - docs/make.bat
+      - docs/references.bib
+      - environment.yml
+      - pylintrc
+      - requirements_dev.txt
       - requirements_upstream.txt
       - setup.cfg
       - setup.py
       - tox.ini
       - xclim/__init__.py
-      - docs/**.ipynb
-      - docs/*.py
-      - docs/*.rst
-      - .github/**.yml
-      - .pre-commit-config.yaml
-      - .readthedocs.yml
-      - .yamllint.yaml
 
 jobs:
   bump_patch_version:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
         with:
