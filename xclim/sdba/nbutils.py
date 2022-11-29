@@ -249,32 +249,3 @@ def _pairwise_haversine_and_bins(lond, latd):
     mx = np.nanmax(dists)
     return dists, mn, mx
 
-
-@njit
-def _individual_haversine_and_bins(londA, latdA, londB, latdB):
-    """Inter-site distances with the haversine approximation."""
-    N = londB.shape[0]
-    lonA = np.deg2rad(londA)
-    latA = np.deg2rad(latdA)
-    lon = np.deg2rad(londB)
-    lat = np.deg2rad(latdB)
-    dists = np.full((N), np.nan)
-    for i in range(N ):
-        if not ((latA==lat).all() and (lonA==lon).all()):
-        #for j in range(i + 1, N):
-            dlon = lonA - lon[i]
-            dists[i] = 6367 * np.arctan2(
-                np.sqrt(
-                    (np.cos(latA) * np.sin(dlon)) ** 2
-                    + (
-                        np.cos(lat[i]) * np.sin(latA)
-                        - np.sin(lat[i]) * np.cos(latA) * np.cos(dlon)
-                    )
-                    ** 2
-                ),
-                np.sin(lat[i]) * np.sin(latA)
-                + np.cos(lat[i]) * np.cos(latA) * np.cos(dlon),
-            )
-    mn = np.nanmin(dists)
-    mx = np.nanmax(dists)
-    return dists, mn, mx

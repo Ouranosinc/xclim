@@ -15,7 +15,6 @@ import numpy as np
 import xarray as xr
 from scipy import stats
 from statsmodels.tsa import stattools
-import warnings
 
 import xclim as xc
 from xclim.core.indicator import Indicator, base_registry
