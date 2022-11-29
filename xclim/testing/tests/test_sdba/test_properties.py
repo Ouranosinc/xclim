@@ -391,6 +391,17 @@ def test_spatial_correlogram():
         out.distance[:5], [26.543199, 67.716227, 108.889254, 150.062282, 191.23531]
     )
 
+@pytest.mark.slow
+def test_decorrelation_length():
+    sim = open_dataset("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc").tasmax.isel(
+        lon=slice(0, 5), lat=slice(0, 1))
+    out = xc.sdba.properties.decorrelation_length(sim, dims=["lat", "lon"], bins=10,
+                                                  radius=30)
+    np.testing.assert_allclose(
+        out,
+        [ 4.5,  4.5,  4.5,  4.5, 10.5],
+    )
+
 
 def test_first_eof():
     pytest.importorskip("eofs")

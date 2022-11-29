@@ -1009,9 +1009,8 @@ spatial_correlogram = StatisticalProperty(
 
 def _decorrelation_length(da: xr.DataArray, *, radius=300, thresh=0.50, dims=None, bins=100, group="time"):
     """Decorrelation length.
-    
-    Distance from a grid cell where the correlation with its neighbours goes below the threshold.
 
+    Distance from a grid cell where the correlation with its neighbours goes below the threshold.
 
     Parameters
     ----------
@@ -1035,7 +1034,7 @@ def _decorrelation_length(da: xr.DataArray, *, radius=300, thresh=0.50, dims=Non
     -------
     xr.DataArray, [dimensionless]
       Decorrelation length.
-      
+
     Notes
     _____
     Calculating this property requires a lot of memory. It will not work with large datasets.
@@ -1113,9 +1112,12 @@ def _decorrelation_length(da: xr.DataArray, *, radius=300, thresh=0.50, dims=Non
 
     # get back to 2d lat and lon
     #if 'lat' in dims and 'lon' in dims:
-    binned = binned.set_index({'_spatial': dims})
-    out = binned.decorrelation_length.unstack()
-
+    if len(dims) >1:
+        binned = binned.set_index({'_spatial': dims})
+        out = binned.decorrelation_length.unstack()
+    else:
+        out = binned.swap_dims({'_spatial': dims[0]}).decorrelation_length
+    
     # put back coords attrs
     for c in out.coords:
         out[c].attrs = coords_attrs[c]
