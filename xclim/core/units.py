@@ -3,8 +3,8 @@
 Units handling submodule
 ========================
 
-`Pint` is used to define the `units` `UnitRegistry` and `xclim.core.unis` defines
-most unit handling methods.
+`Pint` is used to define the :py:data:`xclim.core.units.units` `UnitRegistry`.
+This module defines most unit handling methods.
 """
 from __future__ import annotations
 
@@ -396,7 +396,7 @@ def cf_conversion(standard_name: str, conversion: str, direction: str):
         Standard name of the input.
     conversion : {'amount2rate', 'amount2lwethickness'}
         Type of conversion. Available conversions are the keys of the `conversions` entry in `xclim/data/variables.yml`.
-        See :py:data:`CF_CONVERSIONS`. They also correspond to functions in this module.
+        See :py:data:`xclim.core.units.CF_CONVERSIONS`. They also correspond to functions in this module.
     direction : {'to', 'from'}
         The direction of the requested conversion. "to" means the conversion as given by the `conversion` name,
         while "from" means the reverse operation. For example `conversion="amount2rate"` and `direction="from"`
@@ -425,7 +425,7 @@ FREQ_UNITS = {
     "W": "week",
 }
 """
-Resampling frequency units for :py:func:`infer_sampling_units`.
+Resampling frequency units for :py:func:`xclim.core.units.infer_sampling_units`.
 
 Mapping from offset base to CF-compliant unit. Only constant-length frequencies are included.
 """
@@ -565,7 +565,7 @@ def _rate_and_amount_converter(
     sampling_rate_from_coord: bool = False,
     out_units: str = None,
 ) -> xr.DataArray:
-    """Private function performing the actual conversion for :py:func:`rate2amount` and :py:func:`amount2rate`."""
+    """Private function performing the actual conversion for :py:func:`xclim.core.units.rate2amount` and :py:func:`xclim.core.units.amount2rate`."""
     m = 1
     u = None  # Default to assume a non-uniform axis
     label = "lower"
@@ -661,7 +661,7 @@ def rate2amount(
     are multiplied by the duration between their time coordinate and the next one. The last period
     is estimated with the duration of the one just before.
 
-    This is the inverse operation of :py:func:`amount2rate`.
+    This is the inverse operation of :py:func:`xclim.core.units.amount2rate`.
 
     Parameters
     ----------
@@ -742,7 +742,7 @@ def amount2rate(
     are divided by the duration between their time coordinate and the next one. The last period
     is estimated with the duration of the one just before.
 
-    This is the inverse operation of :py:func:`rate2amount`.
+    This is the inverse operation of :py:func:`xclim.core.units.rate2amount`.
 
     Parameters
     ----------
@@ -752,7 +752,8 @@ def amount2rate(
         The time dimension.
     sampling_rate_from_coord : boolean
         For data with irregular time coordinates. If True, the diff of the time coordinate will be used as the sampling rate,
-        meaning each data point will be assumed to apply for the interval ending at the next point. See notes of :py:func:`rate2amount`.
+        meaning each data point will be assumed to apply for the interval ending at the next point.
+        See notes of :py:func:`xclim.core.units.rate2amount`.
         Defaults to False, which raises an error if the time coordiante is irregular.
     out_units : str, optional
         Output units to convert to.
@@ -761,9 +762,6 @@ def amount2rate(
     ------
     ValueError
         If the time coordinate is irregular and `sampling_rate_from_coord` is False (default).
-
-    out_units : str, optional
-        Output units to convert to.
 
     Returns
     -------
@@ -787,7 +785,7 @@ def amount2lwethickness(amount: xr.DataArray, out_units: str = None):
     """Convert a liquid water amount (mass over area) to its equivalent area-averaged thickness (length).
 
     This will simply divide the amount by the density of liquid water, 1000 kg/m³.
-    This is equivalent to using the "hydro" context of :py:data:`units`.
+    This is equivalent to using the "hydro" context of :py:data:`xclim.core.units.units`.
 
     Parameters
     ----------
@@ -799,8 +797,12 @@ def amount2lwethickness(amount: xr.DataArray, out_units: str = None):
     Returns
     -------
     lwe_thickness
-        The standard_name of `amount` is modified if a conversion is found (see :py:func:`cf_conversion`),
+        The standard_name of `amount` is modified if a conversion is found (see :py:func:`xclim.core.units.cf_conversion`),
         it is removed otherwise. Other attributes are left untouched.
+
+    See Also
+    --------
+    lwethickness2amount
     """
     water_density = str2pint("1000 kg m-3")
     out = pint_multiply(amount, 1 / water_density)
@@ -817,7 +819,7 @@ def lwethickness2amount(thickness: xr.DataArray, out_units: str = None):
     """Convert a liquid water thickness (length) to its equivalent amount (mass over area).
 
     This will simply multiply the thickness by the density of liquid water, 1000 kg/m³.
-    This is equivalent to using the "hydro" context of :py:data:`units`.
+    This is equivalent to using the "hydro" context of :py:data:`xclim.core.units.units`.
 
     Parameters
     ----------
@@ -829,8 +831,12 @@ def lwethickness2amount(thickness: xr.DataArray, out_units: str = None):
     Returns
     -------
     amount
-        The standard_name of `amount` is modified if a conversion is found (see :py:func:`cf_conversion`),
+        The standard_name of `amount` is modified if a conversion is found (see :py:func:`xclim.core.units.cf_conversion`),
         it is removed otherwise. Other attributes are left untouched.
+
+    See Also
+    --------
+    amount2lwethickness
     """
     water_density = str2pint("1000 kg m-3")
     out = pint_multiply(thickness, water_density)
