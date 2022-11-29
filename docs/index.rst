@@ -2,11 +2,6 @@ xclim Official Documentation
 ============================
 
 .. toctree::
-   :hidden:
-
-   self
-
-.. toctree::
    :maxdepth: 2
    :caption: Table of Contents:
 

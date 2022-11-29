@@ -1,1 +1,1 @@
-Test
+.. include:: ../README.rst
