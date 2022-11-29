@@ -1,18 +1,18 @@
-
-@techreport{project_team_eca&d_algorithm_2013,
-	address = {De Bilt, Netherlands},
-	type = {Project {Description}},
-	title = {Algorithm {Theoretical} {Basis} {Document} ({ATBD})},
-	language = {en},
-	number = {EPJ029135},
-	institution = {Royal Netherlands Meteorological Institute KNMI},
-	author = {Project team ECA\&D},
-	month = sep,
-	year = {2013},
-	pages = {46}
+@Article{Hassel:2017,
+AUTHOR = {Hassell, D. and Gregory, J. and Blower, J. and Lawrence, B. N. and Taylor, K. E.},
+TITLE = {A data model of the Climate and Forecast metadata
+conventions (CF-1.6) with a software implementation (cf-python
+v2.1)},
+JOURNAL = {Geoscientific Model Development},
+VOLUME = {10},
+YEAR = {2017},
+NUMBER = {12},
+PAGES = {4619--4646},
+URL = {https://gmd.copernicus.org/articles/10/4619/2017/},
+DOI = {10.5194/gmd-10-4619-2017}
 }
 
-@article{hoyer_xarray:_2017,
+@article{Hoyer:2017,
 	title = {xarray: {N}-{D} labeled {Arrays} and {Datasets} in {Python}},
 	volume = {5},
 	issn = {2049-9647},
@@ -28,87 +28,59 @@
 	pages = {10}
 }
 
-@misc{dask_development_team_dask:_2016,
-	title = {Dask: {Library} for dynamic task scheduling},
-	url = {https://dask.org},
-	author = {{Dask Development Team}},
-	year = {2016}
+@article{Page:2022,
+	doi = {10.1002/essoar.10510291.1},
+	url = {https://doi.org/10.1002%2Fessoar.10510291.1},
+	year = 2022,
+	month = {jan},
+	publisher = {Wiley},
+	author = {Christian Pagé and Alessandro Spinuso and Lars Bärring and Klaus Zimmermann and Abel Aoun},
+	title = {Access to Analysis and Climate Indices Tools for Climate Researchers and End Users}
 }
 
-@article{beniston_trends_2009,
-	title = {Trends in joint quantiles of temperature and precipitation in {Europe} since 1901 and projected for 2100},
-	volume = {36},
-	copyright = {Copyright 2009 by the American Geophysical Union.},
-	issn = {1944-8007},
-	url = {https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2008GL037119},
-	doi = {10.1029/2008GL037119},
-	abstract = {This study assesses the changes in the exceedances of joint extremes of temperature and precipitation quantiles for a number of sites in Europe. The combination of cool/dry, cool/wet, warm/dry and warm/wet modes reveals a systematic change at all locations investigated in the course of the 20th century, with significant declines in the frequency of occurrence of the “cold” modes and a sharp rise in that of the “warm” modes. The changing behavior of these four modes is also accompanied by changes in the particular conditions of temperature and precipitation associated with each mode; for example, the average amount of precipitation during cool/wet events decreases while that during warm/wet events increases, even though mean precipitation at most locations shows no significant trend. In a “greenhouse climate”, the “cool” modes are almost totally absent by 2100 whereas the warm/dry and warm/wet modes pursue the progression already observed in the 20th century.},
-	language = {en},
-	number = {7},
-	urldate = {2019-07-02},
-	journal = {Geophysical Research Letters},
-	author = {Beniston, Martin},
-	year = {2009},
-	keywords = {climate extremes, quantiles},
-	file = {Full Text PDF:/home/tjs/Zotero/storage/TG3MHJVD/Beniston - 2009 - Trends in joint quantiles of temperature and preci.pdf:application/pdf;Snapshot:/home/tjs/Zotero/storage/ZMI6D8DL/2008GL037119.html:text/html}
+@misc{icclim,
+  author = {Christian Pagé and Abel Aoun and Natalia Tatarinova},
+  title = {Python library for climate indices calculation},
+  year = {2022},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  url = {https://github.com/cerfacs-globc/icclim}
 }
 
-@article{casati_regional_2013,
-	title = {Regional {Climate} {Projections} of {Extreme} {Heat} {Events} in {Nine} {Pilot} {Canadian} {Communities} for {Public} {Health} {Planning}},
-	volume = {52},
-	issn = {1558-8424},
-	url = {https://journals.ametsoc.org/doi/full/10.1175/JAMC-D-12-0341.1},
-	doi = {10.1175/JAMC-D-12-0341.1},
-	abstract = {Public health planning needs the support of evidence-based information on current and future climate, which could be used by health professionals and decision makers to better understand and respond to the health impacts of extreme heat. Climate models provide information regarding the expected increase in temperatures and extreme heat events with climate change and can help predict the severity of future health impacts, which can be used in the public health sector for the development of adaptation strategies to reduce heat-related morbidity and mortality. This study analyzes the evolution of extreme temperature indices specifically defined to characterize heat events associated with health risks, in the context of a changing climate. The analysis is performed by using temperature projections from the Canadian Regional Climate Model. A quantile-based statistical correction is applied to the projected temperatures, in order to reduce model biases and account for the representativeness error. Moreover, generalized Pareto distributions are used to extend the temperature distribution upper tails and extrapolate the statistical correction to extremes that are not observed in the present but that might occur in the future. The largest increase in extreme daytime temperatures occurs in southern Manitoba, Canada, where the already overly dry climate and lack of soil moisture can lead to an uncontrolled enhancement of hot extremes. The occurrence of warm nights and heat waves, on the other hand, is already large and will increase substantially in the communities of the Great Lakes region, characterized by a humid climate. Impact and adaptation studies need to account for the temperature variability due to local effects, since it can be considerably larger than the model natural variability.},
-	number = {12},
-	urldate = {2019-07-02},
-	journal = {Journal of Applied Meteorology and Climatology},
-	author = {Casati, Barbara and Yagouti, Abderrahmane and Chaumont, Diane},
-	month = jul,
-	year = {2013},
-	pages = {2669--2698},
-	file = {Full Text PDF:/home/tjs/Zotero/storage/2HYFABJP/Casati et al. - 2013 - Regional Climate Projections of Extreme Heat Event.pdf:application/pdf;Snapshot:/home/tjs/Zotero/storage/RZKQRFN9/JAMC-D-12-0341.html:text/html}
+@misc{metpy,
+author = {May, Ryan and Arms, Sean and Marsh, Patrick and Bruning, Eric and Leeman, John and Goebbert, Kevin and Thielen, Jonathan and Bruick, Zachary and Camron, M. Drew},
+doi = {10.5065/D6WW7G29},
+license = {BSD-3-Clause},
+title = {{MetPy: A Python Package for Meteorological Data}},
+url = {https://github.com/Unidata/MetPy},
+publisher = {GitHub},
+journal = {GitHub repository},
+year = {2022},
 }
 
-@article{robinson_nition_2001,
-	title = {On the {Deﬁnition} of a {Heat} {Wave}},
-	volume = {40},
-	abstract = {Heat waves are a major cause of weather-related deaths. With the current concern for global warming it is reasonable to suppose that they may increase in frequency, severity, duration, or areal extent in the future. However, in the absence of an adequate deﬁnition of a heat wave, it is impossible to assess either changes in the past or possible consequences for the future. A set of deﬁnitions is proposed here, based on the criteria for heat stress forecasts developed by the National Weather Service (NWS). Watches or warnings are issued when thresholds of daytime high and nighttime low heat index (Hi) values are exceeded for at least two consecutive days. The heat index is a combination of ambient temperature and humidity that approximates the environmental aspect of the thermal regime of a human body, with the NWS thresholds representing a generalized estimate of the onset of physiological stress. These thresholds cannot be applied directly nationwide. In hot and humid regions, physical, social, and cultural adaptations will require that the thresholds be set higher to ensure that only those events perceived as stressful are identiﬁed. In other, cooler, areas the NWS criteria may never be reached even though unusually hot events may be perceived as heat waves. Thus, it is likely that a similar number of perceived heat events will occur in all regions, with the thresholds varying regionally. Hourly Hi for 178 stations in the coterminous United States was analyzed for the 1951–90 period to determine appropriate threshold criteria. Use of the NWS criteria alone indicated that much of the nation had less than three heat waves per decade, and this value was adopted as the baseline against which to establish suitable thresholds. For all areas, a percentile threshold approach was tested. Using all available data, daytime high and nighttime low thresholds were established separately for each speciﬁc percentile. Heat waves were treated as occurring when conditions exceeded both the daytime high and the nighttime low thresholds of the same percentile for two consecutive days. Several thresholds were tested. For much of the South, 1\% thresholds produced appropriate values. Consequently, a heat wave was deﬁned as a period of at least 48 h during which neither the overnight low nor the daytime high Hi falls below the NWS heat stress thresholds (80Њ and 105ЊF, respectively), except at stations for which more than 1\% of both the annual high and low Hi observations exceed these thresholds, in which case the 1\% values are used as the heat wave thresholds. As an extension, ‘‘hot spells’’ were similarly deﬁned, but for events falling between the 1\% values and NWS thresholds, with ‘‘warm spells’’ occurring between the 2\% and 1\% values. Again, stations for which the 1\% or 2\% Hi values exceed the NWS thresholds were given modiﬁed deﬁnitions. The preliminary investigation of the timing and location of heat waves resulting from these deﬁnitions indicated that they correctly identiﬁed major epidemiological events. A tentative climatic comparison also suggests that heat waves are becoming less frequent in the southern and more frequent in the midwestern and eastern parts of the nation.},
-	language = {en},
-	journal = {JOURNAL OF APPLIED METEOROLOGY},
-	author = {Robinson, Peter J},
-	year = {2001},
-	pages = {14},
-	file = {Robinson - 2001 - On the Deﬁnition of a Heat Wave.pdf:/home/tjs/Zotero/storage/SFI5Q2Q2/Robinson - 2001 - On the Deﬁnition of a Heat Wave.pdf:application/pdf}
+@misc{clisops,
+author = {Ag Stephens and Eleanor Smith and Carsten Ehbrecht and Trevor James Smith},
+title = {clisops - climate simulation operations},
+year = {2022},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+url = {https://github.com/roocs/clisops}
 }
 
-@misc{environment_and_climate_change_canada_about_nodate,
-	title = {About — {Climate} {Data} {Canada}},
-	url = {https://climatedata.ca/about/},
-	urldate = {2019-07-02},
-	author = {{Environment and Climate Change Canada}},
-	file = {Snapshot:/home/tjs/Zotero/storage/WJQJEMEA/about.html:text/html}
-}
+@misc{xesmf,
+author = {Jiawei Zhuang and David Huard and Pascal Bourgault and Raphael Dussin and Anderson Banihirwe and Stéphane Raynaud},
+title = {xESMF: Universal Regridder for Geospatial Data},
+year = {2022},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  url = {https://github.com/pangeo-data/xESMF}
+  }
 
-@techreport{eaton_netcdf_nodate,
-	title = {{NetCDF} {Climate} and {Forecast} ({CF}) {Metadata} {Conventions}},
-	url = {http://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/cf-conventions.pdf},
-	language = {en},
-	urldate = {2019-07-03},
-	author = {Eaton, Brian and Gregory, Jonathan and Drach, Bob and Taylor, Karl and Hankin, Steve and Blower, Jon and Caron, John and Signell, Rich and Bentley, Phil and Rappa, Greg and Höck, Heinke and Pamment, Alison and Juckes, Martin and Raspaud, Martin},
-	pages = {156},
-	file = {Eaton et al. - NetCDF Climate and Forecast (CF) Metadata Conventi.pdf:/home/tjs/Zotero/storage/J8Y4CLHW/Eaton et al. - NetCDF Climate and Forecast (CF) Metadata Conventi.pdf:application/pdf}
-}
-
-@unpublished{gregory_cf_2003,
-	address = {Centre for Global Atmospheric Modelling, Department of Meteorology, University of Reading, UK, and Met Office Hadley Centre, Exeter, UK},
-	type = {Proposal},
-	title = {The {CF} {Metadata} {Standard}},
-	url = {http://cfconventions.org/Data/cf-documents/overview/article.pdf},
-	language = {en},
-	urldate = {2019-07-03},
-	author = {Gregory, Jonathan},
-	month = nov,
-	year = {2003},
-	file = {article.pdf:/home/tjs/Zotero/storage/5WQEXMAH/article.pdf:application/pdf}
-}
+@misc{finch,
+author = {David Huard and Pascal Bourgault and Trevor James Smith and David Caron and Long Vu and Mathieu Provencher},
+title = {A Web Processing Service for Climate Indicators},
+year = {2022},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  url = {https://github.com/bird-house/finch}
+  }
