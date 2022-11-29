@@ -42,7 +42,7 @@ bibliography: paper.bib
 
 `xclim` is a Python library that enables computation of climate indicators over large, heterogeneous data sets. It is built using `xarray` objects and operations, and relies on community conventions for data formatting and metadata attributes. `xclim` is meant as a tool to facilitate both climate science research and the delivery of operational climate services and products. In addition to climate indicator calculations, `xclim` also includes utilities for bias correction and statistical adjustment, ensemble analytics, and model diagnostics.
 
-# Statement of Need
+# Statement of need
 
 Researchers and climate service providers analyze data from large ensembles of Earth System Model (ESM) simulations. These analyses typically include model comparisons with observations, bias-correction and statistical adjustment, computation of various climate indicators and diagnostics, and ensemble statistics. As the number of models contributing to these ensembles grows, so does the complexity of the code required to deal with model idiosyncrasies, outlier detection, unit conversion, etc. In addition, growing ensemble sizes and improvements in the spatiotemporal resolution of ESMs raise the computational costs of running those analyses. `xclim` is designed to meet the operational needs of climate service providers by offering algorithms for over 150 climate indicators, multiple downscaling algorithms, and ensemble statistics.
 
@@ -52,15 +52,15 @@ The development of `xclim` started at Ouranos in 2018 out of the need to deliver
 
 # Key Features
 
-## Climate Indicators Calculations
+## Climate indicators calculations
 
 An `Indicator` class is built around a `compute` function defining a climate indicator. It performs health checks on input data (units, time frequency, outlier detection), handles missing values, and assigns attributes to the output, so it complies with the Climate and Forecast (CF) Convention [@Hassel:2017]. Indicators can be customized using a context manager, class inheritance, or through a YAML file - the latter allowing the creation of custom collections of indicators for batch processing.
 
-## Statistical Adjustment and Bias Correction
+## Statistical adjustment and bias correction
 
 The `xclim.sdba` subpackage provides different algorithms to adjust the distribution of simulated variables to observed variables. It adopts a train / adjust paradigm, where corrections are first calculated, then applied to the target data or saved for later use. Most methods support additive or multiplicative corrections, different time groupings (seasonal, monthly, or daily with a rolling window). Correction factors can be interpolated between time groupings to avoid discontinuities in the corrected data.
 
-## Ensemble Analysis
+## Ensemble analysis
 
 The `xclim.ensembles` subpackage bundles utilities to facilitate the analysis of results from multiple models. It includes functions to reduce the ensemble size using clustering algorithms, metrics of ensemble robustness, and significance of climate change signals.
 
