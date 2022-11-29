@@ -2,10 +2,14 @@ xclim Official Documentation
 ============================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Table of Contents:
 
    readme
+
+.. toctree::
+   :maxdepth: 2
+
    installation
    notebooks/usage
    notebooks/index

@@ -323,3 +323,7 @@ texinfo_documents = [
         "Miscellaneous",
     )
 ]
+
+
+def setup(app):
+    app.add_css_file("_static/style.css")
