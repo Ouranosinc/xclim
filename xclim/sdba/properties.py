@@ -764,7 +764,7 @@ def _transition_probability(
 ) -> xr.DataArray:
     """Transition probability.
 
-    Probability of transition from the inital state to the final state. The states are
+    Probability of transition from the initial state to the final state. The states are
      booleans comparing the value of the day to the threshold with the operator.
 
      The transition occurs when consecutive days are both in the given states.
@@ -789,7 +789,7 @@ def _transition_probability(
     Returns
     -------
     xr.DataArray, [dimensionless]
-      Transition probablity of values {initial_op} {thresh} to values {final_op} {thresh}.
+      Transition probability of values {initial_op} {thresh} to values {final_op} {thresh}.
     """
     # mask of the ocean with NaNs
     mask = ~(da.isel({group.dim: 0}).isnull()).drop_vars(group.dim)
@@ -1010,6 +1010,8 @@ spatial_correlogram = StatisticalProperty(
 
 def _decorrelation_length(da: xr.DataArray, *, radius=300, thresh=0.50, dims=None, bins=100, group="time"):
     """Decorrelation length.
+    
+    Distance from a grid cell where the correlation with its neighbours goes below the threshold.
 
 
     Parameters
@@ -1034,6 +1036,10 @@ def _decorrelation_length(da: xr.DataArray, *, radius=300, thresh=0.50, dims=Non
     -------
     xr.DataArray, [dimensionless]
       Decorrelation length.
+      
+    Notes
+    _____
+    Calculating this property requires a lot of memory. It will not work with large datasets.
     """
     # save attrs
     coords_attrs = {}
@@ -1102,14 +1108,6 @@ def _decorrelation_length(da: xr.DataArray, *, radius=300, thresh=0.50, dims=Non
     binned = binned.assign_coords(distance_bins=centers).rename(
         distance_bins="distance").assign_attrs(units="")
 
-
-    #display(binned)
-    #find correlation closest to thresh
-    #TODO: thresh instead of argmin
-    # closest = abs(binned.corr - thresh).argmin(dim='distance').values
-    # # get corresponding distance
-    # binned['decorrelation_length'] = xr.DataArray(
-    #     data=[binned.distance.values[i] for i in closest], dims='_spatial')
     closest = abs(binned.corr - thresh).idxmin(dim='distance')
     binned['decorrelation_length'] = closest
 
