@@ -27,6 +27,7 @@ Breaking changes
 Bug fixes
 ^^^^^^^^^
 * The weighted ensemble statistics are now performed within a context in order to preserve data attributes. (:issue:`1232`, :pull:`1234`).
+* The `make docs` Makefile recipe was failing with an esoteric error. This has been resolved by splitting the `linkcheck` and `docs` steps into separate actions. (:issue:`1248`. :pull:`1251`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
