@@ -70,7 +70,7 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 
 .. _audreyfeldroy/cookiecutter-pypackage: https://github.com/audreyfeldroy/cookiecutter-pypackage/
 .. _CFI: https://www.innovation.ca/
-.. _Cookiecutter: https://github.com/audreyr/cookiecutter/
+.. _Cookiecutter: https://github.com/cookiecutter/cookiecutter/
 .. _ECCC: https://www.canada.ca/en/environment-climate-change.html
 .. _FECC: https://www.environnement.gouv.qc.ca/ministere/fonds-electrification-changements-climatiques/index.htm
 .. _Fonds vert: https://www.environnement.gouv.qc.ca/ministere/fonds-vert/index.htm
