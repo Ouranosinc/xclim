@@ -341,7 +341,7 @@ def convert_units_to(
             dim_order_diff = source_unit.dimensionality / target_unit.dimensionality
             for convname, convconf in CF_CONVERSIONS.items():
                 for direction, sign in [("to", 1), ("from", -1)]:
-                    # If the dimensionality diff compatible with this conversion
+                    # If the dimensionality diff is compatible with this conversion
                     compatible = all(
                         [
                             dimdiff == (sign * dim_order_diff.get(f"[{dim}]"))
@@ -672,7 +672,7 @@ def rate2amount(
     sampling_rate_from_coord : boolean
         For data with irregular time coordinates. If True, the diff of the time coordinate will be used as the sampling rate,
         meaning each data point will be assumed to apply for the interval ending at the next point. See notes.
-        Defaults to False, which raises an error if the time coordiante is irregular.
+        Defaults to False, which raises an error if the time coordinate is irregular.
     out_units : str, optional
         Output units to convert to.
 
@@ -752,7 +752,7 @@ def amount2rate(
         The time dimension.
     sampling_rate_from_coord : boolean
         For data with irregular time coordinates. If True, the diff of the time coordinate will be used as the sampling rate,
-        meaning each data point will be assumed to apply for the interval ending at the next point.
+        meaning each data point will be assumed to span the interval ending at the next point.
         See notes of :py:func:`xclim.core.units.rate2amount`.
         Defaults to False, which raises an error if the time coordiante is irregular.
     out_units : str, optional
