@@ -1011,6 +1011,8 @@ def _decorrelation_length(da: xr.DataArray, *, radius=300, thresh=0.50, dims=Non
     """Decorrelation length.
 
     Distance from a grid cell where the correlation with its neighbours goes below the threshold.
+    A correlogram is calculated for each grid cell following the method from ``xclim.sdba.properties.spatial_correlogram``.
+    Then, we find the first bin closest to the threshold.
 
     Parameters
     ----------
@@ -1117,7 +1119,7 @@ def _decorrelation_length(da: xr.DataArray, *, radius=300, thresh=0.50, dims=Non
         out = binned.decorrelation_length.unstack()
     else:
         out = binned.swap_dims({'_spatial': dims[0]}).decorrelation_length
-    
+
     # put back coords attrs
     for c in out.coords:
         out[c].attrs = coords_attrs[c]
