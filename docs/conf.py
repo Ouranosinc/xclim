@@ -115,9 +115,11 @@ autosectionlabel_prefix_document = True
 autosectionlabel_maxdepth = 2
 
 linkcheck_ignore = [
-    r"https://github.com/Ouranosinc/xclim/(pull|issue).*",
+    r"https://github.com/Ouranosinc/xclim/(pull|issue).*",  # too labourious to fully check
     r"https://doi.org/10.1093/mnras/225.1.155",  # does not allow linkcheck requests (error 403)
+    r"https://www.ouranos.ca",  # bad ssl certificate
 ]
+linkcheck_exclude_documents = [r"readme"]
 
 napoleon_numpy_docstring = True
 napoleon_use_rtype = False
@@ -322,3 +324,7 @@ texinfo_documents = [
         "Miscellaneous",
     )
 ]
+
+
+def setup(app):
+    app.add_css_file("_static/style.css")
