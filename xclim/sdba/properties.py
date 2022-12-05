@@ -1093,7 +1093,7 @@ def _decorrelation_length(
     ds = ds.where(ds.distance2 < radius)
 
     def _bin_corr(corr, distance):
-        """Bin and mean"""
+        """Bin and mean."""
         return stats.binned_statistic(
             distance, corr, statistic="mean", bins=bins
         ).statistic
