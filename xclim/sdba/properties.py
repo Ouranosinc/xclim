@@ -757,7 +757,7 @@ def _transition_probability(
     da: xr.DataArray,
     *,
     initial_op: str = ">=",
-    final_op:str = '>=',
+    final_op: str = ">=",
     thresh: str = "1 mm d-1",
     group: str | Grouper = "time",
 ) -> xr.DataArray:
@@ -794,22 +794,24 @@ def _transition_probability(
     mask = ~(da.isel({group.dim: 0}).isnull()).drop_vars(group.dim)
 
     today = da.isel(time=slice(0, -1))
-    tomorrow= da.shift(time=-1).isel(time=slice(0,-1))
+    tomorrow = da.shift(time=-1).isel(time=slice(0, -1))
 
     ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
     t = convert_units_to(thresh, da)
-    cond= ops[initial_op](today, t) * ops[final_op](tomorrow, t)
+    cond = ops[initial_op](today, t) * ops[final_op](tomorrow, t)
     if group.prop != "group":
         cond = cond.groupby(group.name)
-    out = cond.mean( dim=group.dim)
+    out = cond.mean(dim=group.dim)
     out = out.where(mask, np.nan)
     out.attrs["units"] = ""
-    print('test')
+    print("test")
     return out
 
 
 transition_probability = StatisticalProperty(
-    identifier="transition_probability", aspect="temporal", compute=_transition_probability
+    identifier="transition_probability",
+    aspect="temporal",
+    compute=_transition_probability,
 )
 
 
@@ -1007,7 +1009,9 @@ spatial_correlogram = StatisticalProperty(
 )
 
 
-def _decorrelation_length(da: xr.DataArray, *, radius=300, thresh=0.50, dims=None, bins=100, group="time"):
+def _decorrelation_length(
+    da: xr.DataArray, *, radius=300, thresh=0.50, dims=None, bins=100, group="time"
+):
     """Decorrelation length.
 
     Distance from a grid cell where the correlation with its neighbours goes below the threshold.
@@ -1046,7 +1050,6 @@ def _decorrelation_length(da: xr.DataArray, *, radius=300, thresh=0.50, dims=Non
     for c in da.coords:
         coords_attrs[c] = da[c].attrs
 
-
     if dims is None:
         dims = [d for d in da.dims if d != "time"]
 
@@ -1059,10 +1062,12 @@ def _decorrelation_length(da: xr.DataArray, *, radius=300, thresh=0.50, dims=Non
     # fill bottom triangle
     np.nan_to_num(dists, 0)
     # TODO: do it in 2 shots instead?
-    dists = dists + dists.T #- np.diag(np.diag(dists))
+    dists = dists + dists.T  # - np.diag(np.diag(dists))
     dists = dists.astype(int)
     dists = xr.DataArray(dists, dims=corr.dims, coords=corr.coords, name="distance")
-    trans_dists = xr.DataArray(dists.T, dims=corr.dims, coords=corr.coords, name="distance")
+    trans_dists = xr.DataArray(
+        dists.T, dims=corr.dims, coords=corr.coords, name="distance"
+    )
 
     if np.isscalar(bins):
         bins = np.linspace(0, radius, bins + 1)
@@ -1080,50 +1085,60 @@ def _decorrelation_length(da: xr.DataArray, *, radius=300, thresh=0.50, dims=Non
             "long_name": f"Centers of the intersite distance bins (width of {w[0]:.3f} km)",
         },
     )
-    ds = xr.Dataset({"corr": corr, "distance": dists, 'distance2': trans_dists})
+    ds = xr.Dataset({"corr": corr, "distance": dists, "distance2": trans_dists})
 
     # only keep points inside the radius
     ds = ds.where(ds.distance < radius)
 
     ds = ds.where(ds.distance2 < radius)
 
-
     def _bin_corr(corr, distance):
-        """ Bin and mean"""
-        return stats.binned_statistic(distance, corr, statistic='mean',
-                                            bins=bins).statistic
+        """Bin and mean"""
+        return stats.binned_statistic(
+            distance, corr, statistic="mean", bins=bins
+        ).statistic
+
     # (_spatial, _spatial2) -> (_spatial, distance_bins)
-    binned = xr.apply_ufunc(_bin_corr,
-                            ds.corr,
-                            ds.distance,
-                            input_core_dims=[["_spatial2"], ["_spatial2"]],
-                            output_core_dims=[["distance_bins"]],
-                            dask='parallelized',
-                            vectorize=True,
-                            output_dtypes=[float],
-                            dask_gufunc_kwargs={"allow_rechunk": True,
-                                                'output_sizes': {'distance_bins': 100}}
-                            ).rename('corr').to_dataset()
+    binned = (
+        xr.apply_ufunc(
+            _bin_corr,
+            ds.corr,
+            ds.distance,
+            input_core_dims=[["_spatial2"], ["_spatial2"]],
+            output_core_dims=[["distance_bins"]],
+            dask="parallelized",
+            vectorize=True,
+            output_dtypes=[float],
+            dask_gufunc_kwargs={
+                "allow_rechunk": True,
+                "output_sizes": {"distance_bins": 100},
+            },
+        )
+        .rename("corr")
+        .to_dataset()
+    )
 
-    binned = binned.assign_coords(distance_bins=centers).rename(
-        distance_bins="distance").assign_attrs(units="")
+    binned = (
+        binned.assign_coords(distance_bins=centers)
+        .rename(distance_bins="distance")
+        .assign_attrs(units="")
+    )
 
-    closest = abs(binned.corr - thresh).idxmin(dim='distance')
-    binned['decorrelation_length'] = closest
-
+    closest = abs(binned.corr - thresh).idxmin(dim="distance")
+    binned["decorrelation_length"] = closest
 
     # get back to 2d lat and lon
-    #if 'lat' in dims and 'lon' in dims:
-    if len(dims) >1:
-        binned = binned.set_index({'_spatial': dims})
+    # if 'lat' in dims and 'lon' in dims:
+    if len(dims) > 1:
+        binned = binned.set_index({"_spatial": dims})
         out = binned.decorrelation_length.unstack()
     else:
-        out = binned.swap_dims({'_spatial': dims[0]}).decorrelation_length
+        out = binned.swap_dims({"_spatial": dims[0]}).decorrelation_length
 
     # put back coords attrs
     for c in out.coords:
         out[c].attrs = coords_attrs[c]
-    out.attrs['units']= "km"
+    out.attrs["units"] = "km"
     return out
 
 

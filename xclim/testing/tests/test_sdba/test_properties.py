@@ -287,13 +287,11 @@ def test_corr_btw_var():
         sdba.properties.corr_btw_var(sim, simt, group="time", corr_type="pear")
 
 
-
-
 def test_relative_frequency():
     sim = (
         open_dataset("sdba/CanESM2_1950-2100.nc")
-            .sel(time=slice("1950", "1952"), location="Vancouver")
-            .pr
+        .sel(time=slice("1950", "1952"), location="Vancouver")
+        .pr
     )
 
     test = sdba.properties.relative_frequency(sim, thresh="25 mm d-1", op=">=")
@@ -301,14 +299,15 @@ def test_relative_frequency():
         sdba.properties.relative_frequency(
             sim, thresh="25 mm d-1", op=">=", group="time.month"
         )
-            .sel(month=1)
-            .values
+        .sel(month=1)
+        .values
     )
     np.testing.assert_array_almost_equal(
         [test.values, testjan], [0.0045662100456621, 0.010752688172043012]
     )
     assert test.long_name == "Relative frequency of values >= 25 mm d-1."
     assert test.units == ""
+
 
 def test_transition():
     sim = (
@@ -317,13 +316,15 @@ def test_transition():
         .pr
     )
 
-    test = sdba.properties.transition_probability(da= sim, initial_op='<', final_op='>=')
+    test = sdba.properties.transition_probability(da=sim, initial_op="<", final_op=">=")
 
-    np.testing.assert_array_almost_equal(
-        [test.values], [0.14076782449725778]
+    np.testing.assert_array_almost_equal([test.values], [0.14076782449725778])
+    assert (
+        test.long_name
+        == "Transition probability of values < 1 mm d-1 to values >= 1 mm d-1."
     )
-    assert test.long_name ==  'Transition probability of values < 1 mm d-1 to values >= 1 mm d-1.'
     assert test.units == ""
+
 
 def test_trend():
     simt = (
@@ -391,15 +392,18 @@ def test_spatial_correlogram():
         out.distance[:5], [26.543199, 67.716227, 108.889254, 150.062282, 191.23531]
     )
 
+
 @pytest.mark.slow
 def test_decorrelation_length():
     sim = open_dataset("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc").tasmax.isel(
-        lon=slice(0, 5), lat=slice(0, 1))
-    out = sdba.properties.decorrelation_length(sim, dims=["lat", "lon"], bins=10,
-                                                  radius=30)
+        lon=slice(0, 5), lat=slice(0, 1)
+    )
+    out = sdba.properties.decorrelation_length(
+        sim, dims=["lat", "lon"], bins=10, radius=30
+    )
     np.testing.assert_allclose(
         out[0],
-        [ 4.5,  4.5,  4.5,  4.5, 10.5],
+        [4.5, 4.5, 4.5, 4.5, 10.5],
     )
 
 

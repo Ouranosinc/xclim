@@ -878,4 +878,3 @@ def _pairwise_spearman(da, dims):
             "allow_rechunk": True,
         },
     ).rename("correlation")
-

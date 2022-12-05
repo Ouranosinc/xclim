@@ -248,4 +248,3 @@ def _pairwise_haversine_and_bins(lond, latd):
     mn = np.nanmin(dists)
     mx = np.nanmax(dists)
     return dists, mn, mx
-
