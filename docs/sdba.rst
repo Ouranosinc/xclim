@@ -1,5 +1,5 @@
 ==========================================
-Bias adjustment and downscaling algorithms
+Bias Adjustment and Downscaling Algorithms
 ==========================================
 
 `xarray` data structures allow for relatively straightforward implementations of simple bias-adjustment and downscaling algorithms documented in :ref:`Adjustment Methods <sdba:SDBA User API>`.
