@@ -1016,7 +1016,7 @@ def _decorrelation_length(
 
     Distance from a grid cell where the correlation with its neighbours goes below the threshold.
     A correlogram is calculated for each grid cell following the method from ``xclim.sdba.properties.spatial_correlogram``.
-    Then, we find the first bin closest to the threshold.
+    Then, we find the first bin closest to the correlation threshold.
 
     Parameters
     ----------
