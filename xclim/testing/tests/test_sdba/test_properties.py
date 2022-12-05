@@ -376,6 +376,7 @@ def test_spatial_correlogram():
     )
 
 
+@pytest.skip("Hangs inexplicably.")
 def test_first_eof():
     pytest.importorskip("eofs")
     sim = open_dataset("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc").tasmax.isel(
