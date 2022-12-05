@@ -98,6 +98,10 @@ jobs:
           channels: conda-forge,defaults
           mamba-version: "*"
           python-version: "3.9"
+      - name: Conda and Mamba versions
+        shell: bash -l {0}
+        run: |
+          mamba --version
       - name: Install tox
         shell: bash -l {0}
         run: |
