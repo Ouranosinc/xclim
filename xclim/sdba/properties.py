@@ -1042,7 +1042,7 @@ def _decorrelation_length(
       Decorrelation length.
 
     Notes
-    _____
+    -----
     Calculating this property requires a lot of memory. It will not work with large datasets.
     """
     # save attrs
