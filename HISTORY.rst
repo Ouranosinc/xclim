@@ -19,7 +19,7 @@ Breaking changes
     - ``xclim.indices.first_day_above`` → ``xclim.indices.first_day_temperature_above``
     - ``xclim.indices.first_day_below`` → ``xclim.indices.first_day_temperature_below``
     - ``xclim.indices.tropical_nights`` → ``xclim.indices.tn_days_above``
-    - ``xclim.indices.generic.degree_days` → ``xclim.indices.generic.cumulative_difference``
+    - ``xclim.indices.generic.degree_days`` → ``xclim.indices.generic.cumulative_difference``
 * The following *modules* have been removed:
     - `xclim.indices.fwi` → functions migrated to `xclim.indices.fire`
     - `xclim.subset` (mock submodule) → functions migrated to `clisops.core.subset`
@@ -28,12 +28,20 @@ Bug fixes
 ^^^^^^^^^
 * The weighted ensemble statistics are now performed within a context in order to preserve data attributes. (:issue:`1232`, :pull:`1234`).
 
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* ``xclim.core.units.convert_units_to`` can now perform automatic conversions based on the standard name of the input when needed. (:issue:`1205`, :pull:`1206`).
+    - Conversion from amount (thickness) to flux (rate), using ``amount2rate`` and ``rate2amount``.
+    - Conversion from amount to thickness for liquid water quantities, using the new ``amount2lwethickness`` and ``lwethickness2amount``. This is similar to the implicit transformations enabled by the "hydro" unit context.
+
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Minor adjustments to GitHub Actions workflows (newest Ubuntu images, updated actions version, better CI triggering). (:pull:`1221`).
 * Updated article from Alavoine & Grenier (2022) within documentation. Many article reference URLs have been updated to use HTTPS where possible. (:issue:`1246`, :pull:`1247`).
 * Added relevant variable dataflag checks for potential evaporation, convective precipitation, and air pressure at sea level. (:pull:`1241`).
 * Merge of sdba documentation from the module and the rst files, some cleanup and addition of a section refering to github issues. (:pull:`1230`).
+
 
 0.39.0 (2022-11-02)
 -------------------
