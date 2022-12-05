@@ -322,7 +322,7 @@ def test_transition():
     np.testing.assert_array_almost_equal(
         [test.values], [0.14076782449725778]
     )
-    assert test.long_name ==  "Transition probablity of values < 1 mm d-1 to values >= 1 mm d-1."
+    assert test.long_name ==  'Transition probability of values < 1 mm d-1 to values >= 1 mm d-1.'
     assert test.units == ""
 
 def test_trend():
@@ -395,10 +395,10 @@ def test_spatial_correlogram():
 def test_decorrelation_length():
     sim = open_dataset("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc").tasmax.isel(
         lon=slice(0, 5), lat=slice(0, 1))
-    out = xc.sdba.properties.decorrelation_length(sim, dims=["lat", "lon"], bins=10,
+    out = sdba.properties.decorrelation_length(sim, dims=["lat", "lon"], bins=10,
                                                   radius=30)
     np.testing.assert_allclose(
-        out,
+        out[0],
         [ 4.5,  4.5,  4.5,  4.5, 10.5],
     )
 
