@@ -3,20 +3,22 @@
 Units handling submodule
 ========================
 
-`Pint` is used to define the `units` `UnitRegistry` and `xclim.units.core` defines
-most unit handling methods.
+`Pint` is used to define the :py:data:`xclim.core.units.units` `UnitRegistry`.
+This module defines most unit handling methods.
 """
 from __future__ import annotations
 
 import functools
 import re
 import warnings
+from importlib.resources import open_text
 from inspect import signature
-from typing import Any, Callable
+from typing import Any, Callable, TypeVar
 
 import pint
 import xarray as xr
 from boltons.funcutils import wraps
+from yaml import safe_load
 
 from .calendar import date_range, get_calendar, parse_offset
 from .options import datacheck
@@ -24,10 +26,12 @@ from .utils import ValidationError
 
 __all__ = [
     "amount2rate",
+    "amount2lwethickness",
     "check_units",
     "convert_units_to",
     "declare_units",
     "infer_sampling_units",
+    "lwethickness2amount",
     "pint_multiply",
     "pint2cfunits",
     "rate2amount",
@@ -52,6 +56,7 @@ units = pint.UnitRegistry(
     ],
 )
 
+Convertible = TypeVar("Convertible", str, xr.DataArray, units.Unit, units.Quantity)
 units.define("percent = 0.01 = % = pct")
 
 # In pint, the default symbol for year is "a" which is not CF-compliant (stands for "are")
@@ -100,6 +105,29 @@ hydro.add_transformation(
 )
 units.add_context(hydro)
 units.enable_contexts(hydro)
+
+
+CF_CONVERSIONS = safe_load(open_text("xclim.data", "variables.yml"))["conversions"]
+_CONVERSIONS = {}
+
+
+def _register_conversion(conversion, direction):
+    """Register a conversion function to be automatically picked up in `convert_units_to`.
+
+    The function must correspond to a name in `CF_CONVERSIONS`, so to a section in
+    `xclim/data/variables.yml::conversions`.
+    """
+    if conversion not in CF_CONVERSIONS:
+        raise NotImplementedError(
+            "Automatic conversion functions must have a corresponding section in xclim/data/variables.yml"
+        )
+
+    def _func_register(func):
+        _CONVERSIONS[(conversion, direction)] = func
+        return func
+
+    return _func_register
+
 
 # These are the changes that could be included in a units definition file.
 
@@ -165,8 +193,7 @@ def units2pint(value: xr.DataArray | str | units.Quantity) -> pint.Unit:
     return units.parse_units(unit)
 
 
-# Note: The pint library does not have a generic Unit or Quantity type at the moment. Using "Any" as a stand-in.
-def pint2cfunits(value: pint.Unit) -> str:
+def pint2cfunits(value: units.Quantity | units.Unit) -> str:
     """Return a CF-compliant unit string from a `pint` unit.
 
     Parameters
@@ -179,8 +206,8 @@ def pint2cfunits(value: pint.Unit) -> str:
     str
         Units following CF-Convention, using symbols.
     """
-    if isinstance(value, pint.Quantity):
-        value = value.units
+    if isinstance(value, (pint.Quantity, units.Quantity)):
+        value = value.units  # noqa reason: units.Quantity really have .units property
 
     # Print units using abbreviations (millimeter -> mm)
     s = f"{value:~}"
@@ -260,15 +287,15 @@ def str2pint(val: str) -> pint.Quantity:
 
 
 def convert_units_to(
-    source: str | xr.DataArray | Any,
-    target: str | xr.DataArray | Any,
+    source: Convertible,
+    target: str | xr.DataArray | units.Unit,
     context: str | None = None,
-) -> xr.DataArray | float | int | str | Any:
+) -> Convertible:
     """Convert a mathematical expression into a value with the same units as a DataArray.
 
     Parameters
     ----------
-    source : str or xr.DataArray or Any
+    source : str or xr.DataArray or units.Unit or units.Quantity
         The value to be converted, e.g. '4C' or '1 mm/d'.
     target : str or xr.DataArray or Any
         Target array of values to which units must conform.
@@ -277,58 +304,115 @@ def convert_units_to(
 
     Returns
     -------
-    xr.DataArray or float or int or str or Any
+    str or xr.DataArray or units.Unit or units.Quantity
         The source value converted to target's units.
+        The outputted type is always similar to `source` initial type.
+        Attributes are preserved unless an automatic CF conversion is performed,
+        in which case only the new `standard_name` appears in the result.
     """
     # Target units
     if isinstance(target, units.Unit):
-        tu = target
+        target_unit = target
     elif isinstance(target, (str, xr.DataArray)):
-        tu = units2pint(target)
+        target_unit = units2pint(target)
     else:
-        raise NotImplementedError
+        raise NotImplementedError(
+            "target must be either a pint Unit or a xarray DataArray."
+        )
 
     if isinstance(source, str):
         q = str2pint(source)
         # Return magnitude of converted quantity. This is going to fail if units are not compatible.
-        return q.to(tu).m
+        return q.to(target_unit).m
 
     if isinstance(source, units.Quantity):
-        return source.to(tu).m
+        return source.to(target_unit).m
 
     if isinstance(source, xr.DataArray):
-        fu = units2pint(source)
-        tu_u = pint2cfunits(tu)
+        source_unit = units2pint(source)
+        target_cf_unit = pint2cfunits(target_unit)
 
-        if fu == tu:
+        # Automatic pre-conversions based on the dimensionalities and CF standard names
+        standard_name = source.attrs.get("standard_name")
+        if (
+            standard_name is not None
+            and source_unit.dimensionality != target_unit.dimensionality
+        ):
+            dim_order_diff = source_unit.dimensionality / target_unit.dimensionality
+            for convname, convconf in CF_CONVERSIONS.items():
+                for direction, sign in [("to", 1), ("from", -1)]:
+                    # If the dimensionality diff is compatible with this conversion
+                    compatible = all(
+                        [
+                            dimdiff == (sign * dim_order_diff.get(f"[{dim}]"))
+                            for dim, dimdiff in convconf["dimensionality"].items()
+                        ]
+                    )
+                    # Does the input cf standard name have an equivalent after conversion
+                    valid = cf_conversion(standard_name, convname, direction)
+                    if compatible and valid:
+                        # The new cf standard name is inserted by the converter
+                        try:
+                            source = _CONVERSIONS[(convname, direction)](source)
+                        except Exception:
+                            # Failing automatic conversion
+                            # It will anyway fail further down with a correct error message.
+                            pass
+                        else:
+                            source_unit = units2pint(source)
+
+        if source_unit == target_unit:
             # The units are the same, but the symbol may not be.
-            source.attrs["units"] = tu_u
+            source.attrs["units"] = target_cf_unit
             return source
 
         with units.context(context or "none"):
-            out = xr.DataArray(
-                data=units.convert(source.data, fu, tu),  # noqa
-                coords=source.coords,
-                attrs=source.attrs,
-                name=source.name,
-            )
-            out.attrs["units"] = tu_u
+            out = source.copy(data=units.convert(source.data, source_unit, target_unit))
+            out.attrs["units"] = target_cf_unit
             return out
 
     # TODO remove backwards compatibility of int/float thresholds after v1.0 release
     if isinstance(source, (float, int)):
         if context == "hydro":
-            fu = units.mm / units.day
+            source_unit = units.mm / units.day
         else:
-            fu = units.degC
+            source_unit = units.degC
         warnings.warn(
             "Future versions of xclim will require explicit unit specifications.",
             FutureWarning,
             stacklevel=3,
         )
-        return units.Quantity(source, units=fu).to(tu).m
+        return units.Quantity(source, units=source_unit).to(target_unit).m
 
     raise NotImplementedError(f"Source of type `{type(source)}` is not supported.")
+
+
+def cf_conversion(standard_name: str, conversion: str, direction: str):
+    """Get the standard name of the specific conversion for the given standard name.
+
+    Parameters
+    ----------
+    standard_name : str
+        Standard name of the input.
+    conversion : {'amount2rate', 'amount2lwethickness'}
+        Type of conversion. Available conversions are the keys of the `conversions` entry in `xclim/data/variables.yml`.
+        See :py:data:`xclim.core.units.CF_CONVERSIONS`. They also correspond to functions in this module.
+    direction : {'to', 'from'}
+        The direction of the requested conversion. "to" means the conversion as given by the `conversion` name,
+        while "from" means the reverse operation. For example `conversion="amount2rate"` and `direction="from"`
+        will search for a conversion from a rate or flux to an amount or thickness for the given standard name.
+
+    Returns
+    -------
+    converted_standard_name or None
+        If a string, this means the conversion is possible and the result should have this standard name.
+        If None, the conversion is not possible within the CF standards.
+    """
+    i = ["to", "from"].index(direction)
+    for names in CF_CONVERSIONS[conversion]["valid_names"]:
+        if names[i] == standard_name:
+            return names[int(not i)]
+    return None
 
 
 FREQ_UNITS = {
@@ -341,7 +425,7 @@ FREQ_UNITS = {
     "W": "week",
 }
 """
-Resampling frequency units for :py:func:`infer_sampling_units`.
+Resampling frequency units for :py:func:`xclim.core.units.infer_sampling_units`.
 
 Mapping from offset base to CF-compliant unit. Only constant-length frequencies are included.
 """
@@ -475,9 +559,13 @@ def to_agg_units(
 
 
 def _rate_and_amount_converter(
-    da: xr.DataArray, dim: str = "time", to: str = "amount", out_units: str = None
+    da: xr.DataArray,
+    dim: str = "time",
+    to: str = "amount",
+    sampling_rate_from_coord: bool = False,
+    out_units: str = None,
 ) -> xr.DataArray:
-    """Private function performing the actual conversion for :py:func:`rate2amount` and :py:func:`amount2rate`."""
+    """Private function performing the actual conversion for :py:func:`xclim.core.units.rate2amount` and :py:func:`xclim.core.units.amount2rate`."""
     m = 1
     u = None  # Default to assume a non-uniform axis
     label = "lower"
@@ -485,8 +573,14 @@ def _rate_and_amount_converter(
 
     try:
         freq = xr.infer_freq(da[dim])
-    except ValueError:
-        freq = None
+    except ValueError as err:
+        if sampling_rate_from_coord:
+            freq = None
+        else:
+            raise ValueError(
+                "The variables' sampling frequency could not be inferred, which is needed for conversions between rates and amounts. "
+                f"If the derivative of the variables' {dim} coodinate can be used as the sampling rate, pass `sampling_rate_from_coord=True`."
+            ) from err
     if freq is not None:
         multi, base, start_anchor, _ = parse_offset(freq)
         if base in ["M", "Q", "A"]:
@@ -528,10 +622,9 @@ def _rate_and_amount_converter(
             tu = (str2pint(da.units) / str2pint("s")).to_reduced_units()
             out = (da / dt) * tu.m
         else:
-            raise ValueError("Argument `to` must be one of 'amout' or 'rate'.")
+            raise ValueError("Argument `to` must be one of 'amount' or 'rate'.")
 
         out.attrs["units"] = pint2cfunits(tu)
-
     else:
         q = units.Quantity(m, u)
         if to == "amount":
@@ -539,7 +632,15 @@ def _rate_and_amount_converter(
         elif to == "rate":
             out = pint_multiply(da, 1 / q)
         else:
-            raise ValueError("Argument `to` must be one of 'amout' or 'rate'.")
+            raise ValueError("Argument `to` must be one of 'amount' or 'rate'.")
+
+    old_name = da.attrs.get("standard_name")
+    if old_name and (
+        new_name := cf_conversion(
+            old_name, "amount2rate", "to" if to == "rate" else "from"
+        )
+    ):
+        out.attrs["standard_name"] = new_name
 
     if out_units:
         out = convert_units_to(out, out_units)
@@ -547,8 +648,12 @@ def _rate_and_amount_converter(
     return out
 
 
+@_register_conversion("amount2rate", "from")
 def rate2amount(
-    rate: xr.DataArray, dim: str = "time", out_units: str = None
+    rate: xr.DataArray,
+    dim: str = "time",
+    sampling_rate_from_coord: bool = False,
+    out_units: str = None,
 ) -> xr.DataArray:
     """Convert a rate variable to an amount by multiplying by the sampling period length.
 
@@ -556,7 +661,7 @@ def rate2amount(
     are multiplied by the duration between their time coordinate and the next one. The last period
     is estimated with the duration of the one just before.
 
-    This is the inverse operation of :py:func:`amount2rate`.
+    This is the inverse operation of :py:func:`xclim.core.units.amount2rate`.
 
     Parameters
     ----------
@@ -564,8 +669,17 @@ def rate2amount(
         "Rate" variable, with units of "amount" per time. Ex: Precipitation in "mm / d".
     dim : str
         The time dimension.
+    sampling_rate_from_coord : boolean
+        For data with irregular time coordinates. If True, the diff of the time coordinate will be used as the sampling rate,
+        meaning each data point will be assumed to apply for the interval ending at the next point. See notes.
+        Defaults to False, which raises an error if the time coordinate is irregular.
     out_units : str, optional
         Output units to convert to.
+
+    Raises
+    ------
+    ValueError
+        If the time coordinate is irregular and `sampling_rate_from_coord` is False (default).
 
     Returns
     -------
@@ -586,13 +700,13 @@ def rate2amount(
     24.0
 
     Also works if the time axis is irregular : the rates are assumed constant for the whole period
-    starting on the values timestamp to the next timestamp:
+    starting on the values timestamp to the next timestamp. This option is activated with `sampling_rate_from_coord=True`.
 
     >>> time = time[[0, 9, 30]]  # The time axis is Jan 1st, Jan 10th, Jan 31st
     >>> pr = xr.DataArray(
     ...     [1] * 3, dims=("time",), coords={"time": time}, attrs={"units": "mm/h"}
     ... )
-    >>> pram = rate2amount(pr)
+    >>> pram = rate2amount(pr, sampling_rate_from_coord=True)
     >>> pram.values
     array([216., 504., 504.])
 
@@ -601,12 +715,26 @@ def rate2amount(
     >>> pram = rate2amount(pr, out_units="pc")  # Get rain amount in parsecs. Why not.
     >>> pram.values
     array([7.00008327e-18, 1.63335276e-17, 1.63335276e-17])
+
+    See Also
+    --------
+    amount2rate
     """
-    return _rate_and_amount_converter(rate, dim=dim, to="amount", out_units=out_units)
+    return _rate_and_amount_converter(
+        rate,
+        dim=dim,
+        to="amount",
+        sampling_rate_from_coord=sampling_rate_from_coord,
+        out_units=out_units,
+    )
 
 
+@_register_conversion("amount2rate", "to")
 def amount2rate(
-    amount: xr.DataArray, dim: str = "time", out_units: str = None
+    amount: xr.DataArray,
+    dim: str = "time",
+    sampling_rate_from_coord: bool = False,
+    out_units: str = None,
 ) -> xr.DataArray:
     """Convert an amount variable to a rate by dividing by the sampling period length.
 
@@ -614,7 +742,7 @@ def amount2rate(
     are divided by the duration between their time coordinate and the next one. The last period
     is estimated with the duration of the one just before.
 
-    This is the inverse operation of :py:func:`rate2amount`.
+    This is the inverse operation of :py:func:`xclim.core.units.rate2amount`.
 
     Parameters
     ----------
@@ -622,14 +750,104 @@ def amount2rate(
         "amount" variable. Ex: Precipitation amount in "mm".
     dim : str
         The time dimension.
+    sampling_rate_from_coord : boolean
+        For data with irregular time coordinates. If True, the diff of the time coordinate will be used as the sampling rate,
+        meaning each data point will be assumed to span the interval ending at the next point.
+        See notes of :py:func:`xclim.core.units.rate2amount`.
+        Defaults to False, which raises an error if the time coordiante is irregular.
     out_units : str, optional
         Output units to convert to.
+
+    Raises
+    ------
+    ValueError
+        If the time coordinate is irregular and `sampling_rate_from_coord` is False (default).
 
     Returns
     -------
     xr.DataArray
+
+    See Also
+    --------
+    rate2amount
     """
-    return _rate_and_amount_converter(amount, dim=dim, out_units=out_units, to="rate")
+    return _rate_and_amount_converter(
+        amount,
+        dim=dim,
+        to="rate",
+        sampling_rate_from_coord=sampling_rate_from_coord,
+        out_units=out_units,
+    )
+
+
+@_register_conversion("amount2lwethickness", "to")
+def amount2lwethickness(amount: xr.DataArray, out_units: str = None):
+    """Convert a liquid water amount (mass over area) to its equivalent area-averaged thickness (length).
+
+    This will simply divide the amount by the density of liquid water, 1000 kg/m³.
+    This is equivalent to using the "hydro" context of :py:data:`xclim.core.units.units`.
+
+    Parameters
+    ----------
+    amount: xr.DataArray
+        A DataArray storing a liquid water amount quantity.
+    out_units: str
+        Specific output units if needed.
+
+    Returns
+    -------
+    lwe_thickness
+        The standard_name of `amount` is modified if a conversion is found (see :py:func:`xclim.core.units.cf_conversion`),
+        it is removed otherwise. Other attributes are left untouched.
+
+    See Also
+    --------
+    lwethickness2amount
+    """
+    water_density = str2pint("1000 kg m-3")
+    out = pint_multiply(amount, 1 / water_density)
+    old_name = amount.attrs.get("standard_name", None)
+    if old_name and (new_name := cf_conversion(old_name, "amount2lwethickness", "to")):
+        out.attrs["standard_name"] = new_name
+    if out_units:
+        out = convert_units_to(out, out_units)
+    return out
+
+
+@_register_conversion("amount2lwethickness", "from")
+def lwethickness2amount(thickness: xr.DataArray, out_units: str = None):
+    """Convert a liquid water thickness (length) to its equivalent amount (mass over area).
+
+    This will simply multiply the thickness by the density of liquid water, 1000 kg/m³.
+    This is equivalent to using the "hydro" context of :py:data:`xclim.core.units.units`.
+
+    Parameters
+    ----------
+    thickness: xr.DataArray
+        A DataArray storing a liquid water thickness quantity.
+    out_units: str
+        Specific output units if needed.
+
+    Returns
+    -------
+    amount
+        The standard_name of `amount` is modified if a conversion is found (see :py:func:`xclim.core.units.cf_conversion`),
+        it is removed otherwise. Other attributes are left untouched.
+
+    See Also
+    --------
+    amount2lwethickness
+    """
+    water_density = str2pint("1000 kg m-3")
+    out = pint_multiply(thickness, water_density)
+    old_name = thickness.attrs.get("standard_name")
+    if old_name and (
+        new_name := cf_conversion(old_name, "amount2lwethickness", "from")
+    ):
+        out.attrs["standard_name"] = new_name
+    if out_units:
+        out = convert_units_to(out, out_units)
+    return out
 
 
 @datacheck
