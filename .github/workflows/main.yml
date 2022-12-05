@@ -101,6 +101,7 @@ jobs:
       - name: Conda and Mamba versions
         shell: bash -l {0}
         run: |
+          mamba update -n base --all
           mamba --version
       - name: Install tox
         shell: bash -l {0}
