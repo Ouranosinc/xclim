@@ -59,7 +59,7 @@ lint: ## check style with flake8 and black
 	pydocstyle --config=setup.cfg xclim
 	flake8 --config=setup.cfg xclim
 	black --check --target-version py38 xclim
-	black --check --ipynb --target-version py38 docs --include "\.ipynb$$"
+	nbqa black --check docs --target-version py38
 	blackdoc --check --target-version py38 xclim --exclude xclim/indices/__init__.py,xclim/docs/installation.rst
 	isort --check --settings-file=setup.cfg xclim --add_imports="from __future__ import annotations"
 	pylint --rcfile=pylintrc --exit-zero xclim
@@ -84,7 +84,7 @@ autodoc: clean-docs ## create sphinx-apidoc files:
 linkcheck: autodoc ## run checks over all external links found throughout the documentation
 	$(MAKE) -C docs linkcheck
 
-docs: linkcheck ## generate Sphinx HTML documentation, including API docs
+docs: autodoc ## generate Sphinx HTML documentation, including API docs
 	$(MAKE) -C docs html
 ifndef READTHEDOCS
 	$(BROWSER) docs/_build/html/index.html
