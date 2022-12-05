@@ -14,6 +14,7 @@ from xclim.core.units import (
     amount2rate,
     check_units,
     convert_units_to,
+    infer_context,
     lwethickness2amount,
     pint2cfunits,
     pint_multiply,
@@ -250,3 +251,16 @@ def test_amount2lwethickness(snw_series):
 
     snw = lwethickness2amount(swe)
     snw.attrs["standard_name"] == "snowfall_amount"
+
+
+@pytest.mark.parametrize(
+    "std_name,dim,exp",
+    [
+        ("precipitation_flux", None, "hydro"),
+        ("snowfall_flux", None, "none"),
+        ("air_temperature", "[precipitation]", "hydro"),
+        (None, None, "none"),
+    ],
+)
+def test_infer_context(std_name, dim, exp):
+    assert infer_context(std_name, dim) == exp

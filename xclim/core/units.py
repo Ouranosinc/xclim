@@ -996,6 +996,10 @@ def ensure_delta(unit: str = None):
 def infer_context(standard_name=None, dimension=None):
     """Return units context based on either the variable's standard name or the pint dimension.
 
+    Valid standard names for the hydro context are those including the terms "rainfall", "lwe" (liquid water equivalent) and
+    "precipitation". The latter is technically incorrect, as any phase of precipitation could be referenced.
+    Standard names for evapotranspiration, evaporation and canopy water amounts are also associated with the hydro context.
+
     Parameters
     ----------
     standard_name: str
@@ -1008,11 +1012,21 @@ def infer_context(standard_name=None, dimension=None):
     str
       "hydro" if variable is a precipitation, otherwise "none"
     """
-    csn = standard_name in [
-        "precipitation_flux",
-        "convective_precipitation_flux",
-        "water_potential_evapotranspiration_flux",
-    ]
+    csn = (
+        (
+            standard_name
+            in [
+                "water_potential_evapotranspiration_flux",
+                "canopy_water_amount",
+                "water_evaporation_amount",
+            ]
+            or "rainfall" in standard_name
+            or "lwe" in standard_name
+            or "precipitation" in standard_name
+        )
+        if standard_name is not None
+        else False
+    )
     cdim = (dimension == "[precipitation]") if dimension is not None else False
 
     return "hydro" if csn or cdim else "none"
