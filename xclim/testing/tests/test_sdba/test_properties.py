@@ -287,13 +287,11 @@ def test_corr_btw_var():
         sdba.properties.corr_btw_var(sim, simt, group="time", corr_type="pear")
 
 
-
-
 def test_relative_frequency():
     sim = (
         open_dataset("sdba/CanESM2_1950-2100.nc")
-            .sel(time=slice("1950", "1952"), location="Vancouver")
-            .pr
+        .sel(time=slice("1950", "1952"), location="Vancouver")
+        .pr
     )
 
     test = sdba.properties.relative_frequency(sim, thresh="25 mm d-1", op=">=")
