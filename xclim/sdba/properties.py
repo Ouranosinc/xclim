@@ -326,9 +326,7 @@ def _spell_length_distribution(
 
     # threshold is an amount that will be converted to the right units
     if method == "amount":
-        thresh = convert_units_to(
-            thresh, da, context=infer_context(da.attrs.get("standard_name"))
-        )
+        thresh = convert_units_to(thresh, da, context="infer")
     elif method != "quantile":
         raise ValueError(
             f"{method} is not a valid method. Choose 'amount' or 'quantile'."
@@ -734,9 +732,7 @@ def _relative_frequency(
     # mask of the ocean with NaNs
     mask = ~(da.isel({group.dim: 0}).isnull()).drop_vars(group.dim)
     ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
-    t = convert_units_to(
-        thresh, da, context=infer_context(standard_name=da.attrs.get("standard_name"))
-    )
+    t = convert_units_to(thresh, da, context="infer")
     length = da.sizes[group.dim]
     cond = ops[op](da, t)
     if group.prop != "group":  # change the time resolution if necessary

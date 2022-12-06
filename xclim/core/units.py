@@ -293,6 +293,9 @@ def convert_units_to(
 ) -> Convertible:
     """Convert a mathematical expression into a value with the same units as a DataArray.
 
+    If the dimensionalities of source and target units differ, automatic CF conversions
+    will be applied when possible. See :py:func:`xclim.core.units.cf_conversion`.
+
     Parameters
     ----------
     source : str or xr.DataArray or units.Unit or units.Quantity
@@ -301,6 +304,10 @@ def convert_units_to(
         Target array of values to which units must conform.
     context : str, optional
         The unit definition context. Default: None.
+        if "infer", it will be inferred with :py:func:`xclim.core.units.infer_context` using
+        the standard name from the `source` or, if none is found, from the `target`.
+        This means that the 'hydro' context could be activated if any one of the standard names allows it.
+        In many cases, the automatic CF conversions would anyway be applied.
 
     Returns
     -------
@@ -309,6 +316,14 @@ def convert_units_to(
         The outputted type is always similar to `source` initial type.
         Attributes are preserved unless an automatic CF conversion is performed,
         in which case only the new `standard_name` appears in the result.
+
+    See Also
+    --------
+    cf_conversion
+    amount2rate
+    rate2amount
+    amount2lwethickness
+    lwethickness2amount
     """
     context = context or "none"
 
@@ -321,6 +336,18 @@ def convert_units_to(
         raise NotImplementedError(
             "target must be either a pint Unit or a xarray DataArray."
         )
+
+    if context == "infer":
+        ctxs = []
+        if isinstance(source, xr.DataArray):
+            ctxs.append(infer_context(source.attrs.get("standard_name")))
+        if isinstance(target, xr.DataArray):
+            ctxs.append(infer_context(target.attrs.get("standard_name")))
+        # If any one of the target or source is compatible with the "hydro" context, use it.
+        if "hydro" in ctxs:
+            context = "hydro"
+        else:
+            context = "none"
 
     if isinstance(source, str):
         q = str2pint(source)
