@@ -801,7 +801,7 @@ def _transition_probability(
 
     t = convert_units_to(thresh, da)
     cond = compare(today, initial_op, t) * compare(tomorrow, final_op, t)
-    out = group('mean', cond)
+    out = group("mean", cond)
     out = out.where(mask, np.nan)
     out.attrs["units"] = ""
     print("test")
