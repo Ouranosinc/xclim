@@ -23,6 +23,7 @@ from xclim.core.utils import uses_dask
 from xclim.indices import run_length as rl
 from xclim.indices.generic import select_resample_op
 from xclim.indices.stats import fit, parametric_quantile
+from xclim.indices.generic import compare
 
 from .base import Grouper, map_groups
 from .nbutils import _pairwise_haversine_and_bins
@@ -772,10 +773,10 @@ def _transition_probability(
     ----------
     da : xr.DataArray
       Variable on which to calculate the diagnostic.
-    initial_op: {">", "<", ">=", "<="}
+    initial_op: {“>”, “gt”, “<”, “lt”, “>=”, “ge”, “<=”, “le”, “==”, “eq”, “!=”, “ne”}
       Operation to verify the condition for the initial state.
       The condition is variable {op} threshold.
-    final_op: {">", "<", ">=", "<="}
+    final_op: {“>”, “gt”, “<”, “lt”, “>=”, “ge”, “<=”, “le”, “==”, “eq”, “!=”, “ne”}
       Operation to verify the condition for the final state.
       The condition is variable {op} threshold.
     thresh: str
@@ -796,15 +797,11 @@ def _transition_probability(
     today = da.isel(time=slice(0, -1))
     tomorrow = da.shift(time=-1).isel(time=slice(0, -1))
 
-    # To be transported at the top
-    from xclim.indices.generic import compare
-
     t = convert_units_to(thresh, da)
     cond = compare(today, initial_op, t) * compare(tomorrow, final_op, t)
     out = group('mean', cond)
     out = out.where(mask, np.nan)
     out.attrs["units"] = ""
-    print("test")
     return out
 
 
