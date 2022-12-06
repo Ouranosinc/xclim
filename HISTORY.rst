@@ -28,6 +28,7 @@ Breaking changes
 Bug fixes
 ^^^^^^^^^
 * The weighted ensemble statistics are now performed within a context in order to preserve data attributes. (:issue:`1232`, :pull:`1234`).
+* The `make docs` Makefile recipe was failing with an esoteric error. This has been resolved by splitting the `linkcheck` and `docs` steps into separate actions. (:issue:`1248`. :pull:`1251`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -43,6 +44,8 @@ Internal changes
 * Pint units `context` added to various operations, tests and `Indicator` attributes. (:issue:`1208`, :pull:`1227`).
 * Updated article from Alavoine & Grenier (2022) within documentation. Many article reference URLs have been updated to use HTTPS where possible. (:issue:`1246`, :pull:`1247`).
 * Added relevant variable dataflag checks for potential evaporation, convective precipitation, and air pressure at sea level. (:pull:`1241`).
+* Documentation restructured to include `ReadMe` page (as `About`) with some minor changes to documentation titles. (:pull:`1233`).
+* `xclim` development build now uses `nbqa` to effectively run black checks over notebook cells. (:pull:`1233`).
 
 
 0.39.0 (2022-11-02)

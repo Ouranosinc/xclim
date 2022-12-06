@@ -7,6 +7,7 @@ flake8
 flake8-rst-docstrings
 ipython
 mypy
+nbqa
 nbval
 pre-commit>=2.9
 pydocstyle>=5.1.1
