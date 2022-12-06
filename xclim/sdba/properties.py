@@ -796,9 +796,11 @@ def _transition_probability(
     today = da.isel(time=slice(0, -1))
     tomorrow = da.shift(time=-1).isel(time=slice(0, -1))
 
-    ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
+    # To be transported at the top
+    from xclim.indices.generic import compare
+
     t = convert_units_to(thresh, da)
-    cond = ops[initial_op](today, t) * ops[final_op](tomorrow, t)
+    cond = compare(today, initial_op, t) * compare(tomorrow, final_op, t)
     if group.prop != "group":
         cond = cond.groupby(group.name)
     out = cond.mean(dim=group.dim)
