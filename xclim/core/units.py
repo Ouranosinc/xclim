@@ -307,7 +307,6 @@ def convert_units_to(
         If "infer", it will be inferred with :py:func:`xclim.core.units.infer_context` using
         the standard name from the `source` or, if none is found, from the `target`.
         This means that the 'hydro' context could be activated if any one of the standard names allows it.
-        In many cases, the automatic CF conversions would anyway be applied.
 
     Returns
     -------
