@@ -304,7 +304,7 @@ def convert_units_to(
         Target array of values to which units must conform.
     context : str, optional
         The unit definition context. Default: None.
-        if "infer", it will be inferred with :py:func:`xclim.core.units.infer_context` using
+        If "infer", it will be inferred with :py:func:`xclim.core.units.infer_context` using
         the standard name from the `source` or, if none is found, from the `target`.
         This means that the 'hydro' context could be activated if any one of the standard names allows it.
         In many cases, the automatic CF conversions would anyway be applied.
@@ -1037,7 +1037,7 @@ def infer_context(standard_name=None, dimension=None):
     Returns
     -------
     str
-      "hydro" if variable is a precipitation, otherwise "none"
+      "hydro" if variable is a liquid water flux, otherwise "none"
     """
     csn = (
         (
