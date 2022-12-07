@@ -11,7 +11,6 @@ from scipy import integrate, stats
 from sklearn import datasets
 
 import xclim.analog as xca
-from xclim.testing import open_dataset
 
 
 def matlab_sample(n=30):
@@ -58,7 +57,7 @@ def test_randn():
 
 @pytest.mark.slow
 @pytest.mark.parametrize("method", xca.metrics.keys())
-def test_spatial_analogs(method):
+def test_spatial_analogs(method, open_dataset):
     if method in ["nearest_neighbor", "kldiv"] and parse_version(
         __scipy_version__
     ) < parse_version("1.6.0"):
@@ -74,7 +73,7 @@ def test_spatial_analogs(method):
     np.testing.assert_allclose(diss[method], out, rtol=1e-3, atol=1e-3)
 
 
-def test_spatial_analogs_multi_index():
+def test_spatial_analogs_multi_index(open_dataset):
     # Test multi-indexes
     diss = open_dataset("SpatialAnalogs/dissimilarity")
     data = open_dataset("SpatialAnalogs/indicators")

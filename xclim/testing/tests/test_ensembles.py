@@ -26,11 +26,10 @@ from scipy.stats.mstats import mquantiles
 
 from xclim import ensembles
 from xclim.indices.stats import get_dist
-from xclim.testing.utils import _default_cache_dir, open_dataset
 
 
 class TestEnsembleStats:
-    def test_create_ensemble(self, ensemble_dataset_objects):
+    def test_create_ensemble(self, open_dataset, ensemble_dataset_objects, tmp_path):
         ens = ensembles.create_ensemble(ensemble_dataset_objects["nc_datasets_simple"])
         assert len(ens.realization) == len(
             ensemble_dataset_objects["nc_datasets_simple"]
@@ -40,7 +39,7 @@ class TestEnsembleStats:
         # create again using xr.Dataset objects
         ds_all = []
         for n in ensemble_dataset_objects["nc_files"]:
-            ds = open_dataset(os.path.join("EnsembleStats", n), decode_times=False)
+            ds = open_dataset(n, decode_times=False)
             ds["time"] = xr.decode_cf(ds).time
             ds_all.append(ds)
 
@@ -55,29 +54,30 @@ class TestEnsembleStats:
                 ens1.isel(realization=i).tg_mean.values, ds_all[i].tg_mean.values
             )
         reals = [
-            "_".join(f.split("_")[1:4:2]) for f in ensemble_dataset_objects["nc_files"]
+            "_".join(Path(f).name.split("_")[1:4:2])
+            for f in ensemble_dataset_objects["nc_files"]
         ]
         ens2 = ensembles.create_ensemble(ds_all, realizations=reals)
 
         # Kinda a hack? Alternative is to open and rewrite in a temp folder.
         files = [
-            _default_cache_dir / "main" / "EnsembleStats" / f
+            tmp_path / "main" / "EnsembleStats" / Path(f).name
             for f in ensemble_dataset_objects["nc_files"]
         ]
         ens3 = ensembles.create_ensemble(dict(zip(reals, files)))
         xr.testing.assert_identical(ens2, ens3)
 
-    def test_no_time(self, tmp_path, ensemble_dataset_objects):
+    def test_no_time(self, tmp_path, ensemble_dataset_objects, open_dataset):
         # create again using xr.Dataset objects
         f1 = Path(tmp_path / "notime")
         f1.mkdir()
         ds_all = []
         for n in ensemble_dataset_objects["nc_files"]:
-            ds = open_dataset(os.path.join("EnsembleStats", n), decode_times=False)
+            ds = open_dataset(n, decode_times=False)
             ds["time"] = xr.decode_cf(ds).time
             ds_all.append(ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True))
             ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True).to_netcdf(
-                f1.joinpath(n)
+                f1.joinpath(Path(n).name)
             )
 
         ens = ensembles.create_ensemble(ds_all)
@@ -269,7 +269,7 @@ class TestEnsembleStats:
 class TestEnsembleReduction:
     nc_file = os.path.join("EnsembleReduce", "TestEnsReduceCriteria.nc")
 
-    def test_kmeans_rsqcutoff(self):
+    def test_kmeans_rsqcutoff(self, open_dataset):
         pytest.importorskip("sklearn", minversion="0.24.1")
         ds = open_dataset(self.nc_file)
 
@@ -292,7 +292,7 @@ class TestEnsembleReduction:
         assert ids == [4, 7, 23]
         assert len(ids) == 3
 
-    def test_kmeans_rsqopt(self):
+    def test_kmeans_rsqopt(self, open_dataset):
         pytest.importorskip("sklearn", minversion="0.24.1")
         ds = open_dataset(self.nc_file)
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
@@ -304,7 +304,7 @@ class TestEnsembleReduction:
         assert ids == [3, 4, 5, 7, 10, 11, 12, 13]
         assert len(ids) == 8
 
-    def test_kmeans_nclust(self):
+    def test_kmeans_nclust(self, open_dataset):
         ds = open_dataset(self.nc_file)
 
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
@@ -319,7 +319,7 @@ class TestEnsembleReduction:
         assert ids == [0, 3, 4, 6, 7, 10, 11, 12, 13]
         assert len(ids) == 9
 
-    def test_kmeans_sampleweights(self):
+    def test_kmeans_sampleweights(self, open_dataset):
         ds = open_dataset(self.nc_file)
         # Test sample weights
         sample_weights = np.ones(ds.data.shape[0])
@@ -352,7 +352,7 @@ class TestEnsembleReduction:
         assert ids == [4, 5, 7, 10, 11, 12, 13]
         assert len(ids) == 7
 
-    def test_kmeans_variweights(self):
+    def test_kmeans_variweights(self, open_dataset):
         pytest.importorskip("sklearn", minversion="0.24.1")
         ds = open_dataset(self.nc_file)
         # Test sample weights
@@ -385,7 +385,7 @@ class TestEnsembleReduction:
         assert all(np.isin([12, 13, 16], ids))
         assert len(ids) == 6
 
-    def test_kmeans_modelweights(self):
+    def test_kmeans_modelweights(self, open_dataset):
         ds = open_dataset(self.nc_file)
         # Test sample weights
         model_weights = np.ones(ds.data.shape[0])
@@ -408,7 +408,7 @@ class TestEnsembleReduction:
     @pytest.mark.skipif(
         "matplotlib.pyplot" not in sys.modules, reason="matplotlib.pyplot is required"
     )
-    def test_kmeans_rsqcutoff_with_graphs(self):
+    def test_kmeans_rsqcutoff_with_graphs(self, open_dataset):
         pytest.importorskip("sklearn", minversion="0.24.1")
         ds = open_dataset(self.nc_file)
 
@@ -441,14 +441,14 @@ class TestEnsembleReduction:
             ([4, 5], 1, [15]),
         ],
     )
-    def test_kkz_simple(self, crit, num_select, expected):
+    def test_kkz_simple(self, open_dataset, crit, num_select, expected):
         ens = open_dataset(self.nc_file)
         data = ens.data.isel(criteria=crit)
 
         selected = ensembles.kkz_reduce_ensemble(data, num_select)
         assert selected == expected
 
-    def test_kkz_standardize(self):
+    def test_kkz_standardize(self, open_dataset):
         ens = open_dataset(self.nc_file)
         data = ens.data.isel(criteria=[1, 3, 5])
 
@@ -457,7 +457,7 @@ class TestEnsembleReduction:
         assert sel_std == [23, 10, 19, 14]
         assert sel_no == [23, 1, 14, 10]
 
-    def test_kkz_change_metric(self):
+    def test_kkz_change_metric(self, open_dataset):
         # This test uses stupid values but is meant to test is kwargs are passed and if dist_method is used.
         ens = open_dataset(self.nc_file)
         data = ens.data.isel(criteria=[1, 3, 5])
@@ -469,7 +469,7 @@ class TestEnsembleReduction:
         assert sel_euc == [23, 10, 19, 14]
         assert sel_mah == [5, 3, 4, 0]
 
-    def test_standardize_seuclidean(self):
+    def test_standardize_seuclidean(self, open_dataset):
         # This test the odd choice of standardizing data for a standardized distance metric
         ens = open_dataset(self.nc_file)
         data = ens.data

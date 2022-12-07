@@ -9,7 +9,6 @@ import xarray as xr
 
 from xclim.core import missing
 from xclim.core.calendar import convert_calendar
-from xclim.testing import open_dataset
 
 K2C = 273.15
 
@@ -128,7 +127,7 @@ class TestMissingAnyFills:
         miss = missing.missing_any(ts2, freq=None, month=[7], src_timestep="H")
         np.testing.assert_array_equal(miss, True)
 
-    def test_hydro(self):
+    def test_hydro(self, open_dataset):
         fn = Path("Raven", "q_sim.nc")
         ds = open_dataset(fn)
         miss = missing.missing_any(ds.q_sim, freq="YS")
