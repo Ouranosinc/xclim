@@ -29,7 +29,9 @@ from xclim.indices.stats import get_dist
 
 
 class TestEnsembleStats:
-    def test_create_ensemble(self, open_dataset, ensemble_dataset_objects, tmp_path):
+    def test_create_ensemble(
+        self, open_dataset, ensemble_dataset_objects, threadsafe_data_dir
+    ):
         ds_all = []
         for n in ensemble_dataset_objects["nc_files_simple"]:
             ds = open_dataset(n, decode_times=False)
@@ -53,7 +55,7 @@ class TestEnsembleStats:
 
         # Kinda a hack? Alternative is to open and rewrite in a temp folder.
         files = [
-            tmp_path / "main" / "EnsembleStats" / Path(f).name
+            threadsafe_data_dir / "main" / "EnsembleStats" / Path(f).name
             for f in ensemble_dataset_objects["nc_files_simple"]
         ]
         ens2 = ensembles.create_ensemble(dict(zip(reals, files)))
