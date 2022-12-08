@@ -9,6 +9,10 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bo
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Virtual modules can add variables to ``xclim.core.utils.VARIABLES`` through the new `variables` section of the yaml files. (:issue:`1129`, :pull:`1231`).
+* ``xclim.core.units.convert_units_to`` can now perform automatic conversions based on the standard name of the input when needed. (:issue:`1205`, :pull:`1206`).
+    - Conversion from amount (thickness) to flux (rate), using ``amount2rate`` and ``rate2amount``.
+    - Conversion from amount to thickness for liquid water quantities, using the new ``amount2lwethickness`` and ``lwethickness2amount``. This is similar to the implicit transformations enabled by the "hydro" unit context.
+* Thresholds and other quantities passed as parameters of indicators can now be multi-dimensional `DataArray`s. xArray broadcasting mechanisms will apply. Those parameters are now annotated as "Quantity" in the signatures (``xclim.core.utils.Quantity``), instead of "str" as before. Attributes where such thresholds where included will now read "<an array>" (french: "<une matrice>") for these new cases. Multi-dimensional quantities are still unsupported in a very few cases, where it is documented in the docstring. (:issue:`1093`, :pull:`1236`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -23,22 +27,13 @@ Breaking changes
 * The following *modules* have been removed:
     - `xclim.indices.fwi` → functions migrated to `xclim.indices.fire`
     - `xclim.subset` (mock submodule) → functions migrated to `clisops.core.subset`
+* Indicators ``standardized_precipitation_index`` and ``standardized_precipitation_evapotranspiration_index`` will now require ``pr_cal`` and ``wb_cal`` as keyword arguments only. (:pull:`1236`).
+* The internal object ``PercentileDataArray`` has been removed. (:pull:`1236`).
 
 Bug fixes
 ^^^^^^^^^
 * The weighted ensemble statistics are now performed within a context in order to preserve data attributes. (:issue:`1232`, :pull:`1234`).
 * The `make docs` Makefile recipe was failing with an esoteric error. This has been resolved by splitting the `linkcheck` and `docs` steps into separate actions. (:issue:`1248`. :pull:`1251`).
-
-New features and enhancements
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* ``xclim.core.units.convert_units_to`` can now perform automatic conversions based on the standard name of the input when needed. (:issue:`1205`, :pull:`1206`).
-    - Conversion from amount (thickness) to flux (rate), using ``amount2rate`` and ``rate2amount``.
-    - Conversion from amount to thickness for liquid water quantities, using the new ``amount2lwethickness`` and ``lwethickness2amount``. This is similar to the implicit transformations enabled by the "hydro" unit context.
-
-
-New features and enhancements
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* Thresholds and other quantities passed as parameters of indicators can now be multi-dimensional `DataArray`s. xArray broadcasting mechanisms will apply. Those parameters are now annotated as "Quantity" in the signatures (``xclim.core.utils.Quantity``), instead of "str" as before. Attributes where such thresholds where included will now read "<an array>" (french: "<une matrice>") for these new cases. Multi-dimensional quantities are still unsupported in a very few cases, where it is documented in the docstring. (:issue:`1093`, :pull:`1236`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^

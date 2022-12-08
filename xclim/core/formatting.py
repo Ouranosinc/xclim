@@ -17,7 +17,7 @@ from typing import Any, Mapping, Sequence
 import xarray as xr
 from boltons.funcutils import wraps
 
-from xclim.core.utils import InputKind, PercentileDataArray
+from xclim.core.utils import InputKind
 
 DEFAULT_FORMAT_PARAMS = {
     "tasmin_per_thresh": "{unknown}",
@@ -653,7 +653,7 @@ def get_percentile_metadata(data: xr.DataArray, prefix: str) -> dict[str, str]:
     Parameters
     ----------
     data: xr.DataArray
-        Must be compatible with PercentileDataArray, this means the necessary metadata
+        Must be a percentile DataArray, this means the necessary metadata
         must be available in its attributes and coordinates.
     prefix: str
         The prefix to be used in the metadata key.
@@ -664,9 +664,17 @@ def get_percentile_metadata(data: xr.DataArray, prefix: str) -> dict[str, str]:
     dict
         A mapping of the configuration used to compute these percentiles.
     """
-    per_da = PercentileDataArray.from_da(data)
+    # handle case where da was created with `quantile()` method
+    if "quantile" in data.coords:
+        percs = data.coords["quantile"].values * 100
+    elif "percentiles" in data.coords:
+        percs = data.coords["percentiles"].values
+    else:
+        percs = "<unknown percentiles>"
+    clim_bounds = data.attrs.get("climatology_bounds", "<unknown bounds>")
+
     return {
-        f"{prefix}_thresh": per_da.coords["percentiles"].values,
-        f"{prefix}_window": per_da.attrs.get("window", None),
-        f"{prefix}_period": per_da.attrs.get("climatology_bounds"),
+        f"{prefix}_thresh": percs,
+        f"{prefix}_window": data.attrs.get("window", "<unknown window>"),
+        f"{prefix}_period": clim_bounds,
     }

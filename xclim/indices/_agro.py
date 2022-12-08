@@ -678,7 +678,7 @@ def water_budget(
 )
 def standardized_precipitation_index(
     pr: xarray.DataArray,
-    pr_cal: xarray.DataArray,
+    pr_cal: Quantity,
     freq: str = "MS",
     window: int = 1,
     dist: str = "gamma",
@@ -823,7 +823,7 @@ def standardized_precipitation_index(
 )
 def standardized_precipitation_evapotranspiration_index(
     wb: xarray.DataArray,
-    wb_cal: xarray.DataArray,
+    wb_cal: Quantity,
     freq: str = "MS",
     window: int = 1,
     dist: str = "gamma",

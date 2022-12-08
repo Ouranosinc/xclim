@@ -24,7 +24,7 @@ from xclim.core.formatting import (
 )
 from xclim.core.indicator import Daily, Indicator, ResamplingIndicator, registry
 from xclim.core.units import convert_units_to, declare_units, units
-from xclim.core.utils import VARIABLES, InputKind, MissingVariableError
+from xclim.core.utils import VARIABLES, InputKind, MissingVariableError, Quantity
 from xclim.indices import tg_mean
 from xclim.testing import list_input_variables, open_dataset
 
@@ -32,7 +32,7 @@ from xclim.testing import list_input_variables, open_dataset
 @declare_units(da="[temperature]", thresh="[temperature]")
 def uniindtemp_compute(
     da: xr.DataArray,
-    thresh: str = "0.0 degC",
+    thresh: Quantity = "0.0 degC",
     freq: str = "YS",
     method: str = "injected",
 ):
@@ -440,13 +440,14 @@ def test_all_jsonable(official_indicators):
 
 
 def test_all_parameters_understood(official_indicators):
-    problems = []
+    problems = set()
     for identifier, ind in official_indicators.items():
         indinst = ind.get_instance()
         for name, param in indinst.parameters.items():
             if param["kind"] == InputKind.OTHER_PARAMETER:
-                problems.append((identifier, name))
-    if problems:
+                problems.add((identifier, name))
+    # this one we are ok with.
+    if problems - {("COOL_NIGHT_INDEX", "lat")}:
         raise ValueError(
             f"The following indicator/parameter couple {problems} use types not listed in InputKind."
         )
