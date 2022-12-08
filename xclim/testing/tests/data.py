@@ -87,7 +87,6 @@ def populate_testing_data(
         return
 
     data_entries = [
-        "cmip3/tas.sresb1.giss_model_e_r.run1.atm.da.nc",
         "ERA5/daily_surface_cancities_1990-1993.nc",
         "EnsembleReduce/TestEnsReduceCriteria.nc",
         "EnsembleStats/BCCAQv2+ANUSPLIN300_ACCESS1-0_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
@@ -98,6 +97,8 @@ def populate_testing_data(
         "NRCANdaily/nrcan_canada_daily_pr_1990.nc",
         "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc",
         "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc",
+        "cmip3/tas.sresb1.giss_model_e_r.run1.atm.da.nc",
+        "sdba/CanESM2_1950-2100.nc",
     ]
 
     data = dict()
