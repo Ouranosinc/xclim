@@ -176,14 +176,13 @@ def cold_and_dry_days(
       First quartile of daily mean temperature computed by month.
     pr_per : xarray.DataArray
       First quartile of daily total precipitation computed by month.
-
-      .. warning::
-
-        Before computing the percentiles, all the precipitation below 1mm must be filtered out!
-        Otherwise, the percentiles will include non-wet days.
-
     freq : str
       Resampling frequency.
+
+    Warnings
+    --------
+    Before computing the percentiles, all the precipitation below 1mm must be filtered out!
+    Otherwise, the percentiles will include non-wet days.
 
     Returns
     -------
@@ -241,14 +240,13 @@ def warm_and_dry_days(
       Third quartile of daily mean temperature computed by month.
     pr_per : xarray.DataArray
       First quartile of daily total precipitation computed by month.
-
-      .. warning::
-
-        Before computing the percentiles, all the precipitation below 1mm must be filtered out!
-        Otherwise, the percentiles will include non-wet days.
-
     freq : str
       Resampling frequency.
+
+    Warnings
+    --------
+    Before computing the percentiles, all the precipitation below 1mm must be filtered out!
+    Otherwise, the percentiles will include non-wet days.
 
     Returns
     -------
@@ -306,14 +304,13 @@ def warm_and_wet_days(
       Third quartile of daily mean temperature computed by month.
     pr_per : xarray.DataArray
       Third quartile of daily total precipitation computed by month.
-
-      .. warning::
-
-        Before computing the percentiles, all the precipitation below 1mm must be filtered out!
-        Otherwise, the percentiles will include non-wet days.
-
     freq : str
       Resampling frequency.
+
+    Warnings
+    --------
+    Before computing the percentiles, all the precipitation below 1mm must be filtered out!
+    Otherwise, the percentiles will include non-wet days.
 
     Returns
     -------
@@ -373,8 +370,8 @@ def cold_and_wet_days(
     freq : str
       Resampling frequency.
 
-    Warning
-    -------
+    Warnings
+    --------
     Before computing the percentiles, all the precipitation below 1mm must be filtered out!
     Otherwise, the percentiles will include non-wet days.
 

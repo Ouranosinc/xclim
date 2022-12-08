@@ -813,7 +813,6 @@ def test_all_inputs_known():
         - {"q", "da"}  # Generic inputs
         - {"mrt"}  # TODO: add Mean Radiant Temperature
     )
-    print(VARIABLES.keys(), "\n", known_vars)
     if not set(VARIABLES.keys()).issuperset(known_vars):
         raise AssertionError(
             "All input variables of xclim indicators must be registered in "

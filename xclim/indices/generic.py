@@ -33,7 +33,6 @@ __all__ = [
     "count_occurrences",
     "cumulative_difference",
     "default_freq",
-    "degree_days",
     "diurnal_temperature_range",
     "domain_count",
     "doymax",
@@ -835,19 +834,6 @@ def cumulative_difference(
         diff = diff.resample(time=freq).sum(dim="time")
 
     return to_agg_units(diff, data, op="delta_prod")
-
-
-def degree_days(
-    data: xr.DataArray, threshold: Quantity, op: str, freq=None
-) -> xr.DataArray:  # noqa: D103
-    warnings.warn(
-        "The `degree_days` generic indice is being deprecated in favour of `cumulative_difference`. "
-        "This indice will be removed in `xclim>=0.40.0`. Please update your scripts accordingly.",
-        DeprecationWarning,
-        stacklevel=3,
-    )
-
-    return cumulative_difference(data, threshold=threshold, op=op, freq=freq)
 
 
 def first_day_threshold_reached(

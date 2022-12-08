@@ -1,8 +1,6 @@
 # noqa: D100
 from __future__ import annotations
 
-import warnings
-
 import numpy as np
 import xarray
 
@@ -42,7 +40,6 @@ __all__ = [
     "continuous_snow_cover_end",
     "continuous_snow_cover_start",
     "days_with_snow",
-    "freshet_start",
     "growing_degree_days",
     "growing_season_start",
     "growing_season_end",
@@ -52,8 +49,6 @@ __all__ = [
     "frost_free_season_end",
     "frost_free_season_length",
     "frost_season_length",
-    "first_day_above",
-    "first_day_below",
     "first_day_temperature_above",
     "first_day_temperature_below",
     "first_snowfall",
@@ -69,7 +64,6 @@ __all__ = [
     "tg_days_below",
     "tx_days_above",
     "tx_days_below",
-    "tropical_nights",
     "rprctot",
     "warm_day_frequency",
     "warm_night_frequency",
@@ -527,20 +521,6 @@ def cooling_degree_days(
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
     return cumulative_difference(tas, threshold=thresh, op=">", freq=freq)
-
-
-def freshet_start(
-    tas: xarray.DataArray, thresh="0 degC", window: int = 5, **kwargs
-) -> xarray.DataArray:  # noqa: D103
-    warnings.warn(
-        "The `freshet_start` indice is being deprecated in favour of `first_day_temperature_above` "
-        "with `thresh='0 degC'` and `window=5`. "
-        "This indice will be removed in `xclim>=0.40.0`. Please update your scripts accordingly.",
-        DeprecationWarning,
-        stacklevel=3,
-    )
-
-    return first_day_temperature_above(tas=tas, thresh=thresh, window=window, **kwargs)
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -1059,36 +1039,6 @@ def last_spring_frost(
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
     return out
-
-
-def first_day_above(
-    tasmin: xarray.DataArray,
-    **kwargs,
-) -> xarray.DataArray:  # noqa: D103
-    warnings.warn(
-        "The `first_day_above` indice is being deprecated in favour of `first_day_temperature_above` "
-        "with `thresh='0 degC'`. "
-        "This indice will be removed in `xclim>=0.40.0`. Please update your scripts accordingly.",
-        DeprecationWarning,
-        stacklevel=3,
-    )
-
-    return first_day_temperature_above(tas=tasmin, **kwargs)
-
-
-def first_day_below(
-    tasmin: xarray.DataArray,
-    **kwargs,
-) -> xarray.DataArray:  # noqa: D103
-    warnings.warn(
-        "The `first_day_below` indice is being deprecated in favour of `first_day_temperature_below` "
-        "with `thresh='0 degC'`. "
-        "This indice will be removed in `xclim>=0.40.0`. Please update your scripts accordingly.",
-        DeprecationWarning,
-        stacklevel=3,
-    )
-
-    return first_day_temperature_below(tas=tasmin, **kwargs)
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -2247,54 +2197,6 @@ def windy_days(
     out = threshold_count(sfcWind, ">=", thresh, freq)
     out = to_agg_units(out, sfcWind, "count")
     return out
-
-
-@declare_units(tasmin="[temperature]", thresh="[temperature]")
-def tropical_nights(
-    tasmin: xarray.DataArray,
-    thresh: Quantity = "20.0 degC",
-    freq: str = "YS",
-) -> xarray.DataArray:
-    """Tropical nights.
-
-    The number of days with minimum daily temperature above threshold (default: 20℃).
-
-    Parameters
-    ----------
-    tasmin : xarray.DataArray
-        Minimum daily temperature.
-    thresh : Quantity
-        Threshold temperature on which to base evaluation.
-    freq : str
-        Resampling frequency.
-
-    Returns
-    -------
-    xarray.DataArray, [time]
-        Number of days with minimum daily temperature above threshold.
-
-    Notes
-    -----
-    Let :math:`TN_{ij}` be the daily minimum temperature at day :math:`i` of period :math:`j`. Then
-    counted is the number of days where:
-
-    .. math::
-
-        TN_{ij} > Threshold [℃]
-
-    Warnings
-    --------
-    The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with `thresh="20 degC"` by default.
-    The indicator reflects this change. This indice will be removed in a future version of xclim.
-    """
-    warnings.warn(
-        "The `tropical_nights` indice is being deprecated in favour of `tn_days_above` with `thresh='20 degC'`. "
-        "This indice will be removed in `xclim>=0.28.0`. Please update your scripts accordingly.",
-        DeprecationWarning,
-        stacklevel=3,
-    )
-
-    return tn_days_above(tasmin, thresh=thresh, freq=freq)
 
 
 @declare_units(pr="[precipitation]", prc="[precipitation]", thresh="[precipitation]")

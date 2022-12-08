@@ -1,5 +1,5 @@
 ===============
-Climate indices
+Climate Indices
 ===============
 
 .. automodule:: xclim.indices
