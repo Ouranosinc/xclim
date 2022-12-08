@@ -8,6 +8,7 @@ from numpy.testing import assert_almost_equal
 from pkg_resources import parse_version
 from scipy import __version__ as __scipy_version__
 from scipy import integrate, stats
+from sklearn import __version__ as __sklearn_version__
 from sklearn import datasets
 
 import xclim.analog as xca
@@ -70,8 +71,12 @@ def test_spatial_analogs(method, open_dataset):
     candidates = data.sel(time=slice("1970", "1990"))
 
     out = xca.spatial_analogs(target, candidates, method=method)
-    atol = 1e-3 if method != "friedman_rafsky" else 0.1
-    np.testing.assert_allclose(diss[method], out, rtol=1e-3, atol=atol)
+    # Special case since scikit-learn updated to 1.2.0
+    if (method == "friedman_rafsky") and parse_version(
+        __sklearn_version__
+    ) >= parse_version("1.2.0"):
+        diss[method][42, 105] = 0.80952381
+    np.testing.assert_allclose(diss[method], out, rtol=1e-3, atol=1e-3)
 
 
 def test_spatial_analogs_multi_index(open_dataset):
