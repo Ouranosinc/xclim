@@ -7,10 +7,10 @@ from xclim import sdba
 from xclim.core.units import convert_units_to
 
 
-class TestPriorities:
+class TestProperties:
     def test_mean(self, open_dataset):
         sim = (
-            open_dataset(self, "sdba/CanESM2_1950-2100.nc")
+            open_dataset("sdba/CanESM2_1950-2100.nc")
             .sel(time=slice("1950", "1980"), location="Vancouver")
             .pr
         )
