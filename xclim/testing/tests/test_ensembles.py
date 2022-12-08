@@ -203,10 +203,8 @@ class TestEnsembleStats:
         out1 = ensembles.ensemble_percentiles(ens.load(), split=False)
         np.testing.assert_array_equal(out1["tg_mean"], out2["tg_mean"])
 
-    def test_calc_perc_nans(self, ensemble_dataset_objects):
-        ens = ensembles.create_ensemble(
-            ensemble_dataset_objects["nc_datasets_simple"]
-        ).load()
+    def test_calc_perc_nans(self, xdoctest_namespace):
+        ens = ensembles.create_ensemble(xdoctest_namespace["nc_datasets_simple"]).load()
 
         ens.tg_mean[2, 0, 5, 5] = np.nan
         ens.tg_mean[2, 7, 5, 5] = np.nan

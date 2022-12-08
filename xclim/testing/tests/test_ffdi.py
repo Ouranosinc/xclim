@@ -144,7 +144,7 @@ class TestFFDI:
         # the CEMS GEFF dataset, and the R packages ClimInd and ecbtools but all use
         # older definitions of the KBDI and DF that differ from our code and I don't
         # think reflect the modern literature.
-        # For now we just test that the indicators run using real data and that the
+        # For now, we just test that the indicators run using real data and that the
         # outputs look sensible
         test_data = open_dataset(data_url)
 

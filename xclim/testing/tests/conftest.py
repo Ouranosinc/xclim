@@ -27,12 +27,12 @@ SKIP_TEST_DATA = os.getenv("SKIP_TEST_DATA")
 
 @pytest.fixture
 def tmp_netcdf_filename(tmpdir) -> Path:
-    return Path(tmpdir).joinpath("testfile.nc")
+    yield Path(tmpdir).joinpath("testfile.nc")
 
 
 @pytest.fixture(autouse=True, scope="session")
 def threadsafe_data_dir(tmp_path_factory) -> Path:
-    return Path(tmp_path_factory.getbasetemp().joinpath("data"))
+    yield Path(tmp_path_factory.getbasetemp().joinpath("data"))
 
 
 @pytest.fixture
@@ -577,96 +577,92 @@ def official_indicators():
     return registry_cp
 
 
-@pytest.fixture(scope="session")
-def atmosds(xdoctest_namespace, threadsafe_data_dir) -> xr.Dataset:
-    ds = _open_dataset(
+def generate_atmos(cache_dir: Path):
+    with _open_dataset(
         "ERA5/daily_surface_cancities_1990-1993.nc",
+        cache_dir=cache_dir,
+        branch=MAIN_TESTDATA_BRANCH,
+    ) as ds:
+        sfcWind, sfcWindfromdir = xclim.atmos.wind_speed_from_vector(ds=ds)  # noqa
+        sfcWind.attrs.update(cell_methods="time: mean within days")
+        huss = xclim.atmos.specific_humidity(ds=ds)
+        snw = ds.swe * 1000
+        # Liquid water equivalent snow thickness [m] to snow thickness in [m] : lwe [m] * 1000 kg/m³ / 300 kg/m³
+        snd = snw / 300
+        snw.attrs.update(
+            standard_name="surface_snow_amount",
+            units="kg m-2",
+            cell_methods="time: mean within days",
+        )
+        snd.attrs.update(
+            standard_name="surface_snow_thickness",
+            units="m",
+            cell_methods="time: mean within days",
+        )
+
+        psl = ds.ps
+        psl.attrs.update(standard_name="air_pressure_at_sea_level")
+
+        tn10 = xclim.core.calendar.percentile_doy(ds.tasmin, per=10)
+        t10 = xclim.core.calendar.percentile_doy(ds.tas, per=10)
+        t90 = xclim.core.calendar.percentile_doy(ds.tas, per=90)
+        tx90 = xclim.core.calendar.percentile_doy(ds.tasmax, per=90)
+
+        ds = ds.assign(
+            sfcWind=sfcWind,
+            sfcWindfromdir=sfcWindfromdir,
+            huss=huss,
+            psl=psl,
+            snw=snw,
+            snd=snd,
+            tn10=tn10,
+            t10=t10,
+            t90=t90,
+            tx90=tx90,
+        )
+
+        # Create a file in session scoped temporary directory
+        atmos_file = cache_dir.joinpath("atmosds.nc")
+        ds.to_netcdf(atmos_file)
+
+
+@pytest.fixture(scope="function")
+def atmosds(threadsafe_data_dir) -> xr.Dataset:
+    return _open_dataset(
+        threadsafe_data_dir.joinpath("atmosds.nc"),
         cache_dir=threadsafe_data_dir,
         branch=MAIN_TESTDATA_BRANCH,
     )
 
-    sfcWind, sfcWindfromdir = xclim.atmos.wind_speed_from_vector(ds=ds)  # noqa
-    sfcWind.attrs.update(cell_methods="time: mean within days")
-    huss = xclim.atmos.specific_humidity(ds=ds)
-    snw = ds.swe * 1000
-    # Liquid water equivalent snow thickness [m] to snow thickness in [m] : lwe [m] * 1000 kg/m³ / 300 kg/m³
-    snd = snw / 300
-    snw.attrs.update(
-        standard_name="surface_snow_amount",
-        units="kg m-2",
-        cell_methods="time: mean within days",
-    )
-    snd.attrs.update(
-        standard_name="surface_snow_thickness",
-        units="m",
-        cell_methods="time: mean within days",
-    )
 
-    psl = ds.ps
-    psl.attrs.update(standard_name="air_pressure_at_sea_level")
+def ensemble_dataset_objects(cache_dir: Path) -> dict:
+    ns = dict()
 
-    tn10 = xclim.core.calendar.percentile_doy(ds.tasmin, per=10)
-    t10 = xclim.core.calendar.percentile_doy(ds.tas, per=10)
-    t90 = xclim.core.calendar.percentile_doy(ds.tas, per=90)
-    tx90 = xclim.core.calendar.percentile_doy(ds.tasmax, per=90)
-
-    ds = ds.assign(
-        sfcWind=sfcWind,
-        sfcWindfromdir=sfcWindfromdir,
-        huss=huss,
-        psl=psl,
-        snw=snw,
-        snd=snd,
-        tn10=tn10,
-        t10=t10,
-        t90=t90,
-        tx90=tx90,
-    )
-
-    # Create a file in session scoped temporary directory
-    atmos_file = threadsafe_data_dir.joinpath("atmosds.nc")
-    ds.to_netcdf(atmos_file)
-
-    # Give access to this file within xdoctest namespace
-    ns = xdoctest_namespace
-    ns["path_to_atmos_file"] = atmos_file
-
-    # Give access to dataset variables by name in xdoctest namespace
-    for variable in ds.data_vars:
-        ns[f"{variable}_dataset"] = ds.get(variable)
-
-    return ds
-
-
-@pytest.fixture(scope="session")
-def ensemble_dataset_objects(threadsafe_data_dir) -> dict:
-    edo = dict()
-
-    edo["nc_files"] = [
+    ns["nc_files"] = [
         "EnsembleStats/BCCAQv2+ANUSPLIN300_ACCESS1-0_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
         "EnsembleStats/BCCAQv2+ANUSPLIN300_BNU-ESM_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
         "EnsembleStats/BCCAQv2+ANUSPLIN300_CCSM4_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
         "EnsembleStats/BCCAQv2+ANUSPLIN300_CCSM4_historical+rcp45_r2i1p1_1950-2100_tg_mean_YS.nc",
     ]
-    edo[
+    ns[
         "nc_file_extra"
     ] = "EnsembleStats/BCCAQv2+ANUSPLIN300_CNRM-CM5_historical+rcp45_r1i1p1_1970-2050_tg_mean_YS.nc"
-    edo["nc_datasets_simple"] = [
-        _open_dataset(f, cache_dir=threadsafe_data_dir, branch=MAIN_TESTDATA_BRANCH)
-        for f in edo["nc_files"]
+    ns["nc_datasets_simple"] = [
+        _open_dataset(f, cache_dir=cache_dir, branch=MAIN_TESTDATA_BRANCH)
+        for f in ns["nc_files"]
     ]
 
-    ncd: list = deepcopy(edo["nc_datasets_simple"])
+    ncd: list = deepcopy(ns["nc_datasets_simple"])
     ncd.append(
         _open_dataset(
-            edo["nc_file_extra"],
-            cache_dir=threadsafe_data_dir,
+            ns["nc_file_extra"],
+            cache_dir=cache_dir,
             branch=MAIN_TESTDATA_BRANCH,
         )
     )
-    edo["nc_datasets"] = ncd
+    ns["nc_datasets"] = ncd
 
-    return edo
+    return ns
 
 
 def populate_testing_data(
@@ -714,7 +710,7 @@ def populate_testing_data(
     return
 
 
-def add_example_file_paths() -> dict[str]:
+def add_example_file_paths(cache_dir: Path) -> dict[str]:
     """Add these datasets in the doctests scope."""
     ns = dict()
     ns["path_to_pr_file"] = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
@@ -755,6 +751,17 @@ def add_example_file_paths() -> dict[str]:
             },
         ),
     ]
+
+    # Give access to this file within xdoctest namespace
+    atmos_file = cache_dir.joinpath("atmosds.nc")
+
+    # Give access to dataset variables by name in xdoctest namespace
+    with _open_dataset(
+        atmos_file, branch=MAIN_TESTDATA_BRANCH, cache_dir=cache_dir
+    ) as ds:
+        for variable in ds.data_vars:
+            ns[f"{variable}_dataset"] = ds.get(variable)
+
     return ns
 
 
@@ -767,7 +774,6 @@ def gather_session_data(threadsafe_data_dir, worker_id, xdoctest_namespace):
     if worker_id == "master":
         if not SKIP_TEST_DATA:
             populate_testing_data(branch=MAIN_TESTDATA_BRANCH)
-            xdoctest_namespace.update(add_example_file_paths())
     else:
         if not SKIP_TEST_DATA:
             _default_cache_dir.mkdir(exist_ok=True)
@@ -778,7 +784,9 @@ def gather_session_data(threadsafe_data_dir, worker_id, xdoctest_namespace):
                 _default_cache_dir.joinpath(".data_written").touch()
             fl.acquire()
         shutil.copytree(_default_cache_dir, threadsafe_data_dir)
-        xdoctest_namespace.update(add_example_file_paths())
+    generate_atmos(threadsafe_data_dir)
+    xdoctest_namespace.update(add_example_file_paths(threadsafe_data_dir))
+    xdoctest_namespace.update(ensemble_dataset_objects(threadsafe_data_dir))
 
 
 @pytest.fixture(scope="session", autouse=True)
