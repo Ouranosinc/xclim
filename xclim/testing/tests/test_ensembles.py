@@ -30,42 +30,34 @@ from xclim.indices.stats import get_dist
 
 class TestEnsembleStats:
     def test_create_ensemble(self, open_dataset, ensemble_dataset_objects, tmp_path):
-        ens = ensembles.create_ensemble(ensemble_dataset_objects["nc_datasets_simple"])
-        assert len(ens.realization) == len(
-            ensemble_dataset_objects["nc_datasets_simple"]
-        )
-        assert len(ens.time) == 151
-
-        # create again using xr.Dataset objects
         ds_all = []
-        for n in ensemble_dataset_objects["nc_files"]:
+        for n in ensemble_dataset_objects["nc_files_simple"]:
             ds = open_dataset(n, decode_times=False)
             ds["time"] = xr.decode_cf(ds).time
             ds_all.append(ds)
 
-        ens1 = ensembles.create_ensemble(ds_all)
-        coords = list(ens1.coords)
-        coords.extend(list(ens1.data_vars))
-        for c in coords:
-            np.testing.assert_array_equal(ens[c], ens1[c])
+        ens = ensembles.create_ensemble(ds_all)
 
-        for i in np.arange(0, len(ens1.realization)):
+        assert len(ens.realization) == len(ensemble_dataset_objects["nc_files_simple"])
+        assert len(ens.time) == 151
+        for i in np.arange(0, len(ens.realization)):
             np.testing.assert_array_equal(
-                ens1.isel(realization=i).tg_mean.values, ds_all[i].tg_mean.values
+                ens.isel(realization=i).tg_mean.values, ds_all[i].tg_mean.values
             )
+
         reals = [
             "_".join(Path(f).name.split("_")[1:4:2])
-            for f in ensemble_dataset_objects["nc_files"]
+            for f in ensemble_dataset_objects["nc_files_simple"]
         ]
-        ens2 = ensembles.create_ensemble(ds_all, realizations=reals)
+        ens1 = ensembles.create_ensemble(ds_all, realizations=reals)
 
         # Kinda a hack? Alternative is to open and rewrite in a temp folder.
         files = [
             tmp_path / "main" / "EnsembleStats" / Path(f).name
-            for f in ensemble_dataset_objects["nc_files"]
+            for f in ensemble_dataset_objects["nc_files_simple"]
         ]
-        ens3 = ensembles.create_ensemble(dict(zip(reals, files)))
-        xr.testing.assert_identical(ens2, ens3)
+        ens2 = ensembles.create_ensemble(dict(zip(reals, files)))
+        xr.testing.assert_identical(ens1, ens2)
 
     def test_no_time(self, tmp_path, ensemble_dataset_objects, open_dataset):
         # create again using xr.Dataset objects
@@ -79,24 +71,29 @@ class TestEnsembleStats:
             ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True).to_netcdf(
                 f1.joinpath(Path(n).name)
             )
-
         ens = ensembles.create_ensemble(ds_all)
+
         assert len(ens.realization) == len(ensemble_dataset_objects["nc_files"])
 
         in_ncs = list(Path(f1).glob("*.nc"))
         ens = ensembles.create_ensemble(in_ncs)
         assert len(ens.realization) == len(ensemble_dataset_objects["nc_files"])
 
-    def test_create_unequal_times(self, ensemble_dataset_objects):
-        ens = ensembles.create_ensemble(ensemble_dataset_objects["nc_datasets"])
-        assert len(ens.realization) == len(ensemble_dataset_objects["nc_datasets"])
+    def test_create_unequal_times(self, ensemble_dataset_objects, open_dataset):
+        ds_all = []
+        for n in ensemble_dataset_objects["nc_files"]:
+            ds = open_dataset(n)
+            ds_all.append(ds)
+        ens = ensembles.create_ensemble(ds_all)
+
+        assert len(ens.realization) == len(ds_all)
         assert ens.time.dt.year.min() == 1950
         assert ens.time.dt.year.max() == 2100
         assert len(ens.time) == 151
 
         ii = [
             i
-            for i, s in enumerate(ensemble_dataset_objects["nc_datasets"])
+            for i, s in enumerate(ensemble_dataset_objects["nc_files"])
             if "1970-2050" in s
         ]
         # assert padded with nans
@@ -140,8 +137,13 @@ class TestEnsembleStats:
         np.testing.assert_equal(ens.isel(time=0), [0, 0])
 
     @pytest.mark.parametrize("transpose", [False, True])
-    def test_calc_perc(self, transpose, ensemble_dataset_objects):
-        ens = ensembles.create_ensemble(ensemble_dataset_objects["nc_datasets_simple"])
+    def test_calc_perc(self, transpose, ensemble_dataset_objects, open_dataset):
+        ds_all = []
+        for n in ensemble_dataset_objects["nc_files_simple"]:
+            ds = open_dataset(n)
+            ds_all.append(ds)
+        ens = ensembles.create_ensemble(ds_all)
+
         if transpose:
             ens = ens.transpose()
 
@@ -195,16 +197,27 @@ class TestEnsembleStats:
         assert np.all(out4["tg_mean_p90"] > out4["tg_mean_p10"])
 
     @pytest.mark.parametrize("keep_chunk_size", [False, True, None])
-    def test_calc_perc_dask(self, keep_chunk_size, ensemble_dataset_objects):
-        ens = ensembles.create_ensemble(ensemble_dataset_objects["nc_datasets_simple"])
+    def test_calc_perc_dask(
+        self, keep_chunk_size, ensemble_dataset_objects, open_dataset
+    ):
+        ds_all = []
+        for n in ensemble_dataset_objects["nc_files_simple"]:
+            ds = open_dataset(n)
+            ds_all.append(ds)
+        ens = ensembles.create_ensemble(ds_all)
+
         out2 = ensembles.ensemble_percentiles(
             ens.chunk({"time": 2}), keep_chunk_size=keep_chunk_size, split=False
         )
         out1 = ensembles.ensemble_percentiles(ens.load(), split=False)
         np.testing.assert_array_equal(out1["tg_mean"], out2["tg_mean"])
 
-    def test_calc_perc_nans(self, xdoctest_namespace):
-        ens = ensembles.create_ensemble(xdoctest_namespace["nc_datasets_simple"]).load()
+    def test_calc_perc_nans(self, ensemble_dataset_objects, open_dataset):
+        ds_all = []
+        for n in ensemble_dataset_objects["nc_files_simple"]:
+            ds = open_dataset(n)
+            ds_all.append(ds)
+        ens = ensembles.create_ensemble(ds_all).load()
 
         ens.tg_mean[2, 0, 5, 5] = np.nan
         ens.tg_mean[2, 7, 5, 5] = np.nan
@@ -222,8 +235,13 @@ class TestEnsembleStats:
         assert np.all(out1["tg_mean_p90"] > out1["tg_mean_p50"])
         assert np.all(out1["tg_mean_p50"] > out1["tg_mean_p10"])
 
-    def test_calc_mean_std_min_max(self, ensemble_dataset_objects):
-        ens = ensembles.create_ensemble(ensemble_dataset_objects["nc_datasets_simple"])
+    def test_calc_mean_std_min_max(self, ensemble_dataset_objects, open_dataset):
+        ds_all = []
+        for n in ensemble_dataset_objects["nc_files_simple"]:
+            ds = open_dataset(n)
+            ds_all.append(ds)
+        ens = ensembles.create_ensemble(ds_all)
+
         out1 = ensembles.ensemble_mean_std_max_min(ens)
         np.testing.assert_array_equal(
             ens["tg_mean"][:, 0, 5, 5].mean(dim="realization"),
