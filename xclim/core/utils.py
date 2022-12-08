@@ -18,7 +18,7 @@ from importlib.resources import open_text
 from inspect import Parameter, _empty  # noqa
 from io import StringIO
 from pathlib import Path
-from typing import Callable, Mapping, NewType, Sequence
+from typing import Callable, Mapping, NewType, Sequence, TypeVar
 
 import numpy as np
 import xarray as xr
@@ -36,7 +36,7 @@ DateStr = NewType("DateStr", str)
 DayOfYearStr = NewType("DayOfYearStr", str)
 
 #: Type annotation for thresholds and other not-exactly-a-variable quantities
-Quantity = xr.DataArray | str | pint_quantity
+Quantity = TypeVar("Quantity", xr.DataArray, str, pint_quantity)
 
 # Official variables definitions
 VARIABLES = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
