@@ -70,7 +70,8 @@ def test_spatial_analogs(method, open_dataset):
     candidates = data.sel(time=slice("1970", "1990"))
 
     out = xca.spatial_analogs(target, candidates, method=method)
-    np.testing.assert_allclose(diss[method], out, rtol=1e-3, atol=1e-3)
+    atol = 1e-3 if method != "friedman_rafsky" else 0.1
+    np.testing.assert_allclose(diss[method], out, rtol=1e-3, atol=atol)
 
 
 def test_spatial_analogs_multi_index(open_dataset):
