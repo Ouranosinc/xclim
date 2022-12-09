@@ -548,7 +548,7 @@ def add_imports(xdoctest_namespace, threadsafe_data_dir) -> None:
     )  # Needed for modules where xarray is imported as `xr`
 
 
-@pytest.fixture(autouse=True, scope="session")
+@pytest.fixture(autouse=True, scope="function")
 def add_example_dataarray(xdoctest_namespace, tas_series) -> None:
     ns = xdoctest_namespace
     ns["tas"] = tas_series(np.random.rand(365) * 20 + 253.15)
