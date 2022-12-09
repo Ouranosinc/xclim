@@ -11,7 +11,6 @@ import xclim.indices as xci
 from xclim import atmos, core, set_options
 from xclim.core.calendar import build_climatology_bounds, percentile_doy
 from xclim.core.units import convert_units_to
-from xclim.core.utils import PercentileDataArray
 
 K2C = 273.15
 
