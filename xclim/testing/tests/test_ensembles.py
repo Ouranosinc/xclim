@@ -26,77 +26,76 @@ from scipy.stats.mstats import mquantiles
 
 from xclim import ensembles
 from xclim.indices.stats import get_dist
-from xclim.testing.utils import _default_cache_dir, open_dataset
 
 
 class TestEnsembleStats:
-    def test_create_ensemble(self, ensemble_dataset_objects):
-        ens = ensembles.create_ensemble(ensemble_dataset_objects["nc_datasets_simple"])
-        assert len(ens.realization) == len(
-            ensemble_dataset_objects["nc_datasets_simple"]
-        )
-        assert len(ens.time) == 151
-
-        # create again using xr.Dataset objects
+    def test_create_ensemble(
+        self, open_dataset, ensemble_dataset_objects, threadsafe_data_dir
+    ):
         ds_all = []
-        for n in ensemble_dataset_objects["nc_files"]:
-            ds = open_dataset(os.path.join("EnsembleStats", n), decode_times=False)
+        for n in ensemble_dataset_objects["nc_files_simple"]:
+            ds = open_dataset(n, decode_times=False)
             ds["time"] = xr.decode_cf(ds).time
             ds_all.append(ds)
 
-        ens1 = ensembles.create_ensemble(ds_all)
-        coords = list(ens1.coords)
-        coords.extend(list(ens1.data_vars))
-        for c in coords:
-            np.testing.assert_array_equal(ens[c], ens1[c])
+        ens = ensembles.create_ensemble(ds_all)
 
-        for i in np.arange(0, len(ens1.realization)):
+        assert len(ens.realization) == len(ensemble_dataset_objects["nc_files_simple"])
+        assert len(ens.time) == 151
+        for i in np.arange(0, len(ens.realization)):
             np.testing.assert_array_equal(
-                ens1.isel(realization=i).tg_mean.values, ds_all[i].tg_mean.values
+                ens.isel(realization=i).tg_mean.values, ds_all[i].tg_mean.values
             )
+
         reals = [
-            "_".join(f.split("_")[1:4:2]) for f in ensemble_dataset_objects["nc_files"]
+            "_".join(Path(f).name.split("_")[1:4:2])
+            for f in ensemble_dataset_objects["nc_files_simple"]
         ]
-        ens2 = ensembles.create_ensemble(ds_all, realizations=reals)
+        ens1 = ensembles.create_ensemble(ds_all, realizations=reals)
 
         # Kinda a hack? Alternative is to open and rewrite in a temp folder.
         files = [
-            _default_cache_dir / "main" / "EnsembleStats" / f
-            for f in ensemble_dataset_objects["nc_files"]
+            threadsafe_data_dir / "main" / "EnsembleStats" / Path(f).name
+            for f in ensemble_dataset_objects["nc_files_simple"]
         ]
-        ens3 = ensembles.create_ensemble(dict(zip(reals, files)))
-        xr.testing.assert_identical(ens2, ens3)
+        ens2 = ensembles.create_ensemble(dict(zip(reals, files)))
+        xr.testing.assert_identical(ens1, ens2)
 
-    def test_no_time(self, tmp_path, ensemble_dataset_objects):
+    def test_no_time(self, tmp_path, ensemble_dataset_objects, open_dataset):
         # create again using xr.Dataset objects
         f1 = Path(tmp_path / "notime")
         f1.mkdir()
         ds_all = []
         for n in ensemble_dataset_objects["nc_files"]:
-            ds = open_dataset(os.path.join("EnsembleStats", n), decode_times=False)
+            ds = open_dataset(n, decode_times=False)
             ds["time"] = xr.decode_cf(ds).time
             ds_all.append(ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True))
             ds.groupby(ds.time.dt.month).mean("time", keep_attrs=True).to_netcdf(
-                f1.joinpath(n)
+                f1.joinpath(Path(n).name)
             )
-
         ens = ensembles.create_ensemble(ds_all)
+
         assert len(ens.realization) == len(ensemble_dataset_objects["nc_files"])
 
         in_ncs = list(Path(f1).glob("*.nc"))
         ens = ensembles.create_ensemble(in_ncs)
         assert len(ens.realization) == len(ensemble_dataset_objects["nc_files"])
 
-    def test_create_unequal_times(self, ensemble_dataset_objects):
-        ens = ensembles.create_ensemble(ensemble_dataset_objects["nc_datasets"])
-        assert len(ens.realization) == len(ensemble_dataset_objects["nc_datasets"])
+    def test_create_unequal_times(self, ensemble_dataset_objects, open_dataset):
+        ds_all = []
+        for n in ensemble_dataset_objects["nc_files"]:
+            ds = open_dataset(n)
+            ds_all.append(ds)
+        ens = ensembles.create_ensemble(ds_all)
+
+        assert len(ens.realization) == len(ds_all)
         assert ens.time.dt.year.min() == 1950
         assert ens.time.dt.year.max() == 2100
         assert len(ens.time) == 151
 
         ii = [
             i
-            for i, s in enumerate(ensemble_dataset_objects["nc_datasets"])
+            for i, s in enumerate(ensemble_dataset_objects["nc_files"])
             if "1970-2050" in s
         ]
         # assert padded with nans
@@ -140,8 +139,13 @@ class TestEnsembleStats:
         np.testing.assert_equal(ens.isel(time=0), [0, 0])
 
     @pytest.mark.parametrize("transpose", [False, True])
-    def test_calc_perc(self, transpose, ensemble_dataset_objects):
-        ens = ensembles.create_ensemble(ensemble_dataset_objects["nc_datasets_simple"])
+    def test_calc_perc(self, transpose, ensemble_dataset_objects, open_dataset):
+        ds_all = []
+        for n in ensemble_dataset_objects["nc_files_simple"]:
+            ds = open_dataset(n)
+            ds_all.append(ds)
+        ens = ensembles.create_ensemble(ds_all)
+
         if transpose:
             ens = ens.transpose()
 
@@ -195,18 +199,27 @@ class TestEnsembleStats:
         assert np.all(out4["tg_mean_p90"] > out4["tg_mean_p10"])
 
     @pytest.mark.parametrize("keep_chunk_size", [False, True, None])
-    def test_calc_perc_dask(self, keep_chunk_size, ensemble_dataset_objects):
-        ens = ensembles.create_ensemble(ensemble_dataset_objects["nc_datasets_simple"])
+    def test_calc_perc_dask(
+        self, keep_chunk_size, ensemble_dataset_objects, open_dataset
+    ):
+        ds_all = []
+        for n in ensemble_dataset_objects["nc_files_simple"]:
+            ds = open_dataset(n)
+            ds_all.append(ds)
+        ens = ensembles.create_ensemble(ds_all)
+
         out2 = ensembles.ensemble_percentiles(
             ens.chunk({"time": 2}), keep_chunk_size=keep_chunk_size, split=False
         )
         out1 = ensembles.ensemble_percentiles(ens.load(), split=False)
         np.testing.assert_array_equal(out1["tg_mean"], out2["tg_mean"])
 
-    def test_calc_perc_nans(self, ensemble_dataset_objects):
-        ens = ensembles.create_ensemble(
-            ensemble_dataset_objects["nc_datasets_simple"]
-        ).load()
+    def test_calc_perc_nans(self, ensemble_dataset_objects, open_dataset):
+        ds_all = []
+        for n in ensemble_dataset_objects["nc_files_simple"]:
+            ds = open_dataset(n)
+            ds_all.append(ds)
+        ens = ensembles.create_ensemble(ds_all).load()
 
         ens.tg_mean[2, 0, 5, 5] = np.nan
         ens.tg_mean[2, 7, 5, 5] = np.nan
@@ -224,8 +237,13 @@ class TestEnsembleStats:
         assert np.all(out1["tg_mean_p90"] > out1["tg_mean_p50"])
         assert np.all(out1["tg_mean_p50"] > out1["tg_mean_p10"])
 
-    def test_calc_mean_std_min_max(self, ensemble_dataset_objects):
-        ens = ensembles.create_ensemble(ensemble_dataset_objects["nc_datasets_simple"])
+    def test_calc_mean_std_min_max(self, ensemble_dataset_objects, open_dataset):
+        ds_all = []
+        for n in ensemble_dataset_objects["nc_files_simple"]:
+            ds = open_dataset(n)
+            ds_all.append(ds)
+        ens = ensembles.create_ensemble(ds_all)
+
         out1 = ensembles.ensemble_mean_std_max_min(ens)
         np.testing.assert_array_equal(
             ens["tg_mean"][:, 0, 5, 5].mean(dim="realization"),
@@ -269,7 +287,7 @@ class TestEnsembleStats:
 class TestEnsembleReduction:
     nc_file = os.path.join("EnsembleReduce", "TestEnsReduceCriteria.nc")
 
-    def test_kmeans_rsqcutoff(self):
+    def test_kmeans_rsqcutoff(self, open_dataset):
         pytest.importorskip("sklearn", minversion="0.24.1")
         ds = open_dataset(self.nc_file)
 
@@ -292,7 +310,7 @@ class TestEnsembleReduction:
         assert ids == [4, 7, 23]
         assert len(ids) == 3
 
-    def test_kmeans_rsqopt(self):
+    def test_kmeans_rsqopt(self, open_dataset):
         pytest.importorskip("sklearn", minversion="0.24.1")
         ds = open_dataset(self.nc_file)
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
@@ -304,7 +322,7 @@ class TestEnsembleReduction:
         assert ids == [3, 4, 5, 7, 10, 11, 12, 13]
         assert len(ids) == 8
 
-    def test_kmeans_nclust(self):
+    def test_kmeans_nclust(self, open_dataset):
         ds = open_dataset(self.nc_file)
 
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
@@ -319,7 +337,7 @@ class TestEnsembleReduction:
         assert ids == [0, 3, 4, 6, 7, 10, 11, 12, 13]
         assert len(ids) == 9
 
-    def test_kmeans_sampleweights(self):
+    def test_kmeans_sampleweights(self, open_dataset):
         ds = open_dataset(self.nc_file)
         # Test sample weights
         sample_weights = np.ones(ds.data.shape[0])
@@ -352,7 +370,7 @@ class TestEnsembleReduction:
         assert ids == [4, 5, 7, 10, 11, 12, 13]
         assert len(ids) == 7
 
-    def test_kmeans_variweights(self):
+    def test_kmeans_variweights(self, open_dataset):
         pytest.importorskip("sklearn", minversion="0.24.1")
         ds = open_dataset(self.nc_file)
         # Test sample weights
@@ -385,7 +403,7 @@ class TestEnsembleReduction:
         assert all(np.isin([12, 13, 16], ids))
         assert len(ids) == 6
 
-    def test_kmeans_modelweights(self):
+    def test_kmeans_modelweights(self, open_dataset):
         ds = open_dataset(self.nc_file)
         # Test sample weights
         model_weights = np.ones(ds.data.shape[0])
@@ -408,7 +426,7 @@ class TestEnsembleReduction:
     @pytest.mark.skipif(
         "matplotlib.pyplot" not in sys.modules, reason="matplotlib.pyplot is required"
     )
-    def test_kmeans_rsqcutoff_with_graphs(self):
+    def test_kmeans_rsqcutoff_with_graphs(self, open_dataset):
         pytest.importorskip("sklearn", minversion="0.24.1")
         ds = open_dataset(self.nc_file)
 
@@ -441,14 +459,14 @@ class TestEnsembleReduction:
             ([4, 5], 1, [15]),
         ],
     )
-    def test_kkz_simple(self, crit, num_select, expected):
+    def test_kkz_simple(self, open_dataset, crit, num_select, expected):
         ens = open_dataset(self.nc_file)
         data = ens.data.isel(criteria=crit)
 
         selected = ensembles.kkz_reduce_ensemble(data, num_select)
         assert selected == expected
 
-    def test_kkz_standardize(self):
+    def test_kkz_standardize(self, open_dataset):
         ens = open_dataset(self.nc_file)
         data = ens.data.isel(criteria=[1, 3, 5])
 
@@ -457,7 +475,7 @@ class TestEnsembleReduction:
         assert sel_std == [23, 10, 19, 14]
         assert sel_no == [23, 1, 14, 10]
 
-    def test_kkz_change_metric(self):
+    def test_kkz_change_metric(self, open_dataset):
         # This test uses stupid values but is meant to test is kwargs are passed and if dist_method is used.
         ens = open_dataset(self.nc_file)
         data = ens.data.isel(criteria=[1, 3, 5])
@@ -469,7 +487,7 @@ class TestEnsembleReduction:
         assert sel_euc == [23, 10, 19, 14]
         assert sel_mah == [5, 3, 4, 0]
 
-    def test_standardize_seuclidean(self):
+    def test_standardize_seuclidean(self, open_dataset):
         # This test the odd choice of standardizing data for a standardized distance metric
         ens = open_dataset(self.nc_file)
         data = ens.data

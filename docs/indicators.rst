@@ -1,5 +1,5 @@
 ==================
-Climate indicators
+Climate Indicators
 ==================
 
 :py:class:`xclim.core.indicator.Indicator` instances essentially perform the same computations as the functions

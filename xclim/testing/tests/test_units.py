@@ -1,15 +1,19 @@
 from __future__ import annotations
 
 import numpy as np
+import pandas as pd
+import pint
 import pytest
 import xarray as xr
 from dask import array as dsk
 
 from xclim import indices, set_options
 from xclim.core.units import (
+    amount2lwethickness,
     amount2rate,
     check_units,
     convert_units_to,
+    lwethickness2amount,
     pint2cfunits,
     pint_multiply,
     rate2amount,
@@ -94,6 +98,24 @@ class TestConvertUnitsTo:
     def test_offset_confusion(self):
         out = convert_units_to("10 degC days", "K days")
         assert out == 10
+
+    def test_cf_conversion_amount2lwethickness_error(self):
+        # It is not thickness data because the standard name is wrong (absent)
+        not_thickness_data = xr.DataArray([1, 2, 3], attrs={"units": "mm"})
+        with pytest.raises(pint.errors.DimensionalityError):
+            convert_units_to(not_thickness_data, "kg/m**2/day")
+
+    def test_cf_conversion_amount2lwethickness_amount2rate(self):
+        thickness_data = xr.DataArray(
+            [1, 2, 3],
+            coords={"time": pd.date_range("1990-01-01", periods=3, freq="D")},
+            dims=["time"],
+            attrs={"units": "mm", "standard_name": "thickness_of_rainfall_amount"},
+        )
+        out = convert_units_to(thickness_data, "kg/m**2/day")
+        np.testing.assert_array_almost_equal(out, thickness_data)
+        assert out.attrs["units"] == "kg d-1 m-2"  # CF equivalent unit
+        assert out.attrs["standard_name"] == "rainfall_flux"
 
 
 class TestUnitConversion:
@@ -195,6 +217,7 @@ def test_rate2amount(pr_series):
 def test_amount2rate(pr_series):
     pr = pr_series(np.ones(365 + 366 + 365), start="2019-01-01")
     am = rate2amount(pr)
+    assert am.attrs["standard_name"] == "precipitation_amount"
 
     np.testing.assert_allclose(amount2rate(am), pr)
 
@@ -210,3 +233,14 @@ def test_amount2rate(pr_series):
         am_ys = am.resample(time="YS").sum()
         pr_ys = amount2rate(am_ys)
         np.testing.assert_allclose(pr_ys, 1)
+
+
+def test_amount2lwethickness(snw_series):
+    snw = snw_series(np.ones(365), start="2019-01-01")
+
+    swe = amount2lwethickness(snw, out_units="mm")
+    swe.attrs["standard_name"] == "lwe_thickness_of_snowfall_amount"
+    np.testing.assert_allclose(swe, 1)
+
+    snw = lwethickness2amount(swe)
+    snw.attrs["standard_name"] == "snowfall_amount"

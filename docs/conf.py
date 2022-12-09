@@ -58,26 +58,26 @@ def _indicator_table(module):
     """Return a sequence of dicts storing metadata about all available indices in xclim."""
     inds = _get_indicators(getattr(xclim.indicators, module))
     table = {}
-    for indname, ind in inds.items():
+    for ind_name, ind in inds.items():
         # Apply default values
         # args = {
         #     name: p.default if p.default != inspect._empty else f"<{name}>"
         #     for (name, p) in ind._sig.parameters.items()
         # }
         try:
-            table[indname] = ind.json()  # args?
+            table[ind_name] = ind.json()  # args?
         except KeyError as err:
             warnings.warn(
                 f"{ind.identifier} could not be documented.({err})", UserWarning
             )
         else:
-            table[indname]["doc"] = ind.__doc__
+            table[ind_name]["doc"] = ind.__doc__
             if ind.compute.__module__.endswith("generic"):
-                table[indname][
+                table[ind_name][
                     "function"
                 ] = f"xclim.indices.generic.{ind.compute.__name__}"
             else:
-                table[indname]["function"] = f"xclim.indices.{ind.compute.__name__}"
+                table[ind_name]["function"] = f"xclim.indices.{ind.compute.__name__}"
     return table
 
 
@@ -115,10 +115,15 @@ autosectionlabel_prefix_document = True
 autosectionlabel_maxdepth = 2
 
 linkcheck_ignore = [
-    r"https://github.com/Ouranosinc/xclim/(pull|issue).*",
+    r"https://github.com/Ouranosinc/xclim/(pull|issue).*",  # too labourious to fully check
     r"https://doi.org/10.1093/mnras/225.1.155",  # does not allow linkcheck requests (error 403)
-    r"https://hal.inrae.fr/hal-02843898",  # SSL certificate is broken
+    r"https://hal.inrae.fr/hal-02843898",  # bad ssl certificate
+    r"https://www.ouranos.ca/.*",  # bad ssl certificate
+    r"https://doi.org/10.1080/.*",  # tandfonline does not allow linkcheck requests (error 403)
+    r"https://www.tandfonline.com/.*",  # tandfonline does not allow linkcheck requests (error 403)
+    r"http://www.utci.org/.*",  # Added on 2022-12-08: site appears to be down (timeout)
 ]
+linkcheck_exclude_documents = [r"readme"]
 
 napoleon_numpy_docstring = True
 napoleon_use_rtype = False
@@ -323,3 +328,7 @@ texinfo_documents = [
         "Miscellaneous",
     )
 ]
+
+
+def setup(app):
+    app.add_css_file("_static/style.css")
