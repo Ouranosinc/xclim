@@ -10,7 +10,6 @@ from dask import compute
 
 from xclim.core.options import set_options
 from xclim.indices import run_length as rl
-from xclim.testing import open_dataset
 
 K2C = 273.15
 
@@ -266,7 +265,7 @@ class TestFirstRun:
         i = rl.first_run(a, 5, dim="x")
         assert 10 == i
 
-    def test_real_data(self):
+    def test_real_data(self, open_dataset):
         # FIXME: No test here?!
         # n-dim version versus ufunc
         da3d = open_dataset(self.nc_pr).pr[:, 40:50, 50:68] != 0
@@ -344,7 +343,7 @@ def test_run_bounds_synthetic():
     np.testing.assert_array_equal(bounds, [[1, 6], [4, 9]])
 
 
-def test_run_bounds_data():
+def test_run_bounds_data(open_dataset):
     era5 = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
     cond = era5.tas.rolling(time=7).mean() > 285
 
@@ -367,7 +366,7 @@ def test_keep_longest_run_synthetic():
     )
 
 
-def test_keep_longest_run_data():
+def test_keep_longest_run_data(open_dataset):
     era5 = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
     cond = era5.swe > 0.001
     lrun = rl.keep_longest_run(cond, "time")
