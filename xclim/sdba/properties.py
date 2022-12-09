@@ -21,9 +21,8 @@ from xclim.core.indicator import Indicator, base_registry
 from xclim.core.units import convert_units_to, to_agg_units
 from xclim.core.utils import uses_dask
 from xclim.indices import run_length as rl
-from xclim.indices.generic import select_resample_op
+from xclim.indices.generic import compare, select_resample_op
 from xclim.indices.stats import fit, parametric_quantile
-from xclim.indices.generic import compare
 
 from .base import Grouper, map_groups
 from .nbutils import _pairwise_haversine_and_bins
