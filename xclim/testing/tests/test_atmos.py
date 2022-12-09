@@ -6,7 +6,6 @@ import numpy as np
 import xarray as xr
 
 from xclim import atmos, set_options
-from xclim.testing import open_dataset
 
 K2C = 273.16
 
@@ -244,12 +243,12 @@ def test_wind_chill_index(atmosds):
 
 
 class TestPotentialEvapotranspiration:
-    def test_convert_units(self, threadsafe_data_dir):
+    def test_convert_units(self, open_dataset):
         ds = open_dataset(
             "ERA5/daily_surface_cancities_1990-1993.nc",
             branch="add-radiation",
-            cache_dir=threadsafe_data_dir,
         )
+
         tn = ds.tasmin
         tx = ds.tasmax
         tm = ds.tas
@@ -306,12 +305,12 @@ class TestPotentialEvapotranspiration:
         np.testing.assert_allclose(pet_mb05, pet_mb05C, atol=1)
         np.testing.assert_allclose(pet_fao_pm98, pet_fao_pm98C, atol=1)
 
-    def test_nan_values(self, threadsafe_data_dir):
+    def test_nan_values(self, open_dataset):
         ds = open_dataset(
             "ERA5/daily_surface_cancities_1990-1993.nc",
             branch="add-radiation",
-            cache_dir=threadsafe_data_dir,
         )
+
         tn = ds.tasmin
         tx = ds.tasmax
         tm = ds.tas
@@ -360,11 +359,10 @@ class TestPotentialEvapotranspiration:
 
 
 class TestWaterBudget:
-    def test_convert_units(self, threadsafe_data_dir):
+    def test_convert_units(self, open_dataset):
         ds = open_dataset(
             "ERA5/daily_surface_cancities_1990-1993.nc",
             branch="add-radiation",
-            cache_dir=threadsafe_data_dir,
         )
 
         tn = ds.tasmin
@@ -442,11 +440,10 @@ class TestWaterBudget:
         np.testing.assert_allclose(p_pet_fao_pm98, p_pet_fao_pm98R, atol=1)
         np.testing.assert_allclose(p_pet_evpot, p_pet_evpotR, atol=1)
 
-    def test_nan_values(self, threadsafe_data_dir):
+    def test_nan_values(self, open_dataset):
         ds = open_dataset(
             "ERA5/daily_surface_cancities_1990-1993.nc",
             branch="add-radiation",
-            cache_dir=threadsafe_data_dir,
         )
 
         tn = ds.tasmin
@@ -502,12 +499,12 @@ class TestWaterBudget:
 
 
 class TestUTCI:
-    def test_universal_thermal_climate_index(self, threadsafe_data_dir):
+    def test_universal_thermal_climate_index(self, open_dataset):
         dataset = open_dataset(
             "ERA5/daily_surface_cancities_1990-1993.nc",
             branch="add-radiation",
-            cache_dir=threadsafe_data_dir,
         )
+
         tas = dataset.tas
         hurs = dataset.hurs
         sfcWind, sfcWindfromdir = atmos.wind_speed_from_vector(
@@ -535,11 +532,10 @@ class TestUTCI:
 
 
 class TestMeanRadiantTemperature:
-    def test_mean_radiant_temperature(self, threadsafe_data_dir):
+    def test_mean_radiant_temperature(self, open_dataset):
         dataset = open_dataset(
             "ERA5/daily_surface_cancities_1990-1993.nc",
             branch="add-radiation",
-            cache_dir=threadsafe_data_dir,
         )
         rsds = dataset.rsds
         rsus = dataset.rsus
