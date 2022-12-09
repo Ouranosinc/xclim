@@ -19,7 +19,6 @@ from xclim.indices import (
     tx90p,
     warm_spell_duration_index,
 )
-from xclim.testing import open_dataset
 
 
 class Test_bootstrap:
@@ -182,7 +181,7 @@ class Test_bootstrap:
             tg10p(tas_out_base, per, freq="MS", bootstrap=True)
 
     @pytest.mark.slow
-    def test_multi_per(self):
+    def test_multi_per(self, open_dataset):
         tas = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tas
         t90 = percentile_doy(
             tas.sel(time=slice("1990-01-01", "1991-12-31")), window=5, per=[90, 91]
@@ -191,7 +190,7 @@ class Test_bootstrap:
         np.testing.assert_array_equal([90, 91], res.percentiles)
 
     @pytest.mark.slow
-    def test_doctest_ndims(self):
+    def test_doctest_ndims(self, open_dataset):
         """Replicates doctest to facilitate debugging."""
         tas = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tas
         t90 = percentile_doy(

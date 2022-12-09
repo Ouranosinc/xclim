@@ -120,6 +120,7 @@ linkcheck_ignore = [
     r"https://www.ouranos.ca/.*",  # bad ssl certificate
     r"https://doi.org/10.1080/.*",  # tandfonline does not allow linkcheck requests (error 403)
     r"https://www.tandfonline.com/.*",  # tandfonline does not allow linkcheck requests (error 403)
+    r"http://www.utci.org/.*",  # Added on 2022-12-08: site appears to be down (timeout)
 ]
 linkcheck_exclude_documents = [r"readme"]
 
