@@ -764,31 +764,30 @@ def _transition_probability(
     """Transition probability.
 
     Probability of transition from the initial state to the final state. The states are
-     booleans comparing the value of the day to the threshold with the operator.
+    booleans comparing the value of the day to the threshold with the operator.
 
-     The transition occurs when consecutive days are both in the given states.
+    The transition occurs when consecutive days are both in the given states.
 
     Parameters
     ----------
     da : xr.DataArray
-      Variable on which to calculate the diagnostic.
-    initial_op: {“>”, “gt”, “<”, “lt”, “>=”, “ge”, “<=”, “le”, “==”, “eq”, “!=”, “ne”}
-      Operation to verify the condition for the initial state.
-      The condition is variable {op} threshold.
-    final_op: {“>”, “gt”, “<”, “lt”, “>=”, “ge”, “<=”, “le”, “==”, “eq”, “!=”, “ne”}
-      Operation to verify the condition for the final state.
-      The condition is variable {op} threshold.
-    thresh: str
-      Threshold on which to evaluate the condition.
-    group : {'time', 'time.season', 'time.month'}
-      Grouping on the output.
-      Eg. For 'time.month', the relative frequency would be calculated on each month,
-      with all years included.
+        Variable on which to calculate the diagnostic.
+    initial_op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        Operation to verify the condition for the initial state.
+        The condition is variable {op} threshold.
+    final_op: {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        Operation to verify the condition for the final state.
+        The condition is variable {op} threshold.
+    thresh : str
+        Threshold on which to evaluate the condition.
+    group : {"time", "time.season", "time.month"}
+        Grouping on the output.
+        e.g. For "time.month", the relative frequency would be calculated on each month, with all years included.
 
     Returns
     -------
     xr.DataArray, [dimensionless]
-      Transition probability of values {initial_op} {thresh} to values {final_op} {thresh}.
+        Transition probability of values {initial_op} {thresh} to values {final_op} {thresh}.
     """
     # mask of the ocean with NaNs
     mask = ~(da.isel({group.dim: 0}).isnull()).drop_vars(group.dim)
@@ -819,20 +818,20 @@ def _trend(
 ) -> xr.DataArray:
     """Linear Trend.
 
-    The data is averaged over each time resolution and the interannual trend is returned.
+    The data is averaged over each time resolution and the inter-annual trend is returned.
     This function will rechunk along the grouping dimension.
 
     Parameters
     ----------
     da : xr.DataArray
-      Variable on which to calculate the diagnostic.
-    output: {'slope', 'pvalue'}
-      Attributes of the linear regression to return.
-      'slope' is the slope of the regression line.
-      'pvalue' is  for a hypothesis test whose null hypothesis is that the slope is zero,
-      using Wald Test with t-distribution of the test statistic.
+        Variable on which to calculate the diagnostic.
+    output : {'slope', 'pvalue'}
+        Attributes of the linear regression to return.
+        'slope' is the slope of the regression line.
+        'pvalue' is  for a hypothesis test whose null hypothesis is that the slope is zero,
+        using Wald Test with t-distribution of the test statistic.
     group : {'time', 'time.season', 'time.month'}
-      Grouping on the output.
+        Grouping on the output.
 
     Returns
     -------
