@@ -30,7 +30,6 @@ from xclim.core.calendar import (
     percentile_doy,
     time_bnds,
 )
-from xclim.testing import open_dataset
 
 
 @pytest.fixture(
@@ -236,7 +235,7 @@ def test_adjust_doy_366_to_360():
         (("NRCANdaily", "nrcan_canada_daily_pr_1990.nc"), "default", 366),
     ],
 )
-def test_get_calendar(file, cal, maxdoy):
+def test_get_calendar(file, cal, maxdoy, open_dataset):
     with open_dataset(os.path.join(*file)) as ds:
         out_cal = get_calendar(ds)
         assert cal == out_cal

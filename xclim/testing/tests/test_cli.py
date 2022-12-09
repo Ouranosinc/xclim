@@ -9,7 +9,6 @@ from click.testing import CliRunner
 
 import xclim
 from xclim.cli import cli
-from xclim.testing import open_dataset
 
 try:
     from dask.distributed import Client
@@ -133,7 +132,7 @@ def test_multi_input(tas_series, pr_series, tmp_path):
     assert out.solidprcptot.sum() == 0
 
 
-def test_multi_output(tmp_path):
+def test_multi_output(tmp_path, open_dataset):
     ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
     input_file = tmp_path / "ws_in.nc"
     output_file = tmp_path / "out.nc"
