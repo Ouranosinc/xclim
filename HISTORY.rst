@@ -36,6 +36,7 @@ Bug fixes
 * The `make docs` Makefile recipe was failing with an esoteric error. This has been resolved by splitting the `linkcheck` and `docs` steps into separate actions. (:issue:`1248`. :pull:`1251`).
 * The setup step for `pytest` needed to be addressed due to the fact that files were being accessed/modified by multiple tests at a time, causing segmentation faults in some tests. This has been resolved by splitting functions into those that fetch or generate test data (under `xclim.testing.tests.data`) and the fixtures that supply accessors to them (under `xclim.testing.tests.conftest`). (:issue:`1238`, :pull:`1254`).
 * Relaxed the expected output for ``test_spatial_analogs[friedman_rafsky]`` to support expected results from `scikit-learn` 1.2.0.
+* The MBCn example in documentation has been fixed to properly imitate the source. (:issue:`1249`, :pull:`1250`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
