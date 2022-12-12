@@ -9,7 +9,7 @@ K2C = 273
 
 
 class TestColdAndDry:
-    def test_simple(seldf, tas_series, pr_series):
+    def test_simple(self, tas_series, pr_series):
         # GIVEN
         raw_temp = np.full(365 * 4, 20) + K2C
         raw_temp[10:20] -= 10
@@ -26,7 +26,7 @@ class TestColdAndDry:
 
 
 class TestWarmAndDry:
-    def test_simple(seldf, tas_series, pr_series):
+    def test_simple(self, tas_series, pr_series):
         # GIVEN
         raw_temp = np.full(365 * 4, 20) + K2C
         raw_temp[10:30] += 10
@@ -43,7 +43,7 @@ class TestWarmAndDry:
 
 
 class TestWarmAndWet:
-    def test_simple(seldf, tas_series, pr_series):
+    def test_simple(self, tas_series, pr_series):
         # GIVEN
         raw_temp = np.full(365 * 4, 20) + K2C
         raw_temp[10:30] += 10
@@ -60,7 +60,7 @@ class TestWarmAndWet:
 
 
 class TestColdAndWet:
-    def test_simple(seldf, tas_series, pr_series):
+    def test_simple(self, tas_series, pr_series):
         # GIVEN
         raw_temp = np.full(365 * 4, 20) + K2C
         raw_temp[10:25] -= 20

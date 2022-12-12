@@ -14,7 +14,6 @@ from xclim.core.indicator import build_indicator_module_from_yaml
 from xclim.core.locales import read_locale_file
 from xclim.core.options import set_options
 from xclim.core.utils import VARIABLES, InputKind, load_module
-from xclim.testing import open_dataset
 
 
 def all_virtual_indicators():
@@ -58,7 +57,7 @@ def test_virtual_modules(virtual_indicator, atmosds):
 
 
 @pytest.mark.requires_docs
-def test_custom_indices():
+def test_custom_indices(open_dataset):
     # Use the example in the Extending Xclim notebook for testing.
     nbpath = Path(__file__).parent.parent.parent.parent / "docs" / "notebooks"
 
