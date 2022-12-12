@@ -9,6 +9,9 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bo
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Virtual modules can add variables to ``xclim.core.utils.VARIABLES`` through the new `variables` section of the yaml files. (:issue:`1129`, :pull:`1231`).
+* ``xclim.core.units.convert_units_to`` can now perform automatic conversions based on the standard name of the input when needed. (:issue:`1205`, :pull:`1206`).
+    - Conversion from amount (thickness) to flux (rate), using ``amount2rate`` and ``rate2amount``.
+    - Conversion from amount to thickness for liquid water quantities, using the new ``amount2lwethickness`` and ``lwethickness2amount``. This is similar to the implicit transformations enabled by the "hydro" unit context.
 * New properties ``xclim.sdba.properties.decorrelation_length`` and ``xclim.sdba.properties.transition_probability``. (:pull:`1252`)
 
 Breaking changes
@@ -31,12 +34,7 @@ Bug fixes
 * The `make docs` Makefile recipe was failing with an esoteric error. This has been resolved by splitting the `linkcheck` and `docs` steps into separate actions. (:issue:`1248`. :pull:`1251`).
 * The setup step for `pytest` needed to be addressed due to the fact that files were being accessed/modified by multiple tests at a time, causing segmentation faults in some tests. This has been resolved by splitting functions into those that fetch or generate test data (under `xclim.testing.tests.data`) and the fixtures that supply accessors to them (under `xclim.testing.tests.conftest`). (:issue:`1238`, :pull:`1254`).
 * Relaxed the expected output for ``test_spatial_analogs[friedman_rafsky]`` to support expected results from `scikit-learn` 1.2.0.
-
-New features and enhancements
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* ``xclim.core.units.convert_units_to`` can now perform automatic conversions based on the standard name of the input when needed. (:issue:`1205`, :pull:`1206`).
-    - Conversion from amount (thickness) to flux (rate), using ``amount2rate`` and ``rate2amount``.
-    - Conversion from amount to thickness for liquid water quantities, using the new ``amount2lwethickness`` and ``lwethickness2amount``. This is similar to the implicit transformations enabled by the "hydro" unit context.
+* The MBCn example in documentation has been fixed to properly imitate the source. (:issue:`1249`, :pull:`1250`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
