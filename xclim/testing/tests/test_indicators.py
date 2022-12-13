@@ -26,7 +26,7 @@ from xclim.core.indicator import Daily, Indicator, ResamplingIndicator, registry
 from xclim.core.units import convert_units_to, declare_units, units
 from xclim.core.utils import VARIABLES, InputKind, MissingVariableError
 from xclim.indices import tg_mean
-from xclim.testing import list_input_variables, open_dataset
+from xclim.testing import list_input_variables
 
 
 @declare_units(da="[temperature]", thresh="[temperature]")
@@ -610,7 +610,7 @@ def test_update_history():
     assert merged.startswith("a: Text1")
 
 
-def test_input_dataset():
+def test_input_dataset(open_dataset):
     ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
     # Use defaults
@@ -813,7 +813,6 @@ def test_all_inputs_known():
         - {"q", "da"}  # Generic inputs
         - {"mrt"}  # TODO: add Mean Radiant Temperature
     )
-    print(VARIABLES.keys(), "\n", known_vars)
     if not set(VARIABLES.keys()).issuperset(known_vars):
         raise AssertionError(
             "All input variables of xclim indicators must be registered in "

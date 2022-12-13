@@ -11,17 +11,19 @@ on:
       - xclim/__init__.py
   pull_request:
     types:
-      - labeled
       - opened
       - reopened
       - synchronize
+  pull_request_review:
+    types:
+      - submitted
 
 jobs:
   black:
     runs-on: ubuntu-22.04
     if: |
       ((github.event_name == 'pull_request') && (github.event.action != 'labeled')) ||
-      ((github.event.action == 'labeled') && (github.event.label.name == 'approved')) ||
+      (github.event.review.state == 'approved') ||
       (github.event_name == 'push')
     steps:
       - name: Cancel previous runs
@@ -39,7 +41,8 @@ jobs:
 
   test-py38:
     needs: black
-    if: (github.event_name == 'pull_request') && !contains(github.event.pull_request.labels.*.name, 'approved')
+    if: |
+      (github.event_name == 'pull_request') && !contains(github.event.pull_request.labels.*.name, 'approved')
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
@@ -58,6 +61,7 @@ jobs:
     needs: black
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
+      (github.event.review.state == 'approved') ||
       (github.event_name == 'push')
     runs-on: ubuntu-22.04
     steps:
@@ -82,29 +86,52 @@ jobs:
     needs: black
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
+      (github.event.review.state == 'approved') ||
       (github.event_name == 'push')
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
       - name: Setup conda
-        uses: conda-incubator/setup-miniconda@v2.1.1
+        uses: conda-incubator/setup-miniconda@v2
         with:
+          auto-update-conda: true
           activate-environment: xclim39
           channels: conda-forge,defaults
+          environment-file: environment.yml
           mamba-version: "*"
           python-version: "3.9"
-      - name: Install tox
+      - name: Conda and Mamba versions
         shell: bash -l {0}
         run: |
-          mamba install -n xclim39 tox-conda
-      - name: Test with tox
+          mamba --version
+      - name: Install dependencies
+        shell: bash -l {0}
+        run: |
+          mamba install -n xclim39 eofs eigen pybind11
+          conda activate xclim39
+          python -m pip install --no-user "git+https://github.com/Ouranosinc/SBCK.git@easier-install#egg=sbck&subdirectory=python"
+          python -m pip install --no-user .
+      - name: Test
         shell: bash -l {0}
         run: |
           conda activate xclim39
-          tox -e opt-slow-mamba
+          pip check
+          pytest xclim --durations=10
         env:
           CONDA_EXE: mamba
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      - name: Install tox
+#        shell: bash -l {0}
+#        run: |
+#          mamba install -n xclim39 tox-conda
+#      - name: Test
+#        shell: bash -l {0}
+#        run: |
+#          conda activate xclim39
+#          tox -e opt-slow-mamba
+#        env:
+#          CONDA_EXE: mamba
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Report coverage
         uses: AndreMiras/coveralls-python-action@develop
         with:
@@ -115,6 +142,7 @@ jobs:
     needs: black
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
+      (github.event.review.state == 'approved') ||
       (github.event_name == 'push')
     runs-on: ubuntu-22.04
     steps:
@@ -139,6 +167,7 @@ jobs:
     needs: black
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
+      (github.event.review.state == 'approved') ||
       (github.event_name == 'push')
     runs-on: ubuntu-22.04
     steps:

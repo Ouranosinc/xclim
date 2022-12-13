@@ -1,6 +1,5 @@
 # noqa: D205,D400
 """
-# TODO: Remove default values from
 Run length algorithms submodule
 ===============================
 
@@ -48,6 +47,8 @@ def use_ufunc(
         Input array.
     dim : str
         The dimension along which to find runs.
+    freq : str
+      Resampling frequency.
     index : {'first', 'last'}
         If 'first' (default), the run length is indexed with the first element in the run.
         If 'last', with the last element in the run.
@@ -93,17 +94,17 @@ def resample_and_rl(
       N-dimensional array (boolean).
     resample_before_rl : bool
       Determines whether if input arrays of runs `da` should be separated in period before
-      or after the run length algorithms are applied
+      or after the run length algorithms are applied.
     compute
       Run length function to apply
     args
-      Positional arguments needed in `compute`
+      Positional arguments needed in `compute`.
     dim: str
       The dimension along which to find runs.
     freq : str
       Resampling frequency.
     kwargs
-      Keyword arguments needed in `compute`
+      Keyword arguments needed in `compute`.
 
     Returns
     -------
@@ -1048,8 +1049,7 @@ def rle_1d(
     n = len(ia)
 
     if n == 0:
-        e = "run length array empty"
-        warn(e)
+        warn("run length array empty")
         # Returning None makes some other 1d func below fail.
         return np.array(np.nan), 0, np.array(np.nan)
     return _rle_1d(ia)
@@ -1072,7 +1072,7 @@ def first_run_1d(arr: Sequence[int | float], window: int) -> int | np.nan:
         Returns np.nan if there are no valid runs.
     """
     v, rl, pos = rle_1d(arr)
-    ind = np.where(v * rl >= window, pos, np.inf).min()
+    ind = np.where(v * rl >= window, pos, np.inf).min()  # noqa
 
     if np.isinf(ind):
         return np.nan
