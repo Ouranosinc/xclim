@@ -15,7 +15,7 @@ from xarray.core.utils import get_temp_dimname
 
 from xclim.core.calendar import get_calendar, max_doy, parse_offset
 from xclim.core.formatting import update_xclim_history
-from xclim.core.units import convert_units_to
+from xclim.core.units import convert_units_to, infer_context, units
 from xclim.core.utils import uses_dask
 
 from ._processing import _adapt_freq, _normalize, _reordering
@@ -77,8 +77,9 @@ def adapt_freq(
     :cite:cts:`sdba-themesl_empirical-statistical_2012`
 
     """
-    sim = convert_units_to(sim, ref)
-    thresh = convert_units_to(thresh, ref)
+    with units.context(infer_context(ref.attrs.get("standard_name"))):
+        sim = convert_units_to(sim, ref)
+        thresh = convert_units_to(thresh, ref)
 
     out = _adapt_freq(xr.Dataset(dict(sim=sim, ref=ref)), group=group, thresh=thresh)
 
@@ -191,34 +192,35 @@ def jitter(
         and values >= upper are replaced by a uniform noise in range [upper, maximum).
         The two noise distributions are independent.
     """
-    out = x
-    notnull = x.notnull()
-    if lower is not None:
-        lower = convert_units_to(lower, x)
-        minimum = convert_units_to(minimum, x) if minimum is not None else 0
-        minimum = minimum + np.finfo(x.dtype).eps
-        if uses_dask(x):
-            jitter = dsk.random.uniform(
-                low=minimum, high=lower, size=x.shape, chunks=x.chunks
-            )
-        else:
-            jitter = np.random.uniform(low=minimum, high=lower, size=x.shape)
-        out = out.where(~((x < lower) & notnull), jitter.astype(x.dtype))
-    if upper is not None:
-        if maximum is None:
-            raise ValueError("If 'upper' is given, so must 'maximum'.")
-        upper = convert_units_to(upper, x)
-        maximum = convert_units_to(maximum, x)
-        if uses_dask(x):
-            jitter = dsk.random.uniform(
-                low=upper, high=maximum, size=x.shape, chunks=x.chunks
-            )
-        else:
-            jitter = np.random.uniform(low=upper, high=maximum, size=x.shape)
-        out = out.where(~((x >= upper) & notnull), jitter.astype(x.dtype))
+    with units.context(infer_context(x.attrs.get("standard_name"))):
+        out = x
+        notnull = x.notnull()
+        if lower is not None:
+            lower = convert_units_to(lower, x)
+            minimum = convert_units_to(minimum, x) if minimum is not None else 0
+            minimum = minimum + np.finfo(x.dtype).eps
+            if uses_dask(x):
+                jitter = dsk.random.uniform(
+                    low=minimum, high=lower, size=x.shape, chunks=x.chunks
+                )
+            else:
+                jitter = np.random.uniform(low=minimum, high=lower, size=x.shape)
+            out = out.where(~((x < lower) & notnull), jitter.astype(x.dtype))
+        if upper is not None:
+            if maximum is None:
+                raise ValueError("If 'upper' is given, so must 'maximum'.")
+            upper = convert_units_to(upper, x)
+            maximum = convert_units_to(maximum, x)
+            if uses_dask(x):
+                jitter = dsk.random.uniform(
+                    low=upper, high=maximum, size=x.shape, chunks=x.chunks
+                )
+            else:
+                jitter = np.random.uniform(low=upper, high=maximum, size=x.shape)
+            out = out.where(~((x >= upper) & notnull), jitter.astype(x.dtype))
 
-    copy_all_attrs(out, x)  # copy attrs and same units
-    return out
+        copy_all_attrs(out, x)  # copy attrs and same units
+        return out
 
 
 @update_xclim_history
@@ -254,7 +256,9 @@ def normalize(
     ds = xr.Dataset(dict(data=data))
 
     if norm is not None:
-        norm = convert_units_to(norm, data)
+        norm = convert_units_to(
+            norm, data, context=infer_context(data.attrs.get("standard_name"))
+        )
         ds = ds.assign(norm=norm)
 
     out = _normalize(ds, group=group, kind=kind)
@@ -671,9 +675,10 @@ def to_additive_space(
     :cite:cts:`sdba-alavoine_distinct_2022`
 
     """
-    lower_bound = convert_units_to(lower_bound, data)
-    if upper_bound is not None:
-        upper_bound = convert_units_to(upper_bound, data)
+    with units.context(infer_context(data.attrs.get("standard_name"))):
+        lower_bound = convert_units_to(lower_bound, data)
+        if upper_bound is not None:
+            upper_bound = convert_units_to(upper_bound, data)
 
     with xr.set_options(keep_attrs=True):
         if trans == "log":
@@ -711,7 +716,7 @@ def from_additive_space(
     Parameters
     ----------
     data : xr.DataArray
-        A variable that was transform by :py:func:`to_additive_space`.
+        A variable that was transformed by :py:func:`to_additive_space`.
     lower_bound : str, optional
         The smallest physical value of the variable, as a Quantity string.
         The final data will have no value smaller or equal to this bound.

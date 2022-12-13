@@ -247,6 +247,7 @@ snowfall_approximation = Converter(
     abstract="Solid precipitation estimated from total precipitation and temperature "
     "with a given method and temperature threshold.",
     compute=indices.snowfall_approximation,
+    context="hydro",
 )
 
 
@@ -263,6 +264,7 @@ rain_approximation = Converter(
     abstract="Liquid precipitation estimated from total precipitation and temperature "
     "with a given method and temperature threshold.",
     compute=indices.rain_approximation,
+    context="hydro",
 )
 
 

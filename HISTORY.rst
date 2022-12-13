@@ -12,11 +12,16 @@ New features and enhancements
 * ``xclim.core.units.convert_units_to`` can now perform automatic conversions based on the standard name of the input when needed. (:issue:`1205`, :pull:`1206`).
     - Conversion from amount (thickness) to flux (rate), using ``amount2rate`` and ``rate2amount``.
     - Conversion from amount to thickness for liquid water quantities, using the new ``amount2lwethickness`` and ``lwethickness2amount``. This is similar to the implicit transformations enabled by the "hydro" unit context.
+* ``xclim.core.units.convert_units_to`` can now perform automatic conversions based on the standard name of the input when needed. (:issue:`1205`, :pull:`1206`).
+    - Conversion from amount (thickness) to flux (rate), using ``amount2rate`` and ``rate2amount``.
+    - Conversion from amount to thickness for liquid water quantities, using the new ``amount2lwethickness`` and ``lwethickness2amount``. This is similar to the implicit transformations enabled by the "hydro" unit context.
+    - Passing ``context='infer'`` will activate the "hydro" context if the source or the target are DataArrays with a standard name that is compatible, as decided by the new ``xclim.core.units.infer_context`` function.
 * New properties ``xclim.sdba.properties.decorrelation_length`` and ``xclim.sdba.properties.transition_probability``. (:pull:`1252`)
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * Rewrite of ``xclim.core.calendar.time_bnds``. It should now be more resilient and versatile, but all ``cftime_*`` and ``cfindex_*`` functions were removed. (:issue:`74`, :pull:`1207`).
+* `hydro` context is not always enabled, as it led to unwanted unit conversions. Unit conversion operations now need to explicitly declare the `hydro` context to support conversions from `kg / m2 /s` to `mm/day`. (:issue:`1208`, :pull:`1227`).
 * Many previously deprecated indices and indicators have been removed from `xclim` (:pull:`1228`), with replacement indices/indicators suggested as follows:
     - ``xclim.indicators.atmos.fire_weather_indexes`` → ``xclim.indicators.atmos.cffwis_indices``
     - ``xclim.indices.freshet_start`` → ``xclim.indices.first_day_temperature_above``
@@ -39,6 +44,7 @@ Bug fixes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Minor adjustments to GitHub Actions workflows (newest Ubuntu images, updated actions version, better CI triggering). (:pull:`1221`).
+* Pint units `context` added to various operations, tests and `Indicator` attributes. (:issue:`1208`, :pull:`1227`).
 * Updated article from Alavoine & Grenier (2022) within documentation. Many article reference URLs have been updated to use HTTPS where possible. (:issue:`1246`, :pull:`1247`).
 * Added relevant variable dataflag checks for potential evaporation, convective precipitation, and air pressure at sea level. (:pull:`1241`).
 * Documentation restructured to include `ReadMe` page (as `About`) with some minor changes to documentation titles. (:pull:`1233`).
