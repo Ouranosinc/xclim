@@ -203,7 +203,7 @@ class TestCFFWIS:
     def test_fire_weather_ufunc_overwintering(self, atmosds):
         ds = atmosds.assign(
             tas=convert_units_to(atmosds.tas, "degC"),
-            pr=convert_units_to(atmosds.pr, "mm/d"),
+            pr=convert_units_to(atmosds.pr, "mm/d", context="hydro"),
         )
         season_mask_all = fire_season(ds.tas, method="WF93", temp_end_thresh="4 degC")
         season_mask_all_LA08 = fire_season(ds.tas, snd=ds.swe, method="LA08")
@@ -262,7 +262,7 @@ class TestCFFWIS:
         # This test is very shallow only tests if it runs.
         ds = atmosds.assign(
             tas=convert_units_to(atmosds.tas, "degC"),
-            pr=convert_units_to(atmosds.pr, "mm/d"),
+            pr=convert_units_to(atmosds.pr, "mm/d", context="hydro"),
         )
         season_mask_yr = fire_season(ds.tas, method="WF93", freq="YS")
 

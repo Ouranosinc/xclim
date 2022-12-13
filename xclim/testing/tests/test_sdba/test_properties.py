@@ -411,7 +411,7 @@ class TestProperties:
             .pr
         )
 
-        sim = convert_units_to(sim, ref)
+        sim = convert_units_to(sim, ref, context="hydro")
         sim_var = sdba.properties.var(sim)
         ref_var = sdba.properties.var(ref)
 
