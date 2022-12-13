@@ -249,4 +249,6 @@ def _pairwise_haversine_and_bins(lond, latd, transpose=False):
                 dists[j, i] = dists[i, j]
     mn = np.nanmin(dists)
     mx = np.nanmax(dists)
+    if transpose:
+        np.fill_diagonal(dists, 0)
     return dists, mn, mx
