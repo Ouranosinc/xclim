@@ -27,7 +27,7 @@ from xclim.indices.stats import fit, parametric_quantile
 from .base import Grouper, map_groups
 from .nbutils import _pairwise_haversine_and_bins
 from .processing import jitter_under_thresh
-from .utils import _pairwise_spearman
+from .utils import _pairwise_spearman, copy_all_attrs
 
 
 class StatisticalProperty(Indicator):
@@ -1040,25 +1040,18 @@ def _decorrelation_length(
     -----
     Calculating this property requires a lot of memory. It will not work with large datasets.
     """
-    # save attrs
-    coords_attrs = {}
-    for c in da.coords:
-        coords_attrs[c] = da[c].attrs
 
     if dims is None:
-        dims = [d for d in da.dims if d != "time"]
+        dims = [d for d in da.dims if d != group.dim]
 
     corr = _pairwise_spearman(da, dims)
 
     dists, mn, mx = _pairwise_haversine_and_bins(
-        corr.cf["longitude"].values, corr.cf["latitude"].values
+        corr.cf["longitude"].values, corr.cf["latitude"].values, transpose=True
     )
 
     # fill bottom triangle
     np.nan_to_num(dists, 0)
-    # TODO: do it in 2 shots instead?
-    dists = dists + dists.T  # - np.diag(np.diag(dists))
-    dists = dists.astype(int)
     dists = xr.DataArray(dists, dims=corr.dims, coords=corr.coords, name="distance")
     trans_dists = xr.DataArray(
         dists.T, dims=corr.dims, coords=corr.coords, name="distance"
@@ -1130,9 +1123,8 @@ def _decorrelation_length(
     else:
         out = binned.swap_dims({"_spatial": dims[0]}).decorrelation_length
 
-    # put back coords attrs
-    for c in out.coords:
-        out[c].attrs = coords_attrs[c]
+    copy_all_attrs(out,da)
+
     out.attrs["units"] = "km"
     return out
 

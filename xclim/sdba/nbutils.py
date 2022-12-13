@@ -224,7 +224,7 @@ def _extrapolate_on_quantiles(
 
 
 @njit
-def _pairwise_haversine_and_bins(lond, latd):
+def _pairwise_haversine_and_bins(lond, latd, transpose=False):
     """Inter-site distances with the haversine approximation."""
     N = lond.shape[0]
     lon = np.deg2rad(lond)
@@ -245,6 +245,8 @@ def _pairwise_haversine_and_bins(lond, latd):
                 np.sin(lat[i]) * np.sin(lat[j])
                 + np.cos(lat[i]) * np.cos(lat[j]) * np.cos(dlon),
             )
+            if transpose:
+                dists[j, i] = dists[i, j]
     mn = np.nanmin(dists)
     mx = np.nanmax(dists)
     return dists, mn, mx
