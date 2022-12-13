@@ -927,7 +927,9 @@ return_value = StatisticalProperty(
 )
 
 
-def _spatial_correlogram(da: xr.DataArray, *, dims=None, bins=100, group="time"):
+def _spatial_correlogram(
+    da: xr.DataArray, *, dims=None, bins=100, group="time", method=1
+):
     """Spatial correlogram.
 
     Compute the pairwise spatial correlations (Spearman) and averages them based on the pairwise distances.
@@ -978,22 +980,37 @@ def _spatial_correlogram(da: xr.DataArray, *, dims=None, bins=100, group="time")
             "long_name": f"Centers of the intersite distance bins (width of {w[0]:.3f} km)",
         },
     )
-    ds = xr.Dataset({"corr": corr, "distance": dists})
-    corlg = xr.map_blocks(
-        lambda ds, b: ds.corr.groupby_bins(ds.distance, b)
-        .mean()
-        .drop_vars(["distance_bins"]),
-        ds,
-        (bins,),
-        template=corr.isel(_spatial=0, _spatial2=0, drop=True).expand_dims(
-            distance_bins=bins.size - 1
-        ),
+
+    dists = dists.where(corr.notnull())
+
+    def _bin_corr(corr, distance):
+        """Bin and mean."""
+        return stats.binned_statistic(
+            distance.flatten(), corr.flatten(), statistic="mean", bins=bins
+        ).statistic
+
+    # (_spatial, _spatial2) -> (_spatial, distance_bins)
+    binned = xr.apply_ufunc(
+        _bin_corr,
+        corr,
+        dists,
+        input_core_dims=[["_spatial", "_spatial2"], ["_spatial", "_spatial2"]],
+        output_core_dims=[["distance_bins"]],
+        dask="parallelized",
+        vectorize=True,
+        output_dtypes=[float],
+        dask_gufunc_kwargs={
+            "allow_rechunk": True,
+            "output_sizes": {"distance_bins": 100},
+        },
     )
-    return (
-        corlg.assign_coords(distance_bins=centers)
+    binned = (
+        binned.assign_coords(distance_bins=centers)
         .rename(distance_bins="distance")
         .assign_attrs(units="")
+        .rename("corr")
     )
+    return binned
 
 
 spatial_correlogram = StatisticalProperty(
