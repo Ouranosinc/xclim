@@ -637,6 +637,80 @@ def keep_longest_run(
     return da.copy(data=out.transpose(*da.dims).data)
 
 
+def rle_with_holes(
+    da_start: xr.DataArray,
+    window_start: int,
+    index_start: str,
+    da_stop: xr.DataArray | None = None,
+    window_stop: int | None = None,
+    index_stop: str | None = None,
+    dim: str = "time",
+) -> xr.DataArray:
+    """Generate modified run length function with run sequences that can contain holes.
+
+    Parameters
+    ----------
+    da_start : xr.DataArray
+        Input array where run sequences are searched for.
+    window_start: int,
+        Number of events needed to start a run in `da_start`
+    index_start: {'first', 'last'}
+        If 'first' (default), the run length in `da_start` is indexed with the first element in the run.
+        If 'last', with the last element in the run.
+    da_stop : xr.DataArray
+        Input array where sequences put a stop to a run in `da_start`
+    window_stop: int,
+        Number of events needed to start a run in `da_stop`, i.e. to end a run in `da_start`
+    index_stop: {'first', 'last'}
+        Same as `index_start` but for `da_stop`
+    dim : str
+        Dimension name.
+
+    Returns
+    -------
+    xr.DataArray
+        Values are 0 where da is False (out of runs).
+
+    Notes
+    -----
+    Subcases:
+    * Original run length function `rle`: `window_start == 1`,  `window_stop == 1`, `da_stop == 1 - da_start`
+    * Similar to `season` function: `window_stop == window_start` and `da_stop == 1 - da_start`
+    """
+    da_start = da_start.astype(int).fillna(0)
+    da_stop = da_stop.astype(int).fillna(0)
+    if da_stop is None:
+        da_stop = 1 - da_start
+    if window_stop is None:
+        window_stop = window_start
+    if index_stop is None:
+        index_stop = index_start
+
+    def wrap_cumsum_reset(da, dim, index):
+        if index == "first":
+            da = da[{dim: slice(None, None, -1)}]
+
+        out = _cumsum_reset_on_zero(da, dim)
+
+        if index == "first":
+            out = out[{dim: slice(None, None, -1)}]
+        return out
+
+    # start sequences
+    runs = rle(da_start, dim=dim, index=index_start)
+    # stop sequences (0 on every not_runs sequence, 1 elsewhere)
+    stop_runs = xr.where(rle((da_stop), dim=dim) >= window_stop, 0, 1)
+    # backwards cumsum yields number of steps before hitting a stop sequence
+    stop_runs_cumsum = wrap_cumsum_reset(stop_runs, dim=dim, index=index_stop)
+
+    # get the run lenghts
+    run_lengths = xr.where(
+        runs >= window_start, stop_runs_cumsum.shift({dim: -1}), np.NaN
+    )
+
+    return run_lengths
+
+
 def season(
     da: xr.DataArray,
     window: int,
