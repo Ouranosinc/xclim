@@ -782,7 +782,7 @@ def _transition_probability(
         Threshold on which to evaluate the condition.
     group : {"time", "time.season", "time.month"}
         Grouping on the output.
-        e.g. For "time.month", the relative frequency would be calculated on each month, with all years included.
+        e.g. For "time.month", the transition probability would be calculated on each month, with all years included.
 
     Returns
     -------
@@ -1017,8 +1017,8 @@ def _decorrelation_length(
     ----------
     da: xr.DataArray
       Data.
-    radius: int
-        Radius (in km) defining the region where correlations will be calculate between a point and its neighbours.
+    radius: float
+        Radius (in km) defining the region where correlations will be calculated between a point and its neighbours.
     thresh: float
       Threshold correlation defining decorrelation.
        The decorrelation length is defined as the center of the distance bin that has a correlation closest to this threshold.
@@ -1033,7 +1033,7 @@ def _decorrelation_length(
 
     Returns
     -------
-    xr.DataArray, [dimensionless]
+    xr.DataArray, [km]
       Decorrelation length.
 
     Notes
