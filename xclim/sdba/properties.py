@@ -1049,8 +1049,6 @@ def _decorrelation_length(
         corr.cf["longitude"].values, corr.cf["latitude"].values, transpose=True
     )
 
-    # fill bottom triangle
-    np.nan_to_num(dists, 0)
     dists = xr.DataArray(dists, dims=corr.dims, coords=corr.coords, name="distance")
     trans_dists = xr.DataArray(
         dists.T, dims=corr.dims, coords=corr.coords, name="distance"
