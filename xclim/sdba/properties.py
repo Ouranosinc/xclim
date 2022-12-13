@@ -1067,6 +1067,7 @@ def _decorrelation_length(
     )
 
     dists = xr.DataArray(dists, dims=corr.dims, coords=corr.coords, name="distance")
+
     trans_dists = xr.DataArray(
         dists.T, dims=corr.dims, coords=corr.coords, name="distance"
     )
@@ -1094,10 +1095,12 @@ def _decorrelation_length(
 
     ds = ds.where(ds.distance2 < radius)
 
+
     def _bin_corr(corr, distance):
         """Bin and mean."""
+        mask_nan= ~np.isnan(corr)
         return stats.binned_statistic(
-            distance, corr, statistic="mean", bins=bins
+            distance[mask_nan], corr[mask_nan], statistic="mean", bins=bins
         ).statistic
 
     # (_spatial, _spatial2) -> (_spatial, distance_bins)
