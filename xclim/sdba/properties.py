@@ -1096,7 +1096,7 @@ def _decorrelation_length(
             output_dtypes=[float],
             dask_gufunc_kwargs={
                 "allow_rechunk": True,
-                "output_sizes": {"distance_bins": 100},
+                "output_sizes": {"distance_bins": len(bins)},
             },
         )
         .rename("corr")
