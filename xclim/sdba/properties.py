@@ -1040,7 +1040,6 @@ def _decorrelation_length(
     -----
     Calculating this property requires a lot of memory. It will not work with large datasets.
     """
-
     if dims is None:
         dims = [d for d in da.dims if d != group.dim]
 
