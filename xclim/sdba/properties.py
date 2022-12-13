@@ -1122,7 +1122,7 @@ def _decorrelation_length(
     else:
         out = binned.swap_dims({"_spatial": dims[0]}).decorrelation_length
 
-    copy_all_attrs(out,da)
+    copy_all_attrs(out, da)
 
     out.attrs["units"] = "km"
     return out
