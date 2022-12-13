@@ -1095,10 +1095,9 @@ def _decorrelation_length(
 
     ds = ds.where(ds.distance2 < radius)
 
-
     def _bin_corr(corr, distance):
         """Bin and mean."""
-        mask_nan= ~np.isnan(corr)
+        mask_nan = ~np.isnan(corr)
         return stats.binned_statistic(
             distance[mask_nan], corr[mask_nan], statistic="mean", bins=bins
         ).statistic
