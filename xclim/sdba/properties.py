@@ -795,7 +795,7 @@ def _transition_probability(
     today = da.isel(time=slice(0, -1))
     tomorrow = da.shift(time=-1).isel(time=slice(0, -1))
 
-    t = convert_units_to(thresh, da, context='infer')
+    t = convert_units_to(thresh, da, context="infer")
     cond = compare(today, initial_op, t) * compare(tomorrow, final_op, t)
     out = group.apply("mean", cond)
     out = out.where(mask, np.nan)
