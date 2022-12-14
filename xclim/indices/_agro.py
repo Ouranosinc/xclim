@@ -675,193 +675,6 @@ def water_budget(
 
 @declare_units(
     pr="[precipitation]",
-    thresh_wet="[length]",
-    thresh_dry="[length]",
-)
-def _rain_season_start(
-    pr: xarray.DataArray,
-    thresh_wet: str = "25.0 mm",
-    window_wet: int = 3,
-    window_not_dry: int = 30,
-    thresh_dry: str = "1.0 mm",
-    window_dry: int = 7,
-    method_dry: str = "per_day",
-    start_date: DayOfYearStr = "01-01",
-    end_date: DayOfYearStr = "12-31",
-    freq="AS-JUL",
-) -> xarray.DataArray:
-    """Detect the first day of the rain season.
-
-    Rain season start is defined with two conditions. The first condition
-    is having an opening sequence of `window_wet` days where the total precipitation is greater than `thresh_wet`.
-    The second condition involves the days following this sequence: During a period of `window_not_dry`, sequence of
-    dry days as defined with `method_dry` and `thresh_dry` must be lower than `window_dry` days. The search is
-    constrained by `start_date` and `end_date`. The rain season starts on the first day of `window_wet`.
-
-    Parameters
-    ----------
-    pr: xarray.DataArray
-        Precipitation data.
-    thresh_wet: str
-        Accumulated precipitation threshold associated with `window_wet`.
-    window_wet: int
-        Number of days when accumulated precipitation is above `thresh_wet`.
-    window_not_dry: int
-        Number of days, after `s_window_wet`, during which no dry period must be found as a second and last condition to start the rain season.
-        A dry sequence is defined with `s_thresh_dry`, `s_window_dry` and `s_method_dry`.
-    thresh_dry: str
-        Threshold defining the sequence of dry days related to `window_dry`.
-    window_dry: int
-        Number of days used to define a dry sequence. Daily precipitations lower than `thresh_dry`
-        during `window_dry` days are considered a dry sequence. The precipitations must be lower than `thresh_dry`
-        for either every day in the sequence (`method_dry == "per_day"`) or for the total (`method_dry == "total"`).
-    method_dry: {"per_day", "total"}
-        Method used to define a dry sequence associated with `window_dry`. The threshold `thresh_dry` is either compared
-        to every daily precipitations (`method_dry == "per_day"`) or to total precipitations (`method_dry == "total"`)
-        in the sequence `window_dry` days.
-    start_date: DayOfYearStr
-        First day of year when season can start ("mm-dd").
-    end_date: DayOfYearStr
-        Last day of year when season can start ("mm-dd").
-    freq : str
-        Resampling frequency.
-
-    Returns
-    -------
-    xarray.DataArray, [dimensionless]
-        Rain season start (day of year).
-
-    References
-    ----------
-    :cite:cts:`sivakumar_predicting_1998`
-    """
-    # TODO:
-    # - More general output (not only doy)
-    # - Make sure everything is compatible with cftime
-    # Unit conversion.
-    pram = rate2amount(pr, out_units="mm")
-    thresh_wet = convert_units_to(thresh_wet, pram)
-    thresh_dry = convert_units_to(thresh_dry, pram)
-
-    # Eliminate negative values.
-    # QUESTION: Should we put NaN's instead? This might be problematic in the run length
-    pram = xarray.where(pram < 0, 0, pram)
-    pram.attrs["units"] = "mm"
-
-    dim = "time"
-
-    # wrapper function used for resample & map
-    def get_first_run(pram, window_dry=window_dry):
-        da_start = pram.rolling({dim: window_wet}).sum() >= thresh_wet
-
-        if method_dry == "per_day":
-            da_stop = pram < thresh_dry
-        elif method_dry == "total":
-            da_stop = pram.rolling({dim: window_dry}).sum() < thresh_dry
-            window_dry = 1
-
-        # TODO: Change name?
-        season_lengths = rl.rle_with_holes(
-            da_start, 1, "first", da_stop, window_dry, "first"
-        )
-        season_lengths = select_time(season_lengths, date_bounds=(start_date, end_date))
-
-        # start_seasons
-        runs = season_lengths >= window_not_dry
-        # TODO: Use lazy indexing to have more general formulation
-        # first_run  = runs.argmax(dim)
-        first_run = runs.idxmax(dim)
-        return xarray.where(
-            first_run != runs.idxmin(dim), first_run.dt.dayoyear, np.NaN
-        )
-        # return xarray.where(first_run!=runs.idxmin(dim), first_run.dt.dayofyear, np.NaN)
-
-    out = pram.resample(time=freq).map(get_first_run)
-
-    return out
-
-
-@declare_units(
-    pr="[precipitation]",
-    thresh_dry="[length]",
-)
-def _rain_season_end(
-    pr: xarray.DataArray,
-    thresh_dry: str = "1.0 mm",
-    window_dry: int = 7,
-    method_dry: str = "per_day",
-    start_date: DayOfYearStr = "01-01",
-    end_date: DayOfYearStr = "12-31",
-    freq="AS-JUL",
-) -> xarray.DataArray:
-    """Detect the last day of the rain season.
-
-    The seasons ends on the first day of  a sequence of `window_dry`
-    days as defined with `method_dry` and `thresh_dry`. The search is constrained by `start_date` and `end_date`.
-
-    Parameters
-    ----------
-    pr: xarray.DataArray
-        Precipitation data.
-    thresh_dry: str
-        Threshold defining the sequence of dry days related to `window_dry`.
-    window_dry: int
-        Number of days used to define a dry sequence. Daily precipitations lower than `thresh_dry`
-        during `window_dry` days are considered a dry sequence. The precipitations must be lower than `thresh_dry`
-        for either every day in the sequence (`method_dry == "per_day"`) or for the total (`method_dry == "total"`).
-    method_dry: {"per_day", "total"}
-        Method used to define a dry sequence associated with `window_dry`. The threshold `thresh_dry` is either compared
-        to every daily precipitations (`method_dry == "per_day"`) or to total precipitations (`method_dry == "total"`)
-        in the sequence `window_dry` days.
-    start_date: DayOfYearStr
-        First day of year when season can end ("mm-dd").
-    end_date: DayOfYearStr
-        Last day of year when season can end ("mm-dd").
-    freq : str
-        Resampling frequency.
-
-    Returns
-    -------
-    xarray.DataArray, [dimensionless]
-        Rain season start (day of year).
-
-    References
-    ----------
-    :cite:cts:`sivakumar_predicting_1998`
-    """
-    # TODO: Use output of rain_season_start in rain_season_end
-    # to make sure that end of season happens after beginning
-    # Unit conversion.
-    pram = rate2amount(pr, out_units="mm")
-    thresh_dry = convert_units_to(thresh_dry, pram)
-
-    # Eliminate negative values.
-    pram = xarray.where(pram < 0, 0, pram)
-    pram.attrs["units"] = "mm"
-
-    dim = "time"
-
-    def get_first_run(pram):
-        if method_dry == "per_day":
-            da_stop = (pram < thresh_dry).fillna(False)
-            season_lengths = rl.rle(da_stop, dim=dim, index="last") >= window_dry
-        elif method_dry == "total":
-            da_stop = pram.rolling({dim: window_dry}).sum() < thresh_dry
-            season_lengths = da_stop
-
-        runs = select_time(season_lengths, date_bounds=(start_date, end_date))
-        first_run = runs.idxmax("time")
-        return xarray.where(
-            first_run != runs.idxmin(dim), first_run.dt.dayofyear, np.NaN
-        )
-
-    out = pram.resample(time=freq).map(get_first_run)
-
-    return out
-
-
-@declare_units(
-    pr="[precipitation]",
     s_thresh_wet="[length]",
     s_thresh_dry="[length]",
     e_thresh_dry="[length]",
@@ -874,19 +687,20 @@ def rain_season(
     s_thresh_dry: str = "1.0 mm",
     s_window_dry: int = 7,
     s_method_dry: str = "per_day",
-    s_start_date: DayOfYearStr = "01-01",
-    s_end_date: DayOfYearStr = "12-31",
+    start_date_min: DayOfYearStr = "05-01",
+    start_date_max: DayOfYearStr = "12-31",
     e_thresh_dry: str = "1.0 mm",
     e_window_dry: int = 7,
     e_method_dry: str = "per_day",
-    e_start_date: DayOfYearStr = "01-01",
-    e_end_date: DayOfYearStr = "12-31",
-    freq="AS-JUL",
+    end_date_min: DayOfYearStr = "09-01",
+    end_date_max: DayOfYearStr = "12-31",
+    freq="AS-JAN",
     coord: str | bool | None = False,
 ) -> xarray.DataArray:
-    """Find the first and last day of the rain season and its length.
+    """
+    Find the first and last day of the rain season and its length.
 
-    pr: xarray.DataArray
+    pr: xr.DataArray
         Precipitation data.
     s_thresh_wet: str
         Accumulated precipitation threshold associated with `s_window_wet`.
@@ -905,9 +719,9 @@ def rain_season(
         Method used to define a dry sequence associated with `s_window_dry`. The threshold `s_thresh_dry` is either compared
         to every daily precipitations (`s_method_dry == "per_day"`) or to total precipitations (`s_method_dry == "total"`)
         in the sequence `s_window_dry` days.
-    s_start_date: DayOfYearStr
+    start_date_min: DayOfYearStr
         First day of year when season can start ("mm-dd").
-    s_end_date: DayOfYearStr
+    start_date_max: DayOfYearStr
         Last day of year when season can start ("mm-dd").
     e_thresh_dry: str
         Threshold defining the sequence of dry days related to `e_window_dry`.
@@ -919,9 +733,9 @@ def rain_season(
         Method used to define a dry sequence associated with `e_window_dry`. The threshold `e_thresh_dry` is either compared
         to every daily precipitations (`e_method_dry == "per_day"`) or to total precipitations (`e_method_dry == "total"`)
         in the sequence `window_dry` days.
-    e_start_date: DayOfYearStr
+    end_date_min: DayOfYearStr
         First day of year when season can end ("mm-dd").
-    e_end_date: DayOfYearStr
+    end_date_max: DayOfYearStr
         Last day of year when season can end ("mm-dd").
     freq : str
       Resampling frequency.
@@ -930,64 +744,96 @@ def rain_season(
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
         DateTimeAccessor object to use (ex: 'dayofyear').
     """
-    # Calculate rain season start.
-    start = _rain_season_start(
-        pr,
-        s_thresh_wet,
-        s_window_wet,
-        s_window_not_dry,
-        s_thresh_dry,
-        s_window_dry,
-        s_method_dry,
-        s_start_date,
-        s_end_date,
-    )
+    # Unit conversion.
+    pram = rate2amount(pr, out_units="mm")
+    s_thresh_wet = convert_units_to(s_thresh_wet, pram)
+    s_thresh_dry = convert_units_to(s_thresh_dry, pram)
+    e_thresh_dry = convert_units_to(e_thresh_dry, pram)
 
-    # Calculate rain season end.
-    end = _rain_season_end(
-        pr,
-        e_thresh_dry,
-        e_window_dry,
-        e_method_dry,
-        e_start_date,
-        e_end_date,
-    )
+    # Eliminate negative values.
+    pram = xarray.where(pram < 0, 0, pram)
+    pram.attrs["units"] = "mm"
 
-    # No end season if the season was not started
-    # end = xarray.where(start == np.datetime64("NaT") , np.datetime64("NaT"), end)
+    dim = "time"
 
-    # Calculate rain season length.
-    length = (end - start) % 366
-    length = xarray.where(
-        (end.isnull() & start.notnull()),
-        (pr.isel(time=-1).time.dt.dayofyear - start) % 366 + 1,
-        length,
-    )
+    # should we flag end_date_min  < start_date_max?
+    def _get_first_run(run_positions, start_date, end_date):
+        run_positions = select_time(run_positions, date_bounds=(start_date, end_date))
+        first_start = run_positions.argmax("time")
+        return xarray.where(
+            first_start != run_positions.argmin("time"), first_start, np.NaN
+        )
 
-    # Returns
-    out = xarray.Dataset({"start": start, "end": end, "length": length})
+    def _get_start_first_run(pram, window_dry=s_window_dry):
+        da_start = pram.rolling({dim: s_window_wet}).sum() >= s_thresh_wet
+        if s_method_dry == "per_day":
+            da_stop = pram <= s_thresh_dry
+        elif s_method_dry == "total":
+            da_stop = pram.rolling({dim: window_dry}).sum() <= s_thresh_dry
+            window_dry = 1
+        run_positions = (
+            rl.rle_with_holes(da_start, 1, "first", da_stop, window_dry, "first")
+            >= s_window_not_dry
+        )
+        return _get_first_run(run_positions, start_date_min, start_date_max)
 
-    out.start.attrs.update(
-        long_name="Start of the rain season.",
-        description=f"First dayofyear of a run where i) a sequence of {s_window_wet} days accumulated {s_thresh_wet} \
-             of precipitations ii) followed by a sequence of {s_window_not_dry} days with no dry sequence, i.e. a sequence of {s_window_dry} days \
-            with at least {s_thresh_dry} {s_method_dry}. It must be between {s_start_date} and {s_end_date}",
-        is_dayofyear=1,
-        units="",
-    )
-    out.end.attrs.update(
-        long_name="End of the rain season.",
-        description=f"First dayofyear of a dry sequence after the start of the season, i.e.  a sequence of {s_window_dry} days \
-            with at least {s_thresh_dry} {s_method_dry}. It must be between {e_start_date} and {e_end_date}",
-        is_dayofyear=1,
-        units="",
-    )
-    out.length.attrs.update(
-        long_name="Length of the rain season.",
-        description="Number of steps of the original series in the season, between 'start' and 'end'.",
-        units="",
-    )
-    return out
+    def _get_end_first_run(pram):
+        if e_method_dry == "per_day":
+            da_stop = pram <= e_thresh_dry
+            run_positions = rl.rle(da_stop, dim=dim, index="last") >= e_window_dry
+        elif e_method_dry == "total":
+            da_stop = pram.rolling({dim: e_window_dry}).sum() <= e_thresh_dry
+            run_positions = da_stop
+        return _get_first_run(run_positions, end_date_min, end_date_max)
+
+    def _get_out(pram):
+        start = _get_start_first_run(pram)
+        # masking every value up top the start date of the season, the end date should be after
+        ind = xarray.where(start.notnull(), start.astype(int), -1)
+        mask = xarray.where(pram.time == pram.isel(time=ind).time, True, np.NaN).ffill(
+            "time"
+        )
+        mask[{"time": ind}] = np.NaN
+        end = _get_end_first_run(pram.where(mask is True))
+        length = end - start
+
+        # changing index to time if requested
+        if coord:
+            crd = pram[dim]
+            if isinstance(coord, str):
+                crd = getattr(crd.dt, coord)
+                coordstr = coord
+            else:
+                coordstr = dim
+            start = rl.lazy_indexing(crd, start)
+            end = rl.lazy_indexing(crd, end)
+        else:
+            coordstr = "index"
+
+        out = xarray.Dataset({"start": start, "end": end, "length": length})
+        out.start.attrs.update(
+            long_name="Start of the rain season.",
+            description=f"First {coordstr} of a run where i) a sequence of {s_window_wet} days accumulated {s_thresh_wet} \
+                of precipitations ii) followed by a sequence of {s_window_not_dry} days with no dry sequence, i.e. a sequence of {s_window_dry} days \
+                with at least {s_thresh_dry} {s_method_dry}. It must be between {start_date_min} and {start_date_max}",
+            is_dayofyear=1,
+            units="",
+        )
+        out.end.attrs.update(
+            long_name="End of the rain season.",
+            description=f"First {coordstr} of a dry sequence after the start of the season, i.e.  a sequence of {s_window_dry} days \
+                with at least {s_thresh_dry} {s_method_dry}. It must be between {end_date_min} and {end_date_max}",
+            is_dayofyear=1,
+            units="",
+        )
+        out.length.attrs.update(
+            long_name="Length of the rain season.",
+            description="Number of steps of the original series in the season, between 'start' and 'end'.",
+            units="",
+        )
+        return
+
+    return pram.resample(time=freq).map(_get_out)
 
 
 @declare_units(
@@ -1036,7 +882,7 @@ def standardized_precipitation_index(
     -------
     >>> from datetime import datetime
     >>> from xclim.indices import standardized_precipitation_index
-    >>> ds = xarray.open_dataset(path_to_pr_file)
+    >>> ds = xr.open_dataset(path_to_pr_file)
     >>> pr = ds.pr
     >>> pr_cal = pr.sel(time=slice(datetime(1990, 5, 1), datetime(1990, 8, 31)))
     >>> spi_3 = standardized_precipitation_index(
@@ -1240,7 +1086,7 @@ def dry_spell_frequency(
     Examples
     --------
     >>> from xclim.indices import dry_spell_frequency
-    >>> pr = xarray.open_dataset(path_to_pr_file).pr
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> dsf = dry_spell_frequency(pr=pr, op="sum")
     >>> dsf = dry_spell_frequency(pr=pr, op="max")
     """

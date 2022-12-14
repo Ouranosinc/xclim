@@ -123,6 +123,7 @@ def resample_and_rl(
 def _cumsum_reset_on_zero(
     da: xr.DataArray,
     dim: str = "time",
+    index: str = "last",
 ) -> xr.DataArray:
     """Compute the cumulative sum for each series of numbers separated by zero.
 
@@ -132,20 +133,29 @@ def _cumsum_reset_on_zero(
         Input array.
     dim : str
         Dimension name along which the cumulative sum is taken.
+    index : {'first', 'last'}
+        If 'first', the largest value of the cumulative sum is indexed with the first element in the run.
+        If 'last'(default), with the last element in the run.
 
     Returns
     -------
     xr.DataArray
-        An array with the partial cumulative sums.
+        An array with cumulative sums.
     """
+    if index == "first":
+        da = da[{dim: slice(None, None, -1)}]
+
     # Example: da == 100110111 -> cs_s == 100120123
     cs = da.cumsum(dim=dim)  # cumulative sum  e.g. 111233456
-
     cs2 = cs.where(da == 0)  # keep only numbers at positions of zeroes e.g. N11NN3NNN
     cs2[{dim: 0}] = 0  # put a zero in front e.g. 011NN3NNN
     cs2 = cs2.ffill(dim=dim)  # e.g. 011113333
+    out = cs - cs2
 
-    return cs - cs2
+    if index == "first":
+        out = out[{dim: slice(None, None, -1)}]
+
+    return out
 
 
 def rle(
@@ -642,9 +652,9 @@ def rle_with_holes(
     da_start: xr.DataArray,
     window_start: int,
     index_start: str,
-    da_stop: xr.DataArray | None = None,
-    window_stop: int | None = None,
-    index_stop: str | None = None,
+    da_stop: xr.DataArray,
+    window_stop: int,
+    index_stop: str,
     dim: str = "time",
 ) -> xr.DataArray:
     """Generate modified run length function with run sequences that can contain holes.
@@ -680,29 +690,13 @@ def rle_with_holes(
     """
     da_start = da_start.astype(int).fillna(0)
     da_stop = da_stop.astype(int).fillna(0)
-    if da_stop is None:
-        da_stop = 1 - da_start
-    if window_stop is None:
-        window_stop = window_start
-    if index_stop is None:
-        index_stop = index_start
-
-    def wrap_cumsum_reset(da, dim, index):
-        if index == "first":
-            da = da[{dim: slice(None, None, -1)}]
-
-        out = _cumsum_reset_on_zero(da, dim)
-
-        if index == "first":
-            out = out[{dim: slice(None, None, -1)}]
-        return out
 
     # start sequences
     runs = rle(da_start, dim=dim, index=index_start)
     # stop sequences (0 on every not_runs sequence, 1 elsewhere)
     stop_runs = xr.where(rle((da_stop), dim=dim) >= window_stop, 0, 1)
     # backwards cumsum yields number of steps before hitting a stop sequence
-    stop_runs_cumsum = wrap_cumsum_reset(stop_runs, dim=dim, index=index_stop)
+    stop_runs_cumsum = _cumsum_reset_on_zero(stop_runs, dim=dim, index=index_stop)
 
     # get the run lenghts
     run_lengths = xr.where(
