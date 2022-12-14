@@ -28,8 +28,8 @@
    inkscape:document-units="mm"
    showgrid="false"
    inkscape:zoom="1.6971131"
-   inkscape:cx="344.70301"
-   inkscape:cy="265.15617"
+   inkscape:cx="337.04295"
+   inkscape:cy="213.89264"
    inkscape:window-width="1920"
    inkscape:window-height="1051"
    inkscape:window-x="0"
@@ -38,38 +38,21 @@
    inkscape:current-layer="g715" />
  <svg:defs
    class="ClipPathGroup"
-   id="defs8">
-
-  <svg:clipPath
-   id="presentation_clip_path_shrink"
-   clipPathUnits="userSpaceOnUse">
-   <svg:rect
-   x="20"
-   y="14"
-   width="19960"
-   height="13972"
-   id="rect5" />
-  </svg:clipPath>
-
-
-
-
-    <svg:clipPath
-   clipPathUnits="userSpaceOnUse"
-   id="clipPath1782"><svg:g
-     id="g1786"
-     style="stroke-width:28.222"><svg:rect
-       x="0"
-       y="0"
-       width="20000"
-       height="14000"
-       id="rect1784"
-       style="stroke-width:28.222" /></svg:g></svg:clipPath></svg:defs>
+   id="defs8"><svg:clipPath
+     clipPathUnits="userSpaceOnUse"
+     id="clipPath1782"><svg:g
+       id="g1786"
+       style="stroke-width:28.222"><svg:rect
+         x="0"
+         y="0"
+         width="20000"
+         height="14000"
+         id="rect1784"
+         style="stroke-width:28.222" /></svg:g></svg:clipPath></svg:defs>
  <svg:defs
-   id="defs71">
-  <svg:font
-   id="EmbeddedFont_1"
-   horiz-adv-x="2048">
+   id="defs71"><svg:font
+     id="EmbeddedFont_1"
+     horiz-adv-x="2048">
    <svg:font-face
    font-family="Liberation Sans embedded"
    units-per-em="2048"
@@ -221,13 +204,11 @@
    unicode=" "
    horiz-adv-x="556"
    id="glyph68" />
-  </svg:font>
- </svg:defs>
+  </svg:font></svg:defs>
  <svg:defs
-   id="defs118">
-  <svg:font
-   id="EmbeddedFont_2"
-   horiz-adv-x="2048">
+   id="defs118"><svg:font
+     id="EmbeddedFont_2"
+     horiz-adv-x="2048">
    <svg:font-face
    font-family="Liberation Sans embedded"
    units-per-em="2048"
@@ -339,13 +320,11 @@
    unicode=" "
    horiz-adv-x="556"
    id="glyph115" />
-  </svg:font>
- </svg:defs>
+  </svg:font></svg:defs>
  <svg:defs
-   id="defs173">
-  <svg:font
-   id="EmbeddedFont_3"
-   horiz-adv-x="2048">
+   id="defs173"><svg:font
+     id="EmbeddedFont_3"
+     horiz-adv-x="2048">
    <svg:font-face
    font-family="Liberation Sans embedded"
    units-per-em="2048"
@@ -477,13 +456,11 @@
    unicode=" "
    horiz-adv-x="556"
    id="glyph170" />
-  </svg:font>
- </svg:defs>
+  </svg:font></svg:defs>
  <svg:defs
-   id="defs192">
-  <svg:font
-   id="EmbeddedFont_4"
-   horiz-adv-x="2048">
+   id="defs192"><svg:font
+     id="EmbeddedFont_4"
+     horiz-adv-x="2048">
    <svg:font-face
    font-family="Liberation Sans embedded"
    units-per-em="2048"
@@ -526,13 +503,11 @@
    horiz-adv-x="1350"
    d="M 600,-20 C 422,-20 286,12 193,75 100,138 44,234 25,365 L 314,414 C 328,340 359,286 408,252 456,218 527,201 620,201 850,201 965,267 965,400 965,453 945,496 905,527 865,558 786,588 667,618 544,651 454,685 395,720 336,755 291,799 260,850 229,901 213,963 213,1037 213,1155 265,1250 370,1322 475,1394 613,1430 786,1430 945,1430 1072,1401 1168,1344 1264,1286 1323,1202 1345,1091 L 1057,1024 C 1042,1084 1011,1132 962,1168 913,1203 849,1221 770,1221 687,1221 622,1206 575,1175 528,1144 504,1101 504,1047 504,1016 513,989 530,967 547,945 573,926 606,910 639,893 705,872 804,845 910,816 988,788 1039,763 1090,737 1130,708 1161,676 1191,644 1214,607 1230,566 1246,525 1254,477 1254,423 1254,279 1199,169 1088,94 977,18 815,-20 600,-20 Z"
    id="glyph189" />
-  </svg:font>
- </svg:defs>
+  </svg:font></svg:defs>
  <svg:defs
-   id="defs201">
-  <svg:font
-   id="EmbeddedFont_5"
-   horiz-adv-x="2048">
+   id="defs201"><svg:font
+     id="EmbeddedFont_5"
+     horiz-adv-x="2048">
    <svg:font-face
    font-family="OpenSymbol embedded"
    units-per-em="2048"
@@ -550,13 +525,11 @@
    horiz-adv-x="1509"
    d="M 192,1598 L 1678,780 192,-112 192,1598 Z M 292,1428 L 292,64 1477,776 292,1428 Z"
    id="glyph198" />
-  </svg:font>
- </svg:defs>
+  </svg:font></svg:defs>
  <svg:defs
-   id="defs210">
-  <svg:font
-   id="EmbeddedFont_6"
-   horiz-adv-x="2048">
+   id="defs210"><svg:font
+     id="EmbeddedFont_6"
+     horiz-adv-x="2048">
    <svg:font-face
    font-family="StarSymbol embedded"
    units-per-em="2048"
@@ -574,90 +547,19 @@
    horiz-adv-x="1191"
    d="M 813,0 C 632,0 489,54 383,161 276,268 223,411 223,592 223,773 276,916 383,1023 489,1130 632,1184 813,1184 992,1184 1136,1130 1245,1023 1353,916 1407,772 1407,592 1407,412 1353,268 1245,161 1136,54 992,0 813,0 Z"
    id="glyph207" />
-  </svg:font>
- </svg:defs>
+  </svg:font></svg:defs>
  <svg:defs
    class="TextShapeIndex"
-   id="defs214">
-  <svg:g
-   ooo:slide="id1"
-   ooo:id-list="id3 id4 id5 id6 id7 id8 id9"
-   id="g212" />
- </svg:defs>
+   id="defs214" />
  <svg:defs
    class="EmbeddedBulletChars"
-   id="defs246">
-  <svg:g
-   id="bullet-char-template-57356"
-   transform="scale(0.00048828125,-0.00048828125)">
-   <svg:path
-   d="M 580,1141 L 1163,571 580,0 -4,571 580,1141 Z"
-   id="path216" />
-  </svg:g>
-  <svg:g
-   id="bullet-char-template-57354"
-   transform="scale(0.00048828125,-0.00048828125)">
-   <svg:path
-   d="M 8,1128 L 1137,1128 1137,0 8,0 8,1128 Z"
-   id="path219" />
-  </svg:g>
-  <svg:g
-   id="bullet-char-template-10146"
-   transform="scale(0.00048828125,-0.00048828125)">
-   <svg:path
-   d="M 174,0 L 602,739 174,1481 1456,739 174,0 Z M 1358,739 L 309,1346 659,739 1358,739 Z"
-   id="path222" />
-  </svg:g>
-  <svg:g
-   id="bullet-char-template-10132"
-   transform="scale(0.00048828125,-0.00048828125)">
-   <svg:path
-   d="M 2015,739 L 1276,0 717,0 1260,543 174,543 174,936 1260,936 717,1481 1274,1481 2015,739 Z"
-   id="path225" />
-  </svg:g>
-  <svg:g
-   id="bullet-char-template-10007"
-   transform="scale(0.00048828125,-0.00048828125)">
-   <svg:path
-   d="M 0,-2 C -7,14 -16,27 -25,37 L 356,567 C 262,823 215,952 215,954 215,979 228,992 255,992 264,992 276,990 289,987 310,991 331,999 354,1012 L 381,999 492,748 772,1049 836,1024 860,1049 C 881,1039 901,1025 922,1006 886,937 835,863 770,784 769,783 710,716 594,584 L 774,223 C 774,196 753,168 711,139 L 727,119 C 717,90 699,76 672,76 641,76 570,178 457,381 L 164,-76 C 142,-110 111,-127 72,-127 30,-127 9,-110 8,-76 1,-67 -2,-52 -2,-32 -2,-23 -1,-13 0,-2 Z"
-   id="path228" />
-  </svg:g>
-  <svg:g
-   id="bullet-char-template-10004"
-   transform="scale(0.00048828125,-0.00048828125)">
-   <svg:path
-   d="M 285,-33 C 182,-33 111,30 74,156 52,228 41,333 41,471 41,549 55,616 82,672 116,743 169,778 240,778 293,778 328,747 346,684 L 369,508 C 377,444 397,411 428,410 L 1163,1116 C 1174,1127 1196,1133 1229,1133 1271,1133 1292,1118 1292,1087 L 1292,965 C 1292,929 1282,901 1262,881 L 442,47 C 390,-6 338,-33 285,-33 Z"
-   id="path231" />
-  </svg:g>
-  <svg:g
-   id="bullet-char-template-9679"
-   transform="scale(0.00048828125,-0.00048828125)">
+   id="defs246"><svg:g
+     id="bullet-char-template-9679"
+     transform="scale(0.00048828125,-0.00048828125)">
    <svg:path
    d="M 813,0 C 632,0 489,54 383,161 276,268 223,411 223,592 223,773 276,916 383,1023 489,1130 632,1184 813,1184 992,1184 1136,1130 1245,1023 1353,916 1407,772 1407,592 1407,412 1353,268 1245,161 1136,54 992,0 813,0 Z"
    id="path234" />
-  </svg:g>
-  <svg:g
-   id="bullet-char-template-8226"
-   transform="scale(0.00048828125,-0.00048828125)">
-   <svg:path
-   d="M 346,457 C 273,457 209,483 155,535 101,586 74,649 74,723 74,796 101,859 155,911 209,963 273,989 346,989 419,989 480,963 531,910 582,859 608,796 608,723 608,648 583,586 532,535 482,483 420,457 346,457 Z"
-   id="path237" />
-  </svg:g>
-  <svg:g
-   id="bullet-char-template-8211"
-   transform="scale(0.00048828125,-0.00048828125)">
-   <svg:path
-   d="M -4,459 L 1135,459 1135,606 -4,606 -4,459 Z"
-   id="path240" />
-  </svg:g>
-  <svg:g
-   id="bullet-char-template-61548"
-   transform="scale(0.00048828125,-0.00048828125)">
-   <svg:path
-   d="M 173,740 C 173,903 231,1043 346,1159 462,1274 601,1332 765,1332 928,1332 1067,1274 1183,1159 1299,1043 1357,903 1357,740 1357,577 1299,437 1183,322 1067,206 928,148 765,148 601,148 462,206 346,322 231,437 173,577 173,740 Z"
-   id="path243" />
-  </svg:g>
- </svg:defs>
+  </svg:g></svg:defs>
  <svg:g
    id="g251">
   <svg:g
@@ -680,9 +582,17 @@
    class="Page"
    id="g715"
    clip-path="url(#clipPath1782)">
+
+
+
+
+
       <svg:g
-   class="com.sun.star.drawing.CustomShape"
-   id="g268">
+   id="g1880"><svg:g
+     id="g885"
+     style="image-rendering:auto"><svg:g
+       class="com.sun.star.drawing.CustomShape"
+       id="g268">
        <svg:g
    id="id3">
         <svg:rect
@@ -720,10 +630,9 @@
          stroke="none"
          id="tspan259">xclim</svg:tspan></svg:tspan></svg:tspan></svg:text>
        </svg:g>
-      </svg:g>
-      <svg:g
-   class="com.sun.star.drawing.CustomShape"
-   id="g447">
+      </svg:g><svg:g
+       class="com.sun.star.drawing.CustomShape"
+       id="g447">
        <svg:g
    id="id4">
         <svg:rect
@@ -1141,10 +1050,9 @@
          </svg:g>
         </svg:g>
        </svg:g>
-      </svg:g>
-      <svg:g
-   class="com.sun.star.drawing.CustomShape"
-   id="g510">
+      </svg:g><svg:g
+       class="com.sun.star.drawing.CustomShape"
+       id="g510">
        <svg:g
    id="id5">
         <svg:rect
@@ -1289,10 +1197,9 @@
          </svg:g>
         </svg:g>
        </svg:g>
-      </svg:g>
-      <svg:g
-   class="com.sun.star.drawing.CustomShape"
-   id="g583">
+      </svg:g><svg:g
+       class="com.sun.star.drawing.CustomShape"
+       id="g583">
        <svg:g
    id="id6">
         <svg:rect
@@ -1459,10 +1366,9 @@
          </svg:g>
         </svg:g>
        </svg:g>
-      </svg:g>
-      <svg:g
-   class="com.sun.star.drawing.CustomShape"
-   id="g602">
+      </svg:g><svg:g
+       class="com.sun.star.drawing.CustomShape"
+       id="g602">
        <svg:g
    id="id7">
         <svg:rect
@@ -1503,10 +1409,9 @@
          stroke="none"
          id="tspan593">analogs</svg:tspan></svg:tspan></svg:tspan></svg:text>
        </svg:g>
-      </svg:g>
-      <svg:g
-   class="com.sun.star.drawing.CustomShape"
-   id="g665">
+      </svg:g><svg:g
+       class="com.sun.star.drawing.CustomShape"
+       id="g665">
        <svg:g
    id="id8">
         <svg:rect
@@ -1651,7 +1556,7 @@
          </svg:g>
         </svg:g>
        </svg:g>
-      </svg:g>
+      </svg:g></svg:g></svg:g>
 
      </svg:g>
 
