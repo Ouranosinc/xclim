@@ -48,6 +48,8 @@ Internal changes
 * Added relevant variable dataflag checks for potential evaporation, convective precipitation, and air pressure at sea level. (:pull:`1241`).
 * Documentation restructured to include `ReadMe` page (as `About`) with some minor changes to documentation titles. (:pull:`1233`).
 * `xclim` development build now uses `nbqa` to effectively run black checks over notebook cells. (:pull:`1233`).
+* `tox` is now pinned at v3.x due to several breaking changes in newer versions. (:pull:`1258`).
+* A notebook (``extendingxclim.ipynb``) has been updated to remove mentions of obsolete `xclim.subset` module. (:pull:`1258`).
 
 0.39.0 (2022-11-02)
 -------------------
