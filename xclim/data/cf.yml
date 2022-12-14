@@ -36,6 +36,7 @@ indicators:
       reducer: max
       threshold: 1 mm day-1
     references: ETCCDI
+    context: hydro
   cddcoldTT:
     cf_attrs:
     - cell_methods: 'time: sum over days'
@@ -346,6 +347,7 @@ indicators:
       reducer: max
       threshold: 1 mm day-1
     references: ETCCDI
+    context: hydro
   ddgtTT:
     cf_attrs:
     - cell_methods: 'time: sum over days'
