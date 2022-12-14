@@ -794,7 +794,7 @@ def rain_season(
             "time"
         )
         mask[{"time": ind}] = np.NaN
-        end = _get_end_first_run(pram.where(mask is True))
+        end = _get_end_first_run(pram.where(mask))
         length = xarray.where(end.notnull(), end - start, pram[dim].size - start)
 
         # changing index to time if requested
@@ -831,7 +831,7 @@ def rain_season(
             description="Number of steps of the original series in the season, between 'start' and 'end'.",
             units="",
         )
-        return
+        return out
 
     return pram.resample(time=freq).map(_get_out)
 
