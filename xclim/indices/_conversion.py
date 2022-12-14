@@ -1276,7 +1276,8 @@ def potential_evapotranspiration(
         raise NotImplementedError(f"'{method}' method is not implemented.")
 
     out.attrs["units"] = "mm"
-    return amount2rate(out, out_units="kg m-2 s-1")
+    rate = amount2rate(out, out_units="mm/d")
+    return convert_units_to(rate, "kg m-2 s-1", context="hydro")
 
 
 @vectorize(

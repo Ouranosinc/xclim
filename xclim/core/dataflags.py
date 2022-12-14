@@ -19,7 +19,7 @@ import xarray
 from ..indices.run_length import suspicious_run
 from .calendar import climatological_mean_doy, within_bnds_doy
 from .formatting import update_xclim_history
-from .units import convert_units_to, declare_units, str2pint
+from .units import convert_units_to, declare_units, infer_context, str2pint, units
 from .utils import (
     VARIABLES,
     InputKind,
@@ -322,7 +322,7 @@ def very_large_precipitation_events(
     >>> rate = "300 mm d-1"
     >>> flagged = very_large_precipitation_events(ds.pr, thresh=rate)
     """
-    thresh_converted = convert_units_to(thresh, da)
+    thresh_converted = convert_units_to(thresh, da, context="hydro")
     very_large_events = _sanitize_attrs(da > thresh_converted)
     description = f"Precipitation events in excess of {thresh} for {da.name}."
     very_large_events.attrs["description"] = description
@@ -365,7 +365,9 @@ def values_op_thresh_repeating_for_n_or_more_days(
     ...     ds.pr, n=days, thresh=units, op=comparison
     ... )
     """
-    thresh = convert_units_to(thresh, da)
+    thresh = convert_units_to(
+        thresh, da, context=infer_context(standard_name=da.attrs.get("standard_name"))
+    )
 
     repetitions = _sanitize_attrs(suspicious_run(da, window=n, op=op, thresh=thresh))
     description = (
