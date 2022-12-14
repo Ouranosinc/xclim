@@ -689,8 +689,8 @@ def rain_season(
     s_method_dry: str = "per_day",
     start_date_min: DayOfYearStr = "05-01",
     start_date_max: DayOfYearStr = "12-31",
-    e_thresh_dry: str = "1.0 mm",
-    e_window_dry: int = 7,
+    e_thresh_dry: str = "0.0 mm",
+    e_window_dry: int = 20,
     e_method_dry: str = "per_day",
     end_date_min: DayOfYearStr = "09-01",
     end_date_max: DayOfYearStr = "12-31",
@@ -790,12 +790,12 @@ def rain_season(
         start = _get_start_first_run(pram)
         # masking every value up top the start date of the season, the end date should be after
         ind = xarray.where(start.notnull(), start.astype(int), -1)
-        mask = xarray.where(pram.time == pram.isel(time=ind).time, True, np.NaN).ffill(
+        mask = xarray.where(pram[dim] == pram.isel(time=ind).time, True, np.NaN).ffill(
             "time"
         )
         mask[{"time": ind}] = np.NaN
         end = _get_end_first_run(pram.where(mask is True))
-        length = end - start
+        length = xarray.where(end.notnull(), end - start, pram[dim].size - start)
 
         # changing index to time if requested
         if coord:

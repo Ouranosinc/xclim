@@ -2477,6 +2477,36 @@ def test_continuous_snow_cover_end(snd_series):
     assert out.attrs["is_dayofyear"] == 1
 
 
+@pytest.mark.parametrize(
+    "result_type", ["season_found", "no_start_cond1", "no_start_cond2", "no_end"]
+)
+def test_rain_season(pr_series, result_type):
+    pr = pr_series(np.arange(365) * np.NaN, start="2000-01-01", units="kg m-2 s-1")
+    # input values in mm (amount): a correcting factor is used below
+    pr[{"time": slice(0, 0 + 3)}] = 10
+    pr[{"time": slice(3, 3 + 30)}] = 5
+    pr[{"time": slice(99, 99 + 20)}] = 0
+    if result_type == "season_found":
+        out_exp = [2, 118, 116]
+    elif result_type == "no_start_cond1":
+        pr[{"time": 2}] = 0
+        out_exp = [np.NaN, np.NaN, np.NaN]
+    elif result_type == "no_start_cond2":
+        pr[{"time": slice(10, 10 + 7)}] = 0
+        out_exp = [np.NaN, np.NaN, np.NaN]
+    elif result_type == "no_end":
+        pr[{"time": 99 + 20 - 1}] = 5
+        out_exp = [2, np.NaN, 363]
+
+    # convert mm -> kg m-2 s-1
+    with xr.set_options(keep_attrs=True):
+        pr = pr / (60 * 60 * 24)
+
+    out = xci.rain_season(pr, start_date_min="01-01", end_date_min="01-01")
+    out_arr = np.array([out[var].values[0] for var in ["start", "end", "length"]])
+    assert ((np.isnan(out_arr) & np.isnan(out_exp)) | (out_arr == out_exp)).all()
+
+
 def test_high_precip_low_temp(pr_series, tasmin_series):
     pr = pr_series([0, 1, 2, 0, 0])
     tas = tasmin_series(np.array([0, 0, 1, 1]) + K2C)
