@@ -15,7 +15,7 @@ New features and enhancements
 
 New indicators
 ^^^^^^^^^^^^^^
-* Rain season index implemented (default parameters for West Africa). (:issue:`842`)
+* Rain season index implemented (default parameters for West Africa). (:issue:`842`, :pull:`1256`)
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
