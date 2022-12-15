@@ -88,7 +88,7 @@ class BaseDetrend(ParametrizableWithDataset):
             raise ValueError("You must call fit() before detrending.")
         trend = self.ds.trend
         if "units" in da.attrs:
-            trend = convert_units_to(self.ds.trend, da)
+            trend = convert_units_to(self.ds.trend, da, context="infer")
         return self._detrend(da, trend)
 
     def retrend(self, da: xr.DataArray):
@@ -97,7 +97,7 @@ class BaseDetrend(ParametrizableWithDataset):
             raise ValueError("You must call fit() before retrending")
         trend = self.ds.trend
         if "units" in da.attrs:
-            trend = convert_units_to(self.ds.trend, da)
+            trend = convert_units_to(self.ds.trend, da, context="infer")
         return self._retrend(da, trend)
 
     def _detrend(self, da, trend):

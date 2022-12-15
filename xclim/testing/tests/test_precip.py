@@ -126,7 +126,7 @@ class TestStandardizedPrecip:
         # test with data
         ds = open_dataset(self.nc_ds)
         pr = ds.pr.sel(time=slice("2000"))  # kg m-2 s-1
-        prMM = convert_units_to(pr, "mm/day")
+        prMM = convert_units_to(pr, "mm/day", context="hydro")
         # put a nan somewhere
         prMM.values[10] = np.nan
         pr.values[10] = np.nan
@@ -155,7 +155,7 @@ class TestStandardizedPrecip:
             tas = tasmax - 2.5
             tasmin = tasmax - 5
             wb = xci.water_budget(pr, None, tasmin, tasmax, tas, None)
-            wbMM = convert_units_to(wb, "mm/day")
+            wbMM = convert_units_to(wb, "mm/day", context="hydro")
 
         out3 = atmos.standardized_precipitation_evapotranspiration_index(
             wb,
@@ -227,7 +227,7 @@ class TestWetPrcptot:
         out = atmos.wet_precip_accumulation(pr, thresh=thresh)
 
         # Reference value
-        t = core.units.convert_units_to(thresh, pr)
+        t = core.units.convert_units_to(thresh, pr, context="hydro")
         pa = atmos.precip_accumulation(pr.where(pr >= t, 0))
         np.testing.assert_array_equal(out, pa)
 
