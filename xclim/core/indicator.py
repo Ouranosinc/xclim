@@ -661,7 +661,7 @@ class Indicator(IndicatorRegistrar):
                     values = [values] * n_outs
                 elif len(values) != n_outs:  # A sequence of the wrong length.
                     raise ValueError(
-                        f"Attribute {name} has {len(values)} elements but should xclim expected {n_outs}."
+                        f"Attribute {name} has {len(values)} elements but xclim expected {n_outs}."
                     )
                 for attrs, value in zip(cf_attrs, values):
                     if value:  # Skip the empty ones (None or "")

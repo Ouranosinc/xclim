@@ -2478,7 +2478,8 @@ def test_continuous_snow_cover_end(snd_series):
 
 
 @pytest.mark.parametrize(
-    "result_type", ["season_found", "no_start_cond1", "no_start_cond2", "no_end"]
+    "result_type",
+    ["season_found", "start_cond1_fails", "start_cond2_fails", "end_cond_fails"],
 )
 def test_rain_season(pr_series, result_type):
     pr = pr_series(np.arange(365) * np.NaN, start="2000-01-01", units="kg m-2 s-1")
@@ -2488,13 +2489,13 @@ def test_rain_season(pr_series, result_type):
     pr[{"time": slice(99, 99 + 20)}] = 0
     if result_type == "season_found":
         out_exp = [2, 118, 116]
-    elif result_type == "no_start_cond1":
+    elif result_type == "start_cond1_fails":
         pr[{"time": 2}] = 0
         out_exp = [np.NaN, np.NaN, np.NaN]
-    elif result_type == "no_start_cond2":
+    elif result_type == "start_cond2_fails":
         pr[{"time": slice(10, 10 + 7)}] = 0
         out_exp = [np.NaN, np.NaN, np.NaN]
-    elif result_type == "no_end":
+    elif result_type == "end_cond_fails":
         pr[{"time": 99 + 20 - 1}] = 5
         out_exp = [2, np.NaN, 363]
 
@@ -2502,9 +2503,15 @@ def test_rain_season(pr_series, result_type):
     with xr.set_options(keep_attrs=True):
         pr = pr / (60 * 60 * 24)
 
-    out = xci.rain_season(pr, start_date_min="01-01", end_date_min="01-01")
-    out_arr = np.array([out[var].values[0] for var in ["start", "end", "length"]])
-    assert ((np.isnan(out_arr) & np.isnan(out_exp)) | (out_arr == out_exp)).all()
+    out = {}
+    out["start"], out["end"], out["length"] = xci.rain_season(
+        pr, start_date_min="01-01", end_date_min="01-01"
+    )
+    out_arr = np.array(
+        [out[var].values for var in ["start", "end", "length"]]
+    ).flatten()
+    # assert ((np.isnan(out_arr) & np.isnan(out_exp)) | (out_arr == out_exp)).all()
+    np.testing.assert_array_equal(out_arr, out_exp)
 
 
 def test_high_precip_low_temp(pr_series, tasmin_series):

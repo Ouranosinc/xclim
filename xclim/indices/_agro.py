@@ -696,7 +696,7 @@ def rain_season(
     end_date_max: DayOfYearStr = "12-31",
     freq="AS-JAN",
     coord: str | bool | None = False,
-) -> xarray.DataArray:
+):
     """
     Find the first and last day of the rain season and its length.
 
@@ -743,6 +743,16 @@ def rain_season(
         If not False, the function returns values along `dim` instead of indexes.
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
         DateTimeAccessor object to use (ex: 'dayofyear').
+
+    Returns
+    -------
+    rain_season_start: xr.DataArray, [dimensionless]
+    rain_season_end: xr.DataArray, [dimensionless]
+    rain_season_length: xr.DataArray, [dimensionless]
+
+    References
+    ----------
+    :cite:cts:`sivakumar_predicting_1998`
     """
     # Unit conversion.
     pram = rate2amount(pr, out_units="mm")
@@ -789,11 +799,12 @@ def rain_season(
     def _get_out(pram):
         start = _get_start_first_run(pram)
         # masking every value up top the start date of the season, the end date should be after
-        ind = xarray.where(start.notnull(), start.astype(int), -1)
-        mask = xarray.where(pram[dim] == pram.isel(time=ind).time, True, np.NaN).ffill(
-            "time"
-        )
-        mask[{"time": ind}] = np.NaN
+        start_ind = xarray.where(start.notnull(), start.astype(int), -1)
+        mask = xarray.where(
+            pram.time == pram.isel(time=start_ind).time, 1, np.NaN
+        ).ffill("time")
+        mask[{"time": start_ind}] = np.NaN
+        mask = mask.notnull()
         end = _get_end_first_run(pram.where(mask))
         length = xarray.where(end.notnull(), end - start, pram[dim].size - start)
 
@@ -802,38 +813,17 @@ def rain_season(
             crd = pram[dim]
             if isinstance(coord, str):
                 crd = getattr(crd.dt, coord)
-                coordstr = coord
-            else:
-                coordstr = dim
             start = rl.lazy_indexing(crd, start)
             end = rl.lazy_indexing(crd, end)
-        else:
-            coordstr = "index"
 
         out = xarray.Dataset({"start": start, "end": end, "length": length})
-        out.start.attrs.update(
-            long_name="Start of the rain season.",
-            description=f"First {coordstr} of a run where i) a sequence of {s_window_wet} days accumulated {s_thresh_wet} \
-                of precipitations ii) followed by a sequence of {s_window_not_dry} days with no dry sequence, i.e. a sequence of {s_window_dry} days \
-                with at least {s_thresh_dry} {s_method_dry}. It must be between {start_date_min} and {start_date_max}",
-            is_dayofyear=1,
-            units="",
-        )
-        out.end.attrs.update(
-            long_name="End of the rain season.",
-            description=f"First {coordstr} of a dry sequence after the start of the season, i.e.  a sequence of {s_window_dry} days \
-                with at least {s_thresh_dry} {s_method_dry}. It must be between {end_date_min} and {end_date_max}",
-            is_dayofyear=1,
-            units="",
-        )
-        out.length.attrs.update(
-            long_name="Length of the rain season.",
-            description="Number of steps of the original series in the season, between 'start' and 'end'.",
-            units="",
-        )
         return out
 
-    return pram.resample(time=freq).map(_get_out)
+    out = pram.resample(time=freq).map(_get_out)
+    # out = to_agg_units(out, pr, "count")
+    for outd in out.values():
+        outd.attrs["units"] = ""
+    return out["start"], out["end"], out["length"]
 
 
 @declare_units(
