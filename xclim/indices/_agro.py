@@ -695,7 +695,7 @@ def rain_season(
     end_date_min: DayOfYearStr = "09-01",
     end_date_max: DayOfYearStr = "12-31",
     freq="AS-JAN",
-    coord: str | bool | None = False,
+    coord: str | None = None,
 ):
     """
     Find the first and last day of the rain season and its length.
@@ -739,8 +739,8 @@ def rain_season(
         Last day of year when season can end ("mm-dd").
     freq : str
       Resampling frequency.
-    coord : Optional[str]
-        If not False, the function returns values along `dim` instead of indexes.
+    coord : {None, "default", name of a DateTimeAccessor}
+        If `coord == "default"`, the function returns values along `dim` instead of indexes (`coord is None`).
         If `dim` has a datetime dtype, `coord` can also be a str of the name of the
         DateTimeAccessor object to use (ex: 'dayofyear').
 
@@ -811,7 +811,7 @@ def rain_season(
         # changing index to time if requested
         if coord:
             crd = pram[dim]
-            if isinstance(coord, str):
+            if coord != "default":
                 crd = getattr(crd.dt, coord)
             start = rl.lazy_indexing(crd, start)
             end = rl.lazy_indexing(crd, end)
