@@ -502,7 +502,6 @@ class TestUTCI:
     def test_universal_thermal_climate_index(self, open_dataset):
         dataset = open_dataset(
             "ERA5/daily_surface_cancities_1990-1993.nc",
-            branch="add-radiation",
         )
 
         tas = dataset.tas
@@ -535,7 +534,6 @@ class TestMeanRadiantTemperature:
     def test_mean_radiant_temperature(self, open_dataset):
         dataset = open_dataset(
             "ERA5/daily_surface_cancities_1990-1993.nc",
-            branch="add-radiation",
         )
         rsds = dataset.rsds
         rsus = dataset.rsus
