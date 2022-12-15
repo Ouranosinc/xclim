@@ -246,7 +246,6 @@ class TestPotentialEvapotranspiration:
     def test_convert_units(self, open_dataset):
         ds = open_dataset(
             "ERA5/daily_surface_cancities_1990-1993.nc",
-            branch="add-radiation",
         )
 
         tn = ds.tasmin
@@ -308,7 +307,6 @@ class TestPotentialEvapotranspiration:
     def test_nan_values(self, open_dataset):
         ds = open_dataset(
             "ERA5/daily_surface_cancities_1990-1993.nc",
-            branch="add-radiation",
         )
 
         tn = ds.tasmin
@@ -362,7 +360,6 @@ class TestWaterBudget:
     def test_convert_units(self, open_dataset):
         ds = open_dataset(
             "ERA5/daily_surface_cancities_1990-1993.nc",
-            branch="add-radiation",
         )
 
         tn = ds.tasmin
@@ -443,7 +440,6 @@ class TestWaterBudget:
     def test_nan_values(self, open_dataset):
         ds = open_dataset(
             "ERA5/daily_surface_cancities_1990-1993.nc",
-            branch="add-radiation",
         )
 
         tn = ds.tasmin
