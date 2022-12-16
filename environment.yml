@@ -25,3 +25,38 @@ dependencies:
     - eofs
     - eigen
     - pybind11
+    # Testing and development dependencies
+    - black>=22.3
+    - blackdoc
+    - bump2version
+    - coverage
+    - distributed>=2.0
+    - flake8
+    - flake8-rst-docstrings
+    - ipykernel
+    - ipython
+    - matplotlib
+    - mypy
+    - nbsphinx
+    - nbval
+    - nc-time-axis
+    - netCDF4>=1.4
+    - pooch
+    - pre_commit
+    - pybtex
+    - pydocstyle
+    - pylint <2.15
+    - pytest
+    - pytest-cov
+    - pytest-xdist
+    - sphinx
+    - sphinx-codeautolink
+    - sphinx-copybutton
+    - sphinx_rtd_theme
+    - sphinxcontrib-bibtex
+    - statsmodels
+    - tokenize-rt
+    - tox <4.0
+    - xdoctest
+    - yamale
+    - yamllint
