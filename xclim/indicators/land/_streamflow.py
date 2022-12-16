@@ -84,7 +84,7 @@ stats = Streamflow(
 
 fit = Indicator(
     title="Distribution parameters fitted over the time dimension.",
-    identifier="discharge_fit",
+    identifier="discharge_distribution_fit",
     var_name="params",
     units="",
     standard_name="{dist} parameters",

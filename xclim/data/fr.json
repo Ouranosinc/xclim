@@ -622,6 +622,12 @@
     "title": "Calcul de statistiques sur des sous-périodes.",
     "abstract": ""
   },
+  "DISCHARGE_DISTRIBUTION_FIT": {
+    "long_name": "Paramètres d'une distribution {dist:f} d'une série de débits",
+    "description": "Paramètres d'une distribution {dist:f} d'une série de débits.",
+    "title": "Calcul les paramètres d'une distribution univariée pour une série de débits",
+    "abstract": ""
+  },
   "FIT": {
     "long_name": "Paramètres d'une distribution {dist:f}",
     "description": "Paramètres d'une distribution {dist:f}.",
