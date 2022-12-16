@@ -103,6 +103,7 @@ jobs:
       - name: Conda and Mamba versions
         shell: bash -l {0}
         run: |
+          mamba update -n base conda mamba
           mamba --version
 #      - name: Install dependencies
 #        shell: bash -l {0}
