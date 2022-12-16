@@ -19,7 +19,7 @@ build:
       - sphinx-build -b linkcheck docs/ _build/linkcheck
 
 conda:
-  environment: environment.yml
+  environment: environment-dev.yml
 
 python:
   install:
