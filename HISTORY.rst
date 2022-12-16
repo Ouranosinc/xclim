@@ -31,6 +31,7 @@ Breaking changes
 * The following *modules* have been removed:
     - `xclim.indices.fwi` → functions migrated to `xclim.indices.fire`
     - `xclim.subset` (mock submodule) → functions migrated to `clisops.core.subset`
+* The ``xclim.testing.utils.get_all_CMIP6_variables`` and ``xclim.testing.utils.update_variable_yaml`` function were removed as the former was extremely slow and unusable. (:pull:`1258`).
 
 Bug fixes
 ^^^^^^^^^

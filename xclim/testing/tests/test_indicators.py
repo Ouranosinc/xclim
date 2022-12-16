@@ -803,7 +803,6 @@ def test_resampling_indicator_with_indexing(tas_series):
     np.testing.assert_allclose(out, [32, 33])
 
 
-@pytest.mark.xfail(reason="Broken link to the excel file.")
 def test_all_inputs_known():
     var_and_inds = list_input_variables()
     known_vars = (
@@ -816,7 +815,6 @@ def test_all_inputs_known():
     if not set(VARIABLES.keys()).issuperset(known_vars):
         raise AssertionError(
             "All input variables of xclim indicators must be registered in "
-            "data/variables.yml, or skipped explicitly in this test. You can try to "
-            "automatically update the yaml with `xclim.testing.update_variable_yaml(). "
+            "data/variables.yml, or skipped explicitly in this test. "
             f"The yaml file is missing: {known_vars - VARIABLES.keys()}."
         )
