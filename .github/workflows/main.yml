@@ -108,7 +108,7 @@ jobs:
       - name: Install dependencies
         shell: bash -l {0}
         run: |
-          mamba activate xclim39
+          conda activate xclim39
           python -m pip install --no-user "git+https://github.com/Ouranosinc/SBCK.git@easier-install#egg=sbck&subdirectory=python"
           python -m pip install --no-user .
       - name: Test
