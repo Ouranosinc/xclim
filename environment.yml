@@ -52,7 +52,7 @@ dependencies:
     - sphinxcontrib-bibtex
     - statsmodels
     - tokenize-rt
-    - tox
+    - tox <4.0
     - xdoctest
     - yamale
     - yamllint
