@@ -97,7 +97,7 @@ jobs:
           auto-update-conda: true
           activate-environment: xclim39
           channels: conda-forge,defaults
-          environment-file: environment.yml
+#          environment-file: environment.yml
           mamba-version: "*"
           python-version: "3.9"
       - name: Conda and Mamba versions
@@ -128,14 +128,14 @@ jobs:
         shell: bash -l {0}
         run: |
           conda activate xclim39
-          tox -e opt-slow-mamba
+          tox -e opt-slow
         env:
           CONDA_EXE: mamba
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Report coverage
         uses: AndreMiras/coveralls-python-action@develop
         with:
-          flag-name: run-py39-opt-slow-mamba
+          flag-name: run-py39-opt-slow
           parallel: true
 
   test-py310-lm3:
