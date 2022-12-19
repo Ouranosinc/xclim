@@ -608,7 +608,7 @@ rain_season = PrecipWithIndexing(
     title="Rain season",
     identifier="rain_season",
     realm="atmos",
-    var_name=["rain_season_start", "rain_season_end", "rain_season_length"],
+    var_name=["start", "end", "length"],
     standard_name=["rain_season_start", "rain_season_end", "rain_season_length"],
     long_name=[
         "Start of the rain season",
@@ -619,14 +619,14 @@ rain_season = PrecipWithIndexing(
         "First step of a run where i) a sequence of {s_window_wet} days accumulated {s_thresh_wet}"
         "of precipitations ii) followed by a sequence of {s_window_not_dry} days with no dry sequence, i.e. a sequence of {s_window_dry} days"
         "with at least {s_thresh_dry} {s_method_dry}. It must be between {start_date_min} and {start_date_max}",
-        "First step of a dry sequence after the start of the season, i.e.  a sequence of {s_window_dry} days"
-        "with at least {s_thresh_dry} {s_method_dry}. It must be between {end_date_min} and {end_date_max}",
+        "First step of a dry sequence after the start of the season, i.e.  a sequence of {e_window_dry} days"
+        "with at least {e_thresh_dry} {e_method_dry}. It must be between {end_date_min} and {end_date_max}",
         "Number of steps of the original series in the season, between 'start' and 'end'.",
     ],
     units="",
     abstract="The rain season begins when two conditions are met: 1) There must be a number of wet days with"
-    "precipitations above or equal to a given threshold; 2) A second sequence with a number days without a"
-    "dry sequence for a number of days and a second threshold must follow. The rain season ends"
+    "precipitations above or equal to a given threshold; 2) There must be another sequence following, where, for a given period in time, there are no"
+    "dry sequence (i.e. a certain number of days where precipitations are below or equal to a certain threshold). The rain season ends"
     "when there is a dry sequence.",
     cell_methods="",
     compute=indices.rain_season,

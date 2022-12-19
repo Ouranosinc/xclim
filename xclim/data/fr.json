@@ -1100,5 +1100,22 @@
     "description": "La température moyenne des rayonnements incidents sur un corps.",
     "title": "Température radiative moyenne",
     "abstract": "La température moyenne des rayonnements solaires et thermiques incidents sur un corps à l'extérieur."
+  },
+  "RAIN_SEASON": {
+    "description": "Saison des pluies",
+    "title": "Saison des pluies",
+    "abstract": "La saison des pluies commence lorsque deux conditions sont réunies : 1) Il doit y avoir un certain nombre de jours humides avec précipitations supérieures ou égales à un seuil donné ; 2) Il doit y avoir une autre séquence suivante, où, pendant une période de temps donnée, il n'y a pas de séquence sèche (c'est-à-dire un certain nombre de jours où les précipitations sont inférieures ou égales à un certain seuil). La saison des pluies se termine lorsqu'il y a une séquence sèche"
+  },
+  "RAIN_SEASON.start": {
+    "long_name": "Début de la saison des pluies",
+    "description": "Première étape d'une série où i) une séquence de jours {s_window_wet} accumulant {s_thresh_wet} de précipitations ii) suivie d'une séquence de jours {s_window_not_dry} sans séquence sèche, c'est-à-dire une séquence de jours {s_window_dry} avec au moins {s_thresh_dry} {s_method_dry}. Elle doit être comprise entre le {start_date_min} et le {start_date_max}"
+  },
+  "RAIN_SEASON.end": {
+    "long_name": "Fin de la saison des pluies",
+    "description": "Première étape d'une séquence sèche après le début de la saison, c'est-à-dire une séquence de {e_window_dry} jours avec au moins {e_thresh_dry} {e_method_dry}. Elle doit être comprise entre le {end_date_min} et le {end_date_max}"
+  },
+  "RAIN_SEASON.length": {
+    "long_name": "Longueur de la saison des pluies",
+    "description": "Nombre de pas temporels entre le début et la fin de la saison des pluies."
   }
 }
