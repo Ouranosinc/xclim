@@ -259,7 +259,7 @@ class TestPotentialEvapotranspiration:
         uas = ds.uas
         vas = ds.vas
 
-        sfcwind, _ = atmos.wind_speed_from_vector(uas, vas)
+        sfcWind, _ = atmos.wind_speed_from_vector(uas, vas)
 
         with xr.set_options(keep_attrs=True):
             tnC = tn - K2C
@@ -283,7 +283,7 @@ class TestPotentialEvapotranspiration:
             rsus=rsus,
             rlds=rlds,
             rlus=rlus,
-            sfcwind=sfcwind,
+            sfcWind=sfcWind,
             method="FAO_PM98",
         )
         pet_fao_pm98C = atmos.potential_evapotranspiration(
@@ -294,7 +294,7 @@ class TestPotentialEvapotranspiration:
             rsus=rsus,
             rlds=rlds,
             rlus=rlus,
-            sfcwind=sfcwind,
+            sfcWind=sfcWind,
             method="FAO_PM98",
         )
 
@@ -320,7 +320,7 @@ class TestPotentialEvapotranspiration:
         uas = ds.uas
         vas = ds.vas
 
-        sfcwind, _ = atmos.wind_speed_from_vector(uas, vas)
+        sfcWind, _ = atmos.wind_speed_from_vector(uas, vas)
 
         tn[0, 100] = np.nan
         tx[0, 101] = np.nan
@@ -335,7 +335,7 @@ class TestPotentialEvapotranspiration:
             rsus=rsus,
             rlds=rlds,
             rlus=rlus,
-            sfcwind=sfcwind,
+            sfcWind=sfcWind,
             method="FAO_PM98",
         )
 
@@ -374,7 +374,7 @@ class TestWaterBudget:
         uas = ds.uas
         vas = ds.vas
 
-        sfcwind, _ = atmos.wind_speed_from_vector(uas, vas)
+        sfcWind, _ = atmos.wind_speed_from_vector(uas, vas)
 
         with xr.set_options(keep_attrs=True):
             tnC = tn - K2C
@@ -412,7 +412,7 @@ class TestWaterBudget:
             rsus=rsus,
             rlds=rlds,
             rlus=rlus,
-            sfcwind=sfcwind,
+            sfcWind=sfcWind,
             method="FAO_PM98",
         )
         p_pet_fao_pm98R = atmos.water_budget_from_tas(
@@ -424,7 +424,7 @@ class TestWaterBudget:
             rsus=rsus,
             rlds=rlds,
             rlus=rlus,
-            sfcwind=sfcwind,
+            sfcWind=sfcWind,
             method="FAO_PM98",
         )
 
@@ -455,7 +455,7 @@ class TestWaterBudget:
         uas = ds.uas
         vas = ds.vas
 
-        sfcwind, _ = atmos.wind_speed_from_vector(uas, vas)
+        sfcWind, _ = atmos.wind_speed_from_vector(uas, vas)
 
         tn[0, 100] = np.nan
         tx[0, 101] = np.nan
@@ -475,7 +475,7 @@ class TestWaterBudget:
             rsus=rsus,
             rlds=rlds,
             rlus=rlus,
-            sfcwind=sfcwind,
+            sfcWind=sfcWind,
             method="FAO_PM98",
         )
 
