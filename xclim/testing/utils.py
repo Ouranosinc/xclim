@@ -46,7 +46,6 @@ _default_cache_dir = Path.home() / ".xclim_testing_data"
 LOGGER = logging.getLogger("xclim")
 
 __all__ = [
-    "get_all_CMIP6_variables",
     "get_file",
     "get_local_testdata",
     "list_datasets",
@@ -54,7 +53,6 @@ __all__ = [
     "open_dataset",
     "publish_release_notes",
     "show_versions",
-    "update_variable_yaml",
 ]
 
 
@@ -407,73 +405,6 @@ def list_input_variables(
                 variables[var].append(ind)
 
     return variables
-
-
-def get_all_CMIP6_variables(get_cell_methods=True):  # noqa
-    data = pd.read_excel(
-        "http://proj.badc.rl.ac.uk/svn/exarch/CMIP6dreq/tags/01.00.33/dreqPy/docs/CMIP6_MIP_tables.xlsx",
-        sheet_name=None,
-    )
-    data.pop("Notes")
-
-    variables = {}
-
-    def summarize_cell_methods(rawstr):
-        words = str(rawstr).split(" ")
-        iskey = [word.endswith(":") for word in words]
-        cms = {}
-        for i, _ in enumerate(words):
-            if iskey[i] and i + 1 < len(words) and not iskey[i + 1]:
-                cms[words[i][:-1]] = words[i + 1]
-        return cms
-
-    for _, df in data.items():
-        for _, row in df.iterrows():
-            varname = row["Variable Name"]
-            vardata = {
-                "standard_name": row["CF Standard Name"],
-                "canonical_units": row["units"],
-            }
-            if get_cell_methods:
-                vardata["cell_methods"] = [summarize_cell_methods(row["cell_methods"])]
-            if varname in variables and get_cell_methods:
-                if vardata["cell_methods"] not in variables[varname]["cell_methods"]:
-                    variables[varname]["cell_methods"].append(vardata["cell_methods"])
-            else:
-                variables[varname] = vardata
-
-    return variables
-
-
-def update_variable_yaml(filename=None, xclim_needs_only=True):
-    """Update a variable from a yaml file."""
-    print("Downloading CMIP6 variables.")
-    all_vars = get_all_CMIP6_variables(get_cell_methods=False)
-
-    if xclim_needs_only:
-        print("Filtering with xclim-implemented variables.")
-        xc_vars = list_input_variables()
-        all_vars = {k: v for k, v in all_vars.items() if k in xc_vars}
-
-    filepath = Path(
-        filename or (Path(__file__).parent.parent / "data" / "variables.yml")
-    )
-
-    if filepath.exists():
-        with filepath.open() as f:
-            std_vars = safe_load(f)
-
-        for var, data in all_vars.items():
-            if var not in std_vars["variables"]:
-                print(f"Added {var}")
-                new_data = data.copy()
-                new_data.update(description="")
-                std_vars["variables"][var] = new_data
-    else:
-        std_vars = all_vars
-
-    with filepath.open("w") as f:
-        safe_dump(std_vars, f)
 
 
 def publish_release_notes(

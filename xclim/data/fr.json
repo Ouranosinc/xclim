@@ -923,7 +923,7 @@
   },
   "BLOWING_SNOW": {
     "long_name": "Jours de poudrerie",
-    "description": "Nombre {freq:m} de jours avec accumulation de neige au-dessus ou égale à {snd_thresh} au cours des {window} jours précédents et vents supérieurs à {sfcwind_thresh}.",
+    "description": "Nombre {freq:m} de jours avec accumulation de neige au-dessus ou égale à {snd_thresh} au cours des {window} jours précédents et vents supérieurs à {sfcWind_thresh}.",
     "title": "Nombre de jours de poudrerie",
     "abstract": "Nombre de jours avec des chutes de neige, une épaisseur de neige et une vitesse du vent au-dessus ou égales à des seuils donnés pendant une période de jours."
   },

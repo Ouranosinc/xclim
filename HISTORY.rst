@@ -29,6 +29,8 @@ Breaking changes
 * The following *modules* have been removed:
     - `xclim.indices.fwi` → functions migrated to `xclim.indices.fire`
     - `xclim.subset` (mock submodule) → functions migrated to `clisops.core.subset`
+* The ``xclim.testing.utils.get_all_CMIP6_variables`` and ``xclim.testing.utils.update_variable_yaml`` function were removed as the former was extremely slow and unusable. (:pull:`1258`).
+* The wind speed input of ``atmos.potential_evapotranspiration`` and ``atmos.water_budget`` was renamed to ``sfcWind`` (capital W) as this is the correct CMIP6 name. (:pull:`1258`).
 * Indicator `land.stats`, `land.fit` and `land.freq_analysis` are now deprecated and will be removed in version 0.43. They are being phased out in favor of generic indicators `generic.stats`, `generic.fit` and `generic.return_level` respectively.
 
 Bug fixes
@@ -48,6 +50,8 @@ Internal changes
 * Added relevant variable dataflag checks for potential evaporation, convective precipitation, and air pressure at sea level. (:pull:`1241`).
 * Documentation restructured to include `ReadMe` page (as `About`) with some minor changes to documentation titles. (:pull:`1233`).
 * `xclim` development build now uses `nbqa` to effectively run black checks over notebook cells. (:pull:`1233`).
+* Some `tox` recipes (``opt-slow``, ``conda``) are temporarily deactivated until a `tox>=4.0`-compatible `tox-conda` plugin is released. (:pull:`1258`).
+* A notebook (``extendingxclim.ipynb``) has been updated to remove mentions of obsolete `xclim.subset` module. (:pull:`1258`).
 
 0.39.0 (2022-11-02)
 -------------------
