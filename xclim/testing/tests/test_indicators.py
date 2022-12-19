@@ -26,7 +26,7 @@ from xclim.core.indicator import Daily, Indicator, ResamplingIndicator, registry
 from xclim.core.units import convert_units_to, declare_units, units
 from xclim.core.utils import VARIABLES, InputKind, MissingVariableError
 from xclim.indices import tg_mean
-from xclim.testing import list_input_variables, open_dataset
+from xclim.testing import list_input_variables
 
 
 @declare_units(da="[temperature]", thresh="[temperature]")
@@ -610,7 +610,7 @@ def test_update_history():
     assert merged.startswith("a: Text1")
 
 
-def test_input_dataset():
+def test_input_dataset(open_dataset):
     ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
     # Use defaults
@@ -803,20 +803,26 @@ def test_resampling_indicator_with_indexing(tas_series):
     np.testing.assert_allclose(out, [32, 33])
 
 
-@pytest.mark.xfail(reason="Broken link to the excel file.")
 def test_all_inputs_known():
     var_and_inds = list_input_variables()
     known_vars = (
         set(var_and_inds.keys())
-        - {"dc0", "season_mask", "ffmc0", "dmc0"}  # FWI optional inputs
+        - {
+            "dc0",
+            "season_mask",
+            "ffmc0",
+            "dmc0",
+            "kbdi0",
+            "drought_factor",
+        }  # FWI optional inputs
         - {var for var in var_and_inds.keys() if var.endswith("_per")}  # percentiles
+        - {"pr_annual", "pr_cal", "wb_cal"}  # other optional or uncommon
         - {"q", "da"}  # Generic inputs
-        - {"mrt"}  # TODO: add Mean Radiant Temperature
+        - {"mrt", "wb"}  # TODO: add Mean Radiant Temperature and water budget
     )
     if not set(VARIABLES.keys()).issuperset(known_vars):
         raise AssertionError(
             "All input variables of xclim indicators must be registered in "
-            "data/variables.yml, or skipped explicitly in this test. You can try to "
-            "automatically update the yaml with `xclim.testing.update_variable_yaml(). "
+            "data/variables.yml, or skipped explicitly in this test. "
             f"The yaml file is missing: {known_vars - VARIABLES.keys()}."
         )

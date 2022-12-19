@@ -26,7 +26,6 @@ from xclim.core.calendar import date_range, percentile_doy
 from xclim.core.options import set_options
 from xclim.core.units import ValidationError, convert_units_to, units
 from xclim.indices.generic import first_day_threshold_reached
-from xclim.testing import open_dataset
 
 K2C = 273.15
 
@@ -307,7 +306,7 @@ class TestAgroclimaticIndices:
             if method == "icclim":
                 np.testing.assert_array_equal(bedd, bedd_high_lat)
 
-    def test_cool_night_index(self):
+    def test_cool_night_index(self, open_dataset):
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
         ds = ds.rename(dict(tas="tasmin"))
 
@@ -336,7 +335,7 @@ class TestAgroclimaticIndices:
             (75, [55.35, 1058.55, 1895.97, 1472.18, 298.74]),
         ],
     )
-    def test_lat_temperature_index(self, lat_factor, values):
+    def test_lat_temperature_index(self, open_dataset, lat_factor, values):
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
         ds = ds.drop_isel(time=0)  # drop time=2006/12 for one year of data
 
@@ -359,7 +358,7 @@ class TestAgroclimaticIndices:
             ("jones", "11-01", 2219.51),
         ],
     )
-    def test_huglin_index(self, method, end_date, values):
+    def test_huglin_index(self, open_dataset, method, end_date, values):
         ds = open_dataset("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc")
         ds = ds.drop_isel(time=0)  # drop time=2006/12 for one year of data
 
@@ -488,7 +487,7 @@ class TestAgroclimaticIndices:
         ],
     )
     def test_standardized_precipitation_index(
-        self, freq, window, dist, method, values, diff_tol
+        self, open_dataset, freq, window, dist, method, values, diff_tol
     ):
 
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
@@ -564,7 +563,7 @@ class TestAgroclimaticIndices:
         ],
     )
     def test_standardized_precipitation_evapotranspiration_index(
-        self, freq, window, dist, method, values, diff_tol
+        self, open_dataset, freq, window, dist, method, values, diff_tol
     ):
         ds = (
             open_dataset("sdba/CanESM2_1950-2100.nc")
@@ -1540,7 +1539,7 @@ class TestTGXN10p:
         assert out[0] == 0
         assert out[5] == 5
 
-    def test_doy_interpolation(self):
+    def test_doy_interpolation(self, open_dataset):
         # Just a smoke test
         with open_dataset("ERA5/daily_surface_cancities_1990-1993.nc") as ds:
             t10 = percentile_doy(ds.tasmin, per=10).sel(percentiles=10)
@@ -1930,7 +1929,9 @@ class TestTempWetDryPrecipWarmColdQuarter:
     )
     def test_pr_warmcold(self, tas_series, pr_series, freq, op, expected):
         tas, pr = self.get_data(tas_series, pr_series)
-        pr = convert_units_to(pr.resample(time=freq).mean(keep_attrs=True), "mm/d")
+        pr = convert_units_to(
+            pr.resample(time=freq).mean(keep_attrs=True), "mm/d", context="hydro"
+        )
 
         tas = xci.tg_mean(tas, freq=freq)
 
@@ -2188,7 +2189,7 @@ class TestTG:
         "ind,exp",
         [(xci.tg_mean, 283.1391), (xci.tg_min, 266.1117), (xci.tg_max, 292.1250)],
     )
-    def test_simple(self, ind, exp):
+    def test_simple(self, open_dataset, ind, exp):
         ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
         out = ind(ds.tas.sel(location="Victoria"))
         np.testing.assert_almost_equal(out[0], exp, decimal=4)
@@ -2201,14 +2202,6 @@ class TestTG:
             icclim = icclim.TG(cmip3_day_tas)
 
         np.testing.assert_array_equal(icclim, ind)
-
-
-@pytest.fixture(scope="session")
-def cmip3_day_tas():
-    # xr.set_options(enable_cftimeindex=False)
-    ds = open_dataset(os.path.join("cmip3", "tas.sresb1.giss_model_e_r.run1.atm.da.nc"))
-    yield ds.tas
-    ds.close()
 
 
 class TestWindConversion:
@@ -2768,7 +2761,7 @@ class TestPotentialEvapotranspiration:
         rsus = rsus_series(np.array([12.51, 14.46, 20.36])).expand_dims(lat=lat)
         rlds = rlds_series(np.array([293.65, 228.96, 275.40])).expand_dims(lat=lat)
         rlus = rlus_series(np.array([311.39, 280.50, 311.30])).expand_dims(lat=lat)
-        sfcwind = sfcWind_series(np.array([14.11, 15.27, 10.70])).expand_dims(lat=lat)
+        sfcWind = sfcWind_series(np.array([14.11, 15.27, 10.70])).expand_dims(lat=lat)
         out = xci.potential_evapotranspiration(
             tn,
             tx,
@@ -2779,7 +2772,7 @@ class TestPotentialEvapotranspiration:
             rsus=rsus,
             rlds=rlds,
             rlus=rlus,
-            sfcwind=sfcwind,
+            sfcWind=sfcWind,
             method="FAO_PM98",
         )
         np.testing.assert_allclose(out[0, 2], [1.208832768 / 86400], rtol=1e-2)

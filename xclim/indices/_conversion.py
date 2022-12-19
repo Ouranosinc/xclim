@@ -243,7 +243,7 @@ def uas_vas_2_sfcwind(
     Examples
     --------
     >>> from xclim.indices import uas_vas_2_sfcwind
-    >>> sfcwind = uas_vas_2_sfcwind(
+    >>> sfcWind = uas_vas_2_sfcwind(
     ...     uas=uas_dataset, vas=vas_dataset, calm_wind_thresh="0.5 m/s"
     ... )
 
@@ -1038,7 +1038,7 @@ def clausius_clapeyron_scaled_precipitation(
     rsus="[radiation]",
     rlds="[radiation]",
     rlus="[radiation]",
-    sfcwind="[speed]",
+    sfcWind="[speed]",
 )
 def potential_evapotranspiration(
     tasmin: xr.DataArray | None = None,
@@ -1050,7 +1050,7 @@ def potential_evapotranspiration(
     rsus: xr.DataArray | None = None,
     rlds: xr.DataArray | None = None,
     rlus: xr.DataArray | None = None,
-    sfcwind: xr.DataArray | None = None,
+    sfcWind: xr.DataArray | None = None,
     method: str = "BR65",
     peta: float = 0.00516409319477,
     petb: float = 0.0874972822289,
@@ -1080,7 +1080,7 @@ def potential_evapotranspiration(
         Surface Downwelling Longwave Radiation
     rlus : xarray.DataArray, optional
         Surface Upwelling Longwave Radiation
-    sfcwind : xarray.DataArray, optional
+    sfcWind : xarray.DataArray, optional
         Surface wind velocity (at 10 m)
     method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48", "mcguinnessbordne05", "MB05", "allen98", "FAO_PM98"}
         Which method to use, see notes.
@@ -1240,7 +1240,7 @@ def potential_evapotranspiration(
         tasmin = convert_units_to(tasmin, "degC")
 
         # wind speed at two meters
-        wa2 = wind_speed_height_conversion(sfcwind, h_source="10 m", h_target="2 m")
+        wa2 = wind_speed_height_conversion(sfcWind, h_source="10 m", h_target="2 m")
         wa2 = convert_units_to(wa2, "m s-1")
 
         with xr.set_options(keep_attrs=True):
@@ -1276,7 +1276,8 @@ def potential_evapotranspiration(
         raise NotImplementedError(f"'{method}' method is not implemented.")
 
     out.attrs["units"] = "mm"
-    return amount2rate(out, out_units="kg m-2 s-1")
+    rate = amount2rate(out, out_units="mm/d")
+    return convert_units_to(rate, "kg m-2 s-1", context="hydro")
 
 
 @vectorize(

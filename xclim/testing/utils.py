@@ -13,6 +13,7 @@ import sys
 import warnings
 from io import StringIO
 from pathlib import Path
+from shutil import copy
 from typing import Sequence, TextIO
 from urllib.error import HTTPError, URLError
 from urllib.parse import urljoin
@@ -45,21 +46,127 @@ _default_cache_dir = Path.home() / ".xclim_testing_data"
 LOGGER = logging.getLogger("xclim")
 
 __all__ = [
-    "get_all_CMIP6_variables",
+    "get_file",
+    "get_local_testdata",
     "list_datasets",
     "list_input_variables",
     "open_dataset",
     "publish_release_notes",
-    "update_variable_yaml",
     "show_versions",
 ]
 
 
-def file_md5_checksum(fname):
+def file_md5_checksum(f_name):
     hash_md5 = hashlib.md5()  # nosec
-    with open(fname, "rb") as f:
+    with open(f_name, "rb") as f:
         hash_md5.update(f.read())
     return hash_md5.hexdigest()
+
+
+def get_file(
+    name: str | os.PathLike | Sequence[str | os.PathLike],
+    github_url: str = "https://github.com/Ouranosinc/xclim-testdata",
+    branch: str = "master",
+    cache_dir: Path = _default_cache_dir,
+) -> Path | list[Path]:
+    """Return a file from an online GitHub-like repository.
+
+    If a local copy is found then always use that to avoid network traffic.
+
+    Parameters
+    ----------
+    name : str | os.PathLike | Sequence[str | os.PathLike]
+        Name of the file or list/tuple of names of files containing the dataset(s) including suffixes.
+    github_url : str
+        URL to GitHub repository where the data is stored.
+    branch : str, optional
+        For GitHub-hosted files, the branch to download from.
+    cache_dir : Path
+        The directory in which to search for and write cached data.
+
+    Returns
+    -------
+    Path | list[Path]
+    """
+    if isinstance(name, (str, Path)):
+        name = [name]
+
+    files = list()
+    for n in name:
+        fullname = Path(n)
+        suffix = fullname.suffix
+        files.append(
+            _get(
+                fullname=fullname,
+                github_url=github_url,
+                branch=branch,
+                suffix=suffix,
+                cache_dir=cache_dir,
+            )
+        )
+    if len(files) == 1:
+        return files[0]
+    return files
+
+
+def get_local_testdata(
+    patterns: str | Sequence[str],
+    temp_folder: str | os.PathLike,
+    branch: str = "master",
+    _local_cache: str | os.PathLike = _default_cache_dir,
+) -> Path | list[Path]:
+    """Copy specific testdata from a default cache to a temporary folder.
+
+    Return files matching `pattern` in the default cache dir and move to a local temp folder.
+
+    Parameters
+    ----------
+    patterns : str | Sequence[str]
+        Glob patterns, which must include the folder.
+    temp_folder : str | os.PathLike
+        Target folder to copy files and filetree to.
+    branch : str
+        For GitHub-hosted files, the branch to download from.
+    _local_cache : str | os.PathLike
+        Local cache of testing data.
+
+    Returns
+    -------
+    Path | list[Path]
+    """
+    temp_paths = []
+
+    if isinstance(patterns, str):
+        patterns = [patterns]
+
+    for pattern in patterns:
+        potential_paths = [
+            path for path in Path(temp_folder).joinpath(branch).glob(pattern)
+        ]
+        if potential_paths:
+            temp_paths.extend(potential_paths)
+            continue
+
+        testdata_path = Path(_local_cache)
+        if not testdata_path.exists():
+            raise RuntimeError(f"{testdata_path} does not exists")
+        paths = [path for path in testdata_path.joinpath(branch).glob(pattern)]
+        if not paths:
+            raise FileNotFoundError(
+                f"No data found for {pattern} at {testdata_path}/{branch}."
+            )
+
+        main_folder = Path(temp_folder).joinpath(branch).joinpath(Path(pattern).parent)
+        main_folder.mkdir(exist_ok=True, parents=True)
+
+        for file in paths:
+            temp_file = main_folder.joinpath(file.name)
+            if not temp_file.exists():
+                copy(file, main_folder)
+            temp_paths.append(temp_file)
+
+    # Return item directly when singleton, for convenience
+    return temp_paths[0] if len(temp_paths) == 1 else temp_paths
 
 
 def _get(
@@ -298,73 +405,6 @@ def list_input_variables(
                 variables[var].append(ind)
 
     return variables
-
-
-def get_all_CMIP6_variables(get_cell_methods=True):  # noqa
-    data = pd.read_excel(
-        "http://proj.badc.rl.ac.uk/svn/exarch/CMIP6dreq/tags/01.00.33/dreqPy/docs/CMIP6_MIP_tables.xlsx",
-        sheet_name=None,
-    )
-    data.pop("Notes")
-
-    variables = {}
-
-    def summarize_cell_methods(rawstr):
-        words = str(rawstr).split(" ")
-        iskey = [word.endswith(":") for word in words]
-        cms = {}
-        for i, _ in enumerate(words):
-            if iskey[i] and i + 1 < len(words) and not iskey[i + 1]:
-                cms[words[i][:-1]] = words[i + 1]
-        return cms
-
-    for _, df in data.items():
-        for _, row in df.iterrows():
-            varname = row["Variable Name"]
-            vardata = {
-                "standard_name": row["CF Standard Name"],
-                "canonical_units": row["units"],
-            }
-            if get_cell_methods:
-                vardata["cell_methods"] = [summarize_cell_methods(row["cell_methods"])]
-            if varname in variables and get_cell_methods:
-                if vardata["cell_methods"] not in variables[varname]["cell_methods"]:
-                    variables[varname]["cell_methods"].append(vardata["cell_methods"])
-            else:
-                variables[varname] = vardata
-
-    return variables
-
-
-def update_variable_yaml(filename=None, xclim_needs_only=True):
-    """Update a variable from a yaml file."""
-    print("Downloading CMIP6 variables.")
-    all_vars = get_all_CMIP6_variables(get_cell_methods=False)
-
-    if xclim_needs_only:
-        print("Filtering with xclim-implemented variables.")
-        xc_vars = list_input_variables()
-        all_vars = {k: v for k, v in all_vars.items() if k in xc_vars}
-
-    filepath = Path(
-        filename or (Path(__file__).parent.parent / "data" / "variables.yml")
-    )
-
-    if filepath.exists():
-        with filepath.open() as f:
-            std_vars = safe_load(f)
-
-        for var, data in all_vars.items():
-            if var not in std_vars["variables"]:
-                print(f"Added {var}")
-                new_data = data.copy()
-                new_data.update(description="")
-                std_vars["variables"][var] = new_data
-    else:
-        std_vars = all_vars
-
-    with filepath.open("w") as f:
-        safe_dump(std_vars, f)
 
 
 def publish_release_notes(

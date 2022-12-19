@@ -131,7 +131,9 @@ class BaseAdjustment(ParametrizableWithDataset):
         if target is None:
             target = inputs[0].units
 
-        return (convert_units_to(inda, target) for inda in inputs), target
+        return (
+            convert_units_to(inda, target, context="infer") for inda in inputs
+        ), target
 
     @classmethod
     def _train(cls, ref, hist, **kwargs):
