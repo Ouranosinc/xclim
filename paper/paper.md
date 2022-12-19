@@ -70,6 +70,6 @@ The `xclim.ensembles` subpackage bundles utilities to facilitate the analysis of
 
 # Acknowledgements
 
-`xclim` was developed thanks to the financial and strategic contributions of the Canadian Center for Climate Services and the Ouranos Consortium. We acknowledge contributions from Marie-Pier Labonté, David Caron, Jwen-Fai Low, Clair Barnes, Sébastien Biner, Philippe Roy, Carsten Ehbrecht, Tom Keel, Ludwig Lierhammer, Jamie Quinn, Dougie Squire, Ag Stephens, Maliko Tanguy, and Chistopher Whelan.
+`xclim` was developed thanks to the financial and strategic contributions of the Canadian Center for Climate Services and the Ouranos Consortium. We acknowledge contributions from Marie-Pier Labonté, David Caron, Jwen-Fai Low, Raquel Alegre, Clair Barnes, Sébastien Biner, Philippe Roy, Carsten Ehbrecht, Tom Keel, Ludwig Lierhammer, Jamie Quinn, Dougie Squire, Ag Stephens, Maliko Tanguy, Jeremy Fyke, Yannick Rousseau, and Chistopher Whelan.
 
 # References
