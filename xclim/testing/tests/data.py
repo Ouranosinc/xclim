@@ -33,38 +33,12 @@ def generate_atmos(cache_dir: Path):
         cache_dir=cache_dir,
         branch=MAIN_TESTDATA_BRANCH,
     ) as ds:
-        sfcWind, sfcWindfromdir = xclim.atmos.wind_speed_from_vector(ds=ds)  # noqa
-        sfcWind.attrs.update(cell_methods="time: mean within days")
-        huss = xclim.atmos.specific_humidity(ds=ds)
-        snw = ds.swe * 1000
-        # Liquid water equivalent snow thickness [m] to snow thickness in [m] : lwe [m] * 1000 kg/m³ / 300 kg/m³
-        snd = snw / 300
-        snw.attrs.update(
-            standard_name="surface_snow_amount",
-            units="kg m-2",
-            cell_methods="time: mean within days",
-        )
-        snd.attrs.update(
-            standard_name="surface_snow_thickness",
-            units="m",
-            cell_methods="time: mean within days",
-        )
-
-        psl = ds.ps
-        psl.attrs.update(standard_name="air_pressure_at_sea_level")
-
         tn10 = calendar.percentile_doy(ds.tasmin, per=10)
         t10 = calendar.percentile_doy(ds.tas, per=10)
         t90 = calendar.percentile_doy(ds.tas, per=90)
         tx90 = calendar.percentile_doy(ds.tasmax, per=90)
 
         ds = ds.assign(
-            sfcWind=sfcWind,
-            sfcWindfromdir=sfcWindfromdir,
-            huss=huss,
-            psl=psl,
-            snw=snw,
-            snd=snd,
             tn10=tn10,
             t10=t10,
             t90=t90,
