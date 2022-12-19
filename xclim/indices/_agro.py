@@ -580,7 +580,7 @@ def latitude_temperature_index(
     rsus="[radiation]",
     rlds="[radiation]",
     rlus="[radiation]",
-    sfcwind="[speed]",
+    sfcWind="[speed]",
 )
 def water_budget(
     pr: xarray.DataArray,
@@ -594,7 +594,7 @@ def water_budget(
     rsus: xarray.DataArray | None = None,
     rlds: xarray.DataArray | None = None,
     rlus: xarray.DataArray | None = None,
-    sfcwind: xarray.DataArray | None = None,
+    sfcWind: xarray.DataArray | None = None,
     method: str = "BR65",
 ) -> xarray.DataArray:
     r"""Precipitation minus potential evapotranspiration.
@@ -627,7 +627,7 @@ def water_budget(
         Surface Downwelling Longwave Radiation
     rlus : xarray.DataArray, optional
         Surface Upwelling Longwave Radiation
-    sfcwind : xarray.DataArray, optional
+    sfcWind : xarray.DataArray, optional
         Surface wind velocity (at 10 m)
     method : str
         Method to use to calculate the potential evapotranspiration.
@@ -641,7 +641,7 @@ def water_budget(
     xarray.DataArray
         Precipitation minus potential evapotranspiration.
     """
-    pr = convert_units_to(pr, "kg m-2 s-1")
+    pr = convert_units_to(pr, "kg m-2 s-1", context="hydro")
 
     if lat is None and evspsblpot is None:
         lat = _gather_lat(pr)
@@ -657,11 +657,11 @@ def water_budget(
             rsus=rsus,
             rlds=rlds,
             rlus=rlus,
-            sfcwind=sfcwind,
+            sfcWind=sfcWind,
             method=method,
         )
     else:
-        pet = convert_units_to(evspsblpot, "kg m-2 s-1")
+        pet = convert_units_to(evspsblpot, "kg m-2 s-1", context="hydro")
 
     if xarray.infer_freq(pet.time) == "MS":
         pr = pr.resample(time="MS").mean(dim="time", keep_attrs=True)
@@ -871,7 +871,7 @@ def standardized_precipitation_evapotranspiration_index(
         # Distributions bounded by zero: Water budget must be shifted, only positive values
         # are allowed. The offset choice is arbitrary and the same offset as the monocongo
         # library is taken
-        offset = convert_units_to("1 mm/d", wb.units)
+        offset = convert_units_to("1 mm/d", wb.units, context="hydro")
         with xarray.set_options(keep_attrs=True):
             wb, wb_cal = wb + offset, wb_cal + offset
 
@@ -926,8 +926,8 @@ def dry_spell_frequency(
     >>> dsf = dry_spell_frequency(pr=pr, op="sum")
     >>> dsf = dry_spell_frequency(pr=pr, op="max")
     """
-    pram = rate2amount(pr, out_units="mm")
-    thresh = convert_units_to(thresh, pram)
+    pram = rate2amount(convert_units_to(pr, "mm/d", context="hydro"), out_units="mm")
+    thresh = convert_units_to(thresh, pram, context="hydro")
 
     agg_pr = getattr(pram.rolling(time=window, center=True), op)()
     cond = agg_pr < thresh
@@ -989,8 +989,8 @@ def dry_spell_total_length(
     the three 3-day periods of which it is part are considered dry (so a total of five days are included in the
     computation, compared to only three).
     """
-    pram = rate2amount(pr, out_units="mm")
-    thresh = convert_units_to(thresh, pram)
+    pram = rate2amount(convert_units_to(pr, "mm/d", context="hydro"), out_units="mm")
+    thresh = convert_units_to(thresh, pram, context="hydro")
 
     pram_pad = pram.pad(time=(0, window))
     mask = getattr(pram_pad.rolling(time=window), op)() < thresh

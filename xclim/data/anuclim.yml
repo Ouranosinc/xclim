@@ -43,6 +43,7 @@ indicators:
       standard_name: lwe_thickness_of_precipitation_amount
       cell_methods: "time: sum"
       units: mm
+    context: hydro
   P13_PrecipWettestPeriod:
     allowed_periods: [A]
     src_freq: ['D', '7D', 'M']
@@ -53,6 +54,7 @@ indicators:
       units: mm
     parameters:
       op: wettest
+    context: hydro
   P14_PrecipDriestPeriod:
     allowed_periods: [A]
     src_freq: ['D', '7D', 'M']
@@ -63,6 +65,7 @@ indicators:
       units: mm
     parameters:
       op: driest
+    context: hydro
   P15_PrecipSeasonality:
     allowed_periods: [A]
     src_freq: ['D', '7D', 'M']

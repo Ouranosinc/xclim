@@ -427,7 +427,7 @@ def dry_days(
 
         \sum PR_{ij} < Threshold [mm/day]
     """
-    thresh = convert_units_to(thresh, pr)
+    thresh = convert_units_to(thresh, pr, context="hydro")
     out = threshold_count(pr, op, thresh, freq, constrain=("<", "<="))
     out = to_agg_units(out, pr, "count")
     return out
@@ -1188,7 +1188,7 @@ def first_snowfall(
     ----------
     :cite:cts:`cbcl_climate_2020`.
     """
-    thresh = convert_units_to(thresh, prsn)
+    thresh = convert_units_to(thresh, prsn, context="hydro")
     cond = prsn >= thresh
 
     out = cond.resample(time=freq).map(
@@ -1234,7 +1234,7 @@ def last_snowfall(
     ----------
     :cite:cts:`cbcl_climate_2020`.
     """
-    thresh = convert_units_to(thresh, prsn)
+    thresh = convert_units_to(thresh, prsn, context="hydro")
     cond = prsn >= thresh
 
     out = cond.resample(time=freq).map(
@@ -1279,8 +1279,8 @@ def days_with_snow(
     ----------
     :cite:cts:`matthews_planning_2017`
     """
-    low = convert_units_to(low, prsn)
-    high = convert_units_to(high, prsn)
+    low = convert_units_to(low, prsn, context="hydro")
+    high = convert_units_to(high, prsn, context="hydro")
     out = domain_count(prsn, low, high, freq)
     return to_agg_units(out, prsn, "count")
 
@@ -1992,7 +1992,7 @@ def maximum_consecutive_dry_days(
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
     the start and end of the series, but the numerical algorithm does.
     """
-    t = convert_units_to(thresh, pr, "hydro")
+    t = convert_units_to(thresh, pr, context="hydro")
     group = (pr < t).resample(time=freq)
     out = group.map(rl.longest_run, dim="time")
     return to_agg_units(out, pr, "count")

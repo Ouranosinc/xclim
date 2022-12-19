@@ -460,7 +460,7 @@ def prcptot(
     xarray.DataArray, [length]
        Total {freq} precipitation.
     """
-    thresh = convert_units_to(thresh, pr)
+    thresh = convert_units_to(thresh, pr, context="hydro")
     pram = rate2amount(pr.where(pr >= thresh, 0))
     return pram.resample(time=freq).sum().assign_attrs(units=pram.units)
 
@@ -569,7 +569,9 @@ def _to_quarter(
         if pr is not None:
             # Accumulate on a week
             # Ensure units are back to a "rate" for rate2amount below
-            pr = convert_units_to(precip_accumulation(pr, freq="7D"), "mm")
+            pr = convert_units_to(
+                precip_accumulation(pr, freq="7D"), "mm", context="hydro"
+            )
             pr.attrs["units"] = "mm/week"
 
         freq = "W"

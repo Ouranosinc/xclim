@@ -12,11 +12,13 @@ New features and enhancements
 * ``xclim.core.units.convert_units_to`` can now perform automatic conversions based on the standard name of the input when needed. (:issue:`1205`, :pull:`1206`).
     - Conversion from amount (thickness) to flux (rate), using ``amount2rate`` and ``rate2amount``.
     - Conversion from amount to thickness for liquid water quantities, using the new ``amount2lwethickness`` and ``lwethickness2amount``. This is similar to the implicit transformations enabled by the "hydro" unit context.
+    - Passing ``context='infer'`` will activate the "hydro" context if the source or the target are DataArrays with a standard name that is compatible, as decided by the new ``xclim.core.units.infer_context`` function.
 * Thresholds and other quantities passed as parameters of indicators can now be multi-dimensional `DataArray`s. xArray broadcasting mechanisms will apply. Those parameters are now annotated as "Quantity" in the signatures (``xclim.core.utils.Quantity``), instead of "str" as before. Attributes where such thresholds where included will now read "<an array>" (french: "<une matrice>") for these new cases. Multi-dimensional quantities are still unsupported in a very few cases, where it is documented in the docstring. (:issue:`1093`, :pull:`1236`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * Rewrite of ``xclim.core.calendar.time_bnds``. It should now be more resilient and versatile, but all ``cftime_*`` and ``cfindex_*`` functions were removed. (:issue:`74`, :pull:`1207`).
+* `hydro` context is not always enabled, as it led to unwanted unit conversions. Unit conversion operations now need to explicitly declare the `hydro` context to support conversions from `kg / m2 /s` to `mm/day`. (:issue:`1208`, :pull:`1227`).
 * Many previously deprecated indices and indicators have been removed from `xclim` (:pull:`1228`), with replacement indices/indicators suggested as follows:
     - ``xclim.indicators.atmos.fire_weather_indexes`` → ``xclim.indicators.atmos.cffwis_indices``
     - ``xclim.indices.freshet_start`` → ``xclim.indices.first_day_temperature_above``
@@ -29,6 +31,8 @@ Breaking changes
     - `xclim.subset` (mock submodule) → functions migrated to `clisops.core.subset`
 * Indicators ``standardized_precipitation_index`` and ``standardized_precipitation_evapotranspiration_index`` will now require ``pr_cal`` and ``wb_cal`` as keyword arguments only. (:pull:`1236`).
 * The internal object ``PercentileDataArray`` has been removed. (:pull:`1236`).
+* The ``xclim.testing.utils.get_all_CMIP6_variables`` and ``xclim.testing.utils.update_variable_yaml`` function were removed as the former was extremely slow and unusable. (:pull:`1258`).
+* The wind speed input of ``atmos.potential_evapotranspiration`` and ``atmos.water_budget`` was renamed to ``sfcWind`` (capital W) as this is the correct CMIP6 name. (:pull:`1258`).
 
 Bug fixes
 ^^^^^^^^^
@@ -41,10 +45,13 @@ Bug fixes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Minor adjustments to GitHub Actions workflows (newest Ubuntu images, updated actions version, better CI triggering). (:pull:`1221`).
+* Pint units `context` added to various operations, tests and `Indicator` attributes. (:issue:`1208`, :pull:`1227`).
 * Updated article from Alavoine & Grenier (2022) within documentation. Many article reference URLs have been updated to use HTTPS where possible. (:issue:`1246`, :pull:`1247`).
 * Added relevant variable dataflag checks for potential evaporation, convective precipitation, and air pressure at sea level. (:pull:`1241`).
 * Documentation restructured to include `ReadMe` page (as `About`) with some minor changes to documentation titles. (:pull:`1233`).
 * `xclim` development build now uses `nbqa` to effectively run black checks over notebook cells. (:pull:`1233`).
+* Some `tox` recipes (``opt-slow``, ``conda``) are temporarily deactivated until a `tox>=4.0`-compatible `tox-conda` plugin is released. (:pull:`1258`).
+* A notebook (``extendingxclim.ipynb``) has been updated to remove mentions of obsolete `xclim.subset` module. (:pull:`1258`).
 
 0.39.0 (2022-11-02)
 -------------------
