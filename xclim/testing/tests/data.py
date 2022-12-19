@@ -7,7 +7,6 @@ from pathlib import Path
 import numpy as np
 import xarray as xr
 
-import xclim
 from xclim.core import calendar
 from xclim.testing import get_file as _get_file
 from xclim.testing import get_local_testdata as _get_local_testdata
