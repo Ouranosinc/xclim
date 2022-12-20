@@ -1,0 +1,186 @@
+import numpy as np
+import pandas as pd
+import xarray as xr
+
+from ._filters import reverse_dict
+
+"""
+Uncertainty Partitioning
+========================
+
+This module implements methods and tools meant to partition climate projection uncertainties into different components:
+natural variability, GHG scenario and climate models.
+
+Partitioning algorithms:
+
+ - `hawkins_sutton`
+"""
+
+"""
+# References for other more recent algorithms
+
+Yip, S., Ferro, C. A. T., Stephenson, D. B., and Hawkins, E. (2011). A Simple, Coherent Framework for Partitioning
+Uncertainty in Climate Predictions. Journal of Climate 24, 17, 4634-4643, doi:10.1175/2011JCLI4085.1
+
+Northrop, P. J., & Chandler, R. E. (2014). Quantifying sources of uncertainty in projections of future climate.
+Journal of Climate, 27(23), 8793–8808, doi:10.1175/JCLI-D-14-00265.1
+
+Goldenson, N., Mauger, G., Leung, L. R., Bitz, C. M., & Rhines, A. (2018). Effects of ensemble configuration on
+estimates of regional climate uncertainties. Geophysical Research Letters, 45, 926– 934.
+https://doi.org/10.1002/2017GL076297
+
+Lehner, F., Deser, C., Maher, N., Marotzke, J., Fischer, E. M., Brunner, L., Knutti, R., and Hawkins,
+E. (2020). Partitioning climate projection uncertainty with multiple large ensembles and CMIP5/6, Earth Syst. Dynam.,
+11, 491–508, https://doi.org/10.5194/esd-11-491-2020.
+
+Evin, G., Hingray, B., Blanchet, J., Eckert, N., Morin, S., & Verfaillie, D. (2019). Partitioning Uncertainty
+Components of an Incomplete Ensemble of Climate Projections Using Data Augmentation, Journal of Climate, 32(8),
+2423-2440, https://doi.org/10.1175/JCLI-D-18-0606.1
+"""
+
+# Default dimension names
+_dims = dict(model="model", scenario="scenario", member="member")
+
+
+def hawkins_sutton(
+    da: xr.DataArray,
+    sm: xr.DataArray = None,
+    weights: xr.DataArray = None,
+    baseline: tuple = ("1971", "2000"),
+    kind: str = "+",
+    dimensions: dict = None,
+):
+    """Return the mean and partitioned variance of an ensemble.
+
+    Algorithm based on Hawkins and Sutton (2009). Input data should meet the following requirements:
+      - annual frequency;
+      - covers the baseline and future period;
+      - defined over time, scenario and model dimensions;
+      - the same models should be available for each scenario.
+
+    Parameters
+    ----------
+    da: xr.DataArray
+      Time series over dimensions of 'time', 'scenario' and 'model'. If other dimension names are used, provide
+      the mapping with the `dimensions` argument.
+    sm: xr.DataArray
+      Smoothed time series over time. By default, the method uses a fourth order polynomial. Use this argument to
+      use other smoothing strategies, such as another polynomial order, or a LOESS curve.
+    weights: xr.DataArray
+      Weights to be applied to individual models.
+    baseline: [str, str]
+      Start and end year of the reference period.
+    kind: {'+', '*'}
+      Whether the mean over the reference period should be substracted (+) or divided by (*).
+    dimensions: dict
+      Mapping from original dimension names to standard dimension names: scenario, model, member.
+
+    Returns
+    -------
+    xr.DataArray, xr.DataArray
+      The mean and the components of variance of the ensemble. These components are coordinates along the
+      `uncertainty` dimension: `variability`, `model`, `scenario`, and `total`.
+
+    References
+    ----------
+    Hawkins, E., & Sutton, R. (2009) The Potential to Narrow Uncertainty in Regional Climate Predictions. Bulletin of
+      the American Meteorological Society, 90(8), 1095–1108. doi:10.1175/2009BAMS2607.1
+    Hawkins, E., and R. Sutton (2011) The potential to narrow uncertainty in projections of regional precipitation
+      change. Climate Dyn., 37, 407–418, doi:10.1007/s00382-010-0810-6.
+    """
+    if xr.infer_freq(da.time)[0] not in ["A", "Y"]:
+        raise ValueError("This algorithm expects annual time series.")
+
+    if dimensions is None:
+        dimensions = {}
+
+    da = da.rename(reverse_dict(dimensions))
+
+    if "member" in da.dims and len(da.member) > 1:
+        raise ValueError("There should only be one member per model.")
+
+    # Confirm the same models have data for all scenarios
+    check = da.notnull().any("time").all("scenario")
+    if not check.all():
+        raise ValueError(f"Some models are missing data for some scenarios: \n {check}")
+
+    if weights is None:
+        weights = xr.ones_like(da.model, float)
+
+    # Perform analysis 1950 onward
+    da = da.sel(time=slice("1950", None))
+
+    if sm is None:
+        # Fit 4th order polynomial to smooth natural fluctuations
+        # Note that the order of the polynomial has a substantial influence on the results.
+        fit = da.polyfit(dim="time", deg=4, skipna=True)
+        sm = xr.polyval(coord=da.time, coeffs=fit.polyfit_coefficients).where(
+            da.notnull()
+        )
+
+    # Decadal mean residuals
+    res = (da - sm).rolling(time=10).mean(center=True)
+
+    # Individual model variance after 2000: V
+    # Note that the historical data is the same for all scenarios.
+    nv_u = (
+        res.sel(time=slice("2000", None))
+        .var(dim=("scenario", "time"))
+        .weighted(weights)
+        .mean("model")
+    )
+
+    # Compute baseline average
+    ref = sm.sel(time=slice(*baseline)).mean(dim="time")
+
+    # Remove baseline average from smoothed time series
+    if kind == "+":
+        sm -= ref
+    elif kind == "*":
+        sm /= ref
+    else:
+        raise ValueError(kind)
+
+    # Model uncertainty: M(t)
+    model_u = sm.weighted(weights).var(dim="model").mean(dim="scenario")
+
+    # Scenario uncertainty: S(t)
+    scenario_u = sm.weighted(weights).mean(dim="model").var(dim="scenario")
+
+    # Total uncertainty: T(t)
+    total = nv_u + scenario_u + model_u
+
+    # Create output array with the uncertainty components
+    u = pd.Index(["variability", "model", "scenario", "total"], name="uncertainty")
+    uncertainty = xr.concat([nv_u, model_u, scenario_u, total], dim=u)
+
+    # Mean projection: G(t)
+    g = sm.weighted(weights).mean(dim="model").mean(dim="scenario")
+
+    return g, uncertainty
+
+
+def hawkins_sutton_09_weighting(da, obs, baseline=("1971", "2000")):
+    """Return weights according to the ability of models to simulate observed climate change.
+
+    Weights are computed by comparing the 2000 value to the baseline mean: w_m = 1 / (x_{obs} + | x_{m,
+    2000} - x_obs | )
+
+    Parameters
+    ----------
+    da: xr.DataArray
+      Input data over the historical period. Should have a time and model dimension.
+    obs: float
+      Observed change.
+    baseline: (str, str)
+      Baseline start and end year.
+
+    Returns
+    -------
+    xr.DataArray
+      Weights over the model dimension.
+    """
+    mm = da.sel(time=slice(*baseline)).mean("time")
+    xm = da.sel(time=baseline[1]) - mm
+    xm = xm.drop("time").squeeze()
+    return 1 / (obs + np.abs(xm - obs))
