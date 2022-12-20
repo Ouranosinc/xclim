@@ -3,8 +3,8 @@ Bias Adjustment and Downscaling Algorithms
 ==========================================
 
 
-The `xclim.sdba` submodule provides bias-adjustment methods and will eventually provide statistical downscaling algorithms.
-Almost all adjustment algorithms conform to the `train` - `adjust` scheme, formalized within `TrainAdjust` classes.
+The `xclim.sdba` submodule provides a collection of bias-adjustment methods meant to meant to correct for systematic biases found in climate model simulations relative to observations. 
+Almost all adjustment algorithms conform to the `train` - `adjust` scheme, meaning that adjustment factors are first estimated on training data sets, then applied in a distinct step to the data to be adjusted.  
 Given a reference time series (ref), historical simulations (hist) and simulations to be adjusted (sim),
 any bias-adjustment method would be applied by first estimating the adjustment factors between the historical simulation
 and the observation series, and then applying these factors to `sim`, which could be a future simulation::
@@ -15,10 +15,10 @@ and the observation series, and then applying these factors to `sim`, which coul
   scen = Adj.adjust(sim, interp="linear")
   Adj.ds.af  # adjustment factors.
 
-Most method can either be applied additively by multiplication.
+Most method support both additive and multiplicative correction factors.
 Also, the `group` argument allows adjustment factors to be estimated independently for different periods: the full
-time series,  months, seasons or day of the year. The `interp` argument then allows for interpolation between these
-adjustment factors to avoid discontinuities in the bias-adjusted series (only applicable for monthly grouping).
+time series,  months, seasons or day of the year.  For monthly groupings, the `interp` argument then allows for interpolation between
+adjustment factors to avoid discontinuities in the bias-adjusted series.
 See :ref:`Grouping` below.
 
 The same interpolation principle is also used for quantiles. Indeed, for methods extracting adjustment factors by
@@ -83,7 +83,7 @@ Radiation and precipitation
 
 In theory, short wave radiation should be capped when precipitation is not zero, but there is as of yet no mechanism proposed to do that, see :cite:t:`hoffmann_meteorologically_2012`.
 
-Other documentation
+Usage examples
 ===================
 The usage of this module is documented in two example notebooks: `SDBA <notebooks/sdba.ipynb>`_ and `SDBA advanced <notebooks/sdba-advanced.ipynb>`_.
 
