@@ -2,6 +2,15 @@
 History
 =======
 
+0.41.0 (unreleased)
+-------------------
+Contributors to this version: David Huard (:user:`huard`),
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* `ensembles.hawkins_sutton` method to partition the uncertainty sources in a climate projection ensemble. (:issue:`771`, :pull:`1262`)
+
+
 0.40.0 (unreleased)
 -------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Juliette Lavoie (:user:`juliettelavoie`).
