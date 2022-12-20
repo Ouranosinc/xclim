@@ -30,36 +30,6 @@ class Streamflow(ResamplingIndicator):
         check_valid(q, "standard_name", "water_volume_transport_in_river_channel")
 
 
-class Stats(Streamflow):
-    missing = "any"
-
-
-class FA(Streamflow):
-    """Frequency analysis.
-
-    Notes
-    -----
-    FA performs three steps:
-     1. Compute stats over time series (min, max)
-     2. Fit statistical distribution parameters
-     3. Compute parametric quantiles for given return periods
-
-    Missing value functionality cannot be meaningfully applied here, because indicators apply missing value
-    operations on input and apply the mask on output. The `freq` of the input could be "YS", but this same
-    `freq` would then be used to compute the mask, which makes no sense.
-    """
-
-    missing = "skip"
-
-
-# Disable the daily checks because the inputs are period extremes.
-class Fit(Indicator):
-    src_freq = None
-
-    def cfcheck(self, **das):
-        pass
-
-
 base_flow_index = Streamflow(
     title="Base flow index",
     identifier="base_flow_index",
@@ -70,16 +40,19 @@ base_flow_index = Streamflow(
     compute=base_flow_index,
 )
 
-freq_analysis = FA(
-    title="Return period flow amount",
+freq_analysis = Streamflow(
+    title="Return level",
     identifier="freq_analysis",
     var_name="q{window}{mode:r}{indexer}",
-    long_name="N-year return period flow amount",
+    long_name="N-year return level discharge",
     description="Streamflow frequency analysis for the {mode} {indexer} {window}-day flow estimated using the {dist} "
     "distribution.",
     abstract="Streamflow frequency analysis on the basis of a given mode and distribution.",
     units="m^3 s-1",
-    compute=declare_units(da=None)(frequency_analysis),
+    compute=frequency_analysis,
+    missing="skip",
+    input={"da": "discharge"},
+    _version_deprecated="0.40",
 )
 
 rb_flashiness_index = Streamflow(
@@ -94,26 +67,35 @@ rb_flashiness_index = Streamflow(
     compute=rb_flashiness_index,
 )
 
-stats = Stats(
+
+stats = Streamflow(
     title="Statistic of the daily flow for a given period.",
-    identifier="stats",
+    identifier="discharge_stats",
     var_name="q{indexer}{op:r}",
     long_name="Daily flow statistics",
     description="{freq} {op} of daily flow ({indexer}).",
     units="m^3 s-1",
-    compute=declare_units(da=None)(generic.select_resample_op),
+    compute=generic.select_resample_op,
+    missing="any",
+    input={"da": "discharge"},
+    _version_deprecated="0.40",
 )
 
-fit = Fit(
+
+fit = Indicator(
     title="Distribution parameters fitted over the time dimension.",
-    identifier="fit",
+    identifier="discharge_distribution_fit",
     var_name="params",
     units="",
     standard_name="{dist} parameters",
     long_name="{dist} distribution parameters",
     description="Parameters of the {dist} distribution.",
     cell_methods="time: fit",
-    compute=declare_units(da=None)(_fit),
+    src_freq=None,
+    compute=_fit,
+    input={"da": "discharge"},
+    realm="land",
+    _version_deprecated="0.40",
 )
 
 
@@ -124,7 +106,7 @@ doy_qmax = Streamflow(
     long_name="Day of the year of the maximum streamflow over {indexer}",
     description="Day of the year of the maximum streamflow over {indexer}.",
     units="",
-    compute=declare_units(da=None)(generic.select_resample_op),
+    compute=declare_units(da="[discharge]")(generic.select_resample_op),
     parameters=dict(op=generic.doymax),
 )
 
@@ -136,6 +118,6 @@ doy_qmin = Streamflow(
     long_name="Day of the year of the minimum streamflow over {indexer}",
     description="Day of the year of the minimum streamflow over {indexer}.",
     units="",
-    compute=declare_units(da=None)(generic.select_resample_op),
+    compute=declare_units(da="[discharge]")(generic.select_resample_op),
     parameters=dict(op=generic.doymin),
 )
