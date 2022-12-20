@@ -13,6 +13,7 @@ New features and enhancements
     - Conversion from amount (thickness) to flux (rate), using ``amount2rate`` and ``rate2amount``.
     - Conversion from amount to thickness for liquid water quantities, using the new ``amount2lwethickness`` and ``lwethickness2amount``. This is similar to the implicit transformations enabled by the "hydro" unit context.
     - Passing ``context='infer'`` will activate the "hydro" context if the source or the target are DataArrays with a standard name that is compatible, as decided by the new ``xclim.core.units.infer_context`` function.
+* New `generic` indicator realm. Now holds indicators previously meant for streamflow analysis in the `land` realm: `fit`, `return_level` (previously `freq_analysis`) and `stats`.
 * Thresholds and other quantities passed as parameters of indicators can now be multi-dimensional `DataArray`s. xArray broadcasting mechanisms will apply. Those parameters are now annotated as "Quantity" in the signatures (``xclim.core.utils.Quantity``), instead of "str" as before. Attributes where such thresholds where included will now read "<an array>" (french: "<une matrice>") for these new cases. Multi-dimensional quantities are still unsupported in a very few cases, where it is documented in the docstring. (:issue:`1093`, :pull:`1236`).
 
 Breaking changes
@@ -33,6 +34,7 @@ Breaking changes
 * The internal object ``PercentileDataArray`` has been removed. (:pull:`1236`).
 * The ``xclim.testing.utils.get_all_CMIP6_variables`` and ``xclim.testing.utils.update_variable_yaml`` function were removed as the former was extremely slow and unusable. (:pull:`1258`).
 * The wind speed input of ``atmos.potential_evapotranspiration`` and ``atmos.water_budget`` was renamed to ``sfcWind`` (capital W) as this is the correct CMIP6 name. (:pull:`1258`).
+* Indicator `land.stats`, `land.fit` and `land.freq_analysis` are now deprecated and will be removed in version 0.43. They are being phased out in favor of generic indicators `generic.stats`, `generic.fit` and `generic.return_level` respectively.
 
 Bug fixes
 ^^^^^^^^^
@@ -41,6 +43,7 @@ Bug fixes
 * The setup step for `pytest` needed to be addressed due to the fact that files were being accessed/modified by multiple tests at a time, causing segmentation faults in some tests. This has been resolved by splitting functions into those that fetch or generate test data (under `xclim.testing.tests.data`) and the fixtures that supply accessors to them (under `xclim.testing.tests.conftest`). (:issue:`1238`, :pull:`1254`).
 * Relaxed the expected output for ``test_spatial_analogs[friedman_rafsky]`` to support expected results from `scikit-learn` 1.2.0.
 * The MBCn example in documentation has been fixed to properly imitate the source. (:issue:`1249`, :pull:`1250`).
+* Streamflow indicators relying on indices defined in `xclim.indices.stats` were not checking input variable units. These indicators will now raise an error if input data units are not m^3/s. (:issue:`1130`, :pull:`1225`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
