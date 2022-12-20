@@ -12,7 +12,7 @@ from xclim.core.units import (
     str2pint,
     to_agg_units,
 )
-from xclim.core.utils import DayOfYearStr, Quantity
+from xclim.core.utils import DayOfYearStr, Quantified
 
 from . import run_length as rl
 from .generic import (
@@ -84,7 +84,7 @@ __all__ = [
 
 @declare_units(sfcWind="[speed]", thresh="[speed]")
 def calm_days(
-    sfcWind: xarray.DataArray, thresh: Quantity = "2 m s-1", freq: str = "MS"
+    sfcWind: xarray.DataArray, thresh: Quantified = "2 m s-1", freq: str = "MS"
 ) -> xarray.DataArray:
     r"""Calm days.
 
@@ -94,7 +94,7 @@ def calm_days(
     ----------
     sfcWind : xarray.DataArray
         Daily windspeed.
-    thresh : Quantity
+    thresh : Quantified
         Threshold average near-surface wind speed on which to base evaluation.
     freq : str
         Resampling frequency.
@@ -121,7 +121,7 @@ def calm_days(
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def cold_spell_days(
     tas: xarray.DataArray,
-    thresh: Quantity = "-10 degC",
+    thresh: Quantified = "-10 degC",
     window: int = 5,
     freq: str = "AS-JUL",
     op: str = "<",
@@ -136,7 +136,7 @@ def cold_spell_days(
     ----------
     tas : xarray.DataArray
         Mean daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature below which a cold spell begins.
     window : int
         Minimum number of days with temperature below threshold to qualify as a cold spell.
@@ -180,7 +180,7 @@ def cold_spell_days(
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def cold_spell_frequency(
     tas: xarray.DataArray,
-    thresh: Quantity = "-10 degC",
+    thresh: Quantified = "-10 degC",
     window: int = 5,
     freq: str = "AS-JUL",
     op: str = "<",
@@ -195,7 +195,7 @@ def cold_spell_frequency(
     ----------
     tas : xarray.DataArray
         Mean daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature below which a cold spell begins.
     window : int
         Minimum number of days with temperature below threshold to qualify as a cold spell.
@@ -229,7 +229,7 @@ def cold_spell_frequency(
 @declare_units(snd="[length]", thresh="[length]")
 def continuous_snow_cover_end(
     snd: xarray.DataArray,
-    thresh: Quantity = "2 cm",
+    thresh: Quantified = "2 cm",
     window: int = 14,
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
@@ -246,7 +246,7 @@ def continuous_snow_cover_end(
     ----------
     snd : xarray.DataArray
         Surface snow thickness.
-    thresh : Quantity
+    thresh : Quantified
         Threshold snow thickness.
     window : int
         Minimum number of days with snow depth below threshold.
@@ -279,7 +279,7 @@ def continuous_snow_cover_end(
 @declare_units(snd="[length]", thresh="[length]")
 def continuous_snow_cover_start(
     snd: xarray.DataArray,
-    thresh: Quantity = "2 cm",
+    thresh: Quantified = "2 cm",
     window: int = 14,
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
@@ -296,7 +296,7 @@ def continuous_snow_cover_start(
     ----------
     snd : xarray.DataArray
         Surface snow thickness.
-    thresh : Quantity
+    thresh : Quantified
         Threshold snow thickness.
     window : int
         Minimum number of days with snow depth above or equal to threshold.
@@ -332,7 +332,7 @@ def continuous_snow_cover_start(
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
 def daily_pr_intensity(
-    pr: xarray.DataArray, thresh: Quantity = "1 mm/day", freq: str = "YS"
+    pr: xarray.DataArray, thresh: Quantified = "1 mm/day", freq: str = "YS"
 ) -> xarray.DataArray:
     r"""Average daily precipitation intensity.
 
@@ -343,7 +343,7 @@ def daily_pr_intensity(
     ----------
     pr : xarray.DataArray
         Daily precipitation.
-    thresh : Quantity
+    thresh : Quantified
         Precipitation value over which a day is considered wet.
     freq : str
         Resampling frequency.
@@ -394,7 +394,7 @@ def daily_pr_intensity(
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
 def dry_days(
     pr: xarray.DataArray,
-    thresh: Quantity = "0.2 mm/d",
+    thresh: Quantified = "0.2 mm/d",
     freq: str = "YS",
     op: str = "<",
 ) -> xarray.DataArray:
@@ -406,7 +406,7 @@ def dry_days(
     ----------
     pr : xarray.DataArray
         Daily precipitation.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature on which to base evaluation.
     freq : str
         Resampling frequency.
@@ -436,7 +436,7 @@ def dry_days(
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
 def maximum_consecutive_wet_days(
     pr: xarray.DataArray,
-    thresh: Quantity = "1 mm/day",
+    thresh: Quantified = "1 mm/day",
     freq: str = "YS",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
@@ -448,7 +448,7 @@ def maximum_consecutive_wet_days(
     ----------
     pr : xarray.DataArray
         Mean daily precipitation flux.
-    thresh : Quantity
+    thresh : Quantified
         Threshold precipitation on which to base evaluation.
     freq : str
       Resampling frequency.
@@ -489,7 +489,7 @@ def maximum_consecutive_wet_days(
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def cooling_degree_days(
-    tas: xarray.DataArray, thresh: Quantity = "18 degC", freq: str = "YS"
+    tas: xarray.DataArray, thresh: Quantified = "18 degC", freq: str = "YS"
 ) -> xarray.DataArray:
     r"""Cooling degree days.
 
@@ -499,7 +499,7 @@ def cooling_degree_days(
     ----------
     tas : xarray.DataArray
         Mean daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Temperature threshold above which air is cooled.
     freq : str
         Resampling frequency.
@@ -525,7 +525,7 @@ def cooling_degree_days(
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def growing_degree_days(
-    tas: xarray.DataArray, thresh: Quantity = "4.0 degC", freq: str = "YS"
+    tas: xarray.DataArray, thresh: Quantified = "4.0 degC", freq: str = "YS"
 ) -> xarray.DataArray:
     r"""Growing degree-days over threshold temperature value.
 
@@ -535,7 +535,7 @@ def growing_degree_days(
     ----------
     tas : xarray.DataArray
         Mean daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature on which to base evaluation.
     freq : str
         Resampling frequency.
@@ -560,7 +560,7 @@ def growing_degree_days(
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def growing_season_start(
     tas: xarray.DataArray,
-    thresh: Quantity = "5.0 degC",
+    thresh: Quantified = "5.0 degC",
     window: int = 5,
     freq: str = "YS",
 ) -> xarray.DataArray:
@@ -573,7 +573,7 @@ def growing_season_start(
     ----------
     tas : xarray.DataArray
         Mean daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature on which to base evaluation.
     window : int
         Minimum number of days with temperature above threshold needed for evaluation.
@@ -608,7 +608,7 @@ def growing_season_start(
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def growing_season_end(
     tas: xarray.DataArray,
-    thresh: Quantity = "5.0 degC",
+    thresh: Quantified = "5.0 degC",
     mid_date: DayOfYearStr = "07-01",
     window: int = 5,
     freq: str = "YS",
@@ -626,7 +626,7 @@ def growing_season_end(
     ----------
     tas : xarray.DataArray
         Mean daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature on which to base evaluation.
     mid_date : str
         Date of the year after which to look for the end of the season. Should have the format '%m-%d'.
@@ -659,7 +659,7 @@ def growing_season_end(
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def growing_season_length(
     tas: xarray.DataArray,
-    thresh: Quantity = "5.0 degC",
+    thresh: Quantified = "5.0 degC",
     window: int = 6,
     mid_date: DayOfYearStr = "07-01",
     freq: str = "YS",
@@ -679,7 +679,7 @@ def growing_season_length(
     ----------
     tas : xarray.DataArray
         Mean daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature on which to base evaluation.
     window : int
         Minimum number of days with temperature above threshold to mark the beginning and end of growing season.
@@ -741,7 +741,7 @@ def frost_season_length(
     tasmin: xarray.DataArray,
     window: int = 5,
     mid_date: DayOfYearStr | None = "01-01",
-    thresh: Quantity = "0.0 degC",
+    thresh: Quantified = "0.0 degC",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
     r"""Frost season length.
@@ -764,7 +764,7 @@ def frost_season_length(
     mid_date : str, optional
         Date the must be included in the season. It is the earliest the end of the season can be.
         If None, there is no limit.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature on which to base evaluation.
     freq : str
         Resampling frequency.
@@ -815,7 +815,7 @@ def frost_season_length(
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def frost_free_season_start(
     tasmin: xarray.DataArray,
-    thresh: Quantity = "0.0 degC",
+    thresh: Quantified = "0.0 degC",
     window: int = 5,
     freq: str = "YS",
 ) -> xarray.DataArray:
@@ -829,7 +829,7 @@ def frost_free_season_start(
     ----------
     tasmin : xarray.DataArray
         Minimum daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature on which to base evaluation.
     window : int
         Minimum number of days with temperature above threshold needed for evaluation.
@@ -865,7 +865,7 @@ def frost_free_season_start(
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def frost_free_season_end(
     tasmin: xarray.DataArray,
-    thresh: Quantity = "0.0 degC",
+    thresh: Quantified = "0.0 degC",
     mid_date: DayOfYearStr = "07-01",
     window: int = 5,
     freq: str = "YS",
@@ -884,7 +884,7 @@ def frost_free_season_end(
     ----------
     tasmin : xarray.DataArray
         Minimum daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature on which to base evaluation.
     mid_date : str
         Date of the year after which to look for the end of the season. Should have the format '%m-%d'.
@@ -919,7 +919,7 @@ def frost_free_season_length(
     tasmin: xarray.DataArray,
     window: int = 5,
     mid_date: DayOfYearStr | None = "07-01",
-    thresh: Quantity = "0.0 degC",
+    thresh: Quantified = "0.0 degC",
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Frost free season length.
@@ -942,7 +942,7 @@ def frost_free_season_length(
     mid_date : str, optional
         Date the must be included in the season. It is the earliest the end of the season can be.
         If None, there is no limit.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature on which to base evaluation.
     freq : str
         Resampling frequency.
@@ -994,7 +994,7 @@ def frost_free_season_length(
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def last_spring_frost(
     tas: xarray.DataArray,
-    thresh: Quantity = "0 degC",
+    thresh: Quantified = "0 degC",
     before_date: DayOfYearStr = "07-01",
     window: int = 1,
     freq: str = "YS",
@@ -1012,7 +1012,7 @@ def last_spring_frost(
     ----------
     tas : xarray.DataArray
         Mean daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature on which to base evaluation.
     before_date : str,
         Date of the year before which to look for the final frost event. Should have the format '%m-%d'.
@@ -1044,7 +1044,7 @@ def last_spring_frost(
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def first_day_temperature_below(
     tas: xarray.DataArray,
-    thresh: Quantity = "0 degC",
+    thresh: Quantified = "0 degC",
     op: str = "<",
     after_date: DayOfYearStr = "07-01",
     window: int = 1,
@@ -1063,7 +1063,7 @@ def first_day_temperature_below(
     ----------
     tas : xarray.DataArray
         Daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature on which to base evaluation.
     op : {"<", "<=", "lt", "le"}
         Comparison operation. Default: ">".
@@ -1096,7 +1096,7 @@ def first_day_temperature_below(
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def first_day_temperature_above(
     tas: xarray.DataArray,
-    thresh: Quantity = "0 degC",
+    thresh: Quantified = "0 degC",
     op: str = ">",
     after_date: DayOfYearStr = "01-01",
     window: int = 1,
@@ -1115,7 +1115,7 @@ def first_day_temperature_above(
     ----------
     tas : xarray.DataArray
         Daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature on which to base evaluation.
     op : {">", ">=", "gt", "ge"}
         Comparison operation. Default: ">".
@@ -1158,7 +1158,7 @@ def first_day_temperature_above(
 @declare_units(prsn="[precipitation]", thresh="[precipitation]")
 def first_snowfall(
     prsn: xarray.DataArray,
-    thresh: Quantity = "0.5 mm/day",
+    thresh: Quantified = "0.5 mm/day",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
     r"""First day with solid precipitation above a threshold.
@@ -1173,7 +1173,7 @@ def first_snowfall(
     ----------
     prsn : xarray.DataArray
         Solid precipitation flux.
-    thresh : Quantity
+    thresh : Quantified
         Threshold precipitation flux on which to base evaluation.
     freq : str
         Resampling frequency.
@@ -1204,7 +1204,7 @@ def first_snowfall(
 @declare_units(prsn="[precipitation]", thresh="[precipitation]")
 def last_snowfall(
     prsn: xarray.DataArray,
-    thresh: Quantity = "0.5 mm/day",
+    thresh: Quantified = "0.5 mm/day",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
     r"""Last day with solid precipitation above a threshold.
@@ -1219,7 +1219,7 @@ def last_snowfall(
     ----------
     prsn : xarray.DataArray
         Solid precipitation flux.
-    thresh : Quantity
+    thresh : Quantified
         Threshold precipitation flux on which to base evaluation.
     freq : str
         Resampling frequency.
@@ -1250,8 +1250,8 @@ def last_snowfall(
 @declare_units(prsn="[precipitation]", low="[precipitation]", high="[precipitation]")
 def days_with_snow(
     prsn: xarray.DataArray,  # noqa
-    low: Quantity = "0 kg m-2 s-1",
-    high: Quantity = "1E6 kg m-2 s-1",
+    low: Quantified = "0 kg m-2 s-1",
+    high: Quantified = "1E6 kg m-2 s-1",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
     r"""Days with snow.
@@ -1262,9 +1262,9 @@ def days_with_snow(
     ----------
     prsn : xr.DataArray
         Solid precipitation flux.
-    low : Quantity
+    low : Quantified
         Minimum threshold solid precipitation flux.
-    high : Quantity
+    high : Quantified
         Maximum threshold solid precipitation flux.
     freq : str
         Resampling frequency defining the periods as defined in
@@ -1288,7 +1288,7 @@ def days_with_snow(
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def heat_wave_index(
     tasmax: xarray.DataArray,
-    thresh: Quantity = "25.0 degC",
+    thresh: Quantified = "25.0 degC",
     window: int = 5,
     freq: str = "YS",
     op: str = ">",
@@ -1301,7 +1301,7 @@ def heat_wave_index(
     ----------
     tasmax : xarray.DataArray
         Maximum daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature on which to designate a heatwave.
     window : int
         Minimum number of days with temperature above threshold to qualify as a heatwave.
@@ -1325,7 +1325,7 @@ def heat_wave_index(
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def heating_degree_days(
-    tas: xarray.DataArray, thresh: Quantity = "17.0 degC", freq: str = "YS"
+    tas: xarray.DataArray, thresh: Quantified = "17.0 degC", freq: str = "YS"
 ) -> xarray.DataArray:
     r"""Heating degree days.
 
@@ -1335,7 +1335,7 @@ def heating_degree_days(
     ----------
     tas : xarray.DataArray
         Mean daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature on which to base evaluation.
     freq : str
         Resampling frequency.
@@ -1364,7 +1364,7 @@ def heating_degree_days(
 @declare_units(tasmax="[temperature]", thresh_tasmax="[temperature]")
 def hot_spell_max_length(
     tasmax: xarray.DataArray,
-    thresh_tasmax: Quantity = "30 degC",
+    thresh_tasmax: Quantified = "30 degC",
     window: int = 1,
     freq: str = "YS",
     op: str = ">",
@@ -1380,7 +1380,7 @@ def hot_spell_max_length(
     ----------
     tasmax : xarray.DataArray
         Maximum daily temperature.
-    thresh_tasmax : Quantity
+    thresh_tasmax : Quantified
         The maximum temperature threshold needed to trigger a heatwave event.
     window : int
         Minimum number of days with temperatures above thresholds to qualify as a heatwave.
@@ -1420,7 +1420,7 @@ def hot_spell_max_length(
 @declare_units(tasmax="[temperature]", thresh_tasmax="[temperature]")
 def hot_spell_frequency(
     tasmax: xarray.DataArray,
-    thresh_tasmax: Quantity = "30 degC",
+    thresh_tasmax: Quantified = "30 degC",
     window: int = 3,
     freq: str = "YS",
     op: str = ">",
@@ -1434,7 +1434,7 @@ def hot_spell_frequency(
     ----------
     tasmax : xarray.DataArray
         Maximum daily temperature.
-    thresh_tasmax : Quantity
+    thresh_tasmax : Quantified
         The maximum temperature threshold needed to trigger a heatwave event.
     window : int
         Minimum number of days with temperatures above thresholds to qualify as a heatwave.
@@ -1472,7 +1472,7 @@ def hot_spell_frequency(
 
 @declare_units(snd="[length]", thresh="[length]")
 def snow_cover_duration(
-    snd: xarray.DataArray, thresh: Quantity = "2 cm", freq: str = "AS-JUL"
+    snd: xarray.DataArray, thresh: Quantified = "2 cm", freq: str = "AS-JUL"
 ) -> xarray.DataArray:
     # noqa: D401
     """Number of days with snow depth above a threshold.
@@ -1487,7 +1487,7 @@ def snow_cover_duration(
     ----------
     snd : xarray.DataArray
         Surface snow thickness.
-    thresh : Quantity
+    thresh : Quantified
         Threshold snow thickness.
     freq : str
         Resampling frequency.
@@ -1505,7 +1505,7 @@ def snow_cover_duration(
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def tn_days_above(
     tasmin: xarray.DataArray,
-    thresh: Quantity = "20.0 degC",
+    thresh: Quantified = "20.0 degC",
     freq: str = "YS",
     op: str = ">",
 ):  # noqa: D401
@@ -1517,7 +1517,7 @@ def tn_days_above(
     ----------
     tasmin : xarray.DataArray
         Minimum daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature on which to base evaluation.
     freq : str
         Resampling frequency.
@@ -1546,7 +1546,7 @@ def tn_days_above(
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def tn_days_below(
     tasmin: xarray.DataArray,
-    thresh: Quantity = "-10.0 degC",
+    thresh: Quantified = "-10.0 degC",
     freq: str = "YS",
     op: str = "<",
 ) -> xarray.DataArray:  # noqa: D401
@@ -1558,7 +1558,7 @@ def tn_days_below(
     ----------
     tasmin : xarray.DataArray
         Minimum daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature on which to base evaluation.
     freq : str
         Resampling frequency.
@@ -1587,7 +1587,7 @@ def tn_days_below(
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def tg_days_above(
     tas: xarray.DataArray,
-    thresh: Quantity = "10.0 degC",
+    thresh: Quantified = "10.0 degC",
     freq: str = "YS",
     op: str = ">",
 ):  # noqa: D401
@@ -1599,7 +1599,7 @@ def tg_days_above(
     ----------
     tas : xarray.DataArray
         Mean daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature on which to base evaluation.
     freq : str
         Resampling frequency.
@@ -1628,7 +1628,7 @@ def tg_days_above(
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def tg_days_below(
     tas: xarray.DataArray,
-    thresh: Quantity = "10.0 degC",
+    thresh: Quantified = "10.0 degC",
     freq: str = "YS",
     op: str = "<",
 ):  # noqa: D401
@@ -1640,7 +1640,7 @@ def tg_days_below(
     ----------
     tas : xarray.DataArray
         Mean daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature on which to base evaluation.
     freq : str
         Resampling frequency.
@@ -1669,7 +1669,7 @@ def tg_days_below(
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def tx_days_above(
     tasmax: xarray.DataArray,
-    thresh: Quantity = "25.0 degC",
+    thresh: Quantified = "25.0 degC",
     freq: str = "YS",
     op: str = ">",
 ) -> xarray.DataArray:  # noqa: D401
@@ -1681,7 +1681,7 @@ def tx_days_above(
     ----------
     tasmax : xarray.DataArray
         Maximum daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature on which to base evaluation.
     freq : str
         Resampling frequency.
@@ -1710,7 +1710,7 @@ def tx_days_above(
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def tx_days_below(
     tasmax: xarray.DataArray,
-    thresh: Quantity = "25.0 degC",
+    thresh: Quantified = "25.0 degC",
     freq: str = "YS",
     op: str = "<",
 ):  # noqa: D401
@@ -1722,7 +1722,7 @@ def tx_days_below(
     ----------
     tasmax : xarray.DataArray
         Maximum daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature on which to base evaluation.
     freq : str
         Resampling frequency.
@@ -1751,7 +1751,7 @@ def tx_days_below(
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def warm_day_frequency(
     tasmax: xarray.DataArray,
-    thresh: Quantity = "30 degC",
+    thresh: Quantified = "30 degC",
     freq: str = "YS",
     op: str = ">",
 ) -> xarray.DataArray:
@@ -1763,7 +1763,7 @@ def warm_day_frequency(
     ----------
     tasmax : xarray.DataArray
         Maximum daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature on which to base evaluation.
     freq : str
         Resampling frequency.
@@ -1792,7 +1792,7 @@ def warm_day_frequency(
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def warm_night_frequency(
     tasmin: xarray.DataArray,
-    thresh: Quantity = "22 degC",
+    thresh: Quantified = "22 degC",
     freq: str = "YS",
     op: str = ">",
 ) -> xarray.DataArray:
@@ -1804,7 +1804,7 @@ def warm_night_frequency(
     ----------
     tasmin : xarray.DataArray
         Minimum daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature on which to base evaluation.
     freq : str
         Resampling frequency.
@@ -1824,7 +1824,7 @@ def warm_night_frequency(
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
 def wetdays(
     pr: xarray.DataArray,
-    thresh: Quantity = "1.0 mm/day",
+    thresh: Quantified = "1.0 mm/day",
     freq: str = "YS",
     op: str = ">=",
 ) -> xarray.DataArray:
@@ -1836,7 +1836,7 @@ def wetdays(
     ----------
     pr : xarray.DataArray
         Daily precipitation.
-    thresh : Quantity
+    thresh : Quantified
         Precipitation value over which a day is considered wet.
     freq : str
         Resampling frequency.
@@ -1866,7 +1866,7 @@ def wetdays(
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
 def wetdays_prop(
     pr: xarray.DataArray,
-    thresh: Quantity = "1.0 mm/day",
+    thresh: Quantified = "1.0 mm/day",
     freq: str = "YS",
     op: str = ">=",
 ) -> xarray.DataArray:
@@ -1878,7 +1878,7 @@ def wetdays_prop(
     ----------
     pr : xarray.DataArray
         Daily precipitation.
-    thresh : Quantity
+    thresh : Quantified
         Precipitation value over which a day is considered wet.
     freq : str
         Resampling frequency.
@@ -1909,7 +1909,7 @@ def wetdays_prop(
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def maximum_consecutive_frost_days(
     tasmin: xarray.DataArray,
-    thresh: Quantity = "0.0 degC",
+    thresh: Quantified = "0.0 degC",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
     r"""Maximum number of consecutive frost days (Tn < 0℃).
@@ -1925,7 +1925,7 @@ def maximum_consecutive_frost_days(
     ----------
     tasmin : xarray.DataArray
         Minimum daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature.
     freq : str
         Resampling frequency.
@@ -1957,7 +1957,7 @@ def maximum_consecutive_frost_days(
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
 def maximum_consecutive_dry_days(
-    pr: xarray.DataArray, thresh: Quantity = "1 mm/day", freq: str = "YS"
+    pr: xarray.DataArray, thresh: Quantified = "1 mm/day", freq: str = "YS"
 ) -> xarray.DataArray:
     r"""Maximum number of consecutive dry days.
 
@@ -1968,7 +1968,7 @@ def maximum_consecutive_dry_days(
     ----------
     pr : xarray.DataArray
         Mean daily precipitation flux.
-    thresh : Quantity
+    thresh : Quantified
         Threshold precipitation on which to base evaluation.
     freq : str
         Resampling frequency.
@@ -2000,7 +2000,7 @@ def maximum_consecutive_dry_days(
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def maximum_consecutive_frost_free_days(
-    tasmin: xarray.DataArray, thresh: Quantity = "0 degC", freq: str = "YS"
+    tasmin: xarray.DataArray, thresh: Quantified = "0 degC", freq: str = "YS"
 ) -> xarray.DataArray:
     r"""Maximum number of consecutive frost free days (Tn >= 0℃).
 
@@ -2015,7 +2015,7 @@ def maximum_consecutive_frost_free_days(
     ----------
     tasmin : xarray.DataArray
         Minimum daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature.
     freq : str
         Resampling frequency.
@@ -2047,7 +2047,7 @@ def maximum_consecutive_frost_free_days(
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def maximum_consecutive_tx_days(
-    tasmax: xarray.DataArray, thresh: Quantity = "25 degC", freq: str = "YS"
+    tasmax: xarray.DataArray, thresh: Quantified = "25 degC", freq: str = "YS"
 ) -> xarray.DataArray:
     r"""Maximum number of consecutive days with tasmax above a threshold (summer days).
 
@@ -2058,7 +2058,7 @@ def maximum_consecutive_tx_days(
     ----------
     tasmax : xarray.DataArray
         Max daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature.
     freq : str
         Resampling frequency.
@@ -2090,7 +2090,7 @@ def maximum_consecutive_tx_days(
 
 @declare_units(siconc="[]", areacello="[area]", thresh="[]")
 def sea_ice_area(
-    siconc: xarray.DataArray, areacello: xarray.DataArray, thresh: Quantity = "15 pct"
+    siconc: xarray.DataArray, areacello: xarray.DataArray, thresh: Quantified = "15 pct"
 ) -> xarray.DataArray:
     """Total sea ice area.
 
@@ -2103,7 +2103,7 @@ def sea_ice_area(
         Sea ice concentration (area fraction).
     areacello : xarray.DataArray
         Grid cell area (usually over the ocean).
-    thresh : Quantity
+    thresh : Quantified
         Minimum sea ice concentration for a grid cell to contribute to the sea ice extent.
 
     Returns
@@ -2128,7 +2128,7 @@ def sea_ice_area(
 
 @declare_units(siconc="[]", areacello="[area]", thresh="[]")
 def sea_ice_extent(
-    siconc: xarray.DataArray, areacello: xarray.DataArray, thresh: Quantity = "15 pct"
+    siconc: xarray.DataArray, areacello: xarray.DataArray, thresh: Quantified = "15 pct"
 ) -> xarray.DataArray:
     """Total sea ice extent.
 
@@ -2141,7 +2141,7 @@ def sea_ice_extent(
         Sea ice concentration (area fraction).
     areacello : xarray.DataArray
         Grid cell area.
-    thresh : Quantity
+    thresh : Quantified
         Minimum sea ice concentration for a grid cell to contribute to the sea ice extent.
 
     Returns
@@ -2165,7 +2165,7 @@ def sea_ice_extent(
 
 @declare_units(sfcWind="[speed]", thresh="[speed]")
 def windy_days(
-    sfcWind: xarray.DataArray, thresh: Quantity = "10.8 m s-1", freq: str = "MS"
+    sfcWind: xarray.DataArray, thresh: Quantified = "10.8 m s-1", freq: str = "MS"
 ) -> xarray.DataArray:
     r"""Windy days.
 
@@ -2175,7 +2175,7 @@ def windy_days(
     ----------
     sfcWind : xarray.DataArray
         Daily average near-surface wind speed.
-    thresh : Quantity
+    thresh : Quantified
         Threshold average near-surface wind speed on which to base evaluation.
     freq : str
         Resampling frequency.
@@ -2203,7 +2203,7 @@ def windy_days(
 def rprctot(
     pr: xarray.DataArray,
     prc: xarray.DataArray,
-    thresh: Quantity = "1.0 mm/day",
+    thresh: Quantified = "1.0 mm/day",
     freq: str = "YS",
 ) -> xarray.DataArray:
     """Proportion of accumulated precipitation arising from convective processes.
@@ -2217,7 +2217,7 @@ def rprctot(
         Daily precipitation.
     prc : xarray.DataArray
         Daily convective precipitation.
-    thresh : Quantity
+    thresh : Quantified
         Precipitation value over which a day is considered wet.
     freq : str
         Resampling frequency.
@@ -2243,8 +2243,8 @@ def rprctot(
 @declare_units(tas="[temperature]", thresh="[temperature]", sum_thresh="K days")
 def degree_days_exceedance_date(
     tas: xarray.DataArray,
-    thresh: Quantity = "0 degC",
-    sum_thresh: Quantity = "25 K days",
+    thresh: Quantified = "0 degC",
+    sum_thresh: Quantified = "25 K days",
     op: str = ">",
     after_date: DayOfYearStr = None,
     freq: str = "YS",
@@ -2258,9 +2258,9 @@ def degree_days_exceedance_date(
     ----------
     tas : xarray.DataArray
         Mean daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Threshold temperature on which to base degree-days evaluation.
-    sum_thresh : Quantity
+    sum_thresh : Quantified
         Threshold of the degree days sum.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
         If equivalent to '>', degree days are computed as `tas - thresh` and if
@@ -2325,7 +2325,7 @@ def degree_days_exceedance_date(
 
 @declare_units(snd="[length]", thresh="[length]")
 def winter_storm(
-    snd: xarray.DataArray, thresh: Quantity = "25 cm", freq: str = "AS-JUL"
+    snd: xarray.DataArray, thresh: Quantified = "25 cm", freq: str = "AS-JUL"
 ) -> xarray.DataArray:
     """Days with snowfall over threshold.
 
@@ -2339,7 +2339,7 @@ def winter_storm(
     ----------
     snd : xarray.DataArray
         Surface snow depth.
-    thresh : Quantity
+    thresh : Quantified
         Threshold on snowfall accumulation require to label an event a `winter storm`.
     freq : str
         Resampling frequency.

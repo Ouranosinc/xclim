@@ -528,7 +528,7 @@ def unprefix_attrs(source: dict, keys: Sequence, prefix: str):
 KIND_ANNOTATION = {
     InputKind.VARIABLE: "str or DataArray",
     InputKind.OPTIONAL_VARIABLE: "str or DataArray, optional",
-    InputKind.QUANTITY: "quantity (string with units or DataArray)",
+    InputKind.QUANTIFIED: "quantity (string or DataArray, with units)",
     InputKind.FREQ_STR: "offset alias (string)",
     InputKind.NUMBER: "number",
     InputKind.NUMBER_SEQUENCE: "number or sequence of numbers",

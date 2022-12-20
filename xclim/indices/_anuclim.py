@@ -13,7 +13,7 @@ from xclim.core.units import (
     units,
     units2pint,
 )
-from xclim.core.utils import Quantity, ensure_chunk_size
+from xclim.core.utils import Quantified, ensure_chunk_size
 
 from ._multivariate import (
     daily_temperature_range,
@@ -439,7 +439,7 @@ def prcptot_warmcold_quarter(
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
 def prcptot(
-    pr: xarray.DataArray, thresh: Quantity = "0 mm/d", freq: str = "YS"
+    pr: xarray.DataArray, thresh: Quantified = "0 mm/d", freq: str = "YS"
 ) -> xarray.DataArray:
     r"""Accumulated total precipitation.
 

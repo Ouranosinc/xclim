@@ -4,7 +4,7 @@ from __future__ import annotations
 import xarray
 
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
-from xclim.core.utils import Quantity
+from xclim.core.utils import Quantified
 
 from .generic import threshold_count
 
@@ -315,7 +315,7 @@ def tx_min(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def frost_days(
-    tasmin: xarray.DataArray, thresh: Quantity = "0 degC", freq: str = "YS"
+    tasmin: xarray.DataArray, thresh: Quantified = "0 degC", freq: str = "YS"
 ) -> xarray.DataArray:
     r"""Frost days index.
 
@@ -325,7 +325,7 @@ def frost_days(
     ----------
     tasmin : xarray.DataArray
         Minimum daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Freezing temperature.
     freq : str
         Resampling frequency.
@@ -351,7 +351,7 @@ def frost_days(
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def ice_days(
-    tasmax: xarray.DataArray, thresh: Quantity = "0 degC", freq: str = "YS"
+    tasmax: xarray.DataArray, thresh: Quantified = "0 degC", freq: str = "YS"
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of ice/freezing days.
 
@@ -361,7 +361,7 @@ def ice_days(
     ----------
     tasmax : xarray.DataArray
         Maximum daily temperature.
-    thresh : Quantity
+    thresh : Quantified
         Freezing temperature.
     freq : str
         Resampling frequency.

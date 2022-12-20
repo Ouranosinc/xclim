@@ -20,7 +20,7 @@ from xclim.core.calendar import (
     get_calendar,
 )
 from xclim.core.units import convert_units_to
-from xclim.core.utils import Quantity
+from xclim.core.utils import Quantified
 
 
 def distance_from_sun(dates: xr.DataArray) -> xr.DataArray:
@@ -287,7 +287,7 @@ def cosine_of_solar_zenith_angle(
 def extraterrestrial_solar_radiation(
     times: xr.DataArray,
     lat: xr.DataArray,
-    solar_constant: Quantity = "1361 W m-2",
+    solar_constant: Quantified = "1361 W m-2",
     method="spencer",
 ) -> xr.DataArray:
     """Extraterrestrial solar radiation.

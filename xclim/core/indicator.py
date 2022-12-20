@@ -1231,7 +1231,7 @@ class Indicator(IndicatorRegistrar):
                 mba.update(get_percentile_metadata(v, k))
             elif (
                 isinstance(v, DataArray)
-                and cls._all_parameters[k].kind == InputKind.QUANTITY
+                and cls._all_parameters[k].kind == InputKind.QUANTIFIED
             ):
                 mba[k] = "<an array>"
             else:

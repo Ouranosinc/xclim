@@ -24,7 +24,7 @@ from xclim.core.formatting import (
 )
 from xclim.core.indicator import Daily, Indicator, ResamplingIndicator, registry
 from xclim.core.units import convert_units_to, declare_units, units
-from xclim.core.utils import VARIABLES, InputKind, MissingVariableError, Quantity
+from xclim.core.utils import VARIABLES, InputKind, MissingVariableError, Quantified
 from xclim.indices import tg_mean
 from xclim.testing import list_input_variables
 
@@ -32,7 +32,7 @@ from xclim.testing import list_input_variables
 @declare_units(da="[temperature]", thresh="[temperature]")
 def uniindtemp_compute(
     da: xr.DataArray,
-    thresh: Quantity = "0.0 degC",
+    thresh: Quantified = "0.0 degC",
     freq: str = "YS",
     method: str = "injected",
 ):
