@@ -64,9 +64,16 @@ The `xclim.sdba` subpackage provides different algorithms to adjust the distribu
 
 The `xclim.ensembles` subpackage bundles utilities to facilitate the analysis of results from multiple models. It includes functions to reduce the ensemble size using clustering algorithms, metrics of ensemble robustness, and significance of climate change signals.
 
+## Spatial analogs
+
+The `xclim.analogs` subpackage offers tools to find spatial climate analogs using a selection of distribution comparison algorithms.
+
+## Other utilities
+`xclim.core.dataflags` can be used to find abberant values in climate data and  `xclim.cli` implements a command-line interface to most features to facilitate the use of xclim in scripted workflows.
+
 # Projects using `xclim`
 
-`xclim` is core component of Finch [@finch], a server hosting climate analytics services behind a Web Processing Services (WPS) interface. `Finch` itself is part of the computational backend of [climatedata.ca](https://climatedata.ca), an online data portal to access, visualize and analyze climate data over Canada. `xclim` is now also a core component of `icclim` from version 5.0, which itself is used in the `climate4impact` project [@Page:2022].
+`xclim` is core component of Finch [@finch], a server hosting climate analytics services behind a Web Processing Services (WPS) interface. `Finch` itself is part of the computational backend of [climatedata.ca](https://climatedata.ca), an online data portal to access, visualize and analyze climate data over Canada. `xclim` is now also a core component of `icclim` from version 5.0, which itself is used in the `climate4impact` project [@Page:2022]. The statistical adjustment tools of  `xclim` are also being used by the [Climate Impact Lab](https://impactlab.org/) to downscale and adjust CMIP6 simulations on HPCs for climate impact studies.
 
 # Acknowledgements
 
