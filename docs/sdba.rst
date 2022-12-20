@@ -3,8 +3,8 @@ Bias Adjustment and Downscaling Algorithms
 ==========================================
 
 
-The `xclim.sdba` submodule provides a collection of bias-adjustment methods meant to meant to correct for systematic biases found in climate model simulations relative to observations. 
-Almost all adjustment algorithms conform to the `train` - `adjust` scheme, meaning that adjustment factors are first estimated on training data sets, then applied in a distinct step to the data to be adjusted.  
+The `xclim.sdba` submodule provides a collection of bias-adjustment methods meant to correct for systematic biases found in climate model simulations relative to observations.
+Almost all adjustment algorithms conform to the `train` - `adjust` scheme, meaning that adjustment factors are first estimated on training data sets, then applied in a distinct step to the data to be adjusted.
 Given a reference time series (ref), historical simulations (hist) and simulations to be adjusted (sim),
 any bias-adjustment method would be applied by first estimating the adjustment factors between the historical simulation
 and the observation series, and then applying these factors to `sim`, which could be a future simulation::
@@ -41,8 +41,7 @@ the underlying `Adj.ds` dataset and usually has a `af` variable with the adjustm
 other available variables vary between the different algorithm, refer to :ref:`Adjustment methods <sdbauserapi>`.
 
 Parameters needed by the training and the adjustment are saved to the ``Adj.ds`` dataset as a `adj_params` attribute.
-Other parameters, those only needed by the adjustment are passed in the `adjust` call and written to the history
-attribute in the output scenario DataArray.
+Parameters passed to the `adjust` call are written to the history attribute in the output scenario DataArray.
 
 .. _grouping:
 
@@ -52,7 +51,9 @@ Grouping
 For basic time period grouping (months, day of year, season), passing a string to the methods needing it is sufficient.
 Most methods acting on grouped data also accept a `window` int argument to pad the groups with data from adjacent ones.
 Units of `window` are the sampling frequency of the main grouping dimension (usually `time`). For more complex grouping,
-one can pass an instance of :py:class:`xclim.sdba.base.Grouper` directly.
+one can pass an instance of :py:class:`xclim.sdba.base.Grouper` directly. For example, if one wants to compute the factors
+for each day of the year but across all realizations of an ensemble : ``group = Grouper("time.dayofyear", add_dims=['realization'])``.
+In a conventionnal empirical quantile mapping (EQM), this will compute the quantiles for each day of year and all realizations together, yielding a single set of adustment factors for all realizations.
 
 .. warning::
     If grouping according to the day of the year is needed, the :py:mod:`xclim.core.calendar` submodule contains useful
@@ -84,8 +85,11 @@ Radiation and precipitation
 In theory, short wave radiation should be capped when precipitation is not zero, but there is as of yet no mechanism proposed to do that, see :cite:t:`hoffmann_meteorologically_2012`.
 
 Usage examples
-===================
+==============
 The usage of this module is documented in two example notebooks: `SDBA <notebooks/sdba.ipynb>`_ and `SDBA advanced <notebooks/sdba-advanced.ipynb>`_.
+
+Discussion topics
+=================
 
 Some issues were also discussed on the Github repository. Most of these are still open questions, feel free to participate to the discussion!
 
