@@ -2512,7 +2512,6 @@ def test_rain_season(pr_series, result_type):
     out_arr = np.array(
         [out[var].values for var in ["start", "end", "length"]]
     ).flatten()
-    # assert ((np.isnan(out_arr) & np.isnan(out_exp)) | (out_arr == out_exp)).all()
     np.testing.assert_array_equal(out_arr, out_exp)
 
 

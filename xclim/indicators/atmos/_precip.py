@@ -618,8 +618,8 @@ rain_season = PrecipWithIndexing(
     description=[
         "First step of a run where i) a sequence of {s_window_wet} days accumulated {s_thresh_wet}"
         "of precipitations ii) followed by a sequence of {s_window_not_dry} days with no dry sequence, i.e. a sequence of {s_window_dry} days"
-        "with at least {s_thresh_dry} {s_method_dry}. It must be between {start_date_min} and {start_date_max}",
-        "First step of a dry sequence after the start of the season, i.e.  a sequence of {e_window_dry} days"
+        "with at least {s_thresh_dry} {s_method_dry}. The start of the season is on the last day of the first sequence i) and must be between {start_date_min} and {start_date_max}",
+        "Last day in a dry sequence after the start of the season, i.e.  a sequence of {e_window_dry} days"
         "with at least {e_thresh_dry} {e_method_dry}. It must be between {end_date_min} and {end_date_max}",
         "Number of steps of the original series in the season, between 'start' and 'end'.",
     ],
