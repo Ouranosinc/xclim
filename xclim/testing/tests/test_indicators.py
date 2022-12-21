@@ -24,7 +24,7 @@ from xclim.core.formatting import (
 )
 from xclim.core.indicator import Daily, Indicator, ResamplingIndicator, registry
 from xclim.core.units import convert_units_to, declare_units, units
-from xclim.core.utils import VARIABLES, InputKind, MissingVariableError
+from xclim.core.utils import VARIABLES, InputKind, MissingVariableError, Quantified
 from xclim.indices import tg_mean
 from xclim.testing import list_input_variables
 
@@ -32,7 +32,7 @@ from xclim.testing import list_input_variables
 @declare_units(da="[temperature]", thresh="[temperature]")
 def uniindtemp_compute(
     da: xr.DataArray,
-    thresh: str = "0.0 degC",
+    thresh: Quantified = "0.0 degC",
     freq: str = "YS",
     method: str = "injected",
 ):
@@ -51,7 +51,7 @@ uniIndTemp = Daily(
         dict(
             var_name="tmin{thresh}",
             units="K",
-            long_name="{freq} mean surface temperature",
+            long_name="{freq} mean surface temperature with {thresh} threshold.",
             standard_name="{freq} mean temperature",
             cell_methods="time: mean within {freq:noun}",
             another_attr="With a value.",
@@ -160,6 +160,20 @@ def test_attrs(tas_series):
     assert txm.name == "tmin5 degC"
     assert uniIndTemp.standard_name == "{freq} mean temperature"
     assert uniIndTemp.cf_attrs[0]["another_attr"] == "With a value."
+
+    thresh = xr.DataArray(
+        [1],
+        dims=("adim",),
+        coords={"adim": [1]},
+        attrs={"long_name": "A thresh", "units": "degC"},
+        name="TT",
+    )
+    txm = uniIndTemp(a, thresh=thresh, freq="YS")
+    assert (
+        "TMIN(da=tas, thresh=TT, freq='YS') with options check_missing=any"
+        in txm.attrs["history"]
+    )
+    assert txm.attrs["long_name"].endswith("with <an array> threshold.")
 
 
 @pytest.mark.parametrize(
@@ -440,13 +454,14 @@ def test_all_jsonable(official_indicators):
 
 
 def test_all_parameters_understood(official_indicators):
-    problems = []
+    problems = set()
     for identifier, ind in official_indicators.items():
         indinst = ind.get_instance()
         for name, param in indinst.parameters.items():
             if param["kind"] == InputKind.OTHER_PARAMETER:
-                problems.append((identifier, name))
-    if problems:
+                problems.add((identifier, name))
+    # this one we are ok with.
+    if problems - {("COOL_NIGHT_INDEX", "lat")}:
         raise ValueError(
             f"The following indicator/parameter couple {problems} use types not listed in InputKind."
         )

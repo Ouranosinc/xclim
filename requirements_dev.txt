@@ -28,7 +28,7 @@ ipykernel
 matplotlib
 nbsphinx
 nc-time-axis
-netCDF4
+netCDF4 <1.6
 pooch
 sphinx
 sphinx-codeautolink
