@@ -11,7 +11,6 @@ import xclim.indices as xci
 from xclim import atmos, core, set_options
 from xclim.core.calendar import build_climatology_bounds, percentile_doy
 from xclim.core.units import convert_units_to
-from xclim.core.utils import PercentileDataArray
 
 K2C = 273.15
 
@@ -107,7 +106,7 @@ class TestStandardizedPrecip:
 
         out1 = atmos.standardized_precipitation_index(
             pr,
-            pr,
+            pr_cal=pr,
             freq="MS",
             window=1,
             dist="gamma",
@@ -115,7 +114,7 @@ class TestStandardizedPrecip:
         )
         out2 = atmos.standardized_precipitation_index(
             prMM,
-            prMM,
+            pr_cal=prMM,
             freq="MS",
             window=1,
             dist="gamma",
@@ -133,7 +132,7 @@ class TestStandardizedPrecip:
 
         out3 = atmos.standardized_precipitation_evapotranspiration_index(
             wb,
-            wb,
+            wb_cal=wb,
             freq="MS",
             window=1,
             dist="gamma",
@@ -142,7 +141,7 @@ class TestStandardizedPrecip:
         )
         out4 = atmos.standardized_precipitation_evapotranspiration_index(
             wbMM,
-            wbMM,
+            wb_cal=wbMM,
             freq="MS",
             window=1,
             dist="gamma",
@@ -482,7 +481,7 @@ def test_days_over_precip_doy_thresh(open_dataset):
 def test_days_over_precip_thresh(open_dataset):
     pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
     per = pr.quantile(0.8, "time", keep_attrs=True)
-    per = PercentileDataArray.from_da(per, build_climatology_bounds(pr))
+    per.attrs["climatology_bounds"] = build_climatology_bounds(pr)
 
     out = atmos.days_over_precip_thresh(pr, per)
 
@@ -528,7 +527,7 @@ def test_fraction_over_precip_doy_thresh(open_dataset):
 def test_fraction_over_precip_thresh(open_dataset):
     pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
     per = pr.quantile(0.8, "time", keep_attrs=True)
-    per = PercentileDataArray.from_da(per, build_climatology_bounds(pr))
+    per.attrs["climatology_bounds"] = build_climatology_bounds(pr)
 
     out = atmos.fraction_over_precip_thresh(pr, per)
 
