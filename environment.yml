@@ -26,7 +26,7 @@ dependencies:
     - eigen
     - pybind11
     # Testing and development dependencies
-    - black>=22.12
+    - black>=22.10  # 2023-01-09: black==22.12 has not yet been released on conda-forge
     - blackdoc
     - bump2version
     - coverage
