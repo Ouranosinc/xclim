@@ -18,12 +18,13 @@ from importlib.resources import open_text
 from inspect import Parameter, _empty  # noqa
 from io import StringIO
 from pathlib import Path
-from typing import Callable, Mapping, NewType, Sequence
+from typing import Callable, Mapping, NewType, Sequence, TypeVar
 
 import numpy as np
 import xarray as xr
 from boltons.funcutils import update_wrapper
 from dask import array as dsk
+from pint import Quantity
 from yaml import safe_dump, safe_load
 
 logger = logging.getLogger("xclim")
@@ -33,6 +34,9 @@ DateStr = NewType("DateStr", str)
 
 #: Type annotation for strings representing dates without a year (MM-DD).
 DayOfYearStr = NewType("DayOfYearStr", str)
+
+#: Type annotation for thresholds and other not-exactly-a-variable quantities
+Quantified = TypeVar("Quantified", xr.DataArray, str, Quantity)
 
 # Official variables definitions
 VARIABLES = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
@@ -518,10 +522,11 @@ class InputKind(IntEnum):
 
        Annotation : ``xr.DataArray | None``. The default should be None.
     """
-    QUANTITY_STR = 2
-    """A string representing a quantity with units.
+    QUANTIFIED = 2
+    """A quantity with units, either as a string (scalar), a pint.Quantity (scalar) or a DataArray (with units set).
 
-       Annotation : ``str`` +  an entry in the :py:func:`xclim.core.units.declare_units` decorator.
+       Annotation : ``xclim.core.utils.Quantified`` and an entry in the :py:func:`xclim.core.units.declare_units` decorator.
+       "Quantified" translates to ``str | xr.DataArray | pint.util.Quantity``.
     """
     FREQ_STR = 3
     """A string representing an "offset alias", as defined by pandas.
@@ -598,14 +603,14 @@ def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> Inpu
 
     annot = annot - {"None"}
 
-    if "DataArray" in annot:
+    if annot.issubset({"DataArray", "str"}) and has_units:
         return InputKind.OPTIONAL_VARIABLE
 
     if param.name == "freq":
         return InputKind.FREQ_STR
 
-    if annot == {"str"} and has_units:
-        return InputKind.QUANTITY_STR
+    if annot == {"Quantified"} and has_units:
+        return InputKind.QUANTIFIED
 
     if annot.issubset({"int", "float"}):
         return InputKind.NUMBER
@@ -716,7 +721,7 @@ def adapt_clix_meta_yaml(raw: os.PathLike | StringIO | str, adapted: os.PathLike
                         del data["parameters"][name]
                     else:
                         data["parameters"][name] = param[param["kind"]]
-                else:  # kind = quantity
+                else:  # kind = quantified
                     if param.get("proposed_standard_name") == "temporal_window_size":
                         # Window, nothing to do.
                         del data["parameters"][name]
@@ -787,68 +792,14 @@ def adapt_clix_meta_yaml(raw: os.PathLike | StringIO | str, adapted: os.PathLike
         safe_dump(yml, f)
 
 
-class PercentileDataArray(xr.DataArray):
-    """Wrap xarray DataArray for percentiles values.
+def is_percentile_dataarray(source: xr.DataArray) -> bool:
+    """Evaluate whether a DataArray is a Percentile.
 
-    This class is used internally with its corresponding InputKind to recognize this
-    sort of input and to retrieve from it the attributes needed to build indicator
-    metadata.
+    A percentile dataarray must have climatology_bounds attributes and either a
+    quantile or percentiles coordinate, the window is not mandatory.
     """
-
-    __slots__ = ()
-
-    @classmethod
-    def is_compatible(cls, source: xr.DataArray) -> bool:
-        """Evaluate whether PecentileDataArray is conformant with expected fields.
-
-        A PercentileDataArray must have climatology_bounds attributes and either a
-        quantile or percentiles coordinate, the window is not mandatory.
-        """
-        return (
-            isinstance(source, xr.DataArray)
-            and source.attrs.get("climatology_bounds", None) is not None
-            and ("quantile" in source.coords or "percentiles" in source.coords)
-        )
-
-    @classmethod
-    def from_da(
-        cls, source: xr.DataArray, climatology_bounds: list[str] = None
-    ) -> PercentileDataArray:
-        """Create a PercentileDataArray from a xarray.DataArray.
-
-        Parameters
-        ----------
-        source : xr.DataArray
-            A DataArray with its content containing percentiles values.
-            It must also have a coordinate variable percentiles or quantile.
-        climatology_bounds : list[str]
-            Optional. A List of size two which contains the period on which the
-            percentiles were computed. See `xclim.core.calendar.build_climatology_bounds`
-            to build this list from a DataArray.
-
-        Returns
-        -------
-        PercentileDataArray
-            The initial `source` DataArray but wrap by PercentileDataArray class.
-            The data is unchanged and only climatology_bounds attributes is overridden
-            if q new value is given in inputs.
-        """
-        if (
-            climatology_bounds is None
-            and source.attrs.get("climatology_bounds", None) is None
-        ):
-            raise ValueError("PercentileDataArray needs a climatology_bounds.")
-        per = PercentileDataArray(source)
-        # handle case where da was created with `quantile()` method
-        if "quantile" in source.coords:
-            per = per.rename({"quantile": "percentiles"})
-            per.coords["percentiles"] = per.coords["percentiles"] * 100
-        clim_bounds = source.attrs.get("climatology_bounds", climatology_bounds)
-        per.attrs["climatology_bounds"] = clim_bounds
-        if "percentiles" in per.coords:
-            return per
-        raise ValueError(
-            f"DataArray {source.name} could not be turned into"
-            f" PercentileDataArray. The DataArray must have a"
-            f" 'percentiles' coordinate variable."
-        )
+    return (
+        isinstance(source, xr.DataArray)
+        and source.attrs.get("climatology_bounds", None) is not None
+        and ("quantile" in source.coords or "percentiles" in source.coords)
+    )
