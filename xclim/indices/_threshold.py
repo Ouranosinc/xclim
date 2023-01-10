@@ -589,7 +589,7 @@ def growing_season_start(
     Notes
     -----
     Let :math:`x_i` be the daily mean temperature at day of the year :math:`i` for values of :math:`i` going from 1
-    to 365 or 366. The start date of the start of growing season is given by the smallest index :math:`i` for which:
+    to 365 or 366. The start date of the start of growing season is given by the smallest index :math:`i`:
 
     .. math::
 
@@ -645,7 +645,7 @@ def growing_season_end(
     Notes
     -----
     Let :math:`x_i` be the daily mean temperature at day of the year :math:`i` for values of :math:`i` going from 1
-    to 365 or 366. The start date of the end of growing season is given by the smallest index :math:`i` for which:
+    to 365 or 366. The start date of the end of growing season is given by the smallest index :math:`i`:
 
     .. math::
 
@@ -862,13 +862,13 @@ def frost_free_season_start(
     Notes
     -----
     Let :math:`x_i` be the daily mean temperature at day of the year :math:`i` for values of :math:`i` going from 1
-    to 365 or 366. The start date of the start of growing season is given by the smallest index :math:`i` for which:
+    to 365 or 366. The start date of the start of growing season is given by the smallest index :math:`i`:
 
     .. math::
 
        \prod_{j=i}^{i+w} [x_j >= thresh]
 
-    is true, where :math:`w` is the number of days the temperature threshold should be met or exceeded,
+    where :math:`w` is the number of days the temperature threshold should be met or exceeded,
     and :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
     thresh = convert_units_to(thresh, tasmin)
@@ -1153,13 +1153,13 @@ def first_day_temperature_above(
     Notes
     -----
     Let :math:`x_i` be the daily mean|max|min temperature at day of the year :math:`i` for values of :math:`i` going
-    from 1 to 365 or 366. The first day above temperature threshold is given by the smallest index :math:`i` for which
+    from 1 to 365 or 366. The first day above temperature threshold is given by the smallest index :math:`i`:
 
     .. math::
 
        \prod_{j=i}^{i+w} [x_j > thresh]
 
-    is true, where :math:`w` is the number of days the temperature threshold should be exceeded, and :math:`[P]` is
+    where :math:`w` is the number of days the temperature threshold should be exceeded, and :math:`[P]` is
     1 if :math:`P` is true, and 0 if false.
     """
     return first_day_threshold_reached(
