@@ -595,7 +595,7 @@ def growing_season_start(
 
        \prod_{j=i}^{i+w} [x_j >= thresh]
 
-    is true, where :math:`w` is the number of days the temperature threshold should be met or exceeded,
+    where :math:`w` is the number of days the temperature threshold should be met or exceeded,
     and :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
     thresh = convert_units_to(thresh, tas)
@@ -641,6 +641,18 @@ def growing_season_end(
         Day of the year when temperature is inferior to a threshold over a given number of days for the first time.
         If there is no such day or if a growing season is not detected, returns np.nan.
         If the growing season does not end within the time period, returns the last day of the period.
+
+    Notes
+    -----
+    Let :math:`x_i` be the daily mean temperature at day of the year :math:`i` for values of :math:`i` going from 1
+    to 365 or 366. The start date of the end of growing season is given by the smallest index :math:`i` for which:
+
+    .. math::
+
+       \prod_{j=i}^{i+w} [x_j < thresh]
+
+    where :math:`w` is the number of days where temperature should be inferior to a given threshold after a given date,
+    and :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
     thresh = convert_units_to(thresh, tas)
     cond = tas >= thresh
@@ -713,10 +725,12 @@ def growing_season_length(
     >>> from xclim.indices import growing_season_length
     >>> tas = xr.open_dataset(path_to_tas_file).tas
 
-    # For the Northern Hemisphere:
+    For the Northern Hemisphere:
+
     >>> gsl_nh = growing_season_length(tas, mid_date="07-01", freq="AS")
 
-    # If working in the Southern Hemisphere, one can use:
+    If working in the Southern Hemisphere, one can use:
+
     >>> gsl_sh = growing_season_length(tas, mid_date="01-01", freq="AS-JUL")
 
     References
@@ -794,10 +808,12 @@ def frost_season_length(
     >>> from xclim.indices import frost_season_length
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
 
-    # For the Northern Hemisphere:
+    For the Northern Hemisphere:
+
     >>> fsl_nh = frost_season_length(tasmin, freq="AS-JUL")
 
-    # If working in the Southern Hemisphere, one can use:
+    If working in the Southern Hemisphere, one can use:
+
     >>> fsl_sh = frost_season_length(tasmin, freq="YS")
     """
     thresh = convert_units_to(thresh, tasmin)
@@ -972,10 +988,12 @@ def frost_free_season_length(
     >>> from xclim.indices import frost_season_length
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin
 
-    # For the Northern Hemisphere:
+    For the Northern Hemisphere:
+
     >>> ffsl_nh = frost_free_season_length(tasmin, freq="YS")
 
-    # If working in the Southern Hemisphere, one can use:
+    If working in the Southern Hemisphere, one can use:
+
     >>> ffsl_sh = frost_free_season_length(tasmin, freq="AS-JUL")
     """
     thresh = convert_units_to(thresh, tasmin)
