@@ -148,6 +148,9 @@
     ],
     "relamp": [
       "amplitude relative"
+    ],
+    "<an array>": [
+      "<une matrice>"
     ]
   },
   "RAIN_FRZGR": {

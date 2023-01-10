@@ -13,7 +13,7 @@ import re
 import warnings
 from importlib.resources import open_text
 from inspect import signature
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable
 
 import pint
 import xarray as xr
@@ -22,7 +22,7 @@ from yaml import safe_load
 
 from .calendar import date_range, get_calendar, parse_offset
 from .options import datacheck
-from .utils import ValidationError
+from .utils import Quantified, ValidationError
 
 __all__ = [
     "amount2rate",
@@ -57,7 +57,6 @@ units = pint.UnitRegistry(
     ],
 )
 
-Convertible = TypeVar("Convertible", str, xr.DataArray, units.Unit, units.Quantity)
 units.define("percent = 0.01 = % = pct")
 
 # In pint, the default symbol for year is "a" which is not CF-compliant (stands for "are")
@@ -287,10 +286,10 @@ def str2pint(val: str) -> pint.Quantity:
 
 
 def convert_units_to(
-    source: Convertible,
-    target: str | xr.DataArray | units.Unit,
+    source: Quantified,
+    target: Quantified | units.Unit,
     context: str | None = None,
-) -> Convertible:
+) -> Quantified:
     """Convert a mathematical expression into a value with the same units as a DataArray.
 
     If the dimensionalities of source and target units differ, automatic CF conversions
@@ -298,9 +297,9 @@ def convert_units_to(
 
     Parameters
     ----------
-    source : str or xr.DataArray or units.Unit or units.Quantity
+    source : str or xr.DataArray or units.Quantity
         The value to be converted, e.g. '4C' or '1 mm/d'.
-    target : str or xr.DataArray or Any
+    target : str or xr.DataArray or units.Quantity or unirs.Unit
         Target array of values to which units must conform.
     context : str, optional
         The unit definition context. Default: None.
@@ -310,7 +309,7 @@ def convert_units_to(
 
     Returns
     -------
-    str or xr.DataArray or units.Unit or units.Quantity
+    str or xr.DataArray or units.Quantity
         The source value converted to target's units.
         The outputted type is always similar to `source` initial type.
         Attributes are preserved unless an automatic CF conversion is performed,

@@ -14,6 +14,7 @@ New features and enhancements
     - Conversion from amount to thickness for liquid water quantities, using the new ``amount2lwethickness`` and ``lwethickness2amount``. This is similar to the implicit transformations enabled by the "hydro" unit context.
     - Passing ``context='infer'`` will activate the "hydro" context if the source or the target are DataArrays with a standard name that is compatible, as decided by the new ``xclim.core.units.infer_context`` function.
 * New `generic` indicator realm. Now holds indicators previously meant for streamflow analysis in the `land` realm: `fit`, `return_level` (previously `freq_analysis`) and `stats`.
+* Thresholds and other quantities passed as parameters of indicators can now be multi-dimensional `DataArray`s. xArray broadcasting mechanisms will apply. Those parameters are now annotated as "Quantity" in the signatures (``xclim.core.utils.Quantity``), instead of "str" as before. Attributes where such thresholds where included will now read "<an array>" (french: "<une matrice>") for these new cases. Multi-dimensional quantities are still unsupported in a very few cases, where it is documented in the docstring. (:issue:`1093`, :pull:`1236`).
 
 New indicators
 ^^^^^^^^^^^^^^
@@ -33,6 +34,8 @@ Breaking changes
 * The following *modules* have been removed:
     - `xclim.indices.fwi` → functions migrated to `xclim.indices.fire`
     - `xclim.subset` (mock submodule) → functions migrated to `clisops.core.subset`
+* Indicators ``standardized_precipitation_index`` and ``standardized_precipitation_evapotranspiration_index`` will now require ``pr_cal`` and ``wb_cal`` as keyword arguments only. (:pull:`1236`).
+* The internal object ``PercentileDataArray`` has been removed. (:pull:`1236`).
 * The ``xclim.testing.utils.get_all_CMIP6_variables`` and ``xclim.testing.utils.update_variable_yaml`` function were removed as the former was extremely slow and unusable. (:pull:`1258`).
 * The wind speed input of ``atmos.potential_evapotranspiration`` and ``atmos.water_budget`` was renamed to ``sfcWind`` (capital W) as this is the correct CMIP6 name. (:pull:`1258`).
 * Indicator `land.stats`, `land.fit` and `land.freq_analysis` are now deprecated and will be removed in version 0.43. They are being phased out in favor of generic indicators `generic.stats`, `generic.fit` and `generic.return_level` respectively.
@@ -56,6 +59,7 @@ Internal changes
 * `xclim` development build now uses `nbqa` to effectively run black checks over notebook cells. (:pull:`1233`).
 * Some `tox` recipes (``opt-slow``, ``conda``) are temporarily deactivated until a `tox>=4.0`-compatible `tox-conda` plugin is released. (:pull:`1258`).
 * A notebook (``extendingxclim.ipynb``) has been updated to remove mentions of obsolete `xclim.subset` module. (:pull:`1258`).
+* Merge of sdba documentation from the module and the rst files, some cleanup and addition of a section refering to github issues. (:pull:`1230`).
 
 0.39.0 (2022-11-02)
 -------------------
