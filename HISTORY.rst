@@ -44,6 +44,7 @@ Bug fixes
 * Relaxed the expected output for ``test_spatial_analogs[friedman_rafsky]`` to support expected results from `scikit-learn` 1.2.0.
 * The MBCn example in documentation has been fixed to properly imitate the source. (:issue:`1249`, :pull:`1250`).
 * Streamflow indicators relying on indices defined in `xclim.indices.stats` were not checking input variable units. These indicators will now raise an error if input data units are not m^3/s. (:issue:`1130`, :pull:`1225`).
+* Adjusted some documentation examples were not being rendered properly. (:issue:`1264`, :pull:`1266`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
