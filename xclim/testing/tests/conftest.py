@@ -19,7 +19,7 @@ from xclim.testing.tests.data import (
     generate_atmos,
     populate_testing_data,
 )
-from xclim.testing.utils import _default_cache_dir
+from xclim.testing.utils import _default_cache_dir  # noqa
 from xclim.testing.utils import open_dataset as _open_dataset
 
 MAIN_TESTDATA_BRANCH = os.getenv("MAIN_TESTDATA_BRANCH", "main")

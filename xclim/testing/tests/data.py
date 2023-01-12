@@ -11,7 +11,7 @@ from xclim.core import calendar
 from xclim.testing import get_file as _get_file
 from xclim.testing import get_local_testdata as _get_local_testdata
 from xclim.testing import open_dataset as _open_dataset
-from xclim.testing.utils import _default_cache_dir
+from xclim.testing.utils import _default_cache_dir  # noqa
 
 MAIN_TESTDATA_BRANCH = os.getenv("MAIN_TESTDATA_BRANCH", "main")
 TD = Path(__file__).parent / "data"
