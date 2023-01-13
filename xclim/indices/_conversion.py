@@ -784,7 +784,7 @@ def snowfall_approximation(
     tas : xarray.DataArray, optional
         Mean, maximum, or minimum daily temperature.
     thresh : Quantified
-        Freezing point temperature. Non scalar values are not allowed with method "brown".
+        Freezing point temperature. Non-scalar values are not allowed with method "brown".
     method : {"binary", "brown", "auer"}
         Which method to use when approximating snowfall from total precipitation. See notes.
 
@@ -965,7 +965,7 @@ def wind_chill_index(
     sfcWind: xr.DataArray,
     method: str = "CAN",
     mask_invalid: bool = True,
-):
+) -> xr.DataArray:
     r"""Wind chill index.
 
     The Wind Chill Index is an estimation of how cold the weather feels to the average person.
