@@ -17,6 +17,8 @@ LICENSE = "Apache Software License 2.0"
 
 with open("README.rst") as readme_file:
     readme = readme_file.read()
+    # remove disallowed directives for PyPI publishing
+    readme = readme.replace(".. autolink-skip::", "")
 
 with open("HISTORY.rst") as history_file:
     history = history_file.read()
