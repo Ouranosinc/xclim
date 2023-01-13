@@ -133,9 +133,6 @@ def test_xclim_translations(locale, official_indicators):
         if translatable != "modifiers":
             assert isinstance(translations, list)
             assert len(translations) <= len(dic["attrs_mapping"]["modifiers"])
-    assert set(dic["attrs_mapping"].keys()).symmetric_difference(
-        default_formatter.mapping.keys()
-    ) == {"modifiers"}
 
     untranslated = []
     incomplete = []

@@ -726,6 +726,45 @@ class TestHeatWaveTotalLength:
         )
         np.testing.assert_allclose(hwf.values[:1], 0)
 
+    def test_2dthresholds(self, tasmax_series, tasmin_series):
+        tasmax = tasmax_series(np.arange(365) + 3, start="1/1/2001").expand_dims(
+            lat=np.arange(20), lon=np.arange(20)
+        )
+        tasmin = tasmin_series(np.arange(365) + 2, start="1/1/2001").expand_dims(
+            lat=np.arange(20), lon=np.arange(20)
+        )
+
+        thresh_tasmin = xr.DataArray(
+            10 * np.arange(20) + 100,
+            dims=("lat",),
+            coords={"lat": tasmax.lat},
+            attrs={"units": "K"},
+        )
+        thresh_tasmax = xr.DataArray(
+            10 * np.arange(20) + 100,
+            dims=("lon",),
+            coords={"lon": tasmax.lon},
+            attrs={"units": "K"},
+        )
+
+        hwtl = atmos.heat_wave_total_length(
+            tasmin,
+            tasmax,
+            thresh_tasmin=thresh_tasmin,
+            thresh_tasmax=thresh_tasmax,
+            window=1,
+            freq="MS",
+        )
+        # Different thresholds start at different dates according to lat/lon
+        exp = xr.DataArray(
+            [[21, 12, 2], [11, 11, 2], [1, 1, 1]],
+            dims=("lon", "lat"),
+            coords={"lon": hwtl.lon[:3], "lat": hwtl.lat[:3]},
+        )
+        np.testing.assert_array_equal(
+            exp, hwtl.isel(time=3, lon=slice(None, 3), lat=slice(None, 3))
+        )
+
 
 class TestHeatWaveIndex:
     def test_simple(self, tasmax_series):

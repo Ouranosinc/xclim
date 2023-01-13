@@ -16,6 +16,7 @@ from xclim.core.units import (
     str2pint,
     to_agg_units,
 )
+from xclim.core.utils import Quantified
 
 from . import run_length as rl
 from ._conversion import rain_approximation, snowfall_approximation
@@ -204,7 +205,7 @@ def cold_and_dry_days(
     thresh = resample_doy(tas_per, tas)
     tg25 = tas < thresh
 
-    pr_per = convert_units_to(pr_per, pr)
+    pr_per = convert_units_to(pr_per, pr, context="hydro")
     thresh = resample_doy(pr_per, pr)
     pr25 = pr < thresh
 
@@ -268,7 +269,7 @@ def warm_and_dry_days(
     thresh = resample_doy(tas_per, tas)
     tg75 = tas > thresh
 
-    pr_per = convert_units_to(pr_per, pr)
+    pr_per = convert_units_to(pr_per, pr, context="hydro")
     thresh = resample_doy(pr_per, pr)
     pr25 = pr < thresh
 
@@ -331,7 +332,7 @@ def warm_and_wet_days(
     thresh = resample_doy(tas_per, tas)
     tg75 = tas > thresh
 
-    pr_per = convert_units_to(pr_per, pr)
+    pr_per = convert_units_to(pr_per, pr, context="hydro")
     thresh = resample_doy(pr_per, pr)
     pr75 = pr > thresh
 
@@ -394,7 +395,7 @@ def cold_and_wet_days(
     thresh = resample_doy(tas_per, tas)
     tg25 = tas < thresh
 
-    pr_per = convert_units_to(pr_per, pr)
+    pr_per = convert_units_to(pr_per, pr, context="hydro")
     thresh = resample_doy(pr_per, pr)
     pr75 = pr > thresh
 
@@ -411,8 +412,8 @@ def cold_and_wet_days(
 def multiday_temperature_swing(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
-    thresh_tasmin: str = "0 degC",
-    thresh_tasmax: str = "0 degC",
+    thresh_tasmin: Quantified = "0 degC",
+    thresh_tasmax: Quantified = "0 degC",
     window: int = 1,
     op: str = "mean",
     op_tasmin: str = "<=",
@@ -431,9 +432,9 @@ def multiday_temperature_swing(
       Minimum daily temperature.
     tasmax : xarray.DataArray
       Maximum daily temperature.
-    thresh_tasmin : str
+    thresh_tasmin : Quantified
       The temperature threshold needed to trigger a freeze event.
-    thresh_tasmax : str
+    thresh_tasmax : Quantified
       The temperature threshold needed to trigger a thaw event.
     window : int
       The minimal length of spells to be included in the statistics.
@@ -629,8 +630,8 @@ def extreme_temperature_range(
 def heat_wave_frequency(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
-    thresh_tasmin: str = "22.0 degC",
-    thresh_tasmax: str = "30 degC",
+    thresh_tasmin: Quantified = "22.0 degC",
+    thresh_tasmax: Quantified = "30 degC",
     window: int = 3,
     freq: str = "YS",
     op: str = ">",
@@ -647,9 +648,9 @@ def heat_wave_frequency(
       Minimum daily temperature.
     tasmax : xarray.DataArray
       Maximum daily temperature.
-    thresh_tasmin : str
+    thresh_tasmin : Quantified
       The minimum temperature threshold needed to trigger a heatwave event.
-    thresh_tasmax : str
+    thresh_tasmax : Quantified
       The maximum temperature threshold needed to trigger a heatwave event.
     window:  int
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
@@ -707,8 +708,8 @@ def heat_wave_frequency(
 def heat_wave_max_length(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
-    thresh_tasmin: str = "22.0 degC",
-    thresh_tasmax: str = "30 degC",
+    thresh_tasmin: Quantified = "22.0 degC",
+    thresh_tasmax: Quantified = "30 degC",
     window: int = 3,
     freq: str = "YS",
     op: str = ">",
@@ -727,9 +728,9 @@ def heat_wave_max_length(
       Minimum daily temperature.
     tasmax : xarray.DataArray
       Maximum daily temperature.
-    thresh_tasmin : str
+    thresh_tasmin : Quantified
       The minimum temperature threshold needed to trigger a heatwave event.
-    thresh_tasmax : str
+    thresh_tasmax : Quantified
       The maximum temperature threshold needed to trigger a heatwave event.
     window : int
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
@@ -787,8 +788,8 @@ def heat_wave_max_length(
 def heat_wave_total_length(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
-    thresh_tasmin: str = "22.0 degC",
-    thresh_tasmax: str = "30 degC",
+    thresh_tasmin: Quantified = "22.0 degC",
+    thresh_tasmax: Quantified = "30 degC",
     window: int = 3,
     freq: str = "YS",
     op: str = ">",
@@ -857,7 +858,7 @@ def liquid_precip_ratio(
     pr: xarray.DataArray,
     prsn: xarray.DataArray | None = None,
     tas: xarray.DataArray | None = None,
-    thresh: str = "0 degC",
+    thresh: Quantified = "0 degC",
     freq: str = "QS-DEC",
 ) -> xarray.DataArray:
     r"""Ratio of rainfall to total precipitation.
@@ -873,7 +874,7 @@ def liquid_precip_ratio(
       Mean daily solid precipitation flux.
     tas : xarray.DataArray, optional
       Mean daily temperature.
-    thresh : str
+    thresh : Quantified
       Threshold temperature under which precipitation is assumed to be solid.
     freq : str
       Resampling frequency.
@@ -915,7 +916,7 @@ def precip_accumulation(
     pr: xarray.DataArray,
     tas: xarray.DataArray = None,
     phase: str | None = None,
-    thresh: str = "0 degC",
+    thresh: Quantified = "0 degC",
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Accumulated total (liquid and/or solid) precipitation.
@@ -933,7 +934,7 @@ def precip_accumulation(
       Mean, maximum or minimum daily temperature.
     phase : {None, 'liquid', 'solid'}
       Which phase to consider, "liquid" or "solid", if None (default), both are considered.
-    thresh : str
+    thresh : Quantified
       Threshold of `tas` over which the precipication is assumed to be liquid rain.
     freq : str
       Resampling frequency.
@@ -977,7 +978,7 @@ def precip_accumulation(
 def rain_on_frozen_ground_days(
     pr: xarray.DataArray,
     tas: xarray.DataArray,
-    thresh: str = "1 mm/d",
+    thresh: Quantified = "1 mm/d",
     freq: str = "YS",
 ) -> xarray.DataArray:  # noqa: D401
     """Number of rain on frozen ground events.
@@ -991,7 +992,7 @@ def rain_on_frozen_ground_days(
       Mean daily precipitation flux.
     tas : xarray.DataArray
       Mean daily temperature.
-    thresh : str
+    thresh : Quantified
       Precipitation threshold to consider a day as a rain event.
     freq : str
       Resampling frequency.
@@ -1018,7 +1019,7 @@ def rain_on_frozen_ground_days(
 
     is true for continuous periods where :math:`i ≥ 7`
     """
-    t = convert_units_to(thresh, pr)
+    t = convert_units_to(thresh, pr, context="hydro")
     frz = convert_units_to("0 C", tas)
 
     def func(x, axis):
@@ -1042,8 +1043,8 @@ def rain_on_frozen_ground_days(
 def high_precip_low_temp(
     pr: xarray.DataArray,
     tas: xarray.DataArray,
-    pr_thresh: str = "0.4 mm/d",
-    tas_thresh: str = "-0.2 degC",
+    pr_thresh: Quantified = "0.4 mm/d",
+    tas_thresh: Quantified = "-0.2 degC",
     freq: str = "YS",
 ) -> xarray.DataArray:  # noqa: D401
     """Number of days with precipitation above threshold and temperature below threshold.
@@ -1057,9 +1058,9 @@ def high_precip_low_temp(
       Mean daily precipitation flux.
     tas : xarray.DataArray
       Daily mean, minimum or maximum temperature.
-    pr_thresh : str
+    pr_thresh : Quantified
       Precipitation threshold to exceed.
-    tas_thresh : str
+    tas_thresh : Quantified
       Temperature threshold not to exceed.
     freq : str
       Resampling frequency.
@@ -1078,7 +1079,7 @@ def high_precip_low_temp(
     ...     pr, tas=tasmin, pr_thresh="10 mm/d", tas_thresh="-0.2 degC"
     ... )
     """
-    pr_thresh = convert_units_to(pr_thresh, pr)
+    pr_thresh = convert_units_to(pr_thresh, pr, context="hydro")
     tas_thresh = convert_units_to(tas_thresh, tas)
 
     cond = (pr >= pr_thresh) * (tas < tas_thresh) * 1
@@ -1091,7 +1092,7 @@ def high_precip_low_temp(
 def days_over_precip_thresh(
     pr: xarray.DataArray,
     pr_per: xarray.DataArray,
-    thresh: str = "1 mm/day",
+    thresh: Quantified = "1 mm/day",
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
     op: str = ">",
@@ -1108,7 +1109,7 @@ def days_over_precip_thresh(
     pr_per : xarray.DataArray
       Percentile of wet day precipitation flux. Either computed daily (one value per day
       of year) or computed over a period (one value per spatial point).
-    thresh : str
+    thresh : Quantified
        Precipitation value over which a day is considered wet.
     freq : str
       Resampling frequency.
@@ -1134,10 +1135,10 @@ def days_over_precip_thresh(
     >>> p75 = pr.quantile(0.75, dim="time", keep_attrs=True)
     >>> r75p = days_over_precip_thresh(pr, p75)
     """
-    pr_per = convert_units_to(pr_per, pr)
-    thresh = convert_units_to(thresh, pr)
+    pr_per = convert_units_to(pr_per, pr, context="hydro")
+    thresh = convert_units_to(thresh, pr, context="hydro")
 
-    tp = np.maximum(pr_per, thresh)
+    tp = pr_per.where(pr_per > thresh, thresh)
     if "dayofyear" in pr_per.coords:
         # Create time series out of doy values.
         tp = resample_doy(tp, pr)
@@ -1152,7 +1153,7 @@ def days_over_precip_thresh(
 def fraction_over_precip_thresh(
     pr: xarray.DataArray,
     pr_per: xarray.DataArray,
-    thresh: str = "1 mm/day",
+    thresh: Quantified = "1 mm/day",
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
     op: str = ">",
@@ -1169,7 +1170,7 @@ def fraction_over_precip_thresh(
     pr_per : xarray.DataArray
       Percentile of wet day precipitation flux. Either computed daily (one value per day
       of year) or computed over a period (one value per spatial point).
-    thresh : str
+    thresh : Quantified
        Precipitation value over which a day is considered wet.
     freq : str
       Resampling frequency.
@@ -1189,10 +1190,10 @@ def fraction_over_precip_thresh(
       Fraction of precipitation over threshold during wet days.
 
     """
-    pr_per = convert_units_to(pr_per, pr)
-    thresh = convert_units_to(thresh, pr)
+    pr_per = convert_units_to(pr_per, pr, context="hydro")
+    thresh = convert_units_to(thresh, pr, context="hydro")
 
-    tp = np.maximum(pr_per, thresh)
+    tp = pr_per.where(pr_per > thresh, thresh)
     if "dayofyear" in pr_per.coords:
         # Create time series out of doy values.
         tp = resample_doy(tp, pr)
@@ -1568,8 +1569,8 @@ def tx10p(
 def tx_tn_days_above(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
-    thresh_tasmin: str = "22 degC",
-    thresh_tasmax: str = "30 degC",
+    thresh_tasmin: Quantified = "22 degC",
+    thresh_tasmax: Quantified = "30 degC",
     freq: str = "YS",
     op: str = ">",
 ) -> xarray.DataArray:  # noqa: D401
@@ -1583,9 +1584,9 @@ def tx_tn_days_above(
       Minimum daily temperature.
     tasmax : xarray.DataArray
       Maximum daily temperature.
-    thresh_tasmin : str
+    thresh_tasmin : Quantified
       Threshold temperature for tasmin on which to base evaluation.
-    thresh_tasmax : str
+    thresh_tasmax : Quantified
       Threshold temperature for tasmax on which to base evaluation.
     freq : str
       Resampling frequency.
@@ -1745,8 +1746,8 @@ def winter_rain_ratio(
 def blowing_snow(
     snd: xarray.DataArray,
     sfcWind: xarray.DataArray,  # noqa
-    snd_thresh: str = "5 cm",
-    sfcWind_thresh: str = "15 km/h",  # noqa
+    snd_thresh: Quantified = "5 cm",
+    sfcWind_thresh: Quantified = "15 km/h",  # noqa
     window: int = 3,
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
@@ -1760,9 +1761,9 @@ def blowing_snow(
       Surface snow depth.
     sfcWind : xr.DataArray
       Wind velocity
-    snd_thresh : str
+    snd_thresh : Quantified
       Threshold on net snowfall accumulation over the last `window` days.
-    sfcWind_thresh : str
+    sfcWind_thresh : Quantified
       Wind speed threshold.
     window : int
       Period over which snow is accumulated before comparing against threshold.

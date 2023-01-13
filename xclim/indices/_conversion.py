@@ -7,6 +7,7 @@ from numba import float32, float64, vectorize  # noqa
 
 from xclim.core.calendar import date_range, datetime_to_decimal_year
 from xclim.core.units import amount2rate, convert_units_to, declare_units, units2pint
+from xclim.core.utils import Quantified
 from xclim.indices.helpers import (
     _gather_lat,
     _gather_lon,
@@ -215,7 +216,7 @@ def tas(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
 
 @declare_units(uas="[speed]", vas="[speed]", calm_wind_thresh="[speed]")
 def uas_vas_2_sfcwind(
-    uas: xr.DataArray, vas: xr.DataArray, calm_wind_thresh: str = "0.5 m/s"
+    uas: xr.DataArray, vas: xr.DataArray, calm_wind_thresh: Quantified = "0.5 m/s"
 ) -> tuple[xr.DataArray, xr.DataArray]:
     """Wind speed and direction from the eastward and northward wind components.
 
@@ -228,7 +229,7 @@ def uas_vas_2_sfcwind(
         Eastward wind velocity
     vas : xr.DataArray
         Northward wind velocity
-    calm_wind_thresh : str
+    calm_wind_thresh : Quantified
         The threshold under which winds are considered "calm" and for which the direction
         is set to 0. On the Beaufort scale, calm winds are defined as < 0.5 m/s.
 
@@ -243,7 +244,7 @@ def uas_vas_2_sfcwind(
     Examples
     --------
     >>> from xclim.indices import uas_vas_2_sfcwind
-    >>> sfcwind = uas_vas_2_sfcwind(
+    >>> sfcWind = uas_vas_2_sfcwind(
     ...     uas=uas_dataset, vas=vas_dataset, calm_wind_thresh="0.5 m/s"
     ... )
 
@@ -331,7 +332,9 @@ def sfcwind_2_uas_vas(
 
 @declare_units(tas="[temperature]", ice_thresh="[temperature]")
 def saturation_vapor_pressure(
-    tas: xr.DataArray, ice_thresh: str = None, method: str = "sonntag90"  # noqa
+    tas: xr.DataArray,
+    ice_thresh: Quantified | None = None,
+    method: str = "sonntag90",  # noqa
 ) -> xr.DataArray:
     """Saturation vapour pressure from temperature.
 
@@ -339,7 +342,7 @@ def saturation_vapor_pressure(
     ----------
     tas : xr.DataArray
         Temperature array.
-    ice_thresh : str
+    ice_thresh : Quantified, optional
         Threshold temperature under which to switch to equations in reference to ice instead of water.
         If None (default) everything is computed with reference to water.
     method : {"goffgratch46", "sonntag90", "tetens30", "wmo08", "its90"}
@@ -473,10 +476,10 @@ def saturation_vapor_pressure(
 )
 def relative_humidity(
     tas: xr.DataArray,
-    tdps: xr.DataArray = None,
-    huss: xr.DataArray = None,
-    ps: xr.DataArray = None,
-    ice_thresh: str = None,
+    tdps: xr.DataArray | None = None,
+    huss: xr.DataArray | None = None,
+    ps: xr.DataArray | None = None,
+    ice_thresh: Quantified | None = None,
     method: str = "sonntag90",
     invalid_values: str = "clip",
 ) -> xr.DataArray:
@@ -489,13 +492,13 @@ def relative_humidity(
     ----------
     tas : xr.DataArray
         Temperature array
-    tdps : xr.DataArray
+    tdps : xr.DataArray, optional
         Dewpoint temperature, if specified, overrides huss and ps.
-    huss : xr.DataArray
-        Specific humidity.
-    ps : xr.DataArray
-        Air Pressure.
-    ice_thresh : str
+    huss : xr.DataArray, optional
+        Specific humidity. Must be given if tdps is not given.
+    ps : xr.DataArray, optional
+        Air Pressure. Must be given if tdps is not given.
+    ice_thresh : Quantified, optional
         Threshold temperature under which to switch to equations in reference to ice instead of water.
         If None (default) everything is computed with reference to water. Does nothing if 'method' is "bohren98".
     method : {"bohren98", "goffgratch46", "sonntag90", "tetens30", "wmo08"}
@@ -605,7 +608,7 @@ def specific_humidity(
     tas: xr.DataArray,
     hurs: xr.DataArray,
     ps: xr.DataArray,
-    ice_thresh: str = None,
+    ice_thresh: Quantified | None = None,
     method: str = "sonntag90",
     invalid_values: str = None,
 ) -> xr.DataArray:
@@ -622,7 +625,7 @@ def specific_humidity(
         Relative Humidity.
     ps : xr.DataArray
         Air Pressure.
-    ice_thresh : str
+    ice_thresh : Quantified, optional
         Threshold temperature under which to switch to equations in reference to ice instead of water.
         If None (default) everything is computed with reference to water.
     method : {"goffgratch46", "sonntag90", "tetens30", "wmo08"}
@@ -759,7 +762,7 @@ def specific_humidity_from_dewpoint(
 def snowfall_approximation(
     pr: xr.DataArray,
     tas: xr.DataArray,
-    thresh: str = "0 degC",
+    thresh: Quantified = "0 degC",
     method: str = "binary",
 ) -> xr.DataArray:
     """Snowfall approximation from total precipitation and temperature.
@@ -772,8 +775,8 @@ def snowfall_approximation(
         Mean daily precipitation flux.
     tas : xarray.DataArray, optional
         Mean, maximum, or minimum daily temperature.
-    thresh : str,
-        Threshold temperature, used by method "binary".
+    thresh : Quantified
+        Freezing point temperature. Non scalar values are not allowed with method "brown".
     method : {"binary", "brown", "auer"}
         Which method to use when approximating snowfall from total precipitation. See notes.
 
@@ -804,6 +807,9 @@ def snowfall_approximation(
         prsn = pr.where(tas <= thresh, 0)
 
     elif method == "brown":
+        if not np.isscalar(thresh):
+            raise ValueError("Non-scalar `thresh` are not allowed with method `brown`.")
+
         # Freezing point + 2C in the native units
         upper = convert_units_to(convert_units_to(thresh, "degC") + 2, tas)
         thresh = convert_units_to(thresh, tas)
@@ -851,7 +857,7 @@ def snowfall_approximation(
 def rain_approximation(
     pr: xr.DataArray,
     tas: xr.DataArray,
-    thresh: str = "0 degC",
+    thresh: Quantified = "0 degC",
     method: str = "binary",
 ) -> xr.DataArray:
     """Rainfall approximation from total precipitation and temperature.
@@ -865,8 +871,8 @@ def rain_approximation(
         Mean daily precipitation flux.
     tas : xarray.DataArray, optional
         Mean, maximum, or minimum daily temperature.
-    thresh : str,
-        Threshold temperature, used by method "binary".
+    thresh : Quantified
+        Freezing point temperature. Non-scalar values are not allowed with method 'brown'.
     method : {"binary", "brown", "auer"}
         Which method to use when approximating snowfall from total precipitation. See notes.
 
@@ -1038,7 +1044,7 @@ def clausius_clapeyron_scaled_precipitation(
     rsus="[radiation]",
     rlds="[radiation]",
     rlus="[radiation]",
-    sfcwind="[speed]",
+    sfcWind="[speed]",
 )
 def potential_evapotranspiration(
     tasmin: xr.DataArray | None = None,
@@ -1050,7 +1056,7 @@ def potential_evapotranspiration(
     rsus: xr.DataArray | None = None,
     rlds: xr.DataArray | None = None,
     rlus: xr.DataArray | None = None,
-    sfcwind: xr.DataArray | None = None,
+    sfcWind: xr.DataArray | None = None,
     method: str = "BR65",
     peta: float = 0.00516409319477,
     petb: float = 0.0874972822289,
@@ -1080,7 +1086,7 @@ def potential_evapotranspiration(
         Surface Downwelling Longwave Radiation
     rlus : xarray.DataArray, optional
         Surface Upwelling Longwave Radiation
-    sfcwind : xarray.DataArray, optional
+    sfcWind : xarray.DataArray, optional
         Surface wind velocity (at 10 m)
     method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48", "mcguinnessbordne05", "MB05", "allen98", "FAO_PM98"}
         Which method to use, see notes.
@@ -1240,7 +1246,7 @@ def potential_evapotranspiration(
         tasmin = convert_units_to(tasmin, "degC")
 
         # wind speed at two meters
-        wa2 = wind_speed_height_conversion(sfcwind, h_source="10 m", h_target="2 m")
+        wa2 = wind_speed_height_conversion(sfcWind, h_source="10 m", h_target="2 m")
         wa2 = convert_units_to(wa2, "m s-1")
 
         with xr.set_options(keep_attrs=True):
@@ -1276,7 +1282,8 @@ def potential_evapotranspiration(
         raise NotImplementedError(f"'{method}' method is not implemented.")
 
     out.attrs["units"] = "mm"
-    return amount2rate(out, out_units="kg m-2 s-1")
+    rate = amount2rate(out, out_units="mm/d")
+    return convert_units_to(rate, "kg m-2 s-1", context="hydro")
 
 
 @vectorize(

@@ -254,11 +254,11 @@ def keetch_byram_drought_index(
         # a guvectorized function which has the output(s) in its function signature
         return _keetch_byram_drought_index(pr, tasmax, pr_annual, kbdi0)
 
-    pr = convert_units_to(pr, "mm/day")
+    pr = convert_units_to(pr, "mm/day", context="hydro")
     tasmax = convert_units_to(tasmax, "C")
-    pr_annual = convert_units_to(pr_annual, "mm/year")
+    pr_annual = convert_units_to(pr_annual, "mm/year", context="hydro")
     if kbdi0 is not None:
-        kbdi0 = convert_units_to(kbdi0, "mm/day")
+        kbdi0 = convert_units_to(kbdi0, "mm/day", context="hydro")
     else:
         kbdi0 = xr.full_like(pr.isel(time=0), 0)
 
@@ -326,7 +326,7 @@ def griffiths_drought_factor(
         # a guvectorized function which has the output(s) in its function signature
         return _griffiths_drought_factor(pr, smd, lim)
 
-    pr = convert_units_to(pr, "mm/day")
+    pr = convert_units_to(pr, "mm/day", context="hydro")
     smd = convert_units_to(smd, "mm/day")
 
     if limiting_func == "xlim":

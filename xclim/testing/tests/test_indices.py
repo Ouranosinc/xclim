@@ -1929,7 +1929,9 @@ class TestTempWetDryPrecipWarmColdQuarter:
     )
     def test_pr_warmcold(self, tas_series, pr_series, freq, op, expected):
         tas, pr = self.get_data(tas_series, pr_series)
-        pr = convert_units_to(pr.resample(time=freq).mean(keep_attrs=True), "mm/d")
+        pr = convert_units_to(
+            pr.resample(time=freq).mean(keep_attrs=True), "mm/d", context="hydro"
+        )
 
         tas = xci.tg_mean(tas, freq=freq)
 
@@ -2759,7 +2761,7 @@ class TestPotentialEvapotranspiration:
         rsus = rsus_series(np.array([12.51, 14.46, 20.36])).expand_dims(lat=lat)
         rlds = rlds_series(np.array([293.65, 228.96, 275.40])).expand_dims(lat=lat)
         rlus = rlus_series(np.array([311.39, 280.50, 311.30])).expand_dims(lat=lat)
-        sfcwind = sfcWind_series(np.array([14.11, 15.27, 10.70])).expand_dims(lat=lat)
+        sfcWind = sfcWind_series(np.array([14.11, 15.27, 10.70])).expand_dims(lat=lat)
         out = xci.potential_evapotranspiration(
             tn,
             tx,
@@ -2770,7 +2772,7 @@ class TestPotentialEvapotranspiration:
             rsus=rsus,
             rlds=rlds,
             rlus=rlus,
-            sfcwind=sfcwind,
+            sfcWind=sfcWind,
             method="FAO_PM98",
         )
         np.testing.assert_allclose(out[0, 2], [1.208832768 / 86400], rtol=1e-2)

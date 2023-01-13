@@ -13,7 +13,7 @@ import re
 import warnings
 from importlib.resources import open_text
 from inspect import signature
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable
 
 import pint
 import xarray as xr
@@ -22,7 +22,7 @@ from yaml import safe_load
 
 from .calendar import date_range, get_calendar, parse_offset
 from .options import datacheck
-from .utils import ValidationError
+from .utils import Quantified, ValidationError
 
 __all__ = [
     "amount2rate",
@@ -30,6 +30,7 @@ __all__ = [
     "check_units",
     "convert_units_to",
     "declare_units",
+    "infer_context",
     "infer_sampling_units",
     "lwethickness2amount",
     "pint_multiply",
@@ -56,7 +57,6 @@ units = pint.UnitRegistry(
     ],
 )
 
-Convertible = TypeVar("Convertible", str, xr.DataArray, units.Unit, units.Quantity)
 units.define("percent = 0.01 = % = pct")
 
 # In pint, the default symbol for year is "a" which is not CF-compliant (stands for "are")
@@ -104,7 +104,6 @@ hydro.add_transformation(
     lambda ureg, x: x * (1000 * ureg.kg / ureg.m**3),
 )
 units.add_context(hydro)
-units.enable_contexts(hydro)
 
 
 CF_CONVERSIONS = safe_load(open_text("xclim.data", "variables.yml"))["conversions"]
@@ -287,29 +286,45 @@ def str2pint(val: str) -> pint.Quantity:
 
 
 def convert_units_to(
-    source: Convertible,
-    target: str | xr.DataArray | units.Unit,
+    source: Quantified,
+    target: Quantified | units.Unit,
     context: str | None = None,
-) -> Convertible:
+) -> Quantified:
     """Convert a mathematical expression into a value with the same units as a DataArray.
+
+    If the dimensionalities of source and target units differ, automatic CF conversions
+    will be applied when possible. See :py:func:`xclim.core.units.cf_conversion`.
 
     Parameters
     ----------
-    source : str or xr.DataArray or units.Unit or units.Quantity
+    source : str or xr.DataArray or units.Quantity
         The value to be converted, e.g. '4C' or '1 mm/d'.
-    target : str or xr.DataArray or Any
+    target : str or xr.DataArray or units.Quantity or unirs.Unit
         Target array of values to which units must conform.
     context : str, optional
         The unit definition context. Default: None.
+        If "infer", it will be inferred with :py:func:`xclim.core.units.infer_context` using
+        the standard name from the `source` or, if none is found, from the `target`.
+        This means that the 'hydro' context could be activated if any one of the standard names allows it.
 
     Returns
     -------
-    str or xr.DataArray or units.Unit or units.Quantity
+    str or xr.DataArray or units.Quantity
         The source value converted to target's units.
         The outputted type is always similar to `source` initial type.
         Attributes are preserved unless an automatic CF conversion is performed,
         in which case only the new `standard_name` appears in the result.
+
+    See Also
+    --------
+    cf_conversion
+    amount2rate
+    rate2amount
+    amount2lwethickness
+    lwethickness2amount
     """
+    context = context or "none"
+
     # Target units
     if isinstance(target, units.Unit):
         target_unit = target
@@ -320,13 +335,25 @@ def convert_units_to(
             "target must be either a pint Unit or a xarray DataArray."
         )
 
+    if context == "infer":
+        ctxs = []
+        if isinstance(source, xr.DataArray):
+            ctxs.append(infer_context(source.attrs.get("standard_name")))
+        if isinstance(target, xr.DataArray):
+            ctxs.append(infer_context(target.attrs.get("standard_name")))
+        # If any one of the target or source is compatible with the "hydro" context, use it.
+        if "hydro" in ctxs:
+            context = "hydro"
+        else:
+            context = "none"
+
     if isinstance(source, str):
         q = str2pint(source)
         # Return magnitude of converted quantity. This is going to fail if units are not compatible.
-        return q.to(target_unit).m
+        return q.to(target_unit, context).m
 
     if isinstance(source, units.Quantity):
-        return source.to(target_unit).m
+        return source.to(target_unit, context).m
 
     if isinstance(source, xr.DataArray):
         source_unit = units2pint(source)
@@ -856,6 +883,8 @@ def check_units(val: str | int | float | None, dim: str | None) -> None:
     if dim is None or val is None:
         return
 
+    context = infer_context(dimension=dim)
+
     if str(val).startswith("UNSET "):
         warnings.warn(
             "This index calculation will soon require user-specified thresholds.",
@@ -886,11 +915,12 @@ def check_units(val: str | int | float | None, dim: str | None) -> None:
         return
 
     # Check if there is a transformation available
-    start = pint.util.to_units_container(val_dim)
-    end = pint.util.to_units_container(expected)
-    graph = units._active_ctx.graph  # noqa
-    if pint.util.find_shortest_path(graph, start, end):
-        return
+    with units.context(context):
+        start = pint.util.to_units_container(val_dim)
+        end = pint.util.to_units_container(expected)
+        graph = units._active_ctx.graph  # noqa
+        if pint.util.find_shortest_path(graph, start, end):
+            return
 
     raise ValidationError(
         f"Data units {val_units} are not compatible with requested {dim}."
@@ -986,3 +1016,42 @@ def ensure_delta(unit: str = None):
     if "degree_Rankine" in u._units:
         delta_unit = pint2cfunits(u / units2pint("°R") * units2pint("delta_degF"))
     return delta_unit
+
+
+def infer_context(standard_name=None, dimension=None):
+    """Return units context based on either the variable's standard name or the pint dimension.
+
+    Valid standard names for the hydro context are those including the terms "rainfall", "lwe" (liquid water equivalent) and
+    "precipitation". The latter is technically incorrect, as any phase of precipitation could be referenced.
+    Standard names for evapotranspiration, evaporation and canopy water amounts are also associated with the hydro context.
+
+    Parameters
+    ----------
+    standard_name: str
+      CF-Convention standard name.
+    dimension: str
+      Pint dimension, e.g. '[time]'.
+
+    Returns
+    -------
+    str
+      "hydro" if variable is a liquid water flux, otherwise "none"
+    """
+    csn = (
+        (
+            standard_name
+            in [
+                "water_potential_evapotranspiration_flux",
+                "canopy_water_amount",
+                "water_evaporation_amount",
+            ]
+            or "rainfall" in standard_name
+            or "lwe" in standard_name
+            or "precipitation" in standard_name
+        )
+        if standard_name is not None
+        else False
+    )
+    cdim = (dimension == "[precipitation]") if dimension is not None else False
+
+    return "hydro" if csn or cdim else "none"

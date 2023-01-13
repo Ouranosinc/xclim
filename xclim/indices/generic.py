@@ -21,8 +21,14 @@ from xclim.core.calendar import (
     get_calendar,
     select_time,
 )
-from xclim.core.units import convert_units_to, pint2cfunits, str2pint, to_agg_units
-from xclim.core.utils import DayOfYearStr
+from xclim.core.units import (
+    convert_units_to,
+    infer_context,
+    pint2cfunits,
+    str2pint,
+    to_agg_units,
+)
+from xclim.core.utils import DayOfYearStr, Quantified
 
 from . import run_length as rl
 
@@ -222,7 +228,12 @@ def threshold_count(
     return c.resample(time=freq).sum(dim="time")
 
 
-def domain_count(da: xr.DataArray, low: float, high: float, freq: str) -> xr.DataArray:
+def domain_count(
+    da: xr.DataArray,
+    low: float | int | xr.DataArray,
+    high: float | int | xr.DataArray,
+    freq: str,
+) -> xr.DataArray:
     """Count number of days where value is within low and high thresholds.
 
     A value is counted if it is larger than `low`, and smaller or equal to `high`, i.e. in `]low, high]`.
@@ -231,9 +242,9 @@ def domain_count(da: xr.DataArray, low: float, high: float, freq: str) -> xr.Dat
     ----------
     da : xr.DataArray
         Input data.
-    low : float
+    low : scalar or DataArray
         Minimum threshold value.
-    high : float
+    high : scalar or DataArray
         Maximum threshold value.
     freq : str
         Resampling frequency defining the periods defined in
@@ -250,7 +261,7 @@ def domain_count(da: xr.DataArray, low: float, high: float, freq: str) -> xr.Dat
 
 def get_daily_events(
     da: xr.DataArray,
-    threshold: float,
+    threshold: float | int | xr.DataArray,
     op: str,
     constrain: Sequence[str] | None = None,
 ) -> xr.DataArray:
@@ -291,7 +302,7 @@ def get_daily_events(
 def count_level_crossings(
     low_data: xr.DataArray,
     high_data: xr.DataArray,
-    threshold: str,
+    threshold: Quantified,
     freq: str,
     *,
     op_low: str = "<",
@@ -308,8 +319,8 @@ def count_level_crossings(
         Variable that must be under the threshold.
     high_data : xr.DataArray
         Variable that must be above the threshold.
-    threshold : str
-        Quantity.
+    threshold : Quantified
+        Threshold.
     freq : str
         Resampling frequency defining the periods as defined in
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
@@ -335,7 +346,7 @@ def count_level_crossings(
 
 def count_occurrences(
     data: xr.DataArray,
-    threshold: str,
+    threshold: Quantified,
     freq: str,
     op: str,
     constrain: Sequence[str] | None = None,
@@ -351,8 +362,8 @@ def count_occurrences(
     ----------
     data : xr.DataArray
         An array.
-    threshold : str
-        Quantity.
+    threshold : Quantified
+        Threshold.
     freq : str
         Resampling frequency defining the periods as defined in
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
@@ -406,7 +417,7 @@ def diurnal_temperature_range(
 
 def first_occurrence(
     data: xr.DataArray,
-    threshold: str,
+    threshold: Quantified,
     freq: str,
     op: str,
     constrain: Sequence[str] | None = None,
@@ -421,8 +432,8 @@ def first_occurrence(
     ----------
     data : xr.DataArray
         Input data.
-    threshold : str
-        Quantity.
+    threshold : Quantified
+        Threshold.
     freq : str
         Resampling frequency defining the periods as defined in
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
@@ -451,7 +462,7 @@ def first_occurrence(
 
 def last_occurrence(
     data: xr.DataArray,
-    threshold: str,
+    threshold: Quantified,
     freq: str,
     op: str,
     constrain: Sequence[str] | None = None,
@@ -466,8 +477,8 @@ def last_occurrence(
     ----------
     data : xr.DataArray
         Input data.
-    threshold : str
-        Quantity.
+    threshold : Quantified
+        Threshold.
     freq : str
         Resampling frequency defining the periods as defined in
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
@@ -495,7 +506,7 @@ def last_occurrence(
 
 
 def spell_length(
-    data: xr.DataArray, threshold: str, reducer: str, freq: str, op: str
+    data: xr.DataArray, threshold: Quantified, reducer: str, freq: str, op: str
 ) -> xr.DataArray:
     """Calculate statistics on lengths of spells.
 
@@ -507,8 +518,8 @@ def spell_length(
     ----------
     data : xr.DataArray
         Input data.
-    threshold : str
-        Quantity.
+    threshold : Quantified
+        Threshold.
     reducer : {'max', 'min', 'mean', 'sum'}
         Reducer.
     freq : str
@@ -521,7 +532,11 @@ def spell_length(
     -------
     xr.DataArray
     """
-    threshold = convert_units_to(threshold, data)
+    threshold = convert_units_to(
+        threshold,
+        data,
+        context=infer_context(standard_name=data.attrs.get("standard_name")),
+    )
 
     cond = compare(data, op, threshold)
 
@@ -559,7 +574,7 @@ def statistics(data: xr.DataArray, reducer: str, freq: str) -> xr.DataArray:
 def thresholded_statistics(
     data: xr.DataArray,
     op: str,
-    threshold: str,
+    threshold: Quantified,
     reducer: str,
     freq: str,
     constrain: Sequence[str] | None = None,
@@ -576,8 +591,8 @@ def thresholded_statistics(
         Input data.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical operator. e.g. arr > thresh.
-    threshold : str
-        Quantity.
+    threshold : Quantified
+        Threshold.
     reducer : {'max', 'min', 'mean', 'sum'}
         Reducer.
     freq : str
@@ -600,7 +615,7 @@ def thresholded_statistics(
 
 
 def temperature_sum(
-    data: xr.DataArray, op: str, threshold: str, freq: str
+    data: xr.DataArray, op: str, threshold: Quantified, freq: str
 ) -> xr.DataArray:
     """Calculate the temperature sum above/below a threshold.
 
@@ -615,8 +630,8 @@ def temperature_sum(
         Input data.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
         Logical operator. e.g. arr > thresh.
-    threshold : str
-        Quantity.
+    threshold : Quantified
+        Threshold.
     freq : str
         Resampling frequency defining the periods as defined in
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
@@ -795,7 +810,7 @@ def aggregate_between_dates(
 
 
 def cumulative_difference(
-    data: xr.DataArray, threshold: str, op: str, freq: str | None = None
+    data: xr.DataArray, threshold: Quantified, op: str, freq: str | None = None
 ) -> xr.DataArray:
     """Calculate the cumulative difference below/above a given value threshold.
 
@@ -803,7 +818,7 @@ def cumulative_difference(
     ----------
     data : xr.DataArray
         Data for which to determine the cumulative difference.
-    threshold : str
+    threshold : Quantified
         The value threshold.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
         Logical operator. e.g. arr > thresh.
@@ -834,7 +849,7 @@ def cumulative_difference(
 def first_day_threshold_reached(
     data: xr.DataArray,
     *,
-    threshold: str,
+    threshold: Quantified,
     op: str,
     after_date: DayOfYearStr,
     window: int = 1,

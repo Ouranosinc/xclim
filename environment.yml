@@ -21,8 +21,12 @@ dependencies:
     - scikit-learn>=0.21.3
     - scipy>=1.2,<1.9  # See https://github.com/Ouranosinc/xclim/issues/1142
     - xarray>=2022.06.0
+    # Extras
+    - eofs
+    - eigen
+    - pybind11
     # Testing and development dependencies
-    - black>=22.3
+    - black>=22.10  # 2023-01-09: black==22.12 has not yet been released on conda-forge
     - blackdoc
     - bump2version
     - coverage
@@ -41,14 +45,14 @@ dependencies:
     - pre_commit
     - pybtex
     - pydocstyle
-    - pylint <2.15
+    - pylint<2.15
     - pytest
     - pytest-cov
     - pytest-xdist
     - sphinx
     - sphinx-codeautolink
     - sphinx-copybutton
-    - sphinx_rtd_theme
+    - sphinx-rtd-theme>=1.0
     - sphinxcontrib-bibtex
     - statsmodels
     - tokenize-rt

@@ -3,7 +3,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.2.3
+    rev: v3.3.1
     hooks:
       - id: pyupgrade
         args: [ "--py38-plus" ]
@@ -27,17 +27,17 @@ repos:
         additional_dependencies: [ 'flake8-rst-docstrings' ]
         args: [ '--config=setup.cfg' ]
   - repo: https://github.com/psf/black
-    rev: 22.10.0
+    rev: 22.12.0
     hooks:
       - id: black
         args: [ "--target-version=py38" ]
   - repo: https://github.com/PyCQA/isort
-    rev: 5.10.1
+    rev: 5.11.4
     hooks:
       - id: isort
         args: [ '--settings-file=setup.cfg', "--add_imports='from __future__ import annotations'" ]
   - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.5.3
+    rev: 1.6.0
     hooks:
       - id: nbqa-black
         args: [ "--target-version=py38" ]
@@ -51,7 +51,7 @@ repos:
       - id: nbstripout
         files: ".ipynb"
   - repo: https://github.com/pycqa/pydocstyle
-    rev: 6.1.1
+    rev: 6.2.0
     hooks:
       - id: pydocstyle
         args: [ '--config=setup.cfg' ]
