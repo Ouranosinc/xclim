@@ -6,7 +6,13 @@ import xarray as xr
 from numba import float32, float64, vectorize  # noqa
 
 from xclim.core.calendar import date_range, datetime_to_decimal_year
-from xclim.core.units import amount2rate, convert_units_to, declare_units, units2pint
+from xclim.core.units import (
+    amount2rate,
+    convert_units_to,
+    declare_units,
+    lwethickness2amount,
+    units2pint,
+)
 from xclim.core.utils import Quantified
 from xclim.indices.helpers import (
     _gather_lat,
@@ -31,6 +37,8 @@ __all__ = [
     "specific_humidity",
     "specific_humidity_from_dewpoint",
     "snowfall_approximation",
+    "snow_depth_approximation",
+    "snow_water_approximation",
     "rain_approximation",
     "wind_chill_index",
     "clausius_clapeyron_scaled_precipitation",
@@ -893,6 +901,59 @@ def rain_approximation(
     prra = pr - snowfall_approximation(pr, tas, thresh=thresh, method=method)
     prra.attrs["units"] = pr.attrs["units"]
     return prra
+
+
+def snow_depth_approximation(
+    snw: xr.DataArray,
+    snr: xr.DataArray | None = None,
+) -> xr.DataArray:
+    """Approximation of snow density from snow water.
+
+    Parameters
+    ----------
+    snw : xr.DataArray
+        Snow water (kg/m^2).
+        If snow thickness (`swe`: "m") is provided, will be converted to `snw` before calculating.
+    snr : xr.DataArray, optional
+        Snow density (kg/m^3).
+
+    Returns
+    -------
+    xr.DataArray
+    """
+    snw = convert_units_to(snw, "kg m-2", context="hydro")
+    snr = convert_units_to(snr, "kg m-3")
+
+    snd = snw / snr
+
+    snd.attrs["units"] = "m"
+    return snd
+
+
+def snow_water_approximation(
+    snd: xr.DataArray,
+    snr: xr.DataArray | None = None,
+) -> xr.DataArray:
+    """Approximation of snow water from snow depth.
+
+    Parameters
+    ----------
+    snd : xr.DataArray
+        Snow depth (m).
+    snr : xr.DataArray, optional
+        Snow density (kg/m^3).
+
+    Returns
+    -------
+    xr.DataArray
+    """
+    snd = convert_units_to(snd, "m", context="hydro")
+    snr = convert_units_to(snr, "kg m-3")
+
+    snw = snd * snr
+
+    snw.attrs["units"] = "kg m-2"
+    return snw
 
 
 @declare_units(
