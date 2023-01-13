@@ -903,23 +903,25 @@ def rain_approximation(
     return prra
 
 
+@declare_units(snw="[mass]/[area]", snr="[mass]/[volume]")
 def snow_depth_approximation(
     snw: xr.DataArray,
-    snr: xr.DataArray | None = None,
+    snr: xr.DataArray,
 ) -> xr.DataArray:
-    """Approximation of snow density from snow water.
+    """Approximation of snow depth from snow amount and density.
 
     Parameters
     ----------
     snw : xr.DataArray
-        Snow water (kg/m^2).
-        If snow thickness (`swe`: "m") is provided, will be converted to `snw` before calculating.
+        Snow amount [kg/m^2].
+        If snow water equivalent (`swe` [m]) is provided instead, will be converted to `snw` before calculating.
     snr : xr.DataArray, optional
-        Snow density (kg/m^3).
+        Snow density [kg/m^3].
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [m]
+        Snow depth.
     """
     snw = convert_units_to(snw, "kg m-2", context="hydro")
     snr = convert_units_to(snr, "kg m-3")
@@ -930,22 +932,24 @@ def snow_depth_approximation(
     return snd
 
 
-def snow_water_approximation(
+@declare_units(snd="[length]", snr="[mass]/[volume]")
+def snow_amount_approximation(
     snd: xr.DataArray,
-    snr: xr.DataArray | None = None,
+    snr: xr.DataArray,
 ) -> xr.DataArray:
-    """Approximation of snow water from snow depth.
+    """Approximation of snow amount from snow depth.
 
     Parameters
     ----------
     snd : xr.DataArray
         Snow depth (m).
-    snr : xr.DataArray, optional
+    snr : xr.DataArray
         Snow density (kg/m^3).
 
     Returns
     -------
-    xr.DataArray
+    xr.DataArray, [kg m-2]
+        Surface snow amount
     """
     snd = convert_units_to(snd, "m", context="hydro")
     snr = convert_units_to(snr, "kg m-3")
