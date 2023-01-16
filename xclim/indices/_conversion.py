@@ -937,14 +937,14 @@ def snow_amount_approximation(
     snd: xr.DataArray,
     snr: xr.DataArray,
 ) -> xr.DataArray:
-    """Approximation of snow amount from snow depth.
+    """Approximation of snow amount from snow depth and density.
 
     Parameters
     ----------
     snd : xr.DataArray
-        Snow depth (m).
+        Snow depth [m].
     snr : xr.DataArray
-        Snow density (kg/m^3).
+        Snow density [kg/m^3].
 
     Returns
     -------
