@@ -1,9 +1,11 @@
+name: "Draft compile JOSS paper"
+
 on:
   push:
 
 jobs:
   paper:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     name: Paper Draft
     steps:
       - name: Checkout
@@ -14,7 +16,7 @@ jobs:
           journal: joss
           paper-path: paper/paper.md
       - name: Upload
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v3
         with:
           name: paper
           path: paper/paper.pdf
