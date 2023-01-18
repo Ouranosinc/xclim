@@ -42,6 +42,7 @@ snow_cover_duration = SnowWithIndexing(
     description="The {freq} number of days with snow depth greater than or equal to {thresh}.",
     abstract="Number of days when the snow depth is greater than or equal to a given threshold.",
     compute=xci.snow_cover_duration,
+    _version_deprecated="0.41.0",
 )
 
 snow_depth_cover_duration = SnowWithIndexing(
@@ -74,6 +75,7 @@ continuous_snow_cover_start = Snow(
     "for a given number of consecutive days.",
     units="",
     compute=xci.continuous_snow_cover_start,
+    _version_deprecated="0.41.0",
 )
 
 continuous_snow_depth_cover_start = Snow(
@@ -109,6 +111,7 @@ continuous_snow_cover_end = Snow(
     abstract="The first date on which snow depth is below a given threshold for a given number of consecutive days.",
     units="",
     compute=xci.continuous_snow_cover_end,
+    _version_deprecated="0.41.0",
 )
 
 continuous_snow_depth_cover_end = Snow(
