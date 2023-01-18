@@ -150,9 +150,9 @@ from .utils import (
     VARIABLES,
     InputKind,
     MissingVariableError,
-    PercentileDataArray,
     ValidationError,
     infer_kind_from_parameter,
+    is_percentile_dataarray,
     load_module,
     raise_warn_or_log,
 )
@@ -903,7 +903,7 @@ class Indicator(IndicatorRegistrar):
         for name, param in self._all_parameters.items():
             if not param.injected:
                 # If a variable pop the arg
-                if PercentileDataArray.is_compatible(params[name]):
+                if is_percentile_dataarray(params[name]):
                     # duplicate percentiles DA in both das and params
                     das[name] = params[name]
                 elif param.kind in [InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE]:
@@ -942,7 +942,6 @@ class Indicator(IndicatorRegistrar):
         # Pre-computation validation checks on DataArray arguments
         self._bind_call(self.datacheck, **das)
         self._bind_call(self.cfcheck, **das)
-
         return das, params
 
     def _postprocess(self, outs, das, params):
@@ -1228,8 +1227,13 @@ class Indicator(IndicatorRegistrar):
                     mba["indexer"] = dv
                 else:
                     mba["indexer"] = args.get("freq") or "YS"
-            elif PercentileDataArray.is_compatible(v):
+            elif is_percentile_dataarray(v):
                 mba.update(get_percentile_metadata(v, k))
+            elif (
+                isinstance(v, DataArray)
+                and cls._all_parameters[k].kind == InputKind.QUANTIFIED
+            ):
+                mba[k] = "<an array>"
             else:
                 mba[k] = v
         out = {}

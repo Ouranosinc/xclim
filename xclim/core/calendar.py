@@ -27,7 +27,7 @@ from xarray.coding.cftime_offsets import (
 from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core.resample import DataArrayResample, DatasetResample
 
-from xclim.core.utils import DayOfYearStr, PercentileDataArray, uses_dask
+from xclim.core.utils import DayOfYearStr, uses_dask
 
 from .formatting import update_xclim_history
 
@@ -504,7 +504,7 @@ def percentile_doy(
     alpha: float = 1.0 / 3.0,
     beta: float = 1.0 / 3.0,
     copy: bool = True,
-) -> PercentileDataArray:
+) -> xr.DataArray:
     """Percentile value for each day of the year.
 
     Return the climatological percentile over a moving window around each day of the year.
@@ -590,7 +590,7 @@ def percentile_doy(
     p.attrs["window"] = window
     p.attrs["alpha"] = alpha
     p.attrs["beta"] = beta
-    return PercentileDataArray.from_da(p.rename("per"))
+    return p.rename("per")
 
 
 def build_climatology_bounds(da: xr.DataArray) -> list[str]:
