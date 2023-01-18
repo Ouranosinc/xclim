@@ -284,7 +284,10 @@ def continuous_snow_cover_end(
 
 @declare_units(snd="[length]", thresh="[length]")
 def continuous_snow_depth_cover_end(
-    snd: xarray.DataArray, thresh: str = "2 cm", window: int = 14, freq: str = "AS-JUL"
+    snd: xarray.DataArray,
+    thresh: Quantified = "2 cm",
+    window: int = 14,
+    freq: str = "AS-JUL",
 ) -> xarray.DataArray:
     r"""End date of continuous snow depth cover.
 
@@ -293,7 +296,7 @@ def continuous_snow_depth_cover_end(
 
     Warnings
     --------
-    * The default `freq` is valid for the northern hemisphere.
+    The default `freq` is valid for the northern hemisphere.
 
     Parameters
     ----------
@@ -332,7 +335,7 @@ def continuous_snow_depth_cover_end(
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def continuous_snow_water_cover_end(
     snw: xarray.DataArray,
-    thresh: str = "0.02 kg m-2",
+    thresh: Quantified = "0.02 kg m-2",
     window: int = 14,
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
@@ -442,7 +445,10 @@ def continuous_snow_cover_start(
 
 @declare_units(snd="[length]", thresh="[length]")
 def continuous_snow_depth_cover_start(
-    snd: xarray.DataArray, thresh: str = "2 cm", window: int = 14, freq: str = "AS-JUL"
+    snd: xarray.DataArray,
+    thresh: Quantified = "2 cm",
+    window: int = 14,
+    freq: str = "AS-JUL",
 ) -> xarray.DataArray:
     r"""Start date of continuous snow depth cover.
 
@@ -494,7 +500,7 @@ def continuous_snow_depth_cover_start(
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def continuous_snow_water_cover_start(
     snw: xarray.DataArray,
-    thresh: str = "0.02 kg m-2",
+    thresh: Quantified = "0.02 kg m-2",
     window: int = 14,
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
@@ -1742,7 +1748,7 @@ def snow_cover_duration(
 
 @declare_units(snd="[length]", thresh="[length]")
 def snow_depth_cover_duration(
-    snd: xarray.DataArray, thresh: str = "2 cm", freq: str = "AS-JUL"
+    snd: xarray.DataArray, thresh: Quantified = "2 cm", freq: str = "AS-JUL"
 ) -> xarray.DataArray:
     # noqa: D401
     """Number of days with snow depth above a threshold.
@@ -1774,7 +1780,7 @@ def snow_depth_cover_duration(
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def snow_water_cover_duration(
-    snw: xarray.DataArray, thresh: str = "0.02 kg m-2", freq: str = "AS-JUL"
+    snw: xarray.DataArray, thresh: Quantified = "0.02 kg m-2", freq: str = "AS-JUL"
 ) -> xarray.DataArray:
     # noqa: D401
     """Number of days with snow water above a threshold.

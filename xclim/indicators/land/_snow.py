@@ -66,7 +66,7 @@ snow_water_cover_duration = SnowWithIndexing(
 
 continuous_snow_cover_start = Snow(
     title="Start date of continuous snow depth cover",
-    identifier="continuous_snow_depth_cover_start",
+    identifier="continuous_snow_cover_start",
     standard_name="day_of_year",
     long_name="Start date of continuous snow depth cover",
     description="Day of year when snow depth is above or equal to {thresh} for {window} consecutive days.",
@@ -102,7 +102,7 @@ continuous_snow_water_cover_start = Snow(
 
 continuous_snow_cover_end = Snow(
     title="End date of continuous snow depth cover",
-    identifier="continuous_snow_depth_cover_end",
+    identifier="continuous_snow_cover_end",
     standard_name="day_of_year",
     long_name="End date of continuous snow depth cover",
     description="Day of year when snow depth is below {thresh} for {window} consecutive days.",
