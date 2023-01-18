@@ -1,6 +1,8 @@
 # noqa: D100
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 import xarray
 
@@ -39,6 +41,10 @@ __all__ = [
     "cooling_degree_days",
     "continuous_snow_cover_end",
     "continuous_snow_cover_start",
+    "continuous_snow_depth_cover_end",
+    "continuous_snow_depth_cover_start",
+    "continuous_snow_water_cover_end",
+    "continuous_snow_water_cover_start",
     "days_with_snow",
     "growing_degree_days",
     "growing_season_start",
@@ -58,6 +64,8 @@ __all__ = [
     "hot_spell_frequency",
     "hot_spell_max_length",
     "snow_cover_duration",
+    "snow_depth_cover_duration",
+    "snow_water_cover_duration",
     "tn_days_above",
     "tn_days_below",
     "tg_days_above",
@@ -233,14 +241,59 @@ def continuous_snow_cover_end(
     window: int = 14,
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
-    r"""End date of continuous snow cover.
+    r"""End date of continuous snow depth cover.
 
-    First day after the start of the continuous snow cover when snow depth is below a threshold (default: 2 cm)
+    First day after the start of the continuous snow depth cover when snow depth is below a threshold (default: 2 cm)
     for at least `N` (default: 14) consecutive days.
 
     Warnings
     --------
-    The default `freq` is valid for the northern hemisphere.
+    * The default `freq` is valid for the northern hemisphere.
+    * This index will be removed in a future version of xclim.
+
+    Parameters
+    ----------
+    snd : xarray.DataArray
+        Surface snow thickness.
+    thresh : str
+        Threshold snow thickness.
+    window : int
+        Minimum number of days with snow depth below threshold.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+        First day after the start of the continuous snow depth cover when the snow depth
+        goes below a threshold for a minimum duration.
+        If there is no such day, returns np.nan.
+
+    References
+    ----------
+    :cite:cts:`chaumont_elaboration_2017`
+    """
+    warnings.warn(
+        "The `continuous_snow_cover_end` is being deprecated in favour of `continuous_snow_depth_cover_end`"
+        "This indice will be removed in `xclim>=0.42.0`. Please update your scripts accordingly.",
+        DeprecationWarning,
+        stacklevel=3,
+    )
+    return continuous_snow_depth_cover_end(snd, thresh, window, freq)
+
+
+@declare_units(snd="[length]", thresh="[length]")
+def continuous_snow_depth_cover_end(
+    snd: xarray.DataArray, thresh: str = "2 cm", window: int = 14, freq: str = "AS-JUL"
+) -> xarray.DataArray:
+    r"""End date of continuous snow depth cover.
+
+    First day after the start of the continuous snow depth cover when snow depth is below a threshold (default: 2 cm)
+    for at least `N` (default: 14) consecutive days.
+
+    Warnings
+    --------
+    * The default `freq` is valid for the northern hemisphere.
 
     Parameters
     ----------
@@ -256,7 +309,7 @@ def continuous_snow_cover_end(
     Returns
     -------
     xarray.DataArray, [dimensionless]
-        First day after the start of the continuous snow cover when the snow depth
+        First day after the start of the continuous snow depth cover when the snow depth
         goes below a threshold for a minimum duration.
         If there is no such day, returns np.nan.
 
@@ -276,6 +329,56 @@ def continuous_snow_cover_end(
     return out
 
 
+@declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
+def continuous_snow_water_cover_end(
+    snw: xarray.DataArray,
+    thresh: str = "0.02 kg m-2",
+    window: int = 14,
+    freq: str = "AS-JUL",
+) -> xarray.DataArray:
+    r"""End date of continuous snow water cover.
+
+    First day after the start of the continuous snow water cover when snow water is below a threshold (default: 2 cm)
+    for at least `N` (default: 14) consecutive days.
+
+    Warnings
+    --------
+    The default `freq` is valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    snw : xarray.DataArray
+        Surface snow amount.
+    thresh : str
+        Threshold snow amount.
+    window : int
+        Minimum number of days with snow water below threshold.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+        First day after the start of the continuous snow water cover when the snow water
+        goes below a threshold for a minimum duration.
+        If there is no such day, returns np.nan.
+
+    References
+    ----------
+    :cite:cts:`chaumont_elaboration_2017`
+    """
+    thresh = convert_units_to(thresh, snw)
+    cond = snw >= thresh
+
+    out = (
+        cond.resample(time=freq)
+        .map(rl.season, window=window, dim="time", coord="dayofyear")
+        .end
+    )
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snw))
+    return out
+
+
 @declare_units(snd="[length]", thresh="[length]")
 def continuous_snow_cover_start(
     snd: xarray.DataArray,
@@ -283,7 +386,65 @@ def continuous_snow_cover_start(
     window: int = 14,
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
-    r"""Start date of continuous snow cover.
+    r"""Start date of continuous snow depth cover.
+
+    Day of year when snow depth is above or equal to a threshold (default: 2 cm)
+    for at least `N` (default: 14) consecutive days.
+
+    Warnings
+    --------
+    * The default `freq` is valid for the northern hemisphere.
+    * This index will be removed in a future version of xclim.
+
+    Parameters
+    ----------
+    snd : xarray.DataArray
+        Surface snow thickness.
+    thresh : str
+        Threshold snow thickness.
+    window : int
+        Minimum number of days with snow depth above or equal to threshold.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+        First day of the year when the snow depth is superior to a threshold for a minimum duration.
+        If there is no such day, returns np.nan.
+
+    References
+    ----------
+    :cite:cts:`chaumont_elaboration_2017`
+    """
+    warnings.warn(
+        "The `continuous_snow_cover_end` is being deprecated in favour of `continuous_snow_depth_cover_end`"
+        "This indice will be removed in `xclim>=0.42.0`. Please update your scripts accordingly.",
+        DeprecationWarning,
+        stacklevel=3,
+    )
+    thresh = convert_units_to(thresh, snd)
+    cond = snd >= thresh
+
+    out = (
+        cond.resample(time=freq)
+        .map(
+            rl.season,
+            window=window,
+            dim="time",
+            coord="dayofyear",
+        )
+        .start
+    )
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd))
+    return out
+
+
+@declare_units(snd="[length]", thresh="[length]")
+def continuous_snow_depth_cover_start(
+    snd: xarray.DataArray, thresh: str = "2 cm", window: int = 14, freq: str = "AS-JUL"
+) -> xarray.DataArray:
+    r"""Start date of continuous snow depth cover.
 
     Day of year when snow depth is above or equal to a threshold (default: 2 cm)
     for at least `N` (default: 14) consecutive days.
@@ -327,6 +488,60 @@ def continuous_snow_cover_start(
         .start
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd))
+    return out
+
+
+@declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
+def continuous_snow_water_cover_start(
+    snw: xarray.DataArray,
+    thresh: str = "0.02 kg m-2",
+    window: int = 14,
+    freq: str = "AS-JUL",
+) -> xarray.DataArray:
+    r"""Start date of continuous snow water cover.
+
+    Day of year when snow water is above or equal to a threshold (default: 2 cm)
+    for at least `N` (default: 14) consecutive days.
+
+    Warnings
+    --------
+    The default `freq` is valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    snw : xarray.DataArray
+        Surface snow amount.
+    thresh : str
+        Threshold snow amount.
+    window : int
+        Minimum number of days with snow water above or equal to threshold.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+        First day of the year when the snow water is superior to a threshold for a minimum duration.
+        If there is no such day, returns np.nan.
+
+    References
+    ----------
+    :cite:cts:`chaumont_elaboration_2017`
+    """
+    thresh = convert_units_to(thresh, snw)
+    cond = snw >= thresh
+
+    out = (
+        cond.resample(time=freq)
+        .map(
+            rl.season,
+            window=window,
+            dim="time",
+            coord="dayofyear",
+        )
+        .start
+    )
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snw))
     return out
 
 
@@ -1499,6 +1714,43 @@ def snow_cover_duration(
 
     Warnings
     --------
+    * The default `freq` is valid for the northern hemisphere.
+    * This index will be removed in a future version of xclim.
+
+    Parameters
+    ----------
+    snd : xarray.DataArray
+        Surface snow thickness.
+    thresh : str
+        Threshold snow thickness.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+        Number of days where snow depth is greater than or equal to threshold.
+    """
+    warnings.warn(
+        "The `snow_cover_duration` is being deprecated in favour of `snow_depth_cover_duration` "
+        "This indice will be removed in `xclim>=0.42.0`. Please update your scripts accordingly.",
+        DeprecationWarning,
+        stacklevel=3,
+    )
+    return snow_depth_cover_duration(snd, thresh, freq)
+
+
+@declare_units(snd="[length]", thresh="[length]")
+def snow_depth_cover_duration(
+    snd: xarray.DataArray, thresh: str = "2 cm", freq: str = "AS-JUL"
+) -> xarray.DataArray:
+    # noqa: D401
+    """Number of days with snow depth above a threshold.
+
+    Number of days where surface snow depth is greater or equal to given threshold (default: 2 cm).
+
+    Warnings
+    --------
     The default `freq` is valid for the northern hemisphere.
 
     Parameters
@@ -1518,6 +1770,38 @@ def snow_cover_duration(
     thresh = convert_units_to(thresh, snd)
     out = threshold_count(snd, ">=", thresh, freq)
     return to_agg_units(out, snd, "count")
+
+
+@declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
+def snow_water_cover_duration(
+    snw: xarray.DataArray, thresh: str = "0.02 kg m-2", freq: str = "AS-JUL"
+) -> xarray.DataArray:
+    # noqa: D401
+    """Number of days with snow water above a threshold.
+
+    Number of days where surface snow water is greater or equal to given threshold (default: 2 cm).
+
+    Warnings
+    --------
+    The default `freq` is valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    snw : xarray.DataArray
+        Surface snow amount.
+    thresh : str
+        Threshold snow amount.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+        Number of days where snow water is greater than or equal to threshold.
+    """
+    thresh = convert_units_to(thresh, snw)
+    out = threshold_count(snw, ">=", thresh, freq)
+    return to_agg_units(out, snw, "count")
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")

@@ -265,21 +265,21 @@ indicators:
       long_name: Mean of daily snow depth
   SD1:
     realm: land
-    base: snow_cover_duration
+    base: snow_depth_cover_duration
     cf_attrs:
       long_name: Snow days (SD≥1 cm)
     parameters:
       thresh: 1 cm
   SD5cm:
     realm: land
-    base: snow_cover_duration
+    base: snow_depth_cover_duration
     cf_attrs:
       long_name: Snow days (SD≥5 cm)
     parameters:
       thresh: 5 cm
   SD50cm:
     realm: land
-    base: snow_cover_duration
+    base: snow_depth_cover_duration
     cf_attrs:
       long_name: Snow days (SD≥50 cm)
     parameters:
