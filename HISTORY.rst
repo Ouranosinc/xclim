@@ -4,7 +4,7 @@ History
 
 0.40.0 (2023-01-13)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Juliette Lavoie (:user:`juliettelavoie`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Juliette Lavoie (:user:`juliettelavoie`), Éric Dupuis (:user:`coxipi`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -15,6 +15,10 @@ New features and enhancements
     - Passing ``context='infer'`` will activate the "hydro" context if the source or the target are DataArrays with a standard name that is compatible, as decided by the new ``xclim.core.units.infer_context`` function.
 * New `generic` indicator realm. Now holds indicators previously meant for streamflow analysis in the `land` realm: `fit`, `return_level` (previously `freq_analysis`) and `stats`. (:issue:`1130`, :pull:`1225`).
 * Thresholds and other quantities passed as parameters of indicators can now be multi-dimensional `DataArray`s. `xarray` broadcasting mechanisms will apply. These parameters are now annotated as "Quantity" in the signatures (``xclim.core.utils.Quantity``), instead of "str" as before. Attributes where such thresholds where included will now read "<an array>" (french: "<une matrice>") for these new cases. Multi-dimensional quantities are still largely unsupported, except where documented in the docstring. (:issue:`1093`, :pull:`1236`).
+
+New indicators
+^^^^^^^^^^^^^^
+* New indices ``snow_{depth | water}_cover_duration`` and  ``continuous_snow_{depth | water}_cover_{start | end}`` which generalize ``snow_cover_duration`` and  ``continuous_snow_cover_{start | end}`` to allow using these functions with variable `snw`.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
