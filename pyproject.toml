@@ -1,5 +1,5 @@
 [build-system]
-requires = ["flit_core >=3.2,<4"]
+requires = ["flit_core >=3.8,<4"]
 build-backend = "flit_core.buildapi"
 
 [project]
@@ -34,10 +34,55 @@ dynamic = ["description", "version"]
 "Changelog" = "https://xclim.readthedocs.io/en/stable/history.html"
 "Issue tracker" = "https://github.com/Ouranosinc/xclim/issues"
 
+[project.optional-dependencies]
+dev = [
+    # dev tools and testing
+    "black >=22.12",
+    "blackdoc",
+    "bump2version",
+    "coverage",
+    "flake8",
+    "flake8-rst-docstrings",
+    "ipython",
+    "mypy",
+    "nbqa",
+    "nbval",
+    "pre-commit >=2.9",
+    "pydocstyle >=5.1.1",
+    "pybtex",
+    "pylint <2.15",
+    "pytest",
+    "pytest-cov",
+    "pytest-xdist[psutil]",
+    "tokenize-rt",
+    "tox",
+    "wheel",
+    "xdoctest",
+    "yamale",
+    "yamllint",
+    # Documentation and examples
+    "distributed >=2.0",
+    "ipykernel",
+    "matplotlib",
+    "nbsphinx",
+    "nc-time-axis",
+    "netCDF4 <1.6",
+    "pooch",
+    "sphinx",
+    "sphinx-codeautolink",
+    "sphinx-copybutton",
+    "sphinx-rtd-theme >=1.0",
+    "sphinxcontrib-bibtex"
+]
+
 [project.scripts]
 xclim = "xclim.cli:cli"
 
 [tool]
+[tool.flit.sdist]
+include = ["AUTHORS.rst", "CONTRIBUTING.rst", "HISTORY.rst", "LICENSE", "README.rst", "requirements_upstream.txt", "xclim/**/*.py", "xclim/**/*.json", "xclim/**/*.yml", "xclim/**/*.txt", "docs/**/*.rst", "docs/conf.py", "docs/Makefile", "docs/make.bat", "docs/**/*.jpg", "docs/**/*.png", "docs/**/*.gif"]
+exclude = [".*", "pylintrc", "**/__pycache__", "**/*.py[co]"]
+
 [tool.coverage.run]
 relative_files = true
 omit = "*/tests/*.py"
