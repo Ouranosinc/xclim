@@ -4,11 +4,11 @@ History
 
 0.41.0
 -------------------
-Contributors to this version: Éric Dupuis (:user: `coxipi`)
+Contributors to this version: Éric Dupuis (:user:`coxipi`)
 
 Bug fixes
 ^^^^^^^^^
-* ``{snd,snw}_max_doy`` now avoids an error due to `xr.argmax` when there are all-NaN slices.
+* ``{snd,snw}_max_doy`` now avoids an error due to `xr.argmax` when there are all-NaN slices. (:pull:`1277`)
 
 0.40.0 (2023-01-13)
 -------------------
