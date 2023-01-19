@@ -1,0 +1,120 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "xclim"
+authors = [
+    { name="Travis Logan", email="logan.travis@ouranos.ca" }
+    ]
+maintainers = [
+    { name="Trevor James Smith", email="smith.trevorj@ouranos.ca" },
+    { name="Pascal Bourgault", email="bourgault.pascal@ouranos.ca" }
+    ]
+requires-python = ">=3.8.0"
+keywords = ["xclim", "xarray", "climate", "climatology", "bias correction", "ensemble", "indicators", "analysis"]
+license = { file="LICENSE" }
+classifiers=[
+        "Development Status :: 4 - Beta",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: Apache Software License",
+        "Natural Language :: English",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Topic :: Scientific/Engineering :: Atmospheric Science",
+    ]
+dynamic = ["description", "version"]
+
+[project.urls]
+"About Ouranos" =  "https://www.ouranos.ca/en/"
+"Changelog" = "https://xclim.readthedocs.io/en/stable/history.html"
+"Issue tracker" = "https://github.com/Ouranosinc/xclim/issues"
+
+[project.scripts]
+xclim = "xclim.cli:cli"
+
+[tool]
+[tool.coverage.run]
+relative_files = true
+omit = "*/tests/*.py"
+
+[tool.pytest.ini_options]
+addopts = ["--verbose", "--cov=xclim", "--cov-report=term-missing", "--numprocesses=auto", "--maxprocesses=6", "--dist=loadscope"]
+norecursedirs = ["docs/notebooks/*"]
+filterwarnings = ["ignore::UserWarning"]
+testpaths = "xclim/testing/tests xclim/testing/tests/test_sdba"
+usefixtures = "xdoctest_namespace"
+doctest_optionflags = ["NORMALIZE_WHITESPACE", "IGNORE_EXCEPTION_DETAIL", "NUMBER", "ELLIPSIS"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "requires_docs: mark tests that can only be run with documentation present"
+]
+
+[tool.isort]
+profile = "black"
+py_version = 38
+append_only = true
+
+[tool.black]
+target-version = [
+    "py38"
+]
+
+[tool.mypy]
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module= "xarray.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "numpy.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "scipy.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "boltons.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "lmoments3.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "dask.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "numba.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "pint.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "cftime.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "pandas.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "bottleneck.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "sklearn.cluster.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "clisops.core.subset.*"
+ignore_missing_imports = true
