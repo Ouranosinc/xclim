@@ -320,6 +320,12 @@ def continuous_snow_depth_cover_end(
     ----------
     :cite:cts:`chaumont_elaboration_2017`
     """
+    from xclim.core.missing import (  # pylint: disable=import-outside-toplevel
+        at_least_n_valid,
+    )
+
+    valid = at_least_n_valid(snd.where(snd > 0), n=1, freq=freq)
+
     thresh = convert_units_to(thresh, snd)
     cond = snd >= thresh
 
@@ -329,7 +335,7 @@ def continuous_snow_depth_cover_end(
         .end
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd))
-    return out
+    return out.where(~valid)
 
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
@@ -370,6 +376,12 @@ def continuous_snow_water_cover_end(
     ----------
     :cite:cts:`chaumont_elaboration_2017`
     """
+    from xclim.core.missing import (  # pylint: disable=import-outside-toplevel
+        at_least_n_valid,
+    )
+
+    valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
+
     thresh = convert_units_to(thresh, snw)
     cond = snw >= thresh
 
@@ -379,7 +391,7 @@ def continuous_snow_water_cover_end(
         .end
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snw))
-    return out
+    return out.where(~valid)
 
 
 @declare_units(snd="[length]", thresh="[length]")
@@ -426,21 +438,7 @@ def continuous_snow_cover_start(
         DeprecationWarning,
         stacklevel=3,
     )
-    thresh = convert_units_to(thresh, snd)
-    cond = snd >= thresh
-
-    out = (
-        cond.resample(time=freq)
-        .map(
-            rl.season,
-            window=window,
-            dim="time",
-            coord="dayofyear",
-        )
-        .start
-    )
-    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd))
-    return out
+    return continuous_snow_depth_cover_start(snd, thresh, window, freq)
 
 
 @declare_units(snd="[length]", thresh="[length]")
@@ -480,6 +478,12 @@ def continuous_snow_depth_cover_start(
     ----------
     :cite:cts:`chaumont_elaboration_2017`
     """
+    from xclim.core.missing import (  # pylint: disable=import-outside-toplevel
+        at_least_n_valid,
+    )
+
+    valid = at_least_n_valid(snd.where(snd > 0), n=1, freq=freq)
+
     thresh = convert_units_to(thresh, snd)
     cond = snd >= thresh
 
@@ -494,7 +498,7 @@ def continuous_snow_depth_cover_start(
         .start
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd))
-    return out
+    return out.where(~valid)
 
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
@@ -534,6 +538,12 @@ def continuous_snow_water_cover_start(
     ----------
     :cite:cts:`chaumont_elaboration_2017`
     """
+    from xclim.core.missing import (  # pylint: disable=import-outside-toplevel
+        at_least_n_valid,
+    )
+
+    valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
+
     thresh = convert_units_to(thresh, snw)
     cond = snw >= thresh
 
@@ -548,7 +558,7 @@ def continuous_snow_water_cover_start(
         .start
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snw))
-    return out
+    return out.where(~valid)
 
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
@@ -1773,9 +1783,14 @@ def snow_depth_cover_duration(
     xarray.DataArray, [time]
         Number of days where snow depth is greater than or equal to threshold.
     """
+    from xclim.core.missing import (  # pylint: disable=import-outside-toplevel
+        at_least_n_valid,
+    )
+
+    valid = at_least_n_valid(snd.where(snd > 0), n=1, freq=freq)
     thresh = convert_units_to(thresh, snd)
     out = threshold_count(snd, ">=", thresh, freq)
-    return to_agg_units(out, snd, "count")
+    return to_agg_units(out, snd, "count").where(~valid)
 
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
@@ -1805,9 +1820,15 @@ def snow_water_cover_duration(
     xarray.DataArray, [time]
         Number of days where snow water is greater than or equal to threshold.
     """
+    from xclim.core.missing import (  # pylint: disable=import-outside-toplevel
+        at_least_n_valid,
+    )
+
+    valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
+
     thresh = convert_units_to(thresh, snw)
     out = threshold_count(snw, ">=", thresh, freq)
-    return to_agg_units(out, snw, "count")
+    return to_agg_units(out, snw, "count").where(~valid)
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
