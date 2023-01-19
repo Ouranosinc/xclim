@@ -21,13 +21,13 @@ repos:
   - id: debug-statements
   - id: pretty-format-json
     args: ['--autofix', '--no-ensure-ascii', '--no-sort-keys']
-- repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
-  rev: v2.5.0
-  hooks:
+#- repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
+#  rev: v2.5.0
+#  hooks:
 #  - id: pretty-format-toml
 #    args: ['--autofix']
-  - id: pretty-format-yaml
-    args: ['--autofix', '--indent', '2', '--preserve-quotes']
+#  - id: pretty-format-yaml
+#    args: ['--autofix', '--indent', '2', '--preserve-quotes']
 - repo: https://github.com/pycqa/flake8
   rev: 6.0.0
   hooks:
@@ -38,7 +38,6 @@ repos:
   rev: 22.12.0
   hooks:
   - id: black
-    args: ['--target-version=py38']
 - repo: https://github.com/PyCQA/isort
   rev: 5.11.4
   hooks:
@@ -68,7 +67,8 @@ repos:
   hooks:
   - id: blackdoc
     exclude: '(xclim/indices/__init__.py|docs/installation.rst)'
-    additional_dependencies: ['black==22.3.0']
+    additional_dependencies:
+    - 'black==22.12.0'
 - repo: https://github.com/adrienverge/yamllint.git
   rev: v1.28.0
   hooks:
