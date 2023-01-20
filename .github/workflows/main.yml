@@ -6,8 +6,9 @@ on:
       - master
     paths-ignore:
       - HISTORY.rst
+      - README.rst
+      - pyproject.toml
       - setup.cfg
-      - setup.py
       - xclim/__init__.py
   pull_request:
     types:

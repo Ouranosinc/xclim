@@ -58,11 +58,11 @@ clean-test: ## remove test and coverage artifacts
 lint: ## check style with flake8 and black
 	pydocstyle --config=setup.cfg xclim
 	flake8 --config=setup.cfg xclim
-	black --check --target-version py38 xclim
-	nbqa black --check docs --target-version py38
-	blackdoc --check --target-version py38 xclim --exclude xclim/indices/__init__.py,xclim/docs/installation.rst
-	isort --check --settings-file=setup.cfg xclim --add_imports="from __future__ import annotations"
-	pylint --rcfile=pylintrc --exit-zero xclim
+	black --check xclim
+	nbqa black --check docs
+	blackdoc --check --exclude=xclim/indices/__init__.py xclim
+	blackdoc --check docs
+	isort --check xclim
 
 test: ## run tests quickly with the default Python
 	pytest xclim/testing/tests

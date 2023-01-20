@@ -115,6 +115,7 @@ exclude = [".*", "pylintrc", "**/__pycache__", "**/*.py[co]"]
 profile = "black"
 py_version = 38
 append_only = true
+add_imports = "from __future__ import annotations"
 
 [tool.mypy]
 show_error_codes = true
