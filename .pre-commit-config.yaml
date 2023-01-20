@@ -15,17 +15,17 @@ repos:
   - id: end-of-file-fixer
     exclude: '.ipynb'
   - id: check-json
-#  - id: check-toml
+  - id: check-toml
   - id: check-yaml
     args: ['--allow-multiple-documents']
   - id: debug-statements
   - id: pretty-format-json
     args: ['--autofix', '--no-ensure-ascii', '--no-sort-keys']
-#- repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
-#  rev: v2.5.0
-#  hooks:
-#  - id: pretty-format-toml
-#    args: ['--autofix']
+- repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
+  rev: v2.5.0
+  hooks:
+  - id: pretty-format-toml
+    args: ['--autofix']
 #  - id: pretty-format-yaml
 #    args: ['--autofix', '--indent', '2', '--preserve-quotes']
 - repo: https://github.com/pycqa/flake8
