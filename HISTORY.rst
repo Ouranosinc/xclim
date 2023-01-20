@@ -2,6 +2,15 @@
 History
 =======
 
+0.41.0 (unreleased)
+-------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`)
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* `xclim` has adopted `PEP 517 <https://peps.python.org/pep-0517/>`_ and `PEP 621 <https://peps.python.org/pep-0621/>`_ (``pyproject.toml`` using the `flit <https://flit.pypa.io/en/stable/>`_ backend) to replace the legacy ``setup.py`` used to manage package organisation and building. Many tooling configurations that already supported the ``pyproject.toml`` standard have been migrated to this file. (:pull:`1278`, suggested from `PyOpenSci Software Review <https://github.com/pyOpenSci/software-review/issues/73>`_)
+* Documentation source files have been moved around to remove some duplicated image files. (:pull:`1278`)
+
 0.40.0 (2023-01-13)
 -------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Juliette Lavoie (:user:`juliettelavoie`).
