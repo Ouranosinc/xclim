@@ -8,7 +8,7 @@ Stable release
 --------------
 To install xclim via pip, run this command in your terminal:
 
-.. code-block:: console
+.. code-block:: shell
 
     $ pip install xclim
 
@@ -28,7 +28,7 @@ This version tends to be updated at around the same frequency as the pip library
 
 To install the xclim Anaconda binary, run this command in your terminal:
 
-.. code-block:: console
+.. code-block:: shell
 
     $ conda install -c conda-forge xclim
 
@@ -44,10 +44,14 @@ We also recommend using the subsetting tools in `clisops`_ (see: :doc:`clisops.c
 `xclim` is regularly tested against the main development branches of a handful of key base libraries (xarray, cftime, flox, pint).
 For convenience, these libraries can be installed alongside `xclim` using the following pip-installable recipe:
 
-.. code-block::
+.. code-block:: shell
 
     $ pip install -r requirements_upstream.txt
-    # Or, alternatively:
+
+Or, alternatively:
+
+.. code-block:: shell
+
     $ make upstream
 
 .. _flox: https://github.com/xarray-contrib/flox
@@ -58,7 +62,7 @@ It can't be installed directly from pip or conda and has one complex dependency 
 Please refer to Eigen's and SBCK's docs for the recommended installation instructions.
 However, Eigen is available on conda, so one can do:
 
-.. code-block::
+.. code-block:: shell
 
    $ conda install -c conda-forge eigen pybind11
    $ pip install "git+https://github.com/Ouranosinc/SBCK.git@easier-install#egg=sbck&subdirectory=python"
@@ -83,25 +87,25 @@ The sources for xclim can be downloaded from the `Github repo`_.
 
 You can either clone the public repository:
 
-.. code-block:: console
+.. code-block:: shell
 
     $ git clone git@github.com:Ouranosinc/xclim.git
 
 Or download the `tarball`_:
 
-.. code-block:: console
+.. code-block:: shell
 
     $ curl -OL https://github.com/Ouranosinc/xclim/tarball/master
 
 Once you have a copy of the source, you can install it with:
 
-.. code-block:: console
+.. code-block:: shell
 
     $ python setup.py install
 
 Alternatively, you can also install a local development copy via pip:
 
-.. code-block:: console
+.. code-block:: shell
 
     $ pip install -e .[dev]
 
