@@ -1,6 +1,8 @@
 # noqa: D100
 from __future__ import annotations
 
+from typing import Tuple
+
 import cf_xarray  # noqa: F401, pylint: disable=unused-import
 import numpy as np
 import xarray
@@ -22,7 +24,7 @@ __all__ = [
 @declare_units(ua="[speed]")
 def jetstream_metric_woollings(
     ua: xarray.DataArray,
-) -> (xarray.DataArray, xarray.DataArray):
+) -> tuple[xarray.DataArray, xarray.DataArray]:
     """Strength and latitude of jetstream.
 
     Identify latitude and strength of maximum smoothed zonal wind speed in the region from 15 to 75°N and -60 to 0°E,

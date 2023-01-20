@@ -100,7 +100,7 @@ def kkz_reduce_ensemble(
 def kmeans_reduce_ensemble(
     data: xarray.DataArray,
     *,
-    method: dict = None,
+    method: dict,
     make_graph: bool = MPL_INSTALLED,
     max_clusters: int | None = None,
     variable_weights: np.ndarray | None = None,
@@ -118,7 +118,7 @@ def kmeans_reduce_ensemble(
     Parameters
     ----------
     data : xr.DataArray
-        Selecton criteria data : 2-D xr.DataArray with dimensions 'realization' (N) and
+        Selection criteria data : 2-D xr.DataArray with dimensions 'realization' (N) and
         'criteria' (P). These are the values used for clustering. Realizations represent the individual original
         ensemble members and criteria the variables/indicators used in the grouping algorithm.
     method : dict
