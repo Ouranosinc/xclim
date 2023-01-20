@@ -42,7 +42,7 @@ repos:
   rev: 5.11.4
   hooks:
   - id: isort
-    args: ['--settings-file=setup.cfg', "--add_imports='from __future__ import annotations'"]
+    args: ['--settings-file=pyproject.toml', "--add_imports='from __future__ import annotations'"]
 - repo: https://github.com/nbQA-dev/nbQA
   rev: 1.6.0
   hooks:
@@ -51,7 +51,7 @@ repos:
   - id: nbqa-pyupgrade
     args: ['--py38-plus']
   - id: nbqa-isort
-    args: ['--settings-file=setup.cfg']
+    args: ['--settings-file=pyproject.toml']
 - repo: https://github.com/kynan/nbstripout
   rev: 0.6.1
   hooks:
