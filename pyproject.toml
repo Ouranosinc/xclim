@@ -11,7 +11,7 @@ maintainers = [
   {name = "Trevor James Smith", email = "smith.trevorj@ouranos.ca"},
   {name = "Pascal Bourgault", email = "bourgault.pascal@ouranos.ca"}
 ]
-readme = {file = "long_description.rst", content-type = "text/x-rst"}
+readme = {file = "README.rst", content-type = "text/x-rst"}
 requires-python = ">=3.8.0"
 keywords = ["xclim", "xarray", "climate", "climatology", "bias correction", "ensemble", "indicators", "analysis"]
 license = {file = "LICENSE"}
