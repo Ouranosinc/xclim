@@ -11,6 +11,7 @@ maintainers = [
   {name = "Trevor James Smith", email = "smith.trevorj@ouranos.ca"},
   {name = "Pascal Bourgault", email = "bourgault.pascal@ouranos.ca"}
 ]
+readme = {file = "long_description.rst", content-type = "text/x-rst"}
 requires-python = ">=3.8.0"
 keywords = ["xclim", "xarray", "climate", "climatology", "bias correction", "ensemble", "indicators", "analysis"]
 license = {file = "LICENSE"}
@@ -118,7 +119,10 @@ append_only = true
 add_imports = "from __future__ import annotations"
 
 [tool.mypy]
+python_version = 3.8
 show_error_codes = true
+warn_return_any = true
+warn_unused_configs = true
 
 [[tool.mypy.overrides]]
 module = "xarray.*"
