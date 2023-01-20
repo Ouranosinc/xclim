@@ -123,7 +123,7 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :target: https://github.com/psf/black
         :alt: Python Black
 
-.. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/master/_static/_images/xclim-logo-small.png
+.. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/master/docs/logos/xclim-logo-small.png
         :target: https://github.com/Ouranosinc/xclim
         :alt: Xclim
 

@@ -262,7 +262,7 @@ html_sidebars = {
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = "_static/_images/xclim-logo.png"
+html_logo = "logos/xclim-logo.png"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -277,7 +277,7 @@ htmlhelp_basename = "xclimdoc"
 # -- Options for LaTeX output ------------------------------------------
 
 latex_engine = "pdflatex"
-latex_logo = "_static/_images/xclim-logo.png"
+latex_logo = "logos/xclim-logo.png"
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').

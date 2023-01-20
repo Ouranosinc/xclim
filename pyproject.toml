@@ -112,7 +112,7 @@ omit = ["*/tests/*.py"]
 
 [tool.flit.sdist]
 include = ["AUTHORS.rst", "CONTRIBUTING.rst", "HISTORY.rst", "LICENSE", "README.rst", "requirements_upstream.txt", "xclim/**/*.py", "xclim/**/*.json", "xclim/**/*.yml", "xclim/**/*.txt", "docs/**/*.rst", "docs/conf.py", "docs/Makefile", "docs/make.bat", "docs/**/*.jpg", "docs/**/*.png", "docs/**/*.gif"]
-exclude = [".*", "pylintrc", "**/__pycache__", "**/*.py[co]"]
+exclude = [".*", "pylintrc", "**/__pycache__", "**/*.py[co]", "docs/_*", "docs/xclim*.rst", "docs/modules.rst"]
 
 [tool.isort]
 profile = "black"
