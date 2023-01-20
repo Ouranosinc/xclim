@@ -109,6 +109,7 @@ extensions = [
     "sphinxcontrib.bibtex",
     "sphinx_codeautolink",
     "sphinx_copybutton",
+    "sphinx_rtd_theme",
 ]
 
 autosectionlabel_prefix_document = True
@@ -117,6 +118,7 @@ autosectionlabel_maxdepth = 2
 linkcheck_ignore = [
     r"https://github.com/Ouranosinc/xclim/(pull|issue).*",  # too labourious to fully check
     r"https://doi.org/10.1093/mnras/225.1.155",  # does not allow linkcheck requests (error 403)
+    r"https://hal.inrae.fr/hal-02843898",  # bad ssl certificate
     r"https://www.ouranos.ca/.*",  # bad ssl certificate
     r"https://doi.org/10.1080/.*",  # tandfonline does not allow linkcheck requests (error 403)
     r"https://www.tandfonline.com/.*",  # tandfonline does not allow linkcheck requests (error 403)
