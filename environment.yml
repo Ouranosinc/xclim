@@ -26,13 +26,14 @@ dependencies:
     - eigen
     - pybind11
     # Testing and development dependencies
-    - black>=22.10  # 2023-01-09: black==22.12 has not yet been released on conda-forge
+    - black>=22.12
     - blackdoc
     - bump2version
     - coverage
     - distributed>=2.0
     - flake8
     - flake8-rst-docstrings
+    - flit
     - ipykernel
     - ipython
     - matplotlib
