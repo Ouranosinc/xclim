@@ -7,10 +7,9 @@ on:
     paths-ignore:
       - HISTORY.rst
       - Makefile
-      - MANIFEST.in
+      - pyproject.toml
       - requirements_upstream.txt
       - setup.cfg
-      - setup.py
       - tox.ini
       - xclim/__init__.py
       - docs/**.ipynb
