@@ -8,7 +8,7 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`)
 
 New indicators
 ^^^^^^^^^^^^^^
-* New indices and indicators for converting from snow water equivalent to snow depth (``snow_depth_approximation``) and snow depth to snow water equivalent (``snow_amount_approximation``) using snow density [kg/m^3].
+* New indices and indicators for converting from snow water equivalent to snow depth (``snow_depth_approximation``) and snow depth to snow water equivalent (``snow_amount_approximation``) using snow density [kg/m^3]. (:pull:`1271`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
