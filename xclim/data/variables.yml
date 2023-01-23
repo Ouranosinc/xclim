@@ -144,6 +144,11 @@ variables:
     standard_name: surface_snow_thickness
     data_flags:
       - negative_accumulation_values:
+  snr:
+    canonical_units: kg m-3
+    cell_methods: "time: mean"
+    description: Surface snow density.
+    standard_name: surface_snow_density
   snw:
     canonical_units: kg m-2
     cell_methods: "time: mean"
@@ -218,7 +223,7 @@ variables:
   tdps:
     canonical_units: K
     cell_methods: "time: mean"
-    description: Mean surface dew point temperaure.
+    description: Mean surface dew point temperature.
     standard_name: dew_point_temperature
   thickness_of_rainfall_amount:
     canonical_units: m
