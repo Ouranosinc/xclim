@@ -111,7 +111,25 @@ relative_files = true
 omit = ["*/tests/*.py"]
 
 [tool.flit.sdist]
-include = ["AUTHORS.rst", "CONTRIBUTING.rst", "HISTORY.rst", "LICENSE", "README.rst", "requirements_upstream.txt", "xclim/**/*.py", "xclim/**/*.json", "xclim/**/*.yml", "xclim/**/*.txt", "docs/**/*.rst", "docs/conf.py", "docs/Makefile", "docs/make.bat", "docs/**/*.jpg", "docs/**/*.png", "docs/**/*.gif"]
+include = [
+  "AUTHORS.rst",
+  "CONTRIBUTING.rst",
+  "HISTORY.rst",
+  "LICENSE",
+  "README.rst",
+  "docs/**/*.gif",
+  "docs/**/*.jpg",
+  "docs/**/*.png",
+  "docs/**/*.rst",
+  "docs/Makefile",
+  "docs/conf.py",
+  "docs/make.bat",
+  "requirements_upstream.txt",
+  "xclim/**/*.json",
+  "xclim/**/*.py",
+  "xclim/**/*.txt",
+  "xclim/**/*.yml"
+]
 exclude = [".*", "pylintrc", "**/__pycache__", "**/*.py[co]", "docs/_*", "docs/xclim*.rst", "docs/modules.rst"]
 
 [tool.isort]
@@ -128,24 +146,31 @@ warn_unused_configs = true
 
 [[tool.mypy.overrides]]
 module = [
-  "xarray.*",
-  "numpy.*",
-  "scipy.*",
   "boltons.*",
-  "lmoments3.*",
-  "dask.*",
-  "numba.*",
-  "pint.*",
-  "cftime.*",
-  "pandas.*",
   "bottleneck.*",
+  "cftime.*",
+  "clisops.core.subset.*",
+  "dask.*",
+  "lmoments3.*",
+  "numba.*",
+  "numpy.*",
+  "pandas.*",
+  "pint.*",
+  "scipy.*",
   "sklearn.cluster.*",
-  "clisops.core.subset.*"
+  "xarray.*"
 ]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
-addopts = ["--verbose", "--cov=xclim", "--cov-report=term-missing", "--numprocesses=auto", "--maxprocesses=6", "--dist=loadscope"]
+addopts = [
+  "--verbose",
+  "--cov=xclim",
+  "--cov-report=term-missing",
+  "--numprocesses=auto",
+  "--maxprocesses=6",
+  "--dist=worksteal"
+]
 norecursedirs = ["docs/notebooks/*"]
 filterwarnings = ["ignore::UserWarning"]
 testpaths = "xclim/testing/tests xclim/testing/tests/test_sdba"
