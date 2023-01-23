@@ -1,8 +1,6 @@
 # noqa: D100
 from __future__ import annotations
 
-from typing import Tuple
-
 import cf_xarray  # noqa: F401, pylint: disable=unused-import
 import numpy as np
 import xarray
@@ -56,7 +54,8 @@ def jetstream_metric_woollings(
     )
     if not lons_within_range:
         raise ValueError(
-            f"Longitude values need to be in a range between {lon_min}-{lon_max}. Consider changing the longitude coordinates to between -180.E–180.W"
+            f"Longitude values need to be in a range between {lon_min}-{lon_max}. "
+            "Consider changing the longitude coordinates to between -180 degrees E – 180 degrees W."
         )
 
     # get latitude & eastward wind component units
