@@ -168,8 +168,7 @@ addopts = [
   "--cov=xclim",
   "--cov-report=term-missing",
   "--numprocesses=auto",
-  "--maxprocesses=6",
-  "--dist=loadscope" # "--dist=worksteal" available in pytest-xdist >3.1.0
+  "--maxprocesses=6" # "--dist=worksteal" available in pytest-xdist >3.1.0
 ]
 norecursedirs = ["docs/notebooks/*"]
 filterwarnings = ["ignore::UserWarning"]
