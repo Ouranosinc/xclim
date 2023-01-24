@@ -95,9 +95,7 @@ class TestPrecipAccumulation:
 class TestStandardizedPrecip:
     nc_ds = os.path.join("sdba", "CanESM2_1950-2100.nc")
 
-    @pytest.mark.xfail(
-        reason="Causes segmentation faults from python-netcdf/netcdf4 when tested in parallel"
-    )
+    @pytest.mark.slow
     def test_3d_data_with_nans(self, open_dataset):
         # test with data
         ds = open_dataset(self.nc_ds)
