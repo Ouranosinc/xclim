@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from inspect import stack
 
-import cf_xarray  # noqa
+import cf_xarray  # noqa: F401, pylint: disable=unused-import
 import cftime
 import numpy as np
 import xarray as xr
