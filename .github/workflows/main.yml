@@ -134,6 +134,7 @@ jobs:
       - name: Report coverage
         shell: bash -l {0}
         run: |
+          pip install --upgrade coveralls
           coveralls
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -198,7 +199,7 @@ jobs:
     steps:
       - name: Coveralls Finished
         run: |
-          pip3 install --upgrade coveralls
+          pip install --upgrade coveralls
           coveralls --finish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
