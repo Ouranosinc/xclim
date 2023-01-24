@@ -134,7 +134,7 @@ jobs:
       - name: Report coverage
         shell: bash -l {0}
         run: |
-          coveralls --service=github
+          coveralls
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-py39-opt-slow
@@ -199,6 +199,7 @@ jobs:
       - name: Coveralls Finished
         run: |
           pip3 install --upgrade coveralls
-          coveralls --service=github --finish
+          coveralls --finish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_SERVICE_NAME: github
