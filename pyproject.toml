@@ -54,7 +54,7 @@ dev = [
   "black >=22.12",
   "blackdoc",
   "bump2version",
-  "coverage",
+  "coverage[toml]",
   "flake8",
   "flake8-rst-docstrings",
   "ipython",
