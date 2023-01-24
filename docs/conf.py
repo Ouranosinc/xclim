@@ -123,6 +123,7 @@ linkcheck_ignore = [
     r"https://doi.org/10.1080/.*",  # tandfonline does not allow linkcheck requests (error 403)
     r"https://www.tandfonline.com/.*",  # tandfonline does not allow linkcheck requests (error 403)
     r"http://www.utci.org/.*",  # Added on 2022-12-08: site appears to be down (timeout)
+    r"https://ui.adsabs.harvard.edu/abs/2018AGUFMIN33A..06A*",  # Added on 2023-01-24: bad ssl certificate
 ]
 linkcheck_exclude_documents = [r"readme"]
 
@@ -263,7 +264,7 @@ html_sidebars = {
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = "_static/_images/xclim-logo.png"
+html_logo = "logos/xclim-logo.png"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -278,7 +279,7 @@ htmlhelp_basename = "xclimdoc"
 # -- Options for LaTeX output ------------------------------------------
 
 latex_engine = "pdflatex"
-latex_logo = "_static/_images/xclim-logo.png"
+latex_logo = "logos/xclim-logo.png"
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
