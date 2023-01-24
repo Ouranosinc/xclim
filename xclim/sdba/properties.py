@@ -18,7 +18,7 @@ from statsmodels.tsa import stattools
 
 import xclim as xc
 from xclim.core.indicator import Indicator, base_registry
-from xclim.core.units import convert_units_to, infer_context, to_agg_units
+from xclim.core.units import convert_units_to, to_agg_units
 from xclim.core.utils import uses_dask
 from xclim.indices import run_length as rl
 from xclim.indices.generic import select_resample_op
