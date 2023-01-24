@@ -80,7 +80,7 @@ dev = [
   "matplotlib",
   "nbsphinx",
   "nc-time-axis",
-  "netCDF4 <1.6",
+  "netCDF4 >=1.4",
   "pooch",
   "sphinx",
   "sphinx-codeautolink",
