@@ -122,6 +122,7 @@ linkcheck_ignore = [
     r"https://doi.org/10.1080/.*",  # tandfonline does not allow linkcheck requests (error 403)
     r"https://www.tandfonline.com/.*",  # tandfonline does not allow linkcheck requests (error 403)
     r"http://www.utci.org/.*",  # Added on 2022-12-08: site appears to be down (timeout)
+    r"https://ui.adsabs.harvard.edu/abs/2018AGUFMIN33A..06A*",  # Added on 2023-01-24: bad ssl certificate
 ]
 linkcheck_exclude_documents = [r"readme"]
 
