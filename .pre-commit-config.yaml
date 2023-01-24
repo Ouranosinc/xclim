@@ -2,74 +2,79 @@ default_language_version:
   python: python3
 
 repos:
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.3.1
-    hooks:
-      - id: pyupgrade
-        args: [ "--py38-plus" ]
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
-    hooks:
-      - id: trailing-whitespace
-        exclude: setup.cfg
-      - id: end-of-file-fixer
-        exclude: ".ipynb"
-      - id: check-json
-      - id: check-yaml
-        args: [ '--allow-multiple-documents' ]
-      - id: debug-statements
-      - id: pretty-format-json
-        args: ['--autofix', '--no-ensure-ascii', '--no-sort-keys']
-  - repo: https://github.com/pycqa/flake8
-    rev: 6.0.0
-    hooks:
-      - id: flake8
-        additional_dependencies: [ 'flake8-rst-docstrings' ]
-        args: [ '--config=setup.cfg' ]
-  - repo: https://github.com/psf/black
-    rev: 22.12.0
-    hooks:
-      - id: black
-        args: [ "--target-version=py38" ]
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.11.4
-    hooks:
-      - id: isort
-        args: [ '--settings-file=setup.cfg', "--add_imports='from __future__ import annotations'" ]
-  - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.6.0
-    hooks:
-      - id: nbqa-black
-        args: [ "--target-version=py38" ]
-      - id: nbqa-pyupgrade
-        args: [ "--py38-plus" ]
-      - id: nbqa-isort
-        args: [ "--settings-file=setup.cfg" ]
-  - repo: https://github.com/kynan/nbstripout
-    rev: 0.6.1
-    hooks:
-      - id: nbstripout
-        files: ".ipynb"
-  - repo: https://github.com/pycqa/pydocstyle
-    rev: 6.2.0
-    hooks:
-      - id: pydocstyle
-        args: [ '--config=setup.cfg' ]
-  - repo: https://github.com/keewis/blackdoc
-    rev: v0.3.8
-    hooks:
-      - id: blackdoc
-        exclude: '(xclim/indices/__init__.py|docs/installation.rst)'
-        additional_dependencies: [ 'black==22.3.0' ]
-  - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.28.0
-    hooks:
-      - id: yamllint
-        args: [ '--config-file=.yamllint.yaml' ]
-  - repo: meta
-    hooks:
-      - id: check-hooks-apply
-      - id: check-useless-excludes
+- repo: https://github.com/asottile/pyupgrade
+  rev: v3.3.1
+  hooks:
+  - id: pyupgrade
+    args: ['--py38-plus']
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.4.0
+  hooks:
+  - id: trailing-whitespace
+    exclude: setup.cfg
+  - id: end-of-file-fixer
+    exclude: '.ipynb'
+  - id: check-json
+  - id: check-toml
+  - id: check-yaml
+    args: ['--allow-multiple-documents']
+  - id: debug-statements
+  - id: pretty-format-json
+    args: ['--autofix', '--no-ensure-ascii', '--no-sort-keys']
+- repo: https://github.com/pappasam/toml-sort
+  rev: v0.22.2
+  hooks:
+  - id: toml-sort-fix
+- repo: https://github.com/pycqa/flake8
+  rev: 6.0.0
+  hooks:
+  - id: flake8
+    additional_dependencies: ['flake8-rst-docstrings']
+    args: ['--config=setup.cfg']
+- repo: https://github.com/psf/black
+  rev: 22.12.0
+  hooks:
+  - id: black
+- repo: https://github.com/PyCQA/isort
+  rev: 5.11.4
+  hooks:
+  - id: isort
+    args: ['--settings-file=pyproject.toml', "--add_imports='from __future__ import annotations'"]
+- repo: https://github.com/nbQA-dev/nbQA
+  rev: 1.6.1
+  hooks:
+  - id: nbqa-black
+    args: ['--target-version=py38']
+  - id: nbqa-pyupgrade
+    args: ['--py38-plus']
+  - id: nbqa-isort
+    args: ['--settings-file=pyproject.toml']
+- repo: https://github.com/kynan/nbstripout
+  rev: 0.6.1
+  hooks:
+  - id: nbstripout
+    files: '.ipynb'
+- repo: https://github.com/pycqa/pydocstyle
+  rev: 6.3.0
+  hooks:
+  - id: pydocstyle
+    args: ['--config=setup.cfg']
+- repo: https://github.com/keewis/blackdoc
+  rev: v0.3.8
+  hooks:
+  - id: blackdoc
+    exclude: '(xclim/indices/__init__.py|docs/installation.rst)'
+    additional_dependencies:
+    - 'black==22.12.0'
+- repo: https://github.com/adrienverge/yamllint.git
+  rev: v1.29.0
+  hooks:
+  - id: yamllint
+    args: ['--config-file=.yamllint.yaml']
+- repo: meta
+  hooks:
+  - id: check-hooks-apply
+  - id: check-useless-excludes
 
 ci:
   autofix_commit_msg: |
@@ -80,5 +85,5 @@ ci:
   autoupdate_branch: ''
   autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
   autoupdate_schedule: monthly
-  skip: [ nbstripout ]
+  skip: [nbstripout]
   submodules: false

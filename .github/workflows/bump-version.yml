@@ -8,7 +8,6 @@ on:
       - .*
       - .github/**.yml
       - HISTORY.rst
-      - MANIFEST.in
       - Makefile
       - docs/**.ipynb
       - docs/**.py
@@ -18,10 +17,10 @@ on:
       - docs/references.bib
       - environment.yml
       - pylintrc
+      - pyproject.toml
       - requirements_dev.txt
       - requirements_upstream.txt
       - setup.cfg
-      - setup.py
       - tox.ini
       - xclim/__init__.py
 

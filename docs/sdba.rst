@@ -7,13 +7,15 @@ The `xclim.sdba` submodule provides a collection of bias-adjustment methods mean
 Almost all adjustment algorithms conform to the `train` - `adjust` scheme, meaning that adjustment factors are first estimated on training data sets, then applied in a distinct step to the data to be adjusted.
 Given a reference time series (ref), historical simulations (hist) and simulations to be adjusted (sim),
 any bias-adjustment method would be applied by first estimating the adjustment factors between the historical simulation
-and the observation series, and then applying these factors to `sim`, which could be a future simulation::
+and the observation series, and then applying these factors to `sim`, which could be a future simulation:
 
-  # Create the adjustment object by training it with reference and model data, plus certain arguments
-  Adj = Adjustment.train(ref, hist, group="time.month")
-  # Get a scenario by applying the adjustment to a simulated timeseries.
-  scen = Adj.adjust(sim, interp="linear")
-  Adj.ds.af  # adjustment factors.
+.. code-block:: python
+
+    # Create the adjustment object by training it with reference and model data, plus certain arguments
+    Adj = Adjustment.train(ref, hist, group="time.month")
+    # Get a scenario by applying the adjustment to a simulated timeseries.
+    scen = Adj.adjust(sim, interp="linear")
+    Adj.ds.af  # adjustment factors.
 
 Most method support both additive and multiplicative correction factors.
 Also, the `group` argument allows adjustment factors to be estimated independently for different periods: the full

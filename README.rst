@@ -22,7 +22,6 @@ Leveraging xarray and dask, users can easily bias-adjust climate simulations ove
 
 For example, the following would compute monthly mean temperature from daily mean temperature:
 
-.. autolink-skip::
 .. code-block:: python
 
     import xclim
@@ -124,7 +123,7 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :target: https://github.com/psf/black
         :alt: Python Black
 
-.. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/master/_static/_images/xclim-logo-small.png
+.. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/master/docs/logos/xclim-logo-small.png
         :target: https://github.com/Ouranosinc/xclim
         :alt: Xclim
 

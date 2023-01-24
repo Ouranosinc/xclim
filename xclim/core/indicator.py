@@ -888,7 +888,7 @@ class Indicator(IndicatorRegistrar):
             return outs[0]
         return tuple(outs)
 
-    def _parse_variables_from_call(self, args, kwds) -> (OrderedDict, dict):
+    def _parse_variables_from_call(self, args, kwds) -> tuple[OrderedDict, dict]:
         """Extract variable and optional variables from call arguments."""
         # Bind call arguments to `compute` arguments and set defaults.
         ba = self.__signature__.bind(*args, **kwds)
