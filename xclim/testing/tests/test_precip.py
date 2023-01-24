@@ -99,7 +99,7 @@ class TestStandardizedPrecip:
         # test with data
         ds = open_dataset(self.nc_ds)
         pr = ds.pr.sel(time=slice("2000"))  # kg m-2 s-1
-        prMM = convert_units_to(pr, "mm/day", context="hydro")
+        prMM = convert_units_to(pr, "mm/day", context="hydro")  # noqa
         # put a nan somewhere
         prMM.values[10] = np.nan
         pr.values[10] = np.nan
@@ -128,7 +128,7 @@ class TestStandardizedPrecip:
             tas = tasmax - 2.5
             tasmin = tasmax - 5
             wb = xci.water_budget(pr, None, tasmin, tasmax, tas, None)
-            wbMM = convert_units_to(wb, "mm/day", context="hydro")
+            wbMM = convert_units_to(wb, "mm/day", context="hydro")  # noqa
 
         out3 = atmos.standardized_precipitation_evapotranspiration_index(
             wb,
