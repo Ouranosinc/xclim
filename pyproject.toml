@@ -165,6 +165,7 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 addopts = [
   "--verbose",
+  "--color=yes",
   "--cov=xclim",
   "--cov-report=term-missing",
   "--numprocesses=auto",
