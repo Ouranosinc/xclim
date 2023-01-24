@@ -66,7 +66,7 @@ class TestFileRequests:
 
     # Not that this test is super slow, but there is no need in spamming github's API for no reason.
     @pytest.mark.slow
-    @pytest.mark.xfail(reason="test is rate limited.")
+    @pytest.mark.xfail(reason="Test is rate limited by GitHub.")
     def test_list_datasets(self):
         out = utilities.list_datasets()
 

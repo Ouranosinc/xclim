@@ -12,7 +12,6 @@ xclim: Climate services library |logo|
 | Development Status         | |build| |pre-commit| |coveralls| |black| |security| |
 +----------------------------+-----------------------------------------------------+
 
-
 `xclim` is an operational Python library for climate services, providing numerous climate-related indicator tools
 with an extensible framework for constructing custom climate indicators, statistical downscaling and bias
 adjustment of climate model simulations, as well as climate model ensemble analysis tools.
@@ -23,7 +22,6 @@ Leveraging xarray and dask, users can easily bias-adjust climate simulations ove
 
 For example, the following would compute monthly mean temperature from daily mean temperature:
 
-.. autolink-skip::
 .. code-block:: python
 
     import xclim
@@ -42,11 +40,11 @@ streamflow and sea ice concentration, numerous bias-adjustment algorithms, as we
 .. _dask: https://docs.dask.org/
 
 Documentation
-^^^^^^^^^^^^^
+-------------
 The official documentation is at https://xclim.readthedocs.io/
 
 Contributing to xclim
-^^^^^^^^^^^^^^^^^^^^^
+---------------------
 xclim is in active development and is being used in production by climate services specialists around the world.
 
 * If you're interested in participating in the development of xclim by suggesting new features, new indices or report bugs, please leave us a message on the `issue tracker`_. There is also a chat room on gitter (|gitter|).
@@ -57,13 +55,13 @@ xclim is in active development and is being used in production by climate servic
 .. _Contributing Guidelines: https://github.com/Ouranosinc/xclim/blob/master/.github/CONTRIBUTING.rst
 
 How to cite this library
-^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------
 If you wish to cite xclim in a research publication, we kindly ask that you use the bibliographical reference information available through `Zenodo`_
 
 .. _Zenodo: https://doi.org/10.5281/zenodo.2795043
 
 Credits
-^^^^^^^
+-------
 xclim development is funded through Ouranos_, Environment and Climate Change Canada (ECCC_), the `Fonds vert`_ and the Fonds d'électrification et de changements climatiques (FECC_), the Canadian Foundation for Innovation (CFI_), and the Fonds de recherche du Québec (FRQ_).
 
 This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-pypackage`_ project template.
@@ -125,7 +123,7 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :target: https://github.com/psf/black
         :alt: Python Black
 
-.. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/master/_static/_images/xclim-logo-small.png
+.. |logo| image:: https://raw.githubusercontent.com/Ouranosinc/xclim/master/docs/logos/xclim-logo-small.png
         :target: https://github.com/Ouranosinc/xclim
         :alt: Xclim
 
