@@ -70,7 +70,6 @@ dev = [
   "pytest-xdist[psutil]",
   "tokenize-rt",
   "tox",
-  "wheel",
   "xdoctest",
   "yamale",
   "yamllint",
