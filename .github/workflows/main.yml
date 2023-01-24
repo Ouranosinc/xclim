@@ -79,6 +79,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-py38-upstream-lm3
           COVERALLS_PARALLEL: true
+          COVERALLS_SERVICE_NAME: github
 
   test-py39-opt-slow:
     needs: black
@@ -133,10 +134,12 @@ jobs:
       - name: Report coverage
         shell: bash -l {0}
         run: |
-          coveralls
+          coveralls --service=github
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-py39-opt-slow
           COVERALLS_PARALLEL: true
+          COVERALLS_SERVICE_NAME: github
 
   test-py310-lm3:
     needs: black
@@ -159,6 +162,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-py310-lm3
           COVERALLS_PARALLEL: true
+          COVERALLS_SERVICE_NAME: github
 
   doctests:
     needs: black
@@ -182,15 +186,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-doctests
           COVERALLS_PARALLEL: true
+          COVERALLS_SERVICE_NAME: github
 
   finish:
     needs:
       - doctests
       - test-py39-opt-slow
       - test-py310-lm3
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+    container: python:3-slim
     steps:
       - name: Coveralls Finished
-        uses: AndreMiras/coveralls-python-action@develop
-        with:
-          parallel-finished: true
+        run: |
+          pip3 install --upgrade coveralls
+          coveralls --service=github --finish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
