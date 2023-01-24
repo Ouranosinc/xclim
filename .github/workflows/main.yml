@@ -54,9 +54,9 @@ jobs:
       - name: Install tox
         run: pip install tox
       - name: Test with tox
+        run: tox -e py38
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: tox -e py38
 
   test-py38-upstream-lm3:
     needs: black
@@ -74,14 +74,11 @@ jobs:
       - name: Install tox
         run: pip install tox
       - name: Test with tox
+        run: tox -e py38-upstream-lm3-coverage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: tox -e py38-upstream-lm3
-      - name: Report coverage
-        uses: AndreMiras/coveralls-python-action@develop
-        with:
-          flag-name: run-py38-upstream-lm3
-          parallel: true
+          COVERALLS_FLAG_NAME: run-py38-upstream-lm3
+          COVERALLS_PARALLEL: true
 
   test-py39-opt-slow:
     needs: black
@@ -134,10 +131,12 @@ jobs:
 #          CONDA_EXE: mamba
 #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Report coverage
-        uses: AndreMiras/coveralls-python-action@develop
-        with:
-          flag-name: run-py39-opt-slow
-          parallel: true
+        shell: bash -l {0}
+        run: |
+          coveralls
+        env:
+          COVERALLS_FLAG_NAME: run-py39-opt-slow
+          COVERALLS_PARALLEL: true
 
   test-py310-lm3:
     needs: black
@@ -155,14 +154,11 @@ jobs:
       - name: Install tox
         run: pip install tox~=3.0
       - name: Test with tox
+        run: tox -e py310-lm3-coverage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: tox -e py310-lm3
-      - name: Report coverage
-        uses: AndreMiras/coveralls-python-action@develop
-        with:
-          flag-name: run-py310
-          parallel: true
+          COVERALLS_FLAG_NAME: run-py310-lm3
+          COVERALLS_PARALLEL: true
 
   doctests:
     needs: black
@@ -181,12 +177,11 @@ jobs:
       - name: Run pylint
         run: pylint --rcfile=pylintrc --disable=import-error --exit-zero xclim
       - name: Test with tox
-        run: tox -e doctests_only
-      - name: Report coverage
-        uses: AndreMiras/coveralls-python-action@develop
-        with:
-          flag-name: run-doctests
-          parallel: true
+        run: tox -e doctests_only-coverage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_FLAG_NAME: run-doctests
+          COVERALLS_PARALLEL: true
 
   finish:
     needs:
