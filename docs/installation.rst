@@ -64,10 +64,8 @@ Please refer to Eigen's and SBCK's docs for the recommended installation instruc
 .. code-block:: shell
 
    $ conda install -c conda-forge eigen pybind11
-   $ pip install "git+https://github.com/Ouranosinc/SBCK.git@easier-install#egg=sbck&subdirectory=python"
+   $ pip install "git+https://github.com/yrobink/SBCK.git@master#egg=sbck&subdirectory=python"
 
-The last line will install ``SBCK>=v0.4.0`` from Ouranos' fork which implements a small fix that allows this
-direct installation from pip within a virtual environment.
 
 Finally, the function :py:indicator:`xclim.sdba.property.first_eof` makes use of `eofs`_, another optional dependency, which is available on both pip and conda.
 
