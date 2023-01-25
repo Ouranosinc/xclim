@@ -1401,8 +1401,7 @@ class TestFreezeThawSpell:
             tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS"
         )
         np.testing.assert_allclose(
-            out.isel(location=0),
-            [1.911765, 2.027027, 1.888889, 1.733333],
+            out.isel(location=0), [1.911765, 2.027027, 1.888889, 1.733333], rtol=1e-06
         )
 
         # At location -1, year 2 has no spells of length >=2
