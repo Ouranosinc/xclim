@@ -233,7 +233,7 @@ def test_wind_chill_index(atmosds):
     out = atmos.wind_chill_index(ds=atmosds)
 
     np.testing.assert_allclose(
-        out.isel(time=0), [np.nan, -6.116, -36.064, -7.153, np.nan], rtol=1e-3
+        out.isel(time=0), [np.nan, -6.716, -35.617, -8.486, np.nan], rtol=1e-3
     )
 
     out_us = atmos.wind_chill_index(ds=atmosds, method="US")

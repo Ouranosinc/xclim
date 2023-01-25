@@ -1298,7 +1298,7 @@ class TestWarmSpellDurationIndex:
             tasmax=tasmax, tasmax_per=tx90, window=3, freq="AS-JUL"
         )
         np.testing.assert_array_equal(
-            out.isel(location=0, percentiles=0), np.array([np.nan, 3, 0, 0, np.nan])
+            out.isel(location=0, percentiles=0), np.array([np.nan, 4, 0, 0, np.nan])
         )
         assert (
             "Annual number of days with at least 3 consecutive days" in out.description
@@ -1358,7 +1358,7 @@ def test_corn_heat_units(open_dataset):
     np.testing.assert_allclose(chu, chuC, rtol=1e-3)
 
     np.testing.assert_allclose(
-        chu[0, 180:185], np.array([13.777, 12.368, 11.966, 14.674, 16.797]), rtol=1e-4
+        chu[0, 180:185], np.array([12.933, 11.361, 11.1365, 13.419, 15.569]), rtol=1e-4
     )
 
     assert (

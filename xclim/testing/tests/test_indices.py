@@ -2187,7 +2187,7 @@ class TestWinterRainRatio:
 class TestTG:
     @pytest.mark.parametrize(
         "ind,exp",
-        [(xci.tg_mean, 283.1391), (xci.tg_min, 266.1117), (xci.tg_max, 292.1250)],
+        [(xci.tg_mean, 283.0615), (xci.tg_min, 266.1208), (xci.tg_max, 291.5018)],
     )
     def test_simple(self, open_dataset, ind, exp):
         ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")

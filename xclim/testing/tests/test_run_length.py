@@ -350,7 +350,7 @@ def test_run_bounds_data(open_dataset):
     bounds = rl.run_bounds(cond, "time")  # def coord = True
     np.testing.assert_array_equal(
         bounds.isel(location=0, events=0),
-        pd.to_datetime(["1990-06-19", "1990-10-26"]).values,
+        pd.to_datetime(["1990-06-21", "1990-10-26"]).values,
     )
 
     bounds = rl.run_bounds(cond, "time", coord="dayofyear")

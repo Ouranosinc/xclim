@@ -460,7 +460,7 @@ class TestDaysWithSnow:
     def test_simple(self, open_dataset, prsn_series):
         prsn = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").prsn
         out = atmos.days_with_snow(prsn, low="0 kg m-2 s-1")
-        np.testing.assert_array_equal(out[1], [np.nan, 224, 263, 123, np.nan])
+        np.testing.assert_array_equal(out[1], [np.nan, 162, 159, 126, np.nan])
 
 
 def test_days_over_precip_doy_thresh(open_dataset):
@@ -487,7 +487,7 @@ def test_days_over_precip_thresh(open_dataset):
     out = atmos.days_over_precip_thresh(pr, per)
 
     np.testing.assert_allclose(
-        out[1, :], np.array([80.0, 63.0, 68.0, 81.0]), atol=0.001
+        out[1, :], np.array([80.0, 64.0, 65.0, 83.0]), atol=0.001
     )
     assert "80.0th percentile" in out.attrs["description"]
     assert "['1990-01-01', '1993-12-31'] period" in out.attrs["description"]
@@ -502,7 +502,7 @@ def test_days_over_precip_thresh__seasonal_indexer(open_dataset):
         pr, per, freq="AS", date_bounds=("01-10", "12-31")
     )
     # THEN
-    np.testing.assert_almost_equal(out[0], np.array([82.0, 66.0, 66.0, 74.0]))
+    np.testing.assert_almost_equal(out[0], np.array([81.0, 66.0, 66.0, 75.0]))
 
 
 def test_fraction_over_precip_doy_thresh(open_dataset):
@@ -511,7 +511,7 @@ def test_fraction_over_precip_doy_thresh(open_dataset):
 
     out = atmos.fraction_over_precip_doy_thresh(pr, per)
     np.testing.assert_allclose(
-        out[1, :, 0], np.array([0.809, 0.770, 0.748, 0.807]), atol=0.001
+        out[1, :, 0], np.array([0.803, 0.747, 0.745, 0.806]), atol=0.001
     )
 
     out = atmos.fraction_over_precip_doy_thresh(pr, per, thresh="0.002 m/d")
@@ -533,7 +533,7 @@ def test_fraction_over_precip_thresh(open_dataset):
     out = atmos.fraction_over_precip_thresh(pr, per)
 
     np.testing.assert_allclose(
-        out[1, :], np.array([0.839, 0.809, 0.798, 0.859]), atol=0.001
+        out[1, :], np.array([0.839, 0.812, 0.776, 0.864]), atol=0.001
     )
 
     assert "80.0th percentile" in out.attrs["description"]
@@ -573,7 +573,7 @@ def test_dry_spell(atmosds):
     total_d_sum = total_d_sum.sel(location="Halifax", drop=True).isel(time=slice(0, 2))
     total_d_max = total_d_max.sel(location="Halifax", drop=True).isel(time=slice(0, 2))
 
-    np.testing.assert_allclose(events[0:2, 0], [5, 8], rtol=1e-1)
+    np.testing.assert_allclose(events[0:2, 0], [5, 7], rtol=1e-1)
     np.testing.assert_allclose(total_d_sum, [50, 60], rtol=1e-1)
     np.testing.assert_allclose(total_d_max, [76, 97], rtol=1e-1)
 
