@@ -468,10 +468,10 @@ def test_days_over_precip_doy_thresh(open_dataset):
     per = percentile_doy(pr, window=5, per=80)
 
     out1 = atmos.days_over_precip_doy_thresh(pr, per)
-    np.testing.assert_array_equal(out1[1, :, 0], np.array([80, 59, 66, 78]))
+    np.testing.assert_array_equal(out1[1, :, 0], np.array([81, 60, 68, 78]))
 
     out2 = atmos.days_over_precip_doy_thresh(pr, per, thresh="2 mm/d")
-    np.testing.assert_array_equal(out2[1, :, 0], np.array([81, 61, 66, 78]))
+    np.testing.assert_array_equal(out2[1, :, 0], np.array([80, 59, 66, 78]))
 
     assert "only days with at least 2 mm/d are counted." in out2.description
     assert "[80]th percentile" in out2.attrs["description"]

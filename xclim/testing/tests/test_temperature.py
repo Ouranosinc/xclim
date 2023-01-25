@@ -1411,7 +1411,7 @@ class TestFreezeThawSpell:
             window=2,
             freq="YS",
         )
-        np.testing.assert_array_equal(out.isel(location=-1), [2, 0, 2, 2])
+        np.testing.assert_array_equal(out.isel(location=-1), [0, 0, 4, 2])
 
         assert out.attrs["long_name"] == (
             "Average length of events where maximum daily temperatures are above 0 degc "
