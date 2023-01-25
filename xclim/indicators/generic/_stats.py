@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from xclim.core.indicator import Indicator, ResamplingIndicator
-from xclim.core.units import declare_units
 from xclim.indices.generic import select_resample_op
 from xclim.indices.stats import fit as _fit
 from xclim.indices.stats import frequency_analysis

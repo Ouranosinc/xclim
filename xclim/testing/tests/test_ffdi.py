@@ -136,6 +136,7 @@ class TestFFDI:
         ffdi = mcarthur_forest_fire_danger_index(D, T, H, V)
         np.testing.assert_allclose(ffdi, exp, rtol=1e-6)
 
+    @pytest.mark.slow
     @pytest.mark.parametrize("init_kbdi", [True, False])
     @pytest.mark.parametrize("limiting_func", ["xlim", "discrete"])
     def test_ffdi_indicators(self, open_dataset, init_kbdi, limiting_func):

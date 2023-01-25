@@ -8,7 +8,7 @@ Stable release
 --------------
 To install xclim via pip, run this command in your terminal:
 
-.. code-block:: console
+.. code-block:: shell
 
     $ pip install xclim
 
@@ -28,7 +28,7 @@ This version tends to be updated at around the same frequency as the pip library
 
 To install the xclim Anaconda binary, run this command in your terminal:
 
-.. code-block:: console
+.. code-block:: shell
 
     $ conda install -c conda-forge xclim
 
@@ -44,10 +44,14 @@ We also recommend using the subsetting tools in `clisops`_ (see: :doc:`clisops.c
 `xclim` is regularly tested against the main development branches of a handful of key base libraries (xarray, cftime, flox, pint).
 For convenience, these libraries can be installed alongside `xclim` using the following pip-installable recipe:
 
-.. code-block::
+.. code-block:: shell
 
     $ pip install -r requirements_upstream.txt
-    # Or, alternatively:
+
+Or, alternatively:
+
+.. code-block:: shell
+
     $ make upstream
 
 .. _flox: https://github.com/xarray-contrib/flox
@@ -55,16 +59,13 @@ For convenience, these libraries can be installed alongside `xclim` using the fo
 
 Another optional library is `SBCK`_, which provides experimental adjustment methods to extend :doc:`xclim.sdba <sdba>`.
 It can't be installed directly from pip or conda and has one complex dependency : `Eigen`_.
-Please refer to Eigen's and SBCK's docs for the recommended installation instructions.
-However, Eigen is available on conda, so one can do:
+Please refer to Eigen's and SBCK's docs for the recommended installation instructions. However, Eigen is available on conda, so one can do:
 
-.. code-block::
+.. code-block:: shell
 
    $ conda install -c conda-forge eigen pybind11
-   $ pip install "git+https://github.com/Ouranosinc/SBCK.git@easier-install#egg=sbck&subdirectory=python"
+   $ pip install "git+https://github.com/yrobink/SBCK.git@master#egg=sbck&subdirectory=python"
 
-The last line will install SBCK>=v0.4.0 from Ouranos' fork which implements a small fix that allows this
-direct installation from pip within a virtual environment.
 
 Finally, the function :py:indicator:`xclim.sdba.property.first_eof` makes use of `eofs`_, another optional dependency, which is available on both pip and conda.
 
@@ -75,7 +76,7 @@ Finally, the function :py:indicator:`xclim.sdba.property.first_eof` makes use of
 From sources
 ------------
 .. Warning::
-    For Python3.10+ users: Many of the required scientific libraries do not currently have wheels that support the latest
+    For Python3.11+ users: Many of the required scientific libraries do not currently have wheels that support the latest
     python. In order to ensure that installation of xclim doesn't fail, we suggest installing the `Cython` module
     before installing xclim in order to compile necessary libraries from source packages.
 
@@ -83,30 +84,31 @@ The sources for xclim can be downloaded from the `Github repo`_.
 
 You can either clone the public repository:
 
-.. code-block:: console
+.. code-block:: shell
 
     $ git clone git@github.com:Ouranosinc/xclim.git
 
 Or download the `tarball`_:
 
-.. code-block:: console
+.. code-block:: shell
 
     $ curl -OL https://github.com/Ouranosinc/xclim/tarball/master
 
-Once you have a copy of the source, you can install it with:
+Once you have extracted a copy of the source, you can install it with pip:
 
-.. code-block:: console
+.. code-block:: shell
 
-    $ python setup.py install
+    $ pip install -e ".[dev]"
 
-Alternatively, you can also install a local development copy via pip:
+Alternatively, you can also install a local development copy via `flit`_:
 
-.. code-block:: console
+.. code-block:: shell
 
-    $ pip install -e .[dev]
+    $ flit install [--symlink] xclim
 
 .. _Github repo: https://github.com/Ouranosinc/xclim
 .. _tarball: https://github.com/Ouranosinc/xclim/tarball/master
+.. _flit: https://flit.pypa.io/en/stable
 
 Creating a Conda environment
 ----------------------------
@@ -117,4 +119,4 @@ To create a conda development environment including all xclim dependencies, ente
 
     $ conda create -n my_xclim_env python=3.8 --file=environment.yml
     $ conda activate my_xclim_env
-    (my_xclim_env) $ pip install ".[dev]"
+    (my_xclim_env) $ pip install -e .
