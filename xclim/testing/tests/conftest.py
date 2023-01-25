@@ -22,7 +22,7 @@ from xclim.testing.tests.data import (
 from xclim.testing.utils import _default_cache_dir  # noqa
 from xclim.testing.utils import open_dataset as _open_dataset
 
-MAIN_TESTDATA_BRANCH = os.getenv("MAIN_TESTDATA_BRANCH", "main")
+MAIN_TESTDATA_BRANCH = os.getenv("MAIN_TESTDATA_BRANCH", "fix_era5_evspsblpot")
 SKIP_TEST_DATA = os.getenv("SKIP_TEST_DATA")
 
 
