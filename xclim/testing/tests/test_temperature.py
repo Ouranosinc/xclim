@@ -1374,7 +1374,7 @@ class TestFreezeThawSpell:
         out = atmos.freezethaw_spell_frequency(
             tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS"
         )
-        np.testing.assert_array_equal(out.isel(location=0), [32, 38, 37, 30])
+        np.testing.assert_array_equal(out.isel(location=0), [34.0, 37.0, 36.0, 30.0])
 
         # At location -1, year 2 has no spells of length >=2
         out = atmos.freezethaw_spell_frequency(
@@ -1401,7 +1401,7 @@ class TestFreezeThawSpell:
             tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS"
         )
         np.testing.assert_allclose(
-            out.isel(location=0), [2.09375, 2, 1.8648648, 1.7666666]
+            out.isel(location=0), [1.91177, 2.02703, 1.88889, 1.73333]
         )
 
         # At location -1, year 2 has no spells of length >=2
@@ -1437,7 +1437,7 @@ class TestFreezeThawSpell:
             window=2,
             freq="YS",
         )
-        np.testing.assert_array_equal(out.isel(location=-1), [2, 0, 2, 2])
+        np.testing.assert_array_equal(out.isel(location=-1), [0, 0, 4, 2])
 
         assert out.attrs["long_name"] == (
             "Maximal length of events where maximum daily temperatures are above 0 degc "

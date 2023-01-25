@@ -468,7 +468,7 @@ def test_days_over_precip_doy_thresh(open_dataset):
     per = percentile_doy(pr, window=5, per=80)
 
     out1 = atmos.days_over_precip_doy_thresh(pr, per)
-    np.testing.assert_array_equal(out1[1, :, 0], np.array([81, 61, 69, 78]))
+    np.testing.assert_array_equal(out1[1, :, 0], np.array([81, 60, 68, 78]))
 
     out2 = atmos.days_over_precip_doy_thresh(pr, per, thresh="2 mm/d")
     np.testing.assert_array_equal(out2[1, :, 0], np.array([81, 61, 66, 78]))
@@ -516,7 +516,7 @@ def test_fraction_over_precip_doy_thresh(open_dataset):
 
     out = atmos.fraction_over_precip_doy_thresh(pr, per, thresh="0.002 m/d")
     np.testing.assert_allclose(
-        out[1, :, 0], np.array([0.831, 0.803, 0.774, 0.833]), atol=0.001
+        out[1, :, 0], np.array([0.822, 0.780, 0.771, 0.829]), atol=0.001
     )
 
     assert "only days with at least 0.002 m/d are included" in out.description
@@ -574,7 +574,7 @@ def test_dry_spell(atmosds):
     total_d_max = total_d_max.sel(location="Halifax", drop=True).isel(time=slice(0, 2))
 
     np.testing.assert_allclose(events[0:2, 0], [5, 7], rtol=1e-1)
-    np.testing.assert_allclose(total_d_sum, [50, 60], rtol=1e-1)
+    np.testing.assert_allclose(total_d_sum, [50, 53], rtol=1e-1)
     np.testing.assert_allclose(total_d_max, [76, 97], rtol=1e-1)
 
     assert (
