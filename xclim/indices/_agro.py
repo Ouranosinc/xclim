@@ -681,15 +681,15 @@ def water_budget(
 )
 def rain_season(
     pr: xarray.DataArray,
-    s_thresh_wet: str = "25.0 mm",
+    s_thresh_wet: Quantified = "25.0 mm",
     s_window_wet: int = 3,
     s_window_not_dry: int = 30,
-    s_thresh_dry: str = "1.0 mm",
+    s_thresh_dry: Quantified = "1.0 mm",
     s_window_dry: int = 7,
     s_method_dry: str = "per_day",
     start_date_min: DayOfYearStr = "05-01",
     start_date_max: DayOfYearStr = "12-31",
-    e_thresh_dry: str = "0.0 mm",
+    e_thresh_dry: Quantified = "0.0 mm",
     e_window_dry: int = 20,
     e_method_dry: str = "per_day",
     end_date_min: DayOfYearStr = "09-01",
@@ -702,15 +702,15 @@ def rain_season(
 
     pr: xr.DataArray
         Precipitation data.
-    s_thresh_wet: str
+    s_thresh_wet: Quantified
         Accumulated precipitation threshold associated with `s_window_wet`.
     s_window_wet: int
         Number of days when accumulated precipitation is above `s_thresh_wet`. Defines the first condition to start the rain season
     s_window_not_dry: int
         Number of days, after `s_window_wet` days, during which no dry period must be found as a second and last condition to start the rain season.
         A dry sequence is defined with `s_thresh_dry`, `s_window_dry` and `s_method_dry`.
-    s_thresh_dry: str
-        Threshold defining the sequence of dry days related to `s_window_dry`.
+    s_thresh_dry: Quantified
+        Threshold length defining a dry day in the sequence related to `s_window_dry`.
     s_window_dry: int
         Number of days used to define a dry sequence in the start of the season. Daily precipitations lower than `s_thresh_dry`
         during `s_window_dry` days are considered a dry sequence. The precipitations must be lower than `s_thresh_dry`
@@ -724,7 +724,7 @@ def rain_season(
     start_date_max: DayOfYearStr
         Last day of year when season can start ("mm-dd").
     e_thresh_dry: str
-        Threshold defining the sequence of dry days related to `e_window_dry`.
+        Threshold length defining a dry day in the sequence related to `e_window_dry`.
     e_window_dry: int
         Number of days used to define a dry sequence in the end of the season. Daily precipitations lower than `e_thresh_dry`
         during `e_window_dry` days are considered a dry sequence. The precipitations must be lower than `e_thresh_dry`
