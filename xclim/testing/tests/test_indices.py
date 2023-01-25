@@ -2444,7 +2444,8 @@ class TestSnowCover:
         a[10:20] = 0.3
 
         snd = snd_series(a)
-        snw = snw_series(a)
+        # kg m-2 = 1000 kg m-3 * 1 m
+        snw = snw_series(1000 * a)
 
         out = xci.snow_depth_cover_duration(snd)
         assert len(out) == 2
@@ -2457,7 +2458,7 @@ class TestSnowCover:
     def test_continous_snow_cover_start(self, snd_series, snw_series):
         a = np.arange(366) / 100.0
         snd = snd_series(a)
-        snw = snw_series(a)
+        snw = snw_series(1000 * a)
 
         out = xci.continuous_snow_depth_cover_start(snd)
         assert len(out) == 2
@@ -2486,7 +2487,7 @@ class TestSnowCover:
             ]
         )
         snd = snd_series(a / 100.0)
-        snw = snw_series(a / 100.0)
+        snw = snw_series(1000 * a / 100.0)
 
         out = xci.continuous_snow_depth_cover_end(snd)
         assert len(out) == 2

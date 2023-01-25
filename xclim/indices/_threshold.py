@@ -341,7 +341,7 @@ def continuous_snow_depth_cover_end(
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def continuous_snow_water_cover_end(
     snw: xarray.DataArray,
-    thresh: Quantified = "0.02 kg m-2",
+    thresh: Quantified = "20 kg m-2",
     window: int = 14,
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
@@ -504,7 +504,7 @@ def continuous_snow_depth_cover_start(
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def continuous_snow_water_cover_start(
     snw: xarray.DataArray,
-    thresh: Quantified = "0.02 kg m-2",
+    thresh: Quantified = "20 kg m-2",
     window: int = 14,
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
@@ -1795,7 +1795,7 @@ def snow_depth_cover_duration(
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def snow_water_cover_duration(
-    snw: xarray.DataArray, thresh: Quantified = "0.02 kg m-2", freq: str = "AS-JUL"
+    snw: xarray.DataArray, thresh: Quantified = "20 kg m-2", freq: str = "AS-JUL"
 ) -> xarray.DataArray:
     # noqa: D401
     """Number of days with snow water above a threshold.
