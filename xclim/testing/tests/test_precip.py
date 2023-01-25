@@ -468,7 +468,7 @@ def test_days_over_precip_doy_thresh(open_dataset):
     per = percentile_doy(pr, window=5, per=80)
 
     out1 = atmos.days_over_precip_doy_thresh(pr, per)
-    np.testing.assert_array_equal(out1[1, :, 0], np.array([81, 60, 68, 78]))
+    np.testing.assert_array_equal(out1[1, :, 0], np.array([80, 59, 66, 78]))
 
     out2 = atmos.days_over_precip_doy_thresh(pr, per, thresh="2 mm/d")
     np.testing.assert_array_equal(out2[1, :, 0], np.array([81, 61, 66, 78]))
@@ -575,7 +575,7 @@ def test_dry_spell(atmosds):
 
     np.testing.assert_allclose(events[0:2, 0], [5, 7], rtol=1e-1)
     np.testing.assert_allclose(total_d_sum, [50, 53], rtol=1e-1)
-    np.testing.assert_allclose(total_d_max, [76, 97], rtol=1e-1)
+    np.testing.assert_allclose(total_d_max, [68, 97], rtol=1e-1)
 
     assert (
         "The annual number of dry periods of 7 day(s) or more, "

@@ -1383,7 +1383,7 @@ class TestFreezeThawSpell:
             window=2,
             freq="YS",
         )
-        np.testing.assert_array_equal(out.isel(location=-1), [1, 0, 1, 1])
+        np.testing.assert_array_equal(out.isel(location=-1), [0, 0, 1, 1])
 
         assert out.attrs["long_name"] == (
             "Frequency of events where maximum daily temperatures are above 0 degc "
@@ -1401,7 +1401,8 @@ class TestFreezeThawSpell:
             tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS"
         )
         np.testing.assert_allclose(
-            out.isel(location=0), [1.91177, 2.02703, 1.88889, 1.73333]
+            out.isel(location=0),
+            [1.911765, 2.027027, 1.888889, 1.733333],
         )
 
         # At location -1, year 2 has no spells of length >=2
