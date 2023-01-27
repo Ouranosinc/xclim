@@ -207,17 +207,18 @@ def cosine_of_solar_zenith_angle(
         Time correction for solar angle. See :py:func:`time_correction_for_solar_angle`
         This is necessary if stat is "instant".
     hours : xr.DataArray, optional
-        Watch time hours.
+        UTC time hours.
         This is necessary if stat is "instant", "interval" or "sunlit".
     interval : int, optional
         Time interval between two time steps in hours
         This is necessary if stat is "interval" or "sunlit".
     stat : {'integral', 'average', 'instant', 'interval', 'sunlit'}
-        Which daily statistic to return. If "integral", this returns the integral of the cosine of the zenith angle from
-        sunrise to sunset. If "average", the integral is divided by the "duration" from sunrise to sunset. If "instant",
-        this returns the instantaneous cosine of the zenith angle. If "interval", this returns the cosine of the zenith
-        angle during each interval. If "sunlit", this returns the cosine of the zenith angle during the sunlit period of
-        each interval.
+        Which daily statistic to return.
+        If "integral", this returns the integral of the cosine of the zenith angle from sunrise to sunset.
+        If "instant", this returns the instantaneous cosine of the zenith angle.
+        If "interval", this returns the average cosine of the zenith angle during each interval, not considering if the sun is actually in the sky.
+        If "sunlit", this returns the average cosine of the zenith angle during the sunlit period of each interval.
+        "average" is the same as "sunlit", but assuming the data has a daily frequency and `interval` is 24 h.
 
     Returns
     -------
@@ -235,8 +236,14 @@ def cosine_of_solar_zenith_angle(
     :cite:cts:`kalogirou_chapter_2014,di_napoli_mean_2020`
     """
     lat = convert_units_to(lat, "rad")
-    if lon is not None:
-        lon = convert_units_to(lon, "rad")
+
+    if stat in "average":
+        lon = "0 °"
+        hours = xr.zeros_like(declination) + 12
+        interval = 24
+        stat = "sunlit"
+
+    lon = convert_units_to(lon, "rad")
     if hours is not None:
         sha = (hours - 12) * 15 / 180 * np.pi + lon
     if interval is not None:
@@ -246,18 +253,15 @@ def cosine_of_solar_zenith_angle(
     h_sr = -np.arccos(-np.tan(lat) * np.tan(declination))
     h_ss = np.arccos(
         -np.tan(lat) * np.tan(declination)
-    )  # hour angle of sunset (eq. 2.15)
+    )  # hour angle of sunset (eq. 2.15), this has NaNs inside the polar circles
     # The following equation is not explicitly stated in the reference, but it can easily be derived.
     if stat == "integral":
+        # TODO: correct for polar regions
+        # h_ss is here used as a constant, but it reprensents half the day lwngth and not a timing
+        # It should be set to 0 for polar nights and pi for polar days!
         csza = 2 * (
             h_ss * np.sin(declination) * np.sin(lat)
             + np.cos(declination) * np.cos(lat) * np.sin(h_ss)
-        )
-        return xr.where(np.isnan(csza), 0, csza)
-    if stat == "average":
-        csza = (
-            np.sin(declination) * np.sin(lat)
-            + np.cos(declination) * np.cos(lat) * np.sin(h_ss) / h_ss
         )
         return xr.where(np.isnan(csza), 0, csza)
     if stat == "instant":
@@ -277,8 +281,23 @@ def cosine_of_solar_zenith_angle(
         csza = np.sin(declination) * np.sin(lat) + np.cos(declination) * np.cos(lat) * (
             np.sin(h_max) - np.sin(h_min)
         ) / (h_max - h_min)
-        csza = xr.where(np.isnan(csza), 0, csza)
+        csza_polar_day = np.sin(declination) * np.sin(lat) + np.cos(
+            declination
+        ) * np.cos(lat) * (np.sin(h_s) - np.sin(h_e)) / (h_e - h_s)
+
+        csza = xr.where(
+            h_ss.isnull() & (np.sign(declination) == -np.sign(lat)),  # Polar night
+            0,
+            csza,
+        )
+        csza = xr.where(
+            h_ss.isnull() & (np.sign(declination) == np.sign(lat)),  # Polar day
+            csza_polar_day,
+            csza,
+        )
+        # TODO: check if the transition zone between the polar and non polar regions is normal.
         return csza.clip(0, None)
+
     raise NotImplementedError(
         "Argument 'stat' must be one of 'integral', 'average', 'instant', 'interval' or 'sunlit'."
     )
