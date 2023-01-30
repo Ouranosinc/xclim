@@ -103,8 +103,8 @@ jobs:
             python="3.10"
       - name: Conda and Mamba versions
         run: |
-          mamba update -n base conda mamba
-          mamba --version
+          micromamba update -n base conda micromamba
+          micromamba --version
       - name: Install dependencies
         run: |
           python -m pip install --no-user "git+https://github.com/Ouranosinc/SBCK.git@easier-install#egg=sbck&subdirectory=python"
