@@ -124,6 +124,7 @@ def change_significance(
     test_params = {
         "ttest": ["p_change"],
         "welch-ttest": ["p_change"],
+        "mannwhitneyu": ["p_change"],
         "threshold": ["abs_thresh", "rel_thresh"],
     }
     changed = None
@@ -187,6 +188,30 @@ def change_significance(
             output_dtypes=[float],
         )
 
+        # When p < p_change, the hypothesis of no significant change is rejected.
+        changed = pvals < p_change
+    elif test == "mannwhitneyu":
+        if weights is not None:
+            raise NotImplementedError(
+                "'welch-ttest' is not currently supported for weighted arrays."
+            )
+        p_change = kwargs.setdefault("p_change", 0.05)
+
+        #Test hypothesis of no significant change
+        #-> Mann-Whitney U-test
+        pvals = xr.apply_ufunc(
+            lambda f, r: spstats.mannwhitneyu(
+                f, r, axis=-1, nan_policy="omit"
+            )[1],
+            fut,
+            ref,
+            input_core_dims=[["realization", "time"], ["realization", "time"]],
+            output_core_dims=[["realization"]],
+            exclude_dims={"time"},
+            vectorize=True,
+            dask="parallelized",
+            output_dtypes=[float],
+        )
         # When p < p_change, the hypothesis of no significant change is rejected.
         changed = pvals < p_change
     elif test == "threshold":
