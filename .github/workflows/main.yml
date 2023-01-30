@@ -58,7 +58,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  test-py38-upstream-lm3:
+  test-py311-upstream-lm3:
     needs: black
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
@@ -70,14 +70,14 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
-          python-version: "3.8"
+          python-version: "3.11"
       - name: Install tox
         run: pip install tox
       - name: Test with tox
         run: tox -e py38-upstream-lm3-coverage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-py38-upstream-lm3
+          COVERALLS_FLAG_NAME: run-py311-upstream-lm3
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
 
@@ -88,30 +88,28 @@ jobs:
       (github.event.review.state == 'approved') ||
       (github.event_name == 'push')
     runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash -l {0}
     steps:
       - uses: actions/checkout@v3
       - name: Setup conda
-        uses: conda-incubator/setup-miniconda@v2
+        uses: mamba-org/provision-with-micromamba@main
         with:
-          activate-environment: xclim39
-          environment-file: environment.yml
-          miniforge-variant: Mambaforge
-          miniforge-version: latest
-          python-version: "3.9"
-          use-mamba: true
+          cache-downloads: true
+          micromamba-version: 'latest'
+          environment-file: ci/environment.yml
+          extra-specs: |
+            python-version=3.9
       - name: Conda and Mamba versions
-        shell: bash -l {0}
         run: |
           mamba update -n base conda mamba
           mamba --version
       - name: Install dependencies
-        shell: bash -l {0}
         run: |
-          conda activate xclim39
           python -m pip install --no-user "git+https://github.com/Ouranosinc/SBCK.git@easier-install#egg=sbck&subdirectory=python"
           python -m pip install --no-user .
       - name: Test
-        shell: bash -l {0}
         run: |
           conda activate xclim39
           pip check
@@ -132,7 +130,6 @@ jobs:
 #          CONDA_EXE: mamba
 #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Report coverage
-        shell: bash -l {0}
         run: |
           pip install --upgrade coveralls
           coveralls
@@ -142,7 +139,7 @@ jobs:
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
 
-  test-py310-lm3:
+  test-py38-lm3:
     needs: black
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
@@ -154,18 +151,18 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.8"
       - name: Install tox
         run: pip install tox~=3.0
       - name: Test with tox
         run: tox -e py310-lm3-coverage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-py310-lm3
+          COVERALLS_FLAG_NAME: run-py38-lm3
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
 
-  doctests:
+  doctests-py310:
     needs: black
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
@@ -176,7 +173,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.8"
+          python-version: "3.10"
       - name: Install pylint and tox
         run: pip install pylint tox
       - name: Run pylint
@@ -185,15 +182,15 @@ jobs:
         run: tox -e doctests_only-coverage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-doctests
+          COVERALLS_FLAG_NAME: run-doctests-py310
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
 
   finish:
     needs:
-      - doctests
+      - doctests-py310
       - test-py39-opt-slow
-      - test-py310-lm3
+      - test-py38-lm3
     runs-on: ubuntu-22.04
     container: python:3-slim
     steps:
