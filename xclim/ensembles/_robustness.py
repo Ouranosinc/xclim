@@ -46,6 +46,8 @@ def change_significance(
     weights : xr.DataArray
         Weights to apply along the 'realization' dimension. This array cannot contain missing values.
         Note: 'ttest' and 'welch-ttest' are not currently supported with weighted arrays.
+    realization: str
+        Name of the realization dimension. If you don't have multiple cliamte realizations or models, chosse None.
     **kwargs
         Other arguments specific to the statistical test.
 
