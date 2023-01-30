@@ -74,7 +74,7 @@ jobs:
       - name: Install tox
         run: pip install tox
       - name: Test with tox
-        run: tox -e py38-upstream-lm3-coverage
+        run: tox -e py39-upstream-lm3-coverage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-py39-upstream-lm3
@@ -98,7 +98,7 @@ jobs:
         with:
           cache-downloads: true
           micromamba-version: 'latest'
-          environment-file: ci/environment.yml
+          environment-file: environment.yml
           extra-specs: |
             python-version="3.10"
       - name: Conda and Mamba versions
@@ -138,7 +138,7 @@ jobs:
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
 
-  test-py311-lm3:
+  test-py38-lm3:
     needs: black
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
@@ -150,14 +150,14 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: "3.8"
       - name: Install tox
         run: pip install tox~=3.0
       - name: Test with tox
-        run: tox -e py311-lm3-coverage
+        run: tox -e py38-lm3-coverage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-py311-lm3
+          COVERALLS_FLAG_NAME: run-py38-lm3
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
 
@@ -188,8 +188,8 @@ jobs:
   finish:
     needs:
       - doctests-py38
+      - test-py38-lm3
       - test-py310-opt-slow
-      - test-py311-lm3
     runs-on: ubuntu-22.04
     container: python:3-slim
     steps:
