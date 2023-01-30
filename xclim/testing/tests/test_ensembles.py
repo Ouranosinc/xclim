@@ -567,6 +567,7 @@ def robust_data(request):
     [
         ("ttest", [0.25, 1, 1, 1], [1, 0.5, 1, 1], {}),
         ("welch-ttest", [0.25, 1, 1, 1], [1, 0.5, 1, 1], {}),
+        ("mannwhitney-utest", [0.25, 1, 1, 1], [1, 0.5, 1, 1], {}),
         ("threshold", [0.25, 1, 1, 1], [1, 0.5, 1, 1], {"rel_thresh": 0.002}),
         (
             "threshold",
