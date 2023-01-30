@@ -128,8 +128,8 @@ def change_significance(
     """
 
     def remove_emptys_from_list(list_of_lists):
-        return[[s for s in sub_list if s] for sub_list in list_of_lists]
-    
+        return [[s for s in sub_list if s] for sub_list in list_of_lists]
+
     test_params = {
         "ttest": ["p_change"],
         "welch-ttest": ["p_change"],
@@ -216,16 +216,14 @@ def change_significance(
             )
         p_change = kwargs.setdefault("p_change", 0.05)
 
-        #Test hypothesis of no significant change
-        #-> Mann-Whitney U-test
+        # Test hypothesis of no significant change
+        # -> Mann-Whitney U-test
         input_core_dims = [[realization, "time"], [realization, "time"]]
         input_core_dims = remove_emptys_from_list(input_core_dims)
         output_core_dims = [[realization]]
         output_core_dims = remove_emptys_from_list(output_core_dims)
         pvals = xr.apply_ufunc(
-            lambda f, r: spstats.mannwhitneyu(
-                f, r, axis=-1, nan_policy="omit"
-            )[1],
+            lambda f, r: spstats.mannwhitneyu(f, r, axis=-1, nan_policy="omit")[1],
             fut,
             ref,
             input_core_dims=input_core_dims,
@@ -279,9 +277,7 @@ def change_significance(
             delta_chng_w = delta_chng_w.sum(realization)
         else:
             delta_chng_w = delta_chng_w.weights
-        pos_frac = delta_chng_w / (
-            change_frac * n_valid_real
-        )
+        pos_frac = delta_chng_w / (change_frac * n_valid_real)
 
     # Metadata
     kwargs_str = ", ".join(
