@@ -13,7 +13,7 @@ Bug fixes
 New indicators
 ^^^^^^^^^^^^^^
 * ``ensembles.change_significance`` now supports Mann-whitney U-test and flexible ``realization``.
-  
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * `xclim` has adopted `PEP 517 <https://peps.python.org/pep-0517/>`_ and `PEP 621 <https://peps.python.org/pep-0621/>`_ (``pyproject.toml`` using the `flit <https://flit.pypa.io/en/stable/>`_ backend) to replace the legacy ``setup.py`` used to manage package organisation and building. Many tooling configurations that already supported the ``pyproject.toml`` standard have been migrated to this file. CI and development tooling documentation has been updated to reflect these changes. (:pull:`1278`, suggested from `PyOpenSci Software Review <https://github.com/pyOpenSci/software-review/issues/73>`_).
