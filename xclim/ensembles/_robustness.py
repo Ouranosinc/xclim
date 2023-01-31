@@ -126,7 +126,6 @@ def change_significance(
     ...     delta, test="threshold", abs_thresh=2
     ... )
     """
-
     if realization is None:
         realization = "realization"
         fut = fut.assign_coords({"realization": "dummy"})
