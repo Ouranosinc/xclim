@@ -180,7 +180,11 @@ jobs:
       - name: Run pylint
         run: pylint --rcfile=pylintrc --disable=import-error --exit-zero xclim
       - name: Test with tox
-        run: tox -e doctests_only-coverage
+        run: tox -e doctests_only
+      - name: Report coverage
+        run: |
+          pip install --upgrade coveralls
+          coveralls
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-doctests-py38
