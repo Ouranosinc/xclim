@@ -127,9 +127,14 @@ def change_significance(
     ... )
     """
 
-    def remove_emptys_from_list(list_of_lists):
-        return [[s for s in sub_list if s] for sub_list in list_of_lists]
-
+    if realization is None:
+        realization = "realization"
+        fut = fut.assign_coords({"realization": "dummy"})
+        fut = fut.expand_dims("realization")
+        if ref is not None:
+            ref = ref.assign_coords({"realization": "dummy"})
+            ref = ref.expand_dims("realization")
+            
     test_params = {
         "ttest": ["p_change"],
         "welch-ttest": ["p_change"],
@@ -140,9 +145,9 @@ def change_significance(
     if ref is None:
         delta = fut
         if weights is None:
-            n_valid_real = delta.notnull()
+            n_valid_real = delta.notnull().sum(realization)
         else:
-            n_valid_real = weights.where(delta.notnull())
+            n_valid_real = weights.where(delta.notnull()).sum(realization)
         if test not in ["threshold", None]:
             raise ValueError(
                 "When deltas are given (ref=None), 'test' must be one of ['threshold', None]"
@@ -150,11 +155,9 @@ def change_significance(
     else:
         delta = fut.mean("time") - ref.mean("time")
         if weights is None:
-            n_valid_real = fut.notnull().all("time")
+            n_valid_real = fut.notnull().all("time").sum(realization)
         else:
-            n_valid_real = weights.where(fut.notnull().all("time"))
-    if realization:
-        n_valid_real = n_valid_real.sum(realization)
+            n_valid_real = weights.where(fut.notnull().all("time")).sum(realization)
 
     if test == "ttest":
         if weights is not None:
@@ -164,16 +167,12 @@ def change_significance(
         p_change = kwargs.setdefault("p_change", 0.05)
 
         # Test hypothesis of no significant change
-        input_core_dims = [[realization, "time"], [realization]]
-        input_core_dims = remove_emptys_from_list(input_core_dims)
-        output_core_dims = [[realization]]
-        output_core_dims = remove_emptys_from_list(output_core_dims)
         pvals = xr.apply_ufunc(
             lambda f, r: spstats.ttest_1samp(f, r, axis=-1, nan_policy="omit")[1],
             fut,
             ref.mean("time"),
-            input_core_dims=input_core_dims,
-            output_core_dims=output_core_dims,
+            input_core_dims=[[realization, "time"], [realization]],
+            output_core_dims=[[realization]],
             vectorize=True,
             dask="parallelized",
             output_dtypes=[float],
@@ -189,18 +188,14 @@ def change_significance(
 
         # Test hypothesis of no significant change
         # equal_var=False -> Welch's T-test
-        input_core_dims = [[realization, "time"], [realization, "time"]]
-        input_core_dims = remove_emptys_from_list(input_core_dims)
-        output_core_dims = [[realization]]
-        output_core_dims = remove_emptys_from_list(output_core_dims)
         pvals = xr.apply_ufunc(
             lambda f, r: spstats.ttest_ind(
                 f, r, axis=-1, equal_var=False, nan_policy="omit"
             )[1],
             fut,
             ref,
-            input_core_dims=input_core_dims,
-            output_core_dims=output_core_dims,
+            input_core_dims=[[realization, "time"], [realization, "time"]],
+            output_core_dims=[[realization]],
             exclude_dims={"time"},
             vectorize=True,
             dask="parallelized",
@@ -218,16 +213,12 @@ def change_significance(
 
         # Test hypothesis of no significant change
         # -> Mann-Whitney U-test
-        input_core_dims = [[realization, "time"], [realization, "time"]]
-        input_core_dims = remove_emptys_from_list(input_core_dims)
-        output_core_dims = [[realization]]
-        output_core_dims = remove_emptys_from_list(output_core_dims)
         pvals = xr.apply_ufunc(
             lambda f, r: spstats.mannwhitneyu(f, r, axis=-1, nan_policy="omit")[1],
             fut,
             ref,
-            input_core_dims=input_core_dims,
-            output_core_dims=output_core_dims,
+            input_core_dims=[[realization, "time"], [realization, "time"]],
+            output_core_dims=[[realization]],
             exclude_dims={"time"},
             vectorize=True,
             dask="parallelized",
@@ -250,16 +241,9 @@ def change_significance(
     if test is not None:
         delta_chng = delta.where(changed)
         if weights is None:
-            if realization:
-                changed = changed.sum(realization)
-            change_frac = changed / n_valid_real
+            change_frac = changed.sum(realization) / n_valid_real
         else:
-            changed_weights = changed.weighted(weights)
-            if realization:
-                changed_weights = changed_weights.sum(realization)
-            else:
-                changed_weights = changed_weights.weights
-            change_frac = changed_weights / n_valid_real
+            change_frac = changed.weighted(weights).sum(realization) / n_valid_real
     else:
         delta_chng = delta
         change_frac = xr.ones_like(delta.isel(realization=0))
@@ -268,16 +252,11 @@ def change_significance(
     # This returns NaN (cause 0 / 0) where no model show significant change.
     delta_chng_0 = delta_chng > 0
     if weights is None:
-        if realization:
-            delta_chng_0 = delta_chng_0.sum(realization)
-        pos_frac = delta_chng_0 / (change_frac * n_valid_real)
+        pos_frac = delta_chng_0.sum(realization) / (change_frac * n_valid_real)
     else:
-        delta_chng_w = delta_chng_0.weighted(weights)
-        if realization:
-            delta_chng_w = delta_chng_w.sum(realization)
-        else:
-            delta_chng_w = delta_chng_w.weights
-        pos_frac = delta_chng_w / (change_frac * n_valid_real)
+        pos_frac = delta_chng_0.weighted(weights).sum(realization) / (
+            change_frac * n_valid_real
+        )
 
     # Metadata
     kwargs_str = ", ".join(
