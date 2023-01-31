@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from xclim.ensembles import (
     concat_hist,
     hawkins_sutton,
