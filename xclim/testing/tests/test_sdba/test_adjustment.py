@@ -711,10 +711,10 @@ class TestSBCKutils:
     )
     @pytest.mark.parametrize("use_dask", [True])  # do we gain testing both?
     def test_sbck(self, method, use_dask):
-        SBCK = pytest.importorskip("SBCK", minversion="0.4.0")
+        SBCK = pytest.importorskip("SBCK", minversion="0.4.0")  # noqa
 
         n = 10 * 365
-        m = 2  # A dummy dimension to test vectorizing.
+        m = 2  # A dummy dimension to test vectorization.
         ref_y = norm.rvs(loc=10, scale=1, size=(m, n))
         ref_x = norm.rvs(loc=3, scale=2, size=(m, n))
         hist_x = norm.rvs(loc=11, scale=1.2, size=(m, n))
