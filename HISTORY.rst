@@ -20,6 +20,7 @@ Internal changes
 * Documentation source files have been moved around to remove some duplicated image files. (:pull:`1278`).
 * Coveralls GitHub Action removed as it did not support ``pyproject.toml``-based configurations. (:pull:`1278`).
 * Add a remark about how xclim's CFFWIS is different from the original 1982 implementation. (:issue:`1104`, :pull:`1284`).
+* Update CI runs to use Python3.9 when examining upstream dependencies. Replace `setup-conda` action with `provision-with-micromamba` action. (:pull:`1286`).
 
 0.40.0 (2023-01-13)
 -------------------

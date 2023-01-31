@@ -22,7 +22,7 @@ repos:
   - id: pretty-format-json
     args: ['--autofix', '--no-ensure-ascii', '--no-sort-keys']
 - repo: https://github.com/pappasam/toml-sort
-  rev: v0.22.2
+  rev: v0.22.3
   hooks:
   - id: toml-sort-fix
 - repo: https://github.com/pycqa/flake8
@@ -36,7 +36,7 @@ repos:
   hooks:
   - id: black
 - repo: https://github.com/PyCQA/isort
-  rev: 5.11.4
+  rev: 5.12.0
   hooks:
   - id: isort
     args: ['--settings-file=pyproject.toml', "--add_imports='from __future__ import annotations'"]
