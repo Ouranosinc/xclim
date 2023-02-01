@@ -412,7 +412,6 @@ class TestMaxConsecDryDays:
 
 
 class TestSnowfallDate:
-
     tasmin_file = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
     pr_file = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
 
