@@ -504,7 +504,7 @@ def show_versions(
     dependency_versions = [(d, lambda mod: mod.__version__) for d in deps]
 
     deps_blob = []
-    for (modname, ver_f) in dependency_versions:
+    for modname, ver_f in dependency_versions:
         try:
             if modname in sys.modules:
                 mod = sys.modules[modname]

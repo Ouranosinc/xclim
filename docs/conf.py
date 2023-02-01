@@ -160,7 +160,6 @@ class XCLabelStyle(BaseLabelStyle):
 
 
 class XCStyle(AlphaStyle):
-
     default_label_style = XCLabelStyle
 
 

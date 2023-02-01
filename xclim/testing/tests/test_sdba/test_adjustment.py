@@ -662,7 +662,6 @@ class TestExtremeValues:
 
     @pytest.mark.slow
     def test_real_data(self):
-
         dsim = open_dataset("sdba/CanESM2_1950-2100.nc").chunk()
         dref = open_dataset("sdba/ahccd_1950-2013.nc").chunk()
 
