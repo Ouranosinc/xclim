@@ -48,6 +48,10 @@ __all__ = [
 ]
 
 
+def _deaccumulate(ds: xr.DataArray) -> xr.DataArray:
+    """Deaccumulate units."""
+
+
 @declare_units(tas="[temperature]", tdps="[temperature]", hurs="[]")
 def humidex(
     tas: xr.DataArray,
@@ -960,6 +964,7 @@ def snow_amount_approximation(
     return snw
 
 
+@declare_units(rls="[radiation]", rlds="[radiation]")
 def longwave_radiation_upwards_from_net_downwards(
     rls: xr.DataArray, rlds: xr.DataArray
 ) -> xr.DataArray:
@@ -975,11 +980,17 @@ def longwave_radiation_upwards_from_net_downwards(
     Returns
     -------
     xr.DataArray, [W m-2]
-        Surface upwards thermal radiation.
+        Surface upwards thermal radiation (rlus).
     """
-    pass
+    rls = convert_units_to(rls, rlds)
+
+    rlus = rlds - rls
+
+    rlus.attrs["units"] = "W m-2"
+    return rlus
 
 
+@declare_units(rss="[radiation]", rsds="[radiation]")
 def shortwave_radiation_upwards_from_net_downwards(
     rss: xr.DataArray, rsds: xr.DataArray
 ) -> xr.DataArray:
@@ -995,9 +1006,14 @@ def shortwave_radiation_upwards_from_net_downwards(
     Returns
     -------
     xr.DataArray, [W m-2]
-        Surface upwards solar radiation.
+        Surface upwards solar radiation (rsus).
     """
-    pass
+    rss = convert_units_to(rss, rsds)
+
+    rsus = rsds - rss
+
+    rsus.attrs["units"] = "W m-2"
+    return rsus
 
 
 @declare_units(

@@ -74,6 +74,7 @@ units.define(
     "degrees_east = 1 * degree = degrees_east = degrees_E = degreesE = degree_east = degree_E = degreeE"
 )
 units.define("[speed] = [length] / [time]")
+units.define("[radiation] = [power] / [area]")
 
 # Default context.
 null = pint.Context("none")
