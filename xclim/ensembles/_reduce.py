@@ -415,7 +415,6 @@ def plot_rsqprofile(fig_data):
         col = "k--"
         label = f"R² selection > {fig_data['method']['rsq_cutoff']} (n = {n_clusters})"
         if "max_clusters" in fig_data.keys():
-
             if rsq[n_clusters - 1] < fig_data["method"]["rsq_cutoff"]:
                 col = "r--"
                 label = (

@@ -35,7 +35,6 @@ K2C = 273.15
 
 
 class TestMaxNDayPrecipitationAmount:
-
     # test 2 day max precip
     def test_single_max(self, pr_series):
         a = pr_series(np.array([3, 4, 20, 20, 0, 6, 9, 25, 0, 0]))
@@ -225,7 +224,6 @@ class TestAgroclimaticIndices:
         ],
     )
     def test_bedd(self, method, end_date, deg_days, max_deg_days):
-
         time_data = date_range(
             "1992-01-01", "1995-06-01", freq="D", calendar="standard"
         )
@@ -489,7 +487,6 @@ class TestAgroclimaticIndices:
     def test_standardized_precipitation_index(
         self, open_dataset, freq, window, dist, method, values, diff_tol
     ):
-
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
         pr = ds.pr.sel(time=slice("1998", "2000"))
         pr_cal = ds.pr.sel(time=slice("1950", "1980"))
@@ -2527,7 +2524,6 @@ def test_winter_storm(snd_series):
 
 
 def test_humidex(tas_series):
-
     tas = tas_series([15, 25, 35, 40])
     tas.attrs["units"] = "C"
 
@@ -2560,7 +2556,6 @@ def test_humidex(tas_series):
 
 
 def test_heat_index(tas_series, hurs_series):
-
     tas = tas_series([15, 20, 25, 25, 30, 30, 35, 35, 40, 40, 45, 45])
     tas.attrs["units"] = "C"
 
@@ -2878,7 +2873,6 @@ def test_water_budget(pr_series, evspsblpot_series):
     ],
 )
 def test_dry_spell(pr_series, pr, thresh1, thresh2, window, outs):
-
     pr = pr_series(np.array(pr), start="1981-01-01", units="mm/day")
 
     out_events, out_total_d_sum, out_total_d_max = outs

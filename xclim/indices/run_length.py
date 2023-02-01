@@ -406,7 +406,7 @@ def first_run(
     freq: str | None = None,
     coord: str | bool | None = False,
     ufunc_1dim: str | bool = "from_context",
-) -> xr.DataArray:
+) -> xr.DataArray:  # noqa: D202
     """Return the index of the first item of the first run of at least a given length.
 
     Parameters
@@ -436,6 +436,7 @@ def first_run(
         Index (or coordinate if `coord` is not False) of first item in first valid run.
         Returns np.nan if there are no valid runs.
     """
+
     # transforms indexes to coordinates if needed, and drops obsolete dim
     def coord_transform(out, da):
         if coord:
