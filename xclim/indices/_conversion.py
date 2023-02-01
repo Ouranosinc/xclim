@@ -960,6 +960,46 @@ def snow_amount_approximation(
     return snw
 
 
+def longwave_radiation_upwards_from_net_downwards(
+    rls: xr.DataArray, rlds: xr.DataArray
+) -> xr.DataArray:
+    """Approximation of upwards thermal radiation from net thermal radiation and downwards thermal radiation.
+
+    Parameters
+    ----------
+    rls : xr.DataArray
+        Surface net thermal radiation [W m-2].
+    rlds : xr.DataArray
+        Surface downwards thermal radiation [W m-2].
+
+    Returns
+    -------
+    xr.DataArray, [W m-2]
+        Surface upwards thermal radiation.
+    """
+    pass
+
+
+def shortwave_radiation_upwards_from_net_downwards(
+    rss: xr.DataArray, rsds: xr.DataArray
+) -> xr.DataArray:
+    """Approximation of upwards solar radiation from net solar radiation and downwards solar radiation.
+
+    Parameters
+    ----------
+    rss : xr.DataArray
+        Surface net solar radiation [W m-2].
+    rsds : xr.DataArray
+        Surface downwards solar radiation [W m-2].
+
+    Returns
+    -------
+    xr.DataArray, [W m-2]
+        Surface upwards solar radiation.
+    """
+    pass
+
+
 @declare_units(
     tas="[temperature]",
     sfcWind="[speed]",
