@@ -788,7 +788,6 @@ def aggregate_between_dates(
 
         # convert bounds for this group
         if start_d is not None and end_d is not None:
-
             days = (group.time - base_time).dt.days
             days[days < 0] = np.nan
 
