@@ -485,7 +485,6 @@ class DetrendedQuantileMapping(TrainAdjust):
         extrapolation="constant",
         detrend=1,
     ):
-
         scen = dqm_adjust(
             self.ds.assign(sim=sim),
             interp=interp,

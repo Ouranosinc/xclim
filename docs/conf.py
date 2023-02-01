@@ -123,6 +123,8 @@ linkcheck_ignore = [
     r"https://www.tandfonline.com/.*",  # tandfonline does not allow linkcheck requests (error 403)
     r"http://www.utci.org/.*",  # Added on 2022-12-08: site appears to be down (timeout)
     r"https://ui.adsabs.harvard.edu/abs/2018AGUFMIN33A..06A*",  # Added on 2023-01-24: bad ssl certificate
+    r"https://www.jstor.org/.*",  # Added on 2023-01-31: does not allow linkcheck requests (error 403)
+    r"https://doi.org/10.2307/210739",  # Added on 2023-01-31: does not allow linkcheck requests (error 403)
 ]
 linkcheck_exclude_documents = [r"readme"]
 
@@ -158,7 +160,6 @@ class XCLabelStyle(BaseLabelStyle):
 
 
 class XCStyle(AlphaStyle):
-
     default_label_style = XCLabelStyle
 
 
