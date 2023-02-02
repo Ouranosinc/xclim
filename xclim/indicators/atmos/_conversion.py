@@ -390,9 +390,8 @@ shortwave_radiation_upwards_from_net_downwards = Converter(
     title="Upwards shortwave radiation",
     identifier="shortwave_radiation_upwards_from_net_downward",
     units="W m-2",
-    standard_name="surface_net_downward_shortwave_fluxt",
-    long_name="Calculation of upwards shortwave radiative flux from net surface shortwave "
-    "and downward surface shortwave fluxes.",
+    standard_name="surface_net_upward_shortwave_flux",
+    long_name="Upwards shortwave radiative flux",
     description="The calculation of upwards shortwave radiative flux from net surface shortwave "
     "and downward surface shortwave fluxes.",
     var_name="rsus",
@@ -403,9 +402,8 @@ longwave_radiation_upwards_from_net_downwards = Converter(
     title="Upwards longwave radiation",
     identifier="longwave_radiation_upwards_from_net_downwards",
     units="W m-2",
-    standard_name="surface_net_downward_longwave_flux",
-    long_name="Calculation of upwards longwave radiative flux from net surface longwave "
-    "and downward surface longwave fluxes.",
+    standard_name="surface_net_upward_longwave_flux",
+    long_name="Upwards longwave radiative flux",
     description="The calculation of upwards longwave radiative flux from net surface longwave "
     "and downward surface longwave fluxes.",
     var_name="rlus",

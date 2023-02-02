@@ -1151,5 +1151,17 @@
     "description": "Évaluation numérique du danger potentiel d'un feu de forêt.",
     "title": "Indice de danger de feu de forêt McArthur (FFDI)",
     "abstract": "Le FFDI est un indicateur numérique du danger potentiel d'un feu de forêt."
+  },
+  "SHORTWAVE_RADIATION_UPWARDS_FROM_NET_DOWNWARD": {
+    "long_name": "Rayonnement de courtes longueurs d'onde ascendant",
+    "description": "Calcul du rayonnement de courtes longueurs d'onde ascendant à partir du rayonnement de courtes longueurs d'onde net et descendant.",
+    "title": "Rayonnement de courtes longueurs d'onde ascendant",
+    "abstract": "Calcul du rayonnement de courtes longueurs d'onde ascendant à partir du rayonnement de courtes longueurs d'onde net et descendant."
+  },
+  "LONGWAVE_RADIATION_UPWARDS_FROM_NET_DOWNWARDS": {
+    "long_name": "Rayonnement de grandes longueurs d'onde ascendant",
+    "description": "Calcul du rayonnement de grandes longueurs d'onde ascendant à partir du rayonnement de grandes longueurs d'onde net et descendant.",
+    "title": "Rayonnement de grandes longueurs d'onde ascendant",
+    "abstract": "Calcul du rayonnement de grandes longueurs d'onde ascendant à partir du rayonnement de grandes longueurs d'onde net et descendant."
   }
 }
