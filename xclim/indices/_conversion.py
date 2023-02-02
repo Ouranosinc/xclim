@@ -38,8 +38,8 @@ __all__ = [
     "saturation_vapor_pressure",
     "sfcwind_2_uas_vas",
     "shortwave_radiation_upwards_from_net_downwards",
-    "snow_amount_approximation",
-    "snow_depth_approximation",
+    "snow_amount_from_depth",
+    "snow_depth_from_amount",
     "snowfall_approximation",
     "specific_humidity",
     "specific_humidity_from_dewpoint",
@@ -910,11 +910,11 @@ def rain_approximation(
 
 
 @declare_units(snw="[mass]/[area]", snr="[mass]/[volume]")
-def snow_depth_approximation(
+def snow_depth_from_amount(
     snw: xr.DataArray,
     snr: xr.DataArray,
 ) -> xr.DataArray:
-    """Approximation of snow depth from snow amount and density.
+    """Snow depth from snow amount and density.
 
     Parameters
     ----------
@@ -939,11 +939,11 @@ def snow_depth_approximation(
 
 
 @declare_units(snd="[length]", snr="[mass]/[volume]")
-def snow_amount_approximation(
+def snow_amount_from_depth(
     snd: xr.DataArray,
     snr: xr.DataArray,
 ) -> xr.DataArray:
-    """Approximation of snow amount from snow depth and density.
+    """Snow amount from snow depth and density.
 
     Parameters
     ----------

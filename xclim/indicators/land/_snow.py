@@ -9,10 +9,10 @@ __all__ = [
     "continuous_snow_cover_end",
     "continuous_snow_cover_start",
     "snd_max_doy",
-    "snow_amount_approximation",
+    "snow_amount_from_depth",
     "snow_cover_duration",
     "snow_depth",
-    "snow_depth_approximation",
+    "snow_depth_from_amount",
     "snow_melt_we_max",
     "snw_max",
     "snw_max_doy",
@@ -160,24 +160,24 @@ snow_depth = SnowWithIndexing(
     compute=xci.snow_depth,
 )
 
-snow_amount_approximation = Converter(
+snow_amount_from_depth = Converter(
     title="Surface snow amount",
-    identifier="snow_amount_approximation",
+    identifier="snow_amount_from_depth",
     units="kg m-2",
     standard_name="surface_snow_amount",
     long_name="Approximation of daily snow amount from snow depth and density",
     description="The approximation of daily snow amount from snow depth and density.",
     var_name="snw",
-    compute=xci.snow_amount_approximation,
+    compute=xci.snow_amount_from_depth,
 )
 
-snow_depth_approximation = Converter(
+snow_depth_from_amount = Converter(
     title="Surface snow depth",
-    identifier="snow_depth_approximation",
+    identifier="snow_depth_from_amount",
     units="m",
     standard_name="surface_snow_thickness",
     long_name="Approximation of daily snow depth from snow amount and density",
     description="The approximation of daily snow depth from snow amount and density.",
     var_name="snd",
-    compute=xci.snow_depth_approximation,
+    compute=xci.snow_depth_from_amount,
 )

@@ -13,7 +13,7 @@ Bug fixes
 
 New indicators
 ^^^^^^^^^^^^^^
-* New indices and indicators for converting from snow water equivalent to snow depth (``snow_depth_approximation``) and snow depth to snow water equivalent (``snow_amount_approximation``) using snow density [kg/m^3]. (:pull:`1271`).
+* New indices and indicators for converting from snow water equivalent to snow depth (``snow_depth_from_amount``) and snow depth to snow water equivalent (``snow_amount_from_depth``) using snow density [kg/m^3]. (:pull:`1271`).
 * New indices and indicators for determining upwards radiation (CF variables `rsus` and `rlus`) from net and downwards longwave radiation (shortwave: `rss` and `rsds`; longwave: `rls` and `rlds`). (:pull:`1271`).
 
 Internal changes
