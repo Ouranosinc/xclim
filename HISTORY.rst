@@ -9,6 +9,7 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bo
 Bug fixes
 ^^^^^^^^^
 * ``build_indicator_module_from_yaml`` now accepts a ``reload`` argument. When re-building a module that already exists,  ``reload=True`` removes all previous indicator before creating the new ones. (:issue:`1192`,:pull:`1284`).
+* The test for french translations of official indicators was fixed and translations for CFFWIS indices, FFDI, KDBI, DF and Jetstream metric woollings have been added or fixed. (:pull:`1271`).
 
 New indicators
 ^^^^^^^^^^^^^^
