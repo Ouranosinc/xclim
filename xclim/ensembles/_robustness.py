@@ -269,7 +269,7 @@ def change_significance(
         description="Change significance. " + test_str,
         units="",
         test=str(test),
-        histroy=update_history(
+        history=update_history(
             f"change_significance(fut=fut, ref=ref, test={test}, {kwargs_str})",
             **das,
         )
