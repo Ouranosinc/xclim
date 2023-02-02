@@ -267,15 +267,16 @@ def change_significance(
         f"Significant change was tested with test {test} with parameters {kwargs_str}."
     )
     das = {"fut": fut} if ref is None else {"fut": fut, "ref": ref}
-    changed.attrs.update(
-        description="Change significance. " + test_str,
-        units="",
-        test=str(test),
-        history=update_history(
-            f"change_significance(fut=fut, ref=ref, test={test}, {kwargs_str})",
-            **das,
-        ),
-    )
+    if changed is not None:
+        changed.attrs.update(
+            description="Change significance. " + test_str,
+            units="",
+            test=str(test),
+            history=update_history(
+                f"change_significance(fut=fut, ref=ref, test={test}, {kwargs_str})",
+                **das,
+            ),
+        )
     pos_frac.attrs.update(
         description="Fraction of members showing significant change that agree on a positive change. "
         + test_str,
