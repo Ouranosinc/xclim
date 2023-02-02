@@ -634,9 +634,13 @@ def robust_data(request):
         ),
     ],
 )
-def test_change_significance(robust_data, test, exp_chng_frac, exp_pos_frac, exp_chng, kws):
+def test_change_significance(
+    robust_data, test, exp_chng_frac, exp_pos_frac, exp_chng, kws
+):
     ref, fut = robust_data
-    chng_frac, pos_frac, chng = ensembles.change_significance(fut, ref, test=test, **kws)
+    chng_frac, pos_frac, chng = ensembles.change_significance(
+        fut, ref, test=test, **kws
+    )
     assert chng_frac.attrs["test"] == str(test)
     if isinstance(ref, xr.Dataset):
         chng_frac = chng_frac.tas
@@ -651,7 +655,9 @@ def test_change_significance(robust_data, test, exp_chng_frac, exp_pos_frac, exp
 def test_change_significance_weighted(robust_data):
     ref, fut = robust_data
     weights = xr.DataArray([1, 0.1, 3.5, 5], coords={"realization": ref.realization})
-    chng_frac, pos_frac, chng = ensembles.change_significance(fut, ref, test=None, weights=weights)
+    chng_frac, pos_frac, chng = ensembles.change_significance(
+        fut, ref, test=None, weights=weights
+    )
     assert chng_frac.attrs["test"] == "None"
     if isinstance(ref, xr.Dataset):
         chng_frac = chng_frac.tas
@@ -666,7 +672,9 @@ def test_change_significance_weighted(robust_data):
 def test_change_significance_delta(robust_data):
     ref, fut = robust_data
     delta = fut.mean("time") - ref.mean("time")
-    chng_frac, pos_frac, chng = ensembles.change_significance(delta, test="threshold", abs_thresh=2)
+    chng_frac, pos_frac, chng = ensembles.change_significance(
+        delta, test="threshold", abs_thresh=2
+    )
     if isinstance(ref, xr.Dataset):
         chng_frac = chng_frac.tas
         pos_frac = pos_frac.tas
@@ -676,7 +684,7 @@ def test_change_significance_delta(robust_data):
     exp_chng = [
         [False, False, False, False],
         [False, False, False, False],
-        [False, False,  True,  True],
+        [False, False, True, True],
         [False, False, False, False],
     ]
     np.testing.assert_array_equal(chng_frac, exp_chng_frac)
@@ -696,7 +704,7 @@ def test_change_significance_delta(robust_data):
     exp_chng = [
         [False, False, False, False],
         [False, False, False, False],
-        [False, False,  True,  True],
+        [False, False, True, True],
         [False, False, False, False],
     ]
     np.testing.assert_array_almost_equal(chng_frac, exp_chng_frac)
