@@ -563,7 +563,7 @@ def robust_data(request):
 
 
 @pytest.mark.parametrize(
-    "test,exp_chng_frac,exp_pos_frac,exp_chng,kws",
+    "test,exp_chng_frac,exp_pos_frac,exp_changed,kws",
     [
         (
             "ttest",
@@ -635,24 +635,28 @@ def robust_data(request):
     ],
 )
 def test_change_significance(
-    robust_data, test, exp_chng_frac, exp_pos_frac, exp_chng, kws
+    robust_data, test, exp_chng_frac, exp_pos_frac, exp_changed, kws
 ):
     ref, fut = robust_data
-    chng_frac, pos_frac, chng = ensembles.change_significance(
-        fut, ref, test=test, **kws
-    )
+    chng_frac, pos_frac = ensembles.change_significance(fut, ref, test=test, **kws)
     assert chng_frac.attrs["test"] == str(test)
     if isinstance(ref, xr.Dataset):
         chng_frac = chng_frac.tas
         pos_frac = pos_frac.tas
-        if chng is not None:
-            chng = chng.tas
+
     np.testing.assert_array_almost_equal(chng_frac, exp_chng_frac)
     np.testing.assert_array_almost_equal(pos_frac, exp_pos_frac)
-    np.testing.assert_array_almost_equal(chng, exp_chng)
 
     # With p-values
-    chng, sign = ensembles.change_significance(fut, ref, test=test, **kws)
+    chng, sign, pvals = ensembles.change_significance(
+        fut, ref, test=test, p_vals=True, **kws
+    )
+    if pvals is not None:
+        if isinstance(ref, xr.Dataset):
+            pvals = pvals.tas
+        # 0.05 is the default p_change parameter
+        changed = pvals < 0.05
+        np.testing.assert_array_almost_equal(changed, exp_changed)
 
 
 def test_change_significance_weighted(robust_data):
