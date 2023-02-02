@@ -847,22 +847,22 @@
     "abstract": "Précipitation solide estimée à partir de la précipitation totale et de la température selon une méthode et un seuil de température donnés."
   },
   "SNOW_AMOUNT_APPROXIMATION": {
-    "long_name": "Approximation de la quantité de neige quotidienne à partir de l'épaisseur et de la densité de la neige",
-    "description": "L'approximation de la quantité de neige quotidienne à partir de l'épaisseur et de la densité de la neige.",
-    "title": "Quantité de neige en surface",
-    "abstract": "L'approximation de la quantité de neige en surface."
+    "long_name": "Quantité de neige à la surface",
+    "description": "Quantité de neige calculée à partir de son épaisseur et de sa densité.", 
+    "title": "Quantité de neige à la surface",
+    "abstract": "Quantité de neige à la surface calculée à partir de son épaisseur et de sa densité."
   },
   "SNOW_DEPTH": {
-    "long_name": "Épaisseur de neige moyenne quotidienne",
-    "description": "Épaisseur de neige moyenne quotidienne.",
-    "title": "Moyenne de la profondeur de neige",
-    "abstract": "Épaisseur de neige moyenne quotidienne."
+    "long_name": "Épaisseur de neige",
+    "description": "Moyenne {freq:f} de l'épaisseur de neige quotidienne.",
+    "title": "Moyenne de l'épaisseur de neige",
+    "abstract": "Épaisseur de neige moyenne."
   },
   "SNOW_DEPTH_APPROXIMATION": {
-    "long_name": "Approximation de l'épaisseur de neige quotidienne à partir de la quantité et de la densité de la neige",
-    "description": "L'Approximation de l'épaisseur de neige quotidienne à partir de la quantité et de la densité de la neige.",
-    "title": "Profondeur de neige",
-    "abstract": "L'approximation de l'epaisseur de neige."
+    "long_name": "Épaisseur de neige",
+    "description": "Épaisseur de neige calculée à partir de sa quantité et de sa densité.",
+    "title": "Épaisseur de neige",
+    "abstract": "Épaisseur de neige calculée à partir de sa quantité et de sa densité."
   },
   "PRLP": {
     "long_name": "Précipitation liquide (méthode \"{methode}\" avec une température égale ou inférieure à {thresh})",

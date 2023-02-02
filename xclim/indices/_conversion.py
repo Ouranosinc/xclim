@@ -929,7 +929,7 @@ def snow_depth_approximation(
     xr.DataArray, [m]
         Snow depth.
     """
-    snw = convert_units_to(snw, "kg m-2", context="hydro")
+    snw = convert_units_to(snw, "kg m-2")
     snr = convert_units_to(snr, "kg m-3")
 
     snd = snw / snr
@@ -957,7 +957,7 @@ def snow_amount_approximation(
     xr.DataArray, [kg m-2]
         Surface snow amount
     """
-    snd = convert_units_to(snd, "m", context="hydro")
+    snd = convert_units_to(snd, "m")
     snr = convert_units_to(snr, "kg m-3")
 
     snw = snd * snr
