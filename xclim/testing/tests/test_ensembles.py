@@ -662,61 +662,47 @@ def test_change_significance(
 def test_change_significance_weighted(robust_data):
     ref, fut = robust_data
     weights = xr.DataArray([1, 0.1, 3.5, 5], coords={"realization": ref.realization})
-    chng_frac, pos_frac, chng = ensembles.change_significance(
+    chng_frac, pos_frac = ensembles.change_significance(
         fut, ref, test=None, weights=weights
     )
     assert chng_frac.attrs["test"] == "None"
     if isinstance(ref, xr.Dataset):
         chng_frac = chng_frac.tas
         pos_frac = pos_frac.tas
-        if chng is not None:
-            chng = chng.tas
+
     np.testing.assert_array_equal(chng_frac, [1, 1, 1, 1])
     np.testing.assert_array_almost_equal(pos_frac, [0.88541667, 0.88541667, 1.0, 1.0])
-    np.testing.assert_array_equal(chng, None)
 
 
 def test_change_significance_delta(robust_data):
     ref, fut = robust_data
     delta = fut.mean("time") - ref.mean("time")
-    chng_frac, pos_frac, chng = ensembles.change_significance(
+    chng_frac, pos_frac = ensembles.change_significance(
         delta, test="threshold", abs_thresh=2
     )
+
     if isinstance(ref, xr.Dataset):
         chng_frac = chng_frac.tas
         pos_frac = pos_frac.tas
-        chng = chng.tas
+
     exp_chng_frac = [0, 0, 0.5, 0]
     exp_pos_frac = [np.nan, np.nan, 1, np.nan]
-    exp_chng = [
-        [False, False, False, False],
-        [False, False, False, False],
-        [False, False, True, True],
-        [False, False, False, False],
-    ]
     np.testing.assert_array_equal(chng_frac, exp_chng_frac)
     np.testing.assert_array_equal(pos_frac, exp_pos_frac)
-    np.testing.assert_array_equal(chng, exp_chng)
 
     weights = xr.DataArray([1, 0.1, 3.5, 5], coords={"realization": delta.realization})
-    chng_frac, pos_frac, chng = ensembles.change_significance(
+    chng_frac, pos_frac = ensembles.change_significance(
         delta, test="threshold", abs_thresh=2, weights=weights
     )
     if isinstance(ref, xr.Dataset):
         chng_frac = chng_frac.tas
         pos_frac = pos_frac.tas
-        chng = chng.tas
+
     exp_chng_frac = [0, 0, 0.88541667, 0]
     exp_pos_frac = [np.nan, np.nan, 1, np.nan]
-    exp_chng = [
-        [False, False, False, False],
-        [False, False, False, False],
-        [False, False, True, True],
-        [False, False, False, False],
-    ]
+
     np.testing.assert_array_almost_equal(chng_frac, exp_chng_frac)
     np.testing.assert_array_equal(pos_frac, exp_pos_frac)
-    np.testing.assert_array_almost_equal(chng, exp_chng)
 
 
 def test_robustness_coefficient():
