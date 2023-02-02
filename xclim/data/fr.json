@@ -1133,5 +1133,17 @@
     "description": "La température moyenne des rayonnements incidents sur un corps.",
     "title": "Température radiative moyenne",
     "abstract": "La température moyenne des rayonnements solaires et thermiques incidents sur un corps à l'extérieur."
+  },
+  "SHORTWAVE_RADIATION_UPWARDS_FROM_NET_DOWNWARD": {
+    "long_name": "Calcul du flux radiatif d'ondes courtes ascendantes à partir des flux nets d'ondes courtes de surface et d'ondes courtes de surface descendantes",
+    "description": "Le calcul du flux radiatif d'ondes courtes ascendantes à partir des flux nets d'ondes courtes de surface et d'ondes courtes de surface descendantes.",
+    "title": "Rayonnement des courtes ondes vers le haut",
+    "abstract": "Le calcul du flux radiatif d'ondes courtes ascendantes à partir des flux nets d'ondes courtes de surface et d'ondes courtes de surface descendantes."
+  },
+  "LONGWAVE_RADIATION_UPWARDS_FROM_NET_DOWNWARDS": {
+    "long_name": "Calcul du flux radiatif des ondes longues ascendantes à partir des flux nets des ondes longues de surface et des flux des ondes longues de surface descendantes",
+    "description": "Le calcul du flux radiatif des ondes longues ascendantes à partir des flux nets des ondes longues de surface et des flux des ondes longues de surface descendantes.",
+    "title": "Rayonnement à ondes longues vers le haut",
+    "abstract": "Le calcul du flux radiatif des ondes longues ascendantes à partir des flux nets des ondes longues de surface et des flux des ondes longues de surface descendantes."
   }
 }
