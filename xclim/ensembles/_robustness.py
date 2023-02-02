@@ -83,6 +83,8 @@ def change_significance(
         +-----------------+------------------------------+                        |
         | Negative change | (1 - pos_frac) * change_frac |                        |
         +-----------------+------------------------------+------------------------+
+    changed :  xr.DataArray or xr.Dataset
+        Significant changes for each `realization` member.
 
     Notes
     -----
@@ -293,7 +295,7 @@ def change_significance(
             **das,
         ),
     )
-    return changed, change_frac, pos_frac
+    return change_frac, pos_frac, changed
 
 
 def robustness_coefficient(
