@@ -1136,9 +1136,9 @@
   },
   "KBDI": {
     "long_name": "Indice de sécheresse de Keetch-Byran",
-    "description": "Quantité d'eau nécessaire pour ramener le sol à pleine capacité.",
+    "description": "Quantité d'eau nécessaire pour que le contenu en eau du sol atteigne sa capacité au champ.",
     "title": "Indice de sécheresse de Keetch-Byran (KBDI) pour le déficit en humidité du sol.",
-    "abstract": "Le KDBI indique la quantité d'eau nécessaire pour ramener la quantité d'humidité du sol à pleine capacité. Il est utile au calul du FFDI."
+    "abstract": "Le KDBI indique la quantité d'eau nécessaire pour que le contenu en eau du sol atteigne sa capacité au champ. Il est utile au calul du FFDI."
   },
   "DF": {
     "long_name": "Facteur de sécheresse de Griffiths",
