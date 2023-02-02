@@ -848,7 +848,7 @@
   },
   "SNOW_AMOUNT_APPROXIMATION": {
     "long_name": "Quantité de neige à la surface",
-    "description": "Quantité de neige calculée à partir de son épaisseur et de sa densité.", 
+    "description": "Quantité de neige calculée à partir de son épaisseur et de sa densité.",
     "title": "Quantité de neige à la surface",
     "abstract": "Quantité de neige à la surface calculée à partir de son épaisseur et de sa densité."
   },
