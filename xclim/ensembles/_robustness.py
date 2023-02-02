@@ -70,9 +70,9 @@ def change_significance(
     pos_frac : xr.DataArray or xr.Dataset
         The fraction of members showing significant change that show a positive change ]0, 1].
         Null values are returned where no members show significant change.
-    pvals : xr.DataArray or xr.Dataset or None
-        The p-values estimated by the significance tests. Only returned if `p_vals` is True and `test` is one of
-        'ttest', 'welch-ttest', 'mannwhitney-utest'.
+    pvals [Optional] : xr.DataArray or xr.Dataset or None
+        The p-values estimated by the significance tests. Only returned if `p_vals` is True. None
+        if `test` is one of 'ttest', 'welch-ttest' or 'mannwhitney-utest'.
 
         The table below shows the coefficient needed to retrieve the number of members
         that have the indicated characteristics, by multiplying it to the total
@@ -87,6 +87,8 @@ def change_significance(
         +-----------------+------------------------------+                        |
         | Negative change | (1 - pos_frac) * change_frac |                        |
         +-----------------+------------------------------+------------------------+
+    changed :  xr.DataArray or xr.Dataset
+        Significant changes for each `realization` member.
 
     Notes
     -----
@@ -313,6 +315,7 @@ def change_significance(
             **das,
         ),
     )
+
     if p_vals:
         return change_frac, pos_frac, pvals
 
