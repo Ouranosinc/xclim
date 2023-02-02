@@ -588,6 +588,9 @@ def test_change_significance(robust_data, test, exp_chng, exp_sign, kws):
     np.testing.assert_array_almost_equal(chng, exp_chng)
     np.testing.assert_array_almost_equal(sign, exp_sign)
 
+    # With p-values
+    chng, sign = ensembles.change_significance(fut, ref, test=test, **kws)
+
 
 def test_change_significance_weighted(robust_data):
     ref, fut = robust_data
