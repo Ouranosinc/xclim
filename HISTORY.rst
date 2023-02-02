@@ -13,13 +13,14 @@ Bug fixes
 New indicators
 ^^^^^^^^^^^^^^
 * ``ensembles.change_significance`` now supports Mann-whitney U-test and flexible ``realization``.
-  
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * `xclim` has adopted `PEP 517 <https://peps.python.org/pep-0517/>`_ and `PEP 621 <https://peps.python.org/pep-0621/>`_ (``pyproject.toml`` using the `flit <https://flit.pypa.io/en/stable/>`_ backend) to replace the legacy ``setup.py`` used to manage package organisation and building. Many tooling configurations that already supported the ``pyproject.toml`` standard have been migrated to this file. CI and development tooling documentation has been updated to reflect these changes. (:pull:`1278`, suggested from `PyOpenSci Software Review <https://github.com/pyOpenSci/software-review/issues/73>`_).
 * Documentation source files have been moved around to remove some duplicated image files. (:pull:`1278`).
 * Coveralls GitHub Action removed as it did not support ``pyproject.toml``-based configurations. (:pull:`1278`).
 * Add a remark about how xclim's CFFWIS is different from the original 1982 implementation. (:issue:`1104`, :pull:`1284`).
+* Update CI runs to use Python3.9 when examining upstream dependencies. Replace `setup-conda` action with `provision-with-micromamba` action. (:pull:`1286`).
 
 0.40.0 (2023-01-13)
 -------------------

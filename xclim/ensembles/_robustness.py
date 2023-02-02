@@ -135,7 +135,7 @@ def change_significance(
         if ref is not None:
             ref = ref.assign_coords({"realization": "dummy"})
             ref = ref.expand_dims("realization")
-            
+
     test_params = {
         "ttest": ["p_change"],
         "welch-ttest": ["p_change"],
@@ -274,7 +274,7 @@ def change_significance(
         history=update_history(
             f"change_significance(fut=fut, ref=ref, test={test}, {kwargs_str})",
             **das,
-        )
+        ),
     )
     pos_frac.attrs.update(
         description="Fraction of members showing significant change that agree on a positive change. "
