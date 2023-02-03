@@ -243,10 +243,8 @@ def test_wind_chill_index(atmosds):
 
 
 class TestPotentialEvapotranspiration:
-    def test_convert_units(self, open_dataset):
-        ds = open_dataset(
-            "ERA5/daily_surface_cancities_1990-1993.nc",
-        )
+    def test_convert_units(self, atmosds):
+        ds = atmosds
 
         tn = ds.tasmin
         tx = ds.tasmax
@@ -304,10 +302,8 @@ class TestPotentialEvapotranspiration:
         np.testing.assert_allclose(pet_mb05, pet_mb05C, atol=1)
         np.testing.assert_allclose(pet_fao_pm98, pet_fao_pm98C, atol=1)
 
-    def test_nan_values(self, open_dataset):
-        ds = open_dataset(
-            "ERA5/daily_surface_cancities_1990-1993.nc",
-        )
+    def test_nan_values(self, atmosds):
+        ds = atmosds
 
         tn = ds.tasmin
         tx = ds.tasmax
@@ -357,10 +353,8 @@ class TestPotentialEvapotranspiration:
 
 
 class TestWaterBudget:
-    def test_convert_units(self, open_dataset):
-        ds = open_dataset(
-            "ERA5/daily_surface_cancities_1990-1993.nc",
-        )
+    def test_convert_units(self, atmosds):
+        ds = atmosds
 
         tn = ds.tasmin
         tx = ds.tasmax
@@ -437,10 +431,8 @@ class TestWaterBudget:
         np.testing.assert_allclose(p_pet_fao_pm98, p_pet_fao_pm98R, atol=1)
         np.testing.assert_allclose(p_pet_evpot, p_pet_evpotR, atol=1)
 
-    def test_nan_values(self, open_dataset):
-        ds = open_dataset(
-            "ERA5/daily_surface_cancities_1990-1993.nc",
-        )
+    def test_nan_values(self, atmosds):
+        ds = atmosds
 
         tn = ds.tasmin
         tx = ds.tasmax
@@ -495,10 +487,8 @@ class TestWaterBudget:
 
 
 class TestUTCI:
-    def test_universal_thermal_climate_index(self, open_dataset):
-        dataset = open_dataset(
-            "ERA5/daily_surface_cancities_1990-1993.nc",
-        )
+    def test_universal_thermal_climate_index(self, atmosds):
+        dataset = atmosds
 
         tas = dataset.tas
         hurs = dataset.hurs

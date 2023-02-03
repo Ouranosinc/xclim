@@ -194,8 +194,8 @@ class TestWetDays:
 class TestWetPrcptot:
     """Testing of prcptot with wet days"""
 
-    def test_simple(self, open_dataset):
-        pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
+    def test_simple(self, atmosds):
+        pr = atmosds.pr
 
         thresh = "1 mm/day"
         out = atmos.wet_precip_accumulation(pr, thresh=thresh)
