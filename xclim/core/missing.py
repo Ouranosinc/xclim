@@ -413,7 +413,6 @@ class FromContext(MissingBase):
 
     @classmethod
     def execute(cls, da, freq, src_timestep, options, indexer):
-
         name = OPTIONS[CHECK_MISSING]
         kls = MISSING_METHODS[name]
         opts = OPTIONS[MISSING_OPTIONS][name]

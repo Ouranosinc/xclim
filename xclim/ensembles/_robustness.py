@@ -12,8 +12,10 @@ from __future__ import annotations
 from typing import Union
 
 import numpy as np
+import scipy
 import scipy.stats as spstats  # noqa
 import xarray as xr
+from pkg_resources import parse_version
 
 from xclim.core.formatting import update_history
 
@@ -23,6 +25,7 @@ def change_significance(
     ref: xr.DataArray | xr.Dataset = None,
     test: str = "ttest",
     weights: xr.DataArray = None,
+    p_vals: bool = False,
     **kwargs,
 ) -> tuple[xr.DataArray | xr.Dataset, xr.DataArray | xr.Dataset]:
     """Robustness statistics qualifying how the members of an ensemble agree on the existence of change and on its sign.
@@ -40,15 +43,17 @@ def change_significance(
         a distribution across the future period.
         `fut` and `ref` must be of the same type (Dataset or DataArray). If they are
         Dataset, they must have the same variables (name and coords).
-    test : {'ttest', 'welch-ttest', 'threshold', None}
+    test : {'ttest', 'welch-ttest', 'mannwhitney-utest', 'threshold', None}
         Name of the statistical test used to determine if there was significant change. See notes.
     weights : xr.DataArray
         Weights to apply along the 'realization' dimension. This array cannot contain missing values.
         Note: 'ttest' and 'welch-ttest' are not currently supported with weighted arrays.
+    p_vals : bool
+        If True, return the estimated p-values.
     **kwargs
         Other arguments specific to the statistical test.
 
-        For 'ttest' and 'welch-ttest':
+        For 'ttest', 'welch-ttest' and 'mannwhitney-utest':
             p_change : float (default : 0.05)
                 p-value threshold for rejecting the hypothesis of no significant change.
         For 'threshold': (Only one of those must be given.)
@@ -66,6 +71,9 @@ def change_significance(
     pos_frac : xr.DataArray or xr.Dataset
         The fraction of members showing significant change that show a positive change ]0, 1].
         Null values are returned where no members show significant change.
+    pvals [Optional] : xr.DataArray or xr.Dataset or None
+        The p-values estimated by the significance tests. Only returned if `p_vals` is True. None
+        if `test` is one of 'ttest', 'welch-ttest' or 'mannwhitney-utest'.
 
         The table below shows the coefficient needed to retrieve the number of members
         that have the indicated characteristics, by multiplying it to the total
@@ -91,6 +99,8 @@ def change_significance(
         Change is qualified as 'significant' when the test's p-value is below the user-provided `p_change` value.
       'welch-ttest' :
         Two-sided T-test, without assuming equal population variance. Same significance criterion as 'ttest'.
+      'mannwhitney-utest' :
+        Two-sided Mann-Whiney U-test. Same significance criterion as 'ttest'.
       'threshold' :
         Change is considered significative if the absolute delta exceeds a given threshold (absolute or relative).
       None :
@@ -121,18 +131,33 @@ def change_significance(
     ...     delta, test="threshold", abs_thresh=2
     ... )
     """
+    # Realization dimension name
+    realization = "realization"
+
+    # Assign dummy realization dimension if not present.
+    if realization not in fut.dims:
+        fut = fut.assign_coords({realization: "dummy"})
+        fut = fut.expand_dims(realization)
+    if ref is not None and realization not in ref.dims:
+        ref = ref.assign_coords({realization: "dummy"})
+        ref = ref.expand_dims(realization)
+
+    # Significance tests parameter names
     test_params = {
         "ttest": ["p_change"],
         "welch-ttest": ["p_change"],
+        "mannwhitney-utest": ["p_change"],
         "threshold": ["abs_thresh", "rel_thresh"],
     }
+
+    # Get delta, either from fut or from fut - ref
     changed = None
     if ref is None:
         delta = fut
         if weights is None:
-            n_valid_real = delta.notnull().sum("realization")
+            n_valid_real = delta.notnull().sum(realization)
         else:
-            n_valid_real = weights.where(delta.notnull()).sum("realization")
+            n_valid_real = weights.where(delta.notnull()).sum(realization)
         if test not in ["threshold", None]:
             raise ValueError(
                 "When deltas are given (ref=None), 'test' must be one of ['threshold', None]"
@@ -140,10 +165,11 @@ def change_significance(
     else:
         delta = fut.mean("time") - ref.mean("time")
         if weights is None:
-            n_valid_real = fut.notnull().all("time").sum("realization")
+            n_valid_real = fut.notnull().all("time").sum(realization)
         else:
-            n_valid_real = weights.where(fut.notnull().all("time")).sum("realization")
+            n_valid_real = weights.where(fut.notnull().all("time")).sum(realization)
 
+    pvals = None
     if test == "ttest":
         if weights is not None:
             raise NotImplementedError(
@@ -156,14 +182,15 @@ def change_significance(
             lambda f, r: spstats.ttest_1samp(f, r, axis=-1, nan_policy="omit")[1],
             fut,
             ref.mean("time"),
-            input_core_dims=[["realization", "time"], ["realization"]],
-            output_core_dims=[["realization"]],
+            input_core_dims=[[realization, "time"], [realization]],
+            output_core_dims=[[realization]],
             vectorize=True,
             dask="parallelized",
             output_dtypes=[float],
         )
         # When p < p_change, the hypothesis of no significant change is rejected.
         changed = pvals < p_change
+
     elif test == "welch-ttest":
         if weights is not None:
             raise NotImplementedError(
@@ -179,8 +206,8 @@ def change_significance(
             )[1],
             fut,
             ref,
-            input_core_dims=[["realization", "time"], ["realization", "time"]],
-            output_core_dims=[["realization"]],
+            input_core_dims=[[realization, "time"], [realization, "time"]],
+            output_core_dims=[[realization]],
             exclude_dims={"time"},
             vectorize=True,
             dask="parallelized",
@@ -189,6 +216,33 @@ def change_significance(
 
         # When p < p_change, the hypothesis of no significant change is rejected.
         changed = pvals < p_change
+
+    elif test == "mannwhitney-utest":
+        if weights is not None:
+            raise NotImplementedError(
+                "'mannwhitney-utest' is not currently supported for weighted arrays."
+            )
+        if parse_version(scipy.__version__) < parse_version("1.8.0"):
+            raise ImportError("Update to SciPy >= 1.8.0 to use the Mann-Whitney test.")
+
+        p_change = kwargs.setdefault("p_change", 0.05)
+
+        # Test hypothesis of no significant change
+        # -> Mann-Whitney U-test
+        pvals = xr.apply_ufunc(
+            lambda f, r: spstats.mannwhitneyu(f, r, axis=-1, nan_policy="omit")[1],
+            fut,
+            ref,
+            input_core_dims=[[realization, "time"], [realization, "time"]],
+            output_core_dims=[[realization]],
+            exclude_dims={"time"},
+            vectorize=True,
+            dask="parallelized",
+            output_dtypes=[float],
+        )
+        # When p < p_change, the hypothesis of no significant change is rejected.
+        changed = pvals < p_change
+
     elif test == "threshold":
         if "abs_thresh" in kwargs and "rel_thresh" not in kwargs:
             changed = abs(delta) > kwargs["abs_thresh"]
@@ -196,27 +250,29 @@ def change_significance(
             changed = abs(delta / ref.mean("time")) > kwargs["rel_thresh"]
         else:
             raise ValueError("Invalid argument combination for test='threshold'.")
+
     elif test is not None:
         raise ValueError(
             f"Statistical test {test} must be one of {', '.join(test_params.keys())}."
         )
 
+    # Compute `change_frac`: ratio of realizations with significant changes.
     if test is not None:
         delta_chng = delta.where(changed)
         if weights is None:
-            change_frac = changed.sum("realization") / n_valid_real
+            change_frac = changed.sum(realization) / n_valid_real
         else:
-            change_frac = changed.weighted(weights).sum("realization") / n_valid_real
+            change_frac = changed.weighted(weights).sum(realization) / n_valid_real
     else:
         delta_chng = delta
-        change_frac = xr.ones_like(delta.isel(realization=0))
+        change_frac = xr.ones_like(delta.isel({realization: 0}))
 
     # Test that models agree on the sign of the change
     # This returns NaN (cause 0 / 0) where no model show significant change.
     if weights is None:
-        pos_frac = (delta_chng > 0).sum("realization") / (change_frac * n_valid_real)
+        pos_frac = (delta_chng > 0).sum(realization) / (change_frac * n_valid_real)
     else:
-        pos_frac = (delta_chng > 0).weighted(weights).sum("realization") / (
+        pos_frac = (delta_chng > 0).weighted(weights).sum(realization) / (
             change_frac * n_valid_real
         )
 
@@ -228,6 +284,17 @@ def change_significance(
         f"Significant change was tested with test {test} with parameters {kwargs_str}."
     )
     das = {"fut": fut} if ref is None else {"fut": fut, "ref": ref}
+
+    if pvals is not None:
+        pvals.attrs.update(
+            description="P-values from change significance test. " + test_str,
+            units="",
+            test=str(test),
+            history=update_history(
+                f"pvals from change_significance(fut=fut, ref=ref, test={test}, {kwargs_str})",
+                **das,
+            ),
+        )
     pos_frac.attrs.update(
         description="Fraction of members showing significant change that agree on a positive change. "
         + test_str,
@@ -247,6 +314,10 @@ def change_significance(
             **das,
         ),
     )
+
+    if p_vals:
+        return change_frac, pos_frac, pvals
+
     return change_frac, pos_frac
 
 

@@ -1520,6 +1520,7 @@ def build_indicator_module(
     name: str,
     objs: Mapping[str, Indicator],
     doc: str | None = None,
+    reload: bool = False,
 ) -> ModuleType:
     """Create or update a module from imported objects.
 
@@ -1534,6 +1535,9 @@ def build_indicator_module(
       Mapping of the indicators to put in the new module. Keyed by the name they will take in that module.
     doc : str
       Docstring of the new module. Defaults to a simple header. Invalid if the module already exists.
+    reload : bool
+      If reload is True and the module already exists, it is first removed before being rebuilt.
+      If False (default), indicators are added or updated, but not removed.
 
     Returns
     -------
@@ -1548,6 +1552,13 @@ def build_indicator_module(
                 "Passed docstring ignored when extending existing module.", stacklevel=1
             )
         out = getattr(indicators, name)
+        if reload:
+            for name, ind in list(out.iter_indicators()):
+                if name not in objs:
+                    # Remove the indicator from the registries and the module
+                    del registry[ind._registry_id]
+                    del _indicators_registry[ind.__class__]
+                    del out.__dict__[name]
     else:
         doc = doc or f"{name.capitalize()} indicators\n" + "=" * (len(name) + 11)
         try:
@@ -1568,6 +1579,7 @@ def build_indicator_module_from_yaml(
     translations: dict[str, dict | PathLike] | None = None,
     mode: str = "raise",
     encoding: str = "UTF8",
+    reload: bool = False,
 ) -> ModuleType:
     """Build or extend an indicator module from a YAML file.
 
@@ -1595,6 +1607,9 @@ def build_indicator_module_from_yaml(
     encoding: str
       The encoding used to open the `.yaml` and `.json` files.
       It defaults to UTF-8, overriding python's mechanism which is machine dependent.
+    reload : bool
+      If reload is True and the module already exists, it is first removed before being rebuilt.
+      If False (default), indicators are added or updated, but not removed.
 
     Returns
     -------
@@ -1738,7 +1753,7 @@ def build_indicator_module_from_yaml(
             )
 
     # Construct module
-    mod = build_indicator_module(module_name, objs=mapping, doc=doc)
+    mod = build_indicator_module(module_name, objs=mapping, doc=doc, reload=reload)
 
     # If there are translations, load them
     if translations:
