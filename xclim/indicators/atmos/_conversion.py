@@ -28,6 +28,8 @@ __all__ = [
     "corn_heat_units",
     "universal_thermal_climate_index",
     "mean_radiant_temperature",
+    "shortwave_upwelling_radiation_from_net_downwelling",
+    "longwave_upwelling_radiation_from_net_downwelling",
 ]
 
 
@@ -381,4 +383,29 @@ mean_radiant_temperature = Converter(
     cell_methods="",
     var_name="mrt",
     compute=indices.mean_radiant_temperature,
+)
+
+
+shortwave_upwelling_radiation_from_net_downwelling = Converter(
+    title="Upwelling shortwave radiation",
+    identifier="shortwave_upwelling_radiation_from_net_downwelling",
+    units="W m-2",
+    standard_name="surface_upwelling_shortwave_flux",
+    long_name="Upwelling shortwave flux",
+    description="The calculation of upwelling shortwave radiative flux from net surface shortwave "
+    "and downwelling surface shortwave fluxes.",
+    var_name="rsus",
+    compute=indices.shortwave_upwelling_radiation_from_net_downwelling,
+)
+
+longwave_upwelling_radiation_from_net_downwelling = Converter(
+    title="Upwelling longwave radiation",
+    identifier="longwave_upwelling_radiation_from_net_downwelling",
+    units="W m-2",
+    standard_name="surface_upwelling_longwave_flux",
+    long_name="Upwelling longwave flux",
+    description="The calculation of upwelling longwave radiative flux from net surface longwave "
+    "and downwelling surface longwave fluxes.",
+    var_name="rlus",
+    compute=indices.longwave_upwelling_radiation_from_net_downwelling,
 )
