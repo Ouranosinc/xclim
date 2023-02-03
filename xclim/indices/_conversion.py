@@ -6,13 +6,7 @@ import xarray as xr
 from numba import float32, float64, vectorize  # noqa
 
 from xclim.core.calendar import date_range, datetime_to_decimal_year
-from xclim.core.units import (
-    amount2rate,
-    convert_units_to,
-    declare_units,
-    lwethickness2amount,
-    units2pint,
-)
+from xclim.core.units import amount2rate, convert_units_to, declare_units, units2pint
 from xclim.core.utils import Quantified
 from xclim.indices.helpers import (
     _gather_lat,
@@ -30,14 +24,14 @@ __all__ = [
     "clausius_clapeyron_scaled_precipitation",
     "heat_index",
     "humidex",
-    "longwave_radiation_upwards_from_net_downwards",
+    "longwave_upwelling_radiation_from_net_downwelling",
     "mean_radiant_temperature",
     "potential_evapotranspiration",
     "rain_approximation",
     "relative_humidity",
     "saturation_vapor_pressure",
     "sfcwind_2_uas_vas",
-    "shortwave_radiation_upwards_from_net_downwards",
+    "shortwave_upwelling_radiation_from_net_downwelling",
     "snow_amount_from_depth",
     "snow_depth_from_amount",
     "snowfall_approximation",
@@ -967,22 +961,22 @@ def snow_amount_from_depth(
 
 
 @declare_units(rls="[radiation]", rlds="[radiation]")
-def longwave_radiation_upwards_from_net_downwards(
+def longwave_upwelling_radiation_from_net_downwelling(
     rls: xr.DataArray, rlds: xr.DataArray
 ) -> xr.DataArray:
-    """Approximation of upwards thermal radiation from net thermal radiation and downwards thermal radiation.
+    """Calculate upwelling thermal radiation from net thermal radiation and downwelling thermal radiation.
 
     Parameters
     ----------
     rls : xr.DataArray
         Surface net thermal radiation [W m-2].
     rlds : xr.DataArray
-        Surface downwards thermal radiation [W m-2].
+        Surface downwelling thermal radiation [W m-2].
 
     Returns
     -------
     xr.DataArray, [W m-2]
-        Surface upwards thermal radiation (rlus).
+        Surface upwelling thermal radiation (rlus).
     """
     rls = convert_units_to(rls, rlds)
 
@@ -993,22 +987,22 @@ def longwave_radiation_upwards_from_net_downwards(
 
 
 @declare_units(rss="[radiation]", rsds="[radiation]")
-def shortwave_radiation_upwards_from_net_downwards(
+def shortwave_upwelling_radiation_from_net_downwelling(
     rss: xr.DataArray, rsds: xr.DataArray
 ) -> xr.DataArray:
-    """Approximation of upwards solar radiation from net solar radiation and downwards solar radiation.
+    """Calculate upwelling solar radiation from net solar radiation and downwelling solar radiation.
 
     Parameters
     ----------
     rss : xr.DataArray
         Surface net solar radiation [W m-2].
     rsds : xr.DataArray
-        Surface downwards solar radiation [W m-2].
+        Surface downwelling solar radiation [W m-2].
 
     Returns
     -------
     xr.DataArray, [W m-2]
-        Surface upwards solar radiation (rsus).
+        Surface upwelling solar radiation (rsus).
     """
     rss = convert_units_to(rss, rsds)
 
