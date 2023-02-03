@@ -4,11 +4,15 @@ History
 
 0.41.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`)
 
 Bug fixes
 ^^^^^^^^^
 * ``build_indicator_module_from_yaml`` now accepts a ``reload`` argument. When re-building a module that already exists,  ``reload=True`` removes all previous indicator before creating the new ones. (:issue:`1192`,:pull:`1284`).
+
+New indicators
+^^^^^^^^^^^^^^
+* ``ensembles.change_significance`` now supports Mann-whitney U-test and flexible ``realization``.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
