@@ -846,7 +846,7 @@
     "title": "Approximation de la neige",
     "abstract": "Précipitation solide estimée à partir de la précipitation totale et de la température selon une méthode et un seuil de température donnés."
   },
-  "SNOW_AMOUNT_APPROXIMATION": {
+  "SNOW_AMOUNT_FROM_DEPTH": {
     "long_name": "Quantité de neige à la surface",
     "description": "Quantité de neige calculée à partir de son épaisseur et de sa densité.",
     "title": "Quantité de neige à la surface",
@@ -858,7 +858,7 @@
     "title": "Moyenne de l'épaisseur de neige",
     "abstract": "Épaisseur de neige moyenne."
   },
-  "SNOW_DEPTH_APPROXIMATION": {
+  "SNOW_DEPTH_FROM_AMOUNT": {
     "long_name": "Épaisseur de neige",
     "description": "Épaisseur de neige calculée à partir de sa quantité et de sa densité.",
     "title": "Épaisseur de neige",
