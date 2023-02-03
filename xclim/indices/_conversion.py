@@ -1241,7 +1241,6 @@ def potential_evapotranspiration(
         out = 10 * out  # mm/month
 
     elif method in ["allen98", "FAO_PM98"]:
-
         tasmax = convert_units_to(tasmax, "degC")
         tasmin = convert_units_to(tasmin, "degC")
 

@@ -73,7 +73,6 @@ def test_relative_humidity_dewpoint(tas_series, hurs_series):
 
 
 def test_humidex(tas_series):
-
     tas = tas_series([15, 25, 35, 40])
     tas.attrs["units"] = "C"
 
