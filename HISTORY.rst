@@ -4,11 +4,13 @@ History
 
 0.41.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`)
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Éric Dupuis (:user:`coxipi`)
+
 
 Bug fixes
 ^^^^^^^^^
 * ``build_indicator_module_from_yaml`` now accepts a ``reload`` argument. When re-building a module that already exists,  ``reload=True`` removes all previous indicator before creating the new ones. (:issue:`1192`,:pull:`1284`).
+* ``use_ufunc`` in ``windowed_run_count`` is now supplied with argument ``freq`` to warn users that the 1d method does not support resampling after run length operations (:issue:`1279`).
 
 New indicators
 ^^^^^^^^^^^^^^
