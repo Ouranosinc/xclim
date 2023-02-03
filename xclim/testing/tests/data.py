@@ -8,6 +8,7 @@ import numpy as np
 import xarray as xr
 
 from xclim.core import calendar
+from xclim.indices import shortwave_upwelling_radiation_from_net_downwelling
 from xclim.testing import get_file as _get_file
 from xclim.testing import get_local_testdata as _get_local_testdata
 from xclim.testing import open_dataset as _open_dataset
@@ -37,7 +38,10 @@ def generate_atmos(cache_dir: Path):
         t90 = calendar.percentile_doy(ds.tas, per=90)
         tx90 = calendar.percentile_doy(ds.tasmax, per=90)
 
+        rsus = shortwave_upwelling_radiation_from_net_downwelling(ds.rss, ds.rsds)
+
         ds = ds.assign(
+            rsus=rsus,
             tn10=tn10,
             t10=t10,
             t90=t90,
