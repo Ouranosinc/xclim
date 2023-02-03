@@ -15,6 +15,7 @@ import numpy as np
 import scipy
 import scipy.stats as spstats  # noqa
 import xarray as xr
+from pkg_resources import parse_version
 
 from xclim.core.formatting import update_history
 
@@ -223,7 +224,7 @@ def change_significance(
             raise NotImplementedError(
                 "'mannwhitney-utest' is not currently supported for weighted arrays."
             )
-        if scipy.__version__ < "1.8.0":
+        if parse_version(scipy.__version__) < parse_version("1.8.0"):
             raise ImportError("Update to SciPy >= 1.8.0 to use the Mann-Whitney test.")
 
         p_change = kwargs.setdefault("p_change", 0.05)
