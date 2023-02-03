@@ -1,3 +1,13 @@
+# noqa: D205,D400
+"""
+Uncertainty Partitioning
+========================
+
+This module implements methods and tools meant to partition climate projection uncertainties into different components:
+natural variability, GHG scenario and climate models.
+"""
+
+
 from __future__ import annotations
 
 import numpy as np
@@ -7,19 +17,11 @@ import xarray as xr
 from ._filters import reverse_dict
 
 """
-Uncertainty Partitioning
-========================
-
-This module implements methods and tools meant to partition climate projection uncertainties into different components:
-natural variability, GHG scenario and climate models.
-
-Partitioning algorithms:
+Implemented partitioning algorithms:
 
  - `hawkins_sutton`
-"""
 
-"""
-# References for other more recent algorithms
+# References for other more recent algorithms that could be added here.
 
 Yip, S., Ferro, C. A. T., Stephenson, D. B., and Hawkins, E. (2011). A Simple, Coherent Framework for Partitioning
 Uncertainty in Climate Predictions. Journal of Climate 24, 17, 4634-4643, doi:10.1175/2011JCLI4085.1
@@ -38,6 +40,13 @@ E. (2020). Partitioning climate projection uncertainty with multiple large ensem
 Evin, G., Hingray, B., Blanchet, J., Eckert, N., Morin, S., & Verfaillie, D. (2019). Partitioning Uncertainty
 Components of an Incomplete Ensemble of Climate Projections Using Data Augmentation, Journal of Climate, 32(8),
 2423-2440, https://doi.org/10.1175/JCLI-D-18-0606.1
+
+Related bixtex entries:
+ - yip_2011
+ - northrop_2014
+ - goldenson_2018
+ - lehner_2020
+ - evin_2019
 """
 
 # Default dimension names
@@ -52,9 +61,9 @@ def hawkins_sutton(
     kind: str = "+",
     dimensions: dict = None,
 ):
-    """Return the mean and partitioned variance of an ensemble.
+    """Return the mean and partitioned variance of an ensemble based on method from Hawkins & Sutton.
 
-    Algorithm based on Hawkins and Sutton (2009). Input data should meet the following requirements:
+    Algorithm based on :cite:t:`hawkins_2009`. Input data should meet the following requirements:
       - annual frequency;
       - covers the baseline and future period;
       - defined over time, scenario and model dimensions;
@@ -85,10 +94,7 @@ def hawkins_sutton(
 
     References
     ----------
-    Hawkins, E., & Sutton, R. (2009) The Potential to Narrow Uncertainty in Regional Climate Predictions. Bulletin of
-      the American Meteorological Society, 90(8), 1095–1108. doi:10.1175/2009BAMS2607.1
-    Hawkins, E., and R. Sutton (2011) The potential to narrow uncertainty in projections of regional precipitation
-      change. Climate Dyn., 37, 407–418, doi:10.1007/s00382-010-0810-6.
+    :cite:cts:`hawkins_2009,hawkins_2011`
     """
     if xr.infer_freq(da.time)[0] not in ["A", "Y"]:
         raise ValueError("This algorithm expects annual time series.")

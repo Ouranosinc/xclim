@@ -39,12 +39,19 @@ Ensembles module
     :noindex:
 
 .. automodule:: xclim.ensembles._robustness
-    :noindeX:
+    :noindex:
 
 .. autofunction:: xclim.ensembles.change_significance
     :noindex:
 .. autofunction:: xclim.ensembles.robustness_coefficient
     :noindex:
+
+.. automodule:: xclim.ensembles._partitioning
+    :noindex:
+
+.. autofunction:: xclim.ensembles.hawkins_sutton
+    :noindex:
+
 
 Indicator Tools
 ===============
