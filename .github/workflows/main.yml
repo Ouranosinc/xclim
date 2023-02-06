@@ -19,6 +19,9 @@ on:
     types:
       - submitted
 
+env:
+  MAIN_TESTDATA_BRANCH: fix_era5_evspsblpot
+
 jobs:
   black:
     runs-on: ubuntu-latest
