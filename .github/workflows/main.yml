@@ -20,7 +20,7 @@ on:
       - submitted
 
 env:
-  MAIN_TESTDATA_BRANCH: fix_era5_evspsblpot
+  MAIN_TESTDATA_BRANCH: main
 
 jobs:
   black:
