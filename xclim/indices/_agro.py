@@ -550,7 +550,7 @@ def dryness_index(
         Latitude coordinate as an array, float or string.
         If None, a CF-conformant "latitude" field must be available within the passed DataArray.
     wo : str
-        The initial soil water reserve accessible to root systems.
+        The initial soil water reserve accessible to root systems [length]. Default: 200 mm.
     freq : str
         Resampling frequency.
 
@@ -618,7 +618,7 @@ def dryness_index(
     Examples
     --------
     >>> from xclim.indices import dryness_index
-    >>> cni = dryness_index(pr_dataset, evspsblpot_dataset, wo="200 mm")
+    >>> dryi = dryness_index(pr_dataset, evspsblpot_dataset, wo="200 mm")
 
     References
     ----------
@@ -629,8 +629,10 @@ def dryness_index(
         raise ValueError(f"Freq not allowed: {freq}. Must be `YS` or `AS-JAN`")
 
     # Resample all variables to monthly totals in mm units.
-    evspsblpot = rate2amount(evspsblpot, out_units="mm").resample(time="MS").sum()
-    pr = rate2amount(pr, out_units="mm").resample(time="MS").sum()
+    evspsblpot = (
+        convert_units_to(evspsblpot, "mm", context="hydro").resample(time="MS").sum()
+    )
+    pr = convert_units_to(pr, "mm", context="hydro").resample(time="MS").sum()
     wo = convert_units_to(wo, "mm")
 
     # Different potential evapotranspiration rates for northern hemisphere and southern hemisphere.
