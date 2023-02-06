@@ -13,12 +13,9 @@ Bug fixes
 
 New indicators
 ^^^^^^^^^^^^^^
+* ``ensembles.change_significance`` now supports Mann-whitney U-test and flexible ``realization``.
 * New indices and indicators for converting from snow water equivalent to snow depth (``snow_depth_from_amount``) and snow depth to snow water equivalent (``snow_amount_from_depth``) using snow density [kg/m^3]. (:pull:`1271`).
 * New indices and indicators for determining upwelling radiation (`shortwave_upwelling_radiation_from_net_downwelling` and `longwave_upwelling_radiation_from_net_downwelling`; CF variables `rsus` and `rlus`) from net and downwelling radiation (shortwave: `rss` and `rsds`; longwave: `rls` and `rlds`). (:pull:`1271`).
-
-New indicators
-^^^^^^^^^^^^^^
-* ``ensembles.change_significance`` now supports Mann-whitney U-test and flexible ``realization``.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -33,6 +30,7 @@ Internal changes
 * Add a GitHub CI workflow for performing dependency security review scanning. (:pull:`1287`).
 * Grammar and spelling corrections were applied to some docstrings. (:pull:`1271`).
 * Added `[radiation]` (`[power] / [area]`) to list of defined acceptable units. (:pull:`1271`).
+* Updated testing data used to generate the `atmosds` dataset to use more reproducibly-converted ERA5 data, generated with the `miranda` Python package. (:pull:`1269`).
 
 0.40.0 (2023-01-13)
 -------------------
