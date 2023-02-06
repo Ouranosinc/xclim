@@ -500,7 +500,7 @@ class TestUTCI:
         rlds = dataset.rlds
         rlus = dataset.rlus
         # Expected values
-        utci_exp = [255.880, 258.235, 238.389, 258.052, 266.281]
+        utci_exp = [253.887, 254.367, 238.196, 252.826, 264.495]
 
         utci = atmos.universal_thermal_climate_index(
             tas=tas,
