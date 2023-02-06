@@ -618,7 +618,7 @@ def dryness_index(
     Examples
     --------
     >>> from xclim.indices import dryness_index
-    >>> cni = cool_night_index(pr_dataset, evspsblpot_dataset, wo="200 mm")
+    >>> cni = dryness_index(pr_dataset, evspsblpot_dataset, wo="200 mm")
 
     References
     ----------
