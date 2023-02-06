@@ -76,8 +76,8 @@ jobs:
         with:
           python-version: "3.9"
       - name: Install tox
-        run: pip install tox
-      - name: Test with tox~=3.0
+        run: pip install tox~=3.0
+      - name: Test with tox
         run: tox -e py39-upstream-lm3-coverage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -183,14 +183,14 @@ jobs:
       - name: Run pylint
         run: pylint --rcfile=pylintrc --disable=import-error --exit-zero xclim
       - name: Test with tox
-        run: tox -e doctests_only
+        run: tox -e notebooks_doctests
       - name: Report coverage
         run: |
           pip install --upgrade coveralls
           coveralls
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-doctests-py38
+          COVERALLS_FLAG_NAME: run-notebooks_doctests-py38
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
 
