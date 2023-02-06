@@ -15,7 +15,7 @@ New indicators
 
 Bug fixes
 ^^^^^^^^^
-* ``build_indicator_module_from_yaml`` now accepts a ``reload`` argument. When re-building a module that already exists,  ``reload=True`` removes all previous indicator before creating the new ones. (:issue:`1192`,:pull:`1284`).
+* ``build_indicator_module_from_yaml`` now accepts a ``reload`` argument. When re-building a module that already exists, ``reload=True`` removes all previous indicator before creating the new ones. (:issue:`1192`, :pull:`1284`).
 * The test for french translations of official indicators was fixed and translations for CFFWIS indices, FFDI, KDBI, DF and Jetstream metric woollings have been added or fixed. (:pull:`1271`).
 * ``use_ufunc`` in ``windowed_run_count`` is now supplied with argument ``freq`` to warn users that the 1d method does not support resampling after run length operations (:issue:`1279`, :pull:`1291`).
 * ``{snd|snw}_max_doy`` now avoids an error due to `xr.argmax` when there are all-NaN slices. (:pull:`1277`).
