@@ -43,7 +43,7 @@ def change_significance(
         a distribution across the future period.
         `fut` and `ref` must be of the same type (Dataset or DataArray). If they are
         Dataset, they must have the same variables (name and coords).
-    test : {'ttest', 'welch-ttest', 'mannwhitney-utest', 'threshold', None}
+    test : {'ttest', 'welch-ttest', 'mannwhitney-utest', 'brownforsythe-test', 'threshold', None}
         Name of the statistical test used to determine if there was significant change. See notes.
     weights : xr.DataArray
         Weights to apply along the 'realization' dimension. This array cannot contain missing values.
@@ -53,7 +53,7 @@ def change_significance(
     **kwargs
         Other arguments specific to the statistical test.
 
-        For 'ttest', 'welch-ttest' and 'mannwhitney-utest':
+        For 'ttest', 'welch-ttest', 'mannwhitney-utest' and 'brownforsythe-test':
             p_change : float (default : 0.05)
                 p-value threshold for rejecting the hypothesis of no significant change.
         For 'threshold': (Only one of those must be given.)
@@ -73,7 +73,7 @@ def change_significance(
         Null values are returned where no members show significant change.
     pvals [Optional] : xr.DataArray or xr.Dataset or None
         The p-values estimated by the significance tests. Only returned if `p_vals` is True. None
-        if `test` is one of 'ttest', 'welch-ttest' or 'mannwhitney-utest'.
+        if `test` is one of 'ttest', 'welch-ttest', 'mannwhitney-utest' or 'brownforsythe-test'.
 
         The table below shows the coefficient needed to retrieve the number of members
         that have the indicated characteristics, by multiplying it to the total
@@ -101,6 +101,8 @@ def change_significance(
         Two-sided T-test, without assuming equal population variance. Same significance criterion as 'ttest'.
       'mannwhitney-utest' :
         Two-sided Mann-Whiney U-test. Same significance criterion as 'ttest'.
+      'brownforsythe-test' :
+        Brown-Forsythe test with assuming skewed, non-normal distributions. Same significance criterion as 'ttest'.
       'threshold' :
         Change is considered significative if the absolute delta exceeds a given threshold (absolute or relative).
       None :
@@ -147,6 +149,7 @@ def change_significance(
         "ttest": ["p_change"],
         "welch-ttest": ["p_change"],
         "mannwhitney-utest": ["p_change"],
+        "brownforsythe-test": ["p_change"],
         "threshold": ["abs_thresh", "rel_thresh"],
     }
 
@@ -242,7 +245,36 @@ def change_significance(
         )
         # When p < p_change, the hypothesis of no significant change is rejected.
         changed = pvals < p_change
-
+    elif test == "brownforsythe-test":
+        if weights is not None:
+            raise NotImplementedError(
+                "'brownforsythe-test' is not currently supported for weighted arrays."
+            )
+        
+        p_change = kwargs.setdefault("p_change", 0.05)
+        # Test hypothesis of no significant change
+        # -> Brown-Forsythe test
+        pvals = []
+        for realization in fut.realization.values:
+            fut_real = fut.sel(realization=realization).squeeze()
+            ref_real = ref.sel(realization=realization).squeeze()
+            pvals_ = xr.apply_ufunc(
+                lambda f, r: spstats.levene(f, r, center="median")[1],
+                fut_real,
+                ref_real,
+                input_core_dims=[["time"],  ["time"]],
+                output_core_dims=[[]],
+                exclude_dims={"time"},
+                vectorize=True,
+                dask="parallelized",
+                output_dtypes=[float],
+            )
+            pvals_ = pvals_.assign_coords({"realization": realization})
+            pvals_ = pvals_.expand_dims("realization")
+            pvals += [pvals_]
+        pvals = xr.concat(pvals, dim="realization")
+        # When p < p_change, the hypothesis of no significant change is rejected.
+        changed = pvals < p_change
     elif test == "threshold":
         if "abs_thresh" in kwargs and "rel_thresh" not in kwargs:
             changed = abs(delta) > kwargs["abs_thresh"]
@@ -275,7 +307,7 @@ def change_significance(
         pos_frac = (delta_chng > 0).weighted(weights).sum(realization) / (
             change_frac * n_valid_real
         )
-
+        
     # Metadata
     kwargs_str = ", ".join(
         [f"{k}: {v}" for k, v in kwargs.items() if k in test_params[test]]
