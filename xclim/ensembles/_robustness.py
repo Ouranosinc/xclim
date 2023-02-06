@@ -250,7 +250,7 @@ def change_significance(
             raise NotImplementedError(
                 "'brownforsythe-test' is not currently supported for weighted arrays."
             )
-        
+
         p_change = kwargs.setdefault("p_change", 0.05)
         # Test hypothesis of no significant change
         # -> Brown-Forsythe test
@@ -262,7 +262,7 @@ def change_significance(
                 lambda f, r: spstats.levene(f, r, center="median")[1],
                 fut_real,
                 ref_real,
-                input_core_dims=[["time"],  ["time"]],
+                input_core_dims=[["time"], ["time"]],
                 output_core_dims=[[]],
                 exclude_dims={"time"},
                 vectorize=True,
@@ -307,7 +307,7 @@ def change_significance(
         pos_frac = (delta_chng > 0).weighted(weights).sum(realization) / (
             change_frac * n_valid_real
         )
-        
+
     # Metadata
     kwargs_str = ", ".join(
         [f"{k}: {v}" for k, v in kwargs.items() if k in test_params[test]]
