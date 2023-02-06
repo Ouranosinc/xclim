@@ -4,18 +4,20 @@ History
 
 0.41.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Éric Dupuis (:user:`coxipi`)
+
+New indicators
+^^^^^^^^^^^^^^
+* ``ensembles.change_significance`` now supports Mann-whitney U-test and flexible ``realization``. (:pull:`1285`).
+* New indices and indicators for converting from snow water equivalent to snow depth (``snow_depth_from_amount``) and snow depth to snow water equivalent (``snow_amount_from_depth``) using snow density [kg/m^3]. (:pull:`1271`).
+* New indices and indicators for determining upwelling radiation (`shortwave_upwelling_radiation_from_net_downwelling` and `longwave_upwelling_radiation_from_net_downwelling`; CF variables `rsus` and `rlus`) from net and downwelling radiation (shortwave: `rss` and `rsds`; longwave: `rls` and `rlds`). (:pull:`1271`).
 
 Bug fixes
 ^^^^^^^^^
 * ``build_indicator_module_from_yaml`` now accepts a ``reload`` argument. When re-building a module that already exists,  ``reload=True`` removes all previous indicator before creating the new ones. (:issue:`1192`,:pull:`1284`).
 * The test for french translations of official indicators was fixed and translations for CFFWIS indices, FFDI, KDBI, DF and Jetstream metric woollings have been added or fixed. (:pull:`1271`).
-
-New indicators
-^^^^^^^^^^^^^^
-* ``ensembles.change_significance`` now supports Mann-whitney U-test and flexible ``realization``.
-* New indices and indicators for converting from snow water equivalent to snow depth (``snow_depth_from_amount``) and snow depth to snow water equivalent (``snow_amount_from_depth``) using snow density [kg/m^3]. (:pull:`1271`).
-* New indices and indicators for determining upwelling radiation (`shortwave_upwelling_radiation_from_net_downwelling` and `longwave_upwelling_radiation_from_net_downwelling`; CF variables `rsus` and `rlus`) from net and downwelling radiation (shortwave: `rss` and `rsds`; longwave: `rls` and `rlds`). (:pull:`1271`).
+* ``use_ufunc`` in ``windowed_run_count`` is now supplied with argument ``freq`` to warn users that the 1d method does not support resampling after run length operations (:issue:`1279`, :pull:`1291`).
+* ``{snd|snw}_max_doy`` now avoids an error due to `xr.argmax` when there are all-NaN slices. (:pull:`1277`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^

@@ -2435,6 +2435,31 @@ def test_days_with_snow(prsn_series):
     assert out.units == "d"
 
 
+class TestSnowMaxDoy:
+    def test_simple(self, snd_series, snw_series):
+        a = np.ones(366) / 100.0
+        a[10:20] = 0.3
+        snd = snd_series(a)
+        snw = snw_series(a)
+
+        out = xci.snd_max_doy(snd)
+        np.testing.assert_array_equal(out, [193, 182])
+
+        out = xci.snw_max_doy(snw)
+        np.testing.assert_array_equal(out, [193, 182])
+
+    def test_nan_slices(self, snd_series, snw_series):
+        a = np.ones(366) * np.NaN
+        snd = snd_series(a)
+        snw = snw_series(a)
+
+        out = xci.snd_max_doy(snd)
+        assert out.isnull().all()
+
+        out = xci.snw_max_doy(snw)
+        assert out.isnull().all()
+
+
 def test_snow_cover_duration(snd_series):
     a = np.ones(366) / 100.0
     a[10:20] = 0.3
