@@ -703,32 +703,32 @@
     "title": "Fin de la saison sans gel",
     "abstract": "Premier jour où la température minimale quotidienne est sous un seuil donné depuis un certain nombre de jours consécutifs."
   },
-  "FWI": {
+  "CFFWIS": {
     "description": "L'IFM est formé de six composantes qui tiennent compte des effets de la teneur en eau des combustibles et des conditions météorologiques sur le comportement du feu.",
     "title": "Indices Forêt-Météo",
     "abstract": "Calcule les 6 indices forêt-météo tels que définis par le Service Canadien des Forêts : l'indice de sécheresse, l'indice d'humidité de l'humus, l'indice du combustible léger, l'indice de propagation initiale, l'indice du combustible disponible et l'indice forêt météo."
   },
-  "FWI.dc": {
+  "CFFWIS.dc": {
     "long_name": "Indice de sécheresse",
     "description": "Évaluation numérique de la teneur moyenne en eau des épaisses couches organiques compactes."
   },
-  "FWI.dmc": {
+  "CFFWIS.dmc": {
     "long_name": "Indice d'humidité de l'humus",
     "description": "Évaluation numérique de la teneur moyenne en eau des couches organiques peu tassées de moyenne épaisseur."
   },
-  "FWI.ffmc": {
+  "CFFWIS.ffmc": {
     "long_name": "Indice du combustible léger (FFMC)",
     "description": "Évaluation numérique de la teneur en eau de la litière et d'autres combustibles légers."
   },
-  "FWI.isi": {
+  "CFFWIS.isi": {
     "long_name": "Indice de propagation initiale",
     "description": "Évaluation numérique du taux prévu de propagation du feu."
   },
-  "FWI.bui": {
+  "CFFWIS.bui": {
     "long_name": "Indice du combustible disponible",
     "description": "Évaluation numérique de la quantité totale de combustible disponible."
   },
-  "FWI.fwi": {
+  "CFFWIS.fwi": {
     "long_name": "Indice forêt météo",
     "description": "Évaluation numérique de l'intensité du feu."
   },
@@ -846,11 +846,23 @@
     "title": "Approximation de la neige",
     "abstract": "Précipitation solide estimée à partir de la précipitation totale et de la température selon une méthode et un seuil de température donnés."
   },
+  "SNOW_AMOUNT_FROM_DEPTH": {
+    "long_name": "Quantité de neige à la surface",
+    "description": "Quantité de neige calculée à partir de son épaisseur et de sa densité.",
+    "title": "Quantité de neige à la surface",
+    "abstract": "Quantité de neige à la surface calculée à partir de son épaisseur et de sa densité."
+  },
   "SNOW_DEPTH": {
-    "long_name": "Épaisseur de neige moyenne quotidienne",
-    "description": "Épaisseur de neige moyenne quotidienne.",
-    "title": "Moyenne de la profondeur de neige",
-    "abstract": "Épaisseur de neige moyenne quotidienne."
+    "long_name": "Épaisseur de neige",
+    "description": "Moyenne {freq:f} de l'épaisseur de neige quotidienne.",
+    "title": "Moyenne de l'épaisseur de neige",
+    "abstract": "Épaisseur de neige moyenne."
+  },
+  "SNOW_DEPTH_FROM_AMOUNT": {
+    "long_name": "Épaisseur de neige",
+    "description": "Épaisseur de neige calculée à partir de sa quantité et de sa densité.",
+    "title": "Épaisseur de neige",
+    "abstract": "Épaisseur de neige calculée à partir de sa quantité et de sa densité."
   },
   "PRLP": {
     "long_name": "Précipitation liquide (méthode \"{methode}\" avec une température égale ou inférieure à {thresh})",
@@ -1117,16 +1129,16 @@
     "abstract": "Nombre de jours où la vitesse du vent de surface est au-dessus ou égale à un seuil donné."
   },
   "JETSTREAM_METRIC_WOOLLINGS": {
-    "description": [
-      "Latitude quotidienne du maximum du vent zonal lissé par un fenêtrage de Lanczos.",
-      "Magnitude quotidienne du maximum du vent zonal lissé par un fenêtrage de Lanczos."
-    ],
-    "long_name": [
-      "Latitude du maximum du vent zonal",
-      "Magnitude du maximum du vent zonal"
-    ],
     "title": "Force et latitude du courant-jet",
     "abstract": "Latitude et magnitude du maximum de la vitesse du vent zonal entre 15 à 75°N et -60 à 0°E. Le vent est lissé par un fenêtrage de Lanczos."
+  },
+  "JETSTREAM_METRIC_WOOLLINGS.jetlat": {
+    "description": "Latitude quotidienne du maximum du vent zonal lissé par un fenêtrage de Lanczos.",
+    "long_name": "Latitude du maximum du vent zonal"
+  },
+  "JETSTREAM_METRIC_WOOLLINGS.jetstr": {
+    "description": "Magnitude quotidienne du maximum du vent zonal lissé par un fenêtrage de Lanczos.",
+    "long_name": "Magnitude du maximum du vent zonal"
   },
   "UTCI": {
     "long_name": "Indice universel du climat thermique [UTCI]",
@@ -1139,5 +1151,35 @@
     "description": "La température moyenne des rayonnements incidents sur un corps.",
     "title": "Température radiative moyenne",
     "abstract": "La température moyenne des rayonnements solaires et thermiques incidents sur un corps à l'extérieur."
+  },
+  "KBDI": {
+    "long_name": "Indice de sécheresse de Keetch-Byran",
+    "description": "Quantité d'eau nécessaire pour que le contenu en eau du sol atteigne sa capacité au champ.",
+    "title": "Indice de sécheresse de Keetch-Byran (KBDI) pour le déficit en humidité du sol.",
+    "abstract": "Le KDBI indique la quantité d'eau nécessaire pour que le contenu en eau du sol atteigne sa capacité au champ. Il est utile au calul du FFDI."
+  },
+  "DF": {
+    "long_name": "Facteur de sécheresse de Griffiths",
+    "description": "Évaluation numérique de la disponibilité de combustible dans la litière profonde.",
+    "title": "Facteur de sécheresse de Griffiths basé sur le deficit en humidité du sol.",
+    "abstract": "Le facteur de sécheresse est un indicateur numérique de la disponibilité du combustible à feu de forêt dans les couches profondes du sol. Il est utile au calcul de l'indice de danger de feu de forêt McArthur."
+  },
+  "FFDI": {
+    "long_name": "Indice de danger de feu de forêt McArthur",
+    "description": "Évaluation numérique du danger potentiel d'un feu de forêt.",
+    "title": "Indice de danger de feu de forêt McArthur (FFDI)",
+    "abstract": "Le FFDI est un indicateur numérique du danger potentiel d'un feu de forêt."
+  },
+  "SHORTWAVE_UPWELLING_RADIATION_FROM_NET_DOWNWELLING": {
+    "long_name": "Rayonnement de courtes longueurs d'onde ascendant",
+    "description": "Calcul du rayonnement de courtes longueurs d'onde ascendant à partir du rayonnement de courtes longueurs d'onde net et descendant.",
+    "title": "Rayonnement de courtes longueurs d'onde ascendant",
+    "abstract": "Calcul du rayonnement de courtes longueurs d'onde ascendant à partir du rayonnement de courtes longueurs d'onde net et descendant."
+  },
+  "LONGWAVE_UPWELLING_RADIATION_FROM_NET_DOWNWELLING": {
+    "long_name": "Rayonnement de grandes longueurs d'onde ascendant",
+    "description": "Calcul du rayonnement de grandes longueurs d'onde ascendant à partir du rayonnement de grandes longueurs d'onde net et descendant.",
+    "title": "Rayonnement de grandes longueurs d'onde ascendant",
+    "abstract": "Calcul du rayonnement de grandes longueurs d'onde ascendant à partir du rayonnement de grandes longueurs d'onde net et descendant."
   }
 }

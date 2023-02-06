@@ -11,7 +11,8 @@ information available at :cite:t:`code-natural_resources_canada_data_nodate`.
 First adapted from Matlab code `CalcFWITimeSeriesWithStartup.m` from GFWED :cite:p:`fire-wang_updated_2015` made
 for using MERRA2 data, which was a translation of FWI.vba of the Canadian Fire Weather Index system. Then, updated and
 synchronized with the R code of the cffdrs package. When given the correct parameters, the current code has an error
-below 3% when compared with the :cite:t:`fire-field_development_2015` data.
+below 3% when compared with the :cite:t:`fire-field_development_2015` data. The cffdrs R package is different from the
+original 1982 implementation, and so is xclim.
 
 Parts of the code and of the documentation in this submodule are directly taken from :cite:t:`code-cantin_canadian_2014`
 which was published with the GPLv2 license.
@@ -1338,7 +1339,8 @@ def cffwis_indices(
     Notes
     -----
     See :cite:t:`code-natural_resources_canada_data_nodate`, the :py:mod:`xclim.indices.fire` module documentation,
-    and the docstring of :py:func:`fire_weather_ufunc` for more information.
+    and the docstring of :py:func:`fire_weather_ufunc` for more information. This algorithm follows the official R code
+    released by the CFS, which contains revisions from the original 1982 Fortran code.
 
     References
     ----------
@@ -1438,7 +1440,8 @@ def drought_code(
     Notes
     -----
     See :cite:cts:`code-natural_resources_canada_data_nodate`, the :py:mod:`xclim.indices.fire` module documentation,
-    and the docstring of :py:func:`fire_weather_ufunc` for more information.
+    and the docstring of :py:func:`fire_weather_ufunc` for more information. This algorithm follows the official R code
+    released by the CFS, which contains revisions from the original 1982 Fortran code.
 
     References
     ----------

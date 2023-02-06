@@ -58,15 +58,15 @@ clean-test: ## remove test and coverage artifacts
 lint: ## check style with flake8 and black
 	pydocstyle --config=setup.cfg xclim
 	flake8 --config=setup.cfg xclim
-	black --check --target-version py38 xclim
-	nbqa black --check docs --target-version py38
-	blackdoc --check --target-version py38 xclim --exclude xclim/indices/__init__.py,xclim/docs/installation.rst
-	isort --check --settings-file=setup.cfg xclim --add_imports="from __future__ import annotations"
-	pylint --rcfile=pylintrc --exit-zero xclim
+	black --check xclim
+	nbqa black --check docs
+	blackdoc --check --exclude=xclim/indices/__init__.py xclim
+	blackdoc --check docs
+	isort --check xclim
 
 test: ## run tests quickly with the default Python
 	pytest xclim/testing/tests
-	pytest --nbval docs/notebooks
+	pytest --nbval --dist=loadscope docs/notebooks
 	pytest --rootdir xclim/testing/tests/ --xdoctest xclim
 
 test-all: ## run tests on every Python version with tox
@@ -94,11 +94,10 @@ servedocs: docs ## compile the docs watching for changes
 	watchmedo shell-command -p '*.rst' -c '$(MAKE) -C docs html' -R -D .
 
 release: dist ## package and upload a release
-	twine upload dist/*
+	flit publish dist/*
 
 dist: clean ## builds source and wheel package
-	python setup.py sdist
-	python setup.py bdist_wheel
+	flit build
 	ls -l dist
 
 install: clean ## install the package to the active Python's site-packages

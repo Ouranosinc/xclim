@@ -118,10 +118,10 @@ def kmeans_reduce_ensemble(
     Parameters
     ----------
     data : xr.DataArray
-        Selecton criteria data : 2-D xr.DataArray with dimensions 'realization' (N) and
+        Selection criteria data : 2-D xr.DataArray with dimensions 'realization' (N) and
         'criteria' (P). These are the values used for clustering. Realizations represent the individual original
         ensemble members and criteria the variables/indicators used in the grouping algorithm.
-    method : dict
+    method : dict, optional
         Dictionary defining selection method and associated value when required. See Notes.
     max_clusters : int, optional
          Maximum number of members to include in the output ensemble selection.
@@ -415,7 +415,6 @@ def plot_rsqprofile(fig_data):
         col = "k--"
         label = f"R² selection > {fig_data['method']['rsq_cutoff']} (n = {n_clusters})"
         if "max_clusters" in fig_data.keys():
-
             if rsq[n_clusters - 1] < fig_data["method"]["rsq_cutoff"]:
                 col = "r--"
                 label = (

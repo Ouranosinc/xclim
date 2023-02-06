@@ -27,7 +27,6 @@ fwi_url = "FWI/cffdrs_test_fwi.nc"
 
 
 class TestCFFWIS:
-
     # The following were computed with cffdrs 1.8.18, on the test_wDC data.
     cffdrs_fire_season = {
         "id1_default": [["2013-03-15", "2014-03-14"], ["2013-11-23", "2014-11-14"]],
