@@ -1298,7 +1298,7 @@ class TestWarmSpellDurationIndex:
             tasmax=tasmax, tasmax_per=tx90, window=3, freq="AS-JUL"
         )
         np.testing.assert_array_equal(
-            out.isel(location=0, percentiles=0), np.array([np.nan, 3, 0, 0, np.nan])
+            out.isel(location=0, percentiles=0), np.array([np.nan, 4, 0, 0, np.nan])
         )
         assert (
             "Annual number of days with at least 3 consecutive days" in out.description
@@ -1358,7 +1358,7 @@ def test_corn_heat_units(open_dataset):
     np.testing.assert_allclose(chu, chuC, rtol=1e-3)
 
     np.testing.assert_allclose(
-        chu[0, 180:185], np.array([13.777, 12.368, 11.966, 14.674, 16.797]), rtol=1e-4
+        chu[0, 180:185], np.array([12.933, 11.361, 11.1365, 13.419, 15.569]), rtol=1e-4
     )
 
     assert (
@@ -1374,7 +1374,7 @@ class TestFreezeThawSpell:
         out = atmos.freezethaw_spell_frequency(
             tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS"
         )
-        np.testing.assert_array_equal(out.isel(location=0), [32, 38, 37, 30])
+        np.testing.assert_array_equal(out.isel(location=0), [34.0, 37.0, 36.0, 30.0])
 
         # At location -1, year 2 has no spells of length >=2
         out = atmos.freezethaw_spell_frequency(
@@ -1383,7 +1383,7 @@ class TestFreezeThawSpell:
             window=2,
             freq="YS",
         )
-        np.testing.assert_array_equal(out.isel(location=-1), [1, 0, 1, 1])
+        np.testing.assert_array_equal(out.isel(location=-1), [0, 0, 1, 1])
 
         assert out.attrs["long_name"] == (
             "Frequency of events where maximum daily temperatures are above 0 degc "
@@ -1401,7 +1401,7 @@ class TestFreezeThawSpell:
             tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS"
         )
         np.testing.assert_allclose(
-            out.isel(location=0), [2.09375, 2, 1.8648648, 1.7666666]
+            out.isel(location=0), [1.911765, 2.027027, 1.888889, 1.733333], rtol=1e-06
         )
 
         # At location -1, year 2 has no spells of length >=2
@@ -1411,7 +1411,7 @@ class TestFreezeThawSpell:
             window=2,
             freq="YS",
         )
-        np.testing.assert_array_equal(out.isel(location=-1), [2, 0, 2, 2])
+        np.testing.assert_array_equal(out.isel(location=-1), [0, 0, 4, 2])
 
         assert out.attrs["long_name"] == (
             "Average length of events where maximum daily temperatures are above 0 degc "
@@ -1437,7 +1437,7 @@ class TestFreezeThawSpell:
             window=2,
             freq="YS",
         )
-        np.testing.assert_array_equal(out.isel(location=-1), [2, 0, 2, 2])
+        np.testing.assert_array_equal(out.isel(location=-1), [0, 0, 4, 2])
 
         assert out.attrs["long_name"] == (
             "Maximal length of events where maximum daily temperatures are above 0 degc "

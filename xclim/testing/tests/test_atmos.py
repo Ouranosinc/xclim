@@ -232,21 +232,19 @@ def test_wind_chill_index(atmosds):
     out = atmos.wind_chill_index(ds=atmosds)
 
     np.testing.assert_allclose(
-        out.isel(time=0), [np.nan, -6.116, -36.064, -7.153, np.nan], rtol=1e-3
+        out.isel(time=0), [np.nan, -6.716, -35.617, -8.486, np.nan], rtol=1e-3
     )
 
     out_us = atmos.wind_chill_index(ds=atmosds, method="US")
 
     np.testing.assert_allclose(
-        out_us.isel(time=0), [-1.041, -6.116, -36.064, -7.153, 2.951], rtol=1e-3
+        out_us.isel(time=0), [-1.429, -6.716, -35.617, -8.486, 2.781], rtol=1e-3
     )
 
 
 class TestPotentialEvapotranspiration:
-    def test_convert_units(self, open_dataset):
-        ds = open_dataset(
-            "ERA5/daily_surface_cancities_1990-1993.nc",
-        )
+    def test_convert_units(self, atmosds):
+        ds = atmosds
 
         tn = ds.tasmin
         tx = ds.tasmax
@@ -304,10 +302,8 @@ class TestPotentialEvapotranspiration:
         np.testing.assert_allclose(pet_mb05, pet_mb05C, atol=1)
         np.testing.assert_allclose(pet_fao_pm98, pet_fao_pm98C, atol=1)
 
-    def test_nan_values(self, open_dataset):
-        ds = open_dataset(
-            "ERA5/daily_surface_cancities_1990-1993.nc",
-        )
+    def test_nan_values(self, atmosds):
+        ds = atmosds
 
         tn = ds.tasmin
         tx = ds.tasmax
@@ -357,10 +353,8 @@ class TestPotentialEvapotranspiration:
 
 
 class TestWaterBudget:
-    def test_convert_units(self, open_dataset):
-        ds = open_dataset(
-            "ERA5/daily_surface_cancities_1990-1993.nc",
-        )
+    def test_convert_units(self, atmosds):
+        ds = atmosds
 
         tn = ds.tasmin
         tx = ds.tasmax
@@ -437,10 +431,8 @@ class TestWaterBudget:
         np.testing.assert_allclose(p_pet_fao_pm98, p_pet_fao_pm98R, atol=1)
         np.testing.assert_allclose(p_pet_evpot, p_pet_evpotR, atol=1)
 
-    def test_nan_values(self, open_dataset):
-        ds = open_dataset(
-            "ERA5/daily_surface_cancities_1990-1993.nc",
-        )
+    def test_nan_values(self, atmosds):
+        ds = atmosds
 
         tn = ds.tasmin
         tx = ds.tasmax
@@ -495,10 +487,8 @@ class TestWaterBudget:
 
 
 class TestUTCI:
-    def test_universal_thermal_climate_index(self, open_dataset):
-        dataset = open_dataset(
-            "ERA5/daily_surface_cancities_1990-1993.nc",
-        )
+    def test_universal_thermal_climate_index(self, atmosds):
+        dataset = atmosds
 
         tas = dataset.tas
         hurs = dataset.hurs
@@ -510,7 +500,7 @@ class TestUTCI:
         rlds = dataset.rlds
         rlus = dataset.rlus
         # Expected values
-        utci_exp = [256.8, 258.0, 237.4, 258.5, 266.2]
+        utci_exp = [253.887, 254.367, 238.196, 252.826, 264.495]
 
         utci = atmos.universal_thermal_climate_index(
             tas=tas,
