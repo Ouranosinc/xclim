@@ -21,23 +21,31 @@ from xclim.indices.helpers import (
 )
 
 __all__ = [
-    "humidex",
+    "clausius_clapeyron_scaled_precipitation",
     "heat_index",
-    "tas",
-    "uas_vas_2_sfcwind",
-    "sfcwind_2_uas_vas",
-    "saturation_vapor_pressure",
+    "humidex",
+    "longwave_upwelling_radiation_from_net_downwelling",
+    "mean_radiant_temperature",
+    "potential_evapotranspiration",
+    "rain_approximation",
     "relative_humidity",
+    "saturation_vapor_pressure",
+    "sfcwind_2_uas_vas",
+    "shortwave_upwelling_radiation_from_net_downwelling",
+    "snow_amount_from_depth",
+    "snow_depth_from_amount",
+    "snowfall_approximation",
     "specific_humidity",
     "specific_humidity_from_dewpoint",
-    "snowfall_approximation",
-    "rain_approximation",
-    "wind_chill_index",
-    "clausius_clapeyron_scaled_precipitation",
-    "potential_evapotranspiration",
+    "tas",
+    "uas_vas_2_sfcwind",
     "universal_thermal_climate_index",
-    "mean_radiant_temperature",
+    "wind_chill_index",
 ]
+
+
+def _deaccumulate(ds: xr.DataArray) -> xr.DataArray:
+    """Deaccumulate units."""
 
 
 @declare_units(tas="[temperature]", tdps="[temperature]", hurs="[]")
@@ -776,7 +784,7 @@ def snowfall_approximation(
     tas : xarray.DataArray, optional
         Mean, maximum, or minimum daily temperature.
     thresh : Quantified
-        Freezing point temperature. Non scalar values are not allowed with method "brown".
+        Freezing point temperature. Non-scalar values are not allowed with method "brown".
     method : {"binary", "brown", "auer"}
         Which method to use when approximating snowfall from total precipitation. See notes.
 
@@ -895,6 +903,115 @@ def rain_approximation(
     return prra
 
 
+@declare_units(snw="[mass]/[area]", snr="[mass]/[volume]")
+def snow_depth_from_amount(
+    snw: xr.DataArray,
+    snr: xr.DataArray,
+) -> xr.DataArray:
+    """Snow depth from snow amount and density.
+
+    Parameters
+    ----------
+    snw : xr.DataArray
+        Snow amount [kg/m^2].
+        If snow water equivalent (`swe` [m]) is provided instead, will be converted to `snw` before calculating.
+    snr : xr.DataArray, optional
+        Snow density [kg/m^3].
+
+    Returns
+    -------
+    xr.DataArray, [m]
+        Snow depth.
+    """
+    snw = convert_units_to(snw, "kg m-2")
+    snr = convert_units_to(snr, "kg m-3")
+
+    snd = snw / snr
+
+    snd.attrs["units"] = "m"
+    return snd
+
+
+@declare_units(snd="[length]", snr="[mass]/[volume]")
+def snow_amount_from_depth(
+    snd: xr.DataArray,
+    snr: xr.DataArray,
+) -> xr.DataArray:
+    """Snow amount from snow depth and density.
+
+    Parameters
+    ----------
+    snd : xr.DataArray
+        Snow depth [m].
+    snr : xr.DataArray
+        Snow density [kg/m^3].
+
+    Returns
+    -------
+    xr.DataArray, [kg m-2]
+        Surface snow amount
+    """
+    snd = convert_units_to(snd, "m")
+    snr = convert_units_to(snr, "kg m-3")
+
+    snw = snd * snr
+
+    snw.attrs["units"] = "kg m-2"
+    return snw
+
+
+@declare_units(rls="[radiation]", rlds="[radiation]")
+def longwave_upwelling_radiation_from_net_downwelling(
+    rls: xr.DataArray, rlds: xr.DataArray
+) -> xr.DataArray:
+    """Calculate upwelling thermal radiation from net thermal radiation and downwelling thermal radiation.
+
+    Parameters
+    ----------
+    rls : xr.DataArray
+        Surface net thermal radiation [W m-2].
+    rlds : xr.DataArray
+        Surface downwelling thermal radiation [W m-2].
+
+    Returns
+    -------
+    xr.DataArray, [W m-2]
+        Surface upwelling thermal radiation (rlus).
+    """
+    rls = convert_units_to(rls, rlds)
+
+    rlus = rlds - rls
+
+    rlus.attrs["units"] = "W m-2"
+    return rlus
+
+
+@declare_units(rss="[radiation]", rsds="[radiation]")
+def shortwave_upwelling_radiation_from_net_downwelling(
+    rss: xr.DataArray, rsds: xr.DataArray
+) -> xr.DataArray:
+    """Calculate upwelling solar radiation from net solar radiation and downwelling solar radiation.
+
+    Parameters
+    ----------
+    rss : xr.DataArray
+        Surface net solar radiation [W m-2].
+    rsds : xr.DataArray
+        Surface downwelling solar radiation [W m-2].
+
+    Returns
+    -------
+    xr.DataArray, [W m-2]
+        Surface upwelling solar radiation (rsus).
+    """
+    rss = convert_units_to(rss, rsds)
+
+    rsus = rsds - rss
+
+    rsus.attrs["units"] = "W m-2"
+    return rsus
+
+
 @declare_units(
     tas="[temperature]",
     sfcWind="[speed]",
@@ -904,7 +1021,7 @@ def wind_chill_index(
     sfcWind: xr.DataArray,
     method: str = "CAN",
     mask_invalid: bool = True,
-):
+) -> xr.DataArray:
     r"""Wind chill index.
 
     The Wind Chill Index is an estimation of how cold the weather feels to the average person.
