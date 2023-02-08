@@ -242,17 +242,38 @@ def test_wind_chill_index(atmosds):
     )
 
 
-def test_dryness_index(atmosds):
-    ds = atmosds
+class TestDrynessIndex:
+    def test_simple(atmosds):
+        ds = atmosds.isel(location=3)
 
-    pr = ds.pr
-    evspsblpot = ds.evspsblpot
+        pr = ds.pr
+        evspsblpot = ds.evspsblpot
 
-    di = atmos.dryness_index(pr, evspsblpot)
-    city = di.isel(location=3)
+        di = atmos.dryness_index(pr, evspsblpot)
+        np.testing.assert_allclose(
+            di, np.array([13.355, 102.426, 65.576, 158.078]), rtol=1e-03
+        )
+        assert di.attrs["long_name"] == "Growing season humidity"
 
-    # FIXME: This test needs to be adjusted once the Indicator is working.
-    np.testing.assert_allclose(city[:10], np.array([1, 2, 3, 4, 5, 6, 7, 8, 9]))
+    def test_variable_initial_conditions(self, atmosds):
+        ds = atmosds.isel(location=3)
+
+        pr = ds.pr
+        evspsblpot = ds.evspsblpot
+
+        di = atmos.dryness_index(pr, evspsblpot)
+        di_wet = atmos.dryness_index(pr, evspsblpot, wo="250 mm")
+        di_dry = atmos.dryness_index(pr, evspsblpot, wo="100 mm")
+
+        assert np.all(di_wet > di_dry)
+        di_plus_50 = di + 50
+        np.testing.assert_allclose(di_wet, di_plus_50, rtol=1e-03)
+        di_minus_100 = di - 100
+        np.testing.assert_allclose(di_dry, di_minus_100, rtol=1e-03)
+
+        for array, value in {di: "200 mm", di_wet: "250 mm", di_dry: "100 mm"}.items():
+            assert array.attrs["long_name"] == "Growing season humidity"
+            assert value in array.attrs["description"]
 
 
 class TestPotentialEvapotranspiration:

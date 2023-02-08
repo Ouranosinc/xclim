@@ -184,11 +184,10 @@ dryness_index = Precip(
     "moisture content set to {wo} and an adjustment based on monthly precipitation and evapotranspiration limits.",
     abstract="The dryness index is a characterization of the water component in winegrowing regions which considers "
     "the precipitation and evapotranspiration factors without deduction for surface runoff or drainage. "
-    "Metric originally published in Riou et al. (1994). ",
+    "Metric originally published in Riou et al. (1994).",
     cell_methods="",
     src_freq=["D", "M"],
     compute=indices.dryness_index,
-    parameters={"wo": InputKind.QUANTIFIED},
 )
 
 maximum_consecutive_wet_days = Precip(

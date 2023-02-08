@@ -9,7 +9,13 @@ import xarray
 import xclim.indices as xci
 import xclim.indices.run_length as rl
 from xclim.core.calendar import parse_offset, resample_doy, select_time
-from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
+from xclim.core.units import (
+    amount2lwethickness,
+    convert_units_to,
+    declare_units,
+    rate2amount,
+    to_agg_units,
+)
 from xclim.core.utils import DayOfYearStr, Quantified, uses_dask
 from xclim.indices._threshold import (
     first_day_temperature_above,
@@ -629,8 +635,12 @@ def dryness_index(
         raise ValueError(f"Freq not allowed: {freq}. Must be `YS` or `AS-JAN`")
 
     # Resample all variables to monthly totals in mm units.
-    evspsblpot = rate2amount(evspsblpot, out_units="mm").resample(time="MS").sum()
-    pr = rate2amount(pr, out_units="mm").resample(time="MS").sum()
+    evspsblpot = (
+        amount2lwethickness(rate2amount(evspsblpot), out_units="mm")
+        .resample(time="MS")
+        .sum()
+    )
+    pr = amount2lwethickness(rate2amount(pr), out_units="mm").resample(time="MS").sum()
     wo = convert_units_to(wo, "mm")
 
     # Different potential evapotranspiration rates for northern hemisphere and southern hemisphere.
