@@ -555,7 +555,7 @@ def dryness_index(
     lat : xarray.DataArray or {"north", "south"}, optional
         Latitude coordinate as an array, float or string.
         If None, a CF-conformant "latitude" field must be available within the passed DataArray.
-    wo : str
+    wo : Quantified
         The initial soil water reserve accessible to root systems [length]. Default: 200 mm.
     freq : str
         Resampling frequency.
