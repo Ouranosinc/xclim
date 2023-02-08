@@ -34,6 +34,7 @@ Internal changes
 * Grammar and spelling corrections were applied to some docstrings. (:pull:`1271`).
 * Added `[radiation]` (`[power] / [area]`) to list of defined acceptable units. (:pull:`1271`).
 * Updated testing data used to generate the `atmosds` dataset to use more reproducibly-converted ERA5 data, generated with the `miranda` Python package. (:pull:`1269`).
+* Updated testing dependencies to use `pytest-xdist>=3.2`, allowing for the new `--dist=worksteal` scheduler for distributing the pool of remaining tests across workers after individual workers have exhausted their own queues. (:pull:`1235`).
 
 0.40.0 (2023-01-13)
 -------------------
