@@ -188,6 +188,7 @@ dryness_index = Precip(
     cell_methods="",
     src_freq=["D", "M"],
     compute=indices.dryness_index,
+    parameters={"wo": InputKind.QUANTIFIED},
 )
 
 maximum_consecutive_wet_days = Precip(
