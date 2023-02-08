@@ -525,7 +525,7 @@ def cool_night_index(
     return cni
 
 
-@declare_units(pr="[precipitation]", evspsblpot="[precipitation]")
+@declare_units(pr="[precipitation]", evspsblpot="[precipitation]", wo="[length]")
 def dryness_index(
     pr: xarray.DataArray,
     evspsblpot: xarray.DataArray,

@@ -6,6 +6,10 @@ import numpy as np
 import xarray as xr
 
 from xclim import atmos, set_options
+from xclim.indices import (
+    longwave_upwelling_radiation_from_net_downwelling,
+    shortwave_upwelling_radiation_from_net_downwelling,
+)
 
 K2C = 273.16
 
@@ -554,9 +558,13 @@ class TestMeanRadiantTemperature:
         dataset = atmosds
 
         rsds = dataset.rsds
-        rsus = dataset.rsus
+        rsus = shortwave_upwelling_radiation_from_net_downwelling(
+            rss=dataset.rss, rsds=dataset.rsds
+        )
         rlds = dataset.rlds
-        rlus = dataset.rlus
+        rlus = longwave_upwelling_radiation_from_net_downwelling(
+            rls=dataset.rls, rlds=dataset.rlds
+        )
 
         # Expected values
         exp_sun = [np.nan, np.nan, np.nan, np.nan, np.nan]
