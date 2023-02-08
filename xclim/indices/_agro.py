@@ -557,7 +557,7 @@ def dryness_index(
     Returns
     -------
     xarray.DataArray, [mm]
-        Absolute Dryness Index values.
+        Dryness Index.
 
     Notes
     -----

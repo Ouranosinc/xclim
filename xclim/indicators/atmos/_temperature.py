@@ -497,7 +497,7 @@ cool_night_index = Temp(
     title="Cool night index",
     identifier="cool_night_index",
     units="degC",
-    long_name="Mean minimum temperature for September (Northern hemisphere) or March (Southern hemisphere)",
+    long_name="Mean minimum temperature in late summer",
     description="Mean minimum temperature for September (Northern hemisphere) or March (Southern hemisphere).",
     abstract="A night coolness variable which takes into account the mean minimum night temperatures during the "
     "month when ripening usually occurs beyond the ripening period.",
