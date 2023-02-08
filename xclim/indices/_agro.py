@@ -629,7 +629,7 @@ def dryness_index(
         raise ValueError(f"Freq not allowed: {freq}. Must be `YS` or `AS-JAN`")
 
     # Resample all variables to monthly totals in mm units.
-    evspsblpot =  rate2amount(evspsblpot, out_units="mm").resample(time="MS").sum()
+    evspsblpot = rate2amount(evspsblpot, out_units="mm").resample(time="MS").sum()
     pr = rate2amount(pr, out_units="mm").resample(time="MS").sum()
     wo = convert_units_to(wo, "mm")
 
