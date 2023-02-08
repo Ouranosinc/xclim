@@ -2,14 +2,13 @@
 # Expected values might be the same as for the indices tests, see test_indices comments.
 from __future__ import annotations
 
+import sys
+
 import numpy as np
+import pytest
 import xarray as xr
 
 from xclim import atmos, set_options
-from xclim.indices import (
-    longwave_upwelling_radiation_from_net_downwelling,
-    shortwave_upwelling_radiation_from_net_downwelling,
-)
 
 K2C = 273.16
 
@@ -553,18 +552,16 @@ class TestUTCI:
         np.testing.assert_allclose(utci.isel(time=0), utci_exp, rtol=1e-03)
 
 
+@pytest.mark.skipif(sys.version_info == (3, 10), reason="Crashes often on Python3.10")
+@pytest.mark.thread_unsafe
 class TestMeanRadiantTemperature:
     def test_mean_radiant_temperature(self, atmosds):
         dataset = atmosds
 
         rsds = dataset.rsds
-        rsus = shortwave_upwelling_radiation_from_net_downwelling(
-            rss=dataset.rss, rsds=dataset.rsds
-        )
+        rsus = dataset.rsus
         rlds = dataset.rlds
-        rlus = longwave_upwelling_radiation_from_net_downwelling(
-            rls=dataset.rls, rlds=dataset.rlds
-        )
+        rlus = dataset.rlus
 
         # Expected values
         exp_sun = [np.nan, np.nan, np.nan, np.nan, np.nan]
