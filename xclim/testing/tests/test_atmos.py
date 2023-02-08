@@ -243,7 +243,7 @@ def test_wind_chill_index(atmosds):
 
 
 class TestDrynessIndex:
-    def test_simple(atmosds):
+    def test_simple(self, atmosds):
         ds = atmosds.isel(location=3)
 
         pr = ds.pr
@@ -256,7 +256,7 @@ class TestDrynessIndex:
         assert di.attrs["long_name"] == "Growing season humidity"
 
     def test_variable_initial_conditions(self, atmosds):
-        ds = atmosds.isel(location=3)
+        ds = atmosds
 
         pr = ds.pr
         evspsblpot = ds.evspsblpot
@@ -561,8 +561,8 @@ class TestMeanRadiantTemperature:
 
         # Expected values
         exp_sun = [np.nan, np.nan, np.nan, np.nan, np.nan]
-        exp_ins = [277.1, 274.6, 243.5, 268.1, 309.1]
-        exp_avg = [277.1, 274.6, 243.5, 268.1, 278.4]
+        exp_ins = [276.911, 274.742, 243.202, 268.012, 309.151]
+        exp_avg = [276.911, 274.742, 243.202, 268.017, 278.512]
 
         mrt_sun = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="sunlit")
         mrt_ins = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="instant")

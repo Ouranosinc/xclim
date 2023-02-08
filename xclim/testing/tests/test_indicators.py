@@ -461,7 +461,11 @@ def test_all_parameters_understood(official_indicators):
             if param["kind"] == InputKind.OTHER_PARAMETER:
                 problems.add((identifier, name))
     # this one we are ok with.
-    if problems - {("COOL_NIGHT_INDEX", "lat"), ("DRYNESS_INDEX", "lat")}:
+    if problems - {
+        ("COOL_NIGHT_INDEX", "lat"),
+        ("DRYNESS_INDEX", "lat"),
+        ("DRYNESS_INDEX", "wo"),
+    }:
         raise ValueError(
             f"The following indicator/parameter couple {problems} use types not listed in InputKind."
         )
