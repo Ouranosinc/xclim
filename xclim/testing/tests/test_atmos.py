@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 import xarray as xr
 
 from xclim import atmos, set_options
@@ -271,7 +270,7 @@ class TestDrynessIndex:
         di_minus_100 = di - 100
         np.testing.assert_allclose(di_dry, di_minus_100, rtol=1e-03)
 
-        for array, value in {di: "200 mm", di_wet: "250 mm", di_dry: "100 mm"}.items():
+        for value, array in {"200 mm": di, "250 mm": di_wet, "100 mm": di_dry}.items():
             assert array.attrs["long_name"] == "Growing season humidity"
             assert value in array.attrs["description"]
 
