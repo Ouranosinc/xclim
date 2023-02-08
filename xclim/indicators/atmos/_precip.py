@@ -178,9 +178,7 @@ dryness_index = Precip(
     title="Dryness index",
     identifier="dryness_index",
     units="mm",
-    long_name="Estimation of growing season humidity (precipitation minus adjusted evapotranspiration) for the period "
-    "of April to September (Northern Hemisphere) or October to March (Southern Hemisphere), "
-    "with initial soil moisture content set to {wo}",
+    long_name="Growing season humidity"
     description="Estimation of growing season humidity (precipitation minus adjusted evapotranspiration) for the "
     "period of April to September (Northern Hemisphere) or October to March (Southern Hemisphere), with initial soil "
     "moisture content set to {wo} and an adjustment based on monthly precipitation and evapotranspiration limits.",
