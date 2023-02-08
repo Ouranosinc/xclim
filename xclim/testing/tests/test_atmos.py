@@ -242,6 +242,19 @@ def test_wind_chill_index(atmosds):
     )
 
 
+def test_dryness_index(atmosds):
+    ds = atmosds
+
+    pr = ds.pr
+    evspsblpot = ds.evspsblpot
+
+    di = atmos.dryness_index(pr, evspsblpot)
+    city = di.isel(location=3)
+
+    # FIXME: This test needs to be adjusted once the Indicator is working.
+    np.testing.assert_allclose(city[:10], np.array([1, 2, 3, 4, 5, 6, 7, 8, 9]))
+
+
 class TestPotentialEvapotranspiration:
     def test_convert_units(self, atmosds):
         ds = atmosds
@@ -516,12 +529,10 @@ class TestUTCI:
         np.testing.assert_allclose(utci.isel(time=0), utci_exp, rtol=1e-03)
 
 
-@pytest.mark.skip(reason="Causes thread problems? It's a mystery.")
 class TestMeanRadiantTemperature:
-    def test_mean_radiant_temperature(self, open_dataset):
-        dataset = open_dataset(
-            "ERA5/daily_surface_cancities_1990-1993.nc",
-        )
+    def test_mean_radiant_temperature(self, atmosds):
+        dataset = atmosds
+
         rsds = dataset.rsds
         rsus = dataset.rsus
         rlds = dataset.rlds

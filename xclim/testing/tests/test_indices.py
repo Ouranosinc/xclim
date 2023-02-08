@@ -3076,3 +3076,22 @@ def test_mean_radiant_temperature(
     )
 
     np.testing.assert_allclose(mrt, expected, rtol=1e-03)
+
+
+class TestDrynessIndex:
+    def test_dryness_index(self, atmosds):
+        ds = atmosds
+
+        evspsblpot = ds.evspsblpot
+        pr = ds.pr
+
+        di = xci.dryness_index(pr, evspsblpot)
+        di_wet = xci.dryness_index(pr, evspsblpot, wo="300 mm")
+
+        # FIXME: This test needs to be adjusted once the converter is working.
+        np.testing.assert_allclose(
+            di.isel(location=3)[:10], np.array([1, 2, 3, 4, 5, 6, 7, 8, 9])
+        )
+        np.testing.assert_allclose(
+            di_wet.isel(location=3)[:10], np.array([1, 2, 3, 4, 5, 6, 7, 8, 9])
+        )
