@@ -502,7 +502,7 @@ cool_night_index = Temp(
     abstract="A night coolness variable which takes into account the mean minimum night temperatures during the "
     "month when ripening usually occurs beyond the ripening period.",
     cell_methods="time: mean over days",
-    src_freq=["D", "MS"],
+    src_freq=["D", "M"],
     compute=indices.cool_night_index,
 )
 

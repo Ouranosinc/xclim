@@ -524,7 +524,7 @@ def dryness_index(
     pr: xarray.DataArray,
     evspsblpot: xarray.DataArray,
     lat: xarray.DataArray | str | None = None,
-    wo: str = "200 mm",
+    wo: Quantified = "200 mm",
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Dryness Index.
@@ -629,10 +629,8 @@ def dryness_index(
         raise ValueError(f"Freq not allowed: {freq}. Must be `YS` or `AS-JAN`")
 
     # Resample all variables to monthly totals in mm units.
-    evspsblpot = (
-        convert_units_to(evspsblpot, "mm", context="hydro").resample(time="MS").sum()
-    )
-    pr = convert_units_to(pr, "mm", context="hydro").resample(time="MS").sum()
+    evspsblpot =  rate2amount(evspsblpot, out_units="mm").resample(time="MS").sum()
+    pr = rate2amount(pr, out_units="mm").resample(time="MS").sum()
     wo = convert_units_to(wo, "mm")
 
     # Different potential evapotranspiration rates for northern hemisphere and southern hemisphere.
