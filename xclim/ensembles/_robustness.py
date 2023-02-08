@@ -254,25 +254,17 @@ def change_significance(
         p_change = kwargs.setdefault("p_change", 0.05)
         # Test hypothesis of no significant change
         # -> Brown-Forsythe test
-        pvals = []
-        for realization in fut.realization.values:
-            fut_real = fut.sel(realization=realization).squeeze()
-            ref_real = ref.sel(realization=realization).squeeze()
-            pvals_ = xr.apply_ufunc(
-                lambda f, r: spstats.levene(f, r, center="median")[1],
-                fut_real,
-                ref_real,
-                input_core_dims=[["time"], ["time"]],
-                output_core_dims=[[]],
-                exclude_dims={"time"},
-                vectorize=True,
-                dask="parallelized",
-                output_dtypes=[float],
-            )
-            pvals_ = pvals_.assign_coords({"realization": realization})
-            pvals_ = pvals_.expand_dims("realization")
-            pvals += [pvals_]
-        pvals = xr.concat(pvals, dim="realization")
+        pvals = xr.apply_ufunc(
+            lambda f, r: spstats.levene(f, r, center="median")[1],
+            fut,
+            ref,
+            input_core_dims=[["time"], ["time"]],
+            output_core_dims=[[]],
+            exclude_dims={"time"},
+            vectorize=True,
+            dask="parallelized",
+            output_dtypes=[float],
+        )
         # When p < p_change, the hypothesis of no significant change is rejected.
         changed = pvals < p_change
     elif test == "threshold":
