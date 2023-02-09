@@ -75,7 +75,7 @@ class TestSndMaxDoy:
         # Put 0 on one row.
         snd = atmosds.snd.where(atmosds.location != "Victoria", 0)
         out = land.snd_max_doy(snd)
-        np.testing.assert_array_equal(out.isel(time=1), [16, 33, 146, 32, np.NaN])
+        np.testing.assert_array_equal(out.isel(time=1), [16, 13, 91, 29, np.NaN])
 
 
 class TestSnwMax:

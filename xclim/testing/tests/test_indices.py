@@ -2184,7 +2184,7 @@ class TestWinterRainRatio:
 class TestTG:
     @pytest.mark.parametrize(
         "ind,exp",
-        [(xci.tg_mean, 283.1391), (xci.tg_min, 266.1117), (xci.tg_max, 292.1250)],
+        [(xci.tg_mean, 283.0615), (xci.tg_min, 266.1208), (xci.tg_max, 291.5018)],
     )
     def test_simple(self, open_dataset, ind, exp):
         ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
@@ -2433,6 +2433,31 @@ def test_days_with_snow(prsn_series):
     out = xci.days_with_snow(prsn, low="10 kg m-2 s-1", high="20 kg m-2 s-1")
     np.testing.assert_array_equal(out, [10, 0])
     assert out.units == "d"
+
+
+class TestSnowMaxDoy:
+    def test_simple(self, snd_series, snw_series):
+        a = np.ones(366) / 100.0
+        a[10:20] = 0.3
+        snd = snd_series(a)
+        snw = snw_series(a)
+
+        out = xci.snd_max_doy(snd)
+        np.testing.assert_array_equal(out, [193, 182])
+
+        out = xci.snw_max_doy(snw)
+        np.testing.assert_array_equal(out, [193, 182])
+
+    def test_nan_slices(self, snd_series, snw_series):
+        a = np.ones(366) * np.NaN
+        snd = snd_series(a)
+        snw = snw_series(a)
+
+        out = xci.snd_max_doy(snd)
+        assert out.isnull().all()
+
+        out = xci.snw_max_doy(snw)
+        assert out.isnull().all()
 
 
 class TestSnowCover:
@@ -3080,3 +3105,19 @@ def test_mean_radiant_temperature(
     )
 
     np.testing.assert_allclose(mrt, expected, rtol=1e-03)
+
+
+class TestDrynessIndex:
+    def test_dryness_index(self, atmosds):
+        ds = atmosds.isel(location=3)
+
+        evspsblpot = ds.evspsblpot
+        pr = ds.pr
+
+        di = xci.dryness_index(pr, evspsblpot)
+        di_wet = xci.dryness_index(pr, evspsblpot, wo="300 mm")
+        di_plus_100 = di + 100
+        np.testing.assert_allclose(
+            di, np.array([13.355, 102.426, 65.576, 158.078]), rtol=1e-03
+        )
+        np.testing.assert_allclose(di_wet, di_plus_100)

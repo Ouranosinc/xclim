@@ -253,7 +253,7 @@ class TestCFFWIS:
             indexes=["DC"],
         )
         np.testing.assert_allclose(
-            out3["winter_pr"].isel(location=0), 261.27353647, rtol=1e-6
+            out3["winter_pr"].isel(location=0), 262.67575, rtol=1e-6
         )
         np.testing.assert_array_equal(out3["DC"].notnull(), season_mask_yr)
 
