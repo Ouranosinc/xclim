@@ -606,7 +606,7 @@ def robust_data(request):
         (
             "brownforsythe-test",
             [0.5, 0.25, 0.5, 0.5],
-            [0.5, 0., 1, 1],
+            [0.5, 0.0, 1, 1],
             [
                 [False, True, False, True],
                 [True, False, False, False],
