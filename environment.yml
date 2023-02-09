@@ -49,7 +49,7 @@ dependencies:
     - pylint<2.15
     - pytest
     - pytest-cov
-    - pytest-xdist
+    - pytest-xdist>=3.2
     - sphinx
     - sphinx-codeautolink
     - sphinx-copybutton
