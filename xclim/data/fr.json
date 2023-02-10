@@ -930,19 +930,19 @@
     "title": "Date du fin du couvert de neige",
     "abstract": "Première date à partir de laquelle l'épaisseur de neige est sous à un seuil donné pendant un nombre de jours consécutifs suite au début du couvert de neige."
   },
-  "SNOW_WATER_COVER_DURATION": {
+  "SNOW_AMOUNT_COVER_DURATION": {
     "long_name": "Nombre de jour où la quantité de neige est au-dessus d'un seuil",
     "description": "Nombre {freq:m} de jours où la quantité de neige est au-dessus ou égale à {thresh}.",
     "title": "Durée du couvert de neige",
     "abstract": "Nombre de jours pendant lesquels la quantité de neige est au-dessus ou égale à un seuil donné."
   },
-  "CONTINUOUS_SNOW_WATER_COVER_START": {
+  "CONTINUOUS_SNOW_AMOUNT_COVER_START": {
     "long_name": "Date du début du couvert de neige continu",
     "description": "Première date à laquelle la quantité de neige est au-dessus ou égale à {thresh} pendant au moins {window} jours consécutifs.",
     "title": "Date du début du couvert de neige",
     "abstract": "Première date à partir de laquelle la quantité de neige est au-dessus ou égale à un seuil donné pendant un nombre de jours consécutifs."
   },
-  "CONTINUOUS_SNOW_WATER_COVER_END": {
+  "CONTINUOUS_SNOW_AMOUNT_COVER_END": {
     "long_name": "Date de fin du couvert de neige continu",
     "description": "Première date à laquelle la quantité de neige passe sous {thresh} pendant au moins {window} jours consécutifs suite à l'établissement du couvert de neige.",
     "title": "Date du fin du couvert de neige",

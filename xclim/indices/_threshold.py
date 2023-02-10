@@ -43,8 +43,8 @@ __all__ = [
     "continuous_snow_cover_start",
     "continuous_snow_depth_cover_end",
     "continuous_snow_depth_cover_start",
-    "continuous_snow_water_cover_end",
-    "continuous_snow_water_cover_start",
+    "continuous_snow_amount_cover_end",
+    "continuous_snow_amount_cover_start",
     "days_with_snow",
     "growing_degree_days",
     "growing_season_start",
@@ -65,7 +65,7 @@ __all__ = [
     "hot_spell_max_length",
     "snow_cover_duration",
     "snow_depth_cover_duration",
-    "snow_water_cover_duration",
+    "snow_amount_cover_duration",
     "tn_days_above",
     "tn_days_below",
     "tg_days_above",
@@ -339,7 +339,7 @@ def continuous_snow_depth_cover_end(
 
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
-def continuous_snow_water_cover_end(
+def continuous_snow_amount_cover_end(
     snw: xarray.DataArray,
     thresh: Quantified = "20 kg m-2",
     window: int = 14,
@@ -502,7 +502,7 @@ def continuous_snow_depth_cover_start(
 
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
-def continuous_snow_water_cover_start(
+def continuous_snow_amount_cover_start(
     snw: xarray.DataArray,
     thresh: Quantified = "20 kg m-2",
     window: int = 14,
@@ -1794,7 +1794,7 @@ def snow_depth_cover_duration(
 
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
-def snow_water_cover_duration(
+def snow_amount_cover_duration(
     snw: xarray.DataArray, thresh: Quantified = "20 kg m-2", freq: str = "AS-JUL"
 ) -> xarray.DataArray:
     # noqa: D401

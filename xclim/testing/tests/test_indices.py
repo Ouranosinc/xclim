@@ -2472,7 +2472,7 @@ class TestSnowCover:
         assert len(out) == 2
         assert out[0] == 10
 
-        out = xci.snow_water_cover_duration(snw)
+        out = xci.snow_amount_cover_duration(snw)
         assert len(out) == 2
         assert out[0] == 10
 
@@ -2489,7 +2489,7 @@ class TestSnowCover:
         assert out.attrs["units"] == ""
         assert out.attrs["is_dayofyear"] == 1
 
-        out = xci.continuous_snow_water_cover_start(snw)
+        out = xci.continuous_snow_amount_cover_start(snw)
         assert len(out) == 2
         np.testing.assert_array_equal(out, [snw.time.dt.dayofyear[0].data + 2, np.nan])
         for attr in ["units", "is_dayofyear", "calendar"]:
@@ -2519,7 +2519,7 @@ class TestSnowCover:
         assert out.attrs["units"] == ""
         assert out.attrs["is_dayofyear"] == 1
 
-        out = xci.continuous_snow_water_cover_end(snw)
+        out = xci.continuous_snow_amount_cover_end(snw)
         assert len(out) == 2
         doy = snw.time.dt.dayofyear[0].data
         np.testing.assert_array_equal(out, [(doy + 219) % 366, np.nan])

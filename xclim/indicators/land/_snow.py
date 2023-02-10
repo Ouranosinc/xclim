@@ -8,13 +8,13 @@ __all__ = [
     "blowing_snow",
     "snow_cover_duration",
     "snow_depth_cover_duration",
-    "snow_water_cover_duration",
+    "snow_amount_cover_duration",
     "continuous_snow_depth_cover_start",
     "continuous_snow_cover_start",
-    "continuous_snow_water_cover_start",
+    "continuous_snow_amount_cover_start",
     "continuous_snow_depth_cover_end",
     "continuous_snow_cover_end",
-    "continuous_snow_water_cover_end",
+    "continuous_snow_amount_cover_end",
     "snd_max_doy",
     "snow_amount_from_depth",
     "snow_depth",
@@ -58,14 +58,14 @@ snow_depth_cover_duration = SnowWithIndexing(
     compute=xci.snow_depth_cover_duration,
 )
 
-snow_water_cover_duration = SnowWithIndexing(
-    title="Snow water cover duration",
-    identifier="snow_water_cover_duration",
+snow_amount_cover_duration = SnowWithIndexing(
+    title="Snow amount cover duration",
+    identifier="snow_amount_cover_duration",
     units="days",
-    long_name="Number of days with snow water at or above threshold",
-    description="The {freq} number of days with snow water greater than or equal to {thresh}.",
-    abstract="Number of days when the snow water is greater than or equal to a given threshold.",
-    compute=xci.snow_water_cover_duration,
+    long_name="Number of days with snow amount at or above threshold",
+    description="The {freq} number of days with snow amount greater than or equal to {thresh}.",
+    abstract="Number of days when the snow amount is greater than or equal to a given threshold.",
+    compute=xci.snow_amount_cover_duration,
 )
 
 continuous_snow_cover_start = Snow(
@@ -93,16 +93,16 @@ continuous_snow_depth_cover_start = Snow(
     compute=xci.continuous_snow_depth_cover_start,
 )
 
-continuous_snow_water_cover_start = Snow(
-    title="Start date of continuous snow water cover",
-    identifier="continuous_snow_water_cover_start",
+continuous_snow_amount_cover_start = Snow(
+    title="Start date of continuous snow amount cover",
+    identifier="continuous_snow_amount_cover_start",
     standard_name="day_of_year",
-    long_name="Start date of continuous snow water cover",
-    description="Day of year when snow water is above or equal to {thresh} for {window} consecutive days.",
-    abstract="The first date on which snow water is greater than or equal to a given threshold "
+    long_name="Start date of continuous snow amount cover",
+    description="Day of year when snow amount is above or equal to {thresh} for {window} consecutive days.",
+    abstract="The first date on which snow amount is greater than or equal to a given threshold "
     "for a given number of consecutive days.",
     units="",
-    compute=xci.continuous_snow_water_cover_start,
+    compute=xci.continuous_snow_amount_cover_start,
 )
 
 continuous_snow_cover_end = Snow(
@@ -128,15 +128,15 @@ continuous_snow_depth_cover_end = Snow(
     compute=xci.continuous_snow_depth_cover_end,
 )
 
-continuous_snow_water_cover_end = Snow(
-    title="End date of continuous snow water cover",
-    identifier="continuous_snow_water_cover_end",
+continuous_snow_amount_cover_end = Snow(
+    title="End date of continuous snow amount cover",
+    identifier="continuous_snow_amount_cover_end",
     standard_name="day_of_year",
-    long_name="End date of continuous snow water cover",
-    description="Day of year when snow water is below {thresh} for {window} consecutive days.",
-    abstract="The first date on which snow water is below a given threshold for a given number of consecutive days.",
+    long_name="End date of continuous snow amount cover",
+    description="Day of year when snow amount is below {thresh} for {window} consecutive days.",
+    abstract="The first date on which snow amount is below a given threshold for a given number of consecutive days.",
     units="",
-    compute=xci.continuous_snow_water_cover_end,
+    compute=xci.continuous_snow_amount_cover_end,
 )
 
 snd_max_doy = SnowWithIndexing(
@@ -169,9 +169,9 @@ snw_max = SnowWithIndexing(
     identifier="snw_max",
     standard_name="surface_snow_amount",
     var_name="{freq}_snw_max",
-    long_name="Maximum snow water equivalent amount",
-    description="The {freq} maximum snow water equivalent amount on the surface.",
-    abstract="The maximum snow water equivalent amount on the surface.",
+    long_name="Maximum snow amount equivalent amount",
+    description="The {freq} maximum snow amount equivalent amount on the surface.",
+    abstract="The maximum snow amount equivalent amount on the surface.",
     units="kg m-2",
     compute=xci.snw_max,
 )
@@ -181,9 +181,9 @@ snw_max_doy = SnowWithIndexing(
     identifier="snw_max_doy",
     standard_name="day_of_year",
     var_name="{freq}_snw_max_doy",
-    long_name="Day of year of maximum daily snow water equivalent amount",
-    description="The {freq} day of year when snow water equivalent amount on the surface reaches its maximum.",
-    abstract="The day of year when snow water equivalent amount on the surface reaches its maximum.",
+    long_name="Day of year of maximum daily snow amount equivalent amount",
+    description="The {freq} day of year when snow amount equivalent amount on the surface reaches its maximum.",
+    abstract="The day of year when snow amount equivalent amount on the surface reaches its maximum.",
     units="",
     compute=xci.snw_max_doy,
 )
