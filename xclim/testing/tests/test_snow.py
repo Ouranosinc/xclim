@@ -15,30 +15,30 @@ class TestSnowDepth:
         np.testing.assert_array_equal(out, [100, 100, 100, np.nan])
 
 
-class TestSnowCoverDuration:
-    def test_simple(self, snd_series, snw_series):
+class TestSnowDepthCoverDuration:
+    def test_simple(self, snd_series):
         snd = snd_series(np.ones(110), start="2001-01-01")
-        snw = snw_series(np.ones(110), start="2001-01-01")
 
         out = land.snow_depth_cover_duration(snd, freq="M")
         assert out.units == "days"
         np.testing.assert_array_equal(out, [31, 28, 31, np.nan])
 
+
+class TestSnowWaterCoverDuration:
+    def test_simple(self, snw_series):
+        snw = snw_series(np.ones(110) * 1000, start="2001-01-01")
         out = land.snow_water_cover_duration(snw, freq="M")
         assert out.units == "days"
         np.testing.assert_array_equal(out, [31, 28, 31, np.nan])
 
 
-class TestContinuousSnowCoverStartEnd:
-    def test_simple(self, snd_series, snw_series):
+class TestContinuousSnowDepthCoverStartEnd:
+    def test_simple(self, snd_series):
         a = np.zeros(365)
-
         # snow depth
         a[100:200] = 0.03
         snd = snd_series(a, start="2001-07-01")
         snd = snd.expand_dims(lat=[0, 1, 2])
-        snw = snw_series(a, start="2001-07-01")
-        snw = snw.expand_dims(lat=[0, 1, 2])
 
         out = land.continuous_snow_depth_cover_start(snd)
         assert out.units == ""
@@ -47,6 +47,15 @@ class TestContinuousSnowCoverStartEnd:
         out = land.continuous_snow_depth_cover_end(snd)
         assert out.units == ""
         np.testing.assert_array_equal(out.isel(lat=0), snd.time.dt.dayofyear[200])
+
+
+class TestContinuousSnowWaterCoverStartEnd:
+    def test_simple(self, snw_series):
+        a = np.zeros(365)
+        # snow amount
+        a[100:200] = 0.03 * 1000
+        snw = snw_series(a, start="2001-07-01")
+        snw = snw.expand_dims(lat=[0, 1, 2])
 
         out = land.continuous_snow_water_cover_start(snw)
         assert out.units == ""
