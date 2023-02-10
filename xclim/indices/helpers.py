@@ -23,6 +23,10 @@ from xclim.core.units import convert_units_to
 from xclim.core.utils import Quantified
 
 
+def _wrap_radians(da):
+    return ((da + np.pi) % (2 * np.pi)) - np.pi
+
+
 def distance_from_sun(dates: xr.DataArray) -> xr.DataArray:
     """
     Sun-earth distance.
@@ -87,10 +91,9 @@ def solar_declination(day_angle: xr.DataArray, method="spencer") -> xr.DataArray
     if method == "simple":
         # This assumes the orbit is a perfect circle, the obliquity is 0.4091 rad (23.43°)
         # and the equinox is on the March 21st 17:20 UTC (March 20th 23:14 UTC on leap years)
-        return 0.4091 * np.sin(da - 1.39)
-
-    if method == "spencer":
-        return (
+        sd = 0.4091 * np.sin(da - 1.39)
+    elif method == "spencer":
+        sd = (
             0.006918
             - 0.399912 * np.cos(da)
             + 0.070257 * np.sin(da)
@@ -99,7 +102,11 @@ def solar_declination(day_angle: xr.DataArray, method="spencer") -> xr.DataArray
             - 0.002697 * np.cos(3 * da)
             + 0.001480 * np.sin(3 * da)
         )
-    raise NotImplementedError(f"Method {method} must be one of 'simple' or 'spencer'")
+    else:
+        raise NotImplementedError(
+            f"Method {method} must be one of 'simple' or 'spencer'"
+        )
+    return _wrap_radians(sd)
 
 
 def time_correction_for_solar_angle(day_angle: xr.DataArray) -> xr.DataArray:
@@ -133,7 +140,7 @@ def time_correction_for_solar_angle(day_angle: xr.DataArray) -> xr.DataArray:
         - 2.340475 * np.sin(2 * da)
     )
     tc = tc.assign_attrs(units="degrees")
-    return convert_units_to(tc, "rad")
+    return _wrap_radians(convert_units_to(tc, "rad"))
 
 
 def eccentricity_correction_factor(day_angle: xr.DataArray, method="spencer"):
@@ -235,7 +242,7 @@ def cosine_of_solar_zenith_angle(
     ----------
     :cite:cts:`kalogirou_chapter_2014,di_napoli_mean_2020`
     """
-    lat = convert_units_to(lat, "rad")
+    lat = _wrap_radians(convert_units_to(lat, "rad"))
 
     if stat in "average":
         lon = "0 °"
@@ -243,17 +250,19 @@ def cosine_of_solar_zenith_angle(
         interval = 24
         stat = "sunlit"
 
-    lon = convert_units_to(lon, "rad")
+    lon = _wrap_radians(convert_units_to(lon, "rad"))
     if hours is not None:
-        sha = (hours - 12) * 15 / 180 * np.pi + lon
+        sha = _wrap_radians((hours - 12) * 15 / 180 * np.pi + lon)
     if interval is not None:
         k = interval / 2.0
-        h_s = sha - k * 15 * np.pi / 180
-        h_e = sha + k * 15 * np.pi / 180
-    h_sr = -np.arccos(-np.tan(lat) * np.tan(declination))
-    h_ss = np.arccos(
-        -np.tan(lat) * np.tan(declination)
-    )  # hour angle of sunset (eq. 2.15), this has NaNs inside the polar circles
+        h_s = _wrap_radians(sha - k * 15 * np.pi / 180)
+        h_e = _wrap_radians(sha + k * 15 * np.pi / 180)
+
+    # hour angle of sunset and sunrise (eq. 2.15), with NaNs inside the polar day/night
+    tantan = -np.tan(lat) * np.tan(declination)
+    h_ss = np.arccos(tantan.where(abs(tantan) <= 1))
+    h_sr = -h_ss
+
     # The following equation is not explicitly stated in the reference, but it can easily be derived.
     if stat == "integral":
         # TODO: correct for polar regions
@@ -283,7 +292,7 @@ def cosine_of_solar_zenith_angle(
         ) / (h_max - h_min)
         csza_polar_day = np.sin(declination) * np.sin(lat) + np.cos(
             declination
-        ) * np.cos(lat) * (np.sin(h_s) - np.sin(h_e)) / (h_e - h_s)
+        ) * np.cos(lat) * (np.sin(h_e) - np.sin(h_s)) / (h_e - h_s)
 
         csza = xr.where(
             h_ss.isnull() & (np.sign(declination) == -np.sign(lat)),  # Polar night
@@ -295,7 +304,9 @@ def cosine_of_solar_zenith_angle(
             csza_polar_day,
             csza,
         )
-        # TODO: check if the transition zone between the polar and non polar regions is normal.
+        # TODO: The sunlit interval logic does not cover cases:
+        #     - Where there are 2 sunlit parts of the interval
+        #     - Where the interval crosses midnight
         return csza.clip(0, None)
 
     raise NotImplementedError(
