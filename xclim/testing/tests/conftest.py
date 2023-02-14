@@ -22,8 +22,8 @@ from xclim.testing.tests.data import (
 from xclim.testing.utils import _default_cache_dir  # noqa
 from xclim.testing.utils import open_dataset as _open_dataset
 
-MAIN_TESTDATA_BRANCH = os.getenv("MAIN_TESTDATA_BRANCH", "main")
-SKIP_TEST_DATA = os.getenv("SKIP_TEST_DATA")
+TESTDATA_BRANCH = os.getenv("XCLIM_TESTDATA_BRANCH", "main")
+PREFETCH_TESTING_DATA = os.getenv("XCLIM_PREFETCH_TESTING_DATA")
 
 
 @pytest.fixture
@@ -518,7 +518,7 @@ def cmip3_day_tas(threadsafe_data_dir):
     ds = _open_dataset(
         "cmip3/tas.sresb1.giss_model_e_r.run1.atm.da.nc",
         cache_dir=threadsafe_data_dir,
-        branch=MAIN_TESTDATA_BRANCH,
+        branch=TESTDATA_BRANCH,
     )
     yield ds.tas
     ds.close()
@@ -527,7 +527,7 @@ def cmip3_day_tas(threadsafe_data_dir):
 @pytest.fixture(scope="session")
 def open_dataset(threadsafe_data_dir):
     def _open_session_scoped_file(
-        file: str | os.PathLike, branch: str = MAIN_TESTDATA_BRANCH, **xr_kwargs
+        file: str | os.PathLike, branch: str = TESTDATA_BRANCH, **xr_kwargs
     ):
         return _open_dataset(
             file, cache_dir=threadsafe_data_dir, branch=branch, **xr_kwargs
@@ -544,7 +544,7 @@ def add_imports(xdoctest_namespace, threadsafe_data_dir) -> None:
     ns["xr"] = xclim.testing  # xr.open_dataset(...) -> xclim.testing.open_dataset(...)
     ns["xclim"] = xclim
     ns["open_dataset"] = partial(
-        _open_dataset, cache_dir=threadsafe_data_dir, branch=MAIN_TESTDATA_BRANCH
+        _open_dataset, cache_dir=threadsafe_data_dir, branch=TESTDATA_BRANCH
     )  # Needed for modules where xarray is imported as `xr`
 
 
@@ -583,7 +583,7 @@ def atmosds(threadsafe_data_dir) -> xr.Dataset:
     return _open_dataset(
         threadsafe_data_dir.joinpath("atmosds.nc"),
         cache_dir=threadsafe_data_dir,
-        branch=MAIN_TESTDATA_BRANCH,
+        branch=TESTDATA_BRANCH,
     )
 
 
@@ -610,16 +610,19 @@ def gather_session_data(threadsafe_data_dir, worker_id, xdoctest_namespace):
     When running pytest with multiple workers, one worker will copy data remotely to _default_cache_dir while
     other workers wait using lockfile. Once the lock is released, all workers will copy data to their local
     threadsafe_data_dir."""
-    if worker_id == "master":
-        if not SKIP_TEST_DATA:
-            populate_testing_data(branch=MAIN_TESTDATA_BRANCH)
-    else:
-        if not SKIP_TEST_DATA:
+
+    if (
+        not _default_cache_dir.joinpath(TESTDATA_BRANCH).exists()
+        or PREFETCH_TESTING_DATA
+    ):
+        if worker_id in "master":
+            populate_testing_data(branch=TESTDATA_BRANCH)
+        else:
             _default_cache_dir.mkdir(exist_ok=True)
             test_data_being_written = FileLock(_default_cache_dir.joinpath(".lock"))
             with test_data_being_written as fl:
                 # This flag prevents multiple calls from re-attempting to download testing data in the same pytest run
-                populate_testing_data(branch=MAIN_TESTDATA_BRANCH)
+                populate_testing_data(branch=TESTDATA_BRANCH)
                 _default_cache_dir.joinpath(".data_written").touch()
             fl.acquire()
         shutil.copytree(_default_cache_dir, threadsafe_data_dir)
