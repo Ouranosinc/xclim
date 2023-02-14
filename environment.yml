@@ -29,6 +29,7 @@ dependencies:
     - black>=22.12
     - blackdoc
     - bump2version
+    - cairosvg
     - coverage
     - distributed>=2.0
     - flake8
@@ -61,3 +62,6 @@ dependencies:
     - xdoctest
     - yamale
     - yamllint
+    - pip
+    - pip:
+        - sphinxcontrib-svg2pdfconverter

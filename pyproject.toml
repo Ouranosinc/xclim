@@ -85,7 +85,8 @@ dev = [
   "sphinx-codeautolink",
   "sphinx-copybutton",
   "sphinx-rtd-theme >=1.0",
-  "sphinxcontrib-bibtex"
+  "sphinxcontrib-bibtex",
+  "sphinxcontrib-svg2pdfconverter[Cairosvg]"
 ]
 
 [project.scripts]
