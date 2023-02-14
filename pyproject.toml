@@ -166,10 +166,8 @@ ignore_missing_imports = true
 addopts = [
   "--verbose",
   "--color=yes",
-  "--cov=xclim",
-  "--cov-report=term-missing",
-  "--numprocesses=auto",
-  "--maxprocesses=6",
+  "--numprocesses=0",
+  "--maxprocesses=8",
   "--dist=worksteal"
 ]
 norecursedirs = ["docs/notebooks/*"]
