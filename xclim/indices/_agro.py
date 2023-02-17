@@ -1363,3 +1363,59 @@ def effective_growing_degree_days(
     egdd = aggregate_between_dates(deg_days, start=start, end=end, freq=freq)
 
     return to_agg_units(egdd, tas, op="delta_prod")
+
+
+@declare_units(tasmin="[temperature]")
+def hardiness_zones(
+    tasmin: xarray.DataArray,
+    window: int = 30,
+    method: str = "US",
+):
+    """Hardiness zones.
+
+    Hardiness zones are a categorization of the annual extreme temperature minima, averaged over a certain period.
+    The USDA defines 14 zones, each divded in two sub-zones, using steps of 5°F, starting at -65°F.
+    The Australian National Botanic Gardens define 7 zones, using steps of 5°C, starting at -15°C.
+
+    Parameters
+    ----------
+    tasmin: xr.DataArray
+        Minimum temperature.
+    window: int
+        The length of the averaging window, in years.
+    method : {'US', 'AU'}
+        Whether to return the american (US) or the australian (AU) zones.
+
+    Returns
+    -------
+    xr.DataArray, [dimensionless]
+        {method} hardiness zones.
+        US sub-zones are denoted by using a half step. For example, Zone 4b is given as 4.5.
+        Values are given at the end of the averaging window.
+    """
+    tnmin = tasmin.resample(time="YS").min().rolling(time=window).mean()
+
+    if method == "US":
+        tnmin = convert_units_to(tnmin, "degF")
+        bins = np.append(
+            np.insert(np.arange(-65, 66, 5).astype("float"), 0, -np.inf), np.inf
+        )
+
+        def _zones(arr, bs):
+            return (np.digitize(arr, bs) - 1) / 2
+
+    elif method == "AU":
+        tnmin = convert_units_to(tnmin, "degC")
+        bins = np.arange(-15, 21, 5).astype("float")
+
+        def _zones(arr, bs):
+            c = np.digitize(arr, bs)
+            c[c == 0] = np.nan
+            c[c == bs.size] = np.nan
+            return c
+
+    else:
+        raise NotImplementedError(f"Method must be one of US or AU. Got {method}.")
+
+    zones = xarray.apply_ufunc(_zones, tnmin, dask="parallelized", kwargs=dict(bs=bins))
+    return zones.assign_attrs(units="")
