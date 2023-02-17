@@ -3092,3 +3092,27 @@ class TestDrynessIndex:
             di, np.array([13.355, 102.426, 65.576, 158.078]), rtol=1e-03
         )
         np.testing.assert_allclose(di_wet, di_plus_100)
+
+
+@pytest.mark.parametrize(
+    "tmin,meth,zone",
+    [
+        (-6, "US", 9.0),
+        (19, "US", 13.5),
+        (-47, "US", 1.5),
+        (-6, "AU", 2.5),
+        (19, "AU", 7.5),
+        (-47, "AU", np.NaN),
+    ],
+)
+def test_hardiness_zones(tasmin_series, tmin, meth, zone):
+    tasmin = tasmin_series(
+        np.zeros(10957) + K2C + 20, start="1997-01-01"
+    )  # 30 years at 20°C
+    tasmin = xr.where(
+        tasmin.time.dt.dayofyear == 1, tmin + K2C, tasmin, keep_attrs=True
+    )
+
+    hz = xci.hardiness_zones(tasmin=tasmin, method=meth)
+    np.testing.assert_array_equal(hz[-1], zone)
+    assert hz[:-1].isnull().all()

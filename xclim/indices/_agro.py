@@ -34,6 +34,8 @@ from xclim.indices.stats import dist_method, fit
 
 __all__ = [
     "biologically_effective_degree_days",
+    "hardiness_zones",
+    "huglin_index",
     "cool_night_index",
     "corn_heat_units",
     "dry_spell_frequency",
@@ -1380,11 +1382,11 @@ def hardiness_zones(
     Parameters
     ----------
     tasmin: xr.DataArray
-        Minimum temperature.
+      Minimum temperature.
     window: int
-        The length of the averaging window, in years.
+      The length of the averaging window, in years.
     method : {'US', 'AU'}
-        Whether to return the american (US) or the australian (AU) zones.
+      Whether to return the american (US) or the australian (AU) zones.
 
     Returns
     -------
@@ -1392,6 +1394,11 @@ def hardiness_zones(
         {method} hardiness zones.
         US sub-zones are denoted by using a half step. For example, Zone 4b is given as 4.5.
         Values are given at the end of the averaging window.
+
+    References
+    ----------
+    .. [usda] : USDA Plant Hardiness Zone Map, 2012. Agricultural Research Service, U.S. Department of Agriculture. Accessed from https://planthardiness.ars.usda.gov/
+    .. [anbg] : Dawson, I. A. (1991). Plant hardiness zones for Australia. http://www.anbg.gov.au/gardens/research/hort.research/zones.html
     """
     tnmin = tasmin.resample(time="YS").min().rolling(time=window).mean()
 
