@@ -950,7 +950,7 @@ def snow_depth_from_amount(
 def snow_amount_from_depth(
     snd: xr.DataArray,
     snr: xr.DataArray = None,
-    const = Quantified = "312 kg m-3",
+    const : Quantified = "312 kg m-3",
 ) -> xr.DataArray:
     """Snow amount from snow depth and density.
 
