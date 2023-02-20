@@ -906,7 +906,8 @@ def rain_approximation(
 @declare_units(snw="[mass]/[area]", snr="[mass]/[volume]")
 def snow_depth_from_amount(
     snw: xr.DataArray,
-    snr: xr.DataArray,
+    snr: xr.DataArray = None,
+    const: Quantified = "312 kg m-3",
 ) -> xr.DataArray:
     """Snow depth from snow amount and density.
 
@@ -917,12 +918,25 @@ def snow_depth_from_amount(
         If snow water equivalent (`swe` [m]) is provided instead, will be converted to `snw` before calculating.
     snr : xr.DataArray, optional
         Snow density [kg/m^3].
-
+    const: Quantified, optional
+        Constant snow density [kg/m^3]
+        `const` is only used if `snr` is None.
     Returns
     -------
     xr.DataArray, [m]
         Snow depth.
+
+    Notes
+    -----
+    The estimated mean snow density value of 312 kg m-3 is taken from :cite:p:`sturm_swe_2010`.
+
+    References
+    ----------
+    :cite:cts:`sturm_swe_2010`
     """
+    if snr is None:
+        snr = const
+        
     snw = convert_units_to(snw, "kg m-2")
     snr = convert_units_to(snr, "kg m-3")
 
@@ -935,7 +949,8 @@ def snow_depth_from_amount(
 @declare_units(snd="[length]", snr="[mass]/[volume]")
 def snow_amount_from_depth(
     snd: xr.DataArray,
-    snr: xr.DataArray,
+    snr: xr.DataArray = None,
+    const = Quantified = "312 kg m-3",
 ) -> xr.DataArray:
     """Snow amount from snow depth and density.
 
@@ -943,14 +958,28 @@ def snow_amount_from_depth(
     ----------
     snd : xr.DataArray
         Snow depth [m].
-    snr : xr.DataArray
+    snr : xr.DataArray, optional
         Snow density [kg/m^3].
+    const: Quantified, optional
+        Constant snow density [kg/m^3]
+        `const` is only used if `snr` is None.
 
     Returns
     -------
     xr.DataArray, [kg m-2]
         Surface snow amount
+
+    Notes
+    -----
+    The estimated mean snow density value of 312 kg m-3 is taken from :cite:p:`sturm_swe_2010`.
+
+    References
+    ----------
+    :cite:cts:`sturm_swe_2010`
     """
+    if snr is None:
+        snr = const
+        
     snd = convert_units_to(snd, "m")
     snr = convert_units_to(snr, "kg m-3")
 
