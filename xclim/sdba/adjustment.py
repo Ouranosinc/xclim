@@ -647,7 +647,7 @@ class ExtremeValues(TrainAdjust):
         ref_params: xr.Dataset = None,
         q_thresh: float = 0.95,
     ):
-        cluster_thresh = convert_units_to(cluster_thresh, ref)
+        cluster_thresh = convert_units_to(cluster_thresh, ref, context='infer')
 
         # Approximation of how many "quantiles" values we will get:
         N = (1 - q_thresh) * ref.time.size
