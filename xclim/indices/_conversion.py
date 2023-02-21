@@ -921,6 +921,7 @@ def snow_depth_from_amount(
     const: Quantified, optional
         Constant snow density [kg/m^3]
         `const` is only used if `snr` is None.
+
     Returns
     -------
     xr.DataArray, [m]
