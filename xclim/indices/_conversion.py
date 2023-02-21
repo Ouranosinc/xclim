@@ -936,7 +936,7 @@ def snow_depth_from_amount(
     """
     if snr is None:
         snr = const
-        
+
     snw = convert_units_to(snw, "kg m-2")
     snr = convert_units_to(snr, "kg m-3")
 
@@ -950,7 +950,7 @@ def snow_depth_from_amount(
 def snow_amount_from_depth(
     snd: xr.DataArray,
     snr: xr.DataArray = None,
-    const : Quantified = "312 kg m-3",
+    const: Quantified = "312 kg m-3",
 ) -> xr.DataArray:
     """Snow amount from snow depth and density.
 
@@ -979,7 +979,7 @@ def snow_amount_from_depth(
     """
     if snr is None:
         snr = const
-        
+
     snd = convert_units_to(snd, "m")
     snr = convert_units_to(snr, "kg m-3")
 
