@@ -903,7 +903,7 @@ def rain_approximation(
     return prra
 
 
-@declare_units(snw="[mass]/[area]", snr="[mass]/[volume]")
+@declare_units(snw="[mass]/[area]", snr="[mass]/[volume]", const="[mass]/[volume]")
 def snow_depth_from_amount(
     snw: xr.DataArray,
     snr: xr.DataArray = None,
@@ -947,7 +947,7 @@ def snow_depth_from_amount(
     return snd
 
 
-@declare_units(snd="[length]", snr="[mass]/[volume]")
+@declare_units(snd="[length]", snr="[mass]/[volume]", const="[mass]/[volume]")
 def snow_amount_from_depth(
     snd: xr.DataArray,
     snr: xr.DataArray = None,
