@@ -27,6 +27,8 @@ from scipy.stats.mstats import mquantiles
 from xclim import ensembles
 from xclim.indices.stats import get_dist
 
+from .conftest import MAIN_TESTDATA_BRANCH
+
 
 class TestEnsembleStats:
     def test_create_ensemble(
@@ -55,7 +57,7 @@ class TestEnsembleStats:
 
         # Kinda a hack? Alternative is to open and rewrite in a temp folder.
         files = [
-            threadsafe_data_dir / "main" / "EnsembleStats" / Path(f).name
+            threadsafe_data_dir / MAIN_TESTDATA_BRANCH / "EnsembleStats" / Path(f).name
             for f in ensemble_dataset_objects["nc_files_simple"]
         ]
         ens2 = ensembles.create_ensemble(dict(zip(reals, files)))
@@ -563,62 +565,146 @@ def robust_data(request):
 
 
 @pytest.mark.parametrize(
-    "test,exp_chng,exp_sign,kws",
+    "test,exp_chng_frac,exp_pos_frac,exp_changed,kws",
     [
-        ("ttest", [0.25, 1, 1, 1], [1, 0.5, 1, 1], {}),
-        ("welch-ttest", [0.25, 1, 1, 1], [1, 0.5, 1, 1], {}),
-        ("threshold", [0.25, 1, 1, 1], [1, 0.5, 1, 1], {"rel_thresh": 0.002}),
+        (
+            "ttest",
+            [0.25, 1, 1, 1],
+            [1, 0.5, 1, 1],
+            [
+                [False, False, False, True],
+                [True, True, True, True],
+                [True, True, True, True],
+                [False, False, True, True],
+            ],
+            {},
+        ),
+        (
+            "welch-ttest",
+            [0.25, 1, 1, 1],
+            [1, 0.5, 1, 1],
+            [
+                [False, False, False, True],
+                [True, True, True, True],
+                [True, True, True, True],
+                [False, False, True, True],
+            ],
+            {},
+        ),
+        (
+            "mannwhitney-utest",
+            [0.25, 1, 1, 1],
+            [1, 0.5, 1, 1],
+            [
+                [False, False, False, True],
+                [True, True, True, True],
+                [True, True, True, True],
+                [False, False, True, True],
+            ],
+            {},
+        ),
+        (
+            "threshold",
+            [0.25, 1, 1, 1],
+            [1, 0.5, 1, 1],
+            [
+                [False, False, False, True],
+                [True, True, True, True],
+                [True, True, True, True],
+                [False, False, True, True],
+            ],
+            {"rel_thresh": 0.002},
+        ),
         (
             "threshold",
             [0, 0, 0.5, 0],
             [np.nan, np.nan, 1, np.nan],
+            [
+                [False, False, False, False],
+                [False, False, False, False],
+                [False, False, True, True],
+                [False, False, False, False],
+            ],
             {"abs_thresh": 2},
         ),
-        (None, [1, 1, 1, 1], [0.5, 0.5, 1, 1], {}),
+        (
+            None,
+            [1, 1, 1, 1],
+            [0.5, 0.5, 1, 1],
+            [],
+            {},
+        ),
     ],
 )
-def test_change_significance(robust_data, test, exp_chng, exp_sign, kws):
+def test_change_significance(
+    robust_data, test, exp_chng_frac, exp_pos_frac, exp_changed, kws
+):
     ref, fut = robust_data
-    chng, sign = ensembles.change_significance(fut, ref, test=test, **kws)
-    assert chng.attrs["test"] == str(test)
+    chng_frac, pos_frac = ensembles.change_significance(fut, ref, test=test, **kws)
+    assert chng_frac.attrs["test"] == str(test)
     if isinstance(ref, xr.Dataset):
-        chng = chng.tas
-        sign = sign.tas
-    np.testing.assert_array_almost_equal(chng, exp_chng)
-    np.testing.assert_array_almost_equal(sign, exp_sign)
+        chng_frac = chng_frac.tas
+        pos_frac = pos_frac.tas
+
+    np.testing.assert_array_almost_equal(chng_frac, exp_chng_frac)
+    np.testing.assert_array_almost_equal(pos_frac, exp_pos_frac)
+
+    # With p-values
+    chng, sign, pvals = ensembles.change_significance(
+        fut, ref, test=test, p_vals=True, **kws
+    )
+    if pvals is not None:
+        if isinstance(ref, xr.Dataset):
+            pvals = pvals.tas
+        # 0.05 is the default p_change parameter
+        changed = pvals < 0.05
+        np.testing.assert_array_almost_equal(changed, exp_changed)
 
 
 def test_change_significance_weighted(robust_data):
     ref, fut = robust_data
     weights = xr.DataArray([1, 0.1, 3.5, 5], coords={"realization": ref.realization})
-    chng, sign = ensembles.change_significance(fut, ref, test=None, weights=weights)
-    assert chng.attrs["test"] == "None"
+    chng_frac, pos_frac = ensembles.change_significance(
+        fut, ref, test=None, weights=weights
+    )
+    assert chng_frac.attrs["test"] == "None"
     if isinstance(ref, xr.Dataset):
-        chng = chng.tas
-        sign = sign.tas
-    np.testing.assert_array_equal(chng, [1, 1, 1, 1])
-    np.testing.assert_array_almost_equal(sign, [0.88541667, 0.88541667, 1.0, 1.0])
+        chng_frac = chng_frac.tas
+        pos_frac = pos_frac.tas
+
+    np.testing.assert_array_equal(chng_frac, [1, 1, 1, 1])
+    np.testing.assert_array_almost_equal(pos_frac, [0.88541667, 0.88541667, 1.0, 1.0])
 
 
 def test_change_significance_delta(robust_data):
     ref, fut = robust_data
     delta = fut.mean("time") - ref.mean("time")
-    chng, sign = ensembles.change_significance(delta, test="threshold", abs_thresh=2)
+    chng_frac, pos_frac = ensembles.change_significance(
+        delta, test="threshold", abs_thresh=2
+    )
+
     if isinstance(ref, xr.Dataset):
-        chng = chng.tas
-        sign = sign.tas
-    np.testing.assert_array_equal(chng, [0, 0, 0.5, 0])
-    np.testing.assert_array_equal(sign, [np.nan, np.nan, 1, np.nan])
+        chng_frac = chng_frac.tas
+        pos_frac = pos_frac.tas
+
+    exp_chng_frac = [0, 0, 0.5, 0]
+    exp_pos_frac = [np.nan, np.nan, 1, np.nan]
+    np.testing.assert_array_equal(chng_frac, exp_chng_frac)
+    np.testing.assert_array_equal(pos_frac, exp_pos_frac)
 
     weights = xr.DataArray([1, 0.1, 3.5, 5], coords={"realization": delta.realization})
-    chng, sign = ensembles.change_significance(
+    chng_frac, pos_frac = ensembles.change_significance(
         delta, test="threshold", abs_thresh=2, weights=weights
     )
     if isinstance(ref, xr.Dataset):
-        chng = chng.tas
-        sign = sign.tas
-    np.testing.assert_array_almost_equal(chng, [0, 0, 0.88541667, 0])
-    np.testing.assert_array_equal(sign, [np.nan, np.nan, 1, np.nan])
+        chng_frac = chng_frac.tas
+        pos_frac = pos_frac.tas
+
+    exp_chng_frac = [0, 0, 0.88541667, 0]
+    exp_pos_frac = [np.nan, np.nan, 1, np.nan]
+
+    np.testing.assert_array_almost_equal(chng_frac, exp_chng_frac)
+    np.testing.assert_array_equal(pos_frac, exp_pos_frac)
 
 
 def test_robustness_coefficient():

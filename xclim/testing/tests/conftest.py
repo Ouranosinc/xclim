@@ -19,7 +19,7 @@ from xclim.testing.tests.data import (
     generate_atmos,
     populate_testing_data,
 )
-from xclim.testing.utils import _default_cache_dir
+from xclim.testing.utils import _default_cache_dir  # noqa
 from xclim.testing.utils import open_dataset as _open_dataset
 
 MAIN_TESTDATA_BRANCH = os.getenv("MAIN_TESTDATA_BRANCH", "main")
@@ -548,7 +548,7 @@ def add_imports(xdoctest_namespace, threadsafe_data_dir) -> None:
     )  # Needed for modules where xarray is imported as `xr`
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True, scope="function")
 def add_example_dataarray(xdoctest_namespace, tas_series) -> None:
     ns = xdoctest_namespace
     ns["tas"] = tas_series(np.random.rand(365) * 20 + 253.15)

@@ -391,7 +391,7 @@ def windowed_run_count(
     xr.DataArray, [int]
         Total number of `True` values part of a consecutive runs of at least `window` long.
     """
-    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
+    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index, freq=freq)
 
     if ufunc_1dim:
         out = windowed_run_count_ufunc(da, window, dim)

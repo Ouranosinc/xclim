@@ -67,7 +67,7 @@ dev = [
   "pylint <2.15",
   "pytest",
   "pytest-cov",
-  "pytest-xdist[psutil]",
+  "pytest-xdist[psutil] >=3.2",
   "tokenize-rt",
   "tox",
   "xdoctest",
@@ -168,7 +168,8 @@ addopts = [
   "--cov=xclim",
   "--cov-report=term-missing",
   "--numprocesses=auto",
-  "--maxprocesses=6" # "--dist=worksteal" available in pytest-xdist >3.1.0
+  "--maxprocesses=6",
+  "--dist=worksteal"
 ]
 norecursedirs = ["docs/notebooks/*"]
 filterwarnings = ["ignore::UserWarning"]
@@ -177,5 +178,6 @@ usefixtures = "xdoctest_namespace"
 doctest_optionflags = ["NORMALIZE_WHITESPACE", "IGNORE_EXCEPTION_DETAIL", "NUMBER", "ELLIPSIS"]
 markers = [
   "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-  "requires_docs: mark tests that can only be run with documentation present"
+  "requires_docs: mark tests that can only be run with documentation present",
+  "thread_unsafe: Causes segfaults with pytest-xdist distributed testing"
 ]

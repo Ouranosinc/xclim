@@ -43,13 +43,13 @@ dependencies:
     - nc-time-axis
     - netCDF4>=1.4
     - pooch
-    - pre_commit
+    - pre-commit
     - pybtex
     - pydocstyle
     - pylint<2.15
     - pytest
     - pytest-cov
-    - pytest-xdist
+    - pytest-xdist>=3.2
     - sphinx
     - sphinx-codeautolink
     - sphinx-copybutton

@@ -4,22 +4,37 @@ History
 
 0.41.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Éric Dupuis (:user:`coxipi`).
+
+New indicators
+^^^^^^^^^^^^^^
+* ``ensembles.change_significance`` now supports Mann-whitney U-test and flexible ``realization``. (:pull:`1285`).
+* New indices and indicators for converting from snow water equivalent to snow depth (``snow_depth_from_amount``) and snow depth to snow water equivalent (``snow_amount_from_depth``) using snow density [kg/m^3]. (:pull:`1271`).
+* New indices and indicators for determining upwelling radiation (`shortwave_upwelling_radiation_from_net_downwelling` and `longwave_upwelling_radiation_from_net_downwelling`; CF variables `rsus` and `rlus`) from net and downwelling radiation (shortwave: `rss` and `rsds`; longwave: `rls` and `rlds`). (:pull:`1271`).
+* New indice and indicator (``dryness_index``) for estimating soil humidity classifications for winegrowing regions (based on Riou et al. (1994)). (:issue:`355`, :pull:`1235`).
 
 Bug fixes
 ^^^^^^^^^
-* ``build_indicator_module_from_yaml`` now accepts a ``reload`` argument. When re-building a module that already exists,  ``reload=True`` removes all previous indicator before creating the new ones. (:issue:`1192`,:pull:`1284`).
+* ``build_indicator_module_from_yaml`` now accepts a ``reload`` argument. When re-building a module that already exists, ``reload=True`` removes all previous indicator before creating the new ones. (:issue:`1192`, :pull:`1284`).
+* The test for french translations of official indicators was fixed and translations for CFFWIS indices, FFDI, KDBI, DF and Jetstream metric woollings have been added or fixed. (:pull:`1271`).
+* ``use_ufunc`` in ``windowed_run_count`` is now supplied with argument ``freq`` to warn users that the 1d method does not support resampling after run length operations (:issue:`1279`, :pull:`1291`).
+* ``{snd|snw}_max_doy`` now avoids an error due to `xr.argmax` when there are all-NaN slices. (:pull:`1277`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * `xclim` has adopted `PEP 517 <https://peps.python.org/pep-0517/>`_ and `PEP 621 <https://peps.python.org/pep-0621/>`_ (``pyproject.toml`` using the `flit <https://flit.pypa.io/en/stable/>`_ backend) to replace the legacy ``setup.py`` used to manage package organisation and building. Many tooling configurations that already supported the ``pyproject.toml`` standard have been migrated to this file. CI and development tooling documentation has been updated to reflect these changes. (:pull:`1278`, suggested from `PyOpenSci Software Review <https://github.com/pyOpenSci/software-review/issues/73>`_).
 * Documentation source files have been moved around to remove some duplicated image files. (:pull:`1278`).
 * Coveralls GitHub Action removed as it did not support ``pyproject.toml``-based configurations. (:pull:`1278`).
-* Add a remark about how xclim's CFFWIS is different from the original 1982 implementation. (:issue:`1104`, :pull:`1284`).
+* Add a remark about how `xclim`'s CFFWIS is different from the original 1982 implementation. (:issue:`1104`, :pull:`1284`).
 * Update CI runs to use Python3.9 when examining upstream dependencies. Replace `setup-conda` action with `provision-with-micromamba` action. (:pull:`1286`).
 * Update CI runs to always use `tox~=3.0` and the `latest` Ubuntu images (now `v22.04`). (:pull:`1288`).
 * `SBCK` installation command now points to the official development repository. (:pull:`1288`).
 * Some references in the BibTeX were updated to point to better resources. (:pull:`1288`).
+* Add a GitHub CI workflow for performing dependency security review scanning. (:pull:`1287`).
+* Grammar and spelling corrections were applied to some docstrings. (:pull:`1271`).
+* Added `[radiation]` (`[power] / [area]`) to list of defined acceptable units. (:pull:`1271`).
+* Updated testing data used to generate the `atmosds` dataset to use more reproducibly-converted ERA5 data, generated with the `miranda` Python package. (:pull:`1269`).
+* Updated testing dependencies to use `pytest-xdist>=3.2`, allowing for the new `--dist=worksteal` scheduler for distributing the pool of remaining tests across workers after individual workers have exhausted their own queues. (:pull:`1235`).
 
 0.40.0 (2023-01-13)
 -------------------
@@ -79,7 +94,7 @@ Internal changes
 * `xclim` development build now uses `nbqa` to effectively run black checks over notebook cells. (:pull:`1233`).
 * Some `tox` recipes (``opt-slow``, ``conda``) are temporarily deactivated until a `tox>=4.0`-compatible `tox-conda` plugin is released. (:pull:`1258`).
 * A notebook (``extendingxclim.ipynb``) has been updated to remove mentions of obsolete `xclim.subset` module. (:pull:`1258`).
-* Merge of sdba documentation from the module and the rst files, some cleanup and addition of a section refering to github issues. (:pull:`1230`).
+* Merge of sdba documentation from the module and the rst files, some cleanup and addition of a section referring to GitHub issues. (:pull:`1230`).
 
 0.39.0 (2022-11-02)
 -------------------
