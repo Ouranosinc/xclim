@@ -9,7 +9,13 @@ import xarray
 import xclim.indices as xci
 import xclim.indices.run_length as rl
 from xclim.core.calendar import parse_offset, resample_doy, select_time
-from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
+from xclim.core.units import (
+    amount2lwethickness,
+    convert_units_to,
+    declare_units,
+    rate2amount,
+    to_agg_units,
+)
 from xclim.core.utils import DayOfYearStr, Quantified, uses_dask
 from xclim.indices._threshold import (
     first_day_temperature_above,
@@ -28,17 +34,18 @@ from xclim.indices.stats import dist_method, fit
 
 __all__ = [
     "biologically_effective_degree_days",
-    "huglin_index",
     "cool_night_index",
     "corn_heat_units",
     "dry_spell_frequency",
     "dry_spell_total_length",
+    "dryness_index",
     "effective_growing_degree_days",
+    "huglin_index",
     "latitude_temperature_index",
     "qian_weighted_mean_average",
-    "water_budget",
-    "standardized_precipitation_index",
     "standardized_precipitation_evapotranspiration_index",
+    "standardized_precipitation_index",
+    "water_budget",
 ]
 
 
@@ -86,6 +93,7 @@ def corn_heat_units(
     corn heat unit is:
 
     .. math::
+
         CHU_i = \frac{YX_{i} + YN_{i}}{2}
 
     with
@@ -96,12 +104,11 @@ def corn_heat_units(
 
         YN_i & = 1.8(TN_i -4.44), &\text{if } TN_i > 4.44°C
 
-    where :math:`YX_{i}` and :math:`YN_{i}` is 0 when :math:`TX_i \leq 10°C` and :math:`TN_i \leq 4.44°C`, respectively.
+    Where :math:`YX_{i}` and :math:`YN_{i}` is 0 when :math:`TX_i \leq 10°C` and :math:`TN_i \leq 4.44°C`, respectively.
 
     References
     ----------
     :cite:cts:`audet_atlas_2012,bootsma_risk_1999`
-
     """
     tasmin = convert_units_to(tasmin, "degC")
     tasmax = convert_units_to(tasmax, "degC")
@@ -179,11 +186,13 @@ def huglin_index(
     1 April and 30 September is:
 
     .. math::
+
         HI = \sum_{i=\text{April 1}}^{\text{September 30}} \left( \frac{TX_i  + TG_i)}{2} - T_{thresh} \right) * k
 
     For the `smoothed` method, the day-length multiplication factor, :math:`k`, is calculated as follows:
 
     .. math::
+
         k = f(lat) = \begin{cases}
                         1, & \text{if } |lat| <= 40 \\
                         1 + ((abs(lat) - 40) / 10) * 0.06, & \text{if } 40 < |lat| <= 50 \\
@@ -194,6 +203,7 @@ def huglin_index(
     day-length multiplication factor, :math:`k`, is calculated as follows:
 
     .. math::
+
         k = f(lat) = \begin{cases}
                         1.0, & \text{if } |lat| <= 40 \\
                         1.02, & \text{if } 40 < |lat| <= 42 \\
@@ -205,13 +215,12 @@ def huglin_index(
                     \end{cases}
 
     A more robust day-length calculation based on latitude, calendar, day-of-year, and obliquity is available with
-    `method="jones"`.
-    See: :py:func:`xclim.indices.generic.day_lengths` or :cite:t:`hall_spatial_2010` for more information.
+    `method="jones"`. See: :py:func:`xclim.indices.generic.day_lengths` or :cite:t:`hall_spatial_2010` for more
+    information.
 
     References
     ----------
     :cite:cts:`huglin_nouveau_1978, hall_spatial_2010`
-
     """
     tas = convert_units_to(tas, "degC")
     tasmax = convert_units_to(tasmax, "degC")
@@ -448,6 +457,11 @@ def cool_night_index(
     Mean minimum temperature for September (northern hemisphere) or March (Southern hemisphere).
     Used in calculating the Géoviticulture Multicriteria Classification System (:cite:t:`tonietto_multicriteria_2004`).
 
+    Warnings
+    --------
+    This indice is calculated using minimum temperature resampled to monthly average, and therefore will accept monthly
+    averaged data as inputs.
+
     Parameters
     ----------
     tasmin : xarray.DataArray
@@ -469,6 +483,11 @@ def cool_night_index(
     only these timesteps. Users should be aware that due to the missing values checks in wrapped Indicators, datasets
     that are missing several months will be flagged as invalid. This check can be ignored by setting the following
     context:
+
+    .. code-block:: python
+
+        with xclim.set_options(check_missing="skip"):
+            cni = cool_night_index(tasmin)
 
     Examples
     --------
@@ -497,13 +516,206 @@ def cool_night_index(
         else:
             raise ValueError(f"Latitude value unsupported: {lat}.")
     else:
-        raise ValueError(f"Latitude: {lat}.")
+        raise ValueError(f"Latitude not understood {lat}.")
 
     tasmin = tasmin.where(months == month, drop=True)
 
     cni = tasmin.resample(time=freq).mean(keep_attrs=True)
     cni.attrs["units"] = "degC"
     return cni
+
+
+@declare_units(pr="[precipitation]", evspsblpot="[precipitation]", wo="[length]")
+def dryness_index(
+    pr: xarray.DataArray,
+    evspsblpot: xarray.DataArray,
+    lat: xarray.DataArray | str | None = None,
+    wo: Quantified = "200 mm",
+    freq: str = "YS",
+) -> xarray.DataArray:
+    r"""Dryness Index.
+
+    Approximation of the water balance for the categorizing the winegrowing season. Uses both precipitation and an
+    adjustment of potential evapotranspiration between April and September (Northern Hemisphere) or October and March
+    (Southern hemisphere). Used in calculating the Géoviticulture Multicriteria Classification System
+    (:cite:t:`tonietto_multicriteria_2004`).
+
+    Warnings
+    --------
+    Dryness Index expects CF-Convention conformant potential evapotranspiration (positive up). This indice is calculated
+    using evapotranspiration and precipitation resampled and converted to monthly total accumulations, and therefore
+    will accept monthly fluxes as inputs.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+        Precipitation.
+    evspsblpot : xarray.DataArray
+        Potential evapotranspiration.
+    lat : xarray.DataArray or {"north", "south"}, optional
+        Latitude coordinate as an array, float or string.
+        If None, a CF-conformant "latitude" field must be available within the passed DataArray.
+    wo : Quantified
+        The initial soil water reserve accessible to root systems [length]. Default: 200 mm.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [mm]
+        Dryness Index.
+
+    Notes
+    -----
+    Given that this indice only examines monthly total accumulations for six-month periods depending on the hemisphere,
+    it is possible to send in DataArrays containing only these timesteps. Users should be aware that due to the missing
+    values checks in wrapped Indicators, datasets that are missing several months will be flagged as invalid. This check
+    can be ignored by setting the following context:
+
+    .. code-block:: python
+
+        with xclim.set_options(check_missing="skip"):
+            di = dryness_index(pr, evspsblpot)
+
+    Let :math:`Wo` be the initial useful soil water reserve (typically "200 mm"), :math:`P` be precipitation,
+    :math:`T_{v}` be the potential transpiration in the vineyard, and :math:`E_{s}` be the direct evaporation from the
+    soil. Then the Dryness Index, or the estimate of soil water reserve at the end of a period (1 April to 30 September
+    in the Northern Hemispherere or 1 October to 31 March in the Southern Hemisphere), can be given by the following
+    formulae:
+
+    .. math::
+
+        W = \sum_{\text{April 1}}^{\text{September 30}} \left( Wo + P - T_{v} - E_{s} \right)
+
+    or (for the Southern Hemisphere):
+
+    .. math::
+
+        W = \sum_{\text{October 1}}^{\text{March 31}} \left( Wo + P - T_{v} - E_{s} \right)
+
+    Where :math:`T_{v}` and :math:`E_{s}` are given by the following formulae:
+
+    .. math::
+
+        T_{v} = ETP * k
+
+    and
+
+    .. math::
+
+        E_{s} = \frac{ETP}{N}\left( 1 - k \right) * JPm
+
+    Where :math:`ETP` is evapotranspiration, :math:`N` is the number of days in the given month. :math:`k` is the
+    coefficient for radiative absorption given by the vine plant architecture, and :math:`JPm` is the number of days of
+    effective evaporation from the soil per month, both provided by the following formulae:
+
+    .. math::
+
+        k = \begin{cases}
+            0.1, & \text{if month = April (NH) or October (SH)}  \\
+            0.3, & \text{if month = May (NH) or November (SH)}  \\
+            0.5, & \text{if month = June - September (NH) or December - March (SH)} \\
+            \end{cases}
+
+    .. math::
+
+        JPm = \max\left( P / 5, N \right)
+
+    Examples
+    --------
+    >>> from xclim.indices import dryness_index
+    >>> dryi = dryness_index(pr_dataset, evspsblpot_dataset, wo="200 mm")
+
+    References
+    ----------
+    :cite:cts:`tonietto_multicriteria_2004,riou_determinisme_1994`
+
+    """
+    if parse_offset(freq) != (1, "A", True, "JAN"):
+        raise ValueError(f"Freq not allowed: {freq}. Must be `YS` or `AS-JAN`")
+
+    # Resample all variables to monthly totals in mm units.
+    evspsblpot = (
+        amount2lwethickness(rate2amount(evspsblpot), out_units="mm")
+        .resample(time="MS")
+        .sum()
+    )
+    pr = amount2lwethickness(rate2amount(pr), out_units="mm").resample(time="MS").sum()
+    wo = convert_units_to(wo, "mm")
+
+    # Different potential evapotranspiration rates for northern hemisphere and southern hemisphere.
+    # wo_adjustment is the initial soil moisture rate at beginning of season.
+    adjustment_array_north = xarray.DataArray(
+        [0, 0, 0, 0.1, 0.3, 0.5, 0.5, 0.5, 0.5, 0, 0, 0],
+        dims="month",
+        coords=dict(month=np.arange(1, 13)),
+    )
+    adjustment_array_south = xarray.DataArray(
+        [0.5, 0.5, 0.5, 0, 0, 0, 0, 0, 0, 0.1, 0.3, 0.5],
+        dims="month",
+        coords=dict(month=np.arange(1, 13)),
+    )
+
+    has_north, has_south = False, False
+    if lat is None:
+        lat = _gather_lat(pr)
+    if isinstance(lat, xarray.DataArray):
+        if (lat >= 0).any():
+            has_north = True
+        if (lat < 0).any():
+            has_south = True
+
+        adjustment = xarray.where(
+            lat >= 0,
+            adjustment_array_north,
+            adjustment_array_south,
+        )
+    elif isinstance(lat, str):
+        if lat.lower() == "north":
+            adjustment = adjustment_array_north
+            has_north = True
+        elif lat.lower() == "south":
+            adjustment = adjustment_array_south
+            has_south = True
+        else:
+            raise ValueError(f"Latitude value unsupported: {lat}.")
+    else:
+        raise ValueError(f"Latitude not understood: {lat}.")
+
+    # Monthly weights array
+    k = adjustment.sel(month=evspsblpot.time.dt.month)
+
+    # Drop all pr outside seasonal bounds
+    pr_masked = (k > 0) * pr
+
+    # Potential transpiration of the vineyard
+    t_v = evspsblpot * k
+
+    # Direct soil evaporation
+    e_s = (
+        (evspsblpot / evspsblpot.time.dt.daysinmonth)
+        * (1 - k)
+        * (pr_masked / 5).clip(max=evspsblpot.time.dt.daysinmonth)
+    )
+
+    # Dryness index
+    if has_north:
+        di_north = wo + (pr_masked - t_v - e_s).resample(time="AS-JAN").sum()
+    if has_south:
+        di_south = wo + (pr_masked - t_v - e_s).resample(time="AS-JUL").sum()
+        # Shift time for Southern Hemisphere to allow for concatenation with Northern Hemisphere
+        di_south = di_south.shift(time=1).isel(time=slice(1, None))
+        di_south["time"] = di_south.indexes["time"].shift(-6, "MS")
+
+    if has_north and has_south:
+        di = di_north.where(lat >= 0, di_south)  # noqa
+    elif has_north:
+        di = di_north  # noqa
+    elif has_south:
+        di = di_south  # noqa
+
+    di.attrs["units"] = "mm"  # noqa
+    return di
 
 
 @declare_units(tas="[temperature]", lat="[]")

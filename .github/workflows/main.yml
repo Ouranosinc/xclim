@@ -19,6 +19,9 @@ on:
     types:
       - submitted
 
+env:
+  XCLIM_TESTDATA_BRANCH: main
+
 jobs:
   black:
     runs-on: ubuntu-latest
@@ -37,7 +40,7 @@ jobs:
         with:
           python-version: "3.8"
       - name: Install tox
-        run: pip install tox~=3.0
+        run: pip install tox~=4.0
       - name: Run linting suite
         run: tox -e black
 
@@ -53,7 +56,7 @@ jobs:
         with:
           python-version: "3.8"
       - name: Install tox
-        run: pip install tox~=3.0
+        run: pip install tox~=4.0
       - name: Test with tox
         run: tox -e py38
         env:
@@ -73,8 +76,8 @@ jobs:
         with:
           python-version: "3.9"
       - name: Install tox
-        run: pip install tox
-      - name: Test with tox~=3.0
+        run: pip install tox~=4.0
+      - name: Test with tox
         run: tox -e py39-upstream-lm3-coverage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -112,8 +115,9 @@ jobs:
           python -m pip install --no-user .
       - name: Test
         run: |
+          pip list
           pip check
-          pytest xclim --durations=10
+          pytest xclim --numprocesses=logical --durations=10 --cov=xclim --cov-report=term-missing
         env:
           CONDA_EXE: mamba
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -153,7 +157,7 @@ jobs:
         with:
           python-version: "3.8"
       - name: Install tox
-        run: pip install tox~=3.0
+        run: pip install tox~=4.0
       - name: Test with tox
         run: tox -e py38-lm3-coverage
         env:
@@ -180,14 +184,10 @@ jobs:
       - name: Run pylint
         run: pylint --rcfile=pylintrc --disable=import-error --exit-zero xclim
       - name: Test with tox
-        run: tox -e doctests_only
-      - name: Report coverage
-        run: |
-          pip install --upgrade coveralls
-          coveralls
+        run: tox -e notebooks_doctests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-doctests-py38
+          COVERALLS_FLAG_NAME: run-notebooks_doctests-py38
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
 

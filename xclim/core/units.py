@@ -74,6 +74,7 @@ units.define(
     "degrees_east = 1 * degree = degrees_east = degrees_E = degreesE = degree_east = degree_E = degreeE"
 )
 units.define("[speed] = [length] / [time]")
+units.define("[radiation] = [power] / [area]")
 
 # Default context.
 null = pint.Context("none")
@@ -299,7 +300,7 @@ def convert_units_to(
     ----------
     source : str or xr.DataArray or units.Quantity
         The value to be converted, e.g. '4C' or '1 mm/d'.
-    target : str or xr.DataArray or units.Quantity or unirs.Unit
+    target : str or xr.DataArray or units.Quantity or units.Unit
         Target array of values to which units must conform.
     context : str, optional
         The unit definition context. Default: None.
@@ -605,8 +606,10 @@ def _rate_and_amount_converter(
             freq = None
         else:
             raise ValueError(
-                "The variables' sampling frequency could not be inferred, which is needed for conversions between rates and amounts. "
-                f"If the derivative of the variables' {dim} coodinate can be used as the sampling rate, pass `sampling_rate_from_coord=True`."
+                "The variables' sampling frequency could not be inferred, "
+                "which is needed for conversions between rates and amounts. "
+                f"If the derivative of the variables' {dim} coordinate "
+                "can be used as the sampling rate, pass `sampling_rate_from_coord=True`."
             ) from err
     if freq is not None:
         multi, base, start_anchor, _ = parse_offset(freq)
@@ -778,10 +781,11 @@ def amount2rate(
     dim : str
         The time dimension.
     sampling_rate_from_coord : boolean
-        For data with irregular time coordinates. If True, the diff of the time coordinate will be used as the sampling rate,
+        For data with irregular time coordinates.
+        If True, the diff of the time coordinate will be used as the sampling rate,
         meaning each data point will be assumed to span the interval ending at the next point.
         See notes of :py:func:`xclim.core.units.rate2amount`.
-        Defaults to False, which raises an error if the time coordiante is irregular.
+        Defaults to False, which raises an error if the time coordinate is irregular.
     out_units : str, optional
         Output units to convert to.
 
@@ -816,9 +820,9 @@ def amount2lwethickness(amount: xr.DataArray, out_units: str = None):
 
     Parameters
     ----------
-    amount: xr.DataArray
+    amount : xr.DataArray
         A DataArray storing a liquid water amount quantity.
-    out_units: str
+    out_units : str
         Specific output units if needed.
 
     Returns
@@ -850,9 +854,9 @@ def lwethickness2amount(thickness: xr.DataArray, out_units: str = None):
 
     Parameters
     ----------
-    thickness: xr.DataArray
+    thickness : xr.DataArray
         A DataArray storing a liquid water thickness quantity.
-    out_units: str
+    out_units : str
         Specific output units if needed.
 
     Returns
@@ -1021,8 +1025,8 @@ def ensure_delta(unit: str = None):
 def infer_context(standard_name=None, dimension=None):
     """Return units context based on either the variable's standard name or the pint dimension.
 
-    Valid standard names for the hydro context are those including the terms "rainfall", "lwe" (liquid water equivalent) and
-    "precipitation". The latter is technically incorrect, as any phase of precipitation could be referenced.
+    Valid standard names for the hydro context are those including the terms "rainfall", "lwe" (liquid water equivalent) and "precipitation".
+    The latter is technically incorrect, as any phase of precipitation could be referenced.
     Standard names for evapotranspiration, evaporation and canopy water amounts are also associated with the hydro context.
 
     Parameters

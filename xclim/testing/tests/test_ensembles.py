@@ -27,6 +27,8 @@ from scipy.stats.mstats import mquantiles
 from xclim import ensembles
 from xclim.indices.stats import get_dist
 
+from .conftest import TESTDATA_BRANCH
+
 
 class TestEnsembleStats:
     def test_create_ensemble(
@@ -55,7 +57,7 @@ class TestEnsembleStats:
 
         # Kinda a hack? Alternative is to open and rewrite in a temp folder.
         files = [
-            threadsafe_data_dir / "main" / "EnsembleStats" / Path(f).name
+            threadsafe_data_dir / TESTDATA_BRANCH / "EnsembleStats" / Path(f).name
             for f in ensemble_dataset_objects["nc_files_simple"]
         ]
         ens2 = ensembles.create_ensemble(dict(zip(reals, files)))

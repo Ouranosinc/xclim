@@ -7,14 +7,17 @@ from pathlib import Path
 import numpy as np
 import xarray as xr
 
-import xclim
 from xclim.core import calendar
+from xclim.indices import (
+    longwave_upwelling_radiation_from_net_downwelling,
+    shortwave_upwelling_radiation_from_net_downwelling,
+)
 from xclim.testing import get_file as _get_file
 from xclim.testing import get_local_testdata as _get_local_testdata
 from xclim.testing import open_dataset as _open_dataset
-from xclim.testing.utils import _default_cache_dir
+from xclim.testing.utils import _default_cache_dir  # noqa
 
-MAIN_TESTDATA_BRANCH = os.getenv("MAIN_TESTDATA_BRANCH", "main")
+TESTDATA_BRANCH = os.getenv("XCLIM_TESTDATA_BRANCH", "main")
 TD = Path(__file__).parent / "data"
 
 
@@ -31,40 +34,19 @@ def generate_atmos(cache_dir: Path):
     with _open_dataset(
         "ERA5/daily_surface_cancities_1990-1993.nc",
         cache_dir=cache_dir,
-        branch=MAIN_TESTDATA_BRANCH,
+        branch=TESTDATA_BRANCH,
     ) as ds:
-        sfcWind, sfcWindfromdir = xclim.atmos.wind_speed_from_vector(ds=ds)  # noqa
-        sfcWind.attrs.update(cell_methods="time: mean within days")
-        huss = xclim.atmos.specific_humidity(ds=ds)
-        snw = ds.swe * 1000
-        # Liquid water equivalent snow thickness [m] to snow thickness in [m] : lwe [m] * 1000 kg/m³ / 300 kg/m³
-        snd = snw / 300
-        snw.attrs.update(
-            standard_name="surface_snow_amount",
-            units="kg m-2",
-            cell_methods="time: mean within days",
-        )
-        snd.attrs.update(
-            standard_name="surface_snow_thickness",
-            units="m",
-            cell_methods="time: mean within days",
-        )
-
-        psl = ds.ps
-        psl.attrs.update(standard_name="air_pressure_at_sea_level")
-
         tn10 = calendar.percentile_doy(ds.tasmin, per=10)
         t10 = calendar.percentile_doy(ds.tas, per=10)
         t90 = calendar.percentile_doy(ds.tas, per=90)
         tx90 = calendar.percentile_doy(ds.tasmax, per=90)
 
+        rsus = shortwave_upwelling_radiation_from_net_downwelling(ds.rss, ds.rsds)
+        rlus = longwave_upwelling_radiation_from_net_downwelling(ds.rls, ds.rlds)
+
         ds = ds.assign(
-            sfcWind=sfcWind,
-            sfcWindfromdir=sfcWindfromdir,
-            huss=huss,
-            psl=psl,
-            snw=snw,
-            snd=snd,
+            rsus=rsus,
+            rlus=rlus,
             tn10=tn10,
             t10=t10,
             t90=t90,
@@ -78,7 +60,7 @@ def generate_atmos(cache_dir: Path):
 
 def populate_testing_data(
     temp_folder: Path | None = None,
-    branch: str = MAIN_TESTDATA_BRANCH,
+    branch: str = TESTDATA_BRANCH,
     _local_cache: Path = _default_cache_dir,
 ):
     """Perform calls to GitHub for the relevant testing data."""
@@ -130,8 +112,6 @@ def add_example_file_paths(cache_dir: Path) -> dict[str]:
     ns["path_to_tasmax_file"] = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
     ns["path_to_tasmin_file"] = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
     ns["path_to_tas_file"] = "ERA5/daily_surface_cancities_1990-1993.nc"
-    ns["path_to_multi_shape_file"] = str(TD / "multi_regions.json")
-    ns["path_to_shape_file"] = str(TD / "southern_qc_geojson.json")
     ns["path_to_ensemble_file"] = "EnsembleReduce/TestEnsReduceCriteria.nc"
 
     # For core.utils.load_module example
@@ -169,9 +149,7 @@ def add_example_file_paths(cache_dir: Path) -> dict[str]:
     atmos_file = cache_dir.joinpath("atmosds.nc")
 
     # Give access to dataset variables by name in xdoctest namespace
-    with _open_dataset(
-        atmos_file, branch=MAIN_TESTDATA_BRANCH, cache_dir=cache_dir
-    ) as ds:
+    with _open_dataset(atmos_file, branch=TESTDATA_BRANCH, cache_dir=cache_dir) as ds:
         for variable in ds.data_vars:
             ns[f"{variable}_dataset"] = ds.get(variable)
 
