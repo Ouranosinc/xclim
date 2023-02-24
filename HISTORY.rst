@@ -13,6 +13,18 @@ New indicators
 * New indices and indicators for determining upwelling radiation (`shortwave_upwelling_radiation_from_net_downwelling` and `longwave_upwelling_radiation_from_net_downwelling`; CF variables `rsus` and `rlus`) from net and downwelling radiation (shortwave: `rss` and `rsds`; longwave: `rls` and `rlds`). (:pull:`1271`).
 * New indice and indicator (``dryness_index``) for estimating soil humidity classifications for winegrowing regions (based on Riou et al. (1994)). (:issue:`355`, :pull:`1235`).
 
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `xclim` testing default behaviours have been changed (:issue:`1295`, :pull:`1297`):
+   * Running `$ pytest` will no longer use `pytest-xdist` distributed testing be default (can be set with ``-n auto|logical|#``. Coverage is also no longer gathered/reported by default.
+   * Running `$ tox` will now set `pytest-xdist` to use ``-n logical`` processes (with a max of 10).
+   * Default behaviour for testing is to no longer always fetch `xclim-testdata`. If testdata is found in ``$HOME/.xclim_testing_data``, files will be copied to individual processes, otherwise, will be fetched as needed.
+* Environment variables evaluated when running pytest have been changed (:issue:`1295`, :pull:`1297`):
+   * For testing against specific branches of `xclim-testdata`: ``MAIN_TESTDATA_BRANCH`` -> ``XCLIM_TESTDATA_BRANCH``
+   * The option to skip fetching of testdata (``SKIP_TEST_DATA``) has been removed
+   * A new environment variable (``XCLIM_PREFETCH_TESTING_DATA``) is now available to gather `xclim-testdata` before running test ensemble (default: `False`).
+   * Environment variables are now passed to `tox` on execution.
+
 Bug fixes
 ^^^^^^^^^
 * ``build_indicator_module_from_yaml`` now accepts a ``reload`` argument. When re-building a module that already exists, ``reload=True`` removes all previous indicator before creating the new ones. (:issue:`1192`, :pull:`1284`).
@@ -27,7 +39,7 @@ Internal changes
 * Coveralls GitHub Action removed as it did not support ``pyproject.toml``-based configurations. (:pull:`1278`).
 * Add a remark about how `xclim`'s CFFWIS is different from the original 1982 implementation. (:issue:`1104`, :pull:`1284`).
 * Update CI runs to use Python3.9 when examining upstream dependencies. Replace `setup-conda` action with `provision-with-micromamba` action. (:pull:`1286`).
-* Update CI runs to always use `tox~=3.0` and the `latest` Ubuntu images (now `v22.04`). (:pull:`1288`).
+* Update CI runs to always use `tox~=4.0` and the `latest` virtual machine images (now `ubuntu-22.04`). (:pull:`1288`, :pull:`1297`).
 * `SBCK` installation command now points to the official development repository. (:pull:`1288`).
 * Some references in the BibTeX were updated to point to better resources. (:pull:`1288`).
 * Add a GitHub CI workflow for performing dependency security review scanning. (:pull:`1287`).
@@ -35,6 +47,7 @@ Internal changes
 * Added `[radiation]` (`[power] / [area]`) to list of defined acceptable units. (:pull:`1271`).
 * Updated testing data used to generate the `atmosds` dataset to use more reproducibly-converted ERA5 data, generated with the `miranda` Python package. (:pull:`1269`).
 * Updated testing dependencies to use `pytest-xdist>=3.2`, allowing for the new `--dist=worksteal` scheduler for distributing the pool of remaining tests across workers after individual workers have exhausted their own queues. (:pull:`1235`).
+* Adding infer context to the unit conversion in of the training of ExtremeValues. (:pull:`1299`).
 * Added `sphinxcontrib-svg2pdfconverter` for converting SVG graphics within documentation to PDF-compatible images. (:pull:`1296`).
 
 0.40.0 (2023-01-13)
