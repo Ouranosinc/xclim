@@ -117,7 +117,7 @@ jobs:
         run: |
           pip list
           pip check
-          pytest xclim --num-workers=logical --durations=10 --cov=xclim --cov-report=term-missing
+          pytest xclim --numprocesses=logical --durations=10 --cov=xclim --cov-report=term-missing
         env:
           CONDA_EXE: mamba
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
