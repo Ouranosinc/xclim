@@ -858,13 +858,13 @@
     "title": "Quantité de neige à la surface",
     "abstract": "Quantité de neige à la surface calculée à partir de son épaisseur et de sa densité."
   },
-  "SND": {
+  "SNOW_DEPTH": {
     "long_name": "Épaisseur de neige",
     "description": "Moyenne {freq:f} de l'épaisseur de neige quotidienne.",
     "title": "Moyenne de l'épaisseur de neige",
     "abstract": "Épaisseur de neige moyenne."
   },
-  "SND_FROM_AMOUNT": {
+  "SNOW_DEPTH_FROM_AMOUNT": {
     "long_name": "Épaisseur de neige",
     "description": "Épaisseur de neige calculée à partir de sa quantité et de sa densité.",
     "title": "Épaisseur de neige",
