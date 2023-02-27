@@ -43,7 +43,7 @@ dependencies:
     - nc-time-axis
     - netCDF4>=1.4
     - pooch
-    - pre_commit
+    - pre-commit
     - pybtex
     - pydocstyle
     - pylint<2.15
@@ -58,6 +58,7 @@ dependencies:
     - statsmodels
     - tokenize-rt
     - tox
+#    - tox-conda  # Will be added when a tox@v4.0+ compatible plugin is released.
     - xdoctest
     - yamale
     - yamllint

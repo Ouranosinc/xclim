@@ -70,6 +70,7 @@ dev = [
   "pytest-xdist[psutil] >=3.2",
   "tokenize-rt",
   "tox",
+  # "tox-conda",  # Will be added when a tox@v4.0+ compatible plugin is released.
   "xdoctest",
   "yamale",
   "yamllint",
@@ -165,10 +166,8 @@ ignore_missing_imports = true
 addopts = [
   "--verbose",
   "--color=yes",
-  "--cov=xclim",
-  "--cov-report=term-missing",
-  "--numprocesses=auto",
-  "--maxprocesses=6",
+  "--numprocesses=0",
+  "--maxprocesses=8",
   "--dist=worksteal"
 ]
 norecursedirs = ["docs/notebooks/*"]
