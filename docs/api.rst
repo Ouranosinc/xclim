@@ -6,6 +6,11 @@ The API of the statistical downscaling and bias adjustment module (sdba) is docu
 The API of the ``cfchecks``, ``datachecks``, ``missing`` and ``dataflags`` modules are in :ref:`checks:Health Checks`.
 Finally, the API of the translating tools is on the :ref:`internationalization:Internationalization` page.
 
+.. contents:: Table of Contents
+   :depth: 1
+   :local:
+   :backlinks: none
+
 Indicators
 ==========
 
