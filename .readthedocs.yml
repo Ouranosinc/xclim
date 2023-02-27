@@ -4,8 +4,8 @@ sphinx:
   configuration: docs/conf.py
   fail_on_warning: true
 
-formats:
-  - pdf
+#formats:
+#  - pdf
 
 build:
   os: ubuntu-22.04

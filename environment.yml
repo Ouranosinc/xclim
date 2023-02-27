@@ -29,6 +29,7 @@ dependencies:
     - black>=22.12
     - blackdoc
     - bump2version
+    - cairosvg
     - coverage
     - distributed>=2.0
     - flake8
@@ -58,6 +59,10 @@ dependencies:
     - statsmodels
     - tokenize-rt
     - tox
+#    - tox-conda  # Will be added when a tox@v4.0+ compatible plugin is released.
     - xdoctest
     - yamale
     - yamllint
+    - pip
+    - pip:
+        - sphinxcontrib-svg2pdfconverter
