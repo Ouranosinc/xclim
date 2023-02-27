@@ -41,10 +41,10 @@ __all__ = [
     "cooling_degree_days",
     "continuous_snow_cover_end",
     "continuous_snow_cover_start",
-    "continuous_snow_depth_cover_end",
-    "continuous_snow_depth_cover_start",
-    "continuous_snow_amount_cover_end",
-    "continuous_snow_amount_cover_start",
+    "snd_season_end",
+    "snd_season_start",
+    "snw_season_end",
+    "snw_season_start",
     "days_with_snow",
     "growing_degree_days",
     "growing_season_start",
@@ -64,8 +64,8 @@ __all__ = [
     "hot_spell_frequency",
     "hot_spell_max_length",
     "snow_cover_duration",
-    "snow_depth_cover_duration",
-    "snow_amount_cover_duration",
+    "snd_season_length",
+    "snw_season_length",
     "tn_days_above",
     "tn_days_below",
     "tg_days_above",
@@ -274,16 +274,16 @@ def continuous_snow_cover_end(
     :cite:cts:`chaumont_elaboration_2017`
     """
     warnings.warn(
-        "The `continuous_snow_cover_end` is being deprecated in favour of `continuous_snow_depth_cover_end`"
+        "The `continuous_snow_cover_end` is being deprecated in favour of `snd_season_end`"
         "This indice will be removed in `xclim>=0.42.0`. Please update your scripts accordingly.",
         DeprecationWarning,
         stacklevel=3,
     )
-    return continuous_snow_depth_cover_end(snd, thresh, window, freq)
+    return snd_season_end(snd, thresh, window, freq)
 
 
 @declare_units(snd="[length]", thresh="[length]")
-def continuous_snow_depth_cover_end(
+def snd_season_end(
     snd: xarray.DataArray,
     thresh: Quantified = "2 cm",
     window: int = 14,
@@ -339,7 +339,7 @@ def continuous_snow_depth_cover_end(
 
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
-def continuous_snow_amount_cover_end(
+def snw_season_end(
     snw: xarray.DataArray,
     thresh: Quantified = "20 kg m-2",
     window: int = 14,
@@ -433,16 +433,16 @@ def continuous_snow_cover_start(
     :cite:cts:`chaumont_elaboration_2017`
     """
     warnings.warn(
-        "The `continuous_snow_cover_end` is being deprecated in favour of `continuous_snow_depth_cover_end`"
+        "The `continuous_snow_cover_end` is being deprecated in favour of `snd_season_end`"
         "This indice will be removed in `xclim>=0.42.0`. Please update your scripts accordingly.",
         DeprecationWarning,
         stacklevel=3,
     )
-    return continuous_snow_depth_cover_start(snd, thresh, window, freq)
+    return snd_season_start(snd, thresh, window, freq)
 
 
 @declare_units(snd="[length]", thresh="[length]")
-def continuous_snow_depth_cover_start(
+def snd_season_start(
     snd: xarray.DataArray,
     thresh: Quantified = "2 cm",
     window: int = 14,
@@ -502,7 +502,7 @@ def continuous_snow_depth_cover_start(
 
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
-def continuous_snow_amount_cover_start(
+def snw_season_start(
     snw: xarray.DataArray,
     thresh: Quantified = "20 kg m-2",
     window: int = 14,
@@ -1748,16 +1748,16 @@ def snow_cover_duration(
         Number of days where snow depth is greater than or equal to threshold.
     """
     warnings.warn(
-        "The `snow_cover_duration` is being deprecated in favour of `snow_depth_cover_duration` "
+        "The `snow_cover_duration` is being deprecated in favour of `snd_season_length` "
         "This indice will be removed in `xclim>=0.42.0`. Please update your scripts accordingly.",
         DeprecationWarning,
         stacklevel=3,
     )
-    return snow_depth_cover_duration(snd, thresh, freq)
+    return snd_season_length(snd, thresh, freq)
 
 
 @declare_units(snd="[length]", thresh="[length]")
-def snow_depth_cover_duration(
+def snd_season_length(
     snd: xarray.DataArray, thresh: Quantified = "2 cm", freq: str = "AS-JUL"
 ) -> xarray.DataArray:
     # noqa: D401
@@ -1794,7 +1794,7 @@ def snow_depth_cover_duration(
 
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
-def snow_amount_cover_duration(
+def snw_season_length(
     snw: xarray.DataArray, thresh: Quantified = "20 kg m-2", freq: str = "AS-JUL"
 ) -> xarray.DataArray:
     # noqa: D401

@@ -9,9 +9,9 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bo
 New indicators
 ^^^^^^^^^^^^^^
 * ``ensembles.change_significance`` now supports Mann-whitney U-test and flexible ``realization``. (:pull:`1285`).
-* New indices and indicators for converting from snow water equivalent to snow depth (``snow_depth_from_amount``) and snow depth to snow water equivalent (``snow_amount_from_depth``) using snow density [kg/m^3]. (:pull:`1271`).
+* New indices and indicators for converting from snow water equivalent to snow depth (``snow_depth_from_amount``) and snow depth to snow water equivalent (``snw_from_depth``) using snow density [kg/m^3]. (:pull:`1271`).
 * New indices and indicators for determining upwelling radiation (`shortwave_upwelling_radiation_from_net_downwelling` and `longwave_upwelling_radiation_from_net_downwelling`; CF variables `rsus` and `rlus`) from net and downwelling radiation (shortwave: `rss` and `rsds`; longwave: `rls` and `rlds`). (:pull:`1271`).
-* New indice and indicator ``snow_{depth | water}_cover_duration`` and  ``continuous_snow_{depth | water}_cover_{start | end}`` which generalize ``snow_cover_duration`` and  ``continuous_snow_cover_{start | end}`` to allow using these functions with variable `snw` (:pull:`1275`).
+* New indice and indicator ``{snd | snw}_season_{length | start | end}`` which generalize ``snow_cover_duration`` and  ``continuous_snow_cover_{start | end}`` to allow using these functions with variable `snw` (:pull:`1275`).
 * New indice and indicator (``dryness_index``) for estimating soil humidity classifications for winegrowing regions (based on Riou et al. (1994)). (:issue:`355`, :pull:`1235`).
 
 Bug fixes

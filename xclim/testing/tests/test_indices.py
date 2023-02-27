@@ -2461,27 +2461,27 @@ class TestSnowMaxDoy:
 
 
 class TestSnowCover:
-    def test_snow_cover_duration(self, snd_series, snw_series):
+    def test_snow_season_length(self, snd_series, snw_series):
         a = np.ones(366) / 100.0
         a[10:20] = 0.3
         snd = snd_series(a)
         # kg m-2 = 1000 kg m-3 * 1 m
         snw = snw_series(1000 * a)
 
-        out = xci.snow_depth_cover_duration(snd)
+        out = xci.snd_season_length(snd)
         assert len(out) == 2
         assert out[0] == 10
 
-        out = xci.snow_amount_cover_duration(snw)
+        out = xci.snw_season_length(snw)
         assert len(out) == 2
         assert out[0] == 10
 
-    def test_continous_snow_cover_start(self, snd_series, snw_series):
+    def test_continous_snow_season_start(self, snd_series, snw_series):
         a = np.arange(366) / 100.0
         snd = snd_series(a)
         snw = snw_series(1000 * a)
 
-        out = xci.continuous_snow_depth_cover_start(snd)
+        out = xci.snd_season_start(snd)
         assert len(out) == 2
         np.testing.assert_array_equal(out, [snd.time.dt.dayofyear[0].data + 2, np.nan])
         for attr in ["units", "is_dayofyear", "calendar"]:
@@ -2489,7 +2489,7 @@ class TestSnowCover:
         assert out.attrs["units"] == ""
         assert out.attrs["is_dayofyear"] == 1
 
-        out = xci.continuous_snow_amount_cover_start(snw)
+        out = xci.snw_season_start(snw)
         assert len(out) == 2
         np.testing.assert_array_equal(out, [snw.time.dt.dayofyear[0].data + 2, np.nan])
         for attr in ["units", "is_dayofyear", "calendar"]:
@@ -2497,7 +2497,7 @@ class TestSnowCover:
         assert out.attrs["units"] == ""
         assert out.attrs["is_dayofyear"] == 1
 
-    def test_continuous_snow_cover_end(self, snd_series, snw_series):
+    def test_snow_season_end(self, snd_series, snw_series):
         a = np.concatenate(
             [
                 np.zeros(100),
@@ -2510,7 +2510,7 @@ class TestSnowCover:
         snd = snd_series(a / 100.0)
         snw = snw_series(1000 * a / 100.0)
 
-        out = xci.continuous_snow_depth_cover_end(snd)
+        out = xci.snd_season_end(snd)
         assert len(out) == 2
         doy = snd.time.dt.dayofyear[0].data
         np.testing.assert_array_equal(out, [(doy + 219) % 366, np.nan])
@@ -2519,7 +2519,7 @@ class TestSnowCover:
         assert out.attrs["units"] == ""
         assert out.attrs["is_dayofyear"] == 1
 
-        out = xci.continuous_snow_amount_cover_end(snw)
+        out = xci.snw_season_end(snw)
         assert len(out) == 2
         doy = snw.time.dt.dayofyear[0].data
         np.testing.assert_array_equal(out, [(doy + 219) % 366, np.nan])
