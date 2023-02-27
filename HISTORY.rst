@@ -16,6 +16,7 @@ New indicators
 * New indices and indicators for converting from snow water equivalent to snow depth (``snow_depth_from_amount``) and snow depth to snow water equivalent (``snow_amount_from_depth``) using snow density [kg/m^3]. (:pull:`1271`).
 * New indices and indicators for determining upwelling radiation (`shortwave_upwelling_radiation_from_net_downwelling` and `longwave_upwelling_radiation_from_net_downwelling`; CF variables `rsus` and `rlus`) from net and downwelling radiation (shortwave: `rss` and `rsds`; longwave: `rls` and `rlds`). (:pull:`1271`).
 * New indice and indicator (``dryness_index``) for estimating soil humidity classifications for winegrowing regions (based on Riou et al. (1994)). (:issue:`355`, :pull:`1235`).
+* Rain season index implemented (default parameters for West Africa). (:issue:`842`, :pull:`1256`)
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -57,7 +58,7 @@ Internal changes
 
 0.40.0 (2023-01-13)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Juliette Lavoie (:user:`juliettelavoie`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Juliette Lavoie (:user:`juliettelavoie`)
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -68,10 +69,6 @@ New features and enhancements
     - Passing ``context='infer'`` will activate the "hydro" context if the source or the target are DataArrays with a standard name that is compatible, as decided by the new ``xclim.core.units.infer_context`` function.
 * New `generic` indicator realm. Now holds indicators previously meant for streamflow analysis in the `land` realm: `fit`, `return_level` (previously `freq_analysis`) and `stats`. (:issue:`1130`, :pull:`1225`).
 * Thresholds and other quantities passed as parameters of indicators can now be multi-dimensional `DataArray`s. `xarray` broadcasting mechanisms will apply. These parameters are now annotated as "Quantity" in the signatures (``xclim.core.utils.Quantity``), instead of "str" as before. Attributes where such thresholds where included will now read "<an array>" (french: "<une matrice>") for these new cases. Multi-dimensional quantities are still largely unsupported, except where documented in the docstring. (:issue:`1093`, :pull:`1236`).
-
-New indicators
-^^^^^^^^^^^^^^
-* Rain season index implemented (default parameters for West Africa). (:issue:`842`, :pull:`1256`)
 
 Breaking changes
 ^^^^^^^^^^^^^^^^

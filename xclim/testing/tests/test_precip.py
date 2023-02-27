@@ -41,7 +41,7 @@ class TestRainSeason:
         out["start"], out["end"], out["length"] = atmos.rain_season(
             pr,
             freq="AS-JAN",
-            e_window_dry=5,
+            window_dry_end=5,
             start_date_min="01-01",
             end_date_min="01-01",
         )

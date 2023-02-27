@@ -887,23 +887,23 @@ def water_budget(
 
 @declare_units(
     pr="[precipitation]",
-    s_thresh_wet="[length]",
-    s_thresh_dry="[length]",
-    e_thresh_dry="[length]",
+    thresh_wet_start="[length]",
+    thresh_dry_start="[length]",
+    thresh_dry_end="[length]",
 )
 def rain_season(
     pr: xarray.DataArray,
-    s_thresh_wet: Quantified = "25.0 mm",
-    s_window_wet: int = 3,
-    s_window_not_dry: int = 30,
-    s_thresh_dry: Quantified = "1.0 mm",
-    s_window_dry: int = 7,
-    s_method_dry: str = "per_day",
+    thresh_wet_start: Quantified = "25.0 mm",
+    window_wet_start: int = 3,
+    window_not_dry_start: int = 30,
+    thresh_dry_start: Quantified = "1.0 mm",
+    window_dry_start: int = 7,
+    method_dry_start: str = "per_day",
     start_date_min: DayOfYearStr = "05-01",
     start_date_max: DayOfYearStr = "12-31",
-    e_thresh_dry: Quantified = "0.0 mm",
-    e_window_dry: int = 20,
-    e_method_dry: str = "per_day",
+    thresh_dry_end: Quantified = "0.0 mm",
+    window_dry_end: int = 20,
+    method_dry_end: str = "per_day",
     end_date_min: DayOfYearStr = "09-01",
     end_date_max: DayOfYearStr = "12-31",
     freq="AS-JAN",
@@ -914,36 +914,36 @@ def rain_season(
 
     pr: xr.DataArray
         Precipitation data.
-    s_thresh_wet: Quantified
-        Accumulated precipitation threshold associated with `s_window_wet`.
-    s_window_wet: int
-        Number of days when accumulated precipitation is above `s_thresh_wet`. Defines the first condition to start the rain season
-    s_window_not_dry: int
-        Number of days, after `s_window_wet` days, during which no dry period must be found as a second and last condition to start the rain season.
-        A dry sequence is defined with `s_thresh_dry`, `s_window_dry` and `s_method_dry`.
-    s_thresh_dry: Quantified
-        Threshold length defining a dry day in the sequence related to `s_window_dry`.
-    s_window_dry: int
-        Number of days used to define a dry sequence in the start of the season. Daily precipitations lower than `s_thresh_dry`
-        during `s_window_dry` days are considered a dry sequence. The precipitations must be lower than `s_thresh_dry`
-        for either every day in the sequence (`s_method_dry == "per_day"`) or for the total (`s_method_dry == "total"`).
-    s_method_dry: {"per_day", "total"}
-        Method used to define a dry sequence associated with `s_window_dry`. The threshold `s_thresh_dry` is either compared
-        to every daily precipitations (`s_method_dry == "per_day"`) or to total precipitations (`s_method_dry == "total"`)
-        in the sequence `s_window_dry` days.
+    thresh_wet_start: Quantified
+        Accumulated precipitation threshold associated with `window_wet_start`.
+    window_wet_start: int
+        Number of days when accumulated precipitation is above `thresh_wet_start`. Defines the first condition to start the rain season
+    window_not_dry_start: int
+        Number of days, after `window_wet_start` days, during which no dry period must be found as a second and last condition to start the rain season.
+        A dry sequence is defined with `thresh_dry_start`, `window_dry_start` and `method_dry_start`.
+    thresh_dry_start: Quantified
+        Threshold length defining a dry day in the sequence related to `window_dry_start`.
+    window_dry_start: int
+        Number of days used to define a dry sequence in the start of the season. Daily precipitations lower than `thresh_dry_start`
+        during `window_dry_start` days are considered a dry sequence. The precipitations must be lower than `thresh_dry_start`
+        for either every day in the sequence (`method_dry_start == "per_day"`) or for the total (`method_dry_start == "total"`).
+    method_dry_start: {"per_day", "total"}
+        Method used to define a dry sequence associated with `window_dry_start`. The threshold `thresh_dry_start` is either compared
+        to every daily precipitations (`method_dry_start == "per_day"`) or to total precipitations (`method_dry_start == "total"`)
+        in the sequence `window_dry_start` days.
     start_date_min: DayOfYearStr
         First day of year when season can start ("mm-dd").
     start_date_max: DayOfYearStr
         Last day of year when season can start ("mm-dd").
-    e_thresh_dry: str
-        Threshold length defining a dry day in the sequence related to `e_window_dry`.
-    e_window_dry: int
-        Number of days used to define a dry sequence in the end of the season. Daily precipitations lower than `e_thresh_dry`
-        during `e_window_dry` days are considered a dry sequence. The precipitations must be lower than `e_thresh_dry`
-        for either every day in the sequence (`e_method_dry == "per_day"`) or for the total (`e_method_dry == "total"`).
-    e_method_dry: {"per_day", "total"}
-        Method used to define a dry sequence associated with `e_window_dry`. The threshold `e_thresh_dry` is either compared
-        to every daily precipitations (`e_method_dry == "per_day"`) or to total precipitations (`e_method_dry == "total"`)
+    thresh_dry_end: str
+        Threshold length defining a dry day in the sequence related to `window_dry_end`.
+    window_dry_end: int
+        Number of days used to define a dry sequence in the end of the season. Daily precipitations lower than `thresh_dry_end`
+        during `window_dry_end` days are considered a dry sequence. The precipitations must be lower than `thresh_dry_end`
+        for either every day in the sequence (`method_dry_end == "per_day"`) or for the total (`method_dry_end == "total"`).
+    method_dry_end: {"per_day", "total"}
+        Method used to define a dry sequence associated with `window_dry_end`. The threshold `thresh_dry_end` is either compared
+        to every daily precipitations (`method_dry_end == "per_day"`) or to total precipitations (`method_dry_end == "total"`)
         in the sequence `window_dry` days.
     end_date_min: DayOfYearStr
         First day of year when season can end ("mm-dd").
@@ -968,9 +968,9 @@ def rain_season(
     """
     # Unit conversion.
     pram = rate2amount(pr, out_units="mm")
-    s_thresh_wet = convert_units_to(s_thresh_wet, pram)
-    s_thresh_dry = convert_units_to(s_thresh_dry, pram)
-    e_thresh_dry = convert_units_to(e_thresh_dry, pram)
+    thresh_wet_start = convert_units_to(thresh_wet_start, pram)
+    thresh_dry_start = convert_units_to(thresh_dry_start, pram)
+    thresh_dry_end = convert_units_to(thresh_dry_end, pram)
 
     # Eliminate negative values.
     pram = xarray.where(pram < 0, 0, pram)
@@ -986,25 +986,25 @@ def rain_season(
             first_start != run_positions.argmin("time"), first_start, np.NaN
         )
 
-    def _get_start_first_run(pram, window_dry=s_window_dry):
-        da_start = pram.rolling({dim: s_window_wet}).sum() >= s_thresh_wet
-        if s_method_dry == "per_day":
-            da_stop = pram <= s_thresh_dry
-        elif s_method_dry == "total":
-            da_stop = pram.rolling({dim: window_dry}).sum() <= s_thresh_dry
+    def _get_start_first_run(pram, window_dry=window_dry_start):
+        da_start = pram.rolling({dim: window_wet_start}).sum() >= thresh_wet_start
+        if method_dry_start == "per_day":
+            da_stop = pram <= thresh_dry_start
+        elif method_dry_start == "total":
+            da_stop = pram.rolling({dim: window_dry}).sum() <= thresh_dry_start
             window_dry = 1
         run_positions = (
             rl.rle_with_holes(da_start, 1, "first", da_stop, window_dry, "first")
-            >= s_window_not_dry
+            >= window_not_dry_start
         )
         return _get_first_run(run_positions, start_date_min, start_date_max)
 
     def _get_end_first_run(pram):
-        if e_method_dry == "per_day":
-            da_stop = pram <= e_thresh_dry
-            run_positions = rl.rle(da_stop, dim=dim, index="last") >= e_window_dry
-        elif e_method_dry == "total":
-            da_stop = pram.rolling({dim: e_window_dry}).sum() <= e_thresh_dry
+        if method_dry_end == "per_day":
+            da_stop = pram <= thresh_dry_end
+            run_positions = rl.rle(da_stop, dim=dim, index="last") >= window_dry_end
+        elif method_dry_end == "total":
+            da_stop = pram.rolling({dim: window_dry_end}).sum() <= thresh_dry_end
             run_positions = da_stop
         return _get_first_run(run_positions, end_date_min, end_date_max)
 
