@@ -176,7 +176,7 @@ class TestFFDI:
         assert df.shape == test_data["pr"].shape
 
         ffdi = atmos.mcarthur_forest_fire_danger_index(
-            df, test_data["tasmax"], test_data["rh"], test_data["wsgsmax"]
+            df, test_data["tasmax"], test_data["hurs"], test_data["wsgsmax"]
         )
         assert (ffdi.isel(time=slice(19, None)) >= 0).all()
         assert ffdi.shape == test_data["pr"].shape

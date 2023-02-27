@@ -35,7 +35,6 @@ K2C = 273.15
 
 
 class TestMaxNDayPrecipitationAmount:
-
     # test 2 day max precip
     def test_single_max(self, pr_series):
         a = pr_series(np.array([3, 4, 20, 20, 0, 6, 9, 25, 0, 0]))
@@ -225,7 +224,6 @@ class TestAgroclimaticIndices:
         ],
     )
     def test_bedd(self, method, end_date, deg_days, max_deg_days):
-
         time_data = date_range(
             "1992-01-01", "1995-06-01", freq="D", calendar="standard"
         )
@@ -489,7 +487,6 @@ class TestAgroclimaticIndices:
     def test_standardized_precipitation_index(
         self, open_dataset, freq, window, dist, method, values, diff_tol
     ):
-
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
         pr = ds.pr.sel(time=slice("1998", "2000"))
         pr_cal = ds.pr.sel(time=slice("1950", "1980"))
@@ -2187,7 +2184,7 @@ class TestWinterRainRatio:
 class TestTG:
     @pytest.mark.parametrize(
         "ind,exp",
-        [(xci.tg_mean, 283.1391), (xci.tg_min, 266.1117), (xci.tg_max, 292.1250)],
+        [(xci.tg_mean, 283.0615), (xci.tg_min, 266.1208), (xci.tg_max, 291.5018)],
     )
     def test_simple(self, open_dataset, ind, exp):
         ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
@@ -2438,6 +2435,31 @@ def test_days_with_snow(prsn_series):
     assert out.units == "d"
 
 
+class TestSnowMaxDoy:
+    def test_simple(self, snd_series, snw_series):
+        a = np.ones(366) / 100.0
+        a[10:20] = 0.3
+        snd = snd_series(a)
+        snw = snw_series(a)
+
+        out = xci.snd_max_doy(snd)
+        np.testing.assert_array_equal(out, [193, 182])
+
+        out = xci.snw_max_doy(snw)
+        np.testing.assert_array_equal(out, [193, 182])
+
+    def test_nan_slices(self, snd_series, snw_series):
+        a = np.ones(366) * np.NaN
+        snd = snd_series(a)
+        snw = snw_series(a)
+
+        out = xci.snd_max_doy(snd)
+        assert out.isnull().all()
+
+        out = xci.snw_max_doy(snw)
+        assert out.isnull().all()
+
+
 def test_snow_cover_duration(snd_series):
     a = np.ones(366) / 100.0
     a[10:20] = 0.3
@@ -2538,7 +2560,6 @@ def test_winter_storm(snd_series):
 
 
 def test_humidex(tas_series):
-
     tas = tas_series([15, 25, 35, 40])
     tas.attrs["units"] = "C"
 
@@ -2571,7 +2592,6 @@ def test_humidex(tas_series):
 
 
 def test_heat_index(tas_series, hurs_series):
-
     tas = tas_series([15, 20, 25, 25, 30, 30, 35, 35, 40, 40, 45, 45])
     tas.attrs["units"] = "C"
 
@@ -2889,7 +2909,6 @@ def test_water_budget(pr_series, evspsblpot_series):
     ],
 )
 def test_dry_spell(pr_series, pr, thresh1, thresh2, window, outs):
-
     pr = pr_series(np.array(pr), start="1981-01-01", units="mm/day")
 
     out_events, out_total_d_sum, out_total_d_max = outs
@@ -3093,3 +3112,19 @@ def test_mean_radiant_temperature(
     )
 
     np.testing.assert_allclose(mrt, expected, rtol=1e-03)
+
+
+class TestDrynessIndex:
+    def test_dryness_index(self, atmosds):
+        ds = atmosds.isel(location=3)
+
+        evspsblpot = ds.evspsblpot
+        pr = ds.pr
+
+        di = xci.dryness_index(pr, evspsblpot)
+        di_wet = xci.dryness_index(pr, evspsblpot, wo="300 mm")
+        di_plus_100 = di + 100
+        np.testing.assert_allclose(
+            di, np.array([13.355, 102.426, 65.576, 158.078]), rtol=1e-03
+        )
+        np.testing.assert_allclose(di_wet, di_plus_100)

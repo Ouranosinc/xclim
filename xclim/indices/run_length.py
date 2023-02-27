@@ -391,7 +391,7 @@ def windowed_run_count(
     xr.DataArray, [int]
         Total number of `True` values part of a consecutive runs of at least `window` long.
     """
-    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index)
+    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, index=index, freq=freq)
 
     if ufunc_1dim:
         out = windowed_run_count_ufunc(da, window, dim)
@@ -416,7 +416,7 @@ def first_run(
     freq: str | None = None,
     coord: str | bool | None = False,
     ufunc_1dim: str | bool = "from_context",
-) -> xr.DataArray:
+) -> xr.DataArray:  # noqa: D202
     """Return the index of the first item of the first run of at least a given length.
 
     Parameters
@@ -446,6 +446,7 @@ def first_run(
         Index (or coordinate if `coord` is not False) of first item in first valid run.
         Returns np.nan if there are no valid runs.
     """
+
     # transforms indexes to coordinates if needed, and drops obsolete dim
     def coord_transform(out, da):
         if coord:
