@@ -107,6 +107,7 @@ extensions = [
     "IPython.sphinxext.ipython_console_highlighting",
     "autodoc_indicator",
     "sphinxcontrib.bibtex",
+    "sphinxcontrib.cairosvgconverter",
     "sphinx_codeautolink",
     "sphinx_copybutton",
     "sphinx_rtd_theme",
