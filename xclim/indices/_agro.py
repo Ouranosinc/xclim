@@ -962,6 +962,12 @@ def rain_season(
     rain_season_end: xr.DataArray, [dimensionless]
     rain_season_length: xr.DataArray, [dimensionless]
 
+    Note
+    -------
+    The rain season starts with an intense period of raining (during `window_wet_start` days, there is a precipitation total of `thresh_wet_start`),
+    directly followed by a period of `window_not_dry_start` days where there is no dry sequence (`window_dry_start` days with a
+    minimum total or daily precipitation).
+
     References
     ----------
     :cite:cts:`sivakumar_predicting_1998`
