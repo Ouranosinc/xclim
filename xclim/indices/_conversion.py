@@ -32,8 +32,8 @@ __all__ = [
     "saturation_vapor_pressure",
     "sfcwind_2_uas_vas",
     "shortwave_upwelling_radiation_from_net_downwelling",
-    "snow_amount_from_depth",
-    "snow_depth_from_amount",
+    "snd_to_snw",
+    "snw_to_snd",
     "snowfall_approximation",
     "specific_humidity",
     "specific_humidity_from_dewpoint",
@@ -904,7 +904,7 @@ def rain_approximation(
 
 
 @declare_units(snw="[mass]/[area]", snr="[mass]/[volume]", const="[mass]/[volume]")
-def snow_depth_from_amount(
+def snw_to_snd(
     snw: xr.DataArray,
     snr: xr.DataArray | None = None,
     const: Quantified = "312 kg m-3",
@@ -948,7 +948,7 @@ def snow_depth_from_amount(
 
 
 @declare_units(snd="[length]", snr="[mass]/[volume]", const="[mass]/[volume]")
-def snow_amount_from_depth(
+def snd_to_snw(
     snd: xr.DataArray,
     snr: xr.DataArray | None = None,
     const: Quantified = "312 kg m-3",
