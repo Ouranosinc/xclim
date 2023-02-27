@@ -1156,16 +1156,17 @@
   "RAIN_SEASON.length": {
     "long_name": "Longueur de la saison des pluies",
     "description": "Nombre de pas temporels entre le début et la fin de la saison des pluies."
+  },
   "KBDI": {
     "long_name": "Indice de sécheresse de Keetch-Byran",
     "description": "Quantité d'eau nécessaire pour que le contenu en eau du sol atteigne sa capacité au champ.",
-    "title": "Indice de sécheresse de Keetch-Byran (KBDI) pour le déficit en humidité du sol.",
+    "title": "Indice de sécheresse de Keetch-Byran (KBDI) pour le déficit en humidité du sol",
     "abstract": "Le KDBI indique la quantité d'eau nécessaire pour que le contenu en eau du sol atteigne sa capacité au champ. Il est utile au calul du FFDI."
   },
   "DF": {
     "long_name": "Facteur de sécheresse de Griffiths",
     "description": "Évaluation numérique de la disponibilité de combustible dans la litière profonde.",
-    "title": "Facteur de sécheresse de Griffiths basé sur le deficit en humidité du sol.",
+    "title": "Facteur de sécheresse de Griffiths basé sur le deficit en humidité du sol",
     "abstract": "Le facteur de sécheresse est un indicateur numérique de la disponibilité du combustible à feu de forêt dans les couches profondes du sol. Il est utile au calcul de l'indice de danger de feu de forêt McArthur."
   },
   "FFDI": {
