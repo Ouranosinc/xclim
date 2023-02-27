@@ -169,9 +169,9 @@ snw_max = SnowWithIndexing(
     identifier="snw_max",
     standard_name="surface_snow_amount",
     var_name="{freq}_snw_max",
-    long_name="Maximum snow amount equivalent amount",
-    description="The {freq} maximum snow amount equivalent amount on the surface.",
-    abstract="The maximum snow amount equivalent amount on the surface.",
+    long_name="Maximum snow amount equivalent",
+    description="The {freq} maximum snow amount equivalent on the surface.",
+    abstract="The maximum snow amount equivalent on the surface.",
     units="kg m-2",
     compute=xci.snw_max,
 )
