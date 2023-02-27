@@ -21,13 +21,13 @@ from xclim.core.indicator import Indicator, base_registry
 from xclim.core.units import convert_units_to, to_agg_units
 from xclim.core.utils import uses_dask
 from xclim.indices import run_length as rl
-from xclim.indices.generic import select_resample_op
+from xclim.indices.generic import compare, select_resample_op
 from xclim.indices.stats import fit, parametric_quantile
 
 from .base import Grouper, map_groups
 from .nbutils import _pairwise_haversine_and_bins
 from .processing import jitter_under_thresh
-from .utils import _pairwise_spearman
+from .utils import _pairwise_spearman, copy_all_attrs
 
 
 class StatisticalProperty(Indicator):
@@ -707,7 +707,7 @@ def _relative_frequency(
     """Relative Frequency.
 
     Relative Frequency of days with variable respecting a condition (defined by an operation and a threshold) at the
-    time resolution. The relative freqency is the number of days that satisfy the condition divided by the total number
+    time resolution. The relative frequency is the number of days that satisfy the condition divided by the total number
     of days.
 
     Parameters
@@ -753,6 +753,63 @@ relative_frequency = StatisticalProperty(
 )
 
 
+def _transition_probability(
+    da: xr.DataArray,
+    *,
+    initial_op: str = ">=",
+    final_op: str = ">=",
+    thresh: str = "1 mm d-1",
+    group: str | Grouper = "time",
+) -> xr.DataArray:
+    """Transition probability.
+
+    Probability of transition from the initial state to the final state. The states are
+    booleans comparing the value of the day to the threshold with the operator.
+
+    The transition occurs when consecutive days are both in the given states.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Variable on which to calculate the diagnostic.
+    initial_op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        Operation to verify the condition for the initial state.
+        The condition is variable {op} threshold.
+    final_op: {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        Operation to verify the condition for the final state.
+        The condition is variable {op} threshold.
+    thresh : str
+        Threshold on which to evaluate the condition.
+    group : {"time", "time.season", "time.month"}
+        Grouping on the output.
+        e.g. For "time.month", the transition probability would be calculated on each month, with all years included.
+
+    Returns
+    -------
+    xr.DataArray, [dimensionless]
+        Transition probability of values {initial_op} {thresh} to values {final_op} {thresh}.
+    """
+    # mask of the ocean with NaNs
+    mask = ~(da.isel({group.dim: 0}).isnull()).drop_vars(group.dim)
+
+    today = da.isel(time=slice(0, -1))
+    tomorrow = da.shift(time=-1).isel(time=slice(0, -1))
+
+    t = convert_units_to(thresh, da, context="infer")
+    cond = compare(today, initial_op, t) * compare(tomorrow, final_op, t)
+    out = group.apply("mean", cond)
+    out = out.where(mask, np.nan)
+    out.attrs["units"] = ""
+    return out
+
+
+transition_probability = StatisticalProperty(
+    identifier="transition_probability",
+    aspect="temporal",
+    compute=_transition_probability,
+)
+
+
 def _trend(
     da: xr.DataArray,
     *,
@@ -761,20 +818,20 @@ def _trend(
 ) -> xr.DataArray:
     """Linear Trend.
 
-    The data is averaged over each time resolution and the interannual trend is returned.
+    The data is averaged over each time resolution and the inter-annual trend is returned.
     This function will rechunk along the grouping dimension.
 
     Parameters
     ----------
     da : xr.DataArray
-      Variable on which to calculate the diagnostic.
-    output: {'slope', 'pvalue'}
-      Attributes of the linear regression to return.
-      'slope' is the slope of the regression line.
-      'pvalue' is  for a hypothesis test whose null hypothesis is that the slope is zero,
-      using Wald Test with t-distribution of the test statistic.
+        Variable on which to calculate the diagnostic.
+    output : {'slope', 'pvalue'}
+        Attributes of the linear regression to return.
+        'slope' is the slope of the regression line.
+        'pvalue' is  for a hypothesis test whose null hypothesis is that the slope is zero,
+        using Wald Test with t-distribution of the test statistic.
     group : {'time', 'time.season', 'time.month'}
-      Grouping on the output.
+        Grouping on the output.
 
     Returns
     -------
@@ -870,7 +927,9 @@ return_value = StatisticalProperty(
 )
 
 
-def _spatial_correlogram(da: xr.DataArray, *, dims=None, bins=100, group="time"):
+def _spatial_correlogram(
+    da: xr.DataArray, *, dims=None, bins=100, group="time", method=1
+):
     """Spatial correlogram.
 
     Compute the pairwise spatial correlations (Spearman) and averages them based on the pairwise distances.
@@ -921,28 +980,175 @@ def _spatial_correlogram(da: xr.DataArray, *, dims=None, bins=100, group="time")
             "long_name": f"Centers of the intersite distance bins (width of {w[0]:.3f} km)",
         },
     )
-    ds = xr.Dataset({"corr": corr, "distance": dists})
-    corlg = xr.map_blocks(
-        lambda ds, b: ds.corr.groupby_bins(ds.distance, b)
-        .mean()
-        .drop_vars(["distance_bins"]),
-        ds,
-        (bins,),
-        template=corr.isel(_spatial=0, _spatial2=0, drop=True).expand_dims(
-            distance_bins=bins.size - 1
-        ),
+
+    dists = dists.where(corr.notnull())
+
+    def _bin_corr(corr, distance):
+        """Bin and mean."""
+        return stats.binned_statistic(
+            distance.flatten(), corr.flatten(), statistic="mean", bins=bins
+        ).statistic
+
+    # (_spatial, _spatial2) -> (_spatial, distance_bins)
+    binned = xr.apply_ufunc(
+        _bin_corr,
+        corr,
+        dists,
+        input_core_dims=[["_spatial", "_spatial2"], ["_spatial", "_spatial2"]],
+        output_core_dims=[["distance_bins"]],
+        dask="parallelized",
+        vectorize=True,
+        output_dtypes=[float],
+        dask_gufunc_kwargs={
+            "allow_rechunk": True,
+            "output_sizes": {"distance_bins": 100},
+        },
     )
-    return (
-        corlg.assign_coords(distance_bins=centers)
+    binned = (
+        binned.assign_coords(distance_bins=centers)
         .rename(distance_bins="distance")
         .assign_attrs(units="")
+        .rename("corr")
     )
+    return binned
 
 
 spatial_correlogram = StatisticalProperty(
     identifier="spatial_correlogram",
     aspect="spatial",
     compute=_spatial_correlogram,
+    allowed_groups=["group"],
+)
+
+
+def _decorrelation_length(
+    da: xr.DataArray, *, radius=300, thresh=0.50, dims=None, bins=100, group="time"
+):
+    """Decorrelation length.
+
+    Distance from a grid cell where the correlation with its neighbours goes below the threshold.
+    A correlogram is calculated for each grid cell following the method from ``xclim.sdba.properties.spatial_correlogram``.
+    Then, we find the first bin closest to the correlation threshold.
+
+    Parameters
+    ----------
+    da: xr.DataArray
+      Data.
+    radius: float
+        Radius (in km) defining the region where correlations will be calculated between a point and its neighbours.
+    thresh: float
+      Threshold correlation defining decorrelation.
+       The decorrelation length is defined as the center of the distance bin that has a correlation closest to this threshold.
+    dims: sequence of strings
+      Name of the spatial dimensions. Once these are stacked, the longitude and latitude coordinates must be 1D.
+    bins:
+      Same as argument `bins` from :py:meth:`scipy.stats.binned_statistic`.
+      If given as a scalar, the equal-width bin limits from 0 to radius are generated here
+      (instead of letting scipy do it) to improve performance.
+    group: str
+      Useless for now.
+
+    Returns
+    -------
+    xr.DataArray, [km]
+      Decorrelation length.
+
+    Notes
+    -----
+    Calculating this property requires a lot of memory. It will not work with large datasets.
+    """
+    if dims is None:
+        dims = [d for d in da.dims if d != group.dim]
+
+    corr = _pairwise_spearman(da, dims)
+
+    dists, mn, mx = _pairwise_haversine_and_bins(
+        corr.cf["longitude"].values, corr.cf["latitude"].values, transpose=True
+    )
+
+    dists = xr.DataArray(dists, dims=corr.dims, coords=corr.coords, name="distance")
+
+    trans_dists = xr.DataArray(
+        dists.T, dims=corr.dims, coords=corr.coords, name="distance"
+    )
+
+    if np.isscalar(bins):
+        bins = np.linspace(0, radius, bins + 1)
+
+    if uses_dask(corr):
+        dists = dists.chunk()
+        trans_dists = trans_dists.chunk()
+
+    w = np.diff(bins)
+    centers = xr.DataArray(
+        bins[:-1] + w / 2,
+        dims=("distance_bins",),
+        attrs={
+            "units": "km",
+            "long_name": f"Centers of the intersite distance bins (width of {w[0]:.3f} km)",
+        },
+    )
+    ds = xr.Dataset({"corr": corr, "distance": dists, "distance2": trans_dists})
+
+    # only keep points inside the radius
+    ds = ds.where(ds.distance < radius)
+
+    ds = ds.where(ds.distance2 < radius)
+
+    def _bin_corr(corr, distance):
+        """Bin and mean."""
+        mask_nan = ~np.isnan(corr)
+        return stats.binned_statistic(
+            distance[mask_nan], corr[mask_nan], statistic="mean", bins=bins
+        ).statistic
+
+    # (_spatial, _spatial2) -> (_spatial, distance_bins)
+    binned = (
+        xr.apply_ufunc(
+            _bin_corr,
+            ds.corr,
+            ds.distance,
+            input_core_dims=[["_spatial2"], ["_spatial2"]],
+            output_core_dims=[["distance_bins"]],
+            dask="parallelized",
+            vectorize=True,
+            output_dtypes=[float],
+            dask_gufunc_kwargs={
+                "allow_rechunk": True,
+                "output_sizes": {"distance_bins": len(bins)},
+            },
+        )
+        .rename("corr")
+        .to_dataset()
+    )
+
+    binned = (
+        binned.assign_coords(distance_bins=centers)
+        .rename(distance_bins="distance")
+        .assign_attrs(units="")
+    )
+
+    closest = abs(binned.corr - thresh).idxmin(dim="distance")
+    binned["decorrelation_length"] = closest
+
+    # get back to 2d lat and lon
+    # if 'lat' in dims and 'lon' in dims:
+    if len(dims) > 1:
+        binned = binned.set_index({"_spatial": dims})
+        out = binned.decorrelation_length.unstack()
+    else:
+        out = binned.swap_dims({"_spatial": dims[0]}).decorrelation_length
+
+    copy_all_attrs(out, da)
+
+    out.attrs["units"] = "km"
+    return out
+
+
+decorrelation_length = StatisticalProperty(
+    identifier="decorrelation_length",
+    aspect="spatial",
+    compute=_decorrelation_length,
     allowed_groups=["group"],
 )
 

@@ -6,6 +6,10 @@ History
 -------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Éric Dupuis (:user:`coxipi`).
 
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New properties ``xclim.sdba.properties.decorrelation_length`` and ``xclim.sdba.properties.transition_probability``. (:pull:`1252`)
+
 New indicators
 ^^^^^^^^^^^^^^
 * ``ensembles.change_significance`` now supports Mann-whitney U-test and flexible ``realization``. (:pull:`1285`).
