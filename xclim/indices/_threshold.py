@@ -7,6 +7,7 @@ import numpy as np
 import xarray
 
 from xclim.core.calendar import get_calendar
+from xclim.core.missing import at_least_n_valid
 from xclim.core.units import (
     convert_units_to,
     declare_units,
@@ -320,10 +321,6 @@ def snd_season_end(
     ----------
     :cite:cts:`chaumont_elaboration_2017`
     """
-    from xclim.core.missing import (  # pylint: disable=import-outside-toplevel
-        at_least_n_valid,
-    )
-
     valid = at_least_n_valid(snd.where(snd > 0), n=1, freq=freq)
 
     thresh = convert_units_to(thresh, snd)
@@ -376,10 +373,6 @@ def snw_season_end(
     ----------
     :cite:cts:`chaumont_elaboration_2017`
     """
-    from xclim.core.missing import (  # pylint: disable=import-outside-toplevel
-        at_least_n_valid,
-    )
-
     valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
 
     thresh = convert_units_to(thresh, snw)
@@ -478,10 +471,6 @@ def snd_season_start(
     ----------
     :cite:cts:`chaumont_elaboration_2017`
     """
-    from xclim.core.missing import (  # pylint: disable=import-outside-toplevel
-        at_least_n_valid,
-    )
-
     valid = at_least_n_valid(snd.where(snd > 0), n=1, freq=freq)
 
     thresh = convert_units_to(thresh, snd)
@@ -538,10 +527,6 @@ def snw_season_start(
     ----------
     :cite:cts:`chaumont_elaboration_2017`
     """
-    from xclim.core.missing import (  # pylint: disable=import-outside-toplevel
-        at_least_n_valid,
-    )
-
     valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
 
     thresh = convert_units_to(thresh, snw)
@@ -1783,10 +1768,6 @@ def snd_season_length(
     xarray.DataArray, [time]
         Number of days where snow depth is greater than or equal to threshold.
     """
-    from xclim.core.missing import (  # pylint: disable=import-outside-toplevel
-        at_least_n_valid,
-    )
-
     valid = at_least_n_valid(snd.where(snd > 0), n=1, freq=freq)
     thresh = convert_units_to(thresh, snd)
     out = threshold_count(snd, ">=", thresh, freq)
@@ -1820,12 +1801,7 @@ def snw_season_length(
     xarray.DataArray, [time]
         Number of days where snow water is greater than or equal to threshold.
     """
-    from xclim.core.missing import (  # pylint: disable=import-outside-toplevel
-        at_least_n_valid,
-    )
-
     valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
-
     thresh = convert_units_to(thresh, snw)
     out = threshold_count(snw, ">=", thresh, freq)
     return to_agg_units(out, snw, "count").where(~valid)
