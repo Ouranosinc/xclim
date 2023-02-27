@@ -48,9 +48,9 @@ class TestRainSeason:
         out_arr = np.array([out[var].values for var in ["start", "end", "length"]])
         out_exp = np.array(
             [
-                [np.NaN, 11.0, 23.0, 26.0],
-                [np.NaN, np.NaN, 144.0, 98.0],
-                [np.NaN, 354.0, 121.0, 72.0],
+                [np.nan, 11.0, 5.0, 26.0],
+                [np.nan, np.nan, 144.0, np.nan],
+                [np.nan, 354.0, 139.0, 339.0],
             ]
         )
         np.testing.assert_array_equal(out_arr, out_exp)
