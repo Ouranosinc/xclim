@@ -181,9 +181,9 @@ snw_max_doy = SnowWithIndexing(
     identifier="snw_max_doy",
     standard_name="day_of_year",
     var_name="{freq}_snw_max_doy",
-    long_name="Day of year of maximum daily snow amount equivalent amount",
-    description="The {freq} day of year when snow amount equivalent amount on the surface reaches its maximum.",
-    abstract="The day of year when snow amount equivalent amount on the surface reaches its maximum.",
+    long_name="Day of year of maximum daily snow amount equivalent",
+    description="The {freq} day of year when snow amount equivalent on the surface reaches its maximum.",
+    abstract="The day of year when snow amount equivalent on the surface reaches its maximum.",
     units="",
     compute=xci.snw_max_doy,
 )
