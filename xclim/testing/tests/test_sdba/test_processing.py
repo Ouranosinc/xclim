@@ -143,7 +143,6 @@ def test_adapt_freq_add_dims(use_dask):
 
 
 def test_escore():
-
     x = np.array([1, 4, 3, 6, 4, 7, 5, 8, 4, 5, 3, 7]).reshape(2, 6)
     y = np.array([6, 6, 3, 8, 5, 7, 3, 7, 3, 6, 4, 3]).reshape(2, 6)
 

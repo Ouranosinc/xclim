@@ -312,18 +312,15 @@ When publishing to GitHub, you will still need to replace subsection headers in 
 The Manual Approach
 ~~~~~~~~~~~~~~~~~~~
 
-The manual approach to library packaging for general support (pip wheels) requires the following packages installed:
- * setuptools
- * wheel
- * twine
+The manual approach to library packaging for general support (pip wheels) requires that the `flit <https://flit.pypa.io/en/stable/index.html>`_ library is installed.
 
 From the command line on your Linux distribution, simply run the following from the clone's main dev branch::
 
     # To build the packages (sources and wheel)
-    $ python setup.py sdist bdist_wheel
+    $ flit build
 
     # To upload to PyPI
-    $ twine upload dist/*
+    $ flit publish
 
 The new version based off of the version checked out will now be available via `pip` (`$ pip install xclim`).
 

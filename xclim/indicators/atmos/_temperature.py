@@ -497,13 +497,12 @@ cool_night_index = Temp(
     title="Cool night index",
     identifier="cool_night_index",
     units="degC",
-    long_name="Cool night index",
-    # FIXME: Section formatting will shift these month names to all lowercase.
-    description="Mean minimum temperature for September (northern hemisphere) or March (southern hemisphere).",
+    long_name="Mean minimum temperature in late summer",
+    description="Mean minimum temperature for September (Northern hemisphere) or March (Southern hemisphere).",
     abstract="A night coolness variable which takes into account the mean minimum night temperatures during the "
     "month when ripening usually occurs beyond the ripening period.",
     cell_methods="time: mean over days",
-    allowed_periods=["A"],
+    src_freq=["D", "M"],
     compute=indices.cool_night_index,
 )
 

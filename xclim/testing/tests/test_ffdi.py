@@ -136,6 +136,7 @@ class TestFFDI:
         ffdi = mcarthur_forest_fire_danger_index(D, T, H, V)
         np.testing.assert_allclose(ffdi, exp, rtol=1e-6)
 
+    @pytest.mark.slow
     @pytest.mark.parametrize("init_kbdi", [True, False])
     @pytest.mark.parametrize("limiting_func", ["xlim", "discrete"])
     def test_ffdi_indicators(self, open_dataset, init_kbdi, limiting_func):
@@ -175,7 +176,7 @@ class TestFFDI:
         assert df.shape == test_data["pr"].shape
 
         ffdi = atmos.mcarthur_forest_fire_danger_index(
-            df, test_data["tasmax"], test_data["rh"], test_data["wsgsmax"]
+            df, test_data["tasmax"], test_data["hurs"], test_data["wsgsmax"]
         )
         assert (ffdi.isel(time=slice(19, None)) >= 0).all()
         assert ffdi.shape == test_data["pr"].shape

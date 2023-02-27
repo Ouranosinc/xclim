@@ -22,7 +22,7 @@ __all__ = [
 @declare_units(ua="[speed]")
 def jetstream_metric_woollings(
     ua: xarray.DataArray,
-) -> (xarray.DataArray, xarray.DataArray):
+) -> tuple[xarray.DataArray, xarray.DataArray]:
     """Strength and latitude of jetstream.
 
     Identify latitude and strength of maximum smoothed zonal wind speed in the region from 15 to 75°N and -60 to 0°E,
@@ -54,7 +54,8 @@ def jetstream_metric_woollings(
     )
     if not lons_within_range:
         raise ValueError(
-            f"Longitude values need to be in a range between {lon_min}-{lon_max}. Consider changing the longitude coordinates to between -180.E–180.W"
+            f"Longitude values need to be in a range between {lon_min}-{lon_max}. "
+            "Consider changing the longitude coordinates to between -180 degrees E – 180 degrees W."
         )
 
     # get latitude & eastward wind component units

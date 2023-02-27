@@ -109,6 +109,7 @@ extensions = [
     "sphinxcontrib.bibtex",
     "sphinx_codeautolink",
     "sphinx_copybutton",
+    "sphinx_rtd_theme",
 ]
 
 autosectionlabel_prefix_document = True
@@ -117,10 +118,14 @@ autosectionlabel_maxdepth = 2
 linkcheck_ignore = [
     r"https://github.com/Ouranosinc/xclim/(pull|issue).*",  # too labourious to fully check
     r"https://doi.org/10.1093/mnras/225.1.155",  # does not allow linkcheck requests (error 403)
+    r"https://hal.inrae.fr/hal-02843898",  # bad ssl certificate
     r"https://www.ouranos.ca/.*",  # bad ssl certificate
     r"https://doi.org/10.1080/.*",  # tandfonline does not allow linkcheck requests (error 403)
     r"https://www.tandfonline.com/.*",  # tandfonline does not allow linkcheck requests (error 403)
     r"http://www.utci.org/.*",  # Added on 2022-12-08: site appears to be down (timeout)
+    r"https://ui.adsabs.harvard.edu/abs/2018AGUFMIN33A..06A*",  # Added on 2023-01-24: bad ssl certificate
+    r"https://www.jstor.org/.*",  # Added on 2023-01-31: does not allow linkcheck requests (error 403)
+    r"https://doi.org/10.2307/210739",  # Added on 2023-01-31: does not allow linkcheck requests (error 403)
 ]
 linkcheck_exclude_documents = [r"readme"]
 
@@ -156,7 +161,6 @@ class XCLabelStyle(BaseLabelStyle):
 
 
 class XCStyle(AlphaStyle):
-
     default_label_style = XCLabelStyle
 
 
@@ -261,7 +265,7 @@ html_sidebars = {
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = "_static/_images/xclim-logo.png"
+html_logo = "logos/xclim-logo.png"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -276,7 +280,7 @@ htmlhelp_basename = "xclimdoc"
 # -- Options for LaTeX output ------------------------------------------
 
 latex_engine = "pdflatex"
-latex_logo = "_static/_images/xclim-logo.png"
+latex_logo = "logos/xclim-logo.png"
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').

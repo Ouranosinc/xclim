@@ -138,12 +138,12 @@ def test_xclim_translations(locale, official_indicators):
     incomplete = []
     for indname, indcls in official_indicators.items():
         is_complete = True
-        trans = indcls.translate_attrs(locale)
-        if trans == {"cf_attrs": []}:
+        trans = indcls.translate_attrs(locale, fill_missing=False)
+        if set(trans) == {"cf_attrs"}:
             untranslated.append(indname)
             continue
         # Both global attrs are present
-        is_complete = not ({"title", "abstract"} - set(trans.keys()))
+        is_complete = {"title", "abstract"}.issubset(set(trans))
         for attrs, transattrs in zip(indcls.cf_attrs, trans["cf_attrs"]):
             if {"long_name", "description"} - set(transattrs.keys()):
                 is_complete = False
@@ -156,7 +156,7 @@ def test_xclim_translations(locale, official_indicators):
             f"{len(untranslated)} indicators are missing translations"
             f"{': [' + ', '.join(untranslated) + ']' if len(untranslated) else ''}"
             f"{' and ' if len(incomplete) else '.'}"
-            f"[{', '.join(incomplete)}] have incomplete translations for official locale `{locale}`."
+            f"{', '.join(incomplete) or 'None'} have incomplete translations for official locale `{locale}`."
         )
 
 
