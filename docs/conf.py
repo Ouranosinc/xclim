@@ -108,6 +108,7 @@ extensions = [
     "autodoc_indicator",
     "sphinxcontrib.bibtex",
     "sphinxcontrib.cairosvgconverter",
+    "sphinx_autodoc_typehints",
     "sphinx_codeautolink",
     "sphinx_copybutton",
     "sphinx_rtd_theme",
