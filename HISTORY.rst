@@ -50,6 +50,7 @@ Internal changes
 * Adding infer context to the unit conversion in of the training of ExtremeValues. (:pull:`1299`).
 * Added `sphinxcontrib-svg2pdfconverter` for converting SVG graphics within documentation to PDF-compatible images. (:pull:`1296`).
 * README badges for supported Python versions and repository health have been added. (:issue:`1304`, :pull:`1307`).
+* CONTRIBUTING has been moved to the top level, license information clearly in README, use of `sphinx-autodoc-typehints` in documentation. (:issue:`1305`, :pull:`1308`).
 
 0.40.0 (2023-01-13)
 -------------------
