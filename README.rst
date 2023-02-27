@@ -3,13 +3,15 @@ xclim: Climate services library |logo|
 ======================================
 
 +----------------------------+-----------------------------------------------------+
-| Downloads                  | |pypi| |conda|                                      |
+| Versions                   | |pypi| |conda|                                      |
 +----------------------------+-----------------------------------------------------+
-| Documentation and Support  | |docs| |gitter|                                     |
+| Documentation and Support  | |docs| |gitter| |versions|                          |
 +----------------------------+-----------------------------------------------------+
 | Open Source                | |license| |fair| |fossa| |zenodo|                   |
 +----------------------------+-----------------------------------------------------+
-| Development Status         | |build| |pre-commit| |coveralls| |black| |security| |
+| Coding Standards           | |black| |pre-commit| |security|                     |
++----------------------------+-----------------------------------------------------+
+| Development Status         | |status| |build| |coveralls|                        |
 +----------------------------+-----------------------------------------------------+
 
 `xclim` is an operational Python library for climate services, providing numerous climate-related indicator tools
@@ -138,3 +140,10 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 .. |pre-commit| image:: https://results.pre-commit.ci/badge/github/Ouranosinc/xclim/master.svg
         :target: https://results.pre-commit.ci/latest/github/Ouranosinc/xclim/master
         :alt: pre-commit.ci status
+
+.. |status| image:: https://www.repostatus.org/badges/latest/active.svg
+        :target: https://www.repostatus.org/#active
+        :alt: Project Status: Active – The project has reached a stable, usable state and is being actively developed.
+.. |versions| image:: https://img.shields.io/pypi/pyversions/xclim.svg
+        :target: https://pypi.python.org/pypi/xclim
+        :alt: Supported Python Versions
