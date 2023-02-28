@@ -13,7 +13,7 @@ from xclim.core.units import (
     units,
     units2pint,
 )
-from xclim.core.utils import ensure_chunk_size
+from xclim.core.utils import Quantified, ensure_chunk_size
 
 from ._multivariate import (
     daily_temperature_range,
@@ -241,9 +241,9 @@ def tg_mean_warmcold_quarter(
     The following would compute for each grid cell of file `tas.day.nc` the annual temperature of the
     warmest quarter mean temperature:
 
-    >>> import xclim.indices as xci
+    >>> from xclim.indices import tg_mean_warmcold_quarter
     >>> t = xr.open_dataset(path_to_tas_file)
-    >>> t_warm_qrt = xci.tg_mean_warmcold_quarter(tas=t.tas, op="warmest")
+    >>> t_warm_qrt = tg_mean_warmcold_quarter(tas=t.tas, op="warmest")
 
     Notes
     -----
@@ -439,7 +439,7 @@ def prcptot_warmcold_quarter(
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
 def prcptot(
-    pr: xarray.DataArray, thresh: str = "0 mm/d", freq: str = "YS"
+    pr: xarray.DataArray, thresh: Quantified = "0 mm/d", freq: str = "YS"
 ) -> xarray.DataArray:
     r"""Accumulated total precipitation.
 
@@ -460,7 +460,7 @@ def prcptot(
     xarray.DataArray, [length]
        Total {freq} precipitation.
     """
-    thresh = convert_units_to(thresh, pr)
+    thresh = convert_units_to(thresh, pr, context="hydro")
     pram = rate2amount(pr.where(pr >= thresh, 0))
     return pram.resample(time=freq).sum().assign_attrs(units=pram.units)
 
@@ -569,7 +569,9 @@ def _to_quarter(
         if pr is not None:
             # Accumulate on a week
             # Ensure units are back to a "rate" for rate2amount below
-            pr = convert_units_to(precip_accumulation(pr, freq="7D"), "mm")
+            pr = convert_units_to(
+                precip_accumulation(pr, freq="7D"), "mm", context="hydro"
+            )
             pr.attrs["units"] = "mm/week"
 
         freq = "W"

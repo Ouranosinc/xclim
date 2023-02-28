@@ -17,21 +17,21 @@ from typing import Any, Mapping, Sequence
 import xarray as xr
 from boltons.funcutils import wraps
 
-from xclim.core.utils import InputKind, PercentileDataArray
+from xclim.core.utils import InputKind
 
 DEFAULT_FORMAT_PARAMS = {
-    "tasmin_per_thresh": "{unkown}",
-    "tasmin_per_window": "{unkown}",
-    "tasmin_per_period": "{unkown}",
-    "tas_per_thresh": "{unkown}",
-    "tas_per_window": "{unkown}",
-    "tas_per_period": "{unkown}",
-    "tasmax_per_thresh": "{unkown}",
-    "tasmax_per_window": "{unkown}",
-    "tasmax_per_period": "{unkown}",
-    "pr_per_thresh": "{unkown}",
-    "pr_per_window": "{unkown}",
-    "pr_per_period": "{unkown}",
+    "tasmin_per_thresh": "{unknown}",
+    "tasmin_per_window": "{unknown}",
+    "tasmin_per_period": "{unknown}",
+    "tas_per_thresh": "{unknown}",
+    "tas_per_window": "{unknown}",
+    "tas_per_period": "{unknown}",
+    "tasmax_per_thresh": "{unknown}",
+    "tasmax_per_window": "{unknown}",
+    "tasmax_per_period": "{unknown}",
+    "pr_per_thresh": "{unknown}",
+    "pr_per_window": "{unknown}",
+    "pr_per_period": "{unknown}",
 }
 
 
@@ -53,7 +53,8 @@ class AttrFormatter(string.Formatter):
         mapping : Mapping[str, Sequence[str]]
             A mapping from values to their possible variations.
         modifiers : Sequence[str]
-            The list of modifiers, must be the as long as the longest value of `mapping`. Cannot include reserved modifier 'r'.
+            The list of modifiers, must be the as long as the longest value of `mapping`.
+            Cannot include reserved modifier 'r'.
         """
         super().__init__()
         if "r" in modifiers:
@@ -68,7 +69,7 @@ class AttrFormatter(string.Formatter):
         ----------
         format_string: str
         args: Any
-        kwargs
+        **kwargs
 
         Returns
         -------
@@ -171,12 +172,14 @@ default_formatter = AttrFormatter(
         "m10": ["october"],
         "m11": ["november"],
         "m12": ["december"],
-        # Arguments to "op / reducer"
+        # Arguments to "op / reducer / stat"
         "mean": ["average"],
         "max": ["maximal", "maximum"],
         "min": ["minimal", "minimum"],
         "sum": ["total", "sum"],
         "std": ["standard deviation"],
+        "absamp": ["absolute amplitude"],
+        "relamp": ["relative amplitude"],
     },
     ["adj", "noun"],
 )
@@ -292,7 +295,7 @@ def merge_attributes(
     ----------
     attribute : str
       The attribute to merge.
-    inputs_list : Union[xr.DataArray, xr.Dataset]
+    inputs_list : xr.DataArray or xr.Dataset
       The datasets or variables that were used to produce the new object.
       Inputs given that way will be prefixed by their `name` attribute if available.
     new_line : str
@@ -301,7 +304,7 @@ def merge_attributes(
     missing_str : str
       A string that is printed if an input doesn't have the attribute. Defaults to None, in which
       case the input is simply skipped.
-    inputs_kws : Union[xr.DataArray, xr.Dataset]
+    **inputs_kws : xr.DataArray or xr.Dataset
       Mapping from names to the datasets or variables that were used to produce the new object.
       Inputs given that way will be prefixes by the passed name.
 
@@ -429,8 +432,7 @@ def update_xclim_history(func):
 def gen_call_string(funcname: str, *args, **kwargs):
     """Generate a signature string for use in the history attribute.
 
-    DataArrays and Dataset are replaced with their name, while Nones, floats,
-    ints and strings are printed directly.
+    DataArrays and Dataset are replaced with their name, while Nones, floats, ints and strings are printed directly.
     All other objects have their type printed between < >.
 
     Arguments given through positional arguments are printed positionnally and those
@@ -526,7 +528,7 @@ def unprefix_attrs(source: dict, keys: Sequence, prefix: str):
 KIND_ANNOTATION = {
     InputKind.VARIABLE: "str or DataArray",
     InputKind.OPTIONAL_VARIABLE: "str or DataArray, optional",
-    InputKind.QUANTITY_STR: "quantity (string with units)",
+    InputKind.QUANTIFIED: "quantity (string or DataArray, with units)",
     InputKind.FREQ_STR: "offset alias (string)",
     InputKind.NUMBER: "number",
     InputKind.NUMBER_SEQUENCE: "number or sequence of numbers",
@@ -602,12 +604,16 @@ def _gen_returns_section(cf_attrs: Sequence[dict[str, Any]]):
     return section
 
 
-def generate_indicator_docstring(ind):
+def generate_indicator_docstring(ind) -> str:
     """Generate an indicator's docstring from keywords.
 
     Parameters
     ----------
     ind: Indicator instance
+
+    Returns
+    -------
+    str
     """
     header = f"{ind.title} (realm: {ind.realm})\n\n{ind.abstract}\n"
 
@@ -647,7 +653,7 @@ def get_percentile_metadata(data: xr.DataArray, prefix: str) -> dict[str, str]:
     Parameters
     ----------
     data: xr.DataArray
-        Must be compatible with PercentileDataArray, this means the necessary metadata
+        Must be a percentile DataArray, this means the necessary metadata
         must be available in its attributes and coordinates.
     prefix: str
         The prefix to be used in the metadata key.
@@ -658,9 +664,17 @@ def get_percentile_metadata(data: xr.DataArray, prefix: str) -> dict[str, str]:
     dict
         A mapping of the configuration used to compute these percentiles.
     """
-    per_da = PercentileDataArray.from_da(data)
+    # handle case where da was created with `quantile()` method
+    if "quantile" in data.coords:
+        percs = data.coords["quantile"].values * 100
+    elif "percentiles" in data.coords:
+        percs = data.coords["percentiles"].values
+    else:
+        percs = "<unknown percentiles>"
+    clim_bounds = data.attrs.get("climatology_bounds", "<unknown bounds>")
+
     return {
-        f"{prefix}_thresh": per_da.coords["percentiles"].values,
-        f"{prefix}_window": per_da.attrs.get("window", None),
-        f"{prefix}_period": per_da.attrs.get("climatology_bounds"),
+        f"{prefix}_thresh": percs,
+        f"{prefix}_window": data.attrs.get("window", "<unknown window>"),
+        f"{prefix}_period": clim_bounds,
     }

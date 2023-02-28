@@ -131,7 +131,9 @@ class BaseAdjustment(ParametrizableWithDataset):
         if target is None:
             target = inputs[0].units
 
-        return (convert_units_to(inda, target) for inda in inputs), target
+        return (
+            convert_units_to(inda, target, context="infer") for inda in inputs
+        ), target
 
     @classmethod
     def _train(cls, ref, hist, **kwargs):
@@ -163,9 +165,9 @@ class TrainAdjust(BaseAdjustment):
         Parameters
         ----------
         ref : DataArray
-          Training target, usually a reference time series drawn from observations.
+            Training target, usually a reference time series drawn from observations.
         hist : DataArray
-          Training data, usually a model output whose biases are to be adjusted.
+            Training data, usually a model output whose biases are to be adjusted.
         """
         kwargs = parse_group(cls._train, kwargs)
         skip_checks = kwargs.pop("skip_input_checks", False)
@@ -196,11 +198,11 @@ class TrainAdjust(BaseAdjustment):
         Parameters
         ----------
         sim : DataArray
-          Time series to be bias-adjusted, usually a model output.
+            Time series to be bias-adjusted, usually a model output.
         args : xr.DataArray
-          Other DataArrays needed for the adjustment (usually none).
+            Other DataArrays needed for the adjustment (usually none).
         kwargs
-          Algorithm-specific keyword arguments, see class doc.
+            Algorithm-specific keyword arguments, see class doc.
         """
         skip_checks = kwargs.pop("skip_input_checks", False)
         if not skip_checks:
@@ -268,13 +270,13 @@ class Adjust(BaseAdjustment):
         Parameters
         ----------
         ref : DataArray
-          Training target, usually a reference time series drawn from observations.
+            Training target, usually a reference time series drawn from observations.
         hist : DataArray
-          Training data, usually a model output whose biases are to be adjusted.
+            Training data, usually a model output whose biases are to be adjusted.
         sim : DataArray
-          Time series to be bias-adjusted, usually a model output.
-        kwargs :
-          Algorithm-specific keyword arguments, see class doc.
+            Time series to be bias-adjusted, usually a model output.
+        **kwargs
+            Algorithm-specific keyword arguments, see class doc.
         """
         kwargs = parse_group(cls._adjust, kwargs)
         skip_checks = kwargs.pop("skip_input_checks", False)
@@ -315,25 +317,25 @@ class EmpiricalQuantileMapping(TrainAdjust):
 
     where :math:`F` is the cumulative distribution function (CDF) and `mod` stands for model data.
 
-    Parameters
+    Attributes
     ----------
-    Train step:
+    Train step
 
     nquantiles : int or 1d array of floats
-      The number of quantiles to use. Two endpoints at 1e-6 and 1 - 1e-6 will be added.
-      An array of quantiles [0, 1] can also be passed. Defaults to 20 quantiles.
+        The number of quantiles to use. Two endpoints at 1e-6 and 1 - 1e-6 will be added.
+        An array of quantiles [0, 1] can also be passed. Defaults to 20 quantiles.
     kind : {'+', '*'}
-      The adjustment kind, either additive or multiplicative. Defaults to "+".
+        The adjustment kind, either additive or multiplicative. Defaults to "+".
     group : Union[str, Grouper]
-      The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
-      Default is "time", meaning an single adjustment group along dimension "time".
+        The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+        Default is "time", meaning an single adjustment group along dimension "time".
 
     Adjust step:
 
     interp : {'nearest', 'linear', 'cubic'}
-      The interpolation method to use when interpolating the adjustment factors. Defaults to "nearset".
+        The interpolation method to use when interpolating the adjustment factors. Defaults to "nearset".
     extrapolation : {'constant', 'nan'}
-      The type of extrapolation to use. See :py:func:`xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
+        The type of extrapolation to use. See :py:func:`xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
 
     References
     ----------
@@ -409,23 +411,23 @@ class DetrendedQuantileMapping(TrainAdjust):
     Train step:
 
     nquantiles : int or 1d array of floats
-      The number of quantiles to use. See :py:func:`~xclim.sdba.utils.equally_spaced_nodes`.
-      An array of quantiles [0, 1] can also be passed. Defaults to 20 quantiles.
+        The number of quantiles to use. See :py:func:`~xclim.sdba.utils.equally_spaced_nodes`.
+        An array of quantiles [0, 1] can also be passed. Defaults to 20 quantiles.
     kind : {'+', '*'}
-      The adjustment kind, either additive or multiplicative. Defaults to "+".
+        The adjustment kind, either additive or multiplicative. Defaults to "+".
     group : Union[str, Grouper]
-      The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
-      Default is "time", meaning a single adjustment group along dimension "time".
+        The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+        Default is "time", meaning a single adjustment group along dimension "time".
 
     Adjust step:
 
     interp : {'nearest', 'linear', 'cubic'}
-      The interpolation method to use when interpolating the adjustment factors. Defaults to "nearest".
+        The interpolation method to use when interpolating the adjustment factors. Defaults to "nearest".
     detrend : int or BaseDetrend instance
-      The method to use when detrending. If an int is passed, it is understood as a PolyDetrend (polynomial detrending) degree.
-      Defaults to 1 (linear detrending)
+        The method to use when detrending. If an int is passed, it is understood as a PolyDetrend (polynomial detrending) degree.
+        Defaults to 1 (linear detrending)
     extrapolation : {'constant', 'nan'}
-      The type of extrapolation to use. See :py:func:`xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
+        The type of extrapolation to use. See :py:func:`xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
 
     References
     ----------
@@ -483,7 +485,6 @@ class DetrendedQuantileMapping(TrainAdjust):
         extrapolation="constant",
         detrend=1,
     ):
-
         scen = dqm_adjust(
             self.ds.assign(sim=sim),
             interp=interp,
@@ -515,20 +516,20 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
     Train step:
 
     nquantiles : int or 1d array of floats
-      The number of quantiles to use. See :py:func:`~xclim.sdba.utils.equally_spaced_nodes`.
-      An array of quantiles [0, 1] can also be passed. Defaults to 20 quantiles.
+        The number of quantiles to use. See :py:func:`~xclim.sdba.utils.equally_spaced_nodes`.
+        An array of quantiles [0, 1] can also be passed. Defaults to 20 quantiles.
     kind : {'+', '*'}
-      The adjustment kind, either additive or multiplicative. Defaults to "+".
+        The adjustment kind, either additive or multiplicative. Defaults to "+".
     group : Union[str, Grouper]
-      The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
-      Default is "time", meaning a single adjustment group along dimension "time".
+        The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+        Default is "time", meaning a single adjustment group along dimension "time".
 
     Adjust step:
 
     interp : {'nearest', 'linear', 'cubic'}
-      The interpolation method to use when interpolating the adjustment factors. Defaults to "nearest".
+        The interpolation method to use when interpolating the adjustment factors. Defaults to "nearest".
     extrapolation : {'constant', 'nan'}
-      The type of extrapolation to use. See :py:func:`xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
+        The type of extrapolation to use. See :py:func:`xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
 
     Extra diagnostics
     -----------------
@@ -539,7 +540,6 @@ class QuantileDeltaMapping(EmpiricalQuantileMapping):
     References
     ----------
     :cite:cts:`sdba-cannon_bias_2015`
-
     """
 
     def _adjust(self, sim, interp="nearest", extrapolation="constant"):
@@ -560,7 +560,7 @@ class ExtremeValues(TrainAdjust):
     r"""Adjustment correction for extreme values.
 
     The tail of the distribution of adjusted data is corrected according to the bias between the parametric Generalized
-    Pareto distributions of the simulated and reference data [RRJF2021]_. The distributions are composed of the
+    Pareto distributions of the simulated and reference data :cite:p:`sdba-roy_extremeprecip_2021`. The distributions are composed of the
     maximal values of clusters of "large" values.  With "large" values being those above `cluster_thresh`. Only extreme
     values, whose quantile within the pool of large values are above `q_thresh`, are re-adjusted. See `Notes`.
 
@@ -571,26 +571,26 @@ class ExtremeValues(TrainAdjust):
     Train step :
 
     cluster_thresh : Quantity (str with units)
-      The threshold value for defining clusters.
+        The threshold value for defining clusters.
     q_thresh : float
-      The quantile of "extreme" values, [0, 1[. Defaults to 0.95.
+        The quantile of "extreme" values, [0, 1[. Defaults to 0.95.
     ref_params :  xr.DataArray, optional
-      Distribution parameters to use instead of fitting a GenPareto distribution on `ref`.
+        Distribution parameters to use instead of fitting a GenPareto distribution on `ref`.
 
     Adjust step:
 
     scen : DataArray
-      This is a second-order adjustment, so the adjust method needs the first-order
-      adjusted timeseries in addition to the raw "sim".
+        This is a second-order adjustment, so the adjust method needs the first-order
+        adjusted timeseries in addition to the raw "sim".
     interp : {'nearest', 'linear', 'cubic'}
-      The interpolation method to use when interpolating the adjustment factors. Defaults to "linear".
+        The interpolation method to use when interpolating the adjustment factors. Defaults to "linear".
     extrapolation : {'constant', 'nan'}
-      The type of extrapolation to use. See :py:func:`~xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
+        The type of extrapolation to use. See :py:func:`~xclim.sdba.utils.extrapolate_qm` for details. Defaults to "constant".
     frac : float
-      Fraction where the cutoff happens between the original scen and the corrected one.
-      See Notes, ]0, 1]. Defaults to 0.25.
+        Fraction where the cutoff happens between the original scen and the corrected one.
+        See Notes, ]0, 1]. Defaults to 0.25.
     power : float
-      Shape of the correction strength, see Notes. Defaults to 1.0.
+        Shape of the correction strength, see Notes. Defaults to 1.0.
 
     Notes
     -----
@@ -634,9 +634,7 @@ class ExtremeValues(TrainAdjust):
     References
     ----------
     :cite:cts:`sdba-roy_juliaclimateclimatetoolsjl_2021`
-
-    Roy, Rondeau-Genesse, Jalbert, and Fournier [RRJF2021]_
-
+    :cite:cts:`sdba-roy_extremeprecip_2021`
     """
 
     @classmethod
@@ -649,7 +647,7 @@ class ExtremeValues(TrainAdjust):
         ref_params: xr.Dataset = None,
         q_thresh: float = 0.95,
     ):
-        cluster_thresh = convert_units_to(cluster_thresh, ref)
+        cluster_thresh = convert_units_to(cluster_thresh, ref, context="infer")
 
         # Approximation of how many "quantiles" values we will get:
         N = (1 - q_thresh) * ref.time.size
@@ -740,20 +738,20 @@ class LOCI(TrainAdjust):
 
       sim(t) = \max\left(t_{ref} + s \cdot (hist(t) - t_{hist}), 0\right)
 
-    Parameters
+    Attributes
     ----------
     Train step:
 
     group : Union[str, Grouper]
-      The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
-      Default is "time", meaning a single adjustment group along dimension "time".
+        The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+        Default is "time", meaning a single adjustment group along dimension "time".
     thresh : str
-      The threshold in `ref` above which the values are scaled.
+        The threshold in `ref` above which the values are scaled.
 
     Adjust step:
 
     interp : {'nearest', 'linear', 'cubic'}
-      The interpolation method to use then interpolating the adjustment factors. Defaults to "linear".
+        The interpolation method to use then interpolating the adjustment factors. Defaults to "linear".
 
     References
     ----------
@@ -801,15 +799,15 @@ class Scaling(TrainAdjust):
     Train step:
 
     group : Union[str, Grouper]
-      The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
-      Default is "time", meaning an single adjustment group along dimension "time".
+        The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+        Default is "time", meaning an single adjustment group along dimension "time".
     kind : {'+', '*'}
-      The adjustment kind, either additive or multiplicative. Defaults to "+".
+        The adjustment kind, either additive or multiplicative. Defaults to "+".
 
     Adjust step:
 
     interp : {'nearest', 'linear', 'cubic'}
-      The interpolation method to use then interpolating the adjustment factors. Defaults to "nearest".
+        The interpolation method to use then interpolating the adjustment factors. Defaults to "nearest".
     """
 
     _allow_diff_calendars = False
@@ -854,24 +852,24 @@ class PrincipalComponents(TrainAdjust):
     Be aware that *principal components* is meant here as the algebraic operation defining a coordinate system
     based on the eigenvectors, not statistical principal component analysis.
 
-    Parameters
+    Attributes
     ----------
     group : Union[str, Grouper]
-      The main dimension and grouping information. See Notes.
-      See :py:class:`xclim.sdba.base.Grouper` for details.
-      The adjustment will be performed on each group independently.
-      Default is "time", meaning a single adjustment group along dimension "time".
+        The main dimension and grouping information. See Notes.
+        See :py:class:`xclim.sdba.base.Grouper` for details.
+        The adjustment will be performed on each group independently.
+        Default is "time", meaning a single adjustment group along dimension "time".
     best_orientation : {'simple', 'full'}
-      Which method to use when searching for the best principal component orientation.
-      See :py:func:`~xclim.sdba.utils.best_pc_orientation_simple` and
-      :py:func:`~xclim.sdba.utils.best_pc_orientation_full`.
-      "full" is more precise, but it is much slower.
+        Which method to use when searching for the best principal component orientation.
+        See :py:func:`~xclim.sdba.utils.best_pc_orientation_simple` and
+        :py:func:`~xclim.sdba.utils.best_pc_orientation_full`.
+        "full" is more precise, but it is much slower.
     crd_dim : str
-      The data dimension along which the multiple simulation space dimensions are taken.
-      For a multivariate adjustment, this usually is "multivar", as returned by `sdba.stack_variables`.
-      For a multisite adjustment, this should be the spatial dimension.
-      The training algorithm currently doesn't support any chunking
-      along either `crd_dim`. `group.dim` and `group.add_dims`.
+        The data dimension along which the multiple simulation space dimensions are taken.
+        For a multivariate adjustment, this usually is "multivar", as returned by `sdba.stack_variables`.
+        For a multisite adjustment, this should be the spatial dimension.
+        The training algorithm currently doesn't support any chunking
+        along either `crd_dim`. `group.dim` and `group.add_dims`.
 
     Notes
     -----
@@ -902,7 +900,7 @@ class PrincipalComponents(TrainAdjust):
 
     References
     ----------
-    :cite:cts:`sdba-hnilica_multisite_2017,sdba-alavoine_distinct_2021`
+    :cite:cts:`sdba-hnilica_multisite_2017,sdba-alavoine_distinct_2022`
 
     """
 
@@ -1033,24 +1031,24 @@ class NpdfTransform(Adjust):
 
     Parameters
     ----------
-    base: BaseAdjustment
-      An univariate bias-adjustment class. This is untested for anything else than QuantileDeltaMapping.
+    base : BaseAdjustment
+        An univariate bias-adjustment class. This is untested for anything else than QuantileDeltaMapping.
     base_kws : dict, optional
-      Arguments passed to the training of the univariate adjustment.
+        Arguments passed to the training of the univariate adjustment.
     n_escore : int
-      The number of elements to send to the escore function. The default, 0, means all elements are included.
-      Pass -1 to skip computing the escore completely.
-      Small numbers result in less significant scores, but the execution time goes up quickly with large values.
+        The number of elements to send to the escore function. The default, 0, means all elements are included.
+        Pass -1 to skip computing the escore completely.
+        Small numbers result in less significant scores, but the execution time goes up quickly with large values.
     n_iter : int
-      The number of iterations to perform. Defaults to 20.
+        The number of iterations to perform. Defaults to 20.
     pts_dim : str
-      The name of the "multivariate" dimension. Defaults to "multivar", which is the
-      normal case when using :py:func:`xclim.sdba.base.stack_variables`.
+        The name of the "multivariate" dimension. Defaults to "multivar", which is the
+        normal case when using :py:func:`xclim.sdba.base.stack_variables`.
     adj_kws : dict, optional
-      Dictionary of arguments to pass to the adjust method of the univariate adjustment.
+        Dictionary of arguments to pass to the adjust method of the univariate adjustment.
     rot_matrices : xr.DataArray, optional
-      The rotation matrices as a 3D array ('iterations', <pts_dim>, <anything>), with shape (n_iter, <N>, <N>).
-      If left empty, random rotation matrices will be automatically generated.
+        The rotation matrices as a 3D array ('iterations', <pts_dim>, <anything>), with shape (n_iter, <N>, <N>).
+        If left empty, random rotation matrices will be automatically generated.
 
     Notes
     -----
@@ -1060,7 +1058,7 @@ class NpdfTransform(Adjust):
 
     1. Rotate the datasets in the N-dimensional variable space with :math:`\mathbf{R}`, a random rotation NxN matrix.
 
-    ..math ::
+    .. math::
 
         \tilde{\mathbf{T}} = \mathbf{T}\mathbf{R} \
         \tilde{\mathbf{H}} = \mathbf{H}\mathbf{R} \
@@ -1101,7 +1099,6 @@ class NpdfTransform(Adjust):
     References
     ----------
     :cite:cts:`sdba-cannon_multivariate_2018,sdba-cannon_mbc_2020,sdba-pitie_n-dimensional_2005,sdba-mezzadri_how_2007,sdba-szekely_testing_2004`
-
     """
 
     @classmethod

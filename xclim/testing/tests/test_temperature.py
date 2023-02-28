@@ -10,7 +10,6 @@ from xclim import atmos
 from xclim.core.calendar import percentile_doy
 from xclim.core.options import set_options
 from xclim.core.units import convert_units_to
-from xclim.testing import open_dataset
 
 K2C = 273.15
 
@@ -70,7 +69,7 @@ class TestDTR:
     nc_tasmax = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
     nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
-    def test_DTR_3d_data_with_nans(self):
+    def test_DTR_3d_data_with_nans(self, open_dataset):
         tasmax = open_dataset(self.nc_tasmax).tasmax
         tasmax_C = open_dataset(self.nc_tasmax).tasmax
         tasmax_C -= K2C
@@ -110,7 +109,7 @@ class TestDTRVar:
     nc_tasmax = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
     nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
-    def test_dtr_var_3d_data_with_nans(self):
+    def test_dtr_var_3d_data_with_nans(self, open_dataset):
         tasmax = open_dataset(self.nc_tasmax).tasmax
         tasmax_C = open_dataset(self.nc_tasmax).tasmax
         tasmax_C -= K2C
@@ -143,7 +142,7 @@ class TestETR:
     nc_tasmax = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
     nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
-    def test_dtr_var_3d_data_with_nans(self):
+    def test_dtr_var_3d_data_with_nans(self, open_dataset):
         tasmax = open_dataset(self.nc_tasmax).tasmax
         tasmax_C = open_dataset(self.nc_tasmax).tasmax
         tasmax_C -= K2C
@@ -177,7 +176,7 @@ class TestTmean:
         os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc"),
     )
 
-    def test_Tmean_3d_data(self):
+    def test_Tmean_3d_data(self, open_dataset):
         ds_tmax = open_dataset(self.nc_files[0])
         ds_tmin = open_dataset(self.nc_files[1])
         tas = atmos.tg(ds_tmin.tasmin, ds_tmax.tasmax)
@@ -206,7 +205,7 @@ class TestTmean:
 class TestTx:
     nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
 
-    def test_TX_3d_data(self):
+    def test_TX_3d_data(self, open_dataset):
         tasmax = open_dataset(self.nc_file).tasmax
         tasmax_C = open_dataset(self.nc_file).tasmax
         tasmax_C.values -= K2C
@@ -256,7 +255,7 @@ class TestTx:
 class TestTn:
     nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
-    def test_TN_3d_data(self):
+    def test_TN_3d_data(self, open_dataset):
         tasmin = open_dataset(self.nc_file).tasmin
         tasmin_C = open_dataset(self.nc_file).tasmin
         tasmin_C.values -= K2C
@@ -362,7 +361,7 @@ class TestConsecutiveFrostFreeDays:
         test = atmos.maximum_consecutive_frost_free_days(tasmin)
         np.testing.assert_allclose(test[2, 0], [68], rtol=1e-1)
         assert (
-            "Annual maximum number of consecutive days with minimum daily temperature above or equal to 0 degc."
+            "Annual maximum number of consecutive days with minimum daily temperature at or above 0 degc."
         ) in test.description
 
 
@@ -424,7 +423,7 @@ class TestColdSpellDays:
 class TestFrostDays:
     nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
-    def test_3d_data_with_nans(self):
+    def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
         tasmin = open_dataset(self.nc_file).tasmin
         tasminC = open_dataset(self.nc_file).tasmin
@@ -456,7 +455,7 @@ class TestFrostDays:
 class TestIceDays:
     nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
 
-    def test_3d_data_with_nans(self):
+    def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
         tas = open_dataset(self.nc_file).tasmax
         tasC = open_dataset(self.nc_file).tasmax
@@ -486,7 +485,7 @@ class TestIceDays:
 class TestCoolingDegreeDays:
     nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
 
-    def test_3d_data_with_nans(self):
+    def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
         tas = open_dataset(self.nc_file).tasmax
         tas.attrs["cell_methods"] = "time: mean within days"
@@ -507,7 +506,7 @@ class TestCoolingDegreeDays:
 
         assert np.isnan(cdd.values[0, -1, -1])
 
-    def test_convert_units(self):
+    def test_convert_units(self, open_dataset):
         # test with 3d data
         tas = open_dataset(self.nc_file).tasmax
         tas.values -= K2C
@@ -537,7 +536,7 @@ class TestCoolingDegreeDays:
 class TestHeatingDegreeDays:
     nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
 
-    def test_3d_data_with_nans(self):
+    def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
         tas = open_dataset(self.nc_file).tasmax
         # put a nan somewhere
@@ -557,7 +556,7 @@ class TestHeatingDegreeDays:
 
         assert np.isnan(hdd.values[0, -1, -1])
 
-    def test_convert_units(self):
+    def test_convert_units(self, open_dataset):
         # test with 3d data
         tas = open_dataset(self.nc_file).tasmax
         # put a nan somewhere
@@ -583,7 +582,7 @@ class TestHeatingDegreeDays:
 class TestGrowingDegreeDays:
     nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
 
-    def test_3d_data_with_nans(self):
+    def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
         tas = open_dataset(self.nc_file).tasmax
         tas.attrs["cell_methods"] = "time: mean within days"
@@ -727,6 +726,45 @@ class TestHeatWaveTotalLength:
         )
         np.testing.assert_allclose(hwf.values[:1], 0)
 
+    def test_2dthresholds(self, tasmax_series, tasmin_series):
+        tasmax = tasmax_series(np.arange(365) + 3, start="1/1/2001").expand_dims(
+            lat=np.arange(20), lon=np.arange(20)
+        )
+        tasmin = tasmin_series(np.arange(365) + 2, start="1/1/2001").expand_dims(
+            lat=np.arange(20), lon=np.arange(20)
+        )
+
+        thresh_tasmin = xr.DataArray(
+            10 * np.arange(20) + 100,
+            dims=("lat",),
+            coords={"lat": tasmax.lat},
+            attrs={"units": "K"},
+        )
+        thresh_tasmax = xr.DataArray(
+            10 * np.arange(20) + 100,
+            dims=("lon",),
+            coords={"lon": tasmax.lon},
+            attrs={"units": "K"},
+        )
+
+        hwtl = atmos.heat_wave_total_length(
+            tasmin,
+            tasmax,
+            thresh_tasmin=thresh_tasmin,
+            thresh_tasmax=thresh_tasmax,
+            window=1,
+            freq="MS",
+        )
+        # Different thresholds start at different dates according to lat/lon
+        exp = xr.DataArray(
+            [[21, 12, 2], [11, 11, 2], [1, 1, 1]],
+            dims=("lon", "lat"),
+            coords={"lon": hwtl.lon[:3], "lat": hwtl.lat[:3]},
+        )
+        np.testing.assert_array_equal(
+            exp, hwtl.isel(time=3, lon=slice(None, 3), lat=slice(None, 3))
+        )
+
 
 class TestHeatWaveIndex:
     def test_simple(self, tasmax_series):
@@ -758,7 +796,7 @@ class TestDailyFreezeThaw:
     nc_tasmax = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
     nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
-    def test_3d_data_with_nans(self):
+    def test_3d_data_with_nans(self, open_dataset):
         tasmax = open_dataset(self.nc_tasmax).tasmax
         tasmin = open_dataset(self.nc_tasmin).tasmin
 
@@ -778,7 +816,7 @@ class TestDailyFreezeThaw:
 
         assert np.isnan(frzthw.values[0, -1, -1])
 
-    def test_convert_units(self):
+    def test_convert_units(self, open_dataset):
         tasmax = open_dataset(self.nc_tasmax).tasmax
         tasmin = open_dataset(self.nc_tasmin).tasmin
         tasmax.values -= K2C
@@ -874,7 +912,7 @@ class TestGrowingSeasonLength:
 class TestTnDaysBelow:
     nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
-    def test_3d_data_with_nans(self):
+    def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
         tas = open_dataset(self.nc_file).tasmin
         tasC = open_dataset(self.nc_file).tasmin
@@ -904,7 +942,7 @@ class TestTnDaysBelow:
 class TestTxDaysAbove:
     nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
 
-    def test_3d_data_with_nans(self):
+    def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
         tas = open_dataset(self.nc_file).tasmax
         tasC = open_dataset(self.nc_file).tasmax
@@ -938,7 +976,7 @@ class TestTnDaysAbove:
         "tn_indice, kwargs",
         [("tn_days_above", dict(thresh="20 degC")), ("tropical_nights", dict())],
     )
-    def test_3d_data_with_nans(self, tn_indice, kwargs):
+    def test_3d_data_with_nans(self, open_dataset, tn_indice, kwargs):
         # test with 3d data
         tas = open_dataset(self.nc_file).tasmin
         tasC = open_dataset(self.nc_file).tasmin
@@ -969,7 +1007,7 @@ class TestTxTnDaysAbove:
     nc_tasmax = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmax_1990.nc")
     nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
-    def test_3d_data_with_nans(self):
+    def test_3d_data_with_nans(self, open_dataset):
         tasmax = open_dataset(self.nc_tasmax).tasmax
         tasmin = open_dataset(self.nc_tasmin).tasmin
 
@@ -1211,7 +1249,7 @@ def test_freshet_start(tas_series):
     assert out[0] == 51
 
 
-def test_degree_days_exceedance_date():
+def test_degree_days_exceedance_date(open_dataset):
     tas = open_dataset("FWI/GFWED_sample_2017.nc").tas
     tas.attrs.update(
         cell_methods="time: mean within days", standard_name="air_temperature"
@@ -1224,7 +1262,20 @@ def test_degree_days_exceedance_date():
         sum_thresh="200 K days",
     )
     np.testing.assert_array_equal(out, np.array([[153, 136, 9, 6]]).T)
-    assert "tmean > 4 degc" in out.attrs["description"]
+    assert (
+        "Day of year when the integral of degree days (mean daily temperature > 4 degc) exceeds 200 k days."
+        in out.attrs["description"]
+    )
+
+    out = atmos.degree_days_exceedance_date(
+        tas=tas, thresh="4 degC", op=">", sum_thresh="200 K days", after_date="07-01"
+    )
+    np.testing.assert_array_equal(out, np.array([[199, 193, 190, 190]]).T)
+    assert (
+        "Day of year when the integral of degree days (mean daily temperature > 4 degc) "
+        "exceeds 200 k days, with the cumulative sum starting from 07-01."
+        in out.attrs["description"]
+    )
 
     with set_options(check_missing="skip"):
         out = atmos.degree_days_exceedance_date(
@@ -1238,57 +1289,58 @@ def test_degree_days_exceedance_date():
         np.testing.assert_array_equal(out, np.array([[np.nan, 280, 241, 244]]).T)
 
 
-def test_warm_spell_duration_index():
-    tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
-    tx90 = percentile_doy(tasmax, window=5, per=90)
+class TestWarmSpellDurationIndex:
+    def test_warm_spell_duration_index(self, open_dataset):
+        tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
+        tx90 = percentile_doy(tasmax, window=5, per=90)
 
-    out = atmos.warm_spell_duration_index(
-        tasmax=tasmax, tasmax_per=tx90, window=3, freq="AS-JUL"
-    )
-    np.testing.assert_array_equal(
-        out.isel(location=0, percentiles=0), np.array([np.nan, 3, 0, 0, np.nan])
-    )
-    assert "Annual number of days with at least 3 consecutive days" in out.description
+        out = atmos.warm_spell_duration_index(
+            tasmax=tasmax, tasmax_per=tx90, window=3, freq="AS-JUL"
+        )
+        np.testing.assert_array_equal(
+            out.isel(location=0, percentiles=0), np.array([np.nan, 4, 0, 0, np.nan])
+        )
+        assert (
+            "Annual number of days with at least 3 consecutive days" in out.description
+        )
+
+    def test_wsdi_custom_percentiles_parameters(self, open_dataset):
+        # GIVEN
+        tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
+        tasmax_per = tasmax.sel(time=slice("01-01-1990", "31-12-1991"))
+        # WHEN
+        tx90 = percentile_doy(tasmax_per, per=[42, 24], window=2)
+        out = atmos.warm_spell_duration_index(tasmax, tx90, freq="YS")
+        # THEN
+        assert "[42 24]th" in out.attrs["description"]
+        assert "2 day(s) window" in out.attrs["description"]
+        assert "['1990-01-01', '1991-12-31']" in out.attrs["description"]
+
+    def test_wsdi_default_percentiles_parameters(self, open_dataset):
+        # GIVEN
+        tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
+        tasmax_per = tasmax.sel(time=slice("01-01-1990", "31-12-1991"))
+        # WHEN
+        tx90 = percentile_doy(tasmax_per, per=[42, 24], window=2)
+        del tx90.attrs["climatology_bounds"]
+        res = atmos.warm_spell_duration_index(tasmax, tx90, freq="YS")
+        # THEN
+        assert "{unknown} day(s) window" in res.attrs["description"]
+        assert "{unknown} period" in res.attrs["description"]
+        assert "{unknown}th percentile(s)" in res.attrs["description"]
 
 
-def test_wsdi__custom_percentiles_params():
-    # GIVEN
-    tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
-    tasmax_per = tasmax.sel(time=slice("01-01-1990", "31-12-1991"))
-    # WHEN
-    tx90 = percentile_doy(tasmax_per, per=[42, 24], window=2)
-    out = atmos.warm_spell_duration_index(tasmax, tx90, freq="YS")
-    # THEN
-    assert "[42 24]th" in out.attrs["description"]
-    assert "2 day(s) window" in out.attrs["description"]
-    assert "['1990-01-01', '1991-12-31']" in out.attrs["description"]
-
-
-def test_wsdi__default_percentiles_params():
-    # GIVEN
-    tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
-    tasmax_per = tasmax.sel(time=slice("01-01-1990", "31-12-1991"))
-    # WHEN
-    tx90 = percentile_doy(tasmax_per, per=[42, 24], window=2)
-    del tx90.attrs["climatology_bounds"]
-    res = atmos.warm_spell_duration_index(tasmax, tx90, freq="YS")
-    # THEN
-    assert "{unkown} day(s) window" in res.attrs["description"]
-    assert "{unkown} period" in res.attrs["description"]
-    assert "{unkown}th percentile(s)" in res.attrs["description"]
-
-
-def test_maximum_consecutive_warm_days():
+def test_maximum_consecutive_warm_days(open_dataset):
     tasmax = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
     out = atmos.maximum_consecutive_warm_days(tasmax)
     np.testing.assert_array_equal(out[1, :], np.array([13, 21, 6, 10]))
     assert (
-        "Annual longest spell of consecutive days with tmax above 25 degc."
+        "Annual longest spell of consecutive days with maximum daily temperature above 25 degc."
         in out.description
     )
 
 
-def test_corn_heat_units():
+def test_corn_heat_units(open_dataset):
     tn = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmin
     tx = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").tasmax
 
@@ -1306,69 +1358,92 @@ def test_corn_heat_units():
     np.testing.assert_allclose(chu, chuC, rtol=1e-3)
 
     np.testing.assert_allclose(
-        chu[0, 180:185], np.array([13.777, 12.368, 11.966, 14.674, 16.797]), rtol=1e-4
+        chu[0, 180:185], np.array([12.933, 11.361, 11.1365, 13.419, 15.569]), rtol=1e-4
     )
 
     assert (
-        "specific thresholds : tmin > 4.44 degc and tmax > 10 degc." in chu.description
+        "minimum and maximum daily temperatures both exceed 4.44 degc and 10 degc, respectively."
+        in chu.description
     )
 
 
-def test_freezethaw_spell_frequency():
-    ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+class TestFreezeThawSpell:
+    def test_freezethaw_spell_frequency(self, open_dataset):
+        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
-    out = atmos.freezethaw_spell_frequency(
-        tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS"
-    )
-    np.testing.assert_array_equal(out.isel(location=0), [32, 38, 37, 30])
+        out = atmos.freezethaw_spell_frequency(
+            tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS"
+        )
+        np.testing.assert_array_equal(out.isel(location=0), [34.0, 37.0, 36.0, 30.0])
 
-    # At location -1, year 2 has no spells of length >=2
-    out = atmos.freezethaw_spell_frequency(
-        tasmin=convert_units_to(ds.tasmin, "degF"),
-        tasmax=ds.tasmax,
-        window=2,
-        freq="YS",
-    )
-    np.testing.assert_array_equal(out.isel(location=-1), [1, 0, 1, 1])
+        # At location -1, year 2 has no spells of length >=2
+        out = atmos.freezethaw_spell_frequency(
+            tasmin=convert_units_to(ds.tasmin, "degF"),
+            tasmax=ds.tasmax,
+            window=2,
+            freq="YS",
+        )
+        np.testing.assert_array_equal(out.isel(location=-1), [0, 0, 1, 1])
 
-    assert out.attrs["long_name"] == "Annual number of freeze-thaw spells."
+        assert out.attrs["long_name"] == (
+            "Frequency of events where maximum daily temperatures are above 0 degc "
+            "and minimum daily temperatures are at or below 0 degc for at least 2 consecutive day(s)."
+        )
+        assert out.attrs["description"] in [
+            "Annual number of freeze-thaw spells, where maximum daily temperatures are above 0 degc "
+            "and minimum daily temperatures are at or below 0 degc for at least 2 consecutive day(s)."
+        ]
 
+    def test_freezethaw_spell_mean_length(self, open_dataset):
+        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
-def test_freezethaw_spell_mean_length():
-    ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+        out = atmos.freezethaw_spell_mean_length(
+            tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS"
+        )
+        np.testing.assert_allclose(
+            out.isel(location=0), [1.911765, 2.027027, 1.888889, 1.733333], rtol=1e-06
+        )
 
-    out = atmos.freezethaw_spell_mean_length(
-        tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS"
-    )
-    np.testing.assert_allclose(out.isel(location=0), [2.09375, 2, 1.8648648, 1.7666666])
+        # At location -1, year 2 has no spells of length >=2
+        out = atmos.freezethaw_spell_mean_length(
+            tasmin=convert_units_to(ds.tasmin, "degF"),
+            tasmax=ds.tasmax,
+            window=2,
+            freq="YS",
+        )
+        np.testing.assert_array_equal(out.isel(location=-1), [0, 0, 4, 2])
 
-    # At location -1, year 2 has no spells of length >=2
-    out = atmos.freezethaw_spell_mean_length(
-        tasmin=convert_units_to(ds.tasmin, "degF"),
-        tasmax=ds.tasmax,
-        window=2,
-        freq="YS",
-    )
-    np.testing.assert_array_equal(out.isel(location=-1), [2, 0, 2, 2])
+        assert out.attrs["long_name"] == (
+            "Average length of events where maximum daily temperatures are above 0 degc "
+            "and minimum daily temperatures are at or below 0 degc for at least 2 consecutive day(s)."
+        )
+        assert out.attrs["description"] in [
+            "Annual average length of freeze-thaw spells, where maximum daily temperatures are above 0 degc "
+            "and minimum daily temperatures are at or below 0 degc for at least 2 consecutive day(s)."
+        ]
 
-    assert out.attrs["long_name"] == "Annual average length of freeze-thaw spells."
+    def test_freezethaw_spell_max_length(self, open_dataset):
+        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
+        out = atmos.freezethaw_spell_max_length(
+            tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS"
+        )
+        np.testing.assert_array_equal(out.isel(location=0), [12, 7, 7, 4])
 
-def test_freezethaw_spell_max_length():
-    ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+        # At location -1, year 2 has no spells of length >=2
+        out = atmos.freezethaw_spell_max_length(
+            tasmin=convert_units_to(ds.tasmin, "degF"),
+            tasmax=ds.tasmax,
+            window=2,
+            freq="YS",
+        )
+        np.testing.assert_array_equal(out.isel(location=-1), [0, 0, 4, 2])
 
-    out = atmos.freezethaw_spell_max_length(
-        tasmin=ds.tasmin, tasmax=ds.tasmax, freq="YS"
-    )
-    np.testing.assert_array_equal(out.isel(location=0), [12, 7, 7, 4])
-
-    # At location -1, year 2 has no spells of length >=2
-    out = atmos.freezethaw_spell_max_length(
-        tasmin=convert_units_to(ds.tasmin, "degF"),
-        tasmax=ds.tasmax,
-        window=2,
-        freq="YS",
-    )
-    np.testing.assert_array_equal(out.isel(location=-1), [2, 0, 2, 2])
-
-    assert out.attrs["long_name"] == "Annual maximal length of freeze-thaw spells."
+        assert out.attrs["long_name"] == (
+            "Maximal length of events where maximum daily temperatures are above 0 degc "
+            "and minimum daily temperatures are at or below 0 degc for at least 2 consecutive day(s)."
+        )
+        assert out.attrs["description"] in [
+            "Annual maximal length of freeze-thaw spells, where maximum daily temperatures are above 0 degc "
+            "and minimum daily temperatures are at or below 0 degc for at least 2 consecutive day(s)."
+        ]

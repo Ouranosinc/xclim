@@ -3,11 +3,14 @@ from __future__ import annotations
 
 import numpy as np
 import xarray as xr
-from numba import float32, float64, vectorize
+from numba import float32, float64, vectorize  # noqa
 
 from xclim.core.calendar import date_range, datetime_to_decimal_year
 from xclim.core.units import amount2rate, convert_units_to, declare_units, units2pint
+from xclim.core.utils import Quantified
 from xclim.indices.helpers import (
+    _gather_lat,
+    _gather_lon,
     cosine_of_solar_zenith_angle,
     day_lengths,
     distance_from_sun,
@@ -18,23 +21,31 @@ from xclim.indices.helpers import (
 )
 
 __all__ = [
-    "humidex",
+    "clausius_clapeyron_scaled_precipitation",
     "heat_index",
-    "tas",
-    "uas_vas_2_sfcwind",
-    "sfcwind_2_uas_vas",
-    "saturation_vapor_pressure",
+    "humidex",
+    "longwave_upwelling_radiation_from_net_downwelling",
+    "mean_radiant_temperature",
+    "potential_evapotranspiration",
+    "rain_approximation",
     "relative_humidity",
+    "saturation_vapor_pressure",
+    "sfcwind_2_uas_vas",
+    "shortwave_upwelling_radiation_from_net_downwelling",
+    "snd_to_snw",
+    "snw_to_snd",
+    "snowfall_approximation",
     "specific_humidity",
     "specific_humidity_from_dewpoint",
-    "snowfall_approximation",
-    "rain_approximation",
-    "wind_chill_index",
-    "clausius_clapeyron_scaled_precipitation",
-    "potential_evapotranspiration",
+    "tas",
+    "uas_vas_2_sfcwind",
     "universal_thermal_climate_index",
-    "mean_radiant_temperature",
+    "wind_chill_index",
 ]
+
+
+def _deaccumulate(ds: xr.DataArray) -> xr.DataArray:
+    """Deaccumulate units."""
 
 
 @declare_units(tas="[temperature]", tdps="[temperature]", hurs="[]")
@@ -51,11 +62,11 @@ def humidex(
     Parameters
     ----------
     tas : xarray.DataArray
-      Air temperature.
+        Air temperature.
     tdps : xarray.DataArray,
-      Dewpoint temperature.
+        Dewpoint temperature.
     hurs : xarray.DataArray
-      Relative humidity.
+        Relative humidity.
 
     Returns
     -------
@@ -79,7 +90,7 @@ def humidex(
        e = 6.112 \times \exp(5417.7530\left({\frac {1}{273.16}}-{\frac {1}{T_{\text{dewpoint}}}}\right)
 
     where the constant 5417.753 reflects the molecular weight of water, latent heat of vaporization,
-    and the universal gas constant :cite:p`mekis_observed_2015`. Alternatively, the term :math:`e` can also be computed
+    and the universal gas constant :cite:p:`mekis_observed_2015`. Alternatively, the term :math:`e` can also be computed
     from the relative humidity `h` expressed in percent using :cite:t:`sirangelo_combining_2020`:
 
     .. math::
@@ -93,17 +104,14 @@ def humidex(
     - 40 to 45 : great discomfort, avoid exertion;
     - 46 and over : dangerous, possible heat stroke;
 
-    Please note that while both the humidex and the heat index are calculated
-    using dew point, the humidex uses a dew point of 7 °C (45 °F) as a base,
-    whereas the heat index uses a dew point base of 14 °C (57 °F). Further,
-    the heat index uses heat balance equations which account for many variables
-    other than vapor pressure, which is used exclusively in the humidex
-    calculation.
+    Please note that while both the humidex and the heat index are calculated using dew point, the humidex uses
+    a dew point of 7 °C (45 °F) as a base, whereas the heat index uses a dew point base of 14 °C (57 °F). Further,
+    the heat index uses heat balance equations which account for many variables other than vapour pressure,
+    which is used exclusively in the humidex calculation.
 
     References
     ----------
     :cite:cts:`canada_glossary_2011,masterton_humidex_1979,mekis_observed_2015,sirangelo_combining_2020`
-
     """
     if (tdps is None) == (hurs is None):
         raise ValueError(
@@ -145,14 +153,14 @@ def heat_index(tas: xr.DataArray, hurs: xr.DataArray) -> xr.DataArray:
     Parameters
     ----------
     tas : xr.DataArray
-      Temperature. The equation assumes an instantaneous value.
+        Temperature. The equation assumes an instantaneous value.
     hurs : xr.DataArray
-      Relative humidity. The equation assumes an instantaneous value.
+        Relative humidity. The equation assumes an instantaneous value.
 
     Returns
     -------
     xr.DataArray, [temperature]
-      Heat index for moments with temperature above 20°C.
+        Heat index for moments with temperature above 20°C.
 
     References
     ----------
@@ -202,6 +210,11 @@ def tas(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
     -------
     xarray.DataArray
         Mean (daily) temperature [same units as tasmin]
+
+    Examples
+    --------
+    >>> from xclim.indices import tas
+    >>> tas = tas(tasmin_dataset, tasmax_dataset)
     """
     tasmax = convert_units_to(tasmax, tasmin)
     tas = (tasmax + tasmin) / 2
@@ -211,7 +224,7 @@ def tas(tasmin: xr.DataArray, tasmax: xr.DataArray) -> xr.DataArray:
 
 @declare_units(uas="[speed]", vas="[speed]", calm_wind_thresh="[speed]")
 def uas_vas_2_sfcwind(
-    uas: xr.DataArray, vas: xr.DataArray, calm_wind_thresh: str = "0.5 m/s"
+    uas: xr.DataArray, vas: xr.DataArray, calm_wind_thresh: Quantified = "0.5 m/s"
 ) -> tuple[xr.DataArray, xr.DataArray]:
     """Wind speed and direction from the eastward and northward wind components.
 
@@ -221,20 +234,27 @@ def uas_vas_2_sfcwind(
     Parameters
     ----------
     uas : xr.DataArray
-      Eastward wind velocity
+        Eastward wind velocity
     vas : xr.DataArray
-      Northward wind velocity
-    calm_wind_thresh : str
-      The threshold under which winds are considered "calm" and for which the direction
-      is set to 0. On the Beaufort scale, calm winds are defined as < 0.5 m/s.
+        Northward wind velocity
+    calm_wind_thresh : Quantified
+        The threshold under which winds are considered "calm" and for which the direction
+        is set to 0. On the Beaufort scale, calm winds are defined as < 0.5 m/s.
 
     Returns
     -------
     wind : xr.DataArray, [m s-1]
-      Wind velocity
+        Wind velocity
     wind_from_dir : xr.DataArray, [°]
-      Direction from which the wind blows, following the meteorological convention where
-      360 stands for North and 0 for calm winds.
+        Direction from which the wind blows, following the meteorological convention where
+        360 stands for North and 0 for calm winds.
+
+    Examples
+    --------
+    >>> from xclim.indices import uas_vas_2_sfcwind
+    >>> sfcWind = uas_vas_2_sfcwind(
+    ...     uas=uas_dataset, vas=vas_dataset, calm_wind_thresh="0.5 m/s"
+    ... )
 
     Notes
     -----
@@ -276,18 +296,24 @@ def sfcwind_2_uas_vas(
     Parameters
     ----------
     sfcWind : xr.DataArray
-      Wind velocity
+        Wind velocity
     sfcWindfromdir : xr.DataArray
-      Direction from which the wind blows, following the meteorological convention
-      where 360 stands for North.
+        Direction from which the wind blows, following the meteorological convention
+        where 360 stands for North.
 
     Returns
     -------
     uas : xr.DataArray, [m s-1]
-      Eastward wind velocity.
+        Eastward wind velocity.
     vas : xr.DataArray, [m s-1]
-      Northward wind velocity.
+        Northward wind velocity.
 
+    Examples
+    --------
+    >>> from xclim.indices import sfcwind_2_uas_vas
+    >>> uas, vas = sfcwind_2_uas_vas(
+    ...     sfcWind=sfcWind_dataset, sfcWindfromdir=sfcWindfromdir_dataset
+    ... )
     """
     # Converts the wind speed to m s-1
     sfcWind = convert_units_to(sfcWind, "m/s")  # noqa
@@ -314,24 +340,26 @@ def sfcwind_2_uas_vas(
 
 @declare_units(tas="[temperature]", ice_thresh="[temperature]")
 def saturation_vapor_pressure(
-    tas: xr.DataArray, ice_thresh: str = None, method: str = "sonntag90"  # noqa
+    tas: xr.DataArray,
+    ice_thresh: Quantified | None = None,
+    method: str = "sonntag90",  # noqa
 ) -> xr.DataArray:
     """Saturation vapour pressure from temperature.
 
     Parameters
     ----------
     tas : xr.DataArray
-      Temperature array.
-    ice_thresh : str
-      Threshold temperature under which to switch to equations in reference to ice instead of water.
-      If None (default) everything is computed with reference to water.
+        Temperature array.
+    ice_thresh : Quantified, optional
+        Threshold temperature under which to switch to equations in reference to ice instead of water.
+        If None (default) everything is computed with reference to water.
     method : {"goffgratch46", "sonntag90", "tetens30", "wmo08", "its90"}
-      Which method to use, see notes.
+        Which method to use, see notes.
 
     Returns
     -------
     xarray.DataArray, [Pa]
-      Saturation vapour pressure.
+        Saturation vapour pressure.
 
     Notes
     -----
@@ -344,10 +372,16 @@ def saturation_vapor_pressure(
     - "wmo08" or "WMO08", taken from :cite:t:`world_meteorological_organization_guide_2008`.
     - "its90" or "ITS90", taken from :cite:t:`hardy_its-90_1998`.
 
+    Examples
+    --------
+    >>> from xclim.indices import saturation_vapor_pressure
+    >>> rh = saturation_vapor_pressure(
+    ...     tas=tas_dataset, ice_thresh="0 degC", method="wmo08"
+    ... )
+
     References
     ----------
     :cite:cts:`goff_low-pressure_1946,hardy_its-90_1998,sonntag_important_1990,tetens_uber_1930,vomel_saturation_2016,world_meteorological_organization_guide_2008`
-
     """
     if ice_thresh is not None:
         thresh = convert_units_to(ice_thresh, "degK")
@@ -450,50 +484,50 @@ def saturation_vapor_pressure(
 )
 def relative_humidity(
     tas: xr.DataArray,
-    tdps: xr.DataArray = None,
-    huss: xr.DataArray = None,
-    ps: xr.DataArray = None,
-    ice_thresh: str = None,
+    tdps: xr.DataArray | None = None,
+    huss: xr.DataArray | None = None,
+    ps: xr.DataArray | None = None,
+    ice_thresh: Quantified | None = None,
     method: str = "sonntag90",
     invalid_values: str = "clip",
 ) -> xr.DataArray:
     r"""Relative humidity.
 
     Compute relative humidity from temperature and either dewpoint temperature or specific humidity and pressure through
-    the saturation vapor pressure.
+    the saturation vapour pressure.
 
     Parameters
     ----------
     tas : xr.DataArray
-      Temperature array
-    tdps : xr.DataArray
-      Dewpoint temperature, if specified, overrides huss and ps.
-    huss : xr.DataArray
-      Specific humidity.
-    ps : xr.DataArray
-      Air Pressure.
-    ice_thresh : str
-      Threshold temperature under which to switch to equations in reference to ice instead of water.
-      If None (default) everything is computed with reference to water. Does nothing if 'method' is "bohren98".
+        Temperature array
+    tdps : xr.DataArray, optional
+        Dewpoint temperature, if specified, overrides huss and ps.
+    huss : xr.DataArray, optional
+        Specific humidity. Must be given if tdps is not given.
+    ps : xr.DataArray, optional
+        Air Pressure. Must be given if tdps is not given.
+    ice_thresh : Quantified, optional
+        Threshold temperature under which to switch to equations in reference to ice instead of water.
+        If None (default) everything is computed with reference to water. Does nothing if 'method' is "bohren98".
     method : {"bohren98", "goffgratch46", "sonntag90", "tetens30", "wmo08"}
-      Which method to use, see notes of this function and of `saturation_vapor_pressure`.
+        Which method to use, see notes of this function and of :py:func:`saturation_vapor_pressure`.
     invalid_values : {"clip", "mask", None}
-      What to do with values outside the 0-100 range. If "clip" (default), clips everything to 0 - 100,
-      if "mask", replaces values outside the range by np.nan, and if `None`, does nothing.
+        What to do with values outside the 0-100 range. If "clip" (default), clips everything to 0 - 100,
+        if "mask", replaces values outside the range by np.nan, and if `None`, does nothing.
 
     Returns
     -------
     xr.DataArray, [%]
-      Relative humidity.
+        Relative humidity.
 
     Notes
     -----
     In the following, let :math:`T`, :math:`T_d`, :math:`q` and :math:`p` be the temperature,
     the dew point temperature, the specific humidity and the air pressure.
 
-    **For the "bohren98" method** : This method does not use the saturation vapor pressure directly,
+    **For the "bohren98" method** : This method does not use the saturation vapour pressure directly,
     but rather uses an approximation of the ratio of :math:`\frac{e_{sat}(T_d)}{e_{sat}(T)}`.
-    With :math:`L` the enthalpy of vaporization of water and :math:`R_w` the gas constant for water vapor,
+    With :math:`L` the enthalpy of vaporization of water and :math:`R_w` the gas constant for water vapour,
     the relative humidity is computed as:
 
     .. math::
@@ -503,7 +537,7 @@ def relative_humidity(
     From :cite:t:`bohren_atmospheric_1998`, formula taken from :cite:t:`lawrence_relationship_2005`. :math:`L = 2.5\times 10^{-6}` J kg-1, exact for :math:`T = 273.15` K, is used.
 
     **Other methods**: With :math:`w`, :math:`w_{sat}`, :math:`e_{sat}` the mixing ratio,
-    the saturation mixing ratio and the saturation vapor pressure.
+    the saturation mixing ratio and the saturation vapour pressure.
     If the dewpoint temperature is given, relative humidity is computed as:
 
     .. math::
@@ -518,7 +552,20 @@ def relative_humidity(
         w = \frac{q}{1-q}
         w_{sat} = 0.622\frac{e_{sat}}{P - e_{sat}}
 
-    The methods differ by how :math:`e_{sat}` is computed. See the doc of :py:meth:`xclim.core.utils.saturation_vapor_pressure`.
+    The methods differ by how :math:`e_{sat}` is computed. See the doc of :py:func:`xclim.core.utils.saturation_vapor_pressure`.
+
+    Examples
+    --------
+    >>> from xclim.indices import relative_humidity
+    >>> rh = relative_humidity(
+    ...     tas=tas_dataset,
+    ...     tdps=tdps_dataset,
+    ...     huss=huss_dataset,
+    ...     ps=ps_dataset,
+    ...     ice_thresh="0 degC",
+    ...     method="wmo08",
+    ...     invalid_values="clip",
+    ... )
 
     References
     ----------
@@ -569,7 +616,7 @@ def specific_humidity(
     tas: xr.DataArray,
     hurs: xr.DataArray,
     ps: xr.DataArray,
-    ice_thresh: str = None,
+    ice_thresh: Quantified | None = None,
     method: str = "sonntag90",
     invalid_values: str = None,
 ) -> xr.DataArray:
@@ -581,32 +628,32 @@ def specific_humidity(
     Parameters
     ----------
     tas : xr.DataArray
-      Temperature array
+        Temperature array
     hurs : xr.DataArray
-      Relative Humidity.
+        Relative Humidity.
     ps : xr.DataArray
-      Air Pressure.
-    ice_thresh : str
-      Threshold temperature under which to switch to equations in reference to ice instead of water.
-      If None (default) everything is computed with reference to water.
+        Air Pressure.
+    ice_thresh : Quantified, optional
+        Threshold temperature under which to switch to equations in reference to ice instead of water.
+        If None (default) everything is computed with reference to water.
     method : {"goffgratch46", "sonntag90", "tetens30", "wmo08"}
-      Which method to use, see notes of this function and of `saturation_vapor_pressure`.
+        Which method to use, see notes of this function and of :py:func:`saturation_vapor_pressure`.
     invalid_values : {"clip", "mask", None}
-      What to do with values larger than the saturation specific humidity and lower than 0.
-      If "clip" (default), clips everything to 0 - q_sat
-      if "mask", replaces values outside the range by np.nan,
-      if None, does nothing.
+        What to do with values larger than the saturation specific humidity and lower than 0.
+        If "clip" (default), clips everything to 0 - q_sat
+        if "mask", replaces values outside the range by np.nan,
+        if None, does nothing.
 
     Returns
     -------
     xarray.DataArray, [dimensionless]
-      Specific humidity.
+        Specific humidity.
 
     Notes
     -----
     In the following, let :math:`T`, :math:`hurs` (in %) and :math:`p` be the temperature,
     the relative humidity and the air pressure. With :math:`w`, :math:`w_{sat}`, :math:`e_{sat}` the mixing ratio,
-    the saturation mixing ratio and the saturation vapor pressure, specific humidity :math:`q` is computed as:
+    the saturation mixing ratio and the saturation vapour pressure, specific humidity :math:`q` is computed as:
 
     .. math::
 
@@ -614,13 +661,25 @@ def specific_humidity(
         w = w_{sat} * hurs / 100
         q = w / (1 + w)
 
-    The methods differ by how :math:`e_{sat}` is computed. See the doc of `xclim.core.utils.saturation_vapor_pressure`.
+    The methods differ by how :math:`e_{sat}` is computed. See :py:func:`xclim.core.utils.saturation_vapor_pressure`.
 
     If `invalid_values` is not `None`, the saturation specific humidity :math:`q_{sat}` is computed as:
 
     .. math::
 
         q_{sat} = w_{sat} / (1 + w_{sat})
+
+    Examples
+    --------
+    >>> from xclim.indices import specific_humidity
+    >>> rh = specific_humidity(
+    ...     tas=tas_dataset,
+    ...     hurs=hurs_dataset,
+    ...     ps=ps_dataset,
+    ...     ice_thresh="0 degC",
+    ...     method="wmo08",
+    ...     invalid_values="mask",
+    ... )
 
     References
     ----------
@@ -663,20 +722,20 @@ def specific_humidity_from_dewpoint(
     Parameters
     ----------
     tdps : xr.DataArray
-      Dewpoint temperature array.
+        Dewpoint temperature array.
     ps : xr.DataArray
-      Air pressure array.
+        Air pressure array.
     method : {"goffgratch46", "sonntag90", "tetens30", "wmo08"}
-      Method to compute the saturation vapor pressure.
+        Method to compute the saturation vapour pressure.
 
     Returns
     -------
     xarray.DataArray, [dimensionless]
-      Specific humidity.
+        Specific humidity.
 
     Notes
     -----
-    If :math:`e` is the water vapor pressure, and :math:`p` the total air pressure, then specific humidity is given by
+    If :math:`e` is the water vapour pressure, and :math:`p` the total air pressure, then specific humidity is given by
 
     .. math::
 
@@ -685,12 +744,21 @@ def specific_humidity_from_dewpoint(
     where :math:`m_w` and :math:`m_a` are the molecular weights of water and dry air respectively. This formula is often
     written with :math:`ε = m_w / m_a`, which simplifies to :math:`q = ε e / (p - e (1 - ε))`.
 
+    Examples
+    --------
+    >>> from xclim.indices import specific_humidity_from_dewpoint
+    >>> rh = specific_humidity_from_dewpoint(
+    ...     tdps=tas_dataset,
+    ...     ps=ps_dataset,
+    ...     method="wmo08",
+    ... )
+
     References
     ----------
     :cite:cts:`world_meteorological_organization_guide_2008`
     """
     ε = 0.6219569  # weight of water vs dry air []
-    e = saturation_vapor_pressure(tas=tdps, method=method)  # vapor pressure [Pa]
+    e = saturation_vapor_pressure(tas=tdps, method=method)  # vapour pressure [Pa]
     ps = convert_units_to(ps, "Pa")  # total air pressure
 
     q = ε * e / (ps - e * (1 - ε))
@@ -702,7 +770,7 @@ def specific_humidity_from_dewpoint(
 def snowfall_approximation(
     pr: xr.DataArray,
     tas: xr.DataArray,
-    thresh: str = "0 degC",
+    thresh: Quantified = "0 degC",
     method: str = "binary",
 ) -> xr.DataArray:
     """Snowfall approximation from total precipitation and temperature.
@@ -712,18 +780,18 @@ def snowfall_approximation(
     Parameters
     ----------
     pr : xarray.DataArray
-      Mean daily precipitation flux.
+        Mean daily precipitation flux.
     tas : xarray.DataArray, optional
-      Mean, maximum, or minimum daily temperature.
-    thresh : str,
-      Threshold temperature, used by method "binary".
+        Mean, maximum, or minimum daily temperature.
+    thresh : Quantified
+        Freezing point temperature. Non-scalar values are not allowed with method "brown".
     method : {"binary", "brown", "auer"}
-      Which method to use when approximating snowfall from total precipitation. See notes.
+        Which method to use when approximating snowfall from total precipitation. See notes.
 
     Returns
     -------
     xarray.DataArray, [same units as pr]
-      Solid precipitation flux.
+        Solid precipitation flux.
 
     Notes
     -----
@@ -741,13 +809,15 @@ def snowfall_approximation(
     References
     ----------
     :cite:cts:`verseghy_class_2009,melton_atmosphericvarscalcf90_2019`
-
     """
     if method == "binary":
         thresh = convert_units_to(thresh, tas)
         prsn = pr.where(tas <= thresh, 0)
 
     elif method == "brown":
+        if not np.isscalar(thresh):
+            raise ValueError("Non-scalar `thresh` are not allowed with method `brown`.")
+
         # Freezing point + 2C in the native units
         upper = convert_units_to(convert_units_to(thresh, "degC") + 2, tas)
         thresh = convert_units_to(thresh, tas)
@@ -795,7 +865,7 @@ def snowfall_approximation(
 def rain_approximation(
     pr: xr.DataArray,
     tas: xr.DataArray,
-    thresh: str = "0 degC",
+    thresh: Quantified = "0 degC",
     method: str = "binary",
 ) -> xr.DataArray:
     """Rainfall approximation from total precipitation and temperature.
@@ -806,18 +876,18 @@ def rain_approximation(
     Parameters
     ----------
     pr : xarray.DataArray
-      Mean daily precipitation flux.
+        Mean daily precipitation flux.
     tas : xarray.DataArray, optional
-      Mean, maximum, or minimum daily temperature.
-    thresh : str,
-      Threshold temperature, used by method "binary".
+        Mean, maximum, or minimum daily temperature.
+    thresh : Quantified
+        Freezing point temperature. Non-scalar values are not allowed with method 'brown'.
     method : {"binary", "brown", "auer"}
-      Which method to use when approximating snowfall from total precipitation. See notes.
+        Which method to use when approximating snowfall from total precipitation. See notes.
 
     Returns
     -------
     xarray.DataArray, [same units as pr]
-      Liquid precipitation rate.
+        Liquid precipitation rate.
 
     Notes
     -----
@@ -833,6 +903,145 @@ def rain_approximation(
     return prra
 
 
+@declare_units(snw="[mass]/[area]", snr="[mass]/[volume]", const="[mass]/[volume]")
+def snw_to_snd(
+    snw: xr.DataArray,
+    snr: xr.DataArray | None = None,
+    const: Quantified = "312 kg m-3",
+) -> xr.DataArray:
+    """Snow depth from snow amount and density.
+
+    Parameters
+    ----------
+    snw : xr.DataArray
+        Snow amount [kg/m^2].
+        If snow water equivalent (`swe` [m]) is provided instead, will be converted to `snw` before calculating.
+    snr : xr.DataArray, optional
+        Snow density [kg/m^3].
+    const: Quantified
+        Constant snow density [kg/m^3]
+        `const` is only used if `snr` is None.
+
+    Returns
+    -------
+    xr.DataArray, [m]
+        Snow depth.
+
+    Notes
+    -----
+    The estimated mean snow density value of 312 kg m-3 is taken from :cite:t:`sturm_swe_2010`.
+
+    References
+    ----------
+    :cite:cts:`sturm_swe_2010`
+    """
+    if snr is None:
+        snr = const
+
+    snw = convert_units_to(snw, "kg m-2")
+    snr = convert_units_to(snr, "kg m-3")
+
+    snd = snw / snr
+
+    snd.attrs["units"] = "m"
+    return snd
+
+
+@declare_units(snd="[length]", snr="[mass]/[volume]", const="[mass]/[volume]")
+def snd_to_snw(
+    snd: xr.DataArray,
+    snr: xr.DataArray | None = None,
+    const: Quantified = "312 kg m-3",
+) -> xr.DataArray:
+    """Snow amount from snow depth and density.
+
+    Parameters
+    ----------
+    snd : xr.DataArray
+        Snow depth [m].
+    snr : xr.DataArray, optional
+        Snow density [kg/m^3].
+    const: Quantified
+        Constant snow density [kg/m^3]
+        `const` is only used if `snr` is None.
+
+    Returns
+    -------
+    xr.DataArray, [kg m-2]
+        Surface snow amount
+
+    Notes
+    -----
+    The estimated mean snow density value of 312 kg m-3 is taken from :cite:t:`sturm_swe_2010`.
+
+    References
+    ----------
+    :cite:cts:`sturm_swe_2010`
+    """
+    if snr is None:
+        snr = const
+
+    snd = convert_units_to(snd, "m")
+    snr = convert_units_to(snr, "kg m-3")
+
+    snw = snd * snr
+
+    snw.attrs["units"] = "kg m-2"
+    return snw
+
+
+@declare_units(rls="[radiation]", rlds="[radiation]")
+def longwave_upwelling_radiation_from_net_downwelling(
+    rls: xr.DataArray, rlds: xr.DataArray
+) -> xr.DataArray:
+    """Calculate upwelling thermal radiation from net thermal radiation and downwelling thermal radiation.
+
+    Parameters
+    ----------
+    rls : xr.DataArray
+        Surface net thermal radiation [W m-2].
+    rlds : xr.DataArray
+        Surface downwelling thermal radiation [W m-2].
+
+    Returns
+    -------
+    xr.DataArray, [W m-2]
+        Surface upwelling thermal radiation (rlus).
+    """
+    rls = convert_units_to(rls, rlds)
+
+    rlus = rlds - rls
+
+    rlus.attrs["units"] = "W m-2"
+    return rlus
+
+
+@declare_units(rss="[radiation]", rsds="[radiation]")
+def shortwave_upwelling_radiation_from_net_downwelling(
+    rss: xr.DataArray, rsds: xr.DataArray
+) -> xr.DataArray:
+    """Calculate upwelling solar radiation from net solar radiation and downwelling solar radiation.
+
+    Parameters
+    ----------
+    rss : xr.DataArray
+        Surface net solar radiation [W m-2].
+    rsds : xr.DataArray
+        Surface downwelling solar radiation [W m-2].
+
+    Returns
+    -------
+    xr.DataArray, [W m-2]
+        Surface upwelling solar radiation (rsus).
+    """
+    rss = convert_units_to(rss, rsds)
+
+    rsus = rsds - rss
+
+    rsus.attrs["units"] = "W m-2"
+    return rsus
+
+
 @declare_units(
     tas="[temperature]",
     sfcWind="[speed]",
@@ -842,7 +1051,7 @@ def wind_chill_index(
     sfcWind: xr.DataArray,
     method: str = "CAN",
     mask_invalid: bool = True,
-):
+) -> xr.DataArray:
     r"""Wind chill index.
 
     The Wind Chill Index is an estimation of how cold the weather feels to the average person.
@@ -853,21 +1062,21 @@ def wind_chill_index(
     Parameters
     ----------
     tas : xarray.DataArray
-      Surface air temperature.
+        Surface air temperature.
     sfcWind : xarray.DataArray
-      Surface wind speed (10 m).
+        Surface wind speed (10 m).
     method : {'CAN', 'US'}
-      If "CAN" (default), a "slow wind" equation is used where winds are slower than 5 km/h, see Notes.
+        If "CAN" (default), a "slow wind" equation is used where winds are slower than 5 km/h, see Notes.
     mask_invalid : bool
-      Whether to mask values when the inputs are outside their validity range. or not.
-      If True (default), points where the temperature is above a threshold are masked.
-      The threshold is 0°C for the canadian method and 50°F for the american one.
-      With the latter method, points where sfcWind < 3 mph are also masked.
+        Whether to mask values when the inputs are outside their validity range. or not.
+        If True (default), points where the temperature is above a threshold are masked.
+        The threshold is 0°C for the canadian method and 50°F for the american one.
+        With the latter method, points where sfcWind < 3 mph are also masked.
 
     Returns
     -------
     xarray.DataArray, [degC]
-      Wind Chill Index.
+        Wind Chill Index.
 
     Notes
     -----
@@ -893,10 +1102,10 @@ def wind_chill_index(
     `method='US'`. In that case, the maximal valid temperature is 50°F (10 °C) and minimal wind speed is 3 mph
     (4.8 km/h).
 
-    See Also
-    --------
-    National Weather Service FAQ: :cite:p:`us_department_of_commerce_wind_nodate`.
-    The New Wind Chill Equivalent Temperature Chart: :cite:p:`osczevski_new_2005`.
+    For more information, see:
+
+    - National Weather Service FAQ: :cite:p:`us_department_of_commerce_wind_nodate`.
+    - The New Wind Chill Equivalent Temperature Chart: :cite:p:`osczevski_new_2005`.
 
     References
     ----------
@@ -935,11 +1144,11 @@ def clausius_clapeyron_scaled_precipitation(
     Parameters
     ----------
     delta_tas : xarray.DataArray
-      Difference in temperature between a baseline climatology and another climatology.
+        Difference in temperature between a baseline climatology and another climatology.
     pr_baseline : xarray.DataArray
-      Baseline precipitation to adjust with Clausius-Clapeyron.
+        Baseline precipitation to adjust with Clausius-Clapeyron.
     cc_scale_factor : float (default  = 1.07)
-      Clausius Clapeyron scale factor.
+        Clausius Clapeyron scale factor.
 
     Returns
     -------
@@ -948,8 +1157,8 @@ def clausius_clapeyron_scaled_precipitation(
 
     Notes
     -----
-    The Clausius-Clapeyron equation for water vapor under typical atmospheric conditions states that the saturation
-    water vapor pressure :math:`e_s` changes approximately exponentially with temperature
+    The Clausius-Clapeyron equation for water vapour under typical atmospheric conditions states that the saturation
+    water vapour pressure :math:`e_s` changes approximately exponentially with temperature
 
     .. math::
         \frac{\mathrm{d}e_s(T)}{\mathrm{d}T} \approx 1.07 e_s(T)
@@ -982,7 +1191,7 @@ def clausius_clapeyron_scaled_precipitation(
     rsus="[radiation]",
     rlds="[radiation]",
     rlus="[radiation]",
-    sfcwind="[speed]",
+    sfcWind="[speed]",
 )
 def potential_evapotranspiration(
     tasmin: xr.DataArray | None = None,
@@ -994,10 +1203,10 @@ def potential_evapotranspiration(
     rsus: xr.DataArray | None = None,
     rlds: xr.DataArray | None = None,
     rlus: xr.DataArray | None = None,
-    sfcwind: xr.DataArray | None = None,
+    sfcWind: xr.DataArray | None = None,
     method: str = "BR65",
-    peta: float | None = 0.00516409319477,
-    petb: float | None = 0.0874972822289,
+    peta: float = 0.00516409319477,
+    petb: float = 0.0874972822289,
 ) -> xr.DataArray:
     r"""Potential evapotranspiration.
 
@@ -1006,34 +1215,34 @@ def potential_evapotranspiration(
 
     Parameters
     ----------
-    tasmin : xarray.DataArray
-      Minimum daily temperature.
-    tasmax : xarray.DataArray
-      Maximum daily temperature.
-    tas : xarray.DataArray
-      Mean daily temperature.
+    tasmin : xarray.DataArray, optional
+        Minimum daily temperature.
+    tasmax : xarray.DataArray, optional
+        Maximum daily temperature.
+    tas : xarray.DataArray, optional
+        Mean daily temperature.
     lat : xarray.DataArray, optional
-      Latitude. If not given, it is sought on tasmin or tas with cf-xarray.
-    hurs : xarray.DataArray
-      Relative humidity.
-    rsds : xarray.DataArray
-      Surface Downwelling Shortwave Radiation
-    rsus : xarray.DataArray
-      Surface Upwelling Shortwave Radiation
-    rlds : xarray.DataArray
-      Surface Downwelling Longwave Radiation
-    rlus : xarray.DataArray
-      Surface Upwelling Longwave Radiation
-    sfcwind : xarray.DataArray
-      Surface wind velocity (at 10 m)
+        Latitude. If not given, it is sought on tasmin or tas using cf-xarray accessors.
+    hurs : xarray.DataArray, optional
+        Relative humidity.
+    rsds : xarray.DataArray, optional
+        Surface Downwelling Shortwave Radiation
+    rsus : xarray.DataArray, optional
+        Surface Upwelling Shortwave Radiation
+    rlds : xarray.DataArray, optional
+        Surface Downwelling Longwave Radiation
+    rlus : xarray.DataArray, optional
+        Surface Upwelling Longwave Radiation
+    sfcWind : xarray.DataArray, optional
+        Surface wind velocity (at 10 m)
     method : {"baierrobertson65", "BR65", "hargreaves85", "HG85", "thornthwaite48", "TW48", "mcguinnessbordne05", "MB05", "allen98", "FAO_PM98"}
-      Which method to use, see notes.
+        Which method to use, see notes.
     peta : float
-      Used only with method MB05 as :math:`a` for calculation of PET, see Notes section.
-      Default value resulted from calibration of PET over the UK.
+        Used only with method MB05 as :math:`a` for calculation of PET, see Notes section.
+        Default value resulted from calibration of PET over the UK.
     petb : float
-      Used only with method MB05 as :math:`b` for calculation of PET, see Notes section.
-      Default value resulted from calibration of PET over the UK.
+        Used only with method MB05 as :math:`b` for calculation of PET, see Notes section.
+        Default value resulted from calibration of PET over the UK.
 
     Returns
     -------
@@ -1068,7 +1277,7 @@ def potential_evapotranspiration(
     :cite:cts:`baier_estimation_1965,george_h_hargreaves_reference_1985,tanguy_historical_2018,thornthwaite_approach_1948,mcguinness_comparison_1972,allen_crop_1998`
     """
     if lat is None:
-        lat = (tasmin if tas is None else tas).cf["latitude"]
+        lat = _gather_lat(tasmin if tas is None else tas)
 
     if method in ["baierrobertson65", "BR65"]:
         tasmin = convert_units_to(tasmin, "degF")
@@ -1096,7 +1305,7 @@ def potential_evapotranspiration(
         ra = extraterrestrial_solar_radiation(tasmin.time, lat)
         ra = convert_units_to(ra, "MJ m-2 d-1")
 
-        # Hargreaves and Samani(1985) formula
+        # Hargreaves and Samani (1985) formula
         out = (0.0023 * ra * (tas + 17.8) * (tasmax - tasmin) ** 0.5) / lv
         out = out.clip(0)
 
@@ -1155,7 +1364,7 @@ def potential_evapotranspiration(
             name="time",
         )
 
-        # Thornwaith measures half-days
+        # Thornthwaite measures half-days
         dl = day_lengths(time_v, lat) / 12
         dl_m = dl.resample(time="MS").mean(dim="time")
 
@@ -1179,12 +1388,11 @@ def potential_evapotranspiration(
         out = 10 * out  # mm/month
 
     elif method in ["allen98", "FAO_PM98"]:
-
         tasmax = convert_units_to(tasmax, "degC")
         tasmin = convert_units_to(tasmin, "degC")
 
         # wind speed at two meters
-        wa2 = wind_speed_height_conversion(sfcwind, h_source="10 m", h_target="2 m")
+        wa2 = wind_speed_height_conversion(sfcWind, h_source="10 m", h_target="2 m")
         wa2 = convert_units_to(wa2, "m s-1")
 
         with xr.set_options(keep_attrs=True):
@@ -1195,7 +1403,7 @@ def potential_evapotranspiration(
                 saturation_vapor_pressure(tasmax) + saturation_vapor_pressure(tasmin)
             )
             es = convert_units_to(es, "kPa")
-            # mean actual vapour pressure [kPa]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               kPa )
+            # mean actual vapour pressure [kPa]
             ea = hurs * es
 
             # slope of saturation vapour pressure curve  [kPa degC-1]
@@ -1220,7 +1428,8 @@ def potential_evapotranspiration(
         raise NotImplementedError(f"'{method}' method is not implemented.")
 
     out.attrs["units"] = "mm"
-    return amount2rate(out, out_units="kg m-2 s-1")
+    rate = amount2rate(out, out_units="mm/d")
+    return convert_units_to(rate, "kg m-2 s-1", context="hydro")
 
 
 @vectorize(
@@ -1236,7 +1445,7 @@ def _utci(tas, sfcWind, dt, wvp):
     # tas -> Ta (surface temperature, °C)
     # sfcWind -> va (surface wind speed, m/s)
     # dt -> D_Tmrt (tas - t_mrt, K)
-    # wvp -> Pa (water vapor partial pressure, kPa)
+    # wvp -> Pa (water vapour partial pressure, kPa)
     return (
         tas
         + 6.07562052e-1
@@ -1474,7 +1683,7 @@ def universal_thermal_climate_index(
     stat: str = "average",
     mask_invalid: bool = True,
 ) -> xr.DataArray:
-    r"""Universal thermal climate index.
+    r"""Universal thermal climate index (UTCI).
 
     The UTCI is the equivalent temperature for the environment derived from a
     reference environment and is used to evaluate heat stress in outdoor spaces.
@@ -1501,14 +1710,14 @@ def universal_thermal_climate_index(
     rlus : xr.DataArray, optional
         Surface Upwelling Longwave Radiation
         This is necessary if mrt is not None.
-    stat  : {'average', 'instant', 'sunlit'}
+    stat : {'average', 'instant', 'sunlit'}
         Which statistic to apply. If "average", the average of the cosine of the
         solar zenith angle is calculated. If "instant", the instantaneous cosine
         of the solar zenith angle is calculated. If "sunlit", the cosine of the
         solar zenith angle is calculated during the sunlit period of each interval.
         If "instant", the instantaneous cosine of the solar zenith angle is calculated.
         This is necessary if mrt is not None.
-    mask_invalid: boolean
+    mask_invalid: bool
         If True (default), UTCI values are NaN where any of the inputs are outside
         their validity ranges : -50°C < tas < 50°C,  -30°C < tas - mrt < 30°C
         and  0.5 m/s < sfcWind < 17.0 m/s.
@@ -1520,18 +1729,18 @@ def universal_thermal_climate_index(
 
     Notes
     -----
-    The calculation uses water vapor partial pressure, which is derived from relative
-    humidity and saturation vapor pressure computed according to the ITS-90 equation.
+    The calculation uses water vapour partial pressure, which is derived from relative
+    humidity and saturation vapour pressure computed according to the ITS-90 equation.
 
     This code was inspired by the `pythermalcomfort` and `thermofeel` packages.
+
+    Notes
+    -----
+    See: http://www.utci.org/utcineu/utcineu.php
 
     References
     ----------
     :cite:cts:`brode_utci_2009,blazejczyk_introduction_2013`
-
-    See Also
-    --------
-    http://www.utci.org/utcineu/utcineu.php
     """
     e_sat = saturation_vapor_pressure(tas=tas, method="its90")
     tas = convert_units_to(tas, "degC")
@@ -1602,7 +1811,6 @@ def _fdir_ratio(
     References
     ----------
     :cite:cts:`liljegren_modeling_2008,kong_explicit_2022`
-
     """
     d = distance_from_sun(dates)
     s_star = rsds * ((1367 * csza_s * (d ** (-2))) ** (-1))
@@ -1640,7 +1848,7 @@ def mean_radiant_temperature(
         Surface Downwelling Longwave Radiation
     rlus : xr.DataArray
         Surface Upwelling Longwave Radiation
-    stat  : {'average', 'instant', 'sunlit'}
+    stat : {'average', 'instant', 'sunlit'}
         Which statistic to apply. If "average", the average of the cosine of the
         solar zenith angle is calculated. If "instant", the instantaneous cosine
         of the solar zenith angle is calculated. If "sunlit", the cosine of the
@@ -1664,7 +1872,6 @@ def mean_radiant_temperature(
     References
     ----------
     :cite:cts:`di_napoli_mean_2020`
-
     """
     rsds = convert_units_to(rsds, "W m-2")
     rsus = convert_units_to(rsus, "W m-2")
@@ -1673,8 +1880,10 @@ def mean_radiant_temperature(
 
     dates = rsds.time
     hours = ((dates - dates.dt.floor("D")).dt.seconds / 3600).assign_attrs(units="h")
-    lat = rsds.lat
-    lon = rsds.lon
+
+    lat = _gather_lat(rsds)
+    lon = _gather_lon(rsds)
+
     decimal_year = datetime_to_decimal_year(times=dates, calendar=dates.dt.calendar)
     day_angle = ((decimal_year % 1) * 2 * np.pi).assign_attrs(units="rad")
     dec = solar_declination(day_angle)

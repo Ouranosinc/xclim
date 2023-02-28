@@ -14,6 +14,7 @@ class JetStream(Indicator):
 
 
 jetstream_metric_woollings = JetStream(
+    title="Strength and latitude of jetstream",
     identifier="jetstream_metric_woollings",
     var_name=["jetlat", "jetstr"],
     units=["degrees_North", "m s-1"],
@@ -22,8 +23,8 @@ jetstream_metric_woollings = JetStream(
         "Maximum strength of smoothed zonal wind speed",
     ],
     description=[
-        "Daily latitude of maximum smoothed zonal wind speed",
-        "Daily maximum strength of smoothed zonal wind speed",
+        "Daily latitude of maximum Lanczos smoothed zonal wind speed.",
+        "Daily maximum strength of Lanczos smoothed zonal wind speed.",
     ],
     compute=indices.jetstream_metric_woollings,
 )

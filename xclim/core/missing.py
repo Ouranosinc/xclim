@@ -102,22 +102,22 @@ class MissingBase:
 
         Parameters
         ----------
-        da: xr.DataArray
-          Input data.
-        freq: str
-          Resampling frequency defining the periods defined in
-          https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
-        src_timestep: {"D", "H"}
-          Expected input frequency.
-        indexer: {dim: indexer}, optional
-          Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
-          values, month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given,
-          all values are considered.
+        da : xr.DataArray
+            Input data.
+        freq : str
+            Resampling frequency defining the periods defined in
+            https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+        src_timestep : {"D", "H"}
+            Expected input frequency.
+        **indexer : {dim: indexer}, optional
+            Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
+            values, month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given,
+            all values are considered.
 
         Returns
         -------
         xr.DataArray, xr.DataArray
-          Boolean array indicating which values are null, array of expected number of valid values.
+            Boolean array indicating which values are null, array of expected number of valid values.
 
         Notes
         -----
@@ -195,24 +195,23 @@ class MissingBase:
 class MissingAny(MissingBase):
     r"""Return whether there are missing days in the array.
 
-    Parameters
+    Attributes
     ----------
-    da: DataArray
-      Input array.
+    da : xr.DataArray
+        Input array.
     freq: str
-      Resampling frequency.
+        Resampling frequency.
     src_timestep: {"D", "H", "M"}
-      Expected input frequency.
+        Expected input frequency.
     indexer: {dim: indexer, }, optional
-      Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
-      values,
-      month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
-      considered.
+        Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
+        values, month=1 to select January, or month=[6,7,8] to select summer months.
+        If not indexer is given, all values are considered.
 
     Returns
     -------
-    DataArray
-      A boolean array set to True if period has missing values.
+    xr.DataArray
+        A boolean array set to True if period has missing values.
     """
 
     def is_missing(self, null, count):  # noqa
@@ -234,29 +233,28 @@ class MissingWMO(MissingAny):
     Stricter criteria are sometimes used in practice, with a tolerance of 5 missing values or 3 consecutive missing
     values.
 
-    Parameters
+    Attributes
     ----------
-    da: DataArray
-      Input array.
-    freq: str
-      Resampling frequency.
-    nm: int
-      Number of missing values per month that should not be exceeded.
-    nc: int
-      Number of consecutive missing values per month that should not be exceeded.
-    src_timestep: {"D"}
-      Expected input frequency. Only daily values are supported.
+    da : DataArray
+        Input array.
+    freq : str
+        Resampling frequency.
+    nm : int
+        Number of missing values per month that should not be exceeded.
+    nc : int
+        Number of consecutive missing values per month that should not be exceeded.
+    src_timestep : {"D"}
+        Expected input frequency. Only daily values are supported.
     indexer: {dim: indexer, }, optional
-      Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
-      Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
-      values,
-      month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
-      considered.
+        Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
+        Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
+        values, month=1 to select January, or month=[6,7,8] to select summer months.
+        If not indexer is given, all values are considered.
 
     Returns
     -------
     xr.DataArray
-      A boolean array set to True if period has missing values.
+        A boolean array set to True if period has missing values.
 
     Notes
     -----
@@ -314,25 +312,25 @@ class MissingWMO(MissingAny):
 class MissingPct(MissingBase):
     r"""Return whether there are more missing days in the array than a given percentage.
 
-    Parameters
+    Attributes
     ----------
-    da: DataArray
-      Input array.
-    freq: str
-      Resampling frequency.
-    tolerance: float
-      Fraction of missing values that are tolerated [0,1].
-    src_timestep: {"D", "H"}
-      Expected input frequency.
-    indexer: {dim: indexer, }, optional
-      Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
-      month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
-      considered.
+    da : DataArray
+        Input array.
+    freq : str
+        Resampling frequency.
+    tolerance : float
+        Fraction of missing values that are tolerated [0,1].
+    src_timestep : {"D", "H"}
+        Expected input frequency.
+    indexer : {dim: indexer, }, optional
+        Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
+        month=1 to select January, or month=[6,7,8] to select summer months.
+        If not indexer is given, all values are considered.
 
     Returns
     -------
     xr.DataArray
-      A boolean array set to True if period has missing values.
+        A boolean array set to True if period has missing values.
     """
 
     def is_missing(self, null, count, tolerance=0.1):
@@ -353,23 +351,23 @@ class AtLeastNValid(MissingBase):
 
     Parameters
     ----------
-    da: DataArray
-      Input array.
-    freq: str
-      Resampling frequency.
-    n: int
-      Minimum of valid values required.
-    src_timestep: {"D", "H"}
-      Expected input frequency.
-    indexer: {dim: indexer, }, optional
-      Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
-      values, month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given,
-      all values are considered.
+    da : xr.DataArray
+        Input array.
+    freq : str
+        Resampling frequency.
+    n : int
+        Minimum of valid values required.
+    src_timestep : {"D", "H"}
+        Expected input frequency.
+    indexer : {dim: indexer, }, optional
+        Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
+        values, month=1 to select January, or month=[6,7,8] to select summer months.
+        If not indexer is given, all values are considered.
 
     Returns
     -------
-    out : DataArray
-      A boolean array set to True if period has missing values.
+    xr.DataArray
+        A boolean array set to True if period has missing values.
     """
 
     def __init__(self, da, freq, src_timestep, **indexer):
@@ -407,12 +405,14 @@ class Skip(MissingBase):
 class FromContext(MissingBase):
     """Return whether each element of the resampled da should be considered missing according to the currently set options in `xclim.set_options`.
 
-    See `xclim.set_options` and `xclim.core.options.register_missing_method`.
+    See Also
+    --------
+    xclim.set_options
+    xclim.core.options.register_missing_method
     """
 
     @classmethod
     def execute(cls, da, freq, src_timestep, options, indexer):
-
         name = OPTIONS[CHECK_MISSING]
         kls = MISSING_METHODS[name]
         opts = OPTIONS[MISSING_OPTIONS][name]

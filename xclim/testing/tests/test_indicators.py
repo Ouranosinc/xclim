@@ -24,15 +24,15 @@ from xclim.core.formatting import (
 )
 from xclim.core.indicator import Daily, Indicator, ResamplingIndicator, registry
 from xclim.core.units import convert_units_to, declare_units, units
-from xclim.core.utils import VARIABLES, InputKind, MissingVariableError
+from xclim.core.utils import VARIABLES, InputKind, MissingVariableError, Quantified
 from xclim.indices import tg_mean
-from xclim.testing import list_input_variables, open_dataset
+from xclim.testing import list_input_variables
 
 
 @declare_units(da="[temperature]", thresh="[temperature]")
 def uniindtemp_compute(
     da: xr.DataArray,
-    thresh: str = "0.0 degC",
+    thresh: Quantified = "0.0 degC",
     freq: str = "YS",
     method: str = "injected",
 ):
@@ -51,7 +51,7 @@ uniIndTemp = Daily(
         dict(
             var_name="tmin{thresh}",
             units="K",
-            long_name="{freq} mean surface temperature",
+            long_name="{freq} mean surface temperature with {thresh} threshold.",
             standard_name="{freq} mean temperature",
             cell_methods="time: mean within {freq:noun}",
             another_attr="With a value.",
@@ -160,6 +160,20 @@ def test_attrs(tas_series):
     assert txm.name == "tmin5 degC"
     assert uniIndTemp.standard_name == "{freq} mean temperature"
     assert uniIndTemp.cf_attrs[0]["another_attr"] == "With a value."
+
+    thresh = xr.DataArray(
+        [1],
+        dims=("adim",),
+        coords={"adim": [1]},
+        attrs={"long_name": "A thresh", "units": "degC"},
+        name="TT",
+    )
+    txm = uniIndTemp(a, thresh=thresh, freq="YS")
+    assert (
+        "TMIN(da=tas, thresh=TT, freq='YS') with options check_missing=any"
+        in txm.attrs["history"]
+    )
+    assert txm.attrs["long_name"].endswith("with <an array> threshold.")
 
 
 @pytest.mark.parametrize(
@@ -440,13 +454,17 @@ def test_all_jsonable(official_indicators):
 
 
 def test_all_parameters_understood(official_indicators):
-    problems = []
+    problems = set()
     for identifier, ind in official_indicators.items():
         indinst = ind.get_instance()
         for name, param in indinst.parameters.items():
             if param["kind"] == InputKind.OTHER_PARAMETER:
-                problems.append((identifier, name))
-    if problems:
+                problems.add((identifier, name))
+    # this one we are ok with.
+    if problems - {
+        ("COOL_NIGHT_INDEX", "lat"),
+        ("DRYNESS_INDEX", "lat"),
+    }:
         raise ValueError(
             f"The following indicator/parameter couple {problems} use types not listed in InputKind."
         )
@@ -473,14 +491,16 @@ def test_signature():
 
 
 def test_doc():
-    doc = xclim.atmos.fire_weather_indexes.__doc__
-    assert doc.startswith("Fire weather indexes. (realm: atmos)")
+    doc = xclim.atmos.cffwis_indices.__doc__
+    assert doc.startswith("Canadian Fire Weather Index System indices. (realm: atmos)")
     assert "This indicator will check for missing values according to the method" in doc
-    assert "Based on indice :py:func:`~xclim.indices.fwi.fire_weather_indexes`." in doc
+    assert (
+        "Based on indice :py:func:`~xclim.indices.fire._cffwis.cffwis_indices`." in doc
+    )
     assert "ffmc0 : str or DataArray, optional" in doc
     assert "Returns\n-------" in doc
     assert "See :cite:t:`code-natural_resources_canada_data_nodate`, " in doc
-    assert "the :py:mod:`xclim.indices.fwi` module documentation," in doc
+    assert "the :py:mod:`xclim.indices.fire` module documentation," in doc
     assert (
         "and the docstring of :py:func:`fire_weather_ufunc` for more information."
         in doc
@@ -501,14 +521,20 @@ def test_identifier():
 def test_formatting(pr_series):
     out = atmos.wetdays(pr_series(np.arange(366)), thresh=1.0 * units.mm / units.day)
     # pint 0.10 now pretty print day as d.
-    assert out.attrs["long_name"] in [
-        "Number of wet days (precip >= 1 mm/day)",
-        "Number of wet days (precip >= 1 mm/d)",
+    assert (
+        out.attrs["long_name"]
+        == "Number of days with daily precipitation at or above 1 mm/d"
+    )
+    assert out.attrs["description"] in [
+        "Annual number of days with daily precipitation at or above 1 mm/d."
     ]
     out = atmos.wetdays(pr_series(np.arange(366)), thresh=1.5 * units.mm / units.day)
-    assert out.attrs["long_name"] in [
-        "Number of wet days (precip >= 1.5 mm/day)",
-        "Number of wet days (precip >= 1.5 mm/d)",
+    assert (
+        out.attrs["long_name"]
+        == "Number of days with daily precipitation at or above 1.5 mm/d"
+    )
+    assert out.attrs["description"] in [
+        "Annual number of days with daily precipitation at or above 1.5 mm/d."
     ]
 
 
@@ -602,7 +628,7 @@ def test_update_history():
     assert merged.startswith("a: Text1")
 
 
-def test_input_dataset():
+def test_input_dataset(open_dataset):
     ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
 
     # Use defaults
@@ -795,21 +821,26 @@ def test_resampling_indicator_with_indexing(tas_series):
     np.testing.assert_allclose(out, [32, 33])
 
 
-@pytest.mark.xfail(reason="Broken link to the excel file.")
 def test_all_inputs_known():
     var_and_inds = list_input_variables()
     known_vars = (
         set(var_and_inds.keys())
-        - {"dc0", "season_mask", "ffmc0", "dmc0"}  # FWI optional inputs
+        - {
+            "dc0",
+            "season_mask",
+            "ffmc0",
+            "dmc0",
+            "kbdi0",
+            "drought_factor",
+        }  # FWI optional inputs
         - {var for var in var_and_inds.keys() if var.endswith("_per")}  # percentiles
+        - {"pr_annual", "pr_cal", "wb_cal"}  # other optional or uncommon
         - {"q", "da"}  # Generic inputs
-        - {"mrt"}  # TODO: add Mean Radiant Temperature
+        - {"mrt", "wb"}  # TODO: add Mean Radiant Temperature and water budget
     )
-    print(VARIABLES.keys(), "\n", known_vars)
     if not set(VARIABLES.keys()).issuperset(known_vars):
         raise AssertionError(
             "All input variables of xclim indicators must be registered in "
-            "data/variables.yml, or skipped explicitly in this test. You can try to "
-            "automatically update the yaml with `xclim.testing.update_variable_yaml(). "
+            "data/variables.yml, or skipped explicitly in this test. "
             f"The yaml file is missing: {known_vars - VARIABLES.keys()}."
         )

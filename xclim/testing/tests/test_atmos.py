@@ -2,12 +2,13 @@
 # Expected values might be the same as for the indices tests, see test_indices comments.
 from __future__ import annotations
 
+import sys
+
 import numpy as np
+import pytest
 import xarray as xr
 
-import xclim.indices as xci
 from xclim import atmos, set_options
-from xclim.testing import open_dataset
 
 K2C = 273.16
 
@@ -74,7 +75,6 @@ def test_relative_humidity_dewpoint(tas_series, hurs_series):
 
 
 def test_humidex(tas_series):
-
     tas = tas_series([15, 25, 35, 40])
     tas.attrs["units"] = "C"
 
@@ -234,21 +234,54 @@ def test_wind_chill_index(atmosds):
     out = atmos.wind_chill_index(ds=atmosds)
 
     np.testing.assert_allclose(
-        out.isel(time=0), [np.nan, -6.116, -36.064, -7.153, np.nan], rtol=1e-3
+        out.isel(time=0), [np.nan, -6.716, -35.617, -8.486, np.nan], rtol=1e-3
     )
 
     out_us = atmos.wind_chill_index(ds=atmosds, method="US")
 
     np.testing.assert_allclose(
-        out_us.isel(time=0), [-1.041, -6.116, -36.064, -7.153, 2.951], rtol=1e-3
+        out_us.isel(time=0), [-1.429, -6.716, -35.617, -8.486, 2.781], rtol=1e-3
     )
 
 
-class TestPotentialEvapotranspiration:
-    def test_convert_units(self):
-        ds = open_dataset(
-            "ERA5/daily_surface_cancities_1990-1993.nc", branch="add-radiation"
+class TestDrynessIndex:
+    def test_simple(self, atmosds):
+        ds = atmosds.isel(location=3)
+
+        pr = ds.pr
+        evspsblpot = ds.evspsblpot
+
+        di = atmos.dryness_index(pr, evspsblpot)
+        np.testing.assert_allclose(
+            di, np.array([13.355, 102.426, 65.576, 158.078]), rtol=1e-03
         )
+        assert di.attrs["long_name"] == "Growing season humidity"
+
+    def test_variable_initial_conditions(self, atmosds):
+        ds = atmosds
+
+        pr = ds.pr
+        evspsblpot = ds.evspsblpot
+
+        di = atmos.dryness_index(pr, evspsblpot)
+        di_wet = atmos.dryness_index(pr, evspsblpot, wo="250 mm")
+        di_dry = atmos.dryness_index(pr, evspsblpot, wo="100 mm")
+
+        assert np.all(di_wet > di_dry)
+        di_plus_50 = di + 50
+        np.testing.assert_allclose(di_wet, di_plus_50, rtol=1e-03)
+        di_minus_100 = di - 100
+        np.testing.assert_allclose(di_dry, di_minus_100, rtol=1e-03)
+
+        for value, array in {"200 mm": di, "250 mm": di_wet, "100 mm": di_dry}.items():
+            assert array.attrs["long_name"] == "Growing season humidity"
+            assert value in array.attrs["description"]
+
+
+class TestPotentialEvapotranspiration:
+    def test_convert_units(self, atmosds):
+        ds = atmosds
+
         tn = ds.tasmin
         tx = ds.tasmax
         tm = ds.tas
@@ -260,7 +293,7 @@ class TestPotentialEvapotranspiration:
         uas = ds.uas
         vas = ds.vas
 
-        sfcwind, _ = atmos.wind_speed_from_vector(uas, vas)
+        sfcWind, _ = atmos.wind_speed_from_vector(uas, vas)
 
         with xr.set_options(keep_attrs=True):
             tnC = tn - K2C
@@ -284,7 +317,7 @@ class TestPotentialEvapotranspiration:
             rsus=rsus,
             rlds=rlds,
             rlus=rlus,
-            sfcwind=sfcwind,
+            sfcWind=sfcWind,
             method="FAO_PM98",
         )
         pet_fao_pm98C = atmos.potential_evapotranspiration(
@@ -295,7 +328,7 @@ class TestPotentialEvapotranspiration:
             rsus=rsus,
             rlds=rlds,
             rlus=rlus,
-            sfcwind=sfcwind,
+            sfcWind=sfcWind,
             method="FAO_PM98",
         )
 
@@ -305,10 +338,9 @@ class TestPotentialEvapotranspiration:
         np.testing.assert_allclose(pet_mb05, pet_mb05C, atol=1)
         np.testing.assert_allclose(pet_fao_pm98, pet_fao_pm98C, atol=1)
 
-    def test_nan_values(self):
-        ds = open_dataset(
-            "ERA5/daily_surface_cancities_1990-1993.nc", branch="add-radiation"
-        )
+    def test_nan_values(self, atmosds):
+        ds = atmosds
+
         tn = ds.tasmin
         tx = ds.tasmax
         tm = ds.tas
@@ -320,7 +352,7 @@ class TestPotentialEvapotranspiration:
         uas = ds.uas
         vas = ds.vas
 
-        sfcwind, _ = atmos.wind_speed_from_vector(uas, vas)
+        sfcWind, _ = atmos.wind_speed_from_vector(uas, vas)
 
         tn[0, 100] = np.nan
         tx[0, 101] = np.nan
@@ -335,7 +367,7 @@ class TestPotentialEvapotranspiration:
             rsus=rsus,
             rlds=rlds,
             rlus=rlus,
-            sfcwind=sfcwind,
+            sfcWind=sfcWind,
             method="FAO_PM98",
         )
 
@@ -357,10 +389,8 @@ class TestPotentialEvapotranspiration:
 
 
 class TestWaterBudget:
-    def test_convert_units(self):
-        ds = open_dataset(
-            "ERA5/daily_surface_cancities_1990-1993.nc", branch="add-radiation"
-        )
+    def test_convert_units(self, atmosds):
+        ds = atmosds
 
         tn = ds.tasmin
         tx = ds.tasmax
@@ -374,7 +404,7 @@ class TestWaterBudget:
         uas = ds.uas
         vas = ds.vas
 
-        sfcwind, _ = atmos.wind_speed_from_vector(uas, vas)
+        sfcWind, _ = atmos.wind_speed_from_vector(uas, vas)
 
         with xr.set_options(keep_attrs=True):
             tnC = tn - K2C
@@ -412,7 +442,7 @@ class TestWaterBudget:
             rsus=rsus,
             rlds=rlds,
             rlus=rlus,
-            sfcwind=sfcwind,
+            sfcWind=sfcWind,
             method="FAO_PM98",
         )
         p_pet_fao_pm98R = atmos.water_budget_from_tas(
@@ -424,7 +454,7 @@ class TestWaterBudget:
             rsus=rsus,
             rlds=rlds,
             rlus=rlus,
-            sfcwind=sfcwind,
+            sfcWind=sfcWind,
             method="FAO_PM98",
         )
 
@@ -437,10 +467,8 @@ class TestWaterBudget:
         np.testing.assert_allclose(p_pet_fao_pm98, p_pet_fao_pm98R, atol=1)
         np.testing.assert_allclose(p_pet_evpot, p_pet_evpotR, atol=1)
 
-    def test_nan_values(self):
-        ds = open_dataset(
-            "ERA5/daily_surface_cancities_1990-1993.nc", branch="add-radiation"
-        )
+    def test_nan_values(self, atmosds):
+        ds = atmosds
 
         tn = ds.tasmin
         tx = ds.tasmax
@@ -455,7 +483,7 @@ class TestWaterBudget:
         uas = ds.uas
         vas = ds.vas
 
-        sfcwind, _ = atmos.wind_speed_from_vector(uas, vas)
+        sfcWind, _ = atmos.wind_speed_from_vector(uas, vas)
 
         tn[0, 100] = np.nan
         tx[0, 101] = np.nan
@@ -475,7 +503,7 @@ class TestWaterBudget:
             rsus=rsus,
             rlds=rlds,
             rlus=rlus,
-            sfcwind=sfcwind,
+            sfcWind=sfcWind,
             method="FAO_PM98",
         )
 
@@ -494,54 +522,56 @@ class TestWaterBudget:
         np.testing.assert_allclose(p_pet_evpot[0, 0], [np.nan])
 
 
-def test_universal_thermal_climate_index():
-    dataset = open_dataset(
-        "ERA5/daily_surface_cancities_1990-1993.nc", branch="add-radiation"
-    )
-    tas = dataset.tas
-    hurs = dataset.hurs
-    sfcWind, sfcWindfromdir = atmos.wind_speed_from_vector(
-        uas=dataset.uas, vas=dataset.vas
-    )
-    rsds = dataset.rsds
-    rsus = dataset.rsus
-    rlds = dataset.rlds
-    rlus = dataset.rlus
-    # Expected values
-    utci_exp = [256.8, 258.0, 237.4, 258.5, 266.2]
+class TestUTCI:
+    def test_universal_thermal_climate_index(self, atmosds):
+        dataset = atmosds
 
-    utci = atmos.universal_thermal_climate_index(
-        tas=tas,
-        hurs=hurs,
-        sfcWind=sfcWind,
-        rsds=rsds,
-        rsus=rsus,
-        rlds=rlds,
-        rlus=rlus,
-        stat="average",
-    )
+        tas = dataset.tas
+        hurs = dataset.hurs
+        sfcWind, sfcWindfromdir = atmos.wind_speed_from_vector(
+            uas=dataset.uas, vas=dataset.vas
+        )
+        rsds = dataset.rsds
+        rsus = dataset.rsus
+        rlds = dataset.rlds
+        rlus = dataset.rlus
+        # Expected values
+        utci_exp = [253.887, 254.367, 238.196, 252.826, 264.495]
 
-    np.testing.assert_allclose(utci.isel(time=0), utci_exp, rtol=1e-03)
+        utci = atmos.universal_thermal_climate_index(
+            tas=tas,
+            hurs=hurs,
+            sfcWind=sfcWind,
+            rsds=rsds,
+            rsus=rsus,
+            rlds=rlds,
+            rlus=rlus,
+            stat="average",
+        )
+
+        np.testing.assert_allclose(utci.isel(time=0), utci_exp, rtol=1e-03)
 
 
-def test_mean_radiant_temperature():
-    dataset = open_dataset(
-        "ERA5/daily_surface_cancities_1990-1993.nc", branch="add-radiation"
-    )
-    rsds = dataset.rsds
-    rsus = dataset.rsus
-    rlds = dataset.rlds
-    rlus = dataset.rlus
+@pytest.mark.skipif(sys.version_info == (3, 10), reason="Crashes often on Python3.10")
+@pytest.mark.thread_unsafe
+class TestMeanRadiantTemperature:
+    def test_mean_radiant_temperature(self, atmosds):
+        dataset = atmosds
 
-    # Expected values
-    exp_sun = [np.nan, np.nan, np.nan, np.nan, np.nan]
-    exp_ins = [277.1, 274.6, 243.5, 268.1, 309.1]
-    exp_avg = [277.1, 274.6, 243.5, 268.1, 278.4]
+        rsds = dataset.rsds
+        rsus = dataset.rsus
+        rlds = dataset.rlds
+        rlus = dataset.rlus
 
-    mrt_sun = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="sunlit")
-    mrt_ins = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="instant")
-    mrt_avg = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="average")
-    rtol = 1e-03
-    np.testing.assert_allclose(mrt_sun.isel(time=0), exp_sun, rtol=rtol)
-    np.testing.assert_allclose(mrt_ins.isel(time=0), exp_ins, rtol=rtol)
-    np.testing.assert_allclose(mrt_avg.isel(time=0), exp_avg, rtol=rtol)
+        # Expected values
+        exp_sun = [np.nan, np.nan, np.nan, np.nan, np.nan]
+        exp_ins = [276.911, 274.742, 243.202, 268.012, 309.151]
+        exp_avg = [276.911, 274.742, 243.202, 268.017, 278.512]
+
+        mrt_sun = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="sunlit")
+        mrt_ins = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="instant")
+        mrt_avg = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="average")
+        rtol = 1e-03
+        np.testing.assert_allclose(mrt_sun.isel(time=0), exp_sun, rtol=rtol)
+        np.testing.assert_allclose(mrt_ins.isel(time=0), exp_ins, rtol=rtol)
+        np.testing.assert_allclose(mrt_avg.isel(time=0), exp_avg, rtol=rtol)

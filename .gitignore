@@ -5,7 +5,6 @@ __pycache__/
 
 # Doc-generated files
 docs/notebooks/dask-worker-space/
-docs/notebooks/*.nc
 
 # C extensions
 *.so
@@ -113,9 +112,11 @@ ENV/
 /docs/xclim.data.rst
 /docs/xclim.ensembles.rst
 /docs/xclim.indicators.atmos.rst
+/docs/xclim.indicators.generic.rst
 /docs/xclim.indicators.land.rst
 /docs/xclim.indicators.rst
 /docs/xclim.indicators.seaIce.rst
+/docs/xclim.indices.fire.rst
 /docs/xclim.indices.rst
 /docs/xclim.locales.rst
 /docs/xclim.rst

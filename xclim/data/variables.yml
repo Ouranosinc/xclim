@@ -4,11 +4,18 @@ variables:
     cell_methods: "area: sum"
     description: Cell area (over the ocean).
     standard_name: cell_area
+  discharge:
+    canonical_units: m3 s-1
+    cell_methods: "time: mean"
+    description: The amount of water, in all phases, flowing in the river channel and flood plain.
+    standard_name: water_volume_transport_in_river_channel
   evspsblpot:
     canonical_units: kg m-2 s-1
     cell_methods: "time: mean"
     description: Potential evapotranspiration flux.
     standard_name: water_potential_evapotranspiration_flux
+    data_flags:
+      - negative_accumulation_values:
   hurs:
     canonical_units: '%'
     cell_methods: "time: mean"
@@ -47,6 +54,8 @@ variables:
     cell_methods: "time: mean"
     description: Precipitation flux due to the convection schemes of the model (all phases).
     standard_name: convective_precipitation_flux
+    data_flags:
+      - negative_accumulation_values:
   prsn:
     canonical_units: kg m-2 s-1
     cell_methods: "time: mean"
@@ -67,6 +76,19 @@ variables:
     cell_methods: "time: mean"
     description: Air pressure at sea level.
     standard_name: air_pressure_at_sea_level
+    data_flags:
+      - values_repeating_for_n_or_more_days:
+          n: 5
+  rls:
+    canonical_units: W m-2
+    cell_methods: "time: mean"
+    description: Net longwave radiation.
+    standard_name: surface_net_downward_longwave_flux
+  rss:
+    canonical_units: W m-2
+    cell_methods: "time: mean"
+    description: Net shortwave radiation.
+    standard_name: surface_net_downward_shortwave_flux
   rlds:
     canonical_units: W m-2
     cell_methods: "time: mean"
@@ -113,6 +135,11 @@ variables:
     standard_name: sea_ice_area_fraction
     data_flags:
       - percentage_values_outside_of_bounds:
+  smd:
+    canonical_units: mm d-1
+    cell_methods: "time: mean"
+    description: Soil moisture deficit.
+    standard_name: soil_moisture_deficit
   snc:
     canonical_units: '%'
     cell_methods: "time: mean"
@@ -127,6 +154,11 @@ variables:
     standard_name: surface_snow_thickness
     data_flags:
       - negative_accumulation_values:
+  snr:
+    canonical_units: kg m-3
+    cell_methods: "time: mean"
+    description: Surface snow density.
+    standard_name: surface_snow_density
   snw:
     canonical_units: kg m-2
     cell_methods: "time: mean"
@@ -201,8 +233,13 @@ variables:
   tdps:
     canonical_units: K
     cell_methods: "time: mean"
-    description: Mean surface dew point temperaure.
+    description: Mean surface dew point temperature.
     standard_name: dew_point_temperature
+  thickness_of_rainfall_amount:
+    canonical_units: m
+    cell_methods: "time: sum"
+    description: Accumulated depth of rainfall, i.e. the thickness of a layer of liquid water having the same mass per unit area as the rainfall amount.
+    standard_name: thickness_of_rainfall_amount
   ua:
     canonical_units: m s-1
     cell_methods: "time: mean"
@@ -232,3 +269,64 @@ variables:
           op: gt
           thresh: 4.0 m s-1
           n: 5
+conversions:
+  amount2rate:  # Standard names allowed in automatic `amount2rate` and `rate2amount` conversions.
+    dimensionality:  # amount.dimensionality / flux.dimensionality
+      time: 1
+    valid_names:
+    # First element of each entry is the amount, second is the flux (or rate)
+      - [convective_precipitation_amount, convective_precipitation_flux]
+      - [convective_rainfall_amount, convective_rainfall_flux]
+      - [convective_snowfall_amount, convective_snowfall_flux]
+      - [graupel_and_hail_fall_amount, graupel_and_hail_fall_flux]
+      - [graupel_fall_amount, graupel_fall_flux]
+      - [hail_fall_amount, hail_fall_flux]
+      - [lwe_thickness_of_convective_precipitation_amount, lwe_convective_precipitation_rate]
+      - [lwe_thickness_of_convective_snowfall_amount, lwe_convective_snowfall_rate]
+      - [lwe_thickness_of_precipitation_amount, lwe_precipitation_rate]
+      - [lwe_thickness_of_snowfall_amount, lwe_snowfall_rate]
+      - [lwe_thickness_of_stratiform_precipitation_amount, lwe_stratiform_precipitation_rate]
+      - [lwe_thickness_of_stratiform_snowfall_amount, lwe_stratiform_snowfall_rate]
+      - [thickness_of_convective_rainfall_amount, convective_rainfall_rate]
+      - [precipitation_amount, precipitation_flux]
+      - [rainfall_amount, rainfall_flux]
+      - [thickness_of_rainfall_amount, rainfall_rate]
+      - [runoff_amount, runoff_flux]
+      - [snowfall_amount, snowfall_flux]
+      - [stratiform_graupel_fall_amount, stratiform_graupel_flux]
+      - [stratiform_precipitation_amount, stratiform_precipitation_flux]
+      - [stratiform_rainfall_amount, stratiform_rainfall_flux]
+      - [thickness_of_stratiform_rainfall_amount, stratiform_rainfall_rate]
+      - [stratiform_snowfall_amount, stratiform_snowfall_flux]
+      - [subsurface_runoff_amount, subsurface_runoff_flux]
+      - [surface_runoff_amount, surface_runoff_flux]
+      - [surface_snow_melt_amount, surface_snow_melt_flux]
+      - [transpiration_amount, transpiration_flux]
+      - [water_potential_evaporation_amount, water_potential_evaporation_flux]
+  amount2lwethickness:  # Standard names of liquid water quantities, thus allowed in thickness to amount and rate to flux conversions
+  # First element of each entry is the mass over area (amount, flux), second is the thickness (thickness, rate)
+    dimensionality:  # amount.dimensionality / thickness.dimensionality
+      mass: 1
+      length: -3
+    valid_names:
+      - [convective_precipitation_flux, lwe_convective_precipitation_rate]
+      - [convective_precipitation_amount, lwe_thickness_of_convective_precipitation_amount]
+      - [convective_rainfall_amount, thickness_of_convective_rainfall_amount]
+      - [convective_rainfall_flux, convective_rainfall_rate]
+      - [convective_snowfall_amount, lwe_thickness_of_convective_snowfall_amount]
+      - [convective_snowfall_flux, lwe_convective_snowfall_rate]
+      - [precipitation_flux, lwe_precipitation_rate]
+      - [snowfall_flux, lwe_snowfall_rate]
+      - [stratiform_precipitation_flux, lwe_stratiform_precipitation_rate]
+      - [stratiform_snowfall_flux, lwe_stratiform_snowfall_rate]
+      - [canopy_water_amount, lwe_thickness_of_canopy_water_amount]
+      - [precipitation_amount, lwe_thickness_of_precipitation_amount]
+      - [snowfall_amount, lwe_thickness_of_snowfall_amount]
+      - [stratiform_precipitation_amount, lwe_thickness_of_stratiform_precipitation_amount]
+      - [stratiform_snowfall_amount, lwe_thickness_of_stratiform_snowfall_amount]
+      - [surface_snow_amount, lwe_thickness_of_surface_snow_amount]
+      - [water_evaporation_amount, lwe_thickness_of_water_evaporation_amount]
+      - [rainfall_amount, thickness_of_rainfall_amount]
+      - [rainfall_flux, rainfall_rate]
+      - [stratiform_rainfall_amount, thickness_of_stratiform_rainfall_amount]
+      - [stratiform_rainfall_flux, stratiform_rainfall_rate]

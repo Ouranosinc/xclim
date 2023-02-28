@@ -31,6 +31,7 @@ Contributors
 * Marie-Pier Labonté `@marielabonte <https://github.com/marielabonte>`_
 * Jamie Quinn <jamiejquinn@jamiejquinn.com> `@JamieJQuinn <https://github.com/JamieJQuinn>`_
 * Philippe Roy <roy.philippe@ouranos.ca> `@Balinus <https://github.com/Balinus>`_
-* Yannick Rousseau `@yrouranos <https://github.com/yrouranos>`_
+* Yannick Rousseau
+* Dougie Squire <dougiesquire@gmail.com> `@dougiesquire <https://github.com/dougiesquire>`_
 * Ag Stephens <ag.stephens@stfc.ac.uk> `@agstephens <https://github.com/agstephens>`_
 * Maliko Tanguy <malngu@ceh.ac.uk> `@malngu <https://github.com/malngu>`_

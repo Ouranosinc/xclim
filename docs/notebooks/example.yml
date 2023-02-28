@@ -6,24 +6,34 @@ doc: |
   This module is an example of YAML generated xclim submodule.
 realm: atmos
 references: xclim documentation https://xclim.readthedocs.io
+variables:
+  prveg:
+    canonical_units: kg m-2 s-1
+    description: Precipitation flux on the outer surface of the forest
+    standard_name: precipitation_flux_onto_canopy
 indicators:
   RX1day:
     base: rx1day
     cf_attrs:
       long_name: Highest 1-day precipitation amount
-  RX5day:
+    context: hydro
+  RX5day_canopy:
     base: max_n_day_precipitation_amount
     cf_attrs:
-      long_name: Highest 5-day precipitation amount
+      long_name: Highest 5-day precipitation amount on the canopy
+    input:
+      pr: prveg
     parameters:
       freq: QS-DEC
       window: 5
+    context: hydro
   R75pdays:
     base: days_over_precip_thresh
     parameters:
       pr_per:
         description: Daily 75th percentile of wet day precipitation flux.
       thresh: 1 mm/day
+    context: hydro
   fd:
     compute: count_occurrences
     input:
@@ -53,6 +63,7 @@ indicators:
     parameters:
       perc: 95
     references: climdex
+    context: hydro
   R99p:
     base: .R95p
     cf_attrs:
@@ -60,3 +71,4 @@ indicators:
       - var_name: R99p_days
     parameters:
       perc: 99
+    context: hydro

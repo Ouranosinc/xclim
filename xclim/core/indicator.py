@@ -33,6 +33,13 @@ details on each.
     references: <references> # Merged with indicator-specific references (joined with a new line)
     base: <base indicator class>  # Defaults to "Daily" and applies to all indicators that do not give it.
     doc: <module docstring>  # Defaults to a minimal header, only valid if the module doesn't already exists.
+    variables:  # Optional section if indicators declared below rely on variables unknown to xclim (no in `xclim.core.utils.VARIABLES`)
+                # The variables are not module-dependent and will overwrite any already existing with the same name.
+      <varname>:
+        canonical_units: <units> # required
+        description: <description> # required
+        standard_name: <expected standard_name> # optional
+        cell_methods: <exptected cell_methods> # optional
     indicators:
       <identifier>:
         # From which Indicator to inherit
@@ -56,11 +63,11 @@ details on each.
 
         # Compute function
         compute: <function name>  # Referring to a function in the supplied `Indices` module, xclim.indices.generic or xclim.indices
-        input:  # When "compute" is a generic function this is a mapping from argument
-                # name to what CMIP6/xclim variable is expected. This will allow for
-                # declaring expected input units and have a CF metadata check on the inputs.
-                # Can also be used to modify the expected variable, as long as it has
-                # the same units. Ex: tas instead of tasmin.
+        input:  # When "compute" is a generic function, this is a mapping from argument name to the expected variable.
+                # This will allow the input units and CF metadata checks to run on the inputs.
+                # Can also be used to modify the expected variable, as long as it has the same dimensionality
+                # Ex: tas instead of tasmin.
+                # Can refer to a variable declared in the `variables` section above.
           <var name in compute> : <variable official name>
           ...
         parameters:
@@ -143,9 +150,9 @@ from .utils import (
     VARIABLES,
     InputKind,
     MissingVariableError,
-    PercentileDataArray,
     ValidationError,
     infer_kind_from_parameter,
+    is_percentile_dataarray,
     load_module,
     raise_warn_or_log,
 )
@@ -357,6 +364,7 @@ class Indicator(IndicatorRegistrar):
     keywords = ""
     references = ""
     notes = ""
+    _version_deprecated = ""
 
     _all_parameters: Mapping[str, Parameter] = {}
     """A dictionary mapping metadata about the input parameters to the indicator.
@@ -448,8 +456,8 @@ class Indicator(IndicatorRegistrar):
         # All updates done.
         kwds["_all_parameters"] = parameters
 
-        # Parse kwds to organize `cf_attrs`
-        # And before converting callables to staticmethods
+        # Parse keywords to organize `cf_attrs`
+        # And before converting callables to static methods
         kwds["cf_attrs"] = cls._parse_output_attrs(kwds, identifier)
 
         # Convert function objects to static methods.
@@ -478,7 +486,7 @@ class Indicator(IndicatorRegistrar):
             new.__module__ = f"xclim.indicators.{kwds['module']}"
         else:
             # If the module was not forced, set the module to the base class' module.
-            # Otherwise all indicators will have module `xclim.core.indicator`.
+            # Otherwise, all indicators will have module `xclim.core.indicator`.
             new.__module__ = cls.__module__
 
         #  Add the created class to the registry
@@ -504,7 +512,8 @@ class Indicator(IndicatorRegistrar):
             params_dict.setdefault(name, {})["units"] = unit
 
         compute_sig = signature(compute)
-        # Check that the `Parameters` section of the docstring does not include parameters that are not in the `compute` function signature.
+        # Check that the `Parameters` section of the docstring does not include parameters
+        # that are not in the `compute` function signature.
         if not set(params_dict.keys()).issubset(compute_sig.parameters.keys()):
             raise ValueError(
                 f"Malformed docstring on {compute} : the parameters "
@@ -514,7 +523,8 @@ class Indicator(IndicatorRegistrar):
         for name, param in compute_sig.parameters.items():
             meta = params_dict.setdefault(name, {})
             meta["default"] = param.default
-            # Units read from compute.in_units or units passed explicitly, will be added to "meta" elsewhere in the __new__.
+            # Units read from compute.in_units or units passed explicitly,
+            # will be added to "meta" elsewhere in the __new__.
             passed_meta = passed_parameters.get(name, {})
             has_units = ("units" in meta) or (
                 isinstance(passed_meta, dict) and "units" in passed_meta
@@ -641,7 +651,7 @@ class Indicator(IndicatorRegistrar):
                     n_outs = len(arg)
 
             # Populate new cf_attrs from parsing cf_names passed directly.
-            cf_attrs = [{} for i in range(n_outs)]
+            cf_attrs = [{} for _ in range(n_outs)]
             for name in cls._cf_names:
                 values = kwds.pop(name, None)
                 if values is None:  # None passed, skip
@@ -654,7 +664,7 @@ class Indicator(IndicatorRegistrar):
                         f"Attribute {name} has {len(values)} elements but should xclim expected {n_outs}."
                     )
                 for attrs, value in zip(cf_attrs, values):
-                    if value:  # Skip the empty ones (None or '')
+                    if value:  # Skip the empty ones (None or "")
                         attrs[name] = value
         # else we assume a list of dicts
 
@@ -797,6 +807,10 @@ class Indicator(IndicatorRegistrar):
         # Put the variables in `das`, parse them according to the following annotations:
         #     das : OrderedDict of variables (required + non-None optionals)
         #     params : OrderedDict of parameters (var_kwargs as a single argument, if any)
+
+        if self._version_deprecated:
+            self._show_deprecation_warning()  # noqa
+
         das, params = self._parse_variables_from_call(args, kwds)
 
         if OPTIONS[KEEP_ATTRS] is True or (
@@ -874,7 +888,7 @@ class Indicator(IndicatorRegistrar):
             return outs[0]
         return tuple(outs)
 
-    def _parse_variables_from_call(self, args, kwds) -> (OrderedDict, dict):
+    def _parse_variables_from_call(self, args, kwds) -> tuple[OrderedDict, dict]:
         """Extract variable and optional variables from call arguments."""
         # Bind call arguments to `compute` arguments and set defaults.
         ba = self.__signature__.bind(*args, **kwds)
@@ -889,7 +903,7 @@ class Indicator(IndicatorRegistrar):
         for name, param in self._all_parameters.items():
             if not param.injected:
                 # If a variable pop the arg
-                if PercentileDataArray.is_compatible(params[name]):
+                if is_percentile_dataarray(params[name]):
                     # duplicate percentiles DA in both das and params
                     das[name] = params[name]
                 elif param.kind in [InputKind.VARIABLE, InputKind.OPTIONAL_VARIABLE]:
@@ -928,7 +942,6 @@ class Indicator(IndicatorRegistrar):
         # Pre-computation validation checks on DataArray arguments
         self._bind_call(self.datacheck, **das)
         self._bind_call(self.cfcheck, **das)
-
         return das, params
 
     def _postprocess(self, outs, das, params):
@@ -1214,8 +1227,13 @@ class Indicator(IndicatorRegistrar):
                     mba["indexer"] = dv
                 else:
                     mba["indexer"] = args.get("freq") or "YS"
-            elif PercentileDataArray.is_compatible(v):
+            elif is_percentile_dataarray(v):
                 mba.update(get_percentile_metadata(v, k))
+            elif (
+                isinstance(v, DataArray)
+                and cls._all_parameters[k].kind == InputKind.QUANTIFIED
+            ):
+                mba[k] = "<an array>"
             else:
                 mba[k] = v
         out = {}
@@ -1266,11 +1284,20 @@ class Indicator(IndicatorRegistrar):
         * assert no temperature has the same value 5 days in a row
 
         This base datacheck checks that the input data has a valid sampling frequency, as given in self.src_freq.
+        If there are multiple inputs, it also checks if they all have the same frequency and the same anchor.
         """
         if self.src_freq is not None:
             for key, da in das.items():
                 if "time" in da.coords and da.time.ndim == 1 and len(da.time) > 3:
                     datachecks.check_freq(da, self.src_freq, strict=True)
+
+            datachecks.check_common_time(
+                [
+                    da
+                    for da in das.values()
+                    if "time" in da.coords and da.time.ndim == 1 and len(da.time) > 3
+                ]
+            )
 
     def __getattr__(self, attr):
         """Return the attribute."""
@@ -1309,6 +1336,14 @@ class Indicator(IndicatorRegistrar):
             for name, param in self._all_parameters.items()
             if param.injected
         }
+
+    def _show_deprecation_warning(self):
+        warnings.warn(
+            f"`{self.title}` is deprecated as of xclim v{self._version_deprecated}. "
+            f"See the xclim release notes for more information.",
+            DeprecationWarning,
+            stacklevel=3,
+        )
 
 
 class ResamplingIndicator(Indicator):
@@ -1485,6 +1520,7 @@ def build_indicator_module(
     name: str,
     objs: Mapping[str, Indicator],
     doc: str | None = None,
+    reload: bool = False,
 ) -> ModuleType:
     """Create or update a module from imported objects.
 
@@ -1499,6 +1535,9 @@ def build_indicator_module(
       Mapping of the indicators to put in the new module. Keyed by the name they will take in that module.
     doc : str
       Docstring of the new module. Defaults to a simple header. Invalid if the module already exists.
+    reload : bool
+      If reload is True and the module already exists, it is first removed before being rebuilt.
+      If False (default), indicators are added or updated, but not removed.
 
     Returns
     -------
@@ -1513,6 +1552,13 @@ def build_indicator_module(
                 "Passed docstring ignored when extending existing module.", stacklevel=1
             )
         out = getattr(indicators, name)
+        if reload:
+            for name, ind in list(out.iter_indicators()):
+                if name not in objs:
+                    # Remove the indicator from the registries and the module
+                    del registry[ind._registry_id]
+                    del _indicators_registry[ind.__class__]
+                    del out.__dict__[name]
     else:
         doc = doc or f"{name.capitalize()} indicators\n" + "=" * (len(name) + 11)
         try:
@@ -1533,6 +1579,7 @@ def build_indicator_module_from_yaml(
     translations: dict[str, dict | PathLike] | None = None,
     mode: str = "raise",
     encoding: str = "UTF8",
+    reload: bool = False,
 ) -> ModuleType:
     """Build or extend an indicator module from a YAML file.
 
@@ -1560,6 +1607,9 @@ def build_indicator_module_from_yaml(
     encoding: str
       The encoding used to open the `.yaml` and `.json` files.
       It defaults to UTF-8, overriding python's mechanism which is machine dependent.
+    reload : bool
+      If reload is True and the module already exists, it is first removed before being rebuilt.
+      If False (default), indicators are added or updated, but not removed.
 
     Returns
     -------
@@ -1655,6 +1705,14 @@ def build_indicator_module_from_yaml(
         elif b:
             dbase[attr] = b
 
+    # Parse the variables:
+    for varname, vardata in yml.get("variables", {}).items():
+        if varname in VARIABLES and VARIABLES[varname] != vardata:
+            warnings.warn(
+                f"Variable {varname} from module {module_name} will overwrite the one already defined in `xclim.core.utils.VARIABLES`"
+            )
+        VARIABLES[varname] = vardata.copy()
+
     # Parse the indicators:
     mapping = {}
     for identifier, data in yml["indicators"].items():
@@ -1695,7 +1753,7 @@ def build_indicator_module_from_yaml(
             )
 
     # Construct module
-    mod = build_indicator_module(module_name, objs=mapping, doc=doc)
+    mod = build_indicator_module(module_name, objs=mapping, doc=doc, reload=reload)
 
     # If there are translations, load them
     if translations:

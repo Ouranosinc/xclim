@@ -32,15 +32,15 @@ def _adapt_freq(
     Parameters
     ----------
     ds : xr.Dataset
-      With variables :  "ref", Target/reference data, usually observed data.
-      and  "sim", Simulated data.
+        With variables :  "ref", Target/reference data, usually observed data and "sim", Simulated data.
     dim : str, or sequence of strings
-      Dimension name(s). If more than one, the probabilities and quantiles are computed within all the dimensions.
-      If `window` is in the names, it is removed before the correction and the final timeseries is corrected along dim[0] only.
+        Dimension name(s). If more than one, the probabilities and quantiles are computed within all the dimensions.
+        If `window` is in the names, it is removed before the correction
+        and the final timeseries is corrected along dim[0] only.
     group : Union[str, Grouper]
-      Grouping information, see base.Grouper
+        Grouping information, see base.Grouper
     thresh : float
-      Threshold below which values are considered zero.
+        Threshold below which values are considered zero.
 
     Returns
     -------
@@ -66,7 +66,6 @@ def _adapt_freq(
         pth = dP0.copy()
         sim_ad = ds.sim.copy()
     else:
-
         # Compute : ecdf_ref^-1( ecdf_sim( thresh ) )
         # The value in ref with the same rank as the first non-zero value in sim.
         # pth is meaningless when freq. adaptation is not needed
@@ -117,20 +116,20 @@ def _normalize(
 
     Parameters
     ----------
-    ds: xr.Dataset
-      The variable `data` is normalized.
-      If a `norm` variable is present, is uses this one instead of computing the norm again.
+    ds : xr.Dataset
+        The variable `data` is normalized.
+        If a `norm` variable is present, is uses this one instead of computing the norm again.
     group : Union[str, Grouper]
-      Grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+        Grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
     dim : sequence of strings
-      Dimension name(s).
+        Dimension name(s).
     kind : {'+', '*'}
-      How to apply the adjustment, using either additive or multiplicative methods.
+        How to apply the adjustment, using either additive or multiplicative methods.
 
     Returns
     -------
     xr.Dataset
-      Group-wise anomaly of x
+        Group-wise anomaly of x
 
     Notes
     -----
@@ -153,12 +152,12 @@ def _reordering(ds, *, dim):
 
     Parameters
     ----------
-    ds: xr.Dataset
-      With variables:
-        - sim : The timeseries to reorder.
-        - ref : The timeseries whose rank to use.
-    dim: str
-      The dimension along which to reorder.
+    ds : xr.Dataset
+        With variables:
+            - sim : The timeseries to reorder.
+            - ref : The timeseries whose rank to use.
+    dim : str
+        The dimension along which to reorder.
     """
 
     def _reordering_1d(data, ordr):

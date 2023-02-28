@@ -8,7 +8,6 @@ the simulated climate variability.
 """
 from __future__ import annotations
 
-import os
 from warnings import warn
 
 import numpy as np
@@ -46,18 +45,18 @@ def kkz_reduce_ensemble(
     Parameters
     ----------
     data : xr.DataArray
-      Selection criteria data : 2-D xr.DataArray with dimensions 'realization' (N) and
-      'criteria' (P). These are the values used for clustering. Realizations represent the individual original
-      ensemble members and criteria the variables/indicators used in the grouping algorithm.
+        Selection criteria data : 2-D xr.DataArray with dimensions 'realization' (N) and
+        'criteria' (P). These are the values used for clustering. Realizations represent the individual original
+        ensemble members and criteria the variables/indicators used in the grouping algorithm.
     num_select : int
-      The number of members to select.
+        The number of members to select.
     dist_method : str
-      Any distance metric name accepted by `scipy.spatial.distance.cdist`.
+        Any distance metric name accepted by `scipy.spatial.distance.cdist`.
     standardize : bool
-      Whether to standardize the input before running the selection or not.
-      Standardization consists in translation as to have a zero mean and scaling as to have a unit standard deviation.
-    cdist_kwargs
-      All extra arguments are passed as-is to `scipy.spatial.distance.cdist`, see its docs for more information.
+        Whether to standardize the input before running the selection or not.
+        Standardization consists in translation as to have a zero mean and scaling as to have a unit standard deviation.
+    **cdist_kwargs
+        All extra arguments are passed as-is to `scipy.spatial.distance.cdist`, see its docs for more information.
 
     Returns
     -------
@@ -67,7 +66,6 @@ def kkz_reduce_ensemble(
     References
     ----------
     :cite:cts:`cannon_selecting_2015,katsavounidis_new_1994`
-
     """
     if standardize:
         data = (data - data.mean("realization")) / data.std("realization")
@@ -120,32 +118,32 @@ def kmeans_reduce_ensemble(
     Parameters
     ----------
     data : xr.DataArray
-      Selecton criteria data : 2-D xr.DataArray with dimensions 'realization' (N) and
-      'criteria' (P). These are the values used for clustering. Realizations represent the individual original
-      ensemble members and criteria the variables/indicators used in the grouping algorithm.
-    method : dict
-      Dictionary defining selection method and associated value when required. See Notes.
+        Selection criteria data : 2-D xr.DataArray with dimensions 'realization' (N) and
+        'criteria' (P). These are the values used for clustering. Realizations represent the individual original
+        ensemble members and criteria the variables/indicators used in the grouping algorithm.
+    method : dict, optional
+        Dictionary defining selection method and associated value when required. See Notes.
     max_clusters : int, optional
-      Maximum number of members to include in the output ensemble selection.
-      When using 'rsq_optimize' or 'rsq_cutoff' methods, limit the final selection to a maximum number even if method
-      results indicate a higher value. Defaults to N.
-    variable_weights: np.ndarray, optional
-      An array of size P. This weighting can be used to influence of weight of the climate indices (criteria dimension)
-      on the clustering itself.
-    model_weights: np.ndarray, optional
-      An array of size N. This weighting can be used to influence which realization is selected
-      from within each cluster. This parameter has no influence on the clustering itself.
-    sample_weights: np.ndarray, optional
-      An array of size N. sklearn.cluster.KMeans() sample_weights parameter. This weighting can be
-      used to influence of weight of simulations on the clustering itself.
-      See: https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html
+         Maximum number of members to include in the output ensemble selection.
+        When using 'rsq_optimize' or 'rsq_cutoff' methods, limit the final selection to a maximum number even if method
+        results indicate a higher value. Defaults to N.
+    variable_weights : np.ndarray, optional
+        An array of size P. This weighting can be used to influence of weight of the climate indices (criteria dimension)
+        on the clustering itself.
+    model_weights : np.ndarray, optional
+        An array of size N. This weighting can be used to influence which realization is selected
+        from within each cluster. This parameter has no influence on the clustering itself.
+    sample_weights : np.ndarray, optional
+        An array of size N. sklearn.cluster.KMeans() sample_weights parameter. This weighting can be
+        used to influence of weight of simulations on the clustering itself.
+        See: https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html
     random_state: int or np.random.RandomState, optional
-      sklearn.cluster.KMeans() random_state parameter. Determines random number generation for centroid
-      initialization. Use an int to make the randomness deterministic.
-      See: https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html
+        sklearn.cluster.KMeans() random_state parameter. Determines random number generation for centroid
+        initialization. Use an int to make the randomness deterministic.
+        See: https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html
     make_graph: bool
-      output a dictionary of input for displays a plot of R² vs. the number of clusters.
-      Defaults to True if matplotlib is installed in runtime environment.
+        output a dictionary of input for displays a plot of R² vs. the number of clusters.
+        Defaults to True if matplotlib is installed in runtime environment.
 
     Notes
     -----
@@ -176,11 +174,11 @@ def kmeans_reduce_ensemble(
     Returns
     -------
     list
-      Selected model indexes (positions)
+        Selected model indexes (positions)
     np.ndarray
-      KMeans clustering results
+        KMeans clustering results
     dict
-      Dictionary of input data for creating R² profile plot. 'None' when make_graph=False
+        Dictionary of input data for creating R² profile plot. 'None' when make_graph=False
 
     References
     ----------
@@ -188,42 +186,45 @@ def kmeans_reduce_ensemble(
 
     Examples
     --------
-    >>> import xclim
-    >>> from xclim.ensembles import create_ensemble, kmeans_reduce_ensemble
-    >>> from xclim.indices import hot_spell_frequency
+    .. code-block::
 
-    Start with ensemble datasets for temperature:
+        import xclim
+        from xclim.ensembles import create_ensemble, kmeans_reduce_ensemble
+        from xclim.indices import hot_spell_frequency
 
-    >>> ensTas = create_ensemble(temperature_datasets)
+        # Start with ensemble datasets for temperature:
 
-    Calculate selection criteria -- Use annual climate change Δ fields between 2071-2100 and 1981-2010 normals.
-    First, average annual temperature:
+        ensTas = create_ensemble(temperature_datasets)
 
-    >>> tg = xclim.atmos.tg_mean(tas=ensTas.tas)
-    >>> his_tg = tg.sel(time=slice("1990", "2019")).mean(dim="time")
-    >>> fut_tg = tg.sel(time=slice("2020", "2050")).mean(dim="time")
-    >>> dtg = fut_tg - his_tg
+        # Calculate selection criteria -- Use annual climate change Δ fields between 2071-2100 and 1981-2010 normals.
+        # First, average annual temperature:
 
-    Then, Hotspell frequency as second indicator:
+        tg = xclim.atmos.tg_mean(tas=ensTas.tas)
+        his_tg = tg.sel(time=slice("1990", "2019")).mean(dim="time")
+        fut_tg = tg.sel(time=slice("2020", "2050")).mean(dim="time")
+        dtg = fut_tg - his_tg
 
-    >>> hs = hot_spell_frequency(tasmax=ensTas.tas, window=2, thresh_tasmax="10 degC")
-    >>> his_hs = hs.sel(time=slice("1990", "2019")).mean(dim="time")
-    >>> fut_hs = hs.sel(time=slice("2020", "2050")).mean(dim="time")
-    >>> dhs = fut_hs - his_hs
+        # Then, hot spell frequency as second indicator:
 
-    Create a selection criteria xr.DataArray:
+        hs = hot_spell_frequency(tasmax=ensTas.tas, window=2, thresh_tasmax="10 degC")
+        his_hs = hs.sel(time=slice("1990", "2019")).mean(dim="time")
+        fut_hs = hs.sel(time=slice("2020", "2050")).mean(dim="time")
+        dhs = fut_hs - his_hs
 
-    >>> from xarray import concat
-    >>> crit = concat((dtg, dhs), dim="criteria")
+        # Create a selection criteria xr.DataArray:
 
-    Finally, create clusters and select realization ids of reduced ensemble:
+        from xarray import concat
 
-    >>> ids, cluster, fig_data = kmeans_reduce_ensemble(
-    ...     data=crit, method={"rsq_cutoff": 0.9}, random_state=42, make_graph=False
-    ... )
-    >>> ids, cluster, fig_data = kmeans_reduce_ensemble(
-    ...     data=crit, method={"rsq_optimize": None}, random_state=42, make_graph=True
-    ... )
+        crit = concat((dtg, dhs), dim="criteria")
+
+        # Finally, create clusters and select realization ids of reduced ensemble:
+
+        ids, cluster, fig_data = kmeans_reduce_ensemble(
+            data=crit, method={"rsq_cutoff": 0.9}, random_state=42, make_graph=False
+        )
+        ids, cluster, fig_data = kmeans_reduce_ensemble(
+            data=crit, method={"rsq_optimize": None}, random_state=42, make_graph=True
+        )
     """
     if make_graph:
         fig_data = {}
@@ -414,7 +415,6 @@ def plot_rsqprofile(fig_data):
         col = "k--"
         label = f"R² selection > {fig_data['method']['rsq_cutoff']} (n = {n_clusters})"
         if "max_clusters" in fig_data.keys():
-
             if rsq[n_clusters - 1] < fig_data["method"]["rsq_cutoff"]:
                 col = "r--"
                 label = (

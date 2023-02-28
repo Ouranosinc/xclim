@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
+from xclim.core.units import units
 from xclim.sdba.adjustment import EmpiricalQuantileMapping
 from xclim.sdba.base import Grouper
 from xclim.sdba.processing import (
@@ -142,7 +143,6 @@ def test_adapt_freq_add_dims(use_dask):
 
 
 def test_escore():
-
     x = np.array([1, 4, 3, 6, 4, 7, 5, 8, 4, 5, 3, 7]).reshape(2, 6)
     y = np.array([6, 6, 3, 8, 5, 7, 3, 7, 3, 6, 4, 3]).reshape(2, 6)
 
@@ -190,14 +190,16 @@ def test_to_additive(pr_series, hurs_series):
     # log
     pr = pr_series(np.array([0, 1e-5, 1, np.e**10]))
 
-    prlog = to_additive_space(pr, lower_bound="0 mm/d", trans="log")
+    with units.context("hydro"):
+        prlog = to_additive_space(pr, lower_bound="0 mm/d", trans="log")
     np.testing.assert_allclose(prlog, [-np.Inf, -11.512925, 0, 10])
     assert prlog.attrs["sdba_transform"] == "log"
     assert prlog.attrs["sdba_transform_units"] == "kg m-2 s-1"
 
     with xr.set_options(keep_attrs=True):
         pr1 = pr + 1
-    prlog2 = to_additive_space(pr1, trans="log", lower_bound="1.0 kg m-2 s-1")
+    with units.context("hydro"):
+        prlog2 = to_additive_space(pr1, trans="log", lower_bound="1.0 kg m-2 s-1")
     np.testing.assert_allclose(prlog2, [-np.Inf, -11.512925, 0, 10])
     assert prlog2.attrs["sdba_transform_lower"] == 1.0
 
@@ -228,7 +230,10 @@ def test_to_additive(pr_series, hurs_series):
 def test_from_additive(pr_series, hurs_series):
     # log
     pr = pr_series(np.array([0, 1e-5, 1, np.e**10]))
-    pr2 = from_additive_space(to_additive_space(pr, lower_bound="0 mm/d", trans="log"))
+    with units.context("hydro"):
+        pr2 = from_additive_space(
+            to_additive_space(pr, lower_bound="0 mm/d", trans="log")
+        )
     np.testing.assert_allclose(pr[1:], pr2[1:])
     pr2.attrs.pop("history")
     assert pr.attrs == pr2.attrs

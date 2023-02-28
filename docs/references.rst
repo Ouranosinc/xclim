@@ -1,17 +1,16 @@
-.. only:: html or text
+.. only:: html
 
     ============
     Bibliography
     ============
 
-    General References
-    ------------------
+    McArthur Forest Fire Danger System References
+    ---------------------------------------------
 
-    .. bibliography::
-       :style: xcstyle
+    See: :ref:`ffdi-footnotes`
 
-    Fire Weather Index References
-    -----------------------------
+    Canadian Forest Fire Weather Index System References
+    ----------------------------------------------------
 
     See: :ref:`fwi-footnotes`
 
@@ -19,3 +18,8 @@
     ---------------
 
     See: :ref:`sdba-footnotes`
+
+    General References
+    ------------------
+
+.. bibliography::

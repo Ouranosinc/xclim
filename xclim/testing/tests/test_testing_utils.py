@@ -66,6 +66,7 @@ class TestFileRequests:
 
     # Not that this test is super slow, but there is no need in spamming github's API for no reason.
     @pytest.mark.slow
+    @pytest.mark.xfail(reason="Test is rate limited by GitHub.")
     def test_list_datasets(self):
         out = utilities.list_datasets()
 
@@ -137,11 +138,3 @@ class TestTestingFileAccessors:
             utilities.open_dataset(
                 "doesnt_exist.nc", dap_url="https://dap.service.does.not.exist/"
             )
-
-
-@pytest.mark.xfail(reason="Broken link to the excel file.")
-class TestCMIP6ControlledVocabulary:
-    def test_get_all_cmip6_variables(self):
-        all_variables = utilities.get_all_CMIP6_variables()
-        assert all_variables["tasmax"]["standard_name"] == "air_temperature"
-        assert all_variables["sfcWind"]["units"] == "m s-1"

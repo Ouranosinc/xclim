@@ -15,27 +15,55 @@ class TestSnowDepth:
         np.testing.assert_array_equal(out, [100, 100, 100, np.nan])
 
 
-class TestSnowCoverDuration:
+class TestSnowDepthCoverDuration:
     def test_simple(self, snd_series):
         snd = snd_series(np.ones(110), start="2001-01-01")
-        out = land.snow_cover_duration(snd, freq="M")
+
+        out = land.snd_season_length(snd, freq="M")
         assert out.units == "days"
         np.testing.assert_array_equal(out, [31, 28, 31, np.nan])
 
 
-class TestContinuousSnowCoverStartEnd:
+class TestSnowWaterCoverDuration:
+    def test_simple(self, snw_series):
+        snw = snw_series(np.ones(110) * 1000, start="2001-01-01")
+        out = land.snw_season_length(snw, freq="M")
+        assert out.units == "days"
+        np.testing.assert_array_equal(out, [31, 28, 31, np.nan])
+
+
+class TestContinuousSnowDepthCoverStartEnd:
     def test_simple(self, snd_series):
         a = np.zeros(365)
+        # snow depth
         a[100:200] = 0.03
         snd = snd_series(a, start="2001-07-01")
         snd = snd.expand_dims(lat=[0, 1, 2])
-        out = land.continuous_snow_cover_start(snd)
+
+        out = land.snd_season_start(snd)
         assert out.units == ""
         np.testing.assert_array_equal(out.isel(lat=0), snd.time.dt.dayofyear[100])
 
-        out = land.continuous_snow_cover_end(snd)
+        out = land.snd_season_end(snd)
         assert out.units == ""
         np.testing.assert_array_equal(out.isel(lat=0), snd.time.dt.dayofyear[200])
+
+
+class TestContinuousSnowWaterCoverStartEnd:
+    def test_simple(self, snw_series):
+        a = np.zeros(365)
+        # snow amount
+        a[100:200] = 0.03 * 1000
+        snw = snw_series(a, start="2001-07-01")
+        snw = snw.expand_dims(lat=[0, 1, 2])
+
+        out = land.snw_season_start(snw)
+        assert out.units == ""
+        np.testing.assert_array_equal(out.isel(lat=0), snw.time.dt.dayofyear[100])
+
+        out = land.snw_season_end(snw)
+        assert out.units == ""
+        np.testing.assert_array_equal(out.isel(lat=0), snw.time.dt.dayofyear[200])
 
 
 class TestSndMaxDoy:
@@ -56,7 +84,7 @@ class TestSndMaxDoy:
         # Put 0 on one row.
         snd = atmosds.snd.where(atmosds.location != "Victoria", 0)
         out = land.snd_max_doy(snd)
-        np.testing.assert_array_equal(out.isel(time=1), [16, 33, 146, 32, np.NaN])
+        np.testing.assert_array_equal(out.isel(time=1), [16, 13, 91, 29, np.NaN])
 
 
 class TestSnwMax:

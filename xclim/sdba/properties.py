@@ -21,10 +21,13 @@ from xclim.core.indicator import Indicator, base_registry
 from xclim.core.units import convert_units_to, to_agg_units
 from xclim.core.utils import uses_dask
 from xclim.indices import run_length as rl
-from xclim.indices.generic import select_resample_op
+from xclim.indices.generic import compare, select_resample_op
 from xclim.indices.stats import fit, parametric_quantile
 
 from .base import Grouper, map_groups
+from .nbutils import _pairwise_haversine_and_bins
+from .processing import jitter_under_thresh
+from .utils import _pairwise_spearman, copy_all_attrs
 
 
 class StatisticalProperty(Indicator):
@@ -256,6 +259,7 @@ def _spell_length_distribution(
     thresh: str = "1 mm d-1",
     stat: str = "mean",
     group: str | Grouper = "time",
+    resample_before_rl: bool = True,
 ) -> xr.DataArray:
     """Spell length distribution.
 
@@ -283,6 +287,9 @@ def _spell_length_distribution(
     group : {'time', 'time.season', 'time.month'}
       Grouping of the output.
       E.g. If 'time.month', the spell lengths are coputed separately for each month.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -292,7 +299,7 @@ def _spell_length_distribution(
     ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
 
     @map_groups(out=[Grouper.PROP], main_only=True)
-    def _spell_stats(ds, *, dim, method, thresh, op, freq, stat):
+    def _spell_stats(ds, *, dim, method, thresh, op, freq, resample_before_rl, stat):
         # PB: This prevents an import error in the distributed dask scheduler, but I don't know why.
         import xarray.core.resample_cftime  # noqa: F401, pylint: disable=unused-import
 
@@ -304,14 +311,22 @@ def _spell_length_distribution(
             thresh = da.quantile(thresh, dim=dim).drop_vars("quantile")
 
         cond = op(da, thresh)
-        out = cond.resample(time=freq).map(rl.rle_statistics, dim=dim, reducer=stat)
+        out = rl.resample_and_rl(
+            cond,
+            resample_before_rl,
+            rl.rle_statistics,
+            reducer=stat,
+            window=1,
+            dim=dim,
+            freq=freq,
+        )
         out = getattr(out, stat)(dim=dim)
         out = out.where(mask)
         return out.rename("out").to_dataset()
 
     # threshold is an amount that will be converted to the right units
     if method == "amount":
-        thresh = convert_units_to(thresh, da)
+        thresh = convert_units_to(thresh, da, context="infer")
     elif method != "quantile":
         raise ValueError(
             f"{method} is not a valid method. Choose 'amount' or 'quantile'."
@@ -324,6 +339,7 @@ def _spell_length_distribution(
         thresh=thresh,
         op=ops[op],
         freq=group.freq,
+        resample_before_rl=resample_before_rl,
         stat=stat,
     ).out
     return to_agg_units(out, da, op="count")
@@ -365,7 +381,7 @@ def _acf(
 
     References
     ----------
-    :cite:cts:`alavoine_distinct_2021`
+    :cite:cts:`alavoine_distinct_2022`
     """
 
     def acf_last(x, nlags):
@@ -403,112 +419,205 @@ acf = StatisticalProperty(
 
 
 # group was kept even though "time" is the only acceptable arg to keep the signature similar to other properties
-def _annual_cycle_amplitude(
+def _annual_cycle(
     da: xr.DataArray,
     *,
-    amplitude_type: str = "absolute",
+    stat: str = "absamp",
+    window: int = 31,
     group: str | Grouper = "time",
 ) -> xr.DataArray:
-    r"""Annual cycle amplitude.
+    r"""Annual cycle statistics.
 
-    The amplitudes of the annual cycle are calculated for each year, then averaged over the all years.
+    A daily climatology is calculated and optionnaly smoothed with a (circular) moving average.
+    The requested statistic is returned.
 
     Parameters
     ----------
     da : xr.DataArray
       Variable on which to calculate the diagnostic.
-    amplitude_type: {'absolute','relative'}
-      Type of amplitude.
-      'absolute' is the peak-to-peak amplitude. (max - min).
-      'relative' is a relative percentage. 100 * (max - min) / mean (Recommended for precipitation).
+    stat : {'absamp','relamp', 'phase', 'min', 'max', 'asymmetry'}
+      - 'absamp' is the peak-to-peak amplitude. (max - min). In the same units as the input.
+      - 'relamp' is a relative percentage. 100 * (max - min) / mean (Recommended for precipitation). Dimensionless.
+      - 'phase' is the day of year of the maximum.
+      - 'max' is the maximum. Same units as the input.
+      - 'min' is the minimum. Same units as the input.
+      - 'asymmetry' is the length of the period going from the minimum to the maximum. In years between 0 and 1.
+    window : int
+      Size of the window for the moving average filtering. Deactivate this feature by passing window = 1.
 
     Returns
     -------
-    xr.DataArray, [same units as input or dimensionless]
-      {amplitude_type} amplitude of the annual cycle.
+    xr.DataArray, [same units as input or dimensionless or time]
+      {stat} of the annual cycle.
     """
     units = da.units
-    da = da.resample({group.dim: group.freq})
-    # amplitude
-    amp = da.max(dim=group.dim) - da.min(dim=group.dim)
-    amp.attrs["units"] = xc.core.units.ensure_delta(units)
-    if amplitude_type == "relative":
-        amp = amp * 100 / da.mean(dim=group.dim, keep_attrs=True)
-    amp = amp.mean(dim=group.dim)
-    return amp.assign_attrs(units="%" if amplitude_type == "relative" else units)
+
+    ac = da.groupby("time.dayofyear").mean()
+    if window > 1:  # smooth the cycle
+        # We want the rolling mean to be circular. There's no built-in method to do this in xarray,
+        # we'll pad the array and extract the meaningful part.
+        ac = (
+            ac.pad(dayofyear=(window // 2), mode="wrap")
+            .rolling(dayofyear=window, center=True)
+            .mean()
+            .isel(dayofyear=slice(window // 2, -(window // 2)))
+        )
+    # TODO: In April 2024, use a match-case.
+    if stat == "absamp":
+        out = ac.max("dayofyear") - ac.min("dayofyear")
+        out.attrs["units"] = xc.core.units.ensure_delta(units)
+    elif stat == "relamp":
+        out = (ac.max("dayofyear") - ac.min("dayofyear")) * 100 / ac.mean("dayofyear")
+        out.attrs["units"] = "%"
+    elif stat == "phase":
+        out = ac.idxmax("dayofyear")
+        out.attrs.update(units="", is_dayofyear=np.int32(1))
+    elif stat == "min":
+        out = ac.min("dayofyear")
+        out.attrs["units"] = units
+    elif stat == "max":
+        out = ac.max("dayofyear")
+        out.attrs["units"] = units
+    elif stat == "asymmetry":
+        out = (ac.idxmax("dayofyear") - ac.idxmin("dayofyear")) % 365 / 365
+        out.attrs["units"] = "yr"
+    else:
+        raise NotImplementedError(f"{stat} is not a valid annual cycle statistic.")
+    return out
 
 
 annual_cycle_amplitude = StatisticalProperty(
     identifier="annual_cycle_amplitude",
     aspect="temporal",
-    compute=_annual_cycle_amplitude,
-    parameters={"amplitude_type": "absolute"},
+    compute=_annual_cycle,
+    parameters={"stat": "absamp"},
     allowed_groups=["group"],
-    cell_methods="time: range time: mean",
+    cell_methods="time: mean time: range",
 )
-
 
 relative_annual_cycle_amplitude = StatisticalProperty(
     identifier="relative_annual_cycle_amplitude",
     aspect="temporal",
-    compute=_annual_cycle_amplitude,
-    parameters={"amplitude_type": "relative"},
+    compute=_annual_cycle,
+    units="%",
+    parameters={"stat": "relamp"},
     allowed_groups=["group"],
-    cell_methods="time: range time: mean",
+    cell_methods="time: mean time: range",
     measure="xclim.sdba.measures.RATIO",
 )
-
-
-def _annual_cycle_phase(
-    da: xr.DataArray, *, group: str | Grouper = "time"
-) -> xr.DataArray:
-    """Annual cycle phase.
-
-    The phases of the annual cycle are calculated for each year, then averaged over the all years.
-
-    Parameters
-    ----------
-    da : xr.DataArray
-      Variable on which to calculate the diagnostic.
-    group : {"time", 'time.season', 'time.month'}
-      Grouping of the output. Default: "time".
-
-    Returns
-    -------
-    xr.DataArray, [dimensionless]
-      Phase of the annual cycle. The position (day-of-year) of the maximal value.
-    """
-    mask = ~(da.isel({group.dim: 0}).isnull()).drop_vars(
-        group.dim
-    )  # mask of the ocean with NaNs
-    da = da.resample({group.dim: group.freq})
-
-    # +1  at the end to go from index to doy
-    phase = (
-        xr.apply_ufunc(
-            np.argmax,
-            da,
-            input_core_dims=[[group.dim]],
-            vectorize=True,
-            dask="parallelized",
-        )
-        + 1
-    )
-    phase = phase.mean(dim="__resample_dim__")
-    # put nan where there was nan in the input, if not phase = 0 + 1
-    phase = phase.where(mask, np.nan)
-    phase.attrs.update(units="", is_dayofyear=1)
-    return phase
-
 
 annual_cycle_phase = StatisticalProperty(
     identifier="annual_cycle_phase",
     aspect="temporal",
-    long_name="Phase of the annual cycle",
     units="",
-    compute=_annual_cycle_phase,
+    compute=_annual_cycle,
+    parameters={"stat": "phase"},
     cell_methods="time: range",
     allowed_groups=["group"],
+    measure="xclim.sdba.measures.CIRCULAR_BIAS",
+)
+
+annual_cycle_asymmetry = StatisticalProperty(
+    identifier="annual_cycle_asymmetry",
+    aspect="temporal",
+    compute=_annual_cycle,
+    parameters={"stat": "asymmetry"},
+    allowed_groups=["group"],
+    units="yr",
+)
+
+annual_cycle_minimum = StatisticalProperty(
+    identifier="annual_cycle_minimum",
+    aspect="temporal",
+    units="",
+    compute=_annual_cycle,
+    parameters={"stat": "min"},
+    cell_methods="time: mean time: min",
+    allowed_groups=["group"],
+)
+
+annual_cycle_maximum = StatisticalProperty(
+    identifier="annual_cycle_maximum",
+    aspect="temporal",
+    compute=_annual_cycle,
+    parameters={"stat": "max"},
+    cell_methods="time: mean time: max",
+    allowed_groups=["group"],
+)
+
+
+def _annual_statistic(
+    da: xr.DataArray,
+    *,
+    stat: str = "absamp",
+    window: int = 31,
+    group: str | Grouper = "time",
+):
+    """Annual range statistics.
+
+    Compute a statistic on each year of data and return the interannual average. This is similar
+    to the annual cycle, but with the statistic and average operations inverted.
+
+    Parameters
+    ----------
+    da: xr.DataArray
+      Data.
+    stat : {'absamp', 'relamp', 'phase'}
+      The statistic to return.
+    window : int
+      Size of the window for the moving average filtering. Deactivate this feature by passing window = 1.
+
+    Returns
+    -------
+    xr.DataArray, [same units as input or dimensionless]
+      Average annual {stat}.
+    """
+    units = da.units
+
+    if window > 1:
+        da = da.rolling(time=window, center=True).mean()
+
+    yrs = da.resample(time="YS")
+
+    if stat == "absamp":
+        out = yrs.max() - yrs.min()
+        out.attrs["units"] = xc.core.units.ensure_delta(units)
+    elif stat == "relamp":
+        out = (yrs.max() - yrs.min()) * 100 / yrs.mean()
+        out.attrs["units"] = "%"
+    elif stat == "phase":
+        out = yrs.map(xr.DataArray.idxmax).dt.dayofyear
+        out.attrs.update(units="", is_dayofyear=np.int32(1))
+    else:
+        raise NotImplementedError(f"{stat} is not a valid annual cycle statistic.")
+    return out.mean("time", keep_attrs=True)
+
+
+mean_annual_range = StatisticalProperty(
+    identifier="mean_annual_range",
+    aspect="temporal",
+    compute=_annual_statistic,
+    parameters={"stat": "absamp"},
+    allowed_groups=["group"],
+)
+
+mean_annual_relative_range = StatisticalProperty(
+    identifier="mean_annual_relative_range",
+    aspect="temporal",
+    compute=_annual_statistic,
+    parameters={"stat": "relamp"},
+    allowed_groups=["group"],
+    units="%",
+    measure="xclim.sdba.measures.RATIO",
+)
+
+mean_annual_phase = StatisticalProperty(
+    identifier="mean_annual_phase",
+    aspect="temporal",
+    compute=_annual_statistic,
+    parameters={"stat": "phase"},
+    allowed_groups=["group"],
+    units="",
     measure="xclim.sdba.measures.CIRCULAR_BIAS",
 )
 
@@ -554,12 +663,14 @@ def _corr_btw_var(
 
     def _first_output_1d(a, b, index, corr_type):
         """Only keep the correlation (first output) from the scipy function."""
+        # for points in the water with NaNs
+        if np.isnan(a).all():
+            return np.nan
+        aok = ~np.isnan(a)
+        bok = ~np.isnan(b)
         if corr_type == "Pearson":
-            # for points in the water with NaNs
-            if np.isnan(a).any():
-                return np.nan
-            return stats.pearsonr(a, b)[index]
-        return stats.spearmanr(a, b, nan_policy="propagate")[index]
+            return stats.pearsonr(a[aok & bok], b[aok & bok])[index]
+        return stats.spearmanr(a[aok & bok], b[aok & bok])[index]
 
     @map_groups(out=[Grouper.PROP], main_only=True)
     def _first_output(ds, *, dim, index, corr_type):
@@ -596,7 +707,7 @@ def _relative_frequency(
     """Relative Frequency.
 
     Relative Frequency of days with variable respecting a condition (defined by an operation and a threshold) at the
-    time resolution. The relative freqency is the number of days that satisfy the condition divided by the total number
+    time resolution. The relative frequency is the number of days that satisfy the condition divided by the total number
     of days.
 
     Parameters
@@ -621,7 +732,7 @@ def _relative_frequency(
     # mask of the ocean with NaNs
     mask = ~(da.isel({group.dim: 0}).isnull()).drop_vars(group.dim)
     ops = {">": np.greater, "<": np.less, ">=": np.greater_equal, "<=": np.less_equal}
-    t = convert_units_to(thresh, da)
+    t = convert_units_to(thresh, da, context="infer")
     length = da.sizes[group.dim]
     cond = ops[op](da, t)
     if group.prop != "group":  # change the time resolution if necessary
@@ -642,6 +753,63 @@ relative_frequency = StatisticalProperty(
 )
 
 
+def _transition_probability(
+    da: xr.DataArray,
+    *,
+    initial_op: str = ">=",
+    final_op: str = ">=",
+    thresh: str = "1 mm d-1",
+    group: str | Grouper = "time",
+) -> xr.DataArray:
+    """Transition probability.
+
+    Probability of transition from the initial state to the final state. The states are
+    booleans comparing the value of the day to the threshold with the operator.
+
+    The transition occurs when consecutive days are both in the given states.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Variable on which to calculate the diagnostic.
+    initial_op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        Operation to verify the condition for the initial state.
+        The condition is variable {op} threshold.
+    final_op: {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
+        Operation to verify the condition for the final state.
+        The condition is variable {op} threshold.
+    thresh : str
+        Threshold on which to evaluate the condition.
+    group : {"time", "time.season", "time.month"}
+        Grouping on the output.
+        e.g. For "time.month", the transition probability would be calculated on each month, with all years included.
+
+    Returns
+    -------
+    xr.DataArray, [dimensionless]
+        Transition probability of values {initial_op} {thresh} to values {final_op} {thresh}.
+    """
+    # mask of the ocean with NaNs
+    mask = ~(da.isel({group.dim: 0}).isnull()).drop_vars(group.dim)
+
+    today = da.isel(time=slice(0, -1))
+    tomorrow = da.shift(time=-1).isel(time=slice(0, -1))
+
+    t = convert_units_to(thresh, da, context="infer")
+    cond = compare(today, initial_op, t) * compare(tomorrow, final_op, t)
+    out = group.apply("mean", cond)
+    out = out.where(mask, np.nan)
+    out.attrs["units"] = ""
+    return out
+
+
+transition_probability = StatisticalProperty(
+    identifier="transition_probability",
+    aspect="temporal",
+    compute=_transition_probability,
+)
+
+
 def _trend(
     da: xr.DataArray,
     *,
@@ -650,20 +818,20 @@ def _trend(
 ) -> xr.DataArray:
     """Linear Trend.
 
-    The data is averaged over each time resolution and the interannual trend is returned.
+    The data is averaged over each time resolution and the inter-annual trend is returned.
     This function will rechunk along the grouping dimension.
 
     Parameters
     ----------
     da : xr.DataArray
-      Variable on which to calculate the diagnostic.
-    output: {'slope', 'pvalue'}
-      Attributes of the linear regression to return.
-      'slope' is the slope of the regression line.
-      'pvalue' is  for a hypothesis test whose null hypothesis is that the slope is zero,
-      using Wald Test with t-distribution of the test statistic.
+        Variable on which to calculate the diagnostic.
+    output : {'slope', 'pvalue'}
+        Attributes of the linear regression to return.
+        'slope' is the slope of the regression line.
+        'pvalue' is  for a hypothesis test whose null hypothesis is that the slope is zero,
+        using Wald Test with t-distribution of the test statistic.
     group : {'time', 'time.season', 'time.month'}
-      Grouping on the output.
+        Grouping on the output.
 
     Returns
     -------
@@ -756,4 +924,302 @@ def _return_value(
 
 return_value = StatisticalProperty(
     identifier="return_value", aspect="temporal", compute=_return_value
+)
+
+
+def _spatial_correlogram(
+    da: xr.DataArray, *, dims=None, bins=100, group="time", method=1
+):
+    """Spatial correlogram.
+
+    Compute the pairwise spatial correlations (Spearman) and averages them based on the pairwise distances.
+    This collapses the spatial and temporal dimensions and returns a distance bins dimension.
+    Needs coordinates for longitude and latitude. This property is heavy to compute and it will
+    need to create a NxN array in memory (outside of dask), where N is the number of spatial points.
+    There are shortcuts for all-nan time-slices or spatial points, but scipy's nan-omitting algorithm
+    is extremely slow, so the presence of any lone NaN will increase the computation time. Based on an idea
+    from :cite:p:`francois_multivariate_2020`.
+
+    Parameters
+    ----------
+    da: xr.DataArray
+      Data.
+    dims: sequence of strings
+      Name of the spatial dimensions. Once these are stacked, the longitude and latitude coordinates must be 1D.
+    bins:
+      Same as argument `bins` from :py:meth:`xarray.DataArray.groupby_bins`.
+      If given as a scalar, the equal-width bin limits are generated here
+      (instead of letting xarray do it) to improve performance.
+    group: str
+      Useless for now.
+
+    Returns
+    -------
+    xr.DataArray, [dimensionless]
+      Inter-site correlogram as a function of distance.
+    """
+    if dims is None:
+        dims = [d for d in da.dims if d != "time"]
+
+    corr = _pairwise_spearman(da, dims)
+    dists, mn, mx = _pairwise_haversine_and_bins(
+        corr.cf["longitude"].values, corr.cf["latitude"].values
+    )
+    dists = xr.DataArray(dists, dims=corr.dims, coords=corr.coords, name="distance")
+    if np.isscalar(bins):
+        bins = np.linspace(mn * 0.9999, mx * 1.0001, bins + 1)
+    if uses_dask(corr):
+        dists = dists.chunk()
+
+    w = np.diff(bins)
+    centers = xr.DataArray(
+        bins[:-1] + w / 2,
+        dims=("distance_bins",),
+        attrs={
+            "units": "km",
+            "long_name": f"Centers of the intersite distance bins (width of {w[0]:.3f} km)",
+        },
+    )
+
+    dists = dists.where(corr.notnull())
+
+    def _bin_corr(corr, distance):
+        """Bin and mean."""
+        return stats.binned_statistic(
+            distance.flatten(), corr.flatten(), statistic="mean", bins=bins
+        ).statistic
+
+    # (_spatial, _spatial2) -> (_spatial, distance_bins)
+    binned = xr.apply_ufunc(
+        _bin_corr,
+        corr,
+        dists,
+        input_core_dims=[["_spatial", "_spatial2"], ["_spatial", "_spatial2"]],
+        output_core_dims=[["distance_bins"]],
+        dask="parallelized",
+        vectorize=True,
+        output_dtypes=[float],
+        dask_gufunc_kwargs={
+            "allow_rechunk": True,
+            "output_sizes": {"distance_bins": 100},
+        },
+    )
+    binned = (
+        binned.assign_coords(distance_bins=centers)
+        .rename(distance_bins="distance")
+        .assign_attrs(units="")
+        .rename("corr")
+    )
+    return binned
+
+
+spatial_correlogram = StatisticalProperty(
+    identifier="spatial_correlogram",
+    aspect="spatial",
+    compute=_spatial_correlogram,
+    allowed_groups=["group"],
+)
+
+
+def _decorrelation_length(
+    da: xr.DataArray, *, radius=300, thresh=0.50, dims=None, bins=100, group="time"
+):
+    """Decorrelation length.
+
+    Distance from a grid cell where the correlation with its neighbours goes below the threshold.
+    A correlogram is calculated for each grid cell following the method from ``xclim.sdba.properties.spatial_correlogram``.
+    Then, we find the first bin closest to the correlation threshold.
+
+    Parameters
+    ----------
+    da: xr.DataArray
+      Data.
+    radius: float
+        Radius (in km) defining the region where correlations will be calculated between a point and its neighbours.
+    thresh: float
+      Threshold correlation defining decorrelation.
+       The decorrelation length is defined as the center of the distance bin that has a correlation closest to this threshold.
+    dims: sequence of strings
+      Name of the spatial dimensions. Once these are stacked, the longitude and latitude coordinates must be 1D.
+    bins:
+      Same as argument `bins` from :py:meth:`scipy.stats.binned_statistic`.
+      If given as a scalar, the equal-width bin limits from 0 to radius are generated here
+      (instead of letting scipy do it) to improve performance.
+    group: str
+      Useless for now.
+
+    Returns
+    -------
+    xr.DataArray, [km]
+      Decorrelation length.
+
+    Notes
+    -----
+    Calculating this property requires a lot of memory. It will not work with large datasets.
+    """
+    if dims is None:
+        dims = [d for d in da.dims if d != group.dim]
+
+    corr = _pairwise_spearman(da, dims)
+
+    dists, mn, mx = _pairwise_haversine_and_bins(
+        corr.cf["longitude"].values, corr.cf["latitude"].values, transpose=True
+    )
+
+    dists = xr.DataArray(dists, dims=corr.dims, coords=corr.coords, name="distance")
+
+    trans_dists = xr.DataArray(
+        dists.T, dims=corr.dims, coords=corr.coords, name="distance"
+    )
+
+    if np.isscalar(bins):
+        bins = np.linspace(0, radius, bins + 1)
+
+    if uses_dask(corr):
+        dists = dists.chunk()
+        trans_dists = trans_dists.chunk()
+
+    w = np.diff(bins)
+    centers = xr.DataArray(
+        bins[:-1] + w / 2,
+        dims=("distance_bins",),
+        attrs={
+            "units": "km",
+            "long_name": f"Centers of the intersite distance bins (width of {w[0]:.3f} km)",
+        },
+    )
+    ds = xr.Dataset({"corr": corr, "distance": dists, "distance2": trans_dists})
+
+    # only keep points inside the radius
+    ds = ds.where(ds.distance < radius)
+
+    ds = ds.where(ds.distance2 < radius)
+
+    def _bin_corr(corr, distance):
+        """Bin and mean."""
+        mask_nan = ~np.isnan(corr)
+        return stats.binned_statistic(
+            distance[mask_nan], corr[mask_nan], statistic="mean", bins=bins
+        ).statistic
+
+    # (_spatial, _spatial2) -> (_spatial, distance_bins)
+    binned = (
+        xr.apply_ufunc(
+            _bin_corr,
+            ds.corr,
+            ds.distance,
+            input_core_dims=[["_spatial2"], ["_spatial2"]],
+            output_core_dims=[["distance_bins"]],
+            dask="parallelized",
+            vectorize=True,
+            output_dtypes=[float],
+            dask_gufunc_kwargs={
+                "allow_rechunk": True,
+                "output_sizes": {"distance_bins": len(bins)},
+            },
+        )
+        .rename("corr")
+        .to_dataset()
+    )
+
+    binned = (
+        binned.assign_coords(distance_bins=centers)
+        .rename(distance_bins="distance")
+        .assign_attrs(units="")
+    )
+
+    closest = abs(binned.corr - thresh).idxmin(dim="distance")
+    binned["decorrelation_length"] = closest
+
+    # get back to 2d lat and lon
+    # if 'lat' in dims and 'lon' in dims:
+    if len(dims) > 1:
+        binned = binned.set_index({"_spatial": dims})
+        out = binned.decorrelation_length.unstack()
+    else:
+        out = binned.swap_dims({"_spatial": dims[0]}).decorrelation_length
+
+    copy_all_attrs(out, da)
+
+    out.attrs["units"] = "km"
+    return out
+
+
+decorrelation_length = StatisticalProperty(
+    identifier="decorrelation_length",
+    aspect="spatial",
+    compute=_decorrelation_length,
+    allowed_groups=["group"],
+)
+
+
+def _first_eof(da: xr.DataArray, *, dims=None, kind="+", thresh="1 mm/d", group="time"):
+    """First Empirical Orthogonal Function.
+
+    Through principal component analysis (PCA), compute the predominant empirical orthogonal function.
+    The temporal dimension is reduced. The Eof is multiplied by the sign of its mean to ensure coherent
+    signs as much as possible. Needs the eofs package to run. Based on an idea from :cite:p:`vrac_multivariate_2018`,
+    using an implementation from :cite:p:`dawson_eofs_2016`.
+
+    Parameters
+    ----------
+    da: xr.DataArray
+      Data.
+    dims: sequence of string, optional
+      Name of the spatial dimensions. If None (default), all dimensions except "time" are used.
+    kind : {'+', '*'}
+      Variable "kind". If multiplicative, the zero values are set to
+      very small values and the PCA is performed over the logarithm of the data.
+    thresh: str
+      If kind is multiplicative, this is the "zero" threshold passed to
+      :py:func:`xclim.sdba.processing.jitter_under_thresh`.
+    group: str
+      Useless for now.
+
+    Returns
+    -------
+    xr.DataArray, [dimensionless]
+      First empirical orthogonal function
+    """
+    try:
+        from eofs.standard import Eof
+    except ImportError as err:
+        raise ValueError(
+            "The `first_eof` property requires the `eofs` package"
+            ", which is an optional dependency of xclim."
+        ) from err
+
+    if dims is None:
+        dims = [d for d in da.dims if d != "time"]
+
+    if kind == "*":
+        da = np.log(jitter_under_thresh(da, thresh=thresh))
+
+    da = da - da.mean("time")
+
+    def _get_eof(da):
+        # Remove slices where everything is nan
+        da = da[~np.isnan(da).all(axis=tuple(range(1, da.ndim)))]
+        solver = Eof(da, center=False)
+        eof = solver.eofs(neofs=1).squeeze()
+        return eof * np.sign(np.nanmean(eof))
+
+    out = xr.apply_ufunc(
+        _get_eof,
+        da,
+        input_core_dims=[["time", *dims]],
+        output_core_dims=[dims],
+        dask="parallelized",
+        vectorize=True,
+        output_dtypes=[float],
+        dask_gufunc_kwargs={"allow_rechunk": True},
+    )
+    return out.assign_attrs(units="")
+
+
+first_eof = StatisticalProperty(
+    identifier="first_eof",
+    aspect="spatial",
+    compute=_first_eof,
+    allowed_groups=["group"],
 )

@@ -18,13 +18,13 @@ from importlib.resources import open_text
 from inspect import Parameter, _empty  # noqa
 from io import StringIO
 from pathlib import Path
-from types import FunctionType
-from typing import Callable, Mapping, NewType, Sequence
+from typing import Callable, Mapping, NewType, Sequence, TypeVar
 
 import numpy as np
 import xarray as xr
 from boltons.funcutils import update_wrapper
 from dask import array as dsk
+from pint import Quantity
 from yaml import safe_dump, safe_load
 
 logger = logging.getLogger("xclim")
@@ -34,6 +34,9 @@ DateStr = NewType("DateStr", str)
 
 #: Type annotation for strings representing dates without a year (MM-DD).
 DayOfYearStr = NewType("DayOfYearStr", str)
+
+#: Type annotation for thresholds and other not-exactly-a-variable quantities
+Quantified = TypeVar("Quantified", xr.DataArray, str, Quantity)
 
 # Official variables definitions
 VARIABLES = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
@@ -47,19 +50,17 @@ ICM = {
 }
 
 
-def wrapped_partial(
-    func: FunctionType, suggested: dict | None = None, **fixed
-) -> Callable:
+def wrapped_partial(func: Callable, suggested: dict | None = None, **fixed) -> Callable:
     """Wrap a function, updating its signature but keeping its docstring.
 
     Parameters
     ----------
-    func: FunctionType
-      The function to be wrapped
+    func : Callable
+        The function to be wrapped
     suggested : dict, optional
-      Keyword arguments that should have new default values but still appear in the signature.
-    fixed
-      Keyword arguments that should be fixed by the wrapped and removed from the signature.
+        Keyword arguments that should have new default values but still appear in the signature.
+    **fixed
+        Keyword arguments that should be fixed by the wrapped and removed from the signature.
 
     Returns
     -------
@@ -97,20 +98,20 @@ def wrapped_partial(
 
 
 # TODO Reconsider the utility of this
-def walk_map(d: dict, func: FunctionType) -> dict:
+def walk_map(d: dict, func: Callable) -> dict:
     """Apply a function recursively to values of dictionary.
 
     Parameters
     ----------
-    d: dict
-      Input dictionary, possibly nested.
-    func: FunctionType
-      Function to apply to dictionary values.
+    d : dict
+        Input dictionary, possibly nested.
+    func : Callable
+        Function to apply to dictionary values.
 
     Returns
     -------
     dict
-      Dictionary whose values are the output of the given function.
+        Dictionary whose values are the output of the given function.
     """
     out = {}
     for k, v in d.items():
@@ -126,19 +127,25 @@ def load_module(path: os.PathLike, name: str | None = None):
 
     Examples
     --------
-    Given a path to a module file (.py)
+    Given a path to a module file (.py):
 
-    >>> # xdoctest: +SKIP
-    >>> from pathlib import Path
-    >>> path = Path("path/to/example.py")
+    .. code-block:: python
+
+        from pathlib import Path
+        import os
+
+        path = Path("path/to/example.py")
 
     The two following imports are equivalent, the second uses this method.
 
-    >>> os.chdir(path.parent)
-    >>> import example as mod1  # noqa
-    >>> os.chdir(previous_working_dir)
-    >>> mod2 = load_module(path)
-    >>> mod1 == mod2
+    .. code-block:: python
+
+        os.chdir(path.parent)
+        import example as mod1  # noqa
+
+        os.chdir(previous_working_dir)
+        mod2 = load_module(path)
+        mod1 == mod2
     """
     path = Path(path)
     spec = importlib.util.spec_from_file_location(name or path.stem, path)
@@ -167,11 +174,11 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: Mapping[str, int]) -> xr.Da
 
     Parameters
     ----------
-    da: xr.DataArray
-      The input DataArray, with or without the dask backend. Does nothing when passed a non-dask array.
-    minchunks: Mapping[str, int]
-      A kwarg mapping from dimension name to minimum chunk size.
-      Pass -1 to force a single chunk along that dimension.
+    da : xr.DataArray
+        The input DataArray, with or without the dask backend. Does nothing when passed a non-dask array.
+    **minchunks : Mapping[str, int]
+        A kwarg mapping from dimension name to minimum chunk size.
+        Pass -1 to force a single chunk along that dimension.
 
     Returns
     -------
@@ -280,14 +287,14 @@ def _compute_virtual_index(
 
     Parameters
     ----------
-    n: array_like
-      The sample sizes.
-    quantiles: array_like
-      The quantiles values.
-    alpha: float
-      A constant used to correct the index computed.
-    beta: float
-      A constant used to correct the index computed.
+    n : array_like
+        The sample sizes.
+    quantiles : array_like
+        The quantiles values.
+    alpha : float
+        A constant used to correct the index computed.
+    beta : float
+        A constant used to correct the index computed.
 
     Notes
     -----
@@ -329,9 +336,9 @@ def _get_indexes(
 
     Parameters
     ----------
-    arr: array-like
-    virtual_indexes: array-like
-    valid_values_count: array-like
+    arr : array-like
+    virtual_indexes : array-like
+    valid_values_count : array-like
 
     Returns
     -------
@@ -371,11 +378,11 @@ def _linear_interpolation(
     Parameters
     ----------
     left : array_like
-      Left bound.
+        Left bound.
     right : array_like
-      Right bound.
+        Right bound.
     gamma : array_like
-      The interpolation weight.
+        The interpolation weight.
 
     Returns
     -------
@@ -469,17 +476,17 @@ def raise_warn_or_log(
 
     Parameters
     ----------
-    err: Exception
-      An error.
-    mode: {'ignore', 'log', 'warn', 'raise'}
-      What to do with the error.
-    msg: str, optional
-      The string used when logging or warning.
-      Defaults to the `msg` attr of the error (if present) or to "Failed with <err>".
-    err_type: type
-      The type of error/exception to raise.
-    stacklevel: int
-      Stacklevel when warning. Relative to the call of this function (1 is added).
+    err : Exception
+        An error.
+    mode : {'ignore', 'log', 'warn', 'raise'}
+        What to do with the error.
+    msg : str, optional
+        The string used when logging or warning.
+        Defaults to the `msg` attr of the error (if present) or to "Failed with <err>".
+    err_type : type
+        The type of error/exception to raise.
+    stacklevel : int
+        Stacklevel when warning. Relative to the call of this function (1 is added).
     """
     msg = msg or getattr(err, "msg", f"Failed with {err!r}.")
     if mode == "ignore":
@@ -515,10 +522,11 @@ class InputKind(IntEnum):
 
        Annotation : ``xr.DataArray | None``. The default should be None.
     """
-    QUANTITY_STR = 2
-    """A string representing a quantity with units.
+    QUANTIFIED = 2
+    """A quantity with units, either as a string (scalar), a pint.Quantity (scalar) or a DataArray (with units set).
 
-       Annotation : ``str`` +  an entry in the :py:func:`xclim.core.units.declare_units` decorator.
+       Annotation : ``xclim.core.utils.Quantified`` and an entry in the :py:func:`xclim.core.units.declare_units` decorator.
+       "Quantified" translates to ``str | xr.DataArray | pint.util.Quantity``.
     """
     FREQ_STR = 3
     """A string representing an "offset alias", as defined by pandas.
@@ -595,14 +603,14 @@ def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> Inpu
 
     annot = annot - {"None"}
 
-    if "DataArray" in annot:
+    if annot.issubset({"DataArray", "str"}) and has_units:
         return InputKind.OPTIONAL_VARIABLE
 
     if param.name == "freq":
         return InputKind.FREQ_STR
 
-    if annot == {"str"} and has_units:
-        return InputKind.QUANTITY_STR
+    if annot == {"Quantified"} and has_units:
+        return InputKind.QUANTIFIED
 
     if annot.issubset({"int", "float"}):
         return InputKind.NUMBER
@@ -713,7 +721,7 @@ def adapt_clix_meta_yaml(raw: os.PathLike | StringIO | str, adapted: os.PathLike
                         del data["parameters"][name]
                     else:
                         data["parameters"][name] = param[param["kind"]]
-                else:  # kind = quantity
+                else:  # kind = quantified
                     if param.get("proposed_standard_name") == "temporal_window_size":
                         # Window, nothing to do.
                         del data["parameters"][name]
@@ -784,68 +792,14 @@ def adapt_clix_meta_yaml(raw: os.PathLike | StringIO | str, adapted: os.PathLike
         safe_dump(yml, f)
 
 
-class PercentileDataArray(xr.DataArray):
-    """Wrap xarray DataArray for percentiles values.
+def is_percentile_dataarray(source: xr.DataArray) -> bool:
+    """Evaluate whether a DataArray is a Percentile.
 
-    This class is used internally with its corresponding InputKind to recognize this
-    sort of input and to retrieve from it the attributes needed to build indicator
-    metadata.
+    A percentile dataarray must have climatology_bounds attributes and either a
+    quantile or percentiles coordinate, the window is not mandatory.
     """
-
-    __slots__ = ()
-
-    @classmethod
-    def is_compatible(cls, source: xr.DataArray) -> bool:
-        """Evaluate whether PecentileDataArray is conformant with expected fields.
-
-        A PercentileDataArray must have climatology_bounds attributes and either a
-        quantile or percentiles coordinate, the window is not mandatory.
-        """
-        return (
-            isinstance(source, xr.DataArray)
-            and source.attrs.get("climatology_bounds", None) is not None
-            and ("quantile" in source.coords or "percentiles" in source.coords)
-        )
-
-    @classmethod
-    def from_da(
-        cls, source: xr.DataArray, climatology_bounds: list[str] = None
-    ) -> PercentileDataArray:
-        """Create a PercentileDataArray from a xarray.DataArray.
-
-        Parameters
-        ----------
-        source: xr.DataArray
-          A DataArray with its content containing percentiles values.
-          It must also have a coordinate variable percentiles or quantile.
-        climatology_bounds: list[str]
-          Optional. A List of size two which contains the period on which the
-          percentiles were computed. See `xclim.core.calendar.build_climatology_bounds`
-          to build this list from a DataArray.
-
-        Returns
-        -------
-        PercentileDataArray
-          The initial `source` DataArray but wrap by PercentileDataArray class.
-          The data is unchanged and only climatology_bounds attributes is overridden
-          if q new value is given in inputs.
-        """
-        if (
-            climatology_bounds is None
-            and source.attrs.get("climatology_bounds", None) is None
-        ):
-            raise ValueError("PercentileDataArray needs a climatology_bounds.")
-        per = PercentileDataArray(source)
-        # handle case where da was created with `quantile()` method
-        if "quantile" in source.coords:
-            per = per.rename({"quantile": "percentiles"})
-            per.coords["percentiles"] = per.coords["percentiles"] * 100
-        clim_bounds = source.attrs.get("climatology_bounds", climatology_bounds)
-        per.attrs["climatology_bounds"] = clim_bounds
-        if "percentiles" in per.coords:
-            return per
-        raise ValueError(
-            f"DataArray {source.name} could not be turned into"
-            f" PercentileDataArray. The DataArray must have a"
-            f" 'percentiles' coordinate variable."
-        )
+    return (
+        isinstance(source, xr.DataArray)
+        and source.attrs.get("climatology_bounds", None) is not None
+        and ("quantile" in source.coords or "percentiles" in source.coords)
+    )

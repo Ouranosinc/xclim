@@ -148,7 +148,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 6. When unit/doc tests are added or notebooks updated, use ``pytest`` to run them. Alternatively, one can use ``tox`` to run all testing suites as would github do when the PR is submitted and new commits are pushed::
 
     $ pytest --nbval docs/notebooks  # for notebooks, exclusively.
-    $ pytest --rootdir xclim/testing/tests/ --xdoctest xclim --ignore=xclim/testing/tests/  # for doctests, exclusively.
+    $ pytest --no-cov --rootdir xclim/testing/tests/ --xdoctest xclim --ignore=xclim/testing/tests/  # for doctests, exclusively.
     $ pytest  # for all unit tests, excluding doctests and notebooks.
     $ tox  # run all testing suites
 
@@ -312,18 +312,15 @@ When publishing to GitHub, you will still need to replace subsection headers in 
 The Manual Approach
 ~~~~~~~~~~~~~~~~~~~
 
-The manual approach to library packaging for general support (pip wheels) requires the following packages installed:
- * setuptools
- * wheel
- * twine
+The manual approach to library packaging for general support (pip wheels) requires that the `flit <https://flit.pypa.io/en/stable/index.html>`_ library is installed.
 
 From the command line on your Linux distribution, simply run the following from the clone's main dev branch::
 
     # To build the packages (sources and wheel)
-    $ python setup.py sdist bdist_wheel
+    $ flit build
 
     # To upload to PyPI
-    $ twine upload dist/*
+    $ flit publish
 
 The new version based off of the version checked out will now be available via `pip` (`$ pip install xclim`).
 

@@ -16,6 +16,7 @@ from xclim.core.units import (
     str2pint,
     to_agg_units,
 )
+from xclim.core.utils import Quantified
 
 from . import run_length as rl
 from ._conversion import rain_approximation, snowfall_approximation
@@ -67,6 +68,7 @@ def cold_spell_duration_index(
     tasmin_per: xarray.DataArray,
     window: int = 6,
     freq: str = "YS",
+    resample_before_rl: bool = True,
     bootstrap: bool = False,  # noqa  # noqa
     op: str = "<",
 ) -> xarray.DataArray:
@@ -78,28 +80,31 @@ def cold_spell_duration_index(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature.
+        Minimum daily temperature.
     tasmin_per : xarray.DataArray
-      nth percentile of daily minimum temperature with `dayofyear` coordinate.
+        nth percentile of daily minimum temperature with `dayofyear` coordinate.
     window : int
-      Minimum number of days with temperature below threshold to qualify as a cold spell.
+        Minimum number of days with temperature below threshold to qualify as a cold spell.
     freq : str
       Resampling frequency.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
     bootstrap : bool
-      Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
-      Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
-      This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
-      the rest of the time series.
-      Keep bootstrap to False when there is no common period, it would give wrong results
-      plus, bootstrapping is computationally expensive.
-    op: {"<", "<=", "lt", "le"}
-      Comparison operation. Default: "<".
+        Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
+        Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
+        This period, common to percentiles and the sample must be bootstrapped to avoid inhomogeneities with
+        the rest of the time series.
+        Keep bootstrap to False when there is no common period, it would give wrong results
+        plus, bootstrapping is computationally expensive.
+    op : {"<", "<=", "lt", "le"}
+        Comparison operation. Default: "<".
 
     Returns
     -------
     xarray.DataArray, [time]
-      Count of days with at least six consecutive days when the daily minimum temperature is below the 10th
-      percentile.
+        Count of days with at least six consecutive days when the daily minimum temperature is below the 10th
+        percentile.
 
     Notes
     -----
@@ -119,13 +124,13 @@ def cold_spell_duration_index(
 
     Examples
     --------
-    # Note that this example does not use a proper 1961-1990 reference period.
     >>> from xclim.core.calendar import percentile_doy
     >>> from xclim.indices import cold_spell_duration_index
-
     >>> tasmin = xr.open_dataset(path_to_tasmin_file).tasmin.isel(lat=0, lon=0)
     >>> tn10 = percentile_doy(tasmin, per=10).sel(percentiles=10)
     >>> cold_spell_duration_index(tasmin, tn10)
+
+    Note that this example does not use a proper 1961-1990 reference period.
     """
     tasmin_per = convert_units_to(tasmin_per, tasmin)
 
@@ -133,10 +138,14 @@ def cold_spell_duration_index(
     thresh = resample_doy(tasmin_per, tasmin)
 
     below = compare(tasmin, op, thresh, constrain=("<", "<="))
-
-    out = below.resample(time=freq).map(
-        rl.windowed_run_count, window=window, dim="time"
+    out = rl.resample_and_rl(
+        below,
+        resample_before_rl,
+        rl.windowed_run_count,
+        window=window,
+        freq=freq,
     )
+
     return to_agg_units(out, tasmin, "count")
 
 
@@ -167,14 +176,13 @@ def cold_and_dry_days(
       First quartile of daily mean temperature computed by month.
     pr_per : xarray.DataArray
       First quartile of daily total precipitation computed by month.
-
-      .. warning::
-
-        Before computing the percentiles, all the precipitation below 1mm must be filtered out!
-        Otherwise, the percentiles will include non-wet days.
-
     freq : str
       Resampling frequency.
+
+    Warnings
+    --------
+    Before computing the percentiles, all the precipitation below 1mm must be filtered out!
+    Otherwise, the percentiles will include non-wet days.
 
     Returns
     -------
@@ -197,7 +205,7 @@ def cold_and_dry_days(
     thresh = resample_doy(tas_per, tas)
     tg25 = tas < thresh
 
-    pr_per = convert_units_to(pr_per, pr)
+    pr_per = convert_units_to(pr_per, pr, context="hydro")
     thresh = resample_doy(pr_per, pr)
     pr25 = pr < thresh
 
@@ -232,14 +240,13 @@ def warm_and_dry_days(
       Third quartile of daily mean temperature computed by month.
     pr_per : xarray.DataArray
       First quartile of daily total precipitation computed by month.
-
-      .. warning::
-
-        Before computing the percentiles, all the precipitation below 1mm must be filtered out!
-        Otherwise, the percentiles will include non-wet days.
-
     freq : str
       Resampling frequency.
+
+    Warnings
+    --------
+    Before computing the percentiles, all the precipitation below 1mm must be filtered out!
+    Otherwise, the percentiles will include non-wet days.
 
     Returns
     -------
@@ -262,7 +269,7 @@ def warm_and_dry_days(
     thresh = resample_doy(tas_per, tas)
     tg75 = tas > thresh
 
-    pr_per = convert_units_to(pr_per, pr)
+    pr_per = convert_units_to(pr_per, pr, context="hydro")
     thresh = resample_doy(pr_per, pr)
     pr25 = pr < thresh
 
@@ -297,14 +304,13 @@ def warm_and_wet_days(
       Third quartile of daily mean temperature computed by month.
     pr_per : xarray.DataArray
       Third quartile of daily total precipitation computed by month.
-
-      .. warning::
-
-        Before computing the percentiles, all the precipitation below 1mm must be filtered out!
-        Otherwise, the percentiles will include non-wet days.
-
     freq : str
       Resampling frequency.
+
+    Warnings
+    --------
+    Before computing the percentiles, all the precipitation below 1mm must be filtered out!
+    Otherwise, the percentiles will include non-wet days.
 
     Returns
     -------
@@ -326,7 +332,7 @@ def warm_and_wet_days(
     thresh = resample_doy(tas_per, tas)
     tg75 = tas > thresh
 
-    pr_per = convert_units_to(pr_per, pr)
+    pr_per = convert_units_to(pr_per, pr, context="hydro")
     thresh = resample_doy(pr_per, pr)
     pr75 = pr > thresh
 
@@ -364,8 +370,8 @@ def cold_and_wet_days(
     freq : str
       Resampling frequency.
 
-    Warning
-    -------
+    Warnings
+    --------
     Before computing the percentiles, all the precipitation below 1mm must be filtered out!
     Otherwise, the percentiles will include non-wet days.
 
@@ -389,7 +395,7 @@ def cold_and_wet_days(
     thresh = resample_doy(tas_per, tas)
     tg25 = tas < thresh
 
-    pr_per = convert_units_to(pr_per, pr)
+    pr_per = convert_units_to(pr_per, pr, context="hydro")
     thresh = resample_doy(pr_per, pr)
     pr75 = pr > thresh
 
@@ -406,13 +412,14 @@ def cold_and_wet_days(
 def multiday_temperature_swing(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
-    thresh_tasmin: str = "0 degC",
-    thresh_tasmax: str = "0 degC",
+    thresh_tasmin: Quantified = "0 degC",
+    thresh_tasmax: Quantified = "0 degC",
     window: int = 1,
     op: str = "mean",
     op_tasmin: str = "<=",
     op_tasmax: str = ">",
     freq: str = "YS",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:  # noqa: D401
     r"""Statistics of consecutive diurnal temperature swing events.
 
@@ -425,9 +432,9 @@ def multiday_temperature_swing(
       Minimum daily temperature.
     tasmax : xarray.DataArray
       Maximum daily temperature.
-    thresh_tasmin : str
+    thresh_tasmin : Quantified
       The temperature threshold needed to trigger a freeze event.
-    thresh_tasmax : str
+    thresh_tasmax : Quantified
       The temperature threshold needed to trigger a thaw event.
     window : int
       The minimal length of spells to be included in the statistics.
@@ -439,6 +446,9 @@ def multiday_temperature_swing(
       Comparison operation for tasmax. Default: ">".
     freq : str
       Resampling frequency.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -465,13 +475,23 @@ def multiday_temperature_swing(
     ft = freeze * thaw
 
     if op == "count":
-        out = ft.resample(time=freq).map(
-            rl.windowed_run_events, window=window, dim="time"
+        out = rl.resample_and_rl(
+            ft,
+            resample_before_rl,
+            rl.windowed_run_events,
+            window=window,
+            freq=freq,
         )
     else:
-        out = ft.resample(time=freq).map(
-            rl.rle_statistics, reducer=op, window=window, dim="time"
+        out = rl.resample_and_rl(
+            ft,
+            resample_before_rl,
+            rl.rle_statistics,
+            reducer=op,
+            window=window,
+            freq=freq,
         )
+
     return to_agg_units(out, tasmin, "count")
 
 
@@ -610,11 +630,12 @@ def extreme_temperature_range(
 def heat_wave_frequency(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
-    thresh_tasmin: str = "22.0 degC",
-    thresh_tasmax: str = "30 degC",
+    thresh_tasmin: Quantified = "22.0 degC",
+    thresh_tasmax: Quantified = "30 degC",
     window: int = 3,
     freq: str = "YS",
     op: str = ">",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Heat wave frequency.
 
@@ -627,9 +648,9 @@ def heat_wave_frequency(
       Minimum daily temperature.
     tasmax : xarray.DataArray
       Maximum daily temperature.
-    thresh_tasmin : str
+    thresh_tasmin : Quantified
       The minimum temperature threshold needed to trigger a heatwave event.
-    thresh_tasmax : str
+    thresh_tasmax : Quantified
       The maximum temperature threshold needed to trigger a heatwave event.
     window:  int
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
@@ -637,6 +658,9 @@ def heat_wave_frequency(
       Resampling frequency.
     op: {">", ">=", "gt", "ge"}
       Comparison operation. Default: ">".
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -663,7 +687,14 @@ def heat_wave_frequency(
     cond = (compare(tasmin, op, thresh_tasmin, constrain)) & (
         compare(tasmax, op, thresh_tasmax, constrain)
     )
-    out = cond.resample(time=freq).map(rl.windowed_run_events, window=window)
+
+    out = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.windowed_run_events,
+        window=window,
+        freq=freq,
+    )
     out.attrs["units"] = ""
     return out
 
@@ -677,11 +708,12 @@ def heat_wave_frequency(
 def heat_wave_max_length(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
-    thresh_tasmin: str = "22.0 degC",
-    thresh_tasmax: str = "30 degC",
+    thresh_tasmin: Quantified = "22.0 degC",
+    thresh_tasmax: Quantified = "30 degC",
     window: int = 3,
     freq: str = "YS",
     op: str = ">",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Heat wave max length.
 
@@ -696,16 +728,19 @@ def heat_wave_max_length(
       Minimum daily temperature.
     tasmax : xarray.DataArray
       Maximum daily temperature.
-    thresh_tasmin : str
+    thresh_tasmin : Quantified
       The minimum temperature threshold needed to trigger a heatwave event.
-    thresh_tasmax : str
+    thresh_tasmax : Quantified
       The maximum temperature threshold needed to trigger a heatwave event.
     window : int
       Minimum number of days with temperatures above thresholds to qualify as a heatwave.
     freq : str
       Resampling frequency.
-    op: {">", ">=", "gt", "ge"}
+    op : {">", ">=", "gt", "ge"}
       Comparison operation. Default: ">".
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -733,8 +768,14 @@ def heat_wave_max_length(
     cond = (compare(tasmin, op, thresh_tasmin, constrain)) & (
         compare(tasmax, op, thresh_tasmax, constrain)
     )
-    max_l = cond.resample(time=freq).map(rl.longest_run, dim="time")
-    out = max_l.where(max_l >= window, 0)
+    out = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.rle_statistics,
+        reducer="max",
+        window=window,
+        freq=freq,
+    )
     return to_agg_units(out, tasmax, "count")
 
 
@@ -747,11 +788,12 @@ def heat_wave_max_length(
 def heat_wave_total_length(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
-    thresh_tasmin: str = "22.0 degC",
-    thresh_tasmax: str = "30 degC",
+    thresh_tasmin: Quantified = "22.0 degC",
+    thresh_tasmax: Quantified = "30 degC",
     window: int = 3,
     freq: str = "YS",
     op: str = ">",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Heat wave total length.
 
@@ -775,6 +817,9 @@ def heat_wave_total_length(
       Resampling frequency.
     op: {">", ">=", "gt", "ge"}
       Comparison operation. Default: ">".
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -792,7 +837,14 @@ def heat_wave_total_length(
     cond = compare(tasmin, op, thresh_tasmin, constrain) & compare(
         tasmax, op, thresh_tasmax, constrain
     )
-    out = cond.resample(time=freq).map(rl.windowed_run_count, window=window)
+    out = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.windowed_run_count,
+        window=window,
+        freq=freq,
+    )
+
     return to_agg_units(out, tasmin, "count")
 
 
@@ -806,7 +858,7 @@ def liquid_precip_ratio(
     pr: xarray.DataArray,
     prsn: xarray.DataArray | None = None,
     tas: xarray.DataArray | None = None,
-    thresh: str = "0 degC",
+    thresh: Quantified = "0 degC",
     freq: str = "QS-DEC",
 ) -> xarray.DataArray:
     r"""Ratio of rainfall to total precipitation.
@@ -822,7 +874,7 @@ def liquid_precip_ratio(
       Mean daily solid precipitation flux.
     tas : xarray.DataArray, optional
       Mean daily temperature.
-    thresh : str
+    thresh : Quantified
       Threshold temperature under which precipitation is assumed to be solid.
     freq : str
       Resampling frequency.
@@ -864,7 +916,7 @@ def precip_accumulation(
     pr: xarray.DataArray,
     tas: xarray.DataArray = None,
     phase: str | None = None,
-    thresh: str = "0 degC",
+    thresh: Quantified = "0 degC",
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Accumulated total (liquid and/or solid) precipitation.
@@ -882,7 +934,7 @@ def precip_accumulation(
       Mean, maximum or minimum daily temperature.
     phase : {None, 'liquid', 'solid'}
       Which phase to consider, "liquid" or "solid", if None (default), both are considered.
-    thresh : str
+    thresh : Quantified
       Threshold of `tas` over which the precipication is assumed to be liquid rain.
     freq : str
       Resampling frequency.
@@ -921,11 +973,12 @@ def precip_accumulation(
     return pram.resample(time=freq).sum(dim="time").assign_attrs(units=pram.units)
 
 
+# FIXME: Resample after run length?
 @declare_units(pr="[precipitation]", tas="[temperature]", thresh="[precipitation]")
 def rain_on_frozen_ground_days(
     pr: xarray.DataArray,
     tas: xarray.DataArray,
-    thresh: str = "1 mm/d",
+    thresh: Quantified = "1 mm/d",
     freq: str = "YS",
 ) -> xarray.DataArray:  # noqa: D401
     """Number of rain on frozen ground events.
@@ -939,7 +992,7 @@ def rain_on_frozen_ground_days(
       Mean daily precipitation flux.
     tas : xarray.DataArray
       Mean daily temperature.
-    thresh : str
+    thresh : Quantified
       Precipitation threshold to consider a day as a rain event.
     freq : str
       Resampling frequency.
@@ -966,7 +1019,7 @@ def rain_on_frozen_ground_days(
 
     is true for continuous periods where :math:`i ≥ 7`
     """
-    t = convert_units_to(thresh, pr)
+    t = convert_units_to(thresh, pr, context="hydro")
     frz = convert_units_to("0 C", tas)
 
     def func(x, axis):
@@ -990,8 +1043,8 @@ def rain_on_frozen_ground_days(
 def high_precip_low_temp(
     pr: xarray.DataArray,
     tas: xarray.DataArray,
-    pr_thresh: str = "0.4 mm/d",
-    tas_thresh: str = "-0.2 degC",
+    pr_thresh: Quantified = "0.4 mm/d",
+    tas_thresh: Quantified = "-0.2 degC",
     freq: str = "YS",
 ) -> xarray.DataArray:  # noqa: D401
     """Number of days with precipitation above threshold and temperature below threshold.
@@ -1005,9 +1058,9 @@ def high_precip_low_temp(
       Mean daily precipitation flux.
     tas : xarray.DataArray
       Daily mean, minimum or maximum temperature.
-    pr_thresh : str
+    pr_thresh : Quantified
       Precipitation threshold to exceed.
-    tas_thresh : str
+    tas_thresh : Quantified
       Temperature threshold not to exceed.
     freq : str
       Resampling frequency.
@@ -1026,7 +1079,7 @@ def high_precip_low_temp(
     ...     pr, tas=tasmin, pr_thresh="10 mm/d", tas_thresh="-0.2 degC"
     ... )
     """
-    pr_thresh = convert_units_to(pr_thresh, pr)
+    pr_thresh = convert_units_to(pr_thresh, pr, context="hydro")
     tas_thresh = convert_units_to(tas_thresh, tas)
 
     cond = (pr >= pr_thresh) * (tas < tas_thresh) * 1
@@ -1039,7 +1092,7 @@ def high_precip_low_temp(
 def days_over_precip_thresh(
     pr: xarray.DataArray,
     pr_per: xarray.DataArray,
-    thresh: str = "1 mm/day",
+    thresh: Quantified = "1 mm/day",
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
     op: str = ">",
@@ -1056,7 +1109,7 @@ def days_over_precip_thresh(
     pr_per : xarray.DataArray
       Percentile of wet day precipitation flux. Either computed daily (one value per day
       of year) or computed over a period (one value per spatial point).
-    thresh : str
+    thresh : Quantified
        Precipitation value over which a day is considered wet.
     freq : str
       Resampling frequency.
@@ -1082,10 +1135,10 @@ def days_over_precip_thresh(
     >>> p75 = pr.quantile(0.75, dim="time", keep_attrs=True)
     >>> r75p = days_over_precip_thresh(pr, p75)
     """
-    pr_per = convert_units_to(pr_per, pr)
-    thresh = convert_units_to(thresh, pr)
+    pr_per = convert_units_to(pr_per, pr, context="hydro")
+    thresh = convert_units_to(thresh, pr, context="hydro")
 
-    tp = np.maximum(pr_per, thresh)
+    tp = pr_per.where(pr_per > thresh, thresh)
     if "dayofyear" in pr_per.coords:
         # Create time series out of doy values.
         tp = resample_doy(tp, pr)
@@ -1100,7 +1153,7 @@ def days_over_precip_thresh(
 def fraction_over_precip_thresh(
     pr: xarray.DataArray,
     pr_per: xarray.DataArray,
-    thresh: str = "1 mm/day",
+    thresh: Quantified = "1 mm/day",
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
     op: str = ">",
@@ -1117,7 +1170,7 @@ def fraction_over_precip_thresh(
     pr_per : xarray.DataArray
       Percentile of wet day precipitation flux. Either computed daily (one value per day
       of year) or computed over a period (one value per spatial point).
-    thresh : str
+    thresh : Quantified
        Precipitation value over which a day is considered wet.
     freq : str
       Resampling frequency.
@@ -1137,10 +1190,10 @@ def fraction_over_precip_thresh(
       Fraction of precipitation over threshold during wet days.
 
     """
-    pr_per = convert_units_to(pr_per, pr)
-    thresh = convert_units_to(thresh, pr)
+    pr_per = convert_units_to(pr_per, pr, context="hydro")
+    thresh = convert_units_to(thresh, pr, context="hydro")
 
-    tp = np.maximum(pr_per, thresh)
+    tp = pr_per.where(pr_per > thresh, thresh)
     if "dayofyear" in pr_per.coords:
         # Create time series out of doy values.
         tp = resample_doy(tp, pr)
@@ -1516,8 +1569,8 @@ def tx10p(
 def tx_tn_days_above(
     tasmin: xarray.DataArray,
     tasmax: xarray.DataArray,
-    thresh_tasmin: str = "22 degC",
-    thresh_tasmax: str = "30 degC",
+    thresh_tasmin: Quantified = "22 degC",
+    thresh_tasmax: Quantified = "30 degC",
     freq: str = "YS",
     op: str = ">",
 ) -> xarray.DataArray:  # noqa: D401
@@ -1531,9 +1584,9 @@ def tx_tn_days_above(
       Minimum daily temperature.
     tasmax : xarray.DataArray
       Maximum daily temperature.
-    thresh_tasmin : str
+    thresh_tasmin : Quantified
       Threshold temperature for tasmin on which to base evaluation.
-    thresh_tasmax : str
+    thresh_tasmax : Quantified
       Threshold temperature for tasmax on which to base evaluation.
     freq : str
       Resampling frequency.
@@ -1582,6 +1635,7 @@ def warm_spell_duration_index(
     tasmax_per: xarray.DataArray,
     window: int = 6,
     freq: str = "YS",
+    resample_before_rl: bool = True,
     bootstrap: bool = False,  # noqa
     op: str = ">",
 ) -> xarray.DataArray:
@@ -1601,6 +1655,9 @@ def warm_spell_duration_index(
       Minimum number of days with temperature above threshold to qualify as a warm spell.
     freq : str
       Resampling frequency.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
     bootstrap : bool
       Flag to run bootstrapping of percentiles. Used by percentile_bootstrap decorator.
       Bootstrapping is only useful when the percentiles are computed on a part of the studied sample.
@@ -1638,10 +1695,14 @@ def warm_spell_duration_index(
     thresh = resample_doy(thresh, tasmax)
 
     above = compare(tasmax, op, thresh, constrain=(">", ">="))
-
-    out = above.resample(time=freq).map(
-        rl.windowed_run_count, window=window, dim="time"
+    out = rl.resample_and_rl(
+        above,
+        resample_before_rl,
+        rl.windowed_run_count,
+        window=window,
+        freq=freq,
     )
+
     return to_agg_units(out, tasmax, "count")
 
 
@@ -1685,12 +1746,12 @@ def winter_rain_ratio(
 def blowing_snow(
     snd: xarray.DataArray,
     sfcWind: xarray.DataArray,  # noqa
-    snd_thresh: str = "5 cm",
-    sfcWind_thresh: str = "15 km/h",  # noqa
+    snd_thresh: Quantified = "5 cm",
+    sfcWind_thresh: Quantified = "15 km/h",  # noqa
     window: int = 3,
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
-    """Days with blowing snow events.
+    """Blowing snow days.
 
     Number of days when both snowfall over the last days and daily wind speeds are above respective thresholds.
 
@@ -1700,9 +1761,9 @@ def blowing_snow(
       Surface snow depth.
     sfcWind : xr.DataArray
       Wind velocity
-    snd_thresh : str
+    snd_thresh : Quantified
       Threshold on net snowfall accumulation over the last `window` days.
-    sfcWind_thresh : str
+    sfcWind_thresh : Quantified
       Wind speed threshold.
     window : int
       Period over which snow is accumulated before comparing against threshold.

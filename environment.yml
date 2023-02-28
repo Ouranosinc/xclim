@@ -4,6 +4,7 @@ channels:
     - defaults
 dependencies:
     - python>=3.8
+    - astroid
     - boltons>=20.1
     - bottleneck>=1.3.1
     - cf_xarray>=0.6.1
@@ -20,14 +21,20 @@ dependencies:
     - scikit-learn>=0.21.3
     - scipy>=1.2,<1.9  # See https://github.com/Ouranosinc/xclim/issues/1142
     - xarray>=2022.06.0
+    # Extras
+    - eofs
+    - eigen
+    - pybind11
     # Testing and development dependencies
-    - black>=22.3
+    - black>=22.12
     - blackdoc
     - bump2version
+    - cairosvg
     - coverage
     - distributed>=2.0
     - flake8
     - flake8-rst-docstrings
+    - flit
     - ipykernel
     - ipython
     - matplotlib
@@ -37,16 +44,25 @@ dependencies:
     - nc-time-axis
     - netCDF4>=1.4
     - pooch
-    - pre_commit
+    - pre-commit
+    - pybtex
     - pydocstyle
-    - pylint
+    - pylint<2.15
     - pytest
     - pytest-cov
+    - pytest-xdist>=3.2
     - sphinx
-    - sphinx_rtd_theme
+    - sphinx-codeautolink
+    - sphinx-copybutton
+    - sphinx-rtd-theme>=1.0
+    - sphinxcontrib-bibtex
     - statsmodels
     - tokenize-rt
     - tox
+#    - tox-conda  # Will be added when a tox@v4.0+ compatible plugin is released.
     - xdoctest
     - yamale
     - yamllint
+    - pip
+    - pip:
+        - sphinxcontrib-svg2pdfconverter

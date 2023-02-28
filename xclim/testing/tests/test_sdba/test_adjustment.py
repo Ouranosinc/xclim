@@ -662,12 +662,15 @@ class TestExtremeValues:
 
     @pytest.mark.slow
     def test_real_data(self):
-
         dsim = open_dataset("sdba/CanESM2_1950-2100.nc").chunk()
         dref = open_dataset("sdba/ahccd_1950-2013.nc").chunk()
 
-        ref = convert_units_to(dref.sel(time=slice("1950", "2009")).pr, "mm/d")
-        hist = convert_units_to(dsim.sel(time=slice("1950", "2009")).pr, "mm/d")
+        ref = convert_units_to(
+            dref.sel(time=slice("1950", "2009")).pr, "mm/d", context="hydro"
+        )
+        hist = convert_units_to(
+            dsim.sel(time=slice("1950", "2009")).pr, "mm/d", context="hydro"
+        )
 
         quantiles = np.linspace(0.01, 0.99, num=50)
 
@@ -707,10 +710,10 @@ class TestSBCKutils:
     )
     @pytest.mark.parametrize("use_dask", [True])  # do we gain testing both?
     def test_sbck(self, method, use_dask):
-        SBCK = pytest.importorskip("SBCK", minversion="0.4.0")
+        SBCK = pytest.importorskip("SBCK", minversion="0.4.0")  # noqa
 
         n = 10 * 365
-        m = 2  # A dummy dimension to test vectorizing.
+        m = 2  # A dummy dimension to test vectorization.
         ref_y = norm.rvs(loc=10, scale=1, size=(m, n))
         ref_x = norm.rvs(loc=3, scale=2, size=(m, n))
         hist_x = norm.rvs(loc=11, scale=1.2, size=(m, n))

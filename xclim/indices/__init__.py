@@ -10,7 +10,7 @@ functions perform units checks to make sure that inputs have the expected dimens
 have units of temperature, whether it is celsius, kelvin or fahrenheit), and set the `units`
 attribute of the output DataArray.
 
-The `calendar`, `fwi`, `generic`, `helpers`, `run_length` and `stats` submodules provide
+The `calendar`, `fire`, `generic`, `helpers`, `run_length` and `stats` submodules provide
 helpers to simplify the implementation of the indices.
 
 .. note::
@@ -18,7 +18,8 @@ helpers to simplify the implementation of the indices.
     Indices functions do not perform missing value checks, and usually do not set CF-Convention attributes
     (long_name, standard_name, description, cell_methods, etc.). These functionalities are provided by
     :py:class:`xclim.indicators.Indicator` instances found in the :py:mod:`xclim.indicators.atmos`,
-    :py:mod:`xclim.indicators.land` and :mod:`xclim.indicators.seaIce` modules, documented in :ref:`indicators:Climate Indicators`.
+    :py:mod:`xclim.indicators.land` and :mod:`xclim.indicators.seaIce` modules,
+    documented in :ref:`indicators:Climate Indicators`.
 
 """
 from __future__ import annotations
@@ -31,7 +32,14 @@ from ._multivariate import *
 from ._simple import *
 from ._synoptic import *
 from ._threshold import *
-from .fwi import drought_code, fire_season, fire_weather_indexes
+from .fire import (
+    cffwis_indices,
+    drought_code,
+    fire_season,
+    griffiths_drought_factor,
+    keetch_byram_drought_index,
+    mcarthur_forest_fire_danger_index,
+)
 
 """
 Notes for docstring

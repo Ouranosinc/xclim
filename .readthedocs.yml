@@ -4,8 +4,8 @@ sphinx:
   configuration: docs/conf.py
   fail_on_warning: true
 
-formats:
-  - pdf
+#formats:
+#  - pdf
 
 build:
   os: ubuntu-22.04
@@ -16,7 +16,7 @@ build:
       - pip install llvmlite~=0.38 --ignore-installed
     pre_build:
       - sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests
-      - env SKIPNOTEBOOKS=1 sphinx-build -b linkcheck docs/ _build/linkcheck
+      - sphinx-build -b linkcheck docs/ _build/linkcheck
 
 conda:
   environment: environment.yml

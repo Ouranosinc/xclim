@@ -1,3 +1,4 @@
+"""Tests for generic indices."""
 from __future__ import annotations
 
 import numpy as np
@@ -43,22 +44,23 @@ class TestDomainCount:
         np.testing.assert_array_equal(out, [10, 0])
 
 
-def test_doyminmax(q_series):
-    a = np.ones(365)
-    a[9] = 2
-    a[19] = -2
-    a[39] = 4
-    a[49] = -4
-    q = q_series(a)
-    dmx = generic.doymax(q)
-    dmn = generic.doymin(q)
-    assert dmx.values == [40]
-    assert dmn.values == [50]
-    for da in [dmx, dmn]:
-        for attr in ["units", "is_dayofyear", "calendar"]:
-            assert attr in da.attrs.keys()
-        assert da.attrs["units"] == ""
-        assert da.attrs["is_dayofyear"] == 1
+class TestFlowGeneric:
+    def test_doyminmax(self, q_series):
+        a = np.ones(365)
+        a[9] = 2
+        a[19] = -2
+        a[39] = 4
+        a[49] = -4
+        q = q_series(a)
+        dmx = generic.doymax(q)
+        dmn = generic.doymin(q)
+        assert dmx.values == [40]
+        assert dmn.values == [50]
+        for da in [dmx, dmn]:
+            for attr in ["units", "is_dayofyear", "calendar"]:
+                assert attr in da.attrs.keys()
+            assert da.attrs["units"] == ""
+            assert da.attrs["is_dayofyear"] == 1
 
 
 class TestAggregateBetweenDates:
@@ -106,7 +108,7 @@ class TestAggregateBetweenDates:
 
         np.testing.assert_allclose(out, expected)
 
-        # check calendar convertion
+        # check calendar conversion
         out_noleap = generic.aggregate_between_dates(
             data_std, start_std, end_noleap, op="sum", freq="AS-JUL"
         )
@@ -262,7 +264,7 @@ class TestAggregateBetweenDates:
             generic.aggregate_between_dates(data, bad_start, end, op="sum", freq="YS")
 
 
-class TestDegreeDays:
+class TestCumulativeDifference:
     @pytest.mark.parametrize(
         "op, expected",
         [("gt", [0, 5, 10, 0, 0]), (">=", [0, 5, 10, 0, 0]), ("<", [20, 0, 0, 7, 0])],
@@ -270,8 +272,8 @@ class TestDegreeDays:
     def test_simple(self, tas_series, op, expected):
         tas = tas_series(np.array([-10, 15, 20, 3, 10]) + K2C)
 
-        out = generic.degree_days(tas, threshold="10 degC", op=op)
-        out_kelvin = generic.degree_days(tas, threshold="283.15 degK", op=op)
+        out = generic.cumulative_difference(tas, threshold="10 degC", op=op)
+        out_kelvin = generic.cumulative_difference(tas, threshold="283.15 degK", op=op)
 
         np.testing.assert_allclose(out, expected)
         np.testing.assert_allclose(out, out_kelvin)
@@ -280,7 +282,65 @@ class TestDegreeDays:
         tas = tas_series(np.array([-10, 15, 20, 3, 10]) + K2C)
 
         with pytest.raises(NotImplementedError):
-            generic.degree_days(tas, threshold="10 degC", op="!=")
+            generic.cumulative_difference(tas, threshold="10 degC", op="!=")
+
+
+class TestFirstDayThreshold:
+    @pytest.mark.parametrize(
+        "op, expected",
+        [(">", 6), (">=", 5), ("==", 5), ("!=", 1)],
+    )
+    def test_generic_precip_above(self, pr_series, op, expected):
+        a = np.zeros(365)
+        a[:8] = np.arange(8) / 1000
+        pr = pr_series(a, start="1/1/2000")
+
+        fda = generic.first_day_threshold_reached(
+            pr,
+            threshold="0.004 kg m-2 s-1",
+            op=op,
+            after_date="01-01",
+            window=1,
+            freq="YS",
+        )
+        assert fda == expected
+
+    @pytest.mark.parametrize(
+        "op, expected",
+        [("lt", 5), ("le", 4), ("eq", 4), ("ne", 1)],
+    )
+    def test_generic_precip_below(self, pr_series, op, expected):
+        a = np.zeros(365)
+        precip = np.arange(8) / 1000
+        a[:8] = np.flip(precip)
+        pr = pr_series(a, start="1/1/2000")
+
+        fdb = generic.first_day_threshold_reached(
+            pr,
+            threshold="0.004 kg m-2 s-1",
+            op=op,
+            after_date="01-01",
+            window=1,
+            freq="YS",
+        )
+        assert fdb == expected
+
+    def test_generic_forbidden_op(self, pr_series):
+        a = np.zeros(365)
+        precip = np.arange(8) / 1000
+        a[:8] = np.flip(precip)
+        pr = pr_series(a, start="1/1/2000")
+
+        with pytest.raises(ValueError):
+            generic.first_day_threshold_reached(
+                pr,
+                threshold="0.004 kg m-2 s-1",
+                op=">",
+                after_date="01-01",
+                window=1,
+                freq="YS",
+                constrain=("<", "<="),
+            )
 
 
 class TestGetDailyEvents:

@@ -5,7 +5,6 @@ import pytest
 import xarray as xr
 
 from xclim.core import dataflags as df
-from xclim.testing import open_dataset
 
 K2C = 273.15
 
@@ -135,7 +134,7 @@ class TestDataFlags:
         ):
             df.data_flags(bad_ds.tasmax, bad_ds, raise_flags=True)
 
-    def test_era5_ecad_qc_flag(self):
+    def test_era5_ecad_qc_flag(self, open_dataset):
         bad_ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")  # noqa
 
         # Add some suspicious run values

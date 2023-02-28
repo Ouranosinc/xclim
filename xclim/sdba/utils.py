@@ -578,7 +578,7 @@ def best_pc_orientation_full(
     Hmean: np.ndarray,
     hist: np.ndarray,
 ) -> np.ndarray:
-    """Return best orientation vector for `A` according to the method of :cite:t:`sdba-alavoine_distinct_2021`.
+    """Return best orientation vector for `A` according to the method of :cite:t:`sdba-alavoine_distinct_2022`.
 
     Eigenvectors returned by `pc_matrix` do not have a defined orientation.
     Given an inverse transform Hinv, a transform R, the actual and target origins `Hmean` and `Rmean` and the matrix of
@@ -586,7 +586,7 @@ def best_pc_orientation_full(
     maximizes the Spearman correlation coefficient of all variables. The correlation is computed for each variable
     individually, then averaged.
 
-    This trick is explained in :cite:t:`sdba-alavoine_distinct_2021`.
+    This trick is explained in :cite:t:`sdba-alavoine_distinct_2022`.
     See docstring of :py:func:`sdba.adjustment.PrincipalComponentAdjustment`.
 
     Parameters
@@ -609,7 +609,7 @@ def best_pc_orientation_full(
 
     References
     ----------
-    :cite:cts:`sdba-alavoine_distinct_2021`
+    :cite:cts:`sdba-alavoine_distinct_2022`
 
     """
     # All possible orientation vectors
@@ -825,3 +825,56 @@ def copy_all_attrs(ds: xr.Dataset | xr.DataArray, ref: xr.Dataset | xr.DataArray
     for name, var in extras.items():
         if name in others:
             var.attrs.update(ref[name].attrs)
+
+
+def _pairwise_spearman(da, dims):
+    """Area-averaged pairwise temporal correlation.
+
+    With skipna-shortcuts for cases where all times or all points are NaN.
+    """
+    da = da - da.mean(dims)
+    da = (
+        da.stack(_spatial=dims)
+        .reset_index("_spatial")
+        .drop_vars(["_spatial"], errors=["ignore"])
+    )
+
+    def _skipna_correlation(data):
+        nv, nt = data.shape
+        # Mask of which variable are all NaN
+        mask_omit = np.isnan(data).all(axis=1)
+        # Remove useless variables
+        data_noallnan = data[~mask_omit, :]
+        # Mask of which times are nan on all variables
+        mask_skip = np.isnan(data_noallnan).all(axis=0)
+        # Remove those times (they'll be omitted anyway)
+        data_nonan = data_noallnan[:, ~mask_skip]
+
+        # We still have a possibility that a NaN was unique to a variable and time.
+        # If this is the case, it will be a lot longer, but what can we do.
+        coef = spearmanr(data_nonan, axis=1, nan_policy="omit").correlation
+
+        # The output
+        out = np.empty((nv, nv), dtype=coef.dtype)
+        # A 2D mask of removed variables
+        M = (mask_omit)[:, np.newaxis] | (mask_omit)[np.newaxis, :]
+        out[~M] = coef.flatten()
+        out[M] = np.nan
+        return out
+
+    return xr.apply_ufunc(
+        _skipna_correlation,
+        da,
+        input_core_dims=[["_spatial", "time"]],
+        output_core_dims=[["_spatial", "_spatial2"]],
+        vectorize=True,
+        output_dtypes=[float],
+        dask="parallelized",
+        dask_gufunc_kwargs={
+            "output_sizes": {
+                "_spatial": da._spatial.size,
+                "_spatial2": da._spatial.size,
+            },
+            "allow_rechunk": True,
+        },
+    ).rename("correlation")

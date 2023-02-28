@@ -1,19 +1,27 @@
 xclim Official Documentation
 ============================
 
-``xclim`` is a library of functions to compute climate indices from observations or model simulations. It is built using `xarray`_ and can benefit from the parallelization handling provided by `dask`_. Its objective is to make it as simple as possible for users to compute indices from large climate datasets and for scientists to write new indices with very little boilerplate.
+`xclim` is an operational Python library for climate services, providing numerous climate-related indicator tools
+with an extensible framework for constructing custom climate indicators, statistical downscaling and bias
+adjustment of climate model simulations, as well as climate model ensemble analysis tools.
 
-For applications where meta-data and missing values are important to get right, xclim provides a class for each index that validates inputs, checks for missing values, converts units and assigns metadata attributes to the output. This also provides a mechanism for users to customize the indices to their own specifications and preferences.
-
-xclim currently provides over 50 indices related to mean, minimum and maximum daily temperature, daily precipitation, streamflow and sea ice concentration.
+xclim is built using `xarray`_ and can seamlessly benefit from the parallelization handling provided by `dask`_.
+Its objective is to make it as simple as possible for users to perform typical climate services data treatment workflows.
+Leveraging xarray and dask, users can easily bias-adjust climate simulations over large spatial domains or compute indices from large climate datasets.
 
 .. _xarray: https://docs.xarray.dev/
-.. _dask: https://www.dask.org/
+.. _dask: https://docs.dask.org/
+
+.. toctree::
+   :hidden:
+
+   self
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Table of Contents:
 
+   About <readme>
    installation
    notebooks/usage
    notebooks/index
@@ -26,6 +34,10 @@ xclim currently provides over 50 indices related to mean, minimum and maximum da
    sdba
    analogues
    contributing
+
+.. toctree::
+   :titlesonly:
+
    authors
    history
    references

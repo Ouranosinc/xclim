@@ -1,21 +1,39 @@
 # noqa: D104
 from __future__ import annotations
 
+import os
+import shutil
+from functools import partial
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+from filelock import FileLock
 
-import xclim.testing
+import xclim
 from xclim.core.calendar import max_doy
-from xclim.testing.tests import TD
+from xclim.testing.tests.data import (
+    add_example_file_paths,
+    generate_atmos,
+    populate_testing_data,
+)
+from xclim.testing.utils import _default_cache_dir  # noqa
+from xclim.testing.utils import open_dataset as _open_dataset
+
+TESTDATA_BRANCH = os.getenv("XCLIM_TESTDATA_BRANCH", "main")
+PREFETCH_TESTING_DATA = os.getenv("XCLIM_PREFETCH_TESTING_DATA")
 
 
 @pytest.fixture
-def tmp_netcdf_filename(tmpdir):
-    return Path(tmpdir).joinpath("testfile.nc")
+def tmp_netcdf_filename(tmpdir) -> Path:
+    yield Path(tmpdir).joinpath("testfile.nc")
+
+
+@pytest.fixture(autouse=True, scope="session")
+def threadsafe_data_dir(tmp_path_factory) -> Path:
+    yield Path(tmp_path_factory.getbasetemp().joinpath("data"))
 
 
 @pytest.fixture
@@ -290,21 +308,21 @@ def per_doy():
 
 
 @pytest.fixture
-def areacella():
+def areacella() -> xr.DataArray:
     """Return a rectangular grid of grid cell area."""
     r = 6100000
     lon_bnds = np.arange(-180, 181, 1)
     lat_bnds = np.arange(-90, 91, 1)
-    dlon = np.diff(lon_bnds)
-    dlat = np.diff(lat_bnds)
+    d_lon = np.diff(lon_bnds)
+    d_lat = np.diff(lat_bnds)
     lon = np.convolve(lon_bnds, [0.5, 0.5], "valid")
     lat = np.convolve(lat_bnds, [0.5, 0.5], "valid")
     area = (
         r
-        * np.radians(dlat)[:, np.newaxis]
+        * np.radians(d_lat)[:, np.newaxis]
         * r
         * np.cos(np.radians(lat)[:, np.newaxis])
-        * np.radians(dlon)
+        * np.radians(d_lon)
     )
     return xr.DataArray(
         data=area,
@@ -336,8 +354,8 @@ def hurs_series():
 
 
 @pytest.fixture
-def sfcWind_series():
-    def _sfcWind_series(values, start="7/1/2000", units="km h-1"):
+def sfcWind_series():  # noqa
+    def _sfcWind_series(values, start="7/1/2000", units="km h-1"):  # noqa
         coords = pd.date_range(start, periods=len(values), freq="D")
         return xr.DataArray(
             values,
@@ -494,80 +512,50 @@ def rlus_series():
     return _rlus_series
 
 
-@pytest.fixture(autouse=True)
-def add_imports(xdoctest_namespace):
+@pytest.fixture(scope="session")
+def cmip3_day_tas(threadsafe_data_dir):
+    # xr.set_options(enable_cftimeindex=False)
+    ds = _open_dataset(
+        "cmip3/tas.sresb1.giss_model_e_r.run1.atm.da.nc",
+        cache_dir=threadsafe_data_dir,
+        branch=TESTDATA_BRANCH,
+    )
+    yield ds.tas
+    ds.close()
+
+
+@pytest.fixture(scope="session")
+def open_dataset(threadsafe_data_dir):
+    def _open_session_scoped_file(
+        file: str | os.PathLike, branch: str = TESTDATA_BRANCH, **xr_kwargs
+    ):
+        return _open_dataset(
+            file, cache_dir=threadsafe_data_dir, branch=branch, **xr_kwargs
+        )
+
+    return _open_session_scoped_file
+
+
+@pytest.fixture(autouse=True, scope="session")
+def add_imports(xdoctest_namespace, threadsafe_data_dir) -> None:
     """Add these imports into the doctests scope."""
     ns = xdoctest_namespace
     ns["np"] = np
-    ns["xr"] = xclim.testing
+    ns["xr"] = xclim.testing  # xr.open_dataset(...) -> xclim.testing.open_dataset(...)
     ns["xclim"] = xclim
-    ns["open_dataset"] = xclim.testing.open_dataset
+    ns["open_dataset"] = partial(
+        _open_dataset, cache_dir=threadsafe_data_dir, branch=TESTDATA_BRANCH
+    )  # Needed for modules where xarray is imported as `xr`
 
 
-@pytest.fixture(autouse=True)
-def add_example_file_paths(xdoctest_namespace, tas_series):
-    """Add these datasets in the doctests scope."""
-    ns = xdoctest_namespace
-
-    nrcan = Path("NRCANdaily")
-    era5 = Path("ERA5")
-
-    ns["path_to_pr_file"] = str(nrcan / "nrcan_canada_daily_pr_1990.nc")
-
-    ns["path_to_tasmax_file"] = str(nrcan / "nrcan_canada_daily_tasmax_1990.nc")
-
-    ns["path_to_tasmin_file"] = str(nrcan / "nrcan_canada_daily_tasmin_1990.nc")
-
-    ns["path_to_tas_file"] = str(era5 / "daily_surface_cancities_1990-1993.nc")
-
-    ns["path_to_multi_shape_file"] = str(TD / "multi_regions.json")
-
-    ns["path_to_shape_file"] = str(TD / "southern_qc_geojson.json")
-
-    # For core.utils.load_module example
-    ns["path_to_example_py"] = (
-        Path(__file__).parent.parent.parent.parent / "docs" / "notebooks" / "example.py"
-    )
-
-    time = xr.cftime_range("1990-01-01", "2049-12-31", freq="D")
-    ns["temperature_datasets"] = [
-        xr.DataArray(
-            12 * np.random.random_sample(time.size) + 273,
-            coords={"time": time},
-            name="tas",
-            dims=("time",),
-            attrs={
-                "units": "K",
-                "cell_methods": "time: mean within days",
-                "standard_name": "air_temperature",
-            },
-        ),
-        xr.DataArray(
-            12 * np.random.random_sample(time.size) + 273,
-            coords={"time": time},
-            name="tas",
-            dims=("time",),
-            attrs={
-                "units": "K",
-                "cell_methods": "time: mean within days",
-                "standard_name": "air_temperature",
-            },
-        ),
-    ]
-
-    ns["path_to_ensemble_file"] = str(
-        Path("EnsembleReduce").joinpath("TestEnsReduceCriteria.nc")
-    )
-
-
-@pytest.fixture(autouse=True)
-def add_example_dataarray(xdoctest_namespace, tas_series):
+@pytest.fixture(autouse=True, scope="function")
+def add_example_dataarray(xdoctest_namespace, tas_series) -> None:
     ns = xdoctest_namespace
     ns["tas"] = tas_series(np.random.rand(365) * 20 + 253.15)
 
 
-@pytest.fixture(autouse=True)
-def is_matplotlib_installed(xdoctest_namespace):
+@pytest.fixture(autouse=True, scope="session")
+def is_matplotlib_installed(xdoctest_namespace) -> None:
     def _is_matplotlib_installed():
         try:
             import matplotlib  # noqa
@@ -590,45 +578,68 @@ def official_indicators():
     return registry_cp
 
 
-@pytest.fixture(scope="session")
-def atmosds():
-    ds = xclim.testing.open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
-
-    sfcWind, sfcWindfromdir = xclim.atmos.wind_speed_from_vector(ds=ds)
-    sfcWind.attrs.update(cell_methods="time: mean within days")
-    huss = xclim.atmos.specific_humidity(ds=ds)
-    snw = ds.swe * 1000
-    # Liquid water equivalent snow thickness [m] to snow thickness in [m] : lwe [m] * 1000 kg/m³ / 300 kg/m³
-    snd = snw / 300
-    snw.attrs.update(
-        standard_name="surface_snow_amount",
-        units="kg m-2",
-        cell_methods="time: mean within days",
-    )
-    snd.attrs.update(
-        standard_name="surface_snow_thickness",
-        units="m",
-        cell_methods="time: mean within days",
+@pytest.fixture(scope="function")
+def atmosds(threadsafe_data_dir) -> xr.Dataset:
+    return _open_dataset(
+        threadsafe_data_dir.joinpath("atmosds.nc"),
+        cache_dir=threadsafe_data_dir,
+        branch=TESTDATA_BRANCH,
     )
 
-    psl = ds.ps
-    psl.attrs.update(standard_name="air_pressure_at_sea_level")
 
-    tn10 = xclim.core.calendar.percentile_doy(ds.tasmin, per=10)
-    t10 = xclim.core.calendar.percentile_doy(ds.tas, per=10)
-    t90 = xclim.core.calendar.percentile_doy(ds.tas, per=90)
-    tx90 = xclim.core.calendar.percentile_doy(ds.tasmax, per=90)
+@pytest.fixture(scope="function")
+def ensemble_dataset_objects() -> dict:
+    edo = dict()
+    edo["nc_files_simple"] = [
+        "EnsembleStats/BCCAQv2+ANUSPLIN300_ACCESS1-0_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
+        "EnsembleStats/BCCAQv2+ANUSPLIN300_BNU-ESM_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
+        "EnsembleStats/BCCAQv2+ANUSPLIN300_CCSM4_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
+        "EnsembleStats/BCCAQv2+ANUSPLIN300_CCSM4_historical+rcp45_r2i1p1_1950-2100_tg_mean_YS.nc",
+    ]
+    edo["nc_files_extra"] = [
+        "EnsembleStats/BCCAQv2+ANUSPLIN300_CNRM-CM5_historical+rcp45_r1i1p1_1970-2050_tg_mean_YS.nc"
+    ]
+    edo["nc_files"] = edo["nc_files_simple"] + edo["nc_files_extra"]
+    return edo
 
-    ds = ds.assign(
-        sfcWind=sfcWind,
-        sfcWindfromdir=sfcWindfromdir,
-        huss=huss,
-        psl=psl,
-        snw=snw,
-        snd=snd,
-        tn10=tn10,
-        t10=t10,
-        t90=t90,
-        tx90=tx90,
-    )
-    return ds
+
+@pytest.fixture(scope="session", autouse=True)
+def gather_session_data(threadsafe_data_dir, worker_id, xdoctest_namespace):
+    """Gather testing data on pytest run.
+
+    When running pytest with multiple workers, one worker will copy data remotely to _default_cache_dir while
+    other workers wait using lockfile. Once the lock is released, all workers will copy data to their local
+    threadsafe_data_dir."""
+
+    if (
+        not _default_cache_dir.joinpath(TESTDATA_BRANCH).exists()
+        or PREFETCH_TESTING_DATA
+    ):
+        if worker_id in "master":
+            populate_testing_data(branch=TESTDATA_BRANCH)
+        else:
+            _default_cache_dir.mkdir(exist_ok=True)
+            test_data_being_written = FileLock(_default_cache_dir.joinpath(".lock"))
+            with test_data_being_written as fl:
+                # This flag prevents multiple calls from re-attempting to download testing data in the same pytest run
+                populate_testing_data(branch=TESTDATA_BRANCH)
+                _default_cache_dir.joinpath(".data_written").touch()
+            fl.acquire()
+        shutil.copytree(_default_cache_dir, threadsafe_data_dir)
+    generate_atmos(threadsafe_data_dir)
+    xdoctest_namespace.update(add_example_file_paths(threadsafe_data_dir))
+
+
+@pytest.fixture(scope="session", autouse=True)
+def cleanup(request):
+    """Cleanup a testing file once we are finished.
+
+    This flag prevents remote data from being downloaded multiple times in the same pytest run.
+    """
+
+    def remove_data_written_flag():
+        flag = _default_cache_dir.joinpath(".data_written")
+        if flag.exists():
+            flag.unlink()
+
+    request.addfinalizer(remove_data_written_flag)

@@ -20,9 +20,9 @@ import warnings
 from collections import OrderedDict
 
 import xarray
-from pybtex.plugin import register_plugin
-from pybtex.style.formatting.alpha import Style as AlphaStyle
-from pybtex.style.labels import BaseLabelStyle
+from pybtex.plugin import register_plugin  # noqa
+from pybtex.style.formatting.alpha import Style as AlphaStyle  # noqa
+from pybtex.style.labels import BaseLabelStyle  # noqa
 
 xarray.DataArray.__module__ = "xarray"
 xarray.Dataset.__module__ = "xarray"
@@ -48,7 +48,7 @@ def _get_indicators(module):
 
     out = {}
     for key, val in module.__dict__.items():
-        if hasattr(val, "_registry_id") and val._registry_id in registry:
+        if hasattr(val, "_registry_id") and val._registry_id in registry:  # noqa
             out[key] = val
 
     return OrderedDict(sorted(out.items()))
@@ -58,26 +58,26 @@ def _indicator_table(module):
     """Return a sequence of dicts storing metadata about all available indices in xclim."""
     inds = _get_indicators(getattr(xclim.indicators, module))
     table = {}
-    for indname, ind in inds.items():
+    for ind_name, ind in inds.items():
         # Apply default values
         # args = {
         #     name: p.default if p.default != inspect._empty else f"<{name}>"
         #     for (name, p) in ind._sig.parameters.items()
         # }
         try:
-            table[indname] = ind.json()  # args?
+            table[ind_name] = ind.json()  # args?
         except KeyError as err:
             warnings.warn(
                 f"{ind.identifier} could not be documented.({err})", UserWarning
             )
         else:
-            table[indname]["doc"] = ind.__doc__
+            table[ind_name]["doc"] = ind.__doc__
             if ind.compute.__module__.endswith("generic"):
-                table[indname][
+                table[ind_name][
                     "function"
                 ] = f"xclim.indices.generic.{ind.compute.__name__}"
             else:
-                table[indname]["function"] = f"xclim.indices.{ind.compute.__name__}"
+                table[ind_name]["function"] = f"xclim.indices.{ind.compute.__name__}"
     return table
 
 
@@ -107,16 +107,28 @@ extensions = [
     "IPython.sphinxext.ipython_console_highlighting",
     "autodoc_indicator",
     "sphinxcontrib.bibtex",
+    "sphinxcontrib.cairosvgconverter",
+    "sphinx_codeautolink",
+    "sphinx_copybutton",
+    "sphinx_rtd_theme",
 ]
 
 autosectionlabel_prefix_document = True
 autosectionlabel_maxdepth = 2
 
 linkcheck_ignore = [
-    r"https://github.com/Ouranosinc/xclim/(pull|issue).*",
-    r"https://doi.org/10.1093/mnras/225.1.155"  # does not allow linkcheck requests (error 403)
-    r"https://clisops.readthedocs.io/en/latest/notebooks/subset.html",  # target link is currently broken
+    r"https://github.com/Ouranosinc/xclim/(pull|issue).*",  # too labourious to fully check
+    r"https://doi.org/10.1093/mnras/225.1.155",  # does not allow linkcheck requests (error 403)
+    r"https://hal.inrae.fr/hal-02843898",  # bad ssl certificate
+    r"https://www.ouranos.ca/.*",  # bad ssl certificate
+    r"https://doi.org/10.1080/.*",  # tandfonline does not allow linkcheck requests (error 403)
+    r"https://www.tandfonline.com/.*",  # tandfonline does not allow linkcheck requests (error 403)
+    r"http://www.utci.org/.*",  # Added on 2022-12-08: site appears to be down (timeout)
+    r"https://ui.adsabs.harvard.edu/abs/2018AGUFMIN33A..06A*",  # Added on 2023-01-24: bad ssl certificate
+    r"https://www.jstor.org/.*",  # Added on 2023-01-31: does not allow linkcheck requests (error 403)
+    r"https://doi.org/10.2307/210739",  # Added on 2023-01-31: does not allow linkcheck requests (error 403)
 ]
+linkcheck_exclude_documents = [r"readme"]
 
 napoleon_numpy_docstring = True
 napoleon_use_rtype = False
@@ -150,17 +162,24 @@ class XCLabelStyle(BaseLabelStyle):
 
 
 class XCStyle(AlphaStyle):
-
     default_label_style = XCLabelStyle
 
 
 register_plugin("pybtex.style.formatting", "xcstyle", XCStyle)
 bibtex_bibfiles = ["references.bib"]
+bibtex_default_style = "xcstyle"
 bibtex_reference_style = "author_year"
 
-if os.getenv("SKIPNOTEBOOKS"):
-    warnings.warn("Not executing notebooks.")
+skip_notebooks = os.getenv("SKIP_NOTEBOOKS")
+if skip_notebooks or os.getenv("READTHEDOCS_VERSION_TYPE") in [
+    "branch",
+    "external",
+]:
+    if skip_notebooks:
+        warnings.warn("Not executing notebooks.")
     nbsphinx_execute = "never"
+elif os.getenv("READTHEDOCS_VERSION_NAME") in ["latest", "stable"]:
+    nbsphinx_execute = "always"
 else:
     nbsphinx_execute = "auto"
 nbsphinx_prolog = r"""
@@ -247,7 +266,7 @@ html_sidebars = {
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = "_static/_images/xclim-logo.png"
+html_logo = "logos/xclim-logo.png"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -262,7 +281,7 @@ htmlhelp_basename = "xclimdoc"
 # -- Options for LaTeX output ------------------------------------------
 
 latex_engine = "pdflatex"
-latex_logo = "_static/_images/xclim-logo.png"
+latex_logo = "logos/xclim-logo.png"
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
@@ -272,6 +291,7 @@ latex_elements = {
     # Additional stuff for the LaTeX preamble.
     "preamble": r"""
 \renewcommand{\v}[1]{\mathbf{#1}}
+\nocite{*}
 """,
     # Latex figure (float) alignment
     "figure_align": "htbp",
@@ -312,3 +332,7 @@ texinfo_documents = [
         "Miscellaneous",
     )
 ]
+
+
+def setup(app):
+    app.add_css_file("_static/style.css")

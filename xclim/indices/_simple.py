@@ -4,6 +4,7 @@ from __future__ import annotations
 import xarray
 
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
+from xclim.core.utils import Quantified
 
 from .generic import threshold_count
 
@@ -42,14 +43,14 @@ def tg_max(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature.
+        Mean daily temperature.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [same units as tas]
-      Maximum of daily minimum temperature.
+        Maximum of daily minimum temperature.
 
     Notes
     -----
@@ -72,14 +73,14 @@ def tg_mean(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature.
+        Mean daily temperature.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [same units as tas]
-      The mean daily temperature at the given time frequency
+        The mean daily temperature at the given time frequency
 
     Notes
     -----
@@ -111,14 +112,14 @@ def tg_min(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     Parameters
     ----------
     tas : xarray.DataArray
-      Mean daily temperature.
+        Mean daily temperature.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [same units as tas]
-      Minimum of daily minimum temperature.
+        Minimum of daily minimum temperature.
 
     Notes
     -----
@@ -141,14 +142,14 @@ def tn_max(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature.
+        Minimum daily temperature.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [same units as tasmin]
-      Maximum of daily minimum temperature.
+        Maximum of daily minimum temperature.
 
     Notes
     -----
@@ -171,14 +172,14 @@ def tn_mean(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature.
+        Minimum daily temperature.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [same units as tasmin]
-      Mean of daily minimum temperature.
+        Mean of daily minimum temperature.
 
     Notes
     -----
@@ -201,14 +202,14 @@ def tn_min(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature.
+        Minimum daily temperature.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [same units as tasmin]
-      Minimum of daily minimum temperature.
+        Minimum of daily minimum temperature.
 
     Notes
     -----
@@ -231,14 +232,14 @@ def tx_max(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     Parameters
     ----------
     tasmax : xarray.DataArray
-      Maximum daily temperature.
+        Maximum daily temperature.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [same units as tasmax]
-      Maximum value of daily maximum temperature.
+        Maximum value of daily maximum temperature.
 
     Notes
     -----
@@ -261,14 +262,14 @@ def tx_mean(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     Parameters
     ----------
     tasmax : xarray.DataArray
-      Maximum daily temperature.
+        Maximum daily temperature.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [same units as tasmax]
-      Mean of daily maximum temperature.
+        Mean of daily maximum temperature.
 
     Notes
     -----
@@ -291,9 +292,9 @@ def tx_min(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     Parameters
     ----------
     tasmax : xarray.DataArray
-      Maximum daily temperature.
+        Maximum daily temperature.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
@@ -314,7 +315,7 @@ def tx_min(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def frost_days(
-    tasmin: xarray.DataArray, thresh: str = "0 degC", freq: str = "YS"
+    tasmin: xarray.DataArray, thresh: Quantified = "0 degC", freq: str = "YS"
 ) -> xarray.DataArray:
     r"""Frost days index.
 
@@ -323,16 +324,16 @@ def frost_days(
     Parameters
     ----------
     tasmin : xarray.DataArray
-      Minimum daily temperature.
-    thresh : str
-      Freezing temperature.
+        Minimum daily temperature.
+    thresh : Quantified
+        Freezing temperature.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [time]
-      Frost days index.
+        Frost days index.
 
     Notes
     -----
@@ -350,7 +351,7 @@ def frost_days(
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def ice_days(
-    tasmax: xarray.DataArray, thresh: str = "0 degC", freq: str = "YS"
+    tasmax: xarray.DataArray, thresh: Quantified = "0 degC", freq: str = "YS"
 ) -> xarray.DataArray:  # noqa: D401
     r"""Number of ice/freezing days.
 
@@ -359,16 +360,16 @@ def ice_days(
     Parameters
     ----------
     tasmax : xarray.DataArray
-      Maximum daily temperature.
-    thresh : str
-      Freezing temperature.
+        Maximum daily temperature.
+    thresh : Quantified
+        Freezing temperature.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [time]
-      Number of ice/freezing days.
+        Number of ice/freezing days.
 
     Notes
     -----
@@ -395,14 +396,14 @@ def max_1day_precipitation_amount(
     Parameters
     ----------
     pr : xarray.DataArray
-      Daily precipitation values.
+        Daily precipitation values.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [same units as pr]
-      The highest 1-period precipitation flux value at the given time frequency.
+        The highest 1-period precipitation flux value at the given time frequency.
 
     Notes
     -----
@@ -414,10 +415,9 @@ def max_1day_precipitation_amount(
 
     Examples
     --------
-    >>> from xclim.indices import max_1day_precipitation_amount
+    The following would compute for each grid cell the highest 1-day total at an annual frequency:
 
-    # The following would compute for each grid cell the highest 1-day total
-    # at an annual frequency:
+    >>> from xclim.indices import max_1day_precipitation_amount
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> rx1day = max_1day_precipitation_amount(pr, freq="YS")
     """
@@ -436,23 +436,22 @@ def max_n_day_precipitation_amount(
     Parameters
     ----------
     pr : xarray.DataArray
-      Daily precipitation values.
+        Daily precipitation values.
     window : int
-      Window size in days.
+        Window size in days.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [length]
-      The highest cumulated n-period precipitation value at the given time frequency.
+        The highest cumulated n-period precipitation value at the given time frequency.
 
     Examples
     --------
-    >>> from xclim.indices import max_n_day_precipitation_amount
+    The following would compute for each grid cell the highest 5-day total precipitation at an annual frequency:
 
-    # The following would compute for each grid cell the highest 5-day total precipitation
-    #at an annual frequency:
+    >>> from xclim.indices import max_n_day_precipitation_amount
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> out = max_n_day_precipitation_amount(pr, window=5, freq="YS")
     """
@@ -474,24 +473,24 @@ def max_pr_intensity(
     Parameters
     ----------
     pr : xarray.DataArray
-      Hourly precipitation values.
+        Hourly precipitation values.
     window : int
-      Window size in hours.
+        Window size in hours.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [same units as pr]
-      The highest cumulated n-hour precipitation intensity at the given time frequency.
+        The highest cumulated n-hour precipitation intensity at the given time frequency.
 
     Examples
     --------
-    >>> from xclim.indices import max_pr_intensity
+    The following would compute the maximum 6-hour precipitation intensity at an annual frequency:
 
-    # The following would compute the maximum 6-hour precipitation intensity.
-    # at an annual frequency:
-    # TODO: Add minimal working example for documentation
+    >>> from xclim.indices import max_pr_intensity
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> out = max_pr_intensity(pr, window=5, freq="YS")
     """
     # Rolling sum of the values
     arr = pr.rolling(time=window).mean(skipna=False)
@@ -513,14 +512,13 @@ def snow_depth(
     Parameters
     ----------
     snd : xarray.DataArray
-     Mean daily snow depth.
+        Mean daily snow depth.
     freq : str
-      Resampling frequency.
+        Resampling frequency.
 
     Returns
     -------
     xarray.DataArray, [same units as snd]
-      The mean daily snow depth at the given time frequency
-
+        The mean daily snow depth at the given time frequency
     """
     return snd.resample(time=freq).mean(dim="time").assign_attrs(units=snd.units)
