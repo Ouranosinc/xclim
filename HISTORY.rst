@@ -4,7 +4,7 @@ History
 
 0.41.0 (unreleased)
 -------------------
-
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Éric Dupuis (:user:`coxipi`).
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``ensembles.hawkins_sutton`` method to partition the uncertainty sources in a climate projection ensemble. (:issue:`771`, :pull:`1262`).

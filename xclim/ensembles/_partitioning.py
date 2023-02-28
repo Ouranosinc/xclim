@@ -127,7 +127,7 @@ def hawkins_sutton(
         )
 
     # Decadal mean residuals
-    res = (da - sm).rolling(time=10).mean(center=True)
+    res = (da - sm).rolling(time=10, center=True).mean()
 
     # Individual model variance after 2000: V
     # Note that the historical data is the same for all scenarios.
