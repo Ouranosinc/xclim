@@ -19,7 +19,7 @@ dependencies:
     - poppler>=0.67
     - pyyaml
     - scikit-learn>=0.21.3
-    - scipy>=1.2,<1.9  # See https://github.com/Ouranosinc/xclim/issues/1142
+    - scipy>=1.2
     - xarray>=2022.06.0
     # Extras
     - eofs
