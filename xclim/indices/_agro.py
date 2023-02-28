@@ -886,12 +886,11 @@ def water_budget(
 
 @declare_units(
     pr="[precipitation]",
-    pr_cal="[precipitation]",
 )
 def standardized_precipitation_index(
     pr: xarray.DataArray,
-    pr_cal: Quantified,
-    freq: str = "MS",
+    dates: tuple,
+    freq: str | None = "MS",
     window: int = 1,
     dist: str = "gamma",
     method: str = "APP",
@@ -902,8 +901,8 @@ def standardized_precipitation_index(
     ----------
     pr : xarray.DataArray
         Daily precipitation.
-    pr_cal : xarray.DataArray
-        Daily precipitation used for calibration. Usually this is a temporal subset of `pr` over some reference period.
+    dates: tuple
+        Calibration dates
     freq : str
         Resampling frequency. A monthly or daily frequency is expected.
     window : int
@@ -932,15 +931,18 @@ def standardized_precipitation_index(
     >>> from xclim.indices import standardized_precipitation_index
     >>> ds = xr.open_dataset(path_to_pr_file)
     >>> pr = ds.pr
-    >>> pr_cal = pr.sel(time=slice(datetime(1990, 5, 1), datetime(1990, 8, 31)))
     >>> spi_3 = standardized_precipitation_index(
-    ...     pr, pr_cal, freq="MS", window=3, dist="gamma", method="ML"
+    ...     pr,
+    ...     ("1990-05-01", "1990-08-31"),
+    ...     freq="MS",
+    ...     window=3,
+    ...     dist="gamma",
+    ...     method="ML",
     ... )  # Computing SPI-3 months using a gamma distribution for the fit
 
     References
     ----------
     :cite:cts:`mckee_relationship_1993`
-
     """
     # "WPM" method doesn't seem to work for gamma or pearson3
     dist_and_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
@@ -951,80 +953,63 @@ def standardized_precipitation_index(
             f"The method `{method}` is not supported for distribution `{dist}`."
         )
 
-    # calibration period
-    cal_period = pr_cal.time[[0, -1]].dt.strftime("%Y-%m-%dT%H:%M:%S").values.tolist()
+    # freq is None allows to use monthly precips
+    if freq is None:
+        group = "time.month"
 
-    # Determine group type
-    if freq == "D" or freq is None:
-        freq = "D"
-        group = "time.dayofyear"
     else:
-        _, base, _, _ = parse_offset(freq)
-        if base in ["M"]:
-            group = "time.month"
+        # Determine group type
+        if freq == "D" or freq is None:
+            freq = "D"
+            group = "time.dayofyear"
         else:
-            raise NotImplementedError(f"Resampling frequency `{freq}` not supported.")
-
-    # Resampling precipitations
-    if freq != "D":
-        pr = pr.resample(time=freq).mean(keep_attrs=True)
-        pr_cal = pr_cal.resample(time=freq).mean(keep_attrs=True)
-
-        def needs_rechunking(da):
-            if uses_dask(da) and len(da.chunks[da.get_axis_num("time")]) > 1:
-                warnings.warn(
-                    "The input data is chunked on time dimension and must be fully rechunked to"
-                    " run `fit` on groups ."
-                    " Beware, this operation can significantly increase the number of tasks dask"
-                    " has to handle.",
-                    stacklevel=2,
+            _, base, _, _ = parse_offset(freq)
+            if base in ["M"]:
+                group = "time.month"
+            else:
+                raise NotImplementedError(
+                    f"Resampling frequency `{freq}` not supported."
                 )
-                return True
-            return False
 
-        if needs_rechunking(pr):
-            pr = pr.chunk({"time": -1})
-        if needs_rechunking(pr_cal):
-            pr_cal = pr_cal.chunk({"time": -1})
+        # Resampling precipitations
+        if freq != "D":
+            pr = pr.resample(time=freq).mean(keep_attrs=True)
+
+    if uses_dask(pr) and len(pr.chunks[pr.get_axis_num("time")]) > 1:
+        warnings.warn(
+            "The input data is chunked on time dimension and must be fully rechunked to"
+            " run `fit` on groups ."
+            " Beware, this operation can significantly increase the number of tasks dask"
+            " has to handle.",
+            stacklevel=2,
+        )
+        pr = pr.chunk({"time": -1})
 
     # Rolling precipitations
     if window > 1:
         pr = pr.rolling(time=window).mean(skipna=False, keep_attrs=True)
-        pr_cal = pr_cal.rolling(time=window).mean(skipna=False, keep_attrs=True)
 
-    # Obtain fitting params and expand along time dimension
-    def resample_to_time(da, da_ref):
-        if freq == "D":
-            da = resample_doy(da, da_ref)
-        else:
-            da = da.rename(month="time").reindex(time=da_ref.time.dt.month)
-            da["time"] = da_ref.time
-        return da
-
-    params = pr_cal.groupby(group).map(lambda x: fit(x, dist, method))
-    params = resample_to_time(params, pr)
-
-    # ppf to cdf
-    if dist in ["gamma", "fisk"]:
-        prob_pos = dist_method("cdf", params, pr.where(pr > 0))
-        prob_zero = resample_to_time(
-            pr.groupby(group).map(
-                lambda x: (x == 0).sum("time") / x.notnull().sum("time")
-            ),
-            pr,
+    def get_sub_spi(pr):
+        pr_cal = pr.sel(time=slice(dates[0], dates[1]))
+        params = fit(pr_cal, dist, method)
+        # ppf to cdf
+        if dist in ["gamma", "fisk"]:
+            prob_pos = dist_method("cdf", params, pr.where(pr > 0))
+            prob_zero = (pr == 0).sum("time") / pr.notnull().sum("time")
+            prob = prob_zero + (1 - prob_zero) * prob_pos
+        # Invert to normal distribution with ppf and obtain SPI
+        params_norm = xarray.DataArray(
+            [0, 1],
+            dims=["dparams"],
+            coords=dict(dparams=(["loc", "scale"])),
+            attrs=dict(scipy_dist="norm"),
         )
-        prob = prob_zero + (1 - prob_zero) * prob_pos
+        spi_month = dist_method("ppf", params_norm, prob)
+        return spi_month
 
-    # Invert to normal distribution with ppf and obtain SPI
-    params_norm = xarray.DataArray(
-        [0, 1],
-        dims=["dparams"],
-        coords=dict(dparams=(["loc", "scale"])),
-        attrs=dict(scipy_dist="norm"),
-    )
-    spi = dist_method("ppf", params_norm, prob)
+    spi = pr.groupby(group).map(get_sub_spi)
     spi.attrs["units"] = ""
-    spi.attrs["calibration_period"] = cal_period
+    spi.attrs["calibration_period"] = dates
 
     return spi
 
@@ -1035,7 +1020,7 @@ def standardized_precipitation_index(
 )
 def standardized_precipitation_evapotranspiration_index(
     wb: xarray.DataArray,
-    wb_cal: Quantified,
+    dates: tuple,
     freq: str = "MS",
     window: int = 1,
     dist: str = "gamma",
@@ -1085,9 +1070,9 @@ def standardized_precipitation_evapotranspiration_index(
         # library is taken
         offset = convert_units_to("1 mm/d", wb.units, context="hydro")
         with xarray.set_options(keep_attrs=True):
-            wb, wb_cal = wb + offset, wb_cal + offset
+            wb = wb + offset
 
-    spei = standardized_precipitation_index(wb, wb_cal, freq, window, dist, method)
+    spei = standardized_precipitation_index(wb, dates, freq, window, dist, method)
 
     return spei
 
