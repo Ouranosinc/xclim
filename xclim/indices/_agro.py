@@ -889,7 +889,7 @@ def water_budget(
 )
 def standardized_precipitation_index(
     pr: xarray.DataArray,
-    dates: tuple,
+    cal_range: tuple,
     freq: str | None = "MS",
     window: int = 1,
     dist: str = "gamma",
@@ -901,7 +901,7 @@ def standardized_precipitation_index(
     ----------
     pr : xarray.DataArray
         Daily precipitation.
-    dates: tuple
+    cal_range: tuple
         Calibration dates
     freq : str
         Resampling frequency. A monthly or daily frequency is expected.
@@ -990,7 +990,7 @@ def standardized_precipitation_index(
         pr = pr.rolling(time=window).mean(skipna=False, keep_attrs=True)
 
     def get_sub_spi(pr):
-        pr_cal = pr.sel(time=slice(dates[0], dates[1]))
+        pr_cal = pr.sel(time=slice(cal_range[0], cal_range[1]))
         params = fit(pr_cal, dist, method)
         # ppf to cdf
         if dist in ["gamma", "fisk"]:
@@ -1009,7 +1009,7 @@ def standardized_precipitation_index(
 
     spi = pr.groupby(group).map(get_sub_spi)
     spi.attrs["units"] = ""
-    spi.attrs["calibration_period"] = dates
+    spi.attrs["calibration_period"] = cal_range
 
     return spi
 
@@ -1036,8 +1036,8 @@ def standardized_precipitation_evapotranspiration_index(
     ----------
     wb : xarray.DataArray
         Daily water budget (pr - pet).
-    wb_cal : xarray.DataArray
-        Daily water budget used for calibration.
+    cal_range: tuple
+        Calibration dates
     freq : str
         Resampling frequency. A monthly or daily frequency is expected.
     window : int
