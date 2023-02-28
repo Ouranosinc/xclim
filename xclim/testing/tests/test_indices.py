@@ -2512,7 +2512,7 @@ def test_rain_season(pr_series, result_type):
     pr[{"time": slice(3, 3 + 30)}] = 5
     pr[{"time": slice(99, 99 + 20)}] = 0
     if result_type == "season_found":
-        out_exp = [2, 118, 116]
+        out_exp = [3, 100, 97]
     elif result_type == "start_cond1_fails":
         pr[{"time": 2}] = 0
         out_exp = [np.NaN, np.NaN, np.NaN]
@@ -2521,7 +2521,7 @@ def test_rain_season(pr_series, result_type):
         out_exp = [np.NaN, np.NaN, np.NaN]
     elif result_type == "end_cond_fails":
         pr[{"time": 99 + 20 - 1}] = 5
-        out_exp = [2, np.NaN, 363]
+        out_exp = [3, np.NaN, 363]
 
     # convert mm -> kg m-2 s-1
     with xr.set_options(keep_attrs=True):
@@ -2529,7 +2529,7 @@ def test_rain_season(pr_series, result_type):
 
     out = {}
     out["start"], out["end"], out["length"] = xci.rain_season(
-        pr, start_date_min="01-01", end_date_min="01-01"
+        pr, date_min_start="01-01", date_min_end="01-01"
     )
     out_arr = np.array(
         [out[var].values for var in ["start", "end", "length"]]

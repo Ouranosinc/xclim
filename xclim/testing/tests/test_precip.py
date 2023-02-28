@@ -42,15 +42,15 @@ class TestRainSeason:
             pr,
             freq="AS-JAN",
             window_dry_end=5,
-            start_date_min="01-01",
-            end_date_min="01-01",
+            date_min_start="01-01",
+            date_min_end="01-01",
         )
         out_arr = np.array([out[var].values for var in ["start", "end", "length"]])
         out_exp = np.array(
             [
-                [np.nan, 11.0, 5.0, 26.0],
-                [np.nan, np.nan, 144.0, np.nan],
-                [np.nan, 354.0, 139.0, 339.0],
+                [np.nan, 12.0, 6.0, 27.0],
+                [np.nan, np.nan, 141.0, np.nan],
+                [np.nan, 354.0, 135.0, 339.0],
             ]
         )
         np.testing.assert_array_equal(out_arr, out_exp)

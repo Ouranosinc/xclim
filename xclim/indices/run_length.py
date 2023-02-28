@@ -158,6 +158,8 @@ def _cumsum_reset_on_zero(
     return out
 
 
+# TODO: Check if rle would be more performant with ffill/bfill instead of two times [{dim: slice(None, None, -1)}]
+# Just like in rle_with_holes
 def rle(
     da: xr.DataArray,
     dim: str = "time",
@@ -652,10 +654,9 @@ def keep_longest_run(
 def rle_with_holes(
     da_start: xr.DataArray,
     window_start: int,
-    index_start: str,
     da_stop: xr.DataArray,
     window_stop: int,
-    index_stop: str,
+    index: str = "first",
     dim: str = "time",
 ) -> xr.DataArray:
     """Generate modified run length function with run sequences that can contain holes.
@@ -666,15 +667,13 @@ def rle_with_holes(
         Input array where run sequences are searched for.
     window_start: int,
         Number of events needed to start a run in `da_start`
-    index_start: {'first', 'last'}
-        If 'first' (default), the run length in `da_start` is indexed with the first element in the run.
-        If 'last', with the last element in the run.
     da_stop : xr.DataArray
         Input array where sequences put a stop to a run in `da_start`
     window_stop: int,
         Number of events needed to start a run in `da_stop`, i.e. to end a run in `da_start`
-    index_stop: {'first', 'last'}
-        Same as `index_start` but for `da_stop`
+    index : {'first', 'last'}
+        If 'first' (default), the run length is indexed with the first element in the run.
+        If 'last', with the last element in the run.
     dim : str
         Dimension name.
 
@@ -692,17 +691,41 @@ def rle_with_holes(
     da_start = da_start.astype(int).fillna(0)
     da_stop = da_stop.astype(int).fillna(0)
 
-    # start sequences
-    runs = rle(da_start, dim=dim, index=index_start)
-    # stop sequences (0 on every not_runs sequence, 1 elsewhere)
-    stop_runs = xr.where(rle((da_stop), dim=dim) >= window_stop, 0, 1)
-    # backwards cumsum yields number of steps before hitting a stop sequence
-    stop_runs_cumsum = _cumsum_reset_on_zero(stop_runs, dim=dim, index=index_stop)
-
-    # get the run lenghts
-    run_lengths = xr.where(
-        runs >= window_start, stop_runs_cumsum.shift({dim: -1}), np.NaN
+    runs_start = (
+        rle(da_start, dim=dim) >= window_start
+        if window_start > 1
+        else da_start >= window_start
     )
+    runs_stop = (
+        rle(da_stop, dim=dim) >= window_stop
+        if window_stop > 1
+        else da_stop >= window_stop
+    )
+    da = runs_start.where(runs_start | runs_stop).ffill(dim=dim).fillna(0)
+
+    # if runs interstect: only works for index == "first"
+    runs_intersect = runs_start & runs_stop
+    if runs_intersect.any():
+        # fill in a 0 at intersection
+        da = da.where(runs_intersect is False, 0).fillna(0)
+        run_lengths = rle(da, dim=dim, index="first")
+        # there should be a run where we filled  a 0
+        run_lengths = xr.where(
+            runs_intersect is True,
+            run_lengths.shift({dim: -1}, fill_value=0) + 1,
+            run_lengths,
+        )
+        run_lengths = xr.where(
+            runs_intersect.shift({dim: 1}) is True, np.nan, run_lengths
+        )
+    else:
+        run_lengths = rle(da, dim=dim, index=index)
+
+    if index == "last":
+        run_lengths = run_lengths.ffill(dim=dim)
+        run_lengths = run_lengths.where(
+            runs_stop.shift({dim: -1}, fill_value=0) is True
+        )
 
     return run_lengths
 

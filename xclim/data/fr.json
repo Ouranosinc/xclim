@@ -1147,11 +1147,11 @@
   },
   "RAIN_SEASON.start": {
     "long_name": "Début de la saison des pluies",
-    "description": "La saison débute sous deux conditions: i) une séquence de jours {window_wet_start} accumulant {thresh_wet_start} de précipitations ii) suivie d'une séquence de jours {window_not_dry_start} sans séquence sèche, c'est-à-dire une séquence de jours {window_dry_start} avec au moins {thresh_dry_start} {method_dry_start}. Le début de la saison correspond au dernier jour de la séquence i) et doit  être compris entre le {start_date_min} et le {start_date_max}. "
+    "description": "La saison débute sous deux conditions: i) une séquence de jours {window_wet_start} accumulant {thresh_wet_start} de précipitations ii) suivie d'une séquence de jours {window_not_dry_start} sans séquence sèche, c'est-à-dire une séquence de jours {window_dry_start} avec au moins {thresh_dry_start} {method_dry_start}. Le début de la saison correspond au dernier jour de la séquence i) et doit  être compris entre le {date_min_start} et le {date_max_start}. "
   },
   "RAIN_SEASON.end": {
     "long_name": "Fin de la saison des pluies",
-    "description": "Dernier jour d'une séquence sèche après le début de la saison, c'est-à-dire une séquence de {window_dry_end} jours avec au moins {thresh_dry_end} {method_dry_end}. La fin de la saison doit être comprise entre le {end_date_min} et le {end_date_max}."
+    "description": "Dernier jour d'une séquence sèche après le début de la saison, c'est-à-dire une séquence de {window_dry_end} jours avec au moins {thresh_dry_end} {method_dry_end}. La fin de la saison doit être comprise entre le {date_min_end} et le {date_max_end}."
   },
   "RAIN_SEASON.length": {
     "long_name": "Longueur de la saison des pluies",

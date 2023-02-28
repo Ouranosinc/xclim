@@ -899,18 +899,17 @@ def rain_season(
     thresh_dry_start: Quantified = "1.0 mm",
     window_dry_start: int = 7,
     method_dry_start: str = "per_day",
-    start_date_min: DayOfYearStr = "05-01",
-    start_date_max: DayOfYearStr = "12-31",
+    date_min_start: DayOfYearStr = "05-01",
+    date_max_start: DayOfYearStr = "12-31",
     thresh_dry_end: Quantified = "0.0 mm",
     window_dry_end: int = 20,
     method_dry_end: str = "per_day",
-    end_date_min: DayOfYearStr = "09-01",
-    end_date_max: DayOfYearStr = "12-31",
+    date_min_end: DayOfYearStr = "09-01",
+    date_max_end: DayOfYearStr = "12-31",
     freq="AS-JAN",
-    coord: str | None = None,
 ):
     """
-    Find the first and last day of the rain season and its length.
+    Find the length of the rain season and the day of year of its start and its end.
 
     pr: xr.DataArray
         Precipitation data.
@@ -931,9 +930,9 @@ def rain_season(
         Method used to define a dry sequence associated with `window_dry_start`. The threshold `thresh_dry_start` is either compared
         to every daily precipitations (`method_dry_start == "per_day"`) or to total precipitations (`method_dry_start == "total"`)
         in the sequence `window_dry_start` days.
-    start_date_min: DayOfYearStr
+    date_min_start: DayOfYearStr
         First day of year when season can start ("mm-dd").
-    start_date_max: DayOfYearStr
+    date_max_start: DayOfYearStr
         Last day of year when season can start ("mm-dd").
     thresh_dry_end: str
         Threshold length defining a dry day in the sequence related to `window_dry_end`.
@@ -945,16 +944,12 @@ def rain_season(
         Method used to define a dry sequence associated with `window_dry_end`. The threshold `thresh_dry_end` is either compared
         to every daily precipitations (`method_dry_end == "per_day"`) or to total precipitations (`method_dry_end == "total"`)
         in the sequence `window_dry` days.
-    end_date_min: DayOfYearStr
+    date_min_end: DayOfYearStr
         First day of year when season can end ("mm-dd").
-    end_date_max: DayOfYearStr
+    date_max_end: DayOfYearStr
         Last day of year when season can end ("mm-dd").
     freq : str
       Resampling frequency.
-    coord : {None, "default", name of a DateTimeAccessor}
-        If `coord == "default"`, the function returns values along `dim` instead of indexes (`coord is None`).
-        If `dim` has a datetime dtype, `coord` can also be a str of the name of the
-        DateTimeAccessor object to use (ex: 'dayofyear').
 
     Returns
     -------
@@ -962,11 +957,14 @@ def rain_season(
     rain_season_end: xr.DataArray, [dimensionless]
     rain_season_length: xr.DataArray, [dimensionless]
 
-    Note
+    Summary
     -------
-    The rain season starts with an intense period of raining (during `window_wet_start` days, there is a precipitation total of `thresh_wet_start`),
-    directly followed by a period of `window_not_dry_start` days where there is no dry sequence (`window_dry_start` days with a
-    minimum total or daily precipitation).
+    The rain season starts at the end of a period of raining (a total precipitation  of `thresh_wet_start` over `window_wet_start` days). This must
+    be directly followed by a period of `window_not_dry_start` days with no dry sequence. The dry sequence is a period of `window_dry_start`
+    days where precipitations are below `thresh_dry_start` (either the total precipitations over the period, or the daily precipitations, depending
+    on `method_dry_start`). The rain season stops when a dry sequence happens (the dry sequence is defined as in the start sequence,
+    but with parameters `window_dry_end`, `thresh_dry_end` and `method_dry_end`). The dates on which the season can start are constrained
+    by `date_min_start`and `date_max_start` (and similarly for the end of the season).
 
     References
     ----------
@@ -978,13 +976,16 @@ def rain_season(
     thresh_dry_start = convert_units_to(thresh_dry_start, pram)
     thresh_dry_end = convert_units_to(thresh_dry_end, pram)
 
+    # won't work for cftime?
+    last_doy = pram.isel(time=-1).time.dt.date.values.item().strftime("%m-%d")
+
     # Eliminate negative values.
     pram = xarray.where(pram < 0, 0, pram)
     pram.attrs["units"] = "mm"
 
     dim = "time"
 
-    # should we flag end_date_min  < start_date_max?
+    # should we flag date_min_end  < date_max_start?
     def _get_first_run(run_positions, start_date, end_date):
         run_positions = select_time(run_positions, date_bounds=(start_date, end_date))
         first_start = run_positions.argmax("time")
@@ -992,30 +993,38 @@ def rain_season(
             first_start != run_positions.argmin("time"), first_start, np.NaN
         )
 
-    def _get_start_first_run(pram, window_dry=window_dry_start):
+    # Find the start of the rain season
+    def _get_first_run_start(pram, window_dry=window_dry_start):
+        pram = select_time(pram, date_bounds=(date_min_start, last_doy))
         da_start = pram.rolling({dim: window_wet_start}).sum() >= thresh_wet_start
         if method_dry_start == "per_day":
-            da_stop = pram <= thresh_dry_start
+            da_stop = pram >= thresh_dry_start
         elif method_dry_start == "total":
-            da_stop = pram.rolling({dim: window_dry}).sum() <= thresh_dry_start
+            da_stop = (
+                pram[{dim: slice(None, None, -1)}].rolling({dim: window_dry}).sum()
+                >= thresh_dry_start
+            )
+            # equivalent to rolling forward in time instead, i.e. end date will be at beginning of dry run
+            da_stop = da_stop.shift({dim: -(window_dry - 1)})
             window_dry = 1
         run_positions = (
-            rl.rle_with_holes(da_start, 1, "first", da_stop, window_dry, "first")
-            >= window_not_dry_start
+            rl.rle_with_holes(da_start, 1, da_stop, window_dry, "first")
+            >= window_not_dry_start + window_wet_start
         )
-        return _get_first_run(run_positions, start_date_min, start_date_max)
+        return _get_first_run(run_positions, date_min_start, date_max_start)
 
-    def _get_end_first_run(pram):
+    # Find the end of the rain season
+    def _get_first_run_end(pram):
         if method_dry_end == "per_day":
             da_stop = pram <= thresh_dry_end
-            run_positions = rl.rle(da_stop, dim=dim, index="last") >= window_dry_end
+            run_positions = rl.rle(da_stop, dim=dim, index="first") >= window_dry_end
         elif method_dry_end == "total":
             da_stop = pram.rolling({dim: window_dry_end}).sum() <= thresh_dry_end
             run_positions = da_stop
-        return _get_first_run(run_positions, end_date_min, end_date_max)
+        return _get_first_run(run_positions, date_min_end, date_max_end)
 
     def _get_out(pram):
-        start = _get_start_first_run(pram)
+        start = _get_first_run_start(pram)
         # masking every value up top the start date of the season, the end date should be after
         start_ind = xarray.where(start.notnull(), start.astype(int), -1)
         mask = xarray.where(
@@ -1023,22 +1032,19 @@ def rain_season(
         ).ffill("time")
         mask[{"time": start_ind}] = np.NaN
         mask = mask.notnull()
-        end = _get_end_first_run(pram.where(mask))
+        end = _get_first_run_end(pram.where(mask))
         length = xarray.where(end.notnull(), end - start, pram[dim].size - start)
 
-        # changing index to time if requested
-        if coord:
-            crd = pram[dim]
-            if coord != "default":
-                crd = getattr(crd.dt, coord)
-            start = rl.lazy_indexing(crd, start)
-            end = rl.lazy_indexing(crd, end)
+        # converting to doy
+        crd = pram[dim]
+        crd = getattr(crd.dt, "dayofyear")
+        start = rl.lazy_indexing(crd, start)
+        end = rl.lazy_indexing(crd, end)
 
         out = xarray.Dataset({"start": start, "end": end, "length": length})
         return out
 
     out = pram.resample(time=freq).map(_get_out)
-    # out = to_agg_units(out, pr, "count")
     for outd in out.values():
         outd.attrs["units"] = ""
     return out["start"], out["end"], out["length"]
