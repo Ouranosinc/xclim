@@ -65,4 +65,5 @@ dependencies:
     - yamllint
     - pip
     - pip:
+        - lmoments3
         - sphinxcontrib-svg2pdfconverter
