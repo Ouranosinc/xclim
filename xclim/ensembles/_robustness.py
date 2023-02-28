@@ -102,7 +102,7 @@ def change_significance(
       'mannwhitney-utest' :
         Two-sided Mann-Whiney U-test. Same significance criterion as 'ttest'.
       'brownforsythe-test' :
-        Brown-Forsythe test with assuming skewed, non-normal distributions. Same significance criterion as 'ttest'.
+        Brown-Forsythe test assuming skewed, non-normal distributions. Same significance criterion as 'ttest'.
       'threshold' :
         Change is considered significative if the absolute delta exceeds a given threshold (absolute or relative).
       None :
