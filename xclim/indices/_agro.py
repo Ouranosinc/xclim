@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import warnings
+from typing import Tuple
 
 import numpy as np
 import xarray
@@ -16,7 +17,7 @@ from xclim.core.units import (
     rate2amount,
     to_agg_units,
 )
-from xclim.core.utils import DayOfYearStr, Quantified, uses_dask
+from xclim.core.utils import DateStr, DayOfYearStr, Quantified, uses_dask
 from xclim.indices._threshold import (
     first_day_temperature_above,
     first_day_temperature_below,
@@ -886,10 +887,11 @@ def water_budget(
 
 @declare_units(
     pr="[precipitation]",
+    params="[]",
 )
 def standardized_precipitation_index(
     pr: xarray.DataArray,
-    cal_range: tuple | None,
+    cal_range: tuple[DateStr, DateStr] | None = None,
     params: Quantified | None = None,
     freq: str | None = "MS",
     window: int = 1,
@@ -903,8 +905,9 @@ def standardized_precipitation_index(
     ----------
     pr : xarray.DataArray
         Daily precipitation.
-    cal_range: tuple | None
-        Calibration dates. `None` means that the full range of `pr` is used.
+    cal_range: Tuple[DateStr, DateStr] | None
+        Dates used to subset `pr` and obtain dataset for calibration. The tuple is formed by two `DateStr`,  i.e. a `str` in format `"YYYY-MM-DD"`.
+        Default option `None` means that the full range of `pr` is used.
     params: xarray.DataArray
         Fit parameters.
     freq : str
@@ -918,6 +921,8 @@ def standardized_precipitation_index(
     method : {'APP', 'ML'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
+    get_params : bool
+        If `True`, the function only outputs the fit parameters from the calibration. The output
 
     Returns
     -------
@@ -964,6 +969,12 @@ def standardized_precipitation_index(
     :cite:cts:`mckee_relationship_1993`
     """
     uses_params = params is not None
+    if cal_range and uses_params:
+        raise ValueError(
+            "Inputing both calibration dates (`cal_range`) and calibration parameters (`params`) is not accepted,"
+            "input only one or neither of those options (the latter case reverts to default behaviour which performs a calibration"
+            "with the full input dataset)."
+        )
     # "WPM" method doesn't seem to work for gamma or pearson3
     dist_and_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
     if dist not in dist_and_methods:
@@ -1053,6 +1064,7 @@ def standardized_precipitation_index(
 
 @declare_units(
     wb="[precipitation]",
+    params="[]",
 )
 def standardized_precipitation_evapotranspiration_index(
     wb: xarray.DataArray,
@@ -1062,6 +1074,7 @@ def standardized_precipitation_evapotranspiration_index(
     window: int = 1,
     dist: str = "gamma",
     method: str = "APP",
+    get_params: bool = False,
 ) -> xarray.DataArray:
     r"""Standardized Precipitation Evapotranspiration Index (SPEI).
 
@@ -1088,6 +1101,8 @@ def standardized_precipitation_evapotranspiration_index(
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization. Available methods
         vary with the distribution: 'gamma':{'APP', 'ML'}, 'fisk':{'ML'}
+    get_params : bool
+        If `True`, the function only outputs the fit parameters from the calibration. The output
 
     Returns
     -------
@@ -1111,7 +1126,9 @@ def standardized_precipitation_evapotranspiration_index(
         with xarray.set_options(keep_attrs=True):
             wb = wb + offset
 
-    spei = standardized_precipitation_index(wb, cal_range, freq, window, dist, method)
+    spei = standardized_precipitation_index(
+        wb, cal_range, params, freq, window, dist, method, get_params
+    )
 
     return spei
 
