@@ -2,7 +2,6 @@
 API
 ===
 
-The API of the statistical downscaling and bias adjustment module (sdba) is documented :ref:`on this page <sdba:SDBA User API>`.
 The API of the ``cfchecks``, ``datachecks``, ``missing`` and ``dataflags`` modules are in :ref:`checks:Health Checks`.
 Finally, the API of the translating tools is on the :ref:`internationalization:Internationalization` page.
 
@@ -22,6 +21,7 @@ Indices
 =======
 
 .. toctree::
+   :maxdepth: 3
 
    indices
 
@@ -38,16 +38,19 @@ Ensembles module
 .. Use of autofunction is so that paths do not include private modules.
 .. autofunction:: xclim.ensembles.kkz_reduce_ensemble
     :noindex:
+
 .. autofunction:: xclim.ensembles.kmeans_reduce_ensemble
     :noindex:
+
 .. autofunction:: xclim.ensembles.plot_rsqprofile
     :noindex:
 
 .. automodule:: xclim.ensembles._robustness
-    :noindeX:
+    :noindex:
 
 .. autofunction:: xclim.ensembles.change_significance
     :noindex:
+
 .. autofunction:: xclim.ensembles.robustness_coefficient
     :noindex:
 
@@ -67,6 +70,82 @@ Unit Handling module
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
+
+.. _sdba-user-api:
+
+SDBA module
+===========
+
+.. automodule:: xclim.sdba.adjustment
+   :members:
+   :exclude-members: BaseAdjustment
+   :special-members:
+   :show-inheritance:
+   :noindex:
+
+.. automodule:: xclim.sdba.processing
+   :members:
+   :noindex:
+
+.. automodule:: xclim.sdba.detrending
+   :members:
+   :show-inheritance:
+   :exclude-members: BaseDetrend
+   :noindex:
+
+.. automodule:: xclim.sdba.utils
+   :members:
+   :noindex:
+
+.. autoclass:: xclim.sdba.base.Grouper
+   :members:
+   :class-doc-from: init
+   :noindex:
+
+.. automodule:: xclim.sdba.nbutils
+   :members:
+   :noindex:
+
+.. automodule:: xclim.sdba.loess
+   :members:
+   :noindex:
+
+.. automodule:: xclim.sdba.properties
+   :members:
+   :exclude-members: StatisticalProperty
+   :noindex:
+
+.. automodule:: xclim.sdba.measures
+   :members:
+   :exclude-members: StatisticalMeasure
+   :noindex:
+
+SDBA Developer tools
+--------------------
+
+.. automodule:: xclim.sdba.base
+   :members:
+   :show-inheritance:
+   :exclude-members: Grouper
+   :noindex:
+
+.. autoclass:: xclim.sdba.detrending.BaseDetrend
+   :members:
+   :noindex:
+
+.. autoclass:: xclim.sdba.adjustment.TrainAdjust
+   :members:
+   :noindex:
+
+.. autoclass:: xclim.sdba.adjustment.Adjust
+   :members:
+   :noindex:
+
+.. autofunction:: xclim.sdba.properties.StatisticalProperty
+   :noindex:
+
+.. autofunction:: xclim.sdba.measures.StatisticalMeasure
    :noindex:
 
 Other Utilities
