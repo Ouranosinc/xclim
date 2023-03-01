@@ -1068,7 +1068,7 @@ def standardized_precipitation_index(
 )
 def standardized_precipitation_evapotranspiration_index(
     wb: xarray.DataArray,
-    cal_range: tuple,
+    cal_range: tuple[DateStr, DateStr] | None = None,
     params: Quantified | None = None,
     freq: str = "MS",
     window: int = 1,
