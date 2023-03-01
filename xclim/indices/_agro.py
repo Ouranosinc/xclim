@@ -885,6 +885,48 @@ def water_budget(
     return out
 
 
+# this might be useful elsewhere?
+def _get_group(da, freq):
+    if freq is None:
+        _get_group(da, xarray.infer_freq(da.time))
+    else:
+        _, base, _, _ = parse_offset(freq)
+        try:
+            group = {"D": "time.dayofyear", "M": "time.month"}[base]
+        except KeyError():
+            raise ValueError(f"Resampling frequency `{freq}` not supported.")
+    return group
+
+
+def _preprocess_spx(pr, freq, window):
+    if freq:
+        pr = pr.resample(time=freq).mean(keep_attrs=True)
+    if uses_dask(pr) and len(pr.chunks[pr.get_axis_num("time")]) > 1:
+        warnings.warn(
+            "The input data is chunked on time dimension and must be fully rechunked to"
+            " run `fit` on groups ."
+            " Beware, this operation can significantly increase the number of tasks dask"
+            " has to handle.",
+            stacklevel=2,
+        )
+        pr = pr.chunk({"time": -1})
+
+    # Rolling precipitations
+    if window > 1:
+        pr = pr.rolling(time=window).mean(skipna=False, keep_attrs=True)
+    pr.attrs["_processed"] = True
+    return pr
+
+
+def _compute_spx_fit_params(pr, cal_range, freq, window, dist, method, group=None):
+    group = group if group else _get_group(pr, freq)
+    if pr.attrs["_processed_"]:
+        pr = _preprocess_spx(pr, freq, window)
+    if cal_range:
+        pr = pr.sel(time=slice(cal_range[0], cal_range[1]))
+    return pr.groupby(group).map(fit, (dist, method))
+
+
 @declare_units(
     pr="[precipitation]",
     params="[]",
@@ -897,7 +939,6 @@ def standardized_precipitation_index(
     window: int = 1,
     dist: str = "gamma",
     method: str = "APP",
-    get_params: bool = False,
 ) -> xarray.DataArray:
     r"""Standardized Precipitation Index (SPI).
 
@@ -921,8 +962,6 @@ def standardized_precipitation_index(
     method : {'APP', 'ML'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
-    get_params : bool
-        If `True`, the function only outputs the fit parameters from the calibration. The output
 
     Returns
     -------
@@ -984,46 +1023,8 @@ def standardized_precipitation_index(
             f"The method `{method}` is not supported for distribution `{dist}`."
         )
 
-    # freq is None allows to use monthly precips
-    if freq is None:
-        group = "time.month"
-
-    else:
-        # Determine group type
-        if freq == "D" or freq is None:
-            freq = "D"
-            group = "time.dayofyear"
-        else:
-            _, base, _, _ = parse_offset(freq)
-            if base in ["M"]:
-                group = "time.month"
-            else:
-                raise NotImplementedError(
-                    f"Resampling frequency `{freq}` not supported."
-                )
-
-        # Resampling precipitations
-        if freq != "D":
-            pr = pr.resample(time=freq).mean(keep_attrs=True)
-
-    if uses_dask(pr) and len(pr.chunks[pr.get_axis_num("time")]) > 1:
-        warnings.warn(
-            "The input data is chunked on time dimension and must be fully rechunked to"
-            " run `fit` on groups ."
-            " Beware, this operation can significantly increase the number of tasks dask"
-            " has to handle.",
-            stacklevel=2,
-        )
-        pr = pr.chunk({"time": -1})
-
-    # Rolling precipitations
-    if window > 1:
-        pr = pr.rolling(time=window).mean(skipna=False, keep_attrs=True)
-
-    if get_params:
-        if cal_range:
-            pr = pr.sel(time=slice(cal_range[0], cal_range[1]))
-        return pr.groupby(group).map(fit, (dist, method))
+    group = _get_group(pr, freq)
+    pr = _preprocess_spx(pr, freq, window)
 
     if uses_params:
         params_dict = dict(params.groupby(group.rsplit(".")[1]))
@@ -1033,11 +1034,9 @@ def standardized_precipitation_index(
             group_key = pr[group][0].values.item()
             sub_params = params_dict[group_key]
         else:
-            if cal_range:
-                pr_cal = pr.sel(time=slice(cal_range[0], cal_range[1]))
-            else:
-                pr_cal = pr
-            sub_params = fit(pr_cal, dist, method)
+            sub_params = _compute_spx_fit_params(
+                pr, cal_range, freq, window, dist, method, group=group
+            )
 
         # ppf to cdf
         if dist in ["gamma", "fisk"]:
@@ -1074,7 +1073,6 @@ def standardized_precipitation_evapotranspiration_index(
     window: int = 1,
     dist: str = "gamma",
     method: str = "APP",
-    get_params: bool = False,
 ) -> xarray.DataArray:
     r"""Standardized Precipitation Evapotranspiration Index (SPEI).
 
@@ -1101,8 +1099,6 @@ def standardized_precipitation_evapotranspiration_index(
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization. Available methods
         vary with the distribution: 'gamma':{'APP', 'ML'}, 'fisk':{'ML'}
-    get_params : bool
-        If `True`, the function only outputs the fit parameters from the calibration. The output
 
     Returns
     -------
@@ -1127,7 +1123,7 @@ def standardized_precipitation_evapotranspiration_index(
             wb = wb + offset
 
     spei = standardized_precipitation_index(
-        wb, cal_range, params, freq, window, dist, method, get_params
+        wb, cal_range, params, freq, window, dist, method
     )
 
     return spei
