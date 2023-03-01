@@ -2,8 +2,11 @@
 API
 ===
 
-The API of the ``cfchecks``, ``datachecks``, ``missing`` and ``dataflags`` modules are in :ref:`checks:Health Checks`.
-Finally, the API of the translating tools is on the :ref:`internationalization:Internationalization` page.
+.. note::
+
+    The API of the ``cfchecks``, ``datachecks``, ``missing`` and ``dataflags`` modules are located under :ref:`checks:Health Checks`.
+
+    The API for the translation tools can be found within :ref:`internationalization:Internationalization`.
 
 .. contents:: Table of Contents
    :depth: 1
