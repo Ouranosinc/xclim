@@ -937,14 +937,27 @@ def standardized_precipitation_index(
     >>> from xclim.indices import standardized_precipitation_index
     >>> ds = xr.open_dataset(path_to_pr_file)
     >>> pr = ds.pr
+    >>> cal_range = ("1990-05-01", "1990-08-31")
     >>> spi_3 = standardized_precipitation_index(
     ...     pr,
-    ...     ("1990-05-01", "1990-08-31"),
+    ...     cal_range,
     ...     freq="MS",
     ...     window=3,
     ...     dist="gamma",
     ...     method="ML",
     ... )  # Computing SPI-3 months using a gamma distribution for the fit
+    >>> # Fitting parameters can also be obtained ...
+    >>> params = standardized_precipitation_index(
+    ...     pr,
+    ...     cal_range,
+    ...     freq="MS",
+    ...     window=3,
+    ...     dist="gamma",
+    ...     method="ML",
+    ...     get_params=True,
+    ... )  # First getting params
+    >>> # ... and used as input
+    >>> spi_3 = standardized_precipitation_index(pr, None, params=params)
 
     References
     ----------
@@ -1003,12 +1016,12 @@ def standardized_precipitation_index(
         return pr.groupby(group).map(fit, (dist, method))
 
     if uses_params:
-        paramsd = dict(params.groupby(group.rsplit(".")[1]))
+        params_dict = dict(params.groupby(group.rsplit(".")[1]))
 
     def get_sub_spi(pr):
         if uses_params:
-            groupk = pr[group][0].values.item()
-            sub_params = paramsd[groupk]
+            group_key = pr[group][0].values.item()
+            sub_params = params_dict[group_key]
         else:
             if uses_range:
                 pr_cal = pr.sel(time=slice(cal_range[0], cal_range[1]))
