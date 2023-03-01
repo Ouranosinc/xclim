@@ -964,7 +964,6 @@ def standardized_precipitation_index(
     :cite:cts:`mckee_relationship_1993`
     """
     uses_params = params is not None
-    uses_range = cal_range is not None
     # "WPM" method doesn't seem to work for gamma or pearson3
     dist_and_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
     if dist not in dist_and_methods:
@@ -1011,7 +1010,7 @@ def standardized_precipitation_index(
         pr = pr.rolling(time=window).mean(skipna=False, keep_attrs=True)
 
     if get_params:
-        if uses_range:
+        if cal_range:
             pr = pr.sel(time=slice(cal_range[0], cal_range[1]))
         return pr.groupby(group).map(fit, (dist, method))
 
@@ -1023,7 +1022,7 @@ def standardized_precipitation_index(
             group_key = pr[group][0].values.item()
             sub_params = params_dict[group_key]
         else:
-            if uses_range:
+            if cal_range:
                 pr_cal = pr.sel(time=slice(cal_range[0], cal_range[1]))
             else:
                 pr_cal = pr
