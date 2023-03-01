@@ -109,7 +109,7 @@ from inspect import signature
 from os import PathLike
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Callable, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import xarray
@@ -366,7 +366,7 @@ class Indicator(IndicatorRegistrar):
     notes = ""
     _version_deprecated = ""
 
-    _all_parameters: Mapping[str, Parameter] = {}
+    _all_parameters: dict[str, Parameter] = {}
     """A dictionary mapping metadata about the input parameters to the indicator.
 
     Keys are the arguments of the "compute" function. All parameters are listed, even
@@ -374,7 +374,7 @@ class Indicator(IndicatorRegistrar):
     :py:class:`xclim.core.indicator.Parameter`.
     """
 
-    cf_attrs: Sequence[Mapping[str, Any]] = None
+    cf_attrs: Sequence[dict[str, Any]] = None
     """A list of metadata information for each output of the indicator.
 
     It minimally contains a "var_name" entry, and may contain : "standard_name", "long_name",
@@ -1006,7 +1006,14 @@ class Indicator(IndicatorRegistrar):
             append_locale_name=append_locale_name,
         )
 
-    def _update_attrs(self, args, das, attrs, var_id=None, names=None):
+    def _update_attrs(
+        self,
+        args: dict[str, Any],
+        das: dict[str, DataArray],
+        attrs: dict[str, str],
+        var_id: str | None = None,
+        names: Sequence[str] = None,
+    ):
         """Format attributes with the run-time values of `compute` call parameters.
 
         Cell methods and history attributes are updated, adding to existing values.
@@ -1014,11 +1021,11 @@ class Indicator(IndicatorRegistrar):
 
         Parameters
         ----------
-        args: Mapping[str, Any]
+        args: dict[str, Any]
           Keyword arguments of the `compute` call.
-        das: Mapping[str, DataArray]
+        das: dict[str, DataArray]
           Input arrays.
-        attrs : Mapping[str, str]
+        attrs : dict[str, str]
           The attributes to format and update.
         var_id : str
           The identifier to use when requesting the attributes translations.
@@ -1518,7 +1525,7 @@ def add_iter_indicators(module):
 
 def build_indicator_module(
     name: str,
-    objs: Mapping[str, Indicator],
+    objs: dict[str, Indicator],
     doc: str | None = None,
     reload: bool = False,
 ) -> ModuleType:
@@ -1531,7 +1538,7 @@ def build_indicator_module(
     name : str
       New module name. If it already exists, the module is extended with the passed objects,
       overwriting those with same names.
-    objs : dict
+    objs : dict[str, Indicator]
       Mapping of the indicators to put in the new module. Keyed by the name they will take in that module.
     doc : str
       Docstring of the new module. Defaults to a simple header. Invalid if the module already exists.
@@ -1556,7 +1563,7 @@ def build_indicator_module(
             for name, ind in list(out.iter_indicators()):
                 if name not in objs:
                     # Remove the indicator from the registries and the module
-                    del registry[ind._registry_id]
+                    del registry[ind._registry_id]  # noqa
                     del _indicators_registry[ind.__class__]
                     del out.__dict__[name]
     else:
@@ -1575,7 +1582,7 @@ def build_indicator_module(
 def build_indicator_module_from_yaml(
     filename: PathLike,
     name: str | None = None,
-    indices: Mapping[str, Callable] | ModuleType | PathLike | None = None,
+    indices: dict[str, Callable] | ModuleType | PathLike | None = None,
     translations: dict[str, dict | PathLike] | None = None,
     mode: str = "raise",
     encoding: str = "UTF8",

@@ -6,7 +6,7 @@ Base Classes and Developer Tools
 from __future__ import annotations
 
 from inspect import _empty, signature  # noqa
-from typing import Callable, Mapping, Sequence
+from typing import Callable, Sequence
 
 import dask.array as dsk
 import jsonpickle
@@ -318,7 +318,7 @@ class Grouper(Parametrizable):
     def apply(
         self,
         func: Callable | str,
-        da: xr.DataArray | Mapping[str, xr.DataArray] | xr.Dataset,
+        da: xr.DataArray | dict[str, xr.DataArray] | xr.Dataset,
         main_only: bool = False,
         **kwargs,
     ):
@@ -329,7 +329,7 @@ class Grouper(Parametrizable):
         func : Callable or str
             The function to apply to the groups, either a callable or a `xr.core.groupby.GroupBy` method name as a string.
             The function will be called as `func(group, dim=dims, **kwargs)`. See `main_only` for the behaviour of `dims`.
-        da : xr.DataArray or Mapping[str, xr.DataArray] or xr.Dataset
+        da : xr.DataArray or dict[str, xr.DataArray] or xr.Dataset
             The DataArray on which to apply the function. Multiple arrays can be passed through a dictionary.
             A dataset will be created before grouping.
         main_only : bool
