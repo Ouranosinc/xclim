@@ -2,6 +2,19 @@
 History
 =======
 
+0.42.0 (unreleased)
+-------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Documentation adjustments. (:issue:`1305`, :pull:`1308`):
+    * The CONTRIBUTING page has been moved to the top level of the repository.
+    * Information concerning the licensing of xclim is clearly indicated in README.
+    * `sphinx-autodoc-typehints` is now used to simplify call signatures generated in documentation.
+    * The SDBA module API is now found with the rest of the User API documentation.
+* Removed `Mapping` abstract base class types in call signatures (`dict` variables were always expected). (:pull:`1308`).
+
 0.41.0 (2023-02-28)
 -------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Éric Dupuis (:user:`coxipi`).
@@ -55,7 +68,6 @@ Internal changes
 * Adding infer context to the unit conversion in of the training of ExtremeValues. (:pull:`1299`).
 * Added `sphinxcontrib-svg2pdfconverter` for converting SVG graphics within documentation to PDF-compatible images. (:pull:`1296`).
 * README badges for supported Python versions and repository health have been added. (:issue:`1304`, :pull:`1307`).
-* CONTRIBUTING has been moved to the top level, license information clearly in README, use of `sphinx-autodoc-typehints` in documentation. (:issue:`1305`, :pull:`1308`).
 
 0.40.0 (2023-01-13)
 -------------------
