@@ -374,7 +374,7 @@ class Indicator(IndicatorRegistrar):
     :py:class:`xclim.core.indicator.Parameter`.
     """
 
-    cf_attrs: Sequence[dict[str, Any]] = None
+    cf_attrs: list[dict[str, Any]] = None
     """A list of metadata information for each output of the indicator.
 
     It minimally contains a "var_name" entry, and may contain : "standard_name", "long_name",
@@ -1364,7 +1364,7 @@ class ResamplingIndicator(Indicator):
     missing: {any, wmo, pct, at_least_n, skip, from_context}
       The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods. If
       None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
-    missing_options : dict, None
+    missing_options : dict, optional
       Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
     allowed_periods : Sequence[str], optional
       A list of allowed periods, i.e. base parts of the `freq` parameter. For example, indicators meant to be
@@ -1373,8 +1373,8 @@ class ResamplingIndicator(Indicator):
     """
 
     missing = "from_context"
-    missing_options = None
-    allowed_periods = None
+    missing_options: dict | None = None
+    allowed_periods: list[str] | None = None
 
     @classmethod
     def _ensure_correct_parameters(cls, parameters):
@@ -1464,7 +1464,7 @@ class ResamplingIndicatorWithIndexing(ResamplingIndicator):
     """Resampling indicator that also injects "indexer" kwargs to subset the inputs before computation."""
 
     @classmethod
-    def _injected_parameters(self):
+    def _injected_parameters(cls):
         return super()._injected_parameters() + [
             (
                 "indexer",
