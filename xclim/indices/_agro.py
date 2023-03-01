@@ -889,11 +889,13 @@ def water_budget(
 )
 def standardized_precipitation_index(
     pr: xarray.DataArray,
-    cal_range: tuple,
+    cal_range: tuple | None,
+    params: Quantified | None = None,
     freq: str | None = "MS",
     window: int = 1,
     dist: str = "gamma",
     method: str = "APP",
+    get_params: bool = False,
 ) -> xarray.DataArray:
     r"""Standardized Precipitation Index (SPI).
 
@@ -901,8 +903,10 @@ def standardized_precipitation_index(
     ----------
     pr : xarray.DataArray
         Daily precipitation.
-    cal_range: tuple
-        Calibration dates
+    cal_range: tuple | None
+        Calibration dates. `None` means that the full range of `pr` is used.
+    params: xarray.DataArray
+        Fit parameters.
     freq : str
         Resampling frequency. A monthly or daily frequency is expected.
     window : int
@@ -922,8 +926,10 @@ def standardized_precipitation_index(
 
     Notes
     -----
-    The length `N` of the N-month SPI is determined by choosing the `window = N`.
-    Supported statistical distributions are: ["gamma"]
+    * The length `N` of the N-month SPI is determined by choosing the `window = N`.
+    * Supported statistical distributions are: ["gamma", "fisk"], where "fisk" is scipy's implementation of
+       a log-logistic distribution
+    * If `params` is given as input, it overrides the `cal_range` option.
 
     Example
     -------
@@ -944,6 +950,8 @@ def standardized_precipitation_index(
     ----------
     :cite:cts:`mckee_relationship_1993`
     """
+    uses_params = params is not None
+    uses_range = cal_range is not None
     # "WPM" method doesn't seem to work for gamma or pearson3
     dist_and_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
     if dist not in dist_and_methods:
@@ -989,12 +997,28 @@ def standardized_precipitation_index(
     if window > 1:
         pr = pr.rolling(time=window).mean(skipna=False, keep_attrs=True)
 
+    if get_params:
+        if uses_range:
+            pr = pr.sel(time=slice(cal_range[0], cal_range[1]))
+        return pr.groupby(group).map(fit, (dist, method))
+
+    if uses_params:
+        paramsd = dict(params.groupby(group.rsplit(".")[1]))
+
     def get_sub_spi(pr):
-        pr_cal = pr.sel(time=slice(cal_range[0], cal_range[1]))
-        params = fit(pr_cal, dist, method)
+        if uses_params:
+            groupk = pr[group][0].values.item()
+            sub_params = paramsd[groupk]
+        else:
+            if uses_range:
+                pr_cal = pr.sel(time=slice(cal_range[0], cal_range[1]))
+            else:
+                pr_cal = pr
+            sub_params = fit(pr_cal, dist, method)
+
         # ppf to cdf
         if dist in ["gamma", "fisk"]:
-            prob_pos = dist_method("cdf", params, pr.where(pr > 0))
+            prob_pos = dist_method("cdf", sub_params, pr.where(pr > 0))
             prob_zero = (pr == 0).sum("time") / pr.notnull().sum("time")
             prob = prob_zero + (1 - prob_zero) * prob_pos
         # Invert to normal distribution with ppf and obtain SPI
@@ -1004,23 +1028,24 @@ def standardized_precipitation_index(
             coords=dict(dparams=(["loc", "scale"])),
             attrs=dict(scipy_dist="norm"),
         )
-        spi_month = dist_method("ppf", params_norm, prob)
-        return spi_month
+        sub_spi = dist_method("ppf", params_norm, prob)
+        return sub_spi
 
     spi = pr.groupby(group).map(get_sub_spi)
     spi.attrs["units"] = ""
-    spi.attrs["calibration_period"] = cal_range
+
+    spi.attrs["calibration_data"] = "Input parameters" if uses_params else cal_range
 
     return spi
 
 
 @declare_units(
     wb="[precipitation]",
-    wb_cal="[precipitation]",
 )
 def standardized_precipitation_evapotranspiration_index(
     wb: xarray.DataArray,
-    dates: tuple,
+    cal_range: tuple,
+    params: Quantified | None = None,
     freq: str = "MS",
     window: int = 1,
     dist: str = "gamma",
@@ -1038,6 +1063,8 @@ def standardized_precipitation_evapotranspiration_index(
         Daily water budget (pr - pet).
     cal_range: tuple
         Calibration dates
+    params: xarray.DataArray
+        Fit parameters.
     freq : str
         Resampling frequency. A monthly or daily frequency is expected.
     window : int
@@ -1072,7 +1099,7 @@ def standardized_precipitation_evapotranspiration_index(
         with xarray.set_options(keep_attrs=True):
             wb = wb + offset
 
-    spei = standardized_precipitation_index(wb, dates, freq, window, dist, method)
+    spei = standardized_precipitation_index(wb, cal_range, freq, window, dist, method)
 
     return spei
 
