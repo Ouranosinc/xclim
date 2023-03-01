@@ -190,11 +190,11 @@ class Parameter:
     _empty = _empty
 
     kind: InputKind
-    default = _empty_default
+    default: "Any" = _empty_default
     description: str = ""
     units: str = _empty
     choices: set = _empty
-    value = _empty
+    value: "Any" = _empty
 
     def update(self, other: dict) -> None:
         """Update a parameter's values from a dict."""
