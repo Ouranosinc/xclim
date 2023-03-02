@@ -957,8 +957,9 @@ def standardized_precipitation_index(
         i.e. a `str` in format `"YYYY-MM-DD"`. Default option `None` means that the full range of the input dataset is used.
     params: xarray.DataArray
         Fit parameters.
-    freq : str
-        Resampling frequency. A monthly or daily frequency is expected.
+    freq : str | None
+        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
+        has already been applied input dataset and will skip the resampling step.
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
@@ -1084,8 +1085,9 @@ def standardized_precipitation_evapotranspiration_index(
         i.e. a `str` in format `"YYYY-MM-DD"`. Default option `None` means that the full range of the input dataset is used.
     params: xarray.DataArray
         Fit parameters.
-    freq : str
-        Resampling frequency. A monthly or daily frequency is expected.
+    freq : str | None
+        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
+        has already been applied input dataset and will skip the resampling step.
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`, i.e. a monthly
         resampling, the window is an integer number of months.
