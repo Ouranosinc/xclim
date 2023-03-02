@@ -1,6 +1,6 @@
 # noqa: D205,D400
 """
-CF-Convention checking
+CF-Convention Checking
 ======================
 
 Utilities designed to verify the compliance of metadata with the CF-Convention.

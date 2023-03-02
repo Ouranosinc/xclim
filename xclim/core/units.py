@@ -1,6 +1,6 @@
 # noqa: D205,D400
 """
-Units handling submodule
+Units Handling Submodule
 ========================
 
 `Pint` is used to define the :py:data:`xclim.core.units.units` `UnitRegistry`.

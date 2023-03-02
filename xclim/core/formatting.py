@@ -1,6 +1,6 @@
 # noqa: D205,D400
 """
-Formatting utilities for indicators
+Formatting Utilities for Indicators
 ===================================
 """
 from __future__ import annotations

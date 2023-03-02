@@ -1,6 +1,7 @@
 # noqa: D205,D400
 """
-Indicators module
+=================
+Indicators Module
 =================
 
 Indicators are the main tool xclim provides to compute climate indices. In contrast

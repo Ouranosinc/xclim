@@ -52,7 +52,7 @@ Most methods acting on grouped data also accept a `window` int argument to pad t
 Units of `window` are the sampling frequency of the main grouping dimension (usually `time`). For more complex grouping,
 one can pass an instance of :py:class:`xclim.sdba.base.Grouper` directly. For example, if one wants to compute the factors
 for each day of the year but across all realizations of an ensemble : ``group = Grouper("time.dayofyear", add_dims=['realization'])``.
-In a conventionnal empirical quantile mapping (EQM), this will compute the quantiles for each day of year and all realizations together, yielding a single set of adustment factors for all realizations.
+In a conventional empirical quantile mapping (EQM), this will compute the quantiles for each day of year and all realizations together, yielding a single set of adjustment factors for all realizations.
 
 .. warning::
     If grouping according to the day of the year is needed, the :py:mod:`xclim.core.calendar` submodule contains useful
@@ -75,7 +75,7 @@ When adjusting both relative and specific humidity, we want to preserve the rela
 To do this, :cite:t:`grenier_two_2018` suggests to first adjust the relative humidity using a multiplicative factor, ensure values are within 0-100%, then apply an additive adjustment factor to the surface pressure before estimating the specific humidity from thermodynamic relationships.
 
 Radiation and precipitation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+---------------------------
 In theory, short wave radiation should be capped when precipitation is not zero, but there is as of yet no mechanism proposed to do that, see :cite:t:`hoffmann_meteorologically_2012`.
 
 Usage examples
@@ -121,6 +121,10 @@ User API
 
 See: :ref:`sdba-user-api`
 
+Developer API
+=============
+
+See: :ref:`sdba-developer-api`
 
 .. only:: html or text
 

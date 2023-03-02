@@ -1,6 +1,6 @@
 """Sphinx extension that acts as a autodoc patch for documenting Indicator instances.
 
-By default, indicator instances are skipped by autodoc because their subclass is not a bultin type of python.
+By default, indicator instances are skipped by autodoc because their subclass is not a builtin type of python.
 
 Based on https://github.com/powerline/powerline/blob/83d855d3d73498c47553afeba212415990d95c54/docs/source/powerline_autodoc.py
 """

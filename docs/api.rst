@@ -28,7 +28,7 @@ Indices
 
    indices
 
-Ensembles module
+Ensembles Module
 ================
 
 .. automodule:: xclim.ensembles
@@ -57,17 +57,8 @@ Ensembles module
 .. autofunction:: xclim.ensembles.robustness_coefficient
     :noindex:
 
-Indicator Tools
-===============
-
-.. automodule:: xclim.core.indicator
-   :members:
-   :member-order: bysource
-   :show-inheritance:
-   :noindex:
-
-Unit Handling module
-====================
+Units Handling Submodule
+========================
 
 .. automodule:: xclim.core.units
    :members:
@@ -77,7 +68,7 @@ Unit Handling module
 
 .. _sdba-user-api:
 
-SDBA module
+SDBA Module
 ===========
 
 .. automodule:: xclim.sdba.adjustment
@@ -124,32 +115,54 @@ SDBA module
    :exclude-members: StatisticalMeasure
    :noindex:
 
-SDBA Developer tools
---------------------
+.. _spatial-analogues-api:
 
-.. automodule:: xclim.sdba.base
-   :members:
-   :show-inheritance:
-   :exclude-members: Grouper
+Spatial Analogues Module
+========================
+
+.. autoclass:: xclim.analog.spatial_analogs
    :noindex:
 
-.. autoclass:: xclim.sdba.detrending.BaseDetrend
-   :members:
+.. autofunction:: xclim.analog.friedman_rafsky
    :noindex:
 
-.. autoclass:: xclim.sdba.adjustment.TrainAdjust
-   :members:
+.. autofunction:: xclim.analog.kldiv
    :noindex:
 
-.. autoclass:: xclim.sdba.adjustment.Adjust
-   :members:
+.. autofunction:: xclim.analog.kolmogorov_smirnov
    :noindex:
 
-.. autofunction:: xclim.sdba.properties.StatisticalProperty
+.. autofunction:: xclim.analog.nearest_neighbor
    :noindex:
 
-.. autofunction:: xclim.sdba.measures.StatisticalMeasure
+.. autofunction:: xclim.analog.seuclidean
    :noindex:
+
+.. autofunction:: xclim.analog.szekely_rizzo
+   :noindex:
+
+.. autofunction:: xclim.analog.zech_aslan
+   :noindex:
+
+Spatial Analogues Helpers
+-------------------------
+
+.. autofunction:: xclim.analog.metric
+   :noindex:
+
+.. autofunction:: xclim.analog.standardize
+   :noindex:
+
+Subset Module
+=============
+
+.. warning::
+    The `xclim.subset` module was removed in `xclim==0.40`. Subsetting is now offered via `clisops.core.subset`.
+    The subsetting functions offered by `clisops` are available at the following link: :doc:`CLISOPS core subsetting API <clisops:api>`
+
+.. note::
+    For more information about `clisops` refer to their documentation here:
+    :doc:`CLISOPS documentation <clisops:readme>`
 
 Other Utilities
 ===============
@@ -177,35 +190,60 @@ Other Utilities
    :show-inheritance:
    :noindex:
 
-Other xclim modules
-===================
+Modules for xclim Developers
+============================
 
-Spatial Analogs module
-----------------------
+Indicator Tools
+---------------
 
-See :ref:`analogues:Spatial analogues`.
+.. automodule:: xclim.core.indicator
+   :members:
+   :member-order: bysource
+   :show-inheritance:
+   :noindex:
 
-Testing module
+Bootstrapping Algorithms for Indicators Submodule
+-------------------------------------------------
+
+.. automodule:: xclim.core.bootstrapping
+   :members:
+   :show-inheritance:
+   :noindex:
+
+.. _`sdba-developer-api`:
+
+SDBA Utilities
 --------------
 
-.. automodule:: xclim.testing
-    :members:
-    :noindex:
+.. automodule:: xclim.sdba.base
+   :members:
+   :show-inheritance:
+   :exclude-members: Grouper
+   :noindex:
+
+.. autoclass:: xclim.sdba.detrending.BaseDetrend
+   :members:
+   :noindex:
+
+.. autoclass:: xclim.sdba.adjustment.TrainAdjust
+   :members:
+   :noindex:
+
+.. autoclass:: xclim.sdba.adjustment.Adjust
+   :members:
+   :noindex:
+
+.. autofunction:: xclim.sdba.properties.StatisticalProperty
+   :noindex:
+
+.. autofunction:: xclim.sdba.measures.StatisticalMeasure
+   :noindex:
+
+xclim Testing Helpers Module
+----------------------------
 
 .. automodule:: xclim.testing.utils
    :members:
    :undoc-members:
    :show-inheritance:
    :noindex:
-
-Subset module
--------------
-.. warning::
-    The `xclim.subset` module was removed in `xclim==0.40`. Subsetting is now offered via `clisops.core.subset`.
-    The subsetting functions offered by `clisops` are available at the following link:
-
-:doc:`CLISOPS API <clisops:api>`
-
-.. note::
-    For more information about `clisops` refer to their documentation here:
-    :doc:`CLISOPS documentation <clisops:readme>`

@@ -1,7 +1,7 @@
 # noqa: D205,D214,D400,D405,D406,D407,D411
 """
-Indicators utilities
-====================
+Indicator Utilities
+===================
 
 The `Indicator` class wraps indices computations with pre- and post-processing functionality. Prior to computations,
 the class runs data and metadata health checks. After computations, the class masks values that should be considered

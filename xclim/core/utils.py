@@ -1,6 +1,6 @@
 # noqa: D205,D400
 """
-Miscellaneous indices utilities
+Miscellaneous Indices Utilities
 ===============================
 
 Helper functions for the indices computations, indicator construction and other things.
