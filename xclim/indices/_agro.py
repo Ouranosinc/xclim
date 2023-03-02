@@ -885,23 +885,35 @@ def water_budget(
     return out
 
 
-# this might be useful elsewhere?
-def _get_group(da, freq):
-    if freq is None:
-        _get_group(da, xarray.infer_freq(da.time))
-    else:
-        _, base, _, _ = parse_offset(freq)
-        try:
-            group = {"D": "time.dayofyear", "M": "time.month"}[base]
-        except KeyError():
-            raise ValueError(f"Resampling frequency `{freq}` not supported.")
-    return group
-
-
-def _preprocess_spx(pr, freq, window):
+def _preprocess_spx(da, freq, window):
+    _, base, _, _ = parse_offset(freq or xarray.infer_freq(da.time))
+    try:
+        group = {"D": "time.dayofyear", "M": "time.month"}[base]
+    except KeyError():
+        raise ValueError(f"Standardized index with frequency `{freq}` not supported.")
     if freq:
-        pr = pr.resample(time=freq).mean(keep_attrs=True)
-    if uses_dask(pr) and len(pr.chunks[pr.get_axis_num("time")]) > 1:
+        da = da.resample(time=freq).mean(keep_attrs=True)
+    if window > 1:
+        da = da.rolling(time=window).mean(skipna=False, keep_attrs=True)
+    return da, group
+
+
+def _compute_spx_fit_params(da, cal_range, freq, window, dist, method, group=None):
+    # "WPM" method doesn't seem to work for gamma or pearson3
+    dist_and_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
+    if dist not in dist_and_methods:
+        raise NotImplementedError(f"The distribution `{dist}` is not supported.")
+    if method not in dist_and_methods[dist]:
+        raise NotImplementedError(
+            f"The method `{method}` is not supported for distribution `{dist}`."
+        )
+    if group is None:
+        da, group = _preprocess_spx(da, freq, window)
+
+    if cal_range:
+        da = da.sel(time=slice(cal_range[0], cal_range[1]))
+
+    if uses_dask(da) and len(da.chunks[da.get_axis_num("time")]) > 1:
         warnings.warn(
             "The input data is chunked on time dimension and must be fully rechunked to"
             " run `fit` on groups ."
@@ -909,22 +921,16 @@ def _preprocess_spx(pr, freq, window):
             " has to handle.",
             stacklevel=2,
         )
-        pr = pr.chunk({"time": -1})
-
-    # Rolling precipitations
-    if window > 1:
-        pr = pr.rolling(time=window).mean(skipna=False, keep_attrs=True)
-    pr.attrs["_processed"] = True
-    return pr
-
-
-def _compute_spx_fit_params(pr, cal_range, freq, window, dist, method, group=None):
-    group = group if group else _get_group(pr, freq)
-    if pr.attrs["_processed_"]:
-        pr = _preprocess_spx(pr, freq, window)
-    if cal_range:
-        pr = pr.sel(time=slice(cal_range[0], cal_range[1]))
-    return pr.groupby(group).map(fit, (dist, method))
+        da = da.chunk({"time": -1})
+    params = da.groupby(group).map(fit, (dist, method))
+    params.attrs.update(
+        {
+            "Calibration period": str(cal_range),
+            "Distribution": dist,
+            "Method": method,
+        }
+    )
+    return params
 
 
 @declare_units(
@@ -947,8 +953,8 @@ def standardized_precipitation_index(
     pr : xarray.DataArray
         Daily precipitation.
     cal_range: Tuple[DateStr, DateStr] | None
-        Dates used to subset `pr` and obtain dataset for calibration. The tuple is formed by two `DateStr`,  i.e. a `str` in format `"YYYY-MM-DD"`.
-        Default option `None` means that the full range of `pr` is used.
+        Dates used to take a subset the input dataset for calibration. The tuple is formed by two `DateStr`,
+        i.e. a `str` in format `"YYYY-MM-DD"`. Default option `None` means that the full range of the input dataset is used.
     params: xarray.DataArray
         Fit parameters.
     freq : str
@@ -984,59 +990,46 @@ def standardized_precipitation_index(
     >>> cal_range = ("1990-05-01", "1990-08-31")
     >>> spi_3 = standardized_precipitation_index(
     ...     pr,
-    ...     cal_range,
+    ...     cal_range=cal_range,
     ...     freq="MS",
     ...     window=3,
     ...     dist="gamma",
     ...     method="ML",
     ... )  # Computing SPI-3 months using a gamma distribution for the fit
     >>> # Fitting parameters can also be obtained ...
-    >>> params = standardized_precipitation_index(
+    >>> params = _compute_spx_fit_params(
     ...     pr,
     ...     cal_range,
     ...     freq="MS",
     ...     window=3,
     ...     dist="gamma",
     ...     method="ML",
-    ...     get_params=True,
     ... )  # First getting params
     >>> # ... and used as input
-    >>> spi_3 = standardized_precipitation_index(pr, None, params=params)
+    >>> spi_3 = standardized_precipitation_index(pr, params=params)
 
     References
     ----------
     :cite:cts:`mckee_relationship_1993`
     """
-    uses_params = params is not None
-    if cal_range and uses_params:
+    uses_input_params = params is not None
+    if cal_range and uses_input_params:
         raise ValueError(
             "Inputing both calibration dates (`cal_range`) and calibration parameters (`params`) is not accepted,"
             "input only one or neither of those options (the latter case reverts to default behaviour which performs a calibration"
             "with the full input dataset)."
         )
-    # "WPM" method doesn't seem to work for gamma or pearson3
-    dist_and_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
-    if dist not in dist_and_methods:
-        raise NotImplementedError(f"The distribution `{dist}` is not supported.")
-    if method not in dist_and_methods[dist]:
-        raise NotImplementedError(
-            f"The method `{method}` is not supported for distribution `{dist}`."
+
+    pr, group = _preprocess_spx(pr, freq, window)
+    if uses_input_params is False:
+        params = _compute_spx_fit_params(
+            pr, cal_range, freq, window, dist, method, group=group
         )
-
-    group = _get_group(pr, freq)
-    pr = _preprocess_spx(pr, freq, window)
-
-    if uses_params:
-        params_dict = dict(params.groupby(group.rsplit(".")[1]))
+    params_dict = dict(params.groupby(group.rsplit(".")[1]))
 
     def get_sub_spi(pr):
-        if uses_params:
-            group_key = pr[group][0].values.item()
-            sub_params = params_dict[group_key]
-        else:
-            sub_params = _compute_spx_fit_params(
-                pr, cal_range, freq, window, dist, method, group=group
-            )
+        group_key = pr[group][0].values.item()
+        sub_params = params_dict[group_key]
 
         # ppf to cdf
         if dist in ["gamma", "fisk"]:
@@ -1054,9 +1047,11 @@ def standardized_precipitation_index(
         return sub_spi
 
     spi = pr.groupby(group).map(get_sub_spi)
-    spi.attrs["units"] = ""
-
-    spi.attrs["calibration_data"] = "Input parameters" if uses_params else cal_range
+    spi.attrs = params.attrs
+    if uses_input_params:
+        spi.attrs["Calibration period"] = (
+            spi.attrs["Calibration period"] + "(input parameters)"
+        )
 
     return spi
 
@@ -1071,8 +1066,8 @@ def standardized_precipitation_evapotranspiration_index(
     params: Quantified | None = None,
     freq: str = "MS",
     window: int = 1,
-    dist: str = "gamma",
-    method: str = "APP",
+    dist: str = "fisk",
+    method: str = "ML",
 ) -> xarray.DataArray:
     r"""Standardized Precipitation Evapotranspiration Index (SPEI).
 
@@ -1084,8 +1079,9 @@ def standardized_precipitation_evapotranspiration_index(
     ----------
     wb : xarray.DataArray
         Daily water budget (pr - pet).
-    cal_range: tuple
-        Calibration dates
+    cal_range: Tuple[DateStr, DateStr] | None
+        Dates used to take a subset the input dataset for calibration. The tuple is formed by two `DateStr`,
+        i.e. a `str` in format `"YYYY-MM-DD"`. Default option `None` means that the full range of the input dataset is used.
     params: xarray.DataArray
         Fit parameters.
     freq : str
