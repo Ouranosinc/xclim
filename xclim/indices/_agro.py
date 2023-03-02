@@ -885,7 +885,7 @@ def water_budget(
     return out
 
 
-def _preprocess_spx(da, freq, window):
+def _preprocess_spx(da, freq, window, **indexer):
     _, base, _, _ = parse_offset(freq or xarray.infer_freq(da.time))
     try:
         group = {"D": "time.dayofyear", "M": "time.month"}[base]
@@ -895,10 +895,13 @@ def _preprocess_spx(da, freq, window):
         da = da.resample(time=freq).mean(keep_attrs=True)
     if window > 1:
         da = da.rolling(time=window).mean(skipna=False, keep_attrs=True)
+    da = select_time(da, **indexer)
     return da, group
 
 
-def _compute_spx_fit_params(da, cal_range, freq, window, dist, method, group=None):
+def _compute_spx_fit_params(
+    da, cal_range, freq, window, dist, method, group=None, **indexer
+):
     # "WPM" method doesn't seem to work for gamma or pearson3
     dist_and_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
     if dist not in dist_and_methods:
@@ -907,6 +910,7 @@ def _compute_spx_fit_params(da, cal_range, freq, window, dist, method, group=Non
         raise NotImplementedError(
             f"The method `{method}` is not supported for distribution `{dist}`."
         )
+
     if group is None:
         da, group = _preprocess_spx(da, freq, window)
 
@@ -922,14 +926,25 @@ def _compute_spx_fit_params(da, cal_range, freq, window, dist, method, group=Non
             stacklevel=2,
         )
         da = da.chunk({"time": -1})
-    params = da.groupby(group).map(fit, (dist, method))
-    params.attrs.update(
-        {
-            "Calibration period": str(cal_range),
-            "Distribution": dist,
-            "Method": method,
-        }
-    )
+
+    da = select_time(da, **indexer)
+
+    def wrap_fit(da):
+        if indexer != {}:
+            if da.isnull.all():
+                select_dims = {d: 0 for d in da.dims if d != "time"}
+                with xarray.set_options(keep_attrs=True):
+                    params = (
+                        fit(da.isel(time=slice(0, 2))[select_dims], dist, method)
+                        * da.isel(time=0, drop=True)
+                        * np.NaN
+                    )
+                return params
+        return fit(da, dist, method)
+
+    params = da.groupby(group).map(wrap_fit)
+    params.attrs["Calibration period"] = str(cal_range)
+
     return params
 
 
@@ -945,6 +960,7 @@ def standardized_precipitation_index(
     window: int = 1,
     dist: str = "gamma",
     method: str = "APP",
+    **indexer,
 ) -> xarray.DataArray:
     r"""Standardized Precipitation Index (SPI).
 
@@ -969,6 +985,10 @@ def standardized_precipitation_index(
     method : {'APP', 'ML'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
+    indexer
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        Indexing is done after finding the dry days, but before finding the spells.
 
     Returns
     -------
@@ -1021,20 +1041,17 @@ def standardized_precipitation_index(
             "with the full input dataset)."
         )
 
-    pr, group = _preprocess_spx(pr, freq, window)
+    pr, group = _preprocess_spx(pr, freq, window, **indexer)
     if uses_input_params is False:
         params = _compute_spx_fit_params(
             pr, cal_range, freq, window, dist, method, group=group
         )
     params_dict = dict(params.groupby(group.rsplit(".")[1]))
 
-    def get_sub_spi(pr):
-        group_key = pr[group][0].values.item()
-        sub_params = params_dict[group_key]
-
+    def ppf_to_cdf(da, params):
         # ppf to cdf
         if dist in ["gamma", "fisk"]:
-            prob_pos = dist_method("cdf", sub_params, pr.where(pr > 0))
+            prob_pos = dist_method("cdf", params, pr.where(pr > 0))
             prob_zero = (pr == 0).sum("time") / pr.notnull().sum("time")
             prob = prob_zero + (1 - prob_zero) * prob_pos
         # Invert to normal distribution with ppf and obtain SPI
@@ -1046,6 +1063,20 @@ def standardized_precipitation_index(
         )
         sub_spi = dist_method("ppf", params_norm, prob)
         return sub_spi
+
+    def get_sub_spi(pr):
+        group_key = pr[group][0].values.item()
+        sub_params = params_dict[group_key]
+        if indexer != {}:
+            if pr.isnull().all():
+                select_dims = {d: 0 for d in pr.dims if d != "time"}
+                sub_spi = ppf_to_cdf(
+                    pr.isel(time=slice(0, 2))[select_dims], sub_params[select_dims]
+                )
+                with xarray.set_options(keep_attrs=True):
+                    sub_spi = sub_spi * pr * np.NaN
+                return sub_spi
+        return ppf_to_cdf(pr, sub_params)
 
     spi = pr.groupby(group).map(get_sub_spi)
     spi.attrs = params.attrs
@@ -1069,6 +1100,7 @@ def standardized_precipitation_evapotranspiration_index(
     window: int = 1,
     dist: str = "fisk",
     method: str = "ML",
+    **indexer,
 ) -> xarray.DataArray:
     r"""Standardized Precipitation Evapotranspiration Index (SPEI).
 
@@ -1097,6 +1129,10 @@ def standardized_precipitation_evapotranspiration_index(
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization. Available methods
         vary with the distribution: 'gamma':{'APP', 'ML'}, 'fisk':{'ML'}
+    indexer
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        Indexing is done after finding the dry days, but before finding the spells.
 
     Returns
     -------
@@ -1121,7 +1157,7 @@ def standardized_precipitation_evapotranspiration_index(
             wb = wb + offset
 
     spei = standardized_precipitation_index(
-        wb, cal_range, params, freq, window, dist, method
+        wb, cal_range, params, freq, window, dist, method, **indexer
     )
 
     return spei
