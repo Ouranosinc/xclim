@@ -7,7 +7,6 @@ Climate Indices
    :imported-members:
    :undoc-members:
    :show-inheritance:
-   :noindex:
 
 Indices submodules
 ------------------
@@ -16,19 +15,16 @@ Indices submodules
    :members:
    :undoc-members:
    :show-inheritance:
-   :noindex:
 
 .. automodule:: xclim.indices.helpers
    :members:
    :undoc-members:
    :show-inheritance:
-   :noindex:
 
 .. automodule:: xclim.indices.run_length
    :members:
    :undoc-members:
    :show-inheritance:
-   :noindex:
 
 Fire indices submodule
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -38,13 +34,11 @@ Indices related to fire and fire weather. Currently, submodules exist for calcul
    :members: fire_weather_ufunc, fire_season, overwintering_drought_code, drought_code, cffwis_indices
    :undoc-members:
    :show-inheritance:
-   :noindex:
 
 .. automodule:: xclim.indices.fire._ffdi
    :members:
    :undoc-members:
    :show-inheritance:
-   :noindex:
 
 .. only:: html
 
@@ -72,6 +66,8 @@ Indices related to fire and fire weather. Currently, submodules exist for calcul
    :keyprefix: code-
 
 .. only:: html
+
+    .. note::
 
     Matlab code of the GFWED obtained through personal communication.
 

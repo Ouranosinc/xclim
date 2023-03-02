@@ -81,10 +81,21 @@ coverage: ## check code coverage quickly with the default Python
 autodoc: clean-docs ## create sphinx-apidoc files:
 	sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests
 
+autodoc-noindex: clean-docs ## create sphinx-apidoc files but without indexes for indices and indicators:
+	sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests xclim/indicators xclim/indices
+	rm docs/xclim.rst
+	env SPHINX_APIDOC_OPTIONS="members,undoc-members,show-inheritance,noindex" sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests
+
 linkcheck: autodoc ## run checks over all external links found throughout the documentation
 	$(MAKE) -C docs linkcheck
 
 docs: autodoc ## generate Sphinx HTML documentation, including API docs
+	$(MAKE) -C docs html
+ifndef READTHEDOCS
+	$(BROWSER) docs/_build/html/index.html
+endif
+
+docs-noindex: autodoc-noindex ## generate Sphinx HTML documentation, including API docs, but without indexes for for indices and indicators
 	$(MAKE) -C docs html
 ifndef READTHEDOCS
 	$(BROWSER) docs/_build/html/index.html
