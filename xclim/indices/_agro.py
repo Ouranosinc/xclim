@@ -988,7 +988,6 @@ def standardized_precipitation_index(
     indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
-        Indexing is done after finding the dry days, but before finding the spells.
 
     Returns
     -------
@@ -1132,7 +1131,6 @@ def standardized_precipitation_evapotranspiration_index(
     indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
-        Indexing is done after finding the dry days, but before finding the spells.
 
     Returns
     -------
