@@ -53,7 +53,12 @@ documentation in :ref:`analogues:Analogue metrics API`.
 :cite:cts:`roy_probabilistic_2017`
 :cite:cts:`grenier_assessment_2013`
 
-Analogue Metrics API
---------------------
+Analogues Metrics API
+---------------------
 
 See: :ref:`spatial-analogues-api`
+
+Analogues Developer Functions
+-----------------------------
+
+See: :ref:`spatial-analogues-developer-api`

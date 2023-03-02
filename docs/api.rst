@@ -144,15 +144,6 @@ Spatial Analogues Module
 .. autofunction:: xclim.analog.zech_aslan
    :noindex:
 
-Spatial Analogues Helpers
--------------------------
-
-.. autofunction:: xclim.analog.metric
-   :noindex:
-
-.. autofunction:: xclim.analog.standardize
-   :noindex:
-
 Subset Module
 =============
 
@@ -237,6 +228,17 @@ SDBA Utilities
    :noindex:
 
 .. autofunction:: xclim.sdba.measures.StatisticalMeasure
+   :noindex:
+
+.. _`spatial-analogues-developer-api`:
+
+Spatial Analogues Helpers
+-------------------------
+
+.. autofunction:: xclim.analog.metric
+   :noindex:
+
+.. autofunction:: xclim.analog.standardize
    :noindex:
 
 xclim Testing Helpers Module
