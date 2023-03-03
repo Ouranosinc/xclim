@@ -80,7 +80,7 @@ Virtual submodules
 
    <dl>
    {% for indname, ind in indicators['cf'].items() %}
-     <dt><code>cf.{{ indname | safe}}</code> : <a class="reference_internal" href="indicators_api.html#xclim.indicators.cf.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
+     <dt><code>cf.{{ indname | safe}}</code> : <a class="reference_internal" href="api.html#xclim.indicators.cf.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
      <dd>
      {% if ind.identifier != indname %}<b>Id: </b> {{ ind.identifier }} <br>{% endif %}
      <b>Description: </b> {{ ind.abstract }} <br>
@@ -97,7 +97,7 @@ Virtual submodules
 
    <dl>
    {% for indname, ind in indicators['icclim'].items() %}
-     <dt><code>icclim.{{ indname | safe}}</code> : <a class="reference_internal" href="indicators_api.html#xclim.indicators.icclim.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
+     <dt><code>icclim.{{ indname | safe}}</code> : <a class="reference_internal" href="api.html#xclim.indicators.icclim.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
      <dd>
      {% if ind.identifier != indname %}<b>Id: </b> {{ ind.identifier }} <br>{% endif %}
      <b>Description: </b> {{ ind.abstract }} <br>
@@ -114,7 +114,7 @@ Virtual submodules
 
    <dl>
    {% for indname, ind in indicators['anuclim'].items() %}
-     <dt><code>anuclim.{{ indname | safe}}</code> : <a class="reference_internal" href="indicators_api.html#xclim.indicators.anuclim.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
+     <dt><code>anuclim.{{ indname | safe}}</code> : <a class="reference_internal" href="api.html#xclim.indicators.anuclim.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
      <dd>
      {% if ind.identifier != indname %}<b>Id: </b> {{ ind.identifier }} <br>{% endif %}
      <b>Description: </b> {{ ind.abstract }} <br>

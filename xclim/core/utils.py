@@ -659,8 +659,7 @@ def adapt_clix_meta_yaml(raw: os.PathLike | StringIO | str, adapted: os.PathLike
   CF Standard indices
   ===================
 
-  Indicator found here are defined by the team at `clix-meta`_.
-  Adapted documentation from that repository follows:
+  Indicators found here are defined by the `clix-meta project`_. Adapted documentation from that repository follows:
 
   The repository aims to provide a platform for thinking about, and developing,
   a unified view of metadata elements required to describe climate indices (aka climate indicators).
@@ -672,7 +671,7 @@ def adapt_clix_meta_yaml(raw: os.PathLike | StringIO | str, adapted: os.PathLike
   CF Conventions. Currently identified issues frequently relate to standard_name or/and cell_methods
   which both are controlled vocabularies of the CF Conventions.
 
-  .. _clix-meta: https://github.com/clix-meta/clix-meta
+  .. _clix-meta project: https://github.com/clix-meta/clix-meta
 """
     yml["references"] = "clix-meta https://github.com/clix-meta/clix-meta"
 

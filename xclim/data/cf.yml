@@ -3,7 +3,7 @@ doc: |
   CF Standard indices
   ===================
 
-  Indicators found here are defined by the team at `clix-meta`_. Adapted documentation from that repository follows:
+  Indicators found here are defined by the `clix-meta project`_. Adapted documentation from that repository follows:
 
   The repository aims to provide a platform for thinking about, and developing, a unified view of metadata elements
   required to describe climate indices (aka climate indicators).

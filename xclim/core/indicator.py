@@ -32,7 +32,7 @@ details on each.
     keywords: <keywords> # Merged with indicator-specific keywords (joined with a space)
     references: <references> # Merged with indicator-specific references (joined with a new line)
     base: <base indicator class>  # Defaults to "Daily" and applies to all indicators that do not give it.
-    doc: <module docstring>  # Defaults to a minimal header, only valid if the module doesn't already exists.
+    doc: <module docstring>  # Defaults to a minimal header, only valid if the module doesn't already exist.
     variables:  # Optional section if indicators declared below rely on variables unknown to xclim (no in `xclim.core.utils.VARIABLES`)
                 # The variables are not module-dependent and will overwrite any already existing with the same name.
       <varname>:
