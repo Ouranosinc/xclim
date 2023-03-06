@@ -2,6 +2,14 @@
 History
 =======
 
+0.42.0 (unreleased)
+-------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Added `xclim` to the `ouranos Zenodo community <https://zenodo.org/communities/ouranos/>`_ . (:pull:`1313`).
+
 0.41.0 (2023-02-28)
 -------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Éric Dupuis (:user:`coxipi`).
