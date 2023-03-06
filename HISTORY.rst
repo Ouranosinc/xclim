@@ -10,6 +10,10 @@ New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * `scipy` is no longer pinned below v1.9 and `lmoments3>=1.0.5` is now a core dependency and installed by default with `pip`. (:issue:`1142`, :pull:`1171`).
 
+Internal changes
+^^^^^^^^^^^^^^^^
+* Added `xclim` to the `ouranos Zenodo community <https://zenodo.org/communities/ouranos/>`_ . (:pull:`1313`).
+
 0.41.0 (2023-02-28)
 -------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Éric Dupuis (:user:`coxipi`).
