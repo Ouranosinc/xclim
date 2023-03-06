@@ -2,6 +2,13 @@
 Climate Indices
 ===============
 
+.. note::
+
+    Climate `Indices` serve as the driving mechanisms behind `Indicators` and should be used in cases where default settings for an Indicator may need to be tweaked, metadata completeness is not required, or a user wishes to design a virtual module from existing indices (e.g. see :ref:`notebooks/extendxclim:Defining new indicators`).
+
+    For higher-level and general purpose use, the xclim developers suggest using the :ref:`indicators:Climate Indicators`.
+
+
 .. automodule:: xclim.indices
    :members:
    :imported-members:
