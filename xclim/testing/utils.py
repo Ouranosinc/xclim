@@ -431,7 +431,7 @@ def publish_release_notes(
     -----
     This function is solely for development purposes.
     """
-    history_file = Path(__file__).parent.parent.parent.joinpath("HISTORY.rst")
+    history_file = Path(__file__).parent.parent.parent.joinpath("CHANGES.rst")
 
     if not history_file.exists():
         raise FileNotFoundError("History file not found in xclim file tree.")

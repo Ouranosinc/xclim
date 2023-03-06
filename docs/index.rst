@@ -40,7 +40,7 @@ Leveraging xarray and dask, users can easily bias-adjust climate simulations ove
    :titlesonly:
 
    authors
-   history
+   changes
    references
 
 .. toctree::
