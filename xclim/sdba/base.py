@@ -541,7 +541,6 @@ def map_blocks(reduces: Sequence[str] = None, **outvars):
     red_dims = reduces or []
 
     def _decorator(func):
-
         # @wraps(func, hide_wrapped=True)
         @parse_group
         def _map_blocks(ds, **kwargs):

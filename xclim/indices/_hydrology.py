@@ -5,13 +5,10 @@ import numpy as np
 import xarray
 
 from xclim.core.calendar import get_calendar
+from xclim.core.missing import at_least_n_valid
 from xclim.core.units import declare_units, rate2amount
 
 from . import generic
-
-# FIXME: raises circular import issue, see: https://github.com/Ouranosinc/xclim/issues/949
-# from xclim.core.missing import at_least_n_valid
-
 
 __all__ = [
     "base_flow_index",
@@ -128,15 +125,13 @@ def snd_max_doy(snd: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray
     xarray.DataArray
         The day of year at which snow depth reaches its maximum value.
     """
-    from xclim.core.missing import (  # pylint: disable=import-outside-toplevel
-        at_least_n_valid,
-    )
-
     # Identify periods where there is at least one non-null value for snow depth
     valid = at_least_n_valid(snd.where(snd > 0), n=1, freq=freq)
 
     # Compute doymax. Will return first time step if all snow depths are 0.
-    out = generic.select_resample_op(snd, op=generic.doymax, freq=freq)
+    out = generic.select_resample_op(
+        snd.where(snd > 0, 0), op=generic.doymax, freq=freq
+    )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snd))
 
     # Mask arrays that miss at least one non-null snd.
@@ -182,15 +177,13 @@ def snw_max_doy(snw: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray
     xarray.DataArray
         The day of year at which snow amount reaches its maximum value.
     """
-    from xclim.core.missing import (  # pylint: disable=import-outside-toplevel
-        at_least_n_valid,
-    )
-
     # Identify periods where there is at least one non-null value for snow depth
     valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
 
     # Compute doymax. Will return first time step if all snow depths are 0.
-    out = generic.select_resample_op(snw, op=generic.doymax, freq=freq)
+    out = generic.select_resample_op(
+        snw.where(snw > 0, 0), op=generic.doymax, freq=freq
+    )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snw))
 
     # Mask arrays that miss at least one non-null snd.

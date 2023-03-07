@@ -107,6 +107,7 @@ extensions = [
     "IPython.sphinxext.ipython_console_highlighting",
     "autodoc_indicator",
     "sphinxcontrib.bibtex",
+    "sphinxcontrib.cairosvgconverter",
     "sphinx_codeautolink",
     "sphinx_copybutton",
     "sphinx_rtd_theme",
@@ -118,11 +119,14 @@ autosectionlabel_maxdepth = 2
 linkcheck_ignore = [
     r"https://github.com/Ouranosinc/xclim/(pull|issue).*",  # too labourious to fully check
     r"https://doi.org/10.1093/mnras/225.1.155",  # does not allow linkcheck requests (error 403)
+    r"https://hal.inrae.fr/hal-02843898",  # bad ssl certificate
     r"https://www.ouranos.ca/.*",  # bad ssl certificate
     r"https://doi.org/10.1080/.*",  # tandfonline does not allow linkcheck requests (error 403)
     r"https://www.tandfonline.com/.*",  # tandfonline does not allow linkcheck requests (error 403)
     r"http://www.utci.org/.*",  # Added on 2022-12-08: site appears to be down (timeout)
     r"https://ui.adsabs.harvard.edu/abs/2018AGUFMIN33A..06A*",  # Added on 2023-01-24: bad ssl certificate
+    r"https://www.jstor.org/.*",  # Added on 2023-01-31: does not allow linkcheck requests (error 403)
+    r"https://doi.org/10.2307/210739",  # Added on 2023-01-31: does not allow linkcheck requests (error 403)
 ]
 linkcheck_exclude_documents = [r"readme"]
 
@@ -158,7 +162,6 @@ class XCLabelStyle(BaseLabelStyle):
 
 
 class XCStyle(AlphaStyle):
-
     default_label_style = XCLabelStyle
 
 

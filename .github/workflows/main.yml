@@ -19,9 +19,12 @@ on:
     types:
       - submitted
 
+env:
+  XCLIM_TESTDATA_BRANCH: main
+
 jobs:
   black:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     if: |
       ((github.event_name == 'pull_request') && (github.event.action != 'labeled')) ||
       (github.event.review.state == 'approved') ||
@@ -32,11 +35,12 @@ jobs:
         with:
           access_token: ${{ github.token }}
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - name: Set up Python3.8
+        uses: actions/setup-python@v4
         with:
           python-version: "3.8"
       - name: Install tox
-        run: pip install tox~=3.0
+        run: pip install tox~=4.0
       - name: Run linting suite
         run: tox -e black
 
@@ -44,7 +48,7 @@ jobs:
     needs: black
     if: |
       (github.event_name == 'pull_request') && !contains(github.event.pull_request.labels.*.name, 'approved')
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python3.8
@@ -52,70 +56,68 @@ jobs:
         with:
           python-version: "3.8"
       - name: Install tox
-        run: pip install tox
+        run: pip install tox~=4.0
       - name: Test with tox
         run: tox -e py38
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  test-py38-upstream-lm3:
+  test-py39-upstream-lm3:
     needs: black
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
       (github.event.review.state == 'approved') ||
       (github.event_name == 'push')
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python3.9
         uses: actions/setup-python@v4
         with:
-          python-version: "3.8"
+          python-version: "3.9"
       - name: Install tox
-        run: pip install tox
+        run: pip install tox~=4.0
       - name: Test with tox
-        run: tox -e py38-upstream-lm3-coverage
+        run: tox -e py39-upstream-lm3-coverage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-py38-upstream-lm3
+          COVERALLS_FLAG_NAME: run-py39-upstream-lm3
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
 
-  test-py39-opt-slow:
+  test-py310-opt-slow:
     needs: black
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
       (github.event.review.state == 'approved') ||
       (github.event_name == 'push')
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
     steps:
       - uses: actions/checkout@v3
-      - name: Setup conda
-        uses: conda-incubator/setup-miniconda@v2
+      - name: Setup Conda (Micromamba) with Python3.10
+        uses: mamba-org/provision-with-micromamba@main
         with:
-          activate-environment: xclim39
+          cache-downloads: true
+          micromamba-version: 'latest'
           environment-file: environment.yml
-          miniforge-variant: Mambaforge
-          miniforge-version: latest
-          python-version: "3.9"
-          use-mamba: true
+          extra-specs: |
+            python="3.10"
       - name: Conda and Mamba versions
-        shell: bash -l {0}
         run: |
-          mamba update -n base conda mamba
-          mamba --version
+          conda --version
+          echo "micromamba: $(micromamba --version)"
       - name: Install dependencies
-        shell: bash -l {0}
         run: |
-          conda activate xclim39
-          python -m pip install --no-user "git+https://github.com/Ouranosinc/SBCK.git@easier-install#egg=sbck&subdirectory=python"
+          python -m pip install --no-user "git+https://github.com/yrobink/SBCK-python.git@5d11981792#egg=sbck"
           python -m pip install --no-user .
       - name: Test
-        shell: bash -l {0}
         run: |
-          conda activate xclim39
+          pip list
           pip check
-          pytest xclim --durations=10
+          pytest xclim --numprocesses=logical --durations=10 --cov=xclim --cov-report=term-missing
         env:
           CONDA_EXE: mamba
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -132,69 +134,69 @@ jobs:
 #          CONDA_EXE: mamba
 #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Report coverage
-        shell: bash -l {0}
         run: |
           pip install --upgrade coveralls
           coveralls
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-py39-opt-slow
+          COVERALLS_FLAG_NAME: run-py310-opt-slow
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
 
-  test-py310-lm3:
+  test-py38-lm3:
     needs: black
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
       (github.event.review.state == 'approved') ||
       (github.event_name == 'push')
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python3.8
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.8"
       - name: Install tox
-        run: pip install tox~=3.0
+        run: pip install tox~=4.0
       - name: Test with tox
-        run: tox -e py310-lm3-coverage
+        run: tox -e py38-lm3-coverage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-py310-lm3
+          COVERALLS_FLAG_NAME: run-py38-lm3
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
 
-  doctests:
+  doctests-py38:
     needs: black
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
       (github.event.review.state == 'approved') ||
       (github.event_name == 'push')
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - name: Set up Python3.8
+        uses: actions/setup-python@v4
         with:
           python-version: "3.8"
       - name: Install pylint and tox
-        run: pip install pylint tox
+        run: pip install pylint tox~=3.0
       - name: Run pylint
         run: pylint --rcfile=pylintrc --disable=import-error --exit-zero xclim
       - name: Test with tox
-        run: tox -e doctests_only-coverage
+        run: tox -e notebooks_doctests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-doctests
+          COVERALLS_FLAG_NAME: run-notebooks_doctests-py38
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
 
   finish:
     needs:
-      - doctests
-      - test-py39-opt-slow
-      - test-py310-lm3
-    runs-on: ubuntu-22.04
+      - doctests-py38
+      - test-py38-lm3
+      - test-py310-opt-slow
+    runs-on: ubuntu-latest
     container: python:3-slim
     steps:
       - name: Coveralls Finished

@@ -2,18 +2,27 @@ from __future__ import annotations
 
 from xclim import indices as xci
 from xclim.core.indicator import Daily, ResamplingIndicatorWithIndexing
+from xclim.indicators.atmos._conversion import Converter  # noqa
 
 __all__ = [
     "blowing_snow",
     "snow_cover_duration",
+    "snd_season_length",
+    "snw_season_length",
     "continuous_snow_cover_start",
+    "snd_season_start",
+    "snw_season_start",
     "continuous_snow_cover_end",
+    "snd_season_end",
+    "snw_season_end",
     "snd_max_doy",
+    "snd_to_snw",
+    "snow_depth",
+    "snw_to_snd",
     "snow_melt_we_max",
     "snw_max",
     "snw_max_doy",
     "winter_storm",
-    "snow_depth",
 ]
 
 
@@ -29,36 +38,105 @@ class SnowWithIndexing(ResamplingIndicatorWithIndexing):
 
 
 snow_cover_duration = SnowWithIndexing(
-    title="Snow cover duration",
+    title="Snow cover duration (depth) ",
     identifier="snow_cover_duration",
     units="days",
-    long_name="Number of days with snow depth at or above threshold",
+    long_name="Snow cover duration",
     description="The {freq} number of days with snow depth greater than or equal to {thresh}.",
     abstract="Number of days when the snow depth is greater than or equal to a given threshold.",
     compute=xci.snow_cover_duration,
+    _version_deprecated="0.41.0",
+)
+
+snd_season_length = SnowWithIndexing(
+    title="Snow cover duration (depth)",
+    identifier="snd_season_length",
+    units="days",
+    long_name="Snow cover duration",
+    description="The {freq} number of days with snow depth greater than or equal to {thresh}.",
+    abstract="Number of days when the snow depth is greater than or equal to a given threshold.",
+    compute=xci.snd_season_length,
+)
+
+snw_season_length = SnowWithIndexing(
+    title="Snow cover duration (amount)",
+    identifier="snw_season_length",
+    units="days",
+    long_name="Snow cover duration",
+    description="The {freq} number of days with snow amount greater than or equal to {thresh}.",
+    abstract="Number of days when the snow amount is greater than or equal to a given threshold.",
+    compute=xci.snw_season_length,
 )
 
 continuous_snow_cover_start = Snow(
-    title="Start date of continuous snow cover",
+    title="Start date of continuous snow depth cover",
     identifier="continuous_snow_cover_start",
     standard_name="day_of_year",
-    long_name="Start date of continuous snow cover",
+    long_name="Start date of continuous snow depth cover",
     description="Day of year when snow depth is above or equal to {thresh} for {window} consecutive days.",
     abstract="The first date on which snow depth is greater than or equal to a given threshold "
     "for a given number of consecutive days.",
     units="",
     compute=xci.continuous_snow_cover_start,
+    _version_deprecated="0.41.0",
+)
+
+snd_season_start = Snow(
+    title="Start date of continuous snow depth cover",
+    identifier="snd_season_start",
+    standard_name="day_of_year",
+    long_name="Start date of continuous snow depth cover",
+    description="Day of year when snow depth is above or equal to {thresh} for {window} consecutive days.",
+    abstract="The first date on which snow depth is greater than or equal to a given threshold "
+    "for a given number of consecutive days.",
+    units="",
+    compute=xci.snd_season_start,
+)
+
+snw_season_start = Snow(
+    title="Start date of continuous snow amount cover",
+    identifier="snw_season_start",
+    standard_name="day_of_year",
+    long_name="Start date of continuous snow amount cover",
+    description="Day of year when snow amount is above or equal to {thresh} for {window} consecutive days.",
+    abstract="The first date on which snow amount is greater than or equal to a given threshold "
+    "for a given number of consecutive days.",
+    units="",
+    compute=xci.snw_season_start,
 )
 
 continuous_snow_cover_end = Snow(
-    title="End date of continuous snow cover",
+    title="End date of continuous snow depth cover",
     identifier="continuous_snow_cover_end",
     standard_name="day_of_year",
-    long_name="End date of continuous snow cover",
+    long_name="End date of continuous snow depth cover",
     description="Day of year when snow depth is below {thresh} for {window} consecutive days.",
     abstract="The first date on which snow depth is below a given threshold for a given number of consecutive days.",
     units="",
     compute=xci.continuous_snow_cover_end,
+    _version_deprecated="0.41.0",
+)
+
+snd_season_end = Snow(
+    title="End date of continuous snow depth cover",
+    identifier="snd_season_end",
+    standard_name="day_of_year",
+    long_name="End date of continuous snow depth cover",
+    description="Day of year when snow depth is below {thresh} for {window} consecutive days.",
+    abstract="The first date on which snow depth is below a given threshold for a given number of consecutive days.",
+    units="",
+    compute=xci.snd_season_end,
+)
+
+snw_season_end = Snow(
+    title="End date of continuous snow amount cover",
+    identifier="snw_season_end",
+    standard_name="day_of_year",
+    long_name="End date of continuous snow amount cover",
+    description="Day of year when snow amount is below {thresh} for {window} consecutive days.",
+    abstract="The first date on which snow amount is below a given threshold for a given number of consecutive days.",
+    units="",
+    compute=xci.snw_season_end,
 )
 
 snd_max_doy = SnowWithIndexing(
@@ -91,9 +169,9 @@ snw_max = SnowWithIndexing(
     identifier="snw_max",
     standard_name="surface_snow_amount",
     var_name="{freq}_snw_max",
-    long_name="Maximum snow water equivalent amount",
-    description="The {freq} maximum snow water equivalent amount on the surface.",
-    abstract="The maximum snow water equivalent amount on the surface.",
+    long_name="Maximum snow amount equivalent",
+    description="The {freq} maximum snow amount equivalent on the surface.",
+    abstract="The maximum snow amount equivalent on the surface.",
     units="kg m-2",
     compute=xci.snw_max,
 )
@@ -103,9 +181,9 @@ snw_max_doy = SnowWithIndexing(
     identifier="snw_max_doy",
     standard_name="day_of_year",
     var_name="{freq}_snw_max_doy",
-    long_name="Day of year of maximum daily snow water equivalent amount",
-    description="The {freq} day of year when snow water equivalent amount on the surface reaches its maximum.",
-    abstract="The day of year when snow water equivalent amount on the surface reaches its maximum.",
+    long_name="Day of year of maximum daily snow amount equivalent",
+    description="The {freq} day of year when snow amount equivalent on the surface reaches its maximum.",
+    abstract="The day of year when snow amount equivalent on the surface reaches its maximum.",
     units="",
     compute=xci.snw_max_doy,
 )
@@ -155,4 +233,26 @@ snow_depth = SnowWithIndexing(
     abstract="Mean of daily snow depth.",
     cell_methods="time: mean over days",
     compute=xci.snow_depth,
+)
+
+snd_to_snw = Converter(
+    title="Surface snow amount",
+    identifier="snd_to_snw",
+    units="kg m-2",
+    standard_name="surface_snow_amount",
+    long_name="Approximation of daily snow amount from snow depth and density",
+    description="The approximation of daily snow amount from snow depth and density.",
+    var_name="snw",
+    compute=xci.snd_to_snw,
+)
+
+snw_to_snd = Converter(
+    title="Surface snow depth",
+    identifier="snw_to_snd",
+    units="m",
+    standard_name="surface_snow_thickness",
+    long_name="Approximation of daily snow depth from snow amount and density",
+    description="The approximation of daily snow depth from snow amount and density.",
+    var_name="snd",
+    compute=xci.snw_to_snd,
 )
