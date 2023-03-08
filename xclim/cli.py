@@ -1,4 +1,9 @@
-"""xclim command line interface module."""
+# noqa: D205,D400
+"""
+=============================
+Command Line Interface module
+=============================
+"""
 from __future__ import annotations
 
 import sys

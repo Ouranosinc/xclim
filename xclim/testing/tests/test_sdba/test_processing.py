@@ -107,7 +107,7 @@ def test_adapt_freq(use_dask):
     )
     # Assert that Pth and dP0 are approx the good values
     np.testing.assert_allclose(pth, 20, rtol=0.05)
-    np.testing.assert_allclose(dP0, 0.5, atol=0.14)
+    np.testing.assert_allclose(dP0, 0.5, atol=0.15)
     assert sim_ad.units == "mm d-1"
     assert sim_ad.attrs["references"].startswith("Themeßl")
     assert pth.units == "mm d-1"

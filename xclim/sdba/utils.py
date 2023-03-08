@@ -6,7 +6,7 @@ Statistical Downscaling and Bias Adjustment Utilities
 from __future__ import annotations
 
 import itertools
-from typing import Callable, Mapping
+from typing import Callable
 from warnings import warn
 
 import numpy as np
@@ -185,7 +185,7 @@ def broadcast(
     *,
     group: str | Grouper = "time",
     interp: str = "nearest",
-    sel: Mapping[str, xr.DataArray] | None = None,
+    sel: dict[str, xr.DataArray] | None = None,
 ) -> xr.DataArray:
     """Broadcast a grouped array back to the same shape as a given array.
 
@@ -199,7 +199,7 @@ def broadcast(
       Grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
     interp : {'nearest', 'linear', 'cubic'}
       The interpolation method to use,
-    sel : Mapping[str, xr.DataArray]
+    sel : dict[str, xr.DataArray]
       Mapping of grouped coordinates to x coordinates (other than the grouping one).
 
     Returns
