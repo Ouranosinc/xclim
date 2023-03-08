@@ -1,7 +1,7 @@
 # noqa: D205,D400
 """
-Numba-accelerated utilities
----------------------------
+Numba-accelerated Utilities
+===========================
 """
 from __future__ import annotations
 

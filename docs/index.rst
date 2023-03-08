@@ -23,6 +23,7 @@ Leveraging xarray and dask, users can easily bias-adjust climate simulations ove
 
    About <readme>
    installation
+   Why xclim? <explanation>
    notebooks/usage
    notebooks/index
    indicators
@@ -39,7 +40,7 @@ Leveraging xarray and dask, users can easily bias-adjust climate simulations ove
    :titlesonly:
 
    authors
-   history
+   changes
    references
 
 .. toctree::

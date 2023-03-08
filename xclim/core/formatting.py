@@ -1,6 +1,6 @@
 # noqa: D205,D400
 """
-Formatting utilities for indicators
+Formatting Utilities for Indicators
 ===================================
 """
 from __future__ import annotations
@@ -12,7 +12,7 @@ import string
 from ast import literal_eval
 from fnmatch import fnmatch
 from inspect import _empty, signature  # noqa
-from typing import Any, Mapping, Sequence
+from typing import Any, Sequence
 
 import xarray as xr
 from boltons.funcutils import wraps
@@ -43,14 +43,14 @@ class AttrFormatter(string.Formatter):
 
     def __init__(
         self,
-        mapping: Mapping[str, Sequence[str]],
+        mapping: dict[str, Sequence[str]],
         modifiers: Sequence[str],
     ) -> None:
         """Initialize the formatter.
 
         Parameters
         ----------
-        mapping : Mapping[str, Sequence[str]]
+        mapping : dict[str, Sequence[str]]
             A mapping from values to their possible variations.
         modifiers : Sequence[str]
             The list of modifiers, must be the as long as the longest value of `mapping`.
@@ -337,7 +337,7 @@ def update_history(
     hist_str: str,
     *inputs_list: Sequence[xr.DataArray | xr.Dataset],
     new_name: str | None = None,
-    **inputs_kws: Mapping[str, xr.DataArray | xr.Dataset],
+    **inputs_kws: dict[str, xr.DataArray | xr.Dataset],
 ):
     """Return a history string with the timestamped message and the combination of the history of all inputs.
 
@@ -352,7 +352,7 @@ def update_history(
     inputs_list : Sequence[Union[xr.DataArray, xr.Dataset]]
       The datasets or variables that were used to produce the new object.
       Inputs given that way will be prefixed by their "name" attribute if available.
-    inputs_kws : Mapping[str, Union[xr.DataArray, xr.Dataset]]
+    inputs_kws : dict[str, Union[xr.DataArray, xr.Dataset]]
       Mapping from names to the datasets or variables that were used to produce the new object.
       Inputs given that way will be prefixes by the passed name.
 
@@ -543,12 +543,12 @@ KIND_ANNOTATION = {
 }
 
 
-def _gen_parameters_section(parameters: Mapping, allowed_periods: list[str] = None):
+def _gen_parameters_section(parameters: dict, allowed_periods: list[str] = None):
     """Generate the "parameters" section of the indicator docstring.
 
     Parameters
     ----------
-    parameters : mapping
+    parameters : dict
       Parameters dictionary (`Ind.parameters`).
     allowed_periods : List[str], optional
       Restrict parameters to specific periods. Default: None.

@@ -1,6 +1,6 @@
 # noqa: D205,D400
 """
-Missing values identification
+Missing Values Identification
 =============================
 
 Indicators may use different criteria to determine whether a computed indicator value should be

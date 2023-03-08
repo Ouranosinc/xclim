@@ -1,6 +1,6 @@
 # noqa: D205,D400
 """
-Miscellaneous indices utilities
+Miscellaneous Indices Utilities
 ===============================
 
 Helper functions for the indices computations, indicator construction and other things.
@@ -166,7 +166,7 @@ class MissingVariableError(ValueError):
     """Error raised when a dataset is passed to an indicator but one of the needed variable is missing."""
 
 
-def ensure_chunk_size(da: xr.DataArray, **minchunks: Mapping[str, int]) -> xr.DataArray:
+def ensure_chunk_size(da: xr.DataArray, **minchunks: dict[str, int]) -> xr.DataArray:
     """Ensure that the input DataArray has chunks of at least the given size.
 
     If only one chunk is too small, it is merged with an adjacent chunk.
@@ -176,7 +176,7 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: Mapping[str, int]) -> xr.Da
     ----------
     da : xr.DataArray
         The input DataArray, with or without the dask backend. Does nothing when passed a non-dask array.
-    **minchunks : Mapping[str, int]
+    **minchunks : dict[str, int]
         A kwarg mapping from dimension name to minimum chunk size.
         Pass -1 to force a single chunk along that dimension.
 
@@ -665,8 +665,7 @@ def adapt_clix_meta_yaml(raw: os.PathLike | StringIO | str, adapted: os.PathLike
   CF Standard indices
   ===================
 
-  Indicator found here are defined by the team at `clix-meta`_.
-  Adapted documentation from that repository follows:
+  Indicators found here are defined by the `clix-meta project`_. Adapted documentation from that repository follows:
 
   The repository aims to provide a platform for thinking about, and developing,
   a unified view of metadata elements required to describe climate indices (aka climate indicators).
@@ -678,7 +677,7 @@ def adapt_clix_meta_yaml(raw: os.PathLike | StringIO | str, adapted: os.PathLike
   CF Conventions. Currently identified issues frequently relate to standard_name or/and cell_methods
   which both are controlled vocabularies of the CF Conventions.
 
-  .. _clix-meta: https://github.com/clix-meta/clix-meta
+  .. _clix-meta project: https://github.com/clix-meta/clix-meta
 """
     yml["references"] = "clix-meta https://github.com/clix-meta/clix-meta"
 
