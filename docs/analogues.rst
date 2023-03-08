@@ -2,7 +2,7 @@ Spatial Analogues
 =================
 
 Spatial analogues are maps showing which areas have a present-day climate that is analogous to the future climate of a
-given place. This type of map can be useful for climate adaptation to see how well regions are coping today under
+given place. This type of map can be useful for climate adaptation to see how regions are coping today under
 specific climate conditions. For example, officials from a city located in a temperate region that may be expecting more
 heatwaves in the future can learn from the experience of another city where heatwaves are a common occurrence,
 leading to more proactive intervention plans to better deal with new climate conditions.
@@ -12,7 +12,7 @@ the future period with the distribution of the same climate indices computed ove
 candidate regions. A number of methodological choices thus enter the computation:
 
     - Climate indices of interest,
-    - Metrics measuring the difference between both distributions,
+    - Metrics measuring the difference between the distributions of indices,
     - Reference data from which to compute the base indices,
     - A future climate scenario to compute the target indices.
 
@@ -26,7 +26,7 @@ See :ref:`notebooks/analogs:Spatial Analogues examples`.
 Methods to compute the (dis)similarity between samples
 ------------------------------------------------------
 This module implements all methods described in :cite:cts:`grenier_assessment_2013` to measure the dissimilarity between
-two samples, plus the Székely-Rizzo energy distance, some of these algorithms can be used to test whether two samples
+two samples, as well as the Székely-Rizzo energy distance. Some of these algorithms can be used to test whether two samples
 have been drawn from the same distribution. Here, they are used in finding areas with analogue climate conditions to a
 target climate:
 
