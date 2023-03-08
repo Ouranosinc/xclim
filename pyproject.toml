@@ -84,6 +84,7 @@ dev = [
   "netCDF4 >=1.4",
   "pooch",
   "sphinx",
+  "sphinx-autodoc-typehints",
   "sphinx-codeautolink",
   "sphinx-copybutton",
   "sphinx-rtd-theme >=1.0",

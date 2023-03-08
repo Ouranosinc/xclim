@@ -108,6 +108,7 @@ extensions = [
     "autodoc_indicator",
     "sphinxcontrib.bibtex",
     "sphinxcontrib.cairosvgconverter",
+    "sphinx_autodoc_typehints",
     "sphinx_codeautolink",
     "sphinx_copybutton",
     "sphinx_rtd_theme",
@@ -117,16 +118,33 @@ autosectionlabel_prefix_document = True
 autosectionlabel_maxdepth = 2
 
 linkcheck_ignore = [
-    r"https://github.com/Ouranosinc/xclim/(pull|issue).*",  # too labourious to fully check
-    r"https://doi.org/10.1093/mnras/225.1.155",  # does not allow linkcheck requests (error 403)
-    r"https://hal.inrae.fr/hal-02843898",  # bad ssl certificate
-    r"https://www.ouranos.ca/.*",  # bad ssl certificate
-    r"https://doi.org/10.1080/.*",  # tandfonline does not allow linkcheck requests (error 403)
-    r"https://www.tandfonline.com/.*",  # tandfonline does not allow linkcheck requests (error 403)
-    r"http://www.utci.org/.*",  # Added on 2022-12-08: site appears to be down (timeout)
-    r"https://ui.adsabs.harvard.edu/abs/2018AGUFMIN33A..06A*",  # Added on 2023-01-24: bad ssl certificate
-    r"https://www.jstor.org/.*",  # Added on 2023-01-31: does not allow linkcheck requests (error 403)
-    r"https://doi.org/10.2307/210739",  # Added on 2023-01-31: does not allow linkcheck requests (error 403)
+    # too labourious to fully check
+    r"https://github.com/Ouranosinc/xclim/(pull|issue).*",
+    # Added on 2022-09-22: Does not allow linkcheck requests (error 403)
+    r"https://doi.org/10.1093/mnras/225.1.155",
+    # Bad ssl certificate
+    r"https://hal.inrae.fr/hal-02843898",
+    # Added on 2022-12-05: Taylor and Francis online does not allow linkcheck requests (error 403)
+    r"https://www.tandfonline.com/.*" r"https://doi.org/10.1080/.*",
+    # Added on 2022-12-08: Site appears to be down (timeout)
+    r"http://www.utci.org/.*",
+    # Added on 2023-01-24: bad ssl certificate
+    r"https://ui.adsabs.harvard.edu/abs/2018AGUFMIN33A..06A*",
+    # Added on 2023-01-31: JSTOR does not allow linkcheck requests (error 403)
+    r"https://www.jstor.org/.*",
+    r"https://doi.org/10.2307/210739",
+    # Added on 2023-03-02: Wiley does not allow linkcheck requests (error 403)
+    r"https://onlinelibrary.wiley.com/.*",
+    r"https://doi.org/(10.1002|10.1029|10.1111)/.*",
+    # Added on 2023-03-02: NRC does not allow linkcheck requests (error 403)
+    r"https://doi.org/10.4141/S04-019",
+    r"https://doi.org/10.4141/cjps65-051",
+    # Added on 2023-03-02: AGU pubs does not allow linkcheck requests (error 403)
+    r"https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2008GL037119",
+    # Added on 2023-03-02: Site appears to be down (error 500)
+    r"https://www.semanticscholar.org/paper/A-Multivariate-Two-Sample-Test-Based-on-the-Concept-Zech-Aslan/.*",
+    # Added on 2023-03-08: OGC does not allow linkcheck requests (error 403)
+    r"https://www.ogc.org/standard/wps/.*",
 ]
 linkcheck_exclude_documents = [r"readme"]
 

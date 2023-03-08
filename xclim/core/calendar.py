@@ -1,6 +1,6 @@
 # noqa: D205,D400
 """
-Calendar handling utilities
+Calendar Handling Utilities
 ===========================
 
 Helper function to handle dates, times and different calendars with xarray.

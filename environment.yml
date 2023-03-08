@@ -52,6 +52,7 @@ dependencies:
     - pytest-cov
     - pytest-xdist>=3.2
     - sphinx
+    - sphinx-autodoc-typehints
     - sphinx-codeautolink
     - sphinx-copybutton
     - sphinx-rtd-theme>=1.0

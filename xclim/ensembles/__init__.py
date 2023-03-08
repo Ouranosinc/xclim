@@ -1,9 +1,12 @@
+# noqa: D205,D400
 """
-Ensemble tools.
+==============
+Ensemble tools
+==============
 
-This submodule defines some useful methods for dealing with ensembles of climate
-simulations. In xclim, an "ensemble" is a `Dataset` or a `DataArray` where multiple
-climate realizations or models are concatenated along the `realization` dimension.
+This submodule defines some useful methods for dealing with ensembles of climate simulations.
+In xclim, an "ensemble" is a `Dataset` or a `DataArray` where multiple climate realizations
+or models are concatenated along the `realization` dimension.
 """
 from __future__ import annotations
 
