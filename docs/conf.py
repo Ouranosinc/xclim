@@ -143,6 +143,8 @@ linkcheck_ignore = [
     r"https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2008GL037119",
     # Added on 2023-03-02: Site appears to be down (error 500)
     r"https://www.semanticscholar.org/paper/A-Multivariate-Two-Sample-Test-Based-on-the-Concept-Zech-Aslan/.*",
+    # Added on 2023-03-08: OGC does not allow linkcheck requests (error 403)
+    r"https://www.ogc.org/standard/wps/.*",
 ]
 linkcheck_exclude_documents = [r"readme"]
 
