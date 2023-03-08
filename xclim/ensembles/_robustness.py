@@ -28,7 +28,14 @@ def change_significance(
     weights: xr.DataArray = None,
     p_vals: bool = False,
     **kwargs,
-) -> tuple[xr.DataArray | xr.Dataset, xr.DataArray | xr.Dataset]:
+) -> (
+    tuple[xr.DataArray | xr.Dataset, xr.DataArray | xr.Dataset]
+    | tuple[
+        xr.DataArray | xr.Dataset,
+        xr.DataArray | xr.Dataset,
+        xr.DataArray | xr.Dataset | None,
+    ]
+):
     """Robustness statistics qualifying how the members of an ensemble agree on the existence of change and on its sign.
 
     Parameters
@@ -182,7 +189,8 @@ def change_significance(
             warnings.warn(
                 "`xclim` will be dropping support for `scipy<1.9.0` in a future release. "
                 "Please consider updating your environment dependencies accordingly",
-                stacklevel=2,
+                FutureWarning,
+                stacklevel=3,
             )
 
             def _ttest_func(f, r):
@@ -242,7 +250,11 @@ def change_significance(
                 "'mannwhitney-utest' is not currently supported for weighted arrays."
             )
         if parse_version(scipy.__version__) < parse_version("1.8.0"):
-            raise ImportError("Update to SciPy >= 1.8.0 to use the Mann-Whitney test.")
+            raise ImportError(
+                "The Mann-Whitney test requires `scipy>=1.8.0`. "
+                "`xclim` will be dropping support for `scipy<1.9.0` in a future release. "
+                "Please consider updating your environment dependencies accordingly"
+            )
 
         p_change = kwargs.setdefault("p_change", 0.05)
 
@@ -334,9 +346,9 @@ def change_significance(
         ),
     )
 
+    # Returns either two (2) or three (3) variables. This should be adjusted.
     if p_vals:
         return change_frac, pos_frac, pvals
-
     return change_frac, pos_frac
 
 

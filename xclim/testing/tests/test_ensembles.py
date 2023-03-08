@@ -22,6 +22,8 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+from pkg_resources import parse_version
+from scipy import __version__ as __scipy_version__
 from scipy.stats.mstats import mquantiles
 
 from xclim import ensembles
@@ -640,7 +642,15 @@ def test_change_significance(
     robust_data, test, exp_chng_frac, exp_pos_frac, exp_changed, kws
 ):
     ref, fut = robust_data
-    chng_frac, pos_frac = ensembles.change_significance(fut, ref, test=test, **kws)
+
+    if test == "ttest" and parse_version(__scipy_version__) < parse_version("1.9.0"):
+        with pytest.warns(FutureWarning):
+            chng_frac, pos_frac = ensembles.change_significance(
+                fut, ref, test=test, **kws
+            )
+    else:
+        chng_frac, pos_frac = ensembles.change_significance(fut, ref, test=test, **kws)
+
     assert chng_frac.attrs["test"] == str(test)
     if isinstance(ref, xr.Dataset):
         chng_frac = chng_frac.tas
