@@ -21,7 +21,9 @@ Finally, a user can use functions of :py:mod:`~xclim.core.dataflags` to explore 
 .. automodule:: xclim.core.missing
    :noindex:
 
-Corresponding stand-alone functions are also exposed to run the same missing value checks independent from indicator calculations.
+.. note::
+
+    Corresponding stand-alone functions are also exposed to run the same missing value checks independent from indicator calculations.
 
 .. autofunction:: xclim.core.missing.missing_any
    :noindex:

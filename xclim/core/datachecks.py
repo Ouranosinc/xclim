@@ -1,6 +1,6 @@
 # noqa: D205,D400
 """
-Data checks
+Data Checks
 ===========
 
 Utilities designed to check the validity of data inputs.

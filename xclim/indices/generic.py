@@ -1,6 +1,6 @@
 # noqa: D205,D400
 """
-Generic indices submodule
+Generic Indices Submodule
 =========================
 
 Helper functions for common generic actions done in the computation of indices.

@@ -1,6 +1,6 @@
 # noqa: D205,D400
 """
-Ensemble Robustness metrics
+Ensemble Robustness Metrics
 ===========================
 
 Robustness metrics are used to estimate the confidence of the climate change signal of an ensemble.

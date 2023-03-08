@@ -133,7 +133,7 @@ as _all_ seasons are used, even the very short shoulder seasons.
 from __future__ import annotations
 
 from collections import OrderedDict
-from typing import Mapping, Sequence
+from typing import Sequence
 
 import numpy as np
 import xarray as xr
@@ -1244,8 +1244,8 @@ def overwintering_drought_code(
 
 # TODO: The `noqa` can be removed when this function is no longer public
 def _convert_parameters(
-    params: Mapping[str, int | float]
-) -> Mapping[str, int | float]:  # noqa: D103
+    params: dict[str, int | float]
+) -> dict[str, int | float]:  # noqa: D103
     for param, value in params.copy().items():
         if param not in default_params:
             raise ValueError(
