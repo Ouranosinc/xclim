@@ -2,7 +2,6 @@
 Bias Adjustment and Downscaling Algorithms
 ==========================================
 
-
 The `xclim.sdba` submodule provides a collection of bias-adjustment methods meant to correct for systematic biases found in climate model simulations relative to observations.
 Almost all adjustment algorithms conform to the `train` - `adjust` scheme, meaning that adjustment factors are first estimated on training data sets, then applied in a distinct step to the data to be adjusted.
 Given a reference time series (ref), historical simulations (hist) and simulations to be adjusted (sim),
@@ -29,8 +28,7 @@ series, and possibly reduce the number of quantile bins that needs to be used.
 
 Modular Approach
 ================
-
-The module atempts to adopt a modular approach instead of implementing published and named methods directly.
+The module attempts to adopt a modular approach instead of implementing published and named methods directly.
 A generic bias adjustment process is laid out as follows:
 
 - preprocessing on ``ref``, ``hist`` and ``sim`` (using methods in :py:mod:`xclim.sdba.processing` or :py:mod:`xclim.sdba.detrending`)
@@ -40,7 +38,7 @@ A generic bias adjustment process is laid out as follows:
 
 The train-adjust approach allows to inspect the trained adjustment object. The training information is stored in
 the underlying `Adj.ds` dataset and usually has a `af` variable with the adjustment factors. Its layout and the
-other available variables vary between the different algorithm, refer to :ref:`Adjustment methods <sdbauserapi>`.
+other available variables vary between the different algorithm, refer to :ref:`Adjustment methods <sdba-user-api>`.
 
 Parameters needed by the training and the adjustment are saved to the ``Adj.ds`` dataset as a `adj_params` attribute.
 Parameters passed to the `adjust` call are written to the history attribute in the output scenario DataArray.
@@ -49,13 +47,12 @@ Parameters passed to the `adjust` call are written to the history attribute in t
 
 Grouping
 ========
-
 For basic time period grouping (months, day of year, season), passing a string to the methods needing it is sufficient.
 Most methods acting on grouped data also accept a `window` int argument to pad the groups with data from adjacent ones.
 Units of `window` are the sampling frequency of the main grouping dimension (usually `time`). For more complex grouping,
 one can pass an instance of :py:class:`xclim.sdba.base.Grouper` directly. For example, if one wants to compute the factors
 for each day of the year but across all realizations of an ensemble : ``group = Grouper("time.dayofyear", add_dims=['realization'])``.
-In a conventionnal empirical quantile mapping (EQM), this will compute the quantiles for each day of year and all realizations together, yielding a single set of adustment factors for all realizations.
+In a conventional empirical quantile mapping (EQM), this will compute the quantiles for each day of year and all realizations together, yielding a single set of adjustment factors for all realizations.
 
 .. warning::
     If grouping according to the day of the year is needed, the :py:mod:`xclim.core.calendar` submodule contains useful
@@ -63,27 +60,22 @@ In a conventionnal empirical quantile mapping (EQM), this will compute the quant
     passed, the adjustment factors will always be interpolated to the largest range of day of the years but this can
     lead to strange values, so we recommend converting the data beforehand to a common calendar.
 
-
 Application in multivariate settings
 ====================================
-
 When applying univariate adjustment methods to multiple variables, some strategies are recommended to avoid introducing unrealistic artifacts in adjusted outputs.
 
 Minimum and maximum temperature
 -------------------------------
-
 When adjusting both minimum and maximum temperature, adjustment factors sometimes yield minimum temperatures larger than the maximum temperature on the same day, which of course, is nonsensical.
 One way to avoid this is to first adjust maximum temperature using an additive adjustment, then adjust the diurnal temperature range (DTR) using a multiplicative adjustment, and then determine minimum temperature by subtracting DTR from the maximum temperature :cite:p:`thrasher_technical_2012,agbazo_characterizing_2020`.
 
 Relative and specific humidity
 ------------------------------
-
 When adjusting both relative and specific humidity, we want to preserve the relationship between both.
 To do this, :cite:t:`grenier_two_2018` suggests to first adjust the relative humidity using a multiplicative factor, ensure values are within 0-100%, then apply an additive adjustment factor to the surface pressure before estimating the specific humidity from thermodynamic relationships.
 
 Radiation and precipitation
 ---------------------------
-
 In theory, short wave radiation should be capped when precipitation is not zero, but there is as of yet no mechanism proposed to do that, see :cite:t:`hoffmann_meteorologically_2012`.
 
 Usage examples
@@ -92,7 +84,6 @@ The usage of this module is documented in two example notebooks: `SDBA <notebook
 
 Discussion topics
 =================
-
 Some issues were also discussed on the Github repository. Most of these are still open questions, feel free to participate to the discussion!
 
 * Number quantiles to use in quantile mapping methods: :issue:`1162`
@@ -125,81 +116,15 @@ See the `sdba-advanced` notebook for more info on the reasons for this move.
 Other restrictions : ``map_blocks`` will remove any "auxiliary" coordinates before calling the wrapped function and will
 add them back on exit.
 
-.. _sdbauserapi:
+User API
+========
 
-SDBA User API
+See: :ref:`sdba-user-api`
+
+Developer API
 =============
 
-.. automodule:: xclim.sdba.adjustment
-   :members:
-   :exclude-members: BaseAdjustment
-   :special-members:
-   :show-inheritance:
-   :noindex:
-
-.. automodule:: xclim.sdba.processing
-   :members:
-   :noindex:
-
-.. automodule:: xclim.sdba.detrending
-   :members:
-   :show-inheritance:
-   :exclude-members: BaseDetrend
-   :noindex:
-
-.. automodule:: xclim.sdba.utils
-   :members:
-   :noindex:
-
-.. autoclass:: xclim.sdba.base.Grouper
-   :members:
-   :class-doc-from: init
-   :noindex:
-
-.. automodule:: xclim.sdba.nbutils
-   :members:
-   :noindex:
-
-.. automodule:: xclim.sdba.loess
-   :members:
-   :noindex:
-
-.. automodule:: xclim.sdba.properties
-   :members:
-   :exclude-members: StatisticalProperty
-   :noindex:
-
-.. automodule:: xclim.sdba.measures
-   :members:
-   :exclude-members: StatisticalMeasure
-   :noindex:
-
-Developer tools
-===============
-
-.. automodule:: xclim.sdba.base
-   :members:
-   :show-inheritance:
-   :exclude-members: Grouper
-   :noindex:
-
-.. autoclass:: xclim.sdba.detrending.BaseDetrend
-   :members:
-   :noindex:
-
-.. autoclass:: xclim.sdba.adjustment.TrainAdjust
-   :members:
-   :noindex:
-
-.. autoclass:: xclim.sdba.adjustment.Adjust
-   :members:
-   :noindex:
-
-.. autofunction:: xclim.sdba.properties.StatisticalProperty
-   :noindex:
-
-.. autofunction:: xclim.sdba.measures.StatisticalMeasure
-   :noindex:
+See: :ref:`sdba-developer-api`
 
 .. only:: html or text
 
