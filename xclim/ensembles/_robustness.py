@@ -9,6 +9,7 @@ the 12th chapter of the Working Group 1's contribution to the AR5 :cite:p:`colli
 """
 from __future__ import annotations
 
+import warnings
 from typing import Union
 
 import numpy as np
@@ -177,9 +178,27 @@ def change_significance(
             )
         p_change = kwargs.setdefault("p_change", 0.05)
 
+        if parse_version(scipy.__version__) < parse_version("1.9.0"):
+            warnings.warn(
+                "`xclim` will be dropping support for `scipy<1.9.0` in a future release. "
+                "Please consider updating your environment dependencies accordingly",
+                stacklevel=2,
+            )
+
+            def _ttest_func(f, r):
+                return spstats.ttest_1samp(f, r, axis=-1, nan_policy="omit")[1]
+
+        else:
+
+            def _ttest_func(f, r):
+                # scipy>=1.9: popmean.axis[-1] must equal 1 for both fut and ref
+                return spstats.ttest_1samp(
+                    f, r[..., np.newaxis], axis=-1, nan_policy="omit"
+                )[1]
+
         # Test hypothesis of no significant change
         pvals = xr.apply_ufunc(
-            lambda f, r: spstats.ttest_1samp(f, r, axis=-1, nan_policy="omit")[1],
+            _ttest_func,
             fut,
             ref.mean("time"),
             input_core_dims=[[realization, "time"], [realization]],
