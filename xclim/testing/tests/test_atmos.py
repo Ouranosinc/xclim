@@ -552,16 +552,14 @@ class TestUTCI:
         np.testing.assert_allclose(utci.isel(time=0), utci_exp, rtol=1e-03)
 
 
-@pytest.mark.skipif(sys.version_info == (3, 10), reason="Crashes often on Python3.10")
-@pytest.mark.thread_unsafe
 class TestMeanRadiantTemperature:
     def test_mean_radiant_temperature(self, atmosds):
         dataset = atmosds
 
-        rsds = dataset.rsds
-        rsus = dataset.rsus
-        rlds = dataset.rlds
-        rlus = dataset.rlus
+        rsds = dataset.rsds.copy(deep=True)
+        rsus = dataset.rsus.copy(deep=True)
+        rlds = dataset.rlds.copy(deep=True)
+        rlus = dataset.rlus.copy(deep=True)
 
         # Expected values
         exp_sun = [np.nan, np.nan, np.nan, np.nan, np.nan]
