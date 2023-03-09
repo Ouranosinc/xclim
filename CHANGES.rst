@@ -24,6 +24,7 @@ Internal changes
     * The documentation now includes a page explaining the reasons for developing `xclim` and a section briefly detailing similar and related projects.
     * Markdown explanations in some Jupyter Notebooks have been edited for clarity
 * Removed `Mapping` abstract base class types in call signatures (`dict` variables were always expected). (:pull:`1308`).
+* Changes in testing setup now prevent ``test_mean_radiant_temperature`` from sometimes causing a segmentation fault. (:issue:`1303`, :pull:`1315`).
 
 0.41.0 (2023-02-28)
 -------------------

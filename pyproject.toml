@@ -180,6 +180,5 @@ usefixtures = "xdoctest_namespace"
 doctest_optionflags = ["NORMALIZE_WHITESPACE", "IGNORE_EXCEPTION_DETAIL", "NUMBER", "ELLIPSIS"]
 markers = [
   "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-  "requires_docs: mark tests that can only be run with documentation present",
-  "thread_unsafe: Causes segfaults with pytest-xdist distributed testing"
+  "requires_docs: mark tests that can only be run with documentation present"
 ]
