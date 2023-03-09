@@ -585,7 +585,7 @@ def atmosds(threadsafe_data_dir) -> xr.Dataset:
         threadsafe_data_dir.joinpath("atmosds.nc"),
         cache_dir=threadsafe_data_dir,
         branch=TESTDATA_BRANCH,
-    )
+    ).load()
 
 
 @pytest.fixture(scope="function")
