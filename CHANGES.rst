@@ -6,6 +6,12 @@ Changelog
 -------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 
+Breaking changes
+^^^^^^^^^^^^^^^^
+* The call signatures for ``xclim.ensembles.create_ensemble`` and ``xclim.ensembles._base._ens_align_dataset`` have been deprecated. (:issue:`1305`, :pull:`1317`).
+    * `mf_flag` (bool) -> `multifile` (bool)
+  Calls to these functions made with the original signature will emit warnings. Changes will become breaking in `xclim>=0.43.0`.
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Added `xclim` to the `ouranos Zenodo community <https://zenodo.org/communities/ouranos/>`_ . (:pull:`1313`).
