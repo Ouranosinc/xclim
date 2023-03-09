@@ -556,10 +556,10 @@ class TestMeanRadiantTemperature:
     def test_mean_radiant_temperature(self, atmosds):
         dataset = atmosds
 
-        rsds = dataset.rsds.copy(deep=True)
-        rsus = dataset.rsus.copy(deep=True)
-        rlds = dataset.rlds.copy(deep=True)
-        rlus = dataset.rlus.copy(deep=True)
+        rsds = dataset.rsds
+        rsus = dataset.rsus
+        rlds = dataset.rlds
+        rlus = dataset.rlus
 
         # Expected values
         exp_sun = [np.nan, np.nan, np.nan, np.nan, np.nan]
