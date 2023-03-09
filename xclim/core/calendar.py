@@ -36,6 +36,7 @@ __all__ = [
     "adjust_doy_calendar",
     "climatological_mean_doy",
     "compare_offsets",
+    "common_calendar",
     "convert_calendar",
     "date_range",
     "date_range_like",
