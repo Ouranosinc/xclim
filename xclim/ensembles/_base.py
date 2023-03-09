@@ -40,8 +40,8 @@ def create_ensemble(
     Parameters
     ----------
     datasets : list or dict or string
-      List of netcdf file paths or xarray Dataset/DataArray objects . If mf_flag is True, ncfiles should be a list of
-      lists where each sublist contains input .nc files of an xarray multifile Dataset.
+      List of netcdf file paths or xarray Dataset/DataArray objects . If `multifile` is True, ncfiles should be a
+      list of lists where each sublist contains input .nc files of an xarray multifile Dataset.
       If DataArray objects are passed, they should have a name in order to be transformed into Datasets.
       A dictionary can be passed instead of a list, in which case the keys are used as coordinates along the new
       `realization` axis.
@@ -65,7 +65,7 @@ def create_ensemble(
       For conversions involving '360_day', the align_on='date' option is used by default.
     **xr_kwargs
       Any keyword arguments to be given to `xr.open_dataset` when opening the files
-      (or to `xr.open_mfdataset` if mf_flag is True)
+      (or to `xr.open_mfdataset` if `multifile` is True)
 
     Returns
     -------
@@ -92,7 +92,7 @@ def create_ensemble(
 
         # Simulation 2 is also a list of .nc files:
         datasets.extend(Path("/dir2").glob("*.nc"))
-        ens = create_ensemble(datasets, mf_flag=True)
+        ens = create_ensemble(datasets, multifile=True)
     """
     if isinstance(datasets, dict):
         if realizations is None:
@@ -347,10 +347,11 @@ def ensemble_percentiles(
 
 def _ens_align_datasets(
     datasets: list[xr.Dataset | Path | str | list[Path | str]] | str,
-    mf_flag: bool = False,
+    multifile: bool = False,
     resample_freq: str | None = None,
     calendar: str = "default",
     cal_kwargs: dict | None = None,
+    mf_flag: bool | str = "UNSET",  # noqa
     **xr_kwargs,
 ) -> list[xr.Dataset]:
     """Create a list of aligned xarray Datasets for ensemble Dataset creation.
@@ -358,11 +359,11 @@ def _ens_align_datasets(
     Parameters
     ----------
     datasets : list[xr.Dataset | xr.DataArray | Path | str | list[Path | str]] or str
-        List of netcdf file paths or xarray Dataset/DataArray objects . If mf_flag is True, 'datasets' should be a list
-        of lists where each sublist contains input NetCDF files of a xarray multi-file Dataset.
+        List of netcdf file paths or xarray Dataset/DataArray objects . If `multifile` is True, 'datasets' should be a
+        list of lists where each sublist contains input NetCDF files of a xarray multi-file Dataset.
         DataArrays should have a name, so they can be converted to datasets.
         If a string, it is assumed to be a glob pattern for finding datasets.
-    mf_flag : bool
+    multifile : bool
         If True climate simulations are treated as xarray multi-file datasets before concatenation.
         Only applicable when 'datasets' is a sequence of file paths.
     resample_freq : str, optional
@@ -386,10 +387,19 @@ def _ens_align_datasets(
     if isinstance(datasets, str):
         datasets = glob(datasets)
 
+    if mf_flag != "UNSET":
+        warnings.warn(
+            "The `mf_flag` argument is being deprecated in favour of `multifile` in `_ens_align_datasets()`. "
+            "This change will be made effective from `xclim>=0.43.0`. Please update your scripts accordingly",
+            DeprecationWarning,
+            stacklevel=3,
+        )
+        multifile = mf_flag
+
     ds_all = []
     calendars = []
     for i, n in enumerate(datasets):
-        if mf_flag:
+        if multifile:
             ds = xr.open_mfdataset(n, combine="by_coords", **xr_kwargs)
         else:
             if isinstance(n, xr.Dataset):
