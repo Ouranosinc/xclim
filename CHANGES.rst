@@ -6,11 +6,16 @@ Changelog
 -------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Two previously private functions for selecting a day of year in a time series when performing calendar conversions are now exposed. (:issue:`1305`, :pull:`1317`). New functions are:
+    * ``xclim.core.calendar.yearly_interpolated_doy``
+    * ``xclim.core.calendar.yearly_random_doy``
+
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* The call signatures for ``xclim.ensembles.create_ensemble`` and ``xclim.ensembles._base._ens_align_dataset`` have been deprecated. (:issue:`1305`, :pull:`1317`).
+* The call signatures for ``xclim.ensembles.create_ensemble`` and ``xclim.ensembles._base._ens_align_dataset`` have been deprecated. Calls to these functions made with the original signature will emit warnings. Changes will become breaking in `xclim>=0.43.0`.(:issue:`1305`, :pull:`1317`). Affected variable:
     * `mf_flag` (bool) -> `multifile` (bool)
-  Calls to these functions made with the original signature will emit warnings. Changes will become breaking in `xclim>=0.43.0`.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
