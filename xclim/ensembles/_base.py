@@ -109,7 +109,7 @@ def create_ensemble(
         warnings.warn(
             "The `mf_flag` argument is being deprecated in favour of `multifile` in `create.ensemble()`. "
             "This change will be made effective from `xclim>=0.43.0`. Please update your scripts accordingly",
-            DeprecationWarning,
+            FutureWarning,
             stacklevel=3,
         )
         multifile = mf_flag
@@ -391,7 +391,7 @@ def _ens_align_datasets(
         warnings.warn(
             "The `mf_flag` argument is being deprecated in favour of `multifile` in `_ens_align_datasets()`. "
             "This change will be made effective from `xclim>=0.43.0`. Please update your scripts accordingly",
-            DeprecationWarning,
+            FutureWarning,
             stacklevel=3,
         )
         multifile = mf_flag
