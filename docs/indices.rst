@@ -8,6 +8,24 @@ Climate Indices
 
     For higher-level and general purpose use, the xclim developers suggest using the :ref:`indicators:Climate Indicators`.
 
+Indices Library
+---------------
+
+Climate indices functions are designed to operate on `xarray.DataArray` objects. Most of these functions
+operate on daily time series, but in some cases might accept other sampling frequencies as well.
+All functions perform units checks to make sure that inputs have the expected dimensions (for example
+have units of temperature, whether it is Celsius, kelvin or Fahrenheit), and set the `units`
+attribute of the output DataArray.
+
+The `calendar`, `fire`, `generic`, `helpers`, `run_length` and `stats` submodules provide helpers to
+simplify the implementation of the indices.
+
+.. warning::
+
+    Indices functions do not perform missing value checks, and usually do not set CF-Convention attributes
+    (long_name, standard_name, description, cell_methods, etc.). These functionalities are provided by
+    :py:class:`xclim.core.indicator.Indicator` instances found in the :py:mod:`xclim.indicators.atmos`,
+    :py:mod:`xclim.indicators.land` and :mod:`xclim.indicators.seaIce` modules.
 
 .. automodule:: xclim.indices
    :members:
