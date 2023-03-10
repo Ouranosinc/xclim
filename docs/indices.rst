@@ -4,21 +4,25 @@ Climate Indices
 
 .. note::
 
-    Climate `Indices` serve as the driving mechanisms behind `Indicators` and should be used in cases where default settings for an Indicator may need to be tweaked, metadata completeness is not required, or a user wishes to design a virtual module from existing indices (e.g. see :ref:`notebooks/extendxclim:Defining new indicators`).
+    Climate `Indices` serve as the driving mechanisms behind `Indicators` and should be used in cases where
+    default settings for an Indicator may need to be tweaked, metadata completeness is not required, or a user
+    wishes to design a virtual module from existing indices (see: :ref:`notebooks/extendxclim:Defining new indicators`).
 
     For higher-level and general purpose use, the xclim developers suggest using the :ref:`indicators:Climate Indicators`.
 
 Indices Library
 ---------------
 
-Climate indices functions are designed to operate on `xarray.DataArray` objects. Most of these functions
-operate on daily time series, but in some cases might accept other sampling frequencies as well.
-All functions perform units checks to make sure that inputs have the expected dimensions (for example
-have units of temperature, whether it is Celsius, kelvin or Fahrenheit), and set the `units`
-attribute of the output DataArray.
+Climate indices functions are designed to operate on :py:class:`xarray.DataArray` objects.
+Most of these functions operate on daily time series, but in some cases might accept other sampling
+frequencies as well. All functions perform units checks to make sure that inputs have the expected dimensions
+(e.g. handling for units of temperature, whether they are Celsius, kelvin or Fahrenheit), and set the `units`
+attribute of the output `DataArray`.
 
-The `calendar`, `fire`, `generic`, `helpers`, `run_length` and `stats` submodules provide helpers to
-simplify the implementation of the indices.
+The :py:mod:`xclim.indices.generic`, :py:mod:`xclim.indices.helpers`, :py:mod:`xclim.indices.run_length`, and
+:py:mod:`xclim.indices.stats` submodules provide helper functions to simplify the implementation of indices
+while functions under :py:mod:`xclim.core.calendar` can aid with challenges arising from variable calendar
+types.
 
 .. warning::
 
