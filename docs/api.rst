@@ -86,7 +86,7 @@ Ensembles Module
    :noindex:
 
 .. autofunction:: xclim.ensembles.kmeans_reduce_ensemble
-    :noindex:
+   :noindex:
 
 .. autofunction:: xclim.ensembles.plot_rsqprofile
    :noindex:
