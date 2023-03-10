@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from xclim import generic, set_options
+from xclim.core.utils import ValidationError
 
 
 class TestFit:
@@ -41,6 +43,27 @@ class TestFrequencyAnalysis:
         out = generic.return_level(pr, mode="max", t=2, dist="gamma")
         assert out.units == pr.units
 
+    def test_no_indexer(self, ndq_series):
+        out = generic.return_level(ndq_series, mode="max", t=[2, 5], dist="gamma")
+        assert out.description in [
+            "Frequency analysis for the maximal annual 1-day value estimated using the gamma distribution."
+        ]
+        assert out.name == "fa_1maxannual"
+        assert out.shape == (2, 2, 3)  # nrt, nx, ny
+        np.testing.assert_array_equal(out.isnull(), False)
+
+    def test_q27(self, ndq_series):
+        out = generic.return_level(ndq_series, mode="max", t=2, dist="gamma", window=7)
+        assert out.shape == (1, 2, 3)
+
+    def test_empty(self, ndq_series):
+        q = ndq_series.copy()
+        q[:, 0, 0] = np.nan
+        out = generic.return_level(
+            q, mode="max", t=2, dist="genextreme", window=6, freq="YS"
+        )
+        assert np.isnan(out.values[:, 0, 0]).all()
+
 
 class TestStats:
     """See other tests in test_land::TestStats"""
@@ -49,3 +72,12 @@ class TestStats:
         pr = pr_series(np.random.rand(400))
         out = generic.stats(pr, freq="YS", op="min", season="MAM")
         assert out.units == pr.units
+
+    def test_missing(self, ndq_series):
+        a = ndq_series
+        a = ndq_series.where(~((a.time.dt.dayofyear == 5) * (a.time.dt.year == 1902)))
+        assert a.shape == (5000, 2, 3)
+        out = generic.stats(a, op="max", month=1)
+
+        np.testing.assert_array_equal(out.sel(time="1900").isnull(), False)
+        np.testing.assert_array_equal(out.sel(time="1902").isnull(), True)

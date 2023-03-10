@@ -1,8 +1,6 @@
 """Streamflow indicator definitions."""
 from __future__ import annotations
 
-from abc import ABC
-
 from xclim.core.cfchecks import check_valid
 from xclim.core.indicator import Indicator, ResamplingIndicator
 from xclim.core.units import declare_units

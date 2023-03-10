@@ -86,7 +86,7 @@ def test_adapt_freq(use_dask):
     # Where the input is considered zero
     input_zeros = sim_ad.where(prsim <= 1)
 
-    # The proportion of corrected values (time.size * 3 * 0.2 is the theoritical number of values under 1 in prsim)
+    # The proportion of corrected values (time.size * 3 * 0.2 is the theoretical number of values under 1 in prsim)
     dP0_out = (input_zeros > 1).sum() / (time.size * 3 * 0.2)
     np.testing.assert_allclose(dP0_out, 0.5, atol=0.1)
 
