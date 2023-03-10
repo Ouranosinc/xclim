@@ -34,7 +34,9 @@ from .formatting import update_xclim_history
 __all__ = [
     "DayOfYearStr",
     "adjust_doy_calendar",
+    "build_climatology_bounds",
     "climatological_mean_doy",
+    "common_calendar",
     "compare_offsets",
     "convert_calendar",
     "date_range",
@@ -52,9 +54,10 @@ __all__ = [
     "resample_doy",
     "select_time",
     "time_bnds",
-    "within_bnds_doy",
     "uniform_calendars",
-    "build_climatology_bounds",
+    "within_bnds_doy",
+    "yearly_interpolated_doy",
+    "yearly_random_doy",
 ]
 
 # Maximum day of year in each calendar.
@@ -94,6 +97,43 @@ def date_range(
     if calendar == "default":
         return pd.date_range(*args, **kwargs)
     return xr.cftime_range(*args, calendar=calendar, **kwargs)
+
+
+def yearly_interpolated_doy(
+    time: pd.DatetimeIndex | CFTimeIndex, source_calendar: str, target_calendar: str
+):
+    """Return the nearest day in the target calendar of the corresponding "decimal year" in the source calendar."""
+    yr = int(time.dt.year[0])
+    return np.round(
+        days_in_year(yr, target_calendar)
+        * time.dt.dayofyear
+        / days_in_year(yr, source_calendar)
+    ).astype(int)
+
+
+def yearly_random_doy(
+    time: pd.DatetimeIndex | CFTimeIndex,
+    rng: np.random.Generator,
+    source_calendar: str,
+    target_calendar: str,
+):
+    """Return a day of year in the new calendar.
+
+    Removes Feb 29th and five other days chosen randomly within five sections of 72 days.
+    """
+    yr = int(time.dt.year[0])
+    new_doy = np.arange(360) + 1
+    rm_idx = rng.integers(0, 72, 5) + (np.arange(5) * 72)
+    if source_calendar == "360_day":
+        for idx in rm_idx:
+            new_doy[idx + 1 :] = new_doy[idx + 1 :] + 1
+        if days_in_year(yr, target_calendar) == 366:
+            new_doy[new_doy >= 60] = new_doy[new_doy >= 60] + 1
+    elif target_calendar == "360_day":
+        new_doy = np.insert(new_doy, rm_idx - np.arange(5), -1)
+        if days_in_year(yr, source_calendar) == 366:
+            new_doy = np.insert(new_doy, 60, -1)
+    return new_doy[time.dt.dayofyear - 1]
 
 
 def get_calendar(obj: Any, dim: str = "time") -> str:
@@ -321,38 +361,18 @@ def convert_calendar(
     # TODO Maybe the 5-6 days to remove could be given by the user?
     if align_on in ["year", "random"]:
         if align_on == "year":
-
-            def _yearly_interp_doy(time):
-                # Returns the nearest day in the target calendar of the corresponding "decimal year" in the source calendar
-                yr = int(time.dt.year[0])
-                return np.round(
-                    days_in_year(yr, cal_tgt)
-                    * time.dt.dayofyear
-                    / days_in_year(yr, cal_src)
-                ).astype(int)
-
-            new_doy = source.time.groupby(f"{dim}.year").map(_yearly_interp_doy)
-        elif align_on == "random":
-
-            def _yearly_random_doy(time, rng):
-                # Return a doy in the new calendar, removing the Feb 29th and 5 other
-                # days chosen randomly within 5 sections of 72 days.
-                yr = int(time.dt.year[0])
-                new_doy = np.arange(360) + 1
-                rm_idx = rng.integers(0, 72, 5) + (np.arange(5) * 72)
-                if cal_src == "360_day":
-                    for idx in rm_idx:
-                        new_doy[idx + 1 :] = new_doy[idx + 1 :] + 1
-                    if days_in_year(yr, cal_tgt) == 366:
-                        new_doy[new_doy >= 60] = new_doy[new_doy >= 60] + 1
-                elif cal_tgt == "360_day":
-                    new_doy = np.insert(new_doy, rm_idx - np.arange(5), -1)
-                    if days_in_year(yr, cal_src) == 366:
-                        new_doy = np.insert(new_doy, 60, -1)
-                return new_doy[time.dt.dayofyear - 1]
-
             new_doy = source.time.groupby(f"{dim}.year").map(
-                _yearly_random_doy, rng=np.random.default_rng()
+                yearly_interpolated_doy,
+                source_calendar=cal_src,
+                target_calendar=cal_tgt,
+            )
+
+        elif align_on == "random":
+            new_doy = source.time.groupby(f"{dim}.year").map(
+                yearly_random_doy,
+                rng=np.random.default_rng(),
+                source_calendar=cal_src,
+                target_calendar=cal_tgt,
             )
 
         # Convert the source datetimes, but override the doy with our new doys
