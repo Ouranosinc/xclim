@@ -83,22 +83,22 @@ Ensembles Module
 
 .. Use of autofunction is so that paths do not include private modules.
 .. autofunction:: xclim.ensembles.kkz_reduce_ensemble
-    :noindex:
+   :noindex:
 
 .. autofunction:: xclim.ensembles.kmeans_reduce_ensemble
-    :noindex:
+   :noindex:
 
 .. autofunction:: xclim.ensembles.plot_rsqprofile
-    :noindex:
+   :noindex:
 
 .. automodule:: xclim.ensembles._robustness
-    :noindex:
+   :noindex:
 
 .. autofunction:: xclim.ensembles.change_significance
-    :noindex:
+   :noindex:
 
 .. autofunction:: xclim.ensembles.robustness_coefficient
-    :noindex:
+   :noindex:
 
 Units Handling Submodule
 ========================

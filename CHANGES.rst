@@ -6,6 +6,17 @@ Changelog
 -------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Two previously private functions for selecting a day of year in a time series when performing calendar conversions are now exposed. (:issue:`1305`, :pull:`1317`). New functions are:
+    * ``xclim.core.calendar.yearly_interpolated_doy``
+    * ``xclim.core.calendar.yearly_random_doy``
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* The call signatures for ``xclim.ensembles.create_ensemble`` and ``xclim.ensembles._base._ens_align_dataset`` have been deprecated. Calls to these functions made with the original signature will emit warnings. Changes will become breaking in `xclim>=0.43.0`.(:issue:`1305`, :pull:`1317`). Affected variable:
+    * `mf_flag` (bool) -> `multifile` (bool)
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Added `xclim` to the `ouranos Zenodo community <https://zenodo.org/communities/ouranos/>`_ . (:pull:`1313`).
@@ -20,6 +31,8 @@ Internal changes
     * The documentation now includes a page explaining the reasons for developing `xclim` and a section briefly detailing similar and related projects.
     * Markdown explanations in some Jupyter Notebooks have been edited for clarity
 * Removed `Mapping` abstract base class types in call signatures (`dict` variables were always expected). (:pull:`1308`).
+* Changes in testing setup now prevent ``test_mean_radiant_temperature`` from sometimes causing a segmentation fault. (:issue:`1303`, :pull:`1315`).
+* Addressed a formatting bug that caused `Indicators` with multiple variables returned to not be properly formatted in the documentation. (:issue:`1305`, :pull:`1317`).
 
 0.41.0 (2023-02-28)
 -------------------

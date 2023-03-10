@@ -13,6 +13,7 @@ import xarray as xr
 from filelock import FileLock
 
 import xclim
+from xclim.core import indicator
 from xclim.core.calendar import max_doy
 from xclim.testing.tests.data import (
     add_example_file_paths,
@@ -571,8 +572,8 @@ def is_matplotlib_installed(xdoctest_namespace) -> None:
 @pytest.fixture
 def official_indicators():
     # Remove unofficial indicators (as those created during the tests, and those from YAML-built modules)
-    registry_cp = xclim.core.indicator.registry.copy()
-    for cls in xclim.core.indicator.registry.values():
+    registry_cp = indicator.registry.copy()
+    for cls in indicator.registry.values():
         if cls.identifier.upper() != cls._registry_id:
             registry_cp.pop(cls._registry_id)
     return registry_cp
@@ -584,7 +585,7 @@ def atmosds(threadsafe_data_dir) -> xr.Dataset:
         threadsafe_data_dir.joinpath("atmosds.nc"),
         cache_dir=threadsafe_data_dir,
         branch=TESTDATA_BRANCH,
-    )
+    ).load()
 
 
 @pytest.fixture(scope="function")

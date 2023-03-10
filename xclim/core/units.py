@@ -932,7 +932,7 @@ def check_units(val: str | int | float | None, dim: str | None) -> None:
 
 
 def declare_units(
-    **units_by_name: dict[str, str],
+    **units_by_name: str,
 ) -> Callable:
     """Create a decorator to check units of function arguments.
 
