@@ -24,7 +24,7 @@ from xclim.core.formatting import update_history
 def change_significance(
     fut: xr.DataArray | xr.Dataset,
     ref: xr.DataArray | xr.Dataset = None,
-    test: str = "ttest",
+    test: str | None = "ttest",
     weights: xr.DataArray = None,
     p_vals: bool = False,
     **kwargs,
