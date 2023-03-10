@@ -601,7 +601,7 @@ def _gen_returns_section(cf_attrs: Sequence[dict[str, Any]]):
                     attr = "<Dynamically generated string>"
                 added_section += f" **{key}**: {attr};"
         if added_section:
-            section = f"{section}, with additional attributes:{added_section[:-1]}"
+            section = f"{section}, with additional attributes:{added_section[:-1]}\n"
     return section
 
 

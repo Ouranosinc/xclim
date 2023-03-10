@@ -256,7 +256,7 @@ def _fine_fuel_moisture_code(t, p, w, h, ffmc0):  # pragma: no cover
 
     Parameters
     ----------
-    t: array_like
+    t : array_like
         Noon temperature [C].
     p : array_like
         Rain fall in open over previous 24 hours, at noon [mm].
@@ -342,7 +342,7 @@ def _duff_moisture_code(
 
     Parameters
     ----------
-    t: array_like
+    t : array_like
         Noon temperature [C].
     p : array_like
         Rain fall in open over previous 24 hours, at noon [mm].
@@ -404,7 +404,7 @@ def _drought_code(
 
     Parameters
     ----------
-    t: array-like
+    t : array-like
         Noon temperature [C].
     p : array_like
         Rain fall in open over previous 24 hours, at noon [mm].
@@ -945,9 +945,9 @@ def fire_weather_ufunc(
         How to compute the start-up and shutdown of the fire season.
         If "None", no start-ups or shutdowns are computed, similar to the R fire function.
         Ignored if `season_mask` is given.
-    overwintering: bool
+    overwintering : bool
         Whether to activate DC overwintering or not. If True, either season_method or season_mask must be given.
-    dry_start: {None, 'CFS', 'GFWED'}
+    dry_start : {None, 'CFS', 'GFWED'}
         Whether to activate the DC and DMC "dry start" mechanism and which method to use. See Notes.
         If overwintering is activated, it overrides this parameter : only DMC is handled through the dry start mechanism.
     initial_start_up : bool
@@ -1316,9 +1316,9 @@ def cffwis_indices(
         How to compute the start-up and shutdown of the fire season.
         If "None", no start-ups or shutdowns are computed, similar to the R fire function.
         Ignored if `season_mask` is given.
-    overwintering: bool
+    overwintering : bool
         Whether to activate DC overwintering or not. If True, either season_method or season_mask must be given.
-    dry_start: {None, 'CFS', 'GFWED'}
+    dry_start : {None, 'CFS', 'GFWED'}
         Whether to activate the DC and DMC "dry start" mechanism or not, see :py:func:`fire_weather_ufunc`.
     initial_start_up : bool
         If True (default), gridpoints where the fire season is active on the first timestep go through a start_up phase
@@ -1420,9 +1420,9 @@ def drought_code(
         How to compute the start-up and shutdown of the fire season.
         If "None", no start-ups or shutdowns are computed, similar to the R fire function.
         Ignored if `season_mask` is given.
-    overwintering: bool
+    overwintering : bool
         Whether to activate DC overwintering or not. If True, either season_method or season_mask must be given.
-    dry_start: {None, "CFS", 'GFWED'}
+    dry_start : {None, "CFS", 'GFWED'}
         Whether to activate the DC and DMC "dry start" mechanism and which method to use.
         See :py:func:`fire_weather_ufunc`.
     initial_start_up : bool
@@ -1503,16 +1503,16 @@ def fire_season(
     freq : str, optional
         If given only the longest fire season for each period defined by this frequency,
         Every "seasons" are returned if None, including the short shoulder seasons.
-    temp_start_thresh: Quantified
+    temp_start_thresh : Quantified
         Minimal temperature needed to start the season. Must be scalar.
     temp_end_thresh : Quantified
         Maximal temperature needed to end the season. Must be scalar.
-    temp_condition_days: int
+    temp_condition_days : int
         Number of days with temperature above or below the thresholds to trigger a start or an end of the fire season.
-    snow_condition_days: int
+    snow_condition_days : int
         Parameters for the fire season determination. See :py:func:`fire_season`. Temperature is in degC, snow in m.
         The `snow_thresh` parameters is also used when `dry_start` is set to "GFWED".
-    snow_thresh: Quantified
+    snow_thresh : Quantified
         Minimal snow depth level to end a fire season, only used with method "LA08".
         Must be scalar.
 
