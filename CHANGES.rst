@@ -32,6 +32,7 @@ Internal changes
     * Markdown explanations in some Jupyter Notebooks have been edited for clarity
 * Removed `Mapping` abstract base class types in call signatures (`dict` variables were always expected). (:pull:`1308`).
 * Changes in testing setup now prevent ``test_mean_radiant_temperature`` from sometimes causing a segmentation fault. (:issue:`1303`, :pull:`1315`).
+* Addressed a formatting bug that caused `Indicators` with multiple variables returned to not be properly formatted in the documentation. (:issue:`1305`, :pull:`1317`).
 
 0.41.0 (2023-02-28)
 -------------------
