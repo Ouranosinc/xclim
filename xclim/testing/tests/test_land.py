@@ -2,11 +2,9 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 import xarray as xr
 
 from xclim import land
-from xclim.core.utils import ValidationError
 
 
 def test_base_flow_index(ndq_series):
@@ -19,36 +17,6 @@ def test_rb_flashiness_index(ndq_series):
     out = land.base_flow_index(ndq_series, freq="YS")
     assert out.attrs["units"] == ""
     assert isinstance(out, xr.DataArray)
-
-
-class TestFreqAnalysisDeprecated:
-    def test_simple(self, ndq_series):
-        with pytest.warns(DeprecationWarning):
-            out = land.freq_analysis(
-                ndq_series, mode="max", t=[2, 5], dist="gamma", season="DJF"
-            )
-
-        assert out.description in [
-            "Streamflow frequency analysis for the maximal winter 1-day flow "
-            "estimated using the gamma distribution."
-        ]
-        assert out.name == "q1maxwinter"
-        assert out.shape == (2, 2, 3)  # nrt, nx, ny
-        np.testing.assert_array_equal(out.isnull(), False)
-
-    def test_wrong_variable(self, pr_series):
-        with pytest.raises(ValidationError):
-            with pytest.warns(DeprecationWarning):
-                land.freq_analysis(
-                    pr_series(np.random.rand(100)), mode="max", t=2, dist="gamma"
-                )
-
-
-class TestStatsDeprecated:
-    def test_simple(self, ndq_series):
-        with pytest.warns(DeprecationWarning):
-            out = land.stats(ndq_series, freq="YS", op="min", season="MAM")
-        assert out.attrs["units"] == "m^3 s-1"
 
 
 def test_qdoy_max(ndq_series, q_series):

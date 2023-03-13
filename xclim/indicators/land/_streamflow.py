@@ -5,15 +5,10 @@ from xclim.core.cfchecks import check_valid
 from xclim.core.indicator import Indicator, ResamplingIndicator
 from xclim.core.units import declare_units
 from xclim.indices import base_flow_index, generic, rb_flashiness_index
-from xclim.indices.stats import fit as _fit
-from xclim.indices.stats import frequency_analysis
 
 __all__ = [
     "base_flow_index",
     "rb_flashiness_index",
-    "freq_analysis",
-    "stats",
-    "fit",
     "doy_qmax",
     "doy_qmin",
 ]
@@ -38,20 +33,6 @@ base_flow_index = Streamflow(
     compute=base_flow_index,
 )
 
-freq_analysis = Streamflow(
-    title="Return level",
-    identifier="freq_analysis",
-    var_name="q{window}{mode:r}{indexer}",
-    long_name="N-year return level discharge",
-    description="Streamflow frequency analysis for the {mode} {indexer} {window}-day flow estimated using the {dist} "
-    "distribution.",
-    abstract="Streamflow frequency analysis on the basis of a given mode and distribution.",
-    units="m^3 s-1",
-    compute=frequency_analysis,
-    missing="skip",
-    input={"da": "discharge"},
-    _version_deprecated="0.40",
-)
 
 rb_flashiness_index = Streamflow(
     title="Richards-Baker Flashiness Index",
@@ -63,37 +44,6 @@ rb_flashiness_index = Streamflow(
     abstract="Measurement of flow oscillations relative to average flow, "
     "quantifying the frequency and speed of flow changes.",
     compute=rb_flashiness_index,
-)
-
-
-stats = Streamflow(
-    title="Statistic of the daily flow for a given period.",
-    identifier="discharge_stats",
-    var_name="q{indexer}{op:r}",
-    long_name="Daily flow statistics",
-    description="{freq} {op} of daily flow ({indexer}).",
-    units="m^3 s-1",
-    compute=generic.select_resample_op,
-    missing="any",
-    input={"da": "discharge"},
-    _version_deprecated="0.40",
-)
-
-
-fit = Indicator(
-    title="Distribution parameters fitted over the time dimension.",
-    identifier="discharge_distribution_fit",
-    var_name="params",
-    units="",
-    standard_name="{dist} parameters",
-    long_name="{dist} distribution parameters",
-    description="Parameters of the {dist} distribution.",
-    cell_methods="time: fit",
-    src_freq=None,
-    compute=_fit,
-    input={"da": "discharge"},
-    realm="land",
-    _version_deprecated="0.40",
 )
 
 

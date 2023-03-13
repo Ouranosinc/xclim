@@ -35,8 +35,19 @@ class TestFit:
         np.testing.assert_array_equal(out.isnull(), False)
 
 
-class TestFrequencyAnalysis:
-    """See other tests in test_land::Test_FA"""
+class TestReturnLevel:
+    def test_seasonal(self, ndq_series):
+        out = generic.return_level(
+            ndq_series, mode="max", t=[2, 5], dist="gamma", season="DJF"
+        )
+
+        assert out.description in [
+            "Streamflow frequency analysis for the maximal winter 1-day flow "
+            "estimated using the gamma distribution."
+        ]
+        assert out.name == "q1maxwinter"
+        assert out.shape == (2, 2, 3)  # nrt, nx, ny
+        np.testing.assert_array_equal(out.isnull(), False)
 
     def test_any_variable(self, pr_series):
         pr = pr_series(np.random.rand(100))
@@ -64,6 +75,13 @@ class TestFrequencyAnalysis:
         )
         assert np.isnan(out.values[:, 0, 0]).all()
 
+    def test_wrong_variable(self, pr_series):
+        with pytest.raises(ValidationError):
+            with pytest.warns(DeprecationWarning):
+                generic.return_level(
+                    pr_series(np.random.rand(100)), mode="max", t=2, dist="gamma"
+                )
+
 
 class TestStats:
     """See other tests in test_land::TestStats"""
@@ -72,6 +90,10 @@ class TestStats:
         pr = pr_series(np.random.rand(400))
         out = generic.stats(pr, freq="YS", op="min", season="MAM")
         assert out.units == pr.units
+
+    def test_ndq(self, ndq_series):
+        out = generic.stats(ndq_series, freq="YS", op="min", season="MAM")
+        assert out.attrs["units"] == "m^3 s-1"
 
     def test_missing(self, ndq_series):
         a = ndq_series
