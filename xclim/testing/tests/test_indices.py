@@ -416,12 +416,9 @@ class TestAgroclimaticIndices:
         mx = tasmax_series(mg + K2C + 10)
         mn = tasmin_series(mg + K2C - 10)
 
-        # This indice is complaining about implicit unit specifications
-        # Indice logic / variable handling may need to be revised
-        with pytest.warns(FutureWarning):
-            out = xci.effective_growing_degree_days(
-                tasmax=mx, tasmin=mn, method=method, freq="YS"
-            )
+        out = xci.effective_growing_degree_days(
+            tasmax=mx, tasmin=mn, method=method, freq="YS"
+        )
 
         np.testing.assert_array_equal(out, np.array([np.NaN, expected]))
 
@@ -2397,17 +2394,7 @@ def test_snowfall_approximation(pr_series, tasmax_series, method, exp):
     pr = pr_series(np.ones(10))
     tasmax = tasmax_series(np.arange(10) + K2C)
 
-    # "brown" method is complaining about implicit unit definitions
-    # Method logical / variable handling may need to be revised in the indice
-    if method == "brown":
-        with pytest.warns(FutureWarning):
-            prsn = xci.snowfall_approximation(
-                pr, tas=tasmax, thresh="2 degC", method=method
-            )
-    else:
-        prsn = xci.snowfall_approximation(
-            pr, tas=tasmax, thresh="2 degC", method=method
-        )
+    prsn = xci.snowfall_approximation(pr, tas=tasmax, thresh="2 degC", method=method)
 
     np.testing.assert_allclose(prsn, exp, atol=1e-5, rtol=1e-3)
 
