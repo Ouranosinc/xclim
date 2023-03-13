@@ -601,12 +601,6 @@
     "title": "Indice Richards-Baker de torrentialité",
     "abstract": "Mesure des oscillations du débit relatif au débit moyen, quantifiant la fréquence et la rapidité des changements de débits."
   },
-  "FREQ_ANALYSIS": {
-    "long_name": "Valeur de retour du débit",
-    "description": "Analyse fréquentielle de type {dist:f} des débits moyens sur {window} jours, pour le {mode} {indexer}.",
-    "title": "Valeur de retour",
-    "abstract": "Analyse fréquentielle des débits selon un mode et une distribution."
-  },
   "RETURN_LEVEL": {
     "long_name": "Valeur de retour",
     "description": "Analyse fréquentielle de type {dist:f} des moyennes sur {window} jours, pour le {mode} {indexer}.",
