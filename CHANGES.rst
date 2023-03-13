@@ -12,6 +12,10 @@ New features and enhancements
     * ``xclim.core.calendar.yearly_interpolated_doy``
     * ``xclim.core.calendar.yearly_random_doy``
 
+Bug fixes
+^^^^^^^^^
+* Warnings emitted from regular usage of some indices (``snowfall_approximation`` with ``method="brown"``, ``effective_growing_degree_days``) due to successive ``convert_units_to`` calls within their logic have been silenced.
+
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * The call signatures for ``xclim.ensembles.create_ensemble`` and ``xclim.ensembles._base._ens_align_dataset`` have been deprecated. Calls to these functions made with the original signature will emit warnings. Changes will become breaking in `xclim>=0.43.0`.(:issue:`1305`, :pull:`1317`). Affected variable:
@@ -33,6 +37,7 @@ Internal changes
 * Removed `Mapping` abstract base class types in call signatures (`dict` variables were always expected). (:pull:`1308`).
 * Changes in testing setup now prevent ``test_mean_radiant_temperature`` from sometimes causing a segmentation fault. (:issue:`1303`, :pull:`1315`).
 * Addressed a formatting bug that caused `Indicators` with multiple variables returned to not be properly formatted in the documentation. (:issue:`1305`, :pull:`1317`).
+* Warnings from set ``_version_deprecated`` within Indicators now emit ``FutureWarning`` instead of ``DeprecationWarning`` for greater visibility.
 
 v0.41.0 (2023-02-28)
 --------------------
