@@ -15,24 +15,34 @@ New features and enhancements
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * The call signatures for ``xclim.ensembles.create_ensemble`` and ``xclim.ensembles._base._ens_align_dataset`` have been deprecated. Calls to these functions made with the original signature will emit warnings. Changes will become breaking in `xclim>=0.43.0`.(:issue:`1305`, :pull:`1317`). Affected variable:
-    * `mf_flag` (bool) -> `multifile` (bool)
+    - `mf_flag` (bool) -> `multifile` (bool)
+* Many previously deprecated indices and indicators have been removed from `xclim` (:pull:`1318`), with replacement indicators suggested as follows:
+    - ``xclim.indicators.atmos.first_day_above`` ->  ``xclim.indicators.atmos.first_day_{tn | tg | tx}_above``
+    - ``xclim.indicators.atmos.first_day_below`` -> ``xclim.indicators.atmos.first_day_{tn | tg | tx}_below``
+    - ``xclim.indicators.land.snow_cover_duration`` -> ``xclim.indicators.land.snd_season_length``
+    - ``xclim.indices.snow_cover_duration`` -> ``xclim.indices.snd_season_length``
+    - ``xclim.indicators.land.continuous_snow_cover_start`` -> ``xclim.indicators.land.snd_season_start``
+    - ``xclim.indices.continuous_snow_cover_start`` -> ``xclim.indices.snd_season_start``
+    - ``xclim.indicators.land.continuous_snow_cover_end`` -> ``xclim.indicators.land.snd_season_end``
+    - ``xclim.indices.continuous_snow_cover_end`` -> ``xclim.indices.snd_season_end``
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Added `xclim` to the `ouranos Zenodo community <https://zenodo.org/communities/ouranos/>`_ . (:pull:`1313`).
 * Significant documentation adjustments. (:issue:`1305`, :pull:`1308`):
-    * The CONTRIBUTING page has been moved to the top level of the repository.
-    * Information concerning the licensing of xclim is clearly indicated in README.
-    * `sphinx-autodoc-typehints` is now used to simplify call signatures generated in documentation.
-    * The SDBA module API is now found with the rest of the User API documentation.
-    * `HISTORY.rst` has been renamed `CHANGES.rst`, to follow `dask`-like conventions.
-    * Hyperlink targets for individual `indices` and `indicators` now point to their entries under `API` or `Indices`.
-    * Module-level docstrings have migrated from the library scripts directly into the documentation RestructuredText files.
-    * The documentation now includes a page explaining the reasons for developing `xclim` and a section briefly detailing similar and related projects.
-    * Markdown explanations in some Jupyter Notebooks have been edited for clarity
+    - The CONTRIBUTING page has been moved to the top level of the repository.
+    - Information concerning the licensing of xclim is clearly indicated in README.
+    - `sphinx-autodoc-typehints` is now used to simplify call signatures generated in documentation.
+    - The SDBA module API is now found with the rest of the User API documentation.
+    - `HISTORY.rst` has been renamed `CHANGES.rst`, to follow `dask`-like conventions.
+    - Hyperlink targets for individual `indices` and `indicators` now point to their entries under `API` or `Indices`.
+    - Module-level docstrings have migrated from the library scripts directly into the documentation RestructuredText files.
+    - The documentation now includes a page explaining the reasons for developing `xclim` and a section briefly detailing similar and related projects.
+    - Markdown explanations in some Jupyter Notebooks have been edited for clarity
 * Removed `Mapping` abstract base class types in call signatures (`dict` variables were always expected). (:pull:`1308`).
 * Changes in testing setup now prevent ``test_mean_radiant_temperature`` from sometimes causing a segmentation fault. (:issue:`1303`, :pull:`1315`).
 * Addressed a formatting bug that caused `Indicators` with multiple variables returned to not be properly formatted in the documentation. (:issue:`1305`, :pull:`1317`).
+* The testing suite has been adjusted to ensure calls are made to existing functions using non-deprecated syntax. The volume of warnings emitted during testing has been significantly reduced. (:pull:`1318`).
 
 0.41.0 (2023-02-28)
 -------------------
