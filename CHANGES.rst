@@ -19,12 +19,15 @@ Breaking changes
 * Many previously deprecated indices and indicators have been removed from `xclim` (:pull:`1318`), with replacement indicators suggested as follows:
     - ``xclim.indicators.atmos.first_day_above`` ->  ``xclim.indicators.atmos.first_day_{tn | tg | tx}_above``
     - ``xclim.indicators.atmos.first_day_below`` -> ``xclim.indicators.atmos.first_day_{tn | tg | tx}_below``
-    - ``xclim.indicators.land.snow_cover_duration`` -> ``xclim.indicators.land.snd_season_length``
-    - ``xclim.indices.snow_cover_duration`` -> ``xclim.indices.snd_season_length``
-    - ``xclim.indicators.land.continuous_snow_cover_start`` -> ``xclim.indicators.land.snd_season_start``
-    - ``xclim.indices.continuous_snow_cover_start`` -> ``xclim.indices.snd_season_start``
     - ``xclim.indicators.land.continuous_snow_cover_end`` -> ``xclim.indicators.land.snd_season_end``
+    - ``xclim.indicators.land.continuous_snow_cover_start`` -> ``xclim.indicators.land.snd_season_start``
+    - ``xclim.indicators.land.fit`` -> ``xclim.indicators.generic.fit``
+    - ``xclim.indicators.land.frequency_analysis`` -> ``xclim.indicators.generic.return_level``
+    - ``xclim.indicators.land.snow_cover_duration`` -> ``xclim.indicators.land.snd_season_length``
+    - ``xclim.indicators.land.stats`` -> ``xclim.indicators.generic.stats``
     - ``xclim.indices.continuous_snow_cover_end`` -> ``xclim.indices.snd_season_end``
+    - ``xclim.indices.continuous_snow_cover_start`` -> ``xclim.indices.snd_season_start``
+    - ``xclim.indices.snow_cover_duration`` -> ``xclim.indices.snd_season_length``
 
 Internal changes
 ^^^^^^^^^^^^^^^^
