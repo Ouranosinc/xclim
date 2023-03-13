@@ -2,8 +2,8 @@
 Changelog
 =========
 
-0.42.0 (unreleased)
--------------------
+v0.42.0 (unreleased)
+--------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
 
 New features and enhancements
@@ -34,8 +34,8 @@ Internal changes
 * Changes in testing setup now prevent ``test_mean_radiant_temperature`` from sometimes causing a segmentation fault. (:issue:`1303`, :pull:`1315`).
 * Addressed a formatting bug that caused `Indicators` with multiple variables returned to not be properly formatted in the documentation. (:issue:`1305`, :pull:`1317`).
 
-0.41.0 (2023-02-28)
--------------------
+v0.41.0 (2023-02-28)
+--------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Éric Dupuis (:user:`coxipi`).
 
 New features and enhancements
@@ -88,8 +88,8 @@ Internal changes
 * Added `sphinxcontrib-svg2pdfconverter` for converting SVG graphics within documentation to PDF-compatible images. (:pull:`1296`).
 * README badges for supported Python versions and repository health have been added. (:issue:`1304`, :pull:`1307`).
 
-0.40.0 (2023-01-13)
--------------------
+v0.40.0 (2023-01-13)
+--------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Juliette Lavoie (:user:`juliettelavoie`).
 
 New features and enhancements
@@ -144,8 +144,8 @@ Internal changes
 * A notebook (``extendingxclim.ipynb``) has been updated to remove mentions of obsolete `xclim.subset` module. (:pull:`1258`).
 * Merge of sdba documentation from the module and the rst files, some cleanup and addition of a section referring to GitHub issues. (:pull:`1230`).
 
-0.39.0 (2022-11-02)
--------------------
+v0.39.0 (2022-11-02)
+--------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), Éric Dupuis (:user:`coxipi`), Travis Logan (:user:`tlogan2000`), Pascal Bourgault (:user:`aulemahal`).
 
 New features and enhancements
@@ -207,8 +207,8 @@ Internal changes
 * ``show_versions`` can now accept a list of dependencies so that other libraries can make use of this utility. (:pull:`1215`).
 * Pull Requests now are automatically tagged (``CI``, ``docs``, ``indicators``, and/or ``sdba``) according to files modified using the `GitHub Labeler Action <https://github.com/actions/labeler>`_. (:pull:`1214`).
 
-0.38.0 (2022-09-06)
--------------------
+v0.38.0 (2022-09-06)
+--------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Dougie Squire (:user:`dougiesquire`).
 
 New features and enhancements
@@ -281,8 +281,8 @@ Internal changes
 * Adjusted the ANUCLIM indices by removing "ANUCLIM" from their titles, modifying their docstrings, and handling `"op"` input in a more user-friendly way. (:issue:`1055`, :pull:`1169`).
 * Documentation for fire-based indices/indicators has been reorganized to reflect the new submodule structure. (:pull:`1159`).
 
-0.37.0 (2022-06-20)
--------------------
+v0.37.0 (2022-06-20)
+--------------------
 Contributors to this version: Abel Aoun (:user:`bzah`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Juliette Lavoie (:user:`juliettelavoie`), Ludwig Lierhammer (:user:`ludwiglierhammer`).
 
 Announcements
