@@ -105,7 +105,7 @@ class TestReleaseSupportFuncs:
         utilities.publish_release_notes(style="md", file=temp_filename)
 
         with open(temp_filename) as f:
-            assert "# History" in f.readlines()[0]
+            assert "# Changelog" in f.readlines()[0]
 
     @pytest.mark.requires_docs
     def test_release_notes_file_not_implemented(self, tmp_path):
