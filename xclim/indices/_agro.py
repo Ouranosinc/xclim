@@ -931,7 +931,7 @@ def _compute_spx_fit_params(
 
     def wrap_fit(da):
         if indexer != {}:
-            if da.isnull.all():
+            if da.isnull().all():
                 select_dims = {d: 0 for d in da.dims if d != "time"}
                 with xarray.set_options(keep_attrs=True):
                     params = (
