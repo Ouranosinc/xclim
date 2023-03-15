@@ -459,7 +459,7 @@ def first_run(
         # If `d` has no runs, dmax_ind will be 0: We must replace this with NaN
         out = dmax_ind.where(dmax_ind != da.argmin(dim=dim))
         if first is False:
-            out = da[dim].size - out - 2
+            out = da[dim].size - out - 1
         out = coord_transform(out, da)
         return out
 
@@ -479,7 +479,7 @@ def first_run(
             da = da[{dim: slice(None, None, -1)}]
         out = first_run_ufunc(x=da, window=window, dim=dim)
         if first is False:
-            out = da[dim].size - out - 2
+            out = da[dim].size - out - 1
         out = coord_transform(out, da)
 
     else:
