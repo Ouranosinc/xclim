@@ -406,6 +406,7 @@ def first_run(
     freq: str | None = None,
     coord: str | bool | None = False,
     ufunc_1dim: str | bool = "from_context",
+    first: bool = True,
 ) -> xr.DataArray:  # noqa: D202
     """Return the index of the first item of the first run of at least a given length.
 
@@ -451,11 +452,15 @@ def first_run(
         return out
 
     # general method to get indices (or coords) of first run
-    def get_out(d):
-        dmax_ind = d.argmax(dim=dim)
+    def get_out(da):
+        if first is False:
+            da = da[{dim: slice(None, None, -1)}]
+        dmax_ind = da.argmax(dim=dim)
         # If `d` has no runs, dmax_ind will be 0: We must replace this with NaN
-        out = dmax_ind.where(dmax_ind != d.argmin(dim=dim))
-        out = coord_transform(out, d)
+        out = dmax_ind.where(dmax_ind != da.argmin(dim=dim))
+        if first is False:
+            out = da[dim].size - out - 2
+        out = coord_transform(out, da)
         return out
 
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, freq=freq)
@@ -465,16 +470,20 @@ def first_run(
         if freq is not None:
             out = da.resample({dim: freq}).map(get_out)
         else:
-            out = xr.where(da.any(dim=dim), da.argmax(dim=dim), np.NaN)
+            out = get_out(da)
             out = coord_transform(out, da)
 
+    # Last_run not working in this state
     elif ufunc_1dim:
+        if first is False:
+            da = da[{dim: slice(None, None, -1)}]
         out = first_run_ufunc(x=da, window=window, dim=dim)
+        if first is False:
+            out = da[dim].size - out - 2
         out = coord_transform(out, da)
 
     else:
-        d = rle(da, dim=dim, index="first")
-        d = xr.where(d >= window, 1, 0)
+        d = rle(da, dim=dim, index="first") >= window
         if freq is not None:
             out = d.resample({dim: freq}).map(get_out)
         else:
@@ -520,17 +529,19 @@ def last_run(
         Index (or coordinate if `coord` is not False) of last item in last valid run.
         Returns np.nan if there are no valid runs.
     """
-    reversed_da = da.sortby(dim, ascending=False)
+    # THis breaks previously working 1d method
     out = first_run(
-        reversed_da,
+        da,
         window=window,
         dim=dim,
         freq=freq,
         coord=coord,
         ufunc_1dim=ufunc_1dim,
+        first=False,
     )
-    if not coord:
-        return reversed_da[dim].size - out - 1
+    # I'm a bit worried by this line, it's not related to any sort of run length operation
+    # if not coord:
+    #     return da[dim].size - out - 1
     return out
 
 
