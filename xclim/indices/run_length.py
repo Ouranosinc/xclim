@@ -430,6 +430,8 @@ def first_run(
         usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
         for DataArray with a small number of grid points.
         Ignored when `window=1`. It can be modified globally through the "run_length_ufunc" global option.
+    first : bool
+        If False, this is "last_run" mode. Just a temporary switch.
 
     Returns
     -------
@@ -460,6 +462,7 @@ def first_run(
         out = dmax_ind.where(dmax_ind != da.argmin(dim=dim))
         if first is False:
             out = da[dim].size - out - 1
+            da = da[{dim: slice(None, None, -1)}]  # not sure if this is necesary
         out = coord_transform(out, da)
         return out
 
@@ -477,9 +480,13 @@ def first_run(
     elif ufunc_1dim:
         if first is False:
             da = da[{dim: slice(None, None, -1)}]
-        out = first_run_ufunc(x=da, window=window, dim=dim)
+            index = "last"
+        else:
+            index = "first"
+        out = first_run_ufunc(x=da, window=window, dim=dim, index=index)
         if first is False:
             out = da[dim].size - out - 1
+            da = da[{dim: slice(None, None, -1)}]  # not sure if this is necesary
         out = coord_transform(out, da)
 
     else:
@@ -539,7 +546,7 @@ def last_run(
         ufunc_1dim=ufunc_1dim,
         first=False,
     )
-    # I'm a bit worried by this line, it's not related to any sort of run length operation
+    # check if this is needed now
     # if not coord:
     #     return da[dim].size - out - 1
     return out
