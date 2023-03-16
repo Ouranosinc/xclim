@@ -12,6 +12,7 @@ dependencies:
     - Click >=8.1
     - dask>=2.6.0
     - jsonpickle
+    - lmoments3
     - numba
     - numpy>=1.16
     - pandas>=0.23
@@ -66,5 +67,4 @@ dependencies:
     - yamllint
     - pip
     - pip:
-        - lmoments3
         - sphinxcontrib-svg2pdfconverter
