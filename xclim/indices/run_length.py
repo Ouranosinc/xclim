@@ -399,14 +399,14 @@ def windowed_run_count(
     return out
 
 
-def first_run(
+def _boundary_run(
     da: xr.DataArray,
     window: int,
-    dim: str = "time",
-    freq: str | None = None,
-    coord: str | bool | None = False,
-    ufunc_1dim: str | bool = "from_context",
-    first: bool = True,
+    dim: str,
+    freq: str | None,
+    coord: str | bool | None,
+    ufunc_1dim: str | bool,
+    mode: str,
 ) -> xr.DataArray:  # noqa: D202
     """Return the index of the first item of the first run of at least a given length.
 
@@ -430,13 +430,13 @@ def first_run(
         usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
         for DataArray with a small number of grid points.
         Ignored when `window=1`. It can be modified globally through the "run_length_ufunc" global option.
-    first : bool
-        If False, this is "last_run" mode. Just a temporary switch.
+    mode : {"first", "last"}
+        Determines if the algorithm finds the "first" or "last" run
 
     Returns
     -------
     xr.DataArray
-        Index (or coordinate if `coord` is not False) of first item in first valid run.
+        Index (or coordinate if `coord` is not False) of first item in first (last) valid run.
         Returns np.nan if there are no valid runs.
     """
 
@@ -454,16 +454,16 @@ def first_run(
         return out
 
     # general method to get indices (or coords) of first run
-    def get_out(da):
-        if first is False:
-            da = da[{dim: slice(None, None, -1)}]
-        dmax_ind = da.argmax(dim=dim)
-        # If `d` has no runs, dmax_ind will be 0: We must replace this with NaN
-        out = dmax_ind.where(dmax_ind != da.argmin(dim=dim))
-        if first is False:
-            out = da[dim].size - out - 1
-            da = da[{dim: slice(None, None, -1)}]  # not sure if this is necesary
-        out = coord_transform(out, da)
+    def find_boundary_run(runs, mode):
+        if mode == "last":
+            runs = runs[{dim: slice(None, None, -1)}]
+        dmax_ind = runs.argmax(dim=dim)
+        # If there are no runs, dmax_ind will be 0: We must replace this with NaN
+        out = dmax_ind.where(dmax_ind != runs.argmin(dim=dim))
+        if mode == "last":
+            out = runs[dim].size - out - 1
+            runs = runs[{dim: slice(None, None, -1)}]  # not sure if this is necesary
+        out = coord_transform(out, runs)
         return out
 
     ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, freq=freq)
@@ -471,31 +471,72 @@ def first_run(
     da = da.fillna(0)  # We expect a boolean array, but there could be NaNs nonetheless
     if window == 1:
         if freq is not None:
-            out = da.resample({dim: freq}).map(get_out)
+            out = da.resample({dim: freq}).map(find_boundary_run, mode=mode)
         else:
-            out = get_out(da)
-            out = coord_transform(out, da)
+            out = find_boundary_run(da, mode)
 
-    # Last_run not working in this state
+    # not working for last
     elif ufunc_1dim:
-        if first is False:
-            da = da[{dim: slice(None, None, -1)}]
-            index = "last"
-        else:
-            index = "first"
-        out = first_run_ufunc(x=da, window=window, dim=dim, index=index)
-        if first is False:
-            out = da[dim].size - out - 1
-            da = da[{dim: slice(None, None, -1)}]  # not sure if this is necesary
+        out = first_run_ufunc(x=da, window=window, dim=dim)
         out = coord_transform(out, da)
 
     else:
-        d = rle(da, dim=dim, index="first") >= window
+        d = rle(da, dim=dim)
+        d = xr.where(d >= window, 1, 0)
         if freq is not None:
-            out = d.resample({dim: freq}).map(get_out)
+            out = d.resample({dim: freq}).map(find_boundary_run, mode=mode)
         else:
-            out = get_out(d)
+            out = find_boundary_run(d, mode)
 
+    return out
+
+
+def first_run(
+    da: xr.DataArray,
+    window: int,
+    dim: str = "time",
+    freq: str | None = None,
+    coord: str | bool | None = False,
+    ufunc_1dim: str | bool = "from_context",
+) -> xr.DataArray:  # noqa: D202
+    """Return the index of the first item of the first run of at least a given length.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Input N-dimensional DataArray (boolean).
+    window : int
+        Minimum duration of consecutive run to accumulate values.
+        When equal to 1, an optimized version of the algorithm is used.
+    dim : str
+      Dimension along which to calculate consecutive run (default: 'time').
+    freq : str
+      Resampling frequency.
+    coord : Optional[str]
+        If not False, the function returns values along `dim` instead of indexes.
+        If `dim` has a datetime dtype, `coord` can also be a str of the name of the
+        DateTimeAccessor object to use (ex: 'dayofyear').
+    ufunc_1dim : Union[str, bool]
+        Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
+        usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
+        for DataArray with a small number of grid points.
+        Ignored when `window=1`. It can be modified globally through the "run_length_ufunc" global option.
+
+    Returns
+    -------
+    xr.DataArray
+        Index (or coordinate if `coord` is not False) of first item in first valid run.
+        Returns np.nan if there are no valid runs.
+    """
+    out = _boundary_run(
+        da,
+        window=window,
+        dim=dim,
+        freq=freq,
+        coord=coord,
+        ufunc_1dim=ufunc_1dim,
+        mode="first",
+    )
     return out
 
 
@@ -536,15 +577,14 @@ def last_run(
         Index (or coordinate if `coord` is not False) of last item in last valid run.
         Returns np.nan if there are no valid runs.
     """
-    # THis breaks previously working 1d method
-    out = first_run(
+    out = _boundary_run(
         da,
         window=window,
         dim=dim,
         freq=freq,
         coord=coord,
         ufunc_1dim=ufunc_1dim,
-        first=False,
+        mode="last",
     )
     # check if this is needed now
     # if not coord:

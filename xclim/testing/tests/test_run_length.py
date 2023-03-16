@@ -558,7 +558,7 @@ class TestRunsWithDates:
             .resample(time="AS-MAR")
             .map(rl.last_run_before_date, date="03-02", window=2)
         )
-        np.testing.assert_array_equal(out.values[1:], np.array(expected) + 1)
+        np.testing.assert_array_equal(out.values[1:], np.array(expected))
 
     @pytest.mark.parametrize(
         "func", [rl.first_run_after_date, rl.season_length, rl.run_end_after_date]
