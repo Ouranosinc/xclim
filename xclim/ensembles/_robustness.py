@@ -1,6 +1,6 @@
 # noqa: D205,D400
 """
-Ensemble Robustness metrics
+Ensemble Robustness Metrics
 ===========================
 
 Robustness metrics are used to estimate the confidence of the climate change signal of an ensemble.
@@ -23,7 +23,7 @@ from xclim.core.formatting import update_history
 def change_significance(
     fut: xr.DataArray | xr.Dataset,
     ref: xr.DataArray | xr.Dataset = None,
-    test: str = "ttest",
+    test: str | None = "ttest",
     weights: xr.DataArray = None,
     p_vals: bool = False,
     **kwargs,

@@ -552,8 +552,6 @@ class TestUTCI:
         np.testing.assert_allclose(utci.isel(time=0), utci_exp, rtol=1e-03)
 
 
-@pytest.mark.skipif(sys.version_info == (3, 10), reason="Crashes often on Python3.10")
-@pytest.mark.thread_unsafe
 class TestMeanRadiantTemperature:
     def test_mean_radiant_temperature(self, atmosds):
         dataset = atmosds
