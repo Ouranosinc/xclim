@@ -4,7 +4,7 @@ Changelog
 
 0.42.0 (unreleased)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -17,6 +17,10 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 * The call signatures for ``xclim.ensembles.create_ensemble`` and ``xclim.ensembles._base._ens_align_dataset`` have been deprecated. Calls to these functions made with the original signature will emit warnings. Changes will become breaking in `xclim>=0.43.0`.(:issue:`1305`, :pull:`1317`). Affected variable:
     * `mf_flag` (bool) -> `multifile` (bool)
+
+Bug fixes
+^^^^^^^^^
+* `last_run` nows works when `freq` is not `None` (:issue:`1321`, :pull:`1323`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
