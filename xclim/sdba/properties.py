@@ -897,11 +897,9 @@ def _return_value(
       or a probability of non-exceedance (min, left side of the distribution).
     method : {"ML", "PWM"}
       Fitting method, either maximum likelihood (ML) or probability weighted moments (PWM), also called L-Moments.
-      The PWM method is usually more robust to outliers. However, it requires the lmoments3 libraryto be installed
-      from the `develop` branch.
-      ``pip install git+https://github.com/OpenHydrology/lmoments3.git@develop#egg=lmoments3``
+      The PWM method is usually more robust to outliers.
     group : {'time', 'time.season', 'time.month'}
-      Grouping of the output. A distribution of the extremums is done for each group.
+      Grouping of the output. A distribution of the extremes is done for each group.
 
     Returns
     -------
