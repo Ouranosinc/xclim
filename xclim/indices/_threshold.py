@@ -1225,18 +1225,19 @@ def frost_free_season_length(
 
 
 # FIXME: `tas` should instead be `tasmin` if we want to follow expected definitions.
-@declare_units(tas="[temperature]", thresh="[temperature]")
+@declare_units(tasmin="[temperature]", thresh="[temperature]")
 def last_spring_frost(
-    tas: xarray.DataArray,
+    tasmin: xarray.DataArray,
     thresh: Quantified = "0 degC",
+    op: str = "<",
     before_date: DayOfYearStr = "07-01",
     window: int = 1,
     freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Last day of temperatures inferior to a threshold temperature.
 
-    Returns last day of period where a temperature is inferior to a threshold over a given number of days (default: 1)
-    and limited to a final calendar date (default: July 1).
+    Returns last day of period where minimum temperature is inferior to a threshold over a given number of days
+    (default: 1) and limited to a final calendar date (default: July 1).
 
     Warnings
     --------
@@ -1244,10 +1245,12 @@ def last_spring_frost(
 
     Parameters
     ----------
-    tas : xarray.DataArray
+    tasmin : xarray.DataArray
         Mean daily temperature.
     thresh : Quantified
         Threshold temperature on which to base evaluation.
+    op : {"<", "<=", "lt", "le"}
+        Comparison operation. Default: "<".
     before_date : str,
         Date of the year before which to look for the final frost event. Should have the format '%m-%d'.
     window : int
@@ -1261,8 +1264,8 @@ def last_spring_frost(
         Day of the year when temperature is inferior to a threshold over a given number of days for the first time.
         If there is no such day, returns np.nan.
     """
-    thresh = convert_units_to(thresh, tas)
-    cond = tas < thresh
+    thresh = convert_units_to(thresh, tasmin)
+    cond = compare(tasmin, op, thresh, constrain=("<", "<="))
 
     out = cond.resample(time=freq).map(
         rl.last_run_before_date,
@@ -1271,7 +1274,7 @@ def last_spring_frost(
         dim="time",
         coord="dayofyear",
     )
-    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tasmin))
     return out
 
 
