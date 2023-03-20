@@ -899,6 +899,7 @@ def growing_season_length(
     window: int = 6,
     mid_date: DayOfYearStr = "07-01",
     freq: str = "YS",
+    op: str = ">=",
 ) -> xarray.DataArray:
     r"""Growing season length.
 
@@ -923,6 +924,8 @@ def growing_season_length(
         Date of the year after which to look for the end of the season. Should have the format '%m-%d'.
     freq : str
         Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">=".
 
     Returns
     -------
@@ -963,7 +966,7 @@ def growing_season_length(
 
     """
     thresh = convert_units_to(thresh, tas)
-    cond = tas >= thresh
+    cond = compare(tas, op, thresh, constrain=(">=", ">"))
 
     out = cond.resample(time=freq).map(
         rl.season_length,
@@ -981,6 +984,7 @@ def frost_season_length(
     mid_date: DayOfYearStr | None = "01-01",
     thresh: Quantified = "0.0 degC",
     freq: str = "AS-JUL",
+    op: str = "<",
 ) -> xarray.DataArray:
     r"""Frost season length.
 
@@ -1006,6 +1010,8 @@ def frost_season_length(
         Threshold temperature on which to base evaluation.
     freq : str
         Resampling frequency.
+    op : {"<", "<=", "lt", "le"}
+        Comparison operation. Default: "<".
 
     Returns
     -------
@@ -1041,7 +1047,7 @@ def frost_season_length(
     >>> fsl_sh = frost_season_length(tasmin, freq="YS")
     """
     thresh = convert_units_to(thresh, tasmin)
-    cond = tasmin < thresh
+    cond = compare(tasmin, op, thresh, constrain=("<=", "<"))
 
     out = cond.resample(time=freq).map(
         rl.season_length,
@@ -1161,6 +1167,7 @@ def frost_free_season_length(
     mid_date: DayOfYearStr | None = "07-01",
     thresh: Quantified = "0.0 degC",
     freq: str = "YS",
+    op: str = ">=",
 ) -> xarray.DataArray:
     r"""Frost free season length.
 
@@ -1186,6 +1193,8 @@ def frost_free_season_length(
         Threshold temperature on which to base evaluation.
     freq : str
         Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">=".
 
     Returns
     -------
@@ -1221,7 +1230,7 @@ def frost_free_season_length(
     >>> ffsl_sh = frost_free_season_length(tasmin, freq="AS-JUL")
     """
     thresh = convert_units_to(thresh, tasmin)
-    cond = tasmin >= thresh
+    cond = compare(tasmin, op, thresh, constrain=(">=", ">"))
 
     out = cond.resample(time=freq).map(
         rl.season_length,
@@ -1754,7 +1763,10 @@ def snow_cover_duration(
 
 @declare_units(snd="[length]", thresh="[length]")
 def snd_season_length(
-    snd: xarray.DataArray, thresh: Quantified = "2 cm", freq: str = "AS-JUL"
+    snd: xarray.DataArray,
+    thresh: Quantified = "2 cm",
+    freq: str = "AS-JUL",
+    op: str = ">=",
 ) -> xarray.DataArray:
     # noqa: D401
     """Number of days with snow depth above a threshold.
@@ -1773,6 +1785,8 @@ def snd_season_length(
         Threshold snow thickness.
     freq : str
         Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">=".
 
     Returns
     -------
@@ -1781,7 +1795,7 @@ def snd_season_length(
     """
     valid = at_least_n_valid(snd.where(snd > 0), n=1, freq=freq)
     thresh = convert_units_to(thresh, snd)
-    out = threshold_count(snd, ">=", thresh, freq)
+    out = threshold_count(snd, op, thresh, freq)
     return to_agg_units(out, snd, "count").where(~valid)
 
 
