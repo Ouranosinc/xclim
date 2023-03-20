@@ -548,7 +548,10 @@ def snw_season_start(
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
 def daily_pr_intensity(
-    pr: xarray.DataArray, thresh: Quantified = "1 mm/day", freq: str = "YS"
+    pr: xarray.DataArray,
+    thresh: Quantified = "1 mm/day",
+    freq: str = "YS",
+    op: str = ">=",
 ) -> xarray.DataArray:
     r"""Average daily precipitation intensity.
 
@@ -563,6 +566,8 @@ def daily_pr_intensity(
         Precipitation value over which a day is considered wet.
     freq : str
         Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">=".
 
     Returns
     -------
@@ -594,8 +599,11 @@ def daily_pr_intensity(
     # Get amount of rain (not rate)
     pram = rate2amount(pr)
 
+    # Comparison
+    comparison = compare(pr, op, t, constrain=(">", ">="))
+
     # put pram = 0 for non wet-days
-    pram_wd = xarray.where(pr >= t, pram, 0)
+    pram_wd = xarray.where(comparison, pram, 0)
 
     # sum over wanted period
     s = pram_wd.resample(time=freq).sum(dim="time")
@@ -1779,7 +1787,10 @@ def snd_season_length(
 
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def snw_season_length(
-    snw: xarray.DataArray, thresh: Quantified = "20 kg m-2", freq: str = "AS-JUL"
+    snw: xarray.DataArray,
+    thresh: Quantified = "20 kg m-2",
+    freq: str = "AS-JUL",
+    op: str = ">=",
 ) -> xarray.DataArray:
     # noqa: D401
     """Number of days with snow water above a threshold.
@@ -1798,6 +1809,8 @@ def snw_season_length(
         Threshold snow amount.
     freq : str
         Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">=".
 
     Returns
     -------
@@ -1806,7 +1819,7 @@ def snw_season_length(
     """
     valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
     thresh = convert_units_to(thresh, snw)
-    out = threshold_count(snw, ">=", thresh, freq)
+    out = threshold_count(snw, op, thresh, freq)
     return to_agg_units(out, snw, "count").where(~valid)
 
 
@@ -2513,11 +2526,12 @@ def rprctot(
     prc: xarray.DataArray,
     thresh: Quantified = "1.0 mm/day",
     freq: str = "YS",
+    op: str = ">=",
 ) -> xarray.DataArray:
     """Proportion of accumulated precipitation arising from convective processes.
 
     Return the proportion of total accumulated precipitation due to convection on days with total precipitation
-    exceeding a given threshold (default: 1.0 mm/day) during the given period.
+    greater or equal to a given threshold (default: 1.0 mm/day) during the given period.
 
     Parameters
     ----------
@@ -2529,6 +2543,8 @@ def rprctot(
         Precipitation value over which a day is considered wet.
     freq : str
         Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">=".
 
     Returns
     -------
@@ -2538,7 +2554,7 @@ def rprctot(
     thresh = convert_units_to(thresh, pr, "hydro")
     prc = convert_units_to(prc, pr)
 
-    wd = compare(pr, ">=", thresh)
+    wd = compare(pr, op, thresh)
     pr_tot = rate2amount(pr).where(wd).resample(time=freq).sum(dim="time")
     prc_tot = rate2amount(prc).where(wd).resample(time=freq).sum(dim="time")
 
