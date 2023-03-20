@@ -72,12 +72,13 @@ jobs:
           python -m pip install -r requirements_upstream.txt
       - name: Install xclim
         run: |
-          python -m pip install --no-deps -e .
-      - name: Version info
+          python -m pip install --no-user --no-deps "git+https://github.com/yrobink/SBCK-python.git@5d11981792#egg=sbck"
+          python -m pip install --no-user --no-deps .
+      - name: Check versions
         run: |
-          conda info -a
           conda list
           xclim show_version_info
+          pip check
       - name: Run Tests
         if: success()
         id: status
