@@ -14,8 +14,7 @@ To install xclim via pip, run this command in your terminal:
 
 This is the preferred method to install xclim, as it will always install the most recent stable release.
 
-If you don't have `pip`_ installed, this `Python installation guide`_ can guide
-you through the process.
+If you don't have `pip`_ installed, this `Python installation guide`_ can guide you through the process.
 
 .. _pip: https://pip.pypa.io/
 .. _Python installation guide: https://docs.python-guide.org/starting/installation/

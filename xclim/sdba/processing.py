@@ -1,7 +1,7 @@
 # noqa: D205,D400
 """
-Pre and post processing
------------------------
+Pre- and Post-Processing Submodule
+==================================
 """
 from __future__ import annotations
 

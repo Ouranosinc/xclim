@@ -1,6 +1,39 @@
-=======
-History
-=======
+=========
+Changelog
+=========
+
+0.42.0 (unreleased)
+-------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Two previously private functions for selecting a day of year in a time series when performing calendar conversions are now exposed. (:issue:`1305`, :pull:`1317`). New functions are:
+    * ``xclim.core.calendar.yearly_interpolated_doy``
+    * ``xclim.core.calendar.yearly_random_doy``
+* `scipy` is no longer pinned below v1.9 and `lmoments3>=1.0.5` is now a core dependency and installed by default with `pip`. (:issue:`1142`, :pull:`1171`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* The call signatures for ``xclim.ensembles.create_ensemble`` and ``xclim.ensembles._base._ens_align_dataset`` have been deprecated. Calls to these functions made with the original signature will emit warnings. Changes will become breaking in `xclim>=0.43.0`.(:issue:`1305`, :pull:`1317`). Affected variable:
+    * `mf_flag` (bool) -> `multifile` (bool)
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Added `xclim` to the `ouranos Zenodo community <https://zenodo.org/communities/ouranos/>`_ . (:pull:`1313`).
+* Significant documentation adjustments. (:issue:`1305`, :pull:`1308`):
+    * The CONTRIBUTING page has been moved to the top level of the repository.
+    * Information concerning the licensing of xclim is clearly indicated in README.
+    * `sphinx-autodoc-typehints` is now used to simplify call signatures generated in documentation.
+    * The SDBA module API is now found with the rest of the User API documentation.
+    * `HISTORY.rst` has been renamed `CHANGES.rst`, to follow `dask`-like conventions.
+    * Hyperlink targets for individual `indices` and `indicators` now point to their entries under `API` or `Indices`.
+    * Module-level docstrings have migrated from the library scripts directly into the documentation RestructuredText files.
+    * The documentation now includes a page explaining the reasons for developing `xclim` and a section briefly detailing similar and related projects.
+    * Markdown explanations in some Jupyter Notebooks have been edited for clarity
+* Removed `Mapping` abstract base class types in call signatures (`dict` variables were always expected). (:pull:`1308`).
+* Changes in testing setup now prevent ``test_mean_radiant_temperature`` from sometimes causing a segmentation fault. (:issue:`1303`, :pull:`1315`).
+* Addressed a formatting bug that caused `Indicators` with multiple variables returned to not be properly formatted in the documentation. (:issue:`1305`, :pull:`1317`).
 
 0.41.0 (2023-02-28)
 -------------------

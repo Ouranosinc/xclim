@@ -5,7 +5,7 @@ on:
     branches:
       - master
     paths-ignore:
-      - HISTORY.rst
+      - CHANGES.rst
       - README.rst
       - pyproject.toml
       - setup.cfg
@@ -62,7 +62,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  test-py39-upstream-lm3:
+  test-py39-upstream-coverage:
     needs: black
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
@@ -78,10 +78,10 @@ jobs:
       - name: Install tox
         run: pip install tox~=4.0
       - name: Test with tox
-        run: tox -e py39-upstream-lm3-coverage
+        run: tox -e py39-upstream-coverage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-py39-upstream-lm3
+          COVERALLS_FLAG_NAME: run-py39-upstream
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
 
@@ -143,7 +143,7 @@ jobs:
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
 
-  test-py38-lm3:
+  test-py38-coverage:
     needs: black
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
@@ -159,14 +159,14 @@ jobs:
       - name: Install tox
         run: pip install tox~=4.0
       - name: Test with tox
-        run: tox -e py38-lm3-coverage
+        run: tox -e py38-coverage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-py38-lm3
+          COVERALLS_FLAG_NAME: run-py38
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
 
-  doctests-py38:
+  py38-notebooks_doctests:
     needs: black
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
@@ -180,21 +180,21 @@ jobs:
         with:
           python-version: "3.8"
       - name: Install pylint and tox
-        run: pip install pylint tox~=3.0
+        run: pip install pylint tox~=4.0
       - name: Run pylint
         run: pylint --rcfile=pylintrc --disable=import-error --exit-zero xclim
       - name: Test with tox
         run: tox -e notebooks_doctests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-notebooks_doctests-py38
+          COVERALLS_FLAG_NAME: run-py38-notebooks_doctests
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
 
   finish:
     needs:
-      - doctests-py38
-      - test-py38-lm3
+      - py38-notebooks_doctests
+      - test-py38-coverage
       - test-py310-opt-slow
     runs-on: ubuntu-latest
     container: python:3-slim
