@@ -71,6 +71,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Install Eigen3
+        run: |
+          sudo apt-get update
+          sudo apt-get install libeigen3-dev
       - name: Set up Python3.9
         uses: actions/setup-python@v4
         with:
