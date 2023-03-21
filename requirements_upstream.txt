@@ -1,4 +1,5 @@
-git+https://github.com/pydata/bottleneck.git@master#egg=bottleneck
 git+https://github.com/Unidata/cftime.git@master#egg=cftime
-git+https://github.com/xarray-contrib/flox.git@main#egg=flox
+git+https://github.com/pydata/bottleneck.git@master#egg=bottleneck
 git+https://github.com/pydata/xarray.git@main#egg=xarray
+git+https://github.com/xarray-contrib/flox.git@main#egg=flox
+git+https://github.com/yrobink/SBCK-python.git@master#egg=sbck
