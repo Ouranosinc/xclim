@@ -2216,6 +2216,7 @@ def maximum_consecutive_frost_days(
     tasmin: xarray.DataArray,
     thresh: Quantified = "0.0 degC",
     freq: str = "AS-JUL",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Maximum number of consecutive frost days (Tn < 0℃).
 
@@ -2234,6 +2235,9 @@ def maximum_consecutive_frost_days(
         Threshold temperature.
     freq : str
         Resampling frequency.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -2255,14 +2259,23 @@ def maximum_consecutive_frost_days(
     the start and end of the series, but the numerical algorithm does.
     """
     t = convert_units_to(thresh, tasmin)
-    group = (tasmin < t).resample(time=freq)
-    out = group.map(rl.longest_run, dim="time")
+    group = tasmin < t
+    out = rl.resample_and_rl(
+        group,
+        resample_before_rl,
+        rl.longest_run,
+        window=1,
+        freq=freq,
+    )
     return to_agg_units(out, tasmin, "count")
 
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
 def maximum_consecutive_dry_days(
-    pr: xarray.DataArray, thresh: Quantified = "1 mm/day", freq: str = "YS"
+    pr: xarray.DataArray,
+    thresh: Quantified = "1 mm/day",
+    freq: str = "YS",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Maximum number of consecutive dry days.
 
@@ -2277,6 +2290,9 @@ def maximum_consecutive_dry_days(
         Threshold precipitation on which to base evaluation.
     freq : str
         Resampling frequency.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -2298,14 +2314,23 @@ def maximum_consecutive_dry_days(
     the start and end of the series, but the numerical algorithm does.
     """
     t = convert_units_to(thresh, pr, context="hydro")
-    group = (pr < t).resample(time=freq)
-    out = group.map(rl.longest_run, dim="time")
+    group = pr < t
+    out = rl.resample_and_rl(
+        group,
+        resample_before_rl,
+        rl.longest_run,
+        window=1,
+        freq=freq,
+    )
     return to_agg_units(out, pr, "count")
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def maximum_consecutive_frost_free_days(
-    tasmin: xarray.DataArray, thresh: Quantified = "0 degC", freq: str = "YS"
+    tasmin: xarray.DataArray,
+    thresh: Quantified = "0 degC",
+    freq: str = "YS",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Maximum number of consecutive frost free days (Tn >= 0℃).
 
@@ -2324,6 +2349,9 @@ def maximum_consecutive_frost_free_days(
         Threshold temperature.
     freq : str
         Resampling frequency.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -2345,14 +2373,23 @@ def maximum_consecutive_frost_free_days(
     the start and end of the series, but the numerical algorithm does.
     """
     t = convert_units_to(thresh, tasmin)
-    group = (tasmin >= t).resample(time=freq)
-    out = group.map(rl.longest_run, dim="time")
+    group = tasmin >= t
+    out = rl.resample_and_rl(
+        group,
+        resample_before_rl,
+        rl.longest_run,
+        window=1,
+        freq=freq,
+    )
     return to_agg_units(out, tasmin, "count")
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def maximum_consecutive_tx_days(
-    tasmax: xarray.DataArray, thresh: Quantified = "25 degC", freq: str = "YS"
+    tasmax: xarray.DataArray,
+    thresh: Quantified = "25 degC",
+    freq: str = "YS",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Maximum number of consecutive days with tasmax above a threshold (summer days).
 
@@ -2367,6 +2404,9 @@ def maximum_consecutive_tx_days(
         Threshold temperature.
     freq : str
         Resampling frequency.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -2388,8 +2428,14 @@ def maximum_consecutive_tx_days(
     the start and end of the series, but the numerical algorithm does.
     """
     t = convert_units_to(thresh, tasmax)
-    group = (tasmax > t).resample(time=freq)
-    out = group.map(rl.longest_run, dim="time")
+    group = tasmax > t
+    out = rl.resample_and_rl(
+        group,
+        resample_before_rl,
+        rl.longest_run,
+        window=1,
+        freq=freq,
+    )
     return to_agg_units(out, tasmax, "count")
 
 
