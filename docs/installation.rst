@@ -76,7 +76,7 @@ Afterwards, `SBCK can be installed from PyPI using `pip`:
 .. code-block:: shell
 
     $ pip install pybind11
-    $ pip install "git+https://github.com/yrobink/SBCK-python.git@master#egg=sbck"
+    $ pip install "sbck @ git+https://github.com/yrobink/SBCK-python.git@master"
 
 .. _SBCK: https://github.com/yrobink/SBCK
 .. _Eigen3: https://eigen.tuxfamily.org/index.php
