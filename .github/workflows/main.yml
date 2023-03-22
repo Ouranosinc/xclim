@@ -62,7 +62,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  test-py39-upstream-coverage:
+  test-py39-upstream-sbck-coverage:
     needs: black
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
@@ -82,7 +82,7 @@ jobs:
       - name: Install tox
         run: pip install tox~=4.0
       - name: Test with tox
-        run: tox -e py39-upstream-coverage
+        run: tox -e py39-upstream-sbck-coverage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-py39-upstream

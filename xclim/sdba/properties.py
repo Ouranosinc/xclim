@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import numpy as np
 import xarray as xr
+from eofs.standard import Eof
 from scipy import stats
 from statsmodels.tsa import stattools
 
@@ -1179,14 +1180,6 @@ def _first_eof(da: xr.DataArray, *, dims=None, kind="+", thresh="1 mm/d", group=
     xr.DataArray, [dimensionless]
       First empirical orthogonal function
     """
-    try:
-        from eofs.standard import Eof
-    except ImportError as err:
-        raise ValueError(
-            "The `first_eof` property requires the `eofs` package"
-            ", which is an optional dependency of xclim."
-        ) from err
-
     if dims is None:
         dims = [d for d in da.dims if d != "time"]
 
@@ -1195,10 +1188,10 @@ def _first_eof(da: xr.DataArray, *, dims=None, kind="+", thresh="1 mm/d", group=
 
     da = da - da.mean("time")
 
-    def _get_eof(da):
+    def _get_eof(d):
         # Remove slices where everything is nan
-        da = da[~np.isnan(da).all(axis=tuple(range(1, da.ndim)))]
-        solver = Eof(da, center=False)
+        d = d[~np.isnan(d).all(axis=tuple(range(1, d.ndim)))]
+        solver = Eof(d, center=False)
         eof = solver.eofs(neofs=1).squeeze()
         return eof * np.sign(np.nanmean(eof))
 

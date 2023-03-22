@@ -36,6 +36,7 @@ dependencies = [
   "cftime>=1.4.1",
   "Click>=8.1",
   "dask[array]>=2.6",
+  "eofs",
   "jsonpickle",
   "lmoments3>=1.0.5",
   "numba",

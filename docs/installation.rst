@@ -57,20 +57,29 @@ Or, alternatively:
 .. _clisops: https://github.com/roocs/clisops
 
 Another optional library is `SBCK`_, which provides experimental adjustment methods to extend :doc:`xclim.sdba <sdba>`.
-It can't be installed directly from pip or conda and has one complex dependency : `Eigen`_.
-Please refer to Eigen's and SBCK's docs for the recommended installation instructions. However, Eigen is available on conda, so one can do:
+`SBCK` is not installable directly from PyPI or conda-forge and has one complex dependency: `Eigen3`_.
+
+On Debian/Ubuntu, Eigen3 can be installed from via `apt`:
 
 .. code-block:: shell
 
-   $ conda install -c conda-forge eigen pybind11
-   $ pip install "git+https://github.com/yrobink/SBCK.git@master#egg=sbck&subdirectory=python"
+    $ sudo apt-get install libeigen3-dev
 
+Eigen3  is also available on conda-forge, so one can do:
 
-Finally, the function :py:indicator:`xclim.sdba.property.first_eof` makes use of `eofs`_, another optional dependency, which is available on both pip and conda.
+.. code-block:: shell
+
+    $ conda install -c conda-forge eigen
+
+Afterwards, `SBCK can be installed from PyPI using `pip`:
+
+.. code-block:: shell
+
+    $ pip install pybind11
+    $ pip install "git+https://github.com/yrobink/SBCK-python.git@master#egg=sbck"
 
 .. _SBCK: https://github.com/yrobink/SBCK
-.. _Eigen: https://eigen.tuxfamily.org/index.php
-.. _eofs: https://ajdawson.github.io/eofs/
+.. _Eigen3: https://eigen.tuxfamily.org/index.php
 
 From sources
 ------------
