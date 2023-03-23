@@ -62,7 +62,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  test-py39-upstream-sbck-coverage:
+  test-py39-upstream-sbck-eofs-coverage:
     needs: black
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
@@ -82,10 +82,10 @@ jobs:
       - name: Install tox
         run: pip install tox~=4.0
       - name: Test with tox
-        run: tox -e py39-upstream-sbck-coverage
+        run: tox -e py39-upstream-sbck-eofs-coverage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-py39-upstream
+          COVERALLS_FLAG_NAME: run-py39-upstream-sbck-eofs
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
 
@@ -113,10 +113,8 @@ jobs:
         run: |
           conda --version
           echo "micromamba: $(micromamba --version)"
-      - name: Install optional dependencies
+      - name: Install xclim
         run: |
-          python -m pip install --no-user pybind11
-          python -m pip install --no-user "sbck @ git+https://github.com/yrobink/SBCK-python.git@master"
           python -m pip install --no-user .
       - name: Test
         run: |

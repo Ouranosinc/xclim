@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import numpy as np
 import xarray as xr
-from eofs.standard import Eof
 from scipy import stats
 from statsmodels.tsa import stattools
 
@@ -1180,6 +1179,14 @@ def _first_eof(da: xr.DataArray, *, dims=None, kind="+", thresh="1 mm/d", group=
     xr.DataArray, [dimensionless]
       First empirical orthogonal function
     """
+    try:
+        from eofs.standard import Eof
+    except ImportError as err:
+        raise ValueError(
+            "The `first_eof` property requires the `eofs` package"
+            ", which is an optional dependency of xclim."
+        ) from err
+
     if dims is None:
         dims = [d for d in da.dims if d != "time"]
 
