@@ -12,10 +12,10 @@ build:
   tools:
     python: "mambaforge-4.10"
   jobs:
-    pre_install:
-      - pip install llvmlite~=0.38 --ignore-installed
     pre_build:
-      - sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests
+      - sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests xclim/indicators xclim/indices
+      - rm docs/xclim.rst
+      - env SPHINX_APIDOC_OPTIONS="members,undoc-members,show-inheritance,noindex" sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests
       - sphinx-build -b linkcheck docs/ _build/linkcheck
 
 conda:

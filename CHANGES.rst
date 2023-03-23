@@ -1,8 +1,44 @@
-=======
-History
-=======
+=========
+Changelog
+=========
 
-0.41.0 (unreleased)
+0.42.0 (unreleased)
+-------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
+
+New indicators
+^^^^^^^^^^^^^^
+* Rain season index implemented (default parameters for West Africa). (:issue:`842`, :pull:`1256`)
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Two previously private functions for selecting a day of year in a time series when performing calendar conversions are now exposed. (:issue:`1305`, :pull:`1317`). New functions are:
+    * ``xclim.core.calendar.yearly_interpolated_doy``
+    * ``xclim.core.calendar.yearly_random_doy``
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* The call signatures for ``xclim.ensembles.create_ensemble`` and ``xclim.ensembles._base._ens_align_dataset`` have been deprecated. Calls to these functions made with the original signature will emit warnings. Changes will become breaking in `xclim>=0.43.0`.(:issue:`1305`, :pull:`1317`). Affected variable:
+    * `mf_flag` (bool) -> `multifile` (bool)
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Added `xclim` to the `ouranos Zenodo community <https://zenodo.org/communities/ouranos/>`_ . (:pull:`1313`).
+* Significant documentation adjustments. (:issue:`1305`, :pull:`1308`):
+    * The CONTRIBUTING page has been moved to the top level of the repository.
+    * Information concerning the licensing of xclim is clearly indicated in README.
+    * `sphinx-autodoc-typehints` is now used to simplify call signatures generated in documentation.
+    * The SDBA module API is now found with the rest of the User API documentation.
+    * `HISTORY.rst` has been renamed `CHANGES.rst`, to follow `dask`-like conventions.
+    * Hyperlink targets for individual `indices` and `indicators` now point to their entries under `API` or `Indices`.
+    * Module-level docstrings have migrated from the library scripts directly into the documentation RestructuredText files.
+    * The documentation now includes a page explaining the reasons for developing `xclim` and a section briefly detailing similar and related projects.
+    * Markdown explanations in some Jupyter Notebooks have been edited for clarity
+* Removed `Mapping` abstract base class types in call signatures (`dict` variables were always expected). (:pull:`1308`).
+* Changes in testing setup now prevent ``test_mean_radiant_temperature`` from sometimes causing a segmentation fault. (:issue:`1303`, :pull:`1315`).
+* Addressed a formatting bug that caused `Indicators` with multiple variables returned to not be properly formatted in the documentation. (:issue:`1305`, :pull:`1317`).
+
+0.41.0 (2023-02-28)
 -------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Éric Dupuis (:user:`coxipi`).
 
@@ -17,7 +53,6 @@ New indicators
 * New indices and indicators for determining upwelling radiation (`shortwave_upwelling_radiation_from_net_downwelling` and `longwave_upwelling_radiation_from_net_downwelling`; CF variables `rsus` and `rlus`) from net and downwelling radiation (shortwave: `rss` and `rsds`; longwave: `rls` and `rlds`). (:pull:`1271`).
 * New indice and indicator ``{snd | snw}_season_{length | start | end}`` which generalize ``snow_cover_duration`` and  ``continuous_snow_cover_{start | end}`` to allow using these functions with variable `snw` (:pull:`1275`).
 * New indice and indicator (``dryness_index``) for estimating soil humidity classifications for winegrowing regions (based on Riou et al. (1994)). (:issue:`355`, :pull:`1235`).
-* Rain season index implemented (default parameters for West Africa). (:issue:`842`, :pull:`1256`)
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -59,7 +94,7 @@ Internal changes
 
 0.40.0 (2023-01-13)
 -------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Juliette Lavoie (:user:`juliettelavoie`)
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Juliette Lavoie (:user:`juliettelavoie`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

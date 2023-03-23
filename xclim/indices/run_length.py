@@ -1,6 +1,6 @@
 # noqa: D205,D400
 """
-Run length algorithms submodule
+Run-Length Algorithms Submodule
 ===============================
 
 Computation of statistics on runs of True values in boolean arrays.

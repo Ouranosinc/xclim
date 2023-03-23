@@ -5,7 +5,7 @@ on:
     branches:
       - master
     paths-ignore:
-      - HISTORY.rst
+      - CHANGES.rst
       - README.rst
       - pyproject.toml
       - setup.cfg

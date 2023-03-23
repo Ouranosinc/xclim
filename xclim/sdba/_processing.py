@@ -1,7 +1,10 @@
-"""Compute functions of processing.py.
+# noqa: D205,D400
+"""
+Compute Functions Submodule
+===========================
 
-Here are defined the functions wrapped by map_blocks or map_groups,
-user-facing, metadata-handling functions should be defined in processing.py.
+Here are defined the functions wrapped by map_blocks or map_groups.
+The user-facing, metadata-handling functions should be defined in processing.py.
 """
 from __future__ import annotations
 
