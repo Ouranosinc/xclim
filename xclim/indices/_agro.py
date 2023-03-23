@@ -908,8 +908,8 @@ def rain_season(
     date_max_end: DayOfYearStr = "12-31",
     freq="AS-JAN",
 ):
-    """
-    Find the length of the rain season and the day of year of its start and its end.
+    """Find the length of the rain season and the day of year of its start and its end.
+
     The rain season begins when two conditions are met: 1) There must be a number of wet days with
     precipitations above or equal to a given threshold; 2) There must be another sequence following, where, for a given period in time, there are no
     dry sequence (i.e. a certain number of days where precipitations are below or equal to a certain threshold). The rain season ends
@@ -1005,11 +1005,11 @@ def rain_season(
 
         # Second condition: No dry period after
         if method_dry_start == "per_day":
-            da_stop = pram >= thresh_dry_start
+            da_stop = pram <= thresh_dry_start
         elif method_dry_start == "total":
-            da_stop = pram.rolling({"time": window_dry}).sum() >= thresh_dry_start
+            da_stop = pram.rolling({"time": window_dry}).sum() <= thresh_dry_start
             # equivalent to rolling forward in time instead, i.e. end date will be at beginning of dry run
-            da_stop = da_stop.shift({"time": -(window_dry - 1)})
+            da_stop = da_stop.shift({"time": -(window_dry - 1)}, fill_value=False)
             window_dry = 1
 
         # First and second condition combined in a run length
@@ -1030,10 +1030,11 @@ def rain_season(
             run_positions = da_stop
         return _get_first_run(run_positions, date_min_end, date_max_end)
 
-    def _get_out(pram):
+    # Get start, end and length of rain season. Written as a function so it can be resampled
+    def _get_rain_season(pram):
         start = _get_first_run_start(pram)
-        # masking every value up top the start date of the season,
-        # the end date should be after
+
+        # masking value before  start of the season (end of season should be after)
         start_ind = xarray.where(start.notnull(), start.astype(int), -1)
         mask = xarray.where(
             pram.time == pram.isel(time=start_ind).time, 1, np.NaN
@@ -1041,6 +1042,7 @@ def rain_season(
         mask[{"time": start_ind}] = np.NaN
         mask = mask.notnull()
         end = _get_first_run_end(pram.where(mask))
+
         length = xarray.where(end.notnull(), end - start, pram["time"].size - start)
 
         # converting to doy
@@ -1049,13 +1051,19 @@ def rain_season(
         start = rl.lazy_indexing(crd, start)
         end = rl.lazy_indexing(crd, end)
 
-        out = xarray.Dataset({"start": start, "end": end, "length": length})
+        out = xarray.Dataset(
+            {
+                "rain_season_start": start,
+                "rain_season_end": end,
+                "rain_season_length": length,
+            }
+        )
         return out
 
-    out = pram.resample(time=freq).map(_get_out)
+    out = pram.resample(time=freq).map(_get_rain_season)
     for outd in out.values():
         outd.attrs["units"] = ""
-    return out["start"], out["end"], out["length"]
+    return out["rain_season_start"], out["rain_season_end"], out["rain_season_length"]
 
 
 @declare_units(

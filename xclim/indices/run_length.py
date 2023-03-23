@@ -123,6 +123,7 @@ def resample_and_rl(
 def _cumsum_reset_on_zero(
     da: xr.DataArray,
     dim: str = "time",
+    index: str = "last",
 ) -> xr.DataArray:
     """Compute the cumulative sum for each series of numbers separated by zero.
 
@@ -132,19 +133,29 @@ def _cumsum_reset_on_zero(
         Input array.
     dim : str
         Dimension name along which the cumulative sum is taken.
+    index : {'first', 'last'}
+        If 'first', the largest value of the cumulative sum is indexed with the first element in the run.
+        If 'last'(default), with the last element in the run.
 
     Returns
     -------
     xr.DataArray
         An array with cumulative sums.
     """
+    if index == "first":
+        da = da[{dim: slice(None, None, -1)}]
+
     # Example: da == 100110111 -> cs_s == 100120123
     cs = da.cumsum(dim=dim)  # cumulative sum  e.g. 111233456
     cs2 = cs.where(da == 0)  # keep only numbers at positions of zeroes e.g. N11NN3NNN
     cs2[{dim: 0}] = 0  # put a zero in front e.g. 011NN3NNN
     cs2 = cs2.ffill(dim=dim)  # e.g. 011113333
+    out = cs - cs2
 
-    return cs - cs2
+    if index == "first":
+        out = out[{dim: slice(None, None, -1)}]
+
+    return out
 
 
 # TODO: Check if rle would be more performant with ffill/bfill instead of two times [{dim: slice(None, None, -1)}]
@@ -679,43 +690,34 @@ def rle_with_holes(
     da_start = da_start.astype(int).fillna(0)
     da_stop = da_stop.astype(int).fillna(0)
 
-    runs_start = (
-        rle(da_start, dim=dim) >= window_start
-        if window_start > 1
-        else da_start >= window_start
+    # TODO: Check performance. Each of these steps is about 1/2 of rle dask tasks
+    # Find start and stop positions
+    start_positions = (
+        _cumsum_reset_on_zero(da_start, dim=dim, index="first") >= window_start
     )
-    runs_stop = (
-        rle(da_stop, dim=dim) >= window_stop
-        if window_stop > 1
-        else da_stop >= window_stop
+    stop_positions = (
+        _cumsum_reset_on_zero(da_stop, dim=dim, index="first") >= window_stop
     )
-    da = runs_start.where(runs_start | runs_stop).ffill(dim=dim).fillna(0)
 
-    # if runs interstect: only works for index == "first"
-    runs_intersect = runs_start & runs_stop
-    if runs_intersect.any():
-        # fill in a 0 at intersection
-        da = da.where(runs_intersect is False, 0).fillna(0)
-        run_lengths = rle(da, dim=dim, index="first")
-        # there should be a run where we filled  a 0
-        run_lengths = xr.where(
-            runs_intersect is True,
-            run_lengths.shift({dim: -1}, fill_value=0) + 1,
-            run_lengths,
-        )
-        run_lengths = xr.where(
-            runs_intersect.shift({dim: 1}) is True, np.nan, run_lengths
-        )
-    else:
-        run_lengths = rle(da, dim=dim, index=index)
+    # Length between stop positions will be evaluated at start positions
+    length_between_stops = _cumsum_reset_on_zero(
+        xr.where(stop_positions, 0, 1), dim=dim, index="first"
+    )
+    run_lengths = length_between_stops.where(
+        (start_positions) & (length_between_stops > 0)
+    )
 
+    # only keep first element of a run
+    run_lengths = run_lengths.where(run_lengths.shift({dim: 1}).isnull())
+
+    # TODO: Check if this logic is more efficient than what is currently used in rle
     if index == "last":
-        run_lengths = run_lengths.ffill(dim=dim)
-        run_lengths = run_lengths.where(
-            runs_stop.shift({dim: -1}, fill_value=0) is True
-        )
+        # ffill the length of runs over whole run
+        filled_runs = xr.where(length_between_stops == 0, 0, run_lengths).ffill(dim=dim)
+        # keep the last element in runs instead of the first
+        run_lengths = filled_runs.where(filled_runs.shift({dim: -1}, fill_value=0) == 0)
 
-    return run_lengths
+    return run_lengths.where(run_lengths > 0)
 
 
 def season(

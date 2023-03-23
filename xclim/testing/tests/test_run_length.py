@@ -123,6 +123,36 @@ def test_rle(ufunc, use_dask, index):
         np.testing.assert_array_equal(out, expected)
 
 
+@pytest.mark.parametrize("use_dask", [True, False])
+@pytest.mark.parametrize("index", ["first", "last"])
+def test_rle_with_holes(use_dask, index):
+    # implement more tests, this is just to show that this reproduces the behaviour
+    # of rle
+    values = np.zeros((10, 365, 4, 4))
+    time = pd.date_range("2000-01-01", periods=365, freq="D")
+    values[:, 1:11, ...] = 1
+    da = xr.DataArray(values, coords={"time": time}, dims=("a", "time", "b", "c"))
+
+    if use_dask:
+        da = da.chunk({"a": 1, "b": 2})
+
+    out = rl.rle_with_holes(da != 0, 1, da == 0, 1, index=index).mean(["a", "b", "c"])
+
+    # Same output as rle when da_stop is the opposite of da_start and window_start == window_stop = 1
+    # But:
+    # - `rle_with_holes` gives either length or NaN.
+    # - `rle` gives either length, NaN, _or_ 0
+    if index == "last":
+        expected = np.zeros(365) * np.nan
+        # expected[1:10] = np.nan
+        expected[10] = 10
+    else:
+        expected = np.zeros(365) * np.nan
+        expected[1] = 10
+        # expected[2:11] = np.nan
+    np.testing.assert_array_equal(out, expected)
+
+
 class TestStatisticsRun:
     nc_pr = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 

@@ -2560,14 +2560,21 @@ def test_rain_season(pr_series, result_type, method_dry_start):
         pr = pr / (60 * 60 * 24)
 
     out = {}
-    out["start"], out["end"], out["length"] = xci.rain_season(
+    (
+        out["rain_season_start"],
+        out["rain_season_end"],
+        out["rain_season_length"],
+    ) = xci.rain_season(
         pr,
         date_min_start="01-01",
         date_min_end="01-01",
         method_dry_start=method_dry_start,
     )
     out_arr = np.array(
-        [out[var].values for var in ["start", "end", "length"]]
+        [
+            out[var].values
+            for var in ["rain_season_start", "rain_season_end", "rain_season_length"]
+        ]
     ).flatten()
     np.testing.assert_array_equal(out_arr, out_exp)
 
