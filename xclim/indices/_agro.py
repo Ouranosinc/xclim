@@ -910,7 +910,13 @@ def rain_season(
 ):
     """
     Find the length of the rain season and the day of year of its start and its end.
+    The rain season begins when two conditions are met: 1) There must be a number of wet days with
+    precipitations above or equal to a given threshold; 2) There must be another sequence following, where, for a given period in time, there are no
+    dry sequence (i.e. a certain number of days where precipitations are below or equal to a certain threshold). The rain season ends
+    when there is a dry sequence.
 
+    Parameters
+    ----------
     pr: xr.DataArray
         Precipitation data.
     thresh_wet_start: Quantified
