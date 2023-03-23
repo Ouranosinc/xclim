@@ -123,7 +123,6 @@ def resample_and_rl(
 def _cumsum_reset_on_zero(
     da: xr.DataArray,
     dim: str = "time",
-    index: str = "last",
 ) -> xr.DataArray:
     """Compute the cumulative sum for each series of numbers separated by zero.
 
@@ -133,29 +132,19 @@ def _cumsum_reset_on_zero(
         Input array.
     dim : str
         Dimension name along which the cumulative sum is taken.
-    index : {'first', 'last'}
-        If 'first', the largest value of the cumulative sum is indexed with the first element in the run.
-        If 'last'(default), with the last element in the run.
 
     Returns
     -------
     xr.DataArray
         An array with cumulative sums.
     """
-    if index == "first":
-        da = da[{dim: slice(None, None, -1)}]
-
     # Example: da == 100110111 -> cs_s == 100120123
     cs = da.cumsum(dim=dim)  # cumulative sum  e.g. 111233456
     cs2 = cs.where(da == 0)  # keep only numbers at positions of zeroes e.g. N11NN3NNN
     cs2[{dim: 0}] = 0  # put a zero in front e.g. 011NN3NNN
     cs2 = cs2.ffill(dim=dim)  # e.g. 011113333
-    out = cs - cs2
 
-    if index == "first":
-        out = out[{dim: slice(None, None, -1)}]
-
-    return out
+    return cs2
 
 
 # TODO: Check if rle would be more performant with ffill/bfill instead of two times [{dim: slice(None, None, -1)}]
