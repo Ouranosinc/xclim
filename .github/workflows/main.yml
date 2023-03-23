@@ -76,7 +76,7 @@ jobs:
 
   test-pypi:
     needs: black
-    name: test-Python${{ matrix.tox-env }}
+    name: test-${{ matrix.tox-env }} (Python${{ matrix.python-version }})
     if: |
       contains(github.event.pull_request.labels.*.name, 'approved') ||
       (github.event.review.state == 'approved') ||
