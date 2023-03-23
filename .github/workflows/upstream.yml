@@ -3,6 +3,12 @@ on:
   push:
     branches:
       - master
+    paths-ignore:
+      - CHANGES.rst
+      - README.rst
+      - pyproject.toml
+      - setup.cfg
+      - xclim/__init__.py
   pull_request:
     types:
       - opened
@@ -26,11 +32,11 @@ jobs:
     name: upstream-dev
     runs-on: ubuntu-latest
     if: |
-      github.event_name == 'schedule' ||
-      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'schedule') ||
+      (github.event_name == 'workflow_dispatch') ||
       contains(github.event.pull_request.labels.*.name, 'approved') ||
       (github.event.review.state == 'approved') ||
-      (github.event_name == 'push') }}
+      (github.event_name == 'push')
     strategy:
       fail-fast: false
       matrix:
