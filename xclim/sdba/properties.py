@@ -1195,10 +1195,10 @@ def _first_eof(da: xr.DataArray, *, dims=None, kind="+", thresh="1 mm/d", group=
 
     da = da - da.mean("time")
 
-    def _get_eof(da):
+    def _get_eof(d):
         # Remove slices where everything is nan
-        da = da[~np.isnan(da).all(axis=tuple(range(1, da.ndim)))]
-        solver = Eof(da, center=False)
+        d = d[~np.isnan(d).all(axis=tuple(range(1, d.ndim)))]
+        solver = Eof(d, center=False)
         eof = solver.eofs(neofs=1).squeeze()
         return eof * np.sign(np.nanmean(eof))
 
