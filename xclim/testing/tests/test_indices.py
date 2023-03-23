@@ -2533,7 +2533,11 @@ class TestSnowCover:
     "result_type",
     ["season_found", "start_cond1_fails", "start_cond2_fails", "end_cond_fails"],
 )
-def test_rain_season(pr_series, result_type):
+@pytest.mark.parametrize(
+    "method_dry_start",
+    ["per_day", "total"],
+)
+def test_rain_season(pr_series, result_type, method_dry_start):
     pr = pr_series(np.arange(365) * np.NaN, start="2000-01-01", units="kg m-2 s-1")
     # input values in mm (amount): a correcting factor is used below
     pr[{"time": slice(0, 0 + 3)}] = 10  # to satisfy cond1_start
@@ -2557,7 +2561,10 @@ def test_rain_season(pr_series, result_type):
 
     out = {}
     out["start"], out["end"], out["length"] = xci.rain_season(
-        pr, date_min_start="01-01", date_min_end="01-01"
+        pr,
+        date_min_start="01-01",
+        date_min_end="01-01",
+        method_dry_start=method_dry_start,
     )
     out_arr = np.array(
         [out[var].values for var in ["start", "end", "length"]]

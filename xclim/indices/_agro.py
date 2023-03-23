@@ -955,10 +955,10 @@ def rain_season(
     -------
     rain_season_start: xr.DataArray, [dimensionless]
     rain_season_end: xr.DataArray, [dimensionless]
-    rain_season_length: xr.DataArray, [dimensionless]
+    rain_season_length: xr.DataArray, [time]
 
-    Summary
-    -------
+    Notes
+    -----
     The rain season starts at the end of a period of raining (a total precipitation  of `thresh_wet_start` over `window_wet_start` days). This must
     be directly followed by a period of `window_not_dry_start` days with no dry sequence. The dry sequence is a period of `window_dry_start`
     days where precipitations are below `thresh_dry_start` (either the total precipitations over the period, or the daily precipitations, depending
@@ -976,14 +976,11 @@ def rain_season(
     thresh_dry_start = convert_units_to(thresh_dry_start, pram)
     thresh_dry_end = convert_units_to(thresh_dry_end, pram)
 
-    # won't work for cftime?
-    last_doy = pram.isel(time=-1).time.dt.date.values.item().strftime("%m-%d")
+    last_doy = pram.indexes["time"][-1].strftime("%m-%d")
 
     # Eliminate negative values.
     pram = xarray.where(pram < 0, 0, pram)
     pram.attrs["units"] = "mm"
-
-    dim = "time"
 
     # should we flag date_min_end  < date_max_start?
     def _get_first_run(run_positions, start_date, end_date):
@@ -998,15 +995,15 @@ def rain_season(
         pram = select_time(pram, date_bounds=(date_min_start, last_doy))
 
         # First condition: Start with enough precipitation
-        da_start = pram.rolling({dim: window_wet_start}).sum() >= thresh_wet_start
+        da_start = pram.rolling({"time": window_wet_start}).sum() >= thresh_wet_start
 
         # Second condition: No dry period after
         if method_dry_start == "per_day":
             da_stop = pram >= thresh_dry_start
         elif method_dry_start == "total":
-            da_stop = pram.rolling({dim: window_dry}).sum() >= thresh_dry_start
+            da_stop = pram.rolling({"time": window_dry}).sum() >= thresh_dry_start
             # equivalent to rolling forward in time instead, i.e. end date will be at beginning of dry run
-            da_stop = da_stop.shift({dim: -(window_dry - 1)})
+            da_stop = da_stop.shift({"time": -(window_dry - 1)})
             window_dry = 1
 
         # First and second condition combined in a run length
@@ -1014,21 +1011,23 @@ def rain_season(
             rl.rle_with_holes(da_start, 1, da_stop, window_dry, "first")
             >= window_not_dry_start + window_wet_start
         )
+
         return _get_first_run(run_positions, date_min_start, date_max_start)
 
     # Find the end of the rain season
     def _get_first_run_end(pram):
         if method_dry_end == "per_day":
             da_stop = pram <= thresh_dry_end
-            run_positions = rl.rle(da_stop, dim=dim, index="first") >= window_dry_end
+            run_positions = rl.rle(da_stop, index="first") >= window_dry_end
         elif method_dry_end == "total":
-            da_stop = pram.rolling({dim: window_dry_end}).sum() <= thresh_dry_end
+            da_stop = pram.rolling({"time": window_dry_end}).sum() <= thresh_dry_end
             run_positions = da_stop
         return _get_first_run(run_positions, date_min_end, date_max_end)
 
     def _get_out(pram):
         start = _get_first_run_start(pram)
-        # masking every value up top the start date of the season, the end date should be after
+        # masking every value up top the start date of the season,
+        # the end date should be after
         start_ind = xarray.where(start.notnull(), start.astype(int), -1)
         mask = xarray.where(
             pram.time == pram.isel(time=start_ind).time, 1, np.NaN
@@ -1036,10 +1035,10 @@ def rain_season(
         mask[{"time": start_ind}] = np.NaN
         mask = mask.notnull()
         end = _get_first_run_end(pram.where(mask))
-        length = xarray.where(end.notnull(), end - start, pram[dim].size - start)
+        length = xarray.where(end.notnull(), end - start, pram["time"].size - start)
 
         # converting to doy
-        crd = pram[dim]
+        crd = pram["time"]
         crd = getattr(crd.dt, "dayofyear")
         start = rl.lazy_indexing(crd, start)
         end = rl.lazy_indexing(crd, end)

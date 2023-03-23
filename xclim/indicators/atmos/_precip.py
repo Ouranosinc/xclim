@@ -625,8 +625,7 @@ rain_season = PrecipWithIndexing(
     title="Rain season",
     identifier="rain_season",
     realm="atmos",
-    var_name=["start", "end", "length"],
-    standard_name=["rain_season_start", "rain_season_end", "rain_season_length"],
+    var_name=["rain_season_start", "rain_season_end", "rain_season_length"],
     long_name=[
         "Start of the rain season",
         "End of the rain season",
