@@ -68,3 +68,4 @@ dependencies:
     - pip
     - pip:
         - sphinxcontrib-svg2pdfconverter
+        - sbck @ git+https://github.com/yrobink/SBCK-python.git@master
