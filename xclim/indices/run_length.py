@@ -144,11 +144,10 @@ def _cumsum_reset_on_zero(
     cs2[{dim: 0}] = 0  # put a zero in front e.g. 011NN3NNN
     cs2 = cs2.ffill(dim=dim)  # e.g. 011113333
 
-    return cs2
+    return cs - cs2
 
 
 # TODO: Check if rle would be more performant with ffill/bfill instead of two times [{dim: slice(None, None, -1)}]
-# Just like in rle_with_holes
 def rle(
     da: xr.DataArray,
     dim: str = "time",
