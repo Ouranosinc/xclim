@@ -1,4 +1,4 @@
-name: CI Upstream
+name: xclim Upstream dependencies
 on:
   push:
     branches:
@@ -29,7 +29,7 @@ concurrency:
 
 jobs:
   upstream-dev:
-    name: upstream-dev
+    name: test-upstream-dev (Python${{ matrix.python-version }})
     runs-on: ubuntu-latest
     if: |
       (github.event_name == 'schedule') ||

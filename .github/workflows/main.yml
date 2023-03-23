@@ -1,4 +1,4 @@
-name: "xclim Testing Suite"
+name: xclim Testing Suite
 
 on:
   push:
@@ -24,6 +24,7 @@ env:
 
 jobs:
   black:
+    name: Black (Python${{ matrix.python-version }})
     runs-on: ubuntu-latest
     if: |
       ((github.event_name == 'pull_request') && (github.event.action != 'labeled')) ||
@@ -51,6 +52,7 @@ jobs:
         run: tox -e black
 
   test-py38:
+    name: test-${{ matrix.tox-env }} (Python${{ matrix.python-version }})
     needs: black
     if: |
       (github.event_name == 'pull_request') && !contains(github.event.pull_request.labels.*.name, 'approved')
