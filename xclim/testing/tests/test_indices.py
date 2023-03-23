@@ -2536,9 +2536,9 @@ class TestSnowCover:
 def test_rain_season(pr_series, result_type):
     pr = pr_series(np.arange(365) * np.NaN, start="2000-01-01", units="kg m-2 s-1")
     # input values in mm (amount): a correcting factor is used below
-    pr[{"time": slice(0, 0 + 3)}] = 10
-    pr[{"time": slice(3, 3 + 30)}] = 5
-    pr[{"time": slice(99, 99 + 20)}] = 0
+    pr[{"time": slice(0, 0 + 3)}] = 10  # to satisfy cond1_start
+    pr[{"time": slice(3, 3 + 30)}] = 5  # to satisfy cond2_start
+    pr[{"time": slice(99, 99 + 20)}] = 0  # to satisfy cond_end
     if result_type == "season_found":
         out_exp = [3, 100, 97]
     elif result_type == "start_cond1_fails":

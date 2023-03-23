@@ -996,17 +996,20 @@ def rain_season(
     # Find the start of the rain season
     def _get_first_run_start(pram, window_dry=window_dry_start):
         pram = select_time(pram, date_bounds=(date_min_start, last_doy))
+
+        # First condition: Start with enough precipitation
         da_start = pram.rolling({dim: window_wet_start}).sum() >= thresh_wet_start
+
+        # Second condition: No dry period after
         if method_dry_start == "per_day":
             da_stop = pram >= thresh_dry_start
         elif method_dry_start == "total":
-            da_stop = (
-                pram[{dim: slice(None, None, -1)}].rolling({dim: window_dry}).sum()
-                >= thresh_dry_start
-            )
+            da_stop = pram.rolling({dim: window_dry}).sum() >= thresh_dry_start
             # equivalent to rolling forward in time instead, i.e. end date will be at beginning of dry run
             da_stop = da_stop.shift({dim: -(window_dry - 1)})
             window_dry = 1
+
+        # First and second condition combined in a run length
         run_positions = (
             rl.rle_with_holes(da_start, 1, da_stop, window_dry, "first")
             >= window_not_dry_start + window_wet_start
