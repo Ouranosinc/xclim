@@ -165,7 +165,7 @@ jobs:
         run: tox -e py38-coverage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COVERALLS_FLAG_NAME: run-py38
+          COVERALLS_FLAG_NAME: run-py38-coverage
           COVERALLS_PARALLEL: true
           COVERALLS_SERVICE_NAME: github
 
