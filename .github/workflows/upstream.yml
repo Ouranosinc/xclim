@@ -9,16 +9,6 @@ on:
       - pyproject.toml
       - setup.cfg
       - xclim/__init__.py
-  pull_request:
-    types:
-      - opened
-      - reopened
-      - synchronize
-    branches:
-      - master
-  pull_request_review:
-    types:
-      - submitted
   schedule:
     - cron: "0 0 * * *" # Daily “At 00:00” UTC
   workflow_dispatch: # allows you to trigger the workflow run manually
@@ -34,8 +24,6 @@ jobs:
     if: |
       (github.event_name == 'schedule') ||
       (github.event_name == 'workflow_dispatch') ||
-      contains(github.event.pull_request.labels.*.name, 'approved') ||
-      (github.event.review.state == 'approved') ||
       (github.event_name == 'push')
     strategy:
       fail-fast: false
