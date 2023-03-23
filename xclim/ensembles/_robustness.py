@@ -9,6 +9,7 @@ the 12th chapter of the Working Group 1's contribution to the AR5 :cite:p:`colli
 """
 from __future__ import annotations
 
+import warnings
 from typing import Union
 
 import numpy as np
@@ -27,7 +28,14 @@ def change_significance(
     weights: xr.DataArray = None,
     p_vals: bool = False,
     **kwargs,
-) -> tuple[xr.DataArray | xr.Dataset, xr.DataArray | xr.Dataset]:
+) -> (
+    tuple[xr.DataArray | xr.Dataset, xr.DataArray | xr.Dataset]
+    | tuple[
+        xr.DataArray | xr.Dataset,
+        xr.DataArray | xr.Dataset,
+        xr.DataArray | xr.Dataset | None,
+    ]
+):
     """Robustness statistics qualifying how the members of an ensemble agree on the existence of change and on its sign.
 
     Parameters
@@ -177,9 +185,28 @@ def change_significance(
             )
         p_change = kwargs.setdefault("p_change", 0.05)
 
+        if parse_version(scipy.__version__) < parse_version("1.9.0"):
+            warnings.warn(
+                "`xclim` will be dropping support for `scipy<1.9.0` in a future release. "
+                "Please consider updating your environment dependencies accordingly",
+                FutureWarning,
+                stacklevel=3,
+            )
+
+            def _ttest_func(f, r):
+                return spstats.ttest_1samp(f, r, axis=-1, nan_policy="omit")[1]
+
+        else:
+
+            def _ttest_func(f, r):
+                # scipy>=1.9: popmean.axis[-1] must equal 1 for both fut and ref
+                return spstats.ttest_1samp(
+                    f, r[..., np.newaxis], axis=-1, nan_policy="omit"
+                )[1]
+
         # Test hypothesis of no significant change
         pvals = xr.apply_ufunc(
-            lambda f, r: spstats.ttest_1samp(f, r, axis=-1, nan_policy="omit")[1],
+            _ttest_func,
             fut,
             ref.mean("time"),
             input_core_dims=[[realization, "time"], [realization]],
@@ -223,7 +250,11 @@ def change_significance(
                 "'mannwhitney-utest' is not currently supported for weighted arrays."
             )
         if parse_version(scipy.__version__) < parse_version("1.8.0"):
-            raise ImportError("Update to SciPy >= 1.8.0 to use the Mann-Whitney test.")
+            raise ImportError(
+                "The Mann-Whitney test requires `scipy>=1.8.0`. "
+                "`xclim` will be dropping support for `scipy<1.9.0` in a future release. "
+                "Please consider updating your environment dependencies accordingly"
+            )
 
         p_change = kwargs.setdefault("p_change", 0.05)
 
@@ -315,9 +346,9 @@ def change_significance(
         ),
     )
 
+    # Returns either two (2) or three (3) variables. This should be adjusted.
     if p_vals:
         return change_frac, pos_frac, pvals
-
     return change_frac, pos_frac
 
 

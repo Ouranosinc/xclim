@@ -723,7 +723,7 @@ last_spring_frost = Temp(
     "for at least {window} days before a given date ({before_date})",
     description="Day of year of last spring frost, defined as the last day a minimum temperature "
     "remains below a threshold of {thresh} for at least {window} days before a given date ({before_date}).",
-    abstract="The last day when temperature is below a given threshold for a certain number of days, "
+    abstract="The last day when minimum temperature is below a given threshold for a certain number of days, "
     "limited by a final calendar date.",
     cell_methods="",
     compute=indices.last_spring_frost,

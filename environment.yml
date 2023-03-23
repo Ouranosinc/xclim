@@ -12,6 +12,7 @@ dependencies:
     - Click >=8.1
     - dask>=2.6.0
     - jsonpickle
+    - lmoments3
     - numba
     - numpy>=1.16
     - pandas>=0.23
@@ -19,7 +20,7 @@ dependencies:
     - poppler>=0.67
     - pyyaml
     - scikit-learn>=0.21.3
-    - scipy>=1.2,<1.9  # See https://github.com/Ouranosinc/xclim/issues/1142
+    - scipy>=1.2
     - xarray>=2022.06.0
     # Extras
     - eofs
@@ -67,3 +68,4 @@ dependencies:
     - pip
     - pip:
         - sphinxcontrib-svg2pdfconverter
+        - sbck @ git+https://github.com/yrobink/SBCK-python.git@master
