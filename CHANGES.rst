@@ -17,6 +17,9 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 * The call signatures for ``xclim.ensembles.create_ensemble`` and ``xclim.ensembles._base._ens_align_dataset`` have been deprecated. Calls to these functions made with the original signature will emit warnings. Changes will become breaking in `xclim>=0.43.0`.(:issue:`1305`, :pull:`1317`). Affected variable:
     * `mf_flag` (bool) -> `multifile` (bool)
+* The indice and indicator for ``last_spring_frost`` has been modified to use ``tasmin`` by default, reflecting its docstring and literature definition (:issue:`1324`, :pull:`1325`).
+* following indices now accept the `op` argument for modifying the threshold comparison operator (:pull:`1325`):
+    * ``snw_season_length``, ``snd_season_length``, ``growing_season_length``, ``frost_season_length``, ``frost_free_season_length``, ``rprcptot``, ``daily_pr_intensity``
 
 Internal changes
 ^^^^^^^^^^^^^^^^
