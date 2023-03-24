@@ -1526,6 +1526,7 @@ def heat_wave_index(
     window: int = 5,
     freq: str = "YS",
     op: str = ">",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     """Heat wave index.
 
@@ -1543,6 +1544,9 @@ def heat_wave_index(
         Resampling frequency.
     op : {">", ">=", "gt", "ge"}
         Comparison operation. Default: ">".
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -1551,15 +1555,22 @@ def heat_wave_index(
     """
     thresh = convert_units_to(thresh, tasmax)
     over = compare(tasmax, op, thresh, constrain=(">", ">="))
-    group = over.resample(time=freq)
-
-    out = group.map(rl.windowed_run_count, window=window, dim="time")
+    out = rl.resample_and_rl(
+        over,
+        resample_before_rl,
+        rl.resample_before_rl,
+        rl.windowed_run_count,
+        window=window,
+        freq=freq,
+    )
     return to_agg_units(out, tasmax, "count")
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
 def heating_degree_days(
-    tas: xarray.DataArray, thresh: Quantified = "17.0 degC", freq: str = "YS"
+    tas: xarray.DataArray,
+    thresh: Quantified = "17.0 degC",
+    freq: str = "YS",
 ) -> xarray.DataArray:
     r"""Heating degree days.
 
@@ -1602,6 +1613,7 @@ def hot_spell_max_length(
     window: int = 1,
     freq: str = "YS",
     op: str = ">",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     r"""Longest hot spell.
 
@@ -1622,6 +1634,9 @@ def hot_spell_max_length(
         Resampling frequency.
     op : {">", ">=", "gt", "ge"}
         Comparison operation. Default: ">".
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -1645,8 +1660,13 @@ def hot_spell_max_length(
     thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
 
     cond = compare(tasmax, op, thresh_tasmax, constrain=(">", ">="))
-    group = cond.resample(time=freq)
-    max_l = group.map(rl.longest_run, dim="time")
+    max_l = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.longest_run,
+        window=1,
+        freq=freq,
+    )
     out = max_l.where(max_l >= window, 0)
     return to_agg_units(out, tasmax, "count")
 
@@ -1658,6 +1678,7 @@ def hot_spell_frequency(
     window: int = 3,
     freq: str = "YS",
     op: str = ">",
+    resample_before_rl: bool = True,
 ) -> xarray.DataArray:
     """Hot spell frequency.
 
@@ -1676,6 +1697,9 @@ def hot_spell_frequency(
         Resampling frequency.
     op : {">", ">=", "gt", "ge"}
         Comparison operation. Default: ">".
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
@@ -1698,8 +1722,13 @@ def hot_spell_frequency(
     thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
 
     cond = compare(tasmax, op, thresh_tasmax, constrain=(">", ">="))
-    group = cond.resample(time=freq)
-    out = group.map(rl.windowed_run_events, window=window, dim="time")
+    out = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.windowed_run_events,
+        window=window,
+        freq=freq,
+    )
     out.attrs["units"] = ""
     return out
 
