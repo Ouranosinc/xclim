@@ -3,15 +3,12 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from xclim.sdba.loess import (
-    _constant_regression,
-    _gaussian_weighting,
-    _linear_regression,
-    _loess_nb,
-    _tricube_weighting,
-    loess_smoothing,
-)
-from xclim.testing import open_dataset
+from xclim.sdba.loess import _constant_regression  # noqa
+from xclim.sdba.loess import _gaussian_weighting  # noqa
+from xclim.sdba.loess import _linear_regression  # noqa
+from xclim.sdba.loess import _loess_nb  # noqa
+from xclim.sdba.loess import _tricube_weighting  # noqa
+from xclim.sdba.loess import loess_smoothing
 
 
 @pytest.mark.slow
@@ -39,7 +36,7 @@ def test_loess_nb(d, f, w, n, dx, exp):
 
 @pytest.mark.slow
 @pytest.mark.parametrize("use_dask", [True, False])
-def test_loess_smoothing(use_dask):
+def test_loess_smoothing(use_dask, open_dataset):
     tas = open_dataset(
         "cmip3/tas.sresb1.giss_model_e_r.run1.atm.da.nc",
         chunks={"lat": 1} if use_dask else None,

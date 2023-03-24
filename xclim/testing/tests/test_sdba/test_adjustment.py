@@ -31,9 +31,8 @@ from xclim.sdba.utils import (
     get_correction,
     invert,
 )
-from xclim.testing import open_dataset
 
-from .utils import nancov
+from .utils import nancov  # noqa
 
 
 class TestLoci:
@@ -488,7 +487,7 @@ class TestQM:
         np.testing.assert_array_almost_equal(p, ref, 2)
 
     @pytest.mark.parametrize("use_dask", [True, False])
-    def test_add_dims(self, use_dask):
+    def test_add_dims(self, use_dask, open_dataset):
         with set_options(sdba_encode_cf=use_dask):
             if use_dask:
                 chunks = {"location": -1}
@@ -666,7 +665,7 @@ class TestExtremeValues:
         ).sum()
 
     @pytest.mark.slow
-    def test_real_data(self):
+    def test_real_data(self, open_dataset):
         dsim = open_dataset("sdba/CanESM2_1950-2100.nc").chunk()
         dref = open_dataset("sdba/ahccd_1950-2013.nc").chunk()
 
