@@ -653,8 +653,8 @@ def map_blocks(reduces: Sequence[str] = None, **outvars):
                 ds = ds.copy()
                 # Optimization to circumvent the slow pickle.dumps(cftime_array)
                 for name, crd in ds.coords.items():
-                    if xr.core.common._contains_cftime_datetimes(crd.values):
-                        ds[name] = xr.conventions.encode_cf_variable(crd)
+                    if xr.core.common._contains_cftime_datetimes(crd.variable):
+                        ds[name] = xr.conventions.encode_cf_variable(crd.variable)
 
             def _call_and_transpose_on_exit(dsblock, **kwargs):
                 """Call the decorated func and transpose to ensure the same dim order as on the templace."""
