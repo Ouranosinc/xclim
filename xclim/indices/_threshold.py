@@ -1558,7 +1558,6 @@ def heat_wave_index(
     out = rl.resample_and_rl(
         over,
         resample_before_rl,
-        rl.resample_before_rl,
         rl.windowed_run_count,
         window=window,
         freq=freq,
