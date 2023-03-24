@@ -819,7 +819,8 @@ def snowfall_approximation(
             raise ValueError("Non-scalar `thresh` are not allowed with method `brown`.")
 
         # Freezing point + 2C in the native units
-        upper = convert_units_to(convert_units_to(thresh, "degC") + 2, tas)
+        thresh_plus_2 = convert_units_to(thresh, "degC") + 2
+        upper = convert_units_to(f"{thresh_plus_2} degC", tas)
         thresh = convert_units_to(thresh, tas)
 
         # Interpolate fraction over temperature (in units of tas)

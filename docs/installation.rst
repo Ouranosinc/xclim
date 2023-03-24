@@ -18,14 +18,13 @@ If you don't have `pip`_ installed, this `Python installation guide`_ can guide 
 
 .. _pip: https://pip.pypa.io/
 .. _Python installation guide: https://docs.python-guide.org/starting/installation/
-.. _OSGeo4W installer: https://trac.osgeo.org/osgeo4w/
 
 Anaconda release
 ----------------
 For ease of installation across operating systems, we also offer an Anaconda Python package hosted on conda-forge.
 This version tends to be updated at around the same frequency as the pip library, but can lag by a few days at times.
 
-To install the xclim Anaconda binary, run this command in your terminal:
+`xclim` can be installed from conda-forge wth the following:
 
 .. code-block:: shell
 
@@ -35,13 +34,13 @@ To install the xclim Anaconda binary, run this command in your terminal:
 
 Extra dependencies
 ------------------
-To improve performance of xclim, we highly recommend you also install `flox`_ (see: :doc:`flox API <flox:api>`).
+To improve performance of `xclim`, we highly recommend you also install `flox`_ (see: :doc:`flox API <flox:api>`).
 This package integrates into xarray and significantly improves the performance of the grouping and resampling algorithms, especially when using `dask` on large datasets.
 
-We also recommend using the subsetting tools in `clisops`_ (see: :doc:`clisops.core.subset API <clisops:api>`) for spatial manipulation of geospatial data.
+We also recommend using the subsetting tools found in `clisops`_ (see: :doc:`clisops.core.subset API <clisops:api>`) for spatial manipulation of geospatial data.
 
-`xclim` is regularly tested against the main development branches of a handful of key base libraries (xarray, cftime, flox, pint).
-For convenience, these libraries can be installed alongside `xclim` using the following pip-installable recipe:
+`xclim` is regularly tested against the main development branches of a handful of key base libraries (`cftime`, `flox`, `pint`, `xarray`).
+For convenience, these libraries can be installed alongside `xclim` using the following `pip`-installable recipe:
 
 .. code-block:: shell
 
@@ -57,20 +56,38 @@ Or, alternatively:
 .. _clisops: https://github.com/roocs/clisops
 
 Another optional library is `SBCK`_, which provides experimental adjustment methods to extend :doc:`xclim.sdba <sdba>`.
-It can't be installed directly from pip or conda and has one complex dependency : `Eigen`_.
-Please refer to Eigen's and SBCK's docs for the recommended installation instructions. However, Eigen is available on conda, so one can do:
+`SBCK` is not installable directly from PyPI or conda-forge and has one complex dependency: `Eigen3`_.
+
+On Debian/Ubuntu, Eigen3 can be installed from via `apt`:
 
 .. code-block:: shell
 
-   $ conda install -c conda-forge eigen pybind11
-   $ pip install "git+https://github.com/yrobink/SBCK.git@master#egg=sbck&subdirectory=python"
+    $ sudo apt-get install libeigen3-dev
 
+Eigen3  is also available on conda-forge, so one can do:
 
-Finally, the function :py:indicator:`xclim.sdba.property.first_eof` makes use of `eofs`_, another optional dependency, which is available on both pip and conda.
+.. code-block:: shell
 
-.. _SBCK: https://github.com/yrobink/SBCK
-.. _Eigen: https://eigen.tuxfamily.org/index.php
+    $ conda install -c conda-forge eigen
+
+Afterwards, `SBCK can be installed from PyPI using `pip`:
+
+.. code-block:: shell
+
+    $ pip install pybind11
+    $ pip install "sbck @ git+https://github.com/yrobink/SBCK-python.git@master"
+
+Finally, the function :py:indicator:`xclim.sdba.property.first_eof` makes use of `eofs`_, another optional dependency, which is available on both pip and conda:
+
+.. code-block:: shell
+
+    $ pip install eofs
+    # or alternatively,
+    $ conda install -c conda-forge eofs
+
 .. _eofs: https://ajdawson.github.io/eofs/
+.. _SBCK: https://github.com/yrobink/SBCK
+.. _Eigen3: https://eigen.tuxfamily.org/index.php
 
 From sources
 ------------
@@ -111,8 +128,7 @@ Alternatively, you can also install a local development copy via `flit`_:
 
 Creating a Conda environment
 ----------------------------
-
-To create a conda development environment including all xclim dependencies, enter the following command from within your cloned repo:
+To create a conda environment including all of `xclim`'s optional and development dependencies, run the following command from within your cloned repo:
 
 .. code-block:: console
 
