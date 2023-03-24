@@ -37,13 +37,14 @@ dependencies = [
   "Click>=8.1",
   "dask[array]>=2.6",
   "jsonpickle",
+  "lmoments3>=1.0.5",
   "numba",
   "numpy>=1.16",
   "pandas>=0.23",
   "pint>=0.10",
   "pyyaml",
   "scikit-learn>=0.21.3",
-  "scipy>=1.2,<1.9", # see: https://github.com/Ouranosinc/xclim/issues/1142
+  "scipy>=1.2",
   "statsmodels",
   "xarray>=2022.06.0"
 ]
@@ -83,6 +84,7 @@ dev = [
   "netCDF4 >=1.4",
   "pooch",
   "sphinx",
+  "sphinx-autodoc-typehints",
   "sphinx-codeautolink",
   "sphinx-copybutton",
   "sphinx-rtd-theme >=1.0",
@@ -178,6 +180,5 @@ usefixtures = "xdoctest_namespace"
 doctest_optionflags = ["NORMALIZE_WHITESPACE", "IGNORE_EXCEPTION_DETAIL", "NUMBER", "ELLIPSIS"]
 markers = [
   "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-  "requires_docs: mark tests that can only be run with documentation present",
-  "thread_unsafe: Causes segfaults with pytest-xdist distributed testing"
+  "requires_docs: mark tests that can only be run with documentation present"
 ]

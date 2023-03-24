@@ -1,6 +1,6 @@
 # noqa: D205,D400
 """
-Options submodule
+Options Submodule
 =================
 
 Global or contextual options for xclim, similar to xarray.set_options.

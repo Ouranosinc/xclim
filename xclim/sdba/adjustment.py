@@ -6,7 +6,7 @@ Adjustment Methods
 from __future__ import annotations
 
 from inspect import signature
-from typing import Any, Mapping
+from typing import Any
 from warnings import warn
 
 import numpy as np
@@ -1109,11 +1109,11 @@ class NpdfTransform(Adjust):
         sim: xr.DataArray,
         *,
         base: TrainAdjust = QuantileDeltaMapping,
-        base_kws: Mapping[str, Any] | None = None,
+        base_kws: dict[str, Any] | None = None,
         n_escore: int = 0,
         n_iter: int = 20,
         pts_dim: str = "multivar",
-        adj_kws: Mapping[str, Any] | None = None,
+        adj_kws: dict[str, Any] | None = None,
         rot_matrices: xr.DataArray | None = None,
     ):
         if base_kws is None:

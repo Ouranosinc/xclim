@@ -22,6 +22,8 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+from pkg_resources import parse_version
+from scipy import __version__ as __scipy_version__
 from scipy.stats.mstats import mquantiles
 
 from xclim import ensembles
@@ -39,7 +41,6 @@ class TestEnsembleStats:
             ds = open_dataset(n, decode_times=False)
             ds["time"] = xr.decode_cf(ds).time
             ds_all.append(ds)
-
         ens = ensembles.create_ensemble(ds_all)
 
         assert len(ens.realization) == len(ensemble_dataset_objects["nc_files_simple"])
@@ -135,8 +136,8 @@ class TestEnsembleStats:
             ens = ensembles.create_ensemble((d1, d2))
             assert ens.time.size == 48
             np.testing.assert_equal(ens.isel(time=0), [np.nan, 0])
-
         ens = ensembles.create_ensemble((d1, d2), resample_freq="MS")
+
         assert ens.time.size == 24
         np.testing.assert_equal(ens.isel(time=0), [0, 0])
 
@@ -244,7 +245,8 @@ class TestEnsembleStats:
         for n in ensemble_dataset_objects["nc_files_simple"]:
             ds = open_dataset(n)
             ds_all.append(ds)
-        ens = ensembles.create_ensemble(ds_all)
+        with pytest.warns(FutureWarning):
+            ens = ensembles.create_ensemble(ds_all, mf_flag=False)
 
         out1 = ensembles.ensemble_mean_std_max_min(ens)
         np.testing.assert_array_equal(
@@ -640,7 +642,15 @@ def test_change_significance(
     robust_data, test, exp_chng_frac, exp_pos_frac, exp_changed, kws
 ):
     ref, fut = robust_data
-    chng_frac, pos_frac = ensembles.change_significance(fut, ref, test=test, **kws)
+
+    if test == "ttest" and parse_version(__scipy_version__) < parse_version("1.9.0"):
+        with pytest.warns(FutureWarning):
+            chng_frac, pos_frac = ensembles.change_significance(
+                fut, ref, test=test, **kws
+            )
+    else:
+        chng_frac, pos_frac = ensembles.change_significance(fut, ref, test=test, **kws)
+
     assert chng_frac.attrs["test"] == str(test)
     if isinstance(ref, xr.Dataset):
         chng_frac = chng_frac.tas

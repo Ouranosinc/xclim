@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Sequence
 
+import lmoments3.distr
 import numpy as np
 import xarray as xr
 
@@ -414,20 +415,6 @@ def get_dist(dist):
 
 def get_lm3_dist(dist):
     """Return a distribution object from `lmoments3.distr`."""
-    try:
-        # fmt: off
-        import lmoments3.distr  # pylint: disable=import-outside-toplevel
-
-        # The lmoments3 library has to be installed from the `develop` branch.
-        # pip install git+https://github.com/OpenHydrology/lmoments3.git@develop#egg=lmoments3
-        # fmt: on
-    except ModuleNotFoundError as e:
-        msg = (
-            "The lmoments3 library has to be installed from the `develop` branch. Run "
-            "'$ pip install git+https://github.com/OpenHydrology/lmoments3.git@develop#egg=lmoments3'"
-        )
-        raise ModuleNotFoundError(msg) from e
-
     if dist not in _lm3_dist_map:
         raise ValueError(
             f"The {dist} distribution is not supported by `lmoments3` or `xclim`."

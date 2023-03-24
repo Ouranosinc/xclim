@@ -198,7 +198,6 @@ class TestPWMFit:
     @pytest.mark.parametrize("dist", stats._lm3_dist_map.keys())
     def test_get_lm3_dist(self, dist):
         """Check that parameterization for lmoments3 and scipy is identical."""
-        pytest.importorskip("lmoments3")
         dc = stats.get_dist(dist)
         lm3dc = stats.get_lm3_dist(dist)
         par = self.params[dist]
@@ -210,7 +209,6 @@ class TestPWMFit:
     @pytest.mark.parametrize("use_dask", [True, False])
     def test_pwm_fit(self, dist, use_dask):
         """Test that the fitted parameters match parameters used to generate a random sample."""
-        pytest.importorskip("lmoments3")
         n = 500
         dc = stats.get_dist(dist)
         par = self.params[dist]

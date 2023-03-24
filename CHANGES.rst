@@ -1,9 +1,52 @@
-=======
-History
-=======
+=========
+Changelog
+=========
 
-0.41.0 (2023-02-28)
--------------------
+v0.42.0 (unreleased)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Two previously private functions for selecting a day of year in a time series when performing calendar conversions are now exposed. (:issue:`1305`, :pull:`1317`). New functions are:
+    * ``xclim.core.calendar.yearly_interpolated_doy``
+    * ``xclim.core.calendar.yearly_random_doy``
+* `scipy` is no longer pinned below v1.9 and `lmoments3>=1.0.5` is now a core dependency and installed by default with `pip`. (:issue:`1142`, :pull:`1171`).
+
+Bug fixes
+^^^^^^^^^
+* Warnings emitted from regular usage of some indices (``snowfall_approximation`` with ``method="brown"``, ``effective_growing_degree_days``) due to successive ``convert_units_to`` calls within their logic have been silenced. (:pull:`1319`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* The call signatures for ``xclim.ensembles.create_ensemble`` and ``xclim.ensembles._base._ens_align_dataset`` have been deprecated. Calls to these functions made with the original signature will emit warnings. Changes will become breaking in `xclim>=0.43.0`.(:issue:`1305`, :pull:`1317`). Affected variable:
+    * `mf_flag` (bool) -> `multifile` (bool)
+* The indice and indicator for ``last_spring_frost`` has been modified to use ``tasmin`` by default, reflecting its docstring and literature definition (:issue:`1324`, :pull:`1325`).
+* following indices now accept the `op` argument for modifying the threshold comparison operator (:pull:`1325`):
+    * ``snw_season_length``, ``snd_season_length``, ``growing_season_length``, ``frost_season_length``, ``frost_free_season_length``, ``rprcptot``, ``daily_pr_intensity``
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Added `xclim` to the `ouranos Zenodo community <https://zenodo.org/communities/ouranos/>`_ . (:pull:`1313`).
+* Significant documentation adjustments. (:issue:`1305`, :pull:`1308`):
+    * The CONTRIBUTING page has been moved to the top level of the repository.
+    * Information concerning the licensing of xclim is clearly indicated in README.
+    * `sphinx-autodoc-typehints` is now used to simplify call signatures generated in documentation.
+    * The SDBA module API is now found with the rest of the User API documentation.
+    * `HISTORY.rst` has been renamed `CHANGES.rst`, to follow `dask`-like conventions.
+    * Hyperlink targets for individual `indices` and `indicators` now point to their entries under `API` or `Indices`.
+    * Module-level docstrings have migrated from the library scripts directly into the documentation RestructuredText files.
+    * The documentation now includes a page explaining the reasons for developing `xclim` and a section briefly detailing similar and related projects.
+    * Markdown explanations in some Jupyter Notebooks have been edited for clarity
+* Removed `Mapping` abstract base class types in call signatures (`dict` variables were always expected). (:pull:`1308`).
+* Changes in testing setup now prevent ``test_mean_radiant_temperature`` from sometimes causing a segmentation fault. (:issue:`1303`, :pull:`1315`).
+* Addressed a formatting bug that caused `Indicators` with multiple variables returned to not be properly formatted in the documentation. (:issue:`1305`, :pull:`1317`).
+* `tox` now include `sbck` and `eofs` flags for easier testing of dependencies. CI builds now test against `sbck-python` @ master.  (:pull:`1328`).
+* `upstream` CI tests are now run on push to master, at midnight, and can also be triggered via `workflow_dispatch`. Failures from upstream build will open issues using `xarray-contrib/issue-from-pytest-log`. (:pull:`1327`).
+* Warnings from set ``_version_deprecated`` within Indicators now emit ``FutureWarning`` instead of ``DeprecationWarning`` for greater visibility. (:pull:`1319`).
+
+v0.41.0 (2023-02-28)
+--------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Éric Dupuis (:user:`coxipi`).
 
 New features and enhancements
@@ -56,8 +99,8 @@ Internal changes
 * Added `sphinxcontrib-svg2pdfconverter` for converting SVG graphics within documentation to PDF-compatible images. (:pull:`1296`).
 * README badges for supported Python versions and repository health have been added. (:issue:`1304`, :pull:`1307`).
 
-0.40.0 (2023-01-13)
--------------------
+v0.40.0 (2023-01-13)
+--------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), David Huard (:user:`huard`), Juliette Lavoie (:user:`juliettelavoie`).
 
 New features and enhancements
@@ -112,8 +155,8 @@ Internal changes
 * A notebook (``extendingxclim.ipynb``) has been updated to remove mentions of obsolete `xclim.subset` module. (:pull:`1258`).
 * Merge of sdba documentation from the module and the rst files, some cleanup and addition of a section referring to GitHub issues. (:pull:`1230`).
 
-0.39.0 (2022-11-02)
--------------------
+v0.39.0 (2022-11-02)
+--------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), Éric Dupuis (:user:`coxipi`), Travis Logan (:user:`tlogan2000`), Pascal Bourgault (:user:`aulemahal`).
 
 New features and enhancements
@@ -175,8 +218,8 @@ Internal changes
 * ``show_versions`` can now accept a list of dependencies so that other libraries can make use of this utility. (:pull:`1215`).
 * Pull Requests now are automatically tagged (``CI``, ``docs``, ``indicators``, and/or ``sdba``) according to files modified using the `GitHub Labeler Action <https://github.com/actions/labeler>`_. (:pull:`1214`).
 
-0.38.0 (2022-09-06)
--------------------
+v0.38.0 (2022-09-06)
+--------------------
 Contributors to this version: Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Abel Aoun (:user:`bzah`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Dougie Squire (:user:`dougiesquire`).
 
 New features and enhancements
@@ -249,8 +292,8 @@ Internal changes
 * Adjusted the ANUCLIM indices by removing "ANUCLIM" from their titles, modifying their docstrings, and handling `"op"` input in a more user-friendly way. (:issue:`1055`, :pull:`1169`).
 * Documentation for fire-based indices/indicators has been reorganized to reflect the new submodule structure. (:pull:`1159`).
 
-0.37.0 (2022-06-20)
--------------------
+v0.37.0 (2022-06-20)
+--------------------
 Contributors to this version: Abel Aoun (:user:`bzah`), Pascal Bourgault (:user:`aulemahal`), Trevor James Smith (:user:`Zeitsperre`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Juliette Lavoie (:user:`juliettelavoie`), Ludwig Lierhammer (:user:`ludwiglierhammer`).
 
 Announcements
