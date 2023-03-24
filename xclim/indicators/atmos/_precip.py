@@ -621,7 +621,7 @@ cold_and_wet_days = PrecipWithIndexing(
     compute=indices.cold_and_wet_days,
 )
 
-rain_season = PrecipWithIndexing(
+rain_season = Precip(
     title="Rain season",
     identifier="rain_season",
     realm="atmos",
