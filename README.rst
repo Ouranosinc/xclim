@@ -59,6 +59,11 @@ Documentation
 -------------
 The official documentation is at https://xclim.readthedocs.io/
 
+How to make the most of xclim: `Basic Usage Examples`_ and `In-Depth Examples`_.
+
+.. _Basic Usage Examples: https://xclim.readthedocs.io/en/stable/notebooks/usage.html
+.. _In-Depth Examples: https://xclim.readthedocs.io/en/stable/notebooks/index.html
+
 Contributing to xclim
 ---------------------
 xclim is in active development and is being used in production by climate services specialists around the world.
