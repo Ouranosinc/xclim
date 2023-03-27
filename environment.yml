@@ -23,6 +23,7 @@ dependencies:
     - scipy>=1.2
     - xarray>=2022.06.0
     # Extras
+    - wheel
     - eofs
     - eigen
     - pybind11
