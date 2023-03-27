@@ -23,10 +23,11 @@ dependencies:
     - scipy>=1.2
     - xarray>=2022.06.0
     # Extras
+    - clisops
     - eofs
     - eigen
+    - flox
     - pybind11
-    - wheel
   # Testing and development dependencies
     - black>=22.12
     - blackdoc
