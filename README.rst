@@ -3,9 +3,9 @@ xclim: Climate services library |logo|
 ======================================
 
 +----------------------------+-----------------------------------------------------+
-| Versions                   | |pypi| |conda|                                      |
+| Versions                   | |pypi| |conda| |versions|                           |
 +----------------------------+-----------------------------------------------------+
-| Documentation and Support  | |docs| |gitter| |versions|                          |
+| Documentation and Support  | |docs| |gitter|                                     |
 +----------------------------+-----------------------------------------------------+
 | Open Source                | |license| |fair| |fossa| |zenodo|                   |
 +----------------------------+-----------------------------------------------------+
@@ -41,6 +41,20 @@ streamflow and sea ice concentration, numerous bias-adjustment algorithms, as we
 .. _xarray: https://docs.xarray.dev/
 .. _dask: https://docs.dask.org/
 
+Quick Install
+-------------
+`xclim` can be installed from PyPI:
+
+.. code-block:: shell
+
+    $ pip install xclim
+
+or from Anaconda (conda-forge):
+
+.. code-block:: shell
+
+    $ conda install -c conda-forge xclim
+
 Documentation
 -------------
 The official documentation is at https://xclim.readthedocs.io/
@@ -65,7 +79,6 @@ If you wish to cite xclim in a research publication, we kindly ask that you use 
 License
 -------
 This is free software: you can redistribute it and/or modify it under the terms of the `Apache License 2.0`_. A copy of this license is provided in the code repository (`LICENSE`_).
-
 
 .. _Apache License 2.0: https://opensource.org/license/apache-2-0/
 .. _LICENSE: https://github.com/Ouranosinc/xclim/blob/master/LICENSE
