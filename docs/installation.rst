@@ -162,7 +162,7 @@ Alternatively, you can also install a local development copy via `flit`_:
 Creating a Conda environment
 ----------------------------
 
-To create a conda environment including all of `xclim`'s optional and development dependencies, run the following command from within your cloned repo:
+To create a conda environment including `xclim`'s dependencies and several optional libraries (notably: `clisops`, `eigen`, `eofs`, and `flox`) and development dependencies, run the following command from within your cloned repo:
 
 .. code-block:: console
 
