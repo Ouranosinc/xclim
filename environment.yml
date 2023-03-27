@@ -23,11 +23,11 @@ dependencies:
     - scipy>=1.2
     - xarray>=2022.06.0
     # Extras
-    - wheel
     - eofs
     - eigen
     - pybind11
-    # Testing and development dependencies
+    - wheel
+  # Testing and development dependencies
     - black>=22.12
     - blackdoc
     - bump2version
@@ -69,4 +69,3 @@ dependencies:
     - pip
     - pip:
         - sphinxcontrib-svg2pdfconverter
-        - sbck @ git+https://github.com/yrobink/SBCK-python.git@master

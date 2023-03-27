@@ -56,7 +56,8 @@ Or, alternatively:
 .. _clisops: https://github.com/roocs/clisops
 
 Another optional library is `SBCK`_, which provides experimental adjustment methods to extend :doc:`xclim.sdba <sdba>`.
-`SBCK` is not installable directly from PyPI or conda-forge and has one complex dependency: `Eigen3`_.
+`SBCK` is not available from PyPI nor conda-forge, and has one complex dependency: `Eigen3`_.
+As `SBCK` is compiled at installation time, a **C++** compiler (`GCC`, `Clang`, `MSVC`, etc.) must also be available.
 
 On Debian/Ubuntu, Eigen3 can be installed from via `apt`:
 
@@ -64,7 +65,7 @@ On Debian/Ubuntu, Eigen3 can be installed from via `apt`:
 
     $ sudo apt-get install libeigen3-dev
 
-Eigen3  is also available on conda-forge, so one can do:
+Eigen3 is also available on conda-forge, so, if already using Anaconda, one can do:
 
 .. code-block:: shell
 
@@ -74,7 +75,6 @@ Afterwards, `SBCK can be installed from PyPI using `pip`:
 
 .. code-block:: shell
 
-    $ pip install pybind11
     $ pip install "sbck @ git+https://github.com/yrobink/SBCK-python.git@master"
 
 Finally, the function :py:indicator:`xclim.sdba.property.first_eof` makes use of `eofs`_, another optional dependency, which is available on both pip and conda:
@@ -132,6 +132,6 @@ To create a conda environment including all of `xclim`'s optional and developmen
 
 .. code-block:: console
 
-    $ conda create -n my_xclim_env python=3.8 --file=environment.yml
+    $ conda env create -n my_xclim_env python=3.8 --file=environment.yml
     $ conda activate my_xclim_env
     (my_xclim_env) $ pip install -e .
