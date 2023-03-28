@@ -17,6 +17,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  XCLIM_TESTDATA_BRANCH: main
+
 jobs:
   upstream-dev:
     name: test-upstream-dev (Python${{ matrix.python-version }})
