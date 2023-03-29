@@ -26,7 +26,6 @@ from urllib.request import urlopen, urlretrieve
 import pandas as pd
 from xarray import Dataset
 from xarray import open_dataset as _open_dataset
-from yaml import safe_dump, safe_load
 
 _xclim_deps = [
     "xclim",
