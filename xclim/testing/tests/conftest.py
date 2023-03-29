@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import warnings
 from functools import partial
 from pathlib import Path
 
@@ -13,6 +14,7 @@ import xarray as xr
 from filelock import FileLock
 
 import xclim
+from xclim import __version__ as __xclim_version__
 from xclim.core import indicator
 from xclim.core.calendar import max_doy
 from xclim.testing.tests.data import (
@@ -25,6 +27,17 @@ from xclim.testing.utils import open_dataset as _open_dataset
 
 TESTDATA_BRANCH = os.getenv("XCLIM_TESTDATA_BRANCH", "main")
 PREFETCH_TESTING_DATA = os.getenv("XCLIM_PREFETCH_TESTING_DATA")
+
+
+if not __xclim_version__.endswith("-dev") and TESTDATA_BRANCH == "main":
+    # This is fine on GitHub Workflows and ReadTheDocs
+    if not os.getenv("CI") or not os.getenv("READTHEDOCS"):
+        warnings.warn(
+            f'`xclim` {__xclim_version__} is running tests against the "main" branch of `Ouranosinc/xclim-testdata`. '
+            "It is possible that changes in xclim-testdata may be incompatible with tests in this version. "
+            "Please be sure to check https://github.com/Ouranosinc/xclim-testdata for more information.",
+            UserWarning,
+        )
 
 
 @pytest.fixture
