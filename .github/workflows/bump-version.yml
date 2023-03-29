@@ -1,4 +1,4 @@
-name: "Bump Patch Version"
+name: Bump Patch Version
 
 on:
   push:
@@ -26,6 +26,7 @@ on:
 
 jobs:
   bump_patch_version:
+    name: Bumpversion Patch
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

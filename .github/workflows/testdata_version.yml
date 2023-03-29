@@ -1,4 +1,4 @@
-name: "Verify Testing Data"
+name: Verify Testing Data
 
 on:
   pull_request:

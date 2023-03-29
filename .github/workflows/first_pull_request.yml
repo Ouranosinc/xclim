@@ -1,3 +1,5 @@
+name: First Pull Request
+
 on:
   pull_request_target:
     types:
@@ -5,6 +7,7 @@ on:
 
 jobs:
   welcome:
+    name: Welcome
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v6
