@@ -37,7 +37,7 @@ jobs:
           comment-author: 'github-actions[bot]'
           body-includes: It appears that this PR modifies the `XCLIM_TESTDATA_BRANCH` environment variable
       - name: Compare Versions
-        if: ( ${{ env.XCLIM_TESTDATA_TAG }} != ${{ env.XCLIM_TESTDATA_BRANCH }} )
+        if: ${{ env.XCLIM_TESTDATA_TAG }} != ${{ env.XCLIM_TESTDATA_BRANCH }}
         uses: actions/github-script@v6
         with:
           script: |
