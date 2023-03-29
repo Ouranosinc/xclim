@@ -8,7 +8,6 @@ on:
       - synchronize
 #    paths:
 #      - .github/workflows/main.yml
-#      - .github/workflows/upstream.yml
 
 jobs:
   use-latest-tag:
@@ -29,6 +28,45 @@ jobs:
       - name: Gather CI Test Data Version
         run: |
           TESTDATA_CI="$(grep -E "XCLIM_TESTDATA_BRANCH" .github/workflows/main.yml | cut -d ' ' -f4)"
-          echo "TESTDATA_CI=${TESTDATA_CI}" >> $GITHUB_EN
+          echo "TESTDATA_CI=${TESTDATA_CI}" >> $GITHUB_ENV
       - name: Report Testing Data in CI
         run: echo $TESTDATA_CI
+      - name: Find Comment
+        uses: peter-evans/find-comment@v2
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: |
+            > **Warning**
+      - name: Check Versions
+        if: ( ${{ env.TAG }} == ${{ env.TESTDATA_CI }} )
+        uses: actions/github-script@v6
+        with:
+          script: |
+            core.setFailed('Configured `xclim-testdata` tag is not the latest.')
+      - name: Update Failure Comment
+        if: ${{ failure() }}
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            > **Warning**
+            > It appears that this PR modifies the `Ouranosinc/xclim-testdata` branch to a tag that is not the latest in the repository.
+
+            Please make sure to modify this value to match the latest tag before merging.
+            If this PR depends on a new testing dataset, be sure to tag a new version of `Ouranosinc/xclim-testdata` with your changes merged to `main`.
+          edit-mode: replace
+      - name: Update Success Comment
+        if: ${{ success() }}
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            > **Warning**
+            > It appears that this PR updates the `Ouranosinc/xclim-testdata` branch to the most recent tag.
+
+            No further action is required.
+          edit-mode: replace
