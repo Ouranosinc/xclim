@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import warnings
 from functools import partial
@@ -12,6 +13,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 from filelock import FileLock
+from pkg_resources import parse_version
 
 import xclim
 from xclim import __version__ as __xclim_version__
@@ -36,6 +38,14 @@ if not __xclim_version__.endswith("-dev") and TESTDATA_BRANCH == "main":
             f'`xclim` {__xclim_version__} is running tests against the "main" branch of `Ouranosinc/xclim-testdata`. '
             "It is possible that changes in xclim-testdata may be incompatible with tests in this version. "
             "Please be sure to check https://github.com/Ouranosinc/xclim-testdata for more information.",
+            UserWarning,
+        )
+
+if re.match(r"^v\d+\.\d+\.\d+", TESTDATA_BRANCH):
+    if parse_version(TESTDATA_BRANCH) > parse_version(__xclim_version__):
+        warnings.warn(
+            f"`xclim` version ({__xclim_version__}) predates `xclim-testdata` version ({TESTDATA_BRANCH}). "
+            f"It is very likely that the testing data is incompatible with this build of `xclim`.",
             UserWarning,
         )
 
