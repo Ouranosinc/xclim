@@ -1,0 +1,28 @@
+name: "Update Testing Data Tag"
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+#    paths:
+#      - .github/workflows/main.yml
+#      - .github/workflows/upstream.yml
+
+jobs:
+  use-latest-tag:
+    name: Use Latest Testing Data
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set latest testing data tag
+        run: |
+          TAG=( \
+          git -c 'versionsort.suffix=-' \
+          ls-remote --exit-code --refs --sort='version:refname' --tags https://github.com/Ouranosinc/xclim '*.*.*' \
+          | tail --lines=1 \
+          | cut --delimiter='/' --fields=3)
+          echo "TAG=${TAG}" >> $GITHUB_ENV
+      - name: Report tag
+        run: echo $TAG
