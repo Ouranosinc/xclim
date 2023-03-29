@@ -4,8 +4,7 @@
 Contributing
 ============
 
-Contributions are welcome, and they are greatly appreciated! Every little bit
-helps, and credit will always be given.
+Contributions are welcome, and they are greatly appreciated! Every little bit helps, and credit will always be given.
 
 You can contribute in many ways:
 
@@ -15,7 +14,7 @@ Types of Contributions
 Implement Features, Indices or Indicators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-xclim's structure makes it easy to create and register new user-defined indices and indicators.
+`xclim`'s structure makes it easy to create and register new user-defined indices and indicators.
 For the general implementation of indices and their wrapping into indicators, refer to
 :ref:`notebooks/extendxclim:Extending xclim`  and  :ref:`notebooks/customize:Customizing and controlling xclim`.
 
@@ -181,7 +180,7 @@ Pull Request Guidelines
 Before you submit a pull request, please follow these guidelines:
 
 1. Open an *issue* on our `GitHub repository`_ with your issue that you'd like to fix or feature that you'd like to implement.
-2. Perform the changes, commit and push them either to new a branch within Ouranosinc/xclim or to your personal fork of xclim.
+2. Perform the changes, commit and push them either to new a branch within `Ouranosinc/xclim` or to your personal fork of xclim.
 
 .. warning::
      Try to keep your contributions within the scope of the issue that you are addressing.
@@ -223,8 +222,32 @@ Before you submit a pull request, please follow these guidelines:
      ^^^^^^^^^^^^^^^^
      * Updated the contribution guidelines. (:issue:`868`, :pull:`869`).
 
-   If this is your first contribution to Ouranosinc/xclim, we ask that you also add your name to the `AUTHORS.rst <https://github.com/Ouranosinc/xclim/blob/master/AUTHORS.rst>`_,
+   If this is your first contribution to `Ouranosinc/xclim`, we ask that you also add your name to the `AUTHORS.rst <https://github.com/Ouranosinc/xclim/blob/master/AUTHORS.rst>`_,
    under *Contributors* as well as to the `.zenodo.json <https://github.com/Ouranosinc/xclim/blob/master/.zenodo.json>`_, at the end of the *creators* block.
+
+Updating Testing Data
+^^^^^^^^^^^^^^^^^^^^^
+
+If your code changes require changes to the testing data of `xclim` (i.e.: modifications to existing datasets or new datasets),
+these changes must be made via a Pull Request at https://github.com/Ouranosinc/xclim-testdata.
+
+`xclim` allows for developers to test specific branches/versions of `xclim-testdata` via the `XCLIM_TESTDATA_BRANCH` environment variable, e.g.::
+
+    $ export XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data"
+    $ pytest xclim
+
+This will ensure that tests load the testing data from this branch before running.
+
+If you wish to test a specific branch using GitHub CI, this can be set in `.github/workflows/main.yml`:
+
+.. code-block:: yaml
+
+    env:
+      XCLIM_TESTDATA_BRANCH: my_new_branch_of_testing_data
+
+.. warning::
+    In order for a Pull Request to be allowed to merge to main development branch, this variable must match the latest tagged commit name on `Ouranosinc/xclim-testdata`.
+    We suggest merging changed testing data first, tagging a new version of `xclim-testdata`, then re-running tests on your Pull Request at `Ouranosinc/xclim` with the newest tag.
 
 Tips
 ----
