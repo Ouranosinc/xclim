@@ -14,7 +14,7 @@ from scipy.stats import gamma
 
 from xclim.sdba.utils import equally_spaced_nodes
 
-__all__ = ["series", "cannon_2015_rvs", "cannon_2015_dist"]
+__all__ = ["cannon_2015_dist", "cannon_2015_rvs", "nancov", "series"]
 
 
 def series(values, name, start="2000-01-01"):
@@ -40,6 +40,8 @@ def series(values, name, start="2000-01-01"):
             "units": "kg m-2 s-1",
             "kind": "*",
         }
+    else:
+        raise ValueError(f"Name `{name}` not supported.")
 
     return xr.DataArray(
         values,
