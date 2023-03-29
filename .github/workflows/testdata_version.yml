@@ -26,3 +26,9 @@ jobs:
           echo "TAG=${TAG}" >> $GITHUB_ENV
       - name: Report tag
         run: echo $TAG
+      - name: Gather CI Test Data Version
+        run: |
+          TESTDATA_CI="$(grep -E "XCLIM_TESTDATA_BRANCH" .github/workflows/main.yml | cut -d ' ' -f4)"
+          echo "TESTDATA_CI=${TESTDATA_CI}" >> $GITHUB_EN
+      - name: Report Testing Data in CI
+        run: echo $TESTDATA_CI
