@@ -1663,7 +1663,6 @@ def hot_spell_max_length(
         cond,
         resample_before_rl,
         rl.longest_run,
-        window=1,
         freq=freq,
     )
     out = max_l.where(max_l >= window, 0)
@@ -2292,7 +2291,6 @@ def maximum_consecutive_frost_days(
         group,
         resample_before_rl,
         rl.longest_run,
-        window=1,
         freq=freq,
     )
     return to_agg_units(out, tasmin, "count")
@@ -2347,7 +2345,6 @@ def maximum_consecutive_dry_days(
         group,
         resample_before_rl,
         rl.longest_run,
-        window=1,
         freq=freq,
     )
     return to_agg_units(out, pr, "count")
@@ -2406,7 +2403,6 @@ def maximum_consecutive_frost_free_days(
         group,
         resample_before_rl,
         rl.longest_run,
-        window=1,
         freq=freq,
     )
     return to_agg_units(out, tasmin, "count")
@@ -2461,7 +2457,6 @@ def maximum_consecutive_tx_days(
         group,
         resample_before_rl,
         rl.longest_run,
-        window=1,
         freq=freq,
     )
     return to_agg_units(out, tasmax, "count")
