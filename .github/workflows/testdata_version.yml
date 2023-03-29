@@ -37,7 +37,8 @@ jobs:
           comment-author: 'github-actions[bot]'
           body-includes: It appears that this PR modifies the `Ouranosinc/xclim-testdata` branch
       - name: Compare Versions
-        if: ( ${{ env.XCLIM_TESTDATA_TAG }} == ${{ env.XCLIM_TESTDATA_BRANCH }} )
+#        if: ( ${{ env.XCLIM_TESTDATA_TAG }} != ${{ env.XCLIM_TESTDATA_BRANCH }} )
+        if:  ${{ failure() }}
         uses: actions/github-script@v6
         with:
           script: |
