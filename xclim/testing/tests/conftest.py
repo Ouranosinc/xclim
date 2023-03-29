@@ -33,7 +33,7 @@ PREFETCH_TESTING_DATA = os.getenv("XCLIM_PREFETCH_TESTING_DATA")
 
 if not __xclim_version__.endswith("-dev") and TESTDATA_BRANCH == "main":
     # This is fine on GitHub Workflows and ReadTheDocs
-    if not os.getenv("CI") or not os.getenv("READTHEDOCS"):
+    if not os.getenv("CI") and not os.getenv("READTHEDOCS"):
         warnings.warn(
             f'`xclim` {__xclim_version__} is running tests against the "main" branch of `Ouranosinc/xclim-testdata`. '
             "It is possible that changes in xclim-testdata may be incompatible with tests in this version. "
