@@ -83,7 +83,6 @@ dev = [
   "nc-time-axis",
   "netCDF4 >=1.4",
   "pooch",
-  "seaborn",
   "sphinx",
   "sphinx-autodoc-typehints",
   "sphinx-codeautolink",
