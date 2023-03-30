@@ -20,7 +20,7 @@ on:
       - submitted
 
 env:
-  XCLIM_TESTDATA_BRANCH: main
+  XCLIM_TESTDATA_BRANCH: v0.41.0
 
 jobs:
   black:
