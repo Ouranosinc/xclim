@@ -27,6 +27,30 @@ except ImportError:
     MPL_INSTALLED = False
 
 
+def make_criteria(ds: xarray.Dataset | xarray.DataArray):
+    """Reshapes the input into a criteria 2D DataArray.
+
+    The reshaping preserves the "realization" dimension but stacks all other
+    dimensions and variables into a new "criteria" dimension, as expected by
+    functions :py:func:`xclim.ensembles._reduce.kkz_reduce_ensemble`
+    and :py:func:`xclim.ensembles._reduce.kmeans_reduce_ensemble`.
+
+    Parameters
+    ----------
+    ds : Dataset or DataArray
+      Must at least have a "realization" dimension. All values are considered independent "criterion" for the ensemble reduction.
+      If a Dataset, variables are concatenated before stacking the dimensions.
+
+    Returns
+    -------
+    crit : DataArray
+      Same data, reshaped.
+    """
+    if isinstance(ds, xarray.Dataset):
+        ds = ds.to_array("variables")
+    return ds.stack(criteria=set(ds.dims) - {"realization"}).rename("criteria")
+
+
 def kkz_reduce_ensemble(
     data: xarray.DataArray,
     num_select: int,
