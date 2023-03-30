@@ -406,7 +406,7 @@ def _boundary_run(
     freq: str | None,
     coord: str | bool | None,
     ufunc_1dim: str | bool,
-    mode: str,
+    position: str,
 ) -> xr.DataArray:  # noqa: D202
     """Return the index of the first item of the first run of at least a given length.
 
@@ -430,7 +430,7 @@ def _boundary_run(
         usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
         for DataArray with a small number of grid points.
         Ignored when `window=1`. It can be modified globally through the "run_length_ufunc" global option.
-    mode : {"first", "last"}
+    position : {"first", "last"}
         Determines if the algorithm finds the "first" or "last" run
 
     Returns
@@ -454,13 +454,13 @@ def _boundary_run(
         return out
 
     # general method to get indices (or coords) of first run
-    def find_boundary_run(runs, mode):
-        if mode == "last":
+    def find_boundary_run(runs, position):
+        if position == "last":
             runs = runs[{dim: slice(None, None, -1)}]
         dmax_ind = runs.argmax(dim=dim)
         # If there are no runs, dmax_ind will be 0: We must replace this with NaN
         out = dmax_ind.where(dmax_ind != runs.argmin(dim=dim))
-        if mode == "last":
+        if position == "last":
             out = runs[dim].size - out - 1
             runs = runs[{dim: slice(None, None, -1)}]  # not sure if this is necesary
         out = coord_transform(out, runs)
@@ -471,22 +471,27 @@ def _boundary_run(
     da = da.fillna(0)  # We expect a boolean array, but there could be NaNs nonetheless
     if window == 1:
         if freq is not None:
-            out = da.resample({dim: freq}).map(find_boundary_run, mode=mode)
+            out = da.resample({dim: freq}).map(find_boundary_run, position=position)
         else:
-            out = find_boundary_run(da, mode)
+            out = find_boundary_run(da, position)
 
-    # not working for last
     elif ufunc_1dim:
+        if position == "last":
+            da = da[{dim: slice(None, None, -1)}]
         out = first_run_ufunc(x=da, window=window, dim=dim)
+        if position == "last" and not coord:
+            out = da[dim].size - out - 1
+            da = da[{dim: slice(None, None, -1)}]
         out = coord_transform(out, da)
 
     else:
-        d = rle(da, dim=dim)
+        # for "first" run, return "first" element in the run (and conversely for "last" run)
+        d = rle(da, dim=dim, index=position)
         d = xr.where(d >= window, 1, 0)
         if freq is not None:
-            out = d.resample({dim: freq}).map(find_boundary_run, mode=mode)
+            out = d.resample({dim: freq}).map(find_boundary_run, position=position)
         else:
-            out = find_boundary_run(d, mode)
+            out = find_boundary_run(d, position)
 
     return out
 
@@ -535,7 +540,7 @@ def first_run(
         freq=freq,
         coord=coord,
         ufunc_1dim=ufunc_1dim,
-        mode="first",
+        position="first",
     )
     return out
 
@@ -584,7 +589,7 @@ def last_run(
         freq=freq,
         coord=coord,
         ufunc_1dim=ufunc_1dim,
-        mode="last",
+        position="last",
     )
     # check if this is needed now
     # if not coord:
