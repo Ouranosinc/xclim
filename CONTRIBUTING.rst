@@ -226,7 +226,7 @@ Before you submit a pull request, please follow these guidelines:
    under *Contributors* as well as to the `.zenodo.json <https://github.com/Ouranosinc/xclim/blob/master/.zenodo.json>`_, at the end of the *creators* block.
 
 Updating Testing Data
-^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~
 
 If your code changes require changes to the testing data of `xclim` (i.e.: modifications to existing datasets or new datasets),
 these changes must be made via a Pull Request at https://github.com/Ouranosinc/xclim-testdata.
