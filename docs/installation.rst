@@ -41,7 +41,7 @@ Speedups and Helper Libraries
 To improve performance of `xclim`, we highly recommend you also install `flox`_ (see: :doc:`flox API <flox:api>`).
 This package seamlessly integrates into `xarray` and significantly improves the performance of the grouping and resampling algorithms, especially when using `dask` on large datasets.
 
-For grid subsetting, we also recommend using the tools found in `clisops`_ (see: :doc:`clisops.core.subset API <clisops:api>`) for spatial manipulation of geospatial data. `clisops` began as a component of `xclim` and is designed to alongside `xclim` and the `Pangeo`_ stack (`xarray`, `dask`, `jupyter`). In order to install `clisops`, the `GDAL`_ system libraries must be available.
+For grid subsetting, we also recommend using the tools found in `clisops`_ (see: :doc:`clisops.core.subset API <clisops:api>`) for spatial manipulation of geospatial data. `clisops` began as a component of `xclim` and is designed to work alongside `xclim` and the `Pangeo`_ stack (`xarray`, `dask`, `jupyter`). In order to install `clisops`, the `GDAL`_ system libraries must be available.
 
 On Debian/Ubuntu, `GDAL` can be installed via `apt`:
 
