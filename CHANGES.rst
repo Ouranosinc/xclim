@@ -4,7 +4,7 @@ Changelog
 
 v0.42.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user:`juliettelavoie`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user:`juliettelavoie`), Éric Dupuis (:user:`coxipi`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -13,6 +13,7 @@ New features and enhancements
     * ``xclim.core.calendar.yearly_random_doy``
 * `scipy` is no longer pinned below v1.9 and `lmoments3>=1.0.5` is now a core dependency and installed by default with `pip`. (:issue:`1142`, :pull:`1171`).
 * Fix bug on number of bins in ``xclim.sdba.propeties.spatial_correlogram``. (:pull:`1336`)
+* Add `resample_before_rl` argument to control when resampling happens in `maximum_consecutive_{frost|frost_free|dry|tx}_days` and in heat indices (in `_threshold`)  (:issue:`1329`, :pull:`1331`)
 
 Bug fixes
 ^^^^^^^^^
@@ -26,6 +27,10 @@ Breaking changes
 * The indice and indicator for ``last_spring_frost`` has been modified to use ``tasmin`` by default, reflecting its docstring and literature definition (:issue:`1324`, :pull:`1325`).
 * following indices now accept the `op` argument for modifying the threshold comparison operator (:pull:`1325`):
     * ``snw_season_length``, ``snd_season_length``, ``growing_season_length``, ``frost_season_length``, ``frost_free_season_length``, ``rprcptot``, ``daily_pr_intensity``
+
+Bug fixes
+^^^^^^^^^
+* ``xclim.indices.run_length.last_run`` nows works when ``freq`` is not ``None``. (:issue:`1321`, :pull:`1323`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
