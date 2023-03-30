@@ -54,7 +54,6 @@ dependencies:
     - pytest
     - pytest-cov
     - pytest-xdist>=3.2
-    - seaborn
     - sphinx
     - sphinx-autodoc-typehints
     - sphinx-codeautolink
