@@ -2,8 +2,8 @@
 Changelog
 =========
 
-0.42.0 (unreleased)
--------------------
+v0.42.0 (unreleased)
+--------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
 
 New features and enhancements
