@@ -86,8 +86,6 @@ def resample_and_rl(
 ) -> xr.DataArray | xr.Dataset:
     """Wrap run length algorithms to control if resampling occurs before or after the algorithms.
 
-    If resample_before_rl is 'from_context', the parameter is read from xclim's global (or context) options.
-
     Parameters
     ----------
     da: xr.DataArray
