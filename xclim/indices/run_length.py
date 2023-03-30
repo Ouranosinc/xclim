@@ -418,7 +418,7 @@ def _boundary_run(
         Minimum duration of consecutive run to accumulate values.
         When equal to 1, an optimized version of the algorithm is used.
     dim : str
-      Dimension along which to calculate consecutive run (default: 'time').
+      Dimension along which to calculate consecutive run.
     freq : str
       Resampling frequency.
     coord : Optional[str]
