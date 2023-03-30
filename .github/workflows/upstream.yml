@@ -1,4 +1,4 @@
-name: xclim Upstream dependencies
+name: Test Upstream Dependencies
 on:
   push:
     branches:
