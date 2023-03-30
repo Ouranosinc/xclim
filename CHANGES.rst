@@ -30,7 +30,7 @@ Breaking changes
 
 Bug fixes
 ^^^^^^^^^
-* `last_run` nows works when `freq` is not `None` (:issue:`1321`, :pull:`1323`).
+* ``xclim.indices.run_length.last_run`` nows works when ``freq`` is not ``None``. (:issue:`1321`, :pull:`1323`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
