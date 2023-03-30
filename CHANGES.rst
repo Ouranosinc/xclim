@@ -32,6 +32,10 @@ Breaking changes
 * following indices now accept the `op` argument for modifying the threshold comparison operator (:pull:`1325`):
     * ``snw_season_length``, ``snd_season_length``, ``growing_season_length``, ``frost_season_length``, ``frost_free_season_length``, ``rprcptot``, ``daily_pr_intensity``
 
+Bug fixes
+^^^^^^^^^
+* ``xclim.indices.run_length.last_run`` nows works when ``freq`` is not ``None``. (:issue:`1321`, :pull:`1323`).
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Added `xclim` to the `ouranos Zenodo community <https://zenodo.org/communities/ouranos/>`_ . (:pull:`1313`).
