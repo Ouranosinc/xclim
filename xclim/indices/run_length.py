@@ -462,7 +462,7 @@ def _boundary_run(
         out = dmax_ind.where(dmax_ind != runs.argmin(dim=dim))
         if position == "last":
             out = runs[dim].size - out - 1
-            runs = runs[{dim: slice(None, None, -1)}]  # not sure if this is necesary
+            runs = runs[{dim: slice(None, None, -1)}]
         out = coord_transform(out, runs)
         return out
 
@@ -591,9 +591,6 @@ def last_run(
         ufunc_1dim=ufunc_1dim,
         position="last",
     )
-    # check if this is needed now
-    # if not coord:
-    #     return da[dim].size - out - 1
     return out
 
 
