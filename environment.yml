@@ -25,9 +25,7 @@ dependencies:
     # Extras
     - clisops
     - eofs
-    - eigen
     - flox
-    - pybind11
   # Testing and development dependencies
     - black>=22.12
     - blackdoc
