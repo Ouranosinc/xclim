@@ -327,10 +327,11 @@ When publishing on GitHub, maintainers will need to generate the release notes f
     # For ReStructuredText format (offered for convenience):
     $ xclim release_notes -r
 
-When publishing to GitHub, you will still need to replace subsection headers in the Markdown (`^^^^` -> `###`) and the history published should not extend past the changes for the current version. This behaviour may eventually change.
+.. note::
+    The changelog should not extend past those entries relevant for the current version.
 
 .. warning::
-    Be warned that a published package version on PyPI can never be overwritten. Be sure to verify that the package published at https://test.pypi.org/project/xclim/ matches expectations before publishing a version on GitHub.
+    A published version on PyPI can never be overwritten. Be sure to verify that the package published at https://test.pypi.org/project/xclim/ matches expectations before publishing a version on GitHub.
 
 The Manual Approach
 ~~~~~~~~~~~~~~~~~~~

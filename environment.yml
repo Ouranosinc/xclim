@@ -23,11 +23,11 @@ dependencies:
     - scipy>=1.2
     - xarray>=2022.06.0
     # Extras
-    - wheel
+    - clisops
     - eofs
-    - eigen
-    - pybind11
-    # Testing and development dependencies
+    - flox
+    - pytest-json-report  # Added due to a packaging bug with ESMPy. See: https://github.com/esmf-org/esmf/issues/115
+  # Testing and development dependencies
     - black>=22.12
     - blackdoc
     - bump2version
@@ -69,4 +69,3 @@ dependencies:
     - pip
     - pip:
         - sphinxcontrib-svg2pdfconverter
-        - sbck @ git+https://github.com/yrobink/SBCK-python.git@master
