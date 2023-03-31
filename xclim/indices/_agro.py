@@ -1514,17 +1514,20 @@ def effective_growing_degree_days(
     tasmax = convert_units_to(tasmax, "degC")
     tasmin = convert_units_to(tasmin, "degC")
     thresh = convert_units_to(thresh, "degC")
+    thresh_with_units = f"{thresh} degC"
 
     tas = (tasmin + tasmax) / 2
     tas.attrs["units"] = "degC"
 
     if method.lower() == "bootsma":
-        fda = first_day_temperature_above(tas=tas, thresh=thresh, window=1, freq=freq)
+        fda = first_day_temperature_above(
+            tas=tas, thresh=thresh_with_units, window=1, freq=freq
+        )
         start = fda + 10
     elif method.lower() == "qian":
         tas_weighted = qian_weighted_mean_average(tas=tas, dim=dim)
         start = first_day_temperature_above(
-            tas_weighted, thresh=thresh, window=5, freq=freq
+            tas_weighted, thresh=thresh_with_units, window=5, freq=freq
         )
     else:
         raise NotImplementedError(f"Method: {method}.")
