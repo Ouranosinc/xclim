@@ -1,4 +1,4 @@
-name: "Bump Patch Version"
+name: Bump Patch Version
 
 on:
   push:
@@ -26,7 +26,8 @@ on:
 
 jobs:
   bump_patch_version:
-    runs-on: ubuntu-22.04
+    name: Bumpversion Patch
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
         with:
@@ -39,12 +40,15 @@ jobs:
           git config --local user.email "bumpversion[bot]@ouranos.ca"
           git config --local user.name "bumpversion[bot]"
       - name: Current Version
-        run: echo "current_version=$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
+        run: |
+          CURRENT_VERSION="$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
+          echo "current_version=${CURRENT_VERSION}"
       - name: Bump Patch Version
         run: |
           pip install bump2version
           echo "running `bump2version patch`"
-          echo "new_version=$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
+          NEW_VERSION="$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
+          echo "new_version=${NEW_VERSION}"
       - name: Push Changes
         uses: ad-m/github-push-action@master
         with:

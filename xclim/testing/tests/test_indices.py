@@ -1142,6 +1142,23 @@ class TestHotSpellFrequency:
         )
         np.testing.assert_allclose(hsf.values, expected)
 
+    @pytest.mark.parametrize(
+        "resample_before_rl,expected",
+        [
+            (True, 1),
+            (False, 0),
+        ],
+    )
+    def test_resampling_order(self, tasmax_series, resample_before_rl, expected):
+        a = np.zeros(365)
+        a[5:35] = 31
+        tx = tasmax_series(a + K2C)
+
+        hsf = xci.hot_spell_frequency(
+            tx, resample_before_rl=resample_before_rl, freq="MS"
+        )
+        assert hsf[1] == expected
+
 
 class TestHotSpellMaxLength:
     @pytest.mark.parametrize(
@@ -1387,6 +1404,22 @@ class TestMaximumConsecutiveDryDays:
         pr = pr_series(a)
         out = xci.maximum_consecutive_dry_days(pr, freq="M")
         assert out[0] == 10
+
+    @pytest.mark.parametrize(
+        "resample_before_rl,expected",
+        [
+            (True, 26),
+            (False, 30),
+        ],
+    )
+    def test_resampling_order(self, pr_series, resample_before_rl, expected):
+        a = np.zeros(365) + 10
+        a[5:35] = 0
+        pr = pr_series(a)
+        out = xci.maximum_consecutive_dry_days(
+            pr, freq="M", resample_before_rl=resample_before_rl
+        )
+        assert out[0] == expected
 
 
 class TestMaximumConsecutiveTxDays:

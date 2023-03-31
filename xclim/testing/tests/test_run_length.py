@@ -320,6 +320,30 @@ class TestFirstRun:
         out = rl.first_run(runs, window=1, dim="time", coord=coord)
         np.testing.assert_array_equal(out.load(), expected)
 
+    @pytest.mark.parametrize("use_dask", [True, False])
+    @pytest.mark.parametrize(
+        "coord,expected",
+        [
+            (False, [0, 0]),
+            (True, [np.datetime64("2000-01-01"), np.datetime64("2000-02-01")]),
+            ("dayofyear", [1, 32]),
+        ],
+    )
+    def test_resample_after(self, tas_series, coord, expected, use_dask):
+        t = np.zeros(60)
+        t[0] = 2
+        t[30:40] = 2
+        tas = tas_series(t, start="2000-01-01")
+        runs = xr.concat((tas, tas), dim="dim0")
+
+        if use_dask:
+            runs = runs.chunk({"time": -1 if ufunc else 10, "dim0": 1})
+
+        out = rl.first_run(
+            runs, window=1, dim="time", coord=coord, freq="MS", ufunc_1dim=False
+        )
+        np.testing.assert_array_equal(out.load(), np.array([expected, expected]))
+
 
 class TestWindowedRunEvents:
     @pytest.mark.parametrize("index", ["first", "last"])
@@ -360,6 +384,30 @@ class TestLastRun:
 
         out = rl.last_run(runs, window=1, dim="time", coord=coord, ufunc_1dim=ufunc)
         np.testing.assert_array_equal(out.load(), expected)
+
+    @pytest.mark.parametrize("use_dask", [True, False])
+    @pytest.mark.parametrize(
+        "coord,expected",
+        [
+            (False, [30, 8]),
+            (True, [np.datetime64("2000-01-31"), np.datetime64("2000-02-09")]),
+            ("dayofyear", [31, 40]),
+        ],
+    )
+    def test_resample_after(self, tas_series, coord, expected, use_dask):
+        t = np.zeros(60)
+        t[0] = 2
+        t[30:40] = 2
+        tas = tas_series(t, start="2000-01-01")
+        runs = xr.concat((tas, tas), dim="dim0")
+
+        if use_dask:
+            runs = runs.chunk({"time": -1 if ufunc else 10, "dim0": 1})
+
+        out = rl.last_run(
+            runs, window=1, dim="time", coord=coord, freq="MS", ufunc_1dim=False
+        )
+        np.testing.assert_array_equal(out.load(), np.array([expected, expected]))
 
 
 def test_run_bounds_synthetic():
