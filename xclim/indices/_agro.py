@@ -1063,6 +1063,7 @@ def rain_season(
     out = pram.resample(time=freq).map(_get_rain_season)
     for outd in out.values():
         outd.attrs["units"] = ""
+    out["rain_season_length"].attrs["units"] = "days"
     return out["rain_season_start"], out["rain_season_end"], out["rain_season_length"]
 
 
