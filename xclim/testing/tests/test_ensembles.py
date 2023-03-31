@@ -508,6 +508,29 @@ class TestEnsembleReduction:
             assert sel1 == sel2
             assert sel1 == sel3
 
+    def test_make_criteria(self, tas_series):
+        ds = xr.Dataset(
+            data_vars={
+                "var_a": tas_series([0, 1, 2, 3]),
+                "var_b": tas_series([0, 1, 2, 3]).expand_dims(lat=[45, 47]),
+                "var_c": tas_series([0, 1, 2, 3]),
+            }
+        ).expand_dims(realization=["A", "B", "C"])
+
+        crit = ensembles.make_criteria(ds)
+        assert crit.dims == ("realization", "criteria")
+        assert crit.criteria.size == 16
+        uncrit = crit.unstack("criteria").to_dataset("variables")
+        assert set(uncrit.data_vars.keys()) == {"var_a", "var_b", "var_c"}
+        assert uncrit.var_a.dims == ("realization", "lat", "time")
+
+        crit = ensembles.make_criteria(ds.var_b)
+        assert crit.dims == ("realization", "criteria")
+        assert crit.criteria.size == 8
+        uncrit = crit.unstack("criteria")
+        assert ds.var_b.equals(uncrit)
+        assert uncrit.dims == ("realization", "lat", "time")
+
 
 # ## Tests for Robustness ##
 @pytest.fixture(params=[True, False])
