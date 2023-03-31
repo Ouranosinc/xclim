@@ -303,7 +303,7 @@ class TestProperties:
             open_dataset("sdba/CanESM2_1950-2100.nc")
             .sel(time=slice("1950", "1952"), location="Vancouver")
             .pr
-        )
+        ).load()
 
         test = sdba.properties.relative_frequency(sim, thresh="25 mm d-1", op=">=")
         testjan = (
