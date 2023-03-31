@@ -44,6 +44,8 @@ jobs:
           micromamba-version: 'latest'
           environment-file: environment.yml
           extra-specs: |
+            eigen
+            pybind11
             python=${{ matrix.python-version }}
             pytest-reportlog
       - name: Conda and Mamba versions
