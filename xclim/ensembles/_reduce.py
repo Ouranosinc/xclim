@@ -39,13 +39,13 @@ def make_criteria(ds: xarray.Dataset | xarray.DataArray):
     Parameters
     ----------
     ds : Dataset or DataArray
-      Must at least have a "realization" dimension. All values are considered independent "criterion" for the ensemble reduction.
-      If a Dataset, variables may have different sizes, but all must include the "realization" dimension.
+        Must at least have a "realization" dimension. All values are considered independent "criterion" for the ensemble reduction.
+        If a Dataset, variables may have different sizes, but all must include the "realization" dimension.
 
     Returns
     -------
     crit : DataArray
-      Same data, reshaped. Old coordinates (and variables) are available as a multiindex.
+        Same data, reshaped. Old coordinates (and variables) are available as a multiindex.
 
     Notes
     -----
