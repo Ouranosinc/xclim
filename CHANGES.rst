@@ -56,6 +56,8 @@ Internal changes
 * `tox` now include `sbck` and `eofs` flags for easier testing of dependencies. CI builds now test against `sbck-python` @ master.  (:pull:`1328`).
 * `upstream` CI tests are now run on push to master, at midnight, and can also be triggered via `workflow_dispatch`. Failures from upstream build will open issues using `xarray-contrib/issue-from-pytest-log`. (:pull:`1327`).
 * Warnings from set ``_version_deprecated`` within Indicators now emit ``FutureWarning`` instead of ``DeprecationWarning`` for greater visibility. (:pull:`1319`).
+* The `Graphics` section of the `Usage` notebook has been expanded upon while grammar and spelling mistakes within the notebook-generated documentation have been reduced. (:issue:`1335`, :pull:`1338`, suggested from `PyOpenSci Software Review <https://github.com/pyOpenSci/software-review/issues/73>`_).
+* The Contributing guide now lists three separate subsections to help users understand the gains from optional dependencies. (:issue:`1335`, :pull:`1338`, suggested from `PyOpenSci Software Review <https://github.com/pyOpenSci/software-review/issues/73>`_).
 
 v0.41.0 (2023-02-28)
 --------------------

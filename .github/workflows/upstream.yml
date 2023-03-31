@@ -50,9 +50,10 @@ jobs:
         run: |
           conda --version
           echo "micromamba: $(micromamba --version)"
-      - name: Install upstream versions
+      - name: Install upstream versions and SBCK
         run: |
           python -m pip install -r requirements_upstream.txt
+          python -m pip install "sbck @ git+https://github.com/yrobink/SBCK-python.git@master"
       - name: Install xclim
         run: |
           python -m pip install --no-user --no-deps .
