@@ -51,8 +51,10 @@ def make_criteria(ds: xarray.Dataset | xarray.DataArray):
     -----
     One can get back to the original dataset with
 
-    >>> crit = make_criteria(ds)
-    >>> ds2 = crit.unstack("criteria").to_dataset("variables")
+    .. code-block:: python
+    
+        crit = make_criteria(ds)
+        ds2 = crit.unstack("criteria").to_dataset("variables")
 
     `ds2` will have all variables with the same dimensions, so if the original dataset had variables with different dimensions, the
     added dimensions are filled with NaNs. The `to_dataset` part can be skipped if the original input was a DataArray.
