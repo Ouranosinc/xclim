@@ -4,11 +4,11 @@ Changelog
 
 v0.42.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user:`juliettelavoie`), Éric Dupuis (:user:`coxipi`).
 
-New indicators
-^^^^^^^^^^^^^^
-* Rain season index implemented (default parameters for West Africa). (:issue:`842`, :pull:`1256`)
+Announcements
+^^^^^^^^^^^^^
+* `xclim` now supports testing against tagged versions of `Ouranosinc/xclim-testdata <https://github.com/Ouranosinc/xclim-testdata>`_ in order to support older versions of `xclim`. For more information, see the `Contributing Guide <https://xclim.readthedocs.io/en/stable/contributing.html>`_ for more details. (:pull:`1339`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -16,10 +16,17 @@ New features and enhancements
     * ``xclim.core.calendar.yearly_interpolated_doy``
     * ``xclim.core.calendar.yearly_random_doy``
 * `scipy` is no longer pinned below v1.9 and `lmoments3>=1.0.5` is now a core dependency and installed by default with `pip`. (:issue:`1142`, :pull:`1171`).
+* Fix bug on number of bins in ``xclim.sdba.propeties.spatial_correlogram``. (:pull:`1336`)
+* Add `resample_before_rl` argument to control when resampling happens in `maximum_consecutive_{frost|frost_free|dry|tx}_days` and in heat indices (in `_threshold`)  (:issue:`1329`, :pull:`1331`)
+
+New indicators
+^^^^^^^^^^^^^^
+* Rain season index implemented (default parameters for West Africa). (:issue:`842`, :pull:`1256`)
 
 Bug fixes
 ^^^^^^^^^
 * Warnings emitted from regular usage of some indices (``snowfall_approximation`` with ``method="brown"``, ``effective_growing_degree_days``) due to successive ``convert_units_to`` calls within their logic have been silenced. (:pull:`1319`).
+* Fixed a bug that prevented the use of the `sdba_encode_cf` option with xarray 2023.3.0 (:pull:`1333`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -28,6 +35,10 @@ Breaking changes
 * The indice and indicator for ``last_spring_frost`` has been modified to use ``tasmin`` by default, reflecting its docstring and literature definition (:issue:`1324`, :pull:`1325`).
 * following indices now accept the `op` argument for modifying the threshold comparison operator (:pull:`1325`):
     * ``snw_season_length``, ``snd_season_length``, ``growing_season_length``, ``frost_season_length``, ``frost_free_season_length``, ``rprcptot``, ``daily_pr_intensity``
+
+Bug fixes
+^^^^^^^^^
+* ``xclim.indices.run_length.last_run`` nows works when ``freq`` is not ``None``. (:issue:`1321`, :pull:`1323`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^

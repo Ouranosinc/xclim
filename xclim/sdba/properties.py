@@ -999,7 +999,7 @@ def _spatial_correlogram(
         output_dtypes=[float],
         dask_gufunc_kwargs={
             "allow_rechunk": True,
-            "output_sizes": {"distance_bins": 100},
+            "output_sizes": {"distance_bins": bins},
         },
     )
     binned = (
