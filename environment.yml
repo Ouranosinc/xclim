@@ -26,6 +26,7 @@ dependencies:
     - clisops
     - eofs
     - flox
+    - pytest-json-report  # Added due to a packaging bug with ESMPy. See: https://github.com/esmf-org/esmf/issues/115
   # Testing and development dependencies
     - black>=22.12
     - blackdoc
