@@ -147,13 +147,9 @@ def test_xclim_translations(locale, official_indicators):
         for attrs, transattrs in zip(indcls.cf_attrs, trans["cf_attrs"]):
             if {"long_name", "description"} - set(transattrs.keys()):
                 is_complete = False
-                print({"long_name", "description"} - set(transattrs.keys()))
 
         if not is_complete:
             incomplete.append(indname)
-    import xarray as xr
-
-    # xr.DataArray(tempo).to_netcdf("/home/eridup1/test.nc")
     if len(untranslated) > 0 or len(incomplete) > 0:
         pytest.fail(
             f"{len(untranslated)} indicators are missing translations"
