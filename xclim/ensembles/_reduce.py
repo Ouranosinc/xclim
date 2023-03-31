@@ -52,7 +52,7 @@ def make_criteria(ds: xarray.Dataset | xarray.DataArray):
     One can get back to the original dataset with
 
     .. code-block:: python
-    
+
         crit = make_criteria(ds)
         ds2 = crit.unstack("criteria").to_dataset("variables")
 
