@@ -1176,11 +1176,6 @@
     "title": "Température radiative moyenne",
     "abstract": "La température moyenne des rayonnements solaires et thermiques incidents sur un corps à l'extérieur."
   },
-  "RAIN_SEASON": {
-    "description": "Saison des pluies",
-    "title": "Saison des pluies",
-    "abstract": "La saison des pluies commence lorsque deux conditions sont réunies : 1) Il doit y avoir un certain nombre de jours humides avec précipitations supérieures ou égales à un seuil donné ; 2) Il doit y avoir une autre séquence suivante, où, pendant une période de temps donnée, il n'y a pas de séquence sèche (c'est-à-dire un certain nombre de jours où les précipitations sont inférieures ou égales à un certain seuil). La saison des pluies se termine lorsqu'il y a une séquence sèche"
-  },
   "RAIN_SEASON.start": {
     "long_name": "Début de la saison des pluies",
     "description": "La saison débute sous deux conditions: i) une séquence de jours {window_wet_start} accumulant {thresh_wet_start} de précipitations ii) suivie d'une séquence de jours {window_not_dry_start} sans séquence sèche, c'est-à-dire une séquence de jours {window_dry_start} avec au moins {thresh_dry_start} {method_dry_start}. Le début de la saison correspond au dernier jour de la séquence i) et doit  être compris entre le {date_min_start} et le {date_max_start}. "

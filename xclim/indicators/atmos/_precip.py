@@ -640,7 +640,7 @@ rain_season = Precip(
         "with at least {thresh_dry_end} {method_dry_end}. It must be between {date_min_end} and {date_max_end}. ",
         "Number of steps of the original series in the season, between 'start' and 'end'.",
     ],
-    units=["", "", "days"],
+    units=["", "", "day"],
     abstract="Start time, end time and length of the rain season, notably useful for West Africa (sivakumar, 1998). The rain season starts with "
     "a period of abundant rainfall, followed by a period without prolonged dry sequences, which must happen before a given date. "
     "The rain season stops during a dry period happening after a given date",
