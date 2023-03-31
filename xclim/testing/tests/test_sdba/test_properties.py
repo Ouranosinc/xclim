@@ -49,7 +49,7 @@ class TestProperties:
             open_dataset("sdba/CanESM2_1950-2100.nc")
             .sel(time=slice("1950", "1980"), location="Vancouver")
             .pr
-        )
+        ).load()
 
         out_year = sdba.properties.skewness(sim)
         np.testing.assert_array_almost_equal(out_year.values, [2.8497460898513745])
