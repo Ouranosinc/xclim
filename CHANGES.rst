@@ -4,7 +4,7 @@ Changelog
 
 v0.42.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user:`juliettelavoie`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user:`juliettelavoie`), Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -18,7 +18,7 @@ New features and enhancements
 * `scipy` is no longer pinned below v1.9 and `lmoments3>=1.0.5` is now a core dependency and installed by default with `pip`. (:issue:`1142`, :pull:`1171`).
 * Fix bug on number of bins in ``xclim.sdba.propeties.spatial_correlogram``. (:pull:`1336`)
 * Add `resample_before_rl` argument to control when resampling happens in `maximum_consecutive_{frost|frost_free|dry|tx}_days` and in heat indices (in `_threshold`)  (:issue:`1329`, :pull:`1331`)
-* Add ``xclim.ensembles.make_criteria`` to help create inputs for the ensemble-reduction methods. (:issue:`1338`).
+* Add ``xclim.ensembles.make_criteria`` to help create inputs for the ensemble-reduction methods. (:issue:`1338`, :pull:`1341`).
 
 Bug fixes
 ^^^^^^^^^
