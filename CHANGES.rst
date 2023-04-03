@@ -24,6 +24,7 @@ Bug fixes
 ^^^^^^^^^
 * Warnings emitted from regular usage of some indices (``snowfall_approximation`` with ``method="brown"``, ``effective_growing_degree_days``) due to successive ``convert_units_to`` calls within their logic have been silenced. (:pull:`1319`).
 * Fixed a bug that prevented the use of the `sdba_encode_cf` option with xarray 2023.3.0 (:pull:`1333`).
+* Fixed bugs in ``xclim.core.missing`` and ``xclim.sdba.base.Grouper`` when using pandas 2.0.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^

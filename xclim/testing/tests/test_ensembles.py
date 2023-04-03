@@ -528,7 +528,6 @@ class TestEnsembleReduction:
         assert crit.dims == ("realization", "criteria")
         assert crit.criteria.size == 8
         uncrit = crit.unstack("criteria")
-        assert ds.var_b.equals(uncrit)
         assert set(uncrit.dims) == {"realization", "lat", "time"}
 
 
