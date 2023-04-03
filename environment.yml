@@ -15,7 +15,7 @@ dependencies:
     - lmoments3
     - numba
     - numpy>=1.16
-    - pandas>=0.23
+    - pandas>=0.23,<2.0 # Pinned due to incompatibility with xarray <=2023.03
     - pint>=0.9
     - poppler>=0.67
     - pyyaml
