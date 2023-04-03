@@ -383,7 +383,7 @@ class TestProperties:
             sdba.properties.return_value(simt, op="min", group="time.season")
             .sel(season="DJF")
             .values
-        ).load()
+        )
 
         np.testing.assert_array_almost_equal(
             [out_y.values, out_djf], [313.154, 278.072], 3
