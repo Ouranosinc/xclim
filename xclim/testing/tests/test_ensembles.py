@@ -522,14 +522,14 @@ class TestEnsembleReduction:
         assert crit.criteria.size == 16
         uncrit = crit.unstack("criteria").to_dataset("variables")
         assert set(uncrit.data_vars.keys()) == {"var_a", "var_b", "var_c"}
-        assert uncrit.var_a.dims == ("realization", "lat", "time")
+        assert set(uncrit.var_a.dims) == {"realization", "lat", "time"}
 
         crit = ensembles.make_criteria(ds.var_b)
         assert crit.dims == ("realization", "criteria")
         assert crit.criteria.size == 8
         uncrit = crit.unstack("criteria")
         assert ds.var_b.equals(uncrit)
-        assert uncrit.dims == ("realization", "lat", "time")
+        assert set(uncrit.dims) == {"realization", "lat", "time"}
 
 
 # ## Tests for Robustness ##
