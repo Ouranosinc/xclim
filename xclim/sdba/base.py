@@ -293,7 +293,7 @@ class Grouper(Parametrizable):
 
         ind = da.indexes[self.dim]
         if self.prop == "week":
-            i = ind.isocalendar().week
+            i = da[self.dim].copy(data=ind.isocalendar().week).astype(int)
         else:
             i = getattr(ind, self.prop)
 
