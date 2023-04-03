@@ -14,8 +14,6 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from ._filters import reverse_dict
-
 """
 Implemented partitioning algorithms:
 
@@ -49,9 +47,6 @@ Related bixtex entries:
  - evin_2019
 """
 
-# Default dimension names
-_dims = dict(model="model", scenario="scenario", member="member")
-
 
 def hawkins_sutton(
     da: xr.DataArray,
@@ -59,21 +54,18 @@ def hawkins_sutton(
     weights: xr.DataArray = None,
     baseline: tuple = ("1971", "2000"),
     kind: str = "+",
-    dimensions: dict = None,
 ):
-    """Return the mean and partitioned variance of an ensemble based on method from Hawkins & Sutton.
+    """Return the mean and partitioned variance of an ensemble based on method from Hawkins & Sutton (2009).
 
-    Algorithm based on :cite:t:`hawkins_2009`. Input data should meet the following requirements:
-      - annual frequency;
+    To reproduce results from :cite:t:`hawkins_2009`, input data should meet the following requirements:
+      - annual frequency, starting in 1950;
       - covers the baseline and future period;
-      - defined over time, scenario and model dimensions;
-      - the same models should be available for each scenario.
+      - same models available for each scenario.
 
     Parameters
     ----------
     da: xr.DataArray
-      Time series over dimensions of 'time', 'scenario' and 'model'. If other dimension names are used, provide
-      the mapping with the `dimensions` argument.
+      Time series over dimensions 'time', 'scenario' and 'model'.
     sm: xr.DataArray
       Smoothed time series over time. By default, the method uses a fourth order polynomial. Use this argument to
       use other smoothing strategies, such as another polynomial order, or a LOESS curve.
@@ -83,14 +75,18 @@ def hawkins_sutton(
       Start and end year of the reference period.
     kind: {'+', '*'}
       Whether the mean over the reference period should be substracted (+) or divided by (*).
-    dimensions: dict
-      Mapping from original dimension names to standard dimension names: scenario, model, member.
 
     Returns
     -------
     xr.DataArray, xr.DataArray
       The mean and the components of variance of the ensemble. These components are coordinates along the
       `uncertainty` dimension: `variability`, `model`, `scenario`, and `total`.
+
+    Notes
+    -----
+    To prepare input data, make sure `da` has dimensions `time`, `scenario` and `model`,
+    e.g. `da.rename({"scen": "scenario"})`. Also, to match the paper's methodology, select years from 1950 onward,
+    e.g. `da.sel(time=slice("1950", None))`.
 
     References
     ----------
@@ -99,13 +95,10 @@ def hawkins_sutton(
     if xr.infer_freq(da.time)[0] not in ["A", "Y"]:
         raise ValueError("This algorithm expects annual time series.")
 
-    if dimensions is None:
-        dimensions = {}
-
-    da = da.rename(reverse_dict(dimensions))
-
-    if "member" in da.dims and len(da.member) > 1:
-        raise ValueError("There should only be one member per model.")
+    if not {"time", "scenario", "model"}.issubset(da.dims):
+        raise ValueError(
+            "DataArray dimensions should include 'time', 'scenario' and 'model'."
+        )
 
     # Confirm the same models have data for all scenarios
     check = da.notnull().any("time").all("scenario")
@@ -114,9 +107,6 @@ def hawkins_sutton(
 
     if weights is None:
         weights = xr.ones_like(da.model, float)
-
-    # Perform analysis 1950 onward
-    da = da.sel(time=slice("1950", None))
 
     if sm is None:
         # Fit 4th order polynomial to smooth natural fluctuations

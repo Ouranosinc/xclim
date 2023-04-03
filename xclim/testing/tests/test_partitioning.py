@@ -10,11 +10,15 @@ from xclim.ensembles import (
 
 def test_hawkins_sutton(open_dataset):
     """Just a smoke test - looking for data for a hard validation."""
-    dims = {"member": "run", "scenario": "scen"}
-    da = open_dataset(
-        "uncertainty_partitioning/cmip5_pr_global_mon.nc", branch="hawkins_sutton"
-    ).pr
-    da1 = model_in_all_scens(da, dimensions=dims)
-    dac = concat_hist(da1, scen="historical")
-    das = single_member(dac, dimensions=dims)
-    hawkins_sutton(das, dimensions=dims)
+    dims = {"run": "member", "scen": "scenario"}
+    da = (
+        open_dataset(
+            "uncertainty_partitioning/cmip5_pr_global_mon.nc", branch="hawkins_sutton"
+        )
+        .pr.sel(time=slice("1950", None))
+        .rename(dims)
+    )
+    da1 = model_in_all_scens(da)
+    dac = concat_hist(da1, scenario="historical")
+    das = single_member(dac)
+    hawkins_sutton(das)
