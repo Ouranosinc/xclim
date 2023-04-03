@@ -37,6 +37,7 @@ dependencies:
     - flake8
     - flake8-rst-docstrings
     - flit
+    - h5netcdf
     - ipykernel
     - ipython
     - matplotlib
