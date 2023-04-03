@@ -9,6 +9,7 @@ Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Juliette 
 Announcements
 ^^^^^^^^^^^^^
 * `xclim` now supports testing against tagged versions of `Ouranosinc/xclim-testdata <https://github.com/Ouranosinc/xclim-testdata>`_ in order to support older versions of `xclim`. For more information, see the `Contributing Guide <https://xclim.readthedocs.io/en/stable/contributing.html>`_ for more details. (:pull:`1339`).
+* `xclim v0.42.0` will be the last version to explicitly support Python3.8. (:issue:`1268`, :pull:`1344`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -33,6 +34,7 @@ Breaking changes
 * The indice and indicator for ``last_spring_frost`` has been modified to use ``tasmin`` by default, reflecting its docstring and literature definition (:issue:`1324`, :pull:`1325`).
 * following indices now accept the `op` argument for modifying the threshold comparison operator (:pull:`1325`):
     * ``snw_season_length``, ``snd_season_length``, ``growing_season_length``, ``frost_season_length``, ``frost_free_season_length``, ``rprcptot``, ``daily_pr_intensity``
+* In order to support older environments, `pandas` is now conditionally pinned below v2.0 when installing `xclim` on systems running Python3.8. (:pull:`1344`).
 
 Bug fixes
 ^^^^^^^^^
