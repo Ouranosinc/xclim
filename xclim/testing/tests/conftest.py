@@ -543,6 +543,7 @@ def cmip3_day_tas(threadsafe_data_dir):
         "cmip3/tas.sresb1.giss_model_e_r.run1.atm.da.nc",
         cache_dir=threadsafe_data_dir,
         branch=TESTDATA_BRANCH,
+        engine="h5netcdf",
     )
     yield ds.tas
     ds.close()
@@ -553,6 +554,7 @@ def open_dataset(threadsafe_data_dir):
     def _open_session_scoped_file(
         file: str | os.PathLike, branch: str = TESTDATA_BRANCH, **xr_kwargs
     ):
+        xr_kwargs.setdefault("engine", "h5netcdf")
         return _open_dataset(
             file, cache_dir=threadsafe_data_dir, branch=branch, **xr_kwargs
         )
@@ -608,6 +610,7 @@ def atmosds(threadsafe_data_dir) -> xr.Dataset:
         threadsafe_data_dir.joinpath("atmosds.nc"),
         cache_dir=threadsafe_data_dir,
         branch=TESTDATA_BRANCH,
+        engine="h5netcdf",
     ).load()
 
 
