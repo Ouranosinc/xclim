@@ -35,6 +35,7 @@ def generate_atmos(cache_dir: Path):
         "ERA5/daily_surface_cancities_1990-1993.nc",
         cache_dir=cache_dir,
         branch=TESTDATA_BRANCH,
+        engine="h5netcdf",
     ) as ds:
         tn10 = calendar.percentile_doy(ds.tasmin, per=10)
         t10 = calendar.percentile_doy(ds.tas, per=10)
@@ -149,7 +150,9 @@ def add_example_file_paths(cache_dir: Path) -> dict[str]:
     atmos_file = cache_dir.joinpath("atmosds.nc")
 
     # Give access to dataset variables by name in xdoctest namespace
-    with _open_dataset(atmos_file, branch=TESTDATA_BRANCH, cache_dir=cache_dir) as ds:
+    with _open_dataset(
+        atmos_file, branch=TESTDATA_BRANCH, cache_dir=cache_dir, engine="h5netcdf"
+    ) as ds:
         for variable in ds.data_vars:
             ns[f"{variable}_dataset"] = ds.get(variable)
 
