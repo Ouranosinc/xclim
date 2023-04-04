@@ -125,7 +125,7 @@ def test_rle(ufunc, use_dask, index):
 
 @pytest.mark.parametrize("use_dask", [True, False])
 @pytest.mark.parametrize("index", ["first", "last"])
-def test_rle_with_holes(use_dask, index):
+def test_rle_with_holes_reproduces_rle(use_dask, index):
     # implement more tests, this is just to show that this reproduces the behaviour
     # of rle
     values = np.zeros((10, 365, 4, 4))
@@ -150,6 +150,22 @@ def test_rle_with_holes(use_dask, index):
         expected = np.zeros(365) * np.nan
         expected[1] = 10
         # expected[2:11] = np.nan
+    np.testing.assert_array_equal(out, expected)
+
+
+def test_rle_with_holes():
+    values = np.zeros(365)
+    time = pd.date_range("2000-01-01", periods=365, freq="D")
+    a = [0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0]
+    values[0 : len(a)] = a
+    da = xr.DataArray(values, coords={"time": time}, dims=("time"))
+
+    out = rl.rle_with_holes(da == 1, 1, da == 0, 3, index="first")
+
+    expected = values * np.NaN
+    expected[1] = 10
+    expected[15] = 5
+
     np.testing.assert_array_equal(out, expected)
 
 
