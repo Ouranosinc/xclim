@@ -748,32 +748,15 @@ def rle_with_holes(
     da_start = da_start.astype(int).fillna(0)
     da_stop = da_stop.astype(int).fillna(0)
 
-    # TODO: Check performance. Each of these steps is about 1/2 of rle dask tasks
-    # Find start and stop positions
-    start_positions = (
-        _cumsum_reset_on_zero(da_start, dim=dim, index="first") >= window_start
-    )
-    stop_positions = (
-        _cumsum_reset_on_zero(da_stop, dim=dim, index="first") >= window_stop
-    )
+    start_runs = _cumsum_reset_on_zero(da_start, dim=dim, index="first")
+    stop_runs = _cumsum_reset_on_zero(da_stop, dim=dim, index="first")
+    start_positions = xr.where(start_runs >= window_start, 1, np.NaN)
+    stop_positions = xr.where(stop_runs >= window_stop, 0, np.NaN)
 
-    # Length between stop positions will be evaluated at start positions
-    length_between_stops = _cumsum_reset_on_zero(
-        xr.where(stop_positions, 0, 1), dim=dim, index="first"
-    )
-    run_lengths = length_between_stops.where(
-        (start_positions) & (length_between_stops > 0)
-    )
+    # start positions (1) are f-filled until a stop position (0) is met
+    runs = stop_positions.combine_first(start_positions).ffill(dim=dim).fillna(0)
 
-    # only keep first element of a run
-    run_lengths = run_lengths.where(run_lengths.shift({dim: 1}).isnull())
-
-    # TODO: Check if this logic is more efficient than what is currently used in rle
-    if index == "last":
-        # ffill the length of runs over whole run
-        filled_runs = xr.where(length_between_stops == 0, 0, run_lengths).ffill(dim=dim)
-        # keep the last element in runs instead of the first
-        run_lengths = filled_runs.where(filled_runs.shift({dim: -1}, fill_value=0) == 0)
+    run_lengths = rle(runs, index=index)
 
     return run_lengths.where(run_lengths > 0)
 
