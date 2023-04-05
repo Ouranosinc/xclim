@@ -17,7 +17,7 @@ from xclim.sdba.adjustment import (
     QuantileDeltaMapping,
 )
 from xclim.sdba.processing import adapt_freq
-from xclim.testing import cannon_2015_rvs, series
+from xclim.testing.sdba_utils import cannon_2015_rvs, series
 
 try:
     from matplotlib import pyplot as plt
