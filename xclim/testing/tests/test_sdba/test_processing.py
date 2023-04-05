@@ -23,7 +23,6 @@ from xclim.sdba.processing import (
     unstack_variables,
     unstandardize,
 )
-from xclim.testing import open_dataset
 
 
 def test_jitter_both():
@@ -258,7 +257,7 @@ def test_normalize(tas_series):
     np.testing.assert_allclose(xp, xp2)
 
 
-def test_stack_variables():
+def test_stack_variables(open_dataset):
     ds1 = open_dataset("sdba/CanESM2_1950-2100.nc")
     ds2 = open_dataset("sdba/ahccd_1950-2013.nc")
 

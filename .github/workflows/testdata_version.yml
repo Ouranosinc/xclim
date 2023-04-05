@@ -1,0 +1,70 @@
+name: Verify Testing Data
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    paths:
+      - .github/workflows/main.yml
+
+jobs:
+  use-latest-tag:
+    name: Check Latest xclim-testdata Tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Find xclim-testdata Tag and CI Testing Branch
+        run: |
+          XCLIM_TESTDATA_TAG="$( \
+          git -c 'versionsort.suffix=-' \
+          ls-remote --exit-code --refs --sort='version:refname' --tags https://github.com/Ouranosinc/xclim-testdata '*.*.*' \
+          | tail --lines=1 \
+          | cut --delimiter='/' --fields=3)"
+          echo "XCLIM_TESTDATA_TAG=${XCLIM_TESTDATA_TAG}" >> $GITHUB_ENV
+          XCLIM_TESTDATA_BRANCH="$(grep -E "XCLIM_TESTDATA_BRANCH" .github/workflows/main.yml | cut -d ' ' -f4)"
+          echo "XCLIM_TESTDATA_BRANCH=${XCLIM_TESTDATA_BRANCH}" >> $GITHUB_ENV
+      - name: Report Versions Found
+        run: |
+          echo "Latest xclim-testdata tag: ${{ env.XCLIM_TESTDATA_TAG }}"
+          echo "Tag for xclim-testdata in CI: ${{ env.XCLIM_TESTDATA_BRANCH }}"
+      - name: Find Comment
+        uses: peter-evans/find-comment@v2
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: It appears that this PR modifies the `XCLIM_TESTDATA_BRANCH` environment variable
+      - name: Compare Versions
+        if: ${{( env.XCLIM_TESTDATA_TAG != env.XCLIM_TESTDATA_BRANCH )}}
+        uses: actions/github-script@v6
+        with:
+          script: |
+            core.setFailed('Configured `xclim-testdata` tag is not `latest`.')
+      - name: Update Failure Comment
+        if: ${{ failure() }}
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            > **Warning**
+            > It appears that this PR modifies the `XCLIM_TESTDATA_BRANCH` environment variable to a tag that is not the latest in the `Ouranosinc/xclim-testdata` repository.
+
+            Please be sure to modify this value to match the most recent tag (`${{ env.XCLIM_TESTDATA_TAG }}`) before merging.
+
+            If this PR depends on changes in a new testing dataset branch, be sure to tag a new version of `Ouranosinc/xclim-testdata` with your changes merged to `main`.
+          edit-mode: replace
+      - name: Update Success Comment
+        if: ${{ success() }}
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            > **Note**
+            > It appears that this PR modifies the `XCLIM_TESTDATA_BRANCH` environment variable to the most recent tag (`${{ env.XCLIM_TESTDATA_TAG }}`).
+
+            No further action is required.
+          edit-mode: replace

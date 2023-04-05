@@ -26,20 +26,24 @@ from urllib.request import urlopen, urlretrieve
 import pandas as pd
 from xarray import Dataset
 from xarray import open_dataset as _open_dataset
-from yaml import safe_dump, safe_load
 
 _xclim_deps = [
     "xclim",
     "xarray",
+    "statsmodels",
     "sklearn",
     "scipy",
     "pint",
     "pandas",
     "numba",
+    "lmoments3",
+    "jsonpickle",
+    "flox",
     "dask",
     "cf_xarray",
     "cftime",
     "clisops",
+    "click",
     "bottleneck",
     "boltons",
 ]

@@ -897,11 +897,9 @@ def _return_value(
       or a probability of non-exceedance (min, left side of the distribution).
     method : {"ML", "PWM"}
       Fitting method, either maximum likelihood (ML) or probability weighted moments (PWM), also called L-Moments.
-      The PWM method is usually more robust to outliers. However, it requires the lmoments3 libraryto be installed
-      from the `develop` branch.
-      ``pip install git+https://github.com/OpenHydrology/lmoments3.git@develop#egg=lmoments3``
+      The PWM method is usually more robust to outliers.
     group : {'time', 'time.season', 'time.month'}
-      Grouping of the output. A distribution of the extremums is done for each group.
+      Grouping of the output. A distribution of the extremes is done for each group.
 
     Returns
     -------
@@ -1001,7 +999,7 @@ def _spatial_correlogram(
         output_dtypes=[float],
         dask_gufunc_kwargs={
             "allow_rechunk": True,
-            "output_sizes": {"distance_bins": 100},
+            "output_sizes": {"distance_bins": bins},
         },
     )
     binned = (
@@ -1197,10 +1195,10 @@ def _first_eof(da: xr.DataArray, *, dims=None, kind="+", thresh="1 mm/d", group=
 
     da = da - da.mean("time")
 
-    def _get_eof(da):
+    def _get_eof(d):
         # Remove slices where everything is nan
-        da = da[~np.isnan(da).all(axis=tuple(range(1, da.ndim)))]
-        solver = Eof(da, center=False)
+        d = d[~np.isnan(d).all(axis=tuple(range(1, d.ndim)))]
+        solver = Eof(d, center=False)
         eof = solver.eofs(neofs=1).squeeze()
         return eof * np.sign(np.nanmean(eof))
 
