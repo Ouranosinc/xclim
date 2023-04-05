@@ -17,7 +17,7 @@ from xclim.sdba.adjustment import (
     QuantileDeltaMapping,
 )
 from xclim.sdba.processing import adapt_freq
-from xclim.testing import sdba_utils as tu
+from xclim.testing import cannon_2015_rvs, series
 
 try:
     from matplotlib import pyplot as plt
@@ -49,7 +49,7 @@ def synth_rainfall(shape, scale=1, wet_freq=0.25, size=1):
 def cannon_2015_figure_2():
     # noqa: D103
     n = 10000
-    ref, hist, sim = tu.cannon_2015_rvs(n, random=False)
+    ref, hist, sim = cannon_2015_rvs(n, random=False)
     QM = EmpiricalQuantileMapping(kind="*", group="time", interp="linear")
     QM.train(ref, hist)
     sim_eqm = QM.predict(sim)
@@ -125,8 +125,8 @@ def cannon_2015_figure_2():
 def adapt_freq_graph():
     """Create a graphic with the additive adjustment factors estimated after applying the adapt_freq method."""
     n = 10000
-    x = tu.series(synth_rainfall(2, 2, wet_freq=0.25, size=n), "pr")  # sim
-    y = tu.series(synth_rainfall(2, 2, wet_freq=0.5, size=n), "pr")  # ref
+    x = series(synth_rainfall(2, 2, wet_freq=0.25, size=n), "pr")  # sim
+    y = series(synth_rainfall(2, 2, wet_freq=0.5, size=n), "pr")  # ref
 
     xp = adapt_freq(x, y, thresh=0).sim_ad
 

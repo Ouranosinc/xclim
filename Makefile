@@ -66,7 +66,7 @@ lint: ## check style with flake8 and black
 
 test: ## run tests quickly with the default Python
 	pytest
-	pytest --nbval --dist=loadscope docs/notebooks
+	pytest --no-cov --nbval --dist=loadscope --rootdir=tests/ docs/notebooks --ignore=docs/notebooks/example.ipynb
 	pytest --rootdir=tests/ --xdoctest xclim
 
 test-all: ## run tests on every Python version with tox

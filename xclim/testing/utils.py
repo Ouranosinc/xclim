@@ -54,6 +54,7 @@ _default_cache_dir = Path.home() / ".xclim_testing_data"
 LOGGER = logging.getLogger("xclim")
 
 __all__ = [
+    "_default_cache_dir",
     "get_file",
     "get_local_testdata",
     "list_datasets",

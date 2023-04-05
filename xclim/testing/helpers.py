@@ -12,10 +12,10 @@ from xclim.indices import (
     longwave_upwelling_radiation_from_net_downwelling,
     shortwave_upwelling_radiation_from_net_downwelling,
 )
+from xclim.testing import _default_cache_dir  # noqa
 from xclim.testing import get_file as _get_file
 from xclim.testing import get_local_testdata as _get_local_testdata
 from xclim.testing import open_dataset as _open_dataset
-from xclim.testing.utils import _default_cache_dir  # noqa
 
 TESTDATA_BRANCH = os.getenv("XCLIM_TESTDATA_BRANCH", "main")
 PREFETCH_TESTING_DATA = os.getenv("XCLIM_PREFETCH_TESTING_DATA")
