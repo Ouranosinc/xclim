@@ -7,11 +7,10 @@ import xarray as xr
 
 from xclim.sdba.base import parse_group
 from xclim.sdba.utils import apply_correction, equally_spaced_nodes
-
-from . import utils as tu
+from xclim.testing import sdba_utils as tu
 
 # Some test fixtures are useful to have around, so they are implemented as normal python functions and objects in
-# utils.py, and converted into fixtures here.
+# sdba_utils.py, and converted into fixtures here.
 cannon_2015_dist = pytest.fixture(tu.cannon_2015_dist)
 
 

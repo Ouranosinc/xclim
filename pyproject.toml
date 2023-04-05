@@ -113,7 +113,7 @@ target-version = [
 
 [tool.coverage.run]
 relative_files = true
-omit = ["*/tests/*.py"]
+omit = ["tests/*.py"]
 
 [tool.flit.sdist]
 include = [
@@ -130,6 +130,8 @@ include = [
   "docs/conf.py",
   "docs/make.bat",
   "requirements_upstream.txt",
+  "tests/**/*.py",
+  "tests/**/*.txt",
   "xclim/**/*.json",
   "xclim/**/*.py",
   "xclim/**/*.txt",
@@ -177,10 +179,10 @@ addopts = [
 ]
 norecursedirs = ["docs/notebooks/*"]
 filterwarnings = ["ignore::UserWarning"]
-testpaths = "xclim/testing/tests xclim/testing/tests/test_sdba"
+testpaths = "tests tests/test_sdba"
 usefixtures = "xdoctest_namespace"
 doctest_optionflags = ["NORMALIZE_WHITESPACE", "IGNORE_EXCEPTION_DETAIL", "NUMBER", "ELLIPSIS"]
 markers = [
   "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-  "requires_docs: mark tests that can only be run with documentation present"
+  "requires_docs: mark tests that can only be run with documentation present (deselect with '-m \"not requires_docs\"')"
 ]

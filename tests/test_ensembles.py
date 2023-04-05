@@ -28,8 +28,7 @@ from scipy.stats.mstats import mquantiles
 
 from xclim import ensembles
 from xclim.indices.stats import get_dist
-
-from .conftest import TESTDATA_BRANCH
+from xclim.testing.helpers import TESTDATA_BRANCH
 
 
 class TestEnsembleStats:

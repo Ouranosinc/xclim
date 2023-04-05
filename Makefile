@@ -65,9 +65,9 @@ lint: ## check style with flake8 and black
 	isort --check xclim
 
 test: ## run tests quickly with the default Python
-	pytest xclim/testing/tests
+	pytest
 	pytest --nbval --dist=loadscope docs/notebooks
-	pytest --rootdir xclim/testing/tests/ --xdoctest xclim
+	pytest --rootdir=tests/ --xdoctest xclim
 
 test-all: ## run tests on every Python version with tox
 	tox

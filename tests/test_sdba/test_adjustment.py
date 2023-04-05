@@ -31,8 +31,7 @@ from xclim.sdba.utils import (
     get_correction,
     invert,
 )
-
-from .utils import nancov  # noqa
+from xclim.testing.sdba_utils import nancov  # noqa
 
 
 class TestLoci:

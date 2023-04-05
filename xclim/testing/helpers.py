@@ -18,11 +18,12 @@ from xclim.testing import open_dataset as _open_dataset
 from xclim.testing.utils import _default_cache_dir  # noqa
 
 TESTDATA_BRANCH = os.getenv("XCLIM_TESTDATA_BRANCH", "main")
-TD = Path(__file__).parent / "data"
+PREFETCH_TESTING_DATA = os.getenv("XCLIM_PREFETCH_TESTING_DATA")
 
 
 __all__ = [
-    "TD",
+    "TESTDATA_BRANCH",
+    "PREFETCH_TESTING_DATA",
     "add_example_file_paths",
     "generate_atmos",
     "populate_testing_data",

@@ -19,17 +19,15 @@ import xclim
 from xclim import __version__ as __xclim_version__
 from xclim.core import indicator
 from xclim.core.calendar import max_doy
-from xclim.testing.tests.data import (
+from xclim.testing.helpers import (
+    PREFETCH_TESTING_DATA,
+    TESTDATA_BRANCH,
     add_example_file_paths,
     generate_atmos,
     populate_testing_data,
 )
 from xclim.testing.utils import _default_cache_dir  # noqa
 from xclim.testing.utils import open_dataset as _open_dataset
-
-TESTDATA_BRANCH = os.getenv("XCLIM_TESTDATA_BRANCH", "main")
-PREFETCH_TESTING_DATA = os.getenv("XCLIM_PREFETCH_TESTING_DATA")
-
 
 if not __xclim_version__.endswith("-dev") and TESTDATA_BRANCH == "main":
     # This is fine on GitHub Workflows and ReadTheDocs
