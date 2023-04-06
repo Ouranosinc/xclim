@@ -154,7 +154,7 @@ jobs:
           pip check
       - name: Test with pytest
         run: |
-          pytest xclim --numprocesses=logical --durations=10 --cov=xclim --cov-report=term-missing
+          pytest --numprocesses=logical --durations=10 --cov=xclim --cov-report=term-missing
 #      - name: Install tox
 #        shell: bash -l {0}
 #        run: |
