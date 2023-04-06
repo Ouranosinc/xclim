@@ -118,8 +118,8 @@ omit = ["tests/*.py"]
 [tool.flit.sdist]
 include = [
   "AUTHORS.rst",
+  "CHANGES.rst",
   "CONTRIBUTING.rst",
-  "HISTORY.rst",
   "LICENSE",
   "README.rst",
   "docs/**/*.gif",
