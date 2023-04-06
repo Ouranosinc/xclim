@@ -18,8 +18,33 @@ from xclim.testing.utils import get_local_testdata as _get_local_testdata
 from xclim.testing.utils import open_dataset as _open_dataset
 
 TESTDATA_BRANCH = os.getenv("XCLIM_TESTDATA_BRANCH", "main")
-PREFETCH_TESTING_DATA = os.getenv("XCLIM_PREFETCH_TESTING_DATA")
+"""Sets the branch of Ouranosinc/xclim-testdata to use when fetching testing datasets.
 
+Notes
+-----
+When running tests locally, this can be set for both `pytest` and `tox` by exporting the variable:
+
+.. code-block:: console
+
+    $ export XCLIM_TESTDATA_BRANCH="my_testing_branch"
+
+or setting the variable at runtime:
+
+.. code-block:: console
+
+    $ env XCLIM_TESTDATA_BRANCH="my_testing_branch" pytest
+
+"""
+
+PREFETCH_TESTING_DATA = os.getenv("XCLIM_PREFETCH_TESTING_DATA")
+"""Indicates whether the testing data should be downloaded when running tests.
+
+Notes
+-----
+When running tests multiple times, this flag allows developers to significantly speed up the pytest suite
+by preventing sha256sum checks for all downloaded files. Use wisely.
+
+"""
 
 __all__ = [
     "TESTDATA_BRANCH",
@@ -30,8 +55,8 @@ __all__ = [
 ]
 
 
-def generate_atmos(cache_dir: Path):
-    """Create the atmosds synthetic dataset."""
+def generate_atmos(cache_dir: str | Path):
+    """Create the `atmosds` synthetic testing dataset."""
     with _open_dataset(
         "ERA5/daily_surface_cancities_1990-1993.nc",
         cache_dir=cache_dir,
@@ -65,7 +90,7 @@ def populate_testing_data(
     branch: str = TESTDATA_BRANCH,
     _local_cache: Path = _default_cache_dir,
 ):
-    """Perform calls to GitHub for the relevant testing data."""
+    """Perform `_get_file` or `get_local_dataset` calls to GitHub to download or copy relevant testing data."""
     if _local_cache.joinpath(".data_written").exists():
         # This flag prevents multiple calls from re-attempting to download testing data in the same pytest run
         return
@@ -108,7 +133,7 @@ def populate_testing_data(
 
 
 def add_example_file_paths(cache_dir: Path) -> dict[str]:
-    """Return relevant datasets in the dictionary scope."""
+    """Create a dictionary of relevant datasets to be patched into the xdoctest namespace."""
     ns = dict()
     ns["path_to_pr_file"] = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
     ns["path_to_tasmax_file"] = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
