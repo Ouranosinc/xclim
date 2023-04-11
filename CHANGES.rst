@@ -2,6 +2,29 @@
 Changelog
 =========
 
+v0.43.0 (unreleased)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Many previously deprecated indices and indicators have been removed from `xclim` (:pull:`1318`), with replacement indicators suggested as follows:
+    * ``xclim.indicators.atmos.first_day_above`` ->  ``xclim.indicators.atmos.first_day_{tn | tg | tx}_above``
+    * ``xclim.indicators.atmos.first_day_below`` -> ``xclim.indicators.atmos.first_day_{tn | tg | tx}_below``
+    * ``xclim.indicators.land.continuous_snow_cover_end`` -> ``xclim.indicators.land.snd_season_end``
+    * ``xclim.indicators.land.continuous_snow_cover_start`` -> ``xclim.indicators.land.snd_season_start``
+    * ``xclim.indicators.land.fit`` -> ``xclim.indicators.generic.fit``
+    * ``xclim.indicators.land.frequency_analysis`` -> ``xclim.indicators.generic.return_level``
+    * ``xclim.indicators.land.snow_cover_duration`` -> ``xclim.indicators.land.snd_season_length``
+    * ``xclim.indicators.land.stats`` -> ``xclim.indicators.generic.stats``
+    * ``xclim.indices.continuous_snow_cover_end`` -> ``xclim.indices.snd_season_end``
+    * ``xclim.indices.continuous_snow_cover_start`` -> ``xclim.indices.snd_season_start``
+    * ``xclim.indices.snow_cover_duration`` -> ``xclim.indices.snd_season_length``
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* The testing suite has been adjusted to ensure calls are made to existing functions using non-deprecated syntax. The volume of warnings emitted during testing has been significantly reduced. (:pull:`1318`).
+
 v0.42.0 (2023-04-03)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user:`juliettelavoie`), Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`).
