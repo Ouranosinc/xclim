@@ -34,7 +34,7 @@ General to-do list for implementing a new Indicator:
 2. Add unit tests
 
     * Indices are best tested with made up, idealized data to explicitly test the edge cases. Many pytest fixtures are available to help this data generation.
-    * Tests should be added as one or more functions in ``xclim/testing/tests/test_indices.py``, see other tests for inspiration.
+    * Tests should be added as one or more functions in ``tests/test_indices.py``, see other tests for inspiration.
 
 3. Add the indicator
 
@@ -46,8 +46,9 @@ General to-do list for implementing a new Indicator:
 4. Add unit tests
 
     * Indicators are best tested with real data, also looking at missing value propagation and metadata formatting.
-      In addition to the ``atmos_ds`` fixture, only datasets that can be accessed with :py:func:`xclim.testing.open_dataset` should be used.
-    * Tests are added in the most relevant ``xclim/testing/tests/test_{variable}.py`` file.
+      In addition to the ``atmosds`` fixture, only datasets that can be accessed with :py:func:`xclim.testing.open_dataset` should be used.
+      For convenience, this special function is accessible as the ``open_dataset`` pytest fixture.
+    * Tests are added in the most relevant ``tests/test_{variable}.py`` file.
 
 5. Add French translations
 
@@ -104,7 +105,7 @@ If you are proposing a feature:
 
 * Explain in detail how it would work.
 * Keep the scope as narrow as possible, to make it easier to implement.
-* The Xclim development team welcomes you and is always on hand to help. :)
+* The xclim development team welcomes you and is always on hand to help. :)
 
 Get Started!
 ------------
@@ -138,16 +139,16 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
   Instead of ``pre-commit``, you could also verify your changes manually with `black`, `flake8`, `flake8-rst-docstrings`, `pydocstyle`, and `yamllint`::
 
-    $ black --check --target-version py38 xclim xclim/testing/tests
+    $ black --check --target-version py38 xclim tests
     $ black --check --target-version py38 --include "\.ipynb$" docs
-    $ flake8 xclim xclim/testing/tests
+    $ flake8 xclim tests
     $ pydocstyle --config=setup.cfg xclim xclim
     $ yamllint --config-file .yamllint.yaml xclim
 
-6. When unit/doc tests are added or notebooks updated, use ``pytest`` to run them. Alternatively, one can use ``tox`` to run all testing suites as would github do when the PR is submitted and new commits are pushed::
+6. When unit/doc tests are added or notebooks updated, use ``$ pytest`` to run them. Alternatively, one can use ``$ tox`` to run all testing suites as would github do when the PR is submitted and new commits are pushed::
 
     $ pytest --nbval docs/notebooks  # for notebooks, exclusively.
-    $ pytest --no-cov --rootdir xclim/testing/tests/ --xdoctest xclim --ignore=xclim/testing/tests/  # for doctests, exclusively.
+    $ pytest --no-cov --rootdir tests/ --xdoctest xclim  # for doctests, exclusively.
     $ pytest  # for all unit tests, excluding doctests and notebooks.
     $ tox  # run all testing suites
 
@@ -161,7 +162,6 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 8. After clearing the previous checks, commit your changes and push your branch to GitHub::
 
     $ git add *
-
     $ git commit -m "Your detailed description of your changes."
 
 If installed, `pre-commit` will run checks at this point:
@@ -231,10 +231,19 @@ Updating Testing Data
 If your code changes require changes to the testing data of `xclim` (i.e.: modifications to existing datasets or new datasets),
 these changes must be made via a Pull Request at https://github.com/Ouranosinc/xclim-testdata.
 
-`xclim` allows for developers to test specific branches/versions of `xclim-testdata` via the `XCLIM_TESTDATA_BRANCH` environment variable, e.g.::
+`xclim` allows for developers to test specific branches/versions of `xclim-testdata` via the `XCLIM_TESTDATA_BRANCH` environment variable, either through export, e.g.::
 
     $ export XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data"
-    $ pytest xclim
+
+    $ pytest
+    # or, alternatively:
+    $ tox
+
+or by setting the variable at runtime::
+
+    $ env XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data" pytest
+    # or, alternatively:
+    $ env XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data" tox
 
 This will ensure that tests load the testing data from this branch before running.
 
@@ -254,7 +263,7 @@ Tips
 
 To run a subset of tests, we suggest a few approaches. For running only a test file::
 
-    $ pytest xclim/testing/tests/test_xclim.py
+    $ pytest tests/test_xclim.py
 
 To skip all slow tests::
 
