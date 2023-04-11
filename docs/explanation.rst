@@ -49,4 +49,4 @@ R-language specific projects
 ----------------------------
 
 * `climdex.pcic` (`climdex.pcic Source Code <https://github.com/pacificclimate/climdex.pcic>`_; `climdex.pci R-CRAN Index <https://cran.r-project.org/web/packages/climdex.pcic/index.html>`_)
-* `climind` (`climind Source Code <https://github.com/ECA-D/climind>`_; `climind Documentation <https://rdrr.io/cran/ClimInd/man/>`_)
+* `climind` (`climind Source Code <https://github.com/ECA-D/climind>`_; `climind Documentation <https://cran.r-project.org/package=ClimInd>`_)
