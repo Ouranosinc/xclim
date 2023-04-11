@@ -147,10 +147,15 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
 6. When unit/doc tests are added or notebooks updated, use ``$ pytest`` to run them. Alternatively, one can use ``$ tox`` to run all testing suites as would github do when the PR is submitted and new commits are pushed::
 
-    $ pytest --nbval docs/notebooks  # for notebooks, exclusively.
-    $ pytest --no-cov --rootdir tests/ --xdoctest xclim  # for doctests, exclusively.
+    $ pytest --no-cov --nbval --dist=loadscope --rootdir=tests/ docs/notebooks --ignore=docs/notebooks/example.ipynb  # for notebooks, exclusively.
+    $ pytest --no-cov --rootdir=tests/ --xdoctest xclim  # for doctests, exclusively.
     $ pytest  # for all unit tests, excluding doctests and notebooks.
     $ tox  # run all testing suites
+
+.. note::
+    `xclim` tests are organized to support the `pytest-xdist <https://pytest-xdist.readthedocs.io/en/latest/>`_ plugin for distributed testing across workers or CPUs. In order to benefit from multiple processes, add the flag `--numprocesses=auto` or `-n auto` to your `pytest` calls.
+
+    When running tests via `tox`, `numprocesses` is set to the number of logical cores available (`numprocesses=logical`), with a maximum amount of `8`.
 
 7. Docs should also be tested to ensure that the documentation will build correctly on ReadTheDocs. This can be performed in a number of ways::
 
@@ -377,10 +382,10 @@ Before updating the main conda-forge recipe, we *strongly* suggest performing th
  * Ensure that dependencies and dependency versions correspond with those of the tagged version, with open or pinned versions for the `host` requirements.
  * If possible, configure tests within the conda-forge build CI (e.g. `imports: xclim`, `commands: pytest xclim`)
 
+.. _`GitHub Repository`: https://github.com/Ouranosinc/xclim
+.. _`PEP8`: https://peps.python.org/pep-0008/
 .. _`numpydoc`: https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
 .. _`reStructuredText (ReST)`: https://www.jetbrains.com/help/pycharm/using-docstrings-to-specify-types.html
 .. _`reStructuredText Primer`: https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
-.. _`GitHub Repository`: https://github.com/Ouranosinc/xclim
-.. _`PEP8`: https://peps.python.org/pep-0008/
 .. _`sphinxcontrib-bibtex`: https://sphinxcontrib-bibtex.readthedocs.io
 .. _`xclim on TestPyPI`: https://test.pypi.org/project/xclim/
