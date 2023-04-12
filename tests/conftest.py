@@ -19,19 +19,11 @@ import xclim
 from xclim import __version__ as __xclim_version__
 from xclim.core import indicator
 from xclim.core.calendar import max_doy
-from xclim.testing.tests.data import (
-    add_example_file_paths,
-    generate_atmos,
-    populate_testing_data,
-)
+from xclim.testing import helpers
 from xclim.testing.utils import _default_cache_dir  # noqa
 from xclim.testing.utils import open_dataset as _open_dataset
 
-TESTDATA_BRANCH = os.getenv("XCLIM_TESTDATA_BRANCH", "main")
-PREFETCH_TESTING_DATA = os.getenv("XCLIM_PREFETCH_TESTING_DATA")
-
-
-if not __xclim_version__.endswith("-dev") and TESTDATA_BRANCH == "main":
+if not __xclim_version__.endswith("-dev") and helpers.TESTDATA_BRANCH == "main":
     # This is fine on GitHub Workflows and ReadTheDocs
     if not os.getenv("CI") and not os.getenv("READTHEDOCS"):
         warnings.warn(
@@ -41,10 +33,10 @@ if not __xclim_version__.endswith("-dev") and TESTDATA_BRANCH == "main":
             UserWarning,
         )
 
-if re.match(r"^v\d+\.\d+\.\d+", TESTDATA_BRANCH):
-    if parse_version(TESTDATA_BRANCH) > parse_version(__xclim_version__):
+if re.match(r"^v\d+\.\d+\.\d+", helpers.TESTDATA_BRANCH):
+    if parse_version(helpers.TESTDATA_BRANCH) > parse_version(__xclim_version__):
         warnings.warn(
-            f"`xclim` version ({__xclim_version__}) predates `xclim-testdata` version ({TESTDATA_BRANCH}). "
+            f"`xclim` version ({__xclim_version__}) predates `xclim-testdata` version ({helpers.TESTDATA_BRANCH}). "
             f"It is very likely that the testing data is incompatible with this build of `xclim`.",
             UserWarning,
         )
@@ -542,7 +534,7 @@ def cmip3_day_tas(threadsafe_data_dir):
     ds = _open_dataset(
         "cmip3/tas.sresb1.giss_model_e_r.run1.atm.da.nc",
         cache_dir=threadsafe_data_dir,
-        branch=TESTDATA_BRANCH,
+        branch=helpers.TESTDATA_BRANCH,
         engine="h5netcdf",
     )
     yield ds.tas
@@ -552,7 +544,7 @@ def cmip3_day_tas(threadsafe_data_dir):
 @pytest.fixture(scope="session")
 def open_dataset(threadsafe_data_dir):
     def _open_session_scoped_file(
-        file: str | os.PathLike, branch: str = TESTDATA_BRANCH, **xr_kwargs
+        file: str | os.PathLike, branch: str = helpers.TESTDATA_BRANCH, **xr_kwargs
     ):
         xr_kwargs.setdefault("engine", "h5netcdf")
         return _open_dataset(
@@ -570,7 +562,7 @@ def add_imports(xdoctest_namespace, threadsafe_data_dir) -> None:
     ns["xr"] = xclim.testing  # xr.open_dataset(...) -> xclim.testing.open_dataset(...)
     ns["xclim"] = xclim
     ns["open_dataset"] = partial(
-        _open_dataset, cache_dir=threadsafe_data_dir, branch=TESTDATA_BRANCH
+        _open_dataset, cache_dir=threadsafe_data_dir, branch=helpers.TESTDATA_BRANCH
     )  # Needed for modules where xarray is imported as `xr`
 
 
@@ -609,7 +601,7 @@ def atmosds(threadsafe_data_dir) -> xr.Dataset:
     return _open_dataset(
         threadsafe_data_dir.joinpath("atmosds.nc"),
         cache_dir=threadsafe_data_dir,
-        branch=TESTDATA_BRANCH,
+        branch=helpers.TESTDATA_BRANCH,
         engine="h5netcdf",
     ).load()
 
@@ -639,22 +631,22 @@ def gather_session_data(threadsafe_data_dir, worker_id, xdoctest_namespace):
     threadsafe_data_dir."""
 
     if (
-        not _default_cache_dir.joinpath(TESTDATA_BRANCH).exists()
-        or PREFETCH_TESTING_DATA
+        not _default_cache_dir.joinpath(helpers.TESTDATA_BRANCH).exists()
+        or helpers.PREFETCH_TESTING_DATA
     ):
         if worker_id in "master":
-            populate_testing_data(branch=TESTDATA_BRANCH)
+            helpers.populate_testing_data(branch=helpers.TESTDATA_BRANCH)
         else:
             _default_cache_dir.mkdir(exist_ok=True)
             test_data_being_written = FileLock(_default_cache_dir.joinpath(".lock"))
             with test_data_being_written as fl:
                 # This flag prevents multiple calls from re-attempting to download testing data in the same pytest run
-                populate_testing_data(branch=TESTDATA_BRANCH)
+                helpers.populate_testing_data(branch=helpers.TESTDATA_BRANCH)
                 _default_cache_dir.joinpath(".data_written").touch()
             fl.acquire()
         shutil.copytree(_default_cache_dir, threadsafe_data_dir)
-    generate_atmos(threadsafe_data_dir)
-    xdoctest_namespace.update(add_example_file_paths(threadsafe_data_dir))
+    helpers.generate_atmos(threadsafe_data_dir)
+    xdoctest_namespace.update(helpers.add_example_file_paths(threadsafe_data_dir))
 
 
 @pytest.fixture(scope="session", autouse=True)
