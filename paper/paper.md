@@ -1,5 +1,5 @@
 ---
-title: 'xclim: Xarray-based climate data analytics'
+title: 'xclim: xarray-based climate data analytics'
 tags:
   - climate change
   - climate indices
@@ -34,21 +34,21 @@ affiliations:
    index: 1
  - name: Centre européen de recherche et de formation avancée en calcul scientifique (CERFACS)
    index: 2
-date: 1 December 2022
+date: 12 April 2023
 bibliography: paper.bib
 ---
 
 # Summary
 
-`xclim` is a Python library that enables computation of climate indicators over large, heterogeneous data sets. It is built using `xarray` objects and operations, and relies on community conventions for data formatting and metadata attributes. `xclim` is meant as a tool to facilitate both climate science research and the delivery of operational climate services and products. In addition to climate indicator calculations, `xclim` also includes utilities for bias correction and statistical adjustment, ensemble analytics, model diagnostics, data quality assurance, and metadata standards compliance.
+`xclim` is a Python library that enables computation of climate indicators over large, heterogeneous data sets. It is built using `xarray` objects and operations, can seamlessly benefit from the parallelization handling provided by `dask`, and relies on community conventions for data formatting and metadata attributes. `xclim` is meant as a tool to facilitate both climate science research and the delivery of operational climate services and products. In addition to climate indicator calculations, `xclim` also includes utilities for bias correction and statistical adjustment, ensemble analytics, model diagnostics, data quality assurance, and metadata standards compliance.
 
 # Statement of need
 
-Researchers and climate service providers analyze data from large ensembles of Earth System Model (ESM) simulations. These analyses typically include model comparisons with observations, bias-correction and statistical adjustment, computation of various climate indicators and diagnostics, and ensemble statistics. As the number of models contributing to these ensembles grows, so does the complexity of the code required to deal with model idiosyncrasies, outlier detection, unit conversion, etc. In addition, growing ensemble sizes and advancements in the spatiotemporal resolution of ESMs further raises the computational costs of running those analyses. `xclim` is designed to meet the operational needs of climate service providers by offering algorithms for over 150 climate indicators, multiple downscaling algorithms, ensemble statistics, and other associated utilities.
+Researchers and climate service providers analyse data from large ensembles of Earth System Model (ESM) simulations. These analyses typically include model comparisons with observations, bias-correction and statistical adjustment, computation of various climate indicators and diagnostics, and ensemble statistics. As the number of models contributing to these ensembles grows, so does the complexity of the code required to deal with model idiosyncrasies, outlier detection, unit conversion, etc. In addition, growing ensemble sizes and advancements in the spatiotemporal resolution of ESMs further raises the computational costs of running those analyses. `xclim` is designed to meet the operational needs of climate service providers by offering algorithms for over 150 climate indicators, multiple downscaling algorithms, ensemble statistics, and other associated utilities.
 
-The development of `xclim` started in 2018 at [Ouranos](https://www.ouranos.ca), a consortium on regional climatology and adaptation to climate change based in Montréal, Québec, from the need to deliver data for a pan-Canadian atlas of climate indicators. In-house specialists at Ouranos had different implementations for the same indicators, and there was a desire to adopt a common library that would tie together investments in research and development with operational production capabilities. At the time, the package that was closest to meeting these requirements was `icclim` [@icclim], a library developed within the context of the [European Climate Assessment & Dataset](https://www.ecad.eu/) project, whose purpose was to monitor and analyze changes in climate extremes. It was not, however, designed to be easily extensible, and we believed the indicators they offered could be written more succinctly and computed more efficiently by relying on objects and primitives from `xarray` [@Hoyer:2017]. `xclim` started as a reimplementation of `icclim` with an `xarray` backend, drawing inspiration from projects like `MetPy` [@metpy], and eventually grew to include other algorithms routinely used in climate data analysis, both simple and complex.
+The development of `xclim` started in 2018 at [Ouranos](https://www.ouranos.ca), a consortium on regional climatology and adaptation to climate change based in Montréal, Québec, from the need to deliver data for a pan-Canadian atlas of climate indicators. In-house specialists at Ouranos had different implementations for the same indicators, and there was a desire to adopt a common library that would tie together investments in research and development with operational production capabilities. At the time, the package that was closest to meeting these requirements was `icclim` [@icclim], a library developed within the context of the [European Climate Assessment & Dataset](https://www.ecad.eu/) project, whose purpose was to monitor and analyze changes in climate extremes. It was not, however, designed to be easily extensible, and we believed the indicators they offered could be written more succinctly and computed more efficiently by relying on objects and primitives from `xarray` [@Hoyer:2017], with distributed computation and scheduling via `dask` [@dask:2016]. `xclim` started as a reimplementation of `icclim` with an `xarray` backend, drawing inspiration from projects like `MetPy` [@metpy], and eventually grew to include other algorithms routinely used in climate data analysis, both simple and complex.
 
-`xclim` is intended to be one component in a larger software ecosystem for climate data analysis. Other libraries often used in tandem with `xclim` are `clisops` [@clisops], a spatiotemporal subsetting and averaging library (originally a fork of `xclim`'s subsetting module), and `xESMF` [@xesmf], a Pangeo-developed library for spatial regridding.
+`xclim` is intended to be one component in a larger software ecosystem for climate data analysis. Other libraries often used in tandem with `xclim` are `clisops` [@clisops], a spatiotemporal subsetting and averaging library (originally a fork of `xclim`'s subsetting module), and `xESMF` [@xesmf], a PANGEO-developed library for spatial regridding.
 
 # Key Features
 
