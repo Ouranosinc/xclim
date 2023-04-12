@@ -36,13 +36,25 @@ or setting the variable at runtime:
 
 """
 
-PREFETCH_TESTING_DATA = os.getenv("XCLIM_PREFETCH_TESTING_DATA")
+PREFETCH_TESTING_DATA = os.getenv("XCLIM_PREFETCH_TESTING_DATA", False)
 """Indicates whether the testing data should be downloaded when running tests.
 
 Notes
 -----
 When running tests multiple times, this flag allows developers to significantly speed up the pytest suite
-by preventing sha256sum checks for all downloaded files. Use wisely.
+by preventing sha256sum checks for all downloaded files. Proceed with caution.
+
+This can be set for both `pytest` and `tox` by exporting the variable:
+
+.. code-block:: console
+
+    $ export XCLIM_PREFETCH_TESTING_DATA=1
+
+or setting the variable at runtime:
+
+.. code-block:: console
+
+    $ env XCLIM_PREFETCH_TESTING_DATA=1 pytest
 
 """
 
