@@ -64,6 +64,19 @@ How to make the most of xclim: `Basic Usage Examples`_ and `In-Depth Examples`_.
 .. _Basic Usage Examples: https://xclim.readthedocs.io/en/stable/notebooks/usage.html
 .. _In-Depth Examples: https://xclim.readthedocs.io/en/stable/notebooks/index.html
 
+Conventions
+-----------
+In order to provide a coherent interface, xclim tries to follow different sets of conventions. In particular, input data should follow the `CF conventions`_ whenever possible for variable attributes. Variable names are usually the ones used in `CMIP6`_, when they exist.
+
+However, xclim will *always* assume the temporal coordinate is named "time". If your data uses another name (for example: "T"), you can rename the variable with:
+
+.. code-block:: python
+
+    ds = ds.rename(T="time")
+
+.. _CF Conventions: http://cfconventions.org/
+.. _CMIP6: https://clipc-services.ceda.ac.uk/dreq/mipVars.html
+
 Contributing to xclim
 ---------------------
 xclim is in active development and is being used in production by climate services specialists around the world.
