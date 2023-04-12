@@ -58,7 +58,7 @@ jobs:
           python -m pip install "sbck @ git+https://github.com/yrobink/SBCK-python.git@master"
       - name: Install xclim
         run: |
-          python -m pip install --no-user --no-deps .
+          python -m pip install --no-user --no-deps --editable .
       - name: Check versions
         run: |
           conda list
