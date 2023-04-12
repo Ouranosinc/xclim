@@ -9,7 +9,7 @@ xclim: Climate services library |logo|
 +----------------------------+-----------------------------------------------------+
 | Open Source                | |license| |fair| |zenodo| |pyOpenSci|               |
 +----------------------------+-----------------------------------------------------+
-| Coding Standards           | |black| |pre-commit| |security|  |fossa|            |
+| Coding Standards           | |black| |pre-commit| |security| |fossa|             |
 +----------------------------+-----------------------------------------------------+
 | Development Status         | |status| |build| |coveralls|                        |
 +----------------------------+-----------------------------------------------------+
@@ -30,7 +30,7 @@ For example, the following would compute monthly mean temperature from daily mea
     import xarray as xr
 
     ds = xr.open_dataset(filename)
-    tg = xclim.atmos.tg_mean(ds.tas, freq="YS")
+    tg = xclim.atmos.tg_mean(ds.tas, freq="MS")
 
 For applications where metadata and missing values are important to get right, xclim provides a class for each index
 that validates inputs, checks for missing values, converts units and assigns metadata attributes to the output.
