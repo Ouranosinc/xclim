@@ -7,9 +7,9 @@ xclim: Climate services library |logo|
 +----------------------------+-----------------------------------------------------+
 | Documentation and Support  | |docs| |gitter|                                     |
 +----------------------------+-----------------------------------------------------+
-| Open Source                | |license| |fair| |fossa| |zenodo|                   |
+| Open Source                | |license| |fair| |zenodo| |pyOpenSci|               |
 +----------------------------+-----------------------------------------------------+
-| Coding Standards           | |black| |pre-commit| |security|                     |
+| Coding Standards           | |black| |pre-commit| |security|  |fossa|            |
 +----------------------------+-----------------------------------------------------+
 | Development Status         | |status| |build| |coveralls|                        |
 +----------------------------+-----------------------------------------------------+
@@ -130,6 +130,10 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 .. |zenodo| image:: https://zenodo.org/badge/142608764.svg
         :target: https://zenodo.org/badge/latestdoi/142608764
         :alt: DOI
+
+.. |pyOpenSci| image:: https://tinyurl.com/y22nb8up
+        :target: https://github.com/pyOpenSci/software-review/issues/73
+        :alt: pyOpenSci
 
 .. |license| image:: https://img.shields.io/github/license/Ouranosinc/xclim.svg
         :target: https://github.com/Ouranosinc/xclim/blob/master/LICENSE
