@@ -3,13 +3,13 @@ xclim: Climate services library |logo|
 ======================================
 
 +----------------------------+-----------------------------------------------------+
-| Versions                   | |pypi| |conda|                                      |
+| Versions                   | |pypi| |conda| |versions|                           |
 +----------------------------+-----------------------------------------------------+
-| Documentation and Support  | |docs| |gitter| |versions|                          |
+| Documentation and Support  | |docs| |gitter|                                     |
 +----------------------------+-----------------------------------------------------+
-| Open Source                | |license| |fair| |fossa| |zenodo|                   |
+| Open Source                | |license| |fair| |zenodo| |pyOpenSci|               |
 +----------------------------+-----------------------------------------------------+
-| Coding Standards           | |black| |pre-commit| |security|                     |
+| Coding Standards           | |black| |pre-commit| |security| |fossa|             |
 +----------------------------+-----------------------------------------------------+
 | Development Status         | |status| |build| |coveralls|                        |
 +----------------------------+-----------------------------------------------------+
@@ -30,7 +30,7 @@ For example, the following would compute monthly mean temperature from daily mea
     import xarray as xr
 
     ds = xr.open_dataset(filename)
-    tg = xclim.atmos.tg_mean(ds.tas, freq="YS")
+    tg = xclim.atmos.tg_mean(ds.tas, freq="MS")
 
 For applications where metadata and missing values are important to get right, xclim provides a class for each index
 that validates inputs, checks for missing values, converts units and assigns metadata attributes to the output.
@@ -41,9 +41,28 @@ streamflow and sea ice concentration, numerous bias-adjustment algorithms, as we
 .. _xarray: https://docs.xarray.dev/
 .. _dask: https://docs.dask.org/
 
+Quick Install
+-------------
+`xclim` can be installed from PyPI:
+
+.. code-block:: shell
+
+    $ pip install xclim
+
+or from Anaconda (conda-forge):
+
+.. code-block:: shell
+
+    $ conda install -c conda-forge xclim
+
 Documentation
 -------------
 The official documentation is at https://xclim.readthedocs.io/
+
+How to make the most of xclim: `Basic Usage Examples`_ and `In-Depth Examples`_.
+
+.. _Basic Usage Examples: https://xclim.readthedocs.io/en/stable/notebooks/usage.html
+.. _In-Depth Examples: https://xclim.readthedocs.io/en/stable/notebooks/index.html
 
 Contributing to xclim
 ---------------------
@@ -65,7 +84,6 @@ If you wish to cite xclim in a research publication, we kindly ask that you use 
 License
 -------
 This is free software: you can redistribute it and/or modify it under the terms of the `Apache License 2.0`_. A copy of this license is provided in the code repository (`LICENSE`_).
-
 
 .. _Apache License 2.0: https://opensource.org/license/apache-2-0/
 .. _LICENSE: https://github.com/Ouranosinc/xclim/blob/master/LICENSE
@@ -112,6 +130,10 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 .. |zenodo| image:: https://zenodo.org/badge/142608764.svg
         :target: https://zenodo.org/badge/latestdoi/142608764
         :alt: DOI
+
+.. |pyOpenSci| image:: https://tinyurl.com/y22nb8up
+        :target: https://github.com/pyOpenSci/software-review/issues/73
+        :alt: pyOpenSci
 
 .. |license| image:: https://img.shields.io/github/license/Ouranosinc/xclim.svg
         :target: https://github.com/Ouranosinc/xclim/blob/master/LICENSE

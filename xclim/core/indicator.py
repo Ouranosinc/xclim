@@ -1350,9 +1350,10 @@ class Indicator(IndicatorRegistrar):
 
     def _show_deprecation_warning(self):
         warnings.warn(
-            f"`{self.title}` is deprecated as of xclim v{self._version_deprecated}. "
-            f"See the xclim release notes for more information.",
-            DeprecationWarning,
+            f"`{self.title}` is deprecated as of `xclim` v{self._version_deprecated} and will be removed "
+            "in a future release. See the `xclim` release notes for more information: "
+            f"https://xclim.readthedocs.io/en/stable/history.html",
+            FutureWarning,
             stacklevel=3,
         )
 

@@ -12,6 +12,7 @@ from __future__ import annotations
 from warnings import warn
 
 import numpy as np
+import pandas as pd
 import scipy.stats
 import xarray
 from scipy.spatial.distance import cdist
@@ -25,6 +26,87 @@ try:
 except ImportError:
     plt = None
     MPL_INSTALLED = False
+
+
+def make_criteria(ds: xarray.Dataset | xarray.DataArray):
+    """Reshapes the input into a criteria 2D DataArray.
+
+    The reshaping preserves the "realization" dimension but stacks all other
+    dimensions and variables into a new "criteria" dimension, as expected by
+    functions :py:func:`xclim.ensembles._reduce.kkz_reduce_ensemble`
+    and :py:func:`xclim.ensembles._reduce.kmeans_reduce_ensemble`.
+
+    Parameters
+    ----------
+    ds : Dataset or DataArray
+        Must at least have a "realization" dimension. All values are considered independent "criterion" for the ensemble reduction.
+        If a Dataset, variables may have different sizes, but all must include the "realization" dimension.
+
+    Returns
+    -------
+    crit : DataArray
+        Same data, reshaped. Old coordinates (and variables) are available as a multiindex.
+
+    Notes
+    -----
+    One can get back to the original dataset with
+
+    .. code-block:: python
+
+        crit = make_criteria(ds)
+        ds2 = crit.unstack("criteria").to_dataset("variables")
+
+    `ds2` will have all variables with the same dimensions, so if the original dataset had variables with different dimensions, the
+    added dimensions are filled with NaNs. The `to_dataset` part can be skipped if the original input was a DataArray.
+    """
+
+    def _make_crit(da):
+        """Variable version : stack non-realization dims."""
+        return da.stack(criteria=set(da.dims) - {"realization"})
+
+    if isinstance(ds, xarray.Dataset):
+        # When variables have different set of dims, missing dims on one variable results in duplicated values when a simple stack is done.
+        # To avoid that: stack each variable independently add a new "variables" dim
+        stacked = {
+            da.name: _make_crit(da.expand_dims(variables=[da.name]))
+            for da in ds.data_vars.values()
+        }
+        # Get name of all stacked coords
+        stacked_coords = set.union(
+            *[set(da.indexes["criteria"].names) for da in stacked.values()]
+        )
+        # Concat the variables by dropping old stacked index and related coords
+        crit = xarray.concat(
+            [
+                da.reset_index("criteria").drop_vars(stacked_coords, errors="ignore")
+                for k, da in stacked.items()
+            ],
+            "criteria",
+        )
+        # Reconstruct proper stacked coordinates. When a variable is missing one of the coords, give NaNss
+        coords = [
+            (
+                crd,
+                np.concatenate(
+                    [
+                        da[crd].values
+                        if crd in da.coords
+                        else [np.NaN] * da.criteria.size
+                        for da in stacked.values()
+                    ],
+                ),
+            )
+            for crd in stacked_coords
+        ]
+        crit["criteria"] = pd.MultiIndex.from_arrays(
+            [arr for name, arr in coords], names=[name for name, arr in coords]
+        )
+        # Previous ops gave the first variable's attributes, replace by the original dataset ones.
+        crit.attrs = ds.attrs
+    else:
+        # Easy peasy, skip all the convoluted stuff
+        crit = _make_crit(ds)
+    return crit.rename("criteria")
 
 
 def kkz_reduce_ensemble(

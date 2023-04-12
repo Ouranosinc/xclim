@@ -37,13 +37,15 @@ dependencies = [
   "Click>=8.1",
   "dask[array]>=2.6",
   "jsonpickle",
+  "lmoments3>=1.0.5",
   "numba",
   "numpy>=1.16",
-  "pandas>=0.23",
+  "pandas>=0.23,<2.0; python_version == '3.8'",
+  "pandas>=0.23; python_version >= '3.9'",
   "pint>=0.10",
   "pyyaml",
   "scikit-learn>=0.21.3",
-  "scipy>=1.2,<1.9", # see: https://github.com/Ouranosinc/xclim/issues/1142
+  "scipy>=1.2",
   "statsmodels",
   "xarray>=2022.06.0"
 ]
@@ -51,16 +53,18 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   # Dev tools and testing
-  "black >=23.1",
+  "black >=23.3.0",
   "blackdoc",
   "bump2version",
   "coverage[toml]",
   "flake8",
   "flake8-rst-docstrings",
+  "h5netcdf",
   "ipython",
   "mypy",
   "nbqa",
   "nbval",
+  "netCDF4 >=1.4",
   "pre-commit >=2.9",
   "pydocstyle >=5.1.1",
   "pybtex",
@@ -80,7 +84,6 @@ dev = [
   "matplotlib",
   "nbsphinx",
   "nc-time-axis",
-  "netCDF4 >=1.4",
   "pooch",
   "sphinx",
   "sphinx-autodoc-typehints",
@@ -110,14 +113,15 @@ target-version = [
 
 [tool.coverage.run]
 relative_files = true
-omit = ["*/tests/*.py"]
+omit = ["tests/*.py"]
 
 [tool.flit.sdist]
 include = [
   "AUTHORS.rst",
+  "CHANGES.rst",
   "CONTRIBUTING.rst",
-  "HISTORY.rst",
   "LICENSE",
+  "Makefile",
   "README.rst",
   "docs/**/*.gif",
   "docs/**/*.jpg",
@@ -127,6 +131,10 @@ include = [
   "docs/conf.py",
   "docs/make.bat",
   "requirements_upstream.txt",
+  "setup.cfg",
+  "tests/**/*.py",
+  "tests/**/*.txt",
+  "tox.ini",
   "xclim/**/*.json",
   "xclim/**/*.py",
   "xclim/**/*.txt",
@@ -174,10 +182,10 @@ addopts = [
 ]
 norecursedirs = ["docs/notebooks/*"]
 filterwarnings = ["ignore::UserWarning"]
-testpaths = "xclim/testing/tests xclim/testing/tests/test_sdba"
+testpaths = "tests tests/test_sdba"
 usefixtures = "xdoctest_namespace"
 doctest_optionflags = ["NORMALIZE_WHITESPACE", "IGNORE_EXCEPTION_DETAIL", "NUMBER", "ELLIPSIS"]
 markers = [
   "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-  "requires_docs: mark tests that can only be run with documentation present"
+  "requires_docs: mark tests that can only be run with documentation present (deselect with '-m \"not requires_docs\"')"
 ]
