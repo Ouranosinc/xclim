@@ -86,8 +86,6 @@ def resample_and_rl(
 ) -> xr.DataArray | xr.Dataset:
     """Wrap run length algorithms to control if resampling occurs before or after the algorithms.
 
-    If resample_before_rl is 'from_context', the parameter is read from xclim's global (or context) options.
-
     Parameters
     ----------
     da: xr.DataArray
@@ -399,6 +397,103 @@ def windowed_run_count(
     return out
 
 
+def _boundary_run(
+    da: xr.DataArray,
+    window: int,
+    dim: str,
+    freq: str | None,
+    coord: str | bool | None,
+    ufunc_1dim: str | bool,
+    position: str,
+) -> xr.DataArray:  # noqa: D202
+    """Return the index of the first item of the first run of at least a given length.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        Input N-dimensional DataArray (boolean).
+    window : int
+        Minimum duration of consecutive run to accumulate values.
+        When equal to 1, an optimized version of the algorithm is used.
+    dim : str
+      Dimension along which to calculate consecutive run.
+    freq : str
+      Resampling frequency.
+    coord : Optional[str]
+        If not False, the function returns values along `dim` instead of indexes.
+        If `dim` has a datetime dtype, `coord` can also be a str of the name of the
+        DateTimeAccessor object to use (ex: 'dayofyear').
+    ufunc_1dim : Union[str, bool]
+        Use the 1d 'ufunc' version of this function : default (auto) will attempt to select optimal
+        usage based on number of data points.  Using 1D_ufunc=True is typically more efficient
+        for DataArray with a small number of grid points.
+        Ignored when `window=1`. It can be modified globally through the "run_length_ufunc" global option.
+    position : {"first", "last"}
+        Determines if the algorithm finds the "first" or "last" run
+
+    Returns
+    -------
+    xr.DataArray
+        Index (or coordinate if `coord` is not False) of first item in first (last) valid run.
+        Returns np.nan if there are no valid runs.
+    """
+
+    # transforms indexes to coordinates if needed, and drops obsolete dim
+    def coord_transform(out, da):
+        if coord:
+            crd = da[dim]
+            if isinstance(coord, str):
+                crd = getattr(crd.dt, coord)
+
+            out = lazy_indexing(crd, out)
+
+        if dim in out.coords:
+            out = out.drop_vars(dim)
+        return out
+
+    # general method to get indices (or coords) of first run
+    def find_boundary_run(runs, position):
+        if position == "last":
+            runs = runs[{dim: slice(None, None, -1)}]
+        dmax_ind = runs.argmax(dim=dim)
+        # If there are no runs, dmax_ind will be 0: We must replace this with NaN
+        out = dmax_ind.where(dmax_ind != runs.argmin(dim=dim))
+        if position == "last":
+            out = runs[dim].size - out - 1
+            runs = runs[{dim: slice(None, None, -1)}]
+        out = coord_transform(out, runs)
+        return out
+
+    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, freq=freq)
+
+    da = da.fillna(0)  # We expect a boolean array, but there could be NaNs nonetheless
+    if window == 1:
+        if freq is not None:
+            out = da.resample({dim: freq}).map(find_boundary_run, position=position)
+        else:
+            out = find_boundary_run(da, position)
+
+    elif ufunc_1dim:
+        if position == "last":
+            da = da[{dim: slice(None, None, -1)}]
+        out = first_run_ufunc(x=da, window=window, dim=dim)
+        if position == "last" and not coord:
+            out = da[dim].size - out - 1
+            da = da[{dim: slice(None, None, -1)}]
+        out = coord_transform(out, da)
+
+    else:
+        # for "first" run, return "first" element in the run (and conversely for "last" run)
+        d = rle(da, dim=dim, index=position)
+        d = xr.where(d >= window, 1, 0)
+        if freq is not None:
+            out = d.resample({dim: freq}).map(find_boundary_run, position=position)
+        else:
+            out = find_boundary_run(d, position)
+
+    return out
+
+
 def first_run(
     da: xr.DataArray,
     window: int,
@@ -436,50 +531,15 @@ def first_run(
         Index (or coordinate if `coord` is not False) of first item in first valid run.
         Returns np.nan if there are no valid runs.
     """
-
-    # transforms indexes to coordinates if needed, and drops obsolete dim
-    def coord_transform(out, da):
-        if coord:
-            crd = da[dim]
-            if isinstance(coord, str):
-                crd = getattr(crd.dt, coord)
-
-            out = lazy_indexing(crd, out)
-
-        if dim in out.coords:
-            out = out.drop_vars(dim)
-        return out
-
-    # general method to get indices (or coords) of first run
-    def get_out(d):
-        dmax_ind = d.argmax(dim=dim)
-        # If `d` has no runs, dmax_ind will be 0: We must replace this with NaN
-        out = dmax_ind.where(dmax_ind != d.argmin(dim=dim))
-        out = coord_transform(out, d)
-        return out
-
-    ufunc_1dim = use_ufunc(ufunc_1dim, da, dim=dim, freq=freq)
-
-    da = da.fillna(0)  # We expect a boolean array, but there could be NaNs nonetheless
-    if window == 1:
-        if freq is not None:
-            out = da.resample({dim: freq}).map(get_out)
-        else:
-            out = xr.where(da.any(dim=dim), da.argmax(dim=dim), np.NaN)
-            out = coord_transform(out, da)
-
-    elif ufunc_1dim:
-        out = first_run_ufunc(x=da, window=window, dim=dim)
-        out = coord_transform(out, da)
-
-    else:
-        d = rle(da, dim=dim, index="first")
-        d = xr.where(d >= window, 1, 0)
-        if freq is not None:
-            out = d.resample({dim: freq}).map(get_out)
-        else:
-            out = get_out(d)
-
+    out = _boundary_run(
+        da,
+        window=window,
+        dim=dim,
+        freq=freq,
+        coord=coord,
+        ufunc_1dim=ufunc_1dim,
+        position="first",
+    )
     return out
 
 
@@ -520,17 +580,15 @@ def last_run(
         Index (or coordinate if `coord` is not False) of last item in last valid run.
         Returns np.nan if there are no valid runs.
     """
-    reversed_da = da.sortby(dim, ascending=False)
-    out = first_run(
-        reversed_da,
+    out = _boundary_run(
+        da,
         window=window,
         dim=dim,
         freq=freq,
         coord=coord,
         ufunc_1dim=ufunc_1dim,
+        position="last",
     )
-    if not coord:
-        return reversed_da[dim].size - out - 1
     return out
 
 

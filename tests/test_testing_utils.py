@@ -10,8 +10,6 @@ import pytest
 import xclim.testing.utils as utilities
 from xclim import __version__ as __xclim_version__
 
-from . import TD
-
 
 class TestFileRequests:
     def test_get_failure(self, tmp_path):
@@ -81,7 +79,8 @@ class TestFileRequests:
 
 class TestFileAssertions:
     def test_md5_sum(self):
-        callendar = TD / "callendar_1938.txt"
+        test_data = Path(__file__).parent / "data"
+        callendar = test_data / "callendar_1938.txt"
         md5_sum = utilities.file_md5_checksum(callendar)
         assert md5_sum == "9a5d9f94d76d4f9d9b7aaadbe8cbf541"  # noqa
 

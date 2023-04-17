@@ -31,9 +31,7 @@ from xclim.sdba.utils import (
     get_correction,
     invert,
 )
-from xclim.testing import open_dataset
-
-from .utils import nancov
+from xclim.testing.sdba_utils import nancov  # noqa
 
 
 class TestLoci:
@@ -488,37 +486,42 @@ class TestQM:
         np.testing.assert_array_almost_equal(p, ref, 2)
 
     @pytest.mark.parametrize("use_dask", [True, False])
-    def test_add_dims(self, use_dask):
-        if use_dask:
-            chunks = {"location": -1}
-        else:
-            chunks = None
-        ref = (
-            open_dataset(
-                "sdba/ahccd_1950-2013.nc", chunks=chunks, drop_variables=["lat", "lon"]
+    def test_add_dims(self, use_dask, open_dataset):
+        with set_options(sdba_encode_cf=use_dask):
+            if use_dask:
+                chunks = {"location": -1}
+            else:
+                chunks = None
+            ref = (
+                open_dataset(
+                    "sdba/ahccd_1950-2013.nc",
+                    chunks=chunks,
+                    drop_variables=["lat", "lon"],
+                )
+                .sel(time=slice("1981", "2010"))
+                .tasmax
             )
-            .sel(time=slice("1981", "2010"))
-            .tasmax
-        )
-        ref = convert_units_to(ref, "K")
-        ref = ref.isel(location=1, drop=True).expand_dims(location=["Amos"])
+            ref = convert_units_to(ref, "K")
+            ref = ref.isel(location=1, drop=True).expand_dims(location=["Amos"])
 
-        dsim = open_dataset(
-            "sdba/CanESM2_1950-2100.nc", chunks=chunks, drop_variables=["lat", "lon"]
-        ).tasmax
-        hist = dsim.sel(time=slice("1981", "2010"))
-        sim = dsim.sel(time=slice("2041", "2070"))
+            dsim = open_dataset(
+                "sdba/CanESM2_1950-2100.nc",
+                chunks=chunks,
+                drop_variables=["lat", "lon"],
+            ).tasmax
+            hist = dsim.sel(time=slice("1981", "2010"))
+            sim = dsim.sel(time=slice("2041", "2070"))
 
-        # With add_dims, "does it run" test
-        group = Grouper("time.dayofyear", window=5, add_dims=["location"])
-        EQM = EmpiricalQuantileMapping.train(ref, hist, group=group)
-        EQM.adjust(sim).load()
+            # With add_dims, "does it run" test
+            group = Grouper("time.dayofyear", window=5, add_dims=["location"])
+            EQM = EmpiricalQuantileMapping.train(ref, hist, group=group)
+            EQM.adjust(sim).load()
 
-        # Without, sanity test.
-        group = Grouper("time.dayofyear", window=5)
-        EQM2 = EmpiricalQuantileMapping.train(ref, hist, group=group)
-        scen2 = EQM2.adjust(sim).load()
-        assert scen2.sel(location=["Kugluktuk", "Vancouver"]).isnull().all()
+            # Without, sanity test.
+            group = Grouper("time.dayofyear", window=5)
+            EQM2 = EmpiricalQuantileMapping.train(ref, hist, group=group)
+            scen2 = EQM2.adjust(sim).load()
+            assert scen2.sel(location=["Kugluktuk", "Vancouver"]).isnull().all()
 
 
 class TestPrincipalComponents:
@@ -661,7 +664,7 @@ class TestExtremeValues:
         ).sum()
 
     @pytest.mark.slow
-    def test_real_data(self):
+    def test_real_data(self, open_dataset):
         dsim = open_dataset("sdba/CanESM2_1950-2100.nc").chunk()
         dref = open_dataset("sdba/ahccd_1950-2013.nc").chunk()
 

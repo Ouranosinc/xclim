@@ -61,7 +61,7 @@ def test_ensure_chunk_size():
     assert out.chunks[2] == (20,)
 
 
-class Test_nan_calc_percentiles:
+class TestNanCalcPercentiles:
     def test_calc_perc_type7(self):
         # Exemple array from: https://en.wikipedia.org/wiki/Percentile#The_nearest-rank_method
         arr = np.asarray([15.0, 20.0, 35.0, 40.0, 50.0])

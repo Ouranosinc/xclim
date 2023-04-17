@@ -56,11 +56,9 @@ __all__ = [
     "freshet_start",
     "frost_days",
     "last_spring_frost",
-    "first_day_above",
     "first_day_tg_above",
     "first_day_tn_above",
     "first_day_tx_above",
-    "first_day_below",
     "first_day_tg_below",
     "first_day_tn_below",
     "first_day_tx_below",
@@ -723,27 +721,11 @@ last_spring_frost = Temp(
     "for at least {window} days before a given date ({before_date})",
     description="Day of year of last spring frost, defined as the last day a minimum temperature "
     "remains below a threshold of {thresh} for at least {window} days before a given date ({before_date}).",
-    abstract="The last day when temperature is below a given threshold for a certain number of days, "
+    abstract="The last day when minimum temperature is below a given threshold for a certain number of days, "
     "limited by a final calendar date.",
     cell_methods="",
     compute=indices.last_spring_frost,
     parameters={"before_date": {"default": "07-01"}},
-)
-
-first_day_below = Temp(
-    title="First day below",
-    identifier="first_day_below",
-    units="",
-    standard_name="day_of_year",
-    long_name="First day of year with temperature below threshold",
-    description="First day of year with temperature below {thresh} for at least {window} days after {after_date}.",
-    abstract="Calculates the first day of a period when the temperature is lower than a certain threshold during a "
-    "given number of days, after a given calendar date.",
-    cell_methods="",
-    compute=indices.first_day_temperature_below,
-    input=dict(tas="tasmin"),
-    parameters={"after_date": {"default": "07-01"}},
-    _version_deprecated="0.39.0",
 )
 
 first_day_tn_below = Temp(
@@ -788,22 +770,6 @@ first_day_tx_below = Temp(
         after_date={"default": "07-01"},
         op={"default": "<"},
     ),
-)
-
-first_day_above = Temp(
-    title="First day above",
-    identifier="first_day_above",
-    units="",
-    standard_name="day_of_year",
-    long_name="First day of year with temperature above threshold",
-    description="First day of year with temperature above {thresh} for at least {window} days after {after_date}.",
-    abstract="Calculates the first day of a period when the temperature is higher than a certain threshold during a "
-    "given number of days, after a given calendar date.",
-    cell_methods="",
-    compute=indices.first_day_temperature_above,
-    input=dict(tas="tasmin"),
-    parameters={"after_date": {"default": "07-01"}},
-    _version_deprecated="0.39.0",
 )
 
 first_day_tn_above = Temp(

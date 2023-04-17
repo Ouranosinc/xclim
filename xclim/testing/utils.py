@@ -26,20 +26,24 @@ from urllib.request import urlopen, urlretrieve
 import pandas as pd
 from xarray import Dataset
 from xarray import open_dataset as _open_dataset
-from yaml import safe_dump, safe_load
 
 _xclim_deps = [
     "xclim",
     "xarray",
+    "statsmodels",
     "sklearn",
     "scipy",
     "pint",
     "pandas",
     "numba",
+    "lmoments3",
+    "jsonpickle",
+    "flox",
     "dask",
     "cf_xarray",
     "cftime",
     "clisops",
+    "click",
     "bottleneck",
     "boltons",
 ]
@@ -50,6 +54,7 @@ _default_cache_dir = Path.home() / ".xclim_testing_data"
 LOGGER = logging.getLogger("xclim")
 
 __all__ = [
+    "_default_cache_dir",
     "get_file",
     "get_local_testdata",
     "list_datasets",
@@ -412,16 +417,21 @@ def list_input_variables(
 
 
 def publish_release_notes(
-    style: str = "md", file: os.PathLike | StringIO | TextIO | None = None
+    style: str = "md",
+    file: os.PathLike | StringIO | TextIO | None = None,
+    changes: str | os.PathLike | None = None,
 ) -> str | None:
     """Format release notes in Markdown or ReStructuredText.
 
     Parameters
     ----------
-    style: {"rst", "md"}
-      Use ReStructuredText formatting or Markdown. Default: Markdown.
-    file: {os.PathLike, StringIO, TextIO}, optional
-      If provided, prints to the given file-like object. Otherwise, returns a string.
+    style : {"rst", "md"}
+        Use ReStructuredText formatting or Markdown. Default: Markdown.
+    file : {os.PathLike, StringIO, TextIO}, optional
+        If provided, prints to the given file-like object. Otherwise, returns a string.
+    changes : {str, os.PathLike}, optional
+        If provided, manually points to the file where the changelog can be found.
+        Assumes a relative path otherwise.
 
     Returns
     -------
@@ -429,9 +439,12 @@ def publish_release_notes(
 
     Notes
     -----
-    This function is solely for development and packaging purposes.
+    This function is used solely for development and packaging purposes.
     """
-    changes_file = Path(__file__).parent.parent.parent.joinpath("CHANGES.rst")
+    if isinstance(changes, (str, Path)):
+        changes_file = Path(changes).absolute()
+    else:
+        changes_file = Path(__file__).absolute().parents[2].joinpath("CHANGES.rst")
 
     if not changes_file.exists():
         raise FileNotFoundError("Changelog file not found in xclim folder tree.")
