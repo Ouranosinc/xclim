@@ -12,7 +12,7 @@ Announcements
 
 New indicators
 ^^^^^^^^^^^^^^
-* ``ensembles.change_significance`` now supports Brown-Forsythe test. (:pull:`1292`).
+* ``ensembles.change_significance`` now supports the Brown-Forsythe test. (:pull:`1292`).
 
 Bug fixes
 ^^^^^^^^^
@@ -115,7 +115,6 @@ New indicators
 * New indices and indicators for determining upwelling radiation (`shortwave_upwelling_radiation_from_net_downwelling` and `longwave_upwelling_radiation_from_net_downwelling`; CF variables `rsus` and `rlus`) from net and downwelling radiation (shortwave: `rss` and `rsds`; longwave: `rls` and `rlds`). (:pull:`1271`).
 * New indice and indicator ``{snd | snw}_season_{length | start | end}`` which generalize ``snow_cover_duration`` and  ``continuous_snow_cover_{start | end}`` to allow using these functions with variable `snw` (:pull:`1275`).
 * New indice and indicator (``dryness_index``) for estimating soil humidity classifications for winegrowing regions (based on Riou et al. (1994)). (:issue:`355`, :pull:`1235`).
-* ``ensembles.change_significance`` now support Brown-Forsythe test. (:pull:`1292`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
