@@ -233,10 +233,15 @@ def change_significance(
 
         # Test hypothesis of no significant change
         # equal_var=False -> Welch's T-test
+        def wtt_wrapper(f, r):  # This specific test can't manage an all-NaN slice
+            if np.isnan(f).all() or np.isnan(r).all():
+                return np.NaN
+            return spstats.ttest_ind(f, r, axis=-1, equal_var=False, nan_policy="omit")[
+                1
+            ]
+
         pvals = xr.apply_ufunc(
-            lambda f, r: spstats.ttest_ind(
-                f, r, axis=-1, equal_var=False, nan_policy="omit"
-            )[1],
+            wtt_wrapper,
             fut,
             ref,
             input_core_dims=[["time"], ["time"]],

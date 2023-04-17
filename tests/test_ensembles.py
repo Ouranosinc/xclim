@@ -699,7 +699,7 @@ def test_change_significance(
     if pvals is not None:
         if isinstance(ref, xr.Dataset):
             pvals = pvals.tas
-        pvals.load()  # Otherwise it acts weirdly
+        pvals.load()  # Otherwise it acts weirdly for welch-ttest
         # 0.05 is the default p_change parameter
         changed = pvals < 0.05
         np.testing.assert_array_almost_equal(changed, exp_changed)
