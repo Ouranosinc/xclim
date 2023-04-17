@@ -13,7 +13,7 @@ Announcements
 New indicators
 ^^^^^^^^^^^^^^
 * ``ensembles.change_significance`` now supports Brown-Forsythe test. (:pull:`1292`).
-  
+
 Bug fixes
 ^^^^^^^^^
 * Fixed a bug in the `pyproject.toml` configuration that excluded the changelog (`CHANGES.rst`) from the packaged source distribution. (:pull:`1349`).
