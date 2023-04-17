@@ -10,7 +10,6 @@ the 12th chapter of the Working Group 1's contribution to the AR5 :cite:p:`colli
 from __future__ import annotations
 
 import warnings
-from typing import Union
 
 import numpy as np
 import scipy
@@ -212,8 +211,8 @@ def change_significance(
             _ttest_func,
             fut,
             ref.mean("time"),
-            input_core_dims=[[realization, "time"], [realization]],
-            output_core_dims=[[realization]],
+            input_core_dims=[["time"], []],
+            output_core_dims=[[]],
             vectorize=True,
             dask="parallelized",
             output_dtypes=[float],
@@ -236,8 +235,8 @@ def change_significance(
             )[1],
             fut,
             ref,
-            input_core_dims=[[realization, "time"], [realization, "time"]],
-            output_core_dims=[[realization]],
+            input_core_dims=[["time"], ["time"]],
+            output_core_dims=[[]],
             exclude_dims={"time"},
             vectorize=True,
             dask="parallelized",
@@ -246,7 +245,6 @@ def change_significance(
 
         # When p < p_change, the hypothesis of no significant change is rejected.
         changed = pvals < p_change
-
     elif test == "mannwhitney-utest":
         if weights is not None:
             raise NotImplementedError(
@@ -263,12 +261,18 @@ def change_significance(
 
         # Test hypothesis of no significant change
         # -> Mann-Whitney U-test
+
+        def mwu_wrapper(f, r):  # This specific test can't manage an all-NaN slice
+            if np.isnan(f).all() or np.isnan(r).all():
+                return np.NaN
+            return spstats.mannwhitneyu(f, r, axis=-1, nan_policy="omit")[1]
+
         pvals = xr.apply_ufunc(
-            lambda f, r: spstats.mannwhitneyu(f, r, axis=-1, nan_policy="omit")[1],
+            mwu_wrapper,
             fut,
             ref,
-            input_core_dims=[[realization, "time"], [realization, "time"]],
-            output_core_dims=[[realization]],
+            input_core_dims=[["time"], ["time"]],
+            output_core_dims=[[]],
             exclude_dims={"time"},
             vectorize=True,
             dask="parallelized",
