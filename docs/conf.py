@@ -145,6 +145,8 @@ linkcheck_ignore = [
     r"https://www.semanticscholar.org/paper/A-Multivariate-Two-Sample-Test-Based-on-the-Concept-Zech-Aslan/.*",
     # Added on 2023-03-08: OGC does not allow linkcheck requests (error 403)
     r"https://www.ogc.org/standard/wps/.*",
+    # Added on 2023-04-17: IEEE messes around with linkcheck requests (error 418)
+    r"https://ieeexplore.ieee.org/.*",
 ]
 linkcheck_exclude_documents = [r"readme"]
 

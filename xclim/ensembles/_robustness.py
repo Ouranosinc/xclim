@@ -156,9 +156,9 @@ def change_significance(
         w = weights
     else:
         w = xr.DataArray(
-            [1] * ref[realization].size,
+            [1] * fut[realization].size,
             dims=(realization,),
-            coords={"realization": ref[realization]},
+            coords={"realization": fut[realization]},
         )
 
     # Significance tests parameter names
