@@ -54,7 +54,7 @@ def change_significance(
         Name of the statistical test used to determine if there was significant change. See notes.
     weights : xr.DataArray
         Weights to apply along the 'realization' dimension. This array cannot contain missing values.
-        Note: 'ttest' and 'welch-ttest' are not currently supported with weighted arrays.
+        Only tests "threshold" and "None" are currently supported with weighted arrays.
     p_vals : bool
         If True, return the estimated p-values.
     **kwargs
@@ -151,6 +151,16 @@ def change_significance(
         ref = ref.assign_coords({realization: "dummy"})
         ref = ref.expand_dims(realization)
 
+    # Get dummy weights to simplify code
+    if weights is not None:
+        w = weights
+    else:
+        w = xr.DataArray(
+            [1] * ref[realization].size,
+            dims=(realization,),
+            coords={"realization": ref[realization]},
+        )
+
     # Significance tests parameter names
     test_params = {
         "ttest": ["p_change"],
@@ -164,20 +174,14 @@ def change_significance(
     changed = None
     if ref is None:
         delta = fut
-        if weights is None:
-            n_valid_real = delta.notnull().sum(realization)
-        else:
-            n_valid_real = weights.where(delta.notnull()).sum(realization)
+        n_valid_real = w.where(delta.notnull()).sum(realization)
         if test not in ["threshold", None]:
             raise ValueError(
                 "When deltas are given (ref=None), 'test' must be one of ['threshold', None]"
             )
     else:
         delta = fut.mean("time") - ref.mean("time")
-        if weights is None:
-            n_valid_real = fut.notnull().all("time").sum(realization)
-        else:
-            n_valid_real = weights.where(fut.notnull().all("time")).sum(realization)
+        n_valid_real = w.where(fut.notnull().all("time")).sum(realization)
 
     pvals = None
     if test == "ttest":
@@ -318,22 +322,16 @@ def change_significance(
     # Compute `change_frac`: ratio of realizations with significant changes.
     if test is not None:
         delta_chng = delta.where(changed)
-        if weights is None:
-            change_frac = changed.sum(realization) / n_valid_real
-        else:
-            change_frac = changed.weighted(weights).sum(realization) / n_valid_real
+        change_frac = changed.weighted(w).sum(realization) / n_valid_real
     else:
         delta_chng = delta
         change_frac = xr.ones_like(delta.isel({realization: 0}))
 
     # Test that models agree on the sign of the change
     # This returns NaN (cause 0 / 0) where no model show significant change.
-    if weights is None:
-        pos_frac = (delta_chng > 0).sum(realization) / (change_frac * n_valid_real)
-    else:
-        pos_frac = (delta_chng > 0).weighted(weights).sum(realization) / (
-            change_frac * n_valid_real
-        )
+    pos_frac = (delta_chng > 0).weighted(w).sum(realization) / (
+        change_frac * n_valid_real
+    )
 
     # Metadata
     kwargs_str = ", ".join(
