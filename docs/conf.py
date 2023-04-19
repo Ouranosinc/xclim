@@ -145,6 +145,13 @@ linkcheck_ignore = [
     r"https://www.semanticscholar.org/paper/A-Multivariate-Two-Sample-Test-Based-on-the-Concept-Zech-Aslan/.*",
     # Added on 2023-03-08: OGC does not allow linkcheck requests (error 403)
     r"https://www.ogc.org/standard/wps/.*",
+    # Added on 2023-04-19: Site appears to be down (error 418)
+    r"https://doi.org/10.1109/.*",
+    r"https://ieeexplore.ieee.org/document/1544887/",
+    # Added on 2023-04-19: Site appears to be down (error 404)
+    r"https://doi.org/10.1214/.*"
+    r"https://projecteuclid.org/journals/annals-of-statistics/volume-7/issue-4/Multivariate-Generalizations-of-the-Wald-Wolfowitz-and-Smirnov-Two-Sample/10.1214/aos/1176344722.full",
+    "https://projecteuclid.org/journals/annals-of-statistics/volume-16/issue-2/A-Multivariate-Two-Sample-Test-Based-on-the-Number-of/10.1214/aos/1176350835.full",
 ]
 linkcheck_exclude_documents = [r"readme"]
 
