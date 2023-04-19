@@ -151,7 +151,7 @@ linkcheck_ignore = [
     # Added on 2023-04-19: Site appears to be down (error 404)
     r"https://doi.org/10.1214/.*"
     r"https://projecteuclid.org/journals/annals-of-statistics/volume-7/issue-4/Multivariate-Generalizations-of-the-Wald-Wolfowitz-and-Smirnov-Two-Sample/10.1214/aos/1176344722.full",
-    "https://projecteuclid.org/journals/annals-of-statistics/volume-16/issue-2/A-Multivariate-Two-Sample-Test-Based-on-the-Number-of/10.1214/aos/1176350835.full",
+    r"https://projecteuclid.org/journals/annals-of-statistics/volume-16/issue-2/A-Multivariate-Two-Sample-Test-Based-on-the-Number-of/10.1214/aos/1176350835.full",
 ]
 linkcheck_exclude_documents = [r"readme"]
 
