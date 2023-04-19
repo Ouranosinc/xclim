@@ -92,7 +92,7 @@ How to cite this library
 ------------------------
 If you wish to cite xclim in a research publication, we kindly ask that you use the bibliographical reference information available through `Zenodo`_
 
-.. _Zenodo: https://doi.org/10.5281/zenodo.2795043S
+.. _Zenodo: https://doi.org/10.5281/zenodo.2795043
 
 License
 -------
