@@ -1201,11 +1201,15 @@ def fraction_over_precip_thresh(
     constrain = (">", ">=")
     # Total precip during wet days over period
     total = (
-        pr.where(compare(pr, op, thresh, constrain)).resample(time=freq).sum(dim="time")
+        pr.where(compare(pr, op, thresh, constrain), 0)
+        .resample(time=freq)
+        .sum(dim="time")
     )
 
     # Compute the days when precip is both over the wet day threshold and the percentile threshold.
-    over = pr.where(compare(pr, op, tp, constrain)).resample(time=freq).sum(dim="time")
+    over = (
+        pr.where(compare(pr, op, tp, constrain), 0).resample(time=freq).sum(dim="time")
+    )
 
     out = over / total
     out.attrs["units"] = ""
