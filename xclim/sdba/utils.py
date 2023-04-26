@@ -461,14 +461,13 @@ def interp_on_quantiles(
     )
 
 
-# TODO is this useless?
 def rank(da: xr.DataArray, dim: str = "time", pct: bool = False) -> xr.DataArray:
     """Ranks data along a dimension.
 
     Replicates `xr.DataArray.rank` but as a function usable in a Grouper.apply(). Xarray's docstring is below:
 
     Equal values are assigned a rank that is the average of the ranks that would have been otherwise assigned to all the
-    values within that set. Ranks begin at 1, not 0. If pct, computes percentage ranks.
+    values within that set. Ranks begin at 1, not 0. If pct, computes percentage ranks, ranging from 0 to 1.
 
     Parameters
     ----------
@@ -478,6 +477,8 @@ def rank(da: xr.DataArray, dim: str = "time", pct: bool = False) -> xr.DataArray
       Dimension over which to compute rank.
     pct : bool, optional
       If True, compute percentage ranks, otherwise compute integer ranks.
+      Percentage ranks range from 0 to 1, in opposition to xarray's implementation,
+      where they range from 1/N to 1.
 
     Returns
     -------
@@ -487,8 +488,17 @@ def rank(da: xr.DataArray, dim: str = "time", pct: bool = False) -> xr.DataArray
     Notes
     -----
     The `bottleneck` library is required. NaNs in the input array are returned as NaNs.
+
+    See Also
+    --------
+    xarray.DataArray.rank
     """
-    return da.rank(dim, pct=pct)
+    rnk = da.rank(dim, pct=pct)
+    if pct:
+        mn = 1 / rnk.size
+        mx = rnk.max(dim)
+        return mx * (rnk - mn) / (mx - mn)
+    return rnk
 
 
 def pc_matrix(arr: np.ndarray | dsk.Array) -> np.ndarray | dsk.Array:
