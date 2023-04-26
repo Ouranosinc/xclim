@@ -495,7 +495,7 @@ def rank(da: xr.DataArray, dim: str = "time", pct: bool = False) -> xr.DataArray
     """
     rnk = da.rank(dim, pct=pct)
     if pct:
-        mn = 1 / rnk.size
+        mn = rnk.min(dim)
         mx = rnk.max(dim)
         return mx * (rnk - mn) / (mx - mn)
     return rnk
