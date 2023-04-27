@@ -125,7 +125,7 @@ def test_rle(ufunc, use_dask, index):
 
 @pytest.mark.parametrize("use_dask", [True, False])
 @pytest.mark.parametrize("index", ["first", "last"])
-def test_rle_with_holes_reproduces_rle(use_dask, index):
+def test_rle_events_reproduces_rle(use_dask, index):
     # implement more tests, this is just to show that this reproduces the behaviour
     # of rle
     values = np.zeros((10, 365, 4, 4))
@@ -136,11 +136,11 @@ def test_rle_with_holes_reproduces_rle(use_dask, index):
     if use_dask:
         da = da.chunk({"a": 1, "b": 2})
 
-    out = rl.rle_with_holes(da != 0, 1, da == 0, 1, index=index).mean(["a", "b", "c"])
+    out = rl.rle_events(da != 0, 1, da == 0, 1, index=index).mean(["a", "b", "c"])
 
     # Same output as rle when da_stop is the opposite of da_start and window_start == window_stop = 1
     # But:
-    # - `rle_with_holes` gives either length or NaN.
+    # - `rle_events` gives either length or NaN.
     # - `rle` gives either length, NaN, _or_ 0
     if index == "last":
         expected = np.zeros(365) * np.nan
@@ -153,14 +153,14 @@ def test_rle_with_holes_reproduces_rle(use_dask, index):
     np.testing.assert_array_equal(out, expected)
 
 
-def test_rle_with_holes():
+def test_rle_events():
     values = np.zeros(365)
     time = pd.date_range("2000-01-01", periods=365, freq="D")
     a = [0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0]
     values[0 : len(a)] = a
     da = xr.DataArray(values, coords={"time": time}, dims=("time"))
 
-    out = rl.rle_with_holes(da == 1, 1, da == 0, 3, index="first")
+    out = rl.rle_events(da == 1, 1, da == 0, 3, index="first")
 
     expected = values * np.NaN
     expected[1] = 10

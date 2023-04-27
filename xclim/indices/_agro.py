@@ -1014,7 +1014,7 @@ def rain_season(
 
         # First and second condition combined in a run length
         run_positions = (
-            rl.rle_with_holes(da_start, 1, da_stop, window_dry, "first")
+            rl.rle_events(da_start, 1, da_stop, window_dry, "first")
             >= window_not_dry_start + window_wet_start
         )
 
