@@ -10,13 +10,24 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 
+from xclim.core.units import convert_units_to, infer_context, units
 from xclim.indices.stats import _fitfunc_1d  # noqa
 
 from . import nbutils as nbu
 from . import utils as u
+from ._processing import _adapt_freq_s
 from .base import Grouper, map_blocks, map_groups
 from .detrending import PolyDetrend
-from .processing import escore
+from .processing import adapt_freq, escore
+
+
+def _adapt_freq_hist(ds, adapt_freq_thresh):
+    with units.context(infer_context(ds.ref.attrs.get("standard_name"))):
+        thresh = convert_units_to(adapt_freq_thresh, ds.ref)
+    dim = ["time"] + ["window"] * ("window" in ds.hist.dims)
+    return _adapt_freq_s(
+        xr.Dataset(dict(sim=ds.hist, ref=ds.ref)), thresh=thresh, dim=dim
+    )
 
 
 @map_groups(
@@ -24,7 +35,7 @@ from .processing import escore
     hist_q=[Grouper.PROP, "quantiles"],
     scaling=[Grouper.PROP],
 )
-def dqm_train(ds, *, dim, kind, quantiles) -> xr.Dataset:
+def dqm_train(ds, *, dim, kind, quantiles, adapt_freq_thresh) -> xr.Dataset:
     """Train step on one group.
 
     Notes
@@ -33,15 +44,17 @@ def dqm_train(ds, *, dim, kind, quantiles) -> xr.Dataset:
       ref : training target
       hist : training data
     """
+    hist = _adapt_freq_hist(ds, adapt_freq_thresh) if adapt_freq_thresh else ds.hist
+
     refn = u.apply_correction(ds.ref, u.invert(ds.ref.mean(dim), kind), kind)
-    histn = u.apply_correction(ds.hist, u.invert(ds.hist.mean(dim), kind), kind)
+    histn = u.apply_correction(hist, u.invert(hist.mean(dim), kind), kind)
 
     ref_q = nbu.quantile(refn, quantiles, dim)
     hist_q = nbu.quantile(histn, quantiles, dim)
 
     af = u.get_correction(hist_q, ref_q, kind)
     mu_ref = ds.ref.mean(dim)
-    mu_hist = ds.hist.mean(dim)
+    mu_hist = hist.mean(dim)
     scaling = u.get_correction(mu_hist, mu_ref, kind=kind)
 
     return xr.Dataset(data_vars=dict(af=af, hist_q=hist_q, scaling=scaling))
@@ -51,15 +64,17 @@ def dqm_train(ds, *, dim, kind, quantiles) -> xr.Dataset:
     af=[Grouper.PROP, "quantiles"],
     hist_q=[Grouper.PROP, "quantiles"],
 )
-def eqm_train(ds, *, dim, kind, quantiles) -> xr.Dataset:
+def eqm_train(ds, *, dim, kind, quantiles, adapt_freq_thresh) -> xr.Dataset:
     """EQM: Train step on one group.
 
     Dataset variables:
       ref : training target
       hist : training data
     """
+    hist = _adapt_freq_hist(ds, adapt_freq_thresh) if adapt_freq_thresh else ds.hist
+
     ref_q = nbu.quantile(ds.ref, quantiles, dim)
-    hist_q = nbu.quantile(ds.hist, quantiles, dim)
+    hist_q = nbu.quantile(hist, quantiles, dim)
 
     af = u.get_correction(hist_q, ref_q, kind)
 
@@ -154,18 +169,20 @@ def qdm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
     af=[Grouper.PROP],
     hist_thresh=[Grouper.PROP],
 )
-def loci_train(ds, *, group, thresh) -> xr.Dataset:
+def loci_train(ds, *, group, thresh, adapt_freq_thresh) -> xr.Dataset:
     """LOCI: Train on one block.
 
     Dataset variables:
       ref : training target
       hist : training data
     """
+    hist = _adapt_freq_hist(ds, adapt_freq_thresh) if adapt_freq_thresh else ds.hist
+
     s_thresh = group.apply(
         u.map_cdf, ds.rename(hist="x", ref="y"), y_value=thresh
     ).isel(x=0)
-    sth = u.broadcast(s_thresh, ds.hist, group=group)
-    ws = xr.where(ds.hist >= sth, ds.hist, np.nan)
+    sth = u.broadcast(s_thresh, hist, group=group)
+    ws = xr.where(hist >= sth, hist, np.nan)
     wo = xr.where(ds.ref >= thresh, ds.ref, np.nan)
 
     ms = group.apply("mean", ws, skipna=True)
@@ -192,14 +209,16 @@ def loci_adjust(ds, *, group, thresh, interp) -> xr.Dataset:
 
 
 @map_groups(af=[Grouper.PROP])
-def scaling_train(ds, *, dim, kind) -> xr.Dataset:
+def scaling_train(ds, *, dim, kind, adapt_freq_thresh) -> xr.Dataset:
     """Scaling: Train on one group.
 
     Dataset variables:
       ref : training target
       hist : training data
     """
-    mhist = ds.hist.mean(dim)
+    hist = _adapt_freq_hist(ds, adapt_freq_thresh) if adapt_freq_thresh else ds.hist
+
+    mhist = hist.mean(dim)
     mref = ds.ref.mean(dim)
     af = u.get_correction(mhist, mref, kind)
     return af.rename("af").to_dataset()

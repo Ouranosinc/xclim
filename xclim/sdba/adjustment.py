@@ -353,6 +353,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
         nquantiles: int | np.ndarray = 20,
         kind: str = ADDITIVE,
         group: str | Grouper = "time",
+        adapt_freq_thresh: str | None = None,
     ):
         if np.isscalar(nquantiles):
             quantiles = equally_spaced_nodes(nquantiles).astype(ref.dtype)
@@ -364,6 +365,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
             group=group,
             kind=kind,
             quantiles=quantiles,
+            adapt_freq_thresh=adapt_freq_thresh,
         )
 
         ds.af.attrs.update(
@@ -446,6 +448,7 @@ class DetrendedQuantileMapping(TrainAdjust):
         nquantiles: int | np.ndarray = 20,
         kind: str = ADDITIVE,
         group: str | Grouper = "time",
+        adapt_freq_thresh: str | None = None,
     ):
         if group.prop not in ["group", "dayofyear"]:
             warn(
@@ -462,6 +465,7 @@ class DetrendedQuantileMapping(TrainAdjust):
             group=group,
             quantiles=quantiles,
             kind=kind,
+            adapt_freq_thresh=adapt_freq_thresh,
         )
 
         ds.af.attrs.update(
