@@ -91,6 +91,67 @@ class TestPrecipAccumulation:
 
         np.testing.assert_array_almost_equal(out_liq + out_sol, out_tot, 4)
 
+class TestPrecipAverage:
+    # TODO: replace by fixture
+    nc_pr = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
+
+    def test_3d_data_with_nans(self, open_dataset):
+        # test with 3d data
+        pr = open_dataset(self.nc_pr).pr  # mm/s
+        prMM = open_dataset(self.nc_pr).pr
+        prMM *= 86400
+        prMM.attrs["units"] = "mm/day"
+        # put a nan somewhere
+        prMM.values[10, 1, 0] = np.nan
+        pr.values[10, 1, 0] = np.nan
+
+        out1 = atmos.precip_average(pr, freq="MS")
+        out2 = atmos.precip_average(prMM, freq="MS")
+
+        # test kg m-2 s-1
+        pr.attrs["units"] = "kg m-2 s-1"
+        out3 = atmos.precip_average(pr, freq="MS")
+
+        np.testing.assert_array_almost_equal(out1, out2, 3)
+        np.testing.assert_array_almost_equal(out1, out3, 5)
+
+        # check some vector with and without a nan
+        x1 = prMM[:31, 0, 0].values
+
+        prTot = x1.sum()
+
+        np.testing.assert_almost_equal(prTot, out1.values[0, 0, 0], 4)
+
+        assert np.isnan(out1.values[0, 1, 0])
+
+        assert np.isnan(out1.values[0, -1, -1])
+
+    def test_with_different_phases(self, open_dataset):
+        # test with different phases
+        pr = open_dataset(self.nc_pr).pr  # mm/s
+        tasmin = open_dataset(self.nc_tasmin).tasmin  # K
+
+        out_tot = atmos.precip_average(pr, freq="MS")
+        out_sol = atmos.solid_precip_average(pr, tas=tasmin, freq="MS")
+        out_liq = atmos.liquid_precip_average(pr, tas=tasmin, freq="MS")
+
+        np.testing.assert_array_almost_equal(out_liq + out_sol, out_tot, 4)
+
+        assert "solid" in out_sol.description
+        assert "liquid" in out_liq.description
+        assert out_sol.standard_name == "lwe_average_of_snowfall_amount"
+
+        # With a non-default threshold
+        out_sol = atmos.solid_precip_average(
+            pr, tas=tasmin, thresh="40 degF", freq="MS"
+        )
+        out_liq = atmos.liquid_precip_average(
+            pr, tas=tasmin, thresh="40 degF", freq="MS"
+        )
+
+        np.testing.assert_array_almost_equal(out_liq + out_sol, out_tot, 4)
+
 
 class TestStandardizedPrecip:
     nc_ds = os.path.join("sdba", "CanESM2_1950-2100.nc")

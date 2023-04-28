@@ -1484,7 +1484,58 @@ class TestPrecipAccumulation:
         np.testing.assert_array_equal(outsn2[0], 5 * 3600 * 24)
         np.testing.assert_array_equal(outrn[0], 5 * 3600 * 24)
 
+class TestPrecipAverage:
+    # build test data for different calendar
+    time_std = pd.date_range("2000-01-01", "2010-12-31", freq="D")
+    da_std = xr.DataArray(
+        time_std.year, coords=[time_std], dims="time", attrs={"units": "mm d-1"}
+    )
 
+    # calendar 365_day and 360_day not tested for now since xarray.resample
+    # does not support other calendars than standard
+    #
+    # units = 'days since 2000-01-01 00:00'
+    # time_365 = cftime.num2date(np.arange(0, 10 * 365), units, '365_day')
+    # time_360 = cftime.num2date(np.arange(0, 10 * 360), units, '360_day')
+    # da_365 = xr.DataArray(np.arange(time_365.size), coords=[time_365], dims='time')
+    # da_360 = xr.DataArray(np.arange(time_360.size), coords=[time_360], dims='time')
+
+    def test_simple(self, pr_series):
+        pr = np.zeros(100)
+        pr[5:10] = 1
+        pr = pr_series(pr)
+
+        out = xci.precip_average(pr, freq="M")
+        np.testing.assert_array_equal(out[0], 5 * 3600 * 24)
+
+    def test_yearly(self):
+        da_std = self.da_std
+        out_std = xci.precip_average(da_std)
+        target = [
+            (365 + calendar.isleap(y)) * y for y in np.unique(da_std.time.dt.year)
+        ]
+        np.testing.assert_allclose(out_std.values, target)
+
+    def test_mixed_phases(self, pr_series, tas_series):
+        pr = np.zeros(100)
+        pr[5:20] = 1
+        pr = pr_series(pr)
+
+        tas = np.ones(100) * 280
+        tas[5:10] = 270
+        tas[10:15] = 268
+        tas = tas_series(tas)
+
+        outsn = xci.precip_average(pr, tas=tas, phase="solid", freq="M")
+        outsn2 = xci.precip_average(
+            pr, tas=tas, phase="solid", thresh="269 K", freq="M"
+        )
+        outrn = xci.precip_average(pr, tas=tas, phase="liquid", freq="M")
+
+        np.testing.assert_array_equal(outsn[0], 10 * 3600 * 24)
+        np.testing.assert_array_equal(outsn2[0], 5 * 3600 * 24)
+        np.testing.assert_array_equal(outrn[0], 5 * 3600 * 24)
+        
 class TestRainOnFrozenGround:
     def test_simple(self, tas_series, pr_series):
         tas = np.zeros(30) - 1
