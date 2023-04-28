@@ -973,6 +973,7 @@ def precip_accumulation(
     pram = rate2amount(pr)
     return pram.resample(time=freq).sum(dim="time").assign_attrs(units=pram.units)
 
+
 @declare_units(pr="[precipitation]", tas="[temperature]", thresh="[temperature]")
 def precip_average(
     pr: xarray.DataArray,
@@ -1033,6 +1034,7 @@ def precip_average(
         pr = snowfall_approximation(pr, tas=tas, thresh=thresh, method="binary")
     pram = rate2amount(pr)
     return pram.resample(time=freq).mean(dim="time").assign_attrs(units=pram.units)
+
 
 # FIXME: Resample after run length?
 @declare_units(pr="[precipitation]", tas="[temperature]", thresh="[precipitation]")

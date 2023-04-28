@@ -91,6 +91,7 @@ class TestPrecipAccumulation:
 
         np.testing.assert_array_almost_equal(out_liq + out_sol, out_tot, 4)
 
+
 class TestPrecipAverage:
     # TODO: replace by fixture
     nc_pr = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")

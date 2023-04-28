@@ -1484,6 +1484,7 @@ class TestPrecipAccumulation:
         np.testing.assert_array_equal(outsn2[0], 5 * 3600 * 24)
         np.testing.assert_array_equal(outrn[0], 5 * 3600 * 24)
 
+
 class TestPrecipAverage:
     # build test data for different calendar
     time_std = pd.date_range("2000-01-01", "2010-12-31", freq="D")
@@ -1535,7 +1536,8 @@ class TestPrecipAverage:
         np.testing.assert_array_equal(outsn[0], 10 * 3600 * 24)
         np.testing.assert_array_equal(outsn2[0], 5 * 3600 * 24)
         np.testing.assert_array_equal(outrn[0], 5 * 3600 * 24)
-        
+
+
 class TestRainOnFrozenGround:
     def test_simple(self, tas_series, pr_series):
         tas = np.zeros(30) - 1
