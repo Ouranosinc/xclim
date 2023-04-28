@@ -9,6 +9,7 @@ import xarray as xr
 from importlib.resources import open_text
 from yaml import safe_load
 import warnings
+import pytest
 
 from xclim.core import calendar
 from xclim.indices import (
@@ -199,26 +200,25 @@ def add_example_file_paths(cache_dir: Path) -> dict[str]:
 
     return ns
 
+
 @pytest.fixture
 def test_timeseries():
     def _test_timeseries(values, variable,  start="7/1/2000", units=None, freq="D", as_dataset=False):
         coords = pd.date_range(start, periods=len(values), freq=freq)
         data_on_var = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
-
         if variable in data_on_var:
-            attrs={}
-            attrs['units']=data_on_var[variable]['canonical_units']
-            attrs['description'] = data_on_var[variable]['description']
-            attrs['standard_name'] = data_on_var[variable]['standard_name']
-            attrs['cell_methods'] = data_on_var[variable]['cell_methods']
+            attrs ={a:data_on_var[variable].get(a, 'unknown') for a in
+                    ['description','standard_name','cell_methods']}
+            attrs['units'] = data_on_var[variable]['canonical_units']
+
         else:
-            warnings.warn(f'Variable {variable} not recognised. Attrs will filled with "unknown.')
+            warnings.warn(f'Variable {variable} not recognised. Attrs will filled with "unknown".')
             # TODO: is it better to put this or just no attrs ?
-            attrs['units'] = 'unknown'
-            attrs['description'] = 'unknown'
-            attrs['standard_name'] = 'unknown'
-            attrs['cell_methods'] = 'unknown'
-        
+            attrs ={a:'unknown'for a in
+                    ['description','standard_name','cell_methods','units']}
+
+
+
         if units is not None:
             attrs['units'] = units
 
@@ -229,7 +229,7 @@ def test_timeseries():
             name=variable,
             attrs=attrs
         )
-        
+
         if as_dataset:
             return da.to_dataset()
         else:
