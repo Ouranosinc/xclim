@@ -42,6 +42,8 @@ __all__ = [
     "last_snowfall",
     "first_snowfall",
     "days_with_snow",
+    "snowfall_frequency",
+    "snowfall_intensity",
     "days_over_precip_thresh",
     "days_over_precip_doy_thresh",
     "high_precip_low_temp",
@@ -486,6 +488,26 @@ days_with_snow = PrecipWithIndexing(
     abstract="Number of days with snow between a lower and upper limit.",
     units="days",
     compute=indices.days_with_snow,
+)
+
+snowfall_frequency = PrecipWithIndexing(
+    title="Snowfall frequency",
+    identifier="snowfall_frequency",
+    long_name="Percentage of days with solid precipitation flux above {thresh} threshold",
+    description="{freq} percentage of days with solid precipitation flux larger than {thresh}.",
+    abstract="Percentage of days with snow above lower limit.",
+    units="%",
+    compute=indices.snowfall_frequency,
+)
+
+snowfall_intensity = PrecipWithIndexing(
+    title="Snowfall intensity",
+    identifier="snowfall_intensity",
+    long_name="Mean daily solid precipitation flux above {thresh} threshold",
+    description="{freq} mean daily solid precipitation flux larger than {thresh}.",
+    abstract="Mean daily snowflux above lower limit.",
+    units="%",
+    compute=indices.snowfall_intensity,
 )
 
 # FIXME: Are days_over_precip_thresh and days_over_precip_doy_thresh the same thing?

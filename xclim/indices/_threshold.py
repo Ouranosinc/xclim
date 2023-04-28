@@ -66,6 +66,8 @@ __all__ = [
     "hot_spell_max_length",
     "snd_season_length",
     "snw_season_length",
+    "snowfall_intensity",
+    "snowfall_frequency",
     "tn_days_above",
     "tn_days_below",
     "tg_days_above",
