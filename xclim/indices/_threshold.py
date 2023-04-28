@@ -14,10 +14,12 @@ from xclim.core.units import (
     rate2amount,
     str2pint,
     to_agg_units,
+    units2pint,
 )
 from xclim.core.utils import DayOfYearStr, Quantified
 
 from . import run_length as rl
+from ._conversion import prsn_to_mm_per_day
 from .generic import (
     compare,
     cumulative_difference,
@@ -1311,10 +1313,17 @@ def first_day_temperature_above(
     )
 
 
-@declare_units(prsn="[precipitation]", thresh="[precipitation]")
+@declare_units(
+    prsn="[precipitation]",
+    thresh="[precipitation]",
+    snr="[mass]/[volume]",
+    const="[mass]/[volume]",
+)
 def first_snowfall(
     prsn: xarray.DataArray,
     thresh: Quantified = "0.5 mm/day",
+    snr: xarray.DataArray | None = None,
+    const: Quantified = "312 kg m-3",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
     r"""First day with solid precipitation above a threshold.
@@ -1331,6 +1340,15 @@ def first_snowfall(
         Solid precipitation flux.
     thresh : Quantified
         Threshold precipitation flux on which to base evaluation.
+    snr : xarray.DataArray, optional
+        Snow density [kg/m^3].
+        Use this option if unit of low and/or high is mm/day
+        to convert prsn [kg m-2 s-1] to [mm day-1].
+    const: Quantified
+        Constant snow density [kg/m^3]
+        `const` is only used if `snr` is None.
+        Use this option if unit of low and/or high is mm/day
+        to convert prsn [kg m-2 s-1] to [mm day-1].
     freq : str
         Resampling frequency.
 
@@ -1340,10 +1358,18 @@ def first_snowfall(
         First day of the year when the solid precipitation is superior to a threshold.
         If there is no such day, returns np.nan.
 
+    Notes
+    -----
+        The estimated mean snow density value of 312 kg m-3 is taken from :cite:t:`sturm_swe_2010`.
+
     References
     ----------
     :cite:cts:`cbcl_climate_2020`.
     """
+    unit = str2pint("mm/day")
+    unit_thresh = str2pint(thresh)
+    if unit_thresh._units == unit._units:
+        prsn = prsn_to_mm_per_day(prsn, snr=snr, const=const)
     thresh = convert_units_to(thresh, prsn, context="hydro")
     cond = prsn >= thresh
 
@@ -1357,10 +1383,17 @@ def first_snowfall(
     return out
 
 
-@declare_units(prsn="[precipitation]", thresh="[precipitation]")
+@declare_units(
+    prsn="[precipitation]",
+    thresh="[precipitation]",
+    snr="[mass]/[volume]",
+    const="[mass]/[volume]",
+)
 def last_snowfall(
     prsn: xarray.DataArray,
     thresh: Quantified = "0.5 mm/day",
+    snr: xarray.DataArray | None = None,
+    const: Quantified = "312 kg m-3",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
     r"""Last day with solid precipitation above a threshold.
@@ -1377,6 +1410,15 @@ def last_snowfall(
         Solid precipitation flux.
     thresh : Quantified
         Threshold precipitation flux on which to base evaluation.
+    snr : xarray.DataArray, optional
+        Snow density [kg/m^3].
+        Use this option if unit of low and/or high is mm/day
+        to convert prsn [kg m-2 s-1] to [mm day-1].
+    const: Quantified
+        Constant snow density [kg/m^3]
+        `const` is only used if `snr` is None.
+        Use this option if unit of low and/or high is mm/day
+        to convert prsn [kg m-2 s-1] to [mm day-1].
     freq : str
         Resampling frequency.
 
@@ -1386,10 +1428,18 @@ def last_snowfall(
         Last day of the year when the solid precipitation is superior to a threshold.
         If there is no such day, returns np.nan.
 
+    Notes
+    -----
+        The estimated mean snow density value of 312 kg m-3 is taken from :cite:t:`sturm_swe_2010`.
+
     References
     ----------
     :cite:cts:`cbcl_climate_2020`.
     """
+    unit = str2pint("mm/day")
+    unit_thresh = str2pint(thresh)
+    if unit_thresh._units == unit._units:
+        prsn = prsn_to_mm_per_day(prsn, snr=snr, const=const)
     thresh = convert_units_to(thresh, prsn, context="hydro")
     cond = prsn >= thresh
 
@@ -1403,11 +1453,19 @@ def last_snowfall(
     return out
 
 
-@declare_units(prsn="[precipitation]", low="[precipitation]", high="[precipitation]")
+@declare_units(
+    prsn="[precipitation]",
+    low="[precipitation]",
+    high="[precipitation]",
+    snr="[mass]/[volume]",
+    const="[mass]/[volume]",
+)
 def days_with_snow(
-    prsn: xarray.DataArray,  # noqa
+    prsn: xarray.DataArray,
     low: Quantified = "0 kg m-2 s-1",
     high: Quantified = "1E6 kg m-2 s-1",
+    snr: xarray.DataArray | None = None,
+    const: Quantified = "312 kg m-3",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
     r"""Days with snow.
@@ -1416,12 +1474,21 @@ def days_with_snow(
 
     Parameters
     ----------
-    prsn : xr.DataArray
+    prsn : xarray.DataArray
         Solid precipitation flux.
     low : Quantified
         Minimum threshold solid precipitation flux.
     high : Quantified
         Maximum threshold solid precipitation flux.
+    snr : xarray.DataArray, optional
+        Snow density [kg/m^3].
+        Use this option if unit of low and/or high is mm/day
+        to convert prsn [kg m-2 s-1] to [mm day-1].
+    const: Quantified
+        Constant snow density [kg/m^3]
+        `const` is only used if `snr` is None.
+        Use this option if unit of low and/or high is mm/day
+        to convert prsn [kg m-2 s-1] to [mm day-1].
     freq : str
         Resampling frequency defining the periods as defined in
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
@@ -1431,14 +1498,139 @@ def days_with_snow(
     xarray.DataArray, [time]
         Number of days where snowfall is between low and high thresholds.
 
+    Notes
+    -----
+        The estimated mean snow density value of 312 kg m-3 is taken from :cite:t:`sturm_swe_2010`.
+
     References
     ----------
     :cite:cts:`matthews_planning_2017`
     """
+    unit = str2pint("mm/day")
+    unit_low = str2pint(low)
+    unit_high = str2pint(high)
+    if unit_low._units == unit._units or unit_high._units == unit._units:
+        prsn = prsn_to_mm_per_day(prsn, snr=snr, const=const)
     low = convert_units_to(low, prsn, context="hydro")
     high = convert_units_to(high, prsn, context="hydro")
     out = domain_count(prsn, low, high, freq)
     return to_agg_units(out, prsn, "count")
+
+
+@declare_units(
+    prsn="[precipitation]",
+    thresh="[precipitation]",
+    snr="[mass]/[volume]",
+    const="[mass]/[volume]",
+)
+def snowfall_frequency(
+    prsn: xarray.DataArray,
+    thresh: Quantified = "1 mm/day",
+    snr: xarray.DataArray | None = None,
+    const: Quantified = "312 kg m-3",
+    freq: str = "AS-JUL",
+) -> xarray.DataArray:
+    r"""Days with snow.
+
+    Return the percentage of days with solid precipitation exceeds a threshold (default: 1 mm/day)
+
+    Parameters
+    ----------
+    prsn : xarray.DataArray
+        Solid precipitation flux.
+    thresh : Quantified
+        Threshold precipitation flux on which to base evaluation.
+    snr : xarray.DataArray, optional
+        Snow density [kg/m^3].
+        Use this option if unit of low and/or high is mm/day
+        to convert prsn [kg m-2 s-1] to [mm day-1].
+    const: Quantified
+        Constant snow density [kg/m^3]
+        `const` is only used if `snr` is None.
+        Use this option if unit of low and/or high is mm/day
+        to convert prsn [kg m-2 s-1] to [mm day-1].
+    freq : str
+        Resampling frequency defining the periods as defined in
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+
+    Returns
+    -------
+    xarray.DataArray, [%]
+        Percentage of days where snowfall exceeds a threshold.
+
+    Notes
+    -----
+        The estimated mean snow density value of 312 kg m-3 is taken from :cite:t:`sturm_swe_2010`.
+
+    References
+    ----------
+    :cite:cts:`frei_snowfall_2018`
+    """
+    sd = days_with_snow(prsn, low=thresh, snr=snr, const=const, freq=freq)
+    ndays = prsn.resample(time=freq).count(dim="time")
+    sfreq = sd / ndays * 100
+    sfreq = sfreq.assign_attr(**sd.attrs)
+    sfreq.attrs["units"] = "%"
+    return sfreq
+
+
+@declare_units(
+    prsn="[precipitation]",
+    thresh="[precipitation]",
+    snr="[mass]/[volume]",
+    const="[mass]/[volume]",
+)
+def snowfall_intensity(
+    prsn: xarray.DataArray,
+    thresh: Quantified = "1 mm/day",
+    snr: xarray.DataArray | None = None,
+    const: Quantified = "312 kg m-3",
+    freq: str = "AS-JUL",
+) -> xarray.DataArray:
+    r"""Days with snow.
+
+    Return mean daily solid precipitation during days with solid precipitation exceeds a threshold (default: 1 mm/day)
+
+    Parameters
+    ----------
+    prsn : xarray.DataArray
+        Solid precipitation flux.
+    thresh : Quantified
+        Threshold precipitation flux on which to base evaluation.
+    snr : xarray.DataArray, optional
+        Snow density [kg/m^3].
+        Use this option if unit of low and/or high is mm/day
+        to convert prsn [kg m-2 s-1] to [mm day-1].
+    const: Quantified
+        Constant snow density [kg/m^3]
+        `const` is only used if `snr` is None.
+        Use this option if unit of low and/or high is mm/day
+        to convert prsn [kg m-2 s-1] to [mm day-1].
+    freq : str
+        Resampling frequency defining the periods as defined in
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+
+    Returns
+    -------
+    xarray.DataArray, [%]
+        Mean daily snowfall during days where snowfall exceeds a threshold.
+
+    Notes
+    -----
+        The estimated mean snow density value of 312 kg m-3 is taken from :cite:t:`sturm_swe_2010`.
+
+    References
+    ----------
+    :cite:cts:`frei_snowfall_2018`
+    """
+    unit = str2pint("mm/day")
+    unit_thresh = str2pint(thresh)
+    if unit_thresh._units == unit._units:
+        prsn = prsn_to_mm_per_day(prsn, snr=snr, const=const)
+    thresh = convert_units_to(thresh, prsn, context="hydro")
+    cond = prsn >= thresh
+    mean = cond.resample(time=freq).mean(dim="time")
+    return xarray.where(mean == np.nan, 0, mean)
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
