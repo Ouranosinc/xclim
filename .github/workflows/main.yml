@@ -96,7 +96,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install Eigen3
-        if: ${{ matrix.tox-env == 'py39-coverage-sbck-eofs' }}
+        if: contains(matrix.tox-env, 'sbck')
         run: |
           sudo apt-get update
           sudo apt-get install libeigen3-dev
@@ -146,7 +146,7 @@ jobs:
           echo "micromamba: $(micromamba --version)"
       - name: Install xclim
         run: |
-          python -m pip install --no-user .
+          python -m pip install --no-user --editable .
       - name: Check versions
         run: |
           conda list
@@ -154,7 +154,7 @@ jobs:
           pip check
       - name: Test with pytest
         run: |
-          pytest xclim --numprocesses=logical --durations=10 --cov=xclim --cov-report=term-missing
+          pytest --numprocesses=logical --durations=10 --cov=xclim --cov-report=term-missing
 #      - name: Install tox
 #        shell: bash -l {0}
 #        run: |

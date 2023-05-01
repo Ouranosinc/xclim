@@ -13,7 +13,7 @@ class TestProperties:
             open_dataset("sdba/CanESM2_1950-2100.nc")
             .sel(time=slice("1950", "1980"), location="Vancouver")
             .pr
-        )
+        ).load()
 
         out_year = sdba.properties.mean(sim)
         np.testing.assert_array_almost_equal(out_year.values, [3.0016028e-05])
@@ -31,7 +31,7 @@ class TestProperties:
             open_dataset("sdba/CanESM2_1950-2100.nc")
             .sel(time=slice("1950", "1980"), location="Vancouver")
             .pr
-        )
+        ).load()
 
         out_year = sdba.properties.var(sim)
         np.testing.assert_array_almost_equal(out_year.values, [2.5884779e-09])
@@ -49,7 +49,7 @@ class TestProperties:
             open_dataset("sdba/CanESM2_1950-2100.nc")
             .sel(time=slice("1950", "1980"), location="Vancouver")
             .pr
-        )
+        ).load()
 
         out_year = sdba.properties.skewness(sim)
         np.testing.assert_array_almost_equal(out_year.values, [2.8497460898513745])
@@ -72,7 +72,7 @@ class TestProperties:
             open_dataset("sdba/CanESM2_1950-2100.nc")
             .sel(time=slice("1950", "1980"), location="Vancouver")
             .pr
-        )
+        ).load()
 
         out_year = sdba.properties.quantile(sim, q=0.2)
         np.testing.assert_array_almost_equal(out_year.values, [2.8109431013945154e-07])
@@ -94,7 +94,8 @@ class TestProperties:
             open_dataset("sdba/CanESM2_1950-2100.nc")
             .sel(time=slice("1950", "1952"), location="Vancouver")
             .pr
-        )
+        ).load()
+
         tmean = (
             sdba.properties.spell_length_distribution(sim, op="<", group="time.month")
             .sel(month=1)
@@ -121,7 +122,8 @@ class TestProperties:
             open_dataset("sdba/CanESM2_1950-2100.nc")
             .sel(time=slice("1950", "1952"), location="Vancouver")
             .tasmax
-        )
+        ).load()
+
         tmean = sdba.properties.spell_length_distribution(
             simt, op=">=", group="time.month", method="quantile", thresh=0.9
         ).sel(month=6)
@@ -168,7 +170,8 @@ class TestProperties:
             open_dataset("sdba/CanESM2_1950-2100.nc")
             .sel(time=slice("1950", "1952"), location="Vancouver")
             .pr
-        )
+        ).load()
+
         out = sdba.properties.acf(sim, lag=1, group="time.month").sel(month=1)
         np.testing.assert_array_almost_equal(out.values, [0.11242357313756905])
 
@@ -183,7 +186,8 @@ class TestProperties:
             open_dataset("sdba/CanESM2_1950-2100.nc")
             .sel(time=slice("1950", "1952"), location="Vancouver")
             .tasmax
-        )
+        ).load()
+
         amp = sdba.properties.annual_cycle_amplitude(simt)
         relamp = sdba.properties.relative_annual_cycle_amplitude(simt)
         phase = sdba.properties.annual_cycle_phase(simt)
@@ -216,7 +220,8 @@ class TestProperties:
             open_dataset("sdba/CanESM2_1950-2100.nc")
             .sel(time=slice("1950", "1952"), location="Vancouver")
             .tasmax
-        )
+        ).load()
+
         # Initial annual cycle was this with window = 1
         amp = sdba.properties.mean_annual_range(simt, window=1)
         relamp = sdba.properties.mean_annual_relative_range(simt, window=1)
@@ -258,12 +263,14 @@ class TestProperties:
             open_dataset("sdba/CanESM2_1950-2100.nc")
             .sel(time=slice("1950", "1952"), location="Vancouver")
             .tasmax
-        )
+        ).load()
+
         sim = (
             open_dataset("sdba/CanESM2_1950-2100.nc")
             .sel(time=slice("1950", "1952"), location="Vancouver")
             .pr
-        )
+        ).load()
+
         pc = sdba.properties.corr_btw_var(simt, sim, corr_type="Pearson")
         pp = sdba.properties.corr_btw_var(
             simt, sim, corr_type="Pearson", output="pvalue"
@@ -303,7 +310,7 @@ class TestProperties:
             open_dataset("sdba/CanESM2_1950-2100.nc")
             .sel(time=slice("1950", "1952"), location="Vancouver")
             .pr
-        )
+        ).load()
 
         test = sdba.properties.relative_frequency(sim, thresh="25 mm d-1", op=">=")
         testjan = (
@@ -324,7 +331,7 @@ class TestProperties:
             open_dataset("sdba/CanESM2_1950-2100.nc")
             .sel(time=slice("1950", "1952"), location="Vancouver")
             .pr
-        )
+        ).load()
 
         test = sdba.properties.transition_probability(
             da=sim, initial_op="<", final_op=">="
@@ -342,7 +349,8 @@ class TestProperties:
             open_dataset("sdba/CanESM2_1950-2100.nc")
             .sel(time=slice("1950", "1952"), location="Vancouver")
             .tasmax
-        )
+        ).load()
+
         slope = sdba.properties.trend(simt).values
         pvalue = sdba.properties.trend(simt, output="pvalue").values
         np.testing.assert_array_almost_equal(
@@ -367,8 +375,10 @@ class TestProperties:
             open_dataset("sdba/CanESM2_1950-2100.nc")
             .sel(time=slice("1950", "2010"), location="Vancouver")
             .tasmax
-        )
+        ).load()
+
         out_y = sdba.properties.return_value(simt)
+
         out_djf = (
             sdba.properties.return_value(simt, op="min", group="time.season")
             .sel(season="DJF")
@@ -388,7 +398,8 @@ class TestProperties:
             open_dataset("sdba/CanESM2_1950-2100.nc")
             .sel(time=slice("1981", "2010"))
             .tasmax
-        )
+        ).load()
+
         out = sdba.properties.spatial_correlogram(sim, dims=["location"], bins=3)
         np.testing.assert_allclose(out, [-1, np.nan, 0], atol=1e-6)
 
@@ -409,9 +420,12 @@ class TestProperties:
 
     @pytest.mark.slow
     def test_decorrelation_length(self, open_dataset):
-        sim = open_dataset("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc").tasmax.isel(
-            lon=slice(0, 5), lat=slice(0, 1)
+        sim = (
+            open_dataset("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc")
+            .tasmax.isel(lon=slice(0, 5), lat=slice(0, 1))
+            .load()
         )
+
         out = sdba.properties.decorrelation_length(
             sim, dims=["lat", "lon"], bins=10, radius=30
         )
@@ -420,29 +434,18 @@ class TestProperties:
             [4.5, 4.5, 4.5, 4.5, 10.5],
         )
 
-    def test_first_eof(self, open_dataset):
-        pytest.importorskip("eofs")
-        sim = open_dataset("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc").tasmax.isel(
-            lon=slice(0, 10), lat=slice(50, 60)
-        )
-        out = sdba.properties.first_eof(sim)
-        np.testing.assert_allclose(
-            [out.mean(), out.max()], [0.099976, 0.103867], rtol=1e-5
-        )
-        assert (out.isnull() == sim.isnull().any("time")).all()
-
     def test_get_measure(self, open_dataset):
         sim = (
             open_dataset("sdba/CanESM2_1950-2100.nc")
             .sel(time=slice("1981", "2010"), location="Vancouver")
             .pr
-        )
+        ).load()
 
         ref = (
             open_dataset("sdba/ahccd_1950-2013.nc")
             .sel(time=slice("1981", "2010"), location="Vancouver")
             .pr
-        )
+        ).load()
 
         sim = convert_units_to(sim, ref, context="hydro")
         sim_var = sdba.properties.var(sim)
@@ -450,3 +453,19 @@ class TestProperties:
 
         meas = sdba.properties.var.get_measure()(sim_var, ref_var)
         np.testing.assert_allclose(meas, [0.408327], rtol=1e-3)
+
+
+class TestEOF:
+    def test_first_eof(self, open_dataset):
+        pytest.importorskip("eofs")
+        sim = (
+            open_dataset("NRCANdaily/nrcan_canada_daily_tasmax_1990.nc")
+            .tasmax.isel(lon=slice(0, 10), lat=slice(50, 60))
+            .load()
+        )
+
+        out = sdba.properties.first_eof(sim)
+        np.testing.assert_allclose(
+            [out.mean(), out.max()], [0.099976, 0.103867], rtol=1e-5
+        )
+        assert (out.isnull() == sim.isnull().any("time")).all()

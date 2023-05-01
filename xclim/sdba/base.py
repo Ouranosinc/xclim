@@ -292,7 +292,10 @@ class Grouper(Parametrizable):
             return da[self.dim].rename("group")
 
         ind = da.indexes[self.dim]
-        i = getattr(ind, self.prop)
+        if self.prop == "week":
+            i = da[self.dim].copy(data=ind.isocalendar().week).astype(int)
+        else:
+            i = getattr(ind, self.prop)
 
         if not np.issubdtype(i.dtype, np.integer):
             raise ValueError(

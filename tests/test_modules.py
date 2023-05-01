@@ -59,10 +59,10 @@ def test_virtual_modules(virtual_indicator, atmosds):
 @pytest.mark.requires_docs
 def test_custom_indices(open_dataset):
     # Use the example in the Extending Xclim notebook for testing.
-    nbpath = Path(__file__).parent.parent.parent.parent / "docs" / "notebooks"
+    nbpath = Path(__file__).parent.parent / "docs" / "notebooks"
 
     schema = yamale.make_schema(
-        Path(__file__).parent.parent.parent / "data" / "schema.yml"
+        Path(__file__).parent.parent / "xclim" / "data" / "schema.yml"
     )
     data = yamale.make_data(nbpath / "example.yml")
     yamale.validate(schema, data)
@@ -110,7 +110,7 @@ def test_custom_indices(open_dataset):
 @pytest.mark.requires_docs
 def test_indicator_module_translations():
     # Use the example in the Extending Xclim notebook for testing.
-    notebook_path = Path(__file__).parent.parent.parent.parent / "docs" / "notebooks"
+    notebook_path = Path(__file__).parent.parent / "docs" / "notebooks"
 
     ex = build_indicator_module_from_yaml(notebook_path / "example", name="ex_trans")
     assert ex.RX5day_canopy.translate_attrs("fr")["cf_attrs"][0][
@@ -123,7 +123,7 @@ def test_indicator_module_translations():
 
 @pytest.mark.requires_docs
 def test_indicator_module_input_mapping(atmosds):
-    notebook_path = Path(__file__).parent.parent.parent.parent / "docs" / "notebooks"
+    notebook_path = Path(__file__).parent.parent / "docs" / "notebooks"
     ex = build_indicator_module_from_yaml(notebook_path / "example", name="ex_input")
     prveg = atmosds.pr.rename("prveg").assign_attrs(
         standard_name="precipitation_flux_onto_canopy"
@@ -136,7 +136,7 @@ def test_indicator_module_input_mapping(atmosds):
 @pytest.mark.requires_docs
 def test_build_indicator_module_from_yaml_edge_cases():
     # Use the example in the Extending Xclim notebook for testing.
-    nbpath = Path(__file__).parent.parent.parent.parent / "docs" / "notebooks"
+    nbpath = Path(__file__).parent.parent / "docs" / "notebooks"
 
     # All from paths but one
     ex5 = build_indicator_module_from_yaml(
@@ -210,7 +210,7 @@ indices:
 
 
 class TestOfficialYaml(yamale.YamaleTestCase):
-    base_dir = str(Path(__file__).parent.parent.parent / "data")
+    base_dir = str(Path(__file__).parent.parent / "xclim" / "data")
     schema = "schema.yml"
     yaml = ["cf.yml", "anuclim.yml", "icclim.yml"]
 
