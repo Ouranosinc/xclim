@@ -442,3 +442,55 @@ def _scorr(
 scorr = StatisticalPropertyMeasure(
     identifier="Scorr", aspect="spatial", compute=_scorr, allowed_groups=["group"]
 )
+
+
+def _taylordiagram(
+    sim: xr.DataArray, ref: xr.DataArray, dim: str = "time"
+) -> xr.Dataset:
+    """Taylor diagram.
+
+    Compute the standard deviation and Pearson correlation coefficient, necessary to plot points
+    on a Taylor diagram.
+
+    Parameters
+    ----------
+    sim : xr.DataArray
+        data from the simulation (a time-series for each grid-point)
+    ref : xr.DataArray
+        data from the reference (observations) (a time-series for each grid-point)
+    dim : str
+        dimension across which the correlation and standard deviation should be computed.
+
+
+    Returns
+    -------
+    xr.Dataset, [dimensionless]
+        Dataset containing standard deviation and correlation coefficient as variables.
+    """
+    # Pearson
+    corr = xr.corr(sim, ref, dim=dim)
+
+    # standard deviations
+    ref_std = ref.std(dim=dim, skipna=True, keep_attrs=True)
+    sim_std = sim.std(dim=dim, skipna=True, keep_attrs=True)
+
+    out = xr.Dataset(
+        dict(ref_std=ref_std, sim_std=sim_std, corr=corr),
+        attrs=dict(correlation_type="Pearson correlation coefficient"),
+    )
+
+    if hasattr(ref_std, "units") and hasattr(sim_std, "units"):
+        if ref_std.units == sim_std.units:
+            out.attrs["std_units"] = ref_std.units
+        else:
+            raise ValueError("Simulation and reference units must be identical.")
+
+    return out
+
+
+taylordiagram = StatisticalPropertyMeasure(
+    identifier="taylordiagram",
+    aspect="temporal",
+    compute=_taylordiagram,
+    allowed_groups=["group"],
+)
