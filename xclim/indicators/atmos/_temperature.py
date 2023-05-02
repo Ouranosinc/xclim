@@ -42,6 +42,7 @@ __all__ = [
     "cold_spell_duration_index",
     "cold_spell_days",
     "cold_spell_frequency",
+    "cold_spell_max_length",
     "cool_night_index",
     "daily_freezethaw_cycles",
     "freezethaw_spell_frequency",
@@ -489,6 +490,212 @@ cold_spell_frequency = Temp(
     "mean daily temperature below a given threshold.",
     cell_methods="",
     compute=indices.cold_spell_frequency,
+)
+
+cold_spell_max_length = Temp(
+    title="Cold spell maximum length",
+    identifier="cold_spell_max_length",
+    units="days",
+    standard_name="spell_length_of_days_with_air_temperature_below_threshold",
+    long_name="Longest series of at least {window} consecutive days "
+    "with daily temperature below {thresh}",
+    description="{freq} maximum length of cold spell events occurring within a given period. "
+    "A cold spell event occurs when the daily temperature is below {thresh} over at least {window} days.",
+    abstract="Maximum length of cold spells events within a given period. A cold spell occurs when the daily"
+    "temperature is below a given threshold for a minimum number of days.",
+    cell_methods="",
+    compute=indices.cold_spell_max_length,
+)
+
+tg_mean = TempWithIndexing(
+    title="Mean temperature",
+    identifier="tg_mean",
+    units="K",
+    standard_name="air_temperature",
+    long_name="Mean daily mean temperature",
+    description="{freq} mean of daily mean temperature.",
+    abstract="Mean of daily mean temperature.",
+    cell_methods="time: mean over days",
+    compute=indices.tg_mean,
+)
+
+tg_max = TempWithIndexing(
+    title="Maximum of mean temperature",
+    identifier="tg_max",
+    units="K",
+    standard_name="air_temperature",
+    long_name="Maximum daily mean temperature",
+    description="{freq} maximum of daily mean temperature.",
+    abstract="Maximum of daily mean temperature.",
+    cell_methods="time: maximum over days",
+    compute=indices.tg_max,
+)
+
+tg_min = TempWithIndexing(
+    title="Minimum of mean temperature",
+    identifier="tg_min",
+    units="K",
+    standard_name="air_temperature",
+    long_name="Minimum daily mean temperature",
+    description="{freq} minimum of daily mean temperature.",
+    abstract="Minimum of daily mean temperature.",
+    cell_methods="time: minimum over days",
+    compute=indices.tg_min,
+)
+
+tx_mean = TempWithIndexing(
+    title="Mean of maximum temperature",
+    identifier="tx_mean",
+    units="K",
+    standard_name="air_temperature",
+    long_name="Mean daily maximum temperature",
+    description="{freq} mean of daily maximum temperature.",
+    abstract="Mean of daily maximum temperature.",
+    cell_methods="time: mean over days",
+    compute=indices.tx_mean,
+)
+
+tx_max = TempWithIndexing(
+    title="Maximum temperature",
+    identifier="tx_max",
+    units="K",
+    standard_name="air_temperature",
+    long_name="Maximum daily maximum temperature",
+    description="{freq} maximum of daily maximum temperature.",
+    abstract="Maximum of daily maximum temperature.",
+    cell_methods="time: maximum over days",
+    compute=indices.tx_max,
+)
+
+tx_min = TempWithIndexing(
+    title="Minimum of maximum temperature",
+    identifier="tx_min",
+    units="K",
+    standard_name="air_temperature",
+    long_name="Minimum daily maximum temperature",
+    description="{freq} minimum of daily maximum temperature.",
+    abstract="Minimum of daily maximum temperature.",
+    cell_methods="time: minimum over days",
+    compute=indices.tx_min,
+)
+
+tn_mean = TempWithIndexing(
+    title="Mean of minimum temperature",
+    identifier="tn_mean",
+    units="K",
+    standard_name="air_temperature",
+    long_name="Mean daily minimum temperature",
+    description="{freq} mean of daily minimum temperature.",
+    abstract="Mean of daily minimum temperature.",
+    cell_methods="time: mean over days",
+    compute=indices.tn_mean,
+)
+
+tn_max = TempWithIndexing(
+    title="Maximum of minimum temperature",
+    identifier="tn_max",
+    units="K",
+    standard_name="air_temperature",
+    long_name="Maximum daily minimum temperature",
+    description="{freq} maximum of daily minimum temperature.",
+    abstract="Maximum of daily minimum temperature.",
+    cell_methods="time: maximum over days",
+    compute=indices.tn_max,
+)
+
+tn_min = TempWithIndexing(
+    title="Minimum temperature",
+    identifier="tn_min",
+    units="K",
+    standard_name="air_temperature",
+    long_name="Minimum daily minimum temperature",
+    description="{freq} minimum of daily minimum temperature.",
+    abstract="Minimum of daily minimum temperature.",
+    cell_methods="time: minimum over days",
+    compute=indices.tn_min,
+)
+
+daily_temperature_range = TempWithIndexing(
+    title="Mean of daily temperature range",
+    identifier="dtr",
+    units="K",
+    standard_name="air_temperature",
+    long_name="Mean diurnal temperature range",
+    description="{freq} mean diurnal temperature range.",
+    cell_methods="time range within days time: mean over days",
+    abstract="The average difference between the daily maximum and minimum temperatures.",
+    compute=indices.daily_temperature_range,
+    parameters={"op": "mean"},
+)
+
+max_daily_temperature_range = TempWithIndexing(
+    title="Maximum of daily temperature range",
+    identifier="dtrmax",
+    units="K",
+    standard_name="air_temperature",
+    long_name="Maximum diurnal temperature range",
+    description="{freq} maximum diurnal temperature range.",
+    cell_methods="time range within days time: max over days",
+    abstract="The maximum difference between the daily maximum and minimum temperatures.",
+    compute=indices.daily_temperature_range,
+    parameters={"op": "max"},
+)
+
+daily_temperature_range_variability = TempWithIndexing(
+    title="Variability of daily temperature range",
+    identifier="dtrvar",
+    units="K",
+    standard_name="air_temperature",
+    long_name="Mean diurnal temperature range variability",
+    description="{freq} mean diurnal temperature range variability, defined as the average day-to-day variation "
+    "in daily temperature range for the given time period.",
+    abstract="The average day-to-day variation in daily temperature range.",
+    cell_methods="time range within days time: difference over days time: mean over days",
+    compute=indices.daily_temperature_range_variability,
+)
+
+extreme_temperature_range = TempWithIndexing(
+    title="Extreme temperature range",
+    identifier="etr",
+    units="K",
+    standard_name="air_temperature",
+    long_name="Intra-period extreme temperature range",
+    description="{freq} range between the maximum of daily maximum temperature and the minimum of daily"
+    "minimum temperature.",
+    abstract="The maximum of the maximum temperature minus the minimum of the minimum temperature.",
+    compute=indices.extreme_temperature_range,
+)
+
+cold_spell_duration_index = Temp(
+    title="Cold Spell Duration Index (CSDI)",
+    identifier="cold_spell_duration_index",
+    var_name="csdi_{window}",
+    units="days",
+    standard_name="cold_spell_duration_index",
+    long_name="Total number of days constituting events of at least {window} consecutive days "
+    "where the daily minimum temperature is below the {tasmin_per_thresh}th percentile",
+    description="{freq} number of days with at least {window} consecutive days where the daily minimum temperature "
+    "is below the {tasmin_per_thresh}th percentile. A {tasmin_per_window} day(s) window, centred on each calendar day "
+    "in the {tasmin_per_period} period, is used to compute the {tasmin_per_thresh}th percentile(s).",
+    abstract="Number of days part of a percentile-defined cold spell. A cold spell occurs when the daily minimum "
+    "temperature is below a given percentile for a given number of consecutive days.",
+    cell_methods="",
+    compute=indices.cold_spell_duration_index,
+)
+
+cold_spell_days = Temp(
+    title="Cold spell days",
+    identifier="cold_spell_days",
+    units="days",
+    standard_name="cold_spell_days",
+    long_name="Total number of days constituting events of at least {window} consecutive days "
+    "where the mean daily temperature is below {thresh}",
+    description="{freq} number of days that are part of a cold spell. A cold spell is defined as {window} or more "
+    "consecutive days with mean daily temperature below {thresh}.",
+    abstract="The number of days that are part of a cold spell. A cold spell is defined as a minimum number of "
+    "consecutive days with mean daily temperature below a given threshold.",
+    cell_methods="",
+    compute=indices.cold_spell_days,
 )
 
 cool_night_index = Temp(
