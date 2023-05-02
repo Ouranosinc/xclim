@@ -2739,7 +2739,7 @@ def dry_spell_frequency(
     return out
 
 
-@declare_units(tasmax="[precipitation]", thresh_tasmax="[precipitation]")
+@declare_units(pr="[precipitation]", thresh="[precipitation]")
 def dry_spell_max_length(
     pr: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
