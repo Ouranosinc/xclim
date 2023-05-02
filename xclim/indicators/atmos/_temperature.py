@@ -484,7 +484,7 @@ cold_spell_frequency = Temp(
     standard_name="cold_spell_frequency",
     long_name="Total number of series of at least {window} consecutive days "
     "where the mean daily temperature is below {thresh}",
-    description="{freq} number cold spell events. A cold spell is defined as a minimum number of "
+    description="{freq} number of cold spell events. A cold spell is defined as a minimum number of "
     "consecutive days with mean daily temperature below {thresh}.",
     abstract="The number of cold spell events. A cold spell is defined as a minimum number of consecutive days with "
     "mean daily temperature below a given threshold.",
