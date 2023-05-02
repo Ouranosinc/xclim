@@ -445,8 +445,11 @@ scorr = StatisticalPropertyMeasure(
 
 
 def _taylordiagram(
-    sim: xr.DataArray, ref: xr.DataArray, dim: str = "time"
-) -> xr.Dataset:
+    sim: xr.DataArray,
+    ref: xr.DataArray,
+    dim: str = "time",
+    group: str | Grouper = "time",
+) -> xr.DataArray:
     """Taylor diagram.
 
     Compute the standard deviation and Pearson correlation coefficient, necessary to plot points
@@ -459,29 +462,32 @@ def _taylordiagram(
     ref : xr.DataArray
         data from the reference (observations) (a time-series for each grid-point)
     dim : str
-        dimension across which the correlation and standard deviation should be computed.
+        Dimension across which the correlation and standard deviation should be computed.
+    group : str
+        Compute the property and measure for each temporal groups individually.
+        Currently not implemented.
 
 
     Returns
     -------
-    xr.Dataset, [dimensionless]
-        Dataset containing standard deviation and correlation coefficient as variables.
+    xr.DataArray, [measures]
+        DataAray containing the correlation coefficient and standard deviations as coordinates.
     """
-    # Pearson
     corr = xr.corr(sim, ref, dim=dim)
 
-    # standard deviations
     ref_std = ref.std(dim=dim, skipna=True, keep_attrs=True)
     sim_std = sim.std(dim=dim, skipna=True, keep_attrs=True)
 
-    out = xr.Dataset(
-        dict(ref_std=ref_std, sim_std=sim_std, corr=corr),
-        attrs=dict(correlation_type="Pearson correlation coefficient"),
+    out = xr.DataArray(
+        [ref_std, sim_std, corr],
+        coords={"measures": ["ref_std", "sim_std", "corr"]},
+        dims=["measures"],
+        attrs={"correlation_type": "Pearson correlation coefficient"},
     )
 
     if hasattr(ref_std, "units") and hasattr(sim_std, "units"):
         if ref_std.units == sim_std.units:
-            out.attrs["std_units"] = ref_std.units
+            out.attrs["units"] = ref_std.units
         else:
             raise ValueError("Simulation and reference units must be identical.")
 

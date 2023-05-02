@@ -77,3 +77,18 @@ def test_scorr(open_dataset):
     scorr = sdba.measures.scorr(sim.isel(lon=slice(0, 50)), ref.isel(lon=slice(0, 50)))
 
     np.testing.assert_allclose(scorr, [97374.2146243])
+
+
+def test_taylordiagram(open_dataset):
+    sim = (
+        open_dataset("sdba/CanESM2_1950-2100.nc")
+        .sel(time=slice("1950", "1953"), location="Amos")
+        .tasmax
+    )
+    ref = (
+        open_dataset("sdba/nrcan_1950-2013.nc")
+        .sel(time=slice("1950", "1953"), location="Amos")
+        .tasmax
+    )
+    test = sdba.measures.taylordiagram(sim, ref).values
+    np.testing.assert_array_almost_equal(test, [13.12244701, 6.76166582, 0.73230209], 4)
