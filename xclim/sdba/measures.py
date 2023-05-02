@@ -452,8 +452,8 @@ def _taylordiagram(
 ) -> xr.DataArray:
     """Taylor diagram.
 
-    Compute the standard deviation and Pearson correlation coefficient, necessary to plot points
-    on a Taylor diagram.
+    Compute the respective standard deviations of a simulation and a reference array, as well as the Pearson
+    correlation coefficient between both, all necessary parameters to plot points on a Taylor diagram.
 
     Parameters
     ----------
@@ -471,17 +471,24 @@ def _taylordiagram(
     Returns
     -------
     xr.DataArray, [measures]
-        DataAray containing the correlation coefficient and standard deviations as coordinates.
+        DataArray containing the correlation coefficient and standard deviations as coordinates.
     """
     corr = xr.corr(sim, ref, dim=dim)
 
     ref_std = ref.std(dim=dim, skipna=True, keep_attrs=True)
     sim_std = sim.std(dim=dim, skipna=True, keep_attrs=True)
 
+    coords = {"taylor_params": ["ref_std", "sim_std", "corr"]}
+    dims = ["taylor_params"]
+
+    for dim in ref_std.dims:
+        coords[dim] = ref_std[dim].values
+        dims.append(dim)
+
     out = xr.DataArray(
         [ref_std, sim_std, corr],
-        coords={"measures": ["ref_std", "sim_std", "corr"]},
-        dims=["measures"],
+        coords=coords,
+        dims=dims,
         attrs={"correlation_type": "Pearson correlation coefficient"},
     )
 
