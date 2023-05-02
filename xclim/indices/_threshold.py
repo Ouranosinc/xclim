@@ -1346,6 +1346,7 @@ def first_snowfall(
         Snow density [kg/m^3].
         Use this option if unit of low and/or high is mm/day
         to convert prsn [kg m-2 s-1] to [mm day-1].
+        If `snr` is None `const` will be used for convertion.
     const: Quantified
         Constant snow density [kg/m^3]
         `const` is only used if `snr` is None.
@@ -1416,6 +1417,7 @@ def last_snowfall(
         Snow density [kg/m^3].
         Use this option if unit of low and/or high is mm/day
         to convert prsn [kg m-2 s-1] to [mm day-1].
+        If `snr` is None `const` will be used for convertion.
     const: Quantified
         Constant snow density [kg/m^3]
         `const` is only used if `snr` is None.
@@ -1486,6 +1488,7 @@ def days_with_snow(
         Snow density [kg/m^3].
         Use this option if unit of low and/or high is mm/day
         to convert prsn [kg m-2 s-1] to [mm day-1].
+        If `snr` is None `const` will be used for convertion.
     const: Quantified
         Constant snow density [kg/m^3]
         `const` is only used if `snr` is None.
@@ -1546,6 +1549,7 @@ def snowfall_frequency(
         Snow density [kg/m^3].
         Use this option if unit of low and/or high is mm/day
         to convert prsn [kg m-2 s-1] to [mm day-1].
+        If `snr` is None `const` will be used for convertion.
     const: Quantified
         Constant snow density [kg/m^3]
         `const` is only used if `snr` is None.
@@ -1603,6 +1607,7 @@ def snowfall_intensity(
         Snow density [kg/m^3].
         Use this option if unit of low and/or high is mm/day
         to convert prsn [kg m-2 s-1] to [mm day-1].
+        If `snr` is None `const` will be used for convertion.
     const: Quantified
         Constant snow density [kg/m^3]
         `const` is only used if `snr` is None.
