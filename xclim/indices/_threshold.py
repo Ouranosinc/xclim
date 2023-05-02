@@ -37,8 +37,11 @@ __all__ = [
     "calm_days",
     "cold_spell_days",
     "cold_spell_frequency",
+    "cold_spell_max_length",
     "daily_pr_intensity",
     "degree_days_exceedance_date",
+    "dry_spell_frequency",
+    "dry_spell_max_length",
     "cooling_degree_days",
     "snd_season_end",
     "snd_season_start",
@@ -230,6 +233,56 @@ def cold_spell_frequency(
     )
     out.attrs["units"] = ""
     return out
+
+
+@declare_units(tas="[temperature]", thresh="[temperature]")
+def cold_spell_max_length(
+    tas: xarray.DataArray,
+    thresh: Quantified = "-10 degC",
+    window: int = 5,
+    freq: str = "AS-JUL",
+    op: str = "<",
+    resample_before_rl: bool = True,
+) -> xarray.DataArray:
+    r"""Longest cold spell.
+
+    Longest spell of temperatures over a given period.
+    The longest series of consecutive days with tas at or below -10°C. Here, there is no minimum threshold for number
+    of days in a row that must be reached or exceeded to count as a spell. A year with zero -10°C days will return a
+    longest spell value of zero.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+        Mean daily temperature.
+    thresh : Quantified
+        The temperature threshold needed to trigger a coldwave event.
+    window : int
+        Minimum number of days with temperatures below thresholds to qualify as a coldwave.
+    freq : str
+        Resampling frequency.
+    op : {"<", "<=", "lt", "le"}
+        Comparison operation. Default: "<".
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+        Maximum length of continuous cold days at the wanted frequency.
+    """
+    thresh = convert_units_to(thresh, tas)
+
+    cond = compare(tas, op, thresh, constrain=("<", "<="))
+    max_l = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.longest_run,
+        freq=freq,
+    )
+    out = max_l.where(max_l >= window, 0)
+    return to_agg_units(out, tas, "count")
 
 
 @declare_units(snd="[length]", thresh="[length]")
@@ -2635,3 +2688,102 @@ def winter_storm(
 
     out.attrs["units"] = to_agg_units(out, snd, "count")
     return out
+
+
+@declare_units(pr="[precipitation]", thresh="[precipitation]")
+def dry_spell_frequency(
+    pr: xarray.DataArray,
+    thresh: Quantified = "1 mm/day",
+    window: int = 3,
+    freq: str = "YS",
+    op: str = "<",
+    resample_before_rl: bool = True,
+) -> xarray.DataArray:
+    """Dry spell frequency.
+
+    Number of dry spells over a given period. A dry spell is defined as an event where
+    precipitation is below a specific threshold (default: 1 mm/day) over a minimum number of days (default: 3).
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+        Mean daily precipitation flux.
+    thresh : Quantified
+        The precipitation threshold needed to trigger a dry wave event.
+    window : int
+        Minimum number of days with temperatures above thresholds to qualify as a dry wave.
+    freq : str
+        Resampling frequency.
+    op : {"<", "<=", "lt", "le"}
+        Comparison operation. Default: "<".
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+        Number of dry wave at the wanted frequency
+    """
+    thresh = convert_units_to(thresh, pr)
+
+    cond = compare(pr, op, thresh, constrain=("<", "<="))
+    out = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.windowed_run_events,
+        window=window,
+        freq=freq,
+    )
+    out.attrs["units"] = ""
+    return out
+
+
+@declare_units(tasmax="[precipitation]", thresh_tasmax="[precipitation]")
+def dry_spell_max_length(
+    pr: xarray.DataArray,
+    thresh: Quantified = "1 mm/day",
+    window: int = 1,
+    freq: str = "YS",
+    op: str = "<",
+    resample_before_rl: bool = True,
+) -> xarray.DataArray:
+    r"""Longest dry spell.
+
+    Longest spell of precipitation over a given period.
+    The longest series of consecutive days with precipitation at or below 1 mm/day. Here, there is no minimum threshold for number
+    of days in a row that must be reached or exceeded to count as a spell. A year with zero 1mm/day days will return a
+    longest spell value of zero.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+        Mean daily precipitation flux.
+    thresh : Quantified
+        The precipitation threshold needed to trigger a dry wave event.
+    window : int
+        Minimum number of days with precipitation below thresholds to qualify as a dry wave.
+    freq : str
+        Resampling frequency.
+    op : {"<", "<=", "lt", "le"}
+        Comparison operation. Default: "<".
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+        Maximum length of continuous dry days at the wanted frequency.
+    """
+    thresh = convert_units_to(thresh, pr)
+
+    cond = compare(pr, op, thresh, constrain=("<", "<="))
+    max_l = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.longest_run,
+        freq=freq,
+    )
+    out = max_l.where(max_l >= window, 0)
+    return to_agg_units(out, pr, "count")
