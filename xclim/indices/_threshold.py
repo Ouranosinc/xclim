@@ -246,10 +246,8 @@ def cold_spell_max_length(
 ) -> xarray.DataArray:
     r"""Longest cold spell.
 
-    Longest spell of temperatures over a given period.
-    The longest series of consecutive days with tas at or below -10°C. Here, there is no minimum threshold for number
-    of days in a row that must be reached or exceeded to count as a spell. A year with zero -10°C days will return a
-    longest spell value of zero.
+    Longest spell of low temperatures over a given period.
+    Longest series of at least {window} consecutive days with temperature at or below {thresh}.
 
     Parameters
     ----------
