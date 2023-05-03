@@ -11,10 +11,11 @@ from xclim.core.missing import at_least_n_valid
 from xclim.core.units import (
     convert_units_to,
     declare_units,
+    pint2cfunits,
     rate2amount,
     str2pint,
     to_agg_units,
-    units2pint,
+    units,
 )
 from xclim.core.utils import DayOfYearStr, Quantified
 
@@ -1369,11 +1370,23 @@ def first_snowfall(
     ----------
     :cite:cts:`cbcl_climate_2020`.
     """
-    unit = str2pint("mm/day")
-    unit_thresh = str2pint(thresh)
-    if unit_thresh._units == unit._units:
+    length_per_time = units.get_dimensionality("[length] / [time]")
+    thresh_dim = str2pint(thresh).dimensionality
+    prsn_dim = str2pint(prsn).dimensionality
+
+    if thresh_dim == length_per_time:
         prsn = prsn_to_mm_per_day(prsn, snr=snr, const=const)
-    thresh = convert_units_to(thresh, prsn, context="hydro")
+        thresh = convert_units_to(thresh, "mm/day")
+    elif prsn_dim == length_per_time:
+        thresh_pint = str2pint(thresh)
+        thresh_value = thresh_pint._magnitude
+        thresh_units = pint2cfunits(thresh_pint)
+        thresh = xarray.DataArray(thresh_value, attrs={"units": thresh_units})
+        thresh = prsn_to_mm_per_day(thresh, const=const)
+        prsn = convert_units_to(prsn, "mm/day")
+    else:
+        thresh = convert_units_to(thresh, prsn)
+
     cond = prsn >= thresh
 
     out = cond.resample(time=freq).map(
@@ -1440,11 +1453,23 @@ def last_snowfall(
     ----------
     :cite:cts:`cbcl_climate_2020`.
     """
-    unit = str2pint("mm/day")
-    unit_thresh = str2pint(thresh)
-    if unit_thresh._units == unit._units:
+    length_per_time = units.get_dimensionality("[length] / [time]")
+    thresh_dim = str2pint(thresh).dimensionality
+    prsn_dim = str2pint(prsn).dimensionality
+
+    if thresh_dim == length_per_time:
         prsn = prsn_to_mm_per_day(prsn, snr=snr, const=const)
-    thresh = convert_units_to(thresh, prsn, context="hydro")
+        thresh = convert_units_to(thresh, "mm/day")
+    elif prsn_dim == length_per_time:
+        thresh_pint = str2pint(thresh)
+        thresh_value = thresh_pint._magnitude
+        thresh_units = pint2cfunits(thresh_pint)
+        thresh = xarray.DataArray(thresh_value, attrs={"units": thresh_units})
+        thresh = prsn_to_mm_per_day(thresh, const=const)
+        prsn = convert_units_to(prsn, "mm/day")
+    else:
+        thresh = convert_units_to(thresh, prsn)
+
     cond = prsn >= thresh
 
     out = cond.resample(time=freq).map(
@@ -1511,13 +1536,49 @@ def days_with_snow(
     ----------
     :cite:cts:`matthews_planning_2017`
     """
-    unit = str2pint("mm/day")
-    unit_low = str2pint(low)
-    unit_high = str2pint(high)
-    if unit_low._units == unit._units or unit_high._units == unit._units:
+    length_per_time = units.get_dimensionality("[length] / [time]")
+    low_dim = str2pint(low).dimensionality
+    high_dim = str2pint(high).dimensionality
+    prsn_dim = str2pint(prsn).dimensionality
+
+    if low_dim == length_per_time:
         prsn = prsn_to_mm_per_day(prsn, snr=snr, const=const)
-    low = convert_units_to(low, prsn, context="hydro")
-    high = convert_units_to(high, prsn, context="hydro")
+        low = convert_units_to(low, "mm/day")
+        if high_dim != length_per_time:
+            high_pint = str2pint(high)
+            high_value = high_pint._magnitude
+            high_units = pint2cfunits(high_pint)
+            high = xarray.DataArray(high_value, attrs={"units": high_units})
+            high = prsn_to_mm_per_day(high, const=const)
+        else:
+            high = convert_units_to(high, "mm/day")
+    elif high_dim == length_per_time:
+        prsn = prsn_to_mm_per_day(prsn, snr=snr, const=const)
+        high = convert_units_to(high, "mm/day")
+        if low_dim != length_per_time:
+            low_pint = str2pint(low)
+            low_value = low_pint._magnitude
+            low_units = pint2cfunits(low_pint)
+            low = xarray.DataArray(low_value, attrs={"units": low_units})
+            low = prsn_to_mm_per_day(low, const=const)
+        else:
+            low = convert_units_to(low, "mm/day")
+    elif prsn_dim == length_per_time:
+        low_pint = str2pint(low)
+        low_value = low_pint._magnitude
+        low_units = pint2cfunits(low_pint)
+        low = xarray.DataArray(low_value, attrs={"units": low_units})
+        low = prsn_to_mm_per_day(low, const=const)
+        high_pint = str2pint(high)
+        high_value = high_pint._magnitude
+        high_units = pint2cfunits(high_pint)
+        high = xarray.DataArray(high_value, attrs={"units": high_units})
+        high = prsn_to_mm_per_day(high, const=const)
+        prsn = convert_units_to(prsn, "mm/day")
+    else:
+        low = convert_units_to(low, prsn)
+        high = convert_units_to(high, prsn)
+
     out = domain_count(prsn, low, high, freq)
     return to_agg_units(out, prsn, "count")
 
@@ -1630,11 +1691,23 @@ def snowfall_intensity(
     ----------
     :cite:cts:`frei_snowfall_2018`
     """
-    unit = str2pint("mm/day")
-    unit_thresh = str2pint(thresh)
-    if unit_thresh._units == unit._units:
+    length_per_time = units.get_dimensionality("[length] / [time]")
+    thresh_dim = str2pint(thresh).dimensionality
+    prsn_dim = str2pint(prsn).dimensionality
+
+    if thresh_dim == length_per_time:
         prsn = prsn_to_mm_per_day(prsn, snr=snr, const=const)
-    thresh = convert_units_to(thresh, prsn, context="hydro")
+        thresh = convert_units_to(thresh, "mm/day")
+    elif prsn_dim == length_per_time:
+        thresh_pint = str2pint(thresh)
+        thresh_value = thresh_pint._magnitude
+        thresh_units = pint2cfunits(thresh_pint)
+        thresh = xarray.DataArray(thresh_value, attrs={"units": thresh_units})
+        thresh = prsn_to_mm_per_day(thresh, const=const)
+        prsn = convert_units_to(prsn, "mm/day")
+    else:
+        thresh = convert_units_to(thresh, prsn)
+
     cond = prsn >= thresh
     mean = cond.resample(time=freq).mean(dim="time")
     return xarray.where(mean == np.nan, 0, mean)
