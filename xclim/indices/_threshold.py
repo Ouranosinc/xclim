@@ -2721,7 +2721,7 @@ def dry_spell_frequency(
     Returns
     -------
     xarray.DataArray, [dimensionless]
-        Number of dry wave at the wanted frequency
+        Number of dry spells at the wanted frequency
     """
     thresh = convert_units_to(thresh, pr)
 
