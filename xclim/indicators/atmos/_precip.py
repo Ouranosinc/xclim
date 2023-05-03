@@ -629,7 +629,7 @@ dry_spell_frequency = Precip(
     standard_name="dry_spell_frequency",
     long_name="Total number of series of at least {window} consecutive days "
     "where the mean daily precipitation is below {thresh}",
-    description="{freq} number dry spell events. A dry spell is definedas a minimum number of "
+    description="{freq} number of dry spell events. A dry spell is defined as a minimum number of "
     "consecutive days with daily precipitation below {thresh}.",
     abstract="The number of dry spell events. A dry spell is defined as a minimum number of consecutive days with "
     "mean daily precipitation below a given threshold.",
