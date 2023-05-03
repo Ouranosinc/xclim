@@ -2749,9 +2749,7 @@ def dry_spell_max_length(
     r"""Longest dry spell.
 
     Longest spell of precipitation over a given period.
-    The longest series of consecutive days with precipitation at or below 1 mm/day. Here, there is no minimum threshold for number
-    of days in a row that must be reached or exceeded to count as a spell. A year with zero 1mm/day days will return a
-    longest spell value of zero.
+    Longest series of at least {window} consecutive days with precipitations at or below {thresh}.
 
     Parameters
     ----------
