@@ -16,8 +16,10 @@ from xclim.core.units import (
     to_agg_units,
 )
 from xclim.core.utils import DayOfYearStr, Quantified
+from xclim.indices.helpers import _gather_lat
 
 from . import run_length as rl
+from ._simple import frost_days
 from .generic import (
     compare,
     cumulative_difference,
@@ -85,6 +87,7 @@ __all__ = [
     "sea_ice_area",
     "sea_ice_extent",
     "windy_days",
+    "delayed_frost_days",
 ]
 
 
@@ -2635,3 +2638,51 @@ def winter_storm(
 
     out.attrs["units"] = to_agg_units(out, snd, "count")
     return out
+
+
+@declare_units(tasmin="[temperature]", lat="[]", thresh="[temperature]")
+def delayed_frost_days(
+    tasmin: xarray.DataArray,
+    lat: xarray.DataArray | None = None,
+    thresh: Quantified = "0 degC",
+    start_date_nh: DayOfYearStr = "04-01",
+    start_date_sh: DayOfYearStr = "10-01",
+    end_date_nh: DayOfYearStr = "06-30",
+    end_date_sh: DayOfYearStr = "12-31",
+    freq: str = "YS",
+) -> xarray.DataArray:
+    r"""Delayed frost days.
+
+    Number of days where daily minimum temperatures are below a threshold temperature
+    for April to June on Nouthern Hemisphere and for October to December on Southern Hemisphere.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+        Minimum daily temperature
+    lat : xarray.DataArray, optional
+        Latitude coordinate.
+        If None, a CF-conformant "latitude" field must be available within the passed DataArray.
+    thresh : Quantified, optional
+        Freezing temperature
+    start_date_nh : DayOfYearStr, optional
+        The northern hemisphere start date to consider
+    start_date_sh : DayOfYearStr, optional
+        The southern hemisphere start date to consider
+    end_date_nh : DayOfYearStr, optional
+        The northern hemisphere end date to consider
+    end_date_sh : DayOfYearStr, optional
+        The southern hemisphere end date to consider
+    freq : str, optional
+        Resampling frequency
+    """
+    if lat is None:
+        lat = _gather_lat(tasmin)
+
+    date_start = xarray.where(lat > 0, start_date_nh, start_date_sh)
+    date_end = xarray.where(lat > 0, end_date_nh, end_date_sh)
+    dates = [f"{date.month:02d}-{date.day:02d}" for date in tasmin.time.values]
+    dates = xarray.DataArray(dates, coords={"time": tasmin.time})
+
+    tasmin = tasmin.where((dates >= date_start) & (dates <= date_end), drop=True)
+    return frost_days(tasmin, thresh=thresh, freq=freq)

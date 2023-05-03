@@ -1219,3 +1219,17 @@ latitude_temperature_index = Temp(
     compute=indices.latitude_temperature_index,
     parameters={"lat": {"kind": InputKind.VARIABLE}, "lat_factor": 60},
 )
+
+delayed_frost_days = TempWithIndexing(
+    title="Delayed_frost days",
+    identifier="delayed_frost_days",
+    units="days",
+    standard_name="days_with_air_temperature_below_threshold",
+    long_name="Number of delayed days where the daily minimum temperature is below {thresh}",
+    description="{freq} number of delayed days where the daily minimum temperature is below {thresh}."
+    "On the Northern Hemisphere a frost day is delayed betwenn {start_date_nh} and {end_date_nh}."
+    "On the Southern Hemisphere a frost day is delayed between {start_date_sh} and {end_date_sh}.",
+    abstract="Number of delayed days where the daily minimum temperature is below a given threshold.",
+    cell_methods="time: sum over days",
+    compute=indices.delayed_frost_days,
+)
