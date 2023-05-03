@@ -1591,10 +1591,8 @@ def hot_spell_max_length(
 ) -> xarray.DataArray:
     r"""Longest hot spell.
 
-    Longest spell of high temperatures over a given period.
-    The longest series of consecutive days with tasmax at or above 30°C. Here, there is no minimum threshold for number
-    of days in a row that must be reached or exceeded to count as a spell. A year with zero +30°C days will return a
-    longest spell value of zero.
+    Longest spell of high temperatures over a given period. 
+    Longest series of at least {window} consecutive days with tasmax at or above {thresh_tasmax}.
 
     Parameters
     ----------
