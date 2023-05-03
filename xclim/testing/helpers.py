@@ -226,7 +226,6 @@ def test_timeseries(
 
     if units is not None:
         attrs["units"] = units
-
     da = xr.DataArray(values, coords=[coords], dims="time", name=variable, attrs=attrs)
 
     if as_dataset:
