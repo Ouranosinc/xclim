@@ -91,4 +91,4 @@ def test_taylordiagram(open_dataset):
         .tasmax
     )
     test = sdba.measures.taylordiagram(sim, ref).values
-    np.testing.assert_array_almost_equal(test, [13.12244701, 6.76166582, 0.73230209], 4)
+    np.testing.assert_array_almost_equal(test, [13.12244701, 6.76166582, 0.73230199], 4)

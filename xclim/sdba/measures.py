@@ -471,18 +471,19 @@ def _taylordiagram(
     Returns
     -------
     xr.DataArray, [measures]
-        DataArray containing the correlation coefficient and standard deviations as coordinates.
+        Standard deviations of sim, ref and correlation coefficient between both.
     """
     corr = xr.corr(sim, ref, dim=dim)
 
     ref_std = ref.std(dim=dim, skipna=True, keep_attrs=True)
     sim_std = sim.std(dim=dim, skipna=True, keep_attrs=True)
 
-    coords = {"taylor_params": ["ref_std", "sim_std", "corr"]}
-    dims = ["taylor_params"]
+    coords = {"taylor_param": ["ref_std", "sim_std", "corr"]}
+    dims = ["taylor_param"]
 
+    for coord in ref_std.coords:
+        coords[coord] = ref_std[coord]
     for dim in ref_std.dims:
-        coords[dim] = ref_std[dim].values
         dims.append(dim)
 
     out = xr.DataArray(

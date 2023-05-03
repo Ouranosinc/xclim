@@ -35,4 +35,4 @@ Contributors
 * Dougie Squire <dougiesquire@gmail.com> `@dougiesquire <https://github.com/dougiesquire>`_
 * Ag Stephens <ag.stephens@stfc.ac.uk> `@agstephens <https://github.com/agstephens>`_
 * Maliko Tanguy <malngu@ceh.ac.uk> `@malngu <https://github.com/malngu>`_
-* Alexis Beaupré-Laperriere `@Beauprel <https://github.com/Beauprel>`_
+* Alexis Beaupré-Laperrière `@Beauprel <https://github.com/Beauprel>`_
