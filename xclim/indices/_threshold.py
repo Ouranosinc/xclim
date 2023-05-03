@@ -1591,7 +1591,7 @@ def hot_spell_max_length(
 ) -> xarray.DataArray:
     r"""Longest hot spell.
 
-    Longest spell of high temperatures over a given period. 
+    Longest spell of high temperatures over a given period.
     Longest series of at least {window} consecutive days with tasmax at or above {thresh_tasmax}.
 
     Parameters
