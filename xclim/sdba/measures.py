@@ -470,7 +470,7 @@ def _taylordiagram(
 
     Returns
     -------
-    xr.DataArray, [measures]
+    xr.DataArray, [same as ref]
         Standard deviations of sim, ref and correlation coefficient between both.
     """
     corr = xr.corr(sim, ref, dim=dim)
@@ -490,14 +490,11 @@ def _taylordiagram(
         [ref_std, sim_std, corr],
         coords=coords,
         dims=dims,
-        attrs={"correlation_type": "Pearson correlation coefficient"},
+        attrs={
+            "correlation_type": "Pearson correlation coefficient",
+            "units": ref_std.units,
+        },
     )
-
-    if hasattr(ref_std, "units") and hasattr(sim_std, "units"):
-        if ref_std.units == sim_std.units:
-            out.attrs["units"] = ref_std.units
-        else:
-            raise ValueError("Simulation and reference units must be identical.")
 
     return out
 
