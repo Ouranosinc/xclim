@@ -8,7 +8,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import pytest
 import xarray as xr
 from yaml import safe_load
 
@@ -209,20 +208,14 @@ def test_timeseries(
     data_on_var = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
     if variable in data_on_var:
         attrs = {
-            a: data_on_var[variable].get(a, "unknown")
+            a: data_on_var[variable].get(a, "")
             for a in ["description", "standard_name", "cell_methods"]
         }
         attrs["units"] = data_on_var[variable]["canonical_units"]
 
     else:
-        warnings.warn(
-            f'Variable {variable} not recognised. Attrs will filled with "unknown".'
-        )
-        # TODO: is it better to put this or just no attrs ?
-        attrs = {
-            a: "unknown"
-            for a in ["description", "standard_name", "cell_methods", "units"]
-        }
+        warnings.warn(f"Variable {variable} not recognised. Attrs will not be filled.")
+        attrs = {}
 
     if units is not None:
         attrs["units"] = units
