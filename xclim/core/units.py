@@ -30,6 +30,7 @@ __all__ = [
     "check_units",
     "convert_units_to",
     "declare_units",
+    "flux_and_rate_converter",
     "infer_context",
     "infer_sampling_units",
     "lwethickness2amount",
@@ -880,6 +881,49 @@ def lwethickness2amount(thickness: xr.DataArray, out_units: str = None):
         out = convert_units_to(out, out_units)
     return out
 
+def flux_and_rate_converter(
+    da: xr.DataArray,
+    density: Quantified | str,
+    to: str = "rate",
+    out_units: str = None,
+) -> xr.DataArray:
+    """Private function performing the actual conversion for :py:func:`xclim.core.units.flux2rate` and :py:func:`xclim.core.units.rate2flux`."""
+    if to == "rate":
+        # output: rate = da / density, with da = flux
+        density_exp = -1
+    elif to == "flux":
+        # output: flux = da * density, with da = rate
+        density_exp = 1
+    else:
+        raise ValueError("Argument `to` must be one of 'rate' or 'flux'.")
+
+    in_u = units2pint(da)
+    density_u = str2pint(density).units if isinstance(density, str) else units2pint(density)
+    if (out_units):
+        out_u = str2pint(out_units).units
+
+        if ((in_u*density_u**(density_exp)).dimensionality != out_u.dimensionality):
+            op = {1:"*", -1:"/"}[density_exp]
+            raise ValueError(
+                f"Dimensions incompatible for {to} = da {op} density:\n"
+                f"da: {in_u.dimensionality}\n"
+                f"density: {density_u.dimensionality}\n"
+                f"out_units ({to}): {out_u.dimensionality}\n"
+            )
+    else:
+        out_u = in_u*density_u**(density_exp)
+        
+    density = convert_units_to(density, (out_u/in_u)**(density_exp))
+    out = (da*density**(density_exp)).assign_attrs(da.attrs)
+    out.attrs["units"] = pint2cfunits(out_u)
+    # old_name = da.attrs.get("standard_name")
+    # if old_name and (
+    #     new_name := cf_conversion(
+    #         old_name, "flux2rate", "to" if to == "rate" else "from"
+    #     )
+    # ):
+    #     out.attrs["standard_name"] = new_name
+    return out
 
 @datacheck
 def check_units(val: str | int | float | None, dim: str | None) -> None:

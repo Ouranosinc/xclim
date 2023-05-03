@@ -6,19 +6,19 @@ from xclim.indicators.atmos._conversion import Converter  # noqa
 
 __all__ = [
     "blowing_snow",
+    "snd_from_snw",
     "snd_max_doy",
     "snd_season_end",
     "snd_season_length",
     "snd_season_start",
-    "snd_to_snw",
     "snow_depth",
     "snow_melt_we_max",
+    "snw_from_snd",
     "snw_max",
     "snw_max_doy",
     "snw_season_end",
     "snw_season_length",
     "snw_season_start",
-    "snw_to_snd",
     "winter_storm",
 ]
 
@@ -196,9 +196,9 @@ snow_depth = SnowWithIndexing(
     compute=xci.snow_depth,
 )
 
-snd_to_snw = Converter(
+snw_from_snd = Converter(
     title="Surface snow amount",
-    identifier="snd_to_snw",
+    identifier="snw_from_snd",
     units="kg m-2",
     standard_name="surface_snow_amount",
     long_name="Approximation of daily snow amount from snow depth and density",
@@ -207,9 +207,9 @@ snd_to_snw = Converter(
     compute=xci.snd_to_snw,
 )
 
-snw_to_snd = Converter(
+snd_from_snw = Converter(
     title="Surface snow depth",
-    identifier="snw_to_snd",
+    identifier="snd_from_snw",
     units="m",
     standard_name="surface_snow_thickness",
     long_name="Approximation of daily snow depth from snow amount and density",

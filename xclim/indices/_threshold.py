@@ -20,7 +20,7 @@ from xclim.core.units import (
 from xclim.core.utils import DayOfYearStr, Quantified
 
 from . import run_length as rl
-from ._conversion import prsn_to_mm_per_day
+from ._conversion import prsn_to_pr_solid
 from .generic import (
     compare,
     cumulative_difference,
@@ -1375,14 +1375,14 @@ def first_snowfall(
     prsn_dim = str2pint(prsn).dimensionality
 
     if thresh_dim == length_per_time:
-        prsn = prsn_to_mm_per_day(prsn, snr=snr, const=const)
+        prsn = prsn_to_pr_solid(prsn, snr=snr, const=const)
         thresh = convert_units_to(thresh, "mm/day")
     elif prsn_dim == length_per_time:
         thresh_pint = str2pint(thresh)
         thresh_value = thresh_pint._magnitude
         thresh_units = pint2cfunits(thresh_pint)
         thresh = xarray.DataArray(thresh_value, attrs={"units": thresh_units})
-        thresh = prsn_to_mm_per_day(thresh, const=const)
+        thresh = prsn_to_pr_solid(thresh, const=const)
         prsn = convert_units_to(prsn, "mm/day")
     else:
         thresh = convert_units_to(thresh, prsn)
@@ -1458,14 +1458,14 @@ def last_snowfall(
     prsn_dim = str2pint(prsn).dimensionality
 
     if thresh_dim == length_per_time:
-        prsn = prsn_to_mm_per_day(prsn, snr=snr, const=const)
+        prsn = prsn_to_pr_solid(prsn, snr=snr, const=const)
         thresh = convert_units_to(thresh, "mm/day")
     elif prsn_dim == length_per_time:
         thresh_pint = str2pint(thresh)
         thresh_value = thresh_pint._magnitude
         thresh_units = pint2cfunits(thresh_pint)
         thresh = xarray.DataArray(thresh_value, attrs={"units": thresh_units})
-        thresh = prsn_to_mm_per_day(thresh, const=const)
+        thresh = prsn_to_pr_solid(thresh, const=const)
         prsn = convert_units_to(prsn, "mm/day")
     else:
         thresh = convert_units_to(thresh, prsn)
@@ -1542,25 +1542,25 @@ def days_with_snow(
     prsn_dim = str2pint(prsn).dimensionality
 
     if low_dim == length_per_time:
-        prsn = prsn_to_mm_per_day(prsn, snr=snr, const=const)
+        prsn = prsn_to_pr_solid(prsn, snr=snr, const=const)
         low = convert_units_to(low, "mm/day")
         if high_dim != length_per_time:
             high_pint = str2pint(high)
             high_value = high_pint._magnitude
             high_units = pint2cfunits(high_pint)
             high = xarray.DataArray(high_value, attrs={"units": high_units})
-            high = prsn_to_mm_per_day(high, const=const)
+            high = prsn_to_pr_solid(high, const=const)
         else:
             high = convert_units_to(high, "mm/day")
     elif high_dim == length_per_time:
-        prsn = prsn_to_mm_per_day(prsn, snr=snr, const=const)
+        prsn = prsn_to_pr_solid(prsn, snr=snr, const=const)
         high = convert_units_to(high, "mm/day")
         if low_dim != length_per_time:
             low_pint = str2pint(low)
             low_value = low_pint._magnitude
             low_units = pint2cfunits(low_pint)
             low = xarray.DataArray(low_value, attrs={"units": low_units})
-            low = prsn_to_mm_per_day(low, const=const)
+            low = prsn_to_pr_solid(low, const=const)
         else:
             low = convert_units_to(low, "mm/day")
     elif prsn_dim == length_per_time:
@@ -1568,12 +1568,12 @@ def days_with_snow(
         low_value = low_pint._magnitude
         low_units = pint2cfunits(low_pint)
         low = xarray.DataArray(low_value, attrs={"units": low_units})
-        low = prsn_to_mm_per_day(low, const=const)
+        low = prsn_to_pr_solid(low, const=const)
         high_pint = str2pint(high)
         high_value = high_pint._magnitude
         high_units = pint2cfunits(high_pint)
         high = xarray.DataArray(high_value, attrs={"units": high_units})
-        high = prsn_to_mm_per_day(high, const=const)
+        high = prsn_to_pr_solid(high, const=const)
         prsn = convert_units_to(prsn, "mm/day")
     else:
         low = convert_units_to(low, prsn)
@@ -1696,14 +1696,14 @@ def snowfall_intensity(
     prsn_dim = str2pint(prsn).dimensionality
 
     if thresh_dim == length_per_time:
-        prsn = prsn_to_mm_per_day(prsn, snr=snr, const=const)
+        prsn = prsn_to_pr_solid(prsn, snr=snr, const=const)
         thresh = convert_units_to(thresh, "mm/day")
     elif prsn_dim == length_per_time:
         thresh_pint = str2pint(thresh)
         thresh_value = thresh_pint._magnitude
         thresh_units = pint2cfunits(thresh_pint)
         thresh = xarray.DataArray(thresh_value, attrs={"units": thresh_units})
-        thresh = prsn_to_mm_per_day(thresh, const=const)
+        thresh = prsn_to_pr_solid(thresh, const=const)
         prsn = convert_units_to(prsn, "mm/day")
     else:
         thresh = convert_units_to(thresh, prsn)
