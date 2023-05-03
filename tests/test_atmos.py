@@ -69,7 +69,7 @@ def test_relative_humidity_dewpoint(timeseries):
                 np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C, "tas"
             ),
             tdps=timeseries(
-                np.array([-15, -10, -2, 5, 10, 20, 29, 20, 30]) + K2C, "tas"
+                np.array([-15, -10, -2, 5, 10, 20, 29, 20, 30]) + K2C, "tdps"
             ),
         ),
         timeseries([np.nan, 100, 93, 71, 52, 73, 94, 31, 20], "hurs"),
