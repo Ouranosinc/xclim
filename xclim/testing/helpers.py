@@ -68,6 +68,7 @@ __all__ = [
     "add_example_file_paths",
     "generate_atmos",
     "populate_testing_data",
+    "test_timeseries",
 ]
 
 
@@ -204,6 +205,7 @@ def add_example_file_paths(cache_dir: Path) -> dict[str]:
 def test_timeseries(
     values, variable, start="7/1/2000", units=None, freq="D", as_dataset=False
 ):
+    """Create a generic timeseries object based on pre-defined dictionaries of existing variables."""
     coords = pd.date_range(start, periods=len(values), freq=freq)
     data_on_var = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
     if variable in data_on_var:
