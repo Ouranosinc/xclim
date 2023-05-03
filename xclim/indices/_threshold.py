@@ -2707,9 +2707,9 @@ def dry_spell_frequency(
     pr : xarray.DataArray
         Mean daily precipitation flux.
     thresh : Quantified
-        The precipitation threshold needed to trigger a dry wave event.
+        The precipitation threshold needed to trigger a dry spell.
     window : int
-        Minimum number of days with temperatures above thresholds to qualify as a dry wave.
+        Minimum number of days with precipitations above threshold to qualify as a dry spell.
     freq : str
         Resampling frequency.
     op : {"<", "<=", "lt", "le"}
