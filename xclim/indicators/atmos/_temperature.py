@@ -79,6 +79,7 @@ __all__ = [
     "huglin_index",
     "biologically_effective_degree_days",
     "latitude_temperature_index",
+    "delayed_frost_days",
 ]
 
 

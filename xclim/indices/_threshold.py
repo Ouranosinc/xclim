@@ -2681,7 +2681,8 @@ def delayed_frost_days(
 
     date_start = xarray.where(lat > 0, start_date_nh, start_date_sh)
     date_end = xarray.where(lat > 0, end_date_nh, end_date_sh)
-    dates = [f"{date.month:02d}-{date.day:02d}" for date in tasmin.time.values]
+
+    dates = [f"{date.dt.month:02d}-{date.dt.day:02d}" for date in tasmin.time]
     dates = xarray.DataArray(dates, coords={"time": tasmin.time})
 
     tasmin = tasmin.where((dates >= date_start) & (dates <= date_end), drop=True)

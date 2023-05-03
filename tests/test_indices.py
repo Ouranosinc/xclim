@@ -3153,3 +3153,18 @@ class TestDrynessIndex:
             di, np.array([13.355, 102.426, 65.576, 158.078]), rtol=1e-03
         )
         np.testing.assert_allclose(di_wet, di_plus_100)
+
+
+class TestDelayedFrostDays:
+    def test_delayed_frost_days(self, tasmin_series):
+        tasmin = tasmin_series(np.array([-1, 1, 2, -4, 0]) + K2C, start="30/3/2023")
+        lat = xr.DataArray(21.45, attrs={"units": "degrees_north"})
+        tasmin["lat"] = lat
+        dfd = xci.delayed_frost_days(tasmin)
+        np.testing.assert_allclose(dfd, 1)
+
+    def test_delayed_frost_days_lat(self, tasmin_series):
+        tasmin = tasmin_series(np.array([-1, 1, 2, -4, 0]) + K2C, start="30/3/2023")
+        lat = xr.DataArray(21.45, attrs={"units": "degrees_north"})
+        dfd = xci.delayed_frost_days(tasmin, lat=lat)
+        np.testing.assert_allclose(dfd, 1)
