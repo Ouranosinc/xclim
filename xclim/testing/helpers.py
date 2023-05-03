@@ -2,14 +2,15 @@
 from __future__ import annotations
 
 import os
+import warnings
+from importlib.resources import open_text
 from pathlib import Path
 
 import numpy as np
-import xarray as xr
-from importlib.resources import open_text
-from yaml import safe_load
-import warnings
+import pandas as pd
 import pytest
+import xarray as xr
+from yaml import safe_load
 
 from xclim.core import calendar
 from xclim.indices import (
@@ -201,39 +202,34 @@ def add_example_file_paths(cache_dir: Path) -> dict[str]:
     return ns
 
 
-@pytest.fixture
-def test_timeseries():
-    def _test_timeseries(values, variable,  start="7/1/2000", units=None, freq="D", as_dataset=False):
-        coords = pd.date_range(start, periods=len(values), freq=freq)
-        data_on_var = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
-        if variable in data_on_var:
-            attrs ={a:data_on_var[variable].get(a, 'unknown') for a in
-                    ['description','standard_name','cell_methods']}
-            attrs['units'] = data_on_var[variable]['canonical_units']
+def test_timeseries(
+    values, variable, start="7/1/2000", units=None, freq="D", as_dataset=False
+):
+    coords = pd.date_range(start, periods=len(values), freq=freq)
+    data_on_var = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
+    if variable in data_on_var:
+        attrs = {
+            a: data_on_var[variable].get(a, "unknown")
+            for a in ["description", "standard_name", "cell_methods"]
+        }
+        attrs["units"] = data_on_var[variable]["canonical_units"]
 
-        else:
-            warnings.warn(f'Variable {variable} not recognised. Attrs will filled with "unknown".')
-            # TODO: is it better to put this or just no attrs ?
-            attrs ={a:'unknown'for a in
-                    ['description','standard_name','cell_methods','units']}
-
-
-
-        if units is not None:
-            attrs['units'] = units
-
-        da= xr.DataArray(
-            values,
-            coords=[coords],
-            dims="time",
-            name=variable,
-            attrs=attrs
+    else:
+        warnings.warn(
+            f'Variable {variable} not recognised. Attrs will filled with "unknown".'
         )
+        # TODO: is it better to put this or just no attrs ?
+        attrs = {
+            a: "unknown"
+            for a in ["description", "standard_name", "cell_methods", "units"]
+        }
 
-        if as_dataset:
-            return da.to_dataset()
-        else:
-            return da
+    if units is not None:
+        attrs["units"] = units
 
-    return _test_timeseries
+    da = xr.DataArray(values, coords=[coords], dims="time", name=variable, attrs=attrs)
 
+    if as_dataset:
+        return da.to_dataset()
+    else:
+        return da

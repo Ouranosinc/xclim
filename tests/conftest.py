@@ -20,6 +20,7 @@ from xclim import __version__ as __xclim_version__
 from xclim.core import indicator
 from xclim.core.calendar import max_doy
 from xclim.testing import helpers
+from xclim.testing.helpers import test_timeseries
 from xclim.testing.utils import _default_cache_dir  # noqa
 from xclim.testing.utils import open_dataset as _open_dataset
 
@@ -662,3 +663,8 @@ def cleanup(request):
             flag.unlink()
 
     request.addfinalizer(remove_data_written_flag)
+
+
+@pytest.fixture
+def timeseries():
+    return test_timeseries
