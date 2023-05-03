@@ -6,7 +6,13 @@ import xarray as xr
 from numba import float32, float64, vectorize  # noqa
 
 from xclim.core.calendar import date_range, datetime_to_decimal_year
-from xclim.core.units import amount2rate, convert_units_to, declare_units, units2pint
+from xclim.core.units import (
+    amount2rate,
+    convert_units_to,
+    declare_units,
+    units,
+    units2pint,
+)
 from xclim.core.utils import Quantified
 from xclim.indices.helpers import (
     _gather_lat,
@@ -1023,11 +1029,16 @@ def prsn_to_mm_per_day(
     ----------
     :cite:cts:`sturm_swe_2010`
     """
-    prsn = convert_units_to(prsn, "kg/(m**2*day)", context="hydro")
-    prsn.attrs["units"] = "kg/m**2"
-    pr_solid = snw_to_snd(snw=prsn, snr=snr, const=const)
-    pr_solid = convert_units_to(pr_solid, "mm")
-    pr_solid.attrs["units"] = "mm/day"
+    val_dim = units2pint(prsn).dimensionality
+    expected_dim = units.get_dimensionality("[length] / [time]")
+    if val_dim == expected_dim:
+        pr_solid = convert_units_to(prsn, "mm/day")
+    else:
+        prsn = convert_units_to(prsn, "kg/(m**2*day)")
+        prsn.attrs["units"] = "kg/m**2"
+        pr_solid = snw_to_snd(snw=prsn, snr=snr, const=const)
+        pr_solid = convert_units_to(pr_solid, "mm")
+        pr_solid.attrs["units"] = "mm/day"
     return pr_solid.rename("pr_solid")
 
 
