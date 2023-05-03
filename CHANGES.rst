@@ -41,6 +41,7 @@ Internal changes
 * In order to follow best practices and reduce the installed size of the `xclim` wheel, the `tests` folder containing the testing suite has been split from the package and placed in the top-level of the code repository. (:issue:`1348`, :pull:`1349`, suggested from `PyOpenSci Software Review <https://github.com/pyOpenSci/software-review/issues/73>`_). Submodules that were previously called within ``xclim.testing.tests`` have been refactored as follows:
     * ``xclim.testing.tests.data`` → ``xclim.testing.helpers``
     * ``xclim.testing.tests.test_sdba.utils`` → ``xclim.testing.sdba_utils``
+* Added a "Conventions" section to the README. (:issue:`1342`, :pull:`1351`).
 
 v0.42.0 (2023-04-03)
 --------------------
