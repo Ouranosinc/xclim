@@ -1709,8 +1709,8 @@ def snowfall_intensity(
         thresh = convert_units_to(thresh, prsn)
 
     cond = prsn >= thresh
-    mean = cond.resample(time=freq).mean(dim="time")
-    return xarray.where(mean == np.nan, 0, mean)
+    mean = prsn.where(cond).resample(time=freq).mean(dim="time")
+    return mean.fillna(0)
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
