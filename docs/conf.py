@@ -156,6 +156,10 @@ linkcheck_ignore = [
     r"https://projecteuclid.org/journals/annals-of-statistics/volume-16/issue-2/A-Multivariate-Two-Sample-Test-Based-on-the-Number-of/10.1214/aos/1176350835.full",
     # Added on 2023-05-03: Connection refused for bots (error 104)
     r"https://doi.org/10.13031/2013.26773",
+    # Added on 2023-05-03: linkcheck has issues with some anchors
+    r"https://peps.python.org/pep-0537/#features-for-3-7",
+    r"https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.griddata.html#scipy.interpolate.griddata",
+    r"https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.skew.html#scipy.stats.skew",
 ]
 linkcheck_exclude_documents = [r"readme"]
 
