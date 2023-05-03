@@ -18,6 +18,7 @@ Bug fixes
 ^^^^^^^^^
 * Fixed a bug in the `pyproject.toml` configuration that excluded the changelog (`CHANGES.rst`) from the packaged source distribution. (:pull:`1349`).
 * When summing an all-NaN period with `resample`, xarray 2023.04.0 now returns NaN, whereas earlier versions returned 0. This broke ``fraction_over_precip_thresh``, but is now fixed. (:pull:`1354`, :issue:`1337`).
+* In sdba's Quantile Delta Mapping algorithm, the quantiles of the simulation to adjust were computed slightly differently than when creating the adjustment factor. The ``xclim.sdba.utils.rank`` function has been fixed to return "percentage-ranks" (quantiles) in the proper range. (:issue:`1334`, :pull:`1355`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
