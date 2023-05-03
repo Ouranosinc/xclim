@@ -1,6 +1,8 @@
 # noqa: D100
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 import xarray as xr
 from numba import float32, float64, vectorize  # noqa
@@ -27,7 +29,6 @@ from xclim.indices.helpers import (
     wind_speed_height_conversion,
 )
 
-import warnings
 __all__ = [
     "clausius_clapeyron_scaled_precipitation",
     "heat_index",
@@ -918,7 +919,7 @@ def snd_to_snw(
     snd: xr.DataArray,
     snr: Quantified | None = None,
     const: Quantified = "312 kg m-3",
-    out_units: str = None
+    out_units: str = None,
 ) -> xr.DataArray:
     """Snow amount from snow depth and density.
 
@@ -927,9 +928,9 @@ def snd_to_snw(
     snd : xr.DataArray
         Snow depth.
     snr : Quantified, optional
-        Snow density. 
+        Snow density.
     const: Quantified
-        Constant snow density 
+        Constant snow density
         `const` is only used if `snr` is None.
     out_units: str, optional
         Desired units of the snow amount output. If `None`, output units simply follow from `snd * snr`.
@@ -951,13 +952,13 @@ def snd_to_snw(
     snw = flux_and_rate_converter(snd, density=density, to="flux", out_units=out_units)
     return snw.rename("snw")
 
-@declare_units(snw="[mass]/[area]", snr="[mass]/[volume]", const="[mass]/[volume]")
 
+@declare_units(snw="[mass]/[area]", snr="[mass]/[volume]", const="[mass]/[volume]")
 def snw_to_snd(
     snw: xr.DataArray,
     snr: Quantified | None = None,
     const: Quantified = "312 kg m-3",
-    out_units: str | None = None 
+    out_units: str | None = None,
 ) -> xr.DataArray:
     """Snow depth from snow amount and density.
 
@@ -966,7 +967,7 @@ def snw_to_snd(
     snw : xr.DataArray
         Snow amount.
     snr : Quantified, optional
-        Snow density. 
+        Snow density.
     const: Quantified
         Constant snow density
         `const` is only used if `snr` is None.
@@ -1026,16 +1027,18 @@ def prsn_to_pr_solid(
     :cite:cts:`sturm_swe_2010`
     """
     prsn_dim = units2pint(prsn).dimensionality
-    if (prsn_dim == units.get_dimensionality("[length] / [time]")):
+    if prsn_dim == units.get_dimensionality("[length] / [time]"):
         warnings.warn(f"prsn already has target dimensionality: {prsn_dim}")
         if out_units:
             pr_solid = convert_units_to(prsn, out_units)
         else:
             pr_solid = prsn
-    else:        
+    else:
         density = snr if snr else const
         # another name might be better lwe_thickness_rate_of_snowfall_flux ; lwe_snowfall_rate; liquid_bulk_equivalent ...
-        pr_solid = flux_and_rate_converter(prsn, density=density, to="rate", out_units=out_units)
+        pr_solid = flux_and_rate_converter(
+            prsn, density=density, to="rate", out_units=out_units
+        )
     return pr_solid.rename("pr_solid")
 
 
