@@ -1344,13 +1344,13 @@ def first_snowfall(
         Threshold precipitation flux on which to base evaluation.
     snr : xarray.DataArray, optional
         Snow density [kg/m^3].
-        Use this option if unit of low and/or high is mm/day
+        Use this option if unit of thresh is mm/day
         to convert prsn [kg m-2 s-1] to [mm day-1].
         If `snr` is None `const` will be used for convertion.
     const: Quantified
         Constant snow density [kg/m^3]
         `const` is only used if `snr` is None.
-        Use this option if unit of low and/or high is mm/day
+        Use this option if unit of thresh is mm/day
         to convert prsn [kg m-2 s-1] to [mm day-1].
     freq : str
         Resampling frequency.
@@ -1415,13 +1415,13 @@ def last_snowfall(
         Threshold precipitation flux on which to base evaluation.
     snr : xarray.DataArray, optional
         Snow density [kg/m^3].
-        Use this option if unit of low and/or high is mm/day
+        Use this option if unit of thresh is mm/day
         to convert prsn [kg m-2 s-1] to [mm day-1].
         If `snr` is None `const` will be used for convertion.
     const: Quantified
         Constant snow density [kg/m^3]
         `const` is only used if `snr` is None.
-        Use this option if unit of low and/or high is mm/day
+        Use this option if unit of thresh is mm/day
         to convert prsn [kg m-2 s-1] to [mm day-1].
     freq : str
         Resampling frequency.
@@ -1547,13 +1547,13 @@ def snowfall_frequency(
         Threshold precipitation flux on which to base evaluation.
     snr : xarray.DataArray, optional
         Snow density [kg/m^3].
-        Use this option if unit of low and/or high is mm/day
+        Use this option if unit of thresh is mm/day
         to convert prsn [kg m-2 s-1] to [mm day-1].
         If `snr` is None `const` will be used for convertion.
     const: Quantified
         Constant snow density [kg/m^3]
         `const` is only used if `snr` is None.
-        Use this option if unit of low and/or high is mm/day
+        Use this option if unit of thresh is mm/day
         to convert prsn [kg m-2 s-1] to [mm day-1].
     freq : str
         Resampling frequency defining the periods as defined in
@@ -1605,13 +1605,13 @@ def snowfall_intensity(
         Threshold precipitation flux on which to base evaluation.
     snr : xarray.DataArray, optional
         Snow density [kg/m^3].
-        Use this option if unit of low and/or high is mm/day
+        Use this option if unit of thresh is mm/day
         to convert prsn [kg m-2 s-1] to [mm day-1].
         If `snr` is None `const` will be used for convertion.
     const: Quantified
         Constant snow density [kg/m^3]
         `const` is only used if `snr` is None.
-        Use this option if unit of low and/or high is mm/day
+        Use this option if unit of thresh is mm/day
         to convert prsn [kg m-2 s-1] to [mm day-1].
     freq : str
         Resampling frequency defining the periods as defined in
