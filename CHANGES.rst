@@ -13,6 +13,15 @@ Announcements
 New indicators
 ^^^^^^^^^^^^^^
 * ``ensembles.change_significance`` now supports the Brown-Forsythe test. (:pull:`1292`).
+  * New indice and indicator (``snowfall_frequency``) for calculating the percentage of days with snowfall greater than 1 mm/day. (:issue:`1352`, :pull:`1358`)
+* New indice and indicator (``snowfall_intensity``) for calculating the mean snowfall intensity at days with snowfall greater than 1 mm/day. (:issue:`1352`, :pull:`1358`)
+* New indice and indicator (``sfcWind_mean``) for calculating the mean daily mean wind speed. (:issue:`1352`, :pull:`1358`)
+* New indice and indicator (``sfcWindmax_max``) for calculating the maximum daily maximum wind speed. (:issue:`1352`, :pull:`1358`)
+* New indice and indicator (``precip_average``) for calculating the mean daily precipitation amount. (:issue:`1352`, :pull:`1358`)
+* New indice and indicator (``solid_precip_average``) for calculating the mean daily solid precipitation amount. (:pull:`1358`)
+* New indice and indicator (``liquid_precip_average``) for calculating the mean daily liquid precipitation amount. (:pull:`1358`)
+* New indice and indicator (``prsn_to_mm_per_day``) for converting solid precipitation flux in kg/(m^2*s) to solid precipitation flux in mm/day using snow density [kg/m^3]. (:issue:`1352`, :pull:`1358`)
+
 
 Bug fixes
 ^^^^^^^^^
