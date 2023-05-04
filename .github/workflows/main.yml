@@ -20,7 +20,7 @@ on:
       - submitted
 
 env:
-  XCLIM_TESTDATA_BRANCH: 2023.2.6
+  XCLIM_TESTDATA_BRANCH: 2023.5.4
 
 jobs:
   black:
