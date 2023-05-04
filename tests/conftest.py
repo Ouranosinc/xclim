@@ -4,7 +4,9 @@ from __future__ import annotations
 import os
 import re
 import shutil
+import time
 import warnings
+from datetime import datetime as dt
 from functools import partial
 from pathlib import Path
 
@@ -13,7 +15,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 from filelock import FileLock
-from pkg_resources import parse_version
+from pkg_resources import parse_version, working_set
 
 import xclim
 from xclim import __version__ as __xclim_version__
@@ -24,21 +26,31 @@ from xclim.testing.helpers import test_timeseries
 from xclim.testing.utils import _default_cache_dir  # noqa
 from xclim.testing.utils import open_dataset as _open_dataset
 
-if not __xclim_version__.endswith("-dev") and helpers.TESTDATA_BRANCH == "main":
-    # This is fine on GitHub Workflows and ReadTheDocs
+if not __xclim_version__.endswith("-beta") and helpers.TESTDATA_BRANCH == "main":
+    # This does not need to be emitted on GitHub Workflows and ReadTheDocs
     if not os.getenv("CI") and not os.getenv("READTHEDOCS"):
         warnings.warn(
             f'`xclim` {__xclim_version__} is running tests against the "main" branch of `Ouranosinc/xclim-testdata`. '
-            "It is possible that changes in xclim-testdata may be incompatible with tests in this version. "
+            "It is possible that changes in xclim-testdata may be incompatible with test assertions in this version. "
             "Please be sure to check https://github.com/Ouranosinc/xclim-testdata for more information.",
             UserWarning,
         )
 
 if re.match(r"^v\d+\.\d+\.\d+", helpers.TESTDATA_BRANCH):
-    if parse_version(helpers.TESTDATA_BRANCH) > parse_version(__xclim_version__):
+    # Find the date of last modification of xclim source files to generate a calendar version
+    install_date = dt.strptime(
+        time.ctime(os.path.getmtime(working_set.by_key["xclim"].location)),
+        "%a %b %d %H:%M:%S %Y",
+    )
+    install_calendar_version = (
+        f"{install_date.year}.{install_date.month}.{install_date.day}"
+    )
+
+    if parse_version(helpers.TESTDATA_BRANCH) > parse_version(install_calendar_version):
         warnings.warn(
-            f"`xclim` version ({__xclim_version__}) predates `xclim-testdata` version ({helpers.TESTDATA_BRANCH}). "
-            f"It is very likely that the testing data is incompatible with this build of `xclim`.",
+            f"Installation date of `xclim` ({install_date.ctime()}) "
+            f"predates the last release of `xclim-testdata` ({helpers.TESTDATA_BRANCH}). "
+            "It is very likely that the testing data is incompatible with this build of `xclim`.",
             UserWarning,
         )
 
