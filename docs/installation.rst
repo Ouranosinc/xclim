@@ -86,7 +86,7 @@ Experimental SDBA Algorithms
 
 `xclim` also offers support for a handful of experimental adjustment methods to extend :doc:`xclim.sdba <sdba>`, available only if some additional libraries are installed. These libraries are completely optional.
 
-One experimental library is `SBCK`_. `SBCK` is not available from PyPI nor conda-forge, and has one complex dependency: `Eigen3`_.
+One experimental library is `SBCK`_. `SBCK` is available from PyPI but has one complex dependency: `Eigen3`_.
 As `SBCK` is compiled at installation time, a **C++** compiler (`GCC`, `Clang`, `MSVC`, etc.) must also be available.
 
 On Debian/Ubuntu, `Eigen3` can be installed via `apt`:
@@ -105,7 +105,7 @@ Afterwards, `SBCK` can be installed from PyPI using `pip`:
 
 .. code-block:: shell
 
-    $ pip install "sbck @ git+https://github.com/yrobink/SBCK-python.git@master"
+    $ pip install SBCK
 
 Another experimental function :py:indicator:`xclim.sdba.property.first_eof` makes use of the `eofs`_ library, which is available on both PyPI and conda-forge:
 
