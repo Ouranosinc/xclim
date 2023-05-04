@@ -1000,9 +1000,9 @@ def longwave_upwelling_radiation_from_net_downwelling(
     Parameters
     ----------
     rls : xr.DataArray
-        Surface net thermal radiation [W m-2].
+        Surface net thermal radiation.
     rlds : xr.DataArray
-        Surface downwelling thermal radiation [W m-2].
+        Surface downwelling thermal radiation.
 
     Returns
     -------
@@ -1026,9 +1026,9 @@ def shortwave_upwelling_radiation_from_net_downwelling(
     Parameters
     ----------
     rss : xr.DataArray
-        Surface net solar radiation [W m-2].
+        Surface net solar radiation.
     rsds : xr.DataArray
-        Surface downwelling solar radiation [W m-2].
+        Surface downwelling solar radiation.
 
     Returns
     -------
