@@ -4,11 +4,16 @@ Changelog
 
 v0.43.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`).
 
 Announcements
 ^^^^^^^^^^^^^
 * `xclim` has passed the peer-review process and been officially accepted as a project associated with both `pyOpenSci <https://www.pyopensci.org>`_ and `PANGEO <https://pangeo.io/>`_. Additionally, `xclim` has been accepted to be published in the `Journal of Open Source Software <https://joss.theoj.org/>`_. Our review process can be consulted here: `PyOpenSci Software Review <https://github.com/pyOpenSci/software-review/issues/73>`_. (:pull:`1350`).
+
+New indicators
+^^^^^^^^^^^^^^
+* New indice and indicator (``delayed_frost_days``) for calculating the number of delayed frost days (tasmin < 0 degC). On the Northern Hemisphere a frost day is delayed during April and June, on the Southern Hemisphere during October and December. (:issue:`1352`, :pull:`1361`).
+
 
 Bug fixes
 ^^^^^^^^^
