@@ -154,6 +154,8 @@ linkcheck_ignore = [
     r"https://doi.org/10.1214/.*"
     r"https://projecteuclid.org/journals/annals-of-statistics/volume-7/issue-4/Multivariate-Generalizations-of-the-Wald-Wolfowitz-and-Smirnov-Two-Sample/10.1214/aos/1176344722.full",
     r"https://projecteuclid.org/journals/annals-of-statistics/volume-16/issue-2/A-Multivariate-Two-Sample-Test-Based-on-the-Number-of/10.1214/aos/1176350835.full",
+    # Added on 2023-05-03: Site appears to be down (error 502)
+    r"https://openresearchsoftware.metajnl.com/article/10.5334/jors.122/",
     # Added on 2023-05-03: Connection refused for bots (error 104)
     r"https://doi.org/10.13031/2013.26773",
     # Added on 2023-05-03: linkcheck has issues with some anchors
