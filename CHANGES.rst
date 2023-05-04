@@ -4,7 +4,7 @@ Changelog
 
 v0.43.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Pascal Bourgault (:user:`aulemahal`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -12,13 +12,14 @@ Announcements
 
 New indicators
 ^^^^^^^^^^^^^^
+* ``ensembles.change_significance`` now supports the Brown-Forsythe test. (:pull:`1292`)
 * New indice and indicator (``delayed_frost_days``) for calculating the number of delayed frost days (tasmin < 0 degC). On the Northern Hemisphere a frost day is delayed during April and June, on the Southern Hemisphere during October and December. (:issue:`1352`, :pull:`1361`).
-
 
 Bug fixes
 ^^^^^^^^^
 * Fixed a bug in the `pyproject.toml` configuration that excluded the changelog (`CHANGES.rst`) from the packaged source distribution. (:pull:`1349`).
 * When summing an all-NaN period with `resample`, xarray 2023.04.0 now returns NaN, whereas earlier versions returned 0. This broke ``fraction_over_precip_thresh``, but is now fixed. (:pull:`1354`, :issue:`1337`).
+* In sdba's Quantile Delta Mapping algorithm, the quantiles of the simulation to adjust were computed slightly differently than when creating the adjustment factor. The ``xclim.sdba.utils.rank`` function has been fixed to return "percentage-ranks" (quantiles) in the proper range. (:issue:`1334`, :pull:`1355`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -41,6 +42,7 @@ Internal changes
 * In order to follow best practices and reduce the installed size of the `xclim` wheel, the `tests` folder containing the testing suite has been split from the package and placed in the top-level of the code repository. (:issue:`1348`, :pull:`1349`, suggested from `PyOpenSci Software Review <https://github.com/pyOpenSci/software-review/issues/73>`_). Submodules that were previously called within ``xclim.testing.tests`` have been refactored as follows:
     * ``xclim.testing.tests.data`` → ``xclim.testing.helpers``
     * ``xclim.testing.tests.test_sdba.utils`` → ``xclim.testing.sdba_utils``
+* Added a "Conventions" section to the README. (:issue:`1342`, :pull:`1351`).
 
 v0.42.0 (2023-04-03)
 --------------------
