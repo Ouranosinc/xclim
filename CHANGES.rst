@@ -43,6 +43,8 @@ Internal changes
     * ``xclim.testing.tests.test_sdba.utils`` → ``xclim.testing.sdba_utils``
 * Added a "Conventions" section to the README. (:issue:`1342`, :pull:`1351`).
 * New helper function ``xclim.testing.helpers.test_timeseries``. (:pull:`1356`).
+* `tox` recipes and documentation now refer to the official build of `SBCK`, available on PyPI. (:issue:`1362`, :pull:`1364`).
+* Excluded some URLs from `sphinx linkcheck` that were causing issues on ReadTheDocs. (:pull:`1364`).
 
 v0.42.0 (2023-04-03)
 --------------------
