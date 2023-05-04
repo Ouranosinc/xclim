@@ -952,6 +952,7 @@ def snd_to_snw(
     snw = flux_and_rate_converter(snd, density=density, to="flux", out_units=out_units)
     return snw.rename("snw")
 
+
 @declare_units(snw="[mass]/[area]", snr="[mass]/[volume]", const="[mass]/[volume]")
 def snw_to_snd(
     snw: xr.DataArray,
@@ -991,7 +992,9 @@ def snw_to_snd(
     return snd.rename("snd")
 
 
-@declare_units(prsn="[mass]/[area]/[time]", snr="[mass]/[volume]", const="[mass]/[volume]")
+@declare_units(
+    prsn="[mass]/[area]/[time]", snr="[mass]/[volume]", const="[mass]/[volume]"
+)
 def prsn_to_prsnd(
     prsn: xr.DataArray,
     snr: xr.DataArray | None = None,
@@ -1026,7 +1029,9 @@ def prsn_to_prsnd(
     :cite:cts:`sturm_swe_2010`
     """
     density = snr if snr else const
-    prsnd = flux_and_rate_converter(prsn, density=density, to="rate", out_units=out_units)
+    prsnd = flux_and_rate_converter(
+        prsn, density=density, to="rate", out_units=out_units
+    )
     return prsnd.rename("prsnd")
 
 
