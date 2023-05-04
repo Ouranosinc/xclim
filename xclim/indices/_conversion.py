@@ -1051,20 +1051,20 @@ def longwave_upwelling_radiation_from_net_downwelling(
     Parameters
     ----------
     rls : xr.DataArray
-        Surface net thermal radiation [W m-2].
+        Surface net thermal radiation.
     rlds : xr.DataArray
-        Surface downwelling thermal radiation [W m-2].
+        Surface downwelling thermal radiation.
 
     Returns
     -------
-    xr.DataArray, [W m-2]
+    xr.DataArray, [same units as rlds]
         Surface upwelling thermal radiation (rlus).
     """
     rls = convert_units_to(rls, rlds)
 
     rlus = rlds - rls
 
-    rlus.attrs["units"] = "W m-2"
+    rlus.attrs["units"] = rlds.units
     return rlus
 
 
@@ -1077,20 +1077,20 @@ def shortwave_upwelling_radiation_from_net_downwelling(
     Parameters
     ----------
     rss : xr.DataArray
-        Surface net solar radiation [W m-2].
+        Surface net solar radiation.
     rsds : xr.DataArray
-        Surface downwelling solar radiation [W m-2].
+        Surface downwelling solar radiation.
 
     Returns
     -------
-    xr.DataArray, [W m-2]
+    xr.DataArray, [same units as rsds]
         Surface upwelling solar radiation (rsus).
     """
     rss = convert_units_to(rss, rsds)
 
     rsus = rsds - rss
 
-    rsus.attrs["units"] = "W m-2"
+    rsus.attrs["units"] = rsds.units
     return rsus
 
 
