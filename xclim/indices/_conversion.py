@@ -1025,26 +1025,9 @@ def prsn_to_prsnd(
     ----------
     :cite:cts:`sturm_swe_2010`
     """
-<<<<<<< HEAD
     density = snr if snr else const
     prsnd = flux_and_rate_converter(prsn, density=density, to="rate", out_units=out_units)
     return prsnd.rename("prsnd")
-=======
-    prsn_dim = units2pint(prsn).dimensionality
-    if prsn_dim == units.get_dimensionality("[length] / [time]"):
-        warnings.warn(f"prsn already has target dimensionality: {prsn_dim}")
-        if out_units:
-            pr_solid = convert_units_to(prsn, out_units)
-        else:
-            pr_solid = prsn
-    else:
-        density = snr if snr else const
-        # another name might be better lwe_thickness_rate_of_snowfall_flux ; lwe_snowfall_rate; liquid_bulk_equivalent ...
-        pr_solid = flux_and_rate_converter(
-            prsn, density=density, to="rate", out_units=out_units
-        )
-    return pr_solid.rename("pr_solid")
->>>>>>> dae6a2076ec292c4ce5c1b3b1020ed5dd5d28196
 
 
 @declare_units(rls="[radiation]", rlds="[radiation]")
