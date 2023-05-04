@@ -12,11 +12,11 @@ from xclim.core.units import (
     convert_units_to,
     declare_units,
     pint2cfunits,
+    pint_multiply,
     rate2amount,
     str2pint,
     to_agg_units,
     units,
-    pint_multiply
 )
 from xclim.core.utils import DayOfYearStr, Quantified
 
@@ -1347,7 +1347,7 @@ def first_snowfall(
     Returns
     -------
     xarray.DataArray
-        Last day of the year where snowfall is superior to a threshold.        
+        Last day of the year where snowfall is superior to a threshold.
         If there is no such day, returns np.nan.
 
 
@@ -1408,7 +1408,7 @@ def last_snowfall(
     :cite:cts:`cbcl_climate_2020`.
     """
     thresh = convert_units_to(thresh, prsnd)
-    
+
     cond = prsnd >= thresh
 
     out = cond.resample(time=freq).map(
