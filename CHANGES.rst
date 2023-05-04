@@ -4,7 +4,7 @@ Changelog
 
 v0.43.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Pascal Bourgault (:user:`aulemahal`), Alexis Beaupré (:user:`Beauprel`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`). Alexis Beaupré (:user:`Beauprel`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -46,6 +46,7 @@ Internal changes
     * ``xclim.testing.tests.data`` → ``xclim.testing.helpers``
     * ``xclim.testing.tests.test_sdba.utils`` → ``xclim.testing.sdba_utils``
 * Added a "Conventions" section to the README. (:issue:`1342`, :pull:`1351`).
+* New helper function ``xclim.testing.helpers.test_timeseries``. (:pull:`1356`).
 
 v0.42.0 (2023-04-03)
 --------------------
