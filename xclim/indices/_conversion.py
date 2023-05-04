@@ -42,7 +42,7 @@ __all__ = [
     "shortwave_upwelling_radiation_from_net_downwelling",
     "snd_to_snw",
     "snw_to_snd",
-    "prsn_to_pr_solid",
+    "prsn_to_prsnd",
     "snowfall_approximation",
     "specific_humidity",
     "specific_humidity_from_dewpoint",
@@ -952,7 +952,6 @@ def snd_to_snw(
     return snw.rename("snw")
 
 @declare_units(snw="[mass]/[area]", snr="[mass]/[volume]", const="[mass]/[volume]")
-
 def snw_to_snd(
     snw: xr.DataArray,
     snr: Quantified | None = None,
@@ -991,8 +990,8 @@ def snw_to_snd(
     return snd.rename("snd")
 
 
-@declare_units(prsn="[precipitation]", snr="[mass]/[volume]", const="[mass]/[volume]")
-def prsn_to_pr_solid(
+@declare_units(prsn="[mass]/[area]/[time]", snr="[mass]/[volume]", const="[mass]/[volume]")
+def prsn_to_prsnd(
     prsn: xr.DataArray,
     snr: xr.DataArray | None = None,
     const: Quantified = "312 kg m-3",
@@ -1015,7 +1014,7 @@ def prsn_to_pr_solid(
     Returns
     -------
     xr.DataArray
-        Solid precipitation.
+        Snowfall rate.
 
     Notes
     -----
@@ -1025,18 +1024,9 @@ def prsn_to_pr_solid(
     ----------
     :cite:cts:`sturm_swe_2010`
     """
-    prsn_dim = units2pint(prsn).dimensionality
-    if (prsn_dim == units.get_dimensionality("[length] / [time]")):
-        warnings.warn(f"prsn already has target dimensionality: {prsn_dim}")
-        if out_units:
-            pr_solid = convert_units_to(prsn, out_units)
-        else:
-            pr_solid = prsn
-    else:        
-        density = snr if snr else const
-        # another name might be better lwe_thickness_rate_of_snowfall_flux ; lwe_snowfall_rate; liquid_bulk_equivalent ...
-        pr_solid = flux_and_rate_converter(prsn, density=density, to="rate", out_units=out_units)
-    return pr_solid.rename("pr_solid")
+    density = snr if snr else const
+    prsnd = flux_and_rate_converter(prsn, density=density, to="rate", out_units=out_units)
+    return prsnd.rename("prsnd")
 
 
 @declare_units(rls="[radiation]", rlds="[radiation]")
