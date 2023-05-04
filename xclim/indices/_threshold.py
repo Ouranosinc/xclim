@@ -16,7 +16,6 @@ from xclim.core.units import (
     str2pint,
     to_agg_units,
     units,
-    pint_multiply
 )
 from xclim.core.utils import DayOfYearStr, Quantified
 

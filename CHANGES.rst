@@ -10,17 +10,18 @@ Announcements
 ^^^^^^^^^^^^^
 * `xclim` has passed the peer-review process and been officially accepted as a project associated with both `pyOpenSci <https://www.pyopensci.org>`_ and `PANGEO <https://pangeo.io/>`_. Additionally, `xclim` has been accepted to be published in the `Journal of Open Source Software <https://joss.theoj.org/>`_. Our review process can be consulted here: `PyOpenSci Software Review <https://github.com/pyOpenSci/software-review/issues/73>`_. (:pull:`1350`).
 
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New generic function (``flux_and_rate_converter``) converting flux to a rate (and vice-versa) using a density. `snw_to_snd` and `snd_to_snw` were refactored using this function. (:issue:`1352`, :pull:`1358`)
+* New function (``prsn_to_prsnd``) to convert snowfall flux ([mass]/[area]/[time]) to snowfall rate ([length]/[time]) using snow density ([mass]/[volume]). (:issue:`1352`, :pull:`1358`)
+
+
 New indicators
 ^^^^^^^^^^^^^^
 * ``ensembles.change_significance`` now supports the Brown-Forsythe test. (:pull:`1292`).
-  * New indice and indicator (``snowfall_frequency``) for calculating the percentage of days with snowfall greater than 1 mm/day. (:issue:`1352`, :pull:`1358`)
-* New indice and indicator (``snowfall_intensity``) for calculating the mean snowfall intensity at days with snowfall greater than 1 mm/day. (:issue:`1352`, :pull:`1358`)
-* New indice and indicator (``sfcWind_mean``) for calculating the mean daily mean wind speed. (:issue:`1352`, :pull:`1358`)
-* New indice and indicator (``sfcWindmax_max``) for calculating the maximum daily maximum wind speed. (:issue:`1352`, :pull:`1358`)
-* New indice and indicator (``precip_average``) for calculating the mean daily precipitation amount. (:issue:`1352`, :pull:`1358`)
-* New indice and indicator (``solid_precip_average``) for calculating the mean daily solid precipitation amount. (:pull:`1358`)
-* New indice and indicator (``liquid_precip_average``) for calculating the mean daily liquid precipitation amount. (:pull:`1358`)
-* New indice and indicator (``prsn_to_mm_per_day``) for converting solid precipitation flux in kg/(m^2*s) to solid precipitation flux in mm/day using snow density [kg/m^3]. (:issue:`1352`, :pull:`1358`)
+* New indices and indicators (``snowfall_{frequency | intensity}``) for calculating the {percentage of | mean snowfall intensity on} days with snowfall above a threshold. (:issue:`1352`, :pull:`1358`)
+* New indices and indicators (``sfcWind_mean`` and ``sfcWindmax_max``) for calculating the mean daily mean wind speed and the maximum daily maximum wind speed. (:issue:`1352`, :pull:`1358`)
+* New indices and indicators (``{precip | liquid_precip | solid_precip}_average``) for calculating the mean daily {precipitation | liquid precipitation | solid precipitation } amount. (:issue:`1352`, :pull:`1358`)
 
 
 Bug fixes
