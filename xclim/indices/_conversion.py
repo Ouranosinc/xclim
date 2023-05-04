@@ -952,10 +952,6 @@ def snd_to_snw(
     snw = flux_and_rate_converter(snd, density=density, to="flux", out_units=out_units)
     return snw.rename("snw")
 
-<<<<<<< HEAD
-=======
-
->>>>>>> dae6a2076ec292c4ce5c1b3b1020ed5dd5d28196
 @declare_units(snw="[mass]/[area]", snr="[mass]/[volume]", const="[mass]/[volume]")
 def snw_to_snd(
     snw: xr.DataArray,
