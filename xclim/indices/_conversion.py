@@ -44,6 +44,7 @@ __all__ = [
     "snd_to_snw",
     "snw_to_snd",
     "prsn_to_prsnd",
+    "prsnd_to_prsn",
     "snowfall_approximation",
     "specific_humidity",
     "specific_humidity_from_dewpoint",
@@ -998,7 +999,7 @@ def prsn_to_prsnd(
     const: Quantified = "312 kg m-3",
     out_units: str = None,
 ) -> xr.DataArray:
-    """Solid precipitation from snowfall flux and density.
+    """Snowfall rate from snowfall flux and density.
 
     Parameters
     ----------
@@ -1028,6 +1029,44 @@ def prsn_to_prsnd(
     density = snr if snr else const
     prsnd = flux_and_rate_converter(prsn, density=density, to="rate", out_units=out_units)
     return prsnd.rename("prsnd")
+
+@declare_units(prsn="[length]/[time]", snr="[mass]/[volume]", const="[mass]/[volume]")
+def prsnd_to_prsn(
+    prsnd: xr.DataArray,
+    snr: xr.DataArray | None = None,
+    const: Quantified = "312 kg m-3",
+    out_units: str = None,
+) -> xr.DataArray:
+    """Snowfall flux from snowfall rate and density.
+
+    Parameters
+    ----------
+    prsnd : xr.DataArray
+        Snowfall rate.
+    snr : xr.DataArray, optional
+        Snow density.
+    const: Quantified
+        Constant snow density.
+        `const` is only used if `snr` is None.
+    out_units: str, optional
+        Desired units of the snowfall rate. If `None`, output units simply follow from `snd * snr`.
+
+    Returns
+    -------
+    xr.DataArray
+        Snowfall flux.
+
+    Notes
+    -----
+    The estimated mean snow density value of 312 kg m-3 is taken from :cite:t:`sturm_swe_2010`.
+
+    References
+    ----------
+    :cite:cts:`sturm_swe_2010`
+    """
+    density = snr if snr else const
+    prsn = flux_and_rate_converter(prsnd, density=density, to="flux", out_units=out_units)
+    return prsn.rename("prsn")
 
 
 @declare_units(rls="[radiation]", rlds="[radiation]")

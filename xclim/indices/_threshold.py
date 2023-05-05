@@ -1427,9 +1427,9 @@ def last_snowfall(
     high="[precipitation]",
 )
 def days_with_snow(
-    prsn: xarray.DataArray,
-    low: Quantified = "0 kg m-2 s-1",
-    high: Quantified = "1E6 kg m-2 s-1",
+    prsnd: xarray.DataArray,
+    low: Quantified = "0 mm/day",
+    high: Quantified = "3e11 mm/day",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
     r"""Days with snow.
@@ -1442,17 +1442,17 @@ def days_with_snow(
 
     Parameters
     ----------
-    prsn : xarray.DataArray
-        Snowfall flux
+    prsnd : xarray.DataArray
+        Snowfall rate
     low : Quantified
-        Minimum threshold snowfall flux.
+        Minimum threshold snowfall rate.
     high : Quantified
-        Maximum threshold snowfall flux.
+        Maximum threshold snowfall rate.
      freq : str
         Resampling frequency.
     Returns
     -------
-    xarray.DataArray, [time]
+    xarray.DataArray, [days]
         Number of days where snowfall is between low and high thresholds.
 
 
@@ -1500,12 +1500,12 @@ def snowfall_frequency(
     xarray.DataArray, [%]
         Percentage of days where snowfall exceeds a threshold.
 
-
     References
     ----------
     :cite:cts:`frei_snowfall_2018`
     """
     sd = days_with_snow(prsnd, low=thresh, snr=snr, const=const, freq=freq)
+    # nan is tre
     ndays = prsnd.resample(time=freq).count(dim="time")
     sfreq = sd / ndays * 100
     sfreq = sfreq.assign_attr(**sd.attrs)
@@ -1524,7 +1524,7 @@ def snowfall_intensity(
 ) -> xarray.DataArray:
     r"""Days with snow.
 
-    Return mean daily solid precipitation during days with solid precipitation exceeds a threshold (default: 1 mm/day)
+    Return mean daily snowfall rate during days where snowfall exceeds a threshold (default: 1 mm/day)
 
     Warnings
     --------
@@ -1532,21 +1532,17 @@ def snowfall_intensity(
 
     Parameters
     ----------
-    prsn : xarray.DataArray
-        Solid precipitation flux.
+    prsnd : xarray.DataArray
+        Snowfall rate.
     thresh : Quantified
-        Threshold precipitation flux on which to base evaluation.
+        Threshold snowfall rate.
     freq : str
         Resampling frequency.
 
     Returns
     -------
-    xarray.DataArray, [%]
+    xarray.DataArray, [same units as input]
         Mean daily snowfall during days where snowfall exceeds a threshold.
-
-    Notes
-    -----
-        The estimated mean snow density value of 312 kg m-3 is taken from :cite:t:`sturm_swe_2010`.
 
     References
     ----------
