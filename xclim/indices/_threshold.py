@@ -1350,12 +1350,10 @@ def first_snowfall(
         Last day of the year where snowfall is superior to a threshold.
         If there is no such day, returns np.nan.
 
-
     References
     ----------
     :cite:cts:`cbcl_climate_2020`.
     """
-
     thresh = convert_units_to(thresh, prsnd)
 
     cond = prsnd >= thresh
@@ -1450,17 +1448,16 @@ def days_with_snow(
         Maximum threshold snowfall flux.
      freq : str
         Resampling frequency.
+
     Returns
     -------
     xarray.DataArray, [time]
         Number of days where snowfall is between low and high thresholds.
 
-
     References
     ----------
     :cite:cts:`matthews_planning_2017`
     """
-
     low = convert_units_to(low, prsn)
     high = convert_units_to(high, prsn)
     out = domain_count(prsn, low, high, freq)
@@ -1470,8 +1467,6 @@ def days_with_snow(
 @declare_units(
     prsnd="[precipitation]",
     thresh="[precipitation]",
-    snr="[mass]/[volume]",
-    const="[mass]/[volume]",
 )
 def snowfall_frequency(
     prsnd: xarray.DataArray,
@@ -1505,7 +1500,7 @@ def snowfall_frequency(
     ----------
     :cite:cts:`frei_snowfall_2018`
     """
-    sd = days_with_snow(prsnd, low=thresh, snr=snr, const=const, freq=freq)
+    sd = days_with_snow(prsnd, low=thresh, freq=freq)
     ndays = prsnd.resample(time=freq).count(dim="time")
     sfreq = sd / ndays * 100
     sfreq = sfreq.assign_attr(**sd.attrs)
@@ -1532,7 +1527,7 @@ def snowfall_intensity(
 
     Parameters
     ----------
-    prsn : xarray.DataArray
+    prsnd : xarray.DataArray
         Solid precipitation flux.
     thresh : Quantified
         Threshold precipitation flux on which to base evaluation.
@@ -1543,10 +1538,6 @@ def snowfall_intensity(
     -------
     xarray.DataArray, [%]
         Mean daily snowfall during days where snowfall exceeds a threshold.
-
-    Notes
-    -----
-        The estimated mean snow density value of 312 kg m-3 is taken from :cite:t:`sturm_swe_2010`.
 
     References
     ----------
