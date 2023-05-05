@@ -50,6 +50,7 @@ Internal changes
 * New helper function ``xclim.testing.helpers.test_timeseries``. (:pull:`1356`).
 * `tox` recipes and documentation now refer to the official build of `SBCK`, available on PyPI. (:issue:`1362`, :pull:`1364`).
 * Excluded some URLs from `sphinx linkcheck` that were causing issues on ReadTheDocs. (:pull:`1364`).
+* Tagged versions of `xclim-testdata` now follow a `calendar-based versioning <https://calver.org/>`_ scheme for easier determination of compatibility between `xclim` and testing data. (:pull:`1367`, `xclim-testdata discussion <https://github.com/Ouranosinc/xclim-testdata/pull/24>`_)
 
 v0.42.0 (2023-04-03)
 --------------------
