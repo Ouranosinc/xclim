@@ -924,9 +924,10 @@ def _flux_and_rate_converter(
         out.attrs.pop("standard_name")
     return out
 
+
 def rate2flux(
     rate: xr.DataArray,
-    density : Quantified,
+    density: Quantified,
     out_units: str = None,
 ) -> xr.DataArray:
     """Convert a rate variable to a flux by multiplying with a density.
@@ -939,7 +940,7 @@ def rate2flux(
         "Rate" variable. Ex: Snowfall rate in "mm / d".
     density : Quantified
         Density used to convert from a rate to a flux. Ex: Snowfall density "312 kg m-3". Density can also be an array with the
-        same shape as `rate`.        
+        same shape as `rate`.
     out_units : str, optional
         Output units to convert to.
 
@@ -955,7 +956,7 @@ def rate2flux(
     >>> prsnd = xr.DataArray(
     ...     [1] * 365, dims=("time",), coords={"time": time}, attrs={"units": "mm/s"}
     ... )
-    >>> prsn = rate2flux(prsnd, density = "100 kg m-3", out_units = "kg m-2 s-1")
+    >>> prsn = rate2flux(prsnd, density="100 kg m-3", out_units="kg m-2 s-1")
     >>> prsn.units
     'kg m-2 s-1'
     >>> float(prsn[0])
@@ -972,9 +973,10 @@ def rate2flux(
         out_units=out_units,
     )
 
+
 def flux2rate(
     flux: xr.DataArray,
-    density : Quantified,
+    density: Quantified,
     out_units: str = None,
 ) -> xr.DataArray:
     """Convert a flux variable to a rate by dividing with a density.
@@ -987,7 +989,7 @@ def flux2rate(
         "flux" variable. Ex: Snowfall flux in "kg m-2 s-1".
     density : Quantified
         Density used to convert from a flux to a rate. Ex: Snowfall density "312 kg m-3". Density can also be an array with the
-        same shape as `flux`.        
+        same shape as `flux`.
     out_units : str, optional
         Output units to convert to.
 
@@ -1001,9 +1003,12 @@ def flux2rate(
 
     >>> time = xr.cftime_range("2001-01-01", freq="D", periods=365)
     >>> prsn = xr.DataArray(
-    ...     [0.1] * 365, dims=("time",), coords={"time": time}, attrs={"units": "kg m-2 s-1"}
+    ...     [0.1] * 365,
+    ...     dims=("time",),
+    ...     coords={"time": time},
+    ...     attrs={"units": "kg m-2 s-1"},
     ... )
-    >>> prsnd = rate2flux(prsn, density = "100 kg m-3", out_units = "kg m-2 s-1")
+    >>> prsnd = rate2flux(prsn, density="100 kg m-3", out_units="kg m-2 s-1")
     >>> prsnd.units
     'kg m-2 s-1'
     >>> float(prsn[0])
@@ -1019,9 +1024,6 @@ def flux2rate(
         to="rate",
         out_units=out_units,
     )
-
-
-
 
 
 @datacheck

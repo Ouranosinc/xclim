@@ -953,7 +953,7 @@ def snd_to_snw(
     density = snr if (snr is not None) else const
     snw = rate2flux(snd, density=density, out_units=out_units).rename("snw")
     # TODO: Leave this operation to rate2flux? Maybe also the variable renaming above?
-    snw.attrs["standard_name"]  = "surface_snow_amount"
+    snw.attrs["standard_name"] = "surface_snow_amount"
     return snw
 
 
@@ -994,7 +994,7 @@ def snw_to_snd(
     density = snr if (snr is not None) else const
     snd = flux2rate(snw, density=density, out_units=out_units).rename("snd")
     snd.attrs["standard_name"] = "surface_snow_thickness"
-    return 
+    return
 
 
 @declare_units(
