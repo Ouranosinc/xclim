@@ -478,22 +478,16 @@ def _taylordiagram(
     ref_std = ref.std(dim=dim, skipna=True, keep_attrs=True)
     sim_std = sim.std(dim=dim, skipna=True, keep_attrs=True)
 
-    coords = {"taylor_param": ["ref_std", "sim_std", "corr"]}
-    dims = ["taylor_param"]
+    new_dim = xr.DataArray(["ref_std", "sim_std", "corr"], dims=("taylor_param",), name="taylor_param")
 
-    for coord in ref_std.coords:
-        coords[coord] = ref_std[coord]
-    for dim in ref_std.dims:
-        dims.append(dim)
-
-    out = xr.DataArray(
+    out = xr.concat(
         [ref_std, sim_std, corr],
-        coords=coords,
-        dims=dims,
-        attrs={
+        new_dim,
+        compat='override'  # Take common coords from `ref_std`.
+    ).assign_attrs({
             "correlation_type": "Pearson correlation coefficient",
-            "units": ref_std.units,
-        },
+            "units": ref.units,
+        }
     )
 
     return out
