@@ -4,6 +4,7 @@ from __future__ import annotations
 import warnings
 
 import numpy as np
+import pint
 import xarray
 
 from xclim.core.calendar import get_calendar
@@ -18,8 +19,6 @@ from xclim.core.units import (
     to_agg_units,
     units,
 )
-import pint
-
 from xclim.core.utils import DayOfYearStr, Quantified
 
 from . import run_length as rl
@@ -1359,7 +1358,7 @@ def first_snowfall(
     try:
         thresh = convert_units_to(thresh, prsnd)
     except pint.DimensionalityError as e:
-        prsnd_dim, thresh_dim = [str2pint(v).dimensionality for v in [prsnd, thresh]]
+        prsnd_dim, thresh_dim = (str2pint(v).dimensionality for v in [prsnd, thresh])
         warnings.warn(
             f"Dimensionality of the input snowfall ({prsnd_dim}) and threshold ({thresh_dim}) are mismatched."
             "Both dimensionality should be the same. Expecting snowfall rate ([length]/[time]),"
@@ -1420,7 +1419,7 @@ def last_snowfall(
     try:
         thresh = convert_units_to(thresh, prsnd)
     except pint.DimensionalityError as e:
-        prsnd_dim, thresh_dim = [str2pint(v).dimensionality for v in [prsnd, thresh]]
+        prsnd_dim, thresh_dim = (str2pint(v).dimensionality for v in [prsnd, thresh])
         warnings.warn(
             f"Dimensionality of the input snowfall ({prsnd_dim}) and threshold ({thresh_dim}) are mismatched."
             "Both dimensionality should be the same. Expecting snowfall rate ([length]/[time]),"
@@ -1522,7 +1521,7 @@ def snowfall_frequency(
     :cite:cts:`frei_snowfall_2018`
     """
     snow_days = days_with_snow(prsnd, thresh_min=thresh, freq=freq)
-    total_days = prsnd.resample(time=freq).count(dim="time")    
+    total_days = prsnd.resample(time=freq).count(dim="time")
     snow_freq = snow_days / total_days * 100
     snow_freq = snow_freq.assign_attrs(**snow_days.attrs)
     snow_freq.attrs["units"] = "%"

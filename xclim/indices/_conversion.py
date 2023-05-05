@@ -1035,6 +1035,7 @@ def prsn_to_prsnd(
     )
     return prsnd.rename("prsnd")
 
+
 @declare_units(prsnd="[length]/[time]", snr="[mass]/[volume]", const="[mass]/[volume]")
 def prsnd_to_prsn(
     prsnd: xr.DataArray,
@@ -1070,7 +1071,9 @@ def prsnd_to_prsn(
     :cite:cts:`sturm_swe_2010`
     """
     density = snr if snr else const
-    prsn = flux_and_rate_converter(prsnd, density=density, to="flux", out_units=out_units)
+    prsn = flux_and_rate_converter(
+        prsnd, density=density, to="flux", out_units=out_units
+    )
     return prsn.rename("prsn")
 
 
