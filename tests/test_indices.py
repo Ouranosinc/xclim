@@ -1507,14 +1507,12 @@ class TestPrecipAverage:
         pr = pr_series(pr)
 
         out = xci.precip_average(pr, freq="M")
-        np.testing.assert_array_equal(out[0], 5 * 3600 * 24)
+        np.testing.assert_array_equal(out[0], 5 * 3600 * 24 / 31)
 
     def test_yearly(self):
         da_std = self.da_std
         out_std = xci.precip_average(da_std)
-        target = [
-            (365 + calendar.isleap(y)) * y for y in np.unique(da_std.time.dt.year)
-        ]
+        target = [y for y in np.unique(da_std.time.dt.year)]
         np.testing.assert_allclose(out_std.values, target)
 
     def test_mixed_phases(self, pr_series, tas_series):
@@ -1533,9 +1531,9 @@ class TestPrecipAverage:
         )
         outrn = xci.precip_average(pr, tas=tas, phase="liquid", freq="M")
 
-        np.testing.assert_array_equal(outsn[0], 10 * 3600 * 24)
-        np.testing.assert_array_equal(outsn2[0], 5 * 3600 * 24)
-        np.testing.assert_array_equal(outrn[0], 5 * 3600 * 24)
+        np.testing.assert_array_equal(outsn[0], 10 * 3600 * 24 / 31)
+        np.testing.assert_array_equal(outsn2[0], 5 * 3600 * 24 / 31)
+        np.testing.assert_array_equal(outrn[0], 5 * 3600 * 24 / 31)
 
 
 class TestRainOnFrozenGround:
@@ -3206,3 +3204,33 @@ class TestDrynessIndex:
             di, np.array([13.355, 102.426, 65.576, 158.078]), rtol=1e-03
         )
         np.testing.assert_allclose(di_wet, di_plus_100)
+
+
+class TestSfcWindMean:
+    def test_sfcWind_mean(self, sfcWind_series):
+        sfcWind = sfcWind_series(np.array([14.11, 15.27, 10.70]))
+        out = xci.sfcWind_mean(sfcWind)
+        np.testing.assert_allclose(out, [13.36])
+
+
+class TestSfcWindmaxMax:
+    def test_sfcWindmax_max(self, sfcWindmax_series):
+        sfcWindmax = sfcWindmax_series(np.array([14.11, 15.27, 10.70]))
+        out = xci.sfcWindmax_max(sfcWindmax)
+        np.testing.assert_allclose(out, [15.27])
+
+
+class TestSnowfallFrequency:
+    def test_snowfall_frequency(self, prsnd_series):
+        mmday2ms = 86400000
+        prsnd = prsnd_series(np.array([0, 2, 0.3, 0.2, 4]) / mmday2ms)
+        out = xci.snowfall_frequency(prsnd)
+        np.testing.assert_allclose(out, [40])
+
+
+class TestSnowfallIntensity:
+    def test_snowfall_intensity(self, prsnd_series):
+        mmday2ms = 86400000
+        prsnd = prsnd_series(np.array([0, 2, 0.3, 0.2, 4]) / mmday2ms)
+        out = xci.snowfall_intensity(prsnd)
+        np.testing.assert_allclose(out, [3 / mmday2ms])
