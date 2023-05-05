@@ -1037,6 +1037,7 @@ def prsn_to_prsnd(
     prsnd = flux2rate(prsn, density=density, out_units=out_units).rename("prsnd")
     return prsnd
 
+
 @declare_units(prsnd="[length]/[time]", snr="[mass]/[volume]", const="[mass]/[volume]")
 def prsnd_to_prsn(
     prsnd: xr.DataArray,
