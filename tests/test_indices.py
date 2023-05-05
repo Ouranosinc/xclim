@@ -3206,3 +3206,17 @@ class TestDrynessIndex:
             di, np.array([13.355, 102.426, 65.576, 158.078]), rtol=1e-03
         )
         np.testing.assert_allclose(di_wet, di_plus_100)
+
+
+class TestSfcWindMean:
+    def test_sfcWind_mean(self, sfcWind_series):
+        sfcWind = sfcWind_series(np.array([14.11, 15.27, 10.70]))
+        out = xci.sfcWind_mean(sfcWind)
+        np.testing.assert_allclose(out, [13.36])
+
+
+class TestSfcWindmaxMax:
+    def test_sfcWindmax_max(self, sfcWindmax_series):
+        sfcWindmax = sfcWindmax_series(np.array([14.11, 15.27, 10.70]))
+        out = xci.sfcWindmax_max(sfcWindmax)
+        np.testing.assert_allclose(out, [15.27])
