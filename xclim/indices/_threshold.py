@@ -1536,7 +1536,7 @@ def snowfall_intensity(
 
     Returns
     -------
-    xarray.DataArray, [%]
+    xarray.DataArray, [mm/day]
         Mean daily snowfall during days where snowfall exceeds a threshold.
 
     References
@@ -1547,7 +1547,8 @@ def snowfall_intensity(
 
     cond = prsnd >= thresh
     mean = prsnd.where(cond).resample(time=freq).mean(dim="time")
-    return mean.fillna(0)
+    out = mean.fillna(0)
+    return out.assign_attrs(units=prsnd.units)
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
