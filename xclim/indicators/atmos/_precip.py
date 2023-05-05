@@ -506,7 +506,7 @@ snowfall_intensity = PrecipWithIndexing(
     long_name="Mean daily solid precipitation flux above {thresh} threshold",
     description="{freq} mean daily solid precipitation flux larger than {thresh}.",
     abstract="Mean daily snowflux above lower limit.",
-    units="%",
+    units="mm/day",
     compute=indices.snowfall_intensity,
 )
 
