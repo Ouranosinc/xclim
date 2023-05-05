@@ -694,3 +694,52 @@ def test_dry_spell_frequency_op(open_dataset):
         "The monthly number of dry periods of 7 day(s) or more, "
         "during which the maximal precipitation on a window of 7 day(s) is below 3 mm."
     ) in test_max.description
+
+
+class TestSnowfallMeteoSwiss:
+    tasmin_file = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
+    pr_file = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
+
+    @classmethod
+    def get_snowfall(cls, open_dataset):
+        dnr = xr.merge((open_dataset(cls.pr_file), open_dataset(cls.tasmin_file)))
+        return atmos.snowfall_approximation(
+            dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary"
+        )
+
+    def test_snowfall_frequency(self, open_dataset):
+        prsn = self.get_snowfall(open_dataset)
+        prsnd = xci.prsn_to_prsnd(prsn)
+        with set_options(check_missing="skip"):
+            sf = atmos.snowfall_frequency(prsnd=prsnd, thresh="0.5 mm/day")
+        expected = np.array([])
+        np.testing.assert_allclose(
+            sf[:, [0, 45, 82], [10, 105, 155]],
+            expected,
+            rtol=1e-3,
+        )
+
+    def test_snowfall_intensity(self, open_dataset):
+        prsn = self.get_snowfall(open_dataset)
+        prsnd = xci.prsn_to_prsnd(prsn)
+        with set_options(check_missing="skip"):
+            si = atmos.snowfall_intensity(prsnd=prsnd, thresh="0.5 mm/day")
+        expected = np.array(
+            [
+                [
+                    [8.454952, 10.123168, 10.791265],
+                    [12.099894, 15.148849, 15.768576],
+                    [16.984715, 0.0, 0.0],
+                ],
+                [
+                    [13.436356, 12.8628845, 15.547785],
+                    [15.402168, 20.033024, 27.770658],
+                    [17.860577, 0.0, 0.0],
+                ],
+            ]
+        )
+        np.testing.assert_allclose(
+            si[:, [0, 45, 82], [10, 105, 155]],
+            expected,
+            rtol=1e-3,
+        )
