@@ -485,6 +485,7 @@ def _taylordiagram(
     out = xr.concat(
         [ref_std, sim_std, corr],
         new_dim,
+        coords="minimal",
         compat="override",  # Take common coords from `ref_std`.
     ).assign_attrs(
         {
