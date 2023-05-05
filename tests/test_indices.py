@@ -1507,14 +1507,12 @@ class TestPrecipAverage:
         pr = pr_series(pr)
 
         out = xci.precip_average(pr, freq="M")
-        np.testing.assert_array_equal(out[0], 5 * 3600 * 24)
+        np.testing.assert_array_equal(out[0], 5 * 3600 * 24 / 31)
 
     def test_yearly(self):
         da_std = self.da_std
         out_std = xci.precip_average(da_std)
-        target = [
-            (365 + calendar.isleap(y)) * y for y in np.unique(da_std.time.dt.year)
-        ]
+        target = [y for y in np.unique(da_std.time.dt.year)]
         np.testing.assert_allclose(out_std.values, target)
 
     def test_mixed_phases(self, pr_series, tas_series):
@@ -1533,9 +1531,9 @@ class TestPrecipAverage:
         )
         outrn = xci.precip_average(pr, tas=tas, phase="liquid", freq="M")
 
-        np.testing.assert_array_equal(outsn[0], 10 * 3600 * 24)
-        np.testing.assert_array_equal(outsn2[0], 5 * 3600 * 24)
-        np.testing.assert_array_equal(outrn[0], 5 * 3600 * 24)
+        np.testing.assert_array_equal(outsn[0], 10 * 3600 * 24 / 31)
+        np.testing.assert_array_equal(outsn2[0], 5 * 3600 * 24 / 31)
+        np.testing.assert_array_equal(outrn[0], 5 * 3600 * 24 / 31)
 
 
 class TestRainOnFrozenGround:

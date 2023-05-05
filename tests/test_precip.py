@@ -120,9 +120,9 @@ class TestPrecipAverage:
         # check some vector with and without a nan
         x1 = prMM[:31, 0, 0].values
 
-        prTot = x1.sum()
+        prMean = x1.mean()
 
-        np.testing.assert_almost_equal(prTot, out1.values[0, 0, 0], 4)
+        np.testing.assert_almost_equal(prMean, out1.values[0, 0, 0], 4)
 
         assert np.isnan(out1.values[0, 1, 0])
 
@@ -478,16 +478,17 @@ class TestSnowfallDate:
     pr_file = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
 
     @classmethod
-    def get_snowfall(cls, open_dataset):
+    def get_snowfall_rate(cls, open_dataset):
         dnr = xr.merge((open_dataset(cls.pr_file), open_dataset(cls.tasmin_file)))
-        return atmos.snowfall_approximation(
+        prsn = atmos.snowfall_approximation(
             dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary"
         )
+        return xci.prsn_to_prsnd(prsn)
 
     def test_first_snowfall(self, open_dataset):
         with set_options(check_missing="skip"):
             fs = atmos.first_snowfall(
-                prsn=self.get_snowfall(open_dataset), thresh="0.5 mm/day"
+                prsnd=self.get_snowfall_rate(open_dataset), thresh="0.5 mm/day"
             )
 
         np.testing.assert_array_equal(
@@ -503,7 +504,7 @@ class TestSnowfallDate:
     def test_last_snowfall(self, open_dataset):
         with set_options(check_missing="skip"):
             ls = atmos.last_snowfall(
-                prsn=self.get_snowfall(open_dataset), thresh="0.5 mm/day"
+                prsnd=self.get_snowfall_rate(open_dataset), thresh="0.5 mm/day"
             )
 
         np.testing.assert_array_equal(
@@ -701,15 +702,15 @@ class TestSnowfallMeteoSwiss:
     pr_file = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
 
     @classmethod
-    def get_snowfall(cls, open_dataset):
+    def get_snowfall_rate(cls, open_dataset):
         dnr = xr.merge((open_dataset(cls.pr_file), open_dataset(cls.tasmin_file)))
-        return atmos.snowfall_approximation(
+        prsn = atmos.snowfall_approximation(
             dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary"
         )
+        return xci.prsn_to_prsnd(prsn)
 
     def test_snowfall_frequency(self, open_dataset):
-        prsn = self.get_snowfall(open_dataset)
-        prsnd = xci.prsn_to_prsnd(prsn)
+        prsnd = self.get_snowfall_rate(open_dataset)
         with set_options(check_missing="skip"):
             sf = atmos.snowfall_frequency(prsnd=prsnd, thresh="0.5 mm/day")
         expected = np.array([])
@@ -720,8 +721,7 @@ class TestSnowfallMeteoSwiss:
         )
 
     def test_snowfall_intensity(self, open_dataset):
-        prsn = self.get_snowfall(open_dataset)
-        prsnd = xci.prsn_to_prsnd(prsn)
+        prsnd = self.get_snowfall_rate(open_dataset)
         with set_options(check_missing="skip"):
             si = atmos.snowfall_intensity(prsnd=prsnd, thresh="0.5 mm/day")
         expected = np.array(
