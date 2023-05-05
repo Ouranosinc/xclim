@@ -68,6 +68,7 @@ variables:
     cell_methods: "time: mean"
     description: Surface snowfall rate.
     # Standard_name inexistent, but snowfall_rate would follow cf logic
+    data_flags:
       - negative_accumulation_values:
   ps:
     canonical_units: Pa
