@@ -132,6 +132,13 @@ def prsn_series():
 
 
 @pytest.fixture
+def prsnd_series():
+    """Return snowfall rate series time series."""
+    _prsnd_series = partial(test_timeseries, variable="prsnd")
+    return _prsnd_series
+
+
+@pytest.fixture
 def pr_hr_series():
     """Return precipitation hourly time series."""
     _pr_hr_series = partial(
