@@ -12,7 +12,8 @@ from xclim.core.units import (
     amount2rate,
     convert_units_to,
     declare_units,
-    flux_and_rate_converter,
+    flux2rate,
+    rate2flux,
     units,
     units2pint,
 )
@@ -950,8 +951,10 @@ def snd_to_snw(
     :cite:cts:`sturm_swe_2010`
     """
     density = snr if (snr is not None) else const
-    snw = flux_and_rate_converter(snd, density=density, to="flux", out_units=out_units)
-    return snw.rename("snw")
+    snw = rate2flux(snd, density=density, out_units=out_units).rename("snw")
+    # TODO: Leave this operation to rate2flux? Maybe also the variable renaming above?
+    snw.attrs["standard_name"]  = "surface_snow_amount"
+    return snw
 
 
 @declare_units(snw="[mass]/[area]", snr="[mass]/[volume]", const="[mass]/[volume]")
@@ -989,8 +992,9 @@ def snw_to_snd(
     :cite:cts:`sturm_swe_2010`
     """
     density = snr if (snr is not None) else const
-    snd = flux_and_rate_converter(snw, density=density, to="rate", out_units=out_units)
-    return snd.rename("snd")
+    snd = flux2rate(snw, density=density, out_units=out_units).rename("snd")
+    snd.attrs["standard_name"] = "surface_snow_thickness"
+    return 
 
 
 @declare_units(
@@ -1030,10 +1034,8 @@ def prsn_to_prsnd(
     :cite:cts:`sturm_swe_2010`
     """
     density = snr if snr else const
-    prsnd = flux_and_rate_converter(
-        prsn, density=density, to="rate", out_units=out_units
-    )
-    return prsnd.rename("prsnd")
+    prsnd = flux2rate(prsn, density=density, out_units=out_units).rename("prsnd")
+    return prsnd
 
 @declare_units(prsnd="[length]/[time]", snr="[mass]/[volume]", const="[mass]/[volume]")
 def prsnd_to_prsn(
@@ -1070,8 +1072,9 @@ def prsnd_to_prsn(
     :cite:cts:`sturm_swe_2010`
     """
     density = snr if snr else const
-    prsn = flux_and_rate_converter(prsnd, density=density, to="flux", out_units=out_units)
-    return prsn.rename("prsn")
+    prsn = rate2flux(prsnd, density=density, out_units=out_units).rename("prsn")
+    prsn.attrs["standard_name"] = "snowfall_flux"
+    return prsn
 
 
 @declare_units(rls="[radiation]", rlds="[radiation]")

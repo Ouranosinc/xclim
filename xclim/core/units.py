@@ -882,7 +882,7 @@ def lwethickness2amount(thickness: xr.DataArray, out_units: str = None):
     return out
 
 
-def flux_and_rate_converter(
+def _flux_and_rate_converter(
     da: xr.DataArray,
     density: Quantified | str,
     to: str = "rate",
@@ -919,14 +919,108 @@ def flux_and_rate_converter(
     density = convert_units_to(density, (out_u / in_u) ** (density_exp))
     out = (da * density ** (density_exp)).assign_attrs(da.attrs)
     out.attrs["units"] = pint2cfunits(out_u)
-    # old_name = da.attrs.get("standard_name")
-    # if old_name and (
-    #     new_name := cf_conversion(
-    #         old_name, "flux2rate", "to" if to == "rate" else "from"
-    #     )
-    # ):
-    #     out.attrs["standard_name"] = new_name
+    if out.attrs["standard_name"]:
+        out.attrs.pop("standard_name")
     return out
+
+def rate2flux(
+    rate: xr.DataArray,
+    density : Quantified,
+    out_units: str = None,
+) -> xr.DataArray:
+    """Convert a rate variable to a flux by multiplying with a density.
+
+    This is the inverse operation of :py:func:`xclim.core.units.flux2rate`.
+
+    Parameters
+    ----------
+    rate : xr.DataArray
+        "Rate" variable. Ex: Snowfall rate in "mm / d".
+    density : Quantified
+        Density used to convert from a rate to a flux. Ex: Snowfall density "312 kg m-3". Density can also be an array with the
+        same shape as `rate`.        
+    out_units : str, optional
+        Output units to convert to.
+
+    Returns
+    -------
+    flux: xr.DataArray
+
+    Examples
+    --------
+    The following converts an array of snowfall rate in mm/s to snowfall flux in kg m-2 s-1, assuming a density of 100 kg m-3:
+
+    >>> time = xr.cftime_range("2001-01-01", freq="D", periods=365)
+    >>> prsnd = xr.DataArray(
+    ...     [1] * 365, dims=("time",), coords={"time": time}, attrs={"units": "mm/s"}
+    ... )
+    >>> prsn = rate2flux(prsnd, density = "100 kg m-3", out_units = "kg m-2 s-1")
+    >>> prsn.units
+    'kg m-2 s-1'
+    >>> float(prsn[0])
+    0.1
+
+    See Also
+    --------
+    flux2rate
+    """
+    return _flux_and_rate_converter(
+        rate,
+        density=density,
+        to="flux",
+        out_units=out_units,
+    )
+
+def flux2rate(
+    flux: xr.DataArray,
+    density : Quantified,
+    out_units: str = None,
+) -> xr.DataArray:
+    """Convert a flux variable to a rate by dividing with a density.
+
+    This is the inverse operation of :py:func:`xclim.core.units.rate2flux`.
+
+    Parameters
+    ----------
+    flux : xr.DataArray
+        "flux" variable. Ex: Snowfall flux in "kg m-2 s-1".
+    density : Quantified
+        Density used to convert from a flux to a rate. Ex: Snowfall density "312 kg m-3". Density can also be an array with the
+        same shape as `flux`.        
+    out_units : str, optional
+        Output units to convert to.
+
+    Returns
+    -------
+    rate: xr.DataArray
+
+    Examples
+    --------
+    The following converts an array of snowfall flux in kg m-2 s-1 to snowfall flux in mm/s, assuming a density of 100 kg m-3:
+
+    >>> time = xr.cftime_range("2001-01-01", freq="D", periods=365)
+    >>> prsn = xr.DataArray(
+    ...     [0.1] * 365, dims=("time",), coords={"time": time}, attrs={"units": "kg m-2 s-1"}
+    ... )
+    >>> prsnd = rate2flux(prsn, density = "100 kg m-3", out_units = "kg m-2 s-1")
+    >>> prsnd.units
+    'kg m-2 s-1'
+    >>> float(prsn[0])
+    1
+
+    See Also
+    --------
+    rate2flux
+    """
+    return _flux_and_rate_converter(
+        flux,
+        density=density,
+        to="rate",
+        out_units=out_units,
+    )
+
+
+
 
 
 @datacheck
