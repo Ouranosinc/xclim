@@ -37,7 +37,7 @@ __all__ = [
     "pint_multiply",
     "pint2cfunits",
     "rate2amount",
-    "rare2flux",
+    "rate2flux",
     "str2pint",
     "to_agg_units",
     "units",
