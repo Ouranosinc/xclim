@@ -2654,27 +2654,32 @@ def delayed_frost_days(
     r"""Delayed frost days.
 
     Number of days where daily minimum temperatures are below a threshold temperature
-    for April to June on Nouthern Hemisphere and for October to December on Southern Hemisphere.
+    from April to June in the Northern Hemisphere and from October to December in the Southern Hemisphere.
 
     Parameters
     ----------
     tasmin : xarray.DataArray
-        Minimum daily temperature
+        Minimum daily temperature.
     lat : xarray.DataArray, optional
         Latitude coordinate.
         If None, a CF-conformant "latitude" field must be available within the passed DataArray.
-    thresh : Quantified, optional
-        Freezing temperature
-    start_date_nh : DayOfYearStr, optional
-        The northern hemisphere start date to consider
-    start_date_sh : DayOfYearStr, optional
-        The southern hemisphere start date to consider
-    end_date_nh : DayOfYearStr, optional
-        The northern hemisphere end date to consider
-    end_date_sh : DayOfYearStr, optional
-        The southern hemisphere end date to consider
-    freq : str, optional
-        Resampling frequency
+    thresh : Quantified,
+        Freezing temperature.
+    start_date_nh : DayOfYearStr
+        The northern hemisphere start date to consider.
+    start_date_sh : DayOfYearStr
+        The southern hemisphere start date to consider.
+    end_date_nh : DayOfYearStr
+        The northern hemisphere end date to consider.
+    end_date_sh : DayOfYearStr
+        The southern hemisphere end date to consider.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [time]
+        Number of delayed frost days per period.
     """
     if lat is None:
         lat = _gather_lat(tasmin)
