@@ -29,12 +29,68 @@ authors:
  - name: Éric Dupuis
    orcid: 0000-0001-7976-4596
    affiliation: 1
+ - name: Gabriel Rondeau-Genessse
+   orcid: 0000-0003-3389-9406
+   affiliation: 1
+ - name: Raquel Alegre
+   orcid: 0000-0002-6081-0721
+   affiliation: 3
+ - name: Clair Barnes
+   orcid: 0000-0002-7806-7913
+   affiliation: 3
+ - name: Alexis Beaupré Laperrière
+   affiliation: 1
+ - name: Sébastien Biner
+   orcid: 0000-0001-7515-490X
+ - name: David Caron
+ - name: Carsten Ehbrecht
+   affiliation: 4
+ - name: Jeremy Fyke
+   orcid: 0000-0002-4522-3019
+   affiliation: 5
+ - name: Tom Keel
+   orcid: 0000-0001-9193-5271
+   affiliation: 3
+ - name: Marie-Pier Labonté
+   orcid: 0000-0003-0738-3940
+   affiliation: 1
+ - name: Ludwig Lierhammer
+   orcid: 0000-0002-7207-0003
+   affiliation: 6
+ - name: Jwen-Fai Low
+ - name: Jamie Quinn
+   affiliation: 3
+ - name: Philippe Roy
+ - name: Dougie Squire
+   orcid: 0000-0003-3271-6874
+   affiliation: 7
+ - name: Ag Stephens
+   orcid: 0000-0002-1038-7988
+   affiliation: 8
+ - name: Maliko Tanguy
+   orcid: 0000-0002-1516-6834
+   affiliation: 9
+ - name: Christopher Whelan
 affiliations:
- - name: Ouranos Consortium, Montréal, Québec, Canada.
+ - name: Ouranos Consortium, Montréal, Québec, Canada
    index: 1
- - name: Centre européen de recherche et de formation avancée en calcul scientifique (CERFACS)
+ - name: Centre européen de recherche et de formation avancée en calcul scientifique (CERFACS), France
    index: 2
-date: 12 April 2023
+ - name: University College London (UCL)
+   index: 3
+ - name: Deutsches Klimarechenzentrum (DKRZ), Germany
+   index: 4
+ - name: Environment and Climate Change Canada (ECCC)
+   index: 5
+ - name: Helmholtz-Zentrum Hereon, Germany
+   index: 6
+ - name: Commonwealth Scientific and Industrial Research Organisation (CSIRO), Australia
+   index: 7
+ - name: Centre for Environmental Data Analysis (CEDA), United Kingdom
+   index: 8
+ - name: Centre for Ecology & Hydrology (CEH), United Kingdom
+   index: 9
+date: 8 May 2023
 bibliography: paper.bib
 ---
 

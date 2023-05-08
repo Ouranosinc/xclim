@@ -1,6 +1,21 @@
 {
   "creators": [
     {
+      "name": "Bourgault, Pascal",
+      "affiliation": "Ouranos",
+      "orcid": "0000-0003-1192-0403"
+    },
+    {
+      "name": "Huard, David",
+      "affiliation": "Ouranos",
+      "orcid": "0000-0003-0311-5498"
+    },
+    {
+      "name": "Smith, Trevor James",
+      "affiliation": "Ouranos",
+      "orcid": "0000-0001-5393-8359"
+    },
+    {
       "name": "Logan, Travis",
       "affiliation": "Ouranos",
       "orcid": "0000-0002-2212-9580"
@@ -11,9 +26,9 @@
       "orcid": "0000-0003-2289-2890"
     },
     {
-      "name": "Bourgault, Pascal",
+      "name": "Lavoie, Juliette",
       "affiliation": "Ouranos",
-      "orcid": "0000-0003-1192-0403"
+      "orcid": "0000-0002-4708-5182"
     },
     {
       "affiliation": "Ouranos",
@@ -21,24 +36,9 @@
       "orcid": "0000-0001-7976-4596"
     },
     {
-      "name": "Huard, David",
-      "affiliation": "Ouranos",
-      "orcid": "0000-0003-0311-5498"
-    },
-    {
-      "name": "Lavoie, Juliette",
-      "affiliation": "Ouranos",
-      "orcid": "0000-0002-4708-5182"
-    },
-    {
       "name": "Rondeau-Genesse, Gabriel",
       "affiliation": "Ouranos",
       "orcid": "0000-0003-3389-9406"
-    },
-    {
-      "name": "Smith, Trevor James",
-      "affiliation": "Ouranos",
-      "orcid": "0000-0001-5393-8359"
     },
     {
       "name": "Alegre, Raquel",
@@ -51,12 +51,15 @@
       "orcid": "0000-0002-7806-7913"
     },
     {
+      "name": "Beaupré Laperrière, Alexis",
+      "affiliation": "Ouranos"
+    },
+    {
       "name": "Biner, Sébastien",
       "orcid": "0000-0001-7515-490X"
     },
     {
-      "name": "Caron, David",
-      "affiliation": "@jakarto3d"
+      "name": "Caron, David"
     },
     {
       "name": "Ehbrecht, Carsten"
@@ -98,18 +101,16 @@
     },
     {
       "name": "Stephens, Ag",
-      "affiliation": "STFC CEDA"
+      "affiliation": "CEDA",
+      "orcid": "0000-0002-1038-7988"
     },
     {
       "name": "Tanguy, Maliko",
-      "affiliation": "CEH"
+      "affiliation": "CEH",
+      "orcid": "0000-0002-1516-6834"
     },
     {
       "name": "Whelan, Chistopher"
-    },
-    {
-      "name": "Beaupré Laperrière, Alexis",
-      "affiliation": "Ouranos"
     }
   ],
   "keywords": [
