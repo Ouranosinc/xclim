@@ -459,23 +459,23 @@ mcarthur_forest_fire_danger_index = FireWeather(
 
 
 last_snowfall = PrecipWithIndexing(
-    title="Last day where solid precipitation flux exceeded a given threshold",
+    title="Last day where snowfall exceeded a given threshold",
     identifier="last_snowfall",
     standard_name="day_of_year",
-    long_name="Date of last day where the solid precipitation flux exceeded {thresh}",
-    description="{freq} last day where the solid precipitation flux exceeded {thresh}.",
-    abstract="The last day where the solid precipitation flux exceeded a given threshold during a time period.",
+    long_name="Date of last day where snowfall exceeded {thresh}",
+    description="{freq} last day where snowfall exceeded {thresh}.",
+    abstract="The last day where snowfall exceeded a given threshold during a time period.",
     units="",
     compute=indices.last_snowfall,
 )
 
 first_snowfall = PrecipWithIndexing(
-    title="First day where solid precipitation flux exceeded a given threshold",
+    title="First day where snowfall exceeded a given threshold",
     identifier="first_snowfall",
     standard_name="day_of_year",
-    long_name="Date of first day where the solid precipitation flux exceeded {thresh}",
-    description="{freq} first day where the solid precipitation flux exceeded {thresh}.",
-    abstract="The first day where the solid precipitation flux exceeded a given threshold during a time period.",
+    long_name="Date of first day where snowfall exceeded {thresh}",
+    description="{freq} first day where snowfall exceeded {thresh}.",
+    abstract="The first day where snowfall exceeded a given threshold during a time period.",
     units="",
     compute=indices.first_snowfall,
 )
@@ -483,8 +483,8 @@ first_snowfall = PrecipWithIndexing(
 days_with_snow = PrecipWithIndexing(
     title="Days with snowfall",
     identifier="days_with_snow",
-    long_name="Number of days with solid precipitation flux between {thresh_min} and {thresh_max} thresholds",
-    description="{freq} number of days with solid precipitation flux larger than {thresh_min} and smaller or equal to {thresh_max}.",
+    long_name="Number of days with snowfall between {thresh_min} and {thresh_max} thresholds",
+    description="{freq} number of days with snowfall larger than {thresh_min} and smaller or equal to {thresh_max}.",
     abstract="Number of days with snow between a lower and upper limit.",
     units="days",
     compute=indices.days_with_snow,
@@ -493,9 +493,9 @@ days_with_snow = PrecipWithIndexing(
 snowfall_frequency = PrecipWithIndexing(
     title="Snowfall frequency",
     identifier="snowfall_frequency",
-    long_name="Percentage of days with solid precipitation flux above {thresh} threshold",
-    description="{freq} percentage of days with solid precipitation flux larger than {thresh}.",
-    abstract="Percentage of days with snow above lower limit.",
+    long_name="Percentage of days with snowfall above {thresh} threshold",
+    description="{freq} percentage of days with snowfall larger than {thresh}.",
+    abstract="Percentage of days with snowfall above lower limit.",
     units="%",
     compute=indices.snowfall_frequency,
 )
@@ -503,9 +503,9 @@ snowfall_frequency = PrecipWithIndexing(
 snowfall_intensity = PrecipWithIndexing(
     title="Snowfall intensity",
     identifier="snowfall_intensity",
-    long_name="Mean daily solid precipitation flux above {thresh} threshold",
-    description="{freq} mean daily solid precipitation flux larger than {thresh}.",
-    abstract="Mean daily snowflux above lower limit.",
+    long_name="Mean daily snowfall above {thresh} threshold",
+    description="{freq} mean daily snowfall larger than {thresh}.",
+    abstract="Mean daily snowfall above lower limit.",
     units="mm/day",
     compute=indices.snowfall_intensity,
 )
