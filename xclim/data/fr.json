@@ -460,6 +460,12 @@
     "title": "Nombre de jours faisant partie d'une vague de froid",
     "abstract": "Nombre de jours faisant partie d'une vague de froid. Une vague de froid se produit lorsque la température minimale quotidienne est sous un seuil donné durant au moins un certain nombre de jours consécutifs."
   },
+  "COLD_SPELL_MAX_LENGTH": {
+    "long_name": "Série la plus longue d'au moins {window} jours consécutifs ayant une température quotidienne au-dessus de {thresh}.",
+    "description": "Longueur maximale {freq:f} des périodes froides durant une période donnée. Une période froide se produit lorsque la température quotidienne est au-dessus de {thresh} durant au moins {window} jours.",
+    "title": "Longueur maximale des périodes froides",
+    "abstract": "Longueur maximale des périodes froides durant une période donnée. Une période froide se produit lorsque la température quotidienne est au-dessus d'un seuil spécifique durant un minimum de jours."
+  },
   "COOL_NIGHT_INDEX": {
     "long_name": "Indice de fraîcheur des nuits",
     "description": "Moyenne {freq:f} de la température minimale quotidienne en septembre (hémisphère nord) ou en mars (hémisphère sud).",
@@ -1073,6 +1079,12 @@
     "description": "Fréquence {freq:f} des périodes sèches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}.",
     "title": "Fréquence des périodes sèches",
     "abstract": "Fréquence des périodes sèches d'une durée minimale donnée, pendant lesquelles les précipitations accumulées ou maximales sur une fenêtre de jours donnée sont inférieures à un seuil donné."
+  },
+  "DRY_SPELL_MAX_LENGTH": {
+    "long_name": "Durée maximale en jours des périodes sèches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}",
+    "description": "Durée maximale {freq:f} en jours des périodes sèches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}.",
+    "title": "Durée maximale en jours des périodes sèches",
+    "abstract": "Durée maximale en jours des périodes sèches d'une durée minimale donnée, pendant lesquelles les précipitations accumulées ou maximales sur une fenêtre de jours donné sont inférieures à un seuil donné."
   },
   "DRY_SPELL_TOTAL_LENGTH": {
     "long_name": "Durée totale en jours des périodes sèches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}",
