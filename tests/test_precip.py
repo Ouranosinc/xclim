@@ -521,7 +521,9 @@ class TestSnowfallDate:
 class TestDaysWithSnow:
     def test_simple(self, open_dataset, prsn_series):
         prsn = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").prsn
-        out = atmos.days_with_snow(prsn, low="0 kg m-2 s-1")
+        out = atmos.days_with_snow(
+            prsn, thresh_min="0 kg m-2 s-1", thresh_max="1e6 kg m-2 s-1"
+        )
         np.testing.assert_array_equal(out[1], [np.nan, 162, 159, 126, np.nan])
 
 
@@ -713,7 +715,21 @@ class TestSnowfallMeteoSwiss:
         prsnd = self.get_snowfall_rate(open_dataset)
         with set_options(check_missing="skip"):
             sf = atmos.snowfall_frequency(prsnd=prsnd, thresh="0.5 mm/day")
-        expected = np.array([])
+        expected = np.array(
+            [
+                [
+                    [40.331, 38.674, 35.359],
+                    [33.149, 32.597, 27.072],
+                    [14.365, 0.0, 0.0],
+                ],
+                [
+                    [30.435, 32.065, 23.913],
+                    [22.826, 17.935, 14.674],
+                    [8.696, 0.0, 0.0],
+                ],
+            ]
+        )
+        print(sf[:, [0, 45, 82], [10, 105, 155]])
         np.testing.assert_allclose(
             sf[:, [0, 45, 82], [10, 105, 155]],
             expected,

@@ -2491,9 +2491,12 @@ def test_rain_approximation(pr_series, tas_series, method, exp):
     np.testing.assert_allclose(prlp, exp, atol=1e-5, rtol=1e-3)
 
 
-def test_first_snowfall(prsn_series):
-    prsn = prsn_series(30 - abs(np.arange(366) - 180), start="2000-01-01")
-    out = xci.first_snowfall(prsn, thresh="15 kg m-2 s-1", freq="YS")
+def test_first_snowfall(prsnd_series):
+    mmday2ms = 86400000
+    prsnd = prsnd_series(
+        (30 - abs(np.arange(366) - 180)) / mmday2ms, start="2000-01-01"
+    )
+    out = xci.first_snowfall(prsnd, thresh="15 mm/day", freq="YS")
     assert out[0] == 166
     for attr in ["units", "is_dayofyear", "calendar"]:
         assert attr in out.attrs.keys()
@@ -2501,20 +2504,24 @@ def test_first_snowfall(prsn_series):
     assert out.attrs["is_dayofyear"] == 1
 
 
-def test_last_snowfall(prsn_series):
-    prsn = prsn_series(30 - abs(np.arange(366) - 180), start="2000-01-01")
-    out = xci.last_snowfall(prsn, thresh="15 kg m-2 s-1", freq="YS")
+def test_last_snowfall(prsnd_series):
+    mmday2ms = 86400000
+    prsnd = prsnd_series(
+        (30 - abs(np.arange(366) - 180)) / mmday2ms, start="2000-01-01"
+    )
+    out = xci.last_snowfall(prsnd, thresh="15 mm/day", freq="YS")
     assert out[0] == 196
 
 
-def test_days_with_snow(prsn_series):
-    prsn = prsn_series(np.arange(365), start="2000-01-01")
-    out = xci.days_with_snow(prsn)
+def test_days_with_snow(prsnd_series):
+    mmday2ms = 86400000
+    prsnd = prsnd_series(np.arange(365) / mmday2ms, start="2000-01-01")
+    out = xci.days_with_snow(prsnd)
     assert len(out) == 2
     # Days with 0 and 1 are not counted, because condition is > thresh, not >=.
     assert sum(out) == 364
 
-    out = xci.days_with_snow(prsn, low="10 kg m-2 s-1", high="20 kg m-2 s-1")
+    out = xci.days_with_snow(prsnd, thresh_min="10 mm/day", thresh_max="20 mm/day")
     np.testing.assert_array_equal(out, [10, 0])
     assert out.units == "d"
 
