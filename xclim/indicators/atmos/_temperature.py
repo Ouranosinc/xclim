@@ -467,11 +467,11 @@ cold_spell_days = Temp(
     units="days",
     standard_name="cold_spell_days",
     long_name="Total number of days constituting events of at least {window} consecutive days "
-    "where the mean daily temperature is below {thresh}",
+    "where the daily minimum temperature is below {thresh}",
     description="{freq} number of days that are part of a cold spell. A cold spell is defined as {window} or more "
-    "consecutive days with mean daily temperature below {thresh}.",
+    "consecutive days with daily minimum temperature below {thresh}.",
     abstract="The number of days that are part of a cold spell. A cold spell is defined as a minimum number of "
-    "consecutive days with mean daily temperature below a given threshold.",
+    "consecutive days with daily minimum temperature below a given threshold.",
     cell_methods="",
     compute=indices.cold_spell_days,
 )
@@ -482,11 +482,11 @@ cold_spell_frequency = Temp(
     units="",
     standard_name="cold_spell_frequency",
     long_name="Total number of series of at least {window} consecutive days "
-    "where the mean daily temperature is below {thresh}",
+    "where the daily minimum temperature is below {thresh}",
     description="{freq} number cold spell events. A cold spell is defined as a minimum number of "
-    "consecutive days with mean daily temperature below {thresh}.",
+    "consecutive days with daily minimum temperature below {thresh}.",
     abstract="The number of cold spell events. A cold spell is defined as a minimum number of consecutive days with "
-    "mean daily temperature below a given threshold.",
+    "daily minimum temperature below a given threshold.",
     cell_methods="",
     compute=indices.cold_spell_frequency,
 )

@@ -124,9 +124,9 @@ def calm_days(
     return out
 
 
-@declare_units(tas="[temperature]", thresh="[temperature]")
+@declare_units(tasmin="[temperature]", thresh="[temperature]")
 def cold_spell_days(
-    tas: xarray.DataArray,
+    tasmin: xarray.DataArray,
     thresh: Quantified = "-10 degC",
     window: int = 5,
     freq: str = "AS-JUL",
@@ -140,8 +140,8 @@ def cold_spell_days(
 
     Parameters
     ----------
-    tas : xarray.DataArray
-        Mean daily temperature.
+    tasmin : xarray.DataArray
+        Minimum daily temperature.
     thresh : Quantified
         Threshold temperature below which a cold spell begins.
     window : int
@@ -161,7 +161,7 @@ def cold_spell_days(
 
     Notes
     -----
-    Let :math:`T_i` be the mean daily temperature on day :math:`i`, the number of cold spell days during
+    Let :math:`T_i` be the minimum daily temperature on day :math:`i`, the number of cold spell days during
     period :math:`\phi` is given by:
 
     .. math::
@@ -170,8 +170,8 @@ def cold_spell_days(
 
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false.
     """
-    t = convert_units_to(thresh, tas)
-    over = compare(tas, op, t, constrain=("<", "<="))
+    t = convert_units_to(thresh, tasmin)
+    over = compare(tasmin, op, t, constrain=("<", "<="))
 
     out = rl.resample_and_rl(
         over,
@@ -180,12 +180,12 @@ def cold_spell_days(
         window=window,
         freq=freq,
     )
-    return to_agg_units(out, tas, "count")
+    return to_agg_units(out, tasmin, "count")
 
 
-@declare_units(tas="[temperature]", thresh="[temperature]")
+@declare_units(tasmin="[temperature]", thresh="[temperature]")
 def cold_spell_frequency(
-    tas: xarray.DataArray,
+    tasmin: xarray.DataArray,
     thresh: Quantified = "-10 degC",
     window: int = 5,
     freq: str = "AS-JUL",
@@ -199,8 +199,8 @@ def cold_spell_frequency(
 
     Parameters
     ----------
-    tas : xarray.DataArray
-        Mean daily temperature.
+    tasmin : xarray.DataArray
+        Minimum daily temperature.
     thresh : Quantified
         Threshold temperature below which a cold spell begins.
     window : int
@@ -218,8 +218,8 @@ def cold_spell_frequency(
         Cold spell frequency.
 
     """
-    t = convert_units_to(thresh, tas)
-    over = compare(tas, op, t, constrain=("<", "<="))
+    t = convert_units_to(thresh, tasmin)
+    over = compare(tasmin, op, t, constrain=("<", "<="))
 
     out = rl.resample_and_rl(
         over,
