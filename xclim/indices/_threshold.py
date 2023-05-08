@@ -1467,7 +1467,7 @@ def days_with_snow(
         Minimum threshold snowfall rate.
     thresh_max : Quantified
         Maximum threshold snowfall rate.
-     freq : str
+    freq : str
         Resampling frequency.
 
     Returns
