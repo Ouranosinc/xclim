@@ -239,7 +239,7 @@ def cold_spell_frequency(
 def cold_spell_max_length(
     tas: xarray.DataArray,
     thresh: Quantified = "-10 degC",
-    window: int = 5,
+    window: int = 1,
     freq: str = "AS-JUL",
     op: str = "<",
     resample_before_rl: bool = True,
@@ -2721,7 +2721,7 @@ def dry_spell_frequency(
     xarray.DataArray, [dimensionless]
         Number of dry spells at the wanted frequency
     """
-    thresh = convert_units_to(thresh, pr)
+    thresh = convert_units_to(thresh, pr, context="hydro")
 
     cond = compare(pr, op, thresh, constrain=("<", "<="))
     out = rl.resample_and_rl(
@@ -2770,7 +2770,7 @@ def dry_spell_max_length(
     xarray.DataArray, [time]
         Maximum length of continuous dry days at the wanted frequency.
     """
-    thresh = convert_units_to(thresh, pr)
+    thresh = convert_units_to(thresh, pr, context="hydro")
 
     cond = compare(pr, op, thresh, constrain=("<", "<="))
     max_l = rl.resample_and_rl(
