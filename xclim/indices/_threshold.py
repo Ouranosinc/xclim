@@ -254,9 +254,9 @@ def cold_spell_max_length(
     tas : xarray.DataArray
         Mean daily temperature.
     thresh : Quantified
-        The temperature threshold needed to trigger a coldwave event.
+        The temperature threshold needed to trigger a cold spell.
     window : int
-        Minimum number of days with temperatures below thresholds to qualify as a coldwave.
+        Minimum number of days with temperatures below thresholds to qualify as a cold spell.
     freq : str
         Resampling frequency.
     op : {"<", "<=", "lt", "le"}
@@ -2746,8 +2746,9 @@ def dry_spell_max_length(
 ) -> xarray.DataArray:
     r"""Longest dry spell.
 
-    Longest spell of precipitation over a given period.
-    Longest series of at least {window} consecutive days with precipitations at or below {thresh}.
+    Maximum length of dry spells over a given period. A dry spell is defined as an event where
+    precipitation is below a specific threshold (default: 1 mm/day) over a minimum number of days (default: 3).
+
 
     Parameters
     ----------
