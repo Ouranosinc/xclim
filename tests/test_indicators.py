@@ -150,7 +150,7 @@ def test_attrs(tas_series):
 
     a = tas_series(np.arange(360.0))
     txm = uniIndTemp(a, thresh="5 degC", freq="YS")
-    assert txm.cell_methods == "time: mean within days time: mean within years"
+    assert txm.cell_methods == "time: mean time: mean within years"
     assert f"{dt.datetime.now():%Y-%m-%d %H}" in txm.attrs["history"]
     assert (
         "TMIN(da=tas, thresh='5 degC', freq='YS') with options check_missing=any"
