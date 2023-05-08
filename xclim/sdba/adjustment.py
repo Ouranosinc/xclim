@@ -772,10 +772,14 @@ class LOCI(TrainAdjust):
         *,
         thresh: str,
         group: str | Grouper = "time",
+        adapt_freq_thresh: str | None = None,
     ):
         thresh = convert_units_to(thresh, ref)
         ds = loci_train(
-            xr.Dataset({"ref": ref, "hist": hist}), group=group, thresh=thresh
+            xr.Dataset({"ref": ref, "hist": hist}),
+            group=group,
+            thresh=thresh,
+            adapt_freq_thresh=adapt_freq_thresh,
         )
         ds.af.attrs.update(long_name="LOCI adjustment factors")
         ds.hist_thresh.attrs.update(long_name="Threshold over modeled data")
