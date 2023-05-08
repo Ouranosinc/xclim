@@ -25,16 +25,16 @@ from .options import datacheck
 from .utils import Quantified, ValidationError
 
 __all__ = [
-    "amount2rate",
     "amount2lwethickness",
+    "amount2rate",
     "check_units",
     "convert_units_to",
     "declare_units",
     "infer_context",
     "infer_sampling_units",
     "lwethickness2amount",
-    "pint_multiply",
     "pint2cfunits",
+    "pint_multiply",
     "rate2amount",
     "str2pint",
     "to_agg_units",

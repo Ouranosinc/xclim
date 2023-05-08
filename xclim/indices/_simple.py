@@ -16,6 +16,12 @@ from .generic import threshold_count
 # -------------------------------------------------- #
 
 __all__ = [
+    "frost_days",
+    "ice_days",
+    "max_1day_precipitation_amount",
+    "max_n_day_precipitation_amount",
+    "max_pr_intensity",
+    "snow_depth",
     "tg_max",
     "tg_mean",
     "tg_min",
@@ -25,12 +31,6 @@ __all__ = [
     "tx_max",
     "tx_mean",
     "tx_min",
-    "frost_days",
-    "ice_days",
-    "max_1day_precipitation_amount",
-    "max_n_day_precipitation_amount",
-    "max_pr_intensity",
-    "snow_depth",
 ]
 
 

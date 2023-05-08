@@ -12,10 +12,10 @@ from . import generic
 
 __all__ = [
     "base_flow_index",
+    "melt_and_precip_max",
     "rb_flashiness_index",
     "snd_max_doy",
     "snow_melt_we_max",
-    "melt_and_precip_max",
     "snw_max",
     "snw_max_doy",
 ]

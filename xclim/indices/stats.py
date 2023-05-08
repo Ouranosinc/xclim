@@ -13,16 +13,16 @@ from xclim.core.utils import uses_dask
 from . import generic
 
 __all__ = [
+    "_fit_start",
+    "_lm3_dist_map",
     "dist_method",
-    "fit",
-    "parametric_quantile",
-    "parametric_cdf",
     "fa",
+    "fit",
     "frequency_analysis",
     "get_dist",
     "get_lm3_dist",
-    "_fit_start",
-    "_lm3_dist_map",
+    "parametric_cdf",
+    "parametric_quantile",
 ]
 
 
