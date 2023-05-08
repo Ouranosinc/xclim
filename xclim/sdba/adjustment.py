@@ -46,14 +46,14 @@ from .utils import (
 
 __all__ = [
     "BaseAdjustment",
-    "EmpiricalQuantileMapping",
     "DetrendedQuantileMapping",
-    "LOCI",
+    "EmpiricalQuantileMapping",
     "ExtremeValues",
+    "LOCI",
+    "NpdfTransform",
     "PrincipalComponents",
     "QuantileDeltaMapping",
     "Scaling",
-    "NpdfTransform",
 ]
 
 
