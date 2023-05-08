@@ -4,14 +4,27 @@ on:
   pull_request_review:
     types:
       - submitted
+  pull_request_target:
+    types:
+      - ready_for_review
+      - review_requested
+
+permissions:
+  checks: write
+  contents: read
+  pull-requests: write
 
 jobs:
-  approved:
+  label_approved:
     name: Label on Approval
-    if: github.event.review.state == 'approved'
+    if: |
+      (!contains(github.event.pull_request.labels.*.name, 'approved')) &&
+      (github.event.review.state == 'approved') &&
+      (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v6.4.1
+      - name: Label Approved
+        uses: actions/github-script@v6.4.1
         with:
           script: |
             github.rest.issues.addLabels({
@@ -20,3 +33,43 @@ jobs:
               repo: context.repo.repo,
               labels: ['approved']
             })
+
+  comment_approved:
+    name: Comment Concerning Approved Tag
+    if: |
+      (github.event_name == 'pull_request_target') ||
+      (github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Find comment
+        uses: peter-evans/find-comment@v2
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: This Pull Request is coming from a fork and must be manually tagged `approved` in order to perform additional testing
+      - name: Create comment
+        if: |
+          (steps.fc.outputs.comment-id == '') ||
+          (!contains(github.event.pull_request.labels.*.name, 'approved'))
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            > **Warning**
+            > This Pull Request is coming from a fork and must be manually tagged `approved` in order to perform additional testing.
+          edit-mode: replace
+      - name: Update comment
+        if: |
+          contains(github.event.pull_request.labels.*.name, 'approved')
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+
+            Pull Request is approved!
+          reactions: |
+            hooray
+          edit-mode: append
