@@ -639,7 +639,7 @@ dry_spell_frequency = Precip(
 
 dry_spell_max_length = Precip(
     title="Dry spell maximum length",
-    identifier="dry_spell_maximum_length",
+    identifier="dry_spell_max_length",
     units="days",
     standard_name="spell_length_of_days_with_precipitation_below_threshold",
     long_name="Longest series of at least {window} consecutive days "
