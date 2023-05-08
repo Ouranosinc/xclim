@@ -383,40 +383,40 @@ class TestFrostSeasonLength:
 
 
 class TestColdSpellDays:
-    def test_simple(self, tas_series):
+    def test_simple(self, tasmin_series):
         a = np.zeros(365) + K2C
         a[10:20] -= 15  # 10 days
         a[40:43] -= 50  # too short -> 0
         a[80:100] -= 30  # at the end and beginning
-        ts = tas_series(a)
-        out = atmos.cold_spell_days(ts, thresh="-10 C", freq="MS")
+        tn = tasmin_series(a)
+        out = atmos.cold_spell_days(tn, thresh="-10 C", freq="MS")
         np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
-        out = atmos.cold_spell_frequency(ts, thresh="-10 C", freq="MS")
+        out = atmos.cold_spell_frequency(tn, thresh="-10 C", freq="MS")
         np.testing.assert_array_equal(out, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0])
 
-    def test_convert_units(self, tas_series):
+    def test_convert_units(self, tasmin_series):
         a = np.zeros(365)
         a[10:20] -= 15  # 10 days
         a[40:43] -= 50  # too short -> 0
         a[80:100] -= 30  # at the end and beginning
-        ts = tas_series(a)
-        ts.attrs["units"] = "C"
-        out = atmos.cold_spell_days(ts, thresh="-10 C", freq="MS")
+        tn = tasmin_series(a)
+        tn.attrs["units"] = "C"
+        out = atmos.cold_spell_days(tn, thresh="-10 C", freq="MS")
         np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, 0])
-        out = atmos.cold_spell_frequency(ts, thresh="-10 C", freq="MS")
+        out = atmos.cold_spell_frequency(tn, thresh="-10 C", freq="MS")
         np.testing.assert_array_equal(out, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0])
 
-    def test_nan_presence(self, tas_series):
+    def test_nan_presence(self, tasmin_series):
         a = np.zeros(365) + K2C
         a[10:20] -= 15  # 10 days
         a[40:43] -= 50  # too short -> 0
         a[80:100] -= 30  # at the end and beginning
         a[-1] = np.nan
-        ts = tas_series(a)
+        tn = tasmin_series(a)
 
-        out = atmos.cold_spell_days(ts, thresh="-10 C", freq="MS")
+        out = atmos.cold_spell_days(tn, thresh="-10 C", freq="MS")
         np.testing.assert_array_equal(out, [10, 0, 12, 8, 0, 0, 0, 0, 0, 0, 0, np.nan])
-        out = atmos.cold_spell_frequency(ts, thresh="-10 C", freq="MS")
+        out = atmos.cold_spell_frequency(tn, thresh="-10 C", freq="MS")
         np.testing.assert_array_equal(out, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, np.nan])
 
 
