@@ -214,7 +214,7 @@ DAY_LENGTH_FACTORS = np.array(
 )
 
 
-@jit(nopython=False)
+@jit(nopython=True)
 def _day_length(lat: int | float, mth: int):  # pragma: no cover
     """Return the average day length for a month within latitudinal bounds."""
     if -30 > lat >= -90:
@@ -234,7 +234,7 @@ def _day_length(lat: int | float, mth: int):  # pragma: no cover
     return dl[mth - 1]
 
 
-@jit(nopython=False)
+@jit(nopython=True)
 def _day_length_factor(lat: float, mth: int):  # pragma: no cover
     """Return the day length factor."""
     if -15 > lat >= -90:
