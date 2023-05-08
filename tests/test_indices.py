@@ -144,6 +144,24 @@ class TestColdSpellFreq:
         assert out.units == ""
 
 
+class TestColdSpellMaxLength:
+    def test_simple(self, tas_series):
+        a = np.zeros(365)
+        a[10:20] -= 15  # 10 days
+        a[40:43] -= 50  # too short -> 0
+        a[80:86] -= 30
+        a[95:101] -= 30
+        da = tas_series(a + K2C, start="1971-01-01")
+
+        out = xci.cold_spell_max_length(da, thresh="-10. C", freq="M")
+        np.testing.assert_array_equal(out, [10, 3, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0])
+        assert out.units == "d"
+
+        out = xci.cold_spell_max_length(da, thresh="-10. C", freq="YS")
+        np.testing.assert_array_equal(out, 10)
+        assert out.units == "d"
+
+
 class TestMaxConsecutiveFrostDays:
     def test_one_freeze_day(self, tasmin_series):
         a = tasmin_series(np.array([3, 4, 5, -1, 3]) + K2C)
@@ -3153,3 +3171,40 @@ class TestDrynessIndex:
             di, np.array([13.355, 102.426, 65.576, 158.078]), rtol=1e-03
         )
         np.testing.assert_allclose(di_wet, di_plus_100)
+
+
+class TestDrySpellFreq:
+    def test_simple(self, pr_series):
+        a = np.zeros(365) + 2
+        a[10:20] -= 2  # 10 days
+        a[40:42] -= 2  # too short -> 0
+        a[80:86] -= 2
+        a[95:101] -= 2
+        da = pr_series(a / 86400, start="1971-01-01")
+        print(da)
+
+        out = xci.dry_spell_frequency(da, thresh="1 mm/day", freq="M")
+        np.testing.assert_array_equal(out, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0])
+        assert out.units == ""
+
+        out = xci.dry_spell_frequency(da, thresh="1 mm/day", freq="YS")
+        np.testing.assert_array_equal(out, 3)
+        assert out.units == ""
+
+
+class TestDrySpellMaxLength:
+    def test_simple(self, pr_series):
+        a = np.zeros(365) + 2
+        a[10:20] -= 2  # 10 days
+        a[40:42] -= 2  # too short -> 0
+        a[80:86] -= 2
+        a[95:101] -= 2
+        da = pr_series(a, start="1971-01-01")
+
+        out = xci.dry_spell_max_length(da, thresh="1 mm/day", freq="M")
+        np.testing.assert_array_equal(out, [10, 2, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0])
+        assert out.units == "d"
+
+        out = xci.dry_spell_max_length(da, thresh="1 mm/day", freq="YS")
+        np.testing.assert_array_equal(out, 10)
+        assert out.units == "d"
