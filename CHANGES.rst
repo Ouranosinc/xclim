@@ -4,11 +4,15 @@ Changelog
 
 v0.43.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`). Alexis Beaupré (:user:`Beauprel`).
 
 Announcements
 ^^^^^^^^^^^^^
 * `xclim` has passed the peer-review process and been officially accepted as a project associated with both `pyOpenSci <https://www.pyopensci.org>`_ and `PANGEO <https://pangeo.io/>`_. Additionally, `xclim` has been accepted to be published in the `Journal of Open Source Software <https://joss.theoj.org/>`_. Our review process can be consulted here: `PyOpenSci Software Review <https://github.com/pyOpenSci/software-review/issues/73>`_. (:pull:`1350`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New sdba measure ``xclim.sdba.measures.taylordiagram``. (:pull:`1360`).
 
 New indicators
 ^^^^^^^^^^^^^^
@@ -20,6 +24,7 @@ Bug fixes
 * Fixed a bug in the `pyproject.toml` configuration that excluded the changelog (`CHANGES.rst`) from the packaged source distribution. (:pull:`1349`).
 * When summing an all-NaN period with `resample`, xarray 2023.04.0 now returns NaN, whereas earlier versions returned 0. This broke ``fraction_over_precip_thresh``, but is now fixed. (:pull:`1354`, :issue:`1337`).
 * In sdba's Quantile Delta Mapping algorithm, the quantiles of the simulation to adjust were computed slightly differently than when creating the adjustment factor. The ``xclim.sdba.utils.rank`` function has been fixed to return "percentage-ranks" (quantiles) in the proper range. (:issue:`1334`, :pull:`1355`).
+* The radiation converters (``longwave_upwelling_radiation_from_net_downwelling`` and ``shortwave_upwelling_radiation_from_net_downwelling``) were hard-coded to redefine output units as `W m-2`, regardless of input units, so long as unit dimensions checks cleared. Units are now set directly from inputs. (:issue:`1365`, :pull:`1366`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -43,6 +48,10 @@ Internal changes
     * ``xclim.testing.tests.data`` → ``xclim.testing.helpers``
     * ``xclim.testing.tests.test_sdba.utils`` → ``xclim.testing.sdba_utils``
 * Added a "Conventions" section to the README. (:issue:`1342`, :pull:`1351`).
+* New helper function ``xclim.testing.helpers.test_timeseries``. (:pull:`1356`).
+* `tox` recipes and documentation now refer to the official build of `SBCK`, available on PyPI. (:issue:`1362`, :pull:`1364`).
+* Excluded some URLs from `sphinx linkcheck` that were causing issues on ReadTheDocs. (:pull:`1364`).
+* Tagged versions of `xclim-testdata` now follow a `calendar-based versioning <https://calver.org/>`_ scheme for easier determination of compatibility between `xclim` and testing data. (:pull:`1367`, `xclim-testdata discussion <https://github.com/Ouranosinc/xclim-testdata/pull/24>`_)
 
 v0.42.0 (2023-04-03)
 --------------------
