@@ -627,6 +627,18 @@ def robust_data(request):
             {},
         ),
         (
+            "brownforsythe-test",
+            [0.5, 0.25, 0.5, 0.5],
+            [0.5, 0.0, 1, 1],
+            [
+                [False, True, False, True],
+                [True, False, False, False],
+                [False, True, False, True],
+                [False, False, False, True],
+            ],
+            {},
+        ),
+        (
             "threshold",
             [0.25, 1, 1, 1],
             [1, 0.5, 1, 1],
@@ -687,6 +699,7 @@ def test_change_significance(
     if pvals is not None:
         if isinstance(ref, xr.Dataset):
             pvals = pvals.tas
+        pvals.load()  # Otherwise it acts weirdly for welch-ttest
         # 0.05 is the default p_change parameter
         changed = pvals < 0.05
         np.testing.assert_array_almost_equal(changed, exp_changed)

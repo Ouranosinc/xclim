@@ -256,7 +256,7 @@ class TestMaxPrIntensity:
         pr2 = pr_hr_series(np.ones(366 * 24))
 
         pr = xr.concat([pr1, pr2], dim="site")
-        out = atmos.max_pr_intensity(pr, window=2, freq="Y")
+        out = atmos.max_pr_intensity(pr, window=2, freq="YS")
         np.testing.assert_array_almost_equal(out.isel(time=0), [8.5 * 3600, 3600])
 
 
