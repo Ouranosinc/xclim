@@ -1,4 +1,3 @@
-# noqa: D205,D400
 """
 Missing Values Identification
 =============================
@@ -38,11 +37,11 @@ from .options import (
 )
 
 __all__ = [
-    "missing_wmo",
-    "missing_any",
-    "missing_pct",
     "at_least_n_valid",
+    "missing_any",
     "missing_from_context",
+    "missing_pct",
+    "missing_wmo",
     "register_missing_method",
 ]
 
@@ -98,7 +97,7 @@ class MissingBase:
         return null
 
     def prepare(self, da, freq, src_timestep, **indexer):
-        """Prepare arrays to be fed to the `is_missing` function.
+        r"""Prepare arrays to be fed to the `is_missing` function.
 
         Parameters
         ----------
@@ -109,7 +108,7 @@ class MissingBase:
             https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
         src_timestep : {"D", "H"}
             Expected input frequency.
-        **indexer : {dim: indexer}, optional
+        \*\*indexer : {dim: indexer}, optional
             Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
             values, month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given,
             all values are considered.

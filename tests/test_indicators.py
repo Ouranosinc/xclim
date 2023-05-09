@@ -444,7 +444,7 @@ def test_all_jsonable(official_indicators):
         json.dumps(indinst.json())
         try:
             json.dumps(indinst.json())
-        except (TypeError, KeyError) as e:
+        except (KeyError, TypeError) as e:
             problems.append(identifier)
             err = e
     if problems:

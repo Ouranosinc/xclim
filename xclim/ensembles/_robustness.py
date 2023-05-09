@@ -1,4 +1,3 @@
-# noqa: D205,D400
 """
 Ensemble Robustness Metrics
 ===========================
@@ -35,7 +34,7 @@ def change_significance(
         xr.DataArray | xr.Dataset | None,
     ]
 ):
-    """Robustness statistics qualifying how the members of an ensemble agree on the existence of change and on its sign.
+    r"""Robustness statistics qualifying how members of an ensemble agree on the existence of change and on its sign.
 
     Parameters
     ----------
@@ -57,7 +56,7 @@ def change_significance(
         Only tests "threshold" and "None" are currently supported with weighted arrays.
     p_vals : bool
         If True, return the estimated p-values.
-    **kwargs
+    \*\*kwargs
         Other arguments specific to the statistical test.
 
         For 'ttest', 'welch-ttest', 'mannwhitney-utest' and 'brownforsythe-test':
