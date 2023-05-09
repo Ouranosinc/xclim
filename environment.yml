@@ -69,4 +69,5 @@ dependencies:
     - yamllint
     - pip
     - pip:
+        - flake8-alphabetize
         - sphinxcontrib-svg2pdfconverter

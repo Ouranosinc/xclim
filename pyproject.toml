@@ -58,6 +58,7 @@ dev = [
   "bump2version",
   "coverage[toml]",
   "flake8",
+  "flake8-alphabetize",
   "flake8-rst-docstrings",
   "h5netcdf",
   "ipython",
