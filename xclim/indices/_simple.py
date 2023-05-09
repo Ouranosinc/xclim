@@ -352,7 +352,7 @@ def frost_days(
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def ice_days(
     tasmax: xarray.DataArray, thresh: Quantified = "0 degC", freq: str = "YS"
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     r"""Number of ice/freezing days.
 
     Number of days when daily maximum temperatures are below a threshold.

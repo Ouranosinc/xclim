@@ -1,4 +1,3 @@
-# noqa: D205,D400
 """
 Properties Submodule
 ====================
@@ -385,8 +384,7 @@ def _acf(
     """
 
     def acf_last(x, nlags):
-        # noqa: D403
-        """statsmodels acf calculates acf for lag 0 to nlags, this return only the last one."""
+        """Statsmodels acf calculates acf for lag 0 to nlags, this return only the last one."""
         # As we resample + group, timeseries are quite short and fft=False seems more performant
         out_last = stattools.acf(x, nlags=nlags, fft=False)
         return out_last[-1]

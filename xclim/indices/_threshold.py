@@ -1660,8 +1660,7 @@ def snd_season_length(
     freq: str = "AS-JUL",
     op: str = ">=",
 ) -> xarray.DataArray:
-    # noqa: D401
-    """Number of days with snow depth above a threshold.
+    """The number of days with snow depth above a threshold.
 
     Number of days where surface snow depth is greater or equal to given threshold (default: 2 cm).
 
@@ -1698,8 +1697,7 @@ def snw_season_length(
     freq: str = "AS-JUL",
     op: str = ">=",
 ) -> xarray.DataArray:
-    # noqa: D401
-    """Number of days with snow water above a threshold.
+    """The number of days with snow water above a threshold.
 
     Number of days where surface snow water is greater or equal to given threshold (default: 2 cm).
 
@@ -1735,8 +1733,8 @@ def tn_days_above(
     thresh: Quantified = "20.0 degC",
     freq: str = "YS",
     op: str = ">",
-):  # noqa: D401
-    """Number of days with tasmin above a threshold (number of tropical nights).
+):
+    """The number of days with tasmin above a threshold (number of tropical nights).
 
     Number of days where minimum daily temperature exceeds a threshold (default: 20℃).
 
@@ -1776,7 +1774,7 @@ def tn_days_below(
     thresh: Quantified = "-10.0 degC",
     freq: str = "YS",
     op: str = "<",
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     """Number of days with tasmin below a threshold.
 
     Number of days where minimum daily temperature is below a threshold (default: -10℃).
@@ -1817,8 +1815,8 @@ def tg_days_above(
     thresh: Quantified = "10.0 degC",
     freq: str = "YS",
     op: str = ">",
-):  # noqa: D401
-    """Number of days with tas above a threshold.
+):
+    """The number of days with tas above a threshold.
 
     Number of days where mean daily temperature exceeds a threshold (default: 10℃).
 
@@ -1858,8 +1856,8 @@ def tg_days_below(
     thresh: Quantified = "10.0 degC",
     freq: str = "YS",
     op: str = "<",
-):  # noqa: D401
-    """Number of days with tas below a threshold.
+):
+    """The number of days with tas below a threshold.
 
     Number of days where mean daily temperature is below a threshold (default: 10℃).
 
@@ -1899,8 +1897,8 @@ def tx_days_above(
     thresh: Quantified = "25.0 degC",
     freq: str = "YS",
     op: str = ">",
-) -> xarray.DataArray:  # noqa: D401
-    """Number of days with tasmax above a threshold (number of summer days).
+) -> xarray.DataArray:
+    """The number of days with tasmax above a threshold (number of summer days).
 
     Number of days where maximum daily temperature exceeds a threshold (default: 25℃).
 
@@ -1940,8 +1938,8 @@ def tx_days_below(
     thresh: Quantified = "25.0 degC",
     freq: str = "YS",
     op: str = "<",
-):  # noqa: D401
-    """Number of days with tmax below a threshold.
+):
+    """The number of days with tmax below a threshold.
 
     Number of days where maximum daily temperature is below a threshold (default: 25℃).
 

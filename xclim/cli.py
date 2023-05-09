@@ -1,4 +1,3 @@
-# noqa: D205,D400
 """
 =============================
 Command Line Interface module

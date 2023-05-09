@@ -1,4 +1,3 @@
-# noqa: D205,D400
 """
 Ensemble Reduction
 ==================
@@ -117,7 +116,7 @@ def kkz_reduce_ensemble(
     standardize: bool = True,
     **cdist_kwargs,
 ) -> list:
-    """Return a sample of ensemble members using KKZ selection.
+    r"""Return a sample of ensemble members using KKZ selection.
 
     The algorithm selects `num_select` ensemble members spanning the overall range of the ensemble.
     The selection is ordered, smaller groups are always subsets of larger ones for given criteria.
@@ -138,7 +137,7 @@ def kkz_reduce_ensemble(
     standardize : bool
         Whether to standardize the input before running the selection or not.
         Standardization consists in translation as to have a zero mean and scaling as to have a unit standard deviation.
-    **cdist_kwargs
+    \*\*cdist_kwargs
         All extra arguments are passed as-is to `scipy.spatial.distance.cdist`, see its docs for more information.
 
     Returns
@@ -207,7 +206,7 @@ def kmeans_reduce_ensemble(
     method : dict, optional
         Dictionary defining selection method and associated value when required. See Notes.
     max_clusters : int, optional
-         Maximum number of members to include in the output ensemble selection.
+        Maximum number of members to include in the output ensemble selection.
         When using 'rsq_optimize' or 'rsq_cutoff' methods, limit the final selection to a maximum number even if method
         results indicate a higher value. Defaults to N.
     variable_weights : np.ndarray, optional
