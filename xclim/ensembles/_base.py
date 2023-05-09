@@ -1,4 +1,3 @@
-# noqa: D205,D400
 """
 Ensembles Creation and Statistics
 =================================
@@ -28,7 +27,7 @@ def create_ensemble(
     mf_flag: bool | str = "UNSET",  # noqa
     **xr_kwargs,
 ) -> xr.Dataset:
-    """Create an xarray dataset of an ensemble of climate simulation from a list of netcdf files.
+    r"""Create an xarray dataset of an ensemble of climate simulation from a list of netcdf files.
 
     Input data is concatenated along a newly created data dimension ('realization'). Returns an xarray dataset object
     containing input data from the list of netcdf files concatenated along a new dimension (name:'realization').
@@ -40,32 +39,32 @@ def create_ensemble(
     Parameters
     ----------
     datasets : list or dict or string
-      List of netcdf file paths or xarray Dataset/DataArray objects . If `multifile` is True, ncfiles should be a
-      list of lists where each sublist contains input .nc files of an xarray multifile Dataset.
-      If DataArray objects are passed, they should have a name in order to be transformed into Datasets.
-      A dictionary can be passed instead of a list, in which case the keys are used as coordinates along the new
-      `realization` axis.
-      If a string is passed, it is assumed to be a glob pattern for finding datasets.
+        List of netcdf file paths or xarray Dataset/DataArray objects . If `multifile` is True, ncfiles should be a
+        list of lists where each sublist contains input .nc files of an xarray multifile Dataset.
+        If DataArray objects are passed, they should have a name in order to be transformed into Datasets.
+        A dictionary can be passed instead of a list, in which case the keys are used as coordinates along the new
+        `realization` axis.
+        If a string is passed, it is assumed to be a glob pattern for finding datasets.
     multifile : bool
-      If True, climate simulations are treated as xarray multifile Datasets before concatenation.
-      Only applicable when "datasets" is sequence of list of file paths. Default: False.
+        If True, climate simulations are treated as xarray multifile Datasets before concatenation.
+        Only applicable when "datasets" is sequence of list of file paths. Default: False.
     resample_freq : Optional[str]
-      If the members of the ensemble have the same frequency but not the same offset, they cannot be properly aligned.
-      If resample_freq is set, the time coordinate of each member will be modified to fit this frequency.
+        If the members of the ensemble have the same frequency but not the same offset, they cannot be properly aligned.
+        If resample_freq is set, the time coordinate of each member will be modified to fit this frequency.
     calendar : str, optional
-      The calendar of the time coordinate of the ensemble.
-      By default, the smallest common calendar is chosen. For example, a mixed input of "noleap" and "360_day" will default to "noleap".
-      'default' is the standard calendar using np.datetime64 objects (xarray's "standard" with `use_cftime=False`).
+        The calendar of the time coordinate of the ensemble.
+        By default, the smallest common calendar is chosen. For example, a mixed input of "noleap" and "360_day" will default to "noleap".
+        'default' is the standard calendar using np.datetime64 objects (xarray's "standard" with `use_cftime=False`).
     realizations : sequence, optional
-      The coordinate values for the new `realization` axis.
-      If None (default), the new axis has a simple integer coordinate.
-      This argument shouldn't be used if `datasets` is a glob pattern as the dataset order is random.
+        The coordinate values for the new `realization` axis.
+        If None (default), the new axis has a simple integer coordinate.
+        This argument shouldn't be used if `datasets` is a glob pattern as the dataset order is random.
     cal_kwargs : dict, optional
-      Additional arguments to pass to py:func:`xclim.core.calendar.convert_calendar`.
-      For conversions involving '360_day', the align_on='date' option is used by default.
-    **xr_kwargs
-      Any keyword arguments to be given to `xr.open_dataset` when opening the files
-      (or to `xr.open_mfdataset` if `multifile` is True)
+        Additional arguments to pass to py:func:`xclim.core.calendar.convert_calendar`.
+        For conversions involving '360_day', the align_on='date' option is used by default.
+    \*\*xr_kwargs
+        Any keyword arguments to be given to `xr.open_dataset` when opening the files
+        (or to `xr.open_mfdataset` if `multifile` is True)
 
     Returns
     -------
@@ -354,7 +353,7 @@ def _ens_align_datasets(
     mf_flag: bool | str = "UNSET",  # noqa
     **xr_kwargs,
 ) -> list[xr.Dataset]:
-    """Create a list of aligned xarray Datasets for ensemble Dataset creation.
+    r"""Create a list of aligned xarray Datasets for ensemble Dataset creation.
 
     Parameters
     ----------
@@ -374,7 +373,7 @@ def _ens_align_datasets(
         the align_on='date' option is used.
         See :py:func:`xclim.core.calendar.convert_calendar`.
         'default' is the standard calendar using np.datetime64 objects.
-    **xr_kwargs
+    \*\*xr_kwargs
         Any keyword arguments to be given to xarray when opening the files.
 
     Returns

@@ -32,15 +32,15 @@ from .run_length import lazy_indexing
 # -------------------------------------------------- #
 
 __all__ = [
-    "temperature_seasonality",
+    "isothermality",
+    "prcptot",
+    "prcptot_warmcold_quarter",
+    "prcptot_wetdry_period",
+    "prcptot_wetdry_quarter",
     "precip_seasonality",
+    "temperature_seasonality",
     "tg_mean_warmcold_quarter",
     "tg_mean_wetdry_quarter",
-    "prcptot_wetdry_quarter",
-    "prcptot_warmcold_quarter",
-    "prcptot",
-    "prcptot_wetdry_period",
-    "isothermality",
 ]
 
 _xr_argops = {
