@@ -17,7 +17,7 @@ New features and enhancements
 New indicators
 ^^^^^^^^^^^^^^
 * ``ensembles.change_significance`` now supports the Brown-Forsythe test. (:pull:`1292`).
-* New indice and indicator (``delayed_frost_days``) for calculating the number of delayed frost days (tasmin < 0 degC). In the Northern Hemisphere, a frost day is delayed during April and June, and, in the Southern Hemisphere, during October and December. (:issue:`1352`, :pull:`1361`).
+* New indice and indicator (``late_frost_days``) for calculating the number of late frost days (tasmin < 0 degC). In the Northern Hemisphere, a frost day is late during April and June, and, in the Southern Hemisphere, during October and December. (:issue:`1352`, :pull:`1361`).
 
 Bug fixes
 ^^^^^^^^^

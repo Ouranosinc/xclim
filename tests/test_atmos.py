@@ -579,13 +579,13 @@ class TestMeanRadiantTemperature:
         np.testing.assert_allclose(mrt_avg.isel(time=0), exp_avg, rtol=rtol)
 
 
-class TestDelayedFrostDays:
-    def test_delayed_frost_days(self, atmosds):
+class TestLateFrostDays:
+    def test_late_frost_days(self, atmosds):
         tasmin = atmosds.tasmin
 
         # Expected values
         exp = [2, 9, 72, 24, 0]
 
-        dfd = atmos.delayed_frost_days(tasmin)
+        lfd = atmos.late_frost_days(tasmin)
 
-        np.testing.assert_allclose(dfd.isel(time=0), exp, rtol=1e-03)
+        np.testing.assert_allclose(lfd.isel(time=0), exp, rtol=1e-03)

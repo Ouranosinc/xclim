@@ -87,7 +87,7 @@ __all__ = [
     "sea_ice_area",
     "sea_ice_extent",
     "windy_days",
-    "delayed_frost_days",
+    "late_frost_days",
 ]
 
 
@@ -2641,7 +2641,7 @@ def winter_storm(
 
 
 @declare_units(tasmin="[temperature]", lat="[]", thresh="[temperature]")
-def delayed_frost_days(
+def late_frost_days(
     tasmin: xarray.DataArray,
     lat: xarray.DataArray | None = None,
     thresh: Quantified = "0 degC",
@@ -2651,7 +2651,7 @@ def delayed_frost_days(
     end_date_sh: DayOfYearStr = "12-31",
     freq: str = "YS",
 ) -> xarray.DataArray:
-    r"""Delayed frost days.
+    r"""Late frost days.
 
     Number of days where daily minimum temperatures are below a threshold temperature
     from April to June in the Northern Hemisphere and from October to December in the Southern Hemisphere.
@@ -2679,7 +2679,7 @@ def delayed_frost_days(
     Returns
     -------
     xarray.DataArray, [time]
-        Number of delayed frost days per period.
+        Number of late frost days per period.
     """
     if lat is None:
         lat = _gather_lat(tasmin)
