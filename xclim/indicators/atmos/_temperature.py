@@ -11,6 +11,7 @@ __all__ = [
     "cold_spell_days",
     "cold_spell_duration_index",
     "cold_spell_frequency",
+    "cold_spell_max_length",
     "consecutive_frost_days",
     "cool_night_index",
     "cooling_degree_days",

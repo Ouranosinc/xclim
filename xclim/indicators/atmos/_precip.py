@@ -25,6 +25,7 @@ __all__ = [
     "drought_code",
     "dry_days",
     "dry_spell_frequency",
+    "dry_spell_max_length",
     "dry_spell_total_length",
     "dryness_index",
     "first_snowfall",
