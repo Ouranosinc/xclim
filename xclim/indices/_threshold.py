@@ -61,6 +61,7 @@ __all__ = [
     "hot_spell_max_length",
     "last_snowfall",
     "last_spring_frost",
+    "late_frost_days",
     "maximum_consecutive_dry_days",
     "maximum_consecutive_frost_days",
     "maximum_consecutive_frost_free_days",

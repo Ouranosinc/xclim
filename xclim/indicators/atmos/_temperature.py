@@ -50,6 +50,7 @@ __all__ = [
     "huglin_index",
     "ice_days",
     "last_spring_frost",
+    "late_frost_days",
     "latitude_temperature_index",
     "max_daily_temperature_range",
     "maximum_consecutive_frost_free_days",
