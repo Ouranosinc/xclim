@@ -5,13 +5,13 @@ from xclim.core.indicator import ResamplingIndicatorWithIndexing
 
 __all__ = [
     "calm_days",
-    "windy_days",
     "sfcWind_max",
     "sfcWind_mean",
     "sfcWind_min",
     "sfcWindmax_max",
     "sfcWindmax_mean",
     "sfcWindmax_min",
+    "windy_days",
 ]
 
 
