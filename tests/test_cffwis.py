@@ -8,18 +8,20 @@ from xclim import atmos
 from xclim.core.options import set_options
 from xclim.core.units import convert_units_to
 from xclim.indices.fire import (
-    _day_length,
-    _day_length_factor,
-    _drought_code,
-    _duff_moisture_code,
-    _fine_fuel_moisture_code,
-    _overwintering_drought_code,
     build_up_index,
     fire_season,
     fire_weather_index,
     fire_weather_ufunc,
     initial_spread_index,
     overwintering_drought_code,
+)
+from xclim.indices.fire._cffwis import (
+    _day_length,
+    _day_length_factor,
+    _drought_code,
+    _duff_moisture_code,
+    _fine_fuel_moisture_code,
+    _overwintering_drought_code,
 )
 from xclim.indices.run_length import run_bounds
 

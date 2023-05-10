@@ -21,12 +21,6 @@ __all__ = [
     "max_1day_precipitation_amount",
     "max_n_day_precipitation_amount",
     "max_pr_intensity",
-    "sfcWind_max",
-    "sfcWind_mean",
-    "sfcWind_min",
-    "sfcWindmax_max",
-    "sfcWindmax_mean",
-    "sfcWindmax_min",
     "snow_depth",
     "tg_max",
     "tg_mean",
@@ -358,7 +352,7 @@ def frost_days(
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def ice_days(
     tasmax: xarray.DataArray, thresh: Quantified = "0 degC", freq: str = "YS"
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     r"""Number of ice/freezing days.
 
     Number of days when daily maximum temperatures are below a threshold.

@@ -1,4 +1,3 @@
-# noqa: D205,D400
 """
 Data Flags
 ===========
@@ -63,8 +62,8 @@ class DataQualityException(Exception):
 
 
 __all__ = [
-    "data_flags",
     "DataQualityException",
+    "data_flags",
     "ecad_compliant",
     "negative_accumulation_values",
     "outside_n_standard_deviations_of_climatology",

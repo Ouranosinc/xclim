@@ -31,12 +31,9 @@ from .generic import compare, select_resample_op, threshold_count
 
 __all__ = [
     "blowing_snow",
-    "cold_spell_duration_index",
     "cold_and_dry_days",
-    "warm_and_dry_days",
-    "warm_and_wet_days",
     "cold_and_wet_days",
-    "multiday_temperature_swing",
+    "cold_spell_duration_index",
     "daily_temperature_range",
     "daily_temperature_range_variability",
     "days_over_precip_thresh",
@@ -47,16 +44,19 @@ __all__ = [
     "heat_wave_total_length",
     "high_precip_low_temp",
     "liquid_precip_ratio",
+    "multiday_temperature_swing",
     "precip_accumulation",
     "precip_average",
     "rain_on_frozen_ground_days",
-    "tg90p",
     "tg10p",
-    "tn90p",
+    "tg90p",
     "tn10p",
-    "tx90p",
+    "tn90p",
     "tx10p",
+    "tx90p",
     "tx_tn_days_above",
+    "warm_and_dry_days",
+    "warm_and_wet_days",
     "warm_spell_duration_index",
     "winter_rain_ratio",
 ]
@@ -421,7 +421,7 @@ def multiday_temperature_swing(
     op_tasmax: str = ">",
     freq: str = "YS",
     resample_before_rl: bool = True,
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     r"""Statistics of consecutive diurnal temperature swing events.
 
     A diurnal swing of max and min temperature event is when Tmax > thresh_tasmax and Tmin <= thresh_tasmin. This indice
@@ -1043,7 +1043,7 @@ def rain_on_frozen_ground_days(
     tas: xarray.DataArray,
     thresh: Quantified = "1 mm/d",
     freq: str = "YS",
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     """Number of rain on frozen ground events.
 
     Number of days with rain above a threshold after a series of seven days below freezing temperature.
@@ -1109,7 +1109,7 @@ def high_precip_low_temp(
     pr_thresh: Quantified = "0.4 mm/d",
     tas_thresh: Quantified = "-0.2 degC",
     freq: str = "YS",
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     """Number of days with precipitation above threshold and temperature below threshold.
 
     Number of days when precipitation is greater or equal to some threshold, and temperatures are colder than some
@@ -1159,7 +1159,7 @@ def days_over_precip_thresh(
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
     op: str = ">",
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     r"""Number of wet days with daily precipitation over a given percentile.
 
     Number of days over period where the precipitation is above a threshold defining wet days and above a given
@@ -1287,7 +1287,7 @@ def tg90p(
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
     op: str = ">",
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     r"""Number of days with daily mean temperature over the 90th percentile.
 
     Number of days with daily mean temperature over the 90th percentile.
@@ -1345,7 +1345,7 @@ def tg10p(
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
     op: str = "<",
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     r"""Number of days with daily mean temperature below the 10th percentile.
 
     Number of days with daily mean temperature below the 10th percentile.
@@ -1403,7 +1403,7 @@ def tn90p(
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
     op: str = ">",
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     r"""Number of days with daily minimum temperature over the 90th percentile.
 
     Number of days with daily minimum temperature over the 90th percentile.
@@ -1461,7 +1461,7 @@ def tn10p(
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
     op: str = "<",
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     r"""Number of days with daily minimum temperature below the 10th percentile.
 
     Number of days with daily minimum temperature below the 10th percentile.
@@ -1519,7 +1519,7 @@ def tx90p(
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
     op: str = ">",
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     r"""Number of days with daily maximum temperature over the 90th percentile.
 
     Number of days with daily maximum temperature over the 90th percentile.
@@ -1577,7 +1577,7 @@ def tx10p(
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
     op: str = "<",
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     r"""Number of days with daily maximum temperature below the 10th percentile.
 
     Number of days with daily maximum temperature below the 10th percentile.
@@ -1640,7 +1640,7 @@ def tx_tn_days_above(
     thresh_tasmax: Quantified = "30 degC",
     freq: str = "YS",
     op: str = ">",
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     r"""Number of days with both hot maximum and minimum daily temperatures.
 
     The number of days per period with tasmin above a threshold and tasmax above another threshold.

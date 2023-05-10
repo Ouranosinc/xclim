@@ -1,4 +1,3 @@
-# noqa: D205,D400
 """
 Calendar Handling Utilities
 ===========================
@@ -93,7 +92,10 @@ def days_in_year(year: int, calendar: str = "default") -> int:
 def date_range(
     *args, calendar: str = "default", **kwargs
 ) -> pd.DatetimeIndex | CFTimeIndex:
-    """Wrap pd.date_range (if calendar == 'default') or xr.cftime_range (otherwise)."""
+    """Wrap a Pandas date_range object.
+
+    Uses pd.date_range (if calendar == 'default') or xr.cftime_range (otherwise).
+    """
     if calendar == "default":
         return pd.date_range(*args, **kwargs)
     return xr.cftime_range(*args, calendar=calendar, **kwargs)

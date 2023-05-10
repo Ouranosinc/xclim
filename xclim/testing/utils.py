@@ -1,4 +1,3 @@
-# noqa: D205,D400
 """
 Testing and Tutorial Utilities' Module
 ======================================
@@ -257,8 +256,7 @@ def open_dataset(
     cache_dir: Path = _default_cache_dir,
     **kwargs,
 ) -> Dataset:
-    """
-    Open a dataset from the online GitHub-like repository.
+    r"""Open a dataset from the online GitHub-like repository.
 
     If a local copy is found then always use that to avoid network traffic.
 
@@ -278,7 +276,7 @@ def open_dataset(
         The directory in which to search for and write cached data.
     cache : bool
         If True, then cache data locally for use on subsequent calls.
-    kwargs
+    \*\*kwargs
         For NetCDF files, keywords passed to :py:func:`xarray.open_dataset`.
 
     Returns

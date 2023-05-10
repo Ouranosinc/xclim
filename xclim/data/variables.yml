@@ -257,7 +257,9 @@ variables:
   thickness_of_rainfall_amount:
     canonical_units: m
     cell_methods: "time: sum"
-    description: Accumulated depth of rainfall, i.e. the thickness of a layer of liquid water having the same mass per unit area as the rainfall amount.
+    description: >
+      Accumulated depth of rainfall, i.e. the thickness of a layer of liquid water
+      having the same mass per unit area as the rainfall amount.
     standard_name: thickness_of_rainfall_amount
   ua:
     canonical_units: m s-1
@@ -322,8 +324,9 @@ conversions:
       - [surface_snow_melt_amount, surface_snow_melt_flux]
       - [transpiration_amount, transpiration_flux]
       - [water_potential_evaporation_amount, water_potential_evaporation_flux]
-  amount2lwethickness:  # Standard names of liquid water quantities, thus allowed in thickness to amount and rate to flux conversions
-  # First element of each entry is the mass over area (amount, flux), second is the thickness (thickness, rate)
+  amount2lwethickness:
+    # Standard names of liquid water quantities, thus allowed in thickness to amount and rate to flux conversions
+    # First element of each entry is the mass over area (amount, flux), second is the thickness (thickness, rate)
     dimensionality:  # amount.dimensionality / thickness.dimensionality
       mass: 1
       length: -3

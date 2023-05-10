@@ -2,28 +2,9 @@
 Changelog
 =========
 
-v0.44.0 (unreleased)
---------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`), Ludwig Lierhammer (:user:`ludwiglierhammer`)
-
-New features and enhancements
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* New generic function (``flux_and_rate_converter``) converting flux to a rate (and vice-versa) using a density. `snw_to_snd` and `snd_to_snw` were refactored using this function. (:issue:`1352`, :pull:`1358`)
-* New function (``prsn_to_prsnd``) to convert snowfall flux ([mass]/[area]/[time]) to snowfall rate ([length]/[time]) using snow density ([mass]/[volume]). (:issue:`1352`, :pull:`1358`)
-
-New indicators
-^^^^^^^^^^^^^^
-* New indices and indicators (``snowfall_{frequency | intensity}``) for calculating the {percentage of | mean snowfall intensity on} days with snowfall above a threshold. (:issue:`1352`, :pull:`1358`)
-* New indices and indicators (``{sfcWind | sfcWindmax}_{max | mean | min``) for calculating the {max | mean | min} daily {mean | max} wind speed. (:issue:`1352`, :pull:`1358`)
-* New indices and indicators (``{precip | liquid_precip | solid_precip}_average``) for calculating the mean daily {precipitation | liquid precipitation | solid precipitation } amount. (:issue:`1352`, :pull:`1358`)
-
-Internal changes
-^^^^^^^^^^^^^^^^
-* Added `prsnd`, i.e. snowfall rate ([length]/[time]) to list of defined variables. (:pull:`1271`).
-
 v0.43.0 (2023-05-09)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`). Alexis Beaupré (:user:`Beauprel`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Alexis Beaupré (:user:`Beauprel`), Éric Dupuis (:user:`coxipi`).
 
 Announcements
 ^^^^^^^^^^^^^
