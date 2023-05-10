@@ -1,4 +1,3 @@
-# noqa: D205,D400
 r"""
 McArthur Forest Fire Danger (Mark 5) System
 ===========================================
@@ -364,7 +363,7 @@ def mcarthur_forest_fire_danger_index(
     tasmax: xr.DataArray,
     hurs: xr.DataArray,
     sfcWind: xr.DataArray,
-):  # noqa: D403
+):
     """McArthur forest fire danger index (FFDI) Mark 5.
 
     The FFDI is a numeric indicator of the potential danger of a forest fire.

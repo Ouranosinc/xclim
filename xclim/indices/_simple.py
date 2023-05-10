@@ -16,6 +16,12 @@ from .generic import threshold_count
 # -------------------------------------------------- #
 
 __all__ = [
+    "frost_days",
+    "ice_days",
+    "max_1day_precipitation_amount",
+    "max_n_day_precipitation_amount",
+    "max_pr_intensity",
+    "snow_depth",
     "tg_max",
     "tg_mean",
     "tg_min",
@@ -25,12 +31,6 @@ __all__ = [
     "tx_max",
     "tx_mean",
     "tx_min",
-    "frost_days",
-    "ice_days",
-    "max_1day_precipitation_amount",
-    "max_n_day_precipitation_amount",
-    "max_pr_intensity",
-    "snow_depth",
 ]
 
 
@@ -352,7 +352,7 @@ def frost_days(
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def ice_days(
     tasmax: xarray.DataArray, thresh: Quantified = "0 degC", freq: str = "YS"
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     r"""Number of ice/freezing days.
 
     Number of days when daily maximum temperatures are below a threshold.
