@@ -75,6 +75,8 @@ __all__ = [
     "snd_season_end",
     "snd_season_length",
     "snd_season_start",
+    "snowfall_frequency",
+    "snowfall_intensity",
     "snw_season_end",
     "snw_season_length",
     "snw_season_start",
