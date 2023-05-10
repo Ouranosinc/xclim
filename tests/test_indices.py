@@ -3213,6 +3213,13 @@ class TestDrynessIndex:
         np.testing.assert_allclose(di_wet, di_plus_100)
 
 
+class TestSfcWindMax:
+    def test_sfcWind_max(self, sfcWind_series):
+        sfcWind = sfcWind_series(np.array([14.11, 15.27, 10.70]))
+        out = xci.sfcWind_max(sfcWind)
+        np.testing.assert_allclose(out, [15.27])
+
+
 class TestSfcWindMean:
     def test_sfcWind_mean(self, sfcWind_series):
         sfcWind = sfcWind_series(np.array([14.11, 15.27, 10.70]))
@@ -3220,11 +3227,32 @@ class TestSfcWindMean:
         np.testing.assert_allclose(out, [13.36])
 
 
+class TestSfcWindMin:
+    def test_sfcWind_min(self, sfcWind_series):
+        sfcWind = sfcWind_series(np.array([14.11, 15.27, 10.70]))
+        out = xci.sfcWind_min(sfcWind)
+        np.testing.assert_allclose(out, [10.70])
+
+
 class TestSfcWindmaxMax:
     def test_sfcWindmax_max(self, sfcWindmax_series):
         sfcWindmax = sfcWindmax_series(np.array([14.11, 15.27, 10.70]))
         out = xci.sfcWindmax_max(sfcWindmax)
         np.testing.assert_allclose(out, [15.27])
+
+
+class TestSfcWindmaxMean:
+    def test_sfcWindmax_mean(self, sfcWindmax_series):
+        sfcWindmax = sfcWindmax_series(np.array([14.11, 15.27, 10.70]))
+        out = xci.sfcWindmax_mean(sfcWindmax)
+        np.testing.assert_allclose(out, [13.36])
+
+
+class TestSfcWindmaxMin:
+    def test_sfcWindmax_min(self, sfcWindmax_series):
+        sfcWindmax = sfcWindmax_series(np.array([14.11, 15.27, 10.70]))
+        out = xci.sfcWindmax_min(sfcWindmax)
+        np.testing.assert_allclose(out, [10.70])
 
 
 class TestSnowfallFrequency:
