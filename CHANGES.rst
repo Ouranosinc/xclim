@@ -2,6 +2,15 @@
 Changelog
 =========
 
+v0.44.0 (unreleased)
+--------------------
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Ludwig Lierhammer (:user:`ludwiglierhammer`)
+
+New indicators
+^^^^^^^^^^^^^^
+* New indices and indicators (`{cold | dry}_spell_max_length`) for calculating maximum length of {cold | dry} spell events.
+* New indices and indicators (`dry_spell_frequency`) for calculating total number of dry spells.
+
 v0.43.0 (2023-05-09)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Alexis Beaupré (:user:`Beauprel`), Éric Dupuis (:user:`coxipi`).
