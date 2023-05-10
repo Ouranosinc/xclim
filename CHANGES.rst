@@ -2,7 +2,26 @@
 Changelog
 =========
 
-v0.43.0 (unreleased)
+v0.44.0 (unreleased)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`), Ludwig Lierhammer (:user:`ludwiglierhammer`)
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New generic function (``flux_and_rate_converter``) converting flux to a rate (and vice-versa) using a density. `snw_to_snd` and `snd_to_snw` were refactored using this function. (:issue:`1352`, :pull:`1358`)
+* New function (``prsn_to_prsnd``) to convert snowfall flux ([mass]/[area]/[time]) to snowfall rate ([length]/[time]) using snow density ([mass]/[volume]). (:issue:`1352`, :pull:`1358`)
+
+New indicators
+^^^^^^^^^^^^^^
+* New indices and indicators (``snowfall_{frequency | intensity}``) for calculating the {percentage of | mean snowfall intensity on} days with snowfall above a threshold. (:issue:`1352`, :pull:`1358`)
+* New indices and indicators (``{sfcWind | sfcWindmax}_{max | mean | min``) for calculating the {max | mean | min} daily {mean | max} wind speed. (:issue:`1352`, :pull:`1358`)
+* New indices and indicators (``{precip | liquid_precip | solid_precip}_average``) for calculating the mean daily {precipitation | liquid precipitation | solid precipitation } amount. (:issue:`1352`, :pull:`1358`)
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Added `prsnd`, i.e. snowfall rate ([length]/[time]) to list of defined variables. (:pull:`1271`).
+
+v0.43.0 (2023-05-09)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`). Alexis Beaupré (:user:`Beauprel`).
 
@@ -12,23 +31,17 @@ Announcements
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* New sdba measure ``xclim.sdba.measures.taylordiagram``. (:pull:`1360`).
-* New generic function (``flux_and_rate_converter``) converting flux to a rate (and vice-versa) using a density. `snw_to_snd` and `snd_to_snw` were refactored using this function. (:issue:`1352`, :pull:`1358`)
-* New function (``prsn_to_prsnd``) to convert snowfall flux ([mass]/[area]/[time]) to snowfall rate ([length]/[time]) using snow density ([mass]/[volume]). (:issue:`1352`, :pull:`1358`)
+* New ``xclim.sdba`` measure ``xclim.sdba.measures.taylordiagram``. (:pull:`1360`).
 
 New indicators
 ^^^^^^^^^^^^^^
 * ``ensembles.change_significance`` now supports the Brown-Forsythe test. (:pull:`1292`).
-* New indices and indicators (``snowfall_{frequency | intensity}``) for calculating the {percentage of | mean snowfall intensity on} days with snowfall above a threshold. (:issue:`1352`, :pull:`1358`)
-* New indices and indicators (``sfcWind_mean`` and ``sfcWindmax_max``) for calculating the mean daily mean wind speed and the maximum daily maximum wind speed. (:issue:`1352`, :pull:`1358`)
-* New indices and indicators (``{precip | liquid_precip | solid_precip}_average``) for calculating the mean daily {precipitation | liquid precipitation | solid precipitation } amount. (:issue:`1352`, :pull:`1358`)
-
 
 Bug fixes
 ^^^^^^^^^
 * Fixed a bug in the `pyproject.toml` configuration that excluded the changelog (`CHANGES.rst`) from the packaged source distribution. (:pull:`1349`).
-* When summing an all-NaN period with `resample`, xarray 2023.04.0 now returns NaN, whereas earlier versions returned 0. This broke ``fraction_over_precip_thresh``, but is now fixed. (:pull:`1354`, :issue:`1337`).
-* In sdba's Quantile Delta Mapping algorithm, the quantiles of the simulation to adjust were computed slightly differently than when creating the adjustment factor. The ``xclim.sdba.utils.rank`` function has been fixed to return "percentage-ranks" (quantiles) in the proper range. (:issue:`1334`, :pull:`1355`).
+* When summing an all-`NaN` period with `resample`, `xarray` v2023.04.0 now returns `NaN`, whereas earlier versions returned `0`. This broke ``fraction_over_precip_thresh``, but is now fixed. (:pull:`1354`, :issue:`1337`).
+* In ``xclim.sdba``'s Quantile Delta Mapping algorithm, the quantiles of the simulation to adjust were computed slightly differently than when creating the adjustment factor. The ``xclim.sdba.utils.rank`` function has been fixed to return "percentage-ranks" (quantiles) in the proper range. (:issue:`1334`, :pull:`1355`).
 * The radiation converters (``longwave_upwelling_radiation_from_net_downwelling`` and ``shortwave_upwelling_radiation_from_net_downwelling``) were hard-coded to redefine output units as `W m-2`, regardless of input units, so long as unit dimensions checks cleared. Units are now set directly from inputs. (:issue:`1365`, :pull:`1366`).
 
 Breaking changes
@@ -45,6 +58,7 @@ Breaking changes
     * ``xclim.indices.continuous_snow_cover_end`` -> ``xclim.indices.snd_season_end``
     * ``xclim.indices.continuous_snow_cover_start`` -> ``xclim.indices.snd_season_start``
     * ``xclim.indices.snow_cover_duration`` -> ``xclim.indices.snd_season_length``
+* Several `_private` functions within ``xclim.indices.fire._cffwis`` that had been exposed publicly have now been rendered as hidden functions. Affected functions are: ``_day_length``, ``_day_length_factor``, ``_drought_code``, ``_duff_moisture_code``, ``_fine_fuel_moisture_code``, ``_overwintering_drought_code``. (:pull:`1159`, :pull:`1369`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -53,11 +67,13 @@ Internal changes
     * ``xclim.testing.tests.data`` → ``xclim.testing.helpers``
     * ``xclim.testing.tests.test_sdba.utils`` → ``xclim.testing.sdba_utils``
 * Added a "Conventions" section to the README. (:issue:`1342`, :pull:`1351`).
-* New helper function ``xclim.testing.helpers.test_timeseries``. (:pull:`1356`).
+* New helper function ``xclim.testing.helpers.test_timeseries`` for generating timeseries objects with specified variable names and units. (:pull:`1356`).
 * `tox` recipes and documentation now refer to the official build of `SBCK`, available on PyPI. (:issue:`1362`, :pull:`1364`).
 * Excluded some URLs from `sphinx linkcheck` that were causing issues on ReadTheDocs. (:pull:`1364`).
-* Added `prsnd`, i.e. snowfall rate ([length]/[time]) to list of defined variables. (:pull:`1271`).
-* Tagged versions of `xclim-testdata` now follow a `calendar-based versioning <https://calver.org/>`_ scheme for easier determination of compatibility between `xclim` and testing data. (:pull:`1367`, `xclim-testdata discussion <https://github.com/Ouranosinc/xclim-testdata/pull/24>`_)
+* Tagged versions of `xclim-testdata` now follow a `calendar-based versioning <https://calver.org/>`_ scheme for easier determination of compatibility between `xclim` and testing data. (:pull:`1367`, `xclim-testdata discussion <https://github.com/Ouranosinc/xclim-testdata/pull/24>`_).
+* `flake8`, `pycodestyle`, and `pydocstyle` checks have been significantly changed in order to clean up the code base of redundant `# noqa` markers. Linting checks for Makefile and `tox` recipes have been synchronized as well. (:pull:`1369`).
+* `flake8` plugin `flake8-alphabetize` has been added to development recipes in order to check order of `__all__` entries and Exceptions. (:pull:`1369`).
+* Corrected translations of ``cold_spell_{frequency | days}`` (:pull:`1372`).
 
 v0.42.0 (2023-04-03)
 --------------------
