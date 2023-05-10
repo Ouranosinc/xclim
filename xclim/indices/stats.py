@@ -13,16 +13,16 @@ from xclim.core.utils import uses_dask
 from . import generic
 
 __all__ = [
+    "_fit_start",
+    "_lm3_dist_map",
     "dist_method",
-    "fit",
-    "parametric_quantile",
-    "parametric_cdf",
     "fa",
+    "fit",
     "frequency_analysis",
     "get_dist",
     "get_lm3_dist",
-    "_fit_start",
-    "_lm3_dist_map",
+    "parametric_cdf",
+    "parametric_quantile",
 ]
 
 
@@ -81,7 +81,7 @@ def fit(
     dim: str = "time",
     **fitkwargs,
 ) -> xr.DataArray:
-    """Fit an array to a univariate distribution along the time dimension.
+    r"""Fit an array to a univariate distribution along the time dimension.
 
     Parameters
     ----------
@@ -97,7 +97,7 @@ def fit(
         The PWM method is usually more robust to outliers.
     dim : str
         The dimension upon which to perform the indexing (default: "time").
-    **fitkwargs
+    \*\*fitkwargs
         Other arguments passed directly to :py:func:`_fitstart` and to the distribution's `fit`.
 
     Returns
@@ -424,7 +424,7 @@ def get_lm3_dist(dist):
 
 
 def _fit_start(x, dist, **fitkwargs) -> tuple[tuple, dict]:
-    """Return initial values for distribution parameters.
+    r"""Return initial values for distribution parameters.
 
     Providing the ML fit method initial values can help the optimizer find the global optimum.
 
@@ -435,7 +435,7 @@ def _fit_start(x, dist, **fitkwargs) -> tuple[tuple, dict]:
     dist : str
         Name of the univariate distribution, e.g. `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`.
         (see :py:mod:scipy.stats). Only `genextreme` and `weibull_exp` distributions are supported.
-    **fitkwargs
+    \*\*fitkwargs
         Kwargs passed to fit.
 
     Returns
@@ -501,7 +501,7 @@ def _fit_start(x, dist, **fitkwargs) -> tuple[tuple, dict]:
 def _dist_method_1D(
     params: Sequence[float], arg=None, *, dist: str, function: str, **kwargs
 ) -> xr.DataArray:
-    """Statistical function for given argument on given distribution initialized with params.
+    r"""Statistical function for given argument on given distribution initialized with params.
 
     See :py:ref:`scipy:scipy.stats.rv_continuous` for all available functions and their arguments.
     Every method where `"*args"` are the distribution parameters can be wrapped.
@@ -516,7 +516,7 @@ def _dist_method_1D(
         The scipy name of the distribution.
     function : str
         The name of the function to call.
-    **kwargs
+    \*\*kwargs
         Other parameters to pass to the function call.
 
     Returns
@@ -535,7 +535,7 @@ def dist_method(
     arg: xr.DataArray | None = None,
     **kwargs,
 ) -> xr.DataArray:
-    """Vectorized statistical function for given argument on given distribution initialized with params.
+    r"""Vectorized statistical function for given argument on given distribution initialized with params.
 
     Methods where `"*args"` are the distribution parameters can be wrapped, except those that return new dimensions
     (Ex: 'rvs' with size != 1, 'stats' with more than one moment, 'interval', 'support')
@@ -549,7 +549,7 @@ def dist_method(
         Must have a `scipy_dist` attribute with the name of the distribution fitted.
     arg : array_like, optional
         The argument for the requested function.
-    **kwargs
+    \*\*kwargs
         Other parameters to pass to the function call.
 
     Returns

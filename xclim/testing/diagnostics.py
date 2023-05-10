@@ -1,4 +1,3 @@
-# noqa: D205,D400
 """
 SDBA Diagnostic Testing Module
 ==============================
@@ -25,7 +24,7 @@ except ModuleNotFoundError:
     plt = False
 
 
-__all__ = ["synth_rainfall", "cannon_2015_figure_2", "adapt_freq_graph"]
+__all__ = ["adapt_freq_graph", "cannon_2015_figure_2", "synth_rainfall"]
 
 
 def synth_rainfall(shape, scale=1, wet_freq=0.25, size=1):
