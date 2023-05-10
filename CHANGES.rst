@@ -2,6 +2,15 @@
 Changelog
 =========
 
+v0.44.0 (unreleased)
+--------------------
+Contributors to this version: Ludwig Lierhammer (:user:`ludwiglierhammer`)
+
+New indicators
+^^^^^^^^^^^^^^
+
+* New indice and indicator (``late_frost_days``) for calculating the number of late frost days (tasmin < 0 degC). In the Northern Hemisphere, a frost day is late during April and June, and, in the Southern Hemisphere, during October and December. (:issue:`1352`, :pull:`1361`).
+
 v0.43.0 (2023-05-09)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Alexis Beaupré (:user:`Beauprel`), Éric Dupuis (:user:`coxipi`).
@@ -17,7 +26,6 @@ New features and enhancements
 New indicators
 ^^^^^^^^^^^^^^
 * ``ensembles.change_significance`` now supports the Brown-Forsythe test. (:pull:`1292`).
-* New indice and indicator (``late_frost_days``) for calculating the number of late frost days (tasmin < 0 degC). In the Northern Hemisphere, a frost day is late during April and June, and, in the Southern Hemisphere, during October and December. (:issue:`1352`, :pull:`1361`).
 
 Bug fixes
 ^^^^^^^^^
