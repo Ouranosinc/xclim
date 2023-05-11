@@ -633,7 +633,8 @@ def test_dry_spell_frequency_op(open_dataset):
         "during which the maximal precipitation on a window of 7 day(s) is below 3 mm."
     ) in test_max.description
 
-# This test might be redundant 
+
+# This test might be redundant
 class TestDrySpellFrequency:
     def test_simple(self, pr_series):
         a = np.zeros(366) + 3

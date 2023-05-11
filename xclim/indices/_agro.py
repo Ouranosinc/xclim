@@ -1090,9 +1090,6 @@ def standardized_precipitation_evapotranspiration_index(
     return spei
 
 
-
-
-
 @declare_units(tas="[temperature]")
 def qian_weighted_mean_average(
     tas: xarray.DataArray, dim: str = "time"

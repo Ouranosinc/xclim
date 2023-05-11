@@ -2811,6 +2811,7 @@ def dry_spell_total_length(
     )
     return to_agg_units(out, pram, "count")
 
+
 @declare_units(pr="[precipitation]", thresh="[length]")
 def dry_spell_max_length(
     pr: xarray.DataArray,
