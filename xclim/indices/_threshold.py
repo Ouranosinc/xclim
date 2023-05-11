@@ -38,6 +38,7 @@ __all__ = [
     "cold_spell_days",
     "cold_spell_frequency",
     "cold_spell_max_length",
+    "cold_spell_total_length",
     "cooling_degree_days",
     "daily_pr_intensity",
     "days_with_snow",
@@ -61,6 +62,7 @@ __all__ = [
     "heating_degree_days",
     "hot_spell_frequency",
     "hot_spell_max_length",
+    "hot_spell_total_length",
     "last_snowfall",
     "last_spring_frost",
     "maximum_consecutive_dry_days",
@@ -198,8 +200,8 @@ def cold_spell_frequency(
 ) -> xarray.DataArray:
     r"""Cold spell frequency.
 
-    The number of cold spell events, defined as a sequence of consecutive days with mean daily temperature below a
-    threshold (default: -10℃).
+    The number of cold spell events, defined as a sequence of consecutive {window} days
+    with mean daily temperature below a {thresh}.
 
     Parameters
     ----------
@@ -218,8 +220,8 @@ def cold_spell_frequency(
 
     Returns
     -------
-    xarray.DataArray, [time]
-        Cold spell frequency.
+    xarray.DataArray, [unitless]
+        The {freq} number of cold periods of minimum {window} days.
 
     """
     t = convert_units_to(thresh, tas)
@@ -268,8 +270,8 @@ def cold_spell_max_length(
 
     Returns
     -------
-    xarray.DataArray, [time]
-        Maximum length of continuous cold days at the wanted frequency.
+    xarray.DataArray, [days]
+        The {freq} longest spell in cold periods of minimum {window} days.
     """
     thresh = convert_units_to(thresh, tas)
 
@@ -278,6 +280,55 @@ def cold_spell_max_length(
         cond,
         resample_before_rl,
         rl.longest_run,
+        freq=freq,
+    )
+    out = max_l.where(max_l >= window, 0)
+    return to_agg_units(out, tas, "count")
+
+
+@declare_units(tas="[temperature]", thresh="[temperature]")
+def cold_spell_total_length(
+    tas: xarray.DataArray,
+    thresh: Quantified = "-10 degC",
+    window: int = 1,
+    freq: str = "AS-JUL",
+    op: str = "<",
+    resample_before_rl: bool = True,
+) -> xarray.DataArray:
+    r"""Total length of cold spells.
+
+    Total length of spells of low temperatures over a given period.
+    Total length of series of at least {window} consecutive days with temperature at or below {thresh}.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+        Mean daily temperature.
+    thresh : Quantified
+        The temperature threshold needed to trigger a cold spell.
+    window : int
+        Minimum number of days with temperatures below thresholds to qualify as a cold spell.
+    freq : str
+        Resampling frequency.
+    op : {"<", "<=", "lt", "le"}
+        Comparison operation. Default: "<".
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
+
+    Returns
+    -------
+    xarray.DataArray, [days]
+        The {freq} total number of days in cold periods of minimum {window} days.
+    """
+    thresh = convert_units_to(thresh, tas)
+
+    cond = compare(tas, op, thresh, constrain=("<", "<="))
+    max_l = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.windowed_run_count,
+        window=1,
         freq=freq,
     )
     out = max_l.where(max_l >= window, 0)
@@ -1591,16 +1642,16 @@ def hot_spell_max_length(
     r"""Longest hot spell.
 
     Longest spell of high temperatures over a given period.
-    Longest series of at least {window} consecutive days with tasmax at or above {thresh_tasmax}.
+    Longest series of at least {window} consecutive days with temperature at or above {thresh}.
 
     Parameters
     ----------
     tasmax : xarray.DataArray
         Maximum daily temperature.
-    thresh_tasmax : Quantified
-        The maximum temperature threshold needed to trigger a heatwave event.
+    thresh : Quantified
+        The temperature threshold needed to trigger a hot spell.
     window : int
-        Minimum number of days with temperatures above thresholds to qualify as a heatwave.
+        Minimum number of days with temperatures below thresholds to qualify as a hot spell.
     freq : str
         Resampling frequency.
     op : {">", ">=", "gt", "ge"}
@@ -1611,8 +1662,8 @@ def hot_spell_max_length(
 
     Returns
     -------
-    xarray.DataArray, [time]
-        Maximum length of continuous hot days at the wanted frequency.
+    xarray.DataArray, [days]
+        The {freq} longest spell in hot periods of minimum {window} days.
 
     Notes
     -----
@@ -1635,6 +1686,55 @@ def hot_spell_max_length(
         cond,
         resample_before_rl,
         rl.longest_run,
+        freq=freq,
+    )
+    out = max_l.where(max_l >= window, 0)
+    return to_agg_units(out, tasmax, "count")
+
+
+@declare_units(tas="[temperature]", thresh="[temperature]")
+def hot_spell_total_length(
+    tasmax: xarray.DataArray,
+    thresh: Quantified = "30 degC",
+    window: int = 1,
+    freq: str = "YS",
+    op: str = ">",
+    resample_before_rl: bool = True,
+) -> xarray.DataArray:
+    r"""Total length of hot spells.
+
+    Total length of spells of high temperatures over a given period.
+    Total length of series of at least {window} consecutive days with temperature at or above {thresh}.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+        Maximum daily temperature.
+    thresh : Quantified
+        The temperature threshold needed to trigger a hot spell.
+    window : int
+        Minimum number of days with temperatures below thresholds to qualify as a hot spell.
+    freq : str
+        Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">".
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
+
+    Returns
+    -------
+    xarray.DataArray, [days]
+        The {freq} total number of days in hot periods of minimum {window} days.
+    """
+    thresh = convert_units_to(thresh, tasmax)
+
+    cond = compare(tasmax, op, thresh, constrain=(">", ">="))
+    max_l = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.windowed_run_count,
+        window=1,
         freq=freq,
     )
     out = max_l.where(max_l >= window, 0)
