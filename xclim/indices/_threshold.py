@@ -45,6 +45,7 @@ __all__ = [
     "dry_days",
     "dry_spell_frequency",
     "dry_spell_max_length",
+    "dry_spell_total_length",
     "first_day_temperature_above",
     "first_day_temperature_below",
     "first_snowfall",
