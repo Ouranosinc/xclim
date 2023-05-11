@@ -1,4 +1,3 @@
-# noqa: D205,D400
 """
 Measures Submodule
 ==================
@@ -441,4 +440,65 @@ def _scorr(
 
 scorr = StatisticalPropertyMeasure(
     identifier="Scorr", aspect="spatial", compute=_scorr, allowed_groups=["group"]
+)
+
+
+def _taylordiagram(
+    sim: xr.DataArray,
+    ref: xr.DataArray,
+    dim: str = "time",
+    group: str | Grouper = "time",
+) -> xr.DataArray:
+    """Taylor diagram.
+
+    Compute the respective standard deviations of a simulation and a reference array, as well as the Pearson
+    correlation coefficient between both, all necessary parameters to plot points on a Taylor diagram.
+
+    Parameters
+    ----------
+    sim : xr.DataArray
+        data from the simulation (a time-series for each grid-point)
+    ref : xr.DataArray
+        data from the reference (observations) (a time-series for each grid-point)
+    dim : str
+        Dimension across which the correlation and standard deviation should be computed.
+    group : str
+        Compute the property and measure for each temporal groups individually.
+        Currently not implemented.
+
+
+    Returns
+    -------
+    xr.DataArray, [same as ref]
+        Standard deviations of sim, ref and correlation coefficient between both.
+    """
+    corr = xr.corr(sim, ref, dim=dim)
+
+    ref_std = ref.std(dim=dim, skipna=True, keep_attrs=True)
+    sim_std = sim.std(dim=dim, skipna=True, keep_attrs=True)
+
+    new_dim = xr.DataArray(
+        ["ref_std", "sim_std", "corr"], dims=("taylor_param",), name="taylor_param"
+    )
+
+    out = xr.concat(
+        [ref_std, sim_std, corr],
+        new_dim,
+        coords="minimal",
+        compat="override",  # Take common coords from `ref_std`.
+    ).assign_attrs(
+        {
+            "correlation_type": "Pearson correlation coefficient",
+            "units": ref.units,
+        }
+    )
+
+    return out
+
+
+taylordiagram = StatisticalPropertyMeasure(
+    identifier="taylordiagram",
+    aspect="temporal",
+    compute=_taylordiagram,
+    allowed_groups=["group"],
 )

@@ -26,7 +26,7 @@ def spatial_analogs(
     method: str = "kldiv",
     **kwargs,
 ):
-    """Compute dissimilarity statistics between target points and candidate points.
+    r"""Compute dissimilarity statistics between target points and candidate points.
 
     Spatial analogues based on the comparison of climate indices. The algorithm compares
     the distribution of the reference indices with the distribution of spatially
@@ -45,7 +45,7 @@ def spatial_analogs(
         The dimension over which the *distributions* are constructed. This can be a multi-index dimension.
     method : {'seuclidean', 'nearest_neighbor', 'zech_aslan', 'kolmogorov_smirnov', 'friedman_rafsky', 'kldiv'}
         Which method to use when computing the dissimilarity statistic.
-    **kwargs
+    \*\*kwargs
         Any other parameter passed directly to the dissimilarity method.
 
     Returns

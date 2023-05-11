@@ -2,10 +2,14 @@
 from __future__ import annotations
 
 import os
+import warnings
+from importlib.resources import open_text
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import xarray as xr
+from yaml import safe_load
 
 from xclim.core import calendar
 from xclim.indices import (
@@ -59,11 +63,12 @@ or setting the variable at runtime:
 """
 
 __all__ = [
-    "TESTDATA_BRANCH",
     "PREFETCH_TESTING_DATA",
+    "TESTDATA_BRANCH",
     "add_example_file_paths",
     "generate_atmos",
     "populate_testing_data",
+    "test_timeseries",
 ]
 
 
@@ -195,3 +200,31 @@ def add_example_file_paths(cache_dir: Path) -> dict[str]:
             ns[f"{variable}_dataset"] = ds.get(variable)
 
     return ns
+
+
+def test_timeseries(
+    values, variable, start="7/1/2000", units=None, freq="D", as_dataset=False
+):
+    """Create a generic timeseries object based on pre-defined dictionaries of existing variables."""
+    coords = pd.date_range(start, periods=len(values), freq=freq)
+    data_on_var = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
+    if variable in data_on_var:
+        attrs = {
+            a: data_on_var[variable].get(a, "")
+            for a in ["description", "standard_name", "cell_methods"]
+        }
+        attrs["units"] = data_on_var[variable]["canonical_units"]
+
+    else:
+        warnings.warn(f"Variable {variable} not recognised. Attrs will not be filled.")
+        attrs = {}
+
+    if units is not None:
+        attrs["units"] = units
+
+    da = xr.DataArray(values, coords=[coords], dims="time", name=variable, attrs=attrs)
+
+    if as_dataset:
+        return da.to_dataset()
+    else:
+        return da
