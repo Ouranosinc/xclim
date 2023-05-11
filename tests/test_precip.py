@@ -632,26 +632,3 @@ def test_dry_spell_frequency_op(open_dataset):
         "The monthly number of dry periods of 7 day(s) or more, "
         "during which the maximal precipitation on a window of 7 day(s) is below 3 mm."
     ) in test_max.description
-
-
-# This test might be redundant
-class TestDrySpellFrequency:
-    def test_simple(self, pr_series):
-        a = np.zeros(366) + 3
-        a[:10] = np.array([2, 0, 0, 0, 2, 0, 0, 0, 0, 0])
-
-        pr = pr_series(a, start="1/1/2000")
-
-        out = atmos.dry_spell_frequency(pr)
-        np.testing.assert_array_equal(out, 2)
-
-
-class TestDrySpellMaxLength:
-    def test_simple(self, pr_series):
-        a = np.zeros(366) + 3
-        a[:10] = np.array([2, 0, 0, 0, 2, 0, 0, 0, 0, 0])
-
-        pr = pr_series(a, start="1/1/2000")
-
-        out = atmos.dry_spell_max_length(pr, freq="AS")
-        np.testing.assert_array_equal(out, 5)
