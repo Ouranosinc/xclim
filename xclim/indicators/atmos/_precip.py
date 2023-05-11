@@ -554,6 +554,20 @@ dry_spell_total_length = Precip(
     compute=indices.dry_spell_total_length,
 )
 
+dry_spell_max_length = Precip(
+    title="Dry spell maximum length",
+    identifier="dry_spell_max_length",
+    long_name="Maximum consecutive number of days in a dry period of {window} days(s) or more, during which the {op} "
+    "precipitation within windows of {window} day(s) is under {thresh}.",
+    description="The maximum {freq} number of consecutive days in a dry period of {window} day(s) or more"
+    ", during which the {op} precipitation within windows of {window} day(s) is under {thresh}.",
+    abstract="The maximum length of a dry period of `N` days or more, during which the accumulated or maximum "
+    "precipitation over a given time window of days is below a given threshold.",
+    units="days",
+    cell_methods="",
+    compute=indices.dry_spell_max_length,
+)
+
 rprctot = PrecipWithIndexing(
     title="Proportion of accumulated precipitation arising from convective processes",
     identifier="rprctot",
@@ -619,34 +633,4 @@ cold_and_wet_days = PrecipWithIndexing(
     abstract="Number of days with temperature below a given percentile and precipitation above a given percentile.",
     cell_methods="time: sum over days",
     compute=indices.cold_and_wet_days,
-)
-
-dry_spell_frequency = Precip(
-    title="Dry spell frequency",
-    identifier="dry_spell_frequency",
-    units="",
-    standard_name="dry_spell_frequency",
-    long_name="Total number of series of at least {window} consecutive days "
-    "where the mean daily precipitation is below {thresh}",
-    description="{freq} number of dry spell events. A dry spell is defined as a minimum number of "
-    "consecutive days with daily precipitation below {thresh}.",
-    abstract="The number of dry spell events. A dry spell is defined as a minimum number of consecutive days with "
-    "mean daily precipitation below a given threshold.",
-    cell_methods="",
-    compute=indices.dry_spell_frequency,
-)
-
-dry_spell_max_length = Precip(
-    title="Dry spell maximum length",
-    identifier="dry_spell_max_length",
-    units="days",
-    standard_name="spell_length_of_days_with_precipitation_below_threshold",
-    long_name="Longest series of at least {window} consecutive days "
-    "with daily precipitation below {thresh}",
-    description="{freq} maximum length of dry spell events occurring within a given period. "
-    "A dry spell event occurs when the daily precipitation is below {thresh} over at least {window} days.",
-    abstract="Maximum length of dry spells events within a given period. A dry spell occurs when the daily"
-    "precipitation is below a given threshold for a minimum number of days.",
-    cell_methods="",
-    compute=indices.dry_spell_max_length,
 )

@@ -2825,8 +2825,8 @@ def dry_spell_max_length(
 ) -> xarray.DataArray:
     """Longest dry spell.
 
-    Maximum length of dry spells over a given period. A dry spell is a period of minimum length, during which the maximum or
-    accumulated precipitation within a window of the same length (default: 3) is under a threshold (default: 1 mm/day).
+    Maximum number of consecutive days in a dry period of minimum length, during which the maximum or
+    accumulated precipitation within a window of the same length is under a threshold.
 
     Parameters
     ----------
