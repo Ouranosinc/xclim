@@ -1667,8 +1667,8 @@ def hot_spell_max_length(
 
     Notes
     -----
-    The threshold on `tasmax` follows the one used in heat waves. A day temperature threshold between 30° and 35°C  
-    was selected by Health Canada professionals, following a temperature–mortality analysis. This absolute temperature 
+    The threshold on `tasmax` follows the one used in heat waves. A day temperature threshold between 30° and 35°C
+    was selected by Health Canada professionals, following a temperature–mortality analysis. This absolute temperature
     threshold characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
     communities :cite:p:`casati_regional_2013`.
 
@@ -1729,8 +1729,8 @@ def hot_spell_total_length(
 
     Notes
     -----
-    The threshold on `tasmax` follows the one used in heat waves. A day temperature threshold between 30° and 35°C  
-    was selected by Health Canada professionals, following a temperature–mortality analysis. This absolute temperature 
+    The threshold on `tasmax` follows the one used in heat waves. A day temperature threshold between 30° and 35°C
+    was selected by Health Canada professionals, following a temperature–mortality analysis. This absolute temperature
     threshold characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
     communities :cite:p:`casati_regional_2013`.
 
@@ -1787,8 +1787,8 @@ def hot_spell_frequency(
 
     Notes
     -----
-    The threshold on `tasmax` follows the one used in heat waves. A day temperature threshold between 30° and 35°C  
-    was selected by Health Canada professionals, following a temperature–mortality analysis. This absolute temperature 
+    The threshold on `tasmax` follows the one used in heat waves. A day temperature threshold between 30° and 35°C
+    was selected by Health Canada professionals, following a temperature–mortality analysis. This absolute temperature
     threshold characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
     communities :cite:p:`casati_regional_2013`.
 
