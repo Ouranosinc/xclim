@@ -1630,7 +1630,7 @@ def heating_degree_days(
     return cumulative_difference(tas, threshold=thresh, op="<", freq=freq)
 
 
-@declare_units(tasmax="[temperature]", thresh_tasmax="[temperature]")
+@declare_units(tasmax="[temperature]", thresh="[temperature]")
 def hot_spell_max_length(
     tasmax: xarray.DataArray,
     thresh: Quantified = "30 degC",
@@ -1741,7 +1741,7 @@ def hot_spell_total_length(
     return to_agg_units(out, tasmax, "count")
 
 
-@declare_units(tasmax="[temperature]", thresh_tasmax="[temperature]")
+@declare_units(tasmax="[temperature]", thresh="[temperature]")
 def hot_spell_frequency(
     tasmax: xarray.DataArray,
     thresh: Quantified = "30 degC",
