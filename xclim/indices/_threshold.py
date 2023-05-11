@@ -1692,7 +1692,7 @@ def hot_spell_max_length(
     return to_agg_units(out, tasmax, "count")
 
 
-@declare_units(tas="[temperature]", thresh="[temperature]")
+@declare_units(tasmax="[temperature]", thresh="[temperature]")
 def hot_spell_total_length(
     tasmax: xarray.DataArray,
     thresh: Quantified = "30 degC",

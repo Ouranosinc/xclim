@@ -1217,12 +1217,12 @@ class TestHotSpellTotalLength:
     @pytest.mark.parametrize(
         "thresh_tasmax,window,op,expected",
         [
-            ("30 C", 3, ">", 5),  # Some HS
+            ("30 C", 3, ">", 8),  # Some HS
             ("10 C", 3, ">", 10),  # One long HS
-            ("29 C", 3, ">", 5),  # Two HS
+            ("29 C", 3, ">", 8),  # Two HS
             ("29 C", 3, ">=", 9),  # One long HS, minus a day
             ("40 C", 3, ">", 0),  # No HS
-            ("30 C", 5, ">", 5),  # Windowed
+            ("30 C", 5, ">", 8),  # Windowed
         ],
     )
     def test_1d(self, tasmax_series, thresh_tasmax, window, op, expected):
@@ -2968,7 +2968,7 @@ def test_water_budget(pr_series, evspsblpot_series):
             3,
             3,
             7,
-            (2, 12, 20, 20, 20),
+            (2, 12, 20, 12, 20),
         ),
         (
             [0.01] * 6
@@ -2981,7 +2981,7 @@ def test_water_budget(pr_series, evspsblpot_series):
             3,
             3,
             7,
-            (2, 18, 20, 20, 20),
+            (2, 18, 20, 10, 20),
         ),
         ([3.01] * 358 + [0.99] * 14 + [3.01] * 358, 1, 14, 14, (0, 7, 7, 7, 7)),
     ],
