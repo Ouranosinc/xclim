@@ -1633,7 +1633,7 @@ def heating_degree_days(
 @declare_units(tasmax="[temperature]", thresh_tasmax="[temperature]")
 def hot_spell_max_length(
     tasmax: xarray.DataArray,
-    thresh_tasmax: Quantified = "30 degC",
+    thresh: Quantified = "30 degC",
     window: int = 1,
     freq: str = "YS",
     op: str = ">",
@@ -1679,9 +1679,9 @@ def hot_spell_max_length(
     ----------
     :cite:cts:`casati_regional_2013,robinson_definition_2001`
     """
-    thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
+    thresh = convert_units_to(thresh, tasmax)
 
-    cond = compare(tasmax, op, thresh_tasmax, constrain=(">", ">="))
+    cond = compare(tasmax, op, thresh, constrain=(">", ">="))
     max_l = rl.resample_and_rl(
         cond,
         resample_before_rl,
@@ -1744,7 +1744,7 @@ def hot_spell_total_length(
 @declare_units(tasmax="[temperature]", thresh_tasmax="[temperature]")
 def hot_spell_frequency(
     tasmax: xarray.DataArray,
-    thresh_tasmax: Quantified = "30 degC",
+    thresh: Quantified = "30 degC",
     window: int = 3,
     freq: str = "YS",
     op: str = ">",
@@ -1752,29 +1752,28 @@ def hot_spell_frequency(
 ) -> xarray.DataArray:
     """Hot spell frequency.
 
-    Number of hot spells over a given period. A hot spell is defined as an event where the
-    maximum daily temperature exceeds a specific threshold (default: 30℃) over a minimum number of days (default: 3).
+    The number of hot spell events, defined as a sequence of consecutive {window} days
+    with mean daily temperature above a {thresh}.
 
     Parameters
     ----------
     tasmax : xarray.DataArray
         Maximum daily temperature.
-    thresh_tasmax : Quantified
-        The maximum temperature threshold needed to trigger a heatwave event.
+    thresh : Quantified
+        Threshold temperature below which a hot spell begins.
     window : int
-        Minimum number of days with temperatures above thresholds to qualify as a heatwave.
+        Minimum number of days with temperature above threshold to qualify as a hot spell.
     freq : str
         Resampling frequency.
     op : {">", ">=", "gt", "ge"}
         Comparison operation. Default: ">".
     resample_before_rl : bool
         Determines if the resampling should take place before or after the run
-        length encoding (or a similar algorithm) is applied to runs.
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
-        Number of heatwave at the wanted frequency
+    xarray.DataArray, [unitless]
+        The {freq} number of hot periods of minimum {window} days.
 
     Notes
     -----
@@ -1789,9 +1788,9 @@ def hot_spell_frequency(
     ----------
     :cite:cts:`casati_regional_2013,robinson_definition_2001`
     """
-    thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
+    thresh = convert_units_to(thresh, tasmax)
 
-    cond = compare(tasmax, op, thresh_tasmax, constrain=(">", ">="))
+    cond = compare(tasmax, op, thresh, constrain=(">", ">="))
     out = rl.resample_and_rl(
         cond,
         resample_before_rl,
