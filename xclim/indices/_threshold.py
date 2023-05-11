@@ -290,7 +290,7 @@ def cold_spell_max_length(
 def cold_spell_total_length(
     tas: xarray.DataArray,
     thresh: Quantified = "-10 degC",
-    window: int = 1,
+    window: int = 3,
     freq: str = "AS-JUL",
     op: str = "<",
     resample_before_rl: bool = True,
@@ -1696,7 +1696,7 @@ def hot_spell_max_length(
 def hot_spell_total_length(
     tasmax: xarray.DataArray,
     thresh: Quantified = "30 degC",
-    window: int = 1,
+    window: int = 3,
     freq: str = "YS",
     op: str = ">",
     resample_before_rl: bool = True,
