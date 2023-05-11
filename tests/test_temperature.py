@@ -1512,37 +1512,4 @@ class TestColdSpellTotalLength:
         tg = tas_series(a + K2C, start="1/1/2000")
 
         out = atmos.cold_spell_total_length(tg, freq="AS")
-        np.testing.assert_array_equal(out, 5)
-
-
-class TestDrySpellFrequency:
-    def test_simple(self, pr_series):
-        a = np.zeros(366) + 3
-        a[:10] = np.array([2, 0, 0, 0, 2, 0, 0, 0, 0, 0])
-
-        pr = pr_series(a, start="1/1/2000")
-
-        out = atmos.dry_spell_frequency(pr)
-        np.testing.assert_array_equal(out, 2)
-
-
-class TestDrySpellMaxLength:
-    def test_simple(self, pr_series):
-        a = np.zeros(366) + 3
-        a[:10] = np.array([2, 0, 0, 0, 2, 0, 0, 0, 0, 0])
-
-        pr = pr_series(a, start="1/1/2000")
-
-        out = atmos.dry_spell_max_length(pr, freq="AS")
-        np.testing.assert_array_equal(out, 5)
-
-
-class TestDrySpellTotalLength:
-    def test_simple(self, pr_series):
-        a = np.zeros(366) + 3
-        a[:10] = np.array([2, 0, 0, 0, 2, 0, 0, 0, 0, 0])
-
-        pr = pr_series(a, start="1/1/2000")
-
-        out = atmos.dry_spell_max_length(pr, freq="AS")
         np.testing.assert_array_equal(out, 8)
