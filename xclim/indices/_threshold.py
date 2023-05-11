@@ -1667,13 +1667,13 @@ def hot_spell_max_length(
 
     Notes
     -----
-    The thresholds of 22° and 25°C for night temperatures and 30° and 35°C for day temperatures were selected by
-    Health Canada professionals, following a temperature–mortality analysis. These absolute temperature thresholds
-    characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
+    The threshold on `tasmax` follows the one used in heat waves. A day temperature threshold between 30° and 35°C  
+    was selected by Health Canada professionals, following a temperature–mortality analysis. This absolute temperature 
+    threshold characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
     communities :cite:p:`casati_regional_2013`.
 
-    In :cite:t:`robinson_definition_2001`, the parameters would be
-    `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
+    In :cite:t:`robinson_definition_2001` where heat waves are also considered, the corresponding parameters would
+    be `thresh_tasmax=39.44, window=2` (103F).
 
     References
     ----------
@@ -1726,6 +1726,16 @@ def hot_spell_total_length(
     -------
     xarray.DataArray, [days]
         The {freq} total number of days in hot periods of minimum {window} days.
+
+    Notes
+    -----
+    The threshold on `tasmax` follows the one used in heat waves. A day temperature threshold between 30° and 35°C  
+    was selected by Health Canada professionals, following a temperature–mortality analysis. This absolute temperature 
+    threshold characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
+    communities :cite:p:`casati_regional_2013`.
+
+    In :cite:t:`robinson_definition_2001` where heat waves are also considered, the corresponding parameters would
+    be `thresh_tasmax=39.44, window=2` (103F).
     """
     thresh = convert_units_to(thresh, tasmax)
 
@@ -1777,12 +1787,13 @@ def hot_spell_frequency(
 
     Notes
     -----
-    The thresholds of 22° and 25°C for night temperatures and 30° and 35°C for day temperatures were selected by
-    Health Canada professionals, following a temperature–mortality analysis. These absolute temperature thresholds
-    characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
+    The threshold on `tasmax` follows the one used in heat waves. A day temperature threshold between 30° and 35°C  
+    was selected by Health Canada professionals, following a temperature–mortality analysis. This absolute temperature 
+    threshold characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
     communities :cite:p:`casati_regional_2013`.
 
-    In :cite:t:`robinson_definition_2001`, the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
+    In :cite:t:`robinson_definition_2001` where heat waves are also considered, the corresponding parameters would
+    be `thresh_tasmax=39.44, window=2` (103F).
 
     References
     ----------
