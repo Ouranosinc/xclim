@@ -3183,11 +3183,11 @@ class TestDrySpellFreq:
         da = pr_series(a / 86400, start="1971-01-01")
         print(da)
 
-        out = xci.dry_spell_frequency(da, thresh="1 mm/day", freq="M")
+        out = xci.dry_spell_frequency(da, thresh="1 mm", freq="M", op="max")
         np.testing.assert_array_equal(out, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0])
         assert out.units == ""
 
-        out = xci.dry_spell_frequency(da, thresh="1 mm/day", freq="YS")
+        out = xci.dry_spell_frequency(da, thresh="1 mm", freq="YS", op="max")
         np.testing.assert_array_equal(out, 3)
         assert out.units == ""
 
@@ -3201,10 +3201,10 @@ class TestDrySpellMaxLength:
         a[95:101] -= 2
         da = pr_series(a, start="1971-01-01")
 
-        out = xci.dry_spell_max_length(da, thresh="1 mm/day", freq="M")
+        out = xci.dry_spell_max_length(da, thresh="1 mm", freq="M", op="max")
         np.testing.assert_array_equal(out, [10, 2, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0])
         assert out.units == "d"
 
-        out = xci.dry_spell_max_length(da, thresh="1 mm/day", freq="YS")
+        out = xci.dry_spell_max_length(da, thresh="1 mm", freq="YS", op="max")
         np.testing.assert_array_equal(out, 10)
         assert out.units == "d"
