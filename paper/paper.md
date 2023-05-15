@@ -20,6 +20,7 @@ authors:
  - name: Travis Logan
    orcid: 0000-0002-2212-9580
    affiliation: 1
+   corresponding: true
  - name: Abel Aoun
    orcid: 0000-0003-2289-2890
    affiliation: 2
@@ -42,7 +43,9 @@ authors:
    affiliation: 1
  - name: Sébastien Biner
    orcid: 0000-0001-7515-490X
+   affiliation: 12
  - name: David Caron
+   affiliation: 10
  - name: Carsten Ehbrecht
    affiliation: 4
  - name: Jeremy Fyke
@@ -58,9 +61,11 @@ authors:
    orcid: 0000-0002-7207-0003
    affiliation: 6
  - name: Jwen-Fai Low
+   affiliation: 13
  - name: Jamie Quinn
    affiliation: 3
  - name: Philippe Roy
+   affiliation: 11
  - name: Dougie Squire
    orcid: 0000-0003-3271-6874
    affiliation: 7
@@ -71,16 +76,17 @@ authors:
    orcid: 0000-0002-1516-6834
    affiliation: 9
  - name: Christopher Whelan
+   affiliation: 14
 affiliations:
  - name: Ouranos Consortium, Montréal, Québec, Canada
    index: 1
  - name: Centre européen de recherche et de formation avancée en calcul scientifique (CERFACS), France
    index: 2
- - name: University College London (UCL)
+ - name: University College London (UCL), United Kingdom
    index: 3
  - name: Deutsches Klimarechenzentrum (DKRZ), Germany
    index: 4
- - name: Environment and Climate Change Canada (ECCC)
+ - name: Environment and Climate Change Canada (ECCC), Canada
    index: 5
  - name: Helmholtz-Zentrum Hereon, Germany
    index: 6
@@ -90,6 +96,16 @@ affiliations:
    index: 8
  - name: Centre for Ecology & Hydrology (CEH), United Kingdom
    index: 9
+ - name: Jakarto, Montréal, Québec, Canada
+   index: 10
+ - name: Institut de recherche d'Hydro-Québec (IREQ), Québec, Canada
+   index: 11
+ - name: Hydro-Québec (HQ), Québec, Canada
+   index: 12
+ - name: Independent Researcher, Canada
+   index: 13
+ - name: Independent Researcher, United States
+   index: 14
 date: 8 May 2023
 bibliography: paper.bib
 ---
