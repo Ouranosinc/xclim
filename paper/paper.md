@@ -38,7 +38,7 @@ authors:
    affiliation: 3
  - name: Clair Barnes
    orcid: 0000-0002-7806-7913
-   affiliation: 3
+   affiliation: "3, 13"
  - name: Alexis Beaupré Laperrière
    affiliation: 1
  - name: Sébastien Biner
@@ -61,7 +61,7 @@ authors:
    orcid: 0000-0002-7207-0003
    affiliation: 6
  - name: Jwen-Fai Low
-   affiliation: 13
+   affiliation: 14
  - name: Jamie Quinn
    affiliation: 3
  - name: Philippe Roy
@@ -76,7 +76,7 @@ authors:
    orcid: 0000-0002-1516-6834
    affiliation: 9
  - name: Christopher Whelan
-   affiliation: 14
+   affiliation: 15
 affiliations:
  - name: Ouranos Consortium, Montréal, Québec, Canada
    index: 1
@@ -102,10 +102,12 @@ affiliations:
    index: 11
  - name: Hydro-Québec (HQ), Québec, Canada
    index: 12
- - name: Independent Researcher, Canada
+ - name: Grantham Institute for Climate Change and the Environment, Imperial College London, United Kingdom
    index: 13
- - name: Independent Researcher, United States
+ - name: Independent Researcher, Canada
    index: 14
+ - name: Independent Researcher, United States
+   index: 15
 date: 8 May 2023
 bibliography: paper.bib
 ---
