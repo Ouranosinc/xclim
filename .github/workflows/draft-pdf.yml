@@ -2,6 +2,8 @@ name: "Draft compile JOSS paper"
 
 on:
   push:
+    paths:
+      - 'paper/*'
 
 jobs:
   paper:
