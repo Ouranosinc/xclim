@@ -4,12 +4,16 @@ Changelog
 
 v0.44.0 (unreleased)
 --------------------
-Contributors to this version: Éric Dupuis (:user:`coxipi`), Ludwig Lierhammer (:user:`ludwiglierhammer`)
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Trevor James Smith (:user:`Zeitsperre`).
 
 New indicators
 ^^^^^^^^^^^^^^
-* New indices and indicators (`{cold | dry}_spell_max_length`) for calculating maximum length of {cold | dry} spell events.
-* New indices and indicators (`dry_spell_frequency`) for calculating total number of dry spells.
+* New indices and indicators (`{cold | dry}_spell_max_length`) for calculating maximum length of {cold | dry} spell events. (:issue:`1352`, :pull:`1359`).
+* New indices and indicators (`dry_spell_frequency`) for calculating total number of dry spells. (:issue:`1352`, :pull:`1359`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* In order to ensure documentation can be rebuilt at a later time, errors raised by `sphinx` linkcheck are now set to be ignored when building the documentation. (:pull:`1375`).
 
 v0.43.0 (2023-05-09)
 --------------------
