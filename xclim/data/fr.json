@@ -774,11 +774,35 @@
     "long_name": "Vent du sud près de la surface",
     "description": "Vitesse du vent du sud près de la surface calculé à partir de la vitesse et de la direction du vent."
   },
+  "SFCWIND_MIN": {
+    "long_name": "Minimum de la vitesse du vent près de la surface",
+    "description": "Minimum {freq:f} de la vitesse du vent près de la surface",
+    "title": "Minimum de la vitesse du vent près de la surface",
+    "abstract": "Minimum de la vitesse du du vent près de la surface"
+  },
   "SFCWIND_MEAN": {
     "long_name": "Moyenne de la vitesse du vent près de la surface",
     "description": "Moyenne {freq:f} de la vitesse du vent près de la surface",
     "title": "Moyenne de la vitesse du vent près de la surface",
     "abstract": "Moyenne de la vitesse du du vent près de la surface"
+  },
+  "SFCWIND_MAX": {
+    "long_name": "Maximum de la vitesse du vent près de la surface",
+    "description": "Maximum {freq:f} de la vitesse du vent près de la surface",
+    "title": "Maximum de la vitesse du vent près de la surface",
+    "abstract": "Maximum de la vitesse du du vent près de la surface"
+  },
+  "SFCWINDMAX_MIN": {
+    "long_name": "Minimum de la vitesse maximimale du vent près de la surface",
+    "description": "Minimum {freq:f} de la vitesse maximimale du vent près de la surface",
+    "title": "Minimum de la vitesse maximimale du vent près de la surface",
+    "abstract": "Minimum de la vitesse maximimale du vent près de la surface"
+  },
+  "SFCWINDMAX_MEAN": {
+    "long_name": "Moyenne de la vitesse maximimale du vent près de la surface",
+    "description": "Moyenne {freq:f} de la vitesse maximimale du vent près de la surface",
+    "title": "Moyenne de la vitesse maximimale du vent près de la surface",
+    "abstract": "Moyenne de la vitesse maximimale du vent près de la surface"
   },
   "SFCWINDMAX_MAX": {
     "long_name": "Maximum de la vitesse maximimale du vent près de la surface",
