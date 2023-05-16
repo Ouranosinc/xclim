@@ -4,12 +4,15 @@ Changelog
 
 v0.44.0 (unreleased)
 --------------------
-Contributors to this version: Ludwig Lierhammer (:user:`ludwiglierhammer`)
+Contributors to this version: Ludwig Lierhammer (:user:`ludwiglierhammer`), Trevor James Smith (:user:`Zeitsperre`).
 
 New indicators
 ^^^^^^^^^^^^^^
-
 * New indice and indicator (``late_frost_days``) for calculating the number of late frost days (tasmin < 0 degC). In the Northern Hemisphere, a frost day is late during April and June, and, in the Southern Hemisphere, during October and December. (:issue:`1352`, :pull:`1361`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* In order to ensure documentation can be rebuilt at a later time, errors raised by `sphinx` linkcheck are now set to be ignored when building the documentation. (:pull:`1375`).
 
 v0.43.0 (2023-05-09)
 --------------------
