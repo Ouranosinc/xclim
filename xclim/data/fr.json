@@ -502,7 +502,7 @@
     "title": "Degrés-jours de dégel",
     "abstract": "Cumul des degrés-jours pour les jours où la température moyenne quotidienne est au-dessus d'un seuil donné, habituellement 0°C."
   },
-  "DELAYED_FROST_DAYS": {
+  "LATE_FROST_DAYS": {
     "long_name": "Nombre de jours de retard où la température minimale quotidienne est sous {thresh}",
     "description": "Cumul {freq:m} de nombre de jours de retard où la température minimale quotidienne est sous {thresh}. \"Dans l'hémisphère nord, un jour de gel est retardé entre {start_date_nh} et {end_date_nh}. Dans l'hémisphère sud, un jour de gel est retardé entre {start_date_sh} et {end_date_sh}.",
     "title": "Jours de gel retardés",
