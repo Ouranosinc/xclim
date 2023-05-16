@@ -102,7 +102,7 @@ affiliations:
    index: 10
  - name: Institut de recherche d'Hydro-Québec (IREQ), Québec, Canada
    index: 11
- - name: Hydro-Québec (HQ), Québec, Canada
+ - name: Hydro-Québec, Québec, Canada
    index: 12
  - name: Grantham Institute for Climate Change and the Environment, Imperial College London, United Kingdom
    index: 13
