@@ -466,6 +466,12 @@
     "title": "Longueur maximale des périodes froides",
     "abstract": "Longueur maximale des périodes froides durant une période donnée. Une période froide se produit lorsque la température quotidienne est au-dessus d'un seuil spécifique durant un minimum de jours."
   },
+  "COLD_SPELL_TOTAL_LENGTH": {
+    "long_name": "Durée totale des périodes d'au moins {window} jours consécutifs ayant une température quotidienne au-dessus de {thresh}.",
+    "description": "Durée totale {freq:f} des périodes froides durant une période donnée. Une période froide se produit lorsque la température quotidienne est au-dessus de {thresh} durant au moins {window} jours.",
+    "title": "Durée totale des périodes froides",
+    "abstract": "Durée totale des périodes froides durant une période donnée. Une période froide se produit lorsque la température quotidienne est au-dessus d'un seuil spécifique durant un minimum de jours."
+  },
   "COOL_NIGHT_INDEX": {
     "long_name": "Indice de fraîcheur des nuits",
     "description": "Moyenne {freq:f} de la température minimale quotidienne en septembre (hémisphère nord) ou en mars (hémisphère sud).",
@@ -690,6 +696,12 @@
     "description": "Longueur maximale {freq:f} des périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne est au-dessus de {thresh_tasmax} durant au moins {window} jours.",
     "title": "Longueur maximale des périodes chaudes",
     "abstract": "Longueur maximale des périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne est au-dessus d'un seuil spécifique durant un minimum de jours."
+  },
+  "HOT_SPELL_TOTAL_LENGTH": {
+    "long_name": "Durée totale des périodes d'au moins {window} jours consécutifs ayant une température maximale quotidienne au-dessus de {thresh_tasmax}.",
+    "description": "Durée totale {freq:f} des périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne est au-dessus de {thresh_tasmax} durant au moins {window} jours.",
+    "title": "Durée totale des périodes chaudes",
+    "abstract": "Durée totale des périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne est au-dessus d'un seuil spécifique durant un minimum de jours."
   },
   "CONSECUTIVE_FROST_FREE_DAYS": {
     "long_name": "Nombre maximal de jours consécutifs ayant une température minimale au-dessus ou égale à {thresh}",
