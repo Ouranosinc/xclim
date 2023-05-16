@@ -61,10 +61,12 @@ authors:
    orcid: 0000-0002-7207-0003
    affiliation: 6
  - name: Jwen-Fai Low
+   orcid: 0000-0001-6618-7443
    affiliation: 14
  - name: Jamie Quinn
    affiliation: 3
  - name: Philippe Roy
+   orcid: 0000-0003-1239-7589
    affiliation: 11
  - name: Dougie Squire
    orcid: 0000-0003-3271-6874
@@ -94,7 +96,7 @@ affiliations:
    index: 7
  - name: Centre for Environmental Data Analysis (CEDA), United Kingdom
    index: 8
- - name: Centre for Ecology & Hydrology (CEH), United Kingdom
+ - name: UK Centre for Ecology & Hydrology (CEH), Wallingford, United Kingdom
    index: 9
  - name: Jakarto, Montréal, Québec, Canada
    index: 10
