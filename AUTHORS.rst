@@ -23,17 +23,19 @@ Contributors
 
 * Raquel Alegre <raquel.alegre@gmail.com> `@raquelalegre <https://github.com/raquelalegre>`_
 * Clair Barnes <clair.barnes.16@ucl.ac.uk> `@clairbarnes <https://github.com/clairbarnes>`_
-* Sébastien Biner <biner.sebastien@ouranos.ca> `@sbiner <https://github.com/sbiner>`_
+* Alexis Beaupré-Laperrière `@Beauprel <https://github.com/Beauprel>`_
+* Sébastien Biner `@sbiner <https://github.com/sbiner>`_
 * David Caron `@davidcaron <https://github.com/davidcaron>`_
 * Carsten Ehbrecht <ehbrecht@dkrz.de> `@cehbrecht <https://github.com/cehbrecht>`_
 * Jeremy Fyke `@jeremyfyke <https://github.com/jeremyfyke>`_
 * Tom Keel <thomas.keel.18@ucl.ac.uk> `@Thomasjkeel <https://github.com/Thomasjkeel>`_
+* Marie-Pier Labonté <labonte.marie-pier@ouranos.ca> `@marielabonte <https://github.com/marielabonte>`_
+* Ludwig Lierhammer <ludwig.lierhammer@hereon.de> `@ludwiglierhammer <https://github.com/ludwiglierhammer>`_
 * Jwen Fai Low `@jwenfai <https://github.com/jwenfai>`_
-* Marie-Pier Labonté `@marielabonte <https://github.com/marielabonte>`_
 * Jamie Quinn <jamiejquinn@jamiejquinn.com> `@JamieJQuinn <https://github.com/JamieJQuinn>`_
-* Philippe Roy <roy.philippe@ouranos.ca> `@Balinus <https://github.com/Balinus>`_
 * Yannick Rousseau
+* Philippe Roy `@Balinus <https://github.com/Balinus>`_
 * Dougie Squire <dougiesquire@gmail.com> `@dougiesquire <https://github.com/dougiesquire>`_
 * Ag Stephens <ag.stephens@stfc.ac.uk> `@agstephens <https://github.com/agstephens>`_
 * Maliko Tanguy <malngu@ceh.ac.uk> `@malngu <https://github.com/malngu>`_
-* Alexis Beaupré-Laperrière `@Beauprel <https://github.com/Beauprel>`_
+* Christopher Whelan `@qwhelan <https://github.com/qwhelan>`_
