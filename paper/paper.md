@@ -30,7 +30,7 @@ authors:
  - name: Éric Dupuis
    orcid: 0000-0001-7976-4596
    affiliation: 1
- - name: Gabriel Rondeau-Genessse
+ - name: Gabriel Rondeau-Genesse
    orcid: 0000-0003-3389-9406
    affiliation: 1
  - name: Raquel Alegre
