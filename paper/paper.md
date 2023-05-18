@@ -151,10 +151,10 @@ In order to better support the international community, `xclim` provides methods
 ## Other utilities
 
 Among the various modules within `xclim`, a few merit explicit mention;
- - `xclim.cli` implements a command-line interface to most features to enable the use of xclim in shell-scripted workflows;
- - various pseudo-indices provided in `xclim.core.dataflags` can be used to find aberrant values in climate data
- - `xclim.core.datachecks` and `xclim.core.cfchecks` comprise many lower-level functions for evaluating units, dataset consistency, and completeness of metadata;
- - and `xclim.core.calendar` provides numerous tools for standardizing the various calendar systems found in modelled climate datasets.
+   - `xclim.cli` implements a command-line interface to most features to enable the use of xclim in shell-scripted workflows;
+   - various pseudo-indices provided in `xclim.core.dataflags` can be used to find aberrant values in climate data
+   - `xclim.core.datachecks` and `xclim.core.cfchecks` comprise many lower-level functions for evaluating units, dataset consistency, and completeness of metadata;
+   - and `xclim.core.calendar` provides numerous tools for standardizing the various calendar systems found in modelled climate datasets.
 
 # Projects using `xclim`
 
