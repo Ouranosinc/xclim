@@ -82,29 +82,29 @@ authors:
 affiliations:
  - name: Ouranos Consortium, Montréal, Québec, Canada
    index: 1
- - name: Centre européen de recherche et de formation avancée en calcul scientifique (CERFACS), France
+ - name: Centre européen de recherche et de formation avancée en calcul scientifique (CERFACS), Toulouse, France
    index: 2
- - name: University College London (UCL), United Kingdom
+ - name: University College London (UCL), London, United Kingdom
    index: 3
- - name: Deutsches Klimarechenzentrum (DKRZ), Germany
+ - name: Deutsches Klimarechenzentrum (DKRZ), Hamburg, Germany
    index: 4
  - name: Environment and Climate Change Canada (ECCC), Canada
    index: 5
- - name: Helmholtz-Zentrum Hereon, Germany
+ - name: Helmholtz-Zentrum Hereon, Geesthacht, Germany
    index: 6
- - name: Commonwealth Scientific and Industrial Research Organisation (CSIRO), Australia
+ - name: Commonwealth Scientific and Industrial Research Organisation (CSIRO), Adelaide, Australia
    index: 7
  - name: Centre for Environmental Data Analysis (CEDA), United Kingdom
    index: 8
- - name: UK Centre for Ecology & Hydrology (CEH), Wallingford, United Kingdom
+ - name: UK Centre for Ecology & Hydrology (UKCEH), Wallingford, United Kingdom
    index: 9
  - name: Jakarto, Montréal, Québec, Canada
    index: 10
- - name: Institut de recherche d'Hydro-Québec (IREQ), Québec, Canada
+ - name: Institut de recherche d'Hydro-Québec (IREQ), Varennes, Québec, Canada
    index: 11
  - name: Hydro-Québec, Québec, Canada
    index: 12
- - name: Grantham Institute for Climate Change and the Environment, Imperial College London, United Kingdom
+ - name: Grantham Institute for Climate Change and the Environment, Imperial College London, London, United Kingdom
    index: 13
  - name: Independent Researcher, Canada
    index: 14
