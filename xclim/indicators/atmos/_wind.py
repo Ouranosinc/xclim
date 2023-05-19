@@ -5,9 +5,13 @@ from xclim.core.indicator import ResamplingIndicatorWithIndexing
 
 __all__ = [
     "calm_days",
-    "windy_days",
+    "sfcWind_max",
     "sfcWind_mean",
+    "sfcWind_min",
     "sfcWindmax_max",
+    "sfcWindmax_mean",
+    "sfcWindmax_min",
+    "windy_days",
 ]
 
 
@@ -40,6 +44,18 @@ windy_days = Wind(
     compute=indices.windy_days,
 )
 
+sfcWind_max = Wind(
+    title="Maximum near-surface mean wind speed",
+    identifier="sfcWind_max",
+    units="m s-1",
+    standard_name="wind_speed",
+    long_name="Maximum daily mean wind speed",
+    description="{freq} maximum of daily mean wind speed",
+    abstract="Maximum of daily mean near-surface wind speed.",
+    cell_methods="time: max over days",
+    compute=indices.sfcWind_max,
+)
+
 sfcWind_mean = Wind(
     title="Mean near-surface wind speed",
     identifier="sfcWind_mean",
@@ -52,6 +68,18 @@ sfcWind_mean = Wind(
     compute=indices.sfcWind_mean,
 )
 
+sfcWind_min = Wind(
+    title="Minimum near-surface mean wind speed",
+    identifier="sfcWind_min",
+    units="m s-1",
+    standard_name="wind_speed",
+    long_name="Minimum daily mean wind speed",
+    description="{freq} minimum of daily mean wind speed",
+    abstract="Minimum of daily mean near-surface wind speed.",
+    cell_methods="time: min over days",
+    compute=indices.sfcWind_min,
+)
+
 sfcWindmax_max = Wind(
     title="Maximum near-surface maximum wind speed",
     identifier="sfcWindmax_max",
@@ -62,4 +90,28 @@ sfcWindmax_max = Wind(
     abstract="Maximum of daily maximum near-surface wind speed.",
     cell_methods="time: max over days",
     compute=indices.sfcWindmax_max,
+)
+
+sfcWindmax_mean = Wind(
+    title="Mean near-surface maximum wind speed",
+    identifier="sfcWindmax_mean",
+    units="m s-1",
+    standard_name="wind_speed",
+    long_name="Mean daily maximum wind speed",
+    description="{freq} mean of daily maximum wind speed",
+    abstract="Mean of daily maximum near-surface wind speed.",
+    cell_methods="time: mean over days",
+    compute=indices.sfcWindmax_mean,
+)
+
+sfcWindmax_min = Wind(
+    title="Minimum near-surface maximum wind speed",
+    identifier="sfcWindmax_min",
+    units="m s-1",
+    standard_name="wind_speed",
+    long_name="Minimum daily maximum wind speed",
+    description="{freq} minimum of daily maximum wind speed",
+    abstract="Minimum of daily maximum near-surface wind speed.",
+    cell_methods="time: min over days",
+    compute=indices.sfcWindmax_min,
 )

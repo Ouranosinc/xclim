@@ -63,8 +63,8 @@ or setting the variable at runtime:
 """
 
 __all__ = [
-    "TESTDATA_BRANCH",
     "PREFETCH_TESTING_DATA",
+    "TESTDATA_BRANCH",
     "add_example_file_paths",
     "generate_atmos",
     "populate_testing_data",

@@ -12,19 +12,17 @@ from . import generic
 
 __all__ = [
     "base_flow_index",
+    "melt_and_precip_max",
     "rb_flashiness_index",
     "snd_max_doy",
     "snow_melt_we_max",
-    "melt_and_precip_max",
     "snw_max",
     "snw_max_doy",
 ]
 
 
 @declare_units(q="[discharge]")
-def base_flow_index(
-    q: xarray.DataArray, freq: str = "YS"
-) -> xarray.DataArray:  # noqa: D401
+def base_flow_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""Base flow index.
 
     Return the base flow index, defined as the minimum 7-day average flow divided by the mean flow.
@@ -68,9 +66,7 @@ def base_flow_index(
 
 
 @declare_units(q="[discharge]")
-def rb_flashiness_index(
-    q: xarray.DataArray, freq: str = "YS"
-) -> xarray.DataArray:  # noqa: D401
+def rb_flashiness_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     r"""Richards-Baker flashiness index.
 
     Measures oscillations in flow relative to total flow, quantifying the frequency and rapidity of short term changes

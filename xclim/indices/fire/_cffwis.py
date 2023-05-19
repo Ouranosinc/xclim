@@ -1,4 +1,3 @@
-# noqa: D205,D400
 r"""
 Canadian Forest Fire Weather Index System
 =========================================
@@ -143,26 +142,16 @@ from xclim.core.units import convert_units_to, declare_units
 from xclim.core.utils import Quantified
 from xclim.indices import run_length as rl
 
-# TODO: Protected functions will be removed from __all__ in xclim v0.39
 __all__ = [
     "DAY_LENGTHS",
     "DAY_LENGTH_FACTORS",
-    "_convert_parameters",
-    "_day_length",
-    "_day_length_factor",
-    "_drought_code",
-    "_duff_moisture_code",
-    "_fine_fuel_moisture_code",
-    "_fire_season",
-    "_fire_weather_calc",
-    "_overwintering_drought_code",
     "build_up_index",
-    "fire_weather_index",
     "cffwis_indices",
-    "fire_weather_ufunc",
     "daily_severity_rating",
     "drought_code",
     "fire_season",
+    "fire_weather_index",
+    "fire_weather_ufunc",
     "initial_spread_index",
     "overwintering_drought_code",
 ]
@@ -214,7 +203,7 @@ DAY_LENGTH_FACTORS = np.array(
 )
 
 
-@jit
+@jit(nopython=True)
 def _day_length(lat: int | float, mth: int):  # pragma: no cover
     """Return the average day length for a month within latitudinal bounds."""
     if -30 > lat >= -90:
@@ -234,7 +223,7 @@ def _day_length(lat: int | float, mth: int):  # pragma: no cover
     return dl[mth - 1]
 
 
-@jit
+@jit(nopython=True)
 def _day_length_factor(lat: float, mth: int):  # pragma: no cover
     """Return the day length factor."""
     if -15 > lat >= -90:
@@ -954,20 +943,24 @@ def fire_weather_ufunc(
         If True (default), grid points where the fire season is active on the first timestep go through a start-up phase
         for that time step. Otherwise, previous codes must be given as a continuing fire season is assumed for those points.
     carry_over_fraction : float
+        Carry over fraction.
     wetting_efficiency_fraction : float
         Drought code overwintering parameters, see :py:func:`overwintering_drought_code`.
     temp_start_thresh : float
-      Starting temperature threshold.
+        Starting temperature threshold.
     temp_end_thresh : float
-      Ending temperature threshold.
+        Ending temperature threshold.
     temp_condition_days : int
-      The number of days' temperature condition to consider.
+        The number of days' temperature condition to consider.
     snow_thresh : float
+        The snow threshold.
     snow_condition_days : int
         Parameters for the fire season determination. See :py:func:`fire_season`. Temperature is in degC, snow in m.
         The `snow_thresh` parameters is also used when `dry_start` is set to "GFWED", see Notes.
     dc_start : float
+        DC start.
     dmc_start : float
+        DMC start.
     ffmc_start : float
         Default starting values for the three base codes.
     prec_thresh : float
@@ -977,7 +970,9 @@ def fire_weather_ufunc(
     dmc_dry_factor : float
         DMC's start-up values for the "dry start" mechanism, see Notes.
     snow_cover_days : int
+        Snow cover days.
     snow_min_cover_frac : float
+        Snow minimum cover fraction.
     snow_min_mean_depth : float
         Additional parameters for GFWED's version of the "dry start" mechanism. See Notes. Snow depth is in m.
 
@@ -1243,9 +1238,7 @@ def overwintering_drought_code(
 
 
 # TODO: The `noqa` can be removed when this function is no longer public
-def _convert_parameters(
-    params: dict[str, int | float]
-) -> dict[str, int | float]:  # noqa: D103
+def _convert_parameters(params: dict[str, int | float]) -> dict[str, int | float]:
     for param, value in params.copy().items():
         if param not in default_params:
             raise ValueError(

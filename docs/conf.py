@@ -125,7 +125,8 @@ linkcheck_ignore = [
     # Bad ssl certificate
     r"https://hal.inrae.fr/hal-02843898",
     # Added on 2022-12-05: Taylor and Francis online does not allow linkcheck requests (error 403)
-    r"https://www.tandfonline.com/.*" r"https://doi.org/10.1080/.*",
+    r"https://www.tandfonline.com/.*",
+    r"https://doi.org/10.1080/.*",
     # Added on 2022-12-08: Site appears to be down (timeout)
     r"http://www.utci.org/.*",
     # Added on 2023-01-24: bad ssl certificate

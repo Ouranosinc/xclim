@@ -1,4 +1,3 @@
-# noqa: D205,D400
 """
 Adjustment Algorithms
 =====================
@@ -219,7 +218,7 @@ def scaling_adjust(ds, *, group, interp, kind) -> xr.Dataset:
 
 
 def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
-    """N-pdf transform : Iterative univariate adjustment in random rotated spaces.
+    r"""N-pdf transform : Iterative univariate adjustment in random rotated spaces.
 
     Parameters
     ----------
@@ -229,8 +228,7 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
             hist : simulated timeseries on the reference period
             sim : Simulated timeseries on the projected period.
             rot_matrices : Random rotation matrices.
-
-    **kwargs
+    \*\*kwargs
         pts_dim : multivariate dimension name
         base : Adjustment class
         base_kws : Kwargs for initialising the adjustment object

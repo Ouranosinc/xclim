@@ -468,15 +468,15 @@
   },
   "COLD_SPELL_FREQUENCY": {
     "long_name": "Nombre total de séries d'au moins {window} jours consécutifs où la température quotidienne moyenne est sous {thresh}.",
-    "description": "Nombre {freq:m} de vagues de froid. Une vague de froid se produit lorsque la température minimale quotidienne est sous {thresh} durant au moins {window} jours consécutifs.",
+    "description": "Nombre {freq:m} de vagues de froid. Une vague de froid se produit lorsque la température quotidienne moyenne est sous {thresh} durant au moins {window} jours consécutifs.",
     "title": "Nombre de vagues de froid",
-    "abstract": "Nombre de vagues de froid. Une vague de froid se produit lorsque la température minimale quotidienne est sous un seuil durant au moins un certain nombre de jours consécutifs."
+    "abstract": "Nombre de vagues de froid. Une vague de froid se produit lorsque la température quotidienne moyenne est sous un seuil durant au moins un certain nombre de jours consécutifs."
   },
   "COLD_SPELL_DAYS": {
     "long_name": "Nombre total de jours constituant des événements d'au moins {window} jours consécutifs où la température quotidienne moyenne est sous {thresh}",
-    "description": "Nombre {freq:m} de jours faisant partie d'une vague de froid. Une vague de froid se produit lorsque la température minimale quotidienne est sous {thresh} durant au moins {window} jours consécutifs.",
+    "description": "Nombre {freq:m} de jours faisant partie d'une vague de froid. Une vague de froid se produit lorsque la température quotidienne moyenne est sous {thresh} durant au moins {window} jours consécutifs.",
     "title": "Nombre de jours faisant partie d'une vague de froid",
-    "abstract": "Nombre de jours faisant partie d'une vague de froid. Une vague de froid se produit lorsque la température minimale quotidienne est sous un seuil donné durant au moins un certain nombre de jours consécutifs."
+    "abstract": "Nombre de jours faisant partie d'une vague de froid. Une vague de froid se produit lorsque la température quotidienne moyenne est sous un seuil donné durant au moins un certain nombre de jours consécutifs."
   },
   "COOL_NIGHT_INDEX": {
     "long_name": "Indice de fraîcheur des nuits",
@@ -774,11 +774,35 @@
     "long_name": "Vent du sud près de la surface",
     "description": "Vitesse du vent du sud près de la surface calculé à partir de la vitesse et de la direction du vent."
   },
+  "SFCWIND_MIN": {
+    "long_name": "Minimum de la vitesse du vent près de la surface",
+    "description": "Minimum {freq:f} de la vitesse du vent près de la surface",
+    "title": "Minimum de la vitesse du vent près de la surface",
+    "abstract": "Minimum de la vitesse du du vent près de la surface"
+  },
   "SFCWIND_MEAN": {
     "long_name": "Moyenne de la vitesse du vent près de la surface",
     "description": "Moyenne {freq:f} de la vitesse du vent près de la surface",
     "title": "Moyenne de la vitesse du vent près de la surface",
     "abstract": "Moyenne de la vitesse du du vent près de la surface"
+  },
+  "SFCWIND_MAX": {
+    "long_name": "Maximum de la vitesse du vent près de la surface",
+    "description": "Maximum {freq:f} de la vitesse du vent près de la surface",
+    "title": "Maximum de la vitesse du vent près de la surface",
+    "abstract": "Maximum de la vitesse du du vent près de la surface"
+  },
+  "SFCWINDMAX_MIN": {
+    "long_name": "Minimum de la vitesse maximimale du vent près de la surface",
+    "description": "Minimum {freq:f} de la vitesse maximimale du vent près de la surface",
+    "title": "Minimum de la vitesse maximimale du vent près de la surface",
+    "abstract": "Minimum de la vitesse maximimale du vent près de la surface"
+  },
+  "SFCWINDMAX_MEAN": {
+    "long_name": "Moyenne de la vitesse maximimale du vent près de la surface",
+    "description": "Moyenne {freq:f} de la vitesse maximimale du vent près de la surface",
+    "title": "Moyenne de la vitesse maximimale du vent près de la surface",
+    "abstract": "Moyenne de la vitesse maximimale du vent près de la surface"
   },
   "SFCWINDMAX_MAX": {
     "long_name": "Maximum de la vitesse maximimale du vent près de la surface",
