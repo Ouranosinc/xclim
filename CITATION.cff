@@ -1,0 +1,164 @@
+cff-version: "1.2.0"
+authors:
+- family-names: Bourgault
+  given-names: Pascal
+  orcid: "https://orcid.org/0000-0003-1192-0403"
+- family-names: Huard
+  given-names: David
+  orcid: "https://orcid.org/0000-0003-0311-5498"
+- family-names: Smith
+  given-names: Trevor James
+  orcid: "https://orcid.org/0000-0001-5393-8359"
+- family-names: Logan
+  given-names: Travis
+  orcid: "https://orcid.org/0000-0002-2212-9580"
+- family-names: Aoun
+  given-names: Abel
+  orcid: "https://orcid.org/0000-0003-2289-2890"
+- family-names: Lavoie
+  given-names: Juliette
+  orcid: "https://orcid.org/0000-0002-4708-5182"
+- family-names: Dupuis
+  given-names: Éric
+  orcid: "https://orcid.org/0000-0001-7976-4596"
+- family-names: Rondeau-Genesse
+  given-names: Gabriel
+  orcid: "https://orcid.org/0000-0003-3389-9406"
+- family-names: Alegre
+  given-names: Raquel
+  orcid: "https://orcid.org/0000-0002-6081-0721"
+- family-names: Barnes
+  given-names: Clair
+  orcid: "https://orcid.org/0000-0002-7806-7913"
+- family-names: Laperrière
+  given-names: Alexis Beaupré
+- family-names: Biner
+  given-names: Sébastien
+  orcid: "https://orcid.org/0000-0001-7515-490X"
+- family-names: Caron
+  given-names: David
+- family-names: Ehbrecht
+  given-names: Carsten
+- family-names: Fyke
+  given-names: Jeremy
+  orcid: "https://orcid.org/0000-0002-4522-3019"
+- family-names: Keel
+  given-names: Tom
+  orcid: "https://orcid.org/0000-0001-9193-5271"
+- family-names: Labonté
+  given-names: Marie-Pier
+  orcid: "https://orcid.org/0000-0003-0738-3940"
+- family-names: Lierhammer
+  given-names: Ludwig
+  orcid: "https://orcid.org/0000-0002-7207-0003"
+- family-names: Low
+  given-names: Jwen-Fai
+  orcid: "https://orcid.org/0000-0001-6618-7443"
+- family-names: Quinn
+  given-names: Jamie
+- family-names: Roy
+  given-names: Philippe
+  orcid: "https://orcid.org/0000-0003-1239-7589"
+- family-names: Squire
+  given-names: Dougie
+  orcid: "https://orcid.org/0000-0003-3271-6874"
+- family-names: Stephens
+  given-names: Ag
+  orcid: "https://orcid.org/0000-0002-1038-7988"
+- family-names: Tanguy
+  given-names: Maliko
+  orcid: "https://orcid.org/0000-0002-1516-6834"
+- family-names: Whelan
+  given-names: Christopher
+contact:
+- family-names: Logan
+  given-names: Travis
+  orcid: "https://orcid.org/0000-0002-2212-9580"
+doi: 10.5281/zenodo.7916446
+message: If you use this software, please cite our article in the
+  Journal of Open Source Software.
+preferred-citation:
+  authors:
+  - family-names: Bourgault
+    given-names: Pascal
+    orcid: "https://orcid.org/0000-0003-1192-0403"
+  - family-names: Huard
+    given-names: David
+    orcid: "https://orcid.org/0000-0003-0311-5498"
+  - family-names: Smith
+    given-names: Trevor James
+    orcid: "https://orcid.org/0000-0001-5393-8359"
+  - family-names: Logan
+    given-names: Travis
+    orcid: "https://orcid.org/0000-0002-2212-9580"
+  - family-names: Aoun
+    given-names: Abel
+    orcid: "https://orcid.org/0000-0003-2289-2890"
+  - family-names: Lavoie
+    given-names: Juliette
+    orcid: "https://orcid.org/0000-0002-4708-5182"
+  - family-names: Dupuis
+    given-names: Éric
+    orcid: "https://orcid.org/0000-0001-7976-4596"
+  - family-names: Rondeau-Genesse
+    given-names: Gabriel
+    orcid: "https://orcid.org/0000-0003-3389-9406"
+  - family-names: Alegre
+    given-names: Raquel
+    orcid: "https://orcid.org/0000-0002-6081-0721"
+  - family-names: Barnes
+    given-names: Clair
+    orcid: "https://orcid.org/0000-0002-7806-7913"
+  - family-names: Laperrière
+    given-names: Alexis Beaupré
+  - family-names: Biner
+    given-names: Sébastien
+    orcid: "https://orcid.org/0000-0001-7515-490X"
+  - family-names: Caron
+    given-names: David
+  - family-names: Ehbrecht
+    given-names: Carsten
+  - family-names: Fyke
+    given-names: Jeremy
+    orcid: "https://orcid.org/0000-0002-4522-3019"
+  - family-names: Keel
+    given-names: Tom
+    orcid: "https://orcid.org/0000-0001-9193-5271"
+  - family-names: Labonté
+    given-names: Marie-Pier
+    orcid: "https://orcid.org/0000-0003-0738-3940"
+  - family-names: Lierhammer
+    given-names: Ludwig
+    orcid: "https://orcid.org/0000-0002-7207-0003"
+  - family-names: Low
+    given-names: Jwen-Fai
+    orcid: "https://orcid.org/0000-0001-6618-7443"
+  - family-names: Quinn
+    given-names: Jamie
+  - family-names: Roy
+    given-names: Philippe
+    orcid: "https://orcid.org/0000-0003-1239-7589"
+  - family-names: Squire
+    given-names: Dougie
+    orcid: "https://orcid.org/0000-0003-3271-6874"
+  - family-names: Stephens
+    given-names: Ag
+    orcid: "https://orcid.org/0000-0002-1038-7988"
+  - family-names: Tanguy
+    given-names: Maliko
+    orcid: "https://orcid.org/0000-0002-1516-6834"
+  - family-names: Whelan
+    given-names: Christopher
+  date-published: 2023-05-18
+  doi: 10.21105/joss.05415
+  issn: 2475-9066
+  issue: 85
+  journal: Journal of Open Source Software
+  publisher:
+    name: Open Journals
+  start: 5415
+  title: "xclim: xarray-based climate data analytics"
+  type: article
+  url: "https://joss.theoj.org/papers/10.21105/joss.05415"
+  volume: 8
+title: "xclim: xarray-based climate data analytics"
