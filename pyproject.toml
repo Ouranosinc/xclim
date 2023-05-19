@@ -120,6 +120,7 @@ omit = ["tests/*.py"]
 include = [
   "AUTHORS.rst",
   "CHANGES.rst",
+  "CITATION.cff",
   "CONTRIBUTING.rst",
   "LICENSE",
   "Makefile",
@@ -141,7 +142,16 @@ include = [
   "xclim/**/*.txt",
   "xclim/**/*.yml"
 ]
-exclude = [".*", "pylintrc", "**/__pycache__", "**/*.py[co]", "docs/_*", "docs/xclim*.rst", "docs/modules.rst"]
+exclude = [
+  "**/*.py[co]",
+  "**/__pycache__",
+  ".*",
+  "docs/_*",
+  "docs/modules.rst",
+  "docs/paper/*",
+  "docs/xclim*.rst",
+  "pylintrc"
+]
 
 [tool.isort]
 profile = "black"
