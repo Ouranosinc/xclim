@@ -10,6 +10,10 @@ Internal changes
 ^^^^^^^^^^^^^^^^
 * In order to ensure documentation can be rebuilt at a later time, errors raised by `sphinx` linkcheck are now set to be ignored when building the documentation. (:pull:`1375`).
 
+Bug fixes
+^^^^^^^^^
+* Fixed a bug in ``xclim.core.calendar.time_bnds`` when using ``DataArrayResample`` objects, caused by an upstream change in xarray 2023.5.0. (:issue:`1368`, :pull:`1377`).
+
 v0.43.0 (2023-05-09)
 --------------------
 Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Alexis Beaupré (:user:`Beauprel`), Éric Dupuis (:user:`coxipi`).
