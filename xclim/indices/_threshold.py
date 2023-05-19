@@ -1319,11 +1319,11 @@ def first_day_temperature_above(
 
 
 @declare_units(
-    prsnd="[precipitation]",
+    prsn="[precipitation]",
     thresh="[precipitation]",
 )
 def first_snowfall(
-    prsnd: xarray.DataArray,
+    prsn: xarray.DataArray,
     thresh: Quantified = "0.5 mm/day",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
@@ -1337,10 +1337,10 @@ def first_snowfall(
 
     Parameters
     ----------
-    prsnd : xarray.DataArray
-        Snowfall rate.
+    prsn : xarray.DataArray
+        Snowfall flux.
     thresh : Quantified
-        Threshold snowfall rate on which to base evaluation.
+        Threshold snowfall flux on which to base evaluation.
 
     freq : str
         Resampling frequency.
@@ -1355,19 +1355,16 @@ def first_snowfall(
     ----------
     :cite:cts:`cbcl_climate_2020`.
     """
-    try:
-        thresh = convert_units_to(thresh, prsnd)
-    except pint.DimensionalityError as e:
-        prsnd_dim, thresh_dim = (str2pint(v).dimensionality for v in [prsnd, thresh])
+    prsn_dim, thresh_dim = (str2pint(v).dimensionality for v in [prsn, thresh])
+    if (prsn_dim != thresh_dim):
         warnings.warn(
-            f"Dimensionality of the input snowfall ({prsnd_dim}) and threshold ({thresh_dim}) are mismatched."
-            "Both dimensionality should be the same. Expecting snowfall rate ([length]/[time]),"
-            "but snowfall flux is also accepted ([mass]/[area]/[time]). ``prsn_to_prsnd`` and ``prsnd_to_prsn`` "
-            "can be used for conversion."
+            f"Dimensionality of the input snowfall ({prsn_dim}) and threshold ({thresh_dim}) are mismatched."
+            "Converting threshold using 1000 kg m-3 density. Input snow array can be converted between snowfall rate ([length]/[time])"
+            "and snowfall flux with a constant/space-dependent density using ``prsn_to_prsnd`` and ``prsnd_to_prsn``"    
         )
-        raise e
 
-    cond = prsnd >= thresh
+    thresh = convert_units_to(thresh, prsn, context="hydro")
+    cond = prsn >= thresh
 
     out = cond.resample(time=freq).map(
         rl.first_run,
@@ -1375,16 +1372,16 @@ def first_snowfall(
         dim="time",
         coord="dayofyear",
     )
-    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(prsnd))
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(prsn))
     return out
 
 
 @declare_units(
-    prsnd="[precipitation]",
+    prsn="[precipitation]",
     thresh="[precipitation]",
 )
 def last_snowfall(
-    prsnd: xarray.DataArray,
+    prsn: xarray.DataArray,
     thresh: Quantified = "0.5 mm/day",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
@@ -1398,10 +1395,10 @@ def last_snowfall(
 
     Parameters
     ----------
-    prsnd : xarray.DataArray
-        Snowfall rate.
+    prsn : xarray.DataArray
+        Snowfall flux.
     thresh : Quantified
-        Threshold snowfall rate on which to base evaluation.
+        Threshold snowfall flux on which to base evaluation.
     freq : str
         Resampling frequency.
 
@@ -1416,19 +1413,16 @@ def last_snowfall(
     ----------
     :cite:cts:`cbcl_climate_2020`.
     """
-    try:
-        thresh = convert_units_to(thresh, prsnd)
-    except pint.DimensionalityError as e:
-        prsnd_dim, thresh_dim = (str2pint(v).dimensionality for v in [prsnd, thresh])
+    prsn_dim, thresh_dim = (str2pint(v).dimensionality for v in [prsn, thresh])
+    if (prsn_dim != thresh_dim):
         warnings.warn(
-            f"Dimensionality of the input snowfall ({prsnd_dim}) and threshold ({thresh_dim}) are mismatched."
-            "Both dimensionality should be the same. Expecting snowfall rate ([length]/[time]),"
-            "but snowfall flux is also accepted ([mass]/[area]/[time]). ``prsn_to_prsnd`` and ``prsnd_to_prsn`` "
-            "can be used for conversion."
+            f"Dimensionality of the input snowfall ({prsn_dim}) and threshold ({thresh_dim}) are mismatched."
+            "Converting threshold using 1000 kg m-3 density. Input snow array can be converted between snowfall rate ([length]/[time])"
+            "and snowfall flux with a constant/space-dependent density using ``prsn_to_prsnd`` and ``prsnd_to_prsn``"    
         )
-        raise e
 
-    cond = prsnd >= thresh
+    thresh = convert_units_to(thresh, prsn, context="hydro")
+    cond = prsn >= thresh
 
     out = cond.resample(time=freq).map(
         rl.last_run,
@@ -1436,19 +1430,19 @@ def last_snowfall(
         dim="time",
         coord="dayofyear",
     )
-    out.attrs["units"] = ""
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(prsn))
     return out
 
 
 @declare_units(
-    prsnd="[precipitation]",
-    thresh_min="[precipitation]",
-    thresh_max="[precipitation]",
+    prsn="[precipitation]",
+    low="[precipitation]",
+    high="[precipitation]",
 )
 def days_with_snow(
-    prsnd: xarray.DataArray,
-    thresh_min: Quantified = "0 mm/day",
-    thresh_max: Quantified = "1e12 mm/day",
+    prsn: xarray.DataArray,
+    low: Quantified = "0 mm/day",
+    high: Quantified = "1e12 mm/day",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
     r"""Days with snow.
@@ -1461,12 +1455,12 @@ def days_with_snow(
 
     Parameters
     ----------
-    prsnd : xarray.DataArray
-        Snowfall rate
-    thresh_min : Quantified
-        Minimum threshold snowfall rate.
-    thresh_max : Quantified
-        Maximum threshold snowfall rate.
+    prsn : xarray.DataArray
+        Snowfall flux
+    low : Quantified
+        Minimum threshold snowfall flux.
+    high : Quantified
+        Maximum threshold snowfall flux.
      freq : str
         Resampling frequency.
 
@@ -1479,10 +1473,10 @@ def days_with_snow(
     ----------
     :cite:cts:`matthews_planning_2017`
     """
-    thresh_min = convert_units_to(thresh_min, prsnd)
-    thresh_max = convert_units_to(thresh_max, prsnd)
-    out = domain_count(prsnd, thresh_min, thresh_max, freq)
-    return to_agg_units(out, prsnd, "count")
+    low = convert_units_to(low, prsn)
+    high = convert_units_to(high, prsn)
+    out = domain_count(prsn, low, high, freq)
+    return to_agg_units(out, prsn, "count")
 
 
 @declare_units(
@@ -1520,7 +1514,7 @@ def snowfall_frequency(
     ----------
     :cite:cts:`frei_snowfall_2018`
     """
-    snow_days = days_with_snow(prsnd, thresh_min=thresh, freq=freq)
+    snow_days = days_with_snow(prsnd, low=thresh, freq=freq)
     total_days = prsnd.resample(time=freq).count(dim="time")
     snow_freq = snow_days / total_days * 100
     snow_freq = snow_freq.assign_attrs(**snow_days.attrs)

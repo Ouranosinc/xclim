@@ -864,7 +864,7 @@
     "title": "Approximation de la neige",
     "abstract": "Précipitation solide estimée à partir de la précipitation totale et de la température selon une méthode et un seuil de température donnés."
   },
-  "SND_FROM_SNW": {
+  "SNW_TO_SND": {
     "long_name": "Épaisseur de neige",
     "description": "Épaisseur de neige calculée à partir de sa quantité et de sa densité.",
     "title": "Épaisseur de neige",
@@ -888,7 +888,7 @@
     "title": "Intensité de la chute de neige",
     "abstract": "Chute de neige moyenne au-dessus d'un seuil donné."
   },
-  "SNW_FROM_SND": {
+  "SND_TO_SNW": {
     "long_name": "Quantité de neige à la surface",
     "description": "Quantité de neige calculée à partir de son épaisseur et de sa densité.",
     "title": "Quantité de neige à la surface",
@@ -913,8 +913,8 @@
     "abstract": "Premier jour d'une période où la chute de neige est au-dessus d'un seuil donné."
   },
   "DAYS_WITH_SNOW": {
-    "long_name": "Nombre de jours où la chute de neige se trouve entre une borne de {thresh_min} et {thresh_max}",
-    "description": "Nombre {freq:m} de jours où la chute de neige est plus grande que {thresh_min} et plus petite ou égale à {thresh_max}.",
+    "long_name": "Nombre de jours où la chute de neige se trouve entre une borne de {low} et {high}",
+    "description": "Nombre {freq:m} de jours où la chute de neige est plus grande que {low} et plus petite ou égale à {high}.",
     "title": "Jours avec neige",
     "abstract": "Nombre de jours où la neige est entre une borne inférieure et supérieure."
   },

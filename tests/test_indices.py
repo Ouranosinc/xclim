@@ -2521,7 +2521,7 @@ def test_days_with_snow(prsnd_series):
     # Days with 0 and 1 are not counted, because condition is > thresh, not >=.
     assert sum(out) == 364
 
-    out = xci.days_with_snow(prsnd, thresh_min="10 mm/day", thresh_max="20 mm/day")
+    out = xci.days_with_snow(prsnd, low="10 mm/day", high="20 mm/day")
     np.testing.assert_array_equal(out, [10, 0])
     assert out.units == "d"
 
