@@ -1461,7 +1461,7 @@ def days_with_snow(
         Minimum threshold snowfall flux.
     high : Quantified
         Maximum threshold snowfall flux.
-     freq : str
+    freq : str
         Resampling frequency.
 
     Returns
@@ -1479,7 +1479,7 @@ def days_with_snow(
             f"Dimensionality of the input snowfall ({prsn_dim}) and of one or both thresholds (low:{low_dim}, high:{high_dim}) are mismatched."
             "Converting threshold using 1000 kg m-3 density. Input snow array can be converted between snowfall rate ([length]/[time])"
             "and snowfall flux with a constant/space-dependent density using ``prsn_to_prsnd`` and ``prsnd_to_prsn``"    
-        )
+    )
 
     low = convert_units_to(low, prsn, context="hydro")
     high = convert_units_to(high, prsn, context="hydro")
