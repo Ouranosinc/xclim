@@ -148,8 +148,8 @@ exclude = [
   ".*",
   "docs/_*",
   "docs/modules.rst",
+  "docs/paper/*",
   "docs/xclim*.rst",
-  "paper/*",
   "pylintrc"
 ]
 
