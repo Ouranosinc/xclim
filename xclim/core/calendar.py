@@ -38,6 +38,7 @@ __all__ = [
     "common_calendar",
     "compare_offsets",
     "convert_calendar",
+    "convert_doy",
     "date_range",
     "date_range_like",
     "datetime_to_decimal_year",
@@ -230,6 +231,38 @@ def common_calendar(calendars: Sequence[str], join="outer") -> str:
     if join == "inner":
         return calendars[0]
     raise NotImplementedError(f"Unknown join criterion `{join}`.")
+
+
+def convert_doy(
+    source: xr.DataArray,
+    target: xr.DataArray | str,
+    source_cal: str | None = None,
+    align_on: str = "year",
+    missing: Any = np.nan,
+    dim: str = "time",
+) -> xr.DataArray:
+    """Convert the calendar of day of year (doy) data.
+
+    Parameters
+    ----------
+    source : xr.DataArray
+      Day of year data (range [1, 366], max depending on the calendar).
+    target : str
+      Name of the calendar to convert to.
+      Of the new `dim` axis, as converted by `convert_calendar` (must have the same size as on the source).
+    source_cal : str, optional
+      Calendar the doys are in. If not given, uses the "calendar" attribute of `source` or,
+      if absent, the calendar of its `dim` axis.
+    align_on : {'date', 'year'}
+      If 'year' (default), the doy is seen as a "percentage" of the year and is simply rescaled unto the new doy range.
+      This always result in floating point data, changing the decimal part of the value.
+      if 'date', the doy is seen as a specific date. See notes. This never changes the decimal part of the value.
+    missing : Any
+      If `align_on` is "date" and the new doy doesn't exist in the new calendar, this value is used.
+    dim : str
+      Name of the temporal dimension.
+    """
+    pass
 
 
 def convert_calendar(
