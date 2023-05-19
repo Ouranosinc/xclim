@@ -1441,8 +1441,8 @@ def last_snowfall(
 )
 def days_with_snow(
     prsn: xarray.DataArray,
-    low: Quantified = "0 mm/day",
-    high: Quantified = "1e12 mm/day",
+    low: Quantified = "0 kg m-2 s-1",
+    high: Quantified = "1E6 kg m-2 s-1",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
     r"""Days with snow.
@@ -1473,8 +1473,16 @@ def days_with_snow(
     ----------
     :cite:cts:`matthews_planning_2017`
     """
-    low = convert_units_to(low, prsn)
-    high = convert_units_to(high, prsn)
+    prsn_dim, low_dim, high_dim = (str2pint(v).dimensionality for v in [prsn, low, high])
+    if (prsn_dim != low_dim or prsn_dim != high_dim):
+        warnings.warn(
+            f"Dimensionality of the input snowfall ({prsn_dim}) and of one or both thresholds (low:{low_dim}, high:{high_dim}) are mismatched."
+            "Converting threshold using 1000 kg m-3 density. Input snow array can be converted between snowfall rate ([length]/[time])"
+            "and snowfall flux with a constant/space-dependent density using ``prsn_to_prsnd`` and ``prsnd_to_prsn``"    
+        )
+
+    low = convert_units_to(low, prsn, context="hydro")
+    high = convert_units_to(high, prsn, context="hydro")
     out = domain_count(prsn, low, high, freq)
     return to_agg_units(out, prsn, "count")
 
@@ -1514,7 +1522,10 @@ def snowfall_frequency(
     ----------
     :cite:cts:`frei_snowfall_2018`
     """
-    snow_days = days_with_snow(prsnd, low=thresh, freq=freq)
+    # High threshold here just needs to be a big value. It is converted to same units as 
+    # so that a warning message won't be triggered just because of this value 
+    high = convert_units_to("1E6 kg m-2 s-1", thresh, context="hydro")
+    snow_days = days_with_snow(prsnd, low=thresh, high=high, freq=freq)
     total_days = prsnd.resample(time=freq).count(dim="time")
     snow_freq = snow_days / total_days * 100
     snow_freq = snow_freq.assign_attrs(**snow_days.attrs)
