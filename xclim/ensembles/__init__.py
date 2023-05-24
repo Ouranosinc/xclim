@@ -18,5 +18,4 @@ from ._reduce import (
     make_criteria,
     plot_rsqprofile,
 )
-
 from ._robustness import change_significance, robustness_coefficient
