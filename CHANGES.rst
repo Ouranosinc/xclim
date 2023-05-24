@@ -4,11 +4,16 @@ Changelog
 
 v0.44.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Pascal Bourgault (:user:`aulemahal`).
 
 Announcements
 ^^^^^^^^^^^^^
 * `xclim: xarray-based climate data analytics` has been published in the Journal of Open Source Software (`DOI:10.21105/joss.05415 <https://doi.org/10.21105/joss.05415>`_). Users can now make use of the `Cite this repository` button in the sidebar for academic purposes. Many thanks to our core developers and user base for their fine contributions over the years! (:issue:`95`, :pull:`250`).
+
+New indicators
+^^^^^^^^^^^^^^
+* New indices and indicators (`{cold | dry}_spell_max_length`) for calculating maximum length of {cold | dry} spell events. (:issue:`1352`, :pull:`1359`).
+* New indices and indicators (`dry_spell_frequency`) for calculating total number of dry spells. (:issue:`1352`, :pull:`1359`).
 
 Bug fixes
 ^^^^^^^^^
