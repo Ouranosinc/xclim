@@ -4,8 +4,7 @@
 Contributing
 ============
 
-Contributions are welcome, and they are greatly appreciated! Every little bit
-helps, and credit will always be given.
+Contributions are welcome, and they are greatly appreciated! Every little bit helps, and credit will always be given.
 
 You can contribute in many ways:
 
@@ -15,7 +14,7 @@ Types of Contributions
 Implement Features, Indices or Indicators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-xclim's structure makes it easy to create and register new user-defined indices and indicators.
+`xclim`'s structure makes it easy to create and register new user-defined indices and indicators.
 For the general implementation of indices and their wrapping into indicators, refer to
 :ref:`notebooks/extendxclim:Extending xclim`  and  :ref:`notebooks/customize:Customizing and controlling xclim`.
 
@@ -35,7 +34,7 @@ General to-do list for implementing a new Indicator:
 2. Add unit tests
 
     * Indices are best tested with made up, idealized data to explicitly test the edge cases. Many pytest fixtures are available to help this data generation.
-    * Tests should be added as one or more functions in ``xclim/testing/tests/test_indices.py``, see other tests for inspiration.
+    * Tests should be added as one or more functions in ``tests/test_indices.py``, see other tests for inspiration.
 
 3. Add the indicator
 
@@ -47,8 +46,9 @@ General to-do list for implementing a new Indicator:
 4. Add unit tests
 
     * Indicators are best tested with real data, also looking at missing value propagation and metadata formatting.
-      In addition to the ``atmos_ds`` fixture, only datasets that can be accessed with :py:func:`xclim.testing.open_dataset` should be used.
-    * Tests are added in the most relevant ``xclim/testing/tests/test_{variable}.py`` file.
+      In addition to the ``atmosds`` fixture, only datasets that can be accessed with :py:func:`xclim.testing.open_dataset` should be used.
+      For convenience, this special function is accessible as the ``open_dataset`` pytest fixture.
+    * Tests are added in the most relevant ``tests/test_{variable}.py`` file.
 
 5. Add French translations
 
@@ -105,7 +105,7 @@ If you are proposing a feature:
 
 * Explain in detail how it would work.
 * Keep the scope as narrow as possible, to make it easier to implement.
-* The Xclim development team welcomes you and is always on hand to help. :)
+* The xclim development team welcomes you and is always on hand to help. :)
 
 Get Started!
 ------------
@@ -139,18 +139,23 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
   Instead of ``pre-commit``, you could also verify your changes manually with `black`, `flake8`, `flake8-rst-docstrings`, `pydocstyle`, and `yamllint`::
 
-    $ black --check --target-version py38 xclim xclim/testing/tests
+    $ black --check --target-version py38 xclim tests
     $ black --check --target-version py38 --include "\.ipynb$" docs
-    $ flake8 xclim xclim/testing/tests
+    $ flake8 xclim tests
     $ pydocstyle --config=setup.cfg xclim xclim
     $ yamllint --config-file .yamllint.yaml xclim
 
-6. When unit/doc tests are added or notebooks updated, use ``pytest`` to run them. Alternatively, one can use ``tox`` to run all testing suites as would github do when the PR is submitted and new commits are pushed::
+6. When unit/doc tests are added or notebooks updated, use ``$ pytest`` to run them. Alternatively, one can use ``$ tox`` to run all testing suites as would github do when the PR is submitted and new commits are pushed::
 
-    $ pytest --nbval docs/notebooks  # for notebooks, exclusively.
-    $ pytest --no-cov --rootdir xclim/testing/tests/ --xdoctest xclim --ignore=xclim/testing/tests/  # for doctests, exclusively.
+    $ pytest --no-cov --nbval --dist=loadscope --rootdir=tests/ docs/notebooks --ignore=docs/notebooks/example.ipynb  # for notebooks, exclusively.
+    $ pytest --no-cov --rootdir=tests/ --xdoctest xclim  # for doctests, exclusively.
     $ pytest  # for all unit tests, excluding doctests and notebooks.
     $ tox  # run all testing suites
+
+.. note::
+    `xclim` tests are organized to support the `pytest-xdist <https://pytest-xdist.readthedocs.io/en/latest/>`_ plugin for distributed testing across workers or CPUs. In order to benefit from multiple processes, add the flag `--numprocesses=auto` or `-n auto` to your `pytest` calls.
+
+    When running tests via `tox`, `numprocesses` is set to the number of logical cores available (`numprocesses=logical`), with a maximum amount of `8`.
 
 7. Docs should also be tested to ensure that the documentation will build correctly on ReadTheDocs. This can be performed in a number of ways::
 
@@ -162,7 +167,6 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 8. After clearing the previous checks, commit your changes and push your branch to GitHub::
 
     $ git add *
-
     $ git commit -m "Your detailed description of your changes."
 
 If installed, `pre-commit` will run checks at this point:
@@ -181,7 +185,7 @@ Pull Request Guidelines
 Before you submit a pull request, please follow these guidelines:
 
 1. Open an *issue* on our `GitHub repository`_ with your issue that you'd like to fix or feature that you'd like to implement.
-2. Perform the changes, commit and push them either to new a branch within Ouranosinc/xclim or to your personal fork of xclim.
+2. Perform the changes, commit and push them either to new a branch within `Ouranosinc/xclim` or to your personal fork of xclim.
 
 .. warning::
      Try to keep your contributions within the scope of the issue that you are addressing.
@@ -223,15 +227,48 @@ Before you submit a pull request, please follow these guidelines:
      ^^^^^^^^^^^^^^^^
      * Updated the contribution guidelines. (:issue:`868`, :pull:`869`).
 
-   If this is your first contribution to Ouranosinc/xclim, we ask that you also add your name to the `AUTHORS.rst <https://github.com/Ouranosinc/xclim/blob/master/AUTHORS.rst>`_,
+   If this is your first contribution to `Ouranosinc/xclim`, we ask that you also add your name to the `AUTHORS.rst <https://github.com/Ouranosinc/xclim/blob/master/AUTHORS.rst>`_,
    under *Contributors* as well as to the `.zenodo.json <https://github.com/Ouranosinc/xclim/blob/master/.zenodo.json>`_, at the end of the *creators* block.
+
+Updating Testing Data
+~~~~~~~~~~~~~~~~~~~~~
+
+If your code changes require changes to the testing data of `xclim` (i.e.: modifications to existing datasets or new datasets),
+these changes must be made via a Pull Request at https://github.com/Ouranosinc/xclim-testdata.
+
+`xclim` allows for developers to test specific branches/versions of `xclim-testdata` via the `XCLIM_TESTDATA_BRANCH` environment variable, either through export, e.g.::
+
+    $ export XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data"
+
+    $ pytest
+    # or, alternatively:
+    $ tox
+
+or by setting the variable at runtime::
+
+    $ env XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data" pytest
+    # or, alternatively:
+    $ env XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data" tox
+
+This will ensure that tests load the testing data from this branch before running.
+
+If you wish to test a specific branch using GitHub CI, this can be set in `.github/workflows/main.yml`:
+
+.. code-block:: yaml
+
+    env:
+      XCLIM_TESTDATA_BRANCH: my_new_branch_of_testing_data
+
+.. warning::
+    In order for a Pull Request to be allowed to merge to main development branch, this variable must match the latest tagged commit name on `Ouranosinc/xclim-testdata`.
+    We suggest merging changed testing data first, tagging a new version of `xclim-testdata`, then re-running tests on your Pull Request at `Ouranosinc/xclim` with the newest tag.
 
 Tips
 ----
 
 To run a subset of tests, we suggest a few approaches. For running only a test file::
 
-    $ pytest xclim/testing/tests/test_xclim.py
+    $ pytest tests/test_xclim.py
 
 To skip all slow tests::
 
@@ -304,10 +341,11 @@ When publishing on GitHub, maintainers will need to generate the release notes f
     # For ReStructuredText format (offered for convenience):
     $ xclim release_notes -r
 
-When publishing to GitHub, you will still need to replace subsection headers in the Markdown (`^^^^` -> `###`) and the history published should not extend past the changes for the current version. This behaviour may eventually change.
+.. note::
+    The changelog should not extend past those entries relevant for the current version.
 
 .. warning::
-    Be warned that a published package version on PyPI can never be overwritten. Be sure to verify that the package published at https://test.pypi.org/project/xclim/ matches expectations before publishing a version on GitHub.
+    A published version on PyPI can never be overwritten. Be sure to verify that the package published at https://test.pypi.org/project/xclim/ matches expectations before publishing a version on GitHub.
 
 The Manual Approach
 ~~~~~~~~~~~~~~~~~~~
@@ -344,10 +382,10 @@ Before updating the main conda-forge recipe, we *strongly* suggest performing th
  * Ensure that dependencies and dependency versions correspond with those of the tagged version, with open or pinned versions for the `host` requirements.
  * If possible, configure tests within the conda-forge build CI (e.g. `imports: xclim`, `commands: pytest xclim`)
 
+.. _`GitHub Repository`: https://github.com/Ouranosinc/xclim
+.. _`PEP8`: https://peps.python.org/pep-0008/
 .. _`numpydoc`: https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
 .. _`reStructuredText (ReST)`: https://www.jetbrains.com/help/pycharm/using-docstrings-to-specify-types.html
 .. _`reStructuredText Primer`: https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
-.. _`GitHub Repository`: https://github.com/Ouranosinc/xclim
-.. _`PEP8`: https://peps.python.org/pep-0008/
 .. _`sphinxcontrib-bibtex`: https://sphinxcontrib-bibtex.readthedocs.io
 .. _`xclim on TestPyPI`: https://test.pypi.org/project/xclim/

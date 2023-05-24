@@ -120,18 +120,19 @@ def genextreme(request):
     return da
 
 
-def test_fit(fitda):
-    p = stats.fit(fitda, "lognorm")
+class TestFit:
+    def test_fit(self, fitda):
+        p = stats.fit(fitda, "lognorm")
 
-    assert p.dims[0] == "dparams"
-    assert p.get_axis_num("dparams") == 0
-    p0 = lognorm.fit(fitda.values[:, 0, 0])
-    np.testing.assert_array_equal(p[:, 0, 0], p0)
+        assert p.dims[0] == "dparams"
+        assert p.get_axis_num("dparams") == 0
+        p0 = lognorm.fit(fitda.values[:, 0, 0])
+        np.testing.assert_array_equal(p[:, 0, 0], p0)
 
-    # Check that we can reuse the parameters with scipy distributions
-    cdf = lognorm.cdf(0.99, *p.values)
-    assert cdf.shape == (fitda.x.size, fitda.y.size)
-    assert p.attrs["estimator"] == "Maximum likelihood"
+        # Check that we can reuse the parameters with scipy distributions
+        cdf = lognorm.cdf(0.99, *p.values)
+        assert cdf.shape == (fitda.x.size, fitda.y.size)
+        assert p.attrs["estimator"] == "Maximum likelihood"
 
 
 def test_weibull_min_fit(weibull_min):
@@ -198,7 +199,6 @@ class TestPWMFit:
     @pytest.mark.parametrize("dist", stats._lm3_dist_map.keys())
     def test_get_lm3_dist(self, dist):
         """Check that parameterization for lmoments3 and scipy is identical."""
-        pytest.importorskip("lmoments3")
         dc = stats.get_dist(dist)
         lm3dc = stats.get_lm3_dist(dist)
         par = self.params[dist]
@@ -210,7 +210,6 @@ class TestPWMFit:
     @pytest.mark.parametrize("use_dask", [True, False])
     def test_pwm_fit(self, dist, use_dask):
         """Test that the fitted parameters match parameters used to generate a random sample."""
-        pytest.importorskip("lmoments3")
         n = 500
         dc = stats.get_dist(dist)
         par = self.params[dist]

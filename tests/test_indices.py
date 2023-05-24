@@ -14,7 +14,6 @@
 from __future__ import annotations
 
 import calendar
-import os
 
 import numpy as np
 import pandas as pd
@@ -25,7 +24,6 @@ from xclim import indices as xci
 from xclim.core.calendar import date_range, percentile_doy
 from xclim.core.options import set_options
 from xclim.core.units import ValidationError, convert_units_to, units
-from xclim.indices.generic import first_day_threshold_reached
 
 K2C = 273.15
 
@@ -415,9 +413,11 @@ class TestAgroclimaticIndices:
 
         mx = tasmax_series(mg + K2C + 10)
         mn = tasmin_series(mg + K2C - 10)
+
         out = xci.effective_growing_degree_days(
             tasmax=mx, tasmin=mn, method=method, freq="YS"
         )
+
         np.testing.assert_array_equal(out, np.array([np.NaN, expected]))
 
     # gamma reference results: Obtained with `monocongo/climate_indices` library
@@ -1142,6 +1142,23 @@ class TestHotSpellFrequency:
         )
         np.testing.assert_allclose(hsf.values, expected)
 
+    @pytest.mark.parametrize(
+        "resample_before_rl,expected",
+        [
+            (True, 1),
+            (False, 0),
+        ],
+    )
+    def test_resampling_order(self, tasmax_series, resample_before_rl, expected):
+        a = np.zeros(365)
+        a[5:35] = 31
+        tx = tasmax_series(a + K2C)
+
+        hsf = xci.hot_spell_frequency(
+            tx, resample_before_rl=resample_before_rl, freq="MS"
+        )
+        assert hsf[1] == expected
+
 
 class TestHotSpellMaxLength:
     @pytest.mark.parametrize(
@@ -1387,6 +1404,22 @@ class TestMaximumConsecutiveDryDays:
         pr = pr_series(a)
         out = xci.maximum_consecutive_dry_days(pr, freq="M")
         assert out[0] == 10
+
+    @pytest.mark.parametrize(
+        "resample_before_rl,expected",
+        [
+            (True, 26),
+            (False, 30),
+        ],
+    )
+    def test_resampling_order(self, pr_series, resample_before_rl, expected):
+        a = np.zeros(365) + 10
+        a[5:35] = 0
+        pr = pr_series(a)
+        out = xci.maximum_consecutive_dry_days(
+            pr, freq="M", resample_before_rl=resample_before_rl
+        )
+        assert out[0] == expected
 
 
 class TestMaximumConsecutiveTxDays:

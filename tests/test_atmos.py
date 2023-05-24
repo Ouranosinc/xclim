@@ -62,13 +62,17 @@ def test_wind_vector_from_speed():
     np.testing.assert_array_equal(vas.isnull(), [True, True, False])
 
 
-def test_relative_humidity_dewpoint(tas_series, hurs_series):
+def test_relative_humidity_dewpoint(timeseries):
     np.testing.assert_allclose(
         atmos.relative_humidity_from_dewpoint(
-            tas=tas_series(np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C),
-            tdps=tas_series(np.array([-15, -10, -2, 5, 10, 20, 29, 20, 30]) + K2C),
+            tas=timeseries(
+                np.array([-20, -10, -1, 10, 20, 25, 30, 40, 60]) + K2C, "tas"
+            ),
+            tdps=timeseries(
+                np.array([-15, -10, -2, 5, 10, 20, 29, 20, 30]) + K2C, "tdps"
+            ),
         ),
-        hurs_series([np.nan, 100, 93, 71, 52, 73, 94, 31, 20]),
+        timeseries([np.nan, 100, 93, 71, 52, 73, 94, 31, 20], "hurs"),
         rtol=0.02,
         atol=1,
     )
@@ -552,8 +556,6 @@ class TestUTCI:
         np.testing.assert_allclose(utci.isel(time=0), utci_exp, rtol=1e-03)
 
 
-@pytest.mark.skipif(sys.version_info == (3, 10), reason="Crashes often on Python3.10")
-@pytest.mark.thread_unsafe
 class TestMeanRadiantTemperature:
     def test_mean_radiant_temperature(self, atmosds):
         dataset = atmosds

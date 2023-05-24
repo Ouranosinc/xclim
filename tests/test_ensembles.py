@@ -22,12 +22,13 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+from pkg_resources import parse_version
+from scipy import __version__ as __scipy_version__
 from scipy.stats.mstats import mquantiles
 
 from xclim import ensembles
 from xclim.indices.stats import get_dist
-
-from .conftest import TESTDATA_BRANCH
+from xclim.testing.helpers import TESTDATA_BRANCH
 
 
 class TestEnsembleStats:
@@ -39,7 +40,6 @@ class TestEnsembleStats:
             ds = open_dataset(n, decode_times=False)
             ds["time"] = xr.decode_cf(ds).time
             ds_all.append(ds)
-
         ens = ensembles.create_ensemble(ds_all)
 
         assert len(ens.realization) == len(ensemble_dataset_objects["nc_files_simple"])
@@ -135,8 +135,8 @@ class TestEnsembleStats:
             ens = ensembles.create_ensemble((d1, d2))
             assert ens.time.size == 48
             np.testing.assert_equal(ens.isel(time=0), [np.nan, 0])
-
         ens = ensembles.create_ensemble((d1, d2), resample_freq="MS")
+
         assert ens.time.size == 24
         np.testing.assert_equal(ens.isel(time=0), [0, 0])
 
@@ -244,7 +244,8 @@ class TestEnsembleStats:
         for n in ensemble_dataset_objects["nc_files_simple"]:
             ds = open_dataset(n)
             ds_all.append(ds)
-        ens = ensembles.create_ensemble(ds_all)
+        with pytest.warns(FutureWarning):
+            ens = ensembles.create_ensemble(ds_all, mf_flag=False)
 
         out1 = ensembles.ensemble_mean_std_max_min(ens)
         np.testing.assert_array_equal(
@@ -506,6 +507,28 @@ class TestEnsembleReduction:
             assert sel1 == sel2
             assert sel1 == sel3
 
+    def test_make_criteria(self, tas_series):
+        ds = xr.Dataset(
+            data_vars={
+                "var_a": tas_series([0, 1, 2, 3]),
+                "var_b": tas_series([0, 1, 2, 3]).expand_dims(lat=[45, 47]),
+                "var_c": tas_series([0, 1, 2, 3]),
+            }
+        ).expand_dims(realization=["A", "B", "C"])
+
+        crit = ensembles.make_criteria(ds)
+        assert crit.dims == ("realization", "criteria")
+        assert crit.criteria.size == 16
+        uncrit = crit.unstack("criteria").to_dataset("variables")
+        assert set(uncrit.data_vars.keys()) == {"var_a", "var_b", "var_c"}
+        assert set(uncrit.var_a.dims) == {"realization", "lat", "time"}
+
+        crit = ensembles.make_criteria(ds.var_b)
+        assert crit.dims == ("realization", "criteria")
+        assert crit.criteria.size == 8
+        uncrit = crit.unstack("criteria")
+        assert set(uncrit.dims) == {"realization", "lat", "time"}
+
 
 # ## Tests for Robustness ##
 @pytest.fixture(params=[True, False])
@@ -604,6 +627,18 @@ def robust_data(request):
             {},
         ),
         (
+            "brownforsythe-test",
+            [0.5, 0.25, 0.5, 0.5],
+            [0.5, 0.0, 1, 1],
+            [
+                [False, True, False, True],
+                [True, False, False, False],
+                [False, True, False, True],
+                [False, False, False, True],
+            ],
+            {},
+        ),
+        (
             "threshold",
             [0.25, 1, 1, 1],
             [1, 0.5, 1, 1],
@@ -640,7 +675,15 @@ def test_change_significance(
     robust_data, test, exp_chng_frac, exp_pos_frac, exp_changed, kws
 ):
     ref, fut = robust_data
-    chng_frac, pos_frac = ensembles.change_significance(fut, ref, test=test, **kws)
+
+    if test == "ttest" and parse_version(__scipy_version__) < parse_version("1.9.0"):
+        with pytest.warns(FutureWarning):
+            chng_frac, pos_frac = ensembles.change_significance(
+                fut, ref, test=test, **kws
+            )
+    else:
+        chng_frac, pos_frac = ensembles.change_significance(fut, ref, test=test, **kws)
+
     assert chng_frac.attrs["test"] == str(test)
     if isinstance(ref, xr.Dataset):
         chng_frac = chng_frac.tas
@@ -656,6 +699,7 @@ def test_change_significance(
     if pvals is not None:
         if isinstance(ref, xr.Dataset):
             pvals = pvals.tas
+        pvals.load()  # Otherwise it acts weirdly for welch-ttest
         # 0.05 is the default p_change parameter
         changed = pvals < 0.05
         np.testing.assert_array_almost_equal(changed, exp_changed)

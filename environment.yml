@@ -12,20 +12,22 @@ dependencies:
     - Click >=8.1
     - dask>=2.6.0
     - jsonpickle
+    - lmoments3
     - numba
     - numpy>=1.16
-    - pandas>=0.23
+    - pandas>=0.23,<2.0 # Pinned due to incompatibility with xarray <=2023.03
     - pint>=0.9
     - poppler>=0.67
     - pyyaml
     - scikit-learn>=0.21.3
-    - scipy>=1.2,<1.9  # See https://github.com/Ouranosinc/xclim/issues/1142
+    - scipy>=1.2
     - xarray>=2022.06.0
     # Extras
+    - clisops
     - eofs
-    - eigen
-    - pybind11
-    # Testing and development dependencies
+    - flox
+    - pytest-json-report  # Added due to a packaging bug with ESMPy. See: https://github.com/esmf-org/esmf/issues/115
+  # Testing and development dependencies
     - black>=22.12
     - blackdoc
     - bump2version
@@ -35,6 +37,7 @@ dependencies:
     - flake8
     - flake8-rst-docstrings
     - flit
+    - h5netcdf
     - ipykernel
     - ipython
     - matplotlib
@@ -66,4 +69,5 @@ dependencies:
     - yamllint
     - pip
     - pip:
+        - flake8-alphabetize
         - sphinxcontrib-svg2pdfconverter
