@@ -1528,7 +1528,8 @@ def snowfall_frequency(
     """
     # High threshold here just needs to be a big value. It is converted to same units as
     # so that a warning message won't be triggered just because of this value
-    high = f"{convert_units_to('1E6 kg m-2 s-1', thresh, context='hydro')} {pint2cfunits(str2pint(thresh))}"
+    units = pint2cfunits(str2pint(thresh))
+    high = f"{convert_units_to('1E6 kg m-2 s-1', units, context='hydro')} {units}"
     snow_days = days_with_snow(prsnd, low=thresh, high=high, freq=freq)
     total_days = prsnd.resample(time=freq).count(dim="time")
     snow_freq = snow_days / total_days * 100
