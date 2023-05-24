@@ -5,7 +5,7 @@ Numba-accelerated Utilities
 from __future__ import annotations
 
 import numpy as np
-from numba import boolean, float32, float64, guvectorize, njit
+from numba import boolean, float32, float64, guvectorize, jit, njit
 from xarray import DataArray
 from xarray.core import utils
 
@@ -124,8 +124,11 @@ def _euclidean_norm(v):
     return np.sqrt(np.sum(v**2))
 
 
-@njit(
-    #  [float32(float32[:, :], float32[:, :]), float64(float64[:, :], float64[:, :])],
+# @njit(
+#     #  [float32(float32[:, :], float32[:, :]), float64(float64[:, :], float64[:, :])],
+#     fastmath=True,
+# )
+@jit(
     fastmath=True,
 )
 def _correlation(X, Y):
@@ -134,27 +137,39 @@ def _correlation(X, Y):
     X is KxN and Y is KxM, the result is the mean of the MxN distances.
     Similar to scipy.spatial.distance.cdist(X, Y, 'euclidean')
     """
-    d = 0
-    for i in range(X.shape[1]):
-        for j in range(Y.shape[1]):
-            d += _euclidean_norm(X[:, i] - Y[:, j])
-    return d / (X.shape[1] * Y.shape[1])
+    # d = 0
+    # for i in range(X.shape[1]):
+    #     for j in range(Y.shape[1]):
+    #         d += np.sqrt(np.sum((X[:, i] - Y[:, j])**2))
+    #         # d += _euclidean_norm(X[:, i] - Y[:, j])
+    # return d / (X.shape[1] * Y.shape[1])
+    diff = X[:, :, np.newaxis] - Y[:, np.newaxis, :]
+    d = np.sqrt(np.sum(diff**2, axis=0))
+    return np.sum(d) / (X.shape[1] * Y.shape[1])
 
 
-@njit(
-    #  [float32(float32[:, :]), float64(float64[:, :])],
-    fastmath=True
+# @njit(
+#     #  [float32(float32[:, :]), float64(float64[:, :])],
+#     fastmath=True
+# )
+@jit(
+    fastmath=True,
 )
 def _autocorrelation(X):
     """Mean of the NxN pairwise distances of points in X of shape KxN.
 
     Similar to scipy.spatial.distance.pdist(..., 'euclidean')
     """
-    d = 0
-    for i in range(X.shape[1]):
-        for j in range(i):
-            d += _euclidean_norm(X[:, i] - X[:, j])
-    return (2 * d) / X.shape[1] ** 2
+    # d = 0
+    # for i in range(X.shape[1]):
+    #     for j in range(i):
+    #         d += np.sqrt(np.sum((X[:, i] - X[:, j])**2))
+    #         # d += _euclidean_norm(X[:, i] - X[:, j])
+    # return (2 * d) / X.shape[1] ** 2
+    # diff = np.expand_dims(X, -1)  - np.expand_dims(X, 1)
+    diff = X[:, :, np.newaxis] - X[:, np.newaxis, :]
+    d = np.sqrt(np.sum(diff**2, axis=0))
+    return np.sum(d) / X.shape[1] ** 2
 
 
 @guvectorize(

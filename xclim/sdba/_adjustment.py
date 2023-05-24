@@ -247,12 +247,14 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
     dim = kwargs["pts_dim"]
 
     escores = []
+    imax = len(ds.rot_matrices.iterations) - 1
     for i, R in enumerate(ds.rot_matrices.transpose("iterations", ...)):
         # @ operator stands for matrix multiplication (along named dimensions): x@R = R@x
         # @R rotates an array defined over dimension x unto new dimension x'. x@R = x'
-        refp = ref @ R
-        histp = hist @ R
-        simp = sim @ R
+        if i == 0:
+            refp = ref @ R
+            histp = hist @ R
+            simp = sim @ R
 
         # Perform univariate adjustment in rotated space (x')
         ADJ = kwargs["base"].train(
@@ -265,8 +267,14 @@ def npdf_transform(ds: xr.Dataset, **kwargs) -> xr.Dataset:
         # Note that x'@R is a back rotation because the matrix multiplication is now done along x' due to xarray
         # operating along named dimensions.
         # In normal linear algebra, this is equivalent to taking @R.T, the back rotation.
-        hist = scenhp @ R
-        sim = scensp @ R
+        # from IPython import embed;embed()
+        if i < imax:
+            R_next = ds.rot_matrices.isel(iterations=i + 1)
+            hist = (scenhp @ R) @ R_next
+            sim = (scensp @ R) @ R_next
+        else:
+            hist = scenhp @ R
+            sim = scensp @ R
 
         # Compute score
         if kwargs["n_escore"] >= 0:
