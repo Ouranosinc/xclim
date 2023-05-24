@@ -488,7 +488,7 @@ class TestSnowfallDate:
     def test_first_snowfall(self, open_dataset):
         with set_options(check_missing="skip"):
             fs = atmos.first_snowfall(
-                prsnd=self.get_snowfall_rate(open_dataset), thresh="0.5 mm/day"
+                prsn=self.get_snowfall_rate(open_dataset), thresh="0.5 mm/day"
             )
 
         np.testing.assert_array_equal(
@@ -504,7 +504,7 @@ class TestSnowfallDate:
     def test_last_snowfall(self, open_dataset):
         with set_options(check_missing="skip"):
             ls = atmos.last_snowfall(
-                prsnd=self.get_snowfall_rate(open_dataset), thresh="0.5 mm/day"
+                prsn=self.get_snowfall_rate(open_dataset), thresh="0.5 mm/day"
             )
 
         np.testing.assert_array_equal(
