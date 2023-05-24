@@ -1357,8 +1357,8 @@ def first_snowfall(
     :cite:cts:`cbcl_climate_2020`.
     """
     prsn_dim = units2pint(prsn).dimensionality
-    thresh_dim = str2pint(thresh).dimensionality 
-    if (prsn_dim != thresh_dim):
+    thresh_dim = str2pint(thresh).dimensionality
+    if prsn_dim != thresh_dim:
         warnings.warn(
             f"Dimensionality of the input snowfall ({prsn_dim}) and threshold ({thresh_dim}) are mismatched."
             "Converting threshold using 1000 kg m-3 density. Input snow array can be converted between snowfall rate ([length]/[time])"
@@ -1416,8 +1416,8 @@ def last_snowfall(
     :cite:cts:`cbcl_climate_2020`.
     """
     prsn_dim = units2pint(prsn).dimensionality
-    thresh_dim = str2pint(thresh).dimensionality 
-    if (prsn_dim != thresh_dim):
+    thresh_dim = str2pint(thresh).dimensionality
+    if prsn_dim != thresh_dim:
         warnings.warn(
             f"Dimensionality of the input snowfall ({prsn_dim}) and threshold ({thresh_dim}) are mismatched."
             "Converting threshold using 1000 kg m-3 density. Input snow array can be converted between snowfall rate ([length]/[time])"
@@ -1478,7 +1478,7 @@ def days_with_snow(
     """
     prsn_dim = units2pint(prsn).dimensionality
     low_dim, high_dim = (str2pint(v).dimensionality for v in [low, high])
-    if (prsn_dim != low_dim or prsn_dim != high_dim):
+    if prsn_dim != low_dim or prsn_dim != high_dim:
         warnings.warn(
             f"Dimensionality of the input snowfall ({prsn_dim}) and of one or both thresholds (low:{low_dim}, high:{high_dim}) are mismatched."
             "Converting threshold using 1000 kg m-3 density. Input snow array can be converted between snowfall rate ([length]/[time])"
