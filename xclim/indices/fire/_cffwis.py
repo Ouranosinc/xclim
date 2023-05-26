@@ -136,7 +136,7 @@ from typing import Sequence
 
 import numpy as np
 import xarray as xr
-from numba import jit, vectorize
+from numba import njit, vectorize
 
 from xclim.core.units import convert_units_to, declare_units
 from xclim.core.utils import Quantified
@@ -203,7 +203,7 @@ DAY_LENGTH_FACTORS = np.array(
 )
 
 
-@jit
+@njit
 def _day_length(lat: int | float, mth: int):  # pragma: no cover
     """Return the average day length for a month within latitudinal bounds."""
     if -30 > lat >= -90:
@@ -223,7 +223,7 @@ def _day_length(lat: int | float, mth: int):  # pragma: no cover
     return dl[mth - 1]
 
 
-@jit
+@njit
 def _day_length_factor(lat: float, mth: int):  # pragma: no cover
     """Return the day length factor."""
     if -15 > lat >= -90:
@@ -239,7 +239,7 @@ def _day_length_factor(lat: float, mth: int):  # pragma: no cover
     return dlf[mth - 1]
 
 
-@vectorize
+@vectorize(nopython=True)
 def _fine_fuel_moisture_code(t, p, w, h, ffmc0):  # pragma: no cover
     """Compute the fine fuel moisture code over one time step.
 
@@ -318,7 +318,7 @@ def _fine_fuel_moisture_code(t, p, w, h, ffmc0):  # pragma: no cover
     return ffmc
 
 
-@vectorize
+@vectorize(nopython=True)
 def _duff_moisture_code(
     t: np.ndarray,
     p: np.ndarray,
@@ -385,7 +385,7 @@ def _duff_moisture_code(
     return dmc
 
 
-@vectorize
+@vectorize(nopython=True)
 def _drought_code(
     t: np.ndarray, p: np.ndarray, mth: np.ndarray, lat: float, dc0: float
 ) -> np.ndarray:  # pragma: no cover
@@ -517,7 +517,7 @@ def daily_severity_rating(fwi: np.ndarray) -> np.ndarry:
     return 0.0272 * fwi**1.77
 
 
-@vectorize
+@vectorize(nopython=True)
 def _overwintering_drought_code(DCf, wpr, a, b, minDC):  # pragma: no cover
     """Compute the season-starting drought code based on the previous season's last drought code and the total winter precipitation.
 
