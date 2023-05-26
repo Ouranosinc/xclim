@@ -69,7 +69,7 @@ dev = [
   "pre-commit >=2.9",
   "pydocstyle >=5.1.1",
   "pybtex",
-  "pylint <2.15",
+  "pylint",
   "pytest",
   "pytest-cov",
   "pytest-xdist[psutil] >=3.2",
