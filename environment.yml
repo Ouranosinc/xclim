@@ -23,7 +23,6 @@ dependencies:
     - scipy>=1.2
     - xarray>=2022.06.0
     # Extras
-    - clisops
     - eofs
     - flox
     - pytest-json-report  # Added due to a packaging bug with ESMPy. See: https://github.com/esmf-org/esmf/issues/115
