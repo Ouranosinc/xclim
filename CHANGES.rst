@@ -13,6 +13,7 @@ Announcements
 Bug fixes
 ^^^^^^^^^
 * Fixed a bug in ``xclim.core.calendar.time_bnds`` when using ``DataArrayResample`` objects, caused by an upstream change in xarray 2023.5.0. (:issue:`1368`, :pull:`1377`).
+* Accelerated import of xclim by caching the compilation of `guvectorize` functions.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
