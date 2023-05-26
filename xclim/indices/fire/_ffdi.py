@@ -33,16 +33,10 @@ __all__ = [
 
 
 @guvectorize(
-    [
-        (
-            float64[:],
-            float64[:],
-            float64,
-            float64,
-            float64[:],
-        )
-    ],
+    [(float64[:], float64[:], float64, float64, float64[:])],
     "(n),(n),(),()->(n)",
+    nopython=True,
+    cache=True,
 )
 def _keetch_byram_drought_index(p, t, pa, kbdi0, kbdi: float):  # pragma: no cover
     """Compute the Keetch-Byram drought (KBDI) index.
@@ -96,15 +90,10 @@ def _keetch_byram_drought_index(p, t, pa, kbdi0, kbdi: float):  # pragma: no cov
 
 
 @guvectorize(
-    [
-        (
-            float64[:],
-            float64[:],
-            int64,
-            float64[:],
-        )
-    ],
+    [(float64[:], float64[:], int64, float64[:])],
     "(n),(n),()->(n)",
+    nopython=True,
+    cache=True,
 )
 def _griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
     """Compute the Griffiths drought factor.
