@@ -14,6 +14,7 @@ from xarray.core import utils
     [(float32[:], float32, float32[:]), (float64[:], float64, float64[:])],
     "(n),()->()",
     nopython=True,
+    cache=True,
 )
 def _vecquantiles(arr, rnk, res):
     if np.isnan(rnk):
@@ -41,14 +42,7 @@ def vecquantiles(da, rnk, dim):
     return res
 
 
-@njit(
-    # [
-    #     float32[:, :](float32[:, :], float32[:]),
-    #     float64[:, :](float64[:, :], float64[:]),
-    #     float32[:](float32[:], float32[:]),
-    #     float64[:](float64[:], float64[:]),
-    # ],
-)
+@njit
 def _quantile(arr, q):
     if arr.ndim == 1:
         out = np.empty((q.size,), dtype=arr.dtype)
@@ -104,9 +98,7 @@ def quantile(da, q, dim):
     return res
 
 
-@njit(
-    #  [float32[:, :](float32[:, :]), float64[:, :](float64[:, :])]
-)
+@njit
 def remove_NaNs(x):  # noqa
     """Remove NaN values from series."""
     remove = np.zeros_like(x[0, :], dtype=boolean)
@@ -115,22 +107,16 @@ def remove_NaNs(x):  # noqa
     return x[:, ~remove]
 
 
-@njit(
-    #  [float32(float32[:]), float64(float64[:])]
-    fastmath=True
-)
+@njit(fastmath=True)
 def _euclidean_norm(v):
     """Compute the euclidean norm of vector v."""
     return np.sqrt(np.sum(v**2))
 
 
-# @njit(
-#     #  [float32(float32[:, :], float32[:, :]), float64(float64[:, :], float64[:, :])],
-#     fastmath=True,
-# )
 @jit(
     fastmath=True,
 )
+# @njit(fastmath=True)
 def _correlation(X, Y):
     """Compute a correlation as the mean of pairwise distances between points in X and Y.
 
@@ -148,13 +134,10 @@ def _correlation(X, Y):
     return np.sum(d) / (X.shape[1] * Y.shape[1])
 
 
-# @njit(
-#     #  [float32(float32[:, :]), float64(float64[:, :])],
-#     fastmath=True
-# )
 @jit(
     fastmath=True,
 )
+# @njit(fastmath=True)
 def _autocorrelation(X):
     """Mean of the NxN pairwise distances of points in X of shape KxN.
 
@@ -178,6 +161,8 @@ def _autocorrelation(X):
         (float64[:, :], float64[:, :], float64[:]),
     ],
     "(k, n),(k, m)->()",
+    nopython=True,
+    cache=True,
 )
 def _escore(tgt, sim, out):
     """E-score based on the Székely-Rizzo e-distances between clusters.
