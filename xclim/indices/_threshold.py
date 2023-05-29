@@ -37,57 +37,54 @@ __all__ = [
     "calm_days",
     "cold_spell_days",
     "cold_spell_frequency",
-    "daily_pr_intensity",
-    "degree_days_exceedance_date",
     "cooling_degree_days",
-    "continuous_snow_cover_end",
-    "continuous_snow_cover_start",
-    "snd_season_end",
-    "snd_season_start",
-    "snw_season_end",
-    "snw_season_start",
+    "daily_pr_intensity",
     "days_with_snow",
-    "growing_degree_days",
-    "growing_season_start",
-    "growing_season_end",
-    "growing_season_length",
-    "last_spring_frost",
-    "frost_free_season_start",
-    "frost_free_season_end",
-    "frost_free_season_length",
-    "frost_season_length",
+    "degree_days_exceedance_date",
+    "dry_days",
     "first_day_temperature_above",
     "first_day_temperature_below",
     "first_snowfall",
-    "last_snowfall",
+    "frost_free_season_end",
+    "frost_free_season_length",
+    "frost_free_season_start",
+    "frost_season_length",
+    "growing_degree_days",
+    "growing_season_end",
+    "growing_season_length",
+    "growing_season_start",
     "heat_wave_index",
     "heating_degree_days",
     "hot_spell_frequency",
     "hot_spell_max_length",
-    "snow_cover_duration",
-    "snd_season_length",
-    "snw_season_length",
-    "tn_days_above",
-    "tn_days_below",
-    "tg_days_above",
-    "tg_days_below",
-    "tx_days_above",
-    "tx_days_below",
-    "rprctot",
-    "warm_day_frequency",
-    "warm_night_frequency",
-    "wetdays",
-    "wetdays_prop",
-    "winter_storm",
-    "dry_days",
+    "last_snowfall",
+    "last_spring_frost",
     "maximum_consecutive_dry_days",
     "maximum_consecutive_frost_days",
     "maximum_consecutive_frost_free_days",
     "maximum_consecutive_tx_days",
     "maximum_consecutive_wet_days",
+    "rprctot",
     "sea_ice_area",
     "sea_ice_extent",
+    "snd_season_end",
+    "snd_season_length",
+    "snd_season_start",
+    "snw_season_end",
+    "snw_season_length",
+    "snw_season_start",
+    "tg_days_above",
+    "tg_days_below",
+    "tn_days_above",
+    "tn_days_below",
+    "tx_days_above",
+    "tx_days_below",
+    "warm_day_frequency",
+    "warm_night_frequency",
+    "wetdays",
+    "wetdays_prop",
     "windy_days",
+    "winter_storm",
 ]
 
 
@@ -236,54 +233,6 @@ def cold_spell_frequency(
 
 
 @declare_units(snd="[length]", thresh="[length]")
-def continuous_snow_cover_end(
-    snd: xarray.DataArray,
-    thresh: Quantified = "2 cm",
-    window: int = 14,
-    freq: str = "AS-JUL",
-) -> xarray.DataArray:
-    r"""End date of continuous snow depth cover.
-
-    First day after the start of the continuous snow depth cover when snow depth is below a threshold (default: 2 cm)
-    for at least `N` (default: 14) consecutive days.
-
-    Warnings
-    --------
-    * The default `freq` is valid for the northern hemisphere.
-    * This index will be removed in a future version of xclim.
-
-    Parameters
-    ----------
-    snd : xarray.DataArray
-        Surface snow thickness.
-    thresh : str
-        Threshold snow thickness.
-    window : int
-        Minimum number of days with snow depth below threshold.
-    freq : str
-        Resampling frequency.
-
-    Returns
-    -------
-    xarray.DataArray, [dimensionless]
-        First day after the start of the continuous snow depth cover when the snow depth
-        goes below a threshold for a minimum duration.
-        If there is no such day, returns np.nan.
-
-    References
-    ----------
-    :cite:cts:`chaumont_elaboration_2017`
-    """
-    warnings.warn(
-        "The `continuous_snow_cover_end` is being deprecated in favour of `snd_season_end`"
-        "This indice will be removed in `xclim>=0.42.0`. Please update your scripts accordingly.",
-        DeprecationWarning,
-        stacklevel=3,
-    )
-    return snd_season_end(snd, thresh, window, freq)
-
-
-@declare_units(snd="[length]", thresh="[length]")
 def snd_season_end(
     snd: xarray.DataArray,
     thresh: Quantified = "2 cm",
@@ -385,53 +334,6 @@ def snw_season_end(
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snw))
     return out.where(~valid)
-
-
-@declare_units(snd="[length]", thresh="[length]")
-def continuous_snow_cover_start(
-    snd: xarray.DataArray,
-    thresh: Quantified = "2 cm",
-    window: int = 14,
-    freq: str = "AS-JUL",
-) -> xarray.DataArray:
-    r"""Start date of continuous snow depth cover.
-
-    Day of year when snow depth is above or equal to a threshold (default: 2 cm)
-    for at least `N` (default: 14) consecutive days.
-
-    Warnings
-    --------
-    * The default `freq` is valid for the northern hemisphere.
-    * This index will be removed in a future version of xclim.
-
-    Parameters
-    ----------
-    snd : xarray.DataArray
-        Surface snow thickness.
-    thresh : str
-        Threshold snow thickness.
-    window : int
-        Minimum number of days with snow depth above or equal to threshold.
-    freq : str
-        Resampling frequency.
-
-    Returns
-    -------
-    xarray.DataArray, [dimensionless]
-        First day of the year when the snow depth is superior to a threshold for a minimum duration.
-        If there is no such day, returns np.nan.
-
-    References
-    ----------
-    :cite:cts:`chaumont_elaboration_2017`
-    """
-    warnings.warn(
-        "The `continuous_snow_cover_end` is being deprecated in favour of `snd_season_end`"
-        "This indice will be removed in `xclim>=0.42.0`. Please update your scripts accordingly.",
-        DeprecationWarning,
-        stacklevel=3,
-    )
-    return snd_season_start(snd, thresh, window, freq)
 
 
 @declare_units(snd="[length]", thresh="[length]")
@@ -1752,51 +1654,13 @@ def hot_spell_frequency(
 
 
 @declare_units(snd="[length]", thresh="[length]")
-def snow_cover_duration(
-    snd: xarray.DataArray, thresh: Quantified = "2 cm", freq: str = "AS-JUL"
-) -> xarray.DataArray:
-    # noqa: D401
-    """Number of days with snow depth above a threshold.
-
-    Number of days where surface snow depth is greater or equal to given threshold (default: 2 cm).
-
-    Warnings
-    --------
-    * The default `freq` is valid for the northern hemisphere.
-    * This index will be removed in a future version of xclim.
-
-    Parameters
-    ----------
-    snd : xarray.DataArray
-        Surface snow thickness.
-    thresh : str
-        Threshold snow thickness.
-    freq : str
-        Resampling frequency.
-
-    Returns
-    -------
-    xarray.DataArray, [time]
-        Number of days where snow depth is greater than or equal to threshold.
-    """
-    warnings.warn(
-        "The `snow_cover_duration` is being deprecated in favour of `snd_season_length` "
-        "This indice will be removed in `xclim>=0.42.0`. Please update your scripts accordingly.",
-        DeprecationWarning,
-        stacklevel=3,
-    )
-    return snd_season_length(snd, thresh, freq)
-
-
-@declare_units(snd="[length]", thresh="[length]")
 def snd_season_length(
     snd: xarray.DataArray,
     thresh: Quantified = "2 cm",
     freq: str = "AS-JUL",
     op: str = ">=",
 ) -> xarray.DataArray:
-    # noqa: D401
-    """Number of days with snow depth above a threshold.
+    """The number of days with snow depth above a threshold.
 
     Number of days where surface snow depth is greater or equal to given threshold (default: 2 cm).
 
@@ -1833,8 +1697,7 @@ def snw_season_length(
     freq: str = "AS-JUL",
     op: str = ">=",
 ) -> xarray.DataArray:
-    # noqa: D401
-    """Number of days with snow water above a threshold.
+    """The number of days with snow water above a threshold.
 
     Number of days where surface snow water is greater or equal to given threshold (default: 2 cm).
 
@@ -1870,8 +1733,8 @@ def tn_days_above(
     thresh: Quantified = "20.0 degC",
     freq: str = "YS",
     op: str = ">",
-):  # noqa: D401
-    """Number of days with tasmin above a threshold (number of tropical nights).
+):
+    """The number of days with tasmin above a threshold (number of tropical nights).
 
     Number of days where minimum daily temperature exceeds a threshold (default: 20℃).
 
@@ -1911,7 +1774,7 @@ def tn_days_below(
     thresh: Quantified = "-10.0 degC",
     freq: str = "YS",
     op: str = "<",
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     """Number of days with tasmin below a threshold.
 
     Number of days where minimum daily temperature is below a threshold (default: -10℃).
@@ -1952,8 +1815,8 @@ def tg_days_above(
     thresh: Quantified = "10.0 degC",
     freq: str = "YS",
     op: str = ">",
-):  # noqa: D401
-    """Number of days with tas above a threshold.
+):
+    """The number of days with tas above a threshold.
 
     Number of days where mean daily temperature exceeds a threshold (default: 10℃).
 
@@ -1993,8 +1856,8 @@ def tg_days_below(
     thresh: Quantified = "10.0 degC",
     freq: str = "YS",
     op: str = "<",
-):  # noqa: D401
-    """Number of days with tas below a threshold.
+):
+    """The number of days with tas below a threshold.
 
     Number of days where mean daily temperature is below a threshold (default: 10℃).
 
@@ -2034,8 +1897,8 @@ def tx_days_above(
     thresh: Quantified = "25.0 degC",
     freq: str = "YS",
     op: str = ">",
-) -> xarray.DataArray:  # noqa: D401
-    """Number of days with tasmax above a threshold (number of summer days).
+) -> xarray.DataArray:
+    """The number of days with tasmax above a threshold (number of summer days).
 
     Number of days where maximum daily temperature exceeds a threshold (default: 25℃).
 
@@ -2075,8 +1938,8 @@ def tx_days_below(
     thresh: Quantified = "25.0 degC",
     freq: str = "YS",
     op: str = "<",
-):  # noqa: D401
-    """Number of days with tmax below a threshold.
+):
+    """The number of days with tmax below a threshold.
 
     Number of days where maximum daily temperature is below a threshold (default: 25℃).
 

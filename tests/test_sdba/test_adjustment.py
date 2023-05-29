@@ -31,8 +31,7 @@ from xclim.sdba.utils import (
     get_correction,
     invert,
 )
-
-from .utils import nancov  # noqa
+from xclim.testing.sdba_utils import nancov  # noqa
 
 
 class TestLoci:
@@ -388,9 +387,6 @@ class TestQDM:
             scends = QDM.adjust(sim)
 
         assert isinstance(scends, xr.Dataset)
-
-        sim_q_exp = sim.rank(dim="time", pct=True)
-        np.testing.assert_array_equal(sim_q_exp, scends.sim_q)
 
         # Theoretical results
         # ref, hist, sim = cannon_2015_dist

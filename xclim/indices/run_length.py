@@ -1,4 +1,3 @@
-# noqa: D205,D400
 """
 Run-Length Algorithms Submodule
 ===============================
@@ -416,7 +415,7 @@ def _boundary_run(
     coord: str | bool | None,
     ufunc_1dim: str | bool,
     position: str,
-) -> xr.DataArray:  # noqa: D202
+) -> xr.DataArray:
     """Return the index of the first item of the first run of at least a given length.
 
     Parameters
@@ -449,8 +448,8 @@ def _boundary_run(
         Returns np.nan if there are no valid runs.
     """
 
-    # transforms indexes to coordinates if needed, and drops obsolete dim
     def coord_transform(out, da):
+        """Transforms indexes to coordinates if needed, and drops obsolete dim."""
         if coord:
             crd = da[dim]
             if isinstance(coord, str):
@@ -512,7 +511,7 @@ def first_run(
     freq: str | None = None,
     coord: str | bool | None = False,
     ufunc_1dim: str | bool = "from_context",
-) -> xr.DataArray:  # noqa: D202
+) -> xr.DataArray:
     """Return the index of the first item of the first run of at least a given length.
 
     Parameters
@@ -768,7 +767,7 @@ def season(
     dim: str = "time",
     coord: str | bool | None = False,
 ) -> xr.Dataset:
-    """Return the bounds of a season (along dim).
+    """Calculate the bounds of a season along a dimension.
 
     A "season" is a run of True values that may include breaks under a given length (`window`).
     The start is computed as the first run of `window` True values, then end as the first subsequent run

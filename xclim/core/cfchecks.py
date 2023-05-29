@@ -1,4 +1,3 @@
-# noqa: D205,D400
 """
 CF-Convention Checking
 ======================

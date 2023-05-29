@@ -6,8 +6,15 @@
 # https://github.com/actions/labeler/blob/master/README.md
 
 name: Labeler
-on:
-  pull_request:
+on: [pull_request_target]
+  # Note: potential security risk from this action using pull_request_target.
+  # Do not add actions in here which need a checkout of the repo, and do not use any caching in here.
+  # See: https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
+
+permissions:
+  checks: write
+  contents: read
+  pull-requests: write
 
 jobs:
   label:

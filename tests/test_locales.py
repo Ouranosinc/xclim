@@ -9,7 +9,6 @@ import pytest
 
 from xclim import atmos
 from xclim.core import locales as xloc
-from xclim.core.formatting import default_formatter
 from xclim.core.locales import generate_local_dict
 from xclim.core.options import set_options
 

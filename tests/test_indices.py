@@ -14,7 +14,6 @@
 from __future__ import annotations
 
 import calendar
-import os
 
 import numpy as np
 import pandas as pd
@@ -25,7 +24,6 @@ from xclim import indices as xci
 from xclim.core.calendar import date_range, percentile_doy
 from xclim.core.options import set_options
 from xclim.core.units import ValidationError, convert_units_to, units
-from xclim.indices.generic import first_day_threshold_reached
 
 K2C = 273.15
 
@@ -415,9 +413,11 @@ class TestAgroclimaticIndices:
 
         mx = tasmax_series(mg + K2C + 10)
         mn = tasmin_series(mg + K2C - 10)
+
         out = xci.effective_growing_degree_days(
             tasmax=mx, tasmin=mn, method=method, freq="YS"
         )
+
         np.testing.assert_array_equal(out, np.array([np.NaN, expected]))
 
     # gamma reference results: Obtained with `monocongo/climate_indices` library

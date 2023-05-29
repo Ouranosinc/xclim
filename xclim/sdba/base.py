@@ -1,4 +1,3 @@
-# noqa: D205,D400
 """
 Base Classes and Developer Tools
 ================================
@@ -292,7 +291,10 @@ class Grouper(Parametrizable):
             return da[self.dim].rename("group")
 
         ind = da.indexes[self.dim]
-        i = getattr(ind, self.prop)
+        if self.prop == "week":
+            i = da[self.dim].copy(data=ind.isocalendar().week).astype(int)
+        else:
+            i = getattr(ind, self.prop)
 
         if not np.issubdtype(i.dtype, np.integer):
             raise ValueError(
@@ -322,7 +324,7 @@ class Grouper(Parametrizable):
         main_only: bool = False,
         **kwargs,
     ):
-        """Apply a function group-wise on DataArrays.
+        r"""Apply a function group-wise on DataArrays.
 
         Parameters
         ----------
@@ -337,7 +339,7 @@ class Grouper(Parametrizable):
             or with all grouping dims (if False, default) (including the window and dimensions given through `add_dims`).
             The dimensions used are also written in the "group_compute_dims" attribute.
             If all the input arrays are missing one of the 'add_dims', it is silently omitted.
-        **kwargs
+        \*\*kwargs
             Other keyword arguments to pass to the function.
 
         Returns
@@ -499,8 +501,7 @@ def _decode_cf_coords(ds):
 
 
 def map_blocks(reduces: Sequence[str] = None, **outvars):
-    # noqa: D401
-    """Decorator for declaring functions and wrapping them into a map_blocks.
+    r"""Decorator for declaring functions and wrapping them into a map_blocks.
 
     Takes care of constructing the template dataset. Dimension order is not preserved.
     The decorated function must always have the signature: ``func(ds, **kwargs)``, where ds is a DataArray or a Dataset.
@@ -510,7 +511,7 @@ def map_blocks(reduces: Sequence[str] = None, **outvars):
     ----------
     reduces : sequence of strings
         Name of the dimensions that are removed by the function.
-    **outvars
+    \*\*outvars
         Mapping from variable names in the output to their *new* dimensions.
         The placeholders ``Grouper.PROP``, ``Grouper.DIM`` and ``Grouper.ADD_DIMS`` can be used to signify
         ``group.prop``,``group.dim`` and ``group.add_dims`` respectively.
@@ -702,8 +703,7 @@ def map_blocks(reduces: Sequence[str] = None, **outvars):
 
 
 def map_groups(reduces: Sequence[str] = None, main_only: bool = False, **out_vars):
-    # noqa: D401
-    """Decorator for declaring functions acting only on groups and wrapping them into a map_blocks.
+    r"""Decorator for declaring functions acting only on groups and wrapping them into a map_blocks.
 
     This is the same as `map_blocks` but adds a call to `group.apply()` in the mapped func and the default
     value of `reduces` is changed.
@@ -715,14 +715,14 @@ def map_groups(reduces: Sequence[str] = None, main_only: bool = False, **out_var
     Parameters
     ----------
     reduces : sequence of str
-        Dimensions that are removed from the inputs by the function. Defaults to [Grouper.DIM, Grouper.ADD_DIMS] if main_only is False,
-        and [Grouper.DIM] if main_only is True. See :py:func:`map_blocks`.
+        Dimensions that are removed from the inputs by the function. Defaults to [Grouper.DIM, Grouper.ADD_DIMS]
+        if main_only is False, and [Grouper.DIM] if main_only is True. See :py:func:`map_blocks`.
     main_only : bool
         Same as for :py:meth:`Grouper.apply`.
-    **out_vars
+    \*\*out_vars
         Mapping from variable names in the output to their *new* dimensions.
         The placeholders ``Grouper.PROP``, ``Grouper.DIM`` and ``Grouper.ADD_DIMS`` can be used to signify
-      ``group.prop``,``group.dim`` and ``group.add_dims``, respectively.
+        ``group.prop``,``group.dim`` and ``group.add_dims``, respectively.
         If an output keeps a dimension that another loses, that dimension name must be given in `reduces` and in
         the list of new dimensions of the first output.
 

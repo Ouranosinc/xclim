@@ -1,4 +1,3 @@
-# noqa: D205,D400
 """
 Adjustment Methods
 ==================
@@ -46,14 +45,14 @@ from .utils import (
 
 __all__ = [
     "BaseAdjustment",
-    "EmpiricalQuantileMapping",
     "DetrendedQuantileMapping",
-    "LOCI",
+    "EmpiricalQuantileMapping",
     "ExtremeValues",
+    "LOCI",
+    "NpdfTransform",
     "PrincipalComponents",
     "QuantileDeltaMapping",
     "Scaling",
-    "NpdfTransform",
 ]
 
 
@@ -265,7 +264,7 @@ class Adjust(BaseAdjustment):
         sim: xr.DataArray,
         **kwargs,
     ):
-        """Return bias-adjusted data. Refer to the class documentation for the algorithm details.
+        r"""Return bias-adjusted data. Refer to the class documentation for the algorithm details.
 
         Parameters
         ----------
@@ -275,7 +274,7 @@ class Adjust(BaseAdjustment):
             Training data, usually a model output whose biases are to be adjusted.
         sim : DataArray
             Time series to be bias-adjusted, usually a model output.
-        **kwargs
+        \*\*kwargs
             Algorithm-specific keyword arguments, see class doc.
         """
         kwargs = parse_group(cls._adjust, kwargs)

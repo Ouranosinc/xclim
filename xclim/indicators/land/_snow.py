@@ -6,22 +6,19 @@ from xclim.indicators.atmos._conversion import Converter  # noqa
 
 __all__ = [
     "blowing_snow",
-    "snow_cover_duration",
-    "snd_season_length",
-    "snw_season_length",
-    "continuous_snow_cover_start",
-    "snd_season_start",
-    "snw_season_start",
-    "continuous_snow_cover_end",
-    "snd_season_end",
-    "snw_season_end",
     "snd_max_doy",
+    "snd_season_end",
+    "snd_season_length",
+    "snd_season_start",
     "snd_to_snw",
     "snow_depth",
-    "snw_to_snd",
     "snow_melt_we_max",
     "snw_max",
     "snw_max_doy",
+    "snw_season_end",
+    "snw_season_length",
+    "snw_season_start",
+    "snw_to_snd",
     "winter_storm",
 ]
 
@@ -36,17 +33,6 @@ class SnowWithIndexing(ResamplingIndicatorWithIndexing):
 
     src_freq = "D"
 
-
-snow_cover_duration = SnowWithIndexing(
-    title="Snow cover duration (depth) ",
-    identifier="snow_cover_duration",
-    units="days",
-    long_name="Snow cover duration",
-    description="The {freq} number of days with snow depth greater than or equal to {thresh}.",
-    abstract="Number of days when the snow depth is greater than or equal to a given threshold.",
-    compute=xci.snow_cover_duration,
-    _version_deprecated="0.41.0",
-)
 
 snd_season_length = SnowWithIndexing(
     title="Snow cover duration (depth)",
@@ -66,19 +52,6 @@ snw_season_length = SnowWithIndexing(
     description="The {freq} number of days with snow amount greater than or equal to {thresh}.",
     abstract="Number of days when the snow amount is greater than or equal to a given threshold.",
     compute=xci.snw_season_length,
-)
-
-continuous_snow_cover_start = Snow(
-    title="Start date of continuous snow depth cover",
-    identifier="continuous_snow_cover_start",
-    standard_name="day_of_year",
-    long_name="Start date of continuous snow depth cover",
-    description="Day of year when snow depth is above or equal to {thresh} for {window} consecutive days.",
-    abstract="The first date on which snow depth is greater than or equal to a given threshold "
-    "for a given number of consecutive days.",
-    units="",
-    compute=xci.continuous_snow_cover_start,
-    _version_deprecated="0.41.0",
 )
 
 snd_season_start = Snow(
@@ -103,18 +76,6 @@ snw_season_start = Snow(
     "for a given number of consecutive days.",
     units="",
     compute=xci.snw_season_start,
-)
-
-continuous_snow_cover_end = Snow(
-    title="End date of continuous snow depth cover",
-    identifier="continuous_snow_cover_end",
-    standard_name="day_of_year",
-    long_name="End date of continuous snow depth cover",
-    description="Day of year when snow depth is below {thresh} for {window} consecutive days.",
-    abstract="The first date on which snow depth is below a given threshold for a given number of consecutive days.",
-    units="",
-    compute=xci.continuous_snow_cover_end,
-    _version_deprecated="0.41.0",
 )
 
 snd_season_end = Snow(

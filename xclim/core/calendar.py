@@ -1,4 +1,3 @@
-# noqa: D205,D400
 """
 Calendar Handling Utilities
 ===========================
@@ -93,7 +92,10 @@ def days_in_year(year: int, calendar: str = "default") -> int:
 def date_range(
     *args, calendar: str = "default", **kwargs
 ) -> pd.DatetimeIndex | CFTimeIndex:
-    """Wrap pd.date_range (if calendar == 'default') or xr.cftime_range (otherwise)."""
+    """Wrap a Pandas date_range object.
+
+    Uses pd.date_range (if calendar == 'default') or xr.cftime_range (otherwise).
+    """
     if calendar == "default":
         return pd.date_range(*args, **kwargs)
     return xr.cftime_range(*args, calendar=calendar, **kwargs)
@@ -886,7 +888,18 @@ def time_bnds(time, freq=None, precision=None):
     if isinstance(time, (xr.DataArray, xr.Dataset)):
         time = time.indexes[time.name]
     elif isinstance(time, (DataArrayResample, DatasetResample)):
-        time = time._full_index
+        # TODO: Remove conditional when pinning xarray above 2023.5.0
+        if hasattr(time, "_full_index"):  # xr < 2023.5.0
+            time = time._full_index
+        else:  # xr >= 2023.5.0
+            for grouper in time.groupers:
+                if "time" in grouper.dims:
+                    time = grouper.group_as_index
+                    break
+            else:
+                raise ValueError(
+                    'Got object resampled along another dimension than "time".'
+                )
 
     if freq is None and hasattr(time, "freq"):
         freq = time.freq

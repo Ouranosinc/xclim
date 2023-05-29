@@ -28,8 +28,7 @@ from scipy.stats.mstats import mquantiles
 
 from xclim import ensembles
 from xclim.indices.stats import get_dist
-
-from .conftest import TESTDATA_BRANCH
+from xclim.testing.helpers import TESTDATA_BRANCH
 
 
 class TestEnsembleStats:
@@ -508,6 +507,28 @@ class TestEnsembleReduction:
             assert sel1 == sel2
             assert sel1 == sel3
 
+    def test_make_criteria(self, tas_series):
+        ds = xr.Dataset(
+            data_vars={
+                "var_a": tas_series([0, 1, 2, 3]),
+                "var_b": tas_series([0, 1, 2, 3]).expand_dims(lat=[45, 47]),
+                "var_c": tas_series([0, 1, 2, 3]),
+            }
+        ).expand_dims(realization=["A", "B", "C"])
+
+        crit = ensembles.make_criteria(ds)
+        assert crit.dims == ("realization", "criteria")
+        assert crit.criteria.size == 16
+        uncrit = crit.unstack("criteria").to_dataset("variables")
+        assert set(uncrit.data_vars.keys()) == {"var_a", "var_b", "var_c"}
+        assert set(uncrit.var_a.dims) == {"realization", "lat", "time"}
+
+        crit = ensembles.make_criteria(ds.var_b)
+        assert crit.dims == ("realization", "criteria")
+        assert crit.criteria.size == 8
+        uncrit = crit.unstack("criteria")
+        assert set(uncrit.dims) == {"realization", "lat", "time"}
+
 
 # ## Tests for Robustness ##
 @pytest.fixture(params=[True, False])
@@ -606,6 +627,18 @@ def robust_data(request):
             {},
         ),
         (
+            "brownforsythe-test",
+            [0.5, 0.25, 0.5, 0.5],
+            [0.5, 0.0, 1, 1],
+            [
+                [False, True, False, True],
+                [True, False, False, False],
+                [False, True, False, True],
+                [False, False, False, True],
+            ],
+            {},
+        ),
+        (
             "threshold",
             [0.25, 1, 1, 1],
             [1, 0.5, 1, 1],
@@ -666,6 +699,7 @@ def test_change_significance(
     if pvals is not None:
         if isinstance(ref, xr.Dataset):
             pvals = pvals.tas
+        pvals.load()  # Otherwise it acts weirdly for welch-ttest
         # 0.05 is the default p_change parameter
         changed = pvals < 0.05
         np.testing.assert_array_almost_equal(changed, exp_changed)

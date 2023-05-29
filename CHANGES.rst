@@ -2,13 +2,86 @@
 Changelog
 =========
 
-v0.42.0 (unreleased)
+v0.44.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user:`juliettelavoie`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
+
+Announcements
+^^^^^^^^^^^^^
+* `xclim: xarray-based climate data analytics` has been published in the Journal of Open Source Software (`DOI:10.21105/joss.05415 <https://doi.org/10.21105/joss.05415>`_). Users can now make use of the `Cite this repository` button in the sidebar for academic purposes. Many thanks to our core developers and user base for their fine contributions over the years! (:issue:`95`, :pull:`250`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed a bug in ``xclim.core.calendar.time_bnds`` when using ``DataArrayResample`` objects, caused by an upstream change in xarray 2023.5.0. (:issue:`1368`, :pull:`1377`).
+* Accelerated import of xclim by caching the compilation of `guvectorize` functions. (:pull:`1378`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* In order to ensure documentation can be rebuilt at a later time, errors raised by `sphinx` linkcheck are now set to be ignored when building the documentation. (:pull:`1375`).
+* With the publication of `xclim`, the code repository now offers a `CITATION.cff` configuration for users to properly cite the software (APA formatted and raw BibTeX) for academic purposes. (:issue:`95`, :pull:`250`).
+
+v0.43.0 (2023-05-09)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Alexis Beaupré (:user:`Beauprel`), Éric Dupuis (:user:`coxipi`).
+
+Announcements
+^^^^^^^^^^^^^
+* `xclim` has passed the peer-review process and been officially accepted as a project associated with both `pyOpenSci <https://www.pyopensci.org>`_ and `PANGEO <https://pangeo.io/>`_. Additionally, `xclim` has been accepted to be published in the `Journal of Open Source Software <https://joss.theoj.org/>`_. Our review process can be consulted here: `PyOpenSci Software Review <https://github.com/pyOpenSci/software-review/issues/73>`_. (:pull:`1350`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New ``xclim.sdba`` measure ``xclim.sdba.measures.taylordiagram``. (:pull:`1360`).
+
+New indicators
+^^^^^^^^^^^^^^
+* ``ensembles.change_significance`` now supports the Brown-Forsythe test. (:pull:`1292`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed a bug in the `pyproject.toml` configuration that excluded the changelog (`CHANGES.rst`) from the packaged source distribution. (:pull:`1349`).
+* When summing an all-`NaN` period with `resample`, `xarray` v2023.04.0 now returns `NaN`, whereas earlier versions returned `0`. This broke ``fraction_over_precip_thresh``, but is now fixed. (:pull:`1354`, :issue:`1337`).
+* In ``xclim.sdba``'s Quantile Delta Mapping algorithm, the quantiles of the simulation to adjust were computed slightly differently than when creating the adjustment factor. The ``xclim.sdba.utils.rank`` function has been fixed to return "percentage-ranks" (quantiles) in the proper range. (:issue:`1334`, :pull:`1355`).
+* The radiation converters (``longwave_upwelling_radiation_from_net_downwelling`` and ``shortwave_upwelling_radiation_from_net_downwelling``) were hard-coded to redefine output units as `W m-2`, regardless of input units, so long as unit dimensions checks cleared. Units are now set directly from inputs. (:issue:`1365`, :pull:`1366`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Many previously deprecated indices and indicators have been removed from `xclim` (:pull:`1318`), with replacement indicators suggested as follows:
+    * ``xclim.indicators.atmos.first_day_above`` ->  ``xclim.indicators.atmos.first_day_{tn | tg | tx}_above``
+    * ``xclim.indicators.atmos.first_day_below`` -> ``xclim.indicators.atmos.first_day_{tn | tg | tx}_below``
+    * ``xclim.indicators.land.continuous_snow_cover_end`` -> ``xclim.indicators.land.snd_season_end``
+    * ``xclim.indicators.land.continuous_snow_cover_start`` -> ``xclim.indicators.land.snd_season_start``
+    * ``xclim.indicators.land.fit`` -> ``xclim.indicators.generic.fit``
+    * ``xclim.indicators.land.frequency_analysis`` -> ``xclim.indicators.generic.return_level``
+    * ``xclim.indicators.land.snow_cover_duration`` -> ``xclim.indicators.land.snd_season_length``
+    * ``xclim.indicators.land.stats`` -> ``xclim.indicators.generic.stats``
+    * ``xclim.indices.continuous_snow_cover_end`` -> ``xclim.indices.snd_season_end``
+    * ``xclim.indices.continuous_snow_cover_start`` -> ``xclim.indices.snd_season_start``
+    * ``xclim.indices.snow_cover_duration`` -> ``xclim.indices.snd_season_length``
+* Several `_private` functions within ``xclim.indices.fire._cffwis`` that had been exposed publicly have now been rendered as hidden functions. Affected functions are: ``_day_length``, ``_day_length_factor``, ``_drought_code``, ``_duff_moisture_code``, ``_fine_fuel_moisture_code``, ``_overwintering_drought_code``. (:pull:`1159`, :pull:`1369`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* The testing suite has been adjusted to ensure calls are made to existing functions using non-deprecated syntax. The volume of warnings emitted during testing has been significantly reduced. (:pull:`1318`).
+* In order to follow best practices and reduce the installed size of the `xclim` wheel, the `tests` folder containing the testing suite has been split from the package and placed in the top-level of the code repository. (:issue:`1348`, :pull:`1349`, suggested from `PyOpenSci Software Review <https://github.com/pyOpenSci/software-review/issues/73>`_). Submodules that were previously called within ``xclim.testing.tests`` have been refactored as follows:
+    * ``xclim.testing.tests.data`` → ``xclim.testing.helpers``
+    * ``xclim.testing.tests.test_sdba.utils`` → ``xclim.testing.sdba_utils``
+* Added a "Conventions" section to the README. (:issue:`1342`, :pull:`1351`).
+* New helper function ``xclim.testing.helpers.test_timeseries`` for generating timeseries objects with specified variable names and units. (:pull:`1356`).
+* `tox` recipes and documentation now refer to the official build of `SBCK`, available on PyPI. (:issue:`1362`, :pull:`1364`).
+* Excluded some URLs from `sphinx linkcheck` that were causing issues on ReadTheDocs. (:pull:`1364`).
+* Tagged versions of `xclim-testdata` now follow a `calendar-based versioning <https://calver.org/>`_ scheme for easier determination of compatibility between `xclim` and testing data. (:pull:`1367`, `xclim-testdata discussion <https://github.com/Ouranosinc/xclim-testdata/pull/24>`_).
+* `flake8`, `pycodestyle`, and `pydocstyle` checks have been significantly changed in order to clean up the code base of redundant `# noqa` markers. Linting checks for Makefile and `tox` recipes have been synchronized as well. (:pull:`1369`).
+* `flake8` plugin `flake8-alphabetize` has been added to development recipes in order to check order of `__all__` entries and Exceptions. (:pull:`1369`).
+* Corrected translations of ``cold_spell_{frequency | days}`` (:pull:`1372`).
+
+v0.42.0 (2023-04-03)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Juliette Lavoie (:user:`juliettelavoie`), Éric Dupuis (:user:`coxipi`), Pascal Bourgault (:user:`aulemahal`).
 
 Announcements
 ^^^^^^^^^^^^^
 * `xclim` now supports testing against tagged versions of `Ouranosinc/xclim-testdata <https://github.com/Ouranosinc/xclim-testdata>`_ in order to support older versions of `xclim`. For more information, see the `Contributing Guide <https://xclim.readthedocs.io/en/stable/contributing.html>`_ for more details. (:pull:`1339`).
+* `xclim v0.42.0` will be the last version to explicitly support Python3.8. (:issue:`1268`, :pull:`1344`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -18,6 +91,7 @@ New features and enhancements
 * `scipy` is no longer pinned below v1.9 and `lmoments3>=1.0.5` is now a core dependency and installed by default with `pip`. (:issue:`1142`, :pull:`1171`).
 * Fix bug on number of bins in ``xclim.sdba.propeties.spatial_correlogram``. (:pull:`1336`)
 * Add `resample_before_rl` argument to control when resampling happens in `maximum_consecutive_{frost|frost_free|dry|tx}_days` and in heat indices (in `_threshold`)  (:issue:`1329`, :pull:`1331`)
+* Add ``xclim.ensembles.make_criteria`` to help create inputs for the ensemble-reduction methods. (:issue:`1338`, :pull:`1341`).
 
 New indicators
 ^^^^^^^^^^^^^^
@@ -27,6 +101,7 @@ Bug fixes
 ^^^^^^^^^
 * Warnings emitted from regular usage of some indices (``snowfall_approximation`` with ``method="brown"``, ``effective_growing_degree_days``) due to successive ``convert_units_to`` calls within their logic have been silenced. (:pull:`1319`).
 * Fixed a bug that prevented the use of the `sdba_encode_cf` option with xarray 2023.3.0 (:pull:`1333`).
+* Fixed bugs in ``xclim.core.missing`` and ``xclim.sdba.base.Grouper`` when using pandas 2.0. (:pull:`1344`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -35,6 +110,7 @@ Breaking changes
 * The indice and indicator for ``last_spring_frost`` has been modified to use ``tasmin`` by default, reflecting its docstring and literature definition (:issue:`1324`, :pull:`1325`).
 * following indices now accept the `op` argument for modifying the threshold comparison operator (:pull:`1325`):
     * ``snw_season_length``, ``snd_season_length``, ``growing_season_length``, ``frost_season_length``, ``frost_free_season_length``, ``rprcptot``, ``daily_pr_intensity``
+* In order to support older environments, `pandas` is now conditionally pinned below v2.0 when installing `xclim` on systems running Python3.8. (:pull:`1344`).
 
 Bug fixes
 ^^^^^^^^^
@@ -59,6 +135,8 @@ Internal changes
 * `tox` now include `sbck` and `eofs` flags for easier testing of dependencies. CI builds now test against `sbck-python` @ master.  (:pull:`1328`).
 * `upstream` CI tests are now run on push to master, at midnight, and can also be triggered via `workflow_dispatch`. Failures from upstream build will open issues using `xarray-contrib/issue-from-pytest-log`. (:pull:`1327`).
 * Warnings from set ``_version_deprecated`` within Indicators now emit ``FutureWarning`` instead of ``DeprecationWarning`` for greater visibility. (:pull:`1319`).
+* The `Graphics` section of the `Usage` notebook has been expanded upon while grammar and spelling mistakes within the notebook-generated documentation have been reduced. (:issue:`1335`, :pull:`1338`, suggested from `PyOpenSci Software Review <https://github.com/pyOpenSci/software-review/issues/73>`_).
+* The Contributing guide now lists three separate subsections to help users understand the gains from optional dependencies. (:issue:`1335`, :pull:`1338`, suggested from `PyOpenSci Software Review <https://github.com/pyOpenSci/software-review/issues/73>`_).
 
 v0.41.0 (2023-02-28)
 --------------------

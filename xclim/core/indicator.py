@@ -1,4 +1,4 @@
-# noqa: D205,D214,D400,D405,D406,D407,D411
+# noqa: D214,D405,D406,D407,D411
 """
 Indicator Utilities
 ===================
