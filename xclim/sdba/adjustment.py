@@ -828,9 +828,13 @@ class Scaling(TrainAdjust):
         *,
         group: str | Grouper = "time",
         kind: str = ADDITIVE,
+        adapt_freq_thresh: str | None = None,
     ):
         ds = scaling_train(
-            xr.Dataset({"ref": ref, "hist": hist}), group=group, kind=kind
+            xr.Dataset({"ref": ref, "hist": hist}),
+            group=group,
+            kind=kind,
+            adapt_freq_thresh=adapt_freq_thresh,
         )
         ds.af.attrs.update(long_name="Scaling adjustment factors")
         return ds, {"group": group, "kind": kind}
