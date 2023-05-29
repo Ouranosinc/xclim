@@ -14,7 +14,7 @@ from xarray.core import utils
     [(float32[:], float32, float32[:]), (float64[:], float64, float64[:])],
     "(n),()->()",
     nopython=True,
-    cache=True,
+    # cache=True,
 )
 def _vecquantiles(arr, rnk, res):
     if np.isnan(rnk):
@@ -149,7 +149,6 @@ def _autocorrelation(X):
     #         d += np.sqrt(np.sum((X[:, i] - X[:, j])**2))
     #         # d += _euclidean_norm(X[:, i] - X[:, j])
     # return (2 * d) / X.shape[1] ** 2
-    # diff = np.expand_dims(X, -1)  - np.expand_dims(X, 1)
     diff = X[:, :, np.newaxis] - X[:, np.newaxis, :]
     d = np.sqrt(np.sum(diff**2, axis=0))
     return np.sum(d) / X.shape[1] ** 2
@@ -161,8 +160,8 @@ def _autocorrelation(X):
         (float64[:, :], float64[:, :], float64[:]),
     ],
     "(k, n),(k, m)->()",
-    nopython=True,
-    cache=True,
+    # nopython=True,
+    # cache=True,
 )
 def _escore(tgt, sim, out):
     """E-score based on the Székely-Rizzo e-distances between clusters.
