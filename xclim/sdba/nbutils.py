@@ -98,7 +98,7 @@ def quantile(da, q, dim):
     return res
 
 
-@njit
+@jit
 def remove_NaNs(x):  # noqa
     """Remove NaN values from series."""
     remove = np.zeros_like(x[0, :], dtype=boolean)
@@ -115,20 +115,14 @@ def _euclidean_norm(v):
 
 @jit(
     fastmath=True,
+    forceobj=True,
 )
-# @njit(fastmath=True)
 def _correlation(X, Y):
     """Compute a correlation as the mean of pairwise distances between points in X and Y.
 
     X is KxN and Y is KxM, the result is the mean of the MxN distances.
     Similar to scipy.spatial.distance.cdist(X, Y, 'euclidean')
     """
-    # d = 0
-    # for i in range(X.shape[1]):
-    #     for j in range(Y.shape[1]):
-    #         d += np.sqrt(np.sum((X[:, i] - Y[:, j])**2))
-    #         # d += _euclidean_norm(X[:, i] - Y[:, j])
-    # return d / (X.shape[1] * Y.shape[1])
     diff = X[:, :, np.newaxis] - Y[:, np.newaxis, :]
     d = np.sqrt(np.sum(diff**2, axis=0))
     return np.sum(d) / (X.shape[1] * Y.shape[1])
@@ -136,19 +130,13 @@ def _correlation(X, Y):
 
 @jit(
     fastmath=True,
+    forceobj=True,
 )
-# @njit(fastmath=True)
 def _autocorrelation(X):
     """Mean of the NxN pairwise distances of points in X of shape KxN.
 
     Similar to scipy.spatial.distance.pdist(..., 'euclidean')
     """
-    # d = 0
-    # for i in range(X.shape[1]):
-    #     for j in range(i):
-    #         d += np.sqrt(np.sum((X[:, i] - X[:, j])**2))
-    #         # d += _euclidean_norm(X[:, i] - X[:, j])
-    # return (2 * d) / X.shape[1] ** 2
     diff = X[:, :, np.newaxis] - X[:, np.newaxis, :]
     d = np.sqrt(np.sum(diff**2, axis=0))
     return np.sum(d) / X.shape[1] ** 2
@@ -160,8 +148,8 @@ def _autocorrelation(X):
         (float64[:, :], float64[:, :], float64[:]),
     ],
     "(k, n),(k, m)->()",
-    # nopython=True,
-    # cache=True,
+    forceobj=True,
+    cache=True,
 )
 def _escore(tgt, sim, out):
     """E-score based on the Székely-Rizzo e-distances between clusters.
@@ -176,12 +164,14 @@ def _escore(tgt, sim, out):
     n1 = sim.shape[1]
     n2 = tgt.shape[1]
 
-    sXY = _correlation(tgt, sim)
-    sXX = _autocorrelation(tgt)
-    sYY = _autocorrelation(sim)
-
-    w = n1 * n2 / (n1 + n2)
-    out[0] = w * (sXY + sXY - sXX - sYY) / 2
+    if n1 == 0 or n2 == 0:
+        out[0] = np.nan
+    else:
+        sXY = _correlation(tgt, sim)
+        sXX = _autocorrelation(tgt)
+        sYY = _autocorrelation(sim)
+        w = n1 * n2 / (n1 + n2)
+        out[0] = w * (sXY + sXY - sXX - sYY) / 2
 
 
 @njit
