@@ -62,6 +62,7 @@ General notes for implementing new bias-adjustment methods:
 * If the algorithm gets complicated and would generate many dask tasks, it should be implemented as functions wrapped
   by :py:func:`~xclim.sdba.map_blocks` or :py:func:`~xclim.sdba.map_groups` in ``xclim/sdba/_adjustment.py``.
 * xclim doesn't implement monolithic multi-parameter methods, but rather smaller modular functions to construct post-processing workflows.
+* If you are working on numba-accelerated function that use ``@guvectorize``, consider disabling caching during the development phase and reactivating it once all changes are ready for review.
 
 Report Bugs
 ~~~~~~~~~~~
