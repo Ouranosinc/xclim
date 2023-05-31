@@ -1003,7 +1003,7 @@ def snw_to_snd(
 def prsn_to_prsnd(
     prsn: xr.DataArray,
     snr: xr.DataArray | None = None,
-    const: Quantified = "312 kg m-3",
+    const: Quantified = "100 kg m-3",
     out_units: str = None,
 ) -> xr.DataArray:
     """Snowfall rate from snowfall flux and density.
@@ -1027,11 +1027,12 @@ def prsn_to_prsnd(
 
     Notes
     -----
-    The estimated mean snow density value of 312 kg m-3 is taken from :cite:t:`sturm_swe_2010`.
+    The estimated mean snow density value of 100 kg m-3 is taken from 
+    :cite:cts:`frei_snowfall_2018, cbcl_climate_2020`.
 
     References
     ----------
-    :cite:cts:`sturm_swe_2010`
+    :cite:cts:`frei_snowfall_2018, cbcl_climate_2020`
     """
     density = snr if snr else const
     prsnd = flux2rate(prsn, density=density, out_units=out_units).rename("prsnd")
@@ -1042,7 +1043,7 @@ def prsn_to_prsnd(
 def prsnd_to_prsn(
     prsnd: xr.DataArray,
     snr: xr.DataArray | None = None,
-    const: Quantified = "312 kg m-3",
+    const: Quantified = "100 kg m-3",
     out_units: str = None,
 ) -> xr.DataArray:
     """Snowfall flux from snowfall rate and density.
@@ -1066,11 +1067,12 @@ def prsnd_to_prsn(
 
     Notes
     -----
-    The estimated mean snow density value of 312 kg m-3 is taken from :cite:t:`sturm_swe_2010`.
+    The estimated mean snow density value of 100 kg m-3 is taken from 
+    :cite:cts:`frei_snowfall_2018, cbcl_climate_2020`.
 
     References
     ----------
-    :cite:cts:`sturm_swe_2010`
+    :cite:cts:`frei_snowfall_2018, cbcl_climate_2020`
     """
     density = snr if snr else const
     prsn = rate2flux(prsnd, density=density, out_units=out_units).rename("prsn")

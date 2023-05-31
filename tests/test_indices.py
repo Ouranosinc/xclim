@@ -2516,7 +2516,7 @@ def test_last_snowfall(prsnd_series):
 def test_days_with_snow(prsnd_series):
     mmday2ms = 86400000
     prsnd = prsnd_series(np.arange(365) / mmday2ms, start="2000-01-01")
-    out = xci.days_with_snow(prsnd)
+    out = xci.days_with_snow(prsnd, low="0 mm/day", high="1E12 mm/day")
     assert len(out) == 2
     # Days with 0 and 1 are not counted, because condition is > thresh, not >=.
     assert sum(out) == 364

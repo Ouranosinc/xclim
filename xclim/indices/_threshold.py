@@ -1325,12 +1325,13 @@ def first_day_temperature_above(
 )
 def first_snowfall(
     prsn: xarray.DataArray,
-    thresh: Quantified = "0.5 mm/day",
+    thresh: Quantified = "1 mm/day",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
     r"""First day with snowfall rate above a threshold.
 
-    Returns the first day of a period where snowfall exceeds a threshold (default: 0.5 mm/day).
+    Returns the first day of a period where snowfall exceeds a threshold (current default: 0.5 mm/day 
+    liquid water equivalent snowfall rate. xclim >=0.45.0 default: 1 mm/day).
 
     Warnings
     --------
@@ -1341,8 +1342,8 @@ def first_snowfall(
     prsn : xarray.DataArray
         Snowfall flux.
     thresh : Quantified
-        Threshold snowfall flux on which to base evaluation.
-
+        Threshold snowfall flux (current default: 0.5 mm/day liquid water equivalent snowfall rate.
+    xclim >=0.45.0 default: 1 mm/day).
     freq : str
         Resampling frequency.
 
@@ -1355,16 +1356,18 @@ def first_snowfall(
     References
     ----------
     :cite:cts:`cbcl_climate_2020`.
-    """
-    prsn_dim = units2pint(prsn).dimensionality
-    thresh_dim = str2pint(thresh).dimensionality
-    if prsn_dim != thresh_dim:
-        warnings.warn(
-            f"Dimensionality of the input snowfall ({prsn_dim}) and threshold ({thresh_dim}) are mismatched."
-            "Converting threshold using 1000 kg m-3 density. Input snow array can be converted between snowfall rate ([length]/[time])"
-            "and snowfall flux with a constant/space-dependent density using ``prsn_to_prsnd`` and ``prsnd_to_prsn``"
-        )
+    
+    Notes
+    ---------
+    The 1 mm/day liquid water equivalent snowfall rate threshold in :cite:cts:`frei_snowfall_2018` corresponds 
+    to the 1 cm/day snowfall rate threshold  in :cite:cts:`cbcl_climate_2020` using a snow denstiy of 100 kg/m**3.
 
+    If threshold and prsn differ by a density (i.e. [length/time] vs. [mass/area/time]), a liquid water equivalent 
+    snowfall rate is assumed and the threshold is converted using a 1000 kg m-3 density.
+    """
+    if thresh == "UNSET":
+        warnings.warn("The default value for this indicator will change in xclim>=0.45.0,  from `0.5 mm/day` to `1 mm/day`. Using `0.5 mm/day` for now.")
+        thresh = "0.5 mm/day"
     thresh = convert_units_to(thresh, prsn, context="hydro")
     cond = prsn >= thresh
 
@@ -1384,12 +1387,13 @@ def first_snowfall(
 )
 def last_snowfall(
     prsn: xarray.DataArray,
-    thresh: Quantified = "0.5 mm/day",
+    thresh: Quantified = "UNSET",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
     r"""Last day with snowfall above a threshold.
 
-    Returns the last day of a period where the solid precipitation exceeds a threshold (default: 0.5 mm/day).
+    Returns the last day of a period where snowfall exceeds a threshold (current default: 0.5 mm/day liquid water equivalent snowfall rate.
+    xclim >=0.45.0 default: 1 mm/day).
 
     Warnings
     --------
@@ -1400,7 +1404,8 @@ def last_snowfall(
     prsn : xarray.DataArray
         Snowfall flux.
     thresh : Quantified
-        Threshold snowfall flux on which to base evaluation.
+        Threshold snowfall flux (current default: 0.5 mm/day liquid water equivalent snowfall rate.
+    xclim >=0.45.0 default: 1 mm/day).
     freq : str
         Resampling frequency.
 
@@ -1414,16 +1419,20 @@ def last_snowfall(
     References
     ----------
     :cite:cts:`cbcl_climate_2020`.
-    """
-    prsn_dim = units2pint(prsn).dimensionality
-    thresh_dim = str2pint(thresh).dimensionality
-    if prsn_dim != thresh_dim:
-        warnings.warn(
-            f"Dimensionality of the input snowfall ({prsn_dim}) and threshold ({thresh_dim}) are mismatched."
-            "Converting threshold using 1000 kg m-3 density. Input snow array can be converted between snowfall rate ([length]/[time])"
-            "and snowfall flux with a constant/space-dependent density using ``prsn_to_prsnd`` and ``prsnd_to_prsn``"
-        )
 
+    Notes
+    ---------
+    The 1 mm/day liquid water equivalent snowfall rate threshold in :cite:cts:`frei_snowfall_2018` corresponds 
+    to the 1 cm/day snowfall rate threshold  in :cite:cts:`cbcl_climate_2020` using a snow denstiy of 100 kg/m**3.
+
+    If threshold and prsn differ by a density (i.e. [length/time] vs. [mass/area/time]), a liquid water equivalent 
+    snowfall rate is assumed and the threshold is converted using a 1000 kg m-3 density.
+
+    The current default threshold "UNSET" is a placeholder and will be changed to the default 1 mm/day  in xclim>=0.45.0.
+    """
+    if thresh == "UNSET":
+        warnings.warn("The default value for this indicator will change in xclim>=0.45.0,  from `0.5 mm/day` to `1 mm/day`. Using `0.5 mm/day` for now.")
+        thresh = "0.5 mm/day"
     thresh = convert_units_to(thresh, prsn, context="hydro")
     cond = prsn >= thresh
 
@@ -1475,16 +1484,12 @@ def days_with_snow(
     References
     ----------
     :cite:cts:`matthews_planning_2017`
-    """
-    prsn_dim = units2pint(prsn).dimensionality
-    low_dim, high_dim = (str2pint(v).dimensionality for v in [low, high])
-    if prsn_dim != low_dim or prsn_dim != high_dim:
-        warnings.warn(
-            f"Dimensionality of the input snowfall ({prsn_dim}) and of one or both thresholds (low:{low_dim}, high:{high_dim}) are mismatched."
-            "Converting threshold using 1000 kg m-3 density. Input snow array can be converted between snowfall rate ([length]/[time])"
-            "and snowfall flux with a constant/space-dependent density using ``prsn_to_prsnd`` and ``prsnd_to_prsn``"
-        )
 
+    Notes
+    ---------
+    If threshold and prsn differ by a density (i.e. [length/time] vs. [mass/area/time]), a liquid water equivalent 
+    snowfall rate is assumed and the threshold is converted using a 1000 kg m-3 density.
+    """
     low = convert_units_to(low, prsn, context="hydro")
     high = convert_units_to(high, prsn, context="hydro")
     out = domain_count(prsn, low, high, freq)
@@ -1492,11 +1497,11 @@ def days_with_snow(
 
 
 @declare_units(
-    prsnd="[precipitation]",
+    prsn="[precipitation]",
     thresh="[precipitation]",
 )
 def snowfall_frequency(
-    prsnd: xarray.DataArray,
+    prsn: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
@@ -1510,10 +1515,11 @@ def snowfall_frequency(
 
     Parameters
     ----------
-    prsnd : xarray.DataArray
-        Snowfall rate.
+    prsn : xarray.DataArray
+        Snowfall flux.
     thresh : Quantified
-        Minimum snowfall rate
+        Threshold snowfall flux. The default value 1 mm/day is given as a liquid water equivalent
+        snowfall rate. 
     freq : str
         Resampling frequency.
 
@@ -1525,6 +1531,14 @@ def snowfall_frequency(
     References
     ----------
     :cite:cts:`frei_snowfall_2018`
+
+    Notes
+    ---------
+    The 1 mm/day liquid water equivalent snowfall rate threshold in :cite:cts:`frei_snowfall_2018` corresponds 
+    to the 1 cm/day snowfall rate threshold  in :cite:cts:`cbcl_climate_2020` using a snow denstiy of 100 kg/m**3.
+
+    If threshold and prsn differ by a density (i.e. [length/time] vs. [mass/area/time]), a liquid water equivalent 
+    snowfall rate is assumed and the threshold is converted using a 1000 kg m-3 density.
     """
     # High threshold here just needs to be a big value. It is converted to same units as
     # so that a warning message won't be triggered just because of this value
@@ -1539,11 +1553,11 @@ def snowfall_frequency(
 
 
 @declare_units(
-    prsnd="[precipitation]",
+    prsn="[precipitation]",
     thresh="[precipitation]",
 )
 def snowfall_intensity(
-    prsnd: xarray.DataArray,
+    prsn: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
@@ -1557,10 +1571,11 @@ def snowfall_intensity(
 
     Parameters
     ----------
-    prsnd : xarray.DataArray
-        Snowfall rate.
+    prsn : xarray.DataArray
+        Snowfall flux.
     thresh : Quantified
-        Threshold snowfall rate.
+        Threshold snowfall flux. The default value 1 mm/day is given as a liquid water equivalent
+        snowfall rate. 
     freq : str
         Resampling frequency.
 
@@ -1572,13 +1587,21 @@ def snowfall_intensity(
     References
     ----------
     :cite:cts:`frei_snowfall_2018`
-    """
-    thresh = convert_units_to(thresh, prsnd)
 
-    cond = prsnd >= thresh
-    mean = prsnd.where(cond).resample(time=freq).mean(dim="time")
+    Notes
+    ---------
+    The 1 mm/day liquid water equivalent snowfall rate threshold in :cite:cts:`frei_snowfall_2018` corresponds 
+    to the 1 cm/day snowfall rate threshold  in :cite:cts:`cbcl_climate_2020` using a snow denstiy of 100 kg/m**3.
+    
+    If threshold and prsn differ by a density (i.e. [length/time] vs. [mass/area/time]), a liquid water equivalent 
+    snowfall rate is assumed and the threshold is converted using a 1000 kg m-3 density.
+    """
+    thresh = convert_units_to(thresh, prsn)
+
+    cond = prsn >= thresh
+    mean = prsn.where(cond).resample(time=freq).mean(dim="time")
     out = mean.fillna(0)
-    return out.assign_attrs(units=prsnd.units)
+    return out.assign_attrs(units=prsn.units)
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
