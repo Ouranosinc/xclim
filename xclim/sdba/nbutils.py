@@ -107,13 +107,6 @@ def remove_NaNs(x):  # noqa
     return x[:, ~remove]
 
 
-# This is now unused
-@njit(fastmath=True)
-def _euclidean_norm(v):
-    """Compute the euclidean norm of vector v."""
-    return np.sqrt(np.sum(v**2))
-
-
 @njit(fastmath=True)
 def _correlation(X, Y):
     """Compute a correlation as the mean of pairwise distances between points in X and Y.
