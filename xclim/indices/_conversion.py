@@ -1027,7 +1027,7 @@ def prsn_to_prsnd(
 
     Notes
     -----
-    The estimated mean snow density value of 100 kg m-3 is taken from 
+    The estimated mean snow density value of 100 kg m-3 is taken from
     :cite:cts:`frei_snowfall_2018, cbcl_climate_2020`.
 
     References
@@ -1067,7 +1067,7 @@ def prsnd_to_prsn(
 
     Notes
     -----
-    The estimated mean snow density value of 100 kg m-3 is taken from 
+    The estimated mean snow density value of 100 kg m-3 is taken from
     :cite:cts:`frei_snowfall_2018, cbcl_climate_2020`.
 
     References
