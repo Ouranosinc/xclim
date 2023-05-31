@@ -1342,8 +1342,8 @@ def first_snowfall(
     prsn : xarray.DataArray
         Snowfall flux.
     thresh : Quantified
-        Threshold snowfall flux (current default: 0.5 mm/day liquid water equivalent snowfall rate.
-    xclim >=0.45.0 default: 1 mm/day).
+        Threshold snowfall flux (Current default: 0.5 mm/day liquid water equivalent snowfall rate.
+        xclim >=0.45.0 default: 1 mm/day).
     freq : str
         Resampling frequency.
 
@@ -1406,8 +1406,8 @@ def last_snowfall(
     prsn : xarray.DataArray
         Snowfall flux.
     thresh : Quantified
-        Threshold snowfall flux (current default: 0.5 mm/day liquid water equivalent snowfall rate.
-    xclim >=0.45.0 default: 1 mm/day).
+        Threshold snowfall flux (Current default: 0.5 mm/day liquid water equivalent snowfall rate.
+        xclim >=0.45.0 default: 1 mm/day).
     freq : str
         Resampling frequency.
 
