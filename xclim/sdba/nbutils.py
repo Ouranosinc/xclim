@@ -5,7 +5,7 @@ Numba-accelerated Utilities
 from __future__ import annotations
 
 import numpy as np
-from numba import boolean, float32, float64, guvectorize, jit, njit
+from numba import boolean, float32, float64, guvectorize, njit
 from xarray import DataArray
 from xarray.core import utils
 
@@ -14,7 +14,7 @@ from xarray.core import utils
     [(float32[:], float32, float32[:]), (float64[:], float64, float64[:])],
     "(n),()->()",
     nopython=True,
-    # cache=True,
+    cache=True,
 )
 def _vecquantiles(arr, rnk, res):
     if np.isnan(rnk):
@@ -98,7 +98,7 @@ def quantile(da, q, dim):
     return res
 
 
-@jit
+@njit
 def remove_NaNs(x):  # noqa
     """Remove NaN values from series."""
     remove = np.zeros_like(x[0, :], dtype=boolean)
@@ -107,39 +107,44 @@ def remove_NaNs(x):  # noqa
     return x[:, ~remove]
 
 
+# This is now unused
 @njit(fastmath=True)
 def _euclidean_norm(v):
     """Compute the euclidean norm of vector v."""
     return np.sqrt(np.sum(v**2))
 
 
-@jit(
-    fastmath=True,
-    forceobj=True,
-)
+@njit(fastmath=True)
 def _correlation(X, Y):
     """Compute a correlation as the mean of pairwise distances between points in X and Y.
 
     X is KxN and Y is KxM, the result is the mean of the MxN distances.
     Similar to scipy.spatial.distance.cdist(X, Y, 'euclidean')
     """
-    diff = X[:, :, np.newaxis] - Y[:, np.newaxis, :]
-    d = np.sqrt(np.sum(diff**2, axis=0))
-    return np.sum(d) / (X.shape[1] * Y.shape[1])
+    d = 0
+    for i in range(X.shape[1]):
+        for j in range(Y.shape[1]):
+            d1 = 0
+            for k in range(X.shape[0]):
+                d1 += (X[k, i] - Y[k, j]) ** 2
+            d += np.sqrt(d1)
+    return d / (X.shape[1] * Y.shape[1])
 
 
-@jit(
-    fastmath=True,
-    forceobj=True,
-)
+@njit(fastmath=True)
 def _autocorrelation(X):
     """Mean of the NxN pairwise distances of points in X of shape KxN.
 
     Similar to scipy.spatial.distance.pdist(..., 'euclidean')
     """
-    diff = X[:, :, np.newaxis] - X[:, np.newaxis, :]
-    d = np.sqrt(np.sum(diff**2, axis=0))
-    return np.sum(d) / X.shape[1] ** 2
+    d = 0
+    for i in range(X.shape[1]):
+        for j in range(i):
+            d1 = 0
+            for k in range(X.shape[0]):
+                d1 += (X[k, i] - X[k, j]) ** 2
+            d += np.sqrt(d1)
+    return (2 * d) / X.shape[1] ** 2
 
 
 @guvectorize(
@@ -148,7 +153,7 @@ def _autocorrelation(X):
         (float64[:, :], float64[:, :], float64[:]),
     ],
     "(k, n),(k, m)->()",
-    forceobj=True,
+    nopython=True,
     cache=True,
 )
 def _escore(tgt, sim, out):
@@ -164,14 +169,12 @@ def _escore(tgt, sim, out):
     n1 = sim.shape[1]
     n2 = tgt.shape[1]
 
-    if n1 == 0 or n2 == 0:
-        out[0] = np.nan
-    else:
-        sXY = _correlation(tgt, sim)
-        sXX = _autocorrelation(tgt)
-        sYY = _autocorrelation(sim)
-        w = n1 * n2 / (n1 + n2)
-        out[0] = w * (sXY + sXY - sXX - sYY) / 2
+    sXY = _correlation(tgt, sim)
+    sXX = _autocorrelation(tgt)
+    sYY = _autocorrelation(sim)
+
+    w = n1 * n2 / (n1 + n2)
+    out[0] = w * (sXY + sXY - sXX - sYY) / 2
 
 
 @njit
