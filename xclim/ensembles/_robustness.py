@@ -199,12 +199,18 @@ def change_significance(
             )
 
             def _ttest_func(f, r):
+                if np.isnan(f).all() or np.isnan(r).all():
+                    return np.NaN
+
                 return spstats.ttest_1samp(f, r, axis=-1, nan_policy="omit")[1]
 
         else:
 
             def _ttest_func(f, r):
                 # scipy>=1.9: popmean.axis[-1] must equal 1 for both fut and ref
+                if np.isnan(f).all() or np.isnan(r).all():
+                    return np.NaN
+
                 return spstats.ttest_1samp(
                     f, r[..., np.newaxis], axis=-1, nan_policy="omit"
                 )[1]
