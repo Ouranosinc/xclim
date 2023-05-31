@@ -1548,8 +1548,8 @@ def snowfall_frequency(
     # so that a warning message won't be triggered just because of this value
     thresh_units = pint2cfunits(str2pint(thresh))
     high = f"{convert_units_to('1E6 kg m-2 s-1', thresh_units, context='hydro')} {thresh_units}"
-    snow_days = days_with_snow(prsnd, low=thresh, high=high, freq=freq)
-    total_days = prsnd.resample(time=freq).count(dim="time")
+    snow_days = days_with_snow(prsn, low=thresh, high=high, freq=freq)
+    total_days = prsn.resample(time=freq).count(dim="time")
     snow_freq = snow_days / total_days * 100
     snow_freq = snow_freq.assign_attrs(**snow_days.attrs)
     snow_freq.attrs["units"] = "%"
