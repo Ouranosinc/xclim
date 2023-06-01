@@ -464,7 +464,8 @@ last_snowfall = PrecipWithIndexing(
     standard_name="day_of_year",
     long_name="Date of last day where snowfall exceeded {thresh}",
     description="{freq} last day where snowfall exceeded {thresh}.",
-    abstract="The last day where snowfall exceeded a given liquid water equivalent threshold during a time period.",
+    abstract="The last day where snowfall exceeded a given threshold during a time period (the threshold can be "
+    "given as a snowfall flux or a liquid water equivalent snowfall rate).",
     units="",
     compute=indices.last_snowfall,
 )
@@ -475,7 +476,8 @@ first_snowfall = PrecipWithIndexing(
     standard_name="day_of_year",
     long_name="Date of first day where snowfall exceeded {thresh}",
     description="{freq} first day where snowfall exceeded {thresh}.",
-    abstract="The first day where snowfall exceeded a given liquid water equivalent threshold during a time period.",
+    abstract="The first day where snowfall exceeded a given threshold during a time period (the threshold can be "
+    "given as a snowfall flux or a liquid water equivalent snowfall rate).",
     units="",
     compute=indices.first_snowfall,
 )
@@ -495,7 +497,8 @@ snowfall_frequency = PrecipWithIndexing(
     identifier="snowfall_frequency",
     long_name="Percentage of days with snowfall above {thresh} threshold",
     description="{freq} percentage of days with snowfall larger than {thresh}.",
-    abstract="Percentage of days with snowfall above lower liquid water equivalent limit.",
+    abstract="Percentage of days with snowfall above a given threshold (either a "
+    "snowfall flux or a liquid water equivalent snowfall rate).",
     units="%",
     compute=indices.snowfall_frequency,
 )
@@ -505,8 +508,9 @@ snowfall_intensity = PrecipWithIndexing(
     identifier="snowfall_intensity",
     long_name="Mean daily snowfall above {thresh} threshold",
     description="{freq} mean daily snowfall larger than {thresh}.",
-    abstract="Mean daily snowfall above lower liquid water equivalent limit.",
-    units="mm/day",
+    abstract="Mean daily snowfall above threshold (either a "
+    "snowfall flux or a liquid water equivalent snowfall rate)",
+    units="kg m-2 s-1",
     compute=indices.snowfall_intensity,
 )
 
