@@ -478,17 +478,16 @@ class TestSnowfallDate:
     pr_file = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
 
     @classmethod
-    def get_snowfall_rate(cls, open_dataset):
+    def get_snowfall(cls, open_dataset):
         dnr = xr.merge((open_dataset(cls.pr_file), open_dataset(cls.tasmin_file)))
-        prsn = atmos.snowfall_approximation(
+        return atmos.snowfall_approximation(
             dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary"
         )
-        return xci.prsn_to_prsnd(prsn)
 
     def test_first_snowfall(self, open_dataset):
         with set_options(check_missing="skip"):
             fs = atmos.first_snowfall(
-                prsn=self.get_snowfall_rate(open_dataset), thresh="0.5 mm/day"
+                prsn=self.get_snowfall(open_dataset), thresh="0.5 mm/day"
             )
 
         np.testing.assert_array_equal(
@@ -504,7 +503,7 @@ class TestSnowfallDate:
     def test_last_snowfall(self, open_dataset):
         with set_options(check_missing="skip"):
             ls = atmos.last_snowfall(
-                prsn=self.get_snowfall_rate(open_dataset), thresh="0.5 mm/day"
+                prsn=self.get_snowfall(open_dataset), thresh="0.5 mm/day"
             )
 
         np.testing.assert_array_equal(
