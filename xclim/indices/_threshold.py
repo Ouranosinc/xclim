@@ -1325,7 +1325,7 @@ def first_day_temperature_above(
 )
 def first_snowfall(
     prsn: xarray.DataArray,
-    thresh: Quantified = "1 mm/day",
+    thresh: Quantified = "UNSET",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
     r"""First day with snowfall rate above a threshold.
@@ -1364,6 +1364,8 @@ def first_snowfall(
 
     If threshold and prsn differ by a density (i.e. [length/time] vs. [mass/area/time]), a liquid water equivalent
     snowfall rate is assumed and the threshold is converted using a 1000 kg m-3 density.
+
+    The current default threshold "UNSET" is a placeholder and will be changed to the default 1 mm/day  in xclim>=0.45.0.
     """
     if thresh == "UNSET":
         warnings.warn(
