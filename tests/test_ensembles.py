@@ -751,6 +751,18 @@ def test_change_significance_delta(robust_data):
     np.testing.assert_array_equal(pos_frac, exp_pos_frac)
 
 
+def test_change_significance_empty():
+    """Test that NaN is returned if input arrays are full of NaNs."""
+    r = np.full((20, 10), np.nan)
+    f = np.full((20, 10), np.nan)
+
+    ref = xr.DataArray(r, dims=("realization", "time"), name="tas")
+    fut = xr.DataArray(f, dims=("realization", "time"), name="tas")
+
+    c, f = ensembles.change_significance(fut, ref, test="ttest")
+    assert np.all(np.isnan(c))
+
+
 def test_robustness_coefficient():
     # High
     ref = xr.DataArray([274, 275, 274.5, 276, 274.3, 273.3], dims=("time",), name="tas")
