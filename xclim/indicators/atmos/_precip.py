@@ -464,7 +464,7 @@ last_snowfall = PrecipWithIndexing(
     standard_name="day_of_year",
     long_name="Date of last day where snowfall exceeded {thresh}",
     description="{freq} last day where snowfall exceeded {thresh}.",
-    abstract="The last day where snowfall exceeded a given threshold during a time period.",
+    abstract="The last day where snowfall exceeded a given liquid water equivalent threshold during a time period.",
     units="",
     compute=indices.last_snowfall,
 )
@@ -475,7 +475,7 @@ first_snowfall = PrecipWithIndexing(
     standard_name="day_of_year",
     long_name="Date of first day where snowfall exceeded {thresh}",
     description="{freq} first day where snowfall exceeded {thresh}.",
-    abstract="The first day where snowfall exceeded a given threshold during a time period.",
+    abstract="The first day where snowfall exceeded a given liquid water equivalent threshold during a time period.",
     units="",
     compute=indices.first_snowfall,
 )
@@ -495,7 +495,7 @@ snowfall_frequency = PrecipWithIndexing(
     identifier="snowfall_frequency",
     long_name="Percentage of days with snowfall above {thresh} threshold",
     description="{freq} percentage of days with snowfall larger than {thresh}.",
-    abstract="Percentage of days with snowfall above lower limit.",
+    abstract="Percentage of days with snowfall above lower liquid water equivalent limit.",
     units="%",
     compute=indices.snowfall_frequency,
 )
@@ -505,7 +505,7 @@ snowfall_intensity = PrecipWithIndexing(
     identifier="snowfall_intensity",
     long_name="Mean daily snowfall above {thresh} threshold",
     description="{freq} mean daily snowfall larger than {thresh}.",
-    abstract="Mean daily snowfall above lower limit.",
+    abstract="Mean daily snowfall above lower liquid water equivalent limit.",
     units="mm/day",
     compute=indices.snowfall_intensity,
 )
