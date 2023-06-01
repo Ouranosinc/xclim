@@ -13,12 +13,9 @@ from xclim.core.units import (
     convert_units_to,
     declare_units,
     pint2cfunits,
-    pint_multiply,
     rate2amount,
     str2pint,
     to_agg_units,
-    units,
-    units2pint,
 )
 from xclim.core.utils import DayOfYearStr, Quantified
 
@@ -1319,10 +1316,7 @@ def first_day_temperature_above(
     )
 
 
-@declare_units(
-    prsn="[precipitation]",
-    thresh="[precipitation]",
-)
+@declare_units(prsn="[precipitation]", thresh="[precipitation]")
 def first_snowfall(
     prsn: xarray.DataArray,
     thresh: Quantified = "UNSET",
@@ -1385,10 +1379,7 @@ def first_snowfall(
     return out
 
 
-@declare_units(
-    prsn="[precipitation]",
-    thresh="[precipitation]",
-)
+@declare_units(prsn="[precipitation]", thresh="[precipitation]")
 def last_snowfall(
     prsn: xarray.DataArray,
     thresh: Quantified = "UNSET",
@@ -1502,10 +1493,7 @@ def days_with_snow(
     return to_agg_units(out, prsn, "count")
 
 
-@declare_units(
-    prsn="[precipitation]",
-    thresh="[precipitation]",
-)
+@declare_units(prsn="[precipitation]", thresh="[precipitation]")
 def snowfall_frequency(
     prsn: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
@@ -1558,10 +1546,7 @@ def snowfall_frequency(
     return snow_freq
 
 
-@declare_units(
-    prsn="[precipitation]",
-    thresh="[precipitation]",
-)
+@declare_units(prsn="[precipitation]", thresh="[precipitation]")
 def snowfall_intensity(
     prsn: xarray.DataArray,
     thresh: Quantified = "1 mm/day",
