@@ -701,32 +701,30 @@ class TestSnowfallMeteoSwiss:
     pr_file = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
 
     @classmethod
-    def get_snowfall_rate(cls, open_dataset):
+    def get_snowfall(cls, open_dataset):
         dnr = xr.merge((open_dataset(cls.pr_file), open_dataset(cls.tasmin_file)))
-        prsn = atmos.snowfall_approximation(
+        return atmos.snowfall_approximation(
             dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary"
         )
-        return xci.prsn_to_prsnd(prsn)
 
     def test_snowfall_frequency(self, open_dataset):
-        prsnd = self.get_snowfall_rate(open_dataset)
+        prsn = self.get_snowfall(open_dataset)
         with set_options(check_missing="skip"):
-            sf = atmos.snowfall_frequency(prsnd=prsnd, thresh="0.5 mm/day")
+            sf = atmos.snowfall_frequency(prsn=prsn, thresh="1 mm/day")
         expected = np.array(
             [
                 [
-                    [40.331, 38.674, 35.359],
-                    [33.149, 32.597, 27.072],
-                    [14.365, 0.0, 0.0],
+                    [27.624, 29.834, 25.414],
+                    [22.652, 25.414, 22.652],
+                    [12.155, 0.0, 0.0],
                 ],
                 [
-                    [30.435, 32.065, 23.913],
-                    [22.826, 17.935, 14.674],
-                    [8.696, 0.0, 0.0],
+                    [23.913, 23.370, 20.652],
+                    [17.391, 15.761, 13.043],
+                    [4.891, 0.0, 0.0],
                 ],
             ]
         )
-        print(sf[:, [0, 45, 82], [10, 105, 155]])
         np.testing.assert_allclose(
             sf[:, [0, 45, 82], [10, 105, 155]],
             expected,
@@ -734,20 +732,20 @@ class TestSnowfallMeteoSwiss:
         )
 
     def test_snowfall_intensity(self, open_dataset):
-        prsnd = self.get_snowfall_rate(open_dataset)
+        prsn = self.get_snowfall(open_dataset)
         with set_options(check_missing="skip"):
-            si = atmos.snowfall_intensity(prsnd=prsnd, thresh="0.5 mm/day")
+            si = atmos.snowfall_intensity(prsn=prsn, thresh="1 mm/day")
         expected = np.array(
             [
                 [
-                    [8.454952, 10.123168, 10.791265],
-                    [12.099894, 15.148849, 15.768576],
-                    [16.984715, 0.0, 0.0],
+                    [3.585, 3.839, 4.446],
+                    [5.148, 5.884, 5.764],
+                    [5.910, 0.0, 0.0],
                 ],
                 [
-                    [13.436356, 12.8628845, 15.547785],
-                    [15.402168, 20.033024, 27.770658],
-                    [17.860577, 0.0, 0.0],
+                    [5.093, 5.284, 5.539],
+                    [5.946, 6.840, 9.702],
+                    [9.522, 0.0, 0.0],
                 ],
             ]
         )
