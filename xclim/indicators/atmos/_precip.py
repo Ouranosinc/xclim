@@ -508,9 +508,9 @@ snowfall_intensity = PrecipWithIndexing(
     identifier="snowfall_intensity",
     long_name="Mean daily snowfall above {thresh} threshold",
     description="{freq} mean daily snowfall larger than {thresh}.",
-    abstract="Mean daily snowfall above threshold (either a "
+    abstract="Mean daily liquid water equivalent snowfall rate above threshold (either a "
     "snowfall flux or a liquid water equivalent snowfall rate)",
-    units="kg m-2 s-1",
+    units="mm/day",
     compute=indices.snowfall_intensity,
 )
 

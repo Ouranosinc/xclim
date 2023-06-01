@@ -1336,8 +1336,8 @@ def first_snowfall(
     prsn : xarray.DataArray
         Snowfall flux.
     thresh : Quantified
-        Threshold snowfall flux (Current default: 0.5 mm/day liquid water equivalent snowfall rate.
-        xclim >=0.45.0 default: 1 mm/day).
+        Threshold snowfall flux or liquid water equivalent snowfall rate.. (Current default: 0.5 mm/day liquid water equivalent snowfall rate.
+        xclim >=0.45.0 default: 1 mm/day)
     freq : str
         Resampling frequency.
 
@@ -1399,8 +1399,8 @@ def last_snowfall(
     prsn : xarray.DataArray
         Snowfall flux.
     thresh : Quantified
-        Threshold snowfall flux (Current default: 0.5 mm/day liquid water equivalent snowfall rate.
-        xclim >=0.45.0 default: 1 mm/day).
+        Threshold snowfall flux or liquid water equivalent snowfall rate.. (Current default: 0.5 mm/day liquid water equivalent snowfall rate.
+        xclim >=0.45.0 default: 1 mm/day)
     freq : str
         Resampling frequency.
 
@@ -1467,9 +1467,9 @@ def days_with_snow(
     prsn : xarray.DataArray
         Snowfall flux
     low : Quantified
-        Minimum threshold snowfall flux.
+        Minimum threshold snowfall flux or liquid water equivalent snowfall rate.
     high : Quantified
-        Maximum threshold snowfall flux.
+        Maximum threshold snowfall flux or liquid water equivalent snowfall rate.
     freq : str
         Resampling frequency.
 
@@ -1512,7 +1512,7 @@ def snowfall_frequency(
     prsn : xarray.DataArray
         Snowfall flux.
     thresh : Quantified
-        Threshold snowfall flux. The default value 1 mm/day is given as a liquid water equivalent
+        Threshold snowfall flux or liquid water equivalent snowfall rate. (default: 1 mm/day)
         snowfall rate.
     freq : str
         Resampling frequency.
@@ -1565,15 +1565,15 @@ def snowfall_intensity(
     prsn : xarray.DataArray
         Snowfall flux.
     thresh : Quantified
-        Threshold snowfall flux. The default value 1 mm/day is given as a liquid water equivalent
+        Threshold snowfall flux or liquid water equivalent snowfall rate. (default: 1 mm/day)
         snowfall rate.
     freq : str
         Resampling frequency.
 
     Returns
     -------
-    xarray.DataArray, [same units as input]
-        Mean daily snowfall during days where snowfall exceeds a threshold.
+    xarray.DataArray,
+        Mean daily liquid water equivalent snowfall rate during days where snowfall exceeds a threshold.
 
     References
     ----------
@@ -1587,12 +1587,14 @@ def snowfall_intensity(
     If threshold and prsn differ by a density (i.e. [length/time] vs. [mass/area/time]), a liquid water equivalent
     snowfall rate is assumed and the threshold is converted using a 1000 kg m-3 density.
     """
-    thresh = convert_units_to(thresh, prsn, context="hydro")
+    thresh = convert_units_to(thresh, "mm/day", context="hydro")
+    lwe_prsn = convert_units_to(prsn, "mm/day", context="hydro")
 
-    cond = prsn >= thresh
-    mean = prsn.where(cond).resample(time=freq).mean(dim="time")
+    cond = lwe_prsn >= thresh
+    mean = lwe_prsn.where(cond).resample(time=freq).mean(dim="time")
     out = mean.fillna(0)
-    return out.assign_attrs(units=prsn.units)
+
+    return out.assign_attrs(units=lwe_prsn.units)
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
