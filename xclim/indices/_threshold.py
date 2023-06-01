@@ -1511,7 +1511,7 @@ def snowfall_frequency(
     thresh: Quantified = "1 mm/day",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
-    r"""Days with snow.
+    r"""Percentage of snow days.
 
     Return the percentage of days where snowfall exceeds a threshold (default: 1 mm/day)
 
@@ -1567,7 +1567,7 @@ def snowfall_intensity(
     thresh: Quantified = "1 mm/day",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
-    r"""Days with snow.
+    r"""Mean daily snowfall rate during snow days.
 
     Return mean daily snowfall rate during days where snowfall exceeds a threshold (default: 1 mm/day)
 
@@ -1602,7 +1602,7 @@ def snowfall_intensity(
     If threshold and prsn differ by a density (i.e. [length/time] vs. [mass/area/time]), a liquid water equivalent
     snowfall rate is assumed and the threshold is converted using a 1000 kg m-3 density.
     """
-    thresh = convert_units_to(thresh, prsn)
+    thresh = convert_units_to(thresh, prsn, context="hydro")
 
     cond = prsn >= thresh
     mean = prsn.where(cond).resample(time=freq).mean(dim="time")
