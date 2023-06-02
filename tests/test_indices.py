@@ -3256,16 +3256,16 @@ class TestSfcWindmaxMin:
 
 
 class TestSnowfallFrequency:
-    def test_snowfall_frequency(self, prsnd_series):
-        mmday2ms = 86400000
-        prsnd = prsnd_series(np.array([0, 2, 0.3, 0.2, 4]) / mmday2ms)
-        out = xci.snowfall_frequency(prsnd)
+    def test_snowfall_frequency(self, prsn_series):
+        rate2flux = 86400
+        prsn = prsn_series(np.array([0, 2, 0.3, 0.2, 4]) / rate2flux)
+        out = xci.snowfall_frequency(prsn)
         np.testing.assert_allclose(out, [40])
 
 
 class TestSnowfallIntensity:
-    def test_snowfall_intensity(self, prsnd_series):
-        mmday2ms = 86400000
-        prsnd = prsnd_series(np.array([0, 2, 0.3, 0.2, 4]) / mmday2ms)
-        out = xci.snowfall_intensity(prsnd)
-        np.testing.assert_allclose(out, [3 / mmday2ms])
+    def test_snowfall_intensity(self, prsn_series):
+        rate2flux = 86400
+        prsn = prsn_series(np.array([0, 2, 0.3, 0.2, 4]) / rate2flux)
+        out = xci.snowfall_intensity(prsn)
+        np.testing.assert_allclose(out, [3])
