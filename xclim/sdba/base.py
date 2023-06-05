@@ -12,6 +12,7 @@ import jsonpickle
 import numpy as np
 import xarray as xr
 from boltons.funcutils import wraps
+from xarray.core.utils import get_temp_dimname
 
 from xclim.core.calendar import days_in_year, get_calendar
 from xclim.core.options import OPTIONS, SDBA_ENCODE_CF
@@ -751,3 +752,39 @@ def map_groups(reduces: Sequence[str] = None, main_only: bool = False, **out_var
         return wrapper
 
     return _decorator
+
+
+def _get_group_complement(da, group):
+    # gr = group.name if isinstance(group, Grouper) else group
+    # gr = group.name
+    gr = group
+    if gr == "time.dayofyear":
+        return da.time.dt.year
+    if gr == "time.month":
+        return da.time.dt.strftime("%Y-%d")
+
+
+def _get_grouped(da, group):
+    # group = group if isinstance(group, Grouper) else Grouper(group, 1)
+    gr, win = group.name, group.window
+    gr_dim = gr.split(".")[-1]
+    complement_dims = []
+    if win > 1:
+        win_dim = get_temp_dimname(da.dims, "window_dim")
+        da = da.rolling(time=win).construct(window_dim=win_dim)
+        complement_dims.append(win_dim)
+
+    if gr in ["time.month", "time.dayofyear"]:
+        gr_complement_dim = gr_dim + "_complement"
+        da = da.groupby(gr).apply(
+            lambda da: da.assign_coords(time=_get_group_complement(da, gr)).rename(
+                {"time": gr_complement_dim}
+            )
+        )
+        complement_dims.append(gr_complement_dim)
+        # chunking could be removed
+        da = da.chunk({gr_dim: -1})
+    else:
+        complement_dims.append(gr_dim)
+        gr_dim = None
+    return da.assign_attrs({"group_dim": gr_dim, "complement_dims": complement_dims})
