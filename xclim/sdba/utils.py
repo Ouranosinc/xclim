@@ -18,7 +18,7 @@ from scipy.stats import spearmanr
 from xclim.core.calendar import _interpolate_doy_calendar  # noqa
 from xclim.core.utils import ensure_chunk_size
 
-from .base import Grouper, parse_group
+from .base import Grouper, get_windowed_group, parse_group
 from .nbutils import _extrapolate_on_quantiles
 
 MULTIPLICATIVE = "*"
@@ -405,6 +405,21 @@ def interp_on_quantiles(
       last non-nan values along the "quantiles" dimension). When the grouping is "time.month",
       these limits are linearly interpolated along the month dimension.
     """
+    # if (group.prop != "month"):
+    #     gr_newx = get_windowed_group(newx, group.name if isinstance(group, Grouper) else group)
+
+    #     return xr.apply_ufunc(
+    #         _interp_on_quantiles_1D,
+    #         gr_newx,
+    #         oldx,
+    #         oldy,
+    #         input_core_dims=[gr_newx.attrs["complement_dims"],["quantiles"], ["quantiles"] ],
+    #         output_core_dims=[gr_newx.attrs["complement_dims"]],
+    #         dask="parallelized",
+    #         vectorize=True,
+    #         kwargs={"method": method, "extrap": extrapolation},
+    #     ).stack(time=gr_newx.attrs["complement_dims"] + [gr_newx.attrs["group_dim"]] ).assign_coords(time=newx.time)
+
     dim = group.dim
     prop = group.prop
 

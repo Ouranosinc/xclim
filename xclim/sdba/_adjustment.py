@@ -13,7 +13,7 @@ from xclim.indices.stats import _fitfunc_1d  # noqa
 
 from . import nbutils as nbu
 from . import utils as u
-from .base import Grouper, map_blocks, map_groups
+from .base import Grouper, get_windowed_group, map_blocks, map_groups, ungroup
 from .detrending import PolyDetrend
 from .processing import escore
 
@@ -46,26 +46,35 @@ def dqm_train(ds, *, dim, kind, quantiles) -> xr.Dataset:
     return xr.Dataset(data_vars=dict(af=af, hist_q=hist_q, scaling=scaling))
 
 
-@map_groups(
-    af=[Grouper.PROP, "quantiles"],
-    hist_q=[Grouper.PROP, "quantiles"],
-)
-def eqm_train(ds, *, dim, kind, quantiles) -> xr.Dataset:
+# @map_groups(
+#     af=[Grouper.PROP, "quantiles"],
+#     hist_q=[Grouper.PROP, "quantiles"],
+# )
+def eqm_train(ds, *, group, kind, quantiles) -> xr.Dataset:
     """EQM: Train step on one group.
 
     Dataset variables:
       ref : training target
       hist : training data
     """
-    ref_q = nbu.quantile(ds.ref, quantiles, dim)
-    hist_q = nbu.quantile(ds.hist, quantiles, dim)
+    gr_ref = get_windowed_group(ds.ref, group)
+    gr_hist = get_windowed_group(ds.hist, group)
+    ref_q = gr_ref.quantile(dim=gr_ref.attrs["complement_dims"], q=quantiles).rename(
+        {"quantile": "quantiles"}
+    )
+    hist_q = gr_hist.quantile(dim=gr_ref.attrs["complement_dims"], q=quantiles).rename(
+        {"quantile": "quantiles"}
+    )
+
+    # ref_q = nbu.quantile(ds.ref, quantiles, dim)
+    # hist_q = nbu.quantile(ds.hist, quantiles, dim)
 
     af = u.get_correction(hist_q, ref_q, kind)
 
     return xr.Dataset(data_vars=dict(af=af, hist_q=hist_q))
 
 
-@map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[])
+# @map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[])
 def qm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
     """QM (DQM and EQM): Adjust step on one block.
 
@@ -74,14 +83,23 @@ def qm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
       hist_q : Quantiles over the training data
       sim : Data to adjust.
     """
-    af = u.interp_on_quantiles(
-        ds.sim,
+    gr_sim = get_windowed_group(
+        ds.sim, group.name if isinstance(group, Grouper) else group
+    )
+
+    af = xr.apply_ufunc(
+        u._interp_on_quantiles_1D,
+        gr_sim,
         ds.hist_q,
         ds.af,
-        group=group,
-        method=interp,
-        extrapolation=extrapolation,
+        input_core_dims=[gr_sim.attrs["complement_dims"], ["quantiles"], ["quantiles"]],
+        output_core_dims=[gr_sim.attrs["complement_dims"]],
+        dask="parallelized",
+        vectorize=True,
+        kwargs={"method": interp, "extrap": extrapolation},
     )
+
+    af = ungroup(af, group, ds.sim.time)
 
     scen = u.apply_correction(ds.sim, af, kind).rename("scen")
     return scen.to_dataset()
@@ -126,7 +144,7 @@ def dqm_adjust(ds, *, group, interp, kind, extrapolation, detrend):
     return out
 
 
-@map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[], sim_q=[])
+# @map_blocks(reduces=[Grouper.PROP, "quantiles"], scen=[], sim_q=[])
 def qdm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
     """QDM: Adjust process on one block.
 
@@ -135,15 +153,25 @@ def qdm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
       hist_q : Quantiles over the training data
       sim : Data to adjust.
     """
-    sim_q = group.apply(u.rank, ds.sim, main_only=True, pct=True)
-    af = u.interp_on_quantiles(
-        sim_q,
+    gr_sim = get_windowed_group(
+        ds.sim, group.name if isinstance(group, Grouper) else group
+    )
+    gr_rank = gr_sim.compute().rank(dim=gr_sim.attrs["complement_dims"][0], pct=True)
+    sim_q = ungroup(gr_rank, group, ds.sim.time)
+
+    af = xr.apply_ufunc(
+        u._interp_on_quantiles_1D,
+        gr_rank,
         ds.quantiles,
         ds.af,
-        group=group,
-        method=interp,
-        extrapolation=extrapolation,
+        input_core_dims=[gr_sim.attrs["complement_dims"], ["quantiles"], ["quantiles"]],
+        output_core_dims=[gr_sim.attrs["complement_dims"]],
+        dask="parallelized",
+        vectorize=True,
+        kwargs={"method": interp, "extrap": extrapolation},
     )
+
+    af = ungroup(af, group, ds.sim.time)
     scen = u.apply_correction(ds.sim, af, kind)
     return xr.Dataset(dict(scen=scen, sim_q=sim_q))
 

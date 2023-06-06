@@ -4,6 +4,7 @@ Base Classes and Developer Tools
 """
 from __future__ import annotations
 
+import warnings
 from inspect import _empty, signature  # noqa
 from typing import Callable, Sequence
 
@@ -755,8 +756,8 @@ def map_groups(reduces: Sequence[str] = None, main_only: bool = False, **out_var
 
 
 def _get_group_complement(da, group):
-    # gr = group.name if isinstance(group, Grouper) else group
-    # gr = group.name
+    # complement of "dayofyear": "year", etc.
+    gr = group.name if isinstance(group, Grouper) else group
     gr = group
     if gr == "time.dayofyear":
         return da.time.dt.year
@@ -764,14 +765,19 @@ def _get_group_complement(da, group):
         return da.time.dt.strftime("%Y-%d")
 
 
-def _get_grouped(da, group):
-    # group = group if isinstance(group, Grouper) else Grouper(group, 1)
+def get_windowed_group(da, group):
+    r"""Splits an input array into `group`, its complement, and expands the array along a rolling `window` dimension.
+
+    Aims to give a faster alternative to `map_blocks` constructions.
+
+    """
+    group = group if isinstance(group, Grouper) else Grouper(group, 1)
     gr, win = group.name, group.window
     gr_dim = gr.split(".")[-1]
     complement_dims = []
     if win > 1:
         win_dim = get_temp_dimname(da.dims, "window_dim")
-        da = da.rolling(time=win).construct(window_dim=win_dim)
+        da = da.rolling(time=win, center=True).construct(window_dim=win_dim)
         complement_dims.append(win_dim)
 
     if gr in ["time.month", "time.dayofyear"]:
@@ -782,9 +788,32 @@ def _get_grouped(da, group):
             )
         )
         complement_dims.append(gr_complement_dim)
-        # chunking could be removed
-        da = da.chunk({gr_dim: -1})
+        time_dims = complement_dims + [gr_dim]
+        # chunking could be removed?
+        da = da  # .chunk({gr_dim: -1, complement_dims[-1]: -1})
     else:
         complement_dims.append(gr_dim)
         gr_dim = None
-    return da.assign_attrs({"group_dim": gr_dim, "complement_dims": complement_dims})
+        time_dims = complement_dims
+    return da.assign_attrs(
+        {
+            "group_dim": gr_dim,
+            "complement_dims": complement_dims,
+            "time_dims": time_dims,
+        }
+    )
+
+
+def ungroup(gr_da, group, template_time):
+    r"""Inverse the operation done with :py:func:`get_windowed_group`. Only works if `window` is 1."""
+    if isinstance(group, Grouper):
+        gr = group.name
+        if group.window > 1:
+            ValueError("Ungrouping with window > 1 is not supported")
+    else:
+        gr = group
+
+    if gr == "time":
+        return gr_da
+
+    return gr_da.stack(time=gr_da.attrs["time_dims"]).assign_coords(time=template_time)
