@@ -227,10 +227,10 @@
     "abstract": "Précipitation liquide accumulée moyenne. Les précipitations sont considérées liquides lorsque la température quotidienne moyenne est au-dessus de 0°C."
   },
   "SOLIDPRCPAVG": {
-    "long_name": "Précipitation moyenne lorsque la température moyenne est sous ou égale à {thresh}",
-    "description": "Précipitation solide moyenne {freq:f}, estimée comme la précipitation lorsque la température moyenne est sous ou égale à {thresh}.",
+    "long_name": "Précipitation moyenne lorsque la température moyenne est en dessous ou égale à {thresh}",
+    "description": "Précipitation solide moyenne {freq:f}, estimée comme la précipitation lorsque la température moyenne est en dessous ou égale à {thresh}.",
     "title": "Précipitation solide accumulée moyenne",
-    "abstract": "Précipitation solide accumulée moyenne. La précipitation est considéré solide lorsque la température quotidienne moyenne est sous ou égale à 0°C."
+    "abstract": "Précipitation solide accumulée moyenne. La précipitation est considéré solide lorsque la température quotidienne moyenne est en dessous ou égale à 0°C."
   },
   "PRCPTOT": {
     "long_name": "Précipitation totale",
@@ -251,10 +251,10 @@
     "abstract": "Précipitation liquide accumulée totale. Les précipitations sont considérées liquides lorsque la température quotidienne moyenne est au-dessus de 0°C."
   },
   "SOLIDPRCPTOT": {
-    "long_name": "Précipitation totale lorsque la température moyenne est sous ou égale à {thresh}",
-    "description": "Précipitation solide totale {freq:f}, estimée comme la précipitation lorsque la température moyenne est sous ou égale à {thresh}.",
+    "long_name": "Précipitation totale lorsque la température moyenne est en dessous ou égale à {thresh}",
+    "description": "Précipitation solide totale {freq:f}, estimée comme la précipitation lorsque la température moyenne est en dessous ou égale à {thresh}.",
     "title": "Précipitation solide accumulée totale",
-    "abstract": "Précipitation solide accumulée totale. La précipitation est considéré solide lorsque la température quotidienne moyenne est sous ou égale à 0°C."
+    "abstract": "Précipitation solide accumulée totale. La précipitation est considéré solide lorsque la température quotidienne moyenne est en dessous ou égale à 0°C."
   },
   "SPI": {
     "long_name": "Indice de précipitation standardisé (SPI)",
@@ -778,19 +778,19 @@
     "long_name": "Minimum de la vitesse du vent près de la surface",
     "description": "Minimum {freq:f} de la vitesse du vent près de la surface",
     "title": "Minimum de la vitesse du vent près de la surface",
-    "abstract": "Minimum de la vitesse du du vent près de la surface"
+    "abstract": "Minimum de la vitesse du vent près de la surface"
   },
   "SFCWIND_MEAN": {
     "long_name": "Moyenne de la vitesse du vent près de la surface",
     "description": "Moyenne {freq:f} de la vitesse du vent près de la surface",
     "title": "Moyenne de la vitesse du vent près de la surface",
-    "abstract": "Moyenne de la vitesse du du vent près de la surface"
+    "abstract": "Moyenne de la vitesse du vent près de la surface"
   },
   "SFCWIND_MAX": {
     "long_name": "Maximum de la vitesse du vent près de la surface",
     "description": "Maximum {freq:f} de la vitesse du vent près de la surface",
     "title": "Maximum de la vitesse du vent près de la surface",
-    "abstract": "Maximum de la vitesse du du vent près de la surface"
+    "abstract": "Maximum de la vitesse du vent près de la surface"
   },
   "SFCWINDMAX_MIN": {
     "long_name": "Minimum de la vitesse maximimale du vent près de la surface",

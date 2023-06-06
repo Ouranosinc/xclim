@@ -4,7 +4,6 @@ from __future__ import annotations
 import warnings
 
 import numpy as np
-import pint
 import xarray
 
 from xclim.core.calendar import get_calendar
@@ -20,7 +19,6 @@ from xclim.core.units import (
 from xclim.core.utils import DayOfYearStr, Quantified
 
 from . import run_length as rl
-from ._conversion import prsn_to_prsnd
 from .generic import (
     compare,
     cumulative_difference,
