@@ -344,7 +344,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
     _allow_diff_calendars = False
 
     @classmethod
-    def _train(
+    def _train( 
         cls,
         ref: xr.DataArray,
         hist: xr.DataArray,
@@ -357,7 +357,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
             quantiles = equally_spaced_nodes(nquantiles).astype(ref.dtype)
         else:
             quantiles = nquantiles.astype(ref.dtype)
-
+        
         ds = eqm_train(
             xr.Dataset({"ref": ref, "hist": hist}),
             group=group,
