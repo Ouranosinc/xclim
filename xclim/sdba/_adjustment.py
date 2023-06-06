@@ -59,15 +59,9 @@ def eqm_train(ds, *, group, kind, quantiles) -> xr.Dataset:
     """
     gr_ref = get_windowed_group(ds.ref, group)
     gr_hist = get_windowed_group(ds.hist, group)
-    ref_q = gr_ref.quantile(dim=gr_ref.attrs["complement_dims"], q=quantiles).rename(
-        {"quantile": "quantiles"}
-    )
-    hist_q = gr_hist.quantile(dim=gr_ref.attrs["complement_dims"], q=quantiles).rename(
-        {"quantile": "quantiles"}
-    )
-
-    # ref_q = nbu.quantile(ds.ref, quantiles, dim)
-    # hist_q = nbu.quantile(ds.hist, quantiles, dim)
+    dim = gr_ref.attrs["complement_dims"]
+    ref_q = gr_ref.quantile(dim=dim, q=quantiles).rename({"quantile": "quantiles"})
+    hist_q = gr_hist.quantile(dim=dim, q=quantiles).rename({"quantile": "quantiles"})
 
     af = u.get_correction(hist_q, ref_q, kind)
 
@@ -156,7 +150,9 @@ def qdm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
     gr_sim = get_windowed_group(
         ds.sim, group.name if isinstance(group, Grouper) else group
     )
-    gr_rank = gr_sim.compute().rank(dim=gr_sim.attrs["complement_dims"][0], pct=True)
+    gr_rank = gr_sim.map_blocks(
+        lambda da: da.rank(dim=da.attrs["complement_dims"][0], pct=True)
+    )
     sim_q = ungroup(gr_rank, group, ds.sim.time)
 
     af = xr.apply_ufunc(
