@@ -233,10 +233,10 @@
     "abstract": "Précipitation liquide accumulée totale. Les précipitations sont considérées liquides lorsque la température quotidienne moyenne est au-dessus de 0°C."
   },
   "SOLIDPRCPTOT": {
-    "long_name": "Précipitation totale lorsque la température moyenne est sous ou égale à {thresh}",
-    "description": "Précipitation solide totale {freq:f}, estimée comme la précipitation lorsque la température moyenne est sous ou égale à {thresh}.",
+    "long_name": "Précipitation totale lorsque la température moyenne est en dessous ou égale à {thresh}",
+    "description": "Précipitation solide totale {freq:f}, estimée comme la précipitation lorsque la température moyenne est en dessous ou égale à {thresh}.",
     "title": "Précipitation solide accumulée totale",
-    "abstract": "Précipitation solide accumulée totale. La précipitation est considéré solide lorsque la température quotidienne moyenne est sous ou égale à 0°C."
+    "abstract": "Précipitation solide accumulée totale. La précipitation est considéré solide lorsque la température quotidienne moyenne est en dessous ou égale à 0°C."
   },
   "SPI": {
     "long_name": "Indice de précipitation standardisé (SPI)",
