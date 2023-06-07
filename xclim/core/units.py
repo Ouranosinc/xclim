@@ -1026,7 +1026,7 @@ def flux2rate(
     ... )
     >>> prsnd = flux2rate(prsn, density="100 kg m-3", out_units="mm/s")
     >>> prsnd.units
-    'mm/s'
+    'mm s-1'
     >>> float(prsn[0])
     1
 
