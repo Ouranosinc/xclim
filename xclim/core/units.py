@@ -8,6 +8,7 @@ This module defines most unit handling methods.
 from __future__ import annotations
 
 import functools
+import logging
 import re
 import warnings
 from importlib.resources import open_text
@@ -22,6 +23,8 @@ from yaml import safe_load
 from .calendar import date_range, get_calendar, parse_offset
 from .options import datacheck
 from .utils import Quantified, ValidationError
+
+logging.getLogger("pint").setLevel(logging.ERROR)
 
 __all__ = [
     "amount2lwethickness",
