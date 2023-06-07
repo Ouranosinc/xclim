@@ -3225,3 +3225,133 @@ class TestDrynessIndex:
             di, np.array([13.355, 102.426, 65.576, 158.078]), rtol=1e-03
         )
         np.testing.assert_allclose(di_wet, di_plus_100)
+
+
+@pytest.mark.parametrize(
+    "pr,thresh1,thresh2,window,outs",
+    [
+        (
+            [1.01] * 6
+            + [0.01] * 3
+            + [0.51] * 2
+            + [0.75] * 2
+            + [0.51]
+            + [0.01] * 3
+            + [1.01] * 3,
+            3,
+            3,
+            7,
+            (3, 0, 20, 0, 20),
+        ),
+        (
+            [0.01] * 6
+            + [1.01] * 3
+            + [0.51] * 2
+            + [0.75] * 2
+            + [0.51]
+            + [0.01] * 3
+            + [0.01] * 3,
+            3,
+            3,
+            7,
+            (1, 6, 20, 4, 20),
+        ),
+        ([3.01] * 358 + [0.99] * 14 + [3.01] * 358, 1, 14, 14, (1, 0, 0, 0, 0)),
+    ],
+)
+def test_wet_spell(pr_series, pr, thresh1, thresh2, window, outs):
+    pr = pr_series(np.array(pr), start="1981-01-01", units="mm/day")
+
+    out_events, out_total_d_sum, out_total_d_max, out_max_d_sum, out_max_d_max = outs
+
+    events = xci.wet_spell_frequency(
+        pr, thresh=f"{thresh1} mm", window=window, freq="YS"
+    )
+    total_d_sum = xci.wet_spell_total_length(
+        pr,
+        thresh=f"{thresh2} mm",
+        window=window,
+        op="sum",
+        freq="YS",
+    )
+    total_d_max = xci.wet_spell_total_length(
+        pr, thresh=f"{thresh1} mm", window=window, op="max", freq="YS"
+    )
+    max_d_sum = xci.wet_spell_max_length(
+        pr,
+        thresh=f"{thresh2} mm",
+        window=window,
+        op="sum",
+        freq="YS",
+    )
+    max_d_max = xci.wet_spell_max_length(
+        pr, thresh=f"{thresh1} mm", window=window, op="max", freq="YS"
+    )
+    np.testing.assert_allclose(events[0], [out_events], rtol=1e-1)
+    np.testing.assert_allclose(total_d_sum[0], [out_total_d_sum], rtol=1e-1)
+    np.testing.assert_allclose(total_d_max[0], [out_total_d_max], rtol=1e-1)
+    np.testing.assert_allclose(max_d_sum[0], [out_max_d_sum], rtol=1e-1)
+    np.testing.assert_allclose(max_d_max[0], [out_max_d_max], rtol=1e-1)
+
+
+def test_wet_spell_total_length_indexer(pr_series):
+    pr = pr_series([1] * 5 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d")
+    out = xci.wet_spell_total_length(
+        pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31")
+    )
+    np.testing.assert_allclose(out, [3] + [0] * 11)
+
+
+def test_wet_spell_max_length_indexer(pr_series):
+    pr = pr_series([1] * 5 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d")
+    out = xci.wet_spell_max_length(
+        pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31")
+    )
+    np.testing.assert_allclose(out, [3] + [0] * 11)
+
+
+def test_wet_spell_frequency_op(pr_series):
+    pr = pr_series(
+        np.array(
+            [
+                29.012,
+                0.1288,
+                0.0253,
+                0.0035,
+                4.9147,
+                1.4186,
+                1.014,
+                0.5622,
+                0.8001,
+                10.5823,
+                2.8879,
+                8.2635,
+                0.292,
+                0.5242,
+                0.2426,
+                1.3934,
+                0.0,
+                0.4633,
+                0.1862,
+                0.0034,
+                2.4591,
+                3.8547,
+                3.1983,
+                3.0442,
+                7.422,
+                14.8854,
+                13.4334,
+                0.0012,
+                0.0782,
+                31.2916,
+                0.0379,
+            ]
+        )
+    )
+    pr.attrs["units"] = "mm/day"
+
+    test_sum = xci.wet_spell_frequency(pr, thresh="1 mm", window=3, freq="MS", op="sum")
+    test_max = xci.wet_spell_frequency(pr, thresh="1 mm", window=3, freq="MS", op="max")
+
+    np.testing.assert_allclose(test_sum[0], [3], rtol=1e-1)
+    np.testing.assert_allclose(test_max[0], [4], rtol=1e-1)
