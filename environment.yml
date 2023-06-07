@@ -3,7 +3,7 @@ channels:
     - conda-forge
     - defaults
 dependencies:
-    - python>=3.8,<3.11  # pin due to sphinx-autodoc-typehints errors in Python3.11
+    - python>=3.8
     - astroid
     - boltons>=20.1
     - bottleneck>=1.3.1
