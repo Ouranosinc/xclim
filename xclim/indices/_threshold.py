@@ -87,6 +87,9 @@ __all__ = [
     "tx_days_below",
     "warm_day_frequency",
     "warm_night_frequency",
+    "wet_spell_frequency",
+    "wet_spell_max_length",
+    "wet_spell_total_length",
     "wetdays",
     "wetdays_prop",
     "windy_days",
@@ -2981,6 +2984,199 @@ def dry_spell_max_length(
 
     out = rl.resample_and_rl(
         dry,
+        resample_before_rl,
+        rl.longest_run,
+        freq=freq,
+    )
+    return to_agg_units(out, pram, "count")
+
+
+@declare_units(pr="[precipitation]", thresh="[length]")
+def wet_spell_frequency(
+    pr: xarray.DataArray,
+    thresh: Quantified = "1.0 mm",
+    window: int = 3,
+    freq: str = "YS",
+    resample_before_rl: bool = True,
+    op: str = "sum",
+) -> xarray.DataArray:
+    """Return the number of wet periods of n days and more.
+
+    Periods during which the accumulated or maximal daily precipitation amount on a window of n days is over threshold.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+        Daily precipitation.
+    thresh : Quantified
+        Precipitation amount over which a period is considered dry.
+        The value against which the threshold is compared depends on  `op` .
+    window : int
+        Minimum length of the spells.
+    freq : str
+      Resampling frequency.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
+    op: {"sum","max"}
+      Operation to perform on the window.
+      Default is "sum", which checks that the sum of accumulated precipitation over the whole window is more than the
+      threshold.
+      "max" checks that the maximal daily precipitation amount within the window is more than the threshold.
+      This is the same as verifying that each individual day is above the threshold.
+
+    Returns
+    -------
+    xarray.DataArray, [unitless]
+        The {freq} number of wet periods of minimum {window} days.
+
+    Examples
+    --------
+    >>> from xclim.indices import wet_spell_frequency
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> dsf = wet_spell_frequency(pr=pr, op="sum")
+    >>> dsf = wet_spell_frequency(pr=pr, op="max")
+    """
+    pram = rate2amount(convert_units_to(pr, "mm/d", context="hydro"), out_units="mm")
+    thresh = convert_units_to(thresh, pram, context="hydro")
+
+    agg_pr = getattr(pram.rolling(time=window, center=True), op)()
+    cond = agg_pr >= thresh
+    out = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.windowed_run_events,
+        window=1,
+        freq=freq,
+    )
+    out.attrs["units"] = ""
+    return out
+
+
+@declare_units(pr="[precipitation]", thresh="[length]")
+def wet_spell_total_length(
+    pr: xarray.DataArray,
+    thresh: Quantified = "1.0 mm",
+    window: int = 3,
+    op: str = "sum",
+    freq: str = "YS",
+    resample_before_rl: bool = True,
+    **indexer,
+) -> xarray.DataArray:
+    """Total length of dry spells.
+
+    Total number of days in wet periods of a minimum length, during which the maximum or
+    accumulated precipitation within a window of the same length is over a threshold.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+        Daily precipitation.
+    thresh : Quantified
+        Accumulated precipitation value over which a period is considered dry.
+    window : int
+        Number of days when the maximum or accumulated precipitation is over threshold.
+    op : {"max", "sum"}
+        Reduce operation.
+    freq : str
+        Resampling frequency.
+    indexer
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        Indexing is done after finding the dry days, but before finding the spells.
+
+    Returns
+    -------
+    xarray.DataArray, [days]
+        The {freq} total number of days in wet periods of minimum {window} days.
+
+    Notes
+    -----
+    The algorithm assumes days before and after the timeseries are "dry", meaning that the condition for being
+    considered part of a wet spell is stricter on the edges. For example, with `window=3` and `op='sum'`, the first day
+    of the series is considered part of a wet spell only if the accumulated precipitation within the first three days is
+    over the threshold. In comparison, a day in the middle of the series is considered part of a wet spell if any of
+    the three 3-day periods of which it is part are considered wet (so a total of five days are included in the
+    computation, compared to only three).
+    """
+    pram = rate2amount(convert_units_to(pr, "mm/d", context="hydro"), out_units="mm")
+    thresh = convert_units_to(thresh, pram, context="hydro")
+
+    pram_pad = pram.pad(time=(0, window))
+    mask = getattr(pram_pad.rolling(time=window), op)() >= thresh
+    wet = (mask.rolling(time=window).sum() < 1).shift(time=-(window - 1))
+    wet = wet.isel(time=slice(0, pram.time.size)).astype(float)
+
+    wet = select_time(wet, **indexer)
+
+    out = rl.resample_and_rl(
+        wet,
+        resample_before_rl,
+        rl.windowed_run_count,
+        window=1,
+        freq=freq,
+    )
+    return to_agg_units(out, pram, "count")
+
+
+@declare_units(pr="[precipitation]", thresh="[length]")
+def wet_spell_max_length(
+    pr: xarray.DataArray,
+    thresh: Quantified = "1.0 mm",
+    window: int = 1,
+    op: str = "sum",
+    freq: str = "YS",
+    resample_before_rl: bool = True,
+    **indexer,
+) -> xarray.DataArray:
+    """Longest wet spell.
+
+    Maximum number of consecutive days in a wet period of minimum length, during which the maximum or
+    accumulated precipitation within a window of the same length is over a threshold.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+        Daily precipitation.
+    thresh : Quantified
+        Accumulated precipitation value over which a period is considered dry.
+    window : int
+        Number of days when the maximum or accumulated precipitation is over threshold.
+    op : {"max", "sum"}
+        Reduce operation.
+    freq : str
+        Resampling frequency.
+    indexer
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        Indexing is done after finding the dry days, but before finding the spells.
+
+    Returns
+    -------
+    xarray.DataArray, [days]
+        The {freq} longest spell in wet periods of minimum {window} days.
+
+    Notes
+    -----
+    The algorithm assumes days before and after the timeseries are "dry", meaning that the condition for being
+    considered part of a wet spell is stricter on the edges. For example, with `window=3` and `op='sum'`, the first day
+    of the series is considered part of a wet spell only if the accumulated precipitation within the first three days is
+    over the threshold. In comparison, a day in the middle of the series is considered part of a wet spell if any of
+    the three 3-day periods of which it is part are considered wet (so a total of five days are included in the
+    computation, compared to only three).
+    """
+    pram = rate2amount(convert_units_to(pr, "mm/d", context="hydro"), out_units="mm")
+    thresh = convert_units_to(thresh, pram, context="hydro")
+
+    pram_pad = pram.pad(time=(0, window))
+    mask = getattr(pram_pad.rolling(time=window), op)() >= thresh
+    wet = (mask.rolling(time=window).sum() < 1).shift(time=-(window - 1))
+    wet = wet.isel(time=slice(0, pram.time.size)).astype(float)
+
+    wet = select_time(wet, **indexer)
+
+    out = rl.resample_and_rl(
+        wet,
         resample_before_rl,
         rl.longest_run,
         freq=freq,

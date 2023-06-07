@@ -52,6 +52,9 @@ __all__ = [
     "warm_and_dry_days",
     "warm_and_wet_days",
     "wet_precip_accumulation",
+    "wet_spell_frequency",
+    "wet_spell_max_length",
+    "wet_spell_total_length",
     "wetdays",
     "wetdays_prop",
 ]
@@ -566,6 +569,49 @@ dry_spell_max_length = Precip(
     units="days",
     cell_methods="",
     compute=indices.dry_spell_max_length,
+)
+
+wet_spell_frequency = Precip(
+    title="Wet spell frequency",
+    identifier="wet_spell_frequency",
+    long_name="Number of wet periods of {window} day(s) or more, during which the {op} precipitation on a "
+    "window of {window} day(s) is equal or over {thresh}.",
+    description="The {freq} number of wet periods of {window} day(s) or more, during which the {op} precipitation on a "
+    "window of {window} day(s) is equal or over {thresh}.",
+    abstract="The frequency of wet periods of `N` days or more, during which the accumulated or maximum precipitation "
+    "over a given time window of days is equal or above a given threshold.",
+    units="",
+    cell_methods="",
+    compute=indices.wet_spell_frequency,
+)
+
+
+wet_spell_total_length = Precip(
+    title="Wet spell total length",
+    identifier="wet_spell_total_length",
+    long_name="Number of days in wet periods of {window} day(s) or more, during which the {op} "
+    "precipitation within windows of {window} day(s) is equal or over {thresh}.",
+    description="The {freq} number of days in wet periods of {window} day(s) or more, during which the {op} "
+    "precipitation within windows of {window} day(s) is equal or over {thresh}.",
+    abstract="The total length of dry periods of `N` days or more, during which the accumulated or maximum "
+    "precipitation over a given time window of days is equal or above a given threshold.",
+    units="days",
+    cell_methods="",
+    compute=indices.wet_spell_total_length,
+)
+
+wet_spell_max_length = Precip(
+    title="Wet spell maximum length",
+    identifier="wet_spell_max_length",
+    long_name="Maximum consecutive number of days in a wet period of {window} days(s) or more, during which the {op} "
+    "precipitation within windows of {window} day(s) is equal or over {thresh}.",
+    description="The maximum {freq} number of consecutive days in a wet period of {window} day(s) or more"
+    ", during which the {op} precipitation within windows of {window} day(s) is equal or over {thresh}.",
+    abstract="The maximum length of a wet period of `N` days or more, during which the accumulated or maximum "
+    "precipitation over a given time window of days is equal or above a given threshold.",
+    units="days",
+    cell_methods="",
+    compute=indices.wet_spell_max_length,
 )
 
 rprctot = PrecipWithIndexing(
