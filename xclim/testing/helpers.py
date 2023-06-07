@@ -91,7 +91,7 @@ def generate_atmos(cache_dir: str | Path):
         ds = ds.assign(
             rsus=rsus,
             rlus=rlus,
-            sfcWindmax=ds.wsgs,  # wind_speed_gust_max
+            sfcWindmax=ds.wsgsmax,  # wind_speed_gust_max
             tn10=tn10,
             t10=t10,
             t90=t90,
