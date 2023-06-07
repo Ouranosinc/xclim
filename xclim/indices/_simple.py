@@ -556,6 +556,15 @@ def sfcWind_max(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray
     .. math::
 
         FGx_j = max(FG_{ij})
+
+    Examples
+    --------
+    The following would compute for each grid cell the maximum wind speed
+    at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
+
+    >>> from xclim.indices import sfcWind_max
+    >>> fg = xr.open_dataset(path_to_sfcWind_file).sfcWind
+    >>> fg_max = sfcWind_max(fg, freq="QS-DEC")
     """
     return sfcWind.resample(time=freq).max(dim="time").assign_attrs(units=sfcWind.units)
 
@@ -589,7 +598,7 @@ def sfcWind_mean(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArra
 
     Examples
     --------
-    The following would compute for each grid cell of file `sfcWind.day.nc` the mean wind speed
+    The following would compute for each grid cell the mean wind speed
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> from xclim.indices import sfcWind_mean
@@ -627,6 +636,15 @@ def sfcWind_min(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray
     .. math::
 
         FGn_j = min(FG_{ij})
+
+    Examples
+    --------
+    The following would compute for each grid cell the minimum wind speed
+    at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
+
+    >>> from xclim.indices import sfcWind_min
+    >>> fg = xr.open_dataset(path_to_sfcWind_file).sfcWind
+    >>> fg_min = sfcWind_min(fg, freq="QS-DEC")
     """
     return sfcWind.resample(time=freq).min(dim="time").assign_attrs(units=sfcWind.units)
 
@@ -657,6 +675,14 @@ def sfcWindmax_max(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.Dat
     .. math::
 
         FXx_j = max(FX_{ij})
+
+    Examples
+    --------
+    The following would compute for each grid cell of the dataset the extreme maximum wind speed
+    at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
+
+    >>> from xclim.indices import sfcWindmax_max
+    >>> max_sfcWindmax = sfcWindmax_max(sfcWindmax_dataset, freq="QS-DEC")
     """
     return (
         sfcWindmax.resample(time=freq)
@@ -694,12 +720,11 @@ def sfcWindmax_mean(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.Da
 
     Examples
     --------
-    The following would compute for each grid cell of file `sfcWindmax.day.nc` the mean of maximum wind speed
+    The following would compute for each grid cell of the dataset the mean of maximum wind speed
     at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
 
     >>> from xclim.indices import sfcWindmax_mean
-    >>> fx = xr.open_dataset(path_to_sfcWindmax_file).sfcWindmax
-    >>> fx_mean = sfcWindmax_mean(fx, freq="QS-DEC")
+    >>> mean_sfcWindmax = sfcWindmax_mean(sfcWindmax_dataset, freq="QS-DEC")
     """
     return (
         sfcWindmax.resample(time=freq)
@@ -734,6 +759,14 @@ def sfcWindmax_min(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.Dat
     .. math::
 
         FXn_j = min(FX_{ij})
+
+    Examples
+    --------
+    The following would compute for each grid cell of the dataset the minimum of maximum wind speed
+    at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
+
+    >>> from xclim.indices import sfcWindmax_min
+    >>> min_sfcWindmax = sfcWindmax_min(sfcWindmax_dataset, freq="QS-DEC")
     """
     return (
         sfcWindmax.resample(time=freq)
