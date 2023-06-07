@@ -665,6 +665,7 @@ def dry_days(
     return out
 
 
+# NOTE : A spell index could be used below
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
 def maximum_consecutive_wet_days(
     pr: xarray.DataArray,
@@ -2294,6 +2295,7 @@ def wetdays_prop(
     return fwd
 
 
+# NOTE : A spell index could be used below
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def maximum_consecutive_frost_days(
     tasmin: xarray.DataArray,
@@ -2352,6 +2354,7 @@ def maximum_consecutive_frost_days(
     return to_agg_units(out, tasmin, "count")
 
 
+# NOTE : A spell index could be used below
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
 def maximum_consecutive_dry_days(
     pr: xarray.DataArray,
@@ -2464,6 +2467,7 @@ def maximum_consecutive_frost_free_days(
     return to_agg_units(out, tasmin, "count")
 
 
+# NOTE : A spell index could be used below
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def maximum_consecutive_tx_days(
     tasmax: xarray.DataArray,
