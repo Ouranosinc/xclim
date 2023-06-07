@@ -1024,7 +1024,7 @@ def flux2rate(
     ...     coords={"time": time},
     ...     attrs={"units": "kg m-2 s-1"},
     ... )
-    >>> prsnd = rate2flux(prsn, density="100 kg m-3", out_units="mm/s")
+    >>> prsnd = flux2rate(prsn, density="100 kg m-3", out_units="mm/s")
     >>> prsnd.units
     'mm/s'
     >>> float(prsn[0])
