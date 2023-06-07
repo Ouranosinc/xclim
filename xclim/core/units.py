@@ -922,7 +922,7 @@ def _flux_and_rate_converter(
     density = convert_units_to(density, (out_u / in_u) ** (density_exp))
     out = (da * density ** (density_exp)).assign_attrs(da.attrs)
     out.attrs["units"] = pint2cfunits(out_u)
-    if out.attrs["standard_name"]:
+    if "standard_name" in out.attrs.keys():
         out.attrs.pop("standard_name")
     return out
 
@@ -1010,9 +1010,9 @@ def flux2rate(
     ...     coords={"time": time},
     ...     attrs={"units": "kg m-2 s-1"},
     ... )
-    >>> prsnd = rate2flux(prsn, density="100 kg m-3", out_units="kg m-2 s-1")
+    >>> prsnd = rate2flux(prsn, density="100 kg m-3", out_units="mm/s")
     >>> prsnd.units
-    'kg m-2 s-1'
+    'mm/s'
     >>> float(prsn[0])
     1
 
