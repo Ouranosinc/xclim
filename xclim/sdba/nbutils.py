@@ -108,12 +108,6 @@ def remove_NaNs(x):  # noqa
 
 
 @njit(fastmath=True)
-def _euclidean_norm(v):
-    """Compute the euclidean norm of vector v."""
-    return np.sqrt(np.sum(v**2))
-
-
-@njit(fastmath=True)
 def _correlation(X, Y):
     """Compute a correlation as the mean of pairwise distances between points in X and Y.
 
@@ -123,7 +117,10 @@ def _correlation(X, Y):
     d = 0
     for i in range(X.shape[1]):
         for j in range(Y.shape[1]):
-            d += _euclidean_norm(X[:, i] - Y[:, j])
+            d1 = 0
+            for k in range(X.shape[0]):
+                d1 += (X[k, i] - Y[k, j]) ** 2
+            d += np.sqrt(d1)
     return d / (X.shape[1] * Y.shape[1])
 
 
@@ -136,7 +133,10 @@ def _autocorrelation(X):
     d = 0
     for i in range(X.shape[1]):
         for j in range(i):
-            d += _euclidean_norm(X[:, i] - X[:, j])
+            d1 = 0
+            for k in range(X.shape[0]):
+                d1 += (X[k, i] - X[k, j]) ** 2
+            d += np.sqrt(d1)
     return (2 * d) / X.shape[1] ** 2
 
 
