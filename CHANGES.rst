@@ -4,25 +4,27 @@ Changelog
 
 v0.44.0 (unreleased)
 --------------------
-Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
 
 Announcements
 ^^^^^^^^^^^^^
 * `xclim: xarray-based climate data analytics` has been published in the Journal of Open Source Software (`DOI:10.21105/joss.05415 <https://doi.org/10.21105/joss.05415>`_). Users can now make use of the `Cite this repository` button in the sidebar for academic purposes. Many thanks to our core developers and user base for their fine contributions over the years! (:issue:`95`, :pull:`250`).
 
-New indicators
-^^^^^^^^^^^^^^
-* New indices and indicators (`{cold | dry}_spell_max_length`) for calculating maximum length of {cold | dry} spell events. (:issue:`1352`, :pull:`1359`).
-* New indices and indicators (`dry_spell_frequency`) for calculating total number of dry spells. (:issue:`1352`, :pull:`1359`).
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* ``xclim.sdba.processing.escore`` performance was improved with a faster runtime (:pull:`1360`).
 
 Bug fixes
 ^^^^^^^^^
 * Fixed a bug in ``xclim.core.calendar.time_bnds`` when using ``DataArrayResample`` objects, caused by an upstream change in xarray 2023.5.0. (:issue:`1368`, :pull:`1377`).
+* `ensembles.change_significance` will returns NaNs when the input values are all NaNs, instead of failing. (:issue:`1379`, :pull:`1380`).
+* Accelerated import of xclim by caching the compilation of `guvectorize` functions. (:pull:`1378`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * In order to ensure documentation can be rebuilt at a later time, errors raised by `sphinx` linkcheck are now set to be ignored when building the documentation. (:pull:`1375`).
 * With the publication of `xclim`, the code repository now offers a `CITATION.cff` configuration for users to properly cite the software (APA formatted and raw BibTeX) for academic purposes. (:issue:`95`, :pull:`250`).
+* Logging messages emitted when redefining units via `pint` (caused by `logging` interactions with dependencies) have been silenced. (:issue:`1373`, :pull:`1384`).
 
 v0.43.0 (2023-05-09)
 --------------------
