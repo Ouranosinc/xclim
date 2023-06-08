@@ -248,15 +248,16 @@ max_pr_intensity = HrPrecip(
 )
 
 precip_accumulation = PrecipWithIndexing(
-    title="Total accumulated precipitation (solid and liquid)",
+    title="Total accumulated precipitation (solid and/or liquid)",
     identifier="prcptot",
     units="mm",
     standard_name="lwe_thickness_of_precipitation_amount",
-    long_name="Total accumulated precipitation",
-    description="{freq} total precipitation.",
+    long_name="Total accumulated {phase} precipitation",
+    description="{freq} total {phase} precipitation. Precipitation is considered liquid/solid if"
+    "the average daily temperature is above/below {thresh}.",
     abstract="Total accumulated precipitation. If the average daily temperature is given, the phase parameter can be "
     "used to restrict the calculation to precipitation of only one phase (liquid or solid). Precipitation is "
-    "considered solid if the average daily temperature is below {thresh} (and vice versa).",
+    "considered solid if the average daily temperature is below a given threshold (and vice versa).",
     cell_methods="time: sum over days",
     compute=indices.precip_accumulation,
     parameters=dict(tas=None, phase=None),
@@ -267,11 +268,12 @@ precip_average = PrecipWithIndexing(
     identifier="prcpavg",
     units="mm",
     standard_name="lwe_average_of_precipitation_amount",
-    long_name="Averaged precipitation",
-    description="{freq} mean precipitation.",
+    long_name="Averaged {phase} precipitation",
+    description="{freq} mean {phase} precipitation. Precipitation is considered liquid/solid if"
+    "the average daily temperature is above/below {thresh}.",
     abstract="Averaged precipitation. If the average daily temperature is given, the phase parameter can be "
     "used to restrict the calculation to precipitation of only one phase (liquid or solid). Precipitation is "
-    "considered solid if the average daily temperature is below {thresh} (and vice versa).",
+    "considered solid if the average daily temperature is below a given threshold (and vice versa).",
     cell_methods="time: mean over days",
     compute=indices.precip_average,
     parameters=dict(tas=None, phase=None),
@@ -299,7 +301,7 @@ liquid_precip_accumulation = PrTasxWithIndexing(
     long_name="Total accumulated precipitation when temperature is above {thresh}",
     description="{freq} total {phase} precipitation, estimated as precipitation when temperature is above {thresh}.",
     abstract="Total accumulated liquid precipitation. "
-    "Precipitation is considered liquid when the average daily temperature is above {thresh}.",
+    "Precipitation is considered liquid when the average daily temperature is above a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.precip_accumulation,
     parameters={"tas": {"kind": InputKind.VARIABLE}, "phase": "liquid"},
@@ -313,7 +315,7 @@ liquid_precip_average = PrTasxWithIndexing(
     long_name="Averaged precipitation when temperature is above {thresh}",
     description="{freq} mean {phase} precipitation, estimated as precipitation when temperature is above {thresh}.",
     abstract="Averaged liquid precipitation. "
-    "Precipitation is considered liquid when the average daily temperature is above {thresh}.",
+    "Precipitation is considered liquid when the average daily temperature is above a given threshold.",
     cell_methods="time: mean over days",
     compute=indices.precip_average,
     parameters={"tas": {"kind": InputKind.VARIABLE}, "phase": "liquid"},
@@ -327,7 +329,7 @@ solid_precip_accumulation = PrTasxWithIndexing(
     long_name="Total accumulated solid precipitation",
     description="{freq} total solid precipitation, estimated as precipitation when temperature at or below {thresh}.",
     abstract="Total accumulated solid precipitation. "
-    "Precipitation is considered solid when the average daily temperature is at or below {thresh}.",
+    "Precipitation is considered solid when the average daily temperature is at or below a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.precip_accumulation,
     parameters={"tas": {"kind": InputKind.VARIABLE}, "phase": "solid"},
@@ -341,7 +343,7 @@ solid_precip_average = PrTasxWithIndexing(
     long_name="Averaged solid precipitation",
     description="{freq} mean solid precipitation, estimated as precipitation when temperature at or below {thresh}.",
     abstract="Averaged solid precipitation. "
-    "Precipitation is considered solid when the average daily temperature is at or below {thresh}.",
+    "Precipitation is considered solid when the average daily temperature is at or below a given threshold.",
     cell_methods="time: mean over days",
     compute=indices.precip_average,
     parameters={"tas": {"kind": InputKind.VARIABLE}, "phase": "solid"},
