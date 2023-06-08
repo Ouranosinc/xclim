@@ -1492,8 +1492,8 @@ class TestPrecipAverage:
         time_std.year, coords=[time_std], dims="time", attrs={"units": "mm d-1"}
     )
 
-    # calendar 365_day and 360_day not tested for now since xarray.resample
-    # does not support other calendars than standard
+    # "365_day" and "360_day" calendars not tested for now since xarray.resample
+    # does not support calendars other than "standard" and "*gregorian"
     #
     # units = 'days since 2000-01-01 00:00'
     # time_365 = cftime.num2date(np.arange(0, 10 * 365), units, '365_day')
