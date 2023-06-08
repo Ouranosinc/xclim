@@ -132,13 +132,14 @@ jobs:
         shell: bash -l {0}
     steps:
       - uses: actions/checkout@v3
-      - name: Setup Conda (Micromamba) with Python3.10
-        uses: mamba-org/provision-with-micromamba@main
+      - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
+        uses: mamba-org/setup-micromamba@v1
         with:
           cache-downloads: true
-          micromamba-version: 'latest'
+          cache-environment: true
           environment-file: environment.yml
-          extra-specs: |
+          create-args: >-
+            conda
             python=${{ matrix.python-version }}
       - name: Conda and Mamba versions
         run: |
