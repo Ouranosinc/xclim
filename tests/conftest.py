@@ -163,12 +163,12 @@ def pr_hr_series():
 def pr_ndseries():
     def _pr_series(values, start="1/1/2000", units="kg m-2 s-1"):
         nt, nx, ny = np.atleast_3d(values).shape
-        time = pd.date_range(start, periods=nt, freq="D")
+        time_range = pd.date_range(start, periods=nt, freq="D")
         x = np.arange(nx)
         y = np.arange(ny)
         return xr.DataArray(
             values,
-            coords=[time, x, y],
+            coords=[time_range, x, y],
             dims=("time", "x", "y"),
             name="pr",
             attrs={
@@ -209,14 +209,14 @@ def ndq_series():
     cy = xr.IndexVariable("y", y)
     dates = pd.date_range("1900-01-01", periods=nt, freq="D")
 
-    time = xr.IndexVariable(
+    time_range = xr.IndexVariable(
         "time", dates, attrs={"units": "days since 1900-01-01", "calendar": "standard"}
     )
 
     return xr.DataArray(
         np.random.lognormal(10, 1, (nt, nx, ny)),
         dims=("time", "x", "y"),
-        coords={"time": time, "x": cx, "y": cy},
+        coords={"time": time_range, "x": cx, "y": cy},
         attrs={
             "units": "m3 s-1",
             "standard_name": "water_volume_transport_in_river_channel",

@@ -994,7 +994,7 @@ def snw_to_snd(
     density = snr if (snr is not None) else const
     snd = flux2rate(snw, density=density, out_units=out_units).rename("snd")
     snd.attrs["standard_name"] = "surface_snow_thickness"
-    return
+    return snd
 
 
 @declare_units(

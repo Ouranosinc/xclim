@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import os
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -31,9 +31,8 @@ class TestRainOnFrozenGround:
 
 
 class TestPrecipAccumulation:
-    # TODO: replace by fixture
-    nc_pr = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
-    nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
+    nc_pr = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_tasmin = Path("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -58,12 +57,11 @@ class TestPrecipAccumulation:
         # check some vector with and without a nan
         x1 = prMM[:31, 0, 0].values
 
-        prTot = x1.sum()
+        pr_tot = x1.sum()
 
-        np.testing.assert_almost_equal(prTot, out1.values[0, 0, 0], 4)
+        np.testing.assert_almost_equal(pr_tot, out1.values[0, 0, 0], 4)
 
         assert np.isnan(out1.values[0, 1, 0])
-
         assert np.isnan(out1.values[0, -1, -1])
 
     def test_with_different_phases(self, open_dataset):
@@ -93,9 +91,8 @@ class TestPrecipAccumulation:
 
 
 class TestPrecipAverage:
-    # TODO: replace by fixture
-    nc_pr = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
-    nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
+    nc_pr = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_tasmin = Path("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -120,9 +117,9 @@ class TestPrecipAverage:
         # check some vector with and without a nan
         x1 = prMM[:31, 0, 0].values
 
-        prMean = x1.mean()
+        pr_mean = x1.mean()
 
-        np.testing.assert_almost_equal(prMean, out1.values[0, 0, 0], 4)
+        np.testing.assert_almost_equal(pr_mean, out1.values[0, 0, 0], 4)
 
         assert np.isnan(out1.values[0, 1, 0])
 
@@ -155,7 +152,7 @@ class TestPrecipAverage:
 
 
 class TestStandardizedPrecip:
-    nc_ds = os.path.join("sdba", "CanESM2_1950-2100.nc")
+    nc_ds = Path("sdba", "CanESM2_1950-2100.nc")
 
     @pytest.mark.slow
     def test_3d_data_with_nans(self, open_dataset):
@@ -216,8 +213,7 @@ class TestStandardizedPrecip:
 
 
 class TestWetDays:
-    # TODO: replace by fixture
-    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_file = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -271,7 +267,7 @@ class TestWetPrcptot:
 class TestDailyIntensity:
     # testing of wet_day and daily_pr_intensity, both are related
 
-    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_file = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -325,7 +321,7 @@ class TestMaxPrIntensity:
 class TestMax1Day:
     # testing of wet_day and daily_pr_intensity, both are related
 
-    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_file = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -351,17 +347,14 @@ class TestMax1Day:
         rx1 = x1.max()
 
         assert np.allclose(rx1, out1.values[0, 0, 0])
-        # assert (np.allclose(di1, dis.values[0, 0, 0]))
         assert np.isnan(out1.values[0, 1, 0])
-        # assert (np.allclose(di2, dis.values[0, 1, 0]))
         assert np.isnan(out1.values[0, -1, -1])
-        # assert (np.isnan(dis.values[0, -1, -1]))
 
 
 class TestMaxNDay:
     # testing of wet_day and daily_pr_intensity, both are related
 
-    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_file = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     @pytest.mark.parametrize(
         "units,factor,chunks",
@@ -396,8 +389,7 @@ class TestMaxNDay:
 
 
 class TestMaxConsecWetDays:
-    # TODO: replace by fixture
-    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_file = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -431,12 +423,10 @@ class TestMaxConsecWetDays:
 
         # make sure that vector with all nans gives nans whatever skipna
         assert np.isnan(out1.values[0, -1, -1])
-        # assert (np.isnan(wds.values[0, -1, -1]))
 
 
 class TestMaxConsecDryDays:
-    # TODO: replace by fixture
-    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_file = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -470,7 +460,6 @@ class TestMaxConsecDryDays:
 
         # make sure that vector with all nans gives nans whatever skipna
         assert np.isnan(out1.values[0, -1, -1])
-        # assert (np.isnan(wds.values[0, -1, -1]))
 
 
 class TestSnowfallDate:
