@@ -582,9 +582,16 @@ class InputKind(IntEnum):
     """
 
 
-def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> InputKind:
+def infer_kind_from_parameter(param, has_units: bool = False) -> InputKind:
     """Return the appropriate InputKind constant from an ``inspect.Parameter`` object.
 
+    Parameters
+    ----------
+    param : Parameter
+    has_units : bool
+
+    Notes
+    -----
     The correspondence between parameters and kinds is documented in :py:class:`xclim.core.utils.InputKind`.
     The only information not inferable through the `inspect` object is whether the parameter
     has been assigned units through the :py:func:`xclim.core.units.declare_units` decorator.
