@@ -1028,7 +1028,7 @@ def flux2rate(
     >>> prsnd.units
     'mm s-1'
     >>> float(prsnd[0])
-    1
+    1.0
 
     See Also
     --------
