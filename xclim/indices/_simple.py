@@ -21,6 +21,12 @@ __all__ = [
     "max_1day_precipitation_amount",
     "max_n_day_precipitation_amount",
     "max_pr_intensity",
+    "sfcWind_max",
+    "sfcWind_mean",
+    "sfcWind_min",
+    "sfcWindmax_max",
+    "sfcWindmax_mean",
+    "sfcWindmax_min",
     "snow_depth",
     "tg_max",
     "tg_mean",
@@ -50,7 +56,7 @@ def tg_max(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     Returns
     -------
     xarray.DataArray, [same units as tas]
-        Maximum of daily minimum temperature.
+        Maximum of daily mean temperature.
 
     Notes
     -----
@@ -522,3 +528,248 @@ def snow_depth(
         The mean daily snow depth at the given time frequency
     """
     return snd.resample(time=freq).mean(dim="time").assign_attrs(units=snd.units)
+
+
+@declare_units(sfcWind="[speed]")
+def sfcWind_max(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+    r"""Highest daily mean wind speed.
+
+    The maximum of daily mean wind speed.
+
+    Parameters
+    ----------
+    sfcWind : xarray.DataArray
+        Mean daily wind speed.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [same units as sfcWind]
+        Maximum of daily mean wind speed.
+
+    Notes
+    -----
+    Let :math:`FG_{ij}` be the mean wind speed at day :math:`i` of period :math:`j`. Then the maximum
+    daily mean wind speed for period :math:`j` is:
+
+    .. math::
+
+        FGx_j = max(FG_{ij})
+
+    Examples
+    --------
+    The following would compute for each grid cell the maximum wind speed
+    at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
+
+    >>> from xclim.indices import sfcWind_max
+    >>> fg = xr.open_dataset(path_to_sfcWind_file).sfcWind
+    >>> fg_max = sfcWind_max(fg, freq="QS-DEC")
+    """
+    return sfcWind.resample(time=freq).max(dim="time").assign_attrs(units=sfcWind.units)
+
+
+@declare_units(sfcWind="[speed]")
+def sfcWind_mean(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+    r"""Mean of daily mean wind speed.
+
+    Resample the original daily mean wind speed series by taking the mean over each period.
+
+    Parameters
+    ----------
+    sfcWind : xarray.DataArray
+        Mean daily wind speed.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [same units as sfcWind]
+        The mean daily wind speed at the given time frequency
+
+    Notes
+    -----
+    Let :math:`FG_i` be the mean wind speed of day :math:`i`, then for a period :math:`p` starting at
+    day :math:`a` and finishing on day :math:`b`:
+
+    .. math::
+
+       FG_m = \frac{\sum_{i=a}^{b} FG_i}{b - a + 1}
+
+    Examples
+    --------
+    The following would compute for each grid cell the mean wind speed
+    at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
+
+    >>> from xclim.indices import sfcWind_mean
+    >>> fg = xr.open_dataset(path_to_sfcWind_file).sfcWind
+    >>> fg_mean = sfcWind_mean(fg, freq="QS-DEC")
+    """
+    return (
+        sfcWind.resample(time=freq).mean(dim="time").assign_attrs(units=sfcWind.units)
+    )
+
+
+@declare_units(sfcWind="[speed]")
+def sfcWind_min(sfcWind: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+    r"""Lowest daily mean wind speed.
+
+    The minimum of daily mean wind speed.
+
+    Parameters
+    ----------
+    sfcWind : xarray.DataArray
+        Mean daily wind speed.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [same units as sfcWind]
+        Minimum of daily mean wind speed.
+
+    Notes
+    -----
+    Let :math:`FG_{ij}` be the mean wind speed at day :math:`i` of period :math:`j`. Then the minimum
+    daily mean wind speed for period :math:`j` is:
+
+    .. math::
+
+        FGn_j = min(FG_{ij})
+
+    Examples
+    --------
+    The following would compute for each grid cell the minimum wind speed
+    at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
+
+    >>> from xclim.indices import sfcWind_min
+    >>> fg = xr.open_dataset(path_to_sfcWind_file).sfcWind
+    >>> fg_min = sfcWind_min(fg, freq="QS-DEC")
+    """
+    return sfcWind.resample(time=freq).min(dim="time").assign_attrs(units=sfcWind.units)
+
+
+@declare_units(sfcWindmax="[speed]")
+def sfcWindmax_max(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+    r"""Highest maximum wind speed.
+
+    The maximum of daily maximum wind speed.
+
+    Parameters
+    ----------
+    sfcWindmax : xarray.DataArray
+        Maximum daily wind speed.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [same units as sfcWindmax]
+        Maximum value of daily maximum wind speed.
+
+    Notes
+    -----
+    Let :math:`FX_{ij}` be the maximum wind speed at day :math:`i` of period :math:`j`. Then the maximum
+    daily maximum wind speed for period :math:`j` is:
+
+    .. math::
+
+        FXx_j = max(FX_{ij})
+
+    Examples
+    --------
+    The following would compute for each grid cell of the dataset the extreme maximum wind speed
+    at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
+
+    >>> from xclim.indices import sfcWindmax_max
+    >>> max_sfcWindmax = sfcWindmax_max(sfcWindmax_dataset, freq="QS-DEC")
+    """
+    return (
+        sfcWindmax.resample(time=freq)
+        .max(dim="time")
+        .assign_attrs(units=sfcWindmax.units)
+    )
+
+
+@declare_units(sfcWindmax="[speed]")
+def sfcWindmax_mean(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+    r"""Mean of daily maximum wind speed.
+
+    Resample the original daily maximum wind speed series by taking the mean over each period.
+
+    Parameters
+    ----------
+    sfcWindmax : xarray.DataArray
+        Maximum daily wind speed.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [same units as sfcWindmax]
+        The mean daily maximum wind speed at the given time frequency
+
+    Notes
+    -----
+    Let :math:`FX_i` be the maximum wind speed of day :math:`i`, then for a period :math:`p` starting at
+    day :math:`a` and finishing on day :math:`b`:
+
+    .. math::
+
+       FX_m = \frac{\sum_{i=a}^{b} FX_i}{b - a + 1}
+
+    Examples
+    --------
+    The following would compute for each grid cell of the dataset the mean of maximum wind speed
+    at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
+
+    >>> from xclim.indices import sfcWindmax_mean
+    >>> mean_sfcWindmax = sfcWindmax_mean(sfcWindmax_dataset, freq="QS-DEC")
+    """
+    return (
+        sfcWindmax.resample(time=freq)
+        .mean(dim="time")
+        .assign_attrs(units=sfcWindmax.units)
+    )
+
+
+@declare_units(sfcWindmax="[speed]")
+def sfcWindmax_min(sfcWindmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
+    r"""Lowest daily maxium wind speed.
+
+    The minimum of daily maximum wind speed.
+
+    Parameters
+    ----------
+    sfcWindmax : xarray.DataArray
+        Maximum daily wind speed.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [same units as sfcWindmax]
+        Minimum of daily maximum wind speed.
+
+    Notes
+    -----
+    Let :math:`FX_{ij}` be the maximum wind speed at day :math:`i` of period :math:`j`. Then the minimum
+    daily maximum wind speed for period :math:`j` is:
+
+    .. math::
+
+        FXn_j = min(FX_{ij})
+
+    Examples
+    --------
+    The following would compute for each grid cell of the dataset the minimum of maximum wind speed
+    at the seasonal frequency, i.e. DJF, MAM, JJA, SON, DJF, etc.:
+
+    >>> from xclim.indices import sfcWindmax_min
+    >>> min_sfcWindmax = sfcWindmax_min(sfcWindmax_dataset, freq="QS-DEC")
+    """
+    return (
+        sfcWindmax.resample(time=freq)
+        .min(dim="time")
+        .assign_attrs(units=sfcWindmax.units)
+    )

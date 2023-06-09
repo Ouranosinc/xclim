@@ -9,12 +9,23 @@ Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith 
 Announcements
 ^^^^^^^^^^^^^
 * `xclim: xarray-based climate data analytics` has been published in the Journal of Open Source Software (`DOI:10.21105/joss.05415 <https://doi.org/10.21105/joss.05415>`_). Users can now make use of the `Cite this repository` button in the sidebar for academic purposes. Many thanks to our core developers and user base for their fine contributions over the years! (:issue:`95`, :pull:`250`).
+* `xclim` now officially supports Python3.11. (:pull:`1388`).
+
+New indicators
+^^^^^^^^^^^^^^
+* Several new indices and indicators:
+    * ``snowfall_{frequency | intensity}`` for calculating the {percentage of | mean snowfall intensity on} days with snowfall above a threshold. (:issue:`1352`, :pull:`1358`)
+    * ``{sfcWind | sfcWindmax}_{max | mean | min}`` for calculating the {max | mean | min} daily {mean | max} wind speed. (:issue:`1352`, :pull:`1358`)
+    * ``{precip | liquid_precip | solid_precip}_average}`` for calculating the mean daily {total precipitation | liquid precipitation | solid precipitation } amount. (:issue:`1352`, :pull:`1358`)
+    * ``{cold | dry}_spell_max_length`` for calculating maximum length of {cold | dry} spell events. (:issue:`1352`, :pull:`1359`).
+    * ``dry_spell_frequency`` for calculating total number of dry spells. (:issue:`1352`, :pull:`1359`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.sdba.processing.escore`` performance was improved with a faster runtime (:pull:`1360`).
-* New indices and indicators (`{cold | dry}_spell_max_length`) for calculating maximum length of {cold | dry} spell events. (:issue:`1352`, :pull:`1359`).
-* New indices and indicators (`dry_spell_frequency`) for calculating total number of dry spells. (:issue:`1352`, :pull:`1359`).
+* New generic function (``flux_and_rate_converter``) converting flux to a rate (and vice-versa) using a density. `snw_to_snd` and `snd_to_snw` were refactored using this function. (:issue:`1352`, :pull:`1358`)
+* New function (``prsn_to_prsnd``) to convert snowfall flux ([mass]/[area]/[time]) to snowfall rate ([length]/[time]) using snow density ([mass]/[volume]). (:issue:`1352`, :pull:`1358`)
+* New variables: Snowfall rate ``prsnd`` and surface maximum wind speed ``sfcWindmax``.
 
 Bug fixes
 ^^^^^^^^^
@@ -27,7 +38,9 @@ Internal changes
 * In order to ensure documentation can be rebuilt at a later time, errors raised by `sphinx` linkcheck are now set to be ignored when building the documentation. (:pull:`1375`).
 * With the publication of `xclim`, the code repository now offers a `CITATION.cff` configuration for users to properly cite the software (APA formatted and raw BibTeX) for academic purposes. (:issue:`95`, :pull:`250`).
 * Logging messages emitted when redefining units via `pint` (caused by `logging` interactions with dependencies) have been silenced. (:issue:`1373`, :pull:`1384`).
-* Fixed some annotations and dev dependencies issues to allow the development of xclim inside a python 3.11 environment. (:issue:`1376`, :pull:`1381`).
+* Fixed some annotations and `dev` recipe dependencies issues to allow for the development of xclim inside a python3.11 environment. (:issue:`1376`, :pull:`1381`).
+* The deprecated `mamba-org/provision-with-micromamba` GitHub Action has been replaced with `mamba-org/setup-micromamba`. (:pull:`1388`).
+* `xclim` GitHub CI workflows now run builds against Python3.11. (:pull:`1388`).
 
 v0.43.0 (2023-05-09)
 --------------------
