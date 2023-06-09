@@ -3463,6 +3463,7 @@ def test_wet_spell_frequency_op(pr_series):
     np.testing.assert_allclose(test_sum[0], [3], rtol=1e-1)
     np.testing.assert_allclose(test_max[0], [4], rtol=1e-1)
 
+
 class TestSfcWindMax:
     def test_sfcWind_max(self, sfcWind_series):
         sfcWind = sfcWind_series(np.array([14.11, 15.27, 10.70]))
