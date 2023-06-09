@@ -4,16 +4,25 @@ Changelog
 
 v0.44.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Ludwig Lierhammer (:user:`ludwiglierhammer`).
 
 Announcements
 ^^^^^^^^^^^^^
 * `xclim: xarray-based climate data analytics` has been published in the Journal of Open Source Software (`DOI:10.21105/joss.05415 <https://doi.org/10.21105/joss.05415>`_). Users can now make use of the `Cite this repository` button in the sidebar for academic purposes. Many thanks to our core developers and user base for their fine contributions over the years! (:issue:`95`, :pull:`250`).
 * `xclim` now officially supports Python3.11. (:pull:`1388`).
 
+New indicators
+^^^^^^^^^^^^^^
+* New indices and indicators (``snowfall_{frequency | intensity}``) for calculating the {percentage of | mean snowfall intensity on} days with snowfall above a threshold. (:issue:`1352`, :pull:`1358`)
+* New indices and indicators (``{sfcWind | sfcWindmax}_{max | mean | min``) for calculating the {max | mean | min} daily {mean | max} wind speed. (:issue:`1352`, :pull:`1358`)
+* New indices and indicators (``{precip | liquid_precip | solid_precip}_average``) for calculating the mean daily {precipitation | liquid precipitation | solid precipitation } amount. (:issue:`1352`, :pull:`1358`)
+
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.sdba.processing.escore`` performance was improved with a faster runtime (:pull:`1360`).
+* New generic function (``flux_and_rate_converter``) converting flux to a rate (and vice-versa) using a density. `snw_to_snd` and `snd_to_snw` were refactored using this function. (:issue:`1352`, :pull:`1358`)
+* New function (``prsn_to_prsnd``) to convert snowfall flux ([mass]/[area]/[time]) to snowfall rate ([length]/[time]) using snow density ([mass]/[volume]). (:issue:`1352`, :pull:`1358`)
+* New variables: Snowfall rate  ``prsnd`` and surface maximum wind speed ``sfcWindmax``.
 
 Bug fixes
 ^^^^^^^^^

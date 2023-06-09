@@ -152,11 +152,12 @@ def populate_testing_data(
 def add_example_file_paths(cache_dir: Path) -> dict[str]:
     """Create a dictionary of relevant datasets to be patched into the xdoctest namespace."""
     ns = dict()
+    ns["path_to_ensemble_file"] = "EnsembleReduce/TestEnsReduceCriteria.nc"
     ns["path_to_pr_file"] = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
+    ns["path_to_sfcWind_file"] = "ERA5/daily_surface_cancities_1990-1993.nc"
+    ns["path_to_tas_file"] = "ERA5/daily_surface_cancities_1990-1993.nc"
     ns["path_to_tasmax_file"] = "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc"
     ns["path_to_tasmin_file"] = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
-    ns["path_to_tas_file"] = "ERA5/daily_surface_cancities_1990-1993.nc"
-    ns["path_to_ensemble_file"] = "EnsembleReduce/TestEnsReduceCriteria.nc"
 
     # For core.utils.load_module example
     ns["path_to_example_py"] = (

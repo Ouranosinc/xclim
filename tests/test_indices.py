@@ -1485,6 +1485,57 @@ class TestPrecipAccumulation:
         np.testing.assert_array_equal(outrn[0], 5 * 3600 * 24)
 
 
+class TestPrecipAverage:
+    # build test data for different calendar
+    time_std = pd.date_range("2000-01-01", "2010-12-31", freq="D")
+    da_std = xr.DataArray(
+        time_std.year, coords=[time_std], dims="time", attrs={"units": "mm d-1"}
+    )
+
+    # "365_day" and "360_day" calendars not tested for now since xarray.resample
+    # does not support calendars other than "standard" and "*gregorian"
+    #
+    # units = 'days since 2000-01-01 00:00'
+    # time_365 = cftime.num2date(np.arange(0, 10 * 365), units, '365_day')
+    # time_360 = cftime.num2date(np.arange(0, 10 * 360), units, '360_day')
+    # da_365 = xr.DataArray(np.arange(time_365.size), coords=[time_365], dims='time')
+    # da_360 = xr.DataArray(np.arange(time_360.size), coords=[time_360], dims='time')
+
+    def test_simple(self, pr_series):
+        pr = np.zeros(100)
+        pr[5:10] = 1
+        pr = pr_series(pr)
+
+        out = xci.precip_average(pr, freq="M")
+        np.testing.assert_array_equal(out[0], 5 * 3600 * 24 / 31)
+
+    def test_yearly(self):
+        da_std = self.da_std
+        out_std = xci.precip_average(da_std)
+        target = [y for y in np.unique(da_std.time.dt.year)]
+        np.testing.assert_allclose(out_std.values, target)
+
+    def test_mixed_phases(self, pr_series, tas_series):
+        pr = np.zeros(100)
+        pr[5:20] = 1
+        pr = pr_series(pr)
+
+        tas = np.ones(100) * 280
+        tas[5:10] = 270
+        tas[10:15] = 268
+        tas = tas_series(tas)
+
+        outsn = xci.precip_average(pr, tas=tas, phase="solid", freq="M")
+        outsn2 = xci.precip_average(
+            pr, tas=tas, phase="solid", thresh="269 K", freq="M"
+        )
+        outrn = xci.precip_average(pr, tas=tas, phase="liquid", freq="M")
+
+        np.testing.assert_array_equal(outsn[0], 10 * 3600 * 24 / 31)
+        np.testing.assert_array_equal(outsn2[0], 5 * 3600 * 24 / 31)
+        np.testing.assert_array_equal(outrn[0], 5 * 3600 * 24 / 31)
+
+
 class TestRainOnFrozenGround:
     def test_simple(self, tas_series, pr_series):
         tas = np.zeros(30) - 1
@@ -2440,9 +2491,33 @@ def test_rain_approximation(pr_series, tas_series, method, exp):
     np.testing.assert_allclose(prlp, exp, atol=1e-5, rtol=1e-3)
 
 
-def test_first_snowfall(prsn_series):
-    prsn = prsn_series(30 - abs(np.arange(366) - 180), start="2000-01-01")
-    out = xci.first_snowfall(prsn, thresh="15 kg m-2 s-1", freq="YS")
+def test_first_snowfall(prsn_series, prsnd_series):
+    # test with prsnd [mm day-1]
+    prsnd = prsnd_series(
+        (30 - abs(np.arange(366) - 180)), start="2000-01-01", units="mm day-1"
+    )
+    out = xci.first_snowfall(prsnd, thresh="15 mm/day", freq="YS")
+    assert out[0] == 166
+    for attr in ["units", "is_dayofyear", "calendar"]:
+        assert attr in out.attrs.keys()
+    assert out.attrs["units"] == ""
+    assert out.attrs["is_dayofyear"] == 1
+
+    # test with prsnd [m s-1]
+    prsnd = convert_units_to(prsnd, "m s-1")
+    out = xci.first_snowfall(prsnd, thresh="15 mm/day", freq="YS")
+    assert out[0] == 166
+    for attr in ["units", "is_dayofyear", "calendar"]:
+        assert attr in out.attrs.keys()
+    assert out.attrs["units"] == ""
+    assert out.attrs["is_dayofyear"] == 1
+
+    # test with prsn [kg m-2 s-1]
+    prsn = prsn_series(
+        (30 - abs(np.arange(366) - 180)), start="2000-01-01", units="mm day-1"
+    )
+    prsn = convert_units_to(prsn, "kg m-2 s-1", context="hydro")
+    out = xci.first_snowfall(prsn, thresh="15 mm/day", freq="YS")
     assert out[0] == 166
     for attr in ["units", "is_dayofyear", "calendar"]:
         assert attr in out.attrs.keys()
@@ -2450,22 +2525,54 @@ def test_first_snowfall(prsn_series):
     assert out.attrs["is_dayofyear"] == 1
 
 
-def test_last_snowfall(prsn_series):
-    prsn = prsn_series(30 - abs(np.arange(366) - 180), start="2000-01-01")
-    out = xci.last_snowfall(prsn, thresh="15 kg m-2 s-1", freq="YS")
+def test_last_snowfall(prsn_series, prsnd_series):
+    # test with prsnd [mm day-1]
+    prsnd = prsnd_series(
+        (30 - abs(np.arange(366) - 180)), start="2000-01-01", units="mm day-1"
+    )
+    out = xci.last_snowfall(prsnd, thresh="15 mm/day", freq="YS")
+    assert out[0] == 196
+
+    # test with prsnd [m s-1]
+    prsnd = convert_units_to(prsnd, "m s-1")
+    out = xci.last_snowfall(prsnd, thresh="15 mm/day", freq="YS")
+    assert out[0] == 196
+
+    # test with prsn [kg m-2 s-1]
+    prsn = prsn_series(
+        (30 - abs(np.arange(366) - 180)), start="2000-01-01", units="mm day-1"
+    )
+    prsn = convert_units_to(prsn, "kg m-2 s-1", context="hydro")
+    out = xci.last_snowfall(prsn, thresh="15 mm/day", freq="YS")
     assert out[0] == 196
 
 
-def test_days_with_snow(prsn_series):
-    prsn = prsn_series(np.arange(365), start="2000-01-01")
-    out = xci.days_with_snow(prsn)
+def test_days_with_snow(prsnd_series, prsn_series):
+    # test with prsnd [mm day-1]
+    prsnd = prsnd_series(np.arange(365), start="2000-01-01", units="mm day-1")
+    out = xci.days_with_snow(prsnd, low="0 mm/day", high="1E12 mm/day")
     assert len(out) == 2
     # Days with 0 and 1 are not counted, because condition is > thresh, not >=.
     assert sum(out) == 364
 
-    out = xci.days_with_snow(prsn, low="10 kg m-2 s-1", high="20 kg m-2 s-1")
+    out = xci.days_with_snow(prsnd, low="10 mm/day", high="20 mm/day")
     np.testing.assert_array_equal(out, [10, 0])
     assert out.units == "d"
+
+    # test with prsnd [m s-1]
+    prsnd = convert_units_to(prsnd, "m s-1")
+    out = xci.days_with_snow(prsnd, low="0 mm/day", high="1E12 mm/day")
+    assert len(out) == 2
+    # Days with 0 and 1 are not counted, because condition is > thresh, not >=.
+    assert sum(out) == 364
+
+    # test with prsn [kg m-2 s-1]
+    prsn = prsn_series(np.arange(365), start="2000-01-01", units="mm day-1")
+    prsn = convert_units_to(prsn, "kg m-2 s-1", context="hydro")
+    out = xci.days_with_snow(prsn, low="0 mm/day", high="1E12 mm/day")
+    assert len(out) == 2
+    # Days with 0 and 1 are not counted, because condition is > thresh, not >=.
+    assert sum(out) == 364
 
 
 class TestSnowMaxDoy:
@@ -3153,3 +3260,84 @@ class TestDrynessIndex:
             di, np.array([13.355, 102.426, 65.576, 158.078]), rtol=1e-03
         )
         np.testing.assert_allclose(di_wet, di_plus_100)
+
+
+class TestSfcWindMax:
+    def test_sfcWind_max(self, sfcWind_series):
+        sfcWind = sfcWind_series(np.array([14.11, 15.27, 10.70]))
+        out = xci.sfcWind_max(sfcWind)
+        np.testing.assert_allclose(out, [15.27])
+
+
+class TestSfcWindMean:
+    def test_sfcWind_mean(self, sfcWind_series):
+        sfcWind = sfcWind_series(np.array([14.11, 15.27, 10.70]))
+        out = xci.sfcWind_mean(sfcWind)
+        np.testing.assert_allclose(out, [13.36])
+
+
+class TestSfcWindMin:
+    def test_sfcWind_min(self, sfcWind_series):
+        sfcWind = sfcWind_series(np.array([14.11, 15.27, 10.70]))
+        out = xci.sfcWind_min(sfcWind)
+        np.testing.assert_allclose(out, [10.70])
+
+
+class TestSfcWindmaxMax:
+    def test_sfcWindmax_max(self, sfcWindmax_series):
+        sfcWindmax = sfcWindmax_series(np.array([14.11, 15.27, 10.70]))
+        out = xci.sfcWindmax_max(sfcWindmax)
+        np.testing.assert_allclose(out, [15.27])
+
+
+class TestSfcWindmaxMean:
+    def test_sfcWindmax_mean(self, sfcWindmax_series):
+        sfcWindmax = sfcWindmax_series(np.array([14.11, 15.27, 10.70]))
+        out = xci.sfcWindmax_mean(sfcWindmax)
+        np.testing.assert_allclose(out, [13.36])
+
+
+class TestSfcWindmaxMin:
+    def test_sfcWindmax_min(self, sfcWindmax_series):
+        sfcWindmax = sfcWindmax_series(np.array([14.11, 15.27, 10.70]))
+        out = xci.sfcWindmax_min(sfcWindmax)
+        np.testing.assert_allclose(out, [10.70])
+
+
+class TestSnowfallFrequency:
+    def test_snowfall_frequency(self, prsnd_series, prsn_series):
+        # test prsnd [mm day-1]
+        prsnd = prsnd_series(np.array([0, 2, 0.3, 0.2, 4]), units="mm day-1")
+        out = xci.snowfall_frequency(prsnd)
+        np.testing.assert_allclose(out, [40])
+
+        # test prsnd [m s-1]
+        prsnd = convert_units_to(prsnd, "m s-1")
+        out = xci.snowfall_frequency(prsnd)
+        np.testing.assert_allclose(out, [40])
+
+        # test prsn [kg m-2 s-1]
+        prsn = prsn_series(np.array([0, 2, 0.3, 0.2, 4]), units="mm day-1")
+        prsn = convert_units_to(prsn, "kg m-2 s-1", context="hydro")
+        out = xci.snowfall_frequency(prsnd)
+        np.testing.assert_allclose(out, [40])
+
+
+class TestSnowfallIntensity:
+    def test_snowfall_intensity(self, prsnd_series, prsn_series):
+        # test prsnd [mm day-1]
+        prsnd = prsnd_series(np.array([0, 2, 0.3, 0.2, 4]), units="mm day-1")
+        prsn = convert_units_to(prsnd, "kg m-2 s-1", context="hydro")
+        out = xci.snowfall_intensity(prsnd)
+        np.testing.assert_allclose(out, [3])
+
+        # test prsnd [m s-1]
+        prsn = convert_units_to(prsnd, "m s-1")
+        out = xci.snowfall_intensity(prsnd)
+        np.testing.assert_allclose(out, [3])
+
+        # test prsn [kg m-2 s-1]
+        prsn = prsn_series(np.array([0, 2, 0.3, 0.2, 4]), units="mm day-1")
+        prsn = convert_units_to(prsn, "kg m-2 s-1", context="hydro")
+        out = xci.snowfall_intensity(prsn)
+        np.testing.assert_allclose(out, [3])

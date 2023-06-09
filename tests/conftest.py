@@ -144,6 +144,13 @@ def prsn_series():
 
 
 @pytest.fixture
+def prsnd_series():
+    """Return snowfall rate series time series."""
+    _prsnd_series = partial(test_timeseries, variable="prsnd")
+    return _prsnd_series
+
+
+@pytest.fixture
 def pr_hr_series():
     """Return precipitation hourly time series."""
     _pr_hr_series = partial(
@@ -156,12 +163,12 @@ def pr_hr_series():
 def pr_ndseries():
     def _pr_series(values, start="1/1/2000", units="kg m-2 s-1"):
         nt, nx, ny = np.atleast_3d(values).shape
-        time = pd.date_range(start, periods=nt, freq="D")
+        time_range = pd.date_range(start, periods=nt, freq="D")
         x = np.arange(nx)
         y = np.arange(ny)
         return xr.DataArray(
             values,
-            coords=[time, x, y],
+            coords=[time_range, x, y],
             dims=("time", "x", "y"),
             name="pr",
             attrs={
@@ -202,14 +209,14 @@ def ndq_series():
     cy = xr.IndexVariable("y", y)
     dates = pd.date_range("1900-01-01", periods=nt, freq="D")
 
-    time = xr.IndexVariable(
+    time_range = xr.IndexVariable(
         "time", dates, attrs={"units": "days since 1900-01-01", "calendar": "standard"}
     )
 
     return xr.DataArray(
         np.random.lognormal(10, 1, (nt, nx, ny)),
         dims=("time", "x", "y"),
-        coords={"time": time, "x": cx, "y": cy},
+        coords={"time": time_range, "x": cx, "y": cy},
         attrs={
             "units": "m3 s-1",
             "standard_name": "water_volume_transport_in_river_channel",
@@ -278,8 +285,15 @@ def hurs_series():
 @pytest.fixture
 def sfcWind_series():  # noqa
     """Return surface wind speed time series."""
-    _sfcWind_series = partial(test_timeseries, variable="tas", units="km h-1")
+    _sfcWind_series = partial(test_timeseries, variable="sfcWind", units="km h-1")
     return _sfcWind_series
+
+
+@pytest.fixture
+def sfcWindmax_series():  # noqa
+    """Return maximum surface wind speed time series."""
+    _sfcWindmax_series = partial(test_timeseries, variable="sfcWindmax", units="km h-1")
+    return _sfcWindmax_series
 
 
 @pytest.fixture
