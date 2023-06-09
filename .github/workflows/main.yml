@@ -58,9 +58,10 @@ jobs:
       (github.event_name == 'pull_request') && !contains(github.event.pull_request.labels.*.name, 'approved')
     runs-on: ubuntu-latest
     strategy:
-      include:
-        - tox-env: "py39"
-          python-version: "3.9"
+      matrix:
+        include:
+          - tox-env: "py39"
+            python-version: "3.9"
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python${{ matrix.python-version }}
