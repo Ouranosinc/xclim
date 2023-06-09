@@ -248,16 +248,15 @@ max_pr_intensity = HrPrecip(
 )
 
 precip_accumulation = PrecipWithIndexing(
-    title="Total accumulated precipitation (solid and/or liquid)",
+    title="Total accumulated precipitation (solid and liquid)",
     identifier="prcptot",
     units="mm",
     standard_name="lwe_thickness_of_precipitation_amount",
-    long_name="Total accumulated {phase} precipitation",
-    description="{freq} total {phase} precipitation. Precipitation is considered liquid/solid if"
-    "the average daily temperature is above/below {thresh}.",
+    long_name="Total accumulated precipitation",
+    description="{freq} total precipitation.",
     abstract="Total accumulated precipitation. If the average daily temperature is given, the phase parameter can be "
     "used to restrict the calculation to precipitation of only one phase (liquid or solid). Precipitation is "
-    "considered solid if the average daily temperature is below a given threshold (and vice versa).",
+    "considered solid if the average daily temperature is below 0°C (and vice versa).",
     cell_methods="time: sum over days",
     compute=indices.precip_accumulation,
     parameters=dict(tas=None, phase=None),
@@ -268,12 +267,11 @@ precip_average = PrecipWithIndexing(
     identifier="prcpavg",
     units="mm",
     standard_name="lwe_average_of_precipitation_amount",
-    long_name="Averaged {phase} precipitation",
-    description="{freq} mean {phase} precipitation. Precipitation is considered liquid/solid if"
-    "the average daily temperature is above/below {thresh}.",
+    long_name="Averaged precipitation",
+    description="{freq} mean precipitation.",
     abstract="Averaged precipitation. If the average daily temperature is given, the phase parameter can be "
     "used to restrict the calculation to precipitation of only one phase (liquid or solid). Precipitation is "
-    "considered solid if the average daily temperature is below a given threshold (and vice versa).",
+    "considered solid if the average daily temperature is below 0°C threshold (and vice versa).",
     cell_methods="time: mean over days",
     compute=indices.precip_average,
     parameters=dict(tas=None, phase=None),
