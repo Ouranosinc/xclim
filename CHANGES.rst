@@ -4,7 +4,7 @@ Changelog
 
 v0.44.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -13,6 +13,8 @@ Announcements
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.sdba.processing.escore`` performance was improved with a faster runtime (:pull:`1360`).
+* New indices and indicators (`{cold | dry}_spell_max_length`) for calculating maximum length of {cold | dry} spell events. (:issue:`1352`, :pull:`1359`).
+* New indices and indicators (`dry_spell_frequency`) for calculating total number of dry spells. (:issue:`1352`, :pull:`1359`).
 
 Bug fixes
 ^^^^^^^^^
