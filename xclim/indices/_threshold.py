@@ -11,6 +11,7 @@ from xclim.core.missing import at_least_n_valid
 from xclim.core.units import (
     convert_units_to,
     declare_units,
+    pint2cfunits,
     rate2amount,
     str2pint,
     to_agg_units,
@@ -76,6 +77,8 @@ __all__ = [
     "snd_season_end",
     "snd_season_length",
     "snd_season_start",
+    "snowfall_frequency",
+    "snowfall_intensity",
     "snw_season_end",
     "snw_season_length",
     "snw_season_start",
@@ -1421,12 +1424,13 @@ def first_day_temperature_above(
 @declare_units(prsn="[precipitation]", thresh="[precipitation]")
 def first_snowfall(
     prsn: xarray.DataArray,
-    thresh: Quantified = "0.5 mm/day",
+    thresh: Quantified = "UNSET",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
-    r"""First day with solid precipitation above a threshold.
+    r"""First day with snowfall rate above a threshold.
 
-    Returns the first day of a period where the solid precipitation exceeds a threshold (default: 0.5 mm/day).
+    Returns the first day of a period where snowfall exceeds a threshold (current default: 0.5 mm/day
+    liquid water equivalent snowfall rate. xclim >=0.45.0 default: 1 mm/day).
 
     Warnings
     --------
@@ -1435,22 +1439,38 @@ def first_snowfall(
     Parameters
     ----------
     prsn : xarray.DataArray
-        Solid precipitation flux.
+        Snowfall flux.
     thresh : Quantified
-        Threshold precipitation flux on which to base evaluation.
+        Threshold snowfall flux or liquid water equivalent snowfall rate. (Current default: 0.5 mm/day liquid water equivalent snowfall rate.
+        xclim >=0.45.0 default: 1 mm/day)
     freq : str
         Resampling frequency.
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
-        First day of the year when the solid precipitation is superior to a threshold.
+    xarray.DataArray
+        Last day of the year where snowfall is superior to a threshold.
         If there is no such day, returns np.nan.
 
     References
     ----------
     :cite:cts:`cbcl_climate_2020`.
+
+    Notes
+    -----
+    The 1 mm/day liquid water equivalent snowfall rate threshold in :cite:cts:`frei_snowfall_2018` corresponds
+    to the 1 cm/day snowfall rate threshold  in :cite:cts:`cbcl_climate_2020` using a snow denstiy of 100 kg/m**3.
+
+    If threshold and prsn differ by a density (i.e. [length/time] vs. [mass/area/time]), a liquid water equivalent
+    snowfall rate is assumed and the threshold is converted using a 1000 kg m-3 density.
+
+    The current default threshold "UNSET" is a placeholder and will be changed to the default 1 mm/day  in xclim>=0.45.0.
     """
+    if thresh == "UNSET":
+        warnings.warn(
+            "The default value for this indicator will change in xclim>=0.45.0,  from `0.5 mm/day` to `1 mm/day`. Using `0.5 mm/day` for now."
+        )
+        thresh = "0.5 mm/day"
     thresh = convert_units_to(thresh, prsn, context="hydro")
     cond = prsn >= thresh
 
@@ -1467,12 +1487,13 @@ def first_snowfall(
 @declare_units(prsn="[precipitation]", thresh="[precipitation]")
 def last_snowfall(
     prsn: xarray.DataArray,
-    thresh: Quantified = "0.5 mm/day",
+    thresh: Quantified = "UNSET",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
-    r"""Last day with solid precipitation above a threshold.
+    r"""Last day with snowfall above a threshold.
 
-    Returns the last day of a period where the solid precipitation exceeds a threshold (default: 0.5 mm/day).
+    Returns the last day of a period where snowfall exceeds a threshold (current default: 0.5 mm/day liquid water equivalent snowfall rate.
+    xclim >=0.45.0 default: 1 mm/day).
 
     Warnings
     --------
@@ -1481,22 +1502,39 @@ def last_snowfall(
     Parameters
     ----------
     prsn : xarray.DataArray
-        Solid precipitation flux.
+        Snowfall flux.
     thresh : Quantified
-        Threshold precipitation flux on which to base evaluation.
+        Threshold snowfall flux or liquid water equivalent snowfall rate. (Current default: 0.5 mm/day liquid water equivalent snowfall rate.
+        xclim >=0.45.0 default: 1 mm/day)
     freq : str
         Resampling frequency.
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
-        Last day of the year when the solid precipitation is superior to a threshold.
+    xarray.DataArray
+        Last day of the year where snowfall is superior to a threshold.
         If there is no such day, returns np.nan.
+
 
     References
     ----------
     :cite:cts:`cbcl_climate_2020`.
+
+    Notes
+    -----
+    The 1 mm/day liquid water equivalent snowfall rate threshold in :cite:cts:`frei_snowfall_2018` corresponds
+    to the 1 cm/day snowfall rate threshold  in :cite:cts:`cbcl_climate_2020` using a snow denstiy of 100 kg/m**3.
+
+    If threshold and prsn differ by a density (i.e. [length/time] vs. [mass/area/time]), a liquid water equivalent
+    snowfall rate is assumed and the threshold is converted using a 1000 kg m-3 density.
+
+    The current default threshold "UNSET" is a placeholder and will be changed to the default 1 mm/day  in xclim>=0.45.0.
     """
+    if thresh == "UNSET":
+        warnings.warn(
+            "The default value for this indicator will change in xclim>=0.45.0,  from `0.5 mm/day` to `1 mm/day`. Using `0.5 mm/day` for now."
+        )
+        thresh = "0.5 mm/day"
     thresh = convert_units_to(thresh, prsn, context="hydro")
     cond = prsn >= thresh
 
@@ -1506,13 +1544,17 @@ def last_snowfall(
         dim="time",
         coord="dayofyear",
     )
-    out.attrs["units"] = ""
+    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(prsn))
     return out
 
 
-@declare_units(prsn="[precipitation]", low="[precipitation]", high="[precipitation]")
+@declare_units(
+    prsn="[precipitation]",
+    low="[precipitation]",
+    high="[precipitation]",
+)
 def days_with_snow(
-    prsn: xarray.DataArray,  # noqa
+    prsn: xarray.DataArray,
     low: Quantified = "0 kg m-2 s-1",
     high: Quantified = "1E6 kg m-2 s-1",
     freq: str = "AS-JUL",
@@ -1521,31 +1563,141 @@ def days_with_snow(
 
     Return the number of days where snowfall is within low and high thresholds.
 
+    Warnings
+    --------
+    The default `freq` is valid for the northern hemisphere.
+
     Parameters
     ----------
-    prsn : xr.DataArray
-        Solid precipitation flux.
+    prsn : xarray.DataArray
+        Snowfall flux
     low : Quantified
-        Minimum threshold solid precipitation flux.
+        Minimum threshold snowfall flux or liquid water equivalent snowfall rate.
     high : Quantified
-        Maximum threshold solid precipitation flux.
+        Maximum threshold snowfall flux or liquid water equivalent snowfall rate.
     freq : str
-        Resampling frequency defining the periods as defined in
-        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+        Resampling frequency.
 
     Returns
     -------
-    xarray.DataArray, [time]
+    xarray.DataArray, [days]
         Number of days where snowfall is between low and high thresholds.
 
     References
     ----------
     :cite:cts:`matthews_planning_2017`
+
+    Notes
+    -----
+    If threshold and prsn differ by a density (i.e. [length/time] vs. [mass/area/time]), a liquid water equivalent
+    snowfall rate is assumed and the threshold is converted using a 1000 kg m-3 density.
     """
     low = convert_units_to(low, prsn, context="hydro")
     high = convert_units_to(high, prsn, context="hydro")
     out = domain_count(prsn, low, high, freq)
     return to_agg_units(out, prsn, "count")
+
+
+@declare_units(prsn="[precipitation]", thresh="[precipitation]")
+def snowfall_frequency(
+    prsn: xarray.DataArray,
+    thresh: Quantified = "1 mm/day",
+    freq: str = "AS-JUL",
+) -> xarray.DataArray:
+    r"""Percentage of snow days.
+
+    Return the percentage of days where snowfall exceeds a threshold (default: 1 mm/day).
+
+    Warnings
+    --------
+    The default `freq` is valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    prsn : xarray.DataArray
+        Snowfall flux.
+    thresh : Quantified
+        Threshold snowfall flux or liquid water equivalent snowfall rate (default: 1 mm/day).
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [%]
+        Percentage of days where snowfall exceeds a threshold.
+
+    References
+    ----------
+    :cite:cts:`frei_snowfall_2018`
+
+    Notes
+    -----
+    The 1 mm/day liquid water equivalent snowfall rate threshold in :cite:cts:`frei_snowfall_2018` corresponds
+    to the 1 cm/day snowfall rate threshold  in :cite:cts:`cbcl_climate_2020` using a snow denstiy of 100 kg/m**3.
+
+    If threshold and prsn differ by a density (i.e. [length/time] vs. [mass/area/time]), a liquid water equivalent
+    snowfall rate is assumed and the threshold is converted using a 1000 kg m-3 density.
+    """
+    # High threshold here just needs to be a big value. It is converted to same units as
+    # so that a warning message won't be triggered just because of this value
+    thresh_units = pint2cfunits(str2pint(thresh))
+    high = f"{convert_units_to('1E6 kg m-2 s-1', thresh_units, context='hydro')} {thresh_units}"
+    snow_days = days_with_snow(prsn, low=thresh, high=high, freq=freq)
+    total_days = prsn.resample(time=freq).count(dim="time")
+    snow_freq = snow_days / total_days * 100
+    snow_freq = snow_freq.assign_attrs(**snow_days.attrs)
+    snow_freq.attrs["units"] = "%"
+    return snow_freq
+
+
+@declare_units(prsn="[precipitation]", thresh="[precipitation]")
+def snowfall_intensity(
+    prsn: xarray.DataArray,
+    thresh: Quantified = "1 mm/day",
+    freq: str = "AS-JUL",
+) -> xarray.DataArray:
+    r"""Mean daily snowfall rate during snow days.
+
+    Return mean daily snowfall rate during days where snowfall exceeds a threshold (default: 1 mm/day).
+
+    Warnings
+    --------
+    The default `freq` is valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    prsn : xarray.DataArray
+        Snowfall flux.
+    thresh : Quantified
+        Threshold snowfall flux or liquid water equivalent snowfall rate (default: 1 mm/day).
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray,
+        Mean daily liquid water equivalent snowfall rate during days where snowfall exceeds a threshold.
+
+    References
+    ----------
+    :cite:cts:`frei_snowfall_2018`
+
+    Notes
+    -----
+    The 1 mm/day liquid water equivalent snowfall rate threshold in :cite:cts:`frei_snowfall_2018` corresponds
+    to the 1 cm/day snowfall rate threshold  in :cite:cts:`cbcl_climate_2020` using a snow denstiy of 100 kg/m**3.
+
+    If threshold and prsn differ by a density (i.e. [length/time] vs. [mass/area/time]), a liquid water equivalent
+    snowfall rate is assumed and the threshold is converted using a 1000 kg m-3 density.
+    """
+    thresh = convert_units_to(thresh, "mm/day", context="hydro")
+    lwe_prsn = convert_units_to(prsn, "mm/day", context="hydro")
+
+    cond = lwe_prsn >= thresh
+    mean = lwe_prsn.where(cond).resample(time=freq).mean(dim="time")
+    out = mean.fillna(0)
+
+    return out.assign_attrs(units=lwe_prsn.units)
 
 
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
