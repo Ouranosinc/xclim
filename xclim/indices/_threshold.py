@@ -1638,6 +1638,7 @@ def heating_degree_days(
 def hot_spell_max_length(
     tasmax: xarray.DataArray,
     thresh: Quantified = "30 degC",
+    thresh_tasmax: Quantified = "UNSET",
     window: int = 1,
     freq: str = "YS",
     op: str = ">",
@@ -1683,6 +1684,11 @@ def hot_spell_max_length(
     ----------
     :cite:cts:`casati_regional_2013,robinson_definition_2001`
     """
+    if thresh_tasmax != "UNSET":
+        warnings.warn(
+            "The call signature for this indicator will change from `thresh_tasmax` to `thresh` in xclim>=0.45.0.  Passing `thresh_tasmax` value to `thresh`."
+        )
+        thresh = thresh_tasmax
     thresh = convert_units_to(thresh, tasmax)
 
     cond = compare(tasmax, op, thresh, constrain=(">", ">="))
@@ -1700,6 +1706,7 @@ def hot_spell_max_length(
 def hot_spell_total_length(
     tasmax: xarray.DataArray,
     thresh: Quantified = "30 degC",
+    thresh_tasmax: Quantified = "UNSET",
     window: int = 3,
     freq: str = "YS",
     op: str = ">",
@@ -1741,6 +1748,12 @@ def hot_spell_total_length(
     In :cite:t:`robinson_definition_2001` where heat waves are also considered, the corresponding parameters would
     be `thresh_tasmax=39.44, window=2` (103F).
     """
+    if thresh_tasmax != "UNSET":
+        warnings.warn(
+            "The call signature for this indicator will change from `thresh_tasmax` to `thresh` in xclim>=0.45.0.  Passing `thresh_tasmax` value to `thresh`."
+        )
+        thresh = thresh_tasmax
+
     thresh = convert_units_to(thresh, tasmax)
 
     cond = compare(tasmax, op, thresh, constrain=(">", ">="))
@@ -1759,6 +1772,7 @@ def hot_spell_total_length(
 def hot_spell_frequency(
     tasmax: xarray.DataArray,
     thresh: Quantified = "30 degC",
+    thresh_tasmax: Quantified = "UNSET",
     window: int = 3,
     freq: str = "YS",
     op: str = ">",
@@ -1803,6 +1817,11 @@ def hot_spell_frequency(
     ----------
     :cite:cts:`casati_regional_2013,robinson_definition_2001`
     """
+    if thresh_tasmax != "UNSET":
+        warnings.warn(
+            "The call signature for this indicator will change from `thresh_tasmax` to `thresh` in xclim>=0.45.0.  Passing `thresh_tasmax` value to `thresh`."
+        )
+        thresh = thresh_tasmax
     thresh = convert_units_to(thresh, tasmax)
 
     cond = compare(tasmax, op, thresh, constrain=(">", ">="))
