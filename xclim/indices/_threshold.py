@@ -1790,7 +1790,7 @@ def heating_degree_days(
 def hot_spell_max_length(
     tasmax: xarray.DataArray,
     thresh: Quantified = "30 degC",
-    thresh_tasmax: Quantified = "UNSET",
+    thresh_tasmax: Quantified | str = "UNSET",
     window: int = 1,
     freq: str = "YS",
     op: str = ">",
@@ -1858,7 +1858,7 @@ def hot_spell_max_length(
 def hot_spell_total_length(
     tasmax: xarray.DataArray,
     thresh: Quantified = "30 degC",
-    thresh_tasmax: Quantified = "UNSET",
+    thresh_tasmax: Quantified | str = "UNSET",
     window: int = 3,
     freq: str = "YS",
     op: str = ">",
@@ -1924,7 +1924,7 @@ def hot_spell_total_length(
 def hot_spell_frequency(
     tasmax: xarray.DataArray,
     thresh: Quantified = "30 degC",
-    thresh_tasmax: Quantified = "UNSET",
+    thresh_tasmax: Quantified | str = "UNSET",
     window: int = 3,
     freq: str = "YS",
     op: str = ">",
