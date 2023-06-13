@@ -844,3 +844,12 @@ def test_all_inputs_known():
             "data/variables.yml, or skipped explicitly in this test. "
             f"The yaml file is missing: {known_vars - VARIABLES.keys()}."
         )
+
+
+def test_freq_doc():
+    from xclim import atmos
+
+    doc = atmos.latitude_temperature_index.__doc__
+    allowed_periods = ["A"]
+    exp = f"Restricted to frequencies equivalent to one of {allowed_periods}"
+    assert exp in doc
