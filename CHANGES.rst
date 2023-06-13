@@ -38,6 +38,9 @@ Internal changes
 * Fixed some annotations and `dev` recipe dependencies issues to allow for the development of xclim inside a python3.11 environment. (:issue:`1376`, :pull:`1381`).
 * The deprecated `mamba-org/provision-with-micromamba` GitHub Action has been replaced with `mamba-org/setup-micromamba`. (:pull:`1388`).
 * `xclim` GitHub CI workflows now run builds against Python3.11. (:pull:`1388`).
+* Two new GitHub CI Actions have been added to the existing Workflows (:pull:`1390`):
+    * `actions/add-to-project`: Automatically adds issues to the `xclim` project.
+    * `saadmk11/github-actions-version-updater`: Updates GitHub Action versions in all Workflows (triggered monthly).
 
 v0.43.0 (2023-05-09)
 --------------------
