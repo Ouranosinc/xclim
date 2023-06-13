@@ -39,6 +39,7 @@ Internal changes
 * The deprecated `mamba-org/provision-with-micromamba` GitHub Action has been replaced with `mamba-org/setup-micromamba`. (:pull:`1388`).
 * `xclim` GitHub CI workflows now run builds against Python3.11. (:pull:`1388`).
 * In indices, verify that all parameters of type `Quantified` that have a default value have their dimension declared. (:issue:`1293`, :pull:`1393`).
+* Updated `roy_extremeprecip_2021` to the newly published paper. (:pull:`1394`).
 * Two new GitHub CI Actions have been added to the existing Workflows (:pull:`1390`):
     * `actions/add-to-project`: Automatically adds issues to the `xclim` project.
     * `saadmk11/github-actions-version-updater`: Updates GitHub Action versions in all Workflows (triggered monthly).
