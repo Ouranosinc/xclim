@@ -1025,7 +1025,9 @@ def rain_season(
             da_stop = pram <= thresh_dry_end
             run_positions = rl.rle(da_stop, index="first") >= window_dry_end
         elif method_dry_end == "total":
-            run_positions = pram.rolling({"time": window_dry_end}).sum() <= thresh_dry_end
+            run_positions = (
+                pram.rolling({"time": window_dry_end}).sum() <= thresh_dry_end
+            )
         return _get_first_run(run_positions, date_min_end, date_max_end)
 
     # Get start, end and length of rain season. Written as a function so it can be resampled
