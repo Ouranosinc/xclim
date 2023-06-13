@@ -631,7 +631,7 @@ dry_spell_total_length = Precip(
 dry_spell_max_length = Precip(
     title="Dry spell maximum length",
     identifier="dry_spell_max_length",
-    long_name="Maximum consecutive number of days in a dry period of {window} days(s) or more, during which the {op} "
+    long_name="Maximum consecutive number of days in a dry period of {window} day(s) or more, during which the {op} "
     "precipitation within windows of {window} day(s) is under {thresh}.",
     description="The maximum {freq} number of consecutive days in a dry period of {window} day(s) or more"
     ", during which the {op} precipitation within windows of {window} day(s) is under {thresh}.",
@@ -674,7 +674,7 @@ wet_spell_total_length = Precip(
 wet_spell_max_length = Precip(
     title="Wet spell maximum length",
     identifier="wet_spell_max_length",
-    long_name="Maximum consecutive number of days in a wet period of {window} days(s) or more, during which the {op} "
+    long_name="Maximum consecutive number of days in a wet period of {window} day(s) or more, during which the {op} "
     "precipitation within windows of {window} day(s) is equal or over {thresh}.",
     description="The maximum {freq} number of consecutive days in a wet period of {window} day(s) or more"
     ", during which the {op} precipitation within windows of {window} day(s) is equal or over {thresh}.",

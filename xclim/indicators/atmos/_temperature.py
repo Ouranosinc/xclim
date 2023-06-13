@@ -272,7 +272,7 @@ hot_spell_frequency = Temp(
 hot_spell_max_length = Temp(
     title="Hot spell maximum length",
     identifier="hot_spell_max_length",
-    long_name="Maximum consecutive number of days in a hot period of {window} days(s) or more, during which the "
+    long_name="Maximum consecutive number of days in a hot period of {window} day(s) or more, during which the "
     "temperature within windows of {window} day(s) is above {thresh}.",
     description="The maximum {freq} number of consecutive days in a hot period of {window} day(s) or more"
     ", during which the precipitation within windows of {window} day(s) is above {thresh}.",
@@ -505,7 +505,7 @@ cold_spell_frequency = Temp(
 cold_spell_max_length = Temp(
     title="Cold spell maximum length",
     identifier="cold_spell_max_length",
-    long_name="Maximum consecutive number of days in a cold period of {window} days(s) or more, during which the "
+    long_name="Maximum consecutive number of days in a cold period of {window} day(s) or more, during which the "
     "temperature within windows of {window} day(s) is under {thresh}.",
     description="The maximum {freq} number of consecutive days in a cold period of {window} day(s) or more"
     ", during which the precipitation within windows of {window} day(s) is under {thresh}.",
