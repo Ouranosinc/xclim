@@ -627,6 +627,18 @@ def robust_data(request):
             {},
         ),
         (
+            "brownforsythe-test",
+            [0.5, 0.25, 0.5, 0.5],
+            [0.5, 0.0, 1, 1],
+            [
+                [False, True, False, True],
+                [True, False, False, False],
+                [False, True, False, True],
+                [False, False, False, True],
+            ],
+            {},
+        ),
+        (
             "threshold",
             [0.25, 1, 1, 1],
             [1, 0.5, 1, 1],
@@ -687,6 +699,7 @@ def test_change_significance(
     if pvals is not None:
         if isinstance(ref, xr.Dataset):
             pvals = pvals.tas
+        pvals.load()  # Otherwise it acts weirdly for welch-ttest
         # 0.05 is the default p_change parameter
         changed = pvals < 0.05
         np.testing.assert_array_almost_equal(changed, exp_changed)
@@ -736,6 +749,18 @@ def test_change_significance_delta(robust_data):
 
     np.testing.assert_array_almost_equal(chng_frac, exp_chng_frac)
     np.testing.assert_array_equal(pos_frac, exp_pos_frac)
+
+
+def test_change_significance_empty():
+    """Test that NaN is returned if input arrays are full of NaNs."""
+    r = np.full((20, 10), np.nan)
+    f = np.full((20, 10), np.nan)
+
+    ref = xr.DataArray(r, dims=("realization", "time"), name="tas")
+    fut = xr.DataArray(f, dims=("realization", "time"), name="tas")
+
+    c, f = ensembles.change_significance(fut, ref, test="ttest")
+    assert np.all(np.isnan(c))
 
 
 def test_robustness_coefficient():

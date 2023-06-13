@@ -7,78 +7,81 @@ from xclim.core.indicator import Daily, Indicator, ResamplingIndicatorWithIndexi
 from xclim.core.utils import InputKind
 
 __all__ = [
-    "tn_days_above",
-    "tn_days_below",
-    "tg_days_above",
-    "tg_days_below",
-    "tx_days_above",
-    "tx_days_below",
-    "tx_tn_days_above",
-    "heat_wave_frequency",
-    "heat_wave_max_length",
-    "heat_wave_total_length",
-    "heat_wave_index",
-    "hot_spell_frequency",
-    "hot_spell_max_length",
-    "tg_max",
-    "tg_mean",
-    "tg_min",
-    "tg10p",
-    "tg90p",
-    "tn_min",
-    "tn_max",
-    "tn_mean",
-    "tn10p",
-    "tn90p",
-    "tx_min",
-    "tx_max",
-    "tx_mean",
-    "tx10p",
-    "tx90p",
-    "daily_temperature_range",
-    "max_daily_temperature_range",
-    "daily_temperature_range_variability",
-    "extreme_temperature_range",
-    "cold_spell_duration_index",
+    "biologically_effective_degree_days",
     "cold_spell_days",
+    "cold_spell_duration_index",
     "cold_spell_frequency",
+    "cold_spell_max_length",
+    "cold_spell_total_length",
+    "consecutive_frost_days",
     "cool_night_index",
+    "cooling_degree_days",
     "daily_freezethaw_cycles",
+    "daily_temperature_range",
+    "daily_temperature_range_variability",
+    "degree_days_exceedance_date",
+    "extreme_temperature_range",
+    "fire_season",
+    "first_day_tg_above",
+    "first_day_tg_below",
+    "first_day_tn_above",
+    "first_day_tn_below",
+    "first_day_tx_above",
+    "first_day_tx_below",
     "freezethaw_spell_frequency",
     "freezethaw_spell_max_length",
     "freezethaw_spell_mean_length",
-    "cooling_degree_days",
-    "heating_degree_days",
-    "growing_degree_days",
-    "thawing_degree_days",
     "freezing_degree_days",
-    "frost_season_length",
     "freshet_start",
     "frost_days",
-    "last_spring_frost",
-    "first_day_tg_above",
-    "first_day_tn_above",
-    "first_day_tx_above",
-    "first_day_tg_below",
-    "first_day_tn_below",
-    "first_day_tx_below",
-    "ice_days",
-    "consecutive_frost_days",
-    "maximum_consecutive_frost_free_days",
-    "frost_free_season_start",
     "frost_free_season_end",
     "frost_free_season_length",
-    "growing_season_start",
+    "frost_free_season_start",
+    "frost_season_length",
+    "growing_degree_days",
     "growing_season_end",
     "growing_season_length",
-    "tropical_nights",
-    "degree_days_exceedance_date",
-    "warm_spell_duration_index",
-    "maximum_consecutive_warm_days",
-    "fire_season",
+    "growing_season_start",
+    "heat_wave_frequency",
+    "heat_wave_index",
+    "heat_wave_max_length",
+    "heat_wave_total_length",
+    "heating_degree_days",
+    "hot_spell_frequency",
+    "hot_spell_max_length",
+    "hot_spell_total_length",
     "huglin_index",
-    "biologically_effective_degree_days",
+    "ice_days",
+    "last_spring_frost",
     "latitude_temperature_index",
+    "max_daily_temperature_range",
+    "maximum_consecutive_frost_free_days",
+    "maximum_consecutive_warm_days",
+    "tg10p",
+    "tg90p",
+    "tg_days_above",
+    "tg_days_below",
+    "tg_max",
+    "tg_mean",
+    "tg_min",
+    "thawing_degree_days",
+    "tn10p",
+    "tn90p",
+    "tn_days_above",
+    "tn_days_below",
+    "tn_max",
+    "tn_mean",
+    "tn_min",
+    "tropical_nights",
+    "tx10p",
+    "tx90p",
+    "tx_days_above",
+    "tx_days_below",
+    "tx_max",
+    "tx_mean",
+    "tx_min",
+    "tx_tn_days_above",
+    "warm_spell_duration_index",
 ]
 
 
@@ -252,37 +255,46 @@ heat_wave_index = Temp(
     compute=indices.heat_wave_index,
 )
 
-
 hot_spell_frequency = Temp(
     title="Hot spell frequency",
     identifier="hot_spell_frequency",
+    long_name="Number of hot periods of {window} day(s) or more, during which the temperature on a "
+    "window of {window} day(s) is above {thresh}.",
+    description="The {freq} number of hot periods of {window} day(s) or more, during which the temperature on a "
+    "window of {window} day(s) is above {thresh}.",
+    abstract="The frequency of hot periods of `N` days or more, during which the temperature "
+    "over a given time window of days is above a given threshold.",
     units="",
-    standard_name="hot_spell_events",
-    long_name="Total number of series of at least {window} consecutive days "
-    "with daily maximum temperature above {thresh_tasmax}",
-    description="{freq} number of hot spell events within a given period. A hot spell event occurs when the maximum "
-    "daily temperature exceeds {thresh_tasmax} over at least {window} days.",
-    abstract="Number of hot spells events within a given period. A hot spell occurs when the daily maximum temperature"
-    "exceeds a given threshold for a minimum number of days.",
     cell_methods="",
-    keywords="health,",
     compute=indices.hot_spell_frequency,
 )
 
 hot_spell_max_length = Temp(
     title="Hot spell maximum length",
     identifier="hot_spell_max_length",
+    long_name="Maximum consecutive number of days in a hot period of {window} day(s) or more, during which the "
+    "temperature within windows of {window} day(s) is above {thresh}.",
+    description="The maximum {freq} number of consecutive days in a hot period of {window} day(s) or more"
+    ", during which the precipitation within windows of {window} day(s) is above {thresh}.",
+    abstract="The maximum length of a hot period of `N` days or more, during which the "
+    "temperature over a given time window of days is above a given threshold.",
     units="days",
-    standard_name="spell_length_of_days_with_air_temperature_above_threshold",
-    long_name="Longest series of at least {window} consecutive days "
-    "with daily maximum temperature above {thresh_tasmax}",
-    description="{freq} maximum length of hot spell events occurring within a given period. "
-    "A hot spell event occurs when the maximum daily temperature exceeds {thresh_tasmax} over at least {window} days.",
-    abstract="Maximum length of hot spells events within a given period. A hot spell occurs when the daily maximum "
-    "temperature exceeds a given threshold for a minimum number of days.",
     cell_methods="",
-    keywords="health,",
     compute=indices.hot_spell_max_length,
+)
+
+hot_spell_total_length = Temp(
+    title="Hot spell total length",
+    identifier="hot_spell_total_length",
+    long_name="Number of days in hot periods of {window} day(s) or more, during which the"
+    "temperture within windows of {window} day(s) is above {thresh}.",
+    description="The {freq} number of days in hot periods of {window} day(s) or more, during which the "
+    "temperature within windows of {window} day(s) is above {thresh}.",
+    abstract="The total length of hot periods of `N` days or more, during which the "
+    "temperature over a given time window of days is above a given threshold.",
+    units="days",
+    cell_methods="",
+    compute=indices.hot_spell_total_length,
 )
 
 tg_mean = TempWithIndexing(
@@ -479,16 +491,43 @@ cold_spell_days = Temp(
 cold_spell_frequency = Temp(
     title="Cold spell frequency",
     identifier="cold_spell_frequency",
+    long_name="Number of cold periods of {window} day(s) or more, during which the temperature on a "
+    "window of {window} day(s) is below {thresh}.",
+    description="The {freq} number of cold periods of {window} day(s) or more, during which the temperature on a "
+    "window of {window} day(s) is below {thresh}.",
+    abstract="The frequency of cold periods of `N` days or more, during which the temperature "
+    "over a given time window of days is below a given threshold.",
     units="",
-    standard_name="cold_spell_frequency",
-    long_name="Total number of series of at least {window} consecutive days "
-    "where the mean daily temperature is below {thresh}",
-    description="{freq} number cold spell events. A cold spell is defined as a minimum number of "
-    "consecutive days with mean daily temperature below {thresh}.",
-    abstract="The number of cold spell events. A cold spell is defined as a minimum number of consecutive days with "
-    "mean daily temperature below a given threshold.",
     cell_methods="",
     compute=indices.cold_spell_frequency,
+)
+
+cold_spell_max_length = Temp(
+    title="Cold spell maximum length",
+    identifier="cold_spell_max_length",
+    long_name="Maximum consecutive number of days in a cold period of {window} day(s) or more, during which the "
+    "temperature within windows of {window} day(s) is under {thresh}.",
+    description="The maximum {freq} number of consecutive days in a cold period of {window} day(s) or more"
+    ", during which the precipitation within windows of {window} day(s) is under {thresh}.",
+    abstract="The maximum length of a cold period of `N` days or more, during which the "
+    "temperature over a given time window of days is below a given threshold.",
+    units="days",
+    cell_methods="",
+    compute=indices.cold_spell_max_length,
+)
+
+cold_spell_total_length = Temp(
+    title="Cold spell total length",
+    identifier="cold_spell_total_length",
+    long_name="Number of days in cold periods of {window} day(s) or more, during which the"
+    "temperture within windows of {window} day(s) is under {thresh}.",
+    description="The {freq} number of days in cold periods of {window} day(s) or more, during which the "
+    "temperature within windows of {window} day(s) is under {thresh}.",
+    abstract="The total length of cold periods of `N` days or more, during which the "
+    "temperature over a given time window of days is below a given threshold.",
+    units="days",
+    cell_methods="",
+    compute=indices.cold_spell_total_length,
 )
 
 cool_night_index = Temp(

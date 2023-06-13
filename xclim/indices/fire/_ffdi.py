@@ -1,4 +1,3 @@
-# noqa: D205,D400
 r"""
 McArthur Forest Fire Danger (Mark 5) System
 ===========================================
@@ -34,16 +33,10 @@ __all__ = [
 
 
 @guvectorize(
-    [
-        (
-            float64[:],
-            float64[:],
-            float64,
-            float64,
-            float64[:],
-        )
-    ],
+    [(float64[:], float64[:], float64, float64, float64[:])],
     "(n),(n),(),()->(n)",
+    nopython=True,
+    cache=True,
 )
 def _keetch_byram_drought_index(p, t, pa, kbdi0, kbdi: float):  # pragma: no cover
     """Compute the Keetch-Byram drought (KBDI) index.
@@ -97,15 +90,10 @@ def _keetch_byram_drought_index(p, t, pa, kbdi0, kbdi: float):  # pragma: no cov
 
 
 @guvectorize(
-    [
-        (
-            float64[:],
-            float64[:],
-            int64,
-            float64[:],
-        )
-    ],
+    [(float64[:], float64[:], int64, float64[:])],
     "(n),(n),()->(n)",
+    nopython=True,
+    cache=True,
 )
 def _griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
     """Compute the Griffiths drought factor.
@@ -364,7 +352,7 @@ def mcarthur_forest_fire_danger_index(
     tasmax: xr.DataArray,
     hurs: xr.DataArray,
     sfcWind: xr.DataArray,
-):  # noqa: D403
+):
     """McArthur forest fire danger index (FFDI) Mark 5.
 
     The FFDI is a numeric indicator of the potential danger of a forest fire.

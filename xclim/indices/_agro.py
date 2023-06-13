@@ -8,7 +8,7 @@ import xarray
 
 import xclim.indices as xci
 import xclim.indices.run_length as rl
-from xclim.core.calendar import parse_offset, resample_doy, select_time
+from xclim.core.calendar import parse_offset, resample_doy
 from xclim.core.units import (
     amount2lwethickness,
     convert_units_to,
@@ -36,8 +36,6 @@ __all__ = [
     "biologically_effective_degree_days",
     "cool_night_index",
     "corn_heat_units",
-    "dry_spell_frequency",
-    "dry_spell_total_length",
     "dryness_index",
     "effective_growing_degree_days",
     "huglin_index",
@@ -1273,135 +1271,6 @@ def standardized_precipitation_evapotranspiration_index(
     spei = standardized_precipitation_index(wb, wb_cal, freq, window, dist, method)
 
     return spei
-
-
-@declare_units(pr="[precipitation]", thresh="[length]")
-def dry_spell_frequency(
-    pr: xarray.DataArray,
-    thresh: Quantified = "1.0 mm",
-    window: int = 3,
-    freq: str = "YS",
-    resample_before_rl: bool = True,
-    op: str = "sum",
-) -> xarray.DataArray:
-    """Return the number of dry periods of n days and more.
-
-    Periods during which the accumulated or maximal daily precipitation amount on a window of n days is under threshold.
-
-    Parameters
-    ----------
-    pr : xarray.DataArray
-        Daily precipitation.
-    thresh : Quantified
-        Precipitation amount under which a period is considered dry.
-        The value against which the threshold is compared depends on  `op` .
-    window : int
-        Minimum length of the spells.
-    freq : str
-      Resampling frequency.
-    resample_before_rl : bool
-      Determines if the resampling should take place before or after the run
-      length encoding (or a similar algorithm) is applied to runs.
-    op: {"sum","max"}
-      Operation to perform on the window.
-      Default is "sum", which checks that the sum of accumulated precipitation over the whole window is less than the
-      threshold.
-      "max" checks that the maximal daily precipitation amount within the window is less than the threshold.
-      This is the same as verifying that each individual day is below the threshold.
-
-    Returns
-    -------
-    xarray.DataArray, [unitless]
-        The {freq} number of dry periods of minimum {window} days.
-
-    Examples
-    --------
-    >>> from xclim.indices import dry_spell_frequency
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
-    >>> dsf = dry_spell_frequency(pr=pr, op="sum")
-    >>> dsf = dry_spell_frequency(pr=pr, op="max")
-    """
-    pram = rate2amount(convert_units_to(pr, "mm/d", context="hydro"), out_units="mm")
-    thresh = convert_units_to(thresh, pram, context="hydro")
-
-    agg_pr = getattr(pram.rolling(time=window, center=True), op)()
-    cond = agg_pr < thresh
-    out = rl.resample_and_rl(
-        cond,
-        resample_before_rl,
-        rl.windowed_run_events,
-        window=1,
-        freq=freq,
-    )
-
-    out.attrs["units"] = ""
-    return out
-
-
-@declare_units(pr="[precipitation]", thresh="[length]")
-def dry_spell_total_length(
-    pr: xarray.DataArray,
-    thresh: Quantified = "1.0 mm",
-    window: int = 3,
-    op: str = "sum",
-    freq: str = "YS",
-    resample_before_rl: bool = True,
-    **indexer,
-) -> xarray.DataArray:
-    """Total length of dry spells.
-
-    Total number of days in dry periods of a minimum length, during which the maximum or
-    accumulated precipitation within a window of the same length is under a threshold.
-
-    Parameters
-    ----------
-    pr : xarray.DataArray
-        Daily precipitation.
-    thresh : Quantified
-        Accumulated precipitation value under which a period is considered dry.
-    window : int
-        Number of days when the maximum or accumulated precipitation is under threshold.
-    op : {"max", "sum"}
-        Reduce operation.
-    freq : str
-        Resampling frequency.
-    indexer
-        Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
-        Indexing is done after finding the dry days, but before finding the spells.
-
-    Returns
-    -------
-    xarray.DataArray, [days]
-        The {freq} total number of days in dry periods of minimum {window} days.
-
-    Notes
-    -----
-    The algorithm assumes days before and after the timeseries are "wet", meaning that the condition for being
-    considered part of a dry spell is stricter on the edges. For example, with `window=3` and `op='sum'`, the first day
-    of the series is considered part of a dry spell only if the accumulated precipitation within the first three days is
-    under the threshold. In comparison, a day in the middle of the series is considered part of a dry spell if any of
-    the three 3-day periods of which it is part are considered dry (so a total of five days are included in the
-    computation, compared to only three).
-    """
-    pram = rate2amount(convert_units_to(pr, "mm/d", context="hydro"), out_units="mm")
-    thresh = convert_units_to(thresh, pram, context="hydro")
-
-    pram_pad = pram.pad(time=(0, window))
-    mask = getattr(pram_pad.rolling(time=window), op)() < thresh
-    dry = (mask.rolling(time=window).sum() >= 1).shift(time=-(window - 1))
-    dry = dry.isel(time=slice(0, pram.time.size)).astype(float)
-
-    dry = select_time(dry, **indexer)
-
-    out = rl.resample_and_rl(
-        dry,
-        resample_before_rl,
-        rl.windowed_run_count,
-        window=1,
-        freq=freq,
-    )
-    return to_agg_units(out, pram, "count")
 
 
 @declare_units(tas="[temperature]")

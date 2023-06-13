@@ -8,9 +8,9 @@ from xclim.indices import base_flow_index, generic, rb_flashiness_index
 
 __all__ = [
     "base_flow_index",
-    "rb_flashiness_index",
     "doy_qmax",
     "doy_qmin",
+    "rb_flashiness_index",
 ]
 
 

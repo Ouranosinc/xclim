@@ -15,18 +15,17 @@ dependencies:
     - lmoments3
     - numba
     - numpy>=1.16
-    - pandas>=0.23,<2.0 # Pinned due to incompatibility with xarray <=2023.03
+    - pandas>=0.23
     - pint>=0.9
     - poppler>=0.67
     - pyyaml
     - scikit-learn>=0.21.3
     - scipy>=1.2
+    - statsmodels
     - xarray>=2022.06.0
     # Extras
-    - clisops
     - eofs
     - flox
-    - pytest-json-report  # Added due to a packaging bug with ESMPy. See: https://github.com/esmf-org/esmf/issues/115
   # Testing and development dependencies
     - black>=22.12
     - blackdoc
@@ -34,6 +33,7 @@ dependencies:
     - cairosvg
     - coverage
     - distributed>=2.0
+    - filelock
     - flake8
     - flake8-rst-docstrings
     - flit
@@ -50,7 +50,7 @@ dependencies:
     - pre-commit
     - pybtex
     - pydocstyle
-    - pylint<2.15
+    - pylint
     - pytest
     - pytest-cov
     - pytest-xdist>=3.2
@@ -58,9 +58,8 @@ dependencies:
     - sphinx-autodoc-typehints
     - sphinx-codeautolink
     - sphinx-copybutton
-    - sphinx-rtd-theme>=1.0
+    - sphinx_rtd_theme>=1.0
     - sphinxcontrib-bibtex
-    - statsmodels
     - tokenize-rt
     - tox
 #    - tox-conda  # Will be added when a tox@v4.0+ compatible plugin is released.
@@ -69,4 +68,5 @@ dependencies:
     - yamllint
     - pip
     - pip:
+        - flake8-alphabetize
         - sphinxcontrib-svg2pdfconverter

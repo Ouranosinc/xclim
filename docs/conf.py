@@ -125,7 +125,8 @@ linkcheck_ignore = [
     # Bad ssl certificate
     r"https://hal.inrae.fr/hal-02843898",
     # Added on 2022-12-05: Taylor and Francis online does not allow linkcheck requests (error 403)
-    r"https://www.tandfonline.com/.*" r"https://doi.org/10.1080/.*",
+    r"https://www.tandfonline.com/.*",
+    r"https://doi.org/10.1080/.*",
     # Added on 2022-12-08: Site appears to be down (timeout)
     r"http://www.utci.org/.*",
     # Added on 2023-01-24: bad ssl certificate
@@ -145,6 +146,8 @@ linkcheck_ignore = [
     r"https://www.semanticscholar.org/paper/A-Multivariate-Two-Sample-Test-Based-on-the-Concept-Zech-Aslan/.*",
     # Added on 2023-03-08: OGC does not allow linkcheck requests (error 403)
     r"https://www.ogc.org/standard/wps/.*",
+    # Added on 2023-04-17: IEEE messes around with linkcheck requests (error 418)
+    r"https://ieeexplore.ieee.org/.*",
     # Added on 2023-04-19: Site appears to be down (error 418)
     r"https://doi.org/10.1109/.*",
     r"https://ieeexplore.ieee.org/document/1544887/",
@@ -152,6 +155,14 @@ linkcheck_ignore = [
     r"https://doi.org/10.1214/.*"
     r"https://projecteuclid.org/journals/annals-of-statistics/volume-7/issue-4/Multivariate-Generalizations-of-the-Wald-Wolfowitz-and-Smirnov-Two-Sample/10.1214/aos/1176344722.full",
     r"https://projecteuclid.org/journals/annals-of-statistics/volume-16/issue-2/A-Multivariate-Two-Sample-Test-Based-on-the-Number-of/10.1214/aos/1176350835.full",
+    # Added on 2023-05-03: Site appears to be down (error 502)
+    r"https://openresearchsoftware.metajnl.com/article/10.5334/jors.122/",
+    # Added on 2023-05-03: Connection refused for bots (error 104)
+    r"https://doi.org/10.13031/2013.26773",
+    # Added on 2023-05-03: linkcheck has issues with some anchors
+    r"https://peps.python.org/pep-0537/#features-for-3-7",
+    r"https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.griddata.html#scipy.interpolate.griddata",
+    r"https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.skew.html#scipy.stats.skew",
 ]
 linkcheck_exclude_documents = [r"readme"]
 

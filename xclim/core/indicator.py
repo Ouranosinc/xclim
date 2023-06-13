@@ -1,4 +1,4 @@
-# noqa: D205,D214,D400,D405,D406,D407,D411
+# noqa: D214,D405,D406,D407,D411
 """
 Indicator Utilities
 ===================
@@ -190,11 +190,11 @@ class Parameter:
     _empty = _empty
 
     kind: InputKind
-    default: "Any" = _empty_default
+    default: Any = _empty_default
     description: str = ""
     units: str = _empty
     choices: set = _empty
-    value: "Any" = _empty
+    value: Any = _empty
 
     def update(self, other: dict) -> None:
         """Update a parameter's values from a dict."""
@@ -302,30 +302,30 @@ class Indicator(IndicatorRegistrar):
     Parameters
     ----------
     identifier : str
-      Unique ID for class registry, should be a valid slug.
+        Unique ID for class registry, should be a valid slug.
     realm : {'atmos', 'seaIce', 'land', 'ocean'}
-      General domain of validity of the indicator. Indicators created outside xclim.indicators must set this attribute.
+        General domain of validity of the indicator. Indicators created outside xclim.indicators must set this attribute.
     compute : func
-      The function computing the indicators. It should return one or more DataArray.
+        The function computing the indicators. It should return one or more DataArray.
     cf_attrs : list of dicts
-      Attributes to be formatted and added to the computation's output.
-      See :py:attr:`xclim.core.indicator.Indicator.cf_attrs`.
+        Attributes to be formatted and added to the computation's output.
+        See :py:attr:`xclim.core.indicator.Indicator.cf_attrs`.
     title : str
-      A succinct description of what is in the computed outputs. Parsed from `compute` docstring if None (first paragraph).
+        A succinct description of what is in the computed outputs. Parsed from `compute` docstring if None (first paragraph).
     abstract : str
-      A long description of what is in the computed outputs. Parsed from `compute` docstring if None (second paragraph).
+        A long description of what is in the computed outputs. Parsed from `compute` docstring if None (second paragraph).
     keywords : str
-      Comma separated list of keywords. Parsed from `compute` docstring if None (from a "Keywords" section).
+        Comma separated list of keywords. Parsed from `compute` docstring if None (from a "Keywords" section).
     references : str
-      Published or web-based references that describe the data or methods used to produce it. Parsed from
-      `compute` docstring if None (from the "References" section).
+        Published or web-based references that describe the data or methods used to produce it. Parsed from
+        `compute` docstring if None (from the "References" section).
     notes : str
-      Notes regarding computing function, for example the mathematical formulation. Parsed from `compute`
-      docstring if None (form the "Notes" section).
+        Notes regarding computing function, for example the mathematical formulation. Parsed from `compute`
+        docstring if None (form the "Notes" section).
     src_freq : str, sequence of strings, optional
-      The expected frequency of the input data. Can be a list for multiple frequencies, or None if irrelevant.
+        The expected frequency of the input data. Can be a list for multiple frequencies, or None if irrelevant.
     context : str
-      The `pint` unit context, for example use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
+        The `pint` unit context, for example use 'hydro' to allow conversion from kg m-2 s-1 to mm/day.
 
     Notes
     -----
@@ -368,7 +368,7 @@ class Indicator(IndicatorRegistrar):
 
     # Note: typing and class types in this call signature will cause errors with sphinx-autodoc-typehints
     # See: https://github.com/tox-dev/sphinx-autodoc-typehints/issues/186#issuecomment-1450739378
-    _all_parameters: dict[str, "Parameter"] = {}
+    _all_parameters: dict = {}
     """A dictionary mapping metadata about the input parameters to the indicator.
 
     Keys are the arguments of the "compute" function. All parameters are listed, even
@@ -378,7 +378,7 @@ class Indicator(IndicatorRegistrar):
 
     # Note: typing and class types in this call signature will cause errors with sphinx-autodoc-typehints
     # See: https://github.com/tox-dev/sphinx-autodoc-typehints/issues/186#issuecomment-1450739378
-    cf_attrs: list[dict[str, "Any"]] = None
+    cf_attrs: list[dict[str, str]] = None
     """A list of metadata information for each output of the indicator.
 
     It minimally contains a "var_name" entry, and may contain : "standard_name", "long_name",

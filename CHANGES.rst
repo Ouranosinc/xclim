@@ -2,18 +2,75 @@
 Changelog
 =========
 
-v0.43.0 (unreleased)
+v0.44.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`).
+
+Announcements
+^^^^^^^^^^^^^
+* `xclim: xarray-based climate data analytics` has been published in the Journal of Open Source Software (`DOI:10.21105/joss.05415 <https://doi.org/10.21105/joss.05415>`_). Users can now make use of the `Cite this repository` button in the sidebar for academic purposes. Many thanks to our core developers and user base for their fine contributions over the years! (:issue:`95`, :pull:`250`).
+* `xclim` now officially supports Python3.11. (:pull:`1388`).
+
+New indicators
+^^^^^^^^^^^^^^
+* Several new indices and indicators:
+    * ``snowfall_{frequency | intensity}`` for calculating the {percentage of | mean snowfall intensity on} days with snowfall above a threshold. (:issue:`1352`, :pull:`1358`)
+    * ``{sfcWind | sfcWindmax}_{max | mean | min}`` for calculating the {max | mean | min} daily {mean | max} wind speed. (:issue:`1352`, :pull:`1358`)
+    * ``{precip | liquid_precip | solid_precip}_average}`` for calculating the mean daily {total precipitation | liquid precipitation | solid precipitation } amount. (:issue:`1352`, :pull:`1358`)
+    * ``{cold | dry}_spell_max_length`` for calculating maximum length of {cold | dry} spell events. (:issue:`1352`, :pull:`1359`).
+    * ``dry_spell_frequency`` for calculating total number of dry spells. (:issue:`1352`, :pull:`1359`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* ``xclim.sdba.processing.escore`` performance was improved with a faster runtime (:pull:`1360`).
+* New generic function (``flux_and_rate_converter``) converting flux to a rate (and vice-versa) using a density. `snw_to_snd` and `snd_to_snw` were refactored using this function. (:issue:`1352`, :pull:`1358`)
+* New function (``prsn_to_prsnd``) to convert snowfall flux ([mass]/[area]/[time]) to snowfall rate ([length]/[time]) using snow density ([mass]/[volume]). (:issue:`1352`, :pull:`1358`)
+* New variables: Snowfall rate ``prsnd`` and surface maximum wind speed ``sfcWindmax``. (:issue:`1352`, :pull:`1358`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed a bug in ``xclim.core.calendar.time_bnds`` when using ``DataArrayResample`` objects, caused by an upstream change in xarray 2023.5.0. (:issue:`1368`, :pull:`1377`).
+* `ensembles.change_significance` will returns NaNs when the input values are all NaNs, instead of failing. (:issue:`1379`, :pull:`1380`).
+* Accelerated import of xclim by caching the compilation of `guvectorize` functions. (:pull:`1378`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* In order to ensure documentation can be rebuilt at a later time, errors raised by `sphinx` linkcheck are now set to be ignored when building the documentation. (:pull:`1375`).
+* With the publication of `xclim`, the code repository now offers a `CITATION.cff` configuration for users to properly cite the software (APA formatted and raw BibTeX) for academic purposes. (:issue:`95`, :pull:`250`).
+* Logging messages emitted when redefining units via `pint` (caused by `logging` interactions with dependencies) have been silenced. (:issue:`1373`, :pull:`1384`).
+* Fixed some annotations and `dev` recipe dependencies issues to allow for the development of xclim inside a python3.11 environment. (:issue:`1376`, :pull:`1381`).
+* The deprecated `mamba-org/provision-with-micromamba` GitHub Action has been replaced with `mamba-org/setup-micromamba`. (:pull:`1388`).
+* `xclim` GitHub CI workflows now run builds against Python3.11. (:pull:`1388`).
+* In indices, verify that all parameters of type `Quantified` that have a default value have their dimension declared. (:issue:`1293`, :pull:`1393`).
+* Updated `roy_extremeprecip_2021` to the newly published paper. (:pull:`1394`).
+
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Signature of `hot_spell_{frequency | max_length | total_length}` : `thresh_tasmax` modified to `thresh`. (:issue:`1352`, :pull:`1359`).
+
+v0.43.0 (2023-05-09)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Ludwig Lierhammer (:user:`ludwiglierhammer`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Alexis Beaupré (:user:`Beauprel`), Éric Dupuis (:user:`coxipi`).
 
 Announcements
 ^^^^^^^^^^^^^
 * `xclim` has passed the peer-review process and been officially accepted as a project associated with both `pyOpenSci <https://www.pyopensci.org>`_ and `PANGEO <https://pangeo.io/>`_. Additionally, `xclim` has been accepted to be published in the `Journal of Open Source Software <https://joss.theoj.org/>`_. Our review process can be consulted here: `PyOpenSci Software Review <https://github.com/pyOpenSci/software-review/issues/73>`_. (:pull:`1350`).
 
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New ``xclim.sdba`` measure ``xclim.sdba.measures.taylordiagram``. (:pull:`1360`).
+
+New indicators
+^^^^^^^^^^^^^^
+* ``ensembles.change_significance`` now supports the Brown-Forsythe test. (:pull:`1292`).
+
 Bug fixes
 ^^^^^^^^^
 * Fixed a bug in the `pyproject.toml` configuration that excluded the changelog (`CHANGES.rst`) from the packaged source distribution. (:pull:`1349`).
-* When summing an all-NaN period with `resample`, xarray 2023.04.0 now returns NaN, whereas earlier versions returned 0. This broke ``fraction_over_precip_thresh``, but is now fixed. (:pull:`1354`, :issue:`1337`).
+* When summing an all-`NaN` period with `resample`, `xarray` v2023.04.0 now returns `NaN`, whereas earlier versions returned `0`. This broke ``fraction_over_precip_thresh``, but is now fixed. (:pull:`1354`, :issue:`1337`).
+* In ``xclim.sdba``'s Quantile Delta Mapping algorithm, the quantiles of the simulation to adjust were computed slightly differently than when creating the adjustment factor. The ``xclim.sdba.utils.rank`` function has been fixed to return "percentage-ranks" (quantiles) in the proper range. (:issue:`1334`, :pull:`1355`).
+* The radiation converters (``longwave_upwelling_radiation_from_net_downwelling`` and ``shortwave_upwelling_radiation_from_net_downwelling``) were hard-coded to redefine output units as `W m-2`, regardless of input units, so long as unit dimensions checks cleared. Units are now set directly from inputs. (:issue:`1365`, :pull:`1366`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -29,6 +86,7 @@ Breaking changes
     * ``xclim.indices.continuous_snow_cover_end`` -> ``xclim.indices.snd_season_end``
     * ``xclim.indices.continuous_snow_cover_start`` -> ``xclim.indices.snd_season_start``
     * ``xclim.indices.snow_cover_duration`` -> ``xclim.indices.snd_season_length``
+* Several `_private` functions within ``xclim.indices.fire._cffwis`` that had been exposed publicly have now been rendered as hidden functions. Affected functions are: ``_day_length``, ``_day_length_factor``, ``_drought_code``, ``_duff_moisture_code``, ``_fine_fuel_moisture_code``, ``_overwintering_drought_code``. (:pull:`1159`, :pull:`1369`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -36,6 +94,14 @@ Internal changes
 * In order to follow best practices and reduce the installed size of the `xclim` wheel, the `tests` folder containing the testing suite has been split from the package and placed in the top-level of the code repository. (:issue:`1348`, :pull:`1349`, suggested from `PyOpenSci Software Review <https://github.com/pyOpenSci/software-review/issues/73>`_). Submodules that were previously called within ``xclim.testing.tests`` have been refactored as follows:
     * ``xclim.testing.tests.data`` → ``xclim.testing.helpers``
     * ``xclim.testing.tests.test_sdba.utils`` → ``xclim.testing.sdba_utils``
+* Added a "Conventions" section to the README. (:issue:`1342`, :pull:`1351`).
+* New helper function ``xclim.testing.helpers.test_timeseries`` for generating timeseries objects with specified variable names and units. (:pull:`1356`).
+* `tox` recipes and documentation now refer to the official build of `SBCK`, available on PyPI. (:issue:`1362`, :pull:`1364`).
+* Excluded some URLs from `sphinx linkcheck` that were causing issues on ReadTheDocs. (:pull:`1364`).
+* Tagged versions of `xclim-testdata` now follow a `calendar-based versioning <https://calver.org/>`_ scheme for easier determination of compatibility between `xclim` and testing data. (:pull:`1367`, `xclim-testdata discussion <https://github.com/Ouranosinc/xclim-testdata/pull/24>`_).
+* `flake8`, `pycodestyle`, and `pydocstyle` checks have been significantly changed in order to clean up the code base of redundant `# noqa` markers. Linting checks for Makefile and `tox` recipes have been synchronized as well. (:pull:`1369`).
+* `flake8` plugin `flake8-alphabetize` has been added to development recipes in order to check order of `__all__` entries and Exceptions. (:pull:`1369`).
+* Corrected translations of ``cold_spell_{frequency | days}`` (:pull:`1372`).
 
 v0.42.0 (2023-04-03)
 --------------------
