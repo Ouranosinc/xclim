@@ -38,6 +38,7 @@ Internal changes
 * Fixed some annotations and `dev` recipe dependencies issues to allow for the development of xclim inside a python3.11 environment. (:issue:`1376`, :pull:`1381`).
 * The deprecated `mamba-org/provision-with-micromamba` GitHub Action has been replaced with `mamba-org/setup-micromamba`. (:pull:`1388`).
 * `xclim` GitHub CI workflows now run builds against Python3.11. (:pull:`1388`).
+* In indices, verify that all parameters of type `Quantified` that have a default value have their dimension declared. (:issue:`1293`, :pull:`1393`).
 
 v0.43.0 (2023-05-09)
 --------------------
