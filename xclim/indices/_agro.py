@@ -995,7 +995,7 @@ def rain_season(
         )
 
     # Find the start of the rain season
-    def _get_first_run_start(pram, window_dry=window_dry_start):
+    def _get_first_run_start(pram):
         pram = select_time(pram, date_bounds=(date_min_start, last_doy))
 
         # First condition: Start with enough precipitation
@@ -1004,10 +1004,11 @@ def rain_season(
         # Second condition: No dry period after
         if method_dry_start == "per_day":
             da_stop = pram <= thresh_dry_start
+            window_dry = window_dry_start
         elif method_dry_start == "total":
-            da_stop = pram.rolling({"time": window_dry}).sum() <= thresh_dry_start
+            da_stop = pram.rolling({"time": window_dry_start}).sum() <= thresh_dry_start
             # equivalent to rolling forward in time instead, i.e. end date will be at beginning of dry run
-            da_stop = da_stop.shift({"time": -(window_dry - 1)}, fill_value=False)
+            da_stop = da_stop.shift({"time": -(window_dry_start - 1)}, fill_value=False)
             window_dry = 1
 
         # First and second condition combined in a run length
@@ -1024,8 +1025,7 @@ def rain_season(
             da_stop = pram <= thresh_dry_end
             run_positions = rl.rle(da_stop, index="first") >= window_dry_end
         elif method_dry_end == "total":
-            da_stop = pram.rolling({"time": window_dry_end}).sum() <= thresh_dry_end
-            run_positions = da_stop
+            run_positions = pram.rolling({"time": window_dry_end}).sum() <= thresh_dry_end
         return _get_first_run(run_positions, date_min_end, date_max_end)
 
     # Get start, end and length of rain season. Written as a function so it can be resampled
@@ -1044,8 +1044,7 @@ def rain_season(
         length = xarray.where(end.notnull(), end - start, pram["time"].size - start)
 
         # converting to doy
-        crd = pram["time"]
-        crd = getattr(crd.dt, "dayofyear")
+        crd = pram.time.dt.dayofyear
         start = rl.lazy_indexing(crd, start)
         end = rl.lazy_indexing(crd, end)
 
