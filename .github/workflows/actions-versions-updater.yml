@@ -2,7 +2,8 @@ name: GitHub Actions Version Updater
 
 on:
   schedule:
-    - cron:  '0 0 * * 0'
+    # 12:00 AM on the first of every month
+    - cron:  '0 0 1 * *'
   workflow_dispatch:
 
 jobs:
