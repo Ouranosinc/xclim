@@ -32,9 +32,9 @@ __all__ = [
     "saturation_vapor_pressure",
     "sfcwind_2_uas_vas",
     "shortwave_upwelling_radiation_from_net_downwelling",
-    "snow_amount_from_depth",
-    "snow_depth_from_amount",
+    "snd_to_snw",
     "snowfall_approximation",
+    "snw_to_snd",
     "specific_humidity",
     "specific_humidity_from_dewpoint",
     "tas",
@@ -819,7 +819,8 @@ def snowfall_approximation(
             raise ValueError("Non-scalar `thresh` are not allowed with method `brown`.")
 
         # Freezing point + 2C in the native units
-        upper = convert_units_to(convert_units_to(thresh, "degC") + 2, tas)
+        thresh_plus_2 = convert_units_to(thresh, "degC") + 2
+        upper = convert_units_to(f"{thresh_plus_2} degC", tas)
         thresh = convert_units_to(thresh, tas)
 
         # Interpolate fraction over temperature (in units of tas)
@@ -903,10 +904,11 @@ def rain_approximation(
     return prra
 
 
-@declare_units(snw="[mass]/[area]", snr="[mass]/[volume]")
-def snow_depth_from_amount(
+@declare_units(snw="[mass]/[area]", snr="[mass]/[volume]", const="[mass]/[volume]")
+def snw_to_snd(
     snw: xr.DataArray,
-    snr: xr.DataArray,
+    snr: xr.DataArray | None = None,
+    const: Quantified = "312 kg m-3",
 ) -> xr.DataArray:
     """Snow depth from snow amount and density.
 
@@ -917,12 +919,26 @@ def snow_depth_from_amount(
         If snow water equivalent (`swe` [m]) is provided instead, will be converted to `snw` before calculating.
     snr : xr.DataArray, optional
         Snow density [kg/m^3].
+    const: Quantified
+        Constant snow density [kg/m^3]
+        `const` is only used if `snr` is None.
 
     Returns
     -------
     xr.DataArray, [m]
         Snow depth.
+
+    Notes
+    -----
+    The estimated mean snow density value of 312 kg m-3 is taken from :cite:t:`sturm_swe_2010`.
+
+    References
+    ----------
+    :cite:cts:`sturm_swe_2010`
     """
+    if snr is None:
+        snr = const
+
     snw = convert_units_to(snw, "kg m-2")
     snr = convert_units_to(snr, "kg m-3")
 
@@ -932,10 +948,11 @@ def snow_depth_from_amount(
     return snd
 
 
-@declare_units(snd="[length]", snr="[mass]/[volume]")
-def snow_amount_from_depth(
+@declare_units(snd="[length]", snr="[mass]/[volume]", const="[mass]/[volume]")
+def snd_to_snw(
     snd: xr.DataArray,
-    snr: xr.DataArray,
+    snr: xr.DataArray | None = None,
+    const: Quantified = "312 kg m-3",
 ) -> xr.DataArray:
     """Snow amount from snow depth and density.
 
@@ -943,14 +960,28 @@ def snow_amount_from_depth(
     ----------
     snd : xr.DataArray
         Snow depth [m].
-    snr : xr.DataArray
+    snr : xr.DataArray, optional
         Snow density [kg/m^3].
+    const: Quantified
+        Constant snow density [kg/m^3]
+        `const` is only used if `snr` is None.
 
     Returns
     -------
     xr.DataArray, [kg m-2]
         Surface snow amount
+
+    Notes
+    -----
+    The estimated mean snow density value of 312 kg m-3 is taken from :cite:t:`sturm_swe_2010`.
+
+    References
+    ----------
+    :cite:cts:`sturm_swe_2010`
     """
+    if snr is None:
+        snr = const
+
     snd = convert_units_to(snd, "m")
     snr = convert_units_to(snr, "kg m-3")
 
@@ -969,20 +1000,20 @@ def longwave_upwelling_radiation_from_net_downwelling(
     Parameters
     ----------
     rls : xr.DataArray
-        Surface net thermal radiation [W m-2].
+        Surface net thermal radiation.
     rlds : xr.DataArray
-        Surface downwelling thermal radiation [W m-2].
+        Surface downwelling thermal radiation.
 
     Returns
     -------
-    xr.DataArray, [W m-2]
+    xr.DataArray, [same units as rlds]
         Surface upwelling thermal radiation (rlus).
     """
     rls = convert_units_to(rls, rlds)
 
     rlus = rlds - rls
 
-    rlus.attrs["units"] = "W m-2"
+    rlus.attrs["units"] = rlds.units
     return rlus
 
 
@@ -995,20 +1026,20 @@ def shortwave_upwelling_radiation_from_net_downwelling(
     Parameters
     ----------
     rss : xr.DataArray
-        Surface net solar radiation [W m-2].
+        Surface net solar radiation.
     rsds : xr.DataArray
-        Surface downwelling solar radiation [W m-2].
+        Surface downwelling solar radiation.
 
     Returns
     -------
-    xr.DataArray, [W m-2]
+    xr.DataArray, [same units as rsds]
         Surface upwelling solar radiation (rsus).
     """
     rss = convert_units_to(rss, rsds)
 
     rsus = rsds - rss
 
-    rsus.attrs["units"] = "W m-2"
+    rsus.attrs["units"] = rsds.units
     return rsus
 
 

@@ -450,15 +450,15 @@
   },
   "COLD_SPELL_FREQUENCY": {
     "long_name": "Nombre total de séries d'au moins {window} jours consécutifs où la température quotidienne moyenne est sous {thresh}.",
-    "description": "Nombre {freq:m} de vagues de froid. Une vague de froid se produit lorsque la température minimale quotidienne est sous {thresh} durant au moins {window} jours consécutifs.",
+    "description": "Nombre {freq:m} de vagues de froid. Une vague de froid se produit lorsque la température quotidienne moyenne est sous {thresh} durant au moins {window} jours consécutifs.",
     "title": "Nombre de vagues de froid",
-    "abstract": "Nombre de vagues de froid. Une vague de froid se produit lorsque la température minimale quotidienne est sous un seuil durant au moins un certain nombre de jours consécutifs."
+    "abstract": "Nombre de vagues de froid. Une vague de froid se produit lorsque la température quotidienne moyenne est sous un seuil durant au moins un certain nombre de jours consécutifs."
   },
   "COLD_SPELL_DAYS": {
     "long_name": "Nombre total de jours constituant des événements d'au moins {window} jours consécutifs où la température quotidienne moyenne est sous {thresh}",
-    "description": "Nombre {freq:m} de jours faisant partie d'une vague de froid. Une vague de froid se produit lorsque la température minimale quotidienne est sous {thresh} durant au moins {window} jours consécutifs.",
+    "description": "Nombre {freq:m} de jours faisant partie d'une vague de froid. Une vague de froid se produit lorsque la température quotidienne moyenne est sous {thresh} durant au moins {window} jours consécutifs.",
     "title": "Nombre de jours faisant partie d'une vague de froid",
-    "abstract": "Nombre de jours faisant partie d'une vague de froid. Une vague de froid se produit lorsque la température minimale quotidienne est sous un seuil donné durant au moins un certain nombre de jours consécutifs."
+    "abstract": "Nombre de jours faisant partie d'une vague de froid. Une vague de froid se produit lorsque la température quotidienne moyenne est sous un seuil donné durant au moins un certain nombre de jours consécutifs."
   },
   "COOL_NIGHT_INDEX": {
     "long_name": "Indice de fraîcheur des nuits",
@@ -600,12 +600,6 @@
     "description": "Indice R-B {freq:m}, un indice mesurant le caractère torrentiel d'un débit de rivière.",
     "title": "Indice Richards-Baker de torrentialité",
     "abstract": "Mesure des oscillations du débit relatif au débit moyen, quantifiant la fréquence et la rapidité des changements de débits."
-  },
-  "FREQ_ANALYSIS": {
-    "long_name": "Valeur de retour du débit",
-    "description": "Analyse fréquentielle de type {dist:f} des débits moyens sur {window} jours, pour le {mode} {indexer}.",
-    "title": "Valeur de retour",
-    "abstract": "Analyse fréquentielle des débits selon un mode et une distribution."
   },
   "RETURN_LEVEL": {
     "long_name": "Valeur de retour",
@@ -792,12 +786,6 @@
     "title": "Humidité spécifique calculée à partir de la température du point de rosée et de la pression",
     "abstract": "Humidité spécifique calculée à partir de la température du point de rosée et de la pression à l'aide de la pression de vapeur saturante."
   },
-  "FIRST_DAY_BELOW": {
-    "long_name": "Premier jour de l'année avec une température quotidienne sous un seuil",
-    "description": "Premier jour de l'année après {after_date} ayant une température quotidienne sous {thresh} pour au moins {window} jours.",
-    "title": "Premier jour de l'année avec une température quotidienne sous un seuil",
-    "abstract": "Calcule le premier jour d'une période où la température moyenne quotidienne est sous un seuil donné pendant un nombre de jours, après une date de calendrier donnée."
-  },
   "FIRST_DAY_TG_BELOW": {
     "long_name": "Premier jour de l'année avec une température moyenne quotidienne sous {thresh} durant au moins {window} jours",
     "description": "Premier jour de l'année avec une température moyenne quotidienne sous {thresh} durant au moins {window} jours.",
@@ -815,12 +803,6 @@
     "description": "Premier jour de l'année avec une température maximale quotidienne sous {thresh} durant au moins {window} jours.",
     "title": "Premier jour de l'année de températures maximales quotidiennes sous un seuil",
     "abstract": "Calcule le premier jour d'une période où la température maximale quotidienne est plus basse qu'un certain seuil durant un nombre de jours donné, limité par une date minimale."
-  },
-  "FIRST_DAY_ABOVE": {
-    "long_name": "Premier jour de l'année avec une température quotidienne au-dessus d'un seuil",
-    "description": "Premier jour de l'année avec une température quotidienne au-dessus de {thresh} pour au moins {window} jours après {after_date}.",
-    "title": "Premier jour de l'année avec un température quotidienne au-dessus d'un seuil",
-    "abstract": "Calcule le premier jour d'une période où la température quotidienne est au-dessus d'un seuil donné pendant un nombre de jours, après une date de calendrier donnée."
   },
   "FIRST_DAY_TG_ABOVE": {
     "long_name": "Premier jour de l'année avec une température moyenne quotidienne au-dessus de {thresh} durant au moins {window} jours",
@@ -852,7 +834,7 @@
     "title": "Approximation de la neige",
     "abstract": "Précipitation solide estimée à partir de la précipitation totale et de la température selon une méthode et un seuil de température donnés."
   },
-  "SNOW_AMOUNT_FROM_DEPTH": {
+  "SND_TO_SNW": {
     "long_name": "Quantité de neige à la surface",
     "description": "Quantité de neige calculée à partir de son épaisseur et de sa densité.",
     "title": "Quantité de neige à la surface",
@@ -864,7 +846,7 @@
     "title": "Moyenne de l'épaisseur de neige",
     "abstract": "Épaisseur de neige moyenne."
   },
-  "SNOW_DEPTH_FROM_AMOUNT": {
+  "SNW_TO_SND": {
     "long_name": "Épaisseur de neige",
     "description": "Épaisseur de neige calculée à partir de sa quantité et de sa densité.",
     "title": "Épaisseur de neige",
@@ -894,23 +876,41 @@
     "title": "Jours avec neige",
     "abstract": "Nombre de jours où la neige est entre une borne inférieure et supérieure."
   },
-  "SNOW_COVER_DURATION": {
-    "long_name": "Nombre de jour où l'épaisseur de neige est au-dessus d'un seuil",
+  "SND_SEASON_LENGTH": {
+    "long_name": "Durée de couvert de neige",
     "description": "Nombre {freq:m} de jours où l'épaisseur de neige est au-dessus ou égale à {thresh}.",
-    "title": "Durée du couvert de neige",
+    "title": "Durée du couvert de neige (épaisseur)",
     "abstract": "Nombre de jours pendant lesquels l'épaisseur de neige est au-dessus ou égale à un seuil donné."
   },
-  "CONTINUOUS_SNOW_COVER_START": {
+  "SND_SEASON_START": {
     "long_name": "Date du début du couvert de neige continu",
     "description": "Première date à laquelle l'épaisseur de neige est au-dessus ou égale à {thresh} pendant au moins {window} jours consécutifs.",
-    "title": "Date du début du couvert de neige",
+    "title": "Date du début du couvert de neige (épaisseur)",
     "abstract": "Première date à partir de laquelle l'épaisseur de neige est au-dessus ou égale à un seuil donné pendant un nombre de jours consécutifs."
   },
-  "CONTINUOUS_SNOW_COVER_END": {
+  "SND_SEASON_END": {
     "long_name": "Date de fin du couvert de neige continu",
     "description": "Première date à laquelle l'épaisseur de neige passe sous {thresh} pendant au moins {window} jours consécutifs suite à l'établissement du couvert de neige.",
-    "title": "Date du fin du couvert de neige",
+    "title": "Date du fin du couvert de neige (épaisseur)",
     "abstract": "Première date à partir de laquelle l'épaisseur de neige est sous à un seuil donné pendant un nombre de jours consécutifs suite au début du couvert de neige."
+  },
+  "SNW_SEASON_LENGTH": {
+    "long_name": "Durée de couvert de neige",
+    "description": "Nombre {freq:m} de jours où la quantité de neige est au-dessus ou égale à {thresh}.",
+    "title": "Durée du couvert de neige (quantité)",
+    "abstract": "Nombre de jours pendant lesquels la quantité de neige est au-dessus ou égale à un seuil donné."
+  },
+  "SNW_SEASON_START": {
+    "long_name": "Date du début du couvert de neige continu",
+    "description": "Première date à laquelle la quantité de neige est au-dessus ou égale à {thresh} pendant au moins {window} jours consécutifs.",
+    "title": "Date du début du couvert de neige (quantité)",
+    "abstract": "Première date à partir de laquelle la quantité de neige est au-dessus ou égale à un seuil donné pendant un nombre de jours consécutifs."
+  },
+  "SNW_SEASON_END": {
+    "long_name": "Date de fin du couvert de neige continu",
+    "description": "Première date à laquelle la quantité de neige passe sous {thresh} pendant au moins {window} jours consécutifs suite à l'établissement du couvert de neige.",
+    "title": "Date du fin du couvert de neige (quantité)",
+    "abstract": "Première date à partir de laquelle la quantité de neige est sous à un seuil donné pendant un nombre de jours consécutifs suite au début du couvert de neige."
   },
   "SND_MAX_DOY": {
     "long_name": "Date de l'épaisseur de neige maximale",

@@ -1,7 +1,6 @@
-# noqa: D205,D400
 """
-Detrending Objects
-==================
+Detrending Objects Utilities
+============================
 """
 from __future__ import annotations
 

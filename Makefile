@@ -56,18 +56,20 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint: ## check style with flake8 and black
-	pydocstyle --config=setup.cfg xclim
-	flake8 --config=setup.cfg xclim
-	black --check xclim
+	pycodestyle --config=setuyp.cfg xclim tests
+	pydocstyle --config=setup.cfg xclim tests
+	flake8 --config=setup.cfg xclim tests
+	black --check xclim tests
 	nbqa black --check docs
 	blackdoc --check --exclude=xclim/indices/__init__.py xclim
 	blackdoc --check docs
-	isort --check xclim
+	isort --check xclim tests
+	yamllint --config-file=.yamllint.yaml xclim
 
 test: ## run tests quickly with the default Python
-	pytest xclim/testing/tests
-	pytest --nbval --dist=loadscope docs/notebooks
-	pytest --rootdir xclim/testing/tests/ --xdoctest xclim
+	pytest
+	pytest --no-cov --nbval --dist=loadscope --rootdir=tests/ docs/notebooks --ignore=docs/notebooks/example.ipynb
+	pytest --rootdir=tests/ --xdoctest xclim
 
 test-all: ## run tests on every Python version with tox
 	tox
@@ -78,13 +80,18 @@ coverage: ## check code coverage quickly with the default Python
 	coverage html
 	$(BROWSER) htmlcov/index.html
 
-autodoc: clean-docs ## create sphinx-apidoc files:
+autodoc-obsolete: clean-docs ## create sphinx-apidoc files (obsolete)
 	sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests
 
-linkcheck: autodoc ## run checks over all external links found throughout the documentation
+autodoc-custom-index: clean-docs ## create sphinx-apidoc files but with special index handling for indices and indicators
+	sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests xclim/indicators xclim/indices
+	rm docs/xclim.rst
+	env SPHINX_APIDOC_OPTIONS="members,undoc-members,show-inheritance,noindex" sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests
+
+linkcheck: autodoc-custom-index ## run checks over all external links found throughout the documentation
 	$(MAKE) -C docs linkcheck
 
-docs: autodoc ## generate Sphinx HTML documentation, including API docs
+docs: autodoc-custom-index ## generate Sphinx HTML documentation, including API docs, but without indexes for for indices and indicators
 	$(MAKE) -C docs html
 ifndef READTHEDOCS
 	$(BROWSER) docs/_build/html/index.html

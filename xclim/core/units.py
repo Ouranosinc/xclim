@@ -1,6 +1,5 @@
-# noqa: D205,D400
 """
-Units handling submodule
+Units Handling Submodule
 ========================
 
 `Pint` is used to define the :py:data:`xclim.core.units.units` `UnitRegistry`.
@@ -25,16 +24,16 @@ from .options import datacheck
 from .utils import Quantified, ValidationError
 
 __all__ = [
-    "amount2rate",
     "amount2lwethickness",
+    "amount2rate",
     "check_units",
     "convert_units_to",
     "declare_units",
     "infer_context",
     "infer_sampling_units",
     "lwethickness2amount",
-    "pint_multiply",
     "pint2cfunits",
+    "pint_multiply",
     "rate2amount",
     "str2pint",
     "to_agg_units",
@@ -932,7 +931,7 @@ def check_units(val: str | int | float | None, dim: str | None) -> None:
 
 
 def declare_units(
-    **units_by_name,
+    **units_by_name: str,
 ) -> Callable:
     """Create a decorator to check units of function arguments.
 
@@ -941,7 +940,7 @@ def declare_units(
 
     Parameters
     ----------
-    units_by_name : Mapping[str, str]
+    units_by_name : dict[str, str]
         Mapping from the input parameter names to their units or dimensionality ("[...]").
 
     Returns

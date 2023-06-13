@@ -3,10 +3,11 @@ default_language_version:
 
 repos:
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.3.1
+  rev: v3.3.2
   hooks:
   - id: pyupgrade
     args: ['--py38-plus']
+    exclude: 'xclim/core/indicator.py'
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.4.0
   hooks:
@@ -22,26 +23,31 @@ repos:
   - id: pretty-format-json
     args: ['--autofix', '--no-ensure-ascii', '--no-sort-keys']
 - repo: https://github.com/pappasam/toml-sort
-  rev: v0.22.3
+  rev: v0.23.0
   hooks:
   - id: toml-sort-fix
+- repo: https://github.com/adrienverge/yamllint.git
+  rev: v1.31.0
+  hooks:
+  - id: yamllint
+    args: ['--config-file=.yamllint.yaml']
+- repo: https://github.com/psf/black
+  rev: 23.3.0
+  hooks:
+  - id: black
 - repo: https://github.com/pycqa/flake8
   rev: 6.0.0
   hooks:
   - id: flake8
-    additional_dependencies: ['flake8-rst-docstrings']
+    additional_dependencies: ['flake8-alphabetize', 'flake8-rst-docstrings']
     args: ['--config=setup.cfg']
-- repo: https://github.com/psf/black
-  rev: 23.1.0
-  hooks:
-  - id: black
 - repo: https://github.com/PyCQA/isort
   rev: 5.12.0
   hooks:
   - id: isort
     args: ['--settings-file=pyproject.toml', "--add_imports='from __future__ import annotations'"]
 - repo: https://github.com/nbQA-dev/nbQA
-  rev: 1.6.1
+  rev: 1.7.0
   hooks:
   - id: nbqa-black
     args: ['--target-version=py38']
@@ -64,13 +70,7 @@ repos:
   hooks:
   - id: blackdoc
     exclude: '(xclim/indices/__init__.py|docs/installation.rst)'
-    additional_dependencies:
-    - 'black==23.1.0'
-- repo: https://github.com/adrienverge/yamllint.git
-  rev: v1.29.0
-  hooks:
-  - id: yamllint
-    args: ['--config-file=.yamllint.yaml']
+    additional_dependencies: ['black==23.3.0']
 - repo: meta
   hooks:
   - id: check-hooks-apply

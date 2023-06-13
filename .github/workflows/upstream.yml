@@ -1,0 +1,80 @@
+name: Test Upstream Dependencies
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - CHANGES.rst
+      - README.rst
+      - pyproject.toml
+      - setup.cfg
+      - xclim/__init__.py
+  schedule:
+    - cron: "0 0 * * *" # Daily “At 00:00” UTC
+  workflow_dispatch: # allows you to trigger the workflow run manually
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  upstream-dev:
+    name: test-upstream-dev (Python${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'schedule') ||
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event_name == 'push')
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.10"
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Fetch all history for all branches and tags.
+      - name: Set up conda environment
+        uses: mamba-org/provision-with-micromamba@main
+        with:
+          cache-downloads: true
+          micromamba-version: 'latest'
+          environment-file: environment.yml
+          extra-specs: |
+            eigen
+            pybind11
+            python=${{ matrix.python-version }}
+            pytest-reportlog
+      - name: Conda and Mamba versions
+        run: |
+          conda --version
+          echo "micromamba: $(micromamba --version)"
+      - name: Install upstream versions and SBCK
+        run: |
+          python -m pip install -r requirements_upstream.txt
+          python -m pip install "sbck @ git+https://github.com/yrobink/SBCK-python.git@master"
+      - name: Install xclim
+        run: |
+          python -m pip install --no-user --no-deps --editable .
+      - name: Check versions
+        run: |
+          conda list
+          xclim show_version_info
+          pip check
+      - name: Run Tests
+        if: success()
+        id: status
+        run: |
+          pytest --numprocesses=logical --durations=10 --cov=xclim --cov-report=term-missing --report-log output-${{ matrix.python-version }}-log.jsonl
+      - name: Generate and publish the report
+        if: |
+          failure()
+          && steps.status.outcome == 'failure'
+          && github.event_name == 'schedule'
+          && github.repository_owner == 'Ouranosinc'
+        uses: xarray-contrib/issue-from-pytest-log@v1
+        with:
+          log-path: output-${{ matrix.python-version }}-log.jsonl

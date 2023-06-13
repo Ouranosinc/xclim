@@ -1,4 +1,3 @@
-# noqa: D205,D400
 """
 Adjustment Methods
 ==================
@@ -6,7 +5,7 @@ Adjustment Methods
 from __future__ import annotations
 
 from inspect import signature
-from typing import Any, Mapping
+from typing import Any
 from warnings import warn
 
 import numpy as np
@@ -46,14 +45,14 @@ from .utils import (
 
 __all__ = [
     "BaseAdjustment",
-    "EmpiricalQuantileMapping",
     "DetrendedQuantileMapping",
-    "LOCI",
+    "EmpiricalQuantileMapping",
     "ExtremeValues",
+    "LOCI",
+    "NpdfTransform",
     "PrincipalComponents",
     "QuantileDeltaMapping",
     "Scaling",
-    "NpdfTransform",
 ]
 
 
@@ -265,7 +264,7 @@ class Adjust(BaseAdjustment):
         sim: xr.DataArray,
         **kwargs,
     ):
-        """Return bias-adjusted data. Refer to the class documentation for the algorithm details.
+        r"""Return bias-adjusted data. Refer to the class documentation for the algorithm details.
 
         Parameters
         ----------
@@ -275,7 +274,7 @@ class Adjust(BaseAdjustment):
             Training data, usually a model output whose biases are to be adjusted.
         sim : DataArray
             Time series to be bias-adjusted, usually a model output.
-        **kwargs
+        \*\*kwargs
             Algorithm-specific keyword arguments, see class doc.
         """
         kwargs = parse_group(cls._adjust, kwargs)
@@ -1109,11 +1108,11 @@ class NpdfTransform(Adjust):
         sim: xr.DataArray,
         *,
         base: TrainAdjust = QuantileDeltaMapping,
-        base_kws: Mapping[str, Any] | None = None,
+        base_kws: dict[str, Any] | None = None,
         n_escore: int = 0,
         n_iter: int = 20,
         pts_dim: str = "multivar",
-        adj_kws: Mapping[str, Any] | None = None,
+        adj_kws: dict[str, Any] | None = None,
         rot_matrices: xr.DataArray | None = None,
     ):
         if base_kws is None:

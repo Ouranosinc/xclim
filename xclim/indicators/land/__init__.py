@@ -1,6 +1,5 @@
-# noqa: D205,D400
 """
-Land indicators
+Land Indicators
 ===============
 """
 from __future__ import annotations

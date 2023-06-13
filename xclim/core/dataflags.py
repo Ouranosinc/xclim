@@ -1,6 +1,5 @@
-# noqa: D205,D400
 """
-Data flags
+Data Flags
 ===========
 
 Pseudo-indicators designed to analyse supplied variables for suspicious/erroneous indicator values.
@@ -63,8 +62,8 @@ class DataQualityException(Exception):
 
 
 __all__ = [
-    "data_flags",
     "DataQualityException",
+    "data_flags",
     "ecad_compliant",
     "negative_accumulation_values",
     "outside_n_standard_deviations_of_climatology",

@@ -2,25 +2,76 @@
 API
 ===
 
-The API of the statistical downscaling and bias adjustment module (sdba) is documented :ref:`on this page <sdba:SDBA User API>`.
-The API of the ``cfchecks``, ``datachecks``, ``missing`` and ``dataflags`` modules are in :ref:`checks:Health Checks`.
-Finally, the API of the translating tools is on the :ref:`internationalization:Internationalization` page.
+.. contents:: Table of Contents
+   :depth: 1
+   :local:
+   :backlinks: none
 
 Indicators
 ==========
 
-.. toctree::
+Indicators are the main tool xclim provides to compute climate indices. In contrast
+to the function defined in `xclim.indices`, Indicators add a layer of health checks
+and metadata handling. Indicator objects are split into realms : atmos, land and seaIce.
 
-  indicators_api
+Virtual modules are also inserted here. A normal installation of xclim comes with three virtual modules:
+
+ - :py:mod:`xclim.indicators.cf`, Indicators defined in `cf-index-meta`.
+ - :py:mod:`xclim.indicators.icclim`, Indicators defined by ECAD, as found in  python package Icclim.
+ - :py:mod:`xclim.indicators.anuclim`, Indicators of the Australian National University's Fenner School of Environment and Society.
+
+Climate Indicators API
+----------------------
+
+.. automodule:: xclim.indicators.atmos
+   :members:
+   :undoc-members:
+   :imported-members:
+
+.. automodule:: xclim.indicators.land
+   :members:
+   :undoc-members:
+   :imported-members:
+
+.. automodule:: xclim.indicators.seaIce
+   :members:
+   :undoc-members:
+   :imported-members:
+
+Virtual Indicator Submodules
+----------------------------
+
+.. automodule:: xclim.indicators.cf
+   :members:
+   :imported-members:
+   :undoc-members:
+
+.. automodule:: xclim.indicators.icclim
+   :members:
+   :imported-members:
+   :undoc-members:
+
+.. automodule:: xclim.indicators.anuclim
+   :members:
+   :imported-members:
+   :undoc-members:
 
 Indices
 =======
 
-.. toctree::
+See: :ref:`indices:Climate Indices`
 
-   indices
+Health Checks
+=============
 
-Ensembles module
+See: :ref:`checks:Health Checks`
+
+Translation Tools
+=================
+
+See: :ref:`internationalization:Internationalization`
+
+Ensembles Module
 ================
 
 .. automodule:: xclim.ensembles
@@ -32,19 +83,22 @@ Ensembles module
 
 .. Use of autofunction is so that paths do not include private modules.
 .. autofunction:: xclim.ensembles.kkz_reduce_ensemble
-    :noindex:
+   :noindex:
+
 .. autofunction:: xclim.ensembles.kmeans_reduce_ensemble
-    :noindex:
+   :noindex:
+
 .. autofunction:: xclim.ensembles.plot_rsqprofile
-    :noindex:
+   :noindex:
 
 .. automodule:: xclim.ensembles._robustness
-    :noindex:
+   :noindex:
 
 .. autofunction:: xclim.ensembles.change_significance
-    :noindex:
+   :noindex:
+
 .. autofunction:: xclim.ensembles.robustness_coefficient
-    :noindex:
+   :noindex:
 
 .. automodule:: xclim.ensembles._partitioning
     :noindex:
@@ -52,24 +106,103 @@ Ensembles module
 .. autofunction:: xclim.ensembles.hawkins_sutton
     :noindex:
 
-
-Indicator Tools
-===============
-
-.. automodule:: xclim.core.indicator
-   :members:
-   :member-order: bysource
-   :show-inheritance:
-   :noindex:
-
-Unit Handling module
-====================
+Units Handling Submodule
+========================
 
 .. automodule:: xclim.core.units
    :members:
    :undoc-members:
    :show-inheritance:
    :noindex:
+
+.. _sdba-user-api:
+
+SDBA Module
+===========
+
+.. automodule:: xclim.sdba.adjustment
+   :members:
+   :exclude-members: BaseAdjustment
+   :special-members:
+   :show-inheritance:
+   :noindex:
+
+.. automodule:: xclim.sdba.processing
+   :members:
+   :noindex:
+
+.. automodule:: xclim.sdba.detrending
+   :members:
+   :show-inheritance:
+   :exclude-members: BaseDetrend
+   :noindex:
+
+.. automodule:: xclim.sdba.utils
+   :members:
+   :noindex:
+
+.. autoclass:: xclim.sdba.base.Grouper
+   :members:
+   :class-doc-from: init
+   :noindex:
+
+.. automodule:: xclim.sdba.nbutils
+   :members:
+   :noindex:
+
+.. automodule:: xclim.sdba.loess
+   :members:
+   :noindex:
+
+.. automodule:: xclim.sdba.properties
+   :members:
+   :exclude-members: StatisticalProperty
+   :noindex:
+
+.. automodule:: xclim.sdba.measures
+   :members:
+   :exclude-members: StatisticalMeasure
+   :noindex:
+
+.. _spatial-analogues-api:
+
+Spatial Analogues Module
+========================
+
+.. autoclass:: xclim.analog.spatial_analogs
+   :noindex:
+
+.. autofunction:: xclim.analog.friedman_rafsky
+   :noindex:
+
+.. autofunction:: xclim.analog.kldiv
+   :noindex:
+
+.. autofunction:: xclim.analog.kolmogorov_smirnov
+   :noindex:
+
+.. autofunction:: xclim.analog.nearest_neighbor
+   :noindex:
+
+.. autofunction:: xclim.analog.seuclidean
+   :noindex:
+
+.. autofunction:: xclim.analog.szekely_rizzo
+   :noindex:
+
+.. autofunction:: xclim.analog.zech_aslan
+   :noindex:
+
+Subset Module
+=============
+
+.. warning::
+    The `xclim.subset` module was removed in `xclim==0.40`. Subsetting is now offered via `clisops.core.subset`.
+    The subsetting functions offered by `clisops` are available at the following link: :doc:`CLISOPS core subsetting API <clisops:api>`
+
+.. note::
+    For more information about `clisops` refer to their documentation here:
+    :doc:`CLISOPS documentation <clisops:readme>`
 
 Other Utilities
 ===============
@@ -97,20 +230,68 @@ Other Utilities
    :show-inheritance:
    :noindex:
 
-Other xclim modules
-===================
+Modules for xclim Developers
+============================
 
-Spatial Analogs module
-----------------------
+Indicator Tools
+---------------
 
-See :ref:`analogues:Spatial analogues`.
+.. automodule:: xclim.core.indicator
+   :members:
+   :member-order: bysource
+   :show-inheritance:
+   :noindex:
 
-Testing module
+Bootstrapping Algorithms for Indicators Submodule
+-------------------------------------------------
+
+.. automodule:: xclim.core.bootstrapping
+   :members:
+   :show-inheritance:
+   :noindex:
+
+.. _`sdba-developer-api`:
+
+SDBA Utilities
 --------------
 
-.. automodule:: xclim.testing
-    :members:
-    :noindex:
+.. automodule:: xclim.sdba.base
+   :members:
+   :show-inheritance:
+   :exclude-members: Grouper
+   :noindex:
+
+.. autoclass:: xclim.sdba.detrending.BaseDetrend
+   :members:
+   :noindex:
+
+.. autoclass:: xclim.sdba.adjustment.TrainAdjust
+   :members:
+   :noindex:
+
+.. autoclass:: xclim.sdba.adjustment.Adjust
+   :members:
+   :noindex:
+
+.. autofunction:: xclim.sdba.properties.StatisticalProperty
+   :noindex:
+
+.. autofunction:: xclim.sdba.measures.StatisticalMeasure
+   :noindex:
+
+.. _`spatial-analogues-developer-api`:
+
+Spatial Analogues Helpers
+-------------------------
+
+.. autofunction:: xclim.analog.metric
+   :noindex:
+
+.. autofunction:: xclim.analog.standardize
+   :noindex:
+
+Testing Module
+--------------
 
 .. automodule:: xclim.testing.utils
    :members:
@@ -118,14 +299,8 @@ Testing module
    :show-inheritance:
    :noindex:
 
-Subset module
--------------
-.. warning::
-    The `xclim.subset` module was removed in `xclim==0.40`. Subsetting is now offered via `clisops.core.subset`.
-    The subsetting functions offered by `clisops` are available at the following link:
-
-:doc:`CLISOPS API <clisops:api>`
-
-.. note::
-    For more information about `clisops` refer to their documentation here:
-    :doc:`CLISOPS documentation <clisops:readme>`
+.. automodule:: xclim.testing.helpers
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
