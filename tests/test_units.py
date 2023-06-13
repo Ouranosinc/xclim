@@ -14,6 +14,7 @@ from xclim.core.units import (
     amount2rate,
     check_units,
     convert_units_to,
+    declare_units,
     infer_context,
     lwethickness2amount,
     pint2cfunits,
@@ -23,7 +24,7 @@ from xclim.core.units import (
     units,
     units2pint,
 )
-from xclim.core.utils import ValidationError
+from xclim.core.utils import Quantified, ValidationError
 
 
 class TestUnits:
@@ -264,3 +265,21 @@ def test_amount2lwethickness(snw_series):
 )
 def test_infer_context(std_name, dim, exp):
     assert infer_context(std_name, dim) == exp
+
+
+def test_declare_units():
+    """Test that an error is raised when parameters with type Quantified do not declare their dimensions.
+    In this example, `wo` is a Quantified parameter, but does not declare its dimension as [length].
+    """
+
+    with pytest.raises(ValueError):
+
+        @declare_units(pr="[precipitation]", evspsblpot="[precipitation]")
+        def dryness_index(
+            pr: xr.DataArray,
+            evspsblpot: xr.DataArray,
+            lat: xr.DataArray | str | None = None,
+            wo: Quantified = "200 mm",
+            freq: str = "YS",
+        ) -> xr.DataArray:
+            pass

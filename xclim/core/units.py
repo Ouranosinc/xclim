@@ -12,7 +12,7 @@ import logging
 import re
 import warnings
 from importlib.resources import open_text
-from inspect import signature
+from inspect import _empty, signature  # noqa
 from typing import Any, Callable
 
 import pint
@@ -1126,6 +1126,17 @@ def declare_units(
         # Match the signature of the function to the arguments given to the decorator
         sig = signature(func)
         bound_units = sig.bind_partial(**units_by_name)
+
+        # Check that all Quantified parameters have their dimension declared.
+        for name, val in sig.parameters.items():
+            if (
+                (val.annotation == "Quantified")
+                and (val.default is not _empty)
+                and (name not in units_by_name)
+            ):
+                raise ValueError(
+                    f"Argument {name} of function {func.__name__} has no declared dimension."
+                )
 
         @wraps(func)
         def wrapper(*args, **kwargs):
