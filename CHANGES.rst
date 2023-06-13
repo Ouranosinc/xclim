@@ -4,7 +4,7 @@ Changelog
 
 v0.44.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Ludwig Lierhammer (:user:`ludwiglierhammer`).
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Ludwig Lierhammer (:user:`ludwiglierhammer`), David Huard (:user:`huard`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -23,6 +23,7 @@ New features and enhancements
 * New generic function (``flux_and_rate_converter``) converting flux to a rate (and vice-versa) using a density. `snw_to_snd` and `snd_to_snw` were refactored using this function. (:issue:`1352`, :pull:`1358`)
 * New function (``prsn_to_prsnd``) to convert snowfall flux ([mass]/[area]/[time]) to snowfall rate ([length]/[time]) using snow density ([mass]/[volume]). (:issue:`1352`, :pull:`1358`)
 * New variables: Snowfall rate  ``prsnd`` and surface maximum wind speed ``sfcWindmax``.
+* Docstring for `freq` links to pandas offset aliases documentation. (:issue:`1310`, :pull:`1391`)
 
 Bug fixes
 ^^^^^^^^^
