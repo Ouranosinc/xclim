@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 import xarray
 
-from xclim.core.calendar import get_calendar
+from xclim.core.calendar import get_calendar, select_time
 from xclim.core.missing import at_least_n_valid
 from xclim.core.units import (
     convert_units_to,
@@ -38,11 +38,16 @@ __all__ = [
     "calm_days",
     "cold_spell_days",
     "cold_spell_frequency",
+    "cold_spell_max_length",
+    "cold_spell_total_length",
     "cooling_degree_days",
     "daily_pr_intensity",
     "days_with_snow",
     "degree_days_exceedance_date",
     "dry_days",
+    "dry_spell_frequency",
+    "dry_spell_max_length",
+    "dry_spell_total_length",
     "first_day_temperature_above",
     "first_day_temperature_below",
     "first_snowfall",
@@ -58,6 +63,7 @@ __all__ = [
     "heating_degree_days",
     "hot_spell_frequency",
     "hot_spell_max_length",
+    "hot_spell_total_length",
     "last_snowfall",
     "last_spring_frost",
     "maximum_consecutive_dry_days",
@@ -84,6 +90,9 @@ __all__ = [
     "tx_days_below",
     "warm_day_frequency",
     "warm_night_frequency",
+    "wet_spell_frequency",
+    "wet_spell_max_length",
+    "wet_spell_total_length",
     "wetdays",
     "wetdays_prop",
     "windy_days",
@@ -197,8 +206,8 @@ def cold_spell_frequency(
 ) -> xarray.DataArray:
     r"""Cold spell frequency.
 
-    The number of cold spell events, defined as a sequence of consecutive days with mean daily temperature below a
-    threshold (default: -10℃).
+    The number of cold spell events, defined as a sequence of consecutive {window} days
+    with mean daily temperature below a {thresh}.
 
     Parameters
     ----------
@@ -217,8 +226,8 @@ def cold_spell_frequency(
 
     Returns
     -------
-    xarray.DataArray, [time]
-        Cold spell frequency.
+    xarray.DataArray, [unitless]
+        The {freq} number of cold periods of minimum {window} days.
 
     """
     t = convert_units_to(thresh, tas)
@@ -233,6 +242,103 @@ def cold_spell_frequency(
     )
     out.attrs["units"] = ""
     return out
+
+
+@declare_units(tas="[temperature]", thresh="[temperature]")
+def cold_spell_max_length(
+    tas: xarray.DataArray,
+    thresh: Quantified = "-10 degC",
+    window: int = 1,
+    freq: str = "AS-JUL",
+    op: str = "<",
+    resample_before_rl: bool = True,
+) -> xarray.DataArray:
+    r"""Longest cold spell.
+
+    Longest spell of low temperatures over a given period.
+    Longest series of at least {window} consecutive days with temperature at or below {thresh}.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+        Mean daily temperature.
+    thresh : Quantified
+        The temperature threshold needed to trigger a cold spell.
+    window : int
+        Minimum number of days with temperatures below thresholds to qualify as a cold spell.
+    freq : str
+        Resampling frequency.
+    op : {"<", "<=", "lt", "le"}
+        Comparison operation. Default: "<".
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
+
+    Returns
+    -------
+    xarray.DataArray, [days]
+        The {freq} longest spell in cold periods of minimum {window} days.
+    """
+    thresh = convert_units_to(thresh, tas)
+
+    cond = compare(tas, op, thresh, constrain=("<", "<="))
+    max_l = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.longest_run,
+        freq=freq,
+    )
+    out = max_l.where(max_l >= window, 0)
+    return to_agg_units(out, tas, "count")
+
+
+@declare_units(tas="[temperature]", thresh="[temperature]")
+def cold_spell_total_length(
+    tas: xarray.DataArray,
+    thresh: Quantified = "-10 degC",
+    window: int = 3,
+    freq: str = "AS-JUL",
+    op: str = "<",
+    resample_before_rl: bool = True,
+) -> xarray.DataArray:
+    r"""Total length of cold spells.
+
+    Total length of spells of low temperatures over a given period.
+    Total length of series of at least {window} consecutive days with temperature at or below {thresh}.
+
+    Parameters
+    ----------
+    tas : xarray.DataArray
+        Mean daily temperature.
+    thresh : Quantified
+        The temperature threshold needed to trigger a cold spell.
+    window : int
+        Minimum number of days with temperatures below thresholds to qualify as a cold spell.
+    freq : str
+        Resampling frequency.
+    op : {"<", "<=", "lt", "le"}
+        Comparison operation. Default: "<".
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
+
+    Returns
+    -------
+    xarray.DataArray, [days]
+        The {freq} total number of days in cold periods of minimum {window} days.
+    """
+    thresh = convert_units_to(thresh, tas)
+
+    cond = compare(tas, op, thresh, constrain=("<", "<="))
+    max_l = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.windowed_run_count,
+        window=1,
+        freq=freq,
+    )
+    out = max_l.where(max_l >= window, 0)
+    return to_agg_units(out, tas, "count")
 
 
 @declare_units(snd="[length]", thresh="[length]")
@@ -562,6 +668,7 @@ def dry_days(
     return out
 
 
+# NOTE : A spell index could be used below
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
 def maximum_consecutive_wet_days(
     pr: xarray.DataArray,
@@ -1679,10 +1786,11 @@ def heating_degree_days(
     return cumulative_difference(tas, threshold=thresh, op="<", freq=freq)
 
 
-@declare_units(tasmax="[temperature]", thresh_tasmax="[temperature]")
+@declare_units(tasmax="[temperature]", thresh="[temperature]")
 def hot_spell_max_length(
     tasmax: xarray.DataArray,
-    thresh_tasmax: Quantified = "30 degC",
+    thresh: Quantified = "30 degC",
+    thresh_tasmax: str = "UNSET",
     window: int = 1,
     freq: str = "YS",
     op: str = ">",
@@ -1691,18 +1799,16 @@ def hot_spell_max_length(
     r"""Longest hot spell.
 
     Longest spell of high temperatures over a given period.
-    The longest series of consecutive days with tasmax at or above 30°C. Here, there is no minimum threshold for number
-    of days in a row that must be reached or exceeded to count as a spell. A year with zero +30°C days will return a
-    longest spell value of zero.
+    Longest series of at least {window} consecutive days with temperature at or above {thresh}.
 
     Parameters
     ----------
     tasmax : xarray.DataArray
         Maximum daily temperature.
-    thresh_tasmax : Quantified
-        The maximum temperature threshold needed to trigger a heatwave event.
+    thresh : Quantified
+        The temperature threshold needed to trigger a hot spell.
     window : int
-        Minimum number of days with temperatures above thresholds to qualify as a heatwave.
+        Minimum number of days with temperatures below thresholds to qualify as a hot spell.
     freq : str
         Resampling frequency.
     op : {">", ">=", "gt", "ge"}
@@ -1713,26 +1819,31 @@ def hot_spell_max_length(
 
     Returns
     -------
-    xarray.DataArray, [time]
-        Maximum length of continuous hot days at the wanted frequency.
+    xarray.DataArray, [days]
+        The {freq} longest spell in hot periods of minimum {window} days.
 
     Notes
     -----
-    The thresholds of 22° and 25°C for night temperatures and 30° and 35°C for day temperatures were selected by
-    Health Canada professionals, following a temperature–mortality analysis. These absolute temperature thresholds
-    characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
+    The threshold on `tasmax` follows the one used in heat waves. A day temperature threshold between 30° and 35°C
+    was selected by Health Canada professionals, following a temperature–mortality analysis. This absolute temperature
+    threshold characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
     communities :cite:p:`casati_regional_2013`.
 
-    In :cite:t:`robinson_definition_2001`, the parameters would be
-    `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
+    In :cite:t:`robinson_definition_2001` where heat waves are also considered, the corresponding parameters would
+    be `thresh_tasmax=39.44, window=2` (103F).
 
     References
     ----------
     :cite:cts:`casati_regional_2013,robinson_definition_2001`
     """
-    thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
+    if thresh_tasmax != "UNSET":
+        warnings.warn(
+            "The call signature for this indicator will change from `thresh_tasmax` to `thresh` in xclim>=0.45.0.  Passing `thresh_tasmax` value to `thresh`."
+        )
+        thresh = thresh_tasmax
+    thresh = convert_units_to(thresh, tasmax)
 
-    cond = compare(tasmax, op, thresh_tasmax, constrain=(">", ">="))
+    cond = compare(tasmax, op, thresh, constrain=(">", ">="))
     max_l = rl.resample_and_rl(
         cond,
         resample_before_rl,
@@ -1743,28 +1854,29 @@ def hot_spell_max_length(
     return to_agg_units(out, tasmax, "count")
 
 
-@declare_units(tasmax="[temperature]", thresh_tasmax="[temperature]")
-def hot_spell_frequency(
+@declare_units(tasmax="[temperature]", thresh="[temperature]")
+def hot_spell_total_length(
     tasmax: xarray.DataArray,
-    thresh_tasmax: Quantified = "30 degC",
+    thresh: Quantified = "30 degC",
+    thresh_tasmax: str = "UNSET",
     window: int = 3,
     freq: str = "YS",
     op: str = ">",
     resample_before_rl: bool = True,
 ) -> xarray.DataArray:
-    """Hot spell frequency.
+    r"""Total length of hot spells.
 
-    Number of hot spells over a given period. A hot spell is defined as an event where the
-    maximum daily temperature exceeds a specific threshold (default: 30℃) over a minimum number of days (default: 3).
+    Total length of spells of high temperatures over a given period.
+    Total length of series of at least {window} consecutive days with temperature at or above {thresh}.
 
     Parameters
     ----------
     tasmax : xarray.DataArray
         Maximum daily temperature.
-    thresh_tasmax : Quantified
-        The maximum temperature threshold needed to trigger a heatwave event.
+    thresh : Quantified
+        The temperature threshold needed to trigger a hot spell.
     window : int
-        Minimum number of days with temperatures above thresholds to qualify as a heatwave.
+        Minimum number of days with temperatures below thresholds to qualify as a hot spell.
     freq : str
         Resampling frequency.
     op : {">", ">=", "gt", "ge"}
@@ -1775,25 +1887,96 @@ def hot_spell_frequency(
 
     Returns
     -------
-    xarray.DataArray, [dimensionless]
-        Number of heatwave at the wanted frequency
+    xarray.DataArray, [days]
+        The {freq} total number of days in hot periods of minimum {window} days.
 
     Notes
     -----
-    The thresholds of 22° and 25°C for night temperatures and 30° and 35°C for day temperatures were selected by
-    Health Canada professionals, following a temperature–mortality analysis. These absolute temperature thresholds
-    characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
+    The threshold on `tasmax` follows the one used in heat waves. A day temperature threshold between 30° and 35°C
+    was selected by Health Canada professionals, following a temperature–mortality analysis. This absolute temperature
+    threshold characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
     communities :cite:p:`casati_regional_2013`.
 
-    In :cite:t:`robinson_definition_2001`, the parameters would be `thresh_tasmin=27.22, thresh_tasmax=39.44, window=2` (81F, 103F).
+    In :cite:t:`robinson_definition_2001` where heat waves are also considered, the corresponding parameters would
+    be `thresh_tasmax=39.44, window=2` (103F).
+    """
+    if thresh_tasmax != "UNSET":
+        warnings.warn(
+            "The call signature for this indicator will change from `thresh_tasmax` to `thresh` in xclim>=0.45.0.  Passing `thresh_tasmax` value to `thresh`."
+        )
+        thresh = thresh_tasmax
+
+    thresh = convert_units_to(thresh, tasmax)
+
+    cond = compare(tasmax, op, thresh, constrain=(">", ">="))
+    max_l = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.windowed_run_count,
+        window=1,
+        freq=freq,
+    )
+    out = max_l.where(max_l >= window, 0)
+    return to_agg_units(out, tasmax, "count")
+
+
+@declare_units(tasmax="[temperature]", thresh="[temperature]")
+def hot_spell_frequency(
+    tasmax: xarray.DataArray,
+    thresh: Quantified = "30 degC",
+    thresh_tasmax: str = "UNSET",
+    window: int = 3,
+    freq: str = "YS",
+    op: str = ">",
+    resample_before_rl: bool = True,
+) -> xarray.DataArray:
+    """Hot spell frequency.
+
+    The number of hot spell events, defined as a sequence of consecutive {window} days
+    with mean daily temperature above a {thresh}.
+
+    Parameters
+    ----------
+    tasmax : xarray.DataArray
+        Maximum daily temperature.
+    thresh : Quantified
+        Threshold temperature below which a hot spell begins.
+    window : int
+        Minimum number of days with temperature above threshold to qualify as a hot spell.
+    freq : str
+        Resampling frequency.
+    op : {">", ">=", "gt", "ge"}
+        Comparison operation. Default: ">".
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run
+
+    Returns
+    -------
+    xarray.DataArray, [unitless]
+        The {freq} number of hot periods of minimum {window} days.
+
+    Notes
+    -----
+    The threshold on `tasmax` follows the one used in heat waves. A day temperature threshold between 30° and 35°C
+    was selected by Health Canada professionals, following a temperature–mortality analysis. This absolute temperature
+    threshold characterize the occurrence of hot weather events that can result in adverse health outcomes for Canadian
+    communities :cite:p:`casati_regional_2013`.
+
+    In :cite:t:`robinson_definition_2001` where heat waves are also considered, the corresponding parameters would
+    be `thresh_tasmax=39.44, window=2` (103F).
 
     References
     ----------
     :cite:cts:`casati_regional_2013,robinson_definition_2001`
     """
-    thresh_tasmax = convert_units_to(thresh_tasmax, tasmax)
+    if thresh_tasmax != "UNSET":
+        warnings.warn(
+            "The call signature for this indicator will change from `thresh_tasmax` to `thresh` in xclim>=0.45.0.  Passing `thresh_tasmax` value to `thresh`."
+        )
+        thresh = thresh_tasmax
+    thresh = convert_units_to(thresh, tasmax)
 
-    cond = compare(tasmax, op, thresh_tasmax, constrain=(">", ">="))
+    cond = compare(tasmax, op, thresh, constrain=(">", ">="))
     out = rl.resample_and_rl(
         cond,
         resample_before_rl,
@@ -2283,6 +2466,7 @@ def wetdays_prop(
     return fwd
 
 
+# NOTE : A spell index could be used below
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def maximum_consecutive_frost_days(
     tasmin: xarray.DataArray,
@@ -2341,6 +2525,7 @@ def maximum_consecutive_frost_days(
     return to_agg_units(out, tasmin, "count")
 
 
+# NOTE : A spell index could be used below
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
 def maximum_consecutive_dry_days(
     pr: xarray.DataArray,
@@ -2453,6 +2638,7 @@ def maximum_consecutive_frost_free_days(
     return to_agg_units(out, tasmin, "count")
 
 
+# NOTE : A spell index could be used below
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def maximum_consecutive_tx_days(
     tasmax: xarray.DataArray,
@@ -2785,3 +2971,389 @@ def winter_storm(
 
     out.attrs["units"] = to_agg_units(out, snd, "count")
     return out
+
+
+@declare_units(pr="[precipitation]", thresh="[length]")
+def dry_spell_frequency(
+    pr: xarray.DataArray,
+    thresh: Quantified = "1.0 mm",
+    window: int = 3,
+    freq: str = "YS",
+    resample_before_rl: bool = True,
+    op: str = "sum",
+) -> xarray.DataArray:
+    """Return the number of dry periods of n days and more.
+
+    Periods during which the accumulated or maximal daily precipitation amount on a window of n days is under threshold.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+        Daily precipitation.
+    thresh : Quantified
+        Precipitation amount under which a period is considered dry.
+        The value against which the threshold is compared depends on  `op` .
+    window : int
+        Minimum length of the spells.
+    freq : str
+      Resampling frequency.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
+    op: {"sum","max"}
+      Operation to perform on the window.
+      Default is "sum", which checks that the sum of accumulated precipitation over the whole window is less than the
+      threshold.
+      "max" checks that the maximal daily precipitation amount within the window is less than the threshold.
+      This is the same as verifying that each individual day is below the threshold.
+
+    Returns
+    -------
+    xarray.DataArray, [unitless]
+        The {freq} number of dry periods of minimum {window} days.
+
+    Examples
+    --------
+    >>> from xclim.indices import dry_spell_frequency
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> dsf = dry_spell_frequency(pr=pr, op="sum")
+    >>> dsf = dry_spell_frequency(pr=pr, op="max")
+    """
+    pram = rate2amount(convert_units_to(pr, "mm/d", context="hydro"), out_units="mm")
+    thresh = convert_units_to(thresh, pram, context="hydro")
+
+    agg_pr = getattr(pram.rolling(time=window, center=True), op)()
+    cond = agg_pr < thresh
+    out = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.windowed_run_events,
+        window=1,
+        freq=freq,
+    )
+    out.attrs["units"] = ""
+    return out
+
+
+@declare_units(pr="[precipitation]", thresh="[length]")
+def dry_spell_total_length(
+    pr: xarray.DataArray,
+    thresh: Quantified = "1.0 mm",
+    window: int = 3,
+    op: str = "sum",
+    freq: str = "YS",
+    resample_before_rl: bool = True,
+    **indexer,
+) -> xarray.DataArray:
+    """Total length of dry spells.
+
+    Total number of days in dry periods of a minimum length, during which the maximum or
+    accumulated precipitation within a window of the same length is under a threshold.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+        Daily precipitation.
+    thresh : Quantified
+        Accumulated precipitation value under which a period is considered dry.
+    window : int
+        Number of days when the maximum or accumulated precipitation is under threshold.
+    op : {"max", "sum"}
+        Reduce operation.
+    freq : str
+        Resampling frequency.
+    indexer
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        Indexing is done after finding the dry days, but before finding the spells.
+
+    Returns
+    -------
+    xarray.DataArray, [days]
+        The {freq} total number of days in dry periods of minimum {window} days.
+
+    Notes
+    -----
+    The algorithm assumes days before and after the timeseries are "wet", meaning that the condition for being
+    considered part of a dry spell is stricter on the edges. For example, with `window=3` and `op='sum'`, the first day
+    of the series is considered part of a dry spell only if the accumulated precipitation within the first three days is
+    under the threshold. In comparison, a day in the middle of the series is considered part of a dry spell if any of
+    the three 3-day periods of which it is part are considered dry (so a total of five days are included in the
+    computation, compared to only three).
+    """
+    pram = rate2amount(convert_units_to(pr, "mm/d", context="hydro"), out_units="mm")
+    thresh = convert_units_to(thresh, pram, context="hydro")
+
+    pram_pad = pram.pad(time=(0, window))
+    mask = getattr(pram_pad.rolling(time=window), op)() < thresh
+    dry = (mask.rolling(time=window).sum() >= 1).shift(time=-(window - 1))
+    dry = dry.isel(time=slice(0, pram.time.size)).astype(float)
+
+    dry = select_time(dry, **indexer)
+
+    out = rl.resample_and_rl(
+        dry,
+        resample_before_rl,
+        rl.windowed_run_count,
+        window=1,
+        freq=freq,
+    )
+    return to_agg_units(out, pram, "count")
+
+
+@declare_units(pr="[precipitation]", thresh="[length]")
+def dry_spell_max_length(
+    pr: xarray.DataArray,
+    thresh: Quantified = "1.0 mm",
+    window: int = 1,
+    op: str = "sum",
+    freq: str = "YS",
+    resample_before_rl: bool = True,
+    **indexer,
+) -> xarray.DataArray:
+    """Longest dry spell.
+
+    Maximum number of consecutive days in a dry period of minimum length, during which the maximum or
+    accumulated precipitation within a window of the same length is under a threshold.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+        Daily precipitation.
+    thresh : Quantified
+        Accumulated precipitation value under which a period is considered dry.
+    window : int
+        Number of days when the maximum or accumulated precipitation is under threshold.
+    op : {"max", "sum"}
+        Reduce operation.
+    freq : str
+        Resampling frequency.
+    indexer
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        Indexing is done after finding the dry days, but before finding the spells.
+
+    Returns
+    -------
+    xarray.DataArray, [days]
+        The {freq} longest spell in dry periods of minimum {window} days.
+
+    Notes
+    -----
+    The algorithm assumes days before and after the timeseries are "wet", meaning that the condition for being
+    considered part of a dry spell is stricter on the edges. For example, with `window=3` and `op='sum'`, the first day
+    of the series is considered part of a dry spell only if the accumulated precipitation within the first three days is
+    under the threshold. In comparison, a day in the middle of the series is considered part of a dry spell if any of
+    the three 3-day periods of which it is part are considered dry (so a total of five days are included in the
+    computation, compared to only three).
+    """
+    pram = rate2amount(convert_units_to(pr, "mm/d", context="hydro"), out_units="mm")
+    thresh = convert_units_to(thresh, pram, context="hydro")
+
+    pram_pad = pram.pad(time=(0, window))
+    mask = getattr(pram_pad.rolling(time=window), op)() < thresh
+    dry = (mask.rolling(time=window).sum() >= 1).shift(time=-(window - 1))
+    dry = dry.isel(time=slice(0, pram.time.size)).astype(float)
+
+    dry = select_time(dry, **indexer)
+
+    out = rl.resample_and_rl(
+        dry,
+        resample_before_rl,
+        rl.longest_run,
+        freq=freq,
+    )
+    return to_agg_units(out, pram, "count")
+
+
+@declare_units(pr="[precipitation]", thresh="[length]")
+def wet_spell_frequency(
+    pr: xarray.DataArray,
+    thresh: Quantified = "1.0 mm",
+    window: int = 3,
+    freq: str = "YS",
+    resample_before_rl: bool = True,
+    op: str = "sum",
+) -> xarray.DataArray:
+    """Return the number of wet periods of n days and more.
+
+    Periods during which the accumulated or maximal daily precipitation amount on a window of n days is over threshold.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+        Daily precipitation.
+    thresh : Quantified
+        Precipitation amount over which a period is considered dry.
+        The value against which the threshold is compared depends on  `op` .
+    window : int
+        Minimum length of the spells.
+    freq : str
+      Resampling frequency.
+    resample_before_rl : bool
+      Determines if the resampling should take place before or after the run
+      length encoding (or a similar algorithm) is applied to runs.
+    op: {"sum","max"}
+      Operation to perform on the window.
+      Default is "sum", which checks that the sum of accumulated precipitation over the whole window is more than the
+      threshold.
+      "max" checks that the maximal daily precipitation amount within the window is more than the threshold.
+      This is the same as verifying that each individual day is above the threshold.
+
+    Returns
+    -------
+    xarray.DataArray, [unitless]
+        The {freq} number of wet periods of minimum {window} days.
+
+    Examples
+    --------
+    >>> from xclim.indices import wet_spell_frequency
+    >>> pr = xr.open_dataset(path_to_pr_file).pr
+    >>> dsf = wet_spell_frequency(pr=pr, op="sum")
+    >>> dsf = wet_spell_frequency(pr=pr, op="max")
+    """
+    pram = rate2amount(convert_units_to(pr, "mm/d", context="hydro"), out_units="mm")
+    thresh = convert_units_to(thresh, pram, context="hydro")
+
+    agg_pr = getattr(pram.rolling(time=window, center=True), op)()
+    cond = agg_pr >= thresh
+    out = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.windowed_run_events,
+        window=1,
+        freq=freq,
+    )
+    out.attrs["units"] = ""
+    return out
+
+
+@declare_units(pr="[precipitation]", thresh="[length]")
+def wet_spell_total_length(
+    pr: xarray.DataArray,
+    thresh: Quantified = "1.0 mm",
+    window: int = 3,
+    op: str = "sum",
+    freq: str = "YS",
+    resample_before_rl: bool = True,
+    **indexer,
+) -> xarray.DataArray:
+    """Total length of dry spells.
+
+    Total number of days in wet periods of a minimum length, during which the maximum or
+    accumulated precipitation within a window of the same length is over a threshold.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+        Daily precipitation.
+    thresh : Quantified
+        Accumulated precipitation value over which a period is considered dry.
+    window : int
+        Number of days when the maximum or accumulated precipitation is over threshold.
+    op : {"max", "sum"}
+        Reduce operation.
+    freq : str
+        Resampling frequency.
+    indexer
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        Indexing is done after finding the dry days, but before finding the spells.
+
+    Returns
+    -------
+    xarray.DataArray, [days]
+        The {freq} total number of days in wet periods of minimum {window} days.
+
+    Notes
+    -----
+    The algorithm assumes days before and after the timeseries are "dry", meaning that the condition for being
+    considered part of a wet spell is stricter on the edges. For example, with `window=3` and `op='sum'`, the first day
+    of the series is considered part of a wet spell only if the accumulated precipitation within the first three days is
+    over the threshold. In comparison, a day in the middle of the series is considered part of a wet spell if any of
+    the three 3-day periods of which it is part are considered wet (so a total of five days are included in the
+    computation, compared to only three).
+    """
+    pram = rate2amount(convert_units_to(pr, "mm/d", context="hydro"), out_units="mm")
+    thresh = convert_units_to(thresh, pram, context="hydro")
+
+    pram_pad = pram.pad(time=(0, window))
+    mask = getattr(pram_pad.rolling(time=window), op)() >= thresh
+    wet = (mask.rolling(time=window).sum() < 1).shift(time=-(window - 1))
+    wet = wet.isel(time=slice(0, pram.time.size)).astype(float)
+
+    wet = select_time(wet, **indexer)
+
+    out = rl.resample_and_rl(
+        wet,
+        resample_before_rl,
+        rl.windowed_run_count,
+        window=1,
+        freq=freq,
+    )
+    return to_agg_units(out, pram, "count")
+
+
+@declare_units(pr="[precipitation]", thresh="[length]")
+def wet_spell_max_length(
+    pr: xarray.DataArray,
+    thresh: Quantified = "1.0 mm",
+    window: int = 1,
+    op: str = "sum",
+    freq: str = "YS",
+    resample_before_rl: bool = True,
+    **indexer,
+) -> xarray.DataArray:
+    """Longest wet spell.
+
+    Maximum number of consecutive days in a wet period of minimum length, during which the maximum or
+    accumulated precipitation within a window of the same length is over a threshold.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+        Daily precipitation.
+    thresh : Quantified
+        Accumulated precipitation value over which a period is considered dry.
+    window : int
+        Number of days when the maximum or accumulated precipitation is over threshold.
+    op : {"max", "sum"}
+        Reduce operation.
+    freq : str
+        Resampling frequency.
+    indexer
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+        Indexing is done after finding the dry days, but before finding the spells.
+
+    Returns
+    -------
+    xarray.DataArray, [days]
+        The {freq} longest spell in wet periods of minimum {window} days.
+
+    Notes
+    -----
+    The algorithm assumes days before and after the timeseries are "dry", meaning that the condition for being
+    considered part of a wet spell is stricter on the edges. For example, with `window=3` and `op='sum'`, the first day
+    of the series is considered part of a wet spell only if the accumulated precipitation within the first three days is
+    over the threshold. In comparison, a day in the middle of the series is considered part of a wet spell if any of
+    the three 3-day periods of which it is part are considered wet (so a total of five days are included in the
+    computation, compared to only three).
+    """
+    pram = rate2amount(convert_units_to(pr, "mm/d", context="hydro"), out_units="mm")
+    thresh = convert_units_to(thresh, pram, context="hydro")
+
+    pram_pad = pram.pad(time=(0, window))
+    mask = getattr(pram_pad.rolling(time=window), op)() >= thresh
+    wet = (mask.rolling(time=window).sum() < 1).shift(time=-(window - 1))
+    wet = wet.isel(time=slice(0, pram.time.size)).astype(float)
+
+    wet = select_time(wet, **indexer)
+
+    out = rl.resample_and_rl(
+        wet,
+        resample_before_rl,
+        rl.longest_run,
+        freq=freq,
+    )
+    return to_agg_units(out, pram, "count")
