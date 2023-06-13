@@ -1160,7 +1160,7 @@ class TestHeatWaveTotalLength:
 
 class TestHotSpellFrequency:
     @pytest.mark.parametrize(
-        "thresh_tasmax,window,op,expected",
+        "thresh,window,op,expected",
         [
             ("30 C", 3, ">", 2),  # Some HS
             ("30 C", 4, ">", 1),  # One long HS
@@ -1170,10 +1170,10 @@ class TestHotSpellFrequency:
             ("40 C", 5, ">", 0),  # Windowed
         ],
     )
-    def test_1d(self, tasmax_series, thresh_tasmax, window, op, expected):
+    def test_1d(self, tasmax_series, thresh, window, op, expected):
         tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
 
-        hsf = xci.hot_spell_frequency(tx, thresh=thresh_tasmax, window=window, op=op)
+        hsf = xci.hot_spell_frequency(tx, thresh=thresh, window=window, op=op)
         np.testing.assert_allclose(hsf.values, expected)
 
     @pytest.mark.parametrize(
@@ -1196,7 +1196,7 @@ class TestHotSpellFrequency:
 
 class TestHotSpellMaxLength:
     @pytest.mark.parametrize(
-        "thresh_tasmax,window,op,expected",
+        "thresh,window,op,expected",
         [
             ("30 C", 3, ">", 5),  # Some HS
             ("10 C", 3, ">", 10),  # One long HS
@@ -1206,16 +1206,16 @@ class TestHotSpellMaxLength:
             ("30 C", 5, ">", 5),  # Windowed
         ],
     )
-    def test_1d(self, tasmax_series, thresh_tasmax, window, op, expected):
+    def test_1d(self, tasmax_series, thresh, window, op, expected):
         tx = tasmax_series(np.asarray([28, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
 
-        hsml = xci.hot_spell_max_length(tx, thresh=thresh_tasmax, window=window, op=op)
+        hsml = xci.hot_spell_max_length(tx, thresh=thresh, window=window, op=op)
         np.testing.assert_allclose(hsml.values, expected)
 
 
 class TestHotSpellTotalLength:
     @pytest.mark.parametrize(
-        "thresh_tasmax,window,op,expected",
+        "thresh,window,op,expected",
         [
             ("30 C", 3, ">", 8),  # Some HS
             ("10 C", 3, ">", 10),  # One long HS
@@ -1225,12 +1225,10 @@ class TestHotSpellTotalLength:
             ("30 C", 5, ">", 8),  # Windowed
         ],
     )
-    def test_1d(self, tasmax_series, thresh_tasmax, window, op, expected):
+    def test_1d(self, tasmax_series, thresh, window, op, expected):
         tx = tasmax_series(np.asarray([28, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
 
-        hsml = xci.hot_spell_total_length(
-            tx, thresh=thresh_tasmax, window=window, op=op
-        )
+        hsml = xci.hot_spell_total_length(tx, thresh=thresh, window=window, op=op)
         np.testing.assert_allclose(hsml.values, expected)
 
 
