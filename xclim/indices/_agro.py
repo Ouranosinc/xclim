@@ -1060,9 +1060,11 @@ def rain_season(
         return out
 
     out = pram.resample(time=freq).map(_get_rain_season)
-    for outd in out.values():
-        outd.attrs["units"] = ""
+    out["rain_season_start"].attrs["units"] = ""
+    out["rain_season_end"].attrs["units"] = ""
     out["rain_season_length"].attrs["units"] = "days"
+    out["rain_season_start"].attrs["is_dayofyear"] = np.int32(1)
+    out["rain_season_end"].attrs["is_dayofyear"] = np.int32(1)
     return out["rain_season_start"], out["rain_season_end"], out["rain_season_length"]
 
 
