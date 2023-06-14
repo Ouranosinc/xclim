@@ -3361,6 +3361,7 @@ def wet_spell_max_length(
     )
     return to_agg_units(out, pram, "count")
 
+
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def late_frost_days(
     tasmin: xarray.DataArray,

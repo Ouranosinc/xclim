@@ -3508,6 +3508,7 @@ class TestSnowfallIntensity:
         out = xci.snowfall_intensity(prsn)
         np.testing.assert_allclose(out, [3])
 
+
 class TestLateFrostDays:
     def test_late_frost_days(self, tasmin_series):
         tasmin = tasmin_series(np.array([-1, 1, 2, -4, 0]) + K2C, start="30/3/2023")
