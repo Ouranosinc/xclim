@@ -1030,14 +1030,14 @@ def rain_season(
         start = _get_first_run_start(pram)
 
         # masking value before  start of the season (end of season should be after)
-        # Get valid integer indexer of the day after the first run starts. 
-        # `start != NaN` only possible if a condition on next few time steps is respected. Thus, `start+1` exists if `start != NaN` 
+        # Get valid integer indexer of the day after the first run starts.
+        # `start != NaN` only possible if a condition on next few time steps is respected. Thus, `start+1` exists if `start != NaN`
         start_ind = (start + 1).fillna(-1).astype(int)
-        mask = (pram * np.NaN) 
+        mask = pram * np.NaN
         # Put "True" on the day of run start
-        mask[{'time': start_ind}] = 1
+        mask[{"time": start_ind}] = 1
         # Mask back points without runs, propagate the True
-        mask = mask.where(start.notnull()).ffill('time')
+        mask = mask.where(start.notnull()).ffill("time")
         mask = mask.notnull()
         end = _get_first_run_end(pram.where(mask))
 
