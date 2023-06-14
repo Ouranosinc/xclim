@@ -3507,3 +3507,14 @@ class TestSnowfallIntensity:
         prsn = convert_units_to(prsn, "kg m-2 s-1", context="hydro")
         out = xci.snowfall_intensity(prsn)
         np.testing.assert_allclose(out, [3])
+
+class TestLateFrostDays:
+    def test_late_frost_days(self, tasmin_series):
+        tasmin = tasmin_series(np.array([-1, 1, 2, -4, 0]) + K2C, start="30/3/2023")
+        lfd = xci.late_frost_days(tasmin)
+        np.testing.assert_allclose(lfd, 1)
+
+    def test_late_frost_days_lat(self, tasmin_series):
+        tasmin = tasmin_series(np.array([-1, 1, 2, -4, 0]) + K2C, start="30/3/2023")
+        lfd = xci.late_frost_days(tasmin)
+        np.testing.assert_allclose(lfd, 1)
