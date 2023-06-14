@@ -996,6 +996,7 @@ def rain_season(
 
     # Find the start of the rain season
     def _get_first_run_start(pram):
+        last_doy = pram.indexes["time"][-1].strftime("%m-%d")
         pram = select_time(pram, date_bounds=(date_min_start, last_doy))
 
         # First condition: Start with enough precipitation
