@@ -1227,10 +1227,10 @@ late_frost_days = TempWithIndexing(
     units="days",
     standard_name="days_with_air_temperature_below_threshold",
     long_name="Number of days where the daily minimum temperature is below {thresh}",
-    description="{freq} number of days where the daily minimum temperature is below {thresh}."
-    "In the Northern Hemisphere, a frost day is late between {start_date_nh} and {end_date_nh}."
-    "In the Southern Hemisphere, a frost day is late between {start_date_sh} and {end_date_sh}.",
-    abstract="Number of days where the daily minimum temperature is below a given threshold.",
+    description="{freq} number of days where the daily minimum temperature is below {thresh}"
+    "between {start_date} and {end_date}.",
+    abstract="Number of days where the daily minimum temperature is below a given threshold between a given"
+    "start date and a given end date.",
     cell_methods="time: sum over days",
     compute=indices.late_frost_days,
 )

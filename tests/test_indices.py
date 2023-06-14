@@ -3158,13 +3158,10 @@ class TestDrynessIndex:
 class TestLateFrostDays:
     def test_late_frost_days(self, tasmin_series):
         tasmin = tasmin_series(np.array([-1, 1, 2, -4, 0]) + K2C, start="30/3/2023")
-        lat = xr.DataArray(21.45, attrs={"units": "degrees_north"})
-        tasmin["lat"] = lat
         lfd = xci.late_frost_days(tasmin)
         np.testing.assert_allclose(lfd, 1)
 
     def test_late_frost_days_lat(self, tasmin_series):
         tasmin = tasmin_series(np.array([-1, 1, 2, -4, 0]) + K2C, start="30/3/2023")
-        lat = xr.DataArray(21.45, attrs={"units": "degrees_north"})
-        lfd = xci.late_frost_days(tasmin, lat=lat)
+        lfd = xci.late_frost_days(tasmin)
         np.testing.assert_allclose(lfd, 1)
