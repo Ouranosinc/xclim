@@ -70,7 +70,7 @@ def hawkins_sutton(
       Smoothed time series over time. By default, the method uses a fourth order polynomial. Use this argument to
       use other smoothing strategies, such as another polynomial order, or a LOESS curve.
     weights: xr.DataArray
-      Weights to be applied to individual models.
+      Weights to be applied to individual models. Should have `model` dimension.
     baseline: [str, str]
       Start and end year of the reference period.
     kind: {'+', '*'}
