@@ -980,10 +980,6 @@ def rain_season(
     thresh_dry_start = convert_units_to(thresh_dry_start, pram)
     thresh_dry_end = convert_units_to(thresh_dry_end, pram)
 
-    # Eliminate negative values.
-    pram = xarray.where(pram < 0, 0, pram)
-    pram.attrs["units"] = "mm"
-
     # should we flag date_min_end  < date_max_start?
     def _get_first_run(run_positions, start_date, end_date):
         run_positions = select_time(run_positions, date_bounds=(start_date, end_date))
@@ -1058,6 +1054,7 @@ def rain_season(
         )
         return out
 
+    # Compute rain season, attribute units
     out = pram.resample(time=freq).map(_get_rain_season)
     out["rain_season_start"].attrs["units"] = ""
     out["rain_season_end"].attrs["units"] = ""
