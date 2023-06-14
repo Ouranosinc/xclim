@@ -2729,7 +2729,7 @@ class TestSnowCover:
     ["per_day", "total"],
 )
 def test_rain_season(pr_series, result_type, method_dry_start):
-    pr = pr_series(np.arange(365) * np.NaN, start="2000-01-01", units="kg m-2 s-1")
+    pr = pr_series(np.arange(365) * np.NaN, start="2000-01-01", units="mm/d")
     # input values in mm (amount): a correcting factor is used below
     pr[{"time": slice(0, 0 + 3)}] = 10  # to satisfy cond1_start
     pr[{"time": slice(3, 3 + 30)}] = 5  # to satisfy cond2_start
@@ -2746,26 +2746,15 @@ def test_rain_season(pr_series, result_type, method_dry_start):
         pr[{"time": 99 + 20 - 1}] = 5
         out_exp = [3, np.NaN, 363]
 
-    # convert mm -> kg m-2 s-1
-    with xr.set_options(keep_attrs=True):
-        pr = pr / (60 * 60 * 24)
-
     out = {}
-    (
-        out["rain_season_start"],
-        out["rain_season_end"],
-        out["rain_season_length"],
-    ) = xci.rain_season(
+    out["start"], out["end"], out["length"] = xci.rain_season(
         pr,
         date_min_start="01-01",
         date_min_end="01-01",
         method_dry_start=method_dry_start,
     )
     out_arr = np.array(
-        [
-            out[var].values
-            for var in ["rain_season_start", "rain_season_end", "rain_season_length"]
-        ]
+        [out[var].values for var in ["start", "end", "length"]]
     ).flatten()
     np.testing.assert_array_equal(out_arr, out_exp)
 
