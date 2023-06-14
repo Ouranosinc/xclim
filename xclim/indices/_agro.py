@@ -8,7 +8,7 @@ import xarray
 
 import xclim.indices as xci
 import xclim.indices.run_length as rl
-from xclim.core.calendar import parse_offset, resample_doy
+from xclim.core.calendar import parse_offset, resample_doy, select_time
 from xclim.core.units import (
     amount2lwethickness,
     convert_units_to,
