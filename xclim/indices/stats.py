@@ -91,9 +91,9 @@ def fit(
         Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
         (see :py:mod:scipy.stats for full list). If the PWM method is used, only the following distributions are
         currently supported: 'expon', 'gamma', 'genextreme', 'genpareto', 'gumbel_r', 'pearson3', 'weibull_min'.
-    method : {"ML", "PWM", "APP"}
-        Fitting method, either maximum likelihood (ML), probability weighted moments (PWM),
-        also called L-Moments, or approximate method (APP).
+    method : {"ML" or "MLE", "MOM", "PWM", "APP"}
+        Fitting method, either maximum likelihood (ML or MLE), method of moments (MOM),
+        probability weighted moments (PWM), also called L-Moments, or approximate method (APP).
         The PWM method is usually more robust to outliers.
     dim : str
         The dimension upon which to perform the indexing (default: "time").
@@ -112,6 +112,8 @@ def fit(
     """
     method_name = {
         "ML": "maximum likelihood",
+        "MOM": "method of moments",
+        "MLE": "maximum likelihood",
         "PWM": "probability weighted moments",
         "APP": "approximative method",
     }
@@ -135,7 +137,7 @@ def fit(
         keep_attrs=True,
         kwargs=dict(
             # Don't know how APP should be included, this works for now
-            dist=dc if method in ["ML", "APP"] else lm3dc,
+            dist=dc if method in ["ML", "MLE", "MOM", "APP"] else lm3dc,
             nparams=len(dist_params),
             method=method,
             **fitkwargs,
@@ -295,7 +297,11 @@ def parametric_cdf(p: xr.DataArray, v: float | Sequence) -> xr.DataArray:
 
 
 def fa(
-    da: xr.DataArray, t: int | Sequence, dist: str = "norm", mode: str = "max"
+    da: xr.DataArray,
+    t: int | Sequence,
+    dist: str = "norm",
+    mode: str = "max",
+    method: str = "ML",
 ) -> xr.DataArray:
     """Return the value corresponding to the given return period.
 
@@ -310,6 +316,10 @@ def fa(
         Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
     mode : {'min', 'max}
         Whether we are looking for a probability of exceedance (max) or a probability of non-exceedance (min).
+    method : {"ML" or "MLE", "MOM", "PWM", "APP"}
+        Fitting method, either maximum likelihood (ML or MLE), method of moments (MOM),
+        probability weighted moments (PWM), also called L-Moments, or approximate method (APP).
+        The PWM method is usually more robust to outliers.
 
     Returns
     -------
@@ -321,7 +331,7 @@ def fa(
     scipy.stats : For descriptions of univariate distribution types.
     """
     # Fit the parameters of the distribution
-    p = fit(da, dist)
+    p = fit(da, dist, method=method)
     t = np.atleast_1d(t)
 
     if mode in ["max", "high"]:
@@ -350,6 +360,7 @@ def frequency_analysis(
     dist: str,
     window: int = 1,
     freq: str | None = None,
+    method: str = "ML",
     **indexer,
 ) -> xr.DataArray:
     """Return the value corresponding to a return period.
@@ -370,6 +381,10 @@ def frequency_analysis(
     freq : str
         Resampling frequency. If None, the frequency is assumed to be 'YS' unless the indexer is season='DJF',
         in which case `freq` would be set to `AS-DEC`.
+    method : {"ML" or "MLE", "MOM", "PWM", "APP"}
+        Fitting method, either maximum likelihood (ML or MLE), method of moments (MOM),
+        probability weighted moments (PWM), also called L-Moments, or approximate method (APP).
+        The PWM method is usually more robust to outliers.
     indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
         month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
@@ -399,7 +414,7 @@ def frequency_analysis(
     if uses_dask(sel):
         sel = sel.chunk({"time": -1})
     # Frequency analysis
-    return fa(sel, t, dist, mode)
+    return fa(sel, t, dist=dist, mode=mode, method=method)
 
 
 def get_dist(dist):
@@ -417,7 +432,8 @@ def get_lm3_dist(dist):
     """Return a distribution object from `lmoments3.distr`."""
     if dist not in _lm3_dist_map:
         raise ValueError(
-            f"The {dist} distribution is not supported by `lmoments3` or `xclim`."
+            f"The PWM fitting method cannot be used with the {dist} distribution, as it is not supported "
+            f"by `lmoments3`."
         )
 
     return getattr(lmoments3.distr, _lm3_dist_map[dist])

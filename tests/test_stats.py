@@ -134,6 +134,14 @@ class TestFit:
         assert cdf.shape == (fitda.x.size, fitda.y.size)
         assert p.attrs["estimator"] == "Maximum likelihood"
 
+        # Test with MOM
+        p1 = stats.fit(fitda, "lognorm", method="MOM")
+        assert p1 == p
+
+        # Test with explicit MLE
+        p2 = stats.fit(fitda, "lognorm", method="MLE")
+        assert p2 == p
+
 
 def test_weibull_min_fit(weibull_min):
     """Check ML fit with a series that leads to poor values without good initial conditions."""
@@ -154,6 +162,9 @@ def test_fa(fitda):
     p0 = lognorm.fit(fitda.values[:, 0, 0])
     q0 = lognorm.ppf(1 - 1.0 / T, *p0)
     np.testing.assert_array_equal(q[0, 0, 0], q0)
+
+    q1 = stats.fa(fitda, T, "lognorm", method="PWM")
+    np.testing.assert_array_almost_equal(q1, q)
 
 
 def test_fit_nan(fitda):
@@ -251,6 +262,11 @@ def test_frequency_analysis(ndq_series, use_dask):
     stats.frequency_analysis(
         q.transpose(), mode="max", t=2, dist="genextreme", window=6, freq="YS"
     )
+
+    out1 = stats.frequency_analysis(
+        q, mode="max", t=2, dist="genextreme", window=6, freq="YS", method="PWM"
+    )
+    np.testing.assert_array_almost_equal(out1, out)
 
 
 @pytest.mark.parametrize("use_dask", [True, False])
