@@ -980,8 +980,6 @@ def rain_season(
     thresh_dry_start = convert_units_to(thresh_dry_start, pram)
     thresh_dry_end = convert_units_to(thresh_dry_end, pram)
 
-    last_doy = pram.indexes["time"][-1].strftime("%m-%d")
-
     # Eliminate negative values.
     pram = xarray.where(pram < 0, 0, pram)
     pram.attrs["units"] = "mm"
