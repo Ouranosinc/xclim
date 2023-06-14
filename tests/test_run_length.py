@@ -137,19 +137,11 @@ def test_rle_events_reproduces_rle(use_dask, index):
         da = da.chunk({"a": 1, "b": 2})
 
     out = rl.rle_events(da != 0, 1, da == 0, 1, index=index).mean(["a", "b", "c"])
-
+    expected = rl.rle_events(da, index=index).mean(["a", "b", "c"])
     # Same output as rle when da_stop is the opposite of da_start and window_start == window_stop = 1
     # But:
     # - `rle_events` gives either length or NaN.
     # - `rle` gives either length, NaN, _or_ 0
-    if index == "last":
-        expected = np.zeros(365) * np.nan
-        # expected[1:10] = np.nan
-        expected[10] = 10
-    else:
-        expected = np.zeros(365) * np.nan
-        expected[1] = 10
-        # expected[2:11] = np.nan
     np.testing.assert_array_equal(out, expected)
 
 
