@@ -214,6 +214,24 @@
     "title": "Indice simple de l'intensité des précipitations [SDII]",
     "abstract": "Moyenne de la précipitation quotidienne pour les jours où la précipitation est au-dessus d'un seuil donné."
   },
+  "PRCPAVG": {
+    "long_name": "Précipitation moyenne",
+    "description": "Précipitation moyenne {freq:f}.",
+    "title": "Précipitation accumulée moyenne (liquide ou solide)",
+    "abstract": "Précipitation accumulée moyenne. Si la température quotidienne moyenne est donnée, le paramètre phase peut-être utilisé pour restreindre le calcul aux précipitations d'une seule phase (liquide ou solide). Les précipitations sont considérées solides si la température quotidienne moyenne est sous 0°C (et vice-versa)."
+  },
+  "LIQUIDPRCPAVG": {
+    "long_name": "Précipitation moyenne lorsque la température moyenne est au-dessus de {thresh}",
+    "description": "Précipitation liquide moyenne {freq:f}, estimée comme la précipitation lorsque la température moyenne est au-dessus de {thresh}.",
+    "title": "Précipitation liquide accumulée moyenne",
+    "abstract": "Précipitation liquide accumulée moyenne. Les précipitations sont considérées liquides lorsque la température quotidienne moyenne est au-dessus de 0°C."
+  },
+  "SOLIDPRCPAVG": {
+    "long_name": "Précipitation moyenne lorsque la température moyenne est en dessous ou égale à {thresh}",
+    "description": "Précipitation solide moyenne {freq:f}, estimée comme la précipitation lorsque la température moyenne est en dessous ou égale à {thresh}.",
+    "title": "Précipitation solide accumulée moyenne",
+    "abstract": "Précipitation solide accumulée moyenne. La précipitation est considéré solide lorsque la température quotidienne moyenne est en dessous ou égale à 0°C."
+  },
   "PRCPTOT": {
     "long_name": "Précipitation totale",
     "description": "Précipitation totale {freq:f}.",
@@ -233,10 +251,10 @@
     "abstract": "Précipitation liquide accumulée totale. Les précipitations sont considérées liquides lorsque la température quotidienne moyenne est au-dessus de 0°C."
   },
   "SOLIDPRCPTOT": {
-    "long_name": "Précipitation totale lorsque la température moyenne est sous ou égale à {thresh}",
-    "description": "Précipitation solide totale {freq:f}, estimée comme la précipitation lorsque la température moyenne est sous ou égale à {thresh}.",
+    "long_name": "Précipitation totale lorsque la température moyenne est en dessous ou égale à {thresh}",
+    "description": "Précipitation solide totale {freq:f}, estimée comme la précipitation lorsque la température moyenne est en dessous ou égale à {thresh}.",
     "title": "Précipitation solide accumulée totale",
-    "abstract": "Précipitation solide accumulée totale. La précipitation est considéré solide lorsque la température quotidienne moyenne est sous ou égale à 0°C."
+    "abstract": "Précipitation solide accumulée totale. La précipitation est considéré solide lorsque la température quotidienne moyenne est en dessous ou égale à 0°C."
   },
   "SPI": {
     "long_name": "Indice de précipitation standardisé (SPI)",
@@ -459,6 +477,18 @@
     "description": "Nombre {freq:m} de jours faisant partie d'une vague de froid. Une vague de froid se produit lorsque la température quotidienne moyenne est sous {thresh} durant au moins {window} jours consécutifs.",
     "title": "Nombre de jours faisant partie d'une vague de froid",
     "abstract": "Nombre de jours faisant partie d'une vague de froid. Une vague de froid se produit lorsque la température quotidienne moyenne est sous un seuil donné durant au moins un certain nombre de jours consécutifs."
+  },
+  "COLD_SPELL_MAX_LENGTH": {
+    "long_name": "Série la plus longue d'au moins {window} jours consécutifs ayant une température quotidienne au-dessus de {thresh}.",
+    "description": "Longueur maximale {freq:f} des périodes froides durant une période donnée. Une période froide se produit lorsque la température quotidienne est au-dessus de {thresh} durant au moins {window} jours.",
+    "title": "Longueur maximale des périodes froides",
+    "abstract": "Longueur maximale des périodes froides durant une période donnée. Une période froide se produit lorsque la température quotidienne est au-dessus d'un seuil spécifique durant un minimum de jours."
+  },
+  "COLD_SPELL_TOTAL_LENGTH": {
+    "long_name": "Durée totale des périodes d'au moins {window} jours consécutifs ayant une température quotidienne au-dessus de {thresh}.",
+    "description": "Durée totale {freq:f} des périodes froides durant une période donnée. Une période froide se produit lorsque la température quotidienne est au-dessus de {thresh} durant au moins {window} jours.",
+    "title": "Durée totale des périodes froides",
+    "abstract": "Durée totale des périodes froides durant une période donnée. Une période froide se produit lorsque la température quotidienne est au-dessus d'un seuil spécifique durant un minimum de jours."
   },
   "COOL_NIGHT_INDEX": {
     "long_name": "Indice de fraîcheur des nuits",
@@ -691,6 +721,12 @@
     "title": "Longueur maximale des périodes chaudes",
     "abstract": "Longueur maximale des périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne est au-dessus d'un seuil spécifique durant un minimum de jours."
   },
+  "HOT_SPELL_TOTAL_LENGTH": {
+    "long_name": "Durée totale des périodes d'au moins {window} jours consécutifs ayant une température maximale quotidienne au-dessus de {thresh_tasmax}.",
+    "description": "Durée totale {freq:f} des périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne est au-dessus de {thresh_tasmax} durant au moins {window} jours.",
+    "title": "Durée totale des périodes chaudes",
+    "abstract": "Durée totale des périodes chaudes durant une période donnée. Une période chaude se produit lorsque la température maximale quotidienne est au-dessus d'un seuil spécifique durant un minimum de jours."
+  },
   "CONSECUTIVE_FROST_FREE_DAYS": {
     "long_name": "Nombre maximal de jours consécutifs ayant une température minimale au-dessus ou égale à {thresh}",
     "description": "Nombre maximal {freq:m} de jours consécutifs où la température minimale quotidienne est au-dessus ou égale à {thresh}.",
@@ -761,6 +797,42 @@
   "WIND_VECTOR_FROM_SPEED.vas": {
     "long_name": "Vent du sud près de la surface",
     "description": "Vitesse du vent du sud près de la surface calculé à partir de la vitesse et de la direction du vent."
+  },
+  "SFCWIND_MIN": {
+    "long_name": "Minimum de la vitesse du vent près de la surface",
+    "description": "Minimum {freq:f} de la vitesse du vent près de la surface",
+    "title": "Minimum de la vitesse du vent près de la surface",
+    "abstract": "Minimum de la vitesse du vent près de la surface"
+  },
+  "SFCWIND_MEAN": {
+    "long_name": "Moyenne de la vitesse du vent près de la surface",
+    "description": "Moyenne {freq:f} de la vitesse du vent près de la surface",
+    "title": "Moyenne de la vitesse du vent près de la surface",
+    "abstract": "Moyenne de la vitesse du vent près de la surface"
+  },
+  "SFCWIND_MAX": {
+    "long_name": "Maximum de la vitesse du vent près de la surface",
+    "description": "Maximum {freq:f} de la vitesse du vent près de la surface",
+    "title": "Maximum de la vitesse du vent près de la surface",
+    "abstract": "Maximum de la vitesse du vent près de la surface"
+  },
+  "SFCWINDMAX_MIN": {
+    "long_name": "Minimum de la vitesse maximimale du vent près de la surface",
+    "description": "Minimum {freq:f} de la vitesse maximimale du vent près de la surface",
+    "title": "Minimum de la vitesse maximimale du vent près de la surface",
+    "abstract": "Minimum de la vitesse maximimale du vent près de la surface"
+  },
+  "SFCWINDMAX_MEAN": {
+    "long_name": "Moyenne de la vitesse maximimale du vent près de la surface",
+    "description": "Moyenne {freq:f} de la vitesse maximimale du vent près de la surface",
+    "title": "Moyenne de la vitesse maximimale du vent près de la surface",
+    "abstract": "Moyenne de la vitesse maximimale du vent près de la surface"
+  },
+  "SFCWINDMAX_MAX": {
+    "long_name": "Maximum de la vitesse maximimale du vent près de la surface",
+    "description": "Maximum {freq:f} de la vitesse maximimale du vent près de la surface",
+    "title": "Maximum de la vitesse maximimale du vent près de la surface",
+    "abstract": "Maximum de la vitesse maximimale du vent près de la surface"
   },
   "E_SAT": {
     "long_name": "Pression de vapeur saturante (méthode \"{method}\")",
@@ -840,11 +912,11 @@
     "title": "Approximation de la neige",
     "abstract": "Précipitation solide estimée à partir de la précipitation totale et de la température selon une méthode et un seuil de température donnés."
   },
-  "SND_TO_SNW": {
-    "long_name": "Quantité de neige à la surface",
-    "description": "Quantité de neige calculée à partir de son épaisseur et de sa densité.",
-    "title": "Quantité de neige à la surface",
-    "abstract": "Quantité de neige à la surface calculée à partir de son épaisseur et de sa densité."
+  "SNW_TO_SND": {
+    "long_name": "Épaisseur de neige",
+    "description": "Épaisseur de neige calculée à partir de sa quantité et de sa densité.",
+    "title": "Épaisseur de neige",
+    "abstract": "Épaisseur de neige calculée à partir de sa quantité et de sa densité."
   },
   "SNOW_DEPTH": {
     "long_name": "Épaisseur de neige",
@@ -852,11 +924,23 @@
     "title": "Moyenne de l'épaisseur de neige",
     "abstract": "Épaisseur de neige moyenne."
   },
-  "SNW_TO_SND": {
-    "long_name": "Épaisseur de neige",
-    "description": "Épaisseur de neige calculée à partir de sa quantité et de sa densité.",
-    "title": "Épaisseur de neige",
-    "abstract": "Épaisseur de neige calculée à partir de sa quantité et de sa densité."
+  "SNOWFALL_FREQUENCY": {
+    "long_name": "Pourcentage de jours où la chute de neige est au-dessus de {thresh}",
+    "description": "Pourcentage de jours {freq:m} où la chute de neige est au-dessus de {thresh}.",
+    "title": "Fréquence de la chute de neige",
+    "abstract": "Pourcentage de jours où la chute de neige est au-dessus d'un seuil donné."
+  },
+  "SNOWFALL_INTENSITY": {
+    "long_name": "Chute de neige moyenne au-dessus de {thresh}",
+    "description": "Chute de neige moyenne  {freq:f} au-dessus de {thresh}.",
+    "title": "Intensité de la chute de neige",
+    "abstract": "Chute de neige moyenne au-dessus d'un seuil donné."
+  },
+  "SND_TO_SNW": {
+    "long_name": "Quantité de neige à la surface",
+    "description": "Quantité de neige calculée à partir de son épaisseur et de sa densité.",
+    "title": "Quantité de neige à la surface",
+    "abstract": "Quantité de neige à la surface calculée à partir de son épaisseur et de sa densité."
   },
   "PRLP": {
     "long_name": "Précipitation liquide (méthode \"{methode}\" avec une température égale ou inférieure à {thresh})",
@@ -865,20 +949,20 @@
     "abstract": "Précipitation liquide estimée à partir de la précipitation totale et de la température selon une méthode et un seuil de température donnés."
   },
   "LAST_SNOWFALL": {
-    "long_name": "Date du dernier jour où la précipitation solide est au-dessus de {thresh}",
-    "description": "Dernier jour {freq:m} où la précipitation solide est au-dessus de {thresh}.",
-    "title": "Dernier jour avec une précipitation solide au-dessus d'un seuil donné",
-    "abstract": "Dernier jour d'une période où la précipitation solide est au-dessus d'un seuil donné."
+    "long_name": "Date du dernier jour où la chute de neige est au-dessus de {thresh}",
+    "description": "Dernier jour {freq:m} où la chute de neige est au-dessus de {thresh}.",
+    "title": "Dernier jour avec une chute de neige au-dessus d'un seuil donné",
+    "abstract": "Dernier jour d'une période où la chute de neige est au-dessus d'un seuil donné."
   },
   "FIRST_SNOWFALL": {
-    "long_name": "Date du premier jour où la précipitation solide est au-dessus de {thresh}",
-    "description": "Premier jour {freq:m} où la précipitation solide est au-dessus de {thresh}.",
-    "title": "Premier jour avec une précipitation solide au-dessus d'un seuil donné",
-    "abstract": "Premier jour d'une période où la précipitation solide est au-dessus d'un seuil donné."
+    "long_name": "Date du premier jour où la chute de neige est au-dessus de {thresh}",
+    "description": "Premier jour {freq:m} où la chute de neige est au-dessus de {thresh}.",
+    "title": "Premier jour avec une chute de neige au-dessus d'un seuil donné",
+    "abstract": "Premier jour d'une période où la chute de neige est au-dessus d'un seuil donné."
   },
   "DAYS_WITH_SNOW": {
-    "long_name": "Nombre de jours où la précipitation solide se trouve entre une borne de {low} et {high}",
-    "description": "Nombre {freq:m} de jours où la précipitation solide est plus grande que {low} et plus petite ou égale à {high}.",
+    "long_name": "Nombre de jours où la chute de neige se trouve entre une borne de {low} et {high}",
+    "description": "Nombre {freq:m} de jours où la chute de neige est plus grande que {low} et plus petite ou égale à {high}.",
     "title": "Jours avec neige",
     "abstract": "Nombre de jours où la neige est entre une borne inférieure et supérieure."
   },
@@ -1034,7 +1118,7 @@
   },
   "FREEZETHAW_SPELL_MEAN_LENGTH": {
     "long_name": "Durée moyenne des périodes où les températures maximales quotidiennes sont au-dessus de {thresh_tasmax} et les températures minimales quotidiennes sont égales ou en dessous de {thresh_tasmin} pendant au moins {window} jour(s) consécutif(s)",
-    "description": "Durée moyenne {freq:f} des spériodes des événements consécutifs de gel-dégel (températures maximales au-dessus de {thresh_tasmax} et températures minimales en dessous ou égales à {thresh_tasmin} pour au moins {window} jour(s) consécutif(s)).",
+    "description": "Durée moyenne {freq:f} des périodes des événements consécutifs de gel-dégel (températures maximales au-dessus de {thresh_tasmax} et températures minimales en dessous ou égales à {thresh_tasmin} pour au moins {window} jour(s) consécutif(s)).",
     "title": "Durée moyenne des périodes des événements consécutifs de gel-dégel",
     "abstract": "Durée moyenne des périodes des événements consécutifs de gel-dégel. Une période de gel-dégel est définie comme un nombre de jours consécutifs où les températures maximales quotidiennes sont au-dessus d'un seuil donné et les températures minimales quotidiennes sont en dessous ou égales à un seuil donné, généralement 0°C pour les deux."
   },
@@ -1080,11 +1164,35 @@
     "title": "Fréquence des périodes sèches",
     "abstract": "Fréquence des périodes sèches d'une durée minimale donnée, pendant lesquelles les précipitations accumulées ou maximales sur une fenêtre de jours donnée sont inférieures à un seuil donné."
   },
+  "DRY_SPELL_MAX_LENGTH": {
+    "long_name": "Durée maximale en jours des périodes sèches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}",
+    "description": "Durée maximale {freq:f} en jours des périodes sèches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}.",
+    "title": "Durée maximale en jours des périodes sèches",
+    "abstract": "Durée maximale en jours des périodes sèches d'une durée minimale donnée, pendant lesquelles les précipitations accumulées ou maximales sur une fenêtre de jours donné sont inférieures à un seuil donné."
+  },
   "DRY_SPELL_TOTAL_LENGTH": {
     "long_name": "Durée totale en jours des périodes sèches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}",
     "description": "Durée totale {freq:f} en jours des périodes sèches de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont inférieures à {thresh}.",
     "title": "Durée totale en jours des périodes sèches",
     "abstract": "Durée totale en jours des périodes sèches d'une durée minimale donnée, pendant lesquelles les précipitations accumulées ou maximales sur une fenêtre de jours donné sont inférieures à un seuil donné."
+  },
+  "WET_SPELL_FREQUENCY": {
+    "long_name": "Fréquence des périodes mouillées de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont supérieures ou égales à {thresh}",
+    "description": "Fréquence {freq:f} des périodes mouillées de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont supérieures ou égales à {thresh}.",
+    "title": "Fréquence des périodes mouillées",
+    "abstract": "Fréquence des périodes mouillées d'une durée minimale donnée, pendant lesquelles les précipitations accumulées ou maximales sur une fenêtre de jours donnée sont inférieures à un seuil donné."
+  },
+  "WET_SPELL_MAX_LENGTH": {
+    "long_name": "Durée maximale en jours des périodes mouillées de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont supérieures ou égales à {thresh}",
+    "description": "Durée maximale {freq:f} en jours des périodes mouillées de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont supérieures ou égales à {thresh}.",
+    "title": "Durée maximale en jours des périodes mouillées",
+    "abstract": "Durée maximale en jours des périodes mouillées d'une durée minimale donnée, pendant lesquelles les précipitations accumulées ou maximales sur une fenêtre de jours donné sont inférieures à un seuil donné."
+  },
+  "WET_SPELL_TOTAL_LENGTH": {
+    "long_name": "Durée totale en jours des périodes mouillées de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont supérieures ou égales à {thresh}",
+    "description": "Durée totale {freq:f} en jours des périodes mouillées de {window} jours et plus, pendant lesquelles les précipitations {op:fpl} sur une fenêtre de {window} jours sont supérieures ou égales à {thresh}.",
+    "title": "Durée totale en jours des périodes mouillées",
+    "abstract": "Durée totale en jours des périodes mouillées d'une durée minimale donnée, pendant lesquelles les précipitations accumulées ou maximales sur une fenêtre de jours donné sont inférieures à un seuil donné."
   },
   "COLD_AND_DRY_DAYS": {
     "long_name": "Nombre de jours où la température est en dessous du {tas_per_thresh}e centile et la précipitation en dessous du {pr_per_thresh}e centile",

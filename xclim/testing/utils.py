@@ -50,7 +50,7 @@ _xclim_deps = [
 
 _default_cache_dir = Path.home() / ".xclim_testing_data"
 
-LOGGER = logging.getLogger("xclim")
+logger = logging.getLogger("xclim")
 
 __all__ = [
     "_default_cache_dir",
@@ -196,7 +196,7 @@ def _get(
         local_md5 = file_md5_checksum(local_file)
         try:
             url = "/".join((github_url, "raw", branch, md5_name.as_posix()))
-            LOGGER.info(f"Attempting to fetch remote file md5: {md5_name.as_posix()}")
+            logger.info(f"Attempting to fetch remote file md5: {md5_name.as_posix()}")
             urlretrieve(url, md5_file)  # nosec
             with open(md5_file) as f:
                 remote_md5 = f.read()
@@ -217,11 +217,11 @@ def _get(
         local_file.parent.mkdir(parents=True, exist_ok=True)
 
         url = "/".join((github_url, "raw", branch, fullname.as_posix()))
-        LOGGER.info(f"Fetching remote file: {fullname.as_posix()}")
+        logger.info(f"Fetching remote file: {fullname.as_posix()}")
         urlretrieve(url, local_file)  # nosec
         try:
             url = "/".join((github_url, "raw", branch, md5_name.as_posix()))
-            LOGGER.info(f"Fetching remote file md5: {md5_name.as_posix()}")
+            logger.info(f"Fetching remote file md5: {md5_name.as_posix()}")
             urlretrieve(url, md5_file)  # nosec
         except HTTPError as e:
             msg = f"{md5_name.as_posix()} not found. Aborting file retrieval."
@@ -240,7 +240,7 @@ def _get(
                 )
                 raise OSError(msg)
         except OSError as e:
-            LOGGER.error(e)
+            logger.error(e)
 
     return local_file
 
@@ -306,7 +306,7 @@ def open_dataset(
             return ds
         except OSError as err:
             msg = "OPeNDAP file not read. Verify that the service is available."
-            LOGGER.error(msg)
+            logger.error(msg)
             raise OSError(msg) from err
 
     local_file = _get(

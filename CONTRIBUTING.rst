@@ -62,6 +62,7 @@ General notes for implementing new bias-adjustment methods:
 * If the algorithm gets complicated and would generate many dask tasks, it should be implemented as functions wrapped
   by :py:func:`~xclim.sdba.map_blocks` or :py:func:`~xclim.sdba.map_groups` in ``xclim/sdba/_adjustment.py``.
 * xclim doesn't implement monolithic multi-parameter methods, but rather smaller modular functions to construct post-processing workflows.
+* If you are working on numba-accelerated function that use ``@guvectorize``, consider disabling caching during the development phase and reactivating it once all changes are ready for review. This is done by commenting ``cache=True`` in the decorator.
 
 Report Bugs
 ~~~~~~~~~~~
@@ -207,7 +208,7 @@ Before you submit a pull request, please follow these guidelines:
     If you aren't accustomed to writing documentation in reStructuredText (`.rst`), we encourage you to spend a few minutes going over the
     incredibly well-summarized `reStructuredText Primer`_ from the sphinx-doc maintainer community.
 
-5. The pull request should work for Python 3.8, 3.9, and 3.10 as well as raise test coverage.
+5. The pull request should work for Python 3.8, 3.9, 3.10, and 3.11 as well as raise test coverage.
    Pull requests are also checked for documentation build status and for `PEP8`_ compliance.
 
    The build statuses and build errors for pull requests can be found at: https://github.com/Ouranosinc/xclim/actions

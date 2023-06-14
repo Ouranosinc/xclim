@@ -25,6 +25,7 @@ __all__ = [
     "drought_code",
     "dry_days",
     "dry_spell_frequency",
+    "dry_spell_max_length",
     "dry_spell_total_length",
     "dryness_index",
     "first_snowfall",
@@ -35,6 +36,7 @@ __all__ = [
     "keetch_byram_drought_index",
     "last_snowfall",
     "liquid_precip_accumulation",
+    "liquid_precip_average",
     "liquid_precip_ratio",
     "max_1day_precipitation_amount",
     "max_n_day_precipitation_amount",
@@ -43,14 +45,21 @@ __all__ = [
     "maximum_consecutive_wet_days",
     "mcarthur_forest_fire_danger_index",
     "precip_accumulation",
+    "precip_average",
     "rain_on_frozen_ground_days",
     "rprctot",
+    "snowfall_frequency",
+    "snowfall_intensity",
     "solid_precip_accumulation",
+    "solid_precip_average",
     "standardized_precipitation_evapotranspiration_index",
     "standardized_precipitation_index",
     "warm_and_dry_days",
     "warm_and_wet_days",
     "wet_precip_accumulation",
+    "wet_spell_frequency",
+    "wet_spell_max_length",
+    "wet_spell_total_length",
     "wetdays",
     "wetdays_prop",
 ]
@@ -257,6 +266,21 @@ precip_accumulation = PrecipWithIndexing(
     parameters=dict(tas=None, phase=None),
 )
 
+precip_average = PrecipWithIndexing(
+    title="Averaged precipitation (solid and liquid)",
+    identifier="prcpavg",
+    units="mm",
+    standard_name="lwe_average_of_precipitation_amount",
+    long_name="Averaged precipitation",
+    description="{freq} mean precipitation.",
+    abstract="Averaged precipitation. If the average daily temperature is given, the phase parameter can be "
+    "used to restrict the calculation to precipitation of only one phase (liquid or solid). Precipitation is "
+    "considered solid if the average daily temperature is below 0°C threshold (and vice versa).",
+    cell_methods="time: mean over days",
+    compute=indices.precip_average,
+    parameters=dict(tas=None, phase=None),
+)
+
 wet_precip_accumulation = PrecipWithIndexing(
     title="Total accumulated precipitation (solid and liquid) during wet days",
     identifier="wet_prcptot",
@@ -271,7 +295,6 @@ wet_precip_accumulation = PrecipWithIndexing(
     parameters={"thresh": {"default": "1 mm/day"}},
 )
 
-
 liquid_precip_accumulation = PrTasxWithIndexing(
     title="Total accumulated liquid precipitation.",
     identifier="liquidprcptot",
@@ -280,9 +303,23 @@ liquid_precip_accumulation = PrTasxWithIndexing(
     long_name="Total accumulated precipitation when temperature is above {thresh}",
     description="{freq} total {phase} precipitation, estimated as precipitation when temperature is above {thresh}.",
     abstract="Total accumulated liquid precipitation. "
-    "Precipitation is considered liquid when the average daily temperature is above 0°C.",
+    "Precipitation is considered liquid when the average daily temperature is above a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.precip_accumulation,
+    parameters={"tas": {"kind": InputKind.VARIABLE}, "phase": "liquid"},
+)
+
+liquid_precip_average = PrTasxWithIndexing(
+    title="Averaged liquid precipitation.",
+    identifier="liquidprcpavg",
+    units="mm",
+    standard_name="lwe_average_of_liquid_precipitation_amount",
+    long_name="Averaged precipitation when temperature is above {thresh}",
+    description="{freq} mean {phase} precipitation, estimated as precipitation when temperature is above {thresh}.",
+    abstract="Averaged liquid precipitation. "
+    "Precipitation is considered liquid when the average daily temperature is above a given threshold.",
+    cell_methods="time: mean over days",
+    compute=indices.precip_average,
     parameters={"tas": {"kind": InputKind.VARIABLE}, "phase": "liquid"},
 )
 
@@ -294,9 +331,23 @@ solid_precip_accumulation = PrTasxWithIndexing(
     long_name="Total accumulated solid precipitation",
     description="{freq} total solid precipitation, estimated as precipitation when temperature at or below {thresh}.",
     abstract="Total accumulated solid precipitation. "
-    "Precipitation is considered solid when the average daily temperature is at or below 0°C.",
+    "Precipitation is considered solid when the average daily temperature is at or below a given threshold.",
     cell_methods="time: sum over days",
     compute=indices.precip_accumulation,
+    parameters={"tas": {"kind": InputKind.VARIABLE}, "phase": "solid"},
+)
+
+solid_precip_average = PrTasxWithIndexing(
+    title="Averaged solid precipitation.",
+    identifier="solidprcpavg",
+    units="mm",
+    standard_name="lwe_average_of_snowfall_amount",
+    long_name="Averaged solid precipitation",
+    description="{freq} mean solid precipitation, estimated as precipitation when temperature at or below {thresh}.",
+    abstract="Averaged solid precipitation. "
+    "Precipitation is considered solid when the average daily temperature is at or below a given threshold.",
+    cell_methods="time: mean over days",
+    compute=indices.precip_average,
     parameters={"tas": {"kind": InputKind.VARIABLE}, "phase": "solid"},
 )
 
@@ -412,23 +463,25 @@ mcarthur_forest_fire_danger_index = FireWeather(
 
 
 last_snowfall = PrecipWithIndexing(
-    title="Last day where solid precipitation flux exceeded a given threshold",
+    title="Last day where snowfall exceeded a given threshold",
     identifier="last_snowfall",
     standard_name="day_of_year",
-    long_name="Date of last day where the solid precipitation flux exceeded {thresh}",
-    description="{freq} last day where the solid precipitation flux exceeded {thresh}.",
-    abstract="The last day where the solid precipitation flux exceeded a given threshold during a time period.",
+    long_name="Date of last day where snowfall exceeded {thresh}",
+    description="{freq} last day where snowfall exceeded {thresh}.",
+    abstract="The last day where snowfall exceeded a given threshold during a time period (the threshold can be "
+    "given as a snowfall flux or a liquid water equivalent snowfall rate).",
     units="",
     compute=indices.last_snowfall,
 )
 
 first_snowfall = PrecipWithIndexing(
-    title="First day where solid precipitation flux exceeded a given threshold",
+    title="First day where snowfall exceeded a given threshold",
     identifier="first_snowfall",
     standard_name="day_of_year",
-    long_name="Date of first day where the solid precipitation flux exceeded {thresh}",
-    description="{freq} first day where the solid precipitation flux exceeded {thresh}.",
-    abstract="The first day where the solid precipitation flux exceeded a given threshold during a time period.",
+    long_name="Date of first day where snowfall exceeded {thresh}",
+    description="{freq} first day where snowfall exceeded {thresh}.",
+    abstract="The first day where snowfall exceeded a given threshold during a time period (the threshold can be "
+    "given as a snowfall flux or a liquid water equivalent snowfall rate).",
     units="",
     compute=indices.first_snowfall,
 )
@@ -436,11 +489,33 @@ first_snowfall = PrecipWithIndexing(
 days_with_snow = PrecipWithIndexing(
     title="Days with snowfall",
     identifier="days_with_snow",
-    long_name="Number of days with solid precipitation flux between {low} and {high} thresholds",
-    description="{freq} number of days with solid precipitation flux larger than {low} and smaller or equal to {high}.",
+    long_name="Number of days with snowfall between {low} and {high} thresholds",
+    description="{freq} number of days with snowfall larger than {low} and smaller or equal to {high}.",
     abstract="Number of days with snow between a lower and upper limit.",
     units="days",
     compute=indices.days_with_snow,
+)
+
+snowfall_frequency = PrecipWithIndexing(
+    title="Snowfall frequency",
+    identifier="snowfall_frequency",
+    long_name="Percentage of days with snowfall above {thresh} threshold",
+    description="{freq} percentage of days with snowfall larger than {thresh}.",
+    abstract="Percentage of days with snowfall above a given threshold (either a "
+    "snowfall flux or a liquid water equivalent snowfall rate).",
+    units="%",
+    compute=indices.snowfall_frequency,
+)
+
+snowfall_intensity = PrecipWithIndexing(
+    title="Snowfall intensity",
+    identifier="snowfall_intensity",
+    long_name="Mean daily snowfall above {thresh} threshold",
+    description="{freq} mean daily snowfall larger than {thresh}.",
+    abstract="Mean daily liquid water equivalent snowfall rate above threshold (either a "
+    "snowfall flux or a liquid water equivalent snowfall rate)",
+    units="mm/day",
+    compute=indices.snowfall_intensity,
 )
 
 # FIXME: Are days_over_precip_thresh and days_over_precip_doy_thresh the same thing?
@@ -551,6 +626,63 @@ dry_spell_total_length = Precip(
     units="days",
     cell_methods="",
     compute=indices.dry_spell_total_length,
+)
+
+dry_spell_max_length = Precip(
+    title="Dry spell maximum length",
+    identifier="dry_spell_max_length",
+    long_name="Maximum consecutive number of days in a dry period of {window} day(s) or more, during which the {op} "
+    "precipitation within windows of {window} day(s) is under {thresh}.",
+    description="The maximum {freq} number of consecutive days in a dry period of {window} day(s) or more"
+    ", during which the {op} precipitation within windows of {window} day(s) is under {thresh}.",
+    abstract="The maximum length of a dry period of `N` days or more, during which the accumulated or maximum "
+    "precipitation over a given time window of days is below a given threshold.",
+    units="days",
+    cell_methods="",
+    compute=indices.dry_spell_max_length,
+)
+
+wet_spell_frequency = Precip(
+    title="Wet spell frequency",
+    identifier="wet_spell_frequency",
+    long_name="Number of wet periods of {window} day(s) or more, during which the {op} precipitation on a "
+    "window of {window} day(s) is equal or over {thresh}.",
+    description="The {freq} number of wet periods of {window} day(s) or more, during which the {op} precipitation on a "
+    "window of {window} day(s) is equal or over {thresh}.",
+    abstract="The frequency of wet periods of `N` days or more, during which the accumulated or maximum precipitation "
+    "over a given time window of days is equal or above a given threshold.",
+    units="",
+    cell_methods="",
+    compute=indices.wet_spell_frequency,
+)
+
+
+wet_spell_total_length = Precip(
+    title="Wet spell total length",
+    identifier="wet_spell_total_length",
+    long_name="Number of days in wet periods of {window} day(s) or more, during which the {op} "
+    "precipitation within windows of {window} day(s) is equal or over {thresh}.",
+    description="The {freq} number of days in wet periods of {window} day(s) or more, during which the {op} "
+    "precipitation within windows of {window} day(s) is equal or over {thresh}.",
+    abstract="The total length of dry periods of `N` days or more, during which the accumulated or maximum "
+    "precipitation over a given time window of days is equal or above a given threshold.",
+    units="days",
+    cell_methods="",
+    compute=indices.wet_spell_total_length,
+)
+
+wet_spell_max_length = Precip(
+    title="Wet spell maximum length",
+    identifier="wet_spell_max_length",
+    long_name="Maximum consecutive number of days in a wet period of {window} day(s) or more, during which the {op} "
+    "precipitation within windows of {window} day(s) is equal or over {thresh}.",
+    description="The maximum {freq} number of consecutive days in a wet period of {window} day(s) or more"
+    ", during which the {op} precipitation within windows of {window} day(s) is equal or over {thresh}.",
+    abstract="The maximum length of a wet period of `N` days or more, during which the accumulated or maximum "
+    "precipitation over a given time window of days is equal or above a given threshold.",
+    units="days",
+    cell_methods="",
+    compute=indices.wet_spell_max_length,
 )
 
 rprctot = PrecipWithIndexing(
