@@ -3507,4 +3507,3 @@ class TestSnowfallIntensity:
         prsn = convert_units_to(prsn, "kg m-2 s-1", context="hydro")
         out = xci.snowfall_intensity(prsn)
         np.testing.assert_allclose(out, [3])
-
