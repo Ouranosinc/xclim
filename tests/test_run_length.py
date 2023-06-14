@@ -142,6 +142,9 @@ def test_rle_events_reproduces_rle(use_dask, index):
     # But:
     # - `rle_events` gives either length or NaN.
     # - `rle` gives either length, NaN, _or_ 0
+    # for comparison purposes, let's fill all NaNs with 0
+    out = out.fillna(0)
+    expected = expected.fillna(0)
     np.testing.assert_array_equal(out, expected)
 
 
