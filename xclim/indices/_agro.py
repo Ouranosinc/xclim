@@ -1008,7 +1008,7 @@ def rain_season(
 
         # First and second condition combined in a run length
         run_positions = (
-            rl.rle_events(da_start, 1, da_stop, window_dry, "first")
+            rl.rle_events(da_start, 1, da_stop, window_dry)
             >= window_not_dry_start + window_wet_start
         )
 
@@ -1018,7 +1018,7 @@ def rain_season(
     def _get_first_run_end(pram):
         if method_dry_end == "per_day":
             da_stop = pram <= thresh_dry_end
-            run_positions = rl.rle(da_stop, index="first") >= window_dry_end
+            run_positions = rl.rle(da_stop) >= window_dry_end
         elif method_dry_end == "total":
             run_positions = (
                 pram.rolling({"time": window_dry_end}).sum() <= thresh_dry_end

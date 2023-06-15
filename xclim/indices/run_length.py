@@ -707,25 +707,25 @@ def keep_longest_run(
     return da.copy(data=out.transpose(*da.dims).data)
 
 
-def find_event_runs(
+def extract_events(
     da_start: xr.DataArray,
     window_start: int,
     da_stop: xr.DataArray,
     window_stop: int,
     dim: str = "time",
 ) -> xr.DataArray:
-    """Find runs whose starting and stopping points are defined through run length conditions.
+    """Extract events, i.e. runs whose starting and stopping points are defined through run length conditions.
 
     Parameters
     ----------
     da_start : xr.DataArray
         Input array where run sequences are searched to define the start points in the main runs
     window_start: int,
-        Number of events needed to start a run in `da_start`
+        Number of True (1) values needed to start a run in `da_start`
     da_stop : xr.DataArray
         Input array where run sequences are searched to define the stop points in the main runs
     window_stop: int,
-        Number of events needed to start a run in `da_stop`
+        Number of True (1) values needed to start a run in `da_stop`
     dim : str
         Dimension name.
 
@@ -736,9 +736,8 @@ def find_event_runs(
 
     Notes
     -----
-    Subcases:
-    * Original run length function `rle`: `window_start == 1`,  `window_stop == 1`, `da_stop == 1 - da_start`
-    * Similar to `season` function: `window_stop == window_start` and `da_stop == 1 - da_start`
+    A season (as defined in ``season``) could be considered as an event with  `window_stop == window_start` and `da_stop == 1 - da_start`,
+    although it has more constraints on when to start and stop a run through the `date` argument.
     """
     da_start = da_start.astype(int).fillna(0)
     da_stop = da_stop.astype(int).fillna(0)
@@ -759,26 +758,26 @@ def rle_events(
     window_start: int,
     da_stop: xr.DataArray,
     window_stop: int,
-    index: str = "first",
     dim: str = "time",
+    index: str = "first",
 ) -> xr.DataArray:
-    """Run length of event runs (runs built with multiple conditions).
+    """Run length of events (i.e. runs built with multiple conditions).
 
     Parameters
     ----------
     da_start : xr.DataArray
         Input array where run sequences are searched to define the start points in the main runs
     window_start: int,
-        Number of events needed to start a run in `da_start`
+        Number of True (1) values needed to start a run in `da_start`
     da_stop : xr.DataArray
         Input array where run sequences are searched to define the stop points in the main runs
     window_stop: int,
-        Number of events needed to start a run in `da_stop`
+        Number of True (1) values needed to start a run in `da_stop`
+    dim : str
+        Dimension name.
     index : {'first', 'last'}
         If 'first' (default), the run length is indexed with the first element in the run.
         If 'last', with the last element in the run.
-    dim : str
-        Dimension name.
 
     Returns
     -------
@@ -791,8 +790,8 @@ def rle_events(
     * Original run length function `rle`: `window_start == 1`,  `window_stop == 1`, `da_stop == 1 - da_start`
     * Similar to `season` function: `window_stop == window_start` and `da_stop == 1 - da_start`
     """
-    runs = find_event_runs(da_start, window_start, da_stop, window_stop)
-    return rle(runs, index=index)
+    events = extract_events(da_start, window_start, da_stop, window_stop)
+    return rle(events, index=index)
 
 
 def season(
