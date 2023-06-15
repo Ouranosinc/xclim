@@ -27,7 +27,7 @@ New features and enhancements
 * New function (``prsn_to_prsnd``) to convert snowfall flux ([mass]/[area]/[time]) to snowfall rate ([length]/[time]) using snow density ([mass]/[volume]). (:issue:`1352`, :pull:`1358`)
 * New variables: Snowfall rate ``prsnd`` and surface maximum wind speed ``sfcWindmax``. (:issue:`1352`, :pull:`1358`).
 * Docstring for `freq` links to pandas offset aliases documentation. (:issue:`1310`, :pull:`1392`).
-* New function ``xclim.indces.run_length.extract_events` for determining runs whose starting and stopping points are defined through run length conditions. (:pull:`1256`).
+* New function ``xclim.indces.run_length.extract_events`` for determining runs whose starting and stopping points are defined through run length conditions. (:pull:`1256`).
 
 Bug fixes
 ^^^^^^^^^
