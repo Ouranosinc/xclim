@@ -1007,10 +1007,8 @@ def rain_season(
             window_dry = 1
 
         # First and second condition combined in a run length
-        run_positions = (
-            rl.rle_events(da_start, 1, da_stop, window_dry)
-            >= window_not_dry_start + window_wet_start
-        )
+        events = rl.extract_events(da_start, 1, da_stop, window_dry)
+        run_positions = rl.rle(events) >= (window_not_dry_start + window_wet_start)
 
         return _get_first_run(run_positions, date_min_start, date_max_start)
 
