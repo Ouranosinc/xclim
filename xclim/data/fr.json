@@ -1248,16 +1248,33 @@
     "title": "Température radiative moyenne",
     "abstract": "La température moyenne des rayonnements solaires et thermiques incidents sur un corps à l'extérieur."
   },
+  "RAIN_SEASON": {
+    "description": "Début, fin et longueur de la saison des pluies. La saison commence avec une abondance de pluie, suivie d'une période suffisamment humide, et finit par une période sèche.",
+    "title": "Saison des pluies",
+    "abstract": "La saison des pluies commence lorsque deux conditions sont réunies : 1) Il doit y avoir un certain nombre de jours humides avec précipitations supérieures ou égales à un seuil donné ; 2) Il doit y avoir une autre séquence suivante, où, pendant une période de temps donnée, il n'y a pas de séquence sèche (c'est-à-dire un certain nombre de jours où les précipitations sont inférieures ou égales à un certain seuil). La saison des pluies se termine lorsqu'il y a une séquence sèche"
+  },
+  "RAIN_SEASON.rain_season_start": {
+    "long_name": "Début de la saison des pluies",
+    "description": "La saison débute sous deux conditions: i) une séquence de jours {window_wet_start} accumulant {thresh_wet_start} de précipitations ii) suivie d'une séquence de jours {window_not_dry_start} sans séquence sèche, c'est-à-dire une séquence de jours {window_dry_start} avec au moins {thresh_dry_start} {method_dry_start}. Le début de la saison correspond au dernier jour de la séquence i) et doit  être compris entre le {date_min_start} et le {date_max_start}. "
+  },
+  "RAIN_SEASON.rain_season_end": {
+    "long_name": "Fin de la saison des pluies",
+    "description": "Dernier jour d'une séquence sèche après le début de la saison, c'est-à-dire une séquence de {window_dry_end} jours avec au moins {thresh_dry_end} {method_dry_end}. La fin de la saison doit être comprise entre le {date_min_end} et le {date_max_end}."
+  },
+  "RAIN_SEASON.rain_season_length": {
+    "long_name": "Longueur de la saison des pluies",
+    "description": "Nombre de pas temporels entre le début et la fin de la saison des pluies."
+  },
   "KBDI": {
     "long_name": "Indice de sécheresse de Keetch-Byran",
     "description": "Quantité d'eau nécessaire pour que le contenu en eau du sol atteigne sa capacité au champ.",
-    "title": "Indice de sécheresse de Keetch-Byran (KBDI) pour le déficit en humidité du sol.",
+    "title": "Indice de sécheresse de Keetch-Byran (KBDI) pour le déficit en humidité du sol",
     "abstract": "Le KDBI indique la quantité d'eau nécessaire pour que le contenu en eau du sol atteigne sa capacité au champ. Il est utile au calul du FFDI."
   },
   "DF": {
     "long_name": "Facteur de sécheresse de Griffiths",
     "description": "Évaluation numérique de la disponibilité de combustible dans la litière profonde.",
-    "title": "Facteur de sécheresse de Griffiths basé sur le deficit en humidité du sol.",
+    "title": "Facteur de sécheresse de Griffiths basé sur le deficit en humidité du sol",
     "abstract": "Le facteur de sécheresse est un indicateur numérique de la disponibilité du combustible à feu de forêt dans les couches profondes du sol. Il est utile au calcul de l'indice de danger de feu de forêt McArthur."
   },
   "FFDI": {
