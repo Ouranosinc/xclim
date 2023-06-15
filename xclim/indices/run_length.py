@@ -792,9 +792,7 @@ def rle_events(
     * Similar to `season` function: `window_stop == window_start` and `da_stop == 1 - da_start`
     """
     runs = find_event_runs(da_start, window_start, da_stop, window_stop)
-    run_lengths = rle(runs, index=index)
-
-    return run_lengths.where(run_lengths > 0)
+    return rle(runs, index=index)
 
 
 def season(

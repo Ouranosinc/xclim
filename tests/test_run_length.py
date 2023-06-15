@@ -138,13 +138,6 @@ def test_rle_events_reproduces_rle(use_dask, index):
 
     out = rl.rle_events(da != 0, 1, da == 0, 1, index=index).mean(["a", "b", "c"])
     expected = rl.rle(da, index=index).mean(["a", "b", "c"])
-    # Same output as rle when da_stop is the opposite of da_start and window_start == window_stop = 1
-    # But:
-    # - `rle_events` gives either length or NaN.
-    # - `rle` gives either length, NaN, _or_ 0
-    # for comparison purposes, let's fill all NaNs with 0
-    out = out.fillna(0)
-    expected = expected.fillna(0)
     np.testing.assert_array_equal(out, expected)
 
 
@@ -155,9 +148,9 @@ def test_rle_events():
     values[0 : len(a)] = a
     da = xr.DataArray(values, coords={"time": time}, dims=("time"))
 
-    out = rl.rle_events(da == 1, 1, da == 0, 3, index="first")
+    out = rl.rle_events(da == 1, 1, da == 0, 3, index="first").fillna(0)
 
-    expected = values * np.NaN
+    expected = values * 0
     expected[1] = 10
     expected[15] = 5
 
