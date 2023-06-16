@@ -1269,8 +1269,8 @@ australian_hardiness_zones = Temp(
     long_name="Australian National Botanic Gardens scale of average annual minimal temperatures over given time period",
     description="A climate indice based on a rolling average of minimal annual temperature of {window} years. "
     "Developed specifically to aid in determining plant suitability of geographic regions. The Australian National "
-    "Botanical Gardens classification scheme divides categories into 5 degree Celsius zones, between -15 degrees "
-    "Celsius and 20 degrees Celsius.",
+    "Botanical Gardens classification scheme divides categories into 5 degree Celsius zones, ranging from below -15 "
+    "degrees Celsius to above 20 degrees Celsius.",
     abstract="A climate indice based on a rolling average of minimal annual temperature of a given number of years. "
     "Developed specifically to aid in determining plant suitability of geographic regions. The Australian National "
     "Botanical Gardens classification scheme divides categories into 5 degree Celsius zones, ranging from below -15 "
@@ -1287,7 +1287,7 @@ usda_hardiness_zones = Temp(
     title="USDA hardiness zones",
     identifier="usda_hardiness_zones",
     units="",
-    long_name="USDA scale of average minimal temperatures over given time period.",
+    long_name="USDA scale of average minimal temperatures over given time period",
     description="A climate indice based on a rolling average of minimal annual temperature of {window} years. "
     "Developed specifically to aid in determining plant suitability of geographic regions. The USDA classification"
     "scheme divides categories into 10 degree Fahrenheit zones, with 5 degree Fahrenheit half-zones, "

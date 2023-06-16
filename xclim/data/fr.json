@@ -553,6 +553,18 @@
     "comment": "Formule originale prise de Jackson, D. I., & Cherry, N. J. (1988)",
     "abstract": "Indice climatique basé sur la température moyenne du mois le plus chaud et un coefficient basé sur la latitude pour tenir compte de la durée plus longue du jour favorisant les conditions de croissance. Développé spécifiquement pour la viticulture. Température moyenne du mois le plus chaud multipliée par la différence de coéffient de facteur latitude moins la latitude."
   },
+  "AUSTRALIAN_HARDINESS_ZONES": {
+    "long_name": "Échelle des températures minimales annuelles moyennes pendant une période donnée (Australian National Botanic Gardens)",
+    "description": "Indice climatique basé sur une moyenne mobile de la température annuelle minimale de {window} années. Développé spécifiquement pour aider à déterminer l'adéquation des plantes aux régions géographiques. Le système de classification des jardins botaniques nationaux australiens divise les catégories en zones de 5 degrés Celsius, allant de moins de -15 degrés Celsius à plus de 20 degrés Celsius.",
+    "title": "Zones de rusticité australiennes",
+    "abstract": "Indice climatique basé sur une moyenne mobile de la température annuelle minimale d'un nombre donné d'années. Développé spécifiquement pour aider à déterminer l'adéquation des plantes aux régions géographiques. Le système de classification des jardins botaniques nationaux australiens divise les catégories en zones de 5 degrés Celsius, allant de moins de -15 degrés Celsius à plus de 20 degrés Celsius."
+  },
+  "USDA_HARDINESS_ZONES": {
+    "long_name": "Échelle de l'USDA des températures minimales moyennes pendant une période donnée",
+    "description": "Indice climatique basé sur une moyenne mobile de la température annuelle minimale de {window} années. Développé spécifiquement pour aider à déterminer l'adéquation des plantes aux régions géographiques. Le système de classification de l'USDA divise les catégories en zones de 10 degrés Fahrenheit, avec des demi-zones de 5 degrés Fahrenheit, allant de moins de -65 degrés Fahrenheit à plus de 65 degrés Fahrenheit.",
+    "title": "Zones de rusticité de l'USDA",
+    "abstract": "Indice climatique basé sur une moyenne mobile de la température annuelle minimale d'un nombre donné d'années. Développé spécifiquement pour aider à déterminer l'adéquation des plantes aux régions géographiques. Le système de classification de l'USDA divise les catégories en zones de 10 degrés Fahrenheit, avec des demi-zones de 5 degrés Fahrenheit, allant de moins de -65 degrés Fahrenheit à plus de 65 degrés Fahrenheit."
+  },
   "HUGLIN_INDEX": {
     "long_name": "Intégrale de la température moyenne quotidienne au-dessus de {thresh} multipliée par le coefficient de longueur du jour du méthode {method} pour les jours compris entre {start_date} et {end_date}",
     "description": "Indice de sommation de chaleur pour l'estimation de l'adéquation agroclimatique, développé spécifiquement pour la viticulture. Calculé avec la formule {méthode} (Somme de ((Tn + Tx)/2 - {thresh}) * k), où le coefficient (`k`) est une longueur de jour basée sur la latitude pour les jours typiquement compris entre {start_date} et {end_date}.",
