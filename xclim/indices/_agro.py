@@ -1425,22 +1425,22 @@ def effective_growing_degree_days(
 def hardiness_zones(
     tasmin: xarray.DataArray,
     window: int = 30,
-    method: str = "US",
+    method: str = "usda",
 ):
     """Hardiness zones.
 
     Hardiness zones are a categorization of the annual extreme temperature minima, averaged over a certain period.
-    The USDA defines 14 zones, each divded in two sub-zones, using steps of 5°F, starting at -65°F.
+    The USDA defines 14 zones, each divided into two sub-zones, using steps of 5°F, starting at -65°F.
     The Australian National Botanic Gardens define 7 zones, using steps of 5°C, starting at -15°C.
 
     Parameters
     ----------
-    tasmin: xr.DataArray
-      Minimum temperature.
-    window: int
-      The length of the averaging window, in years.
-    method : {'US', 'AU'}
-      Whether to return the american (US) or the australian (AU) zones.
+    tasmin : xr.DataArray
+        Minimum temperature.
+    window : int
+        The length of the averaging window, in years.
+    method : {'usda', 'anbg'}
+        Whether to return the American (usda) or the Australian (anbg) zones.
 
     Returns
     -------
@@ -1452,11 +1452,11 @@ def hardiness_zones(
     References
     ----------
     .. [usda] : USDA Plant Hardiness Zone Map, 2012. Agricultural Research Service, U.S. Department of Agriculture. Accessed from https://planthardiness.ars.usda.gov/
-    .. [anbg] : Dawson, I. A. (1991). Plant hardiness zones for Australia. http://www.anbg.gov.au/gardens/research/hort.research/zones.html
+    .. [anbg] : Dawson, I. A. (1991). Plant hardiness zones for Australia. https://www.anbg.gov.au/gardens/research/hort.research/zones.html
     """
     tnmin = tasmin.resample(time="YS").min().rolling(time=window).mean()
 
-    if method == "US":
+    if method.lower() == "usda":
         tnmin = convert_units_to(tnmin, "degF")
         bins = np.append(
             np.insert(np.arange(-65, 66, 5).astype("float"), 0, -np.inf), np.inf
@@ -1465,7 +1465,7 @@ def hardiness_zones(
         def _zones(arr, bs):
             return (np.digitize(arr, bs) - 1) / 2
 
-    elif method == "AU":
+    elif method.lower() == "anbg":
         tnmin = convert_units_to(tnmin, "degC")
         bins = np.arange(-15, 21, 5).astype("float")
 
@@ -1476,7 +1476,11 @@ def hardiness_zones(
             return c
 
     else:
-        raise NotImplementedError(f"Method must be one of US or AU. Got {method}.")
+        raise NotImplementedError(
+            f"Method must be one of `usda` or `anbg`. Got {method}."
+        )
 
     zones = xarray.apply_ufunc(_zones, tnmin, dask="parallelized", kwargs=dict(bs=bins))
-    return zones.assign_attrs(units="")
+
+    zones.attrs["units"] = ""
+    return zones

@@ -3374,12 +3374,12 @@ class TestDrynessIndex:
 @pytest.mark.parametrize(
     "tmin,meth,zone",
     [
-        (-6, "US", 9.0),
-        (19, "US", 13.5),
-        (-47, "US", 1.5),
-        (-6, "AU", 2.5),
-        (19, "AU", 7.5),
-        (-47, "AU", np.NaN),
+        (-6, "usda", 9.0),
+        (19, "usda", 13.5),
+        (-47, "anbg", 1.5),
+        (-6, "anbg", 2.5),
+        (19, "anbg", 7.5),
+        (-47, "anbg", np.NaN),
     ],
 )
 def test_hardiness_zones(tasmin_series, tmin, meth, zone):
@@ -3387,7 +3387,7 @@ def test_hardiness_zones(tasmin_series, tmin, meth, zone):
         np.zeros(10957) + K2C + 20, start="1997-01-01"
     )  # 30 years at 20°C
     tasmin = xr.where(
-        tasmin.time.dt.dayofyear == 1, tmin + K2C, tasmin, keep_attrs=True
+        tasmin.time.dt.dayofyear != 1, tasmin, tmin + K2C, keep_attrs=True
     )
 
     hz = xci.hardiness_zones(tasmin=tasmin, method=meth)
