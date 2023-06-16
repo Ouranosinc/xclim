@@ -3386,9 +3386,7 @@ def test_hardiness_zones(tasmin_series, tmin, meth, zone):
     tasmin = tasmin_series(
         np.zeros(10957) + K2C + 20, start="1997-01-01"
     )  # 30 years at 20°C
-    tasmin = xr.where(
-        tasmin.time.dt.dayofyear != 1, tasmin, tmin + K2C, keep_attrs=True
-    )
+    tasmin = tasmin.where(tasmin.time.dt.dayofyear != 1, tmin + K2C)
 
     hz = xci.hardiness_zones(tasmin=tasmin, method=meth)
     np.testing.assert_array_equal(hz[-1], zone)
