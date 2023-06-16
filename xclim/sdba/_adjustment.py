@@ -91,8 +91,7 @@ def qm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
         dask="parallelized",
         vectorize=True,
         kwargs={"method": interp, "extrap": extrapolation},
-    )
-
+    ).assign_attrs(gr_sim.attrs)
     af = ungroup(af, group, ds.sim.time)
 
     scen = u.apply_correction(ds.sim, af, kind).rename("scen")
@@ -165,9 +164,9 @@ def qdm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
         dask="parallelized",
         vectorize=True,
         kwargs={"method": interp, "extrap": extrapolation},
-    )
-
+    ).assign_attrs(gr_sim.attrs)
     af = ungroup(af, group, ds.sim.time)
+
     scen = u.apply_correction(ds.sim, af, kind)
     return xr.Dataset(dict(scen=scen, sim_q=sim_q))
 
