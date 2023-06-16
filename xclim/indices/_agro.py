@@ -40,7 +40,6 @@ __all__ = [
     "effective_growing_degree_days",
     "hardiness_zones",
     "huglin_index",
-    "huglin_index",
     "latitude_temperature_index",
     "qian_weighted_mean_average",
     "rain_season",
