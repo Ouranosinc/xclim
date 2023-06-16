@@ -1451,8 +1451,8 @@ def hardiness_zones(
 
     References
     ----------
-    .. [usda] : USDA Plant Hardiness Zone Map, 2012. Agricultural Research Service, U.S. Department of Agriculture. Accessed from https://planthardiness.ars.usda.gov/
-    .. [anbg] : Dawson, I. A. (1991). Plant hardiness zones for Australia. https://www.anbg.gov.au/gardens/research/hort.research/zones.html
+    :cite:cts:`usda_2012`
+    :cite:cts:`dawson_plant_1991`
     """
     tnmin = tasmin.resample(time="YS").min().rolling(time=window).mean()
 
