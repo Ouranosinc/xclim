@@ -1440,7 +1440,7 @@ def hardiness_zones(
     window : int
         The length of the averaging window, in years.
     method : {'usda', 'anbg'}
-        Whether to return the American (usda) or the Australian (anbg) zones.
+        Whether to return the American (`usda`) or the Australian (`anbg`) classification zones.
 
     Returns
     -------
@@ -1454,6 +1454,7 @@ def hardiness_zones(
     :cite:cts:`usda_2012`
     :cite:cts:`dawson_plant_1991`
     """
+    # Construct climatology
     tnmin = tasmin.resample(time="YS").min().rolling(time=window).mean()
 
     if method.lower() == "usda":
@@ -1463,14 +1464,17 @@ def hardiness_zones(
         )
 
         def _zones(arr, bs):
-            return (np.digitize(arr, bs) - 1) / 2
+            c = np.digitize(arr, bs).astype(float)
+            c[c == 0] = np.nan
+            c[c == bs.size] = np.nan
+            return (c - 1) / 2
 
     elif method.lower() == "anbg":
         tnmin = convert_units_to(tnmin, "degC")
         bins = np.arange(-15, 21, 5).astype("float")
 
         def _zones(arr, bs):
-            c = np.digitize(arr, bs)
+            c = np.digitize(arr, bs).astype(float)
             c[c == 0] = np.nan
             c[c == bs.size] = np.nan
             return c

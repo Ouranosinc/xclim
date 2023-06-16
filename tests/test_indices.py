@@ -3376,9 +3376,9 @@ class TestDrynessIndex:
     [
         (-6, "usda", 9.0),
         (19, "usda", 13.5),
-        (-47, "anbg", 1.5),
-        (-6, "anbg", 2.5),
-        (19, "anbg", 7.5),
+        (-47, "usda", 1.5),
+        (-6, "anbg", 2),
+        (19, "anbg", 7),
         (-47, "anbg", np.NaN),
     ],
 )
