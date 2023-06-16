@@ -552,10 +552,15 @@ def _gen_parameters_section(parameters: dict, allowed_periods: list[str] = None)
     section = "Parameters\n----------\n"
     for name, param in parameters.items():
         descstr = param.description
-        if param.kind == InputKind.FREQ_STR and allowed_periods is not None:
+        if param.kind == InputKind.FREQ_STR:
             descstr += (
-                f" Restricted to frequencies equivalent to one of {allowed_periods}"
+                " See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset"
+                "-aliases for available options."
             )
+            if allowed_periods is not None:
+                descstr += (
+                    f" Restricted to frequencies equivalent to one of {allowed_periods}"
+                )
         if param.kind == InputKind.VARIABLE:
             defstr = f"Default : `ds.{param.default}`. "
         elif param.kind == InputKind.OPTIONAL_VARIABLE:

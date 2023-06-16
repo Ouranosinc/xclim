@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import os
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -30,10 +30,35 @@ class TestRainOnFrozenGround:
         np.testing.assert_array_equal(out.sel(location="Montréal"), [np.nan, 4, 5, 3])
 
 
+class TestRainSeason:
+    # @pytest.mark.parametrize("chunks", [{"time": 366}, None])
+    def test_3d_data_with_nans(self, open_dataset):
+        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+
+        pr = ds.pr.isel(location=0).copy()
+        pr[{"time": [0, 10, 100]}] = np.nan
+        out = {}
+        out["start"], out["end"], out["length"] = atmos.rain_season(
+            pr,
+            freq="AS-JAN",
+            window_dry_end=5,
+            date_min_start="01-01",
+            date_min_end="01-01",
+        )
+        out_arr = np.array([out[var].values for var in ["start", "end", "length"]])
+        out_exp = np.array(
+            [
+                [np.nan, 12.0, 6.0, 27.0],
+                [np.nan, np.nan, 141.0, np.nan],
+                [np.nan, 354.0, 135.0, 339.0],
+            ]
+        )
+        np.testing.assert_array_equal(out_arr, out_exp)
+
+
 class TestPrecipAccumulation:
-    # TODO: replace by fixture
-    nc_pr = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
-    nc_tasmin = os.path.join("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
+    nc_pr = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_tasmin = Path("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -58,12 +83,11 @@ class TestPrecipAccumulation:
         # check some vector with and without a nan
         x1 = prMM[:31, 0, 0].values
 
-        prTot = x1.sum()
+        pr_tot = x1.sum()
 
-        np.testing.assert_almost_equal(prTot, out1.values[0, 0, 0], 4)
+        np.testing.assert_almost_equal(pr_tot, out1.values[0, 0, 0], 4)
 
         assert np.isnan(out1.values[0, 1, 0])
-
         assert np.isnan(out1.values[0, -1, -1])
 
     def test_with_different_phases(self, open_dataset):
@@ -92,8 +116,69 @@ class TestPrecipAccumulation:
         np.testing.assert_array_almost_equal(out_liq + out_sol, out_tot, 4)
 
 
+class TestPrecipAverage:
+    nc_pr = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_tasmin = Path("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
+
+    def test_3d_data_with_nans(self, open_dataset):
+        # test with 3d data
+        pr = open_dataset(self.nc_pr).pr  # mm/s
+        prMM = open_dataset(self.nc_pr).pr
+        prMM *= 86400
+        prMM.attrs["units"] = "mm/day"
+        # put a nan somewhere
+        prMM.values[10, 1, 0] = np.nan
+        pr.values[10, 1, 0] = np.nan
+
+        out1 = atmos.precip_average(pr, freq="MS")
+        out2 = atmos.precip_average(prMM, freq="MS")
+
+        # test kg m-2 s-1
+        pr.attrs["units"] = "kg m-2 s-1"
+        out3 = atmos.precip_average(pr, freq="MS")
+
+        np.testing.assert_array_almost_equal(out1, out2, 3)
+        np.testing.assert_array_almost_equal(out1, out3, 5)
+
+        # check some vector with and without a nan
+        x1 = prMM[:31, 0, 0].values
+
+        pr_mean = x1.mean()
+
+        np.testing.assert_almost_equal(pr_mean, out1.values[0, 0, 0], 4)
+
+        assert np.isnan(out1.values[0, 1, 0])
+
+        assert np.isnan(out1.values[0, -1, -1])
+
+    def test_with_different_phases(self, open_dataset):
+        # test with different phases
+        pr = open_dataset(self.nc_pr).pr  # mm/s
+        tasmin = open_dataset(self.nc_tasmin).tasmin  # K
+
+        out_tot = atmos.precip_average(pr, freq="MS")
+        out_sol = atmos.solid_precip_average(pr, tas=tasmin, freq="MS")
+        out_liq = atmos.liquid_precip_average(pr, tas=tasmin, freq="MS")
+
+        np.testing.assert_array_almost_equal(out_liq + out_sol, out_tot, 4)
+
+        assert "solid" in out_sol.description
+        assert "liquid" in out_liq.description
+        assert out_sol.standard_name == "lwe_average_of_snowfall_amount"
+
+        # With a non-default threshold
+        out_sol = atmos.solid_precip_average(
+            pr, tas=tasmin, thresh="40 degF", freq="MS"
+        )
+        out_liq = atmos.liquid_precip_average(
+            pr, tas=tasmin, thresh="40 degF", freq="MS"
+        )
+
+        np.testing.assert_array_almost_equal(out_liq + out_sol, out_tot, 4)
+
+
 class TestStandardizedPrecip:
-    nc_ds = os.path.join("sdba", "CanESM2_1950-2100.nc")
+    nc_ds = Path("sdba", "CanESM2_1950-2100.nc")
 
     @pytest.mark.slow
     def test_3d_data_with_nans(self, open_dataset):
@@ -154,8 +239,7 @@ class TestStandardizedPrecip:
 
 
 class TestWetDays:
-    # TODO: replace by fixture
-    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_file = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -209,7 +293,7 @@ class TestWetPrcptot:
 class TestDailyIntensity:
     # testing of wet_day and daily_pr_intensity, both are related
 
-    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_file = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -263,7 +347,7 @@ class TestMaxPrIntensity:
 class TestMax1Day:
     # testing of wet_day and daily_pr_intensity, both are related
 
-    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_file = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -289,17 +373,14 @@ class TestMax1Day:
         rx1 = x1.max()
 
         assert np.allclose(rx1, out1.values[0, 0, 0])
-        # assert (np.allclose(di1, dis.values[0, 0, 0]))
         assert np.isnan(out1.values[0, 1, 0])
-        # assert (np.allclose(di2, dis.values[0, 1, 0]))
         assert np.isnan(out1.values[0, -1, -1])
-        # assert (np.isnan(dis.values[0, -1, -1]))
 
 
 class TestMaxNDay:
     # testing of wet_day and daily_pr_intensity, both are related
 
-    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_file = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     @pytest.mark.parametrize(
         "units,factor,chunks",
@@ -334,8 +415,7 @@ class TestMaxNDay:
 
 
 class TestMaxConsecWetDays:
-    # TODO: replace by fixture
-    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_file = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -369,12 +449,10 @@ class TestMaxConsecWetDays:
 
         # make sure that vector with all nans gives nans whatever skipna
         assert np.isnan(out1.values[0, -1, -1])
-        # assert (np.isnan(wds.values[0, -1, -1]))
 
 
 class TestMaxConsecDryDays:
-    # TODO: replace by fixture
-    nc_file = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
+    nc_file = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 
     def test_3d_data_with_nans(self, open_dataset):
         # test with 3d data
@@ -408,7 +486,6 @@ class TestMaxConsecDryDays:
 
         # make sure that vector with all nans gives nans whatever skipna
         assert np.isnan(out1.values[0, -1, -1])
-        # assert (np.isnan(wds.values[0, -1, -1]))
 
 
 class TestSnowfallDate:
@@ -458,7 +535,7 @@ class TestSnowfallDate:
 class TestDaysWithSnow:
     def test_simple(self, open_dataset, prsn_series):
         prsn = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").prsn
-        out = atmos.days_with_snow(prsn, low="0 kg m-2 s-1")
+        out = atmos.days_with_snow(prsn, low="0 kg m-2 s-1", high="1e6 kg m-2 s-1")
         np.testing.assert_array_equal(out[1], [np.nan, 162, 159, 126, np.nan])
 
 
@@ -568,13 +645,22 @@ def test_dry_spell(atmosds):
     total_d_max = atmos.dry_spell_total_length(
         pr, thresh="3 mm", window=7, op="max", freq="YS"
     )
-
+    max_d_sum = atmos.dry_spell_max_length(
+        pr, thresh="3 mm", window=7, op="sum", freq="YS"
+    )
+    max_d_max = atmos.dry_spell_max_length(
+        pr, thresh="3 mm", window=7, op="max", freq="YS"
+    )
     total_d_sum = total_d_sum.sel(location="Halifax", drop=True).isel(time=slice(0, 2))
     total_d_max = total_d_max.sel(location="Halifax", drop=True).isel(time=slice(0, 2))
+    max_d_sum = max_d_sum.sel(location="Halifax", drop=True).isel(time=slice(0, 2))
+    max_d_max = max_d_max.sel(location="Halifax", drop=True).isel(time=slice(0, 2))
 
     np.testing.assert_allclose(events[0:2, 0], [5, 7], rtol=1e-1)
     np.testing.assert_allclose(total_d_sum, [50, 53], rtol=1e-1)
     np.testing.assert_allclose(total_d_max, [68, 97], rtol=1e-1)
+    np.testing.assert_allclose(max_d_sum, [14, 10], rtol=1e-1)
+    np.testing.assert_allclose(max_d_max, [14, 14], rtol=1e-1)
 
     assert (
         "The annual number of dry periods of 7 day(s) or more, "
@@ -588,6 +674,14 @@ def test_dry_spell(atmosds):
         "The annual number of days in dry periods of 7 day(s) or more"
         in total_d_max.description
     )
+    assert (
+        "The maximum annual number of consecutive days in a dry period of 7 day(s) or more"
+        in max_d_sum.description
+    )
+    assert (
+        "The maximum annual number of consecutive days in a dry period of 7 day(s) or more"
+        in max_d_max.description
+    )
 
 
 def test_dry_spell_total_length_indexer(pr_series):
@@ -595,6 +689,25 @@ def test_dry_spell_total_length_indexer(pr_series):
         [np.NaN] + [1] * 4 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d"
     )
     out = atmos.dry_spell_total_length(
+        pr,
+        window=7,
+        op="sum",
+        thresh="3 mm",
+        freq="MS",
+    )
+    np.testing.assert_allclose(out, [np.NaN] + [0] * 11)
+
+    out = atmos.dry_spell_total_length(
+        pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31")
+    )
+    np.testing.assert_allclose(out, [9] + [0] * 11)
+
+
+def test_dry_spell_max_length_indexer(pr_series):
+    pr = pr_series(
+        [np.NaN] + [1] * 4 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d"
+    )
+    out = atmos.dry_spell_max_length(
         pr,
         window=7,
         op="sum",
@@ -632,3 +745,63 @@ def test_dry_spell_frequency_op(open_dataset):
         "The monthly number of dry periods of 7 day(s) or more, "
         "during which the maximal precipitation on a window of 7 day(s) is below 3 mm."
     ) in test_max.description
+
+
+class TestSnowfallMeteoSwiss:
+    tasmin_file = "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc"
+    pr_file = "NRCANdaily/nrcan_canada_daily_pr_1990.nc"
+
+    @classmethod
+    def get_snowfall(cls, open_dataset):
+        dnr = xr.merge((open_dataset(cls.pr_file), open_dataset(cls.tasmin_file)))
+        return atmos.snowfall_approximation(
+            dnr.pr, tas=dnr.tasmin, thresh="-0.5 degC", method="binary"
+        )
+
+    def test_snowfall_frequency(self, open_dataset):
+        prsn = self.get_snowfall(open_dataset)
+        with set_options(check_missing="skip"):
+            sf = atmos.snowfall_frequency(prsn=prsn, thresh="1 mm/day")
+        expected = np.array(
+            [
+                [
+                    [27.624, 29.834, 25.414],
+                    [22.652, 25.414, 22.652],
+                    [12.155, 0.0, 0.0],
+                ],
+                [
+                    [23.913, 23.370, 20.652],
+                    [17.391, 15.761, 13.043],
+                    [4.891, 0.0, 0.0],
+                ],
+            ]
+        )
+        np.testing.assert_allclose(
+            sf[:, [0, 45, 82], [10, 105, 155]],
+            expected,
+            rtol=1e-3,
+        )
+
+    def test_snowfall_intensity(self, open_dataset):
+        prsn = self.get_snowfall(open_dataset)
+        with set_options(check_missing="skip"):
+            si = atmos.snowfall_intensity(prsn=prsn, thresh="1 mm/day")
+        expected = np.array(
+            [
+                [
+                    [3.585, 3.839, 4.446],
+                    [5.148, 5.884, 5.764],
+                    [5.910, 0.0, 0.0],
+                ],
+                [
+                    [5.093, 5.284, 5.539],
+                    [5.946, 6.840, 9.702],
+                    [9.522, 0.0, 0.0],
+                ],
+            ]
+        )
+        np.testing.assert_allclose(
+            si[:, [0, 45, 82], [10, 105, 155]],
+            expected,
+            rtol=1e-3,
+        )
