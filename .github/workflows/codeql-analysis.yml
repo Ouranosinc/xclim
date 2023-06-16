@@ -1,11 +1,11 @@
-name: "CodeQL Scan"
+name: CodeQL Scan
 
 on:
   push:
     branches:
       - master
     paths-ignore:
-      - HISTORY.rst
+      - CHANGES.rst
       - Makefile
       - pyproject.toml
       - requirements_upstream.txt
@@ -23,7 +23,7 @@ on:
 jobs:
   analyze:
     name: Analyze
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     permissions:
       actions: read
       contents: read

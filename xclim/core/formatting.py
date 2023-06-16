@@ -1,6 +1,5 @@
-# noqa: D205,D400
 """
-Formatting utilities for indicators
+Formatting Utilities for Indicators
 ===================================
 """
 from __future__ import annotations
@@ -12,7 +11,7 @@ import string
 from ast import literal_eval
 from fnmatch import fnmatch
 from inspect import _empty, signature  # noqa
-from typing import Any, Mapping, Sequence
+from typing import Any, Sequence
 
 import xarray as xr
 from boltons.funcutils import wraps
@@ -43,14 +42,14 @@ class AttrFormatter(string.Formatter):
 
     def __init__(
         self,
-        mapping: Mapping[str, Sequence[str]],
+        mapping: dict[str, Sequence[str]],
         modifiers: Sequence[str],
     ) -> None:
         """Initialize the formatter.
 
         Parameters
         ----------
-        mapping : Mapping[str, Sequence[str]]
+        mapping : dict[str, Sequence[str]]
             A mapping from values to their possible variations.
         modifiers : Sequence[str]
             The list of modifiers, must be the as long as the longest value of `mapping`.
@@ -63,13 +62,13 @@ class AttrFormatter(string.Formatter):
         self.mapping = mapping
 
     def format(self, format_string: str, /, *args: Any, **kwargs: dict) -> str:
-        """Format a string.
+        r"""Format a string.
 
         Parameters
         ----------
         format_string: str
-        args: Any
-        **kwargs
+        \*args: Any
+        \*\*kwargs
 
         Returns
         -------
@@ -286,32 +285,31 @@ def merge_attributes(
     missing_str: str | None = None,
     **inputs_kws: xr.DataArray | xr.Dataset,
 ):
-    r"""
-    Merge attributes from several DataArrays or Datasets.
+    r"""Merge attributes from several DataArrays or Datasets.
 
     If more than one input is given, its name (if available) is prepended as: "<input name> : <input attribute>".
 
     Parameters
     ----------
     attribute : str
-      The attribute to merge.
+        The attribute to merge.
     inputs_list : xr.DataArray or xr.Dataset
-      The datasets or variables that were used to produce the new object.
-      Inputs given that way will be prefixed by their `name` attribute if available.
+        The datasets or variables that were used to produce the new object.
+        Inputs given that way will be prefixed by their `name` attribute if available.
     new_line : str
-      The character to put between each instance of the attributes. Usually, in CF-conventions,
-      the history attributes uses '\\n' while cell_methods uses ' '.
+        The character to put between each instance of the attributes. Usually, in CF-conventions,
+        the history attributes uses '\\n' while cell_methods uses ' '.
     missing_str : str
-      A string that is printed if an input doesn't have the attribute. Defaults to None, in which
-      case the input is simply skipped.
-    **inputs_kws : xr.DataArray or xr.Dataset
-      Mapping from names to the datasets or variables that were used to produce the new object.
-      Inputs given that way will be prefixes by the passed name.
+        A string that is printed if an input doesn't have the attribute. Defaults to None, in which
+        case the input is simply skipped.
+    \*\*inputs_kws : xr.DataArray or xr.Dataset
+        Mapping from names to the datasets or variables that were used to produce the new object.
+        Inputs given that way will be prefixes by the passed name.
 
     Returns
     -------
     str
-      The new attribute made from the combination of the ones from all the inputs.
+        The new attribute made from the combination of the ones from all the inputs.
     """
     inputs = []
     for in_ds in inputs_list:
@@ -337,7 +335,7 @@ def update_history(
     hist_str: str,
     *inputs_list: Sequence[xr.DataArray | xr.Dataset],
     new_name: str | None = None,
-    **inputs_kws: Mapping[str, xr.DataArray | xr.Dataset],
+    **inputs_kws: dict[str, xr.DataArray | xr.Dataset],
 ):
     """Return a history string with the timestamped message and the combination of the history of all inputs.
 
@@ -352,7 +350,7 @@ def update_history(
     inputs_list : Sequence[Union[xr.DataArray, xr.Dataset]]
       The datasets or variables that were used to produce the new object.
       Inputs given that way will be prefixed by their "name" attribute if available.
-    inputs_kws : Mapping[str, Union[xr.DataArray, xr.Dataset]]
+    inputs_kws : dict[str, Union[xr.DataArray, xr.Dataset]]
       Mapping from names to the datasets or variables that were used to produce the new object.
       Inputs given that way will be prefixes by the passed name.
 
@@ -386,7 +384,6 @@ def update_history(
 
 
 def update_xclim_history(func):
-    # noqa: D401
     """Decorator that auto-generates and fills the history attribute.
 
     The history is generated from the signature of the function and added to the first output.
@@ -542,12 +539,12 @@ KIND_ANNOTATION = {
 }
 
 
-def _gen_parameters_section(parameters: Mapping, allowed_periods: list[str] = None):
+def _gen_parameters_section(parameters: dict, allowed_periods: list[str] = None):
     """Generate the "parameters" section of the indicator docstring.
 
     Parameters
     ----------
-    parameters : mapping
+    parameters : dict
       Parameters dictionary (`Ind.parameters`).
     allowed_periods : List[str], optional
       Restrict parameters to specific periods. Default: None.
@@ -555,10 +552,15 @@ def _gen_parameters_section(parameters: Mapping, allowed_periods: list[str] = No
     section = "Parameters\n----------\n"
     for name, param in parameters.items():
         descstr = param.description
-        if param.kind == InputKind.FREQ_STR and allowed_periods is not None:
+        if param.kind == InputKind.FREQ_STR:
             descstr += (
-                f" Restricted to frequencies equivalent to one of {allowed_periods}"
+                " See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset"
+                "-aliases for available options."
             )
+            if allowed_periods is not None:
+                descstr += (
+                    f" Restricted to frequencies equivalent to one of {allowed_periods}"
+                )
         if param.kind == InputKind.VARIABLE:
             defstr = f"Default : `ds.{param.default}`. "
         elif param.kind == InputKind.OPTIONAL_VARIABLE:
@@ -600,7 +602,7 @@ def _gen_returns_section(cf_attrs: Sequence[dict[str, Any]]):
                     attr = "<Dynamically generated string>"
                 added_section += f" **{key}**: {attr};"
         if added_section:
-            section = f"{section}, with additional attributes:{added_section[:-1]}"
+            section = f"{section}, with additional attributes:{added_section[:-1]}\n"
     return section
 
 

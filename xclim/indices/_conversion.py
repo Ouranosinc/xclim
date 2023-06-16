@@ -1,12 +1,22 @@
 # noqa: D100
 from __future__ import annotations
 
+import warnings
+
 import numpy as np
 import xarray as xr
 from numba import float32, float64, vectorize  # noqa
 
 from xclim.core.calendar import date_range, datetime_to_decimal_year
-from xclim.core.units import amount2rate, convert_units_to, declare_units, units2pint
+from xclim.core.units import (
+    amount2rate,
+    convert_units_to,
+    declare_units,
+    flux2rate,
+    rate2flux,
+    units,
+    units2pint,
+)
 from xclim.core.utils import Quantified
 from xclim.indices.helpers import (
     _gather_lat,
@@ -27,14 +37,16 @@ __all__ = [
     "longwave_upwelling_radiation_from_net_downwelling",
     "mean_radiant_temperature",
     "potential_evapotranspiration",
+    "prsn_to_prsnd",
+    "prsnd_to_prsn",
     "rain_approximation",
     "relative_humidity",
     "saturation_vapor_pressure",
     "sfcwind_2_uas_vas",
     "shortwave_upwelling_radiation_from_net_downwelling",
-    "snow_amount_from_depth",
-    "snow_depth_from_amount",
+    "snd_to_snw",
     "snowfall_approximation",
+    "snw_to_snd",
     "specific_humidity",
     "specific_humidity_from_dewpoint",
     "tas",
@@ -819,7 +831,8 @@ def snowfall_approximation(
             raise ValueError("Non-scalar `thresh` are not allowed with method `brown`.")
 
         # Freezing point + 2C in the native units
-        upper = convert_units_to(convert_units_to(thresh, "degC") + 2, tas)
+        thresh_plus_2 = convert_units_to(thresh, "degC") + 2
+        upper = convert_units_to(f"{thresh_plus_2} degC", tas)
         thresh = convert_units_to(thresh, tas)
 
         # Interpolate fraction over temperature (in units of tas)
@@ -903,61 +916,168 @@ def rain_approximation(
     return prra
 
 
-@declare_units(snw="[mass]/[area]", snr="[mass]/[volume]")
-def snow_depth_from_amount(
-    snw: xr.DataArray,
-    snr: xr.DataArray,
-) -> xr.DataArray:
-    """Snow depth from snow amount and density.
-
-    Parameters
-    ----------
-    snw : xr.DataArray
-        Snow amount [kg/m^2].
-        If snow water equivalent (`swe` [m]) is provided instead, will be converted to `snw` before calculating.
-    snr : xr.DataArray, optional
-        Snow density [kg/m^3].
-
-    Returns
-    -------
-    xr.DataArray, [m]
-        Snow depth.
-    """
-    snw = convert_units_to(snw, "kg m-2")
-    snr = convert_units_to(snr, "kg m-3")
-
-    snd = snw / snr
-
-    snd.attrs["units"] = "m"
-    return snd
-
-
-@declare_units(snd="[length]", snr="[mass]/[volume]")
-def snow_amount_from_depth(
+@declare_units(snd="[length]", snr="[mass]/[volume]", const="[mass]/[volume]")
+def snd_to_snw(
     snd: xr.DataArray,
-    snr: xr.DataArray,
+    snr: Quantified | None = None,
+    const: Quantified = "312 kg m-3",
+    out_units: str = None,
 ) -> xr.DataArray:
     """Snow amount from snow depth and density.
 
     Parameters
     ----------
     snd : xr.DataArray
-        Snow depth [m].
-    snr : xr.DataArray
-        Snow density [kg/m^3].
+        Snow depth.
+    snr : Quantified, optional
+        Snow density.
+    const: Quantified
+        Constant snow density
+        `const` is only used if `snr` is None.
+    out_units: str, optional
+        Desired units of the snow amount output. If `None`, output units simply follow from `snd * snr`.
 
     Returns
     -------
-    xr.DataArray, [kg m-2]
-        Surface snow amount
+    xr.DataArray
+        Snow amount
+
+    Notes
+    -----
+    The estimated mean snow density value of 312 kg m-3 is taken from :cite:t:`sturm_swe_2010`.
+
+    References
+    ----------
+    :cite:cts:`sturm_swe_2010`
     """
-    snd = convert_units_to(snd, "m")
-    snr = convert_units_to(snr, "kg m-3")
-
-    snw = snd * snr
-
-    snw.attrs["units"] = "kg m-2"
+    density = snr if (snr is not None) else const
+    snw = rate2flux(snd, density=density, out_units=out_units).rename("snw")
+    # TODO: Leave this operation to rate2flux? Maybe also the variable renaming above?
+    snw.attrs["standard_name"] = "surface_snow_amount"
     return snw
+
+
+@declare_units(snw="[mass]/[area]", snr="[mass]/[volume]", const="[mass]/[volume]")
+def snw_to_snd(
+    snw: xr.DataArray,
+    snr: Quantified | None = None,
+    const: Quantified = "312 kg m-3",
+    out_units: str | None = None,
+) -> xr.DataArray:
+    """Snow depth from snow amount and density.
+
+    Parameters
+    ----------
+    snw : xr.DataArray
+        Snow amount.
+    snr : Quantified, optional
+        Snow density.
+    const: Quantified
+        Constant snow density
+        `const` is only used if `snr` is None.
+    out_units: str, optional
+        Desired units of the snow depth output. If `None`, output units simply follow from `snw / snr`.
+
+    Returns
+    -------
+    xr.DataArray
+        Snow depth
+
+    Notes
+    -----
+    The estimated mean snow density value of 312 kg m-3 is taken from :cite:t:`sturm_swe_2010`.
+
+    References
+    ----------
+    :cite:cts:`sturm_swe_2010`
+    """
+    density = snr if (snr is not None) else const
+    snd = flux2rate(snw, density=density, out_units=out_units).rename("snd")
+    snd.attrs["standard_name"] = "surface_snow_thickness"
+    return snd
+
+
+@declare_units(
+    prsn="[mass]/[area]/[time]", snr="[mass]/[volume]", const="[mass]/[volume]"
+)
+def prsn_to_prsnd(
+    prsn: xr.DataArray,
+    snr: xr.DataArray | None = None,
+    const: Quantified = "100 kg m-3",
+    out_units: str = None,
+) -> xr.DataArray:
+    """Snowfall rate from snowfall flux and density.
+
+    Parameters
+    ----------
+    prsn : xr.DataArray
+        Snowfall flux.
+    snr : xr.DataArray, optional
+        Snow density.
+    const: Quantified
+        Constant snow density.
+        `const` is only used if `snr` is None.
+    out_units: str, optional
+        Desired units of the snowfall rate. If `None`, output units simply follow from `snd * snr`.
+
+    Returns
+    -------
+    xr.DataArray
+        Snowfall rate.
+
+    Notes
+    -----
+    The estimated mean snow density value of 100 kg m-3 is taken from
+    :cite:cts:`frei_snowfall_2018, cbcl_climate_2020`.
+
+    References
+    ----------
+    :cite:cts:`frei_snowfall_2018, cbcl_climate_2020`
+    """
+    density = snr if snr else const
+    prsnd = flux2rate(prsn, density=density, out_units=out_units).rename("prsnd")
+    return prsnd
+
+
+@declare_units(prsnd="[length]/[time]", snr="[mass]/[volume]", const="[mass]/[volume]")
+def prsnd_to_prsn(
+    prsnd: xr.DataArray,
+    snr: xr.DataArray | None = None,
+    const: Quantified = "100 kg m-3",
+    out_units: str = None,
+) -> xr.DataArray:
+    """Snowfall flux from snowfall rate and density.
+
+    Parameters
+    ----------
+    prsnd : xr.DataArray
+        Snowfall rate.
+    snr : xr.DataArray, optional
+        Snow density.
+    const: Quantified
+        Constant snow density.
+        `const` is only used if `snr` is None.
+    out_units: str, optional
+        Desired units of the snowfall rate. If `None`, output units simply follow from `snd * snr`.
+
+    Returns
+    -------
+    xr.DataArray
+        Snowfall flux.
+
+    Notes
+    -----
+    The estimated mean snow density value of 100 kg m-3 is taken from
+    :cite:cts:`frei_snowfall_2018, cbcl_climate_2020`.
+
+    References
+    ----------
+    :cite:cts:`frei_snowfall_2018, cbcl_climate_2020`
+    """
+    density = snr if snr else const
+    prsn = rate2flux(prsnd, density=density, out_units=out_units).rename("prsn")
+    prsn.attrs["standard_name"] = "snowfall_flux"
+    return prsn
 
 
 @declare_units(rls="[radiation]", rlds="[radiation]")
@@ -969,20 +1089,20 @@ def longwave_upwelling_radiation_from_net_downwelling(
     Parameters
     ----------
     rls : xr.DataArray
-        Surface net thermal radiation [W m-2].
+        Surface net thermal radiation.
     rlds : xr.DataArray
-        Surface downwelling thermal radiation [W m-2].
+        Surface downwelling thermal radiation.
 
     Returns
     -------
-    xr.DataArray, [W m-2]
+    xr.DataArray, [same units as rlds]
         Surface upwelling thermal radiation (rlus).
     """
     rls = convert_units_to(rls, rlds)
 
     rlus = rlds - rls
 
-    rlus.attrs["units"] = "W m-2"
+    rlus.attrs["units"] = rlds.units
     return rlus
 
 
@@ -995,20 +1115,20 @@ def shortwave_upwelling_radiation_from_net_downwelling(
     Parameters
     ----------
     rss : xr.DataArray
-        Surface net solar radiation [W m-2].
+        Surface net solar radiation.
     rsds : xr.DataArray
-        Surface downwelling solar radiation [W m-2].
+        Surface downwelling solar radiation.
 
     Returns
     -------
-    xr.DataArray, [W m-2]
+    xr.DataArray, [same units as rsds]
         Surface upwelling solar radiation (rsus).
     """
     rss = convert_units_to(rss, rsds)
 
     rsus = rsds - rss
 
-    rsus.attrs["units"] = "W m-2"
+    rsus.attrs["units"] = rsds.units
     return rsus
 
 

@@ -1,7 +1,6 @@
-# noqa: D205,D400
 """
-Helper functions submodule
-==========================
+Indices Helper Functions Submodule
+==================================
 
 Functions that encapsulate some geophysical logic but could be shared by many indices.
 """

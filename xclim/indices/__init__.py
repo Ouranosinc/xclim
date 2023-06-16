@@ -1,27 +1,4 @@
-# noqa: D205,D400
-"""
-===============
-Indices library
-===============
-
-This module contains climate indices functions operating on `xarray.DataArray`. Most of these
-functions operate on daily time series, but might accept other sampling frequencies as well. All
-functions perform units checks to make sure that inputs have the expected dimensions (for example
-have units of temperature, whether it is celsius, kelvin or fahrenheit), and set the `units`
-attribute of the output DataArray.
-
-The `calendar`, `fire`, `generic`, `helpers`, `run_length` and `stats` submodules provide
-helpers to simplify the implementation of the indices.
-
-.. note::
-
-    Indices functions do not perform missing value checks, and usually do not set CF-Convention attributes
-    (long_name, standard_name, description, cell_methods, etc.). These functionalities are provided by
-    :py:class:`xclim.indicators.Indicator` instances found in the :py:mod:`xclim.indicators.atmos`,
-    :py:mod:`xclim.indicators.land` and :mod:`xclim.indicators.seaIce` modules,
-    documented in :ref:`indicators:Climate Indicators`.
-
-"""
+"""Indices module."""
 from __future__ import annotations
 
 from ._agro import *
@@ -42,8 +19,8 @@ from .fire import (
 )
 
 """
-Notes for docstring
--------------------
+Notes for docstrings
+--------------------
 
 The docstrings adhere to the `NumPy`_ style convention and is meant as a way to store CF-Convention metadata as
 well as information relevant to third party libraries (such as a WPS server).
@@ -110,7 +87,7 @@ The next sections would be **Notes** and **References**:
         of ontological python documentation." Climate Aesthetics,
         vol. 1, pp. 121-155.
 
-Indice descriptions
+Indice Descriptions
 ===================
 .. _`NumPy`: https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
 """
