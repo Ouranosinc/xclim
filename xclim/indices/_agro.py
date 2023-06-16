@@ -1423,9 +1423,7 @@ def effective_growing_degree_days(
 
 @declare_units(tasmin="[temperature]")
 def hardiness_zones(
-    tasmin: xarray.DataArray,
-    window: int = 30,
-    method: str = "usda",
+    tasmin: xarray.DataArray, window: int = 30, method: str = "usda", freq: str = "YS"
 ):
     """Hardiness zones.
 
@@ -1441,6 +1439,8 @@ def hardiness_zones(
         The length of the averaging window, in years.
     method : {'usda', 'anbg'}
         Whether to return the American (`usda`) or the Australian (`anbg`) classification zones.
+    freq : str
+        Resampling frequency.
 
     Returns
     -------
@@ -1455,7 +1455,10 @@ def hardiness_zones(
     :cite:cts:`dawson_plant_1991`
     """
     # Construct climatology
-    tnmin = tasmin.resample(time="YS").min().rolling(time=window).mean()
+    if parse_offset(freq) != (1, "A", True, "JAN"):
+        raise ValueError(f"Freq not allowed: {freq}. Must be `YS` or `AS-JAN`")
+
+    tnmin = tasmin.resample(time=freq).min().rolling(time=window).mean()
 
     if method.lower() == "usda":
         tnmin = convert_units_to(tnmin, "degF")
