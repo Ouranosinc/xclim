@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from xclim.core.calendar import date_range, datetime_to_decimal_year
+from xclim.core.calendar import date_range
 from xclim.core.units import convert_units_to
 from xclim.indices import helpers
 
@@ -20,12 +20,8 @@ def test_solar_declinaton(method, rtol):
         dims=("time",),
     )
     exp = [-19.83, 20.64, 20.00]
-
-    day_angle = ((datetime_to_decimal_year(times) % 1) * 360).assign_attrs(
-        units="degree"
-    )
     np.testing.assert_allclose(
-        helpers.solar_declination(day_angle, method=method),
+        helpers.solar_declination(times, method=method),
         np.deg2rad(exp),
         atol=rtol * 2 * np.deg2rad(23.44),  # % of the possible range
     )

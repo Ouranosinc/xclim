@@ -59,7 +59,18 @@ def distance_from_sun(dates: xr.DataArray) -> xr.DataArray:
     return xr.DataArray(sun_earth, coords=dates.coords, dims=dates.dims)
 
 
-def solar_declination(day_angle: xr.DataArray, method="spencer") -> xr.DataArray:
+def day_angle(time: xr.DataArray):
+    """Day of year as an angle.
+
+    Assuming the earth makes a full circle in a year, this is the angle covered from
+    the beginning of the year up to that timestep. Also called the "julian day fraction".
+    See :py:func:`~xclim.core.calendar.datetime_to_decimal_year`.
+    """
+    decimal_year = datetime_to_decimal_year(times=time, calendar=time.dt.calendar)
+    return ((decimal_year % 1) * 2 * np.pi).assign_attrs(units="rad")
+
+
+def solar_declination(time: xr.DataArray, method="spencer") -> xr.DataArray:
     """Solar declination.
 
     The angle between the sun rays and the earth's equator, in radians, as approximated
@@ -67,10 +78,8 @@ def solar_declination(day_angle: xr.DataArray, method="spencer") -> xr.DataArray
 
     Parameters
     ----------
-    day_angle : xr.DataArray
-      Assuming the earth makes a full circle in a year, this is the angle covered from
-      the beginning of the year up to that timestep. Also called the "julian day fraction".
-      See :py:func:`~xclim.core.calendar.datetime_to_decimal_year`.
+    time: xr.DataArray
+      Time coordinate.
     method : {'spencer', 'simple'}
       Which approximation to use. The default ("spencer") uses the first 7 terms of the
       Fourier series representing the observed declination, while "simple" assumes
@@ -87,7 +96,7 @@ def solar_declination(day_angle: xr.DataArray, method="spencer") -> xr.DataArray
     :cite:cts:`spencer_fourier_1971`
     """
     # julian day fraction
-    da = convert_units_to(day_angle, "rad")
+    da = convert_units_to(day_angle(time), "rad")
     if method == "simple":
         # This assumes the orbit is a perfect circle, the obliquity is 0.4091 rad (23.43°)
         # and the equinox is on the March 21st 17:20 UTC (March 20th 23:14 UTC on leap years)
@@ -109,7 +118,7 @@ def solar_declination(day_angle: xr.DataArray, method="spencer") -> xr.DataArray
     return _wrap_radians(sd)
 
 
-def time_correction_for_solar_angle(day_angle: xr.DataArray) -> xr.DataArray:
+def time_correction_for_solar_angle(time: xr.DataArray) -> xr.DataArray:
     """Time correction for solar angle.
 
     Every 1° of angular rotation on earth is equal to 4 minutes of time.
@@ -117,10 +126,8 @@ def time_correction_for_solar_angle(day_angle: xr.DataArray) -> xr.DataArray:
 
     Parameters
     ----------
-    day_angle : xr.DataArray
-        Assuming the earth makes a full circle in a year, this is the angle covered from
-        the beginning of the year up to that timestep. Also called the "julian day fraction".
-        See :py:func:`~xclim.core.calendar.datetime_to_decimal_year`.
+    time: xr.DataArray
+      Time coordinate.
 
     Returns
     -------
@@ -131,7 +138,7 @@ def time_correction_for_solar_angle(day_angle: xr.DataArray) -> xr.DataArray:
     ----------
     :cite:cts:`di_napoli_mean_2020`
     """
-    da = convert_units_to(day_angle, "rad")
+    da = convert_units_to(day_angle(time), "rad")
     tc = (
         0.004297
         + 0.107029 * np.cos(da)
@@ -143,7 +150,7 @@ def time_correction_for_solar_angle(day_angle: xr.DataArray) -> xr.DataArray:
     return _wrap_radians(convert_units_to(tc, "rad"))
 
 
-def eccentricity_correction_factor(day_angle: xr.DataArray, method="spencer"):
+def eccentricity_correction_factor(time: xr.DataArray, method="spencer"):
     """Eccentricity correction factor of the Earth's orbit.
 
     The squared ratio of the mean distance Earth-Sun to the distance at a specific moment.
@@ -151,10 +158,8 @@ def eccentricity_correction_factor(day_angle: xr.DataArray, method="spencer"):
 
     Parameters
     ----------
-    day_angle : xr.DataArray
-        Assuming the earth makes a full circle in a year, this is the angle covered from the beginning of the year up to
-        that timestep. Also called the "julian day fraction".
-        See :py:func:`~xclim.core.calendar.datetime_to_decimal_year`.
+    time: xr.DataArray
+        Time coordinate
     method : str
         Which approximation to use. The default ("spencer") uses the first five terms of the fourier series of the
         eccentricity, while "simple" approximates with only the first two.
@@ -169,7 +174,7 @@ def eccentricity_correction_factor(day_angle: xr.DataArray, method="spencer"):
     :cite:cts:`spencer_fourier_1971,perrin_estimation_1975`
     """
     # julian day fraction
-    da = convert_units_to(day_angle, "rad")
+    da = convert_units_to(day_angle(time), "rad")
     if method == "simple":
         # It is quite used, I think the source is (not available online):
         # Perrin de Brichambaut, C. (1975).
@@ -186,46 +191,43 @@ def eccentricity_correction_factor(day_angle: xr.DataArray, method="spencer"):
 
 
 def cosine_of_solar_zenith_angle(
+    time: xr.DataArray,
     declination: xr.DataArray,
-    lat: xr.DataArray,
-    lon: xr.DataArray = None,
+    lat: Quantified,
+    lon: Quantified = "0 °",
     time_correction: xr.DataArray = None,
-    hours: xr.DataArray = None,
-    interval: int = None,
     stat: str = "integral",
+    sunlit: bool = False,
 ) -> xr.DataArray:
     """Cosine of the solar zenith angle.
 
     The solar zenith angle is the angle between a vertical line (perpendicular to the ground) and the sun rays.
-    This function computes a daily statistic of its cosine : its integral from sunrise to sunset or the average over
-    the same period. Based on :cite:t:`kalogirou_chapter_2014`. In addition, it computes instantaneous values of its
-    cosine. Based on :cite:t:`di_napoli_mean_2020`.
+    This function computes a statistic of its cosine : its instantaneous value, the integral from sunrise to sunset or the average over
+    the same period or over a subdaily interval.
+    Based on :cite:t:`kalogirou_chapter_2014` and :cite:t:`di_napoli_mean_2020`.
 
     Parameters
     ----------
+    time: xr.DataArray
+        The UTC time. If not daily and `stat` is "integral" or "average", the timestamp is taken as the start of interval.
+        If daily, the interval is assumed to be centered on Noon.
     declination : xr.DataArray
         Solar declination. See :py:func:`solar_declination`.
-    lat : xr.DataArray
+    lat : Quantified
         Latitude.
-    lon : xr.DataArray, optional
-        Longitude.
-        This is necessary if stat is "instant", "interval" or "sunlit".
+    lon : Quantified
+        Longitude. Needed if the input timeseries is subdaily.
     time_correction : xr.DataArray, optional
         Time correction for solar angle. See :py:func:`time_correction_for_solar_angle`
         This is necessary if stat is "instant".
-    hours : xr.DataArray, optional
-        UTC time hours.
-        This is necessary if stat is "instant", "interval" or "sunlit".
-    interval : int, optional
-        Time interval between two time steps in hours
-        This is necessary if stat is "interval" or "sunlit".
-    stat : {'integral', 'average', 'instant', 'interval', 'sunlit'}
+    stat : {'integral', 'average', 'instant'}
         Which daily statistic to return.
-        If "integral", this returns the integral of the cosine of the zenith angle from sunrise to sunset.
-        If "instant", this returns the instantaneous cosine of the zenith angle.
-        If "interval", this returns the average cosine of the zenith angle during each interval, not considering if the sun is actually in the sky.
-        If "sunlit", this returns the average cosine of the zenith angle during the sunlit period of each interval.
-        "average" is the same as "sunlit", but assuming the data has a daily frequency and `interval` is 24 h.
+        If "integral", this returns the integral of the cosine of the zenith angle
+        If "average", this returns the average of the cosine of the zenith angle
+        If "instant", this returns the instantaneous cosine of the zenith angle
+    sunlit: bool
+        If True, only the sunlit part of the interval is considered in the integral or average.
+        Does nothing if stat is "instant".
 
     Returns
     -------
@@ -242,75 +244,101 @@ def cosine_of_solar_zenith_angle(
     ----------
     :cite:cts:`kalogirou_chapter_2014,di_napoli_mean_2020`
     """
+    declination = convert_units_to(declination, "rad")
     lat = _wrap_radians(convert_units_to(lat, "rad"))
-
-    if stat in "average":
-        lon = "0 °"
-        hours = xr.zeros_like(declination) + 12
-        interval = 24
-        stat = "sunlit"
-
     lon = _wrap_radians(convert_units_to(lon, "rad"))
-    if hours is not None:
-        sha = _wrap_radians((hours - 12) * 15 / 180 * np.pi + lon)
-    if interval is not None:
-        k = interval / 2.0
-        h_s = _wrap_radians(sha - k * 15 * np.pi / 180)
-        h_e = _wrap_radians(sha + k * 15 * np.pi / 180)
 
-    # hour angle of sunset and sunrise (eq. 2.15), with NaNs inside the polar day/night
-    tantan = -np.tan(lat) * np.tan(declination)
-    h_ss = np.arccos(tantan.where(abs(tantan) <= 1))
-    h_sr = -h_ss
-
-    # The following equation is not explicitly stated in the reference, but it can easily be derived.
-    if stat == "integral":
-        # TODO: correct for polar regions
-        # h_ss is here used as a constant, but it reprensents half the day lwngth and not a timing
-        # It should be set to 0 for polar nights and pi for polar days!
-        csza = 2 * (
-            h_ss * np.sin(declination) * np.sin(lat)
-            + np.cos(declination) * np.cos(lat) * np.sin(h_ss)
+    if xr.infer_freq(time) == "D":
+        h_s = -np.pi if stat != "instant" else 0
+        h_e = np.pi
+    else:
+        if time.dtype == "O":  # cftime
+            time_as_s = time.copy(data=xr.CFTimeIndex(time.values).asi8 / 1e6)
+        else:  # numpy
+            time_as_s = time.copy(data=time.astype(float) / 1e9)
+        h_s = _wrap_radians(
+            ((time_as_s % (3600 * 24)) / (3600 * 24)) * 2 * np.pi + lon
+        ).assign_attrs(units="rad")
+        interval = (time.diff("time").dt.seconds / 3600).reindex(
+            time=time, method="bfill"
         )
-        return xr.where(np.isnan(csza), 0, csza)
+        h_e = h_s + interval
+
     if stat == "instant":
-        sha = sha + time_correction
-        csza = np.sin(declination) * np.sin(lat) + np.cos(declination) * np.cos(
-            lat
-        ) * np.cos(sha)
-        return csza.clip(0, None)
-    if stat == "interval":
-        csza = np.sin(declination) * np.sin(lat) + np.cos(declination) * np.cos(lat) * (
-            np.sin(h_e) - np.sin(h_s)
-        ) / (h_e - h_s)
-        return csza.clip(0, None)
-    if stat == "sunlit":
-        h_min = xr.where(h_s >= h_sr, h_s, h_sr)
-        h_max = xr.where(h_e <= h_ss, h_e, h_ss)
-        csza = np.sin(declination) * np.sin(lat) + np.cos(declination) * np.cos(lat) * (
-            np.sin(h_max) - np.sin(h_min)
-        ) / (h_max - h_min)
-        csza_polar_day = np.sin(declination) * np.sin(lat) + np.cos(
-            declination
-        ) * np.cos(lat) * (np.sin(h_e) - np.sin(h_s)) / (h_e - h_s)
-
-        csza = xr.where(
-            h_ss.isnull() & (np.sign(declination) == -np.sign(lat)),  # Polar night
-            0,
-            csza,
+        h_s = h_s + time_correction
+        return (
+            np.sin(declination) * np.sin(lat)
+            + np.cos(declination) * np.cos(lat) * np.cos(h_s)
+        ).clip(0, None)
+    elif stat not in {"average", "integral"}:
+        raise NotImplementedError(
+            "Argument 'stat' must be one of 'integral', 'average' or 'instant'."
         )
-        csza = xr.where(
-            h_ss.isnull() & (np.sign(declination) == np.sign(lat)),  # Polar day
-            csza_polar_day,
-            csza,
-        )
-        # TODO: The sunlit interval logic does not cover cases:
-        #     - Where there are 2 sunlit parts of the interval
-        #     - Where the interval crosses midnight
-        return csza.clip(0, None)
+    if sunlit:
+        # hour angle of sunset (eq. 2.15), with NaNs inside the polar day/night
+        tantan = -np.tan(lat) * np.tan(declination)
+        h_ss = np.arccos(tantan.where(abs(tantan) <= 1))
+    else:
+        h_ss = np.pi
 
-    raise NotImplementedError(
-        "Argument 'stat' must be one of 'integral', 'average', 'instant', 'interval' or 'sunlit'."
+    return xr.apply_ufunc(
+        _sunlit_integral_of_cosine_of_solar_zenith_angle,
+        declination,
+        lat,
+        h_ss,
+        h_s,
+        h_e,
+        input_core_dims=[[]] * 6,
+        dask="parallel",
+        kwargs={"average": (stat == "average")},
+        vectorize=True,
+    )
+
+
+def _sunlit_integral_of_cosine_of_solar_zenith_angle(
+    declination, lat, h_sunset, h_start, h_end, average=True
+):
+    """Integral of the cosine of the the solar zenith angle over the sunlit part of the interval."""
+    h_sunrise = -h_sunset
+    # Polar day
+    if np.isnan(h_sunset) & (declination * lat) > 0:
+        num = np.sin(h_end) - np.sin(h_start)
+        denum = h_end - h_start
+    # Polar night:
+    elif np.isnan(h_sunset) & (declination * lat) < 0:
+        return 0
+    # No sunlit interval (at night) 1) crossing midnight and 2) between 0h and sunrise 3) between sunset and 0h
+    elif (
+        (h_start > h_sunset and h_end < h_sunrise)
+        or (h_start < h_sunrise and h_end < h_sunrise)
+        or (h_start > h_sunset and h_end > h_sunset)
+    ):
+        return 0
+    # Interval crossing midnight, starting after sunset (before midnight), finishing after sunrise
+    elif h_end < h_start and h_start > h_sunset and h_end > h_sunrise:
+        num = np.sin(h_end) - np.sin(h_sunrise)
+        denum = h_end - h_sunrise
+    # Interval crossing midnight, starting after sunrise, finishing after sunset (after midnight)
+    elif h_end < h_start and h_start > h_sunrise and h_end < h_sunrise:
+        num = np.sin(h_sunset) - np.sin(h_start)
+        denum = h_sunset - h_start
+    # Interval crossing midnight, starting before sunset, finsing after sunrise (2 sunlit parts)
+    elif h_end < h_start and h_start < h_sunset and h_end > h_sunrise:
+        num = np.sin(h_sunset) - np.sin(h_start) + np.sin(h_end) - np.sin(h_sunrise)
+        denum = h_sunset - h_start + h_end - h_sunrise
+    # All other cases : interval not crossing midnight, overlapping with the sunlit part
+    else:
+        h1 = max(h_sunrise, h_start)
+        h2 = min(h_sunset, h_end)
+        num = np.sin(h2) - np.sin(h1)
+        denum = h2 - h1
+    if average:
+        time_term = num / denum
+    else:
+        time_term = num
+    return (
+        np.sin(declination) * np.sin(lat)
+        + np.cos(declination) * np.cos(lat) * time_term
     )
 
 
@@ -346,9 +374,8 @@ def extraterrestrial_solar_radiation(
     ----------
     :cite:cts:`kalogirou_chapter_2014,matthes_solar_2017`
     """
-    da = ((datetime_to_decimal_year(times) % 1) * 2 * np.pi).assign_attrs(units="rad")
-    dr = eccentricity_correction_factor(da, method=method)
-    ds = solar_declination(da, method=method)
+    dr = eccentricity_correction_factor(times, method=method)
+    ds = solar_declination(times, method=method)
     gsc = convert_units_to(solar_constant, "J m-2 d-1")
     rad_to_day = 1 / (2 * np.pi)  # convert radians of the "day circle" to day
     return (
@@ -385,10 +412,7 @@ def day_lengths(
     ----------
     :cite:cts:`kalogirou_chapter_2014`
     """
-    day_angle = ((datetime_to_decimal_year(dates.time) % 1) * 2 * np.pi).assign_attrs(
-        units="rad"
-    )
-    declination = solar_declination(day_angle, method=method)
+    declination = solar_declination(dates.time, method=method)
     lat = convert_units_to(lat, "rad")
     # arccos gives the hour-angle at sunset, multiply by 24 / 2π to get hours.
     # The day length is twice that.
