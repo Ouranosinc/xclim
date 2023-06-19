@@ -1454,16 +1454,13 @@ def hardiness_zones(
     :cite:cts:`usda_2012`
     :cite:cts:`dawson_plant_1991`
     """
-    # Construct climatology
-    if parse_offset(freq) != (1, "A", True, "JAN"):
-        raise ValueError(f"Freq not allowed: {freq}. Must be `YS` or `AS-JAN`")
-
     tnmin = tasmin.resample(time=freq).min().rolling(time=window).mean()
 
     if method.lower() == "usda":
-        tnmin = convert_units_to(tnmin, "degF")
+        # Bins in [-65,65] degF with steps of 5 degF
+        b0, b1 = convert_units_to("-65 degF", tnmin), convert_units_to("65 degF", tnmin)
         bins = np.append(
-            np.insert(np.arange(-65, 66, 5).astype("float"), 0, -np.inf), np.inf
+            np.insert(np.linspace(b0, b1, int(1 + (2 * 65) / 5)), 0, -np.inf), np.inf
         )
 
         def _zones(arr, bs):
@@ -1473,8 +1470,11 @@ def hardiness_zones(
             return (c - 1) / 2
 
     elif method.lower() == "anbg":
-        tnmin = convert_units_to(tnmin, "degC")
-        bins = np.arange(-15, 21, 5).astype("float")
+        # Bins in [-15,20] degC with steps of 5 degC
+        b0, b1 = convert_units_to("-15 degC", tnmin), convert_units_to("20 degC", tnmin)
+        bins = np.append(
+            np.insert(np.linspace(b0, b1, int(1 + (20 + 15) / 5)), 0, -np.inf), np.inf
+        )
 
         def _zones(arr, bs):
             c = np.digitize(arr, bs).astype(float)
