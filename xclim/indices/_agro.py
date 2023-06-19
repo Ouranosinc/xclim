@@ -927,25 +927,36 @@ def _compute_spx_fit_params(
         )
         da = da.chunk({"time": -1})
 
-    da = select_time(da, **indexer)
+    # I don't think that's necessary? At this point, da is already preprocessed and time selected
+    # da = select_time(da, **indexer)
+    # Should I apply the indexer at the very end? Would that avoid unecessary computations?
 
     def wrap_fit(da):
+        # this could be simplified as:
+        # if group representative completely in the excluded time period of indexer,
+        # just put NaNs there. I wonder if this can be done with less lines of code
         if indexer != {}:
             if da.isnull().all():
                 select_dims = {d: 0 for d in da.dims if d != "time"}
                 with xarray.set_options(keep_attrs=True):
-                    params = (
-                        fit(da.isel(time=slice(0, 2))[select_dims], dist, method)
-                        * da.isel(time=0, drop=True)
-                        * np.NaN
-                    )
-                return params
+                    template = fit(da.isel(time=slice(0, 2))[select_dims], dist, method)
+                    return template * da.isel(time=0, drop=True) * np.NaN
         return fit(da, dist, method)
 
     params = da.groupby(group).map(wrap_fit)
     params.attrs["Calibration period"] = str(cal_range)
 
     return params
+
+
+# TODO : ADD
+"""
+streamflow index (SSI)     GEV, log-logistic (Vincente-Serrano et al., 2012) Tweedie (Barker et al., 2016)    (Station de suivi)
+groundwater index (SGI)   log-normal, gamma, GEV (Bloomfield et Marchant, 2013)	                            (Station de suivi)
+NEW dist: GEV, log-normal
+https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.genextreme.html#scipy.stats.genextreme
+https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.lognorm.html
+"""
 
 
 @declare_units(
