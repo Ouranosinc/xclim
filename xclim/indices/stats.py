@@ -53,9 +53,11 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
         return np.asarray([np.nan] * nparams)
 
     # Estimate parameters
-    if method == "ML":
+    if method in ["ML", "MLE"]:
         args, kwargs = _fit_start(x, dist.name, **fitkwargs)
-        params = dist.fit(x, *args, **kwargs, **fitkwargs)
+        params = dist.fit(x, *args, method="mle", **kwargs, **fitkwargs)
+    elif method == "MM":
+        params = dist.fit(x, method="mm", **fitkwargs)
     elif method == "PWM":
         params = list(dist.lmom_fit(x).values())
     elif method == "APP":
@@ -91,8 +93,8 @@ def fit(
         Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
         (see :py:mod:scipy.stats for full list). If the PWM method is used, only the following distributions are
         currently supported: 'expon', 'gamma', 'genextreme', 'genpareto', 'gumbel_r', 'pearson3', 'weibull_min'.
-    method : {"ML" or "MLE", "MOM", "PWM", "APP"}
-        Fitting method, either maximum likelihood (ML or MLE), method of moments (MOM),
+    method : {"ML" or "MLE", "MM", "PWM", "APP"}
+        Fitting method, either maximum likelihood (ML or MLE), method of moments (MM),
         probability weighted moments (PWM), also called L-Moments, or approximate method (APP).
         The PWM method is usually more robust to outliers.
     dim : str
@@ -112,11 +114,13 @@ def fit(
     """
     method_name = {
         "ML": "maximum likelihood",
-        "MOM": "method of moments",
+        "MM": "method of moments",
         "MLE": "maximum likelihood",
         "PWM": "probability weighted moments",
         "APP": "approximative method",
     }
+    if method not in method_name:
+        raise ValueError(f"Fitting method not recognized: {method}")
 
     # Get the distribution
     dc = get_dist(dist)
@@ -137,7 +141,7 @@ def fit(
         keep_attrs=True,
         kwargs=dict(
             # Don't know how APP should be included, this works for now
-            dist=dc if method in ["ML", "MLE", "MOM", "APP"] else lm3dc,
+            dist=dc if method in ["ML", "MLE", "MM", "APP"] else lm3dc,
             nparams=len(dist_params),
             method=method,
             **fitkwargs,

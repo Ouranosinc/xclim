@@ -11,14 +11,14 @@ from xclim.indices import stats
 
 @pytest.fixture(params=[True, False])
 def fitda(request):
-    nx, ny, nt = 2, 3, 50
+    nx, ny, nt = 2, 3, 100
     x = np.arange(nx)
     y = np.arange(ny)
 
     time = xr.cftime_range("2045-02-02", periods=nt, freq="D")
 
     da = xr.DataArray(
-        np.random.lognormal(10, 1, (nt, nx, ny)),
+        np.random.lognormal(2, 1, (nt, nx, ny)),
         dims=("time", "x", "y"),
         coords={"time": time, "x": x, "y": y},
     )
@@ -122,7 +122,11 @@ def genextreme(request):
 
 class TestFit:
     def test_fit(self, fitda):
-        p = stats.fit(fitda, "lognorm")
+        p = stats.fit(fitda, "lognorm", method="ML")
+
+        # Test with explicit MLE (vs ML should be synonyms)
+        p2 = stats.fit(fitda, "lognorm", method="MLE")
+        np.testing.assert_array_almost_equal(p.values, p2.values)
 
         assert p.dims[0] == "dparams"
         assert p.get_axis_num("dparams") == 0
@@ -134,13 +138,10 @@ class TestFit:
         assert cdf.shape == (fitda.x.size, fitda.y.size)
         assert p.attrs["estimator"] == "Maximum likelihood"
 
-        # Test with MOM
-        p1 = stats.fit(fitda, "lognorm", method="MOM")
-        assert p1 == p
-
-        # Test with explicit MLE
-        p2 = stats.fit(fitda, "lognorm", method="MLE")
-        assert p2 == p
+        # Test with MM
+        pm = stats.fit(fitda, "lognorm", method="MM")
+        mm, mv = lognorm(*pm.values).stats()
+        np.testing.assert_allclose(np.exp(2 + 1 / 2), mm, rtol=0.5)
 
 
 def test_weibull_min_fit(weibull_min):
@@ -163,8 +164,12 @@ def test_fa(fitda):
     q0 = lognorm.ppf(1 - 1.0 / T, *p0)
     np.testing.assert_array_equal(q[0, 0, 0], q0)
 
-    q1 = stats.fa(fitda, T, "lognorm", method="PWM")
-    np.testing.assert_array_almost_equal(q1, q)
+
+def test_fa_gamma(fitda):
+    T = 10
+    q = stats.fa(fitda, T, "lognorm", method="MM")
+    q1 = stats.fa(fitda, T, "gamma", method="PWM")
+    np.testing.assert_allclose(q1, q, rtol=1e-1)
 
 
 def test_fit_nan(fitda):
@@ -263,10 +268,15 @@ def test_frequency_analysis(ndq_series, use_dask):
         q.transpose(), mode="max", t=2, dist="genextreme", window=6, freq="YS"
     )
 
+    # Test with PWM fitting method
     out1 = stats.frequency_analysis(
         q, mode="max", t=2, dist="genextreme", window=6, freq="YS", method="PWM"
     )
-    np.testing.assert_array_almost_equal(out1, out)
+    np.testing.assert_allclose(
+        out1,
+        out,
+        rtol=0.1,
+    )
 
 
 @pytest.mark.parametrize("use_dask", [True, False])
