@@ -25,6 +25,7 @@ __all__ = [
     "drought_code",
     "dry_days",
     "dry_spell_frequency",
+    "dry_spell_max_length",
     "dry_spell_total_length",
     "dryness_index",
     "first_snowfall",
@@ -46,6 +47,7 @@ __all__ = [
     "precip_accumulation",
     "precip_average",
     "rain_on_frozen_ground_days",
+    "rain_season",
     "rprctot",
     "snowfall_frequency",
     "snowfall_intensity",
@@ -56,6 +58,9 @@ __all__ = [
     "warm_and_dry_days",
     "warm_and_wet_days",
     "wet_precip_accumulation",
+    "wet_spell_frequency",
+    "wet_spell_max_length",
+    "wet_spell_total_length",
     "wetdays",
     "wetdays_prop",
 ]
@@ -624,6 +629,63 @@ dry_spell_total_length = Precip(
     compute=indices.dry_spell_total_length,
 )
 
+dry_spell_max_length = Precip(
+    title="Dry spell maximum length",
+    identifier="dry_spell_max_length",
+    long_name="Maximum consecutive number of days in a dry period of {window} day(s) or more, during which the {op} "
+    "precipitation within windows of {window} day(s) is under {thresh}.",
+    description="The maximum {freq} number of consecutive days in a dry period of {window} day(s) or more"
+    ", during which the {op} precipitation within windows of {window} day(s) is under {thresh}.",
+    abstract="The maximum length of a dry period of `N` days or more, during which the accumulated or maximum "
+    "precipitation over a given time window of days is below a given threshold.",
+    units="days",
+    cell_methods="",
+    compute=indices.dry_spell_max_length,
+)
+
+wet_spell_frequency = Precip(
+    title="Wet spell frequency",
+    identifier="wet_spell_frequency",
+    long_name="Number of wet periods of {window} day(s) or more, during which the {op} precipitation on a "
+    "window of {window} day(s) is equal or over {thresh}.",
+    description="The {freq} number of wet periods of {window} day(s) or more, during which the {op} precipitation on a "
+    "window of {window} day(s) is equal or over {thresh}.",
+    abstract="The frequency of wet periods of `N` days or more, during which the accumulated or maximum precipitation "
+    "over a given time window of days is equal or above a given threshold.",
+    units="",
+    cell_methods="",
+    compute=indices.wet_spell_frequency,
+)
+
+
+wet_spell_total_length = Precip(
+    title="Wet spell total length",
+    identifier="wet_spell_total_length",
+    long_name="Number of days in wet periods of {window} day(s) or more, during which the {op} "
+    "precipitation within windows of {window} day(s) is equal or over {thresh}.",
+    description="The {freq} number of days in wet periods of {window} day(s) or more, during which the {op} "
+    "precipitation within windows of {window} day(s) is equal or over {thresh}.",
+    abstract="The total length of dry periods of `N` days or more, during which the accumulated or maximum "
+    "precipitation over a given time window of days is equal or above a given threshold.",
+    units="days",
+    cell_methods="",
+    compute=indices.wet_spell_total_length,
+)
+
+wet_spell_max_length = Precip(
+    title="Wet spell maximum length",
+    identifier="wet_spell_max_length",
+    long_name="Maximum consecutive number of days in a wet period of {window} day(s) or more, during which the {op} "
+    "precipitation within windows of {window} day(s) is equal or over {thresh}.",
+    description="The maximum {freq} number of consecutive days in a wet period of {window} day(s) or more"
+    ", during which the {op} precipitation within windows of {window} day(s) is equal or over {thresh}.",
+    abstract="The maximum length of a wet period of `N` days or more, during which the accumulated or maximum "
+    "precipitation over a given time window of days is equal or above a given threshold.",
+    units="days",
+    cell_methods="",
+    compute=indices.wet_spell_max_length,
+)
+
 rprctot = PrecipWithIndexing(
     title="Proportion of accumulated precipitation arising from convective processes",
     identifier="rprctot",
@@ -689,4 +751,31 @@ cold_and_wet_days = PrecipWithIndexing(
     abstract="Number of days with temperature below a given percentile and precipitation above a given percentile.",
     cell_methods="time: sum over days",
     compute=indices.cold_and_wet_days,
+)
+
+rain_season = Precip(
+    title="Rain season",
+    identifier="rain_season",
+    realm="atmos",
+    var_name=["rain_season_start", "rain_season_end", "rain_season_length"],
+    long_name=[
+        "Start of the rain season",
+        "End of the rain season",
+        "Length of the rain season",
+    ],
+    description=[
+        "First step of a run where i) a sequence of {window_wet_start} days accumulated {thresh_wet_start} "
+        "of precipitations ii) followed by a sequence of {window_not_dry_start} days with no dry sequence, i.e. a sequence of {window_dry_start} days "
+        "with at least {thresh_dry_start} {method_dry_start}. The start of the season is on the last day of the first sequence i) and must be "
+        "between {date_min_start} and {date_max_start}.",
+        "Last day in a dry sequence after the start of the season, i.e.  a sequence of {window_dry_end} days "
+        "with at least {thresh_dry_end} {method_dry_end}. It must be between {date_min_end} and {date_max_end}. ",
+        "Number of steps of the original series in the season, between 'start' and 'end'.",
+    ],
+    units=["", "", "days"],
+    abstract="Start time, end time and length of the rain season, notably useful for West Africa (sivakumar, 1998). The rain season starts with "
+    "a period of abundant rainfall, followed by a period without prolonged dry sequences, which must happen before a given date. "
+    "The rain season stops during a dry period happening after a given date",
+    cell_methods="",
+    compute=indices.rain_season,
 )

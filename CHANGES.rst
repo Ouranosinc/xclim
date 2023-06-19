@@ -4,7 +4,7 @@ Changelog
 
 v0.44.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`), Ludwig Lierhammer (:user:`ludwiglierhammer`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`), David Huard (:user:`huard`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -13,16 +13,21 @@ Announcements
 
 New indicators
 ^^^^^^^^^^^^^^
-* New indices and indicators (``snowfall_{frequency | intensity}``) for calculating the {percentage of | mean snowfall intensity on} days with snowfall above a threshold. (:issue:`1352`, :pull:`1358`)
-* New indices and indicators (``{sfcWind | sfcWindmax}_{max | mean | min``) for calculating the {max | mean | min} daily {mean | max} wind speed. (:issue:`1352`, :pull:`1358`)
-* New indices and indicators (``{precip | liquid_precip | solid_precip}_average``) for calculating the mean daily {precipitation | liquid precipitation | solid precipitation } amount. (:issue:`1352`, :pull:`1358`)
+* Several new indices and indicators:
+    * ``snowfall_{frequency | intensity}`` for calculating the {percentage of | mean snowfall intensity on} days with snowfall above a threshold. (:issue:`1352`, :pull:`1358`)
+    * ``{sfcWind | sfcWindmax}_{max | mean | min}`` for calculating the {max | mean | min} daily {mean | max} wind speed. (:issue:`1352`, :pull:`1358`)
+    * ``{precip | liquid_precip | solid_precip}_average}`` for calculating the mean daily {total precipitation | liquid precipitation | solid precipitation } amount. (:issue:`1352`, :pull:`1358`)
+    * ``{cold | dry}_spell_max_length`` for calculating maximum length of {cold | dry} spell events. (:issue:`1352`, :pull:`1359`).
+    * ``dry_spell_frequency`` for calculating total number of dry spells. (:issue:`1352`, :pull:`1359`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.sdba.processing.escore`` performance was improved with a faster runtime (:pull:`1360`).
 * New generic function (``flux_and_rate_converter``) converting flux to a rate (and vice-versa) using a density. `snw_to_snd` and `snd_to_snw` were refactored using this function. (:issue:`1352`, :pull:`1358`)
 * New function (``prsn_to_prsnd``) to convert snowfall flux ([mass]/[area]/[time]) to snowfall rate ([length]/[time]) using snow density ([mass]/[volume]). (:issue:`1352`, :pull:`1358`)
-* New variables: Snowfall rate  ``prsnd`` and surface maximum wind speed ``sfcWindmax``.
+* New variables: Snowfall rate ``prsnd`` and surface maximum wind speed ``sfcWindmax``. (:issue:`1352`, :pull:`1358`).
+* Docstring for `freq` links to pandas offset aliases documentation. (:issue:`1310`, :pull:`1392`).
+* New function ``xclim.indces.run_length.extract_events`` for determining runs whose starting and stopping points are defined through run length conditions. (:pull:`1256`).
 * Stats functions `frequency_analysis` now takes `method` parameter to select other fitting methods such as PWM or MOM. (:issue:`1168`, :pull:`1398`)
 
 Bug fixes
@@ -39,6 +44,16 @@ Internal changes
 * Fixed some annotations and `dev` recipe dependencies issues to allow for the development of xclim inside a python3.11 environment. (:issue:`1376`, :pull:`1381`).
 * The deprecated `mamba-org/provision-with-micromamba` GitHub Action has been replaced with `mamba-org/setup-micromamba`. (:pull:`1388`).
 * `xclim` GitHub CI workflows now run builds against Python3.11. (:pull:`1388`).
+* In indices, verify that all parameters of type `Quantified` that have a default value have their dimension declared. (:issue:`1293`, :pull:`1393`).
+* Updated `roy_extremeprecip_2021` to the newly published paper. (:pull:`1394`).
+* Two new GitHub CI Actions have been added to the existing Workflows (:pull:`1390`):
+    * `actions/add-to-project`: Automatically adds issues to the `xclim` project.
+    * `saadmk11/github-actions-version-updater`: Updates GitHub Action versions in all Workflows (triggered monthly).
+
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Signature of `hot_spell_{frequency | max_length | total_length}` : `thresh_tasmax` modified to `thresh`. (:issue:`1352`, :pull:`1359`).
 
 v0.43.0 (2023-05-09)
 --------------------
@@ -112,6 +127,10 @@ New features and enhancements
 * Fix bug on number of bins in ``xclim.sdba.propeties.spatial_correlogram``. (:pull:`1336`)
 * Add `resample_before_rl` argument to control when resampling happens in `maximum_consecutive_{frost|frost_free|dry|tx}_days` and in heat indices (in `_threshold`)  (:issue:`1329`, :pull:`1331`)
 * Add ``xclim.ensembles.make_criteria`` to help create inputs for the ensemble-reduction methods. (:issue:`1338`, :pull:`1341`).
+
+New indicators
+^^^^^^^^^^^^^^
+* Rain season index implemented (default parameters for West Africa). (:issue:`842`, :pull:`1256`)
 
 Bug fixes
 ^^^^^^^^^

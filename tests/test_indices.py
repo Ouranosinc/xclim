@@ -144,6 +144,42 @@ class TestColdSpellFreq:
         assert out.units == ""
 
 
+class TestColdSpellMaxLength:
+    def test_simple(self, tas_series):
+        a = np.zeros(365)
+        a[10:20] -= 15  # 10 days
+        a[40:43] -= 50  # too short -> 0
+        a[80:86] -= 30
+        a[95:101] -= 30
+        da = tas_series(a + K2C, start="1971-01-01")
+
+        out = xci.cold_spell_max_length(da, thresh="-10. C", freq="M")
+        np.testing.assert_array_equal(out, [10, 3, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0])
+        assert out.units == "d"
+
+        out = xci.cold_spell_max_length(da, thresh="-10. C", freq="YS")
+        np.testing.assert_array_equal(out, 10)
+        assert out.units == "d"
+
+
+class TestColdSpellTotalLength:
+    def test_simple(self, tas_series):
+        a = np.zeros(365)
+        a[10:20] -= 15  # 10 days
+        a[40:43] -= 50  # too short -> 0
+        a[80:86] -= 30
+        a[95:101] -= 30
+        da = tas_series(a + K2C, start="1971-01-01")
+
+        out = xci.cold_spell_total_length(da, thresh="-10. C", freq="M")
+        np.testing.assert_array_equal(out, [10, 3, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0])
+        assert out.units == "d"
+
+        out = xci.cold_spell_total_length(da, thresh="-10. C", freq="YS")
+        np.testing.assert_array_equal(out, 25)
+        assert out.units == "d"
+
+
 class TestMaxConsecutiveFrostDays:
     def test_one_freeze_day(self, tasmin_series):
         a = tasmin_series(np.array([3, 4, 5, -1, 3]) + K2C)
@@ -1124,7 +1160,7 @@ class TestHeatWaveTotalLength:
 
 class TestHotSpellFrequency:
     @pytest.mark.parametrize(
-        "thresh_tasmax,window,op,expected",
+        "thresh,window,op,expected",
         [
             ("30 C", 3, ">", 2),  # Some HS
             ("30 C", 4, ">", 1),  # One long HS
@@ -1134,12 +1170,10 @@ class TestHotSpellFrequency:
             ("40 C", 5, ">", 0),  # Windowed
         ],
     )
-    def test_1d(self, tasmax_series, thresh_tasmax, window, op, expected):
+    def test_1d(self, tasmax_series, thresh, window, op, expected):
         tx = tasmax_series(np.asarray([29, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
 
-        hsf = xci.hot_spell_frequency(
-            tx, thresh_tasmax=thresh_tasmax, window=window, op=op
-        )
+        hsf = xci.hot_spell_frequency(tx, thresh=thresh, window=window, op=op)
         np.testing.assert_allclose(hsf.values, expected)
 
     @pytest.mark.parametrize(
@@ -1162,7 +1196,7 @@ class TestHotSpellFrequency:
 
 class TestHotSpellMaxLength:
     @pytest.mark.parametrize(
-        "thresh_tasmax,window,op,expected",
+        "thresh,window,op,expected",
         [
             ("30 C", 3, ">", 5),  # Some HS
             ("10 C", 3, ">", 10),  # One long HS
@@ -1172,12 +1206,29 @@ class TestHotSpellMaxLength:
             ("30 C", 5, ">", 5),  # Windowed
         ],
     )
-    def test_1d(self, tasmax_series, thresh_tasmax, window, op, expected):
+    def test_1d(self, tasmax_series, thresh, window, op, expected):
         tx = tasmax_series(np.asarray([28, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
 
-        hsml = xci.hot_spell_max_length(
-            tx, thresh_tasmax=thresh_tasmax, window=window, op=op
-        )
+        hsml = xci.hot_spell_max_length(tx, thresh=thresh, window=window, op=op)
+        np.testing.assert_allclose(hsml.values, expected)
+
+
+class TestHotSpellTotalLength:
+    @pytest.mark.parametrize(
+        "thresh,window,op,expected",
+        [
+            ("30 C", 3, ">", 8),  # Some HS
+            ("10 C", 3, ">", 10),  # One long HS
+            ("29 C", 3, ">", 8),  # Two HS
+            ("29 C", 3, ">=", 9),  # One long HS, minus a day
+            ("40 C", 3, ">", 0),  # No HS
+            ("30 C", 5, ">", 8),  # Windowed
+        ],
+    )
+    def test_1d(self, tasmax_series, thresh, window, op, expected):
+        tx = tasmax_series(np.asarray([28, 31, 31, 31, 29, 31, 31, 31, 31, 31]) + K2C)
+
+        hsml = xci.hot_spell_total_length(tx, thresh=thresh, window=window, op=op)
         np.testing.assert_allclose(hsml.values, expected)
 
 
@@ -2669,6 +2720,45 @@ class TestSnowCover:
         assert out.attrs["is_dayofyear"] == 1
 
 
+@pytest.mark.parametrize(
+    "result_type",
+    ["season_found", "start_cond1_fails", "start_cond2_fails", "end_cond_fails"],
+)
+@pytest.mark.parametrize(
+    "method_dry_start",
+    ["per_day", "total"],
+)
+def test_rain_season(pr_series, result_type, method_dry_start):
+    pr = pr_series(np.arange(365) * np.NaN, start="2000-01-01", units="mm/d")
+    # input values in mm (amount): a correcting factor is used below
+    pr[{"time": slice(0, 0 + 3)}] = 10  # to satisfy cond1_start
+    pr[{"time": slice(3, 3 + 30)}] = 5  # to satisfy cond2_start
+    pr[{"time": slice(99, 99 + 20)}] = 0  # to satisfy cond_end
+    if result_type == "season_found":
+        out_exp = [3, 100, 97]
+    elif result_type == "start_cond1_fails":
+        pr[{"time": 2}] = 0
+        out_exp = [np.NaN, np.NaN, np.NaN]
+    elif result_type == "start_cond2_fails":
+        pr[{"time": slice(10, 10 + 7)}] = 0
+        out_exp = [np.NaN, np.NaN, np.NaN]
+    elif result_type == "end_cond_fails":
+        pr[{"time": 99 + 20 - 1}] = 5
+        out_exp = [3, np.NaN, 363]
+
+    out = {}
+    out["start"], out["end"], out["length"] = xci.rain_season(
+        pr,
+        date_min_start="01-01",
+        date_min_end="01-01",
+        method_dry_start=method_dry_start,
+    )
+    out_arr = np.array(
+        [out[var].values for var in ["start", "end", "length"]]
+    ).flatten()
+    np.testing.assert_array_equal(out_arr, out_exp)
+
+
 def test_high_precip_low_temp(pr_series, tasmin_series):
     pr = pr_series([0, 1, 2, 0, 0])
     tas = tasmin_series(np.array([0, 0, 1, 1]) + K2C)
@@ -3022,7 +3112,7 @@ def test_water_budget(pr_series, evspsblpot_series):
             3,
             3,
             7,
-            (2, 12, 20),
+            (2, 12, 20, 12, 20),
         ),
         (
             [0.01] * 6
@@ -3035,15 +3125,15 @@ def test_water_budget(pr_series, evspsblpot_series):
             3,
             3,
             7,
-            (2, 18, 20),
+            (2, 18, 20, 10, 20),
         ),
-        ([3.01] * 358 + [0.99] * 14 + [3.01] * 358, 1, 14, 14, (0, 7, 7)),
+        ([3.01] * 358 + [0.99] * 14 + [3.01] * 358, 1, 14, 14, (0, 7, 7, 7, 7)),
     ],
 )
 def test_dry_spell(pr_series, pr, thresh1, thresh2, window, outs):
     pr = pr_series(np.array(pr), start="1981-01-01", units="mm/day")
 
-    out_events, out_total_d_sum, out_total_d_max = outs
+    out_events, out_total_d_sum, out_total_d_max, out_max_d_sum, out_max_d_max = outs
 
     events = xci.dry_spell_frequency(
         pr, thresh=f"{thresh1} mm", window=window, freq="YS"
@@ -3058,15 +3148,34 @@ def test_dry_spell(pr_series, pr, thresh1, thresh2, window, outs):
     total_d_max = xci.dry_spell_total_length(
         pr, thresh=f"{thresh1} mm", window=window, op="max", freq="YS"
     )
-
+    max_d_sum = xci.dry_spell_max_length(
+        pr,
+        thresh=f"{thresh2} mm",
+        window=window,
+        op="sum",
+        freq="YS",
+    )
+    max_d_max = xci.dry_spell_max_length(
+        pr, thresh=f"{thresh1} mm", window=window, op="max", freq="YS"
+    )
     np.testing.assert_allclose(events[0], [out_events], rtol=1e-1)
     np.testing.assert_allclose(total_d_sum[0], [out_total_d_sum], rtol=1e-1)
     np.testing.assert_allclose(total_d_max[0], [out_total_d_max], rtol=1e-1)
+    np.testing.assert_allclose(max_d_sum[0], [out_max_d_sum], rtol=1e-1)
+    np.testing.assert_allclose(max_d_max[0], [out_max_d_max], rtol=1e-1)
 
 
 def test_dry_spell_total_length_indexer(pr_series):
     pr = pr_series([1] * 5 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d")
     out = xci.dry_spell_total_length(
+        pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31")
+    )
+    np.testing.assert_allclose(out, [9] + [0] * 11)
+
+
+def test_dry_spell_max_length_indexer(pr_series):
+    pr = pr_series([1] * 5 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d")
+    out = xci.dry_spell_max_length(
         pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31")
     )
     np.testing.assert_allclose(out, [9] + [0] * 11)
@@ -3260,6 +3369,102 @@ class TestDrynessIndex:
             di, np.array([13.355, 102.426, 65.576, 158.078]), rtol=1e-03
         )
         np.testing.assert_allclose(di_wet, di_plus_100)
+
+
+@pytest.mark.parametrize(
+    "pr,thresh1,thresh2,window,outs",
+    [
+        (
+            [1.01] * 6
+            + [0.01] * 3
+            + [0.51] * 2
+            + [0.75] * 2
+            + [0.51]
+            + [0.01] * 3
+            + [1.01] * 3,
+            3,
+            3,
+            7,
+            (3, 0, 20, 0, 20),
+        ),
+        (
+            [0.01] * 6
+            + [1.01] * 3
+            + [0.51] * 2
+            + [0.75] * 2
+            + [0.51]
+            + [0.01] * 3
+            + [0.01] * 3,
+            3,
+            3,
+            7,
+            (1, 6, 20, 4, 20),
+        ),
+        ([3.01] * 358 + [0.99] * 14 + [3.01] * 358, 1, 14, 14, (1, 0, 0, 0, 0)),
+    ],
+)
+def test_wet_spell(pr_series, pr, thresh1, thresh2, window, outs):
+    pr = pr_series(np.array(pr), start="1981-01-01", units="mm/day")
+
+    out_events, out_total_d_sum, out_total_d_max, out_max_d_sum, out_max_d_max = outs
+
+    events = xci.wet_spell_frequency(
+        pr, thresh=f"{thresh1} mm", window=window, freq="YS"
+    )
+    total_d_sum = xci.wet_spell_total_length(
+        pr,
+        thresh=f"{thresh2} mm",
+        window=window,
+        op="sum",
+        freq="YS",
+    )
+    total_d_max = xci.wet_spell_total_length(
+        pr, thresh=f"{thresh1} mm", window=window, op="max", freq="YS"
+    )
+    max_d_sum = xci.wet_spell_max_length(
+        pr,
+        thresh=f"{thresh2} mm",
+        window=window,
+        op="sum",
+        freq="YS",
+    )
+    max_d_max = xci.wet_spell_max_length(
+        pr, thresh=f"{thresh1} mm", window=window, op="max", freq="YS"
+    )
+    np.testing.assert_allclose(events[0], [out_events], rtol=1e-1)
+    np.testing.assert_allclose(total_d_sum[0], [out_total_d_sum], rtol=1e-1)
+    np.testing.assert_allclose(total_d_max[0], [out_total_d_max], rtol=1e-1)
+    np.testing.assert_allclose(max_d_sum[0], [out_max_d_sum], rtol=1e-1)
+    np.testing.assert_allclose(max_d_max[0], [out_max_d_max], rtol=1e-1)
+
+
+def test_wet_spell_total_length_indexer(pr_series):
+    pr = pr_series([1] * 5 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d")
+    out = xci.wet_spell_total_length(
+        pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31")
+    )
+    np.testing.assert_allclose(out, [3] + [0] * 11)
+
+
+def test_wet_spell_max_length_indexer(pr_series):
+    pr = pr_series([1] * 5 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d")
+    out = xci.wet_spell_max_length(
+        pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31")
+    )
+    np.testing.assert_allclose(out, [3] + [0] * 11)
+
+
+def test_wet_spell_frequency_op(pr_series):
+    pr = pr_series(
+        np.array([10] + 5 * [0] + [10, 0.5, 0.5, 0.5, 10] + 5 * [0] + [10]),
+        units="mm/d",
+    )
+
+    test_sum = xci.wet_spell_frequency(pr, thresh="1 mm", window=3, freq="MS", op="sum")
+    test_max = xci.wet_spell_frequency(pr, thresh="1 mm", window=3, freq="MS", op="max")
+
+    np.testing.assert_allclose(test_sum[0], [3], rtol=1e-1)
+    np.testing.assert_allclose(test_max[0], [4], rtol=1e-1)
 
 
 class TestSfcWindMax:

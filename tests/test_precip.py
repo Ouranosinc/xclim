@@ -30,6 +30,32 @@ class TestRainOnFrozenGround:
         np.testing.assert_array_equal(out.sel(location="Montréal"), [np.nan, 4, 5, 3])
 
 
+class TestRainSeason:
+    # @pytest.mark.parametrize("chunks", [{"time": 366}, None])
+    def test_3d_data_with_nans(self, open_dataset):
+        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+
+        pr = ds.pr.isel(location=0).copy()
+        pr[{"time": [0, 10, 100]}] = np.nan
+        out = {}
+        out["start"], out["end"], out["length"] = atmos.rain_season(
+            pr,
+            freq="AS-JAN",
+            window_dry_end=5,
+            date_min_start="01-01",
+            date_min_end="01-01",
+        )
+        out_arr = np.array([out[var].values for var in ["start", "end", "length"]])
+        out_exp = np.array(
+            [
+                [np.nan, 12.0, 6.0, 27.0],
+                [np.nan, np.nan, 141.0, np.nan],
+                [np.nan, 354.0, 135.0, 339.0],
+            ]
+        )
+        np.testing.assert_array_equal(out_arr, out_exp)
+
+
 class TestPrecipAccumulation:
     nc_pr = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
     nc_tasmin = Path("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")
@@ -619,13 +645,22 @@ def test_dry_spell(atmosds):
     total_d_max = atmos.dry_spell_total_length(
         pr, thresh="3 mm", window=7, op="max", freq="YS"
     )
-
+    max_d_sum = atmos.dry_spell_max_length(
+        pr, thresh="3 mm", window=7, op="sum", freq="YS"
+    )
+    max_d_max = atmos.dry_spell_max_length(
+        pr, thresh="3 mm", window=7, op="max", freq="YS"
+    )
     total_d_sum = total_d_sum.sel(location="Halifax", drop=True).isel(time=slice(0, 2))
     total_d_max = total_d_max.sel(location="Halifax", drop=True).isel(time=slice(0, 2))
+    max_d_sum = max_d_sum.sel(location="Halifax", drop=True).isel(time=slice(0, 2))
+    max_d_max = max_d_max.sel(location="Halifax", drop=True).isel(time=slice(0, 2))
 
     np.testing.assert_allclose(events[0:2, 0], [5, 7], rtol=1e-1)
     np.testing.assert_allclose(total_d_sum, [50, 53], rtol=1e-1)
     np.testing.assert_allclose(total_d_max, [68, 97], rtol=1e-1)
+    np.testing.assert_allclose(max_d_sum, [14, 10], rtol=1e-1)
+    np.testing.assert_allclose(max_d_max, [14, 14], rtol=1e-1)
 
     assert (
         "The annual number of dry periods of 7 day(s) or more, "
@@ -639,6 +674,14 @@ def test_dry_spell(atmosds):
         "The annual number of days in dry periods of 7 day(s) or more"
         in total_d_max.description
     )
+    assert (
+        "The maximum annual number of consecutive days in a dry period of 7 day(s) or more"
+        in max_d_sum.description
+    )
+    assert (
+        "The maximum annual number of consecutive days in a dry period of 7 day(s) or more"
+        in max_d_max.description
+    )
 
 
 def test_dry_spell_total_length_indexer(pr_series):
@@ -646,6 +689,25 @@ def test_dry_spell_total_length_indexer(pr_series):
         [np.NaN] + [1] * 4 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d"
     )
     out = atmos.dry_spell_total_length(
+        pr,
+        window=7,
+        op="sum",
+        thresh="3 mm",
+        freq="MS",
+    )
+    np.testing.assert_allclose(out, [np.NaN] + [0] * 11)
+
+    out = atmos.dry_spell_total_length(
+        pr, window=7, op="sum", thresh="3 mm", freq="MS", date_bounds=("01-10", "12-31")
+    )
+    np.testing.assert_allclose(out, [9] + [0] * 11)
+
+
+def test_dry_spell_max_length_indexer(pr_series):
+    pr = pr_series(
+        [np.NaN] + [1] * 4 + [0] * 10 + [1] * 350, start="1900-01-01", units="mm/d"
+    )
+    out = atmos.dry_spell_max_length(
         pr,
         window=7,
         op="sum",
