@@ -2982,7 +2982,9 @@ class TestPotentialEvapotranspiration:
         tx = tasmax_series(np.array([10, 15, 20]) + 273.15).expand_dims(lat=lat)
 
         out = xci.potential_evapotranspiration(tn, tx, lat=lat, method="BR65")
-        np.testing.assert_allclose(out[0, 2], [3.861079 / 86400], rtol=1e-2)
+        np.testing.assert_allclose(
+            out.isel(lat=0, time=2), [3.861079 / 86400], rtol=1e-2
+        )
 
     def test_hargreaves(self, tasmin_series, tasmax_series, tas_series, lat_series):
         lat = lat_series([45])
@@ -2991,7 +2993,9 @@ class TestPotentialEvapotranspiration:
         tm = tas_series(np.array([5, 10, 15]) + 273.15).expand_dims(lat=lat)
 
         out = xci.potential_evapotranspiration(tn, tx, tm, lat=lat, method="HG85")
-        np.testing.assert_allclose(out[2], [3.962589 / 86400], rtol=1e-2)
+        np.testing.assert_allclose(
+            out.isel(lat=0, time=2), [3.962589 / 86400], rtol=1e-2
+        )
 
     def test_thornthwaite(self, tas_series, lat_series):
         lat = lat_series([45])
@@ -3007,7 +3011,9 @@ class TestPotentialEvapotranspiration:
 
         # find lat implicitly
         out = xci.potential_evapotranspiration(tas=tm, method="TW48")
-        np.testing.assert_allclose(out[0, 1], [42.7619242 / (86400 * 30)], rtol=1e-1)
+        np.testing.assert_allclose(
+            out.isel(lat=0, time=1), [42.7619242 / (86400 * 30)], rtol=1e-1
+        )
 
     def test_mcguinnessbordne(self, tasmin_series, tasmax_series, lat_series):
         lat = lat_series([45])
@@ -3015,7 +3021,9 @@ class TestPotentialEvapotranspiration:
         tx = tasmax_series(np.array([10, 15, 20]) + 273.15).expand_dims(lat=lat)
 
         out = xci.potential_evapotranspiration(tn, tx, lat=lat, method="MB05")
-        np.testing.assert_allclose(out[2], [2.78253138816 / 86400], rtol=1e-2)
+        np.testing.assert_allclose(
+            out.isel(lat=0, time=2), [2.78253138816 / 86400], rtol=1e-2
+        )
 
     def test_allen(
         self,
@@ -3053,7 +3061,9 @@ class TestPotentialEvapotranspiration:
             sfcWind=sfcWind,
             method="FAO_PM98",
         )
-        np.testing.assert_allclose(out[0, 2], [1.208832768 / 86400], rtol=1e-2)
+        np.testing.assert_allclose(
+            out.isel(lat=0, time=2), [1.208832768 / 86400], rtol=1e-2
+        )
 
 
 def test_water_budget_from_tas(pr_series, tasmin_series, tasmax_series, lat_series):
@@ -3085,7 +3095,7 @@ def test_water_budget_from_tas(pr_series, tasmin_series, tasmax_series, lat_seri
 
     # find lat implicitly
     out = xci.water_budget(prm, tas=tm, method="TW48")
-    np.testing.assert_allclose(out[1, 0], [8.5746025 / 86400], rtol=2e-1)
+    np.testing.assert_allclose(out.isel(lat=0, time=1), [8.5746025 / 86400], rtol=2e-1)
 
 
 def test_water_budget(pr_series, evspsblpot_series):
