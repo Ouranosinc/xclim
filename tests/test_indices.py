@@ -3319,7 +3319,7 @@ def test_universal_thermal_climate_index(
 
 
 @pytest.mark.parametrize(
-    "stat,expected", [("sunlit", np.nan), ("instant", 295.3), ("average", 295.1)]
+    "stat,expected", [("sunlit", 295.0), ("instant", 294.9), ("average", 295.1)]
 )
 def test_mean_radiant_temperature(
     rsds_series,

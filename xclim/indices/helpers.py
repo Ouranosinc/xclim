@@ -10,6 +10,7 @@ from inspect import stack
 
 import cf_xarray  # noqa: F401, pylint: disable=unused-import
 import cftime
+import numba as nb
 import numpy as np
 import xarray as xr
 
@@ -23,7 +24,8 @@ from xclim.core.utils import Quantified
 
 
 def _wrap_radians(da):
-    return ((da + np.pi) % (2 * np.pi)) - np.pi
+    with xr.set_options(keep_attrs=True):
+        return ((da + np.pi) % (2 * np.pi)) - np.pi
 
 
 def distance_from_sun(dates: xr.DataArray) -> xr.DataArray:
@@ -114,7 +116,7 @@ def solar_declination(time: xr.DataArray, method="spencer") -> xr.DataArray:
         raise NotImplementedError(
             f"Method {method} must be one of 'simple' or 'spencer'"
         )
-    return _wrap_radians(sd)
+    return _wrap_radians(sd).assign_attrs(units="rad").rename("declination")
 
 
 def time_correction_for_solar_angle(time: xr.DataArray) -> xr.DataArray:
@@ -210,6 +212,7 @@ def cosine_of_solar_zenith_angle(
     time: xr.DataArray
         The UTC time. If not daily and `stat` is "integral" or "average", the timestamp is taken as the start of interval.
         If daily, the interval is assumed to be centered on Noon.
+        If fewer than three timesteps are given, a daily frequency is assumed.
     declination : xr.DataArray
         Solar declination. See :py:func:`solar_declination`.
     lat : Quantified
@@ -245,23 +248,26 @@ def cosine_of_solar_zenith_angle(
     """
     declination = convert_units_to(declination, "rad")
     lat = _wrap_radians(convert_units_to(lat, "rad"))
-    lon = _wrap_radians(convert_units_to(lon, "rad"))
+    lon = convert_units_to(lon, "rad")
+    S_IN_D = 24 * 3600
 
-    if xr.infer_freq(time) == "D":
+    if len(time) < 3 or xr.infer_freq(time) == "D":
         h_s = -np.pi if stat != "instant" else 0
-        h_e = np.pi
+        h_e = np.pi - 1e-9  # just below pi
     else:
         if time.dtype == "O":  # cftime
             time_as_s = time.copy(data=xr.CFTimeIndex(time.values).asi8 / 1e6)
         else:  # numpy
             time_as_s = time.copy(data=time.astype(float) / 1e9)
-        h_s = _wrap_radians(
-            ((time_as_s % (3600 * 24)) / (3600 * 24)) * 2 * np.pi + lon
-        ).assign_attrs(units="rad")
-        interval = (time.diff("time").dt.seconds / 3600).reindex(
-            time=time, method="bfill"
+        h_s_utc = (((time_as_s % S_IN_D) / S_IN_D) * 2 * np.pi + np.pi).assign_attrs(
+            units="rad"
         )
-        h_e = h_s + interval
+        h_s = h_s_utc + lon
+
+        interval_as_s = time.diff("time").dt.seconds.reindex(
+            time=time.time, method="bfill"
+        )
+        h_e = h_s + 2 * np.pi * interval_as_s / S_IN_D
 
     if stat == "instant":
         h_s = h_s + time_correction
@@ -278,33 +284,39 @@ def cosine_of_solar_zenith_angle(
         tantan = -np.tan(lat) * np.tan(declination)
         h_ss = np.arccos(tantan.where(abs(tantan) <= 1))
     else:
-        h_ss = np.pi
+        # Whole period, so we put sunset at midnight
+        h_ss = np.pi - 1e-9
 
     return xr.apply_ufunc(
         _sunlit_integral_of_cosine_of_solar_zenith_angle,
         declination,
         lat,
-        h_ss,
-        h_s,
-        h_e,
+        _wrap_radians(h_ss),
+        _wrap_radians(h_s),
+        _wrap_radians(h_e),
+        stat == "average",
         input_core_dims=[[]] * 6,
         dask="parallel",
-        kwargs={"average": (stat == "average")},
-        vectorize=True,
     )
 
 
+@nb.vectorize
 def _sunlit_integral_of_cosine_of_solar_zenith_angle(
-    declination, lat, h_sunset, h_start, h_end, average=True
+    declination, lat, h_sunset, h_start, h_end, average
 ):
     """Integral of the cosine of the the solar zenith angle over the sunlit part of the interval."""
+    # Code inspired by PyWBGT
     h_sunrise = -h_sunset
     # Polar day
-    if np.isnan(h_sunset) & (declination * lat) > 0:
+    if np.isnan(h_sunset) & ((declination * lat) > 0):
         num = np.sin(h_end) - np.sin(h_start)
-        denum = h_end - h_start
+        # Polar day with interval crossing midnight
+        if h_end < h_start:
+            denum = h_end + 2 * np.pi - h_start
+        else:
+            denum = h_end - h_start
     # Polar night:
-    elif np.isnan(h_sunset) & (declination * lat) < 0:
+    elif np.isnan(h_sunset) & ((declination * lat) < 0):
         return 0
     # No sunlit interval (at night) 1) crossing midnight and 2) between 0h and sunrise 3) between sunset and 0h
     elif (
@@ -314,15 +326,15 @@ def _sunlit_integral_of_cosine_of_solar_zenith_angle(
     ):
         return 0
     # Interval crossing midnight, starting after sunset (before midnight), finishing after sunrise
-    elif h_end < h_start and h_start > h_sunset and h_end > h_sunrise:
+    elif h_end < h_start and h_start >= h_sunset and h_end >= h_sunrise:
         num = np.sin(h_end) - np.sin(h_sunrise)
         denum = h_end - h_sunrise
     # Interval crossing midnight, starting after sunrise, finishing after sunset (after midnight)
-    elif h_end < h_start and h_start > h_sunrise and h_end < h_sunrise:
+    elif h_end < h_start and h_start >= h_sunrise and h_end <= h_sunrise:
         num = np.sin(h_sunset) - np.sin(h_start)
         denum = h_sunset - h_start
     # Interval crossing midnight, starting before sunset, finsing after sunrise (2 sunlit parts)
-    elif h_end < h_start and h_start < h_sunset and h_end > h_sunrise:
+    elif h_end < h_start and h_start <= h_sunset and h_end >= h_sunrise:
         num = np.sin(h_sunset) - np.sin(h_start) + np.sin(h_end) - np.sin(h_sunrise)
         denum = h_sunset - h_start + h_end - h_sunrise
     # All other cases : interval not crossing midnight, overlapping with the sunlit part
@@ -331,14 +343,13 @@ def _sunlit_integral_of_cosine_of_solar_zenith_angle(
         h2 = min(h_sunset, h_end)
         num = np.sin(h2) - np.sin(h1)
         denum = h2 - h1
-    if average:
-        time_term = num / denum
-    else:
-        time_term = num
-    return (
-        np.sin(declination) * np.sin(lat)
-        + np.cos(declination) * np.cos(lat) * time_term
+    out = (
+        np.sin(declination) * np.sin(lat) * denum
+        + np.cos(declination) * np.cos(lat) * num
     )
+    if average:
+        out = out / denum
+    return out
 
 
 def extraterrestrial_solar_radiation(
@@ -380,7 +391,7 @@ def extraterrestrial_solar_radiation(
     return (
         gsc
         * rad_to_day
-        * cosine_of_solar_zenith_angle(times, ds, lat, stat="integral")
+        * cosine_of_solar_zenith_angle(times, ds, lat, stat="integral", sunlit=True)
         * dr
     ).assign_attrs(units="J m-2 d-1")
 

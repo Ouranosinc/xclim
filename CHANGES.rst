@@ -34,6 +34,7 @@ Bug fixes
 * Fixed a bug in ``xclim.core.calendar.time_bnds`` when using ``DataArrayResample`` objects, caused by an upstream change in xarray 2023.5.0. (:issue:`1368`, :pull:`1377`).
 * `ensembles.change_significance` will returns NaNs when the input values are all NaNs, instead of failing. (:issue:`1379`, :pull:`1380`).
 * Accelerated import of xclim by caching the compilation of `guvectorize` functions. (:pull:`1378`).
+* Fixed many issues with ``xclim.indices.helpers.cosine_of_solar_zenith_angle``.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
