@@ -379,7 +379,10 @@ def extraterrestrial_solar_radiation(
     gsc = convert_units_to(solar_constant, "J m-2 d-1")
     rad_to_day = 1 / (2 * np.pi)  # convert radians of the "day circle" to day
     return (
-        gsc * rad_to_day * cosine_of_solar_zenith_angle(ds, lat, stat="integral") * dr
+        gsc
+        * rad_to_day
+        * cosine_of_solar_zenith_angle(times, ds, lat, stat="integral")
+        * dr
     ).assign_attrs(units="J m-2 d-1")
 
 

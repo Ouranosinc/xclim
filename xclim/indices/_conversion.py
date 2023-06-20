@@ -1737,25 +1737,21 @@ def mean_radiant_temperature(
 
     if stat == "sunlit":
         csza_i = cosine_of_solar_zenith_angle(
-            declination=dec, lat=lat, lon=lon, stat="average", sunlit=False
+            dates, dec, lat, lon=lon, stat="average", sunlit=False
         )
         csza_s = cosine_of_solar_zenith_angle(
-            declination=dec, lat=lat, lon=lon, stat="average", sunlit=True
+            dates, dec, lat, lon=lon, stat="average", sunlit=True
         )
     elif stat == "instant":
         tc = time_correction_for_solar_angle(dates)
         csza = cosine_of_solar_zenith_angle(
-            declination=dec,
-            lat=lat,
-            lon=lon,
-            time_correction=tc,
-            stat="instant",
+            dates, dec, lat, lon=lon, time_correction=tc, stat="instant"
         )
         csza_i = csza.copy()
         csza_s = csza.copy()
     elif stat == "average":
         csza = cosine_of_solar_zenith_angle(
-            declination=dec, lat=lat, stat="average", sunlit=False
+            dates, dec, lat, stat="average", sunlit=False
         )
         csza_i = csza.copy()
         csza_s = csza.copy()
