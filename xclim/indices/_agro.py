@@ -21,7 +21,7 @@ from xclim.indices._threshold import (
     first_day_temperature_above,
     first_day_temperature_below,
 )
-from xclim.indices.generic import aggregate_between_dates
+from xclim.indices.generic import aggregate_between_dates, get_zones
 from xclim.indices.helpers import _gather_lat, day_lengths
 from xclim.indices.stats import dist_method, fit
 
@@ -1457,37 +1457,14 @@ def hardiness_zones(
     tnmin = tasmin.resample(time=freq).min().rolling(time=window).mean()
 
     if method.lower() == "usda":
-        # Bins in [-65,65] degF with steps of 5 degF
-        b0, b1 = convert_units_to("-65 degF", tnmin), convert_units_to("65 degF", tnmin)
-        bins = np.append(
-            np.insert(np.linspace(b0, b1, int(1 + (2 * 65) / 5)), 0, -np.inf), np.inf
-        )
-
-        def _zones(arr, bs):
-            c = np.digitize(arr, bs).astype(float)
-            c[c == 0] = np.nan
-            c[c == bs.size] = np.nan
-            return (c - 1) / 2
+        zones = get_zones(tnmin, "-60 degF", "70 degF", "5 degF")
 
     elif method.lower() == "anbg":
-        # Bins in [-15,20] degC with steps of 5 degC
-        b0, b1 = convert_units_to("-15 degC", tnmin), convert_units_to("20 degC", tnmin)
-        bins = np.append(
-            np.insert(np.linspace(b0, b1, int(1 + (20 + 15) / 5)), 0, -np.inf), np.inf
-        )
-
-        def _zones(arr, bs):
-            c = np.digitize(arr, bs).astype(float)
-            c[c == 0] = np.nan
-            c[c == bs.size] = np.nan
-            return c
+        zones = get_zones(tnmin, "-15 degC", "20 degC", "5 degC")
 
     else:
         raise NotImplementedError(
             f"Method must be one of `usda` or `anbg`. Got {method}."
         )
 
-    zones = xarray.apply_ufunc(_zones, tnmin, dask="parallelized", kwargs=dict(bs=bins))
-
-    zones.attrs["units"] = ""
     return zones

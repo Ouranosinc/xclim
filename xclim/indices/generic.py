@@ -47,6 +47,7 @@ __all__ = [
     "first_occurrence",
     "get_daily_events",
     "get_op",
+    "get_zones",
     "interday_diurnal_temperature_range",
     "last_occurrence",
     "select_resample_op",
@@ -897,3 +898,54 @@ def first_day_threshold_reached(
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(data))
     return out
+
+
+def get_zones(
+    da: xr.DataArray,
+    zone_min: Quantified,
+    zone_max: Quantified,
+    step_size: Quantified,
+    first_zone: Quantified | None = None,
+    exclude_boundary_zones: bool = True,
+) -> xr.DataArray:
+    r"""Divide data into zones and attribute a zone coordinate to each input value.
+
+    Divide values into zones corresponding to bins of width step_size beginning at zone_min and ending at zone_max.
+    Bins are inclusive on the left values and exclusive on the right values.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+        Input data
+    zone_min : Quantified
+        Left (closed) boundary of the first zone
+    zone_max : Quantified
+        Right (open) boundary of the last zone
+    step_size: Quantified
+        Size of bins
+    first_zone : Quantified
+        Left boundary of the zone labelled as "zone 1"
+    allow_boundary_zones : Bool
+        Determines whether a zone value is attributed for values in ]-np.inf, zone_min[ and [zone_max, np.inf[.
+    """
+    first_zone = first_zone or zone_min
+    zone_next = f"{str2pint(zone_min).magnitude + str2pint(step_size).magnitude}  {pint2cfunits(str2pint(zone_min))}"
+    mn, mn_next, mx, fz = (
+        convert_units_to(v, da) for v in [zone_min, zone_next, zone_max, first_zone]
+    )
+    step = mn_next - mn
+    bins = np.linspace(mn, mx, int(1 + (mx - mn) / step))
+
+    first_zone_index = np.digitize(fz, bins)
+
+    def _get_zone(da):
+        return np.digitize(da, bins) - first_zone_index + 1
+
+    zones = xr.apply_ufunc(_get_zone, da, dask="parallelized")
+
+    if exclude_boundary_zones:
+        zones = zones.where((zones != _get_zone(mn - step)) & (zones != _get_zone(mx)))
+    zones.attrs["units"] = ""
+    return zones
+
+    # return da.assign_coords({"zone":zone_coords})
