@@ -3382,7 +3382,7 @@ class TestDrynessIndex:
         (-47, "anbg", np.NaN),
     ],
     # There are 26 USDA zones: 1a -> 1, 1b -> 2, ... 13b -> 26
-    # There are 7 angb zones
+    # There are 7 angb zones: 1,2, ..., 7
 )
 def test_hardiness_zones(tasmin_series, tmin, meth, zone):
     tasmin = tasmin_series(
