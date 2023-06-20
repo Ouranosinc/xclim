@@ -28,6 +28,7 @@ New features and enhancements
 * New variables: Snowfall rate ``prsnd`` and surface maximum wind speed ``sfcWindmax``. (:issue:`1352`, :pull:`1358`).
 * Docstring for `freq` links to pandas offset aliases documentation. (:issue:`1310`, :pull:`1392`).
 * New function ``xclim.indces.run_length.extract_events`` for determining runs whose starting and stopping points are defined through run length conditions. (:pull:`1256`).
+* Stats functions `frequency_analysis` now takes `method` parameter to select other fitting methods such as PWM or MOM. (:issue:`1168`, :pull:`1398`)
 
 Bug fixes
 ^^^^^^^^^
@@ -49,7 +50,7 @@ Internal changes
 * Two new GitHub CI Actions have been added to the existing Workflows (:pull:`1390`):
     * `actions/add-to-project`: Automatically adds issues to the `xclim` project.
     * `saadmk11/github-actions-version-updater`: Updates GitHub Action versions in all Workflows (triggered monthly).
-
+* Added `method` parameter to `frequency_analysis` and `fa`. (:issue:`1168`, :pull:`1398`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
