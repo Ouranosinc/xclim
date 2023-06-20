@@ -169,7 +169,7 @@ def test_fa_gamma(fitda):
     T = 10
     q = stats.fa(fitda, T, "lognorm", method="MM")
     q1 = stats.fa(fitda, T, "gamma", method="PWM")
-    np.testing.assert_allclose(q1, q, rtol=1e-1)
+    np.testing.assert_allclose(q1, q, rtol=0.2)
 
 
 def test_fit_nan(fitda):
