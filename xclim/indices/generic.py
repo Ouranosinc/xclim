@@ -925,17 +925,32 @@ def get_zones(
     step_size: Quantified
         Size of zones
     zone_1 : Quantified
-        Left boundary of the zone labelled as "zone 1"
+        Left boundary of the zone labelled as "zone 1". It should be in the range [`zone_min`, `zone_max` [.
     allow_boundary_zones : Bool
         Determines whether a zone value is attributed for values in ]-np.inf, zone_min[ and [zone_max, np.inf[.
     close_last_zone_right_boundary : Bool
         Determines if the right boundary of the last zone is closed.
     """
-    zone_1 = zone_1 or zone_min
-    zone_next = f"{str2pint(zone_min).magnitude + str2pint(step_size).magnitude}  {pint2cfunits(str2pint(zone_min))}"
-    mn, mn_next, mx, z1 = (
-        convert_units_to(v, da) for v in [zone_min, zone_next, zone_max, zone_1]
+    zone1 = zone_1 or zone_min
+
+    mn_p, mx_p, step_p, z1_p = (
+        str2pint(v) for v in [zone_min, zone_max, step_size, zone1]
     )
+    units = [pint2cfunits(p) for p in [mn_p, mx_p, step_p, z1_p]]
+    if len(set(units)) != 1:
+        msg = f"Got different units among `zone_min` ({units[0]}), `zone_max` ({units[1]}), `step_size` ({units[2]})"
+        warnings.warn(msg + (f", `zone_1 ({units[3]})`." if zone_1 else "."))
+
+    zone_next = f"{mn_p.magnitude + step_p.magnitude}  {pint2cfunits(mn_p)}"
+    mn, mn_next, mx, z1 = (
+        convert_units_to(v, da) for v in [zone_min, zone_next, zone_max, zone1]
+    )
+    if z1 >= mx or z1 < mn:
+        raise ValueError(
+            "`zone_1` must be in the range [`zone_min`, `zone_max`[."
+            f"Got `zone_1` = {zone1}, `zone_max` = {zone_max}, `zone_min` = {zone_max}."
+        )
+
     step = mn_next - mn
     bins = np.linspace(mn, mx, int(1 + (mx - mn) / step))
 
