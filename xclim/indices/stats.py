@@ -112,6 +112,7 @@ def fit(
     Coordinates for which all values are NaNs will be dropped before fitting the distribution. If the array still
     contains NaNs, the distribution parameters will be returned as NaNs.
     """
+    method = method.upper()
     method_name = {
         "ML": "maximum likelihood",
         "MM": "method of moments",
