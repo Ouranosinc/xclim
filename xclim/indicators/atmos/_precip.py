@@ -47,6 +47,7 @@ __all__ = [
     "precip_accumulation",
     "precip_average",
     "rain_on_frozen_ground_days",
+    "rain_season",
     "rprctot",
     "snowfall_frequency",
     "snowfall_intensity",
@@ -750,4 +751,31 @@ cold_and_wet_days = PrecipWithIndexing(
     abstract="Number of days with temperature below a given percentile and precipitation above a given percentile.",
     cell_methods="time: sum over days",
     compute=indices.cold_and_wet_days,
+)
+
+rain_season = Precip(
+    title="Rain season",
+    identifier="rain_season",
+    realm="atmos",
+    var_name=["rain_season_start", "rain_season_end", "rain_season_length"],
+    long_name=[
+        "Start of the rain season",
+        "End of the rain season",
+        "Length of the rain season",
+    ],
+    description=[
+        "First step of a run where i) a sequence of {window_wet_start} days accumulated {thresh_wet_start} "
+        "of precipitations ii) followed by a sequence of {window_not_dry_start} days with no dry sequence, i.e. a sequence of {window_dry_start} days "
+        "with at least {thresh_dry_start} {method_dry_start}. The start of the season is on the last day of the first sequence i) and must be "
+        "between {date_min_start} and {date_max_start}.",
+        "Last day in a dry sequence after the start of the season, i.e.  a sequence of {window_dry_end} days "
+        "with at least {thresh_dry_end} {method_dry_end}. It must be between {date_min_end} and {date_max_end}. ",
+        "Number of steps of the original series in the season, between 'start' and 'end'.",
+    ],
+    units=["", "", "days"],
+    abstract="Start time, end time and length of the rain season, notably useful for West Africa (sivakumar, 1998). The rain season starts with "
+    "a period of abundant rainfall, followed by a period without prolonged dry sequences, which must happen before a given date. "
+    "The rain season stops during a dry period happening after a given date",
+    cell_methods="",
+    compute=indices.rain_season,
 )

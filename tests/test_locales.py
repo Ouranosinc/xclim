@@ -149,7 +149,6 @@ def test_xclim_translations(locale, official_indicators):
 
         if not is_complete:
             incomplete.append(indname)
-
     if len(untranslated) > 0 or len(incomplete) > 0:
         pytest.fail(
             f"{len(untranslated)} indicator(s) are missing translations"

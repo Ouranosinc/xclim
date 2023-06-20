@@ -30,6 +30,32 @@ class TestRainOnFrozenGround:
         np.testing.assert_array_equal(out.sel(location="Montréal"), [np.nan, 4, 5, 3])
 
 
+class TestRainSeason:
+    # @pytest.mark.parametrize("chunks", [{"time": 366}, None])
+    def test_3d_data_with_nans(self, open_dataset):
+        ds = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc")
+
+        pr = ds.pr.isel(location=0).copy()
+        pr[{"time": [0, 10, 100]}] = np.nan
+        out = {}
+        out["start"], out["end"], out["length"] = atmos.rain_season(
+            pr,
+            freq="AS-JAN",
+            window_dry_end=5,
+            date_min_start="01-01",
+            date_min_end="01-01",
+        )
+        out_arr = np.array([out[var].values for var in ["start", "end", "length"]])
+        out_exp = np.array(
+            [
+                [np.nan, 12.0, 6.0, 27.0],
+                [np.nan, np.nan, 141.0, np.nan],
+                [np.nan, 354.0, 135.0, 339.0],
+            ]
+        )
+        np.testing.assert_array_equal(out_arr, out_exp)
+
+
 class TestPrecipAccumulation:
     nc_pr = Path("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
     nc_tasmin = Path("NRCANdaily", "nrcan_canada_daily_tasmin_1990.nc")

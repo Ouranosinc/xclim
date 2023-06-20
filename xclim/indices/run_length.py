@@ -120,6 +120,7 @@ def resample_and_rl(
 def _cumsum_reset_on_zero(
     da: xr.DataArray,
     dim: str = "time",
+    index: str = "last",
 ) -> xr.DataArray:
     """Compute the cumulative sum for each series of numbers separated by zero.
 
@@ -129,22 +130,32 @@ def _cumsum_reset_on_zero(
         Input array.
     dim : str
         Dimension name along which the cumulative sum is taken.
+    index : {'first', 'last'}
+        If 'first', the largest value of the cumulative sum is indexed with the first element in the run.
+        If 'last'(default), with the last element in the run.
 
     Returns
     -------
     xr.DataArray
-        An array with the partial cumulative sums.
+        An array with cumulative sums.
     """
+    if index == "first":
+        da = da[{dim: slice(None, None, -1)}]
+
     # Example: da == 100110111 -> cs_s == 100120123
     cs = da.cumsum(dim=dim)  # cumulative sum  e.g. 111233456
-
     cs2 = cs.where(da == 0)  # keep only numbers at positions of zeroes e.g. N11NN3NNN
     cs2[{dim: 0}] = 0  # put a zero in front e.g. 011NN3NNN
     cs2 = cs2.ffill(dim=dim)  # e.g. 011113333
+    out = cs - cs2
 
-    return cs - cs2
+    if index == "first":
+        out = out[{dim: slice(None, None, -1)}]
+
+    return out
 
 
+# TODO: Check if rle would be more performant with ffill/bfill instead of two times [{dim: slice(None, None, -1)}]
 def rle(
     da: xr.DataArray,
     dim: str = "time",
@@ -694,6 +705,52 @@ def keep_longest_run(
         out = get_out(rls)
 
     return da.copy(data=out.transpose(*da.dims).data)
+
+
+def extract_events(
+    da_start: xr.DataArray,
+    window_start: int,
+    da_stop: xr.DataArray,
+    window_stop: int,
+    dim: str = "time",
+) -> xr.DataArray:
+    """Extract events, i.e. runs whose starting and stopping points are defined through run length conditions.
+
+    Parameters
+    ----------
+    da_start : xr.DataArray
+        Input array where run sequences are searched to define the start points in the main runs
+    window_start: int,
+        Number of True (1) values needed to start a run in `da_start`
+    da_stop : xr.DataArray
+        Input array where run sequences are searched to define the stop points in the main runs
+    window_stop: int,
+        Number of True (1) values needed to start a run in `da_stop`
+    dim : str
+        Dimension name.
+
+    Returns
+    -------
+    xr.DataArray
+        Output array with 1's when in a run sequence and with 0's elsewhere.
+
+    Notes
+    -----
+    A season (as defined in ``season``) could be considered as an event with  `window_stop == window_start` and `da_stop == 1 - da_start`,
+    although it has more constraints on when to start and stop a run through the `date` argument.
+    """
+    da_start = da_start.astype(int).fillna(0)
+    da_stop = da_stop.astype(int).fillna(0)
+
+    start_runs = _cumsum_reset_on_zero(da_start, dim=dim, index="first")
+    stop_runs = _cumsum_reset_on_zero(da_stop, dim=dim, index="first")
+    start_positions = xr.where(start_runs >= window_start, 1, np.NaN)
+    stop_positions = xr.where(stop_runs >= window_stop, 0, np.NaN)
+
+    # start positions (1) are f-filled until a stop position (0) is met
+    runs = stop_positions.combine_first(start_positions).ffill(dim=dim).fillna(0)
+
+    return runs
 
 
 def season(

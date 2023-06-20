@@ -2720,6 +2720,45 @@ class TestSnowCover:
         assert out.attrs["is_dayofyear"] == 1
 
 
+@pytest.mark.parametrize(
+    "result_type",
+    ["season_found", "start_cond1_fails", "start_cond2_fails", "end_cond_fails"],
+)
+@pytest.mark.parametrize(
+    "method_dry_start",
+    ["per_day", "total"],
+)
+def test_rain_season(pr_series, result_type, method_dry_start):
+    pr = pr_series(np.arange(365) * np.NaN, start="2000-01-01", units="mm/d")
+    # input values in mm (amount): a correcting factor is used below
+    pr[{"time": slice(0, 0 + 3)}] = 10  # to satisfy cond1_start
+    pr[{"time": slice(3, 3 + 30)}] = 5  # to satisfy cond2_start
+    pr[{"time": slice(99, 99 + 20)}] = 0  # to satisfy cond_end
+    if result_type == "season_found":
+        out_exp = [3, 100, 97]
+    elif result_type == "start_cond1_fails":
+        pr[{"time": 2}] = 0
+        out_exp = [np.NaN, np.NaN, np.NaN]
+    elif result_type == "start_cond2_fails":
+        pr[{"time": slice(10, 10 + 7)}] = 0
+        out_exp = [np.NaN, np.NaN, np.NaN]
+    elif result_type == "end_cond_fails":
+        pr[{"time": 99 + 20 - 1}] = 5
+        out_exp = [3, np.NaN, 363]
+
+    out = {}
+    out["start"], out["end"], out["length"] = xci.rain_season(
+        pr,
+        date_min_start="01-01",
+        date_min_end="01-01",
+        method_dry_start=method_dry_start,
+    )
+    out_arr = np.array(
+        [out[var].values for var in ["start", "end", "length"]]
+    ).flatten()
+    np.testing.assert_array_equal(out_arr, out_exp)
+
+
 def test_high_precip_low_temp(pr_series, tasmin_series):
     pr = pr_series([0, 1, 2, 0, 0])
     tas = tasmin_series(np.array([0, 0, 1, 1]) + K2C)
