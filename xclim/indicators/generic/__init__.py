@@ -1,6 +1,5 @@
-# noqa: D205,D400
 """
-Generic indicators
+Generic Indicators
 ==================
 """
 from __future__ import annotations

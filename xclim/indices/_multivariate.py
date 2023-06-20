@@ -31,12 +31,9 @@ from .generic import compare, select_resample_op, threshold_count
 
 __all__ = [
     "blowing_snow",
-    "cold_spell_duration_index",
     "cold_and_dry_days",
-    "warm_and_dry_days",
-    "warm_and_wet_days",
     "cold_and_wet_days",
-    "multiday_temperature_swing",
+    "cold_spell_duration_index",
     "daily_temperature_range",
     "daily_temperature_range_variability",
     "days_over_precip_thresh",
@@ -47,15 +44,19 @@ __all__ = [
     "heat_wave_total_length",
     "high_precip_low_temp",
     "liquid_precip_ratio",
+    "multiday_temperature_swing",
     "precip_accumulation",
+    "precip_average",
     "rain_on_frozen_ground_days",
-    "tg90p",
     "tg10p",
-    "tn90p",
+    "tg90p",
     "tn10p",
-    "tx90p",
+    "tn90p",
     "tx10p",
+    "tx90p",
     "tx_tn_days_above",
+    "warm_and_dry_days",
+    "warm_and_wet_days",
     "warm_spell_duration_index",
     "winter_rain_ratio",
 ]
@@ -420,7 +421,7 @@ def multiday_temperature_swing(
     op_tasmax: str = ">",
     freq: str = "YS",
     resample_before_rl: bool = True,
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     r"""Statistics of consecutive diurnal temperature swing events.
 
     A diurnal swing of max and min temperature event is when Tmax > thresh_tasmax and Tmin <= thresh_tasmin. This indice
@@ -973,6 +974,68 @@ def precip_accumulation(
     return pram.resample(time=freq).sum(dim="time").assign_attrs(units=pram.units)
 
 
+@declare_units(pr="[precipitation]", tas="[temperature]", thresh="[temperature]")
+def precip_average(
+    pr: xarray.DataArray,
+    tas: xarray.DataArray = None,
+    phase: str | None = None,
+    thresh: Quantified = "0 degC",
+    freq: str = "YS",
+) -> xarray.DataArray:
+    r"""Averaged (liquid and/or solid) precipitation.
+
+    Resample the original daily mean precipitation flux and average over each period.
+    If a daily temperature is provided, the `phase` keyword can be used to average precipitation of a given phase only.
+    When the temperature is under the given threshold, precipitation is assumed to be snow, and liquid rain otherwise.
+    This indice is agnostic to the type of daily temperature (tas, tasmax or tasmin) given.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Mean daily precipitation flux.
+    tas : xarray.DataArray, optional
+      Mean, maximum or minimum daily temperature.
+    phase : {None, 'liquid', 'solid'}
+      Which phase to consider, "liquid" or "solid", if None (default), both are considered.
+    thresh : Quantified
+      Threshold of `tas` over which the precipication is assumed to be liquid rain.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [length]
+      The averaged daily precipitation at the given time frequency for the given phase.
+
+    Notes
+    -----
+    Let :math:`PR_i` be the mean daily precipitation of day :math:`i`, then for a period :math:`j` starting at
+    day :math:`a` and finishing on day :math:`b`:
+
+    .. math::
+
+       PR_{ij} =\frac{ \sum_{i=a}^{b} PR_i }{b - a + 1}
+
+    If tas and phase are given, the corresponding phase precipitation is estimated before computing the accumulation,
+    using one of `snowfall_approximation` or `rain_approximation` with the `binary` method.
+
+    Examples
+    --------
+    The following would compute, for each grid cell of a dataset, the total
+    precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
+
+    >>> from xclim.indices import precip_average
+    >>> pr_day = xr.open_dataset(path_to_pr_file).pr
+    >>> prcp_tot_seasonal = precip_average(pr_day, freq="QS-DEC")
+    """
+    if phase == "liquid":
+        pr = rain_approximation(pr, tas=tas, thresh=thresh, method="binary")
+    elif phase == "solid":
+        pr = snowfall_approximation(pr, tas=tas, thresh=thresh, method="binary")
+    pram = rate2amount(pr)
+    return pram.resample(time=freq).mean(dim="time").assign_attrs(units=pram.units)
+
+
 # FIXME: Resample after run length?
 @declare_units(pr="[precipitation]", tas="[temperature]", thresh="[precipitation]")
 def rain_on_frozen_ground_days(
@@ -980,7 +1043,7 @@ def rain_on_frozen_ground_days(
     tas: xarray.DataArray,
     thresh: Quantified = "1 mm/d",
     freq: str = "YS",
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     """Number of rain on frozen ground events.
 
     Number of days with rain above a threshold after a series of seven days below freezing temperature.
@@ -1046,7 +1109,7 @@ def high_precip_low_temp(
     pr_thresh: Quantified = "0.4 mm/d",
     tas_thresh: Quantified = "-0.2 degC",
     freq: str = "YS",
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     """Number of days with precipitation above threshold and temperature below threshold.
 
     Number of days when precipitation is greater or equal to some threshold, and temperatures are colder than some
@@ -1096,7 +1159,7 @@ def days_over_precip_thresh(
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
     op: str = ">",
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     r"""Number of wet days with daily precipitation over a given percentile.
 
     Number of days over period where the precipitation is above a threshold defining wet days and above a given
@@ -1201,11 +1264,15 @@ def fraction_over_precip_thresh(
     constrain = (">", ">=")
     # Total precip during wet days over period
     total = (
-        pr.where(compare(pr, op, thresh, constrain)).resample(time=freq).sum(dim="time")
+        pr.where(compare(pr, op, thresh, constrain), 0)
+        .resample(time=freq)
+        .sum(dim="time")
     )
 
     # Compute the days when precip is both over the wet day threshold and the percentile threshold.
-    over = pr.where(compare(pr, op, tp, constrain)).resample(time=freq).sum(dim="time")
+    over = (
+        pr.where(compare(pr, op, tp, constrain), 0).resample(time=freq).sum(dim="time")
+    )
 
     out = over / total
     out.attrs["units"] = ""
@@ -1220,7 +1287,7 @@ def tg90p(
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
     op: str = ">",
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     r"""Number of days with daily mean temperature over the 90th percentile.
 
     Number of days with daily mean temperature over the 90th percentile.
@@ -1278,7 +1345,7 @@ def tg10p(
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
     op: str = "<",
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     r"""Number of days with daily mean temperature below the 10th percentile.
 
     Number of days with daily mean temperature below the 10th percentile.
@@ -1336,7 +1403,7 @@ def tn90p(
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
     op: str = ">",
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     r"""Number of days with daily minimum temperature over the 90th percentile.
 
     Number of days with daily minimum temperature over the 90th percentile.
@@ -1394,7 +1461,7 @@ def tn10p(
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
     op: str = "<",
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     r"""Number of days with daily minimum temperature below the 10th percentile.
 
     Number of days with daily minimum temperature below the 10th percentile.
@@ -1452,7 +1519,7 @@ def tx90p(
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
     op: str = ">",
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     r"""Number of days with daily maximum temperature over the 90th percentile.
 
     Number of days with daily maximum temperature over the 90th percentile.
@@ -1510,7 +1577,7 @@ def tx10p(
     freq: str = "YS",
     bootstrap: bool = False,  # noqa
     op: str = "<",
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     r"""Number of days with daily maximum temperature below the 10th percentile.
 
     Number of days with daily maximum temperature below the 10th percentile.
@@ -1573,7 +1640,7 @@ def tx_tn_days_above(
     thresh_tasmax: Quantified = "30 degC",
     freq: str = "YS",
     op: str = ">",
-) -> xarray.DataArray:  # noqa: D401
+) -> xarray.DataArray:
     r"""Number of days with both hot maximum and minimum daily temperatures.
 
     The number of days per period with tasmin above a threshold and tasmax above another threshold.

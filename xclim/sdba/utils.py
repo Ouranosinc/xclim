@@ -1,4 +1,3 @@
-# noqa: D205,D400
 """
 Statistical Downscaling and Bias Adjustment Utilities
 =====================================================
@@ -6,7 +5,7 @@ Statistical Downscaling and Bias Adjustment Utilities
 from __future__ import annotations
 
 import itertools
-from typing import Callable, Mapping
+from typing import Callable
 from warnings import warn
 
 import numpy as np
@@ -185,7 +184,7 @@ def broadcast(
     *,
     group: str | Grouper = "time",
     interp: str = "nearest",
-    sel: Mapping[str, xr.DataArray] | None = None,
+    sel: dict[str, xr.DataArray] | None = None,
 ) -> xr.DataArray:
     """Broadcast a grouped array back to the same shape as a given array.
 
@@ -199,7 +198,7 @@ def broadcast(
       Grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
     interp : {'nearest', 'linear', 'cubic'}
       The interpolation method to use,
-    sel : Mapping[str, xr.DataArray]
+    sel : dict[str, xr.DataArray]
       Mapping of grouped coordinates to x coordinates (other than the grouping one).
 
     Returns
@@ -372,8 +371,9 @@ def interp_on_quantiles(
 ):
     """Interpolate values of yq on new values of x.
 
-    Interpolate in 2D with :py:func:`~scipy.interpolate.griddata` if grouping is used, in 1D otherwise, with
-    :py:class:`~scipy.interpolate.interp1d`. Any NaNs in `xq` or `yq` are removed from the input map.
+    Interpolate in 2D with :py:func:`scipy.interpolate.griddata` if grouping is used, in 1D otherwise, with
+    :py:class:`scipy.interpolate.interp1d`.
+    Any NaNs in `xq` or `yq` are removed from the input map.
     Similarly, NaNs in newx are left NaNs.
 
     Parameters
@@ -461,14 +461,13 @@ def interp_on_quantiles(
     )
 
 
-# TODO is this useless?
 def rank(da: xr.DataArray, dim: str = "time", pct: bool = False) -> xr.DataArray:
     """Ranks data along a dimension.
 
     Replicates `xr.DataArray.rank` but as a function usable in a Grouper.apply(). Xarray's docstring is below:
 
     Equal values are assigned a rank that is the average of the ranks that would have been otherwise assigned to all the
-    values within that set. Ranks begin at 1, not 0. If pct, computes percentage ranks.
+    values within that set. Ranks begin at 1, not 0. If pct, computes percentage ranks, ranging from 0 to 1.
 
     Parameters
     ----------
@@ -478,6 +477,8 @@ def rank(da: xr.DataArray, dim: str = "time", pct: bool = False) -> xr.DataArray
       Dimension over which to compute rank.
     pct : bool, optional
       If True, compute percentage ranks, otherwise compute integer ranks.
+      Percentage ranks range from 0 to 1, in opposition to xarray's implementation,
+      where they range from 1/N to 1.
 
     Returns
     -------
@@ -487,8 +488,17 @@ def rank(da: xr.DataArray, dim: str = "time", pct: bool = False) -> xr.DataArray
     Notes
     -----
     The `bottleneck` library is required. NaNs in the input array are returned as NaNs.
+
+    See Also
+    --------
+    xarray.DataArray.rank
     """
-    return da.rank(dim, pct=pct)
+    rnk = da.rank(dim, pct=pct)
+    if pct:
+        mn = rnk.min(dim)
+        mx = rnk.max(dim)
+        return mx * (rnk - mn) / (mx - mn)
+    return rnk
 
 
 def pc_matrix(arr: np.ndarray | dsk.Array) -> np.ndarray | dsk.Array:

@@ -9,25 +9,27 @@ from xclim.core.indicator import Indicator
 from xclim.core.utils import InputKind
 
 __all__ = [
-    "humidex",
+    "corn_heat_units",
     "heat_index",
-    "tg",
-    "wind_speed_from_vector",
-    "wind_vector_from_speed",
-    "saturation_vapor_pressure",
-    "relative_humidity_from_dewpoint",
+    "humidex",
+    "longwave_upwelling_radiation_from_net_downwelling",
+    "mean_radiant_temperature",
+    "potential_evapotranspiration",
+    "rain_approximation",
     "relative_humidity",
+    "relative_humidity_from_dewpoint",
+    "saturation_vapor_pressure",
+    "shortwave_upwelling_radiation_from_net_downwelling",
+    "snowfall_approximation",
     "specific_humidity",
     "specific_humidity_from_dewpoint",
-    "snowfall_approximation",
-    "rain_approximation",
-    "wind_chill_index",
-    "potential_evapotranspiration",
-    "water_budget_from_tas",
-    "water_budget",
-    "corn_heat_units",
+    "tg",
     "universal_thermal_climate_index",
-    "mean_radiant_temperature",
+    "water_budget",
+    "water_budget_from_tas",
+    "wind_chill_index",
+    "wind_speed_from_vector",
+    "wind_vector_from_speed",
 ]
 
 
@@ -381,4 +383,29 @@ mean_radiant_temperature = Converter(
     cell_methods="",
     var_name="mrt",
     compute=indices.mean_radiant_temperature,
+)
+
+
+shortwave_upwelling_radiation_from_net_downwelling = Converter(
+    title="Upwelling shortwave radiation",
+    identifier="shortwave_upwelling_radiation_from_net_downwelling",
+    units="W m-2",
+    standard_name="surface_upwelling_shortwave_flux",
+    long_name="Upwelling shortwave flux",
+    description="The calculation of upwelling shortwave radiative flux from net surface shortwave "
+    "and downwelling surface shortwave fluxes.",
+    var_name="rsus",
+    compute=indices.shortwave_upwelling_radiation_from_net_downwelling,
+)
+
+longwave_upwelling_radiation_from_net_downwelling = Converter(
+    title="Upwelling longwave radiation",
+    identifier="longwave_upwelling_radiation_from_net_downwelling",
+    units="W m-2",
+    standard_name="surface_upwelling_longwave_flux",
+    long_name="Upwelling longwave flux",
+    description="The calculation of upwelling longwave radiative flux from net surface longwave "
+    "and downwelling surface longwave fluxes.",
+    var_name="rlus",
+    compute=indices.longwave_upwelling_radiation_from_net_downwelling,
 )

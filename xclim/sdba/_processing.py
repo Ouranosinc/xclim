@@ -1,7 +1,9 @@
-"""Compute functions of processing.py.
+"""
+Compute Functions Submodule
+===========================
 
-Here are defined the functions wrapped by map_blocks or map_groups,
-user-facing, metadata-handling functions should be defined in processing.py.
+Here are defined the functions wrapped by map_blocks or map_groups.
+The user-facing, metadata-handling functions should be defined in processing.py.
 """
 from __future__ import annotations
 
@@ -66,7 +68,6 @@ def _adapt_freq(
         pth = dP0.copy()
         sim_ad = ds.sim.copy()
     else:
-
         # Compute : ecdf_ref^-1( ecdf_sim( thresh ) )
         # The value in ref with the same rank as the first non-zero value in sim.
         # pth is meaningless when freq. adaptation is not needed

@@ -1,6 +1,5 @@
-# noqa: D205,D400
 """
-Atmospheric indicators
+Atmospheric Indicators
 ======================
 
 While the `indices` module stores the computing functions, this module defines Indicator classes and instances that

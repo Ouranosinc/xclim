@@ -1,4 +1,3 @@
-# noqa: D205,D400
 """
 Adjustment Methods
 ==================
@@ -6,7 +5,7 @@ Adjustment Methods
 from __future__ import annotations
 
 from inspect import signature
-from typing import Any, Mapping
+from typing import Any
 from warnings import warn
 
 import numpy as np
@@ -46,14 +45,14 @@ from .utils import (
 
 __all__ = [
     "BaseAdjustment",
-    "EmpiricalQuantileMapping",
     "DetrendedQuantileMapping",
-    "LOCI",
+    "EmpiricalQuantileMapping",
     "ExtremeValues",
+    "LOCI",
+    "NpdfTransform",
     "PrincipalComponents",
     "QuantileDeltaMapping",
     "Scaling",
-    "NpdfTransform",
 ]
 
 
@@ -265,7 +264,7 @@ class Adjust(BaseAdjustment):
         sim: xr.DataArray,
         **kwargs,
     ):
-        """Return bias-adjusted data. Refer to the class documentation for the algorithm details.
+        r"""Return bias-adjusted data. Refer to the class documentation for the algorithm details.
 
         Parameters
         ----------
@@ -275,7 +274,7 @@ class Adjust(BaseAdjustment):
             Training data, usually a model output whose biases are to be adjusted.
         sim : DataArray
             Time series to be bias-adjusted, usually a model output.
-        **kwargs
+        \*\*kwargs
             Algorithm-specific keyword arguments, see class doc.
         """
         kwargs = parse_group(cls._adjust, kwargs)
@@ -485,7 +484,6 @@ class DetrendedQuantileMapping(TrainAdjust):
         extrapolation="constant",
         detrend=1,
     ):
-
         scen = dqm_adjust(
             self.ds.assign(sim=sim),
             interp=interp,
@@ -561,7 +559,7 @@ class ExtremeValues(TrainAdjust):
     r"""Adjustment correction for extreme values.
 
     The tail of the distribution of adjusted data is corrected according to the bias between the parametric Generalized
-    Pareto distributions of the simulated and reference data :cite:p:`sdba-roy_extremeprecip_2021`. The distributions are composed of the
+    Pareto distributions of the simulated and reference data :cite:p:`sdba-roy_extremeprecip_2023`. The distributions are composed of the
     maximal values of clusters of "large" values.  With "large" values being those above `cluster_thresh`. Only extreme
     values, whose quantile within the pool of large values are above `q_thresh`, are re-adjusted. See `Notes`.
 
@@ -635,7 +633,7 @@ class ExtremeValues(TrainAdjust):
     References
     ----------
     :cite:cts:`sdba-roy_juliaclimateclimatetoolsjl_2021`
-    :cite:cts:`sdba-roy_extremeprecip_2021`
+    :cite:cts:`sdba-roy_extremeprecip_2023`
     """
 
     @classmethod
@@ -648,7 +646,7 @@ class ExtremeValues(TrainAdjust):
         ref_params: xr.Dataset = None,
         q_thresh: float = 0.95,
     ):
-        cluster_thresh = convert_units_to(cluster_thresh, ref)
+        cluster_thresh = convert_units_to(cluster_thresh, ref, context="infer")
 
         # Approximation of how many "quantiles" values we will get:
         N = (1 - q_thresh) * ref.time.size
@@ -1110,11 +1108,11 @@ class NpdfTransform(Adjust):
         sim: xr.DataArray,
         *,
         base: TrainAdjust = QuantileDeltaMapping,
-        base_kws: Mapping[str, Any] | None = None,
+        base_kws: dict[str, Any] | None = None,
         n_escore: int = 0,
         n_iter: int = 20,
         pts_dim: str = "multivar",
-        adj_kws: Mapping[str, Any] | None = None,
+        adj_kws: dict[str, Any] | None = None,
         rot_matrices: xr.DataArray | None = None,
     ):
         if base_kws is None:

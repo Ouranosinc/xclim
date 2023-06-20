@@ -1,6 +1,5 @@
-# noqa: D205,D400
 """
-Fire indices submodule
+Fire Indices Submodule
 ======================
 """
 
