@@ -26,6 +26,7 @@ classifiers = [
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
   "Topic :: Scientific/Engineering :: Atmospheric Science"
 ]
 dynamic = ["description", "version"]
@@ -69,7 +70,7 @@ dev = [
   "pre-commit >=2.9",
   "pydocstyle >=5.1.1",
   "pybtex",
-  "pylint <2.15",
+  "pylint",
   "pytest",
   "pytest-cov",
   "pytest-xdist[psutil] >=3.2",

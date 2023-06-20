@@ -36,13 +36,12 @@ __all__ = [
     "biologically_effective_degree_days",
     "cool_night_index",
     "corn_heat_units",
-    "dry_spell_frequency",
-    "dry_spell_total_length",
     "dryness_index",
     "effective_growing_degree_days",
     "huglin_index",
     "latitude_temperature_index",
     "qian_weighted_mean_average",
+    "rain_season",
     "standardized_precipitation_evapotranspiration_index",
     "standardized_precipitation_index",
     "water_budget",
@@ -886,6 +885,188 @@ def water_budget(
 
 @declare_units(
     pr="[precipitation]",
+    thresh_wet_start="[length]",
+    thresh_dry_start="[length]",
+    thresh_dry_end="[length]",
+)
+def rain_season(
+    pr: xarray.DataArray,
+    thresh_wet_start: Quantified = "25.0 mm",
+    window_wet_start: int = 3,
+    window_not_dry_start: int = 30,
+    thresh_dry_start: Quantified = "1.0 mm",
+    window_dry_start: int = 7,
+    method_dry_start: str = "per_day",
+    date_min_start: DayOfYearStr = "05-01",
+    date_max_start: DayOfYearStr = "12-31",
+    thresh_dry_end: Quantified = "0.0 mm",
+    window_dry_end: int = 20,
+    method_dry_end: str = "per_day",
+    date_min_end: DayOfYearStr = "09-01",
+    date_max_end: DayOfYearStr = "12-31",
+    freq="AS-JAN",
+):
+    """Find the length of the rain season and the day of year of its start and its end.
+
+    The rain season begins when two conditions are met: 1) There must be a number of wet days with
+    precipitations above or equal to a given threshold; 2) There must be another sequence following, where, for a given period in time, there are no
+    dry sequence (i.e. a certain number of days where precipitations are below or equal to a certain threshold). The rain season ends
+    when there is a dry sequence.
+
+    Parameters
+    ----------
+    pr: xr.DataArray
+        Precipitation data.
+    thresh_wet_start: Quantified
+        Accumulated precipitation threshold associated with `window_wet_start`.
+    window_wet_start: int
+        Number of days when accumulated precipitation is above `thresh_wet_start`. Defines the first condition to start the rain season
+    window_not_dry_start: int
+        Number of days, after `window_wet_start` days, during which no dry period must be found as a second and last condition to start the rain season.
+        A dry sequence is defined with `thresh_dry_start`, `window_dry_start` and `method_dry_start`.
+    thresh_dry_start: Quantified
+        Threshold length defining a dry day in the sequence related to `window_dry_start`.
+    window_dry_start: int
+        Number of days used to define a dry sequence in the start of the season. Daily precipitations lower than `thresh_dry_start`
+        during `window_dry_start` days are considered a dry sequence. The precipitations must be lower than `thresh_dry_start`
+        for either every day in the sequence (`method_dry_start == "per_day"`) or for the total (`method_dry_start == "total"`).
+    method_dry_start: {"per_day", "total"}
+        Method used to define a dry sequence associated with `window_dry_start`. The threshold `thresh_dry_start` is either compared
+        to every daily precipitations (`method_dry_start == "per_day"`) or to total precipitations (`method_dry_start == "total"`)
+        in the sequence `window_dry_start` days.
+    date_min_start: DayOfYearStr
+        First day of year when season can start ("mm-dd").
+    date_max_start: DayOfYearStr
+        Last day of year when season can start ("mm-dd").
+    thresh_dry_end: str
+        Threshold length defining a dry day in the sequence related to `window_dry_end`.
+    window_dry_end: int
+        Number of days used to define a dry sequence in the end of the season. Daily precipitations lower than `thresh_dry_end`
+        during `window_dry_end` days are considered a dry sequence. The precipitations must be lower than `thresh_dry_end`
+        for either every day in the sequence (`method_dry_end == "per_day"`) or for the total (`method_dry_end == "total"`).
+    method_dry_end: {"per_day", "total"}
+        Method used to define a dry sequence associated with `window_dry_end`. The threshold `thresh_dry_end` is either compared
+        to every daily precipitations (`method_dry_end == "per_day"`) or to total precipitations (`method_dry_end == "total"`)
+        in the sequence `window_dry` days.
+    date_min_end: DayOfYearStr
+        First day of year when season can end ("mm-dd").
+    date_max_end: DayOfYearStr
+        Last day of year when season can end ("mm-dd").
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    rain_season_start: xr.DataArray, [dimensionless]
+    rain_season_end: xr.DataArray, [dimensionless]
+    rain_season_length: xr.DataArray, [time]
+
+    Notes
+    -----
+    The rain season starts at the end of a period of raining (a total precipitation  of `thresh_wet_start` over `window_wet_start` days). This must
+    be directly followed by a period of `window_not_dry_start` days with no dry sequence. The dry sequence is a period of `window_dry_start`
+    days where precipitations are below `thresh_dry_start` (either the total precipitations over the period, or the daily precipitations, depending
+    on `method_dry_start`). The rain season stops when a dry sequence happens (the dry sequence is defined as in the start sequence,
+    but with parameters `window_dry_end`, `thresh_dry_end` and `method_dry_end`). The dates on which the season can start are constrained
+    by `date_min_start`and `date_max_start` (and similarly for the end of the season).
+
+    References
+    ----------
+    :cite:cts:`sivakumar_predicting_1998`
+    """
+    # Unit conversion.
+    pram = rate2amount(pr, out_units="mm")
+    thresh_wet_start = convert_units_to(thresh_wet_start, pram)
+    thresh_dry_start = convert_units_to(thresh_dry_start, pram)
+    thresh_dry_end = convert_units_to(thresh_dry_end, pram)
+
+    # should we flag date_min_end  < date_max_start?
+    def _get_first_run(run_positions, start_date, end_date):
+        run_positions = select_time(run_positions, date_bounds=(start_date, end_date))
+        first_start = run_positions.argmax("time")
+        return xarray.where(
+            first_start != run_positions.argmin("time"), first_start, np.NaN
+        )
+
+    # Find the start of the rain season
+    def _get_first_run_start(pram):
+        last_doy = pram.indexes["time"][-1].strftime("%m-%d")
+        pram = select_time(pram, date_bounds=(date_min_start, last_doy))
+
+        # First condition: Start with enough precipitation
+        da_start = pram.rolling({"time": window_wet_start}).sum() >= thresh_wet_start
+
+        # Second condition: No dry period after
+        if method_dry_start == "per_day":
+            da_stop = pram <= thresh_dry_start
+            window_dry = window_dry_start
+        elif method_dry_start == "total":
+            da_stop = pram.rolling({"time": window_dry_start}).sum() <= thresh_dry_start
+            # equivalent to rolling forward in time instead, i.e. end date will be at beginning of dry run
+            da_stop = da_stop.shift({"time": -(window_dry_start - 1)}, fill_value=False)
+            window_dry = 1
+
+        # First and second condition combined in a run length
+        events = rl.extract_events(da_start, 1, da_stop, window_dry)
+        run_positions = rl.rle(events) >= (window_not_dry_start + window_wet_start)
+
+        return _get_first_run(run_positions, date_min_start, date_max_start)
+
+    # Find the end of the rain season
+    def _get_first_run_end(pram):
+        if method_dry_end == "per_day":
+            da_stop = pram <= thresh_dry_end
+            run_positions = rl.rle(da_stop) >= window_dry_end
+        elif method_dry_end == "total":
+            run_positions = (
+                pram.rolling({"time": window_dry_end}).sum() <= thresh_dry_end
+            )
+        return _get_first_run(run_positions, date_min_end, date_max_end)
+
+    # Get start, end and length of rain season. Written as a function so it can be resampled
+    def _get_rain_season(pram):
+        start = _get_first_run_start(pram)
+
+        # masking value before  start of the season (end of season should be after)
+        # Get valid integer indexer of the day after the first run starts.
+        # `start != NaN` only possible if a condition on next few time steps is respected. Thus, `start+1` exists if `start != NaN`
+        start_ind = (start + 1).fillna(-1).astype(int)
+        mask = pram * np.NaN
+        # Put "True" on the day of run start
+        mask[{"time": start_ind}] = 1
+        # Mask back points without runs, propagate the True
+        mask = mask.where(start.notnull()).ffill("time")
+        mask = mask.notnull()
+        end = _get_first_run_end(pram.where(mask))
+
+        length = xarray.where(end.notnull(), end - start, pram["time"].size - start)
+
+        # converting to doy
+        crd = pram.time.dt.dayofyear
+        start = rl.lazy_indexing(crd, start)
+        end = rl.lazy_indexing(crd, end)
+
+        out = xarray.Dataset(
+            {
+                "rain_season_start": start,
+                "rain_season_end": end,
+                "rain_season_length": length,
+            }
+        )
+        return out
+
+    # Compute rain season, attribute units
+    out = pram.resample(time=freq).map(_get_rain_season)
+    out["rain_season_start"].attrs["units"] = ""
+    out["rain_season_end"].attrs["units"] = ""
+    out["rain_season_length"].attrs["units"] = "days"
+    out["rain_season_start"].attrs["is_dayofyear"] = np.int32(1)
+    out["rain_season_end"].attrs["is_dayofyear"] = np.int32(1)
+    return out["rain_season_start"], out["rain_season_end"], out["rain_season_length"]
+
+
+@declare_units(
+    pr="[precipitation]",
     pr_cal="[precipitation]",
 )
 def standardized_precipitation_index(
@@ -1090,135 +1271,6 @@ def standardized_precipitation_evapotranspiration_index(
     spei = standardized_precipitation_index(wb, wb_cal, freq, window, dist, method)
 
     return spei
-
-
-@declare_units(pr="[precipitation]", thresh="[length]")
-def dry_spell_frequency(
-    pr: xarray.DataArray,
-    thresh: Quantified = "1.0 mm",
-    window: int = 3,
-    freq: str = "YS",
-    resample_before_rl: bool = True,
-    op: str = "sum",
-) -> xarray.DataArray:
-    """Return the number of dry periods of n days and more.
-
-    Periods during which the accumulated or maximal daily precipitation amount on a window of n days is under threshold.
-
-    Parameters
-    ----------
-    pr : xarray.DataArray
-        Daily precipitation.
-    thresh : Quantified
-        Precipitation amount under which a period is considered dry.
-        The value against which the threshold is compared depends on  `op` .
-    window : int
-        Minimum length of the spells.
-    freq : str
-      Resampling frequency.
-    resample_before_rl : bool
-      Determines if the resampling should take place before or after the run
-      length encoding (or a similar algorithm) is applied to runs.
-    op: {"sum","max"}
-      Operation to perform on the window.
-      Default is "sum", which checks that the sum of accumulated precipitation over the whole window is less than the
-      threshold.
-      "max" checks that the maximal daily precipitation amount within the window is less than the threshold.
-      This is the same as verifying that each individual day is below the threshold.
-
-    Returns
-    -------
-    xarray.DataArray, [unitless]
-        The {freq} number of dry periods of minimum {window} days.
-
-    Examples
-    --------
-    >>> from xclim.indices import dry_spell_frequency
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
-    >>> dsf = dry_spell_frequency(pr=pr, op="sum")
-    >>> dsf = dry_spell_frequency(pr=pr, op="max")
-    """
-    pram = rate2amount(convert_units_to(pr, "mm/d", context="hydro"), out_units="mm")
-    thresh = convert_units_to(thresh, pram, context="hydro")
-
-    agg_pr = getattr(pram.rolling(time=window, center=True), op)()
-    cond = agg_pr < thresh
-    out = rl.resample_and_rl(
-        cond,
-        resample_before_rl,
-        rl.windowed_run_events,
-        window=1,
-        freq=freq,
-    )
-
-    out.attrs["units"] = ""
-    return out
-
-
-@declare_units(pr="[precipitation]", thresh="[length]")
-def dry_spell_total_length(
-    pr: xarray.DataArray,
-    thresh: Quantified = "1.0 mm",
-    window: int = 3,
-    op: str = "sum",
-    freq: str = "YS",
-    resample_before_rl: bool = True,
-    **indexer,
-) -> xarray.DataArray:
-    """Total length of dry spells.
-
-    Total number of days in dry periods of a minimum length, during which the maximum or
-    accumulated precipitation within a window of the same length is under a threshold.
-
-    Parameters
-    ----------
-    pr : xarray.DataArray
-        Daily precipitation.
-    thresh : Quantified
-        Accumulated precipitation value under which a period is considered dry.
-    window : int
-        Number of days when the maximum or accumulated precipitation is under threshold.
-    op : {"max", "sum"}
-        Reduce operation.
-    freq : str
-        Resampling frequency.
-    indexer
-        Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
-        Indexing is done after finding the dry days, but before finding the spells.
-
-    Returns
-    -------
-    xarray.DataArray, [days]
-        The {freq} total number of days in dry periods of minimum {window} days.
-
-    Notes
-    -----
-    The algorithm assumes days before and after the timeseries are "wet", meaning that the condition for being
-    considered part of a dry spell is stricter on the edges. For example, with `window=3` and `op='sum'`, the first day
-    of the series is considered part of a dry spell only if the accumulated precipitation within the first three days is
-    under the threshold. In comparison, a day in the middle of the series is considered part of a dry spell if any of
-    the three 3-day periods of which it is part are considered dry (so a total of five days are included in the
-    computation, compared to only three).
-    """
-    pram = rate2amount(convert_units_to(pr, "mm/d", context="hydro"), out_units="mm")
-    thresh = convert_units_to(thresh, pram, context="hydro")
-
-    pram_pad = pram.pad(time=(0, window))
-    mask = getattr(pram_pad.rolling(time=window), op)() < thresh
-    dry = (mask.rolling(time=window).sum() >= 1).shift(time=-(window - 1))
-    dry = dry.isel(time=slice(0, pram.time.size)).astype(float)
-
-    dry = select_time(dry, **indexer)
-
-    out = rl.resample_and_rl(
-        dry,
-        resample_before_rl,
-        rl.windowed_run_count,
-        window=1,
-        freq=freq,
-    )
-    return to_agg_units(out, pram, "count")
 
 
 @declare_units(tas="[temperature]")

@@ -123,6 +123,40 @@ def test_rle(ufunc, use_dask, index):
         np.testing.assert_array_equal(out, expected)
 
 
+@pytest.mark.parametrize("use_dask", [True, False])
+@pytest.mark.parametrize("index", ["first", "last"])
+def test_extract_events_identity(use_dask, index):
+    # implement more tests, this is just to show that this reproduces the behaviour
+    # of rle
+    values = np.zeros((10, 365, 4, 4))
+    time = pd.date_range("2000-01-01", periods=365, freq="D")
+    values[:, 1:11, ...] = 1
+    da = xr.DataArray(values, coords={"time": time}, dims=("a", "time", "b", "c"))
+
+    if use_dask:
+        da = da.chunk({"a": 1, "b": 2})
+
+    events = rl.extract_events(da != 0, 1, da == 0, 1)
+    expected = da
+    np.testing.assert_array_equal(events, expected)
+
+
+def test_extract_events():
+    values = np.zeros(365)
+    time = pd.date_range("2000-01-01", periods=365, freq="D")
+    a = [0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0]
+    values[0 : len(a)] = a
+    da = xr.DataArray(values, coords={"time": time}, dims=("time"))
+
+    events = rl.extract_events(da == 1, 1, da == 0, 3)
+
+    expected = values * 0
+    expected[1:11] = 1
+    expected[15:20] = 1
+
+    np.testing.assert_array_equal(events, expected)
+
+
 class TestStatisticsRun:
     nc_pr = os.path.join("NRCANdaily", "nrcan_canada_daily_pr_1990.nc")
 

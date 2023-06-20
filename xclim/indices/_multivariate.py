@@ -46,6 +46,7 @@ __all__ = [
     "liquid_precip_ratio",
     "multiday_temperature_swing",
     "precip_accumulation",
+    "precip_average",
     "rain_on_frozen_ground_days",
     "tg10p",
     "tg90p",
@@ -971,6 +972,68 @@ def precip_accumulation(
         pr = snowfall_approximation(pr, tas=tas, thresh=thresh, method="binary")
     pram = rate2amount(pr)
     return pram.resample(time=freq).sum(dim="time").assign_attrs(units=pram.units)
+
+
+@declare_units(pr="[precipitation]", tas="[temperature]", thresh="[temperature]")
+def precip_average(
+    pr: xarray.DataArray,
+    tas: xarray.DataArray = None,
+    phase: str | None = None,
+    thresh: Quantified = "0 degC",
+    freq: str = "YS",
+) -> xarray.DataArray:
+    r"""Averaged (liquid and/or solid) precipitation.
+
+    Resample the original daily mean precipitation flux and average over each period.
+    If a daily temperature is provided, the `phase` keyword can be used to average precipitation of a given phase only.
+    When the temperature is under the given threshold, precipitation is assumed to be snow, and liquid rain otherwise.
+    This indice is agnostic to the type of daily temperature (tas, tasmax or tasmin) given.
+
+    Parameters
+    ----------
+    pr : xarray.DataArray
+      Mean daily precipitation flux.
+    tas : xarray.DataArray, optional
+      Mean, maximum or minimum daily temperature.
+    phase : {None, 'liquid', 'solid'}
+      Which phase to consider, "liquid" or "solid", if None (default), both are considered.
+    thresh : Quantified
+      Threshold of `tas` over which the precipication is assumed to be liquid rain.
+    freq : str
+      Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray, [length]
+      The averaged daily precipitation at the given time frequency for the given phase.
+
+    Notes
+    -----
+    Let :math:`PR_i` be the mean daily precipitation of day :math:`i`, then for a period :math:`j` starting at
+    day :math:`a` and finishing on day :math:`b`:
+
+    .. math::
+
+       PR_{ij} =\frac{ \sum_{i=a}^{b} PR_i }{b - a + 1}
+
+    If tas and phase are given, the corresponding phase precipitation is estimated before computing the accumulation,
+    using one of `snowfall_approximation` or `rain_approximation` with the `binary` method.
+
+    Examples
+    --------
+    The following would compute, for each grid cell of a dataset, the total
+    precipitation at the seasonal frequency, ie DJF, MAM, JJA, SON, DJF, etc.:
+
+    >>> from xclim.indices import precip_average
+    >>> pr_day = xr.open_dataset(path_to_pr_file).pr
+    >>> prcp_tot_seasonal = precip_average(pr_day, freq="QS-DEC")
+    """
+    if phase == "liquid":
+        pr = rain_approximation(pr, tas=tas, thresh=thresh, method="binary")
+    elif phase == "solid":
+        pr = snowfall_approximation(pr, tas=tas, thresh=thresh, method="binary")
+    pram = rate2amount(pr)
+    return pram.resample(time=freq).mean(dim="time").assign_attrs(units=pram.units)
 
 
 # FIXME: Resample after run length?

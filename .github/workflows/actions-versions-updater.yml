@@ -1,0 +1,24 @@
+name: GitHub Actions Version Updater
+
+on:
+  schedule:
+    # 12:00 AM on the first of every month
+    - cron:  '0 0 1 * *'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.WORKFLOW_TOKEN }}
+      - name: Run GitHub Actions Version Updater
+        uses: saadmk11/github-actions-version-updater@v0.7.4
+        with:
+          token: ${{ secrets.WORKFLOW_TOKEN }}
+          committer_email: 'bumpversion[bot]@ouranos.ca'
+          committer_username: 'update-github-actions[bot]'
+          pull_request_title: '[bot] Update GitHub Action Versions'
+          pull_request_user_reviewers: "Zeitsperre"
