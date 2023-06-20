@@ -49,7 +49,7 @@ Internal changes
 * Two new GitHub CI Actions have been added to the existing Workflows (:pull:`1390`):
     * `actions/add-to-project`: Automatically adds issues to the `xclim` project.
     * `saadmk11/github-actions-version-updater`: Updates GitHub Action versions in all Workflows (triggered monthly).
-# Added `method` parameter to `frequency_analysis` and `fa`. (:issue:`1168`, :pull:`1398`).
+* Added `method` parameter to `frequency_analysis` and `fa`. (:issue:`1168`, :pull:`1398`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^

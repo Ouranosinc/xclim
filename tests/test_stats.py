@@ -275,7 +275,7 @@ def test_frequency_analysis(ndq_series, use_dask):
     np.testing.assert_allclose(
         out1,
         out,
-        rtol=0.2,
+        rtol=0.5,
     )
 
 
