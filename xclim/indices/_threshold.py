@@ -68,7 +68,6 @@ __all__ = [
     "hot_spell_total_length",
     "last_snowfall",
     "last_spring_frost",
-    "late_frost_days",
     "maximum_consecutive_dry_days",
     "maximum_consecutive_frost_days",
     "maximum_consecutive_frost_free_days",
@@ -3360,45 +3359,3 @@ def wet_spell_max_length(
         freq=freq,
     )
     return to_agg_units(out, pram, "count")
-
-
-@declare_units(tasmin="[temperature]", thresh="[temperature]")
-def late_frost_days(
-    tasmin: xarray.DataArray,
-    thresh: Quantified = "0 degC",
-    start_date: DayOfYearStr = "04-01",
-    end_date: DayOfYearStr = "06-30",
-    freq: str = "YS",
-) -> xarray.DataArray:
-    r"""Late frost days.
-
-    Number of days where the daily minimum temperature is below a given threshold
-    between a given start date and a given end date.
-
-    Warnings
-    --------
-    The default `freq`, `start_date` and `end_date` are valid for the northern hemisphere.
-
-    Parameters
-    ----------
-    tasmin : xarray.DataArray
-        Minimum daily temperature.
-    thresh : Quantified,
-        Freezing temperature.
-    start_date : DayOfYearStr
-        The start date to consider.
-    end_date : DayOfYearStr
-        The end date to consider.
-    freq : str
-        Resampling frequency.
-
-    Returns
-    -------
-    xarray.DataArray, [time]
-        Number of late frost days per period.
-    """
-    dates = [f"{date.dt.month:02d}-{date.dt.day:02d}" for date in tasmin.time]
-    dates = xarray.DataArray(dates, coords={"time": tasmin.time})
-
-    tasmin = tasmin.where((dates >= start_date) & (dates <= end_date), drop=True)
-    return frost_days(tasmin, thresh=thresh, freq=freq)

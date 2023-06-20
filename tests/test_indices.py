@@ -3512,10 +3512,10 @@ class TestSnowfallIntensity:
 class TestLateFrostDays:
     def test_late_frost_days(self, tasmin_series):
         tasmin = tasmin_series(np.array([-1, 1, 2, -4, 0]) + K2C, start="30/3/2023")
-        lfd = xci.late_frost_days(tasmin)
+        lfd = xci.frost_days(tasmin, date_bounds=("04-01", "06-30"))
         np.testing.assert_allclose(lfd, 1)
 
     def test_late_frost_days_lat(self, tasmin_series):
         tasmin = tasmin_series(np.array([-1, 1, 2, -4, 0]) + K2C, start="30/3/2023")
-        lfd = xci.late_frost_days(tasmin)
+        lfd = xci.frost_days(tasmin, date_bounds=("04-01", "06-30"))
         np.testing.assert_allclose(lfd, 1)
