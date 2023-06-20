@@ -586,6 +586,6 @@ class TestLateFrostDays:
         # Expected values
         exp = [2, 9, 72, 24, 0]
 
-        lfd = atmos.late_frost_days(tasmin)
+        lfd = atmos.late_frost_days(tasmin, date_bounds=("04-01", "06-30"))
 
         np.testing.assert_allclose(lfd.isel(time=0), exp, rtol=1e-03)
