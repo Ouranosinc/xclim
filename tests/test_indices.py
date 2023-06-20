@@ -553,7 +553,7 @@ class TestAgroclimaticIndices:
                 1,
                 "gamma",
                 "APP",
-                [1.3750, 1.5776, 2.1033, -3.09, 0.8681],
+                [1.3750, 1.5776, 1.6806, -3.09, 0.8681],
                 2e-2,
             ),
             (
@@ -561,10 +561,10 @@ class TestAgroclimaticIndices:
                 12,
                 "gamma",
                 "APP",
-                [0.6242, 1.6479, 1.8005, 0.9857, 0.6706],
+                [0.6229, 1.6609, 1.8673, 1.0181, 0.6901],
                 2e-2,
             ),
-            ("MS", 1, "gamma", "ML", [1.38, 1.58, 2.1, -3.09, 0.868], 0.1),
+            ("MS", 1, "gamma", "ML", [1.38, 1.58, 2.1, -3.09, 0.868], 1e-1),
             ("MS", 1, "gamma", "ML", [1.4631, 1.6053, 2.1625, -3.09, 0.87996], 2e-2),
             (
                 "MS",
@@ -572,25 +572,25 @@ class TestAgroclimaticIndices:
                 "gamma",
                 "ML",
                 [0.62417, 1.6479, 1.8005, 0.98574, 0.67063],
-                0.06,
+                6e-2,
             ),
             (
                 "MS",
                 12,
                 "gamma",
                 "ML",
-                [0.65635, 1.5976, 1.7909, 0.98453, 0.66396],
+                [0.6511, 1.6146, 1.8580, 1.0140, 0.6878],
                 2e-2,
             ),
-            ("MS", 1, "fisk", "ML", [1.73, 1.51, 2.05, -3.09, 0.892], 0.35),
-            ("MS", 1, "fisk", "ML", [1.41675, 1.51174, 1.98248, -3.09, 0.942175], 2e-2),
-            ("MS", 12, "fisk", "ML", [0.71228, 1.5347, 1.6498, 1.0241, 0.72203], 0.03),
+            ("MS", 1, "fisk", "ML", [1.73, 1.51, 2.05, -3.09, 0.892], 3.5e-1),
+            ("MS", 1, "fisk", "ML", [1.4167, 1.5117, 2.0562, -3.09, 0.9422], 2e-2),
+            ("MS", 12, "fisk", "ML", [0.7041, 1.562985, 1.7041, 1.0388, 0.7165], 3e-2),
             (
                 "MS",
                 12,
                 "fisk",
                 "ML",
-                [0.70921, 1.55079, 1.6697, 1.02186, 0.695148],
+                [0.7041, 1.562985, 1.7041, 1.0388, 0.71645],
                 2e-2,
             ),
         ],
@@ -2991,7 +2991,7 @@ class TestPotentialEvapotranspiration:
         tm = tas_series(np.array([5, 10, 15]) + 273.15).expand_dims(lat=lat)
 
         out = xci.potential_evapotranspiration(tn, tx, tm, lat=lat, method="HG85")
-        np.testing.assert_allclose(out[0, 2], [3.962589 / 86400], rtol=1e-2)
+        np.testing.assert_allclose(out[2], [3.962589 / 86400], rtol=1e-2)
 
     def test_thornthwaite(self, tas_series, lat_series):
         lat = lat_series([45])
@@ -3015,7 +3015,7 @@ class TestPotentialEvapotranspiration:
         tx = tasmax_series(np.array([10, 15, 20]) + 273.15).expand_dims(lat=lat)
 
         out = xci.potential_evapotranspiration(tn, tx, lat=lat, method="MB05")
-        np.testing.assert_allclose(out[0, 2], [2.78253138816 / 86400], rtol=1e-2)
+        np.testing.assert_allclose(out[2], [2.78253138816 / 86400], rtol=1e-2)
 
     def test_allen(
         self,

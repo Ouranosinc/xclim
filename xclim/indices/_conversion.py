@@ -1359,8 +1359,8 @@ def potential_evapotranspiration(
     with :math:`a=0.0147` and :math:`b=0.07353`. The default parameters used here are calibrated for the UK,
     using the method described in :cite:t:`tanguy_historical_2018`.
 
-    Methods "BR65", "HG85" and "MB05" use an approximation of the extraterrestrial
-    radiation. See :py:func:`~xclim.indices._helpers.extraterrestrial_solar_radiation`.
+    Methods "BR65", "HG85" and "MB05" use an approximation of the extraterrestrial radiation.
+    See :py:func:`~xclim.indices._helpers.extraterrestrial_solar_radiation`.
 
     References
     ----------
