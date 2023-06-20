@@ -905,8 +905,9 @@ def get_zones(
     zone_min: Quantified,
     zone_max: Quantified,
     step_size: Quantified,
-    first_zone: Quantified | None = None,
+    zone_1: Quantified | None = None,
     exclude_boundary_zones: bool = True,
+    close_last_zone_right_boundary: bool = True,
 ) -> xr.DataArray:
     r"""Divide data into zones and attribute a zone coordinate to each input value.
 
@@ -918,28 +919,33 @@ def get_zones(
     da : xarray.DataArray
         Input data
     zone_min : Quantified
-        Left (closed) boundary of the first zone
+        Left boundary of the first zone
     zone_max : Quantified
-        Right (open) boundary of the last zone
+        Right boundary of the last zone
     step_size: Quantified
         Size of zones
-    first_zone : Quantified
+    zone_1 : Quantified
         Left boundary of the zone labelled as "zone 1"
     allow_boundary_zones : Bool
         Determines whether a zone value is attributed for values in ]-np.inf, zone_min[ and [zone_max, np.inf[.
+    close_last_zone_right_boundary : Bool
+        Determines if the right boundary of the last zone is closed.
     """
-    first_zone = first_zone or zone_min
+    zone_1 = zone_1 or zone_min
     zone_next = f"{str2pint(zone_min).magnitude + str2pint(step_size).magnitude}  {pint2cfunits(str2pint(zone_min))}"
-    mn, mn_next, mx, fz = (
-        convert_units_to(v, da) for v in [zone_min, zone_next, zone_max, first_zone]
+    mn, mn_next, mx, z1 = (
+        convert_units_to(v, da) for v in [zone_min, zone_next, zone_max, zone_1]
     )
     step = mn_next - mn
     bins = np.linspace(mn, mx, int(1 + (mx - mn) / step))
 
-    first_zone_index = np.digitize(fz, bins)
+    if close_last_zone_right_boundary:
+        bins[-1] = 1e-6 * bins[-1]
+
+    zone_1_index = np.digitize(z1, bins)
 
     def _get_zone(da):
-        return np.digitize(da, bins) - first_zone_index + 1
+        return np.digitize(da, bins) - zone_1_index + 1
 
     zones = xr.apply_ufunc(_get_zone, da, dask="parallelized")
 
