@@ -922,7 +922,7 @@ def get_zones(
     zone_max : Quantified
         Right (open) boundary of the last zone
     step_size: Quantified
-        Size of bins
+        Size of zones
     first_zone : Quantified
         Left boundary of the zone labelled as "zone 1"
     allow_boundary_zones : Bool

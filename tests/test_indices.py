@@ -3374,13 +3374,15 @@ class TestDrynessIndex:
 @pytest.mark.parametrize(
     "tmin,meth,zone",
     [
-        (-6, "usda", 9.0),
-        (19, "usda", 13.5),
-        (-47, "usda", 1.5),
+        (-6, "usda", 17),
+        (19, "usda", 26),
+        (-47, "usda", 2),
         (-6, "anbg", 2),
         (19, "anbg", 7),
         (-47, "anbg", np.NaN),
     ],
+    # There are 26 USDA zones: 1a -> 1, 1b -> 2, ... 13b -> 26
+    # There are 7 angb zones
 )
 def test_hardiness_zones(tasmin_series, tmin, meth, zone):
     tasmin = tasmin_series(
