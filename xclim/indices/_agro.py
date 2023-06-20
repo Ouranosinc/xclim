@@ -1428,7 +1428,7 @@ def hardiness_zones(
     """Hardiness zones.
 
     Hardiness zones are a categorization of the annual extreme temperature minima, averaged over a certain period.
-    The USDA defines 14 zones, each divided into two sub-zones, using steps of 5°F, starting at -65°F.
+    The USDA defines 14 zones, each divided into two sub-zones, using steps of 5°F, starting at -60°F.
     The Australian National Botanic Gardens define 7 zones, using steps of 5°C, starting at -15°C.
 
     Parameters
@@ -1454,17 +1454,19 @@ def hardiness_zones(
     :cite:cts:`usda_2012`
     :cite:cts:`dawson_plant_1991`
     """
-    tnmin = tasmin.resample(time=freq).min().rolling(time=window).mean()
-
     if method.lower() == "usda":
-        zones = get_zones(tnmin, "-60 degF", "70 degF", "5 degF")
+        zone_min, zone_max, step_size = "-60 degF", "70 degF", "5 degF"
 
     elif method.lower() == "anbg":
-        zones = get_zones(tnmin, "-15 degC", "20 degC", "5 degC")
+        zone_min, zone_max, step_size = "-15 degC", "20 degC", "5 degC"
 
     else:
         raise NotImplementedError(
             f"Method must be one of `usda` or `anbg`. Got {method}."
         )
+
+    tnmin = tasmin.resample(time=freq).min().rolling(time=window).mean()
+    zones = get_zones(tnmin, zone_min, zone_max, step_size)
+    zones.attrs["units"] = ""
 
     return zones

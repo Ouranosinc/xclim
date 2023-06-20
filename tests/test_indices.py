@@ -3383,6 +3383,12 @@ class TestDrynessIndex:
     ],
     # There are 26 USDA zones: 1a -> 1, 1b -> 2, ... 13b -> 26
     # There are 7 angb zones: 1,2, ..., 7
+    # Example for "angb":
+    # Zone 1 : -15 degC <= tmin < -10 degC
+    # Zone 2 : -10 degC <= tmin < -5 degC
+    # ...
+    # Zone 7 : 15 degC <= tmin <= 20 degC
+    # Below -15 degC or above 20 degC, this is NaN
 )
 def test_hardiness_zones(tasmin_series, tmin, meth, zone):
     tasmin = tasmin_series(

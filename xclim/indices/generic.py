@@ -939,9 +939,6 @@ def get_zones(
     step = mn_next - mn
     bins = np.linspace(mn, mx, int(1 + (mx - mn) / step))
 
-    if close_last_zone_right_boundary:
-        bins[-1] = 1e-6 * bins[-1]
-
     zone_1_index = np.digitize(z1, bins)
 
     def _get_zone(da):
@@ -949,9 +946,9 @@ def get_zones(
 
     zones = xr.apply_ufunc(_get_zone, da, dask="parallelized")
 
+    if close_last_zone_right_boundary:
+        zones = zones.where(da != mx, _get_zone(bins[-2]))
+
     if exclude_boundary_zones:
         zones = zones.where((zones != _get_zone(mn - step)) & (zones != _get_zone(mx)))
-    zones.attrs["units"] = ""
     return zones
-
-    # return da.assign_coords({"zone":zone_coords})
