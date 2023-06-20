@@ -2,7 +2,6 @@
 Changelog
 =========
 
-
 v0.45.0 (unreleased)
 --------------------
 * ``ensembles.hawkins_sutton`` method to partition the uncertainty sources in a climate projection ensemble. (:issue:`771`, :pull:`1262`).
@@ -10,7 +9,6 @@ v0.45.0 (unreleased)
 v0.44.0 (unreleased)
 --------------------
 Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`), David Huard (:user:`huard`).
-
 
 Announcements
 ^^^^^^^^^^^^^

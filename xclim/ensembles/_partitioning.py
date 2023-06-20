@@ -39,6 +39,9 @@ Evin, G., Hingray, B., Blanchet, J., Eckert, N., Morin, S., & Verfaillie, D. (20
 Components of an Incomplete Ensemble of Climate Projections Using Data Augmentation, Journal of Climate, 32(8),
 2423-2440, https://doi.org/10.1175/JCLI-D-18-0606.1
 
+Beigi E, Tsai FT-C, Singh VP, Kao S-C. Bayesian Hierarchical Model Uncertainty Quantification for Future Hydroclimate
+Projections in Southern Hills-Gulf Region, USA. Water. 2019; 11(2):268. https://doi.org/10.3390/w11020268
+
 Related bixtex entries:
  - yip_2011
  - northrop_2014
@@ -57,18 +60,14 @@ def hawkins_sutton(
 ):
     """Return the mean and partitioned variance of an ensemble based on method from Hawkins & Sutton (2009).
 
-    To reproduce results from :cite:t:`hawkins_2009`, input data should meet the following requirements:
-      - annual frequency, starting in 1950;
-      - covers the baseline and future period;
-      - same models available for each scenario.
-
     Parameters
     ----------
     da: xr.DataArray
-      Time series over dimensions 'time', 'scenario' and 'model'.
+      Time series with dimensions 'time', 'scenario' and 'model'.
     sm: xr.DataArray
-      Smoothed time series over time. By default, the method uses a fourth order polynomial. Use this argument to
-      use other smoothing strategies, such as another polynomial order, or a LOESS curve.
+      Smoothed time series over time, with the same dimensions as `da`. By default, this is estimated using a 4th order
+      polynomial. Results are sensitive to the choice of smoothing function, use this to set another polynomial
+      order, or a LOESS curve.
     weights: xr.DataArray
       Weights to be applied to individual models. Should have `model` dimension.
     baseline: [str, str]
@@ -79,14 +78,17 @@ def hawkins_sutton(
     Returns
     -------
     xr.DataArray, xr.DataArray
-      The mean and the components of variance of the ensemble. These components are coordinates along the
-      `uncertainty` dimension: `variability`, `model`, `scenario`, and `total`.
+      The mean relative to the baseline, and the components of variance of the ensemble. These components are
+      coordinates along the `uncertainty` dimension: `variability`, `model`, `scenario`, and `total`.
 
     Notes
     -----
     To prepare input data, make sure `da` has dimensions `time`, `scenario` and `model`,
-    e.g. `da.rename({"scen": "scenario"})`. Also, to match the paper's methodology, select years from 1950 onward,
-    e.g. `da.sel(time=slice("1950", None))`.
+    e.g. `da.rename({"scen": "scenario"})`.
+
+    To reproduce results from :cite:t:`hawkins_2009`, input data should meet the following requirements:
+      - annual time series starting in 1950 and ending in 2100;
+      - the same models are available for all scenarios.
 
     References
     ----------
