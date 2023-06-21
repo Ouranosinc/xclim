@@ -649,7 +649,7 @@ class ExtremeValues(TrainAdjust):
         cluster_thresh = convert_units_to(cluster_thresh, ref, context="infer")
 
         # Approximation of how many "quantiles" values we will get:
-        N = (1 - q_thresh) * ref.time.size * 1.05  # extra padding for safety
+        N = (1 - q_thresh) * ref.time.size * 1.02  # extra padding for safety
         # print('first N')
         # print(N)
         # ref_params: cast nan to f32 not to interfere with map_blocks dtype parsing
