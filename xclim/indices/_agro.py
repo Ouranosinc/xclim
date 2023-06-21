@@ -1455,10 +1455,10 @@ def hardiness_zones(
     :cite:cts:`dawson_plant_1991`
     """
     if method.lower() == "usda":
-        zone_min, zone_max, step_size = "-60 degF", "70 degF", "5 degF"
+        zone_min, zone_max, zone_step = "-60 degF", "70 degF", "5 degF"
 
     elif method.lower() == "anbg":
-        zone_min, zone_max, step_size = "-15 degC", "20 degC", "5 degC"
+        zone_min, zone_max, zone_step = "-15 degC", "20 degC", "5 degC"
 
     else:
         raise NotImplementedError(
@@ -1466,7 +1466,7 @@ def hardiness_zones(
         )
 
     tnmin = tasmin.resample(time=freq).min().rolling(time=window).mean()
-    zones = get_zones(tnmin, zone_min, zone_max, step_size)
+    zones = get_zones(tnmin, zone_min=zone_min, zone_max=zone_max, zone_step=zone_step)
     zones.attrs["units"] = ""
 
     return zones
