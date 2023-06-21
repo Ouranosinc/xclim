@@ -3,12 +3,8 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 
-from xclim.ensembles import (
-    concat_hist,
-    hawkins_sutton,
-    model_in_all_scens,
-    single_member,
-)
+from xclim.ensembles import hawkins_sutton
+from xclim.ensembles._filters import _concat_hist, _model_in_all_scens, _single_member
 
 
 def test_hawkins_sutton_smoke(open_dataset):
@@ -21,9 +17,9 @@ def test_hawkins_sutton_smoke(open_dataset):
         .pr.sel(time=slice("1950", None))
         .rename(dims)
     )
-    da1 = model_in_all_scens(da)
-    dac = concat_hist(da1, scenario="historical")
-    das = single_member(dac)
+    da1 = _model_in_all_scens(da)
+    dac = _concat_hist(da1, scenario="historical")
+    das = _single_member(dac)
     hawkins_sutton(das)
 
 

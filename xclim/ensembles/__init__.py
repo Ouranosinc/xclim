@@ -10,7 +10,6 @@ or models are concatenated along the `realization` dimension.
 from __future__ import annotations
 
 from ._base import create_ensemble, ensemble_mean_std_max_min, ensemble_percentiles
-from ._filters import concat_hist, model_in_all_scens, single_member
 from ._partitioning import hawkins_sutton
 from ._reduce import (
     kkz_reduce_ensemble,

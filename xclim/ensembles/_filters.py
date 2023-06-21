@@ -4,7 +4,7 @@ import numpy as np
 import xarray as xr
 
 
-def concat_hist(da, **hist):
+def _concat_hist(da, **hist):
     """Concatenate historical scenario with future scenarios along time.
 
     Parameters
@@ -45,8 +45,10 @@ def concat_hist(da, **hist):
     if len(hist) > 1:
         raise ValueError("Too many values in hist scenario.")
 
+    # Scenario dimension, and name of the historical scenario
     ((dim, name),) = hist.items()
 
+    # Select historical scenario and drop it from the data
     h = da.sel(**hist).dropna("time", how="all")
     ens = da.drop_sel(**hist)
 
@@ -56,7 +58,7 @@ def concat_hist(da, **hist):
     return xr.concat([h, bare], dim="time").assign_coords({dim: index})
 
 
-def model_in_all_scens(da, dimensions=None):
+def _model_in_all_scens(da, dimensions=None):
     """Return data with only simulations that have at least one member in each scenario.
 
     Parameters
@@ -97,7 +99,7 @@ def model_in_all_scens(da, dimensions=None):
     return da.sel(model=ok).rename(dimensions)
 
 
-def single_member(da, dimensions=None):
+def _single_member(da, dimensions=None):
     """Return data for a single member per model.
 
     Parameters
