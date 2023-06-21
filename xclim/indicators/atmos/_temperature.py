@@ -1275,6 +1275,7 @@ late_frost_days = Temp(
     "start date and a given end date.",
     cell_methods="time: sum over days",
     compute=indices.frost_days,
+)
 
 
 australian_hardiness_zones = Temp(
@@ -1316,3 +1317,4 @@ usda_hardiness_zones = Temp(
     var_name="hz",
     compute=indices.hardiness_zones,
     parameters={"method": "usda"},
+)
