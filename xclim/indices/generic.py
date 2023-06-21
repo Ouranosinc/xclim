@@ -923,8 +923,8 @@ def get_zones(
     zone_min: Quantified | None = None,
     zone_max: Quantified | None = None,
     zone_step: Quantified | None = None,
-    bins: Quantified | None = None,
     zone_1: Quantified | None = None,
+    bins: Quantified | None = None,
     exclude_boundary_zones: bool = True,
     close_last_zone_right_boundary: bool = True,
 ) -> xr.DataArray:
