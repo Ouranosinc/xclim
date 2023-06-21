@@ -53,6 +53,7 @@ __all__ = [
     "huglin_index",
     "ice_days",
     "last_spring_frost",
+    "late_frost_days",
     "latitude_temperature_index",
     "max_daily_temperature_range",
     "maximum_consecutive_frost_free_days",
@@ -721,7 +722,7 @@ freshet_start = Temp(
     parameters={"thresh": {"default": "0 degC"}, "window": {"default": 5}},
 )
 
-frost_days = TempWithIndexing(
+frost_days = Temp(
     title="Frost days",
     identifier="frost_days",
     units="days",
@@ -1257,4 +1258,18 @@ latitude_temperature_index = Temp(
     var_name="lti",
     compute=indices.latitude_temperature_index,
     parameters={"lat": {"kind": InputKind.VARIABLE}, "lat_factor": 60},
+)
+
+late_frost_days = Temp(
+    title="Late frost days",
+    identifier="late_frost_days",
+    units="days",
+    standard_name="days_with_air_temperature_below_threshold",
+    long_name="Number of days where the daily minimum temperature is below {thresh}",
+    description="{freq} number of days where the daily minimum temperature is below {thresh}"
+    "over the period {indexer}.",
+    abstract="Number of days where the daily minimum temperature is below a given threshold between a given"
+    "start date and a given end date.",
+    cell_methods="time: sum over days",
+    compute=indices.frost_days,
 )
