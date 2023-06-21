@@ -12,7 +12,7 @@ def _concat_hist(da, **hist):
     da : xr.DataArray
       Input data where the historical scenario is stored alongside other, future, scenarios.
     hist: {str: str}
-      Mapping of the scenario dimension name to the historical scenario coordinate, e.g. `scen="historical"`.
+      Mapping of the scenario dimension name to the historical scenario coordinate, e.g. `scenario="historical"`.
 
     Returns
     -------
@@ -23,23 +23,23 @@ def _concat_hist(da, **hist):
     -----
     Data goes from:
 
-        +----------+----------------------------------+
-        | Scenario | Time                             +
-        +==========+==================================+
-        | hist     | hhhhhhhhhhhhhhhh                 |
-        +----------+----------------------------------+
-        | scen1    |                 111111111111     |
-        +----------+----------------------------------+
-        | scen2    |                 222222222222     |
-        +----------+----------------------------------+
+        +------------+----------------------------------+
+        | scenario   | time                             |
+        +============+==================================+
+        | historical | hhhhhhhhhhhhhhhh                 |
+        +------------+----------------------------------+
+        | ssp245     |                 111111111111     |
+        +------------+----------------------------------+
+        | ssp370     |                 222222222222     |
+        +------------+----------------------------------+
 
     to:
         +----------+----------------------------------+
-        | Scenario | Time                             +
+        | scenario | time                             |
         +==========+==================================+
-        | scen1    | hhhhhhhhhhhhhhhh111111111111     |
+        | ssp245   | hhhhhhhhhhhhhhhh111111111111     |
         +----------+----------------------------------+
-        | scen2    | hhhhhhhhhhhhhhhh222222222222     |
+        | ssp370   | hhhhhhhhhhhhhhhh222222222222     |
         +----------+----------------------------------+
     """
     if len(hist) > 1:
@@ -75,19 +75,19 @@ def _model_in_all_scens(da, dimensions=None):
 
     Notes
     -----
-    In the following example, `GCM_C` would be filtered out from the data because it has no member for `scen2`.
+    In the following example, model `C` would be filtered out from the data because it has no member for `ssp370`.
 
-    +-------+-------+-------+
-    | Model | Members       |
-    +-------+---------------+
-    |       | scen1 | scen2 |
-    +=======+=======+=======+
-    | GCM_A | 1,2,3 | 1,2,3 |
-    +-------+-------+-------+
-    | GCM_B | 1     | 2,3   |
-    +-------+-------+-------+
-    | GCM_C | 1,2,3 |       |
-    +-------+-------+-------+
+    +-------+--------+--------+
+    | model | members         |
+    +-------+-----------------+
+    |       | ssp245 | ssp370 |
+    +=======+========+========+
+    | A     | 1,2,3  | 1,2,3  |
+    +-------+--------+--------+
+    | B     | 1      | 2,3    |
+    +-------+--------+--------+
+    | C     | 1,2,3  |        |
+    +-------+--------+--------+
     """
     if dimensions is None:
         dimensions = {}
@@ -119,15 +119,15 @@ def _single_member(da, dimensions=None):
     In the following example, the original members would be filtered to return only the first member found for each
     scenario.
 
-    +-------+-------+-------+----+-------+-------+
-    | Model | Members       |    | Selected      |
-    +-------+---------------+----+---------------+
-    |       | scen1 | scen2 |    | scen1 | scen2 |
-    +=======+=======+=======+====+=======+=======+
-    | GCM_A | 1,2,3 | 1,2,3 |    | 1     | 1     |
-    +-------+-------+-------+----+-------+-------+
-    | GCM_B | 1,2   | 2,3   |    | 1     | 2     |
-    +-------+-------+-------+----+-------+-------+
+    +-------+--------+--------+----+--------+--------+
+    | model | member          |    | Selected        |
+    +-------+-----------------+----+-----------------+
+    |       | ssp245 | ssp370 |    | ssp245 | ssp370 |
+    +=======+========+========+====+========+========+
+    | A     | 1,2,3  | 1,2,3  |    | 1      | 1      |
+    +-------+--------+--------+----+--------+--------+
+    | B     | 1,2    | 2,3    |    | 1      | 2      |
+    +-------+--------+--------+----+--------+--------+
     """
     if dimensions is None:
         dimensions = {}
