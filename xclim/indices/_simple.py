@@ -6,7 +6,7 @@ import xarray
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.core.utils import Quantified
 
-from .generic import threshold_count
+from .generic import select_time, threshold_count
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -321,7 +321,7 @@ def tx_min(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def frost_days(
-    tasmin: xarray.DataArray, thresh: Quantified = "0 degC", freq: str = "YS"
+    tasmin: xarray.DataArray, thresh: Quantified = "0 degC", freq: str = "YS", **indexer
 ) -> xarray.DataArray:
     r"""Frost days index.
 
@@ -335,6 +335,9 @@ def frost_days(
         Freezing temperature.
     freq : str
         Resampling frequency.
+    indexer
+        Indexing parameters to compute the frost days on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
     Returns
     -------
@@ -351,7 +354,8 @@ def frost_days(
         TN_{ij} < TT
     """
     frz = convert_units_to(thresh, tasmin)
-    out = threshold_count(tasmin, "<", frz, freq)
+    sel = select_time(tasmin, **indexer)
+    out = threshold_count(sel, "<", frz, freq)
     return to_agg_units(out, tasmin, "count")
 
 
