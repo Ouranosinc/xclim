@@ -1359,8 +1359,8 @@ def potential_evapotranspiration(
     with :math:`a=0.0147` and :math:`b=0.07353`. The default parameters used here are calibrated for the UK,
     using the method described in :cite:t:`tanguy_historical_2018`.
 
-    Methods "BR65", "HG85" and "MB05" use an approximation of the extraterrestrial
-    radiation. See :py:func:`~xclim.indices._helpers.extraterrestrial_solar_radiation`.
+    Methods "BR65", "HG85" and "MB05" use an approximation of the extraterrestrial radiation.
+    See :py:func:`~xclim.indices._helpers.extraterrestrial_solar_radiation`.
 
     References
     ----------
@@ -1944,7 +1944,6 @@ def mean_radiant_temperature(
         of the solar zenith angle is calculated. If "sunlit", the cosine of the
         solar zenith angle is calculated during the sunlit period of each interval.
         If "instant", the instantaneous cosine of the solar zenith angle is calculated.
-        This is necessary if mrt is not None.
 
     Returns
     -------
@@ -1969,46 +1968,27 @@ def mean_radiant_temperature(
     rlus = convert_units_to(rlus, "W m-2")
 
     dates = rsds.time
-    hours = ((dates - dates.dt.floor("D")).dt.seconds / 3600).assign_attrs(units="h")
-
     lat = _gather_lat(rsds)
     lon = _gather_lon(rsds)
+    dec = solar_declination(dates)
 
-    decimal_year = datetime_to_decimal_year(times=dates, calendar=dates.dt.calendar)
-    day_angle = ((decimal_year % 1) * 2 * np.pi).assign_attrs(units="rad")
-    dec = solar_declination(day_angle)
     if stat == "sunlit":
-        interval = (dates.diff("time").dt.seconds / 3600).reindex(
-            time=dates.time, method="bfill"
-        )
         csza_i = cosine_of_solar_zenith_angle(
-            declination=dec,
-            lat=lat,
-            lon=lon,
-            hours=hours,
-            interval=interval,
-            stat="interval",
+            dates, dec, lat, lon=lon, stat="average", sunlit=False
         )
         csza_s = cosine_of_solar_zenith_angle(
-            declination=dec, lat=lat, lon=lon, hours=hours, interval=interval, stat=stat
+            dates, dec, lat, lon=lon, stat="average", sunlit=True
         )
     elif stat == "instant":
-        tc = time_correction_for_solar_angle(day_angle)
+        tc = time_correction_for_solar_angle(dates)
         csza = cosine_of_solar_zenith_angle(
-            declination=dec,
-            lat=lat,
-            lon=lon,
-            time_correction=tc,
-            hours=hours,
-            stat="instant",
+            dates, dec, lat, lon=lon, time_correction=tc, stat="instant"
         )
         csza_i = csza.copy()
         csza_s = csza.copy()
     elif stat == "average":
         csza = cosine_of_solar_zenith_angle(
-            declination=dec,
-            lat=lat,
-            stat="average",
+            dates, dec, lat, stat="average", sunlit=False
         )
         csza_i = csza.copy()
         csza_s = csza.copy()
