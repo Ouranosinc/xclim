@@ -532,6 +532,12 @@
     "title": "Degrés-jours de dégel",
     "abstract": "Cumul des degrés-jours pour les jours où la température moyenne quotidienne est au-dessus d'un seuil donné, habituellement 0°C."
   },
+  "LATE_FROST_DAYS": {
+    "long_name": "Nombre de jours de retard où la température minimale quotidienne est sous {thresh}",
+    "description": "Cumul {freq:m} de nombre de jours de retard où la température minimale quotidienne est sous {thresh}. \"Dans l'hémisphère nord, un jour de gel est retardé entre {start_date_nh} et {end_date_nh}. Dans l'hémisphère sud, un jour de gel est retardé entre {start_date_sh} et {end_date_sh}.",
+    "title": "Jours de gel retardés",
+    "abstract": "Nombre de jours de retard où la température minimale quotidienne est sous un seuil donné."
+  },
   "BIOLOGICALLY_EFFECTIVE_DEGREE_DAYS": {
     "long_name": "Intégrale de la température moyenne quotidienne au-dessus de {thresh_tasmin}, avec une valeur maximale de {max_daily_degree_days}, multipliée par un coefficient de longueur de jour et un modificateur de plage de température basé sur la méthode {method} pour les jours compris entre {start_date} et {end_date}",
     "description": "Cumul des degrés-jours borné par la température minimale quotidienne sous {thresh_tasmin} et la différence entre les températures maximale et minimale quotiennes sous {max_daily_degree_days} . Les degrés jours quotidiens sont corrigés selon la différence entre les températures maximale et minimale quotiennes et selon un coefficient de durée du jour `k` dépendant de la latitude et le coefficient `TR_adj` est un modificateur qui tient compte des grandes variations de température.",
