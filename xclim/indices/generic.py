@@ -933,15 +933,9 @@ def get_zones(
     """
     zone1 = zone_1 or zone_min
 
-    mn_p, mx_p, step_p, z1_p = (
-        str2pint(v) for v in [zone_min, zone_max, step_size, zone1]
-    )
-    units = [pint2cfunits(p) for p in [mn_p, mx_p, step_p, z1_p]]
-    if len(set(units)) != 1:
-        msg = f"Got different units among `zone_min` ({units[0]}), `zone_max` ({units[1]}), `step_size` ({units[2]})"
-        warnings.warn(msg + (f", `zone_1 ({units[3]})`." if zone_1 else "."))
+    mn_pint, step_pint = (str2pint(v) for v in [zone_min, step_size])
+    zone_next = f"{mn_pint.magnitude + step_pint.magnitude}  {pint2cfunits(mn_pint)}"
 
-    zone_next = f"{mn_p.magnitude + step_p.magnitude}  {pint2cfunits(mn_p)}"
     mn, mn_next, mx, z1 = (
         convert_units_to(v, da) for v in [zone_min, zone_next, zone_max, zone1]
     )
@@ -951,6 +945,9 @@ def get_zones(
             f"Got `zone_1` = {zone1}, `zone_max` = {zone_max}, `zone_min` = {zone_max}."
         )
 
+    # This convoluted way to obtain step was motivated by temperatures.
+    # Converting directly step_size = 5 degF to degC units does not make sense,
+    # we need to convert to a difference of temperature, not a temperature.
     step = mn_next - mn
     bins = np.linspace(mn, mx, int(1 + (mx - mn) / step))
 
