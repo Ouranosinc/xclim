@@ -566,8 +566,8 @@ class TestMeanRadiantTemperature:
         rlus = dataset.rlus
 
         # Expected values
-        exp_sun = [np.nan, np.nan, np.nan, np.nan, np.nan]
-        exp_ins = [276.911, 274.742, 243.202, 268.012, 309.151]
+        exp_sun = [276.911, 274.742, 243.202, 268.012, 278.505]
+        exp_ins = [276.911, 274.742, 243.202, 268.012, 278.505]
         exp_avg = [276.911, 274.742, 243.202, 268.017, 278.512]
 
         mrt_sun = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="sunlit")
