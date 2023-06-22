@@ -7,6 +7,7 @@ from xclim.core.indicator import Daily, Indicator, ResamplingIndicatorWithIndexi
 from xclim.core.utils import InputKind
 
 __all__ = [
+    "australian_hardiness_zones",
     "biologically_effective_degree_days",
     "cold_spell_days",
     "cold_spell_duration_index",
@@ -53,6 +54,7 @@ __all__ = [
     "huglin_index",
     "ice_days",
     "last_spring_frost",
+    "late_frost_days",
     "latitude_temperature_index",
     "max_daily_temperature_range",
     "maximum_consecutive_frost_free_days",
@@ -81,6 +83,7 @@ __all__ = [
     "tx_mean",
     "tx_min",
     "tx_tn_days_above",
+    "usda_hardiness_zones",
     "warm_spell_duration_index",
 ]
 
@@ -287,7 +290,7 @@ hot_spell_total_length = Temp(
     title="Hot spell total length",
     identifier="hot_spell_total_length",
     long_name="Number of days in hot periods of {window} day(s) or more, during which the"
-    "temperture within windows of {window} day(s) is above {thresh}.",
+    "temperature within windows of {window} day(s) is above {thresh}.",
     description="The {freq} number of days in hot periods of {window} day(s) or more, during which the "
     "temperature within windows of {window} day(s) is above {thresh}.",
     abstract="The total length of hot periods of `N` days or more, during which the "
@@ -520,7 +523,7 @@ cold_spell_total_length = Temp(
     title="Cold spell total length",
     identifier="cold_spell_total_length",
     long_name="Number of days in cold periods of {window} day(s) or more, during which the"
-    "temperture within windows of {window} day(s) is under {thresh}.",
+    "temperature within windows of {window} day(s) is under {thresh}.",
     description="The {freq} number of days in cold periods of {window} day(s) or more, during which the "
     "temperature within windows of {window} day(s) is under {thresh}.",
     abstract="The total length of cold periods of `N` days or more, during which the "
@@ -721,7 +724,7 @@ freshet_start = Temp(
     parameters={"thresh": {"default": "0 degC"}, "window": {"default": 5}},
 )
 
-frost_days = TempWithIndexing(
+frost_days = Temp(
     title="Frost days",
     identifier="frost_days",
     units="days",
@@ -1257,4 +1260,61 @@ latitude_temperature_index = Temp(
     var_name="lti",
     compute=indices.latitude_temperature_index,
     parameters={"lat": {"kind": InputKind.VARIABLE}, "lat_factor": 60},
+)
+
+
+late_frost_days = Temp(
+    title="Late frost days",
+    identifier="late_frost_days",
+    units="days",
+    standard_name="days_with_air_temperature_below_threshold",
+    long_name="Number of days where the daily minimum temperature is below {thresh}",
+    description="{freq} number of days where the daily minimum temperature is below {thresh}"
+    "over the period {indexer}.",
+    abstract="Number of days where the daily minimum temperature is below a given threshold between a given"
+    "start date and a given end date.",
+    cell_methods="time: sum over days",
+    compute=indices.frost_days,
+)
+
+
+australian_hardiness_zones = Temp(
+    title="Australian hardiness zones",
+    identifier="australian_hardiness_zones",
+    units="",
+    long_name="Hardiness zones",
+    description="A climate indice based on a {window}-year rolling average of the annual minimum temperature. "
+    "Developed specifically to aid in determining plant suitability of geographic regions. The Australian National "
+    "Botanical Gardens (ANBG) classification scheme divides categories into 5-degree Celsius zones, starting from -15 "
+    "degrees Celsius and ending at 20 degrees Celsius.",
+    abstract="A climate indice based on a multi-year rolling average of the annual minimum temperature. "
+    "Developed specifically to aid in determining plant suitability of geographic regions. The Australian National "
+    "Botanical Gardens (ANBG) classification scheme divides categories into 5-degree Celsius zones, starting from -15 "
+    "degrees Celsius and ending at 20 degrees Celsius.",
+    cell_methods="",
+    allowed_periods=["A"],
+    var_name="hz",
+    compute=indices.hardiness_zones,
+    parameters={"method": "anbg"},
+)
+
+
+usda_hardiness_zones = Temp(
+    title="USDA hardiness zones",
+    identifier="usda_hardiness_zones",
+    units="",
+    long_name="Hardiness zones",
+    description="A climate indice based on a {window}-year rolling average of the annual minimum temperature. "
+    "Developed specifically to aid in determining plant suitability of geographic regions. The USDA classification"
+    "scheme divides categories into 10 degree Fahrenheit zones, with 5-degree Fahrenheit half-zones, "
+    "starting from -65 degrees Fahrenheit and ending at 65 degrees Fahrenheit.",
+    abstract="A climate indice based on a multi-year rolling average of the annual minimum temperature. "
+    "Developed specifically to aid in determining plant suitability of geographic regions. The USDA classification"
+    "scheme divides categories into 10 degree Fahrenheit zones, with 5-degree Fahrenheit half-zones, "
+    "starting from -65 degrees Fahrenheit and ending at 65 degrees Fahrenheit.",
+    cell_methods="",
+    allowed_periods=["A"],
+    var_name="hz",
+    compute=indices.hardiness_zones,
+    parameters={"method": "usda"},
 )

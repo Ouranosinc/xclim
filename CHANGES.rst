@@ -19,6 +19,8 @@ New indicators
     * ``{precip | liquid_precip | solid_precip}_average}`` for calculating the mean daily {total precipitation | liquid precipitation | solid precipitation } amount. (:issue:`1352`, :pull:`1358`)
     * ``{cold | dry}_spell_max_length`` for calculating maximum length of {cold | dry} spell events. (:issue:`1352`, :pull:`1359`).
     * ``dry_spell_frequency`` for calculating total number of dry spells. (:issue:`1352`, :pull:`1359`).
+    * ``hardiness_zones`` with supported methods `"usda"` (USA) and `"anbg"` (Australia) for calculating hardiness classifications from climatologies. (:issue:`1290`, :pull:`1396`).
+* New indicator ``late_frost_days`` for calculating the number of days where the daily minimum temperature is below a threshold over a given time period. (:issue:`1352`, :pull:`1361`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -28,12 +30,16 @@ New features and enhancements
 * New variables: Snowfall rate ``prsnd`` and surface maximum wind speed ``sfcWindmax``. (:issue:`1352`, :pull:`1358`).
 * Docstring for ``freq`` links to pandas offset aliases documentation. (:issue:`1310`, :pull:`1392`).
 * New function ``xclim.indces.run_length.extract_events`` for determining runs whose starting and stopping points are defined through run length conditions. (:pull:`1256`).
+* Stats functions `frequency_analysis` now takes `method` parameter to select other fitting methods such as PWM or MOM. (:issue:`1168`, :pull:`1398`).
+* ``xclim.indices.frost_days`` now accepts an ``**indexer`` parameter for calculating frost days over a temporal subset of the given dataset. (:issue:`1352`, :pull:`1361`).
+* New function ``xclim.indices.generic.get_zones`` attributing a histogram bin index (a zone) to each value in an input array. (:issue:`1290`, :pull:`1396`).
 
 Bug fixes
 ^^^^^^^^^
 * Fixed a bug in ``xclim.core.calendar.time_bnds`` when using ``DataArrayResample`` objects, caused by an upstream change in xarray 2023.5.0. (:issue:`1368`, :pull:`1377`).
 * ``ensembles.change_significance`` will returns NaNs when the input values are all NaNs, instead of failing. (:issue:`1379`, :pull:`1380`).
 * Accelerated import of xclim by caching the compilation of `guvectorize` functions. (:pull:`1378`).
+* Fixed many issues with ``xclim.indices.helpers.cosine_of_solar_zenith_angle``, the signature changed. (:issue:`1110`, :pull:`1399`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -48,7 +54,7 @@ Internal changes
 * Two new GitHub CI Actions have been added to the existing Workflows (:pull:`1390`):
     * `actions/add-to-project`: Automatically adds issues to the `xclim` project.
     * `saadmk11/github-actions-version-updater`: Updates GitHub Action versions in all Workflows (triggered monthly).
-
+* Added `method` parameter to `frequency_analysis` and `fa`. (:issue:`1168`, :pull:`1398`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
