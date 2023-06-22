@@ -945,7 +945,7 @@ def get_zones(
         Size of zones
     zone_1 : Quantified | None
         Input value whose zone should be labelled as "zone 1". It should be in the range [`zone_min`, `zone_max` [.
-        By default this is set to `None`, with "zone 1" starting `zone_min`
+        By default this is set to `None`, with "zone 1" aligned with `zone_min`
     bins : Quantified | None
         List of zones to be used. If a list is given, units same as `da` are assumed. If an `xr.DataArray` is given,
         units must be precised.
@@ -959,11 +959,13 @@ def get_zones(
     if bins is None:
         if (zone_params == [None] * len(zone_params)).any():
             raise ValueError(
-                "`bins` is `None` as well as some or all of [`zone_min`, `zone_max`, `zone_step`]. Expected defined parameters in one of these cases."
+                "`bins` is `None` as well as some or all of [`zone_min`, `zone_max`, `zone_step`]. "
+                "Expected defined parameters in one of these cases."
             )
     elif set(zone_params) != {None}:
         warnings.warn(
-            "Expected either `bins` or [`zone_min`, `zone_max`, `zone_step`], got both. `bins` will be used."
+            "Expected either `bins` or [`zone_min`, `zone_max`, `zone_step`], got both. "
+            "`bins` will be used."
         )
 
     # Get zone bins (if necessary)
@@ -976,7 +978,8 @@ def get_zones(
         z1 = convert_units_to(zone_1, da)
         if z1 >= bins[-1] or z1 < bins[0]:
             raise ValueError(
-                f"`zone_1` must be in the range [`zone_min`, `zone_max`[. Got `zone_1` = {zone_1}, `zone_max` = {zone_max}, `zone_min` = {zone_max}."
+                "`zone_1` must be in the range [`zone_min`, `zone_max`[. "
+                f"Got `zone_1` = {zone_1}, `zone_max` = {zone_max}, `zone_min` = {zone_max}."
             )
         zone_1_index = np.digitize(z1, bins)
     else:
