@@ -944,12 +944,12 @@ def get_zones(
     zone_step: Quantified | None
         Size of zones
     zone_1 : Quantified | None
-        Input value whose zone should be labelled as "zone 1". It should be in the range [`zone_min`, `zone_max` [.
-        By default this is set to `None`, with "zone 1" aligned with `zone_min`
+        Input value whose zone should be labelled as "zone 1". It should be in the range [`zone_min`, `zone_max`[.
+        By default, this is set to `None`, with "zone 1" aligned with `zone_min`
     bins : Quantified | None
-        List of zones to be used. If a list is given, units same as `da` are assumed. If an `xr.DataArray` is given,
-        units must be precised.
-    allow_boundary_zones : Bool
+        List of zones to be used. If a list is given, units same as `da` are assumed.
+        If an `xr.DataArray` is given, `units` must be defined within the variable attributes.
+    exclude_boundary_zones : Bool
         Determines whether a zone value is attributed for values in ]-np.inf, zone_min[ and [zone_max, np.inf[.
     close_last_zone_right_boundary : Bool
         Determines if the right boundary of the last zone is closed.

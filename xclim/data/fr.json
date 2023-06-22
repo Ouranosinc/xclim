@@ -561,15 +561,15 @@
   },
   "AUSTRALIAN_HARDINESS_ZONES": {
     "long_name": "Zones de rusticité",
-    "description": "Indice climatique basé sur une moyenne mobile de la température annuelle minimale de {window} années. Développé spécifiquement pour aider à déterminer l'adéquation des plantes aux régions géographiques. Le système de classification des jardins botaniques nationaux australiens (ANBG) divise les catégories en zones de 5 degrés Celsius, allant de moins de -15 degrés Celsius à plus de 20 degrés Celsius.",
+    "description": "Indice climatique basé sur une moyenne mobile de {window} années de la température minimale annuelle. Développé spécifiquement pour aider à déterminer l'adéquation des plantes aux régions géographiques. Le système de classification des jardins botaniques nationaux australiens (ANBG) divise les catégories en zones de 5 degrés Celsius, allant de -15 degrés Celsius à 20 degrés Celsius.",
     "title": "Zones de rusticité australiennes",
-    "abstract": "Indice climatique basé sur une moyenne mobile de la température annuelle minimale d'un nombre donné d'années. Développé spécifiquement pour aider à déterminer l'adéquation des plantes aux régions géographiques. Le système de classification des jardins botaniques nationaux australiens divise les catégories en zones de 5 degrés Celsius, allant de moins de -15 degrés Celsius à plus de 20 degrés Celsius."
+    "abstract": "Indice climatique basé sur une moyenne mobile multi-annuelle de la température minimale annuelle. Développé spécifiquement pour aider à déterminer l'adéquation des plantes aux régions géographiques. Le système de classification des jardins botaniques nationaux australiens (ANBG) divise les catégories en zones de 5 degrés Celsius, allant de -15 degrés Celsius à 20 degrés Celsius."
   },
   "USDA_HARDINESS_ZONES": {
     "long_name": "Zones de rusticité",
-    "description": "Indice climatique basé sur une moyenne mobile de la température annuelle minimale de {window} années. Développé spécifiquement pour aider à déterminer l'adéquation des plantes aux régions géographiques. Le système de classification de l'USDA divise les catégories en zones de 10 degrés Fahrenheit, avec des demi-zones de 5 degrés Fahrenheit, allant de moins de -65 degrés Fahrenheit à plus de 65 degrés Fahrenheit.",
+    "description": "Indice climatique basé sur une moyenne mobile de {window} années de la température minimale annuelle. Développé spécifiquement pour aider à déterminer l'adéquation des plantes aux régions géographiques. Le système de classification de l'USDA divise les catégories en zones de 10 degrés Fahrenheit, avec des demi-zones de 5 degrés Fahrenheit, allant de -65 degrés Fahrenheit à 65 degrés Fahrenheit.",
     "title": "Zones de rusticité de l'USDA",
-    "abstract": "Indice climatique basé sur une moyenne mobile de la température annuelle minimale d'un nombre donné d'années. Développé spécifiquement pour aider à déterminer l'adéquation des plantes aux régions géographiques. Le système de classification de l'USDA divise les catégories en zones de 10 degrés Fahrenheit, avec des demi-zones de 5 degrés Fahrenheit, allant de moins de -65 degrés Fahrenheit à plus de 65 degrés Fahrenheit."
+    "abstract": "Indice climatique basé sur une moyenne mobile multi-annuelle de la température minimale annuelle. Développé spécifiquement pour aider à déterminer l'adéquation des plantes aux régions géographiques. Le système de classification de l'USDA divise les catégories en zones de 10 degrés Fahrenheit, avec des demi-zones de 5 degrés Fahrenheit, allant de -65 degrés Fahrenheit à 65 degrés Fahrenheit."
   },
   "HUGLIN_INDEX": {
     "long_name": "Intégrale de la température moyenne quotidienne au-dessus de {thresh} multipliée par le coefficient de longueur du jour du méthode {method} pour les jours compris entre {start_date} et {end_date}",
