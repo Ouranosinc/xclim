@@ -3401,10 +3401,8 @@ class TestDrynessIndex:
     # Below -15 degC or above 20 degC, this is NaN
 )
 def test_hardiness_zones(tasmin_series, tmin, meth, zone):
-    tasmin = tasmin_series(
-        np.zeros(10957) + K2C + 20, start="1997-01-01"
-    )  # 30 years at 20°C
-    tasmin = tasmin.where(tasmin.time.dt.dayofyear != 1, tmin + K2C)
+    tasmin = tasmin_series(np.zeros(10957) + 20, start="1997-01-01", units="degC")
+    tasmin = tasmin.where(tasmin.time.dt.dayofyear != 1, tmin)
 
     hz = xci.hardiness_zones(tasmin=tasmin, method=meth)
     np.testing.assert_array_equal(hz[-1], zone)

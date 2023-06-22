@@ -901,10 +901,27 @@ def first_day_threshold_reached(
 
 
 def _get_zone_bins(
-    zone_min: Quantified | None,
-    zone_max: Quantified | None,
-    zone_step: Quantified | None,
+    zone_min: str | None,
+    zone_max: str | None,
+    zone_step: str | None,
 ):
+    """
+    Bin boudary values as defined by zone parameters.
+
+    Parameters
+    ----------
+    zone_min : str | None
+        Left boundary of the first zone (a string with magnitude and units)
+    zone_max : str | None
+        Right boundary of the last zone (a string with magnitude and units)
+    zone_step: str | None
+        Size of zones (a string with magnitude and units)
+
+    Returns
+    -------
+    xarray.DataArray, [units of `zone_step`]
+        Array of values corresponding to each zone: [zone_min, zone_min+step, ..., zone_max]
+    """
     units = pint2cfunits(str2pint(zone_step))
     mn, mx, step = (
         convert_units_to(str2pint(z), units) for z in [zone_min, zone_max, zone_step]
@@ -920,10 +937,10 @@ def _get_zone_bins(
 
 def get_zones(
     da: xr.DataArray,
-    zone_min: Quantity | None = None,
-    zone_max: Quantity | None = None,
-    zone_step: Quantity | None = None,
-    zone_1: Quantity | None = None,
+    zone_min: str | None = None,
+    zone_max: str | None = None,
+    zone_step: str | None = None,
+    zone_1: str | None = None,
     bins: xr.DataArray | list[Quantity] | None = None,
     exclude_boundary_zones: bool = True,
     close_last_zone_right_boundary: bool = True,
@@ -937,21 +954,26 @@ def get_zones(
     ----------
     da : xarray.DataArray
         Input data
-    zone_min : Quantity | None
-        Left boundary of the first zone
-    zone_max : Quantity | None
-        Right boundary of the last zone
-    zone_step: Quantity | None
-        Size of zones
-    zone_1 : Quantity | None
+    zone_min : str | None
+        Left boundary of the first zone (a string with magnitude and units)
+    zone_max : str | None
+        Right boundary of the last zone (a string with magnitude and units)
+    zone_step: str | None
+        Size of zones (a string with magnitude and units)
+    zone_1 : str | None
         Input value whose zone should be labelled as "zone 1". It should be in the range [`zone_min`, `zone_max` [.
         By default this is set to `None`, with "zone 1" aligned with `zone_min`
-    bins : xr.DataArray | list[Quantity] | None
-        Zones to be used, either as a DataArray with appropriate units or a list of quantities.
+    bins : xr.DataArray | list[str] | None
+        Zones to be used, either as a DataArray with appropriate units or a list of strings (with magnitude and units).
     allow_boundary_zones : Bool
         Determines whether a zone value is attributed for values in ]-np.inf, zone_min[ and [zone_max, np.inf[.
     close_last_zone_right_boundary : Bool
         Determines if the right boundary of the last zone is closed.
+
+    Returns
+    -------
+    xarray.DataArray, [dimensionless]
+        Zone index for each value in `da`.
     """
     # Check compatibility of arguments
     zone_params = np.array([zone_min, zone_max, zone_step])
@@ -971,6 +993,8 @@ def get_zones(
     bins = bins or _get_zone_bins(zone_min, zone_max, zone_step)
     if isinstance(bins, list):
         bins = sorted([convert_units_to(b, da) for b in bins])
+    else:
+        bins = convert_units_to(bins, da)
 
     # Define "zone 1"
     if zone_1:
@@ -994,7 +1018,7 @@ def get_zones(
         zones = zones.where(da != bins[-1], _get_zone(bins[-2]))
     if exclude_boundary_zones:
         zones = zones.where(
-            (zones != _get_zone(bins[0] - 1e-6)) & (zones != _get_zone(bins[-1]))
+            (zones != _get_zone(bins[0] - 1)) & (zones != _get_zone(bins[-1]))
         )
 
     return zones
