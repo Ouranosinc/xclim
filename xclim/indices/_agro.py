@@ -899,9 +899,7 @@ def _preprocess_spx(da, freq, window, **indexer):
     return da, group
 
 
-def _compute_spx_fit_params(
-    da, cal_range, freq, window, dist, method, group=None, **indexer
-):
+def _spx_fit_params(da, cal_range, freq, window, dist, method, group=None, **indexer):
     # "WPM" method doesn't seem to work for gamma or pearson3
     dist_and_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
     if dist not in dist_and_methods:
@@ -932,15 +930,13 @@ def _compute_spx_fit_params(
     # Should I apply the indexer at the very end? Would that avoid unecessary computations?
 
     def wrap_fit(da):
-        # this could be simplified as:
-        # if group representative completely in the excluded time period of indexer,
-        # just put NaNs there. I wonder if this can be done with less lines of code
-        if indexer != {}:
-            if da.isnull().all():
-                select_dims = {d: 0 for d in da.dims if d != "time"}
-                with xarray.set_options(keep_attrs=True):
-                    template = fit(da.isel(time=slice(0, 2))[select_dims], dist, method)
-                    return template * da.isel(time=0, drop=True) * np.NaN
+        if indexer != {} and da.isnull().all():
+            fitted = fit(
+                da[{d: 0 if d != "time" else [0, 1] for d in da.dims}], dist, method
+            )
+            return (fitted * da.isel(time=0, drop=True) * np.NaN).assign_attrs(
+                fitted.attrs
+            )
         return fit(da, dist, method)
 
     params = da.groupby(group).map(wrap_fit)
@@ -1043,26 +1039,22 @@ def standardized_precipitation_index(
     ----------
     :cite:cts:`mckee_relationship_1993`
     """
-    uses_input_params = params is not None
-    if cal_range and uses_input_params:
-        raise ValueError(
-            "Inputing both calibration dates (`cal_range`) and calibration parameters (`params`) is not accepted,"
-            "input only one or neither of those options (the latter case reverts to default behaviour which performs a calibration"
-            "with the full input dataset)."
+    uses_params = params is not None
+    if cal_range and uses_params:
+        warnings.warn(
+            "Expected either `cal_range` or `params`, got both. Proceeding with `params`."
         )
 
     pr, group = _preprocess_spx(pr, freq, window, **indexer)
-    if uses_input_params is False:
-        params = _compute_spx_fit_params(
-            pr, cal_range, freq, window, dist, method, group=group
-        )
+    if uses_params is False:
+        params = _spx_fit_params(pr, cal_range, freq, window, dist, method, group=group)
     params_dict = dict(params.groupby(group.rsplit(".")[1]))
 
     def ppf_to_cdf(da, params):
         # ppf to cdf
         if dist in ["gamma", "fisk"]:
-            prob_pos = dist_method("cdf", params, pr.where(pr > 0))
-            prob_zero = (pr == 0).sum("time") / pr.notnull().sum("time")
+            prob_pos = dist_method("cdf", params, da.where(da > 0))
+            prob_zero = (da == 0).sum("time") / da.notnull().sum("time")
             prob = prob_zero + (1 - prob_zero) * prob_pos
         # Invert to normal distribution with ppf and obtain SPI
         params_norm = xarray.DataArray(
@@ -1077,20 +1069,16 @@ def standardized_precipitation_index(
     def get_sub_spi(pr):
         group_key = pr[group][0].values.item()
         sub_params = params_dict[group_key]
-        if indexer != {}:
-            if pr.isnull().all():
-                select_dims = {d: 0 for d in pr.dims if d != "time"}
-                sub_spi = ppf_to_cdf(
-                    pr.isel(time=slice(0, 2))[select_dims], sub_params[select_dims]
-                )
-                with xarray.set_options(keep_attrs=True):
-                    sub_spi = sub_spi * pr * np.NaN
-                return sub_spi
+        # put NaNs if outside time selection
+        if indexer != {} and pr.isnull().all():
+            select_dims = {d: 0 for d in pr.dims if d != "time"}
+            sub_spi = ppf_to_cdf(pr[select_dims][{"time": [0, 1]}], params[select_dims])
+            return sub_spi.broadcast_like(pr.isel(time=0, drop=True))
         return ppf_to_cdf(pr, sub_params)
 
     spi = pr.groupby(group).map(get_sub_spi)
     spi.attrs = params.attrs
-    if uses_input_params:
+    if uses_params:
         spi.attrs["Calibration period"] = (
             spi.attrs["Calibration period"] + "(input parameters)"
         )
