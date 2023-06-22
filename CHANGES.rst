@@ -19,6 +19,7 @@ New indicators
     * ``{precip | liquid_precip | solid_precip}_average}`` for calculating the mean daily {total precipitation | liquid precipitation | solid precipitation } amount. (:issue:`1352`, :pull:`1358`)
     * ``{cold | dry}_spell_max_length`` for calculating maximum length of {cold | dry} spell events. (:issue:`1352`, :pull:`1359`).
     * ``dry_spell_frequency`` for calculating total number of dry spells. (:issue:`1352`, :pull:`1359`).
+    * ``hardiness_zones`` with supported methods `"usda"` (USA) and `"anbg"` (Australia) for calculating hardiness classifications from climatologies. (:issue:`1290`, :pull:`1396`).
 * New indicator ``late_frost_days`` for calculating the number of days where the daily minimum temperature is below a threshold over a given time period. (:issue:`1352`, :pull:`1361`).
 
 New features and enhancements
@@ -31,6 +32,7 @@ New features and enhancements
 * New function ``xclim.indces.run_length.extract_events`` for determining runs whose starting and stopping points are defined through run length conditions. (:pull:`1256`).
 * Stats functions `frequency_analysis` now takes `method` parameter to select other fitting methods such as PWM or MOM. (:issue:`1168`, :pull:`1398`).
 * ``xclim.indices.frost_days`` now accepts an ``**indexer`` parameter for calculating frost days over a temporal subset of the given dataset. (:issue:`1352`, :pull:`1361`).
+* New function ``xclim.indices.generic.get_zones`` attributing a histogram bin index (a zone) to each value in an input array. (:issue:`1290`, :pull:`1396`).
 
 Bug fixes
 ^^^^^^^^^
