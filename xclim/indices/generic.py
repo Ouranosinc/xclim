@@ -7,7 +7,7 @@ Helper functions for common generic actions done in the computation of indices.
 from __future__ import annotations
 
 import warnings
-from typing import Callable, Sequence
+from typing import Callable, List, Sequence
 
 import cftime
 import numpy as np
@@ -944,12 +944,12 @@ def get_zones(
     zone_step: Quantity | None
         Size of zones
     zone_1 : Quantity | None
-        Input value whose zone should be labelled as "zone 1". It should be in the range [`zone_min`, `zone_max` [.
-        By default this is set to `None`, with "zone 1" aligned with `zone_min`
+        Input value whose zone should be labelled as "zone 1". It should be in the range [`zone_min`, `zone_max`\ [.
+        By default, this is set to `None`, with "zone 1" aligned with `zone_min`.
     bins : xr.DataArray | list[Quantity] | None
         Zones to be used, either as a DataArray with appropriate units or a list of quantities.
-    allow_boundary_zones : Bool
-        Determines whether a zone value is attributed for values in ]-np.inf, zone_min[ and [zone_max, np.inf[.
+    exclude_boundary_zones : Bool
+        Determines whether a zone value is attributed for values in ]`-np.inf`, `zone_min`[ and [`zone_max`, `np.inf`\ [.
     close_last_zone_right_boundary : Bool
         Determines if the right boundary of the last zone is closed.
     """
