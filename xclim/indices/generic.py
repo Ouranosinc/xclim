@@ -906,7 +906,7 @@ def _get_zone_bins(
     zone_step: Quantity,
 ):
     """
-    Bin boudary values as defined by zone parameters.
+    Bin boundary values as defined by zone parameters.
 
     Parameters
     ----------
