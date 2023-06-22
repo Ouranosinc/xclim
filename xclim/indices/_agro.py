@@ -44,6 +44,7 @@ __all__ = [
     "huglin_index",
     "latitude_temperature_index",
     "qian_weighted_mean_average",
+    "spx_fit_params",
     "standardized_precipitation_evapotranspiration_index",
     "standardized_precipitation_index",
     "water_budget",
@@ -886,6 +887,12 @@ def water_budget(
 
 
 def _preprocess_spx(da, freq, window, **indexer):
+    """
+    Resample and roll operations involved when computing a standardized index.
+
+    The `group` variable returned is used spx computations and to keep track if
+    preprocessing was already done or not.
+    """
     _, base, _, _ = parse_offset(freq or xarray.infer_freq(da.time))
     try:
         group = {"D": "time.dayofyear", "M": "time.month"}[base]
@@ -895,11 +902,46 @@ def _preprocess_spx(da, freq, window, **indexer):
         da = da.resample(time=freq).mean(keep_attrs=True)
     if window > 1:
         da = da.rolling(time=window).mean(skipna=False, keep_attrs=True)
+
+    # The time reduction must be done after the rolling
     da = select_time(da, **indexer)
     return da, group
 
 
-def _spx_fit_params(da, cal_range, freq, window, dist, method, group=None, **indexer):
+# TODO: Find a more generic place for this, SPX indices are not exclusive to _agro
+def spx_fit_params(
+    da, cal_range, freq, window, dist, method, group=None, **indexer
+) -> xarray.DataArray:
+    """Standardized Index fitting parameters.
+
+    A standardized index measures the deviation of a variable averaged over a rolling temporal window and
+    fitted with a given distribution `dist` with respect to a calibration dataset. The comparison is done by porting
+    back results to a normalized distribution. The fitting parameters of the calibration dataset fitted with `dist`
+    are obtained here.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+        Input array.
+    cal_range: Tuple[DateStr, DateStr] | None
+        Dates used to take a subset the input dataset for calibration. The tuple is formed by two `DateStr`,
+        i.e. a `str` in format `"YYYY-MM-DD"`. Default option `None` means that the full range of the input dataset is used.
+    freq : str | None
+        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
+        has already been applied input dataset and will skip the resampling step.
+    window : int
+        Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
+        i.e. a monthly resampling, the window is an integer number of months.
+    dist : str
+        Name of the univariate distribution.
+        (see :py:mod:`scipy.stats`).
+    method : str
+        Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
+        uses a deterministic function that doesn't involve any optimization.
+    indexer
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+    """
     # "WPM" method doesn't seem to work for gamma or pearson3
     dist_and_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
     if dist not in dist_and_methods:
@@ -925,18 +967,11 @@ def _spx_fit_params(da, cal_range, freq, window, dist, method, group=None, **ind
         )
         da = da.chunk({"time": -1})
 
-    # I don't think that's necessary? At this point, da is already preprocessed and time selected
-    # da = select_time(da, **indexer)
-    # Should I apply the indexer at the very end? Would that avoid unecessary computations?
-
     def wrap_fit(da):
         if indexer != {} and da.isnull().all():
-            fitted = fit(
-                da[{d: 0 if d != "time" else [0, 1] for d in da.dims}], dist, method
-            )
-            return (fitted * da.isel(time=0, drop=True) * np.NaN).assign_attrs(
-                fitted.attrs
-            )
+            select_dims = {d: 0 if d != "time" else [0, 1] for d in da.dims}
+            fitted = fit(da[select_dims], dist, method)
+            return fitted.broadcast_like(da.isel(time=0, drop=True))
         return fit(da, dist, method)
 
     params = da.groupby(group).map(wrap_fit)
@@ -1047,7 +1082,7 @@ def standardized_precipitation_index(
 
     pr, group = _preprocess_spx(pr, freq, window, **indexer)
     if uses_params is False:
-        params = _spx_fit_params(pr, cal_range, freq, window, dist, method, group=group)
+        params = spx_fit_params(pr, cal_range, freq, window, dist, method, group=group)
     params_dict = dict(params.groupby(group.rsplit(".")[1]))
 
     def ppf_to_cdf(da, params):
