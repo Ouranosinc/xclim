@@ -3384,11 +3384,11 @@ class TestDrynessIndex:
 @pytest.mark.parametrize(
     "tmin,meth,zone",
     [
-        (-6, "usda", 17),
-        (19, "usda", 26),
-        (-47, "usda", 2),
-        (-6, "anbg", 2),
-        (19, "anbg", 7),
+        (-6, "usda", 16),
+        (19, "usda", 25),
+        (-47, "usda", 1),
+        (-6, "anbg", 1),
+        (19, "anbg", 6),
         (-47, "anbg", np.NaN),
     ],
     # There are 26 USDA zones: 1a -> 1, 1b -> 2, ... 13b -> 26
