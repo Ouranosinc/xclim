@@ -27,7 +27,7 @@ from xclim.core.units import (
     str2pint,
     to_agg_units,
 )
-from xclim.core.utils import DayOfYearStr, Quantified
+from xclim.core.utils import DayOfYearStr, Quantified, Quantity
 
 from . import run_length as rl
 
@@ -920,11 +920,11 @@ def _get_zone_bins(
 
 def get_zones(
     da: xr.DataArray,
-    zone_min: Quantified | None = None,
-    zone_max: Quantified | None = None,
-    zone_step: Quantified | None = None,
-    zone_1: Quantified | None = None,
-    bins: Quantified | None = None,
+    zone_min: Quantity | None = None,
+    zone_max: Quantity | None = None,
+    zone_step: Quantity | None = None,
+    zone_1: Quantity | None = None,
+    bins: xr.DataArray | list[Quantity] | None = None,
     exclude_boundary_zones: bool = True,
     close_last_zone_right_boundary: bool = True,
 ) -> xr.DataArray:
@@ -937,18 +937,17 @@ def get_zones(
     ----------
     da : xarray.DataArray
         Input data
-    zone_min : Quantified | None
+    zone_min : Quantity | None
         Left boundary of the first zone
-    zone_max : Quantified | None
+    zone_max : Quantity | None
         Right boundary of the last zone
-    zone_step: Quantified | None
+    zone_step: Quantity | None
         Size of zones
-    zone_1 : Quantified | None
+    zone_1 : Quantity | None
         Input value whose zone should be labelled as "zone 1". It should be in the range [`zone_min`, `zone_max` [.
         By default this is set to `None`, with "zone 1" aligned with `zone_min`
-    bins : Quantified | None
-        List of zones to be used. If a list is given, units same as `da` are assumed. If an `xr.DataArray` is given,
-        units must be precised.
+    bins : xr.DataArray | list[Quantity] | None
+        Zones to be used, either as a DataArray with appropriate units or a list of quantities.
     allow_boundary_zones : Bool
         Determines whether a zone value is attributed for values in ]-np.inf, zone_min[ and [zone_max, np.inf[.
     close_last_zone_right_boundary : Bool
@@ -970,16 +969,16 @@ def get_zones(
 
     # Get zone bins (if necessary)
     bins = bins or _get_zone_bins(zone_min, zone_max, zone_step)
-    if isinstance(bins, xr.DataArray):
-        bins = convert_units_to(bins, da).values
+    if isinstance(bins, list):
+        bins = sorted([convert_units_to(b, da) for b in bins])
 
     # Define "zone 1"
     if zone_1:
         z1 = convert_units_to(zone_1, da)
         if z1 >= bins[-1] or z1 < bins[0]:
             raise ValueError(
-                "`zone_1` must be in the range [`zone_min`, `zone_max`[. "
-                f"Got `zone_1` = {zone_1}, `zone_max` = {zone_max}, `zone_min` = {zone_max}."
+                "Expected `zone_1` in [`zone_min`, `zone_max`[."
+                f"Got `zone_1` = {zone_1}, `zone_min` = {zone_min}, `zone_max` = {zone_max}."
             )
         zone_1_index = np.digitize(z1, bins)
     else:
