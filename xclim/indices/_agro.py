@@ -6,7 +6,6 @@ import warnings
 import numpy as np
 import xarray
 
-import xclim.indices as xci
 import xclim.indices.run_length as rl
 from xclim.core.calendar import parse_offset, resample_doy, select_time
 from xclim.core.units import (
@@ -17,6 +16,8 @@ from xclim.core.units import (
     to_agg_units,
 )
 from xclim.core.utils import DayOfYearStr, Quantified, uses_dask
+from xclim.indices._conversion import potential_evapotranspiration
+from xclim.indices._simple import tn_min
 from xclim.indices._threshold import (
     first_day_temperature_above,
     first_day_temperature_below,
@@ -859,7 +860,7 @@ def water_budget(
         lat = _gather_lat(pr)
 
     if evspsblpot is None:
-        pet = xci.potential_evapotranspiration(
+        pet = potential_evapotranspiration(
             tasmin=tasmin,
             tasmax=tasmax,
             tas=tas,
@@ -1464,8 +1465,10 @@ def hardiness_zones(
             f"Method must be one of `usda` or `anbg`. Got {method}."
         )
 
-    tn_min = tasmin.resample(time=freq).min().rolling(time=window).mean()
-    zones = get_zones(tn_min, zone_min=zone_min, zone_max=zone_max, zone_step=zone_step)
+    tn_min_rolling = tn_min(tasmin, freq=freq).rolling(time=window).mean()
+    zones = get_zones(
+        tn_min_rolling, zone_min=zone_min, zone_max=zone_max, zone_step=zone_step
+    )
 
     zones.attrs["units"] = ""
     return zones
