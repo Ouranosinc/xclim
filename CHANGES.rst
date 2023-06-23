@@ -2,7 +2,7 @@
 Changelog
 =========
 
-v0.44.0 (unreleased)
+v0.44.0 (2023-06-23)
 --------------------
 Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`), David Huard (:user:`huard`).
 
@@ -25,10 +25,10 @@ New indicators
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * ``xclim.sdba.processing.escore`` performance was improved with a faster runtime (:pull:`1360`).
-* New generic function (``flux_and_rate_converter``) converting flux to a rate (and vice-versa) using a density. `snw_to_snd` and `snd_to_snw` were refactored using this function. (:issue:`1352`, :pull:`1358`)
-* New function (``prsn_to_prsnd``) to convert snowfall flux ([mass]/[area]/[time]) to snowfall rate ([length]/[time]) using snow density ([mass]/[volume]). (:issue:`1352`, :pull:`1358`)
+* New generic function (``flux_and_rate_converter``) converting flux to a rate (and vice-versa) using a density. ``snw_to_snd`` and ``snd_to_snw`` were refactored using this function. (:issue:`1352`, :pull:`1358`)
+* New function (``prsn_to_prsnd``) to convert snowfall flux ([mass] / [area] / [time]) to snowfall rate ([length] / [time]) using snow density ([mass] / [volume]). (:issue:`1352`, :pull:`1358`)
 * New variables: Snowfall rate ``prsnd`` and surface maximum wind speed ``sfcWindmax``. (:issue:`1352`, :pull:`1358`).
-* Docstring for `freq` links to pandas offset aliases documentation. (:issue:`1310`, :pull:`1392`).
+* Docstring for ``freq`` links to pandas offset aliases documentation. (:issue:`1310`, :pull:`1392`).
 * New function ``xclim.indces.run_length.extract_events`` for determining runs whose starting and stopping points are defined through run length conditions. (:pull:`1256`).
 * Stats functions `frequency_analysis` now takes `method` parameter to select other fitting methods such as PWM or MOM. (:issue:`1168`, :pull:`1398`).
 * ``xclim.indices.frost_days`` now accepts an ``**indexer`` parameter for calculating frost days over a temporal subset of the given dataset. (:issue:`1352`, :pull:`1361`).
@@ -37,7 +37,7 @@ New features and enhancements
 Bug fixes
 ^^^^^^^^^
 * Fixed a bug in ``xclim.core.calendar.time_bnds`` when using ``DataArrayResample`` objects, caused by an upstream change in xarray 2023.5.0. (:issue:`1368`, :pull:`1377`).
-* `ensembles.change_significance` will returns NaNs when the input values are all NaNs, instead of failing. (:issue:`1379`, :pull:`1380`).
+* ``ensembles.change_significance`` will returns NaNs when the input values are all NaNs, instead of failing. (:issue:`1379`, :pull:`1380`).
 * Accelerated import of xclim by caching the compilation of `guvectorize` functions. (:pull:`1378`).
 * Fixed many issues with ``xclim.indices.helpers.cosine_of_solar_zenith_angle``, the signature changed. (:issue:`1110`, :pull:`1399`).
 
