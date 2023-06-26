@@ -13,16 +13,7 @@ import cftime
 import numpy as np
 import pandas as pd
 import xarray as xr
-from xarray.coding.cftime_offsets import (
-    MonthBegin,
-    MonthEnd,
-    QuarterBegin,
-    QuarterEnd,
-    YearBegin,
-    YearEnd,
-    to_cftime_datetime,
-    to_offset,
-)
+from xarray.coding.cftime_offsets import to_cftime_datetime
 from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core.resample import DataArrayResample, DatasetResample
 
@@ -233,6 +224,18 @@ def common_calendar(calendars: Sequence[str], join="outer") -> str:
     raise NotImplementedError(f"Unknown join criterion `{join}`.")
 
 
+def _convert_doy_date(doy: int, year_of_the_doy: int, src, tgt):
+    date = src(year_of_the_doy, 1, 1) + pydt.timedelta(days=int(doy - 1))
+    try:
+        same_date = tgt(date.year, date.month, date.day)
+    except ValueError:
+        return np.nan
+    else:
+        if tgt is pydt.datetime:
+            return float(same_date.timetuple().tm_yday)
+        return float(same_date.dayofyr)
+
+
 def convert_doy(
     source: xr.DataArray,
     target: xr.DataArray | str,
@@ -262,7 +265,60 @@ def convert_doy(
     dim : str
       Name of the temporal dimension.
     """
-    pass
+    source_cal = source_cal or source.attrs.get("calendar", get_calendar(source[dim]))
+    target_cal = target if isinstance(target, str) else get_calendar(target)
+
+    if align_on == "year":
+        if xr.infer_freq(source[dim]) in ("AS-JAN", "A-DEC"):  # Fast path
+            max_doy_src = xr.DataArray(
+                [days_in_year(yr, source_cal) for yr in source[dim].dt.year],
+                dims=(dim,),
+                coords={dim: source[dim]},
+            )
+            max_doy_tgt = xr.DataArray(
+                [days_in_year(yr, target_cal) for yr in source[dim].dt.year],
+                dims=(dim,),
+                coords={dim: source[dim]},
+            )
+        else:  # Doy might refer to a date from the year after the timestamp.
+            year_of_the_doy = source[dim].dt.year + 1 * (
+                source < source[dim].dt.dayofyear
+            )
+            max_doy_src = xr.apply_ufunc(
+                days_in_year,
+                year_of_the_doy,
+                vectorize=True,
+                dask="parallelized",
+                kwargs={"calendar": source_cal},
+            )
+            max_doy_tgt = xr.apply_ufunc(
+                days_in_year,
+                year_of_the_doy,
+                vectorize=True,
+                dask="parallelized",
+                kwargs={"calendar": target_cal},
+            )
+        new_doy = source.copy(data=source * max_doy_tgt / max_doy_src)
+    elif align_on == "date":
+        year_of_the_doy = source[dim].dt.year + 1 * (source < source[dim].dt.dayofyear)
+        new_doy = xr.apply_ufunc(
+            _convert_doy_date,
+            source,
+            year_of_the_doy,
+            vectorize=True,
+            dask="parallelized",
+            kwargs={
+                "src": datetime_classes[source_cal],
+                "tgt": datetime_classes[target_cal],
+            },
+        )
+    else:
+        raise NotImplementedError('"align_on" must be one of "date" or "year".')
+    if isinstance(target, str):
+        new_doy = convert_calendar(new_doy, target_cal, dim=dim, align_on="date")
+    else:
+        new_doy[dim] = target
+    return new_doy.assign_attrs(is_dayofyear=np.int32(1), calendar=target_cal)
 
 
 def convert_calendar(
@@ -1070,7 +1126,7 @@ def _doy_days_since_doys(
     base_doy = base.dt.dayofyear
 
     doy_max = xr.apply_ufunc(
-        lambda y: days_in_year(y, calendar), base.dt.year, vectorize=True
+        days_in_year, base.dt.year, vectorize=True, kwargs={"calendar": calendar}
     )
 
     if start is not None:
