@@ -566,8 +566,8 @@ class TestMeanRadiantTemperature:
         rlus = dataset.rlus
 
         # Expected values
-        exp_sun = [np.nan, np.nan, np.nan, np.nan, np.nan]
-        exp_ins = [276.911, 274.742, 243.202, 268.012, 309.151]
+        exp_sun = [276.911, 274.742, 243.202, 268.012, 278.505]
+        exp_ins = [276.911, 274.742, 243.202, 268.012, 278.505]
         exp_avg = [276.911, 274.742, 243.202, 268.017, 278.512]
 
         mrt_sun = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="sunlit")
@@ -577,3 +577,15 @@ class TestMeanRadiantTemperature:
         np.testing.assert_allclose(mrt_sun.isel(time=0), exp_sun, rtol=rtol)
         np.testing.assert_allclose(mrt_ins.isel(time=0), exp_ins, rtol=rtol)
         np.testing.assert_allclose(mrt_avg.isel(time=0), exp_avg, rtol=rtol)
+
+
+class TestLateFrostDays:
+    def test_late_frost_days(self, atmosds):
+        tasmin = atmosds.tasmin
+
+        # Expected values
+        exp = [2, 9, 72, 24, 0]
+
+        lfd = atmos.late_frost_days(tasmin, date_bounds=("04-01", "06-30"))
+
+        np.testing.assert_allclose(lfd.isel(time=0), exp, rtol=1e-03)

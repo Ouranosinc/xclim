@@ -69,9 +69,14 @@ def test_time_bnds(freq, datetime_index, cftime_index):
     # cftime resolution goes down to microsecond only, code below corrects
     # that to allow for comparison with pandas datetime
     cftime_ends += np.timedelta64(999, "ns")
-    datetime_starts = da_datetime._full_index.to_period(freq).start_time
-    datetime_ends = da_datetime._full_index.to_period(freq).end_time
-
+    if hasattr(da_datetime, "_full_index"):
+        datetime_starts = da_datetime._full_index.to_period(freq).start_time
+        datetime_ends = da_datetime._full_index.to_period(freq).end_time
+    else:
+        datetime_starts = (
+            da_datetime.groupers[0].group_as_index.to_period(freq).start_time
+        )
+        datetime_ends = da_datetime.groupers[0].group_as_index.to_period(freq).end_time
     assert_array_equal(cftime_starts, datetime_starts)
     assert_array_equal(cftime_ends, datetime_ends)
 

@@ -921,7 +921,18 @@ def time_bnds(time, freq=None, precision=None):
     if isinstance(time, (xr.DataArray, xr.Dataset)):
         time = time.indexes[time.name]
     elif isinstance(time, (DataArrayResample, DatasetResample)):
-        time = time._full_index
+        # TODO: Remove conditional when pinning xarray above 2023.5.0
+        if hasattr(time, "_full_index"):  # xr < 2023.5.0
+            time = time._full_index
+        else:  # xr >= 2023.5.0
+            for grouper in time.groupers:
+                if "time" in grouper.dims:
+                    time = grouper.group_as_index
+                    break
+            else:
+                raise ValueError(
+                    'Got object resampled along another dimension than "time".'
+                )
 
     if freq is None and hasattr(time, "freq"):
         freq = time.freq

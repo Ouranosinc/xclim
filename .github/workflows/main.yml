@@ -20,7 +20,7 @@ on:
       - submitted
 
 env:
-  XCLIM_TESTDATA_BRANCH: v2023.5.4
+  XCLIM_TESTDATA_BRANCH: v2023.6.8
 
 jobs:
   black:
@@ -51,7 +51,7 @@ jobs:
       - name: Run linting suite
         run: tox -e black
 
-  test-py38:
+  test-py39:
     name: test-${{ matrix.tox-env }} (Python${{ matrix.python-version }})
     needs: black
     if: |
@@ -59,10 +59,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        tox-env:
-          - "py38"
-        python-version:
-          - "3.8"
+        include:
+          - tox-env: "py39"
+            python-version: "3.9"
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python${{ matrix.python-version }}
@@ -87,12 +86,14 @@ jobs:
     strategy:
       matrix:
         include:
-          - tox-env: py38-coverage
+          - tox-env: py38-coverage-eofs
             python-version: "3.8"
           - tox-env: py39-coverage-sbck-eofs
             python-version: "3.9"
           - tox-env: notebooks_doctests
             python-version: "3.10"
+          - tox-env: py311-coverage-sbck
+            python-version: "3.11"
     steps:
       - uses: actions/checkout@v3
       - name: Install Eigen3
@@ -132,13 +133,14 @@ jobs:
         shell: bash -l {0}
     steps:
       - uses: actions/checkout@v3
-      - name: Setup Conda (Micromamba) with Python3.10
-        uses: mamba-org/provision-with-micromamba@main
+      - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
+        uses: mamba-org/setup-micromamba@v1
         with:
           cache-downloads: true
-          micromamba-version: 'latest'
+          cache-environment: true
           environment-file: environment.yml
-          extra-specs: |
+          create-args: >-
+            conda
             python=${{ matrix.python-version }}
       - name: Conda and Mamba versions
         run: |
