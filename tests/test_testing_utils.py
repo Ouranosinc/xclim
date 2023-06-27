@@ -6,9 +6,25 @@ from urllib.error import HTTPError
 
 import numpy as np
 import pytest
+from xarray import Dataset
 
 import xclim.testing.utils as utilities
 from xclim import __version__ as __xclim_version__
+from xclim.testing.helpers import test_timeseries
+
+
+class TestFixtures:
+    def test_made_up_variable(self):
+        ds = test_timeseries(
+            np.zeros(365),
+            "luminiferous_aether_flux",
+            units="W K mol A-1 m-2 s-1",
+            as_dataset=True,
+        )
+
+        assert isinstance(ds, Dataset)
+        assert ds.luminiferous_aether_flux.attrs["units"] == "W K mol A-1 m-2 s-1"
+        assert "standard_name" not in ds.luminiferous_aether_flux.attrs
 
 
 class TestFileRequests:
