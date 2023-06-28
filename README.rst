@@ -3,13 +3,13 @@ xclim: Climate services library |logo|
 ======================================
 
 +----------------------------+-----------------------------------------------------+
-| Versions                   | |pypi| |conda|                                      |
+| Versions                   | |pypi| |conda| |versions|                           |
 +----------------------------+-----------------------------------------------------+
-| Documentation and Support  | |docs| |gitter| |versions|                          |
+| Documentation and Support  | |docs| |gitter|                                     |
 +----------------------------+-----------------------------------------------------+
-| Open Source                | |license| |fair| |fossa| |zenodo|                   |
+| Open Source                | |license| |fair| |zenodo| |pyOpenSci| |joss|        |
 +----------------------------+-----------------------------------------------------+
-| Coding Standards           | |black| |pre-commit| |security|                     |
+| Coding Standards           | |black| |pre-commit| |security| |fossa|             |
 +----------------------------+-----------------------------------------------------+
 | Development Status         | |status| |build| |coveralls|                        |
 +----------------------------+-----------------------------------------------------+
@@ -18,7 +18,7 @@ xclim: Climate services library |logo|
 with an extensible framework for constructing custom climate indicators, statistical downscaling and bias
 adjustment of climate model simulations, as well as climate model ensemble analysis tools.
 
-xclim is built using `xarray`_ and can seamlessly benefit from the parallelization handling provided by `dask`_.
+`xclim` is built using `xarray`_ and can seamlessly benefit from the parallelization handling provided by `dask`_.
 Its objective is to make it as simple as possible for users to perform typical climate services data treatment workflows.
 Leveraging xarray and dask, users can easily bias-adjust climate simulations over large spatial domains or compute indices from large climate datasets.
 
@@ -30,26 +30,58 @@ For example, the following would compute monthly mean temperature from daily mea
     import xarray as xr
 
     ds = xr.open_dataset(filename)
-    tg = xclim.atmos.tg_mean(ds.tas, freq="YS")
+    tg = xclim.atmos.tg_mean(ds.tas, freq="MS")
 
 For applications where metadata and missing values are important to get right, xclim provides a class for each index
 that validates inputs, checks for missing values, converts units and assigns metadata attributes to the output.
 This also provides a mechanism for users to customize the indices to their own specifications and preferences.
-xclim currently provides over 150 indices related to mean, minimum and maximum daily temperature, daily precipitation,
+`xclim` currently provides over 150 indices related to mean, minimum and maximum daily temperature, daily precipitation,
 streamflow and sea ice concentration, numerous bias-adjustment algorithms, as well as a dedicated module for ensemble analysis.
 
 .. _xarray: https://docs.xarray.dev/
 .. _dask: https://docs.dask.org/
 
+Quick Install
+-------------
+`xclim` can be installed from PyPI:
+
+.. code-block:: shell
+
+    $ pip install xclim
+
+or from Anaconda (conda-forge):
+
+.. code-block:: shell
+
+    $ conda install -c conda-forge xclim
+
 Documentation
 -------------
 The official documentation is at https://xclim.readthedocs.io/
 
+How to make the most of xclim: `Basic Usage Examples`_ and `In-Depth Examples`_.
+
+.. _Basic Usage Examples: https://xclim.readthedocs.io/en/stable/notebooks/usage.html
+.. _In-Depth Examples: https://xclim.readthedocs.io/en/stable/notebooks/index.html
+
+Conventions
+-----------
+In order to provide a coherent interface, `xclim` tries to follow different sets of conventions. In particular, input data should follow the `CF conventions`_ whenever possible for variable attributes. Variable names are usually the ones used in `CMIP6`_, when they exist.
+
+However, xclim will *always* assume the temporal coordinate is named "time". If your data uses another name (for example: "T"), you can rename the variable with:
+
+.. code-block:: python
+
+    ds = ds.rename(T="time")
+
+.. _CF Conventions: http://cfconventions.org/
+.. _CMIP6: https://clipc-services.ceda.ac.uk/dreq/mipVars.html
+
 Contributing to xclim
 ---------------------
-xclim is in active development and is being used in production by climate services specialists around the world.
+`xclim` is in active development and is being used in production by climate services specialists around the world.
 
-* If you're interested in participating in the development of xclim by suggesting new features, new indices or report bugs, please leave us a message on the `issue tracker`_. There is also a chat room on gitter (|gitter|).
+* If you're interested in participating in the development of `xclim` by suggesting new features, new indices or report bugs, please leave us a message on the `issue tracker`_. There is also a chat room on gitter (|gitter|).
 
 * If you would like to contribute code or documentation (which is greatly appreciated!), check out the `Contributing Guidelines`_ before you begin!
 
@@ -58,21 +90,23 @@ xclim is in active development and is being used in production by climate servic
 
 How to cite this library
 ------------------------
-If you wish to cite xclim in a research publication, we kindly ask that you use the bibliographical reference information available through `Zenodo`_
+If you wish to cite `xclim` in a research publication, we kindly ask that you refer to our article published in The Journal of Open Source Software (`JOSS`_): https://doi.org/10.21105/joss.05415
 
-.. _Zenodo: https://doi.org/10.5281/zenodo.2795043S
+To cite a specific version of `xclim`, the bibliographical reference information can be found through `Zenodo`_
+
+.. _JOSS: https://joss.theoj.org/
+.. _Zenodo: https://doi.org/10.5281/zenodo.2795043
 
 License
 -------
 This is free software: you can redistribute it and/or modify it under the terms of the `Apache License 2.0`_. A copy of this license is provided in the code repository (`LICENSE`_).
-
 
 .. _Apache License 2.0: https://opensource.org/license/apache-2-0/
 .. _LICENSE: https://github.com/Ouranosinc/xclim/blob/master/LICENSE
 
 Credits
 -------
-xclim development is funded through Ouranos_, Environment and Climate Change Canada (ECCC_), the `Fonds vert`_ and the Fonds d'électrification et de changements climatiques (FECC_), the Canadian Foundation for Innovation (CFI_), and the Fonds de recherche du Québec (FRQ_).
+`xclim` development is funded through Ouranos_, Environment and Climate Change Canada (ECCC_), the `Fonds vert`_ and the Fonds d'électrification et de changements climatiques (FECC_), the Canadian Foundation for Innovation (CFI_), and the Fonds de recherche du Québec (FRQ_).
 
 This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-pypackage`_ project template.
 
@@ -113,6 +147,14 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
         :target: https://zenodo.org/badge/latestdoi/142608764
         :alt: DOI
 
+.. |pyOpenSci| image:: https://tinyurl.com/y22nb8up
+        :target: https://github.com/pyOpenSci/software-review/issues/73
+        :alt: pyOpenSci
+
+.. |joss| image:: https://joss.theoj.org/papers/10.21105/joss.05415/status.svg
+        :target: https://doi.org/10.21105/joss.05415
+        :alt: JOSS
+
 .. |license| image:: https://img.shields.io/github/license/Ouranosinc/xclim.svg
         :target: https://github.com/Ouranosinc/xclim/blob/master/LICENSE
         :alt: License
@@ -144,6 +186,7 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 .. |status| image:: https://www.repostatus.org/badges/latest/active.svg
         :target: https://www.repostatus.org/#active
         :alt: Project Status: Active – The project has reached a stable, usable state and is being actively developed.
+
 .. |versions| image:: https://img.shields.io/pypi/pyversions/xclim.svg
         :target: https://pypi.python.org/pypi/xclim
         :alt: Supported Python Versions

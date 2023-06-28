@@ -1,4 +1,3 @@
-# noqa: D205,D400
 """
 Miscellaneous Indices Utilities
 ===============================
@@ -51,7 +50,7 @@ ICM = {
 
 
 def wrapped_partial(func: Callable, suggested: dict | None = None, **fixed) -> Callable:
-    """Wrap a function, updating its signature but keeping its docstring.
+    r"""Wrap a function, updating its signature but keeping its docstring.
 
     Parameters
     ----------
@@ -59,7 +58,7 @@ def wrapped_partial(func: Callable, suggested: dict | None = None, **fixed) -> C
         The function to be wrapped
     suggested : dict, optional
         Keyword arguments that should have new default values but still appear in the signature.
-    **fixed
+    \*\*fixed
         Keyword arguments that should be fixed by the wrapped and removed from the signature.
 
     Returns
@@ -167,7 +166,7 @@ class MissingVariableError(ValueError):
 
 
 def ensure_chunk_size(da: xr.DataArray, **minchunks: dict[str, int]) -> xr.DataArray:
-    """Ensure that the input DataArray has chunks of at least the given size.
+    r"""Ensure that the input DataArray has chunks of at least the given size.
 
     If only one chunk is too small, it is merged with an adjacent chunk.
     If many chunks are too small, they are grouped together by merging adjacent chunks.
@@ -176,7 +175,7 @@ def ensure_chunk_size(da: xr.DataArray, **minchunks: dict[str, int]) -> xr.DataA
     ----------
     da : xr.DataArray
         The input DataArray, with or without the dask backend. Does nothing when passed a non-dask array.
-    **minchunks : dict[str, int]
+    \*\*minchunks : dict[str, int]
         A kwarg mapping from dimension name to minimum chunk size.
         Pass -1 to force a single chunk along that dimension.
 
@@ -589,9 +588,16 @@ class InputKind(IntEnum):
     """
 
 
-def infer_kind_from_parameter(param: Parameter, has_units: bool = False) -> InputKind:
+def infer_kind_from_parameter(param, has_units: bool = False) -> InputKind:
     """Return the appropriate InputKind constant from an ``inspect.Parameter`` object.
 
+    Parameters
+    ----------
+    param : Parameter
+    has_units : bool
+
+    Notes
+    -----
     The correspondence between parameters and kinds is documented in :py:class:`xclim.core.utils.InputKind`.
     The only information not inferable through the `inspect` object is whether the parameter
     has been assigned units through the :py:func:`xclim.core.units.declare_units` decorator.

@@ -100,6 +100,12 @@ Ensembles Module
 .. autofunction:: xclim.ensembles.robustness_coefficient
    :noindex:
 
+.. automodule:: xclim.ensembles._partitioning
+    :noindex:
+
+.. autofunction:: xclim.ensembles.hawkins_sutton
+    :noindex:
+
 Units Handling Submodule
 ========================
 
@@ -284,10 +290,16 @@ Spatial Analogues Helpers
 .. autofunction:: xclim.analog.standardize
    :noindex:
 
-xclim Testing Helpers Module
-----------------------------
+Testing Module
+--------------
 
 .. automodule:: xclim.testing.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :noindex:
+
+.. automodule:: xclim.testing.helpers
    :members:
    :undoc-members:
    :show-inheritance:

@@ -26,7 +26,7 @@ def spatial_analogs(
     method: str = "kldiv",
     **kwargs,
 ):
-    """Compute dissimilarity statistics between target points and candidate points.
+    r"""Compute dissimilarity statistics between target points and candidate points.
 
     Spatial analogues based on the comparison of climate indices. The algorithm compares
     the distribution of the reference indices with the distribution of spatially
@@ -45,7 +45,7 @@ def spatial_analogs(
         The dimension over which the *distributions* are constructed. This can be a multi-index dimension.
     method : {'seuclidean', 'nearest_neighbor', 'zech_aslan', 'kolmogorov_smirnov', 'friedman_rafsky', 'kldiv'}
         Which method to use when computing the dissimilarity statistic.
-    **kwargs
+    \*\*kwargs
         Any other parameter passed directly to the dissimilarity method.
 
     Returns
@@ -78,10 +78,10 @@ def spatial_analogs(
         )
 
     try:
-        metric = metrics[method]
+        metric_func = metrics[method]
     except KeyError as e:
         raise ValueError(
-            f"Method {method} is not implemented. Available methods are : {','.join(metrics.keys())}."
+            f"Method `{method}` is not implemented. Available methods are: {','.join(metrics.keys())}."
         ) from e
 
     if candidates.chunks is not None:
@@ -91,7 +91,7 @@ def spatial_analogs(
 
     # Compute dissimilarity
     diss = xr.apply_ufunc(
-        metric,
+        metric_func,
         target,
         candidates,
         input_core_dims=[(dist_dim, "_indices"), ("_dist_dim", "_indices")],

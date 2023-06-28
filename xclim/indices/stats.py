@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Sequence
 
+import lmoments3.distr
 import numpy as np
 import xarray as xr
 
@@ -12,16 +13,16 @@ from xclim.core.utils import uses_dask
 from . import generic
 
 __all__ = [
+    "_fit_start",
+    "_lm3_dist_map",
     "dist_method",
-    "fit",
-    "parametric_quantile",
-    "parametric_cdf",
     "fa",
+    "fit",
     "frequency_analysis",
     "get_dist",
     "get_lm3_dist",
-    "_fit_start",
-    "_lm3_dist_map",
+    "parametric_cdf",
+    "parametric_quantile",
 ]
 
 
@@ -52,9 +53,11 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
         return np.asarray([np.nan] * nparams)
 
     # Estimate parameters
-    if method == "ML":
+    if method in ["ML", "MLE"]:
         args, kwargs = _fit_start(x, dist.name, **fitkwargs)
-        params = dist.fit(x, *args, **kwargs, **fitkwargs)
+        params = dist.fit(x, *args, method="mle", **kwargs, **fitkwargs)
+    elif method == "MM":
+        params = dist.fit(x, method="mm", **fitkwargs)
     elif method == "PWM":
         params = list(dist.lmom_fit(x).values())
     elif method == "APP":
@@ -80,7 +83,7 @@ def fit(
     dim: str = "time",
     **fitkwargs,
 ) -> xr.DataArray:
-    """Fit an array to a univariate distribution along the time dimension.
+    r"""Fit an array to a univariate distribution along the time dimension.
 
     Parameters
     ----------
@@ -90,13 +93,13 @@ def fit(
         Name of the univariate distribution, such as beta, expon, genextreme, gamma, gumbel_r, lognorm, norm
         (see :py:mod:scipy.stats for full list). If the PWM method is used, only the following distributions are
         currently supported: 'expon', 'gamma', 'genextreme', 'genpareto', 'gumbel_r', 'pearson3', 'weibull_min'.
-    method : {"ML", "PWM", "APP"}
-        Fitting method, either maximum likelihood (ML), probability weighted moments (PWM),
-        also called L-Moments, or approximate method (APP).
+    method : {"ML" or "MLE", "MM", "PWM", "APP"}
+        Fitting method, either maximum likelihood (ML or MLE), method of moments (MM),
+        probability weighted moments (PWM), also called L-Moments, or approximate method (APP).
         The PWM method is usually more robust to outliers.
     dim : str
         The dimension upon which to perform the indexing (default: "time").
-    **fitkwargs
+    \*\*fitkwargs
         Other arguments passed directly to :py:func:`_fitstart` and to the distribution's `fit`.
 
     Returns
@@ -109,11 +112,16 @@ def fit(
     Coordinates for which all values are NaNs will be dropped before fitting the distribution. If the array still
     contains NaNs, the distribution parameters will be returned as NaNs.
     """
+    method = method.upper()
     method_name = {
         "ML": "maximum likelihood",
+        "MM": "method of moments",
+        "MLE": "maximum likelihood",
         "PWM": "probability weighted moments",
         "APP": "approximative method",
     }
+    if method not in method_name:
+        raise ValueError(f"Fitting method not recognized: {method}")
 
     # Get the distribution
     dc = get_dist(dist)
@@ -134,7 +142,7 @@ def fit(
         keep_attrs=True,
         kwargs=dict(
             # Don't know how APP should be included, this works for now
-            dist=dc if method in ["ML", "APP"] else lm3dc,
+            dist=dc if method in ["ML", "MLE", "MM", "APP"] else lm3dc,
             nparams=len(dist_params),
             method=method,
             **fitkwargs,
@@ -294,7 +302,11 @@ def parametric_cdf(p: xr.DataArray, v: float | Sequence) -> xr.DataArray:
 
 
 def fa(
-    da: xr.DataArray, t: int | Sequence, dist: str = "norm", mode: str = "max"
+    da: xr.DataArray,
+    t: int | Sequence,
+    dist: str = "norm",
+    mode: str = "max",
+    method: str = "ML",
 ) -> xr.DataArray:
     """Return the value corresponding to the given return period.
 
@@ -309,6 +321,10 @@ def fa(
         Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
     mode : {'min', 'max}
         Whether we are looking for a probability of exceedance (max) or a probability of non-exceedance (min).
+    method : {"ML" or "MLE", "MOM", "PWM", "APP"}
+        Fitting method, either maximum likelihood (ML or MLE), method of moments (MOM),
+        probability weighted moments (PWM), also called L-Moments, or approximate method (APP).
+        The PWM method is usually more robust to outliers.
 
     Returns
     -------
@@ -320,7 +336,7 @@ def fa(
     scipy.stats : For descriptions of univariate distribution types.
     """
     # Fit the parameters of the distribution
-    p = fit(da, dist)
+    p = fit(da, dist, method=method)
     t = np.atleast_1d(t)
 
     if mode in ["max", "high"]:
@@ -349,6 +365,7 @@ def frequency_analysis(
     dist: str,
     window: int = 1,
     freq: str | None = None,
+    method: str = "ML",
     **indexer,
 ) -> xr.DataArray:
     """Return the value corresponding to a return period.
@@ -369,6 +386,10 @@ def frequency_analysis(
     freq : str
         Resampling frequency. If None, the frequency is assumed to be 'YS' unless the indexer is season='DJF',
         in which case `freq` would be set to `AS-DEC`.
+    method : {"ML" or "MLE", "MOM", "PWM", "APP"}
+        Fitting method, either maximum likelihood (ML or MLE), method of moments (MOM),
+        probability weighted moments (PWM), also called L-Moments, or approximate method (APP).
+        The PWM method is usually more robust to outliers.
     indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
         month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
@@ -398,7 +419,7 @@ def frequency_analysis(
     if uses_dask(sel):
         sel = sel.chunk({"time": -1})
     # Frequency analysis
-    return fa(sel, t, dist, mode)
+    return fa(sel, t, dist=dist, mode=mode, method=method)
 
 
 def get_dist(dist):
@@ -414,30 +435,17 @@ def get_dist(dist):
 
 def get_lm3_dist(dist):
     """Return a distribution object from `lmoments3.distr`."""
-    try:
-        # fmt: off
-        import lmoments3.distr  # pylint: disable=import-outside-toplevel
-
-        # The lmoments3 library has to be installed from the `develop` branch.
-        # pip install git+https://github.com/OpenHydrology/lmoments3.git@develop#egg=lmoments3
-        # fmt: on
-    except ModuleNotFoundError as e:
-        msg = (
-            "The lmoments3 library has to be installed from the `develop` branch. Run "
-            "'$ pip install git+https://github.com/OpenHydrology/lmoments3.git@develop#egg=lmoments3'"
-        )
-        raise ModuleNotFoundError(msg) from e
-
     if dist not in _lm3_dist_map:
         raise ValueError(
-            f"The {dist} distribution is not supported by `lmoments3` or `xclim`."
+            f"The PWM fitting method cannot be used with the {dist} distribution, as it is not supported "
+            f"by `lmoments3`."
         )
 
     return getattr(lmoments3.distr, _lm3_dist_map[dist])
 
 
 def _fit_start(x, dist, **fitkwargs) -> tuple[tuple, dict]:
-    """Return initial values for distribution parameters.
+    r"""Return initial values for distribution parameters.
 
     Providing the ML fit method initial values can help the optimizer find the global optimum.
 
@@ -448,7 +456,7 @@ def _fit_start(x, dist, **fitkwargs) -> tuple[tuple, dict]:
     dist : str
         Name of the univariate distribution, e.g. `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`.
         (see :py:mod:scipy.stats). Only `genextreme` and `weibull_exp` distributions are supported.
-    **fitkwargs
+    \*\*fitkwargs
         Kwargs passed to fit.
 
     Returns
@@ -514,7 +522,7 @@ def _fit_start(x, dist, **fitkwargs) -> tuple[tuple, dict]:
 def _dist_method_1D(
     params: Sequence[float], arg=None, *, dist: str, function: str, **kwargs
 ) -> xr.DataArray:
-    """Statistical function for given argument on given distribution initialized with params.
+    r"""Statistical function for given argument on given distribution initialized with params.
 
     See :py:ref:`scipy:scipy.stats.rv_continuous` for all available functions and their arguments.
     Every method where `"*args"` are the distribution parameters can be wrapped.
@@ -529,7 +537,7 @@ def _dist_method_1D(
         The scipy name of the distribution.
     function : str
         The name of the function to call.
-    **kwargs
+    \*\*kwargs
         Other parameters to pass to the function call.
 
     Returns
@@ -548,7 +556,7 @@ def dist_method(
     arg: xr.DataArray | None = None,
     **kwargs,
 ) -> xr.DataArray:
-    """Vectorized statistical function for given argument on given distribution initialized with params.
+    r"""Vectorized statistical function for given argument on given distribution initialized with params.
 
     Methods where `"*args"` are the distribution parameters can be wrapped, except those that return new dimensions
     (Ex: 'rvs' with size != 1, 'stats' with more than one moment, 'interval', 'support')
@@ -562,7 +570,7 @@ def dist_method(
         Must have a `scipy_dist` attribute with the name of the distribution fitted.
     arg : array_like, optional
         The argument for the requested function.
-    **kwargs
+    \*\*kwargs
         Other parameters to pass to the function call.
 
     Returns

@@ -19,7 +19,6 @@ BOOTSTRAP_DIM = "_bootstrap"
 
 
 def percentile_bootstrap(func):
-    # noqa: D401
     """Decorator applying a bootstrap step to the calculation of exceedance over a percentile threshold.
 
     This feature is experimental.
@@ -66,7 +65,7 @@ def percentile_bootstrap(func):
 
 
 def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
-    """Bootstrap the computation of percentile-based indices.
+    r"""Bootstrap the computation of percentile-based indices.
 
     Indices measuring exceedance over percentile-based thresholds (such as tx90p) may contain artificial discontinuities
     at the beginning and end of the reference period used to calculate percentiles. The bootstrap procedure can reduce
@@ -82,14 +81,14 @@ def bootstrap_func(compute_index_func: Callable, **kwargs) -> xarray.DataArray:
     Parameters
     ----------
     compute_index_func : Callable
-      Index function.
-    **kwargs
-      Arguments to `func`.
+        Index function.
+    \*\*kwargs
+        Arguments to `func`.
 
     Returns
     -------
     xr.DataArray
-      The result of func with bootstrapping.
+        The result of func with bootstrapping.
 
     References
     ----------
