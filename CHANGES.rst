@@ -4,7 +4,11 @@ Changelog
 
 v0.45.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Added ``ensembles.hawkins_sutton`` method to partition the uncertainty sources in a climate projection ensemble. (:issue:`771`, :pull:`1262`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -196,11 +200,11 @@ New features and enhancements
 
 New indicators
 ^^^^^^^^^^^^^^
-* ``ensembles.change_significance`` now supports Mann-whitney U-test and flexible ``realization``. (:pull:`1285`).
 * New indices and indicators for converting from snow water equivalent to snow depth (``snw_to_snd``) and snow depth to snow water equivalent (``snd_to_snw``) using snow density [kg/m^3]. (:pull:`1271`).
 * New indices and indicators for determining upwelling radiation (`shortwave_upwelling_radiation_from_net_downwelling` and `longwave_upwelling_radiation_from_net_downwelling`; CF variables `rsus` and `rlus`) from net and downwelling radiation (shortwave: `rss` and `rsds`; longwave: `rls` and `rlds`). (:pull:`1271`).
-* New indice and indicator ``{snd | snw}_season_{length | start | end}`` which generalize ``snow_cover_duration`` and  ``continuous_snow_cover_{start | end}`` to allow using these functions with variable `snw` (:pull:`1275`).
+* New indice and indicator ``{snd | snw}_season_{length | start | end}`` which generalize ``snow_cover_duration`` and ``continuous_snow_cover_{start | end}`` to allow using these functions with variable `snw` (:pull:`1275`).
 * New indice and indicator (``dryness_index``) for estimating soil humidity classifications for winegrowing regions (based on Riou et al. (1994)). (:issue:`355`, :pull:`1235`).
+* ``ensembles.change_significance`` now supports Mann-whitney U-test and flexible ``realization``. (:pull:`1285`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -216,7 +220,7 @@ Breaking changes
 
 Bug fixes
 ^^^^^^^^^
-* ``build_indicator_module_from_yaml`` now accepts a ``reload`` argument. When re-building a module that already exists, ``reload=True`` removes all previous indicator before creating the new ones. (:issue:`1192`, :pull:`1284`).
+* ``build_indicator_module_from_yaml`` now accepts a ``reload`` argument. When re-building a module that already exists, ``reload=True`` removes all previous indicator before creating the new ones. (:issue:`1192`,:pull:`1284`).
 * The test for french translations of official indicators was fixed and translations for CFFWIS indices, FFDI, KDBI, DF and Jetstream metric woollings have been added or fixed. (:pull:`1271`).
 * ``use_ufunc`` in ``windowed_run_count`` is now supplied with argument ``freq`` to warn users that the 1d method does not support resampling after run length operations (:issue:`1279`, :pull:`1291`).
 * ``{snd|snw}_max_doy`` now avoids an error due to `xr.argmax` when there are all-NaN slices. (:pull:`1277`).
@@ -650,7 +654,7 @@ Internal changes
 ^^^^^^^^^^^^^^^^
 * Added a CI hook in ``.pre-commit-config.yaml`` to perform automated `pre-commit` corrections with GitHub CI. (:pull:`965`).
 * Adjusted CI hooks to fail earlier if `lint` checks fail. (:pull:`972`).
-* `TrainAdjust` and `Adjust` object have a new `skip_input_checks` keyword arg to their `train` and  `adjust` methods. When `True`, all unit-, calendar- and coordinate-related input checks are skipped. This is an ugly solution to disappearing attributes when using `xr.map_blocks` with dask. (:pull:`964`).
+* `TrainAdjust` and `Adjust` object have a new `skip_input_checks` keyword arg to their `train` and `adjust` methods. When `True`, all unit-, calendar- and coordinate-related input checks are skipped. This is an ugly solution to disappearing attributes when using `xr.map_blocks` with dask. (:pull:`964`).
 * Some slow tests were marked `slow` to help speed up the standard test ensemble. (:pull:`969`).
     - Tox testing ensemble now also reports slowest tests using the ``--durations`` flag.
 * `pint` no longer emits warnings about redefined units when the `logging` module is loaded. (:issue:`990`, :pull:`991`).
@@ -807,7 +811,7 @@ New features and enhancements
 * ``xclim.core.utils._cal_perc`` is now only a proxy for ``xc.core.utils.nan_calc_percentiles`` with some axis moves.
 * `xclim` now implements many data quality assurance flags (``xclim.core.dataflags``) for temperature and precipitation based on `ICCLIM documentation guidelines <https://www.ecad.eu/documents/atbd.pdf>`_. These checks include the following:
     - Temperature (variables: ``tas``, ``tasmin``, ``tasmax``): ``tasmax_below_tasmin``, ``tas_exceeds_tasmax``, ``tas_below_tasmin``, ``temperature_extremely_low`` (`thresh="-90 degC"`), ``temperature_extremely_high`` (`thresh="60 degC"`).
-    - Precipitation-specific (variables: ``pr``, ``prsn``, ):  ``negative_accumulation_values``, ``very_large_precipitation_events`` (`thresh="300 mm d-1"`).
+    - Precipitation-specific (variables: ``pr``, ``prsn``, ): ``negative_accumulation_values``, ``very_large_precipitation_events`` (`thresh="300 mm d-1"`).
     - Wind-specific (variables: ``sfcWind``, ``wsgsmax``/``sfcWindMax``): ``wind_values_outside_of_bounds``
     - Generic: ``outside_n_standard_deviations_of_climatology``, ``values_repeating_for_n_or_more_days``, ``values_op_thresh_repeating_for_n_or_more_days``, ``percentage_values_outside_of_bounds``.
 
@@ -924,8 +928,8 @@ New features and enhancements
 * ``humidex`` can be computed using relative humidity instead of dewpoint temperature.
 * New ``sdba.construct_moving_yearly_window`` and ``sdba.unpack_moving_yearly_window`` for moving window adjustments.
 * New ``sdba.adjustment.NpdfTransform`` which is an adaptation of Alex Cannon's version of Pitié's *N-dimensional probability density function transform*. Uses new ``sdba.utils.rand_rot_matrix``. *Experimental, subject to changes.*
-* New ``sdba.processing.standardize``, ``.unstandardize`` and  ``.reordering``. All of them, tools needed to replicate Cannon's MBCn algorithm.
-* New ``sdba.processing.escore``, backed by  ``sdba.nbutils._escore`` to evaluate the performance of the N pdf transform.
+* New ``sdba.processing.standardize``, ``.unstandardize`` and ``.reordering``. All of them, tools needed to replicate Cannon's MBCn algorithm.
+* New ``sdba.processing.escore``, backed by ``sdba.nbutils._escore`` to evaluate the performance of the N pdf transform.
 * New function ``xclim.indices.clausius_clapeyron_scaled_precipitation`` can be used to scale precipitation according to changes in mean temperature.
 * Percentile based indices gained a ``bootstrap`` argument that applies a bootstrapping algorithm to reduce biases on exceedance frequencies computed over *in base* and *out of base* periods. *Experimental, subject to changes.*
 * Added a `.zenodo.json` file for collecting and maintaining author order and tracking ORCIDs.
@@ -1377,7 +1381,7 @@ v0.15.x (2020-03-12)
 --------------------
 * Improvement in FWI: Vectorization of DC, DMC and FFMC with numba and small code refactoring for better maintainability.
 * Added example notebook for creating a catalog of selected indices
-* Added `growing_season_end`, `last_spring_frost`, `dry_days`,  `hot_spell_frequency`, `hot_spell_max_length`, and `maximum_consecutive_frost_free_days` indices.
+* Added `growing_season_end`, `last_spring_frost`, `dry_days`, `hot_spell_frequency`, `hot_spell_max_length`, and `maximum_consecutive_frost_free_days` indices.
 * Dropped use of `fiona.crs` class in lieu of the newer pyproj CRS handler for `subset_shape` operations.
 * Complete internal reorganization of xclim.
 * Internationalization of xclim : add `locales` submodule for localized metadata.
