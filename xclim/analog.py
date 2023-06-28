@@ -78,10 +78,10 @@ def spatial_analogs(
         )
 
     try:
-        metric = metrics[method]
+        metric_func = metrics[method]
     except KeyError as e:
         raise ValueError(
-            f"Method {method} is not implemented. Available methods are : {','.join(metrics.keys())}."
+            f"Method `{method}` is not implemented. Available methods are: {','.join(metrics.keys())}."
         ) from e
 
     if candidates.chunks is not None:
@@ -91,7 +91,7 @@ def spatial_analogs(
 
     # Compute dissimilarity
     diss = xr.apply_ufunc(
-        metric,
+        metric_func,
         target,
         candidates,
         input_core_dims=[(dist_dim, "_indices"), ("_dist_dim", "_indices")],

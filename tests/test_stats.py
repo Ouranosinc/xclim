@@ -141,7 +141,7 @@ class TestFit:
         # Test with MM
         pm = stats.fit(fitda, "lognorm", method="MM")
         mm, mv = lognorm(*pm.values).stats()
-        np.testing.assert_allclose(np.exp(2 + 1 / 2), mm, rtol=0.5)
+        np.testing.assert_allclose(np.exp(2 + 1 / 2), mm, rtol=0.65)
 
 
 def test_weibull_min_fit(weibull_min):

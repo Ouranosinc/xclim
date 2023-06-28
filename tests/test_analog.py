@@ -79,6 +79,19 @@ def test_spatial_analogs(method, open_dataset):
     np.testing.assert_allclose(diss[method], out, rtol=1e-3, atol=1e-3)
 
 
+def test_unsupported_spatial_analog_method(open_dataset):
+    method = "KonMari"
+
+    data = open_dataset("SpatialAnalogs/indicators")
+    target = data.sel(lat=46.1875, lon=-72.1875, time=slice("1970", "1990"))
+    candidates = data.sel(time=slice("1970", "1990"))
+
+    match_statement = f"Method `KonMari` is not implemented. Available methods are: {','.join(xca.metrics.keys())}"
+
+    with pytest.raises(ValueError, match=match_statement):
+        xca.spatial_analogs(target, candidates, method=method)
+
+
 def test_spatial_analogs_multi_index(open_dataset):
     # Test multi-indexes
     diss = open_dataset("SpatialAnalogs/dissimilarity")
