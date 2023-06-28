@@ -6,7 +6,6 @@ import warnings
 import numpy as np
 import xarray
 
-import xclim.indices as xci
 import xclim.indices.run_length as rl
 from xclim.core.calendar import parse_offset, resample_doy, select_time
 from xclim.core.units import (
@@ -17,11 +16,13 @@ from xclim.core.units import (
     to_agg_units,
 )
 from xclim.core.utils import DayOfYearStr, Quantified, uses_dask
+from xclim.indices._conversion import potential_evapotranspiration
+from xclim.indices._simple import tn_min
 from xclim.indices._threshold import (
     first_day_temperature_above,
     first_day_temperature_below,
 )
-from xclim.indices.generic import aggregate_between_dates
+from xclim.indices.generic import aggregate_between_dates, get_zones
 from xclim.indices.helpers import _gather_lat, day_lengths
 from xclim.indices.stats import dist_method, fit
 
@@ -38,6 +39,7 @@ __all__ = [
     "corn_heat_units",
     "dryness_index",
     "effective_growing_degree_days",
+    "hardiness_zones",
     "huglin_index",
     "latitude_temperature_index",
     "qian_weighted_mean_average",
@@ -858,7 +860,7 @@ def water_budget(
         lat = _gather_lat(pr)
 
     if evspsblpot is None:
-        pet = xci.potential_evapotranspiration(
+        pet = potential_evapotranspiration(
             tasmin=tasmin,
             tasmax=tasmax,
             tas=tas,
@@ -1418,3 +1420,55 @@ def effective_growing_degree_days(
     egdd = aggregate_between_dates(deg_days, start=start, end=end, freq=freq)
 
     return to_agg_units(egdd, tas, op="delta_prod")
+
+
+@declare_units(tasmin="[temperature]")
+def hardiness_zones(
+    tasmin: xarray.DataArray, window: int = 30, method: str = "usda", freq: str = "YS"
+):
+    """Hardiness zones.
+
+    Hardiness zones are a categorization of the annual extreme temperature minima, averaged over a certain period.
+    The USDA method defines 14 zones, each divided into two sub-zones, using steps of 5°F, starting at -60°F.
+    The Australian National Botanic Gardens method defines 7 zones, using steps of 5°C, starting at -15°C.
+
+    Parameters
+    ----------
+    tasmin : xr.DataArray
+        Minimum temperature.
+    window : int
+        The length of the averaging window, in years.
+    method : {'usda', 'anbg'}
+        Whether to return the American (`usda`) or the Australian (`anbg`) classification zones.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xr.DataArray, [dimensionless]
+        {method} hardiness zones.
+        US sub-zones are denoted by using a half step. For example, Zone 4b is given as 4.5.
+        Values are given at the end of the averaging window.
+
+    References
+    ----------
+    :cite:cts:`usda_2012,dawson_plant_1991`
+    """
+    if method.lower() == "usda":
+        zone_min, zone_max, zone_step = "-60 degF", "70 degF", "5 degF"
+
+    elif method.lower() == "anbg":
+        zone_min, zone_max, zone_step = "-15 degC", "20 degC", "5 degC"
+
+    else:
+        raise NotImplementedError(
+            f"Method must be one of `usda` or `anbg`. Got {method}."
+        )
+
+    tn_min_rolling = tn_min(tasmin, freq=freq).rolling(time=window).mean()
+    zones = get_zones(
+        tn_min_rolling, zone_min=zone_min, zone_max=zone_max, zone_step=zone_step
+    )
+
+    zones.attrs["units"] = ""
+    return zones
