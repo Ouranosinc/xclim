@@ -975,8 +975,13 @@ def spx_fit_params(
         return fit(da, dist, method)
 
     params = da.groupby(group).map(wrap_fit)
-    params.attrs["Calibration period"] = str(cal_range)
-
+    params.attrs = {
+        "Calibration period": str(cal_range),
+        "freq": freq,
+        "window": window,
+        "dist": dist,
+        "method": method,
+    }
     return params
 
 
@@ -997,11 +1002,11 @@ https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.lognorm.html
 def standardized_precipitation_index(
     pr: xarray.DataArray,
     cal_range: tuple[DateStr, DateStr] | None = None,
-    params: Quantified | None = None,
     freq: str | None = "MS",
-    window: int = 1,
-    dist: str = "gamma",
-    method: str = "APP",
+    window: int | None = 1,
+    dist: str | None = "gamma",
+    method: str | None = "APP",
+    params: Quantified | None = None,
     **indexer,
 ) -> xarray.DataArray:
     r"""Standardized Precipitation Index (SPI).
@@ -1013,8 +1018,6 @@ def standardized_precipitation_index(
     cal_range: Tuple[DateStr, DateStr] | None
         Dates used to take a subset the input dataset for calibration. The tuple is formed by two `DateStr`,
         i.e. a `str` in format `"YYYY-MM-DD"`. Default option `None` means that the full range of the input dataset is used.
-    params: xarray.DataArray
-        Fit parameters.
     freq : str | None
         Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
         has already been applied input dataset and will skip the resampling step.
@@ -1027,6 +1030,8 @@ def standardized_precipitation_index(
     method : {'APP', 'ML'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
+    params: xarray.DataArray
+        Fit parameters. If `params` is given as input, it overrides the `cal_range` option.
     indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -1041,7 +1046,7 @@ def standardized_precipitation_index(
     * The length `N` of the N-month SPI is determined by choosing the `window = N`.
     * Supported statistical distributions are: ["gamma", "fisk"], where "fisk" is scipy's implementation of
        a log-logistic distribution
-    * If `params` is given as input, it overrides the `cal_range` option.
+    * If `params` is given as input, it overrides the `cal_range`, `freq` and `window`, `dist` and `method` options.
 
     Example
     -------
@@ -1079,6 +1084,11 @@ def standardized_precipitation_index(
         warnings.warn(
             "Expected either `cal_range` or `params`, got both. Proceeding with `params`."
         )
+        # Because default parameters for `window` and other options are not None, I can't
+        # make a similar warning for other params.
+        freq, window, dist, method = (
+            params.attrs[s] for s in ["freq", "window", "dist", "method"]
+        )
 
     pr, group = _preprocess_spx(pr, freq, window, **indexer)
     if uses_params is False:
@@ -1113,6 +1123,7 @@ def standardized_precipitation_index(
 
     spi = pr.groupby(group).map(get_sub_spi)
     spi.attrs = params.attrs
+    spi.attrs["units"] = ""
     if uses_params:
         spi.attrs["Calibration period"] = (
             spi.attrs["Calibration period"] + "(input parameters)"
