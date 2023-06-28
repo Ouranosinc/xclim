@@ -2,6 +2,14 @@
 Changelog
 =========
 
+v0.45.0 (unreleased)
+--------------------
+Contributors to this version: Pascal Bourgault (:user:`aulemahal`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* New function ``xclim.core.calendar.convert_doy`` to transform day-of-year data between calendars. Also accessible from ``convert_calendar`` with ``doy=True``. (:issue:`1283`, :pull:`1406`).
+
 v0.44.0 (2023-06-23)
 --------------------
 Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`), David Huard (:user:`huard`).
