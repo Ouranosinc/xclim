@@ -11,9 +11,7 @@ def test_hawkins_sutton_smoke(open_dataset):
     """Just a smoke test."""
     dims = {"run": "member", "scen": "scenario"}
     da = (
-        open_dataset(
-            "uncertainty_partitioning/cmip5_pr_global_mon.nc", branch="hawkins_sutton"
-        )
+        open_dataset("uncertainty_partitioning/cmip5_pr_global_mon.nc")
         .pr.sel(time=slice("1950", None))
         .rename(dims)
     )
