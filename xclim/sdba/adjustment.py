@@ -771,14 +771,12 @@ class LOCI(TrainAdjust):
         *,
         thresh: str,
         group: str | Grouper = "time",
-        adapt_freq_thresh: str | None = None,
     ):
         thresh = convert_units_to(thresh, ref)
         ds = loci_train(
             xr.Dataset({"ref": ref, "hist": hist}),
             group=group,
             thresh=thresh,
-            adapt_freq_thresh=adapt_freq_thresh,
         )
         ds.af.attrs.update(long_name="LOCI adjustment factors")
         ds.hist_thresh.attrs.update(long_name="Threshold over modeled data")
@@ -827,13 +825,11 @@ class Scaling(TrainAdjust):
         *,
         group: str | Grouper = "time",
         kind: str = ADDITIVE,
-        adapt_freq_thresh: str | None = None,
     ):
         ds = scaling_train(
             xr.Dataset({"ref": ref, "hist": hist}),
             group=group,
             kind=kind,
-            adapt_freq_thresh=adapt_freq_thresh,
         )
         ds.af.attrs.update(long_name="Scaling adjustment factors")
         return ds, {"group": group, "kind": kind}
