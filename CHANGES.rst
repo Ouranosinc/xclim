@@ -9,7 +9,7 @@ Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Added ``ensembles.hawkins_sutton`` method to partition the uncertainty sources in a climate projection ensemble. (:issue:`771`, :pull:`1262`).
-* `adapt_freq_thresh` argument added `sdba` training functions, allowing to perform frequency adaptation appropriately in each map block.
+* `adapt_freq_thresh` argument added `sdba` training functions, allowing to perform frequency adaptation appropriately in each map block. (:pull:`1407`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
