@@ -17,6 +17,7 @@ from xclim.core.calendar import (
     compare_offsets,
     construct_offset,
     convert_calendar,
+    convert_doy,
     date_range,
     datetime_to_decimal_year,
     days_in_year,
@@ -418,6 +419,25 @@ def test_convert_calendar_missing(source, target, freq):
         assert out.time[-1].dt.day == 31
 
 
+def test_convert_calendar_and_doy():
+    doy = xr.DataArray(
+        [31, 32, 336, 364.23, 365],
+        dims=("time",),
+        coords={
+            "time": xr.date_range("2000-01-01", periods=5, freq="YS", calendar="noleap")
+        },
+        attrs={"is_dayofyear": 1, "calendar": "noleap"},
+    )
+    out = convert_calendar(doy, "360_day", align_on="date", doy=True)
+    np.testing.assert_allclose(
+        out, [30.575342, 31.561644, 331.39726, 359.240548, 360.0]
+    )
+    assert out.time.dt.calendar == "360_day"
+    out = convert_calendar(doy, "360_day", align_on="date", doy="date")
+    np.testing.assert_array_equal(out, [np.NaN, 31, 332, 360.23, np.NaN])
+    assert out.time.dt.calendar == "360_day"
+
+
 @pytest.mark.parametrize(
     "source,target",
     [
@@ -646,3 +666,40 @@ def test_construct_offset(m, b, s, a, exp):
 )
 def test_common_calendars(inputs, join, expected):
     assert expected == common_calendar(inputs, join=join)
+
+
+def test_convert_doy():
+    doy = xr.DataArray(
+        [31, 32, 336, 364.23, 365],
+        dims=("time",),
+        coords={
+            "time": xr.date_range("2000-01-01", periods=5, freq="YS", calendar="noleap")
+        },
+        attrs={"is_dayofyear": 1, "calendar": "noleap"},
+    )
+
+    out = convert_doy(doy, "360_day", align_on="date")
+    np.testing.assert_array_equal(out, [np.NaN, 31, 332, 360.23, np.NaN])
+    assert out.time.dt.calendar == "noleap"
+    out = convert_doy(doy, "360_day", align_on="year")
+    np.testing.assert_allclose(
+        out, [30.575342, 31.561644, 331.39726, 359.240548, 360.0]
+    )
+
+    doy = xr.DataArray(
+        [31, 200.48, 190, 60, 300.54],
+        dims=("time",),
+        coords={
+            "time": xr.date_range(
+                "2000-01-01", periods=5, freq="AS-JUL", calendar="standard"
+            )
+        },
+        attrs={"is_dayofyear": 1, "calendar": "standard"},
+    ).expand_dims(lat=[10, 20, 30])
+
+    out = convert_doy(doy, "noleap", align_on="date")
+    np.testing.assert_array_equal(out.isel(lat=0), [31, 200.48, 190, np.NaN, 299.54])
+    out = convert_doy(doy, "noleap", align_on="year")
+    np.testing.assert_allclose(
+        out.isel(lat=0), [31.0, 200.48, 190.0, 59.83607, 299.71885]
+    )
