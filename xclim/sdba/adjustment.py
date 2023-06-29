@@ -563,7 +563,7 @@ class ExtremeValues(TrainAdjust):
     r"""Adjustment correction for extreme values.
 
     The tail of the distribution of adjusted data is corrected according to the bias between the parametric Generalized
-    Pareto distributions of the simulated and reference data :cite:p:`sdba-roy_extremeprecip_2021`. The distributions are composed of the
+    Pareto distributions of the simulated and reference data :cite:p:`sdba-roy_extremeprecip_2023`. The distributions are composed of the
     maximal values of clusters of "large" values.  With "large" values being those above `cluster_thresh`. Only extreme
     values, whose quantile within the pool of large values are above `q_thresh`, are re-adjusted. See `Notes`.
 
@@ -637,7 +637,7 @@ class ExtremeValues(TrainAdjust):
     References
     ----------
     :cite:cts:`sdba-roy_juliaclimateclimatetoolsjl_2021`
-    :cite:cts:`sdba-roy_extremeprecip_2021`
+    :cite:cts:`sdba-roy_extremeprecip_2023`
     """
 
     @classmethod

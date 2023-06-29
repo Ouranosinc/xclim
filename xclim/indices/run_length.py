@@ -707,42 +707,37 @@ def keep_longest_run(
     return da.copy(data=out.transpose(*da.dims).data)
 
 
-def rle_with_holes(
+def extract_events(
     da_start: xr.DataArray,
     window_start: int,
     da_stop: xr.DataArray,
     window_stop: int,
-    index: str = "first",
     dim: str = "time",
 ) -> xr.DataArray:
-    """Generate modified run length function with run sequences that can contain holes.
+    """Extract events, i.e. runs whose starting and stopping points are defined through run length conditions.
 
     Parameters
     ----------
     da_start : xr.DataArray
-        Input array where run sequences are searched for.
+        Input array where run sequences are searched to define the start points in the main runs
     window_start: int,
-        Number of events needed to start a run in `da_start`
+        Number of True (1) values needed to start a run in `da_start`
     da_stop : xr.DataArray
-        Input array where sequences put a stop to a run in `da_start`
+        Input array where run sequences are searched to define the stop points in the main runs
     window_stop: int,
-        Number of events needed to start a run in `da_stop`, i.e. to end a run in `da_start`
-    index : {'first', 'last'}
-        If 'first' (default), the run length is indexed with the first element in the run.
-        If 'last', with the last element in the run.
+        Number of True (1) values needed to start a run in `da_stop`
     dim : str
         Dimension name.
 
     Returns
     -------
     xr.DataArray
-        Values are 0 where da is False (out of runs).
+        Output array with 1's when in a run sequence and with 0's elsewhere.
 
     Notes
     -----
-    Subcases:
-    * Original run length function `rle`: `window_start == 1`,  `window_stop == 1`, `da_stop == 1 - da_start`
-    * Similar to `season` function: `window_stop == window_start` and `da_stop == 1 - da_start`
+    A season (as defined in ``season``) could be considered as an event with  `window_stop == window_start` and `da_stop == 1 - da_start`,
+    although it has more constraints on when to start and stop a run through the `date` argument.
     """
     da_start = da_start.astype(int).fillna(0)
     da_stop = da_stop.astype(int).fillna(0)
@@ -755,9 +750,7 @@ def rle_with_holes(
     # start positions (1) are f-filled until a stop position (0) is met
     runs = stop_positions.combine_first(start_positions).ffill(dim=dim).fillna(0)
 
-    run_lengths = rle(runs, index=index)
-
-    return run_lengths.where(run_lengths > 0)
+    return runs
 
 
 def season(

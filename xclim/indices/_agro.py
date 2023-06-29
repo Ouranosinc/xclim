@@ -6,7 +6,6 @@ import warnings
 import numpy as np
 import xarray
 
-import xclim.indices as xci
 import xclim.indices.run_length as rl
 from xclim.core.calendar import parse_offset, resample_doy, select_time
 from xclim.core.units import (
@@ -17,11 +16,13 @@ from xclim.core.units import (
     to_agg_units,
 )
 from xclim.core.utils import DayOfYearStr, Quantified, uses_dask
+from xclim.indices._conversion import potential_evapotranspiration
+from xclim.indices._simple import tn_min
 from xclim.indices._threshold import (
     first_day_temperature_above,
     first_day_temperature_below,
 )
-from xclim.indices.generic import aggregate_between_dates
+from xclim.indices.generic import aggregate_between_dates, get_zones
 from xclim.indices.helpers import _gather_lat, day_lengths
 from xclim.indices.stats import dist_method, fit
 
@@ -36,10 +37,9 @@ __all__ = [
     "biologically_effective_degree_days",
     "cool_night_index",
     "corn_heat_units",
-    "dry_spell_frequency",
-    "dry_spell_total_length",
     "dryness_index",
     "effective_growing_degree_days",
+    "hardiness_zones",
     "huglin_index",
     "latitude_temperature_index",
     "qian_weighted_mean_average",
@@ -860,7 +860,7 @@ def water_budget(
         lat = _gather_lat(pr)
 
     if evspsblpot is None:
-        pet = xci.potential_evapotranspiration(
+        pet = potential_evapotranspiration(
             tasmin=tasmin,
             tasmax=tasmax,
             tas=tas,
@@ -982,12 +982,6 @@ def rain_season(
     thresh_dry_start = convert_units_to(thresh_dry_start, pram)
     thresh_dry_end = convert_units_to(thresh_dry_end, pram)
 
-    last_doy = pram.indexes["time"][-1].strftime("%m-%d")
-
-    # Eliminate negative values.
-    pram = xarray.where(pram < 0, 0, pram)
-    pram.attrs["units"] = "mm"
-
     # should we flag date_min_end  < date_max_start?
     def _get_first_run(run_positions, start_date, end_date):
         run_positions = select_time(run_positions, date_bounds=(start_date, end_date))
@@ -997,7 +991,8 @@ def rain_season(
         )
 
     # Find the start of the rain season
-    def _get_first_run_start(pram, window_dry=window_dry_start):
+    def _get_first_run_start(pram):
+        last_doy = pram.indexes["time"][-1].strftime("%m-%d")
         pram = select_time(pram, date_bounds=(date_min_start, last_doy))
 
         # First condition: Start with enough precipitation
@@ -1006,17 +1001,16 @@ def rain_season(
         # Second condition: No dry period after
         if method_dry_start == "per_day":
             da_stop = pram <= thresh_dry_start
+            window_dry = window_dry_start
         elif method_dry_start == "total":
-            da_stop = pram.rolling({"time": window_dry}).sum() <= thresh_dry_start
+            da_stop = pram.rolling({"time": window_dry_start}).sum() <= thresh_dry_start
             # equivalent to rolling forward in time instead, i.e. end date will be at beginning of dry run
-            da_stop = da_stop.shift({"time": -(window_dry - 1)}, fill_value=False)
+            da_stop = da_stop.shift({"time": -(window_dry_start - 1)}, fill_value=False)
             window_dry = 1
 
         # First and second condition combined in a run length
-        run_positions = (
-            rl.rle_with_holes(da_start, 1, da_stop, window_dry, "first")
-            >= window_not_dry_start + window_wet_start
-        )
+        events = rl.extract_events(da_start, 1, da_stop, window_dry)
+        run_positions = rl.rle(events) >= (window_not_dry_start + window_wet_start)
 
         return _get_first_run(run_positions, date_min_start, date_max_start)
 
@@ -1024,10 +1018,11 @@ def rain_season(
     def _get_first_run_end(pram):
         if method_dry_end == "per_day":
             da_stop = pram <= thresh_dry_end
-            run_positions = rl.rle(da_stop, index="first") >= window_dry_end
+            run_positions = rl.rle(da_stop) >= window_dry_end
         elif method_dry_end == "total":
-            da_stop = pram.rolling({"time": window_dry_end}).sum() <= thresh_dry_end
-            run_positions = da_stop
+            run_positions = (
+                pram.rolling({"time": window_dry_end}).sum() <= thresh_dry_end
+            )
         return _get_first_run(run_positions, date_min_end, date_max_end)
 
     # Get start, end and length of rain season. Written as a function so it can be resampled
@@ -1035,19 +1030,21 @@ def rain_season(
         start = _get_first_run_start(pram)
 
         # masking value before  start of the season (end of season should be after)
-        start_ind = xarray.where(start.notnull(), start.astype(int), -1)
-        mask = xarray.where(
-            pram.time == pram.isel(time=start_ind).time, 1, np.NaN
-        ).ffill("time")
-        mask[{"time": start_ind}] = np.NaN
+        # Get valid integer indexer of the day after the first run starts.
+        # `start != NaN` only possible if a condition on next few time steps is respected. Thus, `start+1` exists if `start != NaN`
+        start_ind = (start + 1).fillna(-1).astype(int)
+        mask = pram * np.NaN
+        # Put "True" on the day of run start
+        mask[{"time": start_ind}] = 1
+        # Mask back points without runs, propagate the True
+        mask = mask.where(start.notnull()).ffill("time")
         mask = mask.notnull()
         end = _get_first_run_end(pram.where(mask))
 
         length = xarray.where(end.notnull(), end - start, pram["time"].size - start)
 
         # converting to doy
-        crd = pram["time"]
-        crd = getattr(crd.dt, "dayofyear")
+        crd = pram.time.dt.dayofyear
         start = rl.lazy_indexing(crd, start)
         end = rl.lazy_indexing(crd, end)
 
@@ -1060,10 +1057,13 @@ def rain_season(
         )
         return out
 
+    # Compute rain season, attribute units
     out = pram.resample(time=freq).map(_get_rain_season)
-    for outd in out.values():
-        outd.attrs["units"] = ""
+    out["rain_season_start"].attrs["units"] = ""
+    out["rain_season_end"].attrs["units"] = ""
     out["rain_season_length"].attrs["units"] = "days"
+    out["rain_season_start"].attrs["is_dayofyear"] = np.int32(1)
+    out["rain_season_end"].attrs["is_dayofyear"] = np.int32(1)
     return out["rain_season_start"], out["rain_season_end"], out["rain_season_length"]
 
 
@@ -1275,135 +1275,6 @@ def standardized_precipitation_evapotranspiration_index(
     return spei
 
 
-@declare_units(pr="[precipitation]", thresh="[length]")
-def dry_spell_frequency(
-    pr: xarray.DataArray,
-    thresh: Quantified = "1.0 mm",
-    window: int = 3,
-    freq: str = "YS",
-    resample_before_rl: bool = True,
-    op: str = "sum",
-) -> xarray.DataArray:
-    """Return the number of dry periods of n days and more.
-
-    Periods during which the accumulated or maximal daily precipitation amount on a window of n days is under threshold.
-
-    Parameters
-    ----------
-    pr : xarray.DataArray
-        Daily precipitation.
-    thresh : Quantified
-        Precipitation amount under which a period is considered dry.
-        The value against which the threshold is compared depends on  `op` .
-    window : int
-        Minimum length of the spells.
-    freq : str
-      Resampling frequency.
-    resample_before_rl : bool
-      Determines if the resampling should take place before or after the run
-      length encoding (or a similar algorithm) is applied to runs.
-    op: {"sum","max"}
-      Operation to perform on the window.
-      Default is "sum", which checks that the sum of accumulated precipitation over the whole window is less than the
-      threshold.
-      "max" checks that the maximal daily precipitation amount within the window is less than the threshold.
-      This is the same as verifying that each individual day is below the threshold.
-
-    Returns
-    -------
-    xarray.DataArray, [unitless]
-        The {freq} number of dry periods of minimum {window} days.
-
-    Examples
-    --------
-    >>> from xclim.indices import dry_spell_frequency
-    >>> pr = xr.open_dataset(path_to_pr_file).pr
-    >>> dsf = dry_spell_frequency(pr=pr, op="sum")
-    >>> dsf = dry_spell_frequency(pr=pr, op="max")
-    """
-    pram = rate2amount(convert_units_to(pr, "mm/d", context="hydro"), out_units="mm")
-    thresh = convert_units_to(thresh, pram, context="hydro")
-
-    agg_pr = getattr(pram.rolling(time=window, center=True), op)()
-    cond = agg_pr < thresh
-    out = rl.resample_and_rl(
-        cond,
-        resample_before_rl,
-        rl.windowed_run_events,
-        window=1,
-        freq=freq,
-    )
-
-    out.attrs["units"] = ""
-    return out
-
-
-@declare_units(pr="[precipitation]", thresh="[length]")
-def dry_spell_total_length(
-    pr: xarray.DataArray,
-    thresh: Quantified = "1.0 mm",
-    window: int = 3,
-    op: str = "sum",
-    freq: str = "YS",
-    resample_before_rl: bool = True,
-    **indexer,
-) -> xarray.DataArray:
-    """Total length of dry spells.
-
-    Total number of days in dry periods of a minimum length, during which the maximum or
-    accumulated precipitation within a window of the same length is under a threshold.
-
-    Parameters
-    ----------
-    pr : xarray.DataArray
-        Daily precipitation.
-    thresh : Quantified
-        Accumulated precipitation value under which a period is considered dry.
-    window : int
-        Number of days when the maximum or accumulated precipitation is under threshold.
-    op : {"max", "sum"}
-        Reduce operation.
-    freq : str
-        Resampling frequency.
-    indexer
-        Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
-        Indexing is done after finding the dry days, but before finding the spells.
-
-    Returns
-    -------
-    xarray.DataArray, [days]
-        The {freq} total number of days in dry periods of minimum {window} days.
-
-    Notes
-    -----
-    The algorithm assumes days before and after the timeseries are "wet", meaning that the condition for being
-    considered part of a dry spell is stricter on the edges. For example, with `window=3` and `op='sum'`, the first day
-    of the series is considered part of a dry spell only if the accumulated precipitation within the first three days is
-    under the threshold. In comparison, a day in the middle of the series is considered part of a dry spell if any of
-    the three 3-day periods of which it is part are considered dry (so a total of five days are included in the
-    computation, compared to only three).
-    """
-    pram = rate2amount(convert_units_to(pr, "mm/d", context="hydro"), out_units="mm")
-    thresh = convert_units_to(thresh, pram, context="hydro")
-
-    pram_pad = pram.pad(time=(0, window))
-    mask = getattr(pram_pad.rolling(time=window), op)() < thresh
-    dry = (mask.rolling(time=window).sum() >= 1).shift(time=-(window - 1))
-    dry = dry.isel(time=slice(0, pram.time.size)).astype(float)
-
-    dry = select_time(dry, **indexer)
-
-    out = rl.resample_and_rl(
-        dry,
-        resample_before_rl,
-        rl.windowed_run_count,
-        window=1,
-        freq=freq,
-    )
-    return to_agg_units(out, pram, "count")
-
-
 @declare_units(tas="[temperature]")
 def qian_weighted_mean_average(
     tas: xarray.DataArray, dim: str = "time"
@@ -1549,3 +1420,55 @@ def effective_growing_degree_days(
     egdd = aggregate_between_dates(deg_days, start=start, end=end, freq=freq)
 
     return to_agg_units(egdd, tas, op="delta_prod")
+
+
+@declare_units(tasmin="[temperature]")
+def hardiness_zones(
+    tasmin: xarray.DataArray, window: int = 30, method: str = "usda", freq: str = "YS"
+):
+    """Hardiness zones.
+
+    Hardiness zones are a categorization of the annual extreme temperature minima, averaged over a certain period.
+    The USDA method defines 14 zones, each divided into two sub-zones, using steps of 5°F, starting at -60°F.
+    The Australian National Botanic Gardens method defines 7 zones, using steps of 5°C, starting at -15°C.
+
+    Parameters
+    ----------
+    tasmin : xr.DataArray
+        Minimum temperature.
+    window : int
+        The length of the averaging window, in years.
+    method : {'usda', 'anbg'}
+        Whether to return the American (`usda`) or the Australian (`anbg`) classification zones.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xr.DataArray, [dimensionless]
+        {method} hardiness zones.
+        US sub-zones are denoted by using a half step. For example, Zone 4b is given as 4.5.
+        Values are given at the end of the averaging window.
+
+    References
+    ----------
+    :cite:cts:`usda_2012,dawson_plant_1991`
+    """
+    if method.lower() == "usda":
+        zone_min, zone_max, zone_step = "-60 degF", "70 degF", "5 degF"
+
+    elif method.lower() == "anbg":
+        zone_min, zone_max, zone_step = "-15 degC", "20 degC", "5 degC"
+
+    else:
+        raise NotImplementedError(
+            f"Method must be one of `usda` or `anbg`. Got {method}."
+        )
+
+    tn_min_rolling = tn_min(tasmin, freq=freq).rolling(time=window).mean()
+    zones = get_zones(
+        tn_min_rolling, zone_min=zone_min, zone_max=zone_max, zone_step=zone_step
+    )
+
+    zones.attrs["units"] = ""
+    return zones
