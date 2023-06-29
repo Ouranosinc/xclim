@@ -774,9 +774,7 @@ class LOCI(TrainAdjust):
     ):
         thresh = convert_units_to(thresh, ref)
         ds = loci_train(
-            xr.Dataset({"ref": ref, "hist": hist}),
-            group=group,
-            thresh=thresh,
+            xr.Dataset({"ref": ref, "hist": hist}), group=group, thresh=thresh
         )
         ds.af.attrs.update(long_name="LOCI adjustment factors")
         ds.hist_thresh.attrs.update(long_name="Threshold over modeled data")
@@ -827,9 +825,7 @@ class Scaling(TrainAdjust):
         kind: str = ADDITIVE,
     ):
         ds = scaling_train(
-            xr.Dataset({"ref": ref, "hist": hist}),
-            group=group,
-            kind=kind,
+            xr.Dataset({"ref": ref, "hist": hist}), group=group, kind=kind
         )
         ds.af.attrs.update(long_name="Scaling adjustment factors")
         return ds, {"group": group, "kind": kind}
