@@ -105,10 +105,10 @@ def _adapt_freq(
     return xr.Dataset(data_vars={"pth": pth, "dP0": dP0, "sim_ad": sim_ad})
 
 
-# The main difference is that this doesnt rely on blocks and works with ranks
-# on possibly multiple dimensions (time, window).
-# If a ds with dimensions (time, window) is given as input, the same dimensions
-# are in the output
+# Works with ranks on possibly multiple dimensions (time, window)
+# ds with dimensions (time, window) as input: same dimensions as output
+# Probably that second part could be done by keeping the explicit map block decorator and calling it
+# appropriately?
 def _adapt_freq_s(
     ds: xr.Dataset,
     *,
