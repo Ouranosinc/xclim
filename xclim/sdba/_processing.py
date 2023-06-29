@@ -108,7 +108,14 @@ def _adapt_freq(
 # Works with ranks on possibly multiple dimensions (time, window)
 # ds with dimensions (time, window) as input: same dimensions as output
 # Probably that second part could be done by keeping the explicit map block decorator and calling it
-# appropriately?
+# appropriately with .func?
+#
+# My issue with incorporating all this in `_adapt_freq` is
+# the [[ if "window" in dim: ]] part above. How does wanting a (window,time) output fit with the idea
+# behind the previous function? If I call adapt_freq.func, should I not expect the output to be
+# of dimension (window,time)?
+
+
 def _adapt_freq_s(
     ds: xr.Dataset,
     *,
