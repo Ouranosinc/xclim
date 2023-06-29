@@ -77,15 +77,17 @@ def _adapt_freq(
         # Probabilities and quantiles computed within all dims, but correction along the first one only.
         sim = ds.sim
         # Get the percentile rank of each value in sim.
-        temp_dim = get_temp_dimname(sim.dims, "temp")
-        rank = (
-            sim.stack(**{temp_dim: dim})
-            .rank(temp_dim, pct=True)
-            .unstack(temp_dim)
-            .transpose(*sim.dims)
-            .drop_vars([dim_ for dim_ in dim if dim_ not in sim.coords])
-        )
-
+        if len(dim) > 1:
+            temp_dim = get_temp_dimname(sim.dims, "temp")
+            rank = (
+                sim.stack(**{temp_dim: dim})
+                .rank(temp_dim, pct=True)
+                .unstack(temp_dim)
+                .transpose(*sim.dims)
+                .drop_vars([dim_ for dim_ in dim if dim_ not in sim.coords])
+            )
+        else:
+            rank = sim.rank(dim[0], pct=True)
         # Frequency-adapted sim
         sim_ad = sim.where(
             dP0 < 0,  # dP0 < 0 means no-adaptation.
