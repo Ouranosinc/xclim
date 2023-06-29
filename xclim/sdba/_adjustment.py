@@ -14,7 +14,7 @@ from xclim.indices.stats import _fitfunc_1d  # noqa
 
 from . import nbutils as nbu
 from . import utils as u
-from ._processing import _adapt_freq_s
+from ._processing import _adapt_freq
 from .base import Grouper, map_blocks, map_groups
 from .detrending import PolyDetrend
 from .processing import escore
@@ -24,9 +24,9 @@ def _adapt_freq_hist(ds, adapt_freq_thresh):
     with units.context(infer_context(ds.ref.attrs.get("standard_name"))):
         thresh = convert_units_to(adapt_freq_thresh, ds.ref)
     dim = ["time"] + ["window"] * ("window" in ds.hist.dims)
-    return _adapt_freq_s(
+    return _adapt_freq.func(
         xr.Dataset(dict(sim=ds.hist, ref=ds.ref)), thresh=thresh, dim=dim
-    )
+    ).sim_ad
 
 
 @map_groups(
@@ -71,7 +71,6 @@ def eqm_train(ds, *, dim, kind, quantiles, adapt_freq_thresh) -> xr.Dataset:
       hist : training data
     """
     hist = _adapt_freq_hist(ds, adapt_freq_thresh) if adapt_freq_thresh else ds.hist
-
     ref_q = nbu.quantile(ds.ref, quantiles, dim)
     hist_q = nbu.quantile(hist, quantiles, dim)
 
