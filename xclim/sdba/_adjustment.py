@@ -17,7 +17,7 @@ from . import utils as u
 from ._processing import _adapt_freq_s
 from .base import Grouper, map_blocks, map_groups
 from .detrending import PolyDetrend
-from .processing import adapt_freq, escore
+from .processing import escore
 
 
 def _adapt_freq_hist(ds, adapt_freq_thresh):
