@@ -10,6 +10,10 @@ New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Added ``ensembles.hawkins_sutton`` method to partition the uncertainty sources in a climate projection ensemble. (:issue:`771`, :pull:`1262`).
 
+Bug fixes
+^^^^^^^^^
+* Fix `kldiv` docstring so the math formula renders to HTML. (:issue:`1408`, :pull:`1409`).
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Tolerance thresholds for error in ``test_stats::test_fit`` have been relaxed to allow for more variation in the results. Previously untested ``*_moving_yearly_window`` functions are now tested. (:issue:`1400`, :pull:`1402`).
