@@ -1180,7 +1180,6 @@ https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.lognorm.html
 
 @declare_units(
     pr="[precipitation]",
-    pr_cal="[precipitation]",
 )
 def standardized_precipitation_index(
     pr: xarray.DataArray,
