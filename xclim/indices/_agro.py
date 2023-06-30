@@ -887,115 +887,6 @@ def water_budget(
     return out
 
 
-def _preprocess_spx(da, freq, window, **indexer):
-    """
-    Resample and roll operations involved when computing a standardized index.
-
-    The `group` variable returned is used spx computations and to keep track if
-    preprocessing was already done or not.
-    """
-    _, base, _, _ = parse_offset(freq or xarray.infer_freq(da.time))
-    try:
-        group = {"D": "time.dayofyear", "M": "time.month"}[base]
-    except KeyError():
-        raise ValueError(f"Standardized index with frequency `{freq}` not supported.")
-    if freq:
-        da = da.resample(time=freq).mean(keep_attrs=True)
-    if window > 1:
-        da = da.rolling(time=window).mean(skipna=False, keep_attrs=True)
-
-    # The time reduction must be done after the rolling
-    da = select_time(da, **indexer)
-    return da, group
-
-
-# TODO: Find a more generic place for this, SPX indices are not exclusive to _agro
-def spx_fit_params(
-    da, cal_range, freq, window, dist, method, group=None, **indexer
-) -> xarray.DataArray:
-    """Standardized Index fitting parameters.
-
-    A standardized index measures the deviation of a variable averaged over a rolling temporal window and
-    fitted with a given distribution `dist` with respect to a calibration dataset. The comparison is done by porting
-    back results to a normalized distribution. The fitting parameters of the calibration dataset fitted with `dist`
-    are obtained here.
-
-    Parameters
-    ----------
-    da : xarray.DataArray
-        Input array.
-    cal_range: Tuple[DateStr, DateStr] | None
-        Dates used to take a subset the input dataset for calibration. The tuple is formed by two `DateStr`,
-        i.e. a `str` in format `"YYYY-MM-DD"`. Default option `None` means that the full range of the input dataset is used.
-    freq : str | None
-        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
-        has already been applied input dataset and will skip the resampling step.
-    window : int
-        Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
-        i.e. a monthly resampling, the window is an integer number of months.
-    dist : str
-        Name of the univariate distribution.
-        (see :py:mod:`scipy.stats`).
-    method : str
-        Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
-        uses a deterministic function that doesn't involve any optimization.
-    indexer
-        Indexing parameters to compute the indicator on a temporal subset of the data.
-        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
-    """
-    # "WPM" method doesn't seem to work for gamma or pearson3
-    dist_and_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
-    if dist not in dist_and_methods:
-        raise NotImplementedError(f"The distribution `{dist}` is not supported.")
-    if method not in dist_and_methods[dist]:
-        raise NotImplementedError(
-            f"The method `{method}` is not supported for distribution `{dist}`."
-        )
-
-    if group is None:
-        da, group = _preprocess_spx(da, freq, window)
-
-    if cal_range:
-        da = da.sel(time=slice(cal_range[0], cal_range[1]))
-
-    if uses_dask(da) and len(da.chunks[da.get_axis_num("time")]) > 1:
-        warnings.warn(
-            "The input data is chunked on time dimension and must be fully rechunked to"
-            " run `fit` on groups ."
-            " Beware, this operation can significantly increase the number of tasks dask"
-            " has to handle.",
-            stacklevel=2,
-        )
-        da = da.chunk({"time": -1})
-
-    def wrap_fit(da):
-        if indexer != {} and da.isnull().all():
-            select_dims = {d: 0 if d != "time" else [0, 1] for d in da.dims}
-            fitted = fit(da[select_dims], dist, method)
-            return fitted.broadcast_like(da.isel(time=0, drop=True))
-        return fit(da, dist, method)
-
-    params = da.groupby(group).map(wrap_fit)
-    params.attrs = {
-        "Calibration period": str(cal_range),
-        "freq": freq,
-        "window": window,
-        "dist": dist,
-        "method": method,
-    }
-    return params
-
-
-# TODO : ADD
-"""
-streamflow index (SSI)     GEV, log-logistic (Vincente-Serrano et al., 2012) Tweedie (Barker et al., 2016)    (Station de suivi)
-groundwater index (SGI)   log-normal, gamma, GEV (Bloomfield et Marchant, 2013)	                            (Station de suivi)
-NEW dist: GEV, log-normal
-https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.genextreme.html#scipy.stats.genextreme
-https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.lognorm.html
-"""
-
-
 @declare_units(
     pr="[precipitation]",
     thresh_wet_start="[length]",
@@ -1178,10 +1069,118 @@ def rain_season(
     return out["rain_season_start"], out["rain_season_end"], out["rain_season_length"]
 
 
+def _preprocess_spx(da, freq, window, **indexer):
+    """
+    Resample and roll operations involved when computing a standardized index.
+
+    The `group` variable returned is used spx computations and to keep track if
+    preprocessing was already done or not.
+    """
+    _, base, _, _ = parse_offset(freq or xarray.infer_freq(da.time))
+    try:
+        group = {"D": "time.dayofyear", "M": "time.month"}[base]
+    except KeyError():
+        raise ValueError(f"Standardized index with frequency `{freq}` not supported.")
+    if freq:
+        da = da.resample(time=freq).mean(keep_attrs=True)
+    if window > 1:
+        da = da.rolling(time=window).mean(skipna=False, keep_attrs=True)
+
+    # The time reduction must be done after the rolling
+    da = select_time(da, **indexer)
+    return da, group
+
+
+# TODO: Find a more generic place for this, SPX indices are not exclusive to _agro
+def spx_fit_params(
+    da, cal_range, freq, window, dist, method, group=None, **indexer
+) -> xarray.DataArray:
+    """Standardized Index fitting parameters.
+
+    A standardized index measures the deviation of a variable averaged over a rolling temporal window and
+    fitted with a given distribution `dist` with respect to a calibration dataset. The comparison is done by porting
+    back results to a normalized distribution. The fitting parameters of the calibration dataset fitted with `dist`
+    are obtained here.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+        Input array.
+    cal_range: Tuple[DateStr, DateStr] | None
+        Dates used to take a subset the input dataset for calibration. The tuple is formed by two `DateStr`,
+        i.e. a `str` in format `"YYYY-MM-DD"`. Default option `None` means that the full range of the input dataset is used.
+    freq : str | None
+        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
+        has already been applied input dataset and will skip the resampling step.
+    window : int
+        Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
+        i.e. a monthly resampling, the window is an integer number of months.
+    dist : str
+        Name of the univariate distribution.
+        (see :py:mod:`scipy.stats`).
+    method : str
+        Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
+        uses a deterministic function that doesn't involve any optimization.
+    indexer
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+    """
+    # "WPM" method doesn't seem to work for gamma or pearson3
+    dist_and_methods = {"gamma": ["ML", "APP"], "fisk": ["ML", "APP"]}
+    if dist not in dist_and_methods:
+        raise NotImplementedError(f"The distribution `{dist}` is not supported.")
+    if method not in dist_and_methods[dist]:
+        raise NotImplementedError(
+            f"The method `{method}` is not supported for distribution `{dist}`."
+        )
+
+    if group is None:
+        da, group = _preprocess_spx(da, freq, window)
+
+    if cal_range:
+        da = da.sel(time=slice(cal_range[0], cal_range[1]))
+
+    if uses_dask(da) and len(da.chunks[da.get_axis_num("time")]) > 1:
+        warnings.warn(
+            "The input data is chunked on time dimension and must be fully rechunked to"
+            " run `fit` on groups ."
+            " Beware, this operation can significantly increase the number of tasks dask"
+            " has to handle.",
+            stacklevel=2,
+        )
+        da = da.chunk({"time": -1})
+
+    def wrap_fit(da):
+        if indexer != {} and da.isnull().all():
+            select_dims = {d: 0 if d != "time" else [0, 1] for d in da.dims}
+            fitted = fit(da[select_dims], dist, method)
+            return fitted.broadcast_like(da.isel(time=0, drop=True))
+        return fit(da, dist, method)
+
+    params = da.groupby(group).map(wrap_fit)
+    params.attrs = {
+        "Calibration period": str(cal_range),
+        "freq": freq,
+        "window": window,
+        "dist": dist,
+        "method": method,
+    }
+    return params
+
+
+# TODO : ADD
+"""
+streamflow index (SSI)     GEV, log-logistic (Vincente-Serrano et al., 2012) Tweedie (Barker et al., 2016)    (Station de suivi)
+groundwater index (SGI)   log-normal, gamma, GEV (Bloomfield et Marchant, 2013)	                            (Station de suivi)
+NEW dist: GEV, log-normal
+https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.genextreme.html#scipy.stats.genextreme
+https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.lognorm.html
+"""
+
+
 @declare_units(
     pr="[precipitation]",
     pr_cal="[precipitation]",
-    params: Quantified | None = None,
 )
 def standardized_precipitation_index(
     pr: xarray.DataArray,
