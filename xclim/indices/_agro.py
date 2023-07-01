@@ -45,7 +45,7 @@ __all__ = [
     "latitude_temperature_index",
     "qian_weighted_mean_average",
     "rain_season",
-    "spx_fit_params",
+    "standardized_index_fit_params",
     "standardized_precipitation_evapotranspiration_index",
     "standardized_precipitation_index",
     "water_budget",
@@ -1069,11 +1069,11 @@ def rain_season(
     return out["rain_season_start"], out["rain_season_end"], out["rain_season_length"]
 
 
-def _preprocess_spx(da, freq, window, **indexer):
+def _preprocess_standardized_index(da, freq, window, **indexer):
     """
     Resample and roll operations involved when computing a standardized index.
 
-    The `group` variable returned is used spx computations and to keep track if
+    The `group` variable returned is used in standardized index computations and to keep track if
     preprocessing was already done or not.
     """
     _, base, _, _ = parse_offset(freq or xarray.infer_freq(da.time))
@@ -1092,7 +1092,7 @@ def _preprocess_spx(da, freq, window, **indexer):
 
 
 # TODO: Find a more generic place for this, SPX indices are not exclusive to _agro
-def spx_fit_params(
+def standardized_index_fit_params(
     da, cal_range, freq, window, dist, method, group=None, **indexer
 ) -> xarray.DataArray:
     """Standardized Index fitting parameters.
@@ -1135,7 +1135,7 @@ def spx_fit_params(
         )
 
     if group is None:
-        da, group = _preprocess_spx(da, freq, window)
+        da, group = _preprocess_standardized_index(da, freq, window)
 
     if cal_range:
         da = da.sel(time=slice(cal_range[0], cal_range[1]))
@@ -1166,6 +1166,23 @@ def spx_fit_params(
         "method": method,
     }
     return params
+
+
+def _get_standardized_index(da, params):
+    # pdf to cdf
+    # Is this way of treating the special case of 0 always the right way?
+    if params.attrs["dist"] in ["gamma", "fisk"]:
+        prob_pos = dist_method("cdf", params, da.where(da > 0))
+        prob_zero = (da == 0).sum("time") / da.notnull().sum("time")
+        prob = prob_zero + (1 - prob_zero) * prob_pos
+    # Invert to normal distribution with normal ppf to get standardized index
+    params_norm = xarray.DataArray(
+        [0, 1],
+        dims=["dparams"],
+        coords=dict(dparams=(["loc", "scale"])),
+        attrs=dict(scipy_dist="norm"),
+    )
+    return dist_method("ppf", params_norm, prob)
 
 
 # TODO : ADD
@@ -1246,7 +1263,7 @@ def standardized_precipitation_index(
     ...     method="ML",
     ... )  # Computing SPI-3 months using a gamma distribution for the fit
     >>> # Fitting parameters can also be obtained ...
-    >>> params = _compute_spx_fit_params(
+    >>> params = _standardized_index_fit_params(
     ...     pr,
     ...     cal_range,
     ...     freq="MS",
@@ -1272,26 +1289,12 @@ def standardized_precipitation_index(
             params.attrs[s] for s in ["freq", "window", "dist", "method"]
         )
 
-    pr, group = _preprocess_spx(pr, freq, window, **indexer)
+    pr, group = _preprocess_standardized_index(pr, freq, window, **indexer)
     if uses_params is False:
-        params = spx_fit_params(pr, cal_range, freq, window, dist, method, group=group)
-    params_dict = dict(params.groupby(group.rsplit(".")[1]))
-
-    def ppf_to_cdf(da, params):
-        # ppf to cdf
-        if dist in ["gamma", "fisk"]:
-            prob_pos = dist_method("cdf", params, da.where(da > 0))
-            prob_zero = (da == 0).sum("time") / da.notnull().sum("time")
-            prob = prob_zero + (1 - prob_zero) * prob_pos
-        # Invert to normal distribution with ppf and obtain SPI
-        params_norm = xarray.DataArray(
-            [0, 1],
-            dims=["dparams"],
-            coords=dict(dparams=(["loc", "scale"])),
-            attrs=dict(scipy_dist="norm"),
+        params = standardized_index_fit_params(
+            pr, cal_range, freq, window, dist, method, group=group
         )
-        sub_spi = dist_method("ppf", params_norm, prob)
-        return sub_spi
+    params_dict = dict(params.groupby(group.rsplit(".")[1]))
 
     def get_sub_spi(pr):
         group_key = pr[group][0].values.item()
@@ -1299,9 +1302,11 @@ def standardized_precipitation_index(
         # put NaNs if outside time selection
         if indexer != {} and pr.isnull().all():
             select_dims = {d: 0 for d in pr.dims if d != "time"}
-            sub_spi = ppf_to_cdf(pr[select_dims][{"time": [0, 1]}], params[select_dims])
+            sub_spi = _get_standardized_index(
+                pr[select_dims][{"time": [0, 1]}], params[select_dims]
+            )
             return sub_spi.broadcast_like(pr.isel(time=0, drop=True))
-        return ppf_to_cdf(pr, sub_params)
+        return _get_standardized_index(pr, sub_params)
 
     spi = pr.groupby(group).map(get_sub_spi)
     spi.attrs = params.attrs
