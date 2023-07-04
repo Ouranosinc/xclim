@@ -1093,7 +1093,8 @@ def check_units(val: str | int | float | None, dim: str | None) -> None:
 
 
 def declare_units(
-    **units_by_name: str,
+    partial: bool = False,
+    **kwargs: str,
 ) -> Callable:
     """Create a decorator to check units of function arguments.
 
@@ -1102,6 +1103,9 @@ def declare_units(
 
     Parameters
     ----------
+    partial: bool
+        If True, only a `_partial_units` attribute is added or updated, the checking mechanism is not injected.
+        Defaults to False.
     units_by_name : dict[str, str]
         Mapping from the input parameter names to their units or dimensionality ("[...]").
 
@@ -1115,25 +1119,58 @@ def declare_units(
 
     .. code-block:: python
 
-        @declare_units(tas=["temperature"])
-        def func(tas):
+        @declare_units(tas="[temperature]", thresh="<tas>")
+        def func(tas, thresh):
             ...
 
-    The decorator will check that `tas` has units of temperature (C, K, F).
+    The decorator will check that `tas` has units of temperature (C, K, F) and that `thresh` has the same units as `tas`.
     """
 
     def dec(func):
-        # Match the signature of the function to the arguments given to the decorator
-        sig = signature(func)
-        bound_units = sig.bind_partial(**units_by_name)
+        units_by_name = kwargs
+        # The `_in_units` attr denotes a previously partially-declared function, update with that info.
+        if hasattr(func, "_partial_units"):
+            units_by_name = func._partial_units | units_by_name
+
+        # Make relative declarations absolute if possible
+        for arg, dim in list(units_by_name.items()):
+            # A relative specification.
+            if "<" in dim:
+                for ref, refdim in units_by_name.items():
+                    if f"<{ref}>" in dim:
+                        if "<" in refdim:
+                            raise ValueError(
+                                "Can't have relative dimensionality declaration "
+                                "with reference to another relative dimensionality. "
+                                f"{arg}'s dimensionality refers to {ref} which is declared as {refdim}."
+                            )
+                        dim = dim.replace(f"<{ref}>", f"({refdim})")
+                units_by_name[arg] = dim
+
+        if partial:
+            # Pass-through wrapper so the partially declared units are set as attr
+            # This is done to avoid setting the attr directly on func, but I'm not sure why we should avoid it.
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+
+            setattr(wrapper, "_partial_units", units_by_name)
+            return wrapper
+
+        # else, now no dimensionalities should be relative
+        for arg, dim in units_by_name.items():
+            if "<" in dim:
+                raise ValueError(
+                    f"Arg {arg} has a relatively declared dimensionality ({dim}). "
+                    "All missing variables must have declared dimensions, either here"
+                    "or in a subsequent `declare_units` call, in which case you should "
+                    "pass `partial=True` to this call."
+                )
 
         # Check that all Quantified parameters have their dimension declared.
-        for name, val in sig.parameters.items():
-            if (
-                (val.annotation == "Quantified")
-                and (val.default is not _empty)
-                and (name not in units_by_name)
-            ):
+        sig = signature(func)
+        for name, param in sig.parameters.items():
+            if (param.annotation == "Quantified") and (name not in units_by_name):
                 raise ValueError(
                     f"Argument {name} of function {func.__name__} has no declared dimension."
                 )
@@ -1142,8 +1179,8 @@ def declare_units(
         def wrapper(*args, **kwargs):
             # Match all passed in value to their proper arguments, so we can check units
             bound_args = sig.bind(*args, **kwargs)
-            for name, val in bound_args.arguments.items():
-                check_units(val, bound_units.arguments.get(name, None))
+            for name, dim in units_by_name.item():
+                check_units(bound_args.arguments.get(name), dim)
 
             out = func(*args, **kwargs)
 
