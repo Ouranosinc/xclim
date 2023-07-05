@@ -10,7 +10,7 @@ New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Added ``ensembles.hawkins_sutton`` method to partition the uncertainty sources in a climate projection ensemble. (:issue:`771`, :pull:`1262`).
 * New function ``xclim.core.calendar.convert_doy`` to transform day-of-year data between calendars. Also accessible from ``convert_calendar`` with ``doy=True``. (:issue:`1283`, :pull:`1406`).
-* ``xclim.units.declare_units`` now accepts relative and partial declarations. This was applied to most "generic" indices.
+* ``xclim.units.declare_units`` now accepts relative and partial declarations. This was applied to most "generic" indices. (:pull:`1414`).
 
 Bug fixes
 ^^^^^^^^^
