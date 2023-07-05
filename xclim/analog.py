@@ -78,10 +78,10 @@ def spatial_analogs(
         )
 
     try:
-        metric = metrics[method]
+        metric_func = metrics[method]
     except KeyError as e:
         raise ValueError(
-            f"Method {method} is not implemented. Available methods are : {','.join(metrics.keys())}."
+            f"Method `{method}` is not implemented. Available methods are: {','.join(metrics.keys())}."
         ) from e
 
     if candidates.chunks is not None:
@@ -91,7 +91,7 @@ def spatial_analogs(
 
     # Compute dissimilarity
     diss = xr.apply_ufunc(
-        metric,
+        metric_func,
         target,
         candidates,
         input_core_dims=[(dist_dim, "_indices"), ("_dist_dim", "_indices")],
@@ -476,10 +476,13 @@ def kldiv(
 ) -> float | Sequence[float]:
     r"""Compute the Kullback-Leibler divergence between two multivariate samples.
 
-    .. math
+    The formula to compute the K-L divergence from samples is given by:
+
+    .. math::
+
         D(P||Q) = \frac{d}{n} \sum_i^n \log\left\{\frac{r_k(x_i)}{s_k(x_i)}\right\} + \log\left\{\frac{m}{n-1}\right\}
 
-    where :math:`r_k(x_i)` and :math:`s_k(x_i)` are, respectively, the euclidean distance to the kth neighbour of
+    where :math:`r_k(x_i)` and :math:`s_k(x_i)` are, respectively, the Euclidean distance to the kth neighbour of
     :math:`x_i` in the x array (excepting :math:`x_i`) and in the y array. This method is scale-dependent.
 
     Parameters

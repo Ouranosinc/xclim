@@ -3382,6 +3382,34 @@ class TestDrynessIndex:
 
 
 @pytest.mark.parametrize(
+    "tmin,meth,zone",
+    [
+        (-6, "usda", 16),
+        (19, "usda", 25),
+        (-47, "usda", 1),
+        (-6, "anbg", 1),
+        (19, "anbg", 6),
+        (-47, "anbg", np.NaN),
+    ],
+    # There are 26 USDA zones: 1a -> 1, 1b -> 2, ... 13b -> 26
+    # There are 7 angb zones: 1,2, ..., 7
+    # Example for "angb":
+    # Zone 1 : -15 degC <= tmin < -10 degC
+    # Zone 2 : -10 degC <= tmin < -5 degC
+    # ...
+    # Zone 7 : 15 degC <= tmin <= 20 degC
+    # Below -15 degC or above 20 degC, this is NaN
+)
+def test_hardiness_zones(tasmin_series, tmin, meth, zone):
+    tasmin = tasmin_series(np.zeros(10957) + 20, start="1997-01-01", units="degC")
+    tasmin = tasmin.where(tasmin.time.dt.dayofyear != 1, tmin)
+
+    hz = xci.hardiness_zones(tasmin=tasmin, method=meth)
+    np.testing.assert_array_equal(hz[-1], zone)
+    assert hz[:-1].isnull().all()
+
+
+@pytest.mark.parametrize(
     "pr,thresh1,thresh2,window,outs",
     [
         (

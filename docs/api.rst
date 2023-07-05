@@ -100,6 +100,12 @@ Ensembles Module
 .. autofunction:: xclim.ensembles.robustness_coefficient
    :noindex:
 
+.. automodule:: xclim.ensembles._partitioning
+    :noindex:
+
+.. autofunction:: xclim.ensembles.hawkins_sutton
+    :noindex:
+
 Units Handling Submodule
 ========================
 
