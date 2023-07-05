@@ -4,7 +4,7 @@ Changelog
 
 v0.44.0 (unreleased)
 --------------------
-Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`), David Huard (:user:`huard`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`), David Huard (:user:`huard`), Juliette Lavoie (:user: `juliettelavoie`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -53,6 +53,7 @@ Internal changes
     * `actions/add-to-project`: Automatically adds issues to the `xclim` project.
     * `saadmk11/github-actions-version-updater`: Updates GitHub Action versions in all Workflows (triggered monthly).
 * Added `method` parameter to `frequency_analysis` and `fa`. (:issue:`1168`, :pull:`1398`).
+* Increase the guess of number of quantiles needed in ExtremeValues. ( :pull:`1413`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
