@@ -4,7 +4,7 @@ Changelog
 
 v0.45.0 (unreleased)
 --------------------
-Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user: `juliettelavoie`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -18,10 +18,11 @@ Bug fixes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Tolerance thresholds for error in ``test_stats::test_fit`` have been relaxed to allow for more variation in the results. Previously untested ``*_moving_yearly_window`` functions are now tested. (:issue:`1400`, :pull:`1402`).
+* Increased the guess of number of quantiles needed in ExtremeValues. ( :pull:`1413`).
 
 v0.44.0 (2023-06-23)
 --------------------
-Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`), David Huard (:user:`huard`), Juliette Lavoie (:user: `juliettelavoie`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`), David Huard (:user:`huard`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -72,7 +73,6 @@ Internal changes
     * `actions/add-to-project`: Automatically adds issues to the `xclim` project.
     * `saadmk11/github-actions-version-updater`: Updates GitHub Action versions in all Workflows (triggered monthly).
 * Added `method` parameter to `frequency_analysis` and `fa`. (:issue:`1168`, :pull:`1398`).
-* Increased the guess of number of quantiles needed in ExtremeValues. ( :pull:`1413`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
