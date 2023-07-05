@@ -441,21 +441,23 @@ class Indicator(IndicatorRegistrar):
         parameters = cls._ensure_correct_parameters(parameters)
 
         # If needed, wrap compute with declare units
-        if (
-            "compute" in kwds
-            and not hasattr(kwds["compute"], "in_units")
-            and "_variable_mapping" in kwds
-        ):
-            # We actually need the inverse mapping (to get cmip6 name -> arg name)
-            inv_var_map = dict(map(reversed, kwds["_variable_mapping"].items()))
-            # parameters has already been update above.
-            kwds["compute"] = declare_units(
-                **{
-                    inv_var_map.get(k, k): m["units"]
-                    for k, m in parameters.items()
-                    if "units" in m
-                }
-            )(kwds["compute"])
+        if "compute" in kwds:
+            if not hasattr(kwds["compute"], "in_units") and "_variable_mapping" in kwds:
+                # We actually need the inverse mapping (to get cmip6 name -> arg name)
+                inv_var_map = dict(map(reversed, kwds["_variable_mapping"].items()))
+                # parameters has already been update above.
+                kwds["compute"] = declare_units(
+                    **{
+                        inv_var_map[k]: m["units"]
+                        for k, m in parameters.items()
+                        if "units" in m and k in inv_var_map
+                    }
+                )(kwds["compute"])
+
+            if hasattr(kwds["compute"], "in_units"):
+                varmap = kwds.get("_variable_mapping", {})
+                for name, unit in kwds["compute"].in_units.items():
+                    parameters[varmap.get(name, name)].units = unit
 
         # All updates done.
         kwds["_all_parameters"] = parameters
@@ -512,9 +514,6 @@ class Indicator(IndicatorRegistrar):
         docmeta = parse_doc(compute.__doc__)
         params_dict = docmeta.pop("parameters", {})  # override parent's parameters
 
-        for name, unit in getattr(compute, "in_units", {}).items():
-            params_dict.setdefault(name, {})["units"] = unit
-
         compute_sig = signature(compute)
         # Check that the `Parameters` section of the docstring does not include parameters
         # that are not in the `compute` function signature.
@@ -527,13 +526,7 @@ class Indicator(IndicatorRegistrar):
         for name, param in compute_sig.parameters.items():
             meta = params_dict.setdefault(name, {})
             meta["default"] = param.default
-            # Units read from compute.in_units or units passed explicitly,
-            # will be added to "meta" elsewhere in the __new__.
-            passed_meta = passed_parameters.get(name, {})
-            has_units = ("units" in meta) or (
-                isinstance(passed_meta, dict) and "units" in passed_meta
-            )
-            meta["kind"] = infer_kind_from_parameter(param, has_units)
+            meta["kind"] = infer_kind_from_parameter(param)
 
         parameters = {name: Parameter(**param) for name, param in params_dict.items()}
         return parameters, docmeta
