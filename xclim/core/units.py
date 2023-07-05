@@ -1136,7 +1136,7 @@ def declare_units(
         units_by_name = kwargs
         # The `_in_units` attr denotes a previously partially-declared function, update with that info.
         if hasattr(func, "_partial_units"):
-            units_by_name = func._partial_units | units_by_name
+            units_by_name = {**func._partial_units, **units_by_name}
 
         # Make relative declarations absolute if possible
         for arg, dim in list(units_by_name.items()):
