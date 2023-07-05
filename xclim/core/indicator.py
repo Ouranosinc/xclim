@@ -593,7 +593,7 @@ class Indicator(IndicatorRegistrar):
                         "the units dimensionality must stay the same. Got: old = "
                         f"{meta.units}, new = {varmeta['canonical_units']}"
                     ) from err
-            meta.units = varmeta["canonical_units"]
+            meta.units = varmeta.get("dimensions", varmeta["canonical_units"])
             meta.description = varmeta["description"]
 
         if variable_mapping:

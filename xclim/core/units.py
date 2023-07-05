@@ -1048,7 +1048,10 @@ def check_units(val: str | int | float | None, dim: str | None) -> None:
     if dim is None or val is None:
         return
 
-    context = infer_context(dimension=dim)
+    # In case val is a DataArray, we try to get a standard_name
+    context = infer_context(
+        standard_name=getattr(val, "standard_name", None), dimension=dim
+    )
 
     if str(val).startswith("UNSET "):
         warnings.warn(
@@ -1179,7 +1182,7 @@ def declare_units(
         def wrapper(*args, **kwargs):
             # Match all passed in value to their proper arguments, so we can check units
             bound_args = sig.bind(*args, **kwargs)
-            for name, dim in units_by_name.item():
+            for name, dim in units_by_name.items():
                 check_units(bound_args.arguments.get(name), dim)
 
             out = func(*args, **kwargs)
@@ -1265,6 +1268,6 @@ def infer_context(standard_name=None, dimension=None):
         if standard_name is not None
         else False
     )
-    cdim = (dimension == "[precipitation]") if dimension is not None else False
+    cdim = ("[precipitation]" in dimension) if dimension is not None else False
 
     return "hydro" if csn or cdim else "none"

@@ -37,10 +37,22 @@ DayOfYearStr = NewType("DayOfYearStr", str)
 #: Type annotation for thresholds and other not-exactly-a-variable quantities
 Quantified = TypeVar("Quantified", xr.DataArray, str, Quantity)
 
-# Official variables definitions
 VARIABLES = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
+"""Official variables definitions.
 
-# Input cell methods
+A mapping from variable name to a dict with the following keys:
+
+- canonical_units [required] : The conventional units used by this variable.
+- cell_methods [optional] : The conventional `cell_methods` CF attribute
+- description [optional] : A description of the variable, to populate dynamically generated docstrings.
+- dimensions [optional] : The dimensionality of the variable, an abstract version of the units.
+    See `xclim.units.units._dimensions.keys()` for available terms. This is especially useful for making xclim aware of "[precipitation]" variables.
+- standard_name [optional] : If it exists, the CF standard name.
+- data_flags [optional] : Data flags methods (:py:mod:`xclim.core.dataflags`) applicable to this variable.
+    The method names are keys and values are dicts of keyword arguments to pass (an empty dict if there's nothing to configure).
+"""
+
+# Input cell methods for clix-meta
 ICM = {
     "tasmin": "time: minimum within days",
     "tasmax": "time: maximum within days",
