@@ -53,7 +53,7 @@ Internal changes
     * `actions/add-to-project`: Automatically adds issues to the `xclim` project.
     * `saadmk11/github-actions-version-updater`: Updates GitHub Action versions in all Workflows (triggered monthly).
 * Added `method` parameter to `frequency_analysis` and `fa`. (:issue:`1168`, :pull:`1398`).
-* Increase the guess of number of quantiles needed in ExtremeValues. ( :pull:`1413`).
+* Increased the guess of number of quantiles needed in ExtremeValues. ( :pull:`1413`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
