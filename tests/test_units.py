@@ -283,3 +283,33 @@ def test_declare_units():
             freq: str = "YS",
         ) -> xr.DataArray:
             pass
+
+
+def test_declare_units_partial():
+    def index(data: xr.DataArray, thresh: Quantified, dthreshdt: Quantified):
+        return xr.DataArray(1, attrs={"units": "rad"})
+
+    index_partial = declare_units(
+        partial=True, thresh="<data>", dthreshdt="<data>/[time]"
+    )(index)
+    assert hasattr(index_partial, "_partial_units")
+
+    index_full_mm = declare_units(data="mm")(index_partial)
+    assert index_full_mm.in_units == {
+        "data": "mm",
+        "thresh": "(mm)",
+        "dthreshdt": "(mm)/[time]",
+    }
+
+    index_full_area = declare_units(data="[area]")(index_partial)
+    assert index_full_area.in_units == {
+        "data": "[area]",
+        "thresh": "([area])",
+        "dthreshdt": "([area])/[time]",
+    }
+
+    # No failures
+    index_full_mm("1 mm", "2 km", "3 mm/s")
+
+    with pytest.raises(ValidationError):
+        index_full_mm("1 mm", "2 Pa", "3 mm/s")
