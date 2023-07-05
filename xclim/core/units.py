@@ -1097,9 +1097,9 @@ def check_units(val: str | int | float | None, dim: str | None) -> None:
 
 def declare_units(
     partial: bool = False,
-    **kwargs: str,
+    **kwargs,
 ) -> Callable:
-    """Create a decorator to check units of function arguments.
+    r"""Create a decorator to check units of function arguments.
 
     The decorator checks that input and output values have units that are compatible with expected dimensions.
     It also stores the input units as a 'in_units' attribute.
@@ -1109,7 +1109,7 @@ def declare_units(
     partial: bool
         If True, only a `_partial_units` attribute is added or updated, the checking mechanism is not injected.
         Defaults to False.
-    units_by_name : dict[str, str]
+    \*\*kwargs
         Mapping from the input parameter names to their units or dimensionality ("[...]").
         The dimensions can be given relative to another input of the wrapped function referring to this arg like : `<arg>`. See examples.
         This is usually helpful when `partial=True` and the main input has not been declared yet.
@@ -1167,7 +1167,7 @@ def declare_units(
         for arg, dim in units_by_name.items():
             if "<" in dim:
                 raise ValueError(
-                    f"Arg {arg} has a relatively declared dimensionality ({dim}). "
+                    f"Arg `{arg}` has a relatively declared dimensionality (`{dim}`). "
                     "All missing variables must have declared dimensions, either here"
                     "or in a subsequent `declare_units` call, in which case you should "
                     "pass `partial=True` to this call."
