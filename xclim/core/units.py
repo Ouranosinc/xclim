@@ -1111,6 +1111,8 @@ def declare_units(
         Defaults to False.
     units_by_name : dict[str, str]
         Mapping from the input parameter names to their units or dimensionality ("[...]").
+        The dimensions can be given relative to another input of the wrapped function referring to this arg like : `<arg>`. See examples.
+        This is usually helpful when `partial=True` and the main input has not been declared yet.
 
     Returns
     -------
@@ -1122,11 +1124,12 @@ def declare_units(
 
     .. code-block:: python
 
-        @declare_units(tas="[temperature]", thresh="<tas>")
-        def func(tas, thresh):
+        @declare_units(tas="[temperature]", thresh="<tas>", thresh2="<tas> * [time]")
+        def func(tas, thresh, thresh2):
             ...
 
     The decorator will check that `tas` has units of temperature (C, K, F) and that `thresh` has the same units as `tas`.
+    The last argument `thresh2` will need "degree days" dimensions.
     """
 
     def dec(func):
