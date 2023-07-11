@@ -1183,15 +1183,15 @@ def _get_standardized_index(da, params, **indexer):
     group_name = params.attrs["group"].rsplit(".")[-1]
     param_names = params.dparams.values
 
-    def wrap_cdf_ppf(da, params, idxs):
+    def wrap_cdf_ppf(da, params, group_idxs):
         if indexer != {} and np.isnan(da).all():
             return np.zeros_like(da) * np.NaN
 
         spi = np.zeros_like(da)
         # loop over groups
-        for ii, v in enumerate(list(dict.fromkeys(group_idxs).keys())):
+        for ii, group_idx in enumerate(list(dict.fromkeys(group_idxs).keys())):
             pars = params[ii, :]
-            indices = np.argwhere(group_idxs == v)
+            indices = np.argwhere(group_idxs == group_idx)
             vals = da[indices]
             zeros = (vals == 0).sum(axis=0)
             vals[vals == 0] = np.NaN
