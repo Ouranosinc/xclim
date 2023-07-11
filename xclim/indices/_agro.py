@@ -1230,6 +1230,7 @@ https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.lognorm.html
 @declare_units(
     pr="[precipitation]",
     pr_cal="[precipitation]",
+    params="[]",
 )
 def standardized_precipitation_index(
     pr: xarray.DataArray,
@@ -1326,7 +1327,7 @@ def standardized_precipitation_index(
 
     if pr_cal is not None:
         warnings.warn(
-            "Inputing `pr_cal` will be deprecated in xclim==0.46.0. If `pr_cal` is a subset of `pr`, then instead of:\n"
+            "Inputing a calibration array will be deprecated in xclim==0.46.0. For example, if `pr_cal` is a subset of `pr`, then instead of say:\n"
             "`standardized_precipitation_index(pr=pr,pr_cal=pr.sel(time=slice(t0,t1)),...)`,\n one can call:\n"
             "`standardized_precipitation_index(pr=pr,cal_range=(t0,t1),...).\n"
             "If for some reason `pr_cal` is not a subset of `pr`, then the following approach will still be possible:\n"
@@ -1429,7 +1430,7 @@ def standardized_precipitation_evapotranspiration_index(
         wb, wb_cal, freq, window, dist, method, cal_range, params, **indexer
     )
 
-    return spei
+    return spei.attrs({"units": ""})
 
 
 @declare_units(tas="[temperature]")
