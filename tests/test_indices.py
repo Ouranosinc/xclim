@@ -526,10 +526,10 @@ class TestAgroclimaticIndices:
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
         pr = ds.pr.sel(time=slice("1998", "2000"))
         pr_cal = ds.pr.sel(time=slice("1950", "1980"))
-        spi = xci.standardized_precipitation_index(
-            pr, pr_cal, freq, window, dist, method
+        params = xci.standardized_index_fit_params(
+            pr_cal, freq=freq, window=window, dist=dist, method=method
         )
-
+        spi = xci.standardized_precipitation_index(pr, params=params)
         # Only a few moments before year 2000 are tested
         spi = spi.isel(time=slice(-11, -1, 2))
 
@@ -613,8 +613,11 @@ class TestAgroclimaticIndices:
             wb_cal = wb.sel(time=slice("1950", "1980"))
             wb = wb.sel(time=slice("1998", "2000"))
 
+        params = xci.standardized_index_fit_params(
+            wb_cal, freq=freq, window=window, dist=dist, method=method
+        )
         spei = xci.standardized_precipitation_evapotranspiration_index(
-            wb, wb_cal, freq, window, dist, method
+            wb, params=params
         )
 
         # Only a few moments before year 2000 are tested

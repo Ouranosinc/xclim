@@ -6,6 +6,7 @@ from typing import Tuple
 
 import numpy as np
 import xarray
+from scipy.stats import norm
 
 import xclim.indices.run_length as rl
 from xclim.core.calendar import parse_offset, resample_doy, select_time
@@ -25,7 +26,7 @@ from xclim.indices._threshold import (
 )
 from xclim.indices.generic import aggregate_between_dates, get_zones
 from xclim.indices.helpers import _gather_lat, day_lengths
-from xclim.indices.stats import dist_method, fit
+from xclim.indices.stats import dist_method, fit, get_dist
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
@@ -1081,8 +1082,20 @@ def _preprocess_standardized_index(da, freq, window, **indexer):
         group = {"D": "time.dayofyear", "M": "time.month"}[base]
     except KeyError():
         raise ValueError(f"Standardized index with frequency `{freq}` not supported.")
+
     if freq:
         da = da.resample(time=freq).mean(keep_attrs=True)
+
+    if uses_dask(da) and len(da.chunks[da.get_axis_num("time")]) > 1:
+        warnings.warn(
+            "The input data is chunked on time dimension and must be fully rechunked to"
+            " run `fit` on groups ."
+            " Beware, this operation can significantly increase the number of tasks dask"
+            " has to handle.",
+            stacklevel=2,
+        )
+        da = da.chunk({"time": -1})
+
     if window > 1:
         da = da.rolling(time=window).mean(skipna=False, keep_attrs=True)
 
@@ -1093,7 +1106,13 @@ def _preprocess_standardized_index(da, freq, window, **indexer):
 
 # TODO: Find a more generic place for this, SPX indices are not exclusive to _agro
 def standardized_index_fit_params(
-    da, cal_range, freq, window, dist, method, group=None, **indexer
+    da: xarray.DataArray,
+    freq: str | None,
+    window: int | None,
+    dist: str | None,
+    method: str | None,
+    cal_range: tuple[DateStr, DateStr] | None = None,
+    **indexer,
 ) -> xarray.DataArray:
     """Standardized Index fitting parameters.
 
@@ -1134,21 +1153,10 @@ def standardized_index_fit_params(
             f"The method `{method}` is not supported for distribution `{dist}`."
         )
 
-    if group is None:
-        da, group = _preprocess_standardized_index(da, freq, window)
+    da, group = _preprocess_standardized_index(da, freq, window, **indexer)
 
     if cal_range:
         da = da.sel(time=slice(cal_range[0], cal_range[1]))
-
-    if uses_dask(da) and len(da.chunks[da.get_axis_num("time")]) > 1:
-        warnings.warn(
-            "The input data is chunked on time dimension and must be fully rechunked to"
-            " run `fit` on groups ."
-            " Beware, this operation can significantly increase the number of tasks dask"
-            " has to handle.",
-            stacklevel=2,
-        )
-        da = da.chunk({"time": -1})
 
     def wrap_fit(da):
         if indexer != {} and da.isnull().all():
@@ -1159,30 +1167,54 @@ def standardized_index_fit_params(
 
     params = da.groupby(group).map(wrap_fit)
     params.attrs = {
-        "Calibration period": str(cal_range),
+        "Calibration period": cal_range,
         "freq": freq,
         "window": window,
-        "dist": dist,
+        "scipy_dist": dist,
         "method": method,
+        "group": group,
+        "time_indexer": indexer,
     }
     return params
 
 
-def _get_standardized_index(da, params):
-    # pdf to cdf
-    # Is this way of treating the special case of 0 always the right way?
-    if params.attrs["dist"] in ["gamma", "fisk"]:
-        prob_pos = dist_method("cdf", params, da.where(da > 0))
-        prob_zero = (da == 0).sum("time") / da.notnull().sum("time")
-        prob = prob_zero + (1 - prob_zero) * prob_pos
-    # Invert to normal distribution with normal ppf to get standardized index
-    params_norm = xarray.DataArray(
-        [0, 1],
-        dims=["dparams"],
-        coords=dict(dparams=(["loc", "scale"])),
-        attrs=dict(scipy_dist="norm"),
+def _get_standardized_index(da, params, **indexer):
+    scipy_dist = get_dist(params.attrs["scipy_dist"])
+    group_name = params.attrs["group"].rsplit(".")[-1]
+    param_names = params.dparams.values
+
+    def wrap_cdf_ppf(da, params, idxs):
+        if indexer != {} and np.isnan(da).all():
+            return np.zeros_like(da) * np.NaN
+
+        spi = np.zeros_like(da)
+        # loop over groups
+        for ii, v in enumerate(list(dict.fromkeys(group_idxs).keys())):
+            pars = params[ii, :]
+            indices = np.argwhere(group_idxs == v)
+            vals = da[indices]
+            zeros = (vals == 0).sum(axis=0)
+            vals[vals == 0] = np.NaN
+            paramsd = {param_names[jj]: pars[jj] for jj in range(len(pars))}
+            probs_of_zero = zeros / vals.shape[0]
+            dist_probs = scipy_dist.cdf(vals, **paramsd)
+            probs = probs_of_zero + ((1 - probs_of_zero) * dist_probs)
+            spi[indices] = norm.ppf(probs)
+        return spi
+
+    group_idxs = da.time.dt.month if group_name == "month" else da.time.dt.dayofyear
+    return xarray.apply_ufunc(
+        wrap_cdf_ppf,
+        da,
+        params,
+        group_idxs,
+        input_core_dims=[["time"], [group_name, "dparams"], ["time"]],
+        output_core_dims=[["time"]],
+        dask="parallelized",
+        dask_gufunc_kwargs={"allow_rechunk": True},
+        output_dtypes=[da.dtype],
+        vectorize=True,
     )
-    return dist_method("ppf", params_norm, prob)
 
 
 # TODO : ADD
@@ -1197,14 +1229,16 @@ https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.lognorm.html
 
 @declare_units(
     pr="[precipitation]",
+    pr_cal="[precipitation]",
 )
 def standardized_precipitation_index(
     pr: xarray.DataArray,
-    cal_range: tuple[DateStr, DateStr] | None = None,
+    pr_cal: Quantified | None = None,
     freq: str | None = "MS",
     window: int | None = 1,
     dist: str | None = "gamma",
     method: str | None = "APP",
+    cal_range: tuple[DateStr, DateStr] | None = None,
     params: Quantified | None = None,
     **indexer,
 ) -> xarray.DataArray:
@@ -1214,9 +1248,9 @@ def standardized_precipitation_index(
     ----------
     pr : xarray.DataArray
         Daily precipitation.
-    cal_range: Tuple[DateStr, DateStr] | None
-        Dates used to take a subset the input dataset for calibration. The tuple is formed by two `DateStr`,
-        i.e. a `str` in format `"YYYY-MM-DD"`. Default option `None` means that the full range of the input dataset is used.
+    pr_cal : xarray.DataArray
+        Daily precipitation used for calibration. Usually this is a temporal subset of `pr` over some reference period. This
+        option will be removed in xclim==0.46.0. Two behaviour will be possible (see below)
     freq : str | None
         Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
         has already been applied input dataset and will skip the resampling step.
@@ -1229,8 +1263,12 @@ def standardized_precipitation_index(
     method : {'APP', 'ML'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
+    cal_range: Tuple[DateStr, DateStr] | None
+        Dates used to take a subset the input dataset for calibration. The tuple is formed by two `DateStr`,
+        i.e. a `str` in format `"YYYY-MM-DD"`. Default option `None` means that the full range of the input dataset is used.
     params: xarray.DataArray
-        Fit parameters. If `params` is given as input, it overrides the `cal_range` option.
+        Fit parameters. The `params` can be computed using ``xclim.indices.standardized_index_fit_params`` in advance.
+        The ouput can be given here as input, and it overrides other options (among others, `cal_range`).
     indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -1278,59 +1316,54 @@ def standardized_precipitation_index(
     ----------
     :cite:cts:`mckee_relationship_1993`
     """
-    uses_params = params is not None
-    if cal_range and uses_params:
-        warnings.warn(
-            "Expected either `cal_range` or `params`, got both. Proceeding with `params`."
-        )
-        # Because default parameters for `window` and other options are not None, I can't
-        # make a similar warning for other params.
-        freq, window, dist, method = (
-            params.attrs[s] for s in ["freq", "window", "dist", "method"]
-        )
-
-    pr, group = _preprocess_standardized_index(pr, freq, window, **indexer)
-    if uses_params is False:
-        params = standardized_index_fit_params(
-            pr, cal_range, freq, window, dist, method, group=group
-        )
-    params_dict = dict(params.groupby(group.rsplit(".")[1]))
-
-    def get_sub_spi(pr):
-        group_key = pr[group][0].values.item()
-        sub_params = params_dict[group_key]
-        # put NaNs if outside time selection
-        if indexer != {} and pr.isnull().all():
-            select_dims = {d: 0 for d in pr.dims if d != "time"}
-            sub_spi = _get_standardized_index(
-                pr[select_dims][{"time": [0, 1]}], params[select_dims]
+    if params is not None and pr_cal is None:
+        freq, window = (params.attrs[s] for s in ["freq", "window"])
+        if cal_range:
+            warnings.warn(
+                "Expected either `cal_range` or `params`, got both. The `params` input will be used, and"
+                "`freq`, `window`, and `dist` used to obtain `params` will be used here."
             )
-            return sub_spi.broadcast_like(pr.isel(time=0, drop=True))
-        return _get_standardized_index(pr, sub_params)
 
-    spi = pr.groupby(group).map(get_sub_spi)
+    if pr_cal is not None:
+        warnings.warn(
+            "Inputing `pr_cal` will be deprecated in xclim==0.46.0. If `pr_cal` is a subset of `pr`, then instead of:\n"
+            "`standardized_precipitation_index(pr=pr,pr_cal=pr.sel(time=slice(t0,t1)),...)`,\n one can call:\n"
+            "`standardized_precipitation_index(pr=pr,cal_range=(t0,t1),...).\n"
+            "If for some reason `pr_cal` is not a subset of `pr`, then the following approach will still be possible:\n"
+            "`params = standardized_index_fit_params(da=pr_cal, freq=freq, window=window, dist=dist, method=method)`.\n"
+            "`spi = standardized_precipitation_index(pr=pr, params=params)`.\n"
+            "This approach can be used in both scenarios to break up the computations in two, i.e. get params, then compute "
+            "standardized indices."
+        )
+        params = standardized_index_fit_params(
+            pr_cal, freq=freq, window=window, dist=dist, method=method
+        )
+
+    pr, _ = _preprocess_standardized_index(pr, freq=freq, window=window, **indexer)
+    if params is None:
+        params = standardized_index_fit_params(
+            pr, cal_range=cal_range, freq=None, window=1, dist=dist, method=method
+        )
+    spi = _get_standardized_index(pr, params, **indexer)
     spi.attrs = params.attrs
     spi.attrs["units"] = ""
-    if uses_params:
-        spi.attrs["Calibration period"] = (
-            spi.attrs["Calibration period"] + "(input parameters)"
-        )
-
     return spi
 
 
 @declare_units(
     wb="[precipitation]",
+    wb_cal="[precipitation]",
     params="[]",
 )
 def standardized_precipitation_evapotranspiration_index(
     wb: xarray.DataArray,
+    wb_cal: Quantified | None = None,
+    freq: str | None = "MS",
+    window: int | None = 1,
+    dist: str | None = "gamma",
+    method: str | None = "APP",
     cal_range: tuple[DateStr, DateStr] | None = None,
     params: Quantified | None = None,
-    freq: str = "MS",
-    window: int = 1,
-    dist: str = "fisk",
-    method: str = "ML",
     **indexer,
 ) -> xarray.DataArray:
     r"""Standardized Precipitation Evapotranspiration Index (SPEI).
@@ -1343,9 +1376,9 @@ def standardized_precipitation_evapotranspiration_index(
     ----------
     wb : xarray.DataArray
         Daily water budget (pr - pet).
-    cal_range: Tuple[DateStr, DateStr] | None
-        Dates used to take a subset the input dataset for calibration. The tuple is formed by two `DateStr`,
-        i.e. a `str` in format `"YYYY-MM-DD"`. Default option `None` means that the full range of the input dataset is used.
+    wb_cal : xarray.DataArray
+        Daily water budget used for calibration. Usually this is a temporal subset of `wb` over some reference period. This
+        option will be removed in xclim==0.46.0. Two behaviour will be possible (see below)
     params: xarray.DataArray
         Fit parameters.
     freq : str | None
@@ -1360,6 +1393,12 @@ def standardized_precipitation_evapotranspiration_index(
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization. Available methods
         vary with the distribution: 'gamma':{'APP', 'ML'}, 'fisk':{'ML'}
+    cal_range: Tuple[DateStr, DateStr] | None
+        Dates used to take a subset the input dataset for calibration. The tuple is formed by two `DateStr`,
+        i.e. a `str` in format `"YYYY-MM-DD"`. Default option `None` means that the full range of the input dataset is used.
+    params: xarray.DataArray
+        Fit parameters. The `params` can be computed using ``xclim.indices.standardized_index_fit_params`` in advance.
+        The ouput can be given here as input, and it overrides other options (among others, `cal_range`).
     indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -1387,7 +1426,7 @@ def standardized_precipitation_evapotranspiration_index(
             wb = wb + offset
 
     spei = standardized_precipitation_index(
-        wb, cal_range, params, freq, window, dist, method, **indexer
+        wb, wb_cal, freq, window, dist, method, cal_range, params, **indexer
     )
 
     return spei
