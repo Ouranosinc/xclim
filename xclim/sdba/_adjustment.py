@@ -151,7 +151,7 @@ def qdm_adjust(ds, *, group, interp, extrapolation, kind) -> xr.Dataset:
     )
     gr_rank = gr_sim.map_blocks(
         lambda da: da.rank(dim=da.attrs["complement_dims"][0], pct=True)
-    )
+    ).assign_attrs(gr_sim.attrs)
     sim_q = ungroup(gr_rank, group, ds.sim.time)
 
     af = xr.apply_ufunc(
