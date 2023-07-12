@@ -789,8 +789,7 @@ def get_windowed_group(da, group):
         )
         complement_dims.append(gr_complement_dim)
         time_dims = complement_dims + [gr_dim]
-        # chunking could be removed?
-        da = da  # .chunk({gr_dim: -1, complement_dims[-1]: -1})
+        da = da.chunk({gr_dim: -1, complement_dims[-1]: -1})
     else:
         complement_dims.append(gr_dim)
         gr_dim = None
