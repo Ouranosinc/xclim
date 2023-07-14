@@ -565,12 +565,6 @@ class InputKind(IntEnum):
 
        Annotation : ``bool``, may be optional.
     """
-    DATE_TUPLE = 10
-    """A tuple of dates in the YYYY-MM-DD format, may include a time.
-
-    !!! not sure how to write this !!!
-       Annotation : `Tuple[xclim.core.utils.DateStr, xclim.core.utils.DateStr]`
-    """
     KWARGS = 50
     """A mapping from argument name to value.
 

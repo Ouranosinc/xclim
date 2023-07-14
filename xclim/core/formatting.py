@@ -532,7 +532,6 @@ KIND_ANNOTATION = {
     InputKind.STRING: "str",
     InputKind.DAY_OF_YEAR: "date (string, MM-DD)",
     InputKind.DATE: "date (string, YYYY-MM-DD)",
-    InputKind.DATE_TUPLE: "date tuple ((string_1, YYYY-MM-DD), (string_2, YYYY-MM-DD))",
     InputKind.BOOL: "boolean",
     InputKind.DATASET: "Dataset, optional",
     InputKind.KWARGS: "",
