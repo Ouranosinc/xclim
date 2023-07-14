@@ -1111,7 +1111,6 @@ def standardized_index_fit_params(
     window: int | None,
     dist: str | None,
     method: str | None,
-    cal_range: tuple[DateStr, DateStr] | None = None,
     **indexer,
 ) -> xarray.DataArray:
     """Standardized Index fitting parameters.
@@ -1125,9 +1124,6 @@ def standardized_index_fit_params(
     ----------
     da : xarray.DataArray
         Input array.
-    cal_range: Tuple[DateStr, DateStr] | None
-        Dates used to take a subset the input dataset for calibration. The tuple is formed by two `DateStr`,
-        i.e. a `str` in format `"YYYY-MM-DD"`. Default option `None` means that the full range of the input dataset is used.
     freq : str | None
         Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
         has already been applied input dataset and will skip the resampling step.
@@ -1155,9 +1151,6 @@ def standardized_index_fit_params(
 
     da, group = _preprocess_standardized_index(da, freq, window, **indexer)
 
-    if cal_range:
-        da = da.sel(time=slice(cal_range[0], cal_range[1]))
-
     def wrap_fit(da):
         if indexer != {} and da.isnull().all():
             select_dims = {d: 0 if d != "time" else [0, 1] for d in da.dims}
@@ -1165,6 +1158,10 @@ def standardized_index_fit_params(
             return fitted.broadcast_like(da.isel(time=0, drop=True))
         return fit(da, dist, method)
 
+    cal_range = (
+        da.time.min().dt.strftime("%Y-%m-%d"),
+        da.time.max().dt.strftime("%Y-%m-%d"),
+    )
     params = da.groupby(group).map(wrap_fit)
     params.attrs = {
         "Calibration period": cal_range,
@@ -1174,6 +1171,7 @@ def standardized_index_fit_params(
         "method": method,
         "group": group,
         "time_indexer": indexer,
+        "units": "",
     }
     return params
 
@@ -1239,7 +1237,8 @@ def standardized_precipitation_index(
     window: int | None = 1,
     dist: str | None = "gamma",
     method: str | None = "APP",
-    cal_range: tuple[DateStr, DateStr] | None = None,
+    cal_start: DateStr | None = None,
+    cal_end: DateStr | None = None,
     params: Quantified | None = None,
     **indexer,
 ) -> xarray.DataArray:
@@ -1264,12 +1263,15 @@ def standardized_precipitation_index(
     method : {'APP', 'ML'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
-    cal_range: Tuple[DateStr, DateStr] | None
-        Dates used to take a subset the input dataset for calibration. The tuple is formed by two `DateStr`,
-        i.e. a `str` in format `"YYYY-MM-DD"`. Default option `None` means that the full range of the input dataset is used.
+    cal_start: DateStr | None
+        Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`. Default option `None`
+        means that the calibration period begins at the start of the input dataset.
+    cal_end: DateStr | None
+        End date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`. Default option `None`
+        means that the calibration period finishes at the end of the input dataset.
     params: xarray.DataArray
         Fit parameters. The `params` can be computed using ``xclim.indices.standardized_index_fit_params`` in advance.
-        The ouput can be given here as input, and it overrides other options (among others, `cal_range`).
+        The ouput can be given here as input, and it overrides other options.
     indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -1284,7 +1286,7 @@ def standardized_precipitation_index(
     * The length `N` of the N-month SPI is determined by choosing the `window = N`.
     * Supported statistical distributions are: ["gamma", "fisk"], where "fisk" is scipy's implementation of
        a log-logistic distribution
-    * If `params` is given as input, it overrides the `cal_range`, `freq` and `window`, `dist` and `method` options.
+    * If `params` is given as input, it overrides the `cal_start`, `cal_end`, `freq` and `window`, `dist` and `method` options.
 
     Example
     -------
@@ -1292,19 +1294,19 @@ def standardized_precipitation_index(
     >>> from xclim.indices import standardized_precipitation_index
     >>> ds = xr.open_dataset(path_to_pr_file)
     >>> pr = ds.pr
-    >>> cal_range = ("1990-05-01", "1990-08-31")
+    >>> cal_start, cal_end = "1990-05-01", "1990-08-31"
     >>> spi_3 = standardized_precipitation_index(
     ...     pr,
-    ...     cal_range=cal_range,
     ...     freq="MS",
     ...     window=3,
     ...     dist="gamma",
     ...     method="ML",
+    ...     cal_start=cal_start,
+    ...     cal_end=cal_end,
     ... )  # Computing SPI-3 months using a gamma distribution for the fit
     >>> # Fitting parameters can also be obtained ...
     >>> params = _standardized_index_fit_params(
-    ...     pr,
-    ...     cal_range,
+    ...     pr.sel(time=slice(cal_start, cal_end)),
     ...     freq="MS",
     ...     window=3,
     ...     dist="gamma",
@@ -1319,10 +1321,10 @@ def standardized_precipitation_index(
     """
     if params is not None and pr_cal is None:
         freq, window = (params.attrs[s] for s in ["freq", "window"])
-        if cal_range:
+        if cal_start or cal_end:
             warnings.warn(
-                "Expected either `cal_range` or `params`, got both. The `params` input will be used, and"
-                "`freq`, `window`, and `dist` used to obtain `params` will be used here."
+                "Expected either `cal_{start|end}` or `params`, got both. The `params` input overrides other inputs."
+                "If `cal_start`, `cal_end`, `freq`, `window`, and/or `dist` were given as input, they will be ignored."
             )
 
     if pr_cal is not None:
@@ -1343,7 +1345,13 @@ def standardized_precipitation_index(
     pr, _ = _preprocess_standardized_index(pr, freq=freq, window=window, **indexer)
     if params is None:
         params = standardized_index_fit_params(
-            pr, cal_range=cal_range, freq=None, window=1, dist=dist, method=method
+            pr,
+            freq=None,
+            window=1,
+            dist=dist,
+            method=method,
+            cal_start=cal_start,
+            cal_end=cal_end,
         )
     spi = _get_standardized_index(pr, params, **indexer)
     spi.attrs = params.attrs
@@ -1354,6 +1362,7 @@ def standardized_precipitation_index(
 @declare_units(
     wb="[precipitation]",
     wb_cal="[precipitation]",
+    offset="[precipitation]",
     params="[]",
 )
 def standardized_precipitation_evapotranspiration_index(
@@ -1363,7 +1372,9 @@ def standardized_precipitation_evapotranspiration_index(
     window: int | None = 1,
     dist: str | None = "gamma",
     method: str | None = "APP",
-    cal_range: tuple[DateStr, DateStr] | None = None,
+    offset: Quantified = "1 mm/d",
+    cal_start: DateStr | None = None,
+    cal_end: DateStr | None = None,
     params: Quantified | None = None,
     **indexer,
 ) -> xarray.DataArray:
@@ -1394,12 +1405,18 @@ def standardized_precipitation_evapotranspiration_index(
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization. Available methods
         vary with the distribution: 'gamma':{'APP', 'ML'}, 'fisk':{'ML'}
-    cal_range: Tuple[DateStr, DateStr] | None
-        Dates used to take a subset the input dataset for calibration. The tuple is formed by two `DateStr`,
-        i.e. a `str` in format `"YYYY-MM-DD"`. Default option `None` means that the full range of the input dataset is used.
+    cal_start: DateStr | None
+        Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`. Default option `None`
+        means that the calibration period begins at the start of the input dataset.
+    cal_end: DateStr | None
+        End date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`. Default option `None`
+        means that the calibration period finishes at the end of the input dataset.
     params: xarray.DataArray
         Fit parameters. The `params` can be computed using ``xclim.indices.standardized_index_fit_params`` in advance.
-        The ouput can be given here as input, and it overrides other options (among others, `cal_range`).
+        The ouput can be given here as input, and it overrides other options.
+    offset: xarray.DataArray
+        For distributions bounded by zero (e.g. "gamma", "fisk"): Water budget must be shifted, only positive values are allowed.
+        This can be given as a precipitation flux or a rate.
     indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -1422,15 +1439,16 @@ def standardized_precipitation_evapotranspiration_index(
         # Distributions bounded by zero: Water budget must be shifted, only positive values
         # are allowed. The offset choice is arbitrary and the same offset as the monocongo
         # library is taken
-        offset = convert_units_to("1 mm/d", wb.units, context="hydro")
+        offset = convert_units_to(offset, wb.units, context="hydro")
         with xarray.set_options(keep_attrs=True):
             wb = wb + offset
+            wb_cal = wb_cal + offset
 
     spei = standardized_precipitation_index(
-        wb, wb_cal, freq, window, dist, method, cal_range, params, **indexer
+        wb, wb_cal, freq, window, dist, method, cal_start, cal_end, params, **indexer
     )
 
-    return spei.attrs({"units": ""})
+    return spei
 
 
 @declare_units(tas="[temperature]")

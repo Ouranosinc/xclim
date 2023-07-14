@@ -613,11 +613,17 @@ class TestAgroclimaticIndices:
             wb_cal = wb.sel(time=slice("1950", "1980"))
             wb = wb.sel(time=slice("1998", "2000"))
 
-        params = xci.standardized_index_fit_params(
-            wb_cal, freq=freq, window=window, dist=dist, method=method
-        )
+        # params = xci.standardized_index_fit_params(
+        #     wb, wb_cal, freq=freq, window=window, dist=dist, method=method,offset="1 mm/d"
+        # )
         spei = xci.standardized_precipitation_evapotranspiration_index(
-            wb, params=params
+            wb,
+            wb_cal,
+            freq=freq,
+            window=window,
+            dist=dist,
+            method=method,
+            offset="1 mm/d",
         )
 
         # Only a few moments before year 2000 are tested
