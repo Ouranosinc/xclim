@@ -1085,6 +1085,114 @@ def check_units(val: str | xr.DataArray | None, dim: str | xr.DataArray | None) 
     )
 
 
+class DeclareUnits:
+    def __init__(self, **units_by_name: dict[str, str]):
+        self.units_by_name = units_by_name
+
+    @staticmethod
+    def get_dims(bargs):
+        """Return dimensions of the arguments of a function."""
+        dims = {}
+        for name, val in bargs.arguments.items():
+            u = str2pint(val) if isinstance(val, str) else units2pint(val)
+            dims[name] = str(u.dimensionality)
+        return dims
+
+    @staticmethod
+    def check_quantified(func: Callable, dimensions: dict):
+        # Check that all Quantified parameters have their dimension declared.
+        sig = signature(func)
+        for name, val in sig.parameters.items():
+            if (val.annotation == "Quantified") and (name not in dimensions):
+                raise ValueError(
+                    f"Argument {name} of function {func.__name__} has no declared dimension."
+                )
+
+    @staticmethod
+    def relative_to_absolute(dimensions):
+        """Replace relative units by absolute ones if possible."""
+        out = {}
+        for arg, dim in list(dimensions.items()):
+            # A relative specification.
+            if "<" in dim:
+                for ref, refdim in dimensions.items():
+                    if f"<{ref}>" in dim:
+                        if "<" in refdim:
+                            raise ValueError(
+                                "Can't have relative dimensionality declaration "
+                                "with reference to another relative dimensionality. "
+                                f"{arg}'s dimensionality refers to {ref} which is declared as {refdim}."
+                            )
+                        dim = dim.replace(f"<{ref}>", f"{refdim}")
+            out[arg] = dim
+        return out
+
+    @staticmethod
+    def check_all_absolute(dimensions):
+        """Raise error if any dimension is relative."""
+        for arg, dim in dimensions.items():
+            if "<" in dim:
+                raise ValueError(
+                    f"Arg `{arg}` has a relatively declared dimensionality (`{dim}`). "
+                    "All missing variables must have declared dimensions, either here"
+                    "or in a subsequent `declare_units` call, in which case you should "
+                    "pass `partial=True` to this call."
+                )
+
+    def __call__(self, func, *args, **kwargs):
+        """Return wrapper."""
+        # Detect if the function has already been wrapped.
+        if hasattr(func, "in_units"):
+            # Convert relative dimensions to absolute dimensions
+            units_by_name = self.relative_to_absolute(
+                {**func.in_units, **self.units_by_name}
+            )
+            self.check_all_absolute(units_by_name)
+
+            # Use the original function, not the wrapper.
+            function = func._func
+        else:
+            units_by_name = self.units_by_name
+            function = func
+
+        self.check_quantified(func=function, dimensions=units_by_name)
+
+        sig = signature(function)
+
+        @wraps(function)
+        def wrapper(*args, **kwargs):
+            bound_args = sig.bind(*args, **kwargs)
+            # Get the dimensions of the bound arguments
+            dims = self.get_dims(bound_args)
+            # Replace relative dimensions by absolute dimensions
+            u = self.relative_to_absolute({**dims, **units_by_name})
+            # Check units of the bound arguments
+            for name, dim in u.items():
+                check_units(bound_args.arguments.get(name), dim)
+
+            out = function(*args, **kwargs)
+
+            # Perform very basic sanity check on the output.
+            # Indice are responsible for unit management.
+            # If this fails, it's a developer's error.
+            if isinstance(out, tuple):
+                for outd in out:
+                    if "units" not in outd.attrs:
+                        raise ValueError(
+                            "No units were assigned in one of the indice's outputs."
+                        )
+                    outd.attrs["units"] = ensure_cf_units(outd.attrs["units"])
+            else:
+                if "units" not in out.attrs:
+                    raise ValueError("No units were assigned to the indice's output.")
+                out.attrs["units"] = ensure_cf_units(out.attrs["units"])
+            return out
+
+        setattr(wrapper, "in_units", units_by_name)
+        setattr(wrapper, "_func", function)
+        return wrapper
+
+
 def declare_units(
     **units_by_name: str,
 ) -> Callable:

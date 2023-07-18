@@ -10,6 +10,7 @@ from dask import array as dsk
 
 from xclim import indices, set_options
 from xclim.core.units import (
+    DeclareUnits,
     amount2lwethickness,
     amount2rate,
     check_units,
@@ -295,3 +296,55 @@ def test_declare_units():
             freq: str = "YS",
         ) -> xr.DataArray:
             pass
+
+
+class TestDeclareUnits:
+    def test_relative(self):
+        """Test relative units declarations."""
+
+        @DeclareUnits(thresh="<data>", dthreshdt="<data>/[time]")
+        def index(data: xr.DataArray, thresh: Quantified, dthreshdt: Quantified):
+            return xr.DataArray(1, attrs={"units": "rad"})
+
+        with pytest.raises(ValidationError):
+            index("1 mm", "2 degC", "3 mm/s")
+
+        index("1 mm", "2 m", "3 cm/s")
+
+        # Now fully declare units
+        index_full_mm = DeclareUnits(data="mm")(index)
+
+        assert index_full_mm.in_units == {
+            "data": "mm",
+            "thresh": "mm",
+            "dthreshdt": "mm/[time]",
+        }
+
+        index_full_area = DeclareUnits(data="[area]")(index)
+        assert index_full_area.in_units == {
+            "data": "[area]",
+            "thresh": "[area]",
+            "dthreshdt": "[area]/[time]",
+        }
+
+        # No failures
+        index_full_mm("1 mm", "2 km", "3 mm/s")
+
+        with pytest.raises(ValidationError):
+            index_full_mm("1 mm", "2 Pa", "3 mm/s")
+
+    def test_quantified_check(self):
+        """Test that an error is raised when parameters with type Quantified do not declare their dimensions.
+        In this example, `wo` is a Quantified parameter, but does not declare its dimension as [length].
+        """
+        with pytest.raises(ValueError):
+
+            @DeclareUnits(pr="[precipitation]", evspsblpot="[precipitation]")
+            def dryness_index(
+                pr: xr.DataArray,
+                evspsblpot: xr.DataArray,
+                lat: xr.DataArray | str | None = None,
+                wo: Quantified = "200 mm",
+                freq: str = "YS",
+            ) -> xr.DataArray:
+                pass
