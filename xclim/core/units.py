@@ -412,16 +412,7 @@ def convert_units_to(
 
     # TODO remove backwards compatibility of int/float thresholds after v1.0 release
     if isinstance(source, (float, int)):
-        if context == "hydro":
-            source_unit = units.mm / units.day
-        else:
-            source_unit = units.degC
-        warnings.warn(
-            "Future versions of xclim will require explicit unit specifications.",
-            FutureWarning,
-            stacklevel=3,
-        )
-        return units.Quantity(source, units=source_unit).to(target_unit).m
+        raise DeprecationWarning("Please specify units explicitly.")
 
     raise NotImplementedError(f"Source of type `{type(source)}` is not supported.")
 
@@ -1043,12 +1034,18 @@ def flux2rate(
 
 
 @datacheck
-def check_units(val: str | int | float | None, dim: str | None) -> None:
-    """Check units for appropriate convention compliance."""
+def check_units(val: str | xr.DataArray | None, dim: str | xr.DataArray | None) -> None:
+    """Check that units are compatible with dimensions, otherwise raise a `ValidationError`.
+
+    Parameters
+    ----------
+    val: str or xr.DataArray
+      Value to check.
+    dim: str or xr.DataArray
+      Expected dimension, e.g. [temperature]. If a quantity or DataArray is given, the dimensionality is extracted.
+    """
     if dim is None or val is None:
         return
-
-    context = infer_context(dimension=dim)
 
     if str(val).startswith("UNSET "):
         warnings.warn(
@@ -1058,27 +1055,23 @@ def check_units(val: str | int | float | None, dim: str | None) -> None:
         )
         val = str(val).replace("UNSET ", "")
 
-    # TODO remove backwards compatibility of int/float thresholds after v1.0 release
     if isinstance(val, (int, float)):
-        return
+        raise DeprecationWarning("Please set units explicitly using a string.")
 
-    # This is needed if dim is units in the CF-syntax,
     try:
-        dim = str2pint(dim)
-        expected = dim.dimensionality
+        dim_units = str2pint(dim) if isinstance(dim, str) else units2pint(dim)
+        expected = dim_units.dimensionality
     except pint.UndefinedUnitError:
         # Raised when it is not understood, we assume it was a dimensionality
         expected = units.get_dimensionality(dim.replace("dimensionless", ""))
 
-    if isinstance(val, str):
-        val_units = str2pint(val)
-    else:  # a DataArray
-        val_units = units2pint(val)
+    val_units = str2pint(val) if isinstance(val, str) else units2pint(val)
     val_dim = val_units.dimensionality
 
     if val_dim == expected:
         return
 
+    context = infer_context(dimension=str(dim))
     # Check if there is a transformation available
     with units.context(context):
         start = pint.util.to_units_container(val_dim)
