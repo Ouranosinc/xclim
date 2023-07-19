@@ -17,7 +17,7 @@ jetstream_metric_woollings = JetStream(
     title="Strength and latitude of jetstream",
     identifier="jetstream_metric_woollings",
     var_name=["jetlat", "jetstr"],
-    units=["degrees_North", "m s-1"],
+    units=["degrees_north", "m s-1"],
     long_name=[
         "Latitude of maximum smoothed zonal wind speed",
         "Maximum strength of smoothed zonal wind speed",
