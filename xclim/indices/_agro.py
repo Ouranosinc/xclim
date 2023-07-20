@@ -1194,7 +1194,7 @@ def _get_standardized_index(da, params, **indexer):
             return np.zeros_like(da) * np.NaN
 
         spi = np.zeros_like(da)
-        # loop over groups
+        # loop over groups (similar to np.groupies idea, but np.groupies can't be used with custom functions)
         for ii, group_idx in enumerate(list(dict.fromkeys(group_idxs).keys())):
             pars = params[ii, :]
             indices = np.argwhere(group_idxs == group_idx)
@@ -1353,13 +1353,11 @@ def standardized_precipitation_index(
     pr, _ = _preprocess_standardized_index(pr, freq=freq, window=window, **indexer)
     if params is None:
         params = standardized_index_fit_params(
-            pr,
+            pr.sel(time=slice(cal_start, cal_end)),
             freq=None,
             window=1,
             dist=dist,
             method=method,
-            cal_start=cal_start,
-            cal_end=cal_end,
         )
     spi = _get_standardized_index(pr, params, **indexer)
     spi.attrs = params.attrs
