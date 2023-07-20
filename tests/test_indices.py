@@ -610,20 +610,17 @@ class TestAgroclimaticIndices:
             tas = tasmax - 2.5
             tasmin = tasmax - 5
             wb = xci.water_budget(pr, None, tasmin, tasmax, tas)
-            wb_cal = wb.sel(time=slice("1950", "1980"))
-            wb = wb.sel(time=slice("1998", "2000"))
 
-        # params = xci.standardized_index_fit_params(
-        #     wb, wb_cal, freq=freq, window=window, dist=dist, method=method,offset="1 mm/d"
-        # )
-        spei = xci.standardized_precipitation_evapotranspiration_index(
-            wb,
-            wb_cal,
+        params = xci.standardized_index_fit_params(
+            wb.sel(time=slice("1950", "1980")),
             freq=freq,
             window=window,
             dist=dist,
             method=method,
             offset="1 mm/d",
+        )
+        spei = xci.standardized_precipitation_evapotranspiration_index(
+            wb.sel(time=slice("1998", "2000")), params=params
         )
 
         # Only a few moments before year 2000 are tested

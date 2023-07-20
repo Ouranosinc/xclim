@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import warnings
-from typing import Tuple
 
 import numpy as np
 import xarray
@@ -1111,6 +1110,7 @@ def standardized_index_fit_params(
     window: int | None,
     dist: str | None,
     method: str | None,
+    offset: Quantified | None = None,
     **indexer,
 ) -> xarray.DataArray:
     """Standardized Index fitting parameters.
@@ -1136,6 +1136,9 @@ def standardized_index_fit_params(
     method : str
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
+    offset: Quantified
+        Distributions bounded by zero (e.g. "gamma", "fisk") can be used for datasets with negative values by using a offset:
+        `da + offset`
     indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
@@ -1148,6 +1151,10 @@ def standardized_index_fit_params(
         raise NotImplementedError(
             f"The method `{method}` is not supported for distribution `{dist}`."
         )
+
+    if offset:
+        with xarray.set_options(keep_attrs=True):
+            da = da + convert_units_to(offset, da, context="hydro")
 
     da, group = _preprocess_standardized_index(da, freq, window, **indexer)
 
@@ -1172,6 +1179,7 @@ def standardized_index_fit_params(
         "group": group,
         "time_indexer": indexer,
         "units": "",
+        "offset": offset,
     }
     return params
 
@@ -1414,7 +1422,7 @@ def standardized_precipitation_evapotranspiration_index(
     params: xarray.DataArray
         Fit parameters. The `params` can be computed using ``xclim.indices.standardized_index_fit_params`` in advance.
         The ouput can be given here as input, and it overrides other options.
-    offset: xarray.DataArray
+    offset: Quantified
         For distributions bounded by zero (e.g. "gamma", "fisk"): Water budget must be shifted, only positive values are allowed.
         This can be given as a precipitation flux or a rate.
     indexer
@@ -1434,15 +1442,34 @@ def standardized_precipitation_evapotranspiration_index(
     -----
     See Standardized Precipitation Index (SPI) for more details on usage.
     """
+    uses_default_offset = offset == "1 mm/d"
+    offset = 0 if offset is None else convert_units_to(offset, wb, context="hydro")
+    if params is not None:
+        params_offset = (
+            0
+            if params.attrs["offset"] is None
+            else convert_units_to(params.attrs["offset"], wb, context="hydro")
+        )
+        if params_offset != offset:
+            extra_msg = (
+                " (using default SPEI value 1 mm/d)" if uses_default_offset else ""
+            )
+            warnings.warn(
+                f"The offset in `params` differs from the input `offset`{extra_msg}."
+                "Procceding with the value given in `params`."
+            )
+            offset = params_offset
     # Allowed distributions are constrained by the SPI function
-    if dist in ["gamma", "fisk"]:
-        # Distributions bounded by zero: Water budget must be shifted, only positive values
-        # are allowed. The offset choice is arbitrary and the same offset as the monocongo
-        # library is taken
-        offset = convert_units_to(offset, wb.units, context="hydro")
+    if dist in ["gamma", "fisk"] and offset <= 0:
+        raise ValueError(
+            "The water budget must be shifted towards positive values to be used with `gamma` and `fisk` "
+            f"distributions which are bounded by zero. A positive offset is required. Current value: {offset}{wb.attrs['units']}"
+        )
+    if offset != 0:
         with xarray.set_options(keep_attrs=True):
             wb = wb + offset
-            wb_cal = wb_cal + offset
+            if wb_cal is not None:
+                wb_cal = wb_cal + offset
 
     spei = standardized_precipitation_index(
         wb, wb_cal, freq, window, dist, method, cal_start, cal_end, params, **indexer

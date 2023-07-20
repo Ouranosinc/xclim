@@ -46,6 +46,22 @@ def dqm_train(ds, *, dim, kind, quantiles) -> xr.Dataset:
     return xr.Dataset(data_vars=dict(af=af, hist_q=hist_q, scaling=scaling))
 
 
+# @ensure_longest_doy
+# def get_correction2(x: xr.DataArray, y: xr.DataArray, kind: str) -> xr.DataArray:
+#     """Return the additive or multiplicative correction/adjustment factors."""
+#     with xr.set_options(keep_attrs=True):
+#         if kind == ADDITIVE:
+#             out = y - x
+#         elif kind == MULTIPLICATIVE:
+#             out = y / x
+#         else:
+#             raise ValueError("kind must be + or *.")
+
+#     if isinstance(out, xr.DataArray):
+#         out.attrs["kind"] = kind
+#     return out
+
+
 @map_groups(
     af=[Grouper.PROP, "quantiles"],
     hist_q=[Grouper.PROP, "quantiles"],
@@ -57,6 +73,7 @@ def eqm_train(ds, *, dim, kind, quantiles) -> xr.Dataset:
       ref : training target
       hist : training data
     """
+    # af, hist_q = nbu.quantile_mapping(ds.ref, ds.hist, quantiles, kind, dim)
     ref_q = nbu.quantile(ds.ref, quantiles, dim)
     hist_q = nbu.quantile(ds.hist, quantiles, dim)
 
