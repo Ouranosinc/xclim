@@ -1223,16 +1223,6 @@ def _get_standardized_index(da, params, **indexer):
     )
 
 
-# TODO : ADD
-"""
-streamflow index (SSI)     GEV, log-logistic (Vincente-Serrano et al., 2012) Tweedie (Barker et al., 2016)    (Station de suivi)
-groundwater index (SGI)   log-normal, gamma, GEV (Bloomfield et Marchant, 2013)	                            (Station de suivi)
-NEW dist: GEV, log-normal
-https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.genextreme.html#scipy.stats.genextreme
-https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.lognorm.html
-"""
-
-
 @declare_units(
     pr="[precipitation]",
     pr_cal="[precipitation]",
