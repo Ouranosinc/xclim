@@ -4,7 +4,7 @@ Changelog
 
 v0.45.0 (unreleased)
 --------------------
-Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Éric Dupuis (:user:`coxipi`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -17,6 +17,11 @@ Internal changes
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Standardized indices (``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index``) are faster. (:issue:`1270` ,:pull:`1311`).
+* Standardized indicators can be computed in two steps: First compute fit parameters with ``xclim.indices.standardized_index_fit_params``, then use the output in the standardized indices functions.  (:issue:`1270` ,:pull:`1311`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* ``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index`` will no longer accept two datasets (data and calibration data). Instead, a single dataset  along start and end of calibration dates (`cal_start`, `cal_end`) is expected. (:issue:`1270` ,:pull:`1311`)
 
 v0.44.0 (2023-06-23)
 --------------------
