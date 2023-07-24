@@ -14,6 +14,7 @@ New features and enhancements
 Bug fixes
 ^^^^^^^^^
 * Fix `kldiv` docstring so the math formula renders to HTML. (:issue:`1408`, :pull:`1409`).
+* Fix the registry entries of "generic" indicators. (:issue:`1423`, :pull:`1424`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
