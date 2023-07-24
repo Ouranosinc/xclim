@@ -67,6 +67,27 @@ seaIce: Sea ice
    {% endfor %}
    </dl>
 
+
+generic: Generic indicators
+===========================
+
+Indicators in this "realm" do not have units assigned to their inputs. They provide useful functions that might apply to many different types of data. They are most useful for building custom "indicator modules", see :ref:`Virtual-modules`.
+
+.. raw:: html
+
+   <dl>
+   {% for indname, ind in indicators['generic'].items() %}
+     <dt><code>generic.{{ indname | safe}}</code> : <a class="reference_internal" href="api.html#xclim.indicators.generic.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
+     <dd>
+     {% if ind.identifier != indname %}<b>Id: </b> {{ ind.identifier }} <br>{% endif %}
+     <b>Description: </b> {{ ind.abstract }} <br>
+     <b>Based on </b><a class="reference internal" href="indices.html#{{ ind.function }}" title="{{ ind.function }}"><code class="xref">{{ ind.function }}</code></a> <br>
+     <b>Produces: </b> {% for var in ind['outputs'] %} <code>{{ var['var_name'] }}: {{ var['long_name'] }} [{{ var['units'] }}]</code> {% endfor %}
+     </dd>
+   {% endfor %}
+   </dl>
+
+
 .. _CF-Convention: http://cfconventions.org/
 
 
