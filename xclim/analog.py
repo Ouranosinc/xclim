@@ -476,10 +476,13 @@ def kldiv(
 ) -> float | Sequence[float]:
     r"""Compute the Kullback-Leibler divergence between two multivariate samples.
 
-    .. math
+    The formula to compute the K-L divergence from samples is given by:
+
+    .. math::
+
         D(P||Q) = \frac{d}{n} \sum_i^n \log\left\{\frac{r_k(x_i)}{s_k(x_i)}\right\} + \log\left\{\frac{m}{n-1}\right\}
 
-    where :math:`r_k(x_i)` and :math:`s_k(x_i)` are, respectively, the euclidean distance to the kth neighbour of
+    where :math:`r_k(x_i)` and :math:`s_k(x_i)` are, respectively, the Euclidean distance to the kth neighbour of
     :math:`x_i` in the x array (excepting :math:`x_i`) and in the y array. This method is scale-dependent.
 
     Parameters
