@@ -22,6 +22,7 @@ Internal changes
 ^^^^^^^^^^^^^^^^
 * Tolerance thresholds for error in ``test_stats::test_fit`` have been relaxed to allow for more variation in the results. Previously untested ``*_moving_yearly_window`` functions are now tested. (:issue:`1400`, :pull:`1402`).
 * Increased the guess of number of quantiles needed in ExtremeValues. ( :pull:`1413`).
+* Tolerance thresholds for error in ``test_processing::test_adapt_freq`` have been relaxed to allow for more variation in the results. (:issue:`1417`, :pull:`1418`).
 
 v0.44.0 (2023-06-23)
 --------------------
