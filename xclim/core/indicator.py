@@ -242,7 +242,7 @@ class IndicatorRegistrar:
         # If the module is not one of xclim's default, prepend the submodule name.
         if module.startswith("xclim.indicators"):
             submodule = module.split(".")[2]
-            if submodule not in ["atmos", "land", "ocean", "seaIce"]:
+            if submodule not in ["atmos", "generic", "land", "ocean", "seaIce"]:
                 name = f"{submodule}.{name}"
         else:
             name = f"{module}.{name}"
