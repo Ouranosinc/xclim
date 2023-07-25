@@ -71,11 +71,10 @@ def test_spatial_analogs(method, open_dataset):
     candidates = data.sel(time=slice("1970", "1990"))
 
     out = xca.spatial_analogs(target, candidates, method=method)
-    # Special case since scikit-learn updated to 1.2.0
-    if (method == "friedman_rafsky") and parse_version(
-        __sklearn_version__
-    ) >= parse_version("1.2.0"):
-        diss[method][42, 105] = 0.80952381
+    # Special case since scikit-learn updated to 1.2.0 (and again at 1.3)
+    if method == "friedman_rafsky":
+        diss[method][42, 105] = np.nan
+        out[42, 105] = np.nan
     np.testing.assert_allclose(diss[method], out, rtol=1e-3, atol=1e-3)
 
 
