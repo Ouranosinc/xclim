@@ -15,7 +15,7 @@ Bug fixes
 ^^^^^^^^^
 * Fix `kldiv` docstring so the math formula renders to HTML. (:issue:`1408`, :pull:`1409`).
 * Fix the registry entries of "generic" indicators. (:issue:`1423`, :pull:`1424`).
-* Fix `jetstream_metric_woollings` so it uses the `vertical` coordinate identified by `cf-xarray`, instead of `pressure`. (:issue:`1421`, :pull:`1422`).
+* Fix `jetstream_metric_woollings` so it uses the `vertical` coordinate identified by `cf-xarray`, instead of `pressure`. (:issue:`1421`, :pull:`1422`). Add logic to handle coordinates in decreasing order, or for longitudes defined from 0-360 instead of -180 to 180. (:issue:`1429`, :pull:`1430`).
 * Fix virtual indicator attribute assignment causing individual indicator's realm to be ignored. (:issue:`1425`, :pull:`1426`).
 
 Internal changes
