@@ -1752,8 +1752,8 @@ def build_indicator_module_from_yaml(
 
             _merge_attrs(data, defkwargs, "references", "\n")
             _merge_attrs(data, defkwargs, "keywords", " ")
-            if data.get("realm") is None and defkwargs.get('realm') is not None:
-                data['realm'] = defkwargs["realm"]
+            if data.get("realm") is None and defkwargs.get("realm") is not None:
+                data["realm"] = defkwargs["realm"]
 
             mapping[identifier] = Indicator.from_dict(
                 data, identifier=identifier, module=module_name
