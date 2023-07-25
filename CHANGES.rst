@@ -15,6 +15,7 @@ Bug fixes
 ^^^^^^^^^
 * Fix `kldiv` docstring so the math formula renders to HTML. (:issue:`1408`, :pull:`1409`).
 * Fix `jetstream_metric_woollings` so it uses the `vertical` coordinate identified by `cf-xarray`, instead of `pressure`. (:issue:`1421`, :pull:`1422`).
+* Fix virtual indicator attribute assignment causing individual indicator's realm to be ignored. (:issue:`1425`, :pull:`1426`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^

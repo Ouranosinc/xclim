@@ -1753,7 +1753,8 @@ def build_indicator_module_from_yaml(
 
             _merge_attrs(data, defkwargs, "references", "\n")
             _merge_attrs(data, defkwargs, "keywords", " ")
-            _merge_attrs(data, defkwargs, "realm", None)
+            if data.get("realm", None) is None:
+                _merge_attrs(data, defkwargs, "realm", None)
 
             mapping[identifier] = Indicator.from_dict(
                 data, identifier=identifier, module=module_name
