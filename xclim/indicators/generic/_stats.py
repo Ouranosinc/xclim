@@ -8,7 +8,15 @@ from xclim.indices.stats import frequency_analysis
 __all__ = ["fit", "return_level", "stats"]
 
 
-fit = Indicator(
+class Generic(Indicator):
+    realm = "generic"
+
+
+class GenericResampling(ResamplingIndicator):
+    realm = "generic"
+
+
+fit = Generic(
     title="Distribution parameters fitted over the time dimension.",
     identifier="fit",
     var_name="params",
@@ -18,12 +26,11 @@ fit = Indicator(
     description="Parameters of the {dist} distribution.",
     cell_methods="time: fit",
     compute=_fit,
-    realm="generic",
     src_freq=None,
 )
 
 
-return_level = ResamplingIndicator(
+return_level = GenericResampling(
     title="Return level from frequency analysis",
     identifier="return_level",
     var_name="fa_{window}{mode:r}{indexer}",
@@ -32,13 +39,12 @@ return_level = ResamplingIndicator(
     "distribution.",
     abstract="Frequency analysis on the basis of a given mode and distribution.",
     compute=frequency_analysis,
-    realm="generic",
     src_freq="D",
     missing="skip",
 )
 
 
-stats = ResamplingIndicator(
+stats = GenericResampling(
     title="Statistic of the daily values for a given period.",
     identifier="stats",
     var_name="stat_{indexer}{op:r}",
@@ -47,5 +53,4 @@ stats = ResamplingIndicator(
     compute=select_resample_op,
     missing="any",
     src_freq="D",
-    realm="generic",
 )
