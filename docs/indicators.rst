@@ -71,7 +71,7 @@ seaIce: Sea ice
 generic: Generic indicators
 ===========================
 
-Indicators in this "realm" do not have units assigned to their inputs. They provide useful functions that might apply to many different types of data. They are most useful for building custom "indicator modules", see :ref:`Virtual-modules`.
+Indicators in this "realm" do not have units assigned to their inputs. They provide useful functions that might apply to many different types of data. They are most useful for building custom "indicator modules", see :ref:`indicators:Virtual submodules`.
 
 .. raw:: html
 
