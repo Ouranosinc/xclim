@@ -64,16 +64,16 @@ def jetstream_metric_woollings(
     lat_name = ua.cf["latitude"].name
 
     # select only relevant hPa levels, compute zonal mean wind speed
-    pmin = convert_units_to("750 hPa", ua.cf["pressure"])
-    pmax = convert_units_to("950 hPa", ua.cf["pressure"])
+    pmin = convert_units_to("750 hPa", ua.cf["vertical"])
+    pmax = convert_units_to("950 hPa", ua.cf["vertical"])
 
     ua = ua.cf.sel(
-        pressure=slice(pmin, pmax),
+        vertical=slice(pmin, pmax),
         latitude=slice(15, 75),
         longitude=slice(lon_min, lon_max),
     )
 
-    zonal_mean = ua.cf.mean(["pressure", "longitude"])
+    zonal_mean = ua.cf.mean(["vertical", "longitude"])
 
     # apply Lanczos filter - parameters are hard-coded following those used in Woollings (2010)
     filter_freq = 10
