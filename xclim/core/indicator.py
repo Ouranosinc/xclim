@@ -1709,11 +1709,10 @@ def build_indicator_module_from_yaml(
         """Merge or replace attribute in dbase from dextra."""
         a = dbase.get(attr)
         b = dextra.get(attr)
-        # If both are not None and sep is a string, join.
-        if a and b and sep is not None:
+        # If both are not None, join.
+        if a and b:
             dbase[attr] = sep.join([a, b])
-        # If both are not None but sep is, this overrides with b
-        # also fills when a is simply missing
+        # Otherwise, if a is None, but not b, replace.
         elif b:
             dbase[attr] = b
 
@@ -1753,8 +1752,8 @@ def build_indicator_module_from_yaml(
 
             _merge_attrs(data, defkwargs, "references", "\n")
             _merge_attrs(data, defkwargs, "keywords", " ")
-            if data.get("realm", None) is None:
-                _merge_attrs(data, defkwargs, "realm", None)
+            if data.get("realm") is None and defkwargs.get('realm') is not None:
+                data['realm'] = defkwargs["realm"]
 
             mapping[identifier] = Indicator.from_dict(
                 data, identifier=identifier, module=module_name
