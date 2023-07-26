@@ -37,10 +37,20 @@ DayOfYearStr = NewType("DayOfYearStr", str)
 #: Type annotation for thresholds and other not-exactly-a-variable quantities
 Quantified = TypeVar("Quantified", xr.DataArray, str, Quantity)
 
-# Official variables definitions
 VARIABLES = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
+"""Official variables definitions.
 
-# Input cell methods
+A mapping from variable name to a dict with the following keys:
+
+- canonical_units [required] : The conventional units used by this variable.
+- cell_methods [optional] : The conventional `cell_methods` CF attribute
+- description [optional] : A description of the variable, to populate dynamically generated docstrings.
+- dimensions [optional] : The dimensionality of the variable, an abstract version of the units. See `xclim.units.units._dimensions.keys()` for available terms. This is especially useful for making xclim aware of "[precipitation]" variables.
+- standard_name [optional] : If it exists, the CF standard name.
+- data_flags [optional] : Data flags methods (:py:mod:`xclim.core.dataflags`) applicable to this variable. The method names are keys and values are dicts of keyword arguments to pass (an empty dict if there's nothing to configure).
+"""
+
+# Input cell methods for clix-meta
 ICM = {
     "tasmin": "time: minimum within days",
     "tasmax": "time: maximum within days",
@@ -582,20 +592,16 @@ class InputKind(IntEnum):
     """
 
 
-def infer_kind_from_parameter(param, has_units: bool = False) -> InputKind:
+def infer_kind_from_parameter(param) -> InputKind:
     """Return the appropriate InputKind constant from an ``inspect.Parameter`` object.
 
     Parameters
     ----------
     param : Parameter
-    has_units : bool
 
     Notes
     -----
     The correspondence between parameters and kinds is documented in :py:class:`xclim.core.utils.InputKind`.
-    The only information not inferable through the `inspect` object is whether the parameter
-    has been assigned units through the :py:func:`xclim.core.units.declare_units` decorator.
-    That can be given with the ``has_units`` flag.
     """
     if param.annotation is not _empty:
         annot = set(
@@ -609,13 +615,13 @@ def infer_kind_from_parameter(param, has_units: bool = False) -> InputKind:
 
     annot = annot - {"None"}
 
-    if annot.issubset({"DataArray", "str"}) and has_units:
+    if "DataArray" in annot:
         return InputKind.OPTIONAL_VARIABLE
 
     if param.name == "freq":
         return InputKind.FREQ_STR
 
-    if annot == {"Quantified"} and has_units:
+    if annot == {"Quantified"}:
         return InputKind.QUANTIFIED
 
     if annot.issubset({"int", "float"}):

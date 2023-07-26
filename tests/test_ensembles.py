@@ -25,6 +25,7 @@ import xarray as xr
 from pkg_resources import parse_version
 from scipy import __version__ as __scipy_version__
 from scipy.stats.mstats import mquantiles
+from sklearn import __version__ as __sklearn_version__
 
 from xclim import ensembles
 from xclim.indices.stats import get_dist
@@ -322,8 +323,10 @@ class TestEnsembleReduction:
             random_state=42,
             make_graph=False,
         )
-        assert ids == [3, 4, 5, 7, 10, 11, 12, 13]
-        assert len(ids) == 8
+        if parse_version(__sklearn_version__) >= parse_version("1.3.0"):
+            assert ids == [4, 5, 7, 10, 11, 12, 13]
+        else:
+            assert ids == [3, 4, 5, 7, 10, 11, 12, 13]
 
     def test_kmeans_nclust(self, open_dataset):
         ds = open_dataset(self.nc_file)
@@ -332,13 +335,11 @@ class TestEnsembleReduction:
             data=ds.data, method={"n_clusters": 4}, random_state=42, make_graph=False
         )
         assert ids == [4, 7, 10, 23]
-        assert len(ids) == 4
 
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
             ds.data, method={"n_clusters": 9}, random_state=42, make_graph=False
         )
         assert ids == [0, 3, 4, 6, 7, 10, 11, 12, 13]
-        assert len(ids) == 9
 
     def test_kmeans_sampleweights(self, open_dataset):
         ds = open_dataset(self.nc_file)
@@ -355,7 +356,6 @@ class TestEnsembleReduction:
             sample_weights=sample_weights,
         )
         assert ids == [0, 20, 23]
-        assert len(ids) == 3
 
         # RSQ optimize
         sample_weights = np.ones(ds.data.shape[0])
@@ -370,8 +370,10 @@ class TestEnsembleReduction:
             sample_weights=sample_weights,
         )
 
-        assert ids == [4, 5, 7, 10, 11, 12, 13]
-        assert len(ids) == 7
+        if parse_version(__sklearn_version__) >= parse_version("1.3.0"):
+            assert ids == [4, 5, 7, 10, 12, 13]
+        else:
+            assert ids == [4, 5, 7, 10, 11, 12, 13]
 
     def test_kmeans_variweights(self, open_dataset):
         pytest.importorskip("sklearn", minversion="0.24.1")
@@ -389,7 +391,6 @@ class TestEnsembleReduction:
             variable_weights=var_weights,
         )
         assert ids == [1, 3, 8, 10, 13, 14, 16, 19, 20]
-        assert len(ids) == 9
 
         # using RSQ optimize and try zero weights
         var_weights = np.ones(ds.data.shape[1])
@@ -439,7 +440,6 @@ class TestEnsembleReduction:
         )
 
         assert ids == [4, 7, 10, 23]
-        assert len(ids) == 4
 
         # Test max cluster option
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
@@ -450,7 +450,6 @@ class TestEnsembleReduction:
             max_clusters=3,
         )
         assert ids == [4, 7, 23]
-        assert len(ids) == 3
 
     @pytest.mark.parametrize(
         "crit,num_select,expected",

@@ -1047,6 +1047,11 @@ def check_units(val: str | xr.DataArray | None, dim: str | xr.DataArray | None) 
     if dim is None or val is None:
         return
 
+    # In case val is a DataArray, we try to get a standard_name
+    context = infer_context(
+        standard_name=getattr(val, "standard_name", None), dimension=dim
+    )
+
     if str(val).startswith("UNSET "):
         warnings.warn(
             "This index calculation will soon require user-specified thresholds.",
@@ -1086,17 +1091,23 @@ def check_units(val: str | xr.DataArray | None, dim: str | xr.DataArray | None) 
 
 
 def declare_units(
-    **units_by_name: str,
+    partial: bool = False,
+    **kwargs,
 ) -> Callable:
-    """Create a decorator to check units of function arguments.
+    r"""Create a decorator to check units of function arguments.
 
     The decorator checks that input and output values have units that are compatible with expected dimensions.
     It also stores the input units as a 'in_units' attribute.
 
     Parameters
     ----------
-    units_by_name : dict[str, str]
+    partial: bool
+        If True, only a `_partial_units` attribute is added or updated, the checking mechanism is not injected.
+        Defaults to False.
+    \*\*kwargs
         Mapping from the input parameter names to their units or dimensionality ("[...]").
+        The dimensions can be given relative to another input of the wrapped function referring to this arg like : `<arg>`. See examples.
+        This is usually helpful when `partial=True` and the main input has not been declared yet.
 
     Returns
     -------
@@ -1108,25 +1119,59 @@ def declare_units(
 
     .. code-block:: python
 
-        @declare_units(tas=["temperature"])
-        def func(tas):
+        @declare_units(tas="[temperature]", thresh="<tas>", thresh2="<tas> * [time]")
+        def func(tas, thresh, thresh2):
             ...
 
-    The decorator will check that `tas` has units of temperature (C, K, F).
+    The decorator will check that `tas` has units of temperature (C, K, F) and that `thresh` has the same units as `tas`.
+    The last argument `thresh2` will need "degree days" dimensions.
     """
 
     def dec(func):
-        # Match the signature of the function to the arguments given to the decorator
-        sig = signature(func)
-        bound_units = sig.bind_partial(**units_by_name)
+        units_by_name = kwargs
+        # The `_in_units` attr denotes a previously partially-declared function, update with that info.
+        if hasattr(func, "_partial_units"):
+            units_by_name = {**func._partial_units, **units_by_name}
+
+        # Make relative declarations absolute if possible
+        for arg, dim in list(units_by_name.items()):
+            # A relative specification.
+            if "<" in dim:
+                for ref, refdim in units_by_name.items():
+                    if f"<{ref}>" in dim:
+                        if "<" in refdim:
+                            raise ValueError(
+                                "Can't have relative dimensionality declaration "
+                                "with reference to another relative dimensionality. "
+                                f"{arg}'s dimensionality refers to {ref} which is declared as {refdim}."
+                            )
+                        dim = dim.replace(f"<{ref}>", f"({refdim})")
+                units_by_name[arg] = dim
+
+        if partial:
+            # Pass-through wrapper so the partially declared units are set as attr
+            # This is done to avoid setting the attr directly on func, but I'm not sure why we should avoid it.
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+
+            setattr(wrapper, "_partial_units", units_by_name)
+            return wrapper
+
+        # else, now no dimensionalities should be relative
+        for arg, dim in units_by_name.items():
+            if "<" in dim:
+                raise ValueError(
+                    f"Arg `{arg}` has a relatively declared dimensionality (`{dim}`). "
+                    "All missing variables must have declared dimensions, either here"
+                    "or in a subsequent `declare_units` call, in which case you should "
+                    "pass `partial=True` to this call."
+                )
 
         # Check that all Quantified parameters have their dimension declared.
-        for name, val in sig.parameters.items():
-            if (
-                (val.annotation == "Quantified")
-                and (val.default is not _empty)
-                and (name not in units_by_name)
-            ):
+        sig = signature(func)
+        for name, param in sig.parameters.items():
+            if (param.annotation == "Quantified") and (name not in units_by_name):
                 raise ValueError(
                     f"Argument {name} of function {func.__name__} has no declared dimension."
                 )
@@ -1135,8 +1180,8 @@ def declare_units(
         def wrapper(*args, **kwargs):
             # Match all passed in value to their proper arguments, so we can check units
             bound_args = sig.bind(*args, **kwargs)
-            for name, val in bound_args.arguments.items():
-                check_units(val, bound_units.arguments.get(name, None))
+            for name, dim in units_by_name.items():
+                check_units(bound_args.arguments.get(name), dim)
 
             out = func(*args, **kwargs)
 
@@ -1221,6 +1266,6 @@ def infer_context(standard_name=None, dimension=None):
         if standard_name is not None
         else False
     )
-    cdim = (dimension == "[precipitation]") if dimension is not None else False
+    cdim = ("[precipitation]" in dimension) if dimension is not None else False
 
     return "hydro" if csn or cdim else "none"

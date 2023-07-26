@@ -53,7 +53,6 @@ indicators:
         default: YS
       threshold:
         description: air temperature
-        units: degree_Celsius
     references: ET-SCI
   cfd:
     cf_attrs:
@@ -107,7 +106,6 @@ indicators:
       reducer: max
       threshold:
         description: air temperature
-        units: degree_Celsius
     references: CLIPC
   ctmgtTT:
     cf_attrs:
@@ -127,7 +125,6 @@ indicators:
       reducer: max
       threshold:
         description: air temperature
-        units: degree_Celsius
     references: CLIPC
   ctmleTT:
     cf_attrs:
@@ -147,7 +144,6 @@ indicators:
       reducer: max
       threshold:
         description: air temperature
-        units: degree_Celsius
     references: CLIPC
   ctmltTT:
     cf_attrs:
@@ -167,7 +163,6 @@ indicators:
       reducer: max
       threshold:
         description: air temperature
-        units: degree_Celsius
     references: CLIPC
   ctngeTT:
     cf_attrs:
@@ -187,7 +182,6 @@ indicators:
       reducer: max
       threshold:
         description: air temperature
-        units: degree_Celsius
     references: CLIPC
   ctngtTT:
     cf_attrs:
@@ -207,7 +201,6 @@ indicators:
       reducer: max
       threshold:
         description: air temperature
-        units: degree_Celsius
     references: CLIPC
   ctnleTT:
     cf_attrs:
@@ -227,7 +220,6 @@ indicators:
       reducer: max
       threshold:
         description: air temperature
-        units: degree_Celsius
     references: CLIPC
   ctnltTT:
     cf_attrs:
@@ -247,7 +239,6 @@ indicators:
       reducer: max
       threshold:
         description: air temperature
-        units: degree_Celsius
     references: CLIPC
   ctxgeTT:
     cf_attrs:
@@ -267,7 +258,6 @@ indicators:
       reducer: max
       threshold:
         description: air temperature
-        units: degree_Celsius
     references: CLIPC
   ctxgtTT:
     cf_attrs:
@@ -287,7 +277,6 @@ indicators:
       reducer: max
       threshold:
         description: air temperature
-        units: degree_Celsius
     references: CLIPC
   ctxleTT:
     cf_attrs:
@@ -307,7 +296,6 @@ indicators:
       reducer: max
       threshold:
         description: air temperature
-        units: degree_Celsius
     references: CLIPC
   ctxltTT:
     cf_attrs:
@@ -327,7 +315,6 @@ indicators:
       reducer: max
       threshold:
         description: air temperature
-        units: degree_Celsius
     references: CLIPC
   cwd:
     cf_attrs:
@@ -364,7 +351,6 @@ indicators:
         default: YS
       threshold:
         description: air temperature
-        units: degree_Celsius
     references: CLIPC
   ddltTT:
     cf_attrs:
@@ -382,7 +368,6 @@ indicators:
         default: YS
       threshold:
         description: air temperature
-        units: degree_Celsius
     references: CLIPC
   dtr:
     cf_attrs:
@@ -477,7 +462,6 @@ indicators:
         default: YS
       threshold:
         description: air temperature
-        units: degree_Celsius
     references: ET-SCI
   hd17:
     cf_attrs:
@@ -511,7 +495,6 @@ indicators:
         default: YS
       threshold:
         description: air temperature
-        units: degree_Celsius
     references: ET-SCI
   maxdtr:
     cf_attrs:

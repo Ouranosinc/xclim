@@ -10,10 +10,13 @@ New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Added ``ensembles.hawkins_sutton`` method to partition the uncertainty sources in a climate projection ensemble. (:issue:`771`, :pull:`1262`).
 * New function ``xclim.core.calendar.convert_doy`` to transform day-of-year data between calendars. Also accessible from ``convert_calendar`` with ``doy=True``. (:issue:`1283`, :pull:`1406`).
+* ``xclim.units.declare_units`` now accepts relative and partial declarations. This was applied to most "generic" indices. (:pull:`1414`).
 
 Bug fixes
 ^^^^^^^^^
 * Fix `kldiv` docstring so the math formula renders to HTML. (:issue:`1408`, :pull:`1409`).
+* Fix the registry entries of "generic" indicators. (:issue:`1423`, :pull:`1424`).
+* Fix `jetstream_metric_woollings` so it uses the `vertical` coordinate identified by `cf-xarray`, instead of `pressure`. (:issue:`1421`, :pull:`1422`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
