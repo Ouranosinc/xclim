@@ -209,6 +209,23 @@ indices:
         assert "cdd" in converted["indicators"]
 
 
+def test_realm(tmp_path):
+    # Regression test for #1425
+    yml = """
+    realm: land
+
+    indicators:
+      ice_extent:
+        base: sea_ice_extent
+        realm: ocean
+    """
+    fh = tmp_path / "test.yml"
+
+    fh.write_text(yml)
+    mod = build_indicator_module_from_yaml(fh, name="test")
+    assert mod.ice_extent.realm == "ocean"
+
+
 class TestOfficialYaml(yamale.YamaleTestCase):
     base_dir = str(Path(__file__).parent.parent / "xclim" / "data")
     schema = "schema.yml"
