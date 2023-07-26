@@ -4,12 +4,13 @@ Changelog
 
 v0.45.0 (unreleased)
 --------------------
-Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user: `juliettelavoie`).
+Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user: `juliettelavoie`), Gabriel Rondeau-Genesse (:user:`RondeauG`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Added ``ensembles.hawkins_sutton`` method to partition the uncertainty sources in a climate projection ensemble. (:issue:`771`, :pull:`1262`).
 * New function ``xclim.core.calendar.convert_doy`` to transform day-of-year data between calendars. Also accessible from ``convert_calendar`` with ``doy=True``. (:issue:`1283`, :pull:`1406`).
+* Add support for setting optional variables through the `ds` argument. (:issue:`1432`, :pull:`1435`).
 
 Bug fixes
 ^^^^^^^^^
@@ -21,7 +22,9 @@ Bug fixes
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Tolerance thresholds for error in ``test_stats::test_fit`` have been relaxed to allow for more variation in the results. Previously untested ``*_moving_yearly_window`` functions are now tested. (:issue:`1400`, :pull:`1402`).
-* Increased the guess of number of quantiles needed in ExtremeValues. ( :pull:`1413`).
+* Increased the guess of number of quantiles needed in ExtremeValues. (:pull:`1413`).
+* Tolerance thresholds for error in ``test_processing::test_adapt_freq`` have been relaxed to allow for more variation in the results. (:issue:`1417`, :pull:`1418`).
+* Added 'streamflow' to the list of known variables (:pull:`1431`).
 
 v0.44.0 (2023-06-23)
 --------------------
