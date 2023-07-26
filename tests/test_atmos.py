@@ -90,6 +90,11 @@ def test_humidex(tas_series):
     np.testing.assert_array_almost_equal(h, [16, 29, 47, 52], 0)
     assert h.name == "humidex"
 
+    # Test with dataset (#1432)
+    ds = xr.Dataset({"tas": tas, "dewpoint": dtas})
+    h2 = atmos.humidex(ds=ds, tdps="dewpoint")
+    np.testing.assert_array_almost_equal(h, h2)
+
 
 def test_heat_index(atmosds):
     # Keep just Montreal values for summertime as we need tas > 20 degC

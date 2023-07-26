@@ -76,9 +76,10 @@ def humidex(
     tas : xarray.DataArray
         Air temperature.
     tdps : xarray.DataArray,
-        Dewpoint temperature.
+        Dewpoint temperature, used to compute the vapour pressure.
     hurs : xarray.DataArray
-        Relative humidity.
+        Relative humidity, used as an alternative way to compute the vapour pressure if the dewpoint temperature is not
+        available.
 
     Returns
     -------
@@ -125,10 +126,8 @@ def humidex(
     ----------
     :cite:cts:`canada_glossary_2011,masterton_humidex_1979,mekis_observed_2015,sirangelo_combining_2020`
     """
-    if (tdps is None) == (hurs is None):
-        raise ValueError(
-            "At least one of `tdps` or `hurs` must be given, and not both."
-        )
+    if (tdps is None) and (hurs is None):
+        raise ValueError("At least one of `tdps` or `hurs` must be given.")
 
     # Vapour pressure in hPa
     if tdps is not None:

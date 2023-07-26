@@ -646,6 +646,10 @@ def test_input_dataset(open_dataset):
     with pytest.raises(MissingVariableError):
         out = xclim.atmos.daily_temperature_range(freq="YS", ds=dsx)  # noqa
 
+    # dataset not given
+    with pytest.raises(ValueError):
+        xclim.atmos.daily_temperature_range(tasmax="tmax")
+
 
 def test_indicator_from_dict():
     d = dict(
