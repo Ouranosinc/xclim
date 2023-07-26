@@ -13,7 +13,7 @@ import re
 import warnings
 from importlib.resources import open_text
 from inspect import _empty, signature  # noqa
-from typing import Any, Callable
+from typing import Any, Callable, Tuple
 
 import pint
 import xarray as xr
@@ -22,7 +22,7 @@ from yaml import safe_load
 
 from .calendar import date_range, get_calendar, parse_offset
 from .options import datacheck
-from .utils import Quantified, ValidationError
+from .utils import InputKind, Quantified, ValidationError, infer_kind_from_parameter
 
 logging.getLogger("pint").setLevel(logging.ERROR)
 
@@ -1095,24 +1095,36 @@ def check_units(val: str | int | float | None, dim: str | None) -> None:
     )
 
 
-def declare_units(
-    partial: bool = False,
-    **kwargs,
-) -> Callable:
+def _output_has_units(out: xr.DataArray | tuple[xr.DataArray]):
+    """Perform very basic sanity check on the output.
+
+    Indice are responsible for unit management.
+    If this fails, it's a developer's error.
+    """
+    if isinstance(out, tuple):
+        for outd in out:
+            if "units" not in outd.attrs:
+                raise ValueError(
+                    "No units were assigned in one of the indice's outputs."
+                )
+            outd.attrs["units"] = ensure_cf_units(outd.attrs["units"])
+    else:
+        if "units" not in out.attrs:
+            raise ValueError("No units were assigned to the indice's output.")
+        out.attrs["units"] = ensure_cf_units(out.attrs["units"])
+
+
+def declare_relative_units(**units_by_name) -> Callable:
     r"""Create a decorator to check units of function arguments.
 
-    The decorator checks that input and output values have units that are compatible with expected dimensions.
-    It also stores the input units as a 'in_units' attribute.
+    The decorator checks that input values have units that are compatible with each other.
+    It also stores the input units as a 'relative_units' attribute.
 
     Parameters
     ----------
-    partial: bool
-        If True, only a `_partial_units` attribute is added or updated, the checking mechanism is not injected.
-        Defaults to False.
     \*\*kwargs
-        Mapping from the input parameter names to their units or dimensionality ("[...]").
-        The dimensions can be given relative to another input of the wrapped function referring to this arg like : `<arg>`. See examples.
-        This is usually helpful when `partial=True` and the main input has not been declared yet.
+        Mapping from the input parameter names to dimensions relative to other parameters.
+        The dimensons can be a single parameter name as `<other_var>` or more complex expressions, like : `<other_var> * [time]`.
 
     Returns
     -------
@@ -1124,62 +1136,142 @@ def declare_units(
 
     .. code-block:: python
 
-        @declare_units(tas="[temperature]", thresh="<tas>", thresh2="<tas> * [time]")
+        @declare_relative_units(thresh="<tas>", thresh2="<tas> / [time]")
         def func(tas, thresh, thresh2):
             ...
 
-    The decorator will check that `tas` has units of temperature (C, K, F) and that `thresh` has the same units as `tas`.
-    The last argument `thresh2` will need "degree days" dimensions.
+    The decorator will check that `thresh` has units compatible with those of `tas`
+    and that `thresh2` has units compatible with the time derivative of tas.
+
+    See Also
+    --------
+    declare_units
     """
 
     def dec(func):
-        units_by_name = kwargs
-        # The `_in_units` attr denotes a previously partially-declared function, update with that info.
-        if hasattr(func, "_partial_units"):
-            units_by_name = {**func._partial_units, **units_by_name}
+        sig = signature(func)
 
-        # Make relative declarations absolute if possible
-        for arg, dim in list(units_by_name.items()):
-            # A relative specification.
-            if "<" in dim:
-                for ref, refdim in units_by_name.items():
-                    if f"<{ref}>" in dim:
-                        if "<" in refdim:
-                            raise ValueError(
-                                "Can't have relative dimensionality declaration "
-                                "with reference to another relative dimensionality. "
-                                f"{arg}'s dimensionality refers to {ref} which is declared as {refdim}."
-                            )
-                        dim = dim.replace(f"<{ref}>", f"({refdim})")
-                units_by_name[arg] = dim
-
-        if partial:
-            # Pass-through wrapper so the partially declared units are set as attr
-            # This is done to avoid setting the attr directly on func, but I'm not sure why we should avoid it.
-            @wraps(func)
-            def wrapper(*args, **kwargs):
-                return func(*args, **kwargs)
-
-            setattr(wrapper, "_partial_units", units_by_name)
-            return wrapper
-
-        # else, now no dimensionalities should be relative
-        for arg, dim in units_by_name.items():
+        # Check if units are valid
+        for name, dim in units_by_name.items():
+            for ref, refparam in sig.parameters.items():
+                if f"<{ref}>" in dim:
+                    if infer_kind_from_parameter(refparam) not in [
+                        InputKind.QUANTIFIED,
+                        InputKind.OPTIONAL_VARIABLE,
+                        InputKind.VARIABLE,
+                    ]:
+                        raise ValueError(
+                            f"Dimensions of {name} are declared relative to {ref}, "
+                            f"but that argument doesn't have a type that supports units. Got {refparam.annotation}."
+                        )
+                    # Put something simple to check validity
+                    dim = dim.replace(f"<{ref}>", "(m)")
             if "<" in dim:
                 raise ValueError(
-                    f"Arg `{arg}` has a relatively declared dimensionality (`{dim}`). "
-                    "All missing variables must have declared dimensions, either here"
-                    "or in a subsequent `declare_units` call, in which case you should "
-                    "pass `partial=True` to this call."
+                    f"Unit declaration of {name} relative to variables absent from the function's signature."
                 )
+            try:
+                str2pint(dim)
+            except pint.UndefinedUnitError:
+                # Raised when it is not understood, we assume it was a dimensionality
+                try:
+                    units.get_dimensionality(dim.replace("dimensionless", ""))
+                except Exception:
+                    raise ValueError(
+                        f"Relative units for {name} are invalid. Got {dim}. (See stacktrace for more information)."
+                    )
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # Match all passed values to their proper arguments, so we can check units
+            bound_args = sig.bind(*args, **kwargs)
+            for name, dim in units_by_name.items():
+                context = None
+                for ref, refvar in bound_args.arguments.items():
+                    if f"<{ref}>" in dim:
+                        dim = dim.replace(f"<{ref}>", f"({units2pint(refvar)})")
+                        # check_units will guess the hydro context if "precipitation" appears in dim, but here we pass a real unit.
+                        # It will also check the standard name of the arg, but we give it another chance by checking the ref arg.
+                        context = context or infer_context(
+                            standard_name=getattr(refvar, "attrs", {}).get(
+                                "standard_name"
+                            )
+                        )
+                with units.context(context):
+                    check_units(bound_args.arguments.get(name), dim)
+
+            out = func(*args, **kwargs)
+
+            _output_has_units(out)
+
+            return out
+
+        setattr(wrapper, "relative_units", units_by_name)
+        return wrapper
+
+    return dec
+
+
+def declare_units(**units_by_name) -> Callable:
+    r"""Create a decorator to check units of function arguments.
+
+    The decorator checks that input and output values have units that are compatible with expected dimensions.
+    It also stores the input units as a 'in_units' attribute.
+
+    Parameters
+    ----------
+    \*\*units_by_name
+        Mapping from the input parameter names to their units or dimensionality ("[...]").
+        If this decorates a function previously decorated with :py:func:`declare_relative_units`,
+        the relative unit declarations are made absolute with the information passed here.
+
+    Returns
+    -------
+    Callable
+
+    Examples
+    --------
+    In the following function definition:
+
+    .. code-block:: python
+
+        @declare_units(tas="[temperature]")
+        def func(tas):
+            ...
+
+    The decorator will check that `tas` has units of temperature (C, K, F).
+
+    See Also
+    --------
+    declare_relative_units
+    """
+
+    def dec(func):
+        # The `_in_units` attr denotes a previously partially-declared function, update with that info.
+        if hasattr(func, "relative_units"):
+            # Make relative declarations absolute if possible
+            for arg, dim in func.relative_units.items():
+                if arg in units_by_name:
+                    # Override. Is this what we want ? Or should this raise an error ?
+                    continue
+
+                for ref, refdim in units_by_name.items():
+                    if f"<{ref}>" in dim:
+                        dim = dim.replace(f"<{ref}>", f"({refdim})")
+                if "<" in dim:
+                    raise ValueError(
+                        f"Units for {arg} are declared relative to arguments absent from this decorator ({dim})."
+                        "Pass units for the missing arguments."
+                    )
+                units_by_name[arg] = dim
 
         # Check that all Quantified parameters have their dimension declared.
         sig = signature(func)
         for name, param in sig.parameters.items():
-            if (param.annotation == "Quantified") and (name not in units_by_name):
-                raise ValueError(
-                    f"Argument {name} of function {func.__name__} has no declared dimension."
-                )
+            if infer_kind_from_parameter(param) == InputKind.QUANTIFIED and (
+                name not in units_by_name
+            ):
+                raise ValueError(f"Argument {name} has no declared dimensions.")
 
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -1190,20 +1282,7 @@ def declare_units(
 
             out = func(*args, **kwargs)
 
-            # Perform very basic sanity check on the output.
-            # Indice are responsible for unit management.
-            # If this fails, it's a developer's error.
-            if isinstance(out, tuple):
-                for outd in out:
-                    if "units" not in outd.attrs:
-                        raise ValueError(
-                            "No units were assigned in one of the indice's outputs."
-                        )
-                    outd.attrs["units"] = ensure_cf_units(outd.attrs["units"])
-            else:
-                if "units" not in out.attrs:
-                    raise ValueError("No units were assigned to the indice's output.")
-                out.attrs["units"] = ensure_cf_units(out.attrs["units"])
+            _output_has_units(out)
 
             return out
 

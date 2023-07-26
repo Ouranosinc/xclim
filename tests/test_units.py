@@ -14,6 +14,7 @@ from xclim.core.units import (
     amount2rate,
     check_units,
     convert_units_to,
+    declare_relative_units,
     declare_units,
     infer_context,
     lwethickness2amount,
@@ -285,23 +286,23 @@ def test_declare_units():
             pass
 
 
-def test_declare_units_partial():
+def test_declare_relative_units():
     def index(data: xr.DataArray, thresh: Quantified, dthreshdt: Quantified):
         return xr.DataArray(1, attrs={"units": "rad"})
 
-    index_partial = declare_units(
-        partial=True, thresh="<data>", dthreshdt="<data>/[time]"
-    )(index)
-    assert hasattr(index_partial, "_partial_units")
+    index_relative = declare_relative_units(thresh="<data>", dthreshdt="<data>/[time]")(
+        index
+    )
+    assert hasattr(index_relative, "relative_units")
 
-    index_full_mm = declare_units(data="mm")(index_partial)
+    index_full_mm = declare_units(data="mm")(index_relative)
     assert index_full_mm.in_units == {
         "data": "mm",
         "thresh": "(mm)",
         "dthreshdt": "(mm)/[time]",
     }
 
-    index_full_area = declare_units(data="[area]")(index_partial)
+    index_full_area = declare_units(data="[area]")(index_relative)
     assert index_full_area.in_units == {
         "data": "[area]",
         "thresh": "([area])",

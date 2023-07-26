@@ -22,6 +22,7 @@ from xclim.core.calendar import (
 )
 from xclim.core.units import (
     convert_units_to,
+    declare_relative_units,
     declare_units,
     infer_context,
     pint2cfunits,
@@ -300,7 +301,7 @@ def get_daily_events(
 # CF-INDEX-META Indices
 
 
-@declare_units(partial=True, threshold="<low_data>")
+@declare_relative_units(threshold="<low_data>")
 def count_level_crossings(
     low_data: xr.DataArray,
     high_data: xr.DataArray,
@@ -346,7 +347,7 @@ def count_level_crossings(
     return to_agg_units(out, low_data, "count", dim="time")
 
 
-@declare_units(partial=True, threshold="<data>")
+@declare_relative_units(threshold="<data>")
 def count_occurrences(
     data: xr.DataArray,
     threshold: Quantified,
@@ -418,7 +419,7 @@ def diurnal_temperature_range(
     return out
 
 
-@declare_units(partial=True, threshold="<data>")
+@declare_relative_units(threshold="<data>")
 def first_occurrence(
     data: xr.DataArray,
     threshold: Quantified,
@@ -464,7 +465,7 @@ def first_occurrence(
     return out
 
 
-@declare_units(partial=True, threshold="<data>")
+@declare_relative_units(threshold="<data>")
 def last_occurrence(
     data: xr.DataArray,
     threshold: Quantified,
@@ -510,7 +511,7 @@ def last_occurrence(
     return out
 
 
-@declare_units(partial=True, threshold="<data>")
+@declare_relative_units(threshold="<data>")
 def spell_length(
     data: xr.DataArray, threshold: Quantified, reducer: str, freq: str, op: str
 ) -> xr.DataArray:
@@ -577,7 +578,7 @@ def statistics(data: xr.DataArray, reducer: str, freq: str) -> xr.DataArray:
     return out
 
 
-@declare_units(partial=True, threshold="<data>")
+@declare_relative_units(threshold="<data>")
 def thresholded_statistics(
     data: xr.DataArray,
     op: str,
@@ -621,7 +622,7 @@ def thresholded_statistics(
     return out
 
 
-@declare_units(partial=True, threshold="<data>")
+@declare_relative_units(threshold="<data>")
 def temperature_sum(
     data: xr.DataArray, op: str, threshold: Quantified, freq: str
 ) -> xr.DataArray:
@@ -816,7 +817,7 @@ def aggregate_between_dates(
     return xr.concat(out, dim="time")
 
 
-@declare_units(partial=True, threshold="<data>")
+@declare_relative_units(threshold="<data>")
 def cumulative_difference(
     data: xr.DataArray, threshold: Quantified, op: str, freq: str | None = None
 ) -> xr.DataArray:
@@ -854,7 +855,7 @@ def cumulative_difference(
     return to_agg_units(diff, data, op="delta_prod")
 
 
-@declare_units(partial=True, threshold="<data>")
+@declare_relative_units(threshold="<data>")
 def first_day_threshold_reached(
     data: xr.DataArray,
     *,

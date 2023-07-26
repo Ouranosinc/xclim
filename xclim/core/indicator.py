@@ -1341,6 +1341,11 @@ class Indicator(IndicatorRegistrar):
             if param.injected
         }
 
+    @property
+    def is_generic(self):
+        """Return True if the indicator is "generic", meaning that it can accepts variable with any units."""
+        return not hasattr(self.compute, "in_units")
+
     def _show_deprecation_warning(self):
         warnings.warn(
             f"`{self.title}` is deprecated as of `xclim` v{self._version_deprecated} and will be removed "
