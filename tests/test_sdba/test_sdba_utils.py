@@ -10,9 +10,9 @@ from xclim.sdba import utils as u
 from xclim.sdba.base import Grouper
 
 
-def test_ecdf(series):
+def test_ecdf(series, random):
     dist = norm(5, 2)
-    r = dist.rvs(10000)
+    r = dist.rvs(10000, random_state=random)
     q = [0.01, 0.5, 0.99]
     x = xr.DataArray(dist.ppf(q), dims=("q",))
     np.testing.assert_allclose(u.ecdf(series(r, "tas"), x), q, 3)
@@ -22,14 +22,19 @@ def test_ecdf(series):
     np.testing.assert_allclose(u.ecdf(series(r, "tas"), x), q, 3)
 
 
-def test_map_cdf(series):
+def test_map_cdf(series, random):
     n = 10000
     xd = norm(5, 2)
     yd = norm(7, 3)
 
     q = [0.1, 0.5, 0.99]
     x_value = u.map_cdf(
-        xr.Dataset(dict(x=series(xd.rvs(n), "pr"), y=series(yd.rvs(n), "pr"))),
+        xr.Dataset(
+            dict(
+                x=series(xd.rvs(n, random_state=random), "pr"),
+                y=series(yd.rvs(n, random_state=random), "pr"),
+            )
+        ),
         y_value=yd.ppf(q),
         dim=["time"],
     )
@@ -38,7 +43,12 @@ def test_map_cdf(series):
     # Scalar
     q = 0.5
     x_value = u.map_cdf(
-        xr.Dataset(dict(x=series(xd.rvs(n), "pr"), y=series(yd.rvs(n), "pr"))),
+        xr.Dataset(
+            dict(
+                x=series(xd.rvs(n, random_state=random), "pr"),
+                y=series(yd.rvs(n, random_state=random), "pr"),
+            )
+        ),
         y_value=yd.ppf(q),
         dim=["time"],
     )
@@ -109,12 +119,12 @@ def test_interp_on_quantiles_constant(interp, expi, extrap, expe):
     assert out.isel(time=-1).isnull().all()
 
 
-def test_interp_on_quantiles_monthly():
+def test_interp_on_quantiles_monthly(random):
     t = xr.cftime_range("2000-01-01", "2030-12-31", freq="D", calendar="noleap")
     ref = xr.DataArray(
         (
             -20 * np.cos(2 * np.pi * t.dayofyear / 365)
-            + 2 * np.random.random_sample((t.size,))
+            + 2 * random.random(t.size)
             + 273.15
             + 0.1 * (t - t[0]).days / 365
         ),  # "warming" of 1K per decade,
@@ -125,7 +135,7 @@ def test_interp_on_quantiles_monthly():
     sim = xr.DataArray(
         (
             -18 * np.cos(2 * np.pi * t.dayofyear / 365)
-            + 2 * np.random.random_sample((t.size,))
+            + 2 * random.random(t.size)
             + 273.15
             + 0.11 * (t - t[0]).days / 365
         ),  # "warming" of 1.1K per decade
@@ -204,8 +214,8 @@ def test_interp_on_quantiles_constant_with_nan(interp, expi, extrap, expe):
     assert out.isel(time=-1).isnull().all()
 
 
-def test_rank():
-    arr = np.random.random_sample(size=(10, 10, 1000))
+def test_rank(random):
+    arr = random.random((10, 10, 1000))
     da = xr.DataArray(arr, dims=("x", "y", "time"))
 
     ranks = u.rank(da, dim="time", pct=False)

@@ -221,7 +221,7 @@ def kmeans_reduce_ensemble(
         See: https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html
     random_state: int or np.random.RandomState, optional
         sklearn.cluster.KMeans() random_state parameter. Determines random number generation for centroid
-        initialization. Use an int to make the randomness deterministic.
+        initialization. Use to make the randomness deterministic.
         See: https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html
     make_graph: bool
         output a dictionary of input for displays a plot of R² vs. the number of clusters.
