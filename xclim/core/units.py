@@ -1136,12 +1136,21 @@ def declare_relative_units(**units_by_name) -> Callable:
 
     .. code-block:: python
 
-        @declare_relative_units(thresh="<tas>", thresh2="<tas> / [time]")
-        def func(tas, thresh, thresh2):
+        @declare_relative_units(thresh="<da>", thresh2="<da> / [time]")
+        def func(da, thresh, thresh2):
             ...
 
-    The decorator will check that `thresh` has units compatible with those of `tas`
-    and that `thresh2` has units compatible with the time derivative of tas.
+    The decorator will check that `thresh` has units compatible with those of da
+    and that `thresh2` has units compatible with the time derivative of da.
+
+    Usually, the function would be decorated further by :py:func:`declare_units` to create
+    a unit-aware index:
+
+    .. code-block:: python
+
+        temperature_func = declare_units(da="[temperature]")(func)
+
+    This call will replace the "<da>" by "[temperature]" everywhere needed.
 
     See Also
     --------
