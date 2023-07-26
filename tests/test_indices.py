@@ -1392,7 +1392,7 @@ class TestJetStreamIndices:
         },
     )
 
-    da_ua.Z.attrs = {"units": "Pa", "standard_name": "pressure"}
+    da_ua.Z.attrs = {"units": "Pa", "standard_name": "air_pressure"}
     da_ua.X.attrs = {"units": "degrees_east", "standard_name": "longitude"}
     da_ua.Y.attrs = {"units": "degrees_north", "standard_name": "latitude"}
     da_ua.T.attrs = {"standard_name": "time"}

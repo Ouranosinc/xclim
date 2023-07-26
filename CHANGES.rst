@@ -14,11 +14,15 @@ New features and enhancements
 Bug fixes
 ^^^^^^^^^
 * Fix `kldiv` docstring so the math formula renders to HTML. (:issue:`1408`, :pull:`1409`).
+* Fix the registry entries of "generic" indicators. (:issue:`1423`, :pull:`1424`).
+* Fix `jetstream_metric_woollings` so it uses the `vertical` coordinate identified by `cf-xarray`, instead of `pressure`. (:issue:`1421`, :pull:`1422`).
+* Fix virtual indicator attribute assignment causing individual indicator's realm to be ignored. (:issue:`1425`, :pull:`1426`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Tolerance thresholds for error in ``test_stats::test_fit`` have been relaxed to allow for more variation in the results. Previously untested ``*_moving_yearly_window`` functions are now tested. (:issue:`1400`, :pull:`1402`).
 * Increased the guess of number of quantiles needed in ExtremeValues. (:pull:`1413`).
+* Tolerance thresholds for error in ``test_processing::test_adapt_freq`` have been relaxed to allow for more variation in the results. (:issue:`1417`, :pull:`1418`).
 * Added 'streamflow' to the list of known variables (:pull:`1431`).
 
 v0.44.0 (2023-06-23)
