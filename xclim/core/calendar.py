@@ -13,16 +13,7 @@ import cftime
 import numpy as np
 import pandas as pd
 import xarray as xr
-from xarray.coding.cftime_offsets import (
-    MonthBegin,
-    MonthEnd,
-    QuarterBegin,
-    QuarterEnd,
-    YearBegin,
-    YearEnd,
-    to_cftime_datetime,
-    to_offset,
-)
+from xarray.coding.cftime_offsets import to_cftime_datetime
 from xarray.coding.cftimeindex import CFTimeIndex
 from xarray.core.resample import DataArrayResample, DatasetResample
 
@@ -38,6 +29,7 @@ __all__ = [
     "common_calendar",
     "compare_offsets",
     "convert_calendar",
+    "convert_doy",
     "date_range",
     "date_range_like",
     "datetime_to_decimal_year",
@@ -232,16 +224,105 @@ def common_calendar(calendars: Sequence[str], join="outer") -> str:
     raise NotImplementedError(f"Unknown join criterion `{join}`.")
 
 
+def _convert_doy_date(doy: int, year: int, src, tgt):
+    fracpart = doy - int(doy)
+    date = src(year, 1, 1) + pydt.timedelta(days=int(doy - 1))
+    try:
+        same_date = tgt(date.year, date.month, date.day)
+    except ValueError:
+        return np.nan
+    else:
+        if tgt is pydt.datetime:
+            return float(same_date.timetuple().tm_yday) + fracpart
+        return float(same_date.dayofyr) + fracpart
+
+
+def convert_doy(
+    source: xr.DataArray,
+    target_cal: str,
+    source_cal: str | None = None,
+    align_on: str = "year",
+    missing: Any = np.nan,
+    dim: str = "time",
+) -> xr.DataArray:
+    """Convert the calendar of day of year (doy) data.
+
+    Parameters
+    ----------
+    source : xr.DataArray
+      Day of year data (range [1, 366], max depending on the calendar).
+    target_cal : str
+      Name of the calendar to convert to.
+    source_cal : str, optional
+      Calendar the doys are in. If not given, uses the "calendar" attribute of `source` or,
+      if absent, the calendar of its `dim` axis.
+    align_on : {'date', 'year'}
+      If 'year' (default), the doy is seen as a "percentage" of the year and is simply rescaled unto the new doy range.
+      This always result in floating point data, changing the decimal part of the value.
+      if 'date', the doy is seen as a specific date. See notes. This never changes the decimal part of the value.
+    missing : Any
+      If `align_on` is "date" and the new doy doesn't exist in the new calendar, this value is used.
+    dim : str
+      Name of the temporal dimension.
+    """
+    source_cal = source_cal or source.attrs.get("calendar", get_calendar(source[dim]))
+    is_calyear = xr.infer_freq(source[dim]) in ("AS-JAN", "A-DEC")
+
+    if is_calyear:  # Fast path
+        year_of_the_doy = source[dim].dt.year
+    else:  # Doy might refer to a date from the year after the timestamp.
+        year_of_the_doy = source[dim].dt.year + 1 * (source < source[dim].dt.dayofyear)
+
+    if align_on == "year":
+        if source_cal in ["noleap", "all_leap", "360_day"]:
+            max_doy_src = max_doy[source_cal]
+        else:
+            max_doy_src = xr.apply_ufunc(
+                days_in_year,
+                year_of_the_doy,
+                vectorize=True,
+                dask="parallelized",
+                kwargs={"calendar": source_cal},
+            )
+        if target_cal in ["noleap", "all_leap", "360_day"]:
+            max_doy_tgt = max_doy[target_cal]
+        else:
+            max_doy_tgt = xr.apply_ufunc(
+                days_in_year,
+                year_of_the_doy,
+                vectorize=True,
+                dask="parallelized",
+                kwargs={"calendar": target_cal},
+            )
+        new_doy = source.copy(data=source * max_doy_tgt / max_doy_src)
+    elif align_on == "date":
+        new_doy = xr.apply_ufunc(
+            _convert_doy_date,
+            source,
+            year_of_the_doy,
+            vectorize=True,
+            dask="parallelized",
+            kwargs={
+                "src": datetime_classes[source_cal],
+                "tgt": datetime_classes[target_cal],
+            },
+        )
+    else:
+        raise NotImplementedError('"align_on" must be one of "date" or "year".')
+    return new_doy.assign_attrs(is_dayofyear=np.int32(1), calendar=target_cal)
+
+
 def convert_calendar(
     source: xr.DataArray | xr.Dataset,
     target: xr.DataArray | str,
     align_on: str | None = None,
     missing: Any | None = None,
+    doy: bool | str = False,
     dim: str = "time",
 ) -> xr.DataArray | xr.Dataset:
     """Convert a DataArray/Dataset to another calendar using the specified method.
 
-    Only converts the individual timestamps, does not modify any data except in dropping invalid/surplus dates or inserting missing dates.
+    By default, only converts the individual timestamps, does not modify any data except in dropping invalid/surplus dates or inserting missing dates.
 
     If the source and target calendars are either no_leap, all_leap or a standard type, only the type of the time array is modified.
     When converting to a leap year from a non-leap year, the 29th of February is removed from the array.
@@ -265,6 +346,9 @@ def convert_calendar(
     missing : Any, optional
       A value to use for filling in dates in the target that were missing in the source.
       If `target` is a string, default (None) is not to fill values. If it is an array, default is to fill with NaN.
+    doy: bool or {'year', 'date'}
+      If not False, variables flagged as "dayofyear" (with a `is_dayofyear==1` attribute) are converted to the new calendar too.
+      Can be a string, which will be passed as the `align_on` argument of :py:func:`convert_doy`. If True, `year` is passed.
     dim : str
       Name of the time coordinate.
 
@@ -359,7 +443,21 @@ def convert_calendar(
     if cal_src != "360_day" and cal_tgt != "360_day":
         align_on = None
 
-    out = source.copy()
+    if doy:
+        doy_align_on = "year" if doy is True else doy
+        if isinstance(source, xr.DataArray) and source.attrs.get("is_dayofyear") == 1:
+            out = convert_doy(source, cal_tgt, align_on=doy_align_on)
+        else:
+            out = source.map(
+                lambda da: (
+                    da
+                    if da.attrs.get("is_dayofyear") != 1
+                    else convert_doy(da, cal_tgt, align_on=doy_align_on)
+                )
+            )
+    else:
+        out = source.copy()
+
     # TODO Maybe the 5-6 days to remove could be given by the user?
     if align_on in ["year", "random"]:
         if align_on == "year":
@@ -409,6 +507,7 @@ def convert_calendar(
     # Copy attrs but change remove `calendar` is still present.
     out[dim].attrs.update(source[dim].attrs)
     out[dim].attrs.pop("calendar", None)
+
     return out
 
 
@@ -1037,7 +1136,7 @@ def _doy_days_since_doys(
     base_doy = base.dt.dayofyear
 
     doy_max = xr.apply_ufunc(
-        lambda y: days_in_year(y, calendar), base.dt.year, vectorize=True
+        days_in_year, base.dt.year, vectorize=True, kwargs={"calendar": calendar}
     )
 
     if start is not None:
