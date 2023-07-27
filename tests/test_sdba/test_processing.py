@@ -66,9 +66,9 @@ def test_jitter_over_thresh():
 
 
 @pytest.mark.parametrize("use_dask", [True, False])
-def test_adapt_freq(use_dask):
+def test_adapt_freq(use_dask, random):
     time = pd.date_range("1990-01-01", "2020-12-31", freq="D")
-    prvals = np.random.randint(0, 100, size=(time.size, 3))
+    prvals = random.integers(0, 100, size=(time.size, 3))
     pr = xr.DataArray(
         prvals,
         coords={"time": time, "lat": [0, 1, 2]},
@@ -115,9 +115,9 @@ def test_adapt_freq(use_dask):
 
 
 @pytest.mark.parametrize("use_dask", [True, False])
-def test_adapt_freq_add_dims(use_dask):
+def test_adapt_freq_add_dims(use_dask, random):
     time = pd.date_range("1990-01-01", "2020-12-31", freq="D")
-    prvals = np.random.randint(0, 100, size=(time.size, 3))
+    prvals = random.integers(0, 100, size=(time.size, 3))
     pr = xr.DataArray(
         prvals,
         coords={"time": time, "lat": [0, 1, 2]},
@@ -157,8 +157,8 @@ def test_escore():
     assert out.attrs["references"].startswith("Székely")
 
 
-def test_standardize():
-    x = np.random.standard_normal((2, 10000))
+def test_standardize(random):
+    x = random.standard_normal((2, 10000))
     x[0, 50] = np.NaN
     x = xr.DataArray(x, dims=("x", "y"), attrs={"units": "m"})
 
@@ -247,9 +247,9 @@ def test_from_additive(pr_series, hurs_series):
     np.testing.assert_allclose(hurs[1:-1], hurs2[1:-1])
 
 
-def test_normalize(tas_series):
+def test_normalize(tas_series, random):
     tas = tas_series(
-        np.random.standard_normal((int(365.25 * 36),)) + 273.15, start="2000-01-01"
+        random.standard_normal((int(365.25 * 36),)) + 273.15, start="2000-01-01"
     )
 
     xp, norm = normalize(tas, group="time.dayofyear")
