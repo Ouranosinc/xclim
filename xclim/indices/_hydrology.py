@@ -14,6 +14,7 @@ __all__ = [
     "base_flow_index",
     "melt_and_precip_max",
     "rb_flashiness_index",
+    "snd_max",
     "snd_max_doy",
     "snow_melt_we_max",
     "snw_max",
@@ -104,6 +105,27 @@ def rb_flashiness_index(q: xarray.DataArray, freq: str = "YS") -> xarray.DataArr
 
 
 @declare_units(snd="[length]")
+def snd_max(snd: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray:
+    """Maximum snow depth.
+
+    The maximum daily snow depth.
+
+    Parameters
+    ----------
+    snw : xarray.DataArray
+        Snow depth (mass per area).
+    freq: str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+        The maximum snow depth over a given number of days for each period. [length].
+    """
+    return generic.select_resample_op(snd, op="max", freq=freq)
+
+
+@declare_units(snd="[length]")
 def snd_max_doy(snd: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray:
     """Maximum snow depth day of year.
 
@@ -152,7 +174,7 @@ def snw_max(snw: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray:
     xarray.DataArray
         The maximum snow amount over a given number of days for each period. [mass/area].
     """
-    return snw.resample(time=freq).max(dim="time").assign_attrs(units=snw.units)
+    return generic.select_resample_op(snw, op="max", freq=freq)
 
 
 @declare_units(snw="[mass]/[area]")
