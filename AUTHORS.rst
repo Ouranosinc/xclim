@@ -39,3 +39,4 @@ Contributors
 * Ag Stephens <ag.stephens@stfc.ac.uk> `@agstephens <https://github.com/agstephens>`_
 * Maliko Tanguy <malngu@ceh.ac.uk> `@malngu <https://github.com/malngu>`_
 * Christopher Whelan `@qwhelan <https://github.com/qwhelan>`_
+* Marco Braun <Braun.Marco@ouranos.ca> `@vindelico <https://github.com/vindelico>`_
