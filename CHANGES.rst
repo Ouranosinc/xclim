@@ -24,10 +24,10 @@ Internal changes
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* Standardized indices (``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index``)  (:issue:`1270`, :issue:`1416`, ,:pull:`1311`) were changed:
-    * More optimized
+* Standardized indices (``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index``)  (:issue:`1270`, :issue:`1416`, :pull:`1311`) were changed:
+    * More optimized and noticeably faster calculation.
     * Can be computed in two steps: First compute fit parameters with ``xclim.indices.standardized_index_fit_params``, then use the output in the standardized indices functions.
-    * The standardized index values are now clipped by ± 8.21.  This reflects the float64 precision of the computation when cdf values are inverted to a normal distribution.
+    * The standardized index values are now clipped to ± 8.21. This reflects the ``float64`` precision of the computation when cumulative distributed function values are inverted to a normal distribution.
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
