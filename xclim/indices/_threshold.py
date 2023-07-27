@@ -56,6 +56,7 @@ __all__ = [
     "frost_free_season_end",
     "frost_free_season_length",
     "frost_free_season_start",
+    "frost_free_spell_max_length",
     "frost_season_length",
     "growing_degree_days",
     "growing_season_end",
