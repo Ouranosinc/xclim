@@ -1209,7 +1209,7 @@ def _get_standardized_index(da, params, **indexer):
         return spi
 
     group_idxs = da.time.dt.month if group_name == "month" else da.time.dt.dayofyear
-    return xarray.apply_ufunc(
+    std_index = xarray.apply_ufunc(
         wrap_cdf_ppf,
         da,
         params,
@@ -1221,6 +1221,11 @@ def _get_standardized_index(da, params, **indexer):
         output_dtypes=[da.dtype],
         vectorize=True,
     )
+    # A cdf value of 0 or 1 gives ±np.inf when inverted to the normal distribution.
+    # The neighbouring values 0.00...1 and 0.99...9 with a float64 give a standardized index of ± 8.21
+    # We use this index as reference for maximal/minimal standardized values
+    std_index = std_index.clip(-8.21, 8.21)
+    return std_index
 
 
 @declare_units(
@@ -1285,6 +1290,8 @@ def standardized_precipitation_index(
     * Supported statistical distributions are: ["gamma", "fisk"], where "fisk" is scipy's implementation of
        a log-logistic distribution
     * If `params` is given as input, it overrides the `cal_start`, `cal_end`, `freq` and `window`, `dist` and `method` options.
+    * The standardized index is bounded by ±8.21. 8.21 is the largest standardized index as constrained by the float64 precision in \
+      the inversion to the normal distribution.
 
     Example
     -------
@@ -1327,7 +1334,7 @@ def standardized_precipitation_index(
 
     if pr_cal is not None:
         warnings.warn(
-            "Inputing a calibration array will be deprecated in xclim==0.46.0. For example, if `pr_cal` is a subset of `pr`, then instead of say:\n"
+            "Inputing a calibration array will be deprecated in xclim>=0.46.0. For example, if `pr_cal` is a subset of `pr`, then instead of say:\n"
             "`standardized_precipitation_index(pr=pr,pr_cal=pr.sel(time=slice(t0,t1)),...)`,\n one can call:\n"
             "`standardized_precipitation_index(pr=pr,cal_range=(t0,t1),...).\n"
             "If for some reason `pr_cal` is not a subset of `pr`, then the following approach will still be possible:\n"
