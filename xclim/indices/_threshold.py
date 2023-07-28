@@ -712,13 +712,17 @@ def maximum_consecutive_wet_days(
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
     the start and end of the series, but the numerical algorithm does.
     """
-    return wet_spell_max_length(
-        pr,
-        thresh=thresh,
-        window=1,
+    thresh = convert_units_to(thresh, pr, "hydro")
+
+    cond = pr > thresh
+    out = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.longest_run,
         freq=freq,
-        resample_before_rl=resample_before_rl,
     )
+    out = to_agg_units(out, pr, "count")
+    return out
 
 
 @declare_units(tas="[temperature]", thresh="[temperature]")
@@ -2612,13 +2616,15 @@ def maximum_consecutive_dry_days(
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
     the start and end of the series, but the numerical algorithm does.
     """
-    return dry_spell_max_length(
-        pr,
-        thresh=thresh,
-        window=1,
+    t = convert_units_to(thresh, pr, context="hydro")
+    group = pr < t
+    out = rl.resample_and_rl(
+        group,
+        resample_before_rl,
+        rl.longest_run,
         freq=freq,
-        resample_before_rl=resample_before_rl,
     )
+    return to_agg_units(out, pr, "count")
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")

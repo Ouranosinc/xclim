@@ -4,13 +4,19 @@ Changelog
 
 v0.45.0 (unreleased)
 --------------------
-Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user: `juliettelavoie`).
+Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user: `juliettelavoie`), Éric DUupuis (:user: `coxipi`)
+
+New indicators
+^^^^^^^^^^^^^^
+* Variations of already existing indices: ``xclim.indices.snd_max`` and ``xclim.indices.frost_free_spell_max_length``. (:pull:`1443`, :issue:).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Added ``ensembles.hawkins_sutton`` method to partition the uncertainty sources in a climate projection ensemble. (:issue:`771`, :pull:`1262`).
 * New function ``xclim.core.calendar.convert_doy`` to transform day-of-year data between calendars. Also accessible from ``convert_calendar`` with ``doy=True``. (:issue:`1283`, :pull:`1406`).
-
+* Refactoring (:pull:). :
+    * Use ``xclim.indices.generic.select_resample_op`` for `{tg|tn|tx}_{max|mean|min}` , `max_1day_precipitation_amount`, `{snw|snd}_max`
+    * Directly use `{cold|hot}_spell_max_length` in `maximum_consecutive_{frost|tx}_days`
 Bug fixes
 ^^^^^^^^^
 * Fix `kldiv` docstring so the math formula renders to HTML. (:issue:`1408`, :pull:`1409`).
@@ -23,7 +29,7 @@ Internal changes
 * Tolerance thresholds for error in ``test_stats::test_fit`` have been relaxed to allow for more variation in the results. Previously untested ``*_moving_yearly_window`` functions are now tested. (:issue:`1400`, :pull:`1402`).
 * Increased the guess of number of quantiles needed in ExtremeValues. ( :pull:`1413`).
 * Tolerance thresholds for error in ``test_processing::test_adapt_freq`` have been relaxed to allow for more variation in the results. (:issue:`1417`, :pull:`1418`).
-
+*
 v0.44.0 (2023-06-23)
 --------------------
 Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Ludwig Lierhammer (:user:`ludwiglierhammer`), David Huard (:user:`huard`).
