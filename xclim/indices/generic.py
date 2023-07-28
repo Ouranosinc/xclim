@@ -90,7 +90,7 @@ def select_resample_op(
     if isinstance(op, str):
         return getattr(r, op)(dim="time", keep_attrs=True)
 
-    return r.map(op)
+    return r.map(op, keep_attrs=True)
 
 
 def doymax(da: xr.DataArray) -> xr.DataArray:
