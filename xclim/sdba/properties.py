@@ -198,7 +198,7 @@ def _std(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
     if group.prop != "group":
         da = da.groupby(group.name)
     out = da.std(dim=group.dim)
-    out.attrs['units'] = units
+    out.attrs["units"] = units
     return out
 
 
@@ -209,6 +209,7 @@ std = StatisticalProperty(
     compute=_std,
     measure="xclim.sdba.measures.RATIO",
 )
+
 
 def _skewness(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
     """Skewness.
