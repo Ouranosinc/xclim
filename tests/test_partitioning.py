@@ -21,7 +21,7 @@ def test_hawkins_sutton_smoke(open_dataset):
     hawkins_sutton(das)
 
 
-def test_hawkins_sutton_synthetic():
+def test_hawkins_sutton_synthetic(random):
     """Test logic of Hawkins-Sutton's implementation using synthetic data."""
 
     # Time, scenario, model
@@ -32,7 +32,7 @@ def test_hawkins_sutton_synthetic():
     mean = mm[np.newaxis, :] + sm[:, np.newaxis]
 
     # Natural variability
-    r = np.random.randn(4, 13, 60)
+    r = random.standard_normal((4, 13, 60))
 
     x = r + mean[:, :, np.newaxis]
     time = xr.date_range("1970-01-01", periods=60, freq="Y")
@@ -56,7 +56,7 @@ def test_hawkins_sutton_synthetic():
     hawkins_sutton(da, sm=sm)
 
     # Test with a multiplicative variable and time evolving scenarios
-    r = np.random.randn(4, 13, 60) + np.arange(60)
+    r = random.standard_normal((4, 13, 60)) + np.arange(60)
     x = r + mean[:, :, np.newaxis]
     da = xr.DataArray(x, dims=("scenario", "model", "time"), coords={"time": time})
     m, v = hawkins_sutton(da, kind="*")

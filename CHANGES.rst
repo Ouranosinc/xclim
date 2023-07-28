@@ -4,7 +4,7 @@ Changelog
 
 v0.45.0 (unreleased)
 --------------------
-Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user: `juliettelavoie`).
+Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user: `juliettelavoie`), Gabriel Rondeau-Genesse (:user:`RondeauG`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -12,15 +12,21 @@ New features and enhancements
 * New function ``xclim.core.calendar.convert_doy`` to transform day-of-year data between calendars. Also accessible from ``convert_calendar`` with ``doy=True``. (:issue:`1283`, :pull:`1406`).
 * Added new function ``xclim.sdba.properties.std``to calculate the standard deviation of a variable over all years at a given time resolution. (:pull:`1445`).
 * Amended the documentation of ``xclim.sdba.properties.trend`` to document already existing functionality of calculating the return values of scipy.stats.linregress. (:pull:`1445`).
+* Add support for setting optional variables through the `ds` argument. (:issue:`1432`, :pull:`1435`).
 
 Bug fixes
 ^^^^^^^^^
 * Fix `kldiv` docstring so the math formula renders to HTML. (:issue:`1408`, :pull:`1409`).
+* Fix the registry entries of "generic" indicators. (:issue:`1423`, :pull:`1424`).
+* Fix `jetstream_metric_woollings` so it uses the `vertical` coordinate identified by `cf-xarray`, instead of `pressure`. (:issue:`1421`, :pull:`1422`). Add logic to handle coordinates in decreasing order, or for longitudes defined from 0-360 instead of -180 to 180. (:issue:`1429`, :pull:`1430`).
+* Fix virtual indicator attribute assignment causing individual indicator's realm to be ignored. (:issue:`1425`, :pull:`1426`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Tolerance thresholds for error in ``test_stats::test_fit`` have been relaxed to allow for more variation in the results. Previously untested ``*_moving_yearly_window`` functions are now tested. (:issue:`1400`, :pull:`1402`).
-* Increased the guess of number of quantiles needed in ExtremeValues. ( :pull:`1413`).
+* Increased the guess of number of quantiles needed in ExtremeValues. (:pull:`1413`).
+* Tolerance thresholds for error in ``test_processing::test_adapt_freq`` have been relaxed to allow for more variation in the results. (:issue:`1417`, :pull:`1418`).
+* Added 'streamflow' to the list of known variables (:pull:`1431`).
 
 v0.44.0 (2023-06-23)
 --------------------

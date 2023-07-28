@@ -670,9 +670,9 @@ def test_lazy_indexing(use_dask):
 
 
 @pytest.mark.parametrize("use_dask", [True, False])
-def test_lazy_indexing_special_cases(use_dask):
-    a = xr.DataArray(np.random.rand(10, 10, 10), dims=("x", "y", "z"))
-    b = xr.DataArray(np.random.rand(10, 10, 10), dims=("x", "y", "z"))
+def test_lazy_indexing_special_cases(use_dask, random):
+    a = xr.DataArray(random.random((10, 10, 10)), dims=("x", "y", "z"))
+    b = xr.DataArray(random.random((10, 10, 10)), dims=("x", "y", "z"))
 
     if use_dask:
         a = a.chunk({"y": 5, "z": 5})

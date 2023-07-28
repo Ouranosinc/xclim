@@ -74,9 +74,9 @@ class TestSndMaxDoy:
         out = land.snd_max_doy(snd, freq="AS-JUL")
         np.testing.assert_array_equal(out, snd.time.dt.dayofyear[200])
 
-    def test_units(self, tas_series):
+    def test_units(self, tas_series, random):
         """Check that unit declaration works."""
-        tas = tas_series(np.random.rand(365), start="1999-07-01")
+        tas = tas_series(random.random(365), start="1999-07-01")
         with pytest.raises(ValidationError):
             land.snd_max_doy(tas)
 

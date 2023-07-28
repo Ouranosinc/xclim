@@ -10,7 +10,7 @@ from xclim.indices import stats
 
 
 @pytest.fixture(params=[True, False])
-def fitda(request):
+def fitda(request, random):
     nx, ny, nt = 2, 3, 100
     x = np.arange(nx)
     y = np.arange(ny)
@@ -18,7 +18,7 @@ def fitda(request):
     time = xr.cftime_range("2045-02-02", periods=nt, freq="D")
 
     da = xr.DataArray(
-        np.random.lognormal(2, 1, (nt, nx, ny)),
+        random.lognormal(2, 1, (nt, nx, ny)),
         dims=("time", "x", "y"),
         coords={"time": time, "x": x, "y": y},
     )
@@ -224,13 +224,13 @@ class TestPWMFit:
 
     @pytest.mark.parametrize("dist", stats._lm3_dist_map.keys())
     @pytest.mark.parametrize("use_dask", [True, False])
-    def test_pwm_fit(self, dist, use_dask):
+    def test_pwm_fit(self, dist, use_dask, random):
         """Test that the fitted parameters match parameters used to generate a random sample."""
         n = 500
         dc = stats.get_dist(dist)
         par = self.params[dist]
         da = xr.DataArray(
-            dc(**par).rvs(size=n),
+            dc(**par).rvs(size=n, random_state=random),
             dims=("time",),
             coords={"time": xr.cftime_range("1980-01-01", periods=n)},
         )
@@ -280,14 +280,14 @@ def test_frequency_analysis(ndq_series, use_dask):
 
 
 @pytest.mark.parametrize("use_dask", [True, False])
-def test_parametric_quantile(use_dask):
+def test_parametric_quantile(use_dask, random):
     mu = 23
     sigma = 2
     n = 10000
     per = 0.9
     d = norm(loc=mu, scale=sigma)
     r = xr.DataArray(
-        d.rvs(n),
+        d.rvs(n, random_state=random),
         dims=("time",),
         coords={"time": xr.cftime_range(start="1980-01-01", periods=n)},
         attrs={"history": "Mosquito bytes per minute"},
@@ -302,14 +302,14 @@ def test_parametric_quantile(use_dask):
 
 
 @pytest.mark.parametrize("use_dask", [True, False])
-def test_paramtric_cdf(use_dask):
+def test_paramtric_cdf(use_dask, random):
     mu = 23
     sigma = 2
     n = 10000
     v = 24
     d = norm(loc=mu, scale=sigma)
     r = xr.DataArray(
-        d.rvs(n),
+        d.rvs(n, random_state=random),
         dims=("time",),
         coords={"time": xr.cftime_range(start="1980-01-01", periods=n)},
         attrs={"history": "Mosquito bytes per minute"},

@@ -81,7 +81,7 @@ def _indicator_table(module):
     return table
 
 
-modules = ("atmos", "land", "seaIce", "cf", "icclim", "anuclim")
+modules = ("atmos", "generic", "land", "seaIce", "cf", "icclim", "anuclim")
 indicators = {module: _indicator_table(module) for module in modules}
 
 # -- General configuration ---------------------------------------------
