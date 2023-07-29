@@ -96,13 +96,13 @@ class TestMax1DayPrecipitationAmount:
 
 
 class TestColdSpellDurationIndex:
-    def test_simple(self, tasmin_series):
+    def test_simple(self, tasmin_series, random):
         i = 3650
         A = 10.0
         tn = (
             np.zeros(i)
             + A * np.sin(np.arange(i) / 365.0 * 2 * np.pi)
-            + 0.1 * np.random.rand(i)
+            + 0.1 * random.random(i)
         )
         tn[10:20] -= 2
         tn = tasmin_series(tn)
@@ -1781,11 +1781,11 @@ class TestTxMax:
 
 class TestTgMaxTgMinIndices:
     @staticmethod
-    def random_tmin_tmax_setup(length, tasmax_series, tasmin_series):
-        max_values = np.random.uniform(-20, 40, length)
+    def random_tmin_tmax_setup(length, tasmax_series, tasmin_series, random):
+        max_values = random.uniform(-20, 40, length)
         min_values = []
         for i in range(length):
-            min_values.append(np.random.uniform(-40, max_values[i]))
+            min_values.append(random.uniform(-40, max_values[i]))
         tasmax = tasmax_series(np.add(max_values, K2C))
         tasmin = tasmin_series(np.add(min_values, K2C))
         return tasmin, tasmax
@@ -2011,17 +2011,16 @@ class TestPrecipWettestDriestQuarter:
 
 class TestTempWetDryPrecipWarmColdQuarter:
     @staticmethod
-    def get_data(tas_series, pr_series):
-        np.random.seed(123)
+    def get_data(tas_series, pr_series, random):
         times = pd.date_range("2000-01-01", "2001-12-31", name="time")
         annual_cycle = np.sin(2 * np.pi * (times.dayofyear.values / 365.25 - 0.28))
         base = 10 + 15 * annual_cycle.reshape(-1, 1)
-        values = base + 3 * np.random.randn(annual_cycle.size, 1) + K2C
+        values = base + 3 * random.standard_normal((annual_cycle.size, 1)) + K2C
         tas = tas_series(values.squeeze(), start="2001-01-01").sel(
             time=slice("2001", "2002")
         )
         base = 15 * annual_cycle.reshape(-1, 1)
-        values = base + 10 + 10 * np.random.randn(annual_cycle.size, 1)
+        values = base + 10 + 10 * random.standard_normal((annual_cycle.size, 1))
         values = values / 3600 / 24
         values[values < 0] = 0
         pr = pr_series(values.squeeze(), start="2001-01-01").sel(
@@ -2032,17 +2031,19 @@ class TestTempWetDryPrecipWarmColdQuarter:
     @pytest.mark.parametrize(
         "freq,op,expected",
         [
-            ("D", "wettest", [296.22664037, 296.99585849]),
-            ("7D", "wettest", [296.22664037, 296.99585849]),
-            ("MS", "wettest", [296.25598395, 296.98613685]),
-            ("D", "driest", [272.161376, 269.31008671]),
-            ("7D", "driest", [272.161376, 269.31008671]),
-            ("MS", "driest", [272.00644843, 269.04077039]),
+            ("D", "wettest", [296.138132, 295.823782]),
+            ("7D", "wettest", [296.138132, 295.823782]),
+            ("MS", "wettest", [296.429311, 296.192342]),
+            ("D", "driest", [271.8105, 269.993252]),
+            ("7D", "driest", [271.8105, 269.993252]),
+            ("MS", "driest", [271.655305, 269.736969]),
         ],
     )
     @pytest.mark.parametrize("use_dask", [True, False])
-    def test_tg_wetdry(self, tas_series, pr_series, use_dask, freq, op, expected):
-        tas, pr = self.get_data(tas_series, pr_series)
+    def test_tg_wetdry(
+        self, tas_series, pr_series, use_dask, freq, op, expected, random
+    ):
+        tas, pr = self.get_data(tas_series, pr_series, random)
         pr = pr.resample(time=freq).mean(keep_attrs=True)
 
         tas = xci.tg_mean(tas, freq=freq)
@@ -2061,16 +2062,16 @@ class TestTempWetDryPrecipWarmColdQuarter:
     @pytest.mark.parametrize(
         "freq,op,expected",
         [
-            ("D", "warmest", [2021.82232981, 2237.15117103]),
-            ("7D", "warmest", [2021.82232981, 2237.15117103]),
-            ("MS", "warmest", [2038.54763205, 2247.47136629]),
-            ("D", "coldest", [311.91895223, 264.50013361]),
-            ("7D", "coldest", [311.91895223, 264.50013361]),
-            ("MS", "coldest", [311.91895223, 259.36682028]),
+            ("D", "warmest", [2042.826039, 2131.651904]),
+            ("7D", "warmest", [2042.826039, 2131.651904]),
+            ("MS", "warmest", [2085.393869, 2193.985419]),
+            ("D", "coldest", [246.965006, 229.86537]),
+            ("7D", "coldest", [246.965006, 229.86537]),
+            ("MS", "coldest", [245.550801, 233.847277]),
         ],
     )
-    def test_pr_warmcold(self, tas_series, pr_series, freq, op, expected):
-        tas, pr = self.get_data(tas_series, pr_series)
+    def test_pr_warmcold(self, tas_series, pr_series, freq, op, expected, random):
+        tas, pr = self.get_data(tas_series, pr_series, random)
         pr = convert_units_to(
             pr.resample(time=freq).mean(keep_attrs=True), "mm/d", context="hydro"
         )
@@ -2182,32 +2183,26 @@ class TestPrecipWettestDriestPeriod:
 
 
 class TestIsothermality:
-    @staticmethod
-    def get_data(tasmin_series, tasmax_series):
-        np.random.seed(123)
-        times = pd.date_range("2000-01-01", "2001-12-31", name="time")
-        annual_cycle = np.sin(2 * np.pi * (times.dayofyear.values / 365.25 - 0.28))
-        base = 10 + 15 * annual_cycle.reshape(-1, 1)
-        values = base + 3 * np.random.randn(annual_cycle.size, 1) + K2C
-        tasmin = tasmin_series(values.squeeze(), start="2001-01-01").sel(
-            time=slice("2001", "2002")
-        )
-        values = base + 10 + 3 * np.random.randn(annual_cycle.size, 1) + K2C
-        tasmax = tasmax_series(values.squeeze(), start="2001-01-01").sel(
-            time=slice("2001", "2002")
-        )
-        return tasmin, tasmax
-
     @pytest.mark.parametrize(
         "freq,expected",
         [
-            ("D", [18.8700109, 19.40941685]),
-            ("7D", [23.29006069, 23.36559839]),
-            ("MS", [25.05925319, 25.09443682]),
+            ("D", [19.798229, 19.559826]),
+            ("7D", [23.835284, 24.15181]),
+            ("MS", [25.260527, 26.647243]),
         ],
     )
-    def test_simple(self, tasmax_series, tasmin_series, freq, expected):
-        tasmin, tasmax = self.get_data(tasmin_series, tasmax_series)
+    def test_simple(self, tasmax_series, tasmin_series, freq, expected, random):
+        times = pd.date_range("2000-01-01", "2001-12-31", name="time")
+        annual_cycle = np.sin(2 * np.pi * (times.dayofyear.values / 365.25 - 0.28))
+        base = 10 + 15 * annual_cycle.reshape(-1, 1)
+        values = base + 3 * random.standard_normal((annual_cycle.size, 1)) + K2C
+        tasmin = tasmin_series(values.squeeze(), start="2001-01-01").sel(
+            time=slice("2001", "2002")
+        )
+        values = base + 10 + 3 * random.standard_normal((annual_cycle.size, 1)) + K2C
+        tasmax = tasmax_series(values.squeeze(), start="2001-01-01").sel(
+            time=slice("2001", "2002")
+        )
 
         # weekly
         tmin = tasmin.resample(time=freq).mean(dim="time", keep_attrs=True)
@@ -2294,13 +2289,13 @@ class TestTxTnDaysAbove:
 
 
 class TestWarmSpellDurationIndex:
-    def test_simple(self, tasmax_series):
+    def test_simple(self, tasmax_series, random):
         i = 3650
         A = 10.0
         tx = (
             np.zeros(i)
             + A * np.sin(np.arange(i) / 365.0 * 2 * np.pi)
-            + 0.1 * np.random.rand(i)
+            + 0.1 * random.random(i)
         )
         tx[10:20] += 2
         tx = tasmax_series(tx)
@@ -2979,12 +2974,12 @@ class TestClausiusClapeyronScaledPrecip:
             ],
         )
 
-    def test_workflow(self, tas_series, pr_series):
+    def test_workflow(self, tas_series, pr_series, random):
         """Test typical workflow."""
         n = int(365.25 * 10)
-        tref = tas_series(np.random.rand(n), start="1961-01-01")
-        tfut = tas_series(np.random.rand(n) + 2, start="2051-01-01")
-        pr = pr_series(np.random.rand(n) * 10, start="1961-01-01")
+        tref = tas_series(random.random(n), start="1961-01-01")
+        tfut = tas_series(random.random(n) + 2, start="2051-01-01")
+        pr = pr_series(random.random(n) * 10, start="1961-01-01")
 
         # Compute climatologies
         with xr.set_options(keep_attrs=True):

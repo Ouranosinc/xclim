@@ -25,11 +25,18 @@ import xarray as xr
 from pkg_resources import parse_version
 from scipy import __version__ as __scipy_version__
 from scipy.stats.mstats import mquantiles
-from sklearn import __version__ as __sklearn_version__
 
 from xclim import ensembles
 from xclim.indices.stats import get_dist
 from xclim.testing.helpers import TESTDATA_BRANCH
+
+
+# sklearn's KMeans doesn't accept the standard numpy Generator, so we create a special fixture for these tests
+# This object is legacy and this fixture should only be used with KMeans, until they update their code to accept Generators instead.
+# https://numpy.org/doc/stable/reference/random/legacy.html#numpy.random.RandomState
+@pytest.fixture
+def random_state():
+    return np.random.RandomState(seed=list(map(ord, "𝕽𝔞𝖓𝔡𝖔𝔪")))
 
 
 class TestEnsembleStats:
@@ -291,13 +298,16 @@ class TestEnsembleStats:
 class TestEnsembleReduction:
     nc_file = os.path.join("EnsembleReduce", "TestEnsReduceCriteria.nc")
 
-    def test_kmeans_rsqcutoff(self, open_dataset):
+    def test_kmeans_rsqcutoff(self, open_dataset, random_state):
         pytest.importorskip("sklearn", minversion="0.24.1")
         ds = open_dataset(self.nc_file)
 
         # use random state variable to ensure consistent clustering in tests:
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
-            data=ds.data, method={"rsq_cutoff": 0.5}, random_state=42, make_graph=False
+            data=ds.data,
+            method={"rsq_cutoff": 0.5},
+            random_state=random_state,
+            make_graph=False,
         )
 
         assert ids == [4, 7, 10, 23]
@@ -307,41 +317,44 @@ class TestEnsembleReduction:
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_cutoff": 0.5},
-            random_state=42,
+            random_state=random_state,
             make_graph=False,
             max_clusters=3,
         )
         assert ids == [4, 7, 23]
         assert len(ids) == 3
 
-    def test_kmeans_rsqopt(self, open_dataset):
+    def test_kmeans_rsqopt(self, open_dataset, random_state):
         pytest.importorskip("sklearn", minversion="0.24.1")
         ds = open_dataset(self.nc_file)
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_optimize": None},
-            random_state=42,
+            random_state=random_state,
             make_graph=False,
         )
-        if parse_version(__sklearn_version__) >= parse_version("1.3.0"):
-            assert ids == [4, 5, 7, 10, 11, 12, 13]
-        else:
-            assert ids == [3, 4, 5, 7, 10, 11, 12, 13]
+        assert ids == [3, 4, 5, 7, 10, 11, 12, 13]
 
-    def test_kmeans_nclust(self, open_dataset):
+    def test_kmeans_nclust(self, open_dataset, random_state):
         ds = open_dataset(self.nc_file)
 
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
-            data=ds.data, method={"n_clusters": 4}, random_state=42, make_graph=False
+            data=ds.data,
+            method={"n_clusters": 4},
+            random_state=random_state,
+            make_graph=False,
         )
         assert ids == [4, 7, 10, 23]
 
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
-            ds.data, method={"n_clusters": 9}, random_state=42, make_graph=False
+            ds.data,
+            method={"n_clusters": 9},
+            random_state=random_state,
+            make_graph=False,
         )
         assert ids == [0, 3, 4, 6, 7, 10, 11, 12, 13]
 
-    def test_kmeans_sampleweights(self, open_dataset):
+    def test_kmeans_sampleweights(self, open_dataset, random_state):
         ds = open_dataset(self.nc_file)
         # Test sample weights
         sample_weights = np.ones(ds.data.shape[0])
@@ -351,7 +364,7 @@ class TestEnsembleReduction:
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_cutoff": 0.5},
-            random_state=42,
+            random_state=random_state,
             make_graph=False,
             sample_weights=sample_weights,
         )
@@ -365,17 +378,14 @@ class TestEnsembleReduction:
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_optimize": None},
-            random_state=0,
+            random_state=random_state,
             make_graph=False,
             sample_weights=sample_weights,
         )
 
-        if parse_version(__sklearn_version__) >= parse_version("1.3.0"):
-            assert ids == [4, 5, 7, 10, 12, 13]
-        else:
-            assert ids == [4, 5, 7, 10, 11, 12, 13]
+        assert ids == [4, 5, 7, 10, 11, 12, 13]
 
-    def test_kmeans_variweights(self, open_dataset):
+    def test_kmeans_variweights(self, open_dataset, random_state):
         pytest.importorskip("sklearn", minversion="0.24.1")
         ds = open_dataset(self.nc_file)
         # Test sample weights
@@ -386,7 +396,7 @@ class TestEnsembleReduction:
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_cutoff": 0.9},
-            random_state=42,
+            random_state=random_state,
             make_graph=False,
             variable_weights=var_weights,
         )
@@ -399,7 +409,7 @@ class TestEnsembleReduction:
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_optimize": None},
-            random_state=42,
+            random_state=random_state,
             make_graph=False,
             variable_weights=var_weights,
         )
@@ -407,7 +417,7 @@ class TestEnsembleReduction:
         assert all(np.isin([12, 13, 16], ids))
         assert len(ids) == 6
 
-    def test_kmeans_modelweights(self, open_dataset):
+    def test_kmeans_modelweights(self, open_dataset, random_state):
         ds = open_dataset(self.nc_file)
         # Test sample weights
         model_weights = np.ones(ds.data.shape[0])
@@ -417,7 +427,7 @@ class TestEnsembleReduction:
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"n_clusters": 4},
-            random_state=42,
+            random_state=random_state,
             make_graph=False,
             model_weights=model_weights,
         )
@@ -430,13 +440,16 @@ class TestEnsembleReduction:
     @pytest.mark.skipif(
         "matplotlib.pyplot" not in sys.modules, reason="matplotlib.pyplot is required"
     )
-    def test_kmeans_rsqcutoff_with_graphs(self, open_dataset):
+    def test_kmeans_rsqcutoff_with_graphs(self, open_dataset, random_state):
         pytest.importorskip("sklearn", minversion="0.24.1")
         ds = open_dataset(self.nc_file)
 
         # use random state variable to ensure consistent clustering in tests:
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
-            data=ds.data, method={"rsq_cutoff": 0.5}, random_state=42, make_graph=True
+            data=ds.data,
+            method={"rsq_cutoff": 0.5},
+            random_state=random_state,
+            make_graph=True,
         )
 
         assert ids == [4, 7, 10, 23]
@@ -445,7 +458,7 @@ class TestEnsembleReduction:
         [ids, cluster, fig_data] = ensembles.kmeans_reduce_ensemble(
             data=ds.data,
             method={"rsq_cutoff": 0.5},
-            random_state=42,
+            random_state=random_state,
             make_graph=True,
             max_clusters=3,
         )
@@ -531,13 +544,13 @@ class TestEnsembleReduction:
 
 # ## Tests for Robustness ##
 @pytest.fixture(params=[True, False])
-def robust_data(request):
+def robust_data(request, random):
     norm = get_dist("norm")
     ref = np.tile(
         np.array(
             [
-                norm.rvs(loc=274, scale=0.8, size=(40,), random_state=r)
-                for r in [101083, 19377, 473820, 483625]
+                norm.rvs(loc=274, scale=0.8, size=(40,), random_state=random)
+                for r in range(4)
             ]
         ),
         (4, 1, 1),
@@ -545,33 +558,33 @@ def robust_data(request):
     fut = np.array(
         [
             [
-                norm.rvs(loc=loc, scale=sc, size=(40,), random_state=r)
-                for loc, sc, r in shps
+                norm.rvs(loc=loc, scale=sc, size=(40,), random_state=random)
+                for loc, sc in shps
             ]
             for shps in (
                 [
-                    (274.0, 0.7, 176378),
-                    (274.0, 0.6, 839789),
-                    (274.0, 0.7, 393239),
-                    (275.6, 1.1, 747390),
+                    (274.0, 0.7),
+                    (274.0, 0.6),
+                    (274.0, 0.7),
+                    (275.6, 1.1),
                 ],  # 3 no change, 1 positive change
                 [
-                    (272.5, 1.2, 743920),
-                    (272.4, 0.8, 138489),
-                    (275.5, 0.8, 673683),
-                    (275.6, 1.1, 969383),
+                    (272.5, 1.2),
+                    (272.4, 0.8),
+                    (275.5, 0.8),
+                    (275.6, 1.1),
                 ],  # 2 neg change
                 [
-                    (275.6, 0.8, 696857),
-                    (275.8, 1.2, 379949),
-                    (276.5, 0.8, 268395),
-                    (277.6, 1.1, 456544),
+                    (275.6, 0.8),
+                    (275.8, 1.2),
+                    (276.5, 0.8),
+                    (277.6, 1.1),
                 ],  # All pos change
                 [
-                    (np.nan, 0.3, 746323),
-                    (np.nan, 1.2, 5643723),
-                    (275.5, 0.8, 118294),
-                    (275.6, 1.1, 574732),
+                    (np.nan, 0.3),
+                    (np.nan, 1.2),
+                    (275.5, 0.8),
+                    (275.6, 1.1),
                 ],  # Some NaN
             )
         ]
@@ -591,10 +604,10 @@ def robust_data(request):
     [
         (
             "ttest",
-            [0.25, 1, 1, 1],
-            [1, 0.5, 1, 1],
+            [0.75, 1, 1, 1],
+            [2 / 3, 0.5, 1, 1],
             [
-                [False, False, False, True],
+                [False, True, True, True],
                 [True, True, True, True],
                 [True, True, True, True],
                 [False, False, True, True],
@@ -615,10 +628,10 @@ def robust_data(request):
         ),
         (
             "mannwhitney-utest",
-            [0.25, 1, 1, 1],
-            [1, 0.5, 1, 1],
+            [0.5, 1, 1, 1],
+            [0.5, 0.5, 1, 1],
             [
-                [False, False, False, True],
+                [False, False, True, True],
                 [True, True, True, True],
                 [True, True, True, True],
                 [False, False, True, True],
@@ -627,13 +640,13 @@ def robust_data(request):
         ),
         (
             "brownforsythe-test",
-            [0.5, 0.25, 0.5, 0.5],
-            [0.5, 0.0, 1, 1],
+            [0.25, 0.25, 0.25, 0],
+            [1, 0.0, 1, np.nan],
             [
-                [False, True, False, True],
+                [False, True, False, False],
                 [True, False, False, False],
-                [False, True, False, True],
                 [False, False, False, True],
+                [False, False, False, False],
             ],
             {},
         ),
@@ -716,7 +729,7 @@ def test_change_significance_weighted(robust_data):
         pos_frac = pos_frac.tas
 
     np.testing.assert_array_equal(chng_frac, [1, 1, 1, 1])
-    np.testing.assert_array_almost_equal(pos_frac, [0.88541667, 0.88541667, 1.0, 1.0])
+    np.testing.assert_array_almost_equal(pos_frac, [0.53125, 0.88541667, 1.0, 1.0])
 
 
 def test_change_significance_delta(robust_data):
