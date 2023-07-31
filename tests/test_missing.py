@@ -16,18 +16,18 @@ K2C = 273.15
 class TestMissingBase:
     """The base class is well tested for daily input through the subclasses."""
 
-    def test_monthly_input(self):
+    def test_monthly_input(self, random):
         """Creating array with 11 months."""
         n = 11
         time = xr.cftime_range(start="2002-01-01", periods=n, freq="M")
-        ts = xr.DataArray(np.random.rand(n), dims="time", coords={"time": time})
+        ts = xr.DataArray(random.random(n), dims="time", coords={"time": time})
         mb = missing.MissingBase(ts, freq="YS", src_timestep="M")
         # Make sure count is 12, because we're requesting a YS freq.
         assert mb.count == 12
 
         n = 5
         time = xr.cftime_range(start="2002-06-01", periods=n, freq="MS")
-        ts = xr.DataArray(np.random.rand(n), dims="time", coords={"time": time})
+        ts = xr.DataArray(random.random(n), dims="time", coords={"time": time})
         mb = missing.MissingBase(ts, freq="AS", src_timestep="M", season="JJA")
         assert mb.count == 3
 

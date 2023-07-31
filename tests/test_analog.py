@@ -8,7 +8,6 @@ from numpy.testing import assert_almost_equal
 from pkg_resources import parse_version
 from scipy import __version__ as __scipy_version__
 from scipy import integrate, stats
-from sklearn import __version__ as __sklearn_version__
 from sklearn import datasets
 
 import xclim.analog as xca
@@ -42,16 +41,20 @@ def matlab_sample(n=30):
     return x, y
 
 
-def randn(mean, std, shape):
-    """Return a random normal sample with exact mean and standard deviation."""
-    r = np.random.randn(*shape)
-    r1 = r / r.std(0, ddof=1) * np.array(std)
-    return r1 - r1.mean(0) + np.array(mean)
+@pytest.fixture
+def exact_randn(random):
+    def _randn(mean, std, shape):
+        """Return a random normal sample with exact mean and standard deviation."""
+        r = random.standard_normal(shape)
+        r1 = r / r.std(0, ddof=1) * np.array(std)
+        return r1 - r1.mean(0) + np.array(mean)
+
+    return _randn
 
 
-def test_randn():
+def test_exact_randn(exact_randn):
     mu, std = [2, 3], [1, 2]
-    r = randn(mu, std, [10, 2])
+    r = exact_randn(mu, std, [10, 2])
     assert_almost_equal(r.mean(0), mu)
     assert_almost_equal(r.std(0, ddof=1), std)
 
@@ -116,18 +119,18 @@ def test_spatial_analogs_multi_index(open_dataset):
 
 
 class TestSEuclidean:
-    def test_simple(self):
+    def test_simple(self, exact_randn):
         d = 2
         n, m = 25, 30
 
-        x = randn(0, 1, (n, d))
-        y = randn([1, 2], 1, (m, d))
+        x = exact_randn(0, 1, (n, d))
+        y = exact_randn([1, 2], 1, (m, d))
         dm = xca.seuclidean(x, y)
         assert_almost_equal(dm, np.hypot(1, 2), 2)
 
         # Variance of the candidate sample does not affect answer.
-        x = randn(0, 1, (n, d))
-        y = randn([1, 2], 2, (m, d))
+        x = exact_randn(0, 1, (n, d))
+        y = exact_randn([1, 2], 2, (m, d))
         dm = xca.seuclidean(x, y)
         assert_almost_equal(dm, np.hypot(1, 2), 2)
 
@@ -142,12 +145,11 @@ class TestSEuclidean:
     reason="Not supported in scipy<1.6.0",
 )
 class TestNN:
-    def test_simple(self):
+    def test_simple(self, random):
         d = 2
         n, m = 200, 200
-        np.random.seed(1)
-        x = np.random.randn(n, d)
-        y = np.random.randn(m, d)
+        x = random.standard_normal((n, d))
+        y = random.standard_normal((m, d))
 
         # Almost identical samples
         dm = xca.nearest_neighbor(x + 0.001, x)
@@ -168,12 +170,12 @@ class TestNN:
 
 
 class TestZAE:
-    def test_simple(self):
+    def test_simple(self, random):
         d = 2
         n = 200
         # m = 200
-        x = np.random.randn(n, d)
-        # y = np.random.randn(m, d)
+        x = random.standard_normal((n, d))
+        # y = random.standard_normal(m, d)
 
         # Almost identical samples
         dm = xca.zech_aslan(x + 0.001, x)
@@ -207,10 +209,10 @@ class TestFR:
 
 
 class TestKS:
-    def test_1D_ks_2samp(self):
+    def test_1D_ks_2samp(self, random):
         # Compare with scipy.stats.ks_2samp
-        x = np.random.randn(50) + 1
-        y = np.random.randn(50)
+        x = random.standard_normal(50) + 1
+        y = random.standard_normal(50)
         s, p = stats.ks_2samp(x, y)
         dm = xca.kolmogorov_smirnov(x, y)
         assert_almost_equal(dm, s, 3)
@@ -250,58 +252,43 @@ def analytical_KLDiv(p, q):
 )
 class TestKLDIV:
     #
-    def test_against_analytic(self):
+    def test_against_analytic(self, random):
         p = stats.norm(2, 1)
         q = stats.norm(2.6, 1.4)
 
         ra = analytical_KLDiv(p, q)
 
         N = 10000
-        np.random.seed(2)
-        # x, y = p.rvs(N), q.rvs(N)
+        # x, y = p.rvs(N, random_state=random), q.rvs(N, random_state=random)
 
-        re = xca.kldiv(p.rvs(N), q.rvs(N))
+        re = xca.kldiv(p.rvs(N, random_state=random), q.rvs(N, random_state=random))
 
         assert_almost_equal(re, ra, 1)
 
-    def accuracy_vs_kth(self, n=100, trials=100):
-        """Evalute the accuracy of the algorithm as a function of k.
-
-        Parameters
-        ----------
-        N : int
-          Number of random samples.
-        trials : int
-          Number of independent drawing experiments.
-
-        Returns
-        -------
-        (err, stddev) The mean error and standard deviation around the
-        analytical value for different values of k from 1 to 15.
-        """
+    def test_accuracy(self, random):
         p = stats.norm(0, 1)
         q = stats.norm(0.2, 0.9)
 
         k = np.arange(1, 16)
 
         out = []
-        for i in range(trials):
-            out.append(xca.kldiv(p.rvs(n), q.rvs(n), k=k))
+        n = 500
+        for i in range(500):
+            out.append(
+                xca.kldiv(
+                    p.rvs(n, random_state=random), q.rvs(n, random_state=random), k=k
+                )
+            )
         out = np.array(out)
 
         # Compare with analytical value
         err = out - analytical_KLDiv(p, q)
 
-        # Return mean and standard deviation
-        return err.mean(0), err.std(0)
-
-    #
-    def test_accuracy(self):
-        m, _ = self.accuracy_vs_kth(n=500, trials=500)
+        m = err.mean(0)
         assert_almost_equal(np.mean(m[0:2]), 0, 2)
 
     #
-    def test_different_sample_size(self):
+    def test_different_sample_size(self, random):
         p = stats.norm(2, 1)
         q = stats.norm(2.6, 1.4)
 
@@ -309,25 +296,32 @@ class TestKLDIV:
 
         n = 6000
         # Same sample size for x and y
-        re = [xca.kldiv(p.rvs(n), q.rvs(n)) for i in range(30)]
+        re = [
+            xca.kldiv(p.rvs(n, random_state=random), q.rvs(n, random_state=random))
+            for i in range(30)
+        ]
         assert_almost_equal(np.mean(re), ra, 2)
 
         # Different sample sizes
-        re = [xca.kldiv(p.rvs(n * 2), q.rvs(n)) for i in range(30)]
+        re = [
+            xca.kldiv(p.rvs(n * 2, random_state=random), q.rvs(n, random_state=random))
+            for i in range(30)
+        ]
         assert_almost_equal(np.mean(re), ra, 2)
 
-        re = [xca.kldiv(p.rvs(n), q.rvs(n * 2)) for i in range(30)]
+        re = [
+            xca.kldiv(p.rvs(n, random_state=random), q.rvs(n * 2, random_state=random))
+            for i in range(30)
+        ]
         assert_almost_equal(np.mean(re), ra, 2)
 
     #
-    def test_mvnormal(self):
+    def test_mvnormal(self, random):
         """Compare the results to the figure 2 in the paper."""
-        from numpy.random import multivariate_normal, normal
 
         n = 30000
-        p = normal(0, 1, size=(n, 2))
-        np.random.seed(1)
-        q = multivariate_normal([0.5, -0.5], [[0.5, 0.1], [0.1, 0.3]], size=n)
+        p = random.normal(0, 1, size=(n, 2))
+        q = random.multivariate_normal([0.5, -0.5], [[0.5, 0.1], [0.1, 0.3]], size=n)
 
         assert_almost_equal(xca.kldiv(p, q), 1.39, 1)
         assert_almost_equal(xca.kldiv(q, p), 0.62, 1)
