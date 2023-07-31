@@ -25,6 +25,7 @@ Contributors
 * Clair Barnes <clair.barnes.16@ucl.ac.uk> `@clairbarnes <https://github.com/clairbarnes>`_
 * Alexis Beaupré-Laperrière `@Beauprel <https://github.com/Beauprel>`_
 * Sébastien Biner `@sbiner <https://github.com/sbiner>`_
+* Marco Braun <Braun.Marco@ouranos.ca> `@vindelico <https://github.com/vindelico>`_
 * David Caron `@davidcaron <https://github.com/davidcaron>`_
 * Carsten Ehbrecht <ehbrecht@dkrz.de> `@cehbrecht <https://github.com/cehbrecht>`_
 * Jeremy Fyke `@jeremyfyke <https://github.com/jeremyfyke>`_
@@ -39,4 +40,4 @@ Contributors
 * Ag Stephens <ag.stephens@stfc.ac.uk> `@agstephens <https://github.com/agstephens>`_
 * Maliko Tanguy <malngu@ceh.ac.uk> `@malngu <https://github.com/malngu>`_
 * Christopher Whelan `@qwhelan <https://github.com/qwhelan>`_
-* Marco Braun <Braun.Marco@ouranos.ca> `@vindelico <https://github.com/vindelico>`_
+
