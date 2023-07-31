@@ -11,6 +11,7 @@ class TestFit:
         ts = generic.stats(pr, freq="YS", op="max")
         p = generic.fit(ts, dist="gumbel_r")
         assert p.attrs["estimator"] == "Maximum likelihood"
+        assert "time" not in p.dims
 
     def test_nan(self, pr_series, random):
         r = random.random(22)
@@ -18,7 +19,10 @@ class TestFit:
         pr = pr_series(r)
 
         out = generic.fit(pr, dist="norm")
-        assert not np.isnan(out.values[0])
+        assert np.isnan(out.values[0])
+        with set_options(check_missing="skip"):
+            out = generic.fit(pr, dist="norm")
+            assert not np.isnan(out.values[0])
 
     def test_ndim(self, pr_ndseries, random):
         pr = pr_ndseries(random.random((100, 1, 2)))
@@ -28,6 +32,9 @@ class TestFit:
 
     def test_options(self, q_series, random):
         q = q_series(random.random(19))
+        out = generic.fit(q, dist="norm")
+        np.testing.assert_array_equal(out.isnull(), False)
+
         with set_options(missing_options={"at_least_n": {"n": 10}}):
             out = generic.fit(q, dist="norm")
         np.testing.assert_array_equal(out.isnull(), False)

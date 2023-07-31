@@ -27,7 +27,7 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 
-from .calendar import date_range, get_calendar, select_time
+from .calendar import date_range, get_calendar, parse_offset, select_time
 from .options import (
     CHECK_MISSING,
     MISSING_METHODS,
@@ -106,8 +106,8 @@ class MissingBase:
         freq : str
             Resampling frequency defining the periods defined in
             https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
-        src_timestep : {"D", "H"}
-            Expected input frequency.
+        src_timestep : str
+            Expected input frequency. See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
         \*\*indexer : {dim: indexer}, optional
             Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
             values, month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given,
@@ -142,7 +142,7 @@ class MissingBase:
             start_time = i[:1]
             end_time = i[-1:]
 
-        if indexer or "M" in src_timestep:
+        if indexer or parse_offset(src_timestep)[1] in "YAQM":
             # Create a full synthetic time series and compare the number of days with the original series.
             t = date_range(
                 start_time[0],

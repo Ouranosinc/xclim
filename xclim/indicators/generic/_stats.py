@@ -27,7 +27,6 @@ fit = Generic(
     cell_methods="time: fit",
     compute=_fit,
     src_freq=None,
-    missing="skip",
 )
 
 
@@ -41,7 +40,6 @@ return_level = Generic(
     abstract="Frequency analysis on the basis of a given mode and distribution.",
     compute=frequency_analysis,
     src_freq="D",
-    missing="skip",
 )
 
 
