@@ -87,8 +87,9 @@ class TestStats:
         assert out.attrs["units"] == "m3 s-1"
 
     def test_missing(self, ndq_series):
-        a = ndq_series
-        a = ndq_series.where(~((a.time.dt.dayofyear == 5) * (a.time.dt.year == 1902)))
+        a = ndq_series.where(
+            ~((ndq_series.time.dt.dayofyear == 5) & (ndq_series.time.dt.year == 1902))
+        )
         assert a.shape == (5000, 2, 3)
         out = generic.stats(a, op="max", month=1)
 

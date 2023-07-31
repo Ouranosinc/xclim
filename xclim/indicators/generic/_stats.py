@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from xclim.core.indicator import Indicator, ResamplingIndicator
+from xclim.core.indicator import CheckMissingIndicator, ResamplingIndicator
 from xclim.indices.generic import select_resample_op
 from xclim.indices.stats import fit as _fit
 from xclim.indices.stats import frequency_analysis
@@ -8,7 +8,7 @@ from xclim.indices.stats import frequency_analysis
 __all__ = ["fit", "return_level", "stats"]
 
 
-class Generic(Indicator):
+class Generic(CheckMissingIndicator):
     realm = "generic"
 
 
@@ -27,10 +27,11 @@ fit = Generic(
     cell_methods="time: fit",
     compute=_fit,
     src_freq=None,
+    missing="skip",
 )
 
 
-return_level = GenericResampling(
+return_level = Generic(
     title="Return level from frequency analysis",
     identifier="return_level",
     var_name="fa_{window}{mode:r}{indexer}",
@@ -51,6 +52,5 @@ stats = GenericResampling(
     long_name="Daily statistics",
     description="{freq} {op} of daily values ({indexer}).",
     compute=select_resample_op,
-    missing="any",
     src_freq="D",
 )
