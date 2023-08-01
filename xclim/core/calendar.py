@@ -40,6 +40,7 @@ __all__ = [
     "get_calendar",
     "interp_calendar",
     "max_doy",
+    "offset_is_divisor",
     "parse_offset",
     "percentile_doy",
     "resample_doy",
@@ -832,6 +833,58 @@ def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | N
     return (
         f"{mult if mult > 1 else ''}{base}{start}{'-' if anchor else ''}{anchor or ''}"
     )
+
+
+def offset_is_divisor(freqA: str, freqB: str):
+    """Check that freqA is a divisor of freqB.
+
+    A frequency is a "divisor" of another if a whole number of periods of the
+    former fit within a single period of the latter.
+
+    Parameters
+    ----------
+    freqA: str
+      The divisor frequency.
+    freqB: str
+      The large frequency.
+
+    Returns
+    -------
+    bool
+
+    Examples
+    --------
+    >>> offset_is_divisor("QS-Jan", "YS")
+    True
+    >>> offset_is_divisor("QS-DEC", "AS-JUL")
+    False
+    >>> offset_is_divisor("D", "M")
+    True
+    """
+    if compare_offsets(freqA, ">", freqB):
+        return False
+    # Reconstruct offsets anchored at the start of the period
+    # to have comparable quantities, also get "offset" objects
+    mA, bA, sA, aA = parse_offset(freqA)
+    offAs = pd.tseries.frequencies.to_offset(construct_offset(mA, bA, True, aA))
+
+    mB, bB, sB, aB = parse_offset(freqB)
+    offBs = pd.tseries.frequencies.to_offset(construct_offset(mB, bB, True, aB))
+    tB = pd.date_range("1970-01-01T00:00:00", freq=offBs, periods=13)
+
+    if bA in "WDHTLUN" or bB in "WDHTLUN":
+        # Simple length comparison is sufficient for submonthly freqs
+        # In case one of bA or bB is > W, we test many to be sure.
+        tA = pd.date_range("1970-01-01T00:00:00", freq=offAs, periods=13)
+        return np.all(
+            (np.diff(tB)[:, np.newaxis] / np.diff(tA)[np.newaxis, :]) % 1 == 0
+        )
+
+    # else, we test alignment with some real dates
+    # If both fall on offAs, then is means freqA is aligned with freqB at those dates
+    # if N=13 is True, then it is always True
+    # As freqA <= freqB, this means freqA is a "divisor" of freqB.
+    return all(offAs.is_on_offset(d) for d in tB)
 
 
 def _interpolate_doy_calendar(

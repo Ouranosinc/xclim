@@ -27,7 +27,13 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 
-from .calendar import date_range, get_calendar, parse_offset, select_time
+from .calendar import (
+    date_range,
+    get_calendar,
+    offset_is_divisor,
+    parse_offset,
+    select_time,
+)
 from .options import (
     CHECK_MISSING,
     MISSING_METHODS,
@@ -142,7 +148,14 @@ class MissingBase:
             start_time = i[:1]
             end_time = i[-1:]
 
-        if indexer or parse_offset(src_timestep)[1] in "YAQM":
+        if freq is not None and not offset_is_divisor(src_timestep, freq):
+            raise NotImplementedError(
+                "Missing checks not implemented for timeseries resampled to a frequency that is not "
+                f"aligned with the source timestep. {src_timestep} is not a divisor of {freq}."
+            )
+
+        offset = parse_offset(src_timestep)
+        if indexer or offset[1] in "YAQM":
             # Create a full synthetic time series and compare the number of days with the original series.
             t = date_range(
                 start_time[0],
