@@ -64,13 +64,13 @@ def test_custom_indices(open_dataset):
     schema = yamale.make_schema(
         Path(__file__).parent.parent / "xclim" / "data" / "schema.yml"
     )
-    data = yamale.make_data(nbpath / "example.yml")
+    data = yamale.make_data(nbpath / "example" / "example.yml")
     yamale.validate(schema, data)
 
     pr = open_dataset("ERA5/daily_surface_cancities_1990-1993.nc").pr
 
     # This tests load_module with a python file that is _not_ on the PATH
-    example = load_module(nbpath / "example.py")
+    example = load_module(nbpath / "example" / "example.py")
 
     # Fron module
     ex1 = build_indicator_module_from_yaml(
@@ -85,7 +85,7 @@ def test_custom_indices(open_dataset):
         "extreme_precip_accumulation_and_days": example.extreme_precip_accumulation_and_days
     }
     ex2 = build_indicator_module_from_yaml(
-        nbpath / "example.yml", name="ex2", indices=exinds
+        nbpath / "example" / "example.yml", name="ex2", indices=exinds
     )
 
     assert ex1.R95p.__doc__ == ex2.R95p.__doc__  # noqa
@@ -103,8 +103,10 @@ def test_custom_indices(open_dataset):
 
     # Error when missing
     with pytest.raises(ImportError, match="extreme_precip_accumulation_and_days"):
-        build_indicator_module_from_yaml(nbpath / "example.yml", name="ex3")
-    build_indicator_module_from_yaml(nbpath / "example.yml", name="ex4", mode="ignore")
+        build_indicator_module_from_yaml(nbpath / "example" / "example.yml", name="ex3")
+    build_indicator_module_from_yaml(
+        nbpath / "example" / "example.yml", name="ex4", mode="ignore"
+    )
 
 
 @pytest.mark.requires_docs
@@ -112,7 +114,9 @@ def test_indicator_module_translations():
     # Use the example in the Extending Xclim notebook for testing.
     notebook_path = Path(__file__).parent.parent / "docs" / "notebooks"
 
-    ex = build_indicator_module_from_yaml(notebook_path / "example", name="ex_trans")
+    ex = build_indicator_module_from_yaml(
+        notebook_path / "example" / "example", name="ex_trans"
+    )
     assert ex.RX5day_canopy.translate_attrs("fr")["cf_attrs"][0][
         "long_name"
     ].startswith("Cumul maximal")
@@ -124,7 +128,9 @@ def test_indicator_module_translations():
 @pytest.mark.requires_docs
 def test_indicator_module_input_mapping(atmosds):
     notebook_path = Path(__file__).parent.parent / "docs" / "notebooks"
-    ex = build_indicator_module_from_yaml(notebook_path / "example", name="ex_input")
+    ex = build_indicator_module_from_yaml(
+        notebook_path / "example" / "example", name="ex_input"
+    )
     prveg = atmosds.pr.rename("prveg").assign_attrs(
         standard_name="precipitation_flux_onto_canopy"
     )
@@ -136,16 +142,16 @@ def test_indicator_module_input_mapping(atmosds):
 @pytest.mark.requires_docs
 def test_build_indicator_module_from_yaml_edge_cases():
     # Use the example in the Extending Xclim notebook for testing.
-    nbpath = Path(__file__).parent.parent / "docs" / "notebooks"
+    example_path = Path(__file__).parent.parent / "docs" / "notebooks" / "example"
 
     # All from paths but one
     ex5 = build_indicator_module_from_yaml(
-        nbpath / "example.yml",
-        indices=nbpath / "example.py",
+        example_path / "example.yml",
+        indices=example_path / "example.py",
         translations={
-            "fr": nbpath / "example.fr.json",
-            "ru": str(nbpath / "example.fr.json"),
-            "eo": read_locale_file(nbpath / "example.fr.json", module="ex5"),
+            "fr": example_path / "example.fr.json",
+            "ru": str(example_path / "example.fr.json"),
+            "eo": read_locale_file(example_path / "example.fr.json", module="ex5"),
         },
         name="ex5",
     )
