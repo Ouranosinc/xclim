@@ -33,6 +33,7 @@ dynamic = ["description", "version"]
 dependencies = [
   "boltons>=20.1",
   "bottleneck>=1.3.1",
+  # cf-xarray is differently named on conda-forge
   "cf-xarray>=0.6.1",
   "cftime>=1.4.1",
   "Click>=8.1",
@@ -110,7 +111,10 @@ xclim = "xclim.cli:cli"
 
 [tool.black]
 target-version = [
-  "py38"
+  "py38",
+  "py39",
+  "py310",
+  "py311"
 ]
 
 [tool.coverage.run]
