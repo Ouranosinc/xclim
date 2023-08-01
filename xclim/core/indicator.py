@@ -604,18 +604,11 @@ class Indicator(IndicatorRegistrar):
 
     @classmethod
     def _ensure_correct_parameters(cls, parameters):
-        """Ensure the parameters are correctly set and ordered.
-
-        Sets the correct variable default to be sure.
-        """
+        """Ensure the parameters are correctly set and ordered."""
+        # Set default values, otherwise the signature binding chokes
+        # on missing arguments when passing only `ds`.
         for name, meta in parameters.items():
             if not meta.injected:
-                # if meta.kind <= InputKind.OPTIONAL_VARIABLE and meta.units is _empty:
-                #     raise ValueError(
-                #         f"Input variable {name} is missing expected units. Units are "
-                #         "parsed either from the declare_units decorator or from the "
-                #         "variable mapping (arg name to CMIP6 name) passed in `input`"
-                #     )
                 if meta.kind == InputKind.OPTIONAL_VARIABLE:
                     meta.default = None
                 elif meta.kind in [InputKind.VARIABLE]:
@@ -923,23 +916,27 @@ class Indicator(IndicatorRegistrar):
     def _assign_named_args(self, ba):
         """Assign inputs passed as strings from ds."""
         ds = ba.arguments.get("ds")
-        for name in list(ba.arguments.keys()):
-            if self.parameters[name].kind <= InputKind.OPTIONAL_VARIABLE and isinstance(
-                ba.arguments[name], str
-            ):
-                if ds is not None:
-                    try:
-                        ba.arguments[name] = ds[ba.arguments[name]]
-                    except KeyError as err:
-                        raise MissingVariableError(
-                            f"For input '{name}', variable '{ba.arguments[name]}' "
-                            "was not found in the input dataset."
-                        ) from err
-                else:
+
+        for name, val in ba.arguments.items():
+            kind = self.parameters[name].kind
+
+            if kind <= InputKind.OPTIONAL_VARIABLE:
+                if isinstance(val, str) and ds is None:
                     raise ValueError(
                         "Passing variable names as string requires giving the `ds` "
-                        f"dataset (got {name}='{ba.arguments[name]}')"
+                        f"dataset (got {name}='{val}')"
                     )
+                if (isinstance(val, str) or val is None) and ds is not None:
+                    # Set default name for DataArray
+                    key = val or name
+
+                    if key in ds:
+                        ba.arguments[name] = ds[key]
+                    elif kind == InputKind.VARIABLE:
+                        raise MissingVariableError(
+                            f"For input '{name}', variable '{key}' "
+                            "was not found in the input dataset."
+                        )
 
     def _preprocess_and_checks(self, das, params):
         """Actions to be done after parsing the arguments and before computing."""
@@ -1709,11 +1706,10 @@ def build_indicator_module_from_yaml(
         """Merge or replace attribute in dbase from dextra."""
         a = dbase.get(attr)
         b = dextra.get(attr)
-        # If both are not None and sep is a string, join.
-        if a and b and sep is not None:
+        # If both are not None, join.
+        if a and b:
             dbase[attr] = sep.join([a, b])
-        # If both are not None but sep is, this overrides with b
-        # also fills when a is simply missing
+        # Otherwise, if a is None, but not b, replace.
         elif b:
             dbase[attr] = b
 
@@ -1753,7 +1749,8 @@ def build_indicator_module_from_yaml(
 
             _merge_attrs(data, defkwargs, "references", "\n")
             _merge_attrs(data, defkwargs, "keywords", " ")
-            _merge_attrs(data, defkwargs, "realm", None)
+            if data.get("realm") is None and defkwargs.get("realm") is not None:
+                data["realm"] = defkwargs["realm"]
 
             mapping[identifier] = Indicator.from_dict(
                 data, identifier=identifier, module=module_name
