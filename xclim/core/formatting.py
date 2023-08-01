@@ -8,6 +8,7 @@ import datetime as dt
 import itertools
 import re
 import string
+import warnings
 from ast import literal_eval
 from fnmatch import fnmatch
 from inspect import _empty, signature  # noqa
@@ -61,14 +62,14 @@ class AttrFormatter(string.Formatter):
         self.modifiers = modifiers
         self.mapping = mapping
 
-    def format(self, format_string: str, /, *args: Any, **kwargs: dict) -> str:
+    def format(self, format_string: str, /, *args: Any, **kwargs: Any) -> str:
         r"""Format a string.
 
         Parameters
         ----------
         format_string: str
         \*args: Any
-        \*\*kwargs
+        \*\*kwargs: Any
 
         Returns
         -------
@@ -192,12 +193,12 @@ def parse_doc(doc: str) -> dict[str, str]:
     Parameters
     ----------
     doc : str
-      The docstring of an indice function.
+        The docstring of an indice function.
 
     Returns
     -------
     dict
-      A dictionary with all parsed sections.
+        A dictionary with all parsed sections.
     """
     if doc is None:
         return {}
@@ -335,29 +336,29 @@ def update_history(
     hist_str: str,
     *inputs_list: Sequence[xr.DataArray | xr.Dataset],
     new_name: str | None = None,
-    **inputs_kws: dict[str, xr.DataArray | xr.Dataset],
+    **inputs_kws: xr.DataArray | xr.Dataset,
 ):
-    """Return a history string with the timestamped message and the combination of the history of all inputs.
+    r"""Return a history string with the timestamped message and the combination of the history of all inputs.
 
     The new history entry is formatted as "[<timestamp>] <new_name>: <hist_str> - xclim version: <xclim.__version__>."
 
     Parameters
     ----------
     hist_str : str
-      The string describing what has been done on the data.
+        The string describing what has been done on the data.
     new_name : Optional[str]
-      The name of the newly created variable or dataset to prefix hist_msg.
-    inputs_list : Sequence[Union[xr.DataArray, xr.Dataset]]
-      The datasets or variables that were used to produce the new object.
-      Inputs given that way will be prefixed by their "name" attribute if available.
-    inputs_kws : dict[str, Union[xr.DataArray, xr.Dataset]]
-      Mapping from names to the datasets or variables that were used to produce the new object.
-      Inputs given that way will be prefixes by the passed name.
+        The name of the newly created variable or dataset to prefix hist_msg.
+    \*inputs_list : Sequence[Union[xr.DataArray, xr.Dataset]]
+        The datasets or variables that were used to produce the new object.
+        Inputs given that way will be prefixed by their "name" attribute if available.
+    \*\*inputs_kws : Union[xr.DataArray, xr.Dataset]
+        Mapping from names to the datasets or variables that were used to produce the new object.
+        Inputs given that way will be prefixes by the passed name.
 
     Returns
     -------
     str
-      The combine history of all inputs starting with `hist_str`.
+        The combine history of all inputs starting with `hist_str`.
 
     See Also
     --------
@@ -438,9 +439,9 @@ def gen_call_string(funcname: str, *args, **kwargs):
     Parameters
     ----------
     funcname : str
-      Name of the function
+        Name of the function
     args, kwargs
-      Arguments given to the function.
+        Arguments given to the function.
 
     Example
     -------
@@ -474,16 +475,16 @@ def prefix_attrs(source: dict, keys: Sequence, prefix: str):
     Parameters
     ----------
     source : dict
-      Source dictionary, for example data attributes.
+        Source dictionary, for example data attributes.
     keys : sequence
-      Names of keys to prefix.
+        Names of keys to prefix.
     prefix : str
-      Prefix to prepend to keys.
+        Prefix to prepend to keys.
 
     Returns
     -------
     dict
-      Dictionary of attributes with some keys prefixed.
+        Dictionary of attributes with some keys prefixed.
     """
     out = {}
     for key, val in source.items():
@@ -500,16 +501,16 @@ def unprefix_attrs(source: dict, keys: Sequence, prefix: str):
     Parameters
     ----------
     source : dict
-      Source dictionary, for example data attributes.
+        Source dictionary, for example data attributes.
     keys : sequence
-      Names of original keys for which prefix should be removed.
+        Names of original keys for which prefix should be removed.
     prefix : str
-      Prefix to remove from keys.
+        Prefix to remove from keys.
 
     Returns
     -------
     dict
-      Dictionary of attributes whose keys were prefixed, with prefix removed.
+        Dictionary of attributes whose keys were prefixed, with prefix removed.
     """
     out = {}
     n = len(prefix)
@@ -545,20 +546,20 @@ def _gen_parameters_section(parameters: dict, allowed_periods: list[str] = None)
     Parameters
     ----------
     parameters : dict
-      Parameters dictionary (`Ind.parameters`).
+        Parameters dictionary (`Ind.parameters`).
     allowed_periods : List[str], optional
-      Restrict parameters to specific periods. Default: None.
+        Restrict parameters to specific periods. Default: None.
     """
     section = "Parameters\n----------\n"
     for name, param in parameters.items():
-        descstr = param.description
+        desc_str = param.description
         if param.kind == InputKind.FREQ_STR:
-            descstr += (
+            desc_str += (
                 " See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset"
                 "-aliases for available options."
             )
             if allowed_periods is not None:
-                descstr += (
+                desc_str += (
                     f" Restricted to frequencies equivalent to one of {allowed_periods}"
                 )
         if param.kind == InputKind.VARIABLE:
@@ -567,6 +568,9 @@ def _gen_parameters_section(parameters: dict, allowed_periods: list[str] = None)
             defstr = ""
         elif param.default is not _empty:
             defstr = f"Default : {param.default}. "
+        else:
+            warnings.warn("No default value for InputKind. Setting to empty string.")
+            defstr = ""
         if "choices" in param:
             annotstr = str(param.choices)
         else:
@@ -575,7 +579,7 @@ def _gen_parameters_section(parameters: dict, allowed_periods: list[str] = None)
             unitstr = f"[Required units : {param.units}]"
         else:
             unitstr = ""
-        section += f"{name} : {annotstr}\n  {descstr}\n  {defstr}{unitstr}\n"
+        section += f"{name} : {annotstr}\n  {desc_str}\n  {defstr}{unitstr}\n"
     return section
 
 
@@ -611,7 +615,8 @@ def generate_indicator_docstring(ind) -> str:
 
     Parameters
     ----------
-    ind: Indicator instance
+    ind
+        Indicator instance
 
     Returns
     -------
@@ -654,10 +659,10 @@ def get_percentile_metadata(data: xr.DataArray, prefix: str) -> dict[str, str]:
 
     Parameters
     ----------
-    data: xr.DataArray
+    data : xr.DataArray
         Must be a percentile DataArray, this means the necessary metadata
         must be available in its attributes and coordinates.
-    prefix: str
+    prefix : str
         The prefix to be used in the metadata key.
         Usually this takes the form of "tasmin_per" or equivalent.
 
