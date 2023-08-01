@@ -37,6 +37,7 @@ clean-build: ## remove build artifacts
 clean-docs: ## remove docs artifacts
 	rm -f docs/apidoc/xclim*.rst
 	rm -f docs/apidoc/modules.rst
+	rm -f docs/notebooks/data/*.nc
 	$(MAKE) -C docs clean
 
 clean-pyc: ## remove Python file artifacts
