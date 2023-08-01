@@ -1223,7 +1223,11 @@ def _get_standardized_index(da, params, **indexer):
     )
     # A cdf value of 0 or 1 gives ±np.inf when inverted to the normal distribution.
     # The neighbouring values 0.00...1 and 0.99...9 with a float64 give a standardized index of ± 8.21
-    # We use this index as reference for maximal/minimal standardized values
+    # We use this index as reference for maximal/minimal standardized values.
+    # Smaller values of standardized index could also be used as bounds. For example, [Guttman, 1999]
+    # notes that precipitation events (over a month/season) generally occur less than 100 times in the US.
+    # Values of standardized index outside the range [-3.09, 3.09] correspond to probabilities smaller than 0.001
+    # or greater than 0.999, which could be considered non-statistically relevant for this sample size.
     std_index = std_index.clip(-8.21, 8.21)
     return std_index
 
