@@ -582,7 +582,7 @@ def to_agg_units(
     >>> degdays.units
     'K d'
     """
-    if op in ["min", "max", "mean", "std"]:
+    if op in ["amin", "min", "amax", "max", "mean", "std"]:
         out.attrs["units"] = orig.attrs["units"] if "units" in orig.attrs else ""
 
     elif op in ["doymin", "doymax"]:
