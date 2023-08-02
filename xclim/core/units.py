@@ -529,7 +529,7 @@ def to_agg_units(
     orig : xr.DataArray
         The original array before the aggregation operation,
         used to infer the sampling units and get the variable units.
-    op : {'min', 'max', 'mean', 'doymin', 'doymax',  'count', 'prod', 'delta_prod'}
+    op : {'min', 'max', 'mean', 'std', 'doymin', 'doymax',  'count', 'prod', 'delta_prod'}
         The type of aggregation operation performed. The special "delta_*" ops are used
         with temperature units needing conversion to their "delta" counterparts (e.g. degree days)
     dim : str
@@ -582,7 +582,7 @@ def to_agg_units(
     >>> degdays.units
     'K d'
     """
-    if op in ["min", "max", "mean"]:
+    if op in ["min", "max", "mean", "std"]:
         out.attrs["units"] = orig.attrs["units"] if "units" in orig.attrs else ""
 
     elif op in ["doymin", "doymax"]:
@@ -605,7 +605,7 @@ def to_agg_units(
             out.attrs["units"] = pint2cfunits((orig_u - orig_u) * freq_u)
     else:
         raise ValueError(
-            f"Aggregation op {op} not in [min, max, mean, doymin, doymax, count, prod, delta_prod,  ]."
+            f"Aggregation op {op} not in [min, max, mean, std, doymin, doymax, count, prod, delta_prod]."
         )
 
     return out
