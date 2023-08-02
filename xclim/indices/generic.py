@@ -89,8 +89,8 @@ def select_resample_op(
     r = da.resample(time=freq)
     if isinstance(op, str):
         return getattr(r, op)(dim="time", keep_attrs=True)
-
-    return r.map(op).assign_attrs(da.attrs)
+    with xr.set_options(keep_attrs=True):
+        return r.map(op)
 
 
 def doymax(da: xr.DataArray) -> xr.DataArray:
