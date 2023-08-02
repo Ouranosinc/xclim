@@ -4,7 +4,7 @@ Changelog
 
 v0.45.0 (unreleased)
 --------------------
-Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user: `juliettelavoie`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Marco Braun (:user:`vindelico`), Éric Dupuis (:user: `coxipi`).
+Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Marco Braun (:user:`vindelico`), Éric Dupuis (:user:`coxipi`).
 
 New indicators
 ^^^^^^^^^^^^^^
@@ -31,7 +31,7 @@ Internal changes
 * Increased the guess of number of quantiles needed in ExtremeValues. (:pull:`1413`).
 * Tolerance thresholds for error in ``test_processing::test_adapt_freq`` have been relaxed to allow for more variation in the results. (:issue:`1417`, :pull:`1418`).
 * Added 'streamflow' to the list of known variables (:pull:`1431`).
-* Refactoring (:pull:`1443`, :issue:`1386`) :
+* Refactoring of index backend calculations (:pull:`1443`, :issue:`1386`) :
     * Use ``xclim.indices.generic.select_resample_op`` for `{tg|tn|tx}_{max|mean|min}` , `max_1day_precipitation_amount`, `{snw|snd}_max`
     * Directly use `{cold|hot}_spell_max_length` in `maximum_consecutive_{frost|tx}_days`
 

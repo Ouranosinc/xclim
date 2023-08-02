@@ -114,7 +114,7 @@ def snd_max(snd: xarray.DataArray, freq: str = "AS-JUL") -> xarray.DataArray:
     ----------
     snw : xarray.DataArray
         Snow depth (mass per area).
-    freq: str
+    freq : str
         Resampling frequency.
 
     Returns
