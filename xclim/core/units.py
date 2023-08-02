@@ -15,6 +15,7 @@ from importlib.resources import open_text
 from inspect import _empty, signature  # noqa
 from typing import Any, Callable
 
+import numpy as np
 import pint
 import xarray as xr
 from boltons.funcutils import wraps
@@ -528,7 +529,7 @@ def to_agg_units(
     orig : xr.DataArray
         The original array before the aggregation operation,
         used to infer the sampling units and get the variable units.
-    op : {'count', 'prod', 'delta_prod'}
+    op : {'min', 'max', 'mean', 'doymin', 'doymax',  'count', 'prod', 'delta_prod'}
         The type of aggregation operation performed. The special "delta_*" ops are used
         with temperature units needing conversion to their "delta" counterparts (e.g. degree days)
     dim : str
@@ -581,19 +582,32 @@ def to_agg_units(
     >>> degdays.units
     'K d'
     """
-    m, freq_u_raw = infer_sampling_units(orig[dim])
-    freq_u = str2pint(freq_u_raw)
-    orig_u = str2pint(orig.units)
+    if op in ["min", "max", "mean"]:
+        out.attrs["units"] = orig.attrs["units"]
 
-    out = out * m
-    if op == "count":
-        out.attrs["units"] = freq_u_raw
-    elif op == "prod":
-        out.attrs["units"] = pint2cfunits(orig_u * freq_u)
-    elif op == "delta_prod":
-        out.attrs["units"] = pint2cfunits((orig_u - orig_u) * freq_u)
+    elif op in ["doymin", "doymax"]:
+        out.attrs.update(
+            units="", is_dayofyear=np.int32(1), calendar=get_calendar(orig)
+        )
+
+    elif op in ["count", "prod", "delta_prod"]:
+        m, freq_u_raw = infer_sampling_units(orig[dim])
+        orig_u = str2pint(orig.units)
+        freq_u = str2pint(freq_u_raw)
+
+        out = out * m
+
+        if op == "count":
+            out.attrs["units"] = freq_u_raw
+        elif op == "prod":
+            out.attrs["units"] = pint2cfunits(orig_u * freq_u)
+        elif op == "delta_prod":
+            out.attrs["units"] = pint2cfunits((orig_u - orig_u) * freq_u)
     else:
-        raise ValueError(f"Aggregation op {op} not in [count, prod, delta_prod].")
+        raise ValueError(
+            f"Aggregation op {op} not in [min, max, mean, doymin, doymax, count, prod, delta_prod,  ]."
+        )
+
     return out
 
 

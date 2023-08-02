@@ -88,25 +88,26 @@ def select_resample_op(
     da = select_time(da, **indexer)
     r = da.resample(time=freq)
     if isinstance(op, str):
-        return getattr(r, op)(dim="time", keep_attrs=True)
-    with xr.set_options(keep_attrs=True):
-        return r.map(op)
+        out = getattr(r, op)(dim="time", keep_attrs=True)
+    else:
+        with xr.set_options(keep_attrs=True):
+            out = r.map(op)
+            op = op.__name__
+    return to_agg_units(out, da, op)
 
 
 def doymax(da: xr.DataArray) -> xr.DataArray:
     """Return the day of year of the maximum value."""
     i = da.argmax(dim="time")
     out = da.time.dt.dayofyear.isel(time=i, drop=True)
-    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(da))
-    return out
+    return to_agg_units(out, da, "doymax")
 
 
 def doymin(da: xr.DataArray) -> xr.DataArray:
     """Return the day of year of the minimum value."""
     i = da.argmin(dim="time")
     out = da.time.dt.dayofyear.isel(time=i, drop=True)
-    out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(da))
-    return out
+    return to_agg_units(out, da, "doymin")
 
 
 def default_freq(**indexer) -> str:
