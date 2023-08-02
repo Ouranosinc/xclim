@@ -583,7 +583,7 @@ def to_agg_units(
     'K d'
     """
     if op in ["min", "max", "mean"]:
-        out.attrs["units"] = orig.attrs["units"]
+        out.attrs["units"] = orig.attrs["units"] if "units" in orig.attrs else ""
 
     elif op in ["doymin", "doymax"]:
         out.attrs.update(
