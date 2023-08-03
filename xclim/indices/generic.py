@@ -92,7 +92,7 @@ def select_resample_op(
     else:
         with xr.set_options(keep_attrs=True):
             out = r.map(op)
-            op = op.__name__
+        op = op.__name__
     return to_agg_units(out, da, op)
 
 
