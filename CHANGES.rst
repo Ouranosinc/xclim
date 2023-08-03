@@ -34,6 +34,12 @@ Internal changes
 * Refactoring of index backend calculations (:pull:`1443`, :issue:`1386`) :
     * Use ``xclim.indices.generic.select_resample_op`` for `{tg|tn|tx}_{max|mean|min}` , `max_1day_precipitation_amount`, `{snw|snd}_max`
     * Directly use `{cold|hot}_spell_max_length` in `maximum_consecutive_{frost|tx}_days`
+    * ``xclim.indices.generic.select_resample_op`` now gives an output with the correct units (``xclim.core.units.to_agg_units`` is used internally).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* Signature of `hot_spell_{frequency | max_length | total_length}` : `thresh_tasmax` modified to `thresh`. (:issue:`1352`, :pull:`1359`).
+* `integral` replaces `prod` and `delta_prod` as possible input in ``xclim.core.units.to_agg_units`` (:pull:`1443`, :issue:`1386`).
 
 v0.44.0 (2023-06-23)
 --------------------
