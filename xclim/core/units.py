@@ -529,7 +529,7 @@ def to_agg_units(
     orig : xr.DataArray
         The original array before the aggregation operation,
         used to infer the sampling units and get the variable units.
-    op : {'min', 'max', 'mean', 'std', 'doymin', 'doymax',  'count', 'prod', 'delta_prod'}
+    op : {'min', 'max', 'mean', 'std', 'doymin', 'doymax',  'count', 'integral'}
         The type of aggregation operation performed. The special "delta_*" ops are used
         with temperature units needing conversion to their "delta" counterparts (e.g. degree days)
     dim : str
@@ -572,7 +572,7 @@ def to_agg_units(
     >>> degdays = (
     ...     (tas - 16).clip(0).sum("time")
     ... )  # Integral of  temperature above a threshold
-    >>> degdays = to_agg_units(degdays, tas, op="delta_prod")
+    >>> degdays = to_agg_units(degdays, tas, op="integral")
     >>> degdays.units
     'week delta_degC'
 
@@ -590,7 +590,7 @@ def to_agg_units(
             units="", is_dayofyear=np.int32(1), calendar=get_calendar(orig)
         )
 
-    elif op in ["count", "prod", "delta_prod"]:
+    elif op in ["count", "integral"]:
         m, freq_u_raw = infer_sampling_units(orig[dim])
         orig_u = str2pint(orig.units)
         freq_u = str2pint(freq_u_raw)
@@ -599,13 +599,11 @@ def to_agg_units(
 
         if op == "count":
             out.attrs["units"] = freq_u_raw
-        elif op == "prod":
-            out.attrs["units"] = pint2cfunits(orig_u * freq_u)
-        elif op == "delta_prod":
+        elif op == "integral":
             out.attrs["units"] = pint2cfunits((orig_u - orig_u) * freq_u)
     else:
         raise ValueError(
-            f"Aggregation op {op} not in [min, max, mean, std, doymin, doymax, count, prod, delta_prod]."
+            f"Aggregation op {op} not in [min, max, mean, std, doymin, doymax, count, integral]."
         )
 
     return out

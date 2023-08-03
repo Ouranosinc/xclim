@@ -70,7 +70,7 @@ def select_resample_op(
     ----------
     da : xr.DataArray
         Input data.
-    op : str {'min', 'max', 'mean', 'std', 'var', 'count', 'sum', 'argmax', 'argmin'} or func
+    op : str {'min', 'max', 'mean', 'std', 'var', 'count', 'sum', 'integral', 'argmax', 'argmin'} or func
         Reduce operation. Can either be a DataArray method or a function that can be applied to a DataArray.
     freq : str
         Resampling frequency defining the periods as defined in
@@ -88,7 +88,7 @@ def select_resample_op(
     da = select_time(da, **indexer)
     r = da.resample(time=freq)
     if isinstance(op, str):
-        out = getattr(r, op)(dim="time", keep_attrs=True)
+        out = getattr(r, op.replace("integral", "sum"))(dim="time", keep_attrs=True)
     else:
         with xr.set_options(keep_attrs=True):
             out = r.map(op)
@@ -648,7 +648,7 @@ def temperature_sum(
 
     out = (data - threshold).where(cond).resample(time=freq).sum()
     out = direction * out
-    return to_agg_units(out, data, "delta_prod")
+    return to_agg_units(out, data, "integral")
 
 
 def interday_diurnal_temperature_range(
@@ -843,7 +843,7 @@ def cumulative_difference(
     if freq is not None:
         diff = diff.resample(time=freq).sum(dim="time")
 
-    return to_agg_units(diff, data, op="delta_prod")
+    return to_agg_units(diff, data, op="integral")
 
 
 def first_day_threshold_reached(
