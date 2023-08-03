@@ -26,7 +26,7 @@ Internal changes
 * Tolerance thresholds for error in ``test_processing::test_adapt_freq`` have been relaxed to allow for more variation in the results. (:issue:`1417`, :pull:`1418`).
 * Added 'streamflow' to the list of known variables (:pull:`1431`).
 * Refactor base indicator classes and fix misleading inheritance of ``return_level`` (:issue:`1263`, :pull:`1446`).
-* Fix and adapt ``percentile_doy`` for an error raised by xarray > 2023.7.0 (:issue:`211`, :pull:`1450`).
+* Fix and adapt ``percentile_doy`` for an error raised by xarray > 2023.7.0 (:issue:`1417`, :pull:`1450`).
 
 v0.44.0 (2023-06-23)
 --------------------
