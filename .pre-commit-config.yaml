@@ -71,7 +71,12 @@ repos:
   hooks:
   - id: blackdoc
     exclude: '(xclim/indices/__init__.py|docs/installation.rst)'
-    additional_dependencies: ['black==23.3.0']
+    additional_dependencies: ['black==23.7.0']
+- repo: https://github.com/python-jsonschema/check-jsonschema
+  rev: 0.23.3
+  hooks:
+  - id: check-github-workflows
+  - id: check-readthedocs
 - repo: meta
   hooks:
   - id: check-hooks-apply
