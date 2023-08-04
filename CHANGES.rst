@@ -39,6 +39,7 @@ Internal changes
 Breaking changes
 ^^^^^^^^^^^^^^^^
 * Signature of `hot_spell_{frequency | max_length | total_length}` : `thresh_tasmax` modified to `thresh`. (:issue:`1352`, :pull:`1359`).
+* Fix and adapt ``percentile_doy`` for an error raised by xarray > 2023.7.0 (:issue:`1417`, :pull:`1450`).
 * `integral` replaces `prod` and `delta_prod` as possible input in ``xclim.core.units.to_agg_units`` (:pull:`1443`, :issue:`1386`).
 
 v0.44.0 (2023-06-23)
