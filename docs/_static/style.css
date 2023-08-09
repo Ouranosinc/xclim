@@ -65,3 +65,28 @@ ul.simple li {
 #contents .toctree-wrapper:first-of-type ul {
     margin-bottom: 0;
 }
+
+#queryInput {
+  width: 100%;
+  padding: 10px;
+  margin: 5px;
+}
+
+.indElem {
+ margin: 10px;
+ padding: 10px;
+ background-color: #ddd;
+ border-radius: 10px;
+}
+
+.indName {
+  float: right;
+}
+
+code > .indName {
+  background-color: #ccc;
+}
+
+.indVarname {
+  border-radius: 10px;
+}

@@ -64,20 +64,28 @@ def _indicator_table(module):
         #     name: p.default if p.default != inspect._empty else f"<{name}>"
         #     for (name, p) in ind._sig.parameters.items()
         # }
-        try:
-            table[ind_name] = ind.json()  # args?
-        except KeyError as err:
-            warnings.warn(
-                f"{ind.identifier} could not be documented.({err})", UserWarning
-            )
-        else:
-            table[ind_name]["doc"] = ind.__doc__
-            if ind.compute.__module__.endswith("generic"):
-                table[ind_name][
-                    "function"
-                ] = f"xclim.indices.generic.{ind.compute.__name__}"
-            else:
-                table[ind_name]["function"] = f"xclim.indices.{ind.compute.__name__}"
+        table[ind_name] = {
+            "title": ind.title,
+            "vars": [
+                param_name
+                for param_name, param in ind._all_parameters.items()
+                if param.kind < 2 and not param.injected
+            ],
+        }
+        # try:
+        #     table[ind_name] = ind.json()  # args?
+        # except KeyError as err:
+        #     warnings.warn(
+        #         f"{ind.identifier} could not be documented.({err})", UserWarning
+        #     )
+        # else:
+        #     table[ind_name]["doc"] = ind.__doc__
+        #     if ind.compute.__module__.endswith("generic"):
+        #         table[ind_name][
+        #             "function"
+        #         ] = f"xclim.indices.generic.{ind.compute.__name__}"
+        #     else:
+        #        table[ind_name]["function"] = f"xclim.indices.{ind.compute.__name__}"
     return table
 
 

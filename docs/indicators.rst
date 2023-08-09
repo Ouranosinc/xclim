@@ -12,135 +12,52 @@ that conform as much as possible with the `CF-Convention`_.
 
 Indicators are split into realms (atmos, land, seaIce), according to the variables they operate on.
 See :ref:`notebooks/extendxclim:Defining new indicators` for instruction on how to create your own indicators. This page
-lists all indicators with a summary description, click on the names to get to the complete docstring of each indicator.
+allows a simple free text search of all indicators. Click on the python names to get to the complete docstring of each indicator.
 
-atmos: Atmosphere
-=================
 
 .. raw:: html
 
-   <dl>
-   {% for indname, ind in indicators['atmos'].items() %}
-     <dt><code>atmos.{{ indname | safe}}</code> : <a class="reference_internal" href="api.html#xclim.indicators.atmos.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
-     <dd>
-     {% if ind.identifier != indname %}<b>Id: </b> {{ ind.identifier }} <br>{% endif %}
-     <b>Description: </b> {{ ind.abstract }} <br>
-     <b>Based on </b><a class="reference internal" href="indices.html#{{ ind.function }}" title="{{ ind.function }}"><code class="xref">{{ ind.function }}</code></a> <br>
-     <b>Produces: </b> {% for var in ind['outputs'] %} <code>{{ var['var_name'] }}: {{ var['long_name'] }} [{{ var['units'] }}]</code> {% endfor %}
-     </dd>
-   {% endfor %}
-   </dl>
+    <input type="text" id="queryInput" onkeyup="indFilter()" placeholder="Search for titles..">
 
+    <div id="indTable">
+    {% for realm, indlist in indicators.items() %}
+    {% for indname, ind in indlist.items() %}
+        <div class="indElem">
+            <div class="indHeader">
+                <b class="indTitle">{{ ind.title }}</b>
+                <a class="reference_internal indName" href="api.html#xclim.indicators.{{ realm }}.{{ indname }}" title="{{ indname }}">
+                    <code>{{ realm }}.{{ indname | safe }}</code>
+                </a>
+            </div>
+            <div class="indVars">Uses: {% for var in ind.vars %}<code class="indVarname">{{ var }}</code> {% endfor %}</div>
+        </div>
+    {% endfor %}
+    {% endfor %}
+    </div>
 
-land: Land surface
-==================
+     <script>
+    function indFilter() {
+      // Declare variables
+      var input, filter, table, elems, title, i, txtValue;
+      input = document.getElementById("queryInput");
+      filter = input.value.toUpperCase();
+      table = document.getElementById("indTable");
+      elems = table.getElementsByClassName("indElem");
 
-.. raw:: html
-
-   <dl>
-   {% for indname, ind in indicators['land'].items() %}
-     <dt><code>land.{{ indname | safe}}</code> : <a class="reference_internal" href="api.html#xclim.indicators.land.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
-     <dd>
-     {% if ind.identifier != indname %}<b>Id: </b> {{ ind.identifier }} <br>{% endif %}
-     <b>Description: </b> {{ ind.abstract }} <br>
-     <b>Based on </b><a class="reference internal" href="indices.html#{{ ind.function }}" title="{{ ind.function }}"><code class="xref">{{ ind.function }}</code></a> <br>
-     <b>Produces: </b> {% for var in ind['outputs'] %} <code>{{ var['var_name'] }}: {{ var['long_name'] }} [{{ var['units'] }}]</code> {% endfor %}
-     </dd>
-   {% endfor %}
-   </dl>
-
-
-seaIce: Sea ice
-===============
-
-.. raw:: html
-
-   <dl>
-   {% for indname, ind in indicators['seaIce'].items() %}
-     <dt><code>seaIce.{{ indname | safe}}</code> : <a class="reference_internal" href="api.html#xclim.indicators.seaIce.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
-     <dd>
-     {% if ind.identifier != indname %}<b>Id: </b> {{ ind.identifier }} <br>{% endif %}
-     <b>Description: </b> {{ ind.abstract }} <br>
-     <b>Based on </b><a class="reference internal" href="indices.html#{{ ind.function }}" title="{{ ind.function }}"><code class="xref">{{ ind.function }}</code></a> <br>
-     <b>Produces: </b> {% for var in ind['outputs'] %} <code>{{ var['var_name'] }}: {{ var['long_name'] }} [{{ var['units'] }}]</code> {% endfor %}
-     </dd>
-   {% endfor %}
-   </dl>
-
-
-generic: Generic indicators
-===========================
-
-Indicators in this "realm" do not have units assigned to their inputs. They provide useful functions that might apply to many different types of data. They are most useful for building custom "indicator modules", see :ref:`indicators:Virtual submodules`.
-
-.. raw:: html
-
-   <dl>
-   {% for indname, ind in indicators['generic'].items() %}
-     <dt><code>generic.{{ indname | safe}}</code> : <a class="reference_internal" href="api.html#xclim.indicators.generic.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
-     <dd>
-     {% if ind.identifier != indname %}<b>Id: </b> {{ ind.identifier }} <br>{% endif %}
-     <b>Description: </b> {{ ind.abstract }} <br>
-     <b>Based on </b><a class="reference internal" href="indices.html#{{ ind.function }}" title="{{ ind.function }}"><code class="xref">{{ ind.function }}</code></a> <br>
-     <b>Produces: </b> {% for var in ind['outputs'] %} <code>{{ var['var_name'] }}: {{ var['long_name'] }} [{{ var['units'] }}]</code> {% endfor %}
-     </dd>
-   {% endfor %}
-   </dl>
+      // Loop through all table rows, and hide those who don't match the search query
+      for (i = 0; i < elems.length; i++) {
+        title = elems[i].getElementsByClassName("indTitle")[0];
+        if (title) {
+          txtValue = title.textContent || title.innerText;
+          if (txtValue.toUpperCase().indexOf(filter) > -1) {
+            elems[i].style.display = "";
+          } else {
+            elems[i].style.display = "none";
+          }
+        }
+      }
+    }
+    </script>
 
 
 .. _CF-Convention: http://cfconventions.org/
-
-
-Virtual submodules
-==================
-
-.. automodule:: xclim.indicators.cf
-    :noindex:
-
-.. raw:: html
-
-   <dl>
-   {% for indname, ind in indicators['cf'].items() %}
-     <dt><code>cf.{{ indname | safe}}</code> : <a class="reference_internal" href="api.html#xclim.indicators.cf.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
-     <dd>
-     {% if ind.identifier != indname %}<b>Id: </b> {{ ind.identifier }} <br>{% endif %}
-     <b>Description: </b> {{ ind.abstract }} <br>
-     <b>Based on </b><a class="reference internal" href="indices.html#{{ ind.function }}" title="{{ ind.function }}"><code class="xref">{{ ind.function }}</code></a> <br>
-     <b>Produces: </b> {% for var in ind['outputs'] %} <code>{{ var['var_name'] }}: {{ var['long_name'] }} [{{ var['units'] }}]</code> {% endfor %}
-     </dd>
-   {% endfor %}
-   </dl>
-
-.. automodule:: xclim.indicators.icclim
-    :noindex:
-
-.. raw:: html
-
-   <dl>
-   {% for indname, ind in indicators['icclim'].items() %}
-     <dt><code>icclim.{{ indname | safe}}</code> : <a class="reference_internal" href="api.html#xclim.indicators.icclim.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
-     <dd>
-     {% if ind.identifier != indname %}<b>Id: </b> {{ ind.identifier }} <br>{% endif %}
-     <b>Description: </b> {{ ind.abstract }} <br>
-     <b>Based on </b><a class="reference internal" href="indices.html#{{ ind.function }}" title="{{ ind.function }}"><code class="xref">{{ ind.function }}</code></a> <br>
-     <b>Produces: </b> {% for var in ind['outputs'] %} <code>{{ var['var_name'] }}: {{ var['long_name'] }} [{{ var['units'] }}]</code> {% endfor %}
-     </dd>
-   {% endfor %}
-   </dl>
-
-.. automodule:: xclim.indicators.anuclim
-    :noindex:
-
-.. raw:: html
-
-   <dl>
-   {% for indname, ind in indicators['anuclim'].items() %}
-     <dt><code>anuclim.{{ indname | safe}}</code> : <a class="reference_internal" href="api.html#xclim.indicators.anuclim.{{ indname }}" title="{{ indname }}"><b>{{ ind.title }}</b></a></dt>
-     <dd>
-     {% if ind.identifier != indname %}<b>Id: </b> {{ ind.identifier }} <br>{% endif %}
-     <b>Description: </b> {{ ind.abstract }} <br>
-     <b>Based on </b><a class="reference internal" href="indices.html#{{ ind.function }}" title="{{ ind.function }}"><code class="xref">{{ ind.function }}</code></a> <br>
-     <b>Produces: </b> {% for var in ind['outputs'] %} <code>{{ var['var_name'] }}: {{ var['long_name'] }} [{{ var['units'] }}]</code> {% endfor %}
-     </dd>
-   {% endfor %}
-   </dl>
