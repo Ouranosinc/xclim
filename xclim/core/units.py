@@ -412,7 +412,7 @@ def convert_units_to(
 
     # TODO remove backwards compatibility of int/float thresholds after v1.0 release
     if isinstance(source, (float, int)):
-        raise DeprecationWarning("Please specify units explicitly.")
+        raise TypeError("Please specify units explicitly.")
 
     raise NotImplementedError(f"Source of type `{type(source)}` is not supported.")
 
@@ -1061,7 +1061,7 @@ def check_units(val: str | xr.DataArray | None, dim: str | xr.DataArray | None) 
         val = str(val).replace("UNSET ", "")
 
     if isinstance(val, (int, float)):
-        raise DeprecationWarning("Please set units explicitly using a string.")
+        raise TypeError("Please set units explicitly using a string.")
 
     try:
         dim_units = str2pint(dim) if isinstance(dim, str) else units2pint(dim)
@@ -1076,7 +1076,6 @@ def check_units(val: str | xr.DataArray | None, dim: str | xr.DataArray | None) 
     if val_dim == expected:
         return
 
-    context = infer_context(dimension=str(dim))
     # Check if there is a transformation available
     with units.context(context):
         start = pint.util.to_units_container(val_dim)

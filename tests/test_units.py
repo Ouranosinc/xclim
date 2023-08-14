@@ -68,13 +68,13 @@ class TestUnits:
 
 class TestConvertUnitsTo:
     def test_deprecation(self, tas_series):
-        with pytest.raises(DeprecationWarning):
+        with pytest.raises(TypeError):
             convert_units_to(0, units.K)
 
-        with pytest.raises(DeprecationWarning):
+        with pytest.raises(TypeError):
             convert_units_to(10.0, units.mm / units.day, context="hydro")
 
-        with pytest.raises(DeprecationWarning):
+        with pytest.raises(TypeError):
             tas = tas_series(np.arange(365), start="1/1/2001")
             out = indices.tx_days_above(tas, 30)  # noqa
 
