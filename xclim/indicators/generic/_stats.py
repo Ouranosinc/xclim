@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from xclim.core.indicator import CheckMissingIndicator, ResamplingIndicator
+from xclim.core.indicator import ReducingIndicator, ResamplingIndicator
 from xclim.indices.generic import select_resample_op
 from xclim.indices.stats import fit as _fit
 from xclim.indices.stats import frequency_analysis
@@ -8,7 +8,7 @@ from xclim.indices.stats import frequency_analysis
 __all__ = ["fit", "return_level", "stats"]
 
 
-class Generic(CheckMissingIndicator):
+class Generic(ReducingIndicator):
     realm = "generic"
 
 

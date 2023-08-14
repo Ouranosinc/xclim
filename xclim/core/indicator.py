@@ -1356,10 +1356,12 @@ class Indicator(IndicatorRegistrar):
 
 
 class CheckMissingIndicator(Indicator):
-    """Class for indicators that completely reduce the time dimension, adding missing value checks.
+    """Class adding missing value checks to indicators.
 
-    A full reduction of the "time" dimension is expected by default: the missing step will fail if the output still has a time dimension.
-    To enable resampling, the :py:meth:`_get_missing_freq` method can be subclassed to return the resampling frequency. The method is always called with the indicator parameters.
+    This should not be used as-is, but subclassed by implementing the `_get_missing_freq` method.
+    This method will be called in `_postprocess` using the compute parameters as only argument.
+    It should return a freq string, the same as the output freq of the computed data.
+    It can also be "None" to indicator the full time axis has been reduced, or "False" to skip the missing checks.
 
     Parameters
     ----------
@@ -1403,13 +1405,14 @@ class CheckMissingIndicator(Indicator):
 
     def _get_missing_freq(self, params):
         """Return the resampling frequency to be used in the missing values check."""
-        return None
+        raise NotImplementedError("Don't use `CheckMissingIndicator` directly.")
 
     def _postprocess(self, outs, das, params):
         """Masking of missing values."""
         outs = super()._postprocess(outs, das, params)
 
-        if self.missing != "skip":
+        freq = self._get_missing_freq(params)
+        if self.missing != "skip" or freq is False:
             # Mask results that do not meet criteria defined by the `missing` method.
             # This means all outputs must have the same dimensions as the broadcasted inputs (excluding time)
             options = self.missing_options or OPTIONS[MISSING_OPTIONS].get(
@@ -1418,7 +1421,6 @@ class CheckMissingIndicator(Indicator):
 
             # We flag periods according to the missing method. skip variables without a time coordinate.
             src_freq = self.src_freq if isinstance(self.src_freq, str) else None
-            freq = self._get_missing_freq(params)
             miss = (
                 self._missing(da, freq, src_freq, options, params.get("indexer", {}))
                 for da in das.values()
@@ -1436,6 +1438,25 @@ class CheckMissingIndicator(Indicator):
             outs = [out.where(~mask) for out in outs]
 
         return outs
+
+
+class ReducingIndicator(CheckMissingIndicator):
+    """Indicator that performs a time-reducing computation.
+
+    Compared to the base Indicator, this adds the handling of missing data.
+
+    Parameters
+    ----------
+    missing : {any, wmo, pct, at_least_n, skip, from_context}
+      The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods. If
+      None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
+    missing_options : dict, optional
+      Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
+    """
+
+    def _get_missing_freq(self, params):
+        """Return None, to indicate that the full time axis is to be reduced."""
+        return None
 
 
 class ResamplingIndicator(CheckMissingIndicator):
@@ -1538,7 +1559,7 @@ class Hourly(ResamplingIndicator):
 
 
 base_registry["Indicator"] = Indicator
-base_registry["CheckMissingIndicator"] = CheckMissingIndicator
+base_registry["ReducingIndicator"] = ReducingIndicator
 base_registry["IndexingIndicator"] = IndexingIndicator
 base_registry["ResamplingIndicator"] = ResamplingIndicator
 base_registry["ResamplingIndicatorWithIndexing"] = ResamplingIndicatorWithIndexing
