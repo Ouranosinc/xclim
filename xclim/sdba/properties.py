@@ -176,6 +176,41 @@ var = StatisticalProperty(
 )
 
 
+def _std(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
+    """Standard Deviation.
+
+    Standard deviation of the variable over all years at the time resolution.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+      Variable on which to calculate the diagnostic.
+    group : {'time', 'time.season', 'time.month'}
+      Grouping of the output.
+      E.g. If 'time.month', the standard deviation is performed separately for each month.
+
+    Returns
+    -------
+    xr.DataArray,
+      Standard deviation of the variable.
+    """
+    units = da.units
+    if group.prop != "group":
+        da = da.groupby(group.name)
+    out = da.std(dim=group.dim)
+    out.attrs["units"] = units
+    return out
+
+
+std = StatisticalProperty(
+    identifier="std",
+    aspect="marginal",
+    cell_methods="time: std",
+    compute=_std,
+    measure="xclim.sdba.measures.RATIO",
+)
+
+
 def _skewness(da: xr.DataArray, *, group: str | Grouper = "time") -> xr.DataArray:
     """Skewness.
 
@@ -823,11 +858,14 @@ def _trend(
     ----------
     da : xr.DataArray
         Variable on which to calculate the diagnostic.
-    output : {'slope', 'pvalue'}
-        Attributes of the linear regression to return.
+    output : {'slope', 'intercept', 'rvalue', 'pvalue', 'stderr', 'intercept_stderr'}
+        The attributes of the linear regression to return, as defined in scipy.stats.linregress:
         'slope' is the slope of the regression line.
-        'pvalue' is  for a hypothesis test whose null hypothesis is that the slope is zero,
-        using Wald Test with t-distribution of the test statistic.
+        'intercept' is the intercept of the regression line.
+        'rvalue' is the The Pearson correlation coefficient. The square of rvalue is equal to the coefficient of determination.
+        'pvalue' is the p-value for a hypothesis test whose null hypothesis is that the slope is zero, using Wald Test with t-distribution of the test statistic.
+        'stderr' is the standard error of the estimated slope (gradient), under the assumption of residual normality.
+        'intercept_stderr' is the standard error of the estimated intercept, under the assumption of residual normality.
     group : {'time', 'time.season', 'time.month'}
         Grouping on the output.
 

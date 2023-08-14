@@ -4,12 +4,14 @@ Changelog
 
 v0.45.0 (unreleased)
 --------------------
-Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user: `juliettelavoie`), Gabriel Rondeau-Genesse (:user:`RondeauG`).
+Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user: `juliettelavoie`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Marco Braun (:user:`vindelico`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Added ``ensembles.hawkins_sutton`` method to partition the uncertainty sources in a climate projection ensemble. (:issue:`771`, :pull:`1262`).
 * New function ``xclim.core.calendar.convert_doy`` to transform day-of-year data between calendars. Also accessible from ``convert_calendar`` with ``doy=True``. (:issue:`1283`, :pull:`1406`).
+* Added new function ``xclim.sdba.properties.std`` to calculate the standard deviation of a variable over all years at a given time resolution. (:pull:`1445`).
+* Amended the documentation of ``xclim.sdba.properties.trend`` to document already existing functionality of calculating the return values of scipy.stats.linregress. (:pull:`1445`).
 * Add support for setting optional variables through the `ds` argument. (:issue:`1432`, :pull:`1435`).
 * New ``xclim.core.calendar.is_offset_divisor`` to test if a given freq divides another one evenly (:pull:`1446`).
 * Missing value objects now support input timeseries of quarterly and yearly frequencies (:pull:`1446`).
@@ -29,6 +31,7 @@ Internal changes
 * Tolerance thresholds for error in ``test_processing::test_adapt_freq`` have been relaxed to allow for more variation in the results. (:issue:`1417`, :pull:`1418`).
 * Added 'streamflow' to the list of known variables (:pull:`1431`).
 * Refactor base indicator classes and fix misleading inheritance of ``return_level`` (:issue:`1263`, :pull:`1446`).
+* Fix and adapt ``percentile_doy`` for an error raised by xarray > 2023.7.0 (:issue:`1417`, :pull:`1450`).
 
 v0.44.0 (2023-06-23)
 --------------------
