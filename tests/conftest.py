@@ -56,6 +56,11 @@ if re.match(r"^v\d+\.\d+\.\d+", helpers.TESTDATA_BRANCH):
 
 
 @pytest.fixture
+def random() -> np.random.Generator:
+    return np.random.default_rng(seed=list(map(ord, "𝕽𝔞𝖓𝔡𝖔𝔪")))
+
+
+@pytest.fixture
 def tmp_netcdf_filename(tmpdir) -> Path:
     yield Path(tmpdir).joinpath("testfile.nc")
 
@@ -112,28 +117,6 @@ def prc_series():
     """Return convective precipitation time series."""
     _prc_series = partial(test_timeseries, variable="prc")
     return _prc_series
-
-
-@pytest.fixture
-def bootstrap_series():
-    def _bootstrap_series(values, start="7/1/2000", units="kg m-2 s-1", cf_time=False):
-        if cf_time:
-            coords = xr.cftime_range(start, periods=len(values), freq="D")
-        else:
-            coords = pd.date_range(start, periods=len(values), freq="D")
-        return xr.DataArray(
-            values,
-            coords=[coords],
-            dims="time",
-            name="pr",
-            attrs={
-                "standard_name": "precipitation_flux",
-                "cell_methods": "time: mean within days",
-                "units": units,
-            },
-        )
-
-    return _bootstrap_series
 
 
 @pytest.fixture
@@ -200,7 +183,7 @@ def q_series():
 
 
 @pytest.fixture
-def ndq_series():
+def ndq_series(random):
     nx, ny, nt = 2, 3, 5000
     x = np.arange(0, nx)
     y = np.arange(0, ny)
@@ -214,7 +197,7 @@ def ndq_series():
     )
 
     return xr.DataArray(
-        np.random.lognormal(10, 1, (nt, nx, ny)),
+        random.lognormal(10, 1, (nt, nx, ny)),
         dims=("time", "x", "y"),
         coords={"time": time_range, "x": cx, "y": cy},
         attrs={

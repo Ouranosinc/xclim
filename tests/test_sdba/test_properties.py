@@ -44,6 +44,24 @@ class TestProperties:
         assert out_season.long_name.startswith("Variance")
         assert out_season.units == "kg^2 m-4 s-2"
 
+    def test_std(self, open_dataset):
+        sim = (
+            open_dataset("sdba/CanESM2_1950-2100.nc")
+            .sel(time=slice("1950", "1980"), location="Vancouver")
+            .pr
+        ).load()
+
+        out_year = sdba.properties.std(sim)
+        np.testing.assert_array_almost_equal(out_year.values, [5.08770208398345e-05])
+
+        out_season = sdba.properties.std(sim, group="time.season")
+        np.testing.assert_array_almost_equal(
+            out_season.values,
+            [6.2666411e-05, 3.5410259e-05, 4.3654352e-05, 5.3643853e-05],
+        )
+        assert out_season.long_name.startswith("Standard deviation")
+        assert out_season.units == "kg m-2 s-1"
+
     def test_skewness(self, open_dataset):
         sim = (
             open_dataset("sdba/CanESM2_1950-2100.nc")
@@ -352,19 +370,63 @@ class TestProperties:
         ).load()
 
         slope = sdba.properties.trend(simt).values
+        intercept = sdba.properties.trend(simt, output="intercept").values
+        rvalue = sdba.properties.trend(simt, output="rvalue").values
         pvalue = sdba.properties.trend(simt, output="pvalue").values
+        stderr = sdba.properties.trend(simt, output="stderr").values
+        intercept_stderr = sdba.properties.trend(simt, output="intercept_stderr").values
+
         np.testing.assert_array_almost_equal(
-            [slope, pvalue], [-1.33720000e-01, 0.154605951862107], 4
+            [slope, intercept, rvalue, pvalue, stderr, intercept_stderr],
+            [
+                -0.133711111111111,
+                288.762132222222222,
+                -0.9706433333333333,
+                0.1546344444444444,
+                0.033135555555555,
+                0.042776666666666,
+            ],
+            4,
         )
 
         slope = sdba.properties.trend(simt, group="time.month").sel(month=1)
+        intercept = (
+            sdba.properties.trend(simt, output="intercept", group="time.month")
+            .sel(month=1)
+            .values
+        )
+        rvalue = (
+            sdba.properties.trend(simt, output="rvalue", group="time.month")
+            .sel(month=1)
+            .values
+        )
         pvalue = (
             sdba.properties.trend(simt, output="pvalue", group="time.month")
             .sel(month=1)
             .values
         )
+        stderr = (
+            sdba.properties.trend(simt, output="stderr", group="time.month")
+            .sel(month=1)
+            .values
+        )
+        intercept_stderr = (
+            sdba.properties.trend(simt, output="intercept_stderr", group="time.month")
+            .sel(month=1)
+            .values
+        )
+
         np.testing.assert_array_almost_equal(
-            [slope.values, pvalue], [0.8254349999999988, 0.6085783558202086], 4
+            [slope.values, intercept, rvalue, pvalue, stderr, intercept_stderr],
+            [
+                0.8254511111111111,
+                281.76353222222222,
+                0.576843333333333,
+                0.6085644444444444,
+                1.1689105555555555,
+                1.509056666666666,
+            ],
+            4,
         )
 
         assert slope.long_name.startswith("Slope of the interannual linear trend")
