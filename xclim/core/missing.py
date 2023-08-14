@@ -30,7 +30,7 @@ import xarray as xr
 from .calendar import (
     date_range,
     get_calendar,
-    offset_is_divisor,
+    is_offset_divisor,
     parse_offset,
     select_time,
 )
@@ -148,7 +148,7 @@ class MissingBase:
             start_time = i[:1]
             end_time = i[-1:]
 
-        if freq is not None and not offset_is_divisor(src_timestep, freq):
+        if freq is not None and not is_offset_divisor(src_timestep, freq):
             raise NotImplementedError(
                 "Missing checks not implemented for timeseries resampled to a frequency that is not "
                 f"aligned with the source timestep. {src_timestep} is not a divisor of {freq}."

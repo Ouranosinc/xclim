@@ -39,8 +39,8 @@ __all__ = [
     "ensure_cftime_array",
     "get_calendar",
     "interp_calendar",
+    "is_offset_divisor",
     "max_doy",
-    "offset_is_divisor",
     "parse_offset",
     "percentile_doy",
     "resample_doy",
@@ -835,17 +835,17 @@ def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | N
     )
 
 
-def offset_is_divisor(freqA: str, freqB: str):
-    """Check that freqA is a divisor of freqB.
+def is_offset_divisor(divisor: str, offset: str):
+    """Check that divisor is a divisor of offset.
 
     A frequency is a "divisor" of another if a whole number of periods of the
     former fit within a single period of the latter.
 
     Parameters
     ----------
-    freqA: str
+    divisor: str
       The divisor frequency.
-    freqB: str
+    offset: str
       The large frequency.
 
     Returns
@@ -854,21 +854,21 @@ def offset_is_divisor(freqA: str, freqB: str):
 
     Examples
     --------
-    >>> offset_is_divisor("QS-Jan", "YS")
+    >>> is_offset_divisor("QS-Jan", "YS")
     True
-    >>> offset_is_divisor("QS-DEC", "AS-JUL")
+    >>> is_offset_divisor("QS-DEC", "AS-JUL")
     False
-    >>> offset_is_divisor("D", "M")
+    >>> is_offset_divisor("D", "M")
     True
     """
-    if compare_offsets(freqA, ">", freqB):
+    if compare_offsets(divisor, ">", offset):
         return False
     # Reconstruct offsets anchored at the start of the period
     # to have comparable quantities, also get "offset" objects
-    mA, bA, sA, aA = parse_offset(freqA)
+    mA, bA, sA, aA = parse_offset(divisor)
     offAs = pd.tseries.frequencies.to_offset(construct_offset(mA, bA, True, aA))
 
-    mB, bB, sB, aB = parse_offset(freqB)
+    mB, bB, sB, aB = parse_offset(offset)
     offBs = pd.tseries.frequencies.to_offset(construct_offset(mB, bB, True, aB))
     tB = pd.date_range("1970-01-01T00:00:00", freq=offBs, periods=13)
 
@@ -881,9 +881,9 @@ def offset_is_divisor(freqA: str, freqB: str):
         )
 
     # else, we test alignment with some real dates
-    # If both fall on offAs, then is means freqA is aligned with freqB at those dates
+    # If both fall on offAs, then is means divisor is aligned with offset at those dates
     # if N=13 is True, then it is always True
-    # As freqA <= freqB, this means freqA is a "divisor" of freqB.
+    # As divisor <= offset, this means divisor is a "divisor" of offset.
     return all(offAs.is_on_offset(d) for d in tB)
 
 
