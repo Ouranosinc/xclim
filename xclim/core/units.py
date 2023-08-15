@@ -1089,23 +1089,19 @@ def check_units(val: str | xr.DataArray | None, dim: str | xr.DataArray | None) 
     )
 
 
-def _output_has_units(out: xr.DataArray | tuple[xr.DataArray]):
+def _check_output_has_units(out: xr.DataArray | tuple[xr.DataArray]):
     """Perform very basic sanity check on the output.
 
     Indice are responsible for unit management.
     If this fails, it's a developer's error.
     """
-    if isinstance(out, tuple):
-        for outd in out:
-            if "units" not in outd.attrs:
-                raise ValueError(
-                    "No units were assigned in one of the indice's outputs."
-                )
-            outd.attrs["units"] = ensure_cf_units(outd.attrs["units"])
-    else:
-        if "units" not in out.attrs:
-            raise ValueError("No units were assigned to the indice's output.")
-        out.attrs["units"] = ensure_cf_units(out.attrs["units"])
+    if not isinstance(out, tuple):
+        out = (out,)
+
+    for outd in out:
+        if "units" not in outd.attrs:
+            raise ValueError("No units were assigned in one of the indice's outputs.")
+        outd.attrs["units"] = ensure_cf_units(outd.attrs["units"])
 
 
 def declare_relative_units(**units_by_name) -> Callable:
@@ -1205,7 +1201,7 @@ def declare_relative_units(**units_by_name) -> Callable:
 
             out = func(*args, **kwargs)
 
-            _output_has_units(out)
+            _check_output_has_units(out)
 
             return out
 
@@ -1255,7 +1251,6 @@ def declare_units(**units_by_name) -> Callable:
             # Make relative declarations absolute if possible
             for arg, dim in func.relative_units.items():
                 if arg in units_by_name:
-                    # Override. Is this what we want ? Or should this raise an error ?
                     continue
 
                 for ref, refdim in units_by_name.items():
@@ -1285,7 +1280,7 @@ def declare_units(**units_by_name) -> Callable:
 
             out = func(*args, **kwargs)
 
-            _output_has_units(out)
+            _check_output_has_units(out)
 
             return out
 
