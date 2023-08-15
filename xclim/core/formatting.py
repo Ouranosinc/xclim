@@ -6,9 +6,9 @@ from __future__ import annotations
 
 import datetime as dt
 import itertools
+import logging
 import re
 import string
-import warnings
 from ast import literal_eval
 from fnmatch import fnmatch
 from inspect import _empty, signature  # noqa
@@ -569,7 +569,7 @@ def _gen_parameters_section(parameters: dict, allowed_periods: list[str] = None)
         elif param.default is not _empty:
             defstr = f"Default : {param.default}. "
         else:
-            warnings.warn("No default value for InputKind. Setting to empty string.")
+            logging.info("No default value for InputKind. Setting to empty string.")
             defstr = ""
         if "choices" in param:
             annotstr = str(param.choices)

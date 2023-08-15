@@ -555,7 +555,7 @@ def _fire_season(
     temp_condition_days: int = default_params["temp_condition_days"],
     snow_condition_days: int = default_params["snow_condition_days"],
     snow_thresh: float = default_params["snow_thresh"][0],
-):
+) -> np.ndarray:
     """Compute the active fire season mask.
 
     Parameters
@@ -893,7 +893,7 @@ def fire_weather_ufunc(
     dry_start: str | None = None,
     initial_start_up: bool = True,
     **params,
-):
+) -> dict[str, xr.DataArray]:
     """Fire Weather Indexes computation using xarray's apply_ufunc.
 
     No unit handling. Meant to be used by power users only. Please prefer using the :py:indicator:`DC` and
@@ -1277,7 +1277,9 @@ def cffwis_indices(
     dry_start: str | None = None,
     initial_start_up: bool = True,
     **params,
-):
+) -> tuple[
+    xr.DataArray, xr.DataArray, xr.DataArray, xr.DataArray, xr.DataArray, xr.DataArray
+]:
     """Canadian Fire Weather Index System indices.
 
     Computes the 6 fire weather indexes as defined by the Canadian Forest Service: the Drought Code, the Duff-Moisture
@@ -1389,7 +1391,7 @@ def drought_code(
     dry_start: str | None = None,
     initial_start_up: bool = True,
     **params,
-):
+) -> xr.DataArray:
     r"""Drought code (FWI component).
 
     The drought code is part of the Canadian Forest Fire Weather Index System.
@@ -1480,7 +1482,7 @@ def fire_season(
     temp_condition_days: int = 3,
     snow_condition_days: int = 3,
     snow_thresh: Quantified = "0.01 m",
-):
+) -> xr.DataArray:
     """Fire season mask.
 
     Binary mask of the active fire season, defined by conditions on consecutive daily temperatures and, optionally, snow depths.
