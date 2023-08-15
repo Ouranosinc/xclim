@@ -137,6 +137,7 @@ include = [
   "docs/Makefile",
   "docs/conf.py",
   "docs/make.bat",
+  "docs/notebooks/_finder.py",
   "requirements_upstream.txt",
   "setup.cfg",
   "tests/**/*.py",
