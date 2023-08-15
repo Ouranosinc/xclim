@@ -69,23 +69,15 @@ class TestUnits:
 
 class TestConvertUnitsTo:
     def test_deprecation(self, tas_series):
-        with pytest.warns(FutureWarning):
-            out = convert_units_to(0, units.K)
-            assert out == 273.15
+        with pytest.raises(TypeError):
+            convert_units_to(0, units.K)
 
-        with pytest.warns(FutureWarning):
-            out = convert_units_to(10, units.mm / units.day, context="hydro")
-            assert out == 10
+        with pytest.raises(TypeError):
+            convert_units_to(10.0, units.mm / units.day, context="hydro")
 
-        with pytest.warns(FutureWarning):
+        with pytest.raises(TypeError):
             tas = tas_series(np.arange(365), start="1/1/2001")
             out = indices.tx_days_above(tas, 30)  # noqa
-
-        out1 = indices.tx_days_above(tas, "30 degC")
-        out2 = indices.tx_days_above(tas, "303.15 K")
-        np.testing.assert_array_equal(out, out1)
-        np.testing.assert_array_equal(out, out2)
-        assert out1.name == tas.name
 
     def test_fraction(self):
         out = convert_units_to(xr.DataArray([10], attrs={"units": "%"}), "")
@@ -185,6 +177,7 @@ class TestCheckUnits:
         check_units("m3/s", "[discharge]")
         check_units("m/s", "[speed]")
         check_units("km/h", "[speed]")
+        check_units("degC", "[temperature]")
 
         with units.context("hydro"):
             check_units("kg/m2", "[length]")
@@ -195,6 +188,25 @@ class TestCheckUnits:
 
             with pytest.raises(ValidationError):
                 check_units("m3", "[discharge]")
+
+    def test_comparison(self):
+        """Check that both units have the same dimensions."""
+        check_units("mm/day", "m/hour")
+
+        with pytest.raises(ValidationError):
+            check_units("mm/day", "m")
+
+        check_units(
+            xr.DataArray([1], attrs={"units": "degC"}),
+            xr.DataArray([1], attrs={"units": "degK"}),
+        )
+
+        with pytest.raises(ValidationError):
+            check_units(xr.DataArray([1], attrs={"units": "degC"}), "2 mm")
+
+        with pytest.raises(ValidationError):
+            """There is no context information to know that mm/day is a precipitation unit."""
+            check_units("kg/m2/s", "mm/day")
 
     def test_user_error(self):
         with pytest.raises(ValidationError):
