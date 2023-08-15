@@ -1105,7 +1105,7 @@ def _check_output_has_units(out: xr.DataArray | tuple[xr.DataArray]):
 
 
 def declare_relative_units(**units_by_name) -> Callable:
-    r"""Create a decorator to check units of function arguments.
+    r"""Function decorator checking the units of arguments.
 
     The decorator checks that input values have units that are compatible with each other.
     It also stores the input units as a 'relative_units' attribute.
