@@ -1360,6 +1360,13 @@ def standardized_precipitation_index(
             dist=dist,
             method=method,
         )
+
+    # If params only contains a subset of main dataset time grouping
+    # (e.g. 8/12 months, etc.), it needs to be broadcasted
+    paramsd = {k: v for k, v in params.sizes.items() if k != "dparams"}
+    if paramsd != pr.sizes:
+        params = params.broadcast_like(pr)
+
     spi = _get_standardized_index(pr, params, **indexer)
     spi.attrs = params.attrs
     spi.attrs["units"] = ""
