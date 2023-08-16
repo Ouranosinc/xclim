@@ -1363,7 +1363,7 @@ def standardized_precipitation_index(
 
     # If params only contains a subset of main dataset time grouping
     # (e.g. 8/12 months, etc.), it needs to be broadcasted
-    template = pr.groupby(params.attrs["group"]).apply(lambda x: x.isel(time=0))
+    template = pr.groupby(params.attrs["group"]).apply(lambda da: da.isel(time=0))
     paramsd = {k: v for k, v in params.sizes.items() if k != "dparams"}
     if paramsd != template.sizes:
         params = params.broadcast_like(template)
