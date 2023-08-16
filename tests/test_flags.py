@@ -125,6 +125,9 @@ class TestDataFlags:
             arr = series(vals, start="1971-01-01")
             bad_ds = xr.merge([bad_ds, arr])
 
+        # At this stage, it should not raise an exception
+        df.data_flags(bad_ds.tasmax, bad_ds, raise_flags=True)
+
         # Swap entire variable arrays
         bad_ds["tasmin"].values, bad_ds["tasmax"].values = (
             bad_ds.tasmax.values,

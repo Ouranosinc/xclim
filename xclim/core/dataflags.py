@@ -692,7 +692,7 @@ def data_flags(
     dsflags = xarray.Dataset(data_vars=flags)
 
     if raise_flags:
-        if np.any(dsflags.data_vars.values()):
+        if np.any([flags[dv] for dv in flags.data_vars]):
             raise DataQualityException(dsflags)
 
     return dsflags
