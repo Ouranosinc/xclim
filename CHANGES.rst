@@ -27,6 +27,7 @@ Internal changes
 * Increased the guess of number of quantiles needed in ExtremeValues. (:pull:`1413`).
 * Tolerance thresholds for error in ``test_processing::test_adapt_freq`` have been relaxed to allow for more variation in the results. (:issue:`1417`, :pull:`1418`).
 * Added 'streamflow' to the list of known variables (:pull:`1431`).
+* Fix and adapt ``percentile_doy`` for an error raised by xarray > 2023.7.0 (:issue:`1417`, :pull:`1450`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
