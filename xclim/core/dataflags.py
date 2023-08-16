@@ -559,7 +559,7 @@ def data_flags(
         The value can be None if there are no parameters to pass (i.e. default will be used).
         The default, None, means that the data flags list will be taken from :py:obj:`xclim.core.utils.VARIABLES`.
     dims : {"all", None} or str or a sequence of strings
-        Dimenions upon which aggregation should be performed. Default: "all".
+        Dimensions upon which the aggregation should be performed. Default: "all".
     freq : str, optional
         Resampling frequency to have data_flags aggregated over periods.
         Defaults to None, which means the "time" axis is treated as any other dimension (see `dims`).
