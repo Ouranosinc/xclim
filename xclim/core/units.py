@@ -592,6 +592,8 @@ def to_agg_units(
         out.attrs["units"] = pint2cfunits(orig_u * freq_u)
     elif op == "delta_prod":
         out.attrs["units"] = pint2cfunits((orig_u - orig_u) * freq_u)
+    elif op == "doymax":
+        out.attrs["units"] = pint2cfunits((orig_u - orig_u) * freq_u)
     else:
         raise ValueError(f"Aggregation op {op} not in [count, prod, delta_prod].")
     return out
