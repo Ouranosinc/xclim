@@ -4,7 +4,7 @@ Changelog
 
 v0.45.0 (unreleased)
 --------------------
-Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user: `juliettelavoie`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Marco Braun (:user:`vindelico`).
+Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Marco Braun (:user:`vindelico`), Éric Dupuis (:user:`coxipi`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -21,6 +21,7 @@ Bug fixes
 * Fix `jetstream_metric_woollings` so it uses the `vertical` coordinate identified by `cf-xarray`, instead of `pressure`. (:issue:`1421`, :pull:`1422`). Add logic to handle coordinates in decreasing order, or for longitudes defined from 0-360 instead of -180 to 180. (:issue:`1429`, :pull:`1430`).
 * Fix virtual indicator attribute assignment causing individual indicator's realm to be ignored. (:issue:`1425`, :pull:`1426`).
 * Fixes the `raise_flags` argument of ``xclim.core.dataflags.data_flags`` so that an Exception is only raised when some checkups fail (:issue:`1456`, :pull:`1457`).
+* Fix ``xclim.indices.generic.get_zones`` so that `bins` can be given as input without error. (:pull:`1455`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
