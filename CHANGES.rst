@@ -21,6 +21,8 @@ Bug fixes
 * Fix the registry entries of "generic" indicators. (:issue:`1423`, :pull:`1424`).
 * Fix `jetstream_metric_woollings` so it uses the `vertical` coordinate identified by `cf-xarray`, instead of `pressure`. (:issue:`1421`, :pull:`1422`). Add logic to handle coordinates in decreasing order, or for longitudes defined from 0-360 instead of -180 to 180. (:issue:`1429`, :pull:`1430`).
 * Fix virtual indicator attribute assignment causing individual indicator's realm to be ignored. (:issue:`1425`, :pull:`1426`).
+* Fixes the `raise_flags` argument of ``xclim.core.dataflags.data_flags`` so that an Exception is only raised when some checkups fail (:issue:`1456`, :pull:`1457`).
+* Fix ``xclim.indices.generic.get_zones`` so that `bins` can be given as input without error. (:pull:`1455`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -28,6 +30,7 @@ Internal changes
 * Increased the guess of number of quantiles needed in ExtremeValues. (:pull:`1413`).
 * Tolerance thresholds for error in ``test_processing::test_adapt_freq`` have been relaxed to allow for more variation in the results. (:issue:`1417`, :pull:`1418`).
 * Added 'streamflow' to the list of known variables (:pull:`1431`).
+* Fix and adapt ``percentile_doy`` for an error raised by xarray > 2023.7.0 (:issue:`1417`, :pull:`1450`).
 
 v0.44.0 (2023-06-23)
 --------------------
