@@ -104,8 +104,7 @@ class MissingBase:
         da : xr.DataArray
             Input data.
         freq : str
-            Resampling frequency defining the periods defined in
-            https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+            Resampling frequency defining the periods defined in :ref:`timeseries.resampling`.
         src_timestep : {"D", "H"}
             Expected input frequency.
         \*\*indexer : {dim: indexer}, optional

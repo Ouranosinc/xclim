@@ -53,7 +53,7 @@ Leveraging xarray and dask, users can easily bias-adjust climate simulations ove
    :maxdepth: 1
    :caption: All Modules
 
-   modules
+   apidoc/modules
 
 .. only:: html
 

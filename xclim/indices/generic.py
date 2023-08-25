@@ -7,7 +7,7 @@ Helper functions for common generic actions done in the computation of indices.
 from __future__ import annotations
 
 import warnings
-from typing import Callable, List, Sequence
+from typing import Callable, Sequence
 
 import cftime
 import numpy as np
@@ -73,8 +73,7 @@ def select_resample_op(
     op : str {'min', 'max', 'mean', 'std', 'var', 'count', 'sum', 'integral', 'argmax', 'argmin'} or func
         Reduce operation. Can either be a DataArray method or a function that can be applied to a DataArray.
     freq : str
-        Resampling frequency defining the periods as defined in
-        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
     indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
         month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
@@ -123,6 +122,8 @@ def default_freq(**indexer) -> str:
             month = cftime.num2date(value[0] - 1, "days since 2004-01-01").month
         elif group == "date_bounds":
             month = int(value[0][:2])
+        else:
+            raise ValueError(f"Unknown group `{group}`.")
         freq = "AS-" + _MONTH_ABBREVIATIONS[month]
     return freq
 
@@ -212,8 +213,7 @@ def threshold_count(
     threshold : Union[float, int]
         Threshold value.
     freq : str
-        Resampling frequency defining the periods as defined in
-        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
     constrain : sequence of str, optional
         Optionally allowed conditions.
 
@@ -248,8 +248,7 @@ def domain_count(
     high : scalar or DataArray
         Maximum threshold value.
     freq : str
-        Resampling frequency defining the periods defined in
-        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+        Resampling frequency defining the periods defined in :ref:`timeseries.resampling`.
 
     Returns
     -------
@@ -323,8 +322,7 @@ def count_level_crossings(
     threshold : Quantified
         Threshold.
     freq : str
-        Resampling frequency defining the periods as defined in
-        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
     op_low : {"<", "<=", "lt", "le"}
         Comparison operator for low_data. Default: "<".
     op_high : {">", ">=", "gt", "ge"}
@@ -366,8 +364,7 @@ def count_occurrences(
     threshold : Quantified
         Threshold.
     freq : str
-        Resampling frequency defining the periods as defined in
-        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical operator. e.g. arr > thresh.
     constrain : sequence of str, optional
@@ -399,8 +396,7 @@ def diurnal_temperature_range(
     reducer : {'max', 'min', 'mean', 'sum'}
         Reducer.
     freq: str
-        Resampling frequency defining the periods as defined in
-        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
     Returns
     -------
@@ -436,8 +432,7 @@ def first_occurrence(
     threshold : Quantified
         Threshold.
     freq : str
-        Resampling frequency defining the periods as defined in
-        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical operator. e.g. arr > thresh.
     constrain : sequence of str, optional
@@ -481,8 +476,7 @@ def last_occurrence(
     threshold : Quantified
         Threshold.
     freq : str
-        Resampling frequency defining the periods as defined in
-        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical operator. e.g. arr > thresh.
     constrain : sequence of str, optional
@@ -524,8 +518,7 @@ def spell_length(
     reducer : {'max', 'min', 'mean', 'sum'}
         Reducer.
     freq : str
-        Resampling frequency defining the periods as defined in
-        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le", "==", "eq", "!=", "ne"}
         Logical operator. e.g. arr > thresh.
 
@@ -560,8 +553,7 @@ def statistics(data: xr.DataArray, reducer: str, freq: str) -> xr.DataArray:
     reducer : {'max', 'min', 'mean', 'sum'}
         Reducer.
     freq : str
-        Resampling frequency defining the periods as defined in
-        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
     Returns
     -------
@@ -597,8 +589,7 @@ def thresholded_statistics(
     reducer : {'max', 'min', 'mean', 'sum'}
         Reducer.
     freq : str
-        Resampling frequency defining the periods as defined in
-        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
     constrain : sequence of str, optional
         Optionally allowed conditions. Default: None.
 
@@ -634,8 +625,7 @@ def temperature_sum(
     threshold : Quantified
         Threshold.
     freq : str
-        Resampling frequency defining the periods as defined in
-        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
     Returns
     -------
@@ -663,8 +653,7 @@ def interday_diurnal_temperature_range(
     high_data : xr.DataArray
         The highest daily temperature (tasmax).
     freq : str
-        Resampling frequency defining the periods as defined in
-        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
 
     Returns
@@ -693,8 +682,7 @@ def extreme_temperature_range(
     high_data : xr.DataArray
         The highest daily temperature (tasmax).
     freq : str
-        Resampling frequency defining the periods as defined in
-        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
 
     Returns
     -------
@@ -729,9 +717,7 @@ def aggregate_between_dates(
     op : {'min', 'max', 'sum', 'mean', 'std'}
         Operator.
     freq : str, optional
-        Resampling frequency defining the periods as defined in
-        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
-        Default: `None`.
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`. Default: `None`.
 
     Returns
     -------
@@ -823,8 +809,7 @@ def cumulative_difference(
     op : {">", "gt", "<", "lt", ">=", "ge", "<=", "le"}
         Logical operator. e.g. arr > thresh.
     freq : str, optional
-        Resampling frequency defining the periods as defined in
-        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         If `None`, no resampling is performed. Default: `None`.
 
     Returns
@@ -874,8 +859,7 @@ def first_day_threshold_reached(
     window : int
         Minimum number of days with values above threshold needed for evaluation. Default: 1.
     freq : str
-        Resampling frequency defining the periods as defined in
-        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+        Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
         Default: "YS".
     constrain : sequence of str, optional
         Optionally allowed conditions.
