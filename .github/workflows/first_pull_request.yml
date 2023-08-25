@@ -39,8 +39,8 @@ jobs:
               repo: context.repo.repo,
               body: `**Welcome**, new contributor!
 
-                It appears that this is your first Pull Request. To give credit where it's due, we ask that you add your information to the \`AUTHORS.rst\` and \`.zenodo.json\`:
-                 - [ ] The relevant author information has been added to \`AUTHORS.rst\` and \`.zenodo.json\`
+              It appears that this is your first Pull Request. To give credit where it's due, we ask that you add your information to the \`AUTHORS.rst\` and \`.zenodo.json\`:
+               - [ ] The relevant author information has been added to \`AUTHORS.rst\` and \`.zenodo.json\`
 
-                Please make sure you've read our [contributing guide](CONTRIBUTING.rst). We look forward to reviewing your Pull Request shortly ✨`
+              Please make sure you've read our [contributing guide](CONTRIBUTING.rst). We look forward to reviewing your Pull Request shortly ✨`
             })
