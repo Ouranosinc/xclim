@@ -23,6 +23,7 @@ from urllib.parse import urljoin
 from urllib.request import urlopen, urlretrieve
 
 import pandas as pd
+from platformdirs import user_cache_dir
 from xarray import Dataset
 from xarray import open_dataset as _open_dataset
 
@@ -48,7 +49,7 @@ _xclim_deps = [
 ]
 
 
-_default_cache_dir = Path.home() / ".xclim_testing_data"
+_default_cache_dir = Path(user_cache_dir("xclim-testdata"))
 
 logger = logging.getLogger("xclim")
 
