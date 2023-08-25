@@ -358,6 +358,11 @@ def cold_and_wet_days(
 
     Returns the total number of days when "cold" and "wet" conditions coincide.
 
+    Warnings
+    --------
+    Before computing the percentiles, all the precipitation below 1mm must be filtered out!
+    Otherwise, the percentiles will include non-wet days.
+
     Parameters
     ----------
     tas : xarray.DataArray
@@ -370,11 +375,6 @@ def cold_and_wet_days(
       Third quartile of daily total precipitation computed by month.
     freq : str
       Resampling frequency.
-
-    Warnings
-    --------
-    Before computing the percentiles, all the precipitation below 1mm must be filtered out!
-    Otherwise, the percentiles will include non-wet days.
 
     Returns
     -------
