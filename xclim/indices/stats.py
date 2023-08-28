@@ -1,7 +1,7 @@
 """Statistic-related functions. See the `frequency_analysis` notebook for examples."""
 from __future__ import annotations
 
-from typing import Sequence
+from typing import Any, Sequence
 
 import lmoments3.distr
 import numpy as np
@@ -66,6 +66,8 @@ def _fitfunc_1d(arr, *, dist, nparams, method, **fitkwargs):
         if "loc" not in kwargs:
             kwargs_list = [0] + kwargs_list
         params = list(args) + kwargs_list
+    else:
+        raise NotImplementedError(f"Unknown method `{method}`.")
 
     params = np.asarray(params)
 
@@ -81,7 +83,7 @@ def fit(
     dist: str = "norm",
     method: str = "ML",
     dim: str = "time",
-    **fitkwargs,
+    **fitkwargs: Any,
 ) -> xr.DataArray:
     r"""Fit an array to a univariate distribution along the time dimension.
 
@@ -174,7 +176,7 @@ def fit(
     return out
 
 
-def parametric_quantile(p: xr.DataArray, q: int | Sequence) -> xr.DataArray:
+def parametric_quantile(p: xr.DataArray, q: float | Sequence[float]) -> xr.DataArray:
     """Return the value corresponding to the given distribution parameters and quantile.
 
     Parameters
@@ -183,7 +185,7 @@ def parametric_quantile(p: xr.DataArray, q: int | Sequence) -> xr.DataArray:
         Distribution parameters returned by the `fit` function.
         The array should have dimension `dparams` storing the distribution parameters,
         and attribute `scipy_dist`, storing the name of the distribution.
-    q : Union[float, Sequence]
+    q : float or Sequence of float
         Quantile to compute, which must be between `0` and `1`, inclusive.
 
     Returns
@@ -243,7 +245,7 @@ def parametric_quantile(p: xr.DataArray, q: int | Sequence) -> xr.DataArray:
     return out
 
 
-def parametric_cdf(p: xr.DataArray, v: float | Sequence) -> xr.DataArray:
+def parametric_cdf(p: xr.DataArray, v: float | Sequence[float]) -> xr.DataArray:
     """Return the cumulative distribution function corresponding to the given distribution parameters and value.
 
     Parameters
@@ -252,7 +254,7 @@ def parametric_cdf(p: xr.DataArray, v: float | Sequence) -> xr.DataArray:
         Distribution parameters returned by the `fit` function.
         The array should have dimension `dparams` storing the distribution parameters,
         and attribute `scipy_dist`, storing the name of the distribution.
-    v : Union[float, Sequence]
+    v : float or Sequence of float
         Value to compute the CDF.
 
     Returns
@@ -318,10 +320,11 @@ def fa(
         Return period. The period depends on the resolution of the input data. If the input array's resolution is
         yearly, then the return period is in years.
     dist : str
-        Name of the univariate distribution, such as `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
+        Name of the univariate distribution, such as:
+        `beta`, `expon`, `genextreme`, `gamma`, `gumbel_r`, `lognorm`, `norm`
     mode : {'min', 'max}
         Whether we are looking for a probability of exceedance (max) or a probability of non-exceedance (min).
-    method : {"ML" or "MLE", "MOM", "PWM", "APP"}
+    method : {"ML", "MLE", "MOM", "PWM", "APP"}
         Fitting method, either maximum likelihood (ML or MLE), method of moments (MOM),
         probability weighted moments (PWM), also called L-Moments, or approximate method (APP).
         The PWM method is usually more robust to outliers.
@@ -366,9 +369,9 @@ def frequency_analysis(
     window: int = 1,
     freq: str | None = None,
     method: str = "ML",
-    **indexer,
+    **indexer: int | float | str,
 ) -> xr.DataArray:
-    """Return the value corresponding to a return period.
+    r"""Return the value corresponding to a return period.
 
     Parameters
     ----------
@@ -390,9 +393,9 @@ def frequency_analysis(
         Fitting method, either maximum likelihood (ML or MLE), method of moments (MOM),
         probability weighted moments (PWM), also called L-Moments, or approximate method (APP).
         The PWM method is usually more robust to outliers.
-    indexer : {dim: indexer, }, optional
+    \*\*indexer
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
-        month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given, all values are
+        month=1 to select January, or month=[6,7,8] to select summer months. If indexer is not provided, all values are
         considered.
 
     Returns
@@ -444,7 +447,7 @@ def get_lm3_dist(dist):
     return getattr(lmoments3.distr, _lm3_dist_map[dist])
 
 
-def _fit_start(x, dist, **fitkwargs) -> tuple[tuple, dict]:
+def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
     r"""Return initial values for distribution parameters.
 
     Providing the ML fit method initial values can help the optimizer find the global optimum.
@@ -487,7 +490,7 @@ def _fit_start(x, dist, **fitkwargs) -> tuple[tuple, dict]:
         scale = (1 - c) * m
         return (c,), {"scale": scale}
 
-    if dist in ("weibull_min"):
+    if dist in "weibull_min":
         s = x.std()
         loc = x.min() - 0.01 * s
         chat = np.pi / np.sqrt(6) / (np.log(x - loc)).std()
@@ -520,7 +523,7 @@ def _fit_start(x, dist, **fitkwargs) -> tuple[tuple, dict]:
 
 
 def _dist_method_1D(
-    params: Sequence[float], arg=None, *, dist: str, function: str, **kwargs
+    params: Sequence[float], arg=None, *, dist: str, function: str, **kwargs: Any
 ) -> xr.DataArray:
     r"""Statistical function for given argument on given distribution initialized with params.
 
@@ -554,7 +557,7 @@ def dist_method(
     function: str,
     fit_params: xr.DataArray,
     arg: xr.DataArray | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> xr.DataArray:
     r"""Vectorized statistical function for given argument on given distribution initialized with params.
 

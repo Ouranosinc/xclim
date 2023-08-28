@@ -110,10 +110,9 @@ class MissingBase:
         da : xr.DataArray
             Input data.
         freq : str
-            Resampling frequency defining the periods defined in
-            https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+            Resampling frequency, from the periods defined in :ref:`timeseries.resampling`.
         src_timestep : str
-            Expected input frequency. See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#resampling.
+            Expected input frequency, from the periods defined in :ref:`timeseries.resampling`.
         \*\*indexer : {dim: indexer}, optional
             Time attribute and values over which to subset the array. For example, use season='DJF' to select winter
             values, month=1 to select January, or month=[6,7,8] to select summer months. If not indexer is given,
