@@ -68,6 +68,7 @@ dev = [
   "nbqa",
   "nbval",
   "netCDF4 >=1.4",
+  "platformdirs >=3.2",
   "pre-commit >=2.9",
   "pydocstyle >=5.1.1",
   "pybtex",
