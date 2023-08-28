@@ -145,10 +145,9 @@ def _meandetrend_get_trend(da, *, dim, kind):
 
 
 class PolyDetrend(BaseDetrend):
-    """
-    Detrend time series using a polynomial regression.
+    """Detrend time series using a polynomial regression.
 
-    Parameters
+    Attributes
     ----------
     group : Union[str, Grouper]
         The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
@@ -158,8 +157,8 @@ class PolyDetrend(BaseDetrend):
     degree : int
         The order of the polynomial to fit.
     preserve_mean : bool
-        Whether to preserve the mean when de/re-trending. If True, the trend has its mean
-        removed before it is used.
+        Whether to preserve the mean when de/re-trending.
+        If True, the trend has its mean removed before it is used.
     """
 
     def __init__(self, group="time", kind=ADDITIVE, degree=4, preserve_mean=False):
@@ -196,26 +195,26 @@ class LoessDetrend(BaseDetrend):
     neighbors is weighted by a bell-shaped curve (gaussian) with parameters sigma (std).
     The x-coordinate of the DataArray is scaled to [0,1] before the regression is computed.
 
-    Parameters
+    Attributes
     ----------
     group : str or Grouper
-      The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
-      The fit is performed along the group's main dim.
+        The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+        The fit is performed along the group's main dim.
     kind : {'*', '+'}
-      The way the trend is removed or added, either additive or multiplicative.
-    d: [0, 1]
-      Order of the local regression. Only 0 and 1 currently implemented.
+        The way the trend is removed or added, either additive or multiplicative.
+    d : {0, 1}
+        Order of the local regression. Only 0 and 1 currently implemented.
     f : float
-      Parameter controlling the span of the weights, between 0 and 1.
+        Parameter controlling the span of the weights, between 0 and 1.
     niter : int
-      Number of robustness iterations to execute.
+        Number of robustness iterations to execute.
     weights : ["tricube", "gaussian"]
-      Shape of the weighting function:
-      "tricube" : a smooth top-hat like curve, f gives the span of non-zero values.
-      "gaussian" : a gaussian curve, f gives the span for 95% of the values.
+        Shape of the weighting function:
+        "tricube" : a smooth top-hat like curve, f gives the span of non-zero values.
+        "gaussian" : a gaussian curve, f gives the span for 95% of the values.
     skipna : bool
-      If True (default), missing values are not included in the loess trend computation
-      and thus are not propagated. The output will have the same missing values as the input.
+        If True (default), missing values are not included in the loess trend computation
+        and thus are not propagated. The output will have the same missing values as the input.
 
     Notes
     -----
@@ -240,7 +239,7 @@ class LoessDetrend(BaseDetrend):
             kind=kind,
             f=f,
             niter=niter,
-            d=0,
+            d=d,
             weights=weights,
             equal_spacing=equal_spacing,
             skipna=skipna,
@@ -272,28 +271,27 @@ def _loessdetrend_get_trend(
 
 
 class RollingMeanDetrend(BaseDetrend):
-    """
-    Detrend time series using a rolling mean.
+    """Detrend time series using a rolling mean.
 
-    Parameters
+    Attributes
     ----------
     group : str or Grouper
-      The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
-      The fit is performed along the group's main dim.
+        The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
+        The fit is performed along the group's main dim.
     kind : {'*', '+'}
-      The way the trend is removed or added, either additive or multiplicative.
+        The way the trend is removed or added, either additive or multiplicative.
     win : int
-      The size of the rolling window. Units are the steps of the grouped data, which
-      means this detrending is best use with either `group='time'` or
-      `group='time.dayofyear'`. Other grouping will have large jumps included within the
-      windows and :py`:class:`LoessDetrend` might offer a better solution.
+        The size of the rolling window. Units are the steps of the grouped data, which
+        means this detrending is best use with either `group='time'` or
+        `group='time.dayofyear'`. Other grouping will have large jumps included within the
+        windows and :py`:class:`LoessDetrend` might offer a better solution.
     weights : sequence of floats, optional
-      Sequence of length `win`. Defaults to None, which means a flat window.
-    min_periods: int, optional
-      Minimum number of observations in window required to have a value, otherwise the
-      result is NaN. See :py:meth:`xarray.DataArray.rolling`.
-      Defaults to None, which sets it equal to `win`. Setting both `weights` and this
-      is not implemented yet.
+        Sequence of length `win`. Defaults to None, which means a flat window.
+    min_periods : int, optional
+        Minimum number of observations in window required to have a value, otherwise the
+        result is NaN. See :py:meth:`xarray.DataArray.rolling`.
+        Defaults to None, which sets it equal to `win`. Setting both `weights` and this
+        is not implemented yet.
 
     Notes
     -----

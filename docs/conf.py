@@ -116,11 +116,16 @@ extensions = [
     "autodoc_indicator",
     "sphinxcontrib.bibtex",
     "sphinxcontrib.cairosvgconverter",
+    # sphinx_autodoc_typehints must always be listed after sphinx.ext.napoleon
     "sphinx_autodoc_typehints",
     "sphinx_codeautolink",
     "sphinx_copybutton",
     "sphinx_rtd_theme",
 ]
+
+autodoc_typehints = "description"
+autodoc_typehints_format = "fully-qualified"
+autodoc_typehints_description_target = "documented_params"
 
 autosectionlabel_prefix_document = True
 autosectionlabel_maxdepth = 2
@@ -185,10 +190,11 @@ numpydoc_class_members_toctree = False
 intersphinx_mapping = {
     "clisops": ("https://clisops.readthedocs.io/en/latest/", None),
     "flox": ("https://flox.readthedocs.io/en/latest/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
     "sklearn": ("https://scikit-learn.org/stable/", None),
     "statsmodels": ("https://www.statsmodels.org/stable/", None),
-    "numpy": ("https://numpy.org/doc/stable/", None),
 }
 extlinks = {
     "issue": ("https://github.com/Ouranosinc/xclim/issues/%s", "GH/%s"),
