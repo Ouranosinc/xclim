@@ -11,6 +11,7 @@ from xclim.core.calendar import resample_doy
 from xclim.core.units import (
     convert_units_to,
     declare_units,
+    ensure_delta,
     pint2cfunits,
     rate2amount,
     str2pint,
@@ -536,9 +537,9 @@ def daily_temperature_range(
     """
     tasmax = convert_units_to(tasmax, tasmin)
     dtr = tasmax - tasmin
-    out = select_resample_op(dtr, op=op, freq=freq)
     u = str2pint(tasmax.units)
-    out.attrs["units"] = pint2cfunits(u - u)
+    dtr.attrs["units"] = pint2cfunits(u - u)
+    out = select_resample_op(dtr, op=op, freq=freq)
     return out
 
 
@@ -575,9 +576,9 @@ def daily_temperature_range_variability(
     """
     tasmax = convert_units_to(tasmax, tasmin)
     vdtr = abs((tasmax - tasmin).diff(dim="time"))
-    out = vdtr.resample(time=freq).mean(dim="time")
     u = str2pint(tasmax.units)
-    out.attrs["units"] = pint2cfunits(u - u)
+    vdtr.attrs["units"] = pint2cfunits(u - u)
+    out = select_resample_op(vdtr, op="mean", freq=freq)
     return out
 
 

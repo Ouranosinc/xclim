@@ -594,13 +594,12 @@ def to_agg_units(
         m, freq_u_raw = infer_sampling_units(orig[dim])
         orig_u = str2pint(orig.units)
         freq_u = str2pint(freq_u_raw)
-
         out = out * m
 
         if op == "count":
             out.attrs["units"] = freq_u_raw
         elif op == "integral":
-            out.attrs["units"] = pint2cfunits((orig_u - orig_u) * freq_u)
+            out.attrs["units"] = pint2cfunits(orig_u * freq_u)
     else:
         raise ValueError(
             f"Aggregation op {op} not in [min, max, mean, std, doymin, doymax, count, integral]."
