@@ -567,12 +567,10 @@ def to_agg_units(
     ...     np.arange(52) + 10,
     ...     dims=("time",),
     ...     coords={"time": time},
-    ...     attrs={"units": "degC"},
     ... )
-    >>> degdays = (
-    ...     (tas - 16).clip(0).sum("time")
-    ... )  # Integral of  temperature above a threshold
-    >>> degdays = to_agg_units(degdays, tas, op="integral")
+    >>> dt = (tas - 16).assign_attrs(units="delta_degC")
+    >>> degdays = dt.clip(0).sum("time")  # Integral of temperature above a threshold
+    >>> degdays = to_agg_units(degdays, dt, op="integral")
     >>> degdays.units
     'week delta_degC'
 
