@@ -569,8 +569,7 @@ def _gen_parameters_section(parameters: dict, allowed_periods: list[str] = None)
         elif param.default is not _empty:
             defstr = f"Default : {param.default}. "
         else:
-            logging.info("No default value for InputKind. Setting to empty string.")
-            defstr = ""
+            defstr = "Required. "
         if "choices" in param:
             annotstr = str(param.choices)
         else:
