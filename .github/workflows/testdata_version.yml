@@ -35,7 +35,7 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
-          body-includes: It appears that this PR modifies the `XCLIM_TESTDATA_BRANCH` environment variable
+          body-includes: It appears that this Pull Request modifies the `main.yml` workflow.
       - name: Compare Versions
         if: ${{( env.XCLIM_TESTDATA_TAG != env.XCLIM_TESTDATA_BRANCH )}}
         uses: actions/github-script@v6.4.1
@@ -50,11 +50,13 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             > **Warning**
-            > It appears that this PR modifies the `XCLIM_TESTDATA_BRANCH` environment variable to a tag that is not the latest in the `Ouranosinc/xclim-testdata` repository.
+            > It appears that this Pull Request modifies the `main.yml` workflow.
 
-            Please be sure to modify this value to match the most recent tag (`${{ env.XCLIM_TESTDATA_TAG }}`) before merging.
+            On inspection, it seems that the `XCLIM_TESTDATA_BRANCH` environment variable is set to a tag that is not the latest in the `Ouranosinc/xclim-testdata` repository.
 
-            If this PR depends on changes in a new testing dataset branch, be sure to tag a new version of `Ouranosinc/xclim-testdata` with your changes merged to `main`.
+            This value must match the most recent tag (`${{ env.XCLIM_TESTDATA_TAG }}`) in order to merge this Pull Request.
+
+            If this PR depends on changes in a new testing dataset branch, be sure to tag a new version of `Ouranosinc/xclim-testdata` once your changes have been merged to its `main` branch.
           edit-mode: replace
       - name: Update Success Comment
         if: ${{ success() }}
@@ -64,7 +66,9 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             > **Note**
-            > It appears that this PR modifies the `XCLIM_TESTDATA_BRANCH` environment variable to the most recent tag (`${{ env.XCLIM_TESTDATA_TAG }}`).
+            > It appears that this Pull Request modifies the `main.yml` workflow.
+
+            On inspection, the `XCLIM_TESTDATA_BRANCH` environment variable is set to the most recent tag (`${{ env.XCLIM_TESTDATA_TAG }}`).
 
             No further action is required.
           edit-mode: replace
