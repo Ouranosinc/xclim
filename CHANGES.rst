@@ -22,12 +22,15 @@ New features and enhancements
 * Added new function ``xclim.sdba.properties.std`` to calculate the standard deviation of a variable over all years at a given time resolution. (:pull:`1445`).
 * Amended the documentation of ``xclim.sdba.properties.trend`` to document already existing functionality of calculating the return values of ``scipy.stats.linregress``. (:pull:`1445`).
 * Add support for setting optional variables through the `ds` argument. (:issue:`1432`, :pull:`1435`).
+* New ``xclim.core.calendar.is_offset_divisor`` to test if a given freq divides another one evenly (:pull:`1446`).
+* Missing value objects now support input timeseries of quarterly and yearly frequencies (:pull:`1446`).
+* Missing value checks enabled for all "generic" indicators (``return_level``, ``fit`` and ``stats``) (:pull:`1446`).
 
 Bug fixes
 ^^^^^^^^^
-* Fix `kldiv` docstring so the math formula renders to HTML. (:issue:`1408`, :pull:`1409`).
+* Fix ``kldiv`` docstring so the math formula renders to HTML. (:issue:`1408`, :pull:`1409`).
 * Fix the registry entries of "generic" indicators. (:issue:`1423`, :pull:`1424`).
-* Fix `jetstream_metric_woollings` so it uses the `vertical` coordinate identified by `cf-xarray`, instead of `pressure`. (:issue:`1421`, :pull:`1422`). Add logic to handle coordinates in decreasing order, or for longitudes defined from 0-360 instead of -180 to 180. (:issue:`1429`, :pull:`1430`).
+* Fix ``jetstream_metric_woollings`` so it uses the `vertical` coordinate identified by `cf-xarray`, instead of `pressure`. (:issue:`1421`, :pull:`1422`). Add logic to handle coordinates in decreasing order, or for longitudes defined from 0-360 instead of -180 to 180. (:issue:`1429`, :pull:`1430`).
 * Fix virtual indicator attribute assignment causing individual indicator's realm to be ignored. (:issue:`1425`, :pull:`1426`).
 * Fixes the `raise_flags` argument of ``xclim.core.dataflags.data_flags`` so that an Exception is only raised when some checkups fail (:issue:`1456`, :pull:`1457`).
 * Fix ``xclim.indices.generic.get_zones`` so that `bins` can be given as input without error. (:pull:`1455`).
@@ -49,6 +52,7 @@ Internal changes
 * Added a helper module ``_finder`` in the notebooks folder so that the working directory can always be found, with redundancies in place to prevent scripts from failing if the helper file is not found. (:pull:`1449`).
 * Added a manual cache-cleaning workflow (based on `GitHub cache-cleaning example <https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows#managing-caches>`_), triggered when a branch has been merged. (:pull:`1462`).
 * Added a workflow for posting updates to the xclim Mastodon account (using `cbrgm/mastodon-github-action <https://github.com/cbrgm/mastodon-github-action>`_, triggered when a new version is published. (:pull:`1462`).
+* Refactor base indicator classes and fix misleading inheritance of ``return_level`` (:issue:`1263`, :pull:`1446`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^

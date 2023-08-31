@@ -31,6 +31,21 @@ class TestMissingBase:
         mb = missing.MissingBase(ts, freq="AS", src_timestep="M", season="JJA")
         assert mb.count == 3
 
+    def test_seasonal_input(self, random):
+        """Creating array with 11 seasons."""
+        n = 11
+        time = xr.cftime_range(start="2002-04-01", periods=n, freq="QS-JAN")
+        ts = xr.DataArray(random.random(n), dims="time", coords={"time": time})
+        mb = missing.MissingBase(ts, freq="YS", src_timestep="QS-JAN")
+        # Make sure count is 12, because we're requesting a YS freq.
+        np.testing.assert_array_equal(mb.count, [4, 4, 4, 1])
+
+        with pytest.raises(
+            NotImplementedError,
+            match="frequency that is not aligned with the source timestep.",
+        ):
+            missing.MissingBase(ts, freq="YS", src_timestep="QS-DEC")
+
 
 class TestMissingAnyFills:
     def test_missing_days(self, tas_series):
@@ -143,6 +158,13 @@ class TestMissingAnyFills:
         pr = pr_hr_series(a)
         out = missing.missing_any(pr, freq="MS")
         np.testing.assert_array_equal(out, [True, False, True])
+
+    def test_seasonal(self, random):
+        n = 11
+        time = xr.cftime_range(start="2002-01-01", periods=n, freq="QS-JAN")
+        ts = xr.DataArray(random.random(n), dims="time", coords={"time": time})
+        out = missing.missing_any(ts, freq="YS")
+        np.testing.assert_array_equal(out, [False, False, True])
 
 
 class TestMissingWMO:
