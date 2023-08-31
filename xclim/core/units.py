@@ -15,6 +15,7 @@ from importlib.resources import open_text
 from inspect import _empty, signature  # noqa
 from typing import Any, Callable, Tuple
 
+import numpy as np
 import pint
 import xarray as xr
 from boltons.funcutils import wraps
@@ -519,7 +520,7 @@ def to_agg_units(
     orig : xr.DataArray
         The original array before the aggregation operation,
         used to infer the sampling units and get the variable units.
-    op : {'count', 'prod', 'delta_prod'}
+    op : {'min', 'max', 'mean', 'std', 'doymin', 'doymax',  'count', 'integral'}
         The type of aggregation operation performed. The special "delta_*" ops are used
         with temperature units needing conversion to their "delta" counterparts (e.g. degree days)
     dim : str
@@ -557,12 +558,10 @@ def to_agg_units(
     ...     np.arange(52) + 10,
     ...     dims=("time",),
     ...     coords={"time": time},
-    ...     attrs={"units": "degC"},
     ... )
-    >>> degdays = (
-    ...     (tas - 16).clip(0).sum("time")
-    ... )  # Integral of  temperature above a threshold
-    >>> degdays = to_agg_units(degdays, tas, op="delta_prod")
+    >>> dt = (tas - 16).assign_attrs(units="delta_degC")
+    >>> degdays = dt.clip(0).sum("time")  # Integral of temperature above a threshold
+    >>> degdays = to_agg_units(degdays, dt, op="integral")
     >>> degdays.units
     'week delta_degC'
 
@@ -572,19 +571,29 @@ def to_agg_units(
     >>> degdays.units
     'K d'
     """
-    m, freq_u_raw = infer_sampling_units(orig[dim])
-    freq_u = str2pint(freq_u_raw)
-    orig_u = str2pint(orig.units)
+    if op in ["amin", "min", "amax", "max", "mean", "std"]:
+        out.attrs["units"] = orig.attrs["units"]
 
-    out = out * m
-    if op == "count":
-        out.attrs["units"] = freq_u_raw
-    elif op == "prod":
-        out.attrs["units"] = pint2cfunits(orig_u * freq_u)
-    elif op == "delta_prod":
-        out.attrs["units"] = pint2cfunits((orig_u - orig_u) * freq_u)
+    elif op in ["doymin", "doymax"]:
+        out.attrs.update(
+            units="", is_dayofyear=np.int32(1), calendar=get_calendar(orig)
+        )
+
+    elif op in ["count", "integral"]:
+        m, freq_u_raw = infer_sampling_units(orig[dim])
+        orig_u = str2pint(orig.units)
+        freq_u = str2pint(freq_u_raw)
+        out = out * m
+
+        if op == "count":
+            out.attrs["units"] = freq_u_raw
+        elif op == "integral":
+            out.attrs["units"] = pint2cfunits(orig_u * freq_u)
     else:
-        raise ValueError(f"Aggregation op {op} not in [count, prod, delta_prod].")
+        raise ValueError(
+            f"Aggregation op {op} not in [min, max, mean, std, doymin, doymax, count, integral]."
+        )
+
     return out
 
 

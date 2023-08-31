@@ -46,6 +46,8 @@ dependencies:
     - nbval
     - nc-time-axis
     - netCDF4>=1.4
+    - notebook
+    - platformdirs
     - pooch
     - pre-commit
     - pybtex

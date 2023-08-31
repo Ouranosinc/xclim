@@ -1419,7 +1419,7 @@ def effective_growing_degree_days(
     deg_days = (tas - thresh).clip(min=0)
     egdd = aggregate_between_dates(deg_days, start=start, end=end, freq=freq)
 
-    return to_agg_units(egdd, tas, op="delta_prod")
+    return to_agg_units(egdd, tas, op="integral")
 
 
 @declare_units(tasmin="[temperature]")

@@ -22,6 +22,7 @@ repos:
   - id: debug-statements
   - id: pretty-format-json
     args: ['--autofix', '--no-ensure-ascii', '--no-sort-keys']
+    exclude: '.ipynb'
 - repo: https://github.com/pappasam/toml-sort
   rev: v0.23.1
   hooks:
@@ -70,7 +71,12 @@ repos:
   hooks:
   - id: blackdoc
     exclude: '(xclim/indices/__init__.py|docs/installation.rst)'
-    additional_dependencies: ['black==23.3.0']
+    additional_dependencies: ['black==23.7.0']
+- repo: https://github.com/python-jsonschema/check-jsonschema
+  rev: 0.23.3
+  hooks:
+  - id: check-github-workflows
+  - id: check-readthedocs
 - repo: meta
   hooks:
   - id: check-hooks-apply
