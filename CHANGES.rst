@@ -50,6 +50,8 @@ Internal changes
 * Some docstring adjustments to existing classes. (:pull:`1449`).
 * `identify` now associates Jupyter Notebooks as JSON files. Set `pre-commit` to ignore JSON-formatting of them. (:pull:`1449`).
 * Added a helper module ``_finder`` in the notebooks folder so that the working directory can always be found, with redundancies in place to prevent scripts from failing if the helper file is not found. (:pull:`1449`).
+* Added a manual cache-cleaning workflow (based on `GitHub cache-cleaning example <https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows#managing-caches>`_), triggered when a branch has been merged. (:pull:`1462`).
+* Added a workflow for posting updates to the xclim Mastodon account (using `cbrgm/mastodon-github-action <https://github.com/cbrgm/mastodon-github-action>`_, triggered when a new version is published. (:pull:`1462`).
 * Refactor base indicator classes and fix misleading inheritance of ``return_level`` (:issue:`1263`, :pull:`1446`).
 
 Breaking changes
