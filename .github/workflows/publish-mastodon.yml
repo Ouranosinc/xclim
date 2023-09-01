@@ -12,7 +12,7 @@ jobs:
     steps:
 
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v3.6.0
 
     - name: Current Version
       run: |
@@ -21,7 +21,7 @@ jobs:
 
     - name: Send toot to Mastodon
       id: mastodon
-      uses: cbrgm/mastodon-github-action@v1
+      uses: cbrgm/mastodon-github-action@v1.0.3
       with:
         message: |
           New #xclim release: v${{ env.current_version }} 🎉
