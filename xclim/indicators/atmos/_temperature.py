@@ -38,6 +38,7 @@ __all__ = [
     "frost_free_season_end",
     "frost_free_season_length",
     "frost_free_season_start",
+    "frost_free_spell_max_length",
     "frost_season_length",
     "growing_degree_days",
     "growing_season_end",
@@ -278,7 +279,7 @@ hot_spell_max_length = Temp(
     long_name="Maximum consecutive number of days in a hot period of {window} day(s) or more, during which the "
     "temperature within windows of {window} day(s) is above {thresh}.",
     description="The maximum {freq} number of consecutive days in a hot period of {window} day(s) or more"
-    ", during which the precipitation within windows of {window} day(s) is above {thresh}.",
+    ", during which the temperature within windows of {window} day(s) is above {thresh}.",
     abstract="The maximum length of a hot period of `N` days or more, during which the "
     "temperature over a given time window of days is above a given threshold.",
     units="days",
@@ -511,7 +512,7 @@ cold_spell_max_length = Temp(
     long_name="Maximum consecutive number of days in a cold period of {window} day(s) or more, during which the "
     "temperature within windows of {window} day(s) is under {thresh}.",
     description="The maximum {freq} number of consecutive days in a cold period of {window} day(s) or more"
-    ", during which the precipitation within windows of {window} day(s) is under {thresh}.",
+    ", during which the temperature within windows of {window} day(s) is under {thresh}.",
     abstract="The maximum length of a cold period of `N` days or more, during which the "
     "temperature over a given time window of days is below a given threshold.",
     units="days",
@@ -930,6 +931,20 @@ frost_free_season_end = Temp(
     cell_methods="",
     compute=indices.frost_free_season_end,
     parameters={"thresh": {"default": "0 degC"}},
+)
+
+frost_free_spell_max_length = Temp(
+    title="Frost free spell maximum length",
+    identifier="frost_free_spell_max_length",
+    long_name="Maximum consecutive number of days in a frost free period of {window} day(s) or more, during which the "
+    "minimum temperature within windows of {window} day(s) is above {thresh}.",
+    description="The maximum {freq} number of consecutive days in a frost free period of {window} day(s) or more"
+    ", during which the minimum temperature within windows of {window} day(s) is above {thresh}.",
+    abstract="The maximum length of a frost free period of `N` days or more, during which the "
+    "minimum temperature over a given time window of days is above a given threshold.",
+    units="days",
+    cell_methods="",
+    compute=indices.frost_free_spell_max_length,
 )
 
 maximum_consecutive_frost_free_days = Temp(

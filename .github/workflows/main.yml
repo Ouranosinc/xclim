@@ -39,9 +39,9 @@ jobs:
         uses: styfle/cancel-workflow-action@0.11.0
         with:
           access_token: ${{ github.token }}
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.6.0
       - name: Set up Python${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v4.7.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install pylint and tox
@@ -63,9 +63,9 @@ jobs:
           - tox-env: "py39"
             python-version: "3.9"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.6.0
       - name: Set up Python${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v4.7.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install tox
@@ -95,14 +95,14 @@ jobs:
           - tox-env: py311-coverage-sbck
             python-version: "3.11"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.6.0
       - name: Install Eigen3
         if: contains(matrix.tox-env, 'sbck')
         run: |
           sudo apt-get update
           sudo apt-get install libeigen3-dev
       - name: Set up Python${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v4.7.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install tox
@@ -132,9 +132,9 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.6.0
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
-        uses: mamba-org/setup-micromamba@v1
+        uses: mamba-org/setup-micromamba@v1.4.3
         with:
           cache-downloads: true
           cache-environment: true
