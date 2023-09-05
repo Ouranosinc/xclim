@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: PyPI
     steps:
 
     - name: Checkout
@@ -19,16 +20,21 @@ jobs:
         CURRENT_VERSION="$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
         echo "current_version=${CURRENT_VERSION}" >> $GITHUB_ENV
 
+    - name: Prepare Message
+      run: |
+          MESSAGE="New #xclim release: v${{ env.current_version }} 🎉
+
+          Source code available at: https://github.com/Ouranosinc/xclim
+          Check out the docs for more information: https://xclim.readthedocs.io/en/v${{ env.current_version }}/"
+          echo "${MESSAGE}" >> $GITHUB_ENV
+
     - name: Send toot to Mastodon
       id: mastodon
       uses: cbrgm/mastodon-github-action@v1.0.3
       with:
         message: |
-          New #xclim release: v${{ env.current_version }} 🎉
-
-          Source code available at: https://github.com/Ouranosinc/xclim
-          Check out the docs for more information: https://xclim.readthedocs.io/en/v${{ env.current_version }}/
-        visibility: "public" # default: public
+          ${{ env.MESSAGE }}
+        visibility: "public"
       env:
-        MASTODON_URL: ${{ secrets.MASTODON_URL }} # https://example.social
-        MASTODON_ACCESS_TOKEN: ${{ secrets.MASTODON_ACCESS_TOKEN }} # access token
+        MASTODON_URL: ${{ secrets.MASTODON_URL }}
+        MASTODON_ACCESS_TOKEN: ${{ secrets.MASTODON_ACCESS_TOKEN }}
