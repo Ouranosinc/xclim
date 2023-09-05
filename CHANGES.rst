@@ -16,7 +16,7 @@ New indicators
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* Added ``ensembles.hawkins_sutton`` method to partition the uncertainty sources in a climate projection ensemble. (:issue:`771`, :pull:`1262`).
+* Added ``ensembles.hawkins_sutton`` method to partition the uncertainty sources in a climate projection ensemble. (:issue:`771`, :pull:`1262`), along with a notebook example. (:pull:`1463`).
 * New function ``xclim.core.calendar.convert_doy`` to transform day-of-year data between calendars. Also accessible from ``convert_calendar`` with ``doy=True``. (:issue:`1283`, :pull:`1406`).
 * New ``xclim.units.declare_relative_units`` to enable relative unit checks. This was applied to most "generic" indices. (:pull:`1414`).
 * Added new function ``xclim.sdba.properties.std`` to calculate the standard deviation of a variable over all years at a given time resolution. (:pull:`1445`).
