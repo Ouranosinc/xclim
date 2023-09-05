@@ -2,6 +2,14 @@
 Changelog
 =========
 
+v0.46.0 (unreleased)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* GitHub deployment workflows now use the "Trusted Publisher" feature to sign and publish the `xclim` wheel and source distributions.
+
 v0.45.0 (2023-09-05)
 --------------------
 Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Marco Braun (:user:`vindelico`), Éric Dupuis (:user:`coxipi`).
