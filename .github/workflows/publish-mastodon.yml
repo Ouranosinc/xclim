@@ -1,0 +1,34 @@
+name: Publish Release Announcement to Mastodon
+
+on:
+  status:
+    types:
+      - published
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v3.6.0
+
+    - name: Current Version
+      run: |
+        CURRENT_VERSION="$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
+        echo "current_version=${CURRENT_VERSION}" >> $GITHUB_ENV
+
+    - name: Send toot to Mastodon
+      id: mastodon
+      uses: cbrgm/mastodon-github-action@v1.0.3
+      with:
+        message: |
+          New #xclim release: v${{ env.current_version }} 🎉
+
+          Source code available at: https://github.com/Ouranosinc/xclim
+          Check out the docs for more information: https://xclim.readthedocs.io/en/v${{ env.current_version }}/
+        visibility: "public" # default: public
+      env:
+        MASTODON_URL: ${{ secrets.MASTODON_URL }} # https://example.social
+        MASTODON_ACCESS_TOKEN: ${{ secrets.MASTODON_ACCESS_TOKEN }} # access token

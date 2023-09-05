@@ -479,16 +479,16 @@
     "abstract": "Nombre de jours faisant partie d'une vague de froid. Une vague de froid se produit lorsque la température quotidienne moyenne est sous un seuil donné durant au moins un certain nombre de jours consécutifs."
   },
   "COLD_SPELL_MAX_LENGTH": {
-    "long_name": "Série la plus longue d'au moins {window} jours consécutifs ayant une température quotidienne au-dessus de {thresh}.",
-    "description": "Longueur maximale {freq:f} des périodes froides durant une période donnée. Une période froide se produit lorsque la température quotidienne est au-dessus de {thresh} durant au moins {window} jours.",
+    "long_name": "Série la plus longue d'au moins {window} jours consécutifs ayant une température quotidienne en dessous de {thresh}.",
+    "description": "Longueur maximale {freq:f} des périodes froides durant une période donnée. Une période froide se produit lorsque la température quotidienne est en dessous de {thresh} durant au moins {window} jours.",
     "title": "Longueur maximale des périodes froides",
-    "abstract": "Longueur maximale des périodes froides durant une période donnée. Une période froide se produit lorsque la température quotidienne est au-dessus d'un seuil spécifique durant un minimum de jours."
+    "abstract": "Longueur maximale des périodes froides durant une période donnée. Une période froide se produit lorsque la température quotidienne est en dessous d'un seuil spécifique durant un minimum de jours."
   },
   "COLD_SPELL_TOTAL_LENGTH": {
-    "long_name": "Durée totale des périodes d'au moins {window} jours consécutifs ayant une température quotidienne au-dessus de {thresh}.",
-    "description": "Durée totale {freq:f} des périodes froides durant une période donnée. Une période froide se produit lorsque la température quotidienne est au-dessus de {thresh} durant au moins {window} jours.",
+    "long_name": "Durée totale des périodes d'au moins {window} jours consécutifs ayant une température quotidienne en dessous de {thresh}.",
+    "description": "Durée totale {freq:f} des périodes froides durant une période donnée. Une période froide se produit lorsque la température quotidienne est en dessous de {thresh} durant au moins {window} jours.",
     "title": "Durée totale des périodes froides",
-    "abstract": "Durée totale des périodes froides durant une période donnée. Une période froide se produit lorsque la température quotidienne est au-dessus d'un seuil spécifique durant un minimum de jours."
+    "abstract": "Durée totale des périodes froides durant une période donnée. Une période froide se produit lorsque la température quotidienne est en dessous d'un seuil spécifique durant un minimum de jours."
   },
   "COOL_NIGHT_INDEX": {
     "long_name": "Indice de fraîcheur des nuits",
@@ -618,6 +618,12 @@
     "description": "Jour de l'année du début de la saison sans gel, défini comme le {window}e jour consécutif où la température minimale quotidienne est au-dessus {thresh}.",
     "title": "Jour de l'année du début de la saison sans gel",
     "abstract": "Premier jour où la température minimale quotidienne est au-dessus un seuil donné depuis un certain nombre de jours consécutifs."
+  },
+  "FROST_FREE_SPELL_MAX_LENGTH": {
+    "long_name": "Série la plus longue d'au moins {window} jours consécutifs ayant une température minimale quotidienne au-dessus de {thresh}.",
+    "description": "Longueur maximale {freq:f} des périodes sans gel durant une période donnée. Une période froide se produit lorsque la température minimale quotidienne est au-dessus de {thresh} durant au moins {window} jours.",
+    "title": "Longueur maximale des périodes sans gel",
+    "abstract": "Longueur maximale des périodes sans gel durant une période donnée. Une période sans gel se produit lorsque la température minimale quotidienne est au-dessus d'un seuil spécifique durant un minimum de jours."
   },
   "GROWING_SEASON_LENGTH": {
     "long_name": "Nombre de jours entre la première occurrence d'au moins {window} jours consécutifs ayant une température moyenne quotidienne au-dessus de {fourchette} et la première occurrence d'au moins {window} jours consécutifs ayant une température moyenne quotidienne sous {thresh}, survenant après {mid_date}",
@@ -1013,6 +1019,12 @@
     "description": "Première date à laquelle la quantité de neige passe sous {thresh} pendant au moins {window} jours consécutifs suite à l'établissement du couvert de neige.",
     "title": "Date du fin du couvert de neige (quantité)",
     "abstract": "Première date à partir de laquelle la quantité de neige est sous à un seuil donné pendant un nombre de jours consécutifs suite au début du couvert de neige."
+  },
+  "SND_MAX": {
+    "long_name": "Épaisseur de neige maximale",
+    "description": "Épaisseur maximale {freq:f} de la neige.",
+    "title": "Épaisseur de la neige maximale",
+    "abstract": "Maximum de l'épaisseur de neige quotidienne."
   },
   "SND_MAX_DOY": {
     "long_name": "Date de l'épaisseur de neige maximale",

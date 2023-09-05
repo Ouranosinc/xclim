@@ -1039,6 +1039,16 @@ class TestFrostFreeSeasonLength:
         np.testing.assert_array_equal(fsl.sel(time="2000-07-01"), 121)
 
 
+class TestFrostFreeSpellMaxLength:
+    def test_simple(self, tasmin_series):
+        tn = np.zeros(365) - 1
+        tn[10:12] = 1
+        tn[20:30] = 1
+        tn = tasmin_series(tn + K2C, start="1/1/2000")
+        out = xci.frost_free_spell_max_length(tn)
+        assert out[0] == 10
+
+
 class TestHeatingDegreeDays:
     def test_simple(self, tas_series):
         a = np.zeros(365) + 17
@@ -2619,6 +2629,31 @@ def test_days_with_snow(prsnd_series, prsn_series):
     assert len(out) == 2
     # Days with 0 and 1 are not counted, because condition is > thresh, not >=.
     assert sum(out) == 364
+
+
+class TestSnowMax:
+    def test_simple(self, snd_series, snw_series):
+        a = np.ones(366) / 100.0
+        a[10:20] = 0.3
+        snd = snd_series(a)
+        snw = snw_series(a)
+
+        out = xci.snd_max(snd)
+        np.testing.assert_array_equal(out, [0.3, 0.01])
+
+        out = xci.snw_max(snw)
+        np.testing.assert_array_equal(out, [0.3, 0.01])
+
+    def test_nan_slices(self, snd_series, snw_series):
+        a = np.ones(366) * np.NaN
+        snd = snd_series(a)
+        snw = snw_series(a)
+
+        out = xci.snd_max_doy(snd)
+        assert out.isnull().all()
+
+        out = xci.snw_max_doy(snw)
+        assert out.isnull().all()
 
 
 class TestSnowMaxDoy:

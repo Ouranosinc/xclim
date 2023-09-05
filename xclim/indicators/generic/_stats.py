@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from xclim.core.indicator import Indicator, ResamplingIndicator
+from xclim.core.indicator import ReducingIndicator, ResamplingIndicator
 from xclim.indices.generic import select_resample_op
 from xclim.indices.stats import fit as _fit
 from xclim.indices.stats import frequency_analysis
@@ -8,7 +8,7 @@ from xclim.indices.stats import frequency_analysis
 __all__ = ["fit", "return_level", "stats"]
 
 
-class Generic(Indicator):
+class Generic(ReducingIndicator):
     realm = "generic"
 
 
@@ -30,7 +30,7 @@ fit = Generic(
 )
 
 
-return_level = GenericResampling(
+return_level = Generic(
     title="Return level from frequency analysis",
     identifier="return_level",
     var_name="fa_{window}{mode:r}{indexer}",
@@ -40,7 +40,6 @@ return_level = GenericResampling(
     abstract="Frequency analysis on the basis of a given mode and distribution.",
     compute=frequency_analysis,
     src_freq="D",
-    missing="skip",
 )
 
 
@@ -51,6 +50,5 @@ stats = GenericResampling(
     long_name="Daily statistics",
     description="{freq} {op} of daily values ({indexer}).",
     compute=select_resample_op,
-    missing="any",
     src_freq="D",
 )

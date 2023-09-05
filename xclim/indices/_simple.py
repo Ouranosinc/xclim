@@ -6,7 +6,7 @@ import xarray
 from xclim.core.units import convert_units_to, declare_units, rate2amount, to_agg_units
 from xclim.core.utils import Quantified
 
-from .generic import select_time, threshold_count
+from .generic import select_resample_op, select_time, threshold_count
 
 # Frequencies : YS: year start, QS-DEC: seasons starting in december, MS: month start
 # See http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
@@ -106,7 +106,7 @@ def tg_mean(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
     >>> t = xr.open_dataset(path_to_tas_file).tas
     >>> tg = tg_mean(t, freq="QS-DEC")
     """
-    return tas.resample(time=freq).mean(dim="time").assign_attrs(units=tas.units)
+    return select_resample_op(tas, op="mean", freq=freq)
 
 
 @declare_units(tas="[temperature]")
@@ -136,7 +136,7 @@ def tg_min(tas: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
         TGn_j = min(TG_{ij})
     """
-    return tas.resample(time=freq).min(dim="time").assign_attrs(units=tas.units)
+    return select_resample_op(tas, op="min", freq=freq)
 
 
 @declare_units(tasmin="[temperature]")
@@ -166,7 +166,7 @@ def tn_max(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
         TNx_j = max(TN_{ij})
     """
-    return tasmin.resample(time=freq).max(dim="time").assign_attrs(units=tasmin.units)
+    return select_resample_op(tasmin, op="max", freq=freq)
 
 
 @declare_units(tasmin="[temperature]")
@@ -196,7 +196,7 @@ def tn_mean(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
         TN_{ij} = \frac{ \sum_{i=1}^{I} TN_{ij} }{I}
     """
-    return tasmin.resample(time=freq).mean(dim="time").assign_attrs(units=tasmin.units)
+    return select_resample_op(tasmin, op="mean", freq=freq)
 
 
 @declare_units(tasmin="[temperature]")
@@ -226,7 +226,7 @@ def tn_min(tasmin: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
         TNn_j = min(TN_{ij})
     """
-    return tasmin.resample(time=freq).min(dim="time").assign_attrs(units=tasmin.units)
+    return select_resample_op(tasmin, op="min", freq=freq)
 
 
 @declare_units(tasmax="[temperature]")
@@ -256,7 +256,7 @@ def tx_max(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
         TXx_j = max(TX_{ij})
     """
-    return tasmax.resample(time=freq).max(dim="time").assign_attrs(units=tasmax.units)
+    return select_resample_op(tasmax, op="max", freq=freq)
 
 
 @declare_units(tasmax="[temperature]")
@@ -286,7 +286,7 @@ def tx_mean(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
         TX_{ij} = \frac{ \sum_{i=1}^{I} TX_{ij} }{I}
     """
-    return tasmax.resample(time=freq).mean(dim="time").assign_attrs(units=tasmax.units)
+    return select_resample_op(tasmax, op="mean", freq=freq)
 
 
 @declare_units(tasmax="[temperature]")
@@ -316,7 +316,7 @@ def tx_min(tasmax: xarray.DataArray, freq: str = "YS") -> xarray.DataArray:
 
         TXn_j = min(TX_{ij})
     """
-    return tasmax.resample(time=freq).min(dim="time").assign_attrs(units=tasmax.units)
+    return select_resample_op(tasmax, op="min", freq=freq)
 
 
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
@@ -431,7 +431,7 @@ def max_1day_precipitation_amount(
     >>> pr = xr.open_dataset(path_to_pr_file).pr
     >>> rx1day = max_1day_precipitation_amount(pr, freq="YS")
     """
-    return pr.resample(time=freq).max(dim="time").assign_attrs(units=pr.units)
+    return select_resample_op(pr, op="max", freq=freq)
 
 
 @declare_units(pr="[precipitation]")
