@@ -253,6 +253,14 @@ def test_wind_chill_index(atmosds):
     )
 
 
+def test_wind_profile(atmosds):
+    atmos.wind_profile(wind_speed=atmosds.sfcWind, h_r="10 m", h="100 m", alpha=1 / 7)
+
+
+def test_wind_power_potential(atmosds):
+    atmos.wind_power_potential(wind_speed=atmosds.sfcWind)
+
+
 class TestDrynessIndex:
     def test_simple(self, atmosds):
         ds = atmosds.isel(location=3)

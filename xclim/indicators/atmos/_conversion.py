@@ -128,7 +128,7 @@ wind_vector_from_speed = Converter(
 wind_power_potential = Converter(
     title="Wind power potential",
     identifier="wind_power_potential",
-    units="W m-2",
+    units="",
     long_name="Wind power potential",
     description="Wind power potential using a semi-idealized turbine power curve using a cut_in speed of {cut_in}, "
     "a rated speed of {rated}, and a cut_out speed of {cut_out}.",
