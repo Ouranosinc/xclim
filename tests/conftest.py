@@ -451,7 +451,7 @@ def gather_session_data(threadsafe_data_dir, worker_id, xdoctest_namespace):
                 helpers.populate_testing_data(branch=helpers.TESTDATA_BRANCH)
                 _default_cache_dir.joinpath(".data_written").touch()
             fl.acquire()
-        shutil.copytree(_default_cache_dir, threadsafe_data_dir)
+    shutil.copytree(_default_cache_dir, threadsafe_data_dir)
     helpers.generate_atmos(threadsafe_data_dir)
     xdoctest_namespace.update(helpers.add_example_file_paths(threadsafe_data_dir))
 
