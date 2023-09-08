@@ -3626,3 +3626,19 @@ class TestLateFrostDays:
         tasmin = tasmin_series(np.array([-1, 1, 2, -4, 0]) + K2C, start="30/3/2023")
         lfd = xci.frost_days(tasmin, date_bounds=("04-01", "06-30"))
         np.testing.assert_allclose(lfd, 1)
+
+
+class TestWindProfile:
+    def test_simple(self, sfcWind_series):
+        a = np.linspace(0, 100)
+        v = xci.wind_profile(sfcWind_series(a), h="100 m", h_r="10 m")
+        np.testing.assert_allclose(v, a * 10 ** (1 / 7))
+
+
+class TestWindPowerPotential:
+    def test_simple(self, sfcWind_series):
+        a = [2, 6, 20, 30]
+        p = xci.wind_power_potential(
+            sfcWind_series(a, units="m/s"), cut_in="4 m/s", rated="8 m/s"
+        )
+        np.testing.assert_allclose(p, [0, 0.5**3, 1, 0])

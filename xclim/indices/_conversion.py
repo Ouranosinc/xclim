@@ -5,7 +5,7 @@ import warnings
 
 import numpy as np
 import xarray as xr
-from numba import float32, float64, vectorize  # noqa
+from numba import float32, float64, njit, vectorize  # noqa
 
 from xclim.core.calendar import date_range, datetime_to_decimal_year
 from xclim.core.units import (
@@ -53,6 +53,8 @@ __all__ = [
     "uas_vas_2_sfcwind",
     "universal_thermal_climate_index",
     "wind_chill_index",
+    "wind_power_potential",
+    "wind_profile",
 ]
 
 
@@ -2017,3 +2019,152 @@ def mean_radiant_temperature(
         0.25,
     )
     return mrt.assign_attrs({"units": "K"})
+
+
+@declare_units(wind_speed="[speed]", h="[length]", h_r="[length]")
+def wind_profile(
+    wind_speed: xr.DataArray,
+    h: Quantified,
+    h_r: Quantified,
+    method: str = "power_law",
+    **kwds,
+):
+    r"""Wind speed at a given height estimated from the wind speed at a reference height.
+
+    Estimate the wind speed based on a power law profile relating wind speed to height above the surface:
+
+    .. math::
+
+        v = v_h \\left( \frac{h}{h_r} \right)^{\alpha}
+
+    Parameters
+    ----------
+    wind_speed : xarray.DataArray
+        Wind speed at the reference height.
+    h : Quantified
+        Height at which to compute the wind speed.
+    h_r : Quantified
+        Reference height.
+    method : {"power_law"}
+        Method to use. Currently only "power_law" is implemented.
+    kwds : dict
+        Additional keyword arguments to pass to the method. For `power_law`, this is `alpha`, which takes a default
+        value of 1/7.
+    """
+    # Convert units to meters
+    h = convert_units_to(h, "m")
+    h_r = convert_units_to(h_r, "m")
+
+    if method == "power_law":
+        alpha = kwds.pop("alpha", 1 / 7)
+        out = wind_speed * (h / h_r) ** alpha
+        out.attrs["units"] = wind_speed.attrs["units"]
+        return out
+    else:
+        raise NotImplementedError(f"Method {method} not implemented.")
+
+
+@declare_units(
+    wind_speed="[speed]",
+    air_density="[air_density]",
+    cut_in="[speed]",
+    rated="[speed]",
+    cut_out="[speed]",
+)
+def wind_power_potential(
+    wind_speed: xr.DataArray,
+    air_density: xr.DataArray = None,
+    cut_in: Quantified = "3.5 m/s",
+    rated: Quantified = "13 m/s",
+    cut_out: Quantified = "25 m/s",
+) -> xr.DataArray:
+    r"""Wind power potential estimated from a semi-idealized wind power production factor.
+
+    The actual power production of a wind farm can be estimated by multiplying its nominal (nameplate) capacity by the
+    wind power potential, which depends on wind speed at the hub height, the turbine specifications and air density.
+
+    Parameters
+    ----------
+    wind_speed : xarray.DataArray
+        Wind speed at the hub height. Use the `wind_profile` function to estimate from the surface wind speed. Note
+        that the temporal resolution of wind time series has a significant influence on the results. Mean daily wind
+        speeds yield lower values than hourly wind speeds.
+    air_density: xarray.DataArray
+        Air density at the hub height. Defaults to 1.225 kg/m³. This is worth changing if applying in cold or
+        mountainous regions with non-standard air density.
+    cut_in : Quantified
+        Cut-in wind speed. Default is 3.5 m/s.
+    rated : Quantified
+        Rated wind speed. Default is 13 m/s.
+    cut_out : Quantified
+        Cut-out wind speed. Default is 25 m/s.
+
+    Returns
+    -------
+    xr.DataArray
+      The power production factor. Multiply by the nominal capacity to get the actual power production.
+
+    See Also
+    --------
+    wind_profile : Estimate wind speed at the hub height from the surface wind speed.
+
+    Notes
+    -----
+    This estimate of wind power production is based on a semi-idealized power curve with four wind regimes specified
+    by the cut-in wind speed (:math:`u_i`), the rated speed (:math:`u_r`) and the cut-out speed (:math:`u_o`).
+    Power production is zero for wind speeds below the cut-in speed, increases cubically between the cut-in
+    and rated speed, is constant between the rated and cut-out speed, and is zero for wind speeds above the cut-out
+    speed to avoid damage to the turbine (10.1088/1748-9326/aab211):
+
+    .. math::
+
+        \begin{cases}
+        0,  &  v < u_i \\
+        (v - u_i)^3 / (u_r - u_i)^3,  & u_i <= v < u_r \\
+        1, & u_r <= v < u_o \\
+        0, v >= u_o
+        \\end{cases}
+
+    For non-standard air density, the wind speed is scaled using
+    :math:`v_n = v \\left( \frac{\rho}{\rho_0} \right)^{1/3}`.
+
+    Note that the temporal resolution of the wind speed time series has a significant influence on the results,
+    but percent changes in the wind power potential projections are similar across resolutions.
+    https://doi.org/10.1016/j.renene.2020.02.090
+    """
+    # Convert units
+    cut_in = convert_units_to(cut_in, wind_speed)
+    rated = convert_units_to(rated, wind_speed)
+    cut_out = convert_units_to(cut_out, wind_speed)
+
+    # Correct wind speed for air density
+    if air_density is not None:
+        default_air_density = convert_units_to("1.225 kg/m^3", air_density)
+        f = (air_density / default_air_density) ** (1 / 3)
+    else:
+        f = 1
+
+    v = wind_speed * f
+
+    if 1:
+        out = xr.zeros_like(v)
+        out = out + xr.where(
+            (v >= cut_in) * (v < rated), ((v - cut_in) / (rated - cut_in)) ** 3, 0
+        )
+        out = out + xr.where((v >= rated) * (v < cut_out), 1, 0)
+    else:
+        out = xr.apply_ufunc(_wind_power_factor, wind_speed, cut_in, rated, cut_out)
+
+    out.attrs["units"] = ""
+    return out
+
+
+@njit
+def _wind_power_factor(v, cut_in, rated, cut_out):
+    if v < cut_in:
+        return 0
+    if v < rated:
+        return ((v - cut_in) / (rated - cut_in)) ** 3
+    if v < cut_out:
+        return 1
+    return 0
