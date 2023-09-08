@@ -2146,25 +2146,18 @@ def wind_power_potential(
 
     v = wind_speed * f
 
-    if 1:
-        out = xr.zeros_like(v)
-        out = out + xr.where(
-            (v >= cut_in) * (v < rated), ((v - cut_in) / (rated - cut_in)) ** 3, 0
-        )
-        out = out + xr.where((v >= rated) * (v < cut_out), 1, 0)
-    else:
-        out = xr.apply_ufunc(_wind_power_factor, wind_speed, cut_in, rated, cut_out)
-
+    out = xr.apply_ufunc(_wind_power_factor, v, cut_in, rated, cut_out)
     out.attrs["units"] = ""
     return out
 
 
-@njit
+@vectorize
 def _wind_power_factor(v, cut_in, rated, cut_out):
+    """Wind power factor function"""
     if v < cut_in:
-        return 0
+        return 0.0
     if v < rated:
         return ((v - cut_in) / (rated - cut_in)) ** 3
     if v < cut_out:
-        return 1
-    return 0
+        return 1.0
+    return 0.0

@@ -3642,3 +3642,8 @@ class TestWindPowerPotential:
             sfcWind_series(a, units="m/s"), cut_in="4 m/s", rated="8 m/s"
         )
         np.testing.assert_allclose(p, [0, 0.5**3, 1, 0])
+
+    # def test_benchmark(self, sfcWind_series, benchmark):
+    #     a = np.random.rand(50000) * 30
+    #     v = sfcWind_series(a, units="m/s")
+    #     benchmark(xci.wind_power_potential, v)
