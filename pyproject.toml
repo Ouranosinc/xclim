@@ -75,6 +75,7 @@ dev = [
   "pylint",
   "pytest",
   "pytest-cov",
+  "pytest-socket",
   "pytest-xdist[psutil] >=3.2",
   "tokenize-rt",
   "tox",

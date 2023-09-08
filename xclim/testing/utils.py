@@ -27,6 +27,11 @@ from platformdirs import user_cache_dir
 from xarray import Dataset
 from xarray import open_dataset as _open_dataset
 
+try:
+    from pytest_socket import SocketBlockedError
+except ImportError:
+    SocketBlockedError = None
+
 _xclim_deps = [
     "xclim",
     "xarray",
@@ -210,6 +215,9 @@ def _get(
                 warnings.warn(msg)
         except (HTTPError, URLError):
             msg = f"{md5_name.as_posix()} not accessible online. Unable to determine validity with upstream repo."
+            warnings.warn(msg)
+        except SocketBlockedError:
+            msg = f"Unable to access {md5_name.as_posix()} online. Testing suite is being run with `--disable-socket`."
             warnings.warn(msg)
 
     if not local_file.is_file():
