@@ -2031,11 +2031,7 @@ def wind_profile(
 ):
     r"""Wind speed at a given height estimated from the wind speed at a reference height.
 
-    Estimate the wind speed based on a power law profile relating wind speed to height above the surface:
-
-    .. math::
-
-        v = v_h \\left( \frac{h}{h_r} \right)^{\alpha}
+    Estimate the wind speed based on a power law profile relating wind speed to height above the surface.
 
     Parameters
     ----------
@@ -2050,6 +2046,18 @@ def wind_profile(
     kwds : dict
         Additional keyword arguments to pass to the method. For `power_law`, this is `alpha`, which takes a default
         value of 1/7.
+
+    Notes
+    -----
+    The power law profile is given by
+
+    .. math::
+
+        v = v_r \left( \frac{h}{h_r} \right)^{\alpha},
+
+    where :math:`v_r` is the wind speed at the reference height, :math:`h` is the height at which the wind speed is
+    desired, and :math:`h_r` is the reference height.
+
     """
     # Convert units to meters
     h = convert_units_to(h, "m")
@@ -2114,23 +2122,27 @@ def wind_power_potential(
     by the cut-in wind speed (:math:`u_i`), the rated speed (:math:`u_r`) and the cut-out speed (:math:`u_o`).
     Power production is zero for wind speeds below the cut-in speed, increases cubically between the cut-in
     and rated speed, is constant between the rated and cut-out speed, and is zero for wind speeds above the cut-out
-    speed to avoid damage to the turbine (10.1088/1748-9326/aab211):
+    speed to avoid damage to the turbine :cite:p:`tobin_2018`:
 
     .. math::
 
         \begin{cases}
         0,  &  v < u_i \\
-        (v - u_i)^3 / (u_r - u_i)^3,  & u_i <= v < u_r \\
-        1, & u_r <= v < u_o \\
-        0, v >= u_o
-        \\end{cases}
+        (v - u_i)^3 / (u_r - u_i)^3,  & u_i ≤ v < u_r \\
+        1, & u_r ≤ v < u_o \\
+        0, & v ≥ u_o
+        \end{cases}
 
-    For non-standard air density, the wind speed is scaled using
-    :math:`v_n = v \\left( \frac{\rho}{\rho_0} \right)^{1/3}`.
+    For non-standard air density (:math:`\rho`), the wind speed is scaled using
+    :math:`v_n = v \left( \frac{\rho}{\rho_0} \right)^{1/3}`.
 
     Note that the temporal resolution of the wind speed time series has a significant influence on the results,
-    but percent changes in the wind power potential projections are similar across resolutions.
-    https://doi.org/10.1016/j.renene.2020.02.090
+    but percent changes in the wind power potential projections are similar across resolutions :cite:p:`chen_2020`.
+
+    References
+    ----------
+    :cite:cts:`chen_2020,tobin_2018`.
+
     """
     # Convert units
     cut_in = convert_units_to(cut_in, wind_speed)
