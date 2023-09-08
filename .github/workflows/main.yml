@@ -90,10 +90,12 @@ jobs:
             python-version: "3.8"
           - tox-env: py39-coverage-sbck-eofs
             python-version: "3.9"
-          - tox-env: notebooks_doctests
+          - tox-env: py310-coverage-offline
             python-version: "3.10"
           - tox-env: py311-coverage-sbck
             python-version: "3.11"
+          - tox-env: notebooks_doctests
+            python-version: "3.10"
     steps:
       - uses: actions/checkout@v3.6.0
       - name: Install Eigen3
