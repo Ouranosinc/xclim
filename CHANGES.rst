@@ -2,6 +2,16 @@
 Changelog
 =========
 
+v0.46.0 (unreleased)
+--------------------
+Contributors to this version: David Huard (:user:`huard`),
+
+New indicators
+^^^^^^^^^^^^^^
+* Add ``wind_profile`` to estimate the wind speed at different heights based on wind speed at a reference height.
+* Add ``wind_power_potential`` to estimate the potential for wind power production given wind speed at the turbine hub height and turbine specifications. (:issue:`1458`)
+
+
 v0.45.0 (2023-09-05)
 --------------------
 Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Marco Braun (:user:`vindelico`), Éric Dupuis (:user:`coxipi`).
