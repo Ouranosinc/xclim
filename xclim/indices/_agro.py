@@ -1447,6 +1447,8 @@ def standardized_precipitation_evapotranspiration_index(
 
     Notes
     -----
+    If results include NaNs, check that the `offset` parameter is larger than the minimum water budget values.
+
     See Standardized Precipitation Index (SPI) for more details on usage.
     """
     uses_default_offset = offset == "1 mm/d"
