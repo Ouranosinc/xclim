@@ -4,7 +4,7 @@ Changelog
 
 v0.46.0 (unreleased)
 --------------------
-Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -21,6 +21,7 @@ Breaking changes
 
 Internal changes
 ^^^^^^^^^^^^^^^^
+* Changed "degK" to "K" (used to designate Kelvin units). (:pull:`1475`).
 * Added handling for `pytest-socket`'s ``SocketBlockedError`` in ``xclim.testing.open_dataset`` when attempting to fetch md5 validation files for cached testing data while explicitly disabling internet sockets. (:issue:`1468`, :pull:`1473`).
 
 v0.45.0 (2023-09-05)
