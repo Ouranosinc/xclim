@@ -2,6 +2,27 @@
 Changelog
 =========
 
+v0.46.0 (unreleased)
+--------------------
+Contributors to this version: Trevor James Smith (:user:`Zeitsperre`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* The testing suite now offers a means of running tests without internet access. This requires a local copy of `xclim-testdata` to be present in the user's home directory and for certain `pytest` options and markers to be set. For more information, see the contributing documentation section `Running Tests Offline`. (:issue:`1468`, :pull:`1473`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed an error in the `pytest` configuration that prevented copying of testing data to thread-safe caches of workers under certain conditions (this should always occur). (:pull:`1473`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* For better transparency and control in development, the `tox` configuration has been adapted to allow passing of markers directly to the `pytest` call. Positional arguments must be passed to tox after the `--` separator to select/deselect tests (e.g. ``'tox -e py38 -- -m "not slow"'``). (:pull:`1473`).
+* `pytest-socket` is now a required development dependency for running the `"offline"` configurations of the `tox` testing suite. This has been added to the `dev` installation recipe. (:issue:`1468`, :pull:`1473`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Added handling for `pytest-socket`'s ``SocketBlockedError`` in ``xclim.testing.open_dataset`` when attempting to fetch md5 validation files for cached testing data while explicitly disabling internet sockets. (:issue:`1468`, :pull:`1473`).
+
 v0.45.0 (2023-09-05)
 --------------------
 Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Marco Braun (:user:`vindelico`), Éric Dupuis (:user:`coxipi`).
