@@ -115,6 +115,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install tox
         run: pip install tox~=4.0
+      - name: Prefetch testing data
+        if: contains(matrix.tox-env, 'offline')
+        run: |
+          python -c "import xclim.testing.helpers; xclim.testing.helpers.populate_testing_data()"
       - name: Test with tox
         run: tox -e ${{ matrix.tox-env }} ${{ matrix.markers }}
         env:
