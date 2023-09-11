@@ -2,7 +2,6 @@
 Changelog
 =========
 
-=======
 v0.46.0
 --------------------
 Contributors to this version: Éric Dupuis (:user:`coxipi`), David Huard (:user:`huard`)
