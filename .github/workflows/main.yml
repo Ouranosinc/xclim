@@ -118,6 +118,7 @@ jobs:
       - name: Prefetch testing data
         if: contains(matrix.tox-env, 'offline')
         run: |
+          pip install .
           python -c "import xclim.testing.helpers; xclim.testing.helpers.populate_testing_data()"
       - name: Test with tox
         run: tox -e ${{ matrix.tox-env }} ${{ matrix.markers }}
