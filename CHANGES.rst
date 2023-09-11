@@ -2,14 +2,19 @@
 Changelog
 =========
 
-v0.46.0 (unreleased)
+=======
+v0.46.0
 --------------------
-Contributors to this version: David Huard (:user:`huard`),
+Contributors to this version: Éric Dupuis (:user:`coxipi`), David Huard (:user:`huard`)
 
 New indicators
 ^^^^^^^^^^^^^^
 * Add ``wind_profile`` to estimate the wind speed at different heights based on wind speed at a reference height.
 * Add ``wind_power_potential`` to estimate the potential for wind power production given wind speed at the turbine hub height and turbine specifications. (:issue:`1458`)
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Change "degK" to "K" used to design Kelvin units. (:pull:`1475`).
 
 
 v0.45.0 (2023-09-05)
