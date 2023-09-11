@@ -395,9 +395,9 @@ def saturation_vapor_pressure(
     :cite:cts:`goff_low-pressure_1946,hardy_its-90_1998,sonntag_important_1990,tetens_uber_1930,vomel_saturation_2016,world_meteorological_organization_guide_2008`
     """
     if ice_thresh is not None:
-        thresh = convert_units_to(ice_thresh, "degK")
+        thresh = convert_units_to(ice_thresh, "K")
     else:
-        thresh = convert_units_to("0 K", "degK")
+        thresh = convert_units_to("0 K", "K")
     tas = convert_units_to(tas, "K")
     ref_is_water = tas > thresh
     if method in ["sonntag90", "SO90"]:
@@ -585,8 +585,8 @@ def relative_humidity(
     if method in ("bohren98", "BA90"):
         if tdps is None:
             raise ValueError("To use method 'bohren98' (BA98), dewpoint must be given.")
-        tdps = convert_units_to(tdps, "degK")
-        tas = convert_units_to(tas, "degK")
+        tdps = convert_units_to(tdps, "K")
+        tas = convert_units_to(tas, "K")
         L = 2.501e6
         Rw = (461.5,)
         hurs = 100 * np.exp(-L * (tas - tdps) / (Rw * tas * tdps))  # type: ignore
@@ -601,7 +601,7 @@ def relative_humidity(
     else:
         ps = convert_units_to(ps, "Pa")
         huss = convert_units_to(huss, "")
-        tas = convert_units_to(tas, "degK")
+        tas = convert_units_to(tas, "K")
 
         e_sat = saturation_vapor_pressure(tas=tas, ice_thresh=ice_thresh, method=method)
 
@@ -698,7 +698,7 @@ def specific_humidity(
     """
     ps = convert_units_to(ps, "Pa")
     hurs = convert_units_to(hurs, "")
-    tas = convert_units_to(tas, "degK")
+    tas = convert_units_to(tas, "K")
 
     e_sat = saturation_vapor_pressure(tas=tas, ice_thresh=ice_thresh, method=method)
 
@@ -844,7 +844,7 @@ def snowfall_approximation(
         prsn = pr * fraction.interp(tas=tas, method="linear")
 
     elif method == "auer":
-        dtas = convert_units_to(tas, "degK") - convert_units_to(thresh, "degK")
+        dtas = convert_units_to(tas, "K") - convert_units_to(thresh, "K")
 
         # Create nodes for the snowfall fraction: -inf, thresh, ..., thresh+6, inf [degC]
         t = np.concatenate(
