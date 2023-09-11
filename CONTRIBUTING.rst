@@ -146,12 +146,32 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     $ pydocstyle --config=setup.cfg xclim xclim
     $ yamllint --config-file .yamllint.yaml xclim
 
-6. When unit/doc tests are added or notebooks updated, use ``$ pytest`` to run them. Alternatively, one can use ``$ tox`` to run all testing suites as would github do when the PR is submitted and new commits are pushed::
+6. When features or bug fixes have been contributed, unit tests and doctests have been added, or notebooks have been updated, use ``$ pytest`` to test them::
 
     $ pytest --no-cov --nbval --dist=loadscope --rootdir=tests/ docs/notebooks --ignore=docs/notebooks/example.ipynb  # for notebooks, exclusively.
     $ pytest --no-cov --rootdir=tests/ --xdoctest xclim  # for doctests, exclusively.
     $ pytest  # for all unit tests, excluding doctests and notebooks.
-    $ tox  # run all testing suites
+    $ pytest -m "not slow"  # for all unit tests, excluding doctests, notebooks, and "slow" marked tests.
+
+  Alternatively, one can use ``$ tox`` to run very specific testing configurations, as GitHub Workflows would do when a Pull Request is submitted and new commits are pushed::
+
+    $ tox -e py38  # run tests on Python 3.8
+    $ tox -e py39-upstream-doctest  # run tests on Python 3.9, including doctests, with upstream dependencies
+    $ tox -e py310 -- -m "not slow  # run tests on Python 3.10, excluding "slow" marked tests
+    $ tox -e py311  # run tests on Python 3.11
+    $ tox -e notebooks_doctests  # run tests using the base Python on doctests and evaluate all notebooks
+    $ tox -e offline  # run tests using the base Python, excluding tests requiring internet access
+
+    $ tox -m test  # run all builds listed above
+
+.. warning::
+    Starting from `xclim` v0.46.0, when running tests with `tox`, any `pytest` markers passed to `pyXX` builds (e.g. `-m "not slow"`) must be passed to `tox` directly. This can be done as follows::
+
+        $ tox -e py38 -- -m "not slow"
+
+    The exceptions to this rule are:
+      `notebooks_doctests`: this configuration does not pass test  markers to its `pytest` call.
+      `offline`: this configuration runs by default with the `-m "not requires_internet"` test marker. Be aware that running `tox` and manually setting a `pytest` marker will override this default.
 
 .. note::
     `xclim` tests are organized to support the `pytest-xdist <https://pytest-xdist.readthedocs.io/en/latest/>`_ plugin for distributed testing across workers or CPUs. In order to benefit from multiple processes, add the flag `--numprocesses=auto` or `-n auto` to your `pytest` calls.
@@ -263,6 +283,19 @@ If you wish to test a specific branch using GitHub CI, this can be set in `.gith
 .. warning::
     In order for a Pull Request to be allowed to merge to main development branch, this variable must match the latest tagged commit name on `Ouranosinc/xclim-testdata`.
     We suggest merging changed testing data first, tagging a new version of `xclim-testdata`, then re-running tests on your Pull Request at `Ouranosinc/xclim` with the newest tag.
+
+Running Tests Offline
+~~~~~~~~~~~~~~~~~~~~~
+
+`xclim` testing is normally performed with the assumption that the machine running the tests has internet access. Many calls to `xclim` functions will attempt to download data or verify checksums from the `Ouranosinc/xclim-testdata` repository. This can be problematic for developers working on features when internet access is not immediately available.
+
+In order to bypass these remote validation checks, the testing can be run offline by either running pytest with the following options::
+
+    $ pytest --disable-socket --allow-unix-socket -m "not requires_internet"
+    # or, alternatively:
+    $ tox -e offline
+
+These options will disable all network calls and skip tests marked with the `requires_internet` marker. The `--allow-unix-socket` option is required to allow the `pytest-xdist` plugin to function properly.
 
 Tips
 ----
