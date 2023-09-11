@@ -8,7 +8,7 @@ Contributors to this version: Éric Dupuis (:user:`coxipi`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* Change "degK" to "K" used to design Kelvin units.
+* Change "degK" to "K" used to design Kelvin units. (:pull:`1475`).
 
 
 v0.45.0 (2023-09-05)
