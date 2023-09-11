@@ -793,10 +793,14 @@
     "description": "Évaluation numérique de l'intensité du feu."
   },
   "WIND_POWER_POTENTIAL": {
+    "long_name": "Potentiel de production éolienne",
+    "description": "Potentiel de production éolienne estimé par une courbe de puissance semi-idéalisée d'une turbine, paramétrée par une vitesse minimale de démarrage {cut_in}, la vitesse nominale {rated}, et la vitesse d'arrêt {cut_out}.",
     "title": "Potentiel de production éolienne",
     "abstract": "Estimation à partir d'une loi de puissance semi-idéalisée de la production d'énergie éolienne selon la vitesse du vent."
   },
   "WIND_PROFILE": {
+    "long_name": "Vitesse du vent à la hauteur {h}",
+    "description": "Vitesse du vent à une hauteur de {h} calculée de la vitesse à {h_r} par un profil de loi de puissance.",
     "title": "Profil du vent",
     "abstract": "Estimation de la vitesse du vent à partir du vent à une hauteur de référence."
   },
