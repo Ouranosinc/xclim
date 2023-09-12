@@ -55,6 +55,7 @@ dependencies:
     - pylint
     - pytest
     - pytest-cov
+    - pytest-socket
     - pytest-xdist>=3.2
     - sphinx
     - sphinx-autodoc-typehints

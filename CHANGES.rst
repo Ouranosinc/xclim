@@ -2,13 +2,32 @@
 Changelog
 =========
 
-v0.46.0
+v0.46.0 (unreleased)
 --------------------
-Contributors to this version: Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* `xclim` now has a dedicated console command for prefetching testing data from `xclim-testdata` with branch options (e.g.: `$ xclim prefetch_testing_data --branch some_development_branch`). This command can be used to download the testing data to a local cache, which can then be used to run the testing suite without internet access or in "offline" mode. For more information, see the contributing documentation section for `Updating Testing Data`. (:issue:`1468`, :pull:`1473`).
+* The testing suite now offers a means of running tests in "offline" mode (using `pytest-socket <https://github.com/miketheman/pytest-socket>`_ to block external connections). This requires a local copy of `xclim-testdata` to be present in the user's home cache directory and for certain `pytest` options and markers to be set when invoked. For more information, see the contributing documentation section for `Running Tests in Offline Mode`. (:issue:`1468`, :pull:`1473`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed an error in the `pytest` configuration that prevented copying of testing data to thread-safe caches of workers under certain conditions (this should always occur). (:pull:`1473`).
+  * Coincidentally, this also fixes an error that caused `pytest` to error-out when invoked without an active internet connection. Running `pytest` without network access is now supported (requires cached testing data). (:issue:`1468`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `pytest-socket` is now a required development dependency for running `"offline"` tests or the `"offline"` configuration of the `tox` testing suite. This has been added to the `dev` installation recipe. (:issue:`1468`, :pull:`1473`).
+* For better transparency and control in development, the `tox` configuration has been adapted to allow passing of markers directly to the `pytest` call. Positional arguments must be passed to tox after the `--` separator to select/deselect tests (e.g. ``'tox -e py38 -- -m "not slow"'``). (:pull:`1473`).
+* For better accuracy, the `tox -e black` recipe has been renamed to `tox -e lint`, as this configuration already included several other linting checks. (:pull:`1473`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
-* Change "degK" to "K" used to design Kelvin units. (:pull:`1475`).
+* Changed "degK" to "K" (used to designate Kelvin units). (:pull:`1475`).
+* Added a `pytest` marker (``pytest.mark.requires_internet``) to allow for skipping of tests that depend on remote network calls to function properly. (:pull:`1473`).
+* Added handling for `pytest-socket`'s ``SocketBlockedError`` in ``xclim.testing.open_dataset`` when attempting to fetch md5 validation files for cached testing data while explicitly disabling internet sockets. (:issue:`1468`, :pull:`1473`).
+* Updated the testing data used in the `analogs.ipynb` notebook to use the testing data now found in `Ouranosinc/xclim-testdata`'s main branch. (`xclim-testdata PR/26 <https://github.com/Ouranosinc/xclim-testdata/pull/26>`_, :pull:`1473`).
 
 v0.45.0 (2023-09-05)
 --------------------
