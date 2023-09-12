@@ -174,7 +174,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
       `offline`: this configuration runs by default with the `-m "not requires_internet"` test marker. Be aware that running `tox` and manually setting a `pytest` marker will override this default.
 
 .. note::
-    `xclim` tests are organized to support the `pytest-xdist <https://pytest-xdist.readthedocs.io/en/latest/>`_ plugin for distributed testing across workers or CPUs. In order to benefit from multiple processes, add the flag `--numprocesses=auto` or `-n auto` to your `pytest` calls.
+    `xclim` tests are organized to support the `pytest-xdist`_ plugin for distributed testing across workers or CPUs. In order to benefit from multiple processes, add the flag `--numprocesses=auto` or `-n auto` to your `pytest` calls.
 
     When running tests via `tox`, `numprocesses` is set to the number of logical cores available (`numprocesses=logical`), with a maximum amount of `8`.
 
@@ -254,7 +254,7 @@ Before you submit a pull request, please follow these guidelines:
 Updating Testing Data
 ~~~~~~~~~~~~~~~~~~~~~
 
-If your code changes require changes to the testing data of `xclim` (i.e.: modifications to existing datasets or new datasets), these changes must be made via a Pull Request at https://github.com/Ouranosinc/xclim-testdata.
+If your code changes require changes to the testing data of `xclim` (i.e.: modifications to existing datasets or new datasets), these changes must be made via a Pull Request at the `xclim-testdata repository`_.
 
 `xclim` allows for developers to test specific branches/versions of `xclim-testdata` via the `XCLIM_TESTDATA_BRANCH` environment variable, either through export, e.g.::
 
@@ -272,7 +272,7 @@ or by setting the variable at runtime::
 
 This will ensure that tests load the testing data from this branch before running.
 
-If you anticipate not having internet access, we suggest prefetching the testing data from `Ouranosinc/xclim-testdata` and storing it in your local cache. This can be done by running the following console command::
+If you anticipate not having internet access, we suggest prefetching the testing data from `xclim-testdata repository`_ and storing it in your local cache. This can be done by running the following console command::
 
     $ xclim prefetch_testing_data
 
@@ -285,7 +285,6 @@ or, alternatively, with the `--branch` option::
 
     $ xclim prefetch_testing_data --branch my_new_branch_of_testing_data
 
-
 If you wish to test a specific branch using GitHub CI, this can be set in `.github/workflows/main.yml`:
 
 .. code-block:: yaml
@@ -294,7 +293,7 @@ If you wish to test a specific branch using GitHub CI, this can be set in `.gith
       XCLIM_TESTDATA_BRANCH: my_new_branch_of_testing_data
 
 .. warning::
-    In order for a Pull Request to be allowed to merge to main development branch, this variable must match the latest tagged commit name on `Ouranosinc/xclim-testdata`.
+    In order for a Pull Request to be allowed to merge to main development branch, this variable must match the latest tagged commit name on `xclim-testdata repository`_.
     We suggest merging changed testing data first, tagging a new version of `xclim-testdata`, then re-running tests on your Pull Request at `Ouranosinc/xclim` with the newest tag.
 
 Running Tests in Offline Mode
@@ -302,7 +301,7 @@ Running Tests in Offline Mode
 
 `xclim` testing is designed with the assumption that the machine running the tests has internet access. Many calls to `xclim` functions will attempt to download data or verify checksums from the `Ouranosinc/xclim-testdata` repository. This can be problematic for developers working on features where internet access is not reliably available.
 
-If you wish to ensure that your feature or bugfix can be developed without internet access, the testing can be run in offline mode by running pytest with the following options::
+If you wish to ensure that your feature or bugfix can be developed without internet access, `xclim` leverages the `pytest-socket`_ plugin so that testing can be run in "offline" mode by invoking pytest with the following options::
 
     $ pytest --disable-socket --allow-unix-socket -m "not requires_internet"
 
@@ -310,7 +309,7 @@ or, alternatively, using `tox` ::
 
     $ tox -e offline
 
-These options will disable all network calls and skip tests marked with the `requires_internet` marker. The `--allow-unix-socket` option is required to allow the `pytest-xdist` plugin to function properly.
+These options will disable all network calls and skip tests marked with the `requires_internet` marker. The `--allow-unix-socket` option is required to allow the `pytest-xdist`_ plugin to function properly.
 
 Tips
 ----
@@ -399,7 +398,7 @@ When publishing on GitHub, maintainers will need to generate the release notes f
 The Manual Approach
 ~~~~~~~~~~~~~~~~~~~
 
-The manual approach to library packaging for general support (pip wheels) requires that the `flit <https://flit.pypa.io/en/stable/index.html>`_ library is installed.
+The manual approach to library packaging for general support (pip wheels) requires that the `flit`_ library is installed.
 
 From the command line on your Linux distribution, simply run the following from the clone's main dev branch::
 
@@ -433,8 +432,12 @@ Before updating the main conda-forge recipe, we *strongly* suggest performing th
 
 .. _`GitHub Repository`: https://github.com/Ouranosinc/xclim
 .. _`PEP8`: https://peps.python.org/pep-0008/
+.. _`flit`: https://flit.pypa.io/en/stable/index.html
 .. _`numpydoc`: https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
+.. _`pytest-socket`: https://github.com/miketheman/pytest-socket
+.. _`pytest-xdist`: https://pytest-xdist.readthedocs.io/en/latest/
 .. _`reStructuredText (ReST)`: https://www.jetbrains.com/help/pycharm/using-docstrings-to-specify-types.html
 .. _`reStructuredText Primer`: https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
 .. _`sphinxcontrib-bibtex`: https://sphinxcontrib-bibtex.readthedocs.io
 .. _`xclim on TestPyPI`: https://test.pypi.org/project/xclim/
+.. _`xclim-testdata repository`: https://github.com/Ouranosinc/xclim-testdata
