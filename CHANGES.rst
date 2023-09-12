@@ -2,13 +2,13 @@
 Changelog
 =========
 
-v0.46.0
+v0.46.0 (unreleased)
 --------------------
-Contributors to this version: Éric Dupuis (:user:`coxipi`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), David Huard (:user:`huard`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* Document `SKIP_NOTEBOOKS` flag to speed up documentation builds. (:issue:`1470`).
+* Document `SKIP_NOTEBOOKS` flag to speed up documentation builds. (:issue:`1470`, :pull:`1476`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
