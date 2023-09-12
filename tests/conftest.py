@@ -430,9 +430,7 @@ def ensemble_dataset_objects() -> dict:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def gather_session_data(
-    threadsafe_data_dir, worker_id, xdoctest_namespace, socket_enabled
-):
+def gather_session_data(threadsafe_data_dir, worker_id, xdoctest_namespace):
     """Gather testing data on pytest run.
 
     When running pytest with multiple workers, one worker will copy data remotely to _default_cache_dir while
@@ -441,9 +439,6 @@ def gather_session_data(
 
     Additionally, this fixture is also used to generate the `atmosds` synthetic testing dataset as well as add the
     example file paths to the xdoctest_namespace, used when running doctests.
-
-    Finally, this fixture is also forced socket enabled, meaning that it will run regardless of whether the tests
-    are being run with `--disable-socket` or not.
     """
 
     if (

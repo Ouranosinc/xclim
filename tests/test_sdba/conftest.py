@@ -106,7 +106,12 @@ def qds_month():
 
 @pytest.fixture
 def ref_hist_sim_tuto(socket_enabled):
-    """Return ref, hist, sim time series of air temperature."""
+    """Return ref, hist, sim time series of air temperature.
+
+    socket_enabled is a fixture that enables the use of the internet to download the tutorial dataset while the
+    `--disable-socket` flag has been called. This fixture will crash if the `air_temperature` tutorial file is
+    not on disk while the internet is unavailable.
+    """
 
     def _ref_hist_sim_tuto(sim_offset=3, delta=0.1, smth_win=3, trend=True):
         ds = xr.tutorial.open_dataset("air_temperature")
