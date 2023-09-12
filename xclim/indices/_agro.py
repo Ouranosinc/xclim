@@ -1188,7 +1188,7 @@ def _get_standardized_index(da, params, **indexer):
     """Compute standardized index for given fit parameters
 
     This computes standardized indices which measure the deviation of  variables in the dataset compared
-    to a reference distribution. The reference is statistical distribution computed with fitting parameters `params`
+    to a reference distribution. The reference is a statistical distribution computed with fitting parameters `params`
     over a given calibration period of the dataset. Those fitting parameters are obtained with
     ``xclim.standardized_index_fit_params``.
 
