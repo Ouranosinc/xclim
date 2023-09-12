@@ -680,7 +680,7 @@ def test_indicator_from_dict():
     # Default value for input variable injected and meta injected
     assert ind._variable_mapping["data"] == "tas"
     assert signature(ind).parameters["tas"].default == "tas"
-    assert ind.parameters["tas"].units == "K"
+    assert ind.parameters["tas"].units == "[temperature]"
 
     # Wrap a multi-output ind
     d = dict(base="wind_speed_from_vector")
