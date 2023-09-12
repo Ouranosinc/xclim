@@ -129,6 +129,8 @@ def populate_testing_data(
         "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc",
         "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc",
         "Raven/q_sim.nc",
+        "SpatialAnalogs/CanESM2_ScenGen_Chibougamau_2041-2070.nc",
+        "SpatialAnalogs/NRCAN_SECan_1981-2010.nc",
         "SpatialAnalogs/dissimilarity.nc",
         "SpatialAnalogs/indicators.nc",
         "cmip3/tas.sresb1.giss_model_e_r.run1.atm.da.nc",

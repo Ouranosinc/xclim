@@ -20,7 +20,7 @@ on:
       - submitted
 
 env:
-  XCLIM_TESTDATA_BRANCH: v2023.6.28
+  XCLIM_TESTDATA_BRANCH: v2023.9.12
 
 jobs:
   lint:
