@@ -99,7 +99,7 @@ jobs:
             markers: '-- -m "not slow"'
           - tox-env: notebooks_doctests
             python-version: "3.10"
-          - tox-env: offline
+          - tox-env: offline-prefetch
             python-version: "3.11"
             markers: '-- -m "not slow and not requires_internet"'
     steps:

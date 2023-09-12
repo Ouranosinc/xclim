@@ -251,7 +251,7 @@ def _get(
             msg = (
                 f"Unable to access {fullname.as_posix()} online. Testing suite is being run with `--disable-socket`. "
                 f"If you intend to run tests with this option enabled, please download the file beforehand with the "
-                f"following command:\n`xclim.testing.helpers.populate_testing_data()`."
+                f"following console command: `xclim prefetch_testing_data`."
             )
             raise FileNotFoundError(msg) from e
         try:

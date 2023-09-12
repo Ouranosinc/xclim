@@ -254,8 +254,7 @@ Before you submit a pull request, please follow these guidelines:
 Updating Testing Data
 ~~~~~~~~~~~~~~~~~~~~~
 
-If your code changes require changes to the testing data of `xclim` (i.e.: modifications to existing datasets or new datasets),
-these changes must be made via a Pull Request at https://github.com/Ouranosinc/xclim-testdata.
+If your code changes require changes to the testing data of `xclim` (i.e.: modifications to existing datasets or new datasets), these changes must be made via a Pull Request at https://github.com/Ouranosinc/xclim-testdata.
 
 `xclim` allows for developers to test specific branches/versions of `xclim-testdata` via the `XCLIM_TESTDATA_BRANCH` environment variable, either through export, e.g.::
 
@@ -273,6 +272,20 @@ or by setting the variable at runtime::
 
 This will ensure that tests load the testing data from this branch before running.
 
+If you anticipate not having internet access, we suggest prefetching the testing data from `Ouranosinc/xclim-testdata` and storing it in your local cache. This can be done by running the following console command::
+
+    $ xclim prefetch_testing_data
+
+If your development branch relies on a specific branch of `Ouranosinc/xclim-testdata`, you can specify this using environment variables::
+
+    $ export XCLIM_TESTDATA_BRANCH="my_new_branch_of_testing_data"
+    $ xclim prefetch_testing_data
+
+or, alternatively, with the `--branch` option::
+
+    $ xclim prefetch_testing_data --branch my_new_branch_of_testing_data
+
+
 If you wish to test a specific branch using GitHub CI, this can be set in `.github/workflows/main.yml`:
 
 .. code-block:: yaml
@@ -284,15 +297,17 @@ If you wish to test a specific branch using GitHub CI, this can be set in `.gith
     In order for a Pull Request to be allowed to merge to main development branch, this variable must match the latest tagged commit name on `Ouranosinc/xclim-testdata`.
     We suggest merging changed testing data first, tagging a new version of `xclim-testdata`, then re-running tests on your Pull Request at `Ouranosinc/xclim` with the newest tag.
 
-Running Tests Offline
-~~~~~~~~~~~~~~~~~~~~~
+Running Tests in Offline Mode
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-`xclim` testing is normally performed with the assumption that the machine running the tests has internet access. Many calls to `xclim` functions will attempt to download data or verify checksums from the `Ouranosinc/xclim-testdata` repository. This can be problematic for developers working on features when internet access is not immediately available.
+`xclim` testing is designed with the assumption that the machine running the tests has internet access. Many calls to `xclim` functions will attempt to download data or verify checksums from the `Ouranosinc/xclim-testdata` repository. This can be problematic for developers working on features where internet access is not reliably available.
 
-In order to bypass these remote validation checks, the testing can be run offline by either running pytest with the following options::
+If you wish to ensure that your feature or bugfix can be developed without internet access, the testing can be run in offline mode by running pytest with the following options::
 
     $ pytest --disable-socket --allow-unix-socket -m "not requires_internet"
-    # or, alternatively:
+
+or, alternatively, using `tox` ::
+
     $ tox -e offline
 
 These options will disable all network calls and skip tests marked with the `requires_internet` marker. The `--allow-unix-socket` option is required to allow the `pytest-xdist` plugin to function properly.
