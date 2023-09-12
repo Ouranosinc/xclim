@@ -2,6 +2,14 @@
 Changelog
 =========
 
+v0.46.0
+--------------------
+Contributors to this version: Éric Dupuis (:user:`coxipi`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Change "degK" to "K" used to design Kelvin units. (:pull:`1475`).
+
 v0.45.0 (2023-09-05)
 --------------------
 Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Marco Braun (:user:`vindelico`), Éric Dupuis (:user:`coxipi`).
