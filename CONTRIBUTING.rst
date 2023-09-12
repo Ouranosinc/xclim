@@ -165,7 +165,11 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     # or, alternatively, to build the docs directly
     $ make docs
 
-Note that running the notebooks can take some time. Set the environment variable `SKIP_NOTEBOOKS` to 1 to skip this step.
+.. note::
+
+    When building the documentation, the defaults behaviour is to run all notebooks. Due to their complexity, this is a very computationally demanding task.
+
+    In order to speed up documentation builds, setting a value for the environment variable "`SKIP_NOTEBOOKS`" (e.g. "`$ export SKIP_NOTEBOOKS=1`") will prevent the notebooks from being evaluated on all subsequent "`$ tox -e docs`" or "`$ make docs`" invocations.
 
 8. After clearing the previous checks, commit your changes and push your branch to GitHub::
 
