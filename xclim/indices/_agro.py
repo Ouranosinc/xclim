@@ -1185,6 +1185,23 @@ def standardized_index_fit_params(
 
 
 def _get_standardized_index(da, params, **indexer):
+    """Compute standardized index for given fit parameters
+
+    This computes standardized indices which measure the deviation of  variables in the dataset compared
+    to a reference distribution. The reference is statistical distribution computed with fitting parameters `params`
+    over a given calibration period of the dataset. Those fitting parameters are obtained with
+    ``xclim.standardized_index_fit_params``.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+        Input array.
+    params: xarray.DataArray
+        Fit parameters computed using ``xclim.indices.standardized_index_fit_params``.
+    indexer
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+    """
     scipy_dist = get_dist(params.attrs["scipy_dist"])
     group_name = params.attrs["group"].rsplit(".")[-1]
     param_names = params.dparams.values
