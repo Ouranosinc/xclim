@@ -25,8 +25,6 @@ from xclim.indices.fire._cffwis import (
 )
 from xclim.indices.run_length import run_bounds
 
-fwi_url = "FWI/cffdrs_test_fwi.nc"
-
 
 class TestCFFWIS:
     # The following were computed with cffdrs 1.8.18, on the test_wDC data.
@@ -44,6 +42,8 @@ class TestCFFWIS:
         ],
     }
 
+    fwi_test_dataset = "FWI/cffdrs_test_fwi.nc"
+
     @classmethod
     def _get_cffdrs_fire_season(cls, key=None):
         def to_xr(arr):
@@ -56,7 +56,7 @@ class TestCFFWIS:
         return {key: to_xr(arr) for key, arr in cls.cffdrs_fire_season.items()}
 
     def test_fine_fuel_moisture_code(self, open_dataset):
-        fwi_data = open_dataset(fwi_url)
+        fwi_data = open_dataset(self.fwi_test_dataset)
         ffmc = np.full(fwi_data.time.size + 1, np.nan)
         ffmc[0] = 85
         for i, t in enumerate(fwi_data.time):
@@ -71,7 +71,7 @@ class TestCFFWIS:
         np.testing.assert_allclose(ffmc[1:], fwi_data.ffmc.isel(test=0), rtol=1e-6)
 
     def test_duff_moisture_code(self, open_dataset):
-        fwi_data = open_dataset(fwi_url)
+        fwi_data = open_dataset(self.fwi_test_dataset)
         dmc = np.full(fwi_data.time.size + 1, np.nan)
         dmc[0] = 6
         for i, t in enumerate(fwi_data.time):
@@ -87,7 +87,7 @@ class TestCFFWIS:
         np.testing.assert_allclose(dmc[1:], fwi_data.dmc.isel(test=0), rtol=1e-6)
 
     def test_drought_code(self, open_dataset):
-        fwi_data = open_dataset(fwi_url)
+        fwi_data = open_dataset(self.fwi_test_dataset)
         dc = np.full(fwi_data.time.size + 1, np.nan)
         dc[0] = 15
         for i, t in enumerate(fwi_data.time):
@@ -102,7 +102,7 @@ class TestCFFWIS:
         np.testing.assert_allclose(dc[1:], fwi_data.dc.isel(test=0), rtol=1e-6)
 
     def test_initial_spread_index(self, open_dataset):
-        fwi_data = open_dataset(fwi_url)
+        fwi_data = open_dataset(self.fwi_test_dataset)
         isi = np.full(fwi_data.time.size, np.nan)
         for i, t in enumerate(fwi_data.time):
             isi[i] = initial_spread_index(
@@ -112,7 +112,7 @@ class TestCFFWIS:
         np.testing.assert_allclose(isi, fwi_data.isi.isel(test=0), rtol=1e-6)
 
     def test_build_up_index(self, open_dataset):
-        fwi_data = open_dataset(fwi_url)
+        fwi_data = open_dataset(self.fwi_test_dataset)
         bui = np.full(fwi_data.time.size, np.nan)
         for i, t in enumerate(fwi_data.time):
             bui[i] = build_up_index(
@@ -152,7 +152,7 @@ class TestCFFWIS:
         np.testing.assert_allclose(out, exp, rtol=1e-6)
 
     def test_fire_weather_index(self, open_dataset):
-        fwi_data = open_dataset(fwi_url)
+        fwi_data = open_dataset(self.fwi_test_dataset)
         fwi = np.full(fwi_data.time.size, np.nan)
         for i, t in enumerate(fwi_data.time):
             fwi[i] = fire_weather_index(
@@ -164,11 +164,11 @@ class TestCFFWIS:
     def test_day_length(self):
         assert _day_length(44, 1) == 6.5
 
-    def test_day_lengh_factor(self):
+    def test_day_length_factor(self):
         assert _day_length_factor(44, 1) == -1.6
 
     def test_cffwis_indicator(self, open_dataset):
-        fwi_data = open_dataset(fwi_url)
+        fwi_data = open_dataset(self.fwi_test_dataset)
         fwi_data.lat.attrs["units"] = "degrees_north"
         dc, dmc, ffmc, isi, bui, fwi = atmos.cffwis_indices(
             tas=fwi_data.tas,
