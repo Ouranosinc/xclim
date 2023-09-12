@@ -213,8 +213,17 @@ def _get(
                     "Attempting new download."
                 )
                 warnings.warn(msg)
-        except (HTTPError, URLError):
-            msg = f"{md5_name.as_posix()} not accessible online. Unable to determine validity with upstream repo."
+        except HTTPError:
+            msg = (
+                f"{md5_name.as_posix()} not accessible in remote repository. "
+                "Unable to determine validity with upstream repo."
+            )
+            warnings.warn(msg)
+        except URLError:
+            msg = (
+                f"{md5_name.as_posix()} not found in remote repository. "
+                "Unable to determine validity with upstream repo."
+            )
             warnings.warn(msg)
         except SocketBlockedError:
             msg = f"Unable to access {md5_name.as_posix()} online. Testing suite is being run with `--disable-socket`."
@@ -227,13 +236,34 @@ def _get(
 
         url = "/".join((github_url, "raw", branch, fullname.as_posix()))
         logger.info(f"Fetching remote file: {fullname.as_posix()}")
-        urlretrieve(url, local_file)  # nosec
+        try:
+            urlretrieve(url, local_file)  # nosec
+        except HTTPError as e:
+            msg = f"{fullname.as_posix()} not accessible in remote repository. Aborting file retrieval."
+            raise FileNotFoundError(msg) from e
+        except URLError as e:
+            msg = (
+                f"{fullname.as_posix()} not found in remote repository. "
+                "Verify filename and repository address. Aborting file retrieval."
+            )
+            raise FileNotFoundError(msg) from e
+        except SocketBlockedError as e:
+            msg = (
+                f"Unable to access {md5_name.as_posix()} online. Testing suite is being run with `--disable-socket`."
+                f"If you intend to run tests with this option enabled, please download the file beforehand with the "
+                f"following command:\n`xclim.testing.helpers.populate_testing_data()`."
+            )
+            raise FileNotFoundError(msg) from e
         try:
             url = "/".join((github_url, "raw", branch, md5_name.as_posix()))
             logger.info(f"Fetching remote file md5: {md5_name.as_posix()}")
             urlretrieve(url, md5_file)  # nosec
-        except HTTPError as e:
-            msg = f"{md5_name.as_posix()} not found. Aborting file retrieval."
+        except (HTTPError, URLError) as e:
+            msg = (
+                f"{md5_name.as_posix()} not accessible online. "
+                "Unable to determine validity of file from upstream repo. "
+                "Aborting file retrieval."
+            )
             local_file.unlink()
             raise FileNotFoundError(msg) from e
 
