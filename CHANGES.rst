@@ -6,6 +6,10 @@ v0.46.0
 --------------------
 Contributors to this version: Éric Dupuis (:user:`coxipi`).
 
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Document `SKIP_NOTEBOOKS` flag to speed up documentation builds. (:issue:`1470`).
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Change "degK" to "K" used to design Kelvin units. (:pull:`1475`).

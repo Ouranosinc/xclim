@@ -165,6 +165,8 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     # or, alternatively, to build the docs directly
     $ make docs
 
+Note that running the notebooks can take some time. Set the environment variable `SKIP_NOTEBOOKS` to 1 to skip this step.
+
 8. After clearing the previous checks, commit your changes and push your branch to GitHub::
 
     $ git add *
