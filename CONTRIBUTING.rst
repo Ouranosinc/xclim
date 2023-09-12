@@ -167,7 +167,7 @@ Ready to contribute? Here's how to set up `xclim` for local development.
 
 .. note::
 
-    When building the documentation, the defaults behaviour is to run all notebooks. Due to their complexity, this is a very computationally demanding task.
+    When building the documentation, the default behaviour is to evaluate notebooks ('`nbsphinx_execute = "auto"`'), rather than simply parse the content ('`nbsphinx_execute = "never"`'). Due to their complexity, this is a very computationally demanding task and should only be performed when necessary (i.e.: when the notebooks have been modified).
 
     In order to speed up documentation builds, setting a value for the environment variable "`SKIP_NOTEBOOKS`" (e.g. "`$ export SKIP_NOTEBOOKS=1`") will prevent the notebooks from being evaluated on all subsequent "`$ tox -e docs`" or "`$ make docs`" invocations.
 
