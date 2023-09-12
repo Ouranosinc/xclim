@@ -6,9 +6,21 @@ v0.46.0
 --------------------
 Contributors to this version: Éric Dupuis (:user:`coxipi`).
 
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Standardized indices (``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index``)  (:issue:`1270`, :issue:`1416`, :issue:`1474`, :pull:`1311`) were changed:
+    * More optimized and noticeably faster calculation.
+    * Can be computed in two steps: First compute fit parameters with ``xclim.indices.standardized_index_fit_params``, then use the output in the standardized indices functions.
+    * The standardized index values are now clipped to ± 8.21. This reflects the ``float64`` precision of the computation when cumulative distributed function values are inverted to a normal distribution.
+    * An offset parameter is now accessible ``xclim.indices.standardized_precipitation_evapotranspiration_index``.
+
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Change "degK" to "K" used to design Kelvin units. (:pull:`1475`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* ``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index`` will no longer accept two datasets (data and calibration data). Instead, a single dataset along start and end of calibration dates (`cal_start`, `cal_end`) is expected. (:issue:`1270` ,:pull:`1311`)
 
 v0.45.0 (2023-09-05)
 --------------------
@@ -66,17 +78,6 @@ Breaking changes
 ^^^^^^^^^^^^^^^^
 * Fix and adapt ``percentile_doy`` for an error raised by xarray > 2023.7.0. (:issue:`1417`, :pull:`1450`).
 * `integral` replaces `prod` and `delta_prod` as possible input in ``xclim.core.units.to_agg_units`` (:pull:`1443`, :issue:`1386`).
-
-New features and enhancements
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* Standardized indices (``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index``)  (:issue:`1270`, :issue:`1416`, :pull:`1311`) were changed:
-    * More optimized and noticeably faster calculation.
-    * Can be computed in two steps: First compute fit parameters with ``xclim.indices.standardized_index_fit_params``, then use the output in the standardized indices functions.
-    * The standardized index values are now clipped to ± 8.21. This reflects the ``float64`` precision of the computation when cumulative distributed function values are inverted to a normal distribution.
-
-Breaking changes
-^^^^^^^^^^^^^^^^
-* ``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index`` will no longer accept two datasets (data and calibration data). Instead, a single dataset  along start and end of calibration dates (`cal_start`, `cal_end`) is expected. (:issue:`1270` ,:pull:`1311`)
 
 v0.44.0 (2023-06-23)
 --------------------
