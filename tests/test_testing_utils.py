@@ -31,7 +31,7 @@ class TestFileRequests:
     @pytest.mark.requires_internet
     def test_get_failure(self, tmp_path):
         bad_repo_address = "https://github.com/beard/of/zeus/"
-        with pytest.raises(HTTPError):
+        with pytest.raises(FileNotFoundError):
             utilities._get(
                 Path("san_diego", "60_percent_of_the_time_it_works_everytime"),
                 bad_repo_address,

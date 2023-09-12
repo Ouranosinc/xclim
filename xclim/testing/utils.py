@@ -249,7 +249,7 @@ def _get(
             raise FileNotFoundError(msg) from e
         except SocketBlockedError as e:
             msg = (
-                f"Unable to access {md5_name.as_posix()} online. Testing suite is being run with `--disable-socket`."
+                f"Unable to access {fullname.as_posix()} online. Testing suite is being run with `--disable-socket`. "
                 f"If you intend to run tests with this option enabled, please download the file beforehand with the "
                 f"following command:\n`xclim.testing.helpers.populate_testing_data()`."
             )

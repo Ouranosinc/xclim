@@ -128,11 +128,13 @@ def populate_testing_data(
         "NRCANdaily/nrcan_canada_daily_pr_1990.nc",
         "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc",
         "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc",
+        "Raven/q_sim.nc",
         "SpatialAnalogs/dissimilarity.nc",
         "SpatialAnalogs/indicators.nc",
         "cmip3/tas.sresb1.giss_model_e_r.run1.atm.da.nc",
         "cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc",
         "sdba/CanESM2_1950-2100.nc",
+        "sdba/ahccd_1950-2013.nc",
         "sdba/nrcan_1950-2013.nc",
         "uncertainty_partitioning/cmip5_pr_global_mon.nc",
     ]

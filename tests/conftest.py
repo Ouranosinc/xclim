@@ -430,17 +430,28 @@ def ensemble_dataset_objects() -> dict:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def gather_session_data(threadsafe_data_dir, worker_id, xdoctest_namespace):
+def gather_session_data(
+    threadsafe_data_dir, worker_id, xdoctest_namespace, socket_enabled
+):
     """Gather testing data on pytest run.
 
     When running pytest with multiple workers, one worker will copy data remotely to _default_cache_dir while
-    other workers wait using lockfile. Once the lock is released, all workers will copy data to their local
-    threadsafe_data_dir."""
+    other workers wait using lockfile. Once the lock is released, all workers will then copy data to their local
+    threadsafe_data_dir.As this fixture is scoped to the session, it will only run once per pytest run.
+
+    Additionally, this fixture is also used to generate the `atmosds` synthetic testing dataset as well as add the
+    example file paths to the xdoctest_namespace, used when running doctests.
+
+    Finally, this fixture is also forced socket enabled, meaning that it will run regardless of whether the tests
+    are being run with `--disable-socket` or not.
+    """
 
     if (
         not _default_cache_dir.joinpath(helpers.TESTDATA_BRANCH).exists()
         or helpers.PREFETCH_TESTING_DATA
     ):
+        if helpers.PREFETCH_TESTING_DATA:
+            print("`XCLIM_PREFETCH_TESTING_DATA` set. Prefetching testing data...")
         if worker_id in "master":
             helpers.populate_testing_data(branch=helpers.TESTDATA_BRANCH)
         else:

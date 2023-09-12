@@ -105,7 +105,7 @@ def qds_month():
 
 
 @pytest.fixture
-def ref_hist_sim_tuto():
+def ref_hist_sim_tuto(socket_enabled):
     """Return ref, hist, sim time series of air temperature."""
 
     def _ref_hist_sim_tuto(sim_offset=3, delta=0.1, smth_win=3, trend=True):
