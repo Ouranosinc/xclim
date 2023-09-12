@@ -74,6 +74,7 @@ class TestFileRequests:
             == Path(cmip3_folder, cmip3_md5).read_text()
         )
 
+    @pytest.mark.requires_internet
     def test_open_testdata(self):
         ds = utilities.open_dataset(
             Path("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712")
