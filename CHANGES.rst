@@ -9,10 +9,10 @@ Contributors to this version: Éric Dupuis (:user:`coxipi`).
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Standardized indices (``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index``)  (:issue:`1270`, :issue:`1416`, :issue:`1474`, :pull:`1311`) were changed:
-    * More optimized and noticeably faster calculation.
+    * Optimized and noticeably faster calculation.
     * Can be computed in two steps: First compute fit parameters with ``xclim.indices.standardized_index_fit_params``, then use the output in the standardized indices functions.
-    * The standardized index values are now clipped to ± 8.21. This reflects the ``float64`` precision of the computation when cumulative distributed function values are inverted to a normal distribution.
-    * An offset parameter is now accessible ``xclim.indices.standardized_precipitation_evapotranspiration_index``.
+    * The standardized index values are now clipped to ±8.21. This reflects the ``float64`` precision of the computation when cumulative distributed function values are inverted to a normal distribution.
+    * An offset parameter is now available to account for negative water balance values``xclim.indices.standardized_precipitation_evapotranspiration_index``.
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -20,7 +20,7 @@ Internal changes
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* ``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index`` will no longer accept two datasets (data and calibration data). Instead, a single dataset along start and end of calibration dates (`cal_start`, `cal_end`) is expected. (:issue:`1270` ,:pull:`1311`)
+* ``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index`` will no longer accept two datasets (data and calibration data). Instead, a single dataset covering both the calibration and evaluation periods is expected. (:issue:`1270` ,:pull:`1311`)
 
 v0.45.0 (2023-09-05)
 --------------------
