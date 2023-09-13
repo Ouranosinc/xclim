@@ -70,6 +70,7 @@ class TestLoci:
         p2 = loci2.adjust(sim)
         np.testing.assert_array_equal(p, p2)
 
+    @pytest.mark.requires_internet
     def test_reduce_dims(self, ref_hist_sim_tuto):
         ref, hist, sim = ref_hist_sim_tuto()
         hist = hist.expand_dims(member=[0, 1])
