@@ -5,11 +5,16 @@ on:
     types:
       - published
   workflow_dispatch:
+    inputs:
+      dry-run:
+        description: 'Dry run'
+        default: true
+        type: boolean
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment: PyPI
+    environment: production
     steps:
 
     - name: Checkout
@@ -20,20 +25,41 @@ jobs:
         CURRENT_VERSION="$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
         echo "current_version=${CURRENT_VERSION}" >> $GITHUB_ENV
 
-    - name: Prepare Message
+    - name: Get Release Description
+      id: get_release_description
       run: |
-          MESSAGE="New #xclim release: v${{ env.current_version }} 🎉
+        # Fetch the release information using the GitHub API
+        RELEASE_INFO=$(curl -sH "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ env.current_version }}")
 
-          Source code available at: https://github.com/Ouranosinc/xclim
-          Check out the docs for more information: https://xclim.readthedocs.io/en/v${{ env.current_version }}/"
-          echo "${MESSAGE}" >> $GITHUB_ENV
+        # Extract the release description from the response
+        RELEASE_DESCRIPTION=$(echo "$RELEASE_INFO" | jq -r .body)
+
+        # Remove Markdown links and the space preceding them
+        CLEANED_DESCRIPTION=$(echo "$RELEASE_DESCRIPTION" | sed -E 's/\[([^\]]+)\]\([^)]+\)//g')
+
+        # Extract the first line of the release description
+        CONTRIBUTORS=$(echo "$CLEANED_DESCRIPTION" | head -n 1)
+
+        echo "$CONTRIBUTORS" >> $GITHUB_ENV
+
+    - name: Prepare Message
+      id: render_template
+      uses: chuhlomin/render-template@v1.7
+      with:
+        template: TOOT_TEMPLATE.md
+        vars: |
+            current_version: ${{ env.current_version }}
+            contributors: ${{ env.CONTRIBUTORS }}
+
+    - name: Message Preview
+      run: echo "${{ steps.render_template.outputs.result }}"
 
     - name: Send toot to Mastodon
-      id: mastodon
+      if: ${{ !github.event.inputs.dry-run }}
       uses: cbrgm/mastodon-github-action@v1.0.3
       with:
-        message: |
-          ${{ env.MESSAGE }}
+        message: ${{ steps.render_template.outputs.result }}
         visibility: "public"
       env:
         MASTODON_URL: ${{ secrets.MASTODON_URL }}
