@@ -23,21 +23,3 @@ jobs:
     - uses: actions/labeler@v4.3.0
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
-
-  label_approved:
-    name: Label on Approval
-    if: |
-      !contains(github.event.pull_request.labels.*.name, 'approved') &&
-      (github.event.review.state == 'approved') &&
-    runs-on: ubuntu-latest
-    steps:
-      - name: Label Approved
-        uses: actions/github-script@v6
-        with:
-          script: |
-            github.rest.issues.addLabels({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              labels: ['approved']
-            })
