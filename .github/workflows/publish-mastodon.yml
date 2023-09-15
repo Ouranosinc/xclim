@@ -6,6 +6,10 @@ on:
       - published
   workflow_dispatch:
     inputs:
+      version:
+        description: 'Version to announce'
+        required: true
+        type: string
       dry-run:
         description: 'Dry run'
         default: true
@@ -21,11 +25,13 @@ jobs:
       uses: actions/checkout@v3.6.0
 
     - name: Current Version
+      if: ${{ !github.event.inputs.version }}
       run: |
         CURRENT_VERSION="$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
         echo "current_version=${CURRENT_VERSION}" >> $GITHUB_ENV
 
     - name: Get Release Description
+      if: ${{ !endsWith(env.current_version, '-dev') }}
       id: get_release_description
       run: |
         # Fetch the release information using the GitHub API
