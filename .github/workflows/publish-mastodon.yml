@@ -28,7 +28,11 @@ jobs:
       if: ${{ !github.event.inputs.version }}
       run: |
         CURRENT_VERSION="$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
-        echo "current_version=${CURRENT_VERSION}" >> $GITHUB_ENV
+        echo "version=${CURRENT_VERSION}" >> $GITHUB_ENV
+    - name: Set Version from Input
+      if: ${{ github.event.inputs.version }}
+      run: |
+        echo "version=${{ github.event.inputs.version }}" >> $GITHUB_ENV
 
     - name: Get Release Description
       if: ${{ !endsWith(env.current_version, '-dev') }}
@@ -36,7 +40,7 @@ jobs:
       run: |
         # Fetch the release information using the GitHub API
         RELEASE_INFO=$(curl -sH "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-          "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ env.current_version }}")
+          "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ env.version }}")
 
         # Extract the release description from the response
         RELEASE_DESCRIPTION=$(echo "$RELEASE_INFO" | jq -r .body)
@@ -55,7 +59,7 @@ jobs:
       with:
         template: TOOT_TEMPLATE.md
         vars: |
-            current_version: ${{ env.current_version }}
+            version: ${{ env.version }}
             contributors: ${{ env.CONTRIBUTORS }}
 
     - name: Message Preview
