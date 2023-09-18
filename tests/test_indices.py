@@ -3652,8 +3652,3 @@ class TestWindPowerPotential:
         pb = xci.wind_power_potential(b)
 
         np.testing.assert_array_almost_equal(pa, pb, decimal=6)
-
-    # def test_benchmark(self, sfcWind_series, benchmark):
-    #     a = np.random.rand(50000) * 30
-    #     v = sfcWind_series(a, units="m/s")
-    #     benchmark(xci.wind_power_potential, v)
