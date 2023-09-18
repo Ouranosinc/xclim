@@ -2044,8 +2044,8 @@ def wind_profile(
     method : {"power_law"}
         Method to use. Currently only "power_law" is implemented.
     kwds : dict
-        Additional keyword arguments to pass to the method. For `power_law`, this is `alpha`, which takes a default
-        value of 1/7.
+        Additional keyword arguments to pass to the method. For power_law, this is alpha, which takes a default value
+        of 1/7, but is highly variable based on topography, surface cover and atmospheric stability.
 
     Notes
     -----
@@ -2086,7 +2086,7 @@ def wind_power_potential(
     rated: Quantified = "13 m/s",
     cut_out: Quantified = "25 m/s",
 ) -> xr.DataArray:
-    r"""Wind power potential estimated from a semi-idealized wind power production factor.
+    r"""Wind power potential estimated from an idealized wind power production factor.
 
     The actual power production of a wind farm can be estimated by multiplying its nominal (nameplate) capacity by the
     wind power potential, which depends on wind speed at the hub height, the turbine specifications and air density.
@@ -2118,7 +2118,7 @@ def wind_power_potential(
 
     Notes
     -----
-    This estimate of wind power production is based on a semi-idealized power curve with four wind regimes specified
+    This estimate of wind power production is based on an idealized power curve with four wind regimes specified
     by the cut-in wind speed (:math:`u_i`), the rated speed (:math:`u_r`) and the cut-out speed (:math:`u_o`).
     Power production is zero for wind speeds below the cut-in speed, increases cubically between the cut-in
     and rated speed, is constant between the rated and cut-out speed, and is zero for wind speeds above the cut-out
@@ -2128,7 +2128,7 @@ def wind_power_potential(
 
         \begin{cases}
         0,  &  v < u_i \\
-        (v - u_i)^3 / (u_r - u_i)^3,  & u_i ≤ v < u_r \\
+        (v^3 - u_i^3) / (u_r^3 - u_i^3),  & u_i ≤ v < u_r \\
         1, & u_r ≤ v < u_o \\
         0, & v ≥ u_o
         \end{cases}
@@ -2137,7 +2137,9 @@ def wind_power_potential(
     :math:`v_n = v \left( \frac{\rho}{\rho_0} \right)^{1/3}`.
 
     Note that the temporal resolution of the wind speed time series has a significant influence on the results,
-    but percent changes in the wind power potential projections are similar across resolutions :cite:p:`chen_2020`.
+    even when aggregated at longer time scales. Total annual power production will differ substantially if estimated
+    from hourly or daily wind speeds, due to the non-linearity of the production factor. Note however that percent
+    changes in the wind power potential projections are similar across resolutions :cite:p:`chen_2020`.
 
     References
     ----------
@@ -2169,7 +2171,7 @@ def _wind_power_factor(v, cut_in, rated, cut_out):
     if v < cut_in:
         return 0.0
     if v < rated:
-        return ((v - cut_in) / (rated - cut_in)) ** 3
+        return (v**3 - cut_in**3) / (rated**3 - cut_in**3)
     if v < cut_out:
         return 1.0
     return 0.0

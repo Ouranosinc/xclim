@@ -3637,11 +3637,21 @@ class TestWindProfile:
 
 class TestWindPowerPotential:
     def test_simple(self, sfcWind_series):
-        a = [2, 6, 20, 30]
+        v = [2, 6, 20, 30]
         p = xci.wind_power_potential(
-            sfcWind_series(a, units="m/s"), cut_in="4 m/s", rated="8 m/s"
+            sfcWind_series(v, units="m/s"), cut_in="4 m/s", rated="8 m/s"
         )
-        np.testing.assert_allclose(p, [0, 0.5**3, 1, 0])
+        np.testing.assert_allclose(p, [0, (6**3 - 4**3) / (8**3 - 4**3), 1, 0])
+
+        # Test discontinuities at the default thresholds
+        v = np.array([3.5, 15])
+        a = sfcWind_series(v - 1e-7, units="m/s")
+        b = sfcWind_series(v + 1e-7, units="m/s")
+
+        pa = xci.wind_power_potential(a)
+        pb = xci.wind_power_potential(b)
+
+        np.testing.assert_array_almost_equal(pa, pb, decimal=6)
 
     # def test_benchmark(self, sfcWind_series, benchmark):
     #     a = np.random.rand(50000) * 30
