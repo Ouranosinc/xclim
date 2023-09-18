@@ -15,7 +15,8 @@ from dask.diagnostics import ProgressBar
 import xclim as xc
 from xclim.core.dataflags import DataQualityException, data_flags, ecad_compliant
 from xclim.core.utils import InputKind
-from xclim.testing.utils import publish_release_notes, show_versions
+from xclim.testing.helpers import TESTDATA_BRANCH, populate_testing_data
+from xclim.testing.utils import _default_cache_dir, publish_release_notes, show_versions
 
 try:
     from dask.distributed import Client, progress  # pylint: disable=ungrouped-imports
@@ -143,6 +144,29 @@ def _create_command(indicator_name):
 def show_version_info(ctx):
     """Print versions of dependencies for debugging purposes."""
     click.echo(show_versions())
+    ctx.exit()
+
+
+@click.command(short_help="Prefetch xclim testing data for development purposes.")
+@click.option(
+    "-b",
+    "--branch",
+    help="The xclim-testdata branch to be fetched and cached. If not specified, defaults to "
+    "`XCLIM_TESTING_DATA_BRANCH` (if set) or `main`.",
+)
+@click.pass_context
+def prefetch_testing_data(ctx, branch):
+    """Prefetch xclim testing data for development purposes."""
+    if branch:
+        testdata_branch = branch
+    else:
+        testdata_branch = TESTDATA_BRANCH
+
+    click.echo(
+        f"Gathering testing data from xclim-testdata `{testdata_branch}` branch..."
+    )
+    click.echo(populate_testing_data(branch=testdata_branch))
+    click.echo(f"Testing data saved to `{_default_cache_dir}`.")
     ctx.exit()
 
 
@@ -325,14 +349,22 @@ class XclimCli(click.MultiCommand):
 
     def list_commands(self, ctx):
         """Return the available commands (other than the indicators)."""
-        return "indices", "info", "dataflags", "release_notes", "show_version_info"
+        return (
+            "indices",
+            "info",
+            "dataflags",
+            "prefetch_testing_data",
+            "release_notes",
+            "show_version_info",
+        )
 
     def get_command(self, ctx, name):
         """Return the requested command."""
         command = {
+            "dataflags": dataflags,
             "indices": indices,
             "info": info,
-            "dataflags": dataflags,
+            "prefetch_testing_data": prefetch_testing_data,
             "release_notes": release_notes,
             "show_version_info": show_version_info,
         }.get(name)
