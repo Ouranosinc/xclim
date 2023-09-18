@@ -6,7 +6,7 @@ on:
       - published
   workflow_dispatch:
     inputs:
-      version:
+      version-tag:
         description: 'Version to announce'
         required: true
         type: string
@@ -25,12 +25,12 @@ jobs:
       uses: actions/checkout@v3.6.0
 
     - name: Current Version
-      if: ${{ !github.event.inputs.version }}
+      if: ${{ !github.event.inputs.version-tag }}
       run: |
         CURRENT_VERSION="$(grep -E '__version__'  xclim/__init__.py | cut -d ' ' -f3)"
-        echo "version=${CURRENT_VERSION}" >> $GITHUB_ENV
+        echo "version=v${CURRENT_VERSION}" >> $GITHUB_ENV
     - name: Set Version from Input
-      if: ${{ github.event.inputs.version }}
+      if: ${{ github.event.inputs.version-tag }}
       run: |
         echo "version=${{ github.event.inputs.version }}" >> $GITHUB_ENV
 
