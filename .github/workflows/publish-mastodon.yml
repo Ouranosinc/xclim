@@ -57,7 +57,7 @@ jobs:
       id: render_template
       uses: chuhlomin/render-template@v1.7
       with:
-        template: TOOT_TEMPLATE.md
+        template: publish-mastodon.template.md
         vars: |
             version: ${{ env.version }}
             contributors: ${{ env.CONTRIBUTORS }}
