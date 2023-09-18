@@ -32,7 +32,7 @@ jobs:
     - name: Set Version from Input
       if: ${{ github.event.inputs.version-tag }}
       run: |
-        echo "version=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+        echo "version=${{ github.event.inputs.version-tag }}" >> $GITHUB_ENV
 
     - name: Get Release Description
       if: ${{ !endsWith(env.current_version, '-dev') }}
