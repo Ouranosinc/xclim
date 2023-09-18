@@ -51,7 +51,7 @@ jobs:
         # Extract the first line of the release description
         CONTRIBUTORS=$(echo "$CLEANED_DESCRIPTION" | head -n 1)
 
-        echo "$CONTRIBUTORS" >> $GITHUB_ENV
+        echo "CONTRIBUTORS=${CONTRIBUTORS}" >> $GITHUB_ENV
 
     - name: Prepare Message
       id: render_template
