@@ -1345,15 +1345,22 @@ def lazy_indexing(
             # The 0-D index case, we add a dummy dimension to help dask
             dim = get_temp_dimname(da.dims, "x")
             index = index.expand_dims(dim)
-        invalid = index.isnull()  # Which indexes to mask
+        # Which indexes to mask.
+        invalid = index.isnull()
         # NaN-indexing doesn't work, so fill with 0 and cast to int
         index = index.fillna(0).astype(int)
         # for each chunk of index, take corresponding values from da
 
         da2 = da.rename("__placeholder__")
         out = index.map_blocks(_index_from_1d_array, args=(da2,)).rename(da.name)
-        # mask where index was NaN
-        out = out.where(~invalid)
+        # mask where index was NaN. Drop any auxiliary coord, they are already on `out`.
+        # Chunked aux coord would have the same name on both sides and xarray will want to check if they are equal, which means loading them
+        # making lazy_indexing not lazy.
+        out = out.where(
+            ~invalid.drop_vars(
+                [crd for crd in invalid.coords if crd not in invalid.dims]
+            )
+        )
         if idx_ndim == 0:
             # 0-D case, drop useless coords and dummy dim
             out = out.drop_vars(da.dims[0]).squeeze()

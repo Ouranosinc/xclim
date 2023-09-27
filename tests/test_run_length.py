@@ -10,6 +10,7 @@ from dask import compute
 
 from xclim.core.options import set_options
 from xclim.indices import run_length as rl
+from xclim.testing.helpers import assert_lazy
 
 K2C = 273.15
 
@@ -654,6 +655,7 @@ class TestRunsWithDates:
 @pytest.mark.parametrize("use_dask", [True, False])
 def test_lazy_indexing(use_dask):
     idx = xr.DataArray([[0, 10], [33, 99]], dims=("x", "y"))
+    idx = idx.assign_coords(x2=idx.x**2)
     da = xr.DataArray(np.arange(100), dims=("time",))
     db = xr.DataArray(-np.arange(100), dims=("time",))
 
@@ -661,7 +663,10 @@ def test_lazy_indexing(use_dask):
         idx = idx.chunk({"x": 1})
 
     # Ensure tasks are different
-    outa, outb = compute(rl.lazy_indexing(da, idx), rl.lazy_indexing(db, idx))
+    with assert_lazy:
+        outa = rl.lazy_indexing(da, idx)
+        outb = rl.lazy_indexing(db, idx)
+    outa, outb = compute(outa, outb)
 
     assert set(outa.dims) == {"x", "y"}
     np.testing.assert_array_equal(idx, outa)

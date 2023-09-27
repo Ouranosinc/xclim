@@ -16,6 +16,7 @@ Bug fixes
 ^^^^^^^^^
 * Fixed an error in the `pytest` configuration that prevented copying of testing data to thread-safe caches of workers under certain conditions (this should always occur). (:pull:`1473`).
   * Coincidentally, this also fixes an error that caused `pytest` to error-out when invoked without an active internet connection. Running `pytest` without network access is now supported (requires cached testing data). (:issue:`1468`).
+* Fixed ``xclim.indices.run_length.lazy_indexing`` which would sometimes trigger the loading of auxiliary coordinates. (:issue:`1483`, :pull:`1484`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
@@ -31,6 +32,7 @@ Internal changes
 * Updated the testing data used in the `analogs.ipynb` notebook to use the testing data now found in `Ouranosinc/xclim-testdata`'s main branch. (`xclim-testdata PR/26 <https://github.com/Ouranosinc/xclim-testdata/pull/26>`_, :pull:`1473`).
 * Fixed an issue with automatic labelling that occurs when a Pull Request is made from a forked repository. (:pull:`1479`).
 * Changes to the ``.zenodo.json`` file no longer are marked as CI-related changes. (:pull:`1479`).
+* New ``xclim.testing.helpers.assert_lazy`` context manager to assert the laziness of code blocks. (:pull:`1484`).
 
 v0.45.0 (2023-09-05)
 --------------------
