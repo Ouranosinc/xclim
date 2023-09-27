@@ -1,7 +1,7 @@
 """Climate indices computation package based on Xarray."""
 from __future__ import annotations
 
-from importlib.resources import contents, path
+from importlib.resources import files as _files
 
 from xclim.core import units  # noqa
 from xclim.core.indicator import build_indicator_module_from_yaml
@@ -14,19 +14,15 @@ __email__ = "logan.travis@ouranos.ca"
 __version__ = "0.45.3-beta"
 
 
+_module_data = _files("xclim.data")
+
 # Load official locales
-for filename in contents("xclim.data"):
+for filename in _module_data.glob("??.json"):
     # Only select <locale>.json and not <module>.<locale>.json
-    if filename.endswith(".json") and filename.count(".") == 1:
-        locale = filename.split(".")[0]
-        with path("xclim.data", filename) as f:
-            load_locale(f, locale)
+    load_locale(filename, filename.stem)
 
 
 # Virtual modules creation:
-with path("xclim.data", "icclim.yml") as f:
-    build_indicator_module_from_yaml(f.with_suffix(""), mode="raise")
-with path("xclim.data", "anuclim.yml") as f:
-    build_indicator_module_from_yaml(f.with_suffix(""), mode="raise")
-with path("xclim.data", "cf.yml") as f:
-    build_indicator_module_from_yaml(f.with_suffix(""), mode="raise")
+build_indicator_module_from_yaml(_module_data / "icclim", mode="raise")
+build_indicator_module_from_yaml(_module_data / "anuclim", mode="raise")
+build_indicator_module_from_yaml(_module_data / "cf", mode="raise")
