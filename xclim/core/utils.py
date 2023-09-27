@@ -13,11 +13,11 @@ import warnings
 from collections import defaultdict
 from enum import IntEnum
 from functools import partial
-from importlib.resources import files
+from importlib.resources import open_text
 from inspect import Parameter, _empty  # noqa
 from io import StringIO
 from pathlib import Path
-from typing import Callable, NewType, Sequence, TypeVar
+from typing import Callable, Mapping, NewType, Sequence, TypeVar
 
 import numpy as np
 import xarray as xr
@@ -37,9 +37,8 @@ DayOfYearStr = NewType("DayOfYearStr", str)
 #: Type annotation for thresholds and other not-exactly-a-variable quantities
 Quantified = TypeVar("Quantified", xr.DataArray, str, Quantity)
 
-with (files("xclim.data") / "variables.yml").open() as f:
-    VARIABLES = safe_load(f)["variables"]
-    """Official variables definitions.
+VARIABLES = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
+"""Official variables definitions.
 
 A mapping from variable name to a dict with the following keys:
 
