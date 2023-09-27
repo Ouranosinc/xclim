@@ -492,7 +492,7 @@ def duck_empty(dims, sizes, dtype="float64", chunks=None):
 def _decode_cf_coords(ds):
     """Decode coords in-place."""
     crds = xr.decode_cf(ds.coords.to_dataset())
-    for crdname in ds.coords.keys():
+    for crdname in list(ds.coords.keys()):
         ds[crdname] = crds[crdname]
         # decode_cf introduces an encoding key for the dtype, which can confuse the netCDF writer
         dtype = ds[crdname].encoding.get("dtype")
