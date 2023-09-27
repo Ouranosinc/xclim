@@ -14,10 +14,10 @@
 from __future__ import annotations
 
 import datetime
+import json
 import os
 import sys
 import warnings
-from collections import OrderedDict
 
 import xarray
 from pybtex.plugin import register_plugin  # noqa
@@ -29,6 +29,7 @@ xarray.Dataset.__module__ = "xarray"
 xarray.CFTimeIndex.__module__ = "xarray"
 
 import xclim  # noqa
+from xclim.core.indicator import registry  # noqa
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory is
@@ -38,59 +39,29 @@ import xclim  # noqa
 sys.path.insert(0, os.path.abspath(".."))
 sys.path.insert(0, os.path.abspath("."))
 
-
-def _get_indicators(module):
-    """For all modules or classes listed, return the children that are instances of registered Indicator classes.
-
-    module : A xclim module.
-    """
-    from xclim.core.indicator import registry
-
-    out = {}
-    for key, val in module.__dict__.items():
-        if hasattr(val, "_registry_id") and val._registry_id in registry:  # noqa
-            out[key] = val
-
-    return OrderedDict(sorted(out.items()))
-
-
-def _indicator_table(module):
-    """Return a sequence of dicts storing metadata about all available indices in xclim."""
-    inds = _get_indicators(getattr(xclim.indicators, module))
-    table = {}
-    for ind_name, ind in inds.items():
-        # Apply default values
-        # args = {
-        #     name: p.default if p.default != inspect._empty else f"<{name}>"
-        #     for (name, p) in ind._sig.parameters.items()
-        # }
-        table[ind_name] = {
-            "title": ind.title,
-            "vars": [
-                param_name
-                for param_name, param in ind._all_parameters.items()
-                if param.kind < 2 and not param.injected
-            ],
-        }
-        # try:
-        #     table[ind_name] = ind.json()  # args?
-        # except KeyError as err:
-        #     warnings.warn(
-        #         f"{ind.identifier} could not be documented.({err})", UserWarning
-        #     )
-        # else:
-        #     table[ind_name]["doc"] = ind.__doc__
-        #     if ind.compute.__module__.endswith("generic"):
-        #         table[ind_name][
-        #             "function"
-        #         ] = f"xclim.indices.generic.{ind.compute.__name__}"
-        #     else:
-        #        table[ind_name]["function"] = f"xclim.indices.{ind.compute.__name__}"
-    return table
-
-
-modules = ("atmos", "generic", "land", "seaIce", "cf", "icclim", "anuclim")
-indicators = {module: _indicator_table(module) for module in modules}
+# Indicator data for populating the searchable indicators page
+# Get all indicators and some information about them
+indicators = {}
+for module in ("atmos", "generic", "land", "seaIce", "cf", "icclim", "anuclim"):
+    for key, ind in getattr(xclim.indicators, module).__dict__.items():
+        if hasattr(ind, "_registry_id") and ind._registry_id in registry:  # noqa
+            indicators[ind._registry_id] = {
+                "realm": ind.realm,
+                "title": ind.title,
+                "name": key,
+                "abstract": ind.abstract,
+                "vars": {
+                    param_name: f"{param.description} [{param.units}]"
+                    for param_name, param in ind._all_parameters.items()
+                    if param.kind < 2 and not param.injected
+                },
+            }
+# Sort by title
+indicators = dict(sorted(indicators.items(), key=lambda kv: kv[1]["title"]))
+# Dump to json. The json is added to the html output (html_extra_path)
+# It is read by _static/indsearch.js to populate the table in indicators.rst
+with open("indicators.json", "w") as f:
+    json.dump(indicators, f)
 
 # -- General configuration ---------------------------------------------
 
@@ -241,6 +212,7 @@ nbsphinx_prolog = r"""
 """
 nbsphinx_timeout = 300
 nbsphinx_allow_errors = False
+# nbsphinx_requirejs_path = ""  # To make MiniSearch work in the indicators page
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -302,7 +274,7 @@ html_short_title = "XClim"
 
 html_theme = "sphinx_rtd_theme"
 
-html_context = {"indicators": indicators}
+html_extra_path = ["indicators.json"]
 
 # Theme options are theme-specific and customize the look and feel of a
 # theme further.  For a list of options available for each theme, see the

@@ -344,7 +344,7 @@ water_budget = Converter(
 
 
 corn_heat_units = Converter(
-    title=" Corn heat units",
+    title="Corn heat units",
     identifier="corn_heat_units",
     units="",
     long_name="Corn heat units (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax})",

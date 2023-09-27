@@ -11,6 +11,7 @@ New features and enhancements
 * `xclim` now has a dedicated console command for prefetching testing data from `xclim-testdata` with branch options (e.g.: `$ xclim prefetch_testing_data --branch some_development_branch`). This command can be used to download the testing data to a local cache, which can then be used to run the testing suite without internet access or in "offline" mode. For more information, see the contributing documentation section for `Updating Testing Data`. (:issue:`1468`, :pull:`1473`).
 * The testing suite now offers a means of running tests in "offline" mode (using `pytest-socket <https://github.com/miketheman/pytest-socket>`_ to block external connections). This requires a local copy of `xclim-testdata` to be present in the user's home cache directory and for certain `pytest` options and markers to be set when invoked. For more information, see the contributing documentation section for `Running Tests in Offline Mode`. (:issue:`1468`, :pull:`1473`).
 * The `SKIP_NOTEBOOKS` flag to speed up docs builds is now documented. See the contributing documentation section `Get Started!` for details. (:issue:`1470`, :pull:`1476`).
+* Refactored the indicators page with the addition of a search bar.
 
 Bug fixes
 ^^^^^^^^^
