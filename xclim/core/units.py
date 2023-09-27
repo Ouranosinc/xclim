@@ -11,9 +11,9 @@ import functools
 import logging
 import re
 import warnings
-from importlib.resources import open_text
+from importlib.resources import files
 from inspect import _empty, signature  # noqa
-from typing import Any, Callable, Tuple
+from typing import Any, Callable
 
 import numpy as np
 import pint
@@ -112,7 +112,8 @@ hydro.add_transformation(
 units.add_context(hydro)
 
 
-CF_CONVERSIONS = safe_load(open_text("xclim.data", "variables.yml"))["conversions"]
+with (files("xclim.data") / "variables.yml").open() as f:
+    CF_CONVERSIONS = safe_load(f)["conversions"]
 _CONVERSIONS = {}
 
 
