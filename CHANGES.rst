@@ -2,13 +2,43 @@
 Changelog
 =========
 
-v0.45.0 (unreleased)
+v0.46.0 (unreleased)
+--------------------
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`).
+
+New features and enhancements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* `xclim` now has a dedicated console command for prefetching testing data from `xclim-testdata` with branch options (e.g.: `$ xclim prefetch_testing_data --branch some_development_branch`). This command can be used to download the testing data to a local cache, which can then be used to run the testing suite without internet access or in "offline" mode. For more information, see the contributing documentation section for `Updating Testing Data`. (:issue:`1468`, :pull:`1473`).
+* The testing suite now offers a means of running tests in "offline" mode (using `pytest-socket <https://github.com/miketheman/pytest-socket>`_ to block external connections). This requires a local copy of `xclim-testdata` to be present in the user's home cache directory and for certain `pytest` options and markers to be set when invoked. For more information, see the contributing documentation section for `Running Tests in Offline Mode`. (:issue:`1468`, :pull:`1473`).
+* The `SKIP_NOTEBOOKS` flag to speed up docs builds is now documented. See the contributing documentation section `Get Started!` for details. (:issue:`1470`, :pull:`1476`).
+
+Bug fixes
+^^^^^^^^^
+* Fixed an error in the `pytest` configuration that prevented copying of testing data to thread-safe caches of workers under certain conditions (this should always occur). (:pull:`1473`).
+  * Coincidentally, this also fixes an error that caused `pytest` to error-out when invoked without an active internet connection. Running `pytest` without network access is now supported (requires cached testing data). (:issue:`1468`).
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* `pytest-socket` is now a required development dependency for running `"offline"` tests or the `"offline"` configuration of the `tox` testing suite. This has been added to the `dev` installation recipe. (:issue:`1468`, :pull:`1473`).
+* For better transparency and control in development, the `tox` configuration has been adapted to allow passing of markers directly to the `pytest` call. Positional arguments must be passed to tox after the `--` separator to select/deselect tests (e.g. ``'tox -e py38 -- -m "not slow"'``). (:pull:`1473`).
+* For better accuracy, the `tox -e black` recipe has been renamed to `tox -e lint`, as this configuration already included several other linting checks. (:pull:`1473`).
+
+Internal changes
+^^^^^^^^^^^^^^^^
+* Changed "degK" to "K" (used to designate Kelvin units). (:pull:`1475`).
+* Added a `pytest` marker (``pytest.mark.requires_internet``) to allow for skipping of tests that depend on remote network calls to function properly. (:pull:`1473`).
+* Added handling for `pytest-socket`'s ``SocketBlockedError`` in ``xclim.testing.open_dataset`` when attempting to fetch md5 validation files for cached testing data while explicitly disabling internet sockets. (:issue:`1468`, :pull:`1473`).
+* Updated the testing data used in the `analogs.ipynb` notebook to use the testing data now found in `Ouranosinc/xclim-testdata`'s main branch. (`xclim-testdata PR/26 <https://github.com/Ouranosinc/xclim-testdata/pull/26>`_, :pull:`1473`).
+* Fixed an issue with automatic labelling that occurs when a Pull Request is made from a forked repository. (:pull:`1479`).
+* Changes to the ``.zenodo.json`` file no longer are marked as CI-related changes. (:pull:`1479`).
+
+v0.45.0 (2023-09-05)
 --------------------
 Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Juliette Lavoie (:user:`juliettelavoie`), Gabriel Rondeau-Genesse (:user:`RondeauG`), Marco Braun (:user:`vindelico`), Éric Dupuis (:user:`coxipi`).
 
 Announcements
 ^^^^^^^^^^^^^
-* `xclim` now uses `platformdirs` to write `xclim-testdata` to the user's cache directory. Dynamic paths are now used to cache data dependent on the user's operating system. Developers can now safely delete the `.xclim-testdata` folder in their home directory without affecting the functionality of `xclim`. (:pull:`1460`).
+* `xclim` now uses `platformdirs` to write `xclim-testdata` to the user's cache directory. Dynamic paths are now used to cache data dependent on the user's operating system. Developers can now safely delete the ``.xclim-testdata`` folder in their home directory without affecting the functionality of `xclim`. (:pull:`1460`).
 
 New indicators
 ^^^^^^^^^^^^^^
@@ -16,12 +46,12 @@ New indicators
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* Added ``ensembles.hawkins_sutton`` method to partition the uncertainty sources in a climate projection ensemble. (:issue:`771`, :pull:`1262`).
+* Added ``ensembles.hawkins_sutton`` method to partition the uncertainty sources in a climate projection ensemble. (:issue:`771`, :pull:`1262`), along with a notebook example. (:pull:`1466`).
 * New function ``xclim.core.calendar.convert_doy`` to transform day-of-year data between calendars. Also accessible from ``convert_calendar`` with ``doy=True``. (:issue:`1283`, :pull:`1406`).
 * New ``xclim.units.declare_relative_units`` to enable relative unit checks. This was applied to most "generic" indices. (:pull:`1414`).
 * Added new function ``xclim.sdba.properties.std`` to calculate the standard deviation of a variable over all years at a given time resolution. (:pull:`1445`).
 * Amended the documentation of ``xclim.sdba.properties.trend`` to document already existing functionality of calculating the return values of ``scipy.stats.linregress``. (:pull:`1445`).
-* Add support for setting optional variables through the `ds` argument. (:issue:`1432`, :pull:`1435`).
+* Add support for setting optional variables through the ``ds`` argument. (:issue:`1432`, :pull:`1435`).
 * New ``xclim.core.calendar.is_offset_divisor`` to test if a given freq divides another one evenly (:pull:`1446`).
 * Missing value objects now support input timeseries of quarterly and yearly frequencies (:pull:`1446`).
 * Missing value checks enabled for all "generic" indicators (``return_level``, ``fit`` and ``stats``) (:pull:`1446`).
@@ -30,29 +60,29 @@ Bug fixes
 ^^^^^^^^^
 * Fix ``kldiv`` docstring so the math formula renders to HTML. (:issue:`1408`, :pull:`1409`).
 * Fix the registry entries of "generic" indicators. (:issue:`1423`, :pull:`1424`).
-* Fix ``jetstream_metric_woollings`` so it uses the `vertical` coordinate identified by `cf-xarray`, instead of `pressure`. (:issue:`1421`, :pull:`1422`). Add logic to handle coordinates in decreasing order, or for longitudes defined from 0-360 instead of -180 to 180. (:issue:`1429`, :pull:`1430`).
+* Fix ``jetstream_metric_woollings`` so it uses the ``vertical`` coordinate identified by `cf-xarray`, instead of ``pressure`` (:issue:`1421`, :pull:`1422`).
+    * Add logic to handle coordinates in decreasing order, or for longitudes defined from 0-360 instead of -180 to 180. (:issue:`1429`, :pull:`1430`).
 * Fix virtual indicator attribute assignment causing individual indicator's realm to be ignored. (:issue:`1425`, :pull:`1426`).
-* Fixes the `raise_flags` argument of ``xclim.core.dataflags.data_flags`` so that an Exception is only raised when some checkups fail (:issue:`1456`, :pull:`1457`).
+* Fixes the ``raise_flags`` argument of ``xclim.core.dataflags.data_flags`` so that an `Exception` is only raised when some checkups fail. (:issue:`1456`, :pull:`1457`).
 * Fix ``xclim.indices.generic.get_zones`` so that `bins` can be given as input without error. (:pull:`1455`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
 * Tolerance thresholds for error in ``test_stats::test_fit`` have been relaxed to allow for more variation in the results. Previously untested ``*_moving_yearly_window`` functions are now tested. (:issue:`1400`, :pull:`1402`).
-* Increased the guess of number of quantiles needed in ExtremeValues. (:pull:`1413`).
+* Increased the guess of number of quantiles needed in `ExtremeValues`. (:pull:`1413`).
 * Tolerance thresholds for error in ``test_processing::test_adapt_freq`` have been relaxed to allow for more variation in the results. (:issue:`1417`, :pull:`1418`).
-* Added 'streamflow' to the list of known variables. (:pull:`1431`).
+* Added ``"streamflow"`` to the list of known variables. (:pull:`1431`).
 * Refactoring of index backend calculations. (:pull:`1443`, :issue:`1386`):
-    * Use ``xclim.indices.generic.select_resample_op`` for `{tg|tn|tx}_{max|mean|min}` , `max_1day_precipitation_amount`, `{snw|snd}_max`
-    * Directly use `{cold|hot}_spell_max_length` in `maximum_consecutive_{frost|tx}_days`
+    * Use ``xclim.indices.generic.select_resample_op`` for ``{tg|tn|tx}_{max|mean|min}`` , ``max_1day_precipitation_amount``, ``{snw|snd}_max``
+    * Directly use ``{cold|hot}_spell_max_length`` in ``maximum_consecutive_{frost|tx}_days``
     * ``xclim.indices.generic.select_resample_op`` now gives an output with the correct units (``xclim.core.units.to_agg_units`` is used internally).
-* Added 'streamflow' to the list of known variables. (:pull:`1431`).
 * Shuffle autogenerated documentation files into distinct folders that can be easily cleaned using Makefile. (:pull:`1449`).
 * Some docstring adjustments to existing classes. (:pull:`1449`).
-* `identify` now associates Jupyter Notebooks as JSON files. Set `pre-commit` to ignore JSON-formatting of them. (:pull:`1449`).
+* The `pre-commit` dependency `identify` now associates Jupyter Notebooks as JSON files. `pre-commit` is now set to ignore JSON-formatting of notebooks. (:pull:`1449`).
 * Added a helper module ``_finder`` in the notebooks folder so that the working directory can always be found, with redundancies in place to prevent scripts from failing if the helper file is not found. (:pull:`1449`).
 * Added a manual cache-cleaning workflow (based on `GitHub cache-cleaning example <https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows#managing-caches>`_), triggered when a branch has been merged. (:pull:`1462`).
 * Added a workflow for posting updates to the xclim Mastodon account (using `cbrgm/mastodon-github-action <https://github.com/cbrgm/mastodon-github-action>`_, triggered when a new version is published. (:pull:`1462`).
-* Refactor base indicator classes and fix misleading inheritance of ``return_level`` (:issue:`1263`, :pull:`1446`).
+* Refactor base indicator classes and fix misleading inheritance of ``return_level``. (:issue:`1263`, :pull:`1446`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^

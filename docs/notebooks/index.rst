@@ -14,3 +14,4 @@ Examples
    sdba
    sdba-advanced
    analogs
+   partitioning
