@@ -42,13 +42,15 @@ sys.path.insert(0, os.path.abspath("."))
 # Indicator data for populating the searchable indicators page
 # Get all indicators and some information about them
 indicators = {}
-for module in ("atmos", "generic", "land", "seaIce", "cf", "icclim", "anuclim"):
+# FIXME: Include cf module when its indicators documentation is improved.
+for module in ("atmos", "generic", "land", "seaIce", "icclim", "anuclim"):
     for key, ind in getattr(xclim.indicators, module).__dict__.items():
         if hasattr(ind, "_registry_id") and ind._registry_id in registry:  # noqa
             indicators[ind._registry_id] = {
                 "realm": ind.realm,
                 "title": ind.title,
                 "name": key,
+                "module": module,
                 "abstract": ind.abstract,
                 "vars": {
                     param_name: f"{param.description} [{param.units}]"
