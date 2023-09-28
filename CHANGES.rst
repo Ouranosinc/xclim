@@ -32,6 +32,8 @@ Internal changes
 * Updated the testing data used in the `analogs.ipynb` notebook to use the testing data now found in `Ouranosinc/xclim-testdata`'s main branch. (`xclim-testdata PR/26 <https://github.com/Ouranosinc/xclim-testdata/pull/26>`_, :pull:`1473`).
 * Fixed an issue with automatic labelling that occurs when a Pull Request is made from a forked repository. (:pull:`1479`).
 * Changes to the ``.zenodo.json`` file no longer are marked as CI-related changes. (:pull:`1479`).
+* GitHub deployment workflows now employs use of deployment environments for workflow security and uses the `Trusted Publisher <https://docs.pypi.org/trusted-publishers/using-a-publisher/>`_ feature to sign and publish the `xclim` wheel and source distributions. (:pull:`1469`).
+* Mastodon publishing now uses `chuhlomin/render-template <https://github.com/chuhlomin/render-template>`_ and a standard formatting markdown document to format Mastodon toots. (:pull:`1469`).
 
 v0.45.0 (2023-09-05)
 --------------------
