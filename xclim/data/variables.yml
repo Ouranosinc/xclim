@@ -1,4 +1,10 @@
 variables:
+  air_density:
+    canonical_units: kg m-3
+    cell_methods: "time: mean"
+    description: Air density.
+    dimensions: "[density]"
+    standard_name: air_density
   areacello:
     canonical_units: m2
     cell_methods: "area: sum"
@@ -316,6 +322,12 @@ variables:
     description: Northward component of the wind velocity (at the surface).
     dimensions: "[speed]"
     standard_name: northward_wind
+  wind_speed:
+    canonical_units: m s-1
+    cell_methods: "time: mean"
+    description: Wind speed.
+    dimensions: "[speed]"
+    standard_name: wind_speed
   wsgsmax:
     cmip6: False
     canonical_units: m s-1

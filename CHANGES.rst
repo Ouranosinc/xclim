@@ -8,6 +8,7 @@ Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith 
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Add ``wind_power_potential`` to estimate the potential for wind power production given wind speed at the turbine hub height and turbine specifications, along with  ``wind_profile`` to estimate the wind speed at different heights based on wind speed at a reference height. (:issue:`1458`, :pull:`1471`)
 * `xclim` now has a dedicated console command for prefetching testing data from `xclim-testdata` with branch options (e.g.: `$ xclim prefetch_testing_data --branch some_development_branch`). This command can be used to download the testing data to a local cache, which can then be used to run the testing suite without internet access or in "offline" mode. For more information, see the contributing documentation section for `Updating Testing Data`. (:issue:`1468`, :pull:`1473`).
 * The testing suite now offers a means of running tests in "offline" mode (using `pytest-socket <https://github.com/miketheman/pytest-socket>`_ to block external connections). This requires a local copy of `xclim-testdata` to be present in the user's home cache directory and for certain `pytest` options and markers to be set when invoked. For more information, see the contributing documentation section for `Running Tests in Offline Mode`. (:issue:`1468`, :pull:`1473`).
 * The `SKIP_NOTEBOOKS` flag to speed up docs builds is now documented. See the contributing documentation section `Get Started!` for details. (:issue:`1470`, :pull:`1476`).
@@ -34,6 +35,7 @@ Internal changes
 * Changes to the ``.zenodo.json`` file no longer are marked as CI-related changes. (:pull:`1479`).
 * GitHub deployment workflows now employs use of deployment environments for workflow security and uses the `Trusted Publisher <https://docs.pypi.org/trusted-publishers/using-a-publisher/>`_ feature to sign and publish the `xclim` wheel and source distributions. (:pull:`1469`).
 * Mastodon publishing now uses `chuhlomin/render-template <https://github.com/chuhlomin/render-template>`_ and a standard formatting markdown document to format Mastodon toots. (:pull:`1469`).
+
 
 v0.45.0 (2023-09-05)
 --------------------

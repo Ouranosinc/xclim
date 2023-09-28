@@ -28,6 +28,8 @@ __all__ = [
     "water_budget",
     "water_budget_from_tas",
     "wind_chill_index",
+    "wind_power_potential",
+    "wind_profile",
     "wind_speed_from_vector",
     "wind_vector_from_speed",
 ]
@@ -123,6 +125,30 @@ wind_vector_from_speed = Converter(
     compute=indices.sfcwind_2_uas_vas,
 )
 
+wind_power_potential = Converter(
+    title="Wind power potential",
+    identifier="wind_power_potential",
+    units="",
+    long_name="Wind power potential",
+    description="Wind power potential using a semi-idealized turbine power curve using a cut_in speed of {cut_in}, "
+    "a rated speed of {rated}, and a cut_out speed of {cut_out}.",
+    cell_methods="",
+    abstract="Calculation of the wind power potential using a semi-idealized turbine power curve.",
+    compute=indices.wind_power_potential,
+)
+
+wind_profile = Converter(
+    title="Wind profile",
+    identifier="wind_profile",
+    var_name="wind_speed",
+    units="m s-1",
+    standard_name="wind_speed",
+    long_name="Wind speed at height {h}",
+    description="Wind speed at a height of {h} computed from the wind speed at {h_r} using a power law profile.",
+    cell_methods="",
+    abstract="Calculation of the wind speed at a given height from the wind speed at a reference height.",
+    compute=indices.wind_profile,
+)
 
 saturation_vapor_pressure = Converter(
     title="Saturation vapour pressure (e_sat)",
