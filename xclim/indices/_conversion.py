@@ -5,7 +5,7 @@ import warnings
 
 import numpy as np
 import xarray as xr
-from numba import float32, float64, njit, vectorize  # noqa
+from numba import float32, float64, vectorize  # noqa
 
 from xclim.core.calendar import date_range, datetime_to_decimal_year
 from xclim.core.units import (
@@ -2094,9 +2094,7 @@ def wind_power_potential(
     Parameters
     ----------
     wind_speed : xarray.DataArray
-        Wind speed at the hub height. Use the `wind_profile` function to estimate from the surface wind speed. Note
-        that the temporal resolution of wind time series has a significant influence on the results. Mean daily wind
-        speeds yield lower values than hourly wind speeds.
+        Wind speed at the hub height. Use the `wind_profile` function to estimate from the surface wind speed.
     air_density: xarray.DataArray
         Air density at the hub height. Defaults to 1.225 kg/m³. This is worth changing if applying in cold or
         mountainous regions with non-standard air density.
@@ -2136,10 +2134,14 @@ def wind_power_potential(
     For non-standard air density (:math:`\rho`), the wind speed is scaled using
     :math:`v_n = v \left( \frac{\rho}{\rho_0} \right)^{1/3}`.
 
-    Note that the temporal resolution of the wind speed time series has a significant influence on the results,
-    even when aggregated at longer time scales. Total annual power production will differ substantially if estimated
-    from hourly or daily wind speeds, due to the non-linearity of the production factor. Note however that percent
-    changes in the wind power potential projections are similar across resolutions :cite:p:`chen_2020`.
+    The temporal resolution of wind time series has a significant influence on the results: mean daily wind
+    speeds yield lower values than hourly wind speeds. Note however that percent changes in the wind power potential
+    climate projections are similar across resolutions :cite:p:`chen_2020`.
+
+    To compute the power production, multiply the power production factor by the nominal
+    turbine capacity (e.g. 100), set the units attribute (e.g. "MW"), resample and sum with
+    `xclim.indices.generic.select_resample_op(power, op="sum", freq="D")`, then convert to
+    the desired units (e.g. "MWh") using `xclim.core.units.convert_units_to`.
 
     References
     ----------

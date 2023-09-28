@@ -254,11 +254,38 @@ def test_wind_chill_index(atmosds):
 
 
 def test_wind_profile(atmosds):
-    atmos.wind_profile(wind_speed=atmosds.sfcWind, h_r="10 m", h="100 m", alpha=1 / 7)
+    out = atmos.wind_profile(
+        wind_speed=atmosds.sfcWind, h_r="10 m", h="100 m", alpha=1 / 7
+    )
+    assert out.attrs["units"] == "m s-1"
+    assert (out > atmosds.sfcWind).all()
 
 
 def test_wind_power_potential(atmosds):
-    atmos.wind_power_potential(wind_speed=atmosds.sfcWind)
+    out = atmos.wind_power_potential(wind_speed=atmosds.sfcWind)
+    assert out.attrs["units"] == ""
+    assert (out >= 0).all()
+    assert (out <= 1).all()
+
+
+def test_wind_power_potential_from_3h_series():
+    """Test a typical computation workflow from 3-hourly time series to daily power production in MWh."""
+    from xclim.core.units import convert_units_to
+    from xclim.indices.generic import select_resample_op
+    from xclim.testing.helpers import test_timeseries
+
+    w = test_timeseries(
+        np.ones(96) * 15, variable="sfcWind", start="7/1/2000", units="m s-1", freq="3H"
+    )
+    out = atmos.wind_power_potential(wind_speed=w)
+
+    # Multiply with nominal capacity
+    power = out * 100
+    power.attrs["units"] = "MW"
+    annual_power = convert_units_to(
+        select_resample_op(power, op="sum", freq="D"), "MWh"
+    )
+    assert (annual_power == 100 * 24).all()
 
 
 class TestDrynessIndex:
