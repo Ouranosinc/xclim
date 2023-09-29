@@ -1,4 +1,7 @@
+/* Array of indicator objects */
 let indicators = [];
+
+/* MiniSearch object defining search mechanism */
 let miniSearch = new MiniSearch({
   fields: ['title', 'abstract', 'variables', 'keywords'], // fields to index for full-text search
   storeFields: ['title', 'abstract', 'vars', 'realm', 'name', 'keywords'], // fields to return with search results
@@ -15,7 +18,7 @@ let miniSearch = new MiniSearch({
   }
 });
 
-// populate list
+// Populate search object with complete list of indicators
 fetch('indicators.json')
   .then(data => data.json())
   .then(data => {
@@ -25,6 +28,16 @@ fetch('indicators.json')
     miniSearch.addAll(indicators);
     indFilter();
   });
+
+
+// Populate list of variables
+//function getVariables() {
+//    fetch('variables.json')
+//        .then((res) => {
+//            return res.json();
+//        })
+//}
+//const variables = getVariables();
 
 
 function makeKeywordLabel(ind) {
@@ -39,8 +52,17 @@ function makeKeywordLabel(ind) {
 }
 
 
+function makeVariableList(ind) {
+    /* Print list of variables and include mouse-hover tooltip with variable description. */
+    return Object.entries(ind.vars).map((kv) => {
+        const tooltip = `<button class="indVarname" title="${kv[1]}" alt="${kv[1]}">${kv[0]}</button>`;
+        return tooltip
+    }).join('');
+}
+
 function indTemplate(ind) {
-  const varlist = Object.entries(ind.vars).map((kv) => `<code class="indVarname">${kv[0]}</code>`).join('');
+  // const varlist = Object.entries(ind.vars).map((kv) => `<code class="indVarname">${kv[0]}</code>`).join('');
+  const varlist = makeVariableList(ind);
   return `
     <div class="indElem" id="${ind.id}">
       <div class="indHeader">
