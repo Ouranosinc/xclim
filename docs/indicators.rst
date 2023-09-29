@@ -16,7 +16,7 @@ allows a simple free text search of all indicators. Click on the python names to
 
 .. raw:: html
 
-    <input type="text" id="queryInput" onkeyup="indFilter()" placeholder="Search for titles..">
+    <input type="text" id="queryInput" onkeyup="indFilter()" placeholder="Search for titles, variables or keywords...">
 
     <div id="indTable">
     </div>
