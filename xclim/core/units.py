@@ -580,7 +580,7 @@ def to_agg_units(
             units="", is_dayofyear=np.int32(1), calendar=get_calendar(orig)
         )
 
-    elif op in ["count", "integral"]:
+    elif op in ["count", "integral", "sum"]:
         m, freq_u_raw = infer_sampling_units(orig[dim])
         orig_u = str2pint(orig.units)
         freq_u = str2pint(freq_u_raw)
@@ -588,7 +588,7 @@ def to_agg_units(
 
         if op == "count":
             out.attrs["units"] = freq_u_raw
-        elif op == "integral":
+        elif op in ["integral", "sum"]:
             out.attrs["units"] = pint2cfunits(orig_u * freq_u)
     else:
         raise ValueError(
