@@ -5,7 +5,7 @@ define BROWSER_PYSCRIPT
 import os, webbrowser, sys
 from urllib.request import pathname2url
 
-webbrowser.open(f"file://{pathname2url(os.path.abspath(sys.argv[1]))}")
+webbrowser.open(sys.argv[1])
 endef
 export BROWSER_PYSCRIPT
 
@@ -93,7 +93,11 @@ linkcheck: autodoc-custom-index ## run checks over all external links found thro
 docs: autodoc-custom-index ## generate Sphinx HTML documentation, including API docs, but without indexes for for indices and indicators
 	$(MAKE) -C docs html
 ifndef READTHEDOCS
-	$(BROWSER) docs/_build/html/index.html
+	## Start http server and show in browser.
+	## We want to have the cli command run in the foreground, so it's easy to kill.
+	## And we wait 2 sec for the server to start before opening the browser.
+	\{ sleep 2; $(BROWSER) http://localhost:54345 \} &
+	python -m http.server 54345 --directory docs/_build/html/
 endif
 
 servedocs: docs ## compile the docs watching for changes

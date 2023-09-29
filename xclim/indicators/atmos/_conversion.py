@@ -56,6 +56,7 @@ humidex = Converter(
     long_name="Humidex index",
     description="Humidex index describing the temperature felt by the average person in response to relative humidity.",
     cell_methods="",
+    keywords="heatwave",
     abstract="The humidex describes the temperature felt by a person when relative humidity is taken into account. "
     "It can be interpreted as the equivalent temperature felt when the air is dry.",
     compute=indices.humidex,
@@ -370,7 +371,7 @@ water_budget = Converter(
 
 
 corn_heat_units = Converter(
-    title=" Corn heat units",
+    title="Corn heat units",
     identifier="corn_heat_units",
     units="",
     long_name="Corn heat units (Tmin > {thresh_tasmin} and Tmax > {thresh_tasmax})",

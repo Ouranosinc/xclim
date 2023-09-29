@@ -1,2 +1,16 @@
 {% extends "!layout.html" %}
 {% set css_files = css_files + ["_static/style.css"] %}
+
+<!-- Injection of the scripts for generating the indicators page data.
+	We do it this way to injected only where needed and to ensure they get
+	loaded before all other scripts. nbsphinx adds a line to load require.js which
+	breaks MiniSearch if loaded first.
+-->
+
+{% block scripts %}
+{% if "indicators" in sourcename %}
+  <script src="https://cdn.jsdelivr.net/npm/minisearch@6.1.0/dist/umd/index.min.js"></script>
+  <script type="text/javascript" src="./_static/indsearch.js"></script>
+{% endif %}
+{{ super() }}
+{% endblock %}
