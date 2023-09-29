@@ -45,8 +45,8 @@ function indTemplate(ind) {
     <div class="indElem" id="${ind.id}">
       <div class="indHeader">
         <b class="indTitle">${ind.title}</b>
-        <a class="reference_internal indName" href="api.html#xclim.indicators.${ind.realm}.${ind.name}" title="${ind.name}">
-          <code>${ind.realm}.${ind.name}</code>
+        <a class="reference_internal indName" href="api.html#xclim.indicators.${ind.module}.${ind.name}" title="${ind.name}">
+          <code>${ind.module}.${ind.name}</code>
         </a>
       </div>
       <div class="indVars">Uses: ${varlist}</div>
