@@ -55,6 +55,7 @@ for module in ("atmos", "generic", "land", "seaIce", "cf", "icclim", "anuclim"):
                     for param_name, param in ind._all_parameters.items()
                     if param.kind < 2 and not param.injected
                 },
+                "keywords": ind.keywords.split(","),
             }
 # Sort by title
 indicators = dict(sorted(indicators.items(), key=lambda kv: kv[1]["title"]))
