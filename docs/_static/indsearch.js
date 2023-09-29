@@ -4,7 +4,7 @@ let indicators = [];
 /* MiniSearch object defining search mechanism */
 let miniSearch = new MiniSearch({
   fields: ['title', 'abstract', 'variables', 'keywords'], // fields to index for full-text search
-  storeFields: ['title', 'abstract', 'vars', 'realm', 'name', 'keywords'], // fields to return with search results
+  storeFields: ['title', 'abstract', 'vars', 'realm', 'module', 'name', 'keywords'], // fields to return with search results
   searchOptions: {
     boost: {'title': 3, 'variables': 2},
     fuzzy: 0.1,
