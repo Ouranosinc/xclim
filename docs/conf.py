@@ -20,6 +20,7 @@ import sys
 import warnings
 
 import xarray
+import yaml
 from pybtex.plugin import register_plugin  # noqa
 from pybtex.style.formatting.alpha import Style as AlphaStyle  # noqa
 from pybtex.style.labels import BaseLabelStyle  # noqa
@@ -53,17 +54,26 @@ for module in ("atmos", "generic", "land", "seaIce", "icclim", "anuclim"):
                 "module": module,
                 "abstract": ind.abstract,
                 "vars": {
-                    param_name: f"{param.description} [{param.units}]"
+                    param_name: f"{param.description}"
                     for param_name, param in ind._all_parameters.items()
                     if param.kind < 2 and not param.injected
                 },
+                "keywords": ind.keywords.split(","),
             }
 # Sort by title
 indicators = dict(sorted(indicators.items(), key=lambda kv: kv[1]["title"]))
-# Dump to json. The json is added to the html output (html_extra_path)
+
+# Dump indicators to json. The json is added to the html output (html_extra_path)
 # It is read by _static/indsearch.js to populate the table in indicators.rst
 with open("indicators.json", "w") as f:
     json.dump(indicators, f)
+
+
+# Dump variables information
+with open("variables.json", "w") as fout:
+    with open("../xclim/data/variables.yml") as fin:
+        data = yaml.safe_load(fin)
+    json.dump(data, fout)
 
 # -- General configuration ---------------------------------------------
 
@@ -276,7 +286,7 @@ html_short_title = "XClim"
 
 html_theme = "sphinx_rtd_theme"
 
-html_extra_path = ["indicators.json"]
+html_extra_path = ["indicators.json", "variables.json"]
 
 # Theme options are theme-specific and customize the look and feel of a
 # theme further.  For a list of options available for each theme, see the

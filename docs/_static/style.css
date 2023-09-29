@@ -90,3 +90,11 @@ code > .indName {
 .indVarname {
   border-radius: 10px;
 }
+
+/* Rounded corners for keyword labels: */
+.keywordlabel {
+    border-radius: 10px;
+    padding: 5px;
+    margin: 5px;
+    background-color: #ddd;
+}
