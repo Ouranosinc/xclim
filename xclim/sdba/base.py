@@ -492,7 +492,7 @@ def duck_empty(dims, sizes, dtype="float64", chunks=None):
 def _decode_cf_coords(ds):
     """Decode coords in-place."""
     crds = xr.decode_cf(ds.coords.to_dataset())
-    for crdname in ds.coords.keys():
+    for crdname in list(ds.coords.keys()):
         ds[crdname] = crds[crdname]
         # decode_cf introduces an encoding key for the dtype, which can confuse the netCDF writer
         dtype = ds[crdname].encoding.get("dtype")
@@ -557,26 +557,6 @@ def map_blocks(reduces: Sequence[str] = None, **outvars):
             ) and group is None:
                 raise ValueError("Missing required `group` argument.")
 
-            if uses_dask(ds):
-                # Use dask if any of the input is dask-backed.
-                chunks = (
-                    dict(ds.chunks)
-                    if isinstance(ds, xr.Dataset)
-                    else dict(zip(ds.dims, ds.chunks))
-                )
-                if group is not None:
-                    badchunks = {
-                        dim: chunks.get(dim)
-                        for dim in group.add_dims + [group.dim]
-                        if len(chunks.get(dim, [])) > 1
-                    }
-                    if badchunks:
-                        raise ValueError(
-                            f"The dimension(s) over which we group cannot be chunked ({badchunks})."
-                        )
-            else:
-                chunks = None
-
             # Make translation dict
             if group is not None:
                 placeholders = {
@@ -601,6 +581,36 @@ def map_blocks(reduces: Sequence[str] = None, **outvars):
                     raise ValueError(
                         f"Dimension {dim} is meant to be added by the computation but it is already on one of the inputs."
                     )
+
+            if uses_dask(ds):
+                # Use dask if any of the input is dask-backed.
+                chunks = (
+                    dict(ds.chunks)
+                    if isinstance(ds, xr.Dataset)
+                    else dict(zip(ds.dims, ds.chunks))
+                )
+                badchunks = {}
+                if group is not None:
+                    badchunks.update(
+                        {
+                            dim: chunks.get(dim)
+                            for dim in group.add_dims + [group.dim]
+                            if len(chunks.get(dim, [])) > 1
+                        }
+                    )
+                badchunks.update(
+                    {
+                        dim: chunks.get(dim)
+                        for dim in reduced_dims
+                        if len(chunks.get(dim)) > 1
+                    }
+                )
+                if badchunks:
+                    raise ValueError(
+                        f"The dimension(s) over which we group, reduce or interpolate cannot be chunked ({badchunks})."
+                    )
+            else:
+                chunks = None
 
             # Dimensions untouched by the function.
             base_dims = list(set(ds.dims) - set(new_dims) - set(reduced_dims))
