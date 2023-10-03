@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3.6.0
+      - uses: actions/checkout@v4.1.0
         with:
           token: ${{ secrets.WORKFLOW_TOKEN }}
       - name: Run GitHub Actions Version Updater
