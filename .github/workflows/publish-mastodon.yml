@@ -16,7 +16,7 @@ on:
         type: boolean
 
 jobs:
-  build:
+  toot:
     runs-on: ubuntu-latest
     environment: production
     steps:
