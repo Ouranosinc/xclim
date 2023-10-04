@@ -15,7 +15,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 from filelock import FileLock
-from pkg_resources import parse_version, working_set
+from packaging.version import Version
 
 import xclim
 from xclim import __version__ as __xclim_version__
@@ -39,14 +39,14 @@ if not __xclim_version__.endswith("-beta") and helpers.TESTDATA_BRANCH == "main"
 if re.match(r"^v\d+\.\d+\.\d+", helpers.TESTDATA_BRANCH):
     # Find the date of last modification of xclim source files to generate a calendar version
     install_date = dt.strptime(
-        time.ctime(os.path.getmtime(working_set.by_key["xclim"].location)),
+        time.ctime(os.path.getmtime(xclim.__file__)),
         "%a %b %d %H:%M:%S %Y",
     )
     install_calendar_version = (
         f"{install_date.year}.{install_date.month}.{install_date.day}"
     )
 
-    if parse_version(helpers.TESTDATA_BRANCH) > parse_version(install_calendar_version):
+    if Version(helpers.TESTDATA_BRANCH) > Version(install_calendar_version):
         warnings.warn(
             f"Installation date of `xclim` ({install_date.ctime()}) "
             f"predates the last release of `xclim-testdata` ({helpers.TESTDATA_BRANCH}). "
