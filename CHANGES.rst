@@ -4,7 +4,7 @@ Changelog
 
 v0.46.0 (unreleased)
 --------------------
-Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`) and Pascal Bourgault (:user:`aulemahal`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -19,6 +19,7 @@ Bug fixes
 * Fixed an error in the `pytest` configuration that prevented copying of testing data to thread-safe caches of workers under certain conditions (this should always occur). (:pull:`1473`).
   * Coincidentally, this also fixes an error that caused `pytest` to error-out when invoked without an active internet connection. Running `pytest` without network access is now supported (requires cached testing data). (:issue:`1468`).
 * Calling a ``sdba.map_blocks``-wrapped function with data chunked along the reduced dimensions will raise an error. This forbids chunking the trained dataset along the distribution dimensions, for example. (:issue:`1481`, :pull:`1482`).
+* Indicators ``snd_season_length`` and ``snw_season_length`` will return 0 instead of NaN if all inputs have a (non-NaN) 0 snow depth (or water-equivalent thickness). (:pull:`1492`, :issue:`1491`)
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
