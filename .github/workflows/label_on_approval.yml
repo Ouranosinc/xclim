@@ -37,7 +37,7 @@ jobs:
   comment_approved:
     name: Comment Concerning Approved Tag
     if: |
-      (github.event_name == 'pull_request_target') ||
+      (github.event_name == 'pull_request_target') &&
       (github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name)
     runs-on: ubuntu-latest
     steps:
@@ -50,8 +50,9 @@ jobs:
           body-includes: This Pull Request is coming from a fork and must be manually tagged `approved` in order to perform additional testing
       - name: Create comment
         if: |
-          (steps.fc.outputs.comment-id == '') ||
-          (!contains(github.event.pull_request.labels.*.name, 'approved'))
+          (steps.fc.outputs.comment-id == '') &&
+          (!contains(github.event.pull_request.labels.*.name, 'approved')) &&
+          (github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name)
         uses: peter-evans/create-or-update-comment@v3.0.2
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}
@@ -68,7 +69,8 @@ jobs:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            Pull Request is approved!
+            > **Note**
+            > This Pull Request is approved!
           reactions: |
             hooray
           edit-mode: append
