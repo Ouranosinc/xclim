@@ -37,7 +37,7 @@ Internal changes
 * GitHub deployment workflows now employs use of deployment environments for workflow security and uses the `Trusted Publisher <https://docs.pypi.org/trusted-publishers/using-a-publisher/>`_ feature to sign and publish the `xclim` wheel and source distributions. (:pull:`1469`).
 * Mastodon publishing now uses `chuhlomin/render-template <https://github.com/chuhlomin/render-template>`_ and a standard formatting markdown document to format Mastodon toots. (:pull:`1469`).
 * GitHub testing workflows now use `Concurrency` instead of the styfle/cancel-workflow-action to cancel redundant workflows. (:pull:`1487`).
-* The `pkg_resources` library has been replaced for the `packaging` library when version comparisons have been performed, and a few warning messages have been silenced in the testing suite. (:pull:`1490`).
+* The `pkg_resources` library has been replaced for the `packaging` library when version comparisons have been performed, and a few warning messages have been silenced in the testing suite. (:issue:`1489`, :pull:`1490`).
 
 v0.45.0 (2023-09-05)
 --------------------
