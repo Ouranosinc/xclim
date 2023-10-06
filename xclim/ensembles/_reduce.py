@@ -2,9 +2,8 @@
 Ensemble Reduction
 ==================
 
-Ensemble reduction is the process of selecting a subset of members from an ensemble in
-order to reduce the volume of computation needed while still covering a good portion of
-the simulated climate variability.
+Ensemble reduction is the process of selecting a subset of members from an ensemble in order to reduce the volume of
+computation needed while still covering a good portion of the simulated climate variability.
 """
 from __future__ import annotations
 
@@ -30,15 +29,15 @@ except ImportError:
 def make_criteria(ds: xarray.Dataset | xarray.DataArray):
     """Reshapes the input into a criteria 2D DataArray.
 
-    The reshaping preserves the "realization" dimension but stacks all other
-    dimensions and variables into a new "criteria" dimension, as expected by
-    functions :py:func:`xclim.ensembles._reduce.kkz_reduce_ensemble`
-    and :py:func:`xclim.ensembles._reduce.kmeans_reduce_ensemble`.
+    The reshaping preserves the "realization" dimension but stacks all other dimensions and variables into a new
+    "criteria" dimension, as expected by functions :py:func:`xclim.ensembles._reduce.kkz_reduce_ensemble` and
+    :py:func:`xclim.ensembles._reduce.kmeans_reduce_ensemble`.
 
     Parameters
     ----------
     ds : Dataset or DataArray
-        Must at least have a "realization" dimension. All values are considered independent "criterion" for the ensemble reduction.
+        Must at least have a "realization" dimension.
+        All values are considered independent "criterion" for the ensemble reduction.
         If a Dataset, variables may have different sizes, but all must include the "realization" dimension.
 
     Returns
@@ -55,8 +54,9 @@ def make_criteria(ds: xarray.Dataset | xarray.DataArray):
         crit = make_criteria(ds)
         ds2 = crit.unstack("criteria").to_dataset("variables")
 
-    `ds2` will have all variables with the same dimensions, so if the original dataset had variables with different dimensions, the
-    added dimensions are filled with NaNs. The `to_dataset` part can be skipped if the original input was a DataArray.
+    `ds2` will have all variables with the same dimensions, so if the original dataset had variables with different
+    dimensions, the added dimensions are filled with NaNs.
+    The `to_dataset` part can be skipped if the original input was a DataArray.
     """
 
     def _make_crit(da):
@@ -211,8 +211,8 @@ def kmeans_reduce_ensemble(
         When using 'rsq_optimize' or 'rsq_cutoff' methods, limit the final selection to a maximum number even if method
         results indicate a higher value. Defaults to N.
     variable_weights : np.ndarray, optional
-        An array of size P. This weighting can be used to influence of weight of the climate indices (criteria dimension)
-        on the clustering itself.
+        An array of size P. This weighting can be used to influence of weight of the climate indices
+        (criteria dimension) on the clustering itself.
     model_weights : np.ndarray, optional
         An array of size N. This weighting can be used to influence which realization is selected
         from within each cluster. This parameter has no influence on the clustering itself.
