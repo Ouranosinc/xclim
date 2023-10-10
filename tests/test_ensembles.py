@@ -22,7 +22,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
-from pkg_resources import parse_version
+from packaging.version import Version
 from scipy import __version__ as __scipy_version__
 from scipy.stats.mstats import mquantiles
 
@@ -688,7 +688,7 @@ def test_change_significance(
 ):
     ref, fut = robust_data
 
-    if test == "ttest" and parse_version(__scipy_version__) < parse_version("1.9.0"):
+    if test == "ttest" and Version(__scipy_version__) < Version("1.9.0"):
         with pytest.warns(FutureWarning):
             chng_frac, pos_frac = ensembles.change_significance(
                 fut, ref, test=test, **kws

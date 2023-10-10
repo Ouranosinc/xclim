@@ -70,6 +70,7 @@ class TestLoci:
         p2 = loci2.adjust(sim)
         np.testing.assert_array_equal(p, p2)
 
+    @pytest.mark.requires_internet
     def test_reduce_dims(self, ref_hist_sim_tuto):
         ref, hist, sim = ref_hist_sim_tuto()
         hist = hist.expand_dims(member=[0, 1])
@@ -483,6 +484,7 @@ class TestQM:
         np.testing.assert_array_almost_equal(p, ref, 2)
 
     @pytest.mark.parametrize("use_dask", [True, False])
+    @pytest.mark.filterwarnings("ignore::RuntimeWarning")
     def test_add_dims(self, use_dask, open_dataset):
         with set_options(sdba_encode_cf=use_dask):
             if use_dask:

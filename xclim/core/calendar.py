@@ -1465,6 +1465,7 @@ def select_time(
     month: int | Sequence[int] = None,
     doy_bounds: tuple[int, int] = None,
     date_bounds: tuple[str, str] = None,
+    include_bounds: bool | tuple[bool, bool] = True,
 ) -> xr.DataArray | xr.Dataset:
     """Select entries according to a time period.
 
@@ -1488,11 +1489,13 @@ def select_time(
       The bounds as (start, end) of the period of interest expressed in day-of-year,
       integers going from 1 (January 1st) to 365 or 366 (December 31st). If calendar
       awareness is needed, consider using ``date_bounds`` instead.
-      Bounds are inclusive.
     date_bounds: 2-tuple of strings
       The bounds as (start, end) of the period of interest expressed as dates in the
       month-day (%m-%d) format.
-      Bounds are inclusive.
+    include_bounds: bool or 2-tuple of booleans
+      Whether the bounds of `doy_bounds` or `date_bounds` should be inclusive or not.
+      Either one value for both or a tuple.
+      Default is True, meaning bounds are inclusive.
 
     Returns
     -------
@@ -1529,10 +1532,19 @@ def select_time(
     if N == 0:
         return da
 
-    def get_doys(start, end):
+    def get_doys(start, end, inclusive):
         if start <= end:
-            return np.arange(start, end + 1)
-        return np.concatenate((np.arange(start, 367), np.arange(0, end + 1)))
+            doys = np.arange(start, end + 1)
+        else:
+            doys = np.concatenate((np.arange(start, 367), np.arange(0, end + 1)))
+        if not inclusive[0]:
+            doys = doys[1:]
+        if not inclusive[1]:
+            doys = doys[:-1]
+        return doys
+
+    if isinstance(include_bounds, bool):
+        include_bounds = (include_bounds, include_bounds)
 
     if season is not None:
         if isinstance(season, str):
@@ -1545,7 +1557,7 @@ def select_time(
         mask = da.time.dt.month.isin(month)
 
     elif doy_bounds is not None:
-        mask = da.time.dt.dayofyear.isin(get_doys(*doy_bounds))
+        mask = da.time.dt.dayofyear.isin(get_doys(*doy_bounds, include_bounds))
 
     elif date_bounds is not None:
         # This one is a bit trickier.
@@ -1564,6 +1576,7 @@ def select_time(
         doys = get_doys(
             to_cftime_datetime("2000-" + start, calendar).dayofyr,
             to_cftime_datetime("2000-" + end, calendar).dayofyr,
+            include_bounds,
         )
         mask = time.time.dt.dayofyear.isin(doys)
         # Needed if we converted calendar, this puts back the correct coord

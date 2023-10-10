@@ -1,4 +1,3 @@
-
 # label rules used by .github/workflows/label.yml
 
 # label 'ci' all automation-related steps and files
@@ -10,7 +9,10 @@ API:
   - xclim/cli.py
 
 CI:
-  - .*  # all '.<something>' files
+  - .editorconfig
+  - .pre-commit-config.yaml
+  - .readthedocs.yml
+  - .yamllint.yml
   - .github/workflows/*
   - docs/Makefile
   - pylintrc
@@ -34,5 +36,9 @@ indicators:
   - xclim/data/**/*.json
   - xclim/data/**/*.yml
 
+information:
+  - CONTRIBUTING.rst
+
 sdba:
   - xclim/sdba/**/*
+  - tests/test_sdba/*.py
