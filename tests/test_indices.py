@@ -320,18 +320,18 @@ class TestAgroclimaticIndices:
                 bedd[1], bedd[0]
             )  # Leap-year has slightly higher values
             np.testing.assert_allclose(
-                bedd, np.array([deg_days, deg_days, deg_days, np.NaN]), rtol=6e-4
+                bedd[:3], np.array([deg_days, deg_days, deg_days]), rtol=6e-4
             )
             np.testing.assert_allclose(
-                bedd_hot, [max_deg_days, max_deg_days, max_deg_days, np.NaN], rtol=0.15
+                bedd_hot[:3], [max_deg_days, max_deg_days, max_deg_days], rtol=0.15
             )
 
         else:
             np.testing.assert_allclose(
-                bedd, np.array([deg_days, deg_days, deg_days, np.NaN])
+                bedd[:3], np.array([deg_days, deg_days, deg_days])
             )
             np.testing.assert_array_equal(
-                bedd_hot, [max_deg_days, max_deg_days, max_deg_days, np.NaN]
+                bedd_hot[:3], [max_deg_days, max_deg_days, max_deg_days]
             )
             if method == "gladstones":
                 np.testing.assert_array_less(bedd, bedd_high_lat)

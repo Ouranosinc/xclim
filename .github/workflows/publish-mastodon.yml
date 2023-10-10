@@ -16,13 +16,13 @@ on:
         type: boolean
 
 jobs:
-  build:
+  toot:
     runs-on: ubuntu-latest
     environment: production
     steps:
 
     - name: Checkout
-      uses: actions/checkout@v3.6.0
+      uses: actions/checkout@v4.1.0
 
     - name: Current Version
       if: ${{ !github.event.inputs.version-tag }}

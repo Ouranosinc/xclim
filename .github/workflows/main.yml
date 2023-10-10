@@ -22,6 +22,11 @@ on:
 env:
   XCLIM_TESTDATA_BRANCH: v2023.9.12
 
+concurrency:
+  # For a given workflow, if we push to the same branch, cancel all previous builds on that branch except on master.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
 jobs:
   lint:
     name: Black (Python${{ matrix.python-version }})
@@ -35,11 +40,7 @@ jobs:
         python-version:
           - "3.8"
     steps:
-      - name: Cancel previous runs
-        uses: styfle/cancel-workflow-action@0.11.0
-        with:
-          access_token: ${{ github.token }}
-      - uses: actions/checkout@v3.6.0
+      - uses: actions/checkout@v4.1.0
       - name: Set up Python${{ matrix.python-version }}
         uses: actions/setup-python@v4.7.0
         with:
@@ -63,7 +64,7 @@ jobs:
           - tox-env: "py39"
             python-version: "3.9"
     steps:
-      - uses: actions/checkout@v3.6.0
+      - uses: actions/checkout@v4.1.0
       - name: Set up Python${{ matrix.python-version }}
         uses: actions/setup-python@v4.7.0
         with:
@@ -103,7 +104,7 @@ jobs:
             python-version: "3.11"
             markers: -m 'not slow and not requires_internet'
     steps:
-      - uses: actions/checkout@v3.6.0
+      - uses: actions/checkout@v4.1.0
       - name: Install Eigen3
         if: contains(matrix.tox-env, 'sbck')
         run: |
@@ -140,9 +141,9 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-      - uses: actions/checkout@v3.6.0
+      - uses: actions/checkout@v4.1.0
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
-        uses: mamba-org/setup-micromamba@v1.4.3
+        uses: mamba-org/setup-micromamba@v1.4.4
         with:
           cache-downloads: true
           cache-environment: true

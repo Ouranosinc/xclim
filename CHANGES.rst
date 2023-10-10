@@ -12,12 +12,14 @@ New features and enhancements
 * `xclim` now has a dedicated console command for prefetching testing data from `xclim-testdata` with branch options (e.g.: `$ xclim prefetch_testing_data --branch some_development_branch`). This command can be used to download the testing data to a local cache, which can then be used to run the testing suite without internet access or in "offline" mode. For more information, see the contributing documentation section for `Updating Testing Data`. (:issue:`1468`, :pull:`1473`).
 * The testing suite now offers a means of running tests in "offline" mode (using `pytest-socket <https://github.com/miketheman/pytest-socket>`_ to block external connections). This requires a local copy of `xclim-testdata` to be present in the user's home cache directory and for certain `pytest` options and markers to be set when invoked. For more information, see the contributing documentation section for `Running Tests in Offline Mode`. (:issue:`1468`, :pull:`1473`).
 * The `SKIP_NOTEBOOKS` flag to speed up docs builds is now documented. See the contributing documentation section `Get Started!` for details. (:issue:`1470`, :pull:`1476`).
+* Refactored the indicators page with the addition of a search bar.
 
 Bug fixes
 ^^^^^^^^^
 * Fixed an error in the `pytest` configuration that prevented copying of testing data to thread-safe caches of workers under certain conditions (this should always occur). (:pull:`1473`).
   * Coincidentally, this also fixes an error that caused `pytest` to error-out when invoked without an active internet connection. Running `pytest` without network access is now supported (requires cached testing data). (:issue:`1468`).
 * Calling a ``sdba.map_blocks``-wrapped function with data chunked along the reduced dimensions will raise an error. This forbids chunking the trained dataset along the distribution dimensions, for example. (:issue:`1481`, :pull:`1482`).
+* Optimization of indicators ``huglin_index`` and ``biologically_effective_degree_days`` when used with dask and flox. As a side effect, the indice functions (i.e. under ``xc.indices``) no longer mask incomplete periods. The indicators' output is unchanged under the default "check_missing" setting (:issue:`1494`, :pull:`1495`).
 * Fixed ``xclim.indices.run_length.lazy_indexing`` which would sometimes trigger the loading of auxiliary coordinates. (:issue:`1483`, :pull:`1484`).
 
 Breaking changes
@@ -36,6 +38,8 @@ Internal changes
 * Changes to the ``.zenodo.json`` file no longer are marked as CI-related changes. (:pull:`1479`).
 * GitHub deployment workflows now employs use of deployment environments for workflow security and uses the `Trusted Publisher <https://docs.pypi.org/trusted-publishers/using-a-publisher/>`_ feature to sign and publish the `xclim` wheel and source distributions. (:pull:`1469`).
 * Mastodon publishing now uses `chuhlomin/render-template <https://github.com/chuhlomin/render-template>`_ and a standard formatting markdown document to format Mastodon toots. (:pull:`1469`).
+* GitHub testing workflows now use `Concurrency` instead of the styfle/cancel-workflow-action to cancel redundant workflows. (:pull:`1487`).
+* The `pkg_resources` library has been replaced for the `packaging` library when version comparisons have been performed, and a few warning messages have been silenced in the testing suite. (:issue:`1489`, :pull:`1490`).
 * New ``xclim.testing.helpers.assert_lazy`` context manager to assert the laziness of code blocks. (:pull:`1484`).
 
 v0.45.0 (2023-09-05)

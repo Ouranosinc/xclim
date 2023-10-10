@@ -563,7 +563,7 @@ high_precip_low_temp = PrTasxWithIndexing(
 # FIXME: Are fraction_over_precip_thresh and fraction_over_precip_doy_thresh the same thing?
 # FIXME: Clarity needed in both French and English metadata fields
 fraction_over_precip_doy_thresh = PrecipWithIndexing(
-    title="",
+    title="Fraction of precipitation due to wet days with daily precipitation over a given daily percentile.",
     identifier="fraction_over_precip_doy_thresh",
     long_name="Fraction of precipitation due to days with daily precipitation above {pr_per_thresh}th daily percentile",
     description="{freq} fraction of total precipitation due to days with precipitation above {pr_per_thresh}th daily "

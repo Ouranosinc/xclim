@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from numpy.testing import assert_almost_equal
-from pkg_resources import parse_version
+from packaging.version import Version
 from scipy import __version__ as __scipy_version__
 from scipy import integrate, stats
 from sklearn import datasets
@@ -62,9 +62,9 @@ def test_exact_randn(exact_randn):
 @pytest.mark.slow
 @pytest.mark.parametrize("method", xca.metrics.keys())
 def test_spatial_analogs(method, open_dataset):
-    if method in ["nearest_neighbor", "kldiv"] and parse_version(
-        __scipy_version__
-    ) < parse_version("1.6.0"):
+    if method in ["nearest_neighbor", "kldiv"] and Version(__scipy_version__) < Version(
+        "1.6.0"
+    ):
         pytest.skip("Method not supported in scipy<1.6.0")
 
     diss = open_dataset("SpatialAnalogs/dissimilarity")
@@ -141,7 +141,7 @@ class TestSEuclidean:
 
 
 @pytest.mark.skipif(
-    parse_version(__scipy_version__) < parse_version("1.6.0"),
+    Version(__scipy_version__) < Version("1.6.0"),
     reason="Not supported in scipy<1.6.0",
 )
 class TestNN:
@@ -247,7 +247,7 @@ def analytical_KLDiv(p, q):
 
 @pytest.mark.slow
 @pytest.mark.skipif(
-    parse_version(__scipy_version__) < parse_version("1.6.0"),
+    Version(__scipy_version__) < Version("1.6.0"),
     reason="Not supported in scipy<1.6.0",
 )
 class TestKLDIV:
