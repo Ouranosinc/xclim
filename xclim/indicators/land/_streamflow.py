@@ -55,7 +55,7 @@ doy_qmax = Streamflow(
     description="Day of the year of the maximum streamflow over {indexer}.",
     units="",
     compute=declare_units(da="[discharge]")(generic.select_resample_op),
-    parameters=dict(op=generic.doymax),
+    parameters=dict(op=generic.doymax, out_units=None),
 )
 
 
@@ -67,5 +67,5 @@ doy_qmin = Streamflow(
     description="Day of the year of the minimum streamflow over {indexer}.",
     units="",
     compute=declare_units(da="[discharge]")(generic.select_resample_op),
-    parameters=dict(op=generic.doymin),
+    parameters=dict(op=generic.doymin, out_units=None),
 )

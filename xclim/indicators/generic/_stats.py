@@ -50,4 +50,5 @@ stats = GenericResampling(
     long_name="Daily statistics",
     description="{freq} {op} of variable ({indexer}).",
     compute=select_resample_op,
+    parameters=dict(out_units=None),
 )
