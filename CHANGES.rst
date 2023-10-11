@@ -19,6 +19,7 @@ Bug fixes
 * Fixed an error in the `pytest` configuration that prevented copying of testing data to thread-safe caches of workers under certain conditions (this should always occur). (:pull:`1473`).
   * Coincidentally, this also fixes an error that caused `pytest` to error-out when invoked without an active internet connection. Running `pytest` without network access is now supported (requires cached testing data). (:issue:`1468`).
 * Calling a ``sdba.map_blocks``-wrapped function with data chunked along the reduced dimensions will raise an error. This forbids chunking the trained dataset along the distribution dimensions, for example. (:issue:`1481`, :pull:`1482`).
+* Optimization of indicators ``huglin_index`` and ``biologically_effective_degree_days`` when used with dask and flox. As a side effect, the indice functions (i.e. under ``xc.indices``) no longer mask incomplete periods. The indicators' output is unchanged under the default "check_missing" setting (:issue:`1494`, :pull:`1495`).
 * Indicators ``snd_season_length`` and ``snw_season_length`` will return 0 instead of NaN if all inputs have a (non-NaN) zero snow depth (or water-equivalent thickness). (:pull:`1492`, :issue:`1491`)
 
 Breaking changes
@@ -37,7 +38,8 @@ Internal changes
 * Changes to the ``.zenodo.json`` file no longer are marked as CI-related changes. (:pull:`1479`).
 * GitHub deployment workflows now employs use of deployment environments for workflow security and uses the `Trusted Publisher <https://docs.pypi.org/trusted-publishers/using-a-publisher/>`_ feature to sign and publish the `xclim` wheel and source distributions. (:pull:`1469`).
 * Mastodon publishing now uses `chuhlomin/render-template <https://github.com/chuhlomin/render-template>`_ and a standard formatting markdown document to format Mastodon toots. (:pull:`1469`).
-
+* GitHub testing workflows now use `Concurrency` instead of the styfle/cancel-workflow-action to cancel redundant workflows. (:pull:`1487`).
+* The `pkg_resources` library has been replaced for the `packaging` library when version comparisons have been performed, and a few warning messages have been silenced in the testing suite. (:issue:`1489`, :pull:`1490`).
 
 v0.45.0 (2023-09-05)
 --------------------
