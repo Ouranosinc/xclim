@@ -178,6 +178,7 @@ default_formatter = AttrFormatter(
         "min": ["minimal", "minimum"],
         "sum": ["total", "sum"],
         "std": ["standard deviation"],
+        "var": ["variance"],
         "absamp": ["absolute amplitude"],
         "relamp": ["relative amplitude"],
     },
