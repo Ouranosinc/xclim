@@ -44,10 +44,10 @@ return_level = Generic(
 
 
 stats = GenericResampling(
-    title="Statistic of the daily values for a given period.",
+    title="Simple resampled statistic of the values.",
     identifier="stats",
     var_name="stat_{indexer}{op:r}",
-    long_name="Daily statistics",
+    long_name="{op} of variable",
     description="{freq} {op} of variable ({indexer}).",
     compute=select_resample_op,
     parameters=dict(out_units=None),
