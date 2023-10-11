@@ -48,7 +48,6 @@ stats = GenericResampling(
     identifier="stats",
     var_name="stat_{indexer}{op:r}",
     long_name="Daily statistics",
-    description="{freq} {op} of daily values ({indexer}).",
+    description="{freq} {op} of variable ({indexer}).",
     compute=select_resample_op,
-    src_freq="D",
 )
