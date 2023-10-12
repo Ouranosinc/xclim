@@ -246,6 +246,7 @@ class TestPWMFit:
 
 
 @pytest.mark.parametrize("use_dask", [True, False])
+@pytest.mark.filterwarnings("ignore::RuntimeWarning")
 def test_frequency_analysis(ndq_series, use_dask):
     q = ndq_series.copy()
     q[:, 0, 0] = np.nan
