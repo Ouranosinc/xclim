@@ -450,7 +450,7 @@ def gather_session_data(threadsafe_data_dir, worker_id, xdoctest_namespace):
         if worker_id in "master":
             helpers.populate_testing_data(branch=helpers.TESTDATA_BRANCH)
         else:
-            _default_cache_dir.mkdir(exist_ok=True)
+            _default_cache_dir.mkdir(exist_ok=True, parents=True)
             test_data_being_written = FileLock(_default_cache_dir.joinpath(".lock"))
             with test_data_being_written as fl:
                 # This flag prevents multiple calls from re-attempting to download testing data in the same pytest run
