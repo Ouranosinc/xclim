@@ -47,8 +47,8 @@ stats = GenericResampling(
     title="Simple resampled statistic of the values.",
     identifier="stats",
     var_name="stat_{indexer}{op:r}",
-    long_name="{op} of variable",
-    description="{freq} {op} of variable ({indexer}).",
+    long_name="{op:noun} of variable",
+    description="{freq} {op:noun} of variable ({indexer}).",
     compute=select_resample_op,
     parameters=dict(out_units=None),
 )

@@ -594,7 +594,7 @@ def to_agg_units(
             out.attrs["units"] = pint2cfunits(orig_u * freq_u)
     else:
         raise ValueError(
-            f"Unknown aggregation op {op}. Known ops are [min, max, mean, std, var, doymin, doymax, count, integral, sum]."
+            f"Unknown aggregation op {op}. Known ops are [min, max, amin, amax, mean, std, var, doymin, doymax, count, integral, sum]."
         )
 
     return out

@@ -76,7 +76,7 @@ def select_resample_op(
         Reduce operation. Can either be a DataArray method or a function that can be applied to a DataArray.
     freq : str
         Resampling frequency defining the periods as defined in :ref:`timeseries.resampling`.
-    out_units : str, optional.
+    out_units : str, optional
         Output units to assign. Only necessary if `op` is function not supported by :py:func:`xclim.core.units.to_agg_units`.
     indexer : {dim: indexer, }, optional
         Time attribute and values over which to subset the array. For example, use season='DJF' to select winter values,
