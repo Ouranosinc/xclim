@@ -296,7 +296,7 @@ def cosine_of_solar_zenith_angle(
         _wrap_radians(h_e),
         stat == "average",
         input_core_dims=[[]] * 6,
-        dask="parallel",
+        dask="parallelized",
     )
 
 

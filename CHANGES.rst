@@ -4,7 +4,7 @@ Changelog
 
 v0.46.0 (unreleased)
 --------------------
-Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`).
+Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`) and Pascal Bourgault (:user:`aulemahal`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -25,6 +25,7 @@ Bug fixes
 * Calling a ``sdba.map_blocks``-wrapped function with data chunked along the reduced dimensions will raise an error. This forbids chunking the trained dataset along the distribution dimensions, for example. (:issue:`1481`, :pull:`1482`).
 * Optimization of indicators ``huglin_index`` and ``biologically_effective_degree_days`` when used with dask and flox. As a side effect, the indice functions (i.e. under ``xc.indices``) no longer mask incomplete periods. The indicators' output is unchanged under the default "check_missing" setting (:issue:`1494`, :pull:`1495`).
 * Fixed ``xclim.indices.run_length.lazy_indexing`` which would sometimes trigger the loading of auxiliary coordinates. (:issue:`1483`, :pull:`1484`).
+* Indicators ``snd_season_length`` and ``snw_season_length`` will return 0 instead of NaN if all inputs have a (non-NaN) zero snow depth (or water-equivalent thickness). (:pull:`1492`, :issue:`1491`)
 * Fixed a bug in the `pytest` configuration that could prevent testing data caching from occurring in systems where the platform-dependent cache directory is not found in the user's home. (:issue:`1468`, :pull:`1473`).
 * Remove nonsensical `stat='average'` option for ``mean_radiant_temperature``. (:issue:`1496`, :pull:`1501`).
 

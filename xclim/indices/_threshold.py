@@ -2069,7 +2069,7 @@ def snd_season_length(
     xarray.DataArray, [time]
         Number of days where snow depth is greater than or equal to threshold.
     """
-    valid = at_least_n_valid(snd.where(snd > 0), n=1, freq=freq)
+    valid = at_least_n_valid(snd, n=1, freq=freq)
     thresh = convert_units_to(thresh, snd)
     out = threshold_count(snd, op, thresh, freq)
     return to_agg_units(out, snd, "count").where(~valid)
@@ -2106,7 +2106,7 @@ def snw_season_length(
     xarray.DataArray, [time]
         Number of days where snow water is greater than or equal to threshold.
     """
-    valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
+    valid = at_least_n_valid(snw, n=1, freq=freq)
     thresh = convert_units_to(thresh, snw)
     out = threshold_count(snw, op, thresh, freq)
     return to_agg_units(out, snw, "count").where(~valid)

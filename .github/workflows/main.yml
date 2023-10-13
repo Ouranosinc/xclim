@@ -75,6 +75,8 @@ jobs:
         run: tox -e ${{ matrix.tox-env }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERALLS_FLAG_NAME: run-{{ matrix.tox-env }}
+          COVERALLS_SERVICE_NAME: github
 
   test-pypi:
     needs: lint
