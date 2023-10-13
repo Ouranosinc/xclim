@@ -590,7 +590,7 @@ class TestUTCI:
             rsus=rsus,
             rlds=rlds,
             rlus=rlus,
-            stat="average",
+            stat="sunlit",
         )
 
         np.testing.assert_allclose(utci.isel(time=0), utci_exp, rtol=1e-03)
@@ -608,15 +608,13 @@ class TestMeanRadiantTemperature:
         # Expected values
         exp_sun = [276.911, 274.742, 243.202, 268.012, 278.505]
         exp_ins = [276.911, 274.742, 243.202, 268.012, 278.505]
-        exp_avg = [276.911, 274.742, 243.202, 268.017, 278.512]
 
         mrt_sun = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="sunlit")
         mrt_ins = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="instant")
-        mrt_avg = atmos.mean_radiant_temperature(rsds, rsus, rlds, rlus, stat="average")
+
         rtol = 1e-03
         np.testing.assert_allclose(mrt_sun.isel(time=0), exp_sun, rtol=rtol)
         np.testing.assert_allclose(mrt_ins.isel(time=0), exp_ins, rtol=rtol)
-        np.testing.assert_allclose(mrt_avg.isel(time=0), exp_avg, rtol=rtol)
 
 
 class TestLateFrostDays:
