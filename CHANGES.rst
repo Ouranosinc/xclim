@@ -6,6 +6,10 @@ v0.46.0 (unreleased)
 --------------------
 Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`).
 
+Announcements
+^^^^^^^^^^^^^
+* The default mechanism for computing the Mean Radiant Temperature, a part of the Universal Thermal Climate Index (UTCI) was broken in xclim 0.44 and 0.45. This has been fixed by changing the default.
+
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Add ``wind_power_potential`` to estimate the potential for wind power production given wind speed at the turbine hub height and turbine specifications, along with  ``wind_profile`` to estimate the wind speed at different heights based on wind speed at a reference height. (:issue:`1458`, :pull:`1471`)
@@ -22,6 +26,7 @@ Bug fixes
 * Optimization of indicators ``huglin_index`` and ``biologically_effective_degree_days`` when used with dask and flox. As a side effect, the indice functions (i.e. under ``xc.indices``) no longer mask incomplete periods. The indicators' output is unchanged under the default "check_missing" setting (:issue:`1494`, :pull:`1495`).
 * Fixed ``xclim.indices.run_length.lazy_indexing`` which would sometimes trigger the loading of auxiliary coordinates. (:issue:`1483`, :pull:`1484`).
 * Fixed a bug in the `pytest` configuration that could prevent testing data caching from occurring in systems where the platform-dependent cache directory is not found in the user's home. (:issue:`1468`, :pull:`1473`).
+* Remove nonsensical `stat='average'` option for ``mean_radiant_temperature``. (:issue:`1496`, :pull:`1501`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^

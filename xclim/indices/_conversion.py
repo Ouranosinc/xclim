@@ -1771,7 +1771,7 @@ def universal_thermal_climate_index(
     rsus: xr.DataArray = None,
     rlds: xr.DataArray = None,
     rlus: xr.DataArray = None,
-    stat: str = "average",
+    stat: str = "sunlit",
     mask_invalid: bool = True,
 ) -> xr.DataArray:
     r"""Universal thermal climate index (UTCI).
@@ -1801,12 +1801,10 @@ def universal_thermal_climate_index(
     rlus : xr.DataArray, optional
         Surface Upwelling Longwave Radiation
         This is necessary if mrt is not None.
-    stat : {'average', 'instant', 'sunlit'}
-        Which statistic to apply. If "average", the average of the cosine of the
-        solar zenith angle is calculated. If "instant", the instantaneous cosine
+    stat : {'instant', 'sunlit'}
+        Which statistic to apply. If "instant", the instantaneous cosine
         of the solar zenith angle is calculated. If "sunlit", the cosine of the
         solar zenith angle is calculated during the sunlit period of each interval.
-        If "instant", the instantaneous cosine of the solar zenith angle is calculated.
         This is necessary if mrt is not None.
     mask_invalid: bool
         If True (default), UTCI values are NaN where any of the inputs are outside
@@ -1923,7 +1921,7 @@ def mean_radiant_temperature(
     rsus: xr.DataArray,
     rlds: xr.DataArray,
     rlus: xr.DataArray,
-    stat: str = "average",
+    stat: str = "sunlit",
 ) -> xr.DataArray:
     r"""Mean radiant temperature.
 
@@ -1939,12 +1937,10 @@ def mean_radiant_temperature(
         Surface Downwelling Longwave Radiation
     rlus : xr.DataArray
         Surface Upwelling Longwave Radiation
-    stat : {'average', 'instant', 'sunlit'}
-        Which statistic to apply. If "average", the average of the cosine of the
-        solar zenith angle is calculated. If "instant", the instantaneous cosine
+    stat : {'instant', 'sunlit'}
+        Which statistic to apply. If "instant", the instantaneous cosine
         of the solar zenith angle is calculated. If "sunlit", the cosine of the
         solar zenith angle is calculated during the sunlit period of each interval.
-        If "instant", the instantaneous cosine of the solar zenith angle is calculated.
 
     Returns
     -------
@@ -1987,15 +1983,9 @@ def mean_radiant_temperature(
         )
         csza_i = csza.copy()
         csza_s = csza.copy()
-    elif stat == "average":
-        csza = cosine_of_solar_zenith_angle(
-            dates, dec, lat, stat="average", sunlit=False
-        )
-        csza_i = csza.copy()
-        csza_s = csza.copy()
     else:
         raise NotImplementedError(
-            "Argument 'stat' must be one of 'average', 'instant' or 'sunlit'."
+            "Argument 'stat' must be one of 'instant' or 'sunlit'."
         )
 
     fdir_ratio = _fdir_ratio(dates, csza_i, csza_s, rsds)
