@@ -232,7 +232,7 @@ def _get(
     if not local_file.is_file():
         # This will always leave this directory on disk.
         # We may want to add an option to remove it.
-        local_file.parent.mkdir(parents=True, exist_ok=True)
+        local_file.parent.mkdir(exist_ok=True, parents=True)
 
         url = "/".join((github_url, "raw", branch, fullname.as_posix()))
         logger.info(f"Fetching remote file: {fullname.as_posix()}")
