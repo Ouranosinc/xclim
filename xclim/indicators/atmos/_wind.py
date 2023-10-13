@@ -19,6 +19,7 @@ class Wind(ResamplingIndicatorWithIndexing):
     """Indicator involving daily sfcWind series."""
 
     src_freq = "D"
+    keywords = "wind"
 
 
 calm_days = Wind(
