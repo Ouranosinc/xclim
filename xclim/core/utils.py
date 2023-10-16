@@ -13,7 +13,12 @@ import warnings
 from collections import defaultdict
 from enum import IntEnum
 from functools import partial
-from importlib.resources import files
+
+try:
+    from importlib.resources import files
+except ImportError:
+    from importlib_resources import files
+
 from inspect import Parameter, _empty  # noqa
 from io import StringIO
 from pathlib import Path
