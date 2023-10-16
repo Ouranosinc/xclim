@@ -6,7 +6,6 @@ Testing and Tutorial Utilities' Module
 from __future__ import annotations
 
 import hashlib
-import importlib
 import json
 import logging
 import os
@@ -14,6 +13,7 @@ import platform
 import re
 import sys
 import warnings
+from importlib import import_module
 from io import StringIO
 from pathlib import Path
 from shutil import copy
@@ -563,7 +563,7 @@ def show_versions(
             if modname in sys.modules:
                 mod = sys.modules[modname]
             else:
-                mod = importlib.import_module(modname)
+                mod = import_module(modname)
         except (KeyError, ModuleNotFoundError):
             deps_blob.append((modname, None))
         else:

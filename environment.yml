@@ -11,6 +11,7 @@ dependencies:
     - cftime>=1.4.1
     - Click >=8.1
     - dask>=2.6.0
+    - importlib-resources  # For Python3.8
     - jsonpickle
     - lmoments3
     - numba
@@ -42,6 +43,7 @@ dependencies:
     - ipython
     - matplotlib
     - mypy
+    - nbqa
     - nbsphinx
     - nbval
     - nc-time-axis

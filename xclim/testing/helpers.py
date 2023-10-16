@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import os
 import warnings
-from importlib.resources import open_text
 from pathlib import Path
 
 import numpy as np
@@ -13,6 +12,7 @@ from dask.diagnostics import Callback
 from yaml import safe_load
 
 from xclim.core import calendar
+from xclim.core.utils import VARIABLES
 from xclim.indices import (
     longwave_upwelling_radiation_from_net_downwelling,
     shortwave_upwelling_radiation_from_net_downwelling,
@@ -234,13 +234,12 @@ def test_timeseries(
     else:
         coords = pd.date_range(start, periods=len(values), freq=freq)
 
-    data_on_var = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
-    if variable in data_on_var:
+    if variable in VARIABLES:
         attrs = {
-            a: data_on_var[variable].get(a, "")
+            a: VARIABLES[variable].get(a, "")
             for a in ["description", "standard_name", "cell_methods"]
         }
-        attrs["units"] = data_on_var[variable]["canonical_units"]
+        attrs["units"] = VARIABLES[variable]["canonical_units"]
 
     else:
         warnings.warn(f"Variable {variable} not recognised. Attrs will not be filled.")
