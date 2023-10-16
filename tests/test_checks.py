@@ -142,7 +142,7 @@ class TestDateHandling:
 
 
 class TestDataCheck:
-    def test_check_hourly(self, date_range):
+    def test_check_hourly(self, date_range, random):
         tas_attrs = {
             "units": "K",
             "standard_name": "air_temperature",
@@ -150,11 +150,11 @@ class TestDataCheck:
 
         n = 100
         time = date_range("2000-01-01", freq="H", periods=n)
-        da = xr.DataArray(np.random.rand(n), [("time", time)], attrs=tas_attrs)
+        da = xr.DataArray(random.random(n), [("time", time)], attrs=tas_attrs)
         datachecks.check_freq(da, "H")
 
         time = date_range("2000-01-01", freq="3H", periods=n)
-        da = xr.DataArray(np.random.rand(n), [("time", time)], attrs=tas_attrs)
+        da = xr.DataArray(random.random(n), [("time", time)], attrs=tas_attrs)
         with pytest.raises(ValidationError):
             datachecks.check_freq(da, "H")
 
@@ -169,7 +169,7 @@ class TestDataCheck:
         with pytest.raises(ValidationError, match="Unable to infer the frequency of"):
             datachecks.check_freq(da.where(da.time.dt.dayofyear != 5, drop=True), "3H")
 
-    def test_common_time(self, tas_series, date_range):
+    def test_common_time(self, tas_series, date_range, random):
         tas_attrs = {
             "units": "K",
             "standard_name": "air_temperature",
@@ -177,7 +177,7 @@ class TestDataCheck:
 
         n = 100
         time = date_range("2000-01-01", freq="H", periods=n)
-        da = xr.DataArray(np.random.rand(n), [("time", time)], attrs=tas_attrs)
+        da = xr.DataArray(random.random(n), [("time", time)], attrs=tas_attrs)
 
         # No freq
         db = da[np.array([0, 1, 4, 6, 10])]
@@ -188,7 +188,7 @@ class TestDataCheck:
 
         # Not same freq
         time = date_range("2000-01-01", freq="6H", periods=n)
-        db = xr.DataArray(np.random.rand(n), [("time", time)], attrs=tas_attrs)
+        db = xr.DataArray(random.random(n), [("time", time)], attrs=tas_attrs)
         with pytest.raises(ValidationError, match="Inputs have different frequencies"):
             datachecks.check_common_time([db, da])
 

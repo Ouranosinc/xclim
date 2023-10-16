@@ -39,6 +39,7 @@ __all__ = [
     "ensure_cftime_array",
     "get_calendar",
     "interp_calendar",
+    "is_offset_divisor",
     "max_doy",
     "parse_offset",
     "percentile_doy",
@@ -675,7 +676,14 @@ def percentile_doy(
         (rr.time.dt.year.values, rr.time.dt.dayofyear.values),
         names=("year", "dayofyear"),
     )
-    rrr = rr.assign_coords(time=ind).unstack("time").stack(stack_dim=("year", "window"))
+    if hasattr(xr, "Coordinates"):
+        # xarray > 2023.7.0 will deprecate passing a Pandas MultiIndex directly.
+        # TODO: Remove this condition when pinning xarray above 2023.7.0
+        ind = xr.Coordinates.from_pandas_multiindex(ind, "time")
+        rr = rr.drop_vars("time").assign_coords(ind)
+    else:
+        rr = rr.drop_vars("time").assign_coords(time=ind)
+    rrr = rr.unstack("time").stack(stack_dim=("year", "window"))
 
     if rrr.chunks is not None and len(rrr.chunks[rrr.get_axis_num("stack_dim")]) > 1:
         # Preserve chunk size
@@ -832,6 +840,58 @@ def construct_offset(mult: int, base: str, start_anchored: bool, anchor: str | N
     return (
         f"{mult if mult > 1 else ''}{base}{start}{'-' if anchor else ''}{anchor or ''}"
     )
+
+
+def is_offset_divisor(divisor: str, offset: str):
+    """Check that divisor is a divisor of offset.
+
+    A frequency is a "divisor" of another if a whole number of periods of the
+    former fit within a single period of the latter.
+
+    Parameters
+    ----------
+    divisor: str
+      The divisor frequency.
+    offset: str
+      The large frequency.
+
+    Returns
+    -------
+    bool
+
+    Examples
+    --------
+    >>> is_offset_divisor("QS-Jan", "YS")
+    True
+    >>> is_offset_divisor("QS-DEC", "AS-JUL")
+    False
+    >>> is_offset_divisor("D", "M")
+    True
+    """
+    if compare_offsets(divisor, ">", offset):
+        return False
+    # Reconstruct offsets anchored at the start of the period
+    # to have comparable quantities, also get "offset" objects
+    mA, bA, sA, aA = parse_offset(divisor)
+    offAs = pd.tseries.frequencies.to_offset(construct_offset(mA, bA, True, aA))
+
+    mB, bB, sB, aB = parse_offset(offset)
+    offBs = pd.tseries.frequencies.to_offset(construct_offset(mB, bB, True, aB))
+    tB = pd.date_range("1970-01-01T00:00:00", freq=offBs, periods=13)
+
+    if bA in "WDHTLUN" or bB in "WDHTLUN":
+        # Simple length comparison is sufficient for submonthly freqs
+        # In case one of bA or bB is > W, we test many to be sure.
+        tA = pd.date_range("1970-01-01T00:00:00", freq=offAs, periods=13)
+        return np.all(
+            (np.diff(tB)[:, np.newaxis] / np.diff(tA)[np.newaxis, :]) % 1 == 0
+        )
+
+    # else, we test alignment with some real dates
+    # If both fall on offAs, then is means divisor is aligned with offset at those dates
+    # if N=13 is True, then it is always True
+    # As divisor <= offset, this means divisor is a "divisor" of offset.
+    return all(offAs.is_on_offset(d) for d in tB)
 
 
 def _interpolate_doy_calendar(
@@ -1405,6 +1465,7 @@ def select_time(
     month: int | Sequence[int] = None,
     doy_bounds: tuple[int, int] = None,
     date_bounds: tuple[str, str] = None,
+    include_bounds: bool | tuple[bool, bool] = True,
 ) -> xr.DataArray | xr.Dataset:
     """Select entries according to a time period.
 
@@ -1428,11 +1489,13 @@ def select_time(
       The bounds as (start, end) of the period of interest expressed in day-of-year,
       integers going from 1 (January 1st) to 365 or 366 (December 31st). If calendar
       awareness is needed, consider using ``date_bounds`` instead.
-      Bounds are inclusive.
     date_bounds: 2-tuple of strings
       The bounds as (start, end) of the period of interest expressed as dates in the
       month-day (%m-%d) format.
-      Bounds are inclusive.
+    include_bounds: bool or 2-tuple of booleans
+      Whether the bounds of `doy_bounds` or `date_bounds` should be inclusive or not.
+      Either one value for both or a tuple.
+      Default is True, meaning bounds are inclusive.
 
     Returns
     -------
@@ -1469,10 +1532,19 @@ def select_time(
     if N == 0:
         return da
 
-    def get_doys(start, end):
+    def get_doys(start, end, inclusive):
         if start <= end:
-            return np.arange(start, end + 1)
-        return np.concatenate((np.arange(start, 367), np.arange(0, end + 1)))
+            doys = np.arange(start, end + 1)
+        else:
+            doys = np.concatenate((np.arange(start, 367), np.arange(0, end + 1)))
+        if not inclusive[0]:
+            doys = doys[1:]
+        if not inclusive[1]:
+            doys = doys[:-1]
+        return doys
+
+    if isinstance(include_bounds, bool):
+        include_bounds = (include_bounds, include_bounds)
 
     if season is not None:
         if isinstance(season, str):
@@ -1485,7 +1557,7 @@ def select_time(
         mask = da.time.dt.month.isin(month)
 
     elif doy_bounds is not None:
-        mask = da.time.dt.dayofyear.isin(get_doys(*doy_bounds))
+        mask = da.time.dt.dayofyear.isin(get_doys(*doy_bounds, include_bounds))
 
     elif date_bounds is not None:
         # This one is a bit trickier.
@@ -1504,6 +1576,7 @@ def select_time(
         doys = get_doys(
             to_cftime_datetime("2000-" + start, calendar).dayofyr,
             to_cftime_datetime("2000-" + end, calendar).dayofyr,
+            include_bounds,
         )
         mask = time.time.dt.dayofyear.isin(doys)
         # Needed if we converted calendar, this puts back the correct coord

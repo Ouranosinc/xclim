@@ -96,13 +96,13 @@ class TestMax1DayPrecipitationAmount:
 
 
 class TestColdSpellDurationIndex:
-    def test_simple(self, tasmin_series):
+    def test_simple(self, tasmin_series, random):
         i = 3650
         A = 10.0
         tn = (
             np.zeros(i)
             + A * np.sin(np.arange(i) / 365.0 * 2 * np.pi)
-            + 0.1 * np.random.rand(i)
+            + 0.1 * random.random(i)
         )
         tn[10:20] -= 2
         tn = tasmin_series(tn)
@@ -320,18 +320,18 @@ class TestAgroclimaticIndices:
                 bedd[1], bedd[0]
             )  # Leap-year has slightly higher values
             np.testing.assert_allclose(
-                bedd, np.array([deg_days, deg_days, deg_days, np.NaN]), rtol=6e-4
+                bedd[:3], np.array([deg_days, deg_days, deg_days]), rtol=6e-4
             )
             np.testing.assert_allclose(
-                bedd_hot, [max_deg_days, max_deg_days, max_deg_days, np.NaN], rtol=0.15
+                bedd_hot[:3], [max_deg_days, max_deg_days, max_deg_days], rtol=0.15
             )
 
         else:
             np.testing.assert_allclose(
-                bedd, np.array([deg_days, deg_days, deg_days, np.NaN])
+                bedd[:3], np.array([deg_days, deg_days, deg_days])
             )
             np.testing.assert_array_equal(
-                bedd_hot, [max_deg_days, max_deg_days, max_deg_days, np.NaN]
+                bedd_hot[:3], [max_deg_days, max_deg_days, max_deg_days]
             )
             if method == "gladstones":
                 np.testing.assert_array_less(bedd, bedd_high_lat)
@@ -1039,6 +1039,16 @@ class TestFrostFreeSeasonLength:
         np.testing.assert_array_equal(fsl.sel(time="2000-07-01"), 121)
 
 
+class TestFrostFreeSpellMaxLength:
+    def test_simple(self, tasmin_series):
+        tn = np.zeros(365) - 1
+        tn[10:12] = 1
+        tn[20:30] = 1
+        tn = tasmin_series(tn + K2C, start="1/1/2000")
+        out = xci.frost_free_spell_max_length(tn)
+        assert out[0] == 10
+
+
 class TestHeatingDegreeDays:
     def test_simple(self, tas_series):
         a = np.zeros(365) + 17
@@ -1392,7 +1402,7 @@ class TestJetStreamIndices:
         },
     )
 
-    da_ua.Z.attrs = {"units": "Pa", "standard_name": "pressure"}
+    da_ua.Z.attrs = {"units": "Pa", "standard_name": "air_pressure"}
     da_ua.X.attrs = {"units": "degrees_east", "standard_name": "longitude"}
     da_ua.Y.attrs = {"units": "degrees_north", "standard_name": "latitude"}
     da_ua.T.attrs = {"standard_name": "time"}
@@ -1771,11 +1781,11 @@ class TestTxMax:
 
 class TestTgMaxTgMinIndices:
     @staticmethod
-    def random_tmin_tmax_setup(length, tasmax_series, tasmin_series):
-        max_values = np.random.uniform(-20, 40, length)
+    def random_tmin_tmax_setup(length, tasmax_series, tasmin_series, random):
+        max_values = random.uniform(-20, 40, length)
         min_values = []
         for i in range(length):
-            min_values.append(np.random.uniform(-40, max_values[i]))
+            min_values.append(random.uniform(-40, max_values[i]))
         tasmax = tasmax_series(np.add(max_values, K2C))
         tasmin = tasmin_series(np.add(min_values, K2C))
         return tasmin, tasmax
@@ -2001,17 +2011,16 @@ class TestPrecipWettestDriestQuarter:
 
 class TestTempWetDryPrecipWarmColdQuarter:
     @staticmethod
-    def get_data(tas_series, pr_series):
-        np.random.seed(123)
+    def get_data(tas_series, pr_series, random):
         times = pd.date_range("2000-01-01", "2001-12-31", name="time")
         annual_cycle = np.sin(2 * np.pi * (times.dayofyear.values / 365.25 - 0.28))
         base = 10 + 15 * annual_cycle.reshape(-1, 1)
-        values = base + 3 * np.random.randn(annual_cycle.size, 1) + K2C
+        values = base + 3 * random.standard_normal((annual_cycle.size, 1)) + K2C
         tas = tas_series(values.squeeze(), start="2001-01-01").sel(
             time=slice("2001", "2002")
         )
         base = 15 * annual_cycle.reshape(-1, 1)
-        values = base + 10 + 10 * np.random.randn(annual_cycle.size, 1)
+        values = base + 10 + 10 * random.standard_normal((annual_cycle.size, 1))
         values = values / 3600 / 24
         values[values < 0] = 0
         pr = pr_series(values.squeeze(), start="2001-01-01").sel(
@@ -2022,17 +2031,19 @@ class TestTempWetDryPrecipWarmColdQuarter:
     @pytest.mark.parametrize(
         "freq,op,expected",
         [
-            ("D", "wettest", [296.22664037, 296.99585849]),
-            ("7D", "wettest", [296.22664037, 296.99585849]),
-            ("MS", "wettest", [296.25598395, 296.98613685]),
-            ("D", "driest", [272.161376, 269.31008671]),
-            ("7D", "driest", [272.161376, 269.31008671]),
-            ("MS", "driest", [272.00644843, 269.04077039]),
+            ("D", "wettest", [296.138132, 295.823782]),
+            ("7D", "wettest", [296.138132, 295.823782]),
+            ("MS", "wettest", [296.429311, 296.192342]),
+            ("D", "driest", [271.8105, 269.993252]),
+            ("7D", "driest", [271.8105, 269.993252]),
+            ("MS", "driest", [271.655305, 269.736969]),
         ],
     )
     @pytest.mark.parametrize("use_dask", [True, False])
-    def test_tg_wetdry(self, tas_series, pr_series, use_dask, freq, op, expected):
-        tas, pr = self.get_data(tas_series, pr_series)
+    def test_tg_wetdry(
+        self, tas_series, pr_series, use_dask, freq, op, expected, random
+    ):
+        tas, pr = self.get_data(tas_series, pr_series, random)
         pr = pr.resample(time=freq).mean(keep_attrs=True)
 
         tas = xci.tg_mean(tas, freq=freq)
@@ -2051,16 +2062,16 @@ class TestTempWetDryPrecipWarmColdQuarter:
     @pytest.mark.parametrize(
         "freq,op,expected",
         [
-            ("D", "warmest", [2021.82232981, 2237.15117103]),
-            ("7D", "warmest", [2021.82232981, 2237.15117103]),
-            ("MS", "warmest", [2038.54763205, 2247.47136629]),
-            ("D", "coldest", [311.91895223, 264.50013361]),
-            ("7D", "coldest", [311.91895223, 264.50013361]),
-            ("MS", "coldest", [311.91895223, 259.36682028]),
+            ("D", "warmest", [2042.826039, 2131.651904]),
+            ("7D", "warmest", [2042.826039, 2131.651904]),
+            ("MS", "warmest", [2085.393869, 2193.985419]),
+            ("D", "coldest", [246.965006, 229.86537]),
+            ("7D", "coldest", [246.965006, 229.86537]),
+            ("MS", "coldest", [245.550801, 233.847277]),
         ],
     )
-    def test_pr_warmcold(self, tas_series, pr_series, freq, op, expected):
-        tas, pr = self.get_data(tas_series, pr_series)
+    def test_pr_warmcold(self, tas_series, pr_series, freq, op, expected, random):
+        tas, pr = self.get_data(tas_series, pr_series, random)
         pr = convert_units_to(
             pr.resample(time=freq).mean(keep_attrs=True), "mm/d", context="hydro"
         )
@@ -2172,32 +2183,26 @@ class TestPrecipWettestDriestPeriod:
 
 
 class TestIsothermality:
-    @staticmethod
-    def get_data(tasmin_series, tasmax_series):
-        np.random.seed(123)
-        times = pd.date_range("2000-01-01", "2001-12-31", name="time")
-        annual_cycle = np.sin(2 * np.pi * (times.dayofyear.values / 365.25 - 0.28))
-        base = 10 + 15 * annual_cycle.reshape(-1, 1)
-        values = base + 3 * np.random.randn(annual_cycle.size, 1) + K2C
-        tasmin = tasmin_series(values.squeeze(), start="2001-01-01").sel(
-            time=slice("2001", "2002")
-        )
-        values = base + 10 + 3 * np.random.randn(annual_cycle.size, 1) + K2C
-        tasmax = tasmax_series(values.squeeze(), start="2001-01-01").sel(
-            time=slice("2001", "2002")
-        )
-        return tasmin, tasmax
-
     @pytest.mark.parametrize(
         "freq,expected",
         [
-            ("D", [18.8700109, 19.40941685]),
-            ("7D", [23.29006069, 23.36559839]),
-            ("MS", [25.05925319, 25.09443682]),
+            ("D", [19.798229, 19.559826]),
+            ("7D", [23.835284, 24.15181]),
+            ("MS", [25.260527, 26.647243]),
         ],
     )
-    def test_simple(self, tasmax_series, tasmin_series, freq, expected):
-        tasmin, tasmax = self.get_data(tasmin_series, tasmax_series)
+    def test_simple(self, tasmax_series, tasmin_series, freq, expected, random):
+        times = pd.date_range("2000-01-01", "2001-12-31", name="time")
+        annual_cycle = np.sin(2 * np.pi * (times.dayofyear.values / 365.25 - 0.28))
+        base = 10 + 15 * annual_cycle.reshape(-1, 1)
+        values = base + 3 * random.standard_normal((annual_cycle.size, 1)) + K2C
+        tasmin = tasmin_series(values.squeeze(), start="2001-01-01").sel(
+            time=slice("2001", "2002")
+        )
+        values = base + 10 + 3 * random.standard_normal((annual_cycle.size, 1)) + K2C
+        tasmax = tasmax_series(values.squeeze(), start="2001-01-01").sel(
+            time=slice("2001", "2002")
+        )
 
         # weekly
         tmin = tasmin.resample(time=freq).mean(dim="time", keep_attrs=True)
@@ -2284,13 +2289,13 @@ class TestTxTnDaysAbove:
 
 
 class TestWarmSpellDurationIndex:
-    def test_simple(self, tasmax_series):
+    def test_simple(self, tasmax_series, random):
         i = 3650
         A = 10.0
         tx = (
             np.zeros(i)
             + A * np.sin(np.arange(i) / 365.0 * 2 * np.pi)
-            + 0.1 * np.random.rand(i)
+            + 0.1 * random.random(i)
         )
         tx[10:20] += 2
         tx = tasmax_series(tx)
@@ -2626,6 +2631,31 @@ def test_days_with_snow(prsnd_series, prsn_series):
     assert sum(out) == 364
 
 
+class TestSnowMax:
+    def test_simple(self, snd_series, snw_series):
+        a = np.ones(366) / 100.0
+        a[10:20] = 0.3
+        snd = snd_series(a)
+        snw = snw_series(a)
+
+        out = xci.snd_max(snd)
+        np.testing.assert_array_equal(out, [0.3, 0.01])
+
+        out = xci.snw_max(snw)
+        np.testing.assert_array_equal(out, [0.3, 0.01])
+
+    def test_nan_slices(self, snd_series, snw_series):
+        a = np.ones(366) * np.NaN
+        snd = snd_series(a)
+        snw = snw_series(a)
+
+        out = xci.snd_max_doy(snd)
+        assert out.isnull().all()
+
+        out = xci.snw_max_doy(snw)
+        assert out.isnull().all()
+
+
 class TestSnowMaxDoy:
     def test_simple(self, snd_series, snw_series):
         a = np.ones(366) / 100.0
@@ -2652,20 +2682,21 @@ class TestSnowMaxDoy:
 
 
 class TestSnowCover:
-    def test_snow_season_length(self, snd_series, snw_series):
-        a = np.ones(366) / 100.0
-        a[10:20] = 0.3
+    @pytest.mark.parametrize("length", [0, 10])
+    def test_snow_season_length(self, snd_series, snw_series, length):
+        a = np.zeros(366)
+        a[10 : 10 + length] = 0.3
         snd = snd_series(a)
         # kg m-2 = 1000 kg m-3 * 1 m
         snw = snw_series(1000 * a)
 
         out = xci.snd_season_length(snd)
         assert len(out) == 2
-        assert out[0] == 10
+        assert out[0] == length
 
         out = xci.snw_season_length(snw)
         assert len(out) == 2
-        assert out[0] == 10
+        assert out[0] == length
 
     def test_continous_snow_season_start(self, snd_series, snw_series):
         a = np.arange(366) / 100.0
@@ -2944,12 +2975,12 @@ class TestClausiusClapeyronScaledPrecip:
             ],
         )
 
-    def test_workflow(self, tas_series, pr_series):
+    def test_workflow(self, tas_series, pr_series, random):
         """Test typical workflow."""
         n = int(365.25 * 10)
-        tref = tas_series(np.random.rand(n), start="1961-01-01")
-        tfut = tas_series(np.random.rand(n) + 2, start="2051-01-01")
-        pr = pr_series(np.random.rand(n) * 10, start="1961-01-01")
+        tref = tas_series(random.random(n), start="1961-01-01")
+        tfut = tas_series(random.random(n) + 2, start="2051-01-01")
+        pr = pr_series(random.random(n) * 10, start="1961-01-01")
 
         # Compute climatologies
         with xr.set_options(keep_attrs=True):
@@ -3596,3 +3627,29 @@ class TestLateFrostDays:
         tasmin = tasmin_series(np.array([-1, 1, 2, -4, 0]) + K2C, start="30/3/2023")
         lfd = xci.frost_days(tasmin, date_bounds=("04-01", "06-30"))
         np.testing.assert_allclose(lfd, 1)
+
+
+class TestWindProfile:
+    def test_simple(self, sfcWind_series):
+        a = np.linspace(0, 100)
+        v = xci.wind_profile(sfcWind_series(a), h="100 m", h_r="10 m")
+        np.testing.assert_allclose(v, a * 10 ** (1 / 7))
+
+
+class TestWindPowerPotential:
+    def test_simple(self, sfcWind_series):
+        v = [2, 6, 20, 30]
+        p = xci.wind_power_potential(
+            sfcWind_series(v, units="m/s"), cut_in="4 m/s", rated="8 m/s"
+        )
+        np.testing.assert_allclose(p, [0, (6**3 - 4**3) / (8**3 - 4**3), 1, 0])
+
+        # Test discontinuities at the default thresholds
+        v = np.array([3.5, 15])
+        a = sfcWind_series(v - 1e-7, units="m/s")
+        b = sfcWind_series(v + 1e-7, units="m/s")
+
+        pa = xci.wind_power_potential(a)
+        pb = xci.wind_power_potential(b)
+
+        np.testing.assert_array_almost_equal(pa, pb, decimal=6)

@@ -46,6 +46,8 @@ dependencies:
     - nbval
     - nc-time-axis
     - netCDF4>=1.4
+    - notebook
+    - platformdirs
     - pooch
     - pre-commit
     - pybtex
@@ -53,6 +55,7 @@ dependencies:
     - pylint
     - pytest
     - pytest-cov
+    - pytest-socket
     - pytest-xdist>=3.2
     - sphinx
     - sphinx-autodoc-typehints

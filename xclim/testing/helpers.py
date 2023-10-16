@@ -9,6 +9,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import xarray as xr
+from dask.diagnostics import Callback
 from yaml import safe_load
 
 from xclim.core import calendar
@@ -66,6 +67,7 @@ __all__ = [
     "PREFETCH_TESTING_DATA",
     "TESTDATA_BRANCH",
     "add_example_file_paths",
+    "assert_lazy",
     "generate_atmos",
     "populate_testing_data",
     "test_timeseries",
@@ -113,6 +115,7 @@ def populate_testing_data(
         return
 
     data_entries = [
+        "CanESM2_365day/pr_day_CanESM2_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc",
         "ERA5/daily_surface_cancities_1990-1993.nc",
         "EnsembleReduce/TestEnsReduceCriteria.nc",
         "EnsembleStats/BCCAQv2+ANUSPLIN300_ACCESS1-0_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
@@ -120,11 +123,24 @@ def populate_testing_data(
         "EnsembleStats/BCCAQv2+ANUSPLIN300_CCSM4_historical+rcp45_r1i1p1_1950-2100_tg_mean_YS.nc",
         "EnsembleStats/BCCAQv2+ANUSPLIN300_CCSM4_historical+rcp45_r2i1p1_1950-2100_tg_mean_YS.nc",
         "EnsembleStats/BCCAQv2+ANUSPLIN300_CNRM-CM5_historical+rcp45_r1i1p1_1970-2050_tg_mean_YS.nc",
+        "FWI/GFWED_sample_2017.nc",
+        "FWI/cffdrs_test_fwi.nc",
+        "FWI/cffdrs_test_wDC.nc",
+        "HadGEM2-CC_360day/pr_day_HadGEM2-CC_rcp85_r1i1p1_na10kgrid_qm-moving-50bins-detrend_2095.nc",
         "NRCANdaily/nrcan_canada_daily_pr_1990.nc",
         "NRCANdaily/nrcan_canada_daily_tasmax_1990.nc",
         "NRCANdaily/nrcan_canada_daily_tasmin_1990.nc",
+        "Raven/q_sim.nc",
+        "SpatialAnalogs/CanESM2_ScenGen_Chibougamau_2041-2070.nc",
+        "SpatialAnalogs/NRCAN_SECan_1981-2010.nc",
+        "SpatialAnalogs/dissimilarity.nc",
+        "SpatialAnalogs/indicators.nc",
         "cmip3/tas.sresb1.giss_model_e_r.run1.atm.da.nc",
+        "cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712.nc",
         "sdba/CanESM2_1950-2100.nc",
+        "sdba/ahccd_1950-2013.nc",
+        "sdba/nrcan_1950-2013.nc",
+        "uncertainty_partitioning/cmip5_pr_global_mon.nc",
     ]
 
     data = dict()
@@ -204,10 +220,20 @@ def add_example_file_paths(cache_dir: Path) -> dict[str]:
 
 
 def test_timeseries(
-    values, variable, start="7/1/2000", units=None, freq="D", as_dataset=False
+    values,
+    variable,
+    start="7/1/2000",
+    units=None,
+    freq="D",
+    as_dataset=False,
+    cftime=False,
 ):
     """Create a generic timeseries object based on pre-defined dictionaries of existing variables."""
-    coords = pd.date_range(start, periods=len(values), freq=freq)
+    if cftime:
+        coords = xr.cftime_range(start, periods=len(values), freq=freq)
+    else:
+        coords = pd.date_range(start, periods=len(values), freq=freq)
+
     data_on_var = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
     if variable in data_on_var:
         attrs = {
@@ -229,3 +255,14 @@ def test_timeseries(
         return da.to_dataset()
     else:
         return da
+
+
+def _raise_on_compute(dsk: dict):
+    """Raise an AssertionError mentionning the number triggered tasks."""
+    raise AssertionError(
+        f"Not lazy. Computation was triggered with a graph of {len(dsk)} tasks."
+    )
+
+
+assert_lazy = Callback(start=_raise_on_compute)
+"""Context manager that raises an AssertionError if any dask computation is triggered."""

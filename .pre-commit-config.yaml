@@ -3,7 +3,7 @@ default_language_version:
 
 repos:
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.4.0
+  rev: v3.14.0
   hooks:
   - id: pyupgrade
     args: ['--py38-plus']
@@ -22,6 +22,7 @@ repos:
   - id: debug-statements
   - id: pretty-format-json
     args: ['--autofix', '--no-ensure-ascii', '--no-sort-keys']
+    exclude: '.ipynb'
 - repo: https://github.com/pappasam/toml-sort
   rev: v0.23.1
   hooks:
@@ -32,11 +33,11 @@ repos:
   - id: yamllint
     args: ['--config-file=.yamllint.yaml']
 - repo: https://github.com/psf/black
-  rev: 23.3.0
+  rev: 23.9.1
   hooks:
   - id: black
 - repo: https://github.com/pycqa/flake8
-  rev: 6.0.0
+  rev: 6.1.0
   hooks:
   - id: flake8
     additional_dependencies: ['flake8-alphabetize', 'flake8-rst-docstrings']
@@ -70,7 +71,12 @@ repos:
   hooks:
   - id: blackdoc
     exclude: '(xclim/indices/__init__.py|docs/installation.rst)'
-    additional_dependencies: ['black==23.3.0']
+    additional_dependencies: ['black==23.9.1']
+- repo: https://github.com/python-jsonschema/check-jsonschema
+  rev: 0.27.0
+  hooks:
+  - id: check-github-workflows
+  - id: check-readthedocs
 - repo: meta
   hooks:
   - id: check-hooks-apply

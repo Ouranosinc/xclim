@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -16,20 +14,35 @@ K2C = 273.15
 class TestMissingBase:
     """The base class is well tested for daily input through the subclasses."""
 
-    def test_monthly_input(self):
+    def test_monthly_input(self, random):
         """Creating array with 11 months."""
         n = 11
         time = xr.cftime_range(start="2002-01-01", periods=n, freq="M")
-        ts = xr.DataArray(np.random.rand(n), dims="time", coords={"time": time})
+        ts = xr.DataArray(random.random(n), dims="time", coords={"time": time})
         mb = missing.MissingBase(ts, freq="YS", src_timestep="M")
         # Make sure count is 12, because we're requesting a YS freq.
         assert mb.count == 12
 
         n = 5
         time = xr.cftime_range(start="2002-06-01", periods=n, freq="MS")
-        ts = xr.DataArray(np.random.rand(n), dims="time", coords={"time": time})
+        ts = xr.DataArray(random.random(n), dims="time", coords={"time": time})
         mb = missing.MissingBase(ts, freq="AS", src_timestep="M", season="JJA")
         assert mb.count == 3
+
+    def test_seasonal_input(self, random):
+        """Creating array with 11 seasons."""
+        n = 11
+        time = xr.cftime_range(start="2002-04-01", periods=n, freq="QS-JAN")
+        ts = xr.DataArray(random.random(n), dims="time", coords={"time": time})
+        mb = missing.MissingBase(ts, freq="YS", src_timestep="QS-JAN")
+        # Make sure count is 12, because we're requesting a YS freq.
+        np.testing.assert_array_equal(mb.count, [4, 4, 4, 1])
+
+        with pytest.raises(
+            NotImplementedError,
+            match="frequency that is not aligned with the source timestep.",
+        ):
+            missing.MissingBase(ts, freq="YS", src_timestep="QS-DEC")
 
 
 class TestMissingAnyFills:
@@ -128,8 +141,7 @@ class TestMissingAnyFills:
         np.testing.assert_array_equal(miss, True)
 
     def test_hydro(self, open_dataset):
-        fn = Path("Raven", "q_sim.nc")
-        ds = open_dataset(fn)
+        ds = open_dataset("Raven/q_sim.nc")
         miss = missing.missing_any(ds.q_sim, freq="YS")
         np.testing.assert_array_equal(miss[:-1], False)
         np.testing.assert_array_equal(miss[-1], True)
@@ -143,6 +155,13 @@ class TestMissingAnyFills:
         pr = pr_hr_series(a)
         out = missing.missing_any(pr, freq="MS")
         np.testing.assert_array_equal(out, [True, False, True])
+
+    def test_seasonal(self, random):
+        n = 11
+        time = xr.cftime_range(start="2002-01-01", periods=n, freq="QS-JAN")
+        ts = xr.DataArray(random.random(n), dims="time", coords={"time": time})
+        out = missing.missing_any(ts, freq="YS")
+        np.testing.assert_array_equal(out, [False, False, True])
 
 
 class TestMissingWMO:
@@ -239,16 +258,7 @@ class TestHourly:
         out = missing.missing_any(pr, "D", src_timestep="H")
         np.testing.assert_array_equal(
             out,
-            [
-                True,
-            ]
-            + 8
-            * [
-                False,
-            ]
-            + [
-                True,
-            ],
+            [True] + 8 * [False] + [True],
         )
 
     def test_pct(self, pr_hr_series):
@@ -256,13 +266,7 @@ class TestHourly:
         out = missing.missing_pct(pr, "D", src_timestep="H", tolerance=0.1)
         np.testing.assert_array_equal(
             out,
-            9
-            * [
-                False,
-            ]
-            + [
-                True,
-            ],
+            9 * [False] + [True],
         )
 
     def test_at_least_n_valid(self, pr_hr_series):
@@ -270,11 +274,5 @@ class TestHourly:
         out = missing.at_least_n_valid(pr, "D", src_timestep="H", n=20)
         np.testing.assert_array_equal(
             out,
-            9
-            * [
-                False,
-            ]
-            + [
-                True,
-            ],
+            9 * [False] + [True],
         )

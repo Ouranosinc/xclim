@@ -1,12 +1,18 @@
-
 # label rules used by .github/workflows/label.yml
 
 # label 'ci' all automation-related steps and files
 #   Since this repository is in itself an automation process to deploy a server instance,
 #   we refer here to CI as the 'meta' configuration files for managing the code and integrations with the repository,
 #   not configurations related to the deployment process itself.
+
+API:
+  - xclim/cli.py
+
 CI:
-  - .*  # all '.<something>' files
+  - .editorconfig
+  - .pre-commit-config.yaml
+  - .readthedocs.yml
+  - .yamllint.yml
   - .github/workflows/*
   - docs/Makefile
   - pylintrc
@@ -14,7 +20,7 @@ CI:
   - Makefile
 
 docs:
-  - ".readthedocs.yml"
+  - .readthedocs.yml
   - docs/**/*
   - AUTHORS.rst
   - CONTRIBUTING.rst
@@ -30,5 +36,9 @@ indicators:
   - xclim/data/**/*.json
   - xclim/data/**/*.yml
 
+information:
+  - CONTRIBUTING.rst
+
 sdba:
   - xclim/sdba/**/*
+  - tests/test_sdba/*.py

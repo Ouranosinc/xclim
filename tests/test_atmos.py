@@ -90,6 +90,11 @@ def test_humidex(tas_series):
     np.testing.assert_array_almost_equal(h, [16, 29, 47, 52], 0)
     assert h.name == "humidex"
 
+    # Test with dataset (#1432)
+    ds = xr.Dataset({"tas": tas, "dewpoint": dtas})
+    h2 = atmos.humidex(ds=ds, tdps="dewpoint")
+    np.testing.assert_array_almost_equal(h, h2)
+
 
 def test_heat_index(atmosds):
     # Keep just Montreal values for summertime as we need tas > 20 degC
@@ -246,6 +251,41 @@ def test_wind_chill_index(atmosds):
     np.testing.assert_allclose(
         out_us.isel(time=0), [-1.429, -6.716, -35.617, -8.486, 2.781], rtol=1e-3
     )
+
+
+def test_wind_profile(atmosds):
+    out = atmos.wind_profile(
+        wind_speed=atmosds.sfcWind, h_r="10 m", h="100 m", alpha=1 / 7
+    )
+    assert out.attrs["units"] == "m s-1"
+    assert (out > atmosds.sfcWind).all()
+
+
+def test_wind_power_potential(atmosds):
+    out = atmos.wind_power_potential(wind_speed=atmosds.sfcWind)
+    assert out.attrs["units"] == ""
+    assert (out >= 0).all()
+    assert (out <= 1).all()
+
+
+def test_wind_power_potential_from_3h_series():
+    """Test a typical computation workflow from 3-hourly time series to daily power production in MWh."""
+    from xclim.core.units import convert_units_to
+    from xclim.indices.generic import select_resample_op
+    from xclim.testing.helpers import test_timeseries
+
+    w = test_timeseries(
+        np.ones(96) * 15, variable="sfcWind", start="7/1/2000", units="m s-1", freq="3H"
+    )
+    out = atmos.wind_power_potential(wind_speed=w)
+
+    # Multiply with nominal capacity
+    power = out * 100
+    power.attrs["units"] = "MW"
+    annual_power = convert_units_to(
+        select_resample_op(power, op="sum", freq="D"), "MWh"
+    )
+    assert (annual_power == 100 * 24).all()
 
 
 class TestDrynessIndex:

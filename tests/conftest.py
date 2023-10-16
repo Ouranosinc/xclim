@@ -15,7 +15,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 from filelock import FileLock
-from pkg_resources import parse_version, working_set
+from packaging.version import Version
 
 import xclim
 from xclim import __version__ as __xclim_version__
@@ -39,20 +39,25 @@ if not __xclim_version__.endswith("-beta") and helpers.TESTDATA_BRANCH == "main"
 if re.match(r"^v\d+\.\d+\.\d+", helpers.TESTDATA_BRANCH):
     # Find the date of last modification of xclim source files to generate a calendar version
     install_date = dt.strptime(
-        time.ctime(os.path.getmtime(working_set.by_key["xclim"].location)),
+        time.ctime(os.path.getmtime(xclim.__file__)),
         "%a %b %d %H:%M:%S %Y",
     )
     install_calendar_version = (
         f"{install_date.year}.{install_date.month}.{install_date.day}"
     )
 
-    if parse_version(helpers.TESTDATA_BRANCH) > parse_version(install_calendar_version):
+    if Version(helpers.TESTDATA_BRANCH) > Version(install_calendar_version):
         warnings.warn(
             f"Installation date of `xclim` ({install_date.ctime()}) "
             f"predates the last release of `xclim-testdata` ({helpers.TESTDATA_BRANCH}). "
             "It is very likely that the testing data is incompatible with this build of `xclim`.",
             UserWarning,
         )
+
+
+@pytest.fixture
+def random() -> np.random.Generator:
+    return np.random.default_rng(seed=list(map(ord, "𝕽𝔞𝖓𝔡𝖔𝔪")))
 
 
 @pytest.fixture
@@ -112,28 +117,6 @@ def prc_series():
     """Return convective precipitation time series."""
     _prc_series = partial(test_timeseries, variable="prc")
     return _prc_series
-
-
-@pytest.fixture
-def bootstrap_series():
-    def _bootstrap_series(values, start="7/1/2000", units="kg m-2 s-1", cf_time=False):
-        if cf_time:
-            coords = xr.cftime_range(start, periods=len(values), freq="D")
-        else:
-            coords = pd.date_range(start, periods=len(values), freq="D")
-        return xr.DataArray(
-            values,
-            coords=[coords],
-            dims="time",
-            name="pr",
-            attrs={
-                "standard_name": "precipitation_flux",
-                "cell_methods": "time: mean within days",
-                "units": units,
-            },
-        )
-
-    return _bootstrap_series
 
 
 @pytest.fixture
@@ -200,7 +183,7 @@ def q_series():
 
 
 @pytest.fixture
-def ndq_series():
+def ndq_series(random):
     nx, ny, nt = 2, 3, 5000
     x = np.arange(0, nx)
     y = np.arange(0, ny)
@@ -214,7 +197,7 @@ def ndq_series():
     )
 
     return xr.DataArray(
-        np.random.lognormal(10, 1, (nt, nx, ny)),
+        random.lognormal(10, 1, (nt, nx, ny)),
         dims=("time", "x", "y"),
         coords={"time": time_range, "x": cx, "y": cy},
         attrs={
@@ -451,24 +434,30 @@ def gather_session_data(threadsafe_data_dir, worker_id, xdoctest_namespace):
     """Gather testing data on pytest run.
 
     When running pytest with multiple workers, one worker will copy data remotely to _default_cache_dir while
-    other workers wait using lockfile. Once the lock is released, all workers will copy data to their local
-    threadsafe_data_dir."""
+    other workers wait using lockfile. Once the lock is released, all workers will then copy data to their local
+    threadsafe_data_dir.As this fixture is scoped to the session, it will only run once per pytest run.
+
+    Additionally, this fixture is also used to generate the `atmosds` synthetic testing dataset as well as add the
+    example file paths to the xdoctest_namespace, used when running doctests.
+    """
 
     if (
         not _default_cache_dir.joinpath(helpers.TESTDATA_BRANCH).exists()
         or helpers.PREFETCH_TESTING_DATA
     ):
+        if helpers.PREFETCH_TESTING_DATA:
+            print("`XCLIM_PREFETCH_TESTING_DATA` set. Prefetching testing data...")
         if worker_id in "master":
             helpers.populate_testing_data(branch=helpers.TESTDATA_BRANCH)
         else:
-            _default_cache_dir.mkdir(exist_ok=True)
+            _default_cache_dir.mkdir(exist_ok=True, parents=True)
             test_data_being_written = FileLock(_default_cache_dir.joinpath(".lock"))
             with test_data_being_written as fl:
                 # This flag prevents multiple calls from re-attempting to download testing data in the same pytest run
                 helpers.populate_testing_data(branch=helpers.TESTDATA_BRANCH)
                 _default_cache_dir.joinpath(".data_written").touch()
             fl.acquire()
-        shutil.copytree(_default_cache_dir, threadsafe_data_dir)
+    shutil.copytree(_default_cache_dir, threadsafe_data_dir)
     helpers.generate_atmos(threadsafe_data_dir)
     xdoctest_namespace.update(helpers.add_example_file_paths(threadsafe_data_dir))
 

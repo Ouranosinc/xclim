@@ -36,9 +36,9 @@ from xclim.testing.sdba_utils import nancov  # noqa
 
 class TestLoci:
     @pytest.mark.parametrize("group,dec", (["time", 2], ["time.month", 1]))
-    def test_time_and_from_ds(self, series, group, dec, tmp_path):
+    def test_time_and_from_ds(self, series, group, dec, tmp_path, random):
         n = 10000
-        u = np.random.rand(n)
+        u = random.random(n)
 
         xd = uniform(loc=0, scale=3)
         x = xd.ppf(u)
@@ -70,6 +70,7 @@ class TestLoci:
         p2 = loci2.adjust(sim)
         np.testing.assert_array_equal(p, p2)
 
+    @pytest.mark.requires_internet
     def test_reduce_dims(self, ref_hist_sim_tuto):
         ref, hist, sim = ref_hist_sim_tuto()
         hist = hist.expand_dims(member=[0, 1])
@@ -80,9 +81,9 @@ class TestLoci:
 @pytest.mark.slow
 class TestScaling:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
-    def test_time(self, kind, name, series):
+    def test_time(self, kind, name, series, random):
         n = 10000
-        u = np.random.rand(n)
+        u = random.random(n)
 
         xd = uniform(loc=2, scale=1)
         x = xd.ppf(u)
@@ -99,9 +100,9 @@ class TestScaling:
         np.testing.assert_array_almost_equal(p, ref)
 
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
-    def test_mon_U(self, mon_series, series, mon_triangular, kind, name):
+    def test_mon_U(self, mon_series, series, mon_triangular, kind, name, random):
         n = 10000
-        u = np.random.rand(n)
+        u = random.random(n)
 
         xd = uniform(loc=2, scale=1)
         x = xd.ppf(u)
@@ -118,9 +119,9 @@ class TestScaling:
         p = scaling.adjust(sim)
         np.testing.assert_array_almost_equal(p, ref)
 
-    def test_add_dim(self, series, mon_series):
+    def test_add_dim(self, series, mon_series, random):
         n = 10000
-        u = np.random.rand(n, 4)
+        u = random.random((n, 4))
 
         xd = uniform(loc=2, scale=1)
         x = xd.ppf(u)
@@ -140,7 +141,7 @@ class TestScaling:
 @pytest.mark.slow
 class TestDQM:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
-    def test_quantiles(self, series, kind, name):
+    def test_quantiles(self, series, kind, name, random):
         """Train on
         hist: U
         ref: Normal
@@ -148,7 +149,7 @@ class TestDQM:
         Predict on hist to get ref
         """
         ns = 10000
-        u = np.random.rand(ns)
+        u = random.random(ns)
 
         # Define distributions
         xd = uniform(loc=10, scale=1)
@@ -207,7 +208,7 @@ class TestDQM:
 
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     @pytest.mark.parametrize("add_dims", [True, False])
-    def test_mon_U(self, mon_series, series, kind, name, add_dims):
+    def test_mon_U(self, mon_series, series, kind, name, add_dims, random):
         """
         Train on
         hist: U
@@ -216,7 +217,7 @@ class TestDQM:
         Predict on hist to get ref
         """
         n = 5000
-        u = np.random.rand(n)
+        u = random.random(n)
 
         # Define distributions
         xd = uniform(loc=2, scale=0.1)
@@ -251,8 +252,8 @@ class TestDQM:
         np.testing.assert_array_almost_equal(mqm, int(kind == MULTIPLICATIVE), 1)
         np.testing.assert_allclose(p.transpose(..., "time"), ref_t, rtol=0.1, atol=0.5)
 
-    def test_cannon_and_from_ds(self, cannon_2015_rvs, tmp_path):
-        ref, hist, sim = cannon_2015_rvs(15000)
+    def test_cannon_and_from_ds(self, cannon_2015_rvs, tmp_path, random):
+        ref, hist, sim = cannon_2015_rvs(15000, random=random)
 
         DQM = DetrendedQuantileMapping.train(ref, hist, kind="*", group="time")
         p = DQM.adjust(sim)
@@ -275,13 +276,13 @@ class TestDQM:
 @pytest.mark.slow
 class TestQDM:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
-    def test_quantiles(self, series, kind, name):
+    def test_quantiles(self, series, kind, name, random):
         """Train on
         x : U(1,1)
         y : U(1,2)
 
         """
-        u = np.random.rand(10000)
+        u = random.random(10000)
 
         # Define distributions
         xd = uniform(loc=1, scale=1)
@@ -323,7 +324,7 @@ class TestQDM:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
     @pytest.mark.parametrize("add_dims", [True, False])
     def test_mon_U(
-        self, mon_series, series, mon_triangular, add_dims, kind, name, use_dask
+        self, mon_series, series, mon_triangular, add_dims, kind, name, use_dask, random
     ):
         """
         Train on
@@ -332,7 +333,7 @@ class TestQDM:
 
         Predict on hist to get ref
         """
-        u = np.random.rand(10000)
+        u = random.random(10000)
 
         # Define distributions
         xd = uniform(loc=1, scale=1)
@@ -407,14 +408,14 @@ class TestQDM:
 @pytest.mark.slow
 class TestQM:
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
-    def test_quantiles(self, series, kind, name):
+    def test_quantiles(self, series, kind, name, random):
         """Train on
         hist: U
         ref: Normal
 
         Predict on hist to get ref
         """
-        u = np.random.rand(10000)
+        u = random.random(10000)
 
         # Define distributions
         xd = uniform(loc=10, scale=1)
@@ -448,7 +449,7 @@ class TestQM:
         np.testing.assert_array_almost_equal(p[middle], ref[middle], 1)
 
     @pytest.mark.parametrize("kind,name", [(ADDITIVE, "tas"), (MULTIPLICATIVE, "pr")])
-    def test_mon_U(self, mon_series, series, mon_triangular, kind, name):
+    def test_mon_U(self, mon_series, series, mon_triangular, kind, name, random):
         """
         Train on
         hist: U
@@ -456,7 +457,7 @@ class TestQM:
 
         Predict on hist to get ref
         """
-        u = np.random.rand(10000)
+        u = random.random(10000)
 
         # Define distributions
         xd = uniform(loc=2, scale=0.1)
@@ -483,6 +484,7 @@ class TestQM:
         np.testing.assert_array_almost_equal(p, ref, 2)
 
     @pytest.mark.parametrize("use_dask", [True, False])
+    @pytest.mark.filterwarnings("ignore::RuntimeWarning")
     def test_add_dims(self, use_dask, open_dataset):
         with set_options(sdba_encode_cf=use_dask):
             if use_dask:
@@ -525,13 +527,13 @@ class TestPrincipalComponents:
     @pytest.mark.parametrize(
         "group", (Grouper("time.month"), Grouper("time", add_dims=["lon"]))
     )
-    def test_simple(self, group):
+    def test_simple(self, group, random):
         n = 15 * 365
         m = 2  # A dummy dimension to test vectorizing.
-        ref_y = norm.rvs(loc=10, scale=1, size=(m, n))
-        ref_x = norm.rvs(loc=3, scale=2, size=(m, n))
-        sim_x = norm.rvs(loc=4, scale=2, size=(m, n))
-        sim_y = sim_x + norm.rvs(loc=1, scale=1, size=(m, n))
+        ref_y = norm.rvs(loc=10, scale=1, size=(m, n), random_state=random)
+        ref_x = norm.rvs(loc=3, scale=2, size=(m, n), random_state=random)
+        sim_x = norm.rvs(loc=4, scale=2, size=(m, n), random_state=random)
+        sim_y = sim_x + norm.rvs(loc=1, scale=1, size=(m, n), random_state=random)
 
         ref = xr.DataArray(
             [ref_x, ref_y], dims=("lat", "lon", "time"), attrs={"units": "degC"}
@@ -619,14 +621,16 @@ class TestExtremeValues:
             ["0.007 m/week", 0.95, 0.25, 2],
         ],
     )
-    def test_simple(self, c_thresh, q_thresh, frac, power):
+    def test_simple(self, c_thresh, q_thresh, frac, power, random):
         n = 45 * 365
 
         def gen_testdata(c, s):
-            base = np.clip(norm.rvs(loc=0, scale=s, size=(n,)), 0, None)
+            base = np.clip(
+                norm.rvs(loc=0, scale=s, size=(n,), random_state=random), 0, None
+            )
             qv = np.quantile(base[base > 1], q_thresh)
             base[base > qv] = genpareto.rvs(
-                c, loc=qv, scale=s, size=base[base > qv].shape
+                c, loc=qv, scale=s, size=base[base > qv].shape, random_state=random
             )
             return xr.DataArray(
                 base,
@@ -709,17 +713,17 @@ class TestSBCKutils:
         "method", [m for m in dir(adjustment) if m.startswith("SBCK_")]
     )
     @pytest.mark.parametrize("use_dask", [True])  # do we gain testing both?
-    def test_sbck(self, method, use_dask):
+    def test_sbck(self, method, use_dask, random):
         SBCK = pytest.importorskip("SBCK", minversion="0.4.0")  # noqa
 
         n = 10 * 365
         m = 2  # A dummy dimension to test vectorization.
-        ref_y = norm.rvs(loc=10, scale=1, size=(m, n))
-        ref_x = norm.rvs(loc=3, scale=2, size=(m, n))
-        hist_x = norm.rvs(loc=11, scale=1.2, size=(m, n))
-        hist_y = norm.rvs(loc=4, scale=2.2, size=(m, n))
-        sim_x = norm.rvs(loc=12, scale=2, size=(m, n))
-        sim_y = norm.rvs(loc=3, scale=1.8, size=(m, n))
+        ref_y = norm.rvs(loc=10, scale=1, size=(m, n), random_state=random)
+        ref_x = norm.rvs(loc=3, scale=2, size=(m, n), random_state=random)
+        hist_x = norm.rvs(loc=11, scale=1.2, size=(m, n), random_state=random)
+        hist_y = norm.rvs(loc=4, scale=2.2, size=(m, n), random_state=random)
+        sim_x = norm.rvs(loc=12, scale=2, size=(m, n), random_state=random)
+        sim_y = norm.rvs(loc=3, scale=1.8, size=(m, n), random_state=random)
 
         ref = xr.Dataset(
             {

@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from boltons.funcutils import wraps
-from pkg_resources import parse_version
+from packaging.version import Version
 from scipy import __version__ as __scipy_version__
 from scipy import spatial
 from scipy.spatial import cKDTree as KDTree
@@ -54,7 +54,7 @@ def spatial_analogs(
         The dissimilarity statistic over the union of candidates' and target's dimensions.
         The range depends on the method.
     """
-    if parse_version(__scipy_version__) < parse_version("1.6.0") and method in [
+    if Version(__scipy_version__) < Version("1.6.0") and method in [
         "kldiv",
         "nearest_neighbor",
     ]:
@@ -476,10 +476,13 @@ def kldiv(
 ) -> float | Sequence[float]:
     r"""Compute the Kullback-Leibler divergence between two multivariate samples.
 
-    .. math
+    The formula to compute the K-L divergence from samples is given by:
+
+    .. math::
+
         D(P||Q) = \frac{d}{n} \sum_i^n \log\left\{\frac{r_k(x_i)}{s_k(x_i)}\right\} + \log\left\{\frac{m}{n-1}\right\}
 
-    where :math:`r_k(x_i)` and :math:`s_k(x_i)` are, respectively, the euclidean distance to the kth neighbour of
+    where :math:`r_k(x_i)` and :math:`s_k(x_i)` are, respectively, the Euclidean distance to the kth neighbour of
     :math:`x_i` in the x array (excepting :math:`x_i`) and in the y array. This method is scale-dependent.
 
     Parameters
@@ -551,9 +554,11 @@ def kldiv(
         # The 0th nearest neighbour of x[i] in x is x[i] itself.
         # Hence, we take the k'th + 1, which in 0-based indexing is given by
         # index k.
-        out.append(
-            -np.log(r[:, ki] / s[:, ki - 1]).sum() * d / nx + np.log(ny / (nx - 1.0))
-        )
+        with np.errstate(divide="ignore"):
+            ki_calc = -np.log(r[:, ki] / s[:, ki - 1]).sum() * d / nx + np.log(
+                ny / (nx - 1.0)
+            )
+        out.append(ki_calc)
 
     if mk:
         return out

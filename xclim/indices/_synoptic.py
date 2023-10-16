@@ -41,39 +41,46 @@ def jetstream_metric_woollings(
     Returns
     -------
     (xarray.DataArray, xarray.DataArray)
-        Daily time series of latitude of jetstream and Daily time series of strength of jetstream.
+        Daily time series of latitude of jetstream and daily time series of strength of jetstream.
 
     References
     ----------
     :cite:cts:`woollings_variability_2010`
     """
-    lon_min = -60
-    lon_max = 0
-    lons_within_range = any(
-        (ua.cf["longitude"] >= lon_min) & (ua.cf["longitude"] <= lon_max)
-    )
-    if not lons_within_range:
+    # Select longitudes in the -60 to 0°E range
+    lon = ua.cf["longitude"]
+    ilon = (lon >= 300) * (lon <= 360) + (lon >= -60) * (lon <= 0)
+    if not ilon.any():
         raise ValueError(
-            f"Longitude values need to be in a range between {lon_min}-{lon_max}. "
-            "Consider changing the longitude coordinates to between -180 degrees E – 180 degrees W."
+            "Make sure the grid includes longitude values in a range between -60 and 0°E."
         )
 
-    # get latitude & eastward wind component units
-    lat_units = ua.cf["latitude"].units
-    ua_units = ua.units
-    lat_name = ua.cf["latitude"].name
+    # Select latitudes in the 15 to 75°N range
+    lat = ua.cf["latitude"]
+    ilat = (lat >= 15) * (lat <= 75)
+    if not ilat.any():
+        raise ValueError(
+            "Make sure the grid includes latitude values in a range between 15 and 75°N."
+        )
 
-    # select only relevant hPa levels, compute zonal mean wind speed
-    pmin = convert_units_to("750 hPa", ua.cf["pressure"])
-    pmax = convert_units_to("950 hPa", ua.cf["pressure"])
+    # Select levels between 750 and 950 hPa
+    pmin = convert_units_to("750 hPa", ua.cf["vertical"])
+    pmax = convert_units_to("950 hPa", ua.cf["vertical"])
+
+    p = ua.cf["vertical"]
+    ip = (p >= pmin) * (p <= pmax)
+    if not ip.any():
+        raise ValueError(
+            "Make sure the grid includes pressure values in a range between 750 and 950 hPa."
+        )
 
     ua = ua.cf.sel(
-        pressure=slice(pmin, pmax),
-        latitude=slice(15, 75),
-        longitude=slice(lon_min, lon_max),
+        vertical=ip,
+        latitude=ilat,
+        longitude=ilon,
     )
 
-    zonal_mean = ua.cf.mean(["pressure", "longitude"])
+    zonal_mean = ua.cf.mean(["vertical", "longitude"])
 
     # apply Lanczos filter - parameters are hard-coded following those used in Woollings (2010)
     filter_freq = 10
@@ -94,6 +101,12 @@ def jetstream_metric_woollings(
         .construct("window")
         .dot(lanczos_weights)
     )
+
+    # Get latitude & eastward wind component units
+    lat_name = ua.cf["latitude"].name
+    lat_units = ua.cf["latitude"].units
+    ua_units = ua.units
+
     jetlat = ua_lf.cf.idxmax(lat_name).rename("jetlat").assign_attrs(units=lat_units)
     jetstr = ua_lf.cf.max(lat_name).rename("jetstr").assign_attrs(units=ua_units)
     return jetlat, jetstr

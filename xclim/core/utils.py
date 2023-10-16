@@ -37,10 +37,20 @@ DayOfYearStr = NewType("DayOfYearStr", str)
 #: Type annotation for thresholds and other not-exactly-a-variable quantities
 Quantified = TypeVar("Quantified", xr.DataArray, str, Quantity)
 
-# Official variables definitions
 VARIABLES = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
+"""Official variables definitions.
 
-# Input cell methods
+A mapping from variable name to a dict with the following keys:
+
+- canonical_units [required] : The conventional units used by this variable.
+- cell_methods [optional] : The conventional `cell_methods` CF attribute
+- description [optional] : A description of the variable, to populate dynamically generated docstrings.
+- dimensions [optional] : The dimensionality of the variable, an abstract version of the units. See `xclim.units.units._dimensions.keys()` for available terms. This is especially useful for making xclim aware of "[precipitation]" variables.
+- standard_name [optional] : If it exists, the CF standard name.
+- data_flags [optional] : Data flags methods (:py:mod:`xclim.core.dataflags`) applicable to this variable. The method names are keys and values are dicts of keyword arguments to pass (an empty dict if there's nothing to configure).
+"""
+
+# Input cell methods for clix-meta
 ICM = {
     "tasmin": "time: minimum within days",
     "tasmax": "time: maximum within days",
@@ -508,7 +518,8 @@ class InputKind(IntEnum):
 
     For developers : for each constant, the docstring specifies the annotation a parameter of an indice function
     should use in order to be picked up by the indicator constructor. Notice that we are using the annotation format
-    as described in PEP604/py3.10, i.e. with | indicating an union and without import objects from `typing`.
+    as described in `PEP 604 <https://peps.python.org/pep-0604/>`_, i.e. with '|' indicating a union and without import
+    objects from `typing`.
     """
 
     VARIABLE = 0
@@ -524,13 +535,14 @@ class InputKind(IntEnum):
     QUANTIFIED = 2
     """A quantity with units, either as a string (scalar), a pint.Quantity (scalar) or a DataArray (with units set).
 
-       Annotation : ``xclim.core.utils.Quantified`` and an entry in the :py:func:`xclim.core.units.declare_units` decorator.
-       "Quantified" translates to ``str | xr.DataArray | pint.util.Quantity``.
+       Annotation : ``xclim.core.utils.Quantified`` and an entry in the :py:func:`xclim.core.units.declare_units`
+       decorator. "Quantified" translates to ``str | xr.DataArray | pint.util.Quantity``.
     """
     FREQ_STR = 3
     """A string representing an "offset alias", as defined by pandas.
 
-       See https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases .
+       See the Pandas documentation on :ref:`timeseries.offset_aliases` for a list of valid aliases.
+
        Annotation : ``str`` + ``freq`` as the parameter name.
     """
     NUMBER = 4
@@ -541,8 +553,9 @@ class InputKind(IntEnum):
     STRING = 5
     """A simple string.
 
-       Annotation : ``str`` or ``str | None``. In most cases, this kind of parameter makes sense with choices indicated
-       in the docstring's version of the annotation with curly braces. See :ref:`notebooks/extendxclim:Defining new indices`.
+       Annotation : ``str`` or ``str | None``. In most cases, this kind of parameter makes sense
+       with choices indicated in the docstring's version of the annotation with curly braces.
+       See :ref:`notebooks/extendxclim:Defining new indices`.
     """
     DAY_OF_YEAR = 6
     """A date, but without a year, in the MM-DD format.
@@ -557,8 +570,8 @@ class InputKind(IntEnum):
     NUMBER_SEQUENCE = 8
     """A sequence of numbers
 
-       Annotation : ``Sequence[int]``, ``Sequence[float]`` and unions thereof,
-       may include single ``int`` and ``float``, may be optional.
+       Annotation : ``Sequence[int]``, ``Sequence[float]`` and unions thereof, may include single ``int`` and ``float``,
+       may be optional.
     """
     BOOL = 9
     """A boolean flag.
@@ -582,20 +595,16 @@ class InputKind(IntEnum):
     """
 
 
-def infer_kind_from_parameter(param, has_units: bool = False) -> InputKind:
+def infer_kind_from_parameter(param) -> InputKind:
     """Return the appropriate InputKind constant from an ``inspect.Parameter`` object.
 
     Parameters
     ----------
     param : Parameter
-    has_units : bool
 
     Notes
     -----
     The correspondence between parameters and kinds is documented in :py:class:`xclim.core.utils.InputKind`.
-    The only information not inferable through the `inspect` object is whether the parameter
-    has been assigned units through the :py:func:`xclim.core.units.declare_units` decorator.
-    That can be given with the ``has_units`` flag.
     """
     if param.annotation is not _empty:
         annot = set(
@@ -609,13 +618,13 @@ def infer_kind_from_parameter(param, has_units: bool = False) -> InputKind:
 
     annot = annot - {"None"}
 
-    if annot.issubset({"DataArray", "str"}) and has_units:
+    if "DataArray" in annot:
         return InputKind.OPTIONAL_VARIABLE
 
     if param.name == "freq":
         return InputKind.FREQ_STR
 
-    if annot == {"Quantified"} and has_units:
+    if annot == {"Quantified"}:
         return InputKind.QUANTIFIED
 
     if annot.issubset({"int", "float"}):

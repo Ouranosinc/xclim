@@ -646,6 +646,10 @@ def test_input_dataset(open_dataset):
     with pytest.raises(MissingVariableError):
         out = xclim.atmos.daily_temperature_range(freq="YS", ds=dsx)  # noqa
 
+    # dataset not given
+    with pytest.raises(ValueError):
+        xclim.atmos.daily_temperature_range(tasmax="tmax")
+
 
 def test_indicator_from_dict():
     d = dict(
@@ -676,7 +680,7 @@ def test_indicator_from_dict():
     # Default value for input variable injected and meta injected
     assert ind._variable_mapping["data"] == "tas"
     assert signature(ind).parameters["tas"].default == "tas"
-    assert ind.parameters["tas"].units == "K"
+    assert ind.parameters["tas"].units == "[temperature]"
 
     # Wrap a multi-output ind
     d = dict(base="wind_speed_from_vector")

@@ -56,6 +56,7 @@ __all__ = [
     "frost_free_season_end",
     "frost_free_season_length",
     "frost_free_season_start",
+    "frost_free_spell_max_length",
     "frost_season_length",
     "growing_degree_days",
     "growing_season_end",
@@ -670,7 +671,6 @@ def dry_days(
     return out
 
 
-# NOTE : A spell index could be used below
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
 def maximum_consecutive_wet_days(
     pr: xarray.DataArray,
@@ -1252,6 +1252,54 @@ def frost_free_season_length(
         date=mid_date,
         dim="time",
     )
+    return to_agg_units(out, tasmin, "count")
+
+
+@declare_units(tasmin="[temperature]", thresh="[temperature]")
+def frost_free_spell_max_length(
+    tasmin: xarray.DataArray,
+    thresh: Quantified = "0.0 degC",
+    window: int = 1,
+    freq: str = "AS-JUL",
+    op: str = ">=",
+    resample_before_rl: bool = True,
+) -> xarray.DataArray:
+    r"""Longest cold spell.
+
+    Longest spell of low temperatures over a given period.
+    Longest series of at least {window} consecutive days with temperature at or below {thresh}.
+
+    Parameters
+    ----------
+    tasmin : xarray.DataArray
+        Minimum daily temperature.
+    thresh : Quantified
+        The temperature threshold needed to trigger a cold spell.
+    window : int
+        Minimum number of days with temperatures above thresholds to qualify as a frost free day.
+    freq : str
+        Resampling frequency.
+    op : {"<", "<=", "lt", "le"}
+        Comparison operation. Default: "<".
+    resample_before_rl : bool
+        Determines if the resampling should take place before or after the run
+        length encoding (or a similar algorithm) is applied to runs.
+
+    Returns
+    -------
+    xarray.DataArray, [days]
+        The {freq} longest spell in frost free periods of minimum {window} days.
+    """
+    thresh = convert_units_to(thresh, tasmin)
+
+    cond = compare(tasmin, op, thresh, constrain=(">", ">="))
+    max_l = rl.resample_and_rl(
+        cond,
+        resample_before_rl,
+        rl.longest_run,
+        freq=freq,
+    )
+    out = max_l.where(max_l >= window, 0)
     return to_agg_units(out, tasmin, "count")
 
 
@@ -2021,7 +2069,7 @@ def snd_season_length(
     xarray.DataArray, [time]
         Number of days where snow depth is greater than or equal to threshold.
     """
-    valid = at_least_n_valid(snd.where(snd > 0), n=1, freq=freq)
+    valid = at_least_n_valid(snd, n=1, freq=freq)
     thresh = convert_units_to(thresh, snd)
     out = threshold_count(snd, op, thresh, freq)
     return to_agg_units(out, snd, "count").where(~valid)
@@ -2058,7 +2106,7 @@ def snw_season_length(
     xarray.DataArray, [time]
         Number of days where snow water is greater than or equal to threshold.
     """
-    valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
+    valid = at_least_n_valid(snw, n=1, freq=freq)
     thresh = convert_units_to(thresh, snw)
     out = threshold_count(snw, op, thresh, freq)
     return to_agg_units(out, snw, "count").where(~valid)
@@ -2468,7 +2516,6 @@ def wetdays_prop(
     return fwd
 
 
-# NOTE : A spell index could be used below
 @declare_units(tasmin="[temperature]", thresh="[temperature]")
 def maximum_consecutive_frost_days(
     tasmin: xarray.DataArray,
@@ -2516,18 +2563,16 @@ def maximum_consecutive_frost_days(
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
     the start and end of the series, but the numerical algorithm does.
     """
-    t = convert_units_to(thresh, tasmin)
-    group = tasmin < t
-    out = rl.resample_and_rl(
-        group,
-        resample_before_rl,
-        rl.longest_run,
+    return cold_spell_max_length(
+        tasmin,
+        thresh=thresh,
+        window=1,
         freq=freq,
+        op="<",
+        resample_before_rl=resample_before_rl,
     )
-    return to_agg_units(out, tasmin, "count")
 
 
-# NOTE : A spell index could be used below
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
 def maximum_consecutive_dry_days(
     pr: xarray.DataArray,
@@ -2629,18 +2674,16 @@ def maximum_consecutive_frost_free_days(
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
     the start and end of the series, but the numerical algorithm does.
     """
-    t = convert_units_to(thresh, tasmin)
-    group = tasmin >= t
-    out = rl.resample_and_rl(
-        group,
-        resample_before_rl,
-        rl.longest_run,
+    return frost_free_spell_max_length(
+        tasmin,
+        thresh=thresh,
+        window=1,
         freq=freq,
+        op=">=",
+        resample_before_rl=resample_before_rl,
     )
-    return to_agg_units(out, tasmin, "count")
 
 
-# NOTE : A spell index could be used below
 @declare_units(tasmax="[temperature]", thresh="[temperature]")
 def maximum_consecutive_tx_days(
     tasmax: xarray.DataArray,
@@ -2684,15 +2727,14 @@ def maximum_consecutive_tx_days(
     where :math:`[P]` is 1 if :math:`P` is true, and 0 if false. Note that this formula does not handle sequences at
     the start and end of the series, but the numerical algorithm does.
     """
-    t = convert_units_to(thresh, tasmax)
-    group = tasmax > t
-    out = rl.resample_and_rl(
-        group,
-        resample_before_rl,
-        rl.longest_run,
+    return hot_spell_max_length(
+        tasmax,
+        thresh=thresh,
+        window=1,
         freq=freq,
+        op=">",
+        resample_before_rl=resample_before_rl,
     )
-    return to_agg_units(out, tasmax, "count")
 
 
 @declare_units(siconc="[]", areacello="[area]", thresh="[]")

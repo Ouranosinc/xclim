@@ -3,13 +3,9 @@
 
 define BROWSER_PYSCRIPT
 import os, webbrowser, sys
+from urllib.request import pathname2url
 
-try:
-	from urllib import pathname2url
-except:
-	from urllib.request import pathname2url
-
-webbrowser.open("file://" + pathname2url(os.path.abspath(sys.argv[1])))
+webbrowser.open(sys.argv[1])
 endef
 export BROWSER_PYSCRIPT
 
@@ -39,8 +35,9 @@ clean-build: ## remove build artifacts
 	find . -name '*.egg' -exec rm -f {} +
 
 clean-docs: ## remove docs artifacts
-	rm -f docs/xclim*.rst
-	rm -f docs/modules.rst
+	rm -f docs/apidoc/xclim*.rst
+	rm -f docs/apidoc/modules.rst
+	rm -f docs/notebooks/data/*.nc
 	$(MAKE) -C docs clean
 
 clean-pyc: ## remove Python file artifacts
@@ -81,12 +78,14 @@ coverage: ## check code coverage quickly with the default Python
 	$(BROWSER) htmlcov/index.html
 
 autodoc-obsolete: clean-docs ## create sphinx-apidoc files (obsolete)
-	sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests
+	mkdir -p docs/apidoc/
+	sphinx-apidoc -o docs/apidoc/ --private --module-first xclim xclim/testing/tests
 
 autodoc-custom-index: clean-docs ## create sphinx-apidoc files but with special index handling for indices and indicators
-	sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests xclim/indicators xclim/indices
-	rm docs/xclim.rst
-	env SPHINX_APIDOC_OPTIONS="members,undoc-members,show-inheritance,noindex" sphinx-apidoc -o docs/ --private --module-first xclim xclim/testing/tests
+	mkdir -p docs/apidoc/
+	sphinx-apidoc -o docs/apidoc/ --private --module-first xclim xclim/testing/tests xclim/indicators xclim/indices
+	rm docs/apidoc/xclim.rst
+	env SPHINX_APIDOC_OPTIONS="members,undoc-members,show-inheritance,noindex" sphinx-apidoc -o docs/apidoc/ --private --module-first xclim xclim/testing/tests
 
 linkcheck: autodoc-custom-index ## run checks over all external links found throughout the documentation
 	$(MAKE) -C docs linkcheck
@@ -94,7 +93,11 @@ linkcheck: autodoc-custom-index ## run checks over all external links found thro
 docs: autodoc-custom-index ## generate Sphinx HTML documentation, including API docs, but without indexes for for indices and indicators
 	$(MAKE) -C docs html
 ifndef READTHEDOCS
-	$(BROWSER) docs/_build/html/index.html
+	## Start http server and show in browser.
+	## We want to have the cli command run in the foreground, so it's easy to kill.
+	## And we wait 2 sec for the server to start before opening the browser.
+	\{ sleep 2; $(BROWSER) http://localhost:54345 \} &
+	python -m http.server 54345 --directory docs/_build/html/
 endif
 
 servedocs: docs ## compile the docs watching for changes

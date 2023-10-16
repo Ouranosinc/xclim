@@ -34,11 +34,11 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4.1.0
         with:
           fetch-depth: 0 # Fetch all history for all branches and tags.
       - name: Setup Conda (Micromamba) with Python${{ matrix.python-version }}
-        uses: mamba-org/setup-micromamba@v1
+        uses: mamba-org/setup-micromamba@v1.4.4
         with:
           cache-downloads: true
           cache-environment: true
@@ -76,6 +76,6 @@ jobs:
           && steps.status.outcome == 'failure'
           && github.event_name == 'schedule'
           && github.repository_owner == 'Ouranosinc'
-        uses: xarray-contrib/issue-from-pytest-log@v1
+        uses: xarray-contrib/issue-from-pytest-log@v1.2.6
         with:
           log-path: output-${{ matrix.python-version }}-log.jsonl

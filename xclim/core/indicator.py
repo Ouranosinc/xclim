@@ -242,7 +242,7 @@ class IndicatorRegistrar:
         # If the module is not one of xclim's default, prepend the submodule name.
         if module.startswith("xclim.indicators"):
             submodule = module.split(".")[2]
-            if submodule not in ["atmos", "land", "ocean", "seaIce"]:
+            if submodule not in ["atmos", "generic", "land", "ocean", "seaIce"]:
                 name = f"{submodule}.{name}"
         else:
             name = f"{module}.{name}"
@@ -441,21 +441,23 @@ class Indicator(IndicatorRegistrar):
         parameters = cls._ensure_correct_parameters(parameters)
 
         # If needed, wrap compute with declare units
-        if (
-            "compute" in kwds
-            and not hasattr(kwds["compute"], "in_units")
-            and "_variable_mapping" in kwds
-        ):
-            # We actually need the inverse mapping (to get cmip6 name -> arg name)
-            inv_var_map = dict(map(reversed, kwds["_variable_mapping"].items()))
-            # parameters has already been update above.
-            kwds["compute"] = declare_units(
-                **{
-                    inv_var_map.get(k, k): m["units"]
-                    for k, m in parameters.items()
-                    if "units" in m
-                }
-            )(kwds["compute"])
+        if "compute" in kwds:
+            if not hasattr(kwds["compute"], "in_units") and "_variable_mapping" in kwds:
+                # We actually need the inverse mapping (to get cmip6 name -> arg name)
+                inv_var_map = dict(map(reversed, kwds["_variable_mapping"].items()))
+                # parameters has already been update above.
+                kwds["compute"] = declare_units(
+                    **{
+                        inv_var_map[k]: m["units"]
+                        for k, m in parameters.items()
+                        if "units" in m and k in inv_var_map
+                    }
+                )(kwds["compute"])
+
+            if hasattr(kwds["compute"], "in_units"):
+                varmap = kwds.get("_variable_mapping", {})
+                for name, unit in kwds["compute"].in_units.items():
+                    parameters[varmap.get(name, name)].units = unit
 
         # All updates done.
         kwds["_all_parameters"] = parameters
@@ -512,9 +514,6 @@ class Indicator(IndicatorRegistrar):
         docmeta = parse_doc(compute.__doc__)
         params_dict = docmeta.pop("parameters", {})  # override parent's parameters
 
-        for name, unit in getattr(compute, "in_units", {}).items():
-            params_dict.setdefault(name, {})["units"] = unit
-
         compute_sig = signature(compute)
         # Check that the `Parameters` section of the docstring does not include parameters
         # that are not in the `compute` function signature.
@@ -527,13 +526,7 @@ class Indicator(IndicatorRegistrar):
         for name, param in compute_sig.parameters.items():
             meta = params_dict.setdefault(name, {})
             meta["default"] = param.default
-            # Units read from compute.in_units or units passed explicitly,
-            # will be added to "meta" elsewhere in the __new__.
-            passed_meta = passed_parameters.get(name, {})
-            has_units = ("units" in meta) or (
-                isinstance(passed_meta, dict) and "units" in passed_meta
-            )
-            meta["kind"] = infer_kind_from_parameter(param, has_units)
+            meta["kind"] = infer_kind_from_parameter(param)
 
         parameters = {name: Parameter(**param) for name, param in params_dict.items()}
         return parameters, docmeta
@@ -593,7 +586,7 @@ class Indicator(IndicatorRegistrar):
                         "the units dimensionality must stay the same. Got: old = "
                         f"{meta.units}, new = {varmeta['canonical_units']}"
                     ) from err
-            meta.units = varmeta["canonical_units"]
+            meta.units = varmeta.get("dimensions", varmeta["canonical_units"])
             meta.description = varmeta["description"]
 
         if variable_mapping:
@@ -604,18 +597,11 @@ class Indicator(IndicatorRegistrar):
 
     @classmethod
     def _ensure_correct_parameters(cls, parameters):
-        """Ensure the parameters are correctly set and ordered.
-
-        Sets the correct variable default to be sure.
-        """
+        """Ensure the parameters are correctly set and ordered."""
+        # Set default values, otherwise the signature binding chokes
+        # on missing arguments when passing only `ds`.
         for name, meta in parameters.items():
             if not meta.injected:
-                # if meta.kind <= InputKind.OPTIONAL_VARIABLE and meta.units is _empty:
-                #     raise ValueError(
-                #         f"Input variable {name} is missing expected units. Units are "
-                #         "parsed either from the declare_units decorator or from the "
-                #         "variable mapping (arg name to CMIP6 name) passed in `input`"
-                #     )
                 if meta.kind == InputKind.OPTIONAL_VARIABLE:
                     meta.default = None
                 elif meta.kind in [InputKind.VARIABLE]:
@@ -923,23 +909,27 @@ class Indicator(IndicatorRegistrar):
     def _assign_named_args(self, ba):
         """Assign inputs passed as strings from ds."""
         ds = ba.arguments.get("ds")
-        for name in list(ba.arguments.keys()):
-            if self.parameters[name].kind <= InputKind.OPTIONAL_VARIABLE and isinstance(
-                ba.arguments[name], str
-            ):
-                if ds is not None:
-                    try:
-                        ba.arguments[name] = ds[ba.arguments[name]]
-                    except KeyError as err:
-                        raise MissingVariableError(
-                            f"For input '{name}', variable '{ba.arguments[name]}' "
-                            "was not found in the input dataset."
-                        ) from err
-                else:
+
+        for name, val in ba.arguments.items():
+            kind = self.parameters[name].kind
+
+            if kind <= InputKind.OPTIONAL_VARIABLE:
+                if isinstance(val, str) and ds is None:
                     raise ValueError(
                         "Passing variable names as string requires giving the `ds` "
-                        f"dataset (got {name}='{ba.arguments[name]}')"
+                        f"dataset (got {name}='{val}')"
                     )
+                if (isinstance(val, str) or val is None) and ds is not None:
+                    # Set default name for DataArray
+                    key = val or name
+
+                    if key in ds:
+                        ba.arguments[name] = ds[key]
+                    elif kind == InputKind.VARIABLE:
+                        raise MissingVariableError(
+                            f"For input '{name}', variable '{key}' "
+                            "was not found in the input dataset."
+                        )
 
     def _preprocess_and_checks(self, das, params):
         """Actions to be done after parsing the arguments and before computing."""
@@ -1150,6 +1140,7 @@ class Indicator(IndicatorRegistrar):
             )
         return attrs
 
+    @classmethod
     def json(self, args=None):
         """Return a serializable dictionary representation of the class.
 
@@ -1348,6 +1339,11 @@ class Indicator(IndicatorRegistrar):
             if param.injected
         }
 
+    @property
+    def is_generic(self):
+        """Return True if the indicator is "generic", meaning that it can accepts variable with any units."""
+        return not hasattr(self.compute, "in_units")
+
     def _show_deprecation_warning(self):
         warnings.warn(
             f"`{self.title}` is deprecated as of `xclim` v{self._version_deprecated} and will be removed "
@@ -1358,7 +1354,111 @@ class Indicator(IndicatorRegistrar):
         )
 
 
-class ResamplingIndicator(Indicator):
+class CheckMissingIndicator(Indicator):
+    """Class adding missing value checks to indicators.
+
+    This should not be used as-is, but subclassed by implementing the `_get_missing_freq` method.
+    This method will be called in `_postprocess` using the compute parameters as only argument.
+    It should return a freq string, the same as the output freq of the computed data.
+    It can also be "None" to indicator the full time axis has been reduced, or "False" to skip the missing checks.
+
+    Parameters
+    ----------
+    missing : {any, wmo, pct, at_least_n, skip, from_context}
+      The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods. If
+      None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
+    missing_options : dict, optional
+      Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
+    """
+
+    missing = "from_context"
+    missing_options: dict | None = None
+
+    def __init__(self, **kwds):
+        if self.missing == "from_context" and self.missing_options is not None:
+            raise ValueError(
+                "Cannot set `missing_options` with `missing` method being from context."
+            )
+
+        # Validate hard-coded missing options
+        kls = MISSING_METHODS[self.missing]
+        self._missing = kls.execute
+        if self.missing_options:
+            kls.validate(**self.missing_options)
+
+        super().__init__(**kwds)
+
+    def _history_string(self, **kwargs):
+        if self.missing == "from_context":
+            missing = OPTIONS[CHECK_MISSING]
+        else:
+            missing = self.missing
+        opt_str = f" with options check_missing={missing}"
+
+        if missing != "skip":
+            mopts = self.missing_options or OPTIONS[MISSING_OPTIONS].get(missing)
+            if mopts:
+                opt_str += f", missing_options={mopts}"
+
+        return super()._history_string(**kwargs) + opt_str
+
+    def _get_missing_freq(self, params):
+        """Return the resampling frequency to be used in the missing values check."""
+        raise NotImplementedError("Don't use `CheckMissingIndicator` directly.")
+
+    def _postprocess(self, outs, das, params):
+        """Masking of missing values."""
+        outs = super()._postprocess(outs, das, params)
+
+        freq = self._get_missing_freq(params)
+        if self.missing != "skip" or freq is False:
+            # Mask results that do not meet criteria defined by the `missing` method.
+            # This means all outputs must have the same dimensions as the broadcasted inputs (excluding time)
+            options = self.missing_options or OPTIONS[MISSING_OPTIONS].get(
+                self.missing, {}
+            )
+
+            # We flag periods according to the missing method. skip variables without a time coordinate.
+            src_freq = self.src_freq if isinstance(self.src_freq, str) else None
+            miss = (
+                self._missing(da, freq, src_freq, options, params.get("indexer", {}))
+                for da in das.values()
+                if "time" in da.coords
+            )
+            # Reduce by or and broadcast to ensure the same length in time
+            # When indexing is used and there are no valid points in the last period, mask will not include it
+            mask = reduce(np.logical_or, miss)
+            if (
+                isinstance(mask, DataArray)
+                and "time" in mask.dims
+                and mask.time.size < outs[0].time.size
+            ):
+                mask = mask.reindex(time=outs[0].time, fill_value=True)
+            outs = [out.where(~mask) for out in outs]
+
+        return outs
+
+
+class ReducingIndicator(CheckMissingIndicator):
+    """Indicator that performs a time-reducing computation.
+
+    Compared to the base Indicator, this adds the handling of missing data.
+
+    Parameters
+    ----------
+    missing : {any, wmo, pct, at_least_n, skip, from_context}
+      The name of the missing value method. See `xclim.core.missing.MissingBase` to create new custom methods. If
+      None, this will be determined by the global configuration (see `xclim.set_options`). Defaults to "from_context".
+    missing_options : dict, optional
+      Arguments to pass to the `missing` function. If None, this will be determined by the global configuration.
+    """
+
+    def _get_missing_freq(self, params):
+        """Return None, to indicate that the full time axis is to be reduced."""
+        return None
+
+
+class ResamplingIndicator(CheckMissingIndicator):
     """Indicator that performs a resampling computation.
 
     Compared to the base Indicator, this adds the handling of missing data,
@@ -1377,8 +1477,6 @@ class ResamplingIndicator(Indicator):
       indicator doesn't take a `freq` argument.
     """
 
-    missing = "from_context"
-    missing_options: dict | None = None
     allowed_periods: list[str] | None = None
 
     @classmethod
@@ -1390,19 +1488,8 @@ class ResamplingIndicator(Indicator):
             )
         return super()._ensure_correct_parameters(parameters)
 
-    def __init__(self, **kwds):
-        if self.missing == "from_context" and self.missing_options is not None:
-            raise ValueError(
-                "Cannot set `missing_options` with `missing` method being from context."
-            )
-
-        # Validate hard-coded missing options
-        kls = MISSING_METHODS[self.missing]
-        self._missing = kls.execute
-        if self.missing_options:
-            kls.validate(**self.missing_options)
-
-        super().__init__(**kwds)
+    def _get_missing_freq(self, params):
+        return params["freq"]
 
     def _preprocess_and_checks(self, das, params):
         """Perform parent's checks and also check if freq is allowed."""
@@ -1421,52 +1508,9 @@ class ResamplingIndicator(Indicator):
 
         return das, params
 
-    def _history_string(self, **kwargs):
-        if self.missing == "from_context":
-            missing = OPTIONS[CHECK_MISSING]
-        else:
-            missing = self.missing
-        opt_str = f" with options check_missing={missing}"
 
-        if missing != "skip":
-            mopts = self.missing_options or OPTIONS[MISSING_OPTIONS].get(missing)
-            if mopts:
-                opt_str += f", missing_options={mopts}"
-
-        return super()._history_string(**kwargs) + opt_str
-
-    def _postprocess(self, outs, das, params):
-        """Masking of missing values."""
-        outs = super()._postprocess(outs, das, params)
-
-        if self.missing != "skip":
-            # Mask results that do not meet criteria defined by the `missing` method.
-            # This means all outputs must have the same dimensions as the broadcasted inputs (excluding time)
-            options = self.missing_options or OPTIONS[MISSING_OPTIONS].get(
-                self.missing, {}
-            )
-
-            # We flag periods according to the missing method. skip variables without a time coordinate.
-            src_freq = self.src_freq if isinstance(self.src_freq, str) else None
-            miss = (
-                self._missing(
-                    da, params["freq"], src_freq, options, params.get("indexer", {})
-                )
-                for da in das.values()
-                if "time" in da.coords
-            )
-            # Reduce by or and broadcast to ensure the same length in time
-            # When indexing is used and there are no valid points in the last period, mask will not include it
-            mask = reduce(np.logical_or, miss)
-            if isinstance(mask, DataArray) and mask.time.size < outs[0].time.size:
-                mask = mask.reindex(time=outs[0].time, fill_value=True)
-            outs = [out.where(~mask) for out in outs]
-
-        return outs
-
-
-class ResamplingIndicatorWithIndexing(ResamplingIndicator):
-    """Resampling indicator that also injects "indexer" kwargs to subset the inputs before computation."""
+class IndexingIndicator(Indicator):
+    """Indicator that also injects "indexer" kwargs to subset the inputs before computation."""
 
     @classmethod
     def _injected_parameters(cls):
@@ -1495,6 +1539,12 @@ class ResamplingIndicatorWithIndexing(ResamplingIndicator):
         return das, params
 
 
+class ResamplingIndicatorWithIndexing(ResamplingIndicator, IndexingIndicator):
+    """Resampling indicator that also injects "indexer" kwargs to subset the inputs before computation."""
+
+    pass
+
+
 class Daily(ResamplingIndicator):
     """Class for daily inputs and resampling computes."""
 
@@ -1508,6 +1558,8 @@ class Hourly(ResamplingIndicator):
 
 
 base_registry["Indicator"] = Indicator
+base_registry["ReducingIndicator"] = ReducingIndicator
+base_registry["IndexingIndicator"] = IndexingIndicator
 base_registry["ResamplingIndicator"] = ResamplingIndicator
 base_registry["ResamplingIndicatorWithIndexing"] = ResamplingIndicatorWithIndexing
 base_registry["Hourly"] = Hourly
@@ -1709,11 +1761,10 @@ def build_indicator_module_from_yaml(
         """Merge or replace attribute in dbase from dextra."""
         a = dbase.get(attr)
         b = dextra.get(attr)
-        # If both are not None and sep is a string, join.
-        if a and b and sep is not None:
+        # If both are not None, join.
+        if a and b:
             dbase[attr] = sep.join([a, b])
-        # If both are not None but sep is, this overrides with b
-        # also fills when a is simply missing
+        # Otherwise, if a is None, but not b, replace.
         elif b:
             dbase[attr] = b
 
@@ -1753,7 +1804,8 @@ def build_indicator_module_from_yaml(
 
             _merge_attrs(data, defkwargs, "references", "\n")
             _merge_attrs(data, defkwargs, "keywords", " ")
-            _merge_attrs(data, defkwargs, "realm", None)
+            if data.get("realm") is None and defkwargs.get("realm") is not None:
+                data["realm"] = defkwargs["realm"]
 
             mapping[identifier] = Indicator.from_dict(
                 data, identifier=identifier, module=module_name

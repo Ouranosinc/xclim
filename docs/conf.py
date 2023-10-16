@@ -14,12 +14,13 @@
 from __future__ import annotations
 
 import datetime
+import json
 import os
 import sys
 import warnings
-from collections import OrderedDict
 
 import xarray
+import yaml
 from pybtex.plugin import register_plugin  # noqa
 from pybtex.style.formatting.alpha import Style as AlphaStyle  # noqa
 from pybtex.style.labels import BaseLabelStyle  # noqa
@@ -29,6 +30,7 @@ xarray.Dataset.__module__ = "xarray"
 xarray.CFTimeIndex.__module__ = "xarray"
 
 import xclim  # noqa
+from xclim.core.indicator import registry  # noqa
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory is
@@ -38,51 +40,40 @@ import xclim  # noqa
 sys.path.insert(0, os.path.abspath(".."))
 sys.path.insert(0, os.path.abspath("."))
 
+# Indicator data for populating the searchable indicators page
+# Get all indicators and some information about them
+indicators = {}
+# FIXME: Include cf module when its indicators documentation is improved.
+for module in ("atmos", "generic", "land", "seaIce", "icclim", "anuclim"):
+    for key, ind in getattr(xclim.indicators, module).__dict__.items():
+        if hasattr(ind, "_registry_id") and ind._registry_id in registry:  # noqa
+            indicators[ind._registry_id] = {
+                "realm": ind.realm,
+                "title": ind.title,
+                "name": key,
+                "module": module,
+                "abstract": ind.abstract,
+                "vars": {
+                    param_name: f"{param.description}"
+                    for param_name, param in ind._all_parameters.items()
+                    if param.kind < 2 and not param.injected
+                },
+                "keywords": ind.keywords.split(","),
+            }
+# Sort by title
+indicators = dict(sorted(indicators.items(), key=lambda kv: kv[1]["title"]))
 
-def _get_indicators(module):
-    """For all modules or classes listed, return the children that are instances of registered Indicator classes.
-
-    module : A xclim module.
-    """
-    from xclim.core.indicator import registry
-
-    out = {}
-    for key, val in module.__dict__.items():
-        if hasattr(val, "_registry_id") and val._registry_id in registry:  # noqa
-            out[key] = val
-
-    return OrderedDict(sorted(out.items()))
-
-
-def _indicator_table(module):
-    """Return a sequence of dicts storing metadata about all available indices in xclim."""
-    inds = _get_indicators(getattr(xclim.indicators, module))
-    table = {}
-    for ind_name, ind in inds.items():
-        # Apply default values
-        # args = {
-        #     name: p.default if p.default != inspect._empty else f"<{name}>"
-        #     for (name, p) in ind._sig.parameters.items()
-        # }
-        try:
-            table[ind_name] = ind.json()  # args?
-        except KeyError as err:
-            warnings.warn(
-                f"{ind.identifier} could not be documented.({err})", UserWarning
-            )
-        else:
-            table[ind_name]["doc"] = ind.__doc__
-            if ind.compute.__module__.endswith("generic"):
-                table[ind_name][
-                    "function"
-                ] = f"xclim.indices.generic.{ind.compute.__name__}"
-            else:
-                table[ind_name]["function"] = f"xclim.indices.{ind.compute.__name__}"
-    return table
+# Dump indicators to json. The json is added to the html output (html_extra_path)
+# It is read by _static/indsearch.js to populate the table in indicators.rst
+with open("indicators.json", "w") as f:
+    json.dump(indicators, f)
 
 
-modules = ("atmos", "land", "seaIce", "cf", "icclim", "anuclim")
-indicators = {module: _indicator_table(module) for module in modules}
+# Dump variables information
+with open("variables.json", "w") as fout:
+    with open("../xclim/data/variables.yml") as fin:
+        data = yaml.safe_load(fin)
+    json.dump(data, fout)
 
 # -- General configuration ---------------------------------------------
 
@@ -108,11 +99,16 @@ extensions = [
     "autodoc_indicator",
     "sphinxcontrib.bibtex",
     "sphinxcontrib.cairosvgconverter",
+    # sphinx_autodoc_typehints must always be listed after sphinx.ext.napoleon
     "sphinx_autodoc_typehints",
     "sphinx_codeautolink",
     "sphinx_copybutton",
     "sphinx_rtd_theme",
 ]
+
+autodoc_typehints = "description"
+autodoc_typehints_format = "fully-qualified"
+autodoc_typehints_description_target = "documented_params"
 
 autosectionlabel_prefix_document = True
 autosectionlabel_maxdepth = 2
@@ -177,10 +173,11 @@ numpydoc_class_members_toctree = False
 intersphinx_mapping = {
     "clisops": ("https://clisops.readthedocs.io/en/latest/", None),
     "flox": ("https://flox.readthedocs.io/en/latest/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
     "sklearn": ("https://scikit-learn.org/stable/", None),
     "statsmodels": ("https://www.statsmodels.org/stable/", None),
-    "numpy": ("https://numpy.org/doc/stable/", None),
 }
 extlinks = {
     "issue": ("https://github.com/Ouranosinc/xclim/issues/%s", "GH/%s"),
@@ -227,6 +224,7 @@ nbsphinx_prolog = r"""
 """
 nbsphinx_timeout = 300
 nbsphinx_allow_errors = False
+# nbsphinx_requirejs_path = ""  # To make MiniSearch work in the indicators page
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -288,7 +286,7 @@ html_short_title = "XClim"
 
 html_theme = "sphinx_rtd_theme"
 
-html_context = {"indicators": indicators}
+html_extra_path = ["indicators.json", "variables.json"]
 
 # Theme options are theme-specific and customize the look and feel of a
 # theme further.  For a list of options available for each theme, see the
