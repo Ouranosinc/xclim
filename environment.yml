@@ -43,6 +43,7 @@ dependencies:
     - ipython
     - matplotlib
     - mypy
+    - nbqa
     - nbsphinx
     - nbval
     - nc-time-axis
