@@ -21,6 +21,7 @@ from .processing import escore
 
 
 def _adapt_freq_hist(ds, adapt_freq_thresh):
+    """Adapt frequency of null values of `hist`    in order to match `ref`."""
     with units.context(infer_context(ds.ref.attrs.get("standard_name"))):
         thresh = convert_units_to(adapt_freq_thresh, ds.ref)
     dim = ["time"] + ["window"] * ("window" in ds.hist.dims)
@@ -42,6 +43,10 @@ def dqm_train(ds, *, dim, kind, quantiles, adapt_freq_thresh) -> xr.Dataset:
     Dataset must contain the following variables:
       ref : training target
       hist : training data
+
+    adapt_freq_thresh : str | None
+        Threshold for frequency adaptation. See :py:class:`xclim.sdba.processing.adapt_freq` for details.
+        Default is None, meaning that frequency adaptation is not performed.
     """
     hist = _adapt_freq_hist(ds, adapt_freq_thresh) if adapt_freq_thresh else ds.hist
 
@@ -69,6 +74,10 @@ def eqm_train(ds, *, dim, kind, quantiles, adapt_freq_thresh) -> xr.Dataset:
     Dataset variables:
       ref : training target
       hist : training data
+
+    adapt_freq_thresh : str | None
+        Threshold for frequency adaptation. See :py:class:`xclim.sdba.processing.adapt_freq` for details.
+        Default is None, meaning that frequency adaptation is not performed.
     """
     hist = _adapt_freq_hist(ds, adapt_freq_thresh) if adapt_freq_thresh else ds.hist
     ref_q = nbu.quantile(ds.ref, quantiles, dim)

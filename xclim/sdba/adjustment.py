@@ -328,6 +328,9 @@ class EmpiricalQuantileMapping(TrainAdjust):
     group : Union[str, Grouper]
         The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
         Default is "time", meaning an single adjustment group along dimension "time".
+    adapt_freq_thresh : str | None
+        Threshold for frequency adaptation. See :py:class:`xclim.sdba.processing.adapt_freq` for details.
+        Default is None, meaning that frequency adaptation is not performed.
 
     Adjust step:
 
@@ -419,6 +422,9 @@ class DetrendedQuantileMapping(TrainAdjust):
     group : Union[str, Grouper]
         The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
         Default is "time", meaning a single adjustment group along dimension "time".
+    adapt_freq_thresh : str | None
+        Threshold for frequency adaptation. See :py:class:`xclim.sdba.processing.adapt_freq` for details.
+        Default is None, meaning that frequency adaptation is not performed.
 
     Adjust step:
 
