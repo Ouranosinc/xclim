@@ -210,3 +210,70 @@ markers = [
   "requires_docs: mark tests that can only be run with documentation present (deselect with '-m \"not requires_docs\"')",
   "requires_internet: mark tests that require internet access (deselect with '-m \"not requires_internet\"')"
 ]
+
+[tool.ruff]
+src = ["xclim"]
+line-length = 150
+target-version = "py38"
+exclude = [
+  ".git",
+  "docs",
+  "build",
+  ".eggs",
+  "tests"
+]
+ignore = [
+  "C901",
+  "D107",
+  "D205",
+  "D400",
+  "D401",
+  "F401",
+  "F403",
+  "W505"
+]
+select = [
+  "C9",
+  "D",
+  "E",
+  "F",
+  "W"
+]
+
+[tool.ruff.flake8-bandit]
+check-typed-exception = true
+
+[tool.ruff.flake8-import-conventions.aliases]
+"matplotlib.pyplot" = "plt"
+numpy = "np"
+pandas = "pd"
+scipy = "sp"
+xarray = "xr"
+
+[tool.ruff.format]
+line-ending = "auto"
+
+[tool.ruff.isort]
+known-first-party = ["xclim"]
+case-sensitive = true
+detect-same-package = false
+lines-after-imports = 1
+no-lines-before = ["future", "standard-library"]
+
+[tool.ruff.per-file-ignores]
+"tests/*" = ["D100", "D101", "D102", "D103", "E402"]
+"xclim/core/indicator.py" = ["D214", "D405", "D406", "D407", "D411"]
+"xclim/core/locales.py" = ["E501"]
+"xclim/core/missing" = ["D103"]
+"xclim/indices/_agro.py" = ["E501"]
+"xclim/indices/fire/_cffwis.py" = ["D103"]
+"xclim/indices/fire/_ffdi.py" = ["D403"]
+"xclim/sdba/utils.py" = ["D103"]
+"xclim/testing/*" = ["D103", "D205", "D400", "D401", "D403"]
+"xclim/docs/*.py" = ["D205", "D400", "D401", "D403"]
+
+[tool.ruff.pycodestyle]
+max-doc-length = 180
+
+[tool.ruff.pydocstyle]
+convention = "numpy"
