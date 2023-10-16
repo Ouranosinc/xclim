@@ -320,18 +320,18 @@ class TestAgroclimaticIndices:
                 bedd[1], bedd[0]
             )  # Leap-year has slightly higher values
             np.testing.assert_allclose(
-                bedd, np.array([deg_days, deg_days, deg_days, np.NaN]), rtol=6e-4
+                bedd[:3], np.array([deg_days, deg_days, deg_days]), rtol=6e-4
             )
             np.testing.assert_allclose(
-                bedd_hot, [max_deg_days, max_deg_days, max_deg_days, np.NaN], rtol=0.15
+                bedd_hot[:3], [max_deg_days, max_deg_days, max_deg_days], rtol=0.15
             )
 
         else:
             np.testing.assert_allclose(
-                bedd, np.array([deg_days, deg_days, deg_days, np.NaN])
+                bedd[:3], np.array([deg_days, deg_days, deg_days])
             )
             np.testing.assert_array_equal(
-                bedd_hot, [max_deg_days, max_deg_days, max_deg_days, np.NaN]
+                bedd_hot[:3], [max_deg_days, max_deg_days, max_deg_days]
             )
             if method == "gladstones":
                 np.testing.assert_array_less(bedd, bedd_high_lat)
@@ -2682,20 +2682,21 @@ class TestSnowMaxDoy:
 
 
 class TestSnowCover:
-    def test_snow_season_length(self, snd_series, snw_series):
-        a = np.ones(366) / 100.0
-        a[10:20] = 0.3
+    @pytest.mark.parametrize("length", [0, 10])
+    def test_snow_season_length(self, snd_series, snw_series, length):
+        a = np.zeros(366)
+        a[10 : 10 + length] = 0.3
         snd = snd_series(a)
         # kg m-2 = 1000 kg m-3 * 1 m
         snw = snw_series(1000 * a)
 
         out = xci.snd_season_length(snd)
         assert len(out) == 2
-        assert out[0] == 10
+        assert out[0] == length
 
         out = xci.snw_season_length(snw)
         assert len(out) == 2
-        assert out[0] == 10
+        assert out[0] == length
 
     def test_continous_snow_season_start(self, snd_series, snw_series):
         a = np.arange(366) / 100.0

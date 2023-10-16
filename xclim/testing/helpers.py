@@ -8,6 +8,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import xarray as xr
+from dask.diagnostics import Callback
 from yaml import safe_load
 
 from xclim.core import calendar
@@ -66,6 +67,7 @@ __all__ = [
     "PREFETCH_TESTING_DATA",
     "TESTDATA_BRANCH",
     "add_example_file_paths",
+    "assert_lazy",
     "generate_atmos",
     "populate_testing_data",
     "test_timeseries",
@@ -252,3 +254,14 @@ def test_timeseries(
         return da.to_dataset()
     else:
         return da
+
+
+def _raise_on_compute(dsk: dict):
+    """Raise an AssertionError mentionning the number triggered tasks."""
+    raise AssertionError(
+        f"Not lazy. Computation was triggered with a graph of {len(dsk)} tasks."
+    )
+
+
+assert_lazy = Callback(start=_raise_on_compute)
+"""Context manager that raises an AssertionError if any dask computation is triggered."""

@@ -14,7 +14,7 @@ jobs:
     name: Check Latest xclim-testdata Tag
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3.6.0
+      - uses: actions/checkout@v4.1.0
       - name: Find xclim-testdata Tag and CI Testing Branch
         run: |
           XCLIM_TESTDATA_TAG="$( \

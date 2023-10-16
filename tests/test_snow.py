@@ -25,11 +25,14 @@ class TestSnowDepthCoverDuration:
 
 
 class TestSnowWaterCoverDuration:
-    def test_simple(self, snw_series):
-        snw = snw_series(np.ones(110) * 1000, start="2001-01-01")
+    @pytest.mark.parametrize(
+        "factor,exp", ([1000, [31, 28, 31, np.NaN]], [0, [0, 0, 0, np.NaN]])
+    )
+    def test_simple(self, snw_series, factor, exp):
+        snw = snw_series(np.ones(110) * factor, start="2001-01-01")
         out = land.snw_season_length(snw, freq="M")
         assert out.units == "days"
-        np.testing.assert_array_equal(out, [31, 28, 31, np.nan])
+        np.testing.assert_array_equal(out, exp)
 
 
 class TestContinuousSnowDepthCoverStartEnd:

@@ -296,7 +296,7 @@ def cosine_of_solar_zenith_angle(
         _wrap_radians(h_e),
         stat == "average",
         input_core_dims=[[]] * 6,
-        dask="parallel",
+        dask="parallelized",
     )
 
 
@@ -429,9 +429,10 @@ def day_lengths(
     lat = convert_units_to(lat, "rad")
     # arccos gives the hour-angle at sunset, multiply by 24 / 2π to get hours.
     # The day length is twice that.
-    day_length_hours = (
-        (24 / np.pi) * np.arccos(-np.tan(lat) * np.tan(declination))
-    ).assign_attrs(units="h")
+    with np.errstate(invalid="ignore"):
+        day_length_hours = (
+            (24 / np.pi) * np.arccos(-np.tan(lat) * np.tan(declination))
+        ).assign_attrs(units="h")
 
     return day_length_hours
 
