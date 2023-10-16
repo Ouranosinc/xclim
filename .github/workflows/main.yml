@@ -70,9 +70,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install tox
-        run: pip install tox~=4.0
+        run: |
+          pip install tox~=4.0
       - name: Test with tox
-        run: tox -e ${{ matrix.tox-env }}
+        run: |
+          tox -e ${{ matrix.tox-env }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-{{ matrix.tox-env }}
@@ -116,10 +118,16 @@ jobs:
         uses: actions/setup-python@v4.7.0
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install importlib-resources
+        if: contains(matrix.tox-env, 'py38')
+        run: |
+          pip install importlib-resources
       - name: Install tox
-        run: pip install tox~=4.0
+        run: |
+          pip install tox~=4.0
       - name: Test with tox
-        run: tox -e ${{ matrix.tox-env }} -- ${{ matrix.markers }}
+        run: |
+          tox -e ${{ matrix.tox-env }} -- ${{ matrix.markers }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: run-{{ matrix.tox-env }}
