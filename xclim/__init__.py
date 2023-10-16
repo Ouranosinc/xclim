@@ -1,7 +1,10 @@
 """Climate indices computation package based on Xarray."""
 from __future__ import annotations
 
-from importlib.resources import files as _files
+try:
+    from importlib.resources import files as _files
+except ImportError:
+    from importlib_resources import files as _files
 
 from xclim.core import units  # noqa
 from xclim.core.indicator import build_indicator_module_from_yaml

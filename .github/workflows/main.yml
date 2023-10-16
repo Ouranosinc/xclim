@@ -118,10 +118,6 @@ jobs:
         uses: actions/setup-python@v4.7.0
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install importlib-resources
-        if: contains(matrix.tox-env, 'py38')
-        run: |
-          pip install importlib-resources
       - name: Install tox
         run: |
           pip install tox~=4.0
