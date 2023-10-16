@@ -33,19 +33,22 @@ details on each.
     references: <references> # Merged with indicator-specific references (joined with a new line)
     base: <base indicator class>  # Defaults to "Daily" and applies to all indicators that do not give it.
     doc: <module docstring>  # Defaults to a minimal header, only valid if the module doesn't already exist.
-    variables:  # Optional section if indicators declared below rely on variables unknown to xclim (no in `xclim.core.utils.VARIABLES`)
+    variables:  # Optional section if indicators declared below rely on variables unknown to xclim
+                # (not in `xclim.core.utils.VARIABLES`)
                 # The variables are not module-dependent and will overwrite any already existing with the same name.
       <varname>:
         canonical_units: <units> # required
         description: <description> # required
         standard_name: <expected standard_name> # optional
-        cell_methods: <exptected cell_methods> # optional
+        cell_methods: <expected cell_methods> # optional
     indicators:
       <identifier>:
         # From which Indicator to inherit
         base: <base indicator class>  # Defaults to module-wide base class
-                                      # If the name startswith a '.', the base class is taken from the current module (thus an indicator declared _above_)
-                                      # Available classes are listed in `xclim.core.indicator.registry` and `xclim.core.indicator.base_registry`.
+                                      # If the name startswith a '.', the base class is taken from the current module
+                                      # (thus an indicator declared _above_).
+                                      # Available classes are listed in `xclim.core.indicator.registry` and
+                                      # `xclim.core.indicator.base_registry`.
 
         # General metadata, usually parsed from the `compute`'s docstring when possible.
         realm: <realm>  # defaults to module-wide realm. One of "atmos", "land", "seaIce", "ocean".
@@ -62,7 +65,7 @@ details on each.
         allowed_periods: [<list>, <of>, <allowed>, <periods>]
 
         # Compute function
-        compute: <function name>  # Referring to a function in the supplied `Indices` module, xclim.indices.generic or xclim.indices
+        compute: <function name>  # Referring to a function in `Indices` module (xclim.indices.generic or xclim.indices)
         input:  # When "compute" is a generic function, this is a mapping from argument name to the expected variable.
                 # This will allow the input units and CF metadata checks to run on the inputs.
                 # Can also be used to modify the expected variable, as long as it has the same dimensionality

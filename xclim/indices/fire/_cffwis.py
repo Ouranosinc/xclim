@@ -1166,7 +1166,7 @@ def overwintering_drought_code(
     | float = default_params["wetting_efficiency_fraction"],
     min_dc: xr.DataArray | float = default_params["dc_start"],
 ) -> xr.DataArray:
-    """Compute the season-starting drought code based on the previous season's last drought code and the total winter precipitation.
+    """Compute season-starting drought code based on previous season's last drought code and total winter precipitation.
 
     This method replicates the "wDC" method of the "cffdrs R package :cite:p:`cantin_canadian_2014`, with an added
     control on the "minimum" DC.
@@ -1205,13 +1205,16 @@ def overwintering_drought_code(
 
     Carry-over fraction of last fall's moisture:
         - 1.0, Daily DC calculated up to 1 November; continuous snow cover, or freeze-up, whichever comes first
-        - 0.75, Daily DC calculations stopped before any of the above conditions met or the area is subject to occasional winter chinook conditions, leaving the ground bare and subject to moisture depletion
+        - 0.75, Daily DC calculations stopped before any of the above conditions met or the area is subject to
+          occasional winter chinook conditions, leaving the ground bare and subject to moisture depletion
         - 0.5,  Forested areas subject to long periods in fall or winter that favor depletion of soil moisture
 
     Effectiveness of winter precipitation in recharging moisture reserves in spring:
         - 0.9, Poorly drained, boggy sites with deep organic layers
-        - 0.75, Deep ground frost does not occur until late fall, if at all; moderately drained sites that allow infiltration of most of the melting snowpack
-        - 0.5, Chinook-prone areas and areas subject to early and deep ground frost; well-drained soils favoring rapid percolation or topography favoring rapid runoff before melting of ground frost
+        - 0.75, Deep ground frost does not occur until late fall, if at all; moderately drained sites that allow
+          infiltration of most of the melting snowpack
+        - 0.5, Chinook-prone areas and areas subject to early and deep ground frost; well-drained soils favoring rapid
+          percolation or topography favoring rapid runoff before melting of ground frost
 
     Source: :cite:cts:`drought-lawson_weather_2008` - Table 9.
 

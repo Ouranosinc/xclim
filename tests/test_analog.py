@@ -20,7 +20,6 @@ def matlab_sample(n=30):
     Climate Analogs" to compare against the functions here. The sample
     created here is identical to the sample used to drive the Matlab code.
 
-
     Parameters
     ----------
     n : int
@@ -31,7 +30,6 @@ def matlab_sample(n=30):
     2D array, 2D array
        Synthetic samples (3, n)
     """
-
     z = 1.0 * (np.arange(n) + 1) / n - 0.5
 
     x = np.vstack([z * 2 + 30, z * 3 + 40, z]).T
@@ -318,7 +316,6 @@ class TestKLDIV:
     #
     def test_mvnormal(self, random):
         """Compare the results to the figure 2 in the paper."""
-
         n = 30000
         p = random.normal(0, 1, size=(n, 2))
         q = random.multivariate_normal([0.5, -0.5], [[0.5, 0.1], [0.1, 0.3]], size=n)

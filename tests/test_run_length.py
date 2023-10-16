@@ -104,7 +104,7 @@ def test_rle(ufunc, use_dask, index):
 
     if ufunc:
         da = da[0, :, 0, 0]
-        v, l, p = rl.rle_1d(da != 0)
+        v, l, p = rl.rle_1d(da != 0)  # noqa: E741
         np.testing.assert_array_equal(v, [False, True, False])
         np.testing.assert_array_equal(l, [1, 10, 354])
         np.testing.assert_array_equal(p, [0, 1, 11])

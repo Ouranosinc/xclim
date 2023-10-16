@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from functools import partial
-
 import numpy as np
 import pytest
 import xarray as xr

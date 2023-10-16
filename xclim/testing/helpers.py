@@ -9,7 +9,6 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from dask.diagnostics import Callback
-from yaml import safe_load
 
 from xclim.core import calendar
 from xclim.core.utils import VARIABLES

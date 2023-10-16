@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from xclim.core.cfchecks import check_valid
-from xclim.core.indicator import Indicator, ResamplingIndicator
+from xclim.core.indicator import ResamplingIndicator
 from xclim.core.units import declare_units
 from xclim.indices import base_flow_index, generic, rb_flashiness_index
 

@@ -17,10 +17,8 @@ from xclim.core.units import (
     to_agg_units,
 )
 from xclim.core.utils import DayOfYearStr, Quantified
-from xclim.indices.helpers import _gather_lat
 
 from . import run_length as rl
-from ._simple import frost_days
 from .generic import (
     compare,
     cumulative_difference,
@@ -1888,7 +1886,8 @@ def hot_spell_max_length(
     """
     if thresh_tasmax != "UNSET":
         warnings.warn(
-            "The call signature for this indicator will change from `thresh_tasmax` to `thresh` in xclim>=0.45.0.  Passing `thresh_tasmax` value to `thresh`."
+            "The call signature for this indicator will change from `thresh_tasmax` to `thresh` in xclim>=0.45.0. "
+            "Passing `thresh_tasmax` value to `thresh`."
         )
         thresh = thresh_tasmax
     thresh = convert_units_to(thresh, tasmax)
@@ -1952,7 +1951,8 @@ def hot_spell_total_length(
     """
     if thresh_tasmax != "UNSET":
         warnings.warn(
-            "The call signature for this indicator will change from `thresh_tasmax` to `thresh` in xclim>=0.45.0.  Passing `thresh_tasmax` value to `thresh`."
+            "The call signature for this indicator will change from `thresh_tasmax` to `thresh` in xclim>=0.45.0. "
+            "Passing `thresh_tasmax` value to `thresh`."
         )
         thresh = thresh_tasmax
 
@@ -2021,7 +2021,8 @@ def hot_spell_frequency(
     """
     if thresh_tasmax != "UNSET":
         warnings.warn(
-            "The call signature for this indicator will change from `thresh_tasmax` to `thresh` in xclim>=0.45.0.  Passing `thresh_tasmax` value to `thresh`."
+            "The call signature for this indicator will change from `thresh_tasmax` to `thresh` in xclim>=0.45.0. "
+            "Passing `thresh_tasmax` value to `thresh`."
         )
         thresh = thresh_tasmax
     thresh = convert_units_to(thresh, tasmax)

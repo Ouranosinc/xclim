@@ -2,8 +2,6 @@
 # Expected values might be the same as for the indices tests, see test_indices comments.
 from __future__ import annotations
 
-import sys
-
 import numpy as np
 import pytest
 import xarray as xr

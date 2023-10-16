@@ -18,7 +18,7 @@ import xarray
 from ..indices.run_length import suspicious_run
 from .calendar import climatological_mean_doy, within_bnds_doy
 from .formatting import update_xclim_history
-from .units import convert_units_to, declare_units, infer_context, str2pint, units
+from .units import convert_units_to, declare_units, infer_context, str2pint
 from .utils import (
     VARIABLES,
     InputKind,

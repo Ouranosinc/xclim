@@ -934,20 +934,24 @@ def rain_season(
     thresh_wet_start: Quantified
         Accumulated precipitation threshold associated with `window_wet_start`.
     window_wet_start: int
-        Number of days when accumulated precipitation is above `thresh_wet_start`. Defines the first condition to start the rain season
+        Number of days when accumulated precipitation is above `thresh_wet_start`.
+        Defines the first condition to start the rain season
     window_not_dry_start: int
-        Number of days, after `window_wet_start` days, during which no dry period must be found as a second and last condition to start the rain season.
+        Number of days, after `window_wet_start` days, during which no dry period must be found as a second and last
+        condition to start the rain season.
         A dry sequence is defined with `thresh_dry_start`, `window_dry_start` and `method_dry_start`.
     thresh_dry_start: Quantified
         Threshold length defining a dry day in the sequence related to `window_dry_start`.
     window_dry_start: int
-        Number of days used to define a dry sequence in the start of the season. Daily precipitations lower than `thresh_dry_start`
-        during `window_dry_start` days are considered a dry sequence. The precipitations must be lower than `thresh_dry_start`
-        for either every day in the sequence (`method_dry_start == "per_day"`) or for the total (`method_dry_start == "total"`).
+        Number of days used to define a dry sequence in the start of the season.
+        Daily precipitations lower than `thresh_dry_start` during `window_dry_start` days are considered a dry sequence.
+        The precipitations must be lower than `thresh_dry_start` for either every day in the sequence
+        (`method_dry_start == "per_day"`) or for the total (`method_dry_start == "total"`).
     method_dry_start: {"per_day", "total"}
-        Method used to define a dry sequence associated with `window_dry_start`. The threshold `thresh_dry_start` is either compared
-        to every daily precipitations (`method_dry_start == "per_day"`) or to total precipitations (`method_dry_start == "total"`)
-        in the sequence `window_dry_start` days.
+        Method used to define a dry sequence associated with `window_dry_start`.
+        The threshold `thresh_dry_start` is either compared to every daily precipitation
+        (`method_dry_start == "per_day"`) or to total precipitations (`method_dry_start == "total"`) in the sequence
+        `window_dry_start` days.
     date_min_start: DayOfYearStr
         First day of year when season can start ("mm-dd").
     date_max_start: DayOfYearStr
@@ -955,13 +959,14 @@ def rain_season(
     thresh_dry_end: str
         Threshold length defining a dry day in the sequence related to `window_dry_end`.
     window_dry_end: int
-        Number of days used to define a dry sequence in the end of the season. Daily precipitations lower than `thresh_dry_end`
-        during `window_dry_end` days are considered a dry sequence. The precipitations must be lower than `thresh_dry_end`
-        for either every day in the sequence (`method_dry_end == "per_day"`) or for the total (`method_dry_end == "total"`).
+        Number of days used to define a dry sequence in the end of the season.
+        Daily precipitations lower than `thresh_dry_end` during `window_dry_end` days are considered a dry sequence.
+        The precipitations must be lower than `thresh_dry_end` for either every day in the sequence
+        (`method_dry_end == "per_day"`) or for the total (`method_dry_end == "total"`).
     method_dry_end: {"per_day", "total"}
-        Method used to define a dry sequence associated with `window_dry_end`. The threshold `thresh_dry_end` is either compared
-        to every daily precipitations (`method_dry_end == "per_day"`) or to total precipitations (`method_dry_end == "total"`)
-        in the sequence `window_dry` days.
+        Method used to define a dry sequence associated with `window_dry_end`.
+        The threshold `thresh_dry_end` is either compared to every daily precipitation (`method_dry_end == "per_day"`)
+        or to total precipitations (`method_dry_end == "total"`) in the sequence `window_dry` days.
     date_min_end: DayOfYearStr
         First day of year when season can end ("mm-dd").
     date_max_end: DayOfYearStr
@@ -977,12 +982,13 @@ def rain_season(
 
     Notes
     -----
-    The rain season starts at the end of a period of raining (a total precipitation  of `thresh_wet_start` over `window_wet_start` days). This must
-    be directly followed by a period of `window_not_dry_start` days with no dry sequence. The dry sequence is a period of `window_dry_start`
-    days where precipitations are below `thresh_dry_start` (either the total precipitations over the period, or the daily precipitations, depending
-    on `method_dry_start`). The rain season stops when a dry sequence happens (the dry sequence is defined as in the start sequence,
-    but with parameters `window_dry_end`, `thresh_dry_end` and `method_dry_end`). The dates on which the season can start are constrained
-    by `date_min_start`and `date_max_start` (and similarly for the end of the season).
+    The rain season starts at the end of a period of raining (a total precipitation  of `thresh_wet_start` over
+    `window_wet_start` days). This must be directly followed by a period of `window_not_dry_start` days with no dry
+    sequence. The dry sequence is a period of `window_dry_start` days where precipitations are below `thresh_dry_start`
+    (either the total precipitations over the period, or the daily precipitations, depending on `method_dry_start`).
+    The rain season stops when a dry sequence happens (the dry sequence is defined as in the start sequence, but with
+    parameters `window_dry_end`, `thresh_dry_end` and `method_dry_end`). The dates on which the season can start are
+    constrained by `date_min_start`and `date_max_start` (and similarly for the end of the season).
 
     References
     ----------
