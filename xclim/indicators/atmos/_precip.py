@@ -71,12 +71,14 @@ class FireWeather(Indicator):
 
     src_freq = "D"
     context = "hydro"
+    keywords = "fire"
 
 
 class Precip(Daily):
     """Indicator involving daily pr series."""
 
     context = "hydro"
+    keywords = "precipitation"
 
 
 class PrecipWithIndexing(ResamplingIndicatorWithIndexing):
@@ -84,6 +86,7 @@ class PrecipWithIndexing(ResamplingIndicatorWithIndexing):
 
     src_freq = "D"
     context = "hydro"
+    keywords = "precipitation"
 
 
 class PrTasxWithIndexing(ResamplingIndicatorWithIndexing):
@@ -91,6 +94,7 @@ class PrTasxWithIndexing(ResamplingIndicatorWithIndexing):
 
     src_freq = "D"
     context = "hydro"
+    keywords = "precipitation"
 
     def cfcheck(self, pr, tas):
         cfchecks.cfcheck_from_name("pr", pr)
@@ -108,6 +112,7 @@ class HrPrecip(Hourly):
     """Indicator involving hourly pr series."""
 
     context = "hydro"
+    keywords = "precipitation"
 
 
 rain_on_frozen_ground_days = PrTasxWithIndexing(
@@ -363,6 +368,7 @@ standardized_precipitation_index = StandardizedIndexes(
     abstract="Precipitation over a moving window, normalized such that SPI averages to 0 for the calibration data. "
     "The window unit `X` is the minimal time period defined by the resampling frequency.",
     cell_methods="",
+    keywords="precipitation",
     compute=indices.standardized_precipitation_index,
 )
 
@@ -379,6 +385,7 @@ standardized_precipitation_evapotranspiration_index = StandardizedIndexes(
     "SPEI averages to 0 for the calibration data. The window unit `X` is the minimal time period defined by the "
     "resampling frequency.",
     cell_methods="",
+    keywords="precipitation",
     compute=indices.standardized_precipitation_evapotranspiration_index,
 )
 

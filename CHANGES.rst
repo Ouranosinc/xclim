@@ -46,6 +46,7 @@ Internal changes
 * The `pkg_resources` library has been replaced for the `packaging` library when version comparisons have been performed, and a few warning messages have been silenced in the testing suite. (:issue:`1489`, :pull:`1490`).
 * New ``xclim.testing.helpers.assert_lazy`` context manager to assert the laziness of code blocks. (:pull:`1484`).
 * Added a fix for the deprecation warnings that `importlib.resources` throws, made backwards-compatible for Python3.8 with `importlib_resources` backport. (:pull:`1485`).
+* Added basic keywords on most indicators for easier searching in the docs. Extracted climate indicators API to its own page for faster loaing. (:pull:`1502`, :issue:`1433`).
 
 v0.45.0 (2023-09-05)
 --------------------

@@ -17,6 +17,7 @@ __all__ = [
 class Streamflow(ResamplingIndicator):
     context = "hydro"
     src_freq = "D"
+    keywords = "streamflow hydrology"
 
     @staticmethod
     def cfcheck(q):
