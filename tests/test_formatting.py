@@ -42,7 +42,7 @@ def test_indicator_docstring():
     )
 
     doc = degree_days_exceedance_date.__doc__.split("\n")
-    assert doc[20] == "  Default : >. "
+    assert doc[21] == "  Default : >. "
 
 
 def test_update_xclim_history(atmosds):
