@@ -6,6 +6,14 @@ v0.46.0 (unreleased)
 --------------------
 Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`), Pascal Bourgault (:user:`aulemahal`).
 
+New indicators
+^^^^^^^^^^^^^^
+* ``xclim.indices.snw_storm_days`` computes the number of days with snowfall amount accumulation above a threshold.
+
+Breaking changes
+^^^^^^^^^^^^^^^^
+* ``xclim.indices.winter_storm`` renamed to ``xclim.indices.snd_storm_days``.
+
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Add ``wind_power_potential`` to estimate the potential for wind power production given wind speed at the turbine hub height and turbine specifications, along with  ``wind_profile`` to estimate the wind speed at different heights based on wind speed at a reference height. (:issue:`1458`, :pull:`1471`)

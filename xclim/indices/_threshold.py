@@ -80,11 +80,13 @@ __all__ = [
     "snd_season_end",
     "snd_season_length",
     "snd_season_start",
+    "snd_storm_days",
     "snowfall_frequency",
     "snowfall_intensity",
     "snw_season_end",
     "snw_season_length",
     "snw_season_start",
+    "snw_storm_days",
     "tg_days_above",
     "tg_days_below",
     "tn_days_above",
@@ -99,7 +101,6 @@ __all__ = [
     "wetdays",
     "wetdays_prop",
     "windy_days",
-    "winter_storm",
 ]
 
 
@@ -399,7 +400,7 @@ def snd_season_end(
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def snw_season_end(
     snw: xarray.DataArray,
-    thresh: Quantified = "20 kg m-2",
+    thresh: Quantified = "4 kg m-2",
     window: int = 14,
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
@@ -507,7 +508,7 @@ def snd_season_start(
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def snw_season_start(
     snw: xarray.DataArray,
-    thresh: Quantified = "20 kg m-2",
+    thresh: Quantified = "4 kg m-2",
     window: int = 14,
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
@@ -558,6 +559,90 @@ def snw_season_start(
     )
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(snw))
     return out.where(~valid)
+
+
+@declare_units(snd="[length]", thresh="[length]")
+def snd_storm_days(
+    snd: xarray.DataArray, thresh: Quantified = "25 cm", freq: str = "AS-JUL"
+) -> xarray.DataArray:
+    """Days with snowfall over threshold.
+
+    Number of days with snowfall depth accumulation greater or equal to threshold (default: 25 cm).
+
+    Warnings
+    --------
+    The default `freq` is valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    snd : xarray.DataArray
+        Surface snow depth.
+    thresh : Quantified
+        Threshold on snowfall depth accumulation require to label an event a `snd storm`.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+        Number of days per period identified as winter storms.
+
+    Notes
+    -----
+    Snowfall accumulation is estimated by the change in snow depth.
+    """
+    thresh = convert_units_to(thresh, snd)
+
+    # Compute daily accumulation
+    acc = snd.diff(dim="time")
+
+    # Winter storm condition
+    out = threshold_count(acc, ">=", thresh, freq)
+
+    out.attrs["units"] = to_agg_units(out, snd, "count")
+    return out
+
+
+@declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
+def snw_storm_days(
+    snw: xarray.DataArray, thresh: Quantified = "10 kg m-2", freq: str = "AS-JUL"
+) -> xarray.DataArray:
+    """Days with snowfall over threshold.
+
+    Number of days with snowfall amount accumulation greater or equal to threshold (default: 10 kg m-2).
+
+    Warnings
+    --------
+    The default `freq` is valid for the northern hemisphere.
+
+    Parameters
+    ----------
+    snw : xarray.DataArray
+        Surface snow amount.
+    thresh : Quantified
+        Threshold on snowfall amount accumulation require to label an event a `snw storm`.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+        Number of days per period identified as winter storms.
+
+    Notes
+    -----
+    Snowfall accumulation is estimated by the change in snow amount.
+    """
+    thresh = convert_units_to(thresh, snw)
+
+    # Compute daily accumulation
+    acc = snw.diff(dim="time")
+
+    # Winter storm condition
+    out = threshold_count(acc, ">=", thresh, freq)
+
+    out.attrs["units"] = to_agg_units(out, snw, "count")
+    return out
 
 
 @declare_units(pr="[precipitation]", thresh="[precipitation]")
@@ -2078,7 +2163,7 @@ def snd_season_length(
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def snw_season_length(
     snw: xarray.DataArray,
-    thresh: Quantified = "20 kg m-2",
+    thresh: Quantified = "4 kg m-2",
     freq: str = "AS-JUL",
     op: str = ">=",
 ) -> xarray.DataArray:
@@ -2972,48 +3057,6 @@ def degree_days_exceedance_date(
 
     out = c.clip(0).resample(time=freq).map(_exceedance_date)
     out.attrs.update(units="", is_dayofyear=np.int32(1), calendar=get_calendar(tas))
-    return out
-
-
-@declare_units(snd="[length]", thresh="[length]")
-def winter_storm(
-    snd: xarray.DataArray, thresh: Quantified = "25 cm", freq: str = "AS-JUL"
-) -> xarray.DataArray:
-    """Days with snowfall over threshold.
-
-    Number of days with snowfall accumulation greater or equal to threshold (default: 25 cm).
-
-    Warnings
-    --------
-    The default `freq` is valid for the northern hemisphere.
-
-    Parameters
-    ----------
-    snd : xarray.DataArray
-        Surface snow depth.
-    thresh : Quantified
-        Threshold on snowfall accumulation require to label an event a `winter storm`.
-    freq : str
-        Resampling frequency.
-
-    Returns
-    -------
-    xarray.DataArray
-        Number of days per period identified as winter storms.
-
-    Notes
-    -----
-    Snowfall accumulation is estimated by the change in snow depth.
-    """
-    thresh = convert_units_to(thresh, snd)
-
-    # Compute daily accumulation
-    acc = snd.diff(dim="time")
-
-    # Winter storm condition
-    out = threshold_count(acc, ">=", thresh, freq)
-
-    out.attrs["units"] = to_agg_units(out, snd, "count")
     return out
 
 
