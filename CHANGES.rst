@@ -8,11 +8,12 @@ Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith 
 
 New indicators
 ^^^^^^^^^^^^^^
-* ``xclim.indices.snw_storm_days`` computes the number of days with snowfall amount accumulation above a threshold.
+* ``xclim.indices.snw_storm_days`` computes the number of days with snowfall amount accumulation above a threshold.  (:pull:`1505`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
-* ``xclim.indices.winter_storm`` renamed to ``xclim.indices.snd_storm_days``.
+* ``xclim.indices.winter_storm`` renamed to ``xclim.indices.snd_storm_days``.  (:pull:`1505`).
+* Default threshold in ``xclim.indices.snw_season_{start|length|end}`` changed form `20 kg m-2` to `4 kg m-2`.  (:pull:`1505`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
