@@ -3066,6 +3066,7 @@ def winter_storm(
     snd: xarray.DataArray, thresh: Quantified = "25 cm", freq: str = "AS-JUL"
 ) -> xarray.DataArray:
     """Days with snowfall over threshold.
+
     Number of days with snowfall accumulation greater or equal to threshold (default: 25 cm).
 
     Warnings
