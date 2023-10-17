@@ -2713,7 +2713,7 @@ class TestSnowCover:
 
         out = xci.snw_season_start(snw)
         assert len(out) == 2
-        np.testing.assert_array_equal(out, [snw.time.dt.dayofyear[0].data + 2, np.nan])
+        np.testing.assert_array_equal(out, [snw.time.dt.dayofyear[0].data + 1, np.nan])
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
         assert out.attrs["units"] == ""
