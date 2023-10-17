@@ -562,6 +562,55 @@ def snw_season_start(
 
 
 @declare_units(snd="[length]", thresh="[length]")
+def winter_storm(
+    snd: xarray.DataArray, thresh: Quantified = "25 cm", freq: str = "AS-JUL"
+) -> xarray.DataArray:
+    """Days with snowfall over threshold.
+    Number of days with snowfall accumulation greater or equal to threshold (default: 25 cm).
+
+    Warnings
+    --------
+    The default `freq` is valid for the northern hemisphere.
+    The `winter_storm` indice is being deprecated in favour of `snd_storm_days`. This indice will
+    be removed in `xclim>=0.47.0`.
+
+    Parameters
+    ----------
+    snd : xarray.DataArray
+        Surface snow depth.
+    thresh : Quantified
+        Threshold on snowfall accumulation require to label an event a `winter storm`.
+    freq : str
+        Resampling frequency.
+
+    Returns
+    -------
+    xarray.DataArray
+        Number of days per period identified as winter storms.
+
+    Notes
+    -----
+    Snowfall accumulation is estimated by the change in snow depth.
+    """
+    warnings.warn(
+        "The `winter_storm` indice is being deprecated in favour of `snd_storm_days`"
+        "This indice will be removed in `xclim>=0.47.0`. Please update your scripts accordingly.",
+        DeprecationWarning,
+        stacklevel=3,
+    )
+    thresh = convert_units_to(thresh, snd)
+
+    # Compute daily accumulation
+    acc = snd.diff(dim="time")
+
+    # Winter storm condition
+    out = threshold_count(acc, ">=", thresh, freq)
+
+    out.attrs["units"] = to_agg_units(out, snd, "count")
+    return out
+
+
+@declare_units(snd="[length]", thresh="[length]")
 def snd_storm_days(
     snd: xarray.DataArray, thresh: Quantified = "25 cm", freq: str = "AS-JUL"
 ) -> xarray.DataArray:
