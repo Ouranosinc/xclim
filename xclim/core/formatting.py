@@ -6,9 +6,9 @@ from __future__ import annotations
 
 import datetime as dt
 import itertools
-import logging
 import re
 import string
+import warnings
 from ast import literal_eval
 from fnmatch import fnmatch
 from inspect import _empty, signature  # noqa
@@ -124,18 +124,30 @@ class AttrFormatter(string.Formatter):
         'La moyenne annuelle est faite sur un échantillon mensuel'
         """
         baseval = self._match_value(value)
-        if baseval is not None and not format_spec:
+        if baseval is None:  # Not something we know how to translate
+            if format_spec in self.modifiers + [
+                "r"
+            ]:  # Woops, however a known format spec was asked
+                warnings.warn(
+                    f"Requested formatting `{format_spec}` for unknown string `{value}`."
+                )
+                format_spec = ""
+            return super().format_field(value, format_spec)
+        # Thus, known value
+
+        if not format_spec:  # (None or '') No modifiers, return first
             return self.mapping[baseval][0]
 
-        if format_spec in self.modifiers:
-            if baseval is not None:
-                return self.mapping[baseval][self.modifiers.index(format_spec)]
-            raise ValueError(
-                f"No known mapping for string '{value}' with modifier '{format_spec}'"
-            )
-        if format_spec == "r":
+        if format_spec == "r":  # Raw modifier
             return super().format_field(value, "")
-        return super().format_field(value, format_spec)
+
+        if format_spec in self.modifiers:  # Known modifier
+            if len(self.mapping[baseval]) == 1:  # But unmodifiable entry
+                return self.mapping[baseval][0]
+            # Known modifier, modifiable entry
+            return self.mapping[baseval][self.modifiers.index(format_spec)]
+        # Known value but unknown modifier, must be a built-in one, only works for the default val...
+        return super().format_field(self.mapping[baseval][0], format_spec)
 
     def _match_value(self, value):
         if isinstance(value, str):
@@ -178,8 +190,11 @@ default_formatter = AttrFormatter(
         "min": ["minimal", "minimum"],
         "sum": ["total", "sum"],
         "std": ["standard deviation"],
+        "var": ["variance"],
         "absamp": ["absolute amplitude"],
         "relamp": ["relative amplitude"],
+        # For when we are formatting indicator classes with empty options
+        "<class 'inspect._empty'>": ["<empty>"],
     },
     ["adj", "noun"],
 )
