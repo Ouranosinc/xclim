@@ -101,6 +101,7 @@ __all__ = [
     "wetdays",
     "wetdays_prop",
     "windy_days",
+    "winter_storm",
 ]
 
 

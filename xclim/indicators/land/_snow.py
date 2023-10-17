@@ -21,6 +21,7 @@ __all__ = [
     "snw_season_start",
     "snw_storm_days",
     "snw_to_snd",
+    "winter_storm",
 ]
 
 
