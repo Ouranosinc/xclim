@@ -93,11 +93,14 @@ __all__ = [
 class Temp(Daily):
     """Indicators involving daily temperature."""
 
+    keywords = "temperature"
+
 
 class TempWithIndexing(ResamplingIndicatorWithIndexing):
     """Indicators involving daily temperature and adding an indexing possibility."""
 
     src_freq = "D"
+    keywords = "temperature"
 
 
 tn_days_above = TempWithIndexing(
@@ -1162,6 +1165,8 @@ maximum_consecutive_warm_days = Temp(
 
 class FireSeasonBase(Indicator):
     """Special Indicator class for FireSeason that accepts any tas[min/max] and optional snd and is not resampling."""
+
+    keywords = "fire"
 
     def cfcheck(self, tas, snd=None):
         cfchecks.check_valid(tas, "standard_name", "air_temperature")

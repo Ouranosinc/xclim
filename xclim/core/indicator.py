@@ -465,9 +465,12 @@ class Indicator(IndicatorRegistrar):
         # All updates done.
         kwds["_all_parameters"] = parameters
 
-        # Parse keywords to organize `cf_attrs`
+        # Parse kwds to organize `cf_attrs`
         # And before converting callables to static methods
         kwds["cf_attrs"] = cls._parse_output_attrs(kwds, identifier)
+        # Parse keywords
+        if "keywords" in kwds:
+            kwds["keywords"] = cls.keywords + " " + kwds.get("keywords")
 
         # Convert function objects to static methods.
         for key in cls._funcs:
