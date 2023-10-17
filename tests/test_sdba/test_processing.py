@@ -117,8 +117,6 @@ def test_adapt_freq(use_dask, random):
 @pytest.mark.parametrize("use_dask", [True, False])
 def test_adapt_freq_add_dims(use_dask, random):
     time = pd.date_range("1990-01-01", "2020-12-31", freq="D")
-    # prvals = random.integers(0, 100, size=(time.size, 3))
-
     prvals = np.random.randint(0, 100 + 1, size=(time.size, 3))
     pr = xr.DataArray(
         prvals,
