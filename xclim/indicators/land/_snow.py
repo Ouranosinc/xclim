@@ -174,7 +174,7 @@ winter_storm = SnowWithIndexing(
     description="The {freq} number of days with snowfall accumulation above {thresh}.",
     units="days",
     compute=xci.snd_storm_days,
-    _version_deprecated="0.47.0",
+    _version_deprecated="0.46.0",
 )
 
 snd_storm_days = SnowWithIndexing(

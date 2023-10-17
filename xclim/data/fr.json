@@ -1070,7 +1070,7 @@
     "description": "Nombre de jours où l'accumulation de neige est au-dessus ou égale à {thresh}.",
     "title": "Jours avec accumulation de neige supérieure à un seuil",
     "abstract": "Nombre de jours où l'accumulation de neige est au-dessus ou égale à un seuil donné.",
-    "_deprecated_version": "0.47.0"
+    "_deprecated_version": "0.46.0"
   },
   "SND_STORM_DAYS": {
     "long_name": "Jours avec forte accumulation de l'épaisseur de neige",
