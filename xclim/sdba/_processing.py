@@ -77,13 +77,13 @@ def _adapt_freq(
         # Probabilities and quantiles computed within all dims, but correction along the first one only.
         sim = ds.sim
         # Get the percentile rank of each value in sim.
-        rank(sim, dim=dim, pct=True)
+        rnk = rank(sim, dim=dim, pct=True)
 
         # Frequency-adapted sim
         sim_ad = sim.where(
             dP0 < 0,  # dP0 < 0 means no-adaptation.
             sim.where(
-                (rank < P0_ref) | (rank > P0_sim),  # Preserve current values
+                (rnk < P0_ref) | (rnk > P0_sim),  # Preserve current values
                 # Generate random numbers ~ U[T0, Pth]
                 (pth.broadcast_like(sim) - thresh)
                 * np.random.random_sample(size=sim.shape)
