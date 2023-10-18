@@ -1179,6 +1179,7 @@ def standardized_index_fit_params(
     da, group = _preprocess_standardized_index(da, freq, window, **indexer)
 
     def wrap_fit(da):
+        # if all values are null, obtain a template of the fit and broadcast
         if indexer != {} and da.isnull().all():
             select_dims = {d: 0 if d != "time" else [0, 1] for d in da.dims}
             fitted = fit(da[select_dims], dist, method)
@@ -1226,6 +1227,8 @@ def _get_standardized_index(da, params, **indexer):
     group_name = params.attrs["group"].rsplit(".")[-1]
     param_names = params.dparams.values
 
+    # transform `da` values to a cdf distribution with fitted parameters `params`
+    # then invert back to a normal distrubtion (ppf)
     def wrap_cdf_ppf(da, params, group_idxs):
         if indexer != {} and np.isnan(da).all():
             return np.zeros_like(da) * np.NaN
@@ -1245,6 +1248,7 @@ def _get_standardized_index(da, params, **indexer):
             spi[indices] = norm.ppf(probs)
         return spi
 
+    # only datasets with daily or monthly values are supported
     group_idxs = da.time.dt.month if group_name == "month" else da.time.dt.dayofyear
     std_index = xarray.apply_ufunc(
         wrap_cdf_ppf,
@@ -1294,7 +1298,7 @@ def standardized_precipitation_index(
         Daily precipitation.
     pr_cal : xarray.DataArray
         Daily precipitation used for calibration. Usually this is a temporal subset of `pr` over some reference period. This
-        option will be removed in xclim==0.46.0. Two behaviour will be possible (see below)
+        option will be removed in xclim >=0.47.0. Two behaviour will be possible (see below)
     freq : str | None
         Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
         has already been applied input dataset and will skip the resampling step.
@@ -1375,7 +1379,7 @@ def standardized_precipitation_index(
 
     if pr_cal is not None:
         warnings.warn(
-            "Inputing a calibration array will be deprecated in xclim>=0.46.0. For example, if `pr_cal` is a subset of `pr`, then instead of say:\n"
+            "Inputing a calibration array will be deprecated in xclim>=0.47.0. For example, if `pr_cal` is a subset of `pr`, then instead of say:\n"
             "`standardized_precipitation_index(pr=pr,pr_cal=pr.sel(time=slice(t0,t1)),...)`,\n one can call:\n"
             "`standardized_precipitation_index(pr=pr,cal_range=(t0,t1),...).\n"
             "If for some reason `pr_cal` is not a subset of `pr`, then the following approach will still be possible:\n"
@@ -1442,7 +1446,7 @@ def standardized_precipitation_evapotranspiration_index(
         Daily water budget (pr - pet).
     wb_cal : xarray.DataArray
         Daily water budget used for calibration. Usually this is a temporal subset of `wb` over some reference period. This
-        option will be removed in xclim==0.46.0. Two behaviour will be possible (see below)
+        option will be removed in xclim >=0.47.0. Two behaviour will be possible (see below)
     params: xarray.DataArray
         Fit parameters.
     freq : str | None
