@@ -252,8 +252,7 @@ class TestEnsembleStats:
         for n in ensemble_dataset_objects["nc_files_simple"]:
             ds = open_dataset(n)
             ds_all.append(ds)
-        with pytest.warns(FutureWarning):
-            ens = ensembles.create_ensemble(ds_all, mf_flag=False)
+        ens = ensembles.create_ensemble(ds_all, multifile=False)
 
         out1 = ensembles.ensemble_mean_std_max_min(ens)
         np.testing.assert_array_equal(
