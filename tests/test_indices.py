@@ -2713,7 +2713,7 @@ class TestSnowCover:
 
         out = xci.snw_season_start(snw)
         assert len(out) == 2
-        np.testing.assert_array_equal(out, [snw.time.dt.dayofyear[0].data + 1, np.nan])
+        np.testing.assert_array_equal(out, [snw.time.dt.dayofyear[0].data + 2, np.nan])
         for attr in ["units", "is_dayofyear", "calendar"]:
             assert attr in out.attrs.keys()
         assert out.attrs["units"] == ""
@@ -2813,7 +2813,7 @@ def test_snd_storm_days(snd_series):
 
 
 def test_snw_storm_days(snw_series):
-    snw = snw_series([0, 50, 20, 70, 0, 80])
+    snw = snw_series([0, 50, 0, 70, 0, 80])
     out = xci.snw_storm_days(snw, thresh="60 kg m-2")
     np.testing.assert_array_equal(out, [2])
 

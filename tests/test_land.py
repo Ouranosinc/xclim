@@ -58,8 +58,8 @@ def test_snd_storm_days(snd_series):
 
 def test_snw_storm_days(snw_series):
     a = np.zeros(366)
-    a[10:20] = np.arange(10, 20)
+    a[10:20] = np.arange(10)
 
     snw = snw_series(a)
-    out = land.snw_storm_days(snw, thresh="10 kg m-2")
+    out = land.snw_storm_days(snw, thresh="0.5 kg m-2")
     np.testing.assert_array_equal(out, [9, np.nan])
