@@ -6,6 +6,7 @@ Helper functions for the indices computations, indicator construction and other 
 """
 from __future__ import annotations
 
+import functools
 import importlib.util
 import logging
 import os
@@ -112,16 +113,12 @@ def wrapped_partial(func: Callable, suggested: dict | None = None, **fixed) -> C
     return fully_wrapped
 
 
-def deprecated(
-    func: Callable, version: str | None, suggested: str | None = None
-) -> Callable:
+def deprecated(from_version: str | None, suggested: str | None = None) -> Callable:
     """Mark an index as deprecated and optionally suggest a replacement.
 
     Parameters
     ----------
-    func : Callable
-        The function to be wrapped
-    version : str, optional
+    from_version : str, optional
         The version of xclim from which the function is deprecated.
     suggested : str, optional
         The name of the function to use instead.
@@ -130,22 +127,27 @@ def deprecated(
     -------
     Callable
     """
-    suggested = suggested or {}
 
-    def wrapper(*args, **kwargs):
-        msg = (
-            f"{func.__name__} is deprecated{' from version {}'.format(version) if version else ''} "
-            "and will be removed in a future version of xclim"
-            f"{'. Please use {} instead'.format(suggested['compute'] if suggested.get('compute') else '')}."
-        )
-        warnings.warn(
-            msg,
-            FutureWarning,
-        )
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            msg = (
+                f"`{func.__name__}` is deprecated{' from version {}'.format(from_version) if from_version else ''} "
+                "and will be removed in a future version of xclim"
+                f"{'. Use `{}` instead'.format(suggested if suggested else '')}. "
+                f"Please update your scripts accordingly."
+            )
+            warnings.warn(
+                msg,
+                DeprecationWarning,
+                stacklevel=3,
+            )
 
-        return func(*args, **kwargs)
+            return func(*args, **kwargs)
 
-    return wrapper
+        return wrapper
+
+    return decorator
 
 
 # TODO Reconsider the utility of this

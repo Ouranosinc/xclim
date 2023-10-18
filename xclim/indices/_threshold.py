@@ -16,7 +16,7 @@ from xclim.core.units import (
     str2pint,
     to_agg_units,
 )
-from xclim.core.utils import DayOfYearStr, Quantified
+from xclim.core.utils import DayOfYearStr, Quantified, deprecated
 from xclim.indices.helpers import _gather_lat
 
 from . import run_length as rl
@@ -3086,6 +3086,7 @@ def degree_days_exceedance_date(
     return out
 
 
+@deprecated(from_version="0.46.0", suggested="snd_storm_days")
 @declare_units(snd="[length]", thresh="[length]")
 def winter_storm(
     snd: xarray.DataArray, thresh: Quantified = "25 cm", freq: str = "AS-JUL"
@@ -3118,12 +3119,6 @@ def winter_storm(
     -----
     Snowfall accumulation is estimated by the change in snow depth.
     """
-    warnings.warn(
-        "The `winter_storm` indice is being deprecated in favour of `snd_storm_days`"
-        "This indice will be removed in `xclim>=0.47.0`. Please update your scripts accordingly.",
-        DeprecationWarning,
-        stacklevel=3,
-    )
     thresh = convert_units_to(thresh, snd)
 
     # Compute daily accumulation
