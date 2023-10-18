@@ -401,7 +401,7 @@ def snd_season_end(
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def snw_season_end(
     snw: xarray.DataArray,
-    thresh: Quantified = "20 kg m-2",
+    thresh: Quantified = "20.00 kg m-2",
     window: int = 14,
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
@@ -436,12 +436,8 @@ def snw_season_end(
     References
     ----------
     :cite:cts:`chaumont_elaboration_2017`
-
-    Notes
-    -----
-    The current default threshold "UNSET" is a placeholder and will be changed to the default 4 kg m-2 in xclim>=0.47.0.
     """
-    if thresh == "20 kg m-2":
+    if thresh == "20.00 kg m-2":
         warnings.warn(
             "The default value for this threshold will change in xclim>=0.47.0, from `20 kg m-2` to `4 kg m-2`."
         )
@@ -518,7 +514,7 @@ def snd_season_start(
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def snw_season_start(
     snw: xarray.DataArray,
-    thresh: Quantified = "20 kg m-2",
+    thresh: Quantified = "20.00 kg m-2",
     window: int = 14,
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
@@ -552,11 +548,8 @@ def snw_season_start(
     ----------
     :cite:cts:`chaumont_elaboration_2017`
 
-    Notes
-    -----
-    The current default threshold "UNSET" is a placeholder and will be changed to the default 4 kg m-2 in xclim>=0.47.0.
     """
-    if thresh == "20 kg m-2":
+    if thresh == "20.00 kg m-2":
         warnings.warn(
             "The default value for this threshold will change in xclim>=0.47.0, from `20 kg m-2` to `4 kg m-2`."
         )
@@ -1577,13 +1570,12 @@ def first_day_temperature_above(
 @declare_units(prsn="[precipitation]", thresh="[precipitation]")
 def first_snowfall(
     prsn: xarray.DataArray,
-    thresh: Quantified = "UNSET",
+    thresh: Quantified = "1 mm/day",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
     r"""First day with snowfall rate above a threshold.
 
-    Returns the first day of a period where snowfall exceeds a threshold (current default: 0.5 mm/day
-    liquid water equivalent snowfall rate. xclim >=0.45.0 default: 1 mm/day).
+    Returns the first day of a period where snowfall exceeds a threshold (default: 1 mm/day).
 
     Warnings
     --------
@@ -1594,8 +1586,7 @@ def first_snowfall(
     prsn : xarray.DataArray
         Snowfall flux.
     thresh : Quantified
-        Threshold snowfall flux or liquid water equivalent snowfall rate. (Current default: 0.5 mm/day liquid water equivalent snowfall rate.
-        xclim >=0.45.0 default: 1 mm/day)
+        Threshold snowfall flux or liquid water equivalent snowfall rate. (default: 1 mm/day)
     freq : str
         Resampling frequency.
 
@@ -1616,14 +1607,7 @@ def first_snowfall(
 
     If threshold and prsn differ by a density (i.e. [length/time] vs. [mass/area/time]), a liquid water equivalent
     snowfall rate is assumed and the threshold is converted using a 1000 kg m-3 density.
-
-    The current default threshold "UNSET" is a placeholder and will be changed to the default 1 mm/day  in xclim>=0.45.0.
     """
-    if thresh == "UNSET":
-        warnings.warn(
-            "The default value for this indicator will change in xclim>=0.45.0,  from `0.5 mm/day` to `1 mm/day`. Using `0.5 mm/day` for now."
-        )
-        thresh = "0.5 mm/day"
     thresh = convert_units_to(thresh, prsn, context="hydro")
     cond = prsn >= thresh
 
@@ -1640,13 +1624,12 @@ def first_snowfall(
 @declare_units(prsn="[precipitation]", thresh="[precipitation]")
 def last_snowfall(
     prsn: xarray.DataArray,
-    thresh: Quantified = "UNSET",
+    thresh: Quantified = "1 mm/day",
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
     r"""Last day with snowfall above a threshold.
 
-    Returns the last day of a period where snowfall exceeds a threshold (current default: 0.5 mm/day liquid water equivalent snowfall rate.
-    xclim >=0.45.0 default: 1 mm/day).
+    Returns the last day of a period where snowfall exceeds a threshold (default: 1 mm/day)
 
     Warnings
     --------
@@ -1657,8 +1640,7 @@ def last_snowfall(
     prsn : xarray.DataArray
         Snowfall flux.
     thresh : Quantified
-        Threshold snowfall flux or liquid water equivalent snowfall rate. (Current default: 0.5 mm/day liquid water equivalent snowfall rate.
-        xclim >=0.45.0 default: 1 mm/day)
+        Threshold snowfall flux or liquid water equivalent snowfall rate (default: 1 mm/day).
     freq : str
         Resampling frequency.
 
@@ -1680,14 +1662,7 @@ def last_snowfall(
 
     If threshold and prsn differ by a density (i.e. [length/time] vs. [mass/area/time]), a liquid water equivalent
     snowfall rate is assumed and the threshold is converted using a 1000 kg m-3 density.
-
-    The current default threshold "UNSET" is a placeholder and will be changed to the default 1 mm/day  in xclim>=0.45.0.
     """
-    if thresh == "UNSET":
-        warnings.warn(
-            "The default value for this indicator will change in xclim>=0.45.0,  from `0.5 mm/day` to `1 mm/day`. Using `0.5 mm/day` for now."
-        )
-        thresh = "0.5 mm/day"
     thresh = convert_units_to(thresh, prsn, context="hydro")
     cond = prsn >= thresh
 
@@ -1943,7 +1918,6 @@ def heating_degree_days(
 def hot_spell_max_length(
     tasmax: xarray.DataArray,
     thresh: Quantified = "30 degC",
-    thresh_tasmax: str = "UNSET",
     window: int = 1,
     freq: str = "YS",
     op: str = ">",
@@ -1983,17 +1957,12 @@ def hot_spell_max_length(
     communities :cite:p:`casati_regional_2013`.
 
     In :cite:t:`robinson_definition_2001` where heat waves are also considered, the corresponding parameters would
-    be `thresh_tasmax=39.44, window=2` (103F).
+    be `thresh=39.44, window=2` (103F).
 
     References
     ----------
     :cite:cts:`casati_regional_2013,robinson_definition_2001`
     """
-    if thresh_tasmax != "UNSET":
-        warnings.warn(
-            "The call signature for this indicator will change from `thresh_tasmax` to `thresh` in xclim>=0.45.0.  Passing `thresh_tasmax` value to `thresh`."
-        )
-        thresh = thresh_tasmax
     thresh = convert_units_to(thresh, tasmax)
 
     cond = compare(tasmax, op, thresh, constrain=(">", ">="))
@@ -2011,7 +1980,6 @@ def hot_spell_max_length(
 def hot_spell_total_length(
     tasmax: xarray.DataArray,
     thresh: Quantified = "30 degC",
-    thresh_tasmax: str = "UNSET",
     window: int = 3,
     freq: str = "YS",
     op: str = ">",
@@ -2051,14 +2019,8 @@ def hot_spell_total_length(
     communities :cite:p:`casati_regional_2013`.
 
     In :cite:t:`robinson_definition_2001` where heat waves are also considered, the corresponding parameters would
-    be `thresh_tasmax=39.44, window=2` (103F).
+    be `thresh=39.44, window=2` (103F).
     """
-    if thresh_tasmax != "UNSET":
-        warnings.warn(
-            "The call signature for this indicator will change from `thresh_tasmax` to `thresh` in xclim>=0.45.0.  Passing `thresh_tasmax` value to `thresh`."
-        )
-        thresh = thresh_tasmax
-
     thresh = convert_units_to(thresh, tasmax)
 
     cond = compare(tasmax, op, thresh, constrain=(">", ">="))
@@ -2077,7 +2039,6 @@ def hot_spell_total_length(
 def hot_spell_frequency(
     tasmax: xarray.DataArray,
     thresh: Quantified = "30 degC",
-    thresh_tasmax: str = "UNSET",
     window: int = 3,
     freq: str = "YS",
     op: str = ">",
@@ -2116,17 +2077,12 @@ def hot_spell_frequency(
     communities :cite:p:`casati_regional_2013`.
 
     In :cite:t:`robinson_definition_2001` where heat waves are also considered, the corresponding parameters would
-    be `thresh_tasmax=39.44, window=2` (103F).
+    be `thresh=39.44, window=2` (103F).
 
     References
     ----------
     :cite:cts:`casati_regional_2013,robinson_definition_2001`
     """
-    if thresh_tasmax != "UNSET":
-        warnings.warn(
-            "The call signature for this indicator will change from `thresh_tasmax` to `thresh` in xclim>=0.45.0.  Passing `thresh_tasmax` value to `thresh`."
-        )
-        thresh = thresh_tasmax
     thresh = convert_units_to(thresh, tasmax)
 
     cond = compare(tasmax, op, thresh, constrain=(">", ">="))
@@ -2181,7 +2137,7 @@ def snd_season_length(
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def snw_season_length(
     snw: xarray.DataArray,
-    thresh: Quantified = "20 kg m-2",
+    thresh: Quantified = "20.00 kg m-2",
     freq: str = "AS-JUL",
     op: str = ">=",
 ) -> xarray.DataArray:
@@ -2209,11 +2165,8 @@ def snw_season_length(
     xarray.DataArray, [time]
         Number of days where snow water is greater than or equal to threshold.
 
-    Notes
-    -----
-    The current default threshold "UNSET" is a placeholder and will be changed to the default 4 kg m-2 in xclim>=0.47.0.
     """
-    if thresh == "20 kg m-2":
+    if thresh == "20.00 kg m-2":
         warnings.warn(
             "The default value for this threshold will change in xclim>=0.47.0, from `20 kg m-2` to `4 kg m-2`."
         )
