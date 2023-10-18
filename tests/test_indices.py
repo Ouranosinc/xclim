@@ -2818,6 +2818,13 @@ def test_snw_storm_days(snw_series):
     np.testing.assert_array_equal(out, [2])
 
 
+def test_winter_storm_deprecated(snd_series):
+    snd = snd_series([0, 0.5, 0.2, 0.7, 0, 0.4])
+    with pytest.warns(DeprecationWarning):
+        out = xci.winter_storm(snd, thresh="30 cm")
+    np.testing.assert_array_equal(out, [3])
+
+
 def test_humidex(tas_series):
     tas = tas_series([15, 25, 35, 40])
     tas.attrs["units"] = "C"

@@ -398,7 +398,7 @@ def snd_season_end(
     return out.where(~valid)
 
 
-@declare_units(snw="[mass]/[area]")
+@declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def snw_season_end(
     snw: xarray.DataArray,
     thresh: Quantified = "UNSET",
@@ -441,11 +441,10 @@ def snw_season_end(
     -----
     The current default threshold "UNSET" is a placeholder and will be changed to the default 4 kg m-2 in xclim>=0.47.0.
     """
-    if thresh == "UNSET":
+    if thresh == "20 kg m-2":
         warnings.warn(
-            "The default value for this threshold will change in xclim>=0.47.0,  from `20 kg m-2` to `4 kg m-2`. Using `20 kg m-2` for now."
+            "The default value for this threshold will change in xclim>=0.47.0, from `20 kg m-2` to `4 kg m-2`."
         )
-        thresh = "20 kg m-2"
     valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
 
     thresh = convert_units_to(thresh, snw)
@@ -516,10 +515,10 @@ def snd_season_start(
     return out.where(~valid)
 
 
-@declare_units(snw="[mass]/[area]")
+@declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def snw_season_start(
     snw: xarray.DataArray,
-    thresh: Quantified = "UNSET",
+    thresh: Quantified = "20 kg m-2",
     window: int = 14,
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
@@ -557,11 +556,10 @@ def snw_season_start(
     -----
     The current default threshold "UNSET" is a placeholder and will be changed to the default 4 kg m-2 in xclim>=0.47.0.
     """
-    if thresh == "UNSET":
+    if thresh == "20 kg m-2":
         warnings.warn(
-            "The default value for this threshold will change in xclim>=0.47.0,  from `20 kg m-2` to `4 kg m-2`. Using `20 kg m-2` for now."
+            "The default value for this threshold will change in xclim>=0.47.0, from `20 kg m-2` to `4 kg m-2`."
         )
-        thresh = "20 kg m-2"
     valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
 
     thresh = convert_units_to(thresh, snw)
@@ -2180,10 +2178,10 @@ def snd_season_length(
     return to_agg_units(out, snd, "count").where(~valid)
 
 
-@declare_units(snw="[mass]/[area]")
+@declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def snw_season_length(
     snw: xarray.DataArray,
-    thresh: Quantified = "UNSET",
+    thresh: Quantified = "20 kg m-2",
     freq: str = "AS-JUL",
     op: str = ">=",
 ) -> xarray.DataArray:
@@ -2215,11 +2213,10 @@ def snw_season_length(
     -----
     The current default threshold "UNSET" is a placeholder and will be changed to the default 4 kg m-2 in xclim>=0.47.0.
     """
-    if thresh == "UNSET":
+    if thresh == "20 kg m-2":
         warnings.warn(
-            "The default value for this threshold will change in xclim>=0.47.0,  from `20 kg m-2` to `4 kg m-2`. Using `20 kg m-2` for now."
+            "The default value for this threshold will change in xclim>=0.47.0, from `20 kg m-2` to `4 kg m-2`."
         )
-        thresh = "20 kg m-2"
     valid = at_least_n_valid(snw, n=1, freq=freq)
     thresh = convert_units_to(thresh, snw)
     out = threshold_count(snw, op, thresh, freq)
