@@ -1070,11 +1070,19 @@ def rain_season(
 
 
 def _preprocess_standardized_index(da, freq, window, **indexer):
-    """
-    Resample and roll operations involved when computing a standardized index.
+    """Perform resample and roll operations involved in computing a standardized index.
 
-    The `group` variable returned is used in standardized index computations and to keep track if
-    preprocessing was already done or not.
+    da : xarray.DataArray
+        Input array.
+    freq : str | None
+        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
+        has already been applied input dataset and will skip the resampling step.
+    window : int
+        Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
+        i.e. a monthly resampling, the window is an integer number of months.
+    indexer
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
     """
     _, base, _, _ = parse_offset(freq or xarray.infer_freq(da.time))
     try:
@@ -1165,11 +1173,11 @@ def standardized_index_fit_params(
             return fitted.broadcast_like(da.isel(time=0, drop=True))
         return fit(da, dist, method)
 
+    params = da.groupby(group).map(wrap_fit)
     cal_range = (
         da.time.min().dt.strftime("%Y-%m-%d"),
         da.time.max().dt.strftime("%Y-%m-%d"),
     )
-    params = da.groupby(group).map(wrap_fit)
     params.attrs = {
         "Calibration period": cal_range,
         "freq": freq,
@@ -1212,8 +1220,8 @@ def _get_standardized_index(da, params, **indexer):
 
         spi = np.zeros_like(da)
         # loop over groups (similar to np.groupies idea, but np.groupies can't be used with custom functions)
-        for ii, group_idx in enumerate(list(dict.fromkeys(group_idxs).keys())):
-            pars = params[ii, :]
+        for group_idx in list(dict.fromkeys(group_idxs).keys()):
+            pars = params[group_idx - 1]
             indices = np.argwhere(group_idxs == group_idx)
             vals = da[indices]
             zeros = (vals == 0).sum(axis=0)
