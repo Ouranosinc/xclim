@@ -2,9 +2,7 @@ from __future__ import annotations
 
 
 def rstjinja(app, docname, source):
-    """
-    Render our pages as a jinja template for fancy templating goodness.
-    """
+    """Render our pages as a jinja template for fancy templating goodness."""
     # Make sure we're outputting HTML
     if app.builder.format != "html":
         return

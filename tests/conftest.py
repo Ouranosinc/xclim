@@ -440,7 +440,6 @@ def gather_session_data(threadsafe_data_dir, worker_id, xdoctest_namespace):
     Additionally, this fixture is also used to generate the `atmosds` synthetic testing dataset as well as add the
     example file paths to the xdoctest_namespace, used when running doctests.
     """
-
     if (
         not _default_cache_dir.joinpath(helpers.TESTDATA_BRANCH).exists()
         or helpers.PREFETCH_TESTING_DATA

@@ -4,8 +4,6 @@ Detrending Objects Utilities
 """
 from __future__ import annotations
 
-from typing import Union
-
 import xarray as xr
 
 from xclim.core.units import convert_units_to

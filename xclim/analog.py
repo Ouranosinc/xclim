@@ -117,8 +117,7 @@ def spatial_analogs(
 
 
 def standardize(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    """
-    Standardize x and y by the square root of the product of their standard deviation.
+    """Standardize x and y by the square root of the product of their standard deviation.
 
     Parameters
     ----------
@@ -207,8 +206,7 @@ def seuclidean(x: np.ndarray, y: np.ndarray) -> float:
 
 @metric
 def nearest_neighbor(x: np.ndarray, y: np.ndarray) -> np.ndarray:
-    """
-    Compute a dissimilarity metric based on the number of points in the pooled sample whose nearest neighbor belongs to the same distribution.
+    """Compute a dissimilarity metric based on the number of points in the pooled sample whose nearest neighbor belongs to the same distribution.
 
     This method is scale-invariant.
 
@@ -245,8 +243,7 @@ def nearest_neighbor(x: np.ndarray, y: np.ndarray) -> np.ndarray:
 
 @metric
 def zech_aslan(x: np.ndarray, y: np.ndarray, *, dmin: float = 1e-12) -> float:
-    r"""
-    Compute a modified Zech-Aslan energy distance dissimilarity metric based on an analogy with the energy of a cloud of electrical charges.
+    r"""Compute a modified Zech-Aslan energy distance dissimilarity metric based on an analogy with the energy of a cloud of electrical charges.
 
     This method is scale-invariant.
 
@@ -289,7 +286,7 @@ def zech_aslan(x: np.ndarray, y: np.ndarray, *, dmin: float = 1e-12) -> float:
     :math:`r \to 0`, it is controllable through the `dmin` parameter.
 
     This version corresponds the :math:`D_{ZAE}` test of :cite:t:`grenier_assessment_2013` (eq. 7), which is a version
-    of :math:`\phi_{NM}` from :cite:t:`aslan_new_2003`, modified by using the standardized  euclidean distance, the log
+    of :math:`\phi_{NM}` from :cite:t:`aslan_new_2003`, modified by using the standardized Euclidean distance, the log
     weight function and choosing :math:`d_{min} = 10^{-12}`.
 
     References

@@ -555,7 +555,8 @@ def test_parse_doc():
     doc = parse_doc(xclim.indices.saturation_vapor_pressure.__doc__)
     assert (
         doc["parameters"]["ice_thresh"]["description"]
-        == "Threshold temperature under which to switch to equations in reference to ice instead of water. If None (default) everything is computed with reference to water."
+        == "Threshold temperature under which to switch to equations in reference to ice instead of water. "
+        "If None (default) everything is computed with reference to water."
     )
     assert "goff_low-pressure_1946" in doc["references"]
 

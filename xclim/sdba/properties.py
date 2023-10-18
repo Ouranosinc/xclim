@@ -862,8 +862,10 @@ def _trend(
         The attributes of the linear regression to return, as defined in scipy.stats.linregress:
         'slope' is the slope of the regression line.
         'intercept' is the intercept of the regression line.
-        'rvalue' is the The Pearson correlation coefficient. The square of rvalue is equal to the coefficient of determination.
-        'pvalue' is the p-value for a hypothesis test whose null hypothesis is that the slope is zero, using Wald Test with t-distribution of the test statistic.
+        'rvalue' is The Pearson correlation coefficient.
+        The square of rvalue is equal to the coefficient of determination.
+        'pvalue' is the p-value for a hypothesis test whose null hypothesis is that the slope is zero,
+        using Wald Test with t-distribution of the test statistic.
         'stderr' is the standard error of the estimated slope (gradient), under the assumption of residual normality.
         'intercept_stderr' is the standard error of the estimated intercept, under the assumption of residual normality.
     group : {'time', 'time.season', 'time.month'}

@@ -53,14 +53,13 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint: ## check style with flake8 and black
-	pycodestyle --config=setuyp.cfg xclim tests
-	pydocstyle --config=setup.cfg xclim tests
-	flake8 --config=setup.cfg xclim tests
 	black --check xclim tests
+	isort --check xclim tests
+	ruff xclim tests
+	flake8 --config=setup.cfg xclim tests
 	nbqa black --check docs
 	blackdoc --check --exclude=xclim/indices/__init__.py xclim
 	blackdoc --check docs
-	isort --check xclim tests
 	yamllint --config-file=.yamllint.yaml xclim
 
 test: ## run tests quickly with the default Python

@@ -18,7 +18,7 @@ import xarray
 from ..indices.run_length import suspicious_run
 from .calendar import climatological_mean_doy, within_bnds_doy
 from .formatting import update_xclim_history
-from .units import convert_units_to, declare_units, infer_context, str2pint, units
+from .units import convert_units_to, declare_units, infer_context, str2pint
 from .utils import (
     VARIABLES,
     InputKind,
@@ -534,7 +534,7 @@ def percentage_values_outside_of_bounds(da: xarray.DataArray) -> xarray.DataArra
     return unbounded_percentages
 
 
-def data_flags(
+def data_flags(  # noqa: C901
     da: xarray.DataArray,
     ds: xarray.Dataset | None = None,
     flags: dict | None = None,

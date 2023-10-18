@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import platform
 from pathlib import Path
-from urllib.error import HTTPError
 
 import numpy as np
 import pytest
