@@ -330,6 +330,9 @@ class EmpiricalQuantileMapping(TrainAdjust):
     group : Union[str, Grouper]
         The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
         Default is "time", meaning an single adjustment group along dimension "time".
+    adapt_freq_thresh : str | None
+        Threshold for frequency adaptation. See :py:class:`xclim.sdba.processing.adapt_freq` for details.
+        Default is None, meaning that frequency adaptation is not performed.
 
     Adjust step:
 
@@ -354,6 +357,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
         nquantiles: int | np.ndarray = 20,
         kind: str = ADDITIVE,
         group: str | Grouper = "time",
+        adapt_freq_thresh: str | None = None,
     ):
         if np.isscalar(nquantiles):
             quantiles = equally_spaced_nodes(nquantiles).astype(ref.dtype)
@@ -365,6 +369,7 @@ class EmpiricalQuantileMapping(TrainAdjust):
             group=group,
             kind=kind,
             quantiles=quantiles,
+            adapt_freq_thresh=adapt_freq_thresh,
         )
 
         ds.af.attrs.update(
@@ -419,6 +424,9 @@ class DetrendedQuantileMapping(TrainAdjust):
     group : Union[str, Grouper]
         The grouping information. See :py:class:`xclim.sdba.base.Grouper` for details.
         Default is "time", meaning a single adjustment group along dimension "time".
+    adapt_freq_thresh : str | None
+        Threshold for frequency adaptation. See :py:class:`xclim.sdba.processing.adapt_freq` for details.
+        Default is None, meaning that frequency adaptation is not performed.
 
     Adjust step:
 
@@ -447,6 +455,7 @@ class DetrendedQuantileMapping(TrainAdjust):
         nquantiles: int | np.ndarray = 20,
         kind: str = ADDITIVE,
         group: str | Grouper = "time",
+        adapt_freq_thresh: str | None = None,
     ):
         if group.prop not in ["group", "dayofyear"]:
             warn(
@@ -463,6 +472,7 @@ class DetrendedQuantileMapping(TrainAdjust):
             group=group,
             quantiles=quantiles,
             kind=kind,
+            adapt_freq_thresh=adapt_freq_thresh,
         )
 
         ds.af.attrs.update(

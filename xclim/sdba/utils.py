@@ -14,6 +14,7 @@ from boltons.funcutils import wraps
 from dask import array as dsk
 from scipy.interpolate import griddata, interp1d
 from scipy.stats import spearmanr
+from xarray.core.utils import get_temp_dimname
 
 from xclim.core.calendar import _interpolate_doy_calendar  # noqa
 from xclim.core.utils import ensure_chunk_size
@@ -461,7 +462,9 @@ def interp_on_quantiles(
     )
 
 
-def rank(da: xr.DataArray, dim: str = "time", pct: bool = False) -> xr.DataArray:
+def rank(
+    da: xr.DataArray, dim: str | list[str] = "time", pct: bool = False
+) -> xr.DataArray:
     """Ranks data along a dimension.
 
     Replicates `xr.DataArray.rank` but as a function usable in a Grouper.apply(). Xarray's docstring is below:
@@ -469,12 +472,14 @@ def rank(da: xr.DataArray, dim: str = "time", pct: bool = False) -> xr.DataArray
     Equal values are assigned a rank that is the average of the ranks that would have been otherwise assigned to all the
     values within that set. Ranks begin at 1, not 0. If pct, computes percentage ranks, ranging from 0 to 1.
 
+    A list of dimensions can be provided and the ranks are then computed separately for each dimension.
+
     Parameters
     ----------
     da: xr.DataArray
       Source array.
-    dim : str, hashable
-      Dimension over which to compute rank.
+    dim : str | list[str], hashable
+      Dimension(s) over which to compute rank.
     pct : bool, optional
       If True, compute percentage ranks, otherwise compute integer ranks.
       Percentage ranks range from 0 to 1, in opposition to xarray's implementation,
@@ -493,11 +498,26 @@ def rank(da: xr.DataArray, dim: str = "time", pct: bool = False) -> xr.DataArray
     --------
     xarray.DataArray.rank
     """
-    rnk = da.rank(dim, pct=pct)
+    da_dims, da_coords = da.dims, da.coords
+    dims = dim if isinstance(dim, list) else [dim]
+    rnk_dim = dims[0] if len(dims) == 1 else get_temp_dimname(da_dims, "temp")
+
+    # multi-dimensional ranking through stacking
+    if len(dims) > 1:
+        da = da.stack(**{rnk_dim: dims})
+    rnk = da.rank(rnk_dim, pct=pct)
+
     if pct:
-        mn = rnk.min(dim)
-        mx = rnk.max(dim)
-        return mx * (rnk - mn) / (mx - mn)
+        mn = rnk.min(rnk_dim)
+        mx = rnk.max(rnk_dim)
+        rnk = mx * (rnk - mn) / (mx - mn)
+
+    if len(dims) > 1:
+        rnk = (
+            rnk.unstack(rnk_dim)
+            .transpose(*da_dims)
+            .drop_vars([d for d in dims if d not in da_coords])
+        )
     return rnk
 
 

@@ -11,10 +11,11 @@ from typing import Sequence
 
 import numpy as np
 import xarray as xr
+from xarray.core.utils import get_temp_dimname
 
 from . import nbutils as nbu
 from .base import Grouper, map_groups
-from .utils import ADDITIVE, apply_correction, ecdf, invert
+from .utils import ADDITIVE, apply_correction, ecdf, invert, rank
 
 
 @map_groups(
@@ -74,22 +75,15 @@ def _adapt_freq(
         pth = nbu.vecquantiles(ds.ref, P0_sim, dim).where(dP0 > 0)
 
         # Probabilities and quantiles computed within all dims, but correction along the first one only.
-        if "window" in dim:
-            # P0_sim was computed using the window, but only the original time series is corrected.
-            # Grouper.apply does this step, but if done here it makes the code faster.
-            sim = ds.sim.isel(window=(ds.sim.window.size - 1) // 2)
-        else:
-            sim = ds.sim
-        dim = dim[0]
-
+        sim = ds.sim
         # Get the percentile rank of each value in sim.
-        rank = sim.rank(dim, pct=True)
+        rnk = rank(sim, dim=dim, pct=True)
 
         # Frequency-adapted sim
         sim_ad = sim.where(
             dP0 < 0,  # dP0 < 0 means no-adaptation.
             sim.where(
-                (rank < P0_ref) | (rank > P0_sim),  # Preserve current values
+                (rnk < P0_ref) | (rnk > P0_sim),  # Preserve current values
                 # Generate random numbers ~ U[T0, Pth]
                 (pth.broadcast_like(sim) - thresh)
                 * np.random.random_sample(size=sim.shape)
