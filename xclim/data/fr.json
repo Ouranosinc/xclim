@@ -1069,7 +1069,20 @@
     "long_name": "Jours avec forte accumulation de neige",
     "description": "Nombre de jours où l'accumulation de neige est au-dessus ou égale à {thresh}.",
     "title": "Jours avec accumulation de neige supérieure à un seuil",
-    "abstract": "Nombre de jours où l'accumulation de neige est au-dessus ou égale à un seuil donné."
+    "abstract": "Nombre de jours où l'accumulation de neige est au-dessus ou égale à un seuil donné.",
+    "_deprecated_version": "0.46.0"
+  },
+  "SND_STORM_DAYS": {
+    "long_name": "Jours avec forte accumulation de l'épaisseur de neige",
+    "description": "Nombre de jours où l'accumulation de l'épaisseur de neige est au-dessus ou égale à {thresh}.",
+    "title": "Jours avec accumulation de l'épaisseur de neige supérieure à un seuil",
+    "abstract": "Nombre de jours où l'accumulation de l'épaisseur neige est au-dessus ou égale à un seuil donné."
+  },
+  "SNW_STORM_DAYS": {
+    "long_name": "Jours avec forte accumulation de la quantité de neige",
+    "description": "Nombre de jours où l'accumulation de la quantité de neige est au-dessus ou égale à {thresh}.",
+    "title": "Jours avec accumulation de la quantité de neige supérieure à un seuil",
+    "abstract": "Nombre de jours où l'accumulation de la quantité de neige est au-dessus ou égale à un seuil donné."
   },
   "HIGH_PRECIP_LOW_TEMP": {
     "long_name": "Jours avec des précipitations au dessus de {pr_thresh} et des températures sous {tas_thresh}",
