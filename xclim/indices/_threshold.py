@@ -401,13 +401,14 @@ def snd_season_end(
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def snw_season_end(
     snw: xarray.DataArray,
-    thresh: Quantified = "4 kg m-2",
+    thresh: Quantified = "UNSET",
     window: int = 14,
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
     r"""End date of continuous snow water cover.
 
-    First day after the start of the continuous snow water cover when snow water is below a threshold (default: 2 cm)
+    First day after the start of the continuous snow water cover
+    when snow water is below a threshold (Current default:  20 kg m-2. xclim >=0.47.0 default: 4 kg m-2)
     for at least `N` (default: 14) consecutive days.
 
     Warnings
@@ -436,6 +437,11 @@ def snw_season_end(
     ----------
     :cite:cts:`chaumont_elaboration_2017`
     """
+    if thresh == "UNSET":
+        warnings.warn(
+            "The default value for this threshold will change in xclim>=0.47.0,  from `20 kg m-2` to `4 kg m-2`. Using `20 kg m-2` for now."
+        )
+        thresh = "20 kg m-2"
     valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
 
     thresh = convert_units_to(thresh, snw)
@@ -509,13 +515,13 @@ def snd_season_start(
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def snw_season_start(
     snw: xarray.DataArray,
-    thresh: Quantified = "4 kg m-2",
+    thresh: Quantified = "UNSET",
     window: int = 14,
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
     r"""Start date of continuous snow water cover.
 
-    Day of year when snow water is above or equal to a threshold (default: 2 cm)
+    Day of year when snow water is above or equal to a threshold  (Current default:  20 kg m-2. xclim >=0.47.0 default: 4 kg m-2)
     for at least `N` (default: 14) consecutive days.
 
     Warnings
@@ -543,6 +549,11 @@ def snw_season_start(
     ----------
     :cite:cts:`chaumont_elaboration_2017`
     """
+    if thresh == "UNSET":
+        warnings.warn(
+            "The default value for this threshold will change in xclim>=0.47.0,  from `20 kg m-2` to `4 kg m-2`. Using `20 kg m-2` for now."
+        )
+        thresh = "20 kg m-2"
     valid = at_least_n_valid(snw.where(snw > 0), n=1, freq=freq)
 
     thresh = convert_units_to(thresh, snw)
@@ -2164,13 +2175,13 @@ def snd_season_length(
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def snw_season_length(
     snw: xarray.DataArray,
-    thresh: Quantified = "4 kg m-2",
+    thresh: Quantified = "UNSET",
     freq: str = "AS-JUL",
     op: str = ">=",
 ) -> xarray.DataArray:
     """The number of days with snow water above a threshold.
 
-    Number of days where surface snow water is greater or equal to given threshold (default: 2 cm).
+    Number of days where surface snow water is greater or equal to given threshold (Current default:  20 kg m-2. xclim >=0.47.0 default: 4 kg m-2).
 
     Warnings
     --------
@@ -2192,6 +2203,11 @@ def snw_season_length(
     xarray.DataArray, [time]
         Number of days where snow water is greater than or equal to threshold.
     """
+    if thresh == "UNSET":
+        warnings.warn(
+            "The default value for this threshold will change in xclim>=0.47.0,  from `20 kg m-2` to `4 kg m-2`. Using `20 kg m-2` for now."
+        )
+        thresh = "20 kg m-2"
     valid = at_least_n_valid(snw, n=1, freq=freq)
     thresh = convert_units_to(thresh, snw)
     out = threshold_count(snw, op, thresh, freq)
