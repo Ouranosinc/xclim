@@ -10,11 +10,6 @@ New indicators
 ^^^^^^^^^^^^^^
 * ``xclim.indices.snw_storm_days`` computes the number of days with snowfall amount accumulation above a threshold. (:pull:`1505`).
 
-Breaking changes
-^^^^^^^^^^^^^^^^
-* ``xclim.indices.winter_storm`` renamed to ``xclim.indices.snd_storm_days``.  (:pull:`1505`).
-* Default threshold in ``xclim.indices.snw_season_{start|length|end}`` changed form `20 kg m-2` to `4 kg m-2`. (:pull:`1505`).
-
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Add ``wind_power_potential`` to estimate the potential for wind power production given wind speed at the turbine hub height and turbine specifications, along with  ``wind_profile`` to estimate the wind speed at different heights based on wind speed at a reference height. (:issue:`1458`, :pull:`1471`)
@@ -40,6 +35,8 @@ Breaking changes
 * `pytest-socket` is now a required development dependency for running `"offline"` tests or the `"offline"` configuration of the `tox` testing suite. This has been added to the `dev` installation recipe. (:issue:`1468`, :pull:`1473`).
 * For better transparency and control in development, the `tox` configuration has been adapted to allow passing of markers directly to the `pytest` call. Positional arguments must be passed to tox after the `--` separator to select/deselect tests (e.g. ``'tox -e py38 -- -m "not slow"'``). (:pull:`1473`).
 * For better accuracy, the `tox -e black` recipe has been renamed to `tox -e lint`, as this configuration already included several other linting checks. (:pull:`1473`).
+* ``xclim.indices.winter_storm`` renamed to ``xclim.indices.snd_storm_days``.  (:pull:`1505`).
+* Default threshold in ``xclim.indices.snw_season_{start|length|end}`` changed form `20 kg m-2` to `4 kg m-2`. (:pull:`1505`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -55,7 +52,7 @@ Internal changes
 * The `pkg_resources` library has been replaced for the `packaging` library when version comparisons have been performed, and a few warning messages have been silenced in the testing suite. (:issue:`1489`, :pull:`1490`).
 * New ``xclim.testing.helpers.assert_lazy`` context manager to assert the laziness of code blocks. (:pull:`1484`).
 * Added a fix for the deprecation warnings that `importlib.resources` throws, made backwards-compatible for Python3.8 with `importlib_resources` backport. (:pull:`1485`).
-* Added basic keywords on most indicators for easier searching in the docs. Extracted climate indicators API to its own page for faster loaing. (:pull:`1502`, :issue:`1433`).
+* Added basic keywords on most indicators for easier searching in the docs. Extracted climate indicators API to its own page for faster loading. (:pull:`1502`, :issue:`1433`).
 
 v0.45.0 (2023-09-05)
 --------------------
