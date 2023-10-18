@@ -1428,7 +1428,7 @@ def standardized_precipitation_evapotranspiration_index(
     window: int | None = 1,
     dist: str | None = "gamma",
     method: str | None = "APP",
-    offset: Quantified = "1 mm/d",
+    offset: Quantified = "1.000 mm/d",
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
     params: Quantified | None = None,
@@ -1492,29 +1492,25 @@ def standardized_precipitation_evapotranspiration_index(
 
     See Standardized Precipitation Index (SPI) for more details on usage.
     """
-    uses_default_offset = offset == "1 mm/d"
-    offset = 0 if offset is None else convert_units_to(offset, wb, context="hydro")
+    uses_default_offset = offset == "1.000 mm/d"
     if params is not None:
-        params_offset = (
-            0
-            if params.attrs["offset"] is None
-            else convert_units_to(params.attrs["offset"], wb, context="hydro")
-        )
-        if params_offset != offset:
-            extra_msg = (
-                " (using default SPEI value 1 mm/d)" if uses_default_offset else ""
-            )
+        params_offset = params.attrs["offset"]
+        if uses_default_offset is False and offset != params_offset:
             warnings.warn(
-                f"The offset in `params` differs from the input `offset`{extra_msg}."
+                "The offset in `params` differs from the input `offset`."
                 "Procceding with the value given in `params`."
             )
-            offset = params_offset
+        offset = params_offset
+    offset = 0 if offset is None else convert_units_to(offset, wb, context="hydro")
     # Allowed distributions are constrained by the SPI function
     if dist in ["gamma", "fisk"] and offset <= 0:
         raise ValueError(
             "The water budget must be shifted towards positive values to be used with `gamma` and `fisk` "
             f"distributions which are bounded by zero. A positive offset is required. Current value: {offset}{wb.attrs['units']}"
         )
+    # Note that the default behaviour would imply an offset for any distribution, even those distributions
+    # that can accomodate negative values of the water budget. This needs to be changed in future versions
+    # of the index.
     if offset != 0:
         with xarray.set_options(keep_attrs=True):
             wb = wb + offset
