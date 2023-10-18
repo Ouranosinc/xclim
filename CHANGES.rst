@@ -54,6 +54,8 @@ Internal changes
 * New ``xclim.testing.helpers.assert_lazy`` context manager to assert the laziness of code blocks. (:pull:`1484`).
 * Added a fix for the deprecation warnings that `importlib.resources` throws, made backwards-compatible for Python3.8 with `importlib_resources` backport. (:pull:`1485`).
 * Added basic keywords on most indicators for easier searching in the docs. Extracted climate indicators API to its own page for faster loading. (:pull:`1502`, :issue:`1433`).
+* `nbstripout` now removes 'metadata.kernelspec' in notebook cells. (:pull:`1407`).
+* Deprecation wrapper ``xclim.core.utils.deprecated`` are added to help with deprecation warnings. (:pull:`1505`).
 
 v0.45.0 (2023-09-05)
 --------------------
