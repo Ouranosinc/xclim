@@ -9,13 +9,25 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 
+from xclim.core.units import convert_units_to, infer_context, units
 from xclim.indices.stats import _fitfunc_1d  # noqa
 
 from . import nbutils as nbu
 from . import utils as u
+from ._processing import _adapt_freq
 from .base import Grouper, map_blocks, map_groups
 from .detrending import PolyDetrend
 from .processing import escore
+
+
+def _adapt_freq_hist(ds, adapt_freq_thresh):
+    """Adapt frequency of null values of `hist`    in order to match `ref`."""
+    with units.context(infer_context(ds.ref.attrs.get("standard_name"))):
+        thresh = convert_units_to(adapt_freq_thresh, ds.ref)
+    dim = ["time"] + ["window"] * ("window" in ds.hist.dims)
+    return _adapt_freq.func(
+        xr.Dataset(dict(sim=ds.hist, ref=ds.ref)), thresh=thresh, dim=dim
+    ).sim_ad
 
 
 @map_groups(
@@ -23,7 +35,7 @@ from .processing import escore
     hist_q=[Grouper.PROP, "quantiles"],
     scaling=[Grouper.PROP],
 )
-def dqm_train(ds, *, dim, kind, quantiles) -> xr.Dataset:
+def dqm_train(ds, *, dim, kind, quantiles, adapt_freq_thresh) -> xr.Dataset:
     """Train step on one group.
 
     Notes
@@ -31,16 +43,22 @@ def dqm_train(ds, *, dim, kind, quantiles) -> xr.Dataset:
     Dataset must contain the following variables:
       ref : training target
       hist : training data
+
+    adapt_freq_thresh : str | None
+        Threshold for frequency adaptation. See :py:class:`xclim.sdba.processing.adapt_freq` for details.
+        Default is None, meaning that frequency adaptation is not performed.
     """
+    hist = _adapt_freq_hist(ds, adapt_freq_thresh) if adapt_freq_thresh else ds.hist
+
     refn = u.apply_correction(ds.ref, u.invert(ds.ref.mean(dim), kind), kind)
-    histn = u.apply_correction(ds.hist, u.invert(ds.hist.mean(dim), kind), kind)
+    histn = u.apply_correction(hist, u.invert(hist.mean(dim), kind), kind)
 
     ref_q = nbu.quantile(refn, quantiles, dim)
     hist_q = nbu.quantile(histn, quantiles, dim)
 
     af = u.get_correction(hist_q, ref_q, kind)
     mu_ref = ds.ref.mean(dim)
-    mu_hist = ds.hist.mean(dim)
+    mu_hist = hist.mean(dim)
     scaling = u.get_correction(mu_hist, mu_ref, kind=kind)
 
     return xr.Dataset(data_vars=dict(af=af, hist_q=hist_q, scaling=scaling))
@@ -50,15 +68,20 @@ def dqm_train(ds, *, dim, kind, quantiles) -> xr.Dataset:
     af=[Grouper.PROP, "quantiles"],
     hist_q=[Grouper.PROP, "quantiles"],
 )
-def eqm_train(ds, *, dim, kind, quantiles) -> xr.Dataset:
+def eqm_train(ds, *, dim, kind, quantiles, adapt_freq_thresh) -> xr.Dataset:
     """EQM: Train step on one group.
 
     Dataset variables:
       ref : training target
       hist : training data
+
+    adapt_freq_thresh : str | None
+        Threshold for frequency adaptation. See :py:class:`xclim.sdba.processing.adapt_freq` for details.
+        Default is None, meaning that frequency adaptation is not performed.
     """
+    hist = _adapt_freq_hist(ds, adapt_freq_thresh) if adapt_freq_thresh else ds.hist
     ref_q = nbu.quantile(ds.ref, quantiles, dim)
-    hist_q = nbu.quantile(ds.hist, quantiles, dim)
+    hist_q = nbu.quantile(hist, quantiles, dim)
 
     af = u.get_correction(hist_q, ref_q, kind)
 
