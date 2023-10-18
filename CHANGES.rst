@@ -38,7 +38,8 @@ Breaking changes
 * For better accuracy, the `tox -e black` recipe has been renamed to `tox -e lint`, as this configuration already included several other linting checks. (:pull:`1473`).
 * ``xclim.indices.winter_storm`` renamed to ``xclim.indices.snd_storm_days``.  (:pull:`1505`).
 * Default threshold in ``xclim.indices.snw_season_{start|length|end}`` changed form `20 kg m-2` to `4 kg m-2`. (:pull:`1505`).
-* The `mf_file` call signature (deprecated in `xclim` v0.43.0) found in ``xclim.ensembles.create_ensemble`` (and ``xclim.ensembles._ens_align_dataset``) has been removed. (:pull:`1506`).
+* `xclim` development dependencies now include `ruff`. `pycodestyle` and `pydocstyle` have been replaced by `ruff` and removed from the `dev` installation recipe. (:pull:`1504`).
+* The `mf_file` call signature found in ``xclim.ensembles.create_ensemble`` (and ``xclim.ensembles._ens_align_dataset``) has been removed (deprecated since `xclim` v0.43.0). (:pull:`1506`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -57,6 +58,7 @@ Internal changes
 * Added basic keywords on most indicators for easier searching in the docs. Extracted climate indicators API to its own page for faster loading. (:pull:`1502`, :issue:`1433`).
 * `nbstripout` now removes 'metadata.kernelspec' in notebook cells. (:pull:`1407`).
 * Deprecation wrapper ``xclim.core.utils.deprecated`` are added to help with deprecation warnings. (:pull:`1505`).
+* `xclim` now uses `ruff` to format the codebase with `make lint` and `pre-commit`. `flake8` is still used for the time being, solely to enforce docstring linting (with `flake8-rst-docstrings`) and alphabetical `__all__` entries (with `flake8-alphabetize`). (:pull:`1504`).
 
 v0.45.0 (2023-09-05)
 --------------------

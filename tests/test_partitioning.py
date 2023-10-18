@@ -23,7 +23,6 @@ def test_hawkins_sutton_smoke(open_dataset):
 
 def test_hawkins_sutton_synthetic(random):
     """Test logic of Hawkins-Sutton's implementation using synthetic data."""
-
     # Time, scenario, model
     # Here the scenarios don't change over time, so there should be no model variability (since it's relative to the
     # reference period.

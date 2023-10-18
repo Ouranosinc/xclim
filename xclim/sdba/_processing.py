@@ -11,7 +11,6 @@ from typing import Sequence
 
 import numpy as np
 import xarray as xr
-from xarray.core.utils import get_temp_dimname
 
 from . import nbutils as nbu
 from .base import Grouper, map_groups

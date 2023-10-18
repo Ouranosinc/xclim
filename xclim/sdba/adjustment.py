@@ -147,9 +147,11 @@ class TrainAdjust(BaseAdjustment):
 
     Children classes should implement these methods:
 
-    - ``_train(ref, hist, **kwargs)``, classmethod receiving the training target and data, returning a training dataset and parameters to store in the object.
+    - ``_train(ref, hist, **kwargs)``, classmethod receiving the training target and data,
+      returning a training dataset and parameters to store in the object.
 
-    - ``_adjust(sim, **kwargs)``, receiving the projected data and some arguments, returning the `scen` DataArray.
+    - ``_adjust(sim, **kwargs)``, receiving the projected data and some arguments,
+      returning the `scen` DataArray.
 
     """
 

@@ -49,7 +49,7 @@ import json
 import warnings
 from copy import deepcopy
 from pathlib import Path
-from typing import Mapping, Optional, Sequence
+from typing import Mapping, Sequence
 
 from .formatting import AttrFormatter, default_formatter
 

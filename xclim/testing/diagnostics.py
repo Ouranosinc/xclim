@@ -46,6 +46,7 @@ def synth_rainfall(shape, scale=1, wet_freq=0.25, size=1):
 
 
 def cannon_2015_figure_2():
+    """Create a graphic similar to figure 2 of Cannon et al. 2015."""
     # noqa: D103
     n = 10000
     ref, hist, sim = cannon_2015_rvs(n, random=False)

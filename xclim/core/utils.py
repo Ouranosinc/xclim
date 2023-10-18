@@ -52,9 +52,13 @@ A mapping from variable name to a dict with the following keys:
 - canonical_units [required] : The conventional units used by this variable.
 - cell_methods [optional] : The conventional `cell_methods` CF attribute
 - description [optional] : A description of the variable, to populate dynamically generated docstrings.
-- dimensions [optional] : The dimensionality of the variable, an abstract version of the units. See `xclim.units.units._dimensions.keys()` for available terms. This is especially useful for making xclim aware of "[precipitation]" variables.
+- dimensions [optional] : The dimensionality of the variable, an abstract version of the units.
+  See `xclim.units.units._dimensions.keys()` for available terms. This is especially useful for making xclim aware of
+  "[precipitation]" variables.
 - standard_name [optional] : If it exists, the CF standard name.
-- data_flags [optional] : Data flags methods (:py:mod:`xclim.core.dataflags`) applicable to this variable. The method names are keys and values are dicts of keyword arguments to pass (an empty dict if there's nothing to configure).
+- data_flags [optional] : Data flags methods (:py:mod:`xclim.core.dataflags`) applicable to this variable.
+  The method names are keys and values are dicts of keyword arguments to pass
+  (an empty dict if there's nothing to configure).
 """
 
 # Input cell methods for clix-meta
@@ -698,7 +702,9 @@ def infer_kind_from_parameter(param) -> InputKind:
     return InputKind.OTHER_PARAMETER
 
 
-def adapt_clix_meta_yaml(raw: os.PathLike | StringIO | str, adapted: os.PathLike):
+def adapt_clix_meta_yaml(  # noqa: C901
+    raw: os.PathLike | StringIO | str, adapted: os.PathLike
+):
     """Read in a clix-meta yaml representation and refactor it to fit xclim's yaml specifications."""
     from ..indices import generic  # pylint: disable=import-outside-toplevel
 

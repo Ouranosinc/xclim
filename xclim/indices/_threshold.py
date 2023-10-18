@@ -17,10 +17,8 @@ from xclim.core.units import (
     to_agg_units,
 )
 from xclim.core.utils import DayOfYearStr, Quantified, deprecated
-from xclim.indices.helpers import _gather_lat
 
 from . import run_length as rl
-from ._simple import frost_days
 from .generic import (
     compare,
     cumulative_difference,
