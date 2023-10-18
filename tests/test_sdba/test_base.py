@@ -203,3 +203,16 @@ def test_map_blocks(tas_series):
     ).load()
     assert set(data.data.dims) == {"dayofyear"}
     assert "leftover" in data
+
+
+def test_map_blocks_error(tas_series):
+    tas = tas_series(np.arange(366), start="2000-01-01")
+    tas = tas.expand_dims(lat=[1, 2, 3, 4]).chunk(lat=1)
+
+    # Test dim parsing
+    @map_blocks(reduces=["lat"], data=[])
+    def func(ds, *, group, lon=None):
+        return ds.tas.rename("data").to_dataset()
+
+    with pytest.raises(ValueError, match="cannot be chunked"):
+        func(xr.Dataset(dict(tas=tas)), group="time")

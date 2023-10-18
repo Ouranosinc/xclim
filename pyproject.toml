@@ -75,6 +75,7 @@ dev = [
   "pylint",
   "pytest",
   "pytest-cov",
+  "pytest-socket",
   "pytest-xdist[psutil] >=3.2",
   "tokenize-rt",
   "tox",
@@ -205,5 +206,6 @@ usefixtures = "xdoctest_namespace"
 doctest_optionflags = ["NORMALIZE_WHITESPACE", "IGNORE_EXCEPTION_DETAIL", "NUMBER", "ELLIPSIS"]
 markers = [
   "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-  "requires_docs: mark tests that can only be run with documentation present (deselect with '-m \"not requires_docs\"')"
+  "requires_docs: mark tests that can only be run with documentation present (deselect with '-m \"not requires_docs\"')",
+  "requires_internet: mark tests that require internet access (deselect with '-m \"not requires_internet\"')"
 ]

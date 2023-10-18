@@ -320,18 +320,18 @@ class TestAgroclimaticIndices:
                 bedd[1], bedd[0]
             )  # Leap-year has slightly higher values
             np.testing.assert_allclose(
-                bedd, np.array([deg_days, deg_days, deg_days, np.NaN]), rtol=6e-4
+                bedd[:3], np.array([deg_days, deg_days, deg_days]), rtol=6e-4
             )
             np.testing.assert_allclose(
-                bedd_hot, [max_deg_days, max_deg_days, max_deg_days, np.NaN], rtol=0.15
+                bedd_hot[:3], [max_deg_days, max_deg_days, max_deg_days], rtol=0.15
             )
 
         else:
             np.testing.assert_allclose(
-                bedd, np.array([deg_days, deg_days, deg_days, np.NaN])
+                bedd[:3], np.array([deg_days, deg_days, deg_days])
             )
             np.testing.assert_array_equal(
-                bedd_hot, [max_deg_days, max_deg_days, max_deg_days, np.NaN]
+                bedd_hot[:3], [max_deg_days, max_deg_days, max_deg_days]
             )
             if method == "gladstones":
                 np.testing.assert_array_less(bedd, bedd_high_lat)
@@ -3677,3 +3677,29 @@ class TestLateFrostDays:
         tasmin = tasmin_series(np.array([-1, 1, 2, -4, 0]) + K2C, start="30/3/2023")
         lfd = xci.frost_days(tasmin, date_bounds=("04-01", "06-30"))
         np.testing.assert_allclose(lfd, 1)
+
+
+class TestWindProfile:
+    def test_simple(self, sfcWind_series):
+        a = np.linspace(0, 100)
+        v = xci.wind_profile(sfcWind_series(a), h="100 m", h_r="10 m")
+        np.testing.assert_allclose(v, a * 10 ** (1 / 7))
+
+
+class TestWindPowerPotential:
+    def test_simple(self, sfcWind_series):
+        v = [2, 6, 20, 30]
+        p = xci.wind_power_potential(
+            sfcWind_series(v, units="m/s"), cut_in="4 m/s", rated="8 m/s"
+        )
+        np.testing.assert_allclose(p, [0, (6**3 - 4**3) / (8**3 - 4**3), 1, 0])
+
+        # Test discontinuities at the default thresholds
+        v = np.array([3.5, 15])
+        a = sfcWind_series(v - 1e-7, units="m/s")
+        b = sfcWind_series(v + 1e-7, units="m/s")
+
+        pa = xci.wind_power_potential(a)
+        pb = xci.wind_power_potential(b)
+
+        np.testing.assert_array_almost_equal(pa, pb, decimal=6)

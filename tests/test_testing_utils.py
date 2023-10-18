@@ -28,9 +28,10 @@ class TestFixtures:
 
 
 class TestFileRequests:
+    @pytest.mark.requires_internet
     def test_get_failure(self, tmp_path):
         bad_repo_address = "https://github.com/beard/of/zeus/"
-        with pytest.raises(HTTPError):
+        with pytest.raises(FileNotFoundError):
             utilities._get(
                 Path("san_diego", "60_percent_of_the_time_it_works_everytime"),
                 bad_repo_address,
@@ -39,6 +40,7 @@ class TestFileRequests:
                 tmp_path,
             )
 
+    @pytest.mark.requires_internet
     def test_open_dataset_with_bad_file(self, tmp_path):
         cmip3_folder = tmp_path.joinpath("main", "cmip3")
         cmip3_folder.mkdir(parents=True)
@@ -72,13 +74,14 @@ class TestFileRequests:
             == Path(cmip3_folder, cmip3_md5).read_text()
         )
 
+    @pytest.mark.requires_internet
     def test_open_testdata(self):
         ds = utilities.open_dataset(
-            Path("cmip5", "tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712").as_posix()
+            Path("cmip5/tas_Amon_CanESM2_rcp85_r1i1p1_200701-200712")
         )
         assert ds.lon.size == 128
 
-    # Not that this test is super slow, but there is no need in spamming github's API for no reason.
+    # Not that this test is super slow, but there is no real value in spamming GitHub's API for no reason.
     @pytest.mark.slow
     @pytest.mark.xfail(reason="Test is rate limited by GitHub.")
     def test_list_datasets(self):

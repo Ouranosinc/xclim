@@ -265,12 +265,14 @@ def huglin_index(
         )
         k_aggregated = 1
     elif method.lower() == "jones":
-        day_length = aggregate_between_dates(
-            day_lengths(dates=tas.time, lat=lat, method="simple"),
-            start=start_date,
-            end=end_date,
-            op="sum",
-            freq=freq,
+        day_length = (
+            select_time(
+                day_lengths(dates=tas.time, lat=lat, method="simple"),
+                date_bounds=(start_date, end_date),
+                include_bounds=(True, False),
+            )
+            .resample(time=freq)
+            .sum()
         )
         k = 1
         k_aggregated = 2.8311e-4 * day_length + 0.30834
@@ -279,10 +281,13 @@ def huglin_index(
 
     hi = (((tas + tasmax) / 2) - thresh).clip(min=0) * k
     hi = (
-        aggregate_between_dates(hi, start=start_date, end=end_date, freq=freq)
+        select_time(
+            hi, date_bounds=(start_date, end_date), include_bounds=(True, False)
+        )
+        .resample(time=freq)
+        .sum()
         * k_aggregated
     )
-
     hi.attrs["units"] = ""
     return hi
 
@@ -420,11 +425,14 @@ def biologically_effective_degree_days(
             )
             k_aggregated = 1
         else:
-            day_length = aggregate_between_dates(
-                day_lengths(dates=tasmin.time, lat=lat, method="simple"),
-                start=start_date,
-                end=end_date,
-                freq=freq,
+            day_length = (
+                select_time(
+                    day_lengths(dates=tasmin.time, lat=lat, method="simple"),
+                    date_bounds=(start_date, end_date),
+                    include_bounds=(True, False),
+                )
+                .resample(time=freq)
+                .sum()
             )
             k = 1
             k_huglin = 2.8311e-4 * day_length + 0.30834
@@ -441,7 +449,11 @@ def biologically_effective_degree_days(
     )
 
     bedd = (
-        aggregate_between_dates(bedd, start=start_date, end=end_date, freq=freq)
+        select_time(
+            bedd, date_bounds=(start_date, end_date), include_bounds=(True, False)
+        )
+        .resample(time=freq)
+        .sum()
         * k_aggregated
     )
 

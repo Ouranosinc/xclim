@@ -1140,6 +1140,7 @@ class Indicator(IndicatorRegistrar):
             )
         return attrs
 
+    @classmethod
     def json(self, args=None):
         """Return a serializable dictionary representation of the class.
 

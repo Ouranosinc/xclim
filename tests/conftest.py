@@ -15,7 +15,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 from filelock import FileLock
-from pkg_resources import parse_version, working_set
+from packaging.version import Version
 
 import xclim
 from xclim import __version__ as __xclim_version__
@@ -39,14 +39,14 @@ if not __xclim_version__.endswith("-beta") and helpers.TESTDATA_BRANCH == "main"
 if re.match(r"^v\d+\.\d+\.\d+", helpers.TESTDATA_BRANCH):
     # Find the date of last modification of xclim source files to generate a calendar version
     install_date = dt.strptime(
-        time.ctime(os.path.getmtime(working_set.by_key["xclim"].location)),
+        time.ctime(os.path.getmtime(xclim.__file__)),
         "%a %b %d %H:%M:%S %Y",
     )
     install_calendar_version = (
         f"{install_date.year}.{install_date.month}.{install_date.day}"
     )
 
-    if parse_version(helpers.TESTDATA_BRANCH) > parse_version(install_calendar_version):
+    if Version(helpers.TESTDATA_BRANCH) > Version(install_calendar_version):
         warnings.warn(
             f"Installation date of `xclim` ({install_date.ctime()}) "
             f"predates the last release of `xclim-testdata` ({helpers.TESTDATA_BRANCH}). "
@@ -434,13 +434,19 @@ def gather_session_data(threadsafe_data_dir, worker_id, xdoctest_namespace):
     """Gather testing data on pytest run.
 
     When running pytest with multiple workers, one worker will copy data remotely to _default_cache_dir while
-    other workers wait using lockfile. Once the lock is released, all workers will copy data to their local
-    threadsafe_data_dir."""
+    other workers wait using lockfile. Once the lock is released, all workers will then copy data to their local
+    threadsafe_data_dir.As this fixture is scoped to the session, it will only run once per pytest run.
+
+    Additionally, this fixture is also used to generate the `atmosds` synthetic testing dataset as well as add the
+    example file paths to the xdoctest_namespace, used when running doctests.
+    """
 
     if (
         not _default_cache_dir.joinpath(helpers.TESTDATA_BRANCH).exists()
         or helpers.PREFETCH_TESTING_DATA
     ):
+        if helpers.PREFETCH_TESTING_DATA:
+            print("`XCLIM_PREFETCH_TESTING_DATA` set. Prefetching testing data...")
         if worker_id in "master":
             helpers.populate_testing_data(branch=helpers.TESTDATA_BRANCH)
         else:
@@ -451,7 +457,7 @@ def gather_session_data(threadsafe_data_dir, worker_id, xdoctest_namespace):
                 helpers.populate_testing_data(branch=helpers.TESTDATA_BRANCH)
                 _default_cache_dir.joinpath(".data_written").touch()
             fl.acquire()
-        shutil.copytree(_default_cache_dir, threadsafe_data_dir)
+    shutil.copytree(_default_cache_dir, threadsafe_data_dir)
     helpers.generate_atmos(threadsafe_data_dir)
     xdoctest_namespace.update(helpers.add_example_file_paths(threadsafe_data_dir))
 
