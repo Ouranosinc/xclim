@@ -398,7 +398,7 @@ def snd_season_end(
     return out.where(~valid)
 
 
-@declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
+@declare_units(snw="[mass]/[area]")
 def snw_season_end(
     snw: xarray.DataArray,
     thresh: Quantified = "UNSET",
@@ -516,7 +516,7 @@ def snd_season_start(
     return out.where(~valid)
 
 
-@declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
+@declare_units(snw="[mass]/[area]")
 def snw_season_start(
     snw: xarray.DataArray,
     thresh: Quantified = "UNSET",
@@ -2180,7 +2180,7 @@ def snd_season_length(
     return to_agg_units(out, snd, "count").where(~valid)
 
 
-@declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
+@declare_units(snw="[mass]/[area]")
 def snw_season_length(
     snw: xarray.DataArray,
     thresh: Quantified = "UNSET",

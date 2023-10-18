@@ -2806,10 +2806,16 @@ def test_blowing_snow(snd_series, sfcWind_series):
     np.testing.assert_array_equal(out, [1])
 
 
-def test_winter_storm(snd_series):
+def test_snd_storm_days(snd_series):
     snd = snd_series([0, 0.5, 0.2, 0.7, 0, 0.4])
-    out = xci.winter_storm(snd, thresh="30 cm")
+    out = xci.snd_storm_days(snd, thresh="30 cm")
     np.testing.assert_array_equal(out, [3])
+
+
+def test_snw_storm_days(snw_series):
+    snw = snw_series([0, 50, 20, 70, 0, 80])
+    out = xci.snw_storm_days(snw, thresh="60 kg m-2")
+    np.testing.assert_array_equal(out, [2])
 
 
 def test_humidex(tas_series):
