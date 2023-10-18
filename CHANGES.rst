@@ -4,7 +4,7 @@ Changelog
 
 v0.46.0 (unreleased)
 --------------------
-Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`), Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -15,6 +15,7 @@ New features and enhancements
 * Refactored the indicators page with the addition of a search bar.
 * Indicator ``generic.stats`` now accepts any frequency (previously only daily). (:pull:`1498`).
 * Added argument ``out_units`` to ``select_resample_op`` to bypass limitations of ``to_agg_units`` in custom indicators. Add "var" to supported operations in ``to_agg_units``. (:pull:`1498`).
+* `adapt_freq_thresh` argument added `sdba` training functions, allowing to perform frequency adaptation appropriately in each map block. (:pull:`1407`).
 
 Bug fixes
 ^^^^^^^^^
