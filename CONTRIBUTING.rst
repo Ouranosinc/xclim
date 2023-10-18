@@ -138,13 +138,21 @@ Ready to contribute? Here's how to set up `xclim` for local development.
     # To run pre-commit hooks manually:
     $ pre-commit run --all-files
 
-  Instead of ``pre-commit``, you could also verify your changes manually with `black`, `flake8`, `flake8-rst-docstrings`, `pydocstyle`, and `yamllint`::
+  Instead of ``pre-commit``, you can also verify your changes using the `Make` recipe for code linting checks::
 
-    $ black --check --target-version py38 xclim tests
-    $ black --check --target-version py38 --include "\.ipynb$" docs
-    $ flake8 xclim tests
-    $ pydocstyle --config=setup.cfg xclim xclim
-    $ yamllint --config-file .yamllint.yaml xclim
+    $ make lint
+
+  Or, alternatively, you can check individual hooks manually with `black`, `isort`, `ruff`, `flake8`, `flake8-rst-docstrings`, `nbqa`, `blackdoc`, and `yamllint`::
+
+	$ black --check xclim tests
+	$ isort --check xclim tests
+	$ ruff xclim tests
+	$ flake8 --config=setup.cfg xclim tests
+	$ nbqa black --check docs
+	$ nbqa isort --check docs
+	$ blackdoc --check --exclude=xclim/indices/__init__.py xclim
+	$ blackdoc --check docs
+	$ yamllint --config-file=.yamllint.yaml xclim
 
 6. When features or bug fixes have been contributed, unit tests and doctests have been added, or notebooks have been updated, use ``$ pytest`` to test them::
 
