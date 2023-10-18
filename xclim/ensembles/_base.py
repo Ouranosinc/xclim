@@ -4,7 +4,6 @@ Ensembles Creation and Statistics
 """
 from __future__ import annotations
 
-import warnings
 from glob import glob
 from pathlib import Path
 from typing import Any, Sequence
