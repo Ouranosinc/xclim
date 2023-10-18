@@ -23,7 +23,6 @@ from xclim.core.calendar import (
 from xclim.core.units import (
     convert_units_to,
     declare_relative_units,
-    declare_units,
     infer_context,
     pint2cfunits,
     str2pint,

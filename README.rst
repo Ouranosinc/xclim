@@ -9,7 +9,7 @@ xclim: Climate services library |logo|
 +----------------------------+-----------------------------------------------------+
 | Open Source                | |license| |fair| |zenodo| |pyOpenSci| |joss|        |
 +----------------------------+-----------------------------------------------------+
-| Coding Standards           | |black| |pre-commit| |security| |fossa|             |
+| Coding Standards           | |black| |ruff| |pre-commit| |security| |fossa|      |
 +----------------------------+-----------------------------------------------------+
 | Development Status         | |status| |build| |coveralls|                        |
 +----------------------------+-----------------------------------------------------+
@@ -182,6 +182,10 @@ This package was created with Cookiecutter_ and the `audreyfeldroy/cookiecutter-
 .. |pre-commit| image:: https://results.pre-commit.ci/badge/github/Ouranosinc/xclim/master.svg
         :target: https://results.pre-commit.ci/latest/github/Ouranosinc/xclim/master
         :alt: pre-commit.ci status
+
+.. |ruff| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
+    :target: https://github.com/astral-sh/ruff
+    :alt: Ruff
 
 .. |status| image:: https://www.repostatus.org/badges/latest/active.svg
         :target: https://www.repostatus.org/#active

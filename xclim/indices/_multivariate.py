@@ -11,7 +11,6 @@ from xclim.core.calendar import resample_doy
 from xclim.core.units import (
     convert_units_to,
     declare_units,
-    ensure_delta,
     pint2cfunits,
     rate2amount,
     str2pint,

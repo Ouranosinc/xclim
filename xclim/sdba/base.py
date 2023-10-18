@@ -500,7 +500,7 @@ def _decode_cf_coords(ds):
             del ds[crdname].encoding["dtype"]
 
 
-def map_blocks(reduces: Sequence[str] = None, **outvars):
+def map_blocks(reduces: Sequence[str] = None, **outvars):  # noqa: C901
     r"""Decorator for declaring functions and wrapping them into a map_blocks.
 
     Takes care of constructing the template dataset. Dimension order is not preserved.
@@ -541,10 +541,10 @@ def map_blocks(reduces: Sequence[str] = None, **outvars):
     # List of dimensions reduced by the function.
     red_dims = reduces or []
 
-    def _decorator(func):
+    def _decorator(func):  # noqa: C901
         # @wraps(func, hide_wrapped=True)
         @parse_group
-        def _map_blocks(ds, **kwargs):
+        def _map_blocks(ds, **kwargs):  # noqa: C901
             if isinstance(ds, xr.Dataset):
                 ds = ds.unify_chunks()
 

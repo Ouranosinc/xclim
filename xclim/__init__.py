@@ -6,6 +6,7 @@ try:
 except ImportError:
     from importlib_resources import files as _files
 
+from xclim import indices
 from xclim.core import units  # noqa
 from xclim.core.indicator import build_indicator_module_from_yaml
 from xclim.core.locales import load_locale
