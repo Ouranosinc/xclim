@@ -401,7 +401,7 @@ def snd_season_end(
 @declare_units(snw="[mass]/[area]", thresh="[mass]/[area]")
 def snw_season_end(
     snw: xarray.DataArray,
-    thresh: Quantified = "UNSET",
+    thresh: Quantified = "20 kg m-2",
     window: int = 14,
     freq: str = "AS-JUL",
 ) -> xarray.DataArray:
