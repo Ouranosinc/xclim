@@ -32,7 +32,7 @@ Breaking changes
 * `pytest-socket` is now a required development dependency for running `"offline"` tests or the `"offline"` configuration of the `tox` testing suite. This has been added to the `dev` installation recipe. (:issue:`1468`, :pull:`1473`).
 * For better transparency and control in development, the `tox` configuration has been adapted to allow passing of markers directly to the `pytest` call. Positional arguments must be passed to tox after the `--` separator to select/deselect tests (e.g. ``'tox -e py38 -- -m "not slow"'``). (:pull:`1473`).
 * For better accuracy, the `tox -e black` recipe has been renamed to `tox -e lint`, as this configuration already included several other linting checks. (:pull:`1473`).
-* The `mf_file` call signature (deprecated in `xclim` v0.43.0) found in ``xclim.ensembles.create_ensemble`` (and ``xclim.ensembles._ens_align_dataset``) has been removed.
+* The `mf_file` call signature (deprecated in `xclim` v0.43.0) found in ``xclim.ensembles.create_ensemble`` (and ``xclim.ensembles._ens_align_dataset``) has been removed. (:pull:`1506`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
