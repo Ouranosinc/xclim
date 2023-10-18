@@ -1092,7 +1092,7 @@ def _preprocess_standardized_index(da, freq, window, **indexer):
 
     da : xarray.DataArray
         Input array.
-    freq : str | None
+    freq : {D, MS}, optional
         Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
         has already been applied input dataset and will skip the resampling step.
     window : int
@@ -1198,7 +1198,7 @@ def standardized_index_fit_params(
         da.time.max().dt.strftime("%Y-%m-%d"),
     )
     params.attrs = {
-        "Calibration period": cal_range,
+        "calibration_period": cal_range,
         "freq": freq,
         "window": window,
         "scipy_dist": dist,
@@ -1230,7 +1230,7 @@ def _get_standardized_index(da, params, **indexer):
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
     """
     scipy_dist = get_dist(params.attrs["scipy_dist"])
-    group_name = params.attrs["group"].rsplit(".")[-1]
+    group_name = params.attrs["group"].split(".")[-1]
     param_names = params.dparams.values
 
     # transform `da` values to a cdf distribution with fitted parameters `params`
@@ -1410,7 +1410,7 @@ def standardized_precipitation_index(
 
     # If params only contains a subset of main dataset time grouping
     # (e.g. 8/12 months, etc.), it needs to be broadcasted
-    template = pr.groupby(params.attrs["group"]).apply(lambda da: da.isel(time=0))
+    template = pr.groupby(params.attrs["group"]).first()
     paramsd = {k: v for k, v in params.sizes.items() if k != "dparams"}
     if paramsd != template.sizes:
         params = params.broadcast_like(template)
