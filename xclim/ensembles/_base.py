@@ -24,7 +24,6 @@ def create_ensemble(
     calendar: str | None = None,
     realizations: Sequence[Any] | None = None,
     cal_kwargs: dict | None = None,
-    mf_flag: bool | str = "UNSET",  # noqa
     **xr_kwargs,
 ) -> xr.Dataset:
     r"""Create an xarray dataset of an ensemble of climate simulation from a list of netcdf files.
@@ -103,15 +102,6 @@ def create_ensemble(
             "Passing `realizations` is not supported when `datasets` "
             "is a glob pattern, as the final order is random."
         )
-
-    if mf_flag != "UNSET":
-        warnings.warn(
-            "The `mf_flag` argument is being deprecated in favour of `multifile` in `create.ensemble()`. "
-            "This change will be made effective from `xclim>=0.43.0`. Please update your scripts accordingly",
-            FutureWarning,
-            stacklevel=3,
-        )
-        multifile = mf_flag
 
     ds = _ens_align_datasets(
         datasets,
@@ -350,7 +340,6 @@ def _ens_align_datasets(
     resample_freq: str | None = None,
     calendar: str = "default",
     cal_kwargs: dict | None = None,
-    mf_flag: bool | str = "UNSET",  # noqa
     **xr_kwargs,
 ) -> list[xr.Dataset]:
     r"""Create a list of aligned xarray Datasets for ensemble Dataset creation.
@@ -385,15 +374,6 @@ def _ens_align_datasets(
 
     if isinstance(datasets, str):
         datasets = glob(datasets)
-
-    if mf_flag != "UNSET":
-        warnings.warn(
-            "The `mf_flag` argument is being deprecated in favour of `multifile` in `_ens_align_datasets()`. "
-            "This change will be made effective from `xclim>=0.43.0`. Please update your scripts accordingly",
-            FutureWarning,
-            stacklevel=3,
-        )
-        multifile = mf_flag
 
     ds_all = []
     calendars = []
