@@ -39,6 +39,7 @@ Breaking changes
 * ``xclim.indices.winter_storm`` renamed to ``xclim.indices.snd_storm_days``.  (:pull:`1505`).
 * Default threshold in ``xclim.indices.snw_season_{start|length|end}`` changed form `20 kg m-2` to `4 kg m-2`. (:pull:`1505`).
 * `xclim` development dependencies now include `ruff`. `pycodestyle` and `pydocstyle` have been replaced by `ruff` and removed from the `dev` installation recipe. (:pull:`1504`).
+* The `mf_file` call signature found in ``xclim.ensembles.create_ensemble`` (and ``xclim.ensembles._ens_align_dataset``) has been removed (deprecated since `xclim` v0.43.0). (:pull:`1506`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^

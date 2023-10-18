@@ -1346,7 +1346,7 @@ class Indicator(IndicatorRegistrar):
 
     @property
     def is_generic(self):
-        """Return True if the indicator is "generic", meaning that it can accepts variable with any units."""
+        """Return True if the indicator is "generic", meaning that it can accept variables with any units."""
         return not hasattr(self.compute, "in_units")
 
     def _show_deprecation_warning(self):
