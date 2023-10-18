@@ -6,6 +6,7 @@ Helper functions for the indices computations, indicator construction and other 
 """
 from __future__ import annotations
 
+import functools
 import importlib.util
 import logging
 import os
@@ -13,11 +14,16 @@ import warnings
 from collections import defaultdict
 from enum import IntEnum
 from functools import partial
-from importlib.resources import open_text
+
+try:
+    from importlib.resources import files
+except ImportError:
+    from importlib_resources import files
+
 from inspect import Parameter, _empty  # noqa
 from io import StringIO
 from pathlib import Path
-from typing import Callable, Mapping, NewType, Sequence, TypeVar
+from typing import Callable, NewType, Sequence, TypeVar
 
 import numpy as np
 import xarray as xr
@@ -37,8 +43,9 @@ DayOfYearStr = NewType("DayOfYearStr", str)
 #: Type annotation for thresholds and other not-exactly-a-variable quantities
 Quantified = TypeVar("Quantified", xr.DataArray, str, Quantity)
 
-VARIABLES = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
-"""Official variables definitions.
+with (files("xclim.data") / "variables.yml").open() as f:
+    VARIABLES = safe_load(f)["variables"]
+    """Official variables definitions.
 
 A mapping from variable name to a dict with the following keys:
 
@@ -104,6 +111,43 @@ def wrapped_partial(func: Callable, suggested: dict | None = None, **fixed) -> C
     injected.update(fixed)
     fully_wrapped._injected = injected
     return fully_wrapped
+
+
+def deprecated(from_version: str | None, suggested: str | None = None) -> Callable:
+    """Mark an index as deprecated and optionally suggest a replacement.
+
+    Parameters
+    ----------
+    from_version : str, optional
+        The version of xclim from which the function is deprecated.
+    suggested : str, optional
+        The name of the function to use instead.
+
+    Returns
+    -------
+    Callable
+    """
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            msg = (
+                f"`{func.__name__}` is deprecated{' from version {}'.format(from_version) if from_version else ''} "
+                "and will be removed in a future version of xclim"
+                f"{'. Use `{}` instead'.format(suggested if suggested else '')}. "
+                f"Please update your scripts accordingly."
+            )
+            warnings.warn(
+                msg,
+                DeprecationWarning,
+                stacklevel=3,
+            )
+
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 # TODO Reconsider the utility of this

@@ -592,7 +592,7 @@ def test_AttrFormatter():
     # Missing mod:
     assert fmt.format("{adj}", adj="evil") == "méchant"
     # Mod with unknown value
-    with pytest.raises(ValueError):
+    with pytest.warns(match="Requested formatting `m` for unknown string `funny`."):
         fmt.format("{adj:m}", adj="funny")
 
 

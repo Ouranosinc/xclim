@@ -143,6 +143,9 @@
     "std": [
       "écart-type"
     ],
+    "var": [
+      "variance"
+    ],
     "absamp": [
       "amplitude absolue"
     ],
@@ -661,22 +664,10 @@
     "title": "Valeur de retour",
     "abstract": "Analyse fréquentielle selon un mode et une distribution."
   },
-  "DISCHARGE_STATS": {
-    "long_name": "Statistique des débits quotidiens",
-    "description": "{op} {freq:f} des débits quotidiens ({indexer}).",
-    "title": "Calcul de statistiques sur des sous-périodes.",
-    "abstract": ""
-  },
   "STATS": {
-    "long_name": "Statistique des valeurs quotidiennes",
-    "description": "{op} {freq:f} des valeurs quotidiennes ({indexer}).",
+    "long_name": "{op:nom} de la variable.",
+    "description": "{op:nom} {freq:f} da la variable ({indexer}).",
     "title": "Calcul de statistiques sur des sous-périodes.",
-    "abstract": ""
-  },
-  "DISCHARGE_DISTRIBUTION_FIT": {
-    "long_name": "Paramètres d'une distribution {dist:f} d'une série de débits",
-    "description": "Paramètres d'une distribution {dist:f} d'une série de débits.",
-    "title": "Calcul les paramètres d'une distribution univariée pour une série de débits",
     "abstract": ""
   },
   "FIT": {
@@ -931,8 +922,8 @@
     "abstract": "Calcule le premier jour d'une période où la température maximale quotidienne est plus élevée qu'un certain seuil durant un nombre de jours donné, limité par une date minimale."
   },
   "DEGREE_DAYS_EXCEEDANCE_DATE": {
-    "long_name": "Premier jour de l'année où l'intégral de la température moyenne quotidienne {op} {thresh} est au-dessus de {sum_thresh}, avec la somme cumulative à partir de {after_date}",
-    "description": "Premier jour de l'année où l'intégral des degrés-jours (ou température moyenne quotidienne {op} {thresh}) est au-dessus de {sum_thresh}, avec la somme cumulative à partir de {after_date}.",
+    "long_name": "Premier jour de l'année où l'intégrale de la température moyenne quotidienne {op} {thresh} est au-dessus de {sum_thresh}, avec la somme cumulative à partir de {after_date}",
+    "description": "Premier jour de l'année où l'intégrale des degrés-jours (ou température moyenne quotidienne {op} {thresh}) est au-dessus de {sum_thresh}, avec la somme cumulative à partir de {after_date}.",
     "title": "Jour du dépassement des degrés-jours",
     "abstract": "Jour de l'année où la somme des degrés-jours est au-dessus d'un seuil donné, survenant après une date donnée. Les degrés-jours sont calculés au-dessus ou en dessous d'un seuil de température donné."
   },
@@ -1078,7 +1069,20 @@
     "long_name": "Jours avec forte accumulation de neige",
     "description": "Nombre de jours où l'accumulation de neige est au-dessus ou égale à {thresh}.",
     "title": "Jours avec accumulation de neige supérieure à un seuil",
-    "abstract": "Nombre de jours où l'accumulation de neige est au-dessus ou égale à un seuil donné."
+    "abstract": "Nombre de jours où l'accumulation de neige est au-dessus ou égale à un seuil donné.",
+    "_deprecated_version": "0.46.0"
+  },
+  "SND_STORM_DAYS": {
+    "long_name": "Jours avec forte accumulation de l'épaisseur de neige",
+    "description": "Nombre de jours où l'accumulation de l'épaisseur de neige est au-dessus ou égale à {thresh}.",
+    "title": "Jours avec accumulation de l'épaisseur de neige supérieure à un seuil",
+    "abstract": "Nombre de jours où l'accumulation de l'épaisseur neige est au-dessus ou égale à un seuil donné."
+  },
+  "SNW_STORM_DAYS": {
+    "long_name": "Jours avec forte accumulation de la quantité de neige",
+    "description": "Nombre de jours où l'accumulation de la quantité de neige est au-dessus ou égale à {thresh}.",
+    "title": "Jours avec accumulation de la quantité de neige supérieure à un seuil",
+    "abstract": "Nombre de jours où l'accumulation de la quantité de neige est au-dessus ou égale à un seuil donné."
   },
   "HIGH_PRECIP_LOW_TEMP": {
     "long_name": "Jours avec des précipitations au dessus de {pr_thresh} et des températures sous {tas_thresh}",

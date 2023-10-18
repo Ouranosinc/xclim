@@ -3,15 +3,16 @@ from __future__ import annotations
 
 import os
 import warnings
-from importlib.resources import open_text
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import xarray as xr
+from dask.diagnostics import Callback
 from yaml import safe_load
 
 from xclim.core import calendar
+from xclim.core.utils import VARIABLES
 from xclim.indices import (
     longwave_upwelling_radiation_from_net_downwelling,
     shortwave_upwelling_radiation_from_net_downwelling,
@@ -66,6 +67,7 @@ __all__ = [
     "PREFETCH_TESTING_DATA",
     "TESTDATA_BRANCH",
     "add_example_file_paths",
+    "assert_lazy",
     "generate_atmos",
     "populate_testing_data",
     "test_timeseries",
@@ -232,13 +234,12 @@ def test_timeseries(
     else:
         coords = pd.date_range(start, periods=len(values), freq=freq)
 
-    data_on_var = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
-    if variable in data_on_var:
+    if variable in VARIABLES:
         attrs = {
-            a: data_on_var[variable].get(a, "")
+            a: VARIABLES[variable].get(a, "")
             for a in ["description", "standard_name", "cell_methods"]
         }
-        attrs["units"] = data_on_var[variable]["canonical_units"]
+        attrs["units"] = VARIABLES[variable]["canonical_units"]
 
     else:
         warnings.warn(f"Variable {variable} not recognised. Attrs will not be filled.")
@@ -253,3 +254,14 @@ def test_timeseries(
         return da.to_dataset()
     else:
         return da
+
+
+def _raise_on_compute(dsk: dict):
+    """Raise an AssertionError mentionning the number triggered tasks."""
+    raise AssertionError(
+        f"Not lazy. Computation was triggered with a graph of {len(dsk)} tasks."
+    )
+
+
+assert_lazy = Callback(start=_raise_on_compute)
+"""Context manager that raises an AssertionError if any dask computation is triggered."""

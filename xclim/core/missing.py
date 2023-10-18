@@ -173,7 +173,10 @@ class MissingBase:
 
         else:
             delta = end_time - start_time
-            n = delta.values.astype(_np_timedelta64[src_timestep]).astype(float)
+            n = (
+                delta.values.astype(_np_timedelta64[offset[1]]).astype(float)
+                / offset[0]
+            )
 
             if freq:
                 count = xr.DataArray(n, coords={"time": c.time}, dims="time")

@@ -11,9 +11,14 @@ import functools
 import logging
 import re
 import warnings
-from importlib.resources import open_text
+
+try:
+    from importlib.resources import files
+except ImportError:
+    from importlib_resources import files
+
 from inspect import _empty, signature  # noqa
-from typing import Any, Callable, Tuple
+from typing import Any, Callable
 
 import numpy as np
 import pint
@@ -112,7 +117,8 @@ hydro.add_transformation(
 units.add_context(hydro)
 
 
-CF_CONVERSIONS = safe_load(open_text("xclim.data", "variables.yml"))["conversions"]
+with (files("xclim.data") / "variables.yml").open() as f:
+    CF_CONVERSIONS = safe_load(f)["conversions"]
 _CONVERSIONS = {}
 
 
@@ -520,7 +526,7 @@ def to_agg_units(
     orig : xr.DataArray
         The original array before the aggregation operation,
         used to infer the sampling units and get the variable units.
-    op : {'min', 'max', 'mean', 'std', 'doymin', 'doymax',  'count', 'integral'}
+    op : {'min', 'max', 'mean', 'std', 'var', 'doymin', 'doymax',  'count', 'integral', 'sum'}
         The type of aggregation operation performed. The special "delta_*" ops are used
         with temperature units needing conversion to their "delta" counterparts (e.g. degree days)
     dim : str
@@ -574,6 +580,9 @@ def to_agg_units(
     if op in ["amin", "min", "amax", "max", "mean", "std"]:
         out.attrs["units"] = orig.attrs["units"]
 
+    elif op in ["var"]:
+        out.attrs["units"] = pint2cfunits(str2pint(orig.units) ** 2)
+
     elif op in ["doymin", "doymax"]:
         out.attrs.update(
             units="", is_dayofyear=np.int32(1), calendar=get_calendar(orig)
@@ -591,7 +600,7 @@ def to_agg_units(
             out.attrs["units"] = pint2cfunits(orig_u * freq_u)
     else:
         raise ValueError(
-            f"Aggregation op {op} not in [min, max, mean, std, doymin, doymax, count, integral]."
+            f"Unknown aggregation op {op}. Known ops are [min, max, mean, std, var, doymin, doymax, count, integral, sum]."
         )
 
     return out

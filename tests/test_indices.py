@@ -2733,20 +2733,21 @@ class TestSnowMaxDoy:
 
 
 class TestSnowCover:
-    def test_snow_season_length(self, snd_series, snw_series):
-        a = np.ones(366) / 100.0
-        a[10:20] = 0.3
+    @pytest.mark.parametrize("length", [0, 10])
+    def test_snow_season_length(self, snd_series, snw_series, length):
+        a = np.zeros(366)
+        a[10 : 10 + length] = 0.3
         snd = snd_series(a)
         # kg m-2 = 1000 kg m-3 * 1 m
         snw = snw_series(1000 * a)
 
         out = xci.snd_season_length(snd)
         assert len(out) == 2
-        assert out[0] == 10
+        assert out[0] == length
 
         out = xci.snw_season_length(snw)
         assert len(out) == 2
-        assert out[0] == 10
+        assert out[0] == length
 
     def test_continous_snow_season_start(self, snd_series, snw_series):
         a = np.arange(366) / 100.0
@@ -2856,9 +2857,22 @@ def test_blowing_snow(snd_series, sfcWind_series):
     np.testing.assert_array_equal(out, [1])
 
 
-def test_winter_storm(snd_series):
+def test_snd_storm_days(snd_series):
     snd = snd_series([0, 0.5, 0.2, 0.7, 0, 0.4])
-    out = xci.winter_storm(snd, thresh="30 cm")
+    out = xci.snd_storm_days(snd, thresh="30 cm")
+    np.testing.assert_array_equal(out, [3])
+
+
+def test_snw_storm_days(snw_series):
+    snw = snw_series([0, 50, 0, 70, 0, 80])
+    out = xci.snw_storm_days(snw, thresh="60 kg m-2")
+    np.testing.assert_array_equal(out, [2])
+
+
+def test_winter_storm_deprecated(snd_series):
+    snd = snd_series([0, 0.5, 0.2, 0.7, 0, 0.4])
+    with pytest.warns(DeprecationWarning):
+        out = xci.winter_storm(snd, thresh="30 cm")
     np.testing.assert_array_equal(out, [3])
 
 
