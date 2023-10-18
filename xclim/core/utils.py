@@ -112,6 +112,42 @@ def wrapped_partial(func: Callable, suggested: dict | None = None, **fixed) -> C
     return fully_wrapped
 
 
+def deprecated(
+    func: Callable, version: str | None, suggested: str | None = None
+) -> Callable:
+    """Mark an index as deprecated and optionally suggest a replacement.
+
+    Parameters
+    ----------
+    func : Callable
+        The function to be wrapped
+    version : str, optional
+        The version of xclim from which the function is deprecated.
+    suggested : str, optional
+        The name of the function to use instead.
+
+    Returns
+    -------
+    Callable
+    """
+    suggested = suggested or {}
+
+    def wrapper(*args, **kwargs):
+        msg = (
+            f"{func.__name__} is deprecated{' from version {}'.format(version) if version else ''} "
+            "and will be removed in a future version of xclim"
+            f"{'. Please use {} instead'.format(suggested['compute'] if suggested.get('compute') else '')}."
+        )
+        warnings.warn(
+            msg,
+            FutureWarning,
+        )
+
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
 # TODO Reconsider the utility of this
 def walk_map(d: dict, func: Callable) -> dict:
     """Apply a function recursively to values of dictionary.
