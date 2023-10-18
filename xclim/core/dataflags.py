@@ -534,7 +534,7 @@ def percentage_values_outside_of_bounds(da: xarray.DataArray) -> xarray.DataArra
     return unbounded_percentages
 
 
-def data_flags(
+def data_flags(  # noqa: C901
     da: xarray.DataArray,
     ds: xarray.Dataset | None = None,
     flags: dict | None = None,

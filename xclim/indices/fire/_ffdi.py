@@ -97,7 +97,7 @@ def _keetch_byram_drought_index(p, t, pa, kbdi0, kbdi: float):  # pragma: no cov
     nopython=True,
     cache=True,
 )
-def _griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover
+def _griffiths_drought_factor(p, smd, lim, df):  # pragma: no cover  # noqa: C901
     """Compute the Griffiths drought factor.
 
     Parameters

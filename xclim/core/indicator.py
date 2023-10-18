@@ -1,4 +1,3 @@
-# noqa: D214,D405,D406,D407,D411
 """
 Indicator Utilities
 ===================
@@ -408,7 +407,7 @@ class Indicator(IndicatorRegistrar):
       Miscellaneous information about the data or methods used to produce it.
     """
 
-    def __new__(cls, **kwds):
+    def __new__(cls, **kwds):  # noqa: C901
         """Create subclass from arguments."""
         identifier = kwds.get("identifier", cls.identifier)
         if identifier is None:
@@ -628,7 +627,7 @@ class Indicator(IndicatorRegistrar):
         return dict(sorted(parameters.items(), key=sortkey))
 
     @classmethod
-    def _parse_output_attrs(
+    def _parse_output_attrs(  # noqa: C901
         cls, kwds: dict[str, Any], identifier: str
     ) -> list[dict[str, str | Callable]]:
         """CF-compliant metadata attributes for all output variables."""
@@ -1642,7 +1641,7 @@ def build_indicator_module(
     return out
 
 
-def build_indicator_module_from_yaml(
+def build_indicator_module_from_yaml(  # noqa: C901
     filename: PathLike,
     name: str | None = None,
     indices: dict[str, Callable] | ModuleType | PathLike | None = None,

@@ -306,7 +306,7 @@ def str2pint(val: str) -> pint.Quantity:
         return units.Quantity(1, units2pint(val))
 
 
-def convert_units_to(
+def convert_units_to(  # noqa: C901
     source: Quantified,
     target: Quantified | units.Unit,
     context: str | None = None,

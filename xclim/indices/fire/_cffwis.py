@@ -628,7 +628,7 @@ def _fire_season(
     return season_mask
 
 
-def _fire_weather_calc(
+def _fire_weather_calc(  # noqa: C901
     tas, pr, rh, ws, snd, mth, lat, season_mask, dc0, dmc0, ffmc0, winter_pr, **params
 ):
     """Primary function computing all Fire Weather Indexes. DO NOT CALL DIRECTLY, use `fire_weather_ufunc` instead."""
@@ -873,7 +873,7 @@ def _fire_weather_calc(
 
 
 # TODO: Does this need to be renamed?
-def fire_weather_ufunc(
+def fire_weather_ufunc(  # noqa: C901
     *,
     tas: xr.DataArray,
     pr: xr.DataArray,

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import numpy as np
-import pytest
 import xarray as xr
 
 from xclim import atmos, set_options

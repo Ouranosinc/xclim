@@ -19,7 +19,7 @@ from packaging.version import Version
 from xclim.core.formatting import update_history
 
 
-def change_significance(
+def change_significance(  # noqa: C901
     fut: xr.DataArray | xr.Dataset,
     ref: xr.DataArray | xr.Dataset = None,
     test: str | None = "ttest",
