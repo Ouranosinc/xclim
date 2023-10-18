@@ -47,10 +47,19 @@ def test_blowing_snow(snd_series, sfcWind_series):
     np.testing.assert_array_equal(out, [5, np.nan])
 
 
-def test_winter_storm(snd_series):
+def test_snd_storm_days(snd_series):
     a = np.zeros(366)
     a[10:20] = np.arange(10)
 
     snd = snd_series(a)
-    out = land.winter_storm(snd, thresh="50 cm")
+    out = land.snd_storm_days(snd, thresh="50 cm")
+    np.testing.assert_array_equal(out, [9, np.nan])
+
+
+def test_snw_storm_days(snw_series):
+    a = np.zeros(366)
+    a[10:20] = np.arange(10, 20)
+
+    snw = snw_series(a)
+    out = land.snw_storm_days(snw, thresh="10 kg m-2")
     np.testing.assert_array_equal(out, [9, np.nan])

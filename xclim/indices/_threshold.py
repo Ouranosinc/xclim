@@ -436,6 +436,10 @@ def snw_season_end(
     References
     ----------
     :cite:cts:`chaumont_elaboration_2017`
+
+    Notes
+    -----
+    The current default threshold "UNSET" is a placeholder and will be changed to the default 4 kg m-2 in xclim>=0.47.0.
     """
     if thresh == "UNSET":
         warnings.warn(
@@ -548,6 +552,10 @@ def snw_season_start(
     References
     ----------
     :cite:cts:`chaumont_elaboration_2017`
+
+    Notes
+    -----
+    The current default threshold "UNSET" is a placeholder and will be changed to the default 4 kg m-2 in xclim>=0.47.0.
     """
     if thresh == "UNSET":
         warnings.warn(
@@ -2202,6 +2210,10 @@ def snw_season_length(
     -------
     xarray.DataArray, [time]
         Number of days where snow water is greater than or equal to threshold.
+
+    Notes
+    -----
+    The current default threshold "UNSET" is a placeholder and will be changed to the default 4 kg m-2 in xclim>=0.47.0.
     """
     if thresh == "UNSET":
         warnings.warn(
