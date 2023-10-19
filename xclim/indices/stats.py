@@ -1,14 +1,19 @@
 """Statistic-related functions. See the `frequency_analysis` notebook for examples."""
 from __future__ import annotations
 
+import warnings
 from typing import Any, Sequence
 
+import flox.xarray as floxx
 import lmoments3.distr
 import numpy as np
 import xarray as xr
+from scipy.stats import norm
 
+from xclim.core.calendar import resample_doy, select_time
 from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history
-from xclim.core.utils import uses_dask
+from xclim.core.units import convert_units_to
+from xclim.core.utils import Quantified, uses_dask
 
 from . import generic
 
@@ -23,6 +28,9 @@ __all__ = [
     "get_lm3_dist",
     "parametric_cdf",
     "parametric_quantile",
+    "preprocess_standardized_index",
+    "standardized_index",
+    "standardized_index_fit_params",
 ]
 
 
@@ -602,3 +610,201 @@ def dist_method(
         output_dtypes=[float],
         dask="parallelized",
     )
+
+
+def preprocess_standardized_index(da, freq, window, **indexer):
+    """Perform resample and roll operations involved in computing a standardized index.
+
+    da : xarray.DataArray
+        Input array.
+    freq : {D, MS}, optional
+        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
+        has already been applied input dataset and will skip the resampling step.
+    window : int
+        Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
+        i.e. a monthly resampling, the window is an integer number of months.
+    indexer
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+
+    Returns
+    -------
+    xarray.DataArray, str
+        Processed array and time grouping corresponding to the final time frequency (following resampling if applicable).
+    """
+    # We could allow a more general frequency in this function and move
+    # the constraint {"D", "MS"} in specific indices such as SPI / SPEI.
+    final_freq = freq or xr.infer_freq(da)
+    try:
+        group = {"D": "time.dayofyear", "MS": "time.month"}[final_freq]
+    except KeyError():
+        raise ValueError(
+            f"The input (following resampling if applicable) has a frequency `{final_freq}`"
+            "which is not supported for standardized indices."
+        )
+
+    if freq:
+        da = da.resample(time=freq).mean(keep_attrs=True)
+
+    if uses_dask(da) and len(da.chunks[da.get_axis_num("time")]) > 1:
+        warnings.warn(
+            "The input data is chunked on time dimension and must be fully rechunked to"
+            " run `fit` on groups ."
+            " Beware, this operation can significantly increase the number of tasks dask"
+            " has to handle.",
+            stacklevel=2,
+        )
+        da = da.chunk({"time": -1})
+
+    if window > 1:
+        da = da.rolling(time=window).mean(skipna=False, keep_attrs=True)
+
+    # The time reduction must be done after the rolling
+    da = select_time(da, **indexer)
+    return da, group
+
+
+def standardized_index_fit_params(
+    da: xr.DataArray,
+    freq: str | None,
+    window: int | None,
+    dist: str | None,
+    method: str | None,
+    offset: Quantified | None = None,
+    **indexer,
+) -> xr.DataArray:
+    """Standardized Index fitting parameters.
+
+    A standardized index measures the deviation of a variable averaged over a rolling temporal window and
+    fitted with a given distribution `dist` with respect to a calibration dataset. The comparison is done by porting
+    back results to a normalized distribution. The fitting parameters of the calibration dataset fitted with `dist`
+    are obtained here.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+        Input array.
+    freq : str | None
+        Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
+        has already been applied input dataset and will skip the resampling step.
+    window : int
+        Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
+        i.e. a monthly resampling, the window is an integer number of months.
+    dist : str
+        Name of the univariate distribution.
+        (see :py:mod:`scipy.stats`).
+    method : str
+        Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
+        uses a deterministic function that doesn't involve any optimization.
+    offset: Quantified
+        Distributions bounded by zero (e.g. "gamma", "fisk") can be used for datasets with negative values by using a offset:
+        `da + offset`
+    indexer
+        Indexing parameters to compute the indicator on a temporal subset of the data.
+        It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
+
+    Returns
+    -------
+    xarray.DataArray
+        Standardized Index fitting parameters. The time dimension of the initial array is reduced to
+
+    Notes
+    -----
+    Supported combinations of `dist` and `method` are:
+    * Gamma ("gamma") : "ML", "APP", "PWM"
+    * Log-logistic ("fisk") : "ML", "APP"
+
+    """
+    # "WPM" method doesn't seem to work for gamma or pearson3
+    dist_and_methods = {"gamma": ["ML", "APP", "PWM"], "fisk": ["ML", "APP"]}
+    if dist not in dist_and_methods:
+        raise NotImplementedError(f"The distribution `{dist}` is not supported.")
+    if method not in dist_and_methods[dist]:
+        raise NotImplementedError(
+            f"The method `{method}` is not supported for distribution `{dist}`."
+        )
+
+    if offset:
+        with xr.set_options(keep_attrs=True):
+            da = da + convert_units_to(offset, da, context="hydro")
+
+    da, group = preprocess_standardized_index(da, freq, window, **indexer)
+    params = da.groupby(group).map(fit, dist=dist, method=method)
+    cal_range = (
+        da.time.min().dt.strftime("%Y-%m-%d"),
+        da.time.max().dt.strftime("%Y-%m-%d"),
+    )
+    params.attrs = {
+        "calibration_period": cal_range,
+        "freq": freq,
+        "window": window,
+        "scipy_dist": dist,
+        "method": method,
+        "group": group,
+        "time_indexer": indexer,
+        "units": "",
+        "offset": offset,
+    }
+    return params
+
+
+def standardized_index(da, params):
+    """Compute standardized index for given fit parameters
+
+    This computes standardized indices which measure the deviation of  variables in the dataset compared
+    to a reference distribution. The reference is a statistical distribution computed with fitting parameters `params`
+    over a given calibration period of the dataset. Those fitting parameters are obtained with
+    ``xclim.standardized_index_fit_params``.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+        Input array.
+    params: xarray.DataArray
+        Fit parameters computed using ``xclim.indices.standardized_index_fit_params``.
+    """
+    freq = params.attrs["freq"] or xr.infer_freq(da)
+
+    def resample_to_time(da, da_ref):
+        if freq == "D":
+            da = resample_doy(da, da_ref)
+        elif freq == "MS":
+            da = da.rename(month="time").reindex(time=da_ref.time.dt.month)
+            da["time"] = da_ref.time
+        else:
+            raise NotImplementedError(
+                f"The frequency of the input `{freq}` is not supported."
+            )
+        return da.chunk({"time": -1})
+
+    idxs = da.time.dt.month
+    probs_of_zero = floxx.xarray_reduce((da + 1) * (da == 0), idxs, func="mean")
+    params, probs_of_zero = (
+        resample_to_time(dax, da) for dax in [params, probs_of_zero]
+    )
+
+    def wrap_cdf_ppf(da, pars, probs_of_zero):
+        dist_probs = get_dist(params.attrs["scipy_dist"]).cdf(da[:], *pars)
+        probs = probs_of_zero + ((1 - probs_of_zero) * dist_probs)
+        return norm.ppf(probs)
+
+    std_index = xr.apply_ufunc(
+        wrap_cdf_ppf,
+        da,
+        params,
+        probs_of_zero,
+        input_core_dims=[["time"], ["dparams", "time"], ["time"]],
+        output_core_dims=[["time"]],
+        vectorize=True,
+        dask="parallelized",
+    )
+
+    # A cdf value of 0 or 1 gives ±np.inf when inverted to the normal distribution.
+    # The neighbouring values 0.00...1 and 0.99...9 with a float64 give a standardized index of ± 8.21
+    # We use this index as reference for maximal/minimal standardized values.
+    # Smaller values of standardized index could also be used as bounds. For example, [Guttman, 1999]
+    # notes that precipitation events (over a month/season) generally occur less than 100 times in the US.
+    # Values of standardized index outside the range [-3.09, 3.09] correspond to probabilities smaller than 0.001
+    # or greater than 0.999, which could be considered non-statistically relevant for this sample size.
+    std_index = std_index.clip(-8.21, 8.21)
+    return std_index
