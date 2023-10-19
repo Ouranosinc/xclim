@@ -1102,9 +1102,8 @@ def _preprocess_standardized_index(da, freq, window, **indexer):
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
     """
-    _, base, _, _ = parse_offset(freq or xarray.infer_freq(da.time))
     try:
-        group = {"D": "time.dayofyear", "M": "time.month"}[base]
+        group = {"D": "time.dayofyear", "MS": "time.month", None: None}[freq]
     except KeyError():
         raise ValueError(f"Standardized index with frequency `{freq}` not supported.")
 
