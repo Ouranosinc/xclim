@@ -777,7 +777,9 @@ def standardized_index(da, params):
             )
         return da.chunk({"time": -1})
 
-    idxs = da.time.dt.month
+    idxs = (
+        da.time.dt.month if "month" in params.attrs["group"] else da.time.dt.dayofyear
+    )
     probs_of_zero = floxx.xarray_reduce((da + 1) * (da == 0), idxs, func="mean")
     params, probs_of_zero = (
         resample_to_time(dax, da) for dax in [params, probs_of_zero]
