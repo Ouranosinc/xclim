@@ -634,7 +634,7 @@ def preprocess_standardized_index(da, freq, window, **indexer):
     """
     # We could allow a more general frequency in this function and move
     # the constraint {"D", "MS"} in specific indices such as SPI / SPEI.
-    final_freq = freq or xr.infer_freq(da)
+    final_freq = freq or xr.infer_freq(da.time)
     try:
         group = {"D": "time.dayofyear", "MS": "time.month"}[final_freq]
     except KeyError():
@@ -785,6 +785,7 @@ def standardized_index(da, params):
         resample_to_time(dax, da) for dax in [params, probs_of_zero]
     )
 
+    # TODO: Change `dist_method` to reproduce the speed obtained below
     def wrap_cdf_ppf(da, pars, probs_of_zero):
         dist_probs = get_dist(params.attrs["scipy_dist"]).cdf(da[:], *pars)
         probs = probs_of_zero + ((1 - probs_of_zero) * dist_probs)
