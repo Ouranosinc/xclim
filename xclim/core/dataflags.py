@@ -42,6 +42,8 @@ class DataQualityException(Exception):
         Message prepended to the error messages.
     """
 
+    flag_array: xarray.Dataset = None
+
     def __init__(
         self,
         flag_array: xarray.Dataset,
