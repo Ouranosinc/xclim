@@ -36,22 +36,25 @@ repos:
   rev: 23.9.1
   hooks:
   - id: black
+- repo: https://github.com/PyCQA/isort
+  rev: 5.12.0
+  hooks:
+  - id: isort
+    args: ['--settings-file=pyproject.toml']
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.1.0
+  hooks:
+  - id: ruff
 - repo: https://github.com/pycqa/flake8
   rev: 6.1.0
   hooks:
   - id: flake8
     additional_dependencies: ['flake8-alphabetize', 'flake8-rst-docstrings']
     args: ['--config=setup.cfg']
-- repo: https://github.com/PyCQA/isort
-  rev: 5.12.0
-  hooks:
-  - id: isort
-    args: ['--settings-file=pyproject.toml', "--add_imports='from __future__ import annotations'"]
 - repo: https://github.com/nbQA-dev/nbQA
   rev: 1.7.0
   hooks:
   - id: nbqa-black
-    args: ['--target-version=py38']
   - id: nbqa-pyupgrade
     args: ['--py38-plus']
   - id: nbqa-isort
@@ -61,11 +64,7 @@ repos:
   hooks:
   - id: nbstripout
     files: '.ipynb'
-- repo: https://github.com/pycqa/pydocstyle
-  rev: 6.3.0
-  hooks:
-  - id: pydocstyle
-    args: ['--config=setup.cfg']
+    args: [ "--extra-keys", "metadata.kernelspec" ]
 - repo: https://github.com/keewis/blackdoc
   rev: v0.3.8
   hooks:

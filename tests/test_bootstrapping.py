@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-from typing import Callable
-
 import numpy as np
 import pytest
-from xarray.core.dataarray import DataArray
 
 from xclim.core.calendar import percentile_doy
 from xclim.indices import (

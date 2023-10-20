@@ -67,7 +67,7 @@ function indTemplate(ind) {
     <div class="indElem" id="${ind.id}">
       <div class="indHeader">
         <b class="indTitle">${ind.title}</b>
-        <a class="reference_internal indName" href="api.html#xclim.indicators.${ind.module}.${ind.name}" title="${ind.name}">
+        <a class="reference_internal indName" href="api_indicators.html#xclim.indicators.${ind.module}.${ind.name}" title="${ind.name}">
           <code>${ind.module}.${ind.name}</code>
         </a>
       </div>

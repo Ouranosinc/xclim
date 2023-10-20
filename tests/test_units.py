@@ -282,9 +282,9 @@ def test_infer_context(std_name, dim, exp):
 
 def test_declare_units():
     """Test that an error is raised when parameters with type Quantified do not declare their dimensions.
+
     In this example, `wo` is a Quantified parameter, but does not declare its dimension as [length].
     """
-
     with pytest.raises(ValueError):
 
         @declare_units(pr="[precipitation]", evspsblpot="[precipitation]")

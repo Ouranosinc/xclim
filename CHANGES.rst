@@ -4,7 +4,11 @@ Changelog
 
 v0.46.0 (unreleased)
 --------------------
-Contributors to this version: Éric Dupuis (:user:`coxipi`), Trevor James Smith (:user:`Zeitsperre`), David Huard (:user:`huard`) and Pascal Bourgault (:user:`aulemahal`).
+Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
+
+New indicators
+^^^^^^^^^^^^^^
+* ``xclim.indices.snw_storm_days`` computes the number of days with snowfall amount accumulation above a threshold. (:pull:`1505`).
 
 Announcements
 ^^^^^^^^^^^^^
@@ -17,6 +21,9 @@ New features and enhancements
 * The testing suite now offers a means of running tests in "offline" mode (using `pytest-socket <https://github.com/miketheman/pytest-socket>`_ to block external connections). This requires a local copy of `xclim-testdata` to be present in the user's home cache directory and for certain `pytest` options and markers to be set when invoked. For more information, see the contributing documentation section for `Running Tests in Offline Mode`. (:issue:`1468`, :pull:`1473`).
 * The `SKIP_NOTEBOOKS` flag to speed up docs builds is now documented. See the contributing documentation section `Get Started!` for details. (:issue:`1470`, :pull:`1476`).
 * Refactored the indicators page with the addition of a search bar.
+* Indicator ``generic.stats`` now accepts any frequency (previously only daily). (:pull:`1498`).
+* Added argument ``out_units`` to ``select_resample_op`` to bypass limitations of ``to_agg_units`` in custom indicators. Add "var" to supported operations in ``to_agg_units``. (:pull:`1498`).
+* `adapt_freq_thresh` argument added `sdba` training functions, allowing to perform frequency adaptation appropriately in each map block. (:pull:`1407`).
 
 Bug fixes
 ^^^^^^^^^
@@ -34,6 +41,10 @@ Breaking changes
 * `pytest-socket` is now a required development dependency for running `"offline"` tests or the `"offline"` configuration of the `tox` testing suite. This has been added to the `dev` installation recipe. (:issue:`1468`, :pull:`1473`).
 * For better transparency and control in development, the `tox` configuration has been adapted to allow passing of markers directly to the `pytest` call. Positional arguments must be passed to tox after the `--` separator to select/deselect tests (e.g. ``'tox -e py38 -- -m "not slow"'``). (:pull:`1473`).
 * For better accuracy, the `tox -e black` recipe has been renamed to `tox -e lint`, as this configuration already included several other linting checks. (:pull:`1473`).
+* ``xclim.indices.winter_storm`` renamed to ``xclim.indices.snd_storm_days``.  (:pull:`1505`).
+* Default threshold in ``xclim.indices.snw_season_{start|length|end}`` changed form `20 kg m-2` to `4 kg m-2`. (:pull:`1505`).
+* `xclim` development dependencies now include `ruff`. `pycodestyle` and `pydocstyle` have been replaced by `ruff` and removed from the `dev` installation recipe. (:pull:`1504`).
+* The `mf_file` call signature found in ``xclim.ensembles.create_ensemble`` (and ``xclim.ensembles._ens_align_dataset``) has been removed (deprecated since `xclim` v0.43.0). (:pull:`1506`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
@@ -48,6 +59,11 @@ Internal changes
 * GitHub testing workflows now use `Concurrency` instead of the styfle/cancel-workflow-action to cancel redundant workflows. (:pull:`1487`).
 * The `pkg_resources` library has been replaced for the `packaging` library when version comparisons have been performed, and a few warning messages have been silenced in the testing suite. (:issue:`1489`, :pull:`1490`).
 * New ``xclim.testing.helpers.assert_lazy`` context manager to assert the laziness of code blocks. (:pull:`1484`).
+* Added a fix for the deprecation warnings that `importlib.resources` throws, made backwards-compatible for Python3.8 with `importlib_resources` backport. (:pull:`1485`).
+* Added basic keywords on most indicators for easier searching in the docs. Extracted climate indicators API to its own page for faster loading. (:pull:`1502`, :issue:`1433`).
+* `nbstripout` now removes 'metadata.kernelspec' in notebook cells. (:pull:`1407`).
+* Deprecation wrapper ``xclim.core.utils.deprecated`` are added to help with deprecation warnings. (:pull:`1505`).
+* `xclim` now uses `ruff` to format the codebase with `make lint` and `pre-commit`. `flake8` is still used for the time being, solely to enforce docstring linting (with `flake8-rst-docstrings`) and alphabetical `__all__` entries (with `flake8-alphabetize`). (:pull:`1504`).
 
 v0.45.0 (2023-09-05)
 --------------------

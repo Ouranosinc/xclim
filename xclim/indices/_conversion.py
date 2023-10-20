@@ -1,20 +1,17 @@
 # noqa: D100
 from __future__ import annotations
 
-import warnings
-
 import numpy as np
 import xarray as xr
 from numba import float32, float64, vectorize  # noqa
 
-from xclim.core.calendar import date_range, datetime_to_decimal_year
+from xclim.core.calendar import date_range
 from xclim.core.units import (
     amount2rate,
     convert_units_to,
     declare_units,
     flux2rate,
     rate2flux,
-    units,
     units2pint,
 )
 from xclim.core.utils import Quantified
@@ -547,7 +544,8 @@ def relative_humidity(
 
         RH = e^{\frac{-L (T - T_d)}{R_wTT_d}}
 
-    From :cite:t:`bohren_atmospheric_1998`, formula taken from :cite:t:`lawrence_relationship_2005`. :math:`L = 2.5\times 10^{-6}` J kg-1, exact for :math:`T = 273.15` K, is used.
+    From :cite:t:`bohren_atmospheric_1998`, formula taken from :cite:t:`lawrence_relationship_2005`.
+    :math:`L = 2.5\times 10^{-6}` J kg-1, exact for :math:`T = 273.15` K, is used.
 
     **Other methods**: With :math:`w`, :math:`w_{sat}`, :math:`e_{sat}` the mixing ratio,
     the saturation mixing ratio and the saturation vapour pressure.
@@ -1343,11 +1341,17 @@ def potential_evapotranspiration(
     -----
     Available methods are:
 
-    - "baierrobertson65" or "BR65", based on :cite:t:`baier_estimation_1965`. Requires tasmin and tasmax, daily [D] freq.
-    - "hargreaves85" or "HG85", based on :cite:t:`george_h_hargreaves_reference_1985`. Requires tasmin and tasmax, daily [D] freq. (optional: tas can be given in addition of tasmin and tasmax).
-    - "mcguinnessbordne05" or "MB05", based on :cite:t:`tanguy_historical_2018`. Requires tas, daily [D] freq, with latitudes 'lat'.
-    - "thornthwaite48" or "TW48", based on :cite:t:`thornthwaite_approach_1948`. Requires tasmin and tasmax, monthly [MS] or daily [D] freq. (optional: tas can be given instead of tasmin and tasmax).
-    - "allen98" or "FAO_PM98", based on :cite:t:`allen_crop_1998`. Modification of Penman-Monteith method. Requires tasmin and tasmax, relative humidity, radiation flux and wind speed (10 m wind will be converted to 2 m).
+    - "baierrobertson65" or "BR65", based on :cite:t:`baier_estimation_1965`.
+      Requires tasmin and tasmax, daily [D] freq.
+    - "hargreaves85" or "HG85", based on :cite:t:`george_h_hargreaves_reference_1985`.
+      Requires tasmin and tasmax, daily [D] freq. (optional: tas can be given in addition of tasmin and tasmax).
+    - "mcguinnessbordne05" or "MB05", based on :cite:t:`tanguy_historical_2018`.
+      Requires tas, daily [D] freq, with latitudes 'lat'.
+    - "thornthwaite48" or "TW48", based on :cite:t:`thornthwaite_approach_1948`.
+      Requires tasmin and tasmax, monthly [MS] or daily [D] freq.
+      (optional: tas can be given instead of tasmin and tasmax).
+    - "allen98" or "FAO_PM98", based on :cite:t:`allen_crop_1998`. Modification of Penman-Monteith method.
+      Requires tasmin and tasmax, relative humidity, radiation flux and wind speed (10 m wind will be converted to 2 m).
 
     The McGuinness-Bordne :cite:p:`mcguinness_comparison_1972` equation is:
 

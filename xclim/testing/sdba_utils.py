@@ -17,7 +17,7 @@ __all__ = ["cannon_2015_dist", "cannon_2015_rvs", "nancov", "series"]
 
 
 def series(values, name, start="2000-01-01"):
-    # noqa: D103
+    """Create a DataArray with time, lon and lat dimensions."""
     coords = collections.OrderedDict()
     for dim, n in zip(("time", "lon", "lat"), values.shape):
         if dim == "time":
@@ -51,8 +51,7 @@ def series(values, name, start="2000-01-01"):
     )
 
 
-def cannon_2015_dist():
-    # noqa: D103
+def cannon_2015_dist():  # noqa: D103
     # ref ~ gamma(k=4, theta=7.5)  mu: 30, sigma: 15
     ref = gamma(4, scale=7.5)
 
@@ -65,8 +64,7 @@ def cannon_2015_dist():
     return ref, hist, sim
 
 
-def cannon_2015_rvs(n, random=True):
-    # noqa: D103
+def cannon_2015_rvs(n, random=True):  # noqa: D103
     # Frozen distributions
     fd = cannon_2015_dist()
 

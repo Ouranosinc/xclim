@@ -71,12 +71,14 @@ class FireWeather(Indicator):
 
     src_freq = "D"
     context = "hydro"
+    keywords = "fire"
 
 
 class Precip(Daily):
     """Indicator involving daily pr series."""
 
     context = "hydro"
+    keywords = "precipitation"
 
 
 class PrecipWithIndexing(ResamplingIndicatorWithIndexing):
@@ -84,6 +86,7 @@ class PrecipWithIndexing(ResamplingIndicatorWithIndexing):
 
     src_freq = "D"
     context = "hydro"
+    keywords = "precipitation"
 
 
 class PrTasxWithIndexing(ResamplingIndicatorWithIndexing):
@@ -91,6 +94,7 @@ class PrTasxWithIndexing(ResamplingIndicatorWithIndexing):
 
     src_freq = "D"
     context = "hydro"
+    keywords = "precipitation"
 
     def cfcheck(self, pr, tas):
         cfchecks.cfcheck_from_name("pr", pr)
@@ -108,6 +112,7 @@ class HrPrecip(Hourly):
     """Indicator involving hourly pr series."""
 
     context = "hydro"
+    keywords = "precipitation"
 
 
 rain_on_frozen_ground_days = PrTasxWithIndexing(
@@ -363,6 +368,7 @@ standardized_precipitation_index = StandardizedIndexes(
     abstract="Precipitation over a moving window, normalized such that SPI averages to 0 for the calibration data. "
     "The window unit `X` is the minimal time period defined by the resampling frequency.",
     cell_methods="",
+    keywords="precipitation",
     compute=indices.standardized_precipitation_index,
 )
 
@@ -379,6 +385,7 @@ standardized_precipitation_evapotranspiration_index = StandardizedIndexes(
     "SPEI averages to 0 for the calibration data. The window unit `X` is the minimal time period defined by the "
     "resampling frequency.",
     cell_methods="",
+    keywords="precipitation",
     compute=indices.standardized_precipitation_evapotranspiration_index,
 )
 
@@ -765,17 +772,18 @@ rain_season = Precip(
     ],
     description=[
         "First step of a run where i) a sequence of {window_wet_start} days accumulated {thresh_wet_start} "
-        "of precipitations ii) followed by a sequence of {window_not_dry_start} days with no dry sequence, i.e. a sequence of {window_dry_start} days "
-        "with at least {thresh_dry_start} {method_dry_start}. The start of the season is on the last day of the first sequence i) and must be "
-        "between {date_min_start} and {date_max_start}.",
-        "Last day in a dry sequence after the start of the season, i.e.  a sequence of {window_dry_end} days "
+        "of precipitations ii) followed by a sequence of {window_not_dry_start} days with no dry sequence, "
+        "i.e. a sequence of {window_dry_start} days with at least {thresh_dry_start} {method_dry_start}. "
+        "The start of the season is on the last day of the first sequence i) and must be between {date_min_start} and "
+        "{date_max_start}.",
+        "Last day in a dry sequence after the start of the season, i.e. a sequence of {window_dry_end} days "
         "with at least {thresh_dry_end} {method_dry_end}. It must be between {date_min_end} and {date_max_end}. ",
         "Number of steps of the original series in the season, between 'start' and 'end'.",
     ],
     units=["", "", "days"],
-    abstract="Start time, end time and length of the rain season, notably useful for West Africa (sivakumar, 1998). The rain season starts with "
-    "a period of abundant rainfall, followed by a period without prolonged dry sequences, which must happen before a given date. "
-    "The rain season stops during a dry period happening after a given date",
+    abstract="Start time, end time and length of the rain season, notably useful for West Africa (sivakumar, 1998). "
+    "The rain season starts with a period of abundant rainfall, followed by a period without prolonged dry sequences, "
+    "which must happen before a given date. The rain season stops during a dry period happening after a given date",
     cell_methods="",
     compute=indices.rain_season,
 )

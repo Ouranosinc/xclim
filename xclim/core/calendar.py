@@ -1007,7 +1007,16 @@ def resample_doy(doy: xr.DataArray, arr: xr.DataArray | xr.Dataset) -> xr.DataAr
     return out
 
 
-def time_bnds(time, freq=None, precision=None):
+def time_bnds(  # noqa: C901
+    time: xr.DataArray
+    | xr.Dataset
+    | CFTimeIndex
+    | pd.DatetimeIndex
+    | DataArrayResample
+    | DatasetResample,
+    freq: str | None = None,
+    precision: str | None = None,
+):
     """
     Find the time bounds for a datetime index.
 

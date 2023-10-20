@@ -10,6 +10,7 @@ __all__ = [
     "snd_season_end",
     "snd_season_length",
     "snd_season_start",
+    "snd_storm_days",
     "snd_to_snw",
     "snow_depth",
     "snow_melt_we_max",
@@ -18,6 +19,7 @@ __all__ = [
     "snw_season_end",
     "snw_season_length",
     "snw_season_start",
+    "snw_storm_days",
     "snw_to_snd",
     "winter_storm",
 ]
@@ -27,11 +29,14 @@ __all__ = [
 class Snow(Daily):
     """Indicators dealing with snow variables."""
 
+    keywords = "snow"
+
 
 class SnowWithIndexing(ResamplingIndicatorWithIndexing):
     """Indicators dealing with snow variables, allowing indexing."""
 
     src_freq = "D"
+    keywords = "snow"
 
 
 snd_season_length = SnowWithIndexing(
@@ -168,7 +173,28 @@ winter_storm = SnowWithIndexing(
     long_name="Days with snowfall at or above a given threshold",
     description="The {freq} number of days with snowfall accumulation above {thresh}.",
     units="days",
-    compute=xci.winter_storm,
+    compute=xci.snd_storm_days,
+    _version_deprecated="0.46.0",
+)
+
+snd_storm_days = SnowWithIndexing(
+    title="Winter storm days",
+    identifier="snd_storm_days",
+    var_name="{freq}_snd_storm_days",
+    long_name="Days with snowfall depth at or above a given threshold",
+    description="The {freq} number of days with snowfall depth accumulation above {thresh}.",
+    units="days",
+    compute=xci.snd_storm_days,
+)
+
+snw_storm_days = SnowWithIndexing(
+    title="Winter storm days",
+    identifier="snw_storm_days",
+    var_name="{freq}_snw_storm_days",
+    long_name="Days with snowfall amount at or above a given threshold",
+    description="The {freq} number of days with snowfall amount accumulation above {thresh}.",
+    units="days",
+    compute=xci.snw_storm_days,
 )
 
 

@@ -6,6 +6,7 @@ Helper functions for the indices computations, indicator construction and other 
 """
 from __future__ import annotations
 
+import functools
 import importlib.util
 import logging
 import os
@@ -13,11 +14,16 @@ import warnings
 from collections import defaultdict
 from enum import IntEnum
 from functools import partial
-from importlib.resources import open_text
+
+try:
+    from importlib.resources import files
+except ImportError:
+    from importlib_resources import files
+
 from inspect import Parameter, _empty  # noqa
 from io import StringIO
 from pathlib import Path
-from typing import Callable, Mapping, NewType, Sequence, TypeVar
+from typing import Callable, NewType, Sequence, TypeVar
 
 import numpy as np
 import xarray as xr
@@ -37,17 +43,22 @@ DayOfYearStr = NewType("DayOfYearStr", str)
 #: Type annotation for thresholds and other not-exactly-a-variable quantities
 Quantified = TypeVar("Quantified", xr.DataArray, str, Quantity)
 
-VARIABLES = safe_load(open_text("xclim.data", "variables.yml"))["variables"]
-"""Official variables definitions.
+with (files("xclim.data") / "variables.yml").open() as f:
+    VARIABLES = safe_load(f)["variables"]
+    """Official variables definitions.
 
 A mapping from variable name to a dict with the following keys:
 
 - canonical_units [required] : The conventional units used by this variable.
 - cell_methods [optional] : The conventional `cell_methods` CF attribute
 - description [optional] : A description of the variable, to populate dynamically generated docstrings.
-- dimensions [optional] : The dimensionality of the variable, an abstract version of the units. See `xclim.units.units._dimensions.keys()` for available terms. This is especially useful for making xclim aware of "[precipitation]" variables.
+- dimensions [optional] : The dimensionality of the variable, an abstract version of the units.
+  See `xclim.units.units._dimensions.keys()` for available terms. This is especially useful for making xclim aware of
+  "[precipitation]" variables.
 - standard_name [optional] : If it exists, the CF standard name.
-- data_flags [optional] : Data flags methods (:py:mod:`xclim.core.dataflags`) applicable to this variable. The method names are keys and values are dicts of keyword arguments to pass (an empty dict if there's nothing to configure).
+- data_flags [optional] : Data flags methods (:py:mod:`xclim.core.dataflags`) applicable to this variable.
+  The method names are keys and values are dicts of keyword arguments to pass
+  (an empty dict if there's nothing to configure).
 """
 
 # Input cell methods for clix-meta
@@ -104,6 +115,43 @@ def wrapped_partial(func: Callable, suggested: dict | None = None, **fixed) -> C
     injected.update(fixed)
     fully_wrapped._injected = injected
     return fully_wrapped
+
+
+def deprecated(from_version: str | None, suggested: str | None = None) -> Callable:
+    """Mark an index as deprecated and optionally suggest a replacement.
+
+    Parameters
+    ----------
+    from_version : str, optional
+        The version of xclim from which the function is deprecated.
+    suggested : str, optional
+        The name of the function to use instead.
+
+    Returns
+    -------
+    Callable
+    """
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            msg = (
+                f"`{func.__name__}` is deprecated{' from version {}'.format(from_version) if from_version else ''} "
+                "and will be removed in a future version of xclim"
+                f"{'. Use `{}` instead'.format(suggested if suggested else '')}. "
+                f"Please update your scripts accordingly."
+            )
+            warnings.warn(
+                msg,
+                DeprecationWarning,
+                stacklevel=3,
+            )
+
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 # TODO Reconsider the utility of this
@@ -654,7 +702,9 @@ def infer_kind_from_parameter(param) -> InputKind:
     return InputKind.OTHER_PARAMETER
 
 
-def adapt_clix_meta_yaml(raw: os.PathLike | StringIO | str, adapted: os.PathLike):
+def adapt_clix_meta_yaml(  # noqa: C901
+    raw: os.PathLike | StringIO | str, adapted: os.PathLike
+):
     """Read in a clix-meta yaml representation and refactor it to fit xclim's yaml specifications."""
     from ..indices import generic  # pylint: disable=import-outside-toplevel
 

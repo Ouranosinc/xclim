@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from xclim.core.cfchecks import check_valid
-from xclim.core.indicator import Indicator, ResamplingIndicator
+from xclim.core.indicator import ResamplingIndicator
 from xclim.core.units import declare_units
 from xclim.indices import base_flow_index, generic, rb_flashiness_index
 
@@ -17,6 +17,7 @@ __all__ = [
 class Streamflow(ResamplingIndicator):
     context = "hydro"
     src_freq = "D"
+    keywords = "streamflow hydrology"
 
     @staticmethod
     def cfcheck(q):
@@ -55,7 +56,7 @@ doy_qmax = Streamflow(
     description="Day of the year of the maximum streamflow over {indexer}.",
     units="",
     compute=declare_units(da="[discharge]")(generic.select_resample_op),
-    parameters=dict(op=generic.doymax),
+    parameters=dict(op=generic.doymax, out_units=None),
 )
 
 
@@ -67,5 +68,5 @@ doy_qmin = Streamflow(
     description="Day of the year of the minimum streamflow over {indexer}.",
     units="",
     compute=declare_units(da="[discharge]")(generic.select_resample_op),
-    parameters=dict(op=generic.doymin),
+    parameters=dict(op=generic.doymin, out_units=None),
 )
