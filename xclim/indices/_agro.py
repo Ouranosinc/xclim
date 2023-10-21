@@ -48,7 +48,6 @@ __all__ = [
     "latitude_temperature_index",
     "qian_weighted_mean_average",
     "rain_season",
-    "standardized_index_fit_params",
     "standardized_precipitation_evapotranspiration_index",
     "standardized_precipitation_index",
     "water_budget",
@@ -1275,9 +1274,9 @@ def standardized_precipitation_evapotranspiration_index(
     dist : {'gamma', 'fisk'}
         Name of the univariate distribution. (see :py:mod:`scipy.stats`).
     method : {'APP', 'ML'}
-        Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
-        uses a deterministic function that doesn't involve any optimization. Available methods
-        vary with the distribution: 'gamma':{'APP', 'ML'}, 'fisk':{'ML'}
+        Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate), `PWM` (probability weighted moments).
+        The approximate method uses a deterministic function that doesn't involve any optimization. Available methods
+        vary with the distribution: 'gamma':{'APP', 'ML', 'PWM'}, 'fisk':{'APP', 'ML'}
     cal_start: DateStr | None
         Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`. Default option `None`
         means that the calibration period begins at the start of the input dataset.

@@ -536,7 +536,7 @@ def _dist_method_1D(*args, dist: str, function: str, **kwargs: Any) -> xr.DataAr
 
     Parameters
     ----------
-    args
+    \*args
         The arguments for the requested scipy function.
     dist : str
         The scipy name of the distribution.
@@ -677,10 +677,10 @@ def standardized_index_fit_params(
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
-    dist : str
+    dist : {'gamma', 'fisk'}
         Name of the univariate distribution.
         (see :py:mod:`scipy.stats`).
-    method : str
+    method : {'ML', 'APP', 'PWM'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
     offset: Quantified
