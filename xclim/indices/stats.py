@@ -4,11 +4,9 @@ from __future__ import annotations
 import warnings
 from typing import Any, Sequence
 
-import flox.xarray as floxx
 import lmoments3.distr
 import numpy as np
 import xarray as xr
-from scipy.stats import norm
 
 from xclim.core.calendar import resample_doy, select_time
 from xclim.core.formatting import prefix_attrs, unprefix_attrs, update_history
@@ -530,9 +528,7 @@ def _fit_start(x, dist: str, **fitkwargs: Any) -> tuple[tuple, dict]:
     return (), {}
 
 
-def _dist_method_1D(
-    params: Sequence[float], arg=None, *, dist: str, function: str, **kwargs: Any
-) -> xr.DataArray:
+def _dist_method_1D(*args, dist: str, function: str, **kwargs: Any) -> xr.DataArray:
     r"""Statistical function for given argument on given distribution initialized with params.
 
     See :py:ref:`scipy:scipy.stats.rv_continuous` for all available functions and their arguments.
@@ -540,10 +536,8 @@ def _dist_method_1D(
 
     Parameters
     ----------
-    params : 1D sequence of floats
-        Distribution parameters, in the same order as given by :py:func:`fit`.
-    arg : array_like, optional
-        The argument for the requested function.
+    args
+        The arguments for the requested scipy function.
     dist : str
         The scipy name of the distribution.
     function : str
@@ -554,10 +548,8 @@ def _dist_method_1D(
     Returns
     -------
     array_like
-        Same shape as arg in most cases.
     """
     dist = get_dist(dist)
-    args = ([arg] if arg is not None else []) + list(params)
     return getattr(dist, function)(*args, **kwargs)
 
 
@@ -580,7 +572,7 @@ def dist_method(
         Distribution parameters are along `dparams`, in the same order as given by :py:func:`fit`.
         Must have a `scipy_dist` attribute with the name of the distribution fitted.
     arg : array_like, optional
-        The argument for the requested function.
+        The first argument for the requested function if different from `fit_params`.
     \*\*kwargs
         Other parameters to pass to the function call.
 
@@ -593,20 +585,15 @@ def dist_method(
     --------
     scipy:scipy.stats.rv_continuous : for all available functions and their arguments.
     """
-    args = [fit_params]
-    input_core_dims = [["dparams"]]
-
-    if arg is not None:
-        args.append(arg)
-        input_core_dims.append([])
-
+    # Typically the data to be transformed
+    arg = [arg] if arg is not None else []
+    args = arg + [fit_params.sel(dparams=dp) for dp in fit_params.dparams.values]
     return xr.apply_ufunc(
         _dist_method_1D,
         *args,
-        input_core_dims=input_core_dims,
+        input_core_dims=[[]] * len(args),
         output_core_dims=[[]],
         kwargs={"dist": fit_params.attrs["scipy_dist"], "function": function, **kwargs},
-        vectorize=True,
         output_dtypes=[float],
         dask="parallelized",
     )
@@ -731,8 +718,8 @@ def standardized_index_fit_params(
     da, group = preprocess_standardized_index(da, freq, window, **indexer)
     params = da.groupby(group).map(fit, dist=dist, method=method)
     cal_range = (
-        da.time.min().dt.strftime("%Y-%m-%d"),
-        da.time.max().dt.strftime("%Y-%m-%d"),
+        da.time.min().dt.strftime("%Y-%m-%d").item(),
+        da.time.max().dt.strftime("%Y-%m-%d").item(),
     )
     params.attrs = {
         "calibration_period": cal_range,
@@ -759,49 +746,35 @@ def standardized_index(da, params):
     Parameters
     ----------
     da : xarray.DataArray
-        Input array.
+        Input array. Resampling and rolling operations should have already been applied using ``xclim.indices.preprocess_standardized_index``.
     params: xarray.DataArray
         Fit parameters computed using ``xclim.indices.standardized_index_fit_params``.
     """
-    freq = params.attrs["freq"] or xr.infer_freq(da)
+    group = params.attrs["group"]
 
-    def resample_to_time(da, da_ref):
-        if freq == "D":
+    def reindex_time(da, da_ref):
+        if group == "time.dayofyear":
+            da = da.rename(day="time").reindex(time=da_ref.time.dt.dayofyear)
+            da["time"] = da_ref.time
             da = resample_doy(da, da_ref)
-        elif freq == "MS":
+        elif group == "time.month":
             da = da.rename(month="time").reindex(time=da_ref.time.dt.month)
             da["time"] = da_ref.time
-        else:
-            raise NotImplementedError(
-                f"The frequency of the input `{freq}` is not supported."
-            )
         return da.chunk({"time": -1})
 
-    idxs = (
-        da.time.dt.month if "month" in params.attrs["group"] else da.time.dt.dayofyear
+    probs_of_zero = da.groupby(group).map(
+        lambda x: (x == 0).sum("time") / x.notnull().sum("time")
     )
-    probs_of_zero = floxx.xarray_reduce((da + 1) * (da == 0), idxs, func="mean")
-    params, probs_of_zero = (
-        resample_to_time(dax, da) for dax in [params, probs_of_zero]
-    )
+    params, probs_of_zero = (reindex_time(dax, da) for dax in [params, probs_of_zero])
+    dist_probs = dist_method("cdf", params, da)
+    probs = probs_of_zero + ((1 - probs_of_zero) * dist_probs)
 
-    # TODO: Change `dist_method` to reproduce the speed obtained below
-    def wrap_cdf_ppf(da, pars, probs_of_zero):
-        dist_probs = get_dist(params.attrs["scipy_dist"]).cdf(da[:], *pars)
-        probs = probs_of_zero + ((1 - probs_of_zero) * dist_probs)
-        return norm.ppf(probs)
-
-    std_index = xr.apply_ufunc(
-        wrap_cdf_ppf,
-        da,
-        params,
-        probs_of_zero,
-        input_core_dims=[["time"], ["dparams", "time"], ["time"]],
-        output_core_dims=[["time"]],
-        vectorize=True,
-        dask="parallelized",
-    )
-
+    params_norm = xr.concat(
+        [0 * params.sel(dparams="loc"), 0 * params.sel(dparams="scale") + 1],
+        dim="dparams",
+    ).chunk({"dparams": -1})
+    params_norm.attrs = dict(scipy_dist="norm")
+    std_index = dist_method("ppf", params_norm, probs)
     # A cdf value of 0 or 1 gives ±np.inf when inverted to the normal distribution.
     # The neighbouring values 0.00...1 and 0.99...9 with a float64 give a standardized index of ± 8.21
     # We use this index as reference for maximal/minimal standardized values.
