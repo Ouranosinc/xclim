@@ -926,54 +926,54 @@ def rain_season(
 ):
     """Find the length of the rain season and the day of year of its start and its end.
 
-    The rain season begins when two conditions are met: 1) There must be a number of wet days with
-    precipitations above or equal to a given threshold; 2) There must be another sequence following, where, for a given period in time, there are no
-    dry sequence (i.e. a certain number of days where precipitations are below or equal to a certain threshold). The rain season ends
-    when there is a dry sequence.
+    The rain season begins when two conditions are met: 1) There must be a number of wet days with precipitations above
+    or equal to a given threshold; 2) There must be another sequence following, where, for a given period in time, there
+    are no dry sequence (i.e. a certain number of days where precipitations are below or equal to a certain threshold).
+    The rain season ends when there is a dry sequence.
 
     Parameters
     ----------
-    pr: xr.DataArray
+    pr : xr.DataArray
         Precipitation data.
-    thresh_wet_start: Quantified
+    thresh_wet_start : Quantified
         Accumulated precipitation threshold associated with `window_wet_start`.
-    window_wet_start: int
+    window_wet_start : int
         Number of days when accumulated precipitation is above `thresh_wet_start`.
         Defines the first condition to start the rain season
-    window_not_dry_start: int
+    window_not_dry_start : int
         Number of days, after `window_wet_start` days, during which no dry period must be found as a second and last
         condition to start the rain season.
         A dry sequence is defined with `thresh_dry_start`, `window_dry_start` and `method_dry_start`.
-    thresh_dry_start: Quantified
+    thresh_dry_start : Quantified
         Threshold length defining a dry day in the sequence related to `window_dry_start`.
-    window_dry_start: int
+    window_dry_start : int
         Number of days used to define a dry sequence in the start of the season.
         Daily precipitations lower than `thresh_dry_start` during `window_dry_start` days are considered a dry sequence.
         The precipitations must be lower than `thresh_dry_start` for either every day in the sequence
         (`method_dry_start == "per_day"`) or for the total (`method_dry_start == "total"`).
-    method_dry_start: {"per_day", "total"}
+    method_dry_start : {"per_day", "total"}
         Method used to define a dry sequence associated with `window_dry_start`.
         The threshold `thresh_dry_start` is either compared to every daily precipitation
         (`method_dry_start == "per_day"`) or to total precipitations (`method_dry_start == "total"`) in the sequence
         `window_dry_start` days.
-    date_min_start: DayOfYearStr
+    date_min_start : DayOfYearStr
         First day of year when season can start ("mm-dd").
-    date_max_start: DayOfYearStr
+    date_max_start : DayOfYearStr
         Last day of year when season can start ("mm-dd").
-    thresh_dry_end: str
+    thresh_dry_end : str
         Threshold length defining a dry day in the sequence related to `window_dry_end`.
-    window_dry_end: int
+    window_dry_end : int
         Number of days used to define a dry sequence in the end of the season.
         Daily precipitations lower than `thresh_dry_end` during `window_dry_end` days are considered a dry sequence.
         The precipitations must be lower than `thresh_dry_end` for either every day in the sequence
         (`method_dry_end == "per_day"`) or for the total (`method_dry_end == "total"`).
-    method_dry_end: {"per_day", "total"}
+    method_dry_end : {"per_day", "total"}
         Method used to define a dry sequence associated with `window_dry_end`.
         The threshold `thresh_dry_end` is either compared to every daily precipitation (`method_dry_end == "per_day"`)
         or to total precipitations (`method_dry_end == "total"`) in the sequence `window_dry` days.
-    date_min_end: DayOfYearStr
+    date_min_end : DayOfYearStr
         First day of year when season can end ("mm-dd").
-    date_max_end: DayOfYearStr
+    date_max_end : DayOfYearStr
         Last day of year when season can end ("mm-dd").
     freq : str
       Resampling frequency.
@@ -1037,6 +1037,7 @@ def rain_season(
         return _get_first_run(run_positions, date_min_start, date_max_start)
 
     # Find the end of the rain season
+    # FIXME: This function mixes local and parent-level variables. It should be refactored.
     def _get_first_run_end(pram):
         if method_dry_end == "per_day":
             da_stop = pram <= thresh_dry_end
@@ -1048,12 +1049,14 @@ def rain_season(
         return _get_first_run(run_positions, date_min_end, date_max_end)
 
     # Get start, end and length of rain season. Written as a function so it can be resampled
+    # FIXME: This function mixes local and parent-level variables. It should be refactored.
     def _get_rain_season(pram):
         start = _get_first_run_start(pram)
 
         # masking value before  start of the season (end of season should be after)
         # Get valid integer indexer of the day after the first run starts.
-        # `start != NaN` only possible if a condition on next few time steps is respected. Thus, `start+1` exists if `start != NaN`
+        # `start != NaN` only possible if a condition on next few time steps is respected.
+        # Thus, `start+1` exists if `start != NaN`
         start_ind = (start + 1).fillna(-1).astype(int)
         mask = pram * np.NaN
         # Put "True" on the day of run start
@@ -1098,9 +1101,9 @@ def standardized_precipitation_index(
     pr: xarray.DataArray,
     pr_cal: Quantified | None = None,
     freq: str | None = "MS",
-    window: int | None = 1,
-    dist: str | None = "gamma",
-    method: str | None = "APP",
+    window: int = 1,
+    dist: str = "gamma",
+    method: str = "APP",
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
     params: Quantified | None = None,
@@ -1112,31 +1115,31 @@ def standardized_precipitation_index(
     ----------
     pr : xarray.DataArray
         Daily precipitation.
-    pr_cal : xarray.DataArray
-        Daily precipitation used for calibration. Usually this is a temporal subset of `pr` over some reference period. This
-        option will be removed in xclim >=0.47.0. Two behaviour will be possible (see below)
-    freq : str | None
+    pr_cal : xarray.DataArray, optional
+        Daily precipitation used for calibration. Usually this is a temporal subset of `pr` over some reference period.
+        This option will be removed in xclim >=0.47.0. Two behaviour will be possible (see below)
+    freq : str, optional
         Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
         has already been applied input dataset and will skip the resampling step.
     window : int
         Averaging window length relative to the resampling frequency. For example, if `freq="MS"`,
         i.e. a monthly resampling, the window is an integer number of months.
     dist : {"gamma", "fisk"}
-        Name of the univariate distribution.
-        (see :py:mod:`scipy.stats`).
+        Name of the univariate distribution. (see :py:mod:`scipy.stats`).
     method : {'APP', 'ML'}
         Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate). The approximate method
         uses a deterministic function that doesn't involve any optimization.
-    cal_start: DateStr | None
-        Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`. Default option `None`
-        means that the calibration period begins at the start of the input dataset.
-    cal_end: DateStr | None
-        End date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`. Default option `None`
-        means that the calibration period finishes at the end of the input dataset.
+    cal_start: DateStr, optional
+        Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
+        Default option `None` means that the calibration period begins at the start of the input dataset.
+    cal_end: DateStr, optional
+        End date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
+        Default option `None` means that the calibration period finishes at the end of the input dataset.
     params: xarray.DataArray
-        Fit parameters. The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
+        Fit parameters.
+        The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
         The ouput can be given here as input, and it overrides other options.
-    indexer
+    \*\*indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
@@ -1195,14 +1198,16 @@ def standardized_precipitation_index(
 
     if pr_cal is not None:
         warnings.warn(
-            "Inputing a calibration array will be deprecated in xclim>=0.47.0. For example, if `pr_cal` is a subset of `pr`, then instead of say:\n"
-            "`standardized_precipitation_index(pr=pr,pr_cal=pr.sel(time=slice(t0,t1)),...)`,\n one can call:\n"
+            "Inputting a calibration array will be deprecated in xclim>=0.47.0. "
+            "For example, if `pr_cal` is a subset of `pr`, then instead of say:\n"
+            "`standardized_precipitation_index(pr=pr,pr_cal=pr.sel(time=slice(t0,t1)),...)`,\n"
+            "one can call:\n"
             "`standardized_precipitation_index(pr=pr,cal_range=(t0,t1),...).\n"
             "If for some reason `pr_cal` is not a subset of `pr`, then the following approach will still be possible:\n"
             "`params = standardized_index_fit_params(da=pr_cal, freq=freq, window=window, dist=dist, method=method)`.\n"
             "`spi = standardized_precipitation_index(pr=pr, params=params)`.\n"
-            "This approach can be used in both scenarios to break up the computations in two, i.e. get params, then compute "
-            "standardized indices."
+            "This approach can be used in both scenarios to break up the computations in two,"
+            "i.e. get params, then compute standardized indices."
         )
         params = standardized_index_fit_params(
             pr_cal, freq=freq, window=window, dist=dist, method=method, **indexer
@@ -1241,9 +1246,9 @@ def standardized_precipitation_evapotranspiration_index(
     wb: xarray.DataArray,
     wb_cal: Quantified | None = None,
     freq: str | None = "MS",
-    window: int | None = 1,
-    dist: str | None = "gamma",
-    method: str | None = "APP",
+    window: int = 1,
+    dist: str = "gamma",
+    method: str = "APP",
     offset: Quantified = "1.000 mm/d",
     cal_start: DateStr | None = None,
     cal_end: DateStr | None = None,
@@ -1260,12 +1265,10 @@ def standardized_precipitation_evapotranspiration_index(
     ----------
     wb : xarray.DataArray
         Daily water budget (pr - pet).
-    wb_cal : xarray.DataArray
-        Daily water budget used for calibration. Usually this is a temporal subset of `wb` over some reference period. This
-        option will be removed in xclim >=0.47.0. Two behaviour will be possible (see below)
-    params: xarray.DataArray
-        Fit parameters.
-    freq : str | None
+    wb_cal : xarray.DataArray, optional
+        Daily water budget used for calibration. Usually this is a temporal subset of `wb` over some reference period.
+        This option will be removed in xclim >=0.47.0. Two behaviours will be possible (see below).
+    freq : str, optional
         Resampling frequency. A monthly or daily frequency is expected. Option `None` assumes that desired resampling
         has already been applied input dataset and will skip the resampling step.
     window : int
@@ -1274,23 +1277,26 @@ def standardized_precipitation_evapotranspiration_index(
     dist : {'gamma', 'fisk'}
         Name of the univariate distribution. (see :py:mod:`scipy.stats`).
     method : {'APP', 'ML'}
-        Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate), `PWM` (probability weighted moments).
+        Name of the fitting method, such as `ML` (maximum likelihood), `APP` (approximate), or
+        `PWM` (probability weighted moments).
         The approximate method uses a deterministic function that doesn't involve any optimization. Available methods
         vary with the distribution: 'gamma':{'APP', 'ML', 'PWM'}, 'fisk':{'APP', 'ML'}
-    cal_start: DateStr | None
-        Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`. Default option `None`
-        means that the calibration period begins at the start of the input dataset.
-    cal_end: DateStr | None
-        End date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`. Default option `None`
-        means that the calibration period finishes at the end of the input dataset.
-    params: xarray.DataArray
-        Fit parameters. The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
-        The ouput can be given here as input, and it overrides other options.
-    offset: Quantified
+    cal_start : DateStr, optional
+        Start date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
+        Default option `None` means that the calibration period begins at the start of the input dataset.
+    cal_end : DateStr, optional
+        End date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`.
+        Default option `None` means that the calibration period finishes at the end of the input dataset.
+    params : xarray.DataArray, optional
+        Fit parameters.
+        The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
+        The output can be given here as input, and it overrides other options.
+    offset : Quantified
         For distributions bounded by zero (e.g. "gamma", "fisk"), an offset must be added to the water budget
-        to make sure there are no negative values. Keep the offset as small as possible to minimize its influence on the results.
+        to make sure there are no negative values.
+        Keep the offset as small as possible to minimize its influence on the results.
         This can be given as a precipitation flux or a rate.
-    indexer
+    \*\*indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
         It accepts the same arguments as :py:func:`xclim.indices.generic.select_time`.
 
@@ -1315,7 +1321,7 @@ def standardized_precipitation_evapotranspiration_index(
         if uses_default_offset is False and offset != params_offset:
             warnings.warn(
                 "The offset in `params` differs from the input `offset`."
-                "Procceding with the value given in `params`."
+                "Proceeding with the value given in `params`."
             )
         offset = params_offset
     offset = 0 if offset is None else convert_units_to(offset, wb, context="hydro")
@@ -1323,10 +1329,11 @@ def standardized_precipitation_evapotranspiration_index(
     if dist in ["gamma", "fisk"] and offset <= 0:
         raise ValueError(
             "The water budget must be shifted towards positive values to be used with `gamma` and `fisk` "
-            f"distributions which are bounded by zero. A positive offset is required. Current value: {offset}{wb.attrs['units']}"
+            "distributions which are bounded by zero. A positive offset is required. Current value: "
+            f"{offset}{wb.attrs['units']}."
         )
     # Note that the default behaviour would imply an offset for any distribution, even those distributions
-    # that can accomodate negative values of the water budget. This needs to be changed in future versions
+    # that can accommodate negative values of the water budget. This needs to be changed in future versions
     # of the index.
     if offset != 0:
         with xarray.set_options(keep_attrs=True):
@@ -1403,7 +1410,8 @@ def effective_growing_degree_days(
 ) -> xarray.DataArray:
     r"""Effective growing degree days.
 
-    Growing degree days based on a dynamic start and end of the growing season, as defined in :cite:p:`bootsma_impacts_2005`.
+    Growing degree days based on a dynamic start and end of the growing season,
+    as defined in :cite:p:`bootsma_impacts_2005`.
 
     Parameters
     ----------
