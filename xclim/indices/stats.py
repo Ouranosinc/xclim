@@ -591,8 +591,6 @@ def dist_method(
     return xr.apply_ufunc(
         _dist_method_1D,
         *args,
-        input_core_dims=[[]] * len(args),
-        output_core_dims=[[]],
         kwargs={"dist": fit_params.attrs["scipy_dist"], "function": function, **kwargs},
         output_dtypes=[float],
         dask="parallelized",
