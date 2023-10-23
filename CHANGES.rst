@@ -20,6 +20,11 @@ New features and enhancements
 * Indicator ``generic.stats`` now accepts any frequency (previously only daily). (:pull:`1498`).
 * Added argument ``out_units`` to ``select_resample_op`` to bypass limitations of ``to_agg_units`` in custom indicators. Add "var" to supported operations in ``to_agg_units``. (:pull:`1498`).
 * `adapt_freq_thresh` argument added `sdba` training functions, allowing to perform frequency adaptation appropriately in each map block. (:pull:`1407`).
+* Standardized indices (``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index``)  (:issue:`1270`, :issue:`1416`, :issue:`1474`, :pull:`1311`) were changed:
+    * Optimized and noticeably faster calculation.
+    * Can be computed in two steps: First compute fit parameters with ``xclim.indices.stats.standardized_index_fit_params``, then use the output in the standardized indices functions.
+    * The standardized index values are now clipped to ±8.21. This reflects the ``float64`` precision of the computation when cumulative distributed function values are inverted to a normal distribution and avoids returning infinite values.
+    * An offset parameter is now available to account for negative water balance values``xclim.indices.standardized_precipitation_evapotranspiration_index``.
 
 Bug fixes
 ^^^^^^^^^
@@ -41,6 +46,7 @@ Breaking changes
 * Default threshold in ``xclim.indices.snw_season_{start|length|end}`` changed form `20 kg m-2` to `4 kg m-2`. (:pull:`1505`).
 * `xclim` development dependencies now include `ruff`. `pycodestyle` and `pydocstyle` have been replaced by `ruff` and removed from the `dev` installation recipe. (:pull:`1504`).
 * The `mf_file` call signature found in ``xclim.ensembles.create_ensemble`` (and ``xclim.ensembles._ens_align_dataset``) has been removed (deprecated since `xclim` v0.43.0). (:pull:`1506`).
+* ``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index`` will no longer accept two datasets (data and calibration data). Instead, a single dataset covering both the calibration and evaluation periods is expected. (:issue:`1270`, :pull:`1311`).
 
 Internal changes
 ^^^^^^^^^^^^^^^^
