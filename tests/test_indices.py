@@ -654,7 +654,7 @@ class TestAgroclimaticIndices:
             method=method,
             offset="1 mm/d",
         )
-        spei1 = xci.stats.standardized_precipitation_evapotranspiration_index(
+        spei1 = xci.standardized_precipitation_evapotranspiration_index(
             wb.sel(time=slice("1998", "2000")), params=params
         )
 
