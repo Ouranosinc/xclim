@@ -526,10 +526,10 @@ class TestAgroclimaticIndices:
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
         pr = ds.pr.sel(time=slice("1998", "2000"))
         pr_cal = ds.pr.sel(time=slice("1950", "1980"))
-        spi = xci.standardized_precipitation_index(
-            pr, pr_cal, freq, window, dist, method
+        params = xci.stats.standardized_index_fit_params(
+            pr_cal, freq=freq, window=window, dist=dist, method=method
         )
-
+        spi = xci.standardized_precipitation_index(pr, params=params)
         # Only a few moments before year 2000 are tested
         spi = spi.isel(time=slice(-11, -1, 2))
 
@@ -610,11 +610,17 @@ class TestAgroclimaticIndices:
             tas = tasmax - 2.5
             tasmin = tasmax - 5
             wb = xci.water_budget(pr, None, tasmin, tasmax, tas)
-            wb_cal = wb.sel(time=slice("1950", "1980"))
-            wb = wb.sel(time=slice("1998", "2000"))
 
+        params = xci.stats.standardized_index_fit_params(
+            wb.sel(time=slice("1950", "1980")),
+            freq=freq,
+            window=window,
+            dist=dist,
+            method=method,
+            offset="1 mm/d",
+        )
         spei = xci.standardized_precipitation_evapotranspiration_index(
-            wb, wb_cal, freq, window, dist, method
+            wb.sel(time=slice("1998", "2000")), params=params
         )
 
         # Only a few moments before year 2000 are tested
@@ -624,6 +630,51 @@ class TestAgroclimaticIndices:
         spei = spei.clip(-3.09, 3.09)
 
         np.testing.assert_allclose(spei.values, values, rtol=0, atol=diff_tol)
+
+    def test_standardized_index_modularity(self, open_dataset):
+        freq, window, dist, method = "MS", 6, "gamma", "APP"
+        ds = (
+            open_dataset("sdba/CanESM2_1950-2100.nc")
+            .isel(location=1)
+            .sel(time=slice("1950", "2000"))
+        )
+        pr = ds.pr
+        # generate water budget
+        with xr.set_options(keep_attrs=True):
+            tasmax = ds.tasmax
+            tas = tasmax - 2.5
+            tasmin = tasmax - 5
+            wb = xci.water_budget(pr, None, tasmin, tasmax, tas)
+
+        params = xci.stats.standardized_index_fit_params(
+            wb.sel(time=slice("1950", "1980")),
+            freq=freq,
+            window=window,
+            dist=dist,
+            method=method,
+            offset="1 mm/d",
+        )
+        spei1 = xci.standardized_precipitation_evapotranspiration_index(
+            wb.sel(time=slice("1998", "2000")), params=params
+        )
+
+        spei2 = xci.standardized_precipitation_evapotranspiration_index(
+            wb,
+            freq=freq,
+            window=window,
+            dist=dist,
+            method=method,
+            offset="1 mm/d",
+            cal_start="1950",
+            cal_end="1980",
+        ).sel(time=slice("1998", "2000"))
+
+        # In the previous computation, the first {window-1} values are NaN because the rolling is performed on the period [1998,2000].
+        # Here, the computation is performed on the period [1950,2000], *then* subsetted to [1998,2000], so it doesn't have NaNs
+        # for the first values
+        spei2[{"time": slice(0, window - 1)}] = np.nan
+
+        np.testing.assert_allclose(spei1.values, spei2.values, rtol=0, atol=1e-4)
 
 
 class TestDailyFreezeThawCycles:
