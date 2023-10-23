@@ -763,7 +763,7 @@ def standardized_index(da: xr.DataArray, params: xr.DataArray):
         elif group == "time.month":
             da = da.rename(month="time").reindex(time=da_ref.time.dt.month)
             da["time"] = da_ref.time
-        return da.chunk({"time": -1})
+        return da if not uses_dask(da) else da.chunk({"time": -1})
 
     probs_of_zero = da.groupby(group).map(
         lambda x: (x == 0).sum("time") / x.notnull().sum("time")
