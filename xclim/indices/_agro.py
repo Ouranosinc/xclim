@@ -1134,7 +1134,7 @@ def standardized_precipitation_index(
         End date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`. Default option `None`
         means that the calibration period finishes at the end of the input dataset.
     params: xarray.DataArray
-        Fit parameters. The `params` can be computed using ``xclim.indices.standardized_index_fit_params`` in advance.
+        Fit parameters. The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
         The ouput can be given here as input, and it overrides other options.
     indexer
         Indexing parameters to compute the indicator on a temporal subset of the data.
@@ -1284,7 +1284,7 @@ def standardized_precipitation_evapotranspiration_index(
         End date of the calibration period. A `DateStr` is expected, that is a `str` in format `"YYYY-MM-DD"`. Default option `None`
         means that the calibration period finishes at the end of the input dataset.
     params: xarray.DataArray
-        Fit parameters. The `params` can be computed using ``xclim.indices.standardized_index_fit_params`` in advance.
+        Fit parameters. The `params` can be computed using ``xclim.indices.stats.standardized_index_fit_params`` in advance.
         The ouput can be given here as input, and it overrides other options.
     offset: Quantified
         For distributions bounded by zero (e.g. "gamma", "fisk"), an offset must be added to the water budget

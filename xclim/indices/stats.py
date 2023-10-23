@@ -748,7 +748,7 @@ def standardized_index(da, params):
     da : xarray.DataArray
         Input array. Resampling and rolling operations should have already been applied using ``xclim.indices.preprocess_standardized_index``.
     params: xarray.DataArray
-        Fit parameters computed using ``xclim.indices.standardized_index_fit_params``.
+        Fit parameters computed using ``xclim.indices.stats.standardized_index_fit_params``.
     """
     group = params.attrs["group"]
 

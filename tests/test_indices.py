@@ -526,7 +526,7 @@ class TestAgroclimaticIndices:
         ds = open_dataset("sdba/CanESM2_1950-2100.nc").isel(location=1)
         pr = ds.pr.sel(time=slice("1998", "2000"))
         pr_cal = ds.pr.sel(time=slice("1950", "1980"))
-        params = xci.standardized_index_fit_params(
+        params = xci.stats.standardized_index_fit_params(
             pr_cal, freq=freq, window=window, dist=dist, method=method
         )
         spi = xci.standardized_precipitation_index(pr, params=params)
@@ -611,7 +611,7 @@ class TestAgroclimaticIndices:
             tasmin = tasmax - 5
             wb = xci.water_budget(pr, None, tasmin, tasmax, tas)
 
-        params = xci.standardized_index_fit_params(
+        params = xci.stats.standardized_index_fit_params(
             wb.sel(time=slice("1950", "1980")),
             freq=freq,
             window=window,
@@ -646,7 +646,7 @@ class TestAgroclimaticIndices:
             tasmin = tasmax - 5
             wb = xci.water_budget(pr, None, tasmin, tasmax, tas)
 
-        params = xci.standardized_index_fit_params(
+        params = xci.stats.standardized_index_fit_params(
             wb.sel(time=slice("1950", "1980")),
             freq=freq,
             window=window,
@@ -654,7 +654,7 @@ class TestAgroclimaticIndices:
             method=method,
             offset="1 mm/d",
         )
-        spei1 = xci.standardized_precipitation_evapotranspiration_index(
+        spei1 = xci.stats.standardized_precipitation_evapotranspiration_index(
             wb.sel(time=slice("1998", "2000")), params=params
         )
 
