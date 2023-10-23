@@ -593,8 +593,6 @@ def dist_method(
     return xr.apply_ufunc(
         _dist_method_1D,
         *args,
-        input_core_dims=[[]] * len(args),
-        output_core_dims=[[]],
         kwargs={"dist": fit_params.attrs["scipy_dist"], "function": function, **kwargs},
         output_dtypes=[float],
         dask="parallelized",
@@ -774,11 +772,12 @@ def standardized_index(da: xr.DataArray, params: xr.DataArray):
     dist_probs = dist_method("cdf", params, da)
     probs = probs_of_zero + ((1 - probs_of_zero) * dist_probs)
 
-    params_norm = xr.concat(
-        [0 * params.sel(dparams="loc"), 0 * params.sel(dparams="scale") + 1],
-        dim="dparams",
-    ).chunk({"dparams": -1})
-    params_norm.attrs = dict(scipy_dist="norm")
+    params_norm = xr.DataArray(
+        [0, 1],
+        dims=["dparams"],
+        coords=dict(dparams=(["loc", "scale"])),
+        attrs=dict(scipy_dist="norm"),
+    )
     std_index = dist_method("ppf", params_norm, probs)
     # A cdf value of 0 or 1 gives ±np.inf when inverted to the normal distribution.
     # The neighbouring values 0.00...1 and 0.99...9 with a float64 give a standardized index of ± 8.21
