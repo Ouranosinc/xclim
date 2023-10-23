@@ -22,7 +22,7 @@ New features and enhancements
 * `adapt_freq_thresh` argument added `sdba` training functions, allowing to perform frequency adaptation appropriately in each map block. (:pull:`1407`).
 * Standardized indices (``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index``)  (:issue:`1270`, :issue:`1416`, :issue:`1474`, :pull:`1311`) were changed:
     * Optimized and noticeably faster calculation.
-    * Can be computed in two steps: First compute fit parameters with ``xclim.indices.standardized_index_fit_params``, then use the output in the standardized indices functions.
+    * Can be computed in two steps: First compute fit parameters with ``xclim.indices.stats.standardized_index_fit_params``, then use the output in the standardized indices functions.
     * The standardized index values are now clipped to ±8.21. This reflects the ``float64`` precision of the computation when cumulative distributed function values are inverted to a normal distribution and avoids returning infinite values.
     * An offset parameter is now available to account for negative water balance values``xclim.indices.standardized_precipitation_evapotranspiration_index``.
 
