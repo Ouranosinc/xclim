@@ -30,6 +30,7 @@ Bug fixes
 * Fixed ``xclim.indices.run_length.lazy_indexing`` which would sometimes trigger the loading of auxiliary coordinates. (:issue:`1483`, :pull:`1484`).
 * Indicators ``snd_season_length`` and ``snw_season_length`` will return 0 instead of NaN if all inputs have a (non-NaN) zero snow depth (or water-equivalent thickness). (:pull:`1492`, :issue:`1491`)
 * Fixed a bug in the `pytest` configuration that could prevent testing data caching from occurring in systems where the platform-dependent cache directory is not found in the user's home. (:issue:`1468`, :pull:`1473`).
+* Fix ``xclim.core.dataflags.data_flags`` variable name generation (:pull:`1507`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^
