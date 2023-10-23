@@ -34,6 +34,7 @@ from . import run_length as rl
 
 __all__ = [
     "aggregate_between_dates",
+    "binary_ops",
     "compare",
     "count_level_crossings",
     "count_occurrences",
