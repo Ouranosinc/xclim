@@ -151,3 +151,20 @@ class TestDataFlags:
 
         df_flagged = df.ecad_compliant(bad_ds)
         np.testing.assert_array_equal(df_flagged.ecad_qc_flag, False)
+
+    def test_names(self, pr_series):
+        pr = pr_series(np.zeros(365), start="1971-01-01")
+        flgs = df.data_flags(
+            pr,
+            flags={
+                "values_op_thresh_repeating_for_n_or_more_days": {
+                    "op": "==",
+                    "n": 5,
+                    "thresh": "-5.1 mm d-1",
+                }
+            },
+        )
+        assert (
+            list(flgs.data_vars.keys())[0]
+            == "values_eq_minus5point1_repeating_for_5_or_more_days"
+        )
