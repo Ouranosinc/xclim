@@ -1,7 +1,7 @@
 name: Publish Release Announcement to Mastodon
 
 on:
-  status:
+  release:
     types:
       - published
   workflow_dispatch:
