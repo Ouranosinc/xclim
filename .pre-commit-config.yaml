@@ -14,7 +14,7 @@ repos:
   - id: trailing-whitespace
     exclude: setup.cfg
   - id: end-of-file-fixer
-    exclude: '.ipynb'
+    exclude: '.ipynb|.github/publish-mastodon.template.md'
   - id: check-json
   - id: check-toml
   - id: check-yaml
