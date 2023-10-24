@@ -18,7 +18,7 @@ on:
 jobs:
   toot:
     runs-on: ubuntu-latest
-    environment: production
+#    environment: production
     steps:
 
     - name: Checkout
@@ -57,7 +57,7 @@ jobs:
       id: render_template
       uses: chuhlomin/render-template@v1.7
       with:
-        template: publish-mastodon.template.md
+        template: ./github/publish-mastodon.template.md
         vars: |
             version: ${{ env.version }}
             contributors: ${{ env.CONTRIBUTORS }}
