@@ -197,7 +197,7 @@ def cosine_of_solar_zenith_angle(
     lat: Quantified,
     lon: Quantified = "0 °",
     time_correction: xr.DataArray = None,
-    stat: str = "integral",
+    stat: str = "average",
     sunlit: bool = False,
 ) -> xr.DataArray:
     """Cosine of the solar zenith angle.
@@ -222,10 +222,10 @@ def cosine_of_solar_zenith_angle(
     time_correction : xr.DataArray, optional
         Time correction for solar angle. See :py:func:`time_correction_for_solar_angle`
         This is necessary if stat is "instant".
-    stat : {'integral', 'average', 'instant'}
+    stat : {'average', 'integral', 'instant'}
         Which daily statistic to return.
-        If "integral", this returns the integral of the cosine of the zenith angle
         If "average", this returns the average of the cosine of the zenith angle
+        If "integral", this returns the integral of the cosine of the zenith angle
         If "instant", this returns the instantaneous cosine of the zenith angle
     sunlit: bool
         If True, only the sunlit part of the interval is considered in the integral or average.

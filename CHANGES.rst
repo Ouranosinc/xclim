@@ -10,6 +10,10 @@ New indicators
 ^^^^^^^^^^^^^^
 * ``xclim.indices.snw_storm_days`` computes the number of days with snowfall amount accumulation above a threshold. (:pull:`1505`).
 
+Announcements
+^^^^^^^^^^^^^
+* The default mechanism for computing the Mean Radiant Temperature, a part of the Universal Thermal Climate Index (UTCI) was broken in xclim 0.44 and 0.45. This has been fixed by changing the default.
+
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * Add ``wind_power_potential`` to estimate the potential for wind power production given wind speed at the turbine hub height and turbine specifications, along with  ``wind_profile`` to estimate the wind speed at different heights based on wind speed at a reference height. (:issue:`1458`, :pull:`1471`)
@@ -36,6 +40,7 @@ Bug fixes
 * Indicators ``snd_season_length`` and ``snw_season_length`` will return 0 instead of NaN if all inputs have a (non-NaN) zero snow depth (or water-equivalent thickness). (:pull:`1492`, :issue:`1491`)
 * Fixed a bug in the `pytest` configuration that could prevent testing data caching from occurring in systems where the platform-dependent cache directory is not found in the user's home. (:issue:`1468`, :pull:`1473`).
 * Fix ``xclim.core.dataflags.data_flags`` variable name generation (:pull:`1507`).
+* Remove nonsensical `stat='average'` option for ``mean_radiant_temperature``. (:issue:`1496`, :pull:`1501`).
 
 Breaking changes
 ^^^^^^^^^^^^^^^^

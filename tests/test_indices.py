@@ -3423,9 +3423,7 @@ def test_universal_thermal_climate_index(
     np.testing.assert_allclose(utci, utci_exp, rtol=1e-03)
 
 
-@pytest.mark.parametrize(
-    "stat,expected", [("sunlit", 295.0), ("instant", 294.9), ("average", 295.1)]
-)
+@pytest.mark.parametrize("stat,expected", [("sunlit", 295.0), ("instant", 294.9)])
 def test_mean_radiant_temperature(
     rsds_series,
     rsus_series,
