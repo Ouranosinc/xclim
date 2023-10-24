@@ -2,31 +2,31 @@
 Changelog
 =========
 
-v0.46.0 (unreleased)
+v0.46.0 (2023-10-24)
 --------------------
 Contributors to this version: David Huard (:user:`huard`), Trevor James Smith (:user:`Zeitsperre`), Pascal Bourgault (:user:`aulemahal`), Éric Dupuis (:user:`coxipi`).
 
-New indicators
-^^^^^^^^^^^^^^
-* ``xclim.indices.snw_storm_days`` computes the number of days with snowfall amount accumulation above a threshold. (:pull:`1505`).
-
 Announcements
 ^^^^^^^^^^^^^
-* The default mechanism for computing the Mean Radiant Temperature, a part of the Universal Thermal Climate Index (UTCI) was broken in xclim 0.44 and 0.45. This has been fixed by changing the default.
+* The default mechanism for computing the Mean Radiant Temperature, a part of the Universal Thermal Climate Index (UTCI) was broken in xclim v0.44.0 and v0.45.0. This has now been fixed by changing the default settings.
+
+New indicators
+^^^^^^^^^^^^^^
+* ``xclim.indices.snw_storm_days`` computes the number of days with snowfall amount accumulation above a given threshold (default: `10 Kg m-2`). (:pull:`1505`).
+* Added ``xclim.indices.wind_power_potential`` to estimate the potential for wind power production given wind speed at the turbine hub height and turbine specifications, along with ``xclim.indices.wind_profile`` to estimate the wind speed at different heights based on wind speed at a reference height. (:issue:`1458`, :pull:`1471`).
 
 New features and enhancements
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* Add ``wind_power_potential`` to estimate the potential for wind power production given wind speed at the turbine hub height and turbine specifications, along with  ``wind_profile`` to estimate the wind speed at different heights based on wind speed at a reference height. (:issue:`1458`, :pull:`1471`)
 * `xclim` now has a dedicated console command for prefetching testing data from `xclim-testdata` with branch options (e.g.: `$ xclim prefetch_testing_data --branch some_development_branch`). This command can be used to download the testing data to a local cache, which can then be used to run the testing suite without internet access or in "offline" mode. For more information, see the contributing documentation section for `Updating Testing Data`. (:issue:`1468`, :pull:`1473`).
 * The testing suite now offers a means of running tests in "offline" mode (using `pytest-socket <https://github.com/miketheman/pytest-socket>`_ to block external connections). This requires a local copy of `xclim-testdata` to be present in the user's home cache directory and for certain `pytest` options and markers to be set when invoked. For more information, see the contributing documentation section for `Running Tests in Offline Mode`. (:issue:`1468`, :pull:`1473`).
 * The `SKIP_NOTEBOOKS` flag to speed up docs builds is now documented. See the contributing documentation section `Get Started!` for details. (:issue:`1470`, :pull:`1476`).
-* Refactored the indicators page with the addition of a search bar.
-* Indicator ``generic.stats`` now accepts any frequency (previously only daily). (:pull:`1498`).
-* Added argument ``out_units`` to ``select_resample_op`` to bypass limitations of ``to_agg_units`` in custom indicators. Add "var" to supported operations in ``to_agg_units``. (:pull:`1498`).
-* `adapt_freq_thresh` argument added `sdba` training functions, allowing to perform frequency adaptation appropriately in each map block. (:pull:`1407`).
+* Refactored the indicators page with the addition of a search bar (:issue:`1433`, :pull:`1454`).
+* Indicator ``xclim.indices.generic.stats`` now accepts any frequency (previously only `daily`). (:pull:`1498`).
+* Added argument `"out_units"` to ``select_resample_op`` to bypass limitations of ``to_agg_units`` in custom indicators. Also, added ``var`` to supported operations in ``to_agg_units``. (:pull:`1498`).
+* `adapt_freq_thresh` argument was added `to `sdba`` training functions, to facilitate performing frequency adaptation appropriately in each map block. (:pull:`1407`).
 * Standardized indices (``xclim.indices.standardized_precipitation_index`` and ``xclim.indices.standardized_precipitation_evapotranspiration_index``)  (:issue:`1270`, :issue:`1416`, :issue:`1474`, :pull:`1311`) were changed:
     * Optimized and noticeably faster calculation.
-    * Can be computed in two steps: First compute fit parameters with ``xclim.indices.stats.standardized_index_fit_params``, then use the output in the standardized indices functions.
+    * Can be computed in two steps: first compute fit parameters with ``xclim.indices.stats.standardized_index_fit_params``, then use the output in the standardized indices functions.
     * The standardized index values are now clipped to ±8.21. This reflects the ``float64`` precision of the computation when cumulative distributed function values are inverted to a normal distribution and avoids returning infinite values.
     * An offset parameter is now available to account for negative water balance values``xclim.indices.standardized_precipitation_evapotranspiration_index``.
 
@@ -35,9 +35,9 @@ Bug fixes
 * Fixed an error in the `pytest` configuration that prevented copying of testing data to thread-safe caches of workers under certain conditions (this should always occur). (:pull:`1473`).
   * Coincidentally, this also fixes an error that caused `pytest` to error-out when invoked without an active internet connection. Running `pytest` without network access is now supported (requires cached testing data). (:issue:`1468`).
 * Calling a ``sdba.map_blocks``-wrapped function with data chunked along the reduced dimensions will raise an error. This forbids chunking the trained dataset along the distribution dimensions, for example. (:issue:`1481`, :pull:`1482`).
-* Optimization of indicators ``huglin_index`` and ``biologically_effective_degree_days`` when used with dask and flox. As a side effect, the indice functions (i.e. under ``xc.indices``) no longer mask incomplete periods. The indicators' output is unchanged under the default "check_missing" setting (:issue:`1494`, :pull:`1495`).
+* Optimization of indicators ``huglin_index`` and ``biologically_effective_degree_days`` when used with `dask` and `flox`. As a side effect, the indice functions (i.e. under ``xclim.indices``) no longer mask incomplete periods. The indicators' output is unchanged under the default `"check_missing"` setting (:issue:`1494`, :pull:`1495`).
 * Fixed ``xclim.indices.run_length.lazy_indexing`` which would sometimes trigger the loading of auxiliary coordinates. (:issue:`1483`, :pull:`1484`).
-* Indicators ``snd_season_length`` and ``snw_season_length`` will return 0 instead of NaN if all inputs have a (non-NaN) zero snow depth (or water-equivalent thickness). (:pull:`1492`, :issue:`1491`)
+* Indicators ``snd_season_length`` and ``snw_season_length`` will return `0` instead of `NaN` if all inputs have a (non-`NaN`) zero snow depth (or water-equivalent thickness). (:pull:`1492`, :issue:`1491`)
 * Fixed a bug in the `pytest` configuration that could prevent testing data caching from occurring in systems where the platform-dependent cache directory is not found in the user's home. (:issue:`1468`, :pull:`1473`).
 * Fix ``xclim.core.dataflags.data_flags`` variable name generation (:pull:`1507`).
 * Remove nonsensical `stat='average'` option for ``mean_radiant_temperature``. (:issue:`1496`, :pull:`1501`).
