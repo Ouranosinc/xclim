@@ -69,7 +69,7 @@ jobs:
       if: ${{ !github.event.inputs.dry-run }}
       uses: cbrgm/mastodon-github-action@v1.0.3
       with:
-        message: "${{ steps.render_template.outputs.result }}\n\n${{ env.contributors }}"
+        message: "${{ steps.render_template.outputs.result }}${{ env.contributors }}"
         visibility: "public"
       env:
         MASTODON_URL: ${{ secrets.MASTODON_URL }}
