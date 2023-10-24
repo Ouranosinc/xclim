@@ -63,13 +63,13 @@ jobs:
 
     - name: Message Preview
       run: |
-        echo "${{ steps.render_template.outputs.result }}\n${{ env.contributors }}"
+        echo "${{ steps.render_template.outputs.result }}${{ env.contributors }}"
 
     - name: Send toot to Mastodon
       if: ${{ !github.event.inputs.dry-run }}
       uses: cbrgm/mastodon-github-action@v1.0.3
       with:
-        message: "${{ steps.render_template.outputs.result }}\n${{ env.contributors }}"
+        message: "${{ steps.render_template.outputs.result }}${{ env.contributors }}"
         visibility: "public"
       env:
         MASTODON_URL: ${{ secrets.MASTODON_URL }}
